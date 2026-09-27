@@ -1,1 +1,33 @@
-tool command failed (trace deployment/debug-nginx -n temp-testing --format json): exit status 1
+{
+  "command": "trace",
+  "target": {
+    "kind": "Deployment",
+    "namespace": "temp-testing",
+    "name": "debug-nginx"
+  },
+  "chain": null,
+  "summary": {
+    "ownerType": "Native",
+    "source": null,
+    "deployer": null
+  },
+  "events": {
+    "events": [
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled up replica set debug-nginx-5dbdb5f74f from 0 to 1",
+        "count": 1,
+        "age": "3m",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-09-27T08:54:35+01:00",
+        "lastSeen": "2026-09-27T08:54:35+01:00"
+      }
+    ],
+    "totalCount": 1,
+    "warningCount": 0,
+    "errorCount": 0
+  }
+}
+cub-scout trace deployment/debug-nginx -n temp-testing --format json exited with status 1; the JSON above is its output.

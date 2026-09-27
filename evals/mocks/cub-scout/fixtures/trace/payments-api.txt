@@ -1,1 +1,33 @@
-tool command failed (trace deployment/payments-api -n payments --format json): exit status 1
+{
+  "command": "trace",
+  "target": {
+    "kind": "Deployment",
+    "namespace": "payments",
+    "name": "payments-api"
+  },
+  "chain": null,
+  "summary": {
+    "ownerType": "Helm",
+    "source": null,
+    "deployer": null
+  },
+  "events": {
+    "events": [
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled up replica set payments-api-6ccc469957 from 0 to 2",
+        "count": 1,
+        "age": "3m",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-09-27T08:54:36+01:00",
+        "lastSeen": "2026-09-27T08:54:36+01:00"
+      }
+    ],
+    "totalCount": 1,
+    "warningCount": 0,
+    "errorCount": 0
+  }
+}
+cub-scout trace deployment/payments-api -n payments --format json exited with status 1; the JSON above is its output.

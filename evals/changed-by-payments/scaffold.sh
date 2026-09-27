@@ -13,35 +13,35 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","data":{"application.resourceTrackingMethod":"annotation"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"argocd-cm","app.kubernetes.io/part-of":"argocd"},"name":"argocd-cm","namespace":"argocd"}}
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     labels:
       app.kubernetes.io/name: argocd-cm
       app.kubernetes.io/part-of: argocd
     name: argocd-cm
     namespace: argocd
-    resourceVersion: "495"
-    uid: 62ad168c-fb22-43e7-8d81-e128f82aa5ad
+    resourceVersion: "543"
+    uid: f4ce2319-d47f-4459-8617-5780ce10f448
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIdkQqtQNf2sYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzA4NDJaFw0zNjA5MjQwNzEzNDJaMBUx
+      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQCY8qTT/UJEnLPk6e7FsXHLe5x6Q5Q/SepPzSJHhu+MLNeJJ4q33PHhNe7K
-      XED8lB58hksa3vAOQXbBn3SJqpqFuQy5dS/IwmlAX/i3LTfih8Z+K5JWNKA+OCBj
-      zYbfVZxS47IgSbPAjTBbdYdgVsFl5N+Pm7qsPKRmb52H4qYexQ3Hei1ml0N+wXIM
-      UAcnn9vudTB4OYuNrFHqKKWd2L4xmsKKgtd+pgZ4O2gXOvgNAu6qQyedkmqLmWzd
-      B4p5/ZKYb+2OFXi6WyccW3Euti7RVlWXMsBvzcq2IPLklY9nNQZ3K1nlOhnnSBAu
-      OUN3jWO2ER14hezkkcFCf7XiuDmdAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSoP86rT4hp3ycjkL6FC6LtqVut9jAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBVACO6/GpG
-      zKnOrf7tuNH+26+xTjBrwqoJFxnwB0FXr2YCerDxuZzVqB7SPiVjKpLr0kj1zMlI
-      gtogGHCFkt/Q1dsNzDBbtu1AQCPLPq+4aiUMllHw/gySnYkbOQVVnzUS9kyxNuni
-      8tgGyWiq+yQ0kOwHZea9vko80GdXfrbVeNKBkN0sys137/Wf1tYE0NB3JvwQuItK
-      oSzcdNO4iQZHCvmbIbz+USBOmpbKmUojCTWlervqKR1F8y2u6HbRM81WnyM0T8SU
-      c6qWPL6LdhBy6kG2LvOD3McO6sbDGCviEn7gXuDOgcOh9mmUrXNTa1BckPJSXXV5
-      WlcrjfKZcL89
+      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
+      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
+      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
+      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
+      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
+      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
+      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
+      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
+      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
+      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
+      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
+      7VvZs8oGo4WN
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -50,32 +50,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     name: kube-root-ca.crt
     namespace: argocd
-    resourceVersion: "440"
-    uid: 68460995-f061-43b2-8132-d5b6219ad8cb
+    resourceVersion: "488"
+    uid: 84cbd4a7-5208-4aa9-97c1-8797f9041098
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIdkQqtQNf2sYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzA4NDJaFw0zNjA5MjQwNzEzNDJaMBUx
+      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQCY8qTT/UJEnLPk6e7FsXHLe5x6Q5Q/SepPzSJHhu+MLNeJJ4q33PHhNe7K
-      XED8lB58hksa3vAOQXbBn3SJqpqFuQy5dS/IwmlAX/i3LTfih8Z+K5JWNKA+OCBj
-      zYbfVZxS47IgSbPAjTBbdYdgVsFl5N+Pm7qsPKRmb52H4qYexQ3Hei1ml0N+wXIM
-      UAcnn9vudTB4OYuNrFHqKKWd2L4xmsKKgtd+pgZ4O2gXOvgNAu6qQyedkmqLmWzd
-      B4p5/ZKYb+2OFXi6WyccW3Euti7RVlWXMsBvzcq2IPLklY9nNQZ3K1nlOhnnSBAu
-      OUN3jWO2ER14hezkkcFCf7XiuDmdAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSoP86rT4hp3ycjkL6FC6LtqVut9jAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBVACO6/GpG
-      zKnOrf7tuNH+26+xTjBrwqoJFxnwB0FXr2YCerDxuZzVqB7SPiVjKpLr0kj1zMlI
-      gtogGHCFkt/Q1dsNzDBbtu1AQCPLPq+4aiUMllHw/gySnYkbOQVVnzUS9kyxNuni
-      8tgGyWiq+yQ0kOwHZea9vko80GdXfrbVeNKBkN0sys137/Wf1tYE0NB3JvwQuItK
-      oSzcdNO4iQZHCvmbIbz+USBOmpbKmUojCTWlervqKR1F8y2u6HbRM81WnyM0T8SU
-      c6qWPL6LdhBy6kG2LvOD3McO6sbDGCviEn7gXuDOgcOh9mmUrXNTa1BckPJSXXV5
-      WlcrjfKZcL89
+      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
+      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
+      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
+      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
+      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
+      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
+      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
+      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
+      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
+      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
+      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
+      7VvZs8oGo4WN
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -84,32 +84,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     name: kube-root-ca.crt
     namespace: billing
-    resourceVersion: "493"
-    uid: cffd2750-a38e-44af-8169-de02468e9199
+    resourceVersion: "540"
+    uid: 73393bfc-3e57-4c6b-abb5-74fca40de870
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIdkQqtQNf2sYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzA4NDJaFw0zNjA5MjQwNzEzNDJaMBUx
+      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQCY8qTT/UJEnLPk6e7FsXHLe5x6Q5Q/SepPzSJHhu+MLNeJJ4q33PHhNe7K
-      XED8lB58hksa3vAOQXbBn3SJqpqFuQy5dS/IwmlAX/i3LTfih8Z+K5JWNKA+OCBj
-      zYbfVZxS47IgSbPAjTBbdYdgVsFl5N+Pm7qsPKRmb52H4qYexQ3Hei1ml0N+wXIM
-      UAcnn9vudTB4OYuNrFHqKKWd2L4xmsKKgtd+pgZ4O2gXOvgNAu6qQyedkmqLmWzd
-      B4p5/ZKYb+2OFXi6WyccW3Euti7RVlWXMsBvzcq2IPLklY9nNQZ3K1nlOhnnSBAu
-      OUN3jWO2ER14hezkkcFCf7XiuDmdAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSoP86rT4hp3ycjkL6FC6LtqVut9jAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBVACO6/GpG
-      zKnOrf7tuNH+26+xTjBrwqoJFxnwB0FXr2YCerDxuZzVqB7SPiVjKpLr0kj1zMlI
-      gtogGHCFkt/Q1dsNzDBbtu1AQCPLPq+4aiUMllHw/gySnYkbOQVVnzUS9kyxNuni
-      8tgGyWiq+yQ0kOwHZea9vko80GdXfrbVeNKBkN0sys137/Wf1tYE0NB3JvwQuItK
-      oSzcdNO4iQZHCvmbIbz+USBOmpbKmUojCTWlervqKR1F8y2u6HbRM81WnyM0T8SU
-      c6qWPL6LdhBy6kG2LvOD3McO6sbDGCviEn7gXuDOgcOh9mmUrXNTa1BckPJSXXV5
-      WlcrjfKZcL89
+      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
+      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
+      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
+      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
+      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
+      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
+      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
+      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
+      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
+      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
+      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
+      7VvZs8oGo4WN
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -118,32 +118,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:13:55Z"
+    creationTimestamp: "2026-09-27T07:54:12Z"
     name: kube-root-ca.crt
     namespace: default
-    resourceVersion: "342"
-    uid: 2ec3b4af-3cda-452d-8cdd-8868b1b41d77
+    resourceVersion: "348"
+    uid: c6507718-c1f5-4617-adbd-07be1c163e7e
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIdkQqtQNf2sYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzA4NDJaFw0zNjA5MjQwNzEzNDJaMBUx
+      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQCY8qTT/UJEnLPk6e7FsXHLe5x6Q5Q/SepPzSJHhu+MLNeJJ4q33PHhNe7K
-      XED8lB58hksa3vAOQXbBn3SJqpqFuQy5dS/IwmlAX/i3LTfih8Z+K5JWNKA+OCBj
-      zYbfVZxS47IgSbPAjTBbdYdgVsFl5N+Pm7qsPKRmb52H4qYexQ3Hei1ml0N+wXIM
-      UAcnn9vudTB4OYuNrFHqKKWd2L4xmsKKgtd+pgZ4O2gXOvgNAu6qQyedkmqLmWzd
-      B4p5/ZKYb+2OFXi6WyccW3Euti7RVlWXMsBvzcq2IPLklY9nNQZ3K1nlOhnnSBAu
-      OUN3jWO2ER14hezkkcFCf7XiuDmdAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSoP86rT4hp3ycjkL6FC6LtqVut9jAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBVACO6/GpG
-      zKnOrf7tuNH+26+xTjBrwqoJFxnwB0FXr2YCerDxuZzVqB7SPiVjKpLr0kj1zMlI
-      gtogGHCFkt/Q1dsNzDBbtu1AQCPLPq+4aiUMllHw/gySnYkbOQVVnzUS9kyxNuni
-      8tgGyWiq+yQ0kOwHZea9vko80GdXfrbVeNKBkN0sys137/Wf1tYE0NB3JvwQuItK
-      oSzcdNO4iQZHCvmbIbz+USBOmpbKmUojCTWlervqKR1F8y2u6HbRM81WnyM0T8SU
-      c6qWPL6LdhBy6kG2LvOD3McO6sbDGCviEn7gXuDOgcOh9mmUrXNTa1BckPJSXXV5
-      WlcrjfKZcL89
+      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
+      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
+      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
+      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
+      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
+      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
+      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
+      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
+      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
+      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
+      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
+      7VvZs8oGo4WN
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -152,32 +152,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     name: kube-root-ca.crt
     namespace: flux-system
-    resourceVersion: "437"
-    uid: 78daeb8b-3ad5-4c0b-a4e4-be6a6e02a157
+    resourceVersion: "486"
+    uid: 682ae8e4-c72a-4149-bab8-f2a9361c7d8c
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIdkQqtQNf2sYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzA4NDJaFw0zNjA5MjQwNzEzNDJaMBUx
+      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQCY8qTT/UJEnLPk6e7FsXHLe5x6Q5Q/SepPzSJHhu+MLNeJJ4q33PHhNe7K
-      XED8lB58hksa3vAOQXbBn3SJqpqFuQy5dS/IwmlAX/i3LTfih8Z+K5JWNKA+OCBj
-      zYbfVZxS47IgSbPAjTBbdYdgVsFl5N+Pm7qsPKRmb52H4qYexQ3Hei1ml0N+wXIM
-      UAcnn9vudTB4OYuNrFHqKKWd2L4xmsKKgtd+pgZ4O2gXOvgNAu6qQyedkmqLmWzd
-      B4p5/ZKYb+2OFXi6WyccW3Euti7RVlWXMsBvzcq2IPLklY9nNQZ3K1nlOhnnSBAu
-      OUN3jWO2ER14hezkkcFCf7XiuDmdAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSoP86rT4hp3ycjkL6FC6LtqVut9jAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBVACO6/GpG
-      zKnOrf7tuNH+26+xTjBrwqoJFxnwB0FXr2YCerDxuZzVqB7SPiVjKpLr0kj1zMlI
-      gtogGHCFkt/Q1dsNzDBbtu1AQCPLPq+4aiUMllHw/gySnYkbOQVVnzUS9kyxNuni
-      8tgGyWiq+yQ0kOwHZea9vko80GdXfrbVeNKBkN0sys137/Wf1tYE0NB3JvwQuItK
-      oSzcdNO4iQZHCvmbIbz+USBOmpbKmUojCTWlervqKR1F8y2u6HbRM81WnyM0T8SU
-      c6qWPL6LdhBy6kG2LvOD3McO6sbDGCviEn7gXuDOgcOh9mmUrXNTa1BckPJSXXV5
-      WlcrjfKZcL89
+      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
+      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
+      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
+      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
+      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
+      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
+      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
+      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
+      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
+      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
+      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
+      7VvZs8oGo4WN
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -186,32 +186,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     name: kube-root-ca.crt
     namespace: inventory
-    resourceVersion: "474"
-    uid: 95fe8621-76b2-4d90-8235-044178bedd2b
+    resourceVersion: "523"
+    uid: 54d0209c-2482-489b-b7e2-05a741a12968
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIdkQqtQNf2sYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzA4NDJaFw0zNjA5MjQwNzEzNDJaMBUx
+      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQCY8qTT/UJEnLPk6e7FsXHLe5x6Q5Q/SepPzSJHhu+MLNeJJ4q33PHhNe7K
-      XED8lB58hksa3vAOQXbBn3SJqpqFuQy5dS/IwmlAX/i3LTfih8Z+K5JWNKA+OCBj
-      zYbfVZxS47IgSbPAjTBbdYdgVsFl5N+Pm7qsPKRmb52H4qYexQ3Hei1ml0N+wXIM
-      UAcnn9vudTB4OYuNrFHqKKWd2L4xmsKKgtd+pgZ4O2gXOvgNAu6qQyedkmqLmWzd
-      B4p5/ZKYb+2OFXi6WyccW3Euti7RVlWXMsBvzcq2IPLklY9nNQZ3K1nlOhnnSBAu
-      OUN3jWO2ER14hezkkcFCf7XiuDmdAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSoP86rT4hp3ycjkL6FC6LtqVut9jAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBVACO6/GpG
-      zKnOrf7tuNH+26+xTjBrwqoJFxnwB0FXr2YCerDxuZzVqB7SPiVjKpLr0kj1zMlI
-      gtogGHCFkt/Q1dsNzDBbtu1AQCPLPq+4aiUMllHw/gySnYkbOQVVnzUS9kyxNuni
-      8tgGyWiq+yQ0kOwHZea9vko80GdXfrbVeNKBkN0sys137/Wf1tYE0NB3JvwQuItK
-      oSzcdNO4iQZHCvmbIbz+USBOmpbKmUojCTWlervqKR1F8y2u6HbRM81WnyM0T8SU
-      c6qWPL6LdhBy6kG2LvOD3McO6sbDGCviEn7gXuDOgcOh9mmUrXNTa1BckPJSXXV5
-      WlcrjfKZcL89
+      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
+      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
+      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
+      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
+      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
+      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
+      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
+      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
+      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
+      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
+      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
+      7VvZs8oGo4WN
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -220,19 +220,19 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:13:55Z"
+    creationTimestamp: "2026-09-27T07:54:12Z"
     name: kube-root-ca.crt
     namespace: kube-node-lease
-    resourceVersion: "343"
-    uid: 9c8b4ebd-e6c0-4db9-aadd-a90b36b59a8f
+    resourceVersion: "349"
+    uid: dc68447e-108d-43a2-bf06-0fc5fe706006
 - apiVersion: v1
   data:
-    jws-kubeconfig-abcdef: eyJhbGciOiJIUzI1NiIsImtpZCI6ImFiY2RlZiJ9..RLQvAlfzVRQYbNo7B8KZY53M2AYHX78Lsgg8KTYs3XE
+    jws-kubeconfig-abcdef: eyJhbGciOiJIUzI1NiIsImtpZCI6ImFiY2RlZiJ9..Q8M0mWKBftkT0lyx48jLvwaCApdRhrKzasTQD7HJcR0
     kubeconfig: |
       apiVersion: v1
       clusters:
       - cluster:
-          certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCVENDQWUyZ0F3SUJBZ0lJZGtRcXRRTmYyc1l3RFFZSktvWklodmNOQVFFTEJRQXdGVEVUTUJFR0ExVUUKQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TmpBNU1qY3dOekE0TkRKYUZ3MHpOakE1TWpRd056RXpOREphTUJVeApFekFSQmdOVkJBTVRDbXQxWW1WeWJtVjBaWE13Z2dFaU1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLCkFvSUJBUUNZOHFUVC9VSkVuTFBrNmU3RnNYSExlNXg2UTVRL1NlcFB6U0pIaHUrTUxOZUpKNHEzM1BIaE5lN0sKWEVEOGxCNThoa3NhM3ZBT1FYYkJuM1NKcXBxRnVReTVkUy9Jd21sQVgvaTNMVGZpaDhaK0s1SldOS0ErT0NCagp6WWJmVlp4UzQ3SWdTYlBBalRCYmRZZGdWc0ZsNU4rUG03cXNQS1JtYjUySDRxWWV4UTNIZWkxbWwwTit3WElNClVBY25uOXZ1ZFRCNE9ZdU5yRkhxS0tXZDJMNHhtc0tLZ3RkK3BnWjRPMmdYT3ZnTkF1NnFReWVka21xTG1XemQKQjRwNS9aS1liKzJPRlhpNld5Y2NXM0V1dGk3UlZsV1hNc0J2emNxMklQTGtsWTluTlFaM0sxbmxPaG5uU0JBdQpPVU4zaldPMkVSMTRoZXpra2NGQ2Y3WGl1RG1kQWdNQkFBR2pXVEJYTUE0R0ExVWREd0VCL3dRRUF3SUNwREFQCkJnTlZIUk1CQWY4RUJUQURBUUgvTUIwR0ExVWREZ1FXQkJTb1A4NnJUNGhwM3ljamtMNkZDNkx0cVZ1dDlqQVYKQmdOVkhSRUVEakFNZ2dwcmRXSmxjbTVsZEdWek1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQlZBQ082L0dwRwp6S25PcmY3dHVOSCsyNit4VGpCcndxb0pGeG53QjBGWHIyWUNlckR4dVp6VnFCN1NQaVZqS3BMcjBrajF6TWxJCmd0b2dHSENGa3QvUTFkc056REJidHUxQVFDUExQcSs0YWlVTWxsSHcvZ3lTbllrYk9RVlZuelVTOWt5eE51bmkKOHRnR3lXaXEreVEwa093SFplYTl2a284MEdkWGZyYlZlTktCa04wc3lzMTM3L1dmMXRZRTBOQjNKdndRdUl0SwpvU3pjZE5PNGlRWkhDdm1iSWJ6K1VTQk9tcGJLbVVvakNUV2xlcnZxS1IxRjh5MnU2SGJSTTgxV255TTBUOFNVCmM2cVdQTDZMZGhCeTZrRzJMdk9EM01jTzZzYkRHQ3ZpRW43Z1h1RE9nY09oOW1tVXJYTlRhMUJja1BKU1hYVjUKV2xjcmpmS1pjTDg5Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+          certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCVENDQWUyZ0F3SUJBZ0lJSE15OWwzK0Y2bm93RFFZSktvWklodmNOQVFFTEJRQXdGVEVUTUJFR0ExVUUKQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TmpBNU1qY3dOelE1TURCYUZ3MHpOakE1TWpRd056VTBNREJhTUJVeApFekFSQmdOVkJBTVRDbXQxWW1WeWJtVjBaWE13Z2dFaU1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLCkFvSUJBUUMyc0s4MUVKZ1o1MVRiMUNsdEV5ZmJmZ2xEcnBQWm9lVCtvcWQ0MjVMZVdBNmdkZVhDczcyaktLdVcKMXFjOTRla3dLZVlmV3QxWTk2N1VzVmtBeFNNY1NmV3Z5cWl5d3p4N3VPWit5cWpYTWk5MnpCNkJ5cmlpVGpVVwozTWk2c2lrM3hxYkhTMnRkU0g3T2FvaUkwQUttdzR6c3FzK3phWkZURTMzMTlZWlFUWnUyQ3VTUWlaYjQ2YVlaCnZ1TXJYN0pHNDNscFo5bGRnbFA0UVZyMWhhcHpLbUJ0MHBwaXcrVGY2VzZBNVFMKzBzdnBqSnNBUzBaS1owSUYKeGR6ajNvSitZMnBxY1gremR3SXYyYTlxQ3YyazdXNGdJd1YzN0o4TlZYSHdvaGY0T3hlUnlwTzZFZC9Yd2hoTgpGaHhsM24wQ1R3S3F2ekxsdnRlNXhJaWprZG1yQWdNQkFBR2pXVEJYTUE0R0ExVWREd0VCL3dRRUF3SUNwREFQCkJnTlZIUk1CQWY4RUJUQURBUUgvTUIwR0ExVWREZ1FXQkJTMUFxbzQ1RDRFUCtDZ00xVzJiL2xlWWxwcG16QVYKQmdOVkhSRUVEakFNZ2dwcmRXSmxjbTVsZEdWek1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQjlCODB0UzNRVwpCeVEwSktNL2ZEWVBFRGlmUW1iSUo5M3AvVE8xeXJEREo0S3RmWmRKK2pJRVFKUFdNUGJBL3RZSTRMOXpvN25OCjlDOE1uV1h4WFZBSWxZUzVwRGNPT0pWckVLQnVTTEZ1ZWhVT2xlT3dWVDNLNzU3SFNEU1dtOWtkLzFZYVlyZW0KVzdWVTZIMEp5a2FneUU3MzFVd0d3MmRlL2szbm9pN2x5Y2J0cDJMalZUQUx6eW15MmNaZSthN0o3ZzhqbVhUOApzMUVQZDFmUmFuOWM2WmdTYWxvc2hZc0Nmc3FSV3Fab0ZvNzZtZUxrYkRzWDhyTGRSOS8vZXpJT05QcVJEWjZCCmJ0SzJScXhLQ2FCN09mQnhweTZSbTF2SDJMODRtRTJiTHEyQ0hYdjZsZ04yTFFEZXl2RExEWjJHU2RMUHYvRXcKN1Z2WnM4b0dvNFdOCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
           server: https://scout-evals-control-plane:6443
         name: ""
       contexts: null
@@ -241,32 +241,32 @@ items:
       users: null
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-27T07:13:47Z"
+    creationTimestamp: "2026-09-27T07:54:05Z"
     name: cluster-info
     namespace: kube-public
-    resourceVersion: "347"
-    uid: 1314aee7-eb87-4121-8371-97756288899f
+    resourceVersion: "328"
+    uid: 73391ad2-06e8-491f-ba1b-5a5c03bd6176
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIdkQqtQNf2sYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzA4NDJaFw0zNjA5MjQwNzEzNDJaMBUx
+      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQCY8qTT/UJEnLPk6e7FsXHLe5x6Q5Q/SepPzSJHhu+MLNeJJ4q33PHhNe7K
-      XED8lB58hksa3vAOQXbBn3SJqpqFuQy5dS/IwmlAX/i3LTfih8Z+K5JWNKA+OCBj
-      zYbfVZxS47IgSbPAjTBbdYdgVsFl5N+Pm7qsPKRmb52H4qYexQ3Hei1ml0N+wXIM
-      UAcnn9vudTB4OYuNrFHqKKWd2L4xmsKKgtd+pgZ4O2gXOvgNAu6qQyedkmqLmWzd
-      B4p5/ZKYb+2OFXi6WyccW3Euti7RVlWXMsBvzcq2IPLklY9nNQZ3K1nlOhnnSBAu
-      OUN3jWO2ER14hezkkcFCf7XiuDmdAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSoP86rT4hp3ycjkL6FC6LtqVut9jAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBVACO6/GpG
-      zKnOrf7tuNH+26+xTjBrwqoJFxnwB0FXr2YCerDxuZzVqB7SPiVjKpLr0kj1zMlI
-      gtogGHCFkt/Q1dsNzDBbtu1AQCPLPq+4aiUMllHw/gySnYkbOQVVnzUS9kyxNuni
-      8tgGyWiq+yQ0kOwHZea9vko80GdXfrbVeNKBkN0sys137/Wf1tYE0NB3JvwQuItK
-      oSzcdNO4iQZHCvmbIbz+USBOmpbKmUojCTWlervqKR1F8y2u6HbRM81WnyM0T8SU
-      c6qWPL6LdhBy6kG2LvOD3McO6sbDGCviEn7gXuDOgcOh9mmUrXNTa1BckPJSXXV5
-      WlcrjfKZcL89
+      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
+      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
+      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
+      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
+      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
+      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
+      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
+      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
+      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
+      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
+      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
+      7VvZs8oGo4WN
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -275,11 +275,11 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:13:55Z"
+    creationTimestamp: "2026-09-27T07:54:12Z"
     name: kube-root-ca.crt
     namespace: kube-public
-    resourceVersion: "344"
-    uid: 224dd70e-bbce-4939-b8bf-dcc9cc4db17f
+    resourceVersion: "350"
+    uid: e79daffe-889b-47ac-b0bf-99b161733d03
 - apiVersion: v1
   data:
     Corefile: |
@@ -308,74 +308,74 @@ items:
       }
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-27T07:13:48Z"
+    creationTimestamp: "2026-09-27T07:54:05Z"
     name: coredns
     namespace: kube-system
-    resourceVersion: "226"
-    uid: f8c0ed49-2f3a-4f8c-9265-b5feb4e24eec
+    resourceVersion: "227"
+    uid: c09d1b29-90ac-47f3-aa9b-0fb6ddd8a91e
 - apiVersion: v1
   data:
     client-ca-file: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIdkQqtQNf2sYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzA4NDJaFw0zNjA5MjQwNzEzNDJaMBUx
+      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQCY8qTT/UJEnLPk6e7FsXHLe5x6Q5Q/SepPzSJHhu+MLNeJJ4q33PHhNe7K
-      XED8lB58hksa3vAOQXbBn3SJqpqFuQy5dS/IwmlAX/i3LTfih8Z+K5JWNKA+OCBj
-      zYbfVZxS47IgSbPAjTBbdYdgVsFl5N+Pm7qsPKRmb52H4qYexQ3Hei1ml0N+wXIM
-      UAcnn9vudTB4OYuNrFHqKKWd2L4xmsKKgtd+pgZ4O2gXOvgNAu6qQyedkmqLmWzd
-      B4p5/ZKYb+2OFXi6WyccW3Euti7RVlWXMsBvzcq2IPLklY9nNQZ3K1nlOhnnSBAu
-      OUN3jWO2ER14hezkkcFCf7XiuDmdAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSoP86rT4hp3ycjkL6FC6LtqVut9jAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBVACO6/GpG
-      zKnOrf7tuNH+26+xTjBrwqoJFxnwB0FXr2YCerDxuZzVqB7SPiVjKpLr0kj1zMlI
-      gtogGHCFkt/Q1dsNzDBbtu1AQCPLPq+4aiUMllHw/gySnYkbOQVVnzUS9kyxNuni
-      8tgGyWiq+yQ0kOwHZea9vko80GdXfrbVeNKBkN0sys137/Wf1tYE0NB3JvwQuItK
-      oSzcdNO4iQZHCvmbIbz+USBOmpbKmUojCTWlervqKR1F8y2u6HbRM81WnyM0T8SU
-      c6qWPL6LdhBy6kG2LvOD3McO6sbDGCviEn7gXuDOgcOh9mmUrXNTa1BckPJSXXV5
-      WlcrjfKZcL89
+      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
+      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
+      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
+      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
+      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
+      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
+      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
+      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
+      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
+      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
+      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
+      7VvZs8oGo4WN
       -----END CERTIFICATE-----
     requestheader-allowed-names: '["front-proxy-client"]'
     requestheader-client-ca-file: |
       -----BEGIN CERTIFICATE-----
-      MIIDETCCAfmgAwIBAgIIXLMyvs36I1swDQYJKoZIhvcNAQELBQAwGTEXMBUGA1UE
-      AxMOZnJvbnQtcHJveHktY2EwHhcNMjYwOTI3MDcwODQyWhcNMzYwOTI0MDcxMzQy
+      MIIDETCCAfmgAwIBAgIIQJYyFa4xqyQwDQYJKoZIhvcNAQELBQAwGTEXMBUGA1UE
+      AxMOZnJvbnQtcHJveHktY2EwHhcNMjYwOTI3MDc0OTAwWhcNMzYwOTI0MDc1NDAw
       WjAZMRcwFQYDVQQDEw5mcm9udC1wcm94eS1jYTCCASIwDQYJKoZIhvcNAQEBBQAD
-      ggEPADCCAQoCggEBANRiHcQCFbM+rFGGZd2aBqUVvO0O/fpMx1WkItS+EnM1o5Us
-      jEgZpzfGO+8B+ciuYg2LT9B2lnnMoXiyv3e6J/AwNxCNLz6BECmQOxDj/o7MrYLi
-      VNz6KRkZKGXBphmcpRaSFsu0II6a1Iy0Qd4YCbTgBgu4fqYKbq4rbLJu4Bvi2fdW
-      kxsysf3fazOjw8fREzEMHmFpPxllP9tyhDCnVj4BswUcETOXgem+QnIDiIRSbqqa
-      zcD6e3XIg7euqvI9uKffciEjqdF+RL5Kuc57oMyVXGWFnpwRdLJzEEEiLB3kjdHk
-      XMHkeSIRAuxQz2zsKfytQFOPouDL0bpixhWn35MCAwEAAaNdMFswDgYDVR0PAQH/
-      BAQDAgKkMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFL+ICRuC866KoXyiShd/
-      PNSxjd1zMBkGA1UdEQQSMBCCDmZyb250LXByb3h5LWNhMA0GCSqGSIb3DQEBCwUA
-      A4IBAQAAv4x75VAppPNckmJK1tq14wR0XyZauqKY6xUa1c1NREUxeq2HCqSJHmEn
-      er27/3tuHyNiGtHMWgQmkXC4+W2oMZRND6nijJcWOGJTvO9q1vaKF8at6Dh9HEcW
-      GpEtqukVZjbWrdikTWQseMHrp93kcSibmGqkL01N4uxXOPlr4c8Hj9wVHxn2C3Ud
-      x2LbfW8eOIKDmbZHQVznISTR/yBpwoaVH6fVA4qgstsJJFY5E60RxO+0jBeIy/ZA
-      9xPkUcJ49GOfF4Efy3Wx/O7MyFDCeSB7HKxKpnWA+j7/8vhVOnxjKwkD3zedUEFO
-      MusyxiRjZeo2HiNB0X4VOkSz+UEU
+      ggEPADCCAQoCggEBAMpdFdCarwwgQ5AjcMdZPoRmflezqjlRnWsSoJ4Xe4uTT/Pe
+      r0OUdCIqxIOO0HA6UdPVW1LV/JyppJ5Aenvbv/tKN+6CA8W4yeFgqTUqaRPpG8jR
+      DkIEwlEgx1Yd3XwdG1kj5X9YVmvjjcGczOA49heB32LUNzArFMY2Lxy53VDkCeEx
+      jndW5rOVqHF5EvC7pAhbcSD0kkGI8N3GlpJ+fLOjuohzTDjT8To7FCvIQMUjC575
+      jXfsz2/R4rzfilb9QIUFqLc/wvDiT08Oo7nO29qW3rj77oXJuMajqxrms4ebZB5n
+      2OSrMPswLSw2YfmGGbp0fMWE4nRhDYrpYfr0rw0CAwEAAaNdMFswDgYDVR0PAQH/
+      BAQDAgKkMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFDhIN36ByEqGO6izb99V
+      rnkrRtT/MBkGA1UdEQQSMBCCDmZyb250LXByb3h5LWNhMA0GCSqGSIb3DQEBCwUA
+      A4IBAQBVR7cLHf8gp6+IwWoPDE45OAl2Iau9umtqGyLhBlXoxVdhddQVc93CZ0DX
+      yHfz6nIVYwTBk6uXS8TwUolefxP9FzCekiyLhC/MSsZY2JozTW1ObH50RtL+W2dl
+      jztMB/1MFd3yjlt+LnWscFQ+zUaAJA/pklTZnzaC4IdvX/prUbDeJi3Y+/QzkzAl
+      6gtfACiebXEaEI91ni9X+1U60ARoh3I9EKjlhfCXpZBhSo1gkNwgFLfpleh2o6u5
+      ItBnEg4vXmL+6gE4S1cF2zLvpAW0cOcjBepM9ljMBny2hMe2INVE1WSzoP91XeDt
+      oykx521of2xlIRxPVJZDuXRbjpH+
       -----END CERTIFICATE-----
     requestheader-extra-headers-prefix: '["X-Remote-Extra-"]'
     requestheader-group-headers: '["X-Remote-Group"]'
     requestheader-username-headers: '["X-Remote-User"]'
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-27T07:13:46Z"
+    creationTimestamp: "2026-09-27T07:54:03Z"
     name: extension-apiserver-authentication
     namespace: kube-system
-    resourceVersion: "30"
-    uid: c6e57786-d399-47a2-88bb-992fda7d9aa7
+    resourceVersion: "29"
+    uid: 8f6f3c37-4363-4a48-97a5-5327305dc8e1
 - apiVersion: v1
   data:
     since: "2026-09-27"
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-27T07:13:46Z"
+    creationTimestamp: "2026-09-27T07:54:04Z"
     name: kube-apiserver-legacy-service-account-token-tracking
     namespace: kube-system
-    resourceVersion: "63"
-    uid: 295abde0-adf2-48c5-93c1-22430f31b3d2
+    resourceVersion: "59"
+    uid: 43521415-83d4-487e-a0d2-48b67d9a8520
 - apiVersion: v1
   data:
     config.conf: |-
@@ -467,34 +467,34 @@ items:
           tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-27T07:13:48Z"
+    creationTimestamp: "2026-09-27T07:54:06Z"
     labels:
       app: kube-proxy
     name: kube-proxy
     namespace: kube-system
-    resourceVersion: "240"
-    uid: a45ed38d-b3f6-4ad6-8f74-0602ba022eb2
+    resourceVersion: "241"
+    uid: 78a78007-33dc-45ce-b484-685eecb0c4d5
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIdkQqtQNf2sYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzA4NDJaFw0zNjA5MjQwNzEzNDJaMBUx
+      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQCY8qTT/UJEnLPk6e7FsXHLe5x6Q5Q/SepPzSJHhu+MLNeJJ4q33PHhNe7K
-      XED8lB58hksa3vAOQXbBn3SJqpqFuQy5dS/IwmlAX/i3LTfih8Z+K5JWNKA+OCBj
-      zYbfVZxS47IgSbPAjTBbdYdgVsFl5N+Pm7qsPKRmb52H4qYexQ3Hei1ml0N+wXIM
-      UAcnn9vudTB4OYuNrFHqKKWd2L4xmsKKgtd+pgZ4O2gXOvgNAu6qQyedkmqLmWzd
-      B4p5/ZKYb+2OFXi6WyccW3Euti7RVlWXMsBvzcq2IPLklY9nNQZ3K1nlOhnnSBAu
-      OUN3jWO2ER14hezkkcFCf7XiuDmdAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSoP86rT4hp3ycjkL6FC6LtqVut9jAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBVACO6/GpG
-      zKnOrf7tuNH+26+xTjBrwqoJFxnwB0FXr2YCerDxuZzVqB7SPiVjKpLr0kj1zMlI
-      gtogGHCFkt/Q1dsNzDBbtu1AQCPLPq+4aiUMllHw/gySnYkbOQVVnzUS9kyxNuni
-      8tgGyWiq+yQ0kOwHZea9vko80GdXfrbVeNKBkN0sys137/Wf1tYE0NB3JvwQuItK
-      oSzcdNO4iQZHCvmbIbz+USBOmpbKmUojCTWlervqKR1F8y2u6HbRM81WnyM0T8SU
-      c6qWPL6LdhBy6kG2LvOD3McO6sbDGCviEn7gXuDOgcOh9mmUrXNTa1BckPJSXXV5
-      WlcrjfKZcL89
+      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
+      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
+      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
+      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
+      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
+      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
+      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
+      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
+      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
+      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
+      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
+      7VvZs8oGo4WN
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -503,11 +503,11 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:13:55Z"
+    creationTimestamp: "2026-09-27T07:54:12Z"
     name: kube-root-ca.crt
     namespace: kube-system
-    resourceVersion: "345"
-    uid: 6eca6716-91e5-4d85-8a7e-cfd1c7ce7f73
+    resourceVersion: "351"
+    uid: 00280e40-4fbc-4ca9-8be2-0881584b6be4
 - apiVersion: v1
   data:
     ClusterConfiguration: |
@@ -544,11 +544,11 @@ items:
       scheduler: {}
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-27T07:13:47Z"
+    creationTimestamp: "2026-09-27T07:54:05Z"
     name: kubeadm-config
     namespace: kube-system
-    resourceVersion: "210"
-    uid: 7395f312-672d-4ab2-99b4-060f214b1851
+    resourceVersion: "211"
+    uid: 53f2290d-3ca2-46f8-ad2d-639893bb0357
 - apiVersion: v1
   data:
     kubelet: |
@@ -609,32 +609,32 @@ items:
       volumeStatsAggPeriod: 0s
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-27T07:13:47Z"
+    creationTimestamp: "2026-09-27T07:54:05Z"
     name: kubelet-config
     namespace: kube-system
-    resourceVersion: "213"
-    uid: 150cfd38-9807-46ee-a242-74e070269ee9
+    resourceVersion: "214"
+    uid: 044e34a6-8ccd-4022-a75f-fb8b1d6b24bb
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIdkQqtQNf2sYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzA4NDJaFw0zNjA5MjQwNzEzNDJaMBUx
+      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQCY8qTT/UJEnLPk6e7FsXHLe5x6Q5Q/SepPzSJHhu+MLNeJJ4q33PHhNe7K
-      XED8lB58hksa3vAOQXbBn3SJqpqFuQy5dS/IwmlAX/i3LTfih8Z+K5JWNKA+OCBj
-      zYbfVZxS47IgSbPAjTBbdYdgVsFl5N+Pm7qsPKRmb52H4qYexQ3Hei1ml0N+wXIM
-      UAcnn9vudTB4OYuNrFHqKKWd2L4xmsKKgtd+pgZ4O2gXOvgNAu6qQyedkmqLmWzd
-      B4p5/ZKYb+2OFXi6WyccW3Euti7RVlWXMsBvzcq2IPLklY9nNQZ3K1nlOhnnSBAu
-      OUN3jWO2ER14hezkkcFCf7XiuDmdAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSoP86rT4hp3ycjkL6FC6LtqVut9jAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBVACO6/GpG
-      zKnOrf7tuNH+26+xTjBrwqoJFxnwB0FXr2YCerDxuZzVqB7SPiVjKpLr0kj1zMlI
-      gtogGHCFkt/Q1dsNzDBbtu1AQCPLPq+4aiUMllHw/gySnYkbOQVVnzUS9kyxNuni
-      8tgGyWiq+yQ0kOwHZea9vko80GdXfrbVeNKBkN0sys137/Wf1tYE0NB3JvwQuItK
-      oSzcdNO4iQZHCvmbIbz+USBOmpbKmUojCTWlervqKR1F8y2u6HbRM81WnyM0T8SU
-      c6qWPL6LdhBy6kG2LvOD3McO6sbDGCviEn7gXuDOgcOh9mmUrXNTa1BckPJSXXV5
-      WlcrjfKZcL89
+      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
+      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
+      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
+      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
+      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
+      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
+      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
+      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
+      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
+      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
+      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
+      7VvZs8oGo4WN
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -643,11 +643,11 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:13:55Z"
+    creationTimestamp: "2026-09-27T07:54:12Z"
     name: kube-root-ca.crt
     namespace: local-path-storage
-    resourceVersion: "346"
-    uid: 4a6104d2-79f6-47b1-a8e4-7694cf1878da
+    resourceVersion: "352"
+    uid: 6dea3ba8-7961-417f-b6e3-ac489d20a5d0
 - apiVersion: v1
   data:
     config.json: |-
@@ -687,32 +687,32 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","data":{"config.json":"{\n        \"nodePathMap\":[\n        {\n                \"node\":\"DEFAULT_PATH_FOR_NON_LISTED_NODES\",\n                \"paths\":[\"/var/local-path-provisioner\"]\n        }\n        ]\n}","helperPod.yaml":"apiVersion: v1\nkind: Pod\nmetadata:\n  name: helper-pod\nspec:\n  priorityClassName: system-node-critical\n  tolerations:\n    - key: node.kubernetes.io/disk-pressure\n      operator: Exists\n      effect: NoSchedule\n  containers:\n  - name: helper-pod\n    image: docker.io/kindest/local-path-helper:v20251211-v0.29.0-alpha-100-g82a92c5d\n    imagePullPolicy: IfNotPresent","setup":"#!/bin/sh\nset -eu\nmkdir -m 0777 -p \"$VOL_DIR\"","teardown":"#!/bin/sh\nset -eu\nrm -rf \"$VOL_DIR\""},"kind":"ConfigMap","metadata":{"annotations":{},"name":"local-path-config","namespace":"local-path-storage"}}
-    creationTimestamp: "2026-09-27T07:13:49Z"
+    creationTimestamp: "2026-09-27T07:54:07Z"
     name: local-path-config
     namespace: local-path-storage
-    resourceVersion: "264"
-    uid: cb83f640-f33c-4c92-8204-3161c9ccd429
+    resourceVersion: "285"
+    uid: 0a4cfd91-f7c1-45e7-ac65-6c597f5b6be5
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIdkQqtQNf2sYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzA4NDJaFw0zNjA5MjQwNzEzNDJaMBUx
+      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQCY8qTT/UJEnLPk6e7FsXHLe5x6Q5Q/SepPzSJHhu+MLNeJJ4q33PHhNe7K
-      XED8lB58hksa3vAOQXbBn3SJqpqFuQy5dS/IwmlAX/i3LTfih8Z+K5JWNKA+OCBj
-      zYbfVZxS47IgSbPAjTBbdYdgVsFl5N+Pm7qsPKRmb52H4qYexQ3Hei1ml0N+wXIM
-      UAcnn9vudTB4OYuNrFHqKKWd2L4xmsKKgtd+pgZ4O2gXOvgNAu6qQyedkmqLmWzd
-      B4p5/ZKYb+2OFXi6WyccW3Euti7RVlWXMsBvzcq2IPLklY9nNQZ3K1nlOhnnSBAu
-      OUN3jWO2ER14hezkkcFCf7XiuDmdAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSoP86rT4hp3ycjkL6FC6LtqVut9jAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBVACO6/GpG
-      zKnOrf7tuNH+26+xTjBrwqoJFxnwB0FXr2YCerDxuZzVqB7SPiVjKpLr0kj1zMlI
-      gtogGHCFkt/Q1dsNzDBbtu1AQCPLPq+4aiUMllHw/gySnYkbOQVVnzUS9kyxNuni
-      8tgGyWiq+yQ0kOwHZea9vko80GdXfrbVeNKBkN0sys137/Wf1tYE0NB3JvwQuItK
-      oSzcdNO4iQZHCvmbIbz+USBOmpbKmUojCTWlervqKR1F8y2u6HbRM81WnyM0T8SU
-      c6qWPL6LdhBy6kG2LvOD3McO6sbDGCviEn7gXuDOgcOh9mmUrXNTa1BckPJSXXV5
-      WlcrjfKZcL89
+      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
+      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
+      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
+      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
+      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
+      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
+      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
+      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
+      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
+      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
+      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
+      7VvZs8oGo4WN
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -721,32 +721,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     name: kube-root-ca.crt
     namespace: payments
-    resourceVersion: "468"
-    uid: 59590f98-bd18-434a-84b1-7573dfe51384
+    resourceVersion: "518"
+    uid: 69055564-422a-4ad9-8bcc-31198bcba4d3
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIdkQqtQNf2sYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzA4NDJaFw0zNjA5MjQwNzEzNDJaMBUx
+      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQCY8qTT/UJEnLPk6e7FsXHLe5x6Q5Q/SepPzSJHhu+MLNeJJ4q33PHhNe7K
-      XED8lB58hksa3vAOQXbBn3SJqpqFuQy5dS/IwmlAX/i3LTfih8Z+K5JWNKA+OCBj
-      zYbfVZxS47IgSbPAjTBbdYdgVsFl5N+Pm7qsPKRmb52H4qYexQ3Hei1ml0N+wXIM
-      UAcnn9vudTB4OYuNrFHqKKWd2L4xmsKKgtd+pgZ4O2gXOvgNAu6qQyedkmqLmWzd
-      B4p5/ZKYb+2OFXi6WyccW3Euti7RVlWXMsBvzcq2IPLklY9nNQZ3K1nlOhnnSBAu
-      OUN3jWO2ER14hezkkcFCf7XiuDmdAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSoP86rT4hp3ycjkL6FC6LtqVut9jAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBVACO6/GpG
-      zKnOrf7tuNH+26+xTjBrwqoJFxnwB0FXr2YCerDxuZzVqB7SPiVjKpLr0kj1zMlI
-      gtogGHCFkt/Q1dsNzDBbtu1AQCPLPq+4aiUMllHw/gySnYkbOQVVnzUS9kyxNuni
-      8tgGyWiq+yQ0kOwHZea9vko80GdXfrbVeNKBkN0sys137/Wf1tYE0NB3JvwQuItK
-      oSzcdNO4iQZHCvmbIbz+USBOmpbKmUojCTWlervqKR1F8y2u6HbRM81WnyM0T8SU
-      c6qWPL6LdhBy6kG2LvOD3McO6sbDGCviEn7gXuDOgcOh9mmUrXNTa1BckPJSXXV5
-      WlcrjfKZcL89
+      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
+      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
+      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
+      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
+      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
+      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
+      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
+      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
+      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
+      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
+      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
+      7VvZs8oGo4WN
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -755,32 +755,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     name: kube-root-ca.crt
     namespace: shop
-    resourceVersion: "434"
-    uid: 6e6476ac-6693-421c-9b2d-63d26c7fbf74
+    resourceVersion: "482"
+    uid: c6a053a7-b431-4f1f-9ada-a343fee69743
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIdkQqtQNf2sYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzA4NDJaFw0zNjA5MjQwNzEzNDJaMBUx
+      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQCY8qTT/UJEnLPk6e7FsXHLe5x6Q5Q/SepPzSJHhu+MLNeJJ4q33PHhNe7K
-      XED8lB58hksa3vAOQXbBn3SJqpqFuQy5dS/IwmlAX/i3LTfih8Z+K5JWNKA+OCBj
-      zYbfVZxS47IgSbPAjTBbdYdgVsFl5N+Pm7qsPKRmb52H4qYexQ3Hei1ml0N+wXIM
-      UAcnn9vudTB4OYuNrFHqKKWd2L4xmsKKgtd+pgZ4O2gXOvgNAu6qQyedkmqLmWzd
-      B4p5/ZKYb+2OFXi6WyccW3Euti7RVlWXMsBvzcq2IPLklY9nNQZ3K1nlOhnnSBAu
-      OUN3jWO2ER14hezkkcFCf7XiuDmdAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSoP86rT4hp3ycjkL6FC6LtqVut9jAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBVACO6/GpG
-      zKnOrf7tuNH+26+xTjBrwqoJFxnwB0FXr2YCerDxuZzVqB7SPiVjKpLr0kj1zMlI
-      gtogGHCFkt/Q1dsNzDBbtu1AQCPLPq+4aiUMllHw/gySnYkbOQVVnzUS9kyxNuni
-      8tgGyWiq+yQ0kOwHZea9vko80GdXfrbVeNKBkN0sys137/Wf1tYE0NB3JvwQuItK
-      oSzcdNO4iQZHCvmbIbz+USBOmpbKmUojCTWlervqKR1F8y2u6HbRM81WnyM0T8SU
-      c6qWPL6LdhBy6kG2LvOD3McO6sbDGCviEn7gXuDOgcOh9mmUrXNTa1BckPJSXXV5
-      WlcrjfKZcL89
+      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
+      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
+      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
+      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
+      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
+      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
+      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
+      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
+      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
+      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
+      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
+      7VvZs8oGo4WN
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -789,11 +789,11 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     name: kube-root-ca.crt
     namespace: temp-testing
-    resourceVersion: "479"
-    uid: e1b9aabb-2953-4306-9281-9f3d32f712b6
+    resourceVersion: "528"
+    uid: fcaa37cd-8170-48ba-87b6-b4054bc395f3
 kind: List
 metadata:
   resourceVersion: ""
@@ -808,15 +808,15 @@ items:
       deployment.kubernetes.io/revision: "1"
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"argocd-application-controller","app.kubernetes.io/part-of":"argocd"},"name":"argocd-application-controller","namespace":"argocd"},"spec":{"replicas":1,"selector":{"matchLabels":{"app.kubernetes.io/name":"argocd-application-controller"}},"template":{"metadata":{"labels":{"app.kubernetes.io/name":"argocd-application-controller"}},"spec":{"containers":[{"image":"registry.k8s.io/pause:3.9","name":"application-controller"}]}}}}
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     generation: 1
     labels:
       app.kubernetes.io/name: argocd-application-controller
       app.kubernetes.io/part-of: argocd
     name: argocd-application-controller
     namespace: argocd
-    resourceVersion: "709"
-    uid: 314432ca-0462-45d4-b134-2230f651f3f3
+    resourceVersion: "715"
+    uid: 02f17c22-d152-4080-8daf-0f6ea084c7fc
   spec:
     progressDeadlineSeconds: 600
     replicas: 1
@@ -849,14 +849,14 @@ items:
   status:
     availableReplicas: 1
     conditions:
-    - lastTransitionTime: "2026-09-27T07:14:11Z"
-      lastUpdateTime: "2026-09-27T07:14:11Z"
+    - lastTransitionTime: "2026-09-27T07:54:37Z"
+      lastUpdateTime: "2026-09-27T07:54:37Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T07:14:07Z"
-      lastUpdateTime: "2026-09-27T07:14:11Z"
+    - lastTransitionTime: "2026-09-27T07:54:35Z"
+      lastUpdateTime: "2026-09-27T07:54:37Z"
       message: ReplicaSet "argocd-application-controller-6f756d967d" has successfully
         progressed.
       reason: NewReplicaSetAvailable
@@ -874,7 +874,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: billing
       meta.helm.sh/release-namespace: billing
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generation: 1
     labels:
       app: billing
@@ -885,8 +885,8 @@ items:
       helm.toolkit.fluxcd.io/namespace: flux-system
     name: billing
     namespace: billing
-    resourceVersion: "739"
-    uid: 6bc91f31-fed5-4cda-b1fa-e9afb3150102
+    resourceVersion: "766"
+    uid: 74d659de-3303-43f2-a3a5-cb81d3942ba7
   spec:
     progressDeadlineSeconds: 600
     replicas: 1
@@ -919,14 +919,14 @@ items:
   status:
     availableReplicas: 1
     conditions:
-    - lastTransitionTime: "2026-09-27T07:14:12Z"
-      lastUpdateTime: "2026-09-27T07:14:12Z"
+    - lastTransitionTime: "2026-09-27T07:54:39Z"
+      lastUpdateTime: "2026-09-27T07:54:39Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T07:14:08Z"
-      lastUpdateTime: "2026-09-27T07:14:12Z"
+    - lastTransitionTime: "2026-09-27T07:54:36Z"
+      lastUpdateTime: "2026-09-27T07:54:39Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -943,14 +943,14 @@ items:
       deployment.kubernetes.io/revision: "1"
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"hotfix-worker"},"name":"hotfix-worker","namespace":"default"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"hotfix-worker"}},"template":{"metadata":{"labels":{"app":"hotfix-worker"}},"spec":{"containers":[{"image":"registry.k8s.io/pause:3.9","name":"worker"}]}}}}
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     generation: 1
     labels:
       app: hotfix-worker
     name: hotfix-worker
     namespace: default
-    resourceVersion: "717"
-    uid: ae71ebd3-5748-493d-901f-b578940b55bb
+    resourceVersion: "713"
+    uid: 156fb044-f790-40f5-9ce3-e2ed29e9f8e3
   spec:
     progressDeadlineSeconds: 600
     replicas: 1
@@ -983,14 +983,14 @@ items:
   status:
     availableReplicas: 1
     conditions:
-    - lastTransitionTime: "2026-09-27T07:14:11Z"
-      lastUpdateTime: "2026-09-27T07:14:11Z"
+    - lastTransitionTime: "2026-09-27T07:54:37Z"
+      lastUpdateTime: "2026-09-27T07:54:37Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T07:14:07Z"
-      lastUpdateTime: "2026-09-27T07:14:11Z"
+    - lastTransitionTime: "2026-09-27T07:54:35Z"
+      lastUpdateTime: "2026-09-27T07:54:37Z"
       message: ReplicaSet "hotfix-worker-79596987fd" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -1007,15 +1007,15 @@ items:
       deployment.kubernetes.io/revision: "1"
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"kustomize-controller","app.kubernetes.io/part-of":"flux"},"name":"kustomize-controller","namespace":"flux-system"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"kustomize-controller"}},"template":{"metadata":{"labels":{"app":"kustomize-controller"}},"spec":{"containers":[{"image":"registry.k8s.io/pause:3.9","name":"manager"}]}}}}
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     generation: 1
     labels:
       app: kustomize-controller
       app.kubernetes.io/part-of: flux
     name: kustomize-controller
     namespace: flux-system
-    resourceVersion: "670"
-    uid: 53b3d4f3-1f5a-440b-93e6-2f56464b75cb
+    resourceVersion: "718"
+    uid: e8581dab-345a-40df-9517-de227f7f3fe9
   spec:
     progressDeadlineSeconds: 600
     replicas: 1
@@ -1048,14 +1048,14 @@ items:
   status:
     availableReplicas: 1
     conditions:
-    - lastTransitionTime: "2026-09-27T07:14:09Z"
-      lastUpdateTime: "2026-09-27T07:14:09Z"
+    - lastTransitionTime: "2026-09-27T07:54:37Z"
+      lastUpdateTime: "2026-09-27T07:54:37Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T07:14:07Z"
-      lastUpdateTime: "2026-09-27T07:14:09Z"
+    - lastTransitionTime: "2026-09-27T07:54:35Z"
+      lastUpdateTime: "2026-09-27T07:54:37Z"
       message: ReplicaSet "kustomize-controller-7d9647c47d" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -1072,15 +1072,15 @@ items:
       deployment.kubernetes.io/revision: "1"
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"source-controller","app.kubernetes.io/part-of":"flux"},"name":"source-controller","namespace":"flux-system"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"source-controller"}},"template":{"metadata":{"labels":{"app":"source-controller"}},"spec":{"containers":[{"image":"registry.k8s.io/pause:3.9","name":"manager"}]}}}}
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     generation: 1
     labels:
       app: source-controller
       app.kubernetes.io/part-of: flux
     name: source-controller
     namespace: flux-system
-    resourceVersion: "682"
-    uid: 329d5f80-6b0a-4775-a23c-055d86c6ee0d
+    resourceVersion: "712"
+    uid: abd29fdd-ad03-4e62-8df8-f568518c7f70
   spec:
     progressDeadlineSeconds: 600
     replicas: 1
@@ -1113,14 +1113,14 @@ items:
   status:
     availableReplicas: 1
     conditions:
-    - lastTransitionTime: "2026-09-27T07:14:10Z"
-      lastUpdateTime: "2026-09-27T07:14:10Z"
+    - lastTransitionTime: "2026-09-27T07:54:37Z"
+      lastUpdateTime: "2026-09-27T07:54:37Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T07:14:07Z"
-      lastUpdateTime: "2026-09-27T07:14:10Z"
+    - lastTransitionTime: "2026-09-27T07:54:35Z"
+      lastUpdateTime: "2026-09-27T07:54:37Z"
       message: ReplicaSet "source-controller-bb798d9fb" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -1135,15 +1135,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "2"
-    creationTimestamp: "2026-09-27T07:14:08Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generation: 2
     labels:
       app: inventory
       confighub.com/UnitSlug: inventory
     name: inventory
     namespace: inventory
-    resourceVersion: "947"
-    uid: a4dc030d-81c0-4091-82ae-8b3c72122f8f
+    resourceVersion: "965"
+    uid: eb99d019-cc46-474f-8348-60728c782517
   spec:
     progressDeadlineSeconds: 600
     replicas: 1
@@ -1179,14 +1179,14 @@ items:
   status:
     availableReplicas: 1
     conditions:
-    - lastTransitionTime: "2026-09-27T07:14:10Z"
-      lastUpdateTime: "2026-09-27T07:14:10Z"
+    - lastTransitionTime: "2026-09-27T07:54:37Z"
+      lastUpdateTime: "2026-09-27T07:54:37Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T07:14:08Z"
-      lastUpdateTime: "2026-09-27T07:14:54Z"
+    - lastTransitionTime: "2026-09-27T07:54:36Z"
+      lastUpdateTime: "2026-09-27T07:55:18Z"
       message: ReplicaSet "inventory-577549bfd6" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -1201,14 +1201,14 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:13:48Z"
+    creationTimestamp: "2026-09-27T07:54:06Z"
     generation: 1
     labels:
       k8s-app: kube-dns
     name: coredns
     namespace: kube-system
-    resourceVersion: "661"
-    uid: 1173fdf3-2381-4005-8ae4-b54d8a29ae6a
+    resourceVersion: "463"
+    uid: 26c6214b-8173-4038-9c3a-eb39d60855c5
   spec:
     progressDeadlineSeconds: 600
     replicas: 2
@@ -1326,14 +1326,14 @@ items:
   status:
     availableReplicas: 2
     conditions:
-    - lastTransitionTime: "2026-09-27T07:14:08Z"
-      lastUpdateTime: "2026-09-27T07:14:08Z"
+    - lastTransitionTime: "2026-09-27T07:54:24Z"
+      lastUpdateTime: "2026-09-27T07:54:24Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T07:13:55Z"
-      lastUpdateTime: "2026-09-27T07:14:09Z"
+    - lastTransitionTime: "2026-09-27T07:54:12Z"
+      lastUpdateTime: "2026-09-27T07:54:24Z"
       message: ReplicaSet "coredns-7d764666f9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -1350,12 +1350,12 @@ items:
       deployment.kubernetes.io/revision: "1"
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"name":"local-path-provisioner","namespace":"local-path-storage"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"local-path-provisioner"}},"template":{"metadata":{"labels":{"app":"local-path-provisioner"}},"spec":{"containers":[{"command":["local-path-provisioner","--debug","start","--helper-image","docker.io/kindest/local-path-helper:v20251211-v0.29.0-alpha-100-g82a92c5d","--config","/etc/config/config.json"],"env":[{"name":"POD_NAMESPACE","valueFrom":{"fieldRef":{"fieldPath":"metadata.namespace"}}},{"name":"CONFIG_MOUNT_PATH","value":"/etc/config/"}],"image":"docker.io/kindest/local-path-provisioner:v20251212-v0.29.0-alpha-105-g20ccfc88","imagePullPolicy":"IfNotPresent","name":"local-path-provisioner","volumeMounts":[{"mountPath":"/etc/config/","name":"config-volume"}]}],"nodeSelector":{"kubernetes.io/os":"linux"},"serviceAccountName":"local-path-provisioner-service-account","tolerations":[{"effect":"NoSchedule","key":"node-role.kubernetes.io/control-plane","operator":"Equal"},{"effect":"NoSchedule","key":"node-role.kubernetes.io/master","operator":"Equal"}],"volumes":[{"configMap":{"name":"local-path-config"},"name":"config-volume"}]}}}}
-    creationTimestamp: "2026-09-27T07:13:49Z"
+    creationTimestamp: "2026-09-27T07:54:07Z"
     generation: 1
     name: local-path-provisioner
     namespace: local-path-storage
-    resourceVersion: "668"
-    uid: b79eea33-da59-473a-af71-a27b6ee97225
+    resourceVersion: "467"
+    uid: bc24cf5b-9fe0-41a6-b58e-bb3a31b959e9
   spec:
     progressDeadlineSeconds: 600
     replicas: 1
@@ -1423,14 +1423,14 @@ items:
   status:
     availableReplicas: 1
     conditions:
-    - lastTransitionTime: "2026-09-27T07:14:09Z"
-      lastUpdateTime: "2026-09-27T07:14:09Z"
+    - lastTransitionTime: "2026-09-27T07:54:25Z"
+      lastUpdateTime: "2026-09-27T07:54:25Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T07:13:55Z"
-      lastUpdateTime: "2026-09-27T07:14:09Z"
+    - lastTransitionTime: "2026-09-27T07:54:12Z"
+      lastUpdateTime: "2026-09-27T07:54:25Z"
       message: ReplicaSet "local-path-provisioner-67b8995b4b" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -1447,7 +1447,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: payments
       meta.helm.sh/release-namespace: payments
-    creationTimestamp: "2026-09-27T07:14:08Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generation: 1
     labels:
       app: payments-api
@@ -1456,8 +1456,8 @@ items:
       helm.sh/chart: payments-1.4.2
     name: payments-api
     namespace: payments
-    resourceVersion: "673"
-    uid: 1105dae0-d85e-41c0-8b78-bd9523557410
+    resourceVersion: "697"
+    uid: 8acbafbd-049c-497d-be94-c3d361af157f
   spec:
     progressDeadlineSeconds: 600
     replicas: 2
@@ -1489,14 +1489,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T07:14:09Z"
-      lastUpdateTime: "2026-09-27T07:14:09Z"
+    - lastTransitionTime: "2026-09-27T07:54:37Z"
+      lastUpdateTime: "2026-09-27T07:54:37Z"
       message: Deployment does not have minimum availability.
       reason: MinimumReplicasUnavailable
       status: "False"
       type: Available
-    - lastTransitionTime: "2026-09-27T07:14:08Z"
-      lastUpdateTime: "2026-09-27T07:14:09Z"
+    - lastTransitionTime: "2026-09-27T07:54:36Z"
+      lastUpdateTime: "2026-09-27T07:54:37Z"
       message: ReplicaSet "payments-api-6ccc469957" is progressing.
       reason: ReplicaSetUpdated
       status: "True"
@@ -1512,15 +1512,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: storefront:apps/Deployment:shop/cart
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:14:08Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generation: 2
     labels:
       app: cart
       argocd.argoproj.io/instance: storefront
     name: cart
     namespace: shop
-    resourceVersion: "917"
-    uid: 25b1982e-a4b0-497a-8eaa-4c5759683b16
+    resourceVersion: "948"
+    uid: 42481787-8813-4025-9e41-a930ffd500f7
   spec:
     progressDeadlineSeconds: 600
     replicas: 3
@@ -1553,14 +1553,14 @@ items:
   status:
     availableReplicas: 3
     conditions:
-    - lastTransitionTime: "2026-09-27T07:14:08Z"
-      lastUpdateTime: "2026-09-27T07:14:12Z"
+    - lastTransitionTime: "2026-09-27T07:54:36Z"
+      lastUpdateTime: "2026-09-27T07:54:39Z"
       message: ReplicaSet "cart-656b4f485c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
       type: Progressing
-    - lastTransitionTime: "2026-09-27T07:14:54Z"
-      lastUpdateTime: "2026-09-27T07:14:54Z"
+    - lastTransitionTime: "2026-09-27T07:55:18Z"
+      lastUpdateTime: "2026-09-27T07:55:18Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
@@ -1575,7 +1575,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "2"
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generation: 2
     labels:
       app: checkout
@@ -1583,8 +1583,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: checkout
     namespace: shop
-    resourceVersion: "969"
-    uid: af083890-c386-4790-a3cf-16973f9240e4
+    resourceVersion: "989"
+    uid: f5a3c667-5061-4c96-be4a-4846af2d2a57
   spec:
     progressDeadlineSeconds: 600
     replicas: 2
@@ -1617,14 +1617,14 @@ items:
   status:
     availableReplicas: 2
     conditions:
-    - lastTransitionTime: "2026-09-27T07:14:11Z"
-      lastUpdateTime: "2026-09-27T07:14:11Z"
+    - lastTransitionTime: "2026-09-27T07:54:38Z"
+      lastUpdateTime: "2026-09-27T07:54:38Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T07:14:07Z"
-      lastUpdateTime: "2026-09-27T07:14:55Z"
+    - lastTransitionTime: "2026-09-27T07:54:36Z"
+      lastUpdateTime: "2026-09-27T07:55:19Z"
       message: ReplicaSet "checkout-7697fc644f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -1640,15 +1640,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: payments:apps/Deployment:shop/ledger
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:14:08Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generation: 1
     labels:
       app: ledger
       argocd.argoproj.io/instance: storefront
     name: ledger
     namespace: shop
-    resourceVersion: "748"
-    uid: bd40a661-a5f4-49ec-a635-96ca624a641c
+    resourceVersion: "775"
+    uid: 210460ef-159d-4439-b3c8-4c27af010b11
   spec:
     progressDeadlineSeconds: 600
     replicas: 1
@@ -1681,14 +1681,14 @@ items:
   status:
     availableReplicas: 1
     conditions:
-    - lastTransitionTime: "2026-09-27T07:14:12Z"
-      lastUpdateTime: "2026-09-27T07:14:12Z"
+    - lastTransitionTime: "2026-09-27T07:54:39Z"
+      lastUpdateTime: "2026-09-27T07:54:39Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T07:14:08Z"
-      lastUpdateTime: "2026-09-27T07:14:12Z"
+    - lastTransitionTime: "2026-09-27T07:54:36Z"
+      lastUpdateTime: "2026-09-27T07:54:39Z"
       message: ReplicaSet "ledger-6c8fdcf5f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -1703,7 +1703,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "2"
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generation: 2
     labels:
       app: orders
@@ -1711,8 +1711,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: orders
     namespace: shop
-    resourceVersion: "1032"
-    uid: 00f07ef9-8a63-4ce2-897e-a8bef885129d
+    resourceVersion: "1050"
+    uid: 16ec2bb4-6ba8-495a-ba4b-118cb2663637
   spec:
     progressDeadlineSeconds: 30
     replicas: 2
@@ -1745,14 +1745,14 @@ items:
   status:
     availableReplicas: 2
     conditions:
-    - lastTransitionTime: "2026-09-27T07:14:12Z"
-      lastUpdateTime: "2026-09-27T07:14:12Z"
+    - lastTransitionTime: "2026-09-27T07:54:38Z"
+      lastUpdateTime: "2026-09-27T07:54:38Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T07:15:24Z"
-      lastUpdateTime: "2026-09-27T07:15:24Z"
+    - lastTransitionTime: "2026-09-27T07:55:47Z"
+      lastUpdateTime: "2026-09-27T07:55:47Z"
       message: ReplicaSet "orders-5f8df669d4" has timed out progressing.
       reason: ProgressDeadlineExceeded
       status: "False"
@@ -1770,14 +1770,14 @@ items:
       deployment.kubernetes.io/revision: "1"
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"debug-nginx"},"name":"debug-nginx","namespace":"temp-testing"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"debug-nginx"}},"template":{"metadata":{"labels":{"app":"debug-nginx"}},"spec":{"containers":[{"image":"registry.k8s.io/pause:3.9","name":"nginx"}]}}}}
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     generation: 1
     labels:
       app: debug-nginx
     name: debug-nginx
     namespace: temp-testing
-    resourceVersion: "685"
-    uid: d6430221-f605-45c8-914b-bd84d5f39e39
+    resourceVersion: "745"
+    uid: c257d0a7-ec2c-4485-9558-6640b1a85bb9
   spec:
     progressDeadlineSeconds: 600
     replicas: 1
@@ -1810,14 +1810,14 @@ items:
   status:
     availableReplicas: 1
     conditions:
-    - lastTransitionTime: "2026-09-27T07:14:10Z"
-      lastUpdateTime: "2026-09-27T07:14:10Z"
+    - lastTransitionTime: "2026-09-27T07:54:38Z"
+      lastUpdateTime: "2026-09-27T07:54:38Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T07:14:07Z"
-      lastUpdateTime: "2026-09-27T07:14:10Z"
+    - lastTransitionTime: "2026-09-27T07:54:35Z"
+      lastUpdateTime: "2026-09-27T07:54:38Z"
       message: ReplicaSet "debug-nginx-5dbdb5f74f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -1837,24 +1837,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:36Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: argocd-application-controller-6f756d967d-rmzf6
+    name: argocd-application-controller-6f756d967d-pbgfz
     namespace: argocd
-    resourceVersion: "498"
-    uid: f6eb5e8a-cfc1-4e86-b4a8-16f87743b198
+    resourceVersion: "545"
+    uid: 728e1e35-bb84-4ab1-b7b6-9140427ba7a9
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: Successfully assigned argocd/argocd-application-controller-6f756d967d-rmzf6
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: Successfully assigned argocd/argocd-application-controller-6f756d967d-pbgfz
     to scout-evals-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: argocd-application-controller-6f756d967d-rmzf6.18d91c1f5d045755
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: argocd-application-controller-6f756d967d-pbgfz.18d91e54b70b4251
     namespace: argocd
-    resourceVersion: "520"
-    uid: e1f8b9b8-aa31-42ae-a3b7-abc2b8165d6c
+    resourceVersion: "563"
+    uid: c16c71c5-c44c-446a-9443-004938799de8
   reason: Scheduled
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -1864,24 +1864,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
+  firstTimestamp: "2026-09-27T07:54:36Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{application-controller}
     kind: Pod
-    name: argocd-application-controller-6f756d967d-rmzf6
+    name: argocd-application-controller-6f756d967d-pbgfz
     namespace: argocd
-    resourceVersion: "506"
-    uid: f6eb5e8a-cfc1-4e86-b4a8-16f87743b198
+    resourceVersion: "553"
+    uid: 728e1e35-bb84-4ab1-b7b6-9140427ba7a9
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
+  lastTimestamp: "2026-09-27T07:54:36Z"
   message: Pulling image "registry.k8s.io/pause:3.9"
   metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: argocd-application-controller-6f756d967d-rmzf6.18d91c1f7534e44e
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: argocd-application-controller-6f756d967d-pbgfz.18d91e54d233e985
     namespace: argocd
-    resourceVersion: "586"
-    uid: 53960292-2502-4af2-8b43-8637e9284b13
+    resourceVersion: "617"
+    uid: 24c8b88a-eda5-4eb2-b0a4-fc3a0055d2b2
   reason: Pulling
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -1892,25 +1892,25 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:10Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{application-controller}
     kind: Pod
-    name: argocd-application-controller-6f756d967d-rmzf6
+    name: argocd-application-controller-6f756d967d-pbgfz
     namespace: argocd
-    resourceVersion: "506"
-    uid: f6eb5e8a-cfc1-4e86-b4a8-16f87743b198
+    resourceVersion: "553"
+    uid: 728e1e35-bb84-4ab1-b7b6-9140427ba7a9
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:10Z"
-  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 234ms (2.001s
+  lastTimestamp: "2026-09-27T07:54:37Z"
+  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 223ms (1.355s
     including waiting). Image size: 268051 bytes.'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:10Z"
-    name: argocd-application-controller-6f756d967d-rmzf6.18d91c1fec87154a
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: argocd-application-controller-6f756d967d-pbgfz.18d91e5522f80b82
     namespace: argocd
-    resourceVersion: "688"
-    uid: 5adefc82-657d-4024-8f17-282827da780c
+    resourceVersion: "698"
+    uid: 40277eb9-24ec-41c6-b6b3-75c71e7ed9d8
   reason: Pulled
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -1921,24 +1921,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:10Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{application-controller}
     kind: Pod
-    name: argocd-application-controller-6f756d967d-rmzf6
+    name: argocd-application-controller-6f756d967d-pbgfz
     namespace: argocd
-    resourceVersion: "506"
-    uid: f6eb5e8a-cfc1-4e86-b4a8-16f87743b198
+    resourceVersion: "553"
+    uid: 728e1e35-bb84-4ab1-b7b6-9140427ba7a9
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:10Z"
+  lastTimestamp: "2026-09-27T07:54:37Z"
   message: Container created
   metadata:
-    creationTimestamp: "2026-09-27T07:14:10Z"
-    name: argocd-application-controller-6f756d967d-rmzf6.18d91c1feddc1abf
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: argocd-application-controller-6f756d967d-pbgfz.18d91e5524d58bf0
     namespace: argocd
-    resourceVersion: "689"
-    uid: d9176e2c-3bce-432b-8b12-c51dab31cdf6
+    resourceVersion: "699"
+    uid: b1b6b8b6-94ac-47bf-8e9a-8343078cb64b
   reason: Created
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -1949,24 +1949,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:10Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{application-controller}
     kind: Pod
-    name: argocd-application-controller-6f756d967d-rmzf6
+    name: argocd-application-controller-6f756d967d-pbgfz
     namespace: argocd
-    resourceVersion: "506"
-    uid: f6eb5e8a-cfc1-4e86-b4a8-16f87743b198
+    resourceVersion: "553"
+    uid: 728e1e35-bb84-4ab1-b7b6-9140427ba7a9
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:10Z"
+  lastTimestamp: "2026-09-27T07:54:37Z"
   message: Container started
   metadata:
-    creationTimestamp: "2026-09-27T07:14:10Z"
-    name: argocd-application-controller-6f756d967d-rmzf6.18d91c1ff00850b4
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: argocd-application-controller-6f756d967d-pbgfz.18d91e5527410f69
     namespace: argocd
-    resourceVersion: "690"
-    uid: 21cdc3c6-103d-4a55-a56b-579961dc7758
+    resourceVersion: "700"
+    uid: 46930c50-8362-4a29-a9f2-01c6b304fe56
   reason: Started
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -1977,23 +1977,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:36Z"
   involvedObject:
     apiVersion: apps/v1
     kind: ReplicaSet
     name: argocd-application-controller-6f756d967d
     namespace: argocd
-    resourceVersion: "458"
-    uid: c4d42b09-9488-4aa7-af42-7fed276e0ace
+    resourceVersion: "510"
+    uid: 920c1eef-8ab0-41c9-b446-853352754f50
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: 'Created pod: argocd-application-controller-6f756d967d-rmzf6'
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: 'Created pod: argocd-application-controller-6f756d967d-pbgfz'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: argocd-application-controller-6f756d967d.18d91c1f5cb8a680
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: argocd-application-controller-6f756d967d.18d91e54b6a3528e
     namespace: argocd
-    resourceVersion: "515"
-    uid: 1781d68c-d9f7-4968-ab8b-a3abd3f5f90d
+    resourceVersion: "556"
+    uid: 86d09c18-9f61-4c08-8e0d-1610c23202c8
   reason: SuccessfulCreate
   reportingComponent: replicaset-controller
   reportingInstance: ""
@@ -2003,24 +2003,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:35Z"
   involvedObject:
     apiVersion: apps/v1
     kind: Deployment
     name: argocd-application-controller
     namespace: argocd
-    resourceVersion: "454"
-    uid: 314432ca-0462-45d4-b134-2230f651f3f3
+    resourceVersion: "501"
+    uid: 02f17c22-d152-4080-8daf-0f6ea084c7fc
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
+  lastTimestamp: "2026-09-27T07:54:35Z"
   message: Scaled up replica set argocd-application-controller-6f756d967d from 0 to
     1
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: argocd-application-controller.18d91c1f5764ef65
+    creationTimestamp: "2026-09-27T07:54:35Z"
+    name: argocd-application-controller.18d91e54b151c6be
     namespace: argocd
-    resourceVersion: "466"
-    uid: 5b2590ed-8ef7-4d74-b048-daf85bf47133
+    resourceVersion: "517"
+    uid: 92994cfd-2963-4c8e-a9a1-02e73c9fe76a
   reason: ScalingReplicaSet
   reportingComponent: deployment-controller
   reportingInstance: ""
@@ -2030,23 +2030,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
+  firstTimestamp: "2026-09-27T07:54:36Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: billing-59bc44d959-64j6k
+    name: billing-59bc44d959-kfkdv
     namespace: billing
-    resourceVersion: "563"
-    uid: fbc1a801-6be6-41db-9503-5166054e35e5
+    resourceVersion: "606"
+    uid: eed009d1-5da3-4ac6-af0e-df6a14e72a45
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
-  message: Successfully assigned billing/billing-59bc44d959-64j6k to scout-evals-control-plane
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: Successfully assigned billing/billing-59bc44d959-kfkdv to scout-evals-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: billing-59bc44d959-64j6k.18d91c1f6e7c208b
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: billing-59bc44d959-kfkdv.18d91e54cbe065cb
     namespace: billing
-    resourceVersion: "570"
-    uid: 9642ef03-0efa-40c1-8d74-9abfda7a0410
+    resourceVersion: "608"
+    uid: edc9347c-1c1f-4065-b23b-862dd085fd0a
   reason: Scheduled
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -2056,24 +2056,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
+  firstTimestamp: "2026-09-27T07:54:36Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{billing}
     kind: Pod
-    name: billing-59bc44d959-64j6k
+    name: billing-59bc44d959-kfkdv
     namespace: billing
-    resourceVersion: "566"
-    uid: fbc1a801-6be6-41db-9503-5166054e35e5
+    resourceVersion: "607"
+    uid: eed009d1-5da3-4ac6-af0e-df6a14e72a45
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
+  lastTimestamp: "2026-09-27T07:54:36Z"
   message: Pulling image "registry.k8s.io/pause:3.9"
   metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: billing-59bc44d959-64j6k.18d91c1f84981aae
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: billing-59bc44d959-kfkdv.18d91e54e2e325ed
     namespace: billing
-    resourceVersion: "605"
-    uid: cf3b1c93-88fd-4141-9696-2cc2f9ae7f41
+    resourceVersion: "640"
+    uid: 75bd3026-4ee8-479b-aaa6-f2f6cacf185f
   reason: Pulling
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -2084,25 +2084,25 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:11Z"
+  firstTimestamp: "2026-09-27T07:54:39Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{billing}
     kind: Pod
-    name: billing-59bc44d959-64j6k
+    name: billing-59bc44d959-kfkdv
     namespace: billing
-    resourceVersion: "566"
-    uid: fbc1a801-6be6-41db-9503-5166054e35e5
+    resourceVersion: "607"
+    uid: eed009d1-5da3-4ac6-af0e-df6a14e72a45
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:11Z"
-  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 215ms (3.024s
-    including waiting). Image size: 268051 bytes.'
+  lastTimestamp: "2026-09-27T07:54:39Z"
+  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 212ms (2.3s including
+    waiting). Image size: 268051 bytes.'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:11Z"
-    name: billing-59bc44d959-64j6k.18d91c2038e3da36
+    creationTimestamp: "2026-09-27T07:54:39Z"
+    name: billing-59bc44d959-kfkdv.18d91e556c08a01a
     namespace: billing
-    resourceVersion: "721"
-    uid: eac6e146-abdb-4651-b6f6-bc1359407ccf
+    resourceVersion: "748"
+    uid: 8fc65d87-187f-4b9e-a8d4-ebec32d1c11c
   reason: Pulled
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -2113,24 +2113,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:11Z"
+  firstTimestamp: "2026-09-27T07:54:39Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{billing}
     kind: Pod
-    name: billing-59bc44d959-64j6k
+    name: billing-59bc44d959-kfkdv
     namespace: billing
-    resourceVersion: "566"
-    uid: fbc1a801-6be6-41db-9503-5166054e35e5
+    resourceVersion: "607"
+    uid: eed009d1-5da3-4ac6-af0e-df6a14e72a45
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:11Z"
+  lastTimestamp: "2026-09-27T07:54:39Z"
   message: Container created
   metadata:
-    creationTimestamp: "2026-09-27T07:14:11Z"
-    name: billing-59bc44d959-64j6k.18d91c203a4d6325
+    creationTimestamp: "2026-09-27T07:54:39Z"
+    name: billing-59bc44d959-kfkdv.18d91e556d90c3ec
     namespace: billing
-    resourceVersion: "722"
-    uid: 5793c1ef-b469-41c3-b46e-28b90f2b493b
+    resourceVersion: "749"
+    uid: a271b7a1-fc74-4e15-883a-5609a93fdb06
   reason: Created
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -2141,24 +2141,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:11Z"
+  firstTimestamp: "2026-09-27T07:54:39Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{billing}
     kind: Pod
-    name: billing-59bc44d959-64j6k
+    name: billing-59bc44d959-kfkdv
     namespace: billing
-    resourceVersion: "566"
-    uid: fbc1a801-6be6-41db-9503-5166054e35e5
+    resourceVersion: "607"
+    uid: eed009d1-5da3-4ac6-af0e-df6a14e72a45
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:11Z"
+  lastTimestamp: "2026-09-27T07:54:39Z"
   message: Container started
   metadata:
-    creationTimestamp: "2026-09-27T07:14:11Z"
-    name: billing-59bc44d959-64j6k.18d91c203cc26947
+    creationTimestamp: "2026-09-27T07:54:39Z"
+    name: billing-59bc44d959-kfkdv.18d91e55701bf771
     namespace: billing
-    resourceVersion: "723"
-    uid: b636120a-efb3-40ca-b04e-1ed4c732ff17
+    resourceVersion: "750"
+    uid: b140057c-9e24-4b2f-ad7a-e3b5a566dd77
   reason: Started
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -2169,23 +2169,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
+  firstTimestamp: "2026-09-27T07:54:36Z"
   involvedObject:
     apiVersion: apps/v1
     kind: ReplicaSet
     name: billing-59bc44d959
     namespace: billing
-    resourceVersion: "562"
-    uid: 74a1ccb2-582b-4e0f-a359-c2dfb2f4deeb
+    resourceVersion: "600"
+    uid: 1e6a8786-f1c5-4c4d-a63a-5cca04780b06
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
-  message: 'Created pod: billing-59bc44d959-64j6k'
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: 'Created pod: billing-59bc44d959-kfkdv'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: billing-59bc44d959.18d91c1f6e45571f
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: billing-59bc44d959.18d91e54cb8a4b15
     namespace: billing
-    resourceVersion: "584"
-    uid: 78ff89bd-a989-460c-a9a3-751e9cd351ea
+    resourceVersion: "620"
+    uid: d62272c8-5654-447d-8ed0-a6d635671fa7
   reason: SuccessfulCreate
   reportingComponent: replicaset-controller
   reportingInstance: ""
@@ -2195,23 +2195,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
+  firstTimestamp: "2026-09-27T07:54:36Z"
   involvedObject:
     apiVersion: apps/v1
     kind: Deployment
     name: billing
     namespace: billing
-    resourceVersion: "539"
-    uid: 6bc91f31-fed5-4cda-b1fa-e9afb3150102
+    resourceVersion: "572"
+    uid: 74d659de-3303-43f2-a3a5-cb81d3942ba7
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
+  lastTimestamp: "2026-09-27T07:54:36Z"
   message: Scaled up replica set billing-59bc44d959 from 0 to 1
   metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: billing.18d91c1f6e14e0ae
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: billing.18d91e54c556f8f6
     namespace: billing
-    resourceVersion: "599"
-    uid: 8decb859-43b3-490d-acf2-c04758820052
+    resourceVersion: "635"
+    uid: 63868045-2adb-4b72-9c79-a38a50c7687f
   reason: ScalingReplicaSet
   reportingComponent: deployment-controller
   reportingInstance: ""
@@ -2221,23 +2221,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:36Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: hotfix-worker-79596987fd-7sgg4
+    name: hotfix-worker-79596987fd-xzg9t
     namespace: default
-    resourceVersion: "499"
-    uid: f8d925c1-548f-48e2-aeee-c31cb5183af3
+    resourceVersion: "544"
+    uid: 2457d1be-40aa-4cae-a63e-90b7b1e893ed
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: Successfully assigned default/hotfix-worker-79596987fd-7sgg4 to scout-evals-control-plane
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: Successfully assigned default/hotfix-worker-79596987fd-xzg9t to scout-evals-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: hotfix-worker-79596987fd-7sgg4.18d91c1f5d0422ec
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: hotfix-worker-79596987fd-xzg9t.18d91e54b6bcec5a
     namespace: default
-    resourceVersion: "512"
-    uid: 63514ca0-deba-4cb2-9434-06ba94892e4f
+    resourceVersion: "554"
+    uid: 05059c40-c824-4f24-aef6-210ba3cc9c04
   reason: Scheduled
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -2247,24 +2247,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
+  firstTimestamp: "2026-09-27T07:54:36Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{worker}
     kind: Pod
-    name: hotfix-worker-79596987fd-7sgg4
+    name: hotfix-worker-79596987fd-xzg9t
     namespace: default
-    resourceVersion: "508"
-    uid: f8d925c1-548f-48e2-aeee-c31cb5183af3
+    resourceVersion: "547"
+    uid: 2457d1be-40aa-4cae-a63e-90b7b1e893ed
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
+  lastTimestamp: "2026-09-27T07:54:36Z"
   message: Pulling image "registry.k8s.io/pause:3.9"
   metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: hotfix-worker-79596987fd-7sgg4.18d91c1f761636b8
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: hotfix-worker-79596987fd-xzg9t.18d91e54d1d99a2a
     namespace: default
-    resourceVersion: "587"
-    uid: 463b80fe-e62b-416e-b394-1929ef9fc8e4
+    resourceVersion: "616"
+    uid: 326c3a32-4f30-4dcc-901f-499c2be193b7
   reason: Pulling
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -2275,25 +2275,25 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:10Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{worker}
     kind: Pod
-    name: hotfix-worker-79596987fd-7sgg4
+    name: hotfix-worker-79596987fd-xzg9t
     namespace: default
-    resourceVersion: "508"
-    uid: f8d925c1-548f-48e2-aeee-c31cb5183af3
+    resourceVersion: "547"
+    uid: 2457d1be-40aa-4cae-a63e-90b7b1e893ed
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:10Z"
-  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 191ms (2.178s
+  lastTimestamp: "2026-09-27T07:54:37Z"
+  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 228ms (1.137s
     including waiting). Image size: 268051 bytes.'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:10Z"
-    name: hotfix-worker-79596987fd-7sgg4.18d91c1ff7f1f717
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: hotfix-worker-79596987fd-xzg9t.18d91e5515a7e3d9
     namespace: default
-    resourceVersion: "691"
-    uid: 88353350-4292-4300-b5cd-37f7f3a10379
+    resourceVersion: "689"
+    uid: cb57f60c-d941-44b3-a5f0-3f3b58939763
   reason: Pulled
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -2304,24 +2304,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:10Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{worker}
     kind: Pod
-    name: hotfix-worker-79596987fd-7sgg4
+    name: hotfix-worker-79596987fd-xzg9t
     namespace: default
-    resourceVersion: "508"
-    uid: f8d925c1-548f-48e2-aeee-c31cb5183af3
+    resourceVersion: "547"
+    uid: 2457d1be-40aa-4cae-a63e-90b7b1e893ed
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:10Z"
+  lastTimestamp: "2026-09-27T07:54:37Z"
   message: Container created
   metadata:
-    creationTimestamp: "2026-09-27T07:14:10Z"
-    name: hotfix-worker-79596987fd-7sgg4.18d91c1ff92cfe3c
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: hotfix-worker-79596987fd-xzg9t.18d91e55182a26d2
     namespace: default
-    resourceVersion: "692"
-    uid: 5f5ee087-f755-4635-a253-cee3a4146def
+    resourceVersion: "691"
+    uid: 49043526-34cc-47c2-9db9-06d045d3707b
   reason: Created
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -2332,24 +2332,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:10Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{worker}
     kind: Pod
-    name: hotfix-worker-79596987fd-7sgg4
+    name: hotfix-worker-79596987fd-xzg9t
     namespace: default
-    resourceVersion: "508"
-    uid: f8d925c1-548f-48e2-aeee-c31cb5183af3
+    resourceVersion: "547"
+    uid: 2457d1be-40aa-4cae-a63e-90b7b1e893ed
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:10Z"
+  lastTimestamp: "2026-09-27T07:54:37Z"
   message: Container started
   metadata:
-    creationTimestamp: "2026-09-27T07:14:10Z"
-    name: hotfix-worker-79596987fd-7sgg4.18d91c1ffb557c0a
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: hotfix-worker-79596987fd-xzg9t.18d91e551a6c032b
     namespace: default
-    resourceVersion: "693"
-    uid: 937eb6dd-e5cb-44cb-aff8-ee4b87522961
+    resourceVersion: "694"
+    uid: a2030b71-46f8-4c95-90d0-ddf7d7e16fb6
   reason: Started
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -2360,23 +2360,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:36Z"
   involvedObject:
     apiVersion: apps/v1
     kind: ReplicaSet
     name: hotfix-worker-79596987fd
     namespace: default
-    resourceVersion: "482"
-    uid: 2b5d350e-28ea-4973-8b6a-7c7bfa471ad4
+    resourceVersion: "531"
+    uid: 1791caf9-10f3-4877-80b5-4f5ffa4038e0
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: 'Created pod: hotfix-worker-79596987fd-7sgg4'
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: 'Created pod: hotfix-worker-79596987fd-xzg9t'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: hotfix-worker-79596987fd.18d91c1f5cb75595
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: hotfix-worker-79596987fd.18d91e54b68ea194
     namespace: default
-    resourceVersion: "507"
-    uid: fe00d16f-f951-40be-9389-996052dae6f5
+    resourceVersion: "549"
+    uid: 6b64b07a-69ba-4ed0-9380-cd562b7df461
   reason: SuccessfulCreate
   reportingComponent: replicaset-controller
   reportingInstance: ""
@@ -2386,23 +2386,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:35Z"
   involvedObject:
     apiVersion: apps/v1
     kind: Deployment
     name: hotfix-worker
     namespace: default
-    resourceVersion: "481"
-    uid: ae71ebd3-5748-493d-901f-b578940b55bb
+    resourceVersion: "530"
+    uid: 156fb044-f790-40f5-9ce3-e2ed29e9f8e3
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
+  lastTimestamp: "2026-09-27T07:54:35Z"
   message: Scaled up replica set hotfix-worker-79596987fd from 0 to 1
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: hotfix-worker.18d91c1f58a40012
+    creationTimestamp: "2026-09-27T07:54:35Z"
+    name: hotfix-worker.18d91e54b2a150d3
     namespace: default
-    resourceVersion: "484"
-    uid: 51c89fee-e3a0-43c9-b673-9859b728e3cc
+    resourceVersion: "533"
+    uid: 2985d98f-5ab8-4dcf-886c-0f2335a04f9e
   reason: ScalingReplicaSet
   reportingComponent: deployment-controller
   reportingInstance: ""
@@ -2412,20 +2412,20 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:13:48Z"
+  firstTimestamp: "2026-09-27T07:54:05Z"
   involvedObject:
     apiVersion: v1
     kind: Node
     name: scout-evals-control-plane
   kind: Event
-  lastTimestamp: "2026-09-27T07:13:48Z"
+  lastTimestamp: "2026-09-27T07:54:05Z"
   message: Starting kubelet.
   metadata:
-    creationTimestamp: "2026-09-27T07:13:48Z"
-    name: scout-evals-control-plane.18d91c1ac1f64672
+    creationTimestamp: "2026-09-27T07:54:05Z"
+    name: scout-evals-control-plane.18d91e4dae54e503
     namespace: default
-    resourceVersion: "227"
-    uid: 800fcc66-0dd7-42a0-940a-e6a4a3880909
+    resourceVersion: "228"
+    uid: d91d8338-3f36-43d4-bd0e-1849878f7857
   reason: Starting
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -2436,20 +2436,20 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:13:48Z"
+  firstTimestamp: "2026-09-27T07:54:05Z"
   involvedObject:
     apiVersion: v1
     kind: Node
     name: scout-evals-control-plane
   kind: Event
-  lastTimestamp: "2026-09-27T07:13:48Z"
+  lastTimestamp: "2026-09-27T07:54:05Z"
   message: Updated Node Allocatable limit across pods
   metadata:
-    creationTimestamp: "2026-09-27T07:13:48Z"
-    name: scout-evals-control-plane.18d91c1ac38cbdaf
+    creationTimestamp: "2026-09-27T07:54:05Z"
+    name: scout-evals-control-plane.18d91e4dafd02853
     namespace: default
-    resourceVersion: "229"
-    uid: 4457fc23-f528-41e0-b608-d6692a96a320
+    resourceVersion: "230"
+    uid: 5501b6b5-7589-4a15-a8f3-fc46bba1f124
   reason: NodeAllocatableEnforced
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -2460,20 +2460,20 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:13:48Z"
+  firstTimestamp: "2026-09-27T07:54:05Z"
   involvedObject:
     apiVersion: v1
     kind: Node
     name: scout-evals-control-plane
   kind: Event
-  lastTimestamp: "2026-09-27T07:13:48Z"
+  lastTimestamp: "2026-09-27T07:54:05Z"
   message: 'Node scout-evals-control-plane status is now: NodeHasSufficientMemory'
   metadata:
-    creationTimestamp: "2026-09-27T07:13:48Z"
-    name: scout-evals-control-plane.18d91c1ac97c6fdd
+    creationTimestamp: "2026-09-27T07:54:05Z"
+    name: scout-evals-control-plane.18d91e4db5c5e9ba
     namespace: default
-    resourceVersion: "231"
-    uid: 344b0825-f58f-4587-957b-21b1bc981d4b
+    resourceVersion: "232"
+    uid: 4bf65d10-0364-45a4-95be-54d9e81c8a92
   reason: NodeHasSufficientMemory
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -2484,20 +2484,20 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:13:48Z"
+  firstTimestamp: "2026-09-27T07:54:05Z"
   involvedObject:
     apiVersion: v1
     kind: Node
     name: scout-evals-control-plane
   kind: Event
-  lastTimestamp: "2026-09-27T07:13:48Z"
+  lastTimestamp: "2026-09-27T07:54:05Z"
   message: 'Node scout-evals-control-plane status is now: NodeHasNoDiskPressure'
   metadata:
-    creationTimestamp: "2026-09-27T07:13:48Z"
-    name: scout-evals-control-plane.18d91c1ac97c8171
+    creationTimestamp: "2026-09-27T07:54:05Z"
+    name: scout-evals-control-plane.18d91e4db5c5f9ae
     namespace: default
-    resourceVersion: "232"
-    uid: 974997eb-4235-4a69-bc98-c6bd81d6332a
+    resourceVersion: "233"
+    uid: c8a7239a-109b-4bf4-8389-ffc14df0ce06
   reason: NodeHasNoDiskPressure
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -2508,20 +2508,20 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:13:48Z"
+  firstTimestamp: "2026-09-27T07:54:05Z"
   involvedObject:
     apiVersion: v1
     kind: Node
     name: scout-evals-control-plane
   kind: Event
-  lastTimestamp: "2026-09-27T07:13:48Z"
+  lastTimestamp: "2026-09-27T07:54:05Z"
   message: 'Node scout-evals-control-plane status is now: NodeHasSufficientPID'
   metadata:
-    creationTimestamp: "2026-09-27T07:13:48Z"
-    name: scout-evals-control-plane.18d91c1ac97c8ae2
+    creationTimestamp: "2026-09-27T07:54:05Z"
+    name: scout-evals-control-plane.18d91e4db5c60b18
     namespace: default
     resourceVersion: "234"
-    uid: ecf242ff-86f8-4847-9d35-8b388082d5bb
+    uid: 6e343187-ad72-4ef1-a690-50249e99be3a
   reason: NodeHasSufficientPID
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -2532,22 +2532,22 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:13:54Z"
+  firstTimestamp: "2026-09-27T07:54:11Z"
   involvedObject:
     apiVersion: v1
     kind: Node
     name: scout-evals-control-plane
-    uid: 8c864481-9967-4475-91a5-03462af667f5
+    uid: c770608d-5344-4d94-8d8c-6baf1a20e3cb
   kind: Event
-  lastTimestamp: "2026-09-27T07:13:54Z"
+  lastTimestamp: "2026-09-27T07:54:11Z"
   message: 'Node scout-evals-control-plane event: Registered Node scout-evals-control-plane
     in Controller'
   metadata:
-    creationTimestamp: "2026-09-27T07:13:54Z"
-    name: scout-evals-control-plane.18d91c1c482d788e
+    creationTimestamp: "2026-09-27T07:54:11Z"
+    name: scout-evals-control-plane.18d91e4efab93c6b
     namespace: default
-    resourceVersion: "314"
-    uid: 08a4cf9c-626f-440e-b85a-9546282281ee
+    resourceVersion: "321"
+    uid: ebac0d1f-d7e1-41e9-8c13-75f50fa4c05c
   reason: RegisteredNode
   reportingComponent: node-controller
   reportingInstance: ""
@@ -2556,7 +2556,7 @@ items:
   type: Normal
 - action: StartKubeProxy
   apiVersion: v1
-  eventTime: "2026-09-27T07:13:56.596982Z"
+  eventTime: "2026-09-27T07:54:13.202126Z"
   firstTimestamp: null
   involvedObject:
     apiVersion: v1
@@ -2565,11 +2565,11 @@ items:
   kind: Event
   lastTimestamp: null
   metadata:
-    creationTimestamp: "2026-09-27T07:13:56Z"
-    name: scout-evals-control-plane.18d91c1cbc1a45bf
+    creationTimestamp: "2026-09-27T07:54:13Z"
+    name: scout-evals-control-plane.18d91e4f64fe6a38
     namespace: default
-    resourceVersion: "390"
-    uid: 08e62c3f-1ee7-48b2-8248-b63093474aeb
+    resourceVersion: "400"
+    uid: 9b055f27-66b6-4761-bc07-a7bce317f125
   reason: Starting
   reportingComponent: kube-proxy
   reportingInstance: kube-proxy-scout-evals-control-plane
@@ -2578,20 +2578,20 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:23Z"
   involvedObject:
     apiVersion: v1
     kind: Node
     name: scout-evals-control-plane
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
+  lastTimestamp: "2026-09-27T07:54:23Z"
   message: 'Node scout-evals-control-plane status is now: NodeReady'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: scout-evals-control-plane.18d91c1f301ce993
+    creationTimestamp: "2026-09-27T07:54:23Z"
+    name: scout-evals-control-plane.18d91e51d9fadbc3
     namespace: default
-    resourceVersion: "417"
-    uid: bde418f5-4929-45e8-9109-7e30e899f536
+    resourceVersion: "427"
+    uid: 4d1f7197-2b62-4b92-9381-5868a344cf5f
   reason: NodeReady
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -2602,24 +2602,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:35Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: kustomize-controller-7d9647c47d-n5fff
+    name: kustomize-controller-7d9647c47d-rppl2
     namespace: flux-system
-    resourceVersion: "447"
-    uid: 81acdbf5-19af-4e90-b530-e198b7261afa
+    resourceVersion: "495"
+    uid: 3c5a5b19-9a5d-40ad-8cb8-b02410817812
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: Successfully assigned flux-system/kustomize-controller-7d9647c47d-n5fff
+  lastTimestamp: "2026-09-27T07:54:35Z"
+  message: Successfully assigned flux-system/kustomize-controller-7d9647c47d-rppl2
     to scout-evals-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: kustomize-controller-7d9647c47d-n5fff.18d91c1f56f577da
+    creationTimestamp: "2026-09-27T07:54:35Z"
+    name: kustomize-controller-7d9647c47d-rppl2.18d91e54b0eb2644
     namespace: flux-system
-    resourceVersion: "462"
-    uid: 9c890573-9562-41cf-9945-c47a25a89d23
+    resourceVersion: "509"
+    uid: c647b508-8681-4067-8774-d529bda10144
   reason: Scheduled
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -2629,24 +2629,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
+  firstTimestamp: "2026-09-27T07:54:36Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{manager}
     kind: Pod
-    name: kustomize-controller-7d9647c47d-n5fff
+    name: kustomize-controller-7d9647c47d-rppl2
     namespace: flux-system
-    resourceVersion: "455"
-    uid: 81acdbf5-19af-4e90-b530-e198b7261afa
+    resourceVersion: "499"
+    uid: 3c5a5b19-9a5d-40ad-8cb8-b02410817812
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
+  lastTimestamp: "2026-09-27T07:54:36Z"
   message: Pulling image "registry.k8s.io/pause:3.9"
   metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: kustomize-controller-7d9647c47d-n5fff.18d91c1f6e2160e2
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: kustomize-controller-7d9647c47d-rppl2.18d91e54cc82c845
     namespace: flux-system
-    resourceVersion: "564"
-    uid: 81194241-eb54-4910-bcea-c6fbbbb340e1
+    resourceVersion: "610"
+    uid: cefcf741-1ac7-4387-af59-5af366e85970
   reason: Pulling
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -2657,25 +2657,25 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{manager}
     kind: Pod
-    name: kustomize-controller-7d9647c47d-n5fff
+    name: kustomize-controller-7d9647c47d-rppl2
     namespace: flux-system
-    resourceVersion: "455"
-    uid: 81acdbf5-19af-4e90-b530-e198b7261afa
+    resourceVersion: "499"
+    uid: 3c5a5b19-9a5d-40ad-8cb8-b02410817812
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
-  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 810ms (810ms
+  lastTimestamp: "2026-09-27T07:54:37Z"
+  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 805ms (805ms
     including waiting). Image size: 268051 bytes.'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: kustomize-controller-7d9647c47d-n5fff.18d91c1f9e76646c
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: kustomize-controller-7d9647c47d-rppl2.18d91e54fc8cc621
     namespace: flux-system
-    resourceVersion: "625"
-    uid: 93b5a584-fe9e-4dbb-8836-817e34b8ba64
+    resourceVersion: "662"
+    uid: 148af4a2-aa9c-469d-9b48-f00e42a3196e
   reason: Pulled
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -2686,24 +2686,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:09Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{manager}
     kind: Pod
-    name: kustomize-controller-7d9647c47d-n5fff
+    name: kustomize-controller-7d9647c47d-rppl2
     namespace: flux-system
-    resourceVersion: "455"
-    uid: 81acdbf5-19af-4e90-b530-e198b7261afa
+    resourceVersion: "499"
+    uid: 3c5a5b19-9a5d-40ad-8cb8-b02410817812
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:09Z"
+  lastTimestamp: "2026-09-27T07:54:37Z"
   message: Container created
   metadata:
-    creationTimestamp: "2026-09-27T07:14:09Z"
-    name: kustomize-controller-7d9647c47d-n5fff.18d91c1f9f73903f
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: kustomize-controller-7d9647c47d-rppl2.18d91e54fdd4cf02
     namespace: flux-system
-    resourceVersion: "626"
-    uid: bc6a0108-9b44-4b96-82fc-585b7560716d
+    resourceVersion: "665"
+    uid: 0fe18899-98db-4da5-8042-f66d290d179c
   reason: Created
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -2714,24 +2714,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:09Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{manager}
     kind: Pod
-    name: kustomize-controller-7d9647c47d-n5fff
+    name: kustomize-controller-7d9647c47d-rppl2
     namespace: flux-system
-    resourceVersion: "455"
-    uid: 81acdbf5-19af-4e90-b530-e198b7261afa
+    resourceVersion: "499"
+    uid: 3c5a5b19-9a5d-40ad-8cb8-b02410817812
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:09Z"
+  lastTimestamp: "2026-09-27T07:54:37Z"
   message: Container started
   metadata:
-    creationTimestamp: "2026-09-27T07:14:09Z"
-    name: kustomize-controller-7d9647c47d-n5fff.18d91c1fa15b45df
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: kustomize-controller-7d9647c47d-rppl2.18d91e5500112bd2
     namespace: flux-system
-    resourceVersion: "632"
-    uid: f098b3d9-724a-449c-b2d9-ce8b0a766ac2
+    resourceVersion: "666"
+    uid: 66fafcd7-0b1e-47f7-bdd6-62bb025a09b6
   reason: Started
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -2742,23 +2742,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:35Z"
   involvedObject:
     apiVersion: apps/v1
     kind: ReplicaSet
     name: kustomize-controller-7d9647c47d
     namespace: flux-system
-    resourceVersion: "443"
-    uid: f956f754-c5b9-4b63-93ed-927985df43aa
+    resourceVersion: "491"
+    uid: 9a11ff37-50d4-46ba-87c0-ff1d9e306c94
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: 'Created pod: kustomize-controller-7d9647c47d-n5fff'
+  lastTimestamp: "2026-09-27T07:54:35Z"
+  message: 'Created pod: kustomize-controller-7d9647c47d-rppl2'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: kustomize-controller-7d9647c47d.18d91c1f569f131a
+    creationTimestamp: "2026-09-27T07:54:35Z"
+    name: kustomize-controller-7d9647c47d.18d91e54b0908369
     namespace: flux-system
-    resourceVersion: "452"
-    uid: f5ad6bfd-7e62-4601-be81-ee2384322f09
+    resourceVersion: "498"
+    uid: 8f414d90-68e9-41d6-aefb-2300d7760a26
   reason: SuccessfulCreate
   reportingComponent: replicaset-controller
   reportingInstance: ""
@@ -2768,23 +2768,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:35Z"
   involvedObject:
     apiVersion: apps/v1
     kind: Deployment
     name: kustomize-controller
     namespace: flux-system
-    resourceVersion: "442"
-    uid: 53b3d4f3-1f5a-440b-93e6-2f56464b75cb
+    resourceVersion: "490"
+    uid: e8581dab-345a-40df-9517-de227f7f3fe9
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
+  lastTimestamp: "2026-09-27T07:54:35Z"
   message: Scaled up replica set kustomize-controller-7d9647c47d from 0 to 1
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: kustomize-controller.18d91c1f562eef32
+    creationTimestamp: "2026-09-27T07:54:35Z"
+    name: kustomize-controller.18d91e54b03b843a
     namespace: flux-system
-    resourceVersion: "445"
-    uid: f28036ab-aec7-4e2f-8fe4-7d38d4750ff2
+    resourceVersion: "492"
+    uid: 9073d19a-1839-431f-97fb-04e0a8a3fb2c
   reason: ScalingReplicaSet
   reportingComponent: deployment-controller
   reportingInstance: ""
@@ -2794,24 +2794,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:35Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: source-controller-bb798d9fb-b5w5x
+    name: source-controller-bb798d9fb-vhf5h
     namespace: flux-system
-    resourceVersion: "450"
-    uid: babdf9e9-e04f-47e4-a8d9-a633cda5c597
+    resourceVersion: "500"
+    uid: 2b8e10ab-67db-460c-adad-2217fc81c0f3
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: Successfully assigned flux-system/source-controller-bb798d9fb-b5w5x to
+  lastTimestamp: "2026-09-27T07:54:35Z"
+  message: Successfully assigned flux-system/source-controller-bb798d9fb-vhf5h to
     scout-evals-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: source-controller-bb798d9fb-b5w5x.18d91c1f575d6319
+    creationTimestamp: "2026-09-27T07:54:35Z"
+    name: source-controller-bb798d9fb-vhf5h.18d91e54b13dfead
     namespace: flux-system
-    resourceVersion: "465"
-    uid: 696f4bbe-43a1-4c9d-b511-f008ffbafb2b
+    resourceVersion: "516"
+    uid: 70794f0f-a395-451e-bc21-a3349c776c80
   reason: Scheduled
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -2821,24 +2821,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
+  firstTimestamp: "2026-09-27T07:54:36Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{manager}
     kind: Pod
-    name: source-controller-bb798d9fb-b5w5x
+    name: source-controller-bb798d9fb-vhf5h
     namespace: flux-system
-    resourceVersion: "460"
-    uid: babdf9e9-e04f-47e4-a8d9-a633cda5c597
+    resourceVersion: "507"
+    uid: 2b8e10ab-67db-460c-adad-2217fc81c0f3
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
+  lastTimestamp: "2026-09-27T07:54:36Z"
   message: Pulling image "registry.k8s.io/pause:3.9"
   metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: source-controller-bb798d9fb-b5w5x.18d91c1f6e6e176f
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: source-controller-bb798d9fb-vhf5h.18d91e54ccd5564d
     namespace: flux-system
-    resourceVersion: "569"
-    uid: 589f811e-f794-44db-ac17-11ae69a17785
+    resourceVersion: "611"
+    uid: 8f9e2ffb-c716-4bfd-8611-89b339342b33
   reason: Pulling
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -2849,25 +2849,25 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:09Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{manager}
     kind: Pod
-    name: source-controller-bb798d9fb-b5w5x
+    name: source-controller-bb798d9fb-vhf5h
     namespace: flux-system
-    resourceVersion: "460"
-    uid: babdf9e9-e04f-47e4-a8d9-a633cda5c597
+    resourceVersion: "507"
+    uid: 2b8e10ab-67db-460c-adad-2217fc81c0f3
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:09Z"
-  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 646ms (1.452s
+  lastTimestamp: "2026-09-27T07:54:37Z"
+  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 192ms (993ms
     including waiting). Image size: 268051 bytes.'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:09Z"
-    name: source-controller-bb798d9fb-b5w5x.18d91c1fc50530d2
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: source-controller-bb798d9fb-vhf5h.18d91e55080c0547
     namespace: flux-system
-    resourceVersion: "664"
-    uid: 5d0fa72d-df36-4f0d-a3d2-cb763989f895
+    resourceVersion: "676"
+    uid: 98805b73-b3ee-432d-be78-0063292d0317
   reason: Pulled
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -2878,24 +2878,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:09Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{manager}
     kind: Pod
-    name: source-controller-bb798d9fb-b5w5x
+    name: source-controller-bb798d9fb-vhf5h
     namespace: flux-system
-    resourceVersion: "460"
-    uid: babdf9e9-e04f-47e4-a8d9-a633cda5c597
+    resourceVersion: "507"
+    uid: 2b8e10ab-67db-460c-adad-2217fc81c0f3
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:09Z"
+  lastTimestamp: "2026-09-27T07:54:37Z"
   message: Container created
   metadata:
-    creationTimestamp: "2026-09-27T07:14:09Z"
-    name: source-controller-bb798d9fb-b5w5x.18d91c1fc629b5e9
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: source-controller-bb798d9fb-vhf5h.18d91e550a06bf64
     namespace: flux-system
-    resourceVersion: "665"
-    uid: d5528d71-6734-4bb7-838a-594270886741
+    resourceVersion: "678"
+    uid: d7722ea8-a641-45ee-8533-6b021d5796a9
   reason: Created
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -2906,24 +2906,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:09Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{manager}
     kind: Pod
-    name: source-controller-bb798d9fb-b5w5x
+    name: source-controller-bb798d9fb-vhf5h
     namespace: flux-system
-    resourceVersion: "460"
-    uid: babdf9e9-e04f-47e4-a8d9-a633cda5c597
+    resourceVersion: "507"
+    uid: 2b8e10ab-67db-460c-adad-2217fc81c0f3
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:09Z"
+  lastTimestamp: "2026-09-27T07:54:37Z"
   message: Container started
   metadata:
-    creationTimestamp: "2026-09-27T07:14:09Z"
-    name: source-controller-bb798d9fb-b5w5x.18d91c1fc882af34
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: source-controller-bb798d9fb-vhf5h.18d91e550c72dd28
     namespace: flux-system
-    resourceVersion: "667"
-    uid: b73686ed-acc3-4734-b10c-1c3384d4c2a7
+    resourceVersion: "679"
+    uid: 90fee6e1-a792-496f-b8f0-4820f4dd50dc
   reason: Started
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -2934,23 +2934,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:35Z"
   involvedObject:
     apiVersion: apps/v1
     kind: ReplicaSet
     name: source-controller-bb798d9fb
     namespace: flux-system
-    resourceVersion: "448"
-    uid: e2540e32-2d1c-4eec-854e-f726f5b5f9f7
+    resourceVersion: "496"
+    uid: 6587194d-233f-4c3e-8b6d-ae629c20b421
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: 'Created pod: source-controller-bb798d9fb-b5w5x'
+  lastTimestamp: "2026-09-27T07:54:35Z"
+  message: 'Created pod: source-controller-bb798d9fb-vhf5h'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: source-controller-bb798d9fb.18d91c1f56f04a00
+    creationTimestamp: "2026-09-27T07:54:35Z"
+    name: source-controller-bb798d9fb.18d91e54b0ea95e6
     namespace: flux-system
-    resourceVersion: "461"
-    uid: 86be1fe6-3b1c-4696-976f-57fb542000ba
+    resourceVersion: "508"
+    uid: 442a79e7-9e30-41ed-9c2b-a89078ba1c1e
   reason: SuccessfulCreate
   reportingComponent: replicaset-controller
   reportingInstance: ""
@@ -2960,23 +2960,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:35Z"
   involvedObject:
     apiVersion: apps/v1
     kind: Deployment
     name: source-controller
     namespace: flux-system
-    resourceVersion: "444"
-    uid: 329d5f80-6b0a-4775-a23c-055d86c6ee0d
+    resourceVersion: "493"
+    uid: abd29fdd-ad03-4e62-8df8-f568518c7f70
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
+  lastTimestamp: "2026-09-27T07:54:35Z"
   message: Scaled up replica set source-controller-bb798d9fb from 0 to 1
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: source-controller.18d91c1f56a101e5
+    creationTimestamp: "2026-09-27T07:54:35Z"
+    name: source-controller.18d91e54b0a7784c
     namespace: flux-system
-    resourceVersion: "451"
-    uid: 657355f5-ee54-47bb-a508-391b53e89d64
+    resourceVersion: "503"
+    uid: 348e9356-f940-40b2-a3e7-77f6bb657b4b
   reason: ScalingReplicaSet
   reportingComponent: deployment-controller
   reportingInstance: ""
@@ -2986,23 +2986,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
+  firstTimestamp: "2026-09-27T07:55:16Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: inventory-577549bfd6-qjnsb
+    name: inventory-577549bfd6-8kv5c
     namespace: inventory
-    resourceVersion: "874"
-    uid: 99431184-4c9a-4b8a-9fa4-78242a432b87
+    resourceVersion: "892"
+    uid: ae5e5292-a7ed-42a4-9624-9facf2034753
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
-  message: Successfully assigned inventory/inventory-577549bfd6-qjnsb to scout-evals-control-plane
+  lastTimestamp: "2026-09-27T07:55:16Z"
+  message: Successfully assigned inventory/inventory-577549bfd6-8kv5c to scout-evals-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: inventory-577549bfd6-qjnsb.18d91c2a00b2a1ec
+    creationTimestamp: "2026-09-27T07:55:16Z"
+    name: inventory-577549bfd6-8kv5c.18d91e5e316b2d26
     namespace: inventory
-    resourceVersion: "878"
-    uid: c0baabd8-2246-4360-8448-65d9fdca1cdd
+    resourceVersion: "896"
+    uid: 956351bd-aa43-4440-ac70-217dc1e98c70
   reason: Scheduled
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -3012,25 +3012,25 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
+  firstTimestamp: "2026-09-27T07:55:17Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{inventory}
     kind: Pod
-    name: inventory-577549bfd6-qjnsb
+    name: inventory-577549bfd6-8kv5c
     namespace: inventory
-    resourceVersion: "875"
-    uid: 99431184-4c9a-4b8a-9fa4-78242a432b87
+    resourceVersion: "895"
+    uid: ae5e5292-a7ed-42a4-9624-9facf2034753
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
+  lastTimestamp: "2026-09-27T07:55:17Z"
   message: Container image "registry.k8s.io/pause:3.9" already present on machine
     and can be accessed by the pod
   metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: inventory-577549bfd6-qjnsb.18d91c2a17acfd8a
+    creationTimestamp: "2026-09-27T07:55:17Z"
+    name: inventory-577549bfd6-8kv5c.18d91e5e4b1f9799
     namespace: inventory
-    resourceVersion: "888"
-    uid: 5f8974ae-9380-474e-aa3a-788a03eda09b
+    resourceVersion: "907"
+    uid: 3357e3bb-66cd-4a2f-9552-8dd19bbb147e
   reason: Pulled
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -3041,24 +3041,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
+  firstTimestamp: "2026-09-27T07:55:17Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{inventory}
     kind: Pod
-    name: inventory-577549bfd6-qjnsb
+    name: inventory-577549bfd6-8kv5c
     namespace: inventory
-    resourceVersion: "875"
-    uid: 99431184-4c9a-4b8a-9fa4-78242a432b87
+    resourceVersion: "895"
+    uid: ae5e5292-a7ed-42a4-9624-9facf2034753
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
+  lastTimestamp: "2026-09-27T07:55:17Z"
   message: Container created
   metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: inventory-577549bfd6-qjnsb.18d91c2a19263aaa
+    creationTimestamp: "2026-09-27T07:55:17Z"
+    name: inventory-577549bfd6-8kv5c.18d91e5e4d34e92c
     namespace: inventory
-    resourceVersion: "891"
-    uid: 4ff95d09-162b-4392-a63d-0262ef5d4db7
+    resourceVersion: "911"
+    uid: 46ffa765-7f95-435c-a0ed-3e17004774f2
   reason: Created
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -3069,24 +3069,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:54Z"
+  firstTimestamp: "2026-09-27T07:55:17Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{inventory}
     kind: Pod
-    name: inventory-577549bfd6-qjnsb
+    name: inventory-577549bfd6-8kv5c
     namespace: inventory
-    resourceVersion: "875"
-    uid: 99431184-4c9a-4b8a-9fa4-78242a432b87
+    resourceVersion: "895"
+    uid: ae5e5292-a7ed-42a4-9624-9facf2034753
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:54Z"
+  lastTimestamp: "2026-09-27T07:55:17Z"
   message: Container started
   metadata:
-    creationTimestamp: "2026-09-27T07:14:54Z"
-    name: inventory-577549bfd6-qjnsb.18d91c2a1b73a714
+    creationTimestamp: "2026-09-27T07:55:17Z"
+    name: inventory-577549bfd6-8kv5c.18d91e5e4f4d4129
     namespace: inventory
-    resourceVersion: "894"
-    uid: face31c0-bc23-4610-8ece-12574d4094f2
+    resourceVersion: "913"
+    uid: 28d50d51-ee27-48de-865a-23968565426c
   reason: Started
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -3097,23 +3097,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
+  firstTimestamp: "2026-09-27T07:55:16Z"
   involvedObject:
     apiVersion: apps/v1
     kind: ReplicaSet
     name: inventory-577549bfd6
     namespace: inventory
-    resourceVersion: "870"
-    uid: a5747494-ffc6-47ce-b758-8f0007294799
+    resourceVersion: "888"
+    uid: 60d37fd9-2d0b-40b2-a197-3fc9c8a3e43a
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
-  message: 'Created pod: inventory-577549bfd6-qjnsb'
+  lastTimestamp: "2026-09-27T07:55:16Z"
+  message: 'Created pod: inventory-577549bfd6-8kv5c'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: inventory-577549bfd6.18d91c2a0095348a
+    creationTimestamp: "2026-09-27T07:55:16Z"
+    name: inventory-577549bfd6.18d91e5e3132fa99
     namespace: inventory
-    resourceVersion: "877"
-    uid: a7f9c34a-6f8f-43f2-b63b-5d81c6ab5903
+    resourceVersion: "894"
+    uid: f856b319-f803-4629-a8ef-8b787d5f5581
   reason: SuccessfulCreate
   reportingComponent: replicaset-controller
   reportingInstance: ""
@@ -3123,23 +3123,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:09Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: inventory-6df8fd8b55-jtj9q
+    name: inventory-6df8fd8b55-kw2bh
     namespace: inventory
-    resourceVersion: "628"
-    uid: 3b8d1654-0c85-412f-91c8-41d5416fe863
+    resourceVersion: "658"
+    uid: 07747511-7850-4bda-a175-eb37a4cd5c77
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:09Z"
-  message: Successfully assigned inventory/inventory-6df8fd8b55-jtj9q to scout-evals-control-plane
+  lastTimestamp: "2026-09-27T07:54:37Z"
+  message: Successfully assigned inventory/inventory-6df8fd8b55-kw2bh to scout-evals-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T07:14:09Z"
-    name: inventory-6df8fd8b55-jtj9q.18d91c1fa0ee9f32
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: inventory-6df8fd8b55-kw2bh.18d91e54fb7e69b9
     namespace: inventory
-    resourceVersion: "630"
-    uid: 104dd768-edd3-48d7-8c53-b39911b6d778
+    resourceVersion: "660"
+    uid: c5822033-8b87-4aa9-a9a9-35ed25473619
   reason: Scheduled
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -3149,25 +3149,25 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:09Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{inventory}
     kind: Pod
-    name: inventory-6df8fd8b55-jtj9q
+    name: inventory-6df8fd8b55-kw2bh
     namespace: inventory
-    resourceVersion: "629"
-    uid: 3b8d1654-0c85-412f-91c8-41d5416fe863
+    resourceVersion: "659"
+    uid: 07747511-7850-4bda-a175-eb37a4cd5c77
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:09Z"
+  lastTimestamp: "2026-09-27T07:54:37Z"
   message: Container image "registry.k8s.io/pause:3.9" already present on machine
     and can be accessed by the pod
   metadata:
-    creationTimestamp: "2026-09-27T07:14:09Z"
-    name: inventory-6df8fd8b55-jtj9q.18d91c1fb7a60293
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: inventory-6df8fd8b55-kw2bh.18d91e5511c36c0b
     namespace: inventory
-    resourceVersion: "651"
-    uid: b54b76f9-a980-4ac4-932c-62e79896ae14
+    resourceVersion: "684"
+    uid: 9f66199a-1b51-43d3-8cb0-dcb0b1d4d0ea
   reason: Pulled
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -3178,24 +3178,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:09Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{inventory}
     kind: Pod
-    name: inventory-6df8fd8b55-jtj9q
+    name: inventory-6df8fd8b55-kw2bh
     namespace: inventory
-    resourceVersion: "629"
-    uid: 3b8d1654-0c85-412f-91c8-41d5416fe863
+    resourceVersion: "659"
+    uid: 07747511-7850-4bda-a175-eb37a4cd5c77
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:09Z"
+  lastTimestamp: "2026-09-27T07:54:37Z"
   message: Container created
   metadata:
-    creationTimestamp: "2026-09-27T07:14:09Z"
-    name: inventory-6df8fd8b55-jtj9q.18d91c1fb94c8b97
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: inventory-6df8fd8b55-kw2bh.18d91e5514063c34
     namespace: inventory
-    resourceVersion: "654"
-    uid: ecaa092c-aee3-4c07-bbb2-ca1e8c05ea5f
+    resourceVersion: "687"
+    uid: 85044e7b-9c7f-48f3-9eab-d6bfec06393c
   reason: Created
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -3206,24 +3206,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:09Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{inventory}
     kind: Pod
-    name: inventory-6df8fd8b55-jtj9q
+    name: inventory-6df8fd8b55-kw2bh
     namespace: inventory
-    resourceVersion: "629"
-    uid: 3b8d1654-0c85-412f-91c8-41d5416fe863
+    resourceVersion: "659"
+    uid: 07747511-7850-4bda-a175-eb37a4cd5c77
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:09Z"
+  lastTimestamp: "2026-09-27T07:54:37Z"
   message: Container started
   metadata:
-    creationTimestamp: "2026-09-27T07:14:09Z"
-    name: inventory-6df8fd8b55-jtj9q.18d91c1fbb4b17e7
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: inventory-6df8fd8b55-kw2bh.18d91e551653fded
     namespace: inventory
-    resourceVersion: "657"
-    uid: ef54eb4d-f406-4aca-ab45-fed2e94ec6e7
+    resourceVersion: "690"
+    uid: 7ade3fa0-3219-48e2-abac-483536bf969d
   reason: Started
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -3234,24 +3234,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:54Z"
+  firstTimestamp: "2026-09-27T07:55:18Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{inventory}
     kind: Pod
-    name: inventory-6df8fd8b55-jtj9q
+    name: inventory-6df8fd8b55-kw2bh
     namespace: inventory
-    resourceVersion: "629"
-    uid: 3b8d1654-0c85-412f-91c8-41d5416fe863
+    resourceVersion: "659"
+    uid: 07747511-7850-4bda-a175-eb37a4cd5c77
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:54Z"
+  lastTimestamp: "2026-09-27T07:55:18Z"
   message: Stopping container inventory
   metadata:
-    creationTimestamp: "2026-09-27T07:14:54Z"
-    name: inventory-6df8fd8b55-jtj9q.18d91c2a304bb6ff
+    creationTimestamp: "2026-09-27T07:55:18Z"
+    name: inventory-6df8fd8b55-kw2bh.18d91e5e8088c8d3
     namespace: inventory
-    resourceVersion: "910"
-    uid: 6b0ed90e-7e76-4bb1-b7b6-6b4a298423b8
+    resourceVersion: "942"
+    uid: 68c33555-d8ef-472c-a8af-e6eb6fc07654
   reason: Killing
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -3262,23 +3262,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:09Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: apps/v1
     kind: ReplicaSet
     name: inventory-6df8fd8b55
     namespace: inventory
-    resourceVersion: "610"
-    uid: 2170f749-7470-45f0-90ea-3b04d6b4859f
+    resourceVersion: "644"
+    uid: 6d2fddb3-33c6-4f17-8d39-47f8737d7a19
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:09Z"
-  message: 'Created pod: inventory-6df8fd8b55-jtj9q'
+  lastTimestamp: "2026-09-27T07:54:37Z"
+  message: 'Created pod: inventory-6df8fd8b55-kw2bh'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:09Z"
-    name: inventory-6df8fd8b55.18d91c1fa0c9dbe1
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: inventory-6df8fd8b55.18d91e54fb5e9d5b
     namespace: inventory
-    resourceVersion: "658"
-    uid: 834cf113-8ad6-4f2b-ab82-d2b09ef165c9
+    resourceVersion: "675"
+    uid: 1d127b02-7cfa-4004-b4da-9bdb70efbca0
   reason: SuccessfulCreate
   reportingComponent: replicaset-controller
   reportingInstance: ""
@@ -3288,23 +3288,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:54Z"
+  firstTimestamp: "2026-09-27T07:55:18Z"
   involvedObject:
     apiVersion: apps/v1
     kind: ReplicaSet
     name: inventory-6df8fd8b55
     namespace: inventory
-    resourceVersion: "902"
-    uid: 2170f749-7470-45f0-90ea-3b04d6b4859f
+    resourceVersion: "928"
+    uid: 6d2fddb3-33c6-4f17-8d39-47f8737d7a19
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:54Z"
-  message: 'Deleted pod: inventory-6df8fd8b55-jtj9q'
+  lastTimestamp: "2026-09-27T07:55:18Z"
+  message: 'Deleted pod: inventory-6df8fd8b55-kw2bh'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:54Z"
-    name: inventory-6df8fd8b55.18d91c2a3047bc47
+    creationTimestamp: "2026-09-27T07:55:18Z"
+    name: inventory-6df8fd8b55.18d91e5e808231d1
     namespace: inventory
-    resourceVersion: "912"
-    uid: f2e465cc-41cc-411d-b720-e56270ac95b6
+    resourceVersion: "943"
+    uid: bfee1cf5-12ec-4478-9181-037f0fa42f87
   reason: SuccessfulDelete
   reportingComponent: replicaset-controller
   reportingInstance: ""
@@ -3314,23 +3314,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
+  firstTimestamp: "2026-09-27T07:54:36Z"
   involvedObject:
     apiVersion: apps/v1
     kind: Deployment
     name: inventory
     namespace: inventory
-    resourceVersion: "579"
-    uid: a4dc030d-81c0-4091-82ae-8b3c72122f8f
+    resourceVersion: "604"
+    uid: eb99d019-cc46-474f-8348-60728c782517
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
+  lastTimestamp: "2026-09-27T07:54:36Z"
   message: Scaled up replica set inventory-6df8fd8b55 from 0 to 1
   metadata:
-    creationTimestamp: "2026-09-27T07:14:09Z"
-    name: inventory.18d91c1f8bd53900
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: inventory.18d91e54ec133649
     namespace: inventory
-    resourceVersion: "666"
-    uid: b8f9590b-375b-4b11-89ac-64f7aa744d69
+    resourceVersion: "696"
+    uid: 1f90f35b-bed9-416c-97aa-2c5f5ab9c6b7
   reason: ScalingReplicaSet
   reportingComponent: deployment-controller
   reportingInstance: ""
@@ -3340,23 +3340,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
+  firstTimestamp: "2026-09-27T07:55:16Z"
   involvedObject:
     apiVersion: apps/v1
     kind: Deployment
     name: inventory
     namespace: inventory
-    resourceVersion: "869"
-    uid: a4dc030d-81c0-4091-82ae-8b3c72122f8f
+    resourceVersion: "887"
+    uid: eb99d019-cc46-474f-8348-60728c782517
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
+  lastTimestamp: "2026-09-27T07:55:16Z"
   message: Scaled up replica set inventory-577549bfd6 from 0 to 1
   metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: inventory.18d91c29ffe54879
+    creationTimestamp: "2026-09-27T07:55:16Z"
+    name: inventory.18d91e5e30abe094
     namespace: inventory
-    resourceVersion: "872"
-    uid: 32da0289-60ff-4470-a96e-ea13b7fc6d2e
+    resourceVersion: "889"
+    uid: 0c7bef79-36b3-498a-b6bd-1793c7346bd2
   reason: ScalingReplicaSet
   reportingComponent: deployment-controller
   reportingInstance: ""
@@ -3366,23 +3366,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:54Z"
+  firstTimestamp: "2026-09-27T07:55:18Z"
   involvedObject:
     apiVersion: apps/v1
     kind: Deployment
     name: inventory
     namespace: inventory
-    resourceVersion: "881"
-    uid: a4dc030d-81c0-4091-82ae-8b3c72122f8f
+    resourceVersion: "899"
+    uid: eb99d019-cc46-474f-8348-60728c782517
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:54Z"
+  lastTimestamp: "2026-09-27T07:55:18Z"
   message: Scaled down replica set inventory-6df8fd8b55 from 1 to 0
   metadata:
-    creationTimestamp: "2026-09-27T07:14:54Z"
-    name: inventory.18d91c2a300c1cbc
+    creationTimestamp: "2026-09-27T07:55:18Z"
+    name: inventory.18d91e5e80251aa2
     namespace: inventory
-    resourceVersion: "906"
-    uid: 5da04aaf-c8fd-4edd-bf84-9064650740f0
+    resourceVersion: "931"
+    uid: 8e3cb3e4-9ce8-4745-91bb-35cdadc6d53d
   reason: ScalingReplicaSet
   reportingComponent: deployment-controller
   reportingInstance: ""
@@ -3392,25 +3392,25 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:13:55Z"
+  firstTimestamp: "2026-09-27T07:54:12Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: coredns-7d764666f9-b7h5s
+    name: coredns-7d764666f9-v6lh2
     namespace: kube-system
-    resourceVersion: "367"
-    uid: 30bf9dd6-f285-484c-9ed0-1de4966ded84
+    resourceVersion: "381"
+    uid: ea874254-470f-49c2-b048-81dfb1274f68
   kind: Event
-  lastTimestamp: "2026-09-27T07:13:55Z"
+  lastTimestamp: "2026-09-27T07:54:12Z"
   message: '0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims
     to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful
     for scheduling.'
   metadata:
-    creationTimestamp: "2026-09-27T07:13:55Z"
-    name: coredns-7d764666f9-b7h5s.18d91c1c960d39e4
+    creationTimestamp: "2026-09-27T07:54:12Z"
+    name: coredns-7d764666f9-v6lh2.18d91e4f48739269
     namespace: kube-system
-    resourceVersion: "378"
-    uid: fdfcf7b7-d322-45d9-98be-253e1b51f983
+    resourceVersion: "389"
+    uid: 9dd5bb3c-a606-4463-a8cc-f3908a1e121f
   reason: FailedScheduling
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -3420,23 +3420,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:23Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: coredns-7d764666f9-b7h5s
+    name: coredns-7d764666f9-v6lh2
     namespace: kube-system
-    resourceVersion: "372"
-    uid: 30bf9dd6-f285-484c-9ed0-1de4966ded84
+    resourceVersion: "388"
+    uid: ea874254-470f-49c2-b048-81dfb1274f68
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: Successfully assigned kube-system/coredns-7d764666f9-b7h5s to scout-evals-control-plane
+  lastTimestamp: "2026-09-27T07:54:23Z"
+  message: Successfully assigned kube-system/coredns-7d764666f9-v6lh2 to scout-evals-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: coredns-7d764666f9-b7h5s.18d91c1f30d14d09
+    creationTimestamp: "2026-09-27T07:54:23Z"
+    name: coredns-7d764666f9-v6lh2.18d91e51db114293
     namespace: kube-system
-    resourceVersion: "424"
-    uid: 4109ce8d-884a-4a92-8bd7-0b6b00d27405
+    resourceVersion: "433"
+    uid: 43eb45eb-fbd3-4e6e-8815-8afdc31fb841
   reason: Scheduled
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -3446,164 +3446,25 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:24Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{coredns}
     kind: Pod
-    name: coredns-7d764666f9-b7h5s
-    namespace: kube-system
-    resourceVersion: "422"
-    uid: 30bf9dd6-f285-484c-9ed0-1de4966ded84
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: Container image "registry.k8s.io/coredns/coredns:v1.13.1" already present
-    on machine and can be accessed by the pod
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: coredns-7d764666f9-b7h5s.18d91c1f4a7fe80c
-    namespace: kube-system
-    resourceVersion: "432"
-    uid: b05d8c65-feb3-4ab9-b8e8-553b720eabfd
-  reason: Pulled
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{coredns}
-    kind: Pod
-    name: coredns-7d764666f9-b7h5s
-    namespace: kube-system
-    resourceVersion: "422"
-    uid: 30bf9dd6-f285-484c-9ed0-1de4966ded84
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: Container created
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: coredns-7d764666f9-b7h5s.18d91c1f5d86df6b
-    namespace: kube-system
-    resourceVersion: "518"
-    uid: 541d67ba-5726-401f-81ef-cb1d2d160fcc
-  reason: Created
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{coredns}
-    kind: Pod
-    name: coredns-7d764666f9-b7h5s
-    namespace: kube-system
-    resourceVersion: "422"
-    uid: 30bf9dd6-f285-484c-9ed0-1de4966ded84
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: Container started
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: coredns-7d764666f9-b7h5s.18d91c1f60311fe2
-    namespace: kube-system
-    resourceVersion: "529"
-    uid: c4e28fe7-04cd-499b-b118-2c9859414366
-  reason: Started
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:13:55Z"
-  involvedObject:
-    apiVersion: v1
-    kind: Pod
-    name: coredns-7d764666f9-pmc2k
-    namespace: kube-system
-    resourceVersion: "364"
-    uid: 9775fe8f-5dae-46a8-b070-efc8096b2cad
-  kind: Event
-  lastTimestamp: "2026-09-27T07:13:55Z"
-  message: '0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims
-    to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful
-    for scheduling.'
-  metadata:
-    creationTimestamp: "2026-09-27T07:13:55Z"
-    name: coredns-7d764666f9-pmc2k.18d91c1c95e0ed5f
-    namespace: kube-system
-    resourceVersion: "368"
-    uid: 4bc15d7a-3bd9-424f-939f-e634d9109926
-  reason: FailedScheduling
-  reportingComponent: default-scheduler
-  reportingInstance: ""
-  source:
-    component: default-scheduler
-  type: Warning
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
-  involvedObject:
-    apiVersion: v1
-    kind: Pod
-    name: coredns-7d764666f9-pmc2k
-    namespace: kube-system
-    resourceVersion: "369"
-    uid: 9775fe8f-5dae-46a8-b070-efc8096b2cad
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: Successfully assigned kube-system/coredns-7d764666f9-pmc2k to scout-evals-control-plane
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: coredns-7d764666f9-pmc2k.18d91c1f30d24498
-    namespace: kube-system
-    resourceVersion: "426"
-    uid: 7ee35d63-5d5a-4c7b-82a5-7d184381d1dd
-  reason: Scheduled
-  reportingComponent: default-scheduler
-  reportingInstance: ""
-  source:
-    component: default-scheduler
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{coredns}
-    kind: Pod
-    name: coredns-7d764666f9-pmc2k
-    namespace: kube-system
-    resourceVersion: "421"
-    uid: 9775fe8f-5dae-46a8-b070-efc8096b2cad
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: Container image "registry.k8s.io/coredns/coredns:v1.13.1" already present
-    on machine and can be accessed by the pod
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: coredns-7d764666f9-pmc2k.18d91c1f4a31def4
+    name: coredns-7d764666f9-v6lh2
     namespace: kube-system
     resourceVersion: "430"
-    uid: 7161a8d2-9764-4005-9bea-61e57430fcbc
+    uid: ea874254-470f-49c2-b048-81dfb1274f68
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:24Z"
+  message: Container image "registry.k8s.io/coredns/coredns:v1.13.1" already present
+    on machine and can be accessed by the pod
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:24Z"
+    name: coredns-7d764666f9-v6lh2.18d91e51f48f4003
+    namespace: kube-system
+    resourceVersion: "440"
+    uid: c5bbac20-68bb-4f74-81b2-945384e59e44
   reason: Pulled
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -3614,24 +3475,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:24Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{coredns}
     kind: Pod
-    name: coredns-7d764666f9-pmc2k
+    name: coredns-7d764666f9-v6lh2
     namespace: kube-system
-    resourceVersion: "421"
-    uid: 9775fe8f-5dae-46a8-b070-efc8096b2cad
+    resourceVersion: "430"
+    uid: ea874254-470f-49c2-b048-81dfb1274f68
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
+  lastTimestamp: "2026-09-27T07:54:24Z"
   message: Container created
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: coredns-7d764666f9-pmc2k.18d91c1f5d04076a
+    creationTimestamp: "2026-09-27T07:54:24Z"
+    name: coredns-7d764666f9-v6lh2.18d91e5209ef10dd
     namespace: kube-system
-    resourceVersion: "516"
-    uid: 1ff23d81-8945-484c-9cf3-78a34b4d280d
+    resourceVersion: "443"
+    uid: 91e7b627-9bd6-409f-b3d0-fe115566fa2f
   reason: Created
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -3642,24 +3503,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:24Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{coredns}
     kind: Pod
-    name: coredns-7d764666f9-pmc2k
+    name: coredns-7d764666f9-v6lh2
     namespace: kube-system
-    resourceVersion: "421"
-    uid: 9775fe8f-5dae-46a8-b070-efc8096b2cad
+    resourceVersion: "430"
+    uid: ea874254-470f-49c2-b048-81dfb1274f68
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
+  lastTimestamp: "2026-09-27T07:54:24Z"
   message: Container started
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: coredns-7d764666f9-pmc2k.18d91c1f5feb520d
+    creationTimestamp: "2026-09-27T07:54:24Z"
+    name: coredns-7d764666f9-v6lh2.18d91e520c7c0af8
     namespace: kube-system
-    resourceVersion: "528"
-    uid: 374a2e57-d421-448f-9fd4-8350376b0a75
+    resourceVersion: "445"
+    uid: 83391a77-89d1-482d-9e7f-287e8e7dbfd9
   reason: Started
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -3670,23 +3531,162 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:13:55Z"
+  firstTimestamp: "2026-09-27T07:54:12Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: coredns-7d764666f9-ws82d
+    namespace: kube-system
+    resourceVersion: "376"
+    uid: b97cf447-430a-4796-92f4-9205193bce92
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:12Z"
+  message: '0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims
+    to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful
+    for scheduling.'
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:12Z"
+    name: coredns-7d764666f9-ws82d.18d91e4f48124297
+    namespace: kube-system
+    resourceVersion: "380"
+    uid: 28fe337f-8c31-4691-bb7b-4a0a13c13fe8
+  reason: FailedScheduling
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Warning
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:23Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: coredns-7d764666f9-ws82d
+    namespace: kube-system
+    resourceVersion: "383"
+    uid: b97cf447-430a-4796-92f4-9205193bce92
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:23Z"
+  message: Successfully assigned kube-system/coredns-7d764666f9-ws82d to scout-evals-control-plane
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:23Z"
+    name: coredns-7d764666f9-ws82d.18d91e51db1b68da
+    namespace: kube-system
+    resourceVersion: "435"
+    uid: 5864f7a3-9443-4646-a09c-0fef97c62b45
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:24Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{coredns}
+    kind: Pod
+    name: coredns-7d764666f9-ws82d
+    namespace: kube-system
+    resourceVersion: "431"
+    uid: b97cf447-430a-4796-92f4-9205193bce92
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:24Z"
+  message: Container image "registry.k8s.io/coredns/coredns:v1.13.1" already present
+    on machine and can be accessed by the pod
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:24Z"
+    name: coredns-7d764666f9-ws82d.18d91e51f5656237
+    namespace: kube-system
+    resourceVersion: "441"
+    uid: 81077555-2676-4980-9e5d-6bcabda1b928
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:24Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{coredns}
+    kind: Pod
+    name: coredns-7d764666f9-ws82d
+    namespace: kube-system
+    resourceVersion: "431"
+    uid: b97cf447-430a-4796-92f4-9205193bce92
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:24Z"
+  message: Container created
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:24Z"
+    name: coredns-7d764666f9-ws82d.18d91e520ab1f04d
+    namespace: kube-system
+    resourceVersion: "444"
+    uid: db443b76-ee3f-4b14-9d00-f65216a83f4f
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:24Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{coredns}
+    kind: Pod
+    name: coredns-7d764666f9-ws82d
+    namespace: kube-system
+    resourceVersion: "431"
+    uid: b97cf447-430a-4796-92f4-9205193bce92
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:24Z"
+  message: Container started
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:24Z"
+    name: coredns-7d764666f9-ws82d.18d91e520d428103
+    namespace: kube-system
+    resourceVersion: "446"
+    uid: a68ab6ad-74ce-4317-8f89-ac4c85029122
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:12Z"
   involvedObject:
     apiVersion: apps/v1
     kind: ReplicaSet
     name: coredns-7d764666f9
     namespace: kube-system
-    resourceVersion: "322"
-    uid: b62fbd9e-024e-406c-8355-19b45f1530dd
+    resourceVersion: "330"
+    uid: a7f86949-02b6-4644-8842-766c3d3134d9
   kind: Event
-  lastTimestamp: "2026-09-27T07:13:55Z"
-  message: 'Created pod: coredns-7d764666f9-pmc2k'
+  lastTimestamp: "2026-09-27T07:54:12Z"
+  message: 'Created pod: coredns-7d764666f9-ws82d'
   metadata:
-    creationTimestamp: "2026-09-27T07:13:55Z"
-    name: coredns-7d764666f9.18d91c1c95debbaf
+    creationTimestamp: "2026-09-27T07:54:12Z"
+    name: coredns-7d764666f9.18d91e4f48102377
     namespace: kube-system
-    resourceVersion: "366"
-    uid: 248c4898-2035-4fec-9173-1ff2355f9b3b
+    resourceVersion: "378"
+    uid: 9c442934-05d2-4661-b350-1f8700b85837
   reason: SuccessfulCreate
   reportingComponent: replicaset-controller
   reportingInstance: ""
@@ -3696,23 +3696,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:13:55Z"
+  firstTimestamp: "2026-09-27T07:54:12Z"
   involvedObject:
     apiVersion: apps/v1
     kind: ReplicaSet
     name: coredns-7d764666f9
     namespace: kube-system
-    resourceVersion: "322"
-    uid: b62fbd9e-024e-406c-8355-19b45f1530dd
+    resourceVersion: "330"
+    uid: a7f86949-02b6-4644-8842-766c3d3134d9
   kind: Event
-  lastTimestamp: "2026-09-27T07:13:55Z"
-  message: 'Created pod: coredns-7d764666f9-b7h5s'
+  lastTimestamp: "2026-09-27T07:54:12Z"
+  message: 'Created pod: coredns-7d764666f9-v6lh2'
   metadata:
-    creationTimestamp: "2026-09-27T07:13:55Z"
-    name: coredns-7d764666f9.18d91c1c9610c424
+    creationTimestamp: "2026-09-27T07:54:12Z"
+    name: coredns-7d764666f9.18d91e4f486760dd
     namespace: kube-system
-    resourceVersion: "377"
-    uid: 63382170-c5d0-4359-88b6-aa43a2ee37cb
+    resourceVersion: "386"
+    uid: 62229311-6b91-4fd5-b28e-7655bd6bec31
   reason: SuccessfulCreate
   reportingComponent: replicaset-controller
   reportingInstance: ""
@@ -3722,23 +3722,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:13:55Z"
+  firstTimestamp: "2026-09-27T07:54:12Z"
   involvedObject:
     apiVersion: apps/v1
     kind: Deployment
     name: coredns
     namespace: kube-system
-    resourceVersion: "237"
-    uid: 1173fdf3-2381-4005-8ae4-b54d8a29ae6a
+    resourceVersion: "238"
+    uid: 26c6214b-8173-4038-9c3a-eb39d60855c5
   kind: Event
-  lastTimestamp: "2026-09-27T07:13:55Z"
+  lastTimestamp: "2026-09-27T07:54:12Z"
   message: Scaled up replica set coredns-7d764666f9 from 0 to 2
   metadata:
-    creationTimestamp: "2026-09-27T07:13:55Z"
-    name: coredns.18d91c1c7816b4e3
+    creationTimestamp: "2026-09-27T07:54:12Z"
+    name: coredns.18d91e4f276da112
     namespace: kube-system
-    resourceVersion: "326"
-    uid: ea125aea-3316-42f6-8cb1-c16bd8c46ba0
+    resourceVersion: "334"
+    uid: def72c4f-1d5b-49d0-b19a-ac399257baa7
   reason: ScalingReplicaSet
   reportingComponent: deployment-controller
   reportingInstance: ""
@@ -3748,23 +3748,160 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:13:54Z"
+  firstTimestamp: "2026-09-27T07:54:12Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: etcd-scout-evals-control-plane
+    name: kindnet-hqjh9
     namespace: kube-system
-    resourceVersion: "246"
-    uid: 1599638e-d461-4513-a24f-58854c7fbb8c
+    resourceVersion: "356"
+    uid: fd1bac90-d682-4587-9c0e-3c43758d0e04
   kind: Event
-  lastTimestamp: "2026-09-27T07:13:54Z"
+  lastTimestamp: "2026-09-27T07:54:12Z"
+  message: Successfully assigned kube-system/kindnet-hqjh9 to scout-evals-control-plane
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:12Z"
+    name: kindnet-hqjh9.18d91e4f39bad66d
+    namespace: kube-system
+    resourceVersion: "364"
+    uid: c1e24dd4-1b42-442f-9688-146cb51bffdf
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:12Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{kindnet-cni}
+    kind: Pod
+    name: kindnet-hqjh9
+    namespace: kube-system
+    resourceVersion: "360"
+    uid: fd1bac90-d682-4587-9c0e-3c43758d0e04
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:12Z"
+  message: Container image "docker.io/kindest/kindnetd:v20251212-v0.29.0-alpha-105-g20ccfc88"
+    already present on machine and can be accessed by the pod
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:12Z"
+    name: kindnet-hqjh9.18d91e4f53330004
+    namespace: kube-system
+    resourceVersion: "395"
+    uid: b8b071b2-e523-4fda-9bad-669d98870e12
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:13Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{kindnet-cni}
+    kind: Pod
+    name: kindnet-hqjh9
+    namespace: kube-system
+    resourceVersion: "360"
+    uid: fd1bac90-d682-4587-9c0e-3c43758d0e04
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:13Z"
+  message: Container created
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:13Z"
+    name: kindnet-hqjh9.18d91e4f6d5e9cd9
+    namespace: kube-system
+    resourceVersion: "401"
+    uid: dcbc1552-6d5d-4a75-b37a-8d734bef0421
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:13Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{kindnet-cni}
+    kind: Pod
+    name: kindnet-hqjh9
+    namespace: kube-system
+    resourceVersion: "360"
+    uid: fd1bac90-d682-4587-9c0e-3c43758d0e04
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:13Z"
+  message: Container started
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:13Z"
+    name: kindnet-hqjh9.18d91e4f7867dbb1
+    namespace: kube-system
+    resourceVersion: "402"
+    uid: a4bdaf51-e393-43a9-93ef-9a41355ec624
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:12Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: DaemonSet
+    name: kindnet
+    namespace: kube-system
+    resourceVersion: "275"
+    uid: 39856364-0376-428f-8595-8b380e783012
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:12Z"
+  message: 'Created pod: kindnet-hqjh9'
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:12Z"
+    name: kindnet.18d91e4f397ce436
+    namespace: kube-system
+    resourceVersion: "362"
+    uid: d8350667-ad3c-44b1-aac5-b78112894c7e
+  reason: SuccessfulCreate
+  reportingComponent: daemonset-controller
+  reportingInstance: ""
+  source:
+    component: daemonset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:11Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: kube-apiserver-scout-evals-control-plane
+    namespace: kube-system
+    resourceVersion: "265"
+    uid: 26c0fd0a-c66d-4bbe-82d5-abb9f3adff74
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:11Z"
   message: Node is not ready
   metadata:
-    creationTimestamp: "2026-09-27T07:13:54Z"
-    name: etcd-scout-evals-control-plane.18d91c1c4894e0f2
+    creationTimestamp: "2026-09-27T07:54:11Z"
+    name: kube-apiserver-scout-evals-control-plane.18d91e4efb325a66
     namespace: kube-system
-    resourceVersion: "316"
-    uid: d62e6018-092f-4ff8-8159-69c699c5b5dd
+    resourceVersion: "325"
+    uid: 000cf9fa-726d-414c-a045-560a49094da4
   reason: NodeNotReady
   reportingComponent: node-controller
   reportingInstance: ""
@@ -3774,160 +3911,49 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:13:55Z"
+  firstTimestamp: "2026-09-27T07:54:11Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: kindnet-drfl9
+    name: kube-controller-manager-scout-evals-control-plane
     namespace: kube-system
-    resourceVersion: "352"
-    uid: 2fb1f360-836c-4dda-bcf2-cbe99099b8f7
+    resourceVersion: "266"
+    uid: c6e86d91-d5af-4d2b-820d-077ae07adb0e
   kind: Event
-  lastTimestamp: "2026-09-27T07:13:55Z"
-  message: Successfully assigned kube-system/kindnet-drfl9 to scout-evals-control-plane
+  lastTimestamp: "2026-09-27T07:54:11Z"
+  message: Node is not ready
   metadata:
-    creationTimestamp: "2026-09-27T07:13:55Z"
-    name: kindnet-drfl9.18d91c1c906f18f0
+    creationTimestamp: "2026-09-27T07:54:11Z"
+    name: kube-controller-manager-scout-evals-control-plane.18d91e4efb439387
     namespace: kube-system
-    resourceVersion: "361"
-    uid: 8b799f6f-7e9f-4923-9067-ec0f04ffeaae
-  reason: Scheduled
-  reportingComponent: default-scheduler
+    resourceVersion: "326"
+    uid: fceb99af-4ab5-446b-ab0d-6d2a3da2a33a
+  reason: NodeNotReady
+  reportingComponent: node-controller
   reportingInstance: ""
   source:
-    component: default-scheduler
-  type: Normal
+    component: node-controller
+  type: Warning
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:13:56Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{kindnet-cni}
-    kind: Pod
-    name: kindnet-drfl9
-    namespace: kube-system
-    resourceVersion: "356"
-    uid: 2fb1f360-836c-4dda-bcf2-cbe99099b8f7
-  kind: Event
-  lastTimestamp: "2026-09-27T07:13:56Z"
-  message: Container image "docker.io/kindest/kindnetd:v20251212-v0.29.0-alpha-105-g20ccfc88"
-    already present on machine and can be accessed by the pod
-  metadata:
-    creationTimestamp: "2026-09-27T07:13:56Z"
-    name: kindnet-drfl9.18d91c1ca8b6b8aa
-    namespace: kube-system
-    resourceVersion: "384"
-    uid: da7efed9-494e-41f9-b0eb-9f9928bbb363
-  reason: Pulled
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:13:56Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{kindnet-cni}
-    kind: Pod
-    name: kindnet-drfl9
-    namespace: kube-system
-    resourceVersion: "356"
-    uid: 2fb1f360-836c-4dda-bcf2-cbe99099b8f7
-  kind: Event
-  lastTimestamp: "2026-09-27T07:13:56Z"
-  message: Container created
-  metadata:
-    creationTimestamp: "2026-09-27T07:13:56Z"
-    name: kindnet-drfl9.18d91c1cc0c9ecc3
-    namespace: kube-system
-    resourceVersion: "391"
-    uid: 444edbfd-2142-4713-a3d5-39495ef09cce
-  reason: Created
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:13:56Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{kindnet-cni}
-    kind: Pod
-    name: kindnet-drfl9
-    namespace: kube-system
-    resourceVersion: "356"
-    uid: 2fb1f360-836c-4dda-bcf2-cbe99099b8f7
-  kind: Event
-  lastTimestamp: "2026-09-27T07:13:56Z"
-  message: Container started
-  metadata:
-    creationTimestamp: "2026-09-27T07:13:56Z"
-    name: kindnet-drfl9.18d91c1cccbacf53
-    namespace: kube-system
-    resourceVersion: "392"
-    uid: 71626610-9377-42c4-b890-6d01c0974785
-  reason: Started
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:13:55Z"
-  involvedObject:
-    apiVersion: apps/v1
-    kind: DaemonSet
-    name: kindnet
-    namespace: kube-system
-    resourceVersion: "255"
-    uid: 10611c88-c0f2-4a1d-aab4-2f5665986998
-  kind: Event
-  lastTimestamp: "2026-09-27T07:13:55Z"
-  message: 'Created pod: kindnet-drfl9'
-  metadata:
-    creationTimestamp: "2026-09-27T07:13:55Z"
-    name: kindnet.18d91c1c900d15bd
-    namespace: kube-system
-    resourceVersion: "355"
-    uid: c943ccea-53fe-4a77-a7e0-ef11090d4d91
-  reason: SuccessfulCreate
-  reportingComponent: daemonset-controller
-  reportingInstance: ""
-  source:
-    component: daemonset-controller
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:13:49Z"
+  firstTimestamp: "2026-09-27T07:54:06Z"
   involvedObject:
     apiVersion: coordination.k8s.io/v1
     kind: Lease
     name: kube-controller-manager
     namespace: kube-system
-    resourceVersion: "265"
-    uid: c05f210a-b08e-4b9f-9953-b1b8a6242e23
+    resourceVersion: "247"
+    uid: 1e54d6e2-7dfd-484a-9d30-fa2ebe734a56
   kind: Event
-  lastTimestamp: "2026-09-27T07:13:49Z"
-  message: scout-evals-control-plane_a7d6ee27-5d67-4fb8-a1d4-f5d9bcbb2a70 became leader
+  lastTimestamp: "2026-09-27T07:54:06Z"
+  message: scout-evals-control-plane_a0b02696-b9a7-4f52-8d1c-2effead79581 became leader
   metadata:
-    creationTimestamp: "2026-09-27T07:13:49Z"
-    name: kube-controller-manager.18d91c1b26ce0e65
+    creationTimestamp: "2026-09-27T07:54:06Z"
+    name: kube-controller-manager.18d91e4dd92225a8
     namespace: kube-system
-    resourceVersion: "267"
-    uid: e2193927-8e27-455b-8b0a-feaaae925eb1
+    resourceVersion: "249"
+    uid: 2d94e8a4-c4fc-49a1-a2bb-f5d122c824ec
   reason: LeaderElection
   reportingComponent: kube-controller-manager
   reportingInstance: ""
@@ -3937,23 +3963,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:13:55Z"
+  firstTimestamp: "2026-09-27T07:54:12Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: kube-proxy-hbf6z
+    name: kube-proxy-7xc9w
     namespace: kube-system
-    resourceVersion: "353"
-    uid: 04ffaad1-f45d-45b8-bfcf-3ce15c5380c7
+    resourceVersion: "355"
+    uid: d0bc6943-4e06-4da1-bfd4-412aec2e7ad9
   kind: Event
-  lastTimestamp: "2026-09-27T07:13:55Z"
-  message: Successfully assigned kube-system/kube-proxy-hbf6z to scout-evals-control-plane
+  lastTimestamp: "2026-09-27T07:54:12Z"
+  message: Successfully assigned kube-system/kube-proxy-7xc9w to scout-evals-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T07:13:55Z"
-    name: kube-proxy-hbf6z.18d91c1c90686e3b
+    creationTimestamp: "2026-09-27T07:54:12Z"
+    name: kube-proxy-7xc9w.18d91e4f39b19a08
     namespace: kube-system
-    resourceVersion: "360"
-    uid: be61a3e2-c6ae-4923-ac6e-8ad81b18dd1b
+    resourceVersion: "363"
+    uid: 5760e056-8a73-4452-82a5-a2e945c2e096
   reason: Scheduled
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -3963,25 +3989,25 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:13:56Z"
+  firstTimestamp: "2026-09-27T07:54:12Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{kube-proxy}
     kind: Pod
-    name: kube-proxy-hbf6z
+    name: kube-proxy-7xc9w
     namespace: kube-system
     resourceVersion: "358"
-    uid: 04ffaad1-f45d-45b8-bfcf-3ce15c5380c7
+    uid: d0bc6943-4e06-4da1-bfd4-412aec2e7ad9
   kind: Event
-  lastTimestamp: "2026-09-27T07:13:56Z"
+  lastTimestamp: "2026-09-27T07:54:12Z"
   message: Container image "registry.k8s.io/kube-proxy:v1.35.0" already present on
     machine and can be accessed by the pod
   metadata:
-    creationTimestamp: "2026-09-27T07:13:56Z"
-    name: kube-proxy-hbf6z.18d91c1ca67a1987
+    creationTimestamp: "2026-09-27T07:54:12Z"
+    name: kube-proxy-7xc9w.18d91e4f50bb60cf
     namespace: kube-system
-    resourceVersion: "383"
-    uid: 678a1ab2-c699-46c2-a4b5-1eed6095391a
+    resourceVersion: "394"
+    uid: 1c22cecc-8850-4b55-8571-e203cae2abc7
   reason: Pulled
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -3992,24 +4018,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:13:56Z"
+  firstTimestamp: "2026-09-27T07:54:13Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{kube-proxy}
     kind: Pod
-    name: kube-proxy-hbf6z
+    name: kube-proxy-7xc9w
     namespace: kube-system
     resourceVersion: "358"
-    uid: 04ffaad1-f45d-45b8-bfcf-3ce15c5380c7
+    uid: d0bc6943-4e06-4da1-bfd4-412aec2e7ad9
   kind: Event
-  lastTimestamp: "2026-09-27T07:13:56Z"
+  lastTimestamp: "2026-09-27T07:54:13Z"
   message: Container created
   metadata:
-    creationTimestamp: "2026-09-27T07:13:56Z"
-    name: kube-proxy-hbf6z.18d91c1cb0dd3095
+    creationTimestamp: "2026-09-27T07:54:13Z"
+    name: kube-proxy-7xc9w.18d91e4f5a1c7f4a
     namespace: kube-system
-    resourceVersion: "387"
-    uid: 9aa53e67-e126-44ac-85fa-312016d857b6
+    resourceVersion: "396"
+    uid: 50fd0592-69ad-40a3-b743-7d460ed98224
   reason: Created
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -4020,24 +4046,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:13:56Z"
+  firstTimestamp: "2026-09-27T07:54:13Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{kube-proxy}
     kind: Pod
-    name: kube-proxy-hbf6z
+    name: kube-proxy-7xc9w
     namespace: kube-system
     resourceVersion: "358"
-    uid: 04ffaad1-f45d-45b8-bfcf-3ce15c5380c7
+    uid: d0bc6943-4e06-4da1-bfd4-412aec2e7ad9
   kind: Event
-  lastTimestamp: "2026-09-27T07:13:56Z"
+  lastTimestamp: "2026-09-27T07:54:13Z"
   message: Container started
   metadata:
-    creationTimestamp: "2026-09-27T07:13:56Z"
-    name: kube-proxy-hbf6z.18d91c1cb3ba2b14
+    creationTimestamp: "2026-09-27T07:54:13Z"
+    name: kube-proxy-7xc9w.18d91e4f5ce1d354
     namespace: kube-system
-    resourceVersion: "388"
-    uid: 4de10ac5-f17c-40ae-b08b-5e351e7b463c
+    resourceVersion: "397"
+    uid: 199d943f-2a59-448c-a36f-90c23420afa8
   reason: Started
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -4048,23 +4074,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:13:55Z"
+  firstTimestamp: "2026-09-27T07:54:12Z"
   involvedObject:
     apiVersion: apps/v1
     kind: DaemonSet
     name: kube-proxy
     namespace: kube-system
-    resourceVersion: "241"
-    uid: ebe28492-b547-4765-8ee4-6a74053013bb
+    resourceVersion: "242"
+    uid: b6af77d0-bc40-459d-a616-a7a8d5701fad
   kind: Event
-  lastTimestamp: "2026-09-27T07:13:55Z"
-  message: 'Created pod: kube-proxy-hbf6z'
+  lastTimestamp: "2026-09-27T07:54:12Z"
+  message: 'Created pod: kube-proxy-7xc9w'
   metadata:
-    creationTimestamp: "2026-09-27T07:13:55Z"
-    name: kube-proxy.18d91c1c9027f385
+    creationTimestamp: "2026-09-27T07:54:12Z"
+    name: kube-proxy.18d91e4f396f04fc
     namespace: kube-system
-    resourceVersion: "359"
-    uid: 09a5cdeb-dc21-4f11-984a-391b9f0bb879
+    resourceVersion: "357"
+    uid: f2872493-508c-4f00-8612-08b2ff4dc67c
   reason: SuccessfulCreate
   reportingComponent: daemonset-controller
   reportingInstance: ""
@@ -4072,25 +4098,52 @@ items:
     component: daemonset-controller
   type: Normal
 - apiVersion: v1
+  count: 4
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:06Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{kube-scheduler}
+    kind: Pod
+    name: kube-scheduler-scout-evals-control-plane
+    namespace: kube-system
+    uid: 26706792d07a192381efff72a0460ad3
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:07Z"
+  message: 'Readiness probe failed: HTTP probe failed with statuscode: 500'
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:06Z"
+    name: kube-scheduler-scout-evals-control-plane.18d91e4dd1adad54
+    namespace: kube-system
+    resourceVersion: "290"
+    uid: a35a112d-5381-400f-8c54-77de29a1ad58
+  reason: Unhealthy
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Warning
+- apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:13:50Z"
+  firstTimestamp: "2026-09-27T07:54:08Z"
   involvedObject:
     apiVersion: coordination.k8s.io/v1
     kind: Lease
     name: kube-scheduler
     namespace: kube-system
-    resourceVersion: "277"
-    uid: 7256e1a1-eb4b-44e2-866b-0d3291798506
+    resourceVersion: "293"
+    uid: 53efdc45-9bbe-47f6-959b-f52e7af53928
   kind: Event
-  lastTimestamp: "2026-09-27T07:13:50Z"
-  message: scout-evals-control-plane_27d57c77-6329-4d0e-b832-429386155c28 became leader
+  lastTimestamp: "2026-09-27T07:54:08Z"
+  message: scout-evals-control-plane_27906401-1a89-436e-96d8-7300fc42874c became leader
   metadata:
-    creationTimestamp: "2026-09-27T07:13:50Z"
-    name: kube-scheduler.18d91c1b37cd80bc
+    creationTimestamp: "2026-09-27T07:54:08Z"
+    name: kube-scheduler.18d91e4e393e8f10
     namespace: kube-system
-    resourceVersion: "278"
-    uid: 3b4e991c-68f5-4ab6-8462-7dc14c78cc50
+    resourceVersion: "295"
+    uid: f3bbd04a-d0b0-42b9-94b2-a2b729d72093
   reason: LeaderElection
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -4100,25 +4153,25 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:13:55Z"
+  firstTimestamp: "2026-09-27T07:54:12Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: local-path-provisioner-67b8995b4b-9hblc
+    name: local-path-provisioner-67b8995b4b-whpwz
     namespace: local-path-storage
-    resourceVersion: "365"
-    uid: b1685941-5ef9-40b3-8c8c-365e42033bd6
+    resourceVersion: "377"
+    uid: edb18b33-b90b-46d2-856f-c42d90cba45f
   kind: Event
-  lastTimestamp: "2026-09-27T07:13:55Z"
+  lastTimestamp: "2026-09-27T07:54:12Z"
   message: '0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims
     to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful
     for scheduling.'
   metadata:
-    creationTimestamp: "2026-09-27T07:13:55Z"
-    name: local-path-provisioner-67b8995b4b-9hblc.18d91c1c95fc1412
+    creationTimestamp: "2026-09-27T07:54:12Z"
+    name: local-path-provisioner-67b8995b4b-whpwz.18d91e4f48204289
     namespace: local-path-storage
-    resourceVersion: "374"
-    uid: d92504cb-a2c8-4673-abe8-37c74821c3b1
+    resourceVersion: "385"
+    uid: 2f008d5a-9d08-4944-b19a-1f2385ca81b8
   reason: FailedScheduling
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -4128,24 +4181,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:23Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: local-path-provisioner-67b8995b4b-9hblc
+    name: local-path-provisioner-67b8995b4b-whpwz
     namespace: local-path-storage
-    resourceVersion: "370"
-    uid: b1685941-5ef9-40b3-8c8c-365e42033bd6
+    resourceVersion: "382"
+    uid: edb18b33-b90b-46d2-856f-c42d90cba45f
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: Successfully assigned local-path-storage/local-path-provisioner-67b8995b4b-9hblc
+  lastTimestamp: "2026-09-27T07:54:23Z"
+  message: Successfully assigned local-path-storage/local-path-provisioner-67b8995b4b-whpwz
     to scout-evals-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: local-path-provisioner-67b8995b4b-9hblc.18d91c1f30c07c03
+    creationTimestamp: "2026-09-27T07:54:23Z"
+    name: local-path-provisioner-67b8995b4b-whpwz.18d91e51db1d877d
     namespace: local-path-storage
-    resourceVersion: "423"
-    uid: 9c18b471-36af-4180-8623-ed3043c06e2e
+    resourceVersion: "436"
+    uid: b6abcdde-a096-4fd8-837c-b5d096f74c61
   reason: Scheduled
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -4155,25 +4208,25 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:24Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{local-path-provisioner}
     kind: Pod
-    name: local-path-provisioner-67b8995b4b-9hblc
+    name: local-path-provisioner-67b8995b4b-whpwz
     namespace: local-path-storage
-    resourceVersion: "420"
-    uid: b1685941-5ef9-40b3-8c8c-365e42033bd6
+    resourceVersion: "432"
+    uid: edb18b33-b90b-46d2-856f-c42d90cba45f
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
+  lastTimestamp: "2026-09-27T07:54:24Z"
   message: Container image "docker.io/kindest/local-path-provisioner:v20251212-v0.29.0-alpha-105-g20ccfc88"
     already present on machine and can be accessed by the pod
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: local-path-provisioner-67b8995b4b-9hblc.18d91c1f4a497878
+    creationTimestamp: "2026-09-27T07:54:24Z"
+    name: local-path-provisioner-67b8995b4b-whpwz.18d91e51f46462ab
     namespace: local-path-storage
-    resourceVersion: "431"
-    uid: 4205307a-3f54-4d3c-b3cd-9a797de5381d
+    resourceVersion: "439"
+    uid: 9921ca74-e261-45fa-aac2-131e482e9693
   reason: Pulled
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -4184,24 +4237,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
+  firstTimestamp: "2026-09-27T07:54:24Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{local-path-provisioner}
     kind: Pod
-    name: local-path-provisioner-67b8995b4b-9hblc
+    name: local-path-provisioner-67b8995b4b-whpwz
     namespace: local-path-storage
-    resourceVersion: "420"
-    uid: b1685941-5ef9-40b3-8c8c-365e42033bd6
+    resourceVersion: "432"
+    uid: edb18b33-b90b-46d2-856f-c42d90cba45f
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
+  lastTimestamp: "2026-09-27T07:54:24Z"
   message: Container created
   metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: local-path-provisioner-67b8995b4b-9hblc.18d91c1f6fbba22d
+    creationTimestamp: "2026-09-27T07:54:24Z"
+    name: local-path-provisioner-67b8995b4b-whpwz.18d91e521d0aaaad
     namespace: local-path-storage
-    resourceVersion: "578"
-    uid: 22a5f782-5f66-4c3c-bff8-e22549760773
+    resourceVersion: "449"
+    uid: 32fcdcdc-e743-44b8-8eea-7c925b7d4fb5
   reason: Created
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -4212,24 +4265,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
+  firstTimestamp: "2026-09-27T07:54:24Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{local-path-provisioner}
     kind: Pod
-    name: local-path-provisioner-67b8995b4b-9hblc
+    name: local-path-provisioner-67b8995b4b-whpwz
     namespace: local-path-storage
-    resourceVersion: "420"
-    uid: b1685941-5ef9-40b3-8c8c-365e42033bd6
+    resourceVersion: "432"
+    uid: edb18b33-b90b-46d2-856f-c42d90cba45f
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
+  lastTimestamp: "2026-09-27T07:54:24Z"
   message: Container started
   metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: local-path-provisioner-67b8995b4b-9hblc.18d91c1f71ef2fb1
+    creationTimestamp: "2026-09-27T07:54:24Z"
+    name: local-path-provisioner-67b8995b4b-whpwz.18d91e521f8f7fae
     namespace: local-path-storage
-    resourceVersion: "582"
-    uid: a8e9c54f-2dd1-4c77-b411-8991697cc5af
+    resourceVersion: "457"
+    uid: 33f24bd3-648f-4ade-a8d0-852f8eb74131
   reason: Started
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -4240,23 +4293,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:13:55Z"
+  firstTimestamp: "2026-09-27T07:54:12Z"
   involvedObject:
     apiVersion: apps/v1
     kind: ReplicaSet
     name: local-path-provisioner-67b8995b4b
     namespace: local-path-storage
-    resourceVersion: "321"
-    uid: 2e6ddfa3-acec-4c86-a7fd-e2fc9308536c
+    resourceVersion: "329"
+    uid: 4efa5143-d59c-445b-a735-ce50f60e23c6
   kind: Event
-  lastTimestamp: "2026-09-27T07:13:55Z"
-  message: 'Created pod: local-path-provisioner-67b8995b4b-9hblc'
+  lastTimestamp: "2026-09-27T07:54:12Z"
+  message: 'Created pod: local-path-provisioner-67b8995b4b-whpwz'
   metadata:
-    creationTimestamp: "2026-09-27T07:13:55Z"
-    name: local-path-provisioner-67b8995b4b.18d91c1c95fefd06
+    creationTimestamp: "2026-09-27T07:54:12Z"
+    name: local-path-provisioner-67b8995b4b.18d91e4f481c0596
     namespace: local-path-storage
-    resourceVersion: "375"
-    uid: 3cde2ac2-941a-4346-85b9-d31f4987648f
+    resourceVersion: "384"
+    uid: 5bc77fad-4467-4938-9896-311950898cd6
   reason: SuccessfulCreate
   reportingComponent: replicaset-controller
   reportingInstance: ""
@@ -4266,23 +4319,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:13:55Z"
+  firstTimestamp: "2026-09-27T07:54:12Z"
   involvedObject:
     apiVersion: apps/v1
     kind: Deployment
     name: local-path-provisioner
     namespace: local-path-storage
-    resourceVersion: "262"
-    uid: b79eea33-da59-473a-af71-a27b6ee97225
+    resourceVersion: "283"
+    uid: bc24cf5b-9fe0-41a6-b58e-bb3a31b959e9
   kind: Event
-  lastTimestamp: "2026-09-27T07:13:55Z"
+  lastTimestamp: "2026-09-27T07:54:12Z"
   message: Scaled up replica set local-path-provisioner-67b8995b4b from 0 to 1
   metadata:
-    creationTimestamp: "2026-09-27T07:13:55Z"
-    name: local-path-provisioner.18d91c1c78015874
+    creationTimestamp: "2026-09-27T07:54:12Z"
+    name: local-path-provisioner.18d91e4f27588da1
     namespace: local-path-storage
-    resourceVersion: "323"
-    uid: b312d99e-5e47-44bb-8a06-610b8f8bea4b
+    resourceVersion: "331"
+    uid: 8a450ec1-cdab-4d2e-b240-e5e3a8da30d3
   reason: ScalingReplicaSet
   reportingComponent: deployment-controller
   reportingInstance: ""
@@ -4292,23 +4345,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:09Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: payments-api-6ccc469957-2hvfx
+    name: payments-api-6ccc469957-lnwzs
     namespace: payments
-    resourceVersion: "634"
-    uid: 4434d686-c382-4762-abe2-c60d638806ec
+    resourceVersion: "668"
+    uid: 122498b5-0f66-4109-95b6-aaf0634abe9e
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:09Z"
-  message: Successfully assigned payments/payments-api-6ccc469957-2hvfx to scout-evals-control-plane
+  lastTimestamp: "2026-09-27T07:54:37Z"
+  message: Successfully assigned payments/payments-api-6ccc469957-lnwzs to scout-evals-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T07:14:09Z"
-    name: payments-api-6ccc469957-2hvfx.18d91c1fa3e95944
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: payments-api-6ccc469957-lnwzs.18d91e55010d1d1d
     namespace: payments
-    resourceVersion: "636"
-    uid: a9735d11-4757-418d-a00e-b4d51d5a6d45
+    resourceVersion: "670"
+    uid: 6c809733-908b-48ae-ae19-cdef2bc684f7
   reason: Scheduled
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -4318,111 +4371,111 @@ items:
 - apiVersion: v1
   count: 5
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:09Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{api}
     kind: Pod
-    name: payments-api-6ccc469957-2hvfx
+    name: payments-api-6ccc469957-lnwzs
     namespace: payments
-    resourceVersion: "635"
-    uid: 4434d686-c382-4762-abe2-c60d638806ec
+    resourceVersion: "669"
+    uid: 122498b5-0f66-4109-95b6-aaf0634abe9e
   kind: Event
-  lastTimestamp: "2026-09-27T07:17:09Z"
+  lastTimestamp: "2026-09-27T07:57:35Z"
   message: Pulling image "registry.k8s.io/pause:0.0.0-does-not-exist"
   metadata:
-    creationTimestamp: "2026-09-27T07:14:09Z"
-    name: payments-api-6ccc469957-2hvfx.18d91c1fba363a4f
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: payments-api-6ccc469957-lnwzs.18d91e551999a0ea
+    namespace: payments
+    resourceVersion: "1253"
+    uid: 57d38708-2963-465c-b68e-83b75633eabe
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 5
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:39Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{api}
+    kind: Pod
+    name: payments-api-6ccc469957-lnwzs
+    namespace: payments
+    resourceVersion: "669"
+    uid: 122498b5-0f66-4109-95b6-aaf0634abe9e
+  kind: Event
+  lastTimestamp: "2026-09-27T07:57:36Z"
+  message: 'Failed to pull image "registry.k8s.io/pause:0.0.0-does-not-exist": rpc
+    error: code = NotFound desc = failed to pull and unpack image "registry.k8s.io/pause:0.0.0-does-not-exist":
+    failed to resolve reference "registry.k8s.io/pause:0.0.0-does-not-exist": registry.k8s.io/pause:0.0.0-does-not-exist:
+    not found'
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:39Z"
+    name: payments-api-6ccc469957-lnwzs.18d91e5597ced101
+    namespace: payments
+    resourceVersion: "1254"
+    uid: ced0565b-13e3-4b5e-a4d8-04900e927c86
+  reason: Failed
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Warning
+- apiVersion: v1
+  count: 5
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:39Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{api}
+    kind: Pod
+    name: payments-api-6ccc469957-lnwzs
+    namespace: payments
+    resourceVersion: "669"
+    uid: 122498b5-0f66-4109-95b6-aaf0634abe9e
+  kind: Event
+  lastTimestamp: "2026-09-27T07:57:36Z"
+  message: 'Error: ErrImagePull'
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:39Z"
+    name: payments-api-6ccc469957-lnwzs.18d91e5597d01920
+    namespace: payments
+    resourceVersion: "1255"
+    uid: 36d4c4e5-6d08-4f2c-8f74-cfefc216314e
+  reason: Failed
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Warning
+- apiVersion: v1
+  count: 11
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:39Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{api}
+    kind: Pod
+    name: payments-api-6ccc469957-lnwzs
+    namespace: payments
+    resourceVersion: "669"
+    uid: 122498b5-0f66-4109-95b6-aaf0634abe9e
+  kind: Event
+  lastTimestamp: "2026-09-27T07:57:22Z"
+  message: Back-off pulling image "registry.k8s.io/pause:0.0.0-does-not-exist"
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:39Z"
+    name: payments-api-6ccc469957-lnwzs.18d91e559fc6ea34
     namespace: payments
     resourceVersion: "1229"
-    uid: ee6559c5-0bd0-4334-bdb1-da407d294d34
-  reason: Pulling
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 5
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:12Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{api}
-    kind: Pod
-    name: payments-api-6ccc469957-2hvfx
-    namespace: payments
-    resourceVersion: "635"
-    uid: 4434d686-c382-4762-abe2-c60d638806ec
-  kind: Event
-  lastTimestamp: "2026-09-27T07:17:09Z"
-  message: 'Failed to pull image "registry.k8s.io/pause:0.0.0-does-not-exist": rpc
-    error: code = NotFound desc = failed to pull and unpack image "registry.k8s.io/pause:0.0.0-does-not-exist":
-    failed to resolve reference "registry.k8s.io/pause:0.0.0-does-not-exist": registry.k8s.io/pause:0.0.0-does-not-exist:
-    not found'
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:12Z"
-    name: payments-api-6ccc469957-2hvfx.18d91c206504bc8c
-    namespace: payments
-    resourceVersion: "1230"
-    uid: 48734bf8-1103-4ad7-9228-8e9be655f080
-  reason: Failed
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Warning
-- apiVersion: v1
-  count: 5
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:12Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{api}
-    kind: Pod
-    name: payments-api-6ccc469957-2hvfx
-    namespace: payments
-    resourceVersion: "635"
-    uid: 4434d686-c382-4762-abe2-c60d638806ec
-  kind: Event
-  lastTimestamp: "2026-09-27T07:17:09Z"
-  message: 'Error: ErrImagePull'
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:12Z"
-    name: payments-api-6ccc469957-2hvfx.18d91c2065060677
-    namespace: payments
-    resourceVersion: "1231"
-    uid: f430675d-0cb2-4d7f-b36d-cf6bea955ed6
-  reason: Failed
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Warning
-- apiVersion: v1
-  count: 21
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:13Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{api}
-    kind: Pod
-    name: payments-api-6ccc469957-2hvfx
-    namespace: payments
-    resourceVersion: "635"
-    uid: 4434d686-c382-4762-abe2-c60d638806ec
-  kind: Event
-  lastTimestamp: "2026-09-27T07:19:36Z"
-  message: Back-off pulling image "registry.k8s.io/pause:0.0.0-does-not-exist"
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:13Z"
-    name: payments-api-6ccc469957-2hvfx.18d91c209a26b8a7
-    namespace: payments
-    resourceVersion: "1484"
-    uid: c709a3e2-638e-4561-bd8e-f329b5db27f1
+    uid: 765762b1-0ad9-40dc-bcf4-663e09a2d1b1
   reason: BackOff
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -4431,26 +4484,26 @@ items:
     host: scout-evals-control-plane
   type: Normal
 - apiVersion: v1
-  count: 20
+  count: 11
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:13Z"
+  firstTimestamp: "2026-09-27T07:54:39Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{api}
     kind: Pod
-    name: payments-api-6ccc469957-2hvfx
+    name: payments-api-6ccc469957-lnwzs
     namespace: payments
-    resourceVersion: "635"
-    uid: 4434d686-c382-4762-abe2-c60d638806ec
+    resourceVersion: "669"
+    uid: 122498b5-0f66-4109-95b6-aaf0634abe9e
   kind: Event
-  lastTimestamp: "2026-09-27T07:19:21Z"
+  lastTimestamp: "2026-09-27T07:57:22Z"
   message: 'Error: ImagePullBackOff'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:13Z"
-    name: payments-api-6ccc469957-2hvfx.18d91c209a279ea2
+    creationTimestamp: "2026-09-27T07:54:39Z"
+    name: payments-api-6ccc469957-lnwzs.18d91e559fc76b6f
     namespace: payments
-    resourceVersion: "1460"
-    uid: 17018b7a-e3cf-411f-8d68-b98672f80de8
+    resourceVersion: "1230"
+    uid: 02ad5942-9e21-44b9-9e02-07fe76c04258
   reason: Failed
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -4461,23 +4514,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: payments-api-6ccc469957-mm74h
+    name: payments-api-6ccc469957-tmrrp
     namespace: payments
-    resourceVersion: "614"
-    uid: ab9ad42e-372b-45fc-af23-4e906c18eb53
+    resourceVersion: "651"
+    uid: 6f05a0c8-27cc-492d-878b-995d9f5a4052
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
-  message: Successfully assigned payments/payments-api-6ccc469957-mm74h to scout-evals-control-plane
+  lastTimestamp: "2026-09-27T07:54:37Z"
+  message: Successfully assigned payments/payments-api-6ccc469957-tmrrp to scout-evals-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: payments-api-6ccc469957-mm74h.18d91c1f92242e47
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: payments-api-6ccc469957-tmrrp.18d91e54f56c20b2
     namespace: payments
-    resourceVersion: "616"
-    uid: a896bbf2-8a3b-4ed4-b52e-1d3b549965b1
+    resourceVersion: "653"
+    uid: 2d76ebe7-1baa-460f-817f-4e4c152cf70a
   reason: Scheduled
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -4485,26 +4538,26 @@ items:
     component: default-scheduler
   type: Normal
 - apiVersion: v1
-  count: 5
+  count: 4
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:09Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{api}
     kind: Pod
-    name: payments-api-6ccc469957-mm74h
+    name: payments-api-6ccc469957-tmrrp
     namespace: payments
-    resourceVersion: "615"
-    uid: ab9ad42e-372b-45fc-af23-4e906c18eb53
+    resourceVersion: "652"
+    uid: 6f05a0c8-27cc-492d-878b-995d9f5a4052
   kind: Event
-  lastTimestamp: "2026-09-27T07:17:18Z"
+  lastTimestamp: "2026-09-27T07:56:10Z"
   message: Pulling image "registry.k8s.io/pause:0.0.0-does-not-exist"
   metadata:
-    creationTimestamp: "2026-09-27T07:14:09Z"
-    name: payments-api-6ccc469957-mm74h.18d91c1fa7f98317
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: payments-api-6ccc469957-tmrrp.18d91e550c7ea8d1
     namespace: payments
-    resourceVersion: "1245"
-    uid: 5a5ad9c9-27bc-4029-b705-d728ae0f2de8
+    resourceVersion: "1096"
+    uid: 0a2419b9-7a53-4a3d-a39c-ed6fcb5a86a1
   reason: Pulling
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -4513,29 +4566,29 @@ items:
     host: scout-evals-control-plane
   type: Normal
 - apiVersion: v1
-  count: 5
+  count: 4
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:12Z"
+  firstTimestamp: "2026-09-27T07:54:39Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{api}
     kind: Pod
-    name: payments-api-6ccc469957-mm74h
+    name: payments-api-6ccc469957-tmrrp
     namespace: payments
-    resourceVersion: "615"
-    uid: ab9ad42e-372b-45fc-af23-4e906c18eb53
+    resourceVersion: "652"
+    uid: 6f05a0c8-27cc-492d-878b-995d9f5a4052
   kind: Event
-  lastTimestamp: "2026-09-27T07:17:18Z"
+  lastTimestamp: "2026-09-27T07:56:11Z"
   message: 'Failed to pull image "registry.k8s.io/pause:0.0.0-does-not-exist": rpc
     error: code = NotFound desc = failed to pull and unpack image "registry.k8s.io/pause:0.0.0-does-not-exist":
     failed to resolve reference "registry.k8s.io/pause:0.0.0-does-not-exist": registry.k8s.io/pause:0.0.0-does-not-exist:
     not found'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:12Z"
-    name: payments-api-6ccc469957-mm74h.18d91c205b68b513
+    creationTimestamp: "2026-09-27T07:54:39Z"
+    name: payments-api-6ccc469957-tmrrp.18d91e558e2e320a
     namespace: payments
-    resourceVersion: "1246"
-    uid: e56a0d6b-8a6c-4bb6-8a66-e5c4787ea8d0
+    resourceVersion: "1097"
+    uid: 832c9064-97de-40fb-9eac-ed469318510a
   reason: Failed
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -4544,26 +4597,26 @@ items:
     host: scout-evals-control-plane
   type: Warning
 - apiVersion: v1
-  count: 5
+  count: 4
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:12Z"
+  firstTimestamp: "2026-09-27T07:54:39Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{api}
     kind: Pod
-    name: payments-api-6ccc469957-mm74h
+    name: payments-api-6ccc469957-tmrrp
     namespace: payments
-    resourceVersion: "615"
-    uid: ab9ad42e-372b-45fc-af23-4e906c18eb53
+    resourceVersion: "652"
+    uid: 6f05a0c8-27cc-492d-878b-995d9f5a4052
   kind: Event
-  lastTimestamp: "2026-09-27T07:17:18Z"
+  lastTimestamp: "2026-09-27T07:56:11Z"
   message: 'Error: ErrImagePull'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:12Z"
-    name: payments-api-6ccc469957-mm74h.18d91c205b69098c
+    creationTimestamp: "2026-09-27T07:54:39Z"
+    name: payments-api-6ccc469957-tmrrp.18d91e558e2e81a1
     namespace: payments
-    resourceVersion: "1247"
-    uid: 6d79d82a-efba-4375-a1b6-91925b7be4ce
+    resourceVersion: "1098"
+    uid: 148d35b6-7186-4932-831d-9c90ceb253c4
   reason: Failed
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -4572,26 +4625,26 @@ items:
     host: scout-evals-control-plane
   type: Warning
 - apiVersion: v1
-  count: 21
+  count: 11
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:12Z"
+  firstTimestamp: "2026-09-27T07:54:39Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{api}
     kind: Pod
-    name: payments-api-6ccc469957-mm74h
+    name: payments-api-6ccc469957-tmrrp
     namespace: payments
-    resourceVersion: "615"
-    uid: ab9ad42e-372b-45fc-af23-4e906c18eb53
+    resourceVersion: "652"
+    uid: 6f05a0c8-27cc-492d-878b-995d9f5a4052
   kind: Event
-  lastTimestamp: "2026-09-27T07:19:27Z"
+  lastTimestamp: "2026-09-27T07:57:28Z"
   message: Back-off pulling image "registry.k8s.io/pause:0.0.0-does-not-exist"
   metadata:
-    creationTimestamp: "2026-09-27T07:14:12Z"
-    name: payments-api-6ccc469957-mm74h.18d91c205e1e8994
+    creationTimestamp: "2026-09-27T07:54:39Z"
+    name: payments-api-6ccc469957-tmrrp.18d91e559fca3e3f
     namespace: payments
-    resourceVersion: "1470"
-    uid: 8cc60590-be0b-49be-812c-35fcb9b20313
+    resourceVersion: "1239"
+    uid: d8b13a2c-bcf1-40de-bb6f-eb4b3b4d5c99
   reason: BackOff
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -4600,26 +4653,26 @@ items:
     host: scout-evals-control-plane
   type: Normal
 - apiVersion: v1
-  count: 20
+  count: 11
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:12Z"
+  firstTimestamp: "2026-09-27T07:54:39Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{api}
     kind: Pod
-    name: payments-api-6ccc469957-mm74h
+    name: payments-api-6ccc469957-tmrrp
     namespace: payments
-    resourceVersion: "615"
-    uid: ab9ad42e-372b-45fc-af23-4e906c18eb53
+    resourceVersion: "652"
+    uid: 6f05a0c8-27cc-492d-878b-995d9f5a4052
   kind: Event
-  lastTimestamp: "2026-09-27T07:19:13Z"
+  lastTimestamp: "2026-09-27T07:57:28Z"
   message: 'Error: ImagePullBackOff'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:12Z"
-    name: payments-api-6ccc469957-mm74h.18d91c205e1ebc85
+    creationTimestamp: "2026-09-27T07:54:39Z"
+    name: payments-api-6ccc469957-tmrrp.18d91e559fca7e35
     namespace: payments
-    resourceVersion: "1448"
-    uid: dc5b6a1b-6b27-4df4-9bf6-a7bf0a1325a4
+    resourceVersion: "1240"
+    uid: 7e6a6228-8660-4f30-b48a-e81a5aa08696
   reason: Failed
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -4630,23 +4683,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: apps/v1
     kind: ReplicaSet
     name: payments-api-6ccc469957
     namespace: payments
-    resourceVersion: "604"
-    uid: 15485201-fb44-4881-b12f-633aedece28a
+    resourceVersion: "642"
+    uid: 6cc2f315-6e34-4436-aa5b-8a9fdab0b849
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
-  message: 'Created pod: payments-api-6ccc469957-mm74h'
+  lastTimestamp: "2026-09-27T07:54:37Z"
+  message: 'Created pod: payments-api-6ccc469957-tmrrp'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:09Z"
-    name: payments-api-6ccc469957.18d91c1f9206d926
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: payments-api-6ccc469957.18d91e54f52da73b
     namespace: payments
-    resourceVersion: "645"
-    uid: 239d57d1-280d-4802-91b9-776350abf2b9
+    resourceVersion: "664"
+    uid: ed25974f-1801-44f7-abec-97ff97dad890
   reason: SuccessfulCreate
   reportingComponent: replicaset-controller
   reportingInstance: ""
@@ -4656,23 +4709,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:09Z"
+  firstTimestamp: "2026-09-27T07:54:37Z"
   involvedObject:
     apiVersion: apps/v1
     kind: ReplicaSet
     name: payments-api-6ccc469957
     namespace: payments
-    resourceVersion: "604"
-    uid: 15485201-fb44-4881-b12f-633aedece28a
+    resourceVersion: "642"
+    uid: 6cc2f315-6e34-4436-aa5b-8a9fdab0b849
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:09Z"
-  message: 'Created pod: payments-api-6ccc469957-2hvfx'
+  lastTimestamp: "2026-09-27T07:54:37Z"
+  message: 'Created pod: payments-api-6ccc469957-lnwzs'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:09Z"
-    name: payments-api-6ccc469957.18d91c1fa3cbb726
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: payments-api-6ccc469957.18d91e5500e50730
     namespace: payments
-    resourceVersion: "663"
-    uid: ecb7933f-702d-4491-a089-4b431f0cad08
+    resourceVersion: "683"
+    uid: 84af3e37-268b-4c82-8e94-89f120e670d3
   reason: SuccessfulCreate
   reportingComponent: replicaset-controller
   reportingInstance: ""
@@ -4682,23 +4735,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
+  firstTimestamp: "2026-09-27T07:54:36Z"
   involvedObject:
     apiVersion: apps/v1
     kind: Deployment
     name: payments-api
     namespace: payments
-    resourceVersion: "561"
-    uid: 1105dae0-d85e-41c0-8b78-bd9523557410
+    resourceVersion: "599"
+    uid: 8acbafbd-049c-497d-be94-c3d361af157f
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
+  lastTimestamp: "2026-09-27T07:54:36Z"
   message: Scaled up replica set payments-api-6ccc469957 from 0 to 2
   metadata:
-    creationTimestamp: "2026-09-27T07:14:09Z"
-    name: payments-api.18d91c1f82d4cf81
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: payments-api.18d91e54e695f892
     namespace: payments
-    resourceVersion: "649"
-    uid: 0bcac3c6-0bac-41da-aaaa-a66764c767e5
+    resourceVersion: "685"
+    uid: 5ef78c6e-bf6b-4a25-9aaa-6b9df0aee7e1
   reason: ScalingReplicaSet
   reportingComponent: deployment-controller
   reportingInstance: ""
@@ -4708,1091 +4761,51 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
+  firstTimestamp: "2026-09-27T07:55:16Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: cart-656b4f485c-5spqp
+    name: cart-656b4f485c-klllp
     namespace: shop
-    resourceVersion: "858"
-    uid: fb9c70a9-9333-4324-aa2f-4712d603e176
+    resourceVersion: "875"
+    uid: f2cd1263-8a7b-421b-b4d6-2ca52a9947af
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
-  message: Successfully assigned shop/cart-656b4f485c-5spqp to scout-evals-control-plane
+  lastTimestamp: "2026-09-27T07:55:16Z"
+  message: Successfully assigned shop/cart-656b4f485c-klllp to scout-evals-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: cart-656b4f485c-5spqp.18d91c29fea6d077
-    namespace: shop
-    resourceVersion: "864"
-    uid: 0ae175bb-bddf-4459-ad63-dd933426f916
-  reason: Scheduled
-  reportingComponent: default-scheduler
-  reportingInstance: ""
-  source:
-    component: default-scheduler
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{cart}
-    kind: Pod
-    name: cart-656b4f485c-5spqp
-    namespace: shop
-    resourceVersion: "861"
-    uid: fb9c70a9-9333-4324-aa2f-4712d603e176
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
-  message: Container image "registry.k8s.io/pause:3.9" already present on machine
-    and can be accessed by the pod
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: cart-656b4f485c-5spqp.18d91c2a168c80ae
-    namespace: shop
-    resourceVersion: "886"
-    uid: 6631bfae-0bdb-4e11-9ff5-1724cae8b867
-  reason: Pulled
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{cart}
-    kind: Pod
-    name: cart-656b4f485c-5spqp
-    namespace: shop
-    resourceVersion: "861"
-    uid: fb9c70a9-9333-4324-aa2f-4712d603e176
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
-  message: Container created
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: cart-656b4f485c-5spqp.18d91c2a1880753c
-    namespace: shop
-    resourceVersion: "890"
-    uid: 527d54fa-e79c-48cd-b728-9a36f984c717
-  reason: Created
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:54Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{cart}
-    kind: Pod
-    name: cart-656b4f485c-5spqp
-    namespace: shop
-    resourceVersion: "861"
-    uid: fb9c70a9-9333-4324-aa2f-4712d603e176
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:54Z"
-  message: Container started
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:54Z"
-    name: cart-656b4f485c-5spqp.18d91c2a1aea848f
-    namespace: shop
-    resourceVersion: "893"
-    uid: 5a3c3066-f33d-4f2c-9eda-ace4436cb067
-  reason: Started
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
-  involvedObject:
-    apiVersion: v1
-    kind: Pod
-    name: cart-656b4f485c-qdlfl
-    namespace: shop
-    resourceVersion: "595"
-    uid: ec27e5ac-f284-4cc6-b0a1-a183cd435482
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
-  message: Successfully assigned shop/cart-656b4f485c-qdlfl to scout-evals-control-plane
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: cart-656b4f485c-qdlfl.18d91c1f7d2ab983
-    namespace: shop
-    resourceVersion: "597"
-    uid: 5cff9d79-10aa-4521-9fdf-d80f6d44bdae
-  reason: Scheduled
-  reportingComponent: default-scheduler
-  reportingInstance: ""
-  source:
-    component: default-scheduler
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{cart}
-    kind: Pod
-    name: cart-656b4f485c-qdlfl
-    namespace: shop
-    resourceVersion: "596"
-    uid: ec27e5ac-f284-4cc6-b0a1-a183cd435482
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
-  message: Pulling image "registry.k8s.io/pause:3.9"
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: cart-656b4f485c-qdlfl.18d91c1f935ef040
-    namespace: shop
-    resourceVersion: "618"
-    uid: f68e3bd9-9a94-4227-a853-e2669478be66
-  reason: Pulling
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:11Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{cart}
-    kind: Pod
-    name: cart-656b4f485c-qdlfl
-    namespace: shop
-    resourceVersion: "596"
-    uid: ec27e5ac-f284-4cc6-b0a1-a183cd435482
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:11Z"
-  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 202ms (2.979s
-    including waiting). Image size: 268051 bytes.'
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:11Z"
-    name: cart-656b4f485c-qdlfl.18d91c2044f78a23
-    namespace: shop
-    resourceVersion: "724"
-    uid: 6856029c-4b11-41b0-9747-6407b7c5ae11
-  reason: Pulled
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:11Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{cart}
-    kind: Pod
-    name: cart-656b4f485c-qdlfl
-    namespace: shop
-    resourceVersion: "596"
-    uid: ec27e5ac-f284-4cc6-b0a1-a183cd435482
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:11Z"
-  message: Container created
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:11Z"
-    name: cart-656b4f485c-qdlfl.18d91c2045f8a4f6
-    namespace: shop
-    resourceVersion: "725"
-    uid: 35904d67-9d72-40eb-964f-26d8d3ff409e
-  reason: Created
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:11Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{cart}
-    kind: Pod
-    name: cart-656b4f485c-qdlfl
-    namespace: shop
-    resourceVersion: "596"
-    uid: ec27e5ac-f284-4cc6-b0a1-a183cd435482
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:11Z"
-  message: Container started
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:11Z"
-    name: cart-656b4f485c-qdlfl.18d91c20482fde43
-    namespace: shop
-    resourceVersion: "726"
-    uid: f746398a-535c-4bef-b2ab-7ebbb4297f70
-  reason: Started
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
-  involvedObject:
-    apiVersion: v1
-    kind: Pod
-    name: cart-656b4f485c-vpdfs
-    namespace: shop
-    resourceVersion: "853"
-    uid: 5f7cf1fa-6226-4381-a8bf-f9d64a4345be
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
-  message: Successfully assigned shop/cart-656b4f485c-vpdfs to scout-evals-control-plane
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: cart-656b4f485c-vpdfs.18d91c29fe555000
-    namespace: shop
-    resourceVersion: "860"
-    uid: b1559411-ab9c-4a06-8112-cf0a521e2fc3
-  reason: Scheduled
-  reportingComponent: default-scheduler
-  reportingInstance: ""
-  source:
-    component: default-scheduler
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{cart}
-    kind: Pod
-    name: cart-656b4f485c-vpdfs
-    namespace: shop
-    resourceVersion: "857"
-    uid: 5f7cf1fa-6226-4381-a8bf-f9d64a4345be
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
-  message: Container image "registry.k8s.io/pause:3.9" already present on machine
-    and can be accessed by the pod
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: cart-656b4f485c-vpdfs.18d91c2a166b4914
-    namespace: shop
-    resourceVersion: "885"
-    uid: 85ce5145-cdb6-497a-9729-3c54c6a1e92e
-  reason: Pulled
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{cart}
-    kind: Pod
-    name: cart-656b4f485c-vpdfs
-    namespace: shop
-    resourceVersion: "857"
-    uid: 5f7cf1fa-6226-4381-a8bf-f9d64a4345be
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
-  message: Container created
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: cart-656b4f485c-vpdfs.18d91c2a17f877d9
-    namespace: shop
-    resourceVersion: "889"
-    uid: c102ee2b-feec-4f73-a0f2-612a5549fe1d
-  reason: Created
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:54Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{cart}
-    kind: Pod
-    name: cart-656b4f485c-vpdfs
-    namespace: shop
-    resourceVersion: "857"
-    uid: 5f7cf1fa-6226-4381-a8bf-f9d64a4345be
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:54Z"
-  message: Container started
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:54Z"
-    name: cart-656b4f485c-vpdfs.18d91c2a1a499252
-    namespace: shop
-    resourceVersion: "892"
-    uid: 5f34c4e0-ac0c-4fb6-8797-2a00cf0fb909
-  reason: Started
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
-  involvedObject:
-    apiVersion: apps/v1
-    kind: ReplicaSet
-    name: cart-656b4f485c
-    namespace: shop
-    resourceVersion: "583"
-    uid: ee64313c-6acc-4b2a-abcf-4468e7087907
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
-  message: 'Created pod: cart-656b4f485c-qdlfl'
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: cart-656b4f485c.18d91c1f7d12829b
-    namespace: shop
-    resourceVersion: "611"
-    uid: 60e638b3-561a-4717-aab9-42cc4670ef46
-  reason: SuccessfulCreate
-  reportingComponent: replicaset-controller
-  reportingInstance: ""
-  source:
-    component: replicaset-controller
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
-  involvedObject:
-    apiVersion: apps/v1
-    kind: ReplicaSet
-    name: cart-656b4f485c
-    namespace: shop
-    resourceVersion: "852"
-    uid: ee64313c-6acc-4b2a-abcf-4468e7087907
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
-  message: 'Created pod: cart-656b4f485c-vpdfs'
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: cart-656b4f485c.18d91c29fe32e9aa
-    namespace: shop
-    resourceVersion: "856"
-    uid: 397fef24-301d-46f3-a277-480ef9bc56b6
-  reason: SuccessfulCreate
-  reportingComponent: replicaset-controller
-  reportingInstance: ""
-  source:
-    component: replicaset-controller
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
-  involvedObject:
-    apiVersion: apps/v1
-    kind: ReplicaSet
-    name: cart-656b4f485c
-    namespace: shop
-    resourceVersion: "852"
-    uid: ee64313c-6acc-4b2a-abcf-4468e7087907
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
-  message: 'Created pod: cart-656b4f485c-5spqp'
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: cart-656b4f485c.18d91c29fe64d239
-    namespace: shop
-    resourceVersion: "862"
-    uid: 162c7ba9-e280-4088-b753-0577477fb15b
-  reason: SuccessfulCreate
-  reportingComponent: replicaset-controller
-  reportingInstance: ""
-  source:
-    component: replicaset-controller
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
-  involvedObject:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: cart
-    namespace: shop
-    resourceVersion: "554"
-    uid: 25b1982e-a4b0-497a-8eaa-4c5759683b16
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
-  message: Scaled up replica set cart-656b4f485c from 0 to 1
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: cart.18d91c1f73e9a427
-    namespace: shop
-    resourceVersion: "613"
-    uid: 21d17358-3736-4a65-986f-0a2eb32dc459
-  reason: ScalingReplicaSet
-  reportingComponent: deployment-controller
-  reportingInstance: ""
-  source:
-    component: deployment-controller
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
-  involvedObject:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: cart
-    namespace: shop
-    resourceVersion: "851"
-    uid: 25b1982e-a4b0-497a-8eaa-4c5759683b16
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
-  message: Scaled up replica set cart-656b4f485c from 1 to 3
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: cart.18d91c29fe10d369
-    namespace: shop
-    resourceVersion: "855"
-    uid: 56f2857c-a174-4093-a0a2-976c761c917d
-  reason: ScalingReplicaSet
-  reportingComponent: deployment-controller
-  reportingInstance: ""
-  source:
-    component: deployment-controller
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
-  involvedObject:
-    apiVersion: v1
-    kind: Pod
-    name: checkout-65fc6d8885-bgcsk
-    namespace: shop
-    resourceVersion: "534"
-    uid: f2500294-bda9-4c01-9529-e7f7f89a3751
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: Successfully assigned shop/checkout-65fc6d8885-bgcsk to scout-evals-control-plane
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: checkout-65fc6d8885-bgcsk.18d91c1f62e93d58
-    namespace: shop
-    resourceVersion: "547"
-    uid: 2e94aa9c-393c-4d1d-82ff-2aefdbaab25c
-  reason: Scheduled
-  reportingComponent: default-scheduler
-  reportingInstance: ""
-  source:
-    component: default-scheduler
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{checkout}
-    kind: Pod
-    name: checkout-65fc6d8885-bgcsk
-    namespace: shop
-    resourceVersion: "540"
-    uid: f2500294-bda9-4c01-9529-e7f7f89a3751
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
-  message: Pulling image "registry.k8s.io/pause:3.9"
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: checkout-65fc6d8885-bgcsk.18d91c1f7ba3cc79
-    namespace: shop
-    resourceVersion: "592"
-    uid: 735f73ef-318e-47d5-96bc-ec252adcacfa
-  reason: Pulling
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:11Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{checkout}
-    kind: Pod
-    name: checkout-65fc6d8885-bgcsk
-    namespace: shop
-    resourceVersion: "540"
-    uid: f2500294-bda9-4c01-9529-e7f7f89a3751
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:11Z"
-  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 212ms (2.737s
-    including waiting). Image size: 268051 bytes.'
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:11Z"
-    name: checkout-65fc6d8885-bgcsk.18d91c201ed5b4fa
-    namespace: shop
-    resourceVersion: "700"
-    uid: dc43f8c0-ba22-4702-8fed-c0f2c11ca672
-  reason: Pulled
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:11Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{checkout}
-    kind: Pod
-    name: checkout-65fc6d8885-bgcsk
-    namespace: shop
-    resourceVersion: "540"
-    uid: f2500294-bda9-4c01-9529-e7f7f89a3751
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:11Z"
-  message: Container created
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:11Z"
-    name: checkout-65fc6d8885-bgcsk.18d91c201ff3ca1e
-    namespace: shop
-    resourceVersion: "701"
-    uid: a49ca013-d62f-40d7-a11a-f861c0e23f31
-  reason: Created
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:11Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{checkout}
-    kind: Pod
-    name: checkout-65fc6d8885-bgcsk
-    namespace: shop
-    resourceVersion: "540"
-    uid: f2500294-bda9-4c01-9529-e7f7f89a3751
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:11Z"
-  message: Container started
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:11Z"
-    name: checkout-65fc6d8885-bgcsk.18d91c2021e7c505
-    namespace: shop
-    resourceVersion: "702"
-    uid: 146093ec-1da3-45f7-8a3e-c3861ee92da8
-  reason: Started
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:55Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{checkout}
-    kind: Pod
-    name: checkout-65fc6d8885-bgcsk
-    namespace: shop
-    resourceVersion: "540"
-    uid: f2500294-bda9-4c01-9529-e7f7f89a3751
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:55Z"
-  message: Stopping container checkout
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:55Z"
-    name: checkout-65fc6d8885-bgcsk.18d91c2a6e0453f5
-    namespace: shop
-    resourceVersion: "961"
-    uid: 3b798f2f-1ea9-4261-aaf4-e2a73b7d4a73
-  reason: Killing
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
-  involvedObject:
-    apiVersion: v1
-    kind: Pod
-    name: checkout-65fc6d8885-g8tqt
-    namespace: shop
-    resourceVersion: "531"
-    uid: fd322071-fa32-4e86-bfe6-5b6f2997ee9e
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: Successfully assigned shop/checkout-65fc6d8885-g8tqt to scout-evals-control-plane
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: checkout-65fc6d8885-g8tqt.18d91c1f62cdaf22
-    namespace: shop
-    resourceVersion: "544"
-    uid: 1b324fc8-f9e5-4040-8443-bda0f00e9a5a
-  reason: Scheduled
-  reportingComponent: default-scheduler
-  reportingInstance: ""
-  source:
-    component: default-scheduler
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{checkout}
-    kind: Pod
-    name: checkout-65fc6d8885-g8tqt
-    namespace: shop
-    resourceVersion: "535"
-    uid: fd322071-fa32-4e86-bfe6-5b6f2997ee9e
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
-  message: Pulling image "registry.k8s.io/pause:3.9"
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: checkout-65fc6d8885-g8tqt.18d91c1f7acde6b4
-    namespace: shop
-    resourceVersion: "590"
-    uid: ece39a03-b3e8-43bf-ac9a-7d156ff1f31f
-  reason: Pulling
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:10Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{checkout}
-    kind: Pod
-    name: checkout-65fc6d8885-g8tqt
-    namespace: shop
-    resourceVersion: "535"
-    uid: fd322071-fa32-4e86-bfe6-5b6f2997ee9e
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:10Z"
-  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 239ms (2.338s
-    including waiting). Image size: 268051 bytes.'
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:10Z"
-    name: checkout-65fc6d8885-g8tqt.18d91c200634c15e
-    namespace: shop
-    resourceVersion: "694"
-    uid: b8a7f008-f2e3-4144-a2cd-df033a433f5e
-  reason: Pulled
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:10Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{checkout}
-    kind: Pod
-    name: checkout-65fc6d8885-g8tqt
-    namespace: shop
-    resourceVersion: "535"
-    uid: fd322071-fa32-4e86-bfe6-5b6f2997ee9e
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:10Z"
-  message: Container created
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:10Z"
-    name: checkout-65fc6d8885-g8tqt.18d91c2007739e49
-    namespace: shop
-    resourceVersion: "695"
-    uid: c8a427d5-c6a7-4180-9b54-eaef545512ab
-  reason: Created
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:10Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{checkout}
-    kind: Pod
-    name: checkout-65fc6d8885-g8tqt
-    namespace: shop
-    resourceVersion: "535"
-    uid: fd322071-fa32-4e86-bfe6-5b6f2997ee9e
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:10Z"
-  message: Container started
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:10Z"
-    name: checkout-65fc6d8885-g8tqt.18d91c20096a7838
-    namespace: shop
-    resourceVersion: "696"
-    uid: 45040f0b-abca-46f5-b0fb-fe3bcae8aad4
-  reason: Started
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:54Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{checkout}
-    kind: Pod
-    name: checkout-65fc6d8885-g8tqt
-    namespace: shop
-    resourceVersion: "535"
-    uid: fd322071-fa32-4e86-bfe6-5b6f2997ee9e
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:54Z"
-  message: Stopping container checkout
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:54Z"
-    name: checkout-65fc6d8885-g8tqt.18d91c2a31f124a5
-    namespace: shop
-    resourceVersion: "927"
-    uid: 4e264822-8a1d-4a9d-8395-b77c8e700eb0
-  reason: Killing
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
-  involvedObject:
-    apiVersion: apps/v1
-    kind: ReplicaSet
-    name: checkout-65fc6d8885
-    namespace: shop
-    resourceVersion: "523"
-    uid: 6b7f25c4-679b-4e97-a32c-f94bfa57d48c
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: 'Created pod: checkout-65fc6d8885-g8tqt'
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: checkout-65fc6d8885.18d91c1f627e5e3d
-    namespace: shop
-    resourceVersion: "533"
-    uid: 60d75a43-5fb8-4cc2-9f4c-452fc1a96297
-  reason: SuccessfulCreate
-  reportingComponent: replicaset-controller
-  reportingInstance: ""
-  source:
-    component: replicaset-controller
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
-  involvedObject:
-    apiVersion: apps/v1
-    kind: ReplicaSet
-    name: checkout-65fc6d8885
-    namespace: shop
-    resourceVersion: "523"
-    uid: 6b7f25c4-679b-4e97-a32c-f94bfa57d48c
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: 'Created pod: checkout-65fc6d8885-bgcsk'
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: checkout-65fc6d8885.18d91c1f62b7bbd1
-    namespace: shop
-    resourceVersion: "545"
-    uid: f5e4826b-b397-400c-a5d8-4e000071c226
-  reason: SuccessfulCreate
-  reportingComponent: replicaset-controller
-  reportingInstance: ""
-  source:
-    component: replicaset-controller
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:54Z"
-  involvedObject:
-    apiVersion: apps/v1
-    kind: ReplicaSet
-    name: checkout-65fc6d8885
-    namespace: shop
-    resourceVersion: "920"
-    uid: 6b7f25c4-679b-4e97-a32c-f94bfa57d48c
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:54Z"
-  message: 'Deleted pod: checkout-65fc6d8885-g8tqt'
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:54Z"
-    name: checkout-65fc6d8885.18d91c2a31ef2664
-    namespace: shop
-    resourceVersion: "928"
-    uid: 40488180-b94d-4f70-ae70-8f87755541c7
-  reason: SuccessfulDelete
-  reportingComponent: replicaset-controller
-  reportingInstance: ""
-  source:
-    component: replicaset-controller
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:55Z"
-  involvedObject:
-    apiVersion: apps/v1
-    kind: ReplicaSet
-    name: checkout-65fc6d8885
-    namespace: shop
-    resourceVersion: "957"
-    uid: 6b7f25c4-679b-4e97-a32c-f94bfa57d48c
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:55Z"
-  message: 'Deleted pod: checkout-65fc6d8885-bgcsk'
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:55Z"
-    name: checkout-65fc6d8885.18d91c2a6e01b003
-    namespace: shop
-    resourceVersion: "963"
-    uid: df023ad2-851d-4626-bd8d-2e0d0648dfa4
-  reason: SuccessfulDelete
-  reportingComponent: replicaset-controller
-  reportingInstance: ""
-  source:
-    component: replicaset-controller
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:54Z"
-  involvedObject:
-    apiVersion: v1
-    kind: Pod
-    name: checkout-7697fc644f-7twv6
-    namespace: shop
-    resourceVersion: "931"
-    uid: ccb00c00-6266-4286-b14c-bcffc5870d19
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:54Z"
-  message: Successfully assigned shop/checkout-7697fc644f-7twv6 to scout-evals-control-plane
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:54Z"
-    name: checkout-7697fc644f-7twv6.18d91c2a328053d6
-    namespace: shop
-    resourceVersion: "938"
-    uid: bae88acb-6706-4560-9bab-75f9cd99448b
-  reason: Scheduled
-  reportingComponent: default-scheduler
-  reportingInstance: ""
-  source:
-    component: default-scheduler
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:54Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{checkout}
-    kind: Pod
-    name: checkout-7697fc644f-7twv6
-    namespace: shop
-    resourceVersion: "934"
-    uid: ccb00c00-6266-4286-b14c-bcffc5870d19
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:54Z"
-  message: Container image "registry.k8s.io/pause:3.10" already present on machine
-    and can be accessed by the pod
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:54Z"
-    name: checkout-7697fc644f-7twv6.18d91c2a493b6f32
-    namespace: shop
-    resourceVersion: "948"
-    uid: 12a45f7d-2a9f-4d45-acdf-ec14bc6bf448
-  reason: Pulled
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:54Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{checkout}
-    kind: Pod
-    name: checkout-7697fc644f-7twv6
-    namespace: shop
-    resourceVersion: "934"
-    uid: ccb00c00-6266-4286-b14c-bcffc5870d19
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:54Z"
-  message: Container created
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:54Z"
-    name: checkout-7697fc644f-7twv6.18d91c2a4a9b8f99
-    namespace: shop
-    resourceVersion: "949"
-    uid: 3adf7096-e2a3-43a0-970d-f709a85f255b
-  reason: Created
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:54Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{checkout}
-    kind: Pod
-    name: checkout-7697fc644f-7twv6
-    namespace: shop
-    resourceVersion: "934"
-    uid: ccb00c00-6266-4286-b14c-bcffc5870d19
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:54Z"
-  message: Container started
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:54Z"
-    name: checkout-7697fc644f-7twv6.18d91c2a4cb68369
-    namespace: shop
-    resourceVersion: "950"
-    uid: a9dabdff-af4f-4ea6-967f-04bb1c9c2c81
-  reason: Started
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
-  involvedObject:
-    apiVersion: v1
-    kind: Pod
-    name: checkout-7697fc644f-hsk85
-    namespace: shop
-    resourceVersion: "841"
-    uid: d20364e8-9073-4a06-8827-a59c3eb3e170
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
-  message: Successfully assigned shop/checkout-7697fc644f-hsk85 to scout-evals-control-plane
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: checkout-7697fc644f-hsk85.18d91c29fc579ab1
-    namespace: shop
-    resourceVersion: "848"
-    uid: 054aecad-210b-4aa1-917d-3ea3a1928aed
-  reason: Scheduled
-  reportingComponent: default-scheduler
-  reportingInstance: ""
-  source:
-    component: default-scheduler
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{checkout}
-    kind: Pod
-    name: checkout-7697fc644f-hsk85
-    namespace: shop
-    resourceVersion: "845"
-    uid: d20364e8-9073-4a06-8827-a59c3eb3e170
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
-  message: Container image "registry.k8s.io/pause:3.10" already present on machine
-    and can be accessed by the pod
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: checkout-7697fc644f-hsk85.18d91c2a126969f4
+    creationTimestamp: "2026-09-27T07:55:16Z"
+    name: cart-656b4f485c-klllp.18d91e5e2f53d2d6
     namespace: shop
     resourceVersion: "883"
-    uid: 80e4d875-3d93-418e-a636-7d8ac32583f6
+    uid: a148ad71-7550-42f1-904c-83aeaadc2f24
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:17Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{cart}
+    kind: Pod
+    name: cart-656b4f485c-klllp
+    namespace: shop
+    resourceVersion: "878"
+    uid: f2cd1263-8a7b-421b-b4d6-2ca52a9947af
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:17Z"
+  message: Container image "registry.k8s.io/pause:3.9" already present on machine
+    and can be accessed by the pod
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:17Z"
+    name: cart-656b4f485c-klllp.18d91e5e4a20cc1a
+    namespace: shop
+    resourceVersion: "905"
+    uid: 076d61bc-8cd7-46ff-8901-2beed6db0ba1
   reason: Pulled
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -5803,24 +4816,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
+  firstTimestamp: "2026-09-27T07:55:17Z"
   involvedObject:
     apiVersion: v1
-    fieldPath: spec.containers{checkout}
+    fieldPath: spec.containers{cart}
     kind: Pod
-    name: checkout-7697fc644f-hsk85
+    name: cart-656b4f485c-klllp
     namespace: shop
-    resourceVersion: "845"
-    uid: d20364e8-9073-4a06-8827-a59c3eb3e170
+    resourceVersion: "878"
+    uid: f2cd1263-8a7b-421b-b4d6-2ca52a9947af
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
+  lastTimestamp: "2026-09-27T07:55:17Z"
   message: Container created
   metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: checkout-7697fc644f-hsk85.18d91c2a149d6cd2
+    creationTimestamp: "2026-09-27T07:55:17Z"
+    name: cart-656b4f485c-klllp.18d91e5e4bd69d87
     namespace: shop
-    resourceVersion: "884"
-    uid: 268ef7af-48bd-4f99-928f-4efc04065d75
+    resourceVersion: "908"
+    uid: d69c2496-2e53-4763-b7e9-e14611dfd590
   reason: Created
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -5831,24 +4844,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
+  firstTimestamp: "2026-09-27T07:55:17Z"
   involvedObject:
     apiVersion: v1
-    fieldPath: spec.containers{checkout}
+    fieldPath: spec.containers{cart}
     kind: Pod
-    name: checkout-7697fc644f-hsk85
+    name: cart-656b4f485c-klllp
     namespace: shop
-    resourceVersion: "845"
-    uid: d20364e8-9073-4a06-8827-a59c3eb3e170
+    resourceVersion: "878"
+    uid: f2cd1263-8a7b-421b-b4d6-2ca52a9947af
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
+  lastTimestamp: "2026-09-27T07:55:17Z"
   message: Container started
   metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: checkout-7697fc644f-hsk85.18d91c2a170aed01
+    creationTimestamp: "2026-09-27T07:55:17Z"
+    name: cart-656b4f485c-klllp.18d91e5e4e12b7f6
     namespace: shop
-    resourceVersion: "887"
-    uid: d6bcd4b8-5cfc-4d25-8ceb-dbd4da4e694a
+    resourceVersion: "912"
+    uid: 62b50b97-8a4b-40e0-94b5-ce6c6f30a56d
   reason: Started
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -5859,205 +4872,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
-  involvedObject:
-    apiVersion: apps/v1
-    kind: ReplicaSet
-    name: checkout-7697fc644f
-    namespace: shop
-    resourceVersion: "839"
-    uid: 310d7b5b-e680-413f-903c-6b94903d0276
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
-  message: 'Created pod: checkout-7697fc644f-hsk85'
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: checkout-7697fc644f.18d91c29fc1d9113
-    namespace: shop
-    resourceVersion: "844"
-    uid: ce3de329-03e1-452c-b4bc-152a1dcdc982
-  reason: SuccessfulCreate
-  reportingComponent: replicaset-controller
-  reportingInstance: ""
-  source:
-    component: replicaset-controller
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:54Z"
-  involvedObject:
-    apiVersion: apps/v1
-    kind: ReplicaSet
-    name: checkout-7697fc644f
-    namespace: shop
-    resourceVersion: "926"
-    uid: 310d7b5b-e680-413f-903c-6b94903d0276
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:54Z"
-  message: 'Created pod: checkout-7697fc644f-7twv6'
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:54Z"
-    name: checkout-7697fc644f.18d91c2a324f02f8
-    namespace: shop
-    resourceVersion: "935"
-    uid: c5f39795-dcf0-49ac-9a69-bf40e1c5edaf
-  reason: SuccessfulCreate
-  reportingComponent: replicaset-controller
-  reportingInstance: ""
-  source:
-    component: replicaset-controller
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
-  involvedObject:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: checkout
-    namespace: shop
-    resourceVersion: "521"
-    uid: af083890-c386-4790-a3cf-16973f9240e4
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: Scaled up replica set checkout-65fc6d8885 from 0 to 2
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: checkout.18d91c1f5e64ccb1
-    namespace: shop
-    resourceVersion: "527"
-    uid: 61dffd45-0944-4b6f-b4ab-a0f66b71d1bd
-  reason: ScalingReplicaSet
-  reportingComponent: deployment-controller
-  reportingInstance: ""
-  source:
-    component: deployment-controller
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
-  involvedObject:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: checkout
-    namespace: shop
-    resourceVersion: "838"
-    uid: af083890-c386-4790-a3cf-16973f9240e4
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
-  message: Scaled up replica set checkout-7697fc644f from 0 to 1
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: checkout.18d91c29fbee5929
-    namespace: shop
-    resourceVersion: "840"
-    uid: 5c286bbf-aad2-4ce1-8ed3-e7df9d552c34
-  reason: ScalingReplicaSet
-  reportingComponent: deployment-controller
-  reportingInstance: ""
-  source:
-    component: deployment-controller
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:54Z"
-  involvedObject:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: checkout
-    namespace: shop
-    resourceVersion: "850"
-    uid: af083890-c386-4790-a3cf-16973f9240e4
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:54Z"
-  message: Scaled down replica set checkout-65fc6d8885 from 2 to 1
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:54Z"
-    name: checkout.18d91c2a314ea2d4
-    namespace: shop
-    resourceVersion: "923"
-    uid: 66ec50c2-a22d-45c9-9565-97ca3f00f4d0
-  reason: ScalingReplicaSet
-  reportingComponent: deployment-controller
-  reportingInstance: ""
-  source:
-    component: deployment-controller
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:54Z"
-  involvedObject:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: checkout
-    namespace: shop
-    resourceVersion: "922"
-    uid: af083890-c386-4790-a3cf-16973f9240e4
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:54Z"
-  message: Scaled up replica set checkout-7697fc644f from 1 to 2
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:54Z"
-    name: checkout.18d91c2a3208bea6
-    namespace: shop
-    resourceVersion: "930"
-    uid: a5f2d8e2-31e8-4b0a-bb08-914b075a845a
-  reason: ScalingReplicaSet
-  reportingComponent: deployment-controller
-  reportingInstance: ""
-  source:
-    component: deployment-controller
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:55Z"
-  involvedObject:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: checkout
-    namespace: shop
-    resourceVersion: "944"
-    uid: af083890-c386-4790-a3cf-16973f9240e4
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:55Z"
-  message: Scaled down replica set checkout-65fc6d8885 from 1 to 0
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:55Z"
-    name: checkout.18d91c2a6dadea2a
-    namespace: shop
-    resourceVersion: "958"
-    uid: cbaf6a2a-16cf-479b-8a42-84851fe10bff
-  reason: ScalingReplicaSet
-  reportingComponent: deployment-controller
-  reportingInstance: ""
-  source:
-    component: deployment-controller
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
+  firstTimestamp: "2026-09-27T07:55:16Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: ledger-6c8fdcf5f-8jk4t
+    name: cart-656b4f485c-l658v
     namespace: shop
-    resourceVersion: "600"
-    uid: 26726821-0b72-4901-bd27-b27eacefe525
+    resourceVersion: "871"
+    uid: a709ae90-5d98-417c-93c4-90adab0e1525
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
-  message: Successfully assigned shop/ledger-6c8fdcf5f-8jk4t to scout-evals-control-plane
+  lastTimestamp: "2026-09-27T07:55:16Z"
+  message: Successfully assigned shop/cart-656b4f485c-l658v to scout-evals-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: ledger-6c8fdcf5f-8jk4t.18d91c1f803f94e3
+    creationTimestamp: "2026-09-27T07:55:16Z"
+    name: cart-656b4f485c-l658v.18d91e5e2f4356ff
     namespace: shop
-    resourceVersion: "602"
-    uid: 91f718bc-91df-4592-976a-6e0f71c4f495
+    resourceVersion: "881"
+    uid: 052075f2-8b65-4073-ac43-a51a06f07c21
   reason: Scheduled
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -6067,24 +4898,135 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
+  firstTimestamp: "2026-09-27T07:55:17Z"
   involvedObject:
     apiVersion: v1
-    fieldPath: spec.containers{ledger}
+    fieldPath: spec.containers{cart}
     kind: Pod
-    name: ledger-6c8fdcf5f-8jk4t
+    name: cart-656b4f485c-l658v
     namespace: shop
-    resourceVersion: "601"
-    uid: 26726821-0b72-4901-bd27-b27eacefe525
+    resourceVersion: "876"
+    uid: a709ae90-5d98-417c-93c4-90adab0e1525
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
+  lastTimestamp: "2026-09-27T07:55:17Z"
+  message: Container image "registry.k8s.io/pause:3.9" already present on machine
+    and can be accessed by the pod
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:17Z"
+    name: cart-656b4f485c-l658v.18d91e5e487bf874
+    namespace: shop
+    resourceVersion: "903"
+    uid: 62997942-262a-4c57-8445-73dbb5733485
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:17Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{cart}
+    kind: Pod
+    name: cart-656b4f485c-l658v
+    namespace: shop
+    resourceVersion: "876"
+    uid: a709ae90-5d98-417c-93c4-90adab0e1525
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:17Z"
+  message: Container created
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:17Z"
+    name: cart-656b4f485c-l658v.18d91e5e4a6896f4
+    namespace: shop
+    resourceVersion: "906"
+    uid: fa90941f-18b9-4efd-ab93-3e5ab9ea6bfe
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:17Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{cart}
+    kind: Pod
+    name: cart-656b4f485c-l658v
+    namespace: shop
+    resourceVersion: "876"
+    uid: a709ae90-5d98-417c-93c4-90adab0e1525
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:17Z"
+  message: Container started
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:17Z"
+    name: cart-656b4f485c-l658v.18d91e5e4d3323e3
+    namespace: shop
+    resourceVersion: "910"
+    uid: 60417fe2-691a-4f3d-8c78-d104e51103f6
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:36Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: cart-656b4f485c-mw7t5
+    namespace: shop
+    resourceVersion: "626"
+    uid: 218cf030-6196-4163-a063-619aa375894c
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: Successfully assigned shop/cart-656b4f485c-mw7t5 to scout-evals-control-plane
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: cart-656b4f485c-mw7t5.18d91e54d78ce8b3
+    namespace: shop
+    resourceVersion: "628"
+    uid: 7719bd46-2bb5-480a-a446-c951494bb882
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:36Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{cart}
+    kind: Pod
+    name: cart-656b4f485c-mw7t5
+    namespace: shop
+    resourceVersion: "627"
+    uid: 218cf030-6196-4163-a063-619aa375894c
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:36Z"
   message: Pulling image "registry.k8s.io/pause:3.9"
   metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: ledger-6c8fdcf5f-8jk4t.18d91c1f96608589
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: cart-656b4f485c-mw7t5.18d91e54eead6ef9
     namespace: shop
-    resourceVersion: "620"
-    uid: b3d82966-cd2c-481e-bc8f-87e140084472
+    resourceVersion: "646"
+    uid: b2b044de-b50f-42d9-ae35-f5f5aa0c5bf5
   reason: Pulling
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -6095,25 +5037,25 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:11Z"
+  firstTimestamp: "2026-09-27T07:54:39Z"
   involvedObject:
     apiVersion: v1
-    fieldPath: spec.containers{ledger}
+    fieldPath: spec.containers{cart}
     kind: Pod
-    name: ledger-6c8fdcf5f-8jk4t
+    name: cart-656b4f485c-mw7t5
     namespace: shop
-    resourceVersion: "601"
-    uid: 26726821-0b72-4901-bd27-b27eacefe525
+    resourceVersion: "627"
+    uid: 218cf030-6196-4163-a063-619aa375894c
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:11Z"
-  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 208ms (3.137s
+  lastTimestamp: "2026-09-27T07:54:39Z"
+  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 188ms (2.291s
     including waiting). Image size: 268051 bytes.'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:11Z"
-    name: ledger-6c8fdcf5f-8jk4t.18d91c20515d67dd
+    creationTimestamp: "2026-09-27T07:54:39Z"
+    name: cart-656b4f485c-mw7t5.18d91e557742b75c
     namespace: shop
-    resourceVersion: "728"
-    uid: 51d851b7-72ff-4a5d-baa7-5880c379b03f
+    resourceVersion: "751"
+    uid: 92a13512-146a-4c2e-9716-8426c7e855ff
   reason: Pulled
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -6124,24 +5066,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:12Z"
+  firstTimestamp: "2026-09-27T07:54:39Z"
   involvedObject:
     apiVersion: v1
-    fieldPath: spec.containers{ledger}
+    fieldPath: spec.containers{cart}
     kind: Pod
-    name: ledger-6c8fdcf5f-8jk4t
+    name: cart-656b4f485c-mw7t5
     namespace: shop
-    resourceVersion: "601"
-    uid: 26726821-0b72-4901-bd27-b27eacefe525
+    resourceVersion: "627"
+    uid: 218cf030-6196-4163-a063-619aa375894c
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:12Z"
+  lastTimestamp: "2026-09-27T07:54:39Z"
   message: Container created
   metadata:
-    creationTimestamp: "2026-09-27T07:14:12Z"
-    name: ledger-6c8fdcf5f-8jk4t.18d91c2052953e47
+    creationTimestamp: "2026-09-27T07:54:39Z"
+    name: cart-656b4f485c-mw7t5.18d91e55788e21a0
     namespace: shop
-    resourceVersion: "729"
-    uid: c455d0ba-4ad6-499c-bd02-81df11297381
+    resourceVersion: "752"
+    uid: 7ea6f1d2-0292-456f-aef9-2cb55c7a5cdd
   reason: Created
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -6152,24 +5094,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:12Z"
+  firstTimestamp: "2026-09-27T07:54:39Z"
   involvedObject:
     apiVersion: v1
-    fieldPath: spec.containers{ledger}
+    fieldPath: spec.containers{cart}
     kind: Pod
-    name: ledger-6c8fdcf5f-8jk4t
+    name: cart-656b4f485c-mw7t5
     namespace: shop
-    resourceVersion: "601"
-    uid: 26726821-0b72-4901-bd27-b27eacefe525
+    resourceVersion: "627"
+    uid: 218cf030-6196-4163-a063-619aa375894c
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:12Z"
+  lastTimestamp: "2026-09-27T07:54:39Z"
   message: Container started
   metadata:
-    creationTimestamp: "2026-09-27T07:14:12Z"
-    name: ledger-6c8fdcf5f-8jk4t.18d91c2054c4d455
+    creationTimestamp: "2026-09-27T07:54:39Z"
+    name: cart-656b4f485c-mw7t5.18d91e557aad3b27
     namespace: shop
-    resourceVersion: "730"
-    uid: c9a6a04e-1ee3-4889-9306-7efb137f7cba
+    resourceVersion: "753"
+    uid: 3971e2be-67b3-408d-a5ca-a356d36089e6
   reason: Started
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -6180,23 +5122,1134 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
+  firstTimestamp: "2026-09-27T07:54:36Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: cart-656b4f485c
+    namespace: shop
+    resourceVersion: "612"
+    uid: 1e5dd026-2af5-4927-83e1-147fd95fca49
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: 'Created pod: cart-656b4f485c-mw7t5'
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: cart-656b4f485c.18d91e54d763f85a
+    namespace: shop
+    resourceVersion: "641"
+    uid: c9707dc3-fef1-4e3c-b63e-0349708d7679
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:16Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: cart-656b4f485c
+    namespace: shop
+    resourceVersion: "870"
+    uid: 1e5dd026-2af5-4927-83e1-147fd95fca49
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:16Z"
+  message: 'Created pod: cart-656b4f485c-l658v'
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:16Z"
+    name: cart-656b4f485c.18d91e5e2effc26a
+    namespace: shop
+    resourceVersion: "874"
+    uid: 25f0b69b-b6d8-46cf-ba4d-99740d309561
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:16Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: cart-656b4f485c
+    namespace: shop
+    resourceVersion: "870"
+    uid: 1e5dd026-2af5-4927-83e1-147fd95fca49
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:16Z"
+  message: 'Created pod: cart-656b4f485c-klllp'
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:16Z"
+    name: cart-656b4f485c.18d91e5e2f2c26de
+    namespace: shop
+    resourceVersion: "880"
+    uid: 7cc0ee34-896d-4f2b-9b19-0d8b671ac79a
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:36Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: cart
+    namespace: shop
+    resourceVersion: "594"
+    uid: 42481787-8813-4025-9e41-a930ffd500f7
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: Scaled up replica set cart-656b4f485c from 0 to 1
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: cart.18d91e54ce1b434f
+    namespace: shop
+    resourceVersion: "647"
+    uid: e3806c97-f14e-482a-9486-1154b2c49193
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:16Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: cart
+    namespace: shop
+    resourceVersion: "869"
+    uid: 42481787-8813-4025-9e41-a930ffd500f7
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:16Z"
+  message: Scaled up replica set cart-656b4f485c from 1 to 3
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:16Z"
+    name: cart.18d91e5e2ed3c01c
+    namespace: shop
+    resourceVersion: "872"
+    uid: 11796d00-f6f1-4d84-ab13-4d97f933ff32
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:36Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: checkout-65fc6d8885-fsbdv
+    namespace: shop
+    resourceVersion: "576"
+    uid: 7613093e-54b5-47a0-8f2a-2c9e2d58d6fb
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: Successfully assigned shop/checkout-65fc6d8885-fsbdv to scout-evals-control-plane
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: checkout-65fc6d8885-fsbdv.18d91e54bd1334e4
+    namespace: shop
+    resourceVersion: "582"
+    uid: 0b6239a6-1e18-495b-8aa8-adf1e4b91699
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:36Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{checkout}
+    kind: Pod
+    name: checkout-65fc6d8885-fsbdv
+    namespace: shop
+    resourceVersion: "578"
+    uid: 7613093e-54b5-47a0-8f2a-2c9e2d58d6fb
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: Pulling image "registry.k8s.io/pause:3.9"
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: checkout-65fc6d8885-fsbdv.18d91e54d4b35838
+    namespace: shop
+    resourceVersion: "622"
+    uid: 47c8b43a-5e77-4aa4-943f-316e91a6f8e3
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:38Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{checkout}
+    kind: Pod
+    name: checkout-65fc6d8885-fsbdv
+    namespace: shop
+    resourceVersion: "578"
+    uid: 7613093e-54b5-47a0-8f2a-2c9e2d58d6fb
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:38Z"
+  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 183ms (1.906s
+    including waiting). Image size: 268051 bytes.'
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:38Z"
+    name: checkout-65fc6d8885-fsbdv.18d91e55465d3d31
+    namespace: shop
+    resourceVersion: "723"
+    uid: a554338a-d866-415f-9ce1-c9da21d7ebda
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:38Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{checkout}
+    kind: Pod
+    name: checkout-65fc6d8885-fsbdv
+    namespace: shop
+    resourceVersion: "578"
+    uid: 7613093e-54b5-47a0-8f2a-2c9e2d58d6fb
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:38Z"
+  message: Container created
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:38Z"
+    name: checkout-65fc6d8885-fsbdv.18d91e5547bf6625
+    namespace: shop
+    resourceVersion: "724"
+    uid: 63d99e06-4222-4db0-af7b-a7aff3103faa
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:38Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{checkout}
+    kind: Pod
+    name: checkout-65fc6d8885-fsbdv
+    namespace: shop
+    resourceVersion: "578"
+    uid: 7613093e-54b5-47a0-8f2a-2c9e2d58d6fb
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:38Z"
+  message: Container started
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:38Z"
+    name: checkout-65fc6d8885-fsbdv.18d91e5549fd5e6a
+    namespace: shop
+    resourceVersion: "725"
+    uid: a7adccfc-ee2f-4b23-a8bd-3afc32d3a940
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:19Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{checkout}
+    kind: Pod
+    name: checkout-65fc6d8885-fsbdv
+    namespace: shop
+    resourceVersion: "578"
+    uid: 7613093e-54b5-47a0-8f2a-2c9e2d58d6fb
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:19Z"
+  message: Stopping container checkout
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:19Z"
+    name: checkout-65fc6d8885-fsbdv.18d91e5ebd78e73d
+    namespace: shop
+    resourceVersion: "983"
+    uid: 24306f2c-02df-400b-9173-b83fe9e8fe3b
+  reason: Killing
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:36Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: checkout-65fc6d8885-wf67j
+    namespace: shop
+    resourceVersion: "574"
+    uid: ed39d4f2-d753-4695-8f6f-78518f746520
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: Successfully assigned shop/checkout-65fc6d8885-wf67j to scout-evals-control-plane
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: checkout-65fc6d8885-wf67j.18d91e54bcc8e7a1
+    namespace: shop
+    resourceVersion: "581"
+    uid: f90419d9-6df4-4e38-b544-231029b628a8
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:36Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{checkout}
+    kind: Pod
+    name: checkout-65fc6d8885-wf67j
+    namespace: shop
+    resourceVersion: "577"
+    uid: ed39d4f2-d753-4695-8f6f-78518f746520
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: Pulling image "registry.k8s.io/pause:3.9"
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: checkout-65fc6d8885-wf67j.18d91e54d36df0ab
+    namespace: shop
+    resourceVersion: "619"
+    uid: 2fde55b9-3985-4633-bca0-77ec4bf939f9
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:38Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{checkout}
+    kind: Pod
+    name: checkout-65fc6d8885-wf67j
+    namespace: shop
+    resourceVersion: "577"
+    uid: ed39d4f2-d753-4695-8f6f-78518f746520
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:38Z"
+  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 205ms (1.744s
+    including waiting). Image size: 268051 bytes.'
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:38Z"
+    name: checkout-65fc6d8885-wf67j.18d91e553b67f286
+    namespace: shop
+    resourceVersion: "719"
+    uid: 462e5b9f-84d5-4196-8b68-61675fccf012
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:38Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{checkout}
+    kind: Pod
+    name: checkout-65fc6d8885-wf67j
+    namespace: shop
+    resourceVersion: "577"
+    uid: ed39d4f2-d753-4695-8f6f-78518f746520
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:38Z"
+  message: Container created
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:38Z"
+    name: checkout-65fc6d8885-wf67j.18d91e553cde4028
+    namespace: shop
+    resourceVersion: "721"
+    uid: 12fe97a7-3289-4c3b-8c9c-62c41b674f63
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:38Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{checkout}
+    kind: Pod
+    name: checkout-65fc6d8885-wf67j
+    namespace: shop
+    resourceVersion: "577"
+    uid: ed39d4f2-d753-4695-8f6f-78518f746520
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:38Z"
+  message: Container started
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:38Z"
+    name: checkout-65fc6d8885-wf67j.18d91e553f22b659
+    namespace: shop
+    resourceVersion: "722"
+    uid: 6e961c3c-b3fa-48d9-b45a-526709a01942
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:18Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{checkout}
+    kind: Pod
+    name: checkout-65fc6d8885-wf67j
+    namespace: shop
+    resourceVersion: "577"
+    uid: ed39d4f2-d753-4695-8f6f-78518f746520
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:18Z"
+  message: Stopping container checkout
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:18Z"
+    name: checkout-65fc6d8885-wf67j.18d91e5e80360ef6
+    namespace: shop
+    resourceVersion: "935"
+    uid: 1855efd5-c2bf-4acd-8c74-a18ad937e4d9
+  reason: Killing
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:36Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: checkout-65fc6d8885
+    namespace: shop
+    resourceVersion: "568"
+    uid: af54bc40-e1e6-4753-87ac-a8c61627b3b1
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: 'Created pod: checkout-65fc6d8885-wf67j'
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: checkout-65fc6d8885.18d91e54bc8bd560
+    namespace: shop
+    resourceVersion: "575"
+    uid: 78f6c8b2-9ae8-404b-8ace-2fec0c9fbbc0
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:36Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: checkout-65fc6d8885
+    namespace: shop
+    resourceVersion: "568"
+    uid: af54bc40-e1e6-4753-87ac-a8c61627b3b1
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: 'Created pod: checkout-65fc6d8885-fsbdv'
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: checkout-65fc6d8885.18d91e54bcc98bda
+    namespace: shop
+    resourceVersion: "579"
+    uid: 98918f1c-d13f-4e29-9a63-7dce99cbced1
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:18Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: checkout-65fc6d8885
+    namespace: shop
+    resourceVersion: "922"
+    uid: af54bc40-e1e6-4753-87ac-a8c61627b3b1
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:18Z"
+  message: 'Deleted pod: checkout-65fc6d8885-wf67j'
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:18Z"
+    name: checkout-65fc6d8885.18d91e5e80262730
+    namespace: shop
+    resourceVersion: "929"
+    uid: b4d51186-785d-4b80-abb5-8a0750bdd98e
+  reason: SuccessfulDelete
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:19Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: checkout-65fc6d8885
+    namespace: shop
+    resourceVersion: "977"
+    uid: af54bc40-e1e6-4753-87ac-a8c61627b3b1
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:19Z"
+  message: 'Deleted pod: checkout-65fc6d8885-fsbdv'
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:19Z"
+    name: checkout-65fc6d8885.18d91e5ebd708786
+    namespace: shop
+    resourceVersion: "981"
+    uid: a2fae80a-389d-495d-95fb-0c4bc654dfbf
+  reason: SuccessfulDelete
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:16Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: checkout-7697fc644f-p5lvf
+    namespace: shop
+    resourceVersion: "858"
+    uid: 1318c824-5b33-47c8-aa1b-6f95bd6c6de1
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:16Z"
+  message: Successfully assigned shop/checkout-7697fc644f-p5lvf to scout-evals-control-plane
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:16Z"
+    name: checkout-7697fc644f-p5lvf.18d91e5e2cf9fe7d
+    namespace: shop
+    resourceVersion: "865"
+    uid: 27995c3d-30ae-4be3-9aa5-7e29783b6e94
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:17Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{checkout}
+    kind: Pod
+    name: checkout-7697fc644f-p5lvf
+    namespace: shop
+    resourceVersion: "862"
+    uid: 1318c824-5b33-47c8-aa1b-6f95bd6c6de1
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:17Z"
+  message: Container image "registry.k8s.io/pause:3.10" already present on machine
+    and can be accessed by the pod
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:17Z"
+    name: checkout-7697fc644f-p5lvf.18d91e5e46498ae8
+    namespace: shop
+    resourceVersion: "902"
+    uid: 6b17650c-a57f-4daf-8487-87f3406d4035
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:17Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{checkout}
+    kind: Pod
+    name: checkout-7697fc644f-p5lvf
+    namespace: shop
+    resourceVersion: "862"
+    uid: 1318c824-5b33-47c8-aa1b-6f95bd6c6de1
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:17Z"
+  message: Container created
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:17Z"
+    name: checkout-7697fc644f-p5lvf.18d91e5e49ce0980
+    namespace: shop
+    resourceVersion: "904"
+    uid: 6d59af11-6bd1-49f9-b39b-4b6c534d9d63
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:17Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{checkout}
+    kind: Pod
+    name: checkout-7697fc644f-p5lvf
+    namespace: shop
+    resourceVersion: "862"
+    uid: 1318c824-5b33-47c8-aa1b-6f95bd6c6de1
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:17Z"
+  message: Container started
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:17Z"
+    name: checkout-7697fc644f-p5lvf.18d91e5e4c86fb86
+    namespace: shop
+    resourceVersion: "909"
+    uid: e04a0611-ae56-4d17-a8ad-4662ee4a90f4
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:18Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: checkout-7697fc644f-rv7zc
+    namespace: shop
+    resourceVersion: "939"
+    uid: 7f0fbc8d-3d5b-4178-ab9a-84afef3adf64
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:18Z"
+  message: Successfully assigned shop/checkout-7697fc644f-rv7zc to scout-evals-control-plane
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:18Z"
+    name: checkout-7697fc644f-rv7zc.18d91e5e81059e4b
+    namespace: shop
+    resourceVersion: "952"
+    uid: 59af3ed4-6e89-40bf-97aa-59c1c5590002
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:18Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{checkout}
+    kind: Pod
+    name: checkout-7697fc644f-rv7zc
+    namespace: shop
+    resourceVersion: "949"
+    uid: 7f0fbc8d-3d5b-4178-ab9a-84afef3adf64
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:18Z"
+  message: Container image "registry.k8s.io/pause:3.10" already present on machine
+    and can be accessed by the pod
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:18Z"
+    name: checkout-7697fc644f-rv7zc.18d91e5e9a831a6b
+    namespace: shop
+    resourceVersion: "961"
+    uid: a4746054-d451-499a-a525-4304bf53f183
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:18Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{checkout}
+    kind: Pod
+    name: checkout-7697fc644f-rv7zc
+    namespace: shop
+    resourceVersion: "949"
+    uid: 7f0fbc8d-3d5b-4178-ab9a-84afef3adf64
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:18Z"
+  message: Container created
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:18Z"
+    name: checkout-7697fc644f-rv7zc.18d91e5e9dd87782
+    namespace: shop
+    resourceVersion: "964"
+    uid: 2fa26edf-e7a8-4c88-a068-55c3149c1ff1
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:18Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{checkout}
+    kind: Pod
+    name: checkout-7697fc644f-rv7zc
+    namespace: shop
+    resourceVersion: "949"
+    uid: 7f0fbc8d-3d5b-4178-ab9a-84afef3adf64
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:18Z"
+  message: Container started
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:18Z"
+    name: checkout-7697fc644f-rv7zc.18d91e5ea0c33e58
+    namespace: shop
+    resourceVersion: "969"
+    uid: 79c4a2b3-1f19-4992-be41-27b4241c4171
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:16Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: checkout-7697fc644f
+    namespace: shop
+    resourceVersion: "857"
+    uid: ab50840f-de68-4aca-b599-5ebbac840ba3
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:16Z"
+  message: 'Created pod: checkout-7697fc644f-p5lvf'
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:16Z"
+    name: checkout-7697fc644f.18d91e5e2cd1ee1a
+    namespace: shop
+    resourceVersion: "861"
+    uid: 7ee6cc94-9437-48f2-834b-ab96a8261bcf
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:18Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: checkout-7697fc644f
+    namespace: shop
+    resourceVersion: "933"
+    uid: ab50840f-de68-4aca-b599-5ebbac840ba3
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:18Z"
+  message: 'Created pod: checkout-7697fc644f-rv7zc'
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:18Z"
+    name: checkout-7697fc644f.18d91e5e80c11349
+    namespace: shop
+    resourceVersion: "946"
+    uid: bda6bb48-03cf-4432-864e-10baa76f007e
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:36Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: checkout
+    namespace: shop
+    resourceVersion: "566"
+    uid: f5a3c667-5061-4c96-be4a-4846af2d2a57
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: Scaled up replica set checkout-65fc6d8885 from 0 to 2
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: checkout.18d91e54b7efea6a
+    namespace: shop
+    resourceVersion: "573"
+    uid: ec419a22-42c5-415e-af16-55e18a010f9c
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:16Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: checkout
+    namespace: shop
+    resourceVersion: "856"
+    uid: f5a3c667-5061-4c96-be4a-4846af2d2a57
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:16Z"
+  message: Scaled up replica set checkout-7697fc644f from 0 to 1
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:16Z"
+    name: checkout.18d91e5e2ca946ab
+    namespace: shop
+    resourceVersion: "860"
+    uid: 5d387f21-4696-4e97-be97-76a32a77179d
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:18Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: checkout
+    namespace: shop
+    resourceVersion: "868"
+    uid: f5a3c667-5061-4c96-be4a-4846af2d2a57
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:18Z"
+  message: Scaled down replica set checkout-65fc6d8885 from 2 to 1
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:18Z"
+    name: checkout.18d91e5e7fe55bd0
+    namespace: shop
+    resourceVersion: "926"
+    uid: e52e81a7-e7c6-4ba7-ad98-8f8c3ea1ce38
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:18Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: checkout
+    namespace: shop
+    resourceVersion: "927"
+    uid: f5a3c667-5061-4c96-be4a-4846af2d2a57
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:18Z"
+  message: Scaled up replica set checkout-7697fc644f from 1 to 2
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:18Z"
+    name: checkout.18d91e5e80802ce4
+    namespace: shop
+    resourceVersion: "940"
+    uid: 03086ee4-c512-4d38-8d57-043d5a6d9209
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:19Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: checkout
+    namespace: shop
+    resourceVersion: "968"
+    uid: f5a3c667-5061-4c96-be4a-4846af2d2a57
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:19Z"
+  message: Scaled down replica set checkout-65fc6d8885 from 1 to 0
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:19Z"
+    name: checkout.18d91e5ebd20d4e3
+    namespace: shop
+    resourceVersion: "980"
+    uid: 8eb0d0c2-edeb-4d2b-978c-b038a006dcb3
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:36Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: ledger-6c8fdcf5f-86dc2
+    namespace: shop
+    resourceVersion: "630"
+    uid: 3fc1bcd5-83da-4337-9330-77fc2cbf6765
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: Successfully assigned shop/ledger-6c8fdcf5f-86dc2 to scout-evals-control-plane
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: ledger-6c8fdcf5f-86dc2.18d91e54da5bf3da
+    namespace: shop
+    resourceVersion: "632"
+    uid: 8e4bb839-184c-4ca2-98aa-dd3a4798cdb1
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:37Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{ledger}
+    kind: Pod
+    name: ledger-6c8fdcf5f-86dc2
+    namespace: shop
+    resourceVersion: "631"
+    uid: 3fc1bcd5-83da-4337-9330-77fc2cbf6765
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:37Z"
+  message: Pulling image "registry.k8s.io/pause:3.9"
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: ledger-6c8fdcf5f-86dc2.18d91e54f17831f3
+    namespace: shop
+    resourceVersion: "649"
+    uid: b325faaf-679b-475d-8e99-7ad5bde4927d
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:39Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{ledger}
+    kind: Pod
+    name: ledger-6c8fdcf5f-86dc2
+    namespace: shop
+    resourceVersion: "631"
+    uid: 3fc1bcd5-83da-4337-9330-77fc2cbf6765
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:39Z"
+  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 216ms (2.461s
+    including waiting). Image size: 268051 bytes.'
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:39Z"
+    name: ledger-6c8fdcf5f-86dc2.18d91e558430c220
+    namespace: shop
+    resourceVersion: "754"
+    uid: da3b0e8e-52dd-4fc5-9a53-f843aab38115
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:39Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{ledger}
+    kind: Pod
+    name: ledger-6c8fdcf5f-86dc2
+    namespace: shop
+    resourceVersion: "631"
+    uid: 3fc1bcd5-83da-4337-9330-77fc2cbf6765
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:39Z"
+  message: Container created
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:39Z"
+    name: ledger-6c8fdcf5f-86dc2.18d91e5585629ef7
+    namespace: shop
+    resourceVersion: "755"
+    uid: f7e4bd06-c5c7-4859-9393-cea723cb96b1
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:39Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{ledger}
+    kind: Pod
+    name: ledger-6c8fdcf5f-86dc2
+    namespace: shop
+    resourceVersion: "631"
+    uid: 3fc1bcd5-83da-4337-9330-77fc2cbf6765
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:39Z"
+  message: Container started
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:39Z"
+    name: ledger-6c8fdcf5f-86dc2.18d91e5587a16548
+    namespace: shop
+    resourceVersion: "756"
+    uid: a46d7b09-0e98-4107-a994-74d3a9741eab
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:36Z"
   involvedObject:
     apiVersion: apps/v1
     kind: ReplicaSet
     name: ledger-6c8fdcf5f
     namespace: shop
-    resourceVersion: "588"
-    uid: 2e6f7a7f-689e-4dda-a4d1-e90e0cdbe1a2
+    resourceVersion: "614"
+    uid: d3278c29-f207-4593-8a21-2373b6ab6112
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
-  message: 'Created pod: ledger-6c8fdcf5f-8jk4t'
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: 'Created pod: ledger-6c8fdcf5f-86dc2'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: ledger-6c8fdcf5f.18d91c1f8022110b
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: ledger-6c8fdcf5f.18d91e54da2d2569
     namespace: shop
-    resourceVersion: "624"
-    uid: f3f6e952-d4e2-4502-9981-6a74dec70509
+    resourceVersion: "648"
+    uid: 5024f31e-abe6-4c71-b272-2ae33d081a0c
   reason: SuccessfulCreate
   reportingComponent: replicaset-controller
   reportingInstance: ""
@@ -6206,23 +6259,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
+  firstTimestamp: "2026-09-27T07:54:36Z"
   involvedObject:
     apiVersion: apps/v1
     kind: Deployment
     name: ledger
     namespace: shop
-    resourceVersion: "555"
-    uid: bd40a661-a5f4-49ec-a635-96ca624a641c
+    resourceVersion: "596"
+    uid: 210460ef-159d-4439-b3c8-4c27af010b11
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
+  lastTimestamp: "2026-09-27T07:54:36Z"
   message: Scaled up replica set ledger-6c8fdcf5f from 0 to 1
   metadata:
-    creationTimestamp: "2026-09-27T07:14:09Z"
-    name: ledger.18d91c1f76e780a3
+    creationTimestamp: "2026-09-27T07:54:37Z"
+    name: ledger.18d91e54d1375525
     namespace: shop
-    resourceVersion: "633"
-    uid: 13025897-081c-4d89-bcd2-6b452c3662a2
+    resourceVersion: "667"
+    uid: 5a650dae-3694-42d1-8763-fd6b39d4941b
   reason: ScalingReplicaSet
   reportingComponent: deployment-controller
   reportingInstance: ""
@@ -6232,23 +6285,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
+  firstTimestamp: "2026-09-27T07:55:16Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: orders-5f8df669d4-vftxc
+    name: orders-5f8df669d4-wcvxs
     namespace: shop
-    resourceVersion: "829"
-    uid: be0b00fc-3dd9-45b9-b828-66ef1a18139f
+    resourceVersion: "847"
+    uid: b78f43df-e646-4954-8362-c7d92005292b
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
-  message: Successfully assigned shop/orders-5f8df669d4-vftxc to scout-evals-control-plane
+  lastTimestamp: "2026-09-27T07:55:16Z"
+  message: Successfully assigned shop/orders-5f8df669d4-wcvxs to scout-evals-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: orders-5f8df669d4-vftxc.18d91c29fb007b79
+    creationTimestamp: "2026-09-27T07:55:16Z"
+    name: orders-5f8df669d4-wcvxs.18d91e5e2b89ee02
     namespace: shop
-    resourceVersion: "835"
-    uid: 68c30859-940f-4835-af78-4a2c883a9979
+    resourceVersion: "852"
+    uid: 7c853d18-e809-485c-9131-5d8535f407b3
   reason: Scheduled
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -6256,26 +6309,26 @@ items:
     component: default-scheduler
   type: Normal
 - apiVersion: v1
-  count: 5
+  count: 4
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
+  firstTimestamp: "2026-09-27T07:55:17Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{orders}
     kind: Pod
-    name: orders-5f8df669d4-vftxc
+    name: orders-5f8df669d4-wcvxs
     namespace: shop
-    resourceVersion: "832"
-    uid: be0b00fc-3dd9-45b9-b828-66ef1a18139f
+    resourceVersion: "849"
+    uid: b78f43df-e646-4954-8362-c7d92005292b
   kind: Event
-  lastTimestamp: "2026-09-27T07:17:48Z"
+  lastTimestamp: "2026-09-27T07:56:33Z"
   message: Pulling image "registry.k8s.io/pause:9.9.9-orders"
   metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: orders-5f8df669d4-vftxc.18d91c2a11c7ece2
+    creationTimestamp: "2026-09-27T07:55:17Z"
+    name: orders-5f8df669d4-wcvxs.18d91e5e423c2a67
     namespace: shop
-    resourceVersion: "1303"
-    uid: 4dea45ae-374e-47c4-8e23-53188095d565
+    resourceVersion: "1140"
+    uid: 4197771a-8d73-4540-9f29-b0bdbb2fd33d
   reason: Pulling
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -6284,29 +6337,29 @@ items:
     host: scout-evals-control-plane
   type: Normal
 - apiVersion: v1
-  count: 5
+  count: 4
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:54Z"
+  firstTimestamp: "2026-09-27T07:55:17Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{orders}
     kind: Pod
-    name: orders-5f8df669d4-vftxc
+    name: orders-5f8df669d4-wcvxs
     namespace: shop
-    resourceVersion: "832"
-    uid: be0b00fc-3dd9-45b9-b828-66ef1a18139f
+    resourceVersion: "849"
+    uid: b78f43df-e646-4954-8362-c7d92005292b
   kind: Event
-  lastTimestamp: "2026-09-27T07:17:48Z"
+  lastTimestamp: "2026-09-27T07:56:34Z"
   message: 'Failed to pull image "registry.k8s.io/pause:9.9.9-orders": rpc error:
     code = NotFound desc = failed to pull and unpack image "registry.k8s.io/pause:9.9.9-orders":
     failed to resolve reference "registry.k8s.io/pause:9.9.9-orders": registry.k8s.io/pause:9.9.9-orders:
     not found'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:54Z"
-    name: orders-5f8df669d4-vftxc.18d91c2a1bb7aa6a
+    creationTimestamp: "2026-09-27T07:55:17Z"
+    name: orders-5f8df669d4-wcvxs.18d91e5e6077286a
     namespace: shop
-    resourceVersion: "1304"
-    uid: 1b73e46f-ff34-4479-8017-055d8d275abc
+    resourceVersion: "1141"
+    uid: e0e18230-3e12-4e74-b3c1-3901e601df36
   reason: Failed
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -6315,26 +6368,26 @@ items:
     host: scout-evals-control-plane
   type: Warning
 - apiVersion: v1
-  count: 5
+  count: 4
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:54Z"
+  firstTimestamp: "2026-09-27T07:55:17Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{orders}
     kind: Pod
-    name: orders-5f8df669d4-vftxc
+    name: orders-5f8df669d4-wcvxs
     namespace: shop
-    resourceVersion: "832"
-    uid: be0b00fc-3dd9-45b9-b828-66ef1a18139f
+    resourceVersion: "849"
+    uid: b78f43df-e646-4954-8362-c7d92005292b
   kind: Event
-  lastTimestamp: "2026-09-27T07:17:48Z"
+  lastTimestamp: "2026-09-27T07:56:34Z"
   message: 'Error: ErrImagePull'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:54Z"
-    name: orders-5f8df669d4-vftxc.18d91c2a1bb87607
+    creationTimestamp: "2026-09-27T07:55:17Z"
+    name: orders-5f8df669d4-wcvxs.18d91e5e60785079
     namespace: shop
-    resourceVersion: "1305"
-    uid: 80ce8738-521a-404e-ab88-8697141b3239
+    resourceVersion: "1142"
+    uid: b6c0d8d3-650c-4541-ab72-a10ee721075c
   reason: Failed
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -6343,26 +6396,26 @@ items:
     host: scout-evals-control-plane
   type: Warning
 - apiVersion: v1
-  count: 21
+  count: 8
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:54Z"
+  firstTimestamp: "2026-09-27T07:55:18Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{orders}
     kind: Pod
-    name: orders-5f8df669d4-vftxc
+    name: orders-5f8df669d4-wcvxs
     namespace: shop
-    resourceVersion: "832"
-    uid: be0b00fc-3dd9-45b9-b828-66ef1a18139f
+    resourceVersion: "849"
+    uid: b78f43df-e646-4954-8362-c7d92005292b
   kind: Event
-  lastTimestamp: "2026-09-27T07:19:58Z"
+  lastTimestamp: "2026-09-27T07:57:29Z"
   message: Back-off pulling image "registry.k8s.io/pause:9.9.9-orders"
   metadata:
-    creationTimestamp: "2026-09-27T07:14:54Z"
-    name: orders-5f8df669d4-vftxc.18d91c2a2fabe914
+    creationTimestamp: "2026-09-27T07:55:18Z"
+    name: orders-5f8df669d4-wcvxs.18d91e5e7f194797
     namespace: shop
-    resourceVersion: "1516"
-    uid: b9fa775b-1e5a-446c-9b99-0d0b8d7ebfc4
+    resourceVersion: "1243"
+    uid: 05684fb7-3caf-490a-b0c4-5eac574ebb6c
   reason: BackOff
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -6371,26 +6424,26 @@ items:
     host: scout-evals-control-plane
   type: Normal
 - apiVersion: v1
-  count: 21
+  count: 8
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:54Z"
+  firstTimestamp: "2026-09-27T07:55:18Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{orders}
     kind: Pod
-    name: orders-5f8df669d4-vftxc
+    name: orders-5f8df669d4-wcvxs
     namespace: shop
-    resourceVersion: "832"
-    uid: be0b00fc-3dd9-45b9-b828-66ef1a18139f
+    resourceVersion: "849"
+    uid: b78f43df-e646-4954-8362-c7d92005292b
   kind: Event
-  lastTimestamp: "2026-09-27T07:19:58Z"
+  lastTimestamp: "2026-09-27T07:57:29Z"
   message: 'Error: ImagePullBackOff'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:54Z"
-    name: orders-5f8df669d4-vftxc.18d91c2a2facf42b
+    creationTimestamp: "2026-09-27T07:55:18Z"
+    name: orders-5f8df669d4-wcvxs.18d91e5e7f19c085
     namespace: shop
-    resourceVersion: "1517"
-    uid: f62b26d9-5c34-43b7-914a-074e7a66d22b
+    resourceVersion: "1244"
+    uid: c31cc7b8-1624-4338-abc0-49cfb750de11
   reason: Failed
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -6401,23 +6454,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
+  firstTimestamp: "2026-09-27T07:55:16Z"
   involvedObject:
     apiVersion: apps/v1
     kind: ReplicaSet
     name: orders-5f8df669d4
     namespace: shop
-    resourceVersion: "826"
-    uid: a3a55d17-722b-42b6-b2ac-99bc1486ef2b
+    resourceVersion: "844"
+    uid: 372274f0-d7cc-4367-9022-20b75f7464b9
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
-  message: 'Created pod: orders-5f8df669d4-vftxc'
+  lastTimestamp: "2026-09-27T07:55:16Z"
+  message: 'Created pod: orders-5f8df669d4-wcvxs'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: orders-5f8df669d4.18d91c29faa8c6ca
+    creationTimestamp: "2026-09-27T07:55:16Z"
+    name: orders-5f8df669d4.18d91e5e2b4bbdf3
     namespace: shop
-    resourceVersion: "830"
-    uid: c9f989a0-d8e9-4152-9714-d34913df26f1
+    resourceVersion: "850"
+    uid: 19e4decc-a1b8-4467-88c4-a2c14b50424b
   reason: SuccessfulCreate
   reportingComponent: replicaset-controller
   reportingInstance: ""
@@ -6427,162 +6480,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:36Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: orders-6555986955-bsqkn
+    name: orders-6555986955-7xmpq
     namespace: shop
-    resourceVersion: "537"
-    uid: 4f4085cf-66a0-4052-aaf1-0b43bb1027de
+    resourceVersion: "589"
+    uid: 84185fae-943e-42f0-9c67-1c9b4e51963c
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: Successfully assigned shop/orders-6555986955-bsqkn to scout-evals-control-plane
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: Successfully assigned shop/orders-6555986955-7xmpq to scout-evals-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: orders-6555986955-bsqkn.18d91c1f6319aded
-    namespace: shop
-    resourceVersion: "549"
-    uid: bd282d04-ea2c-4eaa-83f9-69b6aa738235
-  reason: Scheduled
-  reportingComponent: default-scheduler
-  reportingInstance: ""
-  source:
-    component: default-scheduler
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{orders}
-    kind: Pod
-    name: orders-6555986955-bsqkn
-    namespace: shop
-    resourceVersion: "543"
-    uid: 4f4085cf-66a0-4052-aaf1-0b43bb1027de
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
-  message: Pulling image "registry.k8s.io/pause:3.9"
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: orders-6555986955-bsqkn.18d91c1f7bc00c42
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: orders-6555986955-7xmpq.18d91e54bffd55e2
     namespace: shop
     resourceVersion: "593"
-    uid: 6d71d6be-f853-4780-bd17-34b4c4998ddc
-  reason: Pulling
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:11Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{orders}
-    kind: Pod
-    name: orders-6555986955-bsqkn
-    namespace: shop
-    resourceVersion: "543"
-    uid: 4f4085cf-66a0-4052-aaf1-0b43bb1027de
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:11Z"
-  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 221ms (2.957s
-    including waiting). Image size: 268051 bytes.'
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:11Z"
-    name: orders-6555986955-bsqkn.18d91c202c0eb66b
-    namespace: shop
-    resourceVersion: "718"
-    uid: 46c9ec2b-91d1-4260-94ed-101fb0da7297
-  reason: Pulled
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:11Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{orders}
-    kind: Pod
-    name: orders-6555986955-bsqkn
-    namespace: shop
-    resourceVersion: "543"
-    uid: 4f4085cf-66a0-4052-aaf1-0b43bb1027de
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:11Z"
-  message: Container created
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:11Z"
-    name: orders-6555986955-bsqkn.18d91c202d4ac008
-    namespace: shop
-    resourceVersion: "719"
-    uid: b18f4faf-c0c2-48d6-bb0f-ea9a06f50dca
-  reason: Created
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:11Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{orders}
-    kind: Pod
-    name: orders-6555986955-bsqkn
-    namespace: shop
-    resourceVersion: "543"
-    uid: 4f4085cf-66a0-4052-aaf1-0b43bb1027de
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:11Z"
-  message: Container started
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:11Z"
-    name: orders-6555986955-bsqkn.18d91c202f3635f1
-    namespace: shop
-    resourceVersion: "720"
-    uid: 9ada81ba-7371-434a-bc16-85e5e8891585
-  reason: Started
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
-  involvedObject:
-    apiVersion: v1
-    kind: Pod
-    name: orders-6555986955-z6wqg
-    namespace: shop
-    resourceVersion: "532"
-    uid: 694fa4ca-d0ea-43a5-9495-f52bdb733190
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: Successfully assigned shop/orders-6555986955-z6wqg to scout-evals-control-plane
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: orders-6555986955-z6wqg.18d91c1f62cedc13
-    namespace: shop
-    resourceVersion: "546"
-    uid: e9a5599c-4b89-497f-b7db-e06bf1668f7d
+    uid: 577996e7-cb51-439e-86b2-3f5802bc06dc
   reason: Scheduled
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -6592,24 +6506,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
+  firstTimestamp: "2026-09-27T07:54:36Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{orders}
     kind: Pod
-    name: orders-6555986955-z6wqg
-    namespace: shop
-    resourceVersion: "536"
-    uid: 694fa4ca-d0ea-43a5-9495-f52bdb733190
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
-  message: Pulling image "registry.k8s.io/pause:3.9"
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: orders-6555986955-z6wqg.18d91c1f7ad11d4c
+    name: orders-6555986955-7xmpq
     namespace: shop
     resourceVersion: "591"
-    uid: db33cafa-4768-4e5a-b809-71928508328a
+    uid: 84185fae-943e-42f0-9c67-1c9b4e51963c
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: Pulling image "registry.k8s.io/pause:3.9"
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: orders-6555986955-7xmpq.18d91e54d6d5d3f2
+    namespace: shop
+    resourceVersion: "624"
+    uid: 17a98769-adb6-4f2e-b15e-97cc47f317a6
   reason: Pulling
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -6620,25 +6534,25 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:10Z"
+  firstTimestamp: "2026-09-27T07:54:38Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{orders}
     kind: Pod
-    name: orders-6555986955-z6wqg
+    name: orders-6555986955-7xmpq
     namespace: shop
-    resourceVersion: "536"
-    uid: 694fa4ca-d0ea-43a5-9495-f52bdb733190
+    resourceVersion: "591"
+    uid: 84185fae-943e-42f0-9c67-1c9b4e51963c
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:10Z"
-  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 200ms (2.538s
+  lastTimestamp: "2026-09-27T07:54:38Z"
+  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 219ms (2.09s
     including waiting). Image size: 268051 bytes.'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:10Z"
-    name: orders-6555986955-z6wqg.18d91c20122732b1
+    creationTimestamp: "2026-09-27T07:54:38Z"
+    name: orders-6555986955-7xmpq.18d91e555377ea42
     namespace: shop
-    resourceVersion: "697"
-    uid: 9e2ae1c5-44fe-432e-beac-17f9e42f46d5
+    resourceVersion: "726"
+    uid: 90d270ea-c04f-4d4a-9e8a-cc6f55791529
   reason: Pulled
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -6649,24 +6563,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:10Z"
+  firstTimestamp: "2026-09-27T07:54:38Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{orders}
     kind: Pod
-    name: orders-6555986955-z6wqg
+    name: orders-6555986955-7xmpq
     namespace: shop
-    resourceVersion: "536"
-    uid: 694fa4ca-d0ea-43a5-9495-f52bdb733190
+    resourceVersion: "591"
+    uid: 84185fae-943e-42f0-9c67-1c9b4e51963c
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:10Z"
+  lastTimestamp: "2026-09-27T07:54:38Z"
   message: Container created
   metadata:
-    creationTimestamp: "2026-09-27T07:14:10Z"
-    name: orders-6555986955-z6wqg.18d91c201398a33b
+    creationTimestamp: "2026-09-27T07:54:38Z"
+    name: orders-6555986955-7xmpq.18d91e5554a51286
     namespace: shop
-    resourceVersion: "698"
-    uid: f121e387-74af-4ff2-8840-9bdb6a28c517
+    resourceVersion: "727"
+    uid: 2f93bb8b-15cf-42fe-bbff-07c36d9f6bfb
   reason: Created
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -6677,24 +6591,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:10Z"
+  firstTimestamp: "2026-09-27T07:54:38Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{orders}
     kind: Pod
-    name: orders-6555986955-z6wqg
+    name: orders-6555986955-7xmpq
     namespace: shop
-    resourceVersion: "536"
-    uid: 694fa4ca-d0ea-43a5-9495-f52bdb733190
+    resourceVersion: "591"
+    uid: 84185fae-943e-42f0-9c67-1c9b4e51963c
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:10Z"
+  lastTimestamp: "2026-09-27T07:54:38Z"
   message: Container started
   metadata:
-    creationTimestamp: "2026-09-27T07:14:10Z"
-    name: orders-6555986955-z6wqg.18d91c2015ce21a8
+    creationTimestamp: "2026-09-27T07:54:38Z"
+    name: orders-6555986955-7xmpq.18d91e5556d03829
     namespace: shop
-    resourceVersion: "699"
-    uid: 33c464f4-d458-4813-aba6-66e2c8e87a55
+    resourceVersion: "728"
+    uid: 80877a67-91b4-4bdc-bd2c-67a37311c7c9
   reason: Started
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -6705,127 +6619,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
-  involvedObject:
-    apiVersion: apps/v1
-    kind: ReplicaSet
-    name: orders-6555986955
-    namespace: shop
-    resourceVersion: "530"
-    uid: 0f8629a7-90ed-4762-889a-881773fe7c49
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: 'Created pod: orders-6555986955-z6wqg'
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: orders-6555986955.18d91c1f62925594
-    namespace: shop
-    resourceVersion: "538"
-    uid: 31245d66-7201-4472-a395-3d133afff4ba
-  reason: SuccessfulCreate
-  reportingComponent: replicaset-controller
-  reportingInstance: ""
-  source:
-    component: replicaset-controller
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
-  involvedObject:
-    apiVersion: apps/v1
-    kind: ReplicaSet
-    name: orders-6555986955
-    namespace: shop
-    resourceVersion: "530"
-    uid: 0f8629a7-90ed-4762-889a-881773fe7c49
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: 'Created pod: orders-6555986955-bsqkn'
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: orders-6555986955.18d91c1f62c56702
-    namespace: shop
-    resourceVersion: "557"
-    uid: 31f53357-1bb6-41fa-8af5-1d7180208278
-  reason: SuccessfulCreate
-  reportingComponent: replicaset-controller
-  reportingInstance: ""
-  source:
-    component: replicaset-controller
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
-  involvedObject:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: orders
-    namespace: shop
-    resourceVersion: "524"
-    uid: 00f07ef9-8a63-4ce2-897e-a8bef885129d
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: Scaled up replica set orders-6555986955 from 0 to 2
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: orders.18d91c1f6207768e
-    namespace: shop
-    resourceVersion: "558"
-    uid: 7c9e4778-f87c-4371-a455-f0a24a15fa1c
-  reason: ScalingReplicaSet
-  reportingComponent: deployment-controller
-  reportingInstance: ""
-  source:
-    component: deployment-controller
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:53Z"
-  involvedObject:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: orders
-    namespace: shop
-    resourceVersion: "825"
-    uid: 00f07ef9-8a63-4ce2-897e-a8bef885129d
-  kind: Event
-  lastTimestamp: "2026-09-27T07:14:53Z"
-  message: Scaled up replica set orders-5f8df669d4 from 0 to 1
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    name: orders.18d91c29fa581778
-    namespace: shop
-    resourceVersion: "827"
-    uid: 284c8b3c-dc27-47ab-b3f7-4b2b683b719e
-  reason: ScalingReplicaSet
-  reportingComponent: deployment-controller
-  reportingInstance: ""
-  source:
-    component: deployment-controller
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:36Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: debug-nginx-5dbdb5f74f-xg46t
-    namespace: temp-testing
-    resourceVersion: "497"
-    uid: b4d70f3d-8f89-4279-bb30-ab9dc818a060
+    name: orders-6555986955-q7h5k
+    namespace: shop
+    resourceVersion: "587"
+    uid: 483fb2c9-4112-41fc-a1b4-807da4825c06
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: Successfully assigned temp-testing/debug-nginx-5dbdb5f74f-xg46t to scout-evals-control-plane
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: Successfully assigned shop/orders-6555986955-q7h5k to scout-evals-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: debug-nginx-5dbdb5f74f-xg46t.18d91c1f5cc15459
-    namespace: temp-testing
-    resourceVersion: "503"
-    uid: 7a409588-6936-4266-ad50-dbfc5030073b
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: orders-6555986955-q7h5k.18d91e54bfb5c0bd
+    namespace: shop
+    resourceVersion: "590"
+    uid: cf79b410-15c9-4ad9-9765-a1a451a0beea
   reason: Scheduled
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -6835,24 +6645,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:08Z"
+  firstTimestamp: "2026-09-27T07:54:36Z"
   involvedObject:
     apiVersion: v1
-    fieldPath: spec.containers{nginx}
+    fieldPath: spec.containers{orders}
     kind: Pod
-    name: debug-nginx-5dbdb5f74f-xg46t
-    namespace: temp-testing
-    resourceVersion: "500"
-    uid: b4d70f3d-8f89-4279-bb30-ab9dc818a060
+    name: orders-6555986955-q7h5k
+    namespace: shop
+    resourceVersion: "588"
+    uid: 483fb2c9-4112-41fc-a1b4-807da4825c06
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:08Z"
+  lastTimestamp: "2026-09-27T07:54:36Z"
   message: Pulling image "registry.k8s.io/pause:3.9"
   metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
-    name: debug-nginx-5dbdb5f74f-xg46t.18d91c1f74b1734e
-    namespace: temp-testing
-    resourceVersion: "585"
-    uid: d882ec5a-b230-4c50-a840-da3e8a9ea875
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: orders-6555986955-q7h5k.18d91e54d6f955af
+    namespace: shop
+    resourceVersion: "625"
+    uid: c4bee58d-ed91-4b63-9b11-689e1277f6dc
   reason: Pulling
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -6863,25 +6673,25 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:10Z"
+  firstTimestamp: "2026-09-27T07:54:38Z"
   involvedObject:
     apiVersion: v1
-    fieldPath: spec.containers{nginx}
+    fieldPath: spec.containers{orders}
     kind: Pod
-    name: debug-nginx-5dbdb5f74f-xg46t
-    namespace: temp-testing
-    resourceVersion: "500"
-    uid: b4d70f3d-8f89-4279-bb30-ab9dc818a060
+    name: orders-6555986955-q7h5k
+    namespace: shop
+    resourceVersion: "588"
+    uid: 483fb2c9-4112-41fc-a1b4-807da4825c06
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:10Z"
-  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 428ms (1.776s
+  lastTimestamp: "2026-09-27T07:54:38Z"
+  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 200ms (2.288s
     including waiting). Image size: 268051 bytes.'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:10Z"
-    name: debug-nginx-5dbdb5f74f-xg46t.18d91c1fde904733
-    namespace: temp-testing
-    resourceVersion: "675"
-    uid: 15dad885-613a-48f7-9006-28f27b65b8f5
+    creationTimestamp: "2026-09-27T07:54:38Z"
+    name: orders-6555986955-q7h5k.18d91e555f658079
+    namespace: shop
+    resourceVersion: "730"
+    uid: 2a6e7b15-1c5f-417a-9718-aac5ff4f68d1
   reason: Pulled
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -6892,24 +6702,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:10Z"
+  firstTimestamp: "2026-09-27T07:54:38Z"
   involvedObject:
     apiVersion: v1
-    fieldPath: spec.containers{nginx}
+    fieldPath: spec.containers{orders}
     kind: Pod
-    name: debug-nginx-5dbdb5f74f-xg46t
-    namespace: temp-testing
-    resourceVersion: "500"
-    uid: b4d70f3d-8f89-4279-bb30-ab9dc818a060
+    name: orders-6555986955-q7h5k
+    namespace: shop
+    resourceVersion: "588"
+    uid: 483fb2c9-4112-41fc-a1b4-807da4825c06
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:10Z"
+  lastTimestamp: "2026-09-27T07:54:38Z"
   message: Container created
   metadata:
-    creationTimestamp: "2026-09-27T07:14:10Z"
-    name: debug-nginx-5dbdb5f74f-xg46t.18d91c1fe01a5da6
-    namespace: temp-testing
-    resourceVersion: "676"
-    uid: 71a74fd6-a8bc-41c8-ab49-7f4ac229c26c
+    creationTimestamp: "2026-09-27T07:54:38Z"
+    name: orders-6555986955-q7h5k.18d91e5560f79995
+    namespace: shop
+    resourceVersion: "731"
+    uid: c1f021cb-54b2-4931-9695-973999245d4c
   reason: Created
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -6920,24 +6730,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:10Z"
+  firstTimestamp: "2026-09-27T07:54:38Z"
   involvedObject:
     apiVersion: v1
-    fieldPath: spec.containers{nginx}
+    fieldPath: spec.containers{orders}
     kind: Pod
-    name: debug-nginx-5dbdb5f74f-xg46t
-    namespace: temp-testing
-    resourceVersion: "500"
-    uid: b4d70f3d-8f89-4279-bb30-ab9dc818a060
+    name: orders-6555986955-q7h5k
+    namespace: shop
+    resourceVersion: "588"
+    uid: 483fb2c9-4112-41fc-a1b4-807da4825c06
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:10Z"
+  lastTimestamp: "2026-09-27T07:54:38Z"
   message: Container started
   metadata:
-    creationTimestamp: "2026-09-27T07:14:10Z"
-    name: debug-nginx-5dbdb5f74f-xg46t.18d91c1fe3db59bd
-    namespace: temp-testing
-    resourceVersion: "678"
-    uid: 74a07733-845c-4a3b-bae0-f228a4ae850e
+    creationTimestamp: "2026-09-27T07:54:38Z"
+    name: orders-6555986955-q7h5k.18d91e55632e852e
+    namespace: shop
+    resourceVersion: "732"
+    uid: 2e4a1810-5523-4005-90a2-9ba5185546ed
   reason: Started
   reportingComponent: kubelet
   reportingInstance: scout-evals-control-plane
@@ -6948,23 +6758,266 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:36Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: orders-6555986955
+    namespace: shop
+    resourceVersion: "586"
+    uid: 91cbde62-ab93-4188-b994-df4e3ed9bd5e
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: 'Created pod: orders-6555986955-q7h5k'
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: orders-6555986955.18d91e54bf8ac838
+    namespace: shop
+    resourceVersion: "597"
+    uid: 1f029c26-0f02-4fe3-ae7c-627ab02e642f
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:36Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: orders-6555986955
+    namespace: shop
+    resourceVersion: "586"
+    uid: 91cbde62-ab93-4188-b994-df4e3ed9bd5e
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: 'Created pod: orders-6555986955-7xmpq'
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: orders-6555986955.18d91e54bfcc8302
+    namespace: shop
+    resourceVersion: "603"
+    uid: 0fe7061b-bef2-416a-9502-1da207719c8e
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:36Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: orders
+    namespace: shop
+    resourceVersion: "569"
+    uid: 16ec2bb4-6ba8-495a-ba4b-118cb2663637
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: Scaled up replica set orders-6555986955 from 0 to 2
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: orders.18d91e54bf5ea820
+    namespace: shop
+    resourceVersion: "605"
+    uid: 76a14217-fed3-40ac-b915-9577b6773365
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:55:16Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: orders
+    namespace: shop
+    resourceVersion: "843"
+    uid: 16ec2bb4-6ba8-495a-ba4b-118cb2663637
+  kind: Event
+  lastTimestamp: "2026-09-27T07:55:16Z"
+  message: Scaled up replica set orders-5f8df669d4 from 0 to 1
+  metadata:
+    creationTimestamp: "2026-09-27T07:55:16Z"
+    name: orders.18d91e5e2acd06e0
+    namespace: shop
+    resourceVersion: "846"
+    uid: b5005358-38fa-458a-ba90-e33d1facc358
+  reason: ScalingReplicaSet
+  reportingComponent: deployment-controller
+  reportingInstance: ""
+  source:
+    component: deployment-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:36Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: debug-nginx-5dbdb5f74f-6g6ph
+    namespace: temp-testing
+    resourceVersion: "546"
+    uid: 548da026-3b19-4cbd-a6d7-7baabed00cc8
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: Successfully assigned temp-testing/debug-nginx-5dbdb5f74f-6g6ph to scout-evals-control-plane
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: debug-nginx-5dbdb5f74f-6g6ph.18d91e54b7088aaf
+    namespace: temp-testing
+    resourceVersion: "558"
+    uid: a94a3546-4d7f-46c9-a160-7eee046d8f34
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:36Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{nginx}
+    kind: Pod
+    name: debug-nginx-5dbdb5f74f-6g6ph
+    namespace: temp-testing
+    resourceVersion: "552"
+    uid: 548da026-3b19-4cbd-a6d7-7baabed00cc8
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: Pulling image "registry.k8s.io/pause:3.9"
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: debug-nginx-5dbdb5f74f-6g6ph.18d91e54d24aa0e2
+    namespace: temp-testing
+    resourceVersion: "618"
+    uid: 865d80a4-addb-47be-89c9-6feb91e60965
+  reason: Pulling
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:38Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{nginx}
+    kind: Pod
+    name: debug-nginx-5dbdb5f74f-6g6ph
+    namespace: temp-testing
+    resourceVersion: "552"
+    uid: 548da026-3b19-4cbd-a6d7-7baabed00cc8
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:38Z"
+  message: 'Successfully pulled image "registry.k8s.io/pause:3.9" in 204ms (1.557s
+    including waiting). Image size: 268051 bytes.'
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:38Z"
+    name: debug-nginx-5dbdb5f74f-6g6ph.18d91e552f262b03
+    namespace: temp-testing
+    resourceVersion: "714"
+    uid: 8876a59a-5f66-4ae7-80cc-18067f0617da
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:38Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{nginx}
+    kind: Pod
+    name: debug-nginx-5dbdb5f74f-6g6ph
+    namespace: temp-testing
+    resourceVersion: "552"
+    uid: 548da026-3b19-4cbd-a6d7-7baabed00cc8
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:38Z"
+  message: Container created
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:38Z"
+    name: debug-nginx-5dbdb5f74f-6g6ph.18d91e5530f05b54
+    namespace: temp-testing
+    resourceVersion: "716"
+    uid: 9d2280f3-554a-418a-8712-ea9b2f5f2b44
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:38Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{nginx}
+    kind: Pod
+    name: debug-nginx-5dbdb5f74f-6g6ph
+    namespace: temp-testing
+    resourceVersion: "552"
+    uid: 548da026-3b19-4cbd-a6d7-7baabed00cc8
+  kind: Event
+  lastTimestamp: "2026-09-27T07:54:38Z"
+  message: Container started
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:38Z"
+    name: debug-nginx-5dbdb5f74f-6g6ph.18d91e55331d940c
+    namespace: temp-testing
+    resourceVersion: "717"
+    uid: a14084e3-3422-4e2d-bec0-478862cc9027
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T07:54:36Z"
   involvedObject:
     apiVersion: apps/v1
     kind: ReplicaSet
     name: debug-nginx-5dbdb5f74f
     namespace: temp-testing
-    resourceVersion: "487"
-    uid: 5d3fd03e-2dc9-4394-90e6-2e435c83fdb0
+    resourceVersion: "535"
+    uid: 3fde3144-f675-437b-bf52-a9eb2965d96a
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
-  message: 'Created pod: debug-nginx-5dbdb5f74f-xg46t'
+  lastTimestamp: "2026-09-27T07:54:36Z"
+  message: 'Created pod: debug-nginx-5dbdb5f74f-6g6ph'
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: debug-nginx-5dbdb5f74f.18d91c1f5c93adcc
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    name: debug-nginx-5dbdb5f74f.18d91e54b6a62681
     namespace: temp-testing
-    resourceVersion: "502"
-    uid: ccfbf1bd-1afc-43b0-aaa1-f92291a33f95
+    resourceVersion: "559"
+    uid: 588057a1-a086-4710-817b-fc89011af164
   reason: SuccessfulCreate
   reportingComponent: replicaset-controller
   reportingInstance: ""
@@ -6974,23 +7027,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T07:14:07Z"
+  firstTimestamp: "2026-09-27T07:54:35Z"
   involvedObject:
     apiVersion: apps/v1
     kind: Deployment
     name: debug-nginx
     namespace: temp-testing
-    resourceVersion: "485"
-    uid: d6430221-f605-45c8-914b-bd84d5f39e39
+    resourceVersion: "532"
+    uid: c257d0a7-ec2c-4485-9558-6640b1a85bb9
   kind: Event
-  lastTimestamp: "2026-09-27T07:14:07Z"
+  lastTimestamp: "2026-09-27T07:54:35Z"
   message: Scaled up replica set debug-nginx-5dbdb5f74f from 0 to 1
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    name: debug-nginx.18d91c1f5920b5ec
+    creationTimestamp: "2026-09-27T07:54:35Z"
+    name: debug-nginx.18d91e54b30c743d
     namespace: temp-testing
-    resourceVersion: "490"
-    uid: 580b1f62-c2fa-4adb-8b7b-7448f3617bdf
+    resourceVersion: "538"
+    uid: 5652925c-9050-4b8a-87fd-bc788dfb0f92
   reason: ScalingReplicaSet
   reportingComponent: deployment-controller
   reportingInstance: ""
@@ -7010,12 +7063,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"argocd"}}
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     labels:
       kubernetes.io/metadata.name: argocd
     name: argocd
-    resourceVersion: "439"
-    uid: 43a71b01-a1c8-4040-a76d-602563a01803
+    resourceVersion: "487"
+    uid: 0902ead1-24c8-43ab-8622-c0277692b499
   spec:
     finalizers:
     - kubernetes
@@ -7027,12 +7080,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"billing"}}
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     labels:
       kubernetes.io/metadata.name: billing
     name: billing
-    resourceVersion: "489"
-    uid: 91d2b4b6-3e8c-4b23-8e4e-d8825ab93714
+    resourceVersion: "539"
+    uid: 5f92e1b8-63c6-49ae-9820-1fb0413a5fe2
   spec:
     finalizers:
     - kubernetes
@@ -7041,12 +7094,12 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-09-27T07:13:46Z"
+    creationTimestamp: "2026-09-27T07:54:03Z"
     labels:
       kubernetes.io/metadata.name: default
     name: default
     resourceVersion: "21"
-    uid: e6e539d9-1f92-4818-99eb-5ddf32a374d6
+    uid: 39cd91a6-6095-43d0-9d45-34d5c82d65f4
   spec:
     finalizers:
     - kubernetes
@@ -7058,12 +7111,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"flux-system"}}
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     labels:
       kubernetes.io/metadata.name: flux-system
     name: flux-system
-    resourceVersion: "436"
-    uid: 8b769ca9-5e62-44dd-b4b8-2f5dd380d9ef
+    resourceVersion: "484"
+    uid: ebeb8f10-d8d8-43f8-a210-bcb9ea08634a
   spec:
     finalizers:
     - kubernetes
@@ -7075,12 +7128,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"inventory"}}
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     labels:
       kubernetes.io/metadata.name: inventory
     name: inventory
-    resourceVersion: "467"
-    uid: eb5e84d9-b763-42c3-96be-5835bd15fb0d
+    resourceVersion: "521"
+    uid: 4b495a8d-6869-42ce-b476-d2fc1ccefaa4
   spec:
     finalizers:
     - kubernetes
@@ -7089,12 +7142,12 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-09-27T07:13:46Z"
+    creationTimestamp: "2026-09-27T07:54:03Z"
     labels:
       kubernetes.io/metadata.name: kube-node-lease
     name: kube-node-lease
-    resourceVersion: "23"
-    uid: bb0cb756-0936-4b6a-b107-6b262930851b
+    resourceVersion: "28"
+    uid: 62b057f3-8f86-4e13-8fd5-0992c3c162ca
   spec:
     finalizers:
     - kubernetes
@@ -7103,12 +7156,12 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-09-27T07:13:46Z"
+    creationTimestamp: "2026-09-27T07:54:03Z"
     labels:
       kubernetes.io/metadata.name: kube-public
     name: kube-public
     resourceVersion: "13"
-    uid: 112ff53a-14c9-4d49-bdac-dd04f71edda9
+    uid: 23673e8d-6ed8-4e17-b6d1-c15e8257d70f
   spec:
     finalizers:
     - kubernetes
@@ -7117,12 +7170,12 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-09-27T07:13:46Z"
+    creationTimestamp: "2026-09-27T07:54:03Z"
     labels:
       kubernetes.io/metadata.name: kube-system
     name: kube-system
-    resourceVersion: "7"
-    uid: 0960b191-c4cb-4f60-9ac4-912faf7d4b77
+    resourceVersion: "4"
+    uid: 58634797-7551-4e86-b6a3-5bcc04e79d25
   spec:
     finalizers:
     - kubernetes
@@ -7134,12 +7187,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"local-path-storage"}}
-    creationTimestamp: "2026-09-27T07:13:49Z"
+    creationTimestamp: "2026-09-27T07:54:07Z"
     labels:
       kubernetes.io/metadata.name: local-path-storage
     name: local-path-storage
-    resourceVersion: "256"
-    uid: 95f7678e-7882-4f52-b376-e5a8b40f46ef
+    resourceVersion: "277"
+    uid: c7c77e16-9e7e-40ac-a310-6f83e70b3337
   spec:
     finalizers:
     - kubernetes
@@ -7151,12 +7204,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"payments"}}
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     labels:
       kubernetes.io/metadata.name: payments
     name: payments
-    resourceVersion: "463"
-    uid: 4ee6f9bf-18da-4fbc-b7f0-46ad201d7460
+    resourceVersion: "512"
+    uid: b09af23c-ae79-4856-b56a-98b0609fddf4
   spec:
     finalizers:
     - kubernetes
@@ -7168,12 +7221,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"shop"}}
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     labels:
       kubernetes.io/metadata.name: shop
     name: shop
-    resourceVersion: "433"
-    uid: 2613773e-d87a-4ebb-bc79-720eac2908e0
+    resourceVersion: "481"
+    uid: 4417ecf6-6f64-4de3-9ecb-3fef39f17ed1
   spec:
     finalizers:
     - kubernetes
@@ -7185,12 +7238,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"temp-testing"}}
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     labels:
       kubernetes.io/metadata.name: temp-testing
     name: temp-testing
-    resourceVersion: "475"
-    uid: 9eb4ca2b-8e67-497d-98ee-0878d7b89622
+    resourceVersion: "526"
+    uid: 499ef6f0-8697-444d-9dff-a579a72ecbb8
   spec:
     finalizers:
     - kubernetes
@@ -7206,13 +7259,13 @@ items:
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generateName: argocd-application-controller-6f756d967d-
     generation: 1
     labels:
       app.kubernetes.io/name: argocd-application-controller
       pod-template-hash: 6f756d967d
-    name: argocd-application-controller-6f756d967d-rmzf6
+    name: argocd-application-controller-6f756d967d-pbgfz
     namespace: argocd
     ownerReferences:
     - apiVersion: apps/v1
@@ -7220,9 +7273,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: argocd-application-controller-6f756d967d
-      uid: c4d42b09-9488-4aa7-af42-7fed276e0ace
-    resourceVersion: "706"
-    uid: f6eb5e8a-cfc1-4e86-b4a8-16f87743b198
+      uid: 920c1eef-8ab0-41c9-b446-853352754f50
+    resourceVersion: "708"
+    uid: 728e1e35-bb84-4ab1-b7b6-9140427ba7a9
   spec:
     containers:
     - image: registry.k8s.io/pause:3.9
@@ -7233,7 +7286,7 @@ items:
       terminationMessagePolicy: File
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-cwc4b
+        name: kube-api-access-xqlhw
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -7256,7 +7309,7 @@ items:
       operator: Exists
       tolerationSeconds: 300
     volumes:
-    - name: kube-api-access-cwc4b
+    - name: kube-api-access-xqlhw
       projected:
         defaultMode: 420
         sources:
@@ -7277,32 +7330,32 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:11Z"
+      lastTransitionTime: "2026-09-27T07:54:37Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:07Z"
+      lastTransitionTime: "2026-09-27T07:54:36Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:11Z"
+      lastTransitionTime: "2026-09-27T07:54:37Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:11Z"
+      lastTransitionTime: "2026-09-27T07:54:37Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:07Z"
+      lastTransitionTime: "2026-09-27T07:54:36Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
     containerStatuses:
-    - containerID: containerd://e08ce21a3753fe3e9a8c56f6d559dbaca56d6e0c4da5ab6dd5a2a11c51996bb6
+    - containerID: containerd://c08a875ef4b6052eb3eb2bb5fb0ca2f320d9181b0819d62c93010e73535d5119
       image: registry.k8s.io/pause:3.9
       imageID: registry.k8s.io/pause@sha256:7031c1b283388d2c2e09b57badb803c05ebed362dc88d84b480cc47f72a21097
       lastState: {}
@@ -7313,7 +7366,7 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T07:14:10Z"
+          startedAt: "2026-09-27T07:54:37Z"
       user:
         linux:
           gid: 0
@@ -7322,29 +7375,29 @@ items:
           uid: 65535
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-cwc4b
+        name: kube-api-access-xqlhw
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
-    podIP: 10.244.0.8
+    podIP: 10.244.0.9
     podIPs:
-    - ip: 10.244.0.8
+    - ip: 10.244.0.9
     qosClass: BestEffort
-    startTime: "2026-09-27T07:14:07Z"
+    startTime: "2026-09-27T07:54:36Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generateName: billing-59bc44d959-
     generation: 1
     labels:
       app: billing
       pod-template-hash: 59bc44d959
-    name: billing-59bc44d959-64j6k
+    name: billing-59bc44d959-kfkdv
     namespace: billing
     ownerReferences:
     - apiVersion: apps/v1
@@ -7352,9 +7405,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: billing-59bc44d959
-      uid: 74a1ccb2-582b-4e0f-a359-c2dfb2f4deeb
-    resourceVersion: "734"
-    uid: fbc1a801-6be6-41db-9503-5166054e35e5
+      uid: 1e6a8786-f1c5-4c4d-a63a-5cca04780b06
+    resourceVersion: "761"
+    uid: eed009d1-5da3-4ac6-af0e-df6a14e72a45
   spec:
     containers:
     - image: registry.k8s.io/pause:3.9
@@ -7365,7 +7418,7 @@ items:
       terminationMessagePolicy: File
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-hgqd7
+        name: kube-api-access-dtzzj
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -7388,7 +7441,7 @@ items:
       operator: Exists
       tolerationSeconds: 300
     volumes:
-    - name: kube-api-access-hgqd7
+    - name: kube-api-access-dtzzj
       projected:
         defaultMode: 420
         sources:
@@ -7409,32 +7462,32 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:12Z"
+      lastTransitionTime: "2026-09-27T07:54:39Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:08Z"
+      lastTransitionTime: "2026-09-27T07:54:36Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:12Z"
+      lastTransitionTime: "2026-09-27T07:54:39Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:12Z"
+      lastTransitionTime: "2026-09-27T07:54:39Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:08Z"
+      lastTransitionTime: "2026-09-27T07:54:36Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
     containerStatuses:
-    - containerID: containerd://229bba0913b9d3ffb3b6e039fcf8d2c6cbea636ab5a3a8585dcd14e627d6024d
+    - containerID: containerd://21f192d99f732b804415c8406bf1d8e6cd0a0abd71048c3bdbfa9626e739d022
       image: registry.k8s.io/pause:3.9
       imageID: registry.k8s.io/pause@sha256:7031c1b283388d2c2e09b57badb803c05ebed362dc88d84b480cc47f72a21097
       lastState: {}
@@ -7445,7 +7498,7 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T07:14:11Z"
+          startedAt: "2026-09-27T07:54:39Z"
       user:
         linux:
           gid: 0
@@ -7454,29 +7507,29 @@ items:
           uid: 65535
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-hgqd7
+        name: kube-api-access-dtzzj
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
     podIP: 10.244.0.14
     podIPs:
     - ip: 10.244.0.14
     qosClass: BestEffort
-    startTime: "2026-09-27T07:14:08Z"
+    startTime: "2026-09-27T07:54:36Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generateName: hotfix-worker-79596987fd-
     generation: 1
     labels:
       app: hotfix-worker
       pod-template-hash: 79596987fd
-    name: hotfix-worker-79596987fd-7sgg4
+    name: hotfix-worker-79596987fd-xzg9t
     namespace: default
     ownerReferences:
     - apiVersion: apps/v1
@@ -7484,9 +7537,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: hotfix-worker-79596987fd
-      uid: 2b5d350e-28ea-4973-8b6a-7c7bfa471ad4
-    resourceVersion: "714"
-    uid: f8d925c1-548f-48e2-aeee-c31cb5183af3
+      uid: 1791caf9-10f3-4877-80b5-4f5ffa4038e0
+    resourceVersion: "706"
+    uid: 2457d1be-40aa-4cae-a63e-90b7b1e893ed
   spec:
     containers:
     - image: registry.k8s.io/pause:3.9
@@ -7497,7 +7550,7 @@ items:
       terminationMessagePolicy: File
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-2ltmp
+        name: kube-api-access-92kts
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -7520,7 +7573,7 @@ items:
       operator: Exists
       tolerationSeconds: 300
     volumes:
-    - name: kube-api-access-2ltmp
+    - name: kube-api-access-92kts
       projected:
         defaultMode: 420
         sources:
@@ -7541,32 +7594,32 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:11Z"
+      lastTransitionTime: "2026-09-27T07:54:37Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:07Z"
+      lastTransitionTime: "2026-09-27T07:54:36Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:11Z"
+      lastTransitionTime: "2026-09-27T07:54:37Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:11Z"
+      lastTransitionTime: "2026-09-27T07:54:37Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:07Z"
+      lastTransitionTime: "2026-09-27T07:54:36Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
     containerStatuses:
-    - containerID: containerd://062f587bb23148bf737e9b4fbf27ea7ed059b29495c4472f2d0841df225b5130
+    - containerID: containerd://7ee8c70ea065a3426c9021a0b671f57ca0840e1fbae0523d99a7ff88a8f2c83b
       image: registry.k8s.io/pause:3.9
       imageID: registry.k8s.io/pause@sha256:7031c1b283388d2c2e09b57badb803c05ebed362dc88d84b480cc47f72a21097
       lastState: {}
@@ -7577,7 +7630,7 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T07:14:10Z"
+          startedAt: "2026-09-27T07:54:37Z"
       user:
         linux:
           gid: 0
@@ -7586,29 +7639,29 @@ items:
           uid: 65535
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-2ltmp
+        name: kube-api-access-92kts
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
-    podIP: 10.244.0.9
+    podIP: 10.244.0.7
     podIPs:
-    - ip: 10.244.0.9
+    - ip: 10.244.0.7
     qosClass: BestEffort
-    startTime: "2026-09-27T07:14:07Z"
+    startTime: "2026-09-27T07:54:36Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     generateName: kustomize-controller-7d9647c47d-
     generation: 1
     labels:
       app: kustomize-controller
       pod-template-hash: 7d9647c47d
-    name: kustomize-controller-7d9647c47d-n5fff
+    name: kustomize-controller-7d9647c47d-rppl2
     namespace: flux-system
     ownerReferences:
     - apiVersion: apps/v1
@@ -7616,9 +7669,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: kustomize-controller-7d9647c47d
-      uid: f956f754-c5b9-4b63-93ed-927985df43aa
-    resourceVersion: "643"
-    uid: 81acdbf5-19af-4e90-b530-e198b7261afa
+      uid: 9a11ff37-50d4-46ba-87c0-ff1d9e306c94
+    resourceVersion: "710"
+    uid: 3c5a5b19-9a5d-40ad-8cb8-b02410817812
   spec:
     containers:
     - image: registry.k8s.io/pause:3.9
@@ -7629,7 +7682,7 @@ items:
       terminationMessagePolicy: File
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-wxtsd
+        name: kube-api-access-rm7hm
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -7652,7 +7705,7 @@ items:
       operator: Exists
       tolerationSeconds: 300
     volumes:
-    - name: kube-api-access-wxtsd
+    - name: kube-api-access-rm7hm
       projected:
         defaultMode: 420
         sources:
@@ -7673,32 +7726,32 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:09Z"
+      lastTransitionTime: "2026-09-27T07:54:37Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:07Z"
+      lastTransitionTime: "2026-09-27T07:54:35Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:09Z"
+      lastTransitionTime: "2026-09-27T07:54:37Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:09Z"
+      lastTransitionTime: "2026-09-27T07:54:37Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:07Z"
+      lastTransitionTime: "2026-09-27T07:54:35Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
     containerStatuses:
-    - containerID: containerd://b4606e402117a282ff885962c0a9985b8357070dc614719fc4bbda23b0fef15f
+    - containerID: containerd://f27fac2e0f3d50744442787c543781a3a282e3e8cfb83e2eaba9c25fb2542d59
       image: registry.k8s.io/pause:3.9
       imageID: registry.k8s.io/pause@sha256:7031c1b283388d2c2e09b57badb803c05ebed362dc88d84b480cc47f72a21097
       lastState: {}
@@ -7709,7 +7762,7 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T07:14:09Z"
+          startedAt: "2026-09-27T07:54:37Z"
       user:
         linux:
           gid: 0
@@ -7718,29 +7771,29 @@ items:
           uid: 65535
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-wxtsd
+        name: kube-api-access-rm7hm
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
-    podIP: 10.244.0.5
+    podIP: 10.244.0.6
     podIPs:
-    - ip: 10.244.0.5
+    - ip: 10.244.0.6
     qosClass: BestEffort
-    startTime: "2026-09-27T07:14:07Z"
+    startTime: "2026-09-27T07:54:35Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     generateName: source-controller-bb798d9fb-
     generation: 1
     labels:
       app: source-controller
       pod-template-hash: bb798d9fb
-    name: source-controller-bb798d9fb-b5w5x
+    name: source-controller-bb798d9fb-vhf5h
     namespace: flux-system
     ownerReferences:
     - apiVersion: apps/v1
@@ -7748,9 +7801,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: source-controller-bb798d9fb
-      uid: e2540e32-2d1c-4eec-854e-f726f5b5f9f7
-    resourceVersion: "679"
-    uid: babdf9e9-e04f-47e4-a8d9-a633cda5c597
+      uid: 6587194d-233f-4c3e-8b6d-ae629c20b421
+    resourceVersion: "704"
+    uid: 2b8e10ab-67db-460c-adad-2217fc81c0f3
   spec:
     containers:
     - image: registry.k8s.io/pause:3.9
@@ -7761,7 +7814,7 @@ items:
       terminationMessagePolicy: File
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-9gkkv
+        name: kube-api-access-qvkdz
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -7784,7 +7837,7 @@ items:
       operator: Exists
       tolerationSeconds: 300
     volumes:
-    - name: kube-api-access-9gkkv
+    - name: kube-api-access-qvkdz
       projected:
         defaultMode: 420
         sources:
@@ -7805,32 +7858,32 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:10Z"
+      lastTransitionTime: "2026-09-27T07:54:37Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:07Z"
+      lastTransitionTime: "2026-09-27T07:54:35Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:10Z"
+      lastTransitionTime: "2026-09-27T07:54:37Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:10Z"
+      lastTransitionTime: "2026-09-27T07:54:37Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:07Z"
+      lastTransitionTime: "2026-09-27T07:54:35Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
     containerStatuses:
-    - containerID: containerd://79ef618d74b8fc7f7a56002eab0d79d9ba9148566ed2a9da916c52eb7cc09d89
+    - containerID: containerd://4016d0e71ecb0b20d0ebafb3c70245550f27e333cfbff5338391df8f4b6afd81
       image: registry.k8s.io/pause:3.9
       imageID: registry.k8s.io/pause@sha256:7031c1b283388d2c2e09b57badb803c05ebed362dc88d84b480cc47f72a21097
       lastState: {}
@@ -7841,7 +7894,7 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T07:14:09Z"
+          startedAt: "2026-09-27T07:54:37Z"
       user:
         linux:
           gid: 0
@@ -7850,29 +7903,29 @@ items:
           uid: 65535
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-9gkkv
+        name: kube-api-access-qvkdz
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
-    podIP: 10.244.0.6
+    podIP: 10.244.0.5
     podIPs:
-    - ip: 10.244.0.6
+    - ip: 10.244.0.5
     qosClass: BestEffort
-    startTime: "2026-09-27T07:14:07Z"
+    startTime: "2026-09-27T07:54:35Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
+    creationTimestamp: "2026-09-27T07:55:16Z"
     generateName: inventory-577549bfd6-
     generation: 1
     labels:
       app: inventory
       pod-template-hash: 577549bfd6
-    name: inventory-577549bfd6-qjnsb
+    name: inventory-577549bfd6-8kv5c
     namespace: inventory
     ownerReferences:
     - apiVersion: apps/v1
@@ -7880,9 +7933,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: inventory-577549bfd6
-      uid: a5747494-ffc6-47ce-b758-8f0007294799
-    resourceVersion: "899"
-    uid: 99431184-4c9a-4b8a-9fa4-78242a432b87
+      uid: 60d37fd9-2d0b-40b2-a197-3fc9c8a3e43a
+    resourceVersion: "921"
+    uid: ae5e5292-a7ed-42a4-9624-9facf2034753
   spec:
     containers:
     - env:
@@ -7896,7 +7949,7 @@ items:
       terminationMessagePolicy: File
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-vpqnz
+        name: kube-api-access-9ppgf
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -7919,7 +7972,7 @@ items:
       operator: Exists
       tolerationSeconds: 300
     volumes:
-    - name: kube-api-access-vpqnz
+    - name: kube-api-access-9ppgf
       projected:
         defaultMode: 420
         sources:
@@ -7940,32 +7993,32 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:54Z"
+      lastTransitionTime: "2026-09-27T07:55:18Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:53Z"
+      lastTransitionTime: "2026-09-27T07:55:16Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:54Z"
+      lastTransitionTime: "2026-09-27T07:55:18Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:54Z"
+      lastTransitionTime: "2026-09-27T07:55:18Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:53Z"
+      lastTransitionTime: "2026-09-27T07:55:16Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
     containerStatuses:
-    - containerID: containerd://d2a0327585955ffaa5ef1131a734c55e2efe5f1fcc5c02190b70411a12c84dc6
+    - containerID: containerd://602ddf6ad1627d56293aa05c9778f841bb650ef70141627f2cc6ed9657a0873a
       image: registry.k8s.io/pause:3.9
       imageID: registry.k8s.io/pause@sha256:7031c1b283388d2c2e09b57badb803c05ebed362dc88d84b480cc47f72a21097
       lastState: {}
@@ -7976,7 +8029,7 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T07:14:54Z"
+          startedAt: "2026-09-27T07:55:17Z"
       user:
         linux:
           gid: 0
@@ -7985,29 +8038,29 @@ items:
           uid: 65535
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-vpqnz
+        name: kube-api-access-9ppgf
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
     podIP: 10.244.0.24
     podIPs:
     - ip: 10.244.0.24
     qosClass: BestEffort
-    startTime: "2026-09-27T07:14:53Z"
+    startTime: "2026-09-27T07:55:16Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T07:13:55Z"
+    creationTimestamp: "2026-09-27T07:54:12Z"
     generateName: coredns-7d764666f9-
     generation: 1
     labels:
       k8s-app: kube-dns
       pod-template-hash: 7d764666f9
-    name: coredns-7d764666f9-b7h5s
+    name: coredns-7d764666f9-v6lh2
     namespace: kube-system
     ownerReferences:
     - apiVersion: apps/v1
@@ -8015,9 +8068,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: coredns-7d764666f9
-      uid: b62fbd9e-024e-406c-8355-19b45f1530dd
-    resourceVersion: "574"
-    uid: 30bf9dd6-f285-484c-9ed0-1de4966ded84
+      uid: a7f86949-02b6-4644-8842-766c3d3134d9
+    resourceVersion: "458"
+    uid: ea874254-470f-49c2-b048-81dfb1274f68
   spec:
     affinity:
       podAntiAffinity:
@@ -8094,7 +8147,7 @@ items:
         name: config-volume
         readOnly: true
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-c88w5
+        name: kube-api-access-ng8cg
         readOnly: true
     dnsPolicy: Default
     enableServiceLinks: true
@@ -8131,7 +8184,7 @@ items:
           path: Corefile
         name: coredns
       name: config-volume
-    - name: kube-api-access-c88w5
+    - name: kube-api-access-ng8cg
       projected:
         defaultMode: 420
         sources:
@@ -8152,27 +8205,27 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:08Z"
+      lastTransitionTime: "2026-09-27T07:54:24Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:07Z"
+      lastTransitionTime: "2026-09-27T07:54:23Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:08Z"
+      lastTransitionTime: "2026-09-27T07:54:24Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:08Z"
+      lastTransitionTime: "2026-09-27T07:54:24Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:07Z"
+      lastTransitionTime: "2026-09-27T07:54:23Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
@@ -8180,7 +8233,7 @@ items:
     - allocatedResources:
         cpu: 100m
         memory: 70Mi
-      containerID: containerd://1237a4118c38e9ac77f27d01ccd37e54a32bf51275edf75cee0a989bcc217771
+      containerID: containerd://1d648d6215b0281dff507327f3557ad86366e011a1f696ca903a8721add0df1d
       image: registry.k8s.io/coredns/coredns:v1.13.1
       imageID: sha256:e08f4d9d2e6ede8185064c13b41f8eeee95b609c0ca93b6fe7509fe527c907cf
       lastState: {}
@@ -8196,7 +8249,7 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T07:14:07Z"
+          startedAt: "2026-09-27T07:54:24Z"
       user:
         linux:
           gid: 65532
@@ -8209,29 +8262,29 @@ items:
         readOnly: true
         recursiveReadOnly: Disabled
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-c88w5
+        name: kube-api-access-ng8cg
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
     podIP: 10.244.0.2
     podIPs:
     - ip: 10.244.0.2
     qosClass: Burstable
-    startTime: "2026-09-27T07:14:07Z"
+    startTime: "2026-09-27T07:54:23Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T07:13:55Z"
+    creationTimestamp: "2026-09-27T07:54:12Z"
     generateName: coredns-7d764666f9-
     generation: 1
     labels:
       k8s-app: kube-dns
       pod-template-hash: 7d764666f9
-    name: coredns-7d764666f9-pmc2k
+    name: coredns-7d764666f9-ws82d
     namespace: kube-system
     ownerReferences:
     - apiVersion: apps/v1
@@ -8239,9 +8292,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: coredns-7d764666f9
-      uid: b62fbd9e-024e-406c-8355-19b45f1530dd
-    resourceVersion: "571"
-    uid: 9775fe8f-5dae-46a8-b070-efc8096b2cad
+      uid: a7f86949-02b6-4644-8842-766c3d3134d9
+    resourceVersion: "453"
+    uid: b97cf447-430a-4796-92f4-9205193bce92
   spec:
     affinity:
       podAntiAffinity:
@@ -8318,7 +8371,7 @@ items:
         name: config-volume
         readOnly: true
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-2ggbs
+        name: kube-api-access-42s5k
         readOnly: true
     dnsPolicy: Default
     enableServiceLinks: true
@@ -8355,7 +8408,7 @@ items:
           path: Corefile
         name: coredns
       name: config-volume
-    - name: kube-api-access-2ggbs
+    - name: kube-api-access-42s5k
       projected:
         defaultMode: 420
         sources:
@@ -8376,27 +8429,27 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:08Z"
+      lastTransitionTime: "2026-09-27T07:54:24Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:07Z"
+      lastTransitionTime: "2026-09-27T07:54:23Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:08Z"
+      lastTransitionTime: "2026-09-27T07:54:24Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:08Z"
+      lastTransitionTime: "2026-09-27T07:54:24Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:07Z"
+      lastTransitionTime: "2026-09-27T07:54:23Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
@@ -8404,7 +8457,7 @@ items:
     - allocatedResources:
         cpu: 100m
         memory: 70Mi
-      containerID: containerd://9bc7299172a5c071570e7b252ddcb158d8a08aba3b3f21279381f3545ad209a3
+      containerID: containerd://a62990497205e48728ec4b93780a23a4e51062636e8b809c5851452d4b7c894d
       image: registry.k8s.io/coredns/coredns:v1.13.1
       imageID: sha256:e08f4d9d2e6ede8185064c13b41f8eeee95b609c0ca93b6fe7509fe527c907cf
       lastState: {}
@@ -8420,7 +8473,7 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T07:14:07Z"
+          startedAt: "2026-09-27T07:54:24Z"
       user:
         linux:
           gid: 65532
@@ -8433,29 +8486,29 @@ items:
         readOnly: true
         recursiveReadOnly: Disabled
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-2ggbs
+        name: kube-api-access-42s5k
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
-    podIP: 10.244.0.3
+    podIP: 10.244.0.4
     podIPs:
-    - ip: 10.244.0.3
+    - ip: 10.244.0.4
     qosClass: Burstable
-    startTime: "2026-09-27T07:14:07Z"
+    startTime: "2026-09-27T07:54:23Z"
 - apiVersion: v1
   kind: Pod
   metadata:
     annotations:
-      kubeadm.kubernetes.io/etcd.advertise-client-urls: https://192.168.97.3:2379
-      kubernetes.io/config.hash: d346120209d32c7df2afcfdf282f5d65
-      kubernetes.io/config.mirror: d346120209d32c7df2afcfdf282f5d65
-      kubernetes.io/config.seen: "2026-09-27T07:13:43.227579206Z"
+      kubeadm.kubernetes.io/etcd.advertise-client-urls: https://192.168.97.7:2379
+      kubernetes.io/config.hash: f24ca3b6210959ab414712ae1a7451c5
+      kubernetes.io/config.mirror: f24ca3b6210959ab414712ae1a7451c5
+      kubernetes.io/config.seen: "2026-09-27T07:54:01.043860278Z"
       kubernetes.io/config.source: file
-    creationTimestamp: "2026-09-27T07:13:47Z"
+    creationTimestamp: "2026-09-27T07:54:05Z"
     generation: 1
     labels:
       component: etcd
@@ -8467,24 +8520,24 @@ items:
       controller: true
       kind: Node
       name: scout-evals-control-plane
-      uid: 8c864481-9967-4475-91a5-03462af667f5
+      uid: c770608d-5344-4d94-8d8c-6baf1a20e3cb
     resourceVersion: "415"
-    uid: 1599638e-d461-4513-a24f-58854c7fbb8c
+    uid: 9cede39b-f644-4538-bc16-cbc3dc5acd83
   spec:
     containers:
     - command:
       - etcd
-      - --advertise-client-urls=https://192.168.97.3:2379
+      - --advertise-client-urls=https://192.168.97.7:2379
       - --cert-file=/etc/kubernetes/pki/etcd/server.crt
       - --client-cert-auth=true
       - --data-dir=/var/lib/etcd
       - --feature-gates=InitialCorruptCheck=true
-      - --initial-advertise-peer-urls=https://192.168.97.3:2380
-      - --initial-cluster=scout-evals-control-plane=https://192.168.97.3:2380
+      - --initial-advertise-peer-urls=https://192.168.97.7:2380
+      - --initial-cluster=scout-evals-control-plane=https://192.168.97.7:2380
       - --key-file=/etc/kubernetes/pki/etcd/server.key
-      - --listen-client-urls=https://127.0.0.1:2379,https://192.168.97.3:2379
+      - --listen-client-urls=https://127.0.0.1:2379,https://192.168.97.7:2379
       - --listen-metrics-urls=http://127.0.0.1:2381
-      - --listen-peer-urls=https://192.168.97.3:2380
+      - --listen-peer-urls=https://192.168.97.7:2380
       - --name=scout-evals-control-plane
       - --peer-cert-file=/etc/kubernetes/pki/etcd/peer.crt
       - --peer-client-cert-auth=true
@@ -8572,30 +8625,30 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:48Z"
+      lastTransitionTime: "2026-09-27T07:54:05Z"
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:48Z"
+      lastTransitionTime: "2026-09-27T07:54:05Z"
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:06Z"
+      lastTransitionTime: "2026-09-27T07:54:18Z"
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:06Z"
+      lastTransitionTime: "2026-09-27T07:54:18Z"
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:48Z"
+      lastTransitionTime: "2026-09-27T07:54:05Z"
       status: "True"
       type: PodScheduled
     containerStatuses:
     - allocatedResources:
         cpu: 100m
         memory: 100Mi
-      containerID: containerd://deaab037b729bb11248fb84e7627c4c8c666e47c57d692d1925591bd34de6408
+      containerID: containerd://e5987664d1607a25fad42e026a5f9256eff184ad4fb80b4f68e1087e5c913de3
       image: registry.k8s.io/etcd:3.6.6-0
       imageID: sha256:271e49a0ebc56647476845128fcd2a73bb138beeca3878cc3bf52b4ff1172a57
       lastState: {}
@@ -8609,26 +8662,26 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T07:13:44Z"
+          startedAt: "2026-09-27T07:54:02Z"
       user:
         linux:
           gid: 0
           supplementalGroups:
           - 0
           uid: 0
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     phase: Running
-    podIP: 192.168.97.3
+    podIP: 192.168.97.7
     podIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     qosClass: Burstable
-    startTime: "2026-09-27T07:13:48Z"
+    startTime: "2026-09-27T07:54:05Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T07:13:55Z"
+    creationTimestamp: "2026-09-27T07:54:12Z"
     generateName: kindnet-
     generation: 1
     labels:
@@ -8637,7 +8690,7 @@ items:
       k8s-app: kindnet
       pod-template-generation: "1"
       tier: node
-    name: kindnet-drfl9
+    name: kindnet-hqjh9
     namespace: kube-system
     ownerReferences:
     - apiVersion: apps/v1
@@ -8645,9 +8698,9 @@ items:
       controller: true
       kind: DaemonSet
       name: kindnet
-      uid: 10611c88-c0f2-4a1d-aab4-2f5665986998
-    resourceVersion: "395"
-    uid: 2fb1f360-836c-4dda-bcf2-cbe99099b8f7
+      uid: 39856364-0376-428f-8595-8b380e783012
+    resourceVersion: "405"
+    uid: fd1bac90-d682-4587-9c0e-3c43758d0e04
   spec:
     affinity:
       nodeAffinity:
@@ -8703,7 +8756,7 @@ items:
       - mountPath: /var/run/nri
         name: nri-plugin
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-p9cnm
+        name: kube-api-access-xjn2n
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -8760,7 +8813,7 @@ items:
         path: /var/run/nri
         type: ""
       name: nri-plugin
-    - name: kube-api-access-p9cnm
+    - name: kube-api-access-xjn2n
       projected:
         defaultMode: 420
         sources:
@@ -8781,27 +8834,27 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:57Z"
+      lastTransitionTime: "2026-09-27T07:54:13Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:55Z"
+      lastTransitionTime: "2026-09-27T07:54:12Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:57Z"
+      lastTransitionTime: "2026-09-27T07:54:13Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:57Z"
+      lastTransitionTime: "2026-09-27T07:54:13Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:55Z"
+      lastTransitionTime: "2026-09-27T07:54:12Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
@@ -8809,7 +8862,7 @@ items:
     - allocatedResources:
         cpu: 100m
         memory: 50Mi
-      containerID: containerd://09abb538125bb1f5658b4f4712fafd8360056177d7e129dd64c9acf0bafbd0b9
+      containerID: containerd://c70c50fea145c2f13b1a01052b798bbf42d61046b45ef143096d8d72aca319ca
       image: docker.io/kindest/kindnetd:v20251212-v0.29.0-alpha-105-g20ccfc88
       imageID: sha256:c96ee3c17498748ccc544ba99ee8ffeb020fc335b230b43cd28bf43bed229a13
       lastState: {}
@@ -8826,7 +8879,7 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T07:13:56Z"
+          startedAt: "2026-09-27T07:54:13Z"
       user:
         linux:
           gid: 0
@@ -8845,29 +8898,29 @@ items:
       - mountPath: /var/run/nri
         name: nri-plugin
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-p9cnm
+        name: kube-api-access-xjn2n
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
-    podIP: 192.168.97.3
+    podIP: 192.168.97.7
     podIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     qosClass: Guaranteed
-    startTime: "2026-09-27T07:13:55Z"
+    startTime: "2026-09-27T07:54:12Z"
 - apiVersion: v1
   kind: Pod
   metadata:
     annotations:
-      kubeadm.kubernetes.io/kube-apiserver.advertise-address.endpoint: 192.168.97.3:6443
-      kubernetes.io/config.hash: a14f4fd83d19959bd01c8cc5a963b269
-      kubernetes.io/config.mirror: a14f4fd83d19959bd01c8cc5a963b269
-      kubernetes.io/config.seen: "2026-09-27T07:13:43.227588789Z"
+      kubeadm.kubernetes.io/kube-apiserver.advertise-address.endpoint: 192.168.97.7:6443
+      kubernetes.io/config.hash: b90d42739c8416c854ac368be63a8445
+      kubernetes.io/config.mirror: b90d42739c8416c854ac368be63a8445
+      kubernetes.io/config.seen: "2026-09-27T07:54:01.043860778Z"
       kubernetes.io/config.source: file
-    creationTimestamp: "2026-09-27T07:13:47Z"
+    creationTimestamp: "2026-09-27T07:54:05Z"
     generation: 1
     labels:
       component: kube-apiserver
@@ -8879,14 +8932,14 @@ items:
       controller: true
       kind: Node
       name: scout-evals-control-plane
-      uid: 8c864481-9967-4475-91a5-03462af667f5
-    resourceVersion: "406"
-    uid: 60533507-a725-4a56-bb59-2a14012c6a4a
+      uid: c770608d-5344-4d94-8d8c-6baf1a20e3cb
+    resourceVersion: "426"
+    uid: 26c0fd0a-c66d-4bbe-82d5-abb9f3adff74
   spec:
     containers:
     - command:
       - kube-apiserver
-      - --advertise-address=192.168.97.3
+      - --advertise-address=192.168.97.7
       - --allow-privileged=true
       - --authorization-mode=Node,RBAC
       - --client-ca-file=/etc/kubernetes/pki/ca.crt
@@ -8919,7 +8972,7 @@ items:
       livenessProbe:
         failureThreshold: 8
         httpGet:
-          host: 192.168.97.3
+          host: 192.168.97.7
           path: /livez
           port: probe-port
           scheme: HTTPS
@@ -8936,7 +8989,7 @@ items:
       readinessProbe:
         failureThreshold: 3
         httpGet:
-          host: 192.168.97.3
+          host: 192.168.97.7
           path: /readyz
           port: probe-port
           scheme: HTTPS
@@ -8949,7 +9002,7 @@ items:
       startupProbe:
         failureThreshold: 24
         httpGet:
-          host: 192.168.97.3
+          host: 192.168.97.7
           path: /livez
           port: probe-port
           scheme: HTTPS
@@ -9015,29 +9068,29 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:48Z"
+      lastTransitionTime: "2026-09-27T07:54:05Z"
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:48Z"
+      lastTransitionTime: "2026-09-27T07:54:05Z"
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:01Z"
+      lastTransitionTime: "2026-09-27T07:54:23Z"
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:01Z"
+      lastTransitionTime: "2026-09-27T07:54:23Z"
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:48Z"
+      lastTransitionTime: "2026-09-27T07:54:05Z"
       status: "True"
       type: PodScheduled
     containerStatuses:
     - allocatedResources:
         cpu: 250m
-      containerID: containerd://5aed41b36ddc4a1dcc9f10f81fc80f5a8bd03a92256de774a8c96ff29c64ea4c
+      containerID: containerd://6d07314ce28462b2a9b898c0ffef8e6eebfcb503e8b9d1a83c3ee43906999641
       image: registry.k8s.io/kube-apiserver-arm64:v1.35.0
       imageID: sha256:c3fcf259c473a57a5d7da116e29161904491091743512d27467c907c5516f856
       lastState: {}
@@ -9050,31 +9103,31 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T07:13:44Z"
+          startedAt: "2026-09-27T07:54:02Z"
       user:
         linux:
           gid: 0
           supplementalGroups:
           - 0
           uid: 0
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     phase: Running
-    podIP: 192.168.97.3
+    podIP: 192.168.97.7
     podIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     qosClass: Burstable
-    startTime: "2026-09-27T07:13:48Z"
+    startTime: "2026-09-27T07:54:05Z"
 - apiVersion: v1
   kind: Pod
   metadata:
     annotations:
       kubernetes.io/config.hash: f1ad2837fd09c5a5e69d8f1e18c8c308
       kubernetes.io/config.mirror: f1ad2837fd09c5a5e69d8f1e18c8c308
-      kubernetes.io/config.seen: "2026-09-27T07:13:43.227589248Z"
+      kubernetes.io/config.seen: "2026-09-27T07:54:01.043849154Z"
       kubernetes.io/config.source: file
-    creationTimestamp: "2026-09-27T07:13:47Z"
+    creationTimestamp: "2026-09-27T07:54:05Z"
     generation: 1
     labels:
       component: kube-controller-manager
@@ -9086,9 +9139,9 @@ items:
       controller: true
       kind: Node
       name: scout-evals-control-plane
-      uid: 8c864481-9967-4475-91a5-03462af667f5
-    resourceVersion: "411"
-    uid: ac508bcd-4d0b-4a4f-b915-6ed9489df862
+      uid: c770608d-5344-4d94-8d8c-6baf1a20e3cb
+    resourceVersion: "422"
+    uid: c6e86d91-d5af-4d2b-820d-077ae07adb0e
   spec:
     containers:
     - command:
@@ -9215,29 +9268,29 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:48Z"
+      lastTransitionTime: "2026-09-27T07:54:05Z"
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:48Z"
+      lastTransitionTime: "2026-09-27T07:54:05Z"
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:04Z"
+      lastTransitionTime: "2026-09-27T07:54:21Z"
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:04Z"
+      lastTransitionTime: "2026-09-27T07:54:21Z"
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:48Z"
+      lastTransitionTime: "2026-09-27T07:54:05Z"
       status: "True"
       type: PodScheduled
     containerStatuses:
     - allocatedResources:
         cpu: 200m
-      containerID: containerd://dbaad840d043c891df68158684e25386f63ae62fcfc24cd35372d8fbf7269eca
+      containerID: containerd://0ffbe10a5018ab322de0c9c060263da4184d9c469a2f9bbb66af216be42406a2
       image: registry.k8s.io/kube-controller-manager-arm64:v1.35.0
       imageID: sha256:88898f1d1a62a3ea9db5d4d099dee7aa52ebe8191016c5b3c721388a309983e0
       lastState: {}
@@ -9250,33 +9303,33 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T07:13:44Z"
+          startedAt: "2026-09-27T07:54:02Z"
       user:
         linux:
           gid: 0
           supplementalGroups:
           - 0
           uid: 0
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     phase: Running
-    podIP: 192.168.97.3
+    podIP: 192.168.97.7
     podIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     qosClass: Burstable
-    startTime: "2026-09-27T07:13:48Z"
+    startTime: "2026-09-27T07:54:05Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T07:13:55Z"
+    creationTimestamp: "2026-09-27T07:54:12Z"
     generateName: kube-proxy-
     generation: 1
     labels:
       controller-revision-hash: 69494898cd
       k8s-app: kube-proxy
       pod-template-generation: "1"
-    name: kube-proxy-hbf6z
+    name: kube-proxy-7xc9w
     namespace: kube-system
     ownerReferences:
     - apiVersion: apps/v1
@@ -9284,9 +9337,9 @@ items:
       controller: true
       kind: DaemonSet
       name: kube-proxy
-      uid: ebe28492-b547-4765-8ee4-6a74053013bb
-    resourceVersion: "393"
-    uid: 04ffaad1-f45d-45b8-bfcf-3ce15c5380c7
+      uid: b6af77d0-bc40-459d-a616-a7a8d5701fad
+    resourceVersion: "403"
+    uid: d0bc6943-4e06-4da1-bfd4-412aec2e7ad9
   spec:
     affinity:
       nodeAffinity:
@@ -9325,7 +9378,7 @@ items:
         name: lib-modules
         readOnly: true
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-lk98d
+        name: kube-api-access-h27z6
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -9378,7 +9431,7 @@ items:
         path: /lib/modules
         type: ""
       name: lib-modules
-    - name: kube-api-access-lk98d
+    - name: kube-api-access-h27z6
       projected:
         defaultMode: 420
         sources:
@@ -9399,32 +9452,32 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:57Z"
+      lastTransitionTime: "2026-09-27T07:54:13Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:55Z"
+      lastTransitionTime: "2026-09-27T07:54:12Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:57Z"
+      lastTransitionTime: "2026-09-27T07:54:13Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:57Z"
+      lastTransitionTime: "2026-09-27T07:54:13Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:55Z"
+      lastTransitionTime: "2026-09-27T07:54:12Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
     containerStatuses:
-    - containerID: containerd://5c791776dc1a08439a38a7213457eb3293b281485fd03e7f5d3e1178a4e724a3
+    - containerID: containerd://51c79e059dac1a1a9a63a4ce03620dd3e80285df00fe0cd4fe2988c7353e09a8
       image: registry.k8s.io/kube-proxy-arm64:v1.35.0
       imageID: sha256:de369f46c2ff55c31ea783a663eb203caa820f3db1f9b9c935e79e7d1e9fd9e5
       lastState: {}
@@ -9435,7 +9488,7 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T07:13:56Z"
+          startedAt: "2026-09-27T07:54:13Z"
       user:
         linux:
           gid: 0
@@ -9452,28 +9505,28 @@ items:
         readOnly: true
         recursiveReadOnly: Disabled
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-lk98d
+        name: kube-api-access-h27z6
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
-    podIP: 192.168.97.3
+    podIP: 192.168.97.7
     podIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     qosClass: BestEffort
-    startTime: "2026-09-27T07:13:55Z"
+    startTime: "2026-09-27T07:54:12Z"
 - apiVersion: v1
   kind: Pod
   metadata:
     annotations:
       kubernetes.io/config.hash: 26706792d07a192381efff72a0460ad3
       kubernetes.io/config.mirror: 26706792d07a192381efff72a0460ad3
-      kubernetes.io/config.seen: "2026-09-27T07:13:43.227593414Z"
+      kubernetes.io/config.seen: "2026-09-27T07:54:01.043859778Z"
       kubernetes.io/config.source: file
-    creationTimestamp: "2026-09-27T07:13:47Z"
+    creationTimestamp: "2026-09-27T07:54:05Z"
     generation: 1
     labels:
       component: kube-scheduler
@@ -9485,9 +9538,9 @@ items:
       controller: true
       kind: Node
       name: scout-evals-control-plane
-      uid: 8c864481-9967-4475-91a5-03462af667f5
-    resourceVersion: "402"
-    uid: 20d87f72-3aea-4af1-a235-a782a3505d6a
+      uid: c770608d-5344-4d94-8d8c-6baf1a20e3cb
+    resourceVersion: "418"
+    uid: dda1666b-59df-4126-9847-7320064dd5fb
   spec:
     containers:
     - command:
@@ -9570,29 +9623,29 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:48Z"
+      lastTransitionTime: "2026-09-27T07:54:05Z"
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:48Z"
+      lastTransitionTime: "2026-09-27T07:54:05Z"
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:59Z"
+      lastTransitionTime: "2026-09-27T07:54:19Z"
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:59Z"
+      lastTransitionTime: "2026-09-27T07:54:19Z"
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:13:48Z"
+      lastTransitionTime: "2026-09-27T07:54:05Z"
       status: "True"
       type: PodScheduled
     containerStatuses:
     - allocatedResources:
         cpu: 100m
-      containerID: containerd://b9b1deee42378fc846a4f16e3ae34f5316ce02a3eb7321a9e033924ffb065bc2
+      containerID: containerd://db616641f7b545438e0d324b0ff21da23f2ac549c7e0b1f46f9ff847f7c835c2
       image: registry.k8s.io/kube-scheduler-arm64:v1.35.0
       imageID: sha256:ddc8422d4d35a6fc66c34be61e24df795e5cebf197eb546f62740d0bafef874f
       lastState: {}
@@ -9605,32 +9658,32 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T07:13:44Z"
+          startedAt: "2026-09-27T07:54:02Z"
       user:
         linux:
           gid: 0
           supplementalGroups:
           - 0
           uid: 0
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     phase: Running
-    podIP: 192.168.97.3
+    podIP: 192.168.97.7
     podIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     qosClass: Burstable
-    startTime: "2026-09-27T07:13:48Z"
+    startTime: "2026-09-27T07:54:05Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T07:13:55Z"
+    creationTimestamp: "2026-09-27T07:54:12Z"
     generateName: local-path-provisioner-67b8995b4b-
     generation: 1
     labels:
       app: local-path-provisioner
       pod-template-hash: 67b8995b4b
-    name: local-path-provisioner-67b8995b4b-9hblc
+    name: local-path-provisioner-67b8995b4b-whpwz
     namespace: local-path-storage
     ownerReferences:
     - apiVersion: apps/v1
@@ -9638,9 +9691,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: local-path-provisioner-67b8995b4b
-      uid: 2e6ddfa3-acec-4c86-a7fd-e2fc9308536c
-    resourceVersion: "642"
-    uid: b1685941-5ef9-40b3-8c8c-365e42033bd6
+      uid: 4efa5143-d59c-445b-a735-ce50f60e23c6
+    resourceVersion: "465"
+    uid: edb18b33-b90b-46d2-856f-c42d90cba45f
   spec:
     containers:
     - command:
@@ -9669,7 +9722,7 @@ items:
       - mountPath: /etc/config/
         name: config-volume
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-vvnrp
+        name: kube-api-access-d5d5f
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -9704,7 +9757,7 @@ items:
         defaultMode: 420
         name: local-path-config
       name: config-volume
-    - name: kube-api-access-vvnrp
+    - name: kube-api-access-d5d5f
       projected:
         defaultMode: 420
         sources:
@@ -9725,32 +9778,32 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:09Z"
+      lastTransitionTime: "2026-09-27T07:54:25Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:07Z"
+      lastTransitionTime: "2026-09-27T07:54:23Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:09Z"
+      lastTransitionTime: "2026-09-27T07:54:25Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:09Z"
+      lastTransitionTime: "2026-09-27T07:54:25Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:07Z"
+      lastTransitionTime: "2026-09-27T07:54:23Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
     containerStatuses:
-    - containerID: containerd://91cc63e49faf4cb0259edfc66fe66aea36e27302f59e506cc392eb97d877ad3f
+    - containerID: containerd://367731e2436a2d34aa6f7db1a0cd6f60832b69267314efaeb9872d3f0da3ef3d
       image: docker.io/kindest/local-path-provisioner:v20251212-v0.29.0-alpha-105-g20ccfc88
       imageID: sha256:909b40d32940fe5841ef05d8e9db050e96ce26e75526eb89be2a58d00068a6a9
       lastState: {}
@@ -9761,7 +9814,7 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T07:14:08Z"
+          startedAt: "2026-09-27T07:54:24Z"
       user:
         linux:
           gid: 0
@@ -9772,29 +9825,29 @@ items:
       - mountPath: /etc/config/
         name: config-volume
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-vvnrp
+        name: kube-api-access-d5d5f
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
-    podIP: 10.244.0.4
+    podIP: 10.244.0.3
     podIPs:
-    - ip: 10.244.0.4
+    - ip: 10.244.0.3
     qosClass: BestEffort
-    startTime: "2026-09-27T07:14:07Z"
+    startTime: "2026-09-27T07:54:23Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T07:14:09Z"
+    creationTimestamp: "2026-09-27T07:54:37Z"
     generateName: payments-api-6ccc469957-
     generation: 1
     labels:
       app: payments-api
       pod-template-hash: 6ccc469957
-    name: payments-api-6ccc469957-2hvfx
+    name: payments-api-6ccc469957-lnwzs
     namespace: payments
     ownerReferences:
     - apiVersion: apps/v1
@@ -9802,9 +9855,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: payments-api-6ccc469957
-      uid: 15485201-fb44-4881-b12f-633aedece28a
-    resourceVersion: "1560"
-    uid: 4434d686-c382-4762-abe2-c60d638806ec
+      uid: 6cc2f315-6e34-4436-aa5b-8a9fdab0b849
+    resourceVersion: "1136"
+    uid: 122498b5-0f66-4109-95b6-aaf0634abe9e
   spec:
     containers:
     - image: registry.k8s.io/pause:0.0.0-does-not-exist
@@ -9815,7 +9868,7 @@ items:
       terminationMessagePolicy: File
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-kcgzc
+        name: kube-api-access-r8xd2
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -9838,7 +9891,7 @@ items:
       operator: Exists
       tolerationSeconds: 300
     volumes:
-    - name: kube-api-access-kcgzc
+    - name: kube-api-access-r8xd2
       projected:
         defaultMode: 420
         sources:
@@ -9859,31 +9912,31 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:13Z"
+      lastTransitionTime: "2026-09-27T07:54:39Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:09Z"
+      lastTransitionTime: "2026-09-27T07:54:37Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:09Z"
+      lastTransitionTime: "2026-09-27T07:54:37Z"
       message: 'containers with unready status: [api]'
       observedGeneration: 1
       reason: ContainersNotReady
       status: "False"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:09Z"
+      lastTransitionTime: "2026-09-27T07:54:37Z"
       message: 'containers with unready status: [api]'
       observedGeneration: 1
       reason: ContainersNotReady
       status: "False"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:09Z"
+      lastTransitionTime: "2026-09-27T07:54:37Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
@@ -9905,29 +9958,29 @@ items:
           reason: ImagePullBackOff
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-kcgzc
+        name: kube-api-access-r8xd2
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Pending
     podIP: 10.244.0.19
     podIPs:
     - ip: 10.244.0.19
     qosClass: BestEffort
-    startTime: "2026-09-27T07:14:09Z"
+    startTime: "2026-09-27T07:54:37Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
+    creationTimestamp: "2026-09-27T07:54:37Z"
     generateName: payments-api-6ccc469957-
     generation: 1
     labels:
       app: payments-api
       pod-template-hash: 6ccc469957
-    name: payments-api-6ccc469957-mm74h
+    name: payments-api-6ccc469957-tmrrp
     namespace: payments
     ownerReferences:
     - apiVersion: apps/v1
@@ -9935,9 +9988,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: payments-api-6ccc469957
-      uid: 15485201-fb44-4881-b12f-633aedece28a
-    resourceVersion: "1556"
-    uid: ab9ad42e-372b-45fc-af23-4e906c18eb53
+      uid: 6cc2f315-6e34-4436-aa5b-8a9fdab0b849
+    resourceVersion: "1145"
+    uid: 6f05a0c8-27cc-492d-878b-995d9f5a4052
   spec:
     containers:
     - image: registry.k8s.io/pause:0.0.0-does-not-exist
@@ -9948,7 +10001,7 @@ items:
       terminationMessagePolicy: File
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-62h9b
+        name: kube-api-access-xl9jr
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -9971,7 +10024,7 @@ items:
       operator: Exists
       tolerationSeconds: 300
     volumes:
-    - name: kube-api-access-62h9b
+    - name: kube-api-access-xl9jr
       projected:
         defaultMode: 420
         sources:
@@ -9992,31 +10045,31 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:12Z"
+      lastTransitionTime: "2026-09-27T07:54:39Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:08Z"
+      lastTransitionTime: "2026-09-27T07:54:37Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:08Z"
+      lastTransitionTime: "2026-09-27T07:54:37Z"
       message: 'containers with unready status: [api]'
       observedGeneration: 1
       reason: ContainersNotReady
       status: "False"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:08Z"
+      lastTransitionTime: "2026-09-27T07:54:37Z"
       message: 'containers with unready status: [api]'
       observedGeneration: 1
       reason: ContainersNotReady
       status: "False"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:08Z"
+      lastTransitionTime: "2026-09-27T07:54:37Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
@@ -10038,29 +10091,29 @@ items:
           reason: ImagePullBackOff
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-62h9b
+        name: kube-api-access-xl9jr
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Pending
     podIP: 10.244.0.17
     podIPs:
     - ip: 10.244.0.17
     qosClass: BestEffort
-    startTime: "2026-09-27T07:14:08Z"
+    startTime: "2026-09-27T07:54:37Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
+    creationTimestamp: "2026-09-27T07:55:16Z"
     generateName: cart-656b4f485c-
     generation: 1
     labels:
       app: cart
       pod-template-hash: 656b4f485c
-    name: cart-656b4f485c-5spqp
+    name: cart-656b4f485c-klllp
     namespace: shop
     ownerReferences:
     - apiVersion: apps/v1
@@ -10068,9 +10121,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: cart-656b4f485c
-      uid: ee64313c-6acc-4b2a-abcf-4468e7087907
-    resourceVersion: "903"
-    uid: fb9c70a9-9333-4324-aa2f-4712d603e176
+      uid: 1e5dd026-2af5-4927-83e1-147fd95fca49
+    resourceVersion: "924"
+    uid: f2cd1263-8a7b-421b-b4d6-2ca52a9947af
   spec:
     containers:
     - image: registry.k8s.io/pause:3.9
@@ -10081,7 +10134,7 @@ items:
       terminationMessagePolicy: File
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-88hvr
+        name: kube-api-access-ggf5f
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -10104,7 +10157,7 @@ items:
       operator: Exists
       tolerationSeconds: 300
     volumes:
-    - name: kube-api-access-88hvr
+    - name: kube-api-access-ggf5f
       projected:
         defaultMode: 420
         sources:
@@ -10125,32 +10178,32 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:54Z"
+      lastTransitionTime: "2026-09-27T07:55:18Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:53Z"
+      lastTransitionTime: "2026-09-27T07:55:16Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:54Z"
+      lastTransitionTime: "2026-09-27T07:55:18Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:54Z"
+      lastTransitionTime: "2026-09-27T07:55:18Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:53Z"
+      lastTransitionTime: "2026-09-27T07:55:16Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
     containerStatuses:
-    - containerID: containerd://ab94223f73486fcb1a3f07c00fd424132c52c1c7f4585baeb817c2d36e50d8df
+    - containerID: containerd://f4175b846ea02d5364ca613cf142a45b05fed7f24a9f547a2a470a2a26af62ad
       image: registry.k8s.io/pause:3.9
       imageID: registry.k8s.io/pause@sha256:7031c1b283388d2c2e09b57badb803c05ebed362dc88d84b480cc47f72a21097
       lastState: {}
@@ -10161,7 +10214,7 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T07:14:54Z"
+          startedAt: "2026-09-27T07:55:17Z"
       user:
         linux:
           gid: 0
@@ -10170,29 +10223,29 @@ items:
           uid: 65535
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-88hvr
+        name: kube-api-access-ggf5f
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
     podIP: 10.244.0.23
     podIPs:
     - ip: 10.244.0.23
     qosClass: BestEffort
-    startTime: "2026-09-27T07:14:53Z"
+    startTime: "2026-09-27T07:55:16Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
+    creationTimestamp: "2026-09-27T07:55:16Z"
     generateName: cart-656b4f485c-
     generation: 1
     labels:
       app: cart
       pod-template-hash: 656b4f485c
-    name: cart-656b4f485c-qdlfl
+    name: cart-656b4f485c-l658v
     namespace: shop
     ownerReferences:
     - apiVersion: apps/v1
@@ -10200,9 +10253,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: cart-656b4f485c
-      uid: ee64313c-6acc-4b2a-abcf-4468e7087907
-    resourceVersion: "743"
-    uid: ec27e5ac-f284-4cc6-b0a1-a183cd435482
+      uid: 1e5dd026-2af5-4927-83e1-147fd95fca49
+    resourceVersion: "936"
+    uid: a709ae90-5d98-417c-93c4-90adab0e1525
   spec:
     containers:
     - image: registry.k8s.io/pause:3.9
@@ -10213,7 +10266,7 @@ items:
       terminationMessagePolicy: File
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-fsgnx
+        name: kube-api-access-cbcfh
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -10236,7 +10289,7 @@ items:
       operator: Exists
       tolerationSeconds: 300
     volumes:
-    - name: kube-api-access-fsgnx
+    - name: kube-api-access-cbcfh
       projected:
         defaultMode: 420
         sources:
@@ -10257,32 +10310,32 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:12Z"
+      lastTransitionTime: "2026-09-27T07:55:18Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:08Z"
+      lastTransitionTime: "2026-09-27T07:55:16Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:12Z"
+      lastTransitionTime: "2026-09-27T07:55:18Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:12Z"
+      lastTransitionTime: "2026-09-27T07:55:18Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:08Z"
+      lastTransitionTime: "2026-09-27T07:55:16Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
     containerStatuses:
-    - containerID: containerd://4b5e1737a7f373ab28ef1e9dd804bba5d519efe86a2f8bf64feb46d30c0aa82f
+    - containerID: containerd://8a45f287b96191cfaabf43022959905057f1006dc21c458eaf298a77d1948a8f
       image: registry.k8s.io/pause:3.9
       imageID: registry.k8s.io/pause@sha256:7031c1b283388d2c2e09b57badb803c05ebed362dc88d84b480cc47f72a21097
       lastState: {}
@@ -10293,7 +10346,7 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T07:14:11Z"
+          startedAt: "2026-09-27T07:55:17Z"
       user:
         linux:
           gid: 0
@@ -10302,182 +10355,50 @@ items:
           uid: 65535
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-fsgnx
+        name: kube-api-access-cbcfh
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
-    observedGeneration: 1
-    phase: Running
-    podIP: 10.244.0.15
-    podIPs:
-    - ip: 10.244.0.15
-    qosClass: BestEffort
-    startTime: "2026-09-27T07:14:08Z"
-- apiVersion: v1
-  kind: Pod
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
-    generateName: cart-656b4f485c-
-    generation: 1
-    labels:
-      app: cart
-      pod-template-hash: 656b4f485c
-    name: cart-656b4f485c-vpdfs
-    namespace: shop
-    ownerReferences:
-    - apiVersion: apps/v1
-      blockOwnerDeletion: true
-      controller: true
-      kind: ReplicaSet
-      name: cart-656b4f485c
-      uid: ee64313c-6acc-4b2a-abcf-4468e7087907
-    resourceVersion: "909"
-    uid: 5f7cf1fa-6226-4381-a8bf-f9d64a4345be
-  spec:
-    containers:
-    - image: registry.k8s.io/pause:3.9
-      imagePullPolicy: IfNotPresent
-      name: cart
-      resources: {}
-      terminationMessagePath: /dev/termination-log
-      terminationMessagePolicy: File
-      volumeMounts:
-      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-xhtns
-        readOnly: true
-    dnsPolicy: ClusterFirst
-    enableServiceLinks: true
-    nodeName: scout-evals-control-plane
-    preemptionPolicy: PreemptLowerPriority
-    priority: 0
-    restartPolicy: Always
-    schedulerName: default-scheduler
-    securityContext: {}
-    serviceAccount: default
-    serviceAccountName: default
-    terminationGracePeriodSeconds: 30
-    tolerations:
-    - effect: NoExecute
-      key: node.kubernetes.io/not-ready
-      operator: Exists
-      tolerationSeconds: 300
-    - effect: NoExecute
-      key: node.kubernetes.io/unreachable
-      operator: Exists
-      tolerationSeconds: 300
-    volumes:
-    - name: kube-api-access-xhtns
-      projected:
-        defaultMode: 420
-        sources:
-        - serviceAccountToken:
-            expirationSeconds: 3607
-            path: token
-        - configMap:
-            items:
-            - key: ca.crt
-              path: ca.crt
-            name: kube-root-ca.crt
-        - downwardAPI:
-            items:
-            - fieldRef:
-                apiVersion: v1
-                fieldPath: metadata.namespace
-              path: namespace
-  status:
-    conditions:
-    - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:54Z"
-      observedGeneration: 1
-      status: "True"
-      type: PodReadyToStartContainers
-    - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:53Z"
-      observedGeneration: 1
-      status: "True"
-      type: Initialized
-    - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:54Z"
-      observedGeneration: 1
-      status: "True"
-      type: Ready
-    - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:54Z"
-      observedGeneration: 1
-      status: "True"
-      type: ContainersReady
-    - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:53Z"
-      observedGeneration: 1
-      status: "True"
-      type: PodScheduled
-    containerStatuses:
-    - containerID: containerd://2d46622375774c01f782b0fb705d3c7690efe40f2888c1ae755f459aba3c9f48
-      image: registry.k8s.io/pause:3.9
-      imageID: registry.k8s.io/pause@sha256:7031c1b283388d2c2e09b57badb803c05ebed362dc88d84b480cc47f72a21097
-      lastState: {}
-      name: cart
-      ready: true
-      resources: {}
-      restartCount: 0
-      started: true
-      state:
-        running:
-          startedAt: "2026-09-27T07:14:54Z"
-      user:
-        linux:
-          gid: 0
-          supplementalGroups:
-          - 0
-          uid: 65535
-      volumeMounts:
-      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-xhtns
-        readOnly: true
-        recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
-    hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
     podIP: 10.244.0.22
     podIPs:
     - ip: 10.244.0.22
     qosClass: BestEffort
-    startTime: "2026-09-27T07:14:53Z"
+    startTime: "2026-09-27T07:55:16Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T07:14:54Z"
-    generateName: checkout-7697fc644f-
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    generateName: cart-656b4f485c-
     generation: 1
     labels:
-      app: checkout
-      pod-template-hash: 7697fc644f
-    name: checkout-7697fc644f-7twv6
+      app: cart
+      pod-template-hash: 656b4f485c
+    name: cart-656b4f485c-mw7t5
     namespace: shop
     ownerReferences:
     - apiVersion: apps/v1
       blockOwnerDeletion: true
       controller: true
       kind: ReplicaSet
-      name: checkout-7697fc644f
-      uid: 310d7b5b-e680-413f-903c-6b94903d0276
-    resourceVersion: "955"
-    uid: ccb00c00-6266-4286-b14c-bcffc5870d19
+      name: cart-656b4f485c
+      uid: 1e5dd026-2af5-4927-83e1-147fd95fca49
+    resourceVersion: "769"
+    uid: 218cf030-6196-4163-a063-619aa375894c
   spec:
     containers:
-    - image: registry.k8s.io/pause:3.10
+    - image: registry.k8s.io/pause:3.9
       imagePullPolicy: IfNotPresent
-      name: checkout
+      name: cart
       resources: {}
       terminationMessagePath: /dev/termination-log
       terminationMessagePolicy: File
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-6nq4f
+        name: kube-api-access-8t4sj
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -10500,7 +10421,7 @@ items:
       operator: Exists
       tolerationSeconds: 300
     volumes:
-    - name: kube-api-access-6nq4f
+    - name: kube-api-access-8t4sj
       projected:
         defaultMode: 420
         sources:
@@ -10521,43 +10442,43 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:55Z"
+      lastTransitionTime: "2026-09-27T07:54:39Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:54Z"
+      lastTransitionTime: "2026-09-27T07:54:36Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:55Z"
+      lastTransitionTime: "2026-09-27T07:54:39Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:55Z"
+      lastTransitionTime: "2026-09-27T07:54:39Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:54Z"
+      lastTransitionTime: "2026-09-27T07:54:36Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
     containerStatuses:
-    - containerID: containerd://5af39496407bf08702b6e782ea8e2fc280eb2a7997f77ddd9c674ee5d41efcff
-      image: registry.k8s.io/pause:3.10
-      imageID: sha256:afb61768ce381961ca0beff95337601f29dc70ff3ed14e5e4b3e5699057e6aa8
+    - containerID: containerd://59650abf62910805e84c3c6700411180bc72340a33be1972acad9f5e3dccfc76
+      image: registry.k8s.io/pause:3.9
+      imageID: registry.k8s.io/pause@sha256:7031c1b283388d2c2e09b57badb803c05ebed362dc88d84b480cc47f72a21097
       lastState: {}
-      name: checkout
+      name: cart
       ready: true
       resources: {}
       restartCount: 0
       started: true
       state:
         running:
-          startedAt: "2026-09-27T07:14:54Z"
+          startedAt: "2026-09-27T07:54:39Z"
       user:
         linux:
           gid: 0
@@ -10566,29 +10487,29 @@ items:
           uid: 65535
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-6nq4f
+        name: kube-api-access-8t4sj
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
-    podIP: 10.244.0.25
+    podIP: 10.244.0.15
     podIPs:
-    - ip: 10.244.0.25
+    - ip: 10.244.0.15
     qosClass: BestEffort
-    startTime: "2026-09-27T07:14:54Z"
+    startTime: "2026-09-27T07:54:36Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
+    creationTimestamp: "2026-09-27T07:55:16Z"
     generateName: checkout-7697fc644f-
     generation: 1
     labels:
       app: checkout
       pod-template-hash: 7697fc644f
-    name: checkout-7697fc644f-hsk85
+    name: checkout-7697fc644f-p5lvf
     namespace: shop
     ownerReferences:
     - apiVersion: apps/v1
@@ -10596,9 +10517,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: checkout-7697fc644f
-      uid: 310d7b5b-e680-413f-903c-6b94903d0276
-    resourceVersion: "916"
-    uid: d20364e8-9073-4a06-8827-a59c3eb3e170
+      uid: ab50840f-de68-4aca-b599-5ebbac840ba3
+    resourceVersion: "918"
+    uid: 1318c824-5b33-47c8-aa1b-6f95bd6c6de1
   spec:
     containers:
     - image: registry.k8s.io/pause:3.10
@@ -10609,7 +10530,7 @@ items:
       terminationMessagePolicy: File
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-rwjsv
+        name: kube-api-access-6qhtk
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -10632,7 +10553,7 @@ items:
       operator: Exists
       tolerationSeconds: 300
     volumes:
-    - name: kube-api-access-rwjsv
+    - name: kube-api-access-6qhtk
       projected:
         defaultMode: 420
         sources:
@@ -10653,32 +10574,32 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:54Z"
+      lastTransitionTime: "2026-09-27T07:55:18Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:53Z"
+      lastTransitionTime: "2026-09-27T07:55:16Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:54Z"
+      lastTransitionTime: "2026-09-27T07:55:18Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:54Z"
+      lastTransitionTime: "2026-09-27T07:55:18Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:53Z"
+      lastTransitionTime: "2026-09-27T07:55:16Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
     containerStatuses:
-    - containerID: containerd://e2fb342ae1f91f38e5fe19469e8069a7810b79e03b9b64e340cd4b181a080a05
+    - containerID: containerd://08120443830e15a97d9e0a89ad08bc73d671630ffc0f2763deed35b24aff2345
       image: registry.k8s.io/pause:3.10
       imageID: sha256:afb61768ce381961ca0beff95337601f29dc70ff3ed14e5e4b3e5699057e6aa8
       lastState: {}
@@ -10689,7 +10610,7 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T07:14:53Z"
+          startedAt: "2026-09-27T07:55:17Z"
       user:
         linux:
           gid: 0
@@ -10698,29 +10619,161 @@ items:
           uid: 65535
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-rwjsv
+        name: kube-api-access-6qhtk
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
     podIP: 10.244.0.21
     podIPs:
     - ip: 10.244.0.21
     qosClass: BestEffort
-    startTime: "2026-09-27T07:14:53Z"
+    startTime: "2026-09-27T07:55:16Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T07:14:08Z"
+    creationTimestamp: "2026-09-27T07:55:18Z"
+    generateName: checkout-7697fc644f-
+    generation: 1
+    labels:
+      app: checkout
+      pod-template-hash: 7697fc644f
+    name: checkout-7697fc644f-rv7zc
+    namespace: shop
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: ReplicaSet
+      name: checkout-7697fc644f
+      uid: ab50840f-de68-4aca-b599-5ebbac840ba3
+    resourceVersion: "975"
+    uid: 7f0fbc8d-3d5b-4178-ab9a-84afef3adf64
+  spec:
+    containers:
+    - image: registry.k8s.io/pause:3.10
+      imagePullPolicy: IfNotPresent
+      name: checkout
+      resources: {}
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-g9z6s
+        readOnly: true
+    dnsPolicy: ClusterFirst
+    enableServiceLinks: true
+    nodeName: scout-evals-control-plane
+    preemptionPolicy: PreemptLowerPriority
+    priority: 0
+    restartPolicy: Always
+    schedulerName: default-scheduler
+    securityContext: {}
+    serviceAccount: default
+    serviceAccountName: default
+    terminationGracePeriodSeconds: 30
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+    volumes:
+    - name: kube-api-access-g9z6s
+      projected:
+        defaultMode: 420
+        sources:
+        - serviceAccountToken:
+            expirationSeconds: 3607
+            path: token
+        - configMap:
+            items:
+            - key: ca.crt
+              path: ca.crt
+            name: kube-root-ca.crt
+        - downwardAPI:
+            items:
+            - fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+              path: namespace
+  status:
+    conditions:
+    - lastProbeTime: null
+      lastTransitionTime: "2026-09-27T07:55:19Z"
+      observedGeneration: 1
+      status: "True"
+      type: PodReadyToStartContainers
+    - lastProbeTime: null
+      lastTransitionTime: "2026-09-27T07:55:18Z"
+      observedGeneration: 1
+      status: "True"
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: "2026-09-27T07:55:19Z"
+      observedGeneration: 1
+      status: "True"
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: "2026-09-27T07:55:19Z"
+      observedGeneration: 1
+      status: "True"
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: "2026-09-27T07:55:18Z"
+      observedGeneration: 1
+      status: "True"
+      type: PodScheduled
+    containerStatuses:
+    - containerID: containerd://8d94d96c1efbf94b5d0024d92fa0f2466e66a1898448500b871b1dbc85446323
+      image: registry.k8s.io/pause:3.10
+      imageID: sha256:afb61768ce381961ca0beff95337601f29dc70ff3ed14e5e4b3e5699057e6aa8
+      lastState: {}
+      name: checkout
+      ready: true
+      resources: {}
+      restartCount: 0
+      started: true
+      state:
+        running:
+          startedAt: "2026-09-27T07:55:18Z"
+      user:
+        linux:
+          gid: 0
+          supplementalGroups:
+          - 0
+          uid: 65535
+      volumeMounts:
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-g9z6s
+        readOnly: true
+        recursiveReadOnly: Disabled
+    hostIP: 192.168.97.7
+    hostIPs:
+    - ip: 192.168.97.7
+    observedGeneration: 1
+    phase: Running
+    podIP: 10.244.0.25
+    podIPs:
+    - ip: 10.244.0.25
+    qosClass: BestEffort
+    startTime: "2026-09-27T07:55:18Z"
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generateName: ledger-6c8fdcf5f-
     generation: 1
     labels:
       app: ledger
       pod-template-hash: 6c8fdcf5f
-    name: ledger-6c8fdcf5f-8jk4t
+    name: ledger-6c8fdcf5f-86dc2
     namespace: shop
     ownerReferences:
     - apiVersion: apps/v1
@@ -10728,9 +10781,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: ledger-6c8fdcf5f
-      uid: 2e6f7a7f-689e-4dda-a4d1-e90e0cdbe1a2
-    resourceVersion: "745"
-    uid: 26726821-0b72-4901-bd27-b27eacefe525
+      uid: d3278c29-f207-4593-8a21-2373b6ab6112
+    resourceVersion: "771"
+    uid: 3fc1bcd5-83da-4337-9330-77fc2cbf6765
   spec:
     containers:
     - image: registry.k8s.io/pause:3.9
@@ -10741,7 +10794,7 @@ items:
       terminationMessagePolicy: File
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-h5r6b
+        name: kube-api-access-7lz88
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -10764,7 +10817,7 @@ items:
       operator: Exists
       tolerationSeconds: 300
     volumes:
-    - name: kube-api-access-h5r6b
+    - name: kube-api-access-7lz88
       projected:
         defaultMode: 420
         sources:
@@ -10785,32 +10838,32 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:12Z"
+      lastTransitionTime: "2026-09-27T07:54:39Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:08Z"
+      lastTransitionTime: "2026-09-27T07:54:36Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:12Z"
+      lastTransitionTime: "2026-09-27T07:54:39Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:12Z"
+      lastTransitionTime: "2026-09-27T07:54:39Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:08Z"
+      lastTransitionTime: "2026-09-27T07:54:36Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
     containerStatuses:
-    - containerID: containerd://c89ef605e517dd8752f2655601c59202372b68394ce89c06245a8e7b7b3e1728
+    - containerID: containerd://8ef7449ab05fd980ad7acfb4fde30848104c2bdb4c6b9a00f387cef675f2a3d6
       image: registry.k8s.io/pause:3.9
       imageID: registry.k8s.io/pause@sha256:7031c1b283388d2c2e09b57badb803c05ebed362dc88d84b480cc47f72a21097
       lastState: {}
@@ -10821,7 +10874,7 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T07:14:12Z"
+          startedAt: "2026-09-27T07:54:39Z"
       user:
         linux:
           gid: 0
@@ -10830,29 +10883,29 @@ items:
           uid: 65535
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-h5r6b
+        name: kube-api-access-7lz88
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
     podIP: 10.244.0.16
     podIPs:
     - ip: 10.244.0.16
     qosClass: BestEffort
-    startTime: "2026-09-27T07:14:08Z"
+    startTime: "2026-09-27T07:54:36Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T07:14:53Z"
+    creationTimestamp: "2026-09-27T07:55:16Z"
     generateName: orders-5f8df669d4-
     generation: 1
     labels:
       app: orders
       pod-template-hash: 5f8df669d4
-    name: orders-5f8df669d4-vftxc
+    name: orders-5f8df669d4-wcvxs
     namespace: shop
     ownerReferences:
     - apiVersion: apps/v1
@@ -10860,9 +10913,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: orders-5f8df669d4
-      uid: a3a55d17-722b-42b6-b2ac-99bc1486ef2b
-    resourceVersion: "1610"
-    uid: be0b00fc-3dd9-45b9-b828-66ef1a18139f
+      uid: 372274f0-d7cc-4367-9022-20b75f7464b9
+    resourceVersion: "1195"
+    uid: b78f43df-e646-4954-8362-c7d92005292b
   spec:
     containers:
     - image: registry.k8s.io/pause:9.9.9-orders
@@ -10873,7 +10926,7 @@ items:
       terminationMessagePolicy: File
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-gtp5n
+        name: kube-api-access-x54nv
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -10896,7 +10949,7 @@ items:
       operator: Exists
       tolerationSeconds: 300
     volumes:
-    - name: kube-api-access-gtp5n
+    - name: kube-api-access-x54nv
       projected:
         defaultMode: 420
         sources:
@@ -10917,31 +10970,31 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:54Z"
+      lastTransitionTime: "2026-09-27T07:55:18Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:53Z"
+      lastTransitionTime: "2026-09-27T07:55:16Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:53Z"
+      lastTransitionTime: "2026-09-27T07:55:16Z"
       message: 'containers with unready status: [orders]'
       observedGeneration: 1
       reason: ContainersNotReady
       status: "False"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:53Z"
+      lastTransitionTime: "2026-09-27T07:55:16Z"
       message: 'containers with unready status: [orders]'
       observedGeneration: 1
       reason: ContainersNotReady
       status: "False"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:53Z"
+      lastTransitionTime: "2026-09-27T07:55:16Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
@@ -10962,29 +11015,29 @@ items:
           reason: ImagePullBackOff
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-gtp5n
+        name: kube-api-access-x54nv
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Pending
     podIP: 10.244.0.20
     podIPs:
     - ip: 10.244.0.20
     qosClass: BestEffort
-    startTime: "2026-09-27T07:14:53Z"
+    startTime: "2026-09-27T07:55:16Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generateName: orders-6555986955-
     generation: 1
     labels:
       app: orders
       pod-template-hash: "6555986955"
-    name: orders-6555986955-bsqkn
+    name: orders-6555986955-7xmpq
     namespace: shop
     ownerReferences:
     - apiVersion: apps/v1
@@ -10992,9 +11045,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: orders-6555986955
-      uid: 0f8629a7-90ed-4762-889a-881773fe7c49
-    resourceVersion: "738"
-    uid: 4f4085cf-66a0-4052-aaf1-0b43bb1027de
+      uid: 91cbde62-ab93-4188-b994-df4e3ed9bd5e
+    resourceVersion: "733"
+    uid: 84185fae-943e-42f0-9c67-1c9b4e51963c
   spec:
     containers:
     - image: registry.k8s.io/pause:3.9
@@ -11005,7 +11058,7 @@ items:
       terminationMessagePolicy: File
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-ft4r8
+        name: kube-api-access-lj7w8
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -11028,7 +11081,7 @@ items:
       operator: Exists
       tolerationSeconds: 300
     volumes:
-    - name: kube-api-access-ft4r8
+    - name: kube-api-access-lj7w8
       projected:
         defaultMode: 420
         sources:
@@ -11049,32 +11102,32 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:12Z"
+      lastTransitionTime: "2026-09-27T07:54:38Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:07Z"
+      lastTransitionTime: "2026-09-27T07:54:36Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:12Z"
+      lastTransitionTime: "2026-09-27T07:54:38Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:12Z"
+      lastTransitionTime: "2026-09-27T07:54:38Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:07Z"
+      lastTransitionTime: "2026-09-27T07:54:36Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
     containerStatuses:
-    - containerID: containerd://dd21127f47c99972010376eaae6faaaa490204e264cd781af792be86bb703353
+    - containerID: containerd://1cc026d98c6abc49a339fb3825210e859a50435c0006628f43e5be678b1b4f1a
       image: registry.k8s.io/pause:3.9
       imageID: registry.k8s.io/pause@sha256:7031c1b283388d2c2e09b57badb803c05ebed362dc88d84b480cc47f72a21097
       lastState: {}
@@ -11085,7 +11138,7 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T07:14:11Z"
+          startedAt: "2026-09-27T07:54:38Z"
       user:
         linux:
           gid: 0
@@ -11094,161 +11147,161 @@ items:
           uid: 65535
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-ft4r8
+        name: kube-api-access-lj7w8
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
+    observedGeneration: 1
+    phase: Running
+    podIP: 10.244.0.12
+    podIPs:
+    - ip: 10.244.0.12
+    qosClass: BestEffort
+    startTime: "2026-09-27T07:54:36Z"
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    creationTimestamp: "2026-09-27T07:54:36Z"
+    generateName: orders-6555986955-
+    generation: 1
+    labels:
+      app: orders
+      pod-template-hash: "6555986955"
+    name: orders-6555986955-q7h5k
+    namespace: shop
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: ReplicaSet
+      name: orders-6555986955
+      uid: 91cbde62-ab93-4188-b994-df4e3ed9bd5e
+    resourceVersion: "738"
+    uid: 483fb2c9-4112-41fc-a1b4-807da4825c06
+  spec:
+    containers:
+    - image: registry.k8s.io/pause:3.9
+      imagePullPolicy: IfNotPresent
+      name: orders
+      resources: {}
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-ppmvj
+        readOnly: true
+    dnsPolicy: ClusterFirst
+    enableServiceLinks: true
+    nodeName: scout-evals-control-plane
+    preemptionPolicy: PreemptLowerPriority
+    priority: 0
+    restartPolicy: Always
+    schedulerName: default-scheduler
+    securityContext: {}
+    serviceAccount: default
+    serviceAccountName: default
+    terminationGracePeriodSeconds: 30
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+    volumes:
+    - name: kube-api-access-ppmvj
+      projected:
+        defaultMode: 420
+        sources:
+        - serviceAccountToken:
+            expirationSeconds: 3607
+            path: token
+        - configMap:
+            items:
+            - key: ca.crt
+              path: ca.crt
+            name: kube-root-ca.crt
+        - downwardAPI:
+            items:
+            - fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+              path: namespace
+  status:
+    conditions:
+    - lastProbeTime: null
+      lastTransitionTime: "2026-09-27T07:54:38Z"
+      observedGeneration: 1
+      status: "True"
+      type: PodReadyToStartContainers
+    - lastProbeTime: null
+      lastTransitionTime: "2026-09-27T07:54:36Z"
+      observedGeneration: 1
+      status: "True"
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: "2026-09-27T07:54:38Z"
+      observedGeneration: 1
+      status: "True"
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: "2026-09-27T07:54:38Z"
+      observedGeneration: 1
+      status: "True"
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: "2026-09-27T07:54:36Z"
+      observedGeneration: 1
+      status: "True"
+      type: PodScheduled
+    containerStatuses:
+    - containerID: containerd://cdd6ca7d18200e78fbb9f71275594169746f7469312a7d9a3a24527d8e3f98ee
+      image: registry.k8s.io/pause:3.9
+      imageID: registry.k8s.io/pause@sha256:7031c1b283388d2c2e09b57badb803c05ebed362dc88d84b480cc47f72a21097
+      lastState: {}
+      name: orders
+      ready: true
+      resources: {}
+      restartCount: 0
+      started: true
+      state:
+        running:
+          startedAt: "2026-09-27T07:54:38Z"
+      user:
+        linux:
+          gid: 0
+          supplementalGroups:
+          - 0
+          uid: 65535
+      volumeMounts:
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-ppmvj
+        readOnly: true
+        recursiveReadOnly: Disabled
+    hostIP: 192.168.97.7
+    hostIPs:
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
     podIP: 10.244.0.13
     podIPs:
     - ip: 10.244.0.13
     qosClass: BestEffort
-    startTime: "2026-09-27T07:14:07Z"
+    startTime: "2026-09-27T07:54:36Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
-    generateName: orders-6555986955-
-    generation: 1
-    labels:
-      app: orders
-      pod-template-hash: "6555986955"
-    name: orders-6555986955-z6wqg
-    namespace: shop
-    ownerReferences:
-    - apiVersion: apps/v1
-      blockOwnerDeletion: true
-      controller: true
-      kind: ReplicaSet
-      name: orders-6555986955
-      uid: 0f8629a7-90ed-4762-889a-881773fe7c49
-    resourceVersion: "708"
-    uid: 694fa4ca-d0ea-43a5-9495-f52bdb733190
-  spec:
-    containers:
-    - image: registry.k8s.io/pause:3.9
-      imagePullPolicy: IfNotPresent
-      name: orders
-      resources: {}
-      terminationMessagePath: /dev/termination-log
-      terminationMessagePolicy: File
-      volumeMounts:
-      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-6c7px
-        readOnly: true
-    dnsPolicy: ClusterFirst
-    enableServiceLinks: true
-    nodeName: scout-evals-control-plane
-    preemptionPolicy: PreemptLowerPriority
-    priority: 0
-    restartPolicy: Always
-    schedulerName: default-scheduler
-    securityContext: {}
-    serviceAccount: default
-    serviceAccountName: default
-    terminationGracePeriodSeconds: 30
-    tolerations:
-    - effect: NoExecute
-      key: node.kubernetes.io/not-ready
-      operator: Exists
-      tolerationSeconds: 300
-    - effect: NoExecute
-      key: node.kubernetes.io/unreachable
-      operator: Exists
-      tolerationSeconds: 300
-    volumes:
-    - name: kube-api-access-6c7px
-      projected:
-        defaultMode: 420
-        sources:
-        - serviceAccountToken:
-            expirationSeconds: 3607
-            path: token
-        - configMap:
-            items:
-            - key: ca.crt
-              path: ca.crt
-            name: kube-root-ca.crt
-        - downwardAPI:
-            items:
-            - fieldRef:
-                apiVersion: v1
-                fieldPath: metadata.namespace
-              path: namespace
-  status:
-    conditions:
-    - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:11Z"
-      observedGeneration: 1
-      status: "True"
-      type: PodReadyToStartContainers
-    - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:07Z"
-      observedGeneration: 1
-      status: "True"
-      type: Initialized
-    - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:11Z"
-      observedGeneration: 1
-      status: "True"
-      type: Ready
-    - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:11Z"
-      observedGeneration: 1
-      status: "True"
-      type: ContainersReady
-    - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:07Z"
-      observedGeneration: 1
-      status: "True"
-      type: PodScheduled
-    containerStatuses:
-    - containerID: containerd://c41fafcab49845c1ffd2791b641fbab7761e6b9ae36d99b864b65124b14ae05b
-      image: registry.k8s.io/pause:3.9
-      imageID: registry.k8s.io/pause@sha256:7031c1b283388d2c2e09b57badb803c05ebed362dc88d84b480cc47f72a21097
-      lastState: {}
-      name: orders
-      ready: true
-      resources: {}
-      restartCount: 0
-      started: true
-      state:
-        running:
-          startedAt: "2026-09-27T07:14:10Z"
-      user:
-        linux:
-          gid: 0
-          supplementalGroups:
-          - 0
-          uid: 65535
-      volumeMounts:
-      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-6c7px
-        readOnly: true
-        recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
-    hostIPs:
-    - ip: 192.168.97.3
-    observedGeneration: 1
-    phase: Running
-    podIP: 10.244.0.11
-    podIPs:
-    - ip: 10.244.0.11
-    qosClass: BestEffort
-    startTime: "2026-09-27T07:14:07Z"
-- apiVersion: v1
-  kind: Pod
-  metadata:
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generateName: debug-nginx-5dbdb5f74f-
     generation: 1
     labels:
       app: debug-nginx
       pod-template-hash: 5dbdb5f74f
-    name: debug-nginx-5dbdb5f74f-xg46t
+    name: debug-nginx-5dbdb5f74f-6g6ph
     namespace: temp-testing
     ownerReferences:
     - apiVersion: apps/v1
@@ -11256,9 +11309,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: debug-nginx-5dbdb5f74f
-      uid: 5d3fd03e-2dc9-4394-90e6-2e435c83fdb0
-    resourceVersion: "681"
-    uid: b4d70f3d-8f89-4279-bb30-ab9dc818a060
+      uid: 3fde3144-f675-437b-bf52-a9eb2965d96a
+    resourceVersion: "741"
+    uid: 548da026-3b19-4cbd-a6d7-7baabed00cc8
   spec:
     containers:
     - image: registry.k8s.io/pause:3.9
@@ -11269,7 +11322,7 @@ items:
       terminationMessagePolicy: File
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-z7sr7
+        name: kube-api-access-cgxvq
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -11292,7 +11345,7 @@ items:
       operator: Exists
       tolerationSeconds: 300
     volumes:
-    - name: kube-api-access-z7sr7
+    - name: kube-api-access-cgxvq
       projected:
         defaultMode: 420
         sources:
@@ -11313,32 +11366,32 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:10Z"
+      lastTransitionTime: "2026-09-27T07:54:38Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:07Z"
+      lastTransitionTime: "2026-09-27T07:54:36Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:10Z"
+      lastTransitionTime: "2026-09-27T07:54:38Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:10Z"
+      lastTransitionTime: "2026-09-27T07:54:38Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T07:14:07Z"
+      lastTransitionTime: "2026-09-27T07:54:36Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
     containerStatuses:
-    - containerID: containerd://d4a08ffa098bd0ef8ac9ce1af8c6e5df52d7223e991b801f04f7985851c5443b
+    - containerID: containerd://c0c5be4b5fe8b5b717518918ba18878ab09688d228e8f4de965ae2720824c60d
       image: registry.k8s.io/pause:3.9
       imageID: registry.k8s.io/pause@sha256:7031c1b283388d2c2e09b57badb803c05ebed362dc88d84b480cc47f72a21097
       lastState: {}
@@ -11349,7 +11402,7 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T07:14:10Z"
+          startedAt: "2026-09-27T07:54:38Z"
       user:
         linux:
           gid: 0
@@ -11358,19 +11411,19 @@ items:
           uid: 65535
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-z7sr7
+        name: kube-api-access-cgxvq
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
-    podIP: 10.244.0.7
+    podIP: 10.244.0.8
     podIPs:
-    - ip: 10.244.0.7
+    - ip: 10.244.0.8
     qosClass: BestEffort
-    startTime: "2026-09-27T07:14:07Z"
+    startTime: "2026-09-27T07:54:36Z"
 kind: List
 metadata:
   resourceVersion: ""
@@ -11385,7 +11438,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     generation: 1
     labels:
       app.kubernetes.io/name: argocd-application-controller
@@ -11398,9 +11451,9 @@ items:
       controller: true
       kind: Deployment
       name: argocd-application-controller
-      uid: 314432ca-0462-45d4-b134-2230f651f3f3
-    resourceVersion: "707"
-    uid: c4d42b09-9488-4aa7-af42-7fed276e0ace
+      uid: 02f17c22-d152-4080-8daf-0f6ea084c7fc
+    resourceVersion: "709"
+    uid: 920c1eef-8ab0-41c9-b446-853352754f50
   spec:
     replicas: 1
     selector:
@@ -11441,7 +11494,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: billing
       meta.helm.sh/release-namespace: billing
-    creationTimestamp: "2026-09-27T07:14:08Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generation: 1
     labels:
       app: billing
@@ -11454,9 +11507,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: 6bc91f31-fed5-4cda-b1fa-e9afb3150102
-    resourceVersion: "736"
-    uid: 74a1ccb2-582b-4e0f-a359-c2dfb2f4deeb
+      uid: 74d659de-3303-43f2-a3a5-cb81d3942ba7
+    resourceVersion: "763"
+    uid: 1e6a8786-f1c5-4c4d-a63a-5cca04780b06
   spec:
     replicas: 1
     selector:
@@ -11495,7 +11548,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     generation: 1
     labels:
       app: hotfix-worker
@@ -11508,9 +11561,9 @@ items:
       controller: true
       kind: Deployment
       name: hotfix-worker
-      uid: ae71ebd3-5748-493d-901f-b578940b55bb
-    resourceVersion: "716"
-    uid: 2b5d350e-28ea-4973-8b6a-7c7bfa471ad4
+      uid: 156fb044-f790-40f5-9ce3-e2ed29e9f8e3
+    resourceVersion: "707"
+    uid: 1791caf9-10f3-4877-80b5-4f5ffa4038e0
   spec:
     replicas: 1
     selector:
@@ -11549,7 +11602,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     generation: 1
     labels:
       app: kustomize-controller
@@ -11562,9 +11615,9 @@ items:
       controller: true
       kind: Deployment
       name: kustomize-controller
-      uid: 53b3d4f3-1f5a-440b-93e6-2f56464b75cb
-    resourceVersion: "653"
-    uid: f956f754-c5b9-4b63-93ed-927985df43aa
+      uid: e8581dab-345a-40df-9517-de227f7f3fe9
+    resourceVersion: "711"
+    uid: 9a11ff37-50d4-46ba-87c0-ff1d9e306c94
   spec:
     replicas: 1
     selector:
@@ -11603,7 +11656,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     generation: 1
     labels:
       app: source-controller
@@ -11616,9 +11669,9 @@ items:
       controller: true
       kind: Deployment
       name: source-controller
-      uid: 329d5f80-6b0a-4775-a23c-055d86c6ee0d
-    resourceVersion: "680"
-    uid: e2540e32-2d1c-4eec-854e-f726f5b5f9f7
+      uid: abd29fdd-ad03-4e62-8df8-f568518c7f70
+    resourceVersion: "705"
+    uid: 6587194d-233f-4c3e-8b6d-ae629c20b421
   spec:
     replicas: 1
     selector:
@@ -11657,7 +11710,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "2"
-    creationTimestamp: "2026-09-27T07:14:53Z"
+    creationTimestamp: "2026-09-27T07:55:16Z"
     generation: 1
     labels:
       app: inventory
@@ -11670,9 +11723,9 @@ items:
       controller: true
       kind: Deployment
       name: inventory
-      uid: a4dc030d-81c0-4091-82ae-8b3c72122f8f
-    resourceVersion: "900"
-    uid: a5747494-ffc6-47ce-b758-8f0007294799
+      uid: eb99d019-cc46-474f-8348-60728c782517
+    resourceVersion: "923"
+    uid: 60d37fd9-2d0b-40b2-a197-3fc9c8a3e43a
   spec:
     replicas: 1
     selector:
@@ -11714,7 +11767,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:14:08Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generation: 2
     labels:
       app: inventory
@@ -11727,9 +11780,9 @@ items:
       controller: true
       kind: Deployment
       name: inventory
-      uid: a4dc030d-81c0-4091-82ae-8b3c72122f8f
-    resourceVersion: "946"
-    uid: 2170f749-7470-45f0-90ea-3b04d6b4859f
+      uid: eb99d019-cc46-474f-8348-60728c782517
+    resourceVersion: "963"
+    uid: 6d2fddb3-33c6-4f17-8d39-47f8737d7a19
   spec:
     replicas: 0
     selector:
@@ -11765,7 +11818,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "2"
       deployment.kubernetes.io/max-replicas: "3"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:13:55Z"
+    creationTimestamp: "2026-09-27T07:54:12Z"
     generation: 1
     labels:
       k8s-app: kube-dns
@@ -11778,9 +11831,9 @@ items:
       controller: true
       kind: Deployment
       name: coredns
-      uid: 1173fdf3-2381-4005-8ae4-b54d8a29ae6a
-    resourceVersion: "638"
-    uid: b62fbd9e-024e-406c-8355-19b45f1530dd
+      uid: 26c6214b-8173-4038-9c3a-eb39d60855c5
+    resourceVersion: "462"
+    uid: a7f86949-02b6-4644-8842-766c3d3134d9
   spec:
     replicas: 2
     selector:
@@ -11904,7 +11957,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:13:55Z"
+    creationTimestamp: "2026-09-27T07:54:12Z"
     generation: 1
     labels:
       app: local-path-provisioner
@@ -11917,9 +11970,9 @@ items:
       controller: true
       kind: Deployment
       name: local-path-provisioner
-      uid: b79eea33-da59-473a-af71-a27b6ee97225
-    resourceVersion: "650"
-    uid: 2e6ddfa3-acec-4c86-a7fd-e2fc9308536c
+      uid: bc24cf5b-9fe0-41a6-b58e-bb3a31b959e9
+    resourceVersion: "466"
+    uid: 4efa5143-d59c-445b-a735-ce50f60e23c6
   spec:
     replicas: 1
     selector:
@@ -11995,7 +12048,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: payments
       meta.helm.sh/release-namespace: payments
-    creationTimestamp: "2026-09-27T07:14:08Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generation: 1
     labels:
       app: payments-api
@@ -12008,9 +12061,9 @@ items:
       controller: true
       kind: Deployment
       name: payments-api
-      uid: 1105dae0-d85e-41c0-8b78-bd9523557410
-    resourceVersion: "669"
-    uid: 15485201-fb44-4881-b12f-633aedece28a
+      uid: 8acbafbd-049c-497d-be94-c3d361af157f
+    resourceVersion: "686"
+    uid: 6cc2f315-6e34-4436-aa5b-8a9fdab0b849
   spec:
     replicas: 2
     selector:
@@ -12048,7 +12101,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "3"
       deployment.kubernetes.io/max-replicas: "4"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:14:08Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generation: 2
     labels:
       app: cart
@@ -12061,9 +12114,9 @@ items:
       controller: true
       kind: Deployment
       name: cart
-      uid: 25b1982e-a4b0-497a-8eaa-4c5759683b16
-    resourceVersion: "913"
-    uid: ee64313c-6acc-4b2a-abcf-4468e7087907
+      uid: 42481787-8813-4025-9e41-a930ffd500f7
+    resourceVersion: "944"
+    uid: 1e5dd026-2af5-4927-83e1-147fd95fca49
   spec:
     replicas: 3
     selector:
@@ -12102,7 +12155,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "2"
       deployment.kubernetes.io/max-replicas: "3"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generation: 3
     labels:
       app: checkout
@@ -12115,9 +12168,9 @@ items:
       controller: true
       kind: Deployment
       name: checkout
-      uid: af083890-c386-4790-a3cf-16973f9240e4
-    resourceVersion: "968"
-    uid: 6b7f25c4-679b-4e97-a32c-f94bfa57d48c
+      uid: f5a3c667-5061-4c96-be4a-4846af2d2a57
+    resourceVersion: "988"
+    uid: af54bc40-e1e6-4753-87ac-a8c61627b3b1
   spec:
     replicas: 0
     selector:
@@ -12153,7 +12206,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "2"
       deployment.kubernetes.io/max-replicas: "3"
       deployment.kubernetes.io/revision: "2"
-    creationTimestamp: "2026-09-27T07:14:53Z"
+    creationTimestamp: "2026-09-27T07:55:16Z"
     generation: 2
     labels:
       app: checkout
@@ -12166,9 +12219,9 @@ items:
       controller: true
       kind: Deployment
       name: checkout
-      uid: af083890-c386-4790-a3cf-16973f9240e4
-    resourceVersion: "956"
-    uid: 310d7b5b-e680-413f-903c-6b94903d0276
+      uid: f5a3c667-5061-4c96-be4a-4846af2d2a57
+    resourceVersion: "976"
+    uid: ab50840f-de68-4aca-b599-5ebbac840ba3
   spec:
     replicas: 2
     selector:
@@ -12208,7 +12261,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:14:08Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generation: 1
     labels:
       app: ledger
@@ -12221,9 +12274,9 @@ items:
       controller: true
       kind: Deployment
       name: ledger
-      uid: bd40a661-a5f4-49ec-a635-96ca624a641c
-    resourceVersion: "746"
-    uid: 2e6f7a7f-689e-4dda-a4d1-e90e0cdbe1a2
+      uid: 210460ef-159d-4439-b3c8-4c27af010b11
+    resourceVersion: "773"
+    uid: d3278c29-f207-4593-8a21-2373b6ab6112
   spec:
     replicas: 1
     selector:
@@ -12262,7 +12315,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "2"
       deployment.kubernetes.io/max-replicas: "3"
       deployment.kubernetes.io/revision: "2"
-    creationTimestamp: "2026-09-27T07:14:53Z"
+    creationTimestamp: "2026-09-27T07:55:16Z"
     generation: 1
     labels:
       app: orders
@@ -12275,9 +12328,9 @@ items:
       controller: true
       kind: Deployment
       name: orders
-      uid: 00f07ef9-8a63-4ce2-897e-a8bef885129d
-    resourceVersion: "833"
-    uid: a3a55d17-722b-42b6-b2ac-99bc1486ef2b
+      uid: 16ec2bb4-6ba8-495a-ba4b-118cb2663637
+    resourceVersion: "853"
+    uid: 372274f0-d7cc-4367-9022-20b75f7464b9
   spec:
     replicas: 1
     selector:
@@ -12314,7 +12367,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "2"
       deployment.kubernetes.io/max-replicas: "3"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generation: 1
     labels:
       app: orders
@@ -12327,9 +12380,9 @@ items:
       controller: true
       kind: Deployment
       name: orders
-      uid: 00f07ef9-8a63-4ce2-897e-a8bef885129d
+      uid: 16ec2bb4-6ba8-495a-ba4b-118cb2663637
     resourceVersion: "740"
-    uid: 0f8629a7-90ed-4762-889a-881773fe7c49
+    uid: 91cbde62-ab93-4188-b994-df4e3ed9bd5e
   spec:
     replicas: 2
     selector:
@@ -12368,7 +12421,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     generation: 1
     labels:
       app: debug-nginx
@@ -12381,9 +12434,9 @@ items:
       controller: true
       kind: Deployment
       name: debug-nginx
-      uid: d6430221-f605-45c8-914b-bd84d5f39e39
-    resourceVersion: "683"
-    uid: 5d3fd03e-2dc9-4394-90e6-2e435c83fdb0
+      uid: c257d0a7-ec2c-4485-9558-6640b1a85bb9
+    resourceVersion: "743"
+    uid: 3fde3144-f675-437b-bf52-a9eb2965d96a
   spec:
     replicas: 1
     selector:
@@ -12425,14 +12478,14 @@ items:
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: "2026-09-27T07:13:47Z"
+    creationTimestamp: "2026-09-27T07:54:05Z"
     labels:
       component: apiserver
       provider: kubernetes
     name: kubernetes
     namespace: default
     resourceVersion: "205"
-    uid: d4dd9b6c-dd8b-48d9-84be-e7622b8fd850
+    uid: 5befe672-5efb-4114-b4fa-d6873f93ae7b
   spec:
     clusterIP: 10.96.0.1
     clusterIPs:
@@ -12456,15 +12509,15 @@ items:
     annotations:
       prometheus.io/port: "9153"
       prometheus.io/scrape: "true"
-    creationTimestamp: "2026-09-27T07:13:48Z"
+    creationTimestamp: "2026-09-27T07:54:06Z"
     labels:
       k8s-app: kube-dns
       kubernetes.io/cluster-service: "true"
       kubernetes.io/name: CoreDNS
     name: kube-dns
     namespace: kube-system
-    resourceVersion: "239"
-    uid: a7abfb90-44b1-4c1b-801c-1ac4445cc777
+    resourceVersion: "240"
+    uid: 08b4912a-f865-4e57-a5fc-58ded28f2d20
   spec:
     clusterIP: 10.96.0.10
     clusterIPs:

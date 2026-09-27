@@ -106,12 +106,12 @@ recording.
 
 ## What the recordings show today
 
-Recorded with v2.12.3 code plus #625, without which `explain` attributed the
-`kubectl set image` on `checkout` to Flux (#624). MCP `trace` returns only
-`exit status 1` for all
-six Deployments ([#619](https://github.com/confighub/cub-scout/issues/619)), so
-agents must rely on `explain` and `map`. The recordings keep that on purpose:
-the suite measures cub-scout as shipped.
+Recorded with v2.12.3 plus #625 (hand-edit attribution), #629 (Argo CD
+tracking-id first) and #630 (MCP keeps a command's JSON when it exits
+non-zero). Before #630, MCP `trace` returned only `exit status 1` for every
+Deployment no controller could trace (#619); it now returns the JSON answer
+with `isError: true` and a note. `trace` on an Argo CD workload still fails
+honestly: the scenario has no Argo CD server to ask.
 
 ## Growing the suite
 

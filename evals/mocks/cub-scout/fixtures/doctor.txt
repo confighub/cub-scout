@@ -49,7 +49,7 @@
         "progress": {
           "phase": "stalled",
           "clockSource": "status.conditions[Progressing].lastUpdateTime",
-          "progressAgeSeconds": 463
+          "progressAgeSeconds": 195
         },
         "verdict": "BLOCK",
         "reason": "runtime_failed",
@@ -61,19 +61,19 @@
           "observedGeneration": 1,
           "podReasons": [
             {
-              "pod": "payments-api-6ccc469957-2hvfx",
+              "pod": "payments-api-6ccc469957-lnwzs",
               "container": "api",
-              "reason": "ImagePullBackOff",
-              "message": "Back-off pulling image \"registry.k8s.io/pause:0.0.0-does-not-exist\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k…"
+              "reason": "ErrImagePull",
+              "message": "rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k8s.io/pause:0.0.0-does-not-exist\": failed to resolve reference \"registry.k8s.io/pau…"
             },
             {
-              "pod": "payments-api-6ccc469957-mm74h",
+              "pod": "payments-api-6ccc469957-tmrrp",
               "container": "api",
               "reason": "ImagePullBackOff",
               "message": "Back-off pulling image \"registry.k8s.io/pause:0.0.0-does-not-exist\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k…"
             }
           ],
-          "observedAt": "2026-09-27T07:21:52Z"
+          "observedAt": "2026-09-27T07:57:52Z"
         }
       },
       {
@@ -86,7 +86,7 @@
         "progress": {
           "phase": "stalled",
           "clockSource": "status.conditions[Progressing].lastUpdateTime",
-          "progressAgeSeconds": 388
+          "progressAgeSeconds": 125
         },
         "verdict": "BLOCK",
         "reason": "runtime_failed",
@@ -98,13 +98,13 @@
           "observedGeneration": 2,
           "podReasons": [
             {
-              "pod": "orders-5f8df669d4-vftxc",
+              "pod": "orders-5f8df669d4-wcvxs",
               "container": "orders",
               "reason": "ImagePullBackOff",
               "message": "Back-off pulling image \"registry.k8s.io/pause:9.9.9-orders\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k8s.io/pa…"
             }
           ],
-          "observedAt": "2026-09-27T07:21:52Z"
+          "observedAt": "2026-09-27T07:57:52Z"
         }
       }
     ]
@@ -112,19 +112,19 @@
   "topIssues": [
     {
       "severity": "CRITICAL",
-      "resource": "Pod/payments-api-6ccc469957-2hvfx",
+      "resource": "Pod/payments-api-6ccc469957-lnwzs",
+      "namespace": "payments",
+      "message": "rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k8s.io/pause:0.0.0-does-not-exist\": failed to resolve reference \"registry.k8s.io/..."
+    },
+    {
+      "severity": "CRITICAL",
+      "resource": "Pod/payments-api-6ccc469957-tmrrp",
       "namespace": "payments",
       "message": "Back-off pulling image \"registry.k8s.io/pause:0.0.0-does-not-exist\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"registr..."
     },
     {
       "severity": "CRITICAL",
-      "resource": "Pod/payments-api-6ccc469957-mm74h",
-      "namespace": "payments",
-      "message": "Back-off pulling image \"registry.k8s.io/pause:0.0.0-does-not-exist\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"registr..."
-    },
-    {
-      "severity": "CRITICAL",
-      "resource": "Pod/orders-5f8df669d4-vftxc",
+      "resource": "Pod/orders-5f8df669d4-wcvxs",
       "namespace": "shop",
       "message": "Back-off pulling image \"registry.k8s.io/pause:9.9.9-orders\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k8s.io..."
     }
@@ -132,8 +132,8 @@
   "nextSteps": [
     {
       "actionType": "read-only",
-      "reason": "CRITICAL issue on Pod/payments-api-6ccc469957-2hvfx - investigate immediately",
-      "nextCommand": "cub-scout explain pod/payments-api-6ccc469957-2hvfx -n payments"
+      "reason": "CRITICAL issue on Pod/payments-api-6ccc469957-lnwzs - investigate immediately",
+      "nextCommand": "cub-scout explain pod/payments-api-6ccc469957-lnwzs -n payments"
     },
     {
       "actionType": "read-only",

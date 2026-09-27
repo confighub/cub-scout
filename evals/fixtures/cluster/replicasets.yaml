@@ -7,7 +7,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     generation: 1
     labels:
       app.kubernetes.io/name: argocd-application-controller
@@ -20,9 +20,9 @@ items:
       controller: true
       kind: Deployment
       name: argocd-application-controller
-      uid: 314432ca-0462-45d4-b134-2230f651f3f3
-    resourceVersion: "707"
-    uid: c4d42b09-9488-4aa7-af42-7fed276e0ace
+      uid: 02f17c22-d152-4080-8daf-0f6ea084c7fc
+    resourceVersion: "709"
+    uid: 920c1eef-8ab0-41c9-b446-853352754f50
   spec:
     replicas: 1
     selector:
@@ -63,7 +63,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: billing
       meta.helm.sh/release-namespace: billing
-    creationTimestamp: "2026-09-27T07:14:08Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generation: 1
     labels:
       app: billing
@@ -76,9 +76,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: 6bc91f31-fed5-4cda-b1fa-e9afb3150102
-    resourceVersion: "736"
-    uid: 74a1ccb2-582b-4e0f-a359-c2dfb2f4deeb
+      uid: 74d659de-3303-43f2-a3a5-cb81d3942ba7
+    resourceVersion: "763"
+    uid: 1e6a8786-f1c5-4c4d-a63a-5cca04780b06
   spec:
     replicas: 1
     selector:
@@ -117,7 +117,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     generation: 1
     labels:
       app: hotfix-worker
@@ -130,9 +130,9 @@ items:
       controller: true
       kind: Deployment
       name: hotfix-worker
-      uid: ae71ebd3-5748-493d-901f-b578940b55bb
-    resourceVersion: "716"
-    uid: 2b5d350e-28ea-4973-8b6a-7c7bfa471ad4
+      uid: 156fb044-f790-40f5-9ce3-e2ed29e9f8e3
+    resourceVersion: "707"
+    uid: 1791caf9-10f3-4877-80b5-4f5ffa4038e0
   spec:
     replicas: 1
     selector:
@@ -171,7 +171,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     generation: 1
     labels:
       app: kustomize-controller
@@ -184,9 +184,9 @@ items:
       controller: true
       kind: Deployment
       name: kustomize-controller
-      uid: 53b3d4f3-1f5a-440b-93e6-2f56464b75cb
-    resourceVersion: "653"
-    uid: f956f754-c5b9-4b63-93ed-927985df43aa
+      uid: e8581dab-345a-40df-9517-de227f7f3fe9
+    resourceVersion: "711"
+    uid: 9a11ff37-50d4-46ba-87c0-ff1d9e306c94
   spec:
     replicas: 1
     selector:
@@ -225,7 +225,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     generation: 1
     labels:
       app: source-controller
@@ -238,9 +238,9 @@ items:
       controller: true
       kind: Deployment
       name: source-controller
-      uid: 329d5f80-6b0a-4775-a23c-055d86c6ee0d
-    resourceVersion: "680"
-    uid: e2540e32-2d1c-4eec-854e-f726f5b5f9f7
+      uid: abd29fdd-ad03-4e62-8df8-f568518c7f70
+    resourceVersion: "705"
+    uid: 6587194d-233f-4c3e-8b6d-ae629c20b421
   spec:
     replicas: 1
     selector:
@@ -279,7 +279,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "2"
-    creationTimestamp: "2026-09-27T07:14:53Z"
+    creationTimestamp: "2026-09-27T07:55:16Z"
     generation: 1
     labels:
       app: inventory
@@ -292,9 +292,9 @@ items:
       controller: true
       kind: Deployment
       name: inventory
-      uid: a4dc030d-81c0-4091-82ae-8b3c72122f8f
-    resourceVersion: "900"
-    uid: a5747494-ffc6-47ce-b758-8f0007294799
+      uid: eb99d019-cc46-474f-8348-60728c782517
+    resourceVersion: "923"
+    uid: 60d37fd9-2d0b-40b2-a197-3fc9c8a3e43a
   spec:
     replicas: 1
     selector:
@@ -336,7 +336,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:14:08Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generation: 2
     labels:
       app: inventory
@@ -349,9 +349,9 @@ items:
       controller: true
       kind: Deployment
       name: inventory
-      uid: a4dc030d-81c0-4091-82ae-8b3c72122f8f
-    resourceVersion: "946"
-    uid: 2170f749-7470-45f0-90ea-3b04d6b4859f
+      uid: eb99d019-cc46-474f-8348-60728c782517
+    resourceVersion: "963"
+    uid: 6d2fddb3-33c6-4f17-8d39-47f8737d7a19
   spec:
     replicas: 0
     selector:
@@ -387,7 +387,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "2"
       deployment.kubernetes.io/max-replicas: "3"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:13:55Z"
+    creationTimestamp: "2026-09-27T07:54:12Z"
     generation: 1
     labels:
       k8s-app: kube-dns
@@ -400,9 +400,9 @@ items:
       controller: true
       kind: Deployment
       name: coredns
-      uid: 1173fdf3-2381-4005-8ae4-b54d8a29ae6a
-    resourceVersion: "638"
-    uid: b62fbd9e-024e-406c-8355-19b45f1530dd
+      uid: 26c6214b-8173-4038-9c3a-eb39d60855c5
+    resourceVersion: "462"
+    uid: a7f86949-02b6-4644-8842-766c3d3134d9
   spec:
     replicas: 2
     selector:
@@ -526,7 +526,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:13:55Z"
+    creationTimestamp: "2026-09-27T07:54:12Z"
     generation: 1
     labels:
       app: local-path-provisioner
@@ -539,9 +539,9 @@ items:
       controller: true
       kind: Deployment
       name: local-path-provisioner
-      uid: b79eea33-da59-473a-af71-a27b6ee97225
-    resourceVersion: "650"
-    uid: 2e6ddfa3-acec-4c86-a7fd-e2fc9308536c
+      uid: bc24cf5b-9fe0-41a6-b58e-bb3a31b959e9
+    resourceVersion: "466"
+    uid: 4efa5143-d59c-445b-a735-ce50f60e23c6
   spec:
     replicas: 1
     selector:
@@ -617,7 +617,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: payments
       meta.helm.sh/release-namespace: payments
-    creationTimestamp: "2026-09-27T07:14:08Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generation: 1
     labels:
       app: payments-api
@@ -630,9 +630,9 @@ items:
       controller: true
       kind: Deployment
       name: payments-api
-      uid: 1105dae0-d85e-41c0-8b78-bd9523557410
-    resourceVersion: "669"
-    uid: 15485201-fb44-4881-b12f-633aedece28a
+      uid: 8acbafbd-049c-497d-be94-c3d361af157f
+    resourceVersion: "686"
+    uid: 6cc2f315-6e34-4436-aa5b-8a9fdab0b849
   spec:
     replicas: 2
     selector:
@@ -670,7 +670,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "3"
       deployment.kubernetes.io/max-replicas: "4"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:14:08Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generation: 2
     labels:
       app: cart
@@ -683,9 +683,9 @@ items:
       controller: true
       kind: Deployment
       name: cart
-      uid: 25b1982e-a4b0-497a-8eaa-4c5759683b16
-    resourceVersion: "913"
-    uid: ee64313c-6acc-4b2a-abcf-4468e7087907
+      uid: 42481787-8813-4025-9e41-a930ffd500f7
+    resourceVersion: "944"
+    uid: 1e5dd026-2af5-4927-83e1-147fd95fca49
   spec:
     replicas: 3
     selector:
@@ -724,7 +724,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "2"
       deployment.kubernetes.io/max-replicas: "3"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generation: 3
     labels:
       app: checkout
@@ -737,9 +737,9 @@ items:
       controller: true
       kind: Deployment
       name: checkout
-      uid: af083890-c386-4790-a3cf-16973f9240e4
-    resourceVersion: "968"
-    uid: 6b7f25c4-679b-4e97-a32c-f94bfa57d48c
+      uid: f5a3c667-5061-4c96-be4a-4846af2d2a57
+    resourceVersion: "988"
+    uid: af54bc40-e1e6-4753-87ac-a8c61627b3b1
   spec:
     replicas: 0
     selector:
@@ -775,7 +775,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "2"
       deployment.kubernetes.io/max-replicas: "3"
       deployment.kubernetes.io/revision: "2"
-    creationTimestamp: "2026-09-27T07:14:53Z"
+    creationTimestamp: "2026-09-27T07:55:16Z"
     generation: 2
     labels:
       app: checkout
@@ -788,9 +788,9 @@ items:
       controller: true
       kind: Deployment
       name: checkout
-      uid: af083890-c386-4790-a3cf-16973f9240e4
-    resourceVersion: "956"
-    uid: 310d7b5b-e680-413f-903c-6b94903d0276
+      uid: f5a3c667-5061-4c96-be4a-4846af2d2a57
+    resourceVersion: "976"
+    uid: ab50840f-de68-4aca-b599-5ebbac840ba3
   spec:
     replicas: 2
     selector:
@@ -830,7 +830,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:14:08Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generation: 1
     labels:
       app: ledger
@@ -843,9 +843,9 @@ items:
       controller: true
       kind: Deployment
       name: ledger
-      uid: bd40a661-a5f4-49ec-a635-96ca624a641c
-    resourceVersion: "746"
-    uid: 2e6f7a7f-689e-4dda-a4d1-e90e0cdbe1a2
+      uid: 210460ef-159d-4439-b3c8-4c27af010b11
+    resourceVersion: "773"
+    uid: d3278c29-f207-4593-8a21-2373b6ab6112
   spec:
     replicas: 1
     selector:
@@ -884,7 +884,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "2"
       deployment.kubernetes.io/max-replicas: "3"
       deployment.kubernetes.io/revision: "2"
-    creationTimestamp: "2026-09-27T07:14:53Z"
+    creationTimestamp: "2026-09-27T07:55:16Z"
     generation: 1
     labels:
       app: orders
@@ -897,9 +897,9 @@ items:
       controller: true
       kind: Deployment
       name: orders
-      uid: 00f07ef9-8a63-4ce2-897e-a8bef885129d
-    resourceVersion: "833"
-    uid: a3a55d17-722b-42b6-b2ac-99bc1486ef2b
+      uid: 16ec2bb4-6ba8-495a-ba4b-118cb2663637
+    resourceVersion: "853"
+    uid: 372274f0-d7cc-4367-9022-20b75f7464b9
   spec:
     replicas: 1
     selector:
@@ -936,7 +936,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "2"
       deployment.kubernetes.io/max-replicas: "3"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:36Z"
     generation: 1
     labels:
       app: orders
@@ -949,9 +949,9 @@ items:
       controller: true
       kind: Deployment
       name: orders
-      uid: 00f07ef9-8a63-4ce2-897e-a8bef885129d
+      uid: 16ec2bb4-6ba8-495a-ba4b-118cb2663637
     resourceVersion: "740"
-    uid: 0f8629a7-90ed-4762-889a-881773fe7c49
+    uid: 91cbde62-ab93-4188-b994-df4e3ed9bd5e
   spec:
     replicas: 2
     selector:
@@ -990,7 +990,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T07:14:07Z"
+    creationTimestamp: "2026-09-27T07:54:35Z"
     generation: 1
     labels:
       app: debug-nginx
@@ -1003,9 +1003,9 @@ items:
       controller: true
       kind: Deployment
       name: debug-nginx
-      uid: d6430221-f605-45c8-914b-bd84d5f39e39
-    resourceVersion: "683"
-    uid: 5d3fd03e-2dc9-4394-90e6-2e435c83fdb0
+      uid: c257d0a7-ec2c-4485-9558-6640b1a85bb9
+    resourceVersion: "743"
+    uid: 3fde3144-f675-437b-bf52-a9eb2965d96a
   spec:
     replicas: 1
     selector:
