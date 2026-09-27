@@ -1,0 +1,18 @@
+{
+  "costUsd": 0,
+  "cases": [
+    {
+      "name": "sample",
+      "dir": "test/fixtures/evals-report/sample",
+      "arms": {
+        "with": [
+          {"score": 1, "costUsd": 0.50, "judgeCostUsd": 0.10, "turns": 10, "durationSeconds": 60, "mocks": {"calls": {"costUsd": 0.02}}},
+          {"score": 0.5, "costUsd": 0.30, "judgeCostUsd": 0, "turns": 20, "durationSeconds": 120}
+        ],
+        "without": [
+          {"score": 0, "costUsd": 0.40, "judgeCostUsd": 0, "turns": 30, "durationSeconds": 300, "error": "timed out after 300s"}
+        ]
+      }
+    }
+  ]
+}

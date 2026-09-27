@@ -29,6 +29,40 @@ claude plugin eval . --scaffold --case owner-unlabelled --runs 1 --keep-temp
 Runs are sandboxed: no home directory, no kubeconfig, no network. Nothing touches
 a cluster or ConfigHub.
 
+## Cost and speed
+
+Correctness is half the question; the other half is what an answer costs. Run
+with `--json`, then:
+
+```bash
+evals/scripts/report.py evals/results/<run>.json [more.json ...] --by-tag
+```
+
+It prints, per case and per tag, for each arm: mean score, cost per run, cost
+per correct answer, turns and seconds. Cost per run includes the agent, judge
+graders and agent mocks. **Cost per correct answer** (total cost divided by
+total score) is the headline: an arm that is cheap per run but rarely right is
+expensive per correct answer. Runs that ended in an error are counted and
+listed, because their cost was spent.
+
+From the pilot (one run per case per arm, 2026-09-26/27):
+
+| Group | Arm | Score | $/run | $/correct | Turns |
+|---|---|---|---|---|---|
+| All 13 cases | with | 0.97 | $0.70 | $0.72 | 15.2 |
+| | without | 0.67 | $0.52 | $0.78 | 14.5 |
+| Attribution | with | 1.00 | $0.83 | $0.83 | 18.0 |
+| | without | 0.25 | $0.73 | $2.93 | 22.0 |
+| Pitfalls | with | 1.00 | $0.68 | $0.68 | 13.5 |
+| | without | 0.75 | $0.32 | $0.42 | 9.8 |
+
+On this small scenario cub-scout costs more per run: the plugin adds its skill
+descriptions and tool schemas to every session. It pays for itself where the
+export cannot answer. The hypothesis to test next is scale: with hundreds of
+workloads, reading raw YAML should cost an agent far more than asking
+cub-scout, which is the claim the `scale` scenario exists to measure rather
+than assert.
+
 ## Design
 
 - **Both arms see the same evidence.** Each case's `scaffold.sh` writes a
