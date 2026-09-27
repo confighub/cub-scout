@@ -108,9 +108,12 @@ func detectDeploymentStatus(obj *unstructured.Unstructured) string {
 	updatedReplicas, _, _ := unstructured.NestedInt64(obj.Object, "status", "updatedReplicas")
 	availableReplicas, _, _ := unstructured.NestedInt64(obj.Object, "status", "availableReplicas")
 
-	desiredReplicas, _, _ := unstructured.NestedInt64(obj.Object, "spec", "replicas")
-	if desiredReplicas == 0 {
-		desiredReplicas = 1 // Default to 1 if not specified
+	desiredReplicas, found, _ := unstructured.NestedInt64(obj.Object, "spec", "replicas")
+	if !found {
+		desiredReplicas = 1 // Kubernetes default when unspecified
+	}
+	if desiredReplicas == 0 && replicas == 0 {
+		return StatusReady // scaled to zero and converged (#633)
 	}
 
 	if readyReplicas == desiredReplicas && availableReplicas == desiredReplicas {
@@ -130,9 +133,12 @@ func detectStatefulSetStatus(obj *unstructured.Unstructured) string {
 	replicas, _, _ := unstructured.NestedInt64(obj.Object, "status", "replicas")
 	readyReplicas, _, _ := unstructured.NestedInt64(obj.Object, "status", "readyReplicas")
 
-	desiredReplicas, _, _ := unstructured.NestedInt64(obj.Object, "spec", "replicas")
-	if desiredReplicas == 0 {
-		desiredReplicas = 1
+	desiredReplicas, found, _ := unstructured.NestedInt64(obj.Object, "spec", "replicas")
+	if !found {
+		desiredReplicas = 1 // Kubernetes default when unspecified
+	}
+	if desiredReplicas == 0 && replicas == 0 {
+		return StatusReady // scaled to zero and converged (#633)
 	}
 
 	if readyReplicas == desiredReplicas {

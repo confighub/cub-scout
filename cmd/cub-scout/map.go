@@ -2747,22 +2747,73 @@ func getConditionReason(obj *unstructured.Unstructured) string {
 
 // detectStatus determines the status string for a resource
 // Returns: "Ready", "NotReady", "Failed", "Pending", "Unknown"
+// podWaitingFailureReasons are container waiting reasons that mean the pod
+// cannot make progress without a change, not that it is still starting.
+var podWaitingFailureReasons = map[string]bool{
+	"CrashLoopBackOff":           true,
+	"ImagePullBackOff":           true,
+	"ErrImagePull":               true,
+	"InvalidImageName":           true,
+	"CreateContainerConfigError": true,
+	"CreateContainerError":       true,
+}
+
+// podWaitingOnFailure reports whether any container or init container is
+// waiting for one of podWaitingFailureReasons.
+func podWaitingOnFailure(obj *unstructured.Unstructured) bool {
+	for _, field := range []string{"containerStatuses", "initContainerStatuses"} {
+		statuses, _, _ := unstructured.NestedSlice(obj.Object, "status", field)
+		for _, cs := range statuses {
+			csMap, ok := cs.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			if reason, _, _ := unstructured.NestedString(csMap, "state", "waiting", "reason"); podWaitingFailureReasons[reason] {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func detectStatus(obj *unstructured.Unstructured) string {
 	kind := obj.GetKind()
 
 	switch kind {
-	case "Deployment", "StatefulSet", "DaemonSet":
-		// Check replica readiness
-		desired, _, _ := unstructured.NestedInt64(obj.Object, "spec", "replicas")
+	case "Deployment", "StatefulSet":
+		// Check replica readiness. A missing spec.replicas defaults to 1; an
+		// explicit 0 is a workload scaled to zero, not one waiting for pods
+		// (#633).
+		desired, found, _ := unstructured.NestedInt64(obj.Object, "spec", "replicas")
+		if !found {
+			desired = 1
+		}
 		ready, _, _ := unstructured.NestedInt64(obj.Object, "status", "readyReplicas")
 		if desired == 0 {
-			desired = 1
+			current, _, _ := unstructured.NestedInt64(obj.Object, "status", "replicas")
+			if current == 0 {
+				return "Ready"
+			}
+			return "Pending"
 		}
 		if ready >= desired {
 			return "Ready"
 		}
 		// Check if there are any unavailable replicas indicating a problem
 		unavailable, _, _ := unstructured.NestedInt64(obj.Object, "status", "unavailableReplicas")
+		if unavailable > 0 {
+			return "NotReady"
+		}
+		return "Pending"
+
+	case "DaemonSet":
+		// DaemonSets report scheduling, not replicas (#633).
+		desired, _, _ := unstructured.NestedInt64(obj.Object, "status", "desiredNumberScheduled")
+		ready, _, _ := unstructured.NestedInt64(obj.Object, "status", "numberReady")
+		if ready >= desired {
+			return "Ready"
+		}
+		unavailable, _, _ := unstructured.NestedInt64(obj.Object, "status", "numberUnavailable")
 		if unavailable > 0 {
 			return "NotReady"
 		}
@@ -2784,7 +2835,7 @@ func detectStatus(obj *unstructured.Unstructured) string {
 					waiting, found, _ := unstructured.NestedMap(csMap, "state", "waiting")
 					if found {
 						reason, _ := waiting["reason"].(string)
-						if reason == "CrashLoopBackOff" || reason == "ImagePullBackOff" {
+						if podWaitingFailureReasons[reason] {
 							return "Failed"
 						}
 						return "Pending"
@@ -2793,6 +2844,11 @@ func detectStatus(obj *unstructured.Unstructured) string {
 			}
 			return "Ready"
 		case "Pending":
+			// A pod that cannot pull its image or keeps crashing before it
+			// ever runs stays in phase Pending; it has failed (#633).
+			if podWaitingOnFailure(obj) {
+				return "Failed"
+			}
 			return "Pending"
 		case "Failed":
 			return "Failed"
