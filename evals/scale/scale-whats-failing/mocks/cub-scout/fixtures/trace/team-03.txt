@@ -1,0 +1,176 @@
+## Deployment `api`
+
+{
+  "command": "trace",
+  "target": {
+    "kind": "Deployment",
+    "namespace": "team-03",
+    "name": "api"
+  },
+  "chain": null,
+  "summary": {
+    "ownerType": "Flux",
+    "source": null,
+    "deployer": null
+  }
+}
+cub-scout trace deployment/api -n team-03 --format json exited with status 1; the JSON above is its output.
+
+## Deployment `web`
+
+tool command failed (trace deployment/web -n team-03 --format json): Error: trace failed: argocd context appears stale or invalid (current Argo endpoint is unreachable or stale).
+
+Trace context troubleshooting:
+  1) argocd context
+  2) argocd app list
+  3) argocd logout <server>
+  4) argocd login <server>
+
+Then retry:
+  cub-scout trace --app <app-name>
+
+kubectl fallback failed: kubectl get applications failed: exit status 1: error: the server doesn't have a resource type "applications"
+
+## Deployment `worker`
+
+{
+  "command": "trace",
+  "target": {
+    "kind": "Deployment",
+    "namespace": "team-03",
+    "name": "worker"
+  },
+  "chain": null,
+  "summary": {
+    "ownerType": "Flux",
+    "source": null,
+    "deployer": null
+  }
+}
+cub-scout trace deployment/worker -n team-03 --format json exited with status 1; the JSON above is its output.
+
+## Deployment `cron`
+
+{
+  "command": "trace",
+  "target": {
+    "kind": "Deployment",
+    "namespace": "team-03",
+    "name": "cron"
+  },
+  "chain": null,
+  "summary": {
+    "ownerType": "Flux",
+    "source": null,
+    "deployer": null
+  }
+}
+cub-scout trace deployment/cron -n team-03 --format json exited with status 1; the JSON above is its output.
+
+## Deployment `gateway`
+
+{
+  "command": "trace",
+  "target": {
+    "kind": "Deployment",
+    "namespace": "team-03",
+    "name": "gateway"
+  },
+  "chain": null,
+  "summary": {
+    "ownerType": "Flux",
+    "source": null,
+    "deployer": null
+  }
+}
+cub-scout trace deployment/gateway -n team-03 --format json exited with status 1; the JSON above is its output.
+
+## Deployment `auth`
+
+{
+  "command": "trace",
+  "target": {
+    "kind": "Deployment",
+    "namespace": "team-03",
+    "name": "auth"
+  },
+  "chain": null,
+  "summary": {
+    "ownerType": "Native",
+    "source": null,
+    "deployer": null
+  }
+}
+cub-scout trace deployment/auth -n team-03 --format json exited with status 1; the JSON above is its output.
+
+## Deployment `search`
+
+{
+  "command": "trace",
+  "target": {
+    "kind": "Deployment",
+    "namespace": "team-03",
+    "name": "search"
+  },
+  "chain": null,
+  "summary": {
+    "ownerType": "ConfigHub",
+    "source": null,
+    "deployer": null
+  }
+}
+cub-scout trace deployment/search -n team-03 --format json exited with status 1; the JSON above is its output.
+
+## Deployment `cache`
+
+{
+  "command": "trace",
+  "target": {
+    "kind": "Deployment",
+    "namespace": "team-03",
+    "name": "cache"
+  },
+  "chain": null,
+  "summary": {
+    "ownerType": "Flux",
+    "source": null,
+    "deployer": null
+  }
+}
+cub-scout trace deployment/cache -n team-03 --format json exited with status 1; the JSON above is its output.
+
+## Deployment `billing`
+
+{
+  "command": "trace",
+  "target": {
+    "kind": "Deployment",
+    "namespace": "team-03",
+    "name": "billing"
+  },
+  "chain": null,
+  "summary": {
+    "ownerType": "Flux",
+    "source": null,
+    "deployer": null
+  }
+}
+cub-scout trace deployment/billing -n team-03 --format json exited with status 1; the JSON above is its output.
+
+## Deployment `notify`
+
+{
+  "command": "trace",
+  "target": {
+    "kind": "Deployment",
+    "namespace": "team-03",
+    "name": "notify"
+  },
+  "chain": null,
+  "summary": {
+    "ownerType": "Flux",
+    "source": null,
+    "deployer": null
+  }
+}
+cub-scout trace deployment/notify -n team-03 --format json exited with status 1; the JSON above is its output.

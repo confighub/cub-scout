@@ -16,13 +16,23 @@ import (
 // evidence (#603).
 func TestEvalScaffoldsWriteTheRecordedExport(t *testing.T) {
 	root := filepath.Join("..", "..", "evals")
-	recorded, err := filepath.Glob(filepath.Join(root, "fixtures", "cluster", "*.yaml"))
-	if err != nil || len(recorded) == 0 {
-		t.Fatalf("no recorded export under evals/fixtures/cluster: %v", err)
+	for _, sc := range []struct{ name, export, cases string }{
+		{"main", filepath.Join(root, "fixtures", "cluster"), filepath.Join(root, "*", "case.yaml")},
+		{"scale", filepath.Join(root, "fixtures", "scale", "cluster"), filepath.Join(root, "scale", "*", "case.yaml")},
+	} {
+		t.Run(sc.name, func(t *testing.T) { checkScaffolds(t, sc.export, sc.cases) })
 	}
-	cases, _ := filepath.Glob(filepath.Join(root, "*", "case.yaml"))
+}
+
+func checkScaffolds(t *testing.T, export, casesGlob string) {
+	t.Helper()
+	recorded, err := filepath.Glob(filepath.Join(export, "*.yaml"))
+	if err != nil || len(recorded) == 0 {
+		t.Fatalf("no recorded export under %s: %v", export, err)
+	}
+	cases, _ := filepath.Glob(casesGlob)
 	if len(cases) == 0 {
-		t.Fatal("no eval cases found")
+		t.Fatalf("no eval cases match %s", casesGlob)
 	}
 	for _, caseYAML := range cases {
 		data, err := os.ReadFile(caseYAML)
@@ -43,7 +53,7 @@ func TestEvalScaffoldsWriteTheRecordedExport(t *testing.T) {
 			want, _ := os.ReadFile(src)
 			name := filepath.Base(src)
 			if got, ok := written[name]; !ok || got != strings.TrimRight(string(want), "\n") {
-				t.Errorf("%s/scaffold.sh does not write the recorded %s; run evals/scripts/record.py --scaffolds-only", filepath.Dir(caseYAML), name)
+				t.Errorf("%s/scaffold.sh does not write the recorded %s; run evals/scripts/record.py --scaffolds-only (with --scenario scale for evals/scale)", filepath.Dir(caseYAML), name)
 			}
 		}
 	}

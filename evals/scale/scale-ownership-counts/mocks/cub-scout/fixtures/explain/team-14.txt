@@ -1,0 +1,579 @@
+## Deployment `api`
+
+{
+  "resource": "Deployment/api",
+  "namespace": "team-14",
+  "owner": "Flux",
+  "source": "unknown",
+  "deployedVia": "partial trace only",
+  "health": "Unavailable",
+  "risks": "Not assessed",
+  "drift": "Unknown",
+  "notes": [
+    "partial trace: no GitOps owner chain was discovered"
+  ],
+  "currentChange": {
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespace": "team-14",
+      "name": "api"
+    },
+    "progress": {
+      "phase": "complete",
+      "clockSource": "status.conditions[Progressing].lastUpdateTime",
+      "progressAgeSeconds": 464
+    },
+    "verdict": "PASS",
+    "reason": "workload_converged",
+    "message": "Deployment is available. Replicas: 0",
+    "evidence": {
+      "kstatusStatus": "Current",
+      "kstatusMessage": "Deployment is available. Replicas: 0",
+      "generation": 1,
+      "observedGeneration": 1,
+      "observedAt": "2026-09-27T10:55:46Z"
+    }
+  },
+  "nextSteps": [
+    {
+      "actionType": "read-only",
+      "reason": "Health status unknown - trace the chain to find the root cause",
+      "nextCommand": "cub-scout trace deployment/api -n team-14 --explain"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "See all Flux-managed resources in this scope",
+      "nextCommand": "cub-scout map list -n team-14 -q \"owner=Flux\""
+    },
+    {
+      "actionType": "read-only",
+      "reason": "Get a broad health summary to contextualize this resource",
+      "nextCommand": "cub-scout doctor -n team-14"
+    }
+  ],
+  "mutationCause": "controller-drift",
+  "mutationManager": "kustomize-controller"
+}
+
+## Deployment `web`
+
+{
+  "resource": "Deployment/web",
+  "namespace": "team-14",
+  "owner": "ConfigHub",
+  "source": "unknown",
+  "deployedVia": "partial trace only",
+  "health": "Unavailable",
+  "risks": "Not assessed",
+  "drift": "Unknown",
+  "notes": [
+    "partial trace: no GitOps owner chain was discovered"
+  ],
+  "currentChange": {
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespace": "team-14",
+      "name": "web"
+    },
+    "progress": {
+      "phase": "complete",
+      "clockSource": "status.conditions[Progressing].lastUpdateTime",
+      "progressAgeSeconds": 433
+    },
+    "verdict": "PASS",
+    "reason": "workload_converged",
+    "message": "Deployment is available. Replicas: 0",
+    "evidence": {
+      "kstatusStatus": "Current",
+      "kstatusMessage": "Deployment is available. Replicas: 0",
+      "generation": 1,
+      "observedGeneration": 1,
+      "observedAt": "2026-09-27T10:55:52Z"
+    }
+  },
+  "nextSteps": [
+    {
+      "actionType": "read-only",
+      "reason": "Health status unknown - trace the chain to find the root cause",
+      "nextCommand": "cub-scout trace deployment/web -n team-14 --explain"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "See all ConfigHub-managed resources in this scope",
+      "nextCommand": "cub-scout map list -n team-14 -q \"owner=ConfigHub\""
+    },
+    {
+      "actionType": "read-only",
+      "reason": "Get a broad health summary to contextualize this resource",
+      "nextCommand": "cub-scout doctor -n team-14"
+    }
+  ],
+  "mutationCause": "controller-drift",
+  "mutationManager": "argocd-controller"
+}
+
+## Deployment `worker`
+
+{
+  "resource": "Deployment/worker",
+  "namespace": "team-14",
+  "owner": "ArgoCD",
+  "source": "unknown",
+  "deployedVia": "partial trace only",
+  "health": "Unavailable",
+  "risks": "Not assessed",
+  "drift": "Unknown",
+  "notes": [
+    "partial trace: no GitOps owner chain was discovered"
+  ],
+  "currentChange": {
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespace": "team-14",
+      "name": "worker"
+    },
+    "progress": {
+      "phase": "complete",
+      "clockSource": "status.conditions[Progressing].lastUpdateTime",
+      "progressAgeSeconds": 434
+    },
+    "verdict": "PASS",
+    "reason": "workload_converged",
+    "message": "Deployment is available. Replicas: 0",
+    "evidence": {
+      "kstatusStatus": "Current",
+      "kstatusMessage": "Deployment is available. Replicas: 0",
+      "generation": 1,
+      "observedGeneration": 1,
+      "observedAt": "2026-09-27T10:55:47Z"
+    }
+  },
+  "nextSteps": [
+    {
+      "actionType": "read-only",
+      "reason": "Investigate: trace the Argo ownership chain to find the root cause",
+      "nextCommand": "cub-scout trace deployment/worker -n team-14 --explain"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "See all health issues in this scope to understand the blast radius",
+      "nextCommand": "cub-scout map issues -n team-14"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "This resource is Argo-managed; direct kubectl changes will be reverted - check GitOps pipeline status",
+      "nextCommand": "cub-scout gitops status -n team-14"
+    }
+  ],
+  "mutationCause": "controller-drift",
+  "mutationManager": "argocd-controller"
+}
+
+## Deployment `cron`
+
+{
+  "resource": "Deployment/cron",
+  "namespace": "team-14",
+  "owner": "Flux",
+  "source": "unknown",
+  "deployedVia": "partial trace only",
+  "health": "Unavailable",
+  "risks": "Not assessed",
+  "drift": "Unknown",
+  "notes": [
+    "partial trace: no GitOps owner chain was discovered"
+  ],
+  "currentChange": {
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespace": "team-14",
+      "name": "cron"
+    },
+    "progress": {
+      "phase": "complete",
+      "clockSource": "status.conditions[Progressing].lastUpdateTime",
+      "progressAgeSeconds": 464
+    },
+    "verdict": "PASS",
+    "reason": "workload_converged",
+    "message": "Deployment is available. Replicas: 0",
+    "evidence": {
+      "kstatusStatus": "Current",
+      "kstatusMessage": "Deployment is available. Replicas: 0",
+      "generation": 1,
+      "observedGeneration": 1,
+      "observedAt": "2026-09-27T10:55:46Z"
+    }
+  },
+  "nextSteps": [
+    {
+      "actionType": "read-only",
+      "reason": "Health status unknown - trace the chain to find the root cause",
+      "nextCommand": "cub-scout trace deployment/cron -n team-14 --explain"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "See all Flux-managed resources in this scope",
+      "nextCommand": "cub-scout map list -n team-14 -q \"owner=Flux\""
+    },
+    {
+      "actionType": "read-only",
+      "reason": "Get a broad health summary to contextualize this resource",
+      "nextCommand": "cub-scout doctor -n team-14"
+    }
+  ],
+  "mutationCause": "controller-drift",
+  "mutationManager": "kustomize-controller"
+}
+
+## Deployment `gateway`
+
+{
+  "resource": "Deployment/gateway",
+  "namespace": "team-14",
+  "owner": "Flux",
+  "source": "unknown",
+  "deployedVia": "partial trace only",
+  "health": "Unavailable",
+  "risks": "Not assessed",
+  "drift": "Unknown",
+  "notes": [
+    "partial trace: no GitOps owner chain was discovered"
+  ],
+  "currentChange": {
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespace": "team-14",
+      "name": "gateway"
+    },
+    "progress": {
+      "phase": "complete",
+      "clockSource": "status.conditions[Progressing].lastUpdateTime",
+      "progressAgeSeconds": 470
+    },
+    "verdict": "PASS",
+    "reason": "workload_converged",
+    "message": "Deployment is available. Replicas: 0",
+    "evidence": {
+      "kstatusStatus": "Current",
+      "kstatusMessage": "Deployment is available. Replicas: 0",
+      "generation": 1,
+      "observedGeneration": 1,
+      "observedAt": "2026-09-27T10:55:52Z"
+    }
+  },
+  "nextSteps": [
+    {
+      "actionType": "read-only",
+      "reason": "Health status unknown - trace the chain to find the root cause",
+      "nextCommand": "cub-scout trace deployment/gateway -n team-14 --explain"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "See all Flux-managed resources in this scope",
+      "nextCommand": "cub-scout map list -n team-14 -q \"owner=Flux\""
+    },
+    {
+      "actionType": "read-only",
+      "reason": "Get a broad health summary to contextualize this resource",
+      "nextCommand": "cub-scout doctor -n team-14"
+    }
+  ],
+  "mutationCause": "controller-drift",
+  "mutationManager": "kustomize-controller"
+}
+
+## Deployment `auth`
+
+{
+  "resource": "Deployment/auth",
+  "namespace": "team-14",
+  "owner": "Helm",
+  "source": "unknown",
+  "deployedVia": "partial trace only",
+  "health": "Unavailable",
+  "risks": "Not assessed",
+  "drift": "Unknown",
+  "notes": [
+    "partial trace: no GitOps owner chain was discovered"
+  ],
+  "currentChange": {
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespace": "team-14",
+      "name": "auth"
+    },
+    "progress": {
+      "phase": "complete",
+      "clockSource": "status.conditions[Progressing].lastUpdateTime",
+      "progressAgeSeconds": 436
+    },
+    "verdict": "PASS",
+    "reason": "workload_converged",
+    "message": "Deployment is available. Replicas: 0",
+    "evidence": {
+      "kstatusStatus": "Current",
+      "kstatusMessage": "Deployment is available. Replicas: 0",
+      "generation": 1,
+      "observedGeneration": 1,
+      "observedAt": "2026-09-27T10:55:53Z"
+    }
+  },
+  "nextSteps": [
+    {
+      "actionType": "read-only",
+      "reason": "Health status unknown - trace the chain to find the root cause",
+      "nextCommand": "cub-scout trace deployment/auth -n team-14 --explain"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "See all Helm-managed resources in this scope",
+      "nextCommand": "cub-scout map list -n team-14 -q \"owner=Helm\""
+    },
+    {
+      "actionType": "read-only",
+      "reason": "Get a broad health summary to contextualize this resource",
+      "nextCommand": "cub-scout doctor -n team-14"
+    }
+  ],
+  "mutationCause": "controller-drift",
+  "mutationManager": "helm"
+}
+
+## Deployment `search`
+
+{
+  "resource": "Deployment/search",
+  "namespace": "team-14",
+  "owner": "ConfigHub",
+  "source": "unknown",
+  "deployedVia": "partial trace only",
+  "health": "Unavailable",
+  "risks": "Not assessed",
+  "drift": "Unknown",
+  "notes": [
+    "partial trace: no GitOps owner chain was discovered"
+  ],
+  "currentChange": {
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespace": "team-14",
+      "name": "search"
+    },
+    "progress": {
+      "phase": "complete",
+      "clockSource": "status.conditions[Progressing].lastUpdateTime",
+      "progressAgeSeconds": 427
+    },
+    "verdict": "PASS",
+    "reason": "workload_converged",
+    "message": "Deployment is available. Replicas: 0",
+    "evidence": {
+      "kstatusStatus": "Current",
+      "kstatusMessage": "Deployment is available. Replicas: 0",
+      "generation": 1,
+      "observedGeneration": 1,
+      "observedAt": "2026-09-27T10:55:46Z"
+    }
+  },
+  "nextSteps": [
+    {
+      "actionType": "read-only",
+      "reason": "Health status unknown - trace the chain to find the root cause",
+      "nextCommand": "cub-scout trace deployment/search -n team-14 --explain"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "See all ConfigHub-managed resources in this scope",
+      "nextCommand": "cub-scout map list -n team-14 -q \"owner=ConfigHub\""
+    },
+    {
+      "actionType": "read-only",
+      "reason": "Get a broad health summary to contextualize this resource",
+      "nextCommand": "cub-scout doctor -n team-14"
+    }
+  ],
+  "mutationCause": "controller-drift",
+  "mutationManager": "argocd-controller"
+}
+
+## Deployment `cache`
+
+{
+  "resource": "Deployment/cache",
+  "namespace": "team-14",
+  "owner": "ConfigHub",
+  "source": "unknown",
+  "deployedVia": "partial trace only",
+  "health": "Unavailable",
+  "risks": "Not assessed",
+  "drift": "Unknown",
+  "notes": [
+    "partial trace: no GitOps owner chain was discovered"
+  ],
+  "currentChange": {
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespace": "team-14",
+      "name": "cache"
+    },
+    "progress": {
+      "phase": "complete",
+      "clockSource": "status.conditions[Progressing].lastUpdateTime",
+      "progressAgeSeconds": 433
+    },
+    "verdict": "PASS",
+    "reason": "workload_converged",
+    "message": "Deployment is available. Replicas: 0",
+    "evidence": {
+      "kstatusStatus": "Current",
+      "kstatusMessage": "Deployment is available. Replicas: 0",
+      "generation": 1,
+      "observedGeneration": 1,
+      "observedAt": "2026-09-27T10:55:52Z"
+    }
+  },
+  "nextSteps": [
+    {
+      "actionType": "read-only",
+      "reason": "Health status unknown - trace the chain to find the root cause",
+      "nextCommand": "cub-scout trace deployment/cache -n team-14 --explain"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "See all ConfigHub-managed resources in this scope",
+      "nextCommand": "cub-scout map list -n team-14 -q \"owner=ConfigHub\""
+    },
+    {
+      "actionType": "read-only",
+      "reason": "Get a broad health summary to contextualize this resource",
+      "nextCommand": "cub-scout doctor -n team-14"
+    }
+  ],
+  "mutationCause": "controller-drift",
+  "mutationManager": "argocd-controller"
+}
+
+## Deployment `billing`
+
+{
+  "resource": "Deployment/billing",
+  "namespace": "team-14",
+  "owner": "Helm",
+  "source": "unknown",
+  "deployedVia": "partial trace only",
+  "health": "Unavailable",
+  "risks": "Not assessed",
+  "drift": "Unknown",
+  "notes": [
+    "partial trace: no GitOps owner chain was discovered"
+  ],
+  "currentChange": {
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespace": "team-14",
+      "name": "billing"
+    },
+    "progress": {
+      "phase": "complete",
+      "clockSource": "status.conditions[Progressing].lastUpdateTime",
+      "progressAgeSeconds": 430
+    },
+    "verdict": "PASS",
+    "reason": "workload_converged",
+    "message": "Deployment is available. Replicas: 0",
+    "evidence": {
+      "kstatusStatus": "Current",
+      "kstatusMessage": "Deployment is available. Replicas: 0",
+      "generation": 1,
+      "observedGeneration": 1,
+      "observedAt": "2026-09-27T10:55:47Z"
+    }
+  },
+  "nextSteps": [
+    {
+      "actionType": "read-only",
+      "reason": "Health status unknown - trace the chain to find the root cause",
+      "nextCommand": "cub-scout trace deployment/billing -n team-14 --explain"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "See all Helm-managed resources in this scope",
+      "nextCommand": "cub-scout map list -n team-14 -q \"owner=Helm\""
+    },
+    {
+      "actionType": "read-only",
+      "reason": "Get a broad health summary to contextualize this resource",
+      "nextCommand": "cub-scout doctor -n team-14"
+    }
+  ],
+  "mutationCause": "controller-drift",
+  "mutationManager": "helm"
+}
+
+## Deployment `notify`
+
+{
+  "resource": "Deployment/notify",
+  "namespace": "team-14",
+  "owner": "Helm",
+  "source": "unknown",
+  "deployedVia": "partial trace only",
+  "health": "Unavailable",
+  "risks": "Not assessed",
+  "drift": "Unknown",
+  "notes": [
+    "partial trace: no GitOps owner chain was discovered"
+  ],
+  "currentChange": {
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespace": "team-14",
+      "name": "notify"
+    },
+    "progress": {
+      "phase": "complete",
+      "clockSource": "status.conditions[Progressing].lastUpdateTime",
+      "progressAgeSeconds": 429
+    },
+    "verdict": "PASS",
+    "reason": "workload_converged",
+    "message": "Deployment is available. Replicas: 0",
+    "evidence": {
+      "kstatusStatus": "Current",
+      "kstatusMessage": "Deployment is available. Replicas: 0",
+      "generation": 1,
+      "observedGeneration": 1,
+      "observedAt": "2026-09-27T10:55:46Z"
+    }
+  },
+  "nextSteps": [
+    {
+      "actionType": "read-only",
+      "reason": "Health status unknown - trace the chain to find the root cause",
+      "nextCommand": "cub-scout trace deployment/notify -n team-14 --explain"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "See all Helm-managed resources in this scope",
+      "nextCommand": "cub-scout map list -n team-14 -q \"owner=Helm\""
+    },
+    {
+      "actionType": "read-only",
+      "reason": "Get a broad health summary to contextualize this resource",
+      "nextCommand": "cub-scout doctor -n team-14"
+    }
+  ],
+  "mutationCause": "controller-drift",
+  "mutationManager": "helm"
+}
