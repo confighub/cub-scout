@@ -36,7 +36,7 @@ func detectAndMarkFirstRun() (bool, error) {
 }
 
 func renderRootLanding(w io.Writer, firstRun bool) {
-	fmt.Fprintln(w, "cub-scout - explore and map GitOps in your clusters")
+	fmt.Fprintln(w, "cub-scout - GitOps explorer for agents")
 	fmt.Fprintln(w)
 
 	if firstRun {
