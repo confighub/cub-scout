@@ -12,8 +12,9 @@ release is v2.12.3 (tag at `eec8da3`). Everything below, after #622, is on
 - **v2.12.3 (published 2026-09-26):** #618 (#617, `explain`/`trace` reported the
   tracer that ran as the owner) and #616 (MCP stdio framing; spec clients could
   not connect since v1.7.0). Release notes: [docs/releases/v2.12.3.md](docs/releases/v2.12.3.md).
+  It also carried #615: every skill's `allowed-tools` is read-only however the
+  command line is completed.
 - **Agent-facing fixes on `main`, unreleased**, each found by the evals below:
-  - #615: every skill's `allowed-tools` is read-only however the command line is completed.
   - #625 (#624): `kubectl set/rollout/label/annotate/expose/autoscale` are hand edits.
     Before, `set image` on a Flux-owned object read as Flux's change.
   - #629 (#628): the Argo CD tracking-id names the Application before a copied instance label.
@@ -113,7 +114,7 @@ the answer in two `map` calls, then cross-checked it against the export.
 
 ### Roadmap (high level; detail in [docs/roadmap.md](docs/roadmap.md#path-to-30))
 
-- **Next release.** The unreleased fixes above (#615, #625, #629, #630, #631,
+- **Next release.** The six unreleased fixes above (#625, #629, #630, #631,
   #634, #637) are user-visible correctness fixes for agents. They can go out as
   v2.12.4, or with v2.13.0: the maintainer's call.
 - **v2.13.0, stage 1: measure first, then fix against current ConfigHub.**

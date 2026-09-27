@@ -2,7 +2,7 @@
 
 This is the repo-specific cold-start guide for Claude, Codex, and other AI coding agents.
 
-**2026-09-27 (handover):** read [HANDOVER.md](HANDOVER.md) first: evals on main (13 recorded + 3 live scale cases), seven unreleased agent-facing fixes (#615, #625, #629, #630, #631, #634, #637), the "agentic = cost and time advantage" definition, and the in-flight live-only branch.
+**2026-09-27 (handover):** read [HANDOVER.md](HANDOVER.md) first: evals on main (13 recorded + 3 live scale cases), six unreleased agent-facing fixes (#625, #629, #630, #631, #634, #637), the "agentic = cost and time advantage" definition, and the in-flight live-only branch.
 
 **2026-09-27:** agent evals (#603, `evals/`): the same question with and without
 cub-scout, on the same recorded evidence. First results: +1.00 on the three
