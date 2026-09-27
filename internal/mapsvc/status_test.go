@@ -305,3 +305,23 @@ func TestOwnerStats(t *testing.T) {
 		t.Errorf("ByStatus[Ready] = %d, want 2", stats.ByStatus[StatusReady])
 	}
 }
+
+// #633: an explicit replicas: 0 is a workload scaled to zero, not one
+// waiting for pods; an unset spec.replicas still defaults to 1.
+func TestDetectStatusScaledToZero(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		obj  map[string]interface{}
+		want string
+	}{
+		{"deployment scaled to zero", map[string]interface{}{"kind": "Deployment", "spec": map[string]interface{}{"replicas": int64(0)}, "status": map[string]interface{}{"replicas": int64(0)}}, StatusReady},
+		{"statefulset scaled to zero", map[string]interface{}{"kind": "StatefulSet", "spec": map[string]interface{}{"replicas": int64(0)}, "status": map[string]interface{}{"replicas": int64(0)}}, StatusReady},
+		{"deployment replicas unset, no pods yet", map[string]interface{}{"kind": "Deployment", "spec": map[string]interface{}{}, "status": map[string]interface{}{"replicas": int64(0)}}, StatusPending},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := DetectStatus(&unstructured.Unstructured{Object: tc.obj}); got != tc.want {
+				t.Errorf("DetectStatus = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
