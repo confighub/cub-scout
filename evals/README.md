@@ -203,6 +203,32 @@ Observed on the way, for follow-up:
 - The `explain` agent mock once wrapped its answer in a code fence; the
   content was the recording byte for byte.
 
+### Pitfall cases (2026-09-27)
+
+One run per arm, same model, v2.12.3 plus #625 and #629. $6.46 including a
+rerun.
+
+| Case | With | Without | Δ | cub-scout used |
+|---|---|---|---|---|
+| rollout-stuck-looks-healthy | 1.00 | 1.00 | 0 | a skill |
+| flux-helm-not-plain-helm | 1.00 | 1.00 | 0 | `trace` |
+| flux-installed-but-not-working | 1.00 | 1.00 | 0 | `gitops_status`, `doctor`, `explain` |
+| argo-label-vs-tracking-id | 1.00 | 1.00 | 0 | `trace`, the `observe-argocd` skill |
+
+Where the evidence is in the export, this model reads it carefully enough to
+avoid the traps: `Available=True` beside `ProgressDeadlineExceeded`, Flux's
+labels beside Helm's, the tracking-id beside a copied label. The first run of
+`flux-installed-but-not-working` showed Δ +1.00 only because the baseline hit
+the 300-second limit mid-investigation; with 600 seconds it answered correctly,
+so that Δ is not counted. `argo-label-vs-tracking-id` found #628: before #629,
+cub-scout named the Application from the copied label, so its answer would have
+been wrong while the baseline's was right.
+
+So far cub-scout's measured advantage is evidence the export lacks
+(managedFields). Next candidates: evidence spread across many objects, and
+questions where cub-scout's verdicts save an agent from reading thousands of
+lines, measured by turns and cost as well as score.
+
 Two earlier attempts are not counted: the harness could not find the export
 (`add_dirs`), and the fixed mocks could not key on a resource containing
 `/`; both are fixed above. Before the stand-in controllers were added, the
