@@ -2,7 +2,7 @@
 name: flux-installed-but-not-working
 description: "Flux controller pods run, but no Flux objects exist: nothing reconciles checkout."
 expected_outcome: "FLUX_RECONCILING: no. kustomize-controller and source-controller pods are Running in flux-system, but the cluster has no Flux Kustomization, GitRepository or HelmRelease objects, so nothing reconciles checkout (its kustomize.toolkit.fluxcd.io labels name a Kustomization that does not exist). cub-scout gitops_status: Flux controllerCoverage not_found, found 0. The export alone does not show Flux objects either way."
-tags: [gitops-health, negative]
+tags: [gitops-health, negative, trap]
 max_turns: 20
 timeout_seconds: 300
 allowed_tools: [Read, Glob, Grep, Skill]
