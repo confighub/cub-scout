@@ -9,23 +9,23 @@ items:
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -34,32 +34,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: argocd
-    resourceVersion: "528"
-    uid: 5f0bea12-91ae-4635-9c2f-6acd65e10624
+    resourceVersion: "558"
+    uid: 8666b34b-c2bb-462b-baf1-ab2c42151b2b
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -68,32 +68,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:29Z"
+    creationTimestamp: "2026-09-27T12:38:19Z"
     name: kube-root-ca.crt
     namespace: default
-    resourceVersion: "326"
-    uid: 90a3153b-c58c-4160-9c9f-76715f86dd65
+    resourceVersion: "330"
+    uid: 507ebb47-d3ea-4d38-ae20-03423519a91c
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -102,32 +102,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: flux-system
-    resourceVersion: "524"
-    uid: d63fa6b6-a46d-49a4-b72d-fd7cf943e17a
+    resourceVersion: "555"
+    uid: ab75e464-d2bd-4411-8cd2-b80cf7a03ecd
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -136,19 +136,19 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:29Z"
+    creationTimestamp: "2026-09-27T12:38:19Z"
     name: kube-root-ca.crt
     namespace: kube-node-lease
-    resourceVersion: "322"
-    uid: a337997c-71df-4ffb-a85e-5891123ca264
+    resourceVersion: "331"
+    uid: 11be7d96-469d-43eb-bdb4-83457024fada
 - apiVersion: v1
   data:
-    jws-kubeconfig-abcdef: eyJhbGciOiJIUzI1NiIsImtpZCI6ImFiY2RlZiJ9..AJtYG05m3AmOZszaUil43BAw3lYqGNflaxtWP2fELtg
+    jws-kubeconfig-abcdef: eyJhbGciOiJIUzI1NiIsImtpZCI6ImFiY2RlZiJ9..eg8EDjCiD2HF8JiKAxnmeXyAOspeYOdQ9y8p8EsutKs
     kubeconfig: |
       apiVersion: v1
       clusters:
       - cluster:
-          certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCVENDQWUyZ0F3SUJBZ0lJUWZmM045UDIxV1V3RFFZSktvWklodmNOQVFFTEJRQXdGVEVUTUJFR0ExVUUKQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TmpBNU1qY3hNRFF5TVRkYUZ3MHpOakE1TWpReE1EUTNNVGRhTUJVeApFekFSQmdOVkJBTVRDbXQxWW1WeWJtVjBaWE13Z2dFaU1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLCkFvSUJBUURHMm8rZ2k5UnVHSzJnTlRHOHBORWxUbzdwK3B5ay9tcWlBZ2R6UUJRdmdZcjRING44V0RxYmg1L1MKL21LQWVTdjhPU1UxZks2anJ3UGhQSnlmb1JFMEVnWE1RZlROYS9Oa29xKzdseUpnQWpmbzRpVVRNMTM1ZmIzZQpNOUZhbk9ndXFPSXA1UzhFTW1HN3lZdlhtVGxXc0NUZnZPMk5BMUpId1RXMzFCdzNXYWNIU0U5QlNNTXd1L2ZGCkxkd1EzRXRaNGdxT3NlR3poVUx3THNrQVNPQTF3Q2djVEpaS2RwTGsrK3R0aTJPazgwM1YvL2cxWHRXNVhxcmQKOFNBUERvcGZtUnYxVEc1Z2RJb2JoUERWaXgzVDRTTkpIelBydDdta3JHanRzMm1TVmpLbkpveUlhcm1WYUhlagozVEtRbXUvRTdqZmNhMzBxRVEvaGlTSnA0VUN2QWdNQkFBR2pXVEJYTUE0R0ExVWREd0VCL3dRRUF3SUNwREFQCkJnTlZIUk1CQWY4RUJUQURBUUgvTUIwR0ExVWREZ1FXQkJTWmk2OURxb0JZREtNK3lJRmtuZDRRWFNtaUd6QVYKQmdOVkhSRUVEakFNZ2dwcmRXSmxjbTVsZEdWek1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQkFxTzVFaVNkNAo2RjhmbThpbVMyWVlkS0htOXhNS3BzdG94Mmp1aHU4WW5WYkovVytRQTJMVzdaRXhQNjNlYVJ2eEY0WDF1WWZXCisyaFVmODdWWVhleVpPck91WHltd0JaakdYYU9lcnNnYVd1a0tENUoxWmRDbjFFc3pnQVNmS3Yyei90R0dTT0MKNjhrQjFEbml3ak9jZCtSQlVUcW5uekhpUkRhM2hrdGRVQyt5MS91VjFZaG4rV2VJNEViRml6OURJQnlWeGp5ZAo0bzZ3Y0lYNGdQWTJ3RlM3Mmoyd25WU3JvakNvT3lwbnUrSWxtWXZhemhRRERsNTh2N2lEY3hBalVWYllieS9LCmVCdmNjTzhKZ0U3WjB3MkxmZGRlaWF5R2YvQUNpcDdwNzNkbnpIQlZVWlRIZlM0OU5PaWJiemRyR1RHaDAzbm0KemFYWTJUU0ViY0RiCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+          certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCVENDQWUyZ0F3SUJBZ0lJTkgyOFZ1U1VKT1l3RFFZSktvWklodmNOQVFFTEJRQXdGVEVUTUJFR0ExVUUKQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TmpBNU1qY3hNak16TURaYUZ3MHpOakE1TWpReE1qTTRNRFphTUJVeApFekFSQmdOVkJBTVRDbXQxWW1WeWJtVjBaWE13Z2dFaU1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLCkFvSUJBUURjbXhFRk5BVmhxYW1TN0YydVo0RUg2RmFoTTJ3ZXdjVHJoc3d2ajhBUm1SR3FKbC81Szl3WHRqM0sKOVFRTmRFd2NxOVdhWmo3VWlGZGpVaktnVStlcnZBYnJCbUdyb3kxa05GaWlRWU52eFhMeFVNVnpzblJWZXg2ZApaWTJ3MjA3SUxOdjdzR2NKTkQ4bEJ0Vm1HQ1Q5WU96S2Q3b0haRDhMeHRRYnp3QnRSeTYyZ3hSb2FuOVduY25QCmlvQlc0aE5zOC9CM1dPZURDQWlaYUtHYUV6WFZaMGlQOFhWb2FBQURJNUdPeGQ2clk5Q3JPN3FsaUQyRnhDT2UKSE02N09LUFQ1enhkSTZPb3V6SlJwM0g5am9BcjdtamRHV3llbzhkOXcxc1J2MjduQTFxcm9GeCtiM3I3L3FSeApHQkNHd0tET09kMlpPaThLZEZ2N0FQNWd4SUcvQWdNQkFBR2pXVEJYTUE0R0ExVWREd0VCL3dRRUF3SUNwREFQCkJnTlZIUk1CQWY4RUJUQURBUUgvTUIwR0ExVWREZ1FXQkJRL3A1TE9CSUI2L05ydEpQbUVuQksyQzFBV2ZEQVYKQmdOVkhSRUVEakFNZ2dwcmRXSmxjbTVsZEdWek1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQTNxT3JSTjVnRwpIdHBwWXdFd1ZIMUdyVUxWOThEZHp0ODQyRjJuNE4wV0FMeUpkRS9ZZG5CWnRraGxtWVN3cmFVaTVDU0c3VWc2CkV3RWVOQjZWZHZoeXdDNUVZVkw5RjBRNHhlWnVTdjNUS21UQWNKRGJDQUxPWG5mcWNIc2IvUHZ1Tml6QzcrMG4KK28rQWVtSURBTk42U1A5R2Fid3A4WFZSeENZTUxKV3Vxb0d1NmRyb0hzRDkySWYvWURwM0VFNm40c21IZTBwMQpYNkNPQTVwcmtob1pDeVpQaVUyTG51YW1wQitGQi81MmEwMzdpUDI4dWpKQlQwU0FENUw0WlpDQlRyeHJWTGNZCm1oejhIM0g1bFN4Z0FBUlJMN2QvREdTM3dhWHNtQ1NENmtxc2lCTkl6MnVoVTZwaUJWYzYyU0tZb29sRXYvVUUKUmZ2SlJEZHlYam15Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
           server: https://scout-evals-scale-control-plane:6443
         name: ""
       contexts: null
@@ -157,32 +157,32 @@ items:
       users: null
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-27T10:47:22Z"
+    creationTimestamp: "2026-09-27T12:38:11Z"
     name: cluster-info
     namespace: kube-public
-    resourceVersion: "349"
-    uid: 8582a3be-75a3-458d-a63f-411014cf3d97
+    resourceVersion: "328"
+    uid: a4cae70f-5606-4954-a28c-130341db0c72
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -191,11 +191,11 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:29Z"
+    creationTimestamp: "2026-09-27T12:38:19Z"
     name: kube-root-ca.crt
     namespace: kube-public
-    resourceVersion: "323"
-    uid: 1530435c-4daf-4c26-998b-56be8555feb1
+    resourceVersion: "332"
+    uid: 207f9170-4b61-4df2-ad79-6a7dd22ec450
 - apiVersion: v1
   data:
     Corefile: |
@@ -224,74 +224,74 @@ items:
       }
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-27T10:47:23Z"
+    creationTimestamp: "2026-09-27T12:38:11Z"
     name: coredns
     namespace: kube-system
     resourceVersion: "226"
-    uid: 437ca9e1-06e2-48ac-a94b-bddda12a59db
+    uid: 3fc1e3ff-9af5-42ae-94e4-98cffdca554e
 - apiVersion: v1
   data:
     client-ca-file: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
     requestheader-allowed-names: '["front-proxy-client"]'
     requestheader-client-ca-file: |
       -----BEGIN CERTIFICATE-----
-      MIIDETCCAfmgAwIBAgIINqkMSW6nJgEwDQYJKoZIhvcNAQELBQAwGTEXMBUGA1UE
-      AxMOZnJvbnQtcHJveHktY2EwHhcNMjYwOTI3MTA0MjE3WhcNMzYwOTI0MTA0NzE3
+      MIIDETCCAfmgAwIBAgIINyghwfw6hD8wDQYJKoZIhvcNAQELBQAwGTEXMBUGA1UE
+      AxMOZnJvbnQtcHJveHktY2EwHhcNMjYwOTI3MTIzMzA2WhcNMzYwOTI0MTIzODA2
       WjAZMRcwFQYDVQQDEw5mcm9udC1wcm94eS1jYTCCASIwDQYJKoZIhvcNAQEBBQAD
-      ggEPADCCAQoCggEBAM22bYdyD5QbWUbs/f1JVyg0MRWZ2D6BLZDmTw8dB0fbdxB6
-      TuvJn+GVUFDKSvUsjg65EnBIM9e6LKKuidVJrv0bsOrN6PTVC858ZjhbkvtjlxQw
-      ts9EpbwHeawzhFVSBgX4QL4hhAuv76sgiqqDuK0COSbTbO8nkqGfLGCaR9ntlGMo
-      2Ga+pHRYPFDcksMoMkUVA5WMsAlqwPr3QRvcN4h7zCA11LY5q1Y2EDPhdtKhDkVg
-      0peG+c0UIVnwnEYDSUdATbwYxx4z2DLFOJ0QUmk4dhWRCq9xYYJOozNa4VaIaGTR
-      lABPb3DF60bwBSj3Xwl3EewFnnzypVGN4H1YSdECAwEAAaNdMFswDgYDVR0PAQH/
-      BAQDAgKkMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFMscjgcvIvG3VjF01GGJ
-      toPiRbZ6MBkGA1UdEQQSMBCCDmZyb250LXByb3h5LWNhMA0GCSqGSIb3DQEBCwUA
-      A4IBAQACVQCKGLUBY6VTk3uW56l6tmY6BbW5vb9X6XKzxgCYgMaaz4Czc3z3gSe/
-      87I3HuJxtcxNvxHzNoDvb8AMIIWTyo+iqPWAXbD1YPFWAhqXtfbGZD8suNiWFi/N
-      iNIS863BGF23M3dUI3s6JQQrVVc7G6Po/laW7Yb3SXNCPbjfG21Ijza1XAzcy4id
-      MBQzGlMOAIIY+l1mpHyclG1kzTRNZiGZirF8x8EAV0K5IYr//BNAXKVOppMUDRwl
-      ZydmOwAsreEiDxRif3rrs600DYm0jIYt67VlZy2eBnzLrlmdoOCsc6QnA2i/UtHV
-      sVXsx3jAUvIVgBKT/SuishvsEsJy
+      ggEPADCCAQoCggEBAK/+cr3p7yhwnQ9HHNONKM2GwHKIZfO7Gx4IGf4T/41LZzUb
+      4pe37DX2UV1L/VP2VbHOz78Ef4c1hXssBkbkA8GIKhlTM26UXJHH/3zkfGf0qax6
+      WTdoqv0DL1g92nTZ+3MKJAxP5kYhk6Qa3n6X4IxKmSQZaRgUv1fACbrMBTGNCjM8
+      Y5/4rd/ZSJQqek1A+O/Bq9nT0lmK/r/65wTajtQ9u458ktQBngkyIEYMNxfsJ2ve
+      +HHK1jgdK1uMK7+f7uvq/fevzNH4B1S12LkzmExIjzQsIzad2uA0Drl/LXbZQZMr
+      vDWfLORk/pPDRufxNbnz47t4j3rwD+vb5uXMILcCAwEAAaNdMFswDgYDVR0PAQH/
+      BAQDAgKkMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFF4fMvlibmDrIQLZrAW5
+      H/j98fkMMBkGA1UdEQQSMBCCDmZyb250LXByb3h5LWNhMA0GCSqGSIb3DQEBCwUA
+      A4IBAQCsRTSPnP8ExggAmyZl1Xk++R0Y2b+N4d1nWYXwEEp1sh9XsdXePRoOiWyH
+      a4aYNjjcMK0s0ytkhzCulfaZVBjlG1tH4pc+NGGPB/cb+hIm7sKCsvdM79qN2huF
+      Uh2h80/J6xTeYrl2O2YN1PqonNUuepfVTFyb9emdojdmwPhTT6BB/QaIXO5kZzPq
+      xCn0quQMtnvJPykJ6aTw9zIH2g5GAVPa9KgAdd4nUTCHNnGQuIkaRVaCXLkvqpTX
+      yHF6Aj3W0UD24iaKKqyKbUvZyvylIRNaZL+r2pG8+7K01rYEmVp9P10U7kx91+LE
+      QA/H/CzhqJ7La0x8feAEDwOTRUlT
       -----END CERTIFICATE-----
     requestheader-extra-headers-prefix: '["X-Remote-Extra-"]'
     requestheader-group-headers: '["X-Remote-Group"]'
     requestheader-username-headers: '["X-Remote-User"]'
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-27T10:47:21Z"
+    creationTimestamp: "2026-09-27T12:38:10Z"
     name: extension-apiserver-authentication
     namespace: kube-system
-    resourceVersion: "24"
-    uid: fc082057-fa96-422b-98a4-d46f87f62eb5
+    resourceVersion: "27"
+    uid: ee397a04-4bfa-4ef0-a5c3-05164b2d1e28
 - apiVersion: v1
   data:
     since: "2026-09-27"
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-27T10:47:21Z"
+    creationTimestamp: "2026-09-27T12:38:10Z"
     name: kube-apiserver-legacy-service-account-token-tracking
     namespace: kube-system
-    resourceVersion: "60"
-    uid: bf8d99d0-7830-430e-a087-3d52d443ed9a
+    resourceVersion: "65"
+    uid: 5efff79f-5536-493d-adf4-dd332237bb1d
 - apiVersion: v1
   data:
     config.conf: |-
@@ -383,34 +383,34 @@ items:
           tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-27T10:47:23Z"
+    creationTimestamp: "2026-09-27T12:38:12Z"
     labels:
       app: kube-proxy
     name: kube-proxy
     namespace: kube-system
-    resourceVersion: "249"
-    uid: 35af535d-119f-45d1-b226-7534281d7b7d
+    resourceVersion: "241"
+    uid: 00dd4a86-a2a2-42e0-bd47-d7d14381358b
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -419,11 +419,11 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:29Z"
+    creationTimestamp: "2026-09-27T12:38:19Z"
     name: kube-root-ca.crt
     namespace: kube-system
-    resourceVersion: "324"
-    uid: 60a23292-9628-4ab2-89b4-597a3b205089
+    resourceVersion: "333"
+    uid: 105f3d74-a0b2-42e8-ac08-a4b228317fe0
 - apiVersion: v1
   data:
     ClusterConfiguration: |
@@ -460,11 +460,11 @@ items:
       scheduler: {}
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-27T10:47:22Z"
+    creationTimestamp: "2026-09-27T12:38:11Z"
     name: kubeadm-config
     namespace: kube-system
     resourceVersion: "210"
-    uid: 41737a8a-f731-4455-b11f-6b498a2f959e
+    uid: f0b435b2-7b82-48a5-93d5-40a52d219654
 - apiVersion: v1
   data:
     kubelet: |
@@ -525,32 +525,32 @@ items:
       volumeStatsAggPeriod: 0s
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-27T10:47:22Z"
+    creationTimestamp: "2026-09-27T12:38:11Z"
     name: kubelet-config
     namespace: kube-system
     resourceVersion: "213"
-    uid: 677970bc-5d2b-4517-93ed-4c3606a54af2
+    uid: 57d73b7a-1297-415a-b819-ffb0e7089744
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -559,11 +559,11 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:29Z"
+    creationTimestamp: "2026-09-27T12:38:19Z"
     name: kube-root-ca.crt
     namespace: local-path-storage
-    resourceVersion: "325"
-    uid: 57c94ad3-f570-4de5-95a4-32c1279ee4ad
+    resourceVersion: "334"
+    uid: 0a713cab-34ef-4c1a-8a42-9f4a1d25cc92
 - apiVersion: v1
   data:
     config.json: |-
@@ -603,32 +603,32 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","data":{"config.json":"{\n        \"nodePathMap\":[\n        {\n                \"node\":\"DEFAULT_PATH_FOR_NON_LISTED_NODES\",\n                \"paths\":[\"/var/local-path-provisioner\"]\n        }\n        ]\n}","helperPod.yaml":"apiVersion: v1\nkind: Pod\nmetadata:\n  name: helper-pod\nspec:\n  priorityClassName: system-node-critical\n  tolerations:\n    - key: node.kubernetes.io/disk-pressure\n      operator: Exists\n      effect: NoSchedule\n  containers:\n  - name: helper-pod\n    image: docker.io/kindest/local-path-helper:v20251211-v0.29.0-alpha-100-g82a92c5d\n    imagePullPolicy: IfNotPresent","setup":"#!/bin/sh\nset -eu\nmkdir -m 0777 -p \"$VOL_DIR\"","teardown":"#!/bin/sh\nset -eu\nrm -rf \"$VOL_DIR\""},"kind":"ConfigMap","metadata":{"annotations":{},"name":"local-path-config","namespace":"local-path-storage"}}
-    creationTimestamp: "2026-09-27T10:47:25Z"
+    creationTimestamp: "2026-09-27T12:38:13Z"
     name: local-path-config
     namespace: local-path-storage
-    resourceVersion: "288"
-    uid: 169e2be0-45a9-4c90-9d3d-c6779140bd4f
+    resourceVersion: "283"
+    uid: 82c6c30f-9d18-458e-8e64-65f28d055f7e
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -637,32 +637,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-01
-    resourceVersion: "435"
-    uid: d27ea216-1901-4395-b1e2-ed0f3c4e25de
+    resourceVersion: "442"
+    uid: 3eba23e7-0fb8-46d9-b877-6568c4ff0b74
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -671,32 +671,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-02
-    resourceVersion: "439"
-    uid: 0fb9813e-92c7-4c54-baa9-dc7019caff8a
+    resourceVersion: "444"
+    uid: 7c1892a9-d44e-4d4a-a342-8ae815e9fd5a
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -705,32 +705,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-03
-    resourceVersion: "441"
-    uid: b8d0c323-7da5-438a-9cf3-691cbb2bb8fd
+    resourceVersion: "448"
+    uid: 9bee7032-3d55-495f-8ae0-25441ab2273c
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -739,32 +739,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-04
-    resourceVersion: "445"
-    uid: ff3b86f9-5f64-48b1-8d0a-e1d270750737
+    resourceVersion: "450"
+    uid: 441aeaee-9f1d-4af4-8ae7-d0577780e0b8
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -773,32 +773,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-05
-    resourceVersion: "447"
-    uid: d7905d79-3ca8-47d3-b676-c5a42326a58b
+    resourceVersion: "453"
+    uid: ce3fe880-e943-405b-84aa-cc46e1ea8aad
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -807,32 +807,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-06
-    resourceVersion: "451"
-    uid: 1202d233-2947-4fc8-b784-76bcebc02608
+    resourceVersion: "456"
+    uid: da1fa708-f492-48a9-b100-95c34e93cb9f
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -841,32 +841,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-07
-    resourceVersion: "453"
-    uid: 546df2e8-1df3-4bcb-b79b-525729da680c
+    resourceVersion: "459"
+    uid: a3996765-c984-4a24-92e5-17e430df475f
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -875,32 +875,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-08
-    resourceVersion: "457"
-    uid: b4097fc7-366e-4f19-b85a-0e0b26de0f87
+    resourceVersion: "462"
+    uid: 4b866b8e-f193-48a5-8904-331512499432
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -909,32 +909,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-09
-    resourceVersion: "460"
-    uid: 8e0ee314-1c94-41b5-a190-80f537b08f7c
+    resourceVersion: "466"
+    uid: afeda21d-615b-42d6-b4c3-5f9db0e0b789
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -943,32 +943,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-10
-    resourceVersion: "462"
-    uid: 51c75b93-6c75-4e09-8ffa-5a3f091b81fe
+    resourceVersion: "468"
+    uid: 1b5b2f87-094b-45ec-b17e-b193a27894e4
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -977,32 +977,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-11
-    resourceVersion: "466"
-    uid: d1662b07-88ee-4f9a-bfb8-2270509338d2
+    resourceVersion: "472"
+    uid: f8565a01-f366-4c68-9862-0b398bc6aeb9
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -1011,32 +1011,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-12
-    resourceVersion: "477"
-    uid: cc338ff5-20fb-4f62-8f43-72e90addcce6
+    resourceVersion: "475"
+    uid: 79a50928-7a14-430b-89c1-d719c5127d06
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -1045,32 +1045,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-13
-    resourceVersion: "480"
-    uid: 9eb0f200-7b2f-4259-bc69-64c9107f5d27
+    resourceVersion: "478"
+    uid: 24e81ce3-4cd5-4f23-8102-9e8d55737489
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -1079,32 +1079,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-14
-    resourceVersion: "482"
-    uid: 5ba518af-5a6d-4dfa-8bca-cf9a7ae75372
+    resourceVersion: "480"
+    uid: 7325e6db-8233-498f-b5aa-d69f1b39b9b3
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -1113,32 +1113,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-15
-    resourceVersion: "485"
-    uid: 7508599a-944a-45b2-8dea-e3a8a6b21a2f
+    resourceVersion: "483"
+    uid: 1941a42d-e01b-489e-a37a-7e0e6069b484
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -1147,32 +1147,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-16
-    resourceVersion: "488"
-    uid: c2a676df-cc9b-434b-bdb5-3173464b2f07
+    resourceVersion: "487"
+    uid: 8a8ffca6-a4cf-404b-a158-eeb7c2547429
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -1181,32 +1181,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-17
     resourceVersion: "490"
-    uid: e2bbd760-44bf-4c13-8f92-1bb7edf7a18f
+    uid: b1d4e97f-ecad-4028-9511-3587588f3007
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -1215,32 +1215,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-18
-    resourceVersion: "493"
-    uid: 4ceabb01-5f43-4172-84d9-7f666732e567
+    resourceVersion: "492"
+    uid: c78595b8-45f0-4bbb-b0ad-52e826c192ff
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -1249,32 +1249,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-19
-    resourceVersion: "496"
-    uid: a274d356-d17e-4b2f-9638-fa4150b3965f
+    resourceVersion: "508"
+    uid: ce0566f6-6e82-4e11-87ac-609bdc68af0f
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -1283,32 +1283,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-20
-    resourceVersion: "498"
-    uid: 895fd8ff-d6ea-4051-ac5e-8fd613cdaaf1
+    resourceVersion: "511"
+    uid: 0b6dc45e-4826-4e1b-8e10-f95b86919f20
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -1317,32 +1317,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-21
-    resourceVersion: "501"
-    uid: a7783341-76b2-4e43-bcf8-98a2fde48f5a
+    resourceVersion: "513"
+    uid: 44ceaf12-b525-4348-adcc-d28161df1a31
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -1351,32 +1351,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-22
-    resourceVersion: "503"
-    uid: 7c5d3327-f706-49f4-bfc4-1d840222e492
+    resourceVersion: "516"
+    uid: 2d1b63f6-c42d-483d-86e8-875d8822c6b0
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -1385,32 +1385,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-23
-    resourceVersion: "505"
-    uid: 81b1fe59-4a92-41cf-9e02-19373630dfd0
+    resourceVersion: "519"
+    uid: dfe05091-e113-4c33-9b57-34f3de4766af
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -1419,32 +1419,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-24
-    resourceVersion: "508"
-    uid: 49fb632b-d0a7-4d2a-9a2b-8b10304b0313
+    resourceVersion: "525"
+    uid: 08aa640e-c262-4b55-9844-708e16a8233a
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -1453,32 +1453,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-25
-    resourceVersion: "510"
-    uid: 52944569-3a50-43b2-aa06-9f7c83cdf482
+    resourceVersion: "527"
+    uid: a5ae1547-6991-4327-9940-28a59aafa5c0
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -1487,32 +1487,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-26
-    resourceVersion: "513"
-    uid: 56820084-eb3c-4474-ae72-8c4b2110ba8f
+    resourceVersion: "533"
+    uid: 1be25db9-cce2-416e-bafa-986c8f3cdcea
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -1521,32 +1521,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-27
-    resourceVersion: "515"
-    uid: 832ea901-9ff5-4c0d-9a3f-93eb3c7dd395
+    resourceVersion: "536"
+    uid: 2ff0e256-fc79-4d9e-ad3c-4232bdcfe5b2
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -1555,32 +1555,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-28
-    resourceVersion: "518"
-    uid: 19a64039-b5c2-4c92-a55e-2c94e3c5e1f8
+    resourceVersion: "541"
+    uid: e4ee2be3-ac4e-41c0-8454-d70305cc1811
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -1589,32 +1589,32 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-29
-    resourceVersion: "520"
-    uid: db40cfbe-adc0-4246-bb9b-17cb5cedb0c6
+    resourceVersion: "545"
+    uid: 170b37c4-c983-4621-9103-1ae02db5e70a
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIQff3N9P21WUwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMDQyMTdaFw0zNjA5MjQxMDQ3MTdaMBUx
+      MIIDBTCCAe2gAwIBAgIINH28VuSUJOYwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcxMjMzMDZaFw0zNjA5MjQxMjM4MDZaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQDG2o+gi9RuGK2gNTG8pNElTo7p+pyk/mqiAgdzQBQvgYr4H4n8WDqbh5/S
-      /mKAeSv8OSU1fK6jrwPhPJyfoRE0EgXMQfTNa/Nkoq+7lyJgAjfo4iUTM135fb3e
-      M9FanOguqOIp5S8EMmG7yYvXmTlWsCTfvO2NA1JHwTW31Bw3WacHSE9BSMMwu/fF
-      LdwQ3EtZ4gqOseGzhULwLskASOA1wCgcTJZKdpLk++tti2Ok803V//g1XtW5Xqrd
-      8SAPDopfmRv1TG5gdIobhPDVix3T4SNJHzPrt7mkrGjts2mSVjKnJoyIarmVaHej
-      3TKQmu/E7jfca30qEQ/hiSJp4UCvAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSZi69DqoBYDKM+yIFknd4QXSmiGzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQBAqO5EiSd4
-      6F8fm8imS2YYdKHm9xMKpstox2juhu8YnVbJ/W+QA2LW7ZExP63eaRvxF4X1uYfW
-      +2hUf87VYXeyZOrOuXymwBZjGXaOersgaWukKD5J1ZdCn1EszgASfKv2z/tGGSOC
-      68kB1DniwjOcd+RBUTqnnzHiRDa3hktdUC+y1/uV1Yhn+WeI4EbFiz9DIByVxjyd
-      4o6wcIX4gPY2wFS72j2wnVSrojCoOypnu+IlmYvazhQDDl58v7iDcxAjUVbYby/K
-      eBvccO8JgE7Z0w2LfddeiayGf/ACip7p73dnzHBVUZTHfS49NOibbzdrGTGh03nm
-      zaXY2TSEbcDb
+      AoIBAQDcmxEFNAVhqamS7F2uZ4EH6FahM2wewcTrhswvj8ARmRGqJl/5K9wXtj3K
+      9QQNdEwcq9WaZj7UiFdjUjKgU+ervAbrBmGroy1kNFiiQYNvxXLxUMVzsnRVex6d
+      ZY2w207ILNv7sGcJND8lBtVmGCT9YOzKd7oHZD8LxtQbzwBtRy62gxRoan9WncnP
+      ioBW4hNs8/B3WOeDCAiZaKGaEzXVZ0iP8XVoaAADI5GOxd6rY9CrO7qliD2FxCOe
+      HM67OKPT5zxdI6OouzJRp3H9joAr7mjdGWyeo8d9w1sRv27nA1qroFx+b3r7/qRx
+      GBCGwKDOOd2ZOi8KdFv7AP5gxIG/AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQ/p5LOBIB6/NrtJPmEnBK2C1AWfDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA3qOrRN5gG
+      HtppYwEwVH1GrULV98Ddzt842F2n4N0WALyJdE/YdnBZtkhlmYSwraUi5CSG7Ug6
+      EwEeNB6VdvhywC5EYVL9F0Q4xeZuSv3TKmTAcJDbCALOXnfqcHsb/PvuNizC7+0n
+      +o+AemIDANN6SP9Gabwp8XVRxCYMLJWuqoGu6droHsD92If/YDp3EE6n4smHe0p1
+      X6COA5prkhoZCyZPiU2LnuampB+FB/52a037iP28ujJBT0SAD5L4ZZCBTrxrVLcY
+      mhz8H3H5lSxgAARRL7d/DGS3waXsmCSD6kqsiBNIz2uhU6piBVc62SKYoolEv/UE
+      RfvJRDdyXjmy
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -1623,11 +1623,11 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-30
-    resourceVersion: "523"
-    uid: 6265cceb-d212-42bf-90d4-a4647489bbd3
+    resourceVersion: "550"
+    uid: 95552fad-1c59-43b2-87b5-ac41c49a5065
 kind: List
 metadata:
   resourceVersion: ""
@@ -1640,14 +1640,14 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:23Z"
+    creationTimestamp: "2026-09-27T12:38:12Z"
     generation: 1
     labels:
       k8s-app: kube-dns
     name: coredns
     namespace: kube-system
-    resourceVersion: "1297"
-    uid: 1ea1db2b-ab3c-43ac-9556-87925a0d8f31
+    resourceVersion: "978"
+    uid: 2610f4e6-94a4-4a25-b598-0c27e13c9d4b
   spec:
     progressDeadlineSeconds: 600
     replicas: 2
@@ -1765,14 +1765,14 @@ items:
   status:
     availableReplicas: 2
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:00Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:38:35Z"
+      lastUpdateTime: "2026-09-27T12:38:35Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:29Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:38:19Z"
+      lastUpdateTime: "2026-09-27T12:38:35Z"
       message: ReplicaSet "coredns-7d764666f9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -1789,12 +1789,12 @@ items:
       deployment.kubernetes.io/revision: "1"
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"name":"local-path-provisioner","namespace":"local-path-storage"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"local-path-provisioner"}},"template":{"metadata":{"labels":{"app":"local-path-provisioner"}},"spec":{"containers":[{"command":["local-path-provisioner","--debug","start","--helper-image","docker.io/kindest/local-path-helper:v20251211-v0.29.0-alpha-100-g82a92c5d","--config","/etc/config/config.json"],"env":[{"name":"POD_NAMESPACE","valueFrom":{"fieldRef":{"fieldPath":"metadata.namespace"}}},{"name":"CONFIG_MOUNT_PATH","value":"/etc/config/"}],"image":"docker.io/kindest/local-path-provisioner:v20251212-v0.29.0-alpha-105-g20ccfc88","imagePullPolicy":"IfNotPresent","name":"local-path-provisioner","volumeMounts":[{"mountPath":"/etc/config/","name":"config-volume"}]}],"nodeSelector":{"kubernetes.io/os":"linux"},"serviceAccountName":"local-path-provisioner-service-account","tolerations":[{"effect":"NoSchedule","key":"node-role.kubernetes.io/control-plane","operator":"Equal"},{"effect":"NoSchedule","key":"node-role.kubernetes.io/master","operator":"Equal"}],"volumes":[{"configMap":{"name":"local-path-config"},"name":"config-volume"}]}}}}
-    creationTimestamp: "2026-09-27T10:47:25Z"
+    creationTimestamp: "2026-09-27T12:38:13Z"
     generation: 1
     name: local-path-provisioner
     namespace: local-path-storage
-    resourceVersion: "1298"
-    uid: 2c25bfce-0ef2-4af5-a0dd-d2adef3dd4a2
+    resourceVersion: "1794"
+    uid: 0286138e-8c3e-404c-94d3-7758622765a5
   spec:
     progressDeadlineSeconds: 600
     replicas: 1
@@ -1862,14 +1862,14 @@ items:
   status:
     availableReplicas: 1
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:00Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:39:12Z"
+      lastUpdateTime: "2026-09-27T12:39:12Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:29Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:38:19Z"
+      lastUpdateTime: "2026-09-27T12:39:12Z"
       message: ReplicaSet "local-path-provisioner-67b8995b4b" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -1886,7 +1886,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: api
       meta.helm.sh/release-namespace: team-01
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
@@ -1895,8 +1895,8 @@ items:
       helm.sh/chart: api-1.0.0
     name: api
     namespace: team-01
-    resourceVersion: "2092"
-    uid: 7f2cd912-a06b-4ffc-89df-a3938d6c09d4
+    resourceVersion: "2094"
+    uid: 33c19b1c-5aa2-4a92-9392-567f1d0a8741
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -1928,14 +1928,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:36Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:26Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:18Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:04Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -1947,7 +1947,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: auth
@@ -1955,8 +1955,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: auth
     namespace: team-01
-    resourceVersion: "1300"
-    uid: 8b621782-701b-48f0-9850-c35bd32d865e
+    resourceVersion: "1862"
+    uid: 3d5293fd-62b5-4c1f-a12b-30ce2108ef03
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -1988,14 +1988,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:00Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:39:15Z"
+      lastUpdateTime: "2026-09-27T12:39:15Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:42Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:38:32Z"
+      lastUpdateTime: "2026-09-27T12:39:15Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -2007,7 +2007,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: billing
@@ -2015,8 +2015,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: billing
     namespace: team-01
-    resourceVersion: "1301"
-    uid: c8f03e7b-3908-4d3a-b6c2-2d751bb97801
+    resourceVersion: "1864"
+    uid: 7aa9f650-6692-480d-9c62-c43ff5b0e062
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -2048,14 +2048,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:00Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:39:15Z"
+      lastUpdateTime: "2026-09-27T12:39:15Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:42Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:38:32Z"
+      lastUpdateTime: "2026-09-27T12:39:15Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -2069,7 +2069,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: cache
       meta.helm.sh/release-namespace: team-01
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
@@ -2078,8 +2078,8 @@ items:
       helm.sh/chart: cache-1.0.0
     name: cache
     namespace: team-01
-    resourceVersion: "2094"
-    uid: 88723b12-1f88-4e51-aa1d-55dbb3efbf3c
+    resourceVersion: "2096"
+    uid: dcdcf98e-82bc-41dd-98a1-67b434741e81
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -2111,14 +2111,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:36Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:26Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:18Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:04Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -2130,15 +2130,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: cron
       confighub.com/UnitSlug: team-01-cron
     name: cron
     namespace: team-01
-    resourceVersion: "2139"
-    uid: 9311e56b-52e5-4a2d-90b0-ef859728e37a
+    resourceVersion: "2141"
+    uid: b86802ba-454f-4369-bb75-93b3b1c227c3
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -2170,14 +2170,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:38Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:28Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:25Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:11Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -2191,7 +2191,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: gateway
       meta.helm.sh/release-namespace: team-01
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
@@ -2200,8 +2200,8 @@ items:
       helm.sh/chart: gateway-1.0.0
     name: gateway
     namespace: team-01
-    resourceVersion: "2093"
-    uid: b5bdbc26-ca57-48cb-b8c9-e415621b2944
+    resourceVersion: "2095"
+    uid: 4585bd50-49c5-4915-86bc-80d3956c62b5
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -2233,14 +2233,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:36Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:26Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:18Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:04Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -2252,7 +2252,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: notify
@@ -2260,8 +2260,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: notify
     namespace: team-01
-    resourceVersion: "1302"
-    uid: 62a83b5a-ee18-4d7f-a27e-f226bf321aa0
+    resourceVersion: "1866"
+    uid: c82fac28-1be9-4c74-ace8-21eb474fe704
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -2293,14 +2293,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:00Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:39:16Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:42Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:38:32Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -2312,15 +2312,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: search
       confighub.com/UnitSlug: team-01-search
     name: search
     namespace: team-01
-    resourceVersion: "2140"
-    uid: 4373dd7e-f8da-48fa-bcc7-e1faa6dd23df
+    resourceVersion: "2142"
+    uid: 08e26f95-b9ef-47d9-bbf9-c68ace3774ec
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -2352,14 +2352,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:38Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:28Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:25Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:11Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -2372,15 +2372,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-01:apps/Deployment:team-01/web
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
       argocd.argoproj.io/instance: team-01
     name: web
     namespace: team-01
-    resourceVersion: "1992"
-    uid: 02d0cd94-a6e0-4da9-a04f-aa8e4e327eb0
+    resourceVersion: "1995"
+    uid: 3a869c09-7877-47a4-9ea0-5b29ef5ccc01
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -2412,14 +2412,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:31Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:39:21Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:05Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:38:50Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -2431,7 +2431,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: worker
@@ -2439,8 +2439,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: worker
     namespace: team-01
-    resourceVersion: "1299"
-    uid: 26b88ec8-489b-4003-abbd-4fb681e65a2b
+    resourceVersion: "1612"
+    uid: 03350220-2e75-4a20-a4f3-c5e5df09c5ab
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -2472,14 +2472,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:00Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:39:04Z"
+      lastUpdateTime: "2026-09-27T12:39:04Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:42Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:38:32Z"
+      lastUpdateTime: "2026-09-27T12:39:04Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -2492,15 +2492,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-02:apps/Deployment:team-02/api
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
       argocd.argoproj.io/instance: team-02
     name: api
     namespace: team-02
-    resourceVersion: "1993"
-    uid: 12151396-8129-4d4f-855c-711d861977b2
+    resourceVersion: "1996"
+    uid: 994d477e-aa09-4533-bfac-ad9fa98b68a2
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -2532,14 +2532,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:31Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:39:22Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:05Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:38:50Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -2553,14 +2553,14 @@ items:
       deployment.kubernetes.io/revision: "1"
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"auth"},"name":"auth","namespace":"team-02"},"spec":{"replicas":0,"selector":{"matchLabels":{"app":"auth"}},"template":{"metadata":{"labels":{"app":"auth"}},"spec":{"containers":[{"image":"registry.k8s.io/pause:3.9","name":"auth"}]}}}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: auth
     name: auth
     namespace: team-02
-    resourceVersion: "536"
-    uid: b33f7c35-1992-4a28-aa85-243ae6cd82d1
+    resourceVersion: "530"
+    uid: dfc78f8e-d712-444e-af6b-54caeb4774bd
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -2592,14 +2592,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:47:41Z"
-      lastUpdateTime: "2026-09-27T10:47:41Z"
+    - lastTransitionTime: "2026-09-27T12:38:31Z"
+      lastUpdateTime: "2026-09-27T12:38:31Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:41Z"
-      lastUpdateTime: "2026-09-27T10:47:41Z"
+    - lastTransitionTime: "2026-09-27T12:38:31Z"
+      lastUpdateTime: "2026-09-27T12:38:31Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -2611,7 +2611,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
@@ -2619,8 +2619,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: billing
     namespace: team-02
-    resourceVersion: "1306"
-    uid: 8a382162-0431-4480-8ac1-9a4b7169a02c
+    resourceVersion: "1871"
+    uid: 9e5e3a1a-a2fd-4d18-9cfb-5b5dfce798da
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -2652,14 +2652,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:00Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:39:16Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:43Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:38:33Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -2673,7 +2673,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: cache
       meta.helm.sh/release-namespace: team-02
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
@@ -2682,8 +2682,8 @@ items:
       helm.sh/chart: cache-1.0.0
     name: cache
     namespace: team-02
-    resourceVersion: "2095"
-    uid: d25ae46e-6f8c-4291-b315-18a9b7102708
+    resourceVersion: "2097"
+    uid: 515acfbf-7e8b-44ed-be3b-9f7f62282f9e
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -2715,14 +2715,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:36Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:26Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:18Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:04Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -2734,7 +2734,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
@@ -2742,8 +2742,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cron
     namespace: team-02
-    resourceVersion: "1304"
-    uid: 92e46ade-701b-420b-851e-042f45f93dd2
+    resourceVersion: "1869"
+    uid: 0d7ba767-7f00-4639-87e5-1e4ca7a10620
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -2775,14 +2775,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:00Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:39:16Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:42Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:38:33Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -2794,15 +2794,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: gateway
       confighub.com/UnitSlug: team-02-gateway
     name: gateway
     namespace: team-02
-    resourceVersion: "2141"
-    uid: ba4fe0fc-bd46-4250-9e9b-34b91a995e96
+    resourceVersion: "2143"
+    uid: cf03e17d-bc6d-4e13-a072-f73dd8787e5f
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -2834,14 +2834,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:38Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:28Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:25Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:11Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -2854,15 +2854,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-02:apps/Deployment:team-02/notify
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
       argocd.argoproj.io/instance: team-02
     name: notify
     namespace: team-02
-    resourceVersion: "1995"
-    uid: a9f63a14-826e-46a7-8724-c43469239812
+    resourceVersion: "1999"
+    uid: 8d996e78-f1fe-48ba-bd47-aee125cbfdb2
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -2894,14 +2894,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:31Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:39:22Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:05Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:38:50Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -2913,7 +2913,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: search
@@ -2921,8 +2921,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: search
     namespace: team-02
-    resourceVersion: "1305"
-    uid: 331e0a07-2873-470a-a5ec-a9e9a54b6936
+    resourceVersion: "1870"
+    uid: 3081d2c9-35c6-42af-bac8-96a3234f0a5f
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -2954,14 +2954,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:00Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:39:16Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:43Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:38:33Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -2974,15 +2974,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-02:apps/Deployment:team-02/web
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
       argocd.argoproj.io/instance: team-02
     name: web
     namespace: team-02
-    resourceVersion: "1994"
-    uid: ff1dd00a-01b5-4c7e-af84-055da078be70
+    resourceVersion: "1997"
+    uid: 1e3ce12c-663b-4b01-95d0-6efb43c389e2
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -3014,14 +3014,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:31Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:39:22Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:05Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:38:50Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -3033,7 +3033,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: worker
@@ -3041,8 +3041,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: worker
     namespace: team-02
-    resourceVersion: "1303"
-    uid: 88d293bf-4f0e-467b-8ad5-07c1b516a888
+    resourceVersion: "1868"
+    uid: db64d458-4e37-4ebf-8dac-edef0fff90a6
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -3074,14 +3074,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:00Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:39:16Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:42Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:38:32Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -3093,7 +3093,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
@@ -3101,8 +3101,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: api
     namespace: team-03
-    resourceVersion: "1307"
-    uid: 0dd7deba-f290-4c44-a5e4-f1f45d1fc913
+    resourceVersion: "1872"
+    uid: 35453ddd-0721-4c4b-abbd-2b4ee873ec39
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -3134,14 +3134,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:00Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:39:16Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:43Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:38:33Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -3155,14 +3155,14 @@ items:
       deployment.kubernetes.io/revision: "1"
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"auth"},"name":"auth","namespace":"team-03"},"spec":{"replicas":0,"selector":{"matchLabels":{"app":"auth"}},"template":{"metadata":{"labels":{"app":"auth"}},"spec":{"containers":[{"image":"registry.k8s.io/pause:3.9","name":"auth"}]}}}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: auth
     name: auth
     namespace: team-03
-    resourceVersion: "541"
-    uid: 2bbee99d-c3fb-4af6-9523-4e8ac8625229
+    resourceVersion: "537"
+    uid: 73b9dc23-e2e5-495b-b3d2-2f6e7147ed3d
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -3194,14 +3194,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:47:41Z"
-      lastUpdateTime: "2026-09-27T10:47:41Z"
+    - lastTransitionTime: "2026-09-27T12:38:31Z"
+      lastUpdateTime: "2026-09-27T12:38:31Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:41Z"
-      lastUpdateTime: "2026-09-27T10:47:41Z"
+    - lastTransitionTime: "2026-09-27T12:38:31Z"
+      lastUpdateTime: "2026-09-27T12:38:31Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -3213,7 +3213,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
@@ -3221,8 +3221,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: billing
     namespace: team-03
-    resourceVersion: "1312"
-    uid: 0101279e-bbb3-43fc-a364-3a937511fa48
+    resourceVersion: "1877"
+    uid: efd27636-75d9-41bc-a691-2bd689d7a271
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -3254,14 +3254,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:01Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:39:16Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:44Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:38:34Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -3273,7 +3273,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
@@ -3281,8 +3281,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cache
     namespace: team-03
-    resourceVersion: "1311"
-    uid: e8a321fe-1336-4d97-82b7-25c779c426b3
+    resourceVersion: "1876"
+    uid: 8766ad9c-4813-48a6-bffc-97911091e2ac
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -3314,14 +3314,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:01Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:39:16Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:44Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:38:34Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -3333,7 +3333,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
@@ -3341,8 +3341,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cron
     namespace: team-03
-    resourceVersion: "1309"
-    uid: 0a9a898c-a78a-4572-b5f1-de761096fb7d
+    resourceVersion: "1874"
+    uid: 7bc90243-44ef-44c3-a555-41b5f6ace57d
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -3374,14 +3374,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:01Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:39:16Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:43Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:38:33Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -3393,7 +3393,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
@@ -3401,8 +3401,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: gateway
     namespace: team-03
-    resourceVersion: "1310"
-    uid: 68d2fb7e-5d51-4e27-884f-00a1ea52d08b
+    resourceVersion: "1875"
+    uid: 83b7bc28-0cb9-49b9-a563-a59bd4129c33
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -3434,14 +3434,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:01Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:39:16Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:44Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:38:34Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -3453,7 +3453,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
@@ -3461,8 +3461,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: notify
     namespace: team-03
-    resourceVersion: "1313"
-    uid: 757bea76-7d4f-404f-ab84-33195f76298c
+    resourceVersion: "1878"
+    uid: d9d571f2-0065-4f57-8c43-2bd1d44d0295
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -3494,14 +3494,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:01Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:39:16Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:44Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:38:34Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -3513,15 +3513,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: search
       confighub.com/UnitSlug: team-03-search
     name: search
     namespace: team-03
-    resourceVersion: "2142"
-    uid: 5ad797cb-2643-44a8-a34d-9d7f4b6c3b92
+    resourceVersion: "2144"
+    uid: cf3e5a1a-2884-45bf-8f96-aa33569986fe
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -3553,14 +3553,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:38Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:28Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:25Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:11Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -3573,15 +3573,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-03:apps/Deployment:team-03/web
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
       argocd.argoproj.io/instance: team-03
     name: web
     namespace: team-03
-    resourceVersion: "1996"
-    uid: 1a2d2f9a-7754-49f8-9da5-bb0eeac85168
+    resourceVersion: "2000"
+    uid: f04fb31a-942f-4b47-91a5-e848099b1887
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -3613,14 +3613,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:31Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:39:22Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:05Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:38:51Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -3632,7 +3632,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
@@ -3640,8 +3640,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: worker
     namespace: team-03
-    resourceVersion: "1308"
-    uid: 03282a16-1ecd-4da7-86ed-fb9080b65dc3
+    resourceVersion: "1873"
+    uid: 24f82ac0-cc4b-4779-b5a3-4c5478901fd1
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -3673,14 +3673,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:00Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:39:16Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:43Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:38:33Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -3693,15 +3693,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-04:apps/Deployment:team-04/api
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
       argocd.argoproj.io/instance: team-04
     name: api
     namespace: team-04
-    resourceVersion: "1997"
-    uid: 14cd389c-2019-4a7a-92f1-5ff873bc0860
+    resourceVersion: "2001"
+    uid: 266764c1-9135-4f6d-9343-8851fba28a5e
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -3733,14 +3733,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:32Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:39:22Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:05Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:38:51Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -3754,7 +3754,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: auth
       meta.helm.sh/release-namespace: team-04
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
@@ -3763,8 +3763,8 @@ items:
       helm.sh/chart: auth-1.0.0
     name: auth
     namespace: team-04
-    resourceVersion: "2097"
-    uid: 453bb070-f62a-41c5-87c7-313131decbbd
+    resourceVersion: "2099"
+    uid: d9668541-4780-4d01-a4da-015f74a72f13
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -3796,14 +3796,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:36Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:26Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:19Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:05Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -3815,7 +3815,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
@@ -3823,8 +3823,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: billing
     namespace: team-04
-    resourceVersion: "1316"
-    uid: 7dc95063-5ccc-4df7-be31-dc2ab93f4f26
+    resourceVersion: "1881"
+    uid: dbcdcdd9-5a30-49aa-a3b5-ca3e07cdb23c
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -3856,14 +3856,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:01Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:39:16Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:44Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:38:35Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -3875,7 +3875,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
@@ -3883,8 +3883,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cache
     namespace: team-04
-    resourceVersion: "1315"
-    uid: 39d3701a-bec1-4c20-a713-3dc7ab0121fe
+    resourceVersion: "1880"
+    uid: 73b8a092-efdd-47c9-980f-2c2021e34c47
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -3916,14 +3916,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:01Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:39:16Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:44Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:38:34Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -3936,15 +3936,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-04:apps/Deployment:team-04/cron
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
       argocd.argoproj.io/instance: team-04
     name: cron
     namespace: team-04
-    resourceVersion: "1998"
-    uid: 640ba444-14d2-4869-baf2-f74e9a5f47ff
+    resourceVersion: "2002"
+    uid: 3874ffa4-2da7-436e-a959-f46855376d46
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -3976,14 +3976,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:32Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:39:22Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:05Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:38:51Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -3996,15 +3996,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-04:apps/Deployment:team-04/gateway
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
       argocd.argoproj.io/instance: team-04
     name: gateway
     namespace: team-04
-    resourceVersion: "1999"
-    uid: bf49694c-7f87-4911-b53f-922ed6f90f0f
+    resourceVersion: "2003"
+    uid: d8eb0ead-c584-4e77-919d-508687bcca45
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -4036,14 +4036,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:32Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:39:22Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:05Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:38:51Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -4056,15 +4056,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-04:apps/Deployment:team-04/notify
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
       argocd.argoproj.io/instance: team-04
     name: notify
     namespace: team-04
-    resourceVersion: "2001"
-    uid: 6d0f906c-301e-44d9-bc2c-d824dd78600e
+    resourceVersion: "2005"
+    uid: 9ba1674a-efdf-4b99-9c5f-8d0e0a86dc0c
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -4096,14 +4096,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:32Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:39:22Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:06Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:38:51Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -4116,15 +4116,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-04:apps/Deployment:team-04/search
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: search
       argocd.argoproj.io/instance: team-04
     name: search
     namespace: team-04
-    resourceVersion: "2000"
-    uid: ce22660c-51c6-4804-938f-fb900a295944
+    resourceVersion: "2004"
+    uid: 82c4e8b2-b92c-4ed6-8ae1-70890f6b1c64
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -4156,14 +4156,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:32Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:39:22Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:05Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:38:51Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -4177,7 +4177,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: web
       meta.helm.sh/release-namespace: team-04
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
@@ -4186,8 +4186,8 @@ items:
       helm.sh/chart: web-1.0.0
     name: web
     namespace: team-04
-    resourceVersion: "2096"
-    uid: 78cae00b-9ae2-441b-9218-431781e8601d
+    resourceVersion: "2098"
+    uid: 9904fa46-b5da-4e02-80a4-31db76b71227
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -4219,14 +4219,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:36Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:26Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:18Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:04Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -4238,7 +4238,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
@@ -4246,8 +4246,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: worker
     namespace: team-04
-    resourceVersion: "1314"
-    uid: cd3c99a0-d584-450f-959d-a5c21aa6e883
+    resourceVersion: "1879"
+    uid: 0f527c27-ab34-4dae-a75c-16e535e141c7
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -4279,14 +4279,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:01Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:39:16Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:44Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:38:34Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -4298,7 +4298,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
@@ -4306,8 +4306,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: api
     namespace: team-05
-    resourceVersion: "1317"
-    uid: 347a8c3c-b07a-442a-9ca8-16f701bc3667
+    resourceVersion: "1882"
+    uid: 7faf38d1-8ec6-4e25-b206-a31a48dad59f
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -4339,14 +4339,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:01Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:39:16Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:44Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:38:35Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -4360,14 +4360,14 @@ items:
       deployment.kubernetes.io/revision: "1"
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"auth"},"name":"auth","namespace":"team-05"},"spec":{"replicas":0,"selector":{"matchLabels":{"app":"auth"}},"template":{"metadata":{"labels":{"app":"auth"}},"spec":{"containers":[{"image":"registry.k8s.io/pause:3.9","name":"auth"}]}}}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: auth
     name: auth
     namespace: team-05
-    resourceVersion: "551"
-    uid: e5e7e1dc-57c3-4ade-81f7-173550546843
+    resourceVersion: "556"
+    uid: 370da7bf-19a0-4633-8a67-50203b88ae6a
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -4399,14 +4399,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:47:41Z"
-      lastUpdateTime: "2026-09-27T10:47:41Z"
+    - lastTransitionTime: "2026-09-27T12:38:31Z"
+      lastUpdateTime: "2026-09-27T12:38:31Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:41Z"
-      lastUpdateTime: "2026-09-27T10:47:41Z"
+    - lastTransitionTime: "2026-09-27T12:38:31Z"
+      lastUpdateTime: "2026-09-27T12:38:31Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -4418,7 +4418,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
@@ -4426,8 +4426,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: billing
     namespace: team-05
-    resourceVersion: "1318"
-    uid: 55b63d97-a315-4886-bb93-dc77a8a77946
+    resourceVersion: "1883"
+    uid: a45d6bee-36d3-4964-89b2-ae2ae1f5e240
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -4459,14 +4459,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:01Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:39:16Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:44Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:38:35Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -4479,15 +4479,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-05:apps/Deployment:team-05/cache
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
       argocd.argoproj.io/instance: team-05
     name: cache
     namespace: team-05
-    resourceVersion: "2004"
-    uid: 54061e7f-2333-477b-a0da-c9dac27bdb88
+    resourceVersion: "2008"
+    uid: 1668fe79-9414-4639-b275-6325b1054848
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -4519,14 +4519,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:32Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:39:22Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:06Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:38:52Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -4540,14 +4540,14 @@ items:
       deployment.kubernetes.io/revision: "1"
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"cron"},"name":"cron","namespace":"team-05"},"spec":{"replicas":0,"selector":{"matchLabels":{"app":"cron"}},"template":{"metadata":{"labels":{"app":"cron"}},"spec":{"containers":[{"image":"registry.k8s.io/pause:3.9","name":"cron"}]}}}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: cron
     name: cron
     namespace: team-05
-    resourceVersion: "547"
-    uid: 500386ef-1320-4f2c-83d1-19f05ae249b8
+    resourceVersion: "552"
+    uid: 9d921746-28da-47d4-b99a-7e152bf9805b
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -4579,14 +4579,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:47:41Z"
-      lastUpdateTime: "2026-09-27T10:47:41Z"
+    - lastTransitionTime: "2026-09-27T12:38:31Z"
+      lastUpdateTime: "2026-09-27T12:38:31Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:41Z"
-      lastUpdateTime: "2026-09-27T10:47:41Z"
+    - lastTransitionTime: "2026-09-27T12:38:31Z"
+      lastUpdateTime: "2026-09-27T12:38:31Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -4600,7 +4600,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: gateway
       meta.helm.sh/release-namespace: team-05
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
@@ -4609,8 +4609,8 @@ items:
       helm.sh/chart: gateway-1.0.0
     name: gateway
     namespace: team-05
-    resourceVersion: "2098"
-    uid: 2a411b0b-a175-42c7-8501-283f10babdb4
+    resourceVersion: "2100"
+    uid: b2402e89-2513-4385-8d2d-71e14f6652d5
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -4642,14 +4642,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:36Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:26Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:19Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:05Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -4663,14 +4663,14 @@ items:
       deployment.kubernetes.io/revision: "1"
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"notify"},"name":"notify","namespace":"team-05"},"spec":{"replicas":0,"selector":{"matchLabels":{"app":"notify"}},"template":{"metadata":{"labels":{"app":"notify"}},"spec":{"containers":[{"image":"registry.k8s.io/pause:3.9","name":"notify"}]}}}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: notify
     name: notify
     namespace: team-05
-    resourceVersion: "559"
-    uid: ef8e4ce9-f86d-426b-bf6f-773bfb94f52d
+    resourceVersion: "567"
+    uid: 9c2f950b-6d41-46fd-b5e8-181ca10b5470
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -4702,14 +4702,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:47:41Z"
-      lastUpdateTime: "2026-09-27T10:47:41Z"
+    - lastTransitionTime: "2026-09-27T12:38:31Z"
+      lastUpdateTime: "2026-09-27T12:38:31Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:41Z"
-      lastUpdateTime: "2026-09-27T10:47:41Z"
+    - lastTransitionTime: "2026-09-27T12:38:31Z"
+      lastUpdateTime: "2026-09-27T12:38:31Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -4722,15 +4722,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-05:apps/Deployment:team-05/search
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: search
       argocd.argoproj.io/instance: team-05
     name: search
     namespace: team-05
-    resourceVersion: "2003"
-    uid: f0b9c443-33aa-43e2-93d5-c75b7aa0329d
+    resourceVersion: "2007"
+    uid: ebde0f47-cb1c-466d-b535-3515ce7c6ba5
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -4762,14 +4762,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:32Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:39:22Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:06Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:38:52Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -4782,15 +4782,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-05:apps/Deployment:team-05/web
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
       argocd.argoproj.io/instance: team-05
     name: web
     namespace: team-05
-    resourceVersion: "2002"
-    uid: af0b5dd6-2963-4c60-895a-85f04e2ae0fc
+    resourceVersion: "2006"
+    uid: c29f7ec6-8b43-4dc5-8d35-636f451b92e4
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -4822,14 +4822,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:32Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:39:22Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:06Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:38:52Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -4841,15 +4841,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: worker
       confighub.com/UnitSlug: team-05-worker
     name: worker
     namespace: team-05
-    resourceVersion: "2143"
-    uid: 9dcf2991-f013-4398-90f1-2cfa55747abe
+    resourceVersion: "2145"
+    uid: 794694a6-a6b5-4549-8c25-a2f5286fd2bb
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -4881,14 +4881,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:38Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:28Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:25Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:11Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -4902,7 +4902,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: api
       meta.helm.sh/release-namespace: team-06
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
@@ -4911,8 +4911,8 @@ items:
       helm.sh/chart: api-1.0.0
     name: api
     namespace: team-06
-    resourceVersion: "2099"
-    uid: 78811072-cb5b-4a1b-8e5f-652f5433f38f
+    resourceVersion: "2101"
+    uid: 3528ec87-cb66-4e0a-a6d5-2827fc3e5bd8
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -4944,14 +4944,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:36Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:26Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:19Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:05Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -4963,7 +4963,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
@@ -4971,8 +4971,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: auth
     namespace: team-06
-    resourceVersion: "1319"
-    uid: 61735df5-a253-45f2-abf4-52d21e6dd483
+    resourceVersion: "1884"
+    uid: 7f83e047-6353-44f9-977a-e7b7ad761070
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -5004,14 +5004,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:01Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:39:16Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:45Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:38:35Z"
+      lastUpdateTime: "2026-09-27T12:39:16Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -5023,7 +5023,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
@@ -5031,8 +5031,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: billing
     namespace: team-06
-    resourceVersion: "1323"
-    uid: 180f00d5-2529-4849-93a8-5769583ed4c8
+    resourceVersion: "1886"
+    uid: 9423a4d2-a655-4582-92c6-e7090db42bff
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -5064,14 +5064,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:01Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:39:17Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:45Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:38:35Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -5085,7 +5085,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: cache
       meta.helm.sh/release-namespace: team-06
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
@@ -5094,8 +5094,8 @@ items:
       helm.sh/chart: cache-1.0.0
     name: cache
     namespace: team-06
-    resourceVersion: "2101"
-    uid: 825953bd-f31b-4bca-b935-f1a44f027ca4
+    resourceVersion: "2103"
+    uid: 0c8f2e1d-d658-4a85-9a76-7c6d6b67f16d
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -5127,14 +5127,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:36Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:26Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:19Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:05Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -5147,15 +5147,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-06:apps/Deployment:team-06/cron
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
       argocd.argoproj.io/instance: team-06
     name: cron
     namespace: team-06
-    resourceVersion: "2007"
-    uid: 66e4bfd0-fbd0-4f3f-9e64-8a99306532be
+    resourceVersion: "2010"
+    uid: d0509f3b-aafe-4bf4-98dd-1e42e04162af
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -5187,14 +5187,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:32Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:39:22Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:06Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:38:52Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -5207,15 +5207,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-06:apps/Deployment:team-06/gateway
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
       argocd.argoproj.io/instance: team-06
     name: gateway
     namespace: team-06
-    resourceVersion: "2008"
-    uid: b740147f-0051-46f9-aaf7-de6196b50be0
+    resourceVersion: "2011"
+    uid: bf198c29-85dc-474f-b809-15f111c43969
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -5247,14 +5247,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:32Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:39:22Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:07Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:38:53Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -5267,15 +5267,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-06:apps/Deployment:team-06/notify
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
       argocd.argoproj.io/instance: team-06
     name: notify
     namespace: team-06
-    resourceVersion: "2009"
-    uid: 3ef9d63d-3060-4ebe-82fa-43113bb09d33
+    resourceVersion: "2014"
+    uid: a964c3ea-c088-4e56-a7ff-9ae572cbe54b
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -5307,14 +5307,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:32Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:39:22Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:07Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:38:53Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -5326,7 +5326,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: search
@@ -5334,8 +5334,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: search
     namespace: team-06
-    resourceVersion: "1322"
-    uid: 85ea4f63-3910-4720-965f-b05bcd0c49a1
+    resourceVersion: "1885"
+    uid: dc323e96-29ea-4be3-81c2-907cde54c788
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -5367,14 +5367,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:01Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:39:17Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:45Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:38:35Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -5387,15 +5387,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-06:apps/Deployment:team-06/web
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
       argocd.argoproj.io/instance: team-06
     name: web
     namespace: team-06
-    resourceVersion: "2006"
-    uid: 45cd6c47-48a4-4220-9d92-92ef888746a9
+    resourceVersion: "2009"
+    uid: bc3b59f1-420b-49ae-b404-e1a3b60b4091
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -5427,14 +5427,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:32Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:39:22Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:06Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:38:52Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -5448,7 +5448,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: worker
       meta.helm.sh/release-namespace: team-06
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
@@ -5457,8 +5457,8 @@ items:
       helm.sh/chart: worker-1.0.0
     name: worker
     namespace: team-06
-    resourceVersion: "2100"
-    uid: 1d485f8c-1ef2-4e52-9fda-f204f035fa5a
+    resourceVersion: "2102"
+    uid: 032b616b-df18-42ed-8f7b-645e5bdfca41
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -5490,14 +5490,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:36Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:26Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:19Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:05Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -5510,15 +5510,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-07:apps/Deployment:team-07/api
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
       argocd.argoproj.io/instance: team-07
     name: api
     namespace: team-07
-    resourceVersion: "2010"
-    uid: 5a2543a5-bc61-412a-89e8-cf99550619ec
+    resourceVersion: "2016"
+    uid: 9db4eace-3b6e-43a4-bacb-cb61081ca1b8
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -5550,14 +5550,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:32Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:39:22Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:07Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:38:53Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -5571,7 +5571,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: auth
       meta.helm.sh/release-namespace: team-07
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
@@ -5580,8 +5580,8 @@ items:
       helm.sh/chart: auth-1.0.0
     name: auth
     namespace: team-07
-    resourceVersion: "2104"
-    uid: efb783b9-6d51-4c0d-b538-be2821af93f0
+    resourceVersion: "2106"
+    uid: 65ed63bc-6311-4b97-914e-7a5047755d6e
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -5613,14 +5613,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:36Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:27Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:20Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:06Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -5632,7 +5632,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
@@ -5640,8 +5640,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: billing
     namespace: team-07
-    resourceVersion: "1324"
-    uid: 3b036e11-9278-446e-a2bf-a96aa3672504
+    resourceVersion: "1887"
+    uid: d65f5e5b-fc43-4bcd-b999-3f734855fba6
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -5673,14 +5673,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:01Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:39:17Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:45Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:38:35Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -5693,15 +5693,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-07:apps/Deployment:team-07/cache
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
       argocd.argoproj.io/instance: team-07
     name: cache
     namespace: team-07
-    resourceVersion: "2012"
-    uid: e9d84a12-fd43-45f3-af25-84d3c72250cc
+    resourceVersion: "2018"
+    uid: 3e5e90eb-8262-42da-a2d2-21331bb00343
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -5733,14 +5733,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:32Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:39:22Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:07Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:38:53Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -5752,15 +5752,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: cron
       confighub.com/UnitSlug: team-07-cron
     name: cron
     namespace: team-07
-    resourceVersion: "2145"
-    uid: e5162bd6-f5f4-4c55-a4cf-a6fdc88f5bf2
+    resourceVersion: "2147"
+    uid: fe42a94a-a709-4f3f-94cc-2ea552df3dda
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -5792,14 +5792,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:38Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:29Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:26Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:12Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -5813,7 +5813,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: gateway
       meta.helm.sh/release-namespace: team-07
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
@@ -5822,8 +5822,8 @@ items:
       helm.sh/chart: gateway-1.0.0
     name: gateway
     namespace: team-07
-    resourceVersion: "2103"
-    uid: c75a9911-2a2a-46c9-8665-99664cc5e55e
+    resourceVersion: "2105"
+    uid: a215f07e-8e52-42a5-b644-ac5ae8e3c062
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -5855,14 +5855,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:36Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:27Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:20Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:06Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -5874,7 +5874,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
@@ -5882,8 +5882,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: notify
     namespace: team-07
-    resourceVersion: "1325"
-    uid: 6c241e6e-8c84-49da-aae9-e2624146597e
+    resourceVersion: "1888"
+    uid: 0fe46703-dca5-44aa-b8af-0b47b71b550c
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -5915,14 +5915,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:01Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:39:17Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:45Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:38:35Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -5935,15 +5935,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-07:apps/Deployment:team-07/search
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: search
       argocd.argoproj.io/instance: team-07
     name: search
     namespace: team-07
-    resourceVersion: "2011"
-    uid: 1204d87f-2e5e-465a-89bb-c34d7482e579
+    resourceVersion: "2017"
+    uid: 48e2ebdf-5f6d-4539-94cf-8696f53d95c4
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -5975,14 +5975,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:32Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:39:22Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:07Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:38:53Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -5996,7 +5996,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: web
       meta.helm.sh/release-namespace: team-07
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
@@ -6005,8 +6005,8 @@ items:
       helm.sh/chart: web-1.0.0
     name: web
     namespace: team-07
-    resourceVersion: "2102"
-    uid: 6b2278c4-dd94-4bfe-999d-efaffabc3a4e
+    resourceVersion: "2104"
+    uid: 48ee1328-72cb-48c8-b3ab-b9c202999872
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -6038,14 +6038,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:36Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:26Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:20Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:05Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -6057,15 +6057,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: worker
       confighub.com/UnitSlug: team-07-worker
     name: worker
     namespace: team-07
-    resourceVersion: "2144"
-    uid: 109eebf4-5699-40cb-967d-78b7e7250654
+    resourceVersion: "2146"
+    uid: 6aa9a7b4-595b-4f69-9815-a491b7a7b8fb
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -6097,14 +6097,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:38Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:28Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:26Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:11Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -6117,15 +6117,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-08:apps/Deployment:team-08/api
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
       argocd.argoproj.io/instance: team-08
     name: api
     namespace: team-08
-    resourceVersion: "2013"
-    uid: eaeb919d-d4dc-4ec4-b265-b796e97779f7
+    resourceVersion: "2019"
+    uid: 4d11063b-d82c-47ae-8ba1-960201ed5d59
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -6157,14 +6157,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:32Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:39:22Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:08Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:38:53Z"
+      lastUpdateTime: "2026-09-27T12:39:22Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -6178,7 +6178,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: auth
       meta.helm.sh/release-namespace: team-08
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
@@ -6187,8 +6187,8 @@ items:
       helm.sh/chart: auth-1.0.0
     name: auth
     namespace: team-08
-    resourceVersion: "2105"
-    uid: d2a492f8-debb-4efe-83db-2900ba0ee110
+    resourceVersion: "2107"
+    uid: f2591b09-6c54-4619-8258-480b4a454e13
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -6220,14 +6220,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:36Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:27Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:20Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:06Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -6240,15 +6240,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-08:apps/Deployment:team-08/billing
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
       argocd.argoproj.io/instance: team-08
     name: billing
     namespace: team-08
-    resourceVersion: "2016"
-    uid: 46f3920d-7715-4e1b-83f3-8d81faa7a82c
+    resourceVersion: "2022"
+    uid: 37a13cbb-c260-4f31-89fd-fd223d9d7624
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -6280,14 +6280,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:32Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:39:23Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:08Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:38:54Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -6299,7 +6299,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
@@ -6307,8 +6307,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cache
     namespace: team-08
-    resourceVersion: "1329"
-    uid: dd3386b3-f7ee-432b-88cc-b8ae319983fe
+    resourceVersion: "1892"
+    uid: 1bcf040e-ad07-4743-84e1-ef703309b4de
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -6340,14 +6340,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:01Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:39:17Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:46Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:38:36Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -6359,7 +6359,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
@@ -6367,8 +6367,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cron
     namespace: team-08
-    resourceVersion: "1326"
-    uid: f72eb20e-2a40-4e9b-9978-806fc7cc2664
+    resourceVersion: "1889"
+    uid: 977d2a24-bde9-4f03-910d-77b400f96378
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -6400,14 +6400,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:01Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:39:17Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:45Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:38:36Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -6419,7 +6419,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
@@ -6427,8 +6427,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: gateway
     namespace: team-08
-    resourceVersion: "1327"
-    uid: 8e0686a9-87bb-4236-ad61-34da7c8fe202
+    resourceVersion: "1890"
+    uid: c67b95f6-21c9-459b-833d-04274f47716b
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -6460,14 +6460,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:01Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:39:17Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:46Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:38:36Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -6480,15 +6480,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-08:apps/Deployment:team-08/notify
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
       argocd.argoproj.io/instance: team-08
     name: notify
     namespace: team-08
-    resourceVersion: "2018"
-    uid: 754cb850-ee32-4f16-a7fa-25d4fd358768
+    resourceVersion: "2024"
+    uid: 5817e607-2529-4da3-92c8-61620744e3c9
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -6520,14 +6520,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:32Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:39:23Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:08Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:38:54Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -6539,7 +6539,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: search
@@ -6547,8 +6547,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: search
     namespace: team-08
-    resourceVersion: "1328"
-    uid: 1996c691-aeb3-4110-ad7c-ccd2186a3067
+    resourceVersion: "1891"
+    uid: 92112785-b18b-43a6-a2dc-6b1e8c4825a4
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -6580,14 +6580,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:01Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:39:17Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:46Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:38:36Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -6600,15 +6600,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-08:apps/Deployment:team-08/web
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
       argocd.argoproj.io/instance: team-08
     name: web
     namespace: team-08
-    resourceVersion: "2014"
-    uid: fd91fa12-2fef-4d3f-8f0a-7103b1363397
+    resourceVersion: "2020"
+    uid: ccb1d891-4c3c-400e-ae83-9cc311eb8154
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -6640,14 +6640,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:32Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:39:23Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:08Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:38:53Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -6660,15 +6660,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-08:apps/Deployment:team-08/worker
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
       argocd.argoproj.io/instance: team-08
     name: worker
     namespace: team-08
-    resourceVersion: "2015"
-    uid: 841a87e2-351a-4dfd-97fa-8554e03465b4
+    resourceVersion: "2021"
+    uid: bc9c0277-48fa-4e6d-b32f-722a8dbd061c
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -6700,14 +6700,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:32Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:39:23Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:08Z"
-      lastUpdateTime: "2026-09-27T10:48:32Z"
+    - lastTransitionTime: "2026-09-27T12:38:53Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -6720,15 +6720,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-09:apps/Deployment:team-09/api
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
       argocd.argoproj.io/instance: team-09
     name: api
     namespace: team-09
-    resourceVersion: "2019"
-    uid: 17b6d47f-72c2-44a0-9293-8f9eea8a80b9
+    resourceVersion: "2025"
+    uid: 2ef28e0e-f1dc-42fa-be3e-c74fc4d06cff
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -6760,14 +6760,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:33Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:39:23Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:08Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:38:54Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -6780,15 +6780,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-09:apps/Deployment:team-09/auth
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
       argocd.argoproj.io/instance: team-09
     name: auth
     namespace: team-09
-    resourceVersion: "2021"
-    uid: f6fcd7a8-fa12-4815-8bf0-51b26a4bddd4
+    resourceVersion: "2027"
+    uid: aab65710-0650-49da-965a-71bd7382770c
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -6820,14 +6820,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:33Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:39:23Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:08Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:38:54Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -6841,7 +6841,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: billing
       meta.helm.sh/release-namespace: team-09
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
@@ -6850,8 +6850,8 @@ items:
       helm.sh/chart: billing-1.0.0
     name: billing
     namespace: team-09
-    resourceVersion: "2106"
-    uid: 4cb4ad14-29d3-4868-9b62-1bd005fe3d3d
+    resourceVersion: "2108"
+    uid: a7149edb-7854-4b2a-b013-ac7ff255c44b
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -6883,14 +6883,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:36Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:27Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:20Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:06Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -6903,15 +6903,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-09:apps/Deployment:team-09/cache
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
       argocd.argoproj.io/instance: team-09
     name: cache
     namespace: team-09
-    resourceVersion: "2022"
-    uid: 1f8b5d38-5150-45ae-b2f3-07639ba74fac
+    resourceVersion: "2028"
+    uid: 6950c763-0d58-4cf3-ae2b-d957da413ab8
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -6943,14 +6943,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:33Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:39:23Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:08Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:38:54Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -6962,7 +6962,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
@@ -6970,8 +6970,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cron
     namespace: team-09
-    resourceVersion: "1330"
-    uid: fe694024-4cdf-4936-bd9f-e08b0881bb14
+    resourceVersion: "1894"
+    uid: c4131c3e-de5a-4751-b0d9-a0981428d5b4
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -7003,14 +7003,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:01Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:39:17Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:46Z"
-      lastUpdateTime: "2026-09-27T10:48:01Z"
+    - lastTransitionTime: "2026-09-27T12:38:36Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -7022,15 +7022,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: gateway
       confighub.com/UnitSlug: team-09-gateway
     name: gateway
     namespace: team-09
-    resourceVersion: "2147"
-    uid: c202b894-baf9-411a-952a-04a4afce8e63
+    resourceVersion: "2149"
+    uid: 9f98b97b-48ff-4287-a210-b9b771ab2024
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -7062,14 +7062,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:38Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:29Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:26Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:12Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -7081,7 +7081,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
@@ -7089,8 +7089,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: notify
     namespace: team-09
-    resourceVersion: "1332"
-    uid: 6a5515f6-0ca8-4749-b07b-2b224622ed20
+    resourceVersion: "1896"
+    uid: c40c3f5e-e313-481a-9a1d-6e5630c224d8
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -7122,14 +7122,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:02Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:39:17Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:47Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:38:37Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -7141,7 +7141,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: search
@@ -7149,8 +7149,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: search
     namespace: team-09
-    resourceVersion: "1331"
-    uid: c7e8f6df-89f5-4ba1-95a6-5c8f6d5ef0d9
+    resourceVersion: "1895"
+    uid: 5486dcd9-ae13-4e00-9214-db59ab631fa6
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -7182,14 +7182,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:02Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:39:17Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:46Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:38:37Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -7202,15 +7202,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-09:apps/Deployment:team-09/web
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
       argocd.argoproj.io/instance: team-09
     name: web
     namespace: team-09
-    resourceVersion: "2020"
-    uid: b3fed69c-8fe2-4931-a83d-6993bf9d0d0b
+    resourceVersion: "2026"
+    uid: 21f471d6-ca15-4dfe-ab5b-ca4b4e657af7
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -7242,14 +7242,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:33Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:39:23Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:08Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:38:54Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -7261,15 +7261,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: worker
       confighub.com/UnitSlug: team-09-worker
     name: worker
     namespace: team-09
-    resourceVersion: "2146"
-    uid: 0aca7849-c853-43a4-b54d-4346be49d93a
+    resourceVersion: "2148"
+    uid: 5d59b2d3-a0f7-44e5-8a62-f43da83aa128
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -7301,14 +7301,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:38Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:29Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:26Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:12Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -7320,7 +7320,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
@@ -7328,8 +7328,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: api
     namespace: team-10
-    resourceVersion: "1333"
-    uid: 6ba22458-70c3-4e55-8f51-8c5e7db73c5a
+    resourceVersion: "1897"
+    uid: e95d1c63-32fa-4cae-9a8e-d1ccc66f014b
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -7361,14 +7361,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:02Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:39:17Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:47Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:38:37Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -7381,15 +7381,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-10:apps/Deployment:team-10/auth
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
       argocd.argoproj.io/instance: team-10
     name: auth
     namespace: team-10
-    resourceVersion: "2025"
-    uid: 3e55335a-dc28-4140-ac03-941d2133d4ed
+    resourceVersion: "2032"
+    uid: 24faecba-965f-4d19-8a9d-77b3506e7c08
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -7421,14 +7421,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:33Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:39:23Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:09Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:38:55Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -7441,15 +7441,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-10:apps/Deployment:team-10/billing
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
       argocd.argoproj.io/instance: team-10
     name: billing
     namespace: team-10
-    resourceVersion: "2026"
-    uid: 3f257497-8413-4763-8ce4-0ea20d81a1e1
+    resourceVersion: "2033"
+    uid: f51fef29-3b48-4c97-b8b4-481fcdb97e7b
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -7481,14 +7481,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:33Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:39:23Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:09Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:38:55Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -7500,7 +7500,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
@@ -7508,8 +7508,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cache
     namespace: team-10
-    resourceVersion: "1335"
-    uid: 27cfec55-86ce-493a-b73f-10c72e280561
+    resourceVersion: "1899"
+    uid: f65bc288-e83d-44f3-ac95-fd4b1f80cedb
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -7541,14 +7541,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:02Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:39:17Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:47Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:38:37Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -7560,7 +7560,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
@@ -7568,8 +7568,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cron
     namespace: team-10
-    resourceVersion: "1334"
-    uid: a042b87f-38cc-4169-85db-84ca125b102d
+    resourceVersion: "1898"
+    uid: 8363e495-bfc0-4e4d-8a84-5ac8dfba4fc6
   spec:
     progressDeadlineSeconds: 600
     replicas: 1
@@ -7601,14 +7601,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:02Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:39:17Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: Deployment does not have minimum availability.
       reason: MinimumReplicasUnavailable
       status: "False"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:47Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:38:37Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: ReplicaSet "cron-6554f7f79d" is progressing.
       reason: ReplicaSetUpdated
       status: "True"
@@ -7624,15 +7624,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-10:apps/Deployment:team-10/gateway
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
       argocd.argoproj.io/instance: team-10
     name: gateway
     namespace: team-10
-    resourceVersion: "2024"
-    uid: 9ce2767a-668a-4578-a886-c9c33f64f7ee
+    resourceVersion: "2031"
+    uid: a2516628-9f22-40d5-a003-67afbb32b5aa
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -7664,14 +7664,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:33Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:39:23Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:09Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:38:55Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -7684,15 +7684,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-10:apps/Deployment:team-10/notify
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
       argocd.argoproj.io/instance: team-10
     name: notify
     namespace: team-10
-    resourceVersion: "2027"
-    uid: 1658ff09-cdbe-47a4-949e-7a5e4864332d
+    resourceVersion: "2034"
+    uid: 580158ac-5046-49ca-b4a8-6c98b1d94d51
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -7724,14 +7724,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:33Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:39:23Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:09Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:38:55Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -7743,15 +7743,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: search
       confighub.com/UnitSlug: team-10-search
     name: search
     namespace: team-10
-    resourceVersion: "2148"
-    uid: 65af659a-fd6c-4acb-bf60-65b2e76d1616
+    resourceVersion: "2150"
+    uid: 2ad01065-15f0-4b31-9a7f-2aeb0c3a993c
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -7783,14 +7783,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:38Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:29Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:26Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:12Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -7803,15 +7803,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-10:apps/Deployment:team-10/web
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
       argocd.argoproj.io/instance: team-10
     name: web
     namespace: team-10
-    resourceVersion: "2023"
-    uid: 14d50c21-8d59-43d3-8081-b3ce70569674
+    resourceVersion: "2030"
+    uid: 124b4c22-bb3d-4d53-8d09-f4f06036f2f9
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -7843,14 +7843,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:33Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:39:23Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:09Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:38:54Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -7864,7 +7864,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: worker
       meta.helm.sh/release-namespace: team-10
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
@@ -7873,8 +7873,8 @@ items:
       helm.sh/chart: worker-1.0.0
     name: worker
     namespace: team-10
-    resourceVersion: "2107"
-    uid: 02aece0e-7f3f-4992-b641-f1dfae65fb38
+    resourceVersion: "2109"
+    uid: 94159e96-7d12-47d0-9ab3-6be7751092d3
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -7906,14 +7906,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:37Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:27Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:20Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:06Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -7927,14 +7927,14 @@ items:
       deployment.kubernetes.io/revision: "1"
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"api"},"name":"api","namespace":"team-11"},"spec":{"replicas":0,"selector":{"matchLabels":{"app":"api"}},"template":{"metadata":{"labels":{"app":"api"}},"spec":{"containers":[{"image":"registry.k8s.io/pause:3.9","name":"api"}]}}}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: api
     name: api
     namespace: team-11
-    resourceVersion: "563"
-    uid: b4dea464-3b68-4e9f-b604-8040d065cd87
+    resourceVersion: "572"
+    uid: bfb270e2-d894-4e94-91e2-12cdba5d6686
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -7966,14 +7966,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:47:41Z"
-      lastUpdateTime: "2026-09-27T10:47:41Z"
+    - lastTransitionTime: "2026-09-27T12:38:31Z"
+      lastUpdateTime: "2026-09-27T12:38:31Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:41Z"
-      lastUpdateTime: "2026-09-27T10:47:41Z"
+    - lastTransitionTime: "2026-09-27T12:38:31Z"
+      lastUpdateTime: "2026-09-27T12:38:31Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -7986,15 +7986,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-11:apps/Deployment:team-11/auth
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
       argocd.argoproj.io/instance: team-11
     name: auth
     namespace: team-11
-    resourceVersion: "2029"
-    uid: dd3d8adf-1559-4876-b372-43d9dada6d28
+    resourceVersion: "2036"
+    uid: c90370b3-0f3c-432d-b37b-4b35d265b328
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -8026,14 +8026,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:33Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:39:23Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:10Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:38:56Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -8045,7 +8045,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
@@ -8053,8 +8053,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: billing
     namespace: team-11
-    resourceVersion: "1341"
-    uid: 92b164b1-3839-469c-9109-fb165d78c0d2
+    resourceVersion: "1903"
+    uid: a178302c-780c-4388-ae9c-4848cf5d1892
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -8086,14 +8086,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:02Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:39:17Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:47Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:38:38Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -8105,7 +8105,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
@@ -8113,8 +8113,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cache
     namespace: team-11
-    resourceVersion: "1339"
-    uid: cc508adc-2f7e-488e-81bd-7183440279cc
+    resourceVersion: "1902"
+    uid: fa52e141-61c5-4fe1-9730-7c88b8d8f9de
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -8146,14 +8146,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:02Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:39:17Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:47Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:38:38Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -8165,7 +8165,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
@@ -8173,8 +8173,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cron
     namespace: team-11
-    resourceVersion: "1338"
-    uid: 37f401cd-ccc7-42f3-9c28-675cefdd3281
+    resourceVersion: "1901"
+    uid: b0016f91-e570-41f3-9b5e-a79b2eb311ee
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -8206,14 +8206,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:02Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:39:17Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:47Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:38:38Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -8225,15 +8225,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: gateway
       confighub.com/UnitSlug: team-11-gateway
     name: gateway
     namespace: team-11
-    resourceVersion: "2149"
-    uid: a0966869-223a-4dab-ba9f-cde0772d867b
+    resourceVersion: "2151"
+    uid: bc92be98-9ec3-4c95-9b72-22f6f03f71a3
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -8265,14 +8265,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:39Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:29Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:26Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:12Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -8286,14 +8286,14 @@ items:
       deployment.kubernetes.io/revision: "1"
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"notify"},"name":"notify","namespace":"team-11"},"spec":{"replicas":0,"selector":{"matchLabels":{"app":"notify"}},"template":{"metadata":{"labels":{"app":"notify"}},"spec":{"containers":[{"image":"registry.k8s.io/pause:3.9","name":"notify"}]}}}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: notify
     name: notify
     namespace: team-11
-    resourceVersion: "568"
-    uid: 9bbe2547-cb40-47b8-ab6b-3547936dae2d
+    resourceVersion: "574"
+    uid: 4e2ea467-917a-45a1-b9f2-98a58c9828e7
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -8325,14 +8325,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:47:41Z"
-      lastUpdateTime: "2026-09-27T10:47:41Z"
+    - lastTransitionTime: "2026-09-27T12:38:31Z"
+      lastUpdateTime: "2026-09-27T12:38:31Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:41Z"
-      lastUpdateTime: "2026-09-27T10:47:41Z"
+    - lastTransitionTime: "2026-09-27T12:38:31Z"
+      lastUpdateTime: "2026-09-27T12:38:31Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -8344,15 +8344,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: search
       confighub.com/UnitSlug: team-11-search
     name: search
     namespace: team-11
-    resourceVersion: "2150"
-    uid: 44b5be7c-1291-4b63-87d0-c34659f59c50
+    resourceVersion: "2152"
+    uid: 9aa1254e-4337-421a-9517-5d564895fe1b
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -8384,14 +8384,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:39Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:29Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:27Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:12Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -8404,15 +8404,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-11:apps/Deployment:team-11/web
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
       argocd.argoproj.io/instance: team-11
     name: web
     namespace: team-11
-    resourceVersion: "2028"
-    uid: 5e1e6558-c24e-49c7-bddd-4bbf11dee693
+    resourceVersion: "2035"
+    uid: 9da820e7-8db0-4765-8b6a-6061942a9cc9
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -8444,14 +8444,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:33Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:39:23Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:09Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:38:55Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -8463,7 +8463,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
@@ -8471,8 +8471,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: worker
     namespace: team-11
-    resourceVersion: "1337"
-    uid: 5b14b4f2-6e5c-42f9-afb5-e091ae5b781e
+    resourceVersion: "1900"
+    uid: 832b08ec-6ce4-4068-83ea-015304683b29
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -8504,14 +8504,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:02Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:39:17Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:47Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:38:37Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -8525,7 +8525,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: api
       meta.helm.sh/release-namespace: team-12
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
@@ -8534,8 +8534,8 @@ items:
       helm.sh/chart: api-1.0.0
     name: api
     namespace: team-12
-    resourceVersion: "2108"
-    uid: 5f63ed77-2b44-415e-9868-0bfe23be03bb
+    resourceVersion: "2110"
+    uid: 2684cac5-e9f9-45c2-939a-99857f91a75d
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -8567,14 +8567,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:37Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:27Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:21Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:06Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -8586,15 +8586,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: auth
       confighub.com/UnitSlug: team-12-auth
     name: auth
     namespace: team-12
-    resourceVersion: "2151"
-    uid: 3c6985d7-8a1c-496b-83dd-8a87cc4119cb
+    resourceVersion: "2153"
+    uid: a6cba9eb-d588-4c27-a245-6a947f2fcb34
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -8626,14 +8626,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:39Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:29Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:27Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:12Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -8646,15 +8646,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-12:apps/Deployment:team-12/billing
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
       argocd.argoproj.io/instance: team-12
     name: billing
     namespace: team-12
-    resourceVersion: "2031"
-    uid: b4c7ef6b-ab68-41b3-88c4-1a41820faa57
+    resourceVersion: "2038"
+    uid: e7af5c53-23a9-4e66-a39f-d24de15d68a7
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -8686,14 +8686,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:33Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:39:23Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:10Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:38:56Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -8705,7 +8705,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
@@ -8713,8 +8713,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cache
     namespace: team-12
-    resourceVersion: "1343"
-    uid: 2380ae44-b61f-4c32-9d0d-cf01f7c1a33b
+    resourceVersion: "1905"
+    uid: 0ed2352f-c771-4372-ad05-a6139dde6fd6
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -8746,14 +8746,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:02Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:39:17Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:48Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:38:38Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -8767,7 +8767,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: cron
       meta.helm.sh/release-namespace: team-12
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
@@ -8776,8 +8776,8 @@ items:
       helm.sh/chart: cron-1.0.0
     name: cron
     namespace: team-12
-    resourceVersion: "2109"
-    uid: 50605bb1-89cc-4e5a-9fb8-b0724e856c7b
+    resourceVersion: "2111"
+    uid: 1282e2b3-e087-4efe-b74b-aca86b857483
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -8809,14 +8809,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:37Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:27Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:21Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:06Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -8829,15 +8829,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-12:apps/Deployment:team-12/gateway
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
       argocd.argoproj.io/instance: team-12
     name: gateway
     namespace: team-12
-    resourceVersion: "2030"
-    uid: 671a279f-3253-4bca-8e69-77bb26dc07d1
+    resourceVersion: "2037"
+    uid: 4d1a0b62-5d65-4c6d-a282-63db3d4ae195
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -8869,14 +8869,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:33Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:39:23Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:10Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:38:56Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -8889,15 +8889,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-12:apps/Deployment:team-12/notify
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
       argocd.argoproj.io/instance: team-12
     name: notify
     namespace: team-12
-    resourceVersion: "2034"
-    uid: c306e746-243c-40d9-abd5-2b990bd14e9c
+    resourceVersion: "2039"
+    uid: 544a0706-4ee9-4b23-9324-426e586cb5bc
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -8929,14 +8929,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:33Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:39:23Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:10Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:38:56Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -8948,15 +8948,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: search
       confighub.com/UnitSlug: team-12-search
     name: search
     namespace: team-12
-    resourceVersion: "2152"
-    uid: 1ea9f421-973f-41ce-8abe-f31701a7f3f5
+    resourceVersion: "2154"
+    uid: 2ace5808-7a5d-44af-b674-b5aa076f325e
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -8988,14 +8988,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:39Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:29Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:27Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:13Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -9009,14 +9009,14 @@ items:
       deployment.kubernetes.io/revision: "1"
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"web"},"name":"web","namespace":"team-12"},"spec":{"replicas":0,"selector":{"matchLabels":{"app":"web"}},"template":{"metadata":{"labels":{"app":"web"}},"spec":{"containers":[{"image":"registry.k8s.io/pause:3.9","name":"web"}]}}}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: web
     name: web
     namespace: team-12
-    resourceVersion: "581"
-    uid: e768c8dd-cc9d-49e6-87c0-fde5932ae38f
+    resourceVersion: "634"
+    uid: 9b301358-8fe8-41c1-ac92-49c3033b34f5
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -9048,14 +9048,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:47:41Z"
-      lastUpdateTime: "2026-09-27T10:47:41Z"
+    - lastTransitionTime: "2026-09-27T12:38:31Z"
+      lastUpdateTime: "2026-09-27T12:38:31Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:41Z"
-      lastUpdateTime: "2026-09-27T10:47:41Z"
+    - lastTransitionTime: "2026-09-27T12:38:31Z"
+      lastUpdateTime: "2026-09-27T12:38:31Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -9067,7 +9067,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
@@ -9075,8 +9075,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: worker
     namespace: team-12
-    resourceVersion: "1342"
-    uid: 874a72bd-7db7-4e4c-8289-ae121e8706a8
+    resourceVersion: "1904"
+    uid: f61fd90b-94ae-4438-a066-467828770457
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -9108,14 +9108,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:02Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:39:17Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:48Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:38:38Z"
+      lastUpdateTime: "2026-09-27T12:39:17Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -9127,7 +9127,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
@@ -9135,8 +9135,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: api
     namespace: team-13
-    resourceVersion: "1344"
-    uid: 587b8d72-771c-43a6-97c7-277ce5fc1036
+    resourceVersion: "1907"
+    uid: 8e8b0442-4db5-4668-b986-ea9dc306ed5d
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -9168,14 +9168,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:02Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:39:18Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:48Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:38:38Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -9188,15 +9188,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-13:apps/Deployment:team-13/auth
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
       argocd.argoproj.io/instance: team-13
     name: auth
     namespace: team-13
-    resourceVersion: "2037"
-    uid: b02a4ba7-e744-4e53-9db5-66f045dd87b9
+    resourceVersion: "2042"
+    uid: 0786af21-6586-41e7-b1de-ec13c6e45866
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -9228,14 +9228,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:33Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:39:24Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:11Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:38:56Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -9247,7 +9247,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
@@ -9255,8 +9255,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: billing
     namespace: team-13
-    resourceVersion: "1347"
-    uid: b0a10e4a-10b9-48a3-8fc1-1fae91dce529
+    resourceVersion: "1910"
+    uid: c57a092b-25a9-4508-9b41-d34de4fc6a91
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -9288,14 +9288,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:02Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:39:18Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:48Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:38:38Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -9307,7 +9307,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
@@ -9315,8 +9315,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cache
     namespace: team-13
-    resourceVersion: "1346"
-    uid: 63e328e6-b8d7-41f3-9fde-c5fa6e8e7336
+    resourceVersion: "1909"
+    uid: 66c6a6d0-ff73-45c2-b06f-20e94ec8ee78
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -9348,14 +9348,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:02Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:39:18Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:48Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:38:38Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -9368,15 +9368,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-13:apps/Deployment:team-13/cron
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
       argocd.argoproj.io/instance: team-13
     name: cron
     namespace: team-13
-    resourceVersion: "2036"
-    uid: 9c510bdd-73e0-4c0e-b372-40586b419b99
+    resourceVersion: "2041"
+    uid: 31fc7cd1-dbdc-4450-b175-0e9c20cebf75
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -9408,14 +9408,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:33Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:39:23Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:11Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:38:56Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -9427,7 +9427,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
@@ -9435,8 +9435,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: gateway
     namespace: team-13
-    resourceVersion: "1345"
-    uid: a9bda385-93b8-42c6-bee4-d77e4e3d113d
+    resourceVersion: "1906"
+    uid: d1de03a7-1b7f-4b50-8893-6653e743d5e5
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -9468,14 +9468,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:02Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:39:18Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:48Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:38:38Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -9487,7 +9487,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
@@ -9495,8 +9495,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: notify
     namespace: team-13
-    resourceVersion: "1348"
-    uid: 7d413bc4-30f0-4cc3-9ef3-4502fc9f3a5f
+    resourceVersion: "1911"
+    uid: a4b3ea30-3291-4980-a212-6f07d8f9ff1b
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -9528,14 +9528,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:02Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:39:18Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:48Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:38:39Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -9547,15 +9547,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: search
       confighub.com/UnitSlug: team-13-search
     name: search
     namespace: team-13
-    resourceVersion: "2153"
-    uid: 98e5709d-4c43-404e-a036-329114268dd1
+    resourceVersion: "2155"
+    uid: ad926e9e-eed3-43e3-a5fd-43c0782a2e0f
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -9587,14 +9587,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:39Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:29Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:27Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:13Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -9608,7 +9608,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: web
       meta.helm.sh/release-namespace: team-13
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
@@ -9617,8 +9617,8 @@ items:
       helm.sh/chart: web-1.0.0
     name: web
     namespace: team-13
-    resourceVersion: "2110"
-    uid: ed227612-6845-44ae-af68-fcf58a6b4da6
+    resourceVersion: "2112"
+    uid: 6518e6bd-5a9b-497a-8030-a54aa41c7a75
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -9650,14 +9650,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:37Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:27Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:21Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:06Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -9670,15 +9670,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-13:apps/Deployment:team-13/worker
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
       argocd.argoproj.io/instance: team-13
     name: worker
     namespace: team-13
-    resourceVersion: "2035"
-    uid: 08102af2-ed19-4388-b1bd-5efe22c7b517
+    resourceVersion: "2040"
+    uid: e85a33d9-b1b8-44a3-8003-72880b48cdeb
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -9710,14 +9710,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:33Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:39:23Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:10Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:38:56Z"
+      lastUpdateTime: "2026-09-27T12:39:23Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -9729,7 +9729,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
@@ -9737,8 +9737,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: api
     namespace: team-14
-    resourceVersion: "1349"
-    uid: 5f34e02e-c002-4bfe-b44a-494f471c6a34
+    resourceVersion: "1912"
+    uid: 71ccbc3e-65c2-4156-9b0f-b0f937b7872e
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -9770,14 +9770,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:02Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:39:18Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:49Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:38:39Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -9791,7 +9791,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: auth
       meta.helm.sh/release-namespace: team-14
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
@@ -9800,8 +9800,8 @@ items:
       helm.sh/chart: auth-1.0.0
     name: auth
     namespace: team-14
-    resourceVersion: "2111"
-    uid: 9de91e58-caf6-4699-af5a-42b22e10341e
+    resourceVersion: "2113"
+    uid: b04e7587-cdce-4696-9c1c-c85790769428
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -9833,14 +9833,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:37Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:27Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:21Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:07Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -9854,7 +9854,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: billing
       meta.helm.sh/release-namespace: team-14
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
@@ -9863,8 +9863,8 @@ items:
       helm.sh/chart: billing-1.0.0
     name: billing
     namespace: team-14
-    resourceVersion: "2112"
-    uid: b68ee86c-171f-4f4b-ac15-1f55f84e70fb
+    resourceVersion: "2115"
+    uid: f120579f-1e34-4add-b0a9-42f0a487275b
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -9896,14 +9896,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:37Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:27Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:21Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:07Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -9915,15 +9915,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: cache
       confighub.com/UnitSlug: team-14-cache
     name: cache
     namespace: team-14
-    resourceVersion: "2156"
-    uid: e9f761e0-333a-4f4b-9e29-3349d9321712
+    resourceVersion: "2159"
+    uid: 84d926f4-3470-4a48-8084-361bf526865e
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -9955,14 +9955,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:39Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:29Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:28Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:13Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -9974,7 +9974,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
@@ -9982,8 +9982,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cron
     namespace: team-14
-    resourceVersion: "1350"
-    uid: 895ba3f4-869d-4e54-9f79-93f6bb7c8e07
+    resourceVersion: "1913"
+    uid: e78eae0c-9723-46bf-b7ff-c8f229903e35
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -10015,14 +10015,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:02Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:39:18Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:49Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:38:39Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -10034,7 +10034,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
@@ -10042,8 +10042,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: gateway
     namespace: team-14
-    resourceVersion: "1351"
-    uid: da7a3bba-c223-4554-b815-765425d4a329
+    resourceVersion: "1914"
+    uid: abfc5bd2-19e5-45fc-adc9-564a8c3d1a04
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -10075,14 +10075,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:02Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:39:18Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:49Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:38:39Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -10096,7 +10096,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: notify
       meta.helm.sh/release-namespace: team-14
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
@@ -10105,8 +10105,8 @@ items:
       helm.sh/chart: notify-1.0.0
     name: notify
     namespace: team-14
-    resourceVersion: "2113"
-    uid: 7dac22f2-fd57-457a-89fe-70d8f6e75add
+    resourceVersion: "2116"
+    uid: cb9a06d0-1cd0-4d4b-a4a1-f35528ec6f12
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -10138,14 +10138,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:37Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:27Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:21Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:07Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -10157,15 +10157,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: search
       confighub.com/UnitSlug: team-14-search
     name: search
     namespace: team-14
-    resourceVersion: "2155"
-    uid: 1a613d05-cb8d-4eac-99e6-451d8bb928eb
+    resourceVersion: "2158"
+    uid: 095f0958-1ef9-44aa-94f9-28355157dd19
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -10197,14 +10197,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:39Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:29Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:27Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:13Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -10216,15 +10216,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: web
       confighub.com/UnitSlug: team-14-web
     name: web
     namespace: team-14
-    resourceVersion: "2154"
-    uid: 46023074-97dc-4ca2-8a9f-0bc104bab16b
+    resourceVersion: "2157"
+    uid: de0d368b-52a9-4c3f-bfe9-2455750e86a4
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -10256,14 +10256,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:39Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:29Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:27Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:13Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -10276,15 +10276,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-14:apps/Deployment:team-14/worker
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
       argocd.argoproj.io/instance: team-14
     name: worker
     namespace: team-14
-    resourceVersion: "2038"
-    uid: 7544243e-03c8-4ebe-9dc2-87726464919e
+    resourceVersion: "2043"
+    uid: f9f9c9ec-d660-420d-9db7-c4769b1004d6
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -10316,14 +10316,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:33Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:39:24Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:11Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:38:56Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -10336,15 +10336,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-15:apps/Deployment:team-15/api
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
       argocd.argoproj.io/instance: team-15
     name: api
     namespace: team-15
-    resourceVersion: "2039"
-    uid: c7c97f31-43eb-4421-b1b0-605283fa3afc
+    resourceVersion: "2045"
+    uid: c1fcd04b-d95f-492e-9ea0-df67a32bbc8e
   spec:
     progressDeadlineSeconds: 600
     replicas: 1
@@ -10376,14 +10376,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:33Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:39:24Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: Deployment does not have minimum availability.
       reason: MinimumReplicasUnavailable
       status: "False"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:11Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:38:57Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: ReplicaSet "api-59b56dc7fc" is progressing.
       reason: ReplicaSetUpdated
       status: "True"
@@ -10400,7 +10400,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: auth
       meta.helm.sh/release-namespace: team-15
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
@@ -10409,8 +10409,8 @@ items:
       helm.sh/chart: auth-1.0.0
     name: auth
     namespace: team-15
-    resourceVersion: "2114"
-    uid: 56461e87-fcc6-46c9-b6ee-9f64bcf93505
+    resourceVersion: "2117"
+    uid: d24329e2-b7ef-4116-828c-8502697c96ba
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -10442,14 +10442,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:37Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:27Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:21Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:07Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -10461,7 +10461,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
@@ -10469,8 +10469,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: billing
     namespace: team-15
-    resourceVersion: "1355"
-    uid: 50a47ade-b220-46b3-a6b4-73e1b9c0a8ee
+    resourceVersion: "1918"
+    uid: bad1176c-b031-497b-ba8b-9e354cfeb710
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -10502,14 +10502,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:03Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:39:18Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:50Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:38:40Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -10523,7 +10523,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: cache
       meta.helm.sh/release-namespace: team-15
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
@@ -10532,8 +10532,8 @@ items:
       helm.sh/chart: cache-1.0.0
     name: cache
     namespace: team-15
-    resourceVersion: "2115"
-    uid: c12ece37-60e2-44d7-a73a-9fa7e47cc625
+    resourceVersion: "2118"
+    uid: ec0c10e3-a1da-41c3-8432-0399f6218067
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -10565,14 +10565,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:37Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:27Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:21Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:07Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -10585,15 +10585,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-15:apps/Deployment:team-15/cron
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
       argocd.argoproj.io/instance: team-15
     name: cron
     namespace: team-15
-    resourceVersion: "2040"
-    uid: 0f55a8e1-edc1-4054-a1d2-b167d8247e78
+    resourceVersion: "2046"
+    uid: c0ccec2d-c765-43d7-b2a3-e66aa710d783
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -10625,14 +10625,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:33Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:39:24Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:11Z"
-      lastUpdateTime: "2026-09-27T10:48:33Z"
+    - lastTransitionTime: "2026-09-27T12:38:57Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -10645,15 +10645,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-15:apps/Deployment:team-15/gateway
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
       argocd.argoproj.io/instance: team-15
     name: gateway
     namespace: team-15
-    resourceVersion: "2041"
-    uid: e5688dda-edec-4cb3-b499-15c1adfacc50
+    resourceVersion: "2047"
+    uid: e8c1a2fe-dfdb-4eb0-844c-87a8d90aeaee
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -10685,14 +10685,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:34Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:24Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:11Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:38:57Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -10705,15 +10705,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-15:apps/Deployment:team-15/notify
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
       argocd.argoproj.io/instance: team-15
     name: notify
     namespace: team-15
-    resourceVersion: "2042"
-    uid: 5f6b37e8-76d0-47cd-9f38-5802b9781f69
+    resourceVersion: "2048"
+    uid: 286b24b3-d593-4c0f-8990-226f65a5816f
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -10745,14 +10745,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:34Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:24Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:11Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:38:57Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -10764,7 +10764,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: search
@@ -10772,8 +10772,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: search
     namespace: team-15
-    resourceVersion: "1354"
-    uid: ef441b42-958e-4e31-9e19-20e4e06c8bb5
+    resourceVersion: "1917"
+    uid: f2b98e54-8062-41e8-becc-cd425801162c
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -10805,14 +10805,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:03Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:39:18Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:50Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:38:40Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -10824,7 +10824,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
@@ -10832,8 +10832,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: web
     namespace: team-15
-    resourceVersion: "1352"
-    uid: 2bd9a6a6-4a09-4423-a6b3-caabbb33a875
+    resourceVersion: "1915"
+    uid: 2bb3c119-9514-474b-86f9-0a83b7e1551a
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -10865,14 +10865,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:02Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:39:18Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:49Z"
-      lastUpdateTime: "2026-09-27T10:48:02Z"
+    - lastTransitionTime: "2026-09-27T12:38:39Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -10884,7 +10884,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
@@ -10892,8 +10892,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: worker
     namespace: team-15
-    resourceVersion: "1353"
-    uid: 47243d01-be3c-40fc-bf8b-5f7dd7ced4a8
+    resourceVersion: "1916"
+    uid: 78b45a59-e7fb-4194-8282-e7f0ec2e6c20
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -10925,14 +10925,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:03Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:39:18Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:49Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:38:40Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -10944,7 +10944,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
@@ -10952,8 +10952,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: api
     namespace: team-16
-    resourceVersion: "1358"
-    uid: d797c7aa-14ab-4f53-9e55-7002155b9daa
+    resourceVersion: "1919"
+    uid: 0bf0ac90-0f3e-4cae-9561-284e6974aa79
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -10985,14 +10985,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:03Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:39:18Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:50Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:38:40Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -11005,15 +11005,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-16:apps/Deployment:team-16/auth
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
       argocd.argoproj.io/instance: team-16
     name: auth
     namespace: team-16
-    resourceVersion: "2043"
-    uid: 4136c295-5325-4170-9857-f3fd2060e6f4
+    resourceVersion: "2049"
+    uid: 068581cf-978e-47d0-a71e-6f14c1879fc9
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -11045,14 +11045,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:34Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:24Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:11Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:38:57Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -11064,7 +11064,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
@@ -11072,8 +11072,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: billing
     namespace: team-16
-    resourceVersion: "1365"
-    uid: 548938d7-9ed1-470c-839d-ce00e8fbb4a2
+    resourceVersion: "1926"
+    uid: 7211849d-8a26-46df-9025-3cb91e4224b6
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -11105,14 +11105,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:03Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:39:18Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:50Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:38:41Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -11125,15 +11125,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-16:apps/Deployment:team-16/cache
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
       argocd.argoproj.io/instance: team-16
     name: cache
     namespace: team-16
-    resourceVersion: "2045"
-    uid: 4b34c747-cd27-4f4c-bbd9-1bb63dba074e
+    resourceVersion: "2051"
+    uid: c116a422-c38f-4584-82d6-6acd40c53813
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -11165,14 +11165,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:34Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:24Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:12Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:38:58Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -11184,7 +11184,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
@@ -11192,8 +11192,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cron
     namespace: team-16
-    resourceVersion: "1361"
-    uid: dcdf6231-524a-4baa-87a7-0d01760d522a
+    resourceVersion: "1924"
+    uid: 4da8aff0-2814-41eb-88a1-33d90f87e052
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -11225,14 +11225,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:03Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:39:18Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:50Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:38:41Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -11244,7 +11244,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
@@ -11252,8 +11252,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: gateway
     namespace: team-16
-    resourceVersion: "1364"
-    uid: 7b125f69-dc97-43d7-a86c-3047ecd6e0fb
+    resourceVersion: "1925"
+    uid: 880a9ff7-d23a-4697-801f-f5ac3d142ddd
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -11285,14 +11285,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:03Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:39:18Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:50Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:38:41Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -11304,7 +11304,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
@@ -11312,8 +11312,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: notify
     namespace: team-16
-    resourceVersion: "1366"
-    uid: bf50ce68-8cec-4ab2-bec1-cde7d887aa34
+    resourceVersion: "1927"
+    uid: ecabe98b-4957-4fce-8ddb-fbfb9e4b6221
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -11345,14 +11345,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:03Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:39:18Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:51Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:38:41Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -11365,15 +11365,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-16:apps/Deployment:team-16/search
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: search
       argocd.argoproj.io/instance: team-16
     name: search
     namespace: team-16
-    resourceVersion: "2044"
-    uid: 337c7d9c-f5c2-42c2-8e8f-2971e9f808d9
+    resourceVersion: "2050"
+    uid: e41aa5a5-0f88-42b6-ad43-662908c59b91
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -11405,14 +11405,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:34Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:24Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:12Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:38:57Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -11424,7 +11424,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
@@ -11432,8 +11432,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: web
     namespace: team-16
-    resourceVersion: "1359"
-    uid: 10e487d1-ba47-4c59-b4d0-747a77ac72b6
+    resourceVersion: "1920"
+    uid: 46d919f3-2246-438d-8193-c5f7b8468b28
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -11465,14 +11465,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:03Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:39:18Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:50Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:38:40Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -11484,7 +11484,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
@@ -11492,8 +11492,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: worker
     namespace: team-16
-    resourceVersion: "1360"
-    uid: 29259338-6913-4c64-8d53-dfd16dbfec5a
+    resourceVersion: "1921"
+    uid: 51d70c78-6122-4af8-b31b-d1b558afa2f8
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -11525,14 +11525,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:03Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:39:18Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:50Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:38:40Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -11545,15 +11545,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-17:apps/Deployment:team-17/api
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
       argocd.argoproj.io/instance: team-17
     name: api
     namespace: team-17
-    resourceVersion: "2046"
-    uid: 01d93ec7-b639-451f-84f7-2a24cd24f6d4
+    resourceVersion: "2052"
+    uid: 56f6a321-6610-4504-a0da-c736e94a2147
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -11585,14 +11585,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:34Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:24Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:12Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:38:58Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -11605,15 +11605,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-17:apps/Deployment:team-17/auth
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
       argocd.argoproj.io/instance: team-17
     name: auth
     namespace: team-17
-    resourceVersion: "2047"
-    uid: 31c7e121-6004-491c-a600-92836b184eeb
+    resourceVersion: "2053"
+    uid: e5c4a22d-217f-4424-b2b5-d0866bf60fc2
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -11645,14 +11645,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:34Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:24Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:12Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:38:58Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -11665,15 +11665,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-17:apps/Deployment:team-17/billing
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
       argocd.argoproj.io/instance: team-17
     name: billing
     namespace: team-17
-    resourceVersion: "2050"
-    uid: ad268305-0da2-4500-8bf2-42c76b154f55
+    resourceVersion: "2056"
+    uid: 5f69d19a-34a2-4033-a02c-f99aa49df382
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -11705,14 +11705,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:34Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:24Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:12Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:38:58Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -11725,15 +11725,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-17:apps/Deployment:team-17/cache
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
       argocd.argoproj.io/instance: team-17
     name: cache
     namespace: team-17
-    resourceVersion: "2049"
-    uid: a07a9eb8-89a4-4cab-9742-f32e7da012a3
+    resourceVersion: "2055"
+    uid: 9166cc6f-b0cc-46f5-a8b7-27afb4edd34e
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -11765,14 +11765,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:34Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:24Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:12Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:38:58Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -11786,7 +11786,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: cron
       meta.helm.sh/release-namespace: team-17
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
@@ -11795,8 +11795,8 @@ items:
       helm.sh/chart: cron-1.0.0
     name: cron
     namespace: team-17
-    resourceVersion: "2116"
-    uid: a46793b3-1261-44cb-913f-10123d2b3a8d
+    resourceVersion: "2119"
+    uid: 73a37584-719d-4899-9725-dec6134c6c95
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -11828,14 +11828,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:37Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:27Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:22Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:07Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -11847,7 +11847,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
@@ -11855,8 +11855,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: gateway
     namespace: team-17
-    resourceVersion: "1370"
-    uid: 88e9f93e-466d-4b15-8903-a426246fad2d
+    resourceVersion: "1931"
+    uid: a5c39ef1-cdd2-4394-879b-7ef9d9482e51
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -11888,14 +11888,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:03Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:39:19Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:51Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:38:41Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -11907,7 +11907,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
@@ -11915,8 +11915,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: notify
     namespace: team-17
-    resourceVersion: "1371"
-    uid: dd32b0b3-dcfe-4fa0-8d3c-7c463853026e
+    resourceVersion: "1932"
+    uid: 99a785cc-fe6d-4af2-82df-f943da5d82cc
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -11948,14 +11948,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:03Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:39:19Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:51Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:38:41Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -11968,15 +11968,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-17:apps/Deployment:team-17/search
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: search
       argocd.argoproj.io/instance: team-17
     name: search
     namespace: team-17
-    resourceVersion: "2048"
-    uid: 35d5316a-a935-4abf-8f28-533259f7ca1c
+    resourceVersion: "2054"
+    uid: 0b7e21df-bce1-467f-aacc-9f6d78280ebb
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -12008,14 +12008,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:34Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:24Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:12Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:38:58Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -12027,7 +12027,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
@@ -12035,8 +12035,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: web
     namespace: team-17
-    resourceVersion: "1367"
-    uid: e276b1b0-3576-402f-a450-1b2e7ee26259
+    resourceVersion: "1930"
+    uid: 2ff967dd-afd2-4609-95c6-6bea8f98aae2
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -12068,14 +12068,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:03Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:39:18Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:51Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:38:41Z"
+      lastUpdateTime: "2026-09-27T12:39:18Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -12087,15 +12087,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: worker
       confighub.com/UnitSlug: team-17-worker
     name: worker
     namespace: team-17
-    resourceVersion: "2157"
-    uid: 81aba9e1-e5ca-4e9c-b6ee-d3144362b0c1
+    resourceVersion: "2160"
+    uid: 4a1275ab-2e33-4fea-966f-5fa2e68cd6bb
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -12127,14 +12127,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:39Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:29Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:28Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:13Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -12146,7 +12146,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
@@ -12154,8 +12154,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: api
     namespace: team-18
-    resourceVersion: "1372"
-    uid: 8e184bbf-5ded-4a26-983a-999ccd9aae92
+    resourceVersion: "1933"
+    uid: 4d3a9a37-6559-4c10-a701-eecbdc3b9131
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -12187,14 +12187,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:03Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:39:19Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:51Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:38:41Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -12207,15 +12207,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-18:apps/Deployment:team-18/auth
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
       argocd.argoproj.io/instance: team-18
     name: auth
     namespace: team-18
-    resourceVersion: "2051"
-    uid: c85bf1dc-2a9f-4e4f-85a4-a133d0e6175c
+    resourceVersion: "2057"
+    uid: e34d4356-4f6e-4e74-a4b6-50c18d528e77
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -12247,14 +12247,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:34Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:24Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:13Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:38:59Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -12267,15 +12267,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-18:apps/Deployment:team-18/billing
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
       argocd.argoproj.io/instance: team-18
     name: billing
     namespace: team-18
-    resourceVersion: "2052"
-    uid: 702d8f4a-818e-4a89-8e60-882a31e9e8ad
+    resourceVersion: "2058"
+    uid: 9255c5c2-6d31-454a-a870-bf76e34ee51f
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -12307,14 +12307,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:34Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:24Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:13Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:38:59Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -12326,7 +12326,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
@@ -12334,8 +12334,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cache
     namespace: team-18
-    resourceVersion: "1376"
-    uid: 2ce8ef01-2926-427d-a2af-b3b056b6e818
+    resourceVersion: "1937"
+    uid: 9138da50-a2e3-4383-a492-85640c8c12bb
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -12367,14 +12367,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:03Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:39:19Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:52Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:38:42Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -12386,7 +12386,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
@@ -12394,8 +12394,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cron
     namespace: team-18
-    resourceVersion: "1374"
-    uid: e7e8b2ca-7c6f-464f-a6aa-742510c4e8b8
+    resourceVersion: "1935"
+    uid: fb5748d6-aa80-4bf1-8e4d-4648b0250cb6
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -12427,14 +12427,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:03Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:39:19Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:51Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:38:42Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -12448,7 +12448,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: gateway
       meta.helm.sh/release-namespace: team-18
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
@@ -12457,8 +12457,8 @@ items:
       helm.sh/chart: gateway-1.0.0
     name: gateway
     namespace: team-18
-    resourceVersion: "2117"
-    uid: 14733d82-51ba-44df-9bf6-77df33910abe
+    resourceVersion: "2120"
+    uid: 2065c0de-271e-4456-bb0f-42396b4cc6be
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -12490,14 +12490,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:37Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:27Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:22Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:08Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -12509,15 +12509,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: notify
       confighub.com/UnitSlug: team-18-notify
     name: notify
     namespace: team-18
-    resourceVersion: "2158"
-    uid: 07c56893-2ab1-4c09-838f-bf9610797ccb
+    resourceVersion: "2161"
+    uid: cce55513-22d0-4ca0-9304-87f8032f5d28
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -12549,14 +12549,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:39Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:29Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:28Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:13Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -12568,7 +12568,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: search
@@ -12576,8 +12576,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: search
     namespace: team-18
-    resourceVersion: "1375"
-    uid: 4c6ef753-1b56-420f-ac91-4e6956c27505
+    resourceVersion: "1936"
+    uid: 32468cd6-4149-4655-b7f2-40ff0048cf3d
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -12609,14 +12609,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:03Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:39:19Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:52Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:38:42Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -12630,14 +12630,14 @@ items:
       deployment.kubernetes.io/revision: "1"
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"web"},"name":"web","namespace":"team-18"},"spec":{"replicas":0,"selector":{"matchLabels":{"app":"web"}},"template":{"metadata":{"labels":{"app":"web"}},"spec":{"containers":[{"image":"registry.k8s.io/pause:3.9","name":"web"}]}}}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: web
     name: web
     namespace: team-18
-    resourceVersion: "1290"
-    uid: d6ea1af7-e865-4544-aeaf-22bb3bafd4c9
+    resourceVersion: "1297"
+    uid: 96089e70-00d2-4144-9a20-aa00c1018889
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -12669,14 +12669,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:47:59Z"
-      lastUpdateTime: "2026-09-27T10:47:59Z"
+    - lastTransitionTime: "2026-09-27T12:38:50Z"
+      lastUpdateTime: "2026-09-27T12:38:50Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:41Z"
-      lastUpdateTime: "2026-09-27T10:47:59Z"
+    - lastTransitionTime: "2026-09-27T12:38:31Z"
+      lastUpdateTime: "2026-09-27T12:38:50Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -12688,7 +12688,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
@@ -12696,8 +12696,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: worker
     namespace: team-18
-    resourceVersion: "1373"
-    uid: 1b1fe513-5d7c-4bbd-be8a-dc98297875dc
+    resourceVersion: "1934"
+    uid: 61d18aac-2e96-4453-bee7-ccef5615dbf0
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -12729,14 +12729,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:03Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:39:19Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:51Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:38:41Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -12748,7 +12748,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
@@ -12756,8 +12756,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: api
     namespace: team-19
-    resourceVersion: "1377"
-    uid: 7c5b6c3a-45ab-444f-a068-e448b3c46f47
+    resourceVersion: "1938"
+    uid: 8f07432f-f669-4165-83b0-be5c557e3c27
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -12789,14 +12789,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:03Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:39:19Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:52Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:38:42Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -12808,7 +12808,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
@@ -12816,8 +12816,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: auth
     namespace: team-19
-    resourceVersion: "1381"
-    uid: 05157959-8143-474e-8bee-936ce046a4ce
+    resourceVersion: "1942"
+    uid: 05692982-eff4-47e5-85ae-055c16404045
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -12849,14 +12849,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:04Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:39:19Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:53Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:38:43Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -12869,15 +12869,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-19:apps/Deployment:team-19/billing
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
       argocd.argoproj.io/instance: team-19
     name: billing
     namespace: team-19
-    resourceVersion: "2055"
-    uid: e8691536-8f32-4a31-9768-130030bf345f
+    resourceVersion: "2061"
+    uid: 07a23321-9b9a-4fb9-bb8f-dd95d1d13464
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -12909,14 +12909,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:34Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:24Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:13Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:38:59Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -12928,15 +12928,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: cache
       confighub.com/UnitSlug: team-19-cache
     name: cache
     namespace: team-19
-    resourceVersion: "2159"
-    uid: c68d9159-8078-4682-8393-270c05303231
+    resourceVersion: "2162"
+    uid: 079cf93b-b70c-4bdb-b2f3-0a24b625f5b7
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -12968,14 +12968,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:39Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:29Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:28Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:14Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -12989,14 +12989,14 @@ items:
       deployment.kubernetes.io/revision: "1"
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"cron"},"name":"cron","namespace":"team-19"},"spec":{"replicas":0,"selector":{"matchLabels":{"app":"cron"}},"template":{"metadata":{"labels":{"app":"cron"}},"spec":{"containers":[{"image":"registry.k8s.io/pause:3.9","name":"cron"}]}}}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: cron
     name: cron
     namespace: team-19
-    resourceVersion: "1294"
-    uid: 9b5f3028-bd11-42ce-9ea9-f9790f4510e2
+    resourceVersion: "1298"
+    uid: 7e973ffb-ad5e-49ac-9a59-f71dbe275971
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -13028,14 +13028,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:00Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:38:50Z"
+      lastUpdateTime: "2026-09-27T12:38:50Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:41Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:38:32Z"
+      lastUpdateTime: "2026-09-27T12:38:50Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -13048,15 +13048,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-19:apps/Deployment:team-19/gateway
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
       argocd.argoproj.io/instance: team-19
     name: gateway
     namespace: team-19
-    resourceVersion: "2053"
-    uid: a13a8a53-658a-44e8-906c-a735ee54e40e
+    resourceVersion: "2059"
+    uid: 1213786b-02ce-4b89-a6e9-36e6a266fe5f
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -13088,14 +13088,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:34Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:24Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:13Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:38:59Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -13107,15 +13107,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: notify
       confighub.com/UnitSlug: team-19-notify
     name: notify
     namespace: team-19
-    resourceVersion: "2160"
-    uid: 1c7b1be0-0588-4f22-b255-860e3385932b
+    resourceVersion: "2166"
+    uid: d53b61c4-89cf-4528-944b-e0da0faaf814
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -13147,14 +13147,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:39Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:29Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:28Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:14Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -13167,15 +13167,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-19:apps/Deployment:team-19/search
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: search
       argocd.argoproj.io/instance: team-19
     name: search
     namespace: team-19
-    resourceVersion: "2054"
-    uid: 46d3a05f-6cdf-4576-8b42-e69b58499012
+    resourceVersion: "2060"
+    uid: dc1c4627-6d87-4767-8f93-2e841e6e3c05
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -13207,14 +13207,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:34Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:24Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:13Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:38:59Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -13226,7 +13226,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
@@ -13234,8 +13234,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: web
     namespace: team-19
-    resourceVersion: "1378"
-    uid: f66bfac2-1c89-4807-b771-fb18f8658073
+    resourceVersion: "1940"
+    uid: 475ddb00-f09f-44d2-a3dd-b945192e199f
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -13267,14 +13267,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:03Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:39:19Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:52Z"
-      lastUpdateTime: "2026-09-27T10:48:03Z"
+    - lastTransitionTime: "2026-09-27T12:38:42Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -13286,7 +13286,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
@@ -13294,8 +13294,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: worker
     namespace: team-19
-    resourceVersion: "1380"
-    uid: fd56c04d-1f5a-4104-b032-cf0e97e2fc94
+    resourceVersion: "1941"
+    uid: 83171ba7-88df-4e72-8e57-7e0fd32443de
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -13327,14 +13327,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:04Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:39:19Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:52Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:38:43Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -13346,7 +13346,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
@@ -13354,8 +13354,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: api
     namespace: team-20
-    resourceVersion: "1382"
-    uid: 4f1e6c05-770a-4546-ad42-08758b607c26
+    resourceVersion: "1943"
+    uid: 14221ea4-c4cc-4131-9b25-3b79b1613b64
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -13387,14 +13387,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:04Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:39:19Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:53Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:38:43Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -13407,15 +13407,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-20:apps/Deployment:team-20/auth
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
       argocd.argoproj.io/instance: team-20
     name: auth
     namespace: team-20
-    resourceVersion: "2057"
-    uid: e49b17e0-00b6-4d51-b76f-381094af938a
+    resourceVersion: "2062"
+    uid: 170b8757-2497-4fac-8c67-6af7ff5c17ef
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -13447,14 +13447,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:34Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:24Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:14Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:38:59Z"
+      lastUpdateTime: "2026-09-27T12:39:24Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -13466,7 +13466,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
@@ -13474,8 +13474,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: billing
     namespace: team-20
-    resourceVersion: "1386"
-    uid: eb68f457-a6ab-4e61-a2af-9e397818f825
+    resourceVersion: "1947"
+    uid: a807bfc3-056b-4fe5-9eca-0556ad1c38bb
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -13507,14 +13507,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:04Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:39:19Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:53Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:38:44Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -13526,7 +13526,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
@@ -13534,8 +13534,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cache
     namespace: team-20
-    resourceVersion: "1385"
-    uid: 5faff393-9654-468d-bc65-e511cfe47feb
+    resourceVersion: "1946"
+    uid: cd0e4358-6f6e-4428-b183-7ba9213f422c
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -13567,14 +13567,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:04Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:39:19Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:53Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:38:43Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -13586,7 +13586,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
@@ -13594,8 +13594,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cron
     namespace: team-20
-    resourceVersion: "1384"
-    uid: e69359f0-52d8-43c5-b550-443912c33610
+    resourceVersion: "1945"
+    uid: b0b23860-be9e-4080-9a91-63c99814e362
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -13627,14 +13627,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:04Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:39:19Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:53Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:38:43Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -13648,7 +13648,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: gateway
       meta.helm.sh/release-namespace: team-20
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
@@ -13657,8 +13657,8 @@ items:
       helm.sh/chart: gateway-1.0.0
     name: gateway
     namespace: team-20
-    resourceVersion: "2118"
-    uid: 317ecdd3-ba7a-4fa1-bbed-503eb08b3a23
+    resourceVersion: "2121"
+    uid: 6139c391-b4d4-4320-b571-f642f2e73efd
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -13690,14 +13690,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:37Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:27Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:22Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:08Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -13711,7 +13711,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: notify
       meta.helm.sh/release-namespace: team-20
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
@@ -13720,8 +13720,8 @@ items:
       helm.sh/chart: notify-1.0.0
     name: notify
     namespace: team-20
-    resourceVersion: "2119"
-    uid: 013831da-1a24-42e0-8fba-e3cb6a936147
+    resourceVersion: "2122"
+    uid: e737a4d8-011f-4760-adfb-86db80213c3f
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -13753,14 +13753,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:37Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:27Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:22Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:08Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -13773,15 +13773,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-20:apps/Deployment:team-20/search
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: search
       argocd.argoproj.io/instance: team-20
     name: search
     namespace: team-20
-    resourceVersion: "2058"
-    uid: f1c76297-41e7-4549-b065-57c72f0cac33
+    resourceVersion: "2063"
+    uid: 59de6a1b-573a-461a-88a4-a1352b01d4f5
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -13813,14 +13813,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:34Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:25Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:14Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:38:59Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -13832,7 +13832,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
@@ -13840,8 +13840,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: web
     namespace: team-20
-    resourceVersion: "1383"
-    uid: 8523d8e1-362f-4904-9b54-4d5bd28c908f
+    resourceVersion: "1944"
+    uid: 7b0570c9-ca6a-43f7-9ba4-76038096d746
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -13873,14 +13873,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:04Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:39:19Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:53Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:38:43Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -13892,15 +13892,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: worker
       confighub.com/UnitSlug: team-20-worker
     name: worker
     namespace: team-20
-    resourceVersion: "2161"
-    uid: 32874c60-32c2-4a7a-acd2-c660f0583a5c
+    resourceVersion: "2167"
+    uid: eac77314-c33e-4a34-815e-a2b002bf247d
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -13932,14 +13932,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:39Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:29Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:28Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:14Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -13953,7 +13953,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: api
       meta.helm.sh/release-namespace: team-21
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
@@ -13962,8 +13962,8 @@ items:
       helm.sh/chart: api-1.0.0
     name: api
     namespace: team-21
-    resourceVersion: "2122"
-    uid: 30be9ff3-6e23-497b-99c4-6cf7195d4090
+    resourceVersion: "2123"
+    uid: bdd36319-6160-43a4-a236-5687bed5b83d
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -13995,14 +13995,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:37Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:27Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:22Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:08Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -14016,7 +14016,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: auth
       meta.helm.sh/release-namespace: team-21
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
@@ -14025,8 +14025,8 @@ items:
       helm.sh/chart: auth-1.0.0
     name: auth
     namespace: team-21
-    resourceVersion: "2124"
-    uid: 1841114b-edd4-4f89-8cf3-4e71b41acd0d
+    resourceVersion: "2125"
+    uid: 369b7b3c-fbc5-4f3e-8100-142677b21c08
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -14058,14 +14058,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:37Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:27Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:23Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:08Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -14077,7 +14077,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
@@ -14085,8 +14085,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: billing
     namespace: team-21
-    resourceVersion: "1388"
-    uid: 6dcfa695-2cea-40ca-ab64-866538b0002b
+    resourceVersion: "1949"
+    uid: 194178fb-a203-4c26-bc1a-3fd4908e7645
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -14118,14 +14118,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:04Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:39:19Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:53Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:38:44Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -14137,7 +14137,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
@@ -14145,8 +14145,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cache
     namespace: team-21
-    resourceVersion: "1387"
-    uid: 92413d3a-c8bf-4c1c-bb43-ff806e9a4f5a
+    resourceVersion: "1948"
+    uid: ed9a5d5a-a902-408d-8d0d-e09dcb1f1f24
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -14178,14 +14178,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:04Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:39:19Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:53Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:38:44Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -14198,15 +14198,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-21:apps/Deployment:team-21/cron
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
       argocd.argoproj.io/instance: team-21
     name: cron
     namespace: team-21
-    resourceVersion: "2061"
-    uid: e4bfac69-927b-4a73-ba7b-80d294fa8682
+    resourceVersion: "2066"
+    uid: b4711048-2789-4c48-bd08-e72f0c5f1bac
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -14238,14 +14238,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:34Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:25Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:14Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:00Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -14259,7 +14259,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: gateway
       meta.helm.sh/release-namespace: team-21
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
@@ -14268,8 +14268,8 @@ items:
       helm.sh/chart: gateway-1.0.0
     name: gateway
     namespace: team-21
-    resourceVersion: "2123"
-    uid: 796bf96b-935a-4835-87a4-6ab18eda253c
+    resourceVersion: "2124"
+    uid: 2ddc3c0b-fd03-4e17-b8a8-bfd35300dfc4
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -14301,14 +14301,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:37Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:27Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:22Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:08Z"
+      lastUpdateTime: "2026-09-27T12:39:27Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -14320,7 +14320,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
@@ -14328,8 +14328,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: notify
     namespace: team-21
-    resourceVersion: "1389"
-    uid: 4a576ddb-3e0c-4866-8fe2-6ba33ca47e92
+    resourceVersion: "1950"
+    uid: 987143b1-3e5f-4cb1-9142-0e846d93079b
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -14361,14 +14361,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:04Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:39:19Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:54Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:38:44Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -14381,15 +14381,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-21:apps/Deployment:team-21/search
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: search
       argocd.argoproj.io/instance: team-21
     name: search
     namespace: team-21
-    resourceVersion: "2062"
-    uid: e4af60a2-0724-43b4-84f6-268f1c951d8c
+    resourceVersion: "2067"
+    uid: b14dd048-98be-4524-b7a0-c9bbc4bbcb14
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -14421,14 +14421,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:35Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:25Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:14Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:00Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -14441,15 +14441,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-21:apps/Deployment:team-21/web
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
       argocd.argoproj.io/instance: team-21
     name: web
     namespace: team-21
-    resourceVersion: "2059"
-    uid: 111bf604-556a-4a4d-8a55-a10cedf52502
+    resourceVersion: "2064"
+    uid: b537b3ab-8f9f-4a6b-a9c5-172b5e25d1f1
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -14481,14 +14481,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:34Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:25Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:14Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:00Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -14501,15 +14501,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-21:apps/Deployment:team-21/worker
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
       argocd.argoproj.io/instance: team-21
     name: worker
     namespace: team-21
-    resourceVersion: "2060"
-    uid: 5eade001-ad37-4664-882a-fe8b33755f2c
+    resourceVersion: "2065"
+    uid: defeeb4c-eaf2-4cc8-a0d1-59dc7f54f12d
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -14541,14 +14541,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:34Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:25Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:14Z"
-      lastUpdateTime: "2026-09-27T10:48:34Z"
+    - lastTransitionTime: "2026-09-27T12:39:00Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -14561,15 +14561,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-22:apps/Deployment:team-22/api
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
       argocd.argoproj.io/instance: team-22
     name: api
     namespace: team-22
-    resourceVersion: "2063"
-    uid: 0ace1743-0dde-4dfb-850e-9c8577f6fdbf
+    resourceVersion: "2068"
+    uid: 0d6433dc-8455-485e-b1b7-daebab1b8fd1
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -14601,14 +14601,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:35Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:25Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:14Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:00Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -14621,15 +14621,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-22:apps/Deployment:team-22/auth
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
       argocd.argoproj.io/instance: team-22
     name: auth
     namespace: team-22
-    resourceVersion: "2068"
-    uid: 3299cd0a-bb29-427a-ad1e-225514742761
+    resourceVersion: "2070"
+    uid: 445c1dc7-6706-46fc-8ba3-677ba99f2932
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -14661,14 +14661,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:35Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:25Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:15Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:00Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -14681,15 +14681,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-22:apps/Deployment:team-22/billing
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
       argocd.argoproj.io/instance: team-22
     name: billing
     namespace: team-22
-    resourceVersion: "2070"
-    uid: a6be0017-0309-407c-a065-865bb4f6f64e
+    resourceVersion: "2073"
+    uid: b18cc83f-f6f5-41eb-ae46-d42b44b5925e
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -14721,14 +14721,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:35Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:25Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:15Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:01Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -14742,7 +14742,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: cache
       meta.helm.sh/release-namespace: team-22
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
@@ -14751,8 +14751,8 @@ items:
       helm.sh/chart: cache-1.0.0
     name: cache
     namespace: team-22
-    resourceVersion: "2125"
-    uid: bfd498c3-f3fb-47cb-b615-129b54da7ad7
+    resourceVersion: "2126"
+    uid: 8bfa0353-afcb-4a9d-8a81-a5e474a3e194
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -14784,14 +14784,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:37Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:28Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:23Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:09Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -14803,7 +14803,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
@@ -14811,8 +14811,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cron
     namespace: team-22
-    resourceVersion: "1391"
-    uid: b452fc7f-d5db-431c-bb0e-b7db15d5710b
+    resourceVersion: "1952"
+    uid: 69494b1b-a92f-411e-9b2a-b86834447c80
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -14844,14 +14844,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:04Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:39:20Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:54Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:38:44Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -14863,7 +14863,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
@@ -14871,8 +14871,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: gateway
     namespace: team-22
-    resourceVersion: "1392"
-    uid: 3cd3426d-4d16-45d5-8c24-80cc0bc3c7df
+    resourceVersion: "1953"
+    uid: 25b49f0d-e740-4a86-80c9-138fc923b248
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -14904,14 +14904,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:04Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:39:20Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:54Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:38:44Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -14925,7 +14925,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: notify
       meta.helm.sh/release-namespace: team-22
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
@@ -14934,8 +14934,8 @@ items:
       helm.sh/chart: notify-1.0.0
     name: notify
     namespace: team-22
-    resourceVersion: "2126"
-    uid: 140fa096-ff4b-430c-ac10-5b5b824a1a62
+    resourceVersion: "2127"
+    uid: 6f55fd9b-7a2d-4158-a91b-e539ac95c97d
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -14967,14 +14967,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:37Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:28Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:23Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:09Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -14987,15 +14987,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-22:apps/Deployment:team-22/search
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: search
       argocd.argoproj.io/instance: team-22
     name: search
     namespace: team-22
-    resourceVersion: "2069"
-    uid: fd6fa0ae-0bb4-4590-a3e6-241cafacb5e0
+    resourceVersion: "2072"
+    uid: 0f423b09-7e48-41ca-ba9d-49c28853af2e
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -15027,14 +15027,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:35Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:25Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:15Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:01Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -15047,15 +15047,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-22:apps/Deployment:team-22/web
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
       argocd.argoproj.io/instance: team-22
     name: web
     namespace: team-22
-    resourceVersion: "2064"
-    uid: dd5c39e9-5831-4bbc-b813-3310a3ef9f36
+    resourceVersion: "2069"
+    uid: 1b0d6840-b2c1-460b-b785-0c2aac668ef9
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -15087,14 +15087,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:35Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:25Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:14Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:00Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -15106,7 +15106,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
@@ -15114,8 +15114,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: worker
     namespace: team-22
-    resourceVersion: "1390"
-    uid: 8a4faaa0-ea45-4e2f-82b1-fd2a6a485c6f
+    resourceVersion: "1951"
+    uid: 85dbe797-d634-40b5-88a7-10fc4cd7a438
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -15147,14 +15147,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:04Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:39:19Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:54Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:38:44Z"
+      lastUpdateTime: "2026-09-27T12:39:19Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -15166,7 +15166,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
@@ -15174,8 +15174,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: api
     namespace: team-23
-    resourceVersion: "1393"
-    uid: 0a4bd844-c9ff-4eac-849d-357da4c9943b
+    resourceVersion: "1955"
+    uid: 25ddcfb7-9557-4422-9b93-24fa8c9c2a8e
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -15207,14 +15207,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:04Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:39:20Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:54Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:38:44Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -15227,15 +15227,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-23:apps/Deployment:team-23/auth
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
       argocd.argoproj.io/instance: team-23
     name: auth
     namespace: team-23
-    resourceVersion: "2074"
-    uid: accc2e17-0dbc-4cbd-a721-95ab60317d8f
+    resourceVersion: "2077"
+    uid: aa8cf946-0b75-469f-945e-57f3e1a535d1
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -15267,14 +15267,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:35Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:25Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:15Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:01Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -15286,7 +15286,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
@@ -15294,8 +15294,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: billing
     namespace: team-23
-    resourceVersion: "1651"
-    uid: ed5e2dbc-7dc6-4ab0-982a-f037ebe611f3
+    resourceVersion: "1958"
+    uid: a25c6156-547e-4f58-9fb5-c1d5de0ad312
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -15327,14 +15327,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:16Z"
-      lastUpdateTime: "2026-09-27T10:48:16Z"
+    - lastTransitionTime: "2026-09-27T12:39:20Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:55Z"
-      lastUpdateTime: "2026-09-27T10:48:16Z"
+    - lastTransitionTime: "2026-09-27T12:38:45Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -15347,15 +15347,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-23:apps/Deployment:team-23/cache
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
       argocd.argoproj.io/instance: team-23
     name: cache
     namespace: team-23
-    resourceVersion: "2075"
-    uid: 3976aeea-ed0f-4be9-b30c-29f291d15ab6
+    resourceVersion: "2078"
+    uid: d3c425fb-eca1-4025-a6f0-ab060e21a246
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -15387,14 +15387,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:35Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:25Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:16Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:02Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -15407,15 +15407,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-23:apps/Deployment:team-23/cron
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
       argocd.argoproj.io/instance: team-23
     name: cron
     namespace: team-23
-    resourceVersion: "2073"
-    uid: 8439129a-a11b-406a-99ca-533e0e3ae901
+    resourceVersion: "2076"
+    uid: 367060a7-b51e-424a-b820-1fba52c738a8
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -15447,14 +15447,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:35Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:25Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:15Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:01Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -15466,7 +15466,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
@@ -15474,8 +15474,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: gateway
     namespace: team-23
-    resourceVersion: "1394"
-    uid: 97a41c33-908f-4ce1-bd1d-e34668d0c8f8
+    resourceVersion: "1956"
+    uid: a07f20f2-1419-43ba-b78d-31d3ec8db8f6
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -15507,14 +15507,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:04Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:39:20Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:54Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:38:44Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -15528,7 +15528,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: notify
       meta.helm.sh/release-namespace: team-23
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
@@ -15537,8 +15537,8 @@ items:
       helm.sh/chart: notify-1.0.0
     name: notify
     namespace: team-23
-    resourceVersion: "2127"
-    uid: 4c2e0767-cd7b-499e-b157-a5be1a8987d5
+    resourceVersion: "2129"
+    uid: 122a463b-8ff3-4649-a4fa-401c5766bd16
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -15570,14 +15570,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:37Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:28Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:23Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:09Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -15589,7 +15589,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: search
@@ -15597,8 +15597,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: search
     namespace: team-23
-    resourceVersion: "1395"
-    uid: 02f999c8-0857-4062-a38e-1ea0dafc8045
+    resourceVersion: "1957"
+    uid: ea266b32-6469-4900-8012-799f001c994c
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -15630,14 +15630,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:04Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:39:20Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:54Z"
-      lastUpdateTime: "2026-09-27T10:48:04Z"
+    - lastTransitionTime: "2026-09-27T12:38:45Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -15650,15 +15650,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-23:apps/Deployment:team-23/web
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
       argocd.argoproj.io/instance: team-23
     name: web
     namespace: team-23
-    resourceVersion: "2071"
-    uid: b0bd0dc1-3d4b-4f2a-87e7-2250da50fa8d
+    resourceVersion: "2074"
+    uid: 224fb7ce-0b95-4b70-af47-a4faf94ef5cf
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -15690,14 +15690,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:35Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:25Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:15Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:01Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -15710,15 +15710,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-23:apps/Deployment:team-23/worker
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
       argocd.argoproj.io/instance: team-23
     name: worker
     namespace: team-23
-    resourceVersion: "2072"
-    uid: 2ccc1378-f5d5-4e60-a83a-519a264fefce
+    resourceVersion: "2075"
+    uid: fe4cbce0-2c0f-4341-8d50-45c627065849
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -15750,14 +15750,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:35Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:25Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:15Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:01Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -15770,15 +15770,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-24:apps/Deployment:team-24/api
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
       argocd.argoproj.io/instance: team-24
     name: api
     namespace: team-24
-    resourceVersion: "2076"
-    uid: 2e769758-8dc0-41a3-812a-bc694274566d
+    resourceVersion: "2079"
+    uid: 11d0efef-c0f6-4f6a-9003-b1a79b96a763
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -15810,14 +15810,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:35Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:25Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:16Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:02Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -15829,15 +15829,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: auth
       confighub.com/UnitSlug: team-24-auth
     name: auth
     namespace: team-24
-    resourceVersion: "2165"
-    uid: 6fe113ed-fb8d-4f93-b6c9-451c56149c4f
+    resourceVersion: "2169"
+    uid: 13a00513-9da0-4243-9d01-7396718b2d4a
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -15869,14 +15869,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:39Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:29Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:28Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:14Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -15889,15 +15889,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-24:apps/Deployment:team-24/billing
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
       argocd.argoproj.io/instance: team-24
     name: billing
     namespace: team-24
-    resourceVersion: "2077"
-    uid: fa696f1f-2791-4722-ac99-a2370e965b1b
+    resourceVersion: "2080"
+    uid: 0d231acd-9395-419e-9654-1ae2a8ade435
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -15929,14 +15929,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:35Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:25Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:16Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:02Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -15948,15 +15948,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: cache
       confighub.com/UnitSlug: team-24-cache
     name: cache
     namespace: team-24
-    resourceVersion: "2166"
-    uid: f779c7ba-de18-436a-849d-61322fb1d22d
+    resourceVersion: "2170"
+    uid: fd1c1899-9f09-40d5-8289-82780416f653
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -15988,14 +15988,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:39Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:29Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:29Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:14Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -16009,7 +16009,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: cron
       meta.helm.sh/release-namespace: team-24
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
@@ -16018,8 +16018,8 @@ items:
       helm.sh/chart: cron-1.0.0
     name: cron
     namespace: team-24
-    resourceVersion: "2129"
-    uid: 4bc3e682-fcb3-40f0-abdd-072c52a1e422
+    resourceVersion: "2131"
+    uid: eb7065ad-190f-436f-96fd-c46747fcb65e
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -16051,14 +16051,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:38Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:28Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:23Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:09Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -16070,7 +16070,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
@@ -16078,8 +16078,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: gateway
     namespace: team-24
-    resourceVersion: "1700"
-    uid: e76923ea-dbac-47ae-971b-be8a474602b3
+    resourceVersion: "1959"
+    uid: b0ba4b2f-bc38-437b-8f72-3318b26df433
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -16111,14 +16111,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:18Z"
-      lastUpdateTime: "2026-09-27T10:48:18Z"
+    - lastTransitionTime: "2026-09-27T12:39:20Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:55Z"
-      lastUpdateTime: "2026-09-27T10:48:18Z"
+    - lastTransitionTime: "2026-09-27T12:38:45Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -16130,7 +16130,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
@@ -16138,8 +16138,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: notify
     namespace: team-24
-    resourceVersion: "1821"
-    uid: 9b7d1007-acc3-4958-a4ef-a904a8e24d8a
+    resourceVersion: "1961"
+    uid: de3b040b-b280-4b82-9766-623f618ad46f
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -16171,14 +16171,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:23Z"
-      lastUpdateTime: "2026-09-27T10:48:23Z"
+    - lastTransitionTime: "2026-09-27T12:39:20Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:55Z"
-      lastUpdateTime: "2026-09-27T10:48:23Z"
+    - lastTransitionTime: "2026-09-27T12:38:45Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -16190,7 +16190,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: search
@@ -16198,8 +16198,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: search
     namespace: team-24
-    resourceVersion: "1752"
-    uid: edfc29eb-782f-44f9-b39e-b78077e6cac7
+    resourceVersion: "1960"
+    uid: a32e6e86-fc9e-4977-a87d-b0e5f52c020a
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -16231,14 +16231,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:20Z"
-      lastUpdateTime: "2026-09-27T10:48:20Z"
+    - lastTransitionTime: "2026-09-27T12:39:20Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:55Z"
-      lastUpdateTime: "2026-09-27T10:48:20Z"
+    - lastTransitionTime: "2026-09-27T12:38:45Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -16252,7 +16252,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: web
       meta.helm.sh/release-namespace: team-24
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
@@ -16261,8 +16261,8 @@ items:
       helm.sh/chart: web-1.0.0
     name: web
     namespace: team-24
-    resourceVersion: "2128"
-    uid: 515d757d-3fd9-4b99-90d0-331f760edee9
+    resourceVersion: "2130"
+    uid: e0b0c0bf-9c00-41ac-a23c-c47c81556b67
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -16294,14 +16294,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:37Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:28Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:23Z"
-      lastUpdateTime: "2026-09-27T10:48:37Z"
+    - lastTransitionTime: "2026-09-27T12:39:09Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -16313,15 +16313,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: worker
       confighub.com/UnitSlug: team-24-worker
     name: worker
     namespace: team-24
-    resourceVersion: "2163"
-    uid: 979bea41-39cc-4296-b772-378640609baf
+    resourceVersion: "2168"
+    uid: 12265e49-3a46-4ff4-8f1f-562aba597121
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -16353,14 +16353,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:39Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:29Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:28Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:14Z"
+      lastUpdateTime: "2026-09-27T12:39:29Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -16372,7 +16372,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
@@ -16380,8 +16380,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: api
     namespace: team-25
-    resourceVersion: "1872"
-    uid: eb73ad43-8bee-4ea8-80c3-a8e5f538b5e3
+    resourceVersion: "1962"
+    uid: 6333a2c0-8b15-473c-bc7f-dec2c57b5393
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -16413,14 +16413,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:26Z"
-      lastUpdateTime: "2026-09-27T10:48:26Z"
+    - lastTransitionTime: "2026-09-27T12:39:20Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:55Z"
-      lastUpdateTime: "2026-09-27T10:48:26Z"
+    - lastTransitionTime: "2026-09-27T12:38:46Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -16432,7 +16432,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
@@ -16440,8 +16440,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: auth
     namespace: team-25
-    resourceVersion: "1964"
-    uid: 3b6fb75e-727d-4e53-841b-865f4d917e31
+    resourceVersion: "1966"
+    uid: 9f6f9411-593f-4d33-8628-8c1a1b84aa89
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -16473,14 +16473,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:30Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:39:20Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:56Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:38:46Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -16492,7 +16492,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
@@ -16500,8 +16500,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: billing
     namespace: team-25
-    resourceVersion: "1965"
-    uid: 86e4fe60-113b-4b4a-9b2a-16c5314cbb72
+    resourceVersion: "1967"
+    uid: e2956f17-946a-4d5e-9fbc-84731fac858d
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -16533,14 +16533,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:30Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:39:20Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:56Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:38:46Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -16552,15 +16552,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: cache
       confighub.com/UnitSlug: team-25-cache
     name: cache
     namespace: team-25
-    resourceVersion: "2167"
-    uid: be72e60a-4e65-4174-8adb-12e86e62677c
+    resourceVersion: "2171"
+    uid: b32b9682-676b-4adc-b8da-eae1085dc8fc
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -16592,14 +16592,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:39Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:30Z"
+      lastUpdateTime: "2026-09-27T12:39:30Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:29Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:15Z"
+      lastUpdateTime: "2026-09-27T12:39:30Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -16611,7 +16611,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
@@ -16619,8 +16619,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cron
     namespace: team-25
-    resourceVersion: "1963"
-    uid: 2cfef8a6-12be-4aec-a4be-a7ec86d22092
+    resourceVersion: "1965"
+    uid: 5ac34b39-51b5-478b-89e7-1ce61a07a9d0
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -16652,14 +16652,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:30Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:39:20Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:56Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:38:46Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -16673,7 +16673,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: gateway
       meta.helm.sh/release-namespace: team-25
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
@@ -16682,8 +16682,8 @@ items:
       helm.sh/chart: gateway-1.0.0
     name: gateway
     namespace: team-25
-    resourceVersion: "2130"
-    uid: 7a366fe3-a399-4feb-93f3-c56d7ebaa6ad
+    resourceVersion: "2132"
+    uid: efe72184-1f60-4439-8143-30b6d0a4a990
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -16715,14 +16715,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:38Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:28Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:24Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:09Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -16734,7 +16734,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
@@ -16742,8 +16742,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: notify
     namespace: team-25
-    resourceVersion: "1966"
-    uid: 693fd454-814a-4bdc-a956-fd6d91332278
+    resourceVersion: "1968"
+    uid: 4bba2bfd-2a35-4322-9348-aa5dc6657e3f
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -16775,14 +16775,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:30Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:39:20Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:56Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:38:47Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -16796,14 +16796,14 @@ items:
       deployment.kubernetes.io/revision: "1"
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"search"},"name":"search","namespace":"team-25"},"spec":{"replicas":0,"selector":{"matchLabels":{"app":"search"}},"template":{"metadata":{"labels":{"app":"search"}},"spec":{"containers":[{"image":"registry.k8s.io/pause:3.9","name":"search"}]}}}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: search
     name: search
     namespace: team-25
-    resourceVersion: "1295"
-    uid: e4ac4237-252a-40a2-8ce8-fc6186f6a0bf
+    resourceVersion: "1356"
+    uid: 40751d50-d671-4002-8590-bae9b006376e
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -16835,14 +16835,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:00Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:38:52Z"
+      lastUpdateTime: "2026-09-27T12:38:52Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:41Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:38:32Z"
+      lastUpdateTime: "2026-09-27T12:38:52Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -16854,7 +16854,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
@@ -16862,8 +16862,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: web
     namespace: team-25
-    resourceVersion: "1960"
-    uid: 98724887-bf4a-43ea-9958-ee1e7fc6f38d
+    resourceVersion: "1963"
+    uid: 2966290b-b5fd-44f5-9ef4-4e3b285e0c05
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -16895,14 +16895,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:30Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:39:20Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:56Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:38:46Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -16914,7 +16914,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
@@ -16922,8 +16922,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: worker
     namespace: team-25
-    resourceVersion: "1961"
-    uid: f25faba6-c122-44e5-bb38-d19d88954a7d
+    resourceVersion: "1964"
+    uid: edf359f4-20c0-4dd5-b47c-cd4932a73671
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -16955,14 +16955,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:30Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:39:20Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:56Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:38:46Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -16976,7 +16976,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: api
       meta.helm.sh/release-namespace: team-26
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
@@ -16985,8 +16985,8 @@ items:
       helm.sh/chart: api-1.0.0
     name: api
     namespace: team-26
-    resourceVersion: "2131"
-    uid: 38659b4a-7f6a-43d8-9f03-0284616f8d74
+    resourceVersion: "2133"
+    uid: f9545756-d022-4043-b4aa-e74f33feed90
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -17018,14 +17018,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:38Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:28Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:24Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:09Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -17038,15 +17038,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-26:apps/Deployment:team-26/auth
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
       argocd.argoproj.io/instance: team-26
     name: auth
     namespace: team-26
-    resourceVersion: "2080"
-    uid: b410ff09-1ae2-450e-893e-c8ace642de8e
+    resourceVersion: "2081"
+    uid: 9597d9d1-7d68-4d0f-880a-ec2a3c7fd01d
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -17078,14 +17078,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:35Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:25Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:16Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:02Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -17097,7 +17097,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
@@ -17105,8 +17105,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: billing
     namespace: team-26
-    resourceVersion: "1970"
-    uid: c0928277-95e5-4425-86a3-6dd3ac64c44f
+    resourceVersion: "1973"
+    uid: 90eca8dc-d7d6-4a9b-9d86-002a11323ad1
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -17138,14 +17138,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:30Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:39:20Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:57Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:38:47Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -17158,15 +17158,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-26:apps/Deployment:team-26/cache
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
       argocd.argoproj.io/instance: team-26
     name: cache
     namespace: team-26
-    resourceVersion: "2081"
-    uid: 67ba1cc8-95c4-4d48-9a39-6dec377fcdf5
+    resourceVersion: "2082"
+    uid: 10a549b2-4bfe-465e-8480-d55e664e105b
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -17198,14 +17198,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:35Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:25Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:16Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:02Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -17217,7 +17217,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
@@ -17225,8 +17225,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cron
     namespace: team-26
-    resourceVersion: "1968"
-    uid: 989948fd-c0e8-44da-aa6a-26597d59f652
+    resourceVersion: "1971"
+    uid: 5efe8d32-486d-4323-b02f-66c446c15366
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -17258,14 +17258,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:30Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:39:20Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:56Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:38:47Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -17277,7 +17277,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
@@ -17285,8 +17285,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: gateway
     namespace: team-26
-    resourceVersion: "1969"
-    uid: d6d9a724-61fe-4348-986f-9b8ed98e2d4c
+    resourceVersion: "1972"
+    uid: 3d782086-9cd6-428f-9eec-dbb1ef987878
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -17318,14 +17318,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:30Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:39:20Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:57Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:38:47Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -17337,15 +17337,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: notify
       confighub.com/UnitSlug: team-26-notify
     name: notify
     namespace: team-26
-    resourceVersion: "2169"
-    uid: f68dca1b-6dd5-4c75-86e5-c7bd0acc29c2
+    resourceVersion: "2173"
+    uid: 11114d7b-fd28-4358-9c28-ab3ee6559daa
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -17377,14 +17377,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:39Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:30Z"
+      lastUpdateTime: "2026-09-27T12:39:30Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:29Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:15Z"
+      lastUpdateTime: "2026-09-27T12:39:30Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -17396,15 +17396,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: search
       confighub.com/UnitSlug: team-26-search
     name: search
     namespace: team-26
-    resourceVersion: "2168"
-    uid: 3a1da000-6ebe-473d-9e54-e4ff014de92d
+    resourceVersion: "2172"
+    uid: a30e7b9a-405f-4f07-a513-6a2632757af1
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -17436,14 +17436,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:39Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:30Z"
+      lastUpdateTime: "2026-09-27T12:39:30Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:29Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:15Z"
+      lastUpdateTime: "2026-09-27T12:39:30Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -17457,7 +17457,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: web
       meta.helm.sh/release-namespace: team-26
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
@@ -17466,8 +17466,8 @@ items:
       helm.sh/chart: web-1.0.0
     name: web
     namespace: team-26
-    resourceVersion: "2132"
-    uid: 17c6fd9d-dd1e-4518-8707-e2c93fbed07b
+    resourceVersion: "2134"
+    uid: 16ab81e0-1ac3-48ab-9513-ad865f1159ef
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -17499,14 +17499,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:38Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:28Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:24Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:09Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -17518,7 +17518,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
@@ -17526,8 +17526,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: worker
     namespace: team-26
-    resourceVersion: "1967"
-    uid: 6147f87c-62e2-4d5d-b4ba-c7d6a1246a83
+    resourceVersion: "1969"
+    uid: c8f53953-592d-4843-b4dd-2e7bcd05f13d
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -17559,14 +17559,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:30Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:39:20Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:56Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:38:47Z"
+      lastUpdateTime: "2026-09-27T12:39:20Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -17578,7 +17578,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
@@ -17586,8 +17586,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: api
     namespace: team-27
-    resourceVersion: "1971"
-    uid: 04a10be0-0321-4d4c-bf7d-978b9e3719f8
+    resourceVersion: "1974"
+    uid: e872723f-4396-4e50-99b6-7e5d90a957ad
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -17619,14 +17619,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:30Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:39:21Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:57Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:38:47Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -17638,7 +17638,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
@@ -17646,8 +17646,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: auth
     namespace: team-27
-    resourceVersion: "1973"
-    uid: b0cadb16-bb37-417b-9b57-3ae19f9f3713
+    resourceVersion: "1976"
+    uid: 4a6835c0-a213-489e-8cbf-6cb3648a914b
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -17679,14 +17679,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:30Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:39:21Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:57Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:38:47Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -17698,7 +17698,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
@@ -17706,8 +17706,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: billing
     namespace: team-27
-    resourceVersion: "1975"
-    uid: 2e7106cc-3dd0-49fd-bf8e-c8f98b30b61a
+    resourceVersion: "1979"
+    uid: 7c1a56eb-f6db-4496-a0a6-0ea7a5944517
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -17739,14 +17739,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:31Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:39:21Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:57Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:38:48Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -17758,7 +17758,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
@@ -17766,8 +17766,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cache
     namespace: team-27
-    resourceVersion: "1974"
-    uid: 30e37814-da1c-41bb-864c-5f2b1acdcbee
+    resourceVersion: "1977"
+    uid: 4a0d39a8-41a3-4621-8eea-3b4439bc2e17
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -17799,14 +17799,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:30Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:39:21Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:57Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:38:47Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -17819,15 +17819,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-27:apps/Deployment:team-27/cron
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
       argocd.argoproj.io/instance: team-27
     name: cron
     namespace: team-27
-    resourceVersion: "2082"
-    uid: 47e996f2-c92a-43b8-9174-d7588b7b09a3
+    resourceVersion: "2083"
+    uid: 82b896dc-7908-48a3-8f5e-7b39b6e32295
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -17859,14 +17859,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:35Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:25Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:17Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:02Z"
+      lastUpdateTime: "2026-09-27T12:39:25Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -17879,15 +17879,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-27:apps/Deployment:team-27/gateway
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
       argocd.argoproj.io/instance: team-27
     name: gateway
     namespace: team-27
-    resourceVersion: "2083"
-    uid: 2177fb88-dd2b-4070-b670-1bc84260cba3
+    resourceVersion: "2084"
+    uid: 70c100af-93b4-44b8-8510-115316aeb0e3
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -17919,14 +17919,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:35Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:26Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:17Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:02Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -17939,15 +17939,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-27:apps/Deployment:team-27/notify
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
       argocd.argoproj.io/instance: team-27
     name: notify
     namespace: team-27
-    resourceVersion: "2085"
-    uid: c25b819b-c1e1-4dd0-919b-d0393d64d5a1
+    resourceVersion: "2087"
+    uid: 98f05d17-a9a7-42ef-b585-3214255402e0
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -17979,14 +17979,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:35Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:26Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:17Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:03Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -17999,15 +17999,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-27:apps/Deployment:team-27/search
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: search
       argocd.argoproj.io/instance: team-27
     name: search
     namespace: team-27
-    resourceVersion: "2084"
-    uid: dc852d62-2fcf-4d3d-a19a-386270c4ac69
+    resourceVersion: "2085"
+    uid: ff316ce5-cd5d-4490-bd12-77181f83a341
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -18039,14 +18039,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:35Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:26Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:17Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:03Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -18060,7 +18060,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: web
       meta.helm.sh/release-namespace: team-27
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
@@ -18069,8 +18069,8 @@ items:
       helm.sh/chart: web-1.0.0
     name: web
     namespace: team-27
-    resourceVersion: "2133"
-    uid: 0e8b9e7f-17b4-4815-8580-54984dc7ce0e
+    resourceVersion: "2135"
+    uid: 28c601c4-8a56-4fe6-ad15-4f3ad22f6310
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -18102,14 +18102,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:38Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:28Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:24Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:10Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -18121,7 +18121,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
@@ -18129,8 +18129,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: worker
     namespace: team-27
-    resourceVersion: "1972"
-    uid: 3a7958dc-3b58-4280-ae3f-3fa7b93c9b2f
+    resourceVersion: "1975"
+    uid: c044b109-3a78-4cff-8a10-b79ad243bef7
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -18162,14 +18162,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:30Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:39:21Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:57Z"
-      lastUpdateTime: "2026-09-27T10:48:30Z"
+    - lastTransitionTime: "2026-09-27T12:38:47Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -18182,15 +18182,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-28:apps/Deployment:team-28/api
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
       argocd.argoproj.io/instance: team-28
     name: api
     namespace: team-28
-    resourceVersion: "2086"
-    uid: b27e16ef-854f-4f61-b2ec-b3429902186a
+    resourceVersion: "2088"
+    uid: 314fb273-802b-4831-9987-251ee2525169
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -18222,14 +18222,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:35Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:26Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:17Z"
-      lastUpdateTime: "2026-09-27T10:48:35Z"
+    - lastTransitionTime: "2026-09-27T12:39:03Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -18241,7 +18241,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
@@ -18249,8 +18249,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: auth
     namespace: team-28
-    resourceVersion: "1977"
-    uid: eb89fcbc-2c62-405e-b0dc-ead888ced827
+    resourceVersion: "1981"
+    uid: 319cff9b-a7eb-402f-9e96-c1fecafd4aa4
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -18282,14 +18282,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:31Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:39:21Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:58Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:38:48Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -18301,7 +18301,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
@@ -18309,8 +18309,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: billing
     namespace: team-28
-    resourceVersion: "1980"
-    uid: 3f43c4eb-3750-4033-8ab6-bebfeb37bd20
+    resourceVersion: "1985"
+    uid: a9fc62a8-1c19-4138-93d8-639cbc384302
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -18342,14 +18342,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:31Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:39:21Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:58Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:38:49Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -18361,7 +18361,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
@@ -18369,8 +18369,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: cache
     namespace: team-28
-    resourceVersion: "1979"
-    uid: b2105645-8ee1-4e73-a1d0-6c26991a3717
+    resourceVersion: "1984"
+    uid: 3747dfc7-2bbb-4e31-859b-f5a9f65ed7fb
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -18402,14 +18402,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:31Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:39:21Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:58Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:38:48Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -18421,15 +18421,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: cron
       confighub.com/UnitSlug: team-28-cron
     name: cron
     namespace: team-28
-    resourceVersion: "2170"
-    uid: 75381397-5c46-44a4-b46b-55a7396a069c
+    resourceVersion: "2175"
+    uid: 077ff0a6-b55c-4d02-a6f8-bf3dea78d342
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -18461,14 +18461,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:39Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:30Z"
+      lastUpdateTime: "2026-09-27T12:39:30Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:29Z"
-      lastUpdateTime: "2026-09-27T10:48:39Z"
+    - lastTransitionTime: "2026-09-27T12:39:15Z"
+      lastUpdateTime: "2026-09-27T12:39:30Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -18480,7 +18480,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
@@ -18488,8 +18488,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: gateway
     namespace: team-28
-    resourceVersion: "1976"
-    uid: 5c9363bb-c647-4cad-b3de-5e4ed5740033
+    resourceVersion: "1980"
+    uid: 4dbba7c8-3290-47b6-acdc-d8ff2a0f879e
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -18521,14 +18521,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:31Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:39:21Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:58Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:38:48Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -18542,7 +18542,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: notify
       meta.helm.sh/release-namespace: team-28
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
@@ -18551,8 +18551,8 @@ items:
       helm.sh/chart: notify-1.0.0
     name: notify
     namespace: team-28
-    resourceVersion: "2135"
-    uid: 208d84f5-fb3e-4b0f-9652-ff02984cf9e5
+    resourceVersion: "2137"
+    uid: 31fef7e4-d5f7-430a-88a2-9addbda1934e
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -18584,14 +18584,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:38Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:28Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:24Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:10Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -18603,7 +18603,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: search
@@ -18611,8 +18611,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: search
     namespace: team-28
-    resourceVersion: "1978"
-    uid: f4b2c37e-33df-42e3-8ee7-5693634c2f99
+    resourceVersion: "1982"
+    uid: 66dae4a8-3d88-4b4f-b155-f42092976e9d
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -18644,14 +18644,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:31Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:39:21Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:58Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:38:48Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -18665,7 +18665,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: web
       meta.helm.sh/release-namespace: team-28
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
@@ -18674,8 +18674,8 @@ items:
       helm.sh/chart: web-1.0.0
     name: web
     namespace: team-28
-    resourceVersion: "2134"
-    uid: 0c57127a-5368-4e43-b517-7436afd2c78d
+    resourceVersion: "2136"
+    uid: fbb50fee-709a-42b2-8832-5d2d885e80e6
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -18707,14 +18707,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:38Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:28Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:24Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:10Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -18727,15 +18727,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-28:apps/Deployment:team-28/worker
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
       argocd.argoproj.io/instance: team-28
     name: worker
     namespace: team-28
-    resourceVersion: "2087"
-    uid: 764cf8cc-72df-4dcc-89cf-38b06e762470
+    resourceVersion: "2089"
+    uid: 799838a3-c6cf-4701-88ed-38949914303b
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -18767,14 +18767,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:36Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:26Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:17Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:03Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -18786,7 +18786,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
@@ -18794,8 +18794,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: api
     namespace: team-29
-    resourceVersion: "1981"
-    uid: 3441e6e5-bb0c-44ab-b7dd-0d6ab494e32d
+    resourceVersion: "1986"
+    uid: c6961a45-f2cf-4639-8868-fcbe8576547e
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -18827,14 +18827,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:31Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:39:21Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:59Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:38:49Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -18847,15 +18847,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-29:apps/Deployment:team-29/auth
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
       argocd.argoproj.io/instance: team-29
     name: auth
     namespace: team-29
-    resourceVersion: "2090"
-    uid: 837b3872-143f-46c6-938e-be7366aa0d87
+    resourceVersion: "2092"
+    uid: 29398531-398a-464e-9340-80609660a102
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -18887,14 +18887,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:36Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:26Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:18Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:03Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -18906,15 +18906,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: billing
       confighub.com/UnitSlug: team-29-billing
     name: billing
     namespace: team-29
-    resourceVersion: "2171"
-    uid: d5966449-875f-4a10-b8ab-1b56f2d36e48
+    resourceVersion: "2176"
+    uid: 0acf3abe-5e9f-48df-981d-8783a49dd9fc
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -18946,14 +18946,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:40Z"
-      lastUpdateTime: "2026-09-27T10:48:40Z"
+    - lastTransitionTime: "2026-09-27T12:39:30Z"
+      lastUpdateTime: "2026-09-27T12:39:30Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:29Z"
-      lastUpdateTime: "2026-09-27T10:48:40Z"
+    - lastTransitionTime: "2026-09-27T12:39:15Z"
+      lastUpdateTime: "2026-09-27T12:39:30Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -18967,7 +18967,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: cache
       meta.helm.sh/release-namespace: team-29
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
@@ -18976,8 +18976,8 @@ items:
       helm.sh/chart: cache-1.0.0
     name: cache
     namespace: team-29
-    resourceVersion: "2136"
-    uid: b7584813-691c-489e-bd60-13143be683f9
+    resourceVersion: "2138"
+    uid: 87fd0a72-37af-4667-8b46-b8802f3c3584
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -19009,14 +19009,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:38Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:28Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:24Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:10Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -19029,15 +19029,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-29:apps/Deployment:team-29/cron
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
       argocd.argoproj.io/instance: team-29
     name: cron
     namespace: team-29
-    resourceVersion: "2089"
-    uid: 0584e897-3d40-4686-b26e-cf947c776199
+    resourceVersion: "2091"
+    uid: b20d0d02-6a07-47c6-b1fe-e57bf054b993
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -19069,14 +19069,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:36Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:26Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:18Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:03Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -19088,7 +19088,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
@@ -19096,8 +19096,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: gateway
     namespace: team-29
-    resourceVersion: "1983"
-    uid: 4a8f4b20-9a50-4b53-a093-93a8997e07dc
+    resourceVersion: "1988"
+    uid: ea870192-96d4-4b3c-b58d-ccfabfd8e111
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -19129,14 +19129,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:31Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:39:21Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:59Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:38:49Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -19148,7 +19148,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
@@ -19156,8 +19156,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: notify
     namespace: team-29
-    resourceVersion: "1985"
-    uid: 02b75048-8578-454d-9308-441cea7578c6
+    resourceVersion: "1990"
+    uid: 6433d303-4f46-4e0a-b0b1-6188ea1d4968
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -19189,14 +19189,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:31Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:39:21Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:59Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:38:49Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -19208,7 +19208,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: search
@@ -19216,8 +19216,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: search
     namespace: team-29
-    resourceVersion: "1984"
-    uid: c72b7baa-43a8-4143-b387-4f00232f5a0b
+    resourceVersion: "1989"
+    uid: 7ef9ab2e-5239-406c-b1e5-c68a005ca3a8
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -19249,14 +19249,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:31Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:39:21Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:59Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:38:49Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -19269,15 +19269,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-29:apps/Deployment:team-29/web
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
       argocd.argoproj.io/instance: team-29
     name: web
     namespace: team-29
-    resourceVersion: "2088"
-    uid: 435e652e-2592-49d2-838a-6d5a1a85b2d1
+    resourceVersion: "2090"
+    uid: 1e676474-9b88-4180-85a4-1bd4441a891b
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -19309,14 +19309,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:36Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:26Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:17Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:03Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -19328,7 +19328,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
@@ -19336,8 +19336,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: worker
     namespace: team-29
-    resourceVersion: "1982"
-    uid: 40ff243d-a41b-40e1-9157-55a310e11f46
+    resourceVersion: "1987"
+    uid: 7a7d5228-60d1-494c-af7d-0058fd3ca9ab
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -19369,14 +19369,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:31Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:39:21Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:59Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:38:49Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -19390,7 +19390,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: api
       meta.helm.sh/release-namespace: team-30
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: api
@@ -19399,8 +19399,8 @@ items:
       helm.sh/chart: api-1.0.0
     name: api
     namespace: team-30
-    resourceVersion: "2137"
-    uid: ec849fa8-d5b7-45b4-aed8-42509387854d
+    resourceVersion: "2139"
+    uid: 7f8a3066-1fd9-4a2a-a580-34fed708fd3d
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -19432,14 +19432,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:38Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:28Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:25Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:10Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: ReplicaSet "api-5b9d775cf" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -19453,7 +19453,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: auth
       meta.helm.sh/release-namespace: team-30
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
@@ -19462,8 +19462,8 @@ items:
       helm.sh/chart: auth-1.0.0
     name: auth
     namespace: team-30
-    resourceVersion: "2138"
-    uid: d68e8248-4ec2-4034-9152-e32d2c46c4a5
+    resourceVersion: "2140"
+    uid: adb13a53-4816-4c47-b8d0-0caf62fda949
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -19495,14 +19495,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:38Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:28Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:25Z"
-      lastUpdateTime: "2026-09-27T10:48:38Z"
+    - lastTransitionTime: "2026-09-27T12:39:10Z"
+      lastUpdateTime: "2026-09-27T12:39:28Z"
       message: ReplicaSet "auth-65cfd67f89" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -19514,15 +19514,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: billing
       confighub.com/UnitSlug: team-30-billing
     name: billing
     namespace: team-30
-    resourceVersion: "2173"
-    uid: cf0ee448-4aa9-444a-b98e-246381213d9f
+    resourceVersion: "2178"
+    uid: ad943674-1535-4b2d-bbc3-9e840de106d7
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -19554,14 +19554,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:40Z"
-      lastUpdateTime: "2026-09-27T10:48:40Z"
+    - lastTransitionTime: "2026-09-27T12:39:30Z"
+      lastUpdateTime: "2026-09-27T12:39:30Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:30Z"
-      lastUpdateTime: "2026-09-27T10:48:40Z"
+    - lastTransitionTime: "2026-09-27T12:39:15Z"
+      lastUpdateTime: "2026-09-27T12:39:30Z"
       message: ReplicaSet "billing-59bc44d959" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -19575,14 +19575,14 @@ items:
       deployment.kubernetes.io/revision: "1"
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"cache"},"name":"cache","namespace":"team-30"},"spec":{"replicas":0,"selector":{"matchLabels":{"app":"cache"}},"template":{"metadata":{"labels":{"app":"cache"}},"spec":{"containers":[{"image":"registry.k8s.io/pause:3.9","name":"cache"}]}}}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: cache
     name: cache
     namespace: team-30
-    resourceVersion: "1296"
-    uid: bfa468f6-c0dd-4ae7-b7ee-b2fbf2a93047
+    resourceVersion: "1477"
+    uid: 1426a656-0efc-4c0e-8ba7-08f2426e7131
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -19614,14 +19614,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:00Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:38:58Z"
+      lastUpdateTime: "2026-09-27T12:38:58Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:41Z"
-      lastUpdateTime: "2026-09-27T10:48:00Z"
+    - lastTransitionTime: "2026-09-27T12:38:32Z"
+      lastUpdateTime: "2026-09-27T12:38:58Z"
       message: ReplicaSet "cache-f9df955f" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -19633,15 +19633,15 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: cron
       confighub.com/UnitSlug: team-30-cron
     name: cron
     namespace: team-30
-    resourceVersion: "2172"
-    uid: a89d567f-115b-4311-9773-4dbe66bf5564
+    resourceVersion: "2177"
+    uid: 6044d179-e7af-4964-a7b1-c6b226efded2
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -19673,14 +19673,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:40Z"
-      lastUpdateTime: "2026-09-27T10:48:40Z"
+    - lastTransitionTime: "2026-09-27T12:39:30Z"
+      lastUpdateTime: "2026-09-27T12:39:30Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:30Z"
-      lastUpdateTime: "2026-09-27T10:48:40Z"
+    - lastTransitionTime: "2026-09-27T12:39:15Z"
+      lastUpdateTime: "2026-09-27T12:39:30Z"
       message: ReplicaSet "cron-78dfb794df" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -19692,7 +19692,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: gateway
@@ -19700,8 +19700,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: gateway
     namespace: team-30
-    resourceVersion: "1990"
-    uid: 290ca9b9-f9b3-423c-b517-2c7a5809e97e
+    resourceVersion: "1993"
+    uid: f7ca2807-0dd9-48ab-aeea-9819b358b4b4
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -19733,14 +19733,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:31Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:39:21Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:59Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:38:50Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: ReplicaSet "gateway-54b54c8c5" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -19752,7 +19752,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
@@ -19760,8 +19760,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: notify
     namespace: team-30
-    resourceVersion: "1991"
-    uid: d5bc7830-c3d2-46ec-a181-77fc22d88788
+    resourceVersion: "1994"
+    uid: d2ed0e4d-4b84-4cef-b17b-a42bdc9697f4
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -19793,14 +19793,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:31Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:39:21Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:00Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:38:50Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: ReplicaSet "notify-75cc796fc9" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -19813,15 +19813,15 @@ items:
     annotations:
       argocd.argoproj.io/tracking-id: team-30:apps/Deployment:team-30/search
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: search
       argocd.argoproj.io/instance: team-30
     name: search
     namespace: team-30
-    resourceVersion: "2091"
-    uid: 66f6de68-fb29-4e60-9cfc-da4588bf9572
+    resourceVersion: "2093"
+    uid: 4e026e7e-e562-4597-92b3-6b99c5277942
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -19853,14 +19853,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:36Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:26Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:48:18Z"
-      lastUpdateTime: "2026-09-27T10:48:36Z"
+    - lastTransitionTime: "2026-09-27T12:39:04Z"
+      lastUpdateTime: "2026-09-27T12:39:26Z"
       message: ReplicaSet "search-559cfc6785" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -19872,7 +19872,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: web
@@ -19880,8 +19880,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: web
     namespace: team-30
-    resourceVersion: "1986"
-    uid: 9497a2da-dbd9-4623-9fc6-bba621bf511e
+    resourceVersion: "1991"
+    uid: ab6c0218-4e91-4cfc-82a3-d00f0d2cd780
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -19913,14 +19913,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:31Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:39:21Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:59Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:38:50Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: ReplicaSet "web-85f4f5cb8c" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -19932,7 +19932,7 @@ items:
   metadata:
     annotations:
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
@@ -19940,8 +19940,8 @@ items:
       kustomize.toolkit.fluxcd.io/namespace: flux-system
     name: worker
     namespace: team-30
-    resourceVersion: "1987"
-    uid: 5cfdc06f-e96f-4797-8cef-25f20bdc3ce7
+    resourceVersion: "1992"
+    uid: 81c82517-9355-4d48-8741-ebf0dafd5cc4
   spec:
     progressDeadlineSeconds: 600
     replicas: 0
@@ -19973,14 +19973,14 @@ items:
         terminationGracePeriodSeconds: 30
   status:
     conditions:
-    - lastTransitionTime: "2026-09-27T10:48:31Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:39:21Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: Deployment has minimum availability.
       reason: MinimumReplicasAvailable
       status: "True"
       type: Available
-    - lastTransitionTime: "2026-09-27T10:47:59Z"
-      lastUpdateTime: "2026-09-27T10:48:31Z"
+    - lastTransitionTime: "2026-09-27T12:38:50Z"
+      lastUpdateTime: "2026-09-27T12:39:21Z"
       message: ReplicaSet "worker-789f68d749" has successfully progressed.
       reason: NewReplicaSetAvailable
       status: "True"
@@ -19997,20 +19997,20 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:23Z"
+  firstTimestamp: "2026-09-27T12:38:11Z"
   involvedObject:
     apiVersion: v1
     kind: Node
     name: scout-evals-scale-control-plane
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:23Z"
+  lastTimestamp: "2026-09-27T12:38:11Z"
   message: Starting kubelet.
   metadata:
-    creationTimestamp: "2026-09-27T10:47:23Z"
-    name: scout-evals-scale-control-plane.18d927c28bd00769
+    creationTimestamp: "2026-09-27T12:38:11Z"
+    name: scout-evals-scale-control-plane.18d92dce8b4397c4
     namespace: default
     resourceVersion: "227"
-    uid: 81f92fb1-e06f-4a69-9a20-00f528ef8aa4
+    uid: 2ca585b1-8272-47c9-95d8-f4b20c7337c0
   reason: Starting
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -20021,20 +20021,20 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:23Z"
+  firstTimestamp: "2026-09-27T12:38:12Z"
   involvedObject:
     apiVersion: v1
     kind: Node
     name: scout-evals-scale-control-plane
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:23Z"
+  lastTimestamp: "2026-09-27T12:38:12Z"
   message: Updated Node Allocatable limit across pods
   metadata:
-    creationTimestamp: "2026-09-27T10:47:23Z"
-    name: scout-evals-scale-control-plane.18d927c28d3ebb91
+    creationTimestamp: "2026-09-27T12:38:12Z"
+    name: scout-evals-scale-control-plane.18d92dce8d039339
     namespace: default
     resourceVersion: "229"
-    uid: 58e22d43-173a-41ba-a0f3-df281672d1ff
+    uid: 7178a085-d400-40f5-985f-1d0bb61de6c6
   reason: NodeAllocatableEnforced
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -20045,20 +20045,20 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:23Z"
+  firstTimestamp: "2026-09-27T12:38:12Z"
   involvedObject:
     apiVersion: v1
     kind: Node
     name: scout-evals-scale-control-plane
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:23Z"
+  lastTimestamp: "2026-09-27T12:38:12Z"
   message: 'Node scout-evals-scale-control-plane status is now: NodeHasSufficientMemory'
   metadata:
-    creationTimestamp: "2026-09-27T10:47:23Z"
-    name: scout-evals-scale-control-plane.18d927c2934b248f
+    creationTimestamp: "2026-09-27T12:38:12Z"
+    name: scout-evals-scale-control-plane.18d92dce93213a6f
     namespace: default
     resourceVersion: "232"
-    uid: 9fd4951e-1d47-4895-ad3f-bcd36f702fe6
+    uid: 9d70cf23-ac56-4e42-bd67-13a8a39992f4
   reason: NodeHasSufficientMemory
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -20069,20 +20069,20 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:23Z"
+  firstTimestamp: "2026-09-27T12:38:12Z"
   involvedObject:
     apiVersion: v1
     kind: Node
     name: scout-evals-scale-control-plane
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:23Z"
+  lastTimestamp: "2026-09-27T12:38:12Z"
   message: 'Node scout-evals-scale-control-plane status is now: NodeHasNoDiskPressure'
   metadata:
-    creationTimestamp: "2026-09-27T10:47:23Z"
-    name: scout-evals-scale-control-plane.18d927c2934b42fe
+    creationTimestamp: "2026-09-27T12:38:12Z"
+    name: scout-evals-scale-control-plane.18d92dce93214b32
     namespace: default
     resourceVersion: "233"
-    uid: 9059b27d-350f-4895-b49a-1760816ce45f
+    uid: 3b99a163-6330-4260-8a3c-28283fd61b48
   reason: NodeHasNoDiskPressure
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -20093,20 +20093,20 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:23Z"
+  firstTimestamp: "2026-09-27T12:38:12Z"
   involvedObject:
     apiVersion: v1
     kind: Node
     name: scout-evals-scale-control-plane
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:23Z"
+  lastTimestamp: "2026-09-27T12:38:12Z"
   message: 'Node scout-evals-scale-control-plane status is now: NodeHasSufficientPID'
   metadata:
-    creationTimestamp: "2026-09-27T10:47:23Z"
-    name: scout-evals-scale-control-plane.18d927c2934b4dbc
+    creationTimestamp: "2026-09-27T12:38:12Z"
+    name: scout-evals-scale-control-plane.18d92dce932154a3
     namespace: default
     resourceVersion: "234"
-    uid: 009f61c1-4053-4d25-8b5e-353ecb2a946f
+    uid: d2a7133f-c022-4e43-90bc-1e57bd968a66
   reason: NodeHasSufficientPID
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -20117,22 +20117,22 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:28Z"
+  firstTimestamp: "2026-09-27T12:38:18Z"
   involvedObject:
     apiVersion: v1
     kind: Node
     name: scout-evals-scale-control-plane
-    uid: 5a214369-161d-4a67-9d13-e1ba45dd7e22
+    uid: 846b13a5-3fea-4c2c-b986-98863cee0571
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:28Z"
+  lastTimestamp: "2026-09-27T12:38:18Z"
   message: 'Node scout-evals-scale-control-plane event: Registered Node scout-evals-scale-control-plane
     in Controller'
   metadata:
-    creationTimestamp: "2026-09-27T10:47:28Z"
-    name: scout-evals-scale-control-plane.18d927c3be1e331b
+    creationTimestamp: "2026-09-27T12:38:18Z"
+    name: scout-evals-scale-control-plane.18d92dd004d96125
     namespace: default
-    resourceVersion: "319"
-    uid: a5759d6c-d027-44fd-ae39-95d9376ab131
+    resourceVersion: "322"
+    uid: b2dba0d9-9ea0-4d86-9663-5e694a902dcf
   reason: RegisteredNode
   reportingComponent: node-controller
   reportingInstance: ""
@@ -20141,7 +20141,7 @@ items:
   type: Normal
 - action: StartKubeProxy
   apiVersion: v1
-  eventTime: "2026-09-27T10:47:30.234977Z"
+  eventTime: "2026-09-27T12:38:20.366928Z"
   firstTimestamp: null
   involvedObject:
     apiVersion: v1
@@ -20150,11 +20150,11 @@ items:
   kind: Event
   lastTimestamp: null
   metadata:
-    creationTimestamp: "2026-09-27T10:47:30Z"
-    name: scout-evals-scale-control-plane.18d927c42471911b
+    creationTimestamp: "2026-09-27T12:38:20Z"
+    name: scout-evals-scale-control-plane.18d92dd07f323a61
     namespace: default
-    resourceVersion: "393"
-    uid: 57816a5c-65f9-4073-929a-9ebb60aaa420
+    resourceVersion: "396"
+    uid: dc3ab698-085c-4f08-9c0a-260b5b0182f2
   reason: Starting
   reportingComponent: kube-proxy
   reportingInstance: kube-proxy-scout-evals-scale-control-plane
@@ -20163,20 +20163,20 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:40Z"
+  firstTimestamp: "2026-09-27T12:38:30Z"
   involvedObject:
     apiVersion: v1
     kind: Node
     name: scout-evals-scale-control-plane
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:40Z"
+  lastTimestamp: "2026-09-27T12:38:30Z"
   message: 'Node scout-evals-scale-control-plane status is now: NodeReady'
   metadata:
-    creationTimestamp: "2026-09-27T10:47:40Z"
-    name: scout-evals-scale-control-plane.18d927c69941b5d7
+    creationTimestamp: "2026-09-27T12:38:30Z"
+    name: scout-evals-scale-control-plane.18d92dd2f6fb2968
     namespace: default
-    resourceVersion: "419"
-    uid: df249451-c203-4391-a6cd-390b30e0a8f6
+    resourceVersion: "423"
+    uid: a6a1f840-11cc-4bb7-a2b3-b4552bbc4d90
   reason: NodeReady
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -20187,164 +20187,25 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:29Z"
+  firstTimestamp: "2026-09-27T12:38:19Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: coredns-7d764666f9-jsjvp
-    namespace: kube-system
-    resourceVersion: "371"
-    uid: 30387b46-3fef-48a8-8d7f-704c1ecffdb4
-  kind: Event
-  lastTimestamp: "2026-09-27T10:47:29Z"
-  message: '0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims
-    to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful
-    for scheduling.'
-  metadata:
-    creationTimestamp: "2026-09-27T10:47:29Z"
-    name: coredns-7d764666f9-jsjvp.18d927c40baf86ec
+    name: coredns-7d764666f9-c6vbk
     namespace: kube-system
     resourceVersion: "373"
-    uid: ad7bc0cb-9862-45e0-a270-888389ccbbb2
-  reason: FailedScheduling
-  reportingComponent: default-scheduler
-  reportingInstance: ""
-  source:
-    component: default-scheduler
-  type: Warning
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T10:47:40Z"
-  involvedObject:
-    apiVersion: v1
-    kind: Pod
-    name: coredns-7d764666f9-jsjvp
-    namespace: kube-system
-    resourceVersion: "374"
-    uid: 30387b46-3fef-48a8-8d7f-704c1ecffdb4
+    uid: 341944e3-164e-4167-8ea8-30bfc9e83ef5
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:40Z"
-  message: Successfully assigned kube-system/coredns-7d764666f9-jsjvp to scout-evals-scale-control-plane
-  metadata:
-    creationTimestamp: "2026-09-27T10:47:40Z"
-    name: coredns-7d764666f9-jsjvp.18d927c69a1ac628
-    namespace: kube-system
-    resourceVersion: "427"
-    uid: 91f4966d-06e6-45b6-a790-a661a2e6df2e
-  reason: Scheduled
-  reportingComponent: default-scheduler
-  reportingInstance: ""
-  source:
-    component: default-scheduler
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T10:47:41Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{coredns}
-    kind: Pod
-    name: coredns-7d764666f9-jsjvp
-    namespace: kube-system
-    resourceVersion: "424"
-    uid: 30387b46-3fef-48a8-8d7f-704c1ecffdb4
-  kind: Event
-  lastTimestamp: "2026-09-27T10:47:41Z"
-  message: Container image "registry.k8s.io/coredns/coredns:v1.13.1" already present
-    on machine and can be accessed by the pod
-  metadata:
-    creationTimestamp: "2026-09-27T10:47:41Z"
-    name: coredns-7d764666f9-jsjvp.18d927c6b72ab532
-    namespace: kube-system
-    resourceVersion: "433"
-    uid: e5847500-4476-4304-afff-d36690a29635
-  reason: Pulled
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-scale-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-scale-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T10:47:41Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{coredns}
-    kind: Pod
-    name: coredns-7d764666f9-jsjvp
-    namespace: kube-system
-    resourceVersion: "424"
-    uid: 30387b46-3fef-48a8-8d7f-704c1ecffdb4
-  kind: Event
-  lastTimestamp: "2026-09-27T10:47:41Z"
-  message: Container created
-  metadata:
-    creationTimestamp: "2026-09-27T10:47:41Z"
-    name: coredns-7d764666f9-jsjvp.18d927c6d1e38550
-    namespace: kube-system
-    resourceVersion: "574"
-    uid: 535127bd-9be4-4023-8f38-bff0d0be63b4
-  reason: Created
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-scale-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-scale-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T10:47:41Z"
-  involvedObject:
-    apiVersion: v1
-    fieldPath: spec.containers{coredns}
-    kind: Pod
-    name: coredns-7d764666f9-jsjvp
-    namespace: kube-system
-    resourceVersion: "424"
-    uid: 30387b46-3fef-48a8-8d7f-704c1ecffdb4
-  kind: Event
-  lastTimestamp: "2026-09-27T10:47:41Z"
-  message: Container started
-  metadata:
-    creationTimestamp: "2026-09-27T10:47:41Z"
-    name: coredns-7d764666f9-jsjvp.18d927c6d432334b
-    namespace: kube-system
-    resourceVersion: "579"
-    uid: 4a6f0454-d951-4751-9791-3743dfe9fbdc
-  reason: Started
-  reportingComponent: kubelet
-  reportingInstance: scout-evals-scale-control-plane
-  source:
-    component: kubelet
-    host: scout-evals-scale-control-plane
-  type: Normal
-- apiVersion: v1
-  count: 1
-  eventTime: null
-  firstTimestamp: "2026-09-27T10:47:29Z"
-  involvedObject:
-    apiVersion: v1
-    kind: Pod
-    name: coredns-7d764666f9-kr4hq
-    namespace: kube-system
-    resourceVersion: "376"
-    uid: 10b95a10-42b4-4ec1-91ca-2deb5504bfd3
-  kind: Event
-  lastTimestamp: "2026-09-27T10:47:29Z"
+  lastTimestamp: "2026-09-27T12:38:19Z"
   message: '0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims
     to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful
     for scheduling.'
   metadata:
-    creationTimestamp: "2026-09-27T10:47:29Z"
-    name: coredns-7d764666f9-kr4hq.18d927c40c6eb55d
+    creationTimestamp: "2026-09-27T12:38:19Z"
+    name: coredns-7d764666f9-c6vbk.18d92dd052dda25c
     namespace: kube-system
-    resourceVersion: "381"
-    uid: 78eb62c6-75b0-465f-ac95-0965430f5472
+    resourceVersion: "384"
+    uid: 41e26325-583a-42a1-b2c2-7a255f84c09c
   reason: FailedScheduling
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -20354,23 +20215,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:40Z"
+  firstTimestamp: "2026-09-27T12:38:30Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: coredns-7d764666f9-kr4hq
+    name: coredns-7d764666f9-c6vbk
     namespace: kube-system
-    resourceVersion: "384"
-    uid: 10b95a10-42b4-4ec1-91ca-2deb5504bfd3
+    resourceVersion: "381"
+    uid: 341944e3-164e-4167-8ea8-30bfc9e83ef5
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:40Z"
-  message: Successfully assigned kube-system/coredns-7d764666f9-kr4hq to scout-evals-scale-control-plane
+  lastTimestamp: "2026-09-27T12:38:30Z"
+  message: Successfully assigned kube-system/coredns-7d764666f9-c6vbk to scout-evals-scale-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T10:47:40Z"
-    name: coredns-7d764666f9-kr4hq.18d927c69a1a778c
+    creationTimestamp: "2026-09-27T12:38:30Z"
+    name: coredns-7d764666f9-c6vbk.18d92dd2f7aa5e71
     namespace: kube-system
-    resourceVersion: "426"
-    uid: c3cbb97b-32fe-4fdd-b59d-c61d461be252
+    resourceVersion: "429"
+    uid: b6103097-4499-4b2b-a153-80b52cff17ea
   reason: Scheduled
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -20380,25 +20241,25 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:41Z"
+  firstTimestamp: "2026-09-27T12:38:31Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{coredns}
     kind: Pod
-    name: coredns-7d764666f9-kr4hq
+    name: coredns-7d764666f9-c6vbk
     namespace: kube-system
-    resourceVersion: "423"
-    uid: 10b95a10-42b4-4ec1-91ca-2deb5504bfd3
+    resourceVersion: "426"
+    uid: 341944e3-164e-4167-8ea8-30bfc9e83ef5
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:41Z"
+  lastTimestamp: "2026-09-27T12:38:31Z"
   message: Container image "registry.k8s.io/coredns/coredns:v1.13.1" already present
     on machine and can be accessed by the pod
   metadata:
-    creationTimestamp: "2026-09-27T10:47:41Z"
-    name: coredns-7d764666f9-kr4hq.18d927c6b67f1bdb
+    creationTimestamp: "2026-09-27T12:38:31Z"
+    name: coredns-7d764666f9-c6vbk.18d92dd3108579b2
     namespace: kube-system
-    resourceVersion: "432"
-    uid: fe65e3e6-3067-4a27-9eb9-274f641075ea
+    resourceVersion: "435"
+    uid: 71870a54-58b4-4263-b692-9d65940ed388
   reason: Pulled
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -20409,24 +20270,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:41Z"
+  firstTimestamp: "2026-09-27T12:38:31Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{coredns}
     kind: Pod
-    name: coredns-7d764666f9-kr4hq
+    name: coredns-7d764666f9-c6vbk
     namespace: kube-system
-    resourceVersion: "423"
-    uid: 10b95a10-42b4-4ec1-91ca-2deb5504bfd3
+    resourceVersion: "426"
+    uid: 341944e3-164e-4167-8ea8-30bfc9e83ef5
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:41Z"
+  lastTimestamp: "2026-09-27T12:38:31Z"
   message: Container created
   metadata:
-    creationTimestamp: "2026-09-27T10:47:41Z"
-    name: coredns-7d764666f9-kr4hq.18d927c6d2581777
+    creationTimestamp: "2026-09-27T12:38:31Z"
+    name: coredns-7d764666f9-c6vbk.18d92dd32aa077ea
     namespace: kube-system
-    resourceVersion: "576"
-    uid: 17a7ae56-af14-4505-a7a3-4251aaf52080
+    resourceVersion: "553"
+    uid: 3f785739-a6c2-4c34-b8ed-7346e529b3a8
   reason: Created
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -20437,24 +20298,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:41Z"
+  firstTimestamp: "2026-09-27T12:38:31Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{coredns}
     kind: Pod
-    name: coredns-7d764666f9-kr4hq
+    name: coredns-7d764666f9-c6vbk
     namespace: kube-system
-    resourceVersion: "423"
-    uid: 10b95a10-42b4-4ec1-91ca-2deb5504bfd3
+    resourceVersion: "426"
+    uid: 341944e3-164e-4167-8ea8-30bfc9e83ef5
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:41Z"
+  lastTimestamp: "2026-09-27T12:38:31Z"
   message: Container started
   metadata:
-    creationTimestamp: "2026-09-27T10:47:41Z"
-    name: coredns-7d764666f9-kr4hq.18d927c6d51c862a
+    creationTimestamp: "2026-09-27T12:38:31Z"
+    name: coredns-7d764666f9-c6vbk.18d92dd32e728a5c
     namespace: kube-system
-    resourceVersion: "580"
-    uid: 7c5b7f7f-dd85-43e8-8a29-9e252ae9308f
+    resourceVersion: "581"
+    uid: 96969bca-abb1-4427-8c61-52207cdeac0f
   reason: Started
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -20465,49 +20326,162 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:29Z"
+  firstTimestamp: "2026-09-27T12:38:19Z"
   involvedObject:
-    apiVersion: apps/v1
-    kind: ReplicaSet
-    name: coredns-7d764666f9
+    apiVersion: v1
+    kind: Pod
+    name: coredns-7d764666f9-jjxkk
     namespace: kube-system
-    resourceVersion: "352"
-    uid: 11dad9ca-fc53-452b-a23a-e24b6e59d7e8
+    resourceVersion: "371"
+    uid: 6186bc46-d3ae-4bfd-857e-a384e287c488
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:29Z"
-  message: 'Created pod: coredns-7d764666f9-jsjvp'
+  lastTimestamp: "2026-09-27T12:38:19Z"
+  message: '0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims
+    to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful
+    for scheduling.'
   metadata:
-    creationTimestamp: "2026-09-27T10:47:29Z"
-    name: coredns-7d764666f9.18d927c40bf2388d
+    creationTimestamp: "2026-09-27T12:38:19Z"
+    name: coredns-7d764666f9-jjxkk.18d92dd0529c674d
     namespace: kube-system
-    resourceVersion: "375"
-    uid: f62d53cd-58bc-4235-b95e-7bebba333008
-  reason: SuccessfulCreate
-  reportingComponent: replicaset-controller
+    resourceVersion: "374"
+    uid: 9cc08a31-fa5f-4e62-8bd3-d5d02d1c9d3d
+  reason: FailedScheduling
+  reportingComponent: default-scheduler
   reportingInstance: ""
   source:
-    component: replicaset-controller
-  type: Normal
+    component: default-scheduler
+  type: Warning
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:29Z"
+  firstTimestamp: "2026-09-27T12:38:30Z"
   involvedObject:
-    apiVersion: apps/v1
-    kind: ReplicaSet
-    name: coredns-7d764666f9
-    namespace: kube-system
-    resourceVersion: "352"
-    uid: 11dad9ca-fc53-452b-a23a-e24b6e59d7e8
-  kind: Event
-  lastTimestamp: "2026-09-27T10:47:29Z"
-  message: 'Created pod: coredns-7d764666f9-kr4hq'
-  metadata:
-    creationTimestamp: "2026-09-27T10:47:29Z"
-    name: coredns-7d764666f9.18d927c40c49c61b
+    apiVersion: v1
+    kind: Pod
+    name: coredns-7d764666f9-jjxkk
     namespace: kube-system
     resourceVersion: "380"
-    uid: 69eda71a-6368-4d45-865b-466bbd8bb24a
+    uid: 6186bc46-d3ae-4bfd-857e-a384e287c488
+  kind: Event
+  lastTimestamp: "2026-09-27T12:38:30Z"
+  message: Successfully assigned kube-system/coredns-7d764666f9-jjxkk to scout-evals-scale-control-plane
+  metadata:
+    creationTimestamp: "2026-09-27T12:38:30Z"
+    name: coredns-7d764666f9-jjxkk.18d92dd2f7b1276c
+    namespace: kube-system
+    resourceVersion: "430"
+    uid: 59c5aa21-c2a4-431d-abd8-8d364e327dba
+  reason: Scheduled
+  reportingComponent: default-scheduler
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T12:38:31Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{coredns}
+    kind: Pod
+    name: coredns-7d764666f9-jjxkk
+    namespace: kube-system
+    resourceVersion: "428"
+    uid: 6186bc46-d3ae-4bfd-857e-a384e287c488
+  kind: Event
+  lastTimestamp: "2026-09-27T12:38:31Z"
+  message: Container image "registry.k8s.io/coredns/coredns:v1.13.1" already present
+    on machine and can be accessed by the pod
+  metadata:
+    creationTimestamp: "2026-09-27T12:38:31Z"
+    name: coredns-7d764666f9-jjxkk.18d92dd310ede937
+    namespace: kube-system
+    resourceVersion: "437"
+    uid: 3d875e8b-d596-452d-84bf-76f492185315
+  reason: Pulled
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-scale-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-scale-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T12:38:31Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{coredns}
+    kind: Pod
+    name: coredns-7d764666f9-jjxkk
+    namespace: kube-system
+    resourceVersion: "428"
+    uid: 6186bc46-d3ae-4bfd-857e-a384e287c488
+  kind: Event
+  lastTimestamp: "2026-09-27T12:38:31Z"
+  message: Container created
+  metadata:
+    creationTimestamp: "2026-09-27T12:38:31Z"
+    name: coredns-7d764666f9-jjxkk.18d92dd329a23bea
+    namespace: kube-system
+    resourceVersion: "534"
+    uid: 5f7c56ce-05dc-4f80-9f8e-042b0700d2e5
+  reason: Created
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-scale-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-scale-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T12:38:31Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{coredns}
+    kind: Pod
+    name: coredns-7d764666f9-jjxkk
+    namespace: kube-system
+    resourceVersion: "428"
+    uid: 6186bc46-d3ae-4bfd-857e-a384e287c488
+  kind: Event
+  lastTimestamp: "2026-09-27T12:38:31Z"
+  message: Container started
+  metadata:
+    creationTimestamp: "2026-09-27T12:38:31Z"
+    name: coredns-7d764666f9-jjxkk.18d92dd32dd9845c
+    namespace: kube-system
+    resourceVersion: "578"
+    uid: ab87e69f-1454-4774-bd26-b4c3e6f7811a
+  reason: Started
+  reportingComponent: kubelet
+  reportingInstance: scout-evals-scale-control-plane
+  source:
+    component: kubelet
+    host: scout-evals-scale-control-plane
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T12:38:19Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: coredns-7d764666f9
+    namespace: kube-system
+    resourceVersion: "342"
+    uid: 31d5fa7b-1d39-4099-8a73-6edd19471523
+  kind: Event
+  lastTimestamp: "2026-09-27T12:38:19Z"
+  message: 'Created pod: coredns-7d764666f9-jjxkk'
+  metadata:
+    creationTimestamp: "2026-09-27T12:38:19Z"
+    name: coredns-7d764666f9.18d92dd0529797db
+    namespace: kube-system
+    resourceVersion: "375"
+    uid: 8ae201d6-606f-46ed-bf59-d5fa9f6b5e74
   reason: SuccessfulCreate
   reportingComponent: replicaset-controller
   reportingInstance: ""
@@ -20517,23 +20491,49 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:29Z"
+  firstTimestamp: "2026-09-27T12:38:19Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: ReplicaSet
+    name: coredns-7d764666f9
+    namespace: kube-system
+    resourceVersion: "342"
+    uid: 31d5fa7b-1d39-4099-8a73-6edd19471523
+  kind: Event
+  lastTimestamp: "2026-09-27T12:38:19Z"
+  message: 'Created pod: coredns-7d764666f9-c6vbk'
+  metadata:
+    creationTimestamp: "2026-09-27T12:38:19Z"
+    name: coredns-7d764666f9.18d92dd052d2fc72
+    namespace: kube-system
+    resourceVersion: "386"
+    uid: 40d2b691-3dd5-4ff8-9c78-7bbd04118538
+  reason: SuccessfulCreate
+  reportingComponent: replicaset-controller
+  reportingInstance: ""
+  source:
+    component: replicaset-controller
+  type: Normal
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2026-09-27T12:38:19Z"
   involvedObject:
     apiVersion: apps/v1
     kind: Deployment
     name: coredns
     namespace: kube-system
-    resourceVersion: "244"
-    uid: 1ea1db2b-ab3c-43ac-9556-87925a0d8f31
+    resourceVersion: "238"
+    uid: 2610f4e6-94a4-4a25-b598-0c27e13c9d4b
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:29Z"
+  lastTimestamp: "2026-09-27T12:38:19Z"
   message: Scaled up replica set coredns-7d764666f9 from 0 to 2
   metadata:
-    creationTimestamp: "2026-09-27T10:47:29Z"
-    name: coredns.18d927c3fce4c726
+    creationTimestamp: "2026-09-27T12:38:19Z"
+    name: coredns.18d92dd043b23eb1
     namespace: kube-system
-    resourceVersion: "356"
-    uid: 9591db29-f231-455d-b610-7c9112afd92b
+    resourceVersion: "346"
+    uid: 3dcf6291-3ae1-4f38-923a-d7f1018255d7
   reason: ScalingReplicaSet
   reportingComponent: deployment-controller
   reportingInstance: ""
@@ -20543,23 +20543,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:29Z"
+  firstTimestamp: "2026-09-27T12:38:19Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: kindnet-p4vhm
+    name: kindnet-jnn2c
     namespace: kube-system
-    resourceVersion: "336"
-    uid: 8aad74fb-791d-49b5-965a-1bb66dd2a050
+    resourceVersion: "358"
+    uid: d27b02cb-24ce-4b0f-be53-4e5923ff100c
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:29Z"
-  message: Successfully assigned kube-system/kindnet-p4vhm to scout-evals-scale-control-plane
+  lastTimestamp: "2026-09-27T12:38:19Z"
+  message: Successfully assigned kube-system/kindnet-jnn2c to scout-evals-scale-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T10:47:29Z"
-    name: kindnet-p4vhm.18d927c3f44aacea
+    creationTimestamp: "2026-09-27T12:38:19Z"
+    name: kindnet-jnn2c.18d92dd04d0148c3
     namespace: kube-system
-    resourceVersion: "343"
-    uid: 5cf91393-ee19-49cc-9655-6536d5a850f8
+    resourceVersion: "366"
+    uid: edb9bcfc-ce94-47ec-aa7a-50aa604eae5f
   reason: Scheduled
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -20569,25 +20569,25 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:29Z"
+  firstTimestamp: "2026-09-27T12:38:19Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{kindnet-cni}
     kind: Pod
-    name: kindnet-p4vhm
+    name: kindnet-jnn2c
     namespace: kube-system
-    resourceVersion: "341"
-    uid: 8aad74fb-791d-49b5-965a-1bb66dd2a050
+    resourceVersion: "362"
+    uid: d27b02cb-24ce-4b0f-be53-4e5923ff100c
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:29Z"
+  lastTimestamp: "2026-09-27T12:38:19Z"
   message: Container image "docker.io/kindest/kindnetd:v20251212-v0.29.0-alpha-105-g20ccfc88"
     already present on machine and can be accessed by the pod
   metadata:
-    creationTimestamp: "2026-09-27T10:47:29Z"
-    name: kindnet-p4vhm.18d927c40f124a86
+    creationTimestamp: "2026-09-27T12:38:19Z"
+    name: kindnet-jnn2c.18d92dd06661f31a
     namespace: kube-system
-    resourceVersion: "390"
-    uid: edaeecbc-9968-4932-b53a-6e89b4053d1e
+    resourceVersion: "391"
+    uid: 4836ed1a-0e50-4e5c-b4c9-82c13e10f30e
   reason: Pulled
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -20598,24 +20598,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:30Z"
+  firstTimestamp: "2026-09-27T12:38:20Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{kindnet-cni}
     kind: Pod
-    name: kindnet-p4vhm
+    name: kindnet-jnn2c
     namespace: kube-system
-    resourceVersion: "341"
-    uid: 8aad74fb-791d-49b5-965a-1bb66dd2a050
+    resourceVersion: "362"
+    uid: d27b02cb-24ce-4b0f-be53-4e5923ff100c
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:30Z"
+  lastTimestamp: "2026-09-27T12:38:20Z"
   message: Container created
   metadata:
-    creationTimestamp: "2026-09-27T10:47:30Z"
-    name: kindnet-p4vhm.18d927c429606873
+    creationTimestamp: "2026-09-27T12:38:20Z"
+    name: kindnet-jnn2c.18d92dd085884936
     namespace: kube-system
-    resourceVersion: "394"
-    uid: a76193c8-5ca7-4c5e-ab6b-5920389a8447
+    resourceVersion: "397"
+    uid: 17231a9f-e32a-432f-b8ee-3d6611a47a02
   reason: Created
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -20626,24 +20626,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:30Z"
+  firstTimestamp: "2026-09-27T12:38:20Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{kindnet-cni}
     kind: Pod
-    name: kindnet-p4vhm
+    name: kindnet-jnn2c
     namespace: kube-system
-    resourceVersion: "341"
-    uid: 8aad74fb-791d-49b5-965a-1bb66dd2a050
+    resourceVersion: "362"
+    uid: d27b02cb-24ce-4b0f-be53-4e5923ff100c
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:30Z"
+  lastTimestamp: "2026-09-27T12:38:20Z"
   message: Container started
   metadata:
-    creationTimestamp: "2026-09-27T10:47:30Z"
-    name: kindnet-p4vhm.18d927c433562fa9
+    creationTimestamp: "2026-09-27T12:38:20Z"
+    name: kindnet-jnn2c.18d92dd090a5a06c
     namespace: kube-system
-    resourceVersion: "397"
-    uid: 690e0889-a541-4a45-8566-2127729f7689
+    resourceVersion: "398"
+    uid: 5fe20360-fa69-45f5-aec1-7a9d68cbe0bc
   reason: Started
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -20654,23 +20654,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:29Z"
+  firstTimestamp: "2026-09-27T12:38:19Z"
   involvedObject:
     apiVersion: apps/v1
     kind: DaemonSet
     name: kindnet
     namespace: kube-system
-    resourceVersion: "277"
-    uid: b465aa82-c9b2-4ea8-8a2a-d8058374be28
+    resourceVersion: "265"
+    uid: 69dfb9e6-8e93-4f45-acbd-cecee98a8faa
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:29Z"
-  message: 'Created pod: kindnet-p4vhm'
+  lastTimestamp: "2026-09-27T12:38:19Z"
+  message: 'Created pod: kindnet-jnn2c'
   metadata:
-    creationTimestamp: "2026-09-27T10:47:29Z"
-    name: kindnet.18d927c3f404b1d4
+    creationTimestamp: "2026-09-27T12:38:19Z"
+    name: kindnet.18d92dd04cb0c691
     namespace: kube-system
-    resourceVersion: "342"
-    uid: 33362704-e355-4f88-8234-475394ed9521
+    resourceVersion: "360"
+    uid: c8017dd7-60b0-4c90-959f-68b05c4c8724
   reason: SuccessfulCreate
   reportingComponent: daemonset-controller
   reportingInstance: ""
@@ -20680,24 +20680,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:23Z"
+  firstTimestamp: "2026-09-27T12:38:13Z"
   involvedObject:
     apiVersion: coordination.k8s.io/v1
     kind: Lease
     name: kube-controller-manager
     namespace: kube-system
-    resourceVersion: "236"
-    uid: f164a958-8571-49d0-a1b8-a399457db25f
+    resourceVersion: "261"
+    uid: b3a4a894-1a8b-4eb8-8a48-4c8c77a6e3ed
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:23Z"
-  message: scout-evals-scale-control-plane_15f6d641-0938-4cd5-ab07-53cdb3177d0c became
+  lastTimestamp: "2026-09-27T12:38:13Z"
+  message: scout-evals-scale-control-plane_f0154533-5a94-4652-8ad0-a0f25496aa4c became
     leader
   metadata:
-    creationTimestamp: "2026-09-27T10:47:23Z"
-    name: kube-controller-manager.18d927c29c8a38d7
+    creationTimestamp: "2026-09-27T12:38:13Z"
+    name: kube-controller-manager.18d92dcee35319ad
     namespace: kube-system
-    resourceVersion: "238"
-    uid: 584c0134-c654-4520-b4c3-4678cc21e089
+    resourceVersion: "263"
+    uid: a576e4e0-d55e-4c5a-8bfb-b72f13be5e12
   reason: LeaderElection
   reportingComponent: kube-controller-manager
   reportingInstance: ""
@@ -20707,23 +20707,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:29Z"
+  firstTimestamp: "2026-09-27T12:38:19Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: kube-proxy-lkl45
+    name: kube-proxy-9nfk2
     namespace: kube-system
-    resourceVersion: "335"
-    uid: b8eb05a5-ff76-4a9e-a7fe-1215cef59857
+    resourceVersion: "359"
+    uid: 52431b0a-1494-4fde-89c0-87a1f59efdfb
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:29Z"
-  message: Successfully assigned kube-system/kube-proxy-lkl45 to scout-evals-scale-control-plane
+  lastTimestamp: "2026-09-27T12:38:19Z"
+  message: Successfully assigned kube-system/kube-proxy-9nfk2 to scout-evals-scale-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T10:47:29Z"
-    name: kube-proxy-lkl45.18d927c3f44da4ab
+    creationTimestamp: "2026-09-27T12:38:19Z"
+    name: kube-proxy-9nfk2.18d92dd04d02a9f4
     namespace: kube-system
-    resourceVersion: "345"
-    uid: cbf0747a-dbf8-4e84-b059-3572a08c5576
+    resourceVersion: "368"
+    uid: 18494c0d-ab1f-4693-bcd6-da51ac124615
   reason: Scheduled
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -20733,25 +20733,25 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:29Z"
+  firstTimestamp: "2026-09-27T12:38:19Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{kube-proxy}
     kind: Pod
-    name: kube-proxy-lkl45
+    name: kube-proxy-9nfk2
     namespace: kube-system
-    resourceVersion: "338"
-    uid: b8eb05a5-ff76-4a9e-a7fe-1215cef59857
+    resourceVersion: "363"
+    uid: 52431b0a-1494-4fde-89c0-87a1f59efdfb
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:29Z"
+  lastTimestamp: "2026-09-27T12:38:19Z"
   message: Container image "registry.k8s.io/kube-proxy:v1.35.0" already present on
     machine and can be accessed by the pod
   metadata:
-    creationTimestamp: "2026-09-27T10:47:29Z"
-    name: kube-proxy-lkl45.18d927c40d3df62a
+    creationTimestamp: "2026-09-27T12:38:19Z"
+    name: kube-proxy-9nfk2.18d92dd0633638a6
     namespace: kube-system
-    resourceVersion: "385"
-    uid: 02428a6c-24af-4377-9fae-29274c4bffea
+    resourceVersion: "390"
+    uid: 1e73d2bf-ff62-48a1-8d4c-6fb9545b25fb
   reason: Pulled
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -20762,24 +20762,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:30Z"
+  firstTimestamp: "2026-09-27T12:38:20Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{kube-proxy}
     kind: Pod
-    name: kube-proxy-lkl45
+    name: kube-proxy-9nfk2
     namespace: kube-system
-    resourceVersion: "338"
-    uid: b8eb05a5-ff76-4a9e-a7fe-1215cef59857
+    resourceVersion: "363"
+    uid: 52431b0a-1494-4fde-89c0-87a1f59efdfb
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:30Z"
+  lastTimestamp: "2026-09-27T12:38:20Z"
   message: Container created
   metadata:
-    creationTimestamp: "2026-09-27T10:47:30Z"
-    name: kube-proxy-lkl45.18d927c41a2d1af9
+    creationTimestamp: "2026-09-27T12:38:20Z"
+    name: kube-proxy-9nfk2.18d92dd0730d50de
     namespace: kube-system
-    resourceVersion: "391"
-    uid: dfaad5c9-06eb-4792-88cf-4cb17f26f6e0
+    resourceVersion: "393"
+    uid: c1f45f1d-46ec-4043-95a7-298fcf730747
   reason: Created
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -20790,24 +20790,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:30Z"
+  firstTimestamp: "2026-09-27T12:38:20Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{kube-proxy}
     kind: Pod
-    name: kube-proxy-lkl45
+    name: kube-proxy-9nfk2
     namespace: kube-system
-    resourceVersion: "338"
-    uid: b8eb05a5-ff76-4a9e-a7fe-1215cef59857
+    resourceVersion: "363"
+    uid: 52431b0a-1494-4fde-89c0-87a1f59efdfb
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:30Z"
+  lastTimestamp: "2026-09-27T12:38:20Z"
   message: Container started
   metadata:
-    creationTimestamp: "2026-09-27T10:47:30Z"
-    name: kube-proxy-lkl45.18d927c41c92070b
+    creationTimestamp: "2026-09-27T12:38:20Z"
+    name: kube-proxy-9nfk2.18d92dd0769a2e30
     namespace: kube-system
-    resourceVersion: "392"
-    uid: 3a275705-5040-4d0d-b24d-4b8553284eb6
+    resourceVersion: "394"
+    uid: 670579e5-1d3c-4e75-87b7-6f0437691fb2
   reason: Started
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -20818,23 +20818,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:29Z"
+  firstTimestamp: "2026-09-27T12:38:19Z"
   involvedObject:
     apiVersion: apps/v1
     kind: DaemonSet
     name: kube-proxy
     namespace: kube-system
-    resourceVersion: "250"
-    uid: 03768795-d37e-4593-9cc8-a3c0e964ecae
+    resourceVersion: "242"
+    uid: 7c66d404-0287-4eca-9fee-32dc809fdbbd
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:29Z"
-  message: 'Created pod: kube-proxy-lkl45'
+  lastTimestamp: "2026-09-27T12:38:19Z"
+  message: 'Created pod: kube-proxy-9nfk2'
   metadata:
-    creationTimestamp: "2026-09-27T10:47:29Z"
-    name: kube-proxy.18d927c3f3f55692
+    creationTimestamp: "2026-09-27T12:38:19Z"
+    name: kube-proxy.18d92dd04ccb3073
     namespace: kube-system
-    resourceVersion: "337"
-    uid: d2d3ed1a-efe5-4e96-a95f-13b8bfe38bf9
+    resourceVersion: "365"
+    uid: 61bc1d3d-95b8-4f8c-ac39-6d31551272bc
   reason: SuccessfulCreate
   reportingComponent: daemonset-controller
   reportingInstance: ""
@@ -20844,7 +20844,7 @@ items:
 - apiVersion: v1
   count: 3
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:24Z"
+  firstTimestamp: "2026-09-27T12:38:13Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{kube-scheduler}
@@ -20853,14 +20853,14 @@ items:
     namespace: kube-system
     uid: fad0cfcb16137af7a00e9946955a547c
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:25Z"
+  lastTimestamp: "2026-09-27T12:38:14Z"
   message: 'Readiness probe failed: HTTP probe failed with statuscode: 500'
   metadata:
-    creationTimestamp: "2026-09-27T10:47:24Z"
-    name: kube-scheduler-scout-evals-scale-control-plane.18d927c2d2107d03
+    creationTimestamp: "2026-09-27T12:38:13Z"
+    name: kube-scheduler-scout-evals-scale-control-plane.18d92dced3de666e
     namespace: kube-system
-    resourceVersion: "291"
-    uid: 8f56765b-3287-4274-9993-80ca3a59b14f
+    resourceVersion: "287"
+    uid: 2fb65c2d-1c37-4d3b-a794-37250d856f4a
   reason: Unhealthy
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -20871,24 +20871,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:25Z"
+  firstTimestamp: "2026-09-27T12:38:14Z"
   involvedObject:
     apiVersion: coordination.k8s.io/v1
     kind: Lease
     name: kube-scheduler
     namespace: kube-system
-    resourceVersion: "293"
-    uid: 1ea19e60-1a7f-4983-8a95-6b50ee4e7613
+    resourceVersion: "288"
+    uid: af7aa570-8248-4cdc-b2a8-4e7965efa7d1
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:25Z"
-  message: scout-evals-scale-control-plane_633693fa-6b78-4df3-91d2-6a2d63ba596f became
+  lastTimestamp: "2026-09-27T12:38:14Z"
+  message: scout-evals-scale-control-plane_48f779ee-a468-4d87-8586-99d33c586878 became
     leader
   metadata:
-    creationTimestamp: "2026-09-27T10:47:25Z"
-    name: kube-scheduler.18d927c312ca5e54
+    creationTimestamp: "2026-09-27T12:38:14Z"
+    name: kube-scheduler.18d92dcf0c5b4bcc
     namespace: kube-system
-    resourceVersion: "294"
-    uid: 91634e48-ceba-4a00-87f6-a3743374a3d9
+    resourceVersion: "290"
+    uid: 53eb8c96-20fb-4a6c-b753-8b4127e669ac
   reason: LeaderElection
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -20898,25 +20898,25 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:29Z"
+  firstTimestamp: "2026-09-27T12:38:19Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: local-path-provisioner-67b8995b4b-gmx6f
+    name: local-path-provisioner-67b8995b4b-xrxxz
     namespace: local-path-storage
     resourceVersion: "372"
-    uid: 13fb36f2-b50c-42cc-a7b9-c339b3edf4d7
+    uid: 0cd0e80a-df71-4195-858d-7127f58d1d29
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:29Z"
+  lastTimestamp: "2026-09-27T12:38:19Z"
   message: '0/1 nodes are available: 1 node(s) had untolerated taint(s). no new claims
     to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful
     for scheduling.'
   metadata:
-    creationTimestamp: "2026-09-27T10:47:29Z"
-    name: local-path-provisioner-67b8995b4b-gmx6f.18d927c40c411a6a
+    creationTimestamp: "2026-09-27T12:38:19Z"
+    name: local-path-provisioner-67b8995b4b-xrxxz.18d92dd0529d0dce
     namespace: local-path-storage
-    resourceVersion: "378"
-    uid: 19b4d027-0f86-4573-9859-74746f08bc62
+    resourceVersion: "379"
+    uid: 4782941e-54a2-4aad-b6f9-c00ad4f006e1
   reason: FailedScheduling
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -20926,24 +20926,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:40Z"
+  firstTimestamp: "2026-09-27T12:38:30Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: local-path-provisioner-67b8995b4b-gmx6f
+    name: local-path-provisioner-67b8995b4b-xrxxz
     namespace: local-path-storage
-    resourceVersion: "382"
-    uid: 13fb36f2-b50c-42cc-a7b9-c339b3edf4d7
+    resourceVersion: "377"
+    uid: 0cd0e80a-df71-4195-858d-7127f58d1d29
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:40Z"
-  message: Successfully assigned local-path-storage/local-path-provisioner-67b8995b4b-gmx6f
+  lastTimestamp: "2026-09-27T12:38:30Z"
+  message: Successfully assigned local-path-storage/local-path-provisioner-67b8995b4b-xrxxz
     to scout-evals-scale-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T10:47:40Z"
-    name: local-path-provisioner-67b8995b4b-gmx6f.18d927c69a0959f1
+    creationTimestamp: "2026-09-27T12:38:30Z"
+    name: local-path-provisioner-67b8995b4b-xrxxz.18d92dd2f7ba6c25
     namespace: local-path-storage
-    resourceVersion: "425"
-    uid: 8d7e9018-de07-487d-b3f7-7dfb19e5cbb7
+    resourceVersion: "431"
+    uid: 81a5cb0c-ed99-4927-bea1-df278557938e
   reason: Scheduled
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -20953,25 +20953,25 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:41Z"
+  firstTimestamp: "2026-09-27T12:38:31Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{local-path-provisioner}
     kind: Pod
-    name: local-path-provisioner-67b8995b4b-gmx6f
+    name: local-path-provisioner-67b8995b4b-xrxxz
     namespace: local-path-storage
-    resourceVersion: "422"
-    uid: 13fb36f2-b50c-42cc-a7b9-c339b3edf4d7
+    resourceVersion: "427"
+    uid: 0cd0e80a-df71-4195-858d-7127f58d1d29
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:41Z"
+  lastTimestamp: "2026-09-27T12:38:31Z"
   message: Container image "docker.io/kindest/local-path-provisioner:v20251212-v0.29.0-alpha-105-g20ccfc88"
     already present on machine and can be accessed by the pod
   metadata:
-    creationTimestamp: "2026-09-27T10:47:41Z"
-    name: local-path-provisioner-67b8995b4b-gmx6f.18d927c6b629296e
+    creationTimestamp: "2026-09-27T12:38:31Z"
+    name: local-path-provisioner-67b8995b4b-xrxxz.18d92dd310abcfd3
     namespace: local-path-storage
-    resourceVersion: "431"
-    uid: cf8d4acb-87e2-49a6-9101-5f1a8362a063
+    resourceVersion: "436"
+    uid: b1546567-9fee-4437-8eb3-042117901ed9
   reason: Pulled
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -20982,24 +20982,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:42Z"
+  firstTimestamp: "2026-09-27T12:38:32Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{local-path-provisioner}
     kind: Pod
-    name: local-path-provisioner-67b8995b4b-gmx6f
+    name: local-path-provisioner-67b8995b4b-xrxxz
     namespace: local-path-storage
-    resourceVersion: "422"
-    uid: 13fb36f2-b50c-42cc-a7b9-c339b3edf4d7
+    resourceVersion: "427"
+    uid: 0cd0e80a-df71-4195-858d-7127f58d1d29
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:42Z"
+  lastTimestamp: "2026-09-27T12:38:32Z"
   message: Container created
   metadata:
-    creationTimestamp: "2026-09-27T10:47:42Z"
-    name: local-path-provisioner-67b8995b4b-gmx6f.18d927c6e4c9007b
+    creationTimestamp: "2026-09-27T12:38:32Z"
+    name: local-path-provisioner-67b8995b4b-xrxxz.18d92dd33fc9d0dc
     namespace: local-path-storage
-    resourceVersion: "671"
-    uid: 01578a62-ca32-403c-ae57-f7e1e4fe2733
+    resourceVersion: "664"
+    uid: 317e8bad-5e5f-4062-9d0f-4ba50d88fda9
   reason: Created
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -21010,24 +21010,24 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:42Z"
+  firstTimestamp: "2026-09-27T12:38:32Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{local-path-provisioner}
     kind: Pod
-    name: local-path-provisioner-67b8995b4b-gmx6f
+    name: local-path-provisioner-67b8995b4b-xrxxz
     namespace: local-path-storage
-    resourceVersion: "422"
-    uid: 13fb36f2-b50c-42cc-a7b9-c339b3edf4d7
+    resourceVersion: "427"
+    uid: 0cd0e80a-df71-4195-858d-7127f58d1d29
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:42Z"
+  lastTimestamp: "2026-09-27T12:38:32Z"
   message: Container started
   metadata:
-    creationTimestamp: "2026-09-27T10:47:42Z"
-    name: local-path-provisioner-67b8995b4b-gmx6f.18d927c6e73cff8a
+    creationTimestamp: "2026-09-27T12:38:32Z"
+    name: local-path-provisioner-67b8995b4b-xrxxz.18d92dd3424d1965
     namespace: local-path-storage
-    resourceVersion: "692"
-    uid: 10026910-f271-4c5e-94f9-d0b1e2759e5c
+    resourceVersion: "681"
+    uid: e4bd0432-0ff9-42ae-8dfd-82bbf3e8011f
   reason: Started
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -21038,23 +21038,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:29Z"
+  firstTimestamp: "2026-09-27T12:38:19Z"
   involvedObject:
     apiVersion: apps/v1
     kind: ReplicaSet
     name: local-path-provisioner-67b8995b4b
     namespace: local-path-storage
-    resourceVersion: "351"
-    uid: 295020ca-91fe-429f-be4e-78fbdab2056e
+    resourceVersion: "341"
+    uid: 489bf195-38d1-4b0b-a4f6-723890af4ef5
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:29Z"
-  message: 'Created pod: local-path-provisioner-67b8995b4b-gmx6f'
+  lastTimestamp: "2026-09-27T12:38:19Z"
+  message: 'Created pod: local-path-provisioner-67b8995b4b-xrxxz'
   metadata:
-    creationTimestamp: "2026-09-27T10:47:29Z"
-    name: local-path-provisioner-67b8995b4b.18d927c40c21f782
+    creationTimestamp: "2026-09-27T12:38:19Z"
+    name: local-path-provisioner-67b8995b4b.18d92dd0529eb13d
     namespace: local-path-storage
-    resourceVersion: "379"
-    uid: 06c1cedd-bff6-46cc-96be-30278a5db2e7
+    resourceVersion: "382"
+    uid: b78835a4-940e-431c-a1ba-0aa548819b0f
   reason: SuccessfulCreate
   reportingComponent: replicaset-controller
   reportingInstance: ""
@@ -21064,23 +21064,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:29Z"
+  firstTimestamp: "2026-09-27T12:38:19Z"
   involvedObject:
     apiVersion: apps/v1
     kind: Deployment
     name: local-path-provisioner
     namespace: local-path-storage
-    resourceVersion: "286"
-    uid: 2c25bfce-0ef2-4af5-a0dd-d2adef3dd4a2
+    resourceVersion: "281"
+    uid: 0286138e-8c3e-404c-94d3-7758622765a5
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:29Z"
+  lastTimestamp: "2026-09-27T12:38:19Z"
   message: Scaled up replica set local-path-provisioner-67b8995b4b from 0 to 1
   metadata:
-    creationTimestamp: "2026-09-27T10:47:29Z"
-    name: local-path-provisioner.18d927c3fcda5586
+    creationTimestamp: "2026-09-27T12:38:19Z"
+    name: local-path-provisioner.18d92dd043a50f0a
     namespace: local-path-storage
-    resourceVersion: "353"
-    uid: 8dc1c201-b3d1-4e1c-94da-72e69c663bde
+    resourceVersion: "345"
+    uid: adbe4ca7-d0d1-4216-a6f2-215efb45e7fc
   reason: ScalingReplicaSet
   reportingComponent: deployment-controller
   reportingInstance: ""
@@ -21090,23 +21090,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:47Z"
+  firstTimestamp: "2026-09-27T12:38:37Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: cron-6554f7f79d-t72k5
+    name: cron-6554f7f79d-5qqt9
     namespace: team-10
-    resourceVersion: "833"
-    uid: 6a9c2ee4-7dab-4261-9f11-424ccc9b8816
+    resourceVersion: "1003"
+    uid: a590638e-ea3e-40c4-9001-a8f83974c2c9
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:47Z"
-  message: Successfully assigned team-10/cron-6554f7f79d-t72k5 to scout-evals-scale-control-plane
+  lastTimestamp: "2026-09-27T12:38:37Z"
+  message: Successfully assigned team-10/cron-6554f7f79d-5qqt9 to scout-evals-scale-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T10:47:47Z"
-    name: cron-6554f7f79d-t72k5.18d927c816366301
+    creationTimestamp: "2026-09-27T12:38:37Z"
+    name: cron-6554f7f79d-5qqt9.18d92dd471538c81
     namespace: team-10
-    resourceVersion: "837"
-    uid: 669e7062-4b9a-492c-9f0b-4ef59b0c2776
+    resourceVersion: "1008"
+    uid: 504b3cfc-9d28-48d4-a5a1-54cfc4a78e21
   reason: Scheduled
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -21116,24 +21116,24 @@ items:
 - apiVersion: v1
   count: 5
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:47Z"
+  firstTimestamp: "2026-09-27T12:38:37Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{cron}
     kind: Pod
-    name: cron-6554f7f79d-t72k5
+    name: cron-6554f7f79d-5qqt9
     namespace: team-10
-    resourceVersion: "835"
-    uid: 6a9c2ee4-7dab-4261-9f11-424ccc9b8816
+    resourceVersion: "1005"
+    uid: a590638e-ea3e-40c4-9001-a8f83974c2c9
   kind: Event
-  lastTimestamp: "2026-09-27T10:50:49Z"
+  lastTimestamp: "2026-09-27T12:41:35Z"
   message: Pulling image "registry.k8s.io/pause:0.0.0-team-10-cron"
   metadata:
-    creationTimestamp: "2026-09-27T10:47:47Z"
-    name: cron-6554f7f79d-t72k5.18d927c82e7c4fc0
+    creationTimestamp: "2026-09-27T12:38:37Z"
+    name: cron-6554f7f79d-5qqt9.18d92dd488c895b8
     namespace: team-10
-    resourceVersion: "2389"
-    uid: 0b5e9082-b238-4c75-8e9f-f74b27106bcc
+    resourceVersion: "2390"
+    uid: dd4ca75d-9596-4e28-a979-d6c6958f90e1
   reason: Pulling
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -21144,27 +21144,27 @@ items:
 - apiVersion: v1
   count: 5
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:47Z"
+  firstTimestamp: "2026-09-27T12:38:37Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{cron}
     kind: Pod
-    name: cron-6554f7f79d-t72k5
+    name: cron-6554f7f79d-5qqt9
     namespace: team-10
-    resourceVersion: "835"
-    uid: 6a9c2ee4-7dab-4261-9f11-424ccc9b8816
+    resourceVersion: "1005"
+    uid: a590638e-ea3e-40c4-9001-a8f83974c2c9
   kind: Event
-  lastTimestamp: "2026-09-27T10:50:49Z"
+  lastTimestamp: "2026-09-27T12:41:36Z"
   message: 'Failed to pull image "registry.k8s.io/pause:0.0.0-team-10-cron": rpc error:
     code = NotFound desc = failed to pull and unpack image "registry.k8s.io/pause:0.0.0-team-10-cron":
     failed to resolve reference "registry.k8s.io/pause:0.0.0-team-10-cron": registry.k8s.io/pause:0.0.0-team-10-cron:
     not found'
   metadata:
-    creationTimestamp: "2026-09-27T10:47:47Z"
-    name: cron-6554f7f79d-t72k5.18d927c84089042b
+    creationTimestamp: "2026-09-27T12:38:37Z"
+    name: cron-6554f7f79d-5qqt9.18d92dd495ae387b
     namespace: team-10
-    resourceVersion: "2390"
-    uid: 049dc78c-99d9-44bf-b7c3-1875f2207d3c
+    resourceVersion: "2392"
+    uid: fb6a89c9-6d0b-43fd-b38d-beedc150ab54
   reason: Failed
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -21175,24 +21175,24 @@ items:
 - apiVersion: v1
   count: 5
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:47Z"
+  firstTimestamp: "2026-09-27T12:38:37Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{cron}
     kind: Pod
-    name: cron-6554f7f79d-t72k5
+    name: cron-6554f7f79d-5qqt9
     namespace: team-10
-    resourceVersion: "835"
-    uid: 6a9c2ee4-7dab-4261-9f11-424ccc9b8816
+    resourceVersion: "1005"
+    uid: a590638e-ea3e-40c4-9001-a8f83974c2c9
   kind: Event
-  lastTimestamp: "2026-09-27T10:50:49Z"
+  lastTimestamp: "2026-09-27T12:41:36Z"
   message: 'Error: ErrImagePull'
   metadata:
-    creationTimestamp: "2026-09-27T10:47:47Z"
-    name: cron-6554f7f79d-t72k5.18d927c84092bfd4
+    creationTimestamp: "2026-09-27T12:38:37Z"
+    name: cron-6554f7f79d-5qqt9.18d92dd495b24f32
     namespace: team-10
-    resourceVersion: "2391"
-    uid: c4dcfeb5-c503-48ab-ba65-8f4f890edd59
+    resourceVersion: "2394"
+    uid: 7d10b5d2-e3dc-4d37-98fc-1922baa9c565
   reason: Failed
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -21203,24 +21203,24 @@ items:
 - apiVersion: v1
   count: 21
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:48Z"
+  firstTimestamp: "2026-09-27T12:38:38Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{cron}
     kind: Pod
-    name: cron-6554f7f79d-t72k5
+    name: cron-6554f7f79d-5qqt9
     namespace: team-10
-    resourceVersion: "835"
-    uid: 6a9c2ee4-7dab-4261-9f11-424ccc9b8816
+    resourceVersion: "1005"
+    uid: a590638e-ea3e-40c4-9001-a8f83974c2c9
   kind: Event
-  lastTimestamp: "2026-09-27T10:53:22Z"
+  lastTimestamp: "2026-09-27T12:43:48Z"
   message: Back-off pulling image "registry.k8s.io/pause:0.0.0-team-10-cron"
   metadata:
-    creationTimestamp: "2026-09-27T10:47:48Z"
-    name: cron-6554f7f79d-t72k5.18d927c86302a46c
+    creationTimestamp: "2026-09-27T12:38:38Z"
+    name: cron-6554f7f79d-5qqt9.18d92dd49e2c9239
     namespace: team-10
-    resourceVersion: "2631"
-    uid: 6b6bb064-524e-4755-8ef5-c6c1737d1fdf
+    resourceVersion: "2601"
+    uid: d8739a48-4dbb-4036-821b-52384b38471e
   reason: BackOff
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -21229,26 +21229,26 @@ items:
     host: scout-evals-scale-control-plane
   type: Normal
 - apiVersion: v1
-  count: 19
+  count: 21
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:48Z"
+  firstTimestamp: "2026-09-27T12:38:38Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{cron}
     kind: Pod
-    name: cron-6554f7f79d-t72k5
+    name: cron-6554f7f79d-5qqt9
     namespace: team-10
-    resourceVersion: "835"
-    uid: 6a9c2ee4-7dab-4261-9f11-424ccc9b8816
+    resourceVersion: "1005"
+    uid: a590638e-ea3e-40c4-9001-a8f83974c2c9
   kind: Event
-  lastTimestamp: "2026-09-27T10:52:55Z"
+  lastTimestamp: "2026-09-27T12:43:48Z"
   message: 'Error: ImagePullBackOff'
   metadata:
-    creationTimestamp: "2026-09-27T10:47:48Z"
-    name: cron-6554f7f79d-t72k5.18d927c8630417ac
+    creationTimestamp: "2026-09-27T12:38:38Z"
+    name: cron-6554f7f79d-5qqt9.18d92dd49e2fb6e9
     namespace: team-10
-    resourceVersion: "2593"
-    uid: 2f8906f0-114b-4802-a18e-f58bf9293bce
+    resourceVersion: "2602"
+    uid: 5809a95e-819a-4134-a939-38198bdfc46e
   reason: Failed
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -21259,23 +21259,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:47Z"
+  firstTimestamp: "2026-09-27T12:38:37Z"
   involvedObject:
     apiVersion: apps/v1
     kind: ReplicaSet
     name: cron-6554f7f79d
     namespace: team-10
-    resourceVersion: "832"
-    uid: 48051f46-42ef-432e-90e2-cfc8fac4f553
+    resourceVersion: "1002"
+    uid: 63a67683-93e9-490d-bef2-3d3fc9d76f61
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:47Z"
-  message: 'Created pod: cron-6554f7f79d-t72k5'
+  lastTimestamp: "2026-09-27T12:38:37Z"
+  message: 'Created pod: cron-6554f7f79d-5qqt9'
   metadata:
-    creationTimestamp: "2026-09-27T10:47:47Z"
-    name: cron-6554f7f79d.18d927c815911ba4
+    creationTimestamp: "2026-09-27T12:38:37Z"
+    name: cron-6554f7f79d.18d92dd470ff4c24
     namespace: team-10
-    resourceVersion: "834"
-    uid: 6724d1b2-17ac-40ea-ba14-10e8403273e2
+    resourceVersion: "1006"
+    uid: bf1cf7a2-d628-47b3-b4e7-c172b89abce6
   reason: SuccessfulCreate
   reportingComponent: replicaset-controller
   reportingInstance: ""
@@ -21285,23 +21285,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:47:47Z"
+  firstTimestamp: "2026-09-27T12:38:37Z"
   involvedObject:
     apiVersion: apps/v1
     kind: Deployment
     name: cron
     namespace: team-10
-    resourceVersion: "620"
-    uid: a042b87f-38cc-4169-85db-84ca125b102d
+    resourceVersion: "633"
+    uid: 8363e495-bfc0-4e4d-8a84-5ac8dfba4fc6
   kind: Event
-  lastTimestamp: "2026-09-27T10:47:47Z"
+  lastTimestamp: "2026-09-27T12:38:37Z"
   message: Scaled up replica set cron-6554f7f79d from 0 to 1
   metadata:
-    creationTimestamp: "2026-09-27T10:47:47Z"
-    name: cron.18d927c8153761f2
+    creationTimestamp: "2026-09-27T12:38:37Z"
+    name: cron.18d92dd470c7145f
     namespace: team-10
-    resourceVersion: "847"
-    uid: 4b734b51-da4b-45f2-bb4e-aaf1862a16fd
+    resourceVersion: "1017"
+    uid: 62d3f33d-3442-45f2-9453-8202fe3c67db
   reason: ScalingReplicaSet
   reportingComponent: deployment-controller
   reportingInstance: ""
@@ -21311,23 +21311,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:48:11Z"
+  firstTimestamp: "2026-09-27T12:38:57Z"
   involvedObject:
     apiVersion: v1
     kind: Pod
-    name: api-59b56dc7fc-9q9bj
+    name: api-59b56dc7fc-2kd49
     namespace: team-15
-    resourceVersion: "1529"
-    uid: 04c98e40-2cff-43b5-9a36-0303ac57c926
+    resourceVersion: "1439"
+    uid: e1084588-876e-413e-9c5c-be7ceea632a6
   kind: Event
-  lastTimestamp: "2026-09-27T10:48:11Z"
-  message: Successfully assigned team-15/api-59b56dc7fc-9q9bj to scout-evals-scale-control-plane
+  lastTimestamp: "2026-09-27T12:38:57Z"
+  message: Successfully assigned team-15/api-59b56dc7fc-2kd49 to scout-evals-scale-control-plane
   metadata:
-    creationTimestamp: "2026-09-27T10:48:11Z"
-    name: api-59b56dc7fc-9q9bj.18d927cdaf95660f
+    creationTimestamp: "2026-09-27T12:38:57Z"
+    name: api-59b56dc7fc-2kd49.18d92dd907f9ccfb
     namespace: team-15
-    resourceVersion: "1534"
-    uid: 62bfe164-6e17-4c75-a26e-a055e52c11ed
+    resourceVersion: "1443"
+    uid: d53b9d17-e028-4d3a-a008-5ee5c70a7f47
   reason: Scheduled
   reportingComponent: default-scheduler
   reportingInstance: ""
@@ -21337,24 +21337,24 @@ items:
 - apiVersion: v1
   count: 5
   eventTime: null
-  firstTimestamp: "2026-09-27T10:48:11Z"
+  firstTimestamp: "2026-09-27T12:38:57Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{api}
     kind: Pod
-    name: api-59b56dc7fc-9q9bj
+    name: api-59b56dc7fc-2kd49
     namespace: team-15
-    resourceVersion: "1531"
-    uid: 04c98e40-2cff-43b5-9a36-0303ac57c926
+    resourceVersion: "1442"
+    uid: e1084588-876e-413e-9c5c-be7ceea632a6
   kind: Event
-  lastTimestamp: "2026-09-27T10:51:03Z"
+  lastTimestamp: "2026-09-27T12:41:51Z"
   message: Pulling image "registry.k8s.io/pause:0.0.0-team-15-api"
   metadata:
-    creationTimestamp: "2026-09-27T10:48:11Z"
-    name: api-59b56dc7fc-9q9bj.18d927cdc71a9598
+    creationTimestamp: "2026-09-27T12:38:57Z"
+    name: api-59b56dc7fc-2kd49.18d92dd91f165b7a
     namespace: team-15
-    resourceVersion: "2412"
-    uid: 2a97d566-6440-4e1f-8166-33f52b8121e1
+    resourceVersion: "2419"
+    uid: 2cdb344c-d0dc-4161-a865-393ad451f8d2
   reason: Pulling
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -21365,27 +21365,27 @@ items:
 - apiVersion: v1
   count: 5
   eventTime: null
-  firstTimestamp: "2026-09-27T10:48:11Z"
+  firstTimestamp: "2026-09-27T12:38:57Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{api}
     kind: Pod
-    name: api-59b56dc7fc-9q9bj
+    name: api-59b56dc7fc-2kd49
     namespace: team-15
-    resourceVersion: "1531"
-    uid: 04c98e40-2cff-43b5-9a36-0303ac57c926
+    resourceVersion: "1442"
+    uid: e1084588-876e-413e-9c5c-be7ceea632a6
   kind: Event
-  lastTimestamp: "2026-09-27T10:51:04Z"
+  lastTimestamp: "2026-09-27T12:41:52Z"
   message: 'Failed to pull image "registry.k8s.io/pause:0.0.0-team-15-api": rpc error:
     code = NotFound desc = failed to pull and unpack image "registry.k8s.io/pause:0.0.0-team-15-api":
     failed to resolve reference "registry.k8s.io/pause:0.0.0-team-15-api": registry.k8s.io/pause:0.0.0-team-15-api:
     not found'
   metadata:
-    creationTimestamp: "2026-09-27T10:48:11Z"
-    name: api-59b56dc7fc-9q9bj.18d927cdd1d68233
+    creationTimestamp: "2026-09-27T12:38:57Z"
+    name: api-59b56dc7fc-2kd49.18d92dd928b5c566
     namespace: team-15
-    resourceVersion: "2413"
-    uid: fa38f418-d5ec-40f6-8d62-b9ce2510b4f7
+    resourceVersion: "2420"
+    uid: a4adbd48-1a1b-47a4-a70e-77259fe1e4fb
   reason: Failed
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -21396,24 +21396,24 @@ items:
 - apiVersion: v1
   count: 5
   eventTime: null
-  firstTimestamp: "2026-09-27T10:48:11Z"
+  firstTimestamp: "2026-09-27T12:38:57Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{api}
     kind: Pod
-    name: api-59b56dc7fc-9q9bj
+    name: api-59b56dc7fc-2kd49
     namespace: team-15
-    resourceVersion: "1531"
-    uid: 04c98e40-2cff-43b5-9a36-0303ac57c926
+    resourceVersion: "1442"
+    uid: e1084588-876e-413e-9c5c-be7ceea632a6
   kind: Event
-  lastTimestamp: "2026-09-27T10:51:04Z"
+  lastTimestamp: "2026-09-27T12:41:52Z"
   message: 'Error: ErrImagePull'
   metadata:
-    creationTimestamp: "2026-09-27T10:48:11Z"
-    name: api-59b56dc7fc-9q9bj.18d927cdd1d93835
+    creationTimestamp: "2026-09-27T12:38:57Z"
+    name: api-59b56dc7fc-2kd49.18d92dd928b740a1
     namespace: team-15
-    resourceVersion: "2414"
-    uid: d7e88561-a201-4f2b-8043-d1c7ab6d017c
+    resourceVersion: "2421"
+    uid: 66a6b2ee-6f2e-4f47-9799-0bcfbc605989
   reason: Failed
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -21424,24 +21424,24 @@ items:
 - apiVersion: v1
   count: 21
   eventTime: null
-  firstTimestamp: "2026-09-27T10:48:12Z"
+  firstTimestamp: "2026-09-27T12:38:58Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{api}
     kind: Pod
-    name: api-59b56dc7fc-9q9bj
+    name: api-59b56dc7fc-2kd49
     namespace: team-15
-    resourceVersion: "1531"
-    uid: 04c98e40-2cff-43b5-9a36-0303ac57c926
+    resourceVersion: "1442"
+    uid: e1084588-876e-413e-9c5c-be7ceea632a6
   kind: Event
-  lastTimestamp: "2026-09-27T10:53:23Z"
+  lastTimestamp: "2026-09-27T12:44:11Z"
   message: Back-off pulling image "registry.k8s.io/pause:0.0.0-team-15-api"
   metadata:
-    creationTimestamp: "2026-09-27T10:48:12Z"
-    name: api-59b56dc7fc-9q9bj.18d927cdfe5d0f66
+    creationTimestamp: "2026-09-27T12:38:58Z"
+    name: api-59b56dc7fc-2kd49.18d92dd94960b041
     namespace: team-15
-    resourceVersion: "2635"
-    uid: dc21e3a6-605e-49b5-b3d2-a95032db2eec
+    resourceVersion: "2634"
+    uid: 327f6474-b4cf-453f-a35b-3ee00b388c39
   reason: BackOff
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -21452,24 +21452,24 @@ items:
 - apiVersion: v1
   count: 21
   eventTime: null
-  firstTimestamp: "2026-09-27T10:48:12Z"
+  firstTimestamp: "2026-09-27T12:38:58Z"
   involvedObject:
     apiVersion: v1
     fieldPath: spec.containers{api}
     kind: Pod
-    name: api-59b56dc7fc-9q9bj
+    name: api-59b56dc7fc-2kd49
     namespace: team-15
-    resourceVersion: "1531"
-    uid: 04c98e40-2cff-43b5-9a36-0303ac57c926
+    resourceVersion: "1442"
+    uid: e1084588-876e-413e-9c5c-be7ceea632a6
   kind: Event
-  lastTimestamp: "2026-09-27T10:53:23Z"
+  lastTimestamp: "2026-09-27T12:44:11Z"
   message: 'Error: ImagePullBackOff'
   metadata:
-    creationTimestamp: "2026-09-27T10:48:12Z"
-    name: api-59b56dc7fc-9q9bj.18d927cdfe5e97fa
+    creationTimestamp: "2026-09-27T12:38:58Z"
+    name: api-59b56dc7fc-2kd49.18d92dd9496255cd
     namespace: team-15
-    resourceVersion: "2636"
-    uid: 38be8f9b-f422-45e6-b104-db2dbe150bbb
+    resourceVersion: "2635"
+    uid: da60340f-84fd-4cf8-adcd-1a860347f18e
   reason: Failed
   reportingComponent: kubelet
   reportingInstance: scout-evals-scale-control-plane
@@ -21480,23 +21480,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:48:11Z"
+  firstTimestamp: "2026-09-27T12:38:57Z"
   involvedObject:
     apiVersion: apps/v1
     kind: ReplicaSet
     name: api-59b56dc7fc
     namespace: team-15
-    resourceVersion: "1528"
-    uid: f6e02744-85ea-4749-9c41-34907df6ec19
+    resourceVersion: "1438"
+    uid: 83aa092c-b4b8-4782-b2a0-86aac1fa6838
   kind: Event
-  lastTimestamp: "2026-09-27T10:48:11Z"
-  message: 'Created pod: api-59b56dc7fc-9q9bj'
+  lastTimestamp: "2026-09-27T12:38:57Z"
+  message: 'Created pod: api-59b56dc7fc-2kd49'
   metadata:
-    creationTimestamp: "2026-09-27T10:48:11Z"
-    name: api-59b56dc7fc.18d927cdaf11203e
+    creationTimestamp: "2026-09-27T12:38:57Z"
+    name: api-59b56dc7fc.18d92dd9078fe1e8
     namespace: team-15
-    resourceVersion: "1530"
-    uid: 12f9ca89-4fcf-41e0-ba7a-edb35f02cf6b
+    resourceVersion: "1440"
+    uid: 5c09ca37-1819-4607-ac14-8b9dba98a92a
   reason: SuccessfulCreate
   reportingComponent: replicaset-controller
   reportingInstance: ""
@@ -21506,23 +21506,23 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2026-09-27T10:48:11Z"
+  firstTimestamp: "2026-09-27T12:38:57Z"
   involvedObject:
     apiVersion: apps/v1
     kind: Deployment
     name: api
     namespace: team-15
-    resourceVersion: "1073"
-    uid: c7c97f31-43eb-4421-b1b0-605283fa3afc
+    resourceVersion: "777"
+    uid: c1fcd04b-d95f-492e-9ea0-df67a32bbc8e
   kind: Event
-  lastTimestamp: "2026-09-27T10:48:11Z"
+  lastTimestamp: "2026-09-27T12:38:57Z"
   message: Scaled up replica set api-59b56dc7fc from 0 to 1
   metadata:
-    creationTimestamp: "2026-09-27T10:48:11Z"
-    name: api.18d927cdaea7e4a0
+    creationTimestamp: "2026-09-27T12:38:57Z"
+    name: api.18d92dd907225fb8
     namespace: team-15
-    resourceVersion: "1542"
-    uid: a9268ccc-34db-4dcf-aa64-a9649ab3d54e
+    resourceVersion: "1452"
+    uid: b8fda4e3-76df-479f-a153-c09cf47149bd
   reason: ScalingReplicaSet
   reportingComponent: deployment-controller
   reportingInstance: ""
@@ -21542,12 +21542,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"argocd"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: argocd
     name: argocd
-    resourceVersion: "526"
-    uid: e5d9f37a-2fd8-49f8-ac01-800fa05fc714
+    resourceVersion: "509"
+    uid: 9f4ef108-337d-4e55-87f0-f16b7b9df394
   spec:
     finalizers:
     - kubernetes
@@ -21556,12 +21556,12 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-09-27T10:47:21Z"
+    creationTimestamp: "2026-09-27T12:38:10Z"
     labels:
       kubernetes.io/metadata.name: default
     name: default
-    resourceVersion: "26"
-    uid: 8135cb44-0802-453f-bd19-a11fa3cde772
+    resourceVersion: "22"
+    uid: 6a95af6a-8919-4ae0-b119-ae3fbbf188f7
   spec:
     finalizers:
     - kubernetes
@@ -21573,12 +21573,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"flux-system"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: flux-system
     name: flux-system
-    resourceVersion: "521"
-    uid: 5859d290-be6a-4802-bcac-0a6a2119ab15
+    resourceVersion: "506"
+    uid: c58a33c5-6c0a-4632-9eaf-1b5178b6d4d9
   spec:
     finalizers:
     - kubernetes
@@ -21587,12 +21587,12 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-09-27T10:47:21Z"
+    creationTimestamp: "2026-09-27T12:38:10Z"
     labels:
       kubernetes.io/metadata.name: kube-node-lease
     name: kube-node-lease
-    resourceVersion: "34"
-    uid: bf71c412-1693-484c-a5ef-851d93ba39a2
+    resourceVersion: "30"
+    uid: dbdcfb8b-2d5a-4a20-b0b7-2ce426044a46
   spec:
     finalizers:
     - kubernetes
@@ -21601,12 +21601,12 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-09-27T10:47:21Z"
+    creationTimestamp: "2026-09-27T12:38:10Z"
     labels:
       kubernetes.io/metadata.name: kube-public
     name: kube-public
     resourceVersion: "18"
-    uid: 9713b226-801a-4863-a90a-4d377b905976
+    uid: f2ae7f7a-d8bc-499d-b857-d4c012b106dd
   spec:
     finalizers:
     - kubernetes
@@ -21615,12 +21615,12 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-09-27T10:47:21Z"
+    creationTimestamp: "2026-09-27T12:38:10Z"
     labels:
       kubernetes.io/metadata.name: kube-system
     name: kube-system
-    resourceVersion: "5"
-    uid: a0d7b151-a964-4e1f-872b-245223f62ee4
+    resourceVersion: "10"
+    uid: af60a91d-b0c3-4a8f-8182-819eaba20488
   spec:
     finalizers:
     - kubernetes
@@ -21632,12 +21632,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"local-path-storage"}}
-    creationTimestamp: "2026-09-27T10:47:25Z"
+    creationTimestamp: "2026-09-27T12:38:13Z"
     labels:
       kubernetes.io/metadata.name: local-path-storage
     name: local-path-storage
-    resourceVersion: "280"
-    uid: 7712cd01-9a1a-4e43-854e-426ebacae85d
+    resourceVersion: "275"
+    uid: e24d94f0-2603-4e19-80b6-eeb724eb8505
   spec:
     finalizers:
     - kubernetes
@@ -21649,12 +21649,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-01"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-01
     name: team-01
-    resourceVersion: "434"
-    uid: af5d593e-5dc9-4fb8-bc8b-84d97d5b1616
+    resourceVersion: "440"
+    uid: 15908e38-21f4-439f-a935-536d122e1352
   spec:
     finalizers:
     - kubernetes
@@ -21666,12 +21666,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-02"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-02
     name: team-02
-    resourceVersion: "437"
-    uid: 71795544-cf39-4b28-8510-a6ac3a54eedb
+    resourceVersion: "443"
+    uid: 47659cdf-1db5-4bbf-9411-3534cacb9f3c
   spec:
     finalizers:
     - kubernetes
@@ -21683,12 +21683,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-03"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-03
     name: team-03
-    resourceVersion: "440"
-    uid: 2a9afd45-aa1a-45ed-b676-0803e536ecda
+    resourceVersion: "446"
+    uid: b65fcbf0-9cb2-440c-a963-64f33a9f5582
   spec:
     finalizers:
     - kubernetes
@@ -21700,12 +21700,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-04"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-04
     name: team-04
-    resourceVersion: "443"
-    uid: fd279550-4b20-4371-a0df-f1321f759d7a
+    resourceVersion: "449"
+    uid: 28f3ae81-d5ca-41d3-a0ac-a3aa40d190f6
   spec:
     finalizers:
     - kubernetes
@@ -21717,12 +21717,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-05"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-05
     name: team-05
-    resourceVersion: "446"
-    uid: 5d6c42e2-eeee-433b-9e37-a20bcc54617c
+    resourceVersion: "452"
+    uid: 4409e041-b82e-4619-acdd-4434dbc1780c
   spec:
     finalizers:
     - kubernetes
@@ -21734,12 +21734,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-06"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-06
     name: team-06
-    resourceVersion: "449"
-    uid: a37f0a65-911f-448a-bf36-8a7842aa24b4
+    resourceVersion: "455"
+    uid: 8288cdca-a435-4ffb-9205-6fdc4dfcc78b
   spec:
     finalizers:
     - kubernetes
@@ -21751,12 +21751,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-07"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-07
     name: team-07
-    resourceVersion: "452"
-    uid: fc07a924-989f-4089-bdaf-6bfb97a0aa3d
+    resourceVersion: "457"
+    uid: 0b4b70a6-6b08-4135-b968-8e976425a519
   spec:
     finalizers:
     - kubernetes
@@ -21768,12 +21768,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-08"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-08
     name: team-08
-    resourceVersion: "455"
-    uid: 3ed6e56e-de0e-459a-9471-8021d8601aa3
+    resourceVersion: "461"
+    uid: c1b51a3b-0558-4ab5-a0b8-436d6150414c
   spec:
     finalizers:
     - kubernetes
@@ -21785,12 +21785,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-09"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-09
     name: team-09
-    resourceVersion: "458"
-    uid: 0b2e11a3-2c10-432a-824e-a7567a826417
+    resourceVersion: "464"
+    uid: 0c1d9a1d-5147-4e70-b20e-2ca4b5934071
   spec:
     finalizers:
     - kubernetes
@@ -21802,12 +21802,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-10"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-10
     name: team-10
-    resourceVersion: "461"
-    uid: 9f9679fe-c291-4692-bc1c-d8fe45b9d372
+    resourceVersion: "467"
+    uid: 9ec5628c-81a4-481d-934b-c4d74fb35e13
   spec:
     finalizers:
     - kubernetes
@@ -21819,12 +21819,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-11"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-11
     name: team-11
-    resourceVersion: "464"
-    uid: 99d722fe-7e16-486e-93e8-69c93820eb87
+    resourceVersion: "470"
+    uid: 6e1a581f-c045-4d74-93d9-33a474f8dc92
   spec:
     finalizers:
     - kubernetes
@@ -21836,12 +21836,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-12"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-12
     name: team-12
-    resourceVersion: "467"
-    uid: d2aafcda-ca4a-4fb3-be1b-e2dd94e081bb
+    resourceVersion: "473"
+    uid: ac614341-e4e6-43c8-bff5-cf231967bee1
   spec:
     finalizers:
     - kubernetes
@@ -21853,12 +21853,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-13"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-13
     name: team-13
-    resourceVersion: "468"
-    uid: 80d571be-ab8c-4a93-aec5-7858107165c9
+    resourceVersion: "476"
+    uid: a24067aa-10c9-4981-b329-fadbd5bfaef7
   spec:
     finalizers:
     - kubernetes
@@ -21870,12 +21870,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-14"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-14
     name: team-14
-    resourceVersion: "469"
-    uid: 355cdc01-0b15-4387-8397-e22d81080946
+    resourceVersion: "479"
+    uid: 3e24ffc6-695c-408d-ba76-63e893a9e419
   spec:
     finalizers:
     - kubernetes
@@ -21887,12 +21887,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-15"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-15
     name: team-15
-    resourceVersion: "470"
-    uid: bfe574fb-9df2-4cf5-a094-86168ccb9f07
+    resourceVersion: "482"
+    uid: 93147712-d7df-459f-bac5-d4f18275d940
   spec:
     finalizers:
     - kubernetes
@@ -21904,12 +21904,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-16"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-16
     name: team-16
-    resourceVersion: "471"
-    uid: 198be19d-e1ea-4291-838c-65114408c182
+    resourceVersion: "485"
+    uid: 6ad831ab-d744-4027-b20e-af78793f9d58
   spec:
     finalizers:
     - kubernetes
@@ -21921,12 +21921,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-17"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-17
     name: team-17
-    resourceVersion: "472"
-    uid: 50f0bc62-6761-4089-b88e-5f25b39daba7
+    resourceVersion: "488"
+    uid: 96393b5a-986e-4f8b-9444-f4af445d32d9
   spec:
     finalizers:
     - kubernetes
@@ -21938,12 +21938,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-18"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-18
     name: team-18
-    resourceVersion: "473"
-    uid: 6b00dfa9-cf41-4eb7-909d-436be8d9555c
+    resourceVersion: "491"
+    uid: 1f00084b-3534-4717-956d-22a7c881ce74
   spec:
     finalizers:
     - kubernetes
@@ -21955,12 +21955,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-19"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-19
     name: team-19
-    resourceVersion: "474"
-    uid: 8380817e-72b9-4c6a-877f-64621e10ef97
+    resourceVersion: "494"
+    uid: fca503aa-68cc-4b60-ba6e-832c02dafbb0
   spec:
     finalizers:
     - kubernetes
@@ -21972,12 +21972,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-20"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-20
     name: team-20
-    resourceVersion: "475"
-    uid: 548863e2-2e39-4505-a601-827f18d42795
+    resourceVersion: "495"
+    uid: c397585d-0b37-4a6e-af67-e8a347c32cd1
   spec:
     finalizers:
     - kubernetes
@@ -21989,12 +21989,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-21"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-21
     name: team-21
-    resourceVersion: "476"
-    uid: 136c85ac-bf00-4194-8f72-181689da3cfb
+    resourceVersion: "496"
+    uid: 72acd118-2be7-4790-b8dc-d4f1b153b0e7
   spec:
     finalizers:
     - kubernetes
@@ -22006,12 +22006,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-22"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-22
     name: team-22
-    resourceVersion: "479"
-    uid: d2050b6f-8667-4cad-8bae-d1ce69a3ad64
+    resourceVersion: "497"
+    uid: 394eb0e6-58c0-4c2e-ab5f-000f3d596b44
   spec:
     finalizers:
     - kubernetes
@@ -22023,12 +22023,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-23"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-23
     name: team-23
-    resourceVersion: "483"
-    uid: 008460f7-4ac9-4803-beb0-1ca1a7272fe5
+    resourceVersion: "498"
+    uid: 8696585d-41f0-4e68-9831-63862f1212d4
   spec:
     finalizers:
     - kubernetes
@@ -22040,12 +22040,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-24"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-24
     name: team-24
-    resourceVersion: "487"
-    uid: 8a09344d-b2b3-4453-bc48-044f9f607eef
+    resourceVersion: "499"
+    uid: 96aa6954-0db9-44bb-9b13-b858c481b454
   spec:
     finalizers:
     - kubernetes
@@ -22057,12 +22057,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-25"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-25
     name: team-25
-    resourceVersion: "492"
-    uid: c1287699-036a-4c84-97df-8c3e6fab72f5
+    resourceVersion: "500"
+    uid: 6042d558-9f08-4312-ae46-017efb76fce7
   spec:
     finalizers:
     - kubernetes
@@ -22074,12 +22074,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-26"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-26
     name: team-26
-    resourceVersion: "495"
-    uid: 8af43f13-3e7b-4e9e-b842-c97370bb58b4
+    resourceVersion: "501"
+    uid: 60a26326-d819-4744-aed3-cf6a56d07e77
   spec:
     finalizers:
     - kubernetes
@@ -22091,12 +22091,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-27"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-27
     name: team-27
-    resourceVersion: "500"
-    uid: b9928ec7-c7f0-4e05-9623-f851c3361719
+    resourceVersion: "502"
+    uid: 88249fbf-131e-4811-bd54-8e26896ece00
   spec:
     finalizers:
     - kubernetes
@@ -22108,12 +22108,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-28"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-28
     name: team-28
-    resourceVersion: "506"
-    uid: 0035be61-fda5-46f1-a323-1a2ea17d995d
+    resourceVersion: "503"
+    uid: 16332d9b-c628-47d9-85a1-6825763f3d30
   spec:
     finalizers:
     - kubernetes
@@ -22125,12 +22125,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-29"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-29
     name: team-29
-    resourceVersion: "511"
-    uid: 1a457477-aa75-4efb-8138-901133f5221b
+    resourceVersion: "504"
+    uid: 18648acb-1c20-49cc-ac6b-e8b839995a59
   spec:
     finalizers:
     - kubernetes
@@ -22142,12 +22142,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"team-30"}}
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-30
     name: team-30
-    resourceVersion: "517"
-    uid: 55be652f-9d70-4e4c-8e7b-6475c592084c
+    resourceVersion: "505"
+    uid: aa1cee87-bbf4-4c7d-9b5f-310fc5e0d7cd
   spec:
     finalizers:
     - kubernetes
@@ -22163,13 +22163,13 @@ items:
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T10:47:29Z"
+    creationTimestamp: "2026-09-27T12:38:19Z"
     generateName: coredns-7d764666f9-
     generation: 1
     labels:
       k8s-app: kube-dns
       pod-template-hash: 7d764666f9
-    name: coredns-7d764666f9-jsjvp
+    name: coredns-7d764666f9-c6vbk
     namespace: kube-system
     ownerReferences:
     - apiVersion: apps/v1
@@ -22177,9 +22177,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: coredns-7d764666f9
-      uid: 11dad9ca-fc53-452b-a23a-e24b6e59d7e8
-    resourceVersion: "722"
-    uid: 30387b46-3fef-48a8-8d7f-704c1ecffdb4
+      uid: 31d5fa7b-1d39-4099-8a73-6edd19471523
+    resourceVersion: "621"
+    uid: 341944e3-164e-4167-8ea8-30bfc9e83ef5
   spec:
     affinity:
       podAntiAffinity:
@@ -22256,7 +22256,7 @@ items:
         name: config-volume
         readOnly: true
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-frwmc
+        name: kube-api-access-2pdfr
         readOnly: true
     dnsPolicy: Default
     enableServiceLinks: true
@@ -22293,7 +22293,7 @@ items:
           path: Corefile
         name: coredns
       name: config-volume
-    - name: kube-api-access-frwmc
+    - name: kube-api-access-2pdfr
       projected:
         defaultMode: 420
         sources:
@@ -22314,27 +22314,27 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:42Z"
+      lastTransitionTime: "2026-09-27T12:38:32Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:40Z"
+      lastTransitionTime: "2026-09-27T12:38:30Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:42Z"
+      lastTransitionTime: "2026-09-27T12:38:32Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:42Z"
+      lastTransitionTime: "2026-09-27T12:38:32Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:40Z"
+      lastTransitionTime: "2026-09-27T12:38:30Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
@@ -22342,7 +22342,7 @@ items:
     - allocatedResources:
         cpu: 100m
         memory: 70Mi
-      containerID: containerd://7b6862452836196c0945dcd6b54771a9f8394dda0a26e5d81f8c702f52a16c3a
+      containerID: containerd://a708ed603429cafea7f05e0602dbc0609b428a14bb837eecbdf037520eac7df2
       image: registry.k8s.io/coredns/coredns:v1.13.1
       imageID: sha256:e08f4d9d2e6ede8185064c13b41f8eeee95b609c0ca93b6fe7509fe527c907cf
       lastState: {}
@@ -22358,7 +22358,7 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T10:47:41Z"
+          startedAt: "2026-09-27T12:38:31Z"
       user:
         linux:
           gid: 65532
@@ -22371,29 +22371,29 @@ items:
         readOnly: true
         recursiveReadOnly: Disabled
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-frwmc
+        name: kube-api-access-2pdfr
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
     podIP: 10.244.0.3
     podIPs:
     - ip: 10.244.0.3
     qosClass: Burstable
-    startTime: "2026-09-27T10:47:40Z"
+    startTime: "2026-09-27T12:38:30Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T10:47:29Z"
+    creationTimestamp: "2026-09-27T12:38:19Z"
     generateName: coredns-7d764666f9-
     generation: 1
     labels:
       k8s-app: kube-dns
       pod-template-hash: 7d764666f9
-    name: coredns-7d764666f9-kr4hq
+    name: coredns-7d764666f9-jjxkk
     namespace: kube-system
     ownerReferences:
     - apiVersion: apps/v1
@@ -22401,9 +22401,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: coredns-7d764666f9
-      uid: 11dad9ca-fc53-452b-a23a-e24b6e59d7e8
-    resourceVersion: "728"
-    uid: 10b95a10-42b4-4ec1-91ca-2deb5504bfd3
+      uid: 31d5fa7b-1d39-4099-8a73-6edd19471523
+    resourceVersion: "616"
+    uid: 6186bc46-d3ae-4bfd-857e-a384e287c488
   spec:
     affinity:
       podAntiAffinity:
@@ -22480,7 +22480,7 @@ items:
         name: config-volume
         readOnly: true
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-fjz59
+        name: kube-api-access-5z498
         readOnly: true
     dnsPolicy: Default
     enableServiceLinks: true
@@ -22517,7 +22517,7 @@ items:
           path: Corefile
         name: coredns
       name: config-volume
-    - name: kube-api-access-fjz59
+    - name: kube-api-access-5z498
       projected:
         defaultMode: 420
         sources:
@@ -22538,27 +22538,27 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:42Z"
+      lastTransitionTime: "2026-09-27T12:38:32Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:40Z"
+      lastTransitionTime: "2026-09-27T12:38:30Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:42Z"
+      lastTransitionTime: "2026-09-27T12:38:32Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:42Z"
+      lastTransitionTime: "2026-09-27T12:38:32Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:40Z"
+      lastTransitionTime: "2026-09-27T12:38:30Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
@@ -22566,7 +22566,7 @@ items:
     - allocatedResources:
         cpu: 100m
         memory: 70Mi
-      containerID: containerd://8da449b96baede6a9e2a7594f8ca638085f45aa9e2deefe5fb16336adb318d53
+      containerID: containerd://aaf4d9d4d28e900fe8e9439c616a9b01c531c1f8aa1e8c9a4d0be4c8834f30de
       image: registry.k8s.io/coredns/coredns:v1.13.1
       imageID: sha256:e08f4d9d2e6ede8185064c13b41f8eeee95b609c0ca93b6fe7509fe527c907cf
       lastState: {}
@@ -22582,7 +22582,7 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T10:47:41Z"
+          startedAt: "2026-09-27T12:38:31Z"
       user:
         linux:
           gid: 65532
@@ -22595,29 +22595,29 @@ items:
         readOnly: true
         recursiveReadOnly: Disabled
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-fjz59
+        name: kube-api-access-5z498
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
     podIP: 10.244.0.4
     podIPs:
     - ip: 10.244.0.4
     qosClass: Burstable
-    startTime: "2026-09-27T10:47:40Z"
+    startTime: "2026-09-27T12:38:30Z"
 - apiVersion: v1
   kind: Pod
   metadata:
     annotations:
-      kubeadm.kubernetes.io/etcd.advertise-client-urls: https://192.168.97.3:2379
-      kubernetes.io/config.hash: d33c225ee2e251d5013a3540ead4f99c
-      kubernetes.io/config.mirror: d33c225ee2e251d5013a3540ead4f99c
-      kubernetes.io/config.seen: "2026-09-27T10:47:18.464753910Z"
+      kubeadm.kubernetes.io/etcd.advertise-client-urls: https://192.168.97.7:2379
+      kubernetes.io/config.hash: dc19db39c9b666810f8c9fbbd521008c
+      kubernetes.io/config.mirror: dc19db39c9b666810f8c9fbbd521008c
+      kubernetes.io/config.seen: "2026-09-27T12:38:07.186937345Z"
       kubernetes.io/config.source: file
-    creationTimestamp: "2026-09-27T10:47:22Z"
+    creationTimestamp: "2026-09-27T12:38:11Z"
     generation: 1
     labels:
       component: etcd
@@ -22629,24 +22629,24 @@ items:
       controller: true
       kind: Node
       name: scout-evals-scale-control-plane
-      uid: 5a214369-161d-4a67-9d13-e1ba45dd7e22
-    resourceVersion: "659"
-    uid: 852b7278-503c-44f5-8ab2-47178aa3fe05
+      uid: 846b13a5-3fea-4c2c-b986-98863cee0571
+    resourceVersion: "409"
+    uid: bf8e2ca9-22de-4366-9e66-9e2efaa19689
   spec:
     containers:
     - command:
       - etcd
-      - --advertise-client-urls=https://192.168.97.3:2379
+      - --advertise-client-urls=https://192.168.97.7:2379
       - --cert-file=/etc/kubernetes/pki/etcd/server.crt
       - --client-cert-auth=true
       - --data-dir=/var/lib/etcd
       - --feature-gates=InitialCorruptCheck=true
-      - --initial-advertise-peer-urls=https://192.168.97.3:2380
-      - --initial-cluster=scout-evals-scale-control-plane=https://192.168.97.3:2380
+      - --initial-advertise-peer-urls=https://192.168.97.7:2380
+      - --initial-cluster=scout-evals-scale-control-plane=https://192.168.97.7:2380
       - --key-file=/etc/kubernetes/pki/etcd/server.key
-      - --listen-client-urls=https://127.0.0.1:2379,https://192.168.97.3:2379
+      - --listen-client-urls=https://127.0.0.1:2379,https://192.168.97.7:2379
       - --listen-metrics-urls=http://127.0.0.1:2381
-      - --listen-peer-urls=https://192.168.97.3:2380
+      - --listen-peer-urls=https://192.168.97.7:2380
       - --name=scout-evals-scale-control-plane
       - --peer-cert-file=/etc/kubernetes/pki/etcd/peer.crt
       - --peer-client-cert-auth=true
@@ -22734,30 +22734,30 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:23Z"
+      lastTransitionTime: "2026-09-27T12:38:12Z"
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:23Z"
+      lastTransitionTime: "2026-09-27T12:38:12Z"
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:42Z"
+      lastTransitionTime: "2026-09-27T12:38:22Z"
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:42Z"
+      lastTransitionTime: "2026-09-27T12:38:22Z"
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:23Z"
+      lastTransitionTime: "2026-09-27T12:38:12Z"
       status: "True"
       type: PodScheduled
     containerStatuses:
     - allocatedResources:
         cpu: 100m
         memory: 100Mi
-      containerID: containerd://b648f30ebd987e487a3f2a52f39c28d2728cefd1bd6e5d36518f1f757e62f251
+      containerID: containerd://135b6144dcaff162d0d46ef351049fc1c10948a1c201aa6a0a82a17d0247c866
       image: registry.k8s.io/etcd:3.6.6-0
       imageID: sha256:271e49a0ebc56647476845128fcd2a73bb138beeca3878cc3bf52b4ff1172a57
       lastState: {}
@@ -22771,26 +22771,26 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T10:47:19Z"
+          startedAt: "2026-09-27T12:38:08Z"
       user:
         linux:
           gid: 0
           supplementalGroups:
           - 0
           uid: 0
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     phase: Running
-    podIP: 192.168.97.3
+    podIP: 192.168.97.7
     podIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     qosClass: Burstable
-    startTime: "2026-09-27T10:47:23Z"
+    startTime: "2026-09-27T12:38:12Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T10:47:29Z"
+    creationTimestamp: "2026-09-27T12:38:19Z"
     generateName: kindnet-
     generation: 1
     labels:
@@ -22799,7 +22799,7 @@ items:
       k8s-app: kindnet
       pod-template-generation: "1"
       tier: node
-    name: kindnet-p4vhm
+    name: kindnet-jnn2c
     namespace: kube-system
     ownerReferences:
     - apiVersion: apps/v1
@@ -22807,9 +22807,9 @@ items:
       controller: true
       kind: DaemonSet
       name: kindnet
-      uid: b465aa82-c9b2-4ea8-8a2a-d8058374be28
-    resourceVersion: "399"
-    uid: 8aad74fb-791d-49b5-965a-1bb66dd2a050
+      uid: 69dfb9e6-8e93-4f45-acbd-cecee98a8faa
+    resourceVersion: "402"
+    uid: d27b02cb-24ce-4b0f-be53-4e5923ff100c
   spec:
     affinity:
       nodeAffinity:
@@ -22865,7 +22865,7 @@ items:
       - mountPath: /var/run/nri
         name: nri-plugin
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-ggtx6
+        name: kube-api-access-t2q7n
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -22922,7 +22922,7 @@ items:
         path: /var/run/nri
         type: ""
       name: nri-plugin
-    - name: kube-api-access-ggtx6
+    - name: kube-api-access-t2q7n
       projected:
         defaultMode: 420
         sources:
@@ -22943,27 +22943,27 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:31Z"
+      lastTransitionTime: "2026-09-27T12:38:21Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:29Z"
+      lastTransitionTime: "2026-09-27T12:38:19Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:31Z"
+      lastTransitionTime: "2026-09-27T12:38:21Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:31Z"
+      lastTransitionTime: "2026-09-27T12:38:21Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:29Z"
+      lastTransitionTime: "2026-09-27T12:38:19Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
@@ -22971,7 +22971,7 @@ items:
     - allocatedResources:
         cpu: 100m
         memory: 50Mi
-      containerID: containerd://afad6f40e9179ec0630015ced3fed4cf4ef41db34860f6fffc4ed31f8cba8a15
+      containerID: containerd://a976e03c9a777374ebbde895307ffbb878db29427de05ba9f8312fdb67cc2497
       image: docker.io/kindest/kindnetd:v20251212-v0.29.0-alpha-105-g20ccfc88
       imageID: sha256:c96ee3c17498748ccc544ba99ee8ffeb020fc335b230b43cd28bf43bed229a13
       lastState: {}
@@ -22988,7 +22988,7 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T10:47:30Z"
+          startedAt: "2026-09-27T12:38:20Z"
       user:
         linux:
           gid: 0
@@ -23007,29 +23007,29 @@ items:
       - mountPath: /var/run/nri
         name: nri-plugin
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-ggtx6
+        name: kube-api-access-t2q7n
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
-    podIP: 192.168.97.3
+    podIP: 192.168.97.7
     podIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     qosClass: Guaranteed
-    startTime: "2026-09-27T10:47:29Z"
+    startTime: "2026-09-27T12:38:19Z"
 - apiVersion: v1
   kind: Pod
   metadata:
     annotations:
-      kubeadm.kubernetes.io/kube-apiserver.advertise-address.endpoint: 192.168.97.3:6443
-      kubernetes.io/config.hash: 479a411066b3f3394e1353d7f680a842
-      kubernetes.io/config.mirror: 479a411066b3f3394e1353d7f680a842
-      kubernetes.io/config.seen: "2026-09-27T10:47:18.464767243Z"
+      kubeadm.kubernetes.io/kube-apiserver.advertise-address.endpoint: 192.168.97.7:6443
+      kubernetes.io/config.hash: 496e8bbc60c09bbe7aada867b785eb36
+      kubernetes.io/config.mirror: 496e8bbc60c09bbe7aada867b785eb36
+      kubernetes.io/config.seen: "2026-09-27T12:38:07.186949178Z"
       kubernetes.io/config.source: file
-    creationTimestamp: "2026-09-27T10:47:22Z"
+    creationTimestamp: "2026-09-27T12:38:11Z"
     generation: 1
     labels:
       component: kube-apiserver
@@ -23041,14 +23041,14 @@ items:
       controller: true
       kind: Node
       name: scout-evals-scale-control-plane
-      uid: 5a214369-161d-4a67-9d13-e1ba45dd7e22
-    resourceVersion: "412"
-    uid: 45690ffe-d492-496a-9738-69bffb5b2ad1
+      uid: 846b13a5-3fea-4c2c-b986-98863cee0571
+    resourceVersion: "414"
+    uid: ce75d217-b683-4507-9e69-4ea1043b902f
   spec:
     containers:
     - command:
       - kube-apiserver
-      - --advertise-address=192.168.97.3
+      - --advertise-address=192.168.97.7
       - --allow-privileged=true
       - --authorization-mode=Node,RBAC
       - --client-ca-file=/etc/kubernetes/pki/ca.crt
@@ -23081,7 +23081,7 @@ items:
       livenessProbe:
         failureThreshold: 8
         httpGet:
-          host: 192.168.97.3
+          host: 192.168.97.7
           path: /livez
           port: probe-port
           scheme: HTTPS
@@ -23098,7 +23098,7 @@ items:
       readinessProbe:
         failureThreshold: 3
         httpGet:
-          host: 192.168.97.3
+          host: 192.168.97.7
           path: /readyz
           port: probe-port
           scheme: HTTPS
@@ -23111,7 +23111,7 @@ items:
       startupProbe:
         failureThreshold: 24
         httpGet:
-          host: 192.168.97.3
+          host: 192.168.97.7
           path: /livez
           port: probe-port
           scheme: HTTPS
@@ -23177,29 +23177,29 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:23Z"
+      lastTransitionTime: "2026-09-27T12:38:12Z"
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:23Z"
+      lastTransitionTime: "2026-09-27T12:38:12Z"
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:36Z"
+      lastTransitionTime: "2026-09-27T12:38:26Z"
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:36Z"
+      lastTransitionTime: "2026-09-27T12:38:26Z"
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:23Z"
+      lastTransitionTime: "2026-09-27T12:38:12Z"
       status: "True"
       type: PodScheduled
     containerStatuses:
     - allocatedResources:
         cpu: 250m
-      containerID: containerd://07e7f0538b264834657a116b272052e22f2f21c429b54a127375b94d59ccaeb4
+      containerID: containerd://6068d2279d40707ecb87ed77f018c41f598867b142d3e77bb9be7c0aa289cf27
       image: registry.k8s.io/kube-apiserver-arm64:v1.35.0
       imageID: sha256:c3fcf259c473a57a5d7da116e29161904491091743512d27467c907c5516f856
       lastState: {}
@@ -23212,31 +23212,31 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T10:47:19Z"
+          startedAt: "2026-09-27T12:38:08Z"
       user:
         linux:
           gid: 0
           supplementalGroups:
           - 0
           uid: 0
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     phase: Running
-    podIP: 192.168.97.3
+    podIP: 192.168.97.7
     podIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     qosClass: Burstable
-    startTime: "2026-09-27T10:47:23Z"
+    startTime: "2026-09-27T12:38:12Z"
 - apiVersion: v1
   kind: Pod
   metadata:
     annotations:
       kubernetes.io/config.hash: 48abc4558aa3f29069a5d06db84285aa
       kubernetes.io/config.mirror: 48abc4558aa3f29069a5d06db84285aa
-      kubernetes.io/config.seen: "2026-09-27T10:47:23.379202914Z"
+      kubernetes.io/config.seen: "2026-09-27T12:38:11.983684834Z"
       kubernetes.io/config.source: file
-    creationTimestamp: "2026-09-27T10:47:23Z"
+    creationTimestamp: "2026-09-27T12:38:12Z"
     generation: 1
     labels:
       component: kube-controller-manager
@@ -23248,9 +23248,9 @@ items:
       controller: true
       kind: Node
       name: scout-evals-scale-control-plane
-      uid: 5a214369-161d-4a67-9d13-e1ba45dd7e22
-    resourceVersion: "415"
-    uid: eea81d8d-92ba-4b87-b97d-4926785d86c4
+      uid: 846b13a5-3fea-4c2c-b986-98863cee0571
+    resourceVersion: "419"
+    uid: 9ff789eb-12ed-48c3-9c2c-ab96d4d9468b
   spec:
     containers:
     - command:
@@ -23377,29 +23377,29 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:23Z"
+      lastTransitionTime: "2026-09-27T12:38:12Z"
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:23Z"
+      lastTransitionTime: "2026-09-27T12:38:12Z"
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:39Z"
+      lastTransitionTime: "2026-09-27T12:38:29Z"
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:39Z"
+      lastTransitionTime: "2026-09-27T12:38:29Z"
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:23Z"
+      lastTransitionTime: "2026-09-27T12:38:12Z"
       status: "True"
       type: PodScheduled
     containerStatuses:
     - allocatedResources:
         cpu: 200m
-      containerID: containerd://b0c2f18f55e1dfbb4be3bab686091ecbfb3cf0910a0412472df740ef358f1d82
+      containerID: containerd://6da2e8ef82c25ee484f3cb5b037110cd040c8e0fe15c3e0682aef0efee315a63
       image: registry.k8s.io/kube-controller-manager-arm64:v1.35.0
       imageID: sha256:88898f1d1a62a3ea9db5d4d099dee7aa52ebe8191016c5b3c721388a309983e0
       lastState: {}
@@ -23412,33 +23412,33 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T10:47:19Z"
+          startedAt: "2026-09-27T12:38:08Z"
       user:
         linux:
           gid: 0
           supplementalGroups:
           - 0
           uid: 0
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     phase: Running
-    podIP: 192.168.97.3
+    podIP: 192.168.97.7
     podIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     qosClass: Burstable
-    startTime: "2026-09-27T10:47:23Z"
+    startTime: "2026-09-27T12:38:12Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T10:47:29Z"
+    creationTimestamp: "2026-09-27T12:38:19Z"
     generateName: kube-proxy-
     generation: 1
     labels:
       controller-revision-hash: 69494898cd
       k8s-app: kube-proxy
       pod-template-generation: "1"
-    name: kube-proxy-lkl45
+    name: kube-proxy-9nfk2
     namespace: kube-system
     ownerReferences:
     - apiVersion: apps/v1
@@ -23446,9 +23446,9 @@ items:
       controller: true
       kind: DaemonSet
       name: kube-proxy
-      uid: 03768795-d37e-4593-9cc8-a3c0e964ecae
-    resourceVersion: "395"
-    uid: b8eb05a5-ff76-4a9e-a7fe-1215cef59857
+      uid: 7c66d404-0287-4eca-9fee-32dc809fdbbd
+    resourceVersion: "400"
+    uid: 52431b0a-1494-4fde-89c0-87a1f59efdfb
   spec:
     affinity:
       nodeAffinity:
@@ -23487,7 +23487,7 @@ items:
         name: lib-modules
         readOnly: true
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-gcmg5
+        name: kube-api-access-j4h2m
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -23540,7 +23540,7 @@ items:
         path: /lib/modules
         type: ""
       name: lib-modules
-    - name: kube-api-access-gcmg5
+    - name: kube-api-access-j4h2m
       projected:
         defaultMode: 420
         sources:
@@ -23561,32 +23561,32 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:30Z"
+      lastTransitionTime: "2026-09-27T12:38:21Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:29Z"
+      lastTransitionTime: "2026-09-27T12:38:19Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:30Z"
+      lastTransitionTime: "2026-09-27T12:38:21Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:30Z"
+      lastTransitionTime: "2026-09-27T12:38:21Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:29Z"
+      lastTransitionTime: "2026-09-27T12:38:19Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
     containerStatuses:
-    - containerID: containerd://4c6b465a239c45922ac119fd8389389fa9b2917e88d98263159b1373af0a0bc7
+    - containerID: containerd://732365ab71b520734cefe62bd0e38457b48b5f4f3ebe140d80f64e473b93f144
       image: registry.k8s.io/kube-proxy-arm64:v1.35.0
       imageID: sha256:de369f46c2ff55c31ea783a663eb203caa820f3db1f9b9c935e79e7d1e9fd9e5
       lastState: {}
@@ -23597,7 +23597,7 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T10:47:30Z"
+          startedAt: "2026-09-27T12:38:20Z"
       user:
         linux:
           gid: 0
@@ -23614,28 +23614,28 @@ items:
         readOnly: true
         recursiveReadOnly: Disabled
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-gcmg5
+        name: kube-api-access-j4h2m
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
-    podIP: 192.168.97.3
+    podIP: 192.168.97.7
     podIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     qosClass: BestEffort
-    startTime: "2026-09-27T10:47:29Z"
+    startTime: "2026-09-27T12:38:19Z"
 - apiVersion: v1
   kind: Pod
   metadata:
     annotations:
       kubernetes.io/config.hash: fad0cfcb16137af7a00e9946955a547c
       kubernetes.io/config.mirror: fad0cfcb16137af7a00e9946955a547c
-      kubernetes.io/config.seen: "2026-09-27T10:47:18.464767952Z"
+      kubernetes.io/config.seen: "2026-09-27T12:38:07.186950511Z"
       kubernetes.io/config.source: file
-    creationTimestamp: "2026-09-27T10:47:22Z"
+    creationTimestamp: "2026-09-27T12:38:11Z"
     generation: 1
     labels:
       component: kube-scheduler
@@ -23647,9 +23647,9 @@ items:
       controller: true
       kind: Node
       name: scout-evals-scale-control-plane
-      uid: 5a214369-161d-4a67-9d13-e1ba45dd7e22
-    resourceVersion: "418"
-    uid: 1e3b1673-7d6d-451b-b57d-86d8c4652625
+      uid: 846b13a5-3fea-4c2c-b986-98863cee0571
+    resourceVersion: "422"
+    uid: 4a9072f5-ec17-4bb5-9aa9-42da1dff5dcd
   spec:
     containers:
     - command:
@@ -23732,29 +23732,29 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:23Z"
+      lastTransitionTime: "2026-09-27T12:38:12Z"
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:23Z"
+      lastTransitionTime: "2026-09-27T12:38:12Z"
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:40Z"
+      lastTransitionTime: "2026-09-27T12:38:30Z"
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:40Z"
+      lastTransitionTime: "2026-09-27T12:38:30Z"
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:23Z"
+      lastTransitionTime: "2026-09-27T12:38:12Z"
       status: "True"
       type: PodScheduled
     containerStatuses:
     - allocatedResources:
         cpu: 100m
-      containerID: containerd://183dc8b69639ef680f28f95c13e4a1f408c454ffea609728fad5b1abea55a894
+      containerID: containerd://78457bb853f8cbab30178f341186101d28eb9ab39cb6e0632ed81cbdb1d6b7f5
       image: registry.k8s.io/kube-scheduler-arm64:v1.35.0
       imageID: sha256:ddc8422d4d35a6fc66c34be61e24df795e5cebf197eb546f62740d0bafef874f
       lastState: {}
@@ -23767,32 +23767,32 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T10:47:19Z"
+          startedAt: "2026-09-27T12:38:08Z"
       user:
         linux:
           gid: 0
           supplementalGroups:
           - 0
           uid: 0
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     phase: Running
-    podIP: 192.168.97.3
+    podIP: 192.168.97.7
     podIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     qosClass: Burstable
-    startTime: "2026-09-27T10:47:23Z"
+    startTime: "2026-09-27T12:38:12Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T10:47:29Z"
+    creationTimestamp: "2026-09-27T12:38:19Z"
     generateName: local-path-provisioner-67b8995b4b-
     generation: 1
     labels:
       app: local-path-provisioner
       pod-template-hash: 67b8995b4b
-    name: local-path-provisioner-67b8995b4b-gmx6f
+    name: local-path-provisioner-67b8995b4b-xrxxz
     namespace: local-path-storage
     ownerReferences:
     - apiVersion: apps/v1
@@ -23800,9 +23800,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: local-path-provisioner-67b8995b4b
-      uid: 295020ca-91fe-429f-be4e-78fbdab2056e
-    resourceVersion: "726"
-    uid: 13fb36f2-b50c-42cc-a7b9-c339b3edf4d7
+      uid: 489bf195-38d1-4b0b-a4f6-723890af4ef5
+    resourceVersion: "891"
+    uid: 0cd0e80a-df71-4195-858d-7127f58d1d29
   spec:
     containers:
     - command:
@@ -23831,7 +23831,7 @@ items:
       - mountPath: /etc/config/
         name: config-volume
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-895j6
+        name: kube-api-access-vqgl8
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -23866,7 +23866,7 @@ items:
         defaultMode: 420
         name: local-path-config
       name: config-volume
-    - name: kube-api-access-895j6
+    - name: kube-api-access-vqgl8
       projected:
         defaultMode: 420
         sources:
@@ -23887,32 +23887,32 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:42Z"
+      lastTransitionTime: "2026-09-27T12:38:33Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:40Z"
+      lastTransitionTime: "2026-09-27T12:38:30Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:42Z"
+      lastTransitionTime: "2026-09-27T12:38:33Z"
       observedGeneration: 1
       status: "True"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:42Z"
+      lastTransitionTime: "2026-09-27T12:38:33Z"
       observedGeneration: 1
       status: "True"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:40Z"
+      lastTransitionTime: "2026-09-27T12:38:30Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
     containerStatuses:
-    - containerID: containerd://ba1c5ecff8339d434a642d45593135790c496099d70ebc8d09b857a5bc837216
+    - containerID: containerd://4604ef9034e33255c87f06ef8f801363ddae13e9f847e1b74c96faa0ffcf353e
       image: docker.io/kindest/local-path-provisioner:v20251212-v0.29.0-alpha-105-g20ccfc88
       imageID: sha256:909b40d32940fe5841ef05d8e9db050e96ce26e75526eb89be2a58d00068a6a9
       lastState: {}
@@ -23923,7 +23923,7 @@ items:
       started: true
       state:
         running:
-          startedAt: "2026-09-27T10:47:42Z"
+          startedAt: "2026-09-27T12:38:32Z"
       user:
         linux:
           gid: 0
@@ -23934,29 +23934,29 @@ items:
       - mountPath: /etc/config/
         name: config-volume
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-895j6
+        name: kube-api-access-vqgl8
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Running
     podIP: 10.244.0.2
     podIPs:
     - ip: 10.244.0.2
     qosClass: BestEffort
-    startTime: "2026-09-27T10:47:40Z"
+    startTime: "2026-09-27T12:38:30Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T10:47:47Z"
+    creationTimestamp: "2026-09-27T12:38:37Z"
     generateName: cron-6554f7f79d-
     generation: 1
     labels:
       app: cron
       pod-template-hash: 6554f7f79d
-    name: cron-6554f7f79d-t72k5
+    name: cron-6554f7f79d-5qqt9
     namespace: team-10
     ownerReferences:
     - apiVersion: apps/v1
@@ -23964,9 +23964,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: cron-6554f7f79d
-      uid: 48051f46-42ef-432e-90e2-cfc8fac4f553
-    resourceVersion: "2685"
-    uid: 6a9c2ee4-7dab-4261-9f11-424ccc9b8816
+      uid: 63a67683-93e9-490d-bef2-3d3fc9d76f61
+    resourceVersion: "2688"
+    uid: a590638e-ea3e-40c4-9001-a8f83974c2c9
   spec:
     containers:
     - image: registry.k8s.io/pause:0.0.0-team-10-cron
@@ -23977,7 +23977,7 @@ items:
       terminationMessagePolicy: File
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-7xglr
+        name: kube-api-access-sv4cv
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -24000,7 +24000,7 @@ items:
       operator: Exists
       tolerationSeconds: 300
     volumes:
-    - name: kube-api-access-7xglr
+    - name: kube-api-access-sv4cv
       projected:
         defaultMode: 420
         sources:
@@ -24021,31 +24021,31 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:48Z"
+      lastTransitionTime: "2026-09-27T12:38:38Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:47Z"
+      lastTransitionTime: "2026-09-27T12:38:37Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:47Z"
+      lastTransitionTime: "2026-09-27T12:38:37Z"
       message: 'containers with unready status: [cron]'
       observedGeneration: 1
       reason: ContainersNotReady
       status: "False"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:47Z"
+      lastTransitionTime: "2026-09-27T12:38:37Z"
       message: 'containers with unready status: [cron]'
       observedGeneration: 1
       reason: ContainersNotReady
       status: "False"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:47:47Z"
+      lastTransitionTime: "2026-09-27T12:38:37Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
@@ -24067,29 +24067,29 @@ items:
           reason: ImagePullBackOff
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-7xglr
+        name: kube-api-access-sv4cv
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Pending
     podIP: 10.244.0.5
     podIPs:
     - ip: 10.244.0.5
     qosClass: BestEffort
-    startTime: "2026-09-27T10:47:47Z"
+    startTime: "2026-09-27T12:38:37Z"
 - apiVersion: v1
   kind: Pod
   metadata:
-    creationTimestamp: "2026-09-27T10:48:11Z"
+    creationTimestamp: "2026-09-27T12:38:57Z"
     generateName: api-59b56dc7fc-
     generation: 1
     labels:
       app: api
       pod-template-hash: 59b56dc7fc
-    name: api-59b56dc7fc-9q9bj
+    name: api-59b56dc7fc-2kd49
     namespace: team-15
     ownerReferences:
     - apiVersion: apps/v1
@@ -24097,9 +24097,9 @@ items:
       controller: true
       kind: ReplicaSet
       name: api-59b56dc7fc
-      uid: f6e02744-85ea-4749-9c41-34907df6ec19
-    resourceVersion: "2707"
-    uid: 04c98e40-2cff-43b5-9a36-0303ac57c926
+      uid: 83aa092c-b4b8-4782-b2a0-86aac1fa6838
+    resourceVersion: "2713"
+    uid: e1084588-876e-413e-9c5c-be7ceea632a6
   spec:
     containers:
     - image: registry.k8s.io/pause:0.0.0-team-15-api
@@ -24110,7 +24110,7 @@ items:
       terminationMessagePolicy: File
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-4h7rk
+        name: kube-api-access-j97zx
         readOnly: true
     dnsPolicy: ClusterFirst
     enableServiceLinks: true
@@ -24133,7 +24133,7 @@ items:
       operator: Exists
       tolerationSeconds: 300
     volumes:
-    - name: kube-api-access-4h7rk
+    - name: kube-api-access-j97zx
       projected:
         defaultMode: 420
         sources:
@@ -24154,31 +24154,31 @@ items:
   status:
     conditions:
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:48:12Z"
+      lastTransitionTime: "2026-09-27T12:38:58Z"
       observedGeneration: 1
       status: "True"
       type: PodReadyToStartContainers
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:48:11Z"
+      lastTransitionTime: "2026-09-27T12:38:57Z"
       observedGeneration: 1
       status: "True"
       type: Initialized
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:48:11Z"
+      lastTransitionTime: "2026-09-27T12:38:57Z"
       message: 'containers with unready status: [api]'
       observedGeneration: 1
       reason: ContainersNotReady
       status: "False"
       type: Ready
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:48:11Z"
+      lastTransitionTime: "2026-09-27T12:38:57Z"
       message: 'containers with unready status: [api]'
       observedGeneration: 1
       reason: ContainersNotReady
       status: "False"
       type: ContainersReady
     - lastProbeTime: null
-      lastTransitionTime: "2026-09-27T10:48:11Z"
+      lastTransitionTime: "2026-09-27T12:38:57Z"
       observedGeneration: 1
       status: "True"
       type: PodScheduled
@@ -24200,19 +24200,19 @@ items:
           reason: ImagePullBackOff
       volumeMounts:
       - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access-4h7rk
+        name: kube-api-access-j97zx
         readOnly: true
         recursiveReadOnly: Disabled
-    hostIP: 192.168.97.3
+    hostIP: 192.168.97.7
     hostIPs:
-    - ip: 192.168.97.3
+    - ip: 192.168.97.7
     observedGeneration: 1
     phase: Pending
     podIP: 10.244.0.6
     podIPs:
     - ip: 10.244.0.6
     qosClass: BestEffort
-    startTime: "2026-09-27T10:48:11Z"
+    startTime: "2026-09-27T12:38:57Z"
 kind: List
 metadata:
   resourceVersion: ""
@@ -24227,7 +24227,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "2"
       deployment.kubernetes.io/max-replicas: "3"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:29Z"
+    creationTimestamp: "2026-09-27T12:38:19Z"
     generation: 1
     labels:
       k8s-app: kube-dns
@@ -24240,9 +24240,9 @@ items:
       controller: true
       kind: Deployment
       name: coredns
-      uid: 1ea1db2b-ab3c-43ac-9556-87925a0d8f31
-    resourceVersion: "730"
-    uid: 11dad9ca-fc53-452b-a23a-e24b6e59d7e8
+      uid: 2610f4e6-94a4-4a25-b598-0c27e13c9d4b
+    resourceVersion: "625"
+    uid: 31d5fa7b-1d39-4099-8a73-6edd19471523
   spec:
     replicas: 2
     selector:
@@ -24366,7 +24366,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:29Z"
+    creationTimestamp: "2026-09-27T12:38:19Z"
     generation: 1
     labels:
       app: local-path-provisioner
@@ -24379,9 +24379,9 @@ items:
       controller: true
       kind: Deployment
       name: local-path-provisioner
-      uid: 2c25bfce-0ef2-4af5-a0dd-d2adef3dd4a2
-    resourceVersion: "727"
-    uid: 295020ca-91fe-429f-be4e-78fbdab2056e
+      uid: 0286138e-8c3e-404c-94d3-7758622765a5
+    resourceVersion: "893"
+    uid: 489bf195-38d1-4b0b-a4f6-723890af4ef5
   spec:
     replicas: 1
     selector:
@@ -24457,7 +24457,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: api
       meta.helm.sh/release-namespace: team-01
-    creationTimestamp: "2026-09-27T10:48:18Z"
+    creationTimestamp: "2026-09-27T12:39:04Z"
     generation: 1
     labels:
       app: api
@@ -24470,9 +24470,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 7f2cd912-a06b-4ffc-89df-a3938d6c09d4
-    resourceVersion: "1702"
-    uid: 361db8fe-461e-407d-8955-fec06a4396f2
+      uid: 33c19b1c-5aa2-4a92-9392-567f1d0a8741
+    resourceVersion: "1611"
+    uid: 987bdf8d-4c12-4ccd-9696-4d61917b962c
   spec:
     replicas: 0
     selector:
@@ -24508,7 +24508,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: auth
@@ -24521,9 +24521,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: 8b621782-701b-48f0-9850-c35bd32d865e
-    resourceVersion: "733"
-    uid: 471ac0b2-41b5-45fa-b105-585e92a1c0c2
+      uid: 3d5293fd-62b5-4c1f-a12b-30ce2108ef03
+    resourceVersion: "796"
+    uid: 553fd07e-e26e-4a49-8229-cbdb6c6c9fcb
   spec:
     replicas: 0
     selector:
@@ -24559,7 +24559,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: billing
@@ -24572,9 +24572,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: c8f03e7b-3908-4d3a-b6c2-2d751bb97801
-    resourceVersion: "735"
-    uid: 0b6b2778-6cd8-44e7-a3c9-7bfe566f01ec
+      uid: 7aa9f650-6692-480d-9c62-c43ff5b0e062
+    resourceVersion: "817"
+    uid: 71e40a41-4c75-4f13-9f5e-72aca3a31458
   spec:
     replicas: 0
     selector:
@@ -24612,7 +24612,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: cache
       meta.helm.sh/release-namespace: team-01
-    creationTimestamp: "2026-09-27T10:48:18Z"
+    creationTimestamp: "2026-09-27T12:39:04Z"
     generation: 1
     labels:
       app: cache
@@ -24625,9 +24625,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: 88723b12-1f88-4e51-aa1d-55dbb3efbf3c
-    resourceVersion: "1706"
-    uid: bf3e5a00-82d3-440f-a51b-6a6c7b70c23d
+      uid: dcdcf98e-82bc-41dd-98a1-67b434741e81
+    resourceVersion: "1616"
+    uid: 657173de-a261-43fc-9465-39ece43df055
   spec:
     replicas: 0
     selector:
@@ -24663,7 +24663,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:25Z"
+    creationTimestamp: "2026-09-27T12:39:11Z"
     generation: 1
     labels:
       app: cron
@@ -24676,9 +24676,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: 9311e56b-52e5-4a2d-90b0-ef859728e37a
-    resourceVersion: "1852"
-    uid: bcb80fa2-9ad1-49bf-a912-899135448fb2
+      uid: b86802ba-454f-4369-bb75-93b3b1c227c3
+    resourceVersion: "1758"
+    uid: a9b9ad86-1d6a-4bfa-9e15-760a63172d9a
   spec:
     replicas: 0
     selector:
@@ -24716,7 +24716,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: gateway
       meta.helm.sh/release-namespace: team-01
-    creationTimestamp: "2026-09-27T10:48:18Z"
+    creationTimestamp: "2026-09-27T12:39:04Z"
     generation: 1
     labels:
       app: gateway
@@ -24729,9 +24729,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: b5bdbc26-ca57-48cb-b8c9-e415621b2944
-    resourceVersion: "1704"
-    uid: b1dd5d76-e6f5-4f52-b240-c1c1172cc9d4
+      uid: 4585bd50-49c5-4915-86bc-80d3956c62b5
+    resourceVersion: "1614"
+    uid: 0270330c-cfc2-4a46-ac7e-1079c735b408
   spec:
     replicas: 0
     selector:
@@ -24767,7 +24767,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: notify
@@ -24780,9 +24780,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: 62a83b5a-ee18-4d7f-a27e-f226bf321aa0
-    resourceVersion: "738"
-    uid: 3dc43243-9a8a-4969-b82d-fe6dc6ad9f25
+      uid: c82fac28-1be9-4c74-ace8-21eb474fe704
+    resourceVersion: "829"
+    uid: 4e4bc029-0088-4fa2-a147-2c38c2ffebb9
   spec:
     replicas: 0
     selector:
@@ -24818,7 +24818,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:25Z"
+    creationTimestamp: "2026-09-27T12:39:11Z"
     generation: 1
     labels:
       app: search
@@ -24831,9 +24831,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: 4373dd7e-f8da-48fa-bcc7-e1faa6dd23df
-    resourceVersion: "1854"
-    uid: 48ff1bec-05d1-44f4-be4f-b76ed65fe942
+      uid: 08e26f95-b9ef-47d9-bbf9-c68ace3774ec
+    resourceVersion: "1760"
+    uid: 16c170c8-5058-4e1f-94e5-26196d4976da
   spec:
     replicas: 0
     selector:
@@ -24870,7 +24870,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:05Z"
+    creationTimestamp: "2026-09-27T12:38:50Z"
     generation: 1
     labels:
       app: web
@@ -24883,9 +24883,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: 02d0cd94-a6e0-4da9-a04f-aa8e4e327eb0
-    resourceVersion: "1397"
-    uid: ecf7210f-45b6-4633-8bc6-9cee154af500
+      uid: 3a869c09-7877-47a4-9ea0-5b29ef5ccc01
+    resourceVersion: "1300"
+    uid: fb42178b-ac72-4436-a228-8823fdc7d52d
   spec:
     replicas: 0
     selector:
@@ -24921,7 +24921,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
@@ -24934,9 +24934,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 26b88ec8-489b-4003-abbd-4fb681e65a2b
-    resourceVersion: "675"
-    uid: 9b31dc02-b457-438f-8669-27b19421abf8
+      uid: 03350220-2e75-4a20-a4f3-c5e5df09c5ab
+    resourceVersion: "731"
+    uid: 866ce46f-7c1c-4742-8e01-e5427eba2e3c
   spec:
     replicas: 0
     selector:
@@ -24973,7 +24973,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:05Z"
+    creationTimestamp: "2026-09-27T12:38:50Z"
     generation: 1
     labels:
       app: api
@@ -24986,9 +24986,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 12151396-8129-4d4f-855c-711d861977b2
-    resourceVersion: "1399"
-    uid: 78ba6a09-bc67-4fc4-97e6-5a8fc98d5df8
+      uid: 994d477e-aa09-4533-bfac-ad9fa98b68a2
+    resourceVersion: "1302"
+    uid: f5e89949-7a37-42a0-8e06-a93b4d7a87f6
   spec:
     replicas: 0
     selector:
@@ -25024,7 +25024,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: auth
@@ -25037,9 +25037,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: b33f7c35-1992-4a28-aa85-243ae6cd82d1
-    resourceVersion: "533"
-    uid: 4952c597-7ac3-4db6-92d6-43680605b01a
+      uid: dfc78f8e-d712-444e-af6b-54caeb4774bd
+    resourceVersion: "522"
+    uid: 15c78166-620a-4ee2-a063-a8ad2afcdef0
   spec:
     replicas: 0
     selector:
@@ -25075,7 +25075,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:43Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: billing
@@ -25088,9 +25088,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: 8a382162-0431-4480-8ac1-9a4b7169a02c
-    resourceVersion: "751"
-    uid: affe117b-3e2e-4258-8474-42cb1595d9fc
+      uid: 9e5e3a1a-a2fd-4d18-9cfb-5b5dfce798da
+    resourceVersion: "923"
+    uid: 859719be-b16b-43d9-ae57-bef4655519d7
   spec:
     replicas: 0
     selector:
@@ -25128,7 +25128,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: cache
       meta.helm.sh/release-namespace: team-02
-    creationTimestamp: "2026-09-27T10:48:18Z"
+    creationTimestamp: "2026-09-27T12:39:04Z"
     generation: 1
     labels:
       app: cache
@@ -25141,9 +25141,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: d25ae46e-6f8c-4291-b315-18a9b7102708
-    resourceVersion: "1708"
-    uid: 2b9f1ae6-f802-4a34-830a-898be2386d61
+      uid: 515acfbf-7e8b-44ed-be3b-9f7f62282f9e
+    resourceVersion: "1619"
+    uid: 7d2dfa0a-0cd0-4eb3-8b18-447ebc9ee069
   spec:
     replicas: 0
     selector:
@@ -25179,7 +25179,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: cron
@@ -25192,9 +25192,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: 92e46ade-701b-420b-851e-042f45f93dd2
-    resourceVersion: "743"
-    uid: a772bca7-32a6-47e7-839b-3af67b10ca0e
+      uid: 0d7ba767-7f00-4639-87e5-1e4ca7a10620
+    resourceVersion: "910"
+    uid: 4f5d8f7e-71d0-453b-b255-572caac00636
   spec:
     replicas: 0
     selector:
@@ -25230,7 +25230,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:25Z"
+    creationTimestamp: "2026-09-27T12:39:11Z"
     generation: 1
     labels:
       app: gateway
@@ -25243,9 +25243,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: ba4fe0fc-bd46-4250-9e9b-34b91a995e96
-    resourceVersion: "1856"
-    uid: 164a1d95-f38c-4a00-9e73-8c0cd144850d
+      uid: cf03e17d-bc6d-4e13-a072-f73dd8787e5f
+    resourceVersion: "1762"
+    uid: 3b513d08-5aaa-491f-9fc9-0a5140022e0a
   spec:
     replicas: 0
     selector:
@@ -25282,7 +25282,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:05Z"
+    creationTimestamp: "2026-09-27T12:38:50Z"
     generation: 1
     labels:
       app: notify
@@ -25295,9 +25295,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: a9f63a14-826e-46a7-8724-c43469239812
-    resourceVersion: "1403"
-    uid: 40526026-a85c-410a-9de9-4e2c5c995576
+      uid: 8d996e78-f1fe-48ba-bd47-aee125cbfdb2
+    resourceVersion: "1306"
+    uid: 9618a437-7c9b-4d25-b748-a8a2f4fa76c4
   spec:
     replicas: 0
     selector:
@@ -25333,7 +25333,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:43Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: search
@@ -25346,9 +25346,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: 331e0a07-2873-470a-a5ec-a9e9a54b6936
-    resourceVersion: "749"
-    uid: 4d2bd7dd-fc8d-4fc1-934c-2669ec5a509f
+      uid: 3081d2c9-35c6-42af-bac8-96a3234f0a5f
+    resourceVersion: "920"
+    uid: 4cd1e86f-f427-46b9-b3b5-9d511ac27d24
   spec:
     replicas: 0
     selector:
@@ -25385,7 +25385,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:05Z"
+    creationTimestamp: "2026-09-27T12:38:50Z"
     generation: 1
     labels:
       app: web
@@ -25398,9 +25398,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: ff1dd00a-01b5-4c7e-af84-055da078be70
-    resourceVersion: "1401"
-    uid: bec99c08-c2fd-4eae-95a1-280537306700
+      uid: 1e3ce12c-663b-4b01-95d0-6efb43c389e2
+    resourceVersion: "1304"
+    uid: 56aada42-acf3-4d3a-88bb-5a11dc428103
   spec:
     replicas: 0
     selector:
@@ -25436,7 +25436,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:42Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: worker
@@ -25449,9 +25449,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 88d293bf-4f0e-467b-8ad5-07c1b516a888
-    resourceVersion: "740"
-    uid: 43e7b521-b230-4a80-88f3-f2aba9f8f525
+      uid: db64d458-4e37-4ebf-8dac-edef0fff90a6
+    resourceVersion: "853"
+    uid: 6775cca8-2b07-4d63-8922-2084b39310e2
   spec:
     replicas: 0
     selector:
@@ -25487,7 +25487,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:43Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: api
@@ -25500,9 +25500,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 0dd7deba-f290-4c44-a5e4-f1f45d1fc913
-    resourceVersion: "753"
-    uid: 948d5f38-0b13-4f7b-be7c-73083c8d43ef
+      uid: 35453ddd-0721-4c4b-abbd-2b4ee873ec39
+    resourceVersion: "925"
+    uid: 1e10b2c7-387f-46b3-9747-fb7481bfccf2
   spec:
     replicas: 0
     selector:
@@ -25538,7 +25538,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: auth
@@ -25551,9 +25551,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: 2bbee99d-c3fb-4af6-9523-4e8ac8625229
-    resourceVersion: "539"
-    uid: bf35e449-a9b7-42c9-9fde-553f33b2e262
+      uid: 73b9dc23-e2e5-495b-b3d2-2f6e7147ed3d
+    resourceVersion: "528"
+    uid: f9c09a03-a69e-4a91-a36c-27b1c707e429
   spec:
     replicas: 0
     selector:
@@ -25589,7 +25589,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:44Z"
+    creationTimestamp: "2026-09-27T12:38:34Z"
     generation: 1
     labels:
       app: billing
@@ -25602,9 +25602,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: 0101279e-bbb3-43fc-a364-3a937511fa48
-    resourceVersion: "771"
-    uid: 27cd46f8-25cb-4e85-9aa9-af92fad04293
+      uid: efd27636-75d9-41bc-a691-2bd689d7a271
+    resourceVersion: "941"
+    uid: 7cef2a3c-2959-4649-9f98-90b5464815b5
   spec:
     replicas: 0
     selector:
@@ -25640,7 +25640,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:44Z"
+    creationTimestamp: "2026-09-27T12:38:34Z"
     generation: 1
     labels:
       app: cache
@@ -25653,9 +25653,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: e8a321fe-1336-4d97-82b7-25c779c426b3
-    resourceVersion: "769"
-    uid: 12fc9a36-08b7-4cb1-9abd-04dfe92eada7
+      uid: 8766ad9c-4813-48a6-bffc-97911091e2ac
+    resourceVersion: "939"
+    uid: c0885185-ad49-49b3-bd0f-a088d94b0c15
   spec:
     replicas: 0
     selector:
@@ -25691,7 +25691,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:43Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: cron
@@ -25704,9 +25704,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: 0a9a898c-a78a-4572-b5f1-de761096fb7d
-    resourceVersion: "758"
-    uid: babac0bf-4e19-47df-a520-14cc35240e5b
+      uid: 7bc90243-44ef-44c3-a555-41b5f6ace57d
+    resourceVersion: "932"
+    uid: 4f1bdb03-541c-4d99-b760-f2a9f57a1459
   spec:
     replicas: 0
     selector:
@@ -25742,7 +25742,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:44Z"
+    creationTimestamp: "2026-09-27T12:38:34Z"
     generation: 1
     labels:
       app: gateway
@@ -25755,9 +25755,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: 68d2fb7e-5d51-4e27-884f-00a1ea52d08b
-    resourceVersion: "767"
-    uid: 65f76b15-5857-456f-985b-0c711335869a
+      uid: 83b7bc28-0cb9-49b9-a563-a59bd4129c33
+    resourceVersion: "937"
+    uid: 30c92596-a925-4caa-a92f-992da0a69097
   spec:
     replicas: 0
     selector:
@@ -25793,7 +25793,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:44Z"
+    creationTimestamp: "2026-09-27T12:38:34Z"
     generation: 1
     labels:
       app: notify
@@ -25806,9 +25806,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: 757bea76-7d4f-404f-ab84-33195f76298c
-    resourceVersion: "773"
-    uid: f6dec4e1-75c3-4b52-a2bb-6195de4b7070
+      uid: d9d571f2-0065-4f57-8c43-2bd1d44d0295
+    resourceVersion: "943"
+    uid: 106f5646-1ebf-4e69-8429-30591d03769d
   spec:
     replicas: 0
     selector:
@@ -25844,7 +25844,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:25Z"
+    creationTimestamp: "2026-09-27T12:39:11Z"
     generation: 1
     labels:
       app: search
@@ -25857,9 +25857,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: 5ad797cb-2643-44a8-a34d-9d7f4b6c3b92
-    resourceVersion: "1860"
-    uid: 3c199538-9a3b-451d-96aa-680f8b2bf2f1
+      uid: cf3e5a1a-2884-45bf-8f96-aa33569986fe
+    resourceVersion: "1766"
+    uid: 4e0fb084-2079-41e0-91ce-d38135839cd7
   spec:
     replicas: 0
     selector:
@@ -25896,7 +25896,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:05Z"
+    creationTimestamp: "2026-09-27T12:38:51Z"
     generation: 1
     labels:
       app: web
@@ -25909,9 +25909,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: 1a2d2f9a-7754-49f8-9da5-bb0eeac85168
-    resourceVersion: "1405"
-    uid: 5c257185-2f81-4e03-8107-fb0ed297aeea
+      uid: f04fb31a-942f-4b47-91a5-e848099b1887
+    resourceVersion: "1308"
+    uid: 284691fd-75aa-4cf4-98fe-3624ab99e055
   spec:
     replicas: 0
     selector:
@@ -25947,7 +25947,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:43Z"
+    creationTimestamp: "2026-09-27T12:38:33Z"
     generation: 1
     labels:
       app: worker
@@ -25960,9 +25960,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 03282a16-1ecd-4da7-86ed-fb9080b65dc3
-    resourceVersion: "755"
-    uid: 4d18234b-1d7e-4aad-86c8-f34b819458d1
+      uid: 24f82ac0-cc4b-4779-b5a3-4c5478901fd1
+    resourceVersion: "927"
+    uid: 1b5b687f-853c-4207-a726-d3b5b969c23e
   spec:
     replicas: 0
     selector:
@@ -25999,7 +25999,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:05Z"
+    creationTimestamp: "2026-09-27T12:38:51Z"
     generation: 1
     labels:
       app: api
@@ -26012,9 +26012,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 14cd389c-2019-4a7a-92f1-5ff873bc0860
-    resourceVersion: "1414"
-    uid: 2edeb890-2ece-48a0-9bba-849d8ff8ad54
+      uid: 266764c1-9135-4f6d-9343-8851fba28a5e
+    resourceVersion: "1317"
+    uid: c3bfd7f9-a88b-45ba-a268-710c5fc5e4bd
   spec:
     replicas: 0
     selector:
@@ -26052,7 +26052,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: auth
       meta.helm.sh/release-namespace: team-04
-    creationTimestamp: "2026-09-27T10:48:19Z"
+    creationTimestamp: "2026-09-27T12:39:05Z"
     generation: 1
     labels:
       app: auth
@@ -26065,9 +26065,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: 453bb070-f62a-41c5-87c7-313131decbbd
-    resourceVersion: "1717"
-    uid: 59774502-bed1-4a7d-b38d-305a910c2785
+      uid: d9668541-4780-4d01-a4da-015f74a72f13
+    resourceVersion: "1627"
+    uid: bc4cca17-1a9a-4785-bc75-926ee125efc0
   spec:
     replicas: 0
     selector:
@@ -26103,7 +26103,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:44Z"
+    creationTimestamp: "2026-09-27T12:38:35Z"
     generation: 1
     labels:
       app: billing
@@ -26116,9 +26116,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: 7dc95063-5ccc-4df7-be31-dc2ab93f4f26
-    resourceVersion: "784"
-    uid: 7f31db93-99f2-4e26-9d25-75f322f3e4d1
+      uid: dbcdcdd9-5a30-49aa-a3b5-ca3e07cdb23c
+    resourceVersion: "954"
+    uid: ca57e4b6-1b44-4640-8cf9-638c8b1cdefc
   spec:
     replicas: 0
     selector:
@@ -26154,7 +26154,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:44Z"
+    creationTimestamp: "2026-09-27T12:38:34Z"
     generation: 1
     labels:
       app: cache
@@ -26167,9 +26167,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: 39d3701a-bec1-4c20-a713-3dc7ab0121fe
-    resourceVersion: "782"
-    uid: 16a3165b-16ae-41f1-8c62-783921882427
+      uid: 73b8a092-efdd-47c9-980f-2c2021e34c47
+    resourceVersion: "952"
+    uid: 9135bf26-87f2-4427-ac84-8b0980bd5559
   spec:
     replicas: 0
     selector:
@@ -26206,7 +26206,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:05Z"
+    creationTimestamp: "2026-09-27T12:38:51Z"
     generation: 1
     labels:
       app: cron
@@ -26219,9 +26219,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: 640ba444-14d2-4869-baf2-f74e9a5f47ff
-    resourceVersion: "1416"
-    uid: 976adc8b-6fcc-46b4-a542-e1443052ebac
+      uid: 3874ffa4-2da7-436e-a959-f46855376d46
+    resourceVersion: "1319"
+    uid: ac138769-315c-4db3-aefc-1a8c30a4ad16
   spec:
     replicas: 0
     selector:
@@ -26258,7 +26258,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:05Z"
+    creationTimestamp: "2026-09-27T12:38:51Z"
     generation: 1
     labels:
       app: gateway
@@ -26271,9 +26271,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: bf49694c-7f87-4911-b53f-922ed6f90f0f
-    resourceVersion: "1418"
-    uid: 821f8649-9ab1-420c-8827-a5a7235da355
+      uid: d8eb0ead-c584-4e77-919d-508687bcca45
+    resourceVersion: "1321"
+    uid: d3c58438-5ffe-4e4a-a5fd-c5d02009bf20
   spec:
     replicas: 0
     selector:
@@ -26310,7 +26310,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:06Z"
+    creationTimestamp: "2026-09-27T12:38:51Z"
     generation: 1
     labels:
       app: notify
@@ -26323,9 +26323,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: 6d0f906c-301e-44d9-bc2c-d824dd78600e
-    resourceVersion: "1422"
-    uid: c0a40ff9-f3ae-49d1-b63f-dc6224c334f0
+      uid: 9ba1674a-efdf-4b99-9c5f-8d0e0a86dc0c
+    resourceVersion: "1325"
+    uid: 2a517c7c-e906-48e1-955e-256c80f1c113
   spec:
     replicas: 0
     selector:
@@ -26362,7 +26362,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:05Z"
+    creationTimestamp: "2026-09-27T12:38:51Z"
     generation: 1
     labels:
       app: search
@@ -26375,9 +26375,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: ce22660c-51c6-4804-938f-fb900a295944
-    resourceVersion: "1420"
-    uid: af51e1d5-f24c-407d-8f24-b4e1f642e18b
+      uid: 82c4e8b2-b92c-4ed6-8ae1-70890f6b1c64
+    resourceVersion: "1323"
+    uid: 21207e61-6ad0-407a-809c-847850c35140
   spec:
     replicas: 0
     selector:
@@ -26415,7 +26415,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: web
       meta.helm.sh/release-namespace: team-04
-    creationTimestamp: "2026-09-27T10:48:18Z"
+    creationTimestamp: "2026-09-27T12:39:04Z"
     generation: 1
     labels:
       app: web
@@ -26428,9 +26428,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: 78cae00b-9ae2-441b-9218-431781e8601d
-    resourceVersion: "1710"
-    uid: da6f4d07-51a7-4e7c-a0d0-9fe8623c5968
+      uid: 9904fa46-b5da-4e02-80a4-31db76b71227
+    resourceVersion: "1621"
+    uid: b6f8d55f-5c64-4502-b135-052e6e568622
   spec:
     replicas: 0
     selector:
@@ -26466,7 +26466,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:44Z"
+    creationTimestamp: "2026-09-27T12:38:34Z"
     generation: 1
     labels:
       app: worker
@@ -26479,9 +26479,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: cd3c99a0-d584-450f-959d-a5c21aa6e883
-    resourceVersion: "776"
-    uid: a40cc356-5338-4dbb-9cd8-5fe9fd2c8fed
+      uid: 0f527c27-ab34-4dae-a75c-16e535e141c7
+    resourceVersion: "948"
+    uid: a414fa69-0631-40fc-b4ad-9e2d8ae664d5
   spec:
     replicas: 0
     selector:
@@ -26517,7 +26517,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:44Z"
+    creationTimestamp: "2026-09-27T12:38:35Z"
     generation: 1
     labels:
       app: api
@@ -26530,9 +26530,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 347a8c3c-b07a-442a-9ca8-16f701bc3667
-    resourceVersion: "786"
-    uid: 24773996-1a86-4a11-8c68-5537f773920f
+      uid: 7faf38d1-8ec6-4e25-b206-a31a48dad59f
+    resourceVersion: "956"
+    uid: 4d24fedc-06dc-4e2c-bf60-bc17e68ee046
   spec:
     replicas: 0
     selector:
@@ -26568,7 +26568,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: auth
@@ -26581,9 +26581,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: e5e7e1dc-57c3-4ade-81f7-173550546843
-    resourceVersion: "546"
-    uid: 48608ec3-fc83-4ac9-bce5-93be8bb652a4
+      uid: 370da7bf-19a0-4633-8a67-50203b88ae6a
+    resourceVersion: "547"
+    uid: 24802f69-d7a9-40b3-a6fe-1c4d09fefdd0
   spec:
     replicas: 0
     selector:
@@ -26619,7 +26619,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:44Z"
+    creationTimestamp: "2026-09-27T12:38:35Z"
     generation: 1
     labels:
       app: billing
@@ -26632,9 +26632,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: 55b63d97-a315-4886-bb93-dc77a8a77946
-    resourceVersion: "788"
-    uid: 88756e96-c4a4-4ae1-9a18-dfebb4786f1d
+      uid: a45d6bee-36d3-4964-89b2-ae2ae1f5e240
+    resourceVersion: "958"
+    uid: 3aa671cc-4373-45a8-96a7-09f67fe83869
   spec:
     replicas: 0
     selector:
@@ -26671,7 +26671,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:06Z"
+    creationTimestamp: "2026-09-27T12:38:52Z"
     generation: 1
     labels:
       app: cache
@@ -26684,9 +26684,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: 54061e7f-2333-477b-a0da-c9dac27bdb88
-    resourceVersion: "1433"
-    uid: bacdbd85-2f53-4c58-917c-03862f52f01d
+      uid: 1668fe79-9414-4639-b275-6325b1054848
+    resourceVersion: "1337"
+    uid: 3dbdff53-f40d-4800-93a6-a0e6677cfe8e
   spec:
     replicas: 0
     selector:
@@ -26722,7 +26722,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: cron
@@ -26735,9 +26735,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: 500386ef-1320-4f2c-83d1-19f05ae249b8
-    resourceVersion: "544"
-    uid: 039cb41a-9c13-45f1-bbfa-2368b458fa36
+      uid: 9d921746-28da-47d4-b99a-7e152bf9805b
+    resourceVersion: "543"
+    uid: 7360e658-e782-4dbd-b73c-ceed05b13464
   spec:
     replicas: 0
     selector:
@@ -26775,7 +26775,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: gateway
       meta.helm.sh/release-namespace: team-05
-    creationTimestamp: "2026-09-27T10:48:19Z"
+    creationTimestamp: "2026-09-27T12:39:05Z"
     generation: 1
     labels:
       app: gateway
@@ -26788,9 +26788,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: 2a411b0b-a175-42c7-8501-283f10babdb4
-    resourceVersion: "1719"
-    uid: 04b970f7-826f-48ed-b28e-6cf87ace852f
+      uid: b2402e89-2513-4385-8d2d-71e14f6652d5
+    resourceVersion: "1629"
+    uid: 0e4942c1-1310-478f-b102-b6a90cecd263
   spec:
     replicas: 0
     selector:
@@ -26826,7 +26826,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: notify
@@ -26839,9 +26839,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: ef8e4ce9-f86d-426b-bf6f-773bfb94f52d
-    resourceVersion: "555"
-    uid: 12e911f9-aeeb-432b-ae04-4ebd9a180fe1
+      uid: 9c2f950b-6d41-46fd-b5e8-181ca10b5470
+    resourceVersion: "562"
+    uid: acf723f9-bafc-4806-8a85-04fc3d2fc859
   spec:
     replicas: 0
     selector:
@@ -26878,7 +26878,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:06Z"
+    creationTimestamp: "2026-09-27T12:38:52Z"
     generation: 1
     labels:
       app: search
@@ -26891,9 +26891,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: f0b9c443-33aa-43e2-93d5-c75b7aa0329d
-    resourceVersion: "1431"
-    uid: f6a09abe-104b-4033-a7ec-d91156d1749c
+      uid: ebde0f47-cb1c-466d-b535-3515ce7c6ba5
+    resourceVersion: "1335"
+    uid: 131aabe3-d0e3-4f41-b843-ebdb12395bfe
   spec:
     replicas: 0
     selector:
@@ -26930,7 +26930,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:06Z"
+    creationTimestamp: "2026-09-27T12:38:52Z"
     generation: 1
     labels:
       app: web
@@ -26943,9 +26943,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: af0b5dd6-2963-4c60-895a-85f04e2ae0fc
-    resourceVersion: "1429"
-    uid: a877c554-1037-444c-84f1-e38d1bcd9828
+      uid: c29f7ec6-8b43-4dc5-8d35-636f451b92e4
+    resourceVersion: "1333"
+    uid: 40f9e18a-e93b-4ee1-aaa1-f5db07613f9b
   spec:
     replicas: 0
     selector:
@@ -26981,7 +26981,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:25Z"
+    creationTimestamp: "2026-09-27T12:39:11Z"
     generation: 1
     labels:
       app: worker
@@ -26994,9 +26994,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 9dcf2991-f013-4398-90f1-2cfa55747abe
-    resourceVersion: "1865"
-    uid: d105414a-5132-4cc8-b446-f797675e6836
+      uid: 794694a6-a6b5-4549-8c25-a2f5286fd2bb
+    resourceVersion: "1768"
+    uid: 6fd36233-0fee-41c5-b8d2-33f049b203e4
   spec:
     replicas: 0
     selector:
@@ -27034,7 +27034,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: api
       meta.helm.sh/release-namespace: team-06
-    creationTimestamp: "2026-09-27T10:48:19Z"
+    creationTimestamp: "2026-09-27T12:39:05Z"
     generation: 1
     labels:
       app: api
@@ -27047,9 +27047,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 78811072-cb5b-4a1b-8e5f-652f5433f38f
-    resourceVersion: "1721"
-    uid: e2ef9cfd-d18c-4707-bed9-d43a58655d4e
+      uid: 3528ec87-cb66-4e0a-a6d5-2827fc3e5bd8
+    resourceVersion: "1631"
+    uid: 17775435-19c9-458a-98ea-788f345fb7a3
   spec:
     replicas: 0
     selector:
@@ -27085,7 +27085,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:45Z"
+    creationTimestamp: "2026-09-27T12:38:35Z"
     generation: 1
     labels:
       app: auth
@@ -27098,9 +27098,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: 61735df5-a253-45f2-abf4-52d21e6dd483
-    resourceVersion: "791"
-    uid: 44d1fa1f-0ba7-42cb-af81-dac32a0af846
+      uid: 7f83e047-6353-44f9-977a-e7b7ad761070
+    resourceVersion: "963"
+    uid: e1d62bd4-4dcd-4e96-b73f-519b7967d542
   spec:
     replicas: 0
     selector:
@@ -27136,7 +27136,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:45Z"
+    creationTimestamp: "2026-09-27T12:38:35Z"
     generation: 1
     labels:
       app: billing
@@ -27149,9 +27149,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: 180f00d5-2529-4849-93a8-5769583ed4c8
-    resourceVersion: "799"
-    uid: 566ef87a-83e2-44c9-9533-e9ea07d62a42
+      uid: 9423a4d2-a655-4582-92c6-e7090db42bff
+    resourceVersion: "970"
+    uid: f171bc76-d64a-4e26-b6d1-209750648cca
   spec:
     replicas: 0
     selector:
@@ -27189,7 +27189,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: cache
       meta.helm.sh/release-namespace: team-06
-    creationTimestamp: "2026-09-27T10:48:19Z"
+    creationTimestamp: "2026-09-27T12:39:05Z"
     generation: 1
     labels:
       app: cache
@@ -27202,9 +27202,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: 825953bd-f31b-4bca-b935-f1a44f027ca4
-    resourceVersion: "1725"
-    uid: 3e71cde4-bade-4439-8fed-dd4858fc1c15
+      uid: 0c8f2e1d-d658-4a85-9a76-7c6d6b67f16d
+    resourceVersion: "1636"
+    uid: bdc9acdc-55e1-4f01-8979-0251ed9a091e
   spec:
     replicas: 0
     selector:
@@ -27241,7 +27241,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:06Z"
+    creationTimestamp: "2026-09-27T12:38:52Z"
     generation: 1
     labels:
       app: cron
@@ -27254,9 +27254,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: 66e4bfd0-fbd0-4f3f-9e64-8a99306532be
-    resourceVersion: "1437"
-    uid: d4eb65cf-84e1-4bb3-ac7c-4ddaabc6557e
+      uid: d0509f3b-aafe-4bf4-98dd-1e42e04162af
+    resourceVersion: "1341"
+    uid: 28fc4c4b-fb43-4a56-9f16-caa30f890b99
   spec:
     replicas: 0
     selector:
@@ -27293,7 +27293,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:07Z"
+    creationTimestamp: "2026-09-27T12:38:53Z"
     generation: 1
     labels:
       app: gateway
@@ -27306,9 +27306,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: b740147f-0051-46f9-aaf7-de6196b50be0
-    resourceVersion: "1444"
-    uid: f52987ec-9623-41d6-a3ca-1443ad60e648
+      uid: bf198c29-85dc-474f-b809-15f111c43969
+    resourceVersion: "1351"
+    uid: aab28b2e-0460-4d5e-9849-642fe18a6f61
   spec:
     replicas: 0
     selector:
@@ -27345,7 +27345,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:07Z"
+    creationTimestamp: "2026-09-27T12:38:53Z"
     generation: 1
     labels:
       app: notify
@@ -27358,9 +27358,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: 3ef9d63d-3060-4ebe-82fa-43113bb09d33
-    resourceVersion: "1446"
-    uid: 38a8a033-6364-4d91-b4ca-74dd76002ce1
+      uid: a964c3ea-c088-4e56-a7ff-9ae572cbe54b
+    resourceVersion: "1353"
+    uid: 36c75d91-c1cd-45d6-8ac2-fe2d56fd7885
   spec:
     replicas: 0
     selector:
@@ -27396,7 +27396,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:45Z"
+    creationTimestamp: "2026-09-27T12:38:35Z"
     generation: 1
     labels:
       app: search
@@ -27409,9 +27409,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: 85ea4f63-3910-4720-965f-b05bcd0c49a1
-    resourceVersion: "797"
-    uid: bd311748-5400-4ef0-9313-f07fe9e36bf5
+      uid: dc323e96-29ea-4be3-81c2-907cde54c788
+    resourceVersion: "968"
+    uid: c1e583ac-291d-4acd-b4e0-1b5c8a4aefe1
   spec:
     replicas: 0
     selector:
@@ -27448,7 +27448,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:06Z"
+    creationTimestamp: "2026-09-27T12:38:52Z"
     generation: 1
     labels:
       app: web
@@ -27461,9 +27461,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: 45cd6c47-48a4-4220-9d92-92ef888746a9
-    resourceVersion: "1435"
-    uid: c2b44993-e7ce-402b-b522-b2b21818ea6f
+      uid: bc3b59f1-420b-49ae-b404-e1a3b60b4091
+    resourceVersion: "1339"
+    uid: 877dddda-d362-47a0-8f24-1c3ef9555058
   spec:
     replicas: 0
     selector:
@@ -27501,7 +27501,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: worker
       meta.helm.sh/release-namespace: team-06
-    creationTimestamp: "2026-09-27T10:48:19Z"
+    creationTimestamp: "2026-09-27T12:39:05Z"
     generation: 1
     labels:
       app: worker
@@ -27514,9 +27514,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 1d485f8c-1ef2-4e52-9fda-f204f035fa5a
-    resourceVersion: "1723"
-    uid: ec7f7d0e-67e8-4e2e-9a1e-c51eff085a6d
+      uid: 032b616b-df18-42ed-8f7b-645e5bdfca41
+    resourceVersion: "1634"
+    uid: 47f3f95c-56cf-4d03-8ce4-a09c046b7787
   spec:
     replicas: 0
     selector:
@@ -27553,7 +27553,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:07Z"
+    creationTimestamp: "2026-09-27T12:38:53Z"
     generation: 1
     labels:
       app: api
@@ -27566,9 +27566,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 5a2543a5-bc61-412a-89e8-cf99550619ec
-    resourceVersion: "1448"
-    uid: 0c7d2fd2-5b7a-4217-9dc8-2c4e6eabeb4b
+      uid: 9db4eace-3b6e-43a4-bacb-cb61081ca1b8
+    resourceVersion: "1355"
+    uid: 1a46407d-b5ef-4e16-b965-17af85da6403
   spec:
     replicas: 0
     selector:
@@ -27606,7 +27606,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: auth
       meta.helm.sh/release-namespace: team-07
-    creationTimestamp: "2026-09-27T10:48:20Z"
+    creationTimestamp: "2026-09-27T12:39:06Z"
     generation: 1
     labels:
       app: auth
@@ -27619,9 +27619,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: efb783b9-6d51-4c0d-b538-be2821af93f0
-    resourceVersion: "1738"
-    uid: 62192405-0dfb-445b-b682-4c0225add6f3
+      uid: 65ed63bc-6311-4b97-914e-7a5047755d6e
+    resourceVersion: "1647"
+    uid: d8bcdaf1-0f6d-44ba-ba2e-d40d53bbe0f3
   spec:
     replicas: 0
     selector:
@@ -27657,7 +27657,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:45Z"
+    creationTimestamp: "2026-09-27T12:38:35Z"
     generation: 1
     labels:
       app: billing
@@ -27670,9 +27670,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: 3b036e11-9278-446e-a2bf-a96aa3672504
-    resourceVersion: "801"
-    uid: 8e045913-ffe0-42c5-b13f-ae3954ef1c48
+      uid: d65f5e5b-fc43-4bcd-b999-3f734855fba6
+    resourceVersion: "972"
+    uid: d77c8b6f-198a-40fd-b863-641ceb3223f7
   spec:
     replicas: 0
     selector:
@@ -27709,7 +27709,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:07Z"
+    creationTimestamp: "2026-09-27T12:38:53Z"
     generation: 1
     labels:
       app: cache
@@ -27722,9 +27722,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: e9d84a12-fd43-45f3-af25-84d3c72250cc
-    resourceVersion: "1452"
-    uid: d404cb00-6338-493c-b431-24c1672d4786
+      uid: 3e5e90eb-8262-42da-a2d2-21331bb00343
+    resourceVersion: "1365"
+    uid: 5d2c0641-5aa5-49cd-83d4-2416941e2dd2
   spec:
     replicas: 0
     selector:
@@ -27760,7 +27760,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:26Z"
+    creationTimestamp: "2026-09-27T12:39:12Z"
     generation: 1
     labels:
       app: cron
@@ -27773,9 +27773,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: e5162bd6-f5f4-4c55-a4cf-a6fdc88f5bf2
-    resourceVersion: "1871"
-    uid: e1e43f0a-ff85-498b-b7eb-7228189b2ed0
+      uid: fe42a94a-a709-4f3f-94cc-2ea552df3dda
+    resourceVersion: "1777"
+    uid: e485ba51-38c2-4297-b35c-1a03c209c8eb
   spec:
     replicas: 0
     selector:
@@ -27813,7 +27813,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: gateway
       meta.helm.sh/release-namespace: team-07
-    creationTimestamp: "2026-09-27T10:48:20Z"
+    creationTimestamp: "2026-09-27T12:39:06Z"
     generation: 1
     labels:
       app: gateway
@@ -27826,9 +27826,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: c75a9911-2a2a-46c9-8665-99664cc5e55e
-    resourceVersion: "1736"
-    uid: 09d1c2ad-3917-4975-88cb-77313df7384b
+      uid: a215f07e-8e52-42a5-b644-ac5ae8e3c062
+    resourceVersion: "1645"
+    uid: be7f8b04-2c09-4ce9-86d1-addf7b91519b
   spec:
     replicas: 0
     selector:
@@ -27864,7 +27864,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:45Z"
+    creationTimestamp: "2026-09-27T12:38:35Z"
     generation: 1
     labels:
       app: notify
@@ -27877,9 +27877,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: 6c241e6e-8c84-49da-aae9-e2624146597e
-    resourceVersion: "803"
-    uid: 42eedbd9-2e83-44af-a4b1-470739bbb93e
+      uid: 0fe46703-dca5-44aa-b8af-0b47b71b550c
+    resourceVersion: "974"
+    uid: 0ebade3e-b006-4d7e-a300-e5a8e1aee1a9
   spec:
     replicas: 0
     selector:
@@ -27916,7 +27916,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:07Z"
+    creationTimestamp: "2026-09-27T12:38:53Z"
     generation: 1
     labels:
       app: search
@@ -27929,9 +27929,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: 1204d87f-2e5e-465a-89bb-c34d7482e579
-    resourceVersion: "1450"
-    uid: 4ebe8384-7966-495a-a066-8e5ed5f6049f
+      uid: 48e2ebdf-5f6d-4539-94cf-8696f53d95c4
+    resourceVersion: "1360"
+    uid: 7d89f694-9348-46c9-81d6-546ee30a9868
   spec:
     replicas: 0
     selector:
@@ -27969,7 +27969,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: web
       meta.helm.sh/release-namespace: team-07
-    creationTimestamp: "2026-09-27T10:48:20Z"
+    creationTimestamp: "2026-09-27T12:39:05Z"
     generation: 1
     labels:
       app: web
@@ -27982,9 +27982,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: 6b2278c4-dd94-4bfe-999d-efaffabc3a4e
-    resourceVersion: "1734"
-    uid: 7aeeb329-919b-4f9b-ba88-3eb28ff1fdf6
+      uid: 48ee1328-72cb-48c8-b3ab-b9c202999872
+    resourceVersion: "1643"
+    uid: fa590a82-4d61-4db9-aaec-a72e7be99221
   spec:
     replicas: 0
     selector:
@@ -28020,7 +28020,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:26Z"
+    creationTimestamp: "2026-09-27T12:39:11Z"
     generation: 1
     labels:
       app: worker
@@ -28033,9 +28033,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 109eebf4-5699-40cb-967d-78b7e7250654
-    resourceVersion: "1869"
-    uid: ea06fce7-d22a-487a-a88b-c75b8c960a19
+      uid: 6aa9a7b4-595b-4f69-9815-a491b7a7b8fb
+    resourceVersion: "1775"
+    uid: 1ee01ea1-a2de-49c3-abc3-9cedb7db59cc
   spec:
     replicas: 0
     selector:
@@ -28072,7 +28072,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:08Z"
+    creationTimestamp: "2026-09-27T12:38:53Z"
     generation: 1
     labels:
       app: api
@@ -28085,9 +28085,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: eaeb919d-d4dc-4ec4-b265-b796e97779f7
-    resourceVersion: "1461"
-    uid: 46810722-5d20-4e4b-9e06-42d78cbde20a
+      uid: 4d11063b-d82c-47ae-8ba1-960201ed5d59
+    resourceVersion: "1370"
+    uid: 8c9af649-e720-465e-9a11-a82009d77864
   spec:
     replicas: 0
     selector:
@@ -28125,7 +28125,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: auth
       meta.helm.sh/release-namespace: team-08
-    creationTimestamp: "2026-09-27T10:48:20Z"
+    creationTimestamp: "2026-09-27T12:39:06Z"
     generation: 1
     labels:
       app: auth
@@ -28138,9 +28138,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: d2a492f8-debb-4efe-83db-2900ba0ee110
-    resourceVersion: "1740"
-    uid: 26e36624-5872-4969-947e-c499495fda89
+      uid: f2591b09-6c54-4619-8258-480b4a454e13
+    resourceVersion: "1650"
+    uid: f11462b0-4589-4aa5-995c-5339c6a84490
   spec:
     replicas: 0
     selector:
@@ -28177,7 +28177,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:08Z"
+    creationTimestamp: "2026-09-27T12:38:54Z"
     generation: 1
     labels:
       app: billing
@@ -28190,9 +28190,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: 46f3920d-7715-4e1b-83f3-8d81faa7a82c
-    resourceVersion: "1467"
-    uid: e7915ab0-56a0-483b-8aba-fbe813bf88d1
+      uid: 37a13cbb-c260-4f31-89fd-fd223d9d7624
+    resourceVersion: "1376"
+    uid: 7139844a-e1bc-417f-9dda-c9c4cdcc432a
   spec:
     replicas: 0
     selector:
@@ -28228,7 +28228,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:46Z"
+    creationTimestamp: "2026-09-27T12:38:36Z"
     generation: 1
     labels:
       app: cache
@@ -28241,9 +28241,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: dd3386b3-f7ee-432b-88cc-b8ae319983fe
-    resourceVersion: "818"
-    uid: a4e0675d-2b6b-4a65-ab1d-066828976b64
+      uid: 1bcf040e-ad07-4743-84e1-ef703309b4de
+    resourceVersion: "988"
+    uid: e15f60ef-ca2f-4902-ba0e-2f91cf41a735
   spec:
     replicas: 0
     selector:
@@ -28279,7 +28279,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:45Z"
+    creationTimestamp: "2026-09-27T12:38:36Z"
     generation: 1
     labels:
       app: cron
@@ -28292,9 +28292,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: f72eb20e-2a40-4e9b-9978-806fc7cc2664
-    resourceVersion: "808"
-    uid: e876562f-0e70-42bf-b5c5-16f82ceba300
+      uid: 977d2a24-bde9-4f03-910d-77b400f96378
+    resourceVersion: "982"
+    uid: ac3c4e7b-0f84-45e8-987a-63c4376d6885
   spec:
     replicas: 0
     selector:
@@ -28330,7 +28330,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:46Z"
+    creationTimestamp: "2026-09-27T12:38:36Z"
     generation: 1
     labels:
       app: gateway
@@ -28343,9 +28343,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: 8e0686a9-87bb-4236-ad61-34da7c8fe202
-    resourceVersion: "814"
-    uid: 44e9d1e2-92b0-47e7-9656-3fb43425ddb8
+      uid: c67b95f6-21c9-459b-833d-04274f47716b
+    resourceVersion: "984"
+    uid: b7807f62-ae72-4871-b71e-7e90c4ad64cc
   spec:
     replicas: 0
     selector:
@@ -28382,7 +28382,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:08Z"
+    creationTimestamp: "2026-09-27T12:38:54Z"
     generation: 1
     labels:
       app: notify
@@ -28395,9 +28395,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: 754cb850-ee32-4f16-a7fa-25d4fd358768
-    resourceVersion: "1469"
-    uid: efe4cf66-cacf-4121-9f93-09cdb5ef80cb
+      uid: 5817e607-2529-4da3-92c8-61620744e3c9
+    resourceVersion: "1381"
+    uid: 3af36a8a-b29d-4ba1-add8-933924d38de1
   spec:
     replicas: 0
     selector:
@@ -28433,7 +28433,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:46Z"
+    creationTimestamp: "2026-09-27T12:38:36Z"
     generation: 1
     labels:
       app: search
@@ -28446,9 +28446,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: 1996c691-aeb3-4110-ad7c-ccd2186a3067
-    resourceVersion: "816"
-    uid: a80b9d2d-ef59-4e00-89f0-cbc7f203a79c
+      uid: 92112785-b18b-43a6-a2dc-6b1e8c4825a4
+    resourceVersion: "986"
+    uid: 601b8e5e-764f-4967-96da-25b41b89c59f
   spec:
     replicas: 0
     selector:
@@ -28485,7 +28485,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:08Z"
+    creationTimestamp: "2026-09-27T12:38:53Z"
     generation: 1
     labels:
       app: web
@@ -28498,9 +28498,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: fd91fa12-2fef-4d3f-8f0a-7103b1363397
-    resourceVersion: "1463"
-    uid: d10c5a28-4a96-4b9a-a7fd-1a5d2fc1289f
+      uid: ccb1d891-4c3c-400e-ae83-9cc311eb8154
+    resourceVersion: "1372"
+    uid: 64b215c4-2406-470c-aa20-68ed6e8c55a6
   spec:
     replicas: 0
     selector:
@@ -28537,7 +28537,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:08Z"
+    creationTimestamp: "2026-09-27T12:38:53Z"
     generation: 1
     labels:
       app: worker
@@ -28550,9 +28550,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 841a87e2-351a-4dfd-97fa-8554e03465b4
-    resourceVersion: "1465"
-    uid: ea693802-1d3e-4008-a092-7fb92f280fda
+      uid: bc9c0277-48fa-4e6d-b32f-722a8dbd061c
+    resourceVersion: "1374"
+    uid: 969c993d-b9ac-4ca8-84bc-a58229d596b9
   spec:
     replicas: 0
     selector:
@@ -28589,7 +28589,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:08Z"
+    creationTimestamp: "2026-09-27T12:38:54Z"
     generation: 1
     labels:
       app: api
@@ -28602,9 +28602,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 17b6d47f-72c2-44a0-9293-8f9eea8a80b9
-    resourceVersion: "1476"
-    uid: 7998e463-1e9b-4367-aa4d-33c6d9b1041b
+      uid: 2ef28e0e-f1dc-42fa-be3e-c74fc4d06cff
+    resourceVersion: "1386"
+    uid: 68ce513a-5a4a-498b-bd6a-509993548dca
   spec:
     replicas: 0
     selector:
@@ -28641,7 +28641,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:08Z"
+    creationTimestamp: "2026-09-27T12:38:54Z"
     generation: 1
     labels:
       app: auth
@@ -28654,9 +28654,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: f6fcd7a8-fa12-4815-8bf0-51b26a4bddd4
-    resourceVersion: "1480"
-    uid: 3eebaed0-d100-4179-a7a5-b3e79549631e
+      uid: aab65710-0650-49da-965a-71bd7382770c
+    resourceVersion: "1390"
+    uid: bdf89815-e57f-4c1a-ab07-1ed8c9203bdb
   spec:
     replicas: 0
     selector:
@@ -28694,7 +28694,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: billing
       meta.helm.sh/release-namespace: team-09
-    creationTimestamp: "2026-09-27T10:48:20Z"
+    creationTimestamp: "2026-09-27T12:39:06Z"
     generation: 1
     labels:
       app: billing
@@ -28707,9 +28707,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: 4cb4ad14-29d3-4868-9b62-1bd005fe3d3d
-    resourceVersion: "1742"
-    uid: 9af72dc3-df9b-4242-ab71-de89a5ab2ca2
+      uid: a7149edb-7854-4b2a-b013-ac7ff255c44b
+    resourceVersion: "1652"
+    uid: ee8e8a9a-4839-437c-aa65-9f7939626f4f
   spec:
     replicas: 0
     selector:
@@ -28746,7 +28746,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:08Z"
+    creationTimestamp: "2026-09-27T12:38:54Z"
     generation: 1
     labels:
       app: cache
@@ -28759,9 +28759,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: 1f8b5d38-5150-45ae-b2f3-07639ba74fac
-    resourceVersion: "1482"
-    uid: 8bea7314-3a74-46e6-b71a-6757b551d3ac
+      uid: 6950c763-0d58-4cf3-ae2b-d957da413ab8
+    resourceVersion: "1392"
+    uid: a0ca3ec7-9a7d-4b95-8f8e-4b0ac4bd8a49
   spec:
     replicas: 0
     selector:
@@ -28797,7 +28797,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:46Z"
+    creationTimestamp: "2026-09-27T12:38:36Z"
     generation: 1
     labels:
       app: cron
@@ -28810,9 +28810,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: fe694024-4cdf-4936-bd9f-e08b0881bb14
-    resourceVersion: "820"
-    uid: 362e5f70-29c3-4bdc-af36-22f503faf3eb
+      uid: c4131c3e-de5a-4751-b0d9-a0981428d5b4
+    resourceVersion: "991"
+    uid: 8ce6ee70-ef8a-4811-950f-dd6fe34d4e02
   spec:
     replicas: 0
     selector:
@@ -28848,7 +28848,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:26Z"
+    creationTimestamp: "2026-09-27T12:39:12Z"
     generation: 1
     labels:
       app: gateway
@@ -28861,9 +28861,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: c202b894-baf9-411a-952a-04a4afce8e63
-    resourceVersion: "1878"
-    uid: e99e63c2-f5db-4cb0-ac2c-1889ca08af06
+      uid: 9f98b97b-48ff-4287-a210-b9b771ab2024
+    resourceVersion: "1782"
+    uid: 7a9b6b6a-42b1-442d-b435-82ba66c30f19
   spec:
     replicas: 0
     selector:
@@ -28899,7 +28899,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:47Z"
+    creationTimestamp: "2026-09-27T12:38:37Z"
     generation: 1
     labels:
       app: notify
@@ -28912,9 +28912,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: 6a5515f6-0ca8-4749-b07b-2b224622ed20
-    resourceVersion: "829"
-    uid: 82cee78b-4c28-4fba-ab34-a61994d0c06c
+      uid: c40c3f5e-e313-481a-9a1d-6e5630c224d8
+    resourceVersion: "999"
+    uid: 63d055a5-c90c-4e72-9a94-8d89dadea018
   spec:
     replicas: 0
     selector:
@@ -28950,7 +28950,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:46Z"
+    creationTimestamp: "2026-09-27T12:38:37Z"
     generation: 1
     labels:
       app: search
@@ -28963,9 +28963,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: c7e8f6df-89f5-4ba1-95a6-5c8f6d5ef0d9
-    resourceVersion: "823"
-    uid: a314d7d4-4934-4190-938f-d05310842045
+      uid: 5486dcd9-ae13-4e00-9214-db59ab631fa6
+    resourceVersion: "997"
+    uid: c600c43a-c7bd-410f-a794-deaa32328b4a
   spec:
     replicas: 0
     selector:
@@ -29002,7 +29002,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:08Z"
+    creationTimestamp: "2026-09-27T12:38:54Z"
     generation: 1
     labels:
       app: web
@@ -29015,9 +29015,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: b3fed69c-8fe2-4931-a83d-6993bf9d0d0b
-    resourceVersion: "1478"
-    uid: fc33b22e-b0b4-4424-8f92-c64108aa9599
+      uid: 21f471d6-ca15-4dfe-ab5b-ca4b4e657af7
+    resourceVersion: "1388"
+    uid: 8d286fa1-ddf4-41b2-88f2-c8ae904a6688
   spec:
     replicas: 0
     selector:
@@ -29053,7 +29053,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:26Z"
+    creationTimestamp: "2026-09-27T12:39:12Z"
     generation: 1
     labels:
       app: worker
@@ -29066,9 +29066,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 0aca7849-c853-43a4-b54d-4346be49d93a
-    resourceVersion: "1876"
-    uid: a4735643-2ced-4799-a65e-a6e5e8653f5e
+      uid: 5d59b2d3-a0f7-44e5-8a62-f43da83aa128
+    resourceVersion: "1779"
+    uid: 638480e4-6af5-480b-b6e3-65091b34f89d
   spec:
     replicas: 0
     selector:
@@ -29104,7 +29104,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:47Z"
+    creationTimestamp: "2026-09-27T12:38:37Z"
     generation: 1
     labels:
       app: api
@@ -29117,9 +29117,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 6ba22458-70c3-4e55-8f51-8c5e7db73c5a
-    resourceVersion: "831"
-    uid: e09650af-56a7-45e3-845b-8291638707ba
+      uid: e95d1c63-32fa-4cae-9a8e-d1ccc66f014b
+    resourceVersion: "1001"
+    uid: 562aa91d-e583-442f-b34d-e622b5bea057
   spec:
     replicas: 0
     selector:
@@ -29156,7 +29156,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:09Z"
+    creationTimestamp: "2026-09-27T12:38:55Z"
     generation: 1
     labels:
       app: auth
@@ -29169,9 +29169,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: 3e55335a-dc28-4140-ac03-941d2133d4ed
-    resourceVersion: "1493"
-    uid: 5200fb3d-73d1-4bb0-a70f-5b2918928f1d
+      uid: 24faecba-965f-4d19-8a9d-77b3506e7c08
+    resourceVersion: "1403"
+    uid: 744dc714-7553-4ab5-a566-368296ca5aca
   spec:
     replicas: 0
     selector:
@@ -29208,7 +29208,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:09Z"
+    creationTimestamp: "2026-09-27T12:38:55Z"
     generation: 1
     labels:
       app: billing
@@ -29221,9 +29221,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: 3f257497-8413-4763-8ce4-0ea20d81a1e1
-    resourceVersion: "1495"
-    uid: c96abfa7-de41-451e-95e0-a02c3d01c9e3
+      uid: f51fef29-3b48-4c97-b8b4-481fcdb97e7b
+    resourceVersion: "1405"
+    uid: 63df61ec-a3e2-4c84-99f2-ed5c02623086
   spec:
     replicas: 0
     selector:
@@ -29259,7 +29259,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:47Z"
+    creationTimestamp: "2026-09-27T12:38:37Z"
     generation: 1
     labels:
       app: cache
@@ -29272,9 +29272,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: 27cfec55-86ce-493a-b73f-10c72e280561
-    resourceVersion: "841"
-    uid: c2b23767-091f-4bc3-a856-cd7e02e40b2b
+      uid: f65bc288-e83d-44f3-ac95-fd4b1f80cedb
+    resourceVersion: "1012"
+    uid: 9fd7a340-81bb-48a7-9b7a-4b1a4bbee60b
   spec:
     replicas: 0
     selector:
@@ -29310,7 +29310,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:47Z"
+    creationTimestamp: "2026-09-27T12:38:37Z"
     generation: 1
     labels:
       app: cron
@@ -29323,9 +29323,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: a042b87f-38cc-4169-85db-84ca125b102d
-    resourceVersion: "838"
-    uid: 48051f46-42ef-432e-90e2-cfc8fac4f553
+      uid: 8363e495-bfc0-4e4d-8a84-5ac8dfba4fc6
+    resourceVersion: "1007"
+    uid: 63a67683-93e9-490d-bef2-3d3fc9d76f61
   spec:
     replicas: 1
     selector:
@@ -29363,7 +29363,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:09Z"
+    creationTimestamp: "2026-09-27T12:38:55Z"
     generation: 1
     labels:
       app: gateway
@@ -29376,9 +29376,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: 9ce2767a-668a-4578-a886-c9c33f64f7ee
-    resourceVersion: "1491"
-    uid: 31e6bdaa-e461-43c2-afb1-cf03dafa01e9
+      uid: a2516628-9f22-40d5-a003-67afbb32b5aa
+    resourceVersion: "1401"
+    uid: 69ed8170-8da1-41e0-96e3-ba6f884fac31
   spec:
     replicas: 0
     selector:
@@ -29415,7 +29415,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:09Z"
+    creationTimestamp: "2026-09-27T12:38:55Z"
     generation: 1
     labels:
       app: notify
@@ -29428,9 +29428,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: 1658ff09-cdbe-47a4-949e-7a5e4864332d
-    resourceVersion: "1497"
-    uid: 85c31809-4398-46ce-8471-c7eda98c20ed
+      uid: 580158ac-5046-49ca-b4a8-6c98b1d94d51
+    resourceVersion: "1407"
+    uid: 7a10a1d2-b62d-46c9-92de-1b1714e85de8
   spec:
     replicas: 0
     selector:
@@ -29466,7 +29466,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:26Z"
+    creationTimestamp: "2026-09-27T12:39:12Z"
     generation: 1
     labels:
       app: search
@@ -29479,9 +29479,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: 65af659a-fd6c-4acb-bf60-65b2e76d1616
-    resourceVersion: "1880"
-    uid: 8c209e44-09dd-479a-8f81-ee25d39cfb69
+      uid: 2ad01065-15f0-4b31-9a7f-2aeb0c3a993c
+    resourceVersion: "1784"
+    uid: cfc7c868-de1b-4fbf-a492-426939cd14e0
   spec:
     replicas: 0
     selector:
@@ -29518,7 +29518,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:09Z"
+    creationTimestamp: "2026-09-27T12:38:54Z"
     generation: 1
     labels:
       app: web
@@ -29531,9 +29531,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: 14d50c21-8d59-43d3-8081-b3ce70569674
-    resourceVersion: "1484"
-    uid: d052e46a-18ec-49f2-b197-869827757db3
+      uid: 124b4c22-bb3d-4d53-8d09-f4f06036f2f9
+    resourceVersion: "1397"
+    uid: f2c65141-c3f2-473d-9240-792e19112c1b
   spec:
     replicas: 0
     selector:
@@ -29571,7 +29571,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: worker
       meta.helm.sh/release-namespace: team-10
-    creationTimestamp: "2026-09-27T10:48:20Z"
+    creationTimestamp: "2026-09-27T12:39:06Z"
     generation: 1
     labels:
       app: worker
@@ -29584,9 +29584,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 02aece0e-7f3f-4992-b641-f1dfae65fb38
-    resourceVersion: "1749"
-    uid: bc871727-5776-446a-baf2-69db05d09830
+      uid: 94159e96-7d12-47d0-9ab3-6be7751092d3
+    resourceVersion: "1659"
+    uid: d6befed8-2336-4ec4-a267-9f5115440994
   spec:
     replicas: 0
     selector:
@@ -29622,7 +29622,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: api
@@ -29635,9 +29635,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: b4dea464-3b68-4e9f-b604-8040d065cd87
-    resourceVersion: "558"
-    uid: 26f0e0b9-d84b-4178-81bc-6b35ec58b961
+      uid: bfb270e2-d894-4e94-91e2-12cdba5d6686
+    resourceVersion: "565"
+    uid: 4fc6c63e-de92-4571-8abc-84d0246689ea
   spec:
     replicas: 0
     selector:
@@ -29674,7 +29674,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:10Z"
+    creationTimestamp: "2026-09-27T12:38:56Z"
     generation: 1
     labels:
       app: auth
@@ -29687,9 +29687,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: dd3d8adf-1559-4876-b372-43d9dada6d28
-    resourceVersion: "1508"
-    uid: c208019d-9624-49f0-8e44-c2422afc7989
+      uid: c90370b3-0f3c-432d-b37b-4b35d265b328
+    resourceVersion: "1417"
+    uid: f7ce497b-d736-4ed4-b317-1dc63cd27e1f
   spec:
     replicas: 0
     selector:
@@ -29725,7 +29725,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:47Z"
+    creationTimestamp: "2026-09-27T12:38:38Z"
     generation: 1
     labels:
       app: billing
@@ -29738,9 +29738,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: 92b164b1-3839-469c-9109-fb165d78c0d2
-    resourceVersion: "860"
-    uid: b9246208-0150-48ad-9840-42697de03bc6
+      uid: a178302c-780c-4388-ae9c-4848cf5d1892
+    resourceVersion: "1032"
+    uid: ebed9a56-ba15-4f2a-8347-28a14cf2a398
   spec:
     replicas: 0
     selector:
@@ -29776,7 +29776,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:47Z"
+    creationTimestamp: "2026-09-27T12:38:38Z"
     generation: 1
     labels:
       app: cache
@@ -29789,9 +29789,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: cc508adc-2f7e-488e-81bd-7183440279cc
-    resourceVersion: "858"
-    uid: b28ec409-bb0c-4f0c-aea2-073b19981eaa
+      uid: fa52e141-61c5-4fe1-9730-7c88b8d8f9de
+    resourceVersion: "1027"
+    uid: 3648e97c-1b62-43ee-8a22-eb9f47466296
   spec:
     replicas: 0
     selector:
@@ -29827,7 +29827,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:47Z"
+    creationTimestamp: "2026-09-27T12:38:38Z"
     generation: 1
     labels:
       app: cron
@@ -29840,9 +29840,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: 37f401cd-ccc7-42f3-9c28-675cefdd3281
-    resourceVersion: "854"
-    uid: 83db055c-669f-4ff6-92a2-0baf52e1cf80
+      uid: b0016f91-e570-41f3-9b5e-a79b2eb311ee
+    resourceVersion: "1025"
+    uid: 9f259d56-b09c-40d2-8412-6a849fe0b430
   spec:
     replicas: 0
     selector:
@@ -29878,7 +29878,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:26Z"
+    creationTimestamp: "2026-09-27T12:39:12Z"
     generation: 1
     labels:
       app: gateway
@@ -29891,9 +29891,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: a0966869-223a-4dab-ba9f-cde0772d867b
-    resourceVersion: "1885"
-    uid: acbd3f7b-8208-423e-8056-48dd18c68213
+      uid: bc92be98-9ec3-4c95-9b72-22f6f03f71a3
+    resourceVersion: "1791"
+    uid: 32a3e85b-363f-4ede-96cd-4a189622f21b
   spec:
     replicas: 0
     selector:
@@ -29929,7 +29929,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: notify
@@ -29942,9 +29942,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: 9bbe2547-cb40-47b8-ab6b-3547936dae2d
-    resourceVersion: "566"
-    uid: bc71f0ed-d51f-4ced-85de-5f705ac3b0b3
+      uid: 4e2ea467-917a-45a1-b9f2-98a58c9828e7
+    resourceVersion: "569"
+    uid: 6998cf40-1673-4fa9-bc0f-7f13f6226cb1
   spec:
     replicas: 0
     selector:
@@ -29980,7 +29980,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:27Z"
+    creationTimestamp: "2026-09-27T12:39:12Z"
     generation: 1
     labels:
       app: search
@@ -29993,9 +29993,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: 44b5be7c-1291-4b63-87d0-c34659f59c50
-    resourceVersion: "1887"
-    uid: aee2155e-0efa-4bdd-ae29-6c28b5c1749d
+      uid: 9aa1254e-4337-421a-9517-5d564895fe1b
+    resourceVersion: "1793"
+    uid: 157a9a57-c7f8-4bca-899d-db88ed3cbcbc
   spec:
     replicas: 0
     selector:
@@ -30032,7 +30032,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:09Z"
+    creationTimestamp: "2026-09-27T12:38:55Z"
     generation: 1
     labels:
       app: web
@@ -30045,9 +30045,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: 5e1e6558-c24e-49c7-bddd-4bbf11dee693
-    resourceVersion: "1499"
-    uid: 895b7dff-ad4b-4cb6-9910-e6c2f8f08932
+      uid: 9da820e7-8db0-4765-8b6a-6061942a9cc9
+    resourceVersion: "1413"
+    uid: ca8b0655-cc65-49ef-8280-0e478f2b82d8
   spec:
     replicas: 0
     selector:
@@ -30083,7 +30083,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:47Z"
+    creationTimestamp: "2026-09-27T12:38:37Z"
     generation: 1
     labels:
       app: worker
@@ -30096,9 +30096,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 5b14b4f2-6e5c-42f9-afb5-e091ae5b781e
-    resourceVersion: "844"
-    uid: 43f37c51-0d1e-4344-9eb7-03e87691aa4f
+      uid: 832b08ec-6ce4-4068-83ea-015304683b29
+    resourceVersion: "1021"
+    uid: 98f79a39-d66c-42ed-ba36-09b7167e0fa7
   spec:
     replicas: 0
     selector:
@@ -30136,7 +30136,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: api
       meta.helm.sh/release-namespace: team-12
-    creationTimestamp: "2026-09-27T10:48:21Z"
+    creationTimestamp: "2026-09-27T12:39:06Z"
     generation: 1
     labels:
       app: api
@@ -30149,9 +30149,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 5f63ed77-2b44-415e-9868-0bfe23be03bb
-    resourceVersion: "1751"
-    uid: 0a7bf6fd-7c3e-4493-9f9a-8dcbd4b1a783
+      uid: 2684cac5-e9f9-45c2-939a-99857f91a75d
+    resourceVersion: "1661"
+    uid: cc355fd7-2752-47eb-a04d-675320c43be8
   spec:
     replicas: 0
     selector:
@@ -30187,7 +30187,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:27Z"
+    creationTimestamp: "2026-09-27T12:39:12Z"
     generation: 1
     labels:
       app: auth
@@ -30200,9 +30200,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: 3c6985d7-8a1c-496b-83dd-8a87cc4119cb
-    resourceVersion: "1891"
-    uid: ce1a625a-485c-40be-bbe7-f84d21a97494
+      uid: a6cba9eb-d588-4c27-a245-6a947f2fcb34
+    resourceVersion: "1797"
+    uid: 53eb1473-52c7-4bcb-97aa-ce5c0598a40e
   spec:
     replicas: 0
     selector:
@@ -30239,7 +30239,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:10Z"
+    creationTimestamp: "2026-09-27T12:38:56Z"
     generation: 1
     labels:
       app: billing
@@ -30252,9 +30252,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: b4c7ef6b-ab68-41b3-88c4-1a41820faa57
-    resourceVersion: "1512"
-    uid: 10ac7dd5-b050-49c8-ad30-cacad80fcdef
+      uid: e7af5c53-23a9-4e66-a39f-d24de15d68a7
+    resourceVersion: "1421"
+    uid: fc1a6299-989c-45d8-851e-8db27c3ecc6e
   spec:
     replicas: 0
     selector:
@@ -30290,7 +30290,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:48Z"
+    creationTimestamp: "2026-09-27T12:38:38Z"
     generation: 1
     labels:
       app: cache
@@ -30303,9 +30303,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: 2380ae44-b61f-4c32-9d0d-cf01f7c1a33b
-    resourceVersion: "865"
-    uid: dd68c82f-ec44-421e-a889-c41c08151a5e
+      uid: 0ed2352f-c771-4372-ad05-a6139dde6fd6
+    resourceVersion: "1044"
+    uid: 841ea96f-09f9-44d9-81d3-8c8415ca3879
   spec:
     replicas: 0
     selector:
@@ -30343,7 +30343,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: cron
       meta.helm.sh/release-namespace: team-12
-    creationTimestamp: "2026-09-27T10:48:21Z"
+    creationTimestamp: "2026-09-27T12:39:06Z"
     generation: 1
     labels:
       app: cron
@@ -30356,9 +30356,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: 50605bb1-89cc-4e5a-9fb8-b0724e856c7b
-    resourceVersion: "1754"
-    uid: 9eb1feba-2efa-45f6-986a-d5ead4022e6d
+      uid: 1282e2b3-e087-4efe-b74b-aca86b857483
+    resourceVersion: "1663"
+    uid: 9230508f-99d9-4bb5-9268-4e205ec90182
   spec:
     replicas: 0
     selector:
@@ -30395,7 +30395,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:10Z"
+    creationTimestamp: "2026-09-27T12:38:56Z"
     generation: 1
     labels:
       app: gateway
@@ -30408,9 +30408,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: 671a279f-3253-4bca-8e69-77bb26dc07d1
-    resourceVersion: "1510"
-    uid: c9ac32c0-556b-4305-b2dd-1d63505e0357
+      uid: 4d1a0b62-5d65-4c6d-a282-63db3d4ae195
+    resourceVersion: "1419"
+    uid: 7d1937f4-9721-4c34-b87e-9a581d894eac
   spec:
     replicas: 0
     selector:
@@ -30447,7 +30447,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:10Z"
+    creationTimestamp: "2026-09-27T12:38:56Z"
     generation: 1
     labels:
       app: notify
@@ -30460,9 +30460,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: c306e746-243c-40d9-abd5-2b990bd14e9c
-    resourceVersion: "1514"
-    uid: 2a0c32bb-ba38-4a12-b637-a0428449e1df
+      uid: 544a0706-4ee9-4b23-9324-426e586cb5bc
+    resourceVersion: "1423"
+    uid: 0c815c0c-4f49-4ba2-91f7-94c6854c42e1
   spec:
     replicas: 0
     selector:
@@ -30498,7 +30498,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:27Z"
+    creationTimestamp: "2026-09-27T12:39:13Z"
     generation: 1
     labels:
       app: search
@@ -30511,9 +30511,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: 1ea9f421-973f-41ce-8abe-f31701a7f3f5
-    resourceVersion: "1893"
-    uid: ad9d49e2-d1a1-47b2-a19d-f6728042a492
+      uid: 2ace5808-7a5d-44af-b674-b5aa076f325e
+    resourceVersion: "1799"
+    uid: e09bb438-de5d-40ca-9d71-2dabf8f2e277
   spec:
     replicas: 0
     selector:
@@ -30549,7 +30549,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: web
@@ -30562,9 +30562,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: e768c8dd-cc9d-49e6-87c0-fde5932ae38f
-    resourceVersion: "569"
-    uid: e6445ad3-c074-456d-af08-c0eb27007782
+      uid: 9b301358-8fe8-41c1-ac92-49c3033b34f5
+    resourceVersion: "576"
+    uid: b66cdb80-8008-47b6-b32a-388ce1971226
   spec:
     replicas: 0
     selector:
@@ -30600,7 +30600,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:48Z"
+    creationTimestamp: "2026-09-27T12:38:38Z"
     generation: 1
     labels:
       app: worker
@@ -30613,9 +30613,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 874a72bd-7db7-4e4c-8289-ae121e8706a8
-    resourceVersion: "862"
-    uid: ec95d6a1-2d8f-4cb1-9f93-fd3d429ffdfd
+      uid: f61fd90b-94ae-4438-a066-467828770457
+    resourceVersion: "1035"
+    uid: 7fc0a64f-7cab-4f93-847f-fc7229f8991b
   spec:
     replicas: 0
     selector:
@@ -30651,7 +30651,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:48Z"
+    creationTimestamp: "2026-09-27T12:38:38Z"
     generation: 1
     labels:
       app: api
@@ -30664,9 +30664,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 587b8d72-771c-43a6-97c7-277ce5fc1036
-    resourceVersion: "874"
-    uid: 914f9be1-2716-4383-806d-d8f7dd2f1ed5
+      uid: 8e8b0442-4db5-4668-b986-ea9dc306ed5d
+    resourceVersion: "1045"
+    uid: 1e466aab-42af-4ea1-b294-d443b32d72b7
   spec:
     replicas: 0
     selector:
@@ -30703,7 +30703,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:11Z"
+    creationTimestamp: "2026-09-27T12:38:56Z"
     generation: 1
     labels:
       app: auth
@@ -30716,9 +30716,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: b02a4ba7-e744-4e53-9db5-66f045dd87b9
-    resourceVersion: "1525"
-    uid: 7322b2a8-1a0e-40d6-b0e5-09cc672eeba3
+      uid: 0786af21-6586-41e7-b1de-ec13c6e45866
+    resourceVersion: "1435"
+    uid: 83cf0af7-833f-4da8-b2ab-ddff22a9ad9b
   spec:
     replicas: 0
     selector:
@@ -30754,7 +30754,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:48Z"
+    creationTimestamp: "2026-09-27T12:38:38Z"
     generation: 1
     labels:
       app: billing
@@ -30767,9 +30767,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: b0a10e4a-10b9-48a3-8fc1-1fae91dce529
-    resourceVersion: "880"
-    uid: c0096468-1f44-4d27-9137-a20199920e4a
+      uid: c57a092b-25a9-4508-9b41-d34de4fc6a91
+    resourceVersion: "1050"
+    uid: a6db2bba-bfb5-48b2-a00b-b0e5f05707e0
   spec:
     replicas: 0
     selector:
@@ -30805,7 +30805,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:48Z"
+    creationTimestamp: "2026-09-27T12:38:38Z"
     generation: 1
     labels:
       app: cache
@@ -30818,9 +30818,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: 63e328e6-b8d7-41f3-9fde-c5fa6e8e7336
-    resourceVersion: "878"
-    uid: aecf690b-5ae7-47ce-b350-7f91de39efe7
+      uid: 66c6a6d0-ff73-45c2-b06f-20e94ec8ee78
+    resourceVersion: "1048"
+    uid: 226e9219-c9ff-4013-9316-954853b19b57
   spec:
     replicas: 0
     selector:
@@ -30857,7 +30857,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:11Z"
+    creationTimestamp: "2026-09-27T12:38:56Z"
     generation: 1
     labels:
       app: cron
@@ -30870,9 +30870,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: 9c510bdd-73e0-4c0e-b372-40586b419b99
-    resourceVersion: "1523"
-    uid: eaab9142-7480-4ed4-aa39-1064c3dffd1a
+      uid: 31fc7cd1-dbdc-4450-b175-0e9c20cebf75
+    resourceVersion: "1433"
+    uid: 8f395ffa-f07b-4a8b-bae5-40329601e3b9
   spec:
     replicas: 0
     selector:
@@ -30908,7 +30908,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:48Z"
+    creationTimestamp: "2026-09-27T12:38:38Z"
     generation: 1
     labels:
       app: gateway
@@ -30921,9 +30921,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: a9bda385-93b8-42c6-bee4-d77e4e3d113d
-    resourceVersion: "876"
-    uid: 316fae25-35f4-424a-871b-ae41d70b5a18
+      uid: d1de03a7-1b7f-4b50-8893-6653e743d5e5
+    resourceVersion: "1046"
+    uid: 2435b7ee-6e65-44f4-bc05-0883003c3b70
   spec:
     replicas: 0
     selector:
@@ -30959,7 +30959,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:48Z"
+    creationTimestamp: "2026-09-27T12:38:39Z"
     generation: 1
     labels:
       app: notify
@@ -30972,9 +30972,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: 7d413bc4-30f0-4cc3-9ef3-4502fc9f3a5f
-    resourceVersion: "883"
-    uid: b33f1ed2-1ed4-41be-b767-79994b9d539e
+      uid: a4b3ea30-3291-4980-a212-6f07d8f9ff1b
+    resourceVersion: "1057"
+    uid: e8c0838d-86eb-4fac-9fce-8f1a601cdc96
   spec:
     replicas: 0
     selector:
@@ -31010,7 +31010,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:27Z"
+    creationTimestamp: "2026-09-27T12:39:13Z"
     generation: 1
     labels:
       app: search
@@ -31023,9 +31023,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: 98e5709d-4c43-404e-a036-329114268dd1
-    resourceVersion: "1895"
-    uid: 2b57ae31-c3e5-4635-a72a-454cab6ff2c9
+      uid: ad926e9e-eed3-43e3-a5fd-43c0782a2e0f
+    resourceVersion: "1802"
+    uid: ccbfcc75-2d9a-433f-b28a-7b3919ae0507
   spec:
     replicas: 0
     selector:
@@ -31063,7 +31063,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: web
       meta.helm.sh/release-namespace: team-13
-    creationTimestamp: "2026-09-27T10:48:21Z"
+    creationTimestamp: "2026-09-27T12:39:06Z"
     generation: 1
     labels:
       app: web
@@ -31076,9 +31076,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: ed227612-6845-44ae-af68-fcf58a6b4da6
-    resourceVersion: "1756"
-    uid: 2479ca4b-9779-4dab-bce9-5220d17dfccc
+      uid: 6518e6bd-5a9b-497a-8030-a54aa41c7a75
+    resourceVersion: "1666"
+    uid: 69b761eb-073a-434e-8e41-f85932b838db
   spec:
     replicas: 0
     selector:
@@ -31115,7 +31115,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:10Z"
+    creationTimestamp: "2026-09-27T12:38:56Z"
     generation: 1
     labels:
       app: worker
@@ -31128,9 +31128,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 08102af2-ed19-4388-b1bd-5efe22c7b517
-    resourceVersion: "1516"
-    uid: 7543f62c-1e9f-4ff3-9629-a7b6a5a9d538
+      uid: e85a33d9-b1b8-44a3-8003-72880b48cdeb
+    resourceVersion: "1429"
+    uid: c3fa75f2-1903-42d7-bbd7-89f05aa9473b
   spec:
     replicas: 0
     selector:
@@ -31166,7 +31166,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:49Z"
+    creationTimestamp: "2026-09-27T12:38:39Z"
     generation: 1
     labels:
       app: api
@@ -31179,9 +31179,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 5f34e02e-c002-4bfe-b44a-494f471c6a34
-    resourceVersion: "889"
-    uid: c1dfc76e-27ed-4774-919d-1aa44849bdc7
+      uid: 71ccbc3e-65c2-4156-9b0f-b0f937b7872e
+    resourceVersion: "1059"
+    uid: ea8d0744-fcca-4144-a5e5-057bf46e4ded
   spec:
     replicas: 0
     selector:
@@ -31219,7 +31219,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: auth
       meta.helm.sh/release-namespace: team-14
-    creationTimestamp: "2026-09-27T10:48:21Z"
+    creationTimestamp: "2026-09-27T12:39:07Z"
     generation: 1
     labels:
       app: auth
@@ -31232,9 +31232,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: 9de91e58-caf6-4699-af5a-42b22e10341e
-    resourceVersion: "1760"
-    uid: 3bcfef12-238c-4c5b-a29f-017dd7158f8c
+      uid: b04e7587-cdce-4696-9c1c-c85790769428
+    resourceVersion: "1668"
+    uid: 244c1521-37e4-4692-8c00-6dfe130d43f4
   spec:
     replicas: 0
     selector:
@@ -31272,7 +31272,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: billing
       meta.helm.sh/release-namespace: team-14
-    creationTimestamp: "2026-09-27T10:48:21Z"
+    creationTimestamp: "2026-09-27T12:39:07Z"
     generation: 1
     labels:
       app: billing
@@ -31285,9 +31285,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: b68ee86c-171f-4f4b-ac15-1f55f84e70fb
-    resourceVersion: "1765"
-    uid: da56f9c4-f799-4710-9820-7b9789cebf9d
+      uid: f120579f-1e34-4add-b0a9-42f0a487275b
+    resourceVersion: "1674"
+    uid: 784d2554-5359-4a49-a406-89161e06dbae
   spec:
     replicas: 0
     selector:
@@ -31323,7 +31323,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:28Z"
+    creationTimestamp: "2026-09-27T12:39:13Z"
     generation: 1
     labels:
       app: cache
@@ -31336,9 +31336,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: e9f761e0-333a-4f4b-9e29-3349d9321712
-    resourceVersion: "1908"
-    uid: 3d776aab-0a0b-4100-a469-cf6f255c2aaf
+      uid: 84d926f4-3470-4a48-8084-361bf526865e
+    resourceVersion: "1814"
+    uid: 081a594b-dc4c-48c4-a7a1-db4d9bc17e3e
   spec:
     replicas: 0
     selector:
@@ -31374,7 +31374,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:49Z"
+    creationTimestamp: "2026-09-27T12:38:39Z"
     generation: 1
     labels:
       app: cron
@@ -31387,9 +31387,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: 895ba3f4-869d-4e54-9f79-93f6bb7c8e07
-    resourceVersion: "891"
-    uid: 04cd514f-4d4e-4fa5-aff6-5cb41da806f8
+      uid: e78eae0c-9723-46bf-b7ff-c8f229903e35
+    resourceVersion: "1062"
+    uid: db5560e8-89b7-45c1-bff6-c507f1c2cc54
   spec:
     replicas: 0
     selector:
@@ -31425,7 +31425,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:49Z"
+    creationTimestamp: "2026-09-27T12:38:39Z"
     generation: 1
     labels:
       app: gateway
@@ -31438,9 +31438,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: da7a3bba-c223-4554-b815-765425d4a329
-    resourceVersion: "893"
-    uid: c86246b5-b2cc-494e-a494-ee8b3a4249b3
+      uid: abfc5bd2-19e5-45fc-adc9-564a8c3d1a04
+    resourceVersion: "1064"
+    uid: 7dee548a-514f-41df-b2b9-a45b985147b2
   spec:
     replicas: 0
     selector:
@@ -31478,7 +31478,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: notify
       meta.helm.sh/release-namespace: team-14
-    creationTimestamp: "2026-09-27T10:48:21Z"
+    creationTimestamp: "2026-09-27T12:39:07Z"
     generation: 1
     labels:
       app: notify
@@ -31491,9 +31491,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: 7dac22f2-fd57-457a-89fe-70d8f6e75add
-    resourceVersion: "1767"
-    uid: 334a887d-d8e5-4f79-83e6-9eff46834d88
+      uid: cb9a06d0-1cd0-4d4b-a4a1-f35528ec6f12
+    resourceVersion: "1676"
+    uid: 7aa501ee-4914-4449-825b-ceed859fe5a4
   spec:
     replicas: 0
     selector:
@@ -31529,7 +31529,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:27Z"
+    creationTimestamp: "2026-09-27T12:39:13Z"
     generation: 1
     labels:
       app: search
@@ -31542,9 +31542,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: 1a613d05-cb8d-4eac-99e6-451d8bb928eb
-    resourceVersion: "1902"
-    uid: 35c4e40e-1779-4d55-b3d5-c2c63bf4abdd
+      uid: 095f0958-1ef9-44aa-94f9-28355157dd19
+    resourceVersion: "1810"
+    uid: 9e0d6582-9db0-42b8-abb1-1d4d005ffbfd
   spec:
     replicas: 0
     selector:
@@ -31580,7 +31580,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:27Z"
+    creationTimestamp: "2026-09-27T12:39:13Z"
     generation: 1
     labels:
       app: web
@@ -31593,9 +31593,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: 46023074-97dc-4ca2-8a9f-0bc104bab16b
-    resourceVersion: "1900"
-    uid: 2d6becf6-66f4-47c0-a146-697546236c38
+      uid: de0d368b-52a9-4c3f-bfe9-2455750e86a4
+    resourceVersion: "1808"
+    uid: c05200da-e923-4b3a-b583-db689ff7f119
   spec:
     replicas: 0
     selector:
@@ -31632,7 +31632,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:11Z"
+    creationTimestamp: "2026-09-27T12:38:56Z"
     generation: 1
     labels:
       app: worker
@@ -31645,9 +31645,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 7544243e-03c8-4ebe-9dc2-87726464919e
-    resourceVersion: "1527"
-    uid: 8f4d2079-3886-4b62-b738-4e97f79ba738
+      uid: f9f9c9ec-d660-420d-9db7-c4769b1004d6
+    resourceVersion: "1437"
+    uid: 74ce4628-db32-4ccb-9146-aec2fcd49586
   spec:
     replicas: 0
     selector:
@@ -31684,7 +31684,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "1"
       deployment.kubernetes.io/max-replicas: "2"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:11Z"
+    creationTimestamp: "2026-09-27T12:38:57Z"
     generation: 1
     labels:
       app: api
@@ -31697,9 +31697,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: c7c97f31-43eb-4421-b1b0-605283fa3afc
-    resourceVersion: "1533"
-    uid: f6e02744-85ea-4749-9c41-34907df6ec19
+      uid: c1fcd04b-d95f-492e-9ea0-df67a32bbc8e
+    resourceVersion: "1444"
+    uid: 83aa092c-b4b8-4782-b2a0-86aac1fa6838
   spec:
     replicas: 1
     selector:
@@ -31738,7 +31738,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: auth
       meta.helm.sh/release-namespace: team-15
-    creationTimestamp: "2026-09-27T10:48:21Z"
+    creationTimestamp: "2026-09-27T12:39:07Z"
     generation: 1
     labels:
       app: auth
@@ -31751,9 +31751,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: 56461e87-fcc6-46c9-b6ee-9f64bcf93505
-    resourceVersion: "1771"
-    uid: e3b6dd58-1be1-42a5-9ffd-0afe8674cfd8
+      uid: d24329e2-b7ef-4116-828c-8502697c96ba
+    resourceVersion: "1679"
+    uid: 219627d0-106f-485f-8366-6c8610658812
   spec:
     replicas: 0
     selector:
@@ -31789,7 +31789,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:50Z"
+    creationTimestamp: "2026-09-27T12:38:40Z"
     generation: 1
     labels:
       app: billing
@@ -31802,9 +31802,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: 50a47ade-b220-46b3-a6b4-73e1b9c0a8ee
-    resourceVersion: "908"
-    uid: 28cd9038-f116-4233-80bc-dc321df36a5c
+      uid: bad1176c-b031-497b-ba8b-9e354cfeb710
+    resourceVersion: "1078"
+    uid: 7ca36ad5-a36e-46e5-86f8-9ecbda2984e6
   spec:
     replicas: 0
     selector:
@@ -31842,7 +31842,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: cache
       meta.helm.sh/release-namespace: team-15
-    creationTimestamp: "2026-09-27T10:48:21Z"
+    creationTimestamp: "2026-09-27T12:39:07Z"
     generation: 1
     labels:
       app: cache
@@ -31855,9 +31855,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: c12ece37-60e2-44d7-a73a-9fa7e47cc625
-    resourceVersion: "1773"
-    uid: cb41342e-5dd4-4f32-abab-e35fbb95fc2c
+      uid: ec0c10e3-a1da-41c3-8432-0399f6218067
+    resourceVersion: "1682"
+    uid: f58050cf-77d2-484a-ba40-d6b006dc0359
   spec:
     replicas: 0
     selector:
@@ -31894,7 +31894,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:11Z"
+    creationTimestamp: "2026-09-27T12:38:57Z"
     generation: 1
     labels:
       app: cron
@@ -31907,9 +31907,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: 0f55a8e1-edc1-4054-a1d2-b167d8247e78
-    resourceVersion: "1537"
-    uid: d73b4158-aace-4b20-b84a-aa7e18659d8a
+      uid: c0ccec2d-c765-43d7-b2a3-e66aa710d783
+    resourceVersion: "1450"
+    uid: 3fac8448-0b5f-451e-b25c-3128174152b3
   spec:
     replicas: 0
     selector:
@@ -31946,7 +31946,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:11Z"
+    creationTimestamp: "2026-09-27T12:38:57Z"
     generation: 1
     labels:
       app: gateway
@@ -31959,9 +31959,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: e5688dda-edec-4cb3-b499-15c1adfacc50
-    resourceVersion: "1550"
-    uid: aca39ab4-e5ea-4611-b55b-94fed31ba9b8
+      uid: e8c1a2fe-dfdb-4eb0-844c-87a8d90aeaee
+    resourceVersion: "1459"
+    uid: f2ef1128-c1cf-47c7-8405-e3e0accf2761
   spec:
     replicas: 0
     selector:
@@ -31998,7 +31998,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:11Z"
+    creationTimestamp: "2026-09-27T12:38:57Z"
     generation: 1
     labels:
       app: notify
@@ -32011,9 +32011,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: 5f6b37e8-76d0-47cd-9f38-5802b9781f69
-    resourceVersion: "1552"
-    uid: 8835059b-20f4-4caf-a73a-8f3a3ac45297
+      uid: 286b24b3-d593-4c0f-8990-226f65a5816f
+    resourceVersion: "1461"
+    uid: 2594d2a8-6ea7-486e-920e-149a08f20f38
   spec:
     replicas: 0
     selector:
@@ -32049,7 +32049,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:50Z"
+    creationTimestamp: "2026-09-27T12:38:40Z"
     generation: 1
     labels:
       app: search
@@ -32062,9 +32062,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: ef441b42-958e-4e31-9e19-20e4e06c8bb5
-    resourceVersion: "906"
-    uid: 3e219432-e48c-46a6-9768-896e39fef1ac
+      uid: f2b98e54-8062-41e8-becc-cd425801162c
+    resourceVersion: "1076"
+    uid: 64893a38-650d-4f80-94f8-a8da2600192e
   spec:
     replicas: 0
     selector:
@@ -32100,7 +32100,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:49Z"
+    creationTimestamp: "2026-09-27T12:38:39Z"
     generation: 1
     labels:
       app: web
@@ -32113,9 +32113,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: 2bd9a6a6-4a09-4423-a6b3-caabbb33a875
-    resourceVersion: "895"
-    uid: dda715b0-8f6d-479b-bdde-26fc40da5dcb
+      uid: 2bb3c119-9514-474b-86f9-0a83b7e1551a
+    resourceVersion: "1066"
+    uid: 51839a6b-a3b5-4ab5-87df-d032fd749266
   spec:
     replicas: 0
     selector:
@@ -32151,7 +32151,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:49Z"
+    creationTimestamp: "2026-09-27T12:38:40Z"
     generation: 1
     labels:
       app: worker
@@ -32164,9 +32164,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 47243d01-be3c-40fc-bf8b-5f7dd7ced4a8
-    resourceVersion: "898"
-    uid: 24caa83d-cbc0-4eb9-9e85-6d81b7c34bdd
+      uid: 78b45a59-e7fb-4194-8282-e7f0ec2e6c20
+    resourceVersion: "1073"
+    uid: 17a7317f-5352-4bc4-bfe0-38289c765f4b
   spec:
     replicas: 0
     selector:
@@ -32202,7 +32202,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:50Z"
+    creationTimestamp: "2026-09-27T12:38:40Z"
     generation: 1
     labels:
       app: api
@@ -32215,9 +32215,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: d797c7aa-14ab-4f53-9e55-7002155b9daa
-    resourceVersion: "910"
-    uid: 3dfc5de8-54e0-482e-bf3b-30933c59ebbb
+      uid: 0bf0ac90-0f3e-4cae-9561-284e6974aa79
+    resourceVersion: "1080"
+    uid: 8ef25567-ad87-4d5d-a98b-70d7a756d8d5
   spec:
     replicas: 0
     selector:
@@ -32254,7 +32254,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:11Z"
+    creationTimestamp: "2026-09-27T12:38:57Z"
     generation: 1
     labels:
       app: auth
@@ -32267,9 +32267,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: 4136c295-5325-4170-9857-f3fd2060e6f4
-    resourceVersion: "1554"
-    uid: 56a1c1d5-f964-4074-9f05-362ff1aff2c6
+      uid: 068581cf-978e-47d0-a71e-6f14c1879fc9
+    resourceVersion: "1463"
+    uid: e986ad74-0d56-4b71-9cf8-46e0622f23dd
   spec:
     replicas: 0
     selector:
@@ -32305,7 +32305,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:50Z"
+    creationTimestamp: "2026-09-27T12:38:41Z"
     generation: 1
     labels:
       app: billing
@@ -32318,9 +32318,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: 548938d7-9ed1-470c-839d-ce00e8fbb4a2
-    resourceVersion: "925"
-    uid: 96574b35-52c6-4fdc-b781-39390e7312d3
+      uid: 7211849d-8a26-46df-9025-3cb91e4224b6
+    resourceVersion: "1096"
+    uid: 8d0d38de-6e36-4750-b386-c4f95547c51c
   spec:
     replicas: 0
     selector:
@@ -32357,7 +32357,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:12Z"
+    creationTimestamp: "2026-09-27T12:38:58Z"
     generation: 1
     labels:
       app: cache
@@ -32370,9 +32370,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: 4b34c747-cd27-4f4c-bbd9-1bb63dba074e
-    resourceVersion: "1558"
-    uid: 5153ac7d-515b-4175-9083-8c861e17ed72
+      uid: c116a422-c38f-4584-82d6-6acd40c53813
+    resourceVersion: "1470"
+    uid: d2617c92-2268-47c8-80c6-f4f9548e8dc5
   spec:
     replicas: 0
     selector:
@@ -32408,7 +32408,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:50Z"
+    creationTimestamp: "2026-09-27T12:38:41Z"
     generation: 1
     labels:
       app: cron
@@ -32421,9 +32421,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: dcdf6231-524a-4baa-87a7-0d01760d522a
-    resourceVersion: "921"
-    uid: 48c6d378-67b3-4638-bd34-9c7d57306381
+      uid: 4da8aff0-2814-41eb-88a1-33d90f87e052
+    resourceVersion: "1092"
+    uid: 7e9e3528-4084-45c1-a2a2-a4211a9dae10
   spec:
     replicas: 0
     selector:
@@ -32459,7 +32459,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:50Z"
+    creationTimestamp: "2026-09-27T12:38:41Z"
     generation: 1
     labels:
       app: gateway
@@ -32472,9 +32472,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: 7b125f69-dc97-43d7-a86c-3047ecd6e0fb
-    resourceVersion: "923"
-    uid: d3430654-7a2d-4c67-adfb-1f1a87481bdb
+      uid: 880a9ff7-d23a-4697-801f-f5ac3d142ddd
+    resourceVersion: "1094"
+    uid: 0f9808b2-03ac-4e8c-9747-3d88b3089e45
   spec:
     replicas: 0
     selector:
@@ -32510,7 +32510,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:51Z"
+    creationTimestamp: "2026-09-27T12:38:41Z"
     generation: 1
     labels:
       app: notify
@@ -32523,9 +32523,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: bf50ce68-8cec-4ab2-bec1-cde7d887aa34
-    resourceVersion: "927"
-    uid: b2418de0-75fe-47d9-ae45-076ade7ec7ee
+      uid: ecabe98b-4957-4fce-8ddb-fbfb9e4b6221
+    resourceVersion: "1098"
+    uid: 38f2149f-cb4b-4992-b220-fd4f276a26a4
   spec:
     replicas: 0
     selector:
@@ -32562,7 +32562,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:12Z"
+    creationTimestamp: "2026-09-27T12:38:57Z"
     generation: 1
     labels:
       app: search
@@ -32575,9 +32575,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: 337c7d9c-f5c2-42c2-8e8f-2971e9f808d9
-    resourceVersion: "1556"
-    uid: c8a8aedb-dcd5-4cec-9abf-0625281c1493
+      uid: e41aa5a5-0f88-42b6-ad43-662908c59b91
+    resourceVersion: "1465"
+    uid: 45588747-4d4e-4995-8f02-923d8645064d
   spec:
     replicas: 0
     selector:
@@ -32613,7 +32613,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:50Z"
+    creationTimestamp: "2026-09-27T12:38:40Z"
     generation: 1
     labels:
       app: web
@@ -32626,9 +32626,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: 10e487d1-ba47-4c59-b4d0-747a77ac72b6
-    resourceVersion: "912"
-    uid: 8cc8321f-1d90-4e86-8b68-3e2fcdc432c4
+      uid: 46d919f3-2246-438d-8193-c5f7b8468b28
+    resourceVersion: "1082"
+    uid: a6f6b67c-571d-4470-ba4b-1dcba4c81f03
   spec:
     replicas: 0
     selector:
@@ -32664,7 +32664,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:50Z"
+    creationTimestamp: "2026-09-27T12:38:40Z"
     generation: 1
     labels:
       app: worker
@@ -32677,9 +32677,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 29259338-6913-4c64-8d53-dfd16dbfec5a
-    resourceVersion: "915"
-    uid: f16c07c3-0c9f-4acd-ad45-b58ab6cb7037
+      uid: 51d70c78-6122-4af8-b31b-d1b558afa2f8
+    resourceVersion: "1090"
+    uid: 590aa7ba-2e47-4862-804f-f147690bcb09
   spec:
     replicas: 0
     selector:
@@ -32716,7 +32716,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:12Z"
+    creationTimestamp: "2026-09-27T12:38:58Z"
     generation: 1
     labels:
       app: api
@@ -32729,9 +32729,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 01d93ec7-b639-451f-84f7-2a24cd24f6d4
-    resourceVersion: "1569"
-    uid: a7b8f492-3b5c-4699-b9d3-c4dbeac80a8c
+      uid: 56f6a321-6610-4504-a0da-c736e94a2147
+    resourceVersion: "1479"
+    uid: 3ac9c3d3-af1f-42b2-a233-b1083072f1c1
   spec:
     replicas: 0
     selector:
@@ -32768,7 +32768,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:12Z"
+    creationTimestamp: "2026-09-27T12:38:58Z"
     generation: 1
     labels:
       app: auth
@@ -32781,9 +32781,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: 31c7e121-6004-491c-a600-92836b184eeb
-    resourceVersion: "1572"
-    uid: 5c2156c4-3eea-482f-a6d4-7deec8cb9033
+      uid: e5c4a22d-217f-4424-b2b5-d0866bf60fc2
+    resourceVersion: "1481"
+    uid: 7820723f-d680-44d4-b341-08acc11cf811
   spec:
     replicas: 0
     selector:
@@ -32820,7 +32820,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:12Z"
+    creationTimestamp: "2026-09-27T12:38:58Z"
     generation: 1
     labels:
       app: billing
@@ -32833,9 +32833,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: ad268305-0da2-4500-8bf2-42c76b154f55
-    resourceVersion: "1578"
-    uid: e808a193-a7c3-472d-8a50-ff89755754f2
+      uid: 5f69d19a-34a2-4033-a02c-f99aa49df382
+    resourceVersion: "1489"
+    uid: 8dc2bfb4-157d-4b8d-a698-21b1c11922b0
   spec:
     replicas: 0
     selector:
@@ -32872,7 +32872,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:12Z"
+    creationTimestamp: "2026-09-27T12:38:58Z"
     generation: 1
     labels:
       app: cache
@@ -32885,9 +32885,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: a07a9eb8-89a4-4cab-9742-f32e7da012a3
-    resourceVersion: "1576"
-    uid: 33441f6e-a77a-44b6-8c4d-384a7b759013
+      uid: 9166cc6f-b0cc-46f5-a8b7-27afb4edd34e
+    resourceVersion: "1485"
+    uid: 75a435a2-1c8b-4d6c-b8f0-1ce5950b0ae6
   spec:
     replicas: 0
     selector:
@@ -32925,7 +32925,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: cron
       meta.helm.sh/release-namespace: team-17
-    creationTimestamp: "2026-09-27T10:48:22Z"
+    creationTimestamp: "2026-09-27T12:39:07Z"
     generation: 1
     labels:
       app: cron
@@ -32938,9 +32938,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: a46793b3-1261-44cb-913f-10123d2b3a8d
-    resourceVersion: "1777"
-    uid: a93320ff-a5cc-48f9-a875-9ca08e4d338f
+      uid: 73a37584-719d-4899-9725-dec6134c6c95
+    resourceVersion: "1684"
+    uid: 9eeb678c-e11b-45f2-bd63-948a1fbcd1d1
   spec:
     replicas: 0
     selector:
@@ -32976,7 +32976,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:51Z"
+    creationTimestamp: "2026-09-27T12:38:41Z"
     generation: 1
     labels:
       app: gateway
@@ -32989,9 +32989,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: 88e9f93e-466d-4b15-8903-a426246fad2d
-    resourceVersion: "936"
-    uid: 77a6742b-c760-4ce8-8a97-abbf173487f4
+      uid: a5c39ef1-cdd2-4394-879b-7ef9d9482e51
+    resourceVersion: "1109"
+    uid: 843dad71-4dd3-4cd6-9e32-8fe54ae21496
   spec:
     replicas: 0
     selector:
@@ -33027,7 +33027,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:51Z"
+    creationTimestamp: "2026-09-27T12:38:41Z"
     generation: 1
     labels:
       app: notify
@@ -33040,9 +33040,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: dd32b0b3-dcfe-4fa0-8d3c-7c463853026e
-    resourceVersion: "938"
-    uid: c59bd958-959a-4dd3-9baa-251cf9746f28
+      uid: 99a785cc-fe6d-4af2-82df-f943da5d82cc
+    resourceVersion: "1111"
+    uid: c0406a7f-2a56-4e34-a0e9-a0c5cbc4c396
   spec:
     replicas: 0
     selector:
@@ -33079,7 +33079,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:12Z"
+    creationTimestamp: "2026-09-27T12:38:58Z"
     generation: 1
     labels:
       app: search
@@ -33092,9 +33092,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: 35d5316a-a935-4abf-8f28-533259f7ca1c
-    resourceVersion: "1574"
-    uid: 0992c2c1-7695-44d9-b948-79b808e5433e
+      uid: 0b7e21df-bce1-467f-aacc-9f6d78280ebb
+    resourceVersion: "1483"
+    uid: a983f5a5-4076-4fd7-813b-ee5cf8261f4b
   spec:
     replicas: 0
     selector:
@@ -33130,7 +33130,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:51Z"
+    creationTimestamp: "2026-09-27T12:38:41Z"
     generation: 1
     labels:
       app: web
@@ -33143,9 +33143,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: e276b1b0-3576-402f-a450-1b2e7ee26259
-    resourceVersion: "930"
-    uid: 88f23e61-7eb9-4564-b460-90753db01b07
+      uid: 2ff967dd-afd2-4609-95c6-6bea8f98aae2
+    resourceVersion: "1107"
+    uid: c123d607-c107-4fbe-a742-c44a40c5ef20
   spec:
     replicas: 0
     selector:
@@ -33181,7 +33181,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:28Z"
+    creationTimestamp: "2026-09-27T12:39:13Z"
     generation: 1
     labels:
       app: worker
@@ -33194,9 +33194,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 81aba9e1-e5ca-4e9c-b6ee-d3144362b0c1
-    resourceVersion: "1910"
-    uid: 1ee080f3-5c67-4ef6-aec6-96f8331588b2
+      uid: 4a1275ab-2e33-4fea-966f-5fa2e68cd6bb
+    resourceVersion: "1816"
+    uid: ef26c48e-b948-4f8a-a9c0-306cb00d0c44
   spec:
     replicas: 0
     selector:
@@ -33232,7 +33232,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:51Z"
+    creationTimestamp: "2026-09-27T12:38:41Z"
     generation: 1
     labels:
       app: api
@@ -33245,9 +33245,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 8e184bbf-5ded-4a26-983a-999ccd9aae92
-    resourceVersion: "940"
-    uid: ede32d58-cf91-4ebc-8d51-d7ef8def8de3
+      uid: 4d3a9a37-6559-4c10-a701-eecbdc3b9131
+    resourceVersion: "1113"
+    uid: 78ddd699-8f14-458b-8d11-591175f839c0
   spec:
     replicas: 0
     selector:
@@ -33284,7 +33284,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:13Z"
+    creationTimestamp: "2026-09-27T12:38:59Z"
     generation: 1
     labels:
       app: auth
@@ -33297,9 +33297,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: c85bf1dc-2a9f-4e4f-85a4-a133d0e6175c
-    resourceVersion: "1585"
-    uid: 208c306b-2839-4cbf-94d0-ebe9d8cabbcb
+      uid: e34d4356-4f6e-4e74-a4b6-50c18d528e77
+    resourceVersion: "1494"
+    uid: e9b2153d-3970-4182-8e82-b883630e321d
   spec:
     replicas: 0
     selector:
@@ -33336,7 +33336,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:13Z"
+    creationTimestamp: "2026-09-27T12:38:59Z"
     generation: 1
     labels:
       app: billing
@@ -33349,9 +33349,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: 702d8f4a-818e-4a89-8e60-882a31e9e8ad
-    resourceVersion: "1587"
-    uid: 10441c94-0389-4b9d-ae50-07f68c3f0c73
+      uid: 9255c5c2-6d31-454a-a870-bf76e34ee51f
+    resourceVersion: "1496"
+    uid: 5c0c9ff5-330e-4935-b95c-174d4dc1385b
   spec:
     replicas: 0
     selector:
@@ -33387,7 +33387,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:52Z"
+    creationTimestamp: "2026-09-27T12:38:42Z"
     generation: 1
     labels:
       app: cache
@@ -33400,9 +33400,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: 2ce8ef01-2926-427d-a2af-b3b056b6e818
-    resourceVersion: "956"
-    uid: 40d3d803-1401-468e-a4d0-651a26f63ea1
+      uid: 9138da50-a2e3-4383-a492-85640c8c12bb
+    resourceVersion: "1127"
+    uid: 023ae383-ec14-4da1-a504-0d2e4f36d98e
   spec:
     replicas: 0
     selector:
@@ -33438,7 +33438,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:51Z"
+    creationTimestamp: "2026-09-27T12:38:42Z"
     generation: 1
     labels:
       app: cron
@@ -33451,9 +33451,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: e7e8b2ca-7c6f-464f-a6aa-742510c4e8b8
-    resourceVersion: "947"
-    uid: f028a465-e8dd-4d17-931b-c50bec311b4e
+      uid: fb5748d6-aa80-4bf1-8e4d-4648b0250cb6
+    resourceVersion: "1123"
+    uid: c1c2bfe5-5096-48fc-95c9-eab3007db0a5
   spec:
     replicas: 0
     selector:
@@ -33491,7 +33491,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: gateway
       meta.helm.sh/release-namespace: team-18
-    creationTimestamp: "2026-09-27T10:48:22Z"
+    creationTimestamp: "2026-09-27T12:39:08Z"
     generation: 1
     labels:
       app: gateway
@@ -33504,9 +33504,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: 14733d82-51ba-44df-9bf6-77df33910abe
-    resourceVersion: "1782"
-    uid: 1460fcdf-47f5-42fa-82fd-06d634aafcb9
+      uid: 2065c0de-271e-4456-bb0f-42396b4cc6be
+    resourceVersion: "1690"
+    uid: de79a22a-513e-42d0-9406-a0d32a18052d
   spec:
     replicas: 0
     selector:
@@ -33542,7 +33542,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:28Z"
+    creationTimestamp: "2026-09-27T12:39:13Z"
     generation: 1
     labels:
       app: notify
@@ -33555,9 +33555,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: 07c56893-2ab1-4c09-838f-bf9610797ccb
-    resourceVersion: "1912"
-    uid: 890fd7a6-a348-4673-a901-8b701c2af5d6
+      uid: cce55513-22d0-4ca0-9304-87f8032f5d28
+    resourceVersion: "1819"
+    uid: 6ae0539f-0ffd-4708-bf09-7e1dde07c6f4
   spec:
     replicas: 0
     selector:
@@ -33593,7 +33593,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:52Z"
+    creationTimestamp: "2026-09-27T12:38:42Z"
     generation: 1
     labels:
       app: search
@@ -33606,9 +33606,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: 4c6ef753-1b56-420f-ac91-4e6956c27505
-    resourceVersion: "954"
-    uid: d11a744d-6102-4d1b-9650-1463c8360202
+      uid: 32468cd6-4149-4655-b7f2-40ff0048cf3d
+    resourceVersion: "1125"
+    uid: 053f5f15-3f85-4dfc-b239-7b9d408fc707
   spec:
     replicas: 0
     selector:
@@ -33644,7 +33644,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:31Z"
     generation: 1
     labels:
       app: web
@@ -33657,9 +33657,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: d6ea1af7-e865-4544-aeaf-22bb3bafd4c9
-    resourceVersion: "578"
-    uid: 639d0b02-483f-4f8a-9af3-af3a046800ee
+      uid: 96089e70-00d2-4144-9a20-aa00c1018889
+    resourceVersion: "584"
+    uid: e826cb9a-ea66-4c83-af20-78e89acd2845
   spec:
     replicas: 0
     selector:
@@ -33695,7 +33695,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:51Z"
+    creationTimestamp: "2026-09-27T12:38:41Z"
     generation: 1
     labels:
       app: worker
@@ -33708,9 +33708,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 1b1fe513-5d7c-4bbd-be8a-dc98297875dc
-    resourceVersion: "944"
-    uid: fb60a72c-f043-446f-83f4-1f8393fe5c62
+      uid: 61d18aac-2e96-4453-bee7-ccef5615dbf0
+    resourceVersion: "1115"
+    uid: 181202cc-8ae3-4af3-b719-b844483c7c97
   spec:
     replicas: 0
     selector:
@@ -33746,7 +33746,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:52Z"
+    creationTimestamp: "2026-09-27T12:38:42Z"
     generation: 1
     labels:
       app: api
@@ -33759,9 +33759,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 7c5b6c3a-45ab-444f-a068-e448b3c46f47
-    resourceVersion: "958"
-    uid: 8cd72557-1d32-4314-ae6c-c55040227c92
+      uid: 8f07432f-f669-4165-83b0-be5c557e3c27
+    resourceVersion: "1130"
+    uid: fbb3ca32-8073-4ecf-a5e2-6413b6e49bff
   spec:
     replicas: 0
     selector:
@@ -33797,7 +33797,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:53Z"
+    creationTimestamp: "2026-09-27T12:38:43Z"
     generation: 1
     labels:
       app: auth
@@ -33810,9 +33810,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: 05157959-8143-474e-8bee-936ce046a4ce
-    resourceVersion: "970"
-    uid: 317ab59c-ca71-4e58-aae2-d9107326da33
+      uid: 05692982-eff4-47e5-85ae-055c16404045
+    resourceVersion: "1141"
+    uid: b41a8741-f88f-4487-a609-ed7371a839e3
   spec:
     replicas: 0
     selector:
@@ -33849,7 +33849,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:13Z"
+    creationTimestamp: "2026-09-27T12:38:59Z"
     generation: 1
     labels:
       app: billing
@@ -33862,9 +33862,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: e8691536-8f32-4a31-9768-130030bf345f
-    resourceVersion: "1593"
-    uid: f7ae18a5-158c-4ed6-99a7-93c35551add3
+      uid: 07a23321-9b9a-4fb9-bb8f-dd95d1d13464
+    resourceVersion: "1504"
+    uid: 07b14669-c9e7-4746-b23a-41fd970ca210
   spec:
     replicas: 0
     selector:
@@ -33900,7 +33900,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:28Z"
+    creationTimestamp: "2026-09-27T12:39:14Z"
     generation: 1
     labels:
       app: cache
@@ -33913,9 +33913,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: c68d9159-8078-4682-8393-270c05303231
-    resourceVersion: "1917"
-    uid: 0090b703-ec9a-48af-8d30-726a6abb6c0c
+      uid: 079cf93b-b70c-4bdb-b2f3-0a24b625f5b7
+    resourceVersion: "1824"
+    uid: dcfba1cf-526f-474c-858f-0fb633b19130
   spec:
     replicas: 0
     selector:
@@ -33951,7 +33951,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cron
@@ -33964,9 +33964,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: 9b5f3028-bd11-42ce-9ea9-f9790f4510e2
-    resourceVersion: "594"
-    uid: adc703a0-8a06-48a9-b632-3cae0c9684e9
+      uid: 7e973ffb-ad5e-49ac-9a59-f71dbe275971
+    resourceVersion: "592"
+    uid: 2a0a7451-4c60-4797-8574-04a703b49b8c
   spec:
     replicas: 0
     selector:
@@ -34003,7 +34003,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:13Z"
+    creationTimestamp: "2026-09-27T12:38:59Z"
     generation: 1
     labels:
       app: gateway
@@ -34016,9 +34016,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: a13a8a53-658a-44e8-906c-a735ee54e40e
-    resourceVersion: "1589"
-    uid: 98217e23-151c-4be4-aa05-0fc0998d6b8b
+      uid: 1213786b-02ce-4b89-a6e9-36e6a266fe5f
+    resourceVersion: "1498"
+    uid: b09fe69a-bb8d-4234-b30e-2b8ffa9b26c6
   spec:
     replicas: 0
     selector:
@@ -34054,7 +34054,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:28Z"
+    creationTimestamp: "2026-09-27T12:39:14Z"
     generation: 1
     labels:
       app: notify
@@ -34067,9 +34067,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: 1c7b1be0-0588-4f22-b255-860e3385932b
-    resourceVersion: "1919"
-    uid: e3a15e58-dcf8-4abb-ab87-7a08f152f08d
+      uid: d53b61c4-89cf-4528-944b-e0da0faaf814
+    resourceVersion: "1826"
+    uid: a231cfd4-cc91-4c66-ae4f-0301301fd6f6
   spec:
     replicas: 0
     selector:
@@ -34106,7 +34106,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:13Z"
+    creationTimestamp: "2026-09-27T12:38:59Z"
     generation: 1
     labels:
       app: search
@@ -34119,9 +34119,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: 46d3a05f-6cdf-4576-8b42-e69b58499012
-    resourceVersion: "1591"
-    uid: d1d1b7a7-d20a-42fe-accf-15b867462f56
+      uid: dc1c4627-6d87-4767-8f93-2e841e6e3c05
+    resourceVersion: "1500"
+    uid: dca71837-4e8a-4b4b-a648-90f108c7ffd6
   spec:
     replicas: 0
     selector:
@@ -34157,7 +34157,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:52Z"
+    creationTimestamp: "2026-09-27T12:38:42Z"
     generation: 1
     labels:
       app: web
@@ -34170,9 +34170,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: f66bfac2-1c89-4807-b771-fb18f8658073
-    resourceVersion: "960"
-    uid: ab438223-3a46-48e6-abae-2155d884f2d3
+      uid: 475ddb00-f09f-44d2-a3dd-b945192e199f
+    resourceVersion: "1132"
+    uid: 579f3f70-4b4f-4928-990e-c215a82b170f
   spec:
     replicas: 0
     selector:
@@ -34208,7 +34208,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:52Z"
+    creationTimestamp: "2026-09-27T12:38:43Z"
     generation: 1
     labels:
       app: worker
@@ -34221,9 +34221,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: fd56c04d-1f5a-4104-b032-cf0e97e2fc94
-    resourceVersion: "963"
-    uid: 7360b80d-19bc-43de-a9b6-3e8a12232385
+      uid: 83171ba7-88df-4e72-8e57-7e0fd32443de
+    resourceVersion: "1139"
+    uid: cbf1d7e6-c3b5-41bf-84ca-497eb0c8498c
   spec:
     replicas: 0
     selector:
@@ -34259,7 +34259,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:53Z"
+    creationTimestamp: "2026-09-27T12:38:43Z"
     generation: 1
     labels:
       app: api
@@ -34272,9 +34272,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 4f1e6c05-770a-4546-ad42-08758b607c26
-    resourceVersion: "972"
-    uid: 3800386d-2a4f-415a-917c-cdb439b4bbb1
+      uid: 14221ea4-c4cc-4131-9b25-3b79b1613b64
+    resourceVersion: "1143"
+    uid: 8b9f2649-3f19-441c-b01a-ae14fc72be87
   spec:
     replicas: 0
     selector:
@@ -34311,7 +34311,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:14Z"
+    creationTimestamp: "2026-09-27T12:38:59Z"
     generation: 1
     labels:
       app: auth
@@ -34324,9 +34324,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: e49b17e0-00b6-4d51-b76f-381094af938a
-    resourceVersion: "1602"
-    uid: bb93a230-b94a-4e1b-8feb-e5abf4c144af
+      uid: 170b8757-2497-4fac-8c67-6af7ff5c17ef
+    resourceVersion: "1510"
+    uid: 68bf2f40-a29d-4a99-9bf5-a0b75f618ae9
   spec:
     replicas: 0
     selector:
@@ -34362,7 +34362,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:53Z"
+    creationTimestamp: "2026-09-27T12:38:44Z"
     generation: 1
     labels:
       app: billing
@@ -34375,9 +34375,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: eb68f457-a6ab-4e61-a2af-9e397818f825
-    resourceVersion: "987"
-    uid: cfabdd1a-c02d-4152-bddb-03417a535c6e
+      uid: a807bfc3-056b-4fe5-9eca-0556ad1c38bb
+    resourceVersion: "1157"
+    uid: bfdddebe-7d6e-418b-a0da-5399c06c6866
   spec:
     replicas: 0
     selector:
@@ -34413,7 +34413,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:53Z"
+    creationTimestamp: "2026-09-27T12:38:43Z"
     generation: 1
     labels:
       app: cache
@@ -34426,9 +34426,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: 5faff393-9654-468d-bc65-e511cfe47feb
-    resourceVersion: "979"
-    uid: 38d0fc5d-5559-423c-bf29-a379761e8a51
+      uid: cd0e4358-6f6e-4428-b183-7ba9213f422c
+    resourceVersion: "1155"
+    uid: 06bec4bb-99af-405e-a1b1-b979f7888c6c
   spec:
     replicas: 0
     selector:
@@ -34464,7 +34464,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:53Z"
+    creationTimestamp: "2026-09-27T12:38:43Z"
     generation: 1
     labels:
       app: cron
@@ -34477,9 +34477,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: e69359f0-52d8-43c5-b550-443912c33610
-    resourceVersion: "976"
-    uid: 4acb2af6-2a0f-4a8d-9439-14ea75e7e03f
+      uid: b0b23860-be9e-4080-9a91-63c99814e362
+    resourceVersion: "1147"
+    uid: 22a8cb1a-0970-4b92-97ac-144a0d5c92f3
   spec:
     replicas: 0
     selector:
@@ -34517,7 +34517,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: gateway
       meta.helm.sh/release-namespace: team-20
-    creationTimestamp: "2026-09-27T10:48:22Z"
+    creationTimestamp: "2026-09-27T12:39:08Z"
     generation: 1
     labels:
       app: gateway
@@ -34530,9 +34530,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: 317ecdd3-ba7a-4fa1-bbed-503eb08b3a23
-    resourceVersion: "1784"
-    uid: cb95819e-0113-4c1e-925d-a2a2d13c2be3
+      uid: 6139c391-b4d4-4320-b571-f642f2e73efd
+    resourceVersion: "1693"
+    uid: 66784fae-6fe6-48ed-b827-a51b4d46295d
   spec:
     replicas: 0
     selector:
@@ -34570,7 +34570,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: notify
       meta.helm.sh/release-namespace: team-20
-    creationTimestamp: "2026-09-27T10:48:22Z"
+    creationTimestamp: "2026-09-27T12:39:08Z"
     generation: 1
     labels:
       app: notify
@@ -34583,9 +34583,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: 013831da-1a24-42e0-8fba-e3cb6a936147
-    resourceVersion: "1786"
-    uid: 38116e54-fc29-458f-96d5-a2a61c5cc9ca
+      uid: e737a4d8-011f-4760-adfb-86db80213c3f
+    resourceVersion: "1695"
+    uid: 51d2e03b-bc6b-4d82-a550-ddc39d60beb1
   spec:
     replicas: 0
     selector:
@@ -34622,7 +34622,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:14Z"
+    creationTimestamp: "2026-09-27T12:38:59Z"
     generation: 1
     labels:
       app: search
@@ -34635,9 +34635,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: f1c76297-41e7-4549-b065-57c72f0cac33
-    resourceVersion: "1604"
-    uid: 89234ae9-0919-49d1-af8a-179f75424534
+      uid: 59de6a1b-573a-461a-88a4-a1352b01d4f5
+    resourceVersion: "1512"
+    uid: 7bf80930-248e-4c7d-945c-f562ecbf11ba
   spec:
     replicas: 0
     selector:
@@ -34673,7 +34673,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:53Z"
+    creationTimestamp: "2026-09-27T12:38:43Z"
     generation: 1
     labels:
       app: web
@@ -34686,9 +34686,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: 8523d8e1-362f-4904-9b54-4d5bd28c908f
-    resourceVersion: "974"
-    uid: fa12dcd1-00e6-4d80-91ef-100f79da8b2a
+      uid: 7b0570c9-ca6a-43f7-9ba4-76038096d746
+    resourceVersion: "1145"
+    uid: d641bb78-d595-4d94-b1f9-1cb83246dd73
   spec:
     replicas: 0
     selector:
@@ -34724,7 +34724,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:28Z"
+    creationTimestamp: "2026-09-27T12:39:14Z"
     generation: 1
     labels:
       app: worker
@@ -34737,9 +34737,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 32874c60-32c2-4a7a-acd2-c660f0583a5c
-    resourceVersion: "1923"
-    uid: fe4e8f35-543e-4fc9-ad2e-e6a53f94c98c
+      uid: eac77314-c33e-4a34-815e-a2b002bf247d
+    resourceVersion: "1830"
+    uid: 16ac636d-51e3-4465-a55e-96f08262ea3b
   spec:
     replicas: 0
     selector:
@@ -34777,7 +34777,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: api
       meta.helm.sh/release-namespace: team-21
-    creationTimestamp: "2026-09-27T10:48:22Z"
+    creationTimestamp: "2026-09-27T12:39:08Z"
     generation: 1
     labels:
       app: api
@@ -34790,9 +34790,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 30be9ff3-6e23-497b-99c4-6cf7195d4090
-    resourceVersion: "1789"
-    uid: f85400fe-6527-4fee-9b34-a3de3dcaecda
+      uid: bdd36319-6160-43a4-a236-5687bed5b83d
+    resourceVersion: "1698"
+    uid: f21413db-8a76-4240-a250-58773eaf0e4c
   spec:
     replicas: 0
     selector:
@@ -34830,7 +34830,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: auth
       meta.helm.sh/release-namespace: team-21
-    creationTimestamp: "2026-09-27T10:48:23Z"
+    creationTimestamp: "2026-09-27T12:39:08Z"
     generation: 1
     labels:
       app: auth
@@ -34843,9 +34843,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: 1841114b-edd4-4f89-8cf3-4e71b41acd0d
-    resourceVersion: "1799"
-    uid: ada2c321-a93c-45a6-9426-b9bc60c2d4a8
+      uid: 369b7b3c-fbc5-4f3e-8100-142677b21c08
+    resourceVersion: "1706"
+    uid: aa9e55bd-ae4f-4326-b65b-cd7e7c4d7784
   spec:
     replicas: 0
     selector:
@@ -34881,7 +34881,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:53Z"
+    creationTimestamp: "2026-09-27T12:38:44Z"
     generation: 1
     labels:
       app: billing
@@ -34894,9 +34894,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: 6dcfa695-2cea-40ca-ab64-866538b0002b
-    resourceVersion: "991"
-    uid: fb47e226-8917-4d1a-9c31-2f898cda49ae
+      uid: 194178fb-a203-4c26-bc1a-3fd4908e7645
+    resourceVersion: "1161"
+    uid: ea3ad25a-5a83-43d1-8412-970aa149ae7b
   spec:
     replicas: 0
     selector:
@@ -34932,7 +34932,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:53Z"
+    creationTimestamp: "2026-09-27T12:38:44Z"
     generation: 1
     labels:
       app: cache
@@ -34945,9 +34945,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: 92413d3a-c8bf-4c1c-bb43-ff806e9a4f5a
-    resourceVersion: "989"
-    uid: 98c9d557-697b-4992-b741-8502dc816cca
+      uid: ed9a5d5a-a902-408d-8d0d-e09dcb1f1f24
+    resourceVersion: "1159"
+    uid: 0ff972cf-8cec-46a5-bddb-8226e26a1be7
   spec:
     replicas: 0
     selector:
@@ -34984,7 +34984,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:14Z"
+    creationTimestamp: "2026-09-27T12:39:00Z"
     generation: 1
     labels:
       app: cron
@@ -34997,9 +34997,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: e4bfac69-927b-4a73-ba7b-80d294fa8682
-    resourceVersion: "1610"
-    uid: 5c4c72f3-15ca-43b2-96c3-b51778405dde
+      uid: b4711048-2789-4c48-bd08-e72f0c5f1bac
+    resourceVersion: "1520"
+    uid: e05d49c6-a38a-4527-87ae-342142006378
   spec:
     replicas: 0
     selector:
@@ -35037,7 +35037,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: gateway
       meta.helm.sh/release-namespace: team-21
-    creationTimestamp: "2026-09-27T10:48:22Z"
+    creationTimestamp: "2026-09-27T12:39:08Z"
     generation: 1
     labels:
       app: gateway
@@ -35050,9 +35050,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: 796bf96b-935a-4835-87a4-6ab18eda253c
-    resourceVersion: "1793"
-    uid: 6e4a6d0d-db8c-4ef2-8a32-347ce4d53325
+      uid: 2ddc3c0b-fd03-4e17-b8a8-bfd35300dfc4
+    resourceVersion: "1700"
+    uid: ce896395-b943-44fb-b225-3001ecc55d90
   spec:
     replicas: 0
     selector:
@@ -35088,7 +35088,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:54Z"
+    creationTimestamp: "2026-09-27T12:38:44Z"
     generation: 1
     labels:
       app: notify
@@ -35101,9 +35101,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: 4a576ddb-3e0c-4866-8fe2-6ba33ca47e92
-    resourceVersion: "993"
-    uid: 636a2d89-5c78-4fe2-ba53-58407dbf97b5
+      uid: 987143b1-3e5f-4cb1-9142-0e846d93079b
+    resourceVersion: "1163"
+    uid: 7c5ecfc4-8dcf-49a7-866e-17d8b6598293
   spec:
     replicas: 0
     selector:
@@ -35140,7 +35140,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:14Z"
+    creationTimestamp: "2026-09-27T12:39:00Z"
     generation: 1
     labels:
       app: search
@@ -35153,9 +35153,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: e4af60a2-0724-43b4-84f6-268f1c951d8c
-    resourceVersion: "1618"
-    uid: 80d1273a-7ff2-4539-94a0-fe733a76a14d
+      uid: b14dd048-98be-4524-b7a0-c9bbc4bbcb14
+    resourceVersion: "1527"
+    uid: b7499bac-bb08-4b25-b2bc-efc836735585
   spec:
     replicas: 0
     selector:
@@ -35192,7 +35192,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:14Z"
+    creationTimestamp: "2026-09-27T12:39:00Z"
     generation: 1
     labels:
       app: web
@@ -35205,9 +35205,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: 111bf604-556a-4a4d-8a55-a10cedf52502
-    resourceVersion: "1606"
-    uid: efef09ea-0984-4a0a-bf4e-6720b0324f90
+      uid: b537b3ab-8f9f-4a6b-a9c5-172b5e25d1f1
+    resourceVersion: "1514"
+    uid: 6ec6e9ed-791f-4182-85c7-05a430145df7
   spec:
     replicas: 0
     selector:
@@ -35244,7 +35244,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:14Z"
+    creationTimestamp: "2026-09-27T12:39:00Z"
     generation: 1
     labels:
       app: worker
@@ -35257,9 +35257,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 5eade001-ad37-4664-882a-fe8b33755f2c
-    resourceVersion: "1608"
-    uid: 2969ee08-2751-4222-982d-cabf2f8a0855
+      uid: defeeb4c-eaf2-4cc8-a0d1-59dc7f54f12d
+    resourceVersion: "1516"
+    uid: 3ec6ad4a-7818-4eaa-b876-6da0fa1e7bb4
   spec:
     replicas: 0
     selector:
@@ -35296,7 +35296,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:14Z"
+    creationTimestamp: "2026-09-27T12:39:00Z"
     generation: 1
     labels:
       app: api
@@ -35309,9 +35309,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 0ace1743-0dde-4dfb-850e-9c8577f6fdbf
-    resourceVersion: "1620"
-    uid: 339109d8-2219-4e96-9a64-8012657fe4a6
+      uid: 0d6433dc-8455-485e-b1b7-daebab1b8fd1
+    resourceVersion: "1529"
+    uid: 07b31702-4db0-4905-bab8-391f8de83ff8
   spec:
     replicas: 0
     selector:
@@ -35348,7 +35348,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:15Z"
+    creationTimestamp: "2026-09-27T12:39:00Z"
     generation: 1
     labels:
       app: auth
@@ -35361,9 +35361,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: 3299cd0a-bb29-427a-ad1e-225514742761
-    resourceVersion: "1624"
-    uid: 515c5397-8cbd-4c24-a98d-894d919517ce
+      uid: 445c1dc7-6706-46fc-8ba3-677ba99f2932
+    resourceVersion: "1533"
+    uid: 33d09801-8178-43c3-8b02-a9d9073630b2
   spec:
     replicas: 0
     selector:
@@ -35400,7 +35400,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:15Z"
+    creationTimestamp: "2026-09-27T12:39:01Z"
     generation: 1
     labels:
       app: billing
@@ -35413,9 +35413,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: a6be0017-0309-407c-a065-865bb4f6f64e
-    resourceVersion: "1633"
-    uid: c1d44d2f-cfa9-4431-90fb-0b4688ab3808
+      uid: b18cc83f-f6f5-41eb-ae46-d42b44b5925e
+    resourceVersion: "1542"
+    uid: 949c9ddf-df65-4828-b517-370a060d597f
   spec:
     replicas: 0
     selector:
@@ -35453,7 +35453,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: cache
       meta.helm.sh/release-namespace: team-22
-    creationTimestamp: "2026-09-27T10:48:23Z"
+    creationTimestamp: "2026-09-27T12:39:09Z"
     generation: 1
     labels:
       app: cache
@@ -35466,9 +35466,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: bfd498c3-f3fb-47cb-b615-129b54da7ad7
-    resourceVersion: "1801"
-    uid: 626ec99d-f8d7-4657-8929-5d633e494de1
+      uid: 8bfa0353-afcb-4a9d-8a81-a5e474a3e194
+    resourceVersion: "1710"
+    uid: 8712a994-707c-4044-9a92-42d969254485
   spec:
     replicas: 0
     selector:
@@ -35504,7 +35504,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:54Z"
+    creationTimestamp: "2026-09-27T12:38:44Z"
     generation: 1
     labels:
       app: cron
@@ -35517,9 +35517,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: b452fc7f-d5db-431c-bb0e-b7db15d5710b
-    resourceVersion: "1003"
-    uid: 55b021e3-9ef4-49c8-be29-c772bab6e372
+      uid: 69494b1b-a92f-411e-9b2a-b86834447c80
+    resourceVersion: "1173"
+    uid: c027123b-474f-40bb-849f-af3c221f2720
   spec:
     replicas: 0
     selector:
@@ -35555,7 +35555,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:54Z"
+    creationTimestamp: "2026-09-27T12:38:44Z"
     generation: 1
     labels:
       app: gateway
@@ -35568,9 +35568,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: 3cd3426d-4d16-45d5-8c24-80cc0bc3c7df
-    resourceVersion: "1005"
-    uid: c43bf871-c7bd-4b8e-a746-1c2724840399
+      uid: 25b49f0d-e740-4a86-80c9-138fc923b248
+    resourceVersion: "1175"
+    uid: fd7e6ff4-31e6-407f-959c-645006b2d308
   spec:
     replicas: 0
     selector:
@@ -35608,7 +35608,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: notify
       meta.helm.sh/release-namespace: team-22
-    creationTimestamp: "2026-09-27T10:48:23Z"
+    creationTimestamp: "2026-09-27T12:39:09Z"
     generation: 1
     labels:
       app: notify
@@ -35621,9 +35621,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: 140fa096-ff4b-430c-ac10-5b5b824a1a62
-    resourceVersion: "1803"
-    uid: 7a3433ad-2a5e-4929-96ba-80b854d765bb
+      uid: 6f55fd9b-7a2d-4158-a91b-e539ac95c97d
+    resourceVersion: "1712"
+    uid: 6c030fdf-fff8-4130-8300-4ecdee280ad5
   spec:
     replicas: 0
     selector:
@@ -35660,7 +35660,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:15Z"
+    creationTimestamp: "2026-09-27T12:39:01Z"
     generation: 1
     labels:
       app: search
@@ -35673,9 +35673,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: fd6fa0ae-0bb4-4590-a3e6-241cafacb5e0
-    resourceVersion: "1626"
-    uid: aad4f440-8e34-4a54-960d-d7c2bc126be8
+      uid: 0f423b09-7e48-41ca-ba9d-49c28853af2e
+    resourceVersion: "1537"
+    uid: 99cef472-5836-45a5-b174-7f2e3bc0ab37
   spec:
     replicas: 0
     selector:
@@ -35712,7 +35712,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:14Z"
+    creationTimestamp: "2026-09-27T12:39:00Z"
     generation: 1
     labels:
       app: web
@@ -35725,9 +35725,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: dd5c39e9-5831-4bbc-b813-3310a3ef9f36
-    resourceVersion: "1622"
-    uid: 635ef63f-7009-4bdb-a682-a725bc1a1fc0
+      uid: 1b0d6840-b2c1-460b-b785-0c2aac668ef9
+    resourceVersion: "1531"
+    uid: d808dd10-9ff8-4549-b10e-2b3e4ef20763
   spec:
     replicas: 0
     selector:
@@ -35763,7 +35763,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:54Z"
+    creationTimestamp: "2026-09-27T12:38:44Z"
     generation: 1
     labels:
       app: worker
@@ -35776,9 +35776,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 8a4faaa0-ea45-4e2f-82b1-fd2a6a485c6f
-    resourceVersion: "997"
-    uid: 66f252a8-c14b-41c5-a40f-bfff879e3f74
+      uid: 85dbe797-d634-40b5-88a7-10fc4cd7a438
+    resourceVersion: "1171"
+    uid: 20c7abf3-0f8c-4b57-a75c-24bb8b643ffb
   spec:
     replicas: 0
     selector:
@@ -35814,7 +35814,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:54Z"
+    creationTimestamp: "2026-09-27T12:38:44Z"
     generation: 1
     labels:
       app: api
@@ -35827,9 +35827,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 0a4bd844-c9ff-4eac-849d-357da4c9943b
-    resourceVersion: "1007"
-    uid: fc683885-5a81-4ed4-8ddb-f79c81a3db9b
+      uid: 25ddcfb7-9557-4422-9b93-24fa8c9c2a8e
+    resourceVersion: "1177"
+    uid: 90923b72-ff48-4b3b-99dd-4649f7e4d92c
   spec:
     replicas: 0
     selector:
@@ -35866,7 +35866,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:15Z"
+    creationTimestamp: "2026-09-27T12:39:01Z"
     generation: 1
     labels:
       app: auth
@@ -35879,9 +35879,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: accc2e17-0dbc-4cbd-a721-95ab60317d8f
-    resourceVersion: "1641"
-    uid: 1288ad2e-1a99-405f-8d49-67d71c8f0a70
+      uid: aa8cf946-0b75-469f-945e-57f3e1a535d1
+    resourceVersion: "1554"
+    uid: 11c942d3-0f57-41cf-a264-3f365b914068
   spec:
     replicas: 0
     selector:
@@ -35917,7 +35917,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:45Z"
     generation: 1
     labels:
       app: billing
@@ -35930,9 +35930,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: ed5e2dbc-7dc6-4ab0-982a-f037ebe611f3
-    resourceVersion: "1018"
-    uid: 82cef2ca-e5cd-4b8f-be90-bba91ec3c80f
+      uid: a25c6156-547e-4f58-9fb5-c1d5de0ad312
+    resourceVersion: "1188"
+    uid: 8ab74e47-6cb3-4f05-8a17-f33b58366e7d
   spec:
     replicas: 0
     selector:
@@ -35969,7 +35969,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:16Z"
+    creationTimestamp: "2026-09-27T12:39:02Z"
     generation: 1
     labels:
       app: cache
@@ -35982,9 +35982,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: 3976aeea-ed0f-4be9-b30c-29f291d15ab6
-    resourceVersion: "1650"
-    uid: 912b40a7-0e9d-420e-b513-9c38ed5546aa
+      uid: d3c425fb-eca1-4025-a6f0-ab060e21a246
+    resourceVersion: "1559"
+    uid: 84536fc5-aaca-43ac-971b-25aa26d4c1d4
   spec:
     replicas: 0
     selector:
@@ -36021,7 +36021,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:15Z"
+    creationTimestamp: "2026-09-27T12:39:01Z"
     generation: 1
     labels:
       app: cron
@@ -36034,9 +36034,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: 8439129a-a11b-406a-99ca-533e0e3ae901
-    resourceVersion: "1639"
-    uid: 2c3fe07e-e530-42c4-98a6-913fd0851c43
+      uid: 367060a7-b51e-424a-b820-1fba52c738a8
+    resourceVersion: "1550"
+    uid: 3acdbd8e-2f75-496b-bdc2-46067efc298b
   spec:
     replicas: 0
     selector:
@@ -36072,7 +36072,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:54Z"
+    creationTimestamp: "2026-09-27T12:38:44Z"
     generation: 1
     labels:
       app: gateway
@@ -36085,9 +36085,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: 97a41c33-908f-4ce1-bd1d-e34668d0c8f8
-    resourceVersion: "1009"
-    uid: 3e0bb36e-037c-49cf-b320-dddf861f78c5
+      uid: a07f20f2-1419-43ba-b78d-31d3ec8db8f6
+    resourceVersion: "1179"
+    uid: ab7920d5-1a7e-4b39-b17f-a284264a3a87
   spec:
     replicas: 0
     selector:
@@ -36125,7 +36125,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: notify
       meta.helm.sh/release-namespace: team-23
-    creationTimestamp: "2026-09-27T10:48:23Z"
+    creationTimestamp: "2026-09-27T12:39:09Z"
     generation: 1
     labels:
       app: notify
@@ -36138,9 +36138,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: 4c2e0767-cd7b-499e-b157-a5be1a8987d5
-    resourceVersion: "1805"
-    uid: e0ee2433-0075-432d-9e26-8a5da4989b89
+      uid: 122a463b-8ff3-4649-a4fa-401c5766bd16
+    resourceVersion: "1719"
+    uid: 35c52eab-109e-46ec-a7c9-1469a06e5f92
   spec:
     replicas: 0
     selector:
@@ -36176,7 +36176,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:54Z"
+    creationTimestamp: "2026-09-27T12:38:45Z"
     generation: 1
     labels:
       app: search
@@ -36189,9 +36189,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: 02f999c8-0857-4062-a38e-1ea0dafc8045
-    resourceVersion: "1012"
-    uid: 896736ff-8ab2-45e7-9e82-9e0198a2ffd9
+      uid: ea266b32-6469-4900-8012-799f001c994c
+    resourceVersion: "1186"
+    uid: 2310df87-8ace-4bb9-a798-6577a159f8e2
   spec:
     replicas: 0
     selector:
@@ -36228,7 +36228,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:15Z"
+    creationTimestamp: "2026-09-27T12:39:01Z"
     generation: 1
     labels:
       app: web
@@ -36241,9 +36241,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: b0bd0dc1-3d4b-4f2a-87e7-2250da50fa8d
-    resourceVersion: "1635"
-    uid: 96ea2180-78a4-4af7-8fc6-4e5f250a4445
+      uid: 224fb7ce-0b95-4b70-af47-a4faf94ef5cf
+    resourceVersion: "1545"
+    uid: c2cdd8e3-e814-4e8b-a847-eabc534e68cf
   spec:
     replicas: 0
     selector:
@@ -36280,7 +36280,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:15Z"
+    creationTimestamp: "2026-09-27T12:39:01Z"
     generation: 1
     labels:
       app: worker
@@ -36293,9 +36293,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 2ccc1378-f5d5-4e60-a83a-519a264fefce
-    resourceVersion: "1637"
-    uid: 67db646c-696a-48f7-81d1-5816b416d8c2
+      uid: fe4cbce0-2c0f-4341-8d50-45c627065849
+    resourceVersion: "1547"
+    uid: fdad9df1-dc90-4325-9714-3c26e489cb2b
   spec:
     replicas: 0
     selector:
@@ -36332,7 +36332,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:16Z"
+    creationTimestamp: "2026-09-27T12:39:02Z"
     generation: 1
     labels:
       app: api
@@ -36345,9 +36345,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 2e769758-8dc0-41a3-812a-bc694274566d
-    resourceVersion: "1653"
-    uid: c7ff3a6d-8c64-42d3-85d9-21174056de40
+      uid: 11d0efef-c0f6-4f6a-9003-b1a79b96a763
+    resourceVersion: "1561"
+    uid: 7cdb0255-5d83-4d45-b730-e5d3de28ea48
   spec:
     replicas: 0
     selector:
@@ -36383,7 +36383,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:28Z"
+    creationTimestamp: "2026-09-27T12:39:14Z"
     generation: 1
     labels:
       app: auth
@@ -36396,9 +36396,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: 6fe113ed-fb8d-4f93-b6c9-451c56149c4f
-    resourceVersion: "1927"
-    uid: ed6b1929-b23e-4fda-a968-9bd7df2aa0e1
+      uid: 13a00513-9da0-4243-9d01-7396718b2d4a
+    resourceVersion: "1835"
+    uid: 62119c5b-a5d6-4902-8ba1-021ab0e69487
   spec:
     replicas: 0
     selector:
@@ -36435,7 +36435,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:16Z"
+    creationTimestamp: "2026-09-27T12:39:02Z"
     generation: 1
     labels:
       app: billing
@@ -36448,9 +36448,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: fa696f1f-2791-4722-ac99-a2370e965b1b
-    resourceVersion: "1655"
-    uid: 86c167ee-9ba9-4ddb-a9ec-bd89f5771d61
+      uid: 0d231acd-9395-419e-9654-1ae2a8ade435
+    resourceVersion: "1564"
+    uid: 3ad79c76-b901-4056-b025-0a64f86d5b07
   spec:
     replicas: 0
     selector:
@@ -36486,7 +36486,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:29Z"
+    creationTimestamp: "2026-09-27T12:39:14Z"
     generation: 1
     labels:
       app: cache
@@ -36499,9 +36499,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: f779c7ba-de18-436a-849d-61322fb1d22d
-    resourceVersion: "1932"
-    uid: 3caa97d6-0aca-46ce-bfcf-605ee54fb6c3
+      uid: fd1c1899-9f09-40d5-8289-82780416f653
+    resourceVersion: "1840"
+    uid: cc13c9fe-c197-45b6-8be3-1cfc65e72682
   spec:
     replicas: 0
     selector:
@@ -36539,7 +36539,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: cron
       meta.helm.sh/release-namespace: team-24
-    creationTimestamp: "2026-09-27T10:48:23Z"
+    creationTimestamp: "2026-09-27T12:39:09Z"
     generation: 1
     labels:
       app: cron
@@ -36552,9 +36552,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: 4bc3e682-fcb3-40f0-abdd-072c52a1e422
-    resourceVersion: "1816"
-    uid: 20dfe9fd-7d39-4924-8bf0-c188f4d68c58
+      uid: eb7065ad-190f-436f-96fd-c46747fcb65e
+    resourceVersion: "1726"
+    uid: e6785912-e717-46a3-a3d5-8e0cccb66202
   spec:
     replicas: 0
     selector:
@@ -36590,7 +36590,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:45Z"
     generation: 1
     labels:
       app: gateway
@@ -36603,9 +36603,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: e76923ea-dbac-47ae-971b-be8a474602b3
-    resourceVersion: "1020"
-    uid: f4465fb5-3bac-427f-b981-e6c86572ab3b
+      uid: b0ba4b2f-bc38-437b-8f72-3318b26df433
+    resourceVersion: "1191"
+    uid: 75ea8196-1581-47c1-b9a0-6dea03734f7e
   spec:
     replicas: 0
     selector:
@@ -36641,7 +36641,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:45Z"
     generation: 1
     labels:
       app: notify
@@ -36654,9 +36654,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: 9b7d1007-acc3-4958-a4ef-a904a8e24d8a
-    resourceVersion: "1024"
-    uid: f060c0fa-f6b6-44cd-8fb8-84ab0a55564f
+      uid: de3b040b-b280-4b82-9766-623f618ad46f
+    resourceVersion: "1195"
+    uid: f6aaef3e-abc1-4f2b-a803-2e6c99ea50d6
   spec:
     replicas: 0
     selector:
@@ -36692,7 +36692,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:45Z"
     generation: 1
     labels:
       app: search
@@ -36705,9 +36705,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: edfc29eb-782f-44f9-b39e-b78077e6cac7
-    resourceVersion: "1022"
-    uid: d6522436-06d0-40f4-9ec6-eff8083867a3
+      uid: a32e6e86-fc9e-4977-a87d-b0e5f52c020a
+    resourceVersion: "1193"
+    uid: b1f3027e-75bd-48c5-8a36-4150d33ff317
   spec:
     replicas: 0
     selector:
@@ -36745,7 +36745,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: web
       meta.helm.sh/release-namespace: team-24
-    creationTimestamp: "2026-09-27T10:48:23Z"
+    creationTimestamp: "2026-09-27T12:39:09Z"
     generation: 1
     labels:
       app: web
@@ -36758,9 +36758,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: 515d757d-3fd9-4b99-90d0-331f760edee9
-    resourceVersion: "1809"
-    uid: 412a6230-4743-45c7-a8ab-45984b160226
+      uid: e0b0c0bf-9c00-41ac-a23c-c47c81556b67
+    resourceVersion: "1720"
+    uid: f2c98c6a-95e8-46a7-a162-cd3bebd73dda
   spec:
     replicas: 0
     selector:
@@ -36796,7 +36796,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:28Z"
+    creationTimestamp: "2026-09-27T12:39:14Z"
     generation: 1
     labels:
       app: worker
@@ -36809,9 +36809,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 979bea41-39cc-4296-b772-378640609baf
-    resourceVersion: "1925"
-    uid: 02141753-dfcb-4534-8286-bda348ef9c69
+      uid: 12265e49-3a46-4ff4-8f1f-562aba597121
+    resourceVersion: "1832"
+    uid: c694757f-d1e8-4617-8730-2a747ae457d9
   spec:
     replicas: 0
     selector:
@@ -36847,7 +36847,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:55Z"
+    creationTimestamp: "2026-09-27T12:38:46Z"
     generation: 1
     labels:
       app: api
@@ -36860,9 +36860,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: eb73ad43-8bee-4ea8-80c3-a8e5f538b5e3
-    resourceVersion: "1027"
-    uid: 969ca3c5-7fe3-4964-8c40-de222f8ad911
+      uid: 6333a2c0-8b15-473c-bc7f-dec2c57b5393
+    resourceVersion: "1202"
+    uid: d194dfcf-bac7-4775-b9cc-2563a17623a5
   spec:
     replicas: 0
     selector:
@@ -36898,7 +36898,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:46Z"
     generation: 1
     labels:
       app: auth
@@ -36911,9 +36911,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: 3b6fb75e-727d-4e53-841b-865f4d917e31
-    resourceVersion: "1209"
-    uid: b01b0162-710c-4b07-89c8-729cd09a3827
+      uid: 9f6f9411-593f-4d33-8628-8c1a1b84aa89
+    resourceVersion: "1211"
+    uid: b24d6d91-93bd-4d6c-abb6-792bfede2543
   spec:
     replicas: 0
     selector:
@@ -36949,7 +36949,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:46Z"
     generation: 1
     labels:
       app: billing
@@ -36962,9 +36962,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: 86e4fe60-113b-4b4a-9b2a-16c5314cbb72
-    resourceVersion: "1212"
-    uid: ece29a86-e074-49d6-a488-af7640efe0e9
+      uid: e2956f17-946a-4d5e-9fbc-84731fac858d
+    resourceVersion: "1218"
+    uid: ff731218-059a-430f-8e26-8349c96c03e0
   spec:
     replicas: 0
     selector:
@@ -37000,7 +37000,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:29Z"
+    creationTimestamp: "2026-09-27T12:39:15Z"
     generation: 1
     labels:
       app: cache
@@ -37013,9 +37013,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: be72e60a-4e65-4174-8adb-12e86e62677c
-    resourceVersion: "1934"
-    uid: 0d1153a6-41ba-43d5-95e5-aa522b5a12a2
+      uid: b32b9682-676b-4adc-b8da-eae1085dc8fc
+    resourceVersion: "1842"
+    uid: 566f1e92-b94e-4cf0-bf07-481ed4f37cd4
   spec:
     replicas: 0
     selector:
@@ -37051,7 +37051,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:46Z"
     generation: 1
     labels:
       app: cron
@@ -37064,9 +37064,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: 2cfef8a6-12be-4aec-a4be-a7ec86d22092
-    resourceVersion: "1207"
-    uid: 730d1e49-8ab0-45c6-9e34-67c2994211ea
+      uid: 5ac34b39-51b5-478b-89e7-1ce61a07a9d0
+    resourceVersion: "1209"
+    uid: d49895d6-4a29-457b-8d81-09d6ac2730c6
   spec:
     replicas: 0
     selector:
@@ -37104,7 +37104,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: gateway
       meta.helm.sh/release-namespace: team-25
-    creationTimestamp: "2026-09-27T10:48:24Z"
+    creationTimestamp: "2026-09-27T12:39:09Z"
     generation: 1
     labels:
       app: gateway
@@ -37117,9 +37117,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: 7a366fe3-a399-4feb-93f3-c56d7ebaa6ad
-    resourceVersion: "1818"
-    uid: 0b130c1f-8463-42c7-8463-c1aeecc49de0
+      uid: efe72184-1f60-4439-8143-30b6d0a4a990
+    resourceVersion: "1728"
+    uid: ca550504-31d8-4290-95c6-42778cd8d1b1
   spec:
     replicas: 0
     selector:
@@ -37155,7 +37155,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:47Z"
     generation: 1
     labels:
       app: notify
@@ -37168,9 +37168,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: 693fd454-814a-4bdc-a956-fd6d91332278
-    resourceVersion: "1218"
-    uid: 09f7b0f6-a53d-4a65-8932-263f8d72ba11
+      uid: 4bba2bfd-2a35-4322-9348-aa5dc6657e3f
+    resourceVersion: "1220"
+    uid: 1e11d628-025b-4f0f-8e3d-2ffef9c119be
   spec:
     replicas: 0
     selector:
@@ -37206,7 +37206,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: search
@@ -37219,9 +37219,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: e4ac4237-252a-40a2-8ce8-fc6186f6a0bf
-    resourceVersion: "616"
-    uid: 87610f0f-4a46-466d-bb84-7a650adc6a5a
+      uid: 40751d50-d671-4002-8590-bae9b006376e
+    resourceVersion: "611"
+    uid: 5c39653c-5191-4553-9910-865e65b0dfcc
   spec:
     replicas: 0
     selector:
@@ -37257,7 +37257,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:46Z"
     generation: 1
     labels:
       app: web
@@ -37270,9 +37270,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: 98724887-bf4a-43ea-9958-ee1e7fc6f38d
-    resourceVersion: "1170"
-    uid: bd06c6fd-a61a-4820-b685-304489b72774
+      uid: 2966290b-b5fd-44f5-9ef4-4e3b285e0c05
+    resourceVersion: "1205"
+    uid: 88d9bd61-1692-4ba8-8ae1-db32268ea3a0
   spec:
     replicas: 0
     selector:
@@ -37308,7 +37308,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:46Z"
     generation: 1
     labels:
       app: worker
@@ -37321,9 +37321,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: f25faba6-c122-44e5-bb38-d19d88954a7d
-    resourceVersion: "1200"
-    uid: 5cf8894b-f382-41fd-aa0d-22c302ba12b3
+      uid: edf359f4-20c0-4dd5-b47c-cd4932a73671
+    resourceVersion: "1207"
+    uid: 991c49f2-cb8e-4695-a11f-1204313e4fc2
   spec:
     replicas: 0
     selector:
@@ -37361,7 +37361,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: api
       meta.helm.sh/release-namespace: team-26
-    creationTimestamp: "2026-09-27T10:48:24Z"
+    creationTimestamp: "2026-09-27T12:39:09Z"
     generation: 1
     labels:
       app: api
@@ -37374,9 +37374,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 38659b4a-7f6a-43d8-9f03-0284616f8d74
-    resourceVersion: "1820"
-    uid: 22d80053-44bf-44f8-9eff-01273377eec7
+      uid: f9545756-d022-4043-b4aa-e74f33feed90
+    resourceVersion: "1730"
+    uid: 04fa81fc-e990-4ade-942f-d0c12feb98f6
   spec:
     replicas: 0
     selector:
@@ -37413,7 +37413,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:16Z"
+    creationTimestamp: "2026-09-27T12:39:02Z"
     generation: 1
     labels:
       app: auth
@@ -37426,9 +37426,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: b410ff09-1ae2-450e-893e-c8ace642de8e
-    resourceVersion: "1657"
-    uid: d6f12e99-6f54-4611-b1e5-20978e7cf2ab
+      uid: 9597d9d1-7d68-4d0f-880a-ec2a3c7fd01d
+    resourceVersion: "1566"
+    uid: 18881fa9-3174-447a-8966-51c4db535199
   spec:
     replicas: 0
     selector:
@@ -37464,7 +37464,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:57Z"
+    creationTimestamp: "2026-09-27T12:38:47Z"
     generation: 1
     labels:
       app: billing
@@ -37477,9 +37477,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: c0928277-95e5-4425-86a3-6dd3ac64c44f
-    resourceVersion: "1227"
-    uid: 4899b0d3-2efd-45b1-b035-2762208c7853
+      uid: 90eca8dc-d7d6-4a9b-9d86-002a11323ad1
+    resourceVersion: "1234"
+    uid: 23a3acd6-e97f-41e9-a80f-602bd5340987
   spec:
     replicas: 0
     selector:
@@ -37516,7 +37516,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:16Z"
+    creationTimestamp: "2026-09-27T12:39:02Z"
     generation: 1
     labels:
       app: cache
@@ -37529,9 +37529,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: 67ba1cc8-95c4-4d48-9a39-6dec377fcdf5
-    resourceVersion: "1660"
-    uid: 9c609459-c2df-4a23-8bda-bf965ae96d83
+      uid: 10a549b2-4bfe-465e-8480-d55e664e105b
+    resourceVersion: "1570"
+    uid: 42153bd9-b0b8-4a5e-98c4-f832b41b15ab
   spec:
     replicas: 0
     selector:
@@ -37567,7 +37567,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:47Z"
     generation: 1
     labels:
       app: cron
@@ -37580,9 +37580,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: 989948fd-c0e8-44da-aa6a-26597d59f652
-    resourceVersion: "1222"
-    uid: d082c1cd-28bd-43a0-b86d-48ff7c45a7c2
+      uid: 5efe8d32-486d-4323-b02f-66c446c15366
+    resourceVersion: "1224"
+    uid: 590dc1f7-4cc9-42d5-a684-15f423750da3
   spec:
     replicas: 0
     selector:
@@ -37618,7 +37618,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:57Z"
+    creationTimestamp: "2026-09-27T12:38:47Z"
     generation: 1
     labels:
       app: gateway
@@ -37631,9 +37631,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: d6d9a724-61fe-4348-986f-9b8ed98e2d4c
-    resourceVersion: "1224"
-    uid: 1f9a3cf6-972f-479b-bfa0-e2fdb7537540
+      uid: 3d782086-9cd6-428f-9eec-dbb1ef987878
+    resourceVersion: "1226"
+    uid: 70dfd64e-4a69-45b8-83c9-50d53ad43caa
   spec:
     replicas: 0
     selector:
@@ -37669,7 +37669,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:29Z"
+    creationTimestamp: "2026-09-27T12:39:15Z"
     generation: 1
     labels:
       app: notify
@@ -37682,9 +37682,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: f68dca1b-6dd5-4c75-86e5-c7bd0acc29c2
-    resourceVersion: "1944"
-    uid: 68d2b704-b391-4b59-b32f-a471da7a2ee0
+      uid: 11114d7b-fd28-4358-9c28-ab3ee6559daa
+    resourceVersion: "1847"
+    uid: c4e7b7d3-a6e1-4706-8b15-48b0348d5cf0
   spec:
     replicas: 0
     selector:
@@ -37720,7 +37720,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:29Z"
+    creationTimestamp: "2026-09-27T12:39:15Z"
     generation: 1
     labels:
       app: search
@@ -37733,9 +37733,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: 3a1da000-6ebe-473d-9e54-e4ff014de92d
-    resourceVersion: "1940"
-    uid: b8085718-5089-4996-8c0d-d5670fa317a0
+      uid: a30e7b9a-405f-4f07-a513-6a2632757af1
+    resourceVersion: "1845"
+    uid: c43f2729-a378-4e17-88c1-07f4841ca442
   spec:
     replicas: 0
     selector:
@@ -37773,7 +37773,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: web
       meta.helm.sh/release-namespace: team-26
-    creationTimestamp: "2026-09-27T10:48:24Z"
+    creationTimestamp: "2026-09-27T12:39:09Z"
     generation: 1
     labels:
       app: web
@@ -37786,9 +37786,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: 17c6fd9d-dd1e-4518-8707-e2c93fbed07b
-    resourceVersion: "1825"
-    uid: 6968cdf7-1e44-4866-97bd-f983e66b2f91
+      uid: 16ab81e0-1ac3-48ab-9513-ad865f1159ef
+    resourceVersion: "1733"
+    uid: 97767943-cbf7-492a-a491-8b3813d09e59
   spec:
     replicas: 0
     selector:
@@ -37824,7 +37824,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:56Z"
+    creationTimestamp: "2026-09-27T12:38:47Z"
     generation: 1
     labels:
       app: worker
@@ -37837,9 +37837,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 6147f87c-62e2-4d5d-b4ba-c7d6a1246a83
-    resourceVersion: "1220"
-    uid: 13b66537-5f7b-4362-a4ad-2b91d18f55af
+      uid: c8f53953-592d-4843-b4dd-2e7bcd05f13d
+    resourceVersion: "1222"
+    uid: bd2ef505-7d23-4b12-b36e-53dfa391ca7e
   spec:
     replicas: 0
     selector:
@@ -37875,7 +37875,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:57Z"
+    creationTimestamp: "2026-09-27T12:38:47Z"
     generation: 1
     labels:
       app: api
@@ -37888,9 +37888,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 04a10be0-0321-4d4c-bf7d-978b9e3719f8
-    resourceVersion: "1233"
-    uid: 49f722ab-1560-41a7-98ea-15c6954e9050
+      uid: e872723f-4396-4e50-99b6-7e5d90a957ad
+    resourceVersion: "1236"
+    uid: c1cdb38d-07a0-4de1-9c26-f1659f39cea9
   spec:
     replicas: 0
     selector:
@@ -37926,7 +37926,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:57Z"
+    creationTimestamp: "2026-09-27T12:38:47Z"
     generation: 1
     labels:
       app: auth
@@ -37939,9 +37939,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: b0cadb16-bb37-417b-9b57-3ae19f9f3713
-    resourceVersion: "1237"
-    uid: 0981a81b-cb01-46de-ae2d-277bbfaea7cd
+      uid: 4a6835c0-a213-489e-8cbf-6cb3648a914b
+    resourceVersion: "1240"
+    uid: 7059e4be-1b8b-45c8-b136-d877e2b8906a
   spec:
     replicas: 0
     selector:
@@ -37977,7 +37977,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:57Z"
+    creationTimestamp: "2026-09-27T12:38:48Z"
     generation: 1
     labels:
       app: billing
@@ -37990,9 +37990,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: 2e7106cc-3dd0-49fd-bf8e-c8f98b30b61a
-    resourceVersion: "1244"
-    uid: 48645565-88c7-438b-9261-161e23476080
+      uid: 7c1a56eb-f6db-4496-a0a6-0ea7a5944517
+    resourceVersion: "1250"
+    uid: d7f36989-77bb-4296-b8c7-b62a4ad18178
   spec:
     replicas: 0
     selector:
@@ -38028,7 +38028,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:57Z"
+    creationTimestamp: "2026-09-27T12:38:47Z"
     generation: 1
     labels:
       app: cache
@@ -38041,9 +38041,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: 30e37814-da1c-41bb-864c-5f2b1acdcbee
-    resourceVersion: "1241"
-    uid: a11bb11f-3a58-4241-9974-773da9b42194
+      uid: 4a0d39a8-41a3-4621-8eea-3b4439bc2e17
+    resourceVersion: "1242"
+    uid: d43bc54e-9769-4602-8586-a9e5d00014b7
   spec:
     replicas: 0
     selector:
@@ -38080,7 +38080,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:17Z"
+    creationTimestamp: "2026-09-27T12:39:02Z"
     generation: 1
     labels:
       app: cron
@@ -38093,9 +38093,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: 47e996f2-c92a-43b8-9174-d7588b7b09a3
-    resourceVersion: "1666"
-    uid: 2a37f290-f583-4ca9-847d-0aa7abcddc33
+      uid: 82b896dc-7908-48a3-8f5e-7b39b6e32295
+    resourceVersion: "1575"
+    uid: f66fcbac-eb36-47b9-b14c-1fac4e9eeb9d
   spec:
     replicas: 0
     selector:
@@ -38132,7 +38132,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:17Z"
+    creationTimestamp: "2026-09-27T12:39:02Z"
     generation: 1
     labels:
       app: gateway
@@ -38145,9 +38145,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: 2177fb88-dd2b-4070-b670-1bc84260cba3
-    resourceVersion: "1668"
-    uid: 97ea1726-a88e-46ed-93dd-7c598a0c68f4
+      uid: 70c100af-93b4-44b8-8510-115316aeb0e3
+    resourceVersion: "1577"
+    uid: 0f057385-baf4-4aaa-811f-4a82c5bb6ad3
   spec:
     replicas: 0
     selector:
@@ -38184,7 +38184,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:17Z"
+    creationTimestamp: "2026-09-27T12:39:03Z"
     generation: 1
     labels:
       app: notify
@@ -38197,9 +38197,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: c25b819b-c1e1-4dd0-919b-d0393d64d5a1
-    resourceVersion: "1672"
-    uid: 98f004b7-4479-4027-926f-1da6b891fdf8
+      uid: 98f05d17-a9a7-42ef-b585-3214255402e0
+    resourceVersion: "1582"
+    uid: 2e5a881d-e758-4f64-b5f8-408d6754f4a9
   spec:
     replicas: 0
     selector:
@@ -38236,7 +38236,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:17Z"
+    creationTimestamp: "2026-09-27T12:39:03Z"
     generation: 1
     labels:
       app: search
@@ -38249,9 +38249,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: dc852d62-2fcf-4d3d-a19a-386270c4ac69
-    resourceVersion: "1670"
-    uid: 1052dc4d-2be9-4205-aff1-6bf49c198dc4
+      uid: ff316ce5-cd5d-4490-bd12-77181f83a341
+    resourceVersion: "1580"
+    uid: fb5c88c3-321e-45cd-91f4-a6096536a016
   spec:
     replicas: 0
     selector:
@@ -38289,7 +38289,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: web
       meta.helm.sh/release-namespace: team-27
-    creationTimestamp: "2026-09-27T10:48:24Z"
+    creationTimestamp: "2026-09-27T12:39:10Z"
     generation: 1
     labels:
       app: web
@@ -38302,9 +38302,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: 0e8b9e7f-17b4-4815-8580-54984dc7ce0e
-    resourceVersion: "1830"
-    uid: 3a28d7db-9b9f-4659-9bfc-123dc50409ab
+      uid: 28c601c4-8a56-4fe6-ad15-4f3ad22f6310
+    resourceVersion: "1735"
+    uid: cc2919ab-a1b4-4e75-bbed-184a610ab580
   spec:
     replicas: 0
     selector:
@@ -38340,7 +38340,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:57Z"
+    creationTimestamp: "2026-09-27T12:38:47Z"
     generation: 1
     labels:
       app: worker
@@ -38353,9 +38353,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 3a7958dc-3b58-4280-ae3f-3fa7b93c9b2f
-    resourceVersion: "1235"
-    uid: e1046828-8f16-46cf-a853-c7227d9c83ff
+      uid: c044b109-3a78-4cff-8a10-b79ad243bef7
+    resourceVersion: "1238"
+    uid: faad4f44-3224-4ad6-951e-e520bffb4d9b
   spec:
     replicas: 0
     selector:
@@ -38392,7 +38392,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:17Z"
+    creationTimestamp: "2026-09-27T12:39:03Z"
     generation: 1
     labels:
       app: api
@@ -38405,9 +38405,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: b27e16ef-854f-4f61-b2ec-b3429902186a
-    resourceVersion: "1678"
-    uid: 5f8e2f1e-7a93-4c69-ae12-4a0ed1e30e0b
+      uid: 314fb273-802b-4831-9987-251ee2525169
+    resourceVersion: "1586"
+    uid: 57de43b7-64d9-49f7-a8fc-c2a62d35fd62
   spec:
     replicas: 0
     selector:
@@ -38443,7 +38443,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:58Z"
+    creationTimestamp: "2026-09-27T12:38:48Z"
     generation: 1
     labels:
       app: auth
@@ -38456,9 +38456,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: eb89fcbc-2c62-405e-b0dc-ead888ced827
-    resourceVersion: "1252"
-    uid: 99227153-09c2-4fdf-8d03-9139f3680c79
+      uid: 319cff9b-a7eb-402f-9e96-c1fecafd4aa4
+    resourceVersion: "1254"
+    uid: e89b9656-2473-4acf-8cb9-ea728ef36112
   spec:
     replicas: 0
     selector:
@@ -38494,7 +38494,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:58Z"
+    creationTimestamp: "2026-09-27T12:38:49Z"
     generation: 1
     labels:
       app: billing
@@ -38507,9 +38507,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: 3f43c4eb-3750-4033-8ab6-bebfeb37bd20
-    resourceVersion: "1259"
-    uid: b3083dea-0f7e-4604-9785-ed1cf4e093c6
+      uid: a9fc62a8-1c19-4138-93d8-639cbc384302
+    resourceVersion: "1265"
+    uid: db849b34-eab2-4c48-8e6e-ac77b40e3106
   spec:
     replicas: 0
     selector:
@@ -38545,7 +38545,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:58Z"
+    creationTimestamp: "2026-09-27T12:38:48Z"
     generation: 1
     labels:
       app: cache
@@ -38558,9 +38558,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: b2105645-8ee1-4e73-a1d0-6c26991a3717
-    resourceVersion: "1256"
-    uid: 93b81754-af6c-468c-bede-bb2382724ec6
+      uid: 3747dfc7-2bbb-4e31-859b-f5a9f65ed7fb
+    resourceVersion: "1258"
+    uid: b37b21a2-f526-4edf-84f2-2fa6b9162906
   spec:
     replicas: 0
     selector:
@@ -38596,7 +38596,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:29Z"
+    creationTimestamp: "2026-09-27T12:39:15Z"
     generation: 1
     labels:
       app: cron
@@ -38609,9 +38609,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: 75381397-5c46-44a4-b46b-55a7396a069c
-    resourceVersion: "1946"
-    uid: 1f8698db-3131-49ad-99bb-197234b34288
+      uid: 077ff0a6-b55c-4d02-a6f8-bf3dea78d342
+    resourceVersion: "1850"
+    uid: 0f140800-bcfe-47ee-837f-5dfab1c5d456
   spec:
     replicas: 0
     selector:
@@ -38647,7 +38647,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:58Z"
+    creationTimestamp: "2026-09-27T12:38:48Z"
     generation: 1
     labels:
       app: gateway
@@ -38660,9 +38660,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: 5c9363bb-c647-4cad-b3de-5e4ed5740033
-    resourceVersion: "1250"
-    uid: 5e5e3a0e-8299-462e-8fb0-4f827c5f58f3
+      uid: 4dbba7c8-3290-47b6-acdc-d8ff2a0f879e
+    resourceVersion: "1252"
+    uid: 2738674e-e733-4627-af42-2dd511af9125
   spec:
     replicas: 0
     selector:
@@ -38700,7 +38700,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: notify
       meta.helm.sh/release-namespace: team-28
-    creationTimestamp: "2026-09-27T10:48:24Z"
+    creationTimestamp: "2026-09-27T12:39:10Z"
     generation: 1
     labels:
       app: notify
@@ -38713,9 +38713,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: 208d84f5-fb3e-4b0f-9652-ff02984cf9e5
-    resourceVersion: "1838"
-    uid: 8b349360-e18e-4c91-a4b3-109a2ca3616f
+      uid: 31fef7e4-d5f7-430a-88a2-9addbda1934e
+    resourceVersion: "1744"
+    uid: 0460b438-2652-47c5-aa01-fd2c954fa441
   spec:
     replicas: 0
     selector:
@@ -38751,7 +38751,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:58Z"
+    creationTimestamp: "2026-09-27T12:38:48Z"
     generation: 1
     labels:
       app: search
@@ -38764,9 +38764,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: f4b2c37e-33df-42e3-8ee7-5693634c2f99
-    resourceVersion: "1254"
-    uid: 48bae1f2-54db-437d-9337-42c1caff8cb1
+      uid: 66dae4a8-3d88-4b4f-b155-f42092976e9d
+    resourceVersion: "1256"
+    uid: a48eecee-81b5-4b98-bf50-a6f00c2d97f0
   spec:
     replicas: 0
     selector:
@@ -38804,7 +38804,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: web
       meta.helm.sh/release-namespace: team-28
-    creationTimestamp: "2026-09-27T10:48:24Z"
+    creationTimestamp: "2026-09-27T12:39:10Z"
     generation: 1
     labels:
       app: web
@@ -38817,9 +38817,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: 0c57127a-5368-4e43-b517-7436afd2c78d
-    resourceVersion: "1836"
-    uid: 1ff8f7d2-3d98-42f6-8d00-24285b5c3ebc
+      uid: fbb50fee-709a-42b2-8832-5d2d885e80e6
+    resourceVersion: "1742"
+    uid: cb3e27f7-59ca-4ac5-a5b6-5a2560fa719e
   spec:
     replicas: 0
     selector:
@@ -38856,7 +38856,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:17Z"
+    creationTimestamp: "2026-09-27T12:39:03Z"
     generation: 1
     labels:
       app: worker
@@ -38869,9 +38869,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 764cf8cc-72df-4dcc-89cf-38b06e762470
-    resourceVersion: "1686"
-    uid: d5c622c5-41c1-4337-ae9f-ba14b9a44722
+      uid: 799838a3-c6cf-4701-88ed-38949914303b
+    resourceVersion: "1592"
+    uid: 0d89ff00-d66a-486d-b585-abefdfb46af6
   spec:
     replicas: 0
     selector:
@@ -38907,7 +38907,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:59Z"
+    creationTimestamp: "2026-09-27T12:38:49Z"
     generation: 1
     labels:
       app: api
@@ -38920,9 +38920,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: 3441e6e5-bb0c-44ab-b7dd-0d6ab494e32d
-    resourceVersion: "1265"
-    uid: 8e1fe7d9-0d7b-478a-a8ed-05ebc6c234b0
+      uid: c6961a45-f2cf-4639-8868-fcbe8576547e
+    resourceVersion: "1267"
+    uid: 93e86523-979d-4482-9f8e-2646a9c49d68
   spec:
     replicas: 0
     selector:
@@ -38959,7 +38959,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:18Z"
+    creationTimestamp: "2026-09-27T12:39:03Z"
     generation: 1
     labels:
       app: auth
@@ -38972,9 +38972,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: 837b3872-143f-46c6-938e-be7366aa0d87
-    resourceVersion: "1692"
-    uid: 0daab632-a816-4173-8876-815e79b81691
+      uid: 29398531-398a-464e-9340-80609660a102
+    resourceVersion: "1598"
+    uid: bf3183a5-0cd6-42d3-a869-9245fad238af
   spec:
     replicas: 0
     selector:
@@ -39010,7 +39010,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:29Z"
+    creationTimestamp: "2026-09-27T12:39:15Z"
     generation: 1
     labels:
       app: billing
@@ -39023,9 +39023,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: d5966449-875f-4a10-b8ab-1b56f2d36e48
-    resourceVersion: "1953"
-    uid: e70b605d-0548-4c95-9311-1b960ffcbcd4
+      uid: 0acf3abe-5e9f-48df-981d-8783a49dd9fc
+    resourceVersion: "1856"
+    uid: 6ff8e14a-0fe5-43ef-a22e-36c16cc63039
   spec:
     replicas: 0
     selector:
@@ -39063,7 +39063,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: cache
       meta.helm.sh/release-namespace: team-29
-    creationTimestamp: "2026-09-27T10:48:24Z"
+    creationTimestamp: "2026-09-27T12:39:10Z"
     generation: 1
     labels:
       app: cache
@@ -39076,9 +39076,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: b7584813-691c-489e-bd60-13143be683f9
-    resourceVersion: "1841"
-    uid: 585d3709-db30-47ae-89cb-f27a41c39bbd
+      uid: 87fd0a72-37af-4667-8b46-b8802f3c3584
+    resourceVersion: "1746"
+    uid: 6c024d7b-7a93-441d-b2e0-d102773b165a
   spec:
     replicas: 0
     selector:
@@ -39115,7 +39115,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:18Z"
+    creationTimestamp: "2026-09-27T12:39:03Z"
     generation: 1
     labels:
       app: cron
@@ -39128,9 +39128,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: 0584e897-3d40-4686-b26e-cf947c776199
-    resourceVersion: "1690"
-    uid: 4da9ee89-ea95-4b73-8349-03bf3fd1a772
+      uid: b20d0d02-6a07-47c6-b1fe-e57bf054b993
+    resourceVersion: "1596"
+    uid: a9117b98-e544-4d77-a4f4-4bf51a88d9af
   spec:
     replicas: 0
     selector:
@@ -39166,7 +39166,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:59Z"
+    creationTimestamp: "2026-09-27T12:38:49Z"
     generation: 1
     labels:
       app: gateway
@@ -39179,9 +39179,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: 4a8f4b20-9a50-4b53-a093-93a8997e07dc
-    resourceVersion: "1269"
-    uid: 7460c4ec-e322-4550-ae93-547fa4ab779d
+      uid: ea870192-96d4-4b3c-b58d-ccfabfd8e111
+    resourceVersion: "1271"
+    uid: 8a9e256e-76f7-4a86-aa40-d802a0542720
   spec:
     replicas: 0
     selector:
@@ -39217,7 +39217,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:59Z"
+    creationTimestamp: "2026-09-27T12:38:49Z"
     generation: 1
     labels:
       app: notify
@@ -39230,9 +39230,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: 02b75048-8578-454d-9308-441cea7578c6
-    resourceVersion: "1274"
-    uid: 0ccfcaa6-34d2-4093-8cff-53d2375fe953
+      uid: 6433d303-4f46-4e0a-b0b1-6188ea1d4968
+    resourceVersion: "1281"
+    uid: 02e2f3d7-3410-4b2e-a678-a3c456556224
   spec:
     replicas: 0
     selector:
@@ -39268,7 +39268,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:59Z"
+    creationTimestamp: "2026-09-27T12:38:49Z"
     generation: 1
     labels:
       app: search
@@ -39281,9 +39281,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: c72b7baa-43a8-4143-b387-4f00232f5a0b
-    resourceVersion: "1271"
-    uid: ed3b522d-f2a8-4ae2-bd71-56407d8ffa52
+      uid: 7ef9ab2e-5239-406c-b1e5-c68a005ca3a8
+    resourceVersion: "1273"
+    uid: 7c8b35ef-e187-4c76-918d-71cae1c9c346
   spec:
     replicas: 0
     selector:
@@ -39320,7 +39320,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:17Z"
+    creationTimestamp: "2026-09-27T12:39:03Z"
     generation: 1
     labels:
       app: web
@@ -39333,9 +39333,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: 435e652e-2592-49d2-838a-6d5a1a85b2d1
-    resourceVersion: "1688"
-    uid: a4434526-5cda-465d-8553-1f3cd2eb4ad7
+      uid: 1e676474-9b88-4180-85a4-1bd4441a891b
+    resourceVersion: "1594"
+    uid: 55ac4f6a-e826-4b13-a048-b1c122a2b4e4
   spec:
     replicas: 0
     selector:
@@ -39371,7 +39371,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:59Z"
+    creationTimestamp: "2026-09-27T12:38:49Z"
     generation: 1
     labels:
       app: worker
@@ -39384,9 +39384,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 40ff243d-a41b-40e1-9157-55a310e11f46
-    resourceVersion: "1267"
-    uid: f633967b-23be-44a3-b13b-52002a8511e4
+      uid: 7a7d5228-60d1-494c-af7d-0058fd3ca9ab
+    resourceVersion: "1269"
+    uid: 1d20bb0d-c8fa-4e5a-8f2f-591cdea13882
   spec:
     replicas: 0
     selector:
@@ -39424,7 +39424,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: api
       meta.helm.sh/release-namespace: team-30
-    creationTimestamp: "2026-09-27T10:48:25Z"
+    creationTimestamp: "2026-09-27T12:39:10Z"
     generation: 1
     labels:
       app: api
@@ -39437,9 +39437,9 @@ items:
       controller: true
       kind: Deployment
       name: api
-      uid: ec849fa8-d5b7-45b4-aed8-42509387854d
-    resourceVersion: "1845"
-    uid: efd0187b-ff44-4bba-90b2-23a5cc900127
+      uid: 7f8a3066-1fd9-4a2a-a580-34fed708fd3d
+    resourceVersion: "1749"
+    uid: e9e03606-2a4f-4ad0-ad63-f85009ced0a4
   spec:
     replicas: 0
     selector:
@@ -39477,7 +39477,7 @@ items:
       deployment.kubernetes.io/revision: "1"
       meta.helm.sh/release-name: auth
       meta.helm.sh/release-namespace: team-30
-    creationTimestamp: "2026-09-27T10:48:25Z"
+    creationTimestamp: "2026-09-27T12:39:10Z"
     generation: 1
     labels:
       app: auth
@@ -39490,9 +39490,9 @@ items:
       controller: true
       kind: Deployment
       name: auth
-      uid: d68e8248-4ec2-4034-9152-e32d2c46c4a5
-    resourceVersion: "1848"
-    uid: 3171bdec-6938-4df3-9530-b36a221cc267
+      uid: adb13a53-4816-4c47-b8d0-0caf62fda949
+    resourceVersion: "1751"
+    uid: 38168c9b-a7b3-4479-b13d-65d7dd566057
   spec:
     replicas: 0
     selector:
@@ -39528,7 +39528,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:30Z"
+    creationTimestamp: "2026-09-27T12:39:15Z"
     generation: 1
     labels:
       app: billing
@@ -39541,9 +39541,9 @@ items:
       controller: true
       kind: Deployment
       name: billing
-      uid: cf0ee448-4aa9-444a-b98e-246381213d9f
-    resourceVersion: "1959"
-    uid: 6c7b5dca-44bc-40aa-8639-079b6ce0d819
+      uid: ad943674-1535-4b2d-bbc3-9e840de106d7
+    resourceVersion: "1861"
+    uid: 50b4a6ec-4da1-47bc-a49f-5571fcc35da7
   spec:
     replicas: 0
     selector:
@@ -39579,7 +39579,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:41Z"
+    creationTimestamp: "2026-09-27T12:38:32Z"
     generation: 1
     labels:
       app: cache
@@ -39592,9 +39592,9 @@ items:
       controller: true
       kind: Deployment
       name: cache
-      uid: bfa468f6-c0dd-4ae7-b7ee-b2fbf2a93047
-    resourceVersion: "637"
-    uid: 60b76c5c-6d0a-4c3a-886c-48e8b095f321
+      uid: 1426a656-0efc-4c0e-8ba7-08f2426e7131
+    resourceVersion: "652"
+    uid: 9813f092-71b0-4599-a266-238564855964
   spec:
     replicas: 0
     selector:
@@ -39630,7 +39630,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:30Z"
+    creationTimestamp: "2026-09-27T12:39:15Z"
     generation: 1
     labels:
       app: cron
@@ -39643,9 +39643,9 @@ items:
       controller: true
       kind: Deployment
       name: cron
-      uid: a89d567f-115b-4311-9773-4dbe66bf5564
-    resourceVersion: "1955"
-    uid: bfff31f8-34e8-4efe-b7d9-c8206b4eb490
+      uid: 6044d179-e7af-4964-a7b1-c6b226efded2
+    resourceVersion: "1858"
+    uid: aeb2b7a3-65ed-412a-aa77-052c8ee7b257
   spec:
     replicas: 0
     selector:
@@ -39681,7 +39681,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:59Z"
+    creationTimestamp: "2026-09-27T12:38:50Z"
     generation: 1
     labels:
       app: gateway
@@ -39694,9 +39694,9 @@ items:
       controller: true
       kind: Deployment
       name: gateway
-      uid: 290ca9b9-f9b3-423c-b517-2c7a5809e97e
-    resourceVersion: "1286"
-    uid: 073e9a60-ee86-4de0-89a6-32afad46c1c9
+      uid: f7ca2807-0dd9-48ab-aeea-9819b358b4b4
+    resourceVersion: "1287"
+    uid: dee24deb-3138-4ffd-8417-71c0d25a911c
   spec:
     replicas: 0
     selector:
@@ -39732,7 +39732,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:00Z"
+    creationTimestamp: "2026-09-27T12:38:50Z"
     generation: 1
     labels:
       app: notify
@@ -39745,9 +39745,9 @@ items:
       controller: true
       kind: Deployment
       name: notify
-      uid: d5bc7830-c3d2-46ec-a181-77fc22d88788
-    resourceVersion: "1288"
-    uid: 3050acb9-595b-4b06-8310-dcca463d5fcc
+      uid: d2ed0e4d-4b84-4cef-b17b-a42bdc9697f4
+    resourceVersion: "1289"
+    uid: ba472a32-1157-46b7-b4c9-6fe06c696661
   spec:
     replicas: 0
     selector:
@@ -39784,7 +39784,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:48:18Z"
+    creationTimestamp: "2026-09-27T12:39:04Z"
     generation: 1
     labels:
       app: search
@@ -39797,9 +39797,9 @@ items:
       controller: true
       kind: Deployment
       name: search
-      uid: 66f6de68-fb29-4e60-9cfc-da4588bf9572
-    resourceVersion: "1695"
-    uid: e85f4d3e-cb27-42c4-8573-0f2b132aed3e
+      uid: 4e026e7e-e562-4597-92b3-6b99c5277942
+    resourceVersion: "1605"
+    uid: a6a01866-09bf-4121-9f0d-3751401a5cc3
   spec:
     replicas: 0
     selector:
@@ -39835,7 +39835,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:59Z"
+    creationTimestamp: "2026-09-27T12:38:50Z"
     generation: 1
     labels:
       app: web
@@ -39848,9 +39848,9 @@ items:
       controller: true
       kind: Deployment
       name: web
-      uid: 9497a2da-dbd9-4623-9fc6-bba621bf511e
-    resourceVersion: "1282"
-    uid: 7e3352ac-4f89-4577-8f20-6ba8c28a30d6
+      uid: ab6c0218-4e91-4cfc-82a3-d00f0d2cd780
+    resourceVersion: "1283"
+    uid: b3217b0e-616f-47d2-aa28-e779412039f9
   spec:
     replicas: 0
     selector:
@@ -39886,7 +39886,7 @@ items:
       deployment.kubernetes.io/desired-replicas: "0"
       deployment.kubernetes.io/max-replicas: "0"
       deployment.kubernetes.io/revision: "1"
-    creationTimestamp: "2026-09-27T10:47:59Z"
+    creationTimestamp: "2026-09-27T12:38:50Z"
     generation: 1
     labels:
       app: worker
@@ -39899,9 +39899,9 @@ items:
       controller: true
       kind: Deployment
       name: worker
-      uid: 5cfdc06f-e96f-4797-8cef-25f20bdc3ce7
-    resourceVersion: "1284"
-    uid: 9aca6661-0d33-4e12-86ab-873512a94d80
+      uid: 81c82517-9355-4d48-8741-ebf0dafd5cc4
+    resourceVersion: "1285"
+    uid: c49c60ef-5d52-46b5-908a-2eb1963440a1
   spec:
     replicas: 0
     selector:
@@ -39940,14 +39940,14 @@ items:
 - apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: "2026-09-27T10:47:22Z"
+    creationTimestamp: "2026-09-27T12:38:11Z"
     labels:
       component: apiserver
       provider: kubernetes
     name: kubernetes
     namespace: default
     resourceVersion: "205"
-    uid: d653ebfc-adbd-4113-98e7-b7d98b2bb5d9
+    uid: 79abdd9c-7232-4451-98aa-2698b59ea5a9
   spec:
     clusterIP: 10.96.0.1
     clusterIPs:
@@ -39971,15 +39971,15 @@ items:
     annotations:
       prometheus.io/port: "9153"
       prometheus.io/scrape: "true"
-    creationTimestamp: "2026-09-27T10:47:23Z"
+    creationTimestamp: "2026-09-27T12:38:12Z"
     labels:
       k8s-app: kube-dns
       kubernetes.io/cluster-service: "true"
       kubernetes.io/name: CoreDNS
     name: kube-dns
     namespace: kube-system
-    resourceVersion: "247"
-    uid: e7b4d2dc-7d67-4bfd-8954-75a96349ceb5
+    resourceVersion: "240"
+    uid: 61217767-da0e-48c3-a193-fcd0e98f1533
   spec:
     clusterIP: 10.96.0.10
     clusterIPs:

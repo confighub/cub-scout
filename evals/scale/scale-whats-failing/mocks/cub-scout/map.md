@@ -1,5 +1,7 @@
 ---
 type: fixed
+error: true
 ---
 
-{{file:fixtures/map.txt}}
+This case runs against a live cluster, not recordings. Run it with --mocks off
+and PATH from evals/scripts/live-path.sh; see evals/README.md.

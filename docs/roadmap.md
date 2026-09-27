@@ -1,6 +1,6 @@
 # cub-scout Unified Roadmap
 
-> **Positioning:** GitOps explorer for agents: read-only, deterministic evidence that agents, and the people and scripts they work with, can rely on.
+> **Positioning:** GitOps explorer for agents: read-only, deterministic evidence that agents, and the people and scripts they work with, can rely on. *Agentic* means it gives agents a cost and time advantage, measured in [evals](../evals/README.md): on 300 Deployments, right 9 of 9 times against 8 of 9, 11% cheaper per correct answer, and 36% cheaper and 28% faster where one call answers the question.
 
 > **Status:** Authoritative
 >

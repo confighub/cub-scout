@@ -10,9 +10,11 @@ Writes, for the scenario:
   <case>/scaffold.sh              writes those dumps into a run's workspace
   <mocks>/cub-scout/_tools.json   the real MCP tools/list response
   <mocks>/cub-scout/fixtures/...  recorded answers per MCP tool call
-The main scenario's mocks are suite-wide (evals/mocks/); the scale scenario's
-are written into each scale case's own mocks/ directory, which overrides the
-suite's file by file.
+The main scenario's mocks are suite-wide (evals/mocks/). The scale scenario
+runs live, against the recording cluster (`--mocks off`; see
+evals/scripts/live-path.sh), because a recording cannot answer every filter
+combination the MCP map tool takes. Its cases get guard mocks instead, which
+return an error if they are run without --mocks off.
 
 Usage: evals/scripts/record.py <kube-context> [--scenario main|scale] [--binary path]
        evals/scripts/record.py --scaffolds-only [--scenario main|scale]
@@ -21,8 +23,7 @@ Only the named context is read: the script writes a minified kubeconfig for it
 to a temporary file, so the shared current-context is never changed. `cub` is
 hidden from PATH, so the recording is of a standalone server.
 """
-import argparse, glob, importlib.util, json, os, shutil, subprocess, tempfile
-from concurrent.futures import ThreadPoolExecutor
+import argparse, glob, json, os, shutil, subprocess, tempfile
 
 EVALS = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 KINDS = ["namespaces", "deployments", "replicasets", "pods", "services", "configmaps", "events"]
@@ -34,27 +35,16 @@ WORKLOADS = [("shop", "checkout"), ("shop", "cart"), ("payments", "payments-api"
              ("shop", "orders"), ("billing", "billing"), ("shop", "ledger")]
 
 
-def scale_workloads():
-    path = os.path.join(EVALS, "fixtures", "scale", "generate.py")
-    spec = importlib.util.spec_from_file_location("scale_generate", path)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    workloads, _ = mod.plan()
-    return [(ns, app) for ns, app, _ in workloads]
-
-
 SCENARIOS = {
     "main": {
         "fixtures": os.path.join(EVALS, "fixtures"),
         "cases": os.path.join(EVALS, "*", "case.yaml"),
-        "per_namespace": False,
-        "sessions": 1,
+        "live": False,
     },
     "scale": {
         "fixtures": os.path.join(EVALS, "fixtures", "scale"),
         "cases": os.path.join(EVALS, "scale", "*", "case.yaml"),
-        "per_namespace": True,
-        "sessions": 6,
+        "live": True,
     },
 }
 
@@ -92,20 +82,6 @@ def mcp_session(binary, env, calls):
     return out
 
 
-def mcp_calls(binary, env, calls, sessions):
-    """Spread calls over parallel sessions; results come back in call order."""
-    if sessions <= 1 or len(calls) < 2 * sessions:
-        return mcp_session(binary, env, calls)
-    chunks = [calls[i::sessions] for i in range(sessions)]
-    with ThreadPoolExecutor(sessions) as pool:
-        parts = list(pool.map(lambda c: mcp_session(binary, env, c), chunks))
-    out = [None] * len(calls)
-    for i, part in enumerate(parts):
-        for j, msg in enumerate(part):
-            out[i + j * sessions] = msg
-    return out
-
-
 def result_text(msg):
     if "error" in msg:
         return json.dumps(msg["error"], indent=2)
@@ -140,21 +116,35 @@ tool returns.
 """
 
 
-def write_agent_mocks(mocks, workloads, per_namespace):
+def write_agent_mocks(mocks):
     """trace and explain answer per workload. The harness cannot key a fixed
-    mock on a value containing "/", so an agent mock picks the recording. With
-    many workloads the recordings are grouped per namespace, and the mock
-    includes only the namespace the call names, keeping its prompt small."""
+    mock on a value containing "/", so an agent mock picks the recording."""
     for tool in ["trace", "explain"]:
         parts = [AGENT_MOCK.replace("{tool}", tool)]
-        if per_namespace:
-            parts.append("\nThe recordings below are the Deployments in namespace `{{input.namespace}}`, the "
-                         "namespace this call names; a Deployment not listed is not in that namespace.\n\n"
-                         "{{file:fixtures/%s/{input.namespace}.txt}}\n" % tool)
-        else:
-            for ns, name in workloads:
-                parts.append("\n## Recording: Deployment `%s` in namespace `%s`\n\n{{file:fixtures/%s/%s.txt}}\n" % (name, ns, tool, name))
+        for ns, name in WORKLOADS:
+            parts.append("\n## Recording: Deployment `%s` in namespace `%s`\n\n{{file:fixtures/%s/%s.txt}}\n" % (name, ns, tool, name))
         open(os.path.join(mocks, tool + ".md"), "w").write("".join(parts))
+
+
+LIVE_GUARD = """---
+type: fixed
+error: true
+---
+
+This case runs against a live cluster, not recordings. Run it with --mocks off
+and PATH from evals/scripts/live-path.sh; see evals/README.md.
+"""
+
+
+def write_live_guards(sc):
+    """Live cases carry mocks that fail loudly, so a run without --mocks off
+    cannot silently answer from the main scenario's suite-wide recordings."""
+    for case in scenario_cases(sc):
+        dest = os.path.join(case, "mocks", "cub-scout")
+        shutil.rmtree(dest, ignore_errors=True)
+        os.makedirs(dest)
+        for tool in ["doctor", "explain", "gitops_status", "map", "release_check", "scan", "trace"]:
+            open(os.path.join(dest, tool + ".md"), "w").write(LIVE_GUARD)
 
 
 def write_scaffolds(sc):
@@ -197,21 +187,25 @@ def record(context, sc, binary):
             open(os.path.join(cluster, kind + ".yaml"), "w").write(dump)
         write_scaffolds(sc)
 
-        workloads = scale_workloads() if sc["per_namespace"] else WORKLOADS
+        if sc["live"]:
+            write_live_guards(sc)
+            print("recorded %d kubectl dumps; %s cases run live" % (len(KINDS), len(scenario_cases(sc))))
+            return
+
         calls = [("tools/list", {})] + [("tools/call", {"name": t, "arguments": {}})
                                        for t in ["map", "doctor", "scan", "gitops_status"]]
         for tool in ["trace", "explain"]:
-            for ns, name in workloads:
+            for ns, name in WORKLOADS:
                 calls.append(("tools/call", {"name": tool, "arguments": {"resource": "deployment/" + name, "namespace": ns}}))
-        results = mcp_calls(binary, env, calls, sc["sessions"])
+        results = mcp_session(binary, env, calls)
 
         def clean(msg):
             # Keep timestamps and pod hashes, but not the recording host's paths.
             return result_text(msg).replace(f.name, "<kubeconfig>")
 
-        staging = tempfile.mkdtemp()
-        mocks = os.path.join(staging, "cub-scout")
+        mocks = os.path.join(EVALS, "mocks", "cub-scout")
         fixtures = os.path.join(mocks, "fixtures")
+        shutil.rmtree(fixtures, ignore_errors=True)
         os.makedirs(fixtures)
         json.dump(results[0]["result"], open(os.path.join(mocks, "_tools.json"), "w"), indent=2)
         for tool, msg in zip(["map", "doctor", "scan", "gitops_status"], results[1:5]):
@@ -220,25 +214,10 @@ def record(context, sc, binary):
         rest = iter(results[5:])
         for tool in ["trace", "explain"]:
             os.makedirs(os.path.join(fixtures, tool), exist_ok=True)
-            grouped = {}
-            for ns, name in workloads:
-                text = clean(next(rest))
-                if sc["per_namespace"]:
-                    grouped.setdefault(ns, []).append("## Deployment `%s`\n\n%s\n" % (name, text))
-                else:
-                    open(os.path.join(fixtures, tool, name + ".txt"), "w").write(text)
-            for ns, sections in grouped.items():
-                open(os.path.join(fixtures, tool, ns + ".txt"), "w").write("\n".join(sections))
-        write_agent_mocks(mocks, workloads, sc["per_namespace"])
-
-        targets = ([os.path.join(case, "mocks") for case in scenario_cases(sc)] if sc["per_namespace"]
-                   else [os.path.join(EVALS, "mocks")])
-        for target in targets:
-            dest = os.path.join(target, "cub-scout")
-            shutil.rmtree(dest, ignore_errors=True)
-            shutil.copytree(mocks, dest)
-        shutil.rmtree(staging)
-        print("recorded %d kubectl dumps and %d MCP answers into %d mock set(s)" % (len(KINDS), len(results) - 1, len(targets)))
+            for ns, name in WORKLOADS:
+                open(os.path.join(fixtures, tool, name + ".txt"), "w").write(clean(next(rest)))
+        write_agent_mocks(mocks)
+        print("recorded %d kubectl dumps and %d MCP answers" % (len(KINDS), len(results) - 1))
     finally:
         os.unlink(f.name)
 

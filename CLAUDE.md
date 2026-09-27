@@ -78,7 +78,7 @@ For demo flow "Can I do X with cub-scout or ConfigHub?":
 6. **Graceful degradation** — works without cluster, ConfigHub, or internet
 7. **Test everything** — `go test ./...` must pass
 8. **CLI/TUI parity** — CLI and TUI are two renderings of one model. Every feature must have both a CLI command (with `--format ascii|json|md`) and a TUI equivalent. CLI is not a second-class citizen.
-9. **Measured for agents** — agents are the primary users of cub-scout's evidence. Claims that cub-scout helps an agent cite the agent evals ([evals/README.md](evals/README.md)), with and without cub-scout on the same evidence; where it adds nothing, say so.
+9. **Measured for agents** — agents are the primary users of cub-scout's evidence. Claims that cub-scout helps an agent cite the agent evals ([evals/README.md](evals/README.md)), with and without cub-scout on the same evidence; where it adds nothing, say so. An *agentic* GitOps explorer is one that gives agents a cost and time advantage (cost per correct answer, turns, seconds), not only better answers; claim it only where the evals show it.
 
 ## Current Milestone Reality
 

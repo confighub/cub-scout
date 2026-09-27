@@ -1,6 +1,9 @@
 # Agent Evals
 
-Does an agent answer operators' questions better with cub-scout than without it?
+Does an agent answer operators' questions better with cub-scout than without it,
+and at what cost? An *agentic* GitOps explorer is one that gives agents a cost
+and time advantage, not only better answers; this suite is where cub-scout
+has to show it.
 This suite measures that with
 [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals): each case
 runs with the cub-scout plugin loaded and again without it, and the difference
@@ -58,11 +61,11 @@ From the pilot (one run per case per arm, 2026-09-26/27):
 
 On this small scenario cub-scout costs more per run: the plugin adds its skill
 descriptions and tool schemas to every session. It pays for itself where the
-export cannot answer. At scale the picture changes: on the 300-Deployment
-scenario cub-scout answered all three whole-cluster questions against one of
-three without it, cost $1.27 per correct answer against $4.35, and was cheaper
-per run and about 20% faster (see Scale results below; one run per case so
-far).
+export cannot answer. At scale, over three runs per case on 300 Deployments,
+cub-scout was right 9 of 9 times against 8 of 9, 11% cheaper per correct
+answer, and 36% cheaper and 28% faster where one call answers the question;
+where the agent had both sources it spent the savings cross-checking cub-scout
+against the export (see Scale results below).
 
 ## Design
 
@@ -147,10 +150,22 @@ fixed (Flux 120, Argo CD 90, Helm 45, ConfigHub 33, unmanaged 12, and two with
 an image that does not exist). The rest are scaled to zero, which keeps one
 kind node under its pod limit while every object stays in the export (about
 1 MB of YAML). Its cases live in `evals/scale/` and ask cluster-wide questions:
-owner counts, the unmanaged list, what is failing. Each case carries its own
-mocks, because the recordings differ from the main scenario's; `trace` and
-`explain` are stored per namespace and the agent mock loads only the
-namespace a call names.
+owner counts, the unmanaged list, what is failing.
+
+The scale cases run **live**: the with-cub-scout arm talks to a real
+`cub-scout mcp serve` on the recording cluster, because a recording cannot
+answer every combination of the MCP `map` tool's filters and modes. The
+harness gives plugin servers a sandboxed HOME and does not pass KUBECONFIG, so
+`evals/scripts/live-path.sh` builds a `cub-scout` wrapper that sets it, and
+prints a PATH with the wrapper first and `cub` left out (standalone). The
+baseline arm still reads the recorded export. Each scale case carries guard
+mocks that fail loudly if it is run without `--mocks off`.
+
+```bash
+PATH="$(evals/scripts/live-path.sh kind-scout-evals-scale)" \
+  claude plugin eval . --scaffold --tag scale --runs 3 --mocks off \
+  --allow-tools "mcp__plugin_cub-scout_cub-scout__*" --max-cost-usd 30
+```
 
 ```bash
 kind create cluster --name scout-evals-scale
@@ -160,6 +175,7 @@ evals/fixtures/setup.sh kind-scout-evals-scale evals/fixtures/scale/scenario.yam
 # mid-rollout
 go build ./cmd/cub-scout
 evals/scripts/record.py kind-scout-evals-scale --scenario scale
+# keep the cluster while running the live cases; delete it afterwards
 kind delete cluster --name scout-evals-scale
 ```
 
@@ -169,9 +185,9 @@ warnings here, one per idle Deployment and DaemonSet. `map` for the whole
 cluster is about 270 KB, more than Claude Code accepts from one MCP call by
 default; the MCP `map` tool filters only by namespace.
 
-### Scale results (2026-09-27)
+### Scale results, pilot (2026-09-27, superseded by the 3-run results below)
 
-One run per case per arm, same model; recorded with #634.
+One run per case per arm, same model; recorded with #634, before #637.
 
 | Case | With | Without | $/correct with | $/correct without | Turns with / without |
 |---|---|---|---|---|---|
@@ -191,6 +207,37 @@ cub-scout's own weak point here: its whole-cluster `map` answer (268 KB) is
 larger than an MCP result may be, so Claude Code saved it to a file and the
 agent grepped that. Filters and a count mode on the MCP `map` tool (#635)
 should cut both turns and cost.
+
+### Scale results, 3 runs, live (2026-09-27)
+
+Three runs per case per arm; the with-cub-scout arm against a live
+`cub-scout mcp serve` with #637's `map` filters and modes; $22.13 in total.
+
+| Case | Arm | Correct | $/run | $/correct | Turns | Seconds |
+|---|---|---|---|---|---|---|
+| scale-ownership-counts | with | 3/3 | $0.85 | $0.85 | 23.3 | 190 |
+| | without | 3/3 | $1.33 | $1.33 | 39.7 | 265 |
+| scale-unmanaged | with | 3/3 | $1.83 | $1.83 | 34.3 | 438 |
+| | without | 2/3 | $1.47 | $2.20 | 31.7 | 250 |
+| scale-whats-failing | with | 3/3 | $1.02 | $1.02 | 23.0 | 135 |
+| | without | 3/3 | $0.88 | $0.88 | 25.7 | 172 |
+| **All** | with | **9/9** | $1.23 | **$1.23** | 26.9 | 254 |
+| | without | 8/9 | $1.23 | $1.38 | 32.3 | 229 |
+
+With three runs the picture is more modest than the one-run pilot's 3.4
+times: cub-scout was right every time, 11% cheaper per correct answer, and
+clearly cheaper and faster where one call answers the question (owner counts:
+36% cheaper, 28% faster). It was slower and dearer on the unmanaged list, and
+the transcripts say why: each run had the right list within two `map` calls,
+then kept verifying it against the export (16 to 27 greps, or five `trace`
+and four `explain` calls and a sub-agent). The "same evidence" design gives
+the cub-scout arm two sources and it cross-checks one against the other.
+
+Two follow-ups: a live-only variant for the scale cases (cub-scout against a
+live cluster, no export, versus the export alone), which is how agents meet
+cub-scout and the fair test of cost and time; and evidence on each
+`names_only` entry (why it counts as unmanaged), in case the verification is a
+trust gap.
 
 ## What the recordings show today
 
