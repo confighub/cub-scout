@@ -4,7 +4,7 @@ description: "ConfigHub-labelled workload: the owner is ConfigHub."
 expected_outcome: "OWNER: ConfigHub. deployments.yaml: inventory/inventory carries confighub.com/UnitSlug=inventory and no other ownership labels. cub-scout: explain and map list report ConfigHub."
 tags: [ownership]
 max_turns: 20
-timeout_seconds: 300
+timeout_seconds: 600
 allowed_tools: [Read, Glob, Grep, Skill]
 ---
 

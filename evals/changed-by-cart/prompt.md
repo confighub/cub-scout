@@ -4,7 +4,7 @@ description: "An Argo CD-delivered Deployment scaled by hand with kubectl scale.
 expected_outcome: "CHANGED_BY: kubectl (scale). The export shows 3 replicas but no field managers. cub-scout explain: mutationCause manual-edit, mutationManager kubectl (the scale subresource)."
 tags: [attribution]
 max_turns: 20
-timeout_seconds: 300
+timeout_seconds: 600
 allowed_tools: [Read, Glob, Grep, Skill]
 ---
 

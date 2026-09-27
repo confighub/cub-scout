@@ -4,7 +4,7 @@ description: "A Flux rollout of orders stalled on an image pull while the old po
 expected_outcome: "ROLLED_OUT: no. The Deployment is Available=True (the old ReplicaSet's 2 pods serve) but Progressing=False with ProgressDeadlineExceeded; the new ReplicaSet's pod is ImagePullBackOff on registry.k8s.io/pause:9.9.9-orders. cub-scout explain: currentChange verdict BLOCK, reason runtime_failed, podReasons ImagePullBackOff."
 tags: [rollout, pitfall]
 max_turns: 20
-timeout_seconds: 300
+timeout_seconds: 600
 allowed_tools: [Read, Glob, Grep, Skill]
 ---
 

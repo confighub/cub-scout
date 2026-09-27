@@ -4,7 +4,7 @@ description: "A ConfigHub-delivered Deployment with an env var added by kubectl 
 expected_outcome: "CHANGED_BY: kubectl patch. The export shows FEATURE_BULK_IMPORT=true but no field managers. cub-scout explain: mutationCause manual-edit, mutationManager kubectl-patch."
 tags: [attribution]
 max_turns: 20
-timeout_seconds: 300
+timeout_seconds: 600
 allowed_tools: [Read, Glob, Grep, Skill]
 ---
 

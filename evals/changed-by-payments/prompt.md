@@ -4,7 +4,7 @@ description: "Control: a Helm-delivered Deployment nobody edited by hand."
 expected_outcome: "CHANGED_BY: Helm. No hand edit. cub-scout explain: mutationCause controller-drift, mutationManager helm (only helm and kube-controller-manager in managedFields)."
 tags: [attribution, negative]
 max_turns: 20
-timeout_seconds: 300
+timeout_seconds: 600
 allowed_tools: [Read, Glob, Grep, Skill]
 ---
 

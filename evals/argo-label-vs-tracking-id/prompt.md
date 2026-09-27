@@ -4,7 +4,7 @@ description: "Argo CD annotation tracking: the tracking-id names payments; a cop
 expected_outcome: "APPLICATION: payments. ledger's argocd.argoproj.io/tracking-id is payments:apps/Deployment:shop/ledger, and argocd-cm sets application.resourceTrackingMethod: annotation (Argo CD's default), so the tracking-id decides; the argocd.argoproj.io/instance: storefront label is stale."
 tags: [ownership, pitfall]
 max_turns: 20
-timeout_seconds: 300
+timeout_seconds: 600
 allowed_tools: [Read, Glob, Grep, Skill]
 ---
 

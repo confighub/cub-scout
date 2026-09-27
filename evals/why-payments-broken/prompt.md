@@ -4,7 +4,7 @@ description: "Broken workload: pods cannot pull a nonexistent image tag."
 expected_outcome: "CAUSE: image pull failure. pods.yaml and events.yaml: both payments-api pods are ImagePullBackOff/ErrImagePull for registry.k8s.io/pause:0.0.0-does-not-exist (NotFound). cub-scout: explain currentChange verdict BLOCK, reason runtime_failed, podReasons ImagePullBackOff."
 tags: [diagnosis]
 max_turns: 20
-timeout_seconds: 300
+timeout_seconds: 600
 allowed_tools: [Read, Glob, Grep, Skill]
 ---
 

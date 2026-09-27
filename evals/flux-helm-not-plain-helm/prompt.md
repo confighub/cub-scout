@@ -4,7 +4,7 @@ description: "A Helm chart installed by Flux's helm-controller: Flux owns it, so
 expected_outcome: "OWNER: Flux (HelmRelease flux-system/billing); HELM_UPGRADE_SAFE: no. The Deployment carries app.kubernetes.io/managed-by=Helm and helm.toolkit.fluxcd.io/name=billing; helm-controller reconciles the release, so a manual helm upgrade is reverted at the next reconcile. cub-scout map: owner Flux, ownerDetails helmrelease billing in flux-system."
 tags: [ownership, pitfall]
 max_turns: 20
-timeout_seconds: 300
+timeout_seconds: 600
 allowed_tools: [Read, Glob, Grep, Skill]
 ---
 

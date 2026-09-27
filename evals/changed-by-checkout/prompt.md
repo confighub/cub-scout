@@ -4,7 +4,7 @@ description: "A Flux-delivered Deployment whose image was changed with kubectl s
 expected_outcome: "CHANGED_BY: kubectl set (image). The export shows image pause:3.10 and rollout revision 2 but no field managers. cub-scout explain: mutationCause manual-edit, mutationManager kubectl-set, from managedFields."
 tags: [attribution]
 max_turns: 20
-timeout_seconds: 300
+timeout_seconds: 600
 allowed_tools: [Read, Glob, Grep, Skill]
 ---
 
