@@ -284,7 +284,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"map": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "map",
-				Description: "Standalone resource inventory with ownership classification (map list --json). Use for 'what's running in this cluster or namespace?' and broad inventory questions, especially when the user wants more meaning than raw `kubectl get` output. DO NOT load for bare 'what's broken?' or one-resource root cause; use doctor first for health, then explain for a specific resource.",
+				Description: "Standalone resource inventory with ownership classification (map list --json). Use for 'what's running in this cluster or namespace?', 'how many does Flux manage?' and 'which workloads are unmanaged?', especially when the user wants more meaning than raw `kubectl get` output. On a large cluster the full list can be too big for your context: ask for summary=true (counts by owner and kind) or names_only=true, and filter with kind, owner or query (for example kind=Deployment, owner=Native). DO NOT load for bare 'what's broken?' or one-resource root cause; use doctor first for health, then explain for a specific resource.",
 				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
@@ -293,14 +293,59 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 							"type":        "string",
 							"description": "Optional namespace filter.",
 						},
+						"kind": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional kind filter, for example Deployment.",
+						},
+						"owner": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional owner filter: Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, Terraform, ConfigHub, or Native (managed by none of them).",
+						},
+						"query": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional query expression, for example 'kind=Deployment AND owner!=Native'.",
+						},
+						"summary": map[string]interface{}{
+							"type":        "boolean",
+							"description": "Return counts by owner and kind (after filters) instead of the entries.",
+						},
+						"names_only": map[string]interface{}{
+							"type":        "boolean",
+							"description": "Return namespace/name per entry instead of full entries.",
+						},
+						"count": map[string]interface{}{
+							"type":        "boolean",
+							"description": "Return only the number of entries after filters.",
+						},
 					},
 					"additionalProperties": false,
 				},
 			},
 			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
+				modes := 0
+				for _, m := range []string{"summary", "names_only", "count"} {
+					if argBool(arguments, m) {
+						modes++
+					}
+				}
+				if modes > 1 {
+					return nil, fmt.Errorf("choose at most one of summary, names_only and count")
+				}
 				args := []string{"map", "list", "--json"}
-				if ns := argString(arguments, "namespace"); ns != "" {
-					args = append(args, "--namespace", ns)
+				for _, f := range []struct{ arg, flag string }{
+					{"namespace", "--namespace"}, {"kind", "--kind"}, {"owner", "--owner"}, {"query", "--query"},
+				} {
+					if v := argString(arguments, f.arg); v != "" {
+						args = append(args, f.flag, v)
+					}
+				}
+				switch {
+				case argBool(arguments, "summary"):
+					args = append(args, "--summary")
+				case argBool(arguments, "names_only"):
+					args = append(args, "--names-only")
+				case argBool(arguments, "count"):
+					args = append(args, "--count")
 				}
 				return args, nil
 			},

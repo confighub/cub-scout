@@ -168,6 +168,7 @@ cub-scout map list [flags]
 | `--json` | Output as JSON (shorthand for `--format json`) |
 | `--count` | Show count only |
 | `--names-only` | Show names only |
+| `--summary` | Show counts by owner and kind (after filters) instead of the entries |
 | `--explain` | Show explanatory content |
 
 ### Examples
@@ -2125,6 +2126,8 @@ cub-scout mcp serve
   - `namespace` (optional)
 - `map`
   - `namespace` (optional)
+  - `kind`, `owner`, `query` (optional filters, as `map list --kind/--owner/--query`)
+  - `summary`, `names_only`, `count` (optional booleans, at most one: counts by owner and kind, `namespace/name` lines, or a single number). On a large cluster the unfiltered list can exceed an agent's context; the tool description steers agents to these.
 - `scan`
   - `namespace` (optional)
 - `trace`
