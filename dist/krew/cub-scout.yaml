@@ -5,7 +5,7 @@ metadata:
 spec:
   version: v0.0.0
   homepage: https://github.com/confighub/cub-scout
-  shortDescription: Explore and map GitOps in your clusters
+  shortDescription: GitOps explorer for agents: read-only evidence from your clusters
   description: |
     cub-scout is an offline-first, deterministic, read-only cluster explorer
     for Kubernetes and GitOps. Run it as a kubectl plugin via

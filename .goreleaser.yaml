@@ -127,7 +127,7 @@ homebrew_casks:
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     homepage: "https://confighub.com"
-    description: "Explore and map GitOps in your clusters"
+    description: "GitOps explorer for agents: read-only evidence from your clusters"
     license: "MIT"
     binaries:
       - cub-scout

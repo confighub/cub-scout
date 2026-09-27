@@ -1,6 +1,10 @@
 # cub-scout
 
-**A read-only Kubernetes and GitOps explorer for people, scripts, and AI agents.**
+**GitOps explorer for agents.**
+
+Read-only, deterministic evidence about who owns what in your cluster, how it got
+there and what changed, for AI agents first and for the people and scripts they
+work with. Unknowns are stated, never guessed.
 
 [v2.12.3 release](https://github.com/confighub/cub-scout/releases/tag/v2.12.3)
 | [Start here](docs/getting-started/start-here.md)

@@ -1,6 +1,6 @@
 # cub-scout Unified Roadmap
 
-> **Positioning:** The read-only agentic observation layer that makes Kubernetes and GitOps understandable.
+> **Positioning:** GitOps explorer for agents: read-only, deterministic evidence that agents, and the people and scripts they work with, can rely on.
 
 > **Status:** Authoritative
 >
@@ -1372,7 +1372,7 @@ Delivered:
 
 ### Strategic Positioning
 
-**"The read-only agentic observation layer that makes Kubernetes and GitOps understandable."**
+**"GitOps explorer for agents."** (2026-09-27; previously "The read-only agentic observation layer that makes Kubernetes and GitOps understandable.")
 
 * For **new users:** instant cluster understanding in one command (v1.4)
 * For **ConfigHub:** the bridge from "I can see what's happening" to "I can see what SHOULD be happening" (v1.6)

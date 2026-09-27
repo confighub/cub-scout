@@ -1,6 +1,6 @@
 # cub-scout
 
-Read-only Kubernetes observer. Detects ownership (Flux, ArgoCD, Sveltos, Modelplane, Helm, Crossplane, kro, ConfigHub, Native).
+GitOps explorer for agents: a read-only Kubernetes observer. Detects ownership (Flux, ArgoCD, Sveltos, Modelplane, Helm, Crossplane, kro, ConfigHub, Native).
 
 ## Read First
 
