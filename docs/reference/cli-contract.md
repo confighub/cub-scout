@@ -519,6 +519,7 @@ cub-scout map list [flags]
 | `--json` | bool | false | JSON output (shorthand for --format json) |
 | `--count` | bool | false | Count only |
 | `--names-only` | bool | false | Names only (scripting) |
+| `--summary` | bool | false | Counts by owner and kind after filters, as JSON (`total`, `byOwner`, `byKind`, `byKindOwner`) or text |
 
 ### Owner Values
 

@@ -114,6 +114,7 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `--confighub-stale-after` | Mark live-status writeback stale after this duration | `doctor`, `gitops status`, `trace`, `explain`, `map activity`, `receipt verify` |
 | `--count` | Output count only | `map list` |
 | `--names-only` | Output names only | `map list` |
+| `--summary` | Counts by owner and kind | `map list` |
 | `--stale-after` | Preview staleness threshold | `map previews` |
 | `--max-groups` | Maximum groups shown | `map meaning` |
 | `--max-members` | Maximum members per group | `map meaning` |

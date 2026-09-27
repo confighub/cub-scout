@@ -1795,3 +1795,36 @@ func TestMCPCallToolNonJSONFailureUnchanged(t *testing.T) {
 		t.Fatalf("got isError=%v content=%+v, want the unchanged message %q", result["isError"], content, want)
 	}
 }
+
+// #635: on a 300-Deployment cluster the unfiltered map answer (268 KB) was
+// larger than an MCP result may be. The tool now carries the CLI's filters
+// and compact modes.
+func TestMCPMapToolFiltersAndModes(t *testing.T) {
+	var got []string
+	gateway := newMCPGateway(func(_ context.Context, args []string) (string, error) {
+		got = args
+		return `{}`, nil
+	})
+	call := func(arguments map[string]interface{}) map[string]interface{} {
+		params, _ := json.Marshal(map[string]interface{}{"name": "map", "arguments": arguments})
+		return gateway.callTool(context.Background(), params)
+	}
+
+	call(map[string]interface{}{"kind": "Deployment", "owner": "Native", "summary": true})
+	if want := "map list --json --kind Deployment --owner Native --summary"; strings.Join(got, " ") != want {
+		t.Errorf("args = %q, want %q", strings.Join(got, " "), want)
+	}
+	call(map[string]interface{}{"namespace": "team-05", "query": "owner!=Native", "names_only": true})
+	if want := "map list --json --namespace team-05 --query owner!=Native --names-only"; strings.Join(got, " ") != want {
+		t.Errorf("args = %q, want %q", strings.Join(got, " "), want)
+	}
+	call(map[string]interface{}{})
+	if want := "map list --json"; strings.Join(got, " ") != want {
+		t.Errorf("args = %q, want %q: an unfiltered call is unchanged", strings.Join(got, " "), want)
+	}
+	got = nil
+	result := call(map[string]interface{}{"summary": true, "count": true})
+	if result["isError"] != true || got != nil {
+		t.Errorf("two output modes should be rejected before running anything; isError=%v args=%v", result["isError"], got)
+	}
+}

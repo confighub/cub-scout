@@ -45,6 +45,7 @@ var (
 	mapSince                       string // --since flag for time filtering
 	mapCount                       bool   // --count flag for count-only output
 	mapNamesOnly                   bool   // --names-only flag for names-only output
+	mapSummary                     bool   // --summary flag: counts by owner and kind
 	mapExplain                     bool   // --explain flag for learning mode
 	mapActivitySince               string // --since flag for map activity
 	mapActivityWithConfigHub       bool
@@ -629,6 +630,7 @@ func init() {
 	mapListCmd.Flags().StringVar(&mapSince, "since", "", "Show resources changed since duration (e.g., 1h, 24h, 7d)")
 	mapListCmd.Flags().BoolVar(&mapCount, "count", false, "Output count only (no list)")
 	mapListCmd.Flags().BoolVar(&mapNamesOnly, "names-only", false, "Output names only (for scripting)")
+	mapListCmd.Flags().BoolVar(&mapSummary, "summary", false, "Output counts by owner and kind instead of the entries (after filters)")
 	mapListCmd.Flags().BoolVar(&mapExplain, "explain", false, "Show explanatory content to help learn GitOps concepts")
 	mapListCmd.Flags().StringVar(&mapListFormat, "format", "ascii", "Output format: ascii, json, md")
 
@@ -861,6 +863,18 @@ func renderMapListFromEntries(entries []MapEntry) error {
 		// Deterministic tie-breaker: Kind
 		return entries[i].Kind < entries[j].Kind
 	})
+
+	// Handle --summary flag (counts by owner and kind, after filters)
+	if mapSummary {
+		summary := buildMapListSummary(entries)
+		if mapListFormat == "json" || mapJSON {
+			enc := json.NewEncoder(os.Stdout)
+			enc.SetIndent("", "  ")
+			return enc.Encode(summary)
+		}
+		fmt.Print(renderMapListSummary(summary))
+		return nil
+	}
 
 	// Handle --count flag (output count only)
 	if mapCount {
@@ -9256,4 +9270,59 @@ func formatSecretIssue(issue SecretIssue) string {
 
 	return fmt.Sprintf("✗ %s in %s: %s secret %q (%s)",
 		issue.Resource, ns, statusSymbol, secretRef, refType)
+}
+
+// MapListSummary is `map list --summary`: how many entries each owner and
+// each kind has, after the same filters as the list. It answers "how many
+// does Flux manage?" without returning every entry (#635).
+type MapListSummary struct {
+	Total       int                       `json:"total"`
+	ByOwner     map[string]int            `json:"byOwner"`
+	ByKind      map[string]int            `json:"byKind"`
+	ByKindOwner map[string]map[string]int `json:"byKindOwner"`
+}
+
+func buildMapListSummary(entries []MapEntry) MapListSummary {
+	s := MapListSummary{
+		ByOwner:     map[string]int{},
+		ByKind:      map[string]int{},
+		ByKindOwner: map[string]map[string]int{},
+	}
+	for _, e := range entries {
+		owner := e.Owner
+		if owner == "" {
+			owner = "Native"
+		}
+		s.Total++
+		s.ByOwner[owner]++
+		s.ByKind[e.Kind]++
+		if s.ByKindOwner[e.Kind] == nil {
+			s.ByKindOwner[e.Kind] = map[string]int{}
+		}
+		s.ByKindOwner[e.Kind][owner]++
+	}
+	return s
+}
+
+func renderMapListSummary(s MapListSummary) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "Total: %d\n", s.Total)
+	kinds := make([]string, 0, len(s.ByKindOwner))
+	for k := range s.ByKindOwner {
+		kinds = append(kinds, k)
+	}
+	sort.Strings(kinds)
+	for _, k := range kinds {
+		owners := make([]string, 0, len(s.ByKindOwner[k]))
+		for o := range s.ByKindOwner[k] {
+			owners = append(owners, o)
+		}
+		sort.Strings(owners)
+		parts := make([]string, 0, len(owners))
+		for _, o := range owners {
+			parts = append(parts, fmt.Sprintf("%s=%d", o, s.ByKindOwner[k][o]))
+		}
+		fmt.Fprintf(&b, "%s (%d): %s\n", k, s.ByKind[k], strings.Join(parts, " "))
+	}
+	return b.String()
 }
