@@ -7,7 +7,7 @@ runs with the cub-scout plugin loaded and again without it, and the difference
 (`Δ`) is what cub-scout contributed. Tracking issue:
 [#603](https://github.com/confighub/cub-scout/issues/603).
 
-This is the pilot: nine cases on one recorded scenario. The first suite of 20–30
+This is the pilot: thirteen cases on one recorded scenario. The first suite of 20–30
 cases, a scheduled CI run and published results come next.
 
 ## Run
@@ -57,6 +57,11 @@ a cluster or ConfigHub.
   the agent declines to name an owner or commit that the cluster does not show,
   and `changed-by-payments` only if it does not invent a hand edit. Honest
   omission is part of what is measured.
+- **Traps.** `rollout-stuck-looks-healthy` (Available=True while the new
+  version never started), `flux-helm-not-plain-helm` (Helm's labels on a
+  Flux-managed chart), `flux-installed-but-not-working` (controller pods but no
+  Flux objects) and `argo-label-vs-tracking-id` (a copied label contradicting
+  the tracking-id; this case found #628).
 - **Cases the export cannot answer.** The five ownership and diagnosis cases
   can be answered from labels and status in the export; the first run showed
   agents grep the export and never call cub-scout there, so Δ is about 0 by
@@ -69,13 +74,16 @@ a cluster or ConfigHub.
 
 ## Scenario and recording
 
-`fixtures/scenario.yaml` is six Deployments whose ownership is given by labels
-(Flux, Argo CD, Helm, ConfigHub, two unmanaged) and one image that does not
-exist. No controllers are installed. `fixtures/setup.sh` applies each labelled
+`fixtures/scenario.yaml` is nine Deployments whose ownership is given by labels
+(Flux, Argo CD, Helm, ConfigHub, a Helm chart installed by Flux, two
+unmanaged, and one with a stale Argo CD label), an image that does not exist,
+and an `argocd-cm` that sets annotation tracking. No controllers are installed. `fixtures/setup.sh` applies each labelled
 workload server-side under its controller's real field manager
 (`kustomize-controller`, `argocd-controller`, `helm`), as the controller would.
-`fixtures/incident.sh` then edits three by hand: `kubectl set image` on
-`checkout`, `kubectl scale` on `cart`, `kubectl patch` on `inventory`.
+`fixtures/incident.sh` then has Flux roll out an `orders` image that does not
+exist (the old pods keep serving), and edits three workloads by hand:
+`kubectl set image` on `checkout`, `kubectl scale` on `cart`, `kubectl patch`
+on `inventory`.
 
 To re-record after a change to cub-scout's output:
 

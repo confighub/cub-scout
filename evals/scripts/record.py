@@ -22,7 +22,8 @@ KINDS = ["namespaces", "deployments", "replicasets", "pods", "services", "config
 # workload; an agent mock (mocks/cub-scout/<tool>.md) maps whatever spelling
 # the agent passes as "resource" to the right recording.
 WORKLOADS = [("shop", "checkout"), ("shop", "cart"), ("payments", "payments-api"),
-             ("inventory", "inventory"), ("default", "hotfix-worker"), ("temp-testing", "debug-nginx")]
+             ("inventory", "inventory"), ("default", "hotfix-worker"), ("temp-testing", "debug-nginx"),
+             ("shop", "orders"), ("billing", "billing"), ("shop", "ledger")]
 
 
 def rpc_session(binary, env, calls):
@@ -58,6 +59,43 @@ def result_text(msg):
         return json.dumps(msg["error"], indent=2)
     parts = [c.get("text", "") for c in msg["result"].get("content", []) if c.get("type") == "text"]
     return "\n".join(parts)
+
+
+AGENT_MOCK = """---
+type: agent
+abort_when: never; answer every call, using the not-found reply for anything unrecognised
+---
+
+You stand in for the cub-scout MCP `{tool}` tool. Every answer below was recorded
+from a real `cub-scout mcp serve` against this cluster. Reply with one of them
+exactly as written: no commentary, no reformatting, no summary, no code fences.
+
+Pick the recording by the call's `resource` argument, which must be
+`KIND/NAME`. KIND matches a Deployment when, ignoring case, it is `deploy`,
+`deployment` or `deployments`. The `namespace` argument, if given, must match
+the recording's namespace.
+
+If `resource` has no `/` (a bare name), reply exactly:
+
+tool command failed ({tool} RESOURCE -n NAMESPACE --format json): Error: invalid resource format: use kind/name (e.g., deployment/nginx)
+
+If it has a `/` but matches none of the recordings below, reply exactly:
+
+tool command failed ({tool} RESOURCE -n NAMESPACE --format json): Error: deployments.apps "NAME" not found
+
+In both, take RESOURCE, NAMESPACE and NAME from the call; that is what the real
+tool returns.
+"""
+
+
+def write_agent_mocks(mocks):
+    """trace and explain answer per workload. The harness cannot key a fixed
+    mock on a value containing "/", so an agent mock picks the recording."""
+    for tool in ["trace", "explain"]:
+        parts = [AGENT_MOCK.replace("{tool}", tool)]
+        for ns, name in WORKLOADS:
+            parts.append("\n## Recording: Deployment `%s` in namespace `%s`\n\n{{file:fixtures/%s/%s.txt}}\n" % (name, ns, tool, name))
+        open(os.path.join(mocks, tool + ".md"), "w").write("".join(parts))
 
 
 def write_scaffolds(cluster):
@@ -124,6 +162,7 @@ def main():
 
         os.makedirs(fixtures, exist_ok=True)
         json.dump(results[0]["result"], open(os.path.join(mocks, "_tools.json"), "w"), indent=2)
+        write_agent_mocks(mocks)
         for paths, msg in zip(names, results[1:]):
             text = result_text(msg)
             # Recorded timestamps and pod hashes differ on every run; keep them,

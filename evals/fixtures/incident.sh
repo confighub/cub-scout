@@ -10,6 +10,10 @@ set -euo pipefail
 ctx="${1:?usage: incident.sh <kube-context>}"
 k() { kubectl --context "$ctx" "$@"; }
 
+# Flux rolls out a new orders image that does not exist (a controller change,
+# not a hand edit). The old pods keep serving; the rollout stalls.
+k -n shop patch deployment/orders --field-manager=kustomize-controller --type=json \
+  -p '[{"op":"replace","path":"/spec/template/spec/containers/0/image","value":"registry.k8s.io/pause:9.9.9-orders"}]'
 # Flux-labelled: the image changed by hand, bypassing Git.
 k -n shop set image deployment/checkout checkout=registry.k8s.io/pause:3.10
 # Argo-labelled: scaled by hand.

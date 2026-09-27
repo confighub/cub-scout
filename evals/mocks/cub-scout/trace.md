@@ -46,3 +46,15 @@ tool returns.
 ## Recording: Deployment `debug-nginx` in namespace `temp-testing`
 
 {{file:fixtures/trace/debug-nginx.txt}}
+
+## Recording: Deployment `orders` in namespace `shop`
+
+{{file:fixtures/trace/orders.txt}}
+
+## Recording: Deployment `billing` in namespace `billing`
+
+{{file:fixtures/trace/billing.txt}}
+
+## Recording: Deployment `ledger` in namespace `shop`
+
+{{file:fixtures/trace/ledger.txt}}

@@ -248,3 +248,110 @@ spec:
       containers:
         - name: nginx
           image: registry.k8s.io/pause:3.9
+---
+# Flux Kustomization flux-system/shop-apps. incident.sh rolls out an image that
+# does not exist; the old pods keep serving (maxUnavailable 0) and the rollout
+# stalls after 30 seconds.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orders
+  namespace: shop
+  labels:
+    app: orders
+    kustomize.toolkit.fluxcd.io/name: shop-apps
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 2
+  progressDeadlineSeconds: 30
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: orders
+  template:
+    metadata:
+      labels:
+        app: orders
+    spec:
+      containers:
+        - name: orders
+          image: registry.k8s.io/pause:3.9
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: billing
+---
+# A Helm chart installed by Flux's helm-controller (HelmRelease
+# flux-system/billing): Helm's labels and Flux's labels together. A hand-run
+# `helm upgrade` would be reverted by Flux.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: billing
+  namespace: billing
+  labels:
+    app: billing
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: billing
+    helm.sh/chart: billing-2.1.0
+    helm.toolkit.fluxcd.io/name: billing
+    helm.toolkit.fluxcd.io/namespace: flux-system
+  annotations:
+    meta.helm.sh/release-name: billing
+    meta.helm.sh/release-namespace: billing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: billing
+  template:
+    metadata:
+      labels:
+        app: billing
+    spec:
+      containers:
+        - name: billing
+          image: registry.k8s.io/pause:3.9
+---
+# Argo CD Application argocd/payments, by its tracking-id annotation. The
+# argocd.argoproj.io/instance label was copied from storefront's manifests and
+# is stale: argocd-cm below sets annotation tracking, Argo CD's default.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ledger
+  namespace: shop
+  labels:
+    app: ledger
+    argocd.argoproj.io/instance: storefront
+  annotations:
+    argocd.argoproj.io/tracking-id: payments:apps/Deployment:shop/ledger
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ledger
+  template:
+    metadata:
+      labels:
+        app: ledger
+    spec:
+      containers:
+        - name: ledger
+          image: registry.k8s.io/pause:3.9
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  application.resourceTrackingMethod: annotation

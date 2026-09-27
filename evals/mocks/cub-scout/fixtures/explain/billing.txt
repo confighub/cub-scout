@@ -1,0 +1,73 @@
+{
+  "resource": "Deployment/billing",
+  "namespace": "billing",
+  "owner": "Flux",
+  "source": "unknown",
+  "deployedVia": "partial trace only",
+  "health": "Unavailable",
+  "risks": "Not assessed",
+  "drift": "Unknown",
+  "notes": [
+    "partial trace: no GitOps owner chain was discovered"
+  ],
+  "currentChange": {
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespace": "billing",
+      "name": "billing"
+    },
+    "progress": {
+      "phase": "complete",
+      "clockSource": "status.conditions[Progressing].lastUpdateTime",
+      "progressAgeSeconds": 467
+    },
+    "verdict": "PASS",
+    "reason": "workload_converged",
+    "message": "Deployment is available. Replicas: 1",
+    "evidence": {
+      "kstatusStatus": "Current",
+      "kstatusMessage": "Deployment is available. Replicas: 1",
+      "generation": 1,
+      "observedGeneration": 1,
+      "observedAt": "2026-09-27T07:21:59Z"
+    }
+  },
+  "events": {
+    "events": [
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled up replica set billing-59bc44d959 from 0 to 1",
+        "count": 1,
+        "age": "7m",
+        "lastSeen": "2026-09-27T08:14:08+01:00",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-09-27T08:14:08+01:00"
+      }
+    ],
+    "totalCount": 1,
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "nextSteps": [
+    {
+      "actionType": "read-only",
+      "reason": "Health status unknown - trace the chain to find the root cause",
+      "nextCommand": "cub-scout trace deployment/billing -n billing --explain"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "See all Flux-managed resources in this scope",
+      "nextCommand": "cub-scout map list -n billing -q \"owner=Flux\""
+    },
+    {
+      "actionType": "read-only",
+      "reason": "Get a broad health summary to contextualize this resource",
+      "nextCommand": "cub-scout doctor -n billing"
+    }
+  ],
+  "mutationCause": "controller-drift",
+  "mutationManager": "helm-controller"
+}

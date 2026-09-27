@@ -1,7 +1,7 @@
 ---
 name: list-unmanaged
 description: "Exactly the two unlabelled Deployments are unmanaged; the ConfigHub one is managed."
-expected_outcome: "UNMANAGED: hotfix-worker, debug-nginx. The other four carry kustomize.toolkit.fluxcd.io/* (checkout), argocd.argoproj.io/instance plus tracking-id (cart), app.kubernetes.io/managed-by=Helm (payments-api) and confighub.com/UnitSlug (inventory). cub-scout: map list owner=Native."
+expected_outcome: "UNMANAGED: hotfix-worker, debug-nginx. The others carry kustomize.toolkit.fluxcd.io/* (checkout), argocd.argoproj.io/instance plus tracking-id (cart), app.kubernetes.io/managed-by=Helm (payments-api) and confighub.com/UnitSlug (inventory). cub-scout: map list owner=Native."
 tags: [ownership, inventory]
 max_turns: 20
 timeout_seconds: 300

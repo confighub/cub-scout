@@ -20,7 +20,7 @@
     "progress": {
       "phase": "stalled",
       "clockSource": "status.conditions[Progressing].lastUpdateTime",
-      "progressAgeSeconds": 94
+      "progressAgeSeconds": 469
     },
     "verdict": "BLOCK",
     "reason": "runtime_failed",
@@ -32,19 +32,19 @@
       "observedGeneration": 1,
       "podReasons": [
         {
-          "pod": "payments-api-6ccc469957-5qfrj",
+          "pod": "payments-api-6ccc469957-2hvfx",
           "container": "api",
           "reason": "ImagePullBackOff",
           "message": "Back-off pulling image \"registry.k8s.io/pause:0.0.0-does-not-exist\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k…"
         },
         {
-          "pod": "payments-api-6ccc469957-7bc9d",
+          "pod": "payments-api-6ccc469957-mm74h",
           "container": "api",
           "reason": "ImagePullBackOff",
           "message": "Back-off pulling image \"registry.k8s.io/pause:0.0.0-does-not-exist\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k…"
         }
       ],
-      "observedAt": "2026-09-26T20:18:24Z"
+      "observedAt": "2026-09-27T07:21:58Z"
     }
   },
   "events": {
@@ -54,11 +54,11 @@
         "reason": "ScalingReplicaSet",
         "message": "Scaled up replica set payments-api-6ccc469957 from 0 to 2",
         "count": 1,
-        "age": "1m",
-        "lastSeen": "2026-09-26T21:16:50+01:00",
+        "age": "7m",
+        "lastSeen": "2026-09-27T08:14:08+01:00",
         "severity": "info",
         "source": "deployment-controller",
-        "firstSeen": "2026-09-26T21:16:50+01:00"
+        "firstSeen": "2026-09-27T08:14:08+01:00"
       }
     ],
     "totalCount": 1,

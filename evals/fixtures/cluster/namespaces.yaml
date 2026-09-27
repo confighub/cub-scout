@@ -6,12 +6,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"argocd"}}
-    creationTimestamp: "2026-09-26T20:16:49Z"
+    creationTimestamp: "2026-09-27T07:14:07Z"
     labels:
       kubernetes.io/metadata.name: argocd
     name: argocd
-    resourceVersion: "447"
-    uid: 9db3d302-2805-4723-ab18-c3f2d480851c
+    resourceVersion: "439"
+    uid: 43a71b01-a1c8-4040-a76d-602563a01803
   spec:
     finalizers:
     - kubernetes
@@ -20,12 +20,29 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-09-26T20:16:29Z"
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"billing"}}
+    creationTimestamp: "2026-09-27T07:14:07Z"
+    labels:
+      kubernetes.io/metadata.name: billing
+    name: billing
+    resourceVersion: "489"
+    uid: 91d2b4b6-3e8c-4b23-8e4e-d8825ab93714
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    creationTimestamp: "2026-09-27T07:13:46Z"
     labels:
       kubernetes.io/metadata.name: default
     name: default
-    resourceVersion: "20"
-    uid: 141156e0-50ac-477f-958c-41b70047e24a
+    resourceVersion: "21"
+    uid: e6e539d9-1f92-4818-99eb-5ddf32a374d6
   spec:
     finalizers:
     - kubernetes
@@ -37,12 +54,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"flux-system"}}
-    creationTimestamp: "2026-09-26T20:16:49Z"
+    creationTimestamp: "2026-09-27T07:14:07Z"
     labels:
       kubernetes.io/metadata.name: flux-system
     name: flux-system
-    resourceVersion: "444"
-    uid: f16f8e63-f5bf-49cb-8d16-eaab18d3be92
+    resourceVersion: "436"
+    uid: 8b769ca9-5e62-44dd-b4b8-2f5dd380d9ef
   spec:
     finalizers:
     - kubernetes
@@ -54,12 +71,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"inventory"}}
-    creationTimestamp: "2026-09-26T20:16:49Z"
+    creationTimestamp: "2026-09-27T07:14:07Z"
     labels:
       kubernetes.io/metadata.name: inventory
     name: inventory
-    resourceVersion: "482"
-    uid: fc8ef8b2-f027-43e3-9699-39d7582eb8a0
+    resourceVersion: "467"
+    uid: eb5e84d9-b763-42c3-96be-5835bd15fb0d
   spec:
     finalizers:
     - kubernetes
@@ -68,12 +85,12 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-09-26T20:16:29Z"
+    creationTimestamp: "2026-09-27T07:13:46Z"
     labels:
       kubernetes.io/metadata.name: kube-node-lease
     name: kube-node-lease
-    resourceVersion: "24"
-    uid: 5d56855c-413a-4967-9e46-7c30814ec3f7
+    resourceVersion: "23"
+    uid: bb0cb756-0936-4b6a-b107-6b262930851b
   spec:
     finalizers:
     - kubernetes
@@ -82,12 +99,12 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-09-26T20:16:29Z"
+    creationTimestamp: "2026-09-27T07:13:46Z"
     labels:
       kubernetes.io/metadata.name: kube-public
     name: kube-public
-    resourceVersion: "12"
-    uid: 6f2e261a-d490-4f8f-a379-7326cac8fa9b
+    resourceVersion: "13"
+    uid: 112ff53a-14c9-4d49-bdac-dd04f71edda9
   spec:
     finalizers:
     - kubernetes
@@ -96,12 +113,12 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-09-26T20:16:29Z"
+    creationTimestamp: "2026-09-27T07:13:46Z"
     labels:
       kubernetes.io/metadata.name: kube-system
     name: kube-system
-    resourceVersion: "3"
-    uid: f9b07510-6c53-4aad-9fdb-54652b28321c
+    resourceVersion: "7"
+    uid: 0960b191-c4cb-4f60-9ac4-912faf7d4b77
   spec:
     finalizers:
     - kubernetes
@@ -113,12 +130,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"local-path-storage"}}
-    creationTimestamp: "2026-09-26T20:16:33Z"
+    creationTimestamp: "2026-09-27T07:13:49Z"
     labels:
       kubernetes.io/metadata.name: local-path-storage
     name: local-path-storage
-    resourceVersion: "279"
-    uid: 57b8d48c-6a4b-4427-b006-4e8633b24d02
+    resourceVersion: "256"
+    uid: 95f7678e-7882-4f52-b376-e5a8b40f46ef
   spec:
     finalizers:
     - kubernetes
@@ -130,12 +147,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"payments"}}
-    creationTimestamp: "2026-09-26T20:16:49Z"
+    creationTimestamp: "2026-09-27T07:14:07Z"
     labels:
       kubernetes.io/metadata.name: payments
     name: payments
-    resourceVersion: "471"
-    uid: dcb25cce-2085-4668-b908-31b947e3b4df
+    resourceVersion: "463"
+    uid: 4ee6f9bf-18da-4fbc-b7f0-46ad201d7460
   spec:
     finalizers:
     - kubernetes
@@ -147,12 +164,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"shop"}}
-    creationTimestamp: "2026-09-26T20:16:49Z"
+    creationTimestamp: "2026-09-27T07:14:07Z"
     labels:
       kubernetes.io/metadata.name: shop
     name: shop
-    resourceVersion: "441"
-    uid: 0220985b-5bc1-4458-8cfa-8041a50bfde6
+    resourceVersion: "433"
+    uid: 2613773e-d87a-4ebb-bc79-720eac2908e0
   spec:
     finalizers:
     - kubernetes
@@ -164,12 +181,12 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"temp-testing"}}
-    creationTimestamp: "2026-09-26T20:16:49Z"
+    creationTimestamp: "2026-09-27T07:14:07Z"
     labels:
       kubernetes.io/metadata.name: temp-testing
     name: temp-testing
-    resourceVersion: "487"
-    uid: 5645e4da-788b-46a7-8eec-6a967fb2c9d6
+    resourceVersion: "475"
+    uid: 9eb4ca2b-8e67-497d-98ee-0878d7b89622
   spec:
     finalizers:
     - kubernetes
