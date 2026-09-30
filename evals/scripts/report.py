@@ -7,8 +7,8 @@ Prints the legacy harness score and cost tables as diagnostics, plus a binary
 verified-answer table based on the grader definitions embedded in each result.
 The legacy $/score figure is not a correctness rate.
 Several result files are combined, so separate runs of different cases can be
-reported together. Cost per run is everything the run spent: the agent, any
-judge graders and the agent mocks.
+reported together. `costUsd` is inclusive of agent, judge, and mock costs.
+Optional judge/mock breakdowns are validated against it, never added again.
 
 The legacy $/score figure is total cost divided by total harness score. It is
 retained for continuity and diagnostic comparison; binary verified answers
@@ -34,14 +34,15 @@ def cost_value(value):
 
 
 def run_cost(run):
-    """Return attributable spend, or None if any present spend field is invalid."""
+    """Return inclusive costUsd; validate optional breakdowns without double-counting."""
     if not isinstance(run, dict) or "costUsd" not in run or not cost_value(run["costUsd"]):
         return None
     total = run["costUsd"]
+    breakdown = 0
     if "judgeCostUsd" in run:
         if not cost_value(run["judgeCostUsd"]):
             return None
-        total += run["judgeCostUsd"]
+        breakdown += run["judgeCostUsd"]
     if "mocks" in run:
         mocks = run["mocks"]
         if not isinstance(mocks, dict) or not isinstance(mocks.get("calls"), dict):
@@ -49,7 +50,9 @@ def run_cost(run):
         mock_cost = mocks["calls"].get("costUsd")
         if not cost_value(mock_cost):
             return None
-        total += mock_cost
+        breakdown += mock_cost
+    if breakdown > total:
+        return None
     return total
 
 

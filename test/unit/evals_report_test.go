@@ -160,13 +160,26 @@ func TestEvalReportVerifiedCostsRejectMalformedSpend(t *testing.T) {
 	if err != nil {
 		t.Fatalf("report should retain diagnostics for malformed spend: %v\n%s", err, out)
 	}
-	if !strings.Contains(out, "| invalid-spend | with | 7 | 7/7 | 0 | 7 | UNKNOWN | UNKNOWN |") {
+	if !strings.Contains(out, "| invalid-spend | with | 8 | 8/8 | 0 | 8 | UNKNOWN | UNKNOWN |") {
 		t.Errorf("unknown spend must suppress both binary cost metrics:\n%s", out)
 	}
-	if !strings.Contains(out, "| invalid-spend | with | 7 | 1.00 | UNKNOWN | n/a |") {
+	if !strings.Contains(out, "| invalid-spend | with | 8 | 1.00 | UNKNOWN | n/a |") {
 		t.Errorf("legacy diagnostics should render malformed aggregate spend without crashing or inventing a value:\n%s", out)
 	}
 	if !strings.Contains(out, "| optional-spend-absent | with | 1 | 1/1 | 0 | 0 | $1.00 | $1.00 |") {
 		t.Errorf("absent optional judge/mock costs should retain historical zero defaults:\n%s", out)
+	}
+}
+
+func TestEvalReportUsesInclusiveCostWithoutAddingBreakdownsTwice(t *testing.T) {
+	out, err := runEvalReport(t, reportFixture("inclusive-cost"))
+	if err != nil {
+		t.Fatalf("report failed: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "| inclusive-mock-cost | with | 1 | 1.00 | $0.64 | $0.64 |") {
+		t.Errorf("costUsd already includes mock/judge costs; breakdowns must not be added twice:\n%s", out)
+	}
+	if strings.Contains(out, "$0.67") {
+		t.Errorf("mock cost was double-counted:\n%s", out)
 	}
 }
