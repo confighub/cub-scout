@@ -6,6 +6,12 @@ Read-only, deterministic evidence about who owns what in your cluster, how it go
 there and what changed, for AI agents first and for the people and scripts they
 work with. Unknowns are stated, never guessed.
 
+The goal is **verified answers with less agent spend**: fewer dollars, credits
+and minutes than standalone Claude needs with ordinary read-only tools. We
+[measure that claim](evals/README.md), including where scout adds cost. The
+[3.0 delivery plan](docs/roadmap-3.0-execution.md) sets release criteria for
+fair cost comparisons and preserved correctness; general savings are not yet proven.
+
 [v2.12.3 release](https://github.com/confighub/cub-scout/releases/tag/v2.12.3)
 | [Start here](docs/getting-started/start-here.md)
 | [Is this image deployed?](docs/howto/is-this-image-deployed.md)

@@ -5,9 +5,11 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -154,6 +156,158 @@ func TestPluginMode_UseStringFlip(t *testing.T) {
 
 			if !bytes.Contains(out, []byte(tc.wantUsage)) {
 				t.Errorf("help output does not contain expected usage line %q\nfull output:\n%s", tc.wantUsage, string(out))
+			}
+		})
+	}
+}
+
+// The strings below are not hints, so they do not pass through
+// hintsToStrings or ToStructured; each call site applies
+// preferInvocationForm itself (#386). Every test checks both forms: the
+// plugin form must read `cub scout ...` and the standalone output must not
+// move.
+
+func TestRenderRootLanding_FollowsInvocationForm(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		plugin string
+		want   []string
+		reject string
+	}{
+		{
+			name:   "plugin",
+			plugin: "1",
+			want: []string{
+				"cub scout quickstart --yes  Guided first-run walkthrough",
+				"cub scout doctor           Cluster health summary",
+				"cub scout explain deploy/x -n <namespace>  Explain one resource",
+				"cub scout import --dry-run Preview ConfigHub import (connected)",
+				"Run 'cub scout --help' for all commands",
+			},
+			reject: "  cub-scout ",
+		},
+		{
+			name:   "standalone",
+			plugin: "",
+			want: []string{
+				"cub-scout quickstart --yes  Guided first-run walkthrough",
+				"cub-scout doctor           Cluster health summary",
+				"cub-scout explain deploy/x -n <namespace>  Explain one resource",
+				"cub-scout import --dry-run Preview ConfigHub import (connected)",
+				"Run 'cub-scout --help' for all commands",
+			},
+			reject: "cub scout",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("CUB_PLUGIN", tc.plugin)
+			var b bytes.Buffer
+			renderRootLanding(&b, true)
+			out := b.String()
+			for _, s := range tc.want {
+				if !strings.Contains(out, s) {
+					t.Errorf("expected %q in root landing:\n%s", s, out)
+				}
+			}
+			if strings.Contains(out, tc.reject) {
+				t.Errorf("root landing contains %q in %s mode:\n%s", tc.reject, tc.name, out)
+			}
+			// The product name in the title is not a command and stays put.
+			if !strings.HasPrefix(out, "cub-scout - GitOps explorer for agents\n") {
+				t.Errorf("root landing title changed:\n%s", out)
+			}
+		})
+	}
+}
+
+func TestWithKubeRecoveryHint_FollowsInvocationForm(t *testing.T) {
+	cause := fmt.Errorf("build kubernetes config: no configuration has been provided")
+	for _, tc := range []struct {
+		name, plugin, command string
+		want                  []string
+	}{
+		{name: "plugin", plugin: "1", command: "cub-scout doctor",
+			want: []string{"3) cub scout doctor --help", "4) cub scout quickstart"}},
+		{name: "plugin_empty_command", plugin: "1", command: "",
+			want: []string{"3) cub scout --help", "4) cub scout quickstart"}},
+		{name: "standalone", plugin: "", command: "cub-scout doctor",
+			want: []string{"3) cub-scout doctor --help", "4) cub-scout quickstart"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("CUB_PLUGIN", tc.plugin)
+			err := withKubeRecoveryHint(cause, tc.command)
+			for _, s := range tc.want {
+				if !strings.Contains(err.Error(), s) {
+					t.Errorf("expected %q in recovery error:\n%s", s, err.Error())
+				}
+			}
+			if !strings.HasPrefix(err.Error(), cause.Error()) {
+				t.Errorf("recovery error lost its cause:\n%s", err.Error())
+			}
+		})
+	}
+}
+
+func TestDoctorThreeWayHint_FollowsInvocationForm(t *testing.T) {
+	for _, tc := range []struct{ name, plugin, want string }{
+		{name: "plugin", plugin: "1", want: "cub scout compare three-way --scope namespace/prod"},
+		{name: "standalone", plugin: "", want: "cub-scout compare three-way --scope namespace/prod"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("CUB_PLUGIN", tc.plugin)
+			stubConnectedGate(t, nil)
+			summary := buildDoctorSummary(nil, nil, "kind-dev", "prod", 3)
+			if summary.ThreeWay == nil {
+				t.Fatal("expected a three-way hint with the gate open")
+			}
+			if summary.ThreeWay.Hint != tc.want {
+				t.Errorf("three-way hint = %q, want %q", summary.ThreeWay.Hint, tc.want)
+			}
+			ascii := renderDoctorASCII(summary, PresentationHuman, false, HintContext{})
+			if !strings.Contains(ascii, tc.want) {
+				t.Errorf("doctor ASCII does not show %q:\n%s", tc.want, ascii)
+			}
+		})
+	}
+}
+
+func TestScanFooterAndNextSteps_FollowInvocationForm(t *testing.T) {
+	oldExplain := scanExplain
+	t.Cleanup(func() { scanExplain = oldExplain })
+	scanExplain = true
+
+	for _, tc := range []struct {
+		name, plugin string
+		want         []string
+		reject       string
+	}{
+		{name: "plugin", plugin: "1", want: []string{
+			"Track violations in ConfigHub: cub scout scan --confighub",
+			"See all patterns:        cub scout scan --list",
+			"Scan a YAML file:        cub scout scan --file manifest.yaml",
+			"Trace failing resource:  cub scout trace <kind>/<name> -n <namespace>",
+		}, reject: "cub-scout scan -"},
+		{name: "standalone", plugin: "", want: []string{
+			"Track violations in ConfigHub: cub-scout scan --confighub",
+			"See all patterns:        cub-scout scan --list",
+			"Scan a YAML file:        cub-scout scan --file manifest.yaml",
+			"Trace failing resource:  cub-scout trace <kind>/<name> -n <namespace>",
+		}, reject: "cub scout"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("CUB_PLUGIN", tc.plugin)
+			out := captureStdout(t, func() {
+				if err := outputCombinedHuman(nil, nil, nil, nil, nil); err != nil {
+					t.Errorf("outputCombinedHuman: %v", err)
+				}
+			})
+			for _, s := range tc.want {
+				if !strings.Contains(out, s) {
+					t.Errorf("expected %q in scan output:\n%s", s, out)
+				}
+			}
+			if strings.Contains(out, tc.reject) {
+				t.Errorf("scan output contains %q in %s mode:\n%s", tc.reject, tc.name, out)
 			}
 		})
 	}

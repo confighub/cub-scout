@@ -265,10 +265,12 @@ func hintsToStrings(hints []Hint) []string {
 // This is the single boundary point where hint content adapts to the
 // invocation form the user chose; every hint renderer funnels through
 // hintsToStrings (ASCII) or ToStructured (JSON, MCP), so this one helper
-// covers the full hint surface. Non-hint strings (error recovery messages,
-// landing-page copy, baked-in Long descriptions) are not rewritten yet —
-// those remain standalone-flavored for now because standalone is still
-// the documented primary form during the v2.x transition window.
+// covers the full hint surface. Outside hints, the root landing page, the
+// kube error-recovery steps, the scan footer and next steps, and doctor's
+// three-way line also call it. Baked-in cobra Long/Example text, the
+// quickstart tour and the remaining one-off strings are not rewritten yet —
+// those remain standalone-flavored for now because standalone is still the
+// documented primary form during the v2.x transition window.
 func preferInvocationForm(cmd string) string {
 	if !hub.IsPluginMode() {
 		return cmd
@@ -295,7 +297,7 @@ func withKubeRecoveryHint(err error, command string) error {
 	if cmd == "" {
 		cmd = "cub-scout"
 	}
-	return fmt.Errorf("%w\n\nRecovery:\n  1) kubectl config current-context\n  2) kubectl get ns\n  3) %s --help\n  4) cub-scout quickstart", err, cmd)
+	return fmt.Errorf("%w\n\nRecovery:\n  1) kubectl config current-context\n  2) kubectl get ns\n  3) %s --help\n  4) %s", err, preferInvocationForm(cmd), preferInvocationForm("cub-scout quickstart"))
 }
 
 func mapListTryNextHints(entries []MapEntry, byOwner map[string]int, namespace string) []string {
