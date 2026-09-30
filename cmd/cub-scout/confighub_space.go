@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/confighub/cub-scout/pkg/agent"
-	"github.com/confighub/cub-scout/pkg/hub"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"github.com/confighub/cub-scout/v2/pkg/hub"
 )
 
 // Where a resolved ConfigHub space came from. Output reports it, so a reader

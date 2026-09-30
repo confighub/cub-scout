@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/confighub/cub-scout/pkg/gitops"
+	"github.com/confighub/cub-scout/v2/pkg/gitops"
 )
 
 func TestBuildGitComparison_Deterministic(t *testing.T) {

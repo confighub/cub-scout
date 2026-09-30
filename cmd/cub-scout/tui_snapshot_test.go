@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/confighub/cub-scout/internal/mapsvc"
+	"github.com/confighub/cub-scout/v2/internal/mapsvc"
 	"k8s.io/client-go/rest"
 )
 

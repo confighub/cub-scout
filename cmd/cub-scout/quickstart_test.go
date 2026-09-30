@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/confighub/cub-scout/internal/scan"
+	"github.com/confighub/cub-scout/v2/internal/scan"
 	"github.com/spf13/cobra"
 )
 

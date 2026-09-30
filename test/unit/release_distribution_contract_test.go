@@ -152,7 +152,7 @@ func TestInstallDocs_IncludeDistributionChannels(t *testing.T) {
 
 	requiredSnippets := []string{
 		"brew install confighub/tap/cub-scout",
-		"go install github.com/confighub/cub-scout/cmd/cub-scout@latest",
+		"go install github.com/confighub/cub-scout/v2/cmd/cub-scout@latest",
 		"github.com/confighub/cub-scout/releases",
 		"docker run ghcr.io/confighub/cub-scout",
 		"kubectl krew install cub-scout",

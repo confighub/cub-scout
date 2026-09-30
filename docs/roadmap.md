@@ -326,17 +326,15 @@ follows Argo CD + Crossplane stacks. In one line: exact per-cluster evidence tha
 agents use, that an orchestrator spreads across a fleet, that ConfigHub records,
 and whose value to an agent is measured.
 
-Two facts shape the transition. First, the Go module path: `go.mod` has no
-`/v2` suffix, so the module proxy knows only v1.8 to v1.13 and
-`go install github.com/confighub/cub-scout/cmd/cub-scout@latest` resolves to
-v1.13.0 while the newest tag is v2.12.1 (recorded on [#520](https://github.com/confighub/cub-scout/issues/520) on 2026-09-11;
-the [install guide](getting-started/install.md#go-module-version-caveat) already
-steers people to archives, Homebrew and tagged builds). The import path is not
-part of the CLI contract, whose
+Two facts shape the transition. First, the Go module path: the source now uses
+`github.com/confighub/cub-scout/v2` ahead of the next 2.x minor. Published v2.12.4
+predates the change, so Go-proxy installation via `@latest` remains unverified
+until the correctly tagged minor is published (see the
+[install guide](getting-started/install.md#go-module-version-caveat)). The import
+path is not part of the CLI contract, whose
 [Breaking Change Policy](reference/cli-contract.md#breaking-change-policy) names
-commands, flags, exit codes, JSON fields and query syntax, and no proxy consumer
-of a v2 tag can exist today. So the correct `/v2` path belongs in the next 2.x
-minor, and 3.0.0 moves it to `/v3` as a consequence of the major, not its cause.
+commands, flags, exit codes, JSON fields and query syntax. The next major will
+move the source path to `/v3` as a consequence of that major, not its cause.
 Second, what does require a major under that policy is removing what 2.x
 deprecated: the flags and command already marked deprecated, a cub floor the
 connected gate enforces, and the `fleet outliers` decision. That is 3.0.0's

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
 	"github.com/spf13/cobra"
 )
 

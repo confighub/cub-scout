@@ -13,7 +13,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/confighub/cub-scout/pkg/gitops"
+	"github.com/confighub/cub-scout/v2/pkg/gitops"
 	"github.com/spf13/cobra"
 )
 

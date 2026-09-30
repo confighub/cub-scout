@@ -10,7 +10,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/confighub/cub-scout/pkg/gitops"
+	"github.com/confighub/cub-scout/v2/pkg/gitops"
 )
 
 // ImportSuggestion represents a suggested import structure (org-space model)

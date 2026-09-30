@@ -64,11 +64,12 @@ Unix archives include `cub-scout`, `kubectl-cub_scout`, and the plugin entry poi
 
 ### Go Module Version Caveat
 
-Do not use `go install github.com/confighub/cub-scout/cmd/cub-scout@latest` to
-install v2.12.4. The module path does not have a `/v2` suffix: the default resolver
-returned v1.13.0 for `@latest` in earlier release verification, and an explicit
-`@v2` query fails Go's major-version check. Use an archive or build the tagged
-checkout below. Distribution follow-up:
+The source module path now uses `github.com/confighub/cub-scout/v2`. The published
+v2.12.4 tag predates that change, so
+`go install github.com/confighub/cub-scout/v2/cmd/cub-scout@latest` is not
+verified until the next 2.x minor is tagged and available from the Go module
+proxy. For v2.12.4, use an archive or build its tagged checkout below.
+Distribution follow-up:
 [#520](https://github.com/confighub/cub-scout/issues/520).
 
 ### Container and Bot

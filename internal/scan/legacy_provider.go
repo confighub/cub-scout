@@ -6,7 +6,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
 
 // LegacyProvider wraps the existing pkg/agent scanners behind the Provider

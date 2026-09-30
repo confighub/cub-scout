@@ -10,7 +10,7 @@ package mapsvc
 import (
 	"strings"
 
-	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
 
 // ResourceID is the canonical identity for cross-schema joins.

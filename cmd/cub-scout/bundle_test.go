@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
 
 func TestBundleInspect_Deterministic(t *testing.T) {
