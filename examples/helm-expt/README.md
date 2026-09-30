@@ -409,3 +409,72 @@ Today, `--input-attestation` chains prior cub-scout receipts whose fingerprints
 can be verified by cub-scout. Keep `helm-expt` receipts adjacent in the run
 directory until those upstream receipts are emitted or bridged as cub-scout /
 in-toto Statement receipts.
+
+## Pinned Helm 3/4 release-secret matrix (bounded install/upgrade proof passed)
+
+The companion `run-helm-version-matrix.sh` defines a disposable, serial matrix
+for the bounded namespaced Deployment case. It uses one newly created pinned
+kind cluster and three isolated releases: fresh Helm 3.22.0 install, fresh
+Helm 4.1.4 default install, and Helm 3.22.0 install followed by Helm 4.1.4
+`upgrade --server-side=auto` with replicas changed from one to two. Each run
+records binary/image/chart hashes, exact commands, Deployment identity/UID,
+replica counts, managedFields, Secret names only, release history, and matching
+standalone/plugin `trace --format json` results. The script refuses an existing
+`scout-helm-version-matrix` cluster and non-empty evidence state. It leaves
+unrelated kind clusters untouched and uses an explicit private kubeconfig and
+isolated Helm homes.
+
+After review, the intended invocation is:
+
+```bash
+mkdir /path/to/new-empty-evidence
+HELM3_BIN=/absolute/path/to/helm-v3.22.0 \
+  examples/helm-expt/run-helm-version-matrix.sh /path/to/new-empty-evidence
+```
+
+Pins are kind `v0.31.0`, node image
+`kindest/node:v1.35.0@sha256:4613778f3cfcd10e615029370f5786704559103cf27bef934597ba562b269661`,
+Helm 3.22.0 (`8566ea7d76445d174050eca068bc6d685ba3607de8430524a809a16f505a6138`),
+and Helm 4.1.4 (`11e3c9fb6548fa1661a72000a6a483a31f1c2a0bf300f3d2422270feee180d34`).
+The Helm 3 archive SHA-256 is
+`4c9982a6cdeb458b60258df66b55398ca5b19293f6877faffe2909ad6f23dfe0`. These
+hashes pin the tested Darwin arm64 Helm executables; other binaries are
+rejected even if they report the same version.
+The offline preflight guard is `examples/helm-expt/test-helm-version-matrix-safety.sh`;
+it checks evidence preservation, rejects a binary hash mismatch, refuses only
+the owned cluster name, leaves unrelated cluster names alone, and verifies
+failed-create cleanup uses the private kubeconfig without targeting another
+cluster. Deployment reads request `managedFields` explicitly and verify that
+the Helm 4 upgrade preserves the Deployment UID while changing replicas.
+
+This is a validation protocol, not evidence that the matrix has passed. It
+covers ordinary namespaced install/upgrade and does not cover hooks, CRDs,
+rollback, or server-side conflict modes. Manager fields are recorded as
+observations; they do not by themselves prove which apply method Helm used.
+Run only in an explicitly authorized disposable environment after reviewing
+the script and ensuring no other live lane is active.
+
+The first run at script source `9e6a5bb` installed Helm 3 successfully but Scout
+rejected its release JSON. It stopped before Helm 4; see #676 for the empty
+timestamp regression. The owned cluster was removed. This is retained as a
+failed run, not a passing compatibility result.
+
+For the regression repeat, set `BASELINE_SCOUT_BIN` to the frozen pre-fix
+Scout binary with SHA-256
+`ff6f5a1200a3dae06691c80e5ca4120478c0500ee3a6e18d97ff6b675aa1d16b`.
+The harness requires that binary to fail on the same fresh Helm 3 release
+that the newly built binary successfully traces. Secret name/UID/resourceVersion
+must remain identical across the comparison; no Secret payload is saved.
+The comparison is optional for subsequent ordinary matrix runs, and the
+pinned baseline hash is checked before any cluster creation.
+
+The September 30 repeat at source `0ef39b5` passed the three stated scenarios
+on Kubernetes 1.35.0, after the #676 timestamp fix. The old binary failed on
+the same unchanged Helm 3 Secret that the fixed binary successfully traced.
+Standalone/plugin projections agreed for all four observations. The Helm 4
+upgrade changed ready replicas from one to two while preserving Deployment UID.
+See the [result projection and retained raw-artifact hashes](evidence/2026-09-30-release-matrix.json).
+The owned cluster was deleted; shared context/config hashes and other cluster
+names were unchanged. This does not cover hooks, CRDs, rollback or conflicts,
+and manager names alone still do not establish apply method. The earlier
+failed run remains part of the evidence history.
