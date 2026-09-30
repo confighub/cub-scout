@@ -279,12 +279,31 @@
         {
           "id": "HLT-03",
           "question": "Consul workloads converge with named Ingress residue",
-          "status": "planned",
-          "existing_case": null,
-          "reference": "Name the first incomplete stage and residual Ingress; workload convergence is not total success.",
+          "status": "recorded_projection_prepared_not_run",
+          "existing_case": "evals/consul-ingress-residue",
+          "reference": "Keep receipt-level workload pass separate from the watched Argo child Application; identify the exact Synced/Progressing Ingress and leave its cause unknown.",
           "controls": [
-            "Do not collapse partial completion into PASS"
-          ]
+            "The overall receipt remains WATCH despite passing workload checks",
+            "Use the named child Application rather than root Application health",
+            "Name the residual by exact kind/namespace/name and preserve its recorded sync/health",
+            "Do not infer a cause, current state, atomic join, or full Kubernetes snapshot"
+          ],
+          "source_provenance": {
+            "repository": "confighub/helm-expt",
+            "revision": "9ab4c753a888dc305a3c07956c9f8f5a19eb70a0",
+            "files": [
+              {
+                "path": "runs/live-helm-confighub-compare/hashicorp-consul-secure-mesh-existing-secrets/receipt.yaml",
+                "sha256": "521b08ae448f4d6503123ddef0263944887ced4204debab457677829c43fba15"
+              },
+              {
+                "path": "runs/live-helm-confighub-compare/hashicorp-consul-secure-mesh-existing-secrets/argocd-core-child.json",
+                "sha256": "adf89697a41493e7399ff08b0e777a97e14d691b377d2fdddff2fa4faa27a078"
+              }
+            ],
+            "limits": "Two pinned public recorded artifacts, not an atomic join or full Kubernetes snapshot; current state and residual cause are unknown."
+          },
+          "benchmark_admission": "Receipt-backed public-source case prepared for review; not run. Full benchmark remains non-executable pending other cases and protocol gates."
         },
         {
           "id": "HLT-04",

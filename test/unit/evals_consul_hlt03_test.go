@@ -268,6 +268,69 @@ func TestConsulHLT03AnswerGraderPythonAndJavaScript(t *testing.T) {
 	}
 }
 
+func TestConsulHLT03BenchmarkMappingStaysPreparedAndUnrun(t *testing.T) {
+	manifestBytes, err := os.ReadFile(filepath.Join("..", "..", "evals", "benchmark-v1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var manifest struct {
+		Status string `json:"status"`
+		Groups []struct {
+			Cases []struct {
+				ID                 string `json:"id"`
+				Status             string `json:"status"`
+				ExistingCase       string `json:"existing_case"`
+				BenchmarkAdmission string `json:"benchmark_admission"`
+				Provenance         struct {
+					Repository string `json:"repository"`
+					Revision   string `json:"revision"`
+					Files      []struct {
+						Path string `json:"path"`
+						SHA  string `json:"sha256"`
+					} `json:"files"`
+					Limits string `json:"limits"`
+				} `json:"source_provenance"`
+			} `json:"cases"`
+		} `json:"groups"`
+		Execution struct {
+			Paid bool `json:"paid_runs_authorized_by_this_manifest"`
+		} `json:"execution"`
+	}
+	if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
+		t.Fatal(err)
+	}
+	var hlt03 *struct {
+		ID                 string `json:"id"`
+		Status             string `json:"status"`
+		ExistingCase       string `json:"existing_case"`
+		BenchmarkAdmission string `json:"benchmark_admission"`
+		Provenance         struct {
+			Repository string `json:"repository"`
+			Revision   string `json:"revision"`
+			Files      []struct {
+				Path string `json:"path"`
+				SHA  string `json:"sha256"`
+			} `json:"files"`
+			Limits string `json:"limits"`
+		} `json:"source_provenance"`
+	}
+	caseCount := 0
+	for gi := range manifest.Groups {
+		for ci := range manifest.Groups[gi].Cases {
+			caseCount++
+			if manifest.Groups[gi].Cases[ci].ID == "HLT-03" {
+				hlt03 = &manifest.Groups[gi].Cases[ci]
+			}
+		}
+	}
+	if caseCount != 24 || manifest.Status != "frozen_design_not_executable" || manifest.Execution.Paid || hlt03 == nil {
+		t.Fatalf("HLT-03 mapping changed benchmark inventory/execution gate: cases=%d status=%q paid=%v found=%v", caseCount, manifest.Status, manifest.Execution.Paid, hlt03 != nil)
+	}
+	if hlt03.Status != "recorded_projection_prepared_not_run" || hlt03.ExistingCase != "evals/consul-ingress-residue" || !strings.Contains(hlt03.BenchmarkAdmission, "not run") || hlt03.Provenance.Repository != "confighub/helm-expt" || hlt03.Provenance.Revision != "9ab4c753a888dc305a3c07956c9f8f5a19eb70a0" || len(hlt03.Provenance.Files) != 2 || hlt03.Provenance.Files[0].SHA != "521b08ae448f4d6503123ddef0263944887ced4204debab457677829c43fba15" || hlt03.Provenance.Files[1].SHA != "adf89697a41493e7399ff08b0e777a97e14d691b377d2fdddff2fa4faa27a078" || !strings.Contains(hlt03.Provenance.Limits, "not an atomic join") || !strings.Contains(hlt03.Provenance.Limits, "full Kubernetes snapshot") {
+		t.Fatalf("unexpected HLT-03 mapping/provenance: %+v", *hlt03)
+	}
+}
+
 const pythonRegexHarness = `import json,re,sys
 x=json.load(sys.stdin); p=re.compile(x['pattern'], re.S if 's' in x['flags'] else 0)
 assert all(p.fullmatch(s) for s in x['good']), 'rejected valid answer or key order'

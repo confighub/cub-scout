@@ -15,11 +15,13 @@ latest writer; exact-field counterexamples are tracked in [#649](https://github.
 Neither status means the controlled benchmark ran. DEL-01 and DEL-02 are pinned
 public-source projections, not raw cluster snapshots; both are prepared and
 unrun, and their evidence limits are recorded per case. The 24 cases currently
-comprise 5 refreshed fixtures, 2 scale cases needing snapshot binding, 3
+comprise 5 refreshed fixtures, 2 scale cases needing snapshot binding, 4
 recorded projections prepared but not run, one raw recording prepared but not
-run, and 13 planned cases. Unmapped
-entries remain `planned`; the three live-only scale cases remain a separate
-experiment.
+run, and 12 planned cases. HLT-03 is a receipt-backed pair of public recorded
+files, not a full Kubernetes snapshot; its receipt-level workload pass and
+child Application Ingress residue are separate evidence facts. HLT-02 is the
+raw recording. Unmapped entries remain `planned`; the three live-only scale
+cases remain a separate experiment.
 
 | Group | ID | Frozen question | Current mapping/status |
 |---|---|---|---|
@@ -37,7 +39,7 @@ experiment.
 | Delivery identity | DEL-04 | OCI identity mismatch and Helm lifecycle boundary | Planned; render parity does not prove hooks executed |
 | Health | HLT-01 | Sveltos Provisioned after workload failure | `sveltos-hlt-01-health` — recorded Part B projection prepared, not run; prerequisite state is separate from health |
 | Health | HLT-02 | Flux Ready without workload checks | `flux-ready-without-health` — raw 2026-09-30 capture prepared, not run; Ready, wait/check configuration, Deployment availability, UID chain, and exact source/applied revision kept separate |
-| Health | HLT-03 | Consul convergence with Ingress residue | Planned |
+| Health | HLT-03 | Consul convergence with Ingress residue | `consul-ingress-residue` — pinned receipt + child Application capture prepared, not run; workload pass does not override watched Ingress |
 | Health | HLT-04 | Missing, old, or renewed report timestamps | Planned; report freshness, release identity, and health are separate facts |
 | Prerequisites / graph | PRE-01 | Missing CRD prerequisite | Planned |
 | Prerequisites / graph | PRE-02 | Kubernetes topology/cloud prerequisite | Planned |
