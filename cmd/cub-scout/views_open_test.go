@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/confighub/cub-scout/pkg/hub"
+	"github.com/confighub/cub-scout/v2/pkg/hub"
 )
 
 func TestViewExplorerURL_AnchorsAtProductUIHost(t *testing.T) {

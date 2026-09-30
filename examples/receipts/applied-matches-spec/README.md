@@ -111,7 +111,7 @@ field itself. Tampering with any other field — subject digest, verdict,
 predicate type, even the `_type` envelope — will fail verification.
 
 ```go
-import "github.com/confighub/cub-scout/pkg/agent"
+import "github.com/confighub/cub-scout/v2/pkg/agent"
 
 if err := agent.VerifyStatementFingerprint(stmt); err != nil {
     // The receipt has been tampered with or was malformed at emit time.

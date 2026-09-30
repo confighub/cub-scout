@@ -12,7 +12,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/confighub/cub-scout/internal/mapsvc"
+	"github.com/confighub/cub-scout/v2/internal/mapsvc"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"

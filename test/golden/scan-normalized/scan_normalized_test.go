@@ -18,7 +18,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/confighub/cub-scout/test/golden"
+	"github.com/confighub/cub-scout/v2/test/golden"
 )
 
 var updateGolden = os.Getenv("UPDATE_GOLDEN") == "1"

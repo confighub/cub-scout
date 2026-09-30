@@ -6,7 +6,7 @@ package main
 import (
 	"testing"
 
-	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
 
 func TestIsValidSeverityLevel(t *testing.T) {

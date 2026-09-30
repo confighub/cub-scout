@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
 
 func withFakePrerequisitesLoader(t *testing.T, fn func(context.Context, prerequisiteSpec, string) ([]agent.PrerequisiteFactResult, error)) {

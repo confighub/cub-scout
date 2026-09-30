@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
 
 // resetReceiptAggregateFlags clears --scope and --aggregate-policy

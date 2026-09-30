@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/confighub/cub-scout/internal/graph"
+	"github.com/confighub/cub-scout/v2/internal/graph"
 )
 
 // --- Git → Flux bridge tests ---

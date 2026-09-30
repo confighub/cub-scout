@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/confighub/cub-scout/internal/scan"
-	"github.com/confighub/cub-scout/internal/summarystore"
+	"github.com/confighub/cub-scout/v2/internal/scan"
+	"github.com/confighub/cub-scout/v2/internal/summarystore"
 )
 
 var summaryConnectedFn = configHubReadsAvailable
