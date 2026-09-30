@@ -99,7 +99,7 @@ func (h *HelmTracer) Trace(ctx context.Context, kind, name, namespace string) (*
 			FullyManaged: false,
 			Tool:         "helm",
 			TracedAt:     time.Now(),
-			Error:        "no matching release found among Secrets returned by the owner=helm query",
+			Error:        "no Helm release found managing this resource among Secrets returned by the owner=helm query",
 		}, nil
 	}
 
@@ -126,7 +126,7 @@ func (h *HelmTracer) TraceRelease(ctx context.Context, releaseName, namespace st
 			FullyManaged: false,
 			Tool:         "helm",
 			TracedAt:     time.Now(),
-			Error:        fmt.Sprintf("no owner=helm Secret for release '%s' was returned in namespace '%s'", releaseName, namespace),
+			Error:        fmt.Sprintf("Helm release '%s' not found among Secrets returned by owner=helm in namespace '%s'", releaseName, namespace),
 		}, nil
 	}
 
