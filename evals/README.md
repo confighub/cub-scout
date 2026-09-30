@@ -525,8 +525,11 @@ read-only before/after observation recorded on 2026-09-30 for
 observations; the calls were sequential, not atomic. `proof.json` carries source
 IDs and SHA-256 values. The case-scoped export contains only the matching
 Deployment, and the fixture-owned scaffold writes the accompanying proof files.
-The prompt reads the saved evidence and does not call an MCP tool. This is a
-fixture-only product-contract check intended to run with `--ablation none`; it
+The prompt instructs the model to read saved evidence and avoid MCP calls;
+this is not an enforced tool-isolation boundary. The regex grader checks only
+the final answer, so any future run must also audit its trace for unexpected
+tool use before claiming compliance with that instruction. This recorded-input
+product-contract check is intended to run with `--ablation none`; it
 is not a paired quality or savings measurement. `record.py --scaffolds-only`
 prints when it preserves this custom scaffold; the unit test validates its
 export and proof output. No eval run or paid grader has been run for this case.
