@@ -145,7 +145,8 @@ func buildBoundedExplainSummary(obj *unstructured.Unstructured, evidence agent.B
 	summary := ExplainSummary{
 		Resource:  evidence.Resource.Kind + "/" + evidence.Resource.Name,
 		Namespace: evidence.Resource.Namespace, Owner: "Unknown", Health: "Unavailable",
-		Source: "Not assessed (bounded read)", DeployedVia: "Not assessed (bounded read)",
+		HealthMeasurement: &HealthMeasurement{Status: HealthMeasurementUnmeasured, Scope: "object-local-readiness", Reason: "No supported object-local readiness result was observed."},
+		Source:            "Not assessed (bounded read)", DeployedVia: "Not assessed (bounded read)",
 		Risks: "Not assessed (bounded read)", Drift: "Not assessed (bounded read)",
 		ResourceRead: &evidence,
 		Omissions: []agent.Omission{
@@ -185,18 +186,43 @@ func buildBoundedExplainSummary(obj *unstructured.Unstructured, evidence agent.B
 	if boundedIsWorkload(obj) {
 		st, _ := agent.WorkloadConvergence(obj)
 		summary.Health = st.String()
+		if boundedHasReadinessEvidence(obj) {
+			summary.HealthMeasurement = &HealthMeasurement{Status: HealthMeasurementMeasured, Scope: "object-local-readiness"}
+		}
 		if decision, ok := agent.BuildRolloutDecisionForWorkload(obj, nil, 0, evidence.ObservedAt); ok {
 			summary.CurrentChange = &decision
 		}
 	} else if boundedHasReadyCondition(obj) {
 		st, _ := agent.WorkloadConvergence(obj)
 		summary.Health = st.String()
+		summary.HealthMeasurement = &HealthMeasurement{Status: HealthMeasurementMeasured, Scope: "object-local-readiness"}
 	} else {
 		summary.Notes = append(summary.Notes, "No supported object-local readiness evidence; health remains unknown.")
 	}
 	attr := agent.AttributeFieldMutation(obj, owner)
 	summary.MutationCause, summary.MutationManager = attr.Cause, attr.ManagerHint
 	return summary
+}
+
+func boundedHasReadinessEvidence(obj *unstructured.Unstructured) bool {
+	if obj == nil {
+		return false
+	}
+	if boundedHasReadyCondition(obj) {
+		return true
+	}
+	fieldsByKind := map[string][]string{
+		"Deployment":  {"readyReplicas", "availableReplicas"},
+		"StatefulSet": {"readyReplicas"},
+		"DaemonSet":   {"numberReady"},
+		"Job":         {"succeeded", "failed"},
+	}
+	for _, field := range fieldsByKind[obj.GetKind()] {
+		if _, found, _ := unstructured.NestedFieldNoCopy(obj.Object, "status", field); found {
+			return true
+		}
+	}
+	return false
 }
 
 func boundedIsWorkload(obj *unstructured.Unstructured) bool {

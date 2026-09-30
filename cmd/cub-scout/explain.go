@@ -70,6 +70,7 @@ type ExplainSummary struct {
 	Source                   string                            `json:"source"`
 	DeployedVia              string                            `json:"deployedVia"`
 	Health                   string                            `json:"health"`
+	HealthMeasurement        *HealthMeasurement                `json:"healthMeasurement,omitempty"`
 	Risks                    string                            `json:"risks"`
 	Drift                    string                            `json:"drift"`
 	Notes                    []string                          `json:"notes,omitempty"`
@@ -105,6 +106,20 @@ type ExplainSummary struct {
 	// (see pkg/agent.FieldMutationAttribution.ManagerHint).
 	MutationManager string `json:"mutationManager,omitempty"`
 }
+
+// HealthMeasurement describes whether explain observed evidence for the
+// legacy health value and the scope of that evidence. It does not reinterpret
+// the value or claim that unmeasured resources are unhealthy.
+type HealthMeasurement struct {
+	Status string `json:"status"` // measured or unmeasured
+	Scope  string `json:"scope"`  // controller-chain or object-local-readiness
+	Reason string `json:"reason,omitempty"`
+}
+
+const (
+	HealthMeasurementMeasured   = "measured"
+	HealthMeasurementUnmeasured = "unmeasured"
+)
 
 type explainTraceApplicationFunc func(ctx context.Context, appName string) (*agent.TraceResult, error)
 
@@ -528,20 +543,26 @@ func buildExplainTracerCandidates(ownerType string) []agent.Tracer {
 
 func buildExplainSummary(result *agent.TraceResult) ExplainSummary {
 	summary := ExplainSummary{
-		Resource:    fmt.Sprintf("%s/%s", result.Object.Kind, result.Object.Name),
-		Namespace:   result.Object.Namespace,
-		Owner:       explainSummaryOwner(result),
-		Source:      "unknown",
-		DeployedVia: "unknown",
-		Health:      "Unknown",
-		Risks:       "Not assessed",
-		Drift:       "Unknown",
+		Resource:          fmt.Sprintf("%s/%s", result.Object.Kind, result.Object.Name),
+		Namespace:         result.Object.Namespace,
+		Owner:             explainSummaryOwner(result),
+		Source:            "unknown",
+		DeployedVia:       "unknown",
+		Health:            "Unknown",
+		HealthMeasurement: &HealthMeasurement{Status: HealthMeasurementUnmeasured, Scope: "controller-chain", Reason: "No controller-chain health result was observed."},
+		Risks:             "Not assessed",
+		Drift:             "Unknown",
 	}
 
 	if len(result.Chain) > 0 {
 		summary.DeployedVia = explainDeploymentChain(result.Chain)
 		summary.Source = explainSource(result.Chain)
 		leaf := result.Chain[len(result.Chain)-1]
+		if strings.TrimSpace(leaf.Status) != "" || leaf.Ready {
+			summary.HealthMeasurement = &HealthMeasurement{Status: HealthMeasurementMeasured, Scope: "controller-chain"}
+		} else {
+			summary.HealthMeasurement.Reason = "The trace chain was observed without a leaf health status or readiness signal."
+		}
 		if strings.TrimSpace(leaf.Status) != "" {
 			summary.Health = leaf.Status
 		} else if leaf.Ready {
@@ -612,15 +633,16 @@ func buildExplainSummaryFromFailure(kind, name, namespace string, err error) Exp
 	}
 
 	return ExplainSummary{
-		Resource:    fmt.Sprintf("%s/%s", kind, name),
-		Namespace:   namespace,
-		Owner:       "Unknown - no recognized ownership labels found",
-		Source:      "unknown",
-		DeployedVia: "partial trace only",
-		Health:      "Unavailable",
-		Risks:       "Not assessed",
-		Drift:       "Unknown",
-		Notes:       []string{note},
+		Resource:          fmt.Sprintf("%s/%s", kind, name),
+		Namespace:         namespace,
+		Owner:             "Unknown - no recognized ownership labels found",
+		Source:            "unknown",
+		DeployedVia:       "partial trace only",
+		Health:            "Unavailable",
+		HealthMeasurement: &HealthMeasurement{Status: HealthMeasurementUnmeasured, Scope: "controller-chain", Reason: "The trace did not provide controller-chain health evidence."},
+		Risks:             "Not assessed",
+		Drift:             "Unknown",
+		Notes:             []string{note},
 	}
 }
 
@@ -777,6 +799,9 @@ func renderExplainText(summary ExplainSummary, mode PresentationMode, explicitMo
 	fmt.Fprintf(&b, "  %s %s\n", label("Source"), summary.Source)
 	fmt.Fprintf(&b, "  %s %s\n", label("Deployed via"), summary.DeployedVia)
 	fmt.Fprintf(&b, "  %s %s\n", label("Health"), StatusColor(summary.Health))
+	if summary.HealthMeasurement != nil {
+		fmt.Fprintf(&b, "  %s %s\n", label("Health measurement"), formatHealthMeasurement(summary.HealthMeasurement))
+	}
 	if summary.ResourceRead != nil {
 		fmt.Fprintf(&b, "  %s %s\n", label("Resource read"), formatBoundedRead(summary.ResourceRead))
 	}
@@ -839,6 +864,20 @@ func renderExplainText(summary ExplainSummary, mode PresentationMode, explicitMo
 		b.WriteString(renderConfigHubSection(chHint))
 	}
 	return b.String()
+}
+
+func formatHealthMeasurement(measurement *HealthMeasurement) string {
+	if measurement == nil {
+		return "unmeasured"
+	}
+	if measurement.Scope == "" {
+		return measurement.Status
+	}
+	formatted := measurement.Status + " (" + measurement.Scope + ")"
+	if measurement.Reason != "" {
+		formatted += ": " + measurement.Reason
+	}
+	return formatted
 }
 
 // colorExplainOwner colors the owner field based on its content.
@@ -963,6 +1002,9 @@ func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explic
 	fmt.Fprintf(&b, "- **Source:** %s\n", summary.Source)
 	fmt.Fprintf(&b, "- **Deployed via:** %s\n", summary.DeployedVia)
 	fmt.Fprintf(&b, "- **Health:** %s\n", summary.Health)
+	if summary.HealthMeasurement != nil {
+		fmt.Fprintf(&b, "- **Health measurement:** %s\n", formatHealthMeasurement(summary.HealthMeasurement))
+	}
 	if summary.ResourceRead != nil {
 		fmt.Fprintf(&b, "- **Resource read:** %s\n", formatBoundedRead(summary.ResourceRead))
 	}

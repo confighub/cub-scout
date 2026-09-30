@@ -449,6 +449,12 @@ The per-field-path map is also exposed under `live.attributionByPath`, keyed by 
   "namespace": "prod",
   "owner": "ArgoCD",
   "drift": "Detected by ConfigHub",
+  "health": "Unknown",
+  "healthMeasurement": {
+    "status": "unmeasured",
+    "scope": "controller-chain",
+    "reason": "No controller-chain health result was observed."
+  },
   "currentChange": {
     "resource": {
       "apiVersion": "apps/v1",
@@ -477,6 +483,8 @@ The per-field-path map is also exposed under `live.attributionByPath`, keyed by 
 | Field | Type | Description |
 |-------|------|-------------|
 | `owner` | string | The owner from ownership detection, the same classification and names as `map list` (`Flux`, `ArgoCD`, `Helm`, `ConfigHub`, `Native`, …). A tracer's tool replaces it only when that tracer produced a complete chain; a tracer answering "not managed by me" never sets it. `trace --format json` follows the same rule for `summary.ownerType`. |
+| `health` | string | Legacy health value; preserved for compatibility. Interpret with `healthMeasurement`, since `Unknown` or `Unavailable` does not assert unhealthy state. |
+| `healthMeasurement` | object | Additive evidence-coverage metadata for `health`; independent of `currentChange`. `status` is `measured` or `unmeasured`; `scope` is `controller-chain` or `object-local-readiness`; `reason` explains why a result is unmeasured. Controller-chain measurement requires the leaf to include a status or readiness signal; bounded workload measurement requires supported ready-condition/readiness fields. An observed object alone is not health evidence. Unmeasured means no supported health evidence was observed, not unhealthy. |
 | `currentChange` | object | Optional generation-scoped rollout progress/verdict for workload resources. Omitted for non-workloads or when live rollout evidence cannot be fetched. |
 | `currentChange.progress.phase` | string enum | One of `pending`, `applied`, `rolling_out`, `stalled`, `complete`, or `unknown`. |
 | `currentChange.verdict` | string enum | `PASS`, `WATCH`, `BLOCK`, or `INCONCLUSIVE`. Uses the same vocabulary as receipts. |

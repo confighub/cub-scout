@@ -66,6 +66,56 @@ func TestBuildExplainSummary_FromTraceResult(t *testing.T) {
 	if !strings.Contains(summary.Health, "Healthy") {
 		t.Fatalf("health = %q, want Healthy", summary.Health)
 	}
+	if summary.HealthMeasurement == nil || summary.HealthMeasurement.Status != HealthMeasurementMeasured || summary.HealthMeasurement.Scope != "controller-chain" {
+		t.Fatalf("health measurement = %+v, want measured controller-chain evidence", summary.HealthMeasurement)
+	}
+}
+
+func TestBuildExplainSummary_HealthMeasurementIsIndependentOfCurrentChange(t *testing.T) {
+	result := &agent.TraceResult{Object: agent.ResourceRef{Kind: "Deployment", Name: "api", Namespace: "prod"}}
+	summary := buildExplainSummary(result)
+	summary.CurrentChange = &agent.RolloutDecision{Verdict: agent.VerdictPASS}
+	if summary.Health != "Unknown" {
+		t.Fatalf("legacy health = %q, want unchanged Unknown", summary.Health)
+	}
+	if summary.HealthMeasurement == nil || summary.HealthMeasurement.Status != HealthMeasurementUnmeasured {
+		t.Fatalf("health measurement = %+v, want unmeasured trace health", summary.HealthMeasurement)
+	}
+	if summary.CurrentChange.Verdict != agent.VerdictPASS {
+		t.Fatalf("current change = %+v, want independent PASS", summary.CurrentChange)
+	}
+	text := renderExplainText(summary, DefaultPresentationMode, false, DefaultHintContext())
+	if !strings.Contains(text, "Health measurement: unmeasured") {
+		t.Fatalf("text output lacks measurement explanation:\n%s", text)
+	}
+	if !strings.Contains(text, "Current change: PASS") {
+		t.Fatalf("text output lost independent rollout PASS:\n%s", text)
+	}
+}
+
+func TestBuildExplainSummary_MissingLeafReadinessRemainsUnmeasured(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		error string
+	}{
+		{name: "empty leaf"},
+		{name: "partial trace", error: "controller lookup failed"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			result := &agent.TraceResult{
+				Object: agent.ResourceRef{Kind: "Deployment", Name: "api", Namespace: "prod"},
+				Chain:  []agent.ChainLink{{Kind: "Deployment", Name: "api"}},
+				Error:  tc.error,
+			}
+			summary := buildExplainSummary(result)
+			if summary.Health != "Unhealthy" {
+				t.Fatalf("legacy health = %q, want unchanged Unhealthy", summary.Health)
+			}
+			if summary.HealthMeasurement.Status != HealthMeasurementUnmeasured || summary.HealthMeasurement.Scope != "controller-chain" {
+				t.Fatalf("health measurement = %+v, want unmeasured controller-chain", summary.HealthMeasurement)
+			}
+		})
+	}
 }
 
 func TestBuildExplainSummary_ConfigHubURLsAndRevisionFacts(t *testing.T) {
