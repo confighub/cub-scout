@@ -51,6 +51,36 @@ detectors:
 	}
 }
 
+func TestProcessResource_OwnershipDetectionEvidenceUsesCanonicalType(t *testing.T) {
+	gvr := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
+	makeEntry := func(name string, ownerRef bool) MapEntry {
+		obj := &unstructured.Unstructured{}
+		obj.SetAPIVersion("apps/v1")
+		obj.SetKind("Deployment")
+		obj.SetNamespace("default")
+		obj.SetName(name)
+		if ownerRef {
+			obj.SetOwnerReferences([]metav1.OwnerReference{{APIVersion: "apps/v1", Kind: "ReplicaSet", Name: "app-rs"}})
+		}
+		entries := processResourceWithLookup(obj, gvr, "local", nil, map[string]int{}, mapApplicationSetLookup{
+			byNamespacedName: map[string]int{}, byName: map[string]int{},
+		})
+		return entries[0]
+	}
+
+	knownKubernetes := makeEntry("owned", true)
+	if knownKubernetes.Owner != "Native" {
+		t.Fatalf("display owner = %q, want legacy Native label", knownKubernetes.Owner)
+	}
+	if knownKubernetes.OwnershipDetection.Status != "detected" || knownKubernetes.OwnershipDetection.Source != "ownerRef" {
+		t.Fatalf("canonical Kubernetes ownership source lost: %+v", knownKubernetes.OwnershipDetection)
+	}
+	markerFree := makeEntry("bare", false)
+	if markerFree.Owner != "Native" || markerFree.OwnershipDetection.Status != "no_known_marker" {
+		t.Fatalf("marker-free Native entry should be distinct from known ownerRef: owner=%q evidence=%+v", markerFree.Owner, markerFree.OwnershipDetection)
+	}
+}
+
 func TestDetectOwnershipHelper_UsesAgentDetectors(t *testing.T) {
 	detectors := writeCustomDetectorsFile(t, `
 detectors:

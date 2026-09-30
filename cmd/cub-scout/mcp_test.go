@@ -111,7 +111,7 @@ func TestNewMCPGateway_ToolDescriptionsExpressChainBoundaries(t *testing.T) {
 		{name: "compare_three_way", contains: []string{"governed state agrees with live state", "Load after doctor, explain, or trace", "use doctor first"}},
 		{name: "compare_source_truth", contains: []string{"EVIDENCE", "single workload", "REQUIRED input", "never inferred", "DO NOT use this tool to approve, repair, or accept", "Load after doctor, explain, or compare_three_way", "use doctor first"}},
 		{name: "doctor", contains: []string{"FIRST standalone tool", "whether cub-scout is the right first read-only step", "stale kubeconfig", "optional bounded ConfigHub delivery evidence", "Use before explain, trace, or scan"}},
-		{name: "map", contains: []string{"what's running in this cluster", "raw `kubectl get` output", "optional context selects one exact kubeconfig context", "absent context keeps the current default", "use doctor first"}},
+		{name: "map", contains: []string{"what's running in this cluster", "raw `kubectl get` output", "optional context selects one exact kubeconfig context", "absent context keeps the current default", "ownership_evidence=true", "versioned compact diagnostics envelope", "does not prove orphaning", "use doctor first"}},
 		{name: "scan", contains: []string{"Use AFTER doctor", "awareness scan of live state", "DO NOT use this as a governed promotion or revision-safety gate"}},
 		{name: "explain", contains: []string{"resource-level mutation evidence", "pass field_path", "that path's observed manager names", "shared ambiguous evidence remains unknown", "does not order writes by time or identify a person", "Trace provides owner/source lineage only", "raw `kubectl describe`", "DO NOT load for broad cluster inventory or health"}},
 		{name: "trace", contains: []string{"owner, deployer, or GitOps/source chain", "not which field writer made a change", "do not call trace just to confirm an explain result about manual-edit attribution", "DO NOT load for broad cluster status"}},
@@ -141,6 +141,11 @@ func TestNewMCPGateway_ToolDescriptionsExpressChainBoundaries(t *testing.T) {
 	}
 
 	explainTool := gateway.tools["explain"]
+	mapProperties := gateway.tools["map"].Descriptor.InputSchema["properties"].(map[string]interface{})
+	ownershipEvidenceSchema, ok := mapProperties["ownership_evidence"].(map[string]interface{})
+	if !ok || ownershipEvidenceSchema["type"] != "boolean" {
+		t.Fatalf("map ownership_evidence schema missing or not boolean: %#v", mapProperties["ownership_evidence"])
+	}
 	for _, prop := range []string{"field_path"} {
 		if _, ok := explainTool.Descriptor.InputSchema["properties"].(map[string]interface{})[prop]; !ok {
 			t.Fatalf("explain schema missing %q", prop)
@@ -1859,6 +1864,10 @@ func TestMCPMapToolFiltersAndModes(t *testing.T) {
 	if want := "map list --json"; strings.Join(got, " ") != want {
 		t.Errorf("args = %q, want %q: an unfiltered call is unchanged", strings.Join(got, " "), want)
 	}
+	call(map[string]interface{}{"ownership_evidence": true})
+	if want := "map list --json --ownership-evidence"; strings.Join(got, " ") != want {
+		t.Errorf("args = %q, want %q", strings.Join(got, " "), want)
+	}
 	got = nil
 	result := call(map[string]interface{}{"summary": true, "count": true})
 	if result["isError"] != true || got != nil {
@@ -1869,6 +1878,18 @@ func TestMCPMapToolFiltersAndModes(t *testing.T) {
 		result = call(map[string]interface{}{"context": invalid})
 		if result["isError"] != true || got != nil {
 			t.Errorf("invalid explicit context %#v must fail before running; isError=%v args=%v", invalid, result["isError"], got)
+		}
+	}
+	for _, invalid := range []map[string]interface{}{
+		{"ownership_evidence": "true"},
+		{"ownership_evidence": true, "summary": true},
+		{"ownership_evidence": true, "names_only": true},
+		{"ownership_evidence": true, "count": true},
+	} {
+		got = nil
+		result := call(invalid)
+		if result["isError"] != true || got != nil {
+			t.Errorf("invalid ownership evidence arguments should fail before invoking runner: args=%v result=%v ran=%v", invalid, result, got)
 		}
 	}
 }

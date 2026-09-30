@@ -528,6 +528,7 @@ cub-scout map list [flags]
 | `--count` | bool | false | Count only |
 | `--names-only` | bool | false | Names only (scripting) |
 | `--summary` | bool | false | Counts by owner and kind after filters, as JSON (`total`, `byOwner`, `byKind`, `byKindOwner`) or text |
+| `--ownership-evidence` | bool | false | Opt into versioned ownership detector diagnostics and normalized list omissions; incompatible with `--summary`, `--count`, and `--names-only` |
 
 ### Owner Values
 
@@ -555,6 +556,12 @@ JSON entries produced from live Kubernetes reads include `observation` evidence
 with `source: kubernetes-api`, `mode: map-list`, `observedAt`, `freshness:
 point-in-time`, and optional cluster/namespace/kind scope. See
 [`json-contracts.md` § Observation Evidence Contract](json-contracts.md#observation-evidence-contract).
+
+`--ownership-evidence --format json` selects the separate
+`map-list-ownership-evidence.v1` JSON envelope described in
+[`json-contracts.md` § Map Ownership Diagnostics](json-contracts.md#map-ownership-diagnostics).
+It does not alter default JSON. The local TUI `V` view presents this evidence
+for its already loaded workload entries.
 
 ### Query Syntax
 

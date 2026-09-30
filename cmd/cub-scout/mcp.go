@@ -284,7 +284,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"map": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "map",
-				Description: "Standalone resource inventory with ownership classification (map list --json). Use for 'what's running in this cluster or namespace?', 'how many does Flux manage?' and 'which workloads are unmanaged?', especially when the user wants more meaning than raw `kubectl get` output. On a large cluster the full list can be too big for your context: ask for summary=true (counts by owner and kind) or names_only=true, and filter with kind, owner or query (for example kind=Deployment, owner=Native). The optional context selects one exact kubeconfig context for this inventory read; absent context keeps the current default. DO NOT load for bare 'what's broken?' or one-resource root cause; use doctor first for health, then explain for a specific resource.",
+				Description: "Standalone resource inventory with ownership classification (map list --json). Use for 'what's running in this cluster or namespace?', 'how many does Flux manage?' and 'which workloads are unmanaged?', especially when the user wants more meaning than raw `kubectl get` output. On a large cluster the full list can be too big for your context: ask for summary=true (counts by owner and kind) or names_only=true, and filter with kind, owner or query (for example kind=Deployment, owner=Native). The optional context selects one exact kubeconfig context for this inventory read; absent context keeps the current default. Opt in to ownership_evidence=true only when detector sources and list omissions are needed; it returns a versioned compact diagnostics envelope and cannot be combined with compact output modes. A no-known-marker result is limited to the returned object's metadata and does not prove orphaning. DO NOT load for bare 'what's broken?' or one-resource root cause; use doctor first for health, then explain for a specific resource.",
 				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
@@ -308,6 +308,10 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						"query": map[string]interface{}{
 							"type":        "string",
 							"description": "Optional query expression, for example 'kind=Deployment AND owner!=Native'.",
+						},
+						"ownership_evidence": map[string]interface{}{
+							"type":        "boolean",
+							"description": "Return per-entry canonical ownership detector sources and normalized list omissions. Cannot be combined with summary, names_only, or count.",
 						},
 						"summary": map[string]interface{}{
 							"type":        "boolean",
@@ -335,7 +339,21 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				if modes > 1 {
 					return nil, fmt.Errorf("choose at most one of summary, names_only and count")
 				}
+				includeEvidence := false
+				if raw, present := arguments["ownership_evidence"]; present {
+					value, ok := raw.(bool)
+					if !ok {
+						return nil, fmt.Errorf("ownership_evidence must be a boolean")
+					}
+					includeEvidence = value
+				}
+				if includeEvidence && modes > 0 {
+					return nil, fmt.Errorf("ownership_evidence cannot be combined with summary, names_only, or count")
+				}
 				args := []string{"map", "list", "--json"}
+				if includeEvidence {
+					args = append(args, "--ownership-evidence")
+				}
 				if raw, present := arguments["context"]; present {
 					contextName, ok := raw.(string)
 					if !ok || strings.TrimSpace(contextName) == "" {

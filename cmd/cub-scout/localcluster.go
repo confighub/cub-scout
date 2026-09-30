@@ -138,6 +138,7 @@ func (m LocalClusterModel) getEffectiveQueries() []SavedQuery {
 // LocalClusterModel represents the local cluster TUI state
 type LocalClusterModel struct {
 	entries                []MapEntry
+	ownershipOmissions     []mapsvc.CollectionOmission
 	gitops                 []GitOpsResource
 	gitSources             []GitSourceInfo // Git sources (GitRepository, OCIRepository, HelmRepository)
 	width                  int
@@ -311,15 +312,16 @@ const (
 	viewSprawl
 	viewHistory
 	viewMaps
-	viewTracePicker  // Trace resource picker
-	viewTraceResult  // Trace result display
-	viewScanResult   // Scan result display
-	viewSuspended    // Suspended/paused resources
-	viewApps         // Apps view (grouped by app label)
-	viewDependencies // Dependencies view (upstream/downstream)
-	viewGitSources   // GitOps Sources view (Git repos → deployers → resources)
-	viewClusterData  // Cluster Data view (all data sources TUI reads)
-	viewAppHierarchy // App Hierarchy view (inferred ConfigHub model)
+	viewTracePicker       // Trace resource picker
+	viewTraceResult       // Trace result display
+	viewScanResult        // Scan result display
+	viewSuspended         // Suspended/paused resources
+	viewApps              // Apps view (grouped by app label)
+	viewDependencies      // Dependencies view (upstream/downstream)
+	viewGitSources        // GitOps Sources view (Git repos → deployers → resources)
+	viewClusterData       // Cluster Data view (all data sources TUI reads)
+	viewAppHierarchy      // App Hierarchy view (inferred ConfigHub model)
+	viewOwnershipEvidence // Evidence for ownership detection on loaded objects
 )
 
 type localKeyMap struct {
@@ -336,17 +338,18 @@ type localKeyMap struct {
 	ExportHTML key.Binding
 	ExportSVG  key.Binding
 	// View shortcuts
-	Dashboard key.Binding
-	Workloads key.Binding
-	Pipelines key.Binding
-	Drift     key.Binding
-	Orphans   key.Binding
-	Crashes   key.Binding
-	Issues    key.Binding
-	Bypass    key.Binding
-	Sprawl    key.Binding
-	History   key.Binding
-	Maps      key.Binding
+	Dashboard         key.Binding
+	Workloads         key.Binding
+	Pipelines         key.Binding
+	Drift             key.Binding
+	Orphans           key.Binding
+	Crashes           key.Binding
+	Issues            key.Binding
+	Bypass            key.Binding
+	Sprawl            key.Binding
+	History           key.Binding
+	Maps              key.Binding
+	OwnershipEvidence key.Binding
 	// Actions on selected resource
 	Trace key.Binding
 	Scan  key.Binding
@@ -379,54 +382,56 @@ type localKeyMap struct {
 
 func defaultLocalKeyMap() localKeyMap {
 	return localKeyMap{
-		Up:            key.NewBinding(key.WithKeys("up", "k"), key.WithHelp("↑/k", "up")),
-		Down:          key.NewBinding(key.WithKeys("down", "j"), key.WithHelp("↓/j", "down")),
-		Quit:          key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q", "quit")),
-		Help:          key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "help")),
-		Refresh:       key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "refresh")),
-		Search:        key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "search")),
-		Hub:           key.NewBinding(key.WithKeys("H"), key.WithHelp("H", "ConfigHub")),
-		Tab:           key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "next view")),
-		Enter:         key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "select")),
-		ExportHTML:    key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "export html")),
-		ExportSVG:     key.NewBinding(key.WithKeys("E"), key.WithHelp("E", "export svg")),
-		Dashboard:     key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "status")),
-		Workloads:     key.NewBinding(key.WithKeys("w"), key.WithHelp("w", "workloads")),
-		Pipelines:     key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "pipelines")),
-		Drift:         key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "drift")),
-		Orphans:       key.NewBinding(key.WithKeys("o"), key.WithHelp("o", "orphans")),
-		Crashes:       key.NewBinding(key.WithKeys("c"), key.WithHelp("c", "crashes")),
-		Issues:        key.NewBinding(key.WithKeys("i"), key.WithHelp("i", "issues")),
-		Bypass:        key.NewBinding(key.WithKeys("b"), key.WithHelp("b", "bypass")),
-		Sprawl:        key.NewBinding(key.WithKeys("x"), key.WithHelp("x", "sprawl")),
-		History:       key.NewBinding(key.WithKeys("h"), key.WithHelp("h", "history")),
-		Maps:          key.NewBinding(key.WithKeys("M"), key.WithHelp("M", "maps")),
-		Trace:         key.NewBinding(key.WithKeys("T"), key.WithHelp("T", "trace")),
-		Scan:          key.NewBinding(key.WithKeys("S"), key.WithHelp("S", "scan")),
-		Query:         key.NewBinding(key.WithKeys("Q"), key.WithHelp("Q", "query")),
-		Import:        key.NewBinding(key.WithKeys("I"), key.WithHelp("I", "import")),
-		Suspended:     key.NewBinding(key.WithKeys("u"), key.WithHelp("u", "suspended")),
-		Apps:          key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "apps")),
-		Dependencies:  key.NewBinding(key.WithKeys("D"), key.WithHelp("D", "dependencies")),
-		GitSources:    key.NewBinding(key.WithKeys("G"), key.WithHelp("G", "git sources")),
-		ClusterData:   key.NewBinding(key.WithKeys("4"), key.WithHelp("4", "cluster data")),
-		AppHierarchy:  key.NewBinding(key.WithKeys("5", "A"), key.WithHelp("5/A", "app hierarchy")),
-		NextNamespace: key.NewBinding(key.WithKeys("]"), key.WithHelp("]", "next ns")),
-		PrevNamespace: key.NewBinding(key.WithKeys("["), key.WithHelp("[", "prev ns")),
-		Command:       key.NewBinding(key.WithKeys(":"), key.WithHelp(":", "command")),
-		Suggest:       key.NewBinding(key.WithKeys("C"), key.WithHelp("C", "commands")),
-		Shell:         key.NewBinding(key.WithKeys("$"), key.WithHelp("$", "shell")),
+		Up:                key.NewBinding(key.WithKeys("up", "k"), key.WithHelp("↑/k", "up")),
+		Down:              key.NewBinding(key.WithKeys("down", "j"), key.WithHelp("↓/j", "down")),
+		Quit:              key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q", "quit")),
+		Help:              key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "help")),
+		Refresh:           key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "refresh")),
+		Search:            key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "search")),
+		Hub:               key.NewBinding(key.WithKeys("H"), key.WithHelp("H", "ConfigHub")),
+		Tab:               key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "next view")),
+		Enter:             key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "select")),
+		ExportHTML:        key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "export html")),
+		ExportSVG:         key.NewBinding(key.WithKeys("E"), key.WithHelp("E", "export svg")),
+		Dashboard:         key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "status")),
+		Workloads:         key.NewBinding(key.WithKeys("w"), key.WithHelp("w", "workloads")),
+		Pipelines:         key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "pipelines")),
+		Drift:             key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "drift")),
+		Orphans:           key.NewBinding(key.WithKeys("o"), key.WithHelp("o", "orphans")),
+		Crashes:           key.NewBinding(key.WithKeys("c"), key.WithHelp("c", "crashes")),
+		Issues:            key.NewBinding(key.WithKeys("i"), key.WithHelp("i", "issues")),
+		Bypass:            key.NewBinding(key.WithKeys("b"), key.WithHelp("b", "bypass")),
+		Sprawl:            key.NewBinding(key.WithKeys("x"), key.WithHelp("x", "sprawl")),
+		History:           key.NewBinding(key.WithKeys("h"), key.WithHelp("h", "history")),
+		Maps:              key.NewBinding(key.WithKeys("M"), key.WithHelp("M", "maps")),
+		OwnershipEvidence: key.NewBinding(key.WithKeys("V"), key.WithHelp("V", "ownership evidence")),
+		Trace:             key.NewBinding(key.WithKeys("T"), key.WithHelp("T", "trace")),
+		Scan:              key.NewBinding(key.WithKeys("S"), key.WithHelp("S", "scan")),
+		Query:             key.NewBinding(key.WithKeys("Q"), key.WithHelp("Q", "query")),
+		Import:            key.NewBinding(key.WithKeys("I"), key.WithHelp("I", "import")),
+		Suspended:         key.NewBinding(key.WithKeys("u"), key.WithHelp("u", "suspended")),
+		Apps:              key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "apps")),
+		Dependencies:      key.NewBinding(key.WithKeys("D"), key.WithHelp("D", "dependencies")),
+		GitSources:        key.NewBinding(key.WithKeys("G"), key.WithHelp("G", "git sources")),
+		ClusterData:       key.NewBinding(key.WithKeys("4"), key.WithHelp("4", "cluster data")),
+		AppHierarchy:      key.NewBinding(key.WithKeys("5", "A"), key.WithHelp("5/A", "app hierarchy")),
+		NextNamespace:     key.NewBinding(key.WithKeys("]"), key.WithHelp("]", "next ns")),
+		PrevNamespace:     key.NewBinding(key.WithKeys("["), key.WithHelp("[", "prev ns")),
+		Command:           key.NewBinding(key.WithKeys(":"), key.WithHelp(":", "command")),
+		Suggest:           key.NewBinding(key.WithKeys("C"), key.WithHelp("C", "commands")),
+		Shell:             key.NewBinding(key.WithKeys("$"), key.WithHelp("$", "shell")),
 	}
 }
 
 // Messages
 type localDataLoadedMsg struct {
-	boundedContext string
-	entries        []MapEntry
-	gitops         []GitOpsResource
-	gitSources     []GitSourceInfo // Git sources (GitRepository, etc.)
-	detectedApps   []string        // App names detected from namespaces
-	err            error
+	boundedContext     string
+	entries            []MapEntry
+	ownershipOmissions []mapsvc.CollectionOmission
+	gitops             []GitOpsResource
+	gitSources         []GitSourceInfo // Git sources (GitRepository, etc.)
+	detectedApps       []string        // App names detected from namespaces
+	err                error
 }
 
 type localAuthCheckMsg struct {
@@ -634,6 +639,7 @@ func loadLocalClusterDataWithConfig(cfg *rest.Config, boundContext string, confi
 	}
 
 	var entries []MapEntry
+	var ownershipOmissions []mapsvc.CollectionOmission
 	var gitops []GitOpsResource
 	byOwner := map[string]int{}
 
@@ -647,6 +653,7 @@ func loadLocalClusterDataWithConfig(cfg *rest.Config, boundContext string, confi
 	for _, gvr := range workloadResources {
 		l, err := dynClient.Resource(gvr).List(ctx, v1.ListOptions{})
 		if err != nil {
+			ownershipOmissions = append(ownershipOmissions, mapListCollectionOmission(gvr, "", err))
 			continue
 		}
 		for _, item := range l.Items {
@@ -782,7 +789,7 @@ func loadLocalClusterDataWithConfig(cfg *rest.Config, boundContext string, confi
 	}
 	sort.Strings(detectedApps)
 
-	return localDataLoadedMsg{entries: entries, gitops: gitops, gitSources: gitSources, detectedApps: detectedApps, boundedContext: boundContext}
+	return localDataLoadedMsg{entries: entries, ownershipOmissions: ownershipOmissions, gitops: gitops, gitSources: gitSources, detectedApps: detectedApps, boundedContext: boundContext}
 }
 
 func parseFluxKustomization(item *unstructured.Unstructured) GitOpsResource {
@@ -1269,6 +1276,7 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = msg.err
 		} else {
 			m.entries = msg.entries
+			m.ownershipOmissions = msg.ownershipOmissions
 			m.boundedContext = msg.boundedContext
 			m.gitops = msg.gitops
 			m.gitSources = msg.gitSources
@@ -1750,6 +1758,9 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case key.Matches(msg, m.keymap.Maps):
 					m.panelView = viewMaps
 					m.updatePanelContent()
+				case key.Matches(msg, m.keymap.OwnershipEvidence):
+					m.panelView = viewOwnershipEvidence
+					m.updatePanelContent()
 				case key.Matches(msg, m.keymap.Up):
 					if m.cursor > 0 {
 						m.cursor--
@@ -1947,6 +1958,13 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keymap.Maps):
 			m.panelMode = true
 			m.panelView = viewMaps
+			m.userHasNavigated = true
+			m.updatePanelContent()
+			return m, nil
+
+		case key.Matches(msg, m.keymap.OwnershipEvidence):
+			m.panelMode = true
+			m.panelView = viewOwnershipEvidence
 			m.userHasNavigated = true
 			m.updatePanelContent()
 			return m, nil
@@ -2327,6 +2345,8 @@ func (m *LocalClusterModel) updatePanelContent() {
 		content = m.getPanelAppHierarchy()
 	case viewMaps:
 		content = m.getPanelMaps()
+	case viewOwnershipEvidence:
+		content = m.getPanelOwnershipEvidence()
 	}
 	m.panelPane.SetContent(content)
 	m.panelPane.GotoTop()
@@ -2370,9 +2390,34 @@ func (m LocalClusterModel) getPanelTitle() string {
 		return "APP HIERARCHY"
 	case viewMaps:
 		return "MAPS"
+	case viewOwnershipEvidence:
+		return "OWNERSHIP EVIDENCE"
 	default:
 		return "DETAILS"
 	}
+}
+
+// getPanelOwnershipEvidence renders detector evidence already captured during
+// inventory loading. Opening this view performs no additional cluster reads.
+func (m LocalClusterModel) getPanelOwnershipEvidence() string {
+	entries := m.getFilteredEntries()
+	var b strings.Builder
+	b.WriteString("Ownership detection applies only to workload objects returned during inventory loading. It does not establish that a resource is orphaned or identify a person.\n\n")
+	for _, entry := range entries {
+		b.WriteString(fmt.Sprintf("%s/%s %s — %s\n", entry.Namespace, entry.Name, entry.Kind, mapsvc.OwnershipDetectionSummary(entry.OwnershipDetection)))
+	}
+	if len(entries) == 0 {
+		b.WriteString("No workload entries are currently available.\n")
+	}
+	status := "complete"
+	if len(m.ownershipOmissions) > 0 {
+		status = "partial"
+	}
+	b.WriteString(fmt.Sprintf("\nCollection: %s (%d workload list request(s) omitted)\n", status, len(m.ownershipOmissions)))
+	for _, omission := range m.ownershipOmissions {
+		b.WriteString("- " + mapsvc.CollectionOmissionSummary(omission) + "\n")
+	}
+	return b.String()
 }
 
 func (m LocalClusterModel) View() string {
@@ -2735,6 +2780,7 @@ func (m LocalClusterModel) renderHelp() string {
 	b.WriteString("  " + lcNameStyle.Render("4") + "  Cluster Data (all data sources TUI reads)\n")
 	b.WriteString("  " + lcNameStyle.Render("5/A") + "  App Hierarchy (inferred ConfigHub model)\n")
 	b.WriteString("  " + lcNameStyle.Render("M") + "  Three Maps view\n")
+	b.WriteString("  " + lcNameStyle.Render("V") + "  Ownership detection evidence (loaded workloads)\n")
 	b.WriteString("  " + lcNameStyle.Render("Tab") + "  Cycle views\n")
 	b.WriteString("\n")
 

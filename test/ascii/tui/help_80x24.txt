@@ -20,6 +20,7 @@ VIEWS
   4  Cluster Data (all data sources TUI reads)
   5/A  App Hierarchy (inferred ConfigHub model)
   M  Three Maps view
+  V  Ownership detection evidence (loaded workloads)
   Tab  Cycle views
 
 NAVIGATION

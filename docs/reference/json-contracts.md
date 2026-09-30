@@ -86,6 +86,33 @@ For MCP, the current rule is:
 3. the wrapped CLI surface remains the contract source of truth
 4. selected connected tools may add `structuredContent` with parsed data plus read-only trust guidance
 
+## Map Ownership Diagnostics
+
+`map list --ownership-evidence --format json` and MCP `map` with
+`ownership_evidence: true` opt into a versioned
+`map-list-ownership-evidence.v1` envelope. The default `map list --format json`
+remains its existing `[]Entry` shape; the opt-in resource records are a
+compact ownership projection containing resource identity, owner details,
+existing platform-substrate `ownerEvidence` when present, and
+`ownershipDetection`.
+
+`ownershipDetection.status` is `detected`, `no_known_marker`, or
+`source_missing`. `detected` carries the canonical `DetectOwnership` source.
+`no_known_marker` means only that no supported marker was detected on that
+successfully returned object; it does not prove the resource is unmanaged or
+orphaned. `source_missing` reports that a classified result lacked source
+information. The separate `collection` block is `complete` or `partial` and
+lists normalized request omissions by API version, resource, optional
+namespace, and reason. A request-scoped 404 is recorded as `not_found`; it is
+not a claim that the API resource is globally unsupported. Raw server errors
+are omitted.
+
+The ASCII/Markdown list and TUI `V` view present the same detector/omission
+facts from their existing inventory results. The TUI view uses loaded entries
+and performs no additional API reads. `--ownership-evidence` cannot be mixed
+with `--summary`, `--count`, or `--names-only` because those modes do not return
+per-entry diagnostics.
+
 ## Bounded Resource Read (v2.10.0)
 
 `explain --bounded --format json` and MCP `explain` with `bounded: true` use

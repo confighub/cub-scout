@@ -170,6 +170,7 @@ cub-scout map list [flags]
 | `--count` | Show count only |
 | `--names-only` | Show names only |
 | `--summary` | Show counts by owner and kind (after filters) instead of the entries |
+| `--ownership-evidence` | Emit the versioned ownership-only diagnostics envelope with detector sources and normalized list omissions; cannot be combined with `--summary`, `--count`, or `--names-only` |
 | `--explain` | Show explanatory content |
 | `--kube-context` | Use this exact kubeconfig context for this inventory read; missing or empty names fail without fallback |
 
@@ -220,6 +221,16 @@ For live Kubernetes reads, JSON entries also include `observation` with
 `source`, `mode`, `observedAt`, `freshness`, and optional scope so repeated
 reviewers can tell when the inventory was collected. See
 [`json-contracts.md` § Observation Evidence Contract](json-contracts.md#observation-evidence-contract).
+
+`map list --ownership-evidence --format json` opts into a separate
+`map-list-ownership-evidence.v1` envelope. Its compact resource projection
+contains the canonical detector source (or a bounded no-known-marker result
+for that returned object) and a separate completeness/omissions block. It is
+not the legacy `[]Entry` JSON shape; use ordinary `map list --format json` for
+the full entry/drilldown record. `--ownership-evidence` is also exposed as
+`ownership_evidence: true` on MCP `map`; the TUI's `V` view shows the same
+evidence from the already loaded inventory. See
+[`json-contracts.md` § Map Ownership Diagnostics](json-contracts.md#map-ownership-diagnostics).
 
 ---
 
