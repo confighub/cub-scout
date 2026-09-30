@@ -1,3 +1,12 @@
+---
+name: sveltos-inferred-revision
+description: "Recorded Sveltos inferred revision versus separate OCI delivery receipt; prepared, not run."
+tags: [benchmark-v1, DEL-03, sveltos, revision, recorded]
+max_turns: 5
+timeout_seconds: 90
+allowed_tools: [Read, Grep]
+---
+
 Review the three staged evidence files in `cluster/`: the Sveltos fleet status
 documentation excerpt, the related known-behaviours excerpt, and a separate
 ConfigHub OCI delivery receipt. Use only what these artifacts establish. Keep

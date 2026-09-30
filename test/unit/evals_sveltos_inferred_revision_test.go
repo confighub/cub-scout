@@ -4,15 +4,19 @@
 package unit
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
+
+	"gopkg.in/yaml.v3"
 )
 
 const sveltosInferredRevisionCase = "sveltos-inferred-revision"
@@ -80,19 +84,66 @@ func TestSveltosInferredRevisionEvidenceAndGrader(t *testing.T) {
 	}
 
 	caseData, err := os.ReadFile(filepath.Join(caseRoot, "case.yaml"))
-	if err != nil || !strings.Contains(string(caseData), "FIXTURE-OWNED-SCAFFOLD") || !strings.Contains(string(caseData), "allowed_tools: [Read, Grep]") {
-		t.Fatalf("case must declare its fixture-owned, file-only scaffold: %v", err)
+	if err != nil || !strings.Contains(string(caseData), "FIXTURE-OWNED-SCAFFOLD") {
+		t.Fatalf("case must declare its fixture-owned scaffold: %v", err)
+	}
+	var schema struct {
+		SchemaVersion string `yaml:"schema_version"`
+		Name          string `yaml:"name"`
+		Context       struct {
+			Scaffold string `yaml:"scaffold_script"`
+		} `yaml:"context"`
+	}
+	caseDecoder := yaml.NewDecoder(bytes.NewReader(caseData))
+	caseDecoder.KnownFields(true)
+	if err := caseDecoder.Decode(&schema); err != nil {
+		t.Fatalf("decode case schema: %v", err)
+	}
+	var extra any
+	if err := caseDecoder.Decode(&extra); err != io.EOF {
+		t.Fatalf("case.yaml must contain exactly one document, second decode=%v", err)
+	}
+	if schema.SchemaVersion != "1.1" || schema.Name != sveltosInferredRevisionCase || schema.Context.Scaffold != "scaffold.sh" {
+		t.Fatalf("case schema or scaffold declaration invalid: %+v", schema)
 	}
 	prompt, err := os.ReadFile(filepath.Join(caseRoot, "prompt.md"))
 	if err != nil {
 		t.Fatal(err)
 	}
+	promptText := string(prompt)
+	if !strings.HasPrefix(promptText, "---\n") {
+		t.Fatal("prompt.md is missing execution frontmatter")
+	}
+	frontmatterEnd := strings.Index(promptText[4:], "\n---\n")
+	if frontmatterEnd < 0 {
+		t.Fatal("prompt.md frontmatter is unterminated")
+	}
+	var execution struct {
+		Name           string   `yaml:"name"`
+		Description    string   `yaml:"description"`
+		Tags           []string `yaml:"tags"`
+		MaxTurns       int      `yaml:"max_turns"`
+		TimeoutSeconds int      `yaml:"timeout_seconds"`
+		AllowedTools   []string `yaml:"allowed_tools"`
+	}
+	execDecoder := yaml.NewDecoder(strings.NewReader(promptText[4 : 4+frontmatterEnd]))
+	execDecoder.KnownFields(true)
+	if err := execDecoder.Decode(&execution); err != nil {
+		t.Fatalf("decode execution frontmatter: %v", err)
+	}
+	if execution.Name != schema.Name || execution.Description == "" || execution.MaxTurns != 5 || execution.TimeoutSeconds != 90 || len(execution.AllowedTools) != 2 || execution.AllowedTools[0] != "Read" || execution.AllowedTools[1] != "Grep" {
+		t.Fatalf("execution frontmatter invalid: %+v", execution)
+	}
+	if !containsString(execution.Tags, "DEL-03") || !containsString(execution.Tags, "sveltos") {
+		t.Fatalf("execution frontmatter missing case tags: %+v", execution.Tags)
+	}
+	promptBody := promptText[4+frontmatterEnd+5:]
 	for _, leaked := range []string{"eu-central-uat1", "sha256:e2b3ed3756b1", "hx-sveltos-fleet-pilot"} {
-		if strings.Contains(string(prompt), leaked) {
+		if strings.Contains(promptBody, leaked) {
 			t.Errorf("prompt leaks expected answer value %q", leaked)
 		}
 	}
-	if strings.Contains(string(prompt), "MCP") || strings.Contains(string(caseData), "MCP") {
+	if strings.Contains(promptBody, "MCP") || strings.Contains(string(caseData), "MCP") {
 		t.Fatal("case must not force or declare an MCP-specific route")
 	}
 
@@ -152,6 +203,15 @@ func checkSveltosInferredRevisionCaseScaffold(t *testing.T, caseRoot string) {
 			t.Errorf("scaffold output %s differs from pinned fixture %s: %v", file.output, file.fixture, err)
 		}
 	}
+}
+
+func containsString(values []string, want string) bool {
+	for _, value := range values {
+		if value == want {
+			return true
+		}
+	}
+	return false
 }
 
 func assertEvalRegexInPythonAndJS(t *testing.T, pattern string, good, bad []string) {
