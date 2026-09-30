@@ -1,6 +1,6 @@
 # AI Read Me First
 
-**2026-09-30:** the maintainer adopted the [3.0 execution plan](docs/roadmap-3.0-execution.md). Start with the latest handover and [execution tracker #645](https://github.com/confighub/cub-scout/issues/645). v2.12.4 is being prepared; historical eval scores are exploratory, not proof of equal-evidence savings.
+**2026-09-30:** the maintainer adopted the [3.0 execution plan](docs/roadmap-3.0-execution.md). Start with the latest handover and [execution tracker #645](https://github.com/confighub/cub-scout/issues/645). [v2.12.4 is published](docs/releases/v2.12.4.md); historical eval scores are exploratory, not proof of equal-evidence savings.
 
 This is the repo-specific cold-start guide for Claude, Codex, and other AI coding agents.
 

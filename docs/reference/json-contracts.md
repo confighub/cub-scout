@@ -490,9 +490,8 @@ ambiguous, report the writer as unknown.
 | `currentChange.verdict` | string enum | `PASS`, `WATCH`, `BLOCK`, or `INCONCLUSIVE`. Uses the same vocabulary as receipts. |
 | `currentChange.reason` | string enum | Stable reason such as `workload_converged`, `rollout_progressing`, `stale_generation`, `progress_stalled`, `runtime_failed`, `rollout_failed`, `workload_missing`, or `evidence_missing`. |
 | `currentChange.evidence` | object | Reviewable kstatus, generation, observed generation, pod reason, and observation timestamp evidence used to build the verdict. |
-| `mutationCause` | string enum | Resource-level rollup using the same enum as `cause` above. It does not identify a particular field or the latest writer. The live-resource explain path emits `unknown` when the resource is fetched but its manager evidence is missing or unrecognized; the field is omitted when attribution fetch fails. The bounded object-local path also emits `unknown` when no manager evidence is classifiable. |
+| `mutationCause` | string enum | Resource-level rollup using the same enum as `cause` above. It does not identify a particular field or the latest writer. The unbounded live-resource path emits `unknown` when the resource is fetched but manager evidence is missing or unrecognized; this field is omitted when attribution fetch fails. The bounded object-local path emits `unknown` when no manager evidence is classifiable. |
 | `mutationManager` | string | Representative manager string across the resource's managedFields for transparency. It is not necessarily the manager for a particular field or the latest writer, and does not identify a person. |
-
 When `explain --field-path <canonical-path>` (or MCP `field_path`) is supplied,
 JSON additionally includes only that requested path:
 
@@ -511,9 +510,12 @@ manager-evidence enum above; `managers` is the sorted set of observed manager
 names claiming that path. If the path is absent, its FieldsV1 evidence is
 malformed/missing, or only unrecognized managers claim it, `cause` is
 `unknown` and `reason` explains the unresolved or incomplete evidence. This
-result never falls back to the resource-level rollup. Wildcard and unkeyed
-standard list paths are rejected. It does not establish write order or identify a person. The object is omitted when no field path was
-requested or the resource itself could not be fetched.
+result never falls back to the resource-level rollup. Wildcard selectors are
+rejected; a path resolves only if it exactly matches a decoded FieldsV1 key.
+It does not establish write order or identify a person. When a requested
+resource read fails, `fieldAttribution` remains present with `unknown`, the
+requested path, and an availability reason. The object is omitted only when no
+field path was requested.
 
 ### DoctorSummary rollout additions (doctor --format json)
 
