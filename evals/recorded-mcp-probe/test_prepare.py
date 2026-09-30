@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -15,6 +16,92 @@ prepare = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prepare)
 
 class PreparationGuards(unittest.TestCase):
+    def test_pair_runner_stops_owned_descendants_and_refuses_relaunch(self):
+        import json
+        import time
+        runner_spec = importlib.util.spec_from_file_location('run_pair', ROOT / 'run_pair.py')
+        runner = importlib.util.module_from_spec(runner_spec)
+        runner_spec.loader.exec_module(runner)
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / 'plugin').mkdir()
+            heartbeat = root / 'heartbeat'
+            child = "import signal,time,pathlib; signal.signal(signal.SIGTERM,signal.SIG_IGN); p=pathlib.Path(" + repr(str(heartbeat)) + "); " + "\nwhile True: p.write_text(str(time.monotonic())); time.sleep(.02)"
+            parent = "import subprocess,sys,signal,time; signal.signal(signal.SIGTERM,signal.SIG_IGN); subprocess.Popen([sys.executable,'-c'," + repr(child) + "]); time.sleep(60)"
+            self.assertEqual(runner.run_owned([sys.executable, '-c', parent], root, timeout=.4, grace=.1), 124)
+            self.assertTrue(heartbeat.exists())
+            final = heartbeat.read_bytes()
+            time.sleep(.1)
+            self.assertEqual(heartbeat.read_bytes(), final)
+            self.assertTrue(json.loads((root / 'completion.json').read_text())['timedOut'])
+            with self.assertRaises(FileExistsError):
+                runner.run_owned([sys.executable, '-c', 'raise SystemExit(99)'], root)
+            self.assertEqual(heartbeat.read_bytes(), final)
+
+    def test_pair_runner_cleans_group_on_external_signals(self):
+        import json
+        import signal
+        import time
+        for signum in (signal.SIGINT, signal.SIGTERM):
+            with self.subTest(signum=signum), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                (root / 'plugin').mkdir()
+                heartbeat = root / 'heartbeat'
+                child = "import signal,time,pathlib; signal.signal(signal.SIGTERM,signal.SIG_IGN); p=pathlib.Path(" + repr(str(heartbeat)) + "); " + "\nwhile True: p.write_text(str(time.monotonic())); time.sleep(.02)"
+                parent = "import subprocess,sys,signal,time; signal.signal(signal.SIGTERM,signal.SIG_IGN); subprocess.Popen([sys.executable,'-c'," + repr(child) + "]); time.sleep(60)"
+                driver = "import sys; sys.path.insert(0," + repr(str(ROOT)) + "); from run_pair import run_owned; from pathlib import Path; raise SystemExit(run_owned(" + repr([sys.executable, '-c', parent]) + ",Path(" + repr(str(root)) + "),timeout=5,grace=.1))"
+                process = subprocess.Popen([sys.executable, '-c', driver])
+                try:
+                    deadline = time.monotonic() + 3
+                    while not heartbeat.exists() and time.monotonic() < deadline:
+                        time.sleep(.02)
+                    self.assertTrue(heartbeat.exists())
+                    process.send_signal(signum)
+                    self.assertEqual(process.wait(timeout=8), 128 + signum)
+                    last = heartbeat.read_bytes()
+                    time.sleep(.1)
+                    self.assertEqual(heartbeat.read_bytes(), last)
+                    self.assertEqual(json.loads((root / 'completion.json').read_text())['interruptedBySignal'], signum)
+                finally:
+                    if process.poll() is None:
+                        process.terminate()
+                        process.wait(timeout=8)
+
+    def test_purpose_configuration_preserves_plumbing_and_makes_economy_neutral(self):
+        import json
+        with tempfile.TemporaryDirectory() as tmp:
+            plugin = Path(tmp) / 'plugin'
+            shutil.copytree(ROOT / 'template/plugin', plugin)
+            manifest_template = plugin / '.claude-plugin/plugin.json.in'
+            manifest_path = plugin / '.claude-plugin/plugin.json'
+            manifest_path.write_bytes(manifest_template.read_bytes())
+            case = plugin / 'evals/recorded-explain-mcp'
+            original_prompt = (case / 'prompt.md').read_bytes()
+            original_tool_grader = (case / 'graders/tool-called.md').read_bytes()
+            original_manifest = manifest_template.read_bytes()
+
+            prepare.configure_purpose(plugin, 'plumbing')
+            self.assertEqual((case / 'prompt.md').read_bytes(), original_prompt)
+            self.assertEqual((case / 'graders/tool-called.md').read_bytes(), original_tool_grader)
+
+            prepare.configure_purpose(plugin, 'economy')
+            prompt = (case / 'prompt.md').read_text()
+            self.assertIn('max_turns: 8', prompt)
+            self.assertIn('timeout_seconds: 90', prompt)
+            self.assertIn('no particular tool, file-reading sequence, or amount of reading is required', prompt)
+            self.assertNotIn('call the available `explain` MCP tool', prompt)
+            self.assertNotIn('Read `cluster/deployments.yaml`', prompt)
+            self.assertTrue((case / 'graders/answer.md').is_file())
+            self.assertFalse((case / 'graders/tool-called.md').exists())
+            manifest = json.loads((plugin / '.claude-plugin/plugin.json').read_text())
+            self.assertEqual(manifest['description'], 'Recorded-only evidence for a Kubernetes resource question.')
+            self.assertEqual(original_manifest, (ROOT / 'template/plugin/.claude-plugin/plugin.json.in').read_bytes())
+
+    def test_invalid_purpose_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaisesRegex(ValueError, 'unsupported purpose'):
+                prepare.configure_purpose(Path(tmp), 'benchmark')
+
     def test_hash_mismatch_and_existing_output_are_not_overwritten(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

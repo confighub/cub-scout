@@ -15,6 +15,7 @@ REPO = Path(__file__).resolve().parents[2]
 PACKET = Path(__file__).resolve().parent
 TEMPLATE = PACKET / "template/plugin"
 SOURCE_FIXTURE = REPO / "evals/recorded-explain-contract/fixtures/deployments.yaml"
+ECONOMY_PROMPT = PACKET / "economy/prompt.md"
 FIXTURE_SHA256 = "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8"
 
 
@@ -30,10 +31,29 @@ def shell_quote(value: str) -> str:
     return "'" + value.replace("'", "'\"'\"'") + "'"
 
 
+def configure_purpose(plugin: Path, purpose: str) -> None:
+    """Apply purpose-specific prompt/scoring without changing plumbing default."""
+    if purpose == "plumbing":
+        return
+    if purpose != "economy":
+        raise ValueError(f"unsupported purpose: {purpose}")
+    case_dir = plugin / "evals/recorded-explain-mcp"
+    shutil.copyfile(ECONOMY_PROMPT, case_dir / "prompt.md")
+    tool_grader = case_dir / "graders/tool-called.md"
+    if tool_grader.exists():
+        tool_grader.unlink()
+    manifest_path = plugin / ".claude-plugin/plugin.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["description"] = "Recorded-only evidence for a Kubernetes resource question."
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary", required=True, type=Path, help="local cub-scout binary to pin")
     parser.add_argument("--binary-sha256", required=True, help="expected lowercase SHA-256 of --binary")
+    parser.add_argument("--purpose", choices=("plumbing", "economy"), default="plumbing",
+                        help="diagnostic objective; default plumbing preserves the original prompt and grader")
     parser.add_argument("--out", required=True, type=Path, help="new output directory; existing paths are refused")
     args = parser.parse_args()
 
@@ -88,6 +108,8 @@ def main() -> None:
         if source.name in {"server-wrapper.sh.in", "scaffold.sh"}:
             target.chmod(0o755)
 
+    configure_purpose(plugin, args.purpose)
+
     case_fixtures = plugin / "evals/recorded-explain-mcp/fixtures"
     case_fixtures.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(SOURCE_FIXTURE, case_fixtures / "deployments.yaml")
@@ -131,11 +153,17 @@ def main() -> None:
     for path in sorted(plugin.rglob("*")):
         if path.is_file():
             generated[str(path.relative_to(plugin))] = sha256(path)
+    case_dir = plugin / "evals/recorded-explain-mcp"
     provenance = {
+        "purpose": args.purpose,
         "binary": str(binary),
         "binarySha256": args.binary_sha256,
         "recordedFixtureSha256": FIXTURE_SHA256,
         "armFixtureBytesEqual": True,
+        "promptSha256": sha256(case_dir / "prompt.md"),
+        "caseSha256": sha256(case_dir / "case.yaml"),
+        "answerGraderSha256": sha256(case_dir / "graders/answer.md"),
+        "toolUseGrader": "included for plumbing diagnostic only" if args.purpose == "plumbing" else "omitted; inspect raw trace as diagnostic only",
         "preflight": "passed: initialize, tools/list, exact call, unsupported-tool rejection",
         "modelRun": False,
         "generatedPluginFiles": generated,
