@@ -1,0 +1,84 @@
+apiVersion: "helm-expt.confighub.com/v1alpha1"
+kind: "CatalogOciDeliveryProofReceipt"
+metadata:
+  name: "bitnami-nginx-24-0-2-http-clusterip"
+spec:
+  chart: "bitnami/nginx"
+  version: "24.0.2"
+  base: "http-clusterip"
+  observedAt: "2026-07-26T17:10:27.568Z"
+  result: "pass"
+  source:
+    packagePath: "packages/bitnami/nginx/24.0.2"
+    packageOci: "oci://europe-west1-docker.pkg.dev/nth-fort-499605-q5/helm-expt/bitnami-nginx:24.0.2"
+    renderIntent: "data/helm-render-intents/intents/bitnami-nginx-24-0-2-http-clusterip.yaml"
+    committedObjects: "recipes/bitnami/nginx/24.0.2/revisions/http-clusterip/r001/rendered/release-objects.yaml"
+  render:
+    result: "pass"
+    manifestSha256: "9547e0067fbdbb318d9e4309e3dcc74211bf01cb7ac243b8b23586ccc337d7e7"
+    objectCount: 6
+    allowedExtraObject: "v1|Namespace||nginx"
+    exactCatalogObjects: "yes"
+  releaseOci:
+    host: "oci.hub.confighub.com:443"
+    reference: "oci://oci.hub.confighub.com:443/space/hx-catalog-oci-20260726-wr7-nginx:latest"
+    publish: "pass"
+    releaseId: "1dbed784-4fb6-4092-a734-075eb8bdfd4c"
+    bundleDigest: "sha256:882622f0736d2bd740da6189689cd716ee427b8f1ce44814291e9dc0274fbb89"
+    workloadSpace: "hx-catalog-oci-20260726-wr7-nginx"
+    unitCount: 6
+    sameDigestAcrossConsumers: "yes"
+    digest: "sha256:26d97438d5b52dcacf140d2ef4c57a97bacd0c63e22d5cfa19076a0723b73049"
+  run:
+    rig: "hx-catalog-oci-20260726-wr7"
+    clusterCommand: "cub cluster up"
+    targetShape: "one throwaway cub-managed kind cluster with Argo CD and Flux"
+    releaseTarget: "hx-catalog-oci-20260726-wr7-cluster/oci"
+    organizationPurpose: "ephemeral scratch organization"
+    cleanup:
+      namespace: "pass"
+      workloadSpace: "pass"
+      rig: "pass"
+  legs:
+    argo:
+      mode: "Argo CD"
+      source: "OCI Application"
+      controllerReady: "yes"
+      digest: "sha256:26d97438d5b52dcacf140d2ef4c57a97bacd0c63e22d5cfa19076a0723b73049"
+      workload:
+        deploymentReady: "yes"
+        replicas: "1/1"
+        podReady: "yes"
+        serviceType: "ClusterIP"
+        image: "registry-1.docker.io/bitnami/nginx@sha256:805bcc863fc3f602589fc75cae91eeedebad234d5ce5a476c96b03a747821e7f"
+      result: "pass"
+    flux:
+      mode: "Flux"
+      source: "OCIRepository and Kustomization"
+      controllerReady: "yes"
+      digest: "sha256:26d97438d5b52dcacf140d2ef4c57a97bacd0c63e22d5cfa19076a0723b73049"
+      workload:
+        deploymentReady: "yes"
+        replicas: "1/1"
+        podReady: "yes"
+        serviceType: "ClusterIP"
+        image: "registry-1.docker.io/bitnami/nginx@sha256:805bcc863fc3f602589fc75cae91eeedebad234d5ce5a476c96b03a747821e7f"
+      result: "pass"
+    direct:
+      mode: "Direct apply"
+      source: "oras pull and kubectl apply"
+      controllerReady: "yes"
+      digest: "sha256:26d97438d5b52dcacf140d2ef4c57a97bacd0c63e22d5cfa19076a0723b73049"
+      workload:
+        deploymentReady: "yes"
+        replicas: "1/1"
+        podReady: "yes"
+        serviceType: "ClusterIP"
+        image: "registry-1.docker.io/bitnami/nginx@sha256:805bcc863fc3f602589fc75cae91eeedebad234d5ce5a476c96b03a747821e7f"
+      result: "pass"
+  limits:
+    - "This proves bitnami/nginx 24.0.2 with the http-clusterip base on the recorded throwaway kind target."
+    - "It does not prove another chart, base, Kubernetes version, or production target."
+    - "The scratch organization did not have the helm-catalog apply-policy Triggers; this run proves delivery, not policy execution."
+    - "The test applied the Argo CD Application and Flux source objects directly so that it measured release-OCI consumption without also testing app-of-apps delivery."
+    - "The direct leg proves first apply and workload readiness. Separate receipts cover prune, CRD ordering, and field-conflict handling."

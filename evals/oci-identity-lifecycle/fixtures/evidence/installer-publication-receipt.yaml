@@ -1,0 +1,31 @@
+apiVersion: helm-expt.confighub.com/v1alpha1
+kind: InstallerPackagePublicationReceipt
+metadata:
+  name: bitnami-nginx-24.0.2
+spec:
+  ref: oci://europe-west1-docker.pkg.dev/nth-fort-499605-q5/helm-expt/bitnami-nginx:24.0.2
+  observedAt: "2026-08-26T07:00:13.236Z"
+  package:
+    path: packages/bitnami/nginx/24.0.2
+    sha256: 9905c5ba5f0b0187f5d22b7f4113856635476bb081d584b36251f5513b010414
+    sourceTreeSHA256: b16985c07d31760a77c54abb58eac0c5c272347b6d9081802f520f37fded64d4
+  publicationAction: pushed-new
+  commands:
+    package: "cub installer package packages/bitnami/nginx/24.0.2 -o <tmp>/bitnami-nginx-24.0.2.tgz"
+    push: "cub installer push <tmp>/bitnami-nginx-24.0.2.tgz oci://europe-west1-docker.pkg.dev/nth-fort-499605-q5/helm-expt/bitnami-nginx:24.0.2"
+    inspect: "cub installer inspect oci://europe-west1-docker.pkg.dev/nth-fort-499605-q5/helm-expt/bitnami-nginx:24.0.2 --json"
+  outputs:
+    manifestDigest: sha256:7cf08c0348a32d577ffa0e16069ec6c2510ce773b372008d25b938f9546c5f67
+    layerDigest: sha256:9905c5ba5f0b0187f5d22b7f4113856635476bb081d584b36251f5513b010414
+    package: |
+      Bundled bitnami-nginx@24.0.2
+        output: <tmp>
+        files:  13
+        size:   9220 bytes
+        digest: sha256:9905c5ba5f0b0187f5d22b7f4113856635476bb081d584b36251f5513b010414
+    push: |
+      Pushed europe-west1-docker.pkg.dev/nth-fort-499605-q5/helm-expt/bitnami-nginx:24.0.2
+        manifest: sha256:7cf08c0348a32d577ffa0e16069ec6c2510ce773b372008d25b938f9546c5f67
+        layer:    sha256:9905c5ba5f0b0187f5d22b7f4113856635476bb081d584b36251f5513b010414 (9220 bytes, 13 files)
+    inspectJSONSHA256: c72525728bff5352a7adabd13c5de62cc6d05e9ef8307bcade4e9ee4035c3fdf
+    inspectJSONCanonicalSHA256: b73fa7e3c6479e4596680014da62d405b54c54ba933096f20d5faa42111ba977
