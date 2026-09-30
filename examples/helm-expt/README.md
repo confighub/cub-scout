@@ -359,3 +359,38 @@ Today, `--input-attestation` chains prior cub-scout receipts whose fingerprints
 can be verified by cub-scout. Keep `helm-expt` receipts adjacent in the run
 directory until those upstream receipts are emitted or bridged as cub-scout /
 in-toto Statement receipts.
+
+## Pinned Helm 3/4 release-secret matrix (prepared; not run)
+
+The companion `run-helm-version-matrix.sh` defines a disposable, serial matrix
+for the bounded namespaced Deployment case. It uses one newly created pinned
+kind cluster and three isolated releases: fresh Helm 3.22.0 install, fresh
+Helm 4.1.4 default install, and Helm 3.22.0 install followed by Helm 4.1.4
+`upgrade --server-side=auto` with replicas changed from one to two. Each run
+records binary/image/chart hashes, exact commands, Deployment identity/UID,
+replica counts, managedFields, Secret names only, release history, and matching
+standalone/plugin `trace --format json` results. The script refuses existing
+cluster/evidence state and uses a private kubeconfig and Helm homes.
+
+After review, the intended invocation is:
+
+```bash
+mkdir /path/to/new-empty-evidence
+HELM3_BIN=/absolute/path/to/helm-v3.22.0 \
+  examples/helm-expt/run-helm-version-matrix.sh /path/to/new-empty-evidence
+```
+
+Pins are kind `v0.31.0`, node image
+`kindest/node:v1.35.0@sha256:4613778f3cfcd10e615029370f5786704559103cf27bef934597ba562b269661`,
+Helm 3.22.0 (`8566ea7d76445d174050eca068bc6d685ba3607de8430524a809a16f505a6138`),
+and Helm 4.1.4 (`11e3c9fb6548fa1661a72000a6a483a31f1c2a0bf300f3d2422270feee180d34`).
+The offline preflight guard is `examples/helm-expt/test-helm-version-matrix-safety.sh`;
+it checks evidence preservation, rejects a binary hash mismatch, and proves a
+pre-existing kind cluster is refused before cluster creation.
+
+This is a validation protocol, not evidence that the matrix has passed. It
+covers ordinary namespaced install/upgrade and does not cover hooks, CRDs,
+rollback, or server-side conflict modes. Manager fields are recorded as
+observations; they do not by themselves prove which apply method Helm used.
+Run only in an explicitly authorized disposable environment after reviewing
+the script and ensuring no other live lane is active.
