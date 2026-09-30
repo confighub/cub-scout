@@ -1,8 +1,11 @@
 # HLT-02 — Flux Ready without workload health evidence
 
 This directory prepares a real raw-object capture for benchmark case HLT-02.
-It is **not run yet**, contains no captured result fixture, and is not admitted
-to `benchmark-v1`. No paid evaluation was run.
+The first capture attempt failed before Flux installation because the install
+version lacked the required `v` prefix. Its owned cluster was removed with
+shared context/config unchanged. No completed result fixture is admitted to
+`benchmark-v1`, and no paid evaluation was run. The corrected export is now
+validated before cluster creation; a repeat is pending.
 
 ## Success contract
 

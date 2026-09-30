@@ -78,8 +78,8 @@ func TestFluxHLT02CaptureManifestsDefineWaitFalseAndPinnedSource(t *testing.T) {
 		t.Fatal("fixture patch must use the pinned cached pause image and deterministic missing command")
 	}
 	readme, err := os.ReadFile(filepath.Join(fluxHLT02Dir, "README.md"))
-	if err != nil || !strings.Contains(string(readme), "absence of `healthChecks` alone is insufficient") || !strings.Contains(string(readme), "not run yet") {
-		t.Fatalf("README must preserve wait=true nuance and unrun status: %v", err)
+	if err != nil || !strings.Contains(string(readme), "absence of `healthChecks` alone is insufficient") {
+		t.Fatalf("README must preserve wait=true nuance: %v", err)
 	}
 }
 
@@ -179,7 +179,13 @@ case "$1" in
 esac
 `)
 	writeExecutable(t, filepath.Join(bin, "docker"), "#!/usr/bin/env bash\nexit 0\n")
-	writeExecutable(t, filepath.Join(bin, "flux"), "#!/usr/bin/env bash\nif [[ \"$1\" == --version ]]; then echo 'flux version 2.8.6'; exit 0; fi\nexit 90\n")
+	writeExecutable(t, filepath.Join(bin, "flux"), `#!/usr/bin/env bash
+if [[ "$1" == --version ]]; then echo 'flux version 2.8.6'; exit 0; fi
+if [[ "$1" == install && "$2" == --version=v2.8.6 && "$4" == --export ]]; then
+  echo 'apiVersion: v1'; exit 0
+fi
+exit 90
+`)
 	for _, name := range []string{"kubectl", "jq"} {
 		writeExecutable(t, filepath.Join(bin, name), "#!/usr/bin/env bash\nexit 90\n")
 	}

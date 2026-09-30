@@ -110,6 +110,10 @@ if awk -v name="$CLUSTER" '$0 == name { found=1 } END { exit !found }' <<< "$exi
   exit 2
 fi
 
+# Validate the export before spending a cluster lifecycle on a CLI error.
+run_bounded 20 flux install --version="v$FLUX_VERSION" --components=source-controller,kustomize-controller --export > "$OUT/flux-install.yaml"
+flux_manifest_sha=$(sha256 "$OUT/flux-install.yaml")
+
 create_attempted=1
 KUBECONFIG="$private_kubeconfig" run_bounded 150 kind create cluster --name "$CLUSTER" --image "$NODE_IMAGE" --kubeconfig "$private_kubeconfig" --wait 120s
 chmod 600 "$private_kubeconfig"
@@ -132,8 +136,6 @@ printf '%s\n' "$SOURCE_COMMIT" > "$OUT/source-commit.txt"
 printf '%s\n' "$SOURCE_REPOSITORY" > "$OUT/source-repository.txt"
 printf '%s\n' "$SOURCE_PATH" > "$OUT/source-path.txt"
 
-run_bounded 20 flux install --version="$FLUX_VERSION" --components=source-controller,kustomize-controller --export > "$OUT/flux-install.yaml"
-flux_manifest_sha=$(sha256 "$OUT/flux-install.yaml")
 kubectl_owned apply -f "$OUT/flux-install.yaml"
 kubectl_owned wait --for=condition=Available deployment/source-controller deployment/kustomize-controller -n flux-system --timeout=180s
 
