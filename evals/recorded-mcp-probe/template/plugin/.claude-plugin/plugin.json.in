@@ -1,0 +1,12 @@
+{
+  "name": "recorded-mcp-probe",
+  "description": "Local recorded-only one-tool plumbing diagnostic; no skills or hooks.",
+  "mcpServers": {
+    "cub-scout": {
+      "command": "@WRAPPER_PATH@",
+      "args": []
+    }
+  },
+  "version": "0.0.1",
+  "author": {"name": "Local diagnostic fixture"}
+}

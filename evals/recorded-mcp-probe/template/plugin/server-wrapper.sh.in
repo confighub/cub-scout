@@ -1,0 +1,26 @@
+#!/bin/sh
+set -eu
+EXPECTED_BINARY_SHA256='@BINARY_SHA256@'
+EXPECTED_RECORDING_SHA256='305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8'
+BINARY=@BINARY_PATH@
+RECORDING=@RECORDING_PATH@
+SERVER_HOME=@SERVER_HOME@
+EMPTY_KUBECONFIG=@EMPTY_KUBECONFIG@
+
+sha256() {
+	if command -v shasum >/dev/null 2>&1; then
+		shasum -a 256 "$1" | awk '{print $1}'
+	elif command -v sha256sum >/dev/null 2>&1; then
+		sha256sum "$1" | awk '{print $1}'
+	else
+		echo 'recorded MCP probe: shasum or sha256sum is required' >&2
+		exit 70
+	fi
+}
+
+[ "$(sha256 "$BINARY")" = "$EXPECTED_BINARY_SHA256" ] || { echo 'recorded MCP probe: binary hash mismatch' >&2; exit 70; }
+[ "$(sha256 "$RECORDING")" = "$EXPECTED_RECORDING_SHA256" ] || { echo 'recorded MCP probe: recording hash mismatch' >&2; exit 70; }
+[ -d "$SERVER_HOME" ] || { echo 'recorded MCP probe: isolated server home missing' >&2; exit 70; }
+[ -z "$(find "$SERVER_HOME" -mindepth 1 -maxdepth 1 -print -quit)" ] || { echo 'recorded MCP probe: isolated server home is not empty' >&2; exit 70; }
+[ -f "$EMPTY_KUBECONFIG" ] && [ ! -s "$EMPTY_KUBECONFIG" ] || { echo 'recorded MCP probe: owned empty kubeconfig missing or nonempty' >&2; exit 70; }
+exec /usr/bin/env -i PATH=/usr/bin:/bin HOME="$SERVER_HOME" KUBECONFIG="$EMPTY_KUBECONFIG" "$BINARY" mcp serve --recording "$RECORDING"
