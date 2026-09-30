@@ -1,0 +1,62 @@
+# Recorded transcript projection; this is not a Kubernetes resource.
+projection_format: recorded-transcript/v1
+source:
+  repository: confighub/sveltos-confighub
+  revision: 8187910f9fe226e109e55c4d9c7c0e21297ff424
+  document: health-2026-09-30.log
+  sha256: 24ef8acd48ead05400604198bb0ea695c284c146ab68f27b10a6601f75a655a8
+  section: Part B — the HealthCheck and ClusterHealthCheck written by cub sveltos apply
+  source_line_range: [109, 131]
+  excerpt_sha256: 6a03c7ec3491bce8bfaf1307114be732b75200225004272608c873b170aa0621
+scope:
+  cluster: eu-central-test1
+  observation_time_in_excerpt: 07:40:43
+  later_status_output_time: not recorded
+  atomic_snapshot: false
+excerpt_lines:
+  - source_line: 109
+    text: "== 2. A workload goes down after its release was applied: test1's node is cordoned and the cleanup controller's pod deleted (07:36:39)"
+  - source_line: 110
+    text: "$ kubectl --kubeconfig test1.kubeconfig cordon node/mer-test1-control-plane"
+  - source_line: 111
+    text: "node/mer-test1-control-plane cordoned"
+  - source_line: 112
+    text: "$ kubectl --kubeconfig test1.kubeconfig -n kyverno delete pod -l app.kubernetes.io/component=cleanup-controller --wait=false"
+  - source_line: 113
+    text: "pod \"kyverno-cleanup-controller-59c8fdfb66-97nnv\" deleted from kyverno namespace"
+  - source_line: 114
+    text: "-- 07:40:43, 238s later, the ClusterHealthCheck on eu-central-test1: False Deployment: kyverno/kyverno-background-controller status is Degraded Message: kyverno-background-controller: 0 of 1 available Deployment: kyverno/kyverno-cleanup-controller status is Progressing Message: kyverno-cleanup-controller: rolling out "
+  - source_line: 115
+    text: "$ sh -c \"kubectl --context kind-mer-mgmt get clustersummary -A -o json | jq -r '.items[] | select(.spec.clusterName==\\\"eu-central-test1\\\") | .metadata.name + \\\": \\\" + ([.status.featureSummaries[].status] | join(\\\",\\\"))'\""
+  - source_line: 116
+    text: "kyverno-eu-central-test1-sveltos-eu-central-test1: Provisioned"
+  - source_line: 117
+    text: "-- Sveltos still reports the profile Provisioned: its apply-time checks do not look again"
+  - source_line: 118
+    text: "$ cub sveltos status --context kind-mer-mgmt"
+  - source_line: 119
+    text: "CLUSTER           SPACE                         SYNC    HEALTH    REVISION             WRITTEN    MESSAGE"
+  - source_line: 120
+    text: "eu-central-prod1  mer-kyverno-eu-central-prod1  Synced  Degraded  sha256:a539b34b4f06  yes        ClusterHealthCheck mer-kyverno: Deployment: kyverno/kyverno-reports-controller status is Degraded Message: kyverno-reports-controller: 0 of 1 available Deployment: kyverno/kyverno-admission-controller status is Degraded Message: kyverno-admission-controller: 2 of 3 available Deployment: kyverno/kyverno-background-controller status is Degraded Message: kyverno-background-controller: 0 of 1 avail..."
+  - source_line: 121
+    text: "eu-central-prod2  mer-kyverno-eu-central-prod2  Synced  Healthy   sha256:2a9f8af8d12c  unchanged  "
+  - source_line: 122
+    text: "eu-central-prod3  mer-kyverno-eu-central-prod3  Synced  Healthy   sha256:e71e2320987f  yes        "
+  - source_line: 123
+    text: "eu-central-prod4  mer-kyverno-eu-central-prod4  Synced  Degraded  sha256:b61151227eca  yes        ClusterHealthCheck mer-kyverno: Deployment: kyverno/kyverno-cleanup-controller status is Degraded Message: kyverno-cleanup-controller: 0 of 1 available"
+  - source_line: 124
+    text: "eu-central-test1  mer-kyverno-eu-central-test1  Synced  Degraded  sha256:3cd288e11479  yes        ClusterHealthCheck mer-kyverno: Deployment: kyverno/kyverno-background-controller status is Degraded Message: kyverno-background-controller: 0 of 1 available Deployment: kyverno/kyverno-cleanup-controller status is Progressing Message: kyverno-cleanup-controller: rolling out"
+  - source_line: 125
+    text: "eu-central-uat1   mer-kyverno-eu-central-uat1   Synced  Degraded  sha256:c7a666bbe28b  yes        ClusterHealthCheck mer-kyverno: Deployment: kyverno/kyverno-reports-controller status is Degraded Message: kyverno-reports-controller: 0 of 1 available"
+  - source_line: 126
+    text: "$ cub space get mer-kyverno-eu-central-test1 -o 'jq=.Space.Annotations[\"confighub.com/live-status\"] | fromjson | {syncStatus, healthStatus, message}'"
+  - source_line: 127
+    text: "{"
+  - source_line: 128
+    text: "  \"healthStatus\": \"Degraded\","
+  - source_line: 129
+    text: "  \"message\": \"ClusterHealthCheck mer-kyverno: Deployment: kyverno/kyverno-background-controller status is Degraded Message: kyverno-background-controller: 0 of 1 available Deployment: kyverno/kyverno-cleanup-controller status is Progressing Message: kyverno-cleanup-controller: rolling out\","
+  - source_line: 130
+    text: "  \"syncStatus\": \"Synced\""
+  - source_line: 131
+    text: "}"
