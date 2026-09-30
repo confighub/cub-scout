@@ -113,8 +113,8 @@ func TestNewMCPGateway_ToolDescriptionsExpressChainBoundaries(t *testing.T) {
 		{name: "doctor", contains: []string{"FIRST standalone tool", "whether cub-scout is the right first read-only step", "stale kubeconfig", "optional bounded ConfigHub delivery evidence", "Use before explain, trace, or scan"}},
 		{name: "map", contains: []string{"what's running in this cluster", "raw `kubectl get` output", "use doctor first"}},
 		{name: "scan", contains: []string{"Use AFTER doctor", "awareness scan of live state", "DO NOT use this as a governed promotion or revision-safety gate"}},
-		{name: "explain", contains: []string{"Use AFTER doctor or map", "raw `kubectl describe`", "DO NOT load for broad cluster inventory or health"}},
-		{name: "trace", contains: []string{"Use AFTER doctor or explain", "then explain if the resource is still unclear", "DO NOT load for broad cluster status"}},
+		{name: "explain", contains: []string{"use this directly for 'who changed this field?' or 'was this edited by hand?'", "mutationCause and mutationManager from managedFields", "reports unknown when attribution evidence is missing or ambiguous", "A manager identifies a field-manager string, not a human", "call trace only if the owner or source chain is also needed", "raw `kubectl describe`", "DO NOT load for broad cluster inventory or health"}},
+		{name: "trace", contains: []string{"owner, deployer, or GitOps/source chain", "not which field writer made a change", "do not call trace just to confirm an explain result about manual-edit attribution", "DO NOT load for broad cluster status"}},
 		{name: "gitops_status", contains: []string{"GitOps/controller delivery status", "controllerCoverage[]", "absence vs RBAC/API omission", "DO NOT use to force sync"}},
 		{name: "confighub_changesets", contains: []string{"Connected-only", "what governed write changed a known unit or space", "approval trail", "Load after trace or confighub_units"}},
 		{name: "confighub_k8s_resources", contains: []string{"Connected-only", "Resource-backed Kubernetes configuration reader", "stored ConfigHub Resource data, not live cluster state", "either space or target is REQUIRED", "low-API-load"}},
@@ -154,6 +154,16 @@ func TestNewMCPGateway_ToolDescriptionsCoverRepresentativeIntentEdges(t *testing
 			tool:     "doctor",
 			intent:   "kubectl cannot reach the cluster after restart.",
 			contains: []string{"stale kubeconfig", "API unreachable"},
+		},
+		{
+			tool:     "explain",
+			intent:   "Did someone change this known Deployment by hand?",
+			contains: []string{"use this directly", "mutationCause and mutationManager", "reports unknown when attribution evidence is missing or ambiguous", "not a human", "sufficient for field-writer attribution"},
+		},
+		{
+			tool:     "trace",
+			intent:   "Which controller or GitOps source owns this known Deployment?",
+			contains: []string{"owner, deployer, or GitOps/source chain", "not which field writer", "resource is known"},
 		},
 		{
 			tool:     "scan",
