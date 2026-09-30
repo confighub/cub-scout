@@ -98,6 +98,28 @@ RSS. These are not production latency, bandwidth or fleet-size guarantees.
   different, narrower question. Their two cold requests and zero-request cache
   hits must not be compared to a full inventory as if the tasks were equal.
 
+## Standalone TUI Context Binding (#599 partial)
+
+The standalone TUI resolves its Kubernetes configuration when the session
+starts and reuses that captured configuration for inventory refreshes and
+bounded object drilldowns. A current-context change or a same-name context
+retarget in the kubeconfig during that session does not redirect those reads;
+restart the TUI to adopt changed configuration. The header shows the selected
+kubeconfig context, `in-cluster`, or `unavailable` based on the resolved
+inventory binding. A deterministic two-server regression test demonstrates
+that a drilldown remains on the original server after its named kubeconfig
+context is edited:
+
+```sh
+KUBECONFIG=/tmp/scout-offline-validation.kubeconfig go test ./cmd/cub-scout \
+  -run '^TestBoundedExplainTUISessionPinsSameNameEndpointAndHeader$' -count=1
+```
+
+The test uses temporary HTTP servers and a temporary kubeconfig; it does not
+call a live cluster. This is a partial #599 foundation, not a global context
+selection guarantee. Trace and other subprocess/shell paths, mode switching,
+and explicit context-selection surfaces remain outside this packet.
+
 ## Next Decision
 
 Slice 1 (within-cycle coalescing) has shipped, lowering each cycle to 43
