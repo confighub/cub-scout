@@ -1,0 +1,36 @@
+{
+  "schema": "map-list-ownership-evidence.v1",
+  "resources": [
+    {
+      "clusterName": "recorded-test-cluster",
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespace": "shop",
+      "name": "checkout",
+      "owner": "Flux",
+      "ownerDetails": {"name": "shop-app"},
+      "ownershipDetection": {
+        "status": "detected",
+        "source": "label:kustomize.toolkit.fluxcd.io/name"
+      }
+    },
+    {
+      "clusterName": "recorded-test-cluster",
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespace": "shop",
+      "name": "api",
+      "owner": "Native",
+      "ownershipDetection": {
+        "status": "no_known_marker",
+        "reason": "no_supported_marker_observed_on_returned_object"
+      }
+    }
+  ],
+  "collection": {
+    "status": "partial",
+    "omissions": [
+      {"apiVersion": "apps/v1", "resource": "deployments", "namespace": "restricted", "reason": "forbidden"}
+    ]
+  }
+}

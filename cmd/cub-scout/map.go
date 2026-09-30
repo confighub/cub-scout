@@ -22,6 +22,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -49,6 +50,7 @@ var (
 	mapNamesOnly                   bool   // --names-only flag for names-only output
 	mapSummary                     bool   // --summary flag: counts by owner and kind
 	mapExplain                     bool   // --explain flag for learning mode
+	mapOwnershipEvidence           bool   // --ownership-evidence opt-in diagnostics
 	mapActivitySince               string // --since flag for map activity
 	mapActivityWithConfigHub       bool
 	mapActivityConfigHubSpace      string
@@ -692,6 +694,7 @@ func init() {
 	mapListCmd.Flags().BoolVar(&mapCount, "count", false, "Output count only (no list)")
 	mapListCmd.Flags().BoolVar(&mapNamesOnly, "names-only", false, "Output names only (for scripting)")
 	mapListCmd.Flags().BoolVar(&mapSummary, "summary", false, "Output counts by owner and kind instead of the entries (after filters)")
+	mapListCmd.Flags().BoolVar(&mapOwnershipEvidence, "ownership-evidence", false, "Include ownership detector evidence and collection omissions")
 	mapListCmd.Flags().BoolVar(&mapExplain, "explain", false, "Show explanatory content to help learn GitOps concepts")
 	mapListCmd.Flags().StringVar(&mapListFormat, "format", "ascii", "Output format: ascii, json, md")
 
@@ -767,6 +770,9 @@ func runMapList(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	if mapOwnershipEvidence && (mapSummary || mapCount || mapNamesOnly) {
+		return fmt.Errorf("--ownership-evidence cannot be combined with --summary, --count, or --names-only")
+	}
 
 	// #111: Validate owner flag before doing any work
 	if mapOwner != "" {
@@ -783,27 +789,36 @@ func runMapList(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		return renderMapListFromEntries(entries)
+		return renderMapListFromEntriesWithDiagnostics(entries, nil, mapOwnershipEvidence)
 	}
 
 	// Normal mode: collect from cluster
-	return runMapListFromClusterWithSelection(ctx, selection)
+	return runMapListFromClusterWithSelectionAndDiagnostics(ctx, selection, mapOwnershipEvidence)
 }
 
 func runMapListFromCluster(ctx context.Context) error {
 	cfg, err := buildConfig()
-	return runMapListFromClusterWithConfig(ctx, cfg, err)
+	return runMapListFromClusterWithConfigAndDiagnostics(ctx, cfg, err, false)
 }
 
 func runMapListFromClusterWithSelection(ctx context.Context, selection clusterContextSelection) error {
+	return runMapListFromClusterWithSelectionAndDiagnostics(ctx, selection, false)
+}
+
+func runMapListFromClusterWithSelectionAndDiagnostics(ctx context.Context, selection clusterContextSelection, includeOwnershipEvidence bool) error {
 	if !selection.explicit {
-		return runMapListFromCluster(ctx)
+		cfg, err := buildConfig()
+		return runMapListFromClusterWithConfigAndDiagnostics(ctx, cfg, err, includeOwnershipEvidence)
 	}
 	cfg, _, err := resolveClusterConfig(selection.name, true, clientcmd.NewDefaultClientConfigLoadingRules(), rest.InClusterConfig)
-	return runMapListFromClusterWithConfig(ctx, cfg, err)
+	return runMapListFromClusterWithConfigAndDiagnostics(ctx, cfg, err, includeOwnershipEvidence)
 }
 
 func runMapListFromClusterWithConfig(ctx context.Context, cfg *rest.Config, configErr error) error {
+	return runMapListFromClusterWithConfigAndDiagnostics(ctx, cfg, configErr, false)
+}
+
+func runMapListFromClusterWithConfigAndDiagnostics(ctx context.Context, cfg *rest.Config, configErr error, includeOwnershipEvidence bool) error {
 	debug := os.Getenv("CUB_SCOUT_DEBUG") != ""
 	var startTotal time.Time
 	if debug {
@@ -833,8 +848,13 @@ func runMapListFromClusterWithConfig(ctx context.Context, cfg *rest.Config, conf
 
 	// Collect resources
 	entries := []MapEntry{}
+	var omissions []mapsvc.CollectionOmission
 	byOwner := map[string]int{} // populated during collection; recomputed after filtering for summary correctness
-	appSetLookup := loadMapApplicationSetLookup(ctx, dynClient, mapNamespace)
+	appSetLookup, appSetErr := loadMapApplicationSetLookupWithError(ctx, dynClient, mapNamespace)
+	if includeOwnershipEvidence && appSetErr != nil {
+		appSetGVR := schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applicationsets"}
+		omissions = append(omissions, mapListCollectionOmission(appSetGVR, mapNamespace, appSetErr))
+	}
 
 	// Resource types to scan (defaults + optional custom CRD config)
 	resources := collectMapResourceList()
@@ -849,6 +869,9 @@ func runMapListFromClusterWithConfig(ctx context.Context, cfg *rest.Config, conf
 		if mapNamespace != "" {
 			l, err := dynClient.Resource(gvr).Namespace(mapNamespace).List(ctx, v1.ListOptions{})
 			if err != nil {
+				if includeOwnershipEvidence {
+					omissions = append(omissions, mapListCollectionOmission(gvr, mapNamespace, err))
+				}
 				continue // Skip resources that don't exist
 			}
 			for _, item := range l.Items {
@@ -857,6 +880,9 @@ func runMapListFromClusterWithConfig(ctx context.Context, cfg *rest.Config, conf
 		} else {
 			l, err := dynClient.Resource(gvr).List(ctx, v1.ListOptions{})
 			if err != nil {
+				if includeOwnershipEvidence {
+					omissions = append(omissions, mapListCollectionOmission(gvr, "", err))
+				}
 				continue
 			}
 			for _, item := range l.Items {
@@ -877,7 +903,25 @@ func runMapListFromClusterWithConfig(ctx context.Context, cfg *rest.Config, conf
 
 	// NOTE: byOwner is recomputed inside renderMapListFromEntries after filtering
 	// to keep the summary consistent with the displayed table.
-	return renderMapListFromEntries(entries)
+	return renderMapListFromEntriesWithDiagnostics(entries, omissions, includeOwnershipEvidence)
+}
+
+func mapListCollectionOmission(gvr schema.GroupVersionResource, namespace string, err error) mapsvc.CollectionOmission {
+	reason := "request_failed"
+	switch {
+	case apierrors.IsForbidden(err):
+		reason = "forbidden"
+	case apierrors.IsUnauthorized(err):
+		reason = "unauthorized"
+	case apierrors.IsNotFound(err):
+		reason = "not_found"
+	}
+	return mapsvc.CollectionOmission{
+		APIVersion: gvr.GroupVersion().String(),
+		Resource:   gvr.Resource,
+		Namespace:  namespace,
+		Reason:     reason,
+	}
 }
 
 func annotateMapEntriesObservation(entries []MapEntry, observation *agent.ObservationEvidence) {
@@ -890,6 +934,10 @@ func annotateMapEntriesObservation(entries []MapEntry, observation *agent.Observ
 }
 
 func renderMapListFromEntries(entries []MapEntry) error {
+	return renderMapListFromEntriesWithDiagnostics(entries, nil, false)
+}
+
+func renderMapListFromEntriesWithDiagnostics(entries []MapEntry, omissions []mapsvc.CollectionOmission, includeOwnershipEvidence bool) error {
 	// Apply filters
 	filtered := []MapEntry{}
 
@@ -946,6 +994,9 @@ func renderMapListFromEntries(entries []MapEntry) error {
 
 	// Handle --summary flag (counts by owner and kind, after filters)
 	if mapSummary {
+		if includeOwnershipEvidence {
+			return fmt.Errorf("--ownership-evidence cannot be combined with --summary, --count, or --names-only")
+		}
 		summary := buildMapListSummary(entries)
 		if mapListFormat == "json" || mapJSON {
 			enc := json.NewEncoder(os.Stdout)
@@ -958,12 +1009,18 @@ func renderMapListFromEntries(entries []MapEntry) error {
 
 	// Handle --count flag (output count only)
 	if mapCount {
+		if includeOwnershipEvidence {
+			return fmt.Errorf("--ownership-evidence cannot be combined with --summary, --count, or --names-only")
+		}
 		fmt.Println(len(entries))
 		return nil
 	}
 
 	// Handle --names-only flag (output names only, for scripting)
 	if mapNamesOnly {
+		if includeOwnershipEvidence {
+			return fmt.Errorf("--ownership-evidence cannot be combined with --summary, --count, or --names-only")
+		}
 		for _, e := range entries {
 			if e.Namespace != "" {
 				fmt.Printf("%s/%s\n", e.Namespace, e.Name)
@@ -984,6 +1041,9 @@ func renderMapListFromEntries(entries []MapEntry) error {
 	if effectiveFormat == "json" {
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
+		if includeOwnershipEvidence {
+			return enc.Encode(mapsvc.BuildOwnershipEvidenceOutput(entries, omissions))
+		}
 		return enc.Encode(entries)
 	}
 
@@ -993,7 +1053,13 @@ func renderMapListFromEntries(entries []MapEntry) error {
 		fmt.Println()
 
 		// Markdown table header
-		if mapVerbose {
+		if includeOwnershipEvidence {
+			fmt.Println("| Namespace | Kind | Name | Owner | Ownership detection |")
+			fmt.Println("|-----------|------|------|-------|---------------------|")
+			for _, e := range entries {
+				fmt.Printf("| %s | %s | %s | %s | %s |\n", e.Namespace, e.Kind, e.Name, e.Owner, mapsvc.OwnershipDetectionSummary(e.OwnershipDetection))
+			}
+		} else if mapVerbose {
 			fmt.Println("| Namespace | Kind | Name | Owner | Owner Detail |")
 			fmt.Println("|-----------|------|------|-------|--------------|")
 			for _, e := range entries {
@@ -1032,6 +1098,7 @@ func renderMapListFromEntries(entries []MapEntry) error {
 		}
 		fmt.Println(strings.Join(ownerParts, " "))
 
+		printMapListOwnershipOmissions(omissions, includeOwnershipEvidence)
 		return nil
 	}
 
@@ -1053,14 +1120,23 @@ func renderMapListFromEntries(entries []MapEntry) error {
 		fmt.Println("HELM resources have:")
 		fmt.Println("  app.kubernetes.io/managed-by: Helm")
 		fmt.Println()
-		fmt.Println("NATIVE means no GitOps tool claims ownership (kubectl-applied).")
+		if includeOwnershipEvidence {
+			fmt.Println("NATIVE is the displayed owner class when no supported platform owner was classified; Kubernetes owner-reference evidence can still be present.")
+		} else {
+			fmt.Println("NATIVE means no GitOps tool claims ownership (kubectl-applied).")
+		}
 		fmt.Println("════════════════════════════════════════════════════════════════════")
 		fmt.Println()
 	}
 
 	// Table output
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	if mapVerbose {
+	if includeOwnershipEvidence {
+		fmt.Fprintln(w, "NAMESPACE\tKIND\tNAME\tOWNER\tOWNERSHIP_DETECTION")
+		for _, e := range entries {
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", e.Namespace, e.Kind, e.Name, e.Owner, mapsvc.OwnershipDetectionSummary(e.OwnershipDetection))
+		}
+	} else if mapVerbose {
 		fmt.Fprintln(w, "NAMESPACE\tKIND\tNAME\tOWNER\tOWNER_DETAIL")
 		for _, e := range entries {
 			detail := ""
@@ -1091,6 +1167,7 @@ func renderMapListFromEntries(entries []MapEntry) error {
 		}
 	}
 	w.Flush()
+	printMapListOwnershipOmissions(omissions, includeOwnershipEvidence)
 
 	// Summary
 	fmt.Printf("\nTotal: %d resources\n", len(entries))
@@ -1130,7 +1207,11 @@ func renderMapListFromEntries(entries []MapEntry) error {
 			fmt.Printf("• %d resources are managed by ConfigHub → Deployed via ConfigHub\n", byOwner["ConfigHub"])
 		}
 		if byOwner["Native"] > 0 {
-			fmt.Printf("• %d resources are Native → No detected GitOps or platform controller ownership\n", byOwner["Native"])
+			if includeOwnershipEvidence {
+				fmt.Printf("• %d resources use the Native display class → this does not rule out Kubernetes owner-reference evidence\n", byOwner["Native"])
+			} else {
+				fmt.Printf("• %d resources are Native → No detected GitOps or platform controller ownership\n", byOwner["Native"])
+			}
 		}
 		fmt.Println()
 		fmt.Println("NEXT STEPS:")
@@ -1145,6 +1226,16 @@ func renderMapListFromEntries(entries []MapEntry) error {
 	}
 
 	return nil
+}
+
+func printMapListOwnershipOmissions(omissions []mapsvc.CollectionOmission, enabled bool) {
+	if !enabled || len(omissions) == 0 {
+		return
+	}
+	fmt.Println("\nCOLLECTION OMISSIONS")
+	for _, omission := range omissions {
+		fmt.Printf("- %s\n", mapsvc.CollectionOmissionSummary(omission))
+	}
 }
 
 func processResource(
@@ -1181,17 +1272,18 @@ func processResourceWithLookup(
 	ownership := agent.DetectOwnership(unstr)
 
 	entry := MapEntry{
-		ID:          fmt.Sprintf("%s/%s/%s/%s/%s", clusterName, unstr.GetNamespace(), gvr.Group, unstr.GetKind(), unstr.GetName()),
-		ClusterName: clusterName,
-		Namespace:   unstr.GetNamespace(),
-		Kind:        unstr.GetKind(),
-		Name:        unstr.GetName(),
-		APIVersion:  unstr.GetAPIVersion(),
-		Owner:       displayOwnership(ownership),
-		Labels:      labels,
-		Status:      detectStatus(unstr),
-		CreatedAt:   unstr.GetCreationTimestamp().Time,
-		UpdatedAt:   unstr.GetCreationTimestamp().Time,
+		ID:                 fmt.Sprintf("%s/%s/%s/%s/%s", clusterName, unstr.GetNamespace(), gvr.Group, unstr.GetKind(), unstr.GetName()),
+		ClusterName:        clusterName,
+		Namespace:          unstr.GetNamespace(),
+		Kind:               unstr.GetKind(),
+		Name:               unstr.GetName(),
+		APIVersion:         unstr.GetAPIVersion(),
+		Owner:              displayOwnership(ownership),
+		Labels:             labels,
+		Status:             detectStatus(unstr),
+		CreatedAt:          unstr.GetCreationTimestamp().Time,
+		UpdatedAt:          unstr.GetCreationTimestamp().Time,
+		OwnershipDetection: mapsvc.NewOwnershipDetectionEvidence(ownership),
 	}
 
 	if ownership.Type != "" && ownership.Type != agent.OwnerUnknown {
@@ -1245,6 +1337,11 @@ type mapApplicationSetLookup struct {
 }
 
 func loadMapApplicationSetLookup(ctx context.Context, dynClient dynamic.Interface, namespace string) mapApplicationSetLookup {
+	lookup, _ := loadMapApplicationSetLookupWithError(ctx, dynClient, namespace)
+	return lookup
+}
+
+func loadMapApplicationSetLookupWithError(ctx context.Context, dynClient dynamic.Interface, namespace string) (mapApplicationSetLookup, error) {
 	lookup := mapApplicationSetLookup{
 		byNamespacedName: map[string]int{},
 		byName:           map[string]int{},
@@ -1265,8 +1362,11 @@ func loadMapApplicationSetLookup(ctx context.Context, dynClient dynamic.Interfac
 	} else {
 		list, err = dynClient.Resource(gvr).List(ctx, v1.ListOptions{})
 	}
-	if err != nil || list == nil {
-		return lookup
+	if err != nil {
+		return lookup, err
+	}
+	if list == nil {
+		return lookup, fmt.Errorf("applicationsets list returned no result")
 	}
 
 	for idx, appSet := range list.Items {
@@ -1277,7 +1377,7 @@ func loadMapApplicationSetLookup(ctx context.Context, dynClient dynamic.Interfac
 		}
 	}
 
-	return lookup
+	return lookup, nil
 }
 
 func annotateMapApplicationSetLineage(entry *MapEntry, app *unstructured.Unstructured, lookup mapApplicationSetLookup) {
