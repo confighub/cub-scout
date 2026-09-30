@@ -34,12 +34,14 @@
       "partial": false
     },
     {
-      "stage": "command-access probe diagnostic",
+      "stage": "smoke",
       "resultFile": "evidence-command-probe-8325744506b8cac0/result.json",
       "sha256": "f8f2966a8983ddd66ec7d8f0d68582e71231f1ca0ee5415410525148ae49053e",
       "inclusiveListPriceUsd": 0.0655016,
       "partial": false,
-      "scope": "tool-boundary diagnostic only; not Experiment A and no savings claim"
+      "scope": "tool-boundary diagnostic only; not Experiment A and no savings claim",
+      "kind": "diagnostic",
+      "purpose": "command-access probe diagnostic; not Experiment A and no savings claim"
     }
   ],
   "totalNewEvalListPriceUsd": 3.7801511,

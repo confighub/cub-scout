@@ -23,8 +23,8 @@ listener remained active during both runs and was stopped afterward; the
 owned canary cleanup passed, and no listener remained. The preflight manifest
 and source fixture hashes were unchanged.
 
-The only input was the same previously recorded raw `team-02/auth` Deployment
-object in each run. It is one object, not the equal full raw-export snapshot
+The only resource evidence was the same previously recorded raw `team-02/auth`
+Deployment object in each run. It is one object, not the equal full raw-export snapshot
 required by Experiment A. The probe made no Kubernetes API request, and it did
 not test `kubectl`, Helm, broader file access, or general shell behavior.
 
