@@ -12,7 +12,7 @@ and minutes than standalone Claude needs with ordinary read-only tools. We
 [3.0 delivery plan](docs/roadmap-3.0-execution.md) sets release criteria for
 fair cost comparisons and preserved correctness; general savings are not yet proven.
 
-[v2.12.3 release](https://github.com/confighub/cub-scout/releases/tag/v2.12.3)
+[v2.12.4 release](https://github.com/confighub/cub-scout/releases/tag/v2.12.4)
 | [Start here](docs/getting-started/start-here.md)
 | [Is this image deployed?](docs/howto/is-this-image-deployed.md)
 | [Command guide](CLI-GUIDE.md)
@@ -53,7 +53,7 @@ cub-scout gitops status   # What do delivery controllers report?
 cub-scout map             # Explore interactively
 ```
 
-Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.12.3`, then
+Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.12.4`, then
 `cub scout doctor`. [Installation and verified downloads](docs/getting-started/install.md)
 cover macOS, Linux, Windows, and tagged source builds.
 
@@ -160,7 +160,14 @@ coalescing, opt-in watch-backed idle observation, and a new `resource.deleted`
 event), plus local bot images built from verified release archives. See the
 [release notes](docs/releases/v2.11.0.md).
 
-**v2.12.3 is the latest release.** `explain` and `trace` report the owner that
+**v2.12.4 is the latest release.** It improves manual-edit attribution, Argo
+tracking identity and workload health, retains useful MCP output on non-zero
+exits, and adds compact inventory requests. Plugin-mode hints preserve
+`cub scout`. These changes enable smaller agent reads; a general cost or credit
+savings claim remains subject to the controlled benchmark. See the
+[v2.12.4 release notes](docs/releases/v2.12.4.md).
+
+From v2.12.3, `explain` and `trace` report the owner that
 ownership detection finds, as `map` does, instead of the tracer that ran, and
 `cub-scout mcp serve` accepts the MCP stdio transport, so MCP clients such as
 Claude Code can connect. See the
@@ -359,9 +366,9 @@ brew install confighub/tap/cub-scout
 
 For direct downloads and tagged source builds, use the
 [install guide](docs/getting-started/install.md). Do not use
-`go install github.com/confighub/cub-scout/cmd/cub-scout@latest` for v2.12.3:
+`go install github.com/confighub/cub-scout/cmd/cub-scout@latest` for v2.12.4:
 the current Go module path resolves an older major. Container command
-`docker run ghcr.io/confighub/cub-scout:v2.12.3 version` still needs registry
+`docker run ghcr.io/confighub/cub-scout:v2.12.4 version` still needs registry
 access verification (#520); the published image is Linux amd64 only.
 `kubectl krew install cub-scout` is not a verified distribution path; use the
 `kubectl-cub_scout` binary included in the archives or Homebrew instead.
