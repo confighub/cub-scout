@@ -410,7 +410,7 @@ can be verified by cub-scout. Keep `helm-expt` receipts adjacent in the run
 directory until those upstream receipts are emitted or bridged as cub-scout /
 in-toto Statement receipts.
 
-## Pinned Helm 3/4 release-secret matrix (first run failed; repeat pending)
+## Pinned Helm 3/4 release-secret matrix (bounded install/upgrade proof passed)
 
 The companion `run-helm-version-matrix.sh` defines a disposable, serial matrix
 for the bounded namespaced Deployment case. It uses one newly created pinned
@@ -467,3 +467,14 @@ that the newly built binary successfully traces. Secret name/UID/resourceVersion
 must remain identical across the comparison; no Secret payload is saved.
 The comparison is optional for subsequent ordinary matrix runs, and the
 pinned baseline hash is checked before any cluster creation.
+
+The September 30 repeat at source `0ef39b5` passed the three stated scenarios
+on Kubernetes 1.35.0, after the #676 timestamp fix. The old binary failed on
+the same unchanged Helm 3 Secret that the fixed binary successfully traced.
+Standalone/plugin projections agreed for all four observations. The Helm 4
+upgrade changed ready replicas from one to two while preserving Deployment UID.
+See the [result projection and retained raw-artifact hashes](evidence/2026-09-30-release-matrix.json).
+The owned cluster was deleted; shared context/config hashes and other cluster
+names were unchanged. This does not cover hooks, CRDs, rollback or conflicts,
+and manager names alone still do not establish apply method. The earlier
+failed run remains part of the evidence history.

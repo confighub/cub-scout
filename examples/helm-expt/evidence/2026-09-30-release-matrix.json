@@ -1,0 +1,580 @@
+{
+  "baselineHelm3Exit": 1,
+  "baselineScoutBinarySHA256": "ff6f5a1200a3dae06691c80e5ca4120478c0500ee3a6e18d97ff6b675aa1d16b",
+  "cases": {
+    "fresh-helm3": {
+      "deployment": {
+        "identity": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "name": "release-probe",
+          "namespace": "matrix-h3",
+          "uid": "75fda132-dc14-4813-91a3-0c8bb82c6a51"
+        },
+        "managedFields": [
+          {
+            "apiVersion": "apps/v1",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:annotations": {
+                  ".": {},
+                  "f:meta.helm.sh/release-name": {},
+                  "f:meta.helm.sh/release-namespace": {}
+                },
+                "f:labels": {
+                  ".": {},
+                  "f:app.kubernetes.io/managed-by": {},
+                  "f:app.kubernetes.io/name": {}
+                }
+              },
+              "f:spec": {
+                "f:progressDeadlineSeconds": {},
+                "f:replicas": {},
+                "f:revisionHistoryLimit": {},
+                "f:selector": {},
+                "f:strategy": {
+                  "f:rollingUpdate": {
+                    ".": {},
+                    "f:maxSurge": {},
+                    "f:maxUnavailable": {}
+                  },
+                  "f:type": {}
+                },
+                "f:template": {
+                  "f:metadata": {
+                    "f:labels": {
+                      ".": {},
+                      "f:app.kubernetes.io/name": {}
+                    }
+                  },
+                  "f:spec": {
+                    "f:containers": {
+                      "k:{\"name\":\"pause\"}": {
+                        ".": {},
+                        "f:image": {},
+                        "f:imagePullPolicy": {},
+                        "f:name": {},
+                        "f:resources": {},
+                        "f:terminationMessagePath": {},
+                        "f:terminationMessagePolicy": {}
+                      }
+                    },
+                    "f:dnsPolicy": {},
+                    "f:restartPolicy": {},
+                    "f:schedulerName": {},
+                    "f:securityContext": {},
+                    "f:terminationGracePeriodSeconds": {}
+                  }
+                }
+              }
+            },
+            "manager": "helm",
+            "operation": "Update",
+            "time": "2026-09-30T22:12:55Z"
+          },
+          {
+            "apiVersion": "apps/v1",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:annotations": {
+                  "f:deployment.kubernetes.io/revision": {}
+                }
+              },
+              "f:status": {
+                "f:availableReplicas": {},
+                "f:conditions": {
+                  ".": {},
+                  "k:{\"type\":\"Available\"}": {
+                    ".": {},
+                    "f:lastTransitionTime": {},
+                    "f:lastUpdateTime": {},
+                    "f:message": {},
+                    "f:reason": {},
+                    "f:status": {},
+                    "f:type": {}
+                  },
+                  "k:{\"type\":\"Progressing\"}": {
+                    ".": {},
+                    "f:lastTransitionTime": {},
+                    "f:lastUpdateTime": {},
+                    "f:message": {},
+                    "f:reason": {},
+                    "f:status": {},
+                    "f:type": {}
+                  }
+                },
+                "f:observedGeneration": {},
+                "f:readyReplicas": {},
+                "f:replicas": {},
+                "f:terminatingReplicas": {},
+                "f:updatedReplicas": {}
+              }
+            },
+            "manager": "kube-controller-manager",
+            "operation": "Update",
+            "time": "2026-09-30T22:12:57Z"
+          }
+        ],
+        "replicas": {
+          "desired": 1,
+          "ready": 1
+        }
+      },
+      "history": [
+        {
+          "app_version": "3.9",
+          "chart": "release-probe-0.1.0",
+          "description": "Install complete",
+          "revision": 1,
+          "status": "deployed",
+          "updated": "2026-09-30T23:12:55.380564+01:00"
+        }
+      ],
+      "standalonePluginProjectionEqual": true
+    },
+    "fresh-helm4": {
+      "deployment": {
+        "identity": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "name": "release-probe",
+          "namespace": "matrix-h4",
+          "uid": "21c51ee5-4dc5-4cfc-9637-7c6e17365662"
+        },
+        "managedFields": [
+          {
+            "apiVersion": "apps/v1",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:annotations": {
+                  "f:meta.helm.sh/release-name": {},
+                  "f:meta.helm.sh/release-namespace": {}
+                },
+                "f:labels": {
+                  "f:app.kubernetes.io/managed-by": {},
+                  "f:app.kubernetes.io/name": {}
+                }
+              },
+              "f:spec": {
+                "f:replicas": {},
+                "f:selector": {},
+                "f:template": {
+                  "f:metadata": {
+                    "f:labels": {
+                      "f:app.kubernetes.io/name": {}
+                    }
+                  },
+                  "f:spec": {
+                    "f:containers": {
+                      "k:{\"name\":\"pause\"}": {
+                        ".": {},
+                        "f:image": {},
+                        "f:name": {}
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "manager": "helm",
+            "operation": "Apply",
+            "time": "2026-09-30T22:13:02Z"
+          },
+          {
+            "apiVersion": "apps/v1",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:annotations": {
+                  "f:deployment.kubernetes.io/revision": {}
+                }
+              },
+              "f:status": {
+                "f:availableReplicas": {},
+                "f:conditions": {
+                  ".": {},
+                  "k:{\"type\":\"Available\"}": {
+                    ".": {},
+                    "f:lastTransitionTime": {},
+                    "f:lastUpdateTime": {},
+                    "f:message": {},
+                    "f:reason": {},
+                    "f:status": {},
+                    "f:type": {}
+                  },
+                  "k:{\"type\":\"Progressing\"}": {
+                    ".": {},
+                    "f:lastTransitionTime": {},
+                    "f:lastUpdateTime": {},
+                    "f:message": {},
+                    "f:reason": {},
+                    "f:status": {},
+                    "f:type": {}
+                  }
+                },
+                "f:observedGeneration": {},
+                "f:readyReplicas": {},
+                "f:replicas": {},
+                "f:terminatingReplicas": {},
+                "f:updatedReplicas": {}
+              }
+            },
+            "manager": "kube-controller-manager",
+            "operation": "Update",
+            "time": "2026-09-30T22:13:03Z"
+          }
+        ],
+        "replicas": {
+          "desired": 1,
+          "ready": 1
+        }
+      },
+      "history": [
+        {
+          "app_version": "3.9",
+          "chart": "release-probe-0.1.0",
+          "description": "Install complete",
+          "revision": 1,
+          "status": "deployed",
+          "updated": "2026-09-30T23:13:01.924186+01:00"
+        }
+      ],
+      "standalonePluginProjectionEqual": true
+    },
+    "pre-upgrade-helm3": {
+      "deployment": {
+        "identity": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "name": "release-probe",
+          "namespace": "matrix-h3-to-h4",
+          "uid": "1b7402df-0a84-4ab0-ab0d-fa51be7ad6fa"
+        },
+        "managedFields": [
+          {
+            "apiVersion": "apps/v1",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:annotations": {
+                  ".": {},
+                  "f:meta.helm.sh/release-name": {},
+                  "f:meta.helm.sh/release-namespace": {}
+                },
+                "f:labels": {
+                  ".": {},
+                  "f:app.kubernetes.io/managed-by": {},
+                  "f:app.kubernetes.io/name": {}
+                }
+              },
+              "f:spec": {
+                "f:progressDeadlineSeconds": {},
+                "f:replicas": {},
+                "f:revisionHistoryLimit": {},
+                "f:selector": {},
+                "f:strategy": {
+                  "f:rollingUpdate": {
+                    ".": {},
+                    "f:maxSurge": {},
+                    "f:maxUnavailable": {}
+                  },
+                  "f:type": {}
+                },
+                "f:template": {
+                  "f:metadata": {
+                    "f:labels": {
+                      ".": {},
+                      "f:app.kubernetes.io/name": {}
+                    }
+                  },
+                  "f:spec": {
+                    "f:containers": {
+                      "k:{\"name\":\"pause\"}": {
+                        ".": {},
+                        "f:image": {},
+                        "f:imagePullPolicy": {},
+                        "f:name": {},
+                        "f:resources": {},
+                        "f:terminationMessagePath": {},
+                        "f:terminationMessagePolicy": {}
+                      }
+                    },
+                    "f:dnsPolicy": {},
+                    "f:restartPolicy": {},
+                    "f:schedulerName": {},
+                    "f:securityContext": {},
+                    "f:terminationGracePeriodSeconds": {}
+                  }
+                }
+              }
+            },
+            "manager": "helm",
+            "operation": "Update",
+            "time": "2026-09-30T22:13:03Z"
+          },
+          {
+            "apiVersion": "apps/v1",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:annotations": {
+                  "f:deployment.kubernetes.io/revision": {}
+                }
+              },
+              "f:status": {
+                "f:availableReplicas": {},
+                "f:conditions": {
+                  ".": {},
+                  "k:{\"type\":\"Available\"}": {
+                    ".": {},
+                    "f:lastTransitionTime": {},
+                    "f:lastUpdateTime": {},
+                    "f:message": {},
+                    "f:reason": {},
+                    "f:status": {},
+                    "f:type": {}
+                  },
+                  "k:{\"type\":\"Progressing\"}": {
+                    ".": {},
+                    "f:lastTransitionTime": {},
+                    "f:lastUpdateTime": {},
+                    "f:message": {},
+                    "f:reason": {},
+                    "f:status": {},
+                    "f:type": {}
+                  }
+                },
+                "f:observedGeneration": {},
+                "f:readyReplicas": {},
+                "f:replicas": {},
+                "f:terminatingReplicas": {},
+                "f:updatedReplicas": {}
+              }
+            },
+            "manager": "kube-controller-manager",
+            "operation": "Update",
+            "time": "2026-09-30T22:13:05Z"
+          }
+        ],
+        "replicas": {
+          "desired": 1,
+          "ready": 1
+        }
+      },
+      "history": [
+        {
+          "app_version": "3.9",
+          "chart": "release-probe-0.1.0",
+          "description": "Install complete",
+          "revision": 1,
+          "status": "deployed",
+          "updated": "2026-09-30T23:13:03.7669+01:00"
+        }
+      ],
+      "standalonePluginProjectionEqual": true
+    },
+    "upgraded-helm4-auto": {
+      "deployment": {
+        "identity": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "name": "release-probe",
+          "namespace": "matrix-h3-to-h4",
+          "uid": "1b7402df-0a84-4ab0-ab0d-fa51be7ad6fa"
+        },
+        "managedFields": [
+          {
+            "apiVersion": "apps/v1",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:annotations": {
+                  ".": {},
+                  "f:meta.helm.sh/release-name": {},
+                  "f:meta.helm.sh/release-namespace": {}
+                },
+                "f:labels": {
+                  ".": {},
+                  "f:app.kubernetes.io/managed-by": {},
+                  "f:app.kubernetes.io/name": {}
+                }
+              },
+              "f:spec": {
+                "f:progressDeadlineSeconds": {},
+                "f:replicas": {},
+                "f:revisionHistoryLimit": {},
+                "f:selector": {},
+                "f:strategy": {
+                  "f:rollingUpdate": {
+                    ".": {},
+                    "f:maxSurge": {},
+                    "f:maxUnavailable": {}
+                  },
+                  "f:type": {}
+                },
+                "f:template": {
+                  "f:metadata": {
+                    "f:labels": {
+                      ".": {},
+                      "f:app.kubernetes.io/name": {}
+                    }
+                  },
+                  "f:spec": {
+                    "f:containers": {
+                      "k:{\"name\":\"pause\"}": {
+                        ".": {},
+                        "f:image": {},
+                        "f:imagePullPolicy": {},
+                        "f:name": {},
+                        "f:resources": {},
+                        "f:terminationMessagePath": {},
+                        "f:terminationMessagePolicy": {}
+                      }
+                    },
+                    "f:dnsPolicy": {},
+                    "f:restartPolicy": {},
+                    "f:schedulerName": {},
+                    "f:securityContext": {},
+                    "f:terminationGracePeriodSeconds": {}
+                  }
+                }
+              }
+            },
+            "manager": "helm",
+            "operation": "Update",
+            "time": "2026-09-30T22:13:06Z"
+          },
+          {
+            "apiVersion": "apps/v1",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:annotations": {
+                  "f:deployment.kubernetes.io/revision": {}
+                }
+              },
+              "f:status": {
+                "f:availableReplicas": {},
+                "f:conditions": {
+                  ".": {},
+                  "k:{\"type\":\"Available\"}": {
+                    ".": {},
+                    "f:lastTransitionTime": {},
+                    "f:lastUpdateTime": {},
+                    "f:message": {},
+                    "f:reason": {},
+                    "f:status": {},
+                    "f:type": {}
+                  },
+                  "k:{\"type\":\"Progressing\"}": {
+                    ".": {},
+                    "f:lastTransitionTime": {},
+                    "f:lastUpdateTime": {},
+                    "f:message": {},
+                    "f:reason": {},
+                    "f:status": {},
+                    "f:type": {}
+                  }
+                },
+                "f:observedGeneration": {},
+                "f:readyReplicas": {},
+                "f:replicas": {},
+                "f:terminatingReplicas": {},
+                "f:updatedReplicas": {}
+              }
+            },
+            "manager": "kube-controller-manager",
+            "operation": "Update",
+            "time": "2026-09-30T22:13:07Z"
+          }
+        ],
+        "replicas": {
+          "desired": 2,
+          "ready": 2
+        }
+      },
+      "history": [
+        {
+          "app_version": "3.9",
+          "chart": "release-probe-0.1.0",
+          "description": "Install complete",
+          "revision": 1,
+          "status": "superseded",
+          "updated": "2026-09-30T23:13:03.7669+01:00"
+        },
+        {
+          "app_version": "3.9",
+          "chart": "release-probe-0.1.0",
+          "description": "Upgrade complete",
+          "revision": 2,
+          "status": "deployed",
+          "updated": "2026-09-30T23:13:06.178164+01:00"
+        }
+      ],
+      "standalonePluginProjectionEqual": true
+    }
+  },
+  "cleanup": {
+    "exit": 0,
+    "otherClusterNamesUnchanged": true,
+    "ownedClusterRemoved": true,
+    "seconds": 63.305,
+    "sharedConfigHashesUnchanged": true,
+    "sharedContextUnchanged": true,
+    "sourceUnchanged": true,
+    "timedOut": false
+  },
+  "cluster": "scout-helm-version-matrix",
+  "context": "kind-scout-helm-version-matrix",
+  "coverage": [
+    "fresh-helm3-install",
+    "fresh-helm4-default-install",
+    "helm3-install-then-helm4-upgrade-server-side-auto"
+  ],
+  "dateUTC": "2026-09-30",
+  "fixedScoutBinarySHA256": "5c692fd0c0f1ed0da26f06d80d2d529683f80d22963d21ebf44f91bab9e91c9a",
+  "format": "cub-scout-helm-matrix-proof/v1",
+  "helm3ArchiveSha256": "4c9982a6cdeb458b60258df66b55398ca5b19293f6877faffe2909ad6f23dfe0",
+  "helm3BinarySha256": "8566ea7d76445d174050eca068bc6d685ba3607de8430524a809a16f505a6138",
+  "helm3Version": "v3.22.0+g144ca65",
+  "helm4BinarySha256": "11e3c9fb6548fa1661a72000a6a483a31f1c2a0bf300f3d2422270feee180d34",
+  "helm4Version": "v4.1.4+g05fa379",
+  "kindImage": "kindest/node:v1.35.0@sha256:4613778f3cfcd10e615029370f5786704559103cf27bef934597ba562b269661",
+  "kindVersion": "v0.31.0",
+  "managedFieldsInterpretation": "recorded observations only; manager metadata alone does not establish apply method",
+  "notCovered": [
+    "hooks",
+    "CRDs",
+    "rollback",
+    "server-side-conflict-modes"
+  ],
+  "retainedRawArtifactHashes": {
+    "fresh-helm3-plugin-trace.json": "33c07eec2c18f4722069b4b20839e4e781b7e7eb62d44f352210a703dce79ee2",
+    "fresh-helm3-standalone-trace.json": "33c07eec2c18f4722069b4b20839e4e781b7e7eb62d44f352210a703dce79ee2",
+    "fresh-helm4-plugin-trace.json": "f2f5f48c31ae495ef7f1defb5ff8d5307f6f63a62763132a8e323170bcf70290",
+    "fresh-helm4-standalone-trace.json": "f2f5f48c31ae495ef7f1defb5ff8d5307f6f63a62763132a8e323170bcf70290",
+    "pre-upgrade-helm3-plugin-trace.json": "272af6e22d13617eac7a543208172c61cdbef68937a004382bf3d882199850b1",
+    "pre-upgrade-helm3-standalone-trace.json": "272af6e22d13617eac7a543208172c61cdbef68937a004382bf3d882199850b1",
+    "releases/fresh-helm3/deployment-evidence.json": "5d39d2abac5eff7f758a2f3a4fa5e2618376849fdba8ac7007eeb8f3a238f6d5",
+    "releases/fresh-helm3/deployment.raw.json": "94c0d9ab3fda48047e2bda16392e2483824e0820a411dd06d59fdc8a2f442052",
+    "releases/fresh-helm3/release-history.json": "16c0d6c41c8f49729f4128be6257181f3f3201cbe71ec2bef891f918161f51a4",
+    "releases/fresh-helm4/deployment-evidence.json": "704375b422a4090a97de7b9657f69092d01623bbdd2551b79f9b45388950bcca",
+    "releases/fresh-helm4/deployment.raw.json": "b61f50caf78205d5f9c50a07bcfa72669731da4ed1b5a110cf85b8137fa95872",
+    "releases/fresh-helm4/release-history.json": "177d1bfc22cc4c349d8c7d7243a4729f4ed14a7e2b23d0b042818a31a819ea9d",
+    "releases/pre-upgrade-helm3/deployment-evidence.json": "e55867715af3cf9d044f2fb648309a82d85575a48e80e039f699a9adcfbda875",
+    "releases/pre-upgrade-helm3/deployment.raw.json": "0b2872d9df22dcbbd72e038ba636451d569ed69aa80853e086b470fe0956f8ab",
+    "releases/pre-upgrade-helm3/release-history.json": "75290759bbb6da38770e886c4a9237655deb6a71e8ae8763f47248a7f477683e",
+    "releases/upgraded-helm4-auto/deployment-evidence.json": "c27e6b0cd2346a1f244af5fa01a862e656f60f3321923acd5c355a8d37d70f5c",
+    "releases/upgraded-helm4-auto/deployment.raw.json": "4ee659bb5a83b51d1361604b12121324fc1f81e2520cdd67a8de1b33d1113bf1",
+    "releases/upgraded-helm4-auto/release-history.json": "c44f2a1dc7cfc8984de3b23a32a582f8acacc37ae092635402c205481064db0c",
+    "upgraded-helm4-auto-plugin-trace.json": "bbd7a2a9f90b6a4dda49fee11ffa9f3d3bdc5f855b6ebe0d7947f74eb31451cd",
+    "upgraded-helm4-auto-standalone-trace.json": "bbd7a2a9f90b6a4dda49fee11ffa9f3d3bdc5f855b6ebe0d7947f74eb31451cd"
+  },
+  "sameSecretIdentityBeforeAfter": true,
+  "sourceCommit": "0ef39b53c06f3bbb3c5fd241681d6d67b7ae8531",
+  "sourceDirty": false,
+  "status": "completed"
+}
