@@ -3,7 +3,7 @@
 ## 2026-09-30: Post-release implementation checkpoint
 
 Use [#645](https://github.com/confighub/cub-scout/issues/645) for the current
-queue; this checkpoint covers merged work through `7732dde`. The maintainer's
+queue; this checkpoint covers merged work through `329b30d`. The maintainer's
 continuous-execution authorization remains active. Do not repeat release work
 or treat the historical review restrictions below as the adopted policy.
 Earlier dated snapshots below preserve history; where status or decisions
@@ -34,20 +34,41 @@ post-v2.12.4 changes are on main, not in the published v2.12.4 binaries.
   independent review and required CI passed. CLI and distribution names remain
   unchanged. Proxy installation cannot be claimed until a correctly tagged
   minor exists.
+- #673 completed a pinned Helm 3.22.0/Helm 4.1.4 disposable-cluster matrix:
+  fresh installs on both versions and a Helm 3-to-4 upgrade, across three
+  releases/four observations in one owned cluster. Upgrade preserved the
+  Deployment UID while ready replicas changed 1→2; standalone and plugin Scout
+  traces agreed. This is bounded namespaced install/upgrade evidence only:
+  hooks, CRDs, rollback, and server-side conflict behavior remain untested, and
+  manager names do not establish apply method. It does not close #588.
+- #678 fixes Helm 3's empty `deleted` timestamp decoding while retaining strict
+  rejection of malformed timestamp values. The live matrix exercises the
+  separate install/upgrade path; it is not an exhaustive Helm compatibility
+  claim.
 - #657/#660 preserve source-derived Sveltos, Flux and Argo observations. The
   fixed 24-case benchmark still has 14 planned cases, five refreshed cases,
   two awaiting snapshot binding and three prepared source projections. It is
   not executable. Projections are not full raw joins or fresh live proof.
+- #677 adds a genuine HLT-02 Flux capture. The separate HLT-02 answer case in
+  #681 remains pending review; its captured observations are sequential and
+  do not establish current state. Neither the capture nor prepared answer case
+  is a paid benchmark result.
 
-Paid execution so far is **$3.9459534 estimated inclusive list price**:
-$2.4692065 for live-only completion and $1.4767469 for smoke/probe work.
-The $200 baseline tranche is unspent. Account credits and development-agent
-costs are unmeasured. The two checkout smoke pairs had file-only tools and are
-not Experiment A. The latest one-pair recorded diagnostic (#669) actually called
-MCP with the same full raw recording and ordinary tool inventory in both arms.
-Both arms still read all raw data; ambiguous owner/field-manager wording prevents
-a quality claim. The with-arm reported five turns against configured maxTurns=4;
-enforcement semantics remain unresolved. No paid retry is queued.
+Paid execution so far is **$4.1048522 estimated inclusive list price**:
+$2.4692065 for live-only completion and $1.6356457 for smoke/probe work. The
+additional recorded-MCP economy pair, whose report is pending in #680, scored
+0/2 binary answer checks at $0.1588988. The earlier #669 plumbing pair scored
+1/2 but remains interpretation-confounded; neither pair demonstrates savings.
+PR #679 adds opt-in economy purpose to the bounded probe; it does not itself
+establish a savings result. Credits and development-agent costs remain
+unmeasured. The $200 baseline tranche is unspent.
+The two checkout smoke pairs had file-only tools and are not Experiment A. The
+#669 recorded diagnostic called MCP with the same full raw recording and
+ordinary tool inventory in both arms; both arms still read all raw data, and
+ambiguous owner/field-manager wording prevents a quality claim. Its with-arm
+reported five turns against configured maxTurns=4; enforcement semantics remain
+unresolved. No paid retry is queued. #682 routing preparation is pending and
+has no execution result.
 See [the diagnostic report](evals/reports/2026-09-30-recorded-mcp-probe.md) and
 [the cost ledger](evals/reports/2026-09-30-execution-costs.json).
 **The savings gate has not passed.**

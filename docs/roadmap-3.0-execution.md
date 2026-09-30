@@ -52,12 +52,31 @@ The adopted plan (#644), binary verified-answer/inclusive-cost accounting
 (#658/#659), scoped explicit context (#665), compact ownership diagnostics
 (#667), recorded exact-object explain (#668), Helm storage-identity checks
 (#670) and the `/v2` module migration (#671) are merged. These later changes
-remain unreleased. #669 records an actual one-pair recorded-MCP diagnostic;
-both arms still read the full raw fixture and its wording limits interpretation.
-New paid execution totals $3.9459534 estimated inclusive list price; actual
-credits and development cost are unmeasured. The fixed 24-case benchmark remains
-non-executable, and the general savings gate has not passed. Current next
-packets and external dependencies live in
+remain unreleased. #673 also completed a pinned Helm 3.22.0/Helm 4.1.4
+disposable-cluster matrix: fresh installs for both versions plus a Helm 3-to-4
+upgrade across three releases and four observations. Standalone and plugin
+Scout traces agreed, and the upgrade preserved Deployment UID while ready
+replicas changed 1→2. Scope is namespaced install/upgrade only; hooks, CRDs,
+rollback and server-side conflict behavior remain untested. Manager names alone
+do not establish apply method, and this does not close #588. #677 provides the
+genuine HLT-02 Flux capture; its separate prepared answer case #681 remains
+pending review and is sequential evidence, not current state or a paid result.
+#678 fixes Helm 3 empty `deleted` timestamp decoding, with malformed values
+still rejected. #679 prepares an opt-in bounded economy-probe purpose; it does
+not itself establish savings.
+
+#669 records an actual one-pair recorded-MCP plumbing diagnostic; both arms
+read the full raw fixture and ambiguous owner/field-manager wording limits
+interpretation. A further recorded-MCP economy pair scored 0/2 binary answer
+checks at $0.1588988; its report remains pending in #680. #682 routing
+preparation has no execution result. New paid execution totals $4.1048522
+estimated inclusive list price: $2.4692065 live-only and $1.6356457 smoke/probe.
+Account credits and development-agent cost are unmeasured; the $200 baseline
+tranche is unspent. The fixed 24-case benchmark remains non-executable with
+14 planned cases, five refreshed cases, two awaiting snapshot binding and three
+prepared source projections. Neither diagnostic demonstrates savings, and the
+general savings gate has not passed. Current next packets and external
+dependencies live in
 [#645](https://github.com/confighub/cub-scout/issues/645) and the latest
 [handover](../HANDOVER.md). Do not repeat P0 release work from the historical
 starting snapshot below.
