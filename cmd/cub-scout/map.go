@@ -321,6 +321,9 @@ Time Filtering:
   --since=7d            Resources changed in last week
 
 Examples:
+  # Inspect an immutable local recording (no cluster access)
+  cub-scout map list --recording objects.yaml --api-version apps/v1 --kind Deployment --format json
+
   # List all resources from current cluster
   cub-scout map list
 
@@ -685,6 +688,7 @@ func init() {
 	mapCmd.PersistentFlags().BoolVar(&mapVerbose, "verbose", false, "Show additional details")
 
 	// List-specific flags
+	addRecordedMapFlags(mapListCmd)
 	mapListCmd.Flags().String("kube-context", "", "Use this exact Kubernetes context for this inventory read")
 	mapListCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
 	mapListCmd.Flags().StringVar(&mapKind, "kind", "", "Filter by resource kind")
@@ -765,6 +769,14 @@ func init() {
 }
 
 func runMapList(cmd *cobra.Command, args []string) error {
+	if recordedMapRequested(cmd) {
+		return runRecordedMapCLI(cmd, args)
+	}
+	for _, flag := range []string{"api-version", "namespace-prefix", "tui"} {
+		if cmd.Flags().Changed(flag) {
+			return fmt.Errorf("--%s requires --recording", flag)
+		}
+	}
 	ctx := context.Background()
 	selection, err := clusterContextSelectionFromFlag(cmd)
 	if err != nil {

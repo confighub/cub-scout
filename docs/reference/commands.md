@@ -411,8 +411,8 @@ JSON reports its hash and identity under `recordedInput`, not `resourceRead`.
 It does not infer a capture time, so freshness and time-dependent rollout
 conclusions are omitted. Built-in ownership rules apply; mutable host custom
 detector configuration is not read. `mcp serve --recording FILE` similarly
-fixes the input at server startup and exposes only an exact-object `explain`
-tool; MCP calls cannot choose file paths.
+fixes the input at server startup and exposes recorded `map` and exact-object
+`explain`; MCP calls cannot choose file paths.
 
 `--with-confighub` is opt-in and read-only. For `explain`, connected release,
 unit-event, and live-status reads run only when the resource itself exposes a
@@ -2096,7 +2096,7 @@ cub-scout mcp serve --recording objects.yaml
 ```
 
 With `--recording FILE`, the server parses and fixes the bounded input at
-startup and exposes only exact-object `explain`. Tool calls cannot provide a
+startup and exposes recorded ownership `map` and exact-object `explain`. Tool calls cannot provide a
 path or select live/connected operations. Without that flag, the normal
 standalone and connected tool sets described below remain available.
 
@@ -3278,3 +3278,32 @@ cub-scout map list -q "owner!=Native OR kind=ConfigMap"
 # Label filters
 cub-scout map list -q "labels[app]=frontend"
 ```
+
+### Recorded ownership inventory
+
+```bash
+./cub-scout map list --recording objects.yaml --api-version apps/v1 --kind Deployment --format json
+./cub-scout map list --recording objects.yaml --api-version apps/v1 --kind Deployment --namespace-prefix team- --format md
+./cub-scout map list --recording objects.yaml --api-version apps/v1 --kind Deployment --namespace prod --tui
+```
+
+Both `--api-version` and `--kind` are required, exact and case-sensitive.
+Optional `--namespace` (including an explicitly empty value) and non-empty
+literal `--namespace-prefix` are mutually exclusive. ASCII, JSON, Markdown
+and the dedicated read-only TUI share one ownership model. The recorded MCP
+`map` tool accepts required `api_version` and `kind`, and optional `namespace`
+or `namespace_prefix`, with the same meaning.
+
+The result identifies input bytes by SHA-256 and reports selected and excluded
+object counts. Capture time and completeness are unknown. Native means no
+built-in owner marker was observed on the supplied object; it does not prove
+an orphan. Host custom detectors, current context and live data are not read.
+No health or omitted-object claims are inferred. Duplicate full object
+identities anywhere in the input fail before filtering. The existing 4 MiB,
+128-document, 512-object limits apply.
+
+Recorded mode rejects context, owner/query/time filters, summary/count/names-only
+shortcuts, explanatory/verbose modes and positional arguments. `--ownership-evidence`
+is redundant: recorded results always include detector evidence. `--tui` cannot
+combine with output-format options. The recording-specific API/prefix/TUI flags
+require `--recording`. See the [offline example](../../examples/recorded-inventory/).

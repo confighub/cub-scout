@@ -171,7 +171,7 @@ capture-time metadata, recorded explain omits `currentChange` and
 `controllerRevision`; it never substitutes the current clock. Health is limited
 to object-local evidence. Ownership uses built-in detectors only and includes
 an omission that custom host detector configuration was not read. The recorded
-MCP server loads the file once at startup and exposes only `explain`; requests
+MCP server loads the file once at startup and exposes recorded `map` and `explain`; requests
 cannot supply paths or select live/connected operations. Raw object payloads,
 including Secret data, are not returned.
 
@@ -2465,3 +2465,30 @@ the Codex review rounds that locked the wire format.
 The Codex task handoff schema added for automation handoffs lives at:
 
 - `tools/codex-task-output/codex-task-output.schema.json`
+
+### Recorded inventory (`map-list-recorded.v1`)
+
+CLI `map list --recording` and the recorded MCP `map` tool return the same envelope:
+
+| Field | Meaning |
+|---|---|
+| `schema` | `map-list-recorded.v1` |
+| `provenance.kind` | `kubernetes-object-recording` |
+| `provenance.sha256` | SHA-256 of all supplied bytes, before filtering |
+| `provenance.bytes`, `documents`, `objectCount` | Bounded parser input counts |
+| `provenance.captureTime`, `captureCompleteness` | Literal `unknown`; no timestamp or completeness inferred |
+| `scope.apiVersion`, `scope.kind` | Required exact case-sensitive selection |
+| `scope.namespace` | Optional exact namespace; explicit empty string is meaningful |
+| `scope.namespacePrefix` | Optional literal prefix, mutually exclusive with namespace |
+| `selectedCount`, `excludedFromScopeCount` | Selected and filtered-out parsed objects, not omitted cluster objects |
+| `ownerCounts` | Counts by built-in owner classification for the selected objects |
+| `resources[]` | Exact API version/Kind/namespace/name, owner, optional owner details, ownershipDetection |
+
+`resources` is sorted by API version, Kind, namespace and name. Empty selections
+produce `resources: []`, `ownerCounts: {}`, and zero selected count. Native means
+no built-in marker, while a generic Kubernetes owner reference is `Kubernetes`.
+Per-entry `ownershipDetection` uses the existing detector status/source/reason
+contract. No health, cluster identity, capture-omission list, path, raw object
+payload or current-time claim is emitted. All full identities must be unique,
+even outside the requested scope. The original input hash changes when bytes
+outside that scope change; scoped ownership may remain identical.

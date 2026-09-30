@@ -1,7 +1,8 @@
 # Recorded Kubernetes object loader foundation (#604)
 
-This is a contract for an internal parser foundation, not a public CLI/MCP replay
-mode. The loader accepts caller-provided bytes/reader only; it never opens a
+This describes the internal parser used by recorded explain and
+[recorded inventory](../recorded-inventory/). The loader accepts caller-provided
+bytes/reader only; it never opens a
 path, reads kubeconfig, contacts Kubernetes or ConfigHub, or falls back to live
 state. A source recording must provide the complete immutable raw object input.
 
@@ -34,7 +35,7 @@ class only and never include object payloads (including Secret data).
 
 ## Recorded explain surface contract
 
-The proposed public consumer uses the loader through an explicit
+The public explain consumer uses the loader through an explicit
 `explain <kind/name> --recording FILE --api-version VERSION --namespace NS`
 selection; callers must supply `--namespace ""` for an explicitly empty
 namespace, and exact resource names are not normalized. Built-in ownership
@@ -55,3 +56,8 @@ types and precision through YAML/JSON decoding. The prepared
 raw baseline but only grades file-evidence interpretation; offline Go tests
 exercise the product surfaces on those same bytes. Neither is a benchmark run
 or evidence of comparative benefit.
+
+Recorded MCP also exposes ownership `map` with exact API version/Kind scope.
+It shares the input hash and bounded parser while rejecting duplicate full
+identities across the entire recording before filtering. See the
+[recorded inventory example](../recorded-inventory/).
