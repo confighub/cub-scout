@@ -1,3 +1,6 @@
+//go:build integration
+// +build integration
+
 // Package maplistjson provides golden tests for the map list --json CLI command contract.
 //
 // These tests verify that the map list --json command behaves as documented in:
@@ -16,7 +19,7 @@
 //   - Canonicalizes entries (sorts by namespace, kind, name)
 //   - Compares against golden file
 //
-// Tests skip if no Kubernetes cluster is available.
+// Tests require -tags=integration and skip if no Kubernetes cluster is available.
 // Golden files are generated with UPDATE_GOLDEN=1.
 //
 // Reference: docs/reference/cli-contract.md
