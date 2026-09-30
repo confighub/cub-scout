@@ -14,7 +14,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/confighub/cub-scout/pkg/hub"
+	"github.com/confighub/cub-scout/v2/pkg/hub"
 )
 
 var (

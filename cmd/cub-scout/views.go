@@ -38,8 +38,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/confighub/cub-scout/pkg/agent"
-	"github.com/confighub/cub-scout/pkg/hub"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"github.com/confighub/cub-scout/v2/pkg/hub"
 )
 
 var (

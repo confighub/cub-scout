@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/confighub/cub-scout/test/ascii/golden"
-	"github.com/confighub/cub-scout/test/ascii/runner"
+	"github.com/confighub/cub-scout/v2/test/ascii/golden"
+	"github.com/confighub/cub-scout/v2/test/ascii/runner"
 )
 
 func TestMapList_Basic(t *testing.T) {

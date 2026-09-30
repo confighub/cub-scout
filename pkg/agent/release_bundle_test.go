@@ -16,7 +16,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/confighub/cub-scout/internal/releasetest"
+	"github.com/confighub/cub-scout/v2/internal/releasetest"
 	digest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/require"

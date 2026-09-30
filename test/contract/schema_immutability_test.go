@@ -6,9 +6,9 @@
 // These tests enforce schema immutability for v0.16+ locked schemas.
 // Any change to a locked schema struct (fields, types, JSON tags) will
 // fail this test. To intentionally change a schema, you must:
-//   1. Bump the schema version
-//   2. Create new snapshot files
-//   3. Update the schema version constant
+//  1. Bump the schema version
+//  2. Create new snapshot files
+//  3. Update the schema version constant
 //
 // Contract: Locked schemas are immutable. Silent meaning changes are forbidden.
 package contract
@@ -23,7 +23,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
 
 type schemaTarget struct {
@@ -120,7 +120,7 @@ func walkType(t reflect.Type, prefix string, out *[]string) {
 			}
 		}
 		// Only recurse into structs from the agent package (same schema)
-		if n.Kind() == reflect.Struct && strings.Contains(n.PkgPath(), "cub-scout/pkg/agent") {
+		if n.Kind() == reflect.Struct && strings.HasSuffix(n.PkgPath(), "/pkg/agent") {
 			walkType(n, prefix+"."+f.Name+"[]", out)
 		}
 	}

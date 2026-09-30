@@ -7,7 +7,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
 
 // #617: explain and trace reported the tracer that ran as the owner. For an

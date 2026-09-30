@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/confighub/cub-scout/internal/releasetest"
+	"github.com/confighub/cub-scout/v2/internal/releasetest"
 )
 
 func main() {

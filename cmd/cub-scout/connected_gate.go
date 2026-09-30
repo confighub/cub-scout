@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/confighub/cub-scout/pkg/hub"
+	"github.com/confighub/cub-scout/v2/pkg/hub"
 )
 
 // requireCubConnectedFn is the gate's seam for tests.

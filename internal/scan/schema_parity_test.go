@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
 
 // TestCubScanToNormalized_RoundTrip verifies that a cub-scan Finding can be

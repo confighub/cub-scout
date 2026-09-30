@@ -3,8 +3,8 @@ package main
 import (
 	"testing"
 
-	"github.com/confighub/cub-scout/internal/mapsvc"
-	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/v2/internal/mapsvc"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
 
 func TestIsTraceSourceKind_ConfigHubOCI(t *testing.T) {

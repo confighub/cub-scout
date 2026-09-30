@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/confighub/cub-scout/internal/mapsvc"
-	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/v2/internal/mapsvc"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
 
 func TestConvertSecretEvidence_NilInput(t *testing.T) {

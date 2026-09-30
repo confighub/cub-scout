@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
 
 // fixedTime is a constant time used for deterministic testing.

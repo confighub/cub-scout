@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/confighub/cub-scout/internal/graph"
+	"github.com/confighub/cub-scout/v2/internal/graph"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"
 )

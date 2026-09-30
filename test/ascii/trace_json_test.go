@@ -15,10 +15,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/confighub/cub-scout/internal/mapsvc"
-	"github.com/confighub/cub-scout/pkg/agent"
-	"github.com/confighub/cub-scout/test/ascii/golden"
-	"github.com/confighub/cub-scout/test/ascii/runner"
+	"github.com/confighub/cub-scout/v2/internal/mapsvc"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"github.com/confighub/cub-scout/v2/test/ascii/golden"
+	"github.com/confighub/cub-scout/v2/test/ascii/runner"
 )
 
 // TestTraceFlux_JSON tests the v0.14 JSON schema output for Flux trace.

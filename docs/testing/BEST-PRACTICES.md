@@ -87,7 +87,7 @@ cub-scout has two golden test harnesses. Use the right one for the job.
 Runs the **compiled binary** (`./cub-scout`). Tests CLI output as the user sees it.
 
 ```go
-import "github.com/confighub/cub-scout/test/golden"
+import "github.com/confighub/cub-scout/v2/test/golden"
 
 func TestMyCommand(t *testing.T) {
     result := golden.RunCubScout(t, "mycommand", "--flag", "value")
@@ -109,8 +109,8 @@ Runs via **`go run ./cmd/cub-scout`**. Tests ASCII output format contracts.
 
 ```go
 import (
-    agolden "github.com/confighub/cub-scout/test/ascii/golden"
-    "github.com/confighub/cub-scout/test/ascii/runner"
+    agolden "github.com/confighub/cub-scout/v2/test/ascii/golden"
+    "github.com/confighub/cub-scout/v2/test/ascii/runner"
 )
 
 func TestMyOutput(t *testing.T) {

@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/confighub/cub-scout/pkg/agent"
-	"github.com/confighub/cub-scout/pkg/hub"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"github.com/confighub/cub-scout/v2/pkg/hub"
 )
 
 // ActionType classifies what kind of action a hint suggests.

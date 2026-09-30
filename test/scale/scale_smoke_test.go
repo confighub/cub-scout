@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/confighub/cub-scout/test/golden"
+	"github.com/confighub/cub-scout/v2/test/golden"
 )
 
 // generateScaleFixture creates a YAML file with n resources using mixed ownership.

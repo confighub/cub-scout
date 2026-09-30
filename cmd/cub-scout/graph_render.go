@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	internalgraph "github.com/confighub/cub-scout/internal/graph"
+	internalgraph "github.com/confighub/cub-scout/v2/internal/graph"
 )
 
 const (

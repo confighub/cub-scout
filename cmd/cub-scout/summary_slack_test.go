@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/confighub/cub-scout/internal/summarystore"
+	"github.com/confighub/cub-scout/v2/internal/summarystore"
 	"github.com/spf13/cobra"
 )
 

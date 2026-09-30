@@ -10,8 +10,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/confighub/cub-scout/internal/mapsvc"
-	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/v2/internal/mapsvc"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"
 )

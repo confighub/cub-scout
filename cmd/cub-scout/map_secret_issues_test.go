@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 
-	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
 
 func TestFormatSecretIssue_Missing(t *testing.T) {

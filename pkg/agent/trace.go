@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/confighub/cub-scout/pkg/hub"
+	"github.com/confighub/cub-scout/v2/pkg/hub"
 )
 
 // TraceResult represents the full ownership chain for a resource

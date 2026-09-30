@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/confighub/cub-scout/internal/scan"
-	"github.com/confighub/cub-scout/pkg/agent"
-	"github.com/confighub/cub-scout/pkg/hub"
+	"github.com/confighub/cub-scout/v2/internal/scan"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"github.com/confighub/cub-scout/v2/pkg/hub"
 )
 
 func TestObserveScopeSummary_FromFixture(t *testing.T) {

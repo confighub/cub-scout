@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/confighub/cub-scout/pkg/agent"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 

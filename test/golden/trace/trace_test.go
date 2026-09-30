@@ -35,7 +35,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/confighub/cub-scout/test/golden"
+	"github.com/confighub/cub-scout/v2/test/golden"
 )
 
 // updateGolden controls whether to update golden files.
