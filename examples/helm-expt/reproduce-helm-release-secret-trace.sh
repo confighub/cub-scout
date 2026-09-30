@@ -5,6 +5,20 @@ set -euo pipefail
 
 CLUSTER="cub-scout-helm-release-decode"
 NS="helm-release-decode"
+if [[ -n "${1:-}" ]]; then
+	EVIDENCE_DIR="$1"
+	if [[ -e "$EVIDENCE_DIR" ]]; then
+		if [[ ! -d "$EVIDENCE_DIR" ]] || find "$EVIDENCE_DIR" -mindepth 1 -print -quit | grep -q .; then
+			echo "refusing to overwrite existing evidence: $EVIDENCE_DIR" >&2
+			exit 1
+		fi
+	fi
+	mkdir -p "$EVIDENCE_DIR"
+else
+	EVIDENCE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/cub-scout-helm-release-evidence.XXXXXX")"
+fi
+echo "Evidence directory: $EVIDENCE_DIR"
+
 for tool in kind kubectl helm go; do
 	command -v "$tool" >/dev/null 2>&1 || { echo "$tool is required" >&2; exit 1; }
 done
@@ -15,9 +29,6 @@ fi
 
 TMP_DIR="$(mktemp -d)"
 KUBECONFIG="$TMP_DIR/kubeconfig"
-EVIDENCE_DIR="${1:-$(mktemp -d "${TMPDIR:-/tmp}/cub-scout-helm-release-evidence.XXXXXX")}"
-echo "Evidence directory: $EVIDENCE_DIR"
-mkdir -p "$EVIDENCE_DIR"
 CREATED=false
 cleanup() {
 	status=$?

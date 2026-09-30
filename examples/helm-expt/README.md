@@ -49,7 +49,9 @@ candidates or fallback behavior. It is not run by unit tests and was not run
 for this packet; its output is not Helm-version parity evidence. It preserves
 Helm version, rendered-chart hash, command outputs/status, and Secret names in
 the requested evidence directory (or a printed temporary directory) without
-recording Secret payloads. The deterministic unit contract includes valid
+recording Secret payloads. A non-empty requested evidence directory is refused
+without modifying its contents; verify this locally with
+`bash examples/helm-expt/test-reproduction-evidence-safety.sh`. The deterministic unit contract includes valid
 releases, no records, denied Secret listing, malformed encodings/data,
 oversize expansion, invalid identity metadata, and an older valid record beside
 a bad candidate in either listing order.
