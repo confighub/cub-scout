@@ -1,0 +1,22 @@
+[
+  {
+    "pod": "source-controller-675df74b-4rlhj",
+    "containers": [
+      {
+        "name": "manager",
+        "image": "ghcr.io/fluxcd/source-controller:v1.8.3",
+        "imageID": "ghcr.io/fluxcd/source-controller@sha256:9864978c19249d572ff3beb19cf34bcb8fdaae450a96c2eb5a0ae2ffe09897c4"
+      }
+    ]
+  },
+  {
+    "pod": "kustomize-controller-56c4dd4c97-6m8nl",
+    "containers": [
+      {
+        "name": "manager",
+        "image": "ghcr.io/fluxcd/kustomize-controller:v1.8.4",
+        "imageID": "ghcr.io/fluxcd/kustomize-controller@sha256:86e84b043a7a79203b22b3fcab634c20b2dcf79467c7c37998e489804876f3e5"
+      }
+    ]
+  }
+]

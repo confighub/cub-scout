@@ -1,0 +1,8 @@
+{
+  "kubectl": {
+    "sha256": "f91be8422eefc635dc336846b7f747d9b6aaed883b9e914ea7bf4cafcc6a838e"
+  },
+  "flux": {
+    "sha256": "5ad56f6ef94a4765e49a3d4a884a5fc8396081e0b25c97645073e368bd8929ac"
+  }
+}

@@ -5,7 +5,7 @@ The first capture attempt failed before Flux installation because the install
 version lacked the required `v` prefix. Its owned cluster was removed with
 shared context/config unchanged. No completed result fixture is admitted to
 `benchmark-v1`, and no paid evaluation was run. The corrected export is now
-validated before cluster creation; a repeat is pending.
+validated before cluster creation. The repeat passed; see the raw capture below.
 
 ## Success contract
 
@@ -77,3 +77,24 @@ No expected object/status fixture is synthesized here. The real outputs must
 be inspected and approved before adding them to an eval case. Capture failure,
 missing status, revision mismatch, or controller/workload evidence mismatch
 must remain a failed or unknown capture rather than being hand-filled.
+
+## Captured September 30, 2026
+
+The [unmodified raw capture](fixtures/2026-09-30/provenance.json) at script source
+`828ade5` passed on Flux 2.8.6 / Kubernetes 1.35.0. It observed current-generation
+Kustomization Ready=True with `wait: false` and no explicit health checks;
+GitRepository artifact and applied revision both exactly identify the pinned
+source commit. The Deployment has one desired/unavailable replica and zero
+available replicas. Its ReplicaSet/Pod UID chain identifies a Pod that is not
+Ready and reports the intentionally missing command, exit 128 and CrashLoopBackOff.
+Start/end Kustomization bytes are identical. The observations span
+22:17:57–22:18:44 UTC and are not an atomic snapshot or present-state claim.
+
+The [binding](fixtures/2026-09-30/binding.json) hashes every included raw object,
+version/image record and original provenance file. No raw bytes were edited.
+Pod specifications retain service-account volume references, but there are no
+Secret objects, credential contents or kubeconfig files. The owned cluster was
+removed; shared context/config hashes and other cluster names were unchanged.
+The earlier version-prefix failure remains recorded. This capture supplies
+real evidence; it does not admit the case to benchmark-v1 or establish a
+Scout answer, application-health result, cost saving or paid-eval result.

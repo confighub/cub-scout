@@ -1,0 +1,120 @@
+{
+    "apiVersion": "source.toolkit.fluxcd.io/v1",
+    "kind": "GitRepository",
+    "metadata": {
+        "annotations": {
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"source.toolkit.fluxcd.io/v1\",\"kind\":\"GitRepository\",\"metadata\":{\"annotations\":{},\"name\":\"scout-hlt02-source\",\"namespace\":\"flux-system\"},\"spec\":{\"interval\":\"1h\",\"ref\":{\"commit\":\"7732dde28be8cf8c42c096d94efbd8ce4a9d0a19\"},\"url\":\"https://github.com/confighub/cub-scout\"}}\n"
+        },
+        "creationTimestamp": "2026-09-30T22:18:21Z",
+        "finalizers": [
+            "finalizers.fluxcd.io"
+        ],
+        "generation": 1,
+        "managedFields": [
+            {
+                "apiVersion": "source.toolkit.fluxcd.io/v1",
+                "fieldsType": "FieldsV1",
+                "fieldsV1": {
+                    "f:metadata": {
+                        "f:annotations": {
+                            ".": {},
+                            "f:kubectl.kubernetes.io/last-applied-configuration": {}
+                        }
+                    },
+                    "f:spec": {
+                        ".": {},
+                        "f:interval": {},
+                        "f:ref": {
+                            ".": {},
+                            "f:commit": {}
+                        },
+                        "f:timeout": {},
+                        "f:url": {}
+                    }
+                },
+                "manager": "kubectl-client-side-apply",
+                "operation": "Update",
+                "time": "2026-09-30T22:18:21Z"
+            },
+            {
+                "apiVersion": "source.toolkit.fluxcd.io/v1",
+                "fieldsType": "FieldsV1",
+                "fieldsV1": {
+                    "f:metadata": {
+                        "f:finalizers": {
+                            ".": {},
+                            "v:\"finalizers.fluxcd.io\"": {}
+                        }
+                    }
+                },
+                "manager": "source-controller",
+                "operation": "Update",
+                "time": "2026-09-30T22:18:21Z"
+            },
+            {
+                "apiVersion": "source.toolkit.fluxcd.io/v1",
+                "fieldsType": "FieldsV1",
+                "fieldsV1": {
+                    "f:status": {
+                        "f:artifact": {
+                            ".": {},
+                            "f:digest": {},
+                            "f:lastUpdateTime": {},
+                            "f:path": {},
+                            "f:revision": {},
+                            "f:size": {},
+                            "f:url": {}
+                        },
+                        "f:conditions": {},
+                        "f:observedGeneration": {}
+                    }
+                },
+                "manager": "source-controller",
+                "operation": "Update",
+                "subresource": "status",
+                "time": "2026-09-30T22:18:35Z"
+            }
+        ],
+        "name": "scout-hlt02-source",
+        "namespace": "flux-system",
+        "resourceVersion": "633",
+        "uid": "cfff96d7-8ace-4161-9004-37f6bde0c7f7"
+    },
+    "spec": {
+        "interval": "1h",
+        "ref": {
+            "commit": "7732dde28be8cf8c42c096d94efbd8ce4a9d0a19"
+        },
+        "timeout": "60s",
+        "url": "https://github.com/confighub/cub-scout"
+    },
+    "status": {
+        "artifact": {
+            "digest": "sha256:58beef09f882d28a2495e74f3279827f31a3d5d050a93cfd5097cccd66f30a30",
+            "lastUpdateTime": "2026-09-30T22:18:35Z",
+            "path": "gitrepository/flux-system/scout-hlt02-source/7732dde28be8cf8c42c096d94efbd8ce4a9d0a19.tar.gz",
+            "revision": "sha1:7732dde28be8cf8c42c096d94efbd8ce4a9d0a19",
+            "size": 5188346,
+            "url": "http://source-controller.flux-system.svc.cluster.local./gitrepository/flux-system/scout-hlt02-source/7732dde28be8cf8c42c096d94efbd8ce4a9d0a19.tar.gz"
+        },
+        "conditions": [
+            {
+                "lastTransitionTime": "2026-09-30T22:18:35Z",
+                "message": "stored artifact for revision 'sha1:7732dde28be8cf8c42c096d94efbd8ce4a9d0a19'",
+                "observedGeneration": 1,
+                "reason": "Succeeded",
+                "status": "True",
+                "type": "Ready"
+            },
+            {
+                "lastTransitionTime": "2026-09-30T22:18:35Z",
+                "message": "stored artifact for revision 'sha1:7732dde28be8cf8c42c096d94efbd8ce4a9d0a19'",
+                "observedGeneration": 1,
+                "reason": "Succeeded",
+                "status": "True",
+                "type": "ArtifactInStorage"
+            }
+        ],
+        "observedGeneration": 1
+    }
+}

@@ -1,6 +1,7 @@
 package unit
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -347,5 +348,36 @@ func TestFluxHLT02CaptureValidatorRequiresUnreadyPodOwnerChain(t *testing.T) {
 	healthyPod["status"].(map[string]any)["conditions"].([]any)[0].(map[string]any)["status"] = "True"
 	if err := run(t, deployment, healthySets, healthyPods); err == nil {
 		t.Fatal("Ready Pod should not satisfy the HLT-02 unavailable-workload capture")
+	}
+}
+
+func TestFluxHLT02RecordedCaptureHashesAndWorkloadChain(t *testing.T) {
+	requireFluxHLT02Python(t)
+	dir := filepath.Join(fluxHLT02Dir, "fixtures", "2026-09-30")
+	data, err := os.ReadFile(filepath.Join(dir, "binding.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var binding struct {
+		Files map[string]string `json:"files"`
+	}
+	if err := json.Unmarshal(data, &binding); err != nil {
+		t.Fatal(err)
+	}
+	if len(binding.Files) != 13 {
+		t.Fatalf("unexpected evidence count: %d", len(binding.Files))
+	}
+	for name, hash := range binding.Files {
+		contents, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if actual := fmt.Sprintf("%x", sha256.Sum256(contents)); actual != hash {
+			t.Fatalf("captured evidence changed: %s", name)
+		}
+	}
+	cmd := exec.Command("python3", filepath.Join(fluxHLT02Dir, "validate_capture.py"), dir)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("captured workload chain rejected: %v: %s", err, output)
 	}
 }
