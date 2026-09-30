@@ -302,6 +302,10 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			checkRecordedExplainCaseScaffold(t, caseDir)
 			continue
 		}
+		if filepath.Base(caseDir) == "consul-ingress-residue" {
+			checkConsulHLT03Scaffold(t, caseDir)
+			continue
+		}
 		if filepath.Base(caseDir) == "flux-ready-without-health" {
 			checkFluxHLT02ScaffoldBytes(t, caseDir)
 			continue

@@ -1,0 +1,23 @@
+{
+  "format": "pinned-public-recording/v1",
+  "repository": "confighub/helm-expt",
+  "revision": "9ab4c753a888dc305a3c07956c9f8f5a19eb70a0",
+  "files": [
+    {
+      "path": "runs/live-helm-confighub-compare/hashicorp-consul-secure-mesh-existing-secrets/receipt.yaml",
+      "local_name": "receipt.yaml",
+      "sha256": "521b08ae448f4d6503123ddef0263944887ced4204debab457677829c43fba15"
+    },
+    {
+      "path": "runs/live-helm-confighub-compare/hashicorp-consul-secure-mesh-existing-secrets/argocd-core-child.json",
+      "local_name": "argocd-child.json",
+      "sha256": "adf89697a41493e7399ff08b0e777a97e14d691b377d2fdddff2fa4faa27a078"
+    }
+  ],
+  "limits": {
+    "files_are_distinct_recorded_artifacts": true,
+    "atomic_join_established": false,
+    "current_live_state_established": false,
+    "full_kubernetes_object_snapshot": false
+  }
+}
