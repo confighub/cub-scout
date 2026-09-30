@@ -63,9 +63,20 @@
       "scope": "one paired recorded-only economy diagnostic; both answer grades failed; no general savings claim",
       "kind": "recorded MCP economy diagnostic",
       "purpose": "tool-choice/evidence-retrieval diagnostic for this prompt and pinned model only; not benchmark evidence"
+    },
+    {
+      "stage": "smoke",
+      "resultFile": "recorded-routing-diagnostic-20260930/result.json",
+      "sha256": "0d71b87d0f3e7dbdbedf3bfd861ccf35b01d3f2e89dd0f81533f2b908e1ec9bf",
+      "inclusiveListPriceUsd": 0.1607222,
+      "partial": false,
+      "exitCode": 1,
+      "scope": "one paired recorded-only routing diagnostic; both answer grades failed; no general savings or causal claim",
+      "kind": "recorded attribution-routing diagnostic",
+      "purpose": "compare one generic skill's availability in this prompt and pinned model only; treatment listed the skill but neither arm called Skill or MCP"
     }
   ],
-  "totalNewEvalListPriceUsd": 4.1048522,
+  "totalNewEvalListPriceUsd": 4.2655744,
   "stageEnvelopesUsd": {
     "live-only completion": 15,
     "smoke": 20,
@@ -78,10 +89,11 @@
     "No max-speed run was enabled; all new run terminal records report fast mode off.",
     "Command-access probe diagnostic: one serial run per arm on pinned Claude Haiku 4.5 at normal speed; $0.0655016 inclusive list-price estimate. Not Experiment A, not a product comparison, and not evidence of savings. The $200 baseline envelope remains unspent.",
     "Recorded MCP command-access diagnostic: one paired exact-object explain call with identical full raw fixture available in both arms; both arms read both fixture files. The answer delta is confounded by ambiguous owner-vs-field-manager wording; no quality or savings claim. The result metadata runsPerCase=3 reflects the default, intentionally overridden by invocation --runs 1, as documented in the official Claude Code plugin-evals frontmatter reference (https://code.claude.com/docs/en/plugin-evals#promptmd-frontmatter); this is not an enforcement failure. The with-arm reported 5 turns against configured maxTurns=4; turn-count semantics remain unresolved. Credits not measured.",
-    "Recorded MCP economy diagnostic: one serial run per arm under a $1 prelaunch ceiling within the existing $20 smoke tranche. Both arms read the full fixed recording; treatment added one explain MCP tool but neither arm called MCP. Both answer graders failed (resourceOwner UNKNOWN rather than Flux; with-arm also included extra prose). Result partial=false but command exit=1 because grading failed. This single case provides no verified answer denominator, general savings or quality claim. Costs include failed runs; account credits not measured. Explicit --runs 1 overrode runsPerCase=3; both runs reported 3 turns under maxTurns=8."
+    "Recorded MCP economy diagnostic: one serial run per arm under a $1 prelaunch ceiling within the existing $20 smoke tranche. Both arms read the full fixed recording; treatment added one explain MCP tool but neither arm called MCP. Both answer graders failed (resourceOwner UNKNOWN rather than Flux; with-arm also included extra prose). Result partial=false but command exit=1 because grading failed. This single case provides no verified answer denominator, general savings or quality claim. Costs include failed runs; account credits not measured. Explicit --runs 1 overrode runsPerCase=3; both runs reported 3 turns under maxTurns=8.",
+    "Recorded attribution-routing diagnostic: one serial run per arm under a $1 prelaunch ceiling within the existing $20 smoke tranche. Both arms read both full recording files; the treatment inventory listed its one added generic skill, but neither arm called Skill or MCP. Both answer graders failed (resourceOwner UNKNOWN rather than Flux; with-skill also included extra prose). Result partial=false but command exit=1 because grading failed. This one prompt/model pair shows no verified answer denominator or measured work reduction and does not establish a causal effect, general savings, or quality. Costs include failed runs; account credits not measured. Both runs reported 3 turns under maxTurns=8 at standard speed."
   ],
   "stageSpendUsd": {
     "live-only completion": 2.4692065,
-    "smoke": 1.6356457
+    "smoke": 1.7963679
   }
 }
