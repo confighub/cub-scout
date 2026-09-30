@@ -9,7 +9,7 @@ work with. Unknowns are stated, never guessed.
 The goal is **verified answers with less agent spend**: fewer dollars, credits
 and minutes than standalone Claude needs with ordinary read-only tools. We
 [measure that claim](evals/README.md), including where scout adds cost. The
-[3.0 delivery plan](docs/roadmap-3.0-execution.md) proposes release criteria for
+[3.0 delivery plan](docs/roadmap-3.0-execution.md) sets release criteria for
 fair cost comparisons and preserved correctness; general savings are not yet proven.
 
 [v2.12.3 release](https://github.com/confighub/cub-scout/releases/tag/v2.12.3)

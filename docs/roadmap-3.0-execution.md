@@ -1,11 +1,15 @@
 # Delivery plan to cub scout 3.0
 
-Prepared 2026-09-30. This is the execution companion to the
-[authoritative roadmap](roadmap.md#path-to-30), not a new release promise.
-The proposed sequence, staffing, budgets and numerical targets below are
-planning decisions, not measured results or authorization to spend them.
-Existing issue owners remain responsible; the lead agent coordinates bounded
-implementation packets and the maintainer owns product and release decisions.
+Adopted 2026-09-30 by the maintainer: “make this official, github sync, then
+proceed. execute your plan without stopping - loop until done.” This is the
+execution companion to the [authoritative roadmap](roadmap.md#path-to-30).
+The sequence, staffing, staged budgets, targets and decision defaults below
+are authorized for execution. They remain plans, not measured results or
+calendar promises. Execution tracker: [#645](https://github.com/confighub/cub-scout/issues/645).
+Existing issue owners remain responsible. The lead agent
+executes, obtains independent review, verifies CI and evidence, and merges
+reviewed changes; release and paid-run work stays within the adopted gates and
+budgets. External ConfigHub design dependencies are not presumed resolved.
 
 ## Outcome and value proposition
 
@@ -89,7 +93,7 @@ and external ConfigHub decisions; reforecast cost as well if the window expands.
 
 | Packet / target window | Concrete deliverable and issue scope | Dependency | Lead / delegated work | Exit gate |
 |---|---|---|---|---|
-| P0, days 1–2 | Review #643 and #640 independently; propose v2.12.4 for the six merged fixes; freeze benchmark manifest, versions and budgets. | None | Lead handles review/release recommendation; cheap worker checks fixture/claim inventory. | Reviewable PRs; known green checks; no partial run presented as complete. Release remains a maintainer decision. |
+| P0, days 1–2 | Review #643 and #640 independently; prepare v2.12.4 for the six merged fixes; freeze benchmark manifest, versions and budgets. | None | Lead handles review/release recommendation; cheap worker checks fixture/claim inventory. | Reviewable PRs; known green checks; no partial run presented as complete. Release follows the adopted D1 decision and publication checks. |
 | P1, week 1 | [#603]: complete/regrade live-only experiment; create equal-information baseline, binary success and cost ledger; select the 24 cases below; reproducible pinned-model command and bounded CI design. | #643 reviewed; authenticated eval runner for paid portion | Cheap worker builds offline harness/tests; lead approves scoring; logged-in runner executes paid cases serially. | Graders fail without fixes; model/evidence/cost provenance complete; interrupted runs retained and excluded from complete claims. Baseline published with limits. |
 | P2, weeks 1–2 | [#626], [#603], [#604]: fix routing on attribution prompts; shorten discovery descriptions; prototype per-entry owner evidence and omission reasons for compact `map`; preserve drill-down. | P1 test definitions; does not wait for the whole paid suite | One cheap worker per bounded skill/output slice; lead reviews evidence semantics. | Fewer redundant calls/bytes on affected cases, unchanged correctness; no broad “unmanaged” claim from absent or unreadable metadata. Keep only measured improvements. |
 | P3, weeks 2–3; v2.13 | [#641] read-side decisions, [#591], [#597], [#561] leftovers, [#588], [#599] explicit context; `/v2` per [#595]/[#520]. Separate small PRs, not one rewrite. | P1 fixture contract; decisions D2–D4 | Lead designs joins and safety; cheap workers port recorded fixtures, implement settled adapters and docs. | cub 0.6/server-pinned governance fixtures; exact-identity/freshness negative tests; explicit context never changes shared context; required tests/examples/live proof. v2.13 baseline and cost result published. |
@@ -200,14 +204,14 @@ must not disappear; an abandoned experiment is reported as partial, not pooled
 into a completed headline. Regrade old transcripts if possible before paying
 to rerun only because a grader changed.
 
-### Metrics and proposed release thresholds
+### Metrics and adopted release thresholds
 
 Primary: `total arm spend / number of independently verified successful answers`.
 Zero successes is undefined/infinite, never zero dollars. Publish raw counts and
 both total and task-balanced costs; show each group so easy tasks cannot hide
 an expensive or inaccurate controller class.
 
-| Measure | Proposed target for the 3.0 savings claim on the tested suite |
+| Measure | Adopted target for the 3.0 savings claim on the tested suite |
 |---|---|
 | Quality | No lower observed verified-success rate; every mandatory negative case correct. Predeclare a 2 percentage-point non-inferiority margin: the paired 95% interval for the success-rate difference must not extend below -2 points. If unresolved, keep the evidence descriptive and the claim narrow. |
 | Dollars | At least 20% lower cost per verified answer; paired task-level bootstrap interval excludes no saving. Predefine analysis and weights. |
@@ -271,8 +275,8 @@ actual task cost, or API dollars. Count all calls and context rereads.
 
 Allocate the first three implementation packets **45 lead/review credits plus
 3 cheap-worker credits and 12 reserve credits** as a provisional 60-credit
-planning envelope under those rates. These are accounting targets, not tool-
-enforced caps or a purchase authorization. Reforecast using actual token and
+planning envelope under those rates. These are authorized accounting limits,
+not tool-enforced caps or a new credit purchase. Reforecast using actual token and
 credit telemetry after those packets; do not invent a whole-project dollar
 quote from unmeasured task sizes. Track dollars, attributable credits, human
 minutes and elapsed time in separate columns. If per-task billing is unavailable,
@@ -290,20 +294,20 @@ number of cheap agents spawned.
 
 Planning arithmetic uses **$1.25 per arm-run**, rounded from the historical scale
 pilot's roughly $1.23. It is not a current model quote; replace it after the
-first pinned-model smoke. All amounts below are proposed ceilings, not spend
-already incurred. This planning task runs no paid evals.
+first pinned-model smoke. Amounts below are authorized staged ceilings, not
+spend already incurred. Run only after preflight and authentication succeed.
 
 | Batch | Planned executions | Working envelope |
 |---|---|---|
-| Finish prepared live-only run | 3 cases x 3 treatment repeats = 9 | ~$11.25 at the planning rate; propose $15 cap, replacing the handover's ~$8/$10 estimate; regrade usable transcripts first |
+| Finish prepared live-only run | 3 cases x 3 treatment repeats = 9 | ~$11.25 at the planning rate; $15 cap, replacing the handover's ~$8/$10 estimate; regrade usable transcripts first |
 | P1 smoke | 4 cases x 2 arms x 1 repeat = 8 | ~$10 expected, $20 cap |
 | P1 baseline | 24 x 2 x 3 = 144 | ~$180 expected, $200 cap |
 | Per changed behavior | Only affected case group, 1 repeat/arm first | Up to $20 per packet; no whole-suite rerun for a wording edit |
 | Release benchmark | 24 x 2 x 10 = 480 | ~$600 expected, $650 cap per benchmark campaign; second model or workflow is a separate budget |
 
 The existing #643 command still requests $10; update the execution manifest to
-the proposed $15 only when that batch is authorized, or keep $10 and accept a
-possible partial result. Do not call the earlier estimate a guaranteed bill.
+the adopted $15 for a new authorized batch; retain historical commands and
+results unchanged. Do not call the earlier estimate a guaranteed bill.
 
 Initial live completion + smoke + baseline caps sum to **$235**. One full release
 campaign adds $650, for $885 before targeted reruns, infrastructure or extra
@@ -312,20 +316,21 @@ fixtures and evaluation conditions; otherwise budget both arms again. Recompute
 if per-run costs differ materially, rather than silently consuming the reserve.
 
 PR CI runs deterministic fixtures and grader/report tests without model calls.
-After P1, propose a weekly paid four-case smoke capped at $20 (at most $80 for
+After P1, use a weekly paid four-case smoke capped at $20 (at most $80 for
 four scheduled runs), with concurrency one and a monthly account cap. Full
-paid runs happen at agreed release gates, not every commit. Scheduling and paid
-execution are not activated by this plan. Interrupted/over-budget runs publish
+paid runs happen at agreed release gates, not every commit. Activate paid CI only after its credential, provider-limit and cost-accounting
+preflight; local runs use the logged-in runner. Interrupted/over-budget runs publish
 partial status and costs. Harness caps may not be exact billing stops; use
 provider limits where available and report actual spend. API-key CI is separate
 from the logged-in Claude Code execution path currently available to the team.
 
-Across the proposed roadmap, reserve $235 for P1, $200 each for the v2.14 and
+Across the adopted roadmap, reserve $235 for P1, $200 each for the v2.14 and
 v2.15 three-repeat checks, and $650 for the 3.0 campaign: **$1,285**. A maximum
 of six targeted $20 packets plus three months of four $20 smokes adds $360,
 for a **$1,645 planning ceiling**, excluding infrastructure, development-agent
 usage, extra models and #642. Reuse comparable prior results to spend less.
-This is a forecast to review in tranches, not a request to launch all batches.
+This is a staged ceiling: release gates control dispatch, not an instruction
+to launch every batch immediately.
 
 For [#642], keep a separate budget and owner in ConfigHub/Pilot: promotion,
 secret-reference search, drift diagnosis and rollback, verified independently,
@@ -333,20 +338,20 @@ including service/compute cost and human interventions. Scout contributes
 read-only evidence, not the write executor. No ConfigHub cost-saving result is
 currently established by the scout pilot.
 
-## Decisions with recommended defaults, not blockers to all work
+## Adopted decisions and remaining external dependencies
 
-| Decision | Recommendation for review | Needed by |
+| Decision | Adopted default / external dependency | Needed by |
 |---|---|---|
 | D1: patch release / #640 | Ship the six correctness fixes as v2.12.4 after checks; evaluate #640 independently. Keep behavior-change review before merge. | P0 release; P1/P2 may proceed |
 | D2: [#620] missing health | Add explicit measurement/coverage semantics in 2.x; keep legacy value until a documented 3.0 migration if changing it breaks clients. | P3 health fixtures |
 | D3: [#599] context / parity | Per-call explicit context, immutable client binding, no global context switching; retain recorded fallback when omitted. Shared semantic output and applicable context/refresh controls in TUI; document API-only transport controls. | P3 implementation |
 | D4: `/v2` timing | Next 2.x minor as already planned; verify external imports/install path. Reserve `/v3` for the major transition. | v2.13 packaging |
-| D5: [#641] reporter default | Start with explicit connected-bot publication opt-in; standalone never publishes. Preserve the decision to offer fallback reporting. Never overwrite another reporter, including races; record applied facts, not scout verdicts. Default remains a maintainer decision. | P5 publication, not read-side P3 |
+| D5: [#641] reporter default | Start with explicit connected-bot publication opt-in; standalone never publishes. Preserve the decision to offer fallback reporting. Never overwrite another reporter, including races; record applied facts, not scout verdicts. Explicit opt-in is the adopted default. | P5 publication, not read-side P3 |
 | D6: [#600] facts location | Agree schema/storage/retention with ConfigHub before implementing a local substitute. Include observation identity, expiry and source; no duplicate fleet model. | P5; offline contract work can proceed |
 | D7: [#562] fleet outliers | Deprecate misleading comparison now; remove in 3.0 unless ConfigHub provides stable cross-cluster identity and fixtures prove it. | v2.15 notices |
-| D8: value threshold / budgets | Adopt the proposed 20% targets and staged envelopes; calibrate after smoke while keeping held-out tasks and scoring fixed. | Paid P1 / public claim |
+| D8: value threshold / budgets | Use the adopted 20% targets and staged envelopes; calibrate after smoke while keeping held-out tasks and scoring fixed. | Paid P1 / public claim |
 
-No new capability is marked shipped by these recommendations. Every package
+No new capability is marked shipped by these decisions. Every package
 must define inputs, expected outputs, a failure-without-fix test, example,
 standalone/connected/fleet applicability, omissions, and live proof before
 implementation. Where live proof cannot run, preserve a reproducible command
@@ -355,7 +360,7 @@ and recorded contract test and keep that gate pending. Do not waive it by prose.
 ## First ten working days
 
 1. Day 1: review #643/#640, settle benchmark manifest, log versions/fixtures,
-   register the proposed budget and open decisions. No new broad feature PR.
+   register the adopted budget and remaining external dependencies. No new broad feature PR.
 2. Days 2–3: cheap worker implements binary success/cost telemetry and matched
    managedFields baseline; second worker extracts Sveltos/Flux/Argo/helm-expt
    negative fixtures. Lead settles gate-versus-release semantics.

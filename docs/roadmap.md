@@ -23,6 +23,7 @@ remains future work. Items marked "resolved" had issues filed, implemented, and 
 
 Tracking: issue **#154** is closed. This checklist is now the live tracker.
 
+Execution is tracked in [#645](https://github.com/confighub/cub-scout/issues/645).
 The [September 30 execution plan](roadmap-3.0-execution.md) maps its work
 packets to existing issues, including #603/#626 (measured agent savings),
 #641 (reporter/gate semantics) and #642 (the separate ConfigHub/Pilot benchmark).
@@ -294,12 +295,13 @@ before implementation.
 ### Path to 3.0
 
 **Execution plan, 2026-09-30:** [Delivery plan to cub scout 3.0](roadmap-3.0-execution.md)
-adds ordered work packets, dependencies, proposed cost/quality gates, a 24-case
+adds ordered work packets, dependencies, adopted cost/quality gates, a 24-case
 benchmark, cheap-subagent assignments, spending envelopes and the first ten
 working days. It incorporates measured lessons from Sveltos, Kubara, cub-flux,
 cub-argo and helm-expt. In particular, gate acceptance, inferred release identity
-and current workload health must remain separate. Its thresholds and budgets
-are proposals; neither paid runs nor new capabilities are implied by the plan.
+and current workload health must remain separate. The maintainer adopted its thresholds, staged budgets and decision defaults on
+September 30 and authorized execution. Completion still requires the named
+tests and proof; the plan itself does not establish shipped capability.
 
 A plan, not a date; the rule above that planned sections describe intent applies.
 Stages 1 to 3 are additive and ship in 2.x minors. Stage 4 is the 3.0.0 release
