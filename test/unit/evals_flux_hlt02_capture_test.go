@@ -234,7 +234,7 @@ func TestFluxHLT02CaptureValidatorRequiresUnreadyPodOwnerChain(t *testing.T) {
 		}
 		replicaSet := map[string]any{
 			"apiVersion": "apps/v1", "kind": "ReplicaSet",
-			"metadata": map[string]any{"name": "payment-worker-current", "uid": "replicaset-uid", "labels": map[string]any{
+			"metadata": map[string]any{"name": "payment-worker-current", "namespace": "scout-hlt02", "uid": "replicaset-uid", "labels": map[string]any{
 				"app.kubernetes.io/name": "payment-worker", "pod-template-hash": "template-hash",
 			}, "ownerReferences": []any{map[string]any{"apiVersion": "apps/v1", "kind": "Deployment", "name": "payment-worker", "uid": "deployment-uid", "controller": true}}},
 			"spec": map[string]any{"template": map[string]any{"spec": map[string]any{"containers": []any{map[string]any{
@@ -243,9 +243,10 @@ func TestFluxHLT02CaptureValidatorRequiresUnreadyPodOwnerChain(t *testing.T) {
 		}
 		pod := map[string]any{
 			"apiVersion": "v1", "kind": "Pod",
-			"metadata": map[string]any{"name": "payment-worker-current-xyz", "uid": "pod-uid", "labels": map[string]any{
+			"metadata": map[string]any{"name": "payment-worker-current-xyz", "namespace": "scout-hlt02", "uid": "pod-uid", "labels": map[string]any{
 				"app.kubernetes.io/name": "payment-worker", "pod-template-hash": "template-hash",
-			}, "ownerReferences": []any{map[string]any{"apiVersion": "apps/v1", "kind": "ReplicaSet", "name": "payment-worker-current", "uid": "replicaset-uid", "controller": true}}},
+			}, "ownerReferences": []any{map[string]any{"apiVersion": "apps/v1", "kind": "ReplicaSet", "name": "payment-worker-current", "namespace": "scout-hlt02", "uid": "replicaset-uid", "controller": true}}},
+			"spec": map[string]any{"containers": []any{map[string]any{"name": "worker", "image": "registry.k8s.io/pause:3.9", "command": []any{"/scout-fixture-intentionally-missing"}}}},
 			"status": map[string]any{
 				"conditions": []any{map[string]any{"type": "Ready", "status": "False"}},
 				"containerStatuses": []any{map[string]any{"name": "worker", "state": map[string]any{"waiting": map[string]any{
@@ -281,6 +282,30 @@ func TestFluxHLT02CaptureValidatorRequiresUnreadyPodOwnerChain(t *testing.T) {
 	deployment, replicaSets, pods := makeObjects()
 	if err := run(t, deployment, replicaSets, pods); err != nil {
 		t.Fatalf("valid Deployment→ReplicaSet→Pod chain rejected: %v", err)
+	}
+
+	for _, missing := range []string{"deployment-generation", "pod-uid", "pod-namespace", "replicaset-namespace", "pod-command"} {
+		t.Run(missing, func(t *testing.T) {
+			d, r, p := makeObjects()
+			pod := p["items"].([]any)[0].(map[string]any)
+			rs := r["items"].([]any)[0].(map[string]any)
+			switch missing {
+			case "deployment-generation":
+				delete(d["metadata"].(map[string]any), "generation")
+				delete(d["status"].(map[string]any), "observedGeneration")
+			case "pod-uid":
+				delete(pod["metadata"].(map[string]any), "uid")
+			case "pod-namespace":
+				pod["metadata"].(map[string]any)["namespace"] = "other"
+			case "replicaset-namespace":
+				rs["metadata"].(map[string]any)["namespace"] = "other"
+			case "pod-command":
+				delete(pod, "spec")
+			}
+			if err := run(t, d, r, p); err == nil {
+				t.Fatalf("accepted missing or mismatched evidence: %s", missing)
+			}
+		})
 	}
 
 	_, wrongRSOwner, wrongRSPods := makeObjects()

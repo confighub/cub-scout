@@ -20,9 +20,11 @@ def read_json(path):
         raise InvalidCapture(f"cannot read {path}: {exc}") from exc
 
 
-def controller_ref(obj, kind, uid):
+def controller_ref(obj, kind, uid, name):
     return any(
-        ref.get("kind") == kind
+        ref.get("apiVersion") == "apps/v1"
+        and ref.get("kind") == kind
+        and ref.get("name") == name
         and ref.get("uid") == uid
         and ref.get("controller") is True
         for ref in obj.get("metadata", {}).get("ownerReferences", [])
@@ -61,13 +63,13 @@ def failing_for_fixture(pod):
 
 
 def validate_capture(deployment, replicasets, pod_list):
-    if deployment.get("kind") != "Deployment" or deployment.get("metadata", {}).get("name") != "payment-worker" or deployment.get("metadata", {}).get("namespace") != "scout-hlt02":
+    if deployment.get("apiVersion") != "apps/v1" or deployment.get("kind") != "Deployment" or deployment.get("metadata", {}).get("name") != "payment-worker" or deployment.get("metadata", {}).get("namespace") != "scout-hlt02":
         raise InvalidCapture("selected object is not Deployment/payment-worker")
     deployment_meta = deployment.get("metadata", {})
     deployment_uid = deployment_meta.get("uid")
     generation = deployment_meta.get("generation")
     status = deployment.get("status", {})
-    if not deployment_uid or status.get("observedGeneration") != generation:
+    if not deployment_uid or type(generation) is not int or generation < 1 or status.get("observedGeneration") != generation:
         raise InvalidCapture("Deployment status is not observed for its current generation")
     if deployment.get("spec", {}).get("replicas", 1) != 1 or status.get("availableReplicas", 0) != 0 or status.get("unavailableReplicas", 0) < 1:
         raise InvalidCapture("Deployment does not show one current unavailable replica")
@@ -80,7 +82,7 @@ def validate_capture(deployment, replicasets, pod_list):
     replica_sets = replicasets.get("items", [])
     candidate_sets = []
     for rs in replica_sets:
-        if rs.get("kind") not in (None, "ReplicaSet") or not controller_ref(rs, "Deployment", deployment_uid):
+        if rs.get("apiVersion") != "apps/v1" or rs.get("kind") != "ReplicaSet" or rs.get("metadata", {}).get("namespace") != "scout-hlt02" or not controller_ref(rs, "Deployment", deployment_uid, "payment-worker"):
             continue
         worker = named_container(rs, "worker")
         if worker is None or worker.get("image") != EXPECTED_IMAGE or worker.get("command") != [MISSING_COMMAND]:
@@ -95,13 +97,18 @@ def validate_capture(deployment, replicasets, pod_list):
         rs_meta = rs.get("metadata", {})
         rs_uid = rs_meta.get("uid")
         template_hash = rs_meta.get("labels", {}).get("pod-template-hash")
-        if not rs_uid or not template_hash:
+        if not rs_uid or not rs_meta.get("name") or not template_hash:
             continue
         for pod in pod_list.get("items", []):
             pod_meta = pod.get("metadata", {})
+            if pod.get("apiVersion") != "v1" or pod.get("kind") != "Pod" or pod_meta.get("namespace") != "scout-hlt02" or not pod_meta.get("uid"):
+                continue
+            worker = next((c for c in pod.get("spec", {}).get("containers", []) if c.get("name") == "worker"), None)
+            if worker is None or worker.get("image") != EXPECTED_IMAGE or worker.get("command") != [MISSING_COMMAND]:
+                continue
             if pod_meta.get("labels", {}).get("app.kubernetes.io/name") != "payment-worker":
                 continue
-            if pod_meta.get("labels", {}).get("pod-template-hash") != template_hash or not controller_ref(pod, "ReplicaSet", rs_uid):
+            if pod_meta.get("labels", {}).get("pod-template-hash") != template_hash or not controller_ref(pod, "ReplicaSet", rs_uid, rs_meta["name"]):
                 continue
             ready = next(
                 (condition.get("status") for condition in pod.get("status", {}).get("conditions", [])
