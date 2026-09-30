@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Disposable valid-release live smoke for Helm Secret release decoding.
+# Disposable valid-release live smoke for Helm Secret release decoding and
+# exact manifest-to-resource identity.
 # It never reuses an existing kind cluster or the user's default kubeconfig.
 set -euo pipefail
 
@@ -19,7 +20,7 @@ else
 fi
 echo "Evidence directory: $EVIDENCE_DIR"
 
-for tool in kind kubectl helm go; do
+for tool in kind kubectl helm go jq; do
 	command -v "$tool" >/dev/null 2>&1 || { echo "$tool is required" >&2; exit 1; }
 done
 if kind get clusters 2>/dev/null | grep -Fxq "$CLUSTER"; then
@@ -45,15 +46,50 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 (cd "$REPO_ROOT" && go build -o "$TMP_DIR/cub-scout" ./cmd/cub-scout)
 helm version --short >"$EVIDENCE_DIR/helm-version.txt" 2>&1
-helm create "$TMP_DIR/release-probe"
-helm template release-probe "$TMP_DIR/release-probe" >"$TMP_DIR/rendered.yaml"
+CHART_DIR="$TMP_DIR/release-probe"
+mkdir -p "$CHART_DIR/templates"
+cat >"$CHART_DIR/Chart.yaml" <<'EOF'
+apiVersion: v2
+name: release-probe
+description: Minimal deterministic chart for the Helm release trace smoke.
+type: application
+version: 0.1.0
+appVersion: "3.9"
+EOF
+cat >"$CHART_DIR/templates/deployment.yaml" <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: release-probe
+  namespace: $NS
+  labels:
+    app.kubernetes.io/name: release-probe
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: release-probe
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: release-probe
+    spec:
+      containers:
+        - name: pause
+          image: registry.k8s.io/pause:3.9
+EOF
+helm template release-probe "$CHART_DIR" --namespace "$NS" >"$TMP_DIR/rendered.yaml"
 shasum -a 256 "$TMP_DIR/rendered.yaml" >"$EVIDENCE_DIR/chart-render.sha256"
 
 kind create cluster --name "$CLUSTER" --kubeconfig "$KUBECONFIG" >"$EVIDENCE_DIR/kind-create.stdout" 2>"$EVIDENCE_DIR/kind-create.stderr"
 CREATED=true
 export KUBECONFIG
 
-helm install release-probe "$TMP_DIR/release-probe" --namespace "$NS" --create-namespace >"$EVIDENCE_DIR/helm-install.stdout" 2>"$EVIDENCE_DIR/helm-install.stderr"
+helm install release-probe "$CHART_DIR" --namespace "$NS" --create-namespace >"$EVIDENCE_DIR/helm-install.stdout" 2>"$EVIDENCE_DIR/helm-install.stderr"
 
 kubectl -n "$NS" get secrets -l owner=helm,name=release-probe -o name >"$EVIDENCE_DIR/secret-metadata.txt"
 "$TMP_DIR/cub-scout" trace deployment/release-probe -n "$NS" --format json >"$EVIDENCE_DIR/trace.stdout" 2>"$EVIDENCE_DIR/trace.stderr"
+jq -e --arg ns "$NS" '
+  .summary.ownerType == "Helm" and
+  ([.chain[] | select(.id.kind == "Deployment" and .id.name == "release-probe" and .id.namespace == $ns)] | length) == 1
+' "$EVIDENCE_DIR/trace.stdout" >"$EVIDENCE_DIR/trace-assertion.txt"

@@ -42,8 +42,10 @@ and Kubernetes client.
 
 The optional disposable-cluster smoke is
 [`reproduce-helm-release-secret-trace.sh`](./reproduce-helm-release-secret-trace.sh).
-It creates a uniquely named kind cluster, builds a local sample chart with the
-installed Helm CLI, traces that release, then deletes only the cluster it
+It creates a uniquely named kind cluster, builds a minimal deterministic chart
+with an explicit Deployment namespace and fixed `registry.k8s.io/pause:3.9`
+image, traces that release, and asserts JSON reports Helm ownership and exactly
+one matching Deployment chain node before deleting only the cluster it
 created. It is a valid-release smoke only; it does not test malformed
 candidates or fallback behavior. It is not run by unit tests and was not run
 for this packet; its output is not Helm-version parity evidence. It preserves
