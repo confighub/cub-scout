@@ -6,12 +6,13 @@ save money or time on this case.
 
 | Arm | Required answers | Agent cost | Mock cost | Total / answer | Seconds | Turns |
 |---|---:|---:|---:|---:|---:|---:|
-| With scout | 1/1 | $0.6431775 | $0.024624 | $0.6678015 | 111 | 15 |
+| With scout | 1/1 | $0.6185535 | $0.024624 | $0.6431775 | 111 | 15 |
 | Without | 1/1 | $0.2242625 | $0 | $0.2242625 | 36 | 8 |
 
-Total reported list-price spend: **$0.892064**, within the $3 smoke launch
-ceiling and the adopted $20 smoke envelope. The harness's top-level $0.86744
-excludes mock calls; the table includes them. Actual account credits and
+Total reported list-price spend: **$0.867440**, within the $3 smoke launch
+ceiling and the adopted $20 smoke envelope. The harness's run and top-level costUsd already include mock and judge calls;
+adding the breakdown fields again would double-count them. This was confirmed
+against the terminal trace's primary cost and the installed 2.1.274 harness. Actual account credits and
 incremental subscription billing are not measured.
 
 Source: `d530f79`, Claude Code 2.1.274, primary model `claude-opus-5[1m]`,
