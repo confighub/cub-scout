@@ -288,7 +288,7 @@ func TestRecordedMCPIsolatedImmutableAndNeverUsesLiveRunner(t *testing.T) {
 		t.Fatal(err)
 	}
 	gateway := newRecordedMCPGateway(snapshot)
-	if len(gateway.tools) != 1 || len(gateway.toolList) != 1 || gateway.toolList[0].Name != "explain" || gateway.runTool != nil || gateway.connectedRunner != nil {
+	if len(gateway.tools) != 2 || len(gateway.toolList) != 2 || gateway.toolList[0].Name != "explain" || gateway.toolList[1].Name != "map" || gateway.runTool != nil || gateway.connectedRunner != nil {
 		t.Fatalf("recorded gateway exposes live dispatch: %#v", gateway)
 	}
 	properties := gateway.toolList[0].InputSchema["properties"].(map[string]interface{})

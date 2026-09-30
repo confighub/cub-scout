@@ -67,7 +67,7 @@ Doctor is the first troubleshooting and tool-choice entrypoint.
 Connected tools add governed lookup, intended configuration, receipts, and
 convergence facts once scope is known.
 
-With --recording FILE, only the exact-object recorded explain tool is exposed;
+With --recording FILE, only recorded ownership inventory and exact-object explain are exposed;
 the input is fixed at startup and calls cannot request live or connected tools.`,
 	RunE: runMCPServe,
 }
@@ -77,7 +77,7 @@ var mcpRecording string
 func init() {
 	rootCmd.AddCommand(mcpCmd)
 	mcpCmd.AddCommand(mcpServeCmd)
-	mcpServeCmd.Flags().StringVar(&mcpRecording, "recording", "", "Serve only exact-object explain from this immutable local YAML/JSON recording")
+	mcpServeCmd.Flags().StringVar(&mcpRecording, "recording", "", "Serve ownership inventory and exact-object explain from this immutable local YAML/JSON recording")
 }
 
 type mcpToolRunner func(ctx context.Context, args []string) (string, error)

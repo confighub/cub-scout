@@ -173,8 +173,8 @@ func recordedExplainTool(snapshot recordedObjectSnapshot) mcpTool {
 func newRecordedMCPGateway(snapshot recordedObjectSnapshot) *mcpGateway {
 	tool := recordedExplainTool(snapshot)
 	return &mcpGateway{
-		tools:    map[string]mcpTool{"explain": tool},
-		toolList: []mcpToolDescriptor{tool.Descriptor},
+		tools:    map[string]mcpTool{"explain": tool, "map": recordedMapTool(snapshot)},
+		toolList: []mcpToolDescriptor{tool.Descriptor, recordedMapTool(snapshot).Descriptor},
 		// No ordinary or connected runner is installed in recorded-only mode.
 	}
 }

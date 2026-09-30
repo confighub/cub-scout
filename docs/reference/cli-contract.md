@@ -390,9 +390,9 @@ cub-scout mcp serve --recording objects.yaml
 
 - The MCP gateway remains read-only.
 - With `--recording FILE`, it reads and freezes one bounded input at startup,
-  exposes only exact-object `explain`, and has no live/connected runner. The
-  tool request accepts exact identity fields but no recording path or live
-  options. Without the flag, the normal tool set below is unchanged.
+  exposes recorded ownership `map` and exact-object `explain`, and has no
+  live/connected runner. Requests accept scope/identity fields but no recording
+  path or live options. Without the flag, the normal tool set below is unchanged.
 - Standalone tool set includes:
   - `doctor`
   - `explain`
@@ -1878,3 +1878,20 @@ Each entry includes `freshness.status`:
 - [CLI Guide](../../CLI-GUIDE.md) - Workflow-first CLI tour
 - [Reference: Commands](commands.md) - Detailed command usage and examples
 - [Reference: Query Syntax](query-syntax.md) - Query language details
+
+### Recorded Map List
+
+`map list --recording FILE --api-version VERSION --kind KIND` reads only the
+bounded local recording. Exact case-sensitive API version and Kind are required.
+Optional exact `--namespace` and literal non-empty `--namespace-prefix` are
+mutually exclusive. `--format ascii|json|md` and `--tui` share one deterministic
+model; `--tui` rejects explicit output-format flags. Recorded mode rejects live
+context, saved query, owner/time filters and summary/count/names-only shortcuts.
+It never falls back to a live read, even for invalid or missing inputs.
+
+JSON uses `map-list-recorded.v1`; detector evidence is always present. Selected
+and excluded counts describe only the supplied file. Capture time and capture
+completeness remain unknown, and Native is a no-built-in-marker result, not
+an orphan finding. No custom host detector configuration is read. An empty
+selection is a successful empty answer, whereas an empty input or any duplicate
+full identity is an error. Ordinary live map output is unchanged.
