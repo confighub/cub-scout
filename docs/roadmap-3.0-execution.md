@@ -42,7 +42,7 @@ no cluster mutation, no new fleet membership model, and no renderer hidden in
 `import --git-path`. ConfigHub fact publication has a distinct, explicit write
 boundary even though observing the cluster remains read-only.
 
-## Execution checkpoint — 2026-09-30
+## Execution checkpoint — 2026-09-30 (status as of 22:45 UTC)
 
 v2.12.4 is published at `11c3e38`, with the six correctness fixes and reviewed
 #640/#643. Published archives and supported macOS/Linux entry points are
@@ -52,15 +52,49 @@ The adopted plan (#644), binary verified-answer/inclusive-cost accounting
 (#658/#659), scoped explicit context (#665), compact ownership diagnostics
 (#667), recorded exact-object explain (#668), Helm storage-identity checks
 (#670) and the `/v2` module migration (#671) are merged. These later changes
-remain unreleased. #669 records an actual one-pair recorded-MCP diagnostic;
-both arms still read the full raw fixture and its wording limits interpretation.
-New paid execution totals $3.9459534 estimated inclusive list price; actual
-credits and development cost are unmeasured. The fixed 24-case benchmark remains
-non-executable, and the general savings gate has not passed. Current next
-packets and external dependencies live in
+remain unreleased. #673 also completed a pinned Helm 3.22.0/Helm 4.1.4
+disposable-cluster matrix: fresh installs for both versions plus a Helm 3-to-4
+upgrade across three releases and four observations. Standalone and plugin
+Scout traces agreed. The Helm 4 upgrade used explicit `--server-side=auto`, so
+it is not evidence for default apply behavior. The upgrade preserved Deployment
+UID while ready replicas changed 1→2. Scope is namespaced install/upgrade only;
+hooks, CRDs, rollback and server-side conflict behavior remain untested.
+Manager names alone do not establish apply method, and this does not close #588.
+#677 provides the genuine HLT-02 Flux capture; its separate answer case #681 has review clearance,
+but required CI is pending and it is not merged. The capture is sequential
+evidence, not current state or a paid result.
+#678 fixes Helm 3 empty `deleted` timestamp decoding, with malformed values
+still rejected. #679 prepares an opt-in bounded economy-probe purpose; it does
+not itself establish savings.
+
+#669 records an actual one-pair recorded-MCP plumbing diagnostic; both arms
+read the full raw fixture and ambiguous owner/field-manager wording limits
+interpretation. A further recorded-MCP economy pair scored 0/2 binary answer
+checks at $0.1588988; its report is merged in #680. Another economy-skill pair
+scored 0/2 at $0.1607222 (with: $0.0811486/22s; without: $0.0795736/19s).
+Both arms reported three turns and made two raw-file reads; despite the visible
+attribution skill, neither called it or the MCP tool. No retry is queued, and
+no routing improvement is established. Its report is being prepared separately.
+Routing-preparation PR #682 has review clearance, but its required CI was pending
+at this snapshot.
+Paid execution totals $4.2655744 estimated inclusive list price: $2.4692065
+live-only and $1.7963679 smoke/probe. Account credits and development-agent cost
+are
+unmeasured; the $200 baseline tranche is unspent. The fixed 24-case benchmark
+remains non-executable with 14 planned cases, five refreshed cases, two awaiting
+snapshot binding and three prepared source projections. Neither diagnostic
+demonstrates savings, and the
+general savings gate has not passed. Current next packets and external
+dependencies live in
 [#645](https://github.com/confighub/cub-scout/issues/645) and the latest
 [handover](../HANDOVER.md). Do not repeat P0 release work from the historical
 starting snapshot below.
+
+Aggregate Codex goal telemetry at 22:45 UTC showed 12,992,646 tokens, with no
+attributable model/cache/credit accounting. It cannot establish dollar spend or
+certify the initial 60-credit envelope. Reforecast directionally toward bounded
+offline fixtures; do not infer a precise remaining-dollar amount or schedule
+another paid retry.
 
 ## Starting snapshot at adoption — before September 30 execution
 

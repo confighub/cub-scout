@@ -3,7 +3,8 @@
 ## 2026-09-30: Post-release implementation checkpoint
 
 Use [#645](https://github.com/confighub/cub-scout/issues/645) for the current
-queue; this checkpoint covers merged work through `7732dde`. The maintainer's
+queue; this checkpoint covers merged work through `06ee828`. This status and
+cost snapshot is as of 2026-09-30 22:45 UTC. The maintainer's
 continuous-execution authorization remains active. Do not repeat release work
 or treat the historical review restrictions below as the adopted policy.
 Earlier dated snapshots below preserve history; where status or decisions
@@ -34,23 +35,57 @@ post-v2.12.4 changes are on main, not in the published v2.12.4 binaries.
   independent review and required CI passed. CLI and distribution names remain
   unchanged. Proxy installation cannot be claimed until a correctly tagged
   minor exists.
+- #673 completed a pinned Helm 3.22.0/Helm 4.1.4 disposable-cluster matrix:
+  fresh installs on both versions and a Helm 3-to-4 upgrade, across three
+  releases/four observations in one owned cluster. The Helm 4 upgrade used
+  explicit `--server-side=auto`; it is not evidence for default apply behavior.
+  Upgrade preserved the Deployment UID while ready replicas changed 1→2;
+  standalone and plugin Scout traces agreed. This is bounded namespaced
+  install/upgrade evidence only:
+  hooks, CRDs, rollback, and server-side conflict behavior remain untested, and
+  manager names do not establish apply method. It does not close #588.
+- #678 fixes Helm 3's empty `deleted` timestamp decoding while retaining strict
+  rejection of malformed timestamp values. The live matrix exercises the
+  separate install/upgrade path; it is not an exhaustive Helm compatibility
+  claim.
 - #657/#660 preserve source-derived Sveltos, Flux and Argo observations. The
   fixed 24-case benchmark still has 14 planned cases, five refreshed cases,
   two awaiting snapshot binding and three prepared source projections. It is
   not executable. Projections are not full raw joins or fresh live proof.
+- #677 adds a genuine HLT-02 Flux capture. The separate HLT-02 answer case in
+  #681 has review clearance, but required CI is pending; it is not merged. The
+  capture's observations are sequential and do not establish current state.
+  Neither the capture nor prepared answer case is a paid benchmark result.
 
-Paid execution so far is **$3.9459534 estimated inclusive list price**:
-$2.4692065 for live-only completion and $1.4767469 for smoke/probe work.
-The $200 baseline tranche is unspent. Account credits and development-agent
-costs are unmeasured. The two checkout smoke pairs had file-only tools and are
-not Experiment A. The latest one-pair recorded diagnostic (#669) actually called
-MCP with the same full raw recording and ordinary tool inventory in both arms.
-Both arms still read all raw data; ambiguous owner/field-manager wording prevents
-a quality claim. The with-arm reported five turns against configured maxTurns=4;
-enforcement semantics remain unresolved. No paid retry is queued.
+As-of 22:45 UTC, paid execution totals **$4.2655744 estimated inclusive list
+price**: $2.4692065 live-only and $1.7963679 smoke/probe. This includes the
+#680 economy pair (0/2 answers, $0.1588988) and a further economy-skill pair
+(0/2 answers, with $0.0811486/22s and without $0.0795736/19s; $0.1607222
+total). In the latter pair, both arms reported three turns and made two raw-file
+reads; despite the visible attribution skill, neither called it or the MCP tool.
+No retry is queued. The earlier #669 plumbing pair scored 1/2 but remains
+interpretation-confounded; none of these runs demonstrates savings. The #680
+report is merged; the separate economy-skill
+report is being prepared. PR #679 adds opt-in economy purpose to the bounded
+probe; it does not itself establish savings. Credits and development-agent
+costs remain unmeasured. The $200 baseline tranche is unspent.
+The two checkout smoke pairs had file-only tools and are not Experiment A. The
+#669 recorded diagnostic called MCP with the same full raw recording and
+ordinary tool inventory in both arms; both arms still read all raw data, and
+ambiguous owner/field-manager wording prevents a quality claim. Its with-arm
+reported five turns against configured maxTurns=4; enforcement semantics remain
+unresolved. PR #681 and routing-preparation PR #682 have review clearance, but
+their required CI was still pending at this snapshot. The economy-skill result
+does not establish a routing improvement.
 See [the diagnostic report](evals/reports/2026-09-30-recorded-mcp-probe.md) and
 [the cost ledger](evals/reports/2026-09-30-execution-costs.json).
 **The savings gate has not passed.**
+
+At 22:45 UTC, aggregate Codex goal telemetry showed 12,992,646 tokens. There is
+no attributable model/cache/credit accounting, so this telemetry cannot be
+converted into a cost or used to certify the initial 60-credit envelope.
+Reforecast directionally: prioritize bounded offline fixtures; do not infer a
+precise remaining-dollar amount or schedule another paid retry.
 
 Local cub and the selected local ConfigHub server both reported v0.6.8 on
 September 30. #591 still needs genuine recorded attestation fixtures. #597 can
