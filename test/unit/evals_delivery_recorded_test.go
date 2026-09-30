@@ -129,12 +129,22 @@ func TestDeliveryRecordedCaseGradersRejectOverclaims(t *testing.T) {
 	cases := []struct {
 		name, good string
 		bad        map[string]string
+		vocabulary []string
 	}{
-		{"flux-applied-digest", `{"ready_apps_digest":"sha256:a998f128abb06eb41f65140183ace5850e61702254753778a7a9ed18377cac48","source_revision":"2fe4c48d58f86d6fd44d2625444a2daf61d676d7","evidence_kind":"recorded_run_log","snapshot_limit":"trimmed_sequential_not_atomic"}`, map[string]string{"ready_apps_digest": "sha256:a998f128abb06eb41f65140183ace5850e61702254753778a7a9ed18377cac49", "source_revision": "2fe4c48d58f86d6fd44d2625444a2daf61d676d", "evidence_kind": "raw_live_snapshot", "snapshot_limit": "atomic"}},
-		{"argo-published-release-lag", `{"consumed_before_refresh":"NO","pre_refresh_state":"PREVIOUS_RELEASE","transition":"HARD_REFRESH_RESOLVES_LATEST","exact_digests_and_counts":"UNKNOWN"}`, map[string]string{"consumed_before_refresh": "YES", "pre_refresh_state": "CURRENT_RELEASE", "transition": "PUBLICATION_ALONE", "exact_digests_and_counts": "sha256:123"}},
+		{"flux-applied-digest", `{"ready_apps_digest":"sha256:a998f128abb06eb41f65140183ace5850e61702254753778a7a9ed18377cac48","source_revision":"main@sha1:2fe4c48d58f86d6fd44d2625444a2daf61d676d7","evidence_kind":"recorded_run_log","snapshot_limit":"trimmed_sequential_not_atomic"}`, map[string]string{"ready_apps_digest": "sha256:a998f128abb06eb41f65140183ace5850e61702254753778a7a9ed18377cac49", "source_revision": "main@sha1:2fe4c48d58f86d6fd44d2625444a2daf61d676d", "evidence_kind": "raw_live_snapshot", "snapshot_limit": "atomic"}, []string{"main@sha1:<40-character-hex>", "recorded_run_log", "raw_live_snapshot", "UNKNOWN", "trimmed_sequential_not_atomic", "atomic"}},
+		{"argo-published-release-lag", `{"consumed_before_refresh":"NO","pre_refresh_state":"PREVIOUS_RELEASE","transition":"HARD_REFRESH_RESOLVES_LATEST","exact_digests_and_counts":"UNKNOWN"}`, map[string]string{"consumed_before_refresh": "YES", "pre_refresh_state": "CURRENT_RELEASE", "transition": "PUBLICATION_ALONE", "exact_digests_and_counts": "EXACT_VALUES_SHOWN"}, []string{"YES", "NO", "UNKNOWN", "PREVIOUS_RELEASE", "CURRENT_RELEASE", "HARD_REFRESH_RESOLVES_LATEST", "PUBLICATION_ALONE", "EXACT_VALUES_SHOWN"}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			prompt, err := os.ReadFile(filepath.Join("..", "..", "evals", tc.name, "prompt.md"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, value := range tc.vocabulary {
+				if !strings.Contains(string(prompt), value) {
+					t.Errorf("prompt does not disclose allowed answer value %q", value)
+				}
+			}
 			grader, err := os.ReadFile(filepath.Join("..", "..", "evals", tc.name, "graders", "verified-answer.md"))
 			if err != nil {
 				t.Fatal(err)

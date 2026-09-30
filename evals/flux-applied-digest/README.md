@@ -2,7 +2,7 @@
 
 ## Success criteria
 
-Both arms receive byte-identical pinned source excerpt. The verified answer names the full `apps` release digest and full Git revision reported alongside it, treats the digest—not its timestamp—as release identity, and says the input is a trimmed sequential run log rather than raw/atomic cluster data. It must not substitute the Git SHA for the applied release digest or claim workload-specific identity absent from the excerpt. The exact JSON grader rejects truncated/changed digests, timestamp-only identity, an incorrect evidence/snapshot limit, extra fields, or prose outside the object.
+Both arms receive byte-identical pinned source excerpt. The verified answer names the full `apps` release digest and the full printed `main@sha1:<hash>` Git revision, treats the digest—not its timestamp—as release identity, and classifies the evidence using the closed vocabulary disclosed in the prompt. It must not substitute the Git SHA for the applied release digest or claim workload-specific identity absent from the excerpt. The exact JSON grader rejects truncated/changed identities, timestamp-only identity, an incorrect evidence/snapshot-limit enum, extra fields, or prose outside the object.
 
 ## Provenance and limits
 

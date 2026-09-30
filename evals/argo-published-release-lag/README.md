@@ -2,7 +2,7 @@
 
 ## Success criteria
 
-Both arms receive the same pinned source excerpt. A verified answer states that publishing a release did not show consumption before refresh: after 90 seconds the Application was still at its previous digest and the cluster ran its previous replica count. It identifies hard refresh as the reported transition, while marking concrete old/new digests and replica counts unknown. It must not invent exact identifiers or present the prose excerpt as a raw or atomic Kubernetes snapshot. The strict JSON grader rejects a claim of pre-refresh consumption, wrong transition, fabricated exact values, extra fields, or prose outside the object.
+Both arms receive the same pinned source excerpt. A verified answer states that publishing a release did not show consumption before refresh: after 90 seconds the Application was still at its previous digest and the cluster ran its previous replica count. It identifies hard refresh as the reported transition, while marking concrete old/new digests and replica counts unknown. The prompt discloses the permitted enum vocabulary; the strict JSON grader rejects incorrect enum choices, fabricated exact values, extra fields, or prose outside the object.
 
 ## Provenance and limits
 
