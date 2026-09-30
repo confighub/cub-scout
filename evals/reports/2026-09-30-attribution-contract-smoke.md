@@ -71,9 +71,11 @@ SHA-256. They are not committed transcripts.
 - Amended audit uses only explicitly allowed saved-trace directories; source
   result and costs are preserved, and current grader hashes are recorded.
 
-The smoke-stage spend is now $1.245443 of its $20 envelope; including the
-live-only completion stage, new paid eval spend is $3.7146495. The $200 baseline
-campaign remains unspent. Account credits and development-agent costs remain
-unmeasured. See #603/#626/#649 and the execution cost ledger. Next work should
-reduce required evidence/context reads and complete negative controls, rather
-than spend on a larger campaign before the product can show a benefit.
+At the time of this report, smoke-stage spend was $1.245443 of its $20
+envelope; including live-only completion, new paid eval spend was $3.7146495.
+A later command-access diagnostic added $0.0655016, bringing current smoke spend
+to $1.3109446 and new paid eval spend to $3.7801511. The $200 baseline campaign
+remains unspent. Account credits and development-agent costs remain unmeasured.
+See #603/#626/#649 and the execution cost ledger. Next work should reduce
+required evidence/context reads and complete negative controls, rather than
+spend on a larger campaign before the product can show a benefit.
