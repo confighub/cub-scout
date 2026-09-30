@@ -178,7 +178,7 @@ func TestAttributeFieldsByManagedFields_UnknownManagerSkipped(t *testing.T) {
 	}
 }
 
-func TestAttributeFieldPathReturnsOnlyExactPathManagersSorted(t *testing.T) {
+func TestAttributeFieldPathRetainsSortedManagersAndUnknownCoClaimant(t *testing.T) {
 	resource := makeResourceWithFieldsV1(
 		metav1.ManagedFieldsEntry{Manager: ManagerKubectlSet, FieldsType: "FieldsV1", FieldsV1: fieldsV1(`{"f:spec":{"f:image":{}}}`)},
 		metav1.ManagedFieldsEntry{Manager: ManagerKubectlEdit, FieldsType: "FieldsV1", FieldsV1: fieldsV1(`{"f:spec":{"f:image":{}}}`)},
@@ -192,8 +192,8 @@ func TestAttributeFieldPathReturnsOnlyExactPathManagersSorted(t *testing.T) {
 	if incomplete {
 		t.Fatal("valid entries should be complete")
 	}
-	if attr.Cause != CauseManualEdit {
-		t.Fatalf("Cause = %q, want %q", attr.Cause, CauseManualEdit)
+	if attr.Cause != CauseUnknown {
+		t.Fatalf("Cause = %q, want unknown when an unclassified manager co-claims the path", attr.Cause)
 	}
 	if !reflect.DeepEqual(attr.Managers, []string{"kubectl-edit", "kubectl-set", "shell-writer"}) {
 		t.Fatalf("Managers = %v, want sorted exact-path managers", attr.Managers)
@@ -296,6 +296,17 @@ func TestAttributeFieldPathRetainsUnrecognizedOnlyManagerAsUnknown(t *testing.T)
 	attr, ok := byPath[".spec.image"]
 	if !ok || incomplete || attr.Cause != CauseUnknown || !reflect.DeepEqual(attr.Managers, []string{"vendor-writer"}) {
 		t.Fatalf("unrecognized manager evidence = (%+v, %v), want unknown and retained manager", attr, incomplete)
+	}
+}
+
+func TestAttributeFieldPathUnknownWhenControllerAndUnrecognizedManagerShare(t *testing.T) {
+	resource := makeResourceWithFieldsV1(
+		metav1.ManagedFieldsEntry{Manager: ManagerFluxKustomize, FieldsType: "FieldsV1", FieldsV1: fieldsV1(`{"f:spec":{"f:image":{}}}`)},
+		metav1.ManagedFieldsEntry{Manager: "vendor-writer", FieldsType: "FieldsV1", FieldsV1: fieldsV1(`{"f:spec":{"f:image":{}}}`)},
+	)
+	attr, ok, incomplete := AttributeFieldPath(resource, Ownership{Type: OwnerFlux}, ".spec.image")
+	if !ok || incomplete || attr.Cause != CauseUnknown || !reflect.DeepEqual(attr.Managers, []string{ManagerFluxKustomize, "vendor-writer"}) {
+		t.Fatalf("controller plus unrecognized evidence = (%+v, %v, %v), want unknown with all managers", attr, ok, incomplete)
 	}
 }
 

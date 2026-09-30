@@ -352,7 +352,7 @@ func fieldAttributionResult(path string, attr agent.FieldMutationAttribution, ok
 	result.Cause = attr.Cause
 	result.Managers = attr.Managers
 	if result.Cause == agent.CauseUnknown {
-		result.Reason = "Managers claim this path, but none are classified by the verified manager rules."
+		result.Reason = "Managers claim this path, but the evidence is insufficient to select a cause."
 	}
 	return result
 }

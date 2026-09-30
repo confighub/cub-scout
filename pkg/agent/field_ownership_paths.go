@@ -116,6 +116,7 @@ func fieldAttributionsByEntries(entries []metav1.ManagedFieldsEntry, expectedOwn
 	type pathAccum struct {
 		sawController   bool
 		sawInteractive  bool
+		sawUnclassified bool
 		controllerHint  string
 		interactiveHint string
 		managers        map[string]struct{}
@@ -165,6 +166,8 @@ func fieldAttributionsByEntries(entries []metav1.ManagedFieldsEntry, expectedOwn
 				if acc.interactiveHint == "" {
 					acc.interactiveHint = m
 				}
+			} else if includeUnknown {
+				acc.sawUnclassified = true
 			}
 		})
 	}
@@ -184,6 +187,10 @@ func fieldAttributionsByEntries(entries []metav1.ManagedFieldsEntry, expectedOwn
 			sort.Strings(managers)
 		}
 		switch {
+		case includeUnknown && acc.sawUnclassified:
+			// Any unclassified co-claimant makes exact-path cause attribution
+			// incomplete, even when another observed manager is recognized.
+			out[path] = FieldMutationAttribution{Cause: CauseUnknown, Managers: managers}
 		case acc.sawController && acc.sawInteractive:
 			if includeUnknown {
 				// For exact-field evidence, shared ownership is ambiguous. Keep

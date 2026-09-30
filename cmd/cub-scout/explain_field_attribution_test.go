@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/charmbracelet/x/ansi"
 	"github.com/confighub/cub-scout/pkg/agent"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -75,7 +76,7 @@ func TestFieldAttributionRendersInTextAndMarkdown(t *testing.T) {
 		Resource: "Deployment/checkout", Namespace: "shop", Owner: "Flux", Source: "recorded",
 		Health: "Unknown", Risks: "None", Drift: "Unknown",
 		FieldAttribution: &FieldAttributionSummary{
-			Path: `.spec.template.spec.containers[name="checkout"].image`,
+			Path:  `.spec.template.spec.containers[name="checkout"].image`,
 			Cause: agent.CauseManualEdit, Managers: []string{agent.ManagerKubectlSet},
 		},
 	}
@@ -83,6 +84,7 @@ func TestFieldAttributionRendersInTextAndMarkdown(t *testing.T) {
 		"text": renderExplainText(summary, PresentationHuman, false, HintContext{Mode: HintModeDefault}),
 		"md":   renderExplainMarkdown(summary, PresentationHuman, false, HintContext{Mode: HintModeDefault}),
 	} {
+		output = ansi.Strip(output)
 		if !strings.Contains(output, summary.FieldAttribution.Path) || !strings.Contains(output, agent.ManagerKubectlSet) {
 			t.Errorf("%s omitted selected path manager evidence: %s", name, output)
 		}
