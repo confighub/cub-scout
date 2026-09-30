@@ -94,6 +94,8 @@ cleanup() {
 	exit "$STATUS"
 }
 trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 mkdir -p "$EVIDENCE_DIR/chart/templates" "$EVIDENCE_DIR/releases"
 cat >"$EVIDENCE_DIR/chart/Chart.yaml" <<'EOF'
