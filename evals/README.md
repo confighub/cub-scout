@@ -31,6 +31,17 @@ sequentially, so timestamps and runtime status can change during recording.
 The [first paired smoke](reports/2026-09-30-fair-attribution-smoke.md) answered
 correctly in both arms and cost more with scout; no benefit is assumed.
 
+The existing [`changed-by-checkout` case](changed-by-checkout/) asks for the
+manager on one exact container-image path from the genuine saved cluster export
+provided to both arms. The recording uses representative controller-manager
+names because GitOps controllers were not installed; it does not support a
+human or latest-writer claim. Exact-path CLI/MCP integration is separately source-pinned
+in the [implementation example](../examples/drift/exact-field-attribution/);
+that live Helm-labelled scale fixture is not pooled into the paired agent eval.
+The real standalone MCP `tools/list` catalog in `mocks/cub-scout/_tools.json`
+was refreshed from the captured response and its provenance is recorded in the
+scenario manifest. No paid paired run has been made for this feature.
+
 ## Run
 
 Needs Claude Code 2.1.269 or later, logged in. Runs count against that account.

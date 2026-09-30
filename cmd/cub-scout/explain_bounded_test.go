@@ -81,6 +81,7 @@ func TestBoundedExplainMCPBudgetAndContext(t *testing.T) {
 	}
 	first := call()
 	require.Equal(t, "miss", first.ResourceRead.Cache)
+	require.NotNil(t, first.FieldAttribution, "MCP field_path must reach the bounded observation")
 	require.Equal(t, ".spec.replicas", first.FieldAttribution.Path)
 	require.Equal(t, agent.CauseManualEdit, first.FieldAttribution.Cause)
 	require.Equal(t, []string{"kubectl-edit"}, first.FieldAttribution.Managers)
