@@ -42,7 +42,21 @@ no cluster mutation, no new fleet membership model, and no renderer hidden in
 `import --git-path`. ConfigHub fact publication has a distinct, explicit write
 boundary even though observing the cluster remains read-only.
 
-## Starting point
+## Execution checkpoint — 2026-09-30
+
+v2.12.4 is published at `11c3e38`, with the six correctness fixes and reviewed
+#640/#643. Published archives and supported macOS/Linux entry points are
+verified; see the [release record](releases/v2.12.4.md) for checks and omissions.
+The adopted plan (#644) and binary verified-answer/inclusive-cost accounting
+(#646) are merged. Equal-evidence fixtures and later cost-reduction packets
+remain separate work, tracked in [#645](https://github.com/confighub/cub-scout/issues/645).
+The general savings gate has not passed. Do not repeat P0 release work from the
+historical starting snapshot below.
+
+## Starting snapshot at adoption — before September 30 execution
+
+The following records the pre-execution state, not the current work queue.
+
 
 - Published baseline: v2.12.3. Six fixes (#625, #629, #630, #631, #634, #637)
   are merged but unreleased. Review #640 separately; do not wait for all 3.0
