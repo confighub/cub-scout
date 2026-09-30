@@ -8,6 +8,6 @@ timeout_seconds: 300
 allowed_tools: [Read, Glob, Grep, Skill]
 ---
 
-Review the recorded, read-only evidence in `evidence/health-measurement-contract/`. The before/after object has the same UID and resourceVersion. The explain calls were sequential observations, not an atomic snapshot. The before call used published v2.12.4; the after call used local source `8637c81`.
+Review the saved, read-only evidence in `evidence/health-measurement-contract/`; use the `after-explain.json` file and do not call an MCP tool. The before/after object has the same UID and resourceVersion. The explain calls were sequential observations, not an atomic snapshot. The before call used published v2.12.4; the after call used local source `8637c81`.
 
-Use the after explain result. Return one compact JSON object only, with exactly these keys and values copied from its schema: `health`, `healthMeasurement` containing `status` and `scope`, and `currentChange` containing `verdict`. Do not add a health conclusion beyond what the fields prove.
+Return one compact JSON object only, with exactly these keys in this order: `health`, `healthMeasurement` containing only `status` and `scope`, and `currentChange` containing only `verdict`. Omit the optional `reason` field. Copy the values from `after-explain.json` and do not add a health conclusion beyond what the fields prove.

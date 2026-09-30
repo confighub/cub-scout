@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# FIXTURE-OWNED: regenerated from case fixtures only; record.py preserves this script.
 # Deterministic, case-scoped export and genuine sequential proof records.
 set -euo pipefail
 mkdir -p cluster evidence/health-measurement-contract

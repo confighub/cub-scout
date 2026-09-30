@@ -1,3 +1,4 @@
+# FIXTURE-OWNED-SCAFFOLD: validate against this case's fixtures/ tree; generic recorder must preserve it.
 schema_version: "1.1"
 name: health-measurement-contract
 context:
