@@ -18,11 +18,11 @@
         "reason": "ScalingReplicaSet",
         "message": "Scaled up replica set hotfix-worker-79596987fd from 0 to 1",
         "count": 1,
-        "age": "3m",
+        "age": "1m",
         "severity": "info",
         "source": "deployment-controller",
-        "firstSeen": "2026-09-27T08:54:35+01:00",
-        "lastSeen": "2026-09-27T08:54:35+01:00"
+        "firstSeen": "2026-09-30T18:26:04+01:00",
+        "lastSeen": "2026-09-30T18:26:04+01:00"
       }
     ],
     "totalCount": 1,

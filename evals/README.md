@@ -13,6 +13,24 @@ runs with the cub-scout plugin loaded and again without it, and the difference
 This is the pilot: thirteen cases on one recorded scenario, and three on a 300-Deployment scale scenario. The first suite of 20–30
 cases, a scheduled CI run and published results come next.
 
+## Main scenario evidence refresh (2026-09-30)
+
+The main scenario was re-recorded in an isolated disposable cluster after the
+recorder gained `--show-managed-fields`. Both arms now receive the full field
+manager evidence for attribution. Source revision and file hashes are in
+[the recording manifest](fixtures/recording-2026-09-30.json). The old result
+tables below describe their original evidence; they are not results on these
+new fixtures. The scale raw exports were also refreshed read-only from the
+existing named scale context; [their manifest](fixtures/scale/recording-2026-09-30.json)
+records provenance. Its scout arm remains live, so runtime observations can
+change after capture.
+
+The scenario uses representative field-manager names and controller labels;
+real GitOps controllers are not installed. The raw dump and MCP capture occur
+sequentially, so timestamps and runtime status can change during recording.
+The [first paired smoke](reports/2026-09-30-fair-attribution-smoke.md) answered
+correctly in both arms and cost more with scout; no benefit is assumed.
+
 ## Run
 
 Needs Claude Code 2.1.269 or later, logged in. Runs count against that account.
@@ -119,7 +137,7 @@ before using them. Live scale runs with mocks disabled are unaffected.
 
 These are exploratory historical harness results, not current strict transcript
 regrades or a general savings claim. The attribution rows compare unequal
-evidence: the baseline export lacks `metadata.managedFields`, while cub-scout
+evidence: the original baseline export lacked `metadata.managedFields`, while cub-scout
 could read it. On this small scenario the plugin costs more per run, partly
 because its skill descriptions and tool schemas are added to every session.
 The scale tables below also retain their original historical scores and cost
@@ -127,17 +145,13 @@ ratios; they do not establish general savings.
 
 ## Design
 
-- **Both arms see the same workload scenario, with an attribution evidence gap.**
-  Each recorded case's `scaffold.sh` writes a
-  `kubectl get -o yaml` export of the scenario into the run's workspace as
-  `./cluster/`, with the files embedded (a first attempt with `add_dirs` left
-  the agent unable to find the directory). The without-cub-scout arm answers
-  from that export alone. The with-cub-scout arm also gets the plugin's skills
-  and cub-scout's MCP tools. For labels and status, `Δ` measures the additional
-  tool access on that export. For attribution, the baseline export lacks managedFields while
-  cub-scout has them: that result measures extra evidence access as well as
-  tooling. It does not isolate an advantage on equal information. A matched
-  managedFields baseline remains required before making that claim.
+- **Both arms receive the same full raw export.** Each main-scenario case's
+  `scaffold.sh` writes `kubectl get -o yaml --show-managed-fields` evidence into
+  `./cluster/`. The baseline reads this export; the scout arm also receives
+  skills and MCP recordings from the scenario. Prompts declare that these are
+  recorded responses, not independent live confirmation. The historical
+  attribution runs omitted managedFields from the baseline; their reported
+  advantage must not be transferred to this refreshed design.
 - **MCP answers are recordings.** `mocks/cub-scout/` answers `doctor`, `map`,
   `scan`, `gitops_status`, `trace` and `explain` with what a standalone
   `cub-scout mcp serve` returned for the scenario. `trace` and `explain` are
@@ -162,13 +176,11 @@ ratios; they do not establish general savings.
   Flux-managed chart), `flux-installed-but-not-working` (controller pods but no
   Flux objects) and `argo-label-vs-tracking-id` (a copied label contradicting
   the tracking-id; this case found #628).
-- **Cases the export cannot answer.** The five ownership and diagnosis cases
-  can be answered from labels and status in the export; the first run showed
-  agents grep the export and never call cub-scout there, so Δ is about 0 by
-  design. The four `changed-by-*` cases ask who made the most recent change.
-  That lives in `metadata.managedFields`, which `kubectl get -o yaml` omits and
-  cub-scout's `explain` reports as `mutationCause` / `mutationManager`. This
-  is where Δ should show.
+- **Attribution is now answerable from both sources.** The four
+  `changed-by-*` cases ask about the most recent non-status writer. The export
+  includes `metadata.managedFields`; explain reports `mutationCause` and
+  `mutationManager`. The measurement question is whether scout saves work when
+  both arms have those facts, not whether access to extra facts helps.
 - **Reference answers.** Each `prompt.md` has an `expected_outcome` saying where
   in the export, and in cub-scout's output, the answer comes from.
 

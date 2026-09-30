@@ -8,4 +8,4 @@ timeout_seconds: 600
 allowed_tools: [Read, Glob, Grep, Skill]
 ---
 
-I exported my cluster's state with `kubectl get -o yaml` into the `cluster` directory in the current working directory (namespaces, deployments, replicasets, pods, services, configmaps, events). Use whatever tools you have available. Which Argo CD Application owns the `ledger` Deployment in the `shop` namespace? Finish with one line `APPLICATION: <name, or UNKNOWN>`.
+I exported my cluster's state with `kubectl get -o yaml --show-managed-fields` into the `cluster` directory in the current working directory (namespaces, deployments, replicasets, pods, services, configmaps, events). This is recorded evidence: any available cub-scout MCP responses are recordings from this scenario, not independent live confirmation. Use whatever tools you have available. Which Argo CD Application owns the `ledger` Deployment in the `shop` namespace? Finish with one line `APPLICATION: <name, or UNKNOWN>`.
