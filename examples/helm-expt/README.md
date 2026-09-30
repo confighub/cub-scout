@@ -73,10 +73,11 @@ absence. Empty and comment-only YAML documents are ignored.
 The fixture set in `pkg/agent/testdata/helm-manifest-identity/` covers one
 explicit exact match (including nested, comment, and prefix lookalikes), wrong
 and omitted namespaces, malformed/unsupported or apiVersion-less documents
-(including malformed evidence after an otherwise exact match), and duplicate
-identities at the same or different API versions. Tests reverse candidate
-document and release order; only a unique exact match may produce a managed
-trace. No Kubernetes API discovery or scope guess is introduced.
+(including malformed evidence after an otherwise exact match), non-string
+identity scalars, `kind: List`, and duplicate identities at the same or
+different API versions. Tests reverse candidate document and release order;
+only a unique exact match may produce a managed trace. No Kubernetes API
+discovery or scope guess is introduced.
 
 ## Runnable Demo (Self-Contained)
 

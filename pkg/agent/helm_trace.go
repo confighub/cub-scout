@@ -322,16 +322,6 @@ func releaseManifestMatchesResource(release *helmRelease, kind, name, namespace 
 // absence claim. It retains only the fields needed for identity matching and
 // reports generic errors so stored manifest content is never echoed.
 func parseHelmManifestIdentities(manifest string) ([]helmManifestIdentity, error) {
-	type manifestMetadata struct {
-		Name      *string `yaml:"name"`
-		Namespace *string `yaml:"namespace"`
-	}
-	type manifestObject struct {
-		APIVersion *string           `yaml:"apiVersion"`
-		Kind       *string           `yaml:"kind"`
-		Metadata   *manifestMetadata `yaml:"metadata"`
-	}
-
 	decoder := yaml.NewDecoder(strings.NewReader(manifest))
 	var identities []helmManifestIdentity
 	for {
@@ -352,24 +342,78 @@ func parseHelmManifestIdentities(manifest string) ([]helmManifestIdentity, error
 		if root.Kind != yaml.MappingNode {
 			return nil, fmt.Errorf("unsupported non-object Helm manifest document")
 		}
-		var object manifestObject
-		if err := root.Decode(&object); err != nil || object.APIVersion == nil || strings.TrimSpace(*object.APIVersion) == "" ||
-			object.Kind == nil || strings.TrimSpace(*object.Kind) == "" || object.Metadata == nil ||
-			object.Metadata.Name == nil || strings.TrimSpace(*object.Metadata.Name) == "" {
+		apiVersion, _, err := helmYAMLStringField(root, "apiVersion", true)
+		if err != nil || strings.TrimSpace(apiVersion) == "" {
+			return nil, fmt.Errorf("unsupported Helm manifest identity document")
+		}
+		kind, _, err := helmYAMLStringField(root, "kind", true)
+		if err != nil || strings.TrimSpace(kind) == "" {
+			return nil, fmt.Errorf("unsupported Helm manifest identity document")
+		}
+		if kind == "List" {
+			return nil, fmt.Errorf("unsupported Kubernetes List manifest document")
+		}
+		metadata, present, err := helmYAMLMappingField(root, "metadata")
+		if err != nil || !present {
+			return nil, fmt.Errorf("unsupported Helm manifest identity document")
+		}
+		name, _, err := helmYAMLStringField(metadata, "name", true)
+		if err != nil || strings.TrimSpace(name) == "" {
+			return nil, fmt.Errorf("unsupported Helm manifest identity document")
+		}
+		namespace, namespacePresent, err := helmYAMLStringField(metadata, "namespace", false)
+		if err != nil {
 			return nil, fmt.Errorf("unsupported Helm manifest identity document")
 		}
 		identity := helmManifestIdentity{
-			apiVersion: *object.APIVersion,
-			kind:       *object.Kind,
-			name:       *object.Metadata.Name,
-		}
-		if object.Metadata.Namespace != nil {
-			identity.namespace = *object.Metadata.Namespace
-			identity.namespacePresent = true
+			apiVersion:       apiVersion,
+			kind:             kind,
+			name:             name,
+			namespace:        namespace,
+			namespacePresent: namespacePresent,
 		}
 		identities = append(identities, identity)
 	}
 	return identities, nil
+}
+
+func helmYAMLMappingField(mapping *yaml.Node, field string) (*yaml.Node, bool, error) {
+	if mapping.Kind != yaml.MappingNode || len(mapping.Content)%2 != 0 {
+		return nil, false, fmt.Errorf("invalid mapping")
+	}
+	var found *yaml.Node
+	seen := make(map[string]struct{}, len(mapping.Content)/2)
+	for i := 0; i < len(mapping.Content); i += 2 {
+		key := mapping.Content[i]
+		if key.Kind != yaml.ScalarNode || key.Tag != "!!str" {
+			return nil, false, fmt.Errorf("mapping key is not a string")
+		}
+		if _, exists := seen[key.Value]; exists {
+			return nil, false, fmt.Errorf("duplicate mapping key")
+		}
+		seen[key.Value] = struct{}{}
+		if key.Value == field {
+			found = mapping.Content[i+1]
+		}
+	}
+	return found, found != nil, nil
+}
+
+func helmYAMLStringField(mapping *yaml.Node, field string, required bool) (string, bool, error) {
+	value, present, err := helmYAMLMappingField(mapping, field)
+	if err != nil {
+		return "", false, err
+	}
+	if !present {
+		if required {
+			return "", false, fmt.Errorf("required field absent")
+		}
+		return "", false, nil
+	}
+	if value.Kind != yaml.ScalarNode || value.Tag != "!!str" {
+		return "", false, fmt.Errorf("field is not a string scalar")
+	}
+	return value.Value, true, nil
 }
 
 // buildTraceResult builds a TraceResult from a Helm release

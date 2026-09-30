@@ -127,7 +127,10 @@ func TestHelmTraceDoesNotInferMissingNamespace(t *testing.T) {
 }
 
 func TestHelmTraceRejectsUnreadableOrUnsupportedManifestDocuments(t *testing.T) {
-	for _, fixture := range []string{"malformed.yaml", "valid-plus-malformed.yaml", "non-object.yaml", "unsupported.yaml", "missing-api-version.yaml"} {
+	for _, fixture := range []string{
+		"malformed.yaml", "valid-plus-malformed.yaml", "non-object.yaml", "unsupported.yaml", "missing-api-version.yaml",
+		"api-version-number.yaml", "kind-boolean.yaml", "name-number.yaml", "namespace-number.yaml", "kubernetes-list.yaml",
+	} {
 		t.Run(fixture, func(t *testing.T) {
 			tracer := helmManifestIdentityTracer(helmManifestIdentitySecret(t, "release", readHelmManifestIdentityFixture(t, fixture)))
 			result, err := traceHelmManifestIdentity(t, tracer, "Deployment", "api", "team-a")
