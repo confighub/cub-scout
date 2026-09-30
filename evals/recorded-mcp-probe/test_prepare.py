@@ -139,8 +139,10 @@ class PreparationGuards(unittest.TestCase):
             for fixture_specific in ('checkout', 'kubectl-set', 'shop-apps', 'Flux', '305614fa67327ba3'):
                 self.assertNotIn(fixture_specific, skill)
 
-            manifest = json.loads((plugins['economy-skill'] / '.claude-plugin/plugin.json').read_text())
-            self.assertIn('exact field manager evidence', manifest['description'])
+            plain_manifest = json.loads((plugins['economy'] / '.claude-plugin/plugin.json').read_text())
+            routed_manifest = json.loads((plugins['economy-skill'] / '.claude-plugin/plugin.json').read_text())
+            self.assertEqual(plain_manifest, routed_manifest)
+            self.assertEqual(routed_manifest['description'], 'Recorded-only evidence for a Kubernetes resource question.')
 
     def test_pair_runner_accepts_economy_skill_with_same_bounded_policy_without_running(self):
         import json

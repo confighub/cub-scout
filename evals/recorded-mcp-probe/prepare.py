@@ -50,7 +50,6 @@ def configure_purpose(plugin: Path, purpose: str) -> None:
         skill_dir = plugin / "skills/recorded-field-attribution"
         skill_dir.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ATTRIBUTION_SKILL, skill_dir / "SKILL.md")
-        manifest["description"] = "Recorded-only Kubernetes resource and exact field manager evidence."
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
 
 
