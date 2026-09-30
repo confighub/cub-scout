@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -187,7 +188,7 @@ func TestFluxHLT02GraderRejectsHealthAndProvenanceOverclaims(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, term := range []string{"ready_current_generation", "wait", "health_checks", "deployment_current_generation", "uid_chain", "source_revision", "applied_revision", "SEQUENTIAL_NOT_ATOMIC", "CAPTURE_ONLY", "NOT_RECORDED", "UNKNOWN"} {
+	for _, term := range []string{"ready_current_generation", "wait", "health_checks", "deployment_current_generation", "uid_chain", "source_revision", "applied_revision", "in any order", "SEQUENTIAL_NOT_ATOMIC", "CAPTURE_ONLY", "NOT_RECORDED", "UNKNOWN"} {
 		if !strings.Contains(string(prompt), term) {
 			t.Errorf("prompt does not define answer contract term %q", term)
 		}
@@ -200,13 +201,18 @@ func TestFluxHLT02GraderRejectsHealthAndProvenanceOverclaims(t *testing.T) {
 	if len(m) != 2 {
 		t.Fatalf("missing deterministic regex grader: %s", grader)
 	}
-	pattern, err := regexp.Compile(m[1])
+	good := `{"ready_current_generation":"YES","wait":"FALSE","health_checks":"ABSENT_OR_EMPTY","deployment_current_generation":"UNAVAILABLE","uid_chain":"deployment:3b56bff9-bfe2-4f1f-9913-1ebef756c0e8;replicaset:b7a593de-f7e9-417e-b5a9-1c71e1250f5d;pod:ee02c558-9a4a-489b-b1a6-e792c4b7f01b","source_revision":"sha1:7732dde28be8cf8c42c096d94efbd8ce4a9d0a19","applied_revision":"sha1:7732dde28be8cf8c42c096d94efbd8ce4a9d0a19","revision_binding":"MATCH","ready_proves_workload_healthy":"NO","observation_scope":"SEQUENTIAL_NOT_ATOMIC","current_time_claim":"CAPTURE_ONLY","application_level_check":"NOT_RECORDED"}`
+	var reordered map[string]string
+	if err := json.Unmarshal([]byte(good), &reordered); err != nil {
+		t.Fatal(err)
+	}
+	reorderedBytes, err := json.Marshal(reordered)
 	if err != nil {
 		t.Fatal(err)
 	}
-	good := `{"ready_current_generation":"YES","wait":"FALSE","health_checks":"ABSENT_OR_EMPTY","deployment_current_generation":"UNAVAILABLE","uid_chain":"deployment:3b56bff9-bfe2-4f1f-9913-1ebef756c0e8;replicaset:b7a593de-f7e9-417e-b5a9-1c71e1250f5d;pod:ee02c558-9a4a-489b-b1a6-e792c4b7f01b","source_revision":"sha1:7732dde28be8cf8c42c096d94efbd8ce4a9d0a19","applied_revision":"sha1:7732dde28be8cf8c42c096d94efbd8ce4a9d0a19","revision_binding":"MATCH","ready_proves_workload_healthy":"NO","observation_scope":"SEQUENTIAL_NOT_ATOMIC","current_time_claim":"CAPTURE_ONLY","application_level_check":"NOT_RECORDED"}`
-	if !pattern.MatchString(good) {
-		t.Fatalf("grader rejected the reference answer: %s", good)
+	positiveCandidates := []string{good, string(reorderedBytes)}
+	if results := runPythonRegexCases(t, m[1], positiveCandidates); len(results) != 2 || !results[0] || !results[1] {
+		t.Fatalf("Python grader did not accept plain/reordered reference answer: %v pattern=%q good=%q reordered=%q", results, m[1], good, reorderedBytes)
 	}
 	negatives := []struct{ from, to string }{
 		{`"ready_current_generation":"YES"`, `"ready_current_generation":"NO"`},
@@ -222,18 +228,97 @@ func TestFluxHLT02GraderRejectsHealthAndProvenanceOverclaims(t *testing.T) {
 		{`"current_time_claim":"CAPTURE_ONLY"`, `"current_time_claim":"CURRENT"`},
 		{`"application_level_check":"NOT_RECORDED"`, `"application_level_check":"PERFORMED"`},
 	}
+	var negativeCandidates []string
 	for _, tc := range negatives {
 		if strings.Count(good, tc.from) != 1 {
 			t.Fatalf("bad test substitution %q", tc.from)
 		}
-		if candidate := strings.Replace(good, tc.from, tc.to, 1); pattern.MatchString(candidate) {
-			t.Errorf("grader accepted overclaim: %s", candidate)
+		negativeCandidates = append(negativeCandidates, strings.Replace(good, tc.from, tc.to, 1))
+	}
+	negativeCandidates = append(negativeCandidates, "Answer: "+good, good+"\nExplanation", strings.TrimSuffix(good, "}")+`,"extra":"value"}`, strings.Replace(good, `"wait":"FALSE"`, `"wait":"FALSE","wait":"TRUE"`, 1))
+	for i, matched := range runPythonRegexCases(t, m[1], negativeCandidates) {
+		if matched {
+			t.Errorf("Python grader accepted negative control %d: %s", i, negativeCandidates[i])
 		}
 	}
-	for _, candidate := range []string{"Answer: " + good, good + "\nExplanation", strings.TrimSuffix(good, "}") + `,"extra":"value"}`, strings.Replace(good, `"wait":"FALSE"`, `"wait":"FALSE","wait":"TRUE"`, 1)} {
-		if pattern.MatchString(candidate) {
-			t.Errorf("grader accepted non-contract output: %s", candidate)
-		}
+}
+
+func runPythonRegexCases(t *testing.T, pattern string, samples []string) []bool {
+	t.Helper()
+	requireFluxHLT02Python(t)
+	input, err := json.Marshal(struct {
+		Pattern string   `json:"pattern"`
+		Samples []string `json:"samples"`
+	}{pattern, samples})
+	if err != nil {
+		t.Fatal(err)
+	}
+	cmd := exec.Command("python3", "-c", `import json,re,sys; d=json.load(sys.stdin); p=re.compile(d["pattern"]); print(json.dumps([p.search(s) is not None for s in d["samples"]]))`)
+	cmd.Stdin = bytes.NewReader(input)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("run Python grader controls: %v: %s", err, output)
+	}
+	var results []bool
+	if err := json.Unmarshal(output, &results); err != nil {
+		t.Fatalf("decode Python grader results: %v: %s", err, output)
+	}
+	return results
+}
+
+func TestFluxHLT02CaseMetadataUsesSingleSchemaAndPromptFrontmatter(t *testing.T) {
+	root := filepath.Join("..", "..", "evals", "flux-ready-without-health")
+	caseData, err := os.ReadFile(filepath.Join(root, "case.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var schema struct {
+		SchemaVersion string `yaml:"schema_version"`
+		Name          string `yaml:"name"`
+		Context       struct {
+			Scaffold string `yaml:"scaffold_script"`
+		} `yaml:"context"`
+	}
+	decoder := yaml.NewDecoder(bytes.NewReader(caseData))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(&schema); err != nil {
+		t.Fatalf("decode case schema: %v", err)
+	}
+	var extra any
+	if err := decoder.Decode(&extra); err != io.EOF {
+		t.Fatalf("case.yaml must contain exactly one document, second decode=%v", err)
+	}
+	if schema.SchemaVersion != "1.1" || schema.Name != "flux-ready-without-health" || schema.Context.Scaffold != "scaffold.sh" {
+		t.Fatalf("case schema or scaffold declaration invalid: %+v", schema)
+	}
+	prompt, err := os.ReadFile(filepath.Join(root, "prompt.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(prompt)
+	if !strings.HasPrefix(text, "---\n") {
+		t.Fatal("prompt.md is missing execution frontmatter")
+	}
+	end := strings.Index(text[4:], "\n---\n")
+	if end < 0 {
+		t.Fatal("prompt.md frontmatter is unterminated")
+	}
+	var execution struct {
+		Name            string   `yaml:"name"`
+		Description     string   `yaml:"description"`
+		ExpectedOutcome string   `yaml:"expected_outcome"`
+		Tags            []string `yaml:"tags"`
+		MaxTurns        int      `yaml:"max_turns"`
+		TimeoutSeconds  int      `yaml:"timeout_seconds"`
+		AllowedTools    []string `yaml:"allowed_tools"`
+	}
+	execDecoder := yaml.NewDecoder(strings.NewReader(text[4 : 4+end]))
+	execDecoder.KnownFields(true)
+	if err := execDecoder.Decode(&execution); err != nil {
+		t.Fatalf("decode execution frontmatter: %v", err)
+	}
+	if execution.Name != schema.Name || execution.Description == "" || execution.ExpectedOutcome == "" || execution.MaxTurns != 4 || execution.TimeoutSeconds != 90 || len(execution.AllowedTools) != 2 || execution.AllowedTools[0] != "Read" || execution.AllowedTools[1] != "Grep" {
+		t.Fatalf("execution frontmatter invalid: %+v", execution)
 	}
 }
 
