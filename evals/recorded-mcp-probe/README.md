@@ -70,19 +70,33 @@ python3 evals/recorded-mcp-probe/prepare.py \
 ```
 
 This runs only local contract checks and a no-model MCP preflight. It does not
-start an eval. If a later review explicitly authorizes the single diagnostic
-pair described in issue #603, use one run per arm, serially, normal speed (fast
-mode off), with no judge and no automatic retry. The existing tranche ceiling
-is $1; the runner checks `--max-cost-usd` before launch, so it is not a strict
-in-flight spend stop. For that one pair, the staged command is:
+start an eval. After lead review and the adopted preflights, the one diagnostic
+pair described in issue #603 is scoped to a $1 prelaunch ceiling within the
+existing $20 smoke tranche. Use one run per arm, serially, at normal speed (fast
+mode off), with no judge and no automatic retry. `--max-cost-usd` is checked
+before each run launches; with concurrency one, at most that run can be in
+flight when the ceiling is reached. The case also has a 90-second per-run
+timeout. Retain temporary traces for audit. Run the staged command below only
+through a bounded outer wrapper (210 seconds) that propagates timeout/failure
+and never retries:
 
 ```sh
-claude plugin eval /tmp/cub-scout-recorded-economy-probe/plugin \
-  --scaffold --case recorded-explain-mcp --runs 1 --concurrency 1 \
-  --ablation with-without --mocks off --allow-real-servers \
-  --allow-tools mcp__plugin_recorded-mcp-probe_cub-scout__explain \
-  --model claude-haiku-4-5-20251001 --max-cost-usd 1 --no-publish \
-  --json /tmp/cub-scout-recorded-economy-probe/result.json
+python3 - <<'PY'
+import os, subprocess
+
+env = {**os.environ, "CLAUDE_CODE_DISABLE_FAST_MODE": "1"}
+command = [
+    "claude", "plugin", "eval", "/tmp/cub-scout-recorded-economy-probe/plugin",
+    "--scaffold", "--case", "recorded-explain-mcp", "--runs", "1",
+    "--concurrency", "1", "--ablation", "with-without", "--mocks", "record",
+    "--allow-real-servers", "--allow-tools",
+    "mcp__plugin_recorded-mcp-probe_cub-scout__explain",
+    "--model", "claude-haiku-4-5-20251001", "--max-cost-usd", "1",
+    "--no-publish", "--trust-plugin", "--keep-temp", "--json",
+    "/tmp/cub-scout-recorded-economy-probe/result.json",
+]
+raise SystemExit(subprocess.run(command, env=env, timeout=210).returncode)
+PY
 ```
 
 The `max_turns: 8` setting does not resolve the historical mismatch between
