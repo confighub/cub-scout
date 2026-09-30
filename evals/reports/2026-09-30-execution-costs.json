@@ -32,9 +32,17 @@
       "sha256": "37b15a1bdfa4691bb4a068699e682b11560f7247184b72febdc7bbc3d8366f0e",
       "inclusiveListPriceUsd": 0.37800300000000003,
       "partial": false
+    },
+    {
+      "stage": "command-access probe diagnostic",
+      "resultFile": "evidence-command-probe-8325744506b8cac0/result.json",
+      "sha256": "f8f2966a8983ddd66ec7d8f0d68582e71231f1ca0ee5415410525148ae49053e",
+      "inclusiveListPriceUsd": 0.0655016,
+      "partial": false,
+      "scope": "tool-boundary diagnostic only; not Experiment A and no savings claim"
     }
   ],
-  "totalNewEvalListPriceUsd": 3.7146495,
+  "totalNewEvalListPriceUsd": 3.7801511,
   "stageEnvelopesUsd": {
     "live-only completion": 15,
     "smoke": 20,
@@ -44,6 +52,11 @@
   "notes": [
     "Historical September 27/28 spend is outside this execution ledger and remains in its original reports.",
     "Formatting amendment was regraded offline; no paid retry.",
-    "No max-speed run was enabled; all new run terminal records report fast mode off."
-  ]
+    "No max-speed run was enabled; all new run terminal records report fast mode off.",
+    "Command-access probe diagnostic: one serial run per arm on pinned Claude Haiku 4.5 at normal speed; $0.0655016 inclusive list-price estimate. Not Experiment A, not a product comparison, and not evidence of savings. The $200 baseline envelope remains unspent."
+  ],
+  "stageSpendUsd": {
+    "live-only completion": 2.4692065,
+    "smoke": 1.3109446
+  }
 }

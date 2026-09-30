@@ -37,6 +37,19 @@ tools; Bash, kubectl, Helm, jq and Python were unavailable. Neither satisfies
 roadmap Experiment A. Before a further paid attribution campaign, preflight
 safe, equivalent ordinary command access for both arms.
 
+A separate command-access probe later confirmed a much narrower fact: in one
+serial paired diagnostic, both arms could run the exact `bash ./probe.sh`
+command, parse one identical recorded Deployment with jq and Python, and were
+denied one owned external write and one loopback connection. It did not provide
+the full raw scenario snapshot or test kubectl/Helm, so it is not Experiment A.
+The traces advertised Read, Skill and task/search tools alongside Bash even
+though the case declared only Bash; each arm actually called Bash once. The
+with-arm initializer also lists a dynamic connected MCP entry, while the
+harness result/log say the real server was withheld; neither arm exposed or
+called an MCP tool. See the [probe report](reports/2026-09-30-command-access-probe.md)
+for these limits and retained evidence hashes. This diagnostic supports no
+savings or model-enablement claim.
+
 ## Run
 
 Needs Claude Code 2.1.269 or later, logged in. Runs count against that account.
