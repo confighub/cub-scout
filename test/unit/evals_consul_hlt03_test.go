@@ -212,7 +212,7 @@ func TestConsulHLT03AnswerGraderPythonAndJavaScript(t *testing.T) {
 		Flags   string `yaml:"flags"`
 		Target  string `yaml:"target"`
 	}
-	if err := yaml.Unmarshal([]byte(strings.Trim(strings.TrimPrefix(string(grader), "---\n"), "\n---\n")), &graderFrontmatter); err != nil {
+	if err := yaml.Unmarshal([]byte(strings.TrimSuffix(strings.TrimPrefix(string(grader), "---\n"), "---\n")), &graderFrontmatter); err != nil {
 		t.Fatalf("decode grader frontmatter: %v", err)
 	}
 	if graderFrontmatter.Type != "regex" || graderFrontmatter.Flags != "s" || graderFrontmatter.Target != "last_message" || graderFrontmatter.Pattern == "" {
