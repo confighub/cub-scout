@@ -356,6 +356,7 @@ cub-scout explain deploy/payments-api -n prod --with-confighub --format json
 cub-scout explain deploy/payments-api -n prod --presentation ai
 cub-scout explain deploy/payments-api -n prod --hint-mode operator
 cub-scout explain deployment/payments-api -n prod --format md
+./cub-scout explain Deployment/checkout -n shop --field-path '.spec.template.spec.containers[name="checkout"].image' --format json
 # v2.10.0: one exact object, without enrichment
 ./cub-scout explain Deployment/payments-api -n prod --bounded \
   --api-version apps/v1 --kube-context my-cluster --format json
@@ -369,6 +370,7 @@ cub-scout explain deployment/payments-api -n prod --format md
 | `-n, --namespace` | Namespace of target resource |
 | `--presentation` | Narrative framing for text/Markdown output: `human`, `ai`, `paired`. Omit the flag to keep the legacy/default render path. JSON is unchanged. |
 | `--hint-mode` | Recommendation ranking for next-step hints: `default`, `beginner`, `operator`. JSON is unchanged. |
+| `--field-path` | One exact canonical managedFields path; wildcards and unkeyed list paths are rejected, and unresolved/incomplete evidence is `unknown` without resource-level fallback. |
 | `--with-confighub` | Include bounded ConfigHub delivery evidence when exact resource correlation exists |
 | `--confighub-space` | ConfigHub space for delivery evidence (default: resource ConfigHub space; `*` must be explicit) |
 | `--confighub-since` | Lookback window for ConfigHub release/event evidence (default: `24h`) |
@@ -385,6 +387,10 @@ ConfigHub space, the trace chain exposes a ConfigHub OCI space, or
 `--confighub-space` is supplied. Matched evidence appears under
 `deliveryEvidence`; missing identity, missing writeback, or non-matching rows
 are structured omissions.
+
+`fieldAttribution` is emitted only with `--field-path` and contains manager
+evidence for that path alone. Its sorted `managers` list does not imply write
+order or identify a person. MCP `explain` accepts the equivalent `field_path`.
 
 Bounded reads require exact Kind casing, not an alias such as `deploy`, and an
 explicit namespace for namespaced resources. They are incompatible with
@@ -410,6 +416,9 @@ reads, accepts no mutable/short reference, and reports unknown for unsupported
 controller/source shapes. In the bounded TUI view, `e` edits the expected
 revision; an empty entry clears it. MCP uses `expected_revision`. This slice
 does not add revision filtering to watch/bot or change receipt verdicts.
+Press `f` in a selected bounded resource to enter an exact field path; wildcard
+and unkeyed list paths are rejected. The panel reuses its cached object
+observation and reports only that path's manager evidence.
 
 ---
 

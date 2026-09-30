@@ -113,7 +113,7 @@ func TestNewMCPGateway_ToolDescriptionsExpressChainBoundaries(t *testing.T) {
 		{name: "doctor", contains: []string{"FIRST standalone tool", "whether cub-scout is the right first read-only step", "stale kubeconfig", "optional bounded ConfigHub delivery evidence", "Use before explain, trace, or scan"}},
 		{name: "map", contains: []string{"what's running in this cluster", "raw `kubectl get` output", "use doctor first"}},
 		{name: "scan", contains: []string{"Use AFTER doctor", "awareness scan of live state", "DO NOT use this as a governed promotion or revision-safety gate"}},
-		{name: "explain", contains: []string{"use this directly as a first read for 'was this resource edited by hand?'", "resource-level mutationCause and a representative mutationManager", "does not inspect FieldsV1 paths or order writes by time", "does not prove who last wrote a particular field", "A manager identifies a field-manager string, not a human", "For an exact field claim, inspect that field's managedFields path", "preserve unknown when evidence is missing or ambiguous", "Trace provides owner/source lineage only and does not corroborate field-writer attribution", "raw `kubectl describe`", "DO NOT load for broad cluster inventory or health"}},
+		{name: "explain", contains: []string{"resource-level mutation evidence", "pass field_path", "that path's observed manager names", "shared ambiguous evidence remains unknown", "does not order writes by time or identify a person", "Trace provides owner/source lineage only", "raw `kubectl describe`", "DO NOT load for broad cluster inventory or health"}},
 		{name: "trace", contains: []string{"owner, deployer, or GitOps/source chain", "not which field writer made a change", "do not call trace just to confirm an explain result about manual-edit attribution", "DO NOT load for broad cluster status"}},
 		{name: "gitops_status", contains: []string{"GitOps/controller delivery status", "controllerCoverage[]", "absence vs RBAC/API omission", "DO NOT use to force sync"}},
 		{name: "confighub_changesets", contains: []string{"Connected-only", "what governed write changed a known unit or space", "approval trail", "Load after trace or confighub_units"}},
@@ -139,6 +139,29 @@ func TestNewMCPGateway_ToolDescriptionsExpressChainBoundaries(t *testing.T) {
 			}
 		}
 	}
+
+	explainTool := gateway.tools["explain"]
+	for _, prop := range []string{"field_path"} {
+		if _, ok := explainTool.Descriptor.InputSchema["properties"].(map[string]interface{})[prop]; !ok {
+			t.Fatalf("explain schema missing %q", prop)
+		}
+	}
+	args, err := explainTool.BuildArgs(map[string]interface{}{"resource": "Deployment/checkout", "field_path": `.spec.template.spec.containers[name="checkout"].image`})
+	if err != nil {
+		t.Fatalf("BuildArgs exact field path: %v", err)
+	}
+	fieldArg := false
+	for i := 0; i+1 < len(args); i++ {
+		if args[i] == "--field-path" && args[i+1] == `.spec.template.spec.containers[name="checkout"].image` {
+			fieldArg = true
+		}
+	}
+	if !fieldArg {
+		t.Fatalf("BuildArgs = %v, missing exact field path", args)
+	}
+	if _, err := explainTool.BuildArgs(map[string]interface{}{"resource": "Deployment/checkout", "field_path": `.spec.containers[*].image`}); err == nil {
+		t.Fatal("BuildArgs accepted wildcard field path")
+	}
 }
 
 func TestNewMCPGateway_ToolDescriptionsCoverRepresentativeIntentEdges(t *testing.T) {
@@ -158,7 +181,7 @@ func TestNewMCPGateway_ToolDescriptionsCoverRepresentativeIntentEdges(t *testing
 		{
 			tool:     "explain",
 			intent:   "Was this known Deployment edited by hand?",
-			contains: []string{"use this directly as a first read", "resource-level mutationCause", "representative mutationManager", "does not prove who last wrote a particular field", "not a human"},
+			contains: []string{"use this directly as a first read", "resource-level mutation evidence", "known exact field", "malformed, absent, unrecognized, or shared ambiguous evidence remains unknown", "does not order writes by time or identify a person"},
 		},
 		{
 			tool:     "trace",

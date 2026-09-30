@@ -58,11 +58,16 @@ func boundedExplainRef(args []string, apiVersion, namespace, kubeContext string)
 	return ref, ref.Validate()
 }
 
-func (s *boundedExplainSession) observe(ctx context.Context, ref agent.BoundedResourceRef, kubeContext string, refresh bool) (ExplainSummary, error) {
-	return s.observeRevision(ctx, ref, kubeContext, refresh, "")
+func (s *boundedExplainSession) observe(ctx context.Context, ref agent.BoundedResourceRef, kubeContext string, refresh bool, fieldPath string) (ExplainSummary, error) {
+	return s.observeRevision(ctx, ref, kubeContext, refresh, "", fieldPath)
 }
 
-func (s *boundedExplainSession) observeRevision(ctx context.Context, ref agent.BoundedResourceRef, kubeContext string, refresh bool, expected string) (ExplainSummary, error) {
+func (s *boundedExplainSession) observeRevision(ctx context.Context, ref agent.BoundedResourceRef, kubeContext string, refresh bool, expected string, fieldPath string) (ExplainSummary, error) {
+	if fieldPath != "" {
+		if err := agent.ValidateCanonicalFieldPath(fieldPath); err != nil {
+			return ExplainSummary{}, err
+		}
+	}
 	if expected != "" {
 		if err := agent.ValidateExpectedRevision(expected); err != nil {
 			return ExplainSummary{}, err
@@ -79,7 +84,7 @@ func (s *boundedExplainSession) observeRevision(ctx context.Context, ref agent.B
 		return ExplainSummary{}, err
 	}
 	obj, evidence, err := reader.Read(ctx, ref, refresh)
-	summary := buildBoundedExplainSummary(obj, evidence, err)
+	summary := buildBoundedExplainSummary(obj, evidence, err, fieldPath)
 	if expected != "" {
 		revision := agent.BuildControllerRevisionEvidence(obj, expected, evidence.ObservedAt)
 		summary.ControllerRevision = &revision
@@ -141,7 +146,7 @@ func (s *boundedExplainSession) forContext(kubeContext string) (*agent.BoundedRe
 	return reader, nil
 }
 
-func buildBoundedExplainSummary(obj *unstructured.Unstructured, evidence agent.BoundedReadEvidence, readErr error) ExplainSummary {
+func buildBoundedExplainSummary(obj *unstructured.Unstructured, evidence agent.BoundedReadEvidence, readErr error, fieldPaths ...string) ExplainSummary {
 	summary := ExplainSummary{
 		Resource:  evidence.Resource.Kind + "/" + evidence.Resource.Name,
 		Namespace: evidence.Resource.Namespace, Owner: "Unknown", Health: "Unavailable",
@@ -162,6 +167,9 @@ func buildBoundedExplainSummary(obj *unstructured.Unstructured, evidence agent.B
 	if readErr != nil {
 		summary.Notes = append(summary.Notes, "Evidence unavailable: "+readErr.Error())
 		summary.Omissions = append(summary.Omissions, agent.Omission{Missing: "live-resource", Reason: readErr.Error(), Severity: "warning"})
+		if len(fieldPaths) > 0 && fieldPaths[0] != "" {
+			summary.FieldAttribution = unavailableFieldAttribution(fieldPaths[0], "Exact field evidence unavailable because the bounded resource read failed: "+readErr.Error())
+		}
 		return summary
 	}
 	if obj == nil {
@@ -201,6 +209,9 @@ func buildBoundedExplainSummary(obj *unstructured.Unstructured, evidence agent.B
 	}
 	attr := agent.AttributeFieldMutation(obj, owner)
 	summary.MutationCause, summary.MutationManager = attr.Cause, attr.ManagerHint
+	if len(fieldPaths) > 0 && fieldPaths[0] != "" {
+		summary.FieldAttribution = fieldAttributionSummary(obj, owner, fieldPaths[0])
+	}
 	return summary
 }
 
@@ -261,12 +272,16 @@ func formatBoundedRead(e *agent.BoundedReadEvidence) string {
 		e.Context, e.Resource.APIVersion, observed, e.Cache, e.Reads.Discovery, e.Reads.Object)
 }
 
-func boundedExplainCommand(ref agent.BoundedResourceRef, kubeContext, separator string) string {
+func boundedExplainCommand(ref agent.BoundedResourceRef, kubeContext, separator string, fieldPaths ...string) string {
 	// Kube context names are arbitrary strings, not shell-safe identifiers.
 	quotedContext := "'" + strings.ReplaceAll(kubeContext, "'", "'\"'\"'") + "'"
 	parts := []string{"cub-scout explain " + ref.Kind + "/" + ref.Name, "--bounded --api-version " + ref.APIVersion, "--kube-context " + quotedContext}
 	if ref.Namespace != "" {
 		parts = append(parts, "--namespace "+ref.Namespace)
+	}
+	if len(fieldPaths) > 0 && fieldPaths[0] != "" {
+		quotedPath := "'" + strings.ReplaceAll(fieldPaths[0], "'", "'\"'\"'") + "'"
+		parts = append(parts, "--field-path "+quotedPath)
 	}
 	return strings.Join(parts, separator)
 }
@@ -279,7 +294,7 @@ func validateBoundedExplainArguments(arguments map[string]interface{}) error {
 			}
 		}
 	}
-	for _, key := range []string{"api_version", "context", "namespace", "resource", "expected_revision"} {
+	for _, key := range []string{"api_version", "context", "namespace", "resource", "expected_revision", "field_path"} {
 		if value, present := arguments[key]; present {
 			if _, ok := value.(string); !ok {
 				return fmt.Errorf("%s must be a string", key)
@@ -306,6 +321,7 @@ func boundedMCPRunner(fallback mcpToolRunner) mcpToolRunner {
 		apiVersion, kubeContext := flags.String("api-version", "", ""), flags.String("kube-context", "", "")
 		namespace := flags.StringP("namespace", "n", "", "")
 		expected := flags.String("expected-revision", "", "")
+		fieldPath := flags.String("field-path", "", "")
 		flags.String("format", "json", "")
 		if err := flags.Parse(args[2:]); err != nil {
 			return "", err
@@ -317,7 +333,12 @@ func boundedMCPRunner(fallback mcpToolRunner) mcpToolRunner {
 		if err != nil {
 			return "", err
 		}
-		summary, err := session.observeRevision(ctx, ref, *kubeContext, *refresh, *expected)
+		if *fieldPath != "" {
+			if err := agent.ValidateCanonicalFieldPath(*fieldPath); err != nil {
+				return "", err
+			}
+		}
+		summary, err := session.observeRevision(ctx, ref, *kubeContext, *refresh, *expected, *fieldPath)
 		if err != nil {
 			return "", err
 		}

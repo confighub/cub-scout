@@ -411,7 +411,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"explain": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "explain",
-				Description: "Plain-English explanation for one resource: who owns it, health or drift, recent events, and what to do next (explain --format json). When the resource is known, use this directly as a first read for 'was this resource edited by hand?' questions; it reports resource-level mutationCause and a representative mutationManager from manager strings across managedFields when available. This summary does not inspect FieldsV1 paths or order writes by time, so it does not prove who last wrote a particular field. A manager identifies a field-manager string, not a human. For an exact field claim, inspect that field's managedFields path and preserve unknown when evidence is missing or ambiguous. Trace provides owner/source lineage only and does not corroborate field-writer attribution; call it only when that chain is also needed. For broader symptom triage, use AFTER doctor or map once the resource is narrowed, especially when more computed meaning is needed than raw `kubectl describe`. DO NOT load for broad cluster inventory or health; use doctor first.",
+				Description: "Plain-English explanation for one resource: who owns it, health or drift, recent events, and what to do next (explain --format json). When the resource is known, use this directly as a first read for resource-level mutation evidence. For a known exact field, pass field_path (canonical concrete managedFields path) to get that path's observed manager names and conservative classification; malformed, absent, unrecognized, or shared ambiguous evidence remains unknown. This does not order writes by time or identify a person. Trace provides owner/source lineage only and does not corroborate field-writer attribution; call it only when that chain is also needed. For broader symptom triage, use AFTER doctor or map once the resource is narrowed, especially when more computed meaning is needed than raw `kubectl describe`. DO NOT load for broad cluster inventory or health; use doctor first.",
 				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
@@ -429,6 +429,10 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 							"type":        "string",
 							"description": "Optional namespace override.",
 						},
+						"field_path": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional exact canonical managedFields path (for example .spec.template.spec.containers[name=\"api\"].image); wildcard selectors are rejected and only an exact decoded path is returned. Returns evidence for this path only, without resource-level fallback.",
+						},
 					},
 					"required":             []string{"resource"},
 					"additionalProperties": false,
@@ -441,6 +445,17 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				}
 				if err := validateBoundedExplainArguments(arguments); err != nil {
 					return nil, err
+				}
+				fieldPath := argString(arguments, "field_path")
+				if value, present := arguments["field_path"]; present {
+					if _, ok := value.(string); !ok {
+						return nil, fmt.Errorf("field_path must be a string")
+					}
+				}
+				if fieldPath != "" {
+					if err := agent.ValidateCanonicalFieldPath(fieldPath); err != nil {
+						return nil, err
+					}
 				}
 				args := []string{"explain", resource}
 				if argBool(arguments, "bounded") {
@@ -460,6 +475,9 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				}
 				if ns := argString(arguments, "namespace"); ns != "" {
 					args = append(args, "-n", ns)
+				}
+				if fieldPath != "" {
+					args = append(args, "--field-path", fieldPath)
 				}
 				args = append(args, "--format", "json")
 				return args, nil

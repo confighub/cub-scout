@@ -145,6 +145,9 @@ type ObserveResourceContextRequest struct {
 
 	// Namespace is the resource namespace. Defaults to "default" if empty.
 	Namespace string
+
+	// FieldPath requests compact manager evidence for one exact canonical path.
+	FieldPath string
 }
 
 // ObserveResourceContext returns ownership and lineage context for a resource.
@@ -153,6 +156,11 @@ type ObserveResourceContextRequest struct {
 // The function does not know about Cobra, stdout, presentation modes, or rendering.
 // It returns the canonical ExplainSummary model which callers can render as needed.
 func ObserveResourceContext(ctx context.Context, req ObserveResourceContextRequest) (ExplainSummary, error) {
+	if req.FieldPath != "" {
+		if err := agent.ValidateCanonicalFieldPath(req.FieldPath); err != nil {
+			return ExplainSummary{}, err
+		}
+	}
 	kind := normalizeKind(req.Kind)
 	name := req.Name
 	ns := strings.TrimSpace(req.Namespace)
@@ -162,7 +170,17 @@ func ObserveResourceContext(ctx context.Context, req ObserveResourceContextReque
 
 	traceResult, err := traceForExplain(ctx, kind, name, ns)
 	if err != nil {
-		return buildExplainSummaryFromFailure(kind, name, ns, err), nil
+		summary := buildExplainSummaryFromFailure(kind, name, ns, err)
+		if req.FieldPath != "" {
+			if attr, fieldAttr, ok := fetchResourceAttribution(ctx, ns, kind, name, req.FieldPath); ok && attr.Cause != "" {
+				summary.MutationCause = attr.Cause
+				summary.MutationManager = attr.ManagerHint
+				summary.FieldAttribution = fieldAttr
+			} else {
+				summary.FieldAttribution = unavailableFieldAttribution(req.FieldPath, "Exact field evidence unavailable because the live resource could not be read.")
+			}
+		}
+		return summary, nil
 	}
 
 	if explainWithConfigHub {
@@ -202,9 +220,12 @@ func ObserveResourceContext(ctx context.Context, req ObserveResourceContextReque
 	// Best-effort — silently skipped on fetch failure, so explain still works
 	// without cluster access. Per the parse-don't-guess rule, missing or
 	// unrecognized signals yield CauseUnknown rather than misclassification.
-	if attr, ok := fetchResourceAttribution(ctx, ns, kind, name); ok && attr.Cause != "" {
+	if attr, fieldAttr, ok := fetchResourceAttribution(ctx, ns, kind, name, req.FieldPath); ok && attr.Cause != "" {
 		summary.MutationCause = attr.Cause
 		summary.MutationManager = attr.ManagerHint
+		summary.FieldAttribution = fieldAttr
+	} else if req.FieldPath != "" {
+		summary.FieldAttribution = unavailableFieldAttribution(req.FieldPath, "Exact field evidence unavailable because the live resource could not be read.")
 	}
 
 	if decision, ok := fetchRolloutDecision(ctx, ns, kind, name); ok {
@@ -276,29 +297,64 @@ func relatedPodsForRolloutDecision(ctx context.Context, dynClient dynamic.Interf
 // attribution from metadata.managedFields. Returns false on any fetch or
 // classification failure — attribution is purely additive evidence and must
 // not block explain output.
-func fetchResourceAttribution(ctx context.Context, namespace, kind, name string) (agent.FieldMutationAttribution, bool) {
+func fetchResourceAttribution(ctx context.Context, namespace, kind, name, fieldPath string) (agent.FieldMutationAttribution, *FieldAttributionSummary, bool) {
 	cfg, err := buildConfig()
 	if err != nil {
-		return agent.FieldMutationAttribution{}, false
+		return agent.FieldMutationAttribution{}, nil, false
 	}
 
 	gvr := kindToGVR(kind)
 	if gvr.Resource == "" {
-		return agent.FieldMutationAttribution{}, false
+		return agent.FieldMutationAttribution{}, nil, false
 	}
 
 	dynClient, err := dynamic.NewForConfig(cfg)
 	if err != nil {
-		return agent.FieldMutationAttribution{}, false
+		return agent.FieldMutationAttribution{}, nil, false
 	}
 
 	obj, err := dynClient.Resource(gvr).Namespace(namespace).Get(ctx, name, v1.GetOptions{})
 	if err != nil {
-		return agent.FieldMutationAttribution{}, false
+		return agent.FieldMutationAttribution{}, nil, false
 	}
 
 	owner := agent.DetectOwnership(obj)
-	return agent.AttributeFieldMutation(obj, owner), true
+	attr := agent.AttributeFieldMutation(obj, owner)
+	if fieldPath == "" {
+		return attr, nil, true
+	}
+	fieldAttr := fieldAttributionSummary(obj, owner, fieldPath)
+	return attr, fieldAttr, true
+}
+
+func fieldAttributionSummary(obj *unstructured.Unstructured, owner agent.Ownership, path string) *FieldAttributionSummary {
+	attr, ok, incomplete := agent.AttributeFieldPath(obj, owner, path)
+	return fieldAttributionResult(path, attr, ok, incomplete)
+}
+
+func unavailableFieldAttribution(path, reason string) *FieldAttributionSummary {
+	return &FieldAttributionSummary{Path: path, Cause: agent.CauseUnknown, Reason: reason}
+}
+
+func fieldAttributionResult(path string, attr agent.FieldMutationAttribution, ok, incomplete bool) *FieldAttributionSummary {
+	result := &FieldAttributionSummary{Path: path, Cause: agent.CauseUnknown}
+	if incomplete {
+		if ok {
+			result.Managers = attr.Managers
+		}
+		result.Reason = "Some managedFields entries were malformed; observed managers may be incomplete."
+		return result
+	}
+	if !ok {
+		result.Reason = "No decodable managedFields entry claims this exact path."
+		return result
+	}
+	result.Cause = attr.Cause
+	result.Managers = attr.Managers
+	if result.Cause == agent.CauseUnknown {
+		result.Reason = "Managers claim this path, but the evidence is insufficient to select a cause."
+	}
+	return result
 }
 
 // fetchResourceEvents fetches recent events for a resource.

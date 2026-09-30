@@ -142,6 +142,7 @@ cub-scout explain <kind> <name> [flags]
 | `--format` | string | text | Output format: `text`, `json`, `md` |
 | `--presentation` | string | legacy/default render path | Narrative framing for text/Markdown output: `human`, `ai`, `paired`. Omitting the flag keeps the legacy/default render path. JSON is unchanged. |
 | `--hint-mode` | string | default | Recommendation ranking for next-step hints: `default`, `beginner`, `operator`. JSON is unchanged. |
+| `--field-path` | string | - | Request exact managedFields evidence for one canonical path, for example `.spec.template.spec.containers[name="checkout"].image` |
 | `--with-confighub` | bool | false | Include bounded ConfigHub delivery evidence when exact resource correlation exists |
 | `--confighub-space` | string | resource ConfigHub space | ConfigHub space for delivery evidence; `*` is allowed only as an explicit all-spaces read |
 | `--confighub-since` | string | 24h | Lookback window for ConfigHub release/event evidence |
@@ -159,6 +160,13 @@ cub-scout explain <kind> <name> [flags]
   space, or `--confighub-space` is supplied.
 - `deliveryEvidence` is supporting evidence only. It does not replace Argo,
   Flux, Sveltos, Modelplane, or Kubernetes status authority.
+- `fieldAttribution` appears only when `--field-path` is supplied. It reports
+  managers whose parsed managedFields contain that exact canonical path;
+  absent, malformed, or unrecognized-only evidence remains `unknown`. It never
+  falls back to resource-level attribution or sibling paths. Manager evidence
+  does not establish write order, latest writer, or a person. MCP `explain`
+  accepts the same request as `field_path`; in the selected-resource TUI
+  evidence view, press `f` to enter a path.
 
 ### Bounded Explain (v2.10.0)
 

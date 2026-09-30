@@ -20,6 +20,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -89,7 +90,7 @@ func TestBoundedOriginTUI(t *testing.T) {
 			{APIVersion: obj.GetAPIVersion(), Kind: obj.GetKind(), Namespace: obj.GetNamespace(), Name: obj.GetName()},
 		}}
 		m.openBoundedExplain()
-		m.boundedPanel.observe = func(context.Context, agent.BoundedResourceRef, string, bool) (ExplainSummary, error) {
+		m.boundedPanel.observe = func(context.Context, agent.BoundedResourceRef, string, bool, string) (ExplainSummary, error) {
 			return originFixtureSummary(obj), nil
 		}
 		m.acceptBoundedExplain(m.boundedPanel.read(false)().(boundedExplainMsg))
@@ -132,6 +133,7 @@ func TestBoundedOriginMCPRefreshAndIsolation(t *testing.T) {
 			}
 			obj := fixture.DeepCopy()
 			obj.SetNamespace(namespace)
+			obj.SetManagedFields([]metav1.ManagedFieldsEntry{{Manager: "kubectl-edit", Operation: metav1.ManagedFieldsOperationUpdate, APIVersion: "apps/v1", FieldsType: "FieldsV1", FieldsV1: &metav1.FieldsV1{Raw: []byte(`{"f:spec":{"f:replicas":{}}}`)}}})
 			annotations := obj.GetAnnotations()
 			annotations[agent.ConfigHubOriginAnnotation] = fmt.Sprintf(`{"spaceId":%q,"unitSlug":"api","unitId":%q,"revisionNum":%d}`, spaceID, namespace, revision.Load())
 			obj.SetAnnotations(annotations)
@@ -154,7 +156,7 @@ func TestBoundedOriginMCPRefreshAndIsolation(t *testing.T) {
 		return "", nil
 	}
 	gateway := newMCPGatewayWithMode(boundedMCPRunner(noCalls), noCalls, true)
-	args := map[string]interface{}{"bounded": true, "resource": "Deployment/api", "api_version": "apps/v1", "context": "cluster-a", "namespace": "team-a"}
+	args := map[string]interface{}{"bounded": true, "resource": "Deployment/api", "api_version": "apps/v1", "context": "cluster-a", "namespace": "team-a", "field_path": ".spec.replicas"}
 	call := func() ExplainSummary {
 		params, err := json.Marshal(map[string]interface{}{"name": "explain", "arguments": args})
 		require.NoError(t, err)
@@ -166,6 +168,9 @@ func TestBoundedOriginMCPRefreshAndIsolation(t *testing.T) {
 	}
 	first := call()
 	require.Equal(t, "space-a", first.ConfigHubOrigin.SpaceID)
+	require.Equal(t, ".spec.replicas", first.FieldAttribution.Path)
+	require.Equal(t, agent.CauseManualEdit, first.FieldAttribution.Cause)
+	require.Equal(t, []string{"kubectl-edit"}, first.FieldAttribution.Managers)
 	revision.Store(8)
 	hit := call()
 	require.Equal(t, first.ConfigHubOrigin, hit.ConfigHubOrigin)
@@ -186,7 +191,12 @@ func TestBoundedOriginMCPRefreshAndIsolation(t *testing.T) {
 	require.EqualValues(t, 9007199254740993, *call().ConfigHubOrigin.RevisionNum, "MCP JSON preserves the exact revision above 2^53")
 	require.EqualValues(t, 10, requests.Load())
 	fail.Store(true)
-	require.Nil(t, call().ConfigHubOrigin)
+	failed := call()
+	require.Nil(t, failed.ConfigHubOrigin)
+	require.Equal(t, ".spec.replicas", failed.FieldAttribution.Path)
+	require.Equal(t, agent.CauseUnknown, failed.FieldAttribution.Cause)
+	require.Empty(t, failed.FieldAttribution.Managers)
+	require.Contains(t, failed.FieldAttribution.Reason, "bounded resource read failed")
 	require.EqualValues(t, 12, requests.Load())
 	delete(args, "refresh")
 	require.Nil(t, call().ConfigHubOrigin, "failed refresh cannot restore cached identity")

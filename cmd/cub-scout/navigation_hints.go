@@ -504,7 +504,11 @@ func explainHints(summary ExplainSummary) []Hint {
 // For Argo-managed resources, hints are phase-aware based on health/drift/risk signals.
 func explainHintsWithContext(summary ExplainSummary, ctx HintContext) []Hint {
 	if evidence := summary.ResourceRead; evidence != nil {
-		command := boundedExplainCommand(evidence.Resource, evidence.Context, " ")
+		fieldPath := ""
+		if summary.FieldAttribution != nil {
+			fieldPath = summary.FieldAttribution.Path
+		}
+		command := boundedExplainCommand(evidence.Resource, evidence.Context, " ", fieldPath)
 		if revision := summary.ControllerRevision; revision != nil && agent.ValidateExpectedRevision(revision.ExpectedRevision) == nil {
 			command += " --expected-revision " + revision.ExpectedRevision
 		}

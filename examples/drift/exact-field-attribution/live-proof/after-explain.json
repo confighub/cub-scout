@@ -1,0 +1,100 @@
+{
+  "exitCode": 0,
+  "stdout": {
+    "resourceRead": {
+      "available": true,
+      "context": "kind-scout-evals-scale",
+      "resource": {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "namespace": "team-01",
+        "name": "api"
+      },
+      "uid": "33c19b1c-5aa2-4a92-9392-567f1d0a8741",
+      "resourceVersion": "2094",
+      "observedAt": "2026-09-30T18:32:17.382684Z",
+      "expiresAt": "2026-09-30T18:32:32.382684Z",
+      "cache": "miss",
+      "reads": {
+        "discovery": 1,
+        "object": 1
+      }
+    },
+    "omissions": [
+      {
+        "missing": "source-controller-evidence",
+        "reason": "Bounded read does not query controller sources, ConfigHub, or delivery history.",
+        "severity": "info"
+      },
+      {
+        "missing": "related-pod-event-evidence",
+        "reason": "Bounded read does not query related pods or events.",
+        "severity": "info"
+      },
+      {
+        "missing": "desired-live-comparison",
+        "reason": "No desired configuration or drift/scan assessment was requested.",
+        "severity": "info"
+      },
+      {
+        "missing": "confighub-origin",
+        "reason": "No combined origin annotation observed; source provenance is not established by this read.",
+        "severity": "info"
+      }
+    ],
+    "resource": "Deployment/api",
+    "namespace": "team-01",
+    "owner": "Helm",
+    "source": "Not assessed (bounded read)",
+    "deployedVia": "Not assessed (bounded read)",
+    "health": "Current",
+    "risks": "Not assessed (bounded read)",
+    "drift": "Not assessed (bounded read)",
+    "notes": [
+      "Bounded object evidence only: no source/controller, ConfigHub, event, related-pod, or drift reads.",
+      "Object-local readiness is not proof of delivery completion or application success.",
+      "Origin evidence unavailable: No combined origin annotation observed; source provenance is not established by this read.",
+      "Ownership evidence: label:app.kubernetes.io/managed-by=Helm"
+    ],
+    "currentChange": {
+      "resource": {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "namespace": "team-01",
+        "name": "api"
+      },
+      "progress": {
+        "phase": "complete",
+        "clockSource": "status.conditions[Progressing].lastUpdateTime",
+        "progressAgeSeconds": 280371
+      },
+      "verdict": "PASS",
+      "reason": "workload_converged",
+      "message": "Deployment is available. Replicas: 0",
+      "evidence": {
+        "kstatusStatus": "Current",
+        "kstatusMessage": "Deployment is available. Replicas: 0",
+        "generation": 1,
+        "observedGeneration": 1,
+        "observedAt": "2026-09-30T18:32:17Z"
+      }
+    },
+    "nextSteps": [
+      {
+        "actionType": "read-only",
+        "reason": "Read this exact object again in the same context; ownership or delivery evidence may still be incomplete",
+        "nextCommand": "cub-scout explain Deployment/api --bounded --api-version apps/v1 --kube-context 'kind-scout-evals-scale' --namespace team-01 --field-path '.spec.template.spec.containers[name=\"api\"].image' --refresh"
+      }
+    ],
+    "mutationCause": "controller-drift",
+    "mutationManager": "helm",
+    "fieldAttribution": {
+      "path": ".spec.template.spec.containers[name=\"api\"].image",
+      "cause": "controller-drift",
+      "managers": [
+        "helm"
+      ]
+    }
+  },
+  "stderr": ""
+}
