@@ -88,6 +88,10 @@ func TestBoundedExecAuthRotationClosesActiveHTTP2(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("certificate rotation left an old-certificate HTTP/2 stream active")
 	}
+	// The handler's cancellation signal proves the old connection was closed,
+	// but the client still owns this response body. Close it before issuing a
+	// new request so transport stream cleanup cannot race reuse of the socket.
+	require.NoError(t, resp.Body.Close())
 	req, err = http.NewRequestWithContext(ctx, http.MethodGet, url+"/next", nil)
 	require.NoError(t, err)
 	resp2, err := client.Do(req)
