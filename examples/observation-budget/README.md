@@ -125,16 +125,18 @@ explicit-mode limits; broader subprocess and selector coverage remains pending.
 The scoped selector slice adds a strict named context to `map list`, its MCP
 `map` tool (`context` input), and TUI startup (`map --kube-context`). Omission
 preserves the existing default behavior; an explicitly empty or missing name
-errors without falling back. Deterministic two-server tests show that CLI, MCP,
-and TUI inventory requests reach only the selected endpoint, preserve
-kubeconfig bytes, and remain on the captured endpoint after same-name kubeconfig
-edits and a local-to-Hub-to-local TUI round trip. TUI bounded explain shares
-that captured binding. In explicit mode, trace, scan, graph export, arbitrary
-command mode, shell, and import are unavailable until each action has a
-verified binding path; pure rendering remains available. With `map --hub`, the
-selector applies only if the user switches into the local TUI; it does not
-select a ConfigHub context. This does not claim context selection for other
-commands or all of #599.
+errors without falling back. Deterministic two-server tests show that CLI and
+TUI inventory requests reach only the selected endpoint, preserve kubeconfig
+bytes, and remain on the captured endpoint after same-name kubeconfig edits
+and a local-to-Hub-to-local TUI round trip. The MCP test verifies that the
+selected context is forwarded to the CLI invocation; it does not make an MCP
+request against the two test servers. TUI bounded explain shares the captured
+binding. In explicit mode, trace, scan, graph export, arbitrary command mode,
+shell, and import are unavailable until each action has a verified binding
+path; pure rendering remains available. With `map --hub`, the selector applies
+only if the user switches into the local TUI; it does not select a ConfigHub
+context. This does not claim context selection for other commands or all of
+#599.
 
 ## Next Decision
 
