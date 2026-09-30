@@ -34,8 +34,8 @@ def stop_owned_group(pgid: int, grace: float = 0.35, process: subprocess.Popen |
     # Do not probe or signal any group other than the new-session PGID we own.
     # A fixed bounded grace also gives descendants time to exit on TERM.
     time.sleep(grace)
-    if process is not None and process.poll() is not None:
-        return
+    if process is not None:
+        process.poll()  # Reap a terminated leader without abandoning its descendants.
     try:
         os.killpg(pgid, signal.SIGKILL)
     except ProcessLookupError:
@@ -91,13 +91,13 @@ def run_bounded(command: list[str], env: dict[str, str], timeout: float = 15.0,
     finally:
         for sig in previous:
             signal.signal(sig, signal.SIG_IGN)
-        if proc.poll() is None or selector.get_map():
-            stop_owned_group(proc.pid, grace=0.35, process=proc)
-            try:
-                proc.wait(timeout=1)
-            except subprocess.TimeoutExpired:
-                os.killpg(proc.pid, signal.SIGKILL)
-                proc.wait(timeout=1)
+        # The leader may have exited while descendants still hold inherited pipes.
+        stop_owned_group(proc.pid, grace=0.35, process=proc)
+        try:
+            proc.wait(timeout=1)
+        except subprocess.TimeoutExpired:
+            os.killpg(proc.pid, signal.SIGKILL)
+            proc.wait(timeout=1)
         selector.close()
         proc.stdout.close()
         proc.stderr.close()
@@ -106,15 +106,35 @@ def run_bounded(command: list[str], env: dict[str, str], timeout: float = 15.0,
 
 
 def validate_report(report: dict) -> None:
-    assert report["schema"] == "map-list-recorded.v1", report.get("schema")
-    assert report["provenance"]["objectCount"] == 302, report["provenance"]
-    assert report["provenance"]["sha256"] == DEPLOYMENT_SHA256, report["provenance"]
-    assert report["scope"] == {"apiVersion": "apps/v1", "kind": "Deployment", "namespacePrefix": "team-"}, report["scope"]
-    assert report["selectedCount"] == 300 and report["excludedFromScopeCount"] == 2
-    assert len(report["resources"]) == 300
-    assert report["ownerCounts"] == EXPECTED_COUNTS, report["ownerCounts"]
-    names = sorted(f"{r['namespace']}/{r['name']}" for r in report["resources"] if r["owner"] == "Native")
-    assert names == sorted(NO_MARKER), names
+    def require(condition, message):
+        if not condition:
+            raise ValueError(message)
+    require(report.get("schema") == "map-list-recorded.v1", "unexpected recorded map schema")
+    provenance = report.get("provenance", {})
+    require(provenance.get("objectCount") == 302 and provenance.get("sha256") == DEPLOYMENT_SHA256,
+            "recording provenance mismatch")
+    require(provenance.get("captureTime") == "unknown" and provenance.get("captureCompleteness") == "unknown",
+            "recording must not claim capture time/completeness")
+    require(report.get("scope") == {"apiVersion": "apps/v1", "kind": "Deployment", "namespacePrefix": "team-"},
+            "recorded scope mismatch")
+    require(report.get("selectedCount") == 300 and report.get("excludedFromScopeCount") == 2, "selection counts mismatch")
+    resources = report.get("resources", [])
+    require(len(resources) == 300, "resource count mismatch")
+    require(report.get("ownerCounts") == EXPECTED_COUNTS, "owner counts mismatch")
+    counts, identities = {}, set()
+    for resource in resources:
+        require(resource.get("apiVersion") == "apps/v1" and resource.get("kind") == "Deployment" and
+                isinstance(resource.get("namespace"), str) and resource["namespace"].startswith("team-") and
+                isinstance(resource.get("name"), str) and bool(resource["name"]), "resource outside expected scope")
+        identity = (resource["namespace"], resource["name"])
+        require(identity not in identities, "duplicate selected identity")
+        identities.add(identity)
+        owner = resource.get("owner")
+        require(owner in EXPECTED_COUNTS, "unexpected owner category")
+        counts[owner] = counts.get(owner, 0) + 1
+    require(counts == EXPECTED_COUNTS, "resource owners disagree with aggregate counts")
+    names = sorted(f"{r['namespace']}/{r['name']}" for r in resources if r["owner"] == "Native")
+    require(names == sorted(NO_MARKER), "no-marker identities mismatch")
 
 
 def call_map_stdio(wrapper: Path, kubeconfig: Path, recording: Path,
@@ -184,7 +204,6 @@ def call_map_stdio(wrapper: Path, kubeconfig: Path, recording: Path,
         send({"jsonrpc": "2.0", "id": ident, "method": method, "params": params})
         return receive(ident)
 
-    completed = False
     try:
         for sig in previous:
             signal.signal(sig, interrupted)
@@ -229,35 +248,28 @@ def call_map_stdio(wrapper: Path, kubeconfig: Path, recording: Path,
         if report is None:
             raise ValueError("recorded MCP exact call returned no JSON report")
         validate_report(report)
-        completed = True
         return {"tools": names, "unsupportedToolRejected": True,
                 "unsupportedLiveArgumentRejected": True, "report": report}
     finally:
-        recording.write_bytes(original)
         for sig in previous:
             signal.signal(sig, signal.SIG_IGN)
         try:
-            proc.stdin.close()
-        except BrokenPipeError:
-            pass
-        if completed:
             try:
-                proc.wait(timeout=1)
-            except subprocess.TimeoutExpired:
+                recording.write_bytes(original)
+            finally:
+                try:
+                    proc.stdin.close()
+                except BrokenPipeError:
+                    pass
+                # Always clean the owned group, even after a successful leader exit.
                 stop_owned_group(proc.pid, grace=0.35, process=proc)
                 proc.wait(timeout=1)
-        else:
-            stop_owned_group(proc.pid, grace=0.35, process=proc)
-            try:
-                proc.wait(timeout=1)
-            except subprocess.TimeoutExpired:
-                os.killpg(proc.pid, signal.SIGKILL)
-                proc.wait(timeout=1)
-        selector.close()
-        proc.stdout.close()
-        proc.stderr.close()
-        for sig, handler in previous.items():
-            signal.signal(sig, handler)
+        finally:
+            selector.close()
+            proc.stdout.close()
+            proc.stderr.close()
+            for sig, handler in previous.items():
+                signal.signal(sig, handler)
 
 
 def verify_prepared(root: Path, binary: Path, expected_hash: str) -> dict:

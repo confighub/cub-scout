@@ -12,8 +12,10 @@ manifest SHA-256 is
 `e139701bf9d894ca9dd16ddb302fe0e4f28f3122922030cd9cdda57e8eb3fa22`; the
 Deployment List used by recorded MCP is
 `822716e41eaf59674cec8b52913b2613c76932b578c45d54285f71747dd228b6`.
-Preparation verifies the manifest, each listed file, the exact source commit,
-and the supplied product binary hash. It retains the original manifest in the
+Preparation verifies the manifest, each listed file and the supplied product
+binary hash. Fixed content hashes bind the stated source revision even in a
+shallow checkout; Git ancestry is not asserted. The actual preparation commit
+is recorded separately. It retains the original manifest in the
 output as provenance.
 
 Both model arms receive identical byte-for-byte copies of all seven exports:
@@ -21,8 +23,8 @@ ConfigMaps, Deployments, Events, Namespaces, Pods, ReplicaSets, and Services.
 The treatment plugin has the repository plugin metadata and skills, while its
 MCP server command is replaced in the generated temporary copy with a pinned
 wrapper for `mcp serve --recording`. That recorded gateway exposes only
-`explain` and `map`; the map call is fixed to exact `apps/v1` Deployments with
-the literal `team-` namespace prefix. It accepts no live context or arbitrary
+`explain` and `map`; the preflight calls map with exact `apps/v1` Deployments
+and the literal `team-` namespace prefix. It accepts no live context or arbitrary
 tool arguments. The recorded server process gets a minimal environment with
 an explicit packet-owned kubeconfig containing no clusters, users, or
 contexts; it does not set or reset HOME. This is process configuration, not

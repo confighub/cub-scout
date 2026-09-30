@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Offline tests for recorded scale staging and preflight validation."""
 import hashlib
+import os
+import signal
+import time
 import copy
 import importlib.util
 import json
@@ -24,11 +27,16 @@ def expected_report():
     names = preflight.NO_MARKER
     resources = [{"namespace": item.split("/", 1)[0], "name": item.split("/", 1)[1], "owner": "Native"}
                  for item in names]
-    resources.extend({"namespace": f"team-{i:02d}", "name": f"managed-{i}", "owner": "Flux"}
-                     for i in range(288))
+    for owner, count in preflight.EXPECTED_COUNTS.items():
+        if owner != "Native":
+            resources.extend({"namespace": "team-fixture", "name": f"{owner.lower()}-{i}", "owner": owner}
+                             for i in range(count))
+    for resource in resources:
+        resource.update(apiVersion="apps/v1", kind="Deployment")
     return {
         "schema": "map-list-recorded.v1",
-        "provenance": {"objectCount": 302, "sha256": preflight.DEPLOYMENT_SHA256},
+        "provenance": {"objectCount": 302, "sha256": preflight.DEPLOYMENT_SHA256,
+                       "captureTime": "unknown", "captureCompleteness": "unknown"},
         "scope": {"apiVersion": "apps/v1", "kind": "Deployment", "namespacePrefix": "team-"},
         "selectedCount": 300, "excludedFromScopeCount": 2,
         "ownerCounts": copy.deepcopy(preflight.EXPECTED_COUNTS),
@@ -60,15 +68,21 @@ class RecordedScalePacket(unittest.TestCase):
                           ("api_version", "kind", "namespace", "namespace_prefix", "context")},
                           "required": ["api_version", "kind"], "additionalProperties": False}
         self.assertFalse(preflight.exact_map_schema(invalid_schema))
-        for mutation in ("counts", "native-names", "scope"):
+        for mutation in ("counts", "native-names", "scope", "row-owner", "duplicate", "capture-time"):
             report = expected_report()
             if mutation == "counts":
                 report["ownerCounts"]["Native"] = 11
             elif mutation == "native-names":
                 report["resources"].pop()
+            elif mutation == "row-owner":
+                report["resources"][-1]["owner"] = "ArgoCD"
+            elif mutation == "duplicate":
+                report["resources"][-1] = report["resources"][-2].copy()
+            elif mutation == "capture-time":
+                report["provenance"]["captureTime"] = "now"
             else:
                 report["scope"]["namespacePrefix"] = "team"
-            with self.subTest(mutation=mutation), self.assertRaises(AssertionError):
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
                 preflight.validate_report(report)
 
     def test_prepared_file_tampering_and_binary_hash_mismatch_fail_closed(self):
@@ -245,6 +259,22 @@ for line in sys.stdin:
             value = heartbeat.read_bytes()
             __import__("time").sleep(0.12)
             self.assertEqual(heartbeat.read_bytes(), value)
+
+    def test_exited_leader_does_not_leave_term_ignoring_child(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            heartbeat = Path(tmp) / "heartbeat"
+            child = ("import signal,time,pathlib; signal.signal(signal.SIGTERM,signal.SIG_IGN); "
+                     "p=pathlib.Path(" + repr(str(heartbeat)) + ");\n"
+                     "while True: p.write_text(str(time.monotonic())); time.sleep(.02)")
+            parent = ("import subprocess,sys,time,pathlib; "
+                      "subprocess.Popen([sys.executable,'-c'," + repr(child) + "]); "
+                      "p=pathlib.Path(" + repr(str(heartbeat)) + ");\n"
+                      "while not p.exists(): time.sleep(.01)\n")
+            with self.assertRaises(TimeoutError):
+                preflight.run_bounded([sys.executable, "-c", parent], {"PATH": "/usr/bin:/bin"}, timeout=.4)
+            value = heartbeat.read_bytes()
+            time.sleep(.12)
+            self.assertEqual(heartbeat.read_bytes(), value, "owned descendant survived its leader")
 
     def test_cancellation_restores_private_recording_and_cleans_owned_group(self):
         import signal

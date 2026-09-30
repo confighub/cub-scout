@@ -40,8 +40,7 @@ def verify_sources() -> None:
             raise ValueError(f"scale source hash mismatch: {relative}")
     if FILES.get("evals/fixtures/scale/cluster/deployments.yaml") != DEPLOYMENT_SHA256:
         raise ValueError("recorded Deployment digest does not match pinned source")
-    subprocess.run(["git", "merge-base", "--is-ancestor", SOURCE_COMMIT, "HEAD"], cwd=REPO,
-                   text=True, capture_output=True, check=True, timeout=5)
+    # Content hashes bind the source even in a shallow checkout; no network fetch.
 
 
 def write_scaffold(case_dir: Path) -> None:
@@ -137,6 +136,7 @@ def prepare(binary: Path, expected_hash: str, out: Path) -> None:
     generated = {str(p.relative_to(plugin)): sha256(p) for p in sorted(plugin.rglob("*")) if p.is_file()}
     facts = {
         "schema": "recorded-scale-preparation.v1", "sourceCommit": SOURCE_COMMIT,
+        "sourceVerification": "pinned manifest and all fixture content hashes; ancestry not asserted",
         "preparationCommit": subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO,
                                               text=True, capture_output=True, check=True, timeout=5).stdout.strip(),
         "binary": str(binary), "binarySha256": expected_hash,
