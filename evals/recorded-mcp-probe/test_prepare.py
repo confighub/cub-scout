@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -15,6 +16,41 @@ prepare = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prepare)
 
 class PreparationGuards(unittest.TestCase):
+    def test_purpose_configuration_preserves_plumbing_and_makes_economy_neutral(self):
+        import json
+        with tempfile.TemporaryDirectory() as tmp:
+            plugin = Path(tmp) / 'plugin'
+            shutil.copytree(ROOT / 'template/plugin', plugin)
+            manifest_template = plugin / '.claude-plugin/plugin.json.in'
+            manifest_path = plugin / '.claude-plugin/plugin.json'
+            manifest_path.write_bytes(manifest_template.read_bytes())
+            case = plugin / 'evals/recorded-explain-mcp'
+            original_prompt = (case / 'prompt.md').read_bytes()
+            original_tool_grader = (case / 'graders/tool-called.md').read_bytes()
+            original_manifest = manifest_template.read_bytes()
+
+            prepare.configure_purpose(plugin, 'plumbing')
+            self.assertEqual((case / 'prompt.md').read_bytes(), original_prompt)
+            self.assertEqual((case / 'graders/tool-called.md').read_bytes(), original_tool_grader)
+
+            prepare.configure_purpose(plugin, 'economy')
+            prompt = (case / 'prompt.md').read_text()
+            self.assertIn('max_turns: 8', prompt)
+            self.assertIn('timeout_seconds: 90', prompt)
+            self.assertIn('no particular tool, file-reading sequence, or amount of reading is required', prompt)
+            self.assertNotIn('call the available `explain` MCP tool', prompt)
+            self.assertNotIn('Read `cluster/deployments.yaml`', prompt)
+            self.assertTrue((case / 'graders/answer.md').is_file())
+            self.assertFalse((case / 'graders/tool-called.md').exists())
+            manifest = json.loads((plugin / '.claude-plugin/plugin.json').read_text())
+            self.assertEqual(manifest['description'], 'Recorded-only evidence for a Kubernetes resource question.')
+            self.assertEqual(original_manifest, (ROOT / 'template/plugin/.claude-plugin/plugin.json.in').read_bytes())
+
+    def test_invalid_purpose_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaisesRegex(ValueError, 'unsupported purpose'):
+                prepare.configure_purpose(Path(tmp), 'benchmark')
+
     def test_hash_mismatch_and_existing_output_are_not_overwritten(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

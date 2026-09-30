@@ -46,6 +46,52 @@ cost, and source-fixture hashes. The no-model preflight confirms the plugin
 server's advertised tools, not the model runner's actual inventory or trace.
 Do not open sealed run-home paths merely to complete this preparation packet.
 
+## Economy-purpose preparation (prepared, not run)
+
+`--purpose economy` prepares a separate diagnostic prompt over the same pinned
+recording and ordinary tool permissions. It asks for the same JSON answer in
+both arms but does not direct either arm to read the raw file or call MCP. It
+keeps the answer grader and removes the `tool_used` grader from success scoring;
+whether the arm chooses tools or reads data is an outcome to inspect in the raw
+trace, not a requirement. The answer distinguishes resource ownership labels
+from exact field-manager evidence and makes no person/latest-writer claim.
+Preparation records the purpose and hashes for the prompt, case, answer grader,
+binary, and fixture.
+
+Prepare a new output directory using the pinned diagnostic binary and its known
+hash:
+
+```sh
+python3 evals/recorded-mcp-probe/prepare.py \
+  --purpose economy \
+  --binary /tmp/cub-scout-recorded-explain \
+  --binary-sha256 e94fe84d3e16b6c111ffa68b532523395c6c6f66649be3a890d3033e3afd94c5 \
+  --out /tmp/cub-scout-recorded-economy-probe
+```
+
+This runs only local contract checks and a no-model MCP preflight. It does not
+start an eval. If a later review explicitly authorizes the single diagnostic
+pair described in issue #603, use one run per arm, serially, normal speed (fast
+mode off), with no judge and no automatic retry. The existing tranche ceiling
+is $1; the runner checks `--max-cost-usd` before launch, so it is not a strict
+in-flight spend stop. For that one pair, the staged command is:
+
+```sh
+claude plugin eval /tmp/cub-scout-recorded-economy-probe/plugin \
+  --scaffold --case recorded-explain-mcp --runs 1 --concurrency 1 \
+  --ablation with-without --mocks off --allow-real-servers \
+  --allow-tools mcp__plugin_recorded-mcp-probe_cub-scout__explain \
+  --model claude-haiku-4-5-20251001 --max-cost-usd 1 --no-publish \
+  --json /tmp/cub-scout-recorded-economy-probe/result.json
+```
+
+The `max_turns: 8` setting does not resolve the historical mismatch between
+configured max turns and observed turns. Before interpreting any future result,
+inspect both traces and actual tool inventories, calls, file reads, completion,
+and full spend, including failed attempts. One pair is diagnostic only; it
+cannot establish general savings, quality uplift, or benchmark readiness. This
+packet does not run the paid command above.
+
 The prepared plugin includes an eval case but this packet runs no Claude Code
 eval command and authorizes no spend. Any future paid diagnostic requires a
 preplanned budget and the adopted execution plan's preflight and prompt-review gates. Historical
