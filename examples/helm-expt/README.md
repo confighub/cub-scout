@@ -369,8 +369,10 @@ Helm 4.1.4 default install, and Helm 3.22.0 install followed by Helm 4.1.4
 `upgrade --server-side=auto` with replicas changed from one to two. Each run
 records binary/image/chart hashes, exact commands, Deployment identity/UID,
 replica counts, managedFields, Secret names only, release history, and matching
-standalone/plugin `trace --format json` results. The script refuses existing
-cluster/evidence state and uses a private kubeconfig and Helm homes.
+standalone/plugin `trace --format json` results. The script refuses an existing
+`scout-helm-version-matrix` cluster and non-empty evidence state. It leaves
+unrelated kind clusters untouched and uses an explicit private kubeconfig and
+isolated Helm homes.
 
 After review, the intended invocation is:
 
@@ -384,9 +386,16 @@ Pins are kind `v0.31.0`, node image
 `kindest/node:v1.35.0@sha256:4613778f3cfcd10e615029370f5786704559103cf27bef934597ba562b269661`,
 Helm 3.22.0 (`8566ea7d76445d174050eca068bc6d685ba3607de8430524a809a16f505a6138`),
 and Helm 4.1.4 (`11e3c9fb6548fa1661a72000a6a483a31f1c2a0bf300f3d2422270feee180d34`).
+The Helm 3 archive SHA-256 is
+`4c9982a6cdeb458b60258df66b55398ca5b19293f6877faffe2909ad6f23dfe0`. These
+hashes pin the tested Darwin arm64 Helm executables; other binaries are
+rejected even if they report the same version.
 The offline preflight guard is `examples/helm-expt/test-helm-version-matrix-safety.sh`;
-it checks evidence preservation, rejects a binary hash mismatch, and proves a
-pre-existing kind cluster is refused before cluster creation.
+it checks evidence preservation, rejects a binary hash mismatch, refuses only
+the owned cluster name, leaves unrelated cluster names alone, and verifies
+failed-create cleanup uses the private kubeconfig without targeting another
+cluster. Deployment reads request `managedFields` explicitly and verify that
+the Helm 4 upgrade preserves the Deployment UID while changing replicas.
 
 This is a validation protocol, not evidence that the matrix has passed. It
 covers ordinary namespaced install/upgrade and does not cover hooks, CRDs,
