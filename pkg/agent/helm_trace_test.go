@@ -87,10 +87,12 @@ metadata:
 				Name:      "sh.helm.release.v1.nginx.v3",
 				Namespace: "default",
 				Labels: map[string]string{
-					"owner": "helm",
-					"name":  "nginx",
+					"owner":   "helm",
+					"name":    "nginx",
+					"version": "3",
 				},
 			},
+			Type: corev1.SecretType("helm.sh/release.v1"),
 			Data: map[string][]byte{
 				"release": encodeRelease(t, release),
 			},
@@ -168,10 +170,12 @@ metadata:
 				Name:      "sh.helm.release.v1.redis.v1",
 				Namespace: "cache",
 				Labels: map[string]string{
-					"owner": "helm",
-					"name":  "redis",
+					"owner":   "helm",
+					"name":    "redis",
+					"version": "1",
 				},
 			},
+			Type: corev1.SecretType("helm.sh/release.v1"),
 			Data: map[string][]byte{
 				"release": encodeRelease(t, release),
 			},
@@ -260,10 +264,12 @@ metadata:
 				Name:      "sh.helm.release.v1.broken.v1",
 				Namespace: "default",
 				Labels: map[string]string{
-					"owner": "helm",
-					"name":  "broken",
+					"owner":   "helm",
+					"name":    "broken",
+					"version": "1",
 				},
 			},
+			Type: corev1.SecretType("helm.sh/release.v1"),
 			Data: map[string][]byte{
 				"release": encodeRelease(t, release),
 			},
@@ -383,24 +389,27 @@ func TestHelmReleaseHistory(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "sh.helm.release.v1.nginx.v1",
 				Namespace: "default",
-				Labels:    map[string]string{"owner": "helm", "name": "nginx"},
+				Labels:    map[string]string{"owner": "helm", "name": "nginx", "version": "1"},
 			},
+			Type: corev1.SecretType("helm.sh/release.v1"),
 			Data: map[string][]byte{"release": encodeRelease(t, releaseV1)},
 		},
 		&corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "sh.helm.release.v1.nginx.v2",
 				Namespace: "default",
-				Labels:    map[string]string{"owner": "helm", "name": "nginx"},
+				Labels:    map[string]string{"owner": "helm", "name": "nginx", "version": "2"},
 			},
+			Type: corev1.SecretType("helm.sh/release.v1"),
 			Data: map[string][]byte{"release": encodeRelease(t, releaseV2)},
 		},
 		&corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "sh.helm.release.v1.nginx.v3",
 				Namespace: "default",
-				Labels:    map[string]string{"owner": "helm", "name": "nginx"},
+				Labels:    map[string]string{"owner": "helm", "name": "nginx", "version": "3"},
 			},
+			Type: corev1.SecretType("helm.sh/release.v1"),
 			Data: map[string][]byte{"release": encodeRelease(t, releaseV3)},
 		},
 	)
@@ -463,8 +472,9 @@ func TestHelmHistorySingleRelease(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "sh.helm.release.v1.redis.v1",
 				Namespace: "cache",
-				Labels:    map[string]string{"owner": "helm", "name": "redis"},
+				Labels:    map[string]string{"owner": "helm", "name": "redis", "version": "1"},
 			},
+			Type: corev1.SecretType("helm.sh/release.v1"),
 			Data: map[string][]byte{"release": encodeRelease(t, release)},
 		},
 	)

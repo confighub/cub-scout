@@ -11,11 +11,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -34,6 +37,8 @@ const (
 	maxHelmReleaseEncodedBytes    = 9 << 20
 	maxHelmReleaseCompressedBytes = 6 << 20
 	maxHelmReleaseJSONBytes       = 32 << 20
+	helmReleaseSecretPrefix       = "sh.helm.release.v1."
+	helmReleaseSecretType         = corev1.SecretType("helm.sh/release.v1")
 )
 
 // NewHelmTracer creates a new Helm tracer
@@ -58,8 +63,8 @@ func (h *HelmTracer) Trace(ctx context.Context, kind, name, namespace string) (*
 	if strings.TrimSpace(kind) == "" || strings.TrimSpace(name) == "" {
 		return nil, fmt.Errorf("Helm resource identity is incomplete")
 	}
-	if strings.TrimSpace(namespace) == "" {
-		return nil, fmt.Errorf("Helm resource namespace is unresolved; refusing to infer namespace or scope")
+	if err := requireHelmNamespace(namespace); err != nil {
+		return nil, err
 	}
 
 	// Find the Helm release in the namespace
@@ -94,7 +99,7 @@ func (h *HelmTracer) Trace(ctx context.Context, kind, name, namespace string) (*
 			FullyManaged: false,
 			Tool:         "helm",
 			TracedAt:     time.Now(),
-			Error:        "no Helm release found managing this resource",
+			Error:        "no Helm release found managing this resource among Secrets returned by the owner=helm query",
 		}, nil
 	}
 
@@ -103,6 +108,9 @@ func (h *HelmTracer) Trace(ctx context.Context, kind, name, namespace string) (*
 
 // TraceRelease traces a Helm release by name
 func (h *HelmTracer) TraceRelease(ctx context.Context, releaseName, namespace string) (*TraceResult, error) {
+	if err := requireHelmNamespace(namespace); err != nil {
+		return nil, err
+	}
 	release, err := h.getRelease(ctx, releaseName, namespace)
 	if err != nil {
 		return nil, err
@@ -118,7 +126,7 @@ func (h *HelmTracer) TraceRelease(ctx context.Context, releaseName, namespace st
 			FullyManaged: false,
 			Tool:         "helm",
 			TracedAt:     time.Now(),
-			Error:        fmt.Sprintf("Helm release '%s' not found in namespace '%s'", releaseName, namespace),
+			Error:        fmt.Sprintf("Helm release '%s' not found among Secrets returned by owner=helm in namespace '%s'", releaseName, namespace),
 		}, nil
 	}
 
@@ -160,6 +168,9 @@ type helmChartMetadata struct {
 
 // listReleases finds all Helm releases in a namespace
 func (h *HelmTracer) listReleases(ctx context.Context, namespace string) ([]*helmRelease, error) {
+	if err := requireHelmNamespace(namespace); err != nil {
+		return nil, err
+	}
 	// Helm stores releases in secrets with owner=helm label
 	secrets, err := h.client.CoreV1().Secrets(namespace).List(ctx, v1.ListOptions{
 		LabelSelector: "owner=helm",
@@ -168,26 +179,29 @@ func (h *HelmTracer) listReleases(ctx context.Context, namespace string) ([]*hel
 		return nil, err
 	}
 
-	var releases []*helmRelease
-	releaseMap := make(map[string]*helmRelease)
+	var candidates []helmReleaseCandidate
 
 	for _, secret := range secrets.Items {
-		// Secret name format: sh.helm.release.v1.<release-name>.v<version>
-		if !strings.HasPrefix(secret.Name, "sh.helm.release.v1.") {
-			continue
-		}
-
-		release, err := h.decodeRelease(secret.Data["release"])
+		release, err := h.decodeReleaseSecret(secret, namespace)
 		if err != nil {
-			return nil, fmt.Errorf("decode candidate Helm release Secret %q: %w", secret.Name, err)
+			return nil, err
 		}
 
-		// Keep only the latest version of each release
-		existing, ok := releaseMap[release.Name]
-		if !ok || release.Version > existing.Version {
+		// Validate every returned candidate before selecting a latest revision.
+		candidates = append(candidates, newHelmReleaseCandidate(secret, release))
+	}
+	unique, err := dedupeHelmReleaseCandidates(candidates)
+	if err != nil {
+		return nil, err
+	}
+	releaseMap := make(map[string]*helmRelease)
+	for _, candidate := range unique {
+		release := candidate.release
+		if existing, ok := releaseMap[release.Name]; !ok || release.Version > existing.Version {
 			releaseMap[release.Name] = release
 		}
 	}
+	var releases []*helmRelease
 
 	for _, rel := range releaseMap {
 		releases = append(releases, rel)
@@ -203,30 +217,70 @@ func (h *HelmTracer) listReleases(ctx context.Context, namespace string) ([]*hel
 
 // getRelease gets a specific Helm release by name
 func (h *HelmTracer) getRelease(ctx context.Context, name, namespace string) (*helmRelease, error) {
+	if err := requireHelmNamespace(namespace); err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(name) == "" {
+		return nil, fmt.Errorf("Helm release name is unresolved")
+	}
 	secrets, err := h.client.CoreV1().Secrets(namespace).List(ctx, v1.ListOptions{
-		LabelSelector: fmt.Sprintf("owner=helm,name=%s", name),
+		LabelSelector: "owner=helm",
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	var latestRelease *helmRelease
+	var candidates []helmReleaseCandidate
 	for _, secret := range secrets.Items {
-		if !strings.HasPrefix(secret.Name, "sh.helm.release.v1.") {
+		release, err := h.decodeReleaseSecret(secret, namespace)
+		if err != nil {
+			return nil, err
+		}
+		if release.Name != name {
 			continue
 		}
 
-		release, err := h.decodeRelease(secret.Data["release"])
-		if err != nil {
-			return nil, fmt.Errorf("decode candidate Helm release Secret %q: %w", secret.Name, err)
-		}
+		candidates = append(candidates, newHelmReleaseCandidate(secret, release))
+	}
 
+	unique, err := dedupeHelmReleaseCandidates(candidates)
+	if err != nil {
+		return nil, err
+	}
+	var latestRelease *helmRelease
+	for _, candidate := range unique {
+		release := candidate.release
 		if latestRelease == nil || release.Version > latestRelease.Version {
 			latestRelease = release
 		}
 	}
-
 	return latestRelease, nil
+}
+
+// decodeReleaseSecret verifies the Helm storage driver's redundant identity
+// fields before the decoded payload can influence release selection. Helm's
+// v3.17.3 and v4.0.0 Secret drivers use this key, type, and label shape.
+func (h *HelmTracer) decodeReleaseSecret(secret corev1.Secret, expectedNamespace string) (*helmRelease, error) {
+	release, err := h.decodeRelease(secret.Data["release"])
+	if err != nil {
+		return nil, fmt.Errorf("decode candidate Helm release Secret %q: %w", secret.Name, err)
+	}
+	expectedName := fmt.Sprintf("%s%s.v%d", helmReleaseSecretPrefix, release.Name, release.Version)
+	if expectedNamespace == "" || secret.Namespace != expectedNamespace || release.Namespace != expectedNamespace ||
+		secret.Name != expectedName || secret.Type != helmReleaseSecretType ||
+		secret.Labels["owner"] != "helm" || secret.Labels["name"] != release.Name ||
+		secret.Labels["version"] != strconv.Itoa(release.Version) {
+		return nil, inconsistentHelmReleaseIdentity(secret.Name)
+	}
+	return release, nil
+}
+
+func inconsistentHelmReleaseIdentity(secretName string) error {
+	return fmt.Errorf("Helm release Secret %q has incomplete or inconsistent identity metadata", secretName)
+}
+
+func ambiguousHelmReleaseCandidates() error {
+	return fmt.Errorf("ambiguous Helm release Secret candidates at the same revision")
 }
 
 // decodeRelease decodes a Helm release from the secret data
@@ -554,39 +608,51 @@ func (h *HelmTracer) TraceByOwnership(ctx context.Context, ownership Ownership) 
 // GetReleaseHistory returns the deployment history for a Helm release
 // History is returned sorted by version descending (most recent first)
 func (h *HelmTracer) GetReleaseHistory(ctx context.Context, releaseName, namespace string) ([]HistoryEntry, error) {
+	if err := requireHelmNamespace(namespace); err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(releaseName) == "" {
+		return nil, fmt.Errorf("Helm release name is unresolved")
+	}
 	secrets, err := h.client.CoreV1().Secrets(namespace).List(ctx, v1.ListOptions{
-		LabelSelector: fmt.Sprintf("owner=helm,name=%s", releaseName),
+		LabelSelector: "owner=helm",
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	var releases []*helmRelease
+	var releases []helmReleaseCandidate
 	for _, secret := range secrets.Items {
-		if !strings.HasPrefix(secret.Name, "sh.helm.release.v1.") {
+		release, err := h.decodeReleaseSecret(secret, namespace)
+		if err != nil {
+			return nil, err
+		}
+		if release.Name != releaseName {
 			continue
 		}
 
-		release, err := h.decodeRelease(secret.Data["release"])
-		if err != nil {
-			return nil, fmt.Errorf("decode candidate Helm release Secret %q: %w", secret.Name, err)
-		}
-
-		releases = append(releases, release)
+		releases = append(releases, newHelmReleaseCandidate(secret, release))
 	}
 
 	if len(releases) == 0 {
 		return nil, nil
 	}
 
+	unique, err := dedupeHelmReleaseCandidates(releases)
+	if err != nil {
+		return nil, err
+	}
+	releases = unique
+
 	// Sort by version descending (most recent first)
 	sort.Slice(releases, func(i, j int) bool {
-		return releases[i].Version > releases[j].Version
+		return releases[i].release.Version > releases[j].release.Version
 	})
 
 	// Convert to HistoryEntry
 	history := make([]HistoryEntry, 0, len(releases))
-	for _, rel := range releases {
+	for _, candidate := range releases {
+		rel := candidate.release
 		entry := HistoryEntry{
 			Timestamp: rel.Info.LastDeployed,
 			Revision:  fmt.Sprintf("v%d", rel.Version),
@@ -598,4 +664,67 @@ func (h *HelmTracer) GetReleaseHistory(ctx context.Context, releaseName, namespa
 	}
 
 	return history, nil
+}
+
+func requireHelmNamespace(namespace string) error {
+	if strings.TrimSpace(namespace) == "" {
+		return fmt.Errorf("Helm resource namespace is unresolved; refusing to infer namespace or scope")
+	}
+	return nil
+}
+
+// Keep the exact stored release bytes alongside the decoded projection. The
+// projection intentionally ignores parts of Helm's payload, so it cannot
+// prove that two records with equal projections are actually identical.
+type helmReleaseCandidate struct {
+	release         *helmRelease
+	secretName      string
+	secretNamespace string
+	secretType      corev1.SecretType
+	secretUID       string
+	resourceVersion string
+	labels          map[string]string
+	releaseData     []byte
+}
+
+func newHelmReleaseCandidate(secret corev1.Secret, release *helmRelease) helmReleaseCandidate {
+	labels := make(map[string]string, len(secret.Labels))
+	for key, value := range secret.Labels {
+		labels[key] = value
+	}
+	return helmReleaseCandidate{
+		release:         release,
+		secretName:      secret.Name,
+		secretNamespace: secret.Namespace,
+		secretType:      secret.Type,
+		secretUID:       string(secret.UID),
+		resourceVersion: secret.ResourceVersion,
+		labels:          labels,
+		releaseData:     secret.Data["release"],
+	}
+}
+
+func sameHelmReleaseEvidence(a, b helmReleaseCandidate) bool {
+	return a.secretName == b.secretName && a.secretNamespace == b.secretNamespace &&
+		a.secretType == b.secretType && a.secretUID == b.secretUID &&
+		a.resourceVersion == b.resourceVersion && reflect.DeepEqual(a.labels, b.labels) &&
+		bytes.Equal(a.releaseData, b.releaseData)
+}
+
+func dedupeHelmReleaseCandidates(releases []helmReleaseCandidate) ([]helmReleaseCandidate, error) {
+	byRevision := make(map[string]helmReleaseCandidate, len(releases))
+	unique := make([]helmReleaseCandidate, 0, len(releases))
+	for _, candidate := range releases {
+		release := candidate.release
+		key := fmt.Sprintf("%s\x00%d", release.Name, release.Version)
+		if existing, ok := byRevision[key]; ok {
+			if !sameHelmReleaseEvidence(existing, candidate) {
+				return nil, ambiguousHelmReleaseCandidates()
+			}
+			continue
+		}
+		byRevision[key] = candidate
+		unique = append(unique, candidate)
+	}
+	return unique, nil
 }

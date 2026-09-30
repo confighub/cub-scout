@@ -13,7 +13,30 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
+	kubernetesfake "k8s.io/client-go/kubernetes/fake"
 )
+
+func TestHelmScopedAbsenceRetainsArgoFallback(t *testing.T) {
+	tracer := agent.NewHelmTracer(kubernetesfake.NewSimpleClientset())
+	ownership := &agent.Ownership{Type: agent.OwnerHelm, Name: "redis"}
+	for _, trace := range []func() (*agent.TraceResult, error){
+		func() (*agent.TraceResult, error) {
+			return tracer.Trace(context.Background(), "Deployment", "redis", "prod")
+		},
+		func() (*agent.TraceResult, error) { return tracer.TraceRelease(context.Background(), "redis", "prod") },
+	} {
+		result, err := trace()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(result.Error, "owner=helm") {
+			t.Fatalf("absence lost its query scope: %q", result.Error)
+		}
+		if !shouldAttemptHelmViaArgoFallback(ownership, result) {
+			t.Fatalf("scoped Helm absence disabled the existing Argo evidence fallback: %q", result.Error)
+		}
+	}
+}
 
 func TestTryHelmViaArgoFallback_UsesTrackedApplicationAndAnnotatesTrace(t *testing.T) {
 	ctx := context.Background()
