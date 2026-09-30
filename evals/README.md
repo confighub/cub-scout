@@ -447,3 +447,16 @@ Two earlier attempts are not counted: the harness could not find the export
 `/`; both are fixed above. Before the stand-in controllers were added, the
 baseline deduced "manual" from the absence of any controller and guessed
 right on `changed-by-checkout`; the stand-ins remove that shortcut.
+
+### Health measurement contract fixture
+
+`health-measurement-contract` is a product-contract-only check outside
+`benchmark-v1`. Its exact-object and MCP evidence is a genuine, sequential,
+read-only before/after observation recorded on 2026-09-30 for
+`Deployment/team-02/auth`. The object UID and resourceVersion match across
+observations; the calls were sequential, not atomic. `proof.json` carries source
+IDs and SHA-256 values. The case-scoped export contains only the matching
+Deployment, and the scaffold writes the accompanying proof files. The case uses
+a scoped recorded explain response and is
+intended to run with `--ablation none`; it is not a paired quality or savings
+measurement. No eval run or paid grader has been run for this case.

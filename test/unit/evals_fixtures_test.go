@@ -4,11 +4,152 @@
 package unit
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 )
+
+func TestHealthMeasurementContractEvidenceIsRecordedAndScoped(t *testing.T) {
+	root := filepath.Join("..", "..", "evals", "health-measurement-contract", "fixtures", "proof")
+	proofBytes, err := os.ReadFile(filepath.Join(root, "proof.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var proof struct {
+		Resource                             string            `json:"resource"`
+		BeforeSource                         string            `json:"beforeSource"`
+		AfterSource                          string            `json:"afterSource"`
+		SameUIDAndResourceVersionBeforeAfter bool              `json:"sameUidAndResourceVersionBeforeAfter"`
+		Mutations                            string            `json:"mutations"`
+		Files                                map[string]string `json:"files"`
+	}
+	if err := json.Unmarshal(proofBytes, &proof); err != nil {
+		t.Fatal(err)
+	}
+	if proof.Resource != "apps/v1 Deployment team-02/auth" || proof.BeforeSource != "v2.12.4 at 11c3e38" || proof.AfterSource != "8637c81" || !proof.SameUIDAndResourceVersionBeforeAfter || proof.Mutations != "none; all calls read-only" {
+		t.Fatalf("unexpected evidence provenance: %+v", proof)
+	}
+	for name, wantHash := range proof.Files {
+		data, err := os.ReadFile(filepath.Join(root, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		digest := sha256.Sum256(data)
+		if got := hex.EncodeToString(digest[:]); got != wantHash {
+			t.Errorf("%s SHA-256 = %s, want %s", name, got, wantHash)
+		}
+	}
+
+	var beforeObject, afterObject struct {
+		Metadata struct {
+			UID             string `json:"uid"`
+			ResourceVersion string `json:"resourceVersion"`
+		} `json:"metadata"`
+	}
+	for name, target := range map[string]interface{}{"before-object.json": &beforeObject, "after-object.json": &afterObject} {
+		data, err := os.ReadFile(filepath.Join(root, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := json.Unmarshal(data, target); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if beforeObject.Metadata.UID == "" || beforeObject.Metadata.UID != afterObject.Metadata.UID || beforeObject.Metadata.ResourceVersion == "" || beforeObject.Metadata.ResourceVersion != afterObject.Metadata.ResourceVersion {
+		t.Fatalf("object identity changed: before=%+v after=%+v", beforeObject.Metadata, afterObject.Metadata)
+	}
+
+	for name, wantMeasurement := range map[string]bool{"before-mcp.json": false, "after-mcp.json": true} {
+		data, err := os.ReadFile(filepath.Join(root, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var response struct {
+			Result struct {
+				Content []struct {
+					Text string `json:"text"`
+				} `json:"content"`
+			} `json:"result"`
+		}
+		if err := json.Unmarshal(data, &response); err != nil || len(response.Result.Content) != 1 {
+			t.Fatalf("decode %s MCP response: %v", name, err)
+		}
+		var explain map[string]interface{}
+		if err := json.Unmarshal([]byte(response.Result.Content[0].Text), &explain); err != nil {
+			t.Fatalf("decode %s explain payload: %v", name, err)
+		}
+		if explain["health"] != "Unavailable" {
+			t.Errorf("%s legacy health = %v, want Unavailable", name, explain["health"])
+		}
+		change, ok := explain["currentChange"].(map[string]interface{})
+		if !ok || change["verdict"] != "PASS" {
+			t.Errorf("%s currentChange = %v, want PASS", name, explain["currentChange"])
+		}
+		measurement, ok := explain["healthMeasurement"].(map[string]interface{})
+		if wantMeasurement && (!ok || measurement["status"] != "unmeasured" || measurement["scope"] != "controller-chain") {
+			t.Errorf("%s healthMeasurement = %v, want unmeasured controller-chain", name, explain["healthMeasurement"])
+		}
+		if !wantMeasurement && ok {
+			t.Errorf("%s unexpectedly contains healthMeasurement: %v", name, measurement)
+		}
+	}
+	caseRoot := filepath.Join("..", "..", "evals", "health-measurement-contract")
+	responseBytes, err := os.ReadFile(filepath.Join(root, "after-mcp.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var recorded struct {
+		Result struct {
+			Content []struct {
+				Text string `json:"text"`
+			} `json:"content"`
+		} `json:"result"`
+	}
+	if err := json.Unmarshal(responseBytes, &recorded); err != nil || len(recorded.Result.Content) != 1 {
+		t.Fatalf("decode recorded after MCP response: %v", err)
+	}
+	mock, err := os.ReadFile(filepath.Join(caseRoot, "mocks", "cub-scout", "explain.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts := strings.SplitN(string(mock), "---", 3)
+	if len(parts) != 3 || strings.TrimSpace(parts[1]) != "type: fixed" || strings.TrimSpace(parts[2]) != strings.TrimSpace(recorded.Result.Content[0].Text) {
+		t.Fatal("case-scoped explain mock does not equal the recorded MCP answer")
+	}
+	grader, err := os.ReadFile(filepath.Join(caseRoot, "graders", "health-schema.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	graderText := string(grader)
+	if !strings.Contains(graderText, "flags: s") || strings.Contains(graderText, "(?is)") || strings.Contains(graderText, "with-only") {
+		t.Fatalf("grader must be a portable required schema check: %s", graderText)
+	}
+	workspace := t.TempDir()
+	scaffoldPath, err := filepath.Abs(filepath.Join(caseRoot, "scaffold.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	cmd := exec.Command("bash", scaffoldPath)
+	cmd.Dir = workspace
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("run product-contract scaffold: %v\n%s", err, output)
+	}
+	for _, name := range []string{"before-object.json", "after-object.json", "before-explain.json", "after-explain.json", "before-mcp.json", "after-mcp.json", "proof.json"} {
+		want, err := os.ReadFile(filepath.Join(root, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, err := os.ReadFile(filepath.Join(workspace, "evidence", "health-measurement-contract", name))
+		if err != nil || string(got) != string(want) {
+			t.Errorf("scaffold evidence %s mismatch: %v", name, err)
+		}
+	}
+}
 
 // Each eval run starts in an empty workspace; a case's scaffold.sh writes the
 // recorded cluster export there with the files embedded. Every case must
@@ -57,6 +198,15 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 		t.Fatalf("no eval cases match %s", casesGlob)
 	}
 	for _, caseYAML := range cases {
+		caseDir := filepath.Dir(caseYAML)
+		caseExport, err := filepath.Glob(filepath.Join(caseDir, "fixtures", "cluster", "*.yaml"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		caseExportDir := export
+		if len(caseExport) > 0 {
+			caseExportDir = filepath.Join(caseDir, "fixtures", "cluster")
+		}
 		data, err := os.ReadFile(caseYAML)
 		if err != nil {
 			t.Fatal(err)
@@ -70,17 +220,21 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			t.Errorf("%s: every case reads the export through scaffold.sh", caseYAML)
 			continue
 		}
-		script, err := os.ReadFile(filepath.Join(filepath.Dir(caseYAML), "scaffold.sh"))
+		script, err := os.ReadFile(filepath.Join(caseDir, "scaffold.sh"))
 		if err != nil {
 			t.Errorf("%s: %v", caseYAML, err)
 			continue
 		}
 		written := scaffoldFiles(string(script))
-		for _, src := range recorded {
+		caseRecorded, err := filepath.Glob(filepath.Join(caseExportDir, "*.yaml"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, src := range caseRecorded {
 			want, _ := os.ReadFile(src)
 			name := filepath.Base(src)
 			if got, ok := written[name]; !ok || got != strings.TrimRight(string(want), "\n") {
-				t.Errorf("%s/scaffold.sh does not write the recorded %s; run evals/scripts/record.py --scaffolds-only (with --scenario scale for evals/scale)", filepath.Dir(caseYAML), name)
+				t.Errorf("%s/scaffold.sh does not write its recorded %s; regenerate from the case's fixture source", caseDir, name)
 			}
 		}
 	}

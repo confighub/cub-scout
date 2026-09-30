@@ -1,10 +1,18 @@
+---
+type: fixed
+---
 {
-  "resource": "Deployment/hotfix-worker",
-  "namespace": "default",
+  "resource": "Deployment/auth",
+  "namespace": "team-02",
   "owner": "Native",
   "source": "unknown",
   "deployedVia": "partial trace only",
   "health": "Unavailable",
+  "healthMeasurement": {
+    "status": "unmeasured",
+    "scope": "controller-chain",
+    "reason": "No controller-chain health result was observed."
+  },
   "risks": "Not assessed",
   "drift": "Unknown",
   "notes": [
@@ -14,58 +22,40 @@
     "resource": {
       "apiVersion": "apps/v1",
       "kind": "Deployment",
-      "namespace": "default",
-      "name": "hotfix-worker"
+      "namespace": "team-02",
+      "name": "auth"
     },
     "progress": {
       "phase": "complete",
       "clockSource": "status.conditions[Progressing].lastUpdateTime",
-      "progressAgeSeconds": 202
+      "progressAgeSeconds": 278786
     },
     "verdict": "PASS",
     "reason": "workload_converged",
-    "message": "Deployment is available. Replicas: 1",
+    "message": "Deployment is available. Replicas: 0",
     "evidence": {
       "kstatusStatus": "Current",
-      "kstatusMessage": "Deployment is available. Replicas: 1",
+      "kstatusMessage": "Deployment is available. Replicas: 0",
       "generation": 1,
       "observedGeneration": 1,
-      "observedAt": "2026-09-27T07:57:59Z"
+      "observedAt": "2026-09-30T18:04:57Z"
     }
-  },
-  "events": {
-    "events": [
-      {
-        "type": "Normal",
-        "reason": "ScalingReplicaSet",
-        "message": "Scaled up replica set hotfix-worker-79596987fd from 0 to 1",
-        "count": 1,
-        "age": "3m",
-        "lastSeen": "2026-09-27T08:54:35+01:00",
-        "severity": "info",
-        "source": "deployment-controller",
-        "firstSeen": "2026-09-27T08:54:35+01:00"
-      }
-    ],
-    "totalCount": 1,
-    "warningCount": 0,
-    "errorCount": 0
   },
   "nextSteps": [
     {
       "actionType": "read-only",
       "reason": "Health status unknown - trace the chain to find the root cause",
-      "nextCommand": "cub-scout trace deployment/hotfix-worker -n default --explain"
+      "nextCommand": "cub-scout trace deployment/auth -n team-02 --explain"
     },
     {
       "actionType": "read-only",
       "reason": "See all Native-managed resources in this scope",
-      "nextCommand": "cub-scout map list -n default -q \"owner=Native\""
+      "nextCommand": "cub-scout map list -n team-02 -q \"owner=Native\""
     },
     {
       "actionType": "read-only",
       "reason": "Get a broad health summary to contextualize this resource",
-      "nextCommand": "cub-scout doctor -n default"
+      "nextCommand": "cub-scout doctor -n team-02"
     }
   ],
   "mutationCause": "manual-edit",
