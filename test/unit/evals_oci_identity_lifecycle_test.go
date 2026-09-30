@@ -204,7 +204,7 @@ func TestOCIIdentityLifecycleGraderAcceptsUnorderedAndRejectsDigestSwaps(t *test
 		"package_oci_reference", "package_manifest_digest", "package_layer_digest",
 		"rendered_manifest_sha256", "rendered_object_set_sha256", "confighub_release_id",
 		"output_oci_digest", "bundle_digest", "consumer_digests_match",
-		"recorded_consumer_results", "recorded_image_reference",
+		"recorded_consumer_results", "recorded_image_reference", "runtime_image_id",
 		"current_cluster_state", "independent_bundle_verification", "recorded_hook_policy",
 		"no_hooks_render_flag", "lifecycle_observed", "hook_execution", "policy_execution",
 		"observation_time",
@@ -225,13 +225,16 @@ func TestOCIIdentityLifecycleGraderAcceptsUnorderedAndRejectsDigestSwaps(t *test
 		{"bundle_digest": values["output_oci_digest"]},
 		{"consumer_digests_match": "NO"},
 		{"recorded_consumer_results": "Argo CD=1/1;Flux=1/1"},
+		{"recorded_consumer_results": "Flux=1/1;Argo CD=1/1;Direct apply=1/1"},
 		{"recorded_image_reference": "registry-1.docker.io/bitnami/nginx:latest"},
+		{"runtime_image_id": "registry-1.docker.io/bitnami/nginx@sha256:805bcc863fc3f602589fc75cae91eeedebad234d5ce5a476c96b03a747821e7f"},
 		{"current_cluster_state": "READY"},
 		{"independent_bundle_verification": "YES"},
 		{"recorded_hook_policy": "hooks"},
 		{"no_hooks_render_flag": "--include-crds"},
 		{"lifecycle_observed": "yes"},
 		{"hook_execution": "YES"},
+		{"policy_execution": "NOT_RUN"},
 		{"policy_execution": "YES"},
 		{"observation_time": "2026-09-30T22:45:00Z"},
 	}
@@ -248,7 +251,7 @@ func TestOCIIdentityLifecycleGraderAcceptsUnorderedAndRejectsDigestSwaps(t *test
 	}
 	duplicate := strings.Replace(good, `"hook_execution":"UNKNOWN"`, `"hook_execution":"UNKNOWN","hook_execution":"UNKNOWN"`, 1)
 	extra := strings.TrimSuffix(good, "}") + `,"unsupported":"value"}`
-	missing := strings.Replace(good, `,"policy_execution":"NOT_RUN"`, "", 1)
+	missing := strings.Replace(good, `,"policy_execution":"UNKNOWN"`, "", 1)
 	wrongType := strings.Replace(good, `"hook_execution":"UNKNOWN"`, `"hook_execution":true`, 1)
 	candidates = append(candidates, duplicate, extra, missing, wrongType, "Answer: "+good, good+"\nExplanation")
 	want := make([]bool, len(candidates))
@@ -282,13 +285,14 @@ func ociIdentityExpectedAnswer() map[string]string {
 		"consumer_digests_match":          "YES",
 		"recorded_consumer_results":       "Argo CD=1/1;Flux=1/1;Direct apply=1/1",
 		"recorded_image_reference":        "registry-1.docker.io/bitnami/nginx@sha256:805bcc863fc3f602589fc75cae91eeedebad234d5ce5a476c96b03a747821e7f",
+		"runtime_image_id":                "UNKNOWN",
 		"current_cluster_state":           "UNKNOWN",
 		"independent_bundle_verification": "UNKNOWN",
 		"recorded_hook_policy":            "no-hooks",
 		"no_hooks_render_flag":            "--no-hooks",
 		"lifecycle_observed":              "n/a",
 		"hook_execution":                  "UNKNOWN",
-		"policy_execution":                "NOT_RUN",
+		"policy_execution":                "UNKNOWN",
 		"observation_time":                "2026-07-26T17:10:27.568Z",
 	}
 }
