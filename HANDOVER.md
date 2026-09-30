@@ -1,5 +1,47 @@
 # cub-scout Handover for the Next AI Coder
 
+## 2026-09-30: Post-release implementation checkpoint
+
+Use [#645](https://github.com/confighub/cub-scout/issues/645) for the current
+queue; this checkpoint covers merged work through `1669305`. The maintainer's
+continuous-execution authorization remains active. Do not repeat release work
+or treat the historical review restrictions below as the adopted policy.
+
+- #658 added exact-field attribution to CLI, MCP and the TUI; #659 routes a
+  known-resource/known-field question directly to that evidence. Observed field
+  managers do not establish a person's identity or the latest writer. #626
+  remains open; fewer agent calls or lower costs have not yet been measured.
+- #661 bounds individual Helm release decoding and surfaces unreadable
+  candidates rather than silently falling back to older releases. This is
+  partial #588 work, not Helm 3/4 compatibility or a whole-request bound.
+- #662 captures an immutable Kubernetes configuration for TUI inventory and
+  bounded explain. The public map startup selector and the remaining action
+  isolation are a separate #599 packet; full cross-surface context isolation is
+  not yet complete.
+- #657/#660 preserve source-derived Sveltos, Flux and Argo observations. The
+  fixed 24-case benchmark has 14 planned cases, five refreshed cases, two awaiting
+  snapshot binding and three prepared source projections. It is not executable
+  yet. Projections are not full raw controller/workload joins or fresh live proof.
+- #604's recorded-input foundation is being pulled forward to support #603:
+  both arms must derive their answers from the same immutable raw objects.
+  Missing capture timestamps must stay unknown, never become the current time.
+
+Paid execution so far is **$3.7801511 estimated inclusive list price**:
+$2.4692065 for live-only completion and $1.3109446 for smoke/probe work.
+The $200 baseline tranche is unspent. Account credits and development-agent
+costs are unmeasured. The two checkout smoke pairs had file-only tools and
+are not the ordinary-tool comparison in Experiment A. The small command-access
+probe passed its own confinement checks; it does not certify the complete
+24-case protocol. See [the eval reports](evals/reports/) and
+[the cost ledger](evals/reports/2026-09-30-execution-costs.json) for scope.
+**The savings gate has not passed.**
+
+Local cub and the selected local ConfigHub server both reported v0.6.8 on
+September 30. #591 still needs genuine recorded attestation fixtures. #597 can
+read public ChangeOrder identity/stage fields, but no current gate evaluation
+has been established; its prohibition on promotion argv remains. The fact
+storage/schema agreement in #600 is still external and unresolved.
+
 ## 2026-09-30: Adopted 3.0 execution and v2.12.4 publication
 
 The maintainer adopted the [3.0 execution plan](docs/roadmap-3.0-execution.md)

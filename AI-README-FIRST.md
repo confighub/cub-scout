@@ -122,7 +122,9 @@ Use it for:
 - `cub k8s source` (trace one live resource back to its unit)
 - `cub link list / get` (the data feed for cub-scout's connected attribution layer)
 
-Current local CLI truth (cub v0.5.7 installed; cub v0.6.2 is the newest release, 2026-09-25):
+Local CLI/server check on 2026-09-30: both installed cub and the selected local
+server report v0.6.8. This is a dated local check, not a latest-release claim.
+The read-side governance boundaries are recorded on [#597](https://github.com/confighub/cub-scout/issues/597).
 - `cub variant upload --component <name> <dir | file | - | oci://ref>`
 - `cub gitops discover` and `cub gitops import` **no longer exist**. cub deleted
   the whole `gitops` group on 2026-07-25, in the same commit that removed
