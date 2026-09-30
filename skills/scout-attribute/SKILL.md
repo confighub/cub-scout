@@ -1,13 +1,13 @@
 ---
 name: scout-attribute
-description: 'Use when the user wants to understand WHERE a specific field value came from on a running Kubernetes resource — which controller, which git file, or which ConfigHub Link binding produced it. Natural phrasing: "why is replicas: 1 in prod?", "did someone kubectl edit this?", "is Argo still reconciling or has the GitOps loop been bypassed?", "what git commit set this image tag?", "which upstream unit feeds this field?", "where does this value come from?", "show me the provenance of this Deployment", "is this controller-drift or manual-edit?", "has anyone changed this Deployment by hand?", "was this changed outside Flux / Argo CD / Helm / ConfigHub?", "who made the most recent change, the controller or a person?", "which kubectl command changed this?". Load whenever attribution / provenance / lineage / git-blame-for-runtime / who-changed-this intent appears, especially on `compare` and `explain` output. Do NOT load for: pure ownership classification at the resource level (use scout-observe — that gives Owner=Argo/Flux/etc., not per-field), source-truth strategy verdicts (use scout-compare), or live-cluster mutation (cub-scout cannot mutate — that is `cub` or `kubectl` with user driving).'
+description: 'Use when the user wants manager evidence for a field value on a running Kubernetes resource — which recognized controller or interactive manager is recorded for a path, which git file or ConfigHub Link supplies desired state, or whether resource-level managedFields contains an interactive manager. Natural phrasing: "why is replicas: 1 in prod?", "does this resource show a kubectl manager?", "is Argo still reconciling or is an interactive manager recorded?", "what git commit set this image tag?", "which upstream unit feeds this field?", "where does this value come from?", "show me the provenance of this Deployment", "is this controller-drift or manual-edit?", "has an interactive manager changed this Deployment?", "which manager is recorded for this field?". Load whenever attribution / provenance / lineage / git-blame-for-runtime intent appears, especially on `compare` and `explain` output. Do NOT promise the latest writer or a human identity from manager hints: `explain` is resource-level, and path-level compare evidence does not order managers by time. Do NOT load for: pure ownership classification at the resource level (use scout-observe — that gives Owner=Argo/Flux/etc., not per-field), source-truth strategy verdicts (use scout-compare), or live-cluster mutation (cub-scout cannot mutate — that is `cub` or `kubectl` with user driving).'
 phase: verify
 allowed-tools: Bash(./cub-scout compare three-way *) Bash(cub-scout compare three-way *) Bash(cub scout compare three-way *) Bash(./cub-scout compare drift *) Bash(cub-scout compare drift *) Bash(cub scout compare drift *) Bash(./cub-scout compare source-truth *) Bash(cub-scout compare source-truth *) Bash(cub scout compare source-truth *) Bash(./cub-scout explain *) Bash(cub-scout explain *) Bash(cub scout explain *) Bash(./cub-scout trace *) Bash(cub-scout trace *) Bash(cub scout trace *) Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl get --show-managed-fields *) Bash(cub link list *) Bash(cub link get *) Bash(cub unit get *) Bash(cub unit list *)
 ---
 
 # scout-attribute
 
-The Attribute layer of cub-scout (#435). Reads `metadata.managedFields` + label-based owner detection + Argo/Flux tracer + ConfigHub Link bindings, and answers the question that pure ownership detection can't: *which writer last touched each field, and what was the field's value supposed to be?*
+The Attribute layer of cub-scout (#435). Reads `metadata.managedFields` + label-based owner detection + Argo/Flux tracer + ConfigHub Link bindings. It reports recognized manager evidence for a field path when decodable `FieldsV1` is available, otherwise a resource-level manager summary, alongside the field's desired-state source where available. These manager classifications do not form a time-ordered mutation history.
 
 ## When to use
 
@@ -54,8 +54,8 @@ Attribution evidence is **not its own verb** — it's *enrichment* on the output
 
 | Field | Means | Source |
 |---|---|---|
-| `cause` | One of `controller-drift`, `manual-edit`, `unknown`. The classifier's verdict for *who* last wrote this field. | `metadata.managedFields` + owner co-signal |
-| `managerHint` | Representative manager string (e.g., `argocd-controller`, `kubectl-edit`) for transparency | `metadata.managedFields[].manager` |
+| `cause` | One of `controller-drift`, `manual-edit`, `unknown`. A classification of recognized manager evidence for the mapped path, or a resource-level rollup when path attribution is unavailable. It does not say who wrote last. | `metadata.managedFields` + owner co-signal |
+| `managerHint` | A representative recognized manager string (e.g., `argocd-controller`, `kubectl-edit`) for transparency. Resource-level explain output aggregates manager strings across the object. | `metadata.managedFields[].manager` |
 | `gitSource` | `{repoUrl, revision, path, file?, line?}` — where the field's desired value lives in git | Controller spec (Argo Application / Flux GitRepository) + optional `--source-path` back-resolution (#440) |
 | `bindingSource` | `{linkId, linkSlug, upstreamUnitId, upstreamPath, transformExpr}` — the ConfigHub Link that supplies this field's value | `cub link list` for the owning unit |
 | `incomingBindings[]` | All Links whose downstream is this resource's unit | `cub link list --where "FromUnitID = ..."` |
@@ -66,15 +66,15 @@ See [`references/verified-manager-strings.md`](../references/verified-manager-st
 
 1. **Identify the divergence.** The user is asking about a specific field value (`replicas: 1`, `image: ghcr.io/.../v1.4`, `env[LOG_LEVEL]`) — figure out which resource and which field.
 2. **Pick the surface:**
-   - For a *single resource* explanation, use `cub-scout explain <kind>/<name> -n <ns>`. The attribution evidence appears in the "Mutation cause" line and `nextSteps[]`.
-   - For a *field-level diff with cause*, use `cub-scout compare three-way --scope resource:<kind>/<name>` or `--scope namespace/<ns>`. Each `compareFieldMismatch` carries `cause`, `managerHint`, `gitSource`, `bindingSource`.
+   - For a *resource-level first read*, use `cub-scout explain <kind>/<name> -n <ns>`. Its `mutationCause` and representative `mutationManager` aggregate manager evidence across the resource; they do not identify a field or latest writer.
+   - For a *field-path manager classification*, use `cub-scout compare three-way --scope resource:<kind>/<name>` or `--scope namespace/<ns>`. A mismatch can use the mapped path's `cause` and `managerHint` when decodable `FieldsV1` is available; otherwise it falls back to the resource-level summary. This classification does not order managers by time.
 3. **Read the `cause`:**
-   - `controller-drift` → the expected GitOps controller is reconciling; the divergence is likely transient
-   - `manual-edit` → someone wrote via `kubectl-*` (or bare `kubectl` SSA); the GitOps loop was bypassed
-   - `unknown` → managedFields missing or no recognized manager; never guess
+   - `controller-drift` → a recognized expected-controller manager claims the resource or mapped path; this does not establish that reconciliation is happening now
+   - `manual-edit` → a recognized interactive manager claims the resource or mapped path and may coexist with a controller manager; it does not establish that it wrote last or identify a person
+   - `unknown` → manager evidence is missing, unrecognized, or cannot be mapped; never guess
 4. **Read the `gitSource`:** when present, this is the git origin of the desired value. Add `--source-path <local-checkout>` to populate `file` + `line` (stage B back-resolution, raw YAML only — #440).
 5. **Read the `bindingSource`** (connected only): which upstream ConfigHub unit + path supplies this field. `incomingBindings[]` shows the full Link graph for the unit.
-6. **Hand off.** If `cause: manual-edit` and the user wants to *correct* it — refuse to mutate; route to `cub` (port the change back to ConfigHub) or `kubectl edit` (user driving) to revert. If `cause: controller-drift`, wait for reconciliation and re-run the compare.
+6. **Hand off.** Treat `cause: manual-edit` as manager evidence, not proof of a person or latest write. If the user needs an exact field's writer, inspect that field's `managedFields` path and timestamps where present; if the record is incomplete or ambiguous, say unknown. Any correction remains user-driven; cub-scout does not mutate.
 
 ## Worked examples
 
@@ -116,9 +116,9 @@ Diff Highlights
 
 There is no WET side: ConfigHub no longer exposes a unit's live data, so a connected compare shows DRY against LIVE (`Mode: dry-live`) and says so in its notes.
 
-The `Drift cause: manual-edit` line is decisive: the controller (Argo) is *not* the writer; someone ran `kubectl edit`. The `bound from` line tells the user the upstream ConfigHub unit + path that *should* be feeding `replicas` — that's the C2 connected enrichment on top of standalone's cause + gitSource.
+For this `.spec.replicas` mismatch, a path-specific `manual-edit` classification means a recognized interactive manager is recorded for that path (when decodable `FieldsV1` is available); a controller manager may also be recorded. It does not prove which manager wrote the value last or identify who ran a command. A resource-level fallback must not be stated as evidence about `replicas`. The `bound from` line tells the user the upstream ConfigHub unit + path that *should* be feeding `replicas` — that's the C2 connected enrichment on top of standalone's cause + gitSource.
 
-Next read-only step (don't apply!): inspect the manual-edit history.
+Next read-only step (don't apply!): inspect the exact path's managed-field entries; use audit logs if the user needs write history or identity.
 
 ```bash
 $ kubectl get deploy/api -n prod -o yaml --show-managed-fields | grep -A 3 "manager: kubectl-edit"
@@ -149,7 +149,7 @@ $ cub-scout compare three-way Deployment/api -n prod --format json | \
 }
 ```
 
-The agent can now say to the operator: "the value should have come from upstream unit `01HFK...XY` at path `.spec.scale.value` via link `replicas-from-scale`, but the live cluster has it overridden by `kubectl-edit`."
+The agent can say that the live `replicas` path is associated with the `kubectl-edit` manager while the intended value comes from upstream unit `01HFK...XY` at path `.spec.scale.value` via link `replicas-from-scale`. The manager string does not identify a human or prove it was the latest write.
 
 ## Output evidence
 
@@ -167,8 +167,8 @@ The agent can now say to the operator: "the value should have come from upstream
 
 ## Constraints
 
-- `cause: manual-edit` is a *signal*, not an accusation. managedFields records the field manager string, not the human identity behind it. To attribute to a specific user, cross-reference cluster audit logs (out of scope for cub-scout).
-- managedFields is **field-manager evidence, not complete mutation-history proof**. A controller that was overwritten and then re-reconciled may not leave a manual-edit trace if the controller subsequently wins. For stronger history, pair with a K8s admission audit log.
+- `cause: manual-edit` is a *manager-presence signal*, not proof of a person or the latest writer. managedFields records a manager string, not the human identity behind it. To attribute to a specific user or order writes, cross-reference cluster audit logs (out of scope for cub-scout).
+- managedFields is **field-manager evidence, not complete or time-ordered mutation-history proof**. The classifier does not order managers by their timestamps. A controller that was overwritten and then re-reconciled may not leave a manual-edit trace if the controller subsequently wins. For stronger history, pair with a K8s admission audit log.
 - The `kubectl-client-side-apply` manager string is *ambiguous* — Argo CD's CSA migration uses it as the default, and so does `kubectl apply` (client-side). The classifier disambiguates via the `argocd.argoproj.io/tracking-id` annotation (label co-signal). See [`references/verified-manager-strings.md`](../references/verified-manager-strings.md).
 - Crossplane composed-resource manager strings carry a per-XR hash suffix (`apiextensions.crossplane.io/composed-<hash>`). The classifier matches by **prefix**, not exact string.
 - For *templated sources* (Helm / Kustomize), `gitSource.file:line` is not populated (stage B handles raw YAML only). Resource-level `gitSource` (`repoUrl`, `revision`, `path`) still applies.

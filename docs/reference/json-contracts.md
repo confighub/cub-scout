@@ -405,7 +405,7 @@ Source: `cmd/cub-scout/three_way.go`, `cmd/cub-scout/compare_three_way.go`
 
 ## Field Mutation Attribution Contract
 
-When `compare three-way` and `explain` are run in connected mode (and the live cluster is reachable), each field mismatch is annotated with a `cause` classifying the mutation source — controller drift vs manual edit — derived from K8s `metadata.managedFields` co-signaled with the resource owner detected from labels and annotations. This is the first stage of the attribution layer; see `pkg/agent/field_ownership.go`.
+When `compare three-way` and `explain` are run in connected mode (and the live cluster is reachable), managed-field manager evidence can classify a mismatch as controller-managed, interactive-manager-present, or unknown, co-signaled with the resource owner detected from labels and annotations. This is manager evidence, not a time-ordered mutation history or an identity for a person; see `pkg/agent/field_ownership.go`.
 
 ### compareFieldMismatch additions (compare three-way / compare three-way per-resource)
 
@@ -429,7 +429,7 @@ When `compare three-way` and `explain` are run in connected mode (and the live c
 | `cause` | string enum | `controller-drift`, `manual-edit`, or `unknown`. Omitted when classification yields no signal. |
 | `managerHint` | string | Representative manager string from `metadata.managedFields` for transparency. Omitted when no manager string was identified. |
 
-When the live K8s resource has decodable `FieldsV1` data in `metadata.managedFields`, `cause` and `managerHint` are resolved **per-field-path** (A1.5) — each field mismatch gets the classification specific to its path. When `FieldsV1` is absent or the field name doesn't map to a single canonical path (e.g., `images` which spans container list items), the classifier falls back to the resource-level rollup (A1).
+When the live K8s resource has decodable `FieldsV1` data in `metadata.managedFields`, `cause` and `managerHint` can be resolved **per-field-path** (A1.5) — a mismatch gets the manager classification for its mapped path. The classifier checks which recognized manager classes claim that path; it does not order those claims by `managedFields[].time` or establish the latest writer. When `FieldsV1` is absent or the field name doesn't map to a single canonical path (e.g., `images` which spans container list items), the classifier falls back to the resource-level rollup (A1). A resource-level result must not be presented as evidence about a particular field.
 
 The per-field-path map is also exposed under `live.attributionByPath`, keyed by canonical path strings as rendered by `sigs.k8s.io/structured-merge-diff/v4/fieldpath.Path.String` (for example `.spec.replicas` or `.spec.template.spec.containers[name="api"].image`).
 
@@ -437,9 +437,17 @@ The per-field-path map is also exposed under `live.attributionByPath`, keyed by 
 
 | Value | Meaning |
 |-------|---------|
-| `controller-drift` | The resource's expected GitOps/orchestration controller (per `pkg/agent/ownership.go`) is reconciling fields. A mismatch with desired state is likely transient. |
-| `manual-edit` | A `kubectl-*` or other interactive tool has written fields. Includes the mixed case where both a controller and an interactive tool have managed fields. |
-| `unknown` | The cause cannot be confidently determined — `managedFields` missing/empty, or only unrecognized manager strings present. Omitted from JSON output. |
+| `controller-drift` | Recognized manager evidence is associated with the resource's expected GitOps/orchestration controller (per `pkg/agent/ownership.go`). This does not establish that reconciliation is happening now or that a mismatch is transient. |
+| `manual-edit` | A recognized `kubectl-*` or other interactive manager is present on the resource, or on the mapped field path when path attribution is available. A controller manager may also be present. This does not establish that the interactive manager wrote last or identify a person. |
+| `unknown` | The manager evidence cannot be confidently classified — for example, `managedFields` is missing/empty, only unrecognized manager strings are present, or a field cannot be mapped to a path. Omitted from JSON output. |
+
+`managedFields` is field-manager ownership evidence, not a complete or
+time-ordered mutation log. Manager timestamps are not used by this
+classification. Even path-specific `cause` and `managerHint` do not identify a
+human or prove which writer most recently changed the value. For that claim,
+inspect the exact `FieldsV1` path and timestamp evidence where available; this
+contract does not interpret those timestamps. If history is incomplete or
+ambiguous, report the writer as unknown.
 
 ### ExplainSummary additions (explain --format json)
 
@@ -482,8 +490,8 @@ The per-field-path map is also exposed under `live.attributionByPath`, keyed by 
 | `currentChange.verdict` | string enum | `PASS`, `WATCH`, `BLOCK`, or `INCONCLUSIVE`. Uses the same vocabulary as receipts. |
 | `currentChange.reason` | string enum | Stable reason such as `workload_converged`, `rollout_progressing`, `stale_generation`, `progress_stalled`, `runtime_failed`, `rollout_failed`, `workload_missing`, or `evidence_missing`. |
 | `currentChange.evidence` | object | Reviewable kstatus, generation, observed generation, pod reason, and observation timestamp evidence used to build the verdict. |
-| `mutationCause` | string enum | Same enum as `cause` above. Best-effort; omitted on fetch failure or when no signal is present. |
-| `mutationManager` | string | Representative manager string for transparency. |
+| `mutationCause` | string enum | Resource-level rollup using the same enum as `cause` above. It does not identify a particular field or the latest writer. Best-effort; omitted on fetch failure or when no signal is present. |
+| `mutationManager` | string | Representative manager string across the resource's managedFields for transparency. It is not necessarily the manager for a particular field or the latest writer, and does not identify a person. |
 
 ### DoctorSummary rollout additions (doctor --format json)
 
