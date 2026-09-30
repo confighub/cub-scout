@@ -137,21 +137,22 @@ func (m LocalClusterModel) getEffectiveQueries() []SavedQuery {
 
 // LocalClusterModel represents the local cluster TUI state
 type LocalClusterModel struct {
-	entries     []MapEntry
-	gitops      []GitOpsResource
-	gitSources  []GitSourceInfo // Git sources (GitRepository, OCIRepository, HelmRepository)
-	width       int
-	height      int
-	ready       bool
-	loading     bool
-	err         error
-	cursor      int
-	view        localView
-	spinner     spinner.Model
-	keymap      localKeyMap
-	statusMsg   string
-	clusterName string
-	contextName string // kubectl context name
+	entries        []MapEntry
+	gitops         []GitOpsResource
+	gitSources     []GitSourceInfo // Git sources (GitRepository, OCIRepository, HelmRepository)
+	width          int
+	height         int
+	ready          bool
+	loading        bool
+	err            error
+	cursor         int
+	view           localView
+	spinner        spinner.Model
+	keymap         localKeyMap
+	statusMsg      string
+	clusterName    string
+	contextName    string               // kubectl context name
+	clusterBinding *localClusterBinding // Session-pinned inventory config; never serialized.
 
 	// Connection status (checked async on startup)
 	connectionMode string // "offline", "online", "connected"
@@ -512,6 +513,7 @@ func initialLocalModelWithOpts(opts ViewOptions) LocalClusterModel {
 	}
 
 	contextName := getCurrentContext()
+	clusterBinding := resolveLegacyLocalClusterBinding(contextName)
 
 	m := LocalClusterModel{
 		loading:        true,
@@ -520,6 +522,7 @@ func initialLocalModelWithOpts(opts ViewOptions) LocalClusterModel {
 		view:           viewDashboard,
 		clusterName:    clusterName,
 		contextName:    contextName,
+		clusterBinding: clusterBinding,
 		panelPane:      vp,
 		viewOpts:       opts,
 		connectionMode: hub.QuickMode().String(), // Instant display; async check refines later
@@ -570,33 +573,44 @@ func (m LocalClusterModel) Init() tea.Cmd {
 }
 
 func loadLocalClusterData() tea.Msg {
-	return loadLocalClusterDataForContext(getCurrentContext())
+	return loadLocalClusterDataWithBinding(resolveLegacyLocalClusterBinding(getCurrentContext()))
 }
 
 func (m LocalClusterModel) loadLocalClusterData() tea.Msg {
+	if m.clusterBinding != nil {
+		return loadLocalClusterDataWithBinding(m.clusterBinding)
+	}
+	// Model literals used by tests and legacy internal call sites only carry a
+	// named context, so retain strict named-context semantics for that fallback.
 	return loadLocalClusterDataForContext(m.contextName)
 }
 
 func localClusterConfig(kubeContext string) (*rest.Config, string, error) {
-	if config, err := rest.InClusterConfig(); err == nil {
-		return config, "", nil
-	}
-	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		clientcmd.NewDefaultClientConfigLoadingRules(),
-		&clientcmd.ConfigOverrides{CurrentContext: kubeContext},
-	).ClientConfig()
-	return config, kubeContext, err
+	return resolveClusterConfig(kubeContext, true, clientcmd.NewDefaultClientConfigLoadingRules(), rest.InClusterConfig)
 }
 
 func loadLocalClusterDataForContext(kubeContext string) tea.Msg {
-	ctx := context.Background()
-
 	cfg, boundContext, err := localClusterConfig(kubeContext)
-	if err != nil {
-		return localDataLoadedMsg{err: fmt.Errorf("build kubernetes config: %w", err)}
+	return loadLocalClusterDataWithConfig(cfg, boundContext, err)
+}
+
+func loadLocalClusterDataWithBinding(binding *localClusterBinding) tea.Msg {
+	if binding == nil {
+		return localDataLoadedMsg{err: fmt.Errorf("resolve Kubernetes config: no cluster binding")}
+	}
+	return loadLocalClusterDataWithConfig(binding.config, binding.context, binding.err)
+}
+
+func loadLocalClusterDataWithConfig(cfg *rest.Config, boundContext string, configErr error) tea.Msg {
+	ctx := context.Background()
+	if configErr != nil {
+		return localDataLoadedMsg{err: fmt.Errorf("build kubernetes config: %w", configErr)}
+	}
+	if cfg == nil {
+		return localDataLoadedMsg{err: fmt.Errorf("build kubernetes config: no config resolved")}
 	}
 
-	dynClient, err := dynamic.NewForConfig(cfg)
+	dynClient, err := dynamic.NewForConfig(rest.CopyConfig(cfg))
 	if err != nil {
 		return localDataLoadedMsg{err: fmt.Errorf("create dynamic client: %w", err)}
 	}
@@ -2433,7 +2447,7 @@ func (m LocalClusterModel) renderModeHeader() string {
 	}
 
 	cluster := lcModeHeaderStyle.Render(fmt.Sprintf(" │ Cluster: %s", m.clusterName))
-	context := lcModeHeaderStyle.Render(fmt.Sprintf(" │ Context: %s", m.contextName))
+	context := lcModeHeaderStyle.Render(fmt.Sprintf(" │ Context: %s", m.boundContextLabel()))
 
 	var worker string
 	if m.workerName != "" {
@@ -2447,6 +2461,22 @@ func (m LocalClusterModel) renderModeHeader() string {
 	}
 
 	return mode + cluster + context + worker + "\n"
+}
+
+// boundContextLabel describes the credentials actually used for inventory.
+// In-cluster auth has no kubeconfig context name, so showing the process's
+// unrelated current-context would misattribute the observed cluster.
+func (m LocalClusterModel) boundContextLabel() string {
+	if m.clusterBinding == nil {
+		return m.contextName
+	}
+	if m.clusterBinding.err != nil || m.clusterBinding.config == nil {
+		return "unavailable"
+	}
+	if m.clusterBinding.context == "" {
+		return "in-cluster"
+	}
+	return m.clusterBinding.context
 }
 
 // renderFilterStrip returns the CLI filter indicator strip.
