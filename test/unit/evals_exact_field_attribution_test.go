@@ -59,16 +59,6 @@ func TestExactFieldAttributionProductCaseEvidenceAndGrader(t *testing.T) {
 		}
 	}
 
-	var cliResult struct {
-		Stdout struct {
-			FieldAttribution struct {
-				Path     string   `json:"path"`
-				Cause    string   `json:"cause"`
-				Managers []string `json:"managers"`
-				Reason   string   `json:"reason"`
-			} `json:"fieldAttribution"`
-		} `json:"stdout"`
-	}
 	for _, tc := range []struct{ name, path, cause string }{
 		{name: "after-explain.json", path: proof.Path, cause: "controller-drift"},
 		{name: "after-absent-path.json", path: ".spec.nonexistent", cause: "unknown"},
@@ -77,14 +67,24 @@ func TestExactFieldAttributionProductCaseEvidenceAndGrader(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		var cliResult struct {
+			Stdout struct {
+				FieldAttribution struct {
+					Path     string   `json:"path"`
+					Cause    string   `json:"cause"`
+					Managers []string `json:"managers"`
+					Reason   string   `json:"reason"`
+				} `json:"fieldAttribution"`
+			} `json:"stdout"`
+		}
 		if err := json.Unmarshal(data, &cliResult); err != nil {
 			t.Fatalf("decode %s: %v", tc.name, err)
 		}
 		if cliResult.Stdout.FieldAttribution.Cause != tc.cause || cliResult.Stdout.FieldAttribution.Path != tc.path {
 			t.Errorf("%s field result = %+v, want path=%s cause=%s", tc.name, cliResult.Stdout.FieldAttribution, tc.path, tc.cause)
 		}
-		if tc.cause == "unknown" && cliResult.Stdout.FieldAttribution.Reason == "" {
-			t.Fatalf("absent-path evidence = %+v, want explicit unknown with reason", cliResult.Stdout.FieldAttribution)
+		if tc.cause == "unknown" && (cliResult.Stdout.FieldAttribution.Reason == "" || len(cliResult.Stdout.FieldAttribution.Managers) != 0) {
+			t.Fatalf("absent-path evidence = %+v, want explicit unknown with no invented managers", cliResult.Stdout.FieldAttribution)
 		}
 	}
 
@@ -145,6 +145,9 @@ func TestExactFieldAttributionProductCaseEvidenceAndGrader(t *testing.T) {
 	}
 	if !pattern.MatchString(pretty.String()) {
 		t.Fatalf("grader rejected correct multiline JSON evidence contract: %s", pretty.String())
+	}
+	if !pattern.MatchString(" \n" + good + "\n\t") {
+		t.Fatal("grader rejected correct JSON with outer whitespace")
 	}
 	for _, bad := range []string{
 		strings.Replace(good, `["helm"]`, `["kubectl-set"]`, 1),
