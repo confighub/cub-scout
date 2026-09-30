@@ -40,7 +40,7 @@
       "inclusiveListPriceUsd": 0.0655016,
       "partial": false,
       "scope": "tool-boundary diagnostic only; not Experiment A and no savings claim",
-      "kind": "diagnostic",
+      "kind": "command-access probe diagnostic",
       "purpose": "command-access probe diagnostic; not Experiment A and no savings claim"
     }
   ],
