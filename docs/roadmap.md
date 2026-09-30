@@ -1,6 +1,6 @@
 # cub-scout Unified Roadmap
 
-> **Positioning:** GitOps explorer for agents: read-only, deterministic evidence that agents, and the people and scripts they work with, can rely on. *Agentic* means it gives agents a cost and time advantage, measured in [evals](../evals/README.md): on 300 Deployments, right 9 of 9 times against 8 of 9, 11% cheaper per correct answer, and 36% cheaper and 28% faster where one call answers the question.
+> **Positioning:** GitOps explorer for agents: verified answers with less agent spend. *Agentic* means a demonstrated dollar, credit and time advantage over standalone Claude using ordinary read-only tools, while preserving correctness and explainable unknowns. This is the product goal, not a universal savings claim. The [pilot evals](../evals/README.md) show scoped gains and regressions; the [3.0 execution plan](roadmap-3.0-execution.md) defines the fair baseline, release targets and economical development strategy.
 
 > **Status:** Authoritative
 >
@@ -22,6 +22,12 @@ closed as scope definitions — the contract/design was documented but runtime i
 remains future work. Items marked "resolved" had issues filed, implemented, and closed.
 
 Tracking: issue **#154** is closed. This checklist is now the live tracker.
+
+The [September 30 execution plan](roadmap-3.0-execution.md) maps its work
+packets to existing issues, including #603/#626 (measured agent savings),
+#641 (reporter/gate semantics) and #642 (the separate ConfigHub/Pilot benchmark).
+No new untracked implementation scope is introduced; add any expansion here
+before filing its implementation issue.
 
 Running-image completeness is now tracked in
 [#578](https://github.com/confighub/cub-scout/issues/578), alongside OCI source
@@ -286,6 +292,14 @@ before implementation.
   themselves require 3.0.0. Tracked in [#595](https://github.com/confighub/cub-scout/issues/595).
 
 ### Path to 3.0
+
+**Execution plan, 2026-09-30:** [Delivery plan to cub scout 3.0](roadmap-3.0-execution.md)
+adds ordered work packets, dependencies, proposed cost/quality gates, a 24-case
+benchmark, cheap-subagent assignments, spending envelopes and the first ten
+working days. It incorporates measured lessons from Sveltos, Kubara, cub-flux,
+cub-argo and helm-expt. In particular, gate acceptance, inferred release identity
+and current workload health must remain separate. Its thresholds and budgets
+are proposals; neither paid runs nor new capabilities are implied by the plan.
 
 A plan, not a date; the rule above that planned sections describe intent applies.
 Stages 1 to 3 are additive and ship in 2.x minors. Stage 4 is the 3.0.0 release
