@@ -197,7 +197,7 @@ func TestBoundedExplainHealthMeasurementTracksOnlySupportedReadiness(t *testing.
 	require.Equal(t, "object-local-readiness", summary.HealthMeasurement.Scope)
 	text := renderExplainText(summary, DefaultPresentationMode, false, DefaultHintContext())
 	markdown := renderExplainMarkdown(summary, DefaultPresentationMode, false, DefaultHintContext())
-	require.Contains(t, text, "Health measurement: measured (object-local-readiness)")
+	require.Contains(t, ansi.Strip(text), "Health measurement: measured (object-local-readiness)")
 	require.Contains(t, markdown, "**Health measurement:** measured (object-local-readiness)")
 }
 

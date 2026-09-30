@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/charmbracelet/x/ansi"
 	"github.com/confighub/cub-scout/pkg/agent"
 )
 
@@ -84,7 +85,7 @@ func TestBuildExplainSummary_HealthMeasurementIsIndependentOfCurrentChange(t *te
 	if summary.CurrentChange.Verdict != agent.VerdictPASS {
 		t.Fatalf("current change = %+v, want independent PASS", summary.CurrentChange)
 	}
-	text := renderExplainText(summary, DefaultPresentationMode, false, DefaultHintContext())
+	text := ansi.Strip(renderExplainText(summary, DefaultPresentationMode, false, DefaultHintContext()))
 	if !strings.Contains(text, "Health measurement: unmeasured") {
 		t.Fatalf("text output lacks measurement explanation:\n%s", text)
 	}
