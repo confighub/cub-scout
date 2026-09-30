@@ -48,7 +48,7 @@ image, traces that release, and asserts JSON reports Helm ownership and exactly
 one matching Deployment chain node before deleting only the cluster it
 created. It is a valid-release smoke only; it does not test malformed
 candidates or fallback behavior. It is not run by unit tests and was not run
-for this packet; its output is not Helm-version parity evidence. It preserves
+for the original bounded-decoding packet (#661); its output is not Helm-version parity evidence. It preserves
 Helm version, rendered-chart hash, command outputs/status, and Secret names in
 the requested evidence directory (or a printed temporary directory) without
 recording Secret payloads. A non-empty requested evidence directory is refused
@@ -57,6 +57,13 @@ without modifying its contents; verify this locally with
 releases, no records, denied Secret listing, malformed encodings/data,
 oversize expansion, invalid identity metadata, and an older valid record beside
 a bad candidate in either listing order.
+
+On 2026-09-30, the lead ran this smoke at source `e8e7523` for #663 using
+Helm `v4.1.4+g05fa379`. It exited 0 and reported Helm ownership with the exact
+`Deployment/helm-release-decode/release-probe` chain node. The owned cluster
+was removed and the shared-context result was unchanged. This validates that
+minimal explicit-namespace release only, not malformed live cases or a
+Helm 3/4 compatibility matrix. See [the PR proof](https://github.com/confighub/cub-scout/pull/663).
 
 ## Helm manifest identity contract (#588, exact matching)
 
