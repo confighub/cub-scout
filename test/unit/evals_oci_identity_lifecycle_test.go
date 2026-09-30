@@ -195,12 +195,8 @@ func TestOCIIdentityLifecycleGraderAcceptsUnorderedAndRejectsDigestSwaps(t *test
 	}
 	pattern := string(match[1])
 	values := ociIdentityExpectedAnswer()
-	keys := make([]string, 0, len(values))
-	for key := range values {
-		keys = append(keys, key)
-	}
 	// Keep a stable forward order independent of map iteration.
-	keys = []string{
+	keys := []string{
 		"package_oci_reference", "package_manifest_digest", "package_layer_digest",
 		"rendered_manifest_sha256", "rendered_object_set_sha256", "confighub_release_id",
 		"output_oci_digest", "bundle_digest", "consumer_digests_match",
