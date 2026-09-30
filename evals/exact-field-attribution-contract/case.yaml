@@ -1,0 +1,13 @@
+# FIXTURE-OWNED-SCAFFOLD: case-local source-pinned exact-field evidence.
+schema_version: "1.1"
+name: exact-field-attribution-contract
+context:
+  scaffold_script: scaffold.sh
+---
+name: exact-field-attribution-contract
+description: "File-only product contract for exact managedFields attribution and conservative missing-path behavior. Not a benchmark or savings experiment."
+expected_outcome: "The recorded exact image path has controller-drift cause and manager helm; absent path is unknown; no person/latest-writer claim; Helm-labelled object is not proof of Helm reconciliation."
+tags: [product-contract, attribution, exact-field, fixture-backed]
+max_turns: 10
+timeout_seconds: 300
+allowed_tools: [Read, Glob, Grep, Skill]

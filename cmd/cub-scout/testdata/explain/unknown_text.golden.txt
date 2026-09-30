@@ -3,6 +3,7 @@ Deployment/legacy-api in namespace default:
   Source: unknown
   Deployed via: partial trace only
   Health: Unavailable
+  Health measurement: unmeasured (controller-chain): No controller-chain health result was observed.
   Risks: Not assessed
   Drift: Unknown
   Notes:

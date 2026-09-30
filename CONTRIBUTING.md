@@ -41,6 +41,18 @@ go test ./... -v
 make test-import-delegation
 ```
 
+Cluster-mutating golden tests require an explicit integration opt-in. Run them
+only against an owned disposable cluster, with its private kubeconfig:
+
+```bash
+KUBECONFIG=/absolute/path/to/disposable-test.kubeconfig go test -tags=integration ./test/golden/... -count=1 -v
+```
+
+The default suite excludes these live fixtures. For offline validation, bind
+`KUBECONFIG` to a valid empty config file; setting it to an empty string falls
+back to the shared default config. CI runs the live golden suite in its
+disposable kind integration job.
+
 **What tests do I need?** Use this quick guide:
 
 | Change type | Required tests |

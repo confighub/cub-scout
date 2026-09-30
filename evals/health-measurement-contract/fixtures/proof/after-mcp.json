@@ -1,0 +1,13 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "content": [
+      {
+        "text": "{\n  \"resource\": \"Deployment/auth\",\n  \"namespace\": \"team-02\",\n  \"owner\": \"Native\",\n  \"source\": \"unknown\",\n  \"deployedVia\": \"partial trace only\",\n  \"health\": \"Unavailable\",\n  \"healthMeasurement\": {\n    \"status\": \"unmeasured\",\n    \"scope\": \"controller-chain\",\n    \"reason\": \"No controller-chain health result was observed.\"\n  },\n  \"risks\": \"Not assessed\",\n  \"drift\": \"Unknown\",\n  \"notes\": [\n    \"partial trace: no GitOps owner chain was discovered\"\n  ],\n  \"currentChange\": {\n    \"resource\": {\n      \"apiVersion\": \"apps/v1\",\n      \"kind\": \"Deployment\",\n      \"namespace\": \"team-02\",\n      \"name\": \"auth\"\n    },\n    \"progress\": {\n      \"phase\": \"complete\",\n      \"clockSource\": \"status.conditions[Progressing].lastUpdateTime\",\n      \"progressAgeSeconds\": 278786\n    },\n    \"verdict\": \"PASS\",\n    \"reason\": \"workload_converged\",\n    \"message\": \"Deployment is available. Replicas: 0\",\n    \"evidence\": {\n      \"kstatusStatus\": \"Current\",\n      \"kstatusMessage\": \"Deployment is available. Replicas: 0\",\n      \"generation\": 1,\n      \"observedGeneration\": 1,\n      \"observedAt\": \"2026-09-30T18:04:57Z\"\n    }\n  },\n  \"nextSteps\": [\n    {\n      \"actionType\": \"read-only\",\n      \"reason\": \"Health status unknown - trace the chain to find the root cause\",\n      \"nextCommand\": \"cub-scout trace deployment/auth -n team-02 --explain\"\n    },\n    {\n      \"actionType\": \"read-only\",\n      \"reason\": \"See all Native-managed resources in this scope\",\n      \"nextCommand\": \"cub-scout map list -n team-02 -q \\\"owner=Native\\\"\"\n    },\n    {\n      \"actionType\": \"read-only\",\n      \"reason\": \"Get a broad health summary to contextualize this resource\",\n      \"nextCommand\": \"cub-scout doctor -n team-02\"\n    }\n  ],\n  \"mutationCause\": \"manual-edit\",\n  \"mutationManager\": \"kubectl-client-side-apply\"\n}",
+        "type": "text"
+      }
+    ],
+    "isError": false
+  }
+}

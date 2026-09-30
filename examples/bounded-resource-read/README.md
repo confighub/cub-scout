@@ -13,6 +13,7 @@ artifact checks are recorded in [#525](https://github.com/confighub/cub-scout/is
 | Can I reuse that observation? | The real MCP gateway and the TUI picker retain at most 16 observations, for less than 15 seconds, within their own process. A hit makes no discovery/object requests. |
 | Can I force a fresh check? | MCP `refresh: true` and TUI `r` discard the cached observation and repeat the two reads. Failed refresh never returns the previous success. |
 | Does readiness mean this delivery succeeded? | No. Object-local readiness does not prove source revision, controller delivery, desired/live agreement, related pod health, or application success. The JSON includes omissions. |
+| What does `healthMeasurement` mean? | `measured` identifies supported object-local readiness evidence in bounded explain; merely reading the object is not enough. `unmeasured` means the read did not contain supported readiness evidence. It never changes the legacy `health` value, and unmeasured does not mean unhealthy. |
 | Which source identity is stamped on the resource? | `configHubOrigin` preserves the observed space/unit IDs, slugs, and optional integer revision without another API request; it does not independently verify the annotation. |
 | What if that identity is absent or conflicts? | An explicit `confighub-origin` omission explains missing, malformed, duplicate, unsupported, or legacy-conflicting metadata. There is no guessed identity or legacy fallback. |
 
@@ -76,6 +77,13 @@ is known.
 - `resourceRead.available` means an identity-matching object was read, not that
   it is healthy or desired. UID/resourceVersion are included when supplied by
   Kubernetes. Read failure leaves availability false and timestamps zero.
+- `healthMeasurement` makes coverage explicit without changing legacy `health`:
+  bounded explain reports `object-local-readiness` as measured only when a
+  supported readiness field or condition is present. Rich explain uses
+  `controller-chain` as measured only when the leaf has a status or readiness
+  signal. A separate `currentChange`
+  verdict, including `PASS`, is rollout evidence and does not mark trace health
+  as measured.
 - `resourceRead.observedAt`, `expiresAt`, `cache`, and `reads` describe the
   observation and reuse policy. TTL is not a guarantee the object stayed current.
 - `omissions` records missing source/controller, pod/event, and comparison

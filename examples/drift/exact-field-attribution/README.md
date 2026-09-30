@@ -46,7 +46,9 @@ This is a sequential read of the Helm-labelled `team-01/api` scale fixture, not
 proof of actual Helm reconciliation or a broader provenance claim. It does not
 identify a person or establish write order. The live capture is implementation
 evidence; deterministic tests and the separate
-[`changed-by-checkout` eval case](../../../evals/changed-by-checkout/) cover the
+[`exact-field-attribution-contract` eval case](../../../evals/exact-field-attribution-contract/)
+assert the captured Helm-labelled path and absent-path result; the existing
+[`changed-by-checkout` case](../../../evals/changed-by-checkout/) covers the
 genuine saved checkout managedFields record (its controller-manager name is
 representative; no GitOps controllers were installed). No paid model run was
 used.

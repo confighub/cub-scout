@@ -1,0 +1,183 @@
+#!/usr/bin/env bash
+# FIXTURE-OWNED: validate against this case's evidence; generic recorder preserves it.
+set -euo pipefail
+script_dir="$(cd -- "$(dirname -- "$0")" && pwd)"
+mkdir -p cluster evidence/exact-field-attribution
+cat > cluster/deployments.yaml <<'CUB_SCOUT_EVAL_EOF'
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "annotations": {
+          "deployment.kubernetes.io/revision": "1",
+          "meta.helm.sh/release-name": "api",
+          "meta.helm.sh/release-namespace": "team-01"
+        },
+        "creationTimestamp": "2026-09-27T12:38:32Z",
+        "generation": 1,
+        "labels": {
+          "app": "api",
+          "app.kubernetes.io/instance": "api",
+          "app.kubernetes.io/managed-by": "Helm",
+          "helm.sh/chart": "api-1.0.0"
+        },
+        "managedFields": [
+          {
+            "apiVersion": "apps/v1",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:annotations": {
+                  "f:meta.helm.sh/release-name": {},
+                  "f:meta.helm.sh/release-namespace": {}
+                },
+                "f:labels": {
+                  "f:app": {},
+                  "f:app.kubernetes.io/instance": {},
+                  "f:app.kubernetes.io/managed-by": {},
+                  "f:helm.sh/chart": {}
+                }
+              },
+              "f:spec": {
+                "f:replicas": {},
+                "f:selector": {},
+                "f:template": {
+                  "f:metadata": {
+                    "f:labels": {
+                      "f:app": {}
+                    }
+                  },
+                  "f:spec": {
+                    "f:containers": {
+                      "k:{\"name\":\"api\"}": {
+                        ".": {},
+                        "f:image": {},
+                        "f:name": {}
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "manager": "helm",
+            "operation": "Apply",
+            "time": "2026-09-27T12:38:32Z"
+          },
+          {
+            "apiVersion": "apps/v1",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:annotations": {
+                  "f:deployment.kubernetes.io/revision": {}
+                }
+              },
+              "f:status": {
+                "f:conditions": {
+                  ".": {},
+                  "k:{\"type\":\"Available\"}": {
+                    ".": {},
+                    "f:lastTransitionTime": {},
+                    "f:lastUpdateTime": {},
+                    "f:message": {},
+                    "f:reason": {},
+                    "f:status": {},
+                    "f:type": {}
+                  },
+                  "k:{\"type\":\"Progressing\"}": {
+                    ".": {},
+                    "f:lastTransitionTime": {},
+                    "f:lastUpdateTime": {},
+                    "f:message": {},
+                    "f:reason": {},
+                    "f:status": {},
+                    "f:type": {}
+                  }
+                },
+                "f:observedGeneration": {},
+                "f:terminatingReplicas": {}
+              }
+            },
+            "manager": "kube-controller-manager",
+            "operation": "Update",
+            "subresource": "status",
+            "time": "2026-09-27T12:39:26Z"
+          }
+        ],
+        "name": "api",
+        "namespace": "team-01",
+        "resourceVersion": "2094",
+        "uid": "33c19b1c-5aa2-4a92-9392-567f1d0a8741"
+      },
+      "spec": {
+        "progressDeadlineSeconds": 600,
+        "replicas": 0,
+        "revisionHistoryLimit": 10,
+        "selector": {
+          "matchLabels": {
+            "app": "api"
+          }
+        },
+        "strategy": {
+          "rollingUpdate": {
+            "maxSurge": "25%",
+            "maxUnavailable": "25%"
+          },
+          "type": "RollingUpdate"
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "api"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "image": "registry.k8s.io/pause:3.9",
+                "imagePullPolicy": "IfNotPresent",
+                "name": "api",
+                "resources": {},
+                "terminationMessagePath": "/dev/termination-log",
+                "terminationMessagePolicy": "File"
+              }
+            ],
+            "dnsPolicy": "ClusterFirst",
+            "restartPolicy": "Always",
+            "schedulerName": "default-scheduler",
+            "securityContext": {},
+            "terminationGracePeriodSeconds": 30
+          }
+        }
+      },
+      "status": {
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-09-27T12:39:26Z",
+            "lastUpdateTime": "2026-09-27T12:39:26Z",
+            "message": "Deployment has minimum availability.",
+            "reason": "MinimumReplicasAvailable",
+            "status": "True",
+            "type": "Available"
+          },
+          {
+            "lastTransitionTime": "2026-09-27T12:39:04Z",
+            "lastUpdateTime": "2026-09-27T12:39:26Z",
+            "message": "ReplicaSet \"api-5b9d775cf\" has successfully progressed.",
+            "reason": "NewReplicaSetAvailable",
+            "status": "True",
+            "type": "Progressing"
+          }
+        ],
+        "observedGeneration": 1,
+        "terminatingReplicas": 0
+      }
+    }
+  ]
+}
+CUB_SCOUT_EVAL_EOF
+cp -R "$script_dir"/fixtures/proof/. evidence/exact-field-attribution/

@@ -3,6 +3,7 @@ Deployment/frontend in namespace prod:
   Source: https://github.com/acme/apps.git (revision: main@sha1:def4567)
   Deployed via: Application/frontend-app -> Deployment/frontend
   Health: Healthy
+  Health measurement: measured (controller-chain)
   Risks: Not assessed
   Drift: Unknown
 

@@ -31,6 +31,12 @@ grader does not certify the surrounding prose: the scout answer called recorded
 MCP output independent live confirmation, and the baseline claimed an unseen
 Git desired image. These are quality gaps, not verified conclusions.
 
+Tool-access limit: the `changed-by-checkout` session was file-only. Ordinary
+tools were Read, Glob and Grep, plus harness task, skill and search tools;
+Bash, kubectl, Helm, jq and Python were unavailable. This does **not** satisfy
+roadmap Experiment A. Preflight safe, equivalent ordinary command access for
+both arms before a further paid attribution campaign.
+
 Follow-up: declare recorded-tool provenance in both prompts (now applied),
 then test a narrowly scoped reduction in redundant reads under #626. Keep
 negative evidence and missing-source caveats. Do not buy the full campaign

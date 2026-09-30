@@ -26,6 +26,13 @@ container pulls still return 403 (#520).
   Shared context changed during release validation; the full suite passed but
   exercised temporary fixtures on `kind-cs-argo`. No fixture namespaces remained
   afterward. Future offline runs use an isolated empty kubeconfig.
+- Cluster-mutating golden suites now require `-tags=integration`; ordinary
+  `go test ./...` excludes them even if a default context is reachable. Live
+  local runs need a private kubeconfig for an owned disposable test cluster.
+  A later worker mistakenly used an empty KUBECONFIG value and created
+  `cub-scout-golden-maplist-mixed` on `kind-cs-argo`; the lead stopped the run
+  and removed that identified test fixture (#654). An empty value is not an
+  empty config file.
 - Reuse the named scale context only with explicit context/KUBECONFIG. Do not
   delete a shared cluster because older instructions below say to clean it up.
 - Direct-shell Claude authentication was verified on September 30. Recheck

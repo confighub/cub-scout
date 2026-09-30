@@ -1,0 +1,24 @@
+{
+  "beforeSource": "v2.12.4@11c3e38",
+  "afterSource": "9d3efad1078aa59824a7cc1868fef81d2591d8d2",
+  "context": "kind-scout-evals-scale",
+  "resource": "apps/v1 Deployment team-01/api",
+  "path": ".spec.template.spec.containers[name=\"api\"].image",
+  "sameUidAndResourceVersion": true,
+  "readOnly": true,
+  "limitations": "Sequential observations, not atomic; manager string does not identify a person or latest write. Helm-labelled scale fixture, not actual Helm reconciliation proof. No paid model run.",
+  "files": {
+    "after-absent-path.json": "9e489a5ead4631fb941468ef21788d942249ea12216f0d46fefa48fffb534b80",
+    "after-explain.json": "ecd2553371a7df47debf114a34d09ee21e491b753d785d4ccc13c44f8844747c",
+    "after-mcp.json": "be09aa9c0a58d53b3fb02af91e387b2db19636334503e54ea144eaee2ed32460",
+    "after-object.json": "b2e9743ef7b5ad0fc273b745a510cb3adbc186e12703c8257446b99d59b508a6",
+    "after-tools.json": "b3a79263a2655497a05f0fe8c1b19c67dc4f809926d70764d3dbd08c16f62503",
+    "before-explain.json": "fcb510d67e091d400d344291398a18902a20c6cf182eb4b43f6219f575c12d53",
+    "before-field-request.json": "da0a37ca433bc59ffe1a823cc6d9895c7a5fed116ef16c4ccb883fd44c98826c",
+    "before-mcp.json": "7e6669f19e5b1bacdce61647f07b45a3471b9ad07b2fc6a4de9c10b6aa9f53d9",
+    "before-object.json": "b2e9743ef7b5ad0fc273b745a510cb3adbc186e12703c8257446b99d59b508a6",
+    "before-tools.json": "f9d1f56d6f9b0c00464c8858d0459c2caf42428f074e6184b0b5916d834a7b6e"
+  },
+  "afterBinarySha256": "40c3a5bd78b89c86e4ea7c94ebcdb703178ef0f190a37558af5d292d39c80485",
+  "beforeBinarySha256": "8ca00de7bf4b21c4ad877b0b6506b18abb99cd9258bbe4bcb2411418e867c264"
+}
