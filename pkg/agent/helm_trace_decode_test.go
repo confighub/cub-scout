@@ -244,8 +244,11 @@ func TestHelmReleaseEqualRevisionCandidatesAreOrderIndependent(t *testing.T) {
 	older := helmSecret(gzipAndBase64(t, releaseJSON("web", "default", 1, "superseded")), "web", 1)
 	valid := helmSecret(gzipAndBase64(t, validReleaseJSON()), "web", 2)
 	conflictingPayload := helmSecret(gzipAndBase64(t, releaseJSON("web", "default", 2, "failed")), "web", 2)
+	unknownFieldPayload := helmSecret(gzipAndBase64(t, []byte(`{"name":"web","namespace":"default","version":2,"info":{"status":"deployed"},"unmodeled":"different"}`)), "web", 2)
 	conflictingIdentity := valid.DeepCopy()
 	conflictingIdentity.Name = "custom-secret"
+	conflictingSecretUID := valid.DeepCopy()
+	conflictingSecretUID.UID = "different-uid"
 
 	for _, tc := range []struct {
 		name       string
@@ -254,6 +257,8 @@ func TestHelmReleaseEqualRevisionCandidatesAreOrderIndependent(t *testing.T) {
 	}{
 		{"identical duplicate evidence", []corev1.Secret{*valid, *valid.DeepCopy()}, false},
 		{"equal revision conflicting payload", []corev1.Secret{*valid, *conflictingPayload}, true},
+		{"equal decoded projection but differing unmodeled payload", []corev1.Secret{*valid, *unknownFieldPayload}, true},
+		{"equal payload but conflicting Secret UID", []corev1.Secret{*valid, *conflictingSecretUID}, true},
 		{"valid plus conflicting same revision identity", []corev1.Secret{*valid, *conflictingIdentity}, true},
 		{"valid older plus conflicting latest identity", []corev1.Secret{*older, *conflictingIdentity}, true},
 	} {

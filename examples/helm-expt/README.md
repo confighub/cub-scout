@@ -35,10 +35,12 @@ payload namespace, canonical `sh.helm.release.v1.<name>.v<version>` key,
 `helm.sh/release.v1` type, and the `owner`, `name`, and `version` labels must
 agree. Missing or inconsistent fields return an incomplete/error result; they
 cannot make an older revision appear current. If a query returns repeated
-evidence for one release revision, identical decoded payloads are deduplicated;
-conflicting payloads for that same name/version are ambiguous, independent of
-list order. Latest-release listing, direct release lookup, resource tracing,
-and history use the same checks. Direct lookup/history query `owner=helm`
+evidence for one release revision, only byte-identical stored payloads with
+matching Secret identity metadata are deduplicated. Any payload-byte or
+identity-metadata difference for the same name/version is ambiguous,
+independent of list order; the decoded projection does not cover every field
+in Helm's stored record. Latest-release listing, direct release lookup,
+resource tracing, and history use the same checks. Direct lookup/history query `owner=helm`
 records before validating and selecting the requested payload name, so a
 returned candidate with a mismatched `name` label is not hidden by a narrower
 label selector.

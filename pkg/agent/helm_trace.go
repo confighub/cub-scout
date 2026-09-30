@@ -173,7 +173,7 @@ func (h *HelmTracer) listReleases(ctx context.Context, namespace string) ([]*hel
 		return nil, err
 	}
 
-	var candidates []*helmRelease
+	var candidates []helmReleaseCandidate
 
 	for _, secret := range secrets.Items {
 		release, err := h.decodeReleaseSecret(secret, namespace)
@@ -182,14 +182,15 @@ func (h *HelmTracer) listReleases(ctx context.Context, namespace string) ([]*hel
 		}
 
 		// Validate every returned candidate before selecting a latest revision.
-		candidates = append(candidates, release)
+		candidates = append(candidates, newHelmReleaseCandidate(secret, release))
 	}
 	unique, err := dedupeHelmReleaseCandidates(candidates)
 	if err != nil {
 		return nil, err
 	}
 	releaseMap := make(map[string]*helmRelease)
-	for _, release := range unique {
+	for _, candidate := range unique {
+		release := candidate.release
 		if existing, ok := releaseMap[release.Name]; !ok || release.Version > existing.Version {
 			releaseMap[release.Name] = release
 		}
@@ -217,7 +218,7 @@ func (h *HelmTracer) getRelease(ctx context.Context, name, namespace string) (*h
 		return nil, err
 	}
 
-	var candidates []*helmRelease
+	var candidates []helmReleaseCandidate
 	for _, secret := range secrets.Items {
 		release, err := h.decodeReleaseSecret(secret, namespace)
 		if err != nil {
@@ -227,7 +228,7 @@ func (h *HelmTracer) getRelease(ctx context.Context, name, namespace string) (*h
 			continue
 		}
 
-		candidates = append(candidates, release)
+		candidates = append(candidates, newHelmReleaseCandidate(secret, release))
 	}
 
 	unique, err := dedupeHelmReleaseCandidates(candidates)
@@ -235,7 +236,8 @@ func (h *HelmTracer) getRelease(ctx context.Context, name, namespace string) (*h
 		return nil, err
 	}
 	var latestRelease *helmRelease
-	for _, release := range unique {
+	for _, candidate := range unique {
+		release := candidate.release
 		if latestRelease == nil || release.Version > latestRelease.Version {
 			latestRelease = release
 		}
@@ -601,7 +603,7 @@ func (h *HelmTracer) GetReleaseHistory(ctx context.Context, releaseName, namespa
 		return nil, err
 	}
 
-	var releases []*helmRelease
+	var releases []helmReleaseCandidate
 	for _, secret := range secrets.Items {
 		release, err := h.decodeReleaseSecret(secret, namespace)
 		if err != nil {
@@ -611,7 +613,7 @@ func (h *HelmTracer) GetReleaseHistory(ctx context.Context, releaseName, namespa
 			continue
 		}
 
-		releases = append(releases, release)
+		releases = append(releases, newHelmReleaseCandidate(secret, release))
 	}
 
 	if len(releases) == 0 {
@@ -626,12 +628,13 @@ func (h *HelmTracer) GetReleaseHistory(ctx context.Context, releaseName, namespa
 
 	// Sort by version descending (most recent first)
 	sort.Slice(releases, func(i, j int) bool {
-		return releases[i].Version > releases[j].Version
+		return releases[i].release.Version > releases[j].release.Version
 	})
 
 	// Convert to HistoryEntry
 	history := make([]HistoryEntry, 0, len(releases))
-	for _, rel := range releases {
+	for _, candidate := range releases {
+		rel := candidate.release
 		entry := HistoryEntry{
 			Timestamp: rel.Info.LastDeployed,
 			Revision:  fmt.Sprintf("v%d", rel.Version),
@@ -645,19 +648,58 @@ func (h *HelmTracer) GetReleaseHistory(ctx context.Context, releaseName, namespa
 	return history, nil
 }
 
-func dedupeHelmReleaseCandidates(releases []*helmRelease) ([]*helmRelease, error) {
-	byRevision := make(map[string]*helmRelease, len(releases))
-	unique := make([]*helmRelease, 0, len(releases))
-	for _, release := range releases {
+// Keep the exact stored release bytes alongside the decoded projection. The
+// projection intentionally ignores parts of Helm's payload, so it cannot
+// prove that two records with equal projections are actually identical.
+type helmReleaseCandidate struct {
+	release         *helmRelease
+	secretName      string
+	secretNamespace string
+	secretType      corev1.SecretType
+	secretUID       string
+	resourceVersion string
+	labels          map[string]string
+	releaseData     []byte
+}
+
+func newHelmReleaseCandidate(secret corev1.Secret, release *helmRelease) helmReleaseCandidate {
+	labels := make(map[string]string, len(secret.Labels))
+	for key, value := range secret.Labels {
+		labels[key] = value
+	}
+	return helmReleaseCandidate{
+		release:         release,
+		secretName:      secret.Name,
+		secretNamespace: secret.Namespace,
+		secretType:      secret.Type,
+		secretUID:       string(secret.UID),
+		resourceVersion: secret.ResourceVersion,
+		labels:          labels,
+		releaseData:     secret.Data["release"],
+	}
+}
+
+func sameHelmReleaseEvidence(a, b helmReleaseCandidate) bool {
+	return a.secretName == b.secretName && a.secretNamespace == b.secretNamespace &&
+		a.secretType == b.secretType && a.secretUID == b.secretUID &&
+		a.resourceVersion == b.resourceVersion && reflect.DeepEqual(a.labels, b.labels) &&
+		bytes.Equal(a.releaseData, b.releaseData)
+}
+
+func dedupeHelmReleaseCandidates(releases []helmReleaseCandidate) ([]helmReleaseCandidate, error) {
+	byRevision := make(map[string]helmReleaseCandidate, len(releases))
+	unique := make([]helmReleaseCandidate, 0, len(releases))
+	for _, candidate := range releases {
+		release := candidate.release
 		key := fmt.Sprintf("%s\x00%d", release.Name, release.Version)
 		if existing, ok := byRevision[key]; ok {
-			if !reflect.DeepEqual(existing, release) {
+			if !sameHelmReleaseEvidence(existing, candidate) {
 				return nil, ambiguousHelmReleaseCandidates()
 			}
 			continue
 		}
-		byRevision[key] = release
-		unique = append(unique, release)
+		byRevision[key] = candidate
+		unique = append(unique, candidate)
 	}
 	return unique, nil
 }
