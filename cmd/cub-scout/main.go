@@ -233,20 +233,13 @@ func runCompletionCommand(cmd *cobra.Command, args []string) error {
 
 // buildConfig builds a Kubernetes client config
 func buildConfig() (*rest.Config, error) {
-	// Try in-cluster config first
-	cfg, err := rest.InClusterConfig()
-	if err == nil {
-		return cfg, nil
-	}
-
-	// Fall back to kubeconfig
 	kubeconfig := os.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
 		home, _ := os.UserHomeDir()
 		kubeconfig = home + "/.kube/config"
 	}
-
-	return clientcmd.BuildConfigFromFlags("", kubeconfig)
+	cfg, _, err := resolveClusterConfig("", false, &clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfig}, rest.InClusterConfig)
+	return cfg, err
 }
 
 // getCurrentContext returns the current kubectl context name

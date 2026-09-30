@@ -15,6 +15,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/confighub/cub-scout/pkg/agent"
+	"k8s.io/client-go/rest"
 )
 
 type boundedExplainPanel struct {
@@ -49,6 +50,10 @@ type boundedExplainMsg struct {
 func (m *LocalClusterModel) openBoundedExplain() {
 	if m.boundedSession == nil {
 		m.boundedSession = &boundedExplainSession{}
+		if m.clusterBinding != nil && m.clusterBinding.err == nil && m.clusterBinding.config != nil && m.clusterBinding.context != "" {
+			m.boundedSession.pinnedConfig = rest.CopyConfig(m.clusterBinding.config)
+			m.boundedSession.pinnedContext = m.clusterBinding.context
+		}
 	}
 	panel := &boundedExplainPanel{context: m.boundedContext, observe: m.boundedSession.observe, observeRevision: m.boundedSession.observeRevision}
 	panel.revisionInput = textinput.New()

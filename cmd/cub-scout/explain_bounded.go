@@ -18,6 +18,7 @@ import (
 	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
@@ -37,6 +38,10 @@ type boundedExplainSession struct {
 	mu          sync.Mutex
 	fingerprint [32]byte
 	reader      *agent.BoundedResourceReader
+	// pinnedConfig is used by a TUI session to keep drilldowns on the exact
+	// inventory endpoint even if the kubeconfig is edited while the TUI runs.
+	pinnedConfig  *rest.Config
+	pinnedContext string
 }
 
 func boundedExplainRef(args []string, apiVersion, namespace, kubeContext string) (agent.BoundedResourceRef, error) {
@@ -105,6 +110,19 @@ func (s *boundedExplainSession) forContext(kubeContext string) (*agent.BoundedRe
 	}
 	if strings.TrimSpace(kubeContext) == "" {
 		return fail(fmt.Errorf("bounded explain requires --kube-context"))
+	}
+	if s.pinnedConfig != nil {
+		if kubeContext != s.pinnedContext {
+			return fail(fmt.Errorf("bounded explain context does not match the pinned inventory context"))
+		}
+		if s.reader == nil {
+			reader, err := agent.NewBoundedResourceReader(rest.CopyConfig(s.pinnedConfig), s.pinnedContext)
+			if err != nil {
+				return fail(err)
+			}
+			s.reader = reader
+		}
+		return s.reader, nil
 	}
 	raw, err := clientcmd.NewDefaultClientConfigLoadingRules().Load()
 	if err != nil {

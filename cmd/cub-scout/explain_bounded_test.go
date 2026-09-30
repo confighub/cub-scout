@@ -23,6 +23,7 @@ import (
 	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
@@ -426,6 +427,50 @@ func TestBoundedExplainTUIPinsInventoryContext(t *testing.T) {
 	m.openBoundedExplain()
 	require.Empty(t, m.boundedPanel.items, "unbound or in-cluster inventory must not infer a kubeconfig context")
 	require.Nil(t, m.boundedPanel.read(false))
+}
+
+func TestBoundedExplainTUISessionPinsSameNameEndpointAndHeader(t *testing.T) {
+	t.Setenv("KUBERNETES_SERVICE_HOST", "")
+	var requestsA, requestsB atomic.Int32
+	server := func(requests *atomic.Int32) *httptest.Server {
+		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			requests.Add(1)
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"apiVersion":"v1","kind":"List","items":[]}`)
+		}))
+	}
+	a, b := server(&requestsA), server(&requestsB)
+	defer a.Close()
+	defer b.Close()
+	path := boundedTestConfig(t, a.URL)
+	rules := &clientcmd.ClientConfigLoadingRules{ExplicitPath: path}
+	binding := resolveLocalClusterBinding("cluster-a", rules, nil)
+	require.NoError(t, binding.err)
+	require.Equal(t, "cluster-a", binding.context)
+	m := LocalClusterModel{contextName: "cluster-a", clusterBinding: binding, boundedContext: "cluster-a", entries: []MapEntry{{APIVersion: "apps/v1", Kind: "Deployment", Namespace: "team-a", Name: "api"}}}
+	m.openBoundedExplain()
+	beforeA := requestsA.Load()
+
+	// Retarget the same named kubeconfig context after inventory was loaded.
+	raw, err := clientcmd.LoadFromFile(path)
+	require.NoError(t, err)
+	raw.Clusters["server"].Server = b.URL
+	data, err := clientcmd.Write(*raw)
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(path, data, 0600))
+
+	cmd := m.boundedPanel.read(false)
+	require.NotNil(t, cmd)
+	_ = cmd().(boundedExplainMsg)
+	require.Greater(t, requestsA.Load(), beforeA, "drilldown must use the inventory's captured endpoint")
+	require.Zero(t, requestsB.Load(), "a same-name context retarget must not cross-bind the drilldown")
+
+	clusterBinding := &localClusterBinding{config: &rest.Config{Host: a.URL}}
+	label := (LocalClusterModel{contextName: "unrelated-current-context", clusterBinding: clusterBinding}).boundContextLabel()
+	require.Equal(t, "in-cluster", label)
+	clusterBinding = &localClusterBinding{config: &rest.Config{Host: a.URL}, context: "selected-context"}
+	label = (LocalClusterModel{contextName: "unrelated-current-context", clusterBinding: clusterBinding}).boundContextLabel()
+	require.Equal(t, "selected-context", label)
 }
 
 func TestBoundedExplainOwnerFamilies(t *testing.T) {

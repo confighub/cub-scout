@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/confighub/cub-scout/internal/mapsvc"
+	"k8s.io/client-go/rest"
 )
 
 var updateTUI = flag.Bool("update-tui", false, "update TUI snapshot golden files")
@@ -395,6 +396,7 @@ func createTestModel(width, height int) LocalClusterModel {
 	m.height = height
 	m.clusterName = "test-cluster"
 	m.contextName = "test-context"
+	m.clusterBinding = &localClusterBinding{config: &rest.Config{Host: "https://test.invalid"}, context: "test-context"}
 
 	// Realistic workload entries
 	m.entries = []MapEntry{
