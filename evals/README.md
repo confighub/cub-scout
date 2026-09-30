@@ -420,6 +420,16 @@ honestly: the scenario has no Argo CD server to ask.
 
 ## Growing the suite
 
+The [recorded-explain-contract](recorded-explain-contract/) case is prepared
+against a complete raw Kubernetes List and has an exact schema grader, but it
+is intentionally outside `benchmark-v1` and has not been run. Its current
+file-only tool configuration checks evidence interpretation, not CLI/MCP
+execution; the CLI, MCP, text/Markdown, and TUI surfaces are exercised by
+deterministic offline Go contract tests. A future eval harness run must first
+configure its MCP server with the fixed recording input and prove that the
+recorded tool inventory is isolated before this case can test the product
+surface or join a paired benchmark.
+
 The suite grows with the product. New cases come from four places:
 
 1. **Agent-facing bugs.** Reproduce the failure as a question and keep it as a

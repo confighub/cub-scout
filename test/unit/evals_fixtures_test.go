@@ -294,6 +294,14 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		// This single product-contract case owns a complete raw List fixture and
+		// uses a copy-based scaffold rather than embedding the suite-wide export.
+		// Validate it through its dedicated hash-and-execution assertions; keep
+		// every other case on the generic embedded-export path below.
+		if filepath.Base(caseDir) == "recorded-explain-contract" {
+			checkRecordedExplainCaseScaffold(t, caseDir)
+			continue
+		}
 		if !strings.Contains(string(data), "scaffold_script: scaffold.sh") {
 			// Live-only cases read the cluster through cub-scout, not an export.
 			prompt, _ := os.ReadFile(filepath.Join(filepath.Dir(caseYAML), "prompt.md"))

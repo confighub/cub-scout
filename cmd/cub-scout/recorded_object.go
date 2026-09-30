@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -47,30 +48,41 @@ type recordedObject struct {
 	Provenance recordedObjectProvenance
 }
 
+// recordedObjectSnapshot is parsed once at MCP startup and treated as
+// immutable. Selection returns a deep copy so callers cannot mutate the source.
+type recordedObjectSnapshot struct {
+	Objects    []*unstructured.Unstructured
+	Provenance recordedObjectProvenance
+}
+
 // loadRecordedObject parses a bounded YAML/JSON object stream or generic
 // Kubernetes v1/List. It is deliberately byte-reader-only: it has no path,
 // kubeconfig, client, clock, or fallback dependencies.
 func loadRecordedObject(input io.Reader, want recordedObjectIdentity) (recordedObject, error) {
-	if input == nil {
-		return recordedObject{}, fmt.Errorf("recorded input is required")
+	snapshot, err := loadRecordedObjectSnapshot(input)
+	if err != nil {
+		return recordedObject{}, err
 	}
-	if !validRecordedIdentityValue(want.APIVersion, false) || !validRecordedIdentityValue(want.Kind, false) ||
-		!validRecordedIdentityValue(want.Namespace, true) || !validRecordedIdentityValue(want.Name, false) {
-		return recordedObject{}, fmt.Errorf("complete recorded object identity is required")
+	return snapshot.selectObject(want)
+}
+
+func loadRecordedObjectSnapshot(input io.Reader) (recordedObjectSnapshot, error) {
+	if input == nil {
+		return recordedObjectSnapshot{}, fmt.Errorf("recorded input is required")
 	}
 	raw, err := io.ReadAll(io.LimitReader(input, maxRecordedObjectBytes+1))
 	if err != nil {
-		return recordedObject{}, fmt.Errorf("read recorded input: %w", err)
+		return recordedObjectSnapshot{}, fmt.Errorf("read recorded input")
 	}
 	if len(raw) > maxRecordedObjectBytes {
-		return recordedObject{}, fmt.Errorf("recorded input exceeds byte limit")
+		return recordedObjectSnapshot{}, fmt.Errorf("recorded input exceeds byte limit")
 	}
 	if len(bytes.TrimSpace(raw)) == 0 {
-		return recordedObject{}, fmt.Errorf("recorded input contains no objects")
+		return recordedObjectSnapshot{}, fmt.Errorf("recorded input contains no objects")
 	}
 
 	decoder := yaml.NewDecoder(bytes.NewReader(raw))
-	var selected *unstructured.Unstructured
+	objects := make([]*unstructured.Unstructured, 0)
 	var documents, objectCount int
 	for {
 		var document yaml.Node
@@ -79,74 +91,90 @@ func loadRecordedObject(input io.Reader, want recordedObjectIdentity) (recordedO
 			break
 		}
 		if err != nil {
-			return recordedObject{}, fmt.Errorf("recorded input contains malformed document")
+			return recordedObjectSnapshot{}, fmt.Errorf("recorded input contains malformed document")
 		}
 		documents++
 		if documents > maxRecordedObjectDocuments {
-			return recordedObject{}, fmt.Errorf("recorded input exceeds document limit")
+			return recordedObjectSnapshot{}, fmt.Errorf("recorded input exceeds document limit")
 		}
 		if len(document.Content) == 0 {
 			continue
 		}
 		root := document.Content[0]
 		if err := validateRecordedYAMLNode(root, 0); err != nil {
-			return recordedObject{}, err
+			return recordedObjectSnapshot{}, err
 		}
 		object, err := decodeRecordedMapping(root)
 		if err != nil {
-			return recordedObject{}, err
+			return recordedObjectSnapshot{}, err
 		}
 		apiVersion, kind, err := recordedTypeIdentity(root)
 		if err != nil {
-			return recordedObject{}, err
+			return recordedObjectSnapshot{}, err
 		}
 		if kind == "List" {
 			if apiVersion != "v1" {
-				return recordedObject{}, fmt.Errorf("recorded input contains unsupported List type")
+				return recordedObjectSnapshot{}, fmt.Errorf("recorded input contains unsupported List type")
 			}
 			itemsNode := mappingValue(root, "items")
 			if itemsNode == nil || itemsNode.Kind != yaml.SequenceNode {
-				return recordedObject{}, fmt.Errorf("recorded List has invalid items")
+				return recordedObjectSnapshot{}, fmt.Errorf("recorded List has invalid items")
 			}
 			for _, item := range itemsNode.Content {
 				objectCount++
 				if objectCount > maxRecordedObjectCount {
-					return recordedObject{}, fmt.Errorf("recorded input exceeds object limit")
+					return recordedObjectSnapshot{}, fmt.Errorf("recorded input exceeds object limit")
 				}
 				candidate, err := decodeRecordedObject(item)
 				if err != nil {
-					return recordedObject{}, err
+					return recordedObjectSnapshot{}, err
 				}
-				selected, err = selectRecordedObject(selected, candidate, want)
-				if err != nil {
-					return recordedObject{}, err
-				}
+				objects = append(objects, candidate)
 			}
 			continue
 		}
 		objectCount++
 		if objectCount > maxRecordedObjectCount {
-			return recordedObject{}, fmt.Errorf("recorded input exceeds object limit")
+			return recordedObjectSnapshot{}, fmt.Errorf("recorded input exceeds object limit")
 		}
 		candidate, err := decodeRecordedObjectNode(root, object)
 		if err != nil {
-			return recordedObject{}, err
+			return recordedObjectSnapshot{}, err
 		}
-		selected, err = selectRecordedObject(selected, candidate, want)
-		if err != nil {
-			return recordedObject{}, err
-		}
+		objects = append(objects, candidate)
 	}
-	if selected == nil {
-		return recordedObject{}, fmt.Errorf("recorded input has no exact identity match")
+	if len(objects) == 0 {
+		return recordedObjectSnapshot{}, fmt.Errorf("recorded input contains no objects")
 	}
 	digest := sha256.Sum256(raw)
-	return recordedObject{
-		Object: selected,
+	return recordedObjectSnapshot{
+		Objects: objects,
 		Provenance: recordedObjectProvenance{
 			SHA256: hex.EncodeToString(digest[:]), Bytes: len(raw), Documents: documents, ObjectCount: objectCount,
 		},
 	}, nil
+}
+
+func (s recordedObjectSnapshot) selectObject(want recordedObjectIdentity) (recordedObject, error) {
+	if !validRecordedIdentityValue(want.APIVersion, false) || !validRecordedIdentityValue(want.Kind, false) ||
+		!validRecordedIdentityValue(want.Namespace, true) || !validRecordedIdentityValue(want.Name, false) {
+		return recordedObject{}, fmt.Errorf("complete recorded object identity is required")
+	}
+	var selected *unstructured.Unstructured
+	for _, candidate := range s.Objects {
+		if candidate.GetAPIVersion() != want.APIVersion || candidate.GetKind() != want.Kind ||
+			candidate.GetNamespace() != want.Namespace || candidate.GetName() != want.Name {
+			continue
+		}
+		if selected != nil {
+			return recordedObject{}, fmt.Errorf("recorded input contains an ambiguous exact identity")
+		}
+		selected = candidate.DeepCopy()
+	}
+	if selected == nil {
+		return recordedObject{}, fmt.Errorf("recorded input has no exact identity match")
+	}
+	return recordedObject{Object: selected, Provenance: s.Provenance}, nil
 }
 
 func validateRecordedYAMLNode(node *yaml.Node, depth int) error {
@@ -189,11 +217,71 @@ func decodeRecordedMapping(node *yaml.Node) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, fmt.Errorf("recorded document is not a supported object")
 	}
+	decoder := json.NewDecoder(bytes.NewReader(jsonBytes))
+	decoder.UseNumber()
 	var object map[string]interface{}
-	if err := json.Unmarshal(jsonBytes, &object); err != nil || object == nil {
+	if err := decoder.Decode(&object); err != nil || object == nil {
 		return nil, fmt.Errorf("recorded document is not a supported object")
 	}
+	if err := normalizeRecordedNumbers(object); err != nil {
+		return nil, fmt.Errorf("recorded document contains an unsupported number")
+	}
 	return object, nil
+}
+
+func normalizeRecordedNumbers(value interface{}) error {
+	switch item := value.(type) {
+	case map[string]interface{}:
+		for key, child := range item {
+			if err := normalizeRecordedNumberAt(item, key, child); err != nil {
+				return err
+			}
+		}
+	case []interface{}:
+		for i, child := range item {
+			switch number := child.(type) {
+			case json.Number:
+				normalized, err := recordedJSONNumber(number)
+				if err != nil {
+					return err
+				}
+				item[i] = normalized
+			default:
+				if err := normalizeRecordedNumbers(child); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func normalizeRecordedNumberAt(parent map[string]interface{}, key string, value interface{}) error {
+	if number, ok := value.(json.Number); ok {
+		normalized, err := recordedJSONNumber(number)
+		if err != nil {
+			return err
+		}
+		parent[key] = normalized
+		return nil
+	}
+	return normalizeRecordedNumbers(value)
+}
+
+func recordedJSONNumber(number json.Number) (interface{}, error) {
+	text := number.String()
+	if !strings.ContainsAny(text, ".eE") {
+		integer, err := number.Int64()
+		if err != nil {
+			return nil, err
+		}
+		return integer, nil
+	}
+	floating, err := number.Float64()
+	if err != nil || math.IsNaN(floating) || math.IsInf(floating, 0) {
+		return nil, fmt.Errorf("invalid floating-point number")
+	}
+	return floating, nil
 }
 
 func mappingValue(node *yaml.Node, key string) *yaml.Node {
@@ -270,15 +358,4 @@ func recordedMetadataIdentity(node *yaml.Node) (name, namespace string, err erro
 		return "", "", fmt.Errorf("recorded object has missing or invalid identity metadata")
 	}
 	return name, namespaceNode.Value, nil
-}
-
-func selectRecordedObject(selected, candidate *unstructured.Unstructured, want recordedObjectIdentity) (*unstructured.Unstructured, error) {
-	if candidate.GetAPIVersion() != want.APIVersion || candidate.GetKind() != want.Kind ||
-		candidate.GetNamespace() != want.Namespace || candidate.GetName() != want.Name {
-		return selected, nil
-	}
-	if selected != nil {
-		return nil, fmt.Errorf("recorded input contains an ambiguous exact identity")
-	}
-	return candidate.DeepCopy(), nil
 }

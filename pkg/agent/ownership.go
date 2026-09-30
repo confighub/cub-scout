@@ -27,6 +27,18 @@ const (
 
 // DetectOwnership examines a resource and determines who manages it
 func DetectOwnership(resource *unstructured.Unstructured) Ownership {
+	return detectOwnership(resource, true)
+}
+
+// DetectOwnershipBuiltin applies the same built-in precedence as
+// DetectOwnership without loading host-configured custom detector files. It is
+// used for immutable recorded evidence where ambient mutable configuration
+// would make results nondeterministic.
+func DetectOwnershipBuiltin(resource *unstructured.Unstructured) Ownership {
+	return detectOwnership(resource, false)
+}
+
+func detectOwnership(resource *unstructured.Unstructured, includeCustom bool) Ownership {
 	labels := resource.GetLabels()
 	annotations := resource.GetAnnotations()
 
@@ -82,8 +94,10 @@ func DetectOwnership(resource *unstructured.Unstructured) Ownership {
 
 	// Check for custom configured ownership detectors.
 	// Built-ins intentionally run first to preserve contract precedence.
-	if ownership := detectCustomOwnership(labels, annotations); ownership.Type != "" {
-		return ownership
+	if includeCustom {
+		if ownership := detectCustomOwnership(labels, annotations); ownership.Type != "" {
+			return ownership
+		}
 	}
 
 	// Check for Kubernetes native ownership (via OwnerReferences)

@@ -55,6 +55,7 @@ When fields cross surface boundaries, mapping is explicit (e.g., metadata `creat
 | GitOps delivery evidence | This doc (below) | Embedded in `gitops status --with-confighub` and `doctor --with-confighub` JSON |
 | Resource delivery evidence | This doc (below) | Embedded in `trace --with-confighub`, `explain --with-confighub`, and single-resource `receipt verify --with-confighub` JSON |
 | Bounded resource read (v2.10.0) | This doc (below) | Additive `resourceRead`, `configHubOrigin`, and `omissions` on bounded `explain` only |
+| Recorded object input | This doc (below) | `recordedInput` provenance on offline `explain --recording` |
 | Map activity delivery rows | This doc (below) | Embedded in `map activity --with-confighub` JSON rows |
 | MCP standalone tools | CLI JSON contract of the wrapped command | Embedded in MCP `content[0].text` |
 | MCP connected trust guidance | This doc (below) | Additive `structuredContent` wrapper |
@@ -147,6 +148,32 @@ The real MCP gateway and TUI each reuse up to 16 observations for less than 15
 seconds. A hit keeps the original timestamps and uses zero requests. Refresh
 invalidates old evidence even if the new read fails. Tests and live smoke:
 [bounded resource evidence](../../examples/bounded-resource-read/).
+
+### Recorded Explain Input
+
+`explain --recording FILE` and `mcp serve --recording FILE` use the bounded
+recorded-object loader contract described in
+[recorded object loader](../../examples/recorded-object-loader/). Recorded
+explain selects an exact `apiVersion`, Kind, namespace, and name. Its summary
+uses `recordedInput` for immutable input provenance and deliberately omits
+`resourceRead`:
+
+| Field | Meaning |
+|---|---|
+| `recordedInput.kind` | `kubernetes-object-recording` |
+| `recordedInput.identity` | Exact requested API version, Kind, namespace, and name |
+| `recordedInput.sha256` | SHA-256 of the complete input bytes |
+| `recordedInput.bytes`, `documents`, `objectCount` | Bounded input byte, YAML document, and object counts |
+| `omissions[]` | Includes missing trusted capture time, controller revision, source/controller, related-pod/event, and desired/live evidence |
+
+No file path or capture timestamp is reported. Without separately trusted
+capture-time metadata, recorded explain omits `currentChange` and
+`controllerRevision`; it never substitutes the current clock. Health is limited
+to object-local evidence. Ownership uses built-in detectors only and includes
+an omission that custom host detector configuration was not read. The recorded
+MCP server loads the file once at startup and exposes only `explain`; requests
+cannot supply paths or select live/connected operations. Raw object payloads,
+including Secret data, are not returned.
 
 ### Observed Origin
 

@@ -31,3 +31,27 @@ object is ambiguous even if its content is byte-identical; a Deployment in
 `staging`, a prefix name such as `api-canary`, or an object with missing
 identity metadata cannot satisfy the request. Errors describe the failure
 class only and never include object payloads (including Secret data).
+
+## Recorded explain surface contract
+
+The proposed public consumer uses the loader through an explicit
+`explain <kind/name> --recording FILE --api-version VERSION --namespace NS`
+selection; callers must supply `--namespace ""` for an explicitly empty
+namespace, and exact resource names are not normalized. Built-in ownership
+rules retain normal precedence; ambient custom detector files are not read and
+that limitation is explicit in the result. `--tui` renders this one selected
+object interactively, without creating a cluster inventory. The JSON summary has a separate `recordedInput`
+provenance block and no live `resourceRead` block. The MCP server may instead
+be started with a fixed `--recording FILE`; its explain tool takes only exact
+identity fields, while other live or connected tools are not exposed.
+
+Recorded summaries reuse only pure object facts. Without explicit trusted
+capture-time metadata they omit `currentChange` and controller-revision
+comparisons, identify time-dependent conclusions as unavailable, and do not
+consult kubeconfig, the network, ConfigHub, filesystem paths supplied to MCP
+calls, or a wall clock. Integer values retain Kubernetes-compatible `int64`
+types and precision through YAML/JSON decoding. The prepared
+[recorded explain case](../../evals/recorded-explain-contract/) uses the complete
+raw baseline but only grades file-evidence interpretation; offline Go tests
+exercise the product surfaces on those same bytes. Neither is a benchmark run
+or evidence of comparative benefit.

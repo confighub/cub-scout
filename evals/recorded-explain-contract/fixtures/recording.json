@@ -1,0 +1,10 @@
+{
+  "kind": "complete recorded Kubernetes Deployments List",
+  "source": "evals/fixtures/cluster/deployments.yaml",
+  "sha256": "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8",
+  "bytes": 67696,
+  "documents": 1,
+  "objectCount": 14,
+  "captureTimeTrusted": false,
+  "purpose": "offline evidence interpretation only; not a CLI, TUI, or MCP run"
+}
