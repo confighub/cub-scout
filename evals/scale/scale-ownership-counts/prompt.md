@@ -8,4 +8,4 @@ timeout_seconds: 900
 allowed_tools: [Read, Glob, Grep, Skill]
 ---
 
-I exported my cluster's state with `kubectl get -o yaml` into the `cluster` directory in the current working directory (namespaces, deployments, replicasets, pods, services, configmaps, events). Use whatever tools you have available. The workloads are the Deployments in the `team-*` namespaces. How many of these Deployments does each of Flux, Argo CD, Helm and ConfigHub manage, and how many are managed by none of them? Finish with one line exactly in this form: `COUNTS: flux=N argocd=N helm=N confighub=N unmanaged=N`.
+I exported my cluster's state with `kubectl get -o yaml --show-managed-fields` into the `cluster` directory in the current working directory (namespaces, deployments, replicasets, pods, services, configmaps, events). Use whatever tools you have available. The workloads are the Deployments in the `team-*` namespaces. How many of these Deployments does each of Flux, Argo CD, Helm and ConfigHub manage, and how many are managed by none of them? Finish with one line exactly in this form: `COUNTS: flux=N argocd=N helm=N confighub=N unmanaged=N`.

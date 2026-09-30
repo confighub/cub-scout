@@ -13,6 +13,22 @@ runs with the cub-scout plugin loaded and again without it, and the difference
 This is the pilot: thirteen cases on one recorded scenario, and three on a 300-Deployment scale scenario. The first suite of 20–30
 cases, a scheduled CI run and published results come next.
 
+## Main scenario evidence refresh (2026-09-30)
+
+The main scenario was re-recorded in an isolated disposable cluster after the
+recorder gained `--show-managed-fields`. Both arms now receive the full field
+manager evidence for attribution. Source revision and file hashes are in
+[the recording manifest](fixtures/recording-2026-09-30.json). The old result
+tables below describe their original evidence; they are not results on these
+new fixtures. The scale raw exports were also refreshed read-only from the
+existing named scale context; [their manifest](fixtures/scale/recording-2026-09-30.json)
+records provenance. Its scout arm remains live, so runtime observations can
+change after capture.
+
+The scenario uses representative field-manager names and controller labels;
+real GitOps controllers are not installed. The raw dump and MCP capture occur
+sequentially, so timestamps and runtime status can change during recording.
+
 ## Run
 
 Needs Claude Code 2.1.269 or later, logged in. Runs count against that account.

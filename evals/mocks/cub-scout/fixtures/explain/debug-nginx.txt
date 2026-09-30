@@ -20,7 +20,7 @@
     "progress": {
       "phase": "complete",
       "clockSource": "status.conditions[Progressing].lastUpdateTime",
-      "progressAgeSeconds": 201
+      "progressAgeSeconds": 98
     },
     "verdict": "PASS",
     "reason": "workload_converged",
@@ -30,7 +30,7 @@
       "kstatusMessage": "Deployment is available. Replicas: 1",
       "generation": 1,
       "observedGeneration": 1,
-      "observedAt": "2026-09-27T07:57:59Z"
+      "observedAt": "2026-09-30T17:27:46Z"
     }
   },
   "events": {
@@ -40,11 +40,11 @@
         "reason": "ScalingReplicaSet",
         "message": "Scaled up replica set debug-nginx-5dbdb5f74f from 0 to 1",
         "count": 1,
-        "age": "3m",
-        "lastSeen": "2026-09-27T08:54:35+01:00",
+        "age": "1m",
+        "lastSeen": "2026-09-30T18:26:04+01:00",
         "severity": "info",
         "source": "deployment-controller",
-        "firstSeen": "2026-09-27T08:54:35+01:00"
+        "firstSeen": "2026-09-30T18:26:04+01:00"
       }
     ],
     "totalCount": 1,

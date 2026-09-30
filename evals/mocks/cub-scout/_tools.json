@@ -116,16 +116,40 @@
     },
     {
       "name": "map",
-      "description": "Standalone resource inventory with ownership classification (map list --json). Use for 'what's running in this cluster or namespace?' and broad inventory questions, especially when the user wants more meaning than raw `kubectl get` output. DO NOT load for bare 'what's broken?' or one-resource root cause; use doctor first for health, then explain for a specific resource.",
+      "description": "Standalone resource inventory with ownership classification (map list --json). Use for 'what's running in this cluster or namespace?', 'how many does Flux manage?' and 'which workloads are unmanaged?', especially when the user wants more meaning than raw `kubectl get` output. On a large cluster the full list can be too big for your context: ask for summary=true (counts by owner and kind) or names_only=true, and filter with kind, owner or query (for example kind=Deployment, owner=Native). DO NOT load for bare 'what's broken?' or one-resource root cause; use doctor first for health, then explain for a specific resource.",
       "annotations": {
         "readOnlyHint": true
       },
       "inputSchema": {
         "additionalProperties": false,
         "properties": {
+          "count": {
+            "description": "Return only the number of entries after filters.",
+            "type": "boolean"
+          },
+          "kind": {
+            "description": "Optional kind filter, for example Deployment.",
+            "type": "string"
+          },
+          "names_only": {
+            "description": "Return namespace/name per entry instead of full entries.",
+            "type": "boolean"
+          },
           "namespace": {
             "description": "Optional namespace filter.",
             "type": "string"
+          },
+          "owner": {
+            "description": "Optional owner filter: Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, Terraform, ConfigHub, or Native (managed by none of them).",
+            "type": "string"
+          },
+          "query": {
+            "description": "Optional query expression, for example 'kind=Deployment AND owner!=Native'.",
+            "type": "string"
+          },
+          "summary": {
+            "description": "Return counts by owner and kind (after filters) instead of the entries.",
+            "type": "boolean"
           }
         },
         "type": "object"

@@ -20,7 +20,7 @@
     "progress": {
       "phase": "complete",
       "clockSource": "status.conditions[Progressing].lastUpdateTime",
-      "progressAgeSeconds": 161
+      "progressAgeSeconds": 55
     },
     "verdict": "PASS",
     "reason": "workload_converged",
@@ -30,7 +30,7 @@
       "kstatusMessage": "Deployment is available. Replicas: 1",
       "generation": 2,
       "observedGeneration": 2,
-      "observedAt": "2026-09-27T07:57:59Z"
+      "observedAt": "2026-09-30T17:27:45Z"
     }
   },
   "events": {
@@ -40,33 +40,33 @@
         "reason": "ScalingReplicaSet",
         "message": "Scaled down replica set inventory-6df8fd8b55 from 1 to 0",
         "count": 1,
-        "age": "2m",
-        "lastSeen": "2026-09-27T08:55:18+01:00",
+        "age": "55s",
+        "lastSeen": "2026-09-30T18:26:50+01:00",
         "severity": "info",
         "source": "deployment-controller",
-        "firstSeen": "2026-09-27T08:55:18+01:00"
+        "firstSeen": "2026-09-30T18:26:50+01:00"
       },
       {
         "type": "Normal",
         "reason": "ScalingReplicaSet",
         "message": "Scaled up replica set inventory-577549bfd6 from 0 to 1",
         "count": 1,
-        "age": "2m",
-        "lastSeen": "2026-09-27T08:55:16+01:00",
+        "age": "1m",
+        "lastSeen": "2026-09-30T18:26:45+01:00",
         "severity": "info",
         "source": "deployment-controller",
-        "firstSeen": "2026-09-27T08:55:16+01:00"
+        "firstSeen": "2026-09-30T18:26:45+01:00"
       },
       {
         "type": "Normal",
         "reason": "ScalingReplicaSet",
         "message": "Scaled up replica set inventory-6df8fd8b55 from 0 to 1",
         "count": 1,
-        "age": "3m",
-        "lastSeen": "2026-09-27T08:54:36+01:00",
+        "age": "1m",
+        "lastSeen": "2026-09-30T18:26:05+01:00",
         "severity": "info",
         "source": "deployment-controller",
-        "firstSeen": "2026-09-27T08:54:36+01:00"
+        "firstSeen": "2026-09-30T18:26:05+01:00"
       }
     ],
     "totalCount": 3,
