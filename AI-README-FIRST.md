@@ -1,5 +1,7 @@
 # AI Read Me First
 
+**2026-09-30:** the maintainer adopted the [3.0 execution plan](docs/roadmap-3.0-execution.md). Start with the latest handover and [execution tracker #645](https://github.com/confighub/cub-scout/issues/645). v2.12.4 is being prepared; historical eval scores are exploratory, not proof of equal-evidence savings.
+
 This is the repo-specific cold-start guide for Claude, Codex, and other AI coding agents.
 
 **2026-09-27 (handover):** read [HANDOVER.md](HANDOVER.md) first: evals on main (13 recorded + 3 live scale cases), six unreleased agent-facing fixes (#625, #629, #630, #631, #634, #637), the "agentic = cost and time advantage" definition, and the in-flight live-only branch.
