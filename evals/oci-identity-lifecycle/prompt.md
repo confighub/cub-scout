@@ -37,11 +37,10 @@ Copy exact identities and timestamps only where a receipt records them. For
 `observation_time` must be copied from `catalog-delivery-proof.yaml` at
 `spec.observedAt`. For `current_cluster_state`,
 `independent_bundle_verification`, `runtime_image_id`, and `hook_execution`,
-use `UNKNOWN` when evidence is absent. The delivery receipt says the scratch
-organization lacked apply-policy Triggers and limits its proof to delivery;
-it does not establish whether policy execution occurred. Therefore
-`policy_execution` is `UNKNOWN`, not `NOT_RUN`. Do not copy the recorded image
-reference into `runtime_image_id`. Copy the `recorded_hook_policy`, the
+use `UNKNOWN` when evidence is absent. For `policy_execution`, use `RUN`,
+`NOT_RUN`, or `UNKNOWN` according to the evidence; distinguish missing policy
+configuration from proof of execution or non-execution. Do not copy the
+recorded image reference into `runtime_image_id`. Copy the `recorded_hook_policy`, the
 specific no-hooks flag, and `lifecycle_observed` exactly. Do not substitute a
 similar digest, infer runtime state from the receipt's observation, or claim
 independent verification without artifact bytes. Do not run historical
