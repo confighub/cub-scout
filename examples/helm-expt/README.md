@@ -16,6 +16,40 @@ This is a general pattern for any chart/release that `helm-expt` can render
 and compare. Redis is the first worked value set, not the shape of the whole
 example.
 
+## Helm release-secret decoding contract (#588, partial)
+
+Before release decoding can be trusted, a valid stored release must retain its
+name, namespace, and positive version. A malformed or over-limit candidate
+Helm Secret must produce explicit incomplete/error evidence from release
+listing, direct lookup, and history; it must never disappear silently and make
+an older version look current or history look empty. A namespace with no Helm
+release Secrets keeps the existing no-record behavior. Decoder limits are 9
+MiB of encoded `data.release`, 6 MiB after base64 decode, and 32 MiB of
+decompressed JSON. Decoder errors identify the failure class without echoing
+secret contents.
+
+This work affects standalone `trace` paths that read Helm's Kubernetes Secret
+storage. The same tracer's connected consumer, where present, must preserve the
+explicit error/incomplete result; this packet adds deterministic unit coverage,
+not a connected integration run. It does not cover SQL or other Helm storage
+drivers, exact parsed manifest-to-resource identity, hooks, application
+success, or any Helm 3/4 compatibility matrix. A valid `deployed` release is
+still only Helm's stored release status. The caps bound each `data.release`
+decode only; they do not bound Secret-list cardinality/response bytes or API
+request duration. This packet does not add pagination, namespace inventory
+limits, or a new request timeout; those remain separate limits on the caller
+and Kubernetes client.
+
+The future disposable-cluster smoke is
+[`reproduce-helm-release-secret-trace.sh`](./reproduce-helm-release-secret-trace.sh).
+It creates a uniquely named kind cluster, builds a local sample chart with the
+installed Helm CLI, traces that release, then deletes only the cluster it
+created. It is not run by unit tests and was not run for this packet; its output
+is not Helm-version parity evidence. The deterministic unit contract includes
+valid releases, no records, denied Secret listing, malformed encodings/data,
+oversize expansion, invalid identity metadata, and an older valid record beside
+a bad candidate in either listing order.
+
 ## Runnable Demo (Self-Contained)
 
 The rest of this page is the full integration narrative against a real
