@@ -460,7 +460,7 @@ func TestDeliveryCaseMappingsKeepBenchmarkUnexecutable(t *testing.T) {
 			}
 		}
 	}
-	if m.Status != "frozen_design_not_executable" || m.Execution.Paid || !found["DEL-01"] || !found["DEL-02"] || !found["HLT-02"] || counts["planned"] != 12 || counts["existing_refreshed_fixture"] != 5 || counts["existing_needs_snapshot_binding"] != 2 || counts["recorded_projection_prepared_not_run"] != 4 || counts["raw_recording_prepared_not_run"] != 1 {
+	if m.Status != "frozen_design_not_executable" || m.Execution.Paid || !found["DEL-01"] || !found["DEL-02"] || !found["HLT-02"] || counts["planned"] != 10 || counts["existing_refreshed_fixture"] != 5 || counts["existing_needs_snapshot_binding"] != 2 || counts["recorded_projection_prepared_not_run"] != 6 || counts["raw_recording_prepared_not_run"] != 1 {
 		t.Fatalf("case preparation changed benchmark gates or readiness: status=%q paid=%v mappings=%v counts=%v", m.Status, m.Execution.Paid, found, counts)
 	}
 	if hlt02Provenance.SourceRevision != "sha1:7732dde28be8cf8c42c096d94efbd8ce4a9d0a19" || hlt02Provenance.AppliedRevision != hlt02Provenance.SourceRevision || hlt02Provenance.AtomicSnapshot {
@@ -504,5 +504,78 @@ func TestDeliveryCaseMappingsKeepBenchmarkUnexecutable(t *testing.T) {
 		if got := fmt.Sprintf("%x", sha256.Sum256(contents)); got != want {
 			t.Fatalf("applied manifest %s hash=%s want %s", name, got, want)
 		}
+	}
+}
+
+func TestDeliveryReceiptMappingsPreserveUnrunLimits(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "evals", "benchmark-v1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var manifest struct {
+		Status    string `json:"status"`
+		Execution struct {
+			Paid bool `json:"paid_runs_authorized_by_this_manifest"`
+		} `json:"execution"`
+		Groups []struct {
+			Cases []struct {
+				ID           string   `json:"id"`
+				Status       string   `json:"status"`
+				ExistingCase string   `json:"existing_case"`
+				Remaining    []string `json:"remaining_controls"`
+				Admission    string   `json:"benchmark_admission"`
+				Provenance   struct {
+					Repository string            `json:"repository"`
+					Revision   string            `json:"revision"`
+					Files      map[string]string `json:"fixture_files_sha256"`
+					Limits     string            `json:"limits"`
+				} `json:"source_provenance"`
+			} `json:"cases"`
+		} `json:"groups"`
+	}
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		t.Fatal(err)
+	}
+	if manifest.Status != "frozen_design_not_executable" || manifest.Execution.Paid {
+		t.Fatal("receipt mappings must not authorize a benchmark run")
+	}
+	want := map[string]struct {
+		directory, repository, revision string
+		files                           int
+	}{
+		"DEL-03": {"evals/sveltos-inferred-revision", "confighub/sveltos-confighub", "8187910f9fe226e109e55c4d9c7c0e21297ff424", 3},
+		"DEL-04": {"evals/oci-identity-lifecycle", "confighub/helm-expt", "9ab4c753a888dc305a3c07956c9f8f5a19eb70a0", 5},
+	}
+	found := map[string]bool{}
+	for _, g := range manifest.Groups {
+		for _, c := range g.Cases {
+			w, ok := want[c.ID]
+			if !ok {
+				continue
+			}
+			if found[c.ID] {
+				t.Fatalf("duplicate mapping%s", c.ID)
+			}
+			found[c.ID] = true
+			if c.ExistingCase != w.directory || c.Status != "recorded_projection_prepared_not_run" || c.Provenance.Repository != w.repository || c.Provenance.Revision != w.revision || len(c.Provenance.Files) != w.files || len(c.Remaining) == 0 || !strings.Contains(c.Admission, "not run or admitted") || c.Provenance.Limits == "" {
+				t.Fatalf("mapping lost provenance/readiness limits:%+v", c)
+			}
+			for path, wantHash := range c.Provenance.Files {
+				if !strings.HasPrefix(path, "fixtures/") || strings.Contains(path, "..") {
+					t.Fatalf("invalid fixture path %q", path)
+				}
+				raw, err := os.ReadFile(filepath.Join("..", "..", c.ExistingCase, path))
+				if err != nil {
+					t.Fatal(err)
+				}
+				hash := sha256.Sum256(raw)
+				if hex.EncodeToString(hash[:]) != wantHash {
+					t.Fatalf("%s/%s differs from pinned source", c.ID, path)
+				}
+			}
+		}
+	}
+	if len(found) != 2 {
+		t.Fatalf("missing receipt mappings:%v", found)
 	}
 }

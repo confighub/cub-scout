@@ -1,8 +1,9 @@
 # Sveltos inferred revision versus delivery receipt
 
 This is a single recorded-evidence case prepared for DEL-03 review. It has not
-been run, does not change benchmark-v1 mapping or counts, and is not evidence
-of benchmark admission or product quality. Both arms receive identical
+been run. It is mapped in benchmark-v1 as a prepared source projection, not
+admitted to the baseline or evidence of product quality. Missing/stale input
+variants remain pending; rejected grader answers do not replace those controls. Both arms receive identical
 case-owned files through `scaffold.sh`; the case requires no MCP call and no
 live or shell access.
 

@@ -1,7 +1,7 @@
 # OCI identity lifecycle receipt case
 
-This is an offline, prepared-not-run candidate for DEL-04. It is not mapped
-into `benchmark-v1`, is not admitted to the paid baseline, and does not make
+This is an offline, prepared-not-run DEL-04 projection mapped in
+`benchmark-v1`. It is not admitted to the paid baseline and does not make
 the 24-case benchmark executable. It is a receipt projection, not a raw
 Kubernetes snapshot or raw OCI/bundle bytes.
 
