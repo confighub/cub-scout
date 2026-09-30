@@ -1,0 +1,5 @@
+apiVersion: 1
+kind: Deployment
+metadata:
+  name: other
+  namespace: team-a

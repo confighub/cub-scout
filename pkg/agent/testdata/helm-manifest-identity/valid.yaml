@@ -1,0 +1,18 @@
+---
+# A comment containing name: api must not affect identity matching.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: team-a
+  annotations:
+    note: "name: api-helper"
+spec:
+  template:
+    metadata:
+      name: api-helper
+---
+# Empty and comment-only documents are valid and ignored.
+
+---
+# comment only

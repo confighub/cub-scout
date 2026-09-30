@@ -997,6 +997,28 @@ func selectBestTraceResult(ownership *agent.Ownership, results []tracerTestResul
 	return nil
 }
 
+func TestExplainKeepsHelmManifestIdentityFailurePartial(t *testing.T) {
+	ownership := &agent.Ownership{
+		Type:   agent.OwnerHelm,
+		Name:   "web",
+		Source: "label:app.kubernetes.io/managed-by=Helm",
+	}
+	traceErr := fmt.Errorf("cannot establish Helm manifest identity: multiple manifest API versions match the requested identity")
+	result := selectBestTraceResult(ownership, []tracerTestResult{{tool: "helm", err: traceErr}})
+	if result == nil {
+		t.Fatal("explain returned nil for known Helm ownership with incomplete trace")
+	}
+	if result.FullyManaged || len(result.Chain) != 0 {
+		t.Fatalf("incomplete explain trace claimed management: %+v", result)
+	}
+	if !strings.Contains(result.Error, traceErr.Error()) {
+		t.Fatalf("explain lost manifest ambiguity: %q", result.Error)
+	}
+	if summary := buildExplainSummary(result); summary.Owner != "Helm" {
+		t.Fatalf("explain owner = %q, want preserved Helm ownership", summary.Owner)
+	}
+}
+
 func TestRenderExplainMarkdown_PresentationModes(t *testing.T) {
 	summary := ExplainSummary{
 		Resource:    "Deployment/payments-api",

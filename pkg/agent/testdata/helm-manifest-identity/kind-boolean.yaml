@@ -1,0 +1,5 @@
+apiVersion: apps/v1
+kind: true
+metadata:
+  name: other
+  namespace: team-a
