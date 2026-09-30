@@ -40,13 +40,17 @@ request duration. This packet does not add pagination, namespace inventory
 limits, or a new request timeout; those remain separate limits on the caller
 and Kubernetes client.
 
-The future disposable-cluster smoke is
+The optional disposable-cluster smoke is
 [`reproduce-helm-release-secret-trace.sh`](./reproduce-helm-release-secret-trace.sh).
 It creates a uniquely named kind cluster, builds a local sample chart with the
 installed Helm CLI, traces that release, then deletes only the cluster it
-created. It is not run by unit tests and was not run for this packet; its output
-is not Helm-version parity evidence. The deterministic unit contract includes
-valid releases, no records, denied Secret listing, malformed encodings/data,
+created. It is a valid-release smoke only; it does not test malformed
+candidates or fallback behavior. It is not run by unit tests and was not run
+for this packet; its output is not Helm-version parity evidence. It preserves
+Helm version, rendered-chart hash, command outputs/status, and Secret names in
+the requested evidence directory (or a printed temporary directory) without
+recording Secret payloads. The deterministic unit contract includes valid
+releases, no records, denied Secret listing, malformed encodings/data,
 oversize expansion, invalid identity metadata, and an older valid record beside
 a bad candidate in either listing order.
 
