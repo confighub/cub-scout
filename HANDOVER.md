@@ -1,16 +1,19 @@
 # cub-scout Handover for the Next AI Coder
 
-## 2026-09-30: Adopted 3.0 execution and patch preparation
+## 2026-09-30: Adopted 3.0 execution and v2.12.4 publication
 
 The maintainer adopted the [3.0 execution plan](docs/roadmap-3.0-execution.md)
 and authorized implementation, GitHub synchronization and reviewed delivery.
 [Tracker #645](https://github.com/confighub/cub-scout/issues/645) holds the live
 work queue. Its P0–P6 order and adopted decisions supersede the historical
-next-step instructions below. Prepare v2.12.4 before the next minor.
+next-step instructions below. v2.12.4 is published at `11c3e38`; archive,
+macOS/Linux entry-point and Homebrew checksum checks passed. Anonymous
+container pulls still return 403 (#520).
 
 - #643 merged the live-only cases, strict regex fixes and incomplete-result
-  reporting. Saved live-only results are still partial; do not call them a
-  completed experiment.
+  reporting. The original live-only file remains partial; completion runs and
+  saved-trace regrading are recorded in PR #646. They are exploratory and do
+  not establish the controlled equal-evidence savings gate.
 - #603 now requires binary verified answers, equal raw evidence including
   managedFields, all failed-attempt costs and explicit unmeasured credits.
   Historical fractional scores and unequal attribution evidence are exploratory.
@@ -18,6 +21,11 @@ next-step instructions below. Prepare v2.12.4 before the next minor.
   normal speed is the default. The lead reviews semantics and evidence.
   Paid work uses staged ceilings in the execution plan and never silently
   enables fast mode.
+- Run offline Go tests with an explicit empty kubeconfig: some golden tests
+  create/delete fixture namespaces when a reachable default context exists.
+  Shared context changed during release validation; the full suite passed but
+  exercised temporary fixtures on `kind-cs-argo`. No fixture namespaces remained
+  afterward. Future offline runs use an isolated empty kubeconfig.
 - Reuse the named scale context only with explicit context/KUBECONFIG. Do not
   delete a shared cluster because older instructions below say to clean it up.
 - Direct-shell Claude authentication was verified on September 30. Recheck
