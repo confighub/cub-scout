@@ -158,27 +158,7 @@ func TestConsulHLT03PinnedReceiptAndChildCapture(t *testing.T) {
 		t.Fatalf("unexpected provenance or unsupported scope claim: %+v", provenance)
 	}
 
-	caseYAML, err := os.ReadFile(filepath.Join(root, "case.yaml"))
-	if err != nil || !strings.Contains(string(caseYAML), "FIXTURE-OWNED-SCAFFOLD") {
-		t.Fatalf("case must declare its fixture-owned scaffold: %v", err)
-	}
-	workspace := t.TempDir()
-	scaffold, err := filepath.Abs(filepath.Join(root, "scaffold.sh"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	cmd := exec.Command("bash", scaffold)
-	cmd.Dir = workspace
-	if output, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("run receipt scaffold: %v\n%s", err, output)
-	}
-	for _, name := range []string{"receipt.yaml", "argocd-child.json", "source-provenance.json"} {
-		got, err := os.ReadFile(filepath.Join(workspace, "cluster", name))
-		want, readErr := os.ReadFile(filepath.Join(root, "fixtures", name))
-		if err != nil || readErr != nil || string(got) != string(want) {
-			t.Fatalf("scaffold output %s differs from checked-in source bytes: %v %v", name, err, readErr)
-		}
-	}
+	checkConsulHLT03Scaffold(t, root)
 	promptBytes, err := os.ReadFile(filepath.Join(root, "prompt.md"))
 	if err != nil {
 		t.Fatal(err)
@@ -186,6 +166,37 @@ func TestConsulHLT03PinnedReceiptAndChildCapture(t *testing.T) {
 	prompt := string(promptBytes)
 	if strings.Contains(prompt, "Ingress/consul/consul-consul-ui") || strings.Contains(prompt, `"receipt_outcome":"WATCH"`) || !strings.Contains(prompt, "hashicorp-consul-secure-mesh-existing-secrets-parity") {
 		t.Fatal("prompt leaks the expected residual/outcome or omits the exact child Application identity")
+	}
+}
+
+func checkConsulHLT03Scaffold(t *testing.T, root string) {
+	t.Helper()
+	caseYAML, err := os.ReadFile(filepath.Join(root, "case.yaml"))
+	if err != nil || !strings.Contains(string(caseYAML), "FIXTURE-OWNED-SCAFFOLD") {
+		t.Fatalf("case must declare its fixture-owned scaffold: %v", err)
+	}
+	scaffold, err := filepath.Abs(filepath.Join(root, "scaffold.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, arm := range []string{"with", "without"} {
+		workspace := t.TempDir()
+		cmd := exec.Command("bash", scaffold)
+		cmd.Dir = workspace
+		if output, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("run %s receipt scaffold: %v\n%s", arm, err, output)
+		}
+		entries, err := os.ReadDir(filepath.Join(workspace, "cluster"))
+		if err != nil || len(entries) != 3 {
+			t.Fatalf("%s scaffold inventory: %d files, %v", arm, len(entries), err)
+		}
+		for _, name := range []string{"receipt.yaml", "argocd-child.json", "source-provenance.json"} {
+			got, err := os.ReadFile(filepath.Join(workspace, "cluster", name))
+			want, readErr := os.ReadFile(filepath.Join(root, "fixtures", name))
+			if err != nil || readErr != nil || string(got) != string(want) {
+				t.Fatalf("%s scaffold output %s differs from source: %v %v", arm, name, err, readErr)
+			}
+		}
 	}
 }
 
