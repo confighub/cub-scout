@@ -136,6 +136,13 @@ a version. Helm/Kustomize back-resolution [#481], Grafana [#432], Commander/TUI
 integration [#519]/[#421]/[#422], more controllers [#607], Git-host publication
 [#606] and scanner restoration [#534] remain outside this critical path.
 
+September 30 execution refinement ([#649](https://github.com/confighub/cub-scout/issues/649)):
+P1/P2 must distinguish resource-level mutation hints from exact-field evidence.
+`explain.mutationManager` is representative metadata, not proof of a particular
+field's latest writer or a person. Attribution cases must include path-specific
+counterexamples and recorded/live/source limits; a correct final label alone
+cannot establish a general answer-quality or savings claim.
+
 ## Contract to settle before adding more adapters
 
 P3/P4 use one evidence model, projected through the existing surfaces:

@@ -1,0 +1,49 @@
+{
+  "date": "2026-09-30",
+  "costBasis": "producer-estimated inclusive list price; mock/judge breakdowns are not added again",
+  "accountCredits": null,
+  "accountCreditsStatus": "not measured",
+  "developmentAgentCostStatus": "not measured",
+  "runs": [
+    {
+      "stage": "live-only completion",
+      "resultFile": "scale-unmanaged-live-completion-20260930.json",
+      "sha256": "a85b6824303cd9e91bed6a5ea557b4a04baead2f2843b1162757eca8e870cd9d",
+      "inclusiveListPriceUsd": 0.9869255,
+      "partial": false
+    },
+    {
+      "stage": "live-only completion",
+      "resultFile": "scale-whats-failing-live-completion-20260930.json",
+      "sha256": "544cce67b5f8c70aa5cbb66b2c7d1833a392e7cfd06402535d4a46cac151aa9c",
+      "inclusiveListPriceUsd": 1.482281,
+      "partial": false
+    },
+    {
+      "stage": "smoke",
+      "resultFile": "fair-checkout-smoke-20260930.json",
+      "sha256": "705072da3004ab7e7abbd35acac0241c447219f3985b914cd268ea7a4687ed46",
+      "inclusiveListPriceUsd": 0.86744,
+      "partial": false
+    },
+    {
+      "stage": "smoke",
+      "resultFile": "fair-checkout-routing-20260930.json",
+      "sha256": "37b15a1bdfa4691bb4a068699e682b11560f7247184b72febdc7bbc3d8366f0e",
+      "inclusiveListPriceUsd": 0.37800300000000003,
+      "partial": false
+    }
+  ],
+  "totalNewEvalListPriceUsd": 3.7146495,
+  "stageEnvelopesUsd": {
+    "live-only completion": 15,
+    "smoke": 20,
+    "baseline": 200
+  },
+  "baselineSpendUsd": 0,
+  "notes": [
+    "Historical September 27/28 spend is outside this execution ledger and remains in its original reports.",
+    "Formatting amendment was regraded offline; no paid retry.",
+    "No max-speed run was enabled; all new run terminal records report fast mode off."
+  ]
+}

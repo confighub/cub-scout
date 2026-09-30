@@ -1,23 +1,23 @@
 ---
 name: investigate-drift
-description: 'Use when the user wants to find out WHY live state diverges from desired state — and specifically whether the drift is the controller still reconciling vs. someone bypassing the GitOps loop. Natural phrasing: "why is this Deployment different from the git manifest?", "did someone kubectl-edit this?", "is Argo still syncing or did a human change this?", "controller-drift or manual-edit?", "find the field that diverged and the writer", "compare three-way + attribution for deploy/api". Composes `compare three-way` + `compare drift` + the attribution layer (per-field cause / managerHint / gitSource / bindingSource). Do NOT load for: a triage where the workload won''t start (use triage-unhealthy-workload), pure inventory (use scout-observe), generating a fingerprinted evidence artifact (use scout-verify and the no-manual-edits-since predicate), or any mutating fix (cub-scout never mutates).'
+description: 'Use when the user wants to compare live and desired state and inspect available manager and source evidence. Natural phrasing: "why is this Deployment different from the git manifest?", "which recognized manager is recorded for this path?", "controller-drift or interactive-manager evidence?", "compare three-way + attribution for deploy/api". Composes `compare three-way` + `compare drift` + the attribution layer (`cause` / `managerHint` / `gitSource` / `bindingSource`). Do NOT promise who changed the value or which manager wrote last: path-level manager evidence is not time-ordered, and resource-level `explain` evidence is not field-specific. Do NOT load for: a triage where the workload won''t start (use triage-unhealthy-workload), pure inventory (use scout-observe), generating a fingerprinted evidence artifact (use scout-verify and the no-manual-edits-since predicate), or any mutating fix (cub-scout never mutates).'
 phase: cross-cutting
 allowed-tools: Bash(./cub-scout compare three-way *) Bash(cub-scout compare three-way *) Bash(cub scout compare three-way *) Bash(./cub-scout compare drift *) Bash(cub-scout compare drift *) Bash(cub scout compare drift *) Bash(./cub-scout compare source-truth *) Bash(cub-scout compare source-truth *) Bash(cub scout compare source-truth *) Bash(./cub-scout explain *) Bash(cub-scout explain *) Bash(cub scout explain *) Bash(./cub-scout trace *) Bash(cub-scout trace *) Bash(cub scout trace *) Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl get --show-managed-fields *) Bash(cub space list *) Bash(cub unit get *) Bash(cub unit list *) Bash(cub link get *) Bash(cub link list *) Bash(cub view get *) Bash(cub view list *) Bash(cub unit-event list *) Bash(cub resource list *) Bash(cub release list *) Bash(cub changeset list *) Bash(argocd app get *) Bash(flux get *)
 ---
 
 # investigate-drift
 
-The drift-detective loop. Live state doesn't match desired state — and the operator needs to know WHY. Composes `compare three-way` (DRY/WET/LIVE) + `compare drift` (file/bundle vs cluster) + the attribution layer (`cause` / `managerHint` / `gitSource` / `bindingSource` per field) into a structured "find the diff + identify the writer" investigation.
+The drift-investigation loop. Live state does not match desired state, so compare the values and inspect available provenance. Composes `compare three-way` (DRY/WET/LIVE) + `compare drift` (file/bundle vs cluster) + attribution (`cause` / `managerHint` / `gitSource` / `bindingSource`). Manager evidence classifies recognized managers; it does not establish write order or human identity.
 
 ## When to use
 
 Explicit phrasings:
 
 - "Why is deploy/api different from the git manifest?"
-- "Did someone `kubectl edit` this?"
-- "Is Argo still syncing or did a human change this?"
+- "Is a recognized interactive manager recorded for this path?"
+- "Which recognized controller or interactive manager is recorded?"
 - "controller-drift or manual-edit?"
-- "Find the field that diverged and tell me who wrote it"
+- "Find the field that diverged and show its available manager evidence"
 - "Compare three-way + attribution for deploy/api in prod"
 - "The cluster says replicas=1, ConfigHub says 3 — what happened?"
 
@@ -39,15 +39,15 @@ Implicit intents:
 ## The loop
 
 1. **Detect the diff** with `compare three-way` (connected) or `compare drift --file <yaml>` (standalone).
-2. **Identify the writer per field** by reading the `attribution` block on each `compareFieldMismatch`:
+2. **Inspect manager evidence** on each `compareFieldMismatch`. Path-specific classifications require decodable `FieldsV1` and a mapped canonical path; otherwise the result can be a resource-level fallback, which must not be attributed to that field:
    - `cause`: `controller-drift` / `manual-edit` / `unknown`
-   - `managerHint`: the K8s `managedFields` manager string for this field
+   - `managerHint`: a representative recognized K8s `managedFields` manager string for the path classification or fallback
    - `gitSource`: where the desired value comes from (repo / revision / path / file:line if stage B back-resolution is wired)
    - `bindingSource` (connected): which ConfigHub Link supplied this field
-3. **Resolve the writer** to a real human/CI action:
-   - `argocd-controller` / `kustomize-controller` / `helm-controller` → controller is reconciling
-   - `kubectl-edit` / `kubectl-patch` / `kubectl-apply` (no GitOps owner) → human writer
-   - `kubectl-client-side-apply` + Argo owner → Argo CSA migration (controller, not human)
+3. **Interpret the manager string conservatively** using [`references/verified-manager-strings.md`](../references/verified-manager-strings.md):
+   - `argocd-controller` / `kustomize-controller` / `helm-controller` → recognized controller-manager evidence; this does not show reconciliation is happening now
+   - `kubectl-edit` / `kubectl-patch` / `kubectl-apply` → recognized interactive-manager evidence; it does not identify the person or prove write order
+   - `kubectl-client-side-apply` + Argo owner → Argo CSA migration co-signal; manager strings alone do not identify a human
 4. **Decide the response** based on cause + the operator's policy. cub-scout doesn't pick; the user does.
 
 ## Step-by-step
@@ -84,26 +84,26 @@ Each `compareFieldMismatch.attribution` block carries the per-field provenance. 
 | Field | Meaning |
 |-------|---------|
 | `cause` | One of `controller-drift` / `manual-edit` / `unknown` (verified manager-string enumeration in `pkg/agent/manager_strings.go`) |
-| `managerHint` | The specific writer name that produced this classification |
+| `managerHint` | A representative recognized manager string; not proof of the latest writer or a person |
 | `gitSource.{repoUrl, revision, path}` | Resource-level git anchor from the Argo / Flux tracer (A2) |
 | `gitSource.{file, line}` | Stage B back-resolution (`--source-path <local-checkout>`) — the exact YAML file:line where the field was set |
 | `bindingSource` (connected) | `{unit, path, link}` — which ConfigHub Link supplies this field's value (C2) |
 
-The `cause` is the headline. `managerHint` is the verbatim writer string. The git/binding sources are the breadcrumb back to source-of-truth.
+The `cause` classifies recognized manager evidence. `managerHint` is a manager string, not a person or timestamped writer identity. The git/binding sources point to desired-state provenance.
 
-### Step 3 — resolve the writer
+### Step 3 — interpret manager evidence
 
-Read the manager-string enumeration in [`references/verified-manager-strings.md`](../references/verified-manager-strings.md). Common writers and what they mean:
+Read the manager-string enumeration in [`references/verified-manager-strings.md`](../references/verified-manager-strings.md). These are manager classifications, not proof of a current reconciliation or human action:
 
 | Writer | Owner context | Meaning |
 |--------|--------------|---------|
-| `argocd-controller` | Argo-owned | Argo reconciled the field. `controller-drift`. |
-| `kubectl-client-side-apply` | Argo-owned | Argo's CSA migration default. `controller-drift`. |
-| `kubectl-client-side-apply` | Native (no Argo signal) | Human ran `kubectl apply`. `manual-edit`. |
-| `kustomize-controller` / `helm-controller` | Flux-owned | Flux reconciled the field. `controller-drift`. |
-| `kubectl-edit` / `kubectl-patch` | Any | Human edit. `manual-edit`. |
-| `apiextensions.crossplane.io/composed-<hash>` | Crossplane-owned | Crossplane composed-resource writer. `controller-drift`. |
-| `helm` (bare) | Helm-direct | Direct `helm install/upgrade`. `controller-drift` for OwnerHelm. |
+| `argocd-controller` | Argo-owned | Recognized Argo controller-manager evidence. `controller-drift`; recency is not established. |
+| `kubectl-client-side-apply` | Argo-owned | Argo CSA migration co-signal. `controller-drift`; does not establish recency. |
+| `kubectl-client-side-apply` | Native (no Argo signal) | Classified as interactive-manager evidence. `manual-edit`; the human identity is unknown. |
+| `kustomize-controller` / `helm-controller` | Flux-owned | Recognized Flux controller-manager evidence. `controller-drift`; recency is not established. |
+| `kubectl-edit` / `kubectl-patch` | Any | Recognized interactive-manager evidence. `manual-edit`; person and write order are unknown. |
+| `apiextensions.crossplane.io/composed-<hash>` | Crossplane-owned | Recognized Crossplane composed-resource manager evidence. `controller-drift`; recency is not established. |
+| `helm` (bare) | Helm-direct | Helm manager evidence. `controller-drift` for OwnerHelm; it does not establish a person or write order. |
 | Unrecognized | Any | `cause=unknown`. cub-scout parses; it does not guess. |
 
 The owner co-signal is essential for the `kubectl-client-side-apply` disambiguation. See [`observe-argocd`](../observe-argocd/SKILL.md) for the full rule.
@@ -114,12 +114,12 @@ cub-scout produces the evidence; the operator picks the action.
 
 | Cause | Common operator response (mutations are user-driven) |
 |-------|----------------------------------------------------|
-| `controller-drift` + recent sync | Wait. The controller is reconciling; the diff is transient. |
-| `controller-drift` + persistent | Investigate the controller (Argo `OutOfSync`, Flux `False`, kstatus failure). The reconciler is broken. |
-| `manual-edit` + change should be kept | Port the edit back to git → controller reconciles → drift resolves. |
-| `manual-edit` + change should be reverted | `kubectl rollout undo` OR wait for controller to revert. The original git state wins. |
-| `manual-edit` + change should be accepted as canonical | Commit the live state to git → drift resolves; document the policy exception. |
-| `unknown` | Cannot classify. Likely `managedFields` was stripped (admission webhook?) or the writer isn't in the verified enumeration. File an issue with the manager string. |
+| `controller-drift` + independently observed recent sync | Compare live values again and inspect controller health; manager evidence alone does not show it is reconciling or that the diff is transient. |
+| `controller-drift` + persistent | Investigate controller status (Argo `OutOfSync`, Flux `False`, kstatus failure); do not infer a broken reconciler from manager evidence alone. |
+| `manual-edit` + change should be kept | Verify the live value and desired source, then port an approved change back to git. |
+| `manual-edit` + change should be reverted | Verify policy and live value, then have the operator restore desired state; do not assume which value is newest. |
+| `manual-edit` + change should be accepted as canonical | Verify and review the live value, then update the source of truth through the operator's normal process. |
+| `unknown` | Cannot classify. Missing, incomplete, unmapped, or unrecognized evidence can all yield unknown; investigate the available metadata without guessing. |
 
 ## Worked example
 
@@ -146,13 +146,13 @@ Field mismatches:
     Git source:   (same)
 ```
 
-**Reading:** Two fields, both `manual-edit`. The writers are `kubectl-edit` (replicas) and `kubectl-patch` (cpu request). Someone ran two separate manual commands. Argo CD's `Synced` state is misleading because Argo's last sync wasn't the most recent write — the `managedFields` co-signal proves it.
+**Reading:** If these are path-specific classifications, each path has recognized interactive-manager evidence; controller-manager evidence may also be present. The strings do not prove separate commands, identify a person, or establish that Argo's last sync predates these values. Check the actual live and desired values and the controller status independently.
 
 **Response options:**
 
-- If the edit was emergency cost-control (CPU + replicas down for a spike), revert: `kubectl rollout undo deploy/api -n prod` and let Argo re-apply the manifest version.
-- If the edit was correct (replicas 1 IS what prod needs), commit the change back to `apps/prod/api/deployment.yaml`, push, and Argo will reconcile.
-- Either way, somebody bypassed GitOps. Surface this in the team's drift dashboard (or via `cub-scout receipt verify ... --predicate no-manual-edits-since`, which captures it as a fingerprinted artifact for the postmortem).
+- If the live values should return to desired state, have the operator restore them through the approved workflow and verify reconciliation.
+- If the live values should become canonical, have the operator review and update the source of truth through the normal workflow.
+- Manager evidence alone does not establish that somebody bypassed GitOps. For time-bounded history, use a suitable audit source or the receipt predicate with its documented timestamp evidence.
 
 cub-scout produced the evidence in one command. The decision is the operator's.
 
@@ -165,7 +165,7 @@ With `cub auth login`, `compare three-way` adds:
 - **`confighubUrl`** — deep-link to the unit's revision in the ConfigHub GUI
 - **`incomingBindings[]`** on the unit — which upstream units feed this unit
 
-Standalone mode loses the DRY column and bindingSource; what remains is the WET (file) vs LIVE (cluster) diff plus the per-field cause from `managedFields`. Still useful — just narrower.
+Standalone mode loses the DRY column and bindingSource; what remains is the WET (file) vs LIVE (cluster) diff. A path-specific manager classification is available only when decodable `FieldsV1` maps the mismatch; otherwise output may be resource-level or unknown. It still does not establish write order or a person.
 
 ## Tool boundary
 
@@ -186,5 +186,6 @@ Standalone mode loses the DRY column and bindingSource; what remains is the WET 
 ## Constraints
 
 - This skill is **investigation**, not remediation. cub-scout categorically never applies a fix. Every revert / port / accept is the operator running another tool.
-- `cause=unknown` is an honest answer when `managedFields` is missing or stripped. Don't pressure-classify it.
+- `cause=unknown` is honest when manager evidence is missing, incomplete, unmapped, or unrecognized. Don't pressure-classify it.
+- `controller-drift` and `manual-edit` describe recognized manager presence in the resource or mapped path. The classifier does not use manager timestamps to order writers or prove a person acted; inspect audit logs for identity/history.
 - Stage B file:line back-resolution requires `--source-path <local-git-checkout>` and only covers raw YAML (no Helm / Kustomize templating yet — see #435 follow-ons).

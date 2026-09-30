@@ -377,7 +377,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"trace": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "trace",
-				Description: "Exact ownership and source chain for one resource (trace --format json). Use AFTER doctor or explain once the user has narrowed to one resource and wants to know where it came from, which source or deployer owns it end-to-end, or what GitOps chain produced it. DO NOT load for broad cluster status or first-pass troubleshooting; use doctor first, then explain if the resource is still unclear.",
+				Description: "Exact ownership and source chain for one resource (trace --format json). Use when the user needs the resource's owner, deployer, or GitOps/source chain after the resource is known. This answers ownership/source lineage, not which field writer made a change; do not call trace just to confirm an explain result about manual-edit attribution. DO NOT load for broad cluster status or first-pass troubleshooting; use doctor when the resource or problem scope is still unclear.",
 				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
@@ -411,7 +411,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"explain": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "explain",
-				Description: "Plain-English explanation for one resource: who owns it, health or drift, recent events, and what to do next (explain --format json). Use AFTER doctor or map once the user has narrowed to a specific resource, especially when the user wants more computed meaning than raw `kubectl describe`. DO NOT load for broad cluster inventory or health; use doctor first.",
+				Description: "Plain-English explanation for one resource: who owns it, health or drift, recent events, and what to do next (explain --format json). When the resource is known, use this directly as a first read for 'was this resource edited by hand?' questions; it reports resource-level mutationCause and a representative mutationManager from manager strings across managedFields when available. This summary does not inspect FieldsV1 paths or order writes by time, so it does not prove who last wrote a particular field. A manager identifies a field-manager string, not a human. For an exact field claim, inspect that field's managedFields path and preserve unknown when evidence is missing or ambiguous. Trace provides owner/source lineage only and does not corroborate field-writer attribution; call it only when that chain is also needed. For broader symptom triage, use AFTER doctor or map once the resource is narrowed, especially when more computed meaning is needed than raw `kubectl describe`. DO NOT load for broad cluster inventory or health; use doctor first.",
 				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",

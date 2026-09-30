@@ -20,7 +20,6 @@
     "evals/fixtures/incident.sh": "dd73c6f6aa7e61658d116bf7026b3eff9c4f719a0ea315a51e550897050bccc4",
     "evals/fixtures/scenario.yaml": "987e75a696c75b383cde1ab3aea39c08613b6cb2a3efe53d7e2122118230464c",
     "evals/fixtures/setup.sh": "877dd1dbe16ed25da95b0297d427adb5b965c7c36d014a49eee65c1508fec4dd",
-    "evals/mocks/cub-scout/_tools.json": "6d6af7fdc52dfef542329f47e8d1f2108ceb24e122c3eada572c49820385aefc",
     "evals/mocks/cub-scout/fixtures/doctor.txt": "418271509d69ae555f66191aa1944e2a68e71bd0016a70d753361420555bdc51",
     "evals/mocks/cub-scout/fixtures/explain/billing.txt": "2b6f02368c3cd133409482abc3987fe965042adaf6eb04b16fa8350e0f0d5a27",
     "evals/mocks/cub-scout/fixtures/explain/cart.txt": "2b22f646cabf3a23a1dd0b5c26dde997538c18b9163b982763ebbb9ea9c2d276",
@@ -43,5 +42,13 @@
     "evals/mocks/cub-scout/fixtures/trace/ledger.txt": "fa89b125e32e0763b49fa1873c6d972d9fca5512b75b9ee12fde024682ddcc0a",
     "evals/mocks/cub-scout/fixtures/trace/orders.txt": "8a1421d5a8ef3e7b51260158000b612e5068f6c4ab818e4a8944cfd753f108b9",
     "evals/mocks/cub-scout/fixtures/trace/payments-api.txt": "4560ef4d2fe92aa565fe1e333ab1e052699c2ca72c0421654d0ecb401e301061"
+  },
+  "toolCatalog": {
+    "path": "evals/mocks/cub-scout/_tools.json",
+    "sha256": "fd221f0c928b1bf41d36dae19c44a46a9452aea09b22964231fefba97542594c",
+    "recordedAt": "2026-09-30",
+    "sourceCommit": "04f92bc",
+    "scope": "Standalone tools/list only; empty kubeconfig, cub hidden from PATH. No cluster data re-recorded.",
+    "previousSha256": "6d6af7fdc52dfef542329f47e8d1f2108ceb24e122c3eada572c49820385aefc"
   }
 }
