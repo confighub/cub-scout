@@ -57,9 +57,9 @@ def failing_for_fixture(pod):
         return True
     if waiting.get("reason") == "CrashLoopBackOff":
         terminated = status.get("lastState", {}).get("terminated") or {}
-        return isinstance(terminated.get("exitCode"), int) and terminated["exitCode"] != 0
+        return type(terminated.get("exitCode")) is int and terminated["exitCode"] != 0
     terminated = status.get("state", {}).get("terminated") or {}
-    return isinstance(terminated.get("exitCode"), int) and terminated["exitCode"] != 0
+    return type(terminated.get("exitCode")) is int and terminated["exitCode"] != 0
 
 
 def validate_capture(deployment, replicasets, pod_list):
@@ -69,8 +69,11 @@ def validate_capture(deployment, replicasets, pod_list):
     deployment_uid = deployment_meta.get("uid")
     generation = deployment_meta.get("generation")
     status = deployment.get("status", {})
-    if not deployment_uid or type(generation) is not int or generation < 1 or status.get("observedGeneration") != generation:
+    if not deployment_uid or type(generation) is not int or generation < 1 or type(status.get("observedGeneration")) is not int or status.get("observedGeneration") != generation:
         raise InvalidCapture("Deployment status is not observed for its current generation")
+    counts = [deployment.get("spec", {}).get("replicas", 1), status.get("availableReplicas", 0), status.get("unavailableReplicas", 0)]
+    if any(type(value) is not int or value < 0 for value in counts):
+        raise InvalidCapture("Deployment replica counts must be nonnegative integers")
     if deployment.get("spec", {}).get("replicas", 1) != 1 or status.get("availableReplicas", 0) != 0 or status.get("unavailableReplicas", 0) < 1:
         raise InvalidCapture("Deployment does not show one current unavailable replica")
     if deployment_meta.get("labels", {}).get("kustomize.toolkit.fluxcd.io/name") != "apps" or deployment_meta.get("labels", {}).get("kustomize.toolkit.fluxcd.io/namespace") != "flux-system":
@@ -86,6 +89,9 @@ def validate_capture(deployment, replicasets, pod_list):
             continue
         worker = named_container(rs, "worker")
         if worker is None or worker.get("image") != EXPECTED_IMAGE or worker.get("command") != [MISSING_COMMAND]:
+            continue
+        counts = [rs.get("spec", {}).get("replicas", 1), rs.get("status", {}).get("readyReplicas", 0)]
+        if any(type(value) is not int or value < 0 for value in counts):
             continue
         if rs.get("spec", {}).get("replicas", 1) != 1 or rs.get("status", {}).get("readyReplicas", 0) != 0:
             continue

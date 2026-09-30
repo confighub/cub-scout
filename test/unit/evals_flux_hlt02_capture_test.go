@@ -284,7 +284,7 @@ func TestFluxHLT02CaptureValidatorRequiresUnreadyPodOwnerChain(t *testing.T) {
 		t.Fatalf("valid Deployment→ReplicaSet→Pod chain rejected: %v", err)
 	}
 
-	for _, missing := range []string{"deployment-generation", "pod-uid", "pod-namespace", "replicaset-namespace", "pod-command"} {
+	for _, missing := range []string{"deployment-generation", "pod-uid", "pod-namespace", "replicaset-namespace", "pod-command", "bool-generation", "bool-replicas", "bool-available", "bool-unavailable", "bool-rs-replicas", "bool-exit-code"} {
 		t.Run(missing, func(t *testing.T) {
 			d, r, p := makeObjects()
 			pod := p["items"].([]any)[0].(map[string]any)
@@ -301,6 +301,19 @@ func TestFluxHLT02CaptureValidatorRequiresUnreadyPodOwnerChain(t *testing.T) {
 				rs["metadata"].(map[string]any)["namespace"] = "other"
 			case "pod-command":
 				delete(pod, "spec")
+			case "bool-generation":
+				d["metadata"].(map[string]any)["generation"] = 1
+				d["status"].(map[string]any)["observedGeneration"] = true
+			case "bool-replicas":
+				d["spec"].(map[string]any)["replicas"] = true
+			case "bool-available":
+				d["status"].(map[string]any)["availableReplicas"] = false
+			case "bool-unavailable":
+				d["status"].(map[string]any)["unavailableReplicas"] = true
+			case "bool-rs-replicas":
+				rs["spec"].(map[string]any)["replicas"] = true
+			case "bool-exit-code":
+				pod["status"].(map[string]any)["containerStatuses"].([]any)[0].(map[string]any)["state"] = map[string]any{"terminated": map[string]any{"exitCode": true}}
 			}
 			if err := run(t, d, r, p); err == nil {
 				t.Fatalf("accepted missing or mismatched evidence: %s", missing)
