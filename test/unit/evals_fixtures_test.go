@@ -306,6 +306,12 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			checkFluxHLT02ScaffoldBytes(t, caseDir)
 			continue
 		}
+		// DEL-04 is a receipt-only case: it owns immutable public source
+		// receipts, not the unrelated suite-wide Kubernetes resource export.
+		if filepath.Base(caseDir) == "oci-identity-lifecycle" {
+			checkOCIIdentityLifecycleScaffold(t, caseDir)
+			continue
+		}
 		if !strings.Contains(string(data), "scaffold_script: scaffold.sh") {
 			// Live-only cases read the cluster through cub-scout, not an export.
 			prompt, _ := os.ReadFile(filepath.Join(filepath.Dir(caseYAML), "prompt.md"))

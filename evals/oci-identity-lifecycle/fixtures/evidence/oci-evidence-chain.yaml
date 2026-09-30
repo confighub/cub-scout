@@ -1,0 +1,107 @@
+apiVersion: "catalog.confighub.com/v1alpha1"
+kind: "OciEvidenceChain"
+metadata:
+  name: "cub-installer-nginx-three-consumers"
+  labels:
+    sourceType: "cub-installer"
+spec:
+  sourceType: "cub-installer"
+  example: "A public NGINX installer package rendered once and delivered three ways"
+  boundaries:
+    source:
+      result: "pass"
+      digest: "sha256:7cf08c0348a32d577ffa0e16069ec6c2510ce773b372008d25b938f9546c5f67"
+      reference: "oci://europe-west1-docker.pkg.dev/nth-fort-499605-q5/helm-expt/bitnami-nginx:24.0.2"
+      identifiers:
+        - "package-layer:sha256:9905c5ba5f0b0187f5d22b7f4113856635476bb081d584b36251f5513b010414"
+        - "preset:http-clusterip"
+      evidence:
+        - "runs/installer-oci/bitnami-nginx/24.0.2/installer-package-publication-receipt.yaml"
+        - "packages/bitnami/nginx/24.0.2/installer.yaml"
+      detail: "The public multi-preset installer package is identified by its OCI manifest and package-layer digests."
+      observedAt: ""
+      expiresAt: ""
+    reviewedConfiguration:
+      result: "pass"
+      digest: "sha256:9547e0067fbdbb318d9e4309e3dcc74211bf01cb7ac243b8b23586ccc337d7e7"
+      reference: "recipes/bitnami/nginx/24.0.2/revisions/http-clusterip/r001/rendered/release-objects.yaml"
+      identifiers:
+        - "objects:6"
+        - "preset:http-clusterip"
+      evidence:
+        - "data/helm-render-intents/intents/bitnami-nginx-24-0-2-http-clusterip.yaml"
+        - "recipes/bitnami/nginx/24.0.2/revisions/http-clusterip/r001/rendered/release-objects.yaml"
+      detail: "The http-clusterip preset produced the committed catalog objects plus the requested Namespace."
+      observedAt: ""
+      expiresAt: ""
+    configHubRecord:
+      result: "pass"
+      digest: ""
+      reference: "space:hx-catalog-oci-20260726-wr7-nginx"
+      identifiers:
+        - "release-id:1dbed784-4fb6-4092-a734-075eb8bdfd4c"
+        - "units:6"
+      evidence:
+        - "runs/catalog-oci-delivery-proof/bitnami-nginx-24-0-2-http-clusterip.yaml"
+      detail: "ConfigHub held the selected, rendered configuration and published one release for all three consumers."
+      observedAt: ""
+      expiresAt: ""
+    outputOci:
+      result: "pass"
+      digest: "sha256:26d97438d5b52dcacf140d2ef4c57a97bacd0c63e22d5cfa19076a0723b73049"
+      reference: "oci://oci.hub.confighub.com:443/space/hx-catalog-oci-20260726-wr7-nginx:latest"
+      identifiers:
+        - "release-id:1dbed784-4fb6-4092-a734-075eb8bdfd4c"
+        - "bundle-digest:sha256:882622f0736d2bd740da6189689cd716ee427b8f1ce44814291e9dc0274fbb89"
+      evidence:
+        - "runs/catalog-oci-delivery-proof/bitnami-nginx-24-0-2-http-clusterip.yaml"
+      detail: "ConfigHub published one immutable release OCI."
+      observedAt: ""
+      expiresAt: ""
+    delivery:
+      result: "pass"
+      digest: "sha256:26d97438d5b52dcacf140d2ef4c57a97bacd0c63e22d5cfa19076a0723b73049"
+      reference: "oci://oci.hub.confighub.com:443/space/hx-catalog-oci-20260726-wr7-nginx:latest"
+      identifiers:
+        - "consumer:Argo CD"
+        - "consumer:Direct apply"
+        - "consumer:Flux"
+      evidence:
+        - "runs/catalog-oci-delivery-proof/bitnami-nginx-24-0-2-http-clusterip.yaml"
+      detail: "Argo CD, Flux, and direct apply all consumed the same release digest."
+      observedAt: ""
+      expiresAt: ""
+    observation:
+      result: "pass"
+      digest: "sha256:26d97438d5b52dcacf140d2ef4c57a97bacd0c63e22d5cfa19076a0723b73049"
+      reference: ""
+      identifiers:
+        - "Argo CD:replicas-1/1"
+        - "Direct apply:replicas-1/1"
+        - "Flux:replicas-1/1"
+      evidence:
+        - "runs/catalog-oci-delivery-proof/bitnami-nginx-24-0-2-http-clusterip.yaml"
+      detail: "Each delivery method reported a ready NGINX workload with the expected image and replica count."
+      observedAt: "2026-07-26T17:10:27.568Z"
+      expiresAt: ""
+  companionRecords:
+    sourceInputs:
+      - "packages/bitnami/nginx/24.0.2/installer.yaml"
+      - "data/helm-render-intents/intents/bitnami-nginx-24-0-2-http-clusterip.yaml"
+    lifecycle:
+      - "data/helm-render-intents/intents/bitnami-nginx-24-0-2-http-clusterip.yaml"
+    checks:
+      - "data/helm-render-intents/intents/bitnami-nginx-24-0-2-http-clusterip.yaml"
+    receipts:
+      - "runs/installer-oci/bitnami-nginx/24.0.2/installer-package-publication-receipt.yaml"
+      - "runs/catalog-oci-delivery-proof/bitnami-nginx-24-0-2-http-clusterip.yaml"
+status:
+  coverage: "managed-and-observed"
+  completeThrough: "observation"
+  claim: "One public cub installer package can be followed from the package digest through a selected preset, one ConfigHub release OCI, and ready workloads delivered by Argo CD, Flux, and direct apply."
+  limits:
+    - "This proves bitnami/nginx 24.0.2 with the http-clusterip base on the recorded throwaway kind target."
+    - "It does not prove another chart, base, Kubernetes version, or production target."
+    - "The scratch organization did not have the helm-catalog apply-policy Triggers; this run proves delivery, not policy execution."
+    - "The test applied the Argo CD Application and Flux source objects directly so that it measured release-OCI consumption without also testing app-of-apps delivery."
+    - "The direct leg proves first apply and workload readiness. Separate receipts cover prune, CRD ordering, and field-conflict handling."
