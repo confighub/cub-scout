@@ -29,8 +29,9 @@ editing graders):
 claude plugin eval . --scaffold --case owner-unlabelled --runs 1 --keep-temp
 ```
 
-Runs are sandboxed: no home directory, no kubeconfig, no network. Nothing touches
-a cluster or ConfigHub.
+Recorded runs are sandboxed: no home directory, no kubeconfig, no network.
+They do not touch a cluster or ConfigHub; the scale cases below explicitly
+use a live cluster.
 
 ## Cost and speed
 
@@ -46,7 +47,20 @@ per correct answer, turns and seconds. Cost per run includes the agent, judge
 graders and agent mocks. **Cost per correct answer** (total cost divided by
 total score) is the headline: an arm that is cheap per run but rarely right is
 expensive per correct answer. Runs that ended in an error are counted and
-listed, because their cost was spent.
+listed, because their cost was spent. Input completeness is reported before the
+tables. Use `--require-complete` for a gate: partial or unverified completeness
+exits non-zero while still printing the observed costs and scores. A completed
+run is not necessarily a passing run; correctness remains a separate metric.
+Completeness uses the producer's `partial` flag and per-case planned run counts;
+it cannot discover a case omitted entirely from a falsely complete artifact.
+
+```bash
+evals/scripts/report.py evals/results/<run>.json --require-complete
+```
+
+Do not pool different models, versions, evidence conditions or grader revisions
+into one headline number. The reporter combines observations; it does not prove
+that the input experiments are comparable.
 
 From the pilot (one run per case per arm, 2026-09-26/27):
 
@@ -69,13 +83,17 @@ against the export (see Scale results below).
 
 ## Design
 
-- **Both arms see the same evidence.** Each case's `scaffold.sh` writes a
+- **Both arms see the same workload scenario, with an attribution evidence gap.**
+  Each recorded case's `scaffold.sh` writes a
   `kubectl get -o yaml` export of the scenario into the run's workspace as
   `./cluster/`, with the files embedded (a first attempt with `add_dirs` left
   the agent unable to find the directory). The without-cub-scout arm answers
   from that export alone. The with-cub-scout arm also gets the plugin's skills
-  and cub-scout's MCP tools. So `Δ` measures what
-  cub-scout adds on the same evidence, not the value of having any data at all.
+  and cub-scout's MCP tools. For labels and status, `Δ` measures the additional
+  tool access on that export. For attribution, the baseline export lacks managedFields while
+  cub-scout has them: that result measures extra evidence access as well as
+  tooling. It does not isolate an advantage on equal information. A matched
+  managedFields baseline remains required before making that claim.
 - **MCP answers are recordings.** `mocks/cub-scout/` answers `doctor`, `map`,
   `scan`, `gitops_status`, `trace` and `explain` with what a standalone
   `cub-scout mcp serve` returned for the scenario. `trace` and `explain` are
@@ -235,9 +253,61 @@ the cub-scout arm two sources and it cross-checks one against the other.
 
 Two follow-ups: a live-only variant for the scale cases (cub-scout against a
 live cluster, no export, versus the export alone), which is how agents meet
-cub-scout and the fair test of cost and time; and evidence on each
-`names_only` entry (why it counts as unmanaged), in case the verification is a
+cub-scout and a separate workflow comparison of cost and time; and evidence
+on each `names_only` entry (why it counts as unmanaged), in case the verification is a
 trust gap.
+
+### Live-only scale cases: prepared, results pending
+
+The three `*-live` cases have no export scaffold. Run only their plugin arm
+(`--ablation none`); a without-plugin arm would have neither an export nor live
+tools and is not a valid baseline. Compare each case with the **without** arm
+of the corresponding unsuffixed scale case, keeping the model/version, fixture
+state and grader revision aligned. Report the three pairs separately; do not
+combine all six case names into an all-cases headline. This measures different
+operator workflows, not an equal-information experiment.
+
+The interrupted September 27 artifact, when available locally, is partial and
+must not be presented as the completed three-case result. Preserve it for cost
+accounting. The exact-identity list graders were tightened on September 30;
+older scores need transcript regrading or a rerun before comparison with new
+scores. The historical tables above retain their original grader results.
+
+For a fresh run from a terminal with Claude Code login and access to the
+existing `kind-scout-evals-scale` context:
+
+```bash
+go build ./cmd/cub-scout
+kubectl --context kind-scout-evals-scale get deployments -A
+# Stop if the named context is unavailable or the scenario has changed.
+# Compute PATH separately so a failed preflight cannot start a paid eval.
+eval_path="$(evals/scripts/live-path.sh kind-scout-evals-scale)" &&
+  PATH="$eval_path" claude plugin eval . --tag scale-live --ablation none \
+    --runs 3 --mocks off --allow-tools "mcp__plugin_cub-scout_cub-scout__*" \
+    --max-cost-usd 10 --json evals/results/scale-live-only-runs3-rerun.json
+
+evals/scripts/report.py evals/results/scale-live-only-runs3-rerun.json \
+  --require-complete
+```
+
+The handover estimated about $8; the command requests a $10 harness budget.
+That is an estimate and a harness limit, not a guaranteed bill. Keep the old
+artifact and use a fresh output filename for each attempt. If the budget or
+session ends early, publish the partial status and cost, not a benefit claim.
+Do not recreate or delete the shared cluster merely to run this command.
+Paid execution, a pinned-model repeat, and a complete comparison are pending.
+
+Offline checks exercise the actual list-grader regexes against exact,
+reordered, missing, duplicate, extra and suffixed resource identities. Reporting
+checks use synthetic result files under `test/fixtures/evals-report/`, outside
+the harness's case discovery path. These ownership and diagnosis questions
+extend the existing [AI-agent quest](../examples/ai-agent-quest/); the scale
+scenario above supplies their deterministic inputs. Run checks without model
+charges:
+
+```bash
+go test ./test/unit -run 'TestEval' -count=1
+```
 
 ## What the recordings show today
 

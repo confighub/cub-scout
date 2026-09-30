@@ -1,5 +1,33 @@
 # cub-scout Handover for the Next AI Coder
 
+## 2026-09-30: Eval Completion Checks and Live-Only Preparation
+
+At session start, local and remote `main` were `387f6b5`; #640 was still open.
+The work on `codex/eval-completeness` carries forward the three live-only scale
+cases from `feat/eval-scale-live-only`, tightens exact resource-list grading,
+and makes partial eval results visible. `report.py --require-complete` rejects
+incomplete or unverified run metadata while retaining the observed costs.
+This is eval tooling work; no runtime ownership or health behavior changes.
+
+The existing local live-only result is interrupted, with two cases present and
+$5.15 recorded cost. No new paid Claude eval was run. This shell had no current
+Kubernetes context; the shared cluster was not recreated, changed or removed.
+The [eval README](evals/README.md#live-only-scale-cases-prepared-results-pending)
+has the exact rerun command (about $8 estimated, $10 requested harness cap),
+baseline pairing and remaining methodology limits. Old list-grader scores need
+transcript regrading or a rerun before comparison with the tightened graders.
+
+The live-only result and #603 remain pending. Next independent work remains
+#626 routing measurement and per-entry `map` evidence. Release timing, #620,
+#599, the module-path timing, #640 review/merge handling and #641's reporter
+default have not been decided here. #642 is ConfigHub/Pilot benchmark design,
+not authorization to implement a write path in cub-scout.
+
+Cost preference: plan costs before substantial execution, use cheaper
+subagents for bounded work, and reserve max speed for necessity. Behavior
+changes should be opened for review, not self-merged under the earlier
+Claude-specific delegation.
+
 ## 2026-09-27: Agent Evals, Five Fixes, and "Agentic" Defined
 
 **State at hand-off.** `main` is at `292d20e`, CI green, no open PRs. The last

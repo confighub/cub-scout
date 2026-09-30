@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Summarise `claude plugin eval --json` results: correctness, cost and speed.
 
-Usage: evals/scripts/report.py RESULT.json [RESULT.json ...] [--by-tag]
+Usage: evals/scripts/report.py RESULT.json [RESULT.json ...] [--by-tag] [--require-complete]
 
 Prints a Markdown table per case and arm (with cub-scout / without), then the
 totals: mean score, cost per run, cost per correct answer, turns and seconds.
@@ -45,13 +45,71 @@ def case_tags(case):
 
 def load(paths):
     cases = {}
+    inputs = []
     for path in paths:
-        for case in json.load(open(path))["cases"]:
+        result = json.load(open(path))
+        file_cases = result.get("cases") or []
+        ablation = (result.get("suite") or {}).get("ablation")
+        expected_arms = ARMS if ablation == "with-without" else ("with",) if ablation == "none" else None
+        inputs.append({
+            "path": path,
+            "partial": result.get("partial"),
+            "reason": result.get("partialReason"),
+            "cases": file_cases,
+            "expected_arms": expected_arms,
+        })
+        for case in file_cases:
             entry = cases.setdefault(case["name"], {"tags": case_tags(case), "runs": defaultdict(list)})
             for arm in ARMS:
                 for run in (case.get("arms") or {}).get(arm) or []:
                     entry["runs"][arm].append(run)
-    return cases
+    return cases, inputs
+
+
+def completeness(inputs):
+    diagnostics = []
+    incomplete = False
+    unknown = False
+    for source in inputs:
+        path = source["path"]
+        if source["partial"] is True:
+            incomplete = True
+            detail = "partial=true"
+            if source["reason"]:
+                detail += " reason=" + str(source["reason"])
+            diagnostics.append(("INPUT", path, detail))
+        elif source["partial"] is False:
+            diagnostics.append(("INPUT", path, "partial=false"))
+        else:
+            unknown = True
+            diagnostics.append(("UNKNOWN", path, "partial flag missing"))
+
+        expected_arms = source["expected_arms"]
+        if expected_arms is None:
+            unknown = True
+            diagnostics.append(("UNKNOWN", path, "suite ablation does not identify expected arms"))
+            continue
+        if not source["cases"]:
+            unknown = True
+            diagnostics.append(("UNKNOWN", path, "no case run metadata"))
+            continue
+        for case in source["cases"]:
+            planned = case.get("runsPerCase")
+            if type(planned) is not int or planned <= 0:
+                unknown = True
+                diagnostics.append(("UNKNOWN", path, "%s: planned run count missing" % case.get("name", "<unnamed>")))
+                continue
+            arms = case.get("arms") or {}
+            for arm in expected_arms:
+                observed = len(arms.get(arm) or [])
+                diagnostics.append(("RUNS", path, "%s (%s): %d planned, %d observed" %
+                                    (case.get("name", "<unnamed>"), arm, planned, observed)))
+                if observed < planned:
+                    incomplete = True
+                    diagnostics.append(("INCOMPLETE", path, "%s (%s): expected %d, observed %d" %
+                                        (case.get("name", "<unnamed>"), arm, planned, observed)))
+    status = "INCOMPLETE" if incomplete else "UNKNOWN" if unknown else "COMPLETE"
+    return status, diagnostics
 
 
 def summarise(runs):
@@ -92,10 +150,16 @@ def table(title, rows):
 
 def main(argv):
     by_tag = "--by-tag" in argv
-    paths = [a for a in argv if a != "--by-tag"]
+    require_complete = "--require-complete" in argv
+    paths = [a for a in argv if a not in ("--by-tag", "--require-complete")]
     if not paths:
         raise SystemExit(__doc__)
-    cases = load(paths)
+    cases, inputs = load(paths)
+    status, diagnostics = completeness(inputs)
+    print("Completeness: " + status)
+    for level, path, detail in diagnostics:
+        print("- %s: %s — %s" % (level, path, detail))
+    print()
 
     rows = [(name, {arm: summarise(c["runs"][arm]) for arm in ARMS}) for name, c in sorted(cases.items())]
     print(table("Case", rows))
@@ -117,6 +181,10 @@ def main(argv):
         for name, arm, err in errored:
             print("- %s (%s): %s" % (name, arm, err))
 
+    if require_complete and status != "COMPLETE":
+        return 1
+    return 0
+
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    raise SystemExit(main(sys.argv[1:]))
