@@ -73,10 +73,9 @@ credentials are excluded. The temporary private kubeconfig is removed on exit.
 Review the resulting data for sensitive metadata before checking any capture
 into the repository.
 
-No expected object/status fixture is synthesized here. The real outputs must
-be inspected and approved before adding them to an eval case. Capture failure,
-missing status, revision mismatch, or controller/workload evidence mismatch
-must remain a failed or unknown capture rather than being hand-filled.
+The capture script synthesizes no expected object/status fixture. Capture
+failure, missing status, revision mismatch, or controller/workload evidence
+mismatch must remain a failed or unknown capture rather than being hand-filled.
 
 ## Captured September 30, 2026
 
@@ -96,5 +95,26 @@ Pod specifications retain service-account volume references, but there are no
 Secret objects, credential contents or kubeconfig files. The owned cluster was
 removed; shared context/config hashes and other cluster names were unchanged.
 The earlier version-prefix failure remains recorded. This capture supplies
-real evidence; it does not admit the case to benchmark-v1 or establish a
+real evidence; by itself it is not a benchmark run and does not establish a
 Scout answer, application-health result, cost saving or paid-eval result.
+
+## HLT-02 case packet (prepared, not run)
+
+`case.yaml` and `prompt.md` make this capture available as a deterministic
+product-evidence question. The fixture-owned scaffold copies every JSON file
+from `fixtures/2026-09-30/` byte-for-byte, together with the exact applied
+GitRepository and Kustomization manifests. The same scaffold is used for both
+arms; it does not request MCP and does not execute the historical cluster
+commands. The `verified-answer` regex is a free deterministic grader. Offline
+contract tests exercise its correct answer and negative substitutions for
+false readiness/health inferences, incorrect revisions/UID chain, atomic or
+current-state claims, and a fabricated application-level health test.
+
+The capture reports Ready=True for its observed generation with `wait: false`
+and no configured health checks; it separately records an unavailable
+Deployment and a UID-linked ReplicaSet/Pod. GitRepository artifact and applied
+revision match exactly. Observations were made sequentially over 47 seconds,
+not as an atomic snapshot. This is not current-time evidence and includes no
+application-level health test. The case is `raw_recording_prepared_not_run`;
+equal-tool/protocol admission, full benchmark execution, and any savings claim
+remain pending.

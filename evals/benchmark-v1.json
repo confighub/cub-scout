@@ -231,12 +231,50 @@
         {
           "id": "HLT-02",
           "question": "Flux Ready without workload checks",
-          "status": "planned",
-          "existing_case": null,
-          "reference": "Report Ready as controller status; report workload health only when checks ran and evidence supports it.",
+          "status": "raw_recording_prepared_not_run",
+          "existing_case": "evals/flux-ready-without-health",
+          "reference": "Report current-generation Flux Ready separately from workload health: wait is false, health checks are absent, and the captured Deployment is unavailable with a UID-linked ReplicaSet/Pod chain. Match the full Git artifact/applied revision. State sequential capture limits and do not claim current time or application-level health.",
           "controls": [
-            "No health claim from Ready alone"
-          ]
+            "Ready does not prove workload health when wait is false and checks are absent",
+            "A true Ready value cannot override the independently unavailable Deployment",
+            "Do not infer Ready/current-generation without matching observedGeneration",
+            "Do not infer atomicity, current state, or an application-level health test"
+          ],
+          "evidence_refresh": "2026-09-30",
+          "source_provenance": {
+            "repository": "confighub/cub-scout",
+            "revision": "7732dde28be8cf8c42c096d94efbd8ce4a9d0a19",
+            "capture_source_commit": "828ade537ef1ff73d4430d683be5aa134786610f",
+            "fixture_revision": "6f46768dc3b611ba4536abb6dbe98ce10fe2e6ed",
+            "document": "evals/flux-ready-without-health/fixtures/2026-09-30/",
+            "raw_capture_binding_sha256": "fe81b64dc4e259d76cff54cda0ca084e44bbedd367a35f6619694d89394940b3",
+            "source_revision": "sha1:7732dde28be8cf8c42c096d94efbd8ce4a9d0a19",
+            "applied_revision": "sha1:7732dde28be8cf8c42c096d94efbd8ce4a9d0a19",
+            "capture_started_at": "2026-09-30T22:17:57Z",
+            "capture_ended_at": "2026-09-30T22:18:44Z",
+            "atomic_snapshot": false,
+            "raw_files_sha256": {
+              "cli-binary-hashes.json": "f2e07ac9eada94fa8738f1d11e1ef52deefe9a3ab482b42162644c6119ddc216",
+              "controller-images.json": "de1fd0b1578f093abfab0ccea717938ba7d0dab22d3e5adae91e84cc81fde1ae",
+              "deployment.json": "a49278364bd6e1359e4b45e5c963897083d709c8a7883a8c0b92dba03160c792",
+              "gitrepository.json": "c65ca477c21148fd5cdbe342c990f2787ee595826f102174ac317a1e510771c8",
+              "kubernetes-version.json": "ee7b3dafb6898143948f3b88cf77ebda7ae1f9e605ca8690fb2f3c534627f549",
+              "kustomization-end.json": "026e2f3934c40aab07173d4f4fefccc9ee65737ecbce526be1438e5514b13cc9",
+              "kustomization-start.json": "026e2f3934c40aab07173d4f4fefccc9ee65737ecbce526be1438e5514b13cc9",
+              "kustomize-controller-pods.json": "8370786261b76dc0b7334f54245eff7cca63446210f995ad432f1cb2734b0d50",
+              "pods.json": "c08af7ad49988da39b8dd8a4519fe6e4c982a4d859273851395d1de6fa0053c2",
+              "provenance.json": "e229575b10fcb8b34c5b1835402d8af4fa2985db40f31fd284134e18fc340b9b",
+              "replicasets.json": "6b50ae0e03ad94aca6bb9941903fca7892ead9731218079d93e399f161557b92",
+              "source-controller-pods.json": "6a65c7f0357c7af930f86d309466d96178d300f942f905ac0e751946c58e6fbc",
+              "workload-validation.json": "951705160bae481472f8bfa0bd8c71675a5d95b380ff16dc1aceca4838571a9b"
+            },
+            "applied_manifest_sha256": {
+              "gitrepository.yaml": "7818566407d732608fdd66d707c9c5f2d916532e14737ae1f885d8a74b7a602d",
+              "kustomization.yaml": "c39803bd27015532c72fb62725af23d17de3cfff539162818fe3bb906f7b6d86"
+            },
+            "limits": "Raw captured Kubernetes objects and applied manifests, not an atomic/current snapshot. The captured interval is 22:17:57–22:18:44 UTC. Flux readiness and Kubernetes workload status are separate observations; no application-level health test was recorded. Full benchmark and equal-tool/protocol admission remain pending."
+          },
+          "benchmark_admission": "Raw capture scaffold and deterministic correctness contract prepared; not run. Full benchmark remains non-executable pending all case and protocol gates."
         },
         {
           "id": "HLT-03",

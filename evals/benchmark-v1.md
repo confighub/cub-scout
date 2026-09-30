@@ -16,7 +16,8 @@ Neither status means the controlled benchmark ran. DEL-01 and DEL-02 are pinned
 public-source projections, not raw cluster snapshots; both are prepared and
 unrun, and their evidence limits are recorded per case. The 24 cases currently
 comprise 5 refreshed fixtures, 2 scale cases needing snapshot binding, 3
-recorded projections prepared but not run, and 14 planned cases. Unmapped
+recorded projections prepared but not run, one raw recording prepared but not
+run, and 13 planned cases. Unmapped
 entries remain `planned`; the three live-only scale cases remain a separate
 experiment.
 
@@ -35,7 +36,7 @@ experiment.
 | Delivery identity | DEL-03 | Sveltos inferred revision versus exact proof | Planned; include missing and stale identity |
 | Delivery identity | DEL-04 | OCI identity mismatch and Helm lifecycle boundary | Planned; render parity does not prove hooks executed |
 | Health | HLT-01 | Sveltos Provisioned after workload failure | `sveltos-hlt-01-health` — recorded Part B projection prepared, not run; prerequisite state is separate from health |
-| Health | HLT-02 | Flux Ready without workload checks | Planned |
+| Health | HLT-02 | Flux Ready without workload checks | `flux-ready-without-health` — raw 2026-09-30 capture prepared, not run; Ready, wait/check configuration, Deployment availability, UID chain, and exact source/applied revision kept separate |
 | Health | HLT-03 | Consul convergence with Ingress residue | Planned |
 | Health | HLT-04 | Missing, old, or renewed report timestamps | Planned; report freshness, release identity, and health are separate facts |
 | Prerequisites / graph | PRE-01 | Missing CRD prerequisite | Planned |
