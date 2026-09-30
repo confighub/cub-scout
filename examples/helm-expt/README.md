@@ -360,7 +360,7 @@ can be verified by cub-scout. Keep `helm-expt` receipts adjacent in the run
 directory until those upstream receipts are emitted or bridged as cub-scout /
 in-toto Statement receipts.
 
-## Pinned Helm 3/4 release-secret matrix (prepared; not run)
+## Pinned Helm 3/4 release-secret matrix (first run failed; repeat pending)
 
 The companion `run-helm-version-matrix.sh` defines a disposable, serial matrix
 for the bounded namespaced Deployment case. It uses one newly created pinned
@@ -403,3 +403,17 @@ rollback, or server-side conflict modes. Manager fields are recorded as
 observations; they do not by themselves prove which apply method Helm used.
 Run only in an explicitly authorized disposable environment after reviewing
 the script and ensuring no other live lane is active.
+
+The first run at script source `9e6a5bb` installed Helm 3 successfully but Scout
+rejected its release JSON. It stopped before Helm 4; see #676 for the empty
+timestamp regression. The owned cluster was removed. This is retained as a
+failed run, not a passing compatibility result.
+
+For the regression repeat, set `BASELINE_SCOUT_BIN` to the frozen pre-fix
+Scout binary with SHA-256
+`ff6f5a1200a3dae06691c80e5ca4120478c0500ee3a6e18d97ff6b675aa1d16b`.
+The harness requires that binary to fail on the same fresh Helm 3 release
+that the newly built binary successfully traces. Secret name/UID/resourceVersion
+must remain identical across the comparison; no Secret payload is saved.
+The comparison is optional for subsequent ordinary matrix runs, and the
+pinned baseline hash is checked before any cluster creation.

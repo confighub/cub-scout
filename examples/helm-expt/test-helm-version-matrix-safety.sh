@@ -55,6 +55,17 @@ fi
 grep -Fq "Helm 3 binary SHA-256 mismatch" "$TMP_DIR/mismatch.err"
 test ! -s "$KIND_CALLS"
 
+# Optional old/fixed comparison rejects an unpinned Scout before cluster calls.
+mkdir "$TMP_DIR/baseline-mismatch-evidence"
+if PATH="$TMP_DIR/bin:$SYSTEM_PATH" BASELINE_SCOUT_BIN="$TMP_DIR/helm3" \
+	HELM3_BIN="$TMP_DIR/helm3" HELM4_BIN="$TMP_DIR/helm4" KIND_BIN="$TMP_DIR/kind" \
+	KUBECTL_BIN="$TMP_DIR/kubectl" JQ_BIN="$TMP_DIR/jq" GO_BIN="$TMP_DIR/go-fail-build" \
+	"$SCRIPT" "$TMP_DIR/baseline-mismatch-evidence" >"$TMP_DIR/baseline.out" 2>"$TMP_DIR/baseline.err"; then
+	echo "expected rejection of unpinned baseline binary" >&2; exit 1
+fi
+grep -Fq "baseline Scout binary SHA-256 mismatch" "$TMP_DIR/baseline.err"
+test ! -s "$KIND_CALLS"
+
 # The exact owned name blocks use; unrelated cluster names are preserved.
 mkdir "$TMP_DIR/owned-collision-evidence"
 : >"$GO_CALLS"

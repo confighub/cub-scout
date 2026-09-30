@@ -18,6 +18,8 @@ usage() {
 if [[ $# -ne 1 ]]; then usage; exit 2; fi
 EVIDENCE_DIR=$1
 HELM3_BIN=${HELM3_BIN:-}
+BASELINE_SCOUT_BIN=${BASELINE_SCOUT_BIN:-}
+readonly BASELINE_SCOUT_SHA=ff6f5a1200a3dae06691c80e5ca4120478c0500ee3a6e18d97ff6b675aa1d16b
 HELM4_BIN=${HELM4_BIN:-$(command -v helm || true)}
 KIND_BIN=${KIND_BIN:-$(command -v kind || true)}
 KUBECTL_BIN=${KUBECTL_BIN:-$(command -v kubectl || true)}
@@ -36,6 +38,10 @@ fi
 sha256() { shasum -a 256 "$1" | awk '{print $1}'; }
 [[ "$(sha256 "$HELM3_BIN")" == "$HELM3_SHA" ]] || fail "Helm 3 binary SHA-256 mismatch"
 [[ "$(sha256 "$HELM4_BIN")" == "$HELM4_SHA" ]] || fail "Helm 4 binary SHA-256 mismatch"
+if [[ -n "$BASELINE_SCOUT_BIN" ]]; then
+	[[ -x "$BASELINE_SCOUT_BIN" ]] || fail "baseline Scout binary is not executable"
+	[[ "$(sha256 "$BASELINE_SCOUT_BIN")" == "$BASELINE_SCOUT_SHA" ]] || fail "baseline Scout binary SHA-256 mismatch"
+fi
 HELM_PREFLIGHT_HOME="$(mktemp -d "${TMPDIR:-/tmp}/scout-helm-version-check.XXXXXX")"
 trap 'rm -rf "$HELM_PREFLIGHT_HOME"' EXIT
 mkdir -p "$HELM_PREFLIGHT_HOME"/{helm3,helm4}/{cache,config,data,home}
@@ -192,6 +198,12 @@ assert_trace() {
 	' "$out" >/dev/null || fail "trace assertion failed for $ns ($source)"
 	"$JQ_BIN" -S '{owner:.summary.ownerType, target:.target, chain:(.chain // [])}' "$out" >"$out.projection.json"
 }
+capture_helm_secret_identity() {
+	local ns=$1 out=$2
+	kubectl_call "helm-secret-identity-$ns" -n "$ns" get secrets -l owner=helm,name=release-probe \
+		-o 'custom-columns=NAME:.metadata.name,UID:.metadata.uid,RV:.metadata.resourceVersion' --no-headers >"$out" 2>"$out.stderr"
+	[[ "$(wc -l <"$out" | tr -d ' ')" == 1 ]] || fail "expected one Helm 3 release Secret for baseline comparison"
+}
 capture_release() {
 	local label=$1 binary=$2 version_home=$3 ns=$4 expected_replicas=$5
 	local dir="$EVIDENCE_DIR/releases/$label"
@@ -207,10 +219,25 @@ capture_release() {
 		"$dir/deployment.raw.json" >"$dir/deployment-evidence.json"
 	kubectl_call "get-$label-helm-secret-names" -n "$ns" get secrets -l owner=helm,name=release-probe -o name >"$dir/secret-names.txt" 2>"$dir/secret-names.stderr"
 	helm_call "history-$label" "$version_home" "$binary" history release-probe -n "$ns" -o json >"$dir/release-history.json" 2>"$dir/release-history.stderr"
+	if [[ "$label" == fresh-helm3 && -n "$BASELINE_SCOUT_BIN" ]]; then
+		capture_helm_secret_identity "$ns" "$dir/baseline-secret-before.txt"
+		local baseline_exit=0
+		record_run "baseline-trace-$ns" env -i PATH="$PATH" HOME="$WORK_DIR/cub-home" KUBECONFIG="$KUBECONFIG" \
+			"$BASELINE_SCOUT_BIN" trace deployment/release-probe -n "$ns" --format json \
+			>"$dir/baseline-trace.json" 2>"$dir/baseline-trace.stderr" || baseline_exit=$?
+		[[ "$baseline_exit" != 0 ]] || fail "expected the frozen pre-fix binary to reject Helm 3 empty timestamps"
+		grep -Fq 'invalid JSON in Helm release data' "$dir/baseline-trace.stderr" || fail "baseline failed for a different reason"
+		printf '%s\n' "$baseline_exit" >"$dir/baseline-exit.txt"
+		shasum -a 256 "$BASELINE_SCOUT_BIN" >"$dir/baseline-binary.sha256"
+	fi
 	assert_trace "$ns" standalone "${label}-standalone-trace.json"
 	assert_trace "$ns" plugin "${label}-plugin-trace.json"
 	cmp "$EVIDENCE_DIR/${label}-standalone-trace.json.projection.json" \
 		"$EVIDENCE_DIR/${label}-plugin-trace.json.projection.json" || fail "standalone/plugin trace projections differ for $label"
+	if [[ "$label" == fresh-helm3 && -n "$BASELINE_SCOUT_BIN" ]]; then
+		capture_helm_secret_identity "$ns" "$dir/baseline-secret-after.txt"
+		cmp "$dir/baseline-secret-before.txt" "$dir/baseline-secret-after.txt" || fail "release Secret changed during old/fixed comparison"
+	fi
 }
 
 printf 'build-cub-scout: (cd %q && %q build -o %q ./cmd/cub-scout)\n' "$REPO_ROOT" "$GO_BIN" "$WORK_DIR/cub-scout" >>"$EVIDENCE_DIR/commands.log"
