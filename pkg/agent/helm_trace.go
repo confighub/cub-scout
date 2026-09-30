@@ -63,8 +63,8 @@ func (h *HelmTracer) Trace(ctx context.Context, kind, name, namespace string) (*
 	if strings.TrimSpace(kind) == "" || strings.TrimSpace(name) == "" {
 		return nil, fmt.Errorf("Helm resource identity is incomplete")
 	}
-	if strings.TrimSpace(namespace) == "" {
-		return nil, fmt.Errorf("Helm resource namespace is unresolved; refusing to infer namespace or scope")
+	if err := requireHelmNamespace(namespace); err != nil {
+		return nil, err
 	}
 
 	// Find the Helm release in the namespace
@@ -108,6 +108,9 @@ func (h *HelmTracer) Trace(ctx context.Context, kind, name, namespace string) (*
 
 // TraceRelease traces a Helm release by name
 func (h *HelmTracer) TraceRelease(ctx context.Context, releaseName, namespace string) (*TraceResult, error) {
+	if err := requireHelmNamespace(namespace); err != nil {
+		return nil, err
+	}
 	release, err := h.getRelease(ctx, releaseName, namespace)
 	if err != nil {
 		return nil, err
@@ -165,6 +168,9 @@ type helmChartMetadata struct {
 
 // listReleases finds all Helm releases in a namespace
 func (h *HelmTracer) listReleases(ctx context.Context, namespace string) ([]*helmRelease, error) {
+	if err := requireHelmNamespace(namespace); err != nil {
+		return nil, err
+	}
 	// Helm stores releases in secrets with owner=helm label
 	secrets, err := h.client.CoreV1().Secrets(namespace).List(ctx, v1.ListOptions{
 		LabelSelector: "owner=helm",
@@ -211,6 +217,12 @@ func (h *HelmTracer) listReleases(ctx context.Context, namespace string) ([]*hel
 
 // getRelease gets a specific Helm release by name
 func (h *HelmTracer) getRelease(ctx context.Context, name, namespace string) (*helmRelease, error) {
+	if err := requireHelmNamespace(namespace); err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(name) == "" {
+		return nil, fmt.Errorf("Helm release name is unresolved")
+	}
 	secrets, err := h.client.CoreV1().Secrets(namespace).List(ctx, v1.ListOptions{
 		LabelSelector: "owner=helm",
 	})
@@ -596,6 +608,12 @@ func (h *HelmTracer) TraceByOwnership(ctx context.Context, ownership Ownership) 
 // GetReleaseHistory returns the deployment history for a Helm release
 // History is returned sorted by version descending (most recent first)
 func (h *HelmTracer) GetReleaseHistory(ctx context.Context, releaseName, namespace string) ([]HistoryEntry, error) {
+	if err := requireHelmNamespace(namespace); err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(releaseName) == "" {
+		return nil, fmt.Errorf("Helm release name is unresolved")
+	}
 	secrets, err := h.client.CoreV1().Secrets(namespace).List(ctx, v1.ListOptions{
 		LabelSelector: "owner=helm",
 	})
@@ -646,6 +664,13 @@ func (h *HelmTracer) GetReleaseHistory(ctx context.Context, releaseName, namespa
 	}
 
 	return history, nil
+}
+
+func requireHelmNamespace(namespace string) error {
+	if strings.TrimSpace(namespace) == "" {
+		return fmt.Errorf("Helm resource namespace is unresolved; refusing to infer namespace or scope")
+	}
+	return nil
 }
 
 // Keep the exact stored release bytes alongside the decoded projection. The

@@ -45,6 +45,10 @@ records before validating and selecting the requested payload name, so a
 returned candidate with a mismatched `name` label is not hidden by a narrower
 label selector.
 
+An empty or whitespace-only namespace is rejected before any Secret request;
+direct lookup and history also reject a blank release name before reading.
+An omitted namespace never becomes an all-namespace Secret list.
+
 These deterministic Secret metadata fixtures are synthetic and mirror the
 storage shape in [Helm v3.17.3](https://github.com/helm/helm/blob/v3.17.3/pkg/storage/storage.go)
 and [v4.0.0](https://github.com/helm/helm/blob/v4.0.0/pkg/storage/storage.go)

@@ -184,6 +184,59 @@ func TestHelmReleaseSecretListDeniedAndNoRecordsRemainDistinct(t *testing.T) {
 	}
 }
 
+func TestHelmBlankNamespaceIsRejectedBeforeAnySecretList(t *testing.T) {
+	for _, namespace := range []string{"", " \t\n"} {
+		t.Run(fmt.Sprintf("namespace-%q", namespace), func(t *testing.T) {
+			client := fake.NewSimpleClientset()
+			tracer := NewHelmTracer(client)
+			calls := []struct {
+				name string
+				call func() error
+			}{
+				{"listReleases", func() error { _, err := tracer.listReleases(context.Background(), namespace); return err }},
+				{"getRelease", func() error { _, err := tracer.getRelease(context.Background(), "web", namespace); return err }},
+				{"Trace", func() error { _, err := tracer.Trace(context.Background(), "Deployment", "web", namespace); return err }},
+				{"TraceRelease", func() error { _, err := tracer.TraceRelease(context.Background(), "web", namespace); return err }},
+				{"GetReleaseHistory", func() error { _, err := tracer.GetReleaseHistory(context.Background(), "web", namespace); return err }},
+			}
+			for _, tc := range calls {
+				t.Run(tc.name, func(t *testing.T) {
+					client.ClearActions()
+					err := tc.call()
+					if err == nil || !strings.Contains(err.Error(), "namespace is unresolved") {
+						t.Fatalf("call error = %v, want safe unresolved-namespace error", err)
+					}
+					if got := client.Actions(); len(got) != 0 {
+						t.Fatalf("call made Kubernetes API actions before rejecting namespace: %v", got)
+					}
+				})
+			}
+		})
+	}
+}
+
+func TestHelmBlankReleaseNameIsRejectedBeforeAnySecretList(t *testing.T) {
+	for _, name := range []string{"", " \t\n"} {
+		client := fake.NewSimpleClientset()
+		tracer := NewHelmTracer(client)
+		calls := []func() error{
+			func() error { _, err := tracer.getRelease(context.Background(), name, "default"); return err },
+			func() error { _, err := tracer.TraceRelease(context.Background(), name, "default"); return err },
+			func() error { _, err := tracer.GetReleaseHistory(context.Background(), name, "default"); return err },
+		}
+		for _, call := range calls {
+			client.ClearActions()
+			err := call()
+			if err == nil || !strings.Contains(err.Error(), "release name is unresolved") {
+				t.Fatalf("call error = %v, want safe unresolved-name error", err)
+			}
+			if got := client.Actions(); len(got) != 0 {
+				t.Fatalf("blank release name caused Kubernetes API actions: %v", got)
+			}
+		}
+	}
+}
+
 func TestHelmDecodeReleaseIdentityValidationUsesJSON(t *testing.T) {
 	payload := map[string]any{"name": "valid", "namespace": "default", "version": 1}
 	b, err := json.Marshal(payload)
