@@ -1,0 +1,2 @@
+{"type":"assistant","message":{"content":[{"type":"text","text":"VERDICT: correct"}]}}
+{"type":"result","subtype":"success","result":"VERDICT: correct","model":"claude-test","usage":{"input_tokens":12,"output_tokens":4},"total_cost_usd":0.005}

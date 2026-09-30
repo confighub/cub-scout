@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "partial": false,
+  "suite": {"ablation": "none"},
+  "cases": [{
+    "name": "unknown-correctness",
+    "graders": [
+      {"name": "answer-a", "type": "regex"},
+      {"name": "answer-b", "type": "regex"},
+      {"name": "used-map", "type": "tool_used"}
+    ],
+    "runsPerCase": 4,
+    "arms": {"with": [
+      {"score": 0.5, "costUsd": 1.0, "graders": [{"name": "answer-a", "passed": true}]},
+      {"score": 1.0, "costUsd": 1.0, "graders": [
+        {"name": "answer-a", "passed": true}, {"name": "answer-a", "passed": true},
+        {"name": "answer-b", "passed": true}
+      ]},
+      {"score": 1.0, "costUsd": 1.0, "graders": [
+        {"name": "answer-a", "passed": "true"}, {"name": "answer-b", "passed": true}
+      ]},
+      {"score": 0.5, "costUsd": 1.0, "error": "timed out", "graders": [
+        {"name": "answer-a", "passed": true}, {"name": "answer-b", "passed": true}
+      ]}
+    ]}
+  }, {
+    "name": "error-without-grader-metadata",
+    "runsPerCase": 1,
+    "arms": {"with": [{"score": 0, "costUsd": 0.5, "error": "setup failed"}]}
+  }, {
+    "name": "nan-weight",
+    "graders": [{"name": "answer-a", "type": "regex", "weight": NaN}],
+    "runsPerCase": 1,
+    "arms": {"with": [{"score": 1, "costUsd": 0.5, "graders": [{"name": "answer-a", "passed": true}]}]}
+  }, {
+    "name": "infinite-weight",
+    "graders": [{"name": "answer-a", "type": "regex", "weight": 1e999}],
+    "runsPerCase": 1,
+    "arms": {"with": [{"score": 1, "costUsd": 0.5, "graders": [{"name": "answer-a", "passed": true}]}]}
+  }]
+}

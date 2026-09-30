@@ -3,22 +3,22 @@
 
 Usage: evals/scripts/report.py RESULT.json [RESULT.json ...] [--by-tag] [--require-complete]
 
-Prints a Markdown table per case and arm (with cub-scout / without), then the
-totals: mean score, cost per run, cost per correct answer, turns and seconds.
+Prints the legacy harness score and cost tables as diagnostics, plus a binary
+verified-answer table based on the grader definitions embedded in each result.
+The legacy $/score figure is not a correctness rate.
 Several result files are combined, so separate runs of different cases can be
 reported together. Cost per run is everything the run spent: the agent, any
 judge graders and the agent mocks.
 
-Cost per correct answer is total cost divided by total score, so a run that
-scores 0.5 counts as half a correct answer. It is the fairest single cost
-measure when one arm answers more often: an arm that is cheap per run but
-rarely right is expensive per correct answer. It is "n/a" when an arm never
-scored.
+The legacy $/score figure is total cost divided by total harness score. It is
+retained for continuity and diagnostic comparison; binary verified answers
+are reported separately.
 
 Runs that ended in an error (a timeout, the turn cap) are counted, and listed
 under the table, because their cost was really spent.
 """
 import json
+import math
 import os
 import re
 import sys
@@ -59,9 +59,11 @@ def load(paths):
             "expected_arms": expected_arms,
         })
         for case in file_cases:
+            definitions = grader_definitions(case)
             entry = cases.setdefault(case["name"], {"tags": case_tags(case), "runs": defaultdict(list)})
             for arm in ARMS:
                 for run in (case.get("arms") or {}).get(arm) or []:
+                    run["_grader_definitions"] = definitions
                     entry["runs"][arm].append(run)
     return cases, inputs
 
@@ -122,21 +124,96 @@ def summarise(runs):
         "runs": n,
         "score": score / n,
         "cost": cost / n,
-        "per_correct": cost / score if score > 0 else None,
+        "per_score": cost / score if score > 0 else None,
         "turns": sum(r.get("turns") or 0 for r in runs) / n,
         "seconds": sum(r.get("durationSeconds") or 0 for r in runs) / n,
         "errors": sum(1 for r in runs if r.get("error")),
     }
 
 
+def grader_definitions(case):
+    """Return correctness grader definitions embedded in the result, if present."""
+    for key in ("graderDefinitions", "graders"):
+        definitions = case.get(key)
+        if isinstance(definitions, list) and definitions and all(isinstance(g, dict) and "type" in g for g in definitions):
+            return definitions
+    return None
+
+
+def verified_answer(run, definitions):
+    """Return True/False for a binary answer check, or None when unprovable."""
+    if run.get("error"):
+        return False
+    if definitions is None or not isinstance(run.get("graders"), list):
+        return None
+    if run.get("skippedPaidGraders") is True:
+        return None
+    required = {}
+    for definition in definitions:
+        if not isinstance(definition, dict) or not isinstance(definition.get("type"), str):
+            return None
+        if definition["type"] == "tool_used":
+            continue
+        weight = definition.get("weight", 1)
+        if (isinstance(weight, bool) or not isinstance(weight, (int, float)) or
+                isinstance(weight, float) and not math.isfinite(weight)):
+            return None
+        if weight > 0:
+            name = definition.get("name")
+            if not isinstance(name, str) or not name or name in required:
+                return None
+            required[name] = True
+    if not required:
+        return None
+    by_name = defaultdict(list)
+    for result in run["graders"]:
+        if isinstance(result, dict) and isinstance(result.get("name"), str):
+            by_name[result["name"]].append(result)
+    verified = True
+    for name in required:
+        matches = by_name.get(name) or []
+        if len(matches) != 1 or type(matches[0].get("passed")) is not bool:
+            return None
+        verified = verified and matches[0]["passed"]
+    return verified
+
+
+def verified_summary(runs):
+    statuses = [verified_answer(run, run.get("_grader_definitions")) for run in runs]
+    known = [status for status in statuses if status is not None]
+    verified = sum(status is True for status in known)
+    cost = sum(run_cost(run) for run in runs)
+    unknown = len(statuses) - len(known)
+    per_verified = None if unknown or not verified else cost / verified
+    return {"runs": len(runs), "verified": verified, "known": len(known),
+            "unknown": unknown, "cost": cost, "per_verified": per_verified}
+
+
+def verified_table(rows):
+    out = ["| Case/group | Arm | Runs | Verified | Unknown | $/run | $/verified |",
+           "|---|---|---:|---:|---:|---:|---:|"]
+    for label, by_arm in rows:
+        for arm in ARMS:
+            s = by_arm.get(arm)
+            if s is None:
+                out.append("| %s | %s | 0 | 0 | 0 | n/a | n/a |" % (label if arm == "with" else "", arm))
+                continue
+            per = "UNKNOWN" if s["unknown"] else "n/a" if s["per_verified"] is None else "$%.2f" % s["per_verified"]
+            cost_per_run = "n/a" if not s["runs"] else "$%.2f" % (s["cost"] / s["runs"])
+            out.append("| %s | %s | %d | %d/%d | %d | %s | %s |" %
+                       (label if arm == "with" else "", arm, s["runs"], s["verified"],
+                        s["known"], s["unknown"], cost_per_run, per))
+    return "\n".join(out)
+
+
 def fmt(s):
     if s is None:
         return "| – | – | – | – | – | – |"
-    per = "n/a" if s["per_correct"] is None else "$%.2f" % s["per_correct"]
+    per = "n/a" if s["per_score"] is None else "$%.2f" % s["per_score"]
     return "| %d | %.2f | $%.2f | %s | %.1f | %.0f |" % (s["runs"], s["score"], s["cost"], per, s["turns"], s["seconds"])
 
 
-HEADER = "| {label} | Arm | Runs | Score | $/run | $/correct | Turns | Seconds |\n|---|---|---|---|---|---|---|---|"
+HEADER = "| {label} | Arm | Runs | Score | $/run | $/score | Turns | Seconds |\n|---|---|---|---|---|---|---|---|"
 
 
 def table(title, rows):
@@ -172,6 +249,14 @@ def main(argv):
     totals = [(label, {arm: summarise([r for c in members for r in c["runs"][arm]]) for arm in ARMS})
               for label, members in groups]
     print(table("Group", totals))
+
+    verified_rows = [(name, {arm: verified_summary(c["runs"][arm]) if c["runs"][arm] else None
+                             for arm in ARMS}) for name, c in sorted(cases.items())]
+    verified_rows += [(label, {arm: verified_summary([r for c in members for r in c["runs"][arm]])
+                                if any(c["runs"][arm] for c in members) else None
+                                for arm in ARMS}) for label, members in groups]
+    print("\nBinary verified answers (from each result's embedded grader definitions; positive-weight non-tool_used checks only):")
+    print(verified_table(verified_rows))
 
     errored = [(name, arm, r.get("error")) for name, c in sorted(cases.items())
                for arm in ARMS for r in c["runs"][arm] if r.get("error")]

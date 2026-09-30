@@ -183,7 +183,7 @@ def record(context, sc, binary):
         cluster = os.path.join(sc["fixtures"], "cluster")
         os.makedirs(cluster, exist_ok=True)
         for kind in KINDS:
-            dump = subprocess.run(["kubectl", "get", kind, "-A", "-o", "yaml"], env=env,
+            dump = subprocess.run(["kubectl", "get", kind, "-A", "-o", "yaml", "--show-managed-fields"], env=env,
                                   check=True, capture_output=True, text=True).stdout
             open(os.path.join(cluster, kind + ".yaml"), "w").write(dump)
         write_scaffolds(sc)

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "partial": false,
+  "suite": {"ablation": "none"},
+  "cases": [
+    {
+      "name": "same-answer",
+      "graders": [
+        {"name": "answer-a", "type": "regex", "weight": 1},
+        {"name": "answer-b", "type": "regex", "weight": 1},
+        {"name": "used-map", "type": "tool_used", "weight": 1}
+      ],
+      "runsPerCase": 1,
+      "arms": {"with": [{"score": 0.67, "costUsd": 1.0, "graders": [
+        {"name": "answer-a", "passed": true, "weight": 1, "scored": true},
+        {"name": "answer-b", "passed": true, "weight": 1, "scored": true},
+        {"name": "used-map", "passed": false, "weight": 1, "scored": true}
+      ]}]}
+    }
+  ]
+}
