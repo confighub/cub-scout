@@ -1,0 +1,8 @@
+{
+  "cases": [
+    {
+      "name": "legacy-case",
+      "arms": {"with": [{"score": 1, "costUsd": 0.25}]}
+    }
+  ]
+}

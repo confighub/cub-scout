@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "partial": true,
+  "partialReason": "interrupted",
+  "suite": {"ablation": "none"},
+  "cases": [
+    {
+      "name": "live-case",
+      "runsPerCase": 2,
+      "arms": {
+        "with": [
+          {"score": 1, "costUsd": 1.25},
+          {"score": 0, "costUsd": 0.75}
+        ]
+      }
+    }
+  ]
+}

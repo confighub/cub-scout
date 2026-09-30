@@ -139,7 +139,8 @@ and PATH from evals/scripts/live-path.sh; see evals/README.md.
 def write_live_guards(sc):
     """Live cases carry mocks that fail loudly, so a run without --mocks off
     cannot silently answer from the main scenario's suite-wide recordings."""
-    for case in scenario_cases(sc):
+    # Every live case, including live-only ones that read no export.
+    for case in sorted(os.path.dirname(p) for p in glob.glob(sc["cases"])):
         dest = os.path.join(case, "mocks", "cub-scout")
         shutil.rmtree(dest, ignore_errors=True)
         os.makedirs(dest)

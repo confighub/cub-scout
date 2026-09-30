@@ -24,6 +24,28 @@ func TestEvalScaffoldsWriteTheRecordedExport(t *testing.T) {
 	}
 }
 
+func TestEvalLiveOnlyCasesHaveNoExportAndGuardMocks(t *testing.T) {
+	for _, name := range []string{"scale-ownership-counts", "scale-unmanaged", "scale-whats-failing"} {
+		dir := filepath.Join("..", "..", "evals", "scale", name+"-live")
+		data, err := os.ReadFile(filepath.Join(dir, "case.yaml"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(string(data), "scaffold_script:") {
+			t.Errorf("%s: live-only case must not receive an export scaffold", name)
+		}
+		if _, err := os.Stat(filepath.Join(dir, "scaffold.sh")); !os.IsNotExist(err) {
+			t.Errorf("%s: unexpected scaffold or filesystem error: %v", name, err)
+		}
+		for _, tool := range []string{"doctor", "explain", "gitops_status", "map", "release_check", "scan", "trace"} {
+			mock, err := os.ReadFile(filepath.Join(dir, "mocks", "cub-scout", tool+".md"))
+			if err != nil || !strings.Contains(string(mock), "error: true") || !strings.Contains(string(mock), "--mocks off") {
+				t.Errorf("%s/%s: missing live-only guard: %v", name, tool, err)
+			}
+		}
+	}
+}
+
 func checkScaffolds(t *testing.T, export, casesGlob string) {
 	t.Helper()
 	recorded, err := filepath.Glob(filepath.Join(export, "*.yaml"))
@@ -40,6 +62,11 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			t.Fatal(err)
 		}
 		if !strings.Contains(string(data), "scaffold_script: scaffold.sh") {
+			// Live-only cases read the cluster through cub-scout, not an export.
+			prompt, _ := os.ReadFile(filepath.Join(filepath.Dir(caseYAML), "prompt.md"))
+			if strings.Contains(string(prompt), "live-only") {
+				continue
+			}
 			t.Errorf("%s: every case reads the export through scaffold.sh", caseYAML)
 			continue
 		}
