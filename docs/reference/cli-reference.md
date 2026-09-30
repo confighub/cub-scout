@@ -29,7 +29,7 @@ Source of truth:
 | `debug` | Guided GitOps debugging wizard | [Command Reference](commands.md#debug) | [Platform example](../../examples/platform-example/) |
 | `doctor` | One-command cluster health summary | [Command Reference](commands.md#doctor) | [Connect and compare](../../examples/connect-and-compare/) |
 | `explain` | Plain-English ownership and lineage for one resource | [Command Reference](commands.md#explain) | [New user puzzle quest](../../examples/new-user-puzzle-quest/) |
-| `fleet` | Connected fleet command group; `fleet outliers` is deprecated in 2.x | [Command Reference](commands.md#fleet-outliers) | [Fleet import](../../examples/fleet-import/) |
+| `fleet` | Connected fleet command group; `fleet outliers` is deprecated in 2.x for planned 3.0 removal | [Command Reference](commands.md#fleet-outliers) | [Fleet import](../../examples/fleet-import/) |
 | `gitops` | GitOps pipeline health and diagnostics | [Command Reference](commands.md#gitops-v014) | [Connected summary storage](../../examples/connected-summary-storage/) |
 | `graph` | Resource graph export and explanation | [Command Reference](commands.md#graph-v06) | [Graph export](../../examples/graph-export/) |
 | `help` | Help for any command path | [CLI Guide](../../CLI-GUIDE.md#verify-behavior-locally) | - |
@@ -64,7 +64,7 @@ Source of truth:
 | `compare drift` | Desired vs live drift detection | [Command Reference](commands.md#compare-drift) | [Drift examples](../../examples/drift/) |
 | `compare source-truth` | Read-only source-truth evidence for Pilot acceptance (#393) | [Command Reference](commands.md#compare-source-truth) | - |
 | `compare three-way` | Connected DRY/WET/LIVE comparison; `--source-path <local-checkout>` opts into stage-B `gitSource.file:line` back-resolution for raw-YAML sources | [Command Reference](commands.md#compare-three-way) | [Connect and compare](../../examples/connect-and-compare/) |
-| `fleet outliers` | Deprecated 2.x comparison; planned removal in 3.0, with no equivalent replacement yet | [Command Reference](commands.md#fleet-outliers) | [Fleet import](../../examples/fleet-import/) |
+| `fleet outliers` | Deprecated 2.x comparison; planned removal in 3.0 absent validated cross-cluster identity; no equivalent replacement yet | [Command Reference](commands.md#fleet-outliers) | [Fleet import](../../examples/fleet-import/) |
 | `gitops status` | GitOps pipeline health plus optional bounded ConfigHub delivery evidence | [Command Reference](commands.md#gitops-v014) | [Live delivery observability](../../examples/live-delivery-observability/) |
 | `import apply` | Apply an import proposal JSON | [Command Reference](commands.md#import-apply) | [Import from live](../../examples/import-from-live/) |
 | `import argocd` | Import one ArgoCD Application | [Command Reference](commands.md#import-argocd) | [Argo import demo](../../examples/argo-import-confighub-demo/) |

@@ -294,7 +294,7 @@ The verified manager-string enumeration covers Argo CD, Flux (kustomize / helm /
 |---|---|---|
 | `history` | Connected ChangeSet timeline for one resource | ConfigHub |
 | `impact` | Connected blast-radius preview for one unit | ConfigHub |
-| `fleet outliers` | Deprecated in 2.x for planned 3.0 removal; the current single-space comparison cannot establish reliable fleet outliers, and no equivalent replacement is available yet ([#562](https://github.com/confighub/cub-scout/issues/562)) | ConfigHub |
+| `fleet outliers` | Deprecated in 2.x; planned 3.0 removal unless stable cross-cluster identity and fixture-backed comparisons justify retaining or rebuilding it; no equivalent replacement is available yet ([#562](https://github.com/confighub/cub-scout/issues/562)) | ConfigHub |
 | `summary` (`list` / `slack`) | Connected summary storage + Slack delivery | ConfigHub |
 | `views` (`resolve` / `open` / `project`) | Resolve, open, and project ConfigHub Views (#391) | ConfigHub |
 | `audit list` | Break-glass accept/reject audit trail | ConfigHub |

@@ -15,10 +15,11 @@ missing units.
 There is no equivalent replacement in cub-scout 2.x. `map fleet` can provide
 connected inventory, but it does not perform lineage-based outlier analysis.
 Do not compare unit or target names across spaces as identity. Removal in 3.0
-remains conditional: defer it if ConfigHub provides stable cross-cluster
-identity and fixtures demonstrate correct comparisons.
+is the adopted default. Retain or rebuild the command only if ConfigHub provides
+stable cross-cluster identity and fixture-backed tests demonstrate correct
+comparisons. The existence of an identity field alone is not sufficient proof.
 
-The deprecation notice is planned for the v2.15 minor release. This source
-documentation is not itself a published notice, and does not start the public
-deprecation window. At least one minor release containing the notice must be
-published before removal in 3.0.
+The notice is planned for the next 2.x minor release. At least one minor
+release containing the notice must be published before removal in 3.0. This
+source documentation is not a published notice; the deprecation window has not
+started yet.
