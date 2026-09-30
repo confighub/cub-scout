@@ -16,6 +16,7 @@ PACKET = Path(__file__).resolve().parent
 TEMPLATE = PACKET / "template/plugin"
 SOURCE_FIXTURE = REPO / "evals/recorded-explain-contract/fixtures/deployments.yaml"
 ECONOMY_PROMPT = PACKET / "economy/prompt.md"
+ATTRIBUTION_SKILL = PACKET / "economy-skill/SKILL.md"
 FIXTURE_SHA256 = "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8"
 
 
@@ -35,7 +36,7 @@ def configure_purpose(plugin: Path, purpose: str) -> None:
     """Apply purpose-specific prompt/scoring without changing plumbing default."""
     if purpose == "plumbing":
         return
-    if purpose != "economy":
+    if purpose not in {"economy", "economy-skill"}:
         raise ValueError(f"unsupported purpose: {purpose}")
     case_dir = plugin / "evals/recorded-explain-mcp"
     shutil.copyfile(ECONOMY_PROMPT, case_dir / "prompt.md")
@@ -45,6 +46,11 @@ def configure_purpose(plugin: Path, purpose: str) -> None:
     manifest_path = plugin / ".claude-plugin/plugin.json"
     manifest = json.loads(manifest_path.read_text())
     manifest["description"] = "Recorded-only evidence for a Kubernetes resource question."
+    if purpose == "economy-skill":
+        skill_dir = plugin / "skills/recorded-field-attribution"
+        skill_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ATTRIBUTION_SKILL, skill_dir / "SKILL.md")
+        manifest["description"] = "Recorded-only Kubernetes resource and exact field manager evidence."
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
 
 
@@ -52,7 +58,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary", required=True, type=Path, help="local cub-scout binary to pin")
     parser.add_argument("--binary-sha256", required=True, help="expected lowercase SHA-256 of --binary")
-    parser.add_argument("--purpose", choices=("plumbing", "economy"), default="plumbing",
+    parser.add_argument("--purpose", choices=("plumbing", "economy", "economy-skill"), default="plumbing",
                         help="diagnostic objective; default plumbing preserves the original prompt and grader")
     parser.add_argument("--out", required=True, type=Path, help="new output directory; existing paths are refused")
     args = parser.parse_args()
@@ -163,6 +169,10 @@ def main() -> None:
         "promptSha256": sha256(case_dir / "prompt.md"),
         "caseSha256": sha256(case_dir / "case.yaml"),
         "answerGraderSha256": sha256(case_dir / "graders/answer.md"),
+        "routingSkillSha256": (
+            sha256(plugin / "skills/recorded-field-attribution/SKILL.md")
+            if args.purpose == "economy-skill" else None
+        ),
         "toolUseGrader": "included for plumbing diagnostic only" if args.purpose == "plumbing" else "omitted; inspect raw trace as diagnostic only",
         "preflight": "passed: initialize, tools/list, exact call, unsupported-tool rejection",
         "modelRun": False,

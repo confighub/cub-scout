@@ -99,6 +99,36 @@ and full spend, including failed attempts. One pair is diagnostic only; it
 cannot establish general savings, quality uplift, or benchmark readiness. This
 packet does not run the paid command above.
 
+## Economy-skill routing preparation (prepared, not run)
+
+`--purpose economy-skill` keeps the exact economy prompt, answer grader,
+recorded fixture, and declared ordinary tool permissions identical, and adds
+one generic recorded-field-attribution skill to the treatment plugin. The
+existing pair runner applies the same model, run count, concurrency, timeout,
+and budget to either economy purpose. The skill's instruction prefers a direct
+exact-path `explain` call when the resource and canonical field path are known,
+while retaining raw recorded-data drill-down and requiring unknown for insufficient evidence. It contains no
+fixture-specific names or expected answers. The generated manifest records the
+skill hash; the no-model MCP preflight remains unchanged. This isolates a
+routing-instruction prototype, and does not establish why the previous model
+chose raw reads.
+
+Prepare it to a fresh directory using the same pinned binary:
+
+```sh
+python3 evals/recorded-mcp-probe/prepare.py \
+  --purpose economy-skill \
+  --binary /tmp/cub-scout-recorded-explain \
+  --binary-sha256 e94fe84d3e16b6c111ffa68b532523395c6c6f66649be3a890d3033e3afd94c5 \
+  --out /tmp/cub-scout-recorded-attribution-routing
+```
+
+The existing `run_pair.py` accepts this prepared purpose under the same serial
+one-run-per-arm, $1 prelaunch ceiling and bounded no-retry wrapper policy. This
+packet prepares and validates the plugin only; it does not run a model. Any
+later pair requires its own review and preflights and must retain raw tool
+inventory, call, read, answer, turn, and spend evidence.
+
 The prepared plugin includes an eval case but this packet runs no Claude Code
 eval command and authorizes no spend. Any future paid diagnostic requires a
 preplanned budget and the adopted execution plan's preflight and prompt-review gates. Historical

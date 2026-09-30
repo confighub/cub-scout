@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run one reviewed economy diagnostic pair; never retry or overwrite a run."""
+"""Run one reviewed economy-purpose diagnostic pair; never retry or overwrite a run."""
 import argparse
 import hashlib
 import json
@@ -88,8 +88,8 @@ def main():
     args = parser.parse_args()
     root = args.prepared_directory.resolve(strict=True)
     prepared = json.loads((root / 'prepared.json').read_text())
-    if prepared.get('purpose') != 'economy' or prepared.get('modelRun') is not False:
-        parser.error('requires an unrun economy preparation')
+    if prepared.get('purpose') not in {'economy', 'economy-skill'} or prepared.get('modelRun') is not False:
+        parser.error('requires an unrun economy or economy-skill preparation')
     for name, expected in prepared['generatedPluginFiles'].items():
         path = (root / 'plugin' / name).resolve(strict=True)
         if not path.is_relative_to(root / 'plugin') or hashlib.sha256(path.read_bytes()).hexdigest() != expected:
