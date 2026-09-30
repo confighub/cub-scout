@@ -1,0 +1,75 @@
+# Recorded public-source projection, not raw cluster/API output.
+projection_format: recorded-markdown-excerpt/v1
+source:
+  repository: confighub/examples
+  revision: 64a6c499ce824d4700a8dfbc1945333dc2e4a1e3
+  document: cub-flux/docs/runs/2026-09-30-bootstrapped-handover.md
+  sha256: 1872605798cbb2d554c8b0ee6a22b68c27bc652005701edf882887189e7fe24b
+  ranges: [[1, 10], [66, 86]]
+  excerpt_sha256: f4659569fdcbd7d5c6ddc34345f46e2dcb001730a76529b9c477e27ccccad17e
+scope:
+  evidence_kind: public recorded run-log or guide excerpt
+  snapshot: false
+excerpt_lines:
+  - source_line: 1
+    text: "# Run log: bootstrapped handover, 2026-09-30"
+  - source_line: 2
+    text: ""
+  - source_line: 3
+    text: "A fleet set up the way `flux bootstrap` sets it up, handed over to ConfigHub"
+  - source_line: 4
+    text: "through the root, and handed back. Kept as a record of what was run and seen."
+  - source_line: 5
+    text: ""
+  - source_line: 6
+    text: "- **Flux:** v2.8.6 on kind, cluster `rh-boot`."
+  - source_line: 7
+    text: "- **ConfigHub:** v0.6.8, self-hosted, gateway over plain HTTP. `cub` v0.6.8."
+  - source_line: 8
+    text: "- **Fleet:** this repository's `gitops/flux/beginner`, served by a lab Git server the cluster reads and the test pushes to."
+  - source_line: 9
+    text: "- **Bootstrap:** `clusters/dev/flux-system/` holds `gotk-components.yaml` (from `flux install --export`) and a `gotk-sync.yaml`. So the `flux-system` Kustomization applies `clusters/dev/` from that server, and owns both layers."
+  - source_line: 10
+    text: "- **Output:** trimmed to the lines that matter; the digests and SHAs are the real ones."
+  - source_line: 66
+    text: "## 3. handover.sh again: resumes flux-system on that commit"
+  - source_line: 67
+    text: ""
+  - source_line: 68
+    text: "```text"
+  - source_line: 69
+    text: "  continuing: flux-system was suspended by an earlier run"
+  - source_line: 70
+    text: "  the layers are applied by Kustomization flux-system from Git: it will be suspended while the root takes them over, and resumed once Git no longer defines them"
+  - source_line: 71
+    text: "  flux-system resumed at main@sha1:2fe4c48d58f86d6fd44d2625444a2daf61d676d7; every layer is still the root's"
+  - source_line: 72
+    text: "2026-09-30T09:47:08Z Ready apps at latest@sha256:a998f128abb06eb41f65140183ace5850e61702254753778a7a9ed18377cac48, from the root"
+  - source_line: 73
+    text: "2026-09-30T09:47:08Z flux-system reads main@sha1:2fe4c48d58f86d6fd44d2625444a2daf61d676d7: the layers are gone from its Git and the root is in it"
+  - source_line: 74
+    text: "2026-09-30T09:47:13Z resumed flux-system at main@sha1:2fe4c48d58f86d6fd44d2625444a2daf61d676d7"
+  - source_line: 75
+    text: "2026-09-30T09:47:14Z the root is now flux-system's, from Git"
+  - source_line: 76
+    text: "```"
+  - source_line: 77
+    text: ""
+  - source_line: 78
+    text: "After forcing two more `flux-system` reconciles:"
+  - source_line: 79
+    text: ""
+  - source_line: 80
+    text: "```text"
+  - source_line: 81
+    text: "infrastructure owner: confighub-root"
+  - source_line: 82
+    text: "apps owner: confighub-root"
+  - source_line: 83
+    text: "confighub-root owner: flux-system"
+  - source_line: 84
+    text: "flux-system inventory: confighub-root Kustomization, flux-system Kustomization, confighub-root OCIRepository"
+  - source_line: 85
+    text: "every UID and the rollout revision identical"
+  - source_line: 86
+    text: "```"

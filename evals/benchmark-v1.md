@@ -12,8 +12,13 @@ Main-scenario mappings are `existing_refreshed_fixture`; the scale scout arm
 still reads live data, so those mappings are `existing_needs_snapshot_binding`.
 Resource-level mutation manager/cause parity does not prove a particular field's
 latest writer; exact-field counterexamples are tracked in [#649](https://github.com/confighub/cub-scout/issues/649).
-Neither status means the controlled benchmark ran. Unmapped entries remain
-`planned`; the three live-only scale cases remain a separate experiment.
+Neither status means the controlled benchmark ran. DEL-01 and DEL-02 are pinned
+public-source projections, not raw cluster snapshots; both are prepared and
+unrun, and their evidence limits are recorded per case. The 24 cases currently
+comprise 5 refreshed fixtures, 2 scale cases needing snapshot binding, 3
+recorded projections prepared but not run, and 14 planned cases. Unmapped
+entries remain `planned`; the three live-only scale cases remain a separate
+experiment.
 
 | Group | ID | Frozen question | Current mapping/status |
 |---|---|---|---|
@@ -25,8 +30,8 @@ Neither status means the controlled benchmark ran. Unmapped entries remain
 | Attribution | ATR-02 | Manual scale attribution | `changed-by-cart` — fixtures refreshed; benchmark run pending |
 | Attribution | ATR-03 | Controller-only change | `changed-by-payments` — fixtures refreshed; benchmark run pending |
 | Attribution | ATR-04 | Copied Argo instance label versus tracking identity | `argo-label-vs-tracking-id` — fixtures refreshed; benchmark run pending |
-| Delivery identity | DEL-01 | Flux applied digest | Planned; identity is digest-based, never timestamp-derived |
-| Delivery identity | DEL-02 | Argo publication not consumed | Planned |
+| Delivery identity | DEL-01 | Flux applied digest | `flux-applied-digest` — pinned public run-log projection prepared, not run; exact apps digest and Git revision shown |
+| Delivery identity | DEL-02 | Argo publication not consumed | `argo-published-release-lag` — pinned narrative projection prepared, not run; exact old/new digests and replica counts absent |
 | Delivery identity | DEL-03 | Sveltos inferred revision versus exact proof | Planned; include missing and stale identity |
 | Delivery identity | DEL-04 | OCI identity mismatch and Helm lifecycle boundary | Planned; render parity does not prove hooks executed |
 | Health | HLT-01 | Sveltos Provisioned after workload failure | `sveltos-hlt-01-health` — recorded Part B projection prepared, not run; prerequisite state is separate from health |
