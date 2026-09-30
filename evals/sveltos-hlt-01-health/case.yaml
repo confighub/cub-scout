@@ -1,0 +1,5 @@
+# FIXTURE-OWNED-SCAFFOLD: validate against this case's recorded projection.
+schema_version: "1.1"
+name: sveltos-hlt-01-health
+context:
+  scaffold_script: scaffold.sh

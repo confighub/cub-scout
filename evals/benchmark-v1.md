@@ -29,7 +29,7 @@ Neither status means the controlled benchmark ran. Unmapped entries remain
 | Delivery identity | DEL-02 | Argo publication not consumed | Planned |
 | Delivery identity | DEL-03 | Sveltos inferred revision versus exact proof | Planned; include missing and stale identity |
 | Delivery identity | DEL-04 | OCI identity mismatch and Helm lifecycle boundary | Planned; render parity does not prove hooks executed |
-| Health | HLT-01 | Sveltos Provisioned after workload failure | Planned; prerequisite acceptance is separate from health |
+| Health | HLT-01 | Sveltos Provisioned after workload failure | `sveltos-hlt-01-health` — recorded Part B projection prepared, not run; prerequisite state is separate from health |
 | Health | HLT-02 | Flux Ready without workload checks | Planned |
 | Health | HLT-03 | Consul convergence with Ingress residue | Planned |
 | Health | HLT-04 | Missing, old, or renewed report timestamps | Planned; report freshness, release identity, and health are separate facts |

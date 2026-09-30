@@ -167,12 +167,30 @@
         {
           "id": "HLT-01",
           "question": "Sveltos Provisioned after workload failure",
-          "status": "planned",
-          "existing_case": null,
+          "status": "recorded_projection_prepared_not_run",
+          "existing_case": "evals/sveltos-hlt-01-health",
           "reference": "Keep gate acceptance/prerequisite state separate from workload health and release approval.",
           "controls": [
-            "Provisioned plus a failed workload is not healthy"
-          ]
+            "Provisioned plus a failed workload is not healthy",
+            "The reported shortened revision is not an exact release identity",
+            "Sequential transcript outputs are not an atomic snapshot"
+          ],
+          "evidence_refresh": "2026-09-30",
+          "source_provenance": {
+            "repository": "confighub/sveltos-confighub",
+            "revision": "8187910f9fe226e109e55c4d9c7c0e21297ff424",
+            "document": "health-2026-09-30.log",
+            "source_sha256": "24ef8acd48ead05400604198bb0ea695c284c146ab68f27b10a6601f75a655a8",
+            "source_part": "B",
+            "source_lines": [
+              109,
+              131
+            ],
+            "excerpt_sha256": "6a03c7ec3491bce8bfaf1307114be732b75200225004272608c873b170aa0621",
+            "projection_sha256": "49e34b3bb6dc9adbe28c6be75ba97a51615149298a361a230efeb5aa5c18a3ef",
+            "limits": "Sequential transcript projection; no atomic/current-now claim or exact release identity from shortened revision."
+          },
+          "benchmark_admission": "Prepared for review; not run. Full benchmark remains non-executable pending other cases and protocol gates."
         },
         {
           "id": "HLT-02",
