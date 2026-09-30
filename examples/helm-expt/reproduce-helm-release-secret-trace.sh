@@ -119,6 +119,8 @@ if [[ "$NEGATIVE_IDENTITY" == "true" ]]; then
 	fi
 	# Record only identity metadata. Never persist Secret .data or decoded payload.
 	kubectl -n "$NS" get secret "$SECRET_NAME" -o json | jq '{metadata:{name:.metadata.name,namespace:.metadata.namespace,labels:.metadata.labels},type:.type}' >"$EVIDENCE_DIR/secret-identity-before.json"
+	kubectl -n "$NS" label secret "$SECRET_NAME" version=999 --overwrite >/dev/null
+	kubectl -n "$NS" get secret "$SECRET_NAME" -o json | jq '{metadata:{name:.metadata.name,namespace:.metadata.namespace,labels:.metadata.labels},type:.type}' >"$EVIDENCE_DIR/secret-identity-after.json"
 	if [[ -n "${CUB_SCOUT_BASELINE_BIN:-}" ]]; then
 		set +e
 		"$TMP_DIR/cub-scout-baseline" trace deployment/release-probe -n "$NS" --format json >"$EVIDENCE_DIR/baseline-corrupt-label.stdout" 2>"$EVIDENCE_DIR/baseline-corrupt-label.stderr"
@@ -126,8 +128,6 @@ if [[ "$NEGATIVE_IDENTITY" == "true" ]]; then
 		set -e
 		printf '%s\n' "$BASELINE_STATUS" >"$EVIDENCE_DIR/baseline-corrupt-label.exit-status.txt"
 	fi
-	kubectl -n "$NS" label secret "$SECRET_NAME" version=999 --overwrite >/dev/null
-	kubectl -n "$NS" get secret "$SECRET_NAME" -o json | jq '{metadata:{name:.metadata.name,namespace:.metadata.namespace,labels:.metadata.labels},type:.type}' >"$EVIDENCE_DIR/secret-identity-after.json"
 	set +e
 	"$SCOUT_BIN" trace deployment/release-probe -n "$NS" --format json >"$EVIDENCE_DIR/trace-corrupt-label.stdout" 2>"$EVIDENCE_DIR/trace-corrupt-label.stderr"
 	TRACE_STATUS=$?
@@ -138,6 +138,10 @@ if [[ "$NEGATIVE_IDENTITY" == "true" ]]; then
 		exit 1
 	fi
 	if [[ -n "${CUB_SCOUT_BASELINE_BIN:-}" ]]; then
+		if [[ "$BASELINE_STATUS" -ne 0 ]]; then
+			echo "baseline did not produce a trace for the same corrupted Secret" >&2
+			exit 1
+		fi
 		jq -e --arg ns "$NS" '
 		  .summary.ownerType == "Helm" and
 		  ([.chain[] | select(.id.kind == "Deployment" and .id.name == "release-probe" and .id.namespace == $ns)] | length) == 1
