@@ -39,6 +39,8 @@ assert definition["kind"] == "regex"
 pattern = definition["compiled"]
 good = "CHANGED_BY: MANUAL_TOOL | MANAGER: kubectl-set | FIELD_PATH: spec.template.spec.containers[name=checkout].image | HUMAN_ACTOR: UNKNOWN | SCOPE: recorded evidence only; no live confirmation; no Git desired state provided"
 assert pattern.search(good), "regrader rejected the exact source-bounded answer"
+tick = chr(96)
+assert pattern.search(tick + good + tick), "regrader rejected a whole-line inline-code wrapper"
 
 # These are the unsupported claims recorded in the first fair smoke. The
 # grader anchors the entire last message, so no arbitrary surrounding prose
@@ -57,6 +59,10 @@ wrong = [
     good.replace("HUMAN_ACTOR: UNKNOWN", "HUMAN_ACTOR: IDENTIFIED"),
     good.replace("SCOPE: recorded evidence only; no live confirmation; no Git desired state provided", "SCOPE: live cluster confirmed; Git desired state available"),
     good.replace("CHANGED_BY: MANUAL_TOOL", "CHANGED_BY: UNKNOWN"),
+    tick + good,
+    good + tick,
+    tick + tick + good + tick + tick,
+    "Answer: " + tick + good + tick,
 ]
 for answer in wrong:
     assert not pattern.search(answer), "accepted an unsupported/unknown attribution: " + answer
