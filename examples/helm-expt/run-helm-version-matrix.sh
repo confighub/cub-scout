@@ -143,7 +143,7 @@ shasum -a 256 "$SCRIPT_DIR/run-helm-version-matrix.sh" >>"$EVIDENCE_DIR/commands
 git -C "$REPO_ROOT" status --short >"$EVIDENCE_DIR/source-status.txt"
 printf 'version-kind: %q version\nversion-helm3: %q version --short\nversion-helm4: %q version --short\n' \
 	"$KIND_BIN" "$HELM3_BIN" "$HELM4_BIN" >>"$EVIDENCE_DIR/commands.log"
-	"$GO_BIN" version >"$EVIDENCE_DIR/go-version.txt" 2>&1
+"$GO_BIN" version >"$EVIDENCE_DIR/go-version.txt" 2>&1
 "$KIND_BIN" version >"$EVIDENCE_DIR/kind-version.txt" 2>&1
 shasum -a 256 "$KIND_BIN" >"$EVIDENCE_DIR/kind-binary.sha256"
 "$KUBECTL_BIN" version --client -o yaml >"$EVIDENCE_DIR/kubectl-version.yaml" 2>&1
@@ -175,7 +175,7 @@ helm_call() {
 kubectl_call() {
 	local label=$1; shift
 	record_run "$label" env KUBECONFIG="$KUBECONFIG" "$KUBECTL_BIN" --kubeconfig "$KUBECONFIG" \
-		--context "$CONTEXT" "$@"
+		--context "$CONTEXT" --request-timeout=30s "$@"
 }
 assert_trace() {
 	local ns=$1 source=$2 out="$EVIDENCE_DIR/$3"
@@ -217,8 +217,9 @@ printf 'build-cub-scout: (cd %q && %q build -o %q ./cmd/cub-scout)\n' "$REPO_ROO
 (cd "$REPO_ROOT" && "$GO_BIN" build -o "$WORK_DIR/cub-scout" ./cmd/cub-scout)
 shasum -a 256 "$WORK_DIR/cub-scout" >"$EVIDENCE_DIR/cub-scout-binary.sha256"
 CREATE_ATTEMPTED=true
-	record_run create-cluster env KUBECONFIG="$KUBECONFIG" "$KIND_BIN" create cluster --name "$CLUSTER" --image "$KIND_IMAGE" --kubeconfig "$KUBECONFIG" --wait 5m >"$EVIDENCE_DIR/kind-create.stdout" 2>"$EVIDENCE_DIR/kind-create.stderr"
+record_run create-cluster env KUBECONFIG="$KUBECONFIG" "$KIND_BIN" create cluster --name "$CLUSTER" --image "$KIND_IMAGE" --kubeconfig "$KUBECONFIG" --wait 5m >"$EVIDENCE_DIR/kind-create.stdout" 2>"$EVIDENCE_DIR/kind-create.stderr"
 CREATED=true
+kubectl_call server-version version -o json >"$EVIDENCE_DIR/kubernetes-version.json" 2>"$EVIDENCE_DIR/kubernetes-version.stderr"
 mkdir -p "$WORK_DIR/helm3"/{cache,config,data} "$WORK_DIR/helm4"/{cache,config,data}
 
 # Case 1: fresh Helm 3 install (default client-side behavior).
