@@ -47,11 +47,20 @@ boundary even though observing the cluster remains read-only.
 v2.12.4 is published at `11c3e38`, with the six correctness fixes and reviewed
 #640/#643. Published archives and supported macOS/Linux entry points are
 verified; see the [release record](releases/v2.12.4.md) for checks and omissions.
-The adopted plan (#644) and binary verified-answer/inclusive-cost accounting
-(#646) are merged. Equal-evidence fixtures and later cost-reduction packets
-remain separate work, tracked in [#645](https://github.com/confighub/cub-scout/issues/645).
-The general savings gate has not passed. Do not repeat P0 release work from the
-historical starting snapshot below.
+The adopted plan (#644), binary verified-answer/inclusive-cost accounting
+(#646), equal-raw-evidence fixtures (#648), exact-field evidence/routing
+(#658/#659), scoped explicit context (#665), compact ownership diagnostics
+(#667), recorded exact-object explain (#668), Helm storage-identity checks
+(#670) and the `/v2` module migration (#671) are merged. These later changes
+remain unreleased. #669 records an actual one-pair recorded-MCP diagnostic;
+both arms still read the full raw fixture and its wording limits interpretation.
+New paid execution totals $3.9459534 estimated inclusive list price; actual
+credits and development cost are unmeasured. The fixed 24-case benchmark remains
+non-executable, and the general savings gate has not passed. Current next
+packets and external dependencies live in
+[#645](https://github.com/confighub/cub-scout/issues/645) and the latest
+[handover](../HANDOVER.md). Do not repeat P0 release work from the historical
+starting snapshot below.
 
 ## Starting snapshot at adoption — before September 30 execution
 

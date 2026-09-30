@@ -3,46 +3,69 @@
 ## 2026-09-30: Post-release implementation checkpoint
 
 Use [#645](https://github.com/confighub/cub-scout/issues/645) for the current
-queue; this checkpoint covers merged work through `1669305`. The maintainer's
+queue; this checkpoint covers merged work through `7732dde`. The maintainer's
 continuous-execution authorization remains active. Do not repeat release work
 or treat the historical review restrictions below as the adopted policy.
 Earlier dated snapshots below preserve history; where status or decisions
-conflict, this checkpoint and the live tracker take precedence.
+conflict, this checkpoint and the live tracker take precedence. The following
+post-v2.12.4 changes are on main, not in the published v2.12.4 binaries.
 
-- #658 added exact-field attribution to CLI, MCP and the TUI; #659 routes a
-  known-resource/known-field question directly to that evidence. Observed field
-  managers do not establish a person's identity or the latest writer. #626
-  remains open; fewer agent calls or lower costs have not yet been measured.
-- #661 bounds individual Helm release decoding and surfaces unreadable
-  candidates rather than silently falling back to older releases. This is
-  partial #588 work, not Helm 3/4 compatibility or a whole-request bound.
-- #662 captures an immutable Kubernetes configuration for TUI inventory and
-  bounded explain. The public map startup selector and the remaining action
-  isolation are a separate #599 packet; full cross-surface context isolation is
-  not yet complete.
+- #658/#659 provide and route exact-field attribution through CLI, MCP and TUI.
+  Observed managers do not establish a person's identity or the latest writer.
+- #661/#663 bound individual Helm release decoding and parse exact manifest
+  identity. #670 adds Secret/payload identity checks; independent review,
+  required CI, the full offline suite and isolated valid/corrupt-label live
+  proof passed. The Helm 3/4 lifecycle matrix remains open under #588; these
+  scoped Helm 4.1.4 cases do not establish migration compatibility.
+- #662/#665 pin TUI configuration and add explicit context to `map`, `map list`
+  and MCP map. CLI/MCP inventory and TUI checks passed on the named scale
+  context without mutation. Unsupported TUI actions fail closed in explicit
+  mode. This does not complete #599's all-command identity/cost contract.
+- #667 adds opt-in compact ownership diagnostics with per-object detector
+  source and scoped collection omissions. CLI/MCP agreed on 302 Deployments;
+  this fixture's JSON shrank from 260,337 to 135,065 bytes. The TUI preserves
+  scope/coverage after its tested wrapping fix. This is byte reduction, not
+  agent-spend savings.
+- #666/#668 add bounded recorded-object loading and exact recorded explain
+  through CLI, MCP and TUI. Recorded MCP exposes only explain against its
+  startup file; no live fallback. Missing capture time stays unknown, large
+  integers remain exact, and recorded JSON contains no live next-step commands.
+- #671 migrates the module and self-imports to `/v2`; local build/vet/full tests,
+  independent review and required CI passed. CLI and distribution names remain
+  unchanged. Proxy installation cannot be claimed until a correctly tagged
+  minor exists.
 - #657/#660 preserve source-derived Sveltos, Flux and Argo observations. The
-  fixed 24-case benchmark has 14 planned cases, five refreshed cases, two awaiting
-  snapshot binding and three prepared source projections. It is not executable
-  yet. Projections are not full raw controller/workload joins or fresh live proof.
-- #604's recorded-input foundation is being pulled forward to support #603:
-  both arms must derive their answers from the same immutable raw objects.
-  Missing capture timestamps must stay unknown, never become the current time.
+  fixed 24-case benchmark still has 14 planned cases, five refreshed cases,
+  two awaiting snapshot binding and three prepared source projections. It is
+  not executable. Projections are not full raw joins or fresh live proof.
 
-Paid execution so far is **$3.7801511 estimated inclusive list price**:
-$2.4692065 for live-only completion and $1.3109446 for smoke/probe work.
+Paid execution so far is **$3.9459534 estimated inclusive list price**:
+$2.4692065 for live-only completion and $1.4767469 for smoke/probe work.
 The $200 baseline tranche is unspent. Account credits and development-agent
-costs are unmeasured. The two checkout smoke pairs had file-only tools and
-are not the ordinary-tool comparison in Experiment A. The small command-access
-probe passed its own confinement checks; it does not certify the complete
-24-case protocol. See [the eval reports](evals/reports/) and
-[the cost ledger](evals/reports/2026-09-30-execution-costs.json) for scope.
+costs are unmeasured. The two checkout smoke pairs had file-only tools and are
+not Experiment A. The latest one-pair recorded diagnostic (#669) actually called
+MCP with the same full raw recording and ordinary tool inventory in both arms.
+Both arms still read all raw data; ambiguous owner/field-manager wording prevents
+a quality claim. The with-arm reported five turns against configured maxTurns=4;
+enforcement semantics remain unresolved. No paid retry is queued.
+See [the diagnostic report](evals/reports/2026-09-30-recorded-mcp-probe.md) and
+[the cost ledger](evals/reports/2026-09-30-execution-costs.json).
 **The savings gate has not passed.**
 
 Local cub and the selected local ConfigHub server both reported v0.6.8 on
 September 30. #591 still needs genuine recorded attestation fixtures. #597 can
 read public ChangeOrder identity/stage fields, but no current gate evaluation
-has been established; its prohibition on promotion argv remains. The fact
-storage/schema agreement in #600 is still external and unresolved.
+has been established; all promotion argv, including dry-run, remain prohibited.
+The fact storage/schema agreement in #600 is external and unresolved. Anonymous
+GHCR pulls failed; the current CLI credential also lacks `read:packages`, so
+package visibility is unverified. These limitations do not block other packets.
+
+Run offline tests with a verified empty kubeconfig file, never an empty value.
+Use a private kubeconfig and one serial lane for live proofs. Preserve ignored
+eval traces. Stop only owned processes with retained session/PID provenance;
+never scan for and kill processes by command name. Process-handling incidents
+and the unresolved earlier ad hoc recorded-preflight process are documented in
+#654 and the diagnostic report; do not claim a clean process environment.
 
 ## 2026-09-30: Adopted 3.0 execution and v2.12.4 publication
 
