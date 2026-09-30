@@ -16,6 +16,8 @@ import (
 	"strings"
 	"testing"
 
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/confighub/cub-scout/internal/mapsvc"
 	"github.com/confighub/cub-scout/pkg/agent"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -116,6 +118,57 @@ func TestMapOwnershipEvidenceViewUsesLoadedEntriesOnly(t *testing.T) {
 	}
 	if len(m.entries) != before {
 		t.Fatal("rendering evidence changed loaded inventory")
+	}
+}
+
+func TestMapOwnershipEvidenceViewWrapsCompleteScopeAtNarrowWidth(t *testing.T) {
+	m := initialLocalModel()
+	m.ready = true
+	m.loading = false
+	m.panelMode = true
+	m.panelView = viewOwnershipEvidence
+	m.entries = []MapEntry{
+		{
+			Kind: "Deployment", Namespace: "team-a", Name: "api", Owner: "Flux",
+			OwnershipDetection: mapsvc.NewOwnershipDetectionEvidence(agent.Ownership{Type: agent.OwnerFlux, Source: "label:kustomize.toolkit.fluxcd.io/name"}),
+		},
+		{
+			Kind: "Deployment", Namespace: "team-a", Name: "native", Owner: "Native",
+			OwnershipDetection: mapsvc.NewOwnershipDetectionEvidence(agent.Ownership{Type: agent.OwnerUnknown}),
+		},
+	}
+	m.ownershipOmissions = []mapsvc.CollectionOmission{{APIVersion: "apps/v1", Resource: "deployments", Namespace: "team-a", Reason: "forbidden"}}
+
+	updated, _ := m.Update(tea.WindowSizeMsg{Width: 120, Height: 24})
+	m = updated.(LocalClusterModel)
+	if m.panelPane.Width != 54 {
+		t.Fatalf("wide panel width = %d, want 54", m.panelPane.Width)
+	}
+	updated, _ = m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = updated.(LocalClusterModel)
+	if m.panelPane.Width != 34 {
+		t.Fatalf("narrow panel width = %d, want 34", m.panelPane.Width)
+	}
+	view := ansi.Strip(m.View())
+	m.panelPane.Height = 100
+	// Hard wrapping may break within a long detector source. Removing only
+	// inserted line breaks proves the viewport retained the complete content.
+	fullPanel := strings.ReplaceAll(ansi.Strip(m.panelPane.View()), "\n", "")
+	for _, want := range []string{
+		"Ownership detection applies only to workload objects returned during inventory loading.",
+		"It does not establish that a resource is orphaned or identify a person.",
+		"team-a/api Deployment", "detected via label:kustomize.toolkit.fluxcd.io/name",
+		"team-a/native Deployment", "no known marker", "partial",
+		"apps/v1/deployments namespace=team-a not returned (forbidden)",
+	} {
+		if !strings.Contains(fullPanel, want) {
+			t.Errorf("narrow ownership evidence view clipped %q; full panel=%q\nrendered view:\n%s", want, fullPanel, view)
+		}
+	}
+	for _, line := range strings.Split(view, "\n") {
+		if got := ansi.StringWidth(line); got > 81 {
+			t.Errorf("narrow TUI line width = %d, want <= 81 including pane borders: %q", got, line)
+		}
 	}
 }
 

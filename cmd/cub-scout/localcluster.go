@@ -19,6 +19,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/confighub/cub-scout/internal/mapsvc"
 	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/confighub/cub-scout/pkg/hub"
@@ -421,6 +422,18 @@ func defaultLocalKeyMap() localKeyMap {
 		Suggest:           key.NewBinding(key.WithKeys("C"), key.WithHelp("C", "commands")),
 		Shell:             key.NewBinding(key.WithKeys("$"), key.WithHelp("$", "shell")),
 	}
+}
+
+func ownershipEvidencePanelWidth(width int) int {
+	leftWidth := width/2 - 2
+	if leftWidth < 20 {
+		leftWidth = 20
+	}
+	rightWidth := width - leftWidth - 4
+	if rightWidth < 20 {
+		rightWidth = 20
+	}
+	return max(1, rightWidth-4)
 }
 
 // Messages
@@ -1259,6 +1272,12 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+		m.panelPane.Width = ownershipEvidencePanelWidth(msg.Width)
+		if m.panelView == viewOwnershipEvidence {
+			// Keep the evidence text wrapped to the panel width after resizes;
+			// the viewport does not provide horizontal scrolling.
+			m.updatePanelContent()
+		}
 		if m.boundedPanel != nil {
 			m.boundedPanel.resize(msg.Width, msg.Height)
 		}
@@ -2346,7 +2365,7 @@ func (m *LocalClusterModel) updatePanelContent() {
 	case viewMaps:
 		content = m.getPanelMaps()
 	case viewOwnershipEvidence:
-		content = m.getPanelOwnershipEvidence()
+		content = ansi.Hardwrap(m.getPanelOwnershipEvidence(), max(1, m.panelPane.Width), true)
 	}
 	m.panelPane.SetContent(content)
 	m.panelPane.GotoTop()
