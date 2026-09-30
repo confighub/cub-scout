@@ -25,6 +25,16 @@ type HelmTracer struct {
 	client kubernetes.Interface
 }
 
+// Helm release Secrets are untrusted compressed input. Keep each decoding
+// stage bounded even though the Kubernetes API has already returned the Secret.
+// These limits intentionally leave room above ordinary release records while
+// bounding a single candidate to 32 MiB of decoded JSON.
+const (
+	maxHelmReleaseEncodedBytes    = 9 << 20
+	maxHelmReleaseCompressedBytes = 6 << 20
+	maxHelmReleaseJSONBytes       = 32 << 20
+)
+
 // NewHelmTracer creates a new Helm tracer
 func NewHelmTracer(client kubernetes.Interface) *HelmTracer {
 	return &HelmTracer{
@@ -154,7 +164,7 @@ func (h *HelmTracer) listReleases(ctx context.Context, namespace string) ([]*hel
 
 		release, err := h.decodeRelease(secret.Data["release"])
 		if err != nil {
-			continue // Skip undecodable releases
+			return nil, fmt.Errorf("decode candidate Helm release Secret %q: %w", secret.Name, err)
 		}
 
 		// Keep only the latest version of each release
@@ -193,7 +203,7 @@ func (h *HelmTracer) getRelease(ctx context.Context, name, namespace string) (*h
 
 		release, err := h.decodeRelease(secret.Data["release"])
 		if err != nil {
-			continue
+			return nil, fmt.Errorf("decode candidate Helm release Secret %q: %w", secret.Name, err)
 		}
 
 		if latestRelease == nil || release.Version > latestRelease.Version {
@@ -208,31 +218,46 @@ func (h *HelmTracer) getRelease(ctx context.Context, name, namespace string) (*h
 // Helm stores releases as base64(gzip(json))
 func (h *HelmTracer) decodeRelease(data []byte) (*helmRelease, error) {
 	if len(data) == 0 {
-		return nil, fmt.Errorf("empty release data")
+		return nil, fmt.Errorf("empty Helm release data")
+	}
+	if len(data) > maxHelmReleaseEncodedBytes {
+		return nil, fmt.Errorf("encoded Helm release exceeds size limit (%d bytes)", maxHelmReleaseEncodedBytes)
+	}
+	if base64.StdEncoding.DecodedLen(len(data)) > maxHelmReleaseCompressedBytes {
+		return nil, fmt.Errorf("compressed Helm release exceeds size limit (%d bytes)", maxHelmReleaseCompressedBytes)
 	}
 
 	// Base64 decode
 	decoded, err := base64.StdEncoding.DecodeString(string(data))
 	if err != nil {
-		return nil, fmt.Errorf("base64 decode: %w", err)
+		return nil, fmt.Errorf("invalid base64 data in Helm release")
+	}
+	if len(decoded) > maxHelmReleaseCompressedBytes {
+		return nil, fmt.Errorf("compressed Helm release exceeds size limit (%d bytes)", maxHelmReleaseCompressedBytes)
 	}
 
 	// Gzip decompress
 	reader, err := gzip.NewReader(bytes.NewReader(decoded))
 	if err != nil {
-		return nil, fmt.Errorf("gzip reader: %w", err)
+		return nil, fmt.Errorf("invalid gzip data in Helm release")
 	}
 	defer reader.Close()
 
-	decompressed, err := io.ReadAll(reader)
+	decompressed, err := io.ReadAll(io.LimitReader(reader, maxHelmReleaseJSONBytes+1))
 	if err != nil {
-		return nil, fmt.Errorf("gzip read: %w", err)
+		return nil, fmt.Errorf("unable to decompress Helm release data")
+	}
+	if len(decompressed) > maxHelmReleaseJSONBytes {
+		return nil, fmt.Errorf("expanded Helm release exceeds size limit (%d bytes)", maxHelmReleaseJSONBytes)
 	}
 
 	// JSON unmarshal
 	var release helmRelease
 	if err := json.Unmarshal(decompressed, &release); err != nil {
-		return nil, fmt.Errorf("json unmarshal: %w", err)
+		return nil, fmt.Errorf("invalid JSON in Helm release data")
+	}
+	if strings.TrimSpace(release.Name) == "" || strings.TrimSpace(release.Namespace) == "" || release.Version <= 0 {
+		return nil, fmt.Errorf("Helm release identity metadata is incomplete")
 	}
 
 	return &release, nil
@@ -415,7 +440,7 @@ func (h *HelmTracer) GetReleaseHistory(ctx context.Context, releaseName, namespa
 
 		release, err := h.decodeRelease(secret.Data["release"])
 		if err != nil {
-			continue
+			return nil, fmt.Errorf("decode candidate Helm release Secret %q: %w", secret.Name, err)
 		}
 
 		releases = append(releases, release)
