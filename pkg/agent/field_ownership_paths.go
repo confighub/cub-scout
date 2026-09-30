@@ -185,13 +185,16 @@ func fieldAttributionsByEntries(entries []metav1.ManagedFieldsEntry, expectedOwn
 		}
 		switch {
 		case acc.sawController && acc.sawInteractive:
-			cause := CauseManualEdit
 			if includeUnknown {
 				// For exact-field evidence, shared ownership is ambiguous. Keep
 				// every observed manager but do not infer a cause from co-ownership.
-				cause = CauseUnknown
+				out[path] = FieldMutationAttribution{Cause: CauseUnknown, Managers: managers}
+			} else {
+				out[path] = FieldMutationAttribution{
+					Cause:       CauseManualEdit,
+					ManagerHint: acc.interactiveHint,
+				}
 			}
-			out[path] = FieldMutationAttribution{Cause: cause, Managers: managers}
 		case acc.sawController:
 			out[path] = FieldMutationAttribution{
 				Cause:       CauseControllerDrift,
