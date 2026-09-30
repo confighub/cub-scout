@@ -1,0 +1,218 @@
+{
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "metadata": {
+        "annotations": {
+            "deployment.kubernetes.io/revision": "1"
+        },
+        "creationTimestamp": "2026-09-30T22:18:39Z",
+        "generation": 1,
+        "labels": {
+            "app.kubernetes.io/name": "payment-worker",
+            "app.kubernetes.io/part-of": "banko",
+            "kustomize.toolkit.fluxcd.io/name": "apps",
+            "kustomize.toolkit.fluxcd.io/namespace": "flux-system"
+        },
+        "managedFields": [
+            {
+                "apiVersion": "apps/v1",
+                "fieldsType": "FieldsV1",
+                "fieldsV1": {
+                    "f:metadata": {
+                        "f:labels": {
+                            "f:app.kubernetes.io/name": {},
+                            "f:app.kubernetes.io/part-of": {},
+                            "f:kustomize.toolkit.fluxcd.io/name": {},
+                            "f:kustomize.toolkit.fluxcd.io/namespace": {}
+                        }
+                    },
+                    "f:spec": {
+                        "f:replicas": {},
+                        "f:selector": {},
+                        "f:strategy": {},
+                        "f:template": {
+                            "f:metadata": {
+                                "f:labels": {
+                                    "f:app.kubernetes.io/name": {},
+                                    "f:app.kubernetes.io/part-of": {}
+                                }
+                            },
+                            "f:spec": {
+                                "f:containers": {
+                                    "k:{\"name\":\"worker\"}": {
+                                        ".": {},
+                                        "f:command": {},
+                                        "f:env": {
+                                            "k:{\"name\":\"DB_HOST\"}": {
+                                                ".": {},
+                                                "f:name": {},
+                                                "f:value": {}
+                                            },
+                                            "k:{\"name\":\"QUEUE_URL\"}": {
+                                                ".": {},
+                                                "f:name": {},
+                                                "f:value": {}
+                                            }
+                                        },
+                                        "f:image": {},
+                                        "f:name": {},
+                                        "f:resources": {
+                                            "f:limits": {
+                                                "f:cpu": {},
+                                                "f:memory": {}
+                                            },
+                                            "f:requests": {
+                                                "f:cpu": {},
+                                                "f:memory": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "manager": "kustomize-controller",
+                "operation": "Apply",
+                "time": "2026-09-30T22:18:39Z"
+            },
+            {
+                "apiVersion": "apps/v1",
+                "fieldsType": "FieldsV1",
+                "fieldsV1": {
+                    "f:metadata": {
+                        "f:annotations": {
+                            ".": {},
+                            "f:deployment.kubernetes.io/revision": {}
+                        }
+                    },
+                    "f:status": {
+                        "f:conditions": {
+                            ".": {},
+                            "k:{\"type\":\"Available\"}": {
+                                ".": {},
+                                "f:lastTransitionTime": {},
+                                "f:lastUpdateTime": {},
+                                "f:message": {},
+                                "f:reason": {},
+                                "f:status": {},
+                                "f:type": {}
+                            },
+                            "k:{\"type\":\"Progressing\"}": {
+                                ".": {},
+                                "f:lastTransitionTime": {},
+                                "f:lastUpdateTime": {},
+                                "f:message": {},
+                                "f:reason": {},
+                                "f:status": {},
+                                "f:type": {}
+                            }
+                        },
+                        "f:observedGeneration": {},
+                        "f:replicas": {},
+                        "f:terminatingReplicas": {},
+                        "f:unavailableReplicas": {},
+                        "f:updatedReplicas": {}
+                    }
+                },
+                "manager": "kube-controller-manager",
+                "operation": "Update",
+                "subresource": "status",
+                "time": "2026-09-30T22:18:39Z"
+            }
+        ],
+        "name": "payment-worker",
+        "namespace": "scout-hlt02",
+        "resourceVersion": "658",
+        "uid": "3b56bff9-bfe2-4f1f-9913-1ebef756c0e8"
+    },
+    "spec": {
+        "progressDeadlineSeconds": 600,
+        "replicas": 1,
+        "revisionHistoryLimit": 10,
+        "selector": {
+            "matchLabels": {
+                "app.kubernetes.io/name": "payment-worker"
+            }
+        },
+        "strategy": {
+            "rollingUpdate": {
+                "maxSurge": "25%",
+                "maxUnavailable": "25%"
+            },
+            "type": "RollingUpdate"
+        },
+        "template": {
+            "metadata": {
+                "labels": {
+                    "app.kubernetes.io/name": "payment-worker",
+                    "app.kubernetes.io/part-of": "banko"
+                }
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "command": [
+                            "/scout-fixture-intentionally-missing"
+                        ],
+                        "env": [
+                            {
+                                "name": "QUEUE_URL",
+                                "value": "rabbitmq:5672"
+                            },
+                            {
+                                "name": "DB_HOST",
+                                "value": "postgres:5432"
+                            }
+                        ],
+                        "image": "registry.k8s.io/pause:3.9",
+                        "imagePullPolicy": "IfNotPresent",
+                        "name": "worker",
+                        "resources": {
+                            "limits": {
+                                "cpu": "100m",
+                                "memory": "128Mi"
+                            },
+                            "requests": {
+                                "cpu": "50m",
+                                "memory": "64Mi"
+                            }
+                        },
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File"
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "restartPolicy": "Always",
+                "schedulerName": "default-scheduler",
+                "securityContext": {},
+                "terminationGracePeriodSeconds": 30
+            }
+        }
+    },
+    "status": {
+        "conditions": [
+            {
+                "lastTransitionTime": "2026-09-30T22:18:39Z",
+                "lastUpdateTime": "2026-09-30T22:18:39Z",
+                "message": "Deployment does not have minimum availability.",
+                "reason": "MinimumReplicasUnavailable",
+                "status": "False",
+                "type": "Available"
+            },
+            {
+                "lastTransitionTime": "2026-09-30T22:18:39Z",
+                "lastUpdateTime": "2026-09-30T22:18:39Z",
+                "message": "ReplicaSet \"payment-worker-78db7d4787\" is progressing.",
+                "reason": "ReplicaSetUpdated",
+                "status": "True",
+                "type": "Progressing"
+            }
+        ],
+        "observedGeneration": 1,
+        "replicas": 1,
+        "terminatingReplicas": 0,
+        "unavailableReplicas": 1,
+        "updatedReplicas": 1
+    }
+}

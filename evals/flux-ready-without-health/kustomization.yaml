@@ -1,0 +1,28 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: apps
+  namespace: flux-system
+spec:
+  interval: 1h
+  path: ./examples/combined-git-live/git-repo/apps/payment-worker/base
+  prune: true
+  wait: false
+  targetNamespace: scout-hlt02
+  sourceRef:
+    kind: GitRepository
+    name: scout-hlt02-source
+  patches:
+    - target:
+        group: apps
+        version: v1
+        kind: Deployment
+        name: payment-worker
+      patch: |
+        - op: replace
+          path: /spec/template/spec/containers/0/image
+          value: registry.k8s.io/pause:3.9
+        - op: add
+          path: /spec/template/spec/containers/0/command
+          value:
+            - /scout-fixture-intentionally-missing

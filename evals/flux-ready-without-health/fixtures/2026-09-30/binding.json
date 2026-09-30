@@ -1,0 +1,32 @@
+{
+  "benchmarkAdmission": "pending prompt, equivalent tools, graders and paired protocol",
+  "captureSourceCommit": "828ade537ef1ff73d4430d683be5aa134786610f",
+  "cleanup": {
+    "exit": 0,
+    "otherClusterNamesUnchanged": true,
+    "ownedClusterRemoved": true,
+    "seconds": 85.283,
+    "sharedConfigHashesUnchanged": true,
+    "sharedContextUnchanged": true,
+    "sourceUnchanged": true,
+    "timedOut": false
+  },
+  "files": {
+    "cli-binary-hashes.json": "f2e07ac9eada94fa8738f1d11e1ef52deefe9a3ab482b42162644c6119ddc216",
+    "controller-images.json": "de1fd0b1578f093abfab0ccea717938ba7d0dab22d3e5adae91e84cc81fde1ae",
+    "deployment.json": "a49278364bd6e1359e4b45e5c963897083d709c8a7883a8c0b92dba03160c792",
+    "gitrepository.json": "c65ca477c21148fd5cdbe342c990f2787ee595826f102174ac317a1e510771c8",
+    "kubernetes-version.json": "ee7b3dafb6898143948f3b88cf77ebda7ae1f9e605ca8690fb2f3c534627f549",
+    "kustomization-end.json": "026e2f3934c40aab07173d4f4fefccc9ee65737ecbce526be1438e5514b13cc9",
+    "kustomization-start.json": "026e2f3934c40aab07173d4f4fefccc9ee65737ecbce526be1438e5514b13cc9",
+    "kustomize-controller-pods.json": "8370786261b76dc0b7334f54245eff7cca63446210f995ad432f1cb2734b0d50",
+    "pods.json": "c08af7ad49988da39b8dd8a4519fe6e4c982a4d859273851395d1de6fa0053c2",
+    "provenance.json": "e229575b10fcb8b34c5b1835402d8af4fa2985db40f31fd284134e18fc340b9b",
+    "replicasets.json": "6b50ae0e03ad94aca6bb9941903fca7892ead9731218079d93e399f161557b92",
+    "source-controller-pods.json": "6a65c7f0357c7af930f86d309466d96178d300f942f905ac0e751946c58e6fbc",
+    "workload-validation.json": "951705160bae481472f8bfa0bd8c71675a5d95b380ff16dc1aceca4838571a9b"
+  },
+  "format": "cub-scout-hlt02-capture-binding/v1",
+  "modelRun": false,
+  "rawObjectsUnmodified": true
+}

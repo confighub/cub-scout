@@ -1,0 +1,145 @@
+{
+    "apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+    "kind": "Kustomization",
+    "metadata": {
+        "annotations": {
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"kustomize.toolkit.fluxcd.io/v1\",\"kind\":\"Kustomization\",\"metadata\":{\"annotations\":{},\"name\":\"apps\",\"namespace\":\"flux-system\"},\"spec\":{\"interval\":\"1h\",\"patches\":[{\"patch\":\"- op: replace\\n  path: /spec/template/spec/containers/0/image\\n  value: registry.k8s.io/pause:3.9\\n- op: add\\n  path: /spec/template/spec/containers/0/command\\n  value:\\n    - /scout-fixture-intentionally-missing\\n\",\"target\":{\"group\":\"apps\",\"kind\":\"Deployment\",\"name\":\"payment-worker\",\"version\":\"v1\"}}],\"path\":\"./examples/combined-git-live/git-repo/apps/payment-worker/base\",\"prune\":true,\"sourceRef\":{\"kind\":\"GitRepository\",\"name\":\"scout-hlt02-source\"},\"targetNamespace\":\"scout-hlt02\",\"wait\":false}}\n"
+        },
+        "creationTimestamp": "2026-09-30T22:18:21Z",
+        "finalizers": [
+            "finalizers.fluxcd.io"
+        ],
+        "generation": 1,
+        "managedFields": [
+            {
+                "apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+                "fieldsType": "FieldsV1",
+                "fieldsV1": {
+                    "f:metadata": {
+                        "f:finalizers": {
+                            ".": {},
+                            "v:\"finalizers.fluxcd.io\"": {}
+                        }
+                    }
+                },
+                "manager": "gotk-kustomize-controller",
+                "operation": "Update",
+                "time": "2026-09-30T22:18:21Z"
+            },
+            {
+                "apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+                "fieldsType": "FieldsV1",
+                "fieldsV1": {
+                    "f:metadata": {
+                        "f:annotations": {
+                            ".": {},
+                            "f:kubectl.kubernetes.io/last-applied-configuration": {}
+                        }
+                    },
+                    "f:spec": {
+                        ".": {},
+                        "f:force": {},
+                        "f:interval": {},
+                        "f:patches": {},
+                        "f:path": {},
+                        "f:prune": {},
+                        "f:sourceRef": {
+                            ".": {},
+                            "f:kind": {},
+                            "f:name": {}
+                        },
+                        "f:targetNamespace": {},
+                        "f:wait": {}
+                    }
+                },
+                "manager": "kubectl-client-side-apply",
+                "operation": "Update",
+                "time": "2026-09-30T22:18:21Z"
+            },
+            {
+                "apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+                "fieldsType": "FieldsV1",
+                "fieldsV1": {
+                    "f:status": {
+                        "f:conditions": {},
+                        "f:history": {},
+                        "f:inventory": {
+                            ".": {},
+                            "f:entries": {}
+                        },
+                        "f:lastAppliedRevision": {},
+                        "f:lastAttemptedRevision": {},
+                        "f:observedGeneration": {}
+                    }
+                },
+                "manager": "gotk-kustomize-controller",
+                "operation": "Update",
+                "subresource": "status",
+                "time": "2026-09-30T22:18:39Z"
+            }
+        ],
+        "name": "apps",
+        "namespace": "flux-system",
+        "resourceVersion": "652",
+        "uid": "e1fc4eba-c750-40a1-8d71-d71947360b21"
+    },
+    "spec": {
+        "force": false,
+        "interval": "1h",
+        "patches": [
+            {
+                "patch": "- op: replace\n  path: /spec/template/spec/containers/0/image\n  value: registry.k8s.io/pause:3.9\n- op: add\n  path: /spec/template/spec/containers/0/command\n  value:\n    - /scout-fixture-intentionally-missing\n",
+                "target": {
+                    "group": "apps",
+                    "kind": "Deployment",
+                    "name": "payment-worker",
+                    "version": "v1"
+                }
+            }
+        ],
+        "path": "./examples/combined-git-live/git-repo/apps/payment-worker/base",
+        "prune": true,
+        "sourceRef": {
+            "kind": "GitRepository",
+            "name": "scout-hlt02-source"
+        },
+        "targetNamespace": "scout-hlt02",
+        "wait": false
+    },
+    "status": {
+        "conditions": [
+            {
+                "lastTransitionTime": "2026-09-30T22:18:39Z",
+                "message": "Applied revision: sha1:7732dde28be8cf8c42c096d94efbd8ce4a9d0a19",
+                "observedGeneration": 1,
+                "reason": "ReconciliationSucceeded",
+                "status": "True",
+                "type": "Ready"
+            }
+        ],
+        "history": [
+            {
+                "digest": "sha256:c5149d932f6097cee61e9046bc0f99762157a41c0aef4e68970290e484044fe9",
+                "firstReconciled": "2026-09-30T22:18:39Z",
+                "lastReconciled": "2026-09-30T22:18:39Z",
+                "lastReconciledDuration": "3.385223934s",
+                "lastReconciledStatus": "ReconciliationSucceeded",
+                "metadata": {
+                    "revision": "sha1:7732dde28be8cf8c42c096d94efbd8ce4a9d0a19"
+                },
+                "totalReconciliations": 1
+            }
+        ],
+        "inventory": {
+            "entries": [
+                {
+                    "id": "scout-hlt02_payment-worker_apps_Deployment",
+                    "v": "v1"
+                }
+            ]
+        },
+        "lastAppliedRevision": "sha1:7732dde28be8cf8c42c096d94efbd8ce4a9d0a19",
+        "lastAttemptedRevision": "sha1:7732dde28be8cf8c42c096d94efbd8ce4a9d0a19",
+        "observedGeneration": 1
+    }
+}

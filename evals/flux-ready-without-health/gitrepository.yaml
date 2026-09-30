@@ -1,0 +1,10 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: scout-hlt02-source
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: https://github.com/confighub/cub-scout
+  ref:
+    commit: 7732dde28be8cf8c42c096d94efbd8ce4a9d0a19
