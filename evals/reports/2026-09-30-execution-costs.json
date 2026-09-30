@@ -52,9 +52,20 @@
       "scope": "recorded MCP command-access diagnostic only; not Experiment A, not a product-quality comparison, and no savings claim",
       "kind": "recorded MCP command-access probe diagnostic",
       "purpose": "one paired exact-object tool plumbing check with identical raw fixture access in both arms; answer difference confounded by owner-versus-field-manager prompt ambiguity"
+    },
+    {
+      "stage": "smoke",
+      "resultFile": "recorded-mcp-economy-20260930/result.json",
+      "sha256": "b6dceac0293a8c98c4851d8ca01b15cd00e7d232245ee334b9b6781dfa444d35",
+      "inclusiveListPriceUsd": 0.1588988,
+      "partial": false,
+      "exitCode": 1,
+      "scope": "one paired recorded-only economy diagnostic; both answer grades failed; no general savings claim",
+      "kind": "recorded MCP economy diagnostic",
+      "purpose": "tool-choice/evidence-retrieval diagnostic for this prompt and pinned model only; not benchmark evidence"
     }
   ],
-  "totalNewEvalListPriceUsd": 3.9459534,
+  "totalNewEvalListPriceUsd": 4.1048522,
   "stageEnvelopesUsd": {
     "live-only completion": 15,
     "smoke": 20,
@@ -66,10 +77,11 @@
     "Formatting amendment was regraded offline; no paid retry.",
     "No max-speed run was enabled; all new run terminal records report fast mode off.",
     "Command-access probe diagnostic: one serial run per arm on pinned Claude Haiku 4.5 at normal speed; $0.0655016 inclusive list-price estimate. Not Experiment A, not a product comparison, and not evidence of savings. The $200 baseline envelope remains unspent.",
-    "Recorded MCP command-access diagnostic: one paired exact-object explain call with identical full raw fixture available in both arms; both arms read both fixture files. The answer delta is confounded by ambiguous owner-vs-field-manager wording; no quality or savings claim. One run per arm despite case runsPerCase=3 metadata; with-arm result reported 5 turns against configured maxTurns=4. Credits not measured."
+    "Recorded MCP command-access diagnostic: one paired exact-object explain call with identical full raw fixture available in both arms; both arms read both fixture files. The answer delta is confounded by ambiguous owner-vs-field-manager wording; no quality or savings claim. One run per arm despite case runsPerCase=3 metadata; with-arm result reported 5 turns against configured maxTurns=4. Credits not measured.",
+    "Recorded MCP economy diagnostic: one serial run per arm under a $1 prelaunch ceiling within the existing $20 smoke tranche. Both arms read the full fixed recording; treatment added one explain MCP tool but neither arm called MCP. Both answer graders failed (resourceOwner UNKNOWN rather than Flux; with-arm also included extra prose). Result partial=false but command exit=1 because grading failed. This single case provides no verified answer denominator, general savings or quality claim. Costs include failed runs; account credits not measured. Explicit --runs 1 overrode runsPerCase=3; both runs reported 3 turns under maxTurns=8."
   ],
   "stageSpendUsd": {
     "live-only completion": 2.4692065,
-    "smoke": 1.4767469
+    "smoke": 1.6356457
   }
 }
