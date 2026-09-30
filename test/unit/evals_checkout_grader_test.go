@@ -34,7 +34,8 @@ field_evidence = '''fieldsV1:
       manager: kubectl-set'''
 assert field_evidence in deployment_export, "fixture no longer ties kubectl-set to checkout's image field"
 
-definition = regrade.parse_grader(pathlib.Path("evals/changed-by-checkout/graders/changed-by-line.md"))
+grader_path = pathlib.Path("evals/changed-by-checkout/graders/changed-by-line.md")
+definition = regrade.parse_grader(grader_path, grader_path.read_bytes())
 assert definition["kind"] == "regex"
 pattern = definition["compiled"]
 good = "CHANGED_BY: MANUAL_TOOL | MANAGER: kubectl-set | FIELD_PATH: spec.template.spec.containers[name=checkout].image | HUMAN_ACTOR: UNKNOWN | SCOPE: recorded evidence only; no live confirmation; no Git desired state provided"
