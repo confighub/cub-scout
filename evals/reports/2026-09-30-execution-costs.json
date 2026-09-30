@@ -42,9 +42,19 @@
       "scope": "tool-boundary diagnostic only; not Experiment A and no savings claim",
       "kind": "command-access probe diagnostic",
       "purpose": "command-access probe diagnostic; not Experiment A and no savings claim"
+    },
+    {
+      "stage": "smoke",
+      "resultFile": "recorded-mcp-probe-c37a81a201c8c72d/result.json",
+      "sha256": "3431ff4b1a57911b0b45217efe9be7b0fe16124b6ea4d02be53b08f1d843c440",
+      "inclusiveListPriceUsd": 0.1658023,
+      "partial": false,
+      "scope": "recorded MCP command-access diagnostic only; not Experiment A, not a product-quality comparison, and no savings claim",
+      "kind": "recorded MCP command-access probe diagnostic",
+      "purpose": "one paired exact-object tool plumbing check with identical raw fixture access in both arms; answer difference confounded by owner-versus-field-manager prompt ambiguity"
     }
   ],
-  "totalNewEvalListPriceUsd": 3.7801511,
+  "totalNewEvalListPriceUsd": 3.9459534,
   "stageEnvelopesUsd": {
     "live-only completion": 15,
     "smoke": 20,
@@ -55,10 +65,11 @@
     "Historical September 27/28 spend is outside this execution ledger and remains in its original reports.",
     "Formatting amendment was regraded offline; no paid retry.",
     "No max-speed run was enabled; all new run terminal records report fast mode off.",
-    "Command-access probe diagnostic: one serial run per arm on pinned Claude Haiku 4.5 at normal speed; $0.0655016 inclusive list-price estimate. Not Experiment A, not a product comparison, and not evidence of savings. The $200 baseline envelope remains unspent."
+    "Command-access probe diagnostic: one serial run per arm on pinned Claude Haiku 4.5 at normal speed; $0.0655016 inclusive list-price estimate. Not Experiment A, not a product comparison, and not evidence of savings. The $200 baseline envelope remains unspent.",
+    "Recorded MCP command-access diagnostic: one paired exact-object explain call with identical full raw fixture available in both arms; both arms read both fixture files. The answer delta is confounded by ambiguous owner-vs-field-manager wording; no quality or savings claim. One run per arm despite case runsPerCase=3 metadata; with-arm result reported 5 turns against configured maxTurns=4. Credits not measured."
   ],
   "stageSpendUsd": {
     "live-only completion": 2.4692065,
-    "smoke": 1.3109446
+    "smoke": 1.4767469
   }
 }
