@@ -153,6 +153,59 @@ type helmReleaseInfo struct {
 	Status        string    `json:"status"`
 }
 
+// UnmarshalJSON accepts Helm's zero timestamp representation. Helm's time
+// wrapper marshals a zero time as an empty string, while encoding/json's
+// standard time.Time decoder rejects that value. Missing and null timestamps
+// also remain zero; nonempty values retain time.Time's RFC3339 parsing rules.
+func (info *helmReleaseInfo) UnmarshalJSON(data []byte) error {
+	type plain helmReleaseInfo
+	var wire struct {
+		plain
+		FirstDeployed json.RawMessage `json:"first_deployed"`
+		LastDeployed  json.RawMessage `json:"last_deployed"`
+		Deleted       json.RawMessage `json:"deleted"`
+	}
+	if err := json.Unmarshal(data, &wire); err != nil {
+		return err
+	}
+	first, err := parseHelmReleaseTime(wire.FirstDeployed)
+	if err != nil {
+		return fmt.Errorf("invalid first_deployed timestamp")
+	}
+	last, err := parseHelmReleaseTime(wire.LastDeployed)
+	if err != nil {
+		return fmt.Errorf("invalid last_deployed timestamp")
+	}
+	deleted, err := parseHelmReleaseTime(wire.Deleted)
+	if err != nil {
+		return fmt.Errorf("invalid deleted timestamp")
+	}
+	decoded := helmReleaseInfo(wire.plain)
+	decoded.FirstDeployed = first
+	decoded.LastDeployed = last
+	decoded.Deleted = deleted
+	*info = decoded
+	return nil
+}
+
+func parseHelmReleaseTime(raw json.RawMessage) (time.Time, error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		return time.Time{}, nil
+	}
+	var value string
+	if err := json.Unmarshal(raw, &value); err != nil {
+		return time.Time{}, err
+	}
+	if value == "" {
+		return time.Time{}, nil
+	}
+	parsed, err := time.Parse(time.RFC3339Nano, value)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return parsed, nil
+}
+
 type helmChart struct {
 	Metadata helmChartMetadata `json:"metadata"`
 }
