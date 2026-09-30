@@ -1,6 +1,8 @@
 package unit
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,6 +13,13 @@ import (
 )
 
 const fluxHLT02Dir = "../../evals/flux-ready-without-health"
+
+func requireFluxHLT02Python(t *testing.T) {
+	t.Helper()
+	if _, err := exec.LookPath("python3"); err != nil {
+		t.Skip("python3 is required for the offline HLT-02 capture checks")
+	}
+}
 
 func TestFluxHLT02CaptureManifestsDefineWaitFalseAndPinnedSource(t *testing.T) {
 	var source struct {
@@ -75,6 +84,7 @@ func TestFluxHLT02CaptureManifestsDefineWaitFalseAndPinnedSource(t *testing.T) {
 }
 
 func TestFluxHLT02CaptureRefusesExistingOwnedKindCluster(t *testing.T) {
+	requireFluxHLT02Python(t)
 	bin := t.TempDir()
 	logPath := filepath.Join(t.TempDir(), "calls.log")
 	writeExecutable(t, filepath.Join(bin, "kind"), `#!/usr/bin/env bash
@@ -109,6 +119,7 @@ exit 90
 }
 
 func TestFluxHLT02CaptureRefusesUncachedPinnedNodeImage(t *testing.T) {
+	requireFluxHLT02Python(t)
 	bin := t.TempDir()
 	logPath := filepath.Join(t.TempDir(), "calls.log")
 	writeExecutable(t, filepath.Join(bin, "kind"), `#!/usr/bin/env bash
@@ -139,5 +150,158 @@ exit 90
 	log, _ := os.ReadFile(logPath)
 	if strings.Contains(string(log), "create cluster") || strings.Contains(string(log), "delete cluster") {
 		t.Fatalf("cache guard must run before any kind lifecycle operation: %s", log)
+	}
+}
+
+func TestFluxHLT02CaptureCleansPartialCreateWithPrivateKubeconfigOnly(t *testing.T) {
+	requireFluxHLT02Python(t)
+	bin := t.TempDir()
+	state := t.TempDir()
+	logPath := filepath.Join(t.TempDir(), "kind.log")
+	writeExecutable(t, filepath.Join(bin, "kind"), `#!/usr/bin/env bash
+set -euo pipefail
+printf 'KUBECONFIG=%s ARGS=%s\n' "${KUBECONFIG-}" "$*" >> "$MOCK_KIND_LOG"
+case "$1" in
+  version) echo 'kind v0.31.0 go1.24.2 darwin/arm64' ;;
+  get)
+    if [[ -f "$MOCK_STATE/deleted" ]]; then echo 'kind-shared-other'
+    elif [[ -f "$MOCK_STATE/created" ]]; then printf '%s\n%s\n' 'scout-hlt02-ready-without-health' 'kind-shared-other'
+    else echo 'kind-shared-other'; fi
+    ;;
+  create)
+    touch "$MOCK_STATE/created"
+    exit 7
+    ;;
+  delete)
+    touch "$MOCK_STATE/deleted"
+    ;;
+  *) exit 90 ;;
+esac
+`)
+	writeExecutable(t, filepath.Join(bin, "docker"), "#!/usr/bin/env bash\nexit 0\n")
+	writeExecutable(t, filepath.Join(bin, "flux"), "#!/usr/bin/env bash\nif [[ \"$1\" == --version ]]; then echo 'flux version 2.8.6'; exit 0; fi\nexit 90\n")
+	for _, name := range []string{"kubectl", "jq"} {
+		writeExecutable(t, filepath.Join(bin, name), "#!/usr/bin/env bash\nexit 90\n")
+	}
+	cmd := exec.Command("bash", filepath.Join(fluxHLT02Dir, "capture.sh"), "--execute", filepath.Join(t.TempDir(), "capture"))
+	cmd.Env = append(os.Environ(), "PATH="+bin+string(os.PathListSeparator)+os.Getenv("PATH"), "KUBECONFIG=/tmp/sentinel-user-config", "MOCK_KIND_LOG="+logPath, "MOCK_STATE="+state)
+	if output, err := cmd.CombinedOutput(); err == nil {
+		t.Fatalf("stubbed partial cluster creation should fail: %s", output)
+	}
+	logData, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	log := string(logData)
+	var privateConfig string
+	for _, line := range strings.Split(log, "\n") {
+		if strings.Contains(line, "ARGS=create cluster") {
+			for _, part := range strings.Fields(line) {
+				if strings.HasPrefix(part, "KUBECONFIG=") {
+					privateConfig = strings.TrimPrefix(part, "KUBECONFIG=")
+				}
+			}
+			if privateConfig == "" || privateConfig == "/tmp/sentinel-user-config" || !strings.Contains(line, "--kubeconfig "+privateConfig) {
+				t.Fatalf("create did not use its private kubeconfig in env and arg: %s", line)
+			}
+		}
+		if strings.Contains(line, "ARGS=delete cluster") {
+			if privateConfig == "" || !strings.Contains(line, "KUBECONFIG="+privateConfig) || !strings.Contains(line, "--kubeconfig "+privateConfig) {
+				t.Fatalf("cleanup did not use the same private kubeconfig in env and arg: %s", line)
+			}
+			if strings.Contains(line, "kind-shared-other") {
+				t.Fatalf("cleanup attempted to delete unrelated shared cluster: %s", line)
+			}
+		}
+	}
+	if !strings.Contains(log, "ARGS=delete cluster") {
+		t.Fatalf("partial create was not cleaned up: %s", log)
+	}
+}
+
+func TestFluxHLT02CaptureValidatorRequiresUnreadyPodOwnerChain(t *testing.T) {
+	requireFluxHLT02Python(t)
+	makeObjects := func() (map[string]any, map[string]any, map[string]any) {
+		deployment := map[string]any{
+			"apiVersion": "apps/v1", "kind": "Deployment",
+			"metadata": map[string]any{"name": "payment-worker", "namespace": "scout-hlt02", "uid": "deployment-uid", "generation": 3, "labels": map[string]any{
+				"kustomize.toolkit.fluxcd.io/name": "apps", "kustomize.toolkit.fluxcd.io/namespace": "flux-system",
+			}},
+			"spec": map[string]any{"replicas": 1, "template": map[string]any{"spec": map[string]any{"containers": []any{map[string]any{
+				"name": "worker", "image": "registry.k8s.io/pause:3.9", "command": []any{"/scout-fixture-intentionally-missing"},
+			}}}}},
+			"status": map[string]any{"observedGeneration": 3, "availableReplicas": 0, "unavailableReplicas": 1},
+		}
+		replicaSet := map[string]any{
+			"apiVersion": "apps/v1", "kind": "ReplicaSet",
+			"metadata": map[string]any{"name": "payment-worker-current", "uid": "replicaset-uid", "labels": map[string]any{
+				"app.kubernetes.io/name": "payment-worker", "pod-template-hash": "template-hash",
+			}, "ownerReferences": []any{map[string]any{"apiVersion": "apps/v1", "kind": "Deployment", "name": "payment-worker", "uid": "deployment-uid", "controller": true}}},
+			"spec": map[string]any{"template": map[string]any{"spec": map[string]any{"containers": []any{map[string]any{
+				"name": "worker", "image": "registry.k8s.io/pause:3.9", "command": []any{"/scout-fixture-intentionally-missing"},
+			}}}}},
+		}
+		pod := map[string]any{
+			"apiVersion": "v1", "kind": "Pod",
+			"metadata": map[string]any{"name": "payment-worker-current-xyz", "uid": "pod-uid", "labels": map[string]any{
+				"app.kubernetes.io/name": "payment-worker", "pod-template-hash": "template-hash",
+			}, "ownerReferences": []any{map[string]any{"apiVersion": "apps/v1", "kind": "ReplicaSet", "name": "payment-worker-current", "uid": "replicaset-uid", "controller": true}}},
+			"status": map[string]any{
+				"conditions": []any{map[string]any{"type": "Ready", "status": "False"}},
+				"containerStatuses": []any{map[string]any{"name": "worker", "state": map[string]any{"waiting": map[string]any{
+					"reason": "CreateContainerError", "message": "exec: /scout-fixture-intentionally-missing: no such file or directory",
+				}}}},
+			},
+		}
+		return deployment, map[string]any{"apiVersion": "apps/v1", "kind": "ReplicaSetList", "items": []any{replicaSet}}, map[string]any{"apiVersion": "v1", "kind": "PodList", "items": []any{pod}}
+	}
+	write := func(t *testing.T, dir string, name string, value any) {
+		t.Helper()
+		data, err := json.Marshal(value)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, name), data, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	run := func(t *testing.T, deployment, replicasets, pods map[string]any) error {
+		t.Helper()
+		dir := t.TempDir()
+		write(t, dir, "deployment.json", deployment)
+		write(t, dir, "replicasets.json", replicasets)
+		write(t, dir, "pods.json", pods)
+		cmd := exec.Command("python3", filepath.Join(fluxHLT02Dir, "validate_capture.py"), dir)
+		if output, err := cmd.CombinedOutput(); err != nil {
+			return fmt.Errorf("validator rejected capture: %w: %s", err, output)
+		}
+		return nil
+	}
+
+	deployment, replicaSets, pods := makeObjects()
+	if err := run(t, deployment, replicaSets, pods); err != nil {
+		t.Fatalf("valid Deployment→ReplicaSet→Pod chain rejected: %v", err)
+	}
+
+	_, wrongRSOwner, wrongRSPods := makeObjects()
+	wrongPod := wrongRSPods["items"].([]any)[0].(map[string]any)
+	wrongPod["metadata"].(map[string]any)["ownerReferences"].([]any)[0].(map[string]any)["uid"] = "another-replicaset"
+	if err := run(t, deployment, wrongRSOwner, wrongRSPods); err == nil {
+		t.Fatal("Pod with unrelated ReplicaSet UID should be rejected")
+	}
+
+	_, directOwnerSets, directOwnerPods := makeObjects()
+	directPod := directOwnerPods["items"].([]any)[0].(map[string]any)
+	directPod["metadata"].(map[string]any)["ownerReferences"].([]any)[0].(map[string]any)["kind"] = "Deployment"
+	directPod["metadata"].(map[string]any)["ownerReferences"].([]any)[0].(map[string]any)["uid"] = "deployment-uid"
+	if err := run(t, deployment, directOwnerSets, directOwnerPods); err == nil {
+		t.Fatal("Pod directly naming the Deployment rather than its ReplicaSet should be rejected")
+	}
+
+	_, healthySets, healthyPods := makeObjects()
+	healthyPod := healthyPods["items"].([]any)[0].(map[string]any)
+	healthyPod["status"].(map[string]any)["conditions"].([]any)[0].(map[string]any)["status"] = "True"
+	if err := run(t, deployment, healthySets, healthyPods); err == nil {
+		t.Fatal("Ready Pod should not satisfy the HLT-02 unavailable-workload capture")
 	}
 }

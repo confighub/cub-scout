@@ -72,13 +72,6 @@ run_bounded 15 docker image inspect "$NODE_IMAGE" >/dev/null 2>&1 || {
   exit 2
 }
 
-# Never adopt or delete an existing cluster, including one created by another run.
-existing_clusters=$(run_bounded 15 kind get clusters) || { echo 'Cannot verify existing kind clusters; refusing to create.' >&2; exit 2; }
-if awk -v name="$CLUSTER" '$0 == name { found=1 } END { exit !found }' <<< "$existing_clusters"; then
-  echo "Refusing to reuse existing kind cluster '$CLUSTER'." >&2
-  exit 2
-fi
-
 tmp_dir=$(mktemp -d "${TMPDIR:-/tmp}/scout-hlt02.XXXXXX")
 chmod 700 "$tmp_dir"
 private_kubeconfig="$tmp_dir/kubeconfig"
@@ -93,7 +86,7 @@ cleanup() {
     cluster_list=$(run_bounded 15 kind get clusters 2>/dev/null) || { echo 'Cannot verify owned cluster during cleanup.' >&2; cluster_list=''; status=1; }
     if awk -v name="$CLUSTER" '$0 == name { found=1 } END { exit !found }' <<< "$cluster_list"; then
       # Deliberately use the same private kubeconfig for deletion as creation.
-      run_bounded 60 kind delete cluster --name "$CLUSTER" --kubeconfig "$private_kubeconfig" >/dev/null || status=1
+      KUBECONFIG="$private_kubeconfig" run_bounded 60 kind delete cluster --name "$CLUSTER" --kubeconfig "$private_kubeconfig" >/dev/null || status=1
       remaining=$(run_bounded 15 kind get clusters 2>/dev/null) || { echo 'Cannot verify cluster cleanup.' >&2; remaining=''; status=1; }
       if awk -v name="$CLUSTER" '$0 == name { found=1 } END { exit !found }' <<< "$remaining"; then
         echo "Owned kind cluster '$CLUSTER' remains after cleanup." >&2
@@ -109,10 +102,16 @@ trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-# Do not let inherited kubeconfig selection affect any operation.
-unset KUBECONFIG
+# Check again while holding the owned-run lock, so two capture invocations
+# cannot both pass the inventory check and race to own the same cluster name.
+existing_clusters=$(run_bounded 15 kind get clusters) || { echo 'Cannot verify existing kind clusters; refusing to create.' >&2; exit 2; }
+if awk -v name="$CLUSTER" '$0 == name { found=1 } END { exit !found }' <<< "$existing_clusters"; then
+  echo "Refusing to reuse existing kind cluster '$CLUSTER'." >&2
+  exit 2
+fi
+
 create_attempted=1
-run_bounded 150 kind create cluster --name "$CLUSTER" --image "$NODE_IMAGE" --kubeconfig "$private_kubeconfig" --wait 120s
+KUBECONFIG="$private_kubeconfig" run_bounded 150 kind create cluster --name "$CLUSTER" --image "$NODE_IMAGE" --kubeconfig "$private_kubeconfig" --wait 120s
 chmod 600 "$private_kubeconfig"
 
 kubectl_owned() {
@@ -145,30 +144,25 @@ kubectl_owned apply -f "$OUT/gitrepository.yaml"
 kubectl_owned apply -f "$OUT/kustomization.yaml"
 kubectl_owned wait --for=condition=Ready kustomization/apps -n flux-system --timeout=240s
 
-# Wait only for the bounded workload evidence to exist; never wait for it to be healthy.
-deadline=$((SECONDS + 180))
-while :; do
-  if kubectl_owned get deployment "$DEPLOYMENT_NAME" -n "$FIXTURE_NAMESPACE" -o json > "$tmp_dir/deployment-probe.json" 2>/dev/null \
-    && jq -e '.metadata.uid and .status.observedGeneration == .metadata.generation and (.spec.replicas // 1) == 1 and (.status.availableReplicas // 0) == 0 and (.status.unavailableReplicas // 0) >= 1' "$tmp_dir/deployment-probe.json" >/dev/null; then
-    break
-  fi
-  (( SECONDS < deadline )) || { echo 'Timed out waiting for current-generation unavailable Deployment evidence.' >&2; exit 1; }
-  sleep 2
-done
-
 kubectl_owned get gitrepository scout-hlt02-source -n flux-system --show-managed-fields=true -o json > "$OUT/gitrepository.json"
 kubectl_owned get kustomization apps -n flux-system --show-managed-fields=true -o json > "$OUT/kustomization-start.json"
-kubectl_owned get deployment "$DEPLOYMENT_NAME" -n "$FIXTURE_NAMESPACE" --show-managed-fields=true -o json > "$OUT/deployment.json"
-deadline=$((SECONDS + 120))
+# Wait for actual raw objects with a controller ownership chain and a failed,
+# unready Pod; no readiness condition is treated as success.
+deadline=$((SECONDS + 180))
 while :; do
-  if kubectl_owned get pods -n "$FIXTURE_NAMESPACE" -l app.kubernetes.io/name=payment-worker -o json > "$tmp_dir/pods-probe.json" 2>/dev/null \
-    && jq -e --arg uid "$(jq -r '.metadata.uid' "$OUT/deployment.json")" 'any(.items[]; any(.metadata.ownerReferences[]?; .uid == $uid))' "$tmp_dir/pods-probe.json" >/dev/null; then
+  if kubectl_owned get deployment "$DEPLOYMENT_NAME" -n "$FIXTURE_NAMESPACE" --show-managed-fields=true -o json > "$tmp_dir/deployment.json" 2>/dev/null \
+    && kubectl_owned get replicasets -n "$FIXTURE_NAMESPACE" -l app.kubernetes.io/name=payment-worker --show-managed-fields=true -o json > "$tmp_dir/replicasets.json" 2>/dev/null \
+    && kubectl_owned get pods -n "$FIXTURE_NAMESPACE" -l app.kubernetes.io/name=payment-worker --show-managed-fields=true -o json > "$tmp_dir/pods.json" 2>/dev/null \
+    && run_bounded 10 python3 "$SCRIPT_DIR/validate_capture.py" "$tmp_dir" > "$tmp_dir/workload-validation.json" 2>/dev/null; then
     break
   fi
-  (( SECONDS < deadline )) || { echo 'Timed out waiting for Pod evidence owned by the fixture Deployment.' >&2; exit 1; }
+  (( SECONDS < deadline )) || { echo 'Timed out waiting for unavailable Deployment and failed Pod through ReplicaSet owner chain.' >&2; exit 1; }
   sleep 2
 done
-kubectl_owned get pods -n "$FIXTURE_NAMESPACE" -l app.kubernetes.io/name=payment-worker --show-managed-fields=true -o json > "$OUT/pods.json"
+cp "$tmp_dir/deployment.json" "$OUT/deployment.json"
+cp "$tmp_dir/replicasets.json" "$OUT/replicasets.json"
+cp "$tmp_dir/pods.json" "$OUT/pods.json"
+cp "$tmp_dir/workload-validation.json" "$OUT/workload-validation.json"
 
 git_revision=$(jq -r '.status.artifact.revision // empty' "$OUT/gitrepository.json")
 applied_revision=$(jq -r '.status.lastAppliedRevision // empty' "$OUT/kustomization-start.json")
@@ -181,17 +175,22 @@ jq -e '(.spec.wait == false) and ((.spec.healthChecks // []) | length == 0) and 
   echo 'Captured Kustomization does not prove wait=false and absent/empty health checks.' >&2; exit 1;
 }
 jq -e --arg commit "$SOURCE_COMMIT" '.status.artifact.revision | contains($commit)' "$OUT/gitrepository.json" >/dev/null || { echo 'GitRepository artifact revision does not contain the full pinned commit.' >&2; exit 1; }
-# Validate workload identity/status and Flux ownership labels.
-jq -e '.spec.replicas == 1 and .status.observedGeneration == .metadata.generation and (.status.availableReplicas // 0) == 0 and (.status.unavailableReplicas // 0) >= 1 and .metadata.labels["kustomize.toolkit.fluxcd.io/name"] == "apps" and .metadata.labels["kustomize.toolkit.fluxcd.io/namespace"] == "flux-system"' "$OUT/deployment.json" >/dev/null || {
-  echo 'Captured Deployment is not current-generation, Flux-owned, and unavailable.' >&2; exit 1;
-}
 deployment_uid=$(jq -r '.metadata.uid' "$OUT/deployment.json")
-jq -e --arg uid "$deployment_uid" 'any(.items[]; any(.metadata.ownerReferences[]?; .uid == $uid))' "$OUT/pods.json" >/dev/null || {
-  echo 'No captured Pod is owned by the selected Deployment.' >&2; exit 1;
-}
+replicaset_uid=$(jq -r '.replicaSetUID' "$OUT/workload-validation.json")
+pod_uid=$(jq -r '.podUID' "$OUT/workload-validation.json")
 
 kubectl_owned get pods -n flux-system -l app=source-controller --show-managed-fields=true -o json > "$OUT/source-controller-pods.json"
 kubectl_owned get pods -n flux-system -l app=kustomize-controller --show-managed-fields=true -o json > "$OUT/kustomize-controller-pods.json"
+kubectl_owned version -o json > "$OUT/kubernetes-version.json" || {
+  echo 'Could not capture Kubernetes API server version/commit.' >&2; exit 1;
+}
+jq -e '.serverVersion.gitVersion and .serverVersion.gitCommit and .clientVersion.gitVersion' "$OUT/kubernetes-version.json" >/dev/null || {
+  echo 'Kubernetes version output lacks client/server version identity.' >&2; exit 1;
+}
+jq -n \
+  --arg kubectl_sha "$(sha256 "$(command -v kubectl)")" \
+  --arg flux_sha "$(sha256 "$(command -v flux)")" \
+  '{kubectl:{sha256:$kubectl_sha},flux:{sha256:$flux_sha}}' > "$OUT/cli-binary-hashes.json"
 jq -s '[.[] | .items[]? as $pod | {pod: $pod.metadata.name, containers: [$pod.spec.containers[]? as $container | {name: $container.name, image: $container.image, imageID: ([$pod.status.containerStatuses[]? | select(.name == $container.name) | .imageID][0] // null)}]}]' \
   "$OUT/source-controller-pods.json" "$OUT/kustomize-controller-pods.json" > "$OUT/controller-images.json"
 kubectl_owned get kustomization apps -n flux-system --show-managed-fields=true -o json > "$OUT/kustomization-end.json"
@@ -216,8 +215,12 @@ cat > "$OUT/provenance.json" <<EOF
   "kindVersion": $(jq -Rn --arg value "$kind_version" '$value'),
   "nodeImage": "$NODE_IMAGE",
   "fluxCLI": $(jq -Rn --arg value "$flux_version" '$value'),
+  "kubectlCLI": $(jq -Rn --arg value "$(jq -r '.clientVersion.gitVersion' "$OUT/kubernetes-version.json")" '$value'),
+  "kubernetesServerVersion": $(jq -Rn --arg value "$(jq -r '.serverVersion.gitVersion' "$OUT/kubernetes-version.json")" '$value'),
+  "kubernetesServerGitCommit": $(jq -Rn --arg value "$(jq -r '.serverVersion.gitCommit' "$OUT/kubernetes-version.json")" '$value'),
   "fluxInstallManifestSHA256": "$flux_manifest_sha",
   "captureScriptSHA256": "$(sha256 "$SCRIPT_DIR/capture.sh")",
+  "validatorScriptSHA256": "$(sha256 "$SCRIPT_DIR/validate_capture.py")",
   "gitRepositoryManifestSHA256": "$(sha256 "$OUT/gitrepository.yaml")",
   "kustomizationManifestSHA256": "$(sha256 "$OUT/kustomization.yaml")",
   "sourceRepository": "$SOURCE_REPOSITORY",
@@ -228,11 +231,17 @@ cat > "$OUT/provenance.json" <<EOF
   "kustomizationUID": "$start_uid",
   "kustomizationGeneration": $generation,
   "deploymentUID": "$deployment_uid",
+  "replicaSetUID": "$replicaset_uid",
+  "podUID": "$pod_uid",
   "objects": {
     "gitrepository.json": "$(sha256 "$OUT/gitrepository.json")",
     "kustomization-start.json": "$(sha256 "$OUT/kustomization-start.json")",
     "deployment.json": "$(sha256 "$OUT/deployment.json")",
+    "replicasets.json": "$(sha256 "$OUT/replicasets.json")",
     "pods.json": "$(sha256 "$OUT/pods.json")",
+    "workload-validation.json": "$(sha256 "$OUT/workload-validation.json")",
+    "kubernetes-version.json": "$(sha256 "$OUT/kubernetes-version.json")",
+    "cli-binary-hashes.json": "$(sha256 "$OUT/cli-binary-hashes.json")",
     "controller-images.json": "$(sha256 "$OUT/controller-images.json")",
     "kustomization-end.json": "$(sha256 "$OUT/kustomization-end.json")"
   },
