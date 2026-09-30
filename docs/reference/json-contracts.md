@@ -493,6 +493,28 @@ ambiguous, report the writer as unknown.
 | `mutationCause` | string enum | Resource-level rollup using the same enum as `cause` above. It does not identify a particular field or the latest writer. The live-resource explain path emits `unknown` when the resource is fetched but its manager evidence is missing or unrecognized; the field is omitted when attribution fetch fails. The bounded object-local path also emits `unknown` when no manager evidence is classifiable. |
 | `mutationManager` | string | Representative manager string across the resource's managedFields for transparency. It is not necessarily the manager for a particular field or the latest writer, and does not identify a person. |
 
+When `explain --field-path <canonical-path>` (or MCP `field_path`) is supplied,
+JSON additionally includes only that requested path:
+
+```json
+{
+  "fieldAttribution": {
+    "path": ".spec.template.spec.containers[name=\"checkout\"].image",
+    "cause": "manual-edit",
+    "managers": ["kubectl-set"]
+  }
+}
+```
+
+`fieldAttribution.path` echoes the exact canonical path; `cause` uses the
+manager-evidence enum above; `managers` is the sorted set of observed manager
+names claiming that path. If the path is absent, its FieldsV1 evidence is
+malformed/missing, or only unrecognized managers claim it, `cause` is
+`unknown` and `reason` explains the unresolved or incomplete evidence. This
+result never falls back to the resource-level rollup. Wildcard and unkeyed
+standard list paths are rejected. It does not establish write order or identify a person. The object is omitted when no field path was
+requested or the resource itself could not be fetched.
+
 ### DoctorSummary rollout additions (doctor --format json)
 
 When live workload rollout evidence is available, `doctor --format json`

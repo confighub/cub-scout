@@ -4,6 +4,7 @@
 package agent
 
 import (
+	"reflect"
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -174,6 +175,143 @@ func TestAttributeFieldsByManagedFields_UnknownManagerSkipped(t *testing.T) {
 	_, byPath := AttributeFieldsByManagedFields(resource, Ownership{Type: OwnerArgo, SubType: "application"})
 	if len(byPath) != 0 {
 		t.Errorf("byPath = %v, want empty for unknown manager", byPath)
+	}
+}
+
+func TestAttributeFieldPathReturnsOnlyExactPathManagersSorted(t *testing.T) {
+	resource := makeResourceWithFieldsV1(
+		metav1.ManagedFieldsEntry{Manager: ManagerKubectlSet, FieldsType: "FieldsV1", FieldsV1: fieldsV1(`{"f:spec":{"f:image":{}}}`)},
+		metav1.ManagedFieldsEntry{Manager: ManagerKubectlEdit, FieldsType: "FieldsV1", FieldsV1: fieldsV1(`{"f:spec":{"f:image":{}}}`)},
+		metav1.ManagedFieldsEntry{Manager: "shell-writer", FieldsType: "FieldsV1", FieldsV1: fieldsV1(`{"f:spec":{"f:image":{}}}`)},
+		metav1.ManagedFieldsEntry{Manager: ManagerKubectlEdit, FieldsType: "FieldsV1", FieldsV1: fieldsV1(`{"f:metadata":{"f:labels":{"f:app":{}}}}`)},
+	)
+	attr, ok, incomplete := AttributeFieldPath(resource, Ownership{Type: OwnerUnknown}, ".spec.image")
+	if !ok {
+		t.Fatal("expected exact path attribution")
+	}
+	if incomplete {
+		t.Fatal("valid entries should be complete")
+	}
+	if attr.Cause != CauseManualEdit {
+		t.Fatalf("Cause = %q, want %q", attr.Cause, CauseManualEdit)
+	}
+	if !reflect.DeepEqual(attr.Managers, []string{"kubectl-edit", "kubectl-set", "shell-writer"}) {
+		t.Fatalf("Managers = %v, want sorted exact-path managers", attr.Managers)
+	}
+	if _, ok, _ := AttributeFieldPath(resource, Ownership{Type: OwnerUnknown}, ".spec.replicas"); ok {
+		t.Fatal("unrelated resource-level or label managers must not fall back into a missing path")
+	}
+}
+
+func TestAttributeFieldPathDoesNotMergeSiblingListItemManagers(t *testing.T) {
+	resource := makeResourceWithFieldsV1(
+		metav1.ManagedFieldsEntry{Manager: ManagerKubectlSet, FieldsType: "FieldsV1", FieldsV1: fieldsV1(`{"f:spec":{"f:template":{"f:spec":{"f:containers":{"k:{\"name\":\"checkout\"}":{"f:image":{}}}}}}}`)},
+		metav1.ManagedFieldsEntry{Manager: ManagerKubectlEdit, FieldsType: "FieldsV1", FieldsV1: fieldsV1(`{"f:spec":{"f:template":{"f:spec":{"f:containers":{"k:{\"name\":\"api\"}":{"f:image":{}}}}}}}`)},
+	)
+	attr, ok, incomplete := AttributeFieldPath(resource, Ownership{Type: OwnerUnknown}, `.spec.template.spec.containers[name="checkout"].image`)
+	if !ok || incomplete || attr.Cause != CauseManualEdit || !reflect.DeepEqual(attr.Managers, []string{ManagerKubectlSet}) {
+		t.Fatalf("checkout path attribution = (%+v, %v, %v), sibling manager must not bleed in", attr, ok, incomplete)
+	}
+}
+
+func TestAttributeFieldPathDoesNotConfuseLabelAndImageOwners(t *testing.T) {
+	resource := makeResourceWithFieldsV1(
+		metav1.ManagedFieldsEntry{Manager: ManagerKubectlEdit, FieldsType: "FieldsV1", FieldsV1: fieldsV1(`{"f:metadata":{"f:labels":{"f:app":{}}}}`)},
+		metav1.ManagedFieldsEntry{Manager: ManagerFluxKustomize, FieldsType: "FieldsV1", FieldsV1: fieldsV1(`{"f:spec":{"f:template":{"f:spec":{"f:containers":{"k:{\"name\":\"checkout\"}":{"f:image":{}}}}}}}`)},
+	)
+	attr, ok, incomplete := AttributeFieldPath(resource, Ownership{Type: OwnerFlux}, `.spec.template.spec.containers[name="checkout"].image`)
+	if !ok || incomplete || attr.Cause != CauseControllerDrift || !reflect.DeepEqual(attr.Managers, []string{ManagerFluxKustomize}) {
+		t.Fatalf("image attribution = (%+v, %v), want controller-only", attr, ok)
+	}
+}
+
+func TestAttributeFieldPathSupportsUnknownCRDScalarFieldNames(t *testing.T) {
+	resource := makeResourceWithFieldsV1(
+		metav1.ManagedFieldsEntry{Manager: ManagerKubectlSet, FieldsType: "FieldsV1", FieldsV1: fieldsV1(`{"f:spec":{"f:environment":{}}}`)},
+	)
+	path := ".spec.environment"
+	if err := ValidateCanonicalFieldPath(path); err != nil {
+		t.Fatalf("valid CRD field path rejected: %v", err)
+	}
+	attr, ok, incomplete := AttributeFieldPath(resource, Ownership{Type: OwnerUnknown}, path)
+	if !ok || incomplete || attr.Cause != CauseManualEdit || !reflect.DeepEqual(attr.Managers, []string{ManagerKubectlSet}) {
+		t.Fatalf("CRD scalar path attribution = (%+v, %v, %v), want exact manager evidence", attr, ok, incomplete)
+	}
+}
+
+func TestValidateCanonicalFieldPathAllowsWildcardInsideQuotedSelector(t *testing.T) {
+	path := `.spec.template.spec.containers[name="checkout*"].image`
+	if err := ValidateCanonicalFieldPath(path); err != nil {
+		t.Fatalf("literal wildcard in quoted map key rejected: %v", err)
+	}
+}
+
+func TestAttributeFieldPathUnknownForMalformedMissingAndWildcard(t *testing.T) {
+	owner := Ownership{Type: OwnerFlux}
+	tests := []struct {
+		name       string
+		resource   *unstructured.Unstructured
+		path       string
+		invalid    bool
+		incomplete bool
+	}{
+		{name: "missing FieldsV1", resource: makeResourceWithFieldsV1(metav1.ManagedFieldsEntry{Manager: ManagerKubectlEdit}), path: ".spec.image", incomplete: true},
+		{name: "path absent", resource: makeResourceWithFieldsV1(metav1.ManagedFieldsEntry{Manager: ManagerKubectlEdit, FieldsType: "FieldsV1", FieldsV1: fieldsV1(`{"f:metadata":{"f:labels":{"f:app":{}}}}`)}), path: ".spec.image"},
+		{name: "wildcard", resource: makeResourceWithFieldsV1(), path: ".spec.template.spec.containers[*].image", invalid: true},
+		{name: "unkeyed list path", resource: makeResourceWithFieldsV1(), path: ".spec.template.spec.containers.image"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			attr, ok, incomplete := AttributeFieldPath(tc.resource, owner, tc.path)
+			if ok || attr.Cause != CauseUnknown {
+				t.Fatalf("AttributeFieldPath = (%+v, %v), want unknown/unresolved", attr, ok)
+			}
+			if incomplete != tc.incomplete {
+				t.Fatalf("incomplete = %v, want %v", incomplete, tc.incomplete)
+			}
+			if err := ValidateCanonicalFieldPath(tc.path); (err != nil) != tc.invalid {
+				t.Fatalf("ValidateCanonicalFieldPath error = %v, invalid=%v", err, tc.invalid)
+			}
+		})
+	}
+}
+
+func TestAttributeFieldPathMalformedEntryMakesObservedPathIncomplete(t *testing.T) {
+	entries := []metav1.ManagedFieldsEntry{
+		metav1.ManagedFieldsEntry{Manager: ManagerKubectlSet, FieldsType: "FieldsV1", FieldsV1: fieldsV1(`{"f:spec":{"f:image":{}}}`)},
+		metav1.ManagedFieldsEntry{Manager: "maybe-another-owner", FieldsType: "FieldsV1", FieldsV1: fieldsV1(`{bad`)},
+	}
+	byPath, incomplete := fieldAttributionsByEntries(entries, Ownership{Type: OwnerUnknown}, true)
+	attr, ok := byPath[".spec.image"]
+	if !ok || !incomplete || attr.Cause != CauseManualEdit || !reflect.DeepEqual(attr.Managers, []string{ManagerKubectlSet}) {
+		t.Fatalf("partial attribution = (%+v, %v, %v), want observed manager with incomplete evidence", attr, ok, incomplete)
+	}
+}
+
+func TestAttributeFieldPathRetainsUnrecognizedOnlyManagerAsUnknown(t *testing.T) {
+	entries := []metav1.ManagedFieldsEntry{
+		{Manager: "vendor-writer", FieldsType: "FieldsV1", FieldsV1: fieldsV1(`{"f:spec":{"f:image":{}}}`)},
+	}
+	byPath, incomplete := fieldAttributionsByEntries(entries, Ownership{Type: OwnerFlux}, true)
+	attr, ok := byPath[".spec.image"]
+	if !ok || incomplete || attr.Cause != CauseUnknown || !reflect.DeepEqual(attr.Managers, []string{"vendor-writer"}) {
+		t.Fatalf("unrecognized manager evidence = (%+v, %v), want unknown and retained manager", attr, incomplete)
+	}
+}
+
+func TestAttributeFieldPathSharedControllerAndManualManagersRemainUnknown(t *testing.T) {
+	entries := []metav1.ManagedFieldsEntry{
+		{Manager: ManagerFluxKustomize, FieldsType: "FieldsV1", FieldsV1: fieldsV1(`{"f:spec":{"f:image":{}}}`)},
+		{Manager: ManagerKubectlSet, FieldsType: "FieldsV1", FieldsV1: fieldsV1(`{"f:spec":{"f:image":{}}}`)},
+	}
+	byPath, incomplete := fieldAttributionsByEntries(entries, Ownership{Type: OwnerFlux}, true)
+	attr, ok := byPath[".spec.image"]
+	if !ok || incomplete || attr.Cause != CauseUnknown || !reflect.DeepEqual(attr.Managers, []string{ManagerKubectlSet, ManagerFluxKustomize}) {
+		t.Fatalf("shared manager evidence = (%+v, %v), want unknown with all managers", attr, incomplete)
+	}
+	legacyByPath, _ := fieldAttributionsByEntries(entries, Ownership{Type: OwnerFlux}, false)
+	if legacyByPath[".spec.image"].Cause != CauseManualEdit {
+		t.Fatalf("existing per-path rollup changed: %+v", legacyByPath[".spec.image"])
 	}
 }
 

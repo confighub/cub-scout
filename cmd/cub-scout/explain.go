@@ -19,6 +19,7 @@ import (
 var (
 	explainNamespace           string
 	explainFormat              string
+	explainFieldPath           string
 	explainPresentation        string
 	explainHintMode            string
 	explainWithConfigHub       bool
@@ -45,6 +46,7 @@ func init() {
 	rootCmd.AddCommand(explainCmd)
 	explainCmd.Flags().StringVarP(&explainNamespace, "namespace", "n", "", "Namespace of the resource")
 	explainCmd.Flags().StringVar(&explainFormat, "format", "text", "Output format: text, json, md")
+	explainCmd.Flags().StringVar(&explainFieldPath, "field-path", "", "Exact canonical managedFields path to inspect (for example .spec.template.spec.containers[name=\"api\"].image)")
 	explainCmd.Flags().StringVar(&explainPresentation, "presentation", "", PresentationModeHelp())
 	explainCmd.Flags().StringVar(&explainHintMode, "hint-mode", "", HintModeHelp())
 	explainCmd.Flags().BoolVar(&explainBounded, "bounded", false, "Read only the exact API object, without controller or connected enrichment")
@@ -104,6 +106,17 @@ type ExplainSummary struct {
 	// MutationManager is a representative manager string for transparency
 	// (see pkg/agent.FieldMutationAttribution.ManagerHint).
 	MutationManager string `json:"mutationManager,omitempty"`
+	// FieldAttribution is emitted only when an exact field path was requested.
+	FieldAttribution *FieldAttributionSummary `json:"fieldAttribution,omitempty"`
+}
+
+// FieldAttributionSummary reports only manager evidence for one requested
+// canonical path. It never infers write order or human identity.
+type FieldAttributionSummary struct {
+	Path     string                   `json:"path"`
+	Cause    agent.FieldMutationCause `json:"cause"`
+	Managers []string                 `json:"managers,omitempty"`
+	Reason   string                   `json:"reason,omitempty"`
 }
 
 type explainTraceApplicationFunc func(ctx context.Context, appName string) (*agent.TraceResult, error)
@@ -115,6 +128,11 @@ func runExplain(cmd *cobra.Command, args []string) error {
 	}
 	if format != "text" && format != "json" && format != "md" {
 		return fmt.Errorf("invalid --format %q (valid: text, json, md)", explainFormat)
+	}
+	if explainFieldPath != "" {
+		if err := agent.ValidateCanonicalFieldPath(explainFieldPath); err != nil {
+			return err
+		}
 	}
 
 	// Build invocation context with presentation mode resolution
@@ -142,7 +160,7 @@ func runExplain(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		summary, err := (&boundedExplainSession{}).observeRevision(cmd.Context(), ref, explainContext, explainRefresh, explainExpectedRevision)
+		summary, err := (&boundedExplainSession{}).observeRevision(cmd.Context(), ref, explainContext, explainRefresh, explainExpectedRevision, explainFieldPath)
 		if err != nil {
 			return err
 		}
@@ -162,6 +180,7 @@ func runExplain(cmd *cobra.Command, args []string) error {
 		Kind:      kind,
 		Name:      name,
 		Namespace: explainNamespace,
+		FieldPath: explainFieldPath,
 	})
 	if err != nil {
 		return err
@@ -801,6 +820,16 @@ func renderExplainText(summary ExplainSummary, mode PresentationMode, explicitMo
 		}
 		fmt.Fprintf(&b, "  %s %s\n", label("Mutation cause"), colorExplainMutationCause(summary.MutationCause, mutationLine))
 	}
+	if summary.FieldAttribution != nil {
+		fmt.Fprintf(&b, "  %s %s: %s", label("Field manager evidence"), summary.FieldAttribution.Path, summary.FieldAttribution.Cause)
+		if len(summary.FieldAttribution.Managers) > 0 {
+			fmt.Fprintf(&b, " (managers: %s)", strings.Join(summary.FieldAttribution.Managers, ", "))
+		}
+		if summary.FieldAttribution.Reason != "" {
+			fmt.Fprintf(&b, " — %s", summary.FieldAttribution.Reason)
+		}
+		b.WriteByte('\n')
+	}
 	if len(summary.Notes) > 0 {
 		fmt.Fprintf(&b, "  %s\n", label("Notes"))
 		for _, note := range summary.Notes {
@@ -986,6 +1015,16 @@ func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explic
 			mutationLine += fmt.Sprintf(" (manager: `%s`)", summary.MutationManager)
 		}
 		fmt.Fprintf(&b, "- **Mutation cause:** %s\n", mutationLine)
+	}
+	if summary.FieldAttribution != nil {
+		fmt.Fprintf(&b, "- **Field manager evidence:** `%s` — `%s`", summary.FieldAttribution.Path, summary.FieldAttribution.Cause)
+		if len(summary.FieldAttribution.Managers) > 0 {
+			fmt.Fprintf(&b, " (managers: `%s`)", strings.Join(summary.FieldAttribution.Managers, "`, `"))
+		}
+		if summary.FieldAttribution.Reason != "" {
+			fmt.Fprintf(&b, " — %s", summary.FieldAttribution.Reason)
+		}
+		b.WriteByte('\n')
 	}
 	if len(summary.Notes) > 0 {
 		fmt.Fprintf(&b, "- **Notes:**\n")

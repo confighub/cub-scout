@@ -58,7 +58,7 @@ func TestBoundedExplainMCPBudgetAndContext(t *testing.T) {
 			http.NotFound(w, r)
 			return
 		}
-		fmt.Fprint(w, `{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"api","namespace":"team-a","generation":2},"spec":{"replicas":1},"status":{"observedGeneration":1}}`)
+		fmt.Fprint(w, `{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"api","namespace":"team-a","generation":2,"managedFields":[{"manager":"kubectl-edit","operation":"Update","apiVersion":"apps/v1","fieldsType":"FieldsV1","fieldsV1":{"f:spec":{"f:replicas":{}}}}]},"spec":{"replicas":1},"status":{"observedGeneration":1}}`)
 	}))
 	defer server.Close()
 	configPath := boundedTestConfig(t, server.URL)
@@ -68,7 +68,7 @@ func TestBoundedExplainMCPBudgetAndContext(t *testing.T) {
 		t.Fatal("bounded read must not call ConfigHub")
 		return "", nil
 	}, true)
-	arguments := map[string]interface{}{"bounded": true, "resource": "Deployment/api", "api_version": "apps/v1", "context": "cluster-a", "namespace": "team-a"}
+	arguments := map[string]interface{}{"bounded": true, "resource": "Deployment/api", "api_version": "apps/v1", "context": "cluster-a", "namespace": "team-a", "field_path": ".spec.replicas"}
 	call := func() ExplainSummary {
 		params, err := json.Marshal(map[string]interface{}{"name": "explain", "arguments": arguments})
 		require.NoError(t, err)
@@ -81,6 +81,9 @@ func TestBoundedExplainMCPBudgetAndContext(t *testing.T) {
 	}
 	first := call()
 	require.Equal(t, "miss", first.ResourceRead.Cache)
+	require.Equal(t, ".spec.replicas", first.FieldAttribution.Path)
+	require.Equal(t, agent.CauseManualEdit, first.FieldAttribution.Cause)
+	require.Equal(t, []string{"kubectl-edit"}, first.FieldAttribution.Managers)
 	require.NotEqual(t, agent.VerdictPASS, first.CurrentChange.Verdict)
 	require.NotEmpty(t, first.NextSteps, "same structured-hint contract as CLI")
 	second := call()
@@ -121,7 +124,7 @@ func TestBoundedExplainMCPMalformedInputsNeverRun(t *testing.T) {
 		value interface{}
 	}{
 		{"bounded", "true"}, {"bounded", nil}, {"refresh", "false"},
-		{"api_version", []string{"apps/v1"}}, {"context", 7}, {"namespace", true},
+		{"api_version", []string{"apps/v1"}}, {"context", 7}, {"namespace", true}, {"field_path", []string{".spec.image"}},
 	} {
 		t.Run(tc.key+fmt.Sprint(tc.value), func(t *testing.T) {
 			gateway := newMCPGatewayWithMode(func(context.Context, []string) (string, error) {
@@ -193,7 +196,7 @@ func TestBoundedExplainTUISelectionCancellationAndLateResults(t *testing.T) {
 	require.Len(t, p.items, 2)
 	require.Equal(t, "team-a", p.items[0].Namespace)
 	var captured context.Context
-	p.observe = func(ctx context.Context, ref agent.BoundedResourceRef, kubeContext string, refresh bool) (ExplainSummary, error) {
+	p.observe = func(ctx context.Context, ref agent.BoundedResourceRef, kubeContext string, refresh bool, _ string) (ExplainSummary, error) {
 		captured = ctx
 		require.Equal(t, "cluster-a", kubeContext)
 		return ExplainSummary{Resource: ref.Kind + "/" + ref.Name, Namespace: ref.Namespace, Notes: []string{"selected-object-proof"}}, nil
@@ -218,6 +221,35 @@ func TestBoundedExplainTUISelectionCancellationAndLateResults(t *testing.T) {
 	updated, _ = m.boundedExplainKey(tea.KeyMsg{Type: tea.KeyEsc})
 	m = updated.(LocalClusterModel)
 	require.Nil(t, m.boundedPanel)
+}
+
+func TestBoundedExplainTUIRequestsSelectedFieldPath(t *testing.T) {
+	path := `.spec.template.spec.containers[name="checkout"].image`
+	m := LocalClusterModel{ready: true, width: 100, height: 30, contextName: "cluster-a", boundedContext: "cluster-a", entries: []MapEntry{
+		{APIVersion: "apps/v1", Kind: "Deployment", Namespace: "shop", Name: "checkout"},
+	}}
+	m.openBoundedExplain()
+	p := m.boundedPanel
+	p.viewing = true
+	gotPath := ""
+	p.observe = func(_ context.Context, ref agent.BoundedResourceRef, _ string, _ bool, fieldPath string) (ExplainSummary, error) {
+		gotPath = fieldPath
+		return ExplainSummary{
+			Resource: ref.Kind + "/" + ref.Name, Namespace: ref.Namespace,
+			FieldAttribution: &FieldAttributionSummary{Path: fieldPath, Cause: agent.CauseManualEdit, Managers: []string{agent.ManagerKubectlSet}},
+		}, nil
+	}
+	updated, _ := m.boundedExplainKey(tea.KeyMsg{Runes: []rune("f"), Type: tea.KeyRunes})
+	m = updated.(LocalClusterModel)
+	require.True(t, p.editingPath)
+	p.fieldInput.SetValue(path)
+	updated, cmd := m.boundedExplainKey(tea.KeyMsg{Type: tea.KeyEnter})
+	m = updated.(LocalClusterModel)
+	require.NotNil(t, cmd)
+	m.acceptBoundedExplain(cmd().(boundedExplainMsg))
+	require.Equal(t, path, gotPath)
+	require.Contains(t, p.content, path)
+	require.Contains(t, p.content, agent.ManagerKubectlSet)
 }
 
 func TestBoundedExplainTUINarrowView(t *testing.T) {
@@ -245,7 +277,7 @@ func TestBoundedExplainTUICancelsPendingRead(t *testing.T) {
 	m.openBoundedExplain()
 	started := make(chan struct{})
 	finished := make(chan boundedExplainMsg, 1)
-	m.boundedPanel.observe = func(ctx context.Context, _ agent.BoundedResourceRef, _ string, _ bool) (ExplainSummary, error) {
+	m.boundedPanel.observe = func(ctx context.Context, _ agent.BoundedResourceRef, _ string, _ bool, _ string) (ExplainSummary, error) {
 		close(started)
 		<-ctx.Done()
 		return ExplainSummary{}, ctx.Err()

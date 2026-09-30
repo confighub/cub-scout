@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/confighub/cub-scout/internal/scan"
+	"github.com/confighub/cub-scout/pkg/agent"
 	"github.com/confighub/cub-scout/pkg/hub"
 )
 
@@ -147,6 +148,7 @@ func TestObserveResourceContext_DefaultNamespace(t *testing.T) {
 		Kind:      "Deployment",
 		Name:      "test-app",
 		Namespace: "", // empty should default to "default"
+		FieldPath: ".spec.image",
 	})
 	if err != nil {
 		t.Fatalf("ObserveResourceContext error: %v", err)
@@ -155,6 +157,9 @@ func TestObserveResourceContext_DefaultNamespace(t *testing.T) {
 	// Should have "default" namespace in the summary
 	if summary.Namespace != "default" {
 		t.Errorf("Namespace = %q, want %q", summary.Namespace, "default")
+	}
+	if summary.FieldAttribution == nil || summary.FieldAttribution.Path != ".spec.image" || summary.FieldAttribution.Cause != agent.CauseUnknown || len(summary.FieldAttribution.Managers) != 0 {
+		t.Errorf("failed resource read fieldAttribution = %+v, want explicit unknown without managers", summary.FieldAttribution)
 	}
 }
 
@@ -225,6 +230,7 @@ func TestObserveResourceContextRequest_IsTransportAgnostic(t *testing.T) {
 		Kind:      "Deployment",
 		Name:      "api",
 		Namespace: "prod",
+		FieldPath: `.spec.template.spec.containers[name="api"].image`,
 	}
 
 	// Just verify it can be created and used without any transport-specific fields
@@ -236,5 +242,8 @@ func TestObserveResourceContextRequest_IsTransportAgnostic(t *testing.T) {
 	}
 	if req.Namespace != "prod" {
 		t.Errorf("Namespace = %q, want %q", req.Namespace, "prod")
+	}
+	if req.FieldPath != `.spec.template.spec.containers[name="api"].image` {
+		t.Errorf("FieldPath = %q, want canonical exact path", req.FieldPath)
 	}
 }

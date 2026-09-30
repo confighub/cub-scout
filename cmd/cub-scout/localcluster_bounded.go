@@ -27,12 +27,16 @@ type boundedExplainPanel struct {
 	viewport        viewport.Model
 	content         string
 	height          int
-	observe         func(context.Context, agent.BoundedResourceRef, string, bool) (ExplainSummary, error)
-	observeRevision func(context.Context, agent.BoundedResourceRef, string, bool, string) (ExplainSummary, error)
+	observe         func(context.Context, agent.BoundedResourceRef, string, bool, string) (ExplainSummary, error)
+	observeRevision func(context.Context, agent.BoundedResourceRef, string, bool, string, string) (ExplainSummary, error)
 	expected        string
 	editingRevision bool
 	revisionInput   textinput.Model
 	revisionError   string
+	fieldPath       string
+	editingPath     bool
+	fieldInput      textinput.Model
+	fieldError      string
 }
 
 type boundedExplainMsg struct {
@@ -50,6 +54,9 @@ func (m *LocalClusterModel) openBoundedExplain() {
 	panel.revisionInput = textinput.New()
 	panel.revisionInput.CharLimit = 512
 	panel.revisionInput.Prompt = "> "
+	panel.fieldInput = textinput.New()
+	panel.fieldInput.CharLimit = 1024
+	panel.fieldInput.Prompt = "> "
 	panel.resize(m.width, m.height)
 	m.boundedPanel = panel
 	if panel.context == "" {
@@ -86,6 +93,7 @@ func (p *boundedExplainPanel) resize(width, height int) {
 	p.viewport.Width = max(1, width-2)
 	p.viewport.Height = max(1, height-4)
 	p.revisionInput.Width = max(1, width-6)
+	p.fieldInput.Width = max(1, width-6)
 	p.viewport.SetContent(ansi.Hardwrap(p.content, p.viewport.Width, true))
 }
 
@@ -113,14 +121,14 @@ func (p *boundedExplainPanel) read(refresh bool) tea.Cmd {
 	ctx, cancel := context.WithCancel(context.Background())
 	p.cancel = cancel
 	request, ref, kubeContext, observe := p.request, p.items[p.cursor], p.context, p.observe
-	expected, observeRevision := p.expected, p.observeRevision
+	expected, observeRevision, fieldPath := p.expected, p.observeRevision, p.fieldPath
 	return func() tea.Msg {
 		var summary ExplainSummary
 		var err error
 		if expected != "" {
-			summary, err = observeRevision(ctx, ref, kubeContext, refresh, expected)
+			summary, err = observeRevision(ctx, ref, kubeContext, refresh, expected, fieldPath)
 		} else {
-			summary, err = observe(ctx, ref, kubeContext, refresh)
+			summary, err = observe(ctx, ref, kubeContext, refresh, fieldPath)
 		}
 		cancel()
 		return boundedExplainMsg{panel: p, request: request, summary: summary, err: err}
@@ -129,6 +137,30 @@ func (p *boundedExplainPanel) read(refresh bool) tea.Cmd {
 
 func (m LocalClusterModel) boundedExplainKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	p := m.boundedPanel
+	if p.editingPath && msg.String() != "ctrl+c" {
+		switch msg.String() {
+		case "esc":
+			p.editingPath = false
+			p.fieldError = ""
+			p.fieldInput.Blur()
+			return m, nil
+		case "enter":
+			path := strings.TrimSpace(p.fieldInput.Value())
+			if path != "" {
+				if err := agent.ValidateCanonicalFieldPath(path); err != nil {
+					p.fieldError = err.Error()
+					return m, nil
+				}
+			}
+			p.fieldPath, p.editingPath, p.fieldError = path, false, ""
+			p.fieldInput.Blur()
+			return m, p.read(false)
+		default:
+			var cmd tea.Cmd
+			p.fieldInput, cmd = p.fieldInput.Update(msg)
+			return m, cmd
+		}
+	}
 	if p.editingRevision && msg.String() != "ctrl+c" {
 		switch msg.String() {
 		case "esc":
@@ -161,6 +193,7 @@ func (m LocalClusterModel) boundedExplainKey(msg tea.KeyMsg) (tea.Model, tea.Cmd
 		if p.viewing {
 			p.viewing = false
 			p.expected = ""
+			p.fieldPath = ""
 		} else {
 			m.boundedPanel = nil
 		}
@@ -180,14 +213,23 @@ func (m LocalClusterModel) boundedExplainKey(msg tea.KeyMsg) (tea.Model, tea.Cmd
 			p.revisionInput.SetValue(p.expected)
 			return m, p.revisionInput.Focus()
 		}
+	case "f":
+		if p.viewing && p.cursor >= 0 && p.cursor < len(p.items) {
+			p.stop()
+			p.editingPath, p.fieldError = true, ""
+			p.fieldInput.SetValue(p.fieldPath)
+			return m, p.fieldInput.Focus()
+		}
 	case "up", "k":
 		if !p.viewing {
 			p.cursor = max(0, p.cursor-1)
+			p.fieldPath = ""
 			return m, nil
 		}
 	case "down", "j":
 		if !p.viewing {
 			p.cursor = min(len(p.items)-1, p.cursor+1)
+			p.fieldPath = ""
 			return m, nil
 		}
 	}
@@ -204,9 +246,11 @@ func (p *boundedExplainPanel) view() string {
 	body.WriteString(fmt.Sprintf("Bounded resource evidence | context=%q\n\n", p.context))
 	if p.editingRevision {
 		body.WriteString("Expected immutable revision\n" + p.revisionInput.View() + "\n" + p.revisionError)
+	} else if p.editingPath {
+		body.WriteString("Exact canonical field path (blank clears)\n" + p.fieldInput.View() + "\n" + p.fieldError)
 	} else if p.viewing {
 		body.WriteString(p.viewport.View())
-		body.WriteString("\ne expected revision | r refresh | esc back")
+		body.WriteString("\nf field path | e expected revision | r refresh | esc back")
 	} else if len(p.items) == 0 {
 		body.WriteString("No resources with complete, supported API identity in the current inventory.")
 	} else {
@@ -234,7 +278,11 @@ func (m *LocalClusterModel) acceptBoundedExplain(msg boundedExplainMsg) {
 		return
 	}
 	ref := p.items[p.cursor]
-	command := "./" + boundedExplainCommand(ref, p.context, " \\\n  ")
+	fieldPath := ""
+	if msg.summary.FieldAttribution != nil {
+		fieldPath = msg.summary.FieldAttribution.Path
+	}
+	command := "./" + boundedExplainCommand(ref, p.context, " \\\n  ", fieldPath)
 	if p.expected != "" {
 		command += " --expected-revision " + p.expected
 	}
