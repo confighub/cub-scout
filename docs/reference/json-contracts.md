@@ -405,7 +405,7 @@ Source: `cmd/cub-scout/three_way.go`, `cmd/cub-scout/compare_three_way.go`
 
 ## Field Mutation Attribution Contract
 
-When `compare three-way` and `explain` are run in connected mode (and the live cluster is reachable), managed-field manager evidence can classify a mismatch as controller-managed, interactive-manager-present, or unknown, co-signaled with the resource owner detected from labels and annotations. This is manager evidence, not a time-ordered mutation history or an identity for a person; see `pkg/agent/field_ownership.go`.
+When `compare three-way` emits a live-resource mismatch, or `explain` successfully reads the live resource (standalone or connected), managed-field manager evidence can classify the resource or a mapped field path as controller-managed, interactive-manager-present, or unknown, co-signaled with the resource owner detected from labels and annotations. This is manager evidence, not a time-ordered mutation history or an identity for a person; see `pkg/agent/field_ownership.go`.
 
 ### compareFieldMismatch additions (compare three-way / compare three-way per-resource)
 
@@ -426,7 +426,7 @@ When `compare three-way` and `explain` are run in connected mode (and the live c
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `cause` | string enum | `controller-drift`, `manual-edit`, or `unknown`. Omitted when classification yields no signal. |
+| `cause` | string enum | `controller-drift`, `manual-edit`, or `unknown`. A fetched live attribution can emit `unknown` when no manager signal is classifiable; omitted when live attribution is unavailable. |
 | `managerHint` | string | Representative manager string from `metadata.managedFields` for transparency. Omitted when no manager string was identified. |
 
 When the live K8s resource has decodable `FieldsV1` data in `metadata.managedFields`, `cause` and `managerHint` can be resolved **per-field-path** (A1.5) — a mismatch gets the manager classification for its mapped path. The classifier checks which recognized manager classes claim that path; it does not order those claims by `managedFields[].time` or establish the latest writer. When `FieldsV1` is absent or the field name doesn't map to a single canonical path (e.g., `images` which spans container list items), the classifier falls back to the resource-level rollup (A1). A resource-level result must not be presented as evidence about a particular field.
@@ -439,7 +439,7 @@ The per-field-path map is also exposed under `live.attributionByPath`, keyed by 
 |-------|---------|
 | `controller-drift` | Recognized manager evidence is associated with the resource's expected GitOps/orchestration controller (per `pkg/agent/ownership.go`). This does not establish that reconciliation is happening now or that a mismatch is transient. |
 | `manual-edit` | A recognized `kubectl-*` or other interactive manager is present on the resource, or on the mapped field path when path attribution is available. A controller manager may also be present. This does not establish that the interactive manager wrote last or identify a person. |
-| `unknown` | The manager evidence cannot be confidently classified — for example, `managedFields` is missing/empty, only unrecognized manager strings are present, or a field cannot be mapped to a path. Omitted from JSON output. |
+| `unknown` | The manager evidence cannot be confidently classified — for example, `managedFields` is missing/empty, only unrecognized manager strings are present, or a field cannot be mapped to a path. Emitted as `unknown` when an attribution result is available; some surfaces omit attribution when evidence could not be fetched. |
 
 `managedFields` is field-manager ownership evidence, not a complete or
 time-ordered mutation log. Manager timestamps are not used by this
@@ -490,7 +490,7 @@ ambiguous, report the writer as unknown.
 | `currentChange.verdict` | string enum | `PASS`, `WATCH`, `BLOCK`, or `INCONCLUSIVE`. Uses the same vocabulary as receipts. |
 | `currentChange.reason` | string enum | Stable reason such as `workload_converged`, `rollout_progressing`, `stale_generation`, `progress_stalled`, `runtime_failed`, `rollout_failed`, `workload_missing`, or `evidence_missing`. |
 | `currentChange.evidence` | object | Reviewable kstatus, generation, observed generation, pod reason, and observation timestamp evidence used to build the verdict. |
-| `mutationCause` | string enum | Resource-level rollup using the same enum as `cause` above. It does not identify a particular field or the latest writer. Best-effort; omitted on fetch failure or when no signal is present. |
+| `mutationCause` | string enum | Resource-level rollup using the same enum as `cause` above. It does not identify a particular field or the latest writer. The live-resource explain path emits `unknown` when the resource is fetched but its manager evidence is missing or unrecognized; the field is omitted when attribution fetch fails. The bounded object-local path also emits `unknown` when no manager evidence is classifiable. |
 | `mutationManager` | string | Representative manager string across the resource's managedFields for transparency. It is not necessarily the manager for a particular field or the latest writer, and does not identify a person. |
 
 ### DoctorSummary rollout additions (doctor --format json)
