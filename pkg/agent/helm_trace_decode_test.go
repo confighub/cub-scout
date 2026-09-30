@@ -41,7 +41,11 @@ func gzipAndBase64(t *testing.T, payload []byte) []byte {
 }
 
 func validReleaseJSON() []byte {
-	return []byte(`{"name":"web","namespace":"default","version":2,"info":{"status":"deployed"}}`)
+	return releaseJSON("web", "default", 2, "deployed")
+}
+
+func releaseJSON(name, namespace string, version int, status string) []byte {
+	return []byte(fmt.Sprintf(`{"name":%q,"namespace":%q,"version":%d,"info":{"status":%q}}`, name, namespace, version, status))
 }
 
 func helmSecret(data []byte, name string, version int) *corev1.Secret {
@@ -49,8 +53,9 @@ func helmSecret(data []byte, name string, version int) *corev1.Secret {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("sh.helm.release.v1.%s.v%d", name, version),
 			Namespace: "default",
-			Labels:    map[string]string{"owner": "helm", "name": name},
+			Labels:    map[string]string{"owner": "helm", "name": name, "version": fmt.Sprint(version)},
 		},
+		Type: corev1.SecretType("helm.sh/release.v1"),
 		Data: map[string][]byte{"release": data},
 	}
 }
@@ -188,5 +193,109 @@ func TestHelmDecodeReleaseIdentityValidationUsesJSON(t *testing.T) {
 	tracer := NewHelmTracer(fake.NewSimpleClientset())
 	if release, err := tracer.decodeRelease(gzipAndBase64(t, b)); err != nil || release.Name != "valid" {
 		t.Fatalf("decode valid metadata = %+v, %v", release, err)
+	}
+}
+
+// These fixtures mirror the storage metadata written by Helm v3.17.3 and
+// v4.0.0 Secret drivers: canonical storage key, owner/name/version labels,
+// Secret namespace, and helm.sh/release.v1 type. Payloads are synthetic and
+// stay offline; they do not claim a live Helm-version compatibility proof.
+func TestHelmReleaseSecretIdentityMetadataMustMatchPayload(t *testing.T) {
+	base := helmSecret(gzipAndBase64(t, validReleaseJSON()), "web", 2)
+	mutations := []struct {
+		name string
+		edit func(*corev1.Secret)
+	}{
+		{"secret namespace mismatch", func(s *corev1.Secret) { s.Namespace = "other" }},
+		{"payload namespace mismatch", func(s *corev1.Secret) {
+			s.Data["release"] = gzipAndBase64(t, releaseJSON("web", "other", 2, "deployed"))
+		}},
+		{"payload name mismatch", func(s *corev1.Secret) {
+			s.Data["release"] = gzipAndBase64(t, releaseJSON("other", "default", 2, "deployed"))
+		}},
+		{"payload version mismatch", func(s *corev1.Secret) {
+			s.Data["release"] = gzipAndBase64(t, releaseJSON("web", "default", 3, "deployed"))
+		}},
+		{"storage key mismatch", func(s *corev1.Secret) { s.Name = "sh.helm.release.v1.web.v3" }},
+		{"missing owner label", func(s *corev1.Secret) { delete(s.Labels, "owner") }},
+		{"release name label mismatch", func(s *corev1.Secret) { s.Labels["name"] = "other" }},
+		{"release version label mismatch", func(s *corev1.Secret) { s.Labels["version"] = "3" }},
+		{"missing version label", func(s *corev1.Secret) { delete(s.Labels, "version") }},
+		{"secret type mismatch", func(s *corev1.Secret) { s.Type = corev1.SecretTypeOpaque }},
+	}
+	tracer := NewHelmTracer(fake.NewSimpleClientset())
+	for _, tc := range mutations {
+		t.Run(tc.name, func(t *testing.T) {
+			secret := base.DeepCopy()
+			tc.edit(secret)
+			release, err := tracer.decodeReleaseSecret(*secret, "default")
+			if err == nil || release != nil {
+				t.Fatalf("decodeReleaseSecret = (%+v, %v), want incomplete identity error", release, err)
+			}
+			if strings.Contains(err.Error(), "deployed") || strings.Contains(err.Error(), "other") {
+				t.Fatalf("identity error exposed payload/foreign metadata: %v", err)
+			}
+		})
+	}
+}
+
+func TestHelmReleaseEqualRevisionCandidatesAreOrderIndependent(t *testing.T) {
+	ctx := context.Background()
+	older := helmSecret(gzipAndBase64(t, releaseJSON("web", "default", 1, "superseded")), "web", 1)
+	valid := helmSecret(gzipAndBase64(t, validReleaseJSON()), "web", 2)
+	conflictingPayload := helmSecret(gzipAndBase64(t, releaseJSON("web", "default", 2, "failed")), "web", 2)
+	conflictingIdentity := valid.DeepCopy()
+	conflictingIdentity.Name = "custom-secret"
+
+	for _, tc := range []struct {
+		name       string
+		candidates []corev1.Secret
+		wantErr    bool
+	}{
+		{"identical duplicate evidence", []corev1.Secret{*valid, *valid.DeepCopy()}, false},
+		{"equal revision conflicting payload", []corev1.Secret{*valid, *conflictingPayload}, true},
+		{"valid plus conflicting same revision identity", []corev1.Secret{*valid, *conflictingIdentity}, true},
+		{"valid older plus conflicting latest identity", []corev1.Secret{*older, *conflictingIdentity}, true},
+	} {
+		for order := 0; order < 2; order++ {
+			t.Run(fmt.Sprintf("%s/order-%d", tc.name, order), func(t *testing.T) {
+				candidates := append([]corev1.Secret(nil), tc.candidates...)
+				if order == 1 {
+					candidates[0], candidates[1] = candidates[1], candidates[0]
+				}
+				client := fake.NewSimpleClientset()
+				client.PrependReactor("list", "secrets", func(action k8stesting.Action) (bool, runtime.Object, error) {
+					listAction, ok := action.(k8stesting.ListAction)
+					if !ok || listAction.GetListRestrictions().Labels.String() != "owner=helm" {
+						t.Errorf("release candidate query selector = %v, want owner=helm without a name restriction", action)
+					}
+					return true, &corev1.SecretList{Items: candidates}, nil
+				})
+				tracer := NewHelmTracer(client)
+				list, listErr := tracer.listReleases(ctx, "default")
+				got, getErr := tracer.getRelease(ctx, "web", "default")
+				history, historyErr := tracer.GetReleaseHistory(ctx, "web", "default")
+				trace, traceErr := tracer.TraceRelease(ctx, "web", "default")
+				resourceTrace, resourceTraceErr := tracer.Trace(ctx, "Deployment", "web", "default")
+				errs := []error{listErr, getErr, historyErr, traceErr, resourceTraceErr}
+				if tc.wantErr {
+					for _, err := range errs {
+						if err == nil || !strings.Contains(err.Error(), "identity") && !strings.Contains(err.Error(), "ambiguous") {
+							t.Errorf("candidate result missing safe ambiguity/identity error: %v", err)
+						}
+					}
+					if list != nil || got != nil || history != nil || trace != nil || resourceTrace != nil {
+						t.Errorf("conflicting candidates returned partial results: list=%v get=%v history=%v trace=%v resourceTrace=%v", list, got, history, trace, resourceTrace)
+					}
+					return
+				}
+				if listErr != nil || getErr != nil || historyErr != nil || traceErr != nil || resourceTraceErr != nil {
+					t.Fatalf("identical duplicate errors: list=%v get=%v history=%v trace=%v resourceTrace=%v", listErr, getErr, historyErr, traceErr, resourceTraceErr)
+				}
+				if len(list) != 1 || got == nil || got.Version != 2 || len(history) != 1 || len(trace.Chain) < 2 || resourceTrace.FullyManaged {
+					t.Fatalf("identical duplicate selection changed valid behavior: list=%v get=%+v history=%v trace=%+v resourceTrace=%+v", list, got, history, trace, resourceTrace)
+				}
+			})
+		}
 	}
 }

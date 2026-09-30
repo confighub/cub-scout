@@ -6,6 +6,15 @@ set -euo pipefail
 
 CLUSTER="cub-scout-helm-release-decode"
 NS="helm-release-decode"
+NEGATIVE_IDENTITY=false
+if [[ "${1:-}" == "--negative-identity" ]]; then
+	NEGATIVE_IDENTITY=true
+	shift
+fi
+if [[ $# -gt 1 ]]; then
+	echo "usage: $0 [--negative-identity] [evidence-directory]" >&2
+	exit 2
+fi
 if [[ -n "${1:-}" ]]; then
 	EVIDENCE_DIR="$1"
 	if [[ -e "$EVIDENCE_DIR" ]]; then
@@ -44,7 +53,15 @@ trap cleanup EXIT
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-(cd "$REPO_ROOT" && go build -o "$TMP_DIR/cub-scout" ./cmd/cub-scout)
+SCOUT_BIN="$TMP_DIR/cub-scout"
+if [[ -n "${CUB_SCOUT_BASELINE_BIN:-}" ]]; then
+	if [[ ! -x "$CUB_SCOUT_BASELINE_BIN" ]]; then
+		echo "CUB_SCOUT_BASELINE_BIN must name an executable" >&2
+		exit 1
+	fi
+	cp "$CUB_SCOUT_BASELINE_BIN" "$TMP_DIR/cub-scout-baseline"
+fi
+(cd "$REPO_ROOT" && go build -o "$SCOUT_BIN" ./cmd/cub-scout)
 helm version --short >"$EVIDENCE_DIR/helm-version.txt" 2>&1
 CHART_DIR="$TMP_DIR/release-probe"
 mkdir -p "$CHART_DIR/templates"
@@ -88,8 +105,42 @@ export KUBECONFIG
 helm install release-probe "$CHART_DIR" --namespace "$NS" --create-namespace >"$EVIDENCE_DIR/helm-install.stdout" 2>"$EVIDENCE_DIR/helm-install.stderr"
 
 kubectl -n "$NS" get secrets -l owner=helm,name=release-probe -o name >"$EVIDENCE_DIR/secret-metadata.txt"
-"$TMP_DIR/cub-scout" trace deployment/release-probe -n "$NS" --format json >"$EVIDENCE_DIR/trace.stdout" 2>"$EVIDENCE_DIR/trace.stderr"
+"$SCOUT_BIN" trace deployment/release-probe -n "$NS" --format json >"$EVIDENCE_DIR/trace.stdout" 2>"$EVIDENCE_DIR/trace.stderr"
 jq -e --arg ns "$NS" '
   .summary.ownerType == "Helm" and
   ([.chain[] | select(.id.kind == "Deployment" and .id.name == "release-probe" and .id.namespace == $ns)] | length) == 1
 ' "$EVIDENCE_DIR/trace.stdout" >"$EVIDENCE_DIR/trace-assertion.txt"
+
+if [[ "$NEGATIVE_IDENTITY" == "true" ]]; then
+	SECRET_NAME="$(kubectl -n "$NS" get secrets -l owner=helm,name=release-probe -o jsonpath='{.items[0].metadata.name}')"
+	if [[ -z "$SECRET_NAME" ]]; then
+		echo "Helm release Secret was not found by the owner=helm,name selector" >&2
+		exit 1
+	fi
+	# Record only identity metadata. Never persist Secret .data or decoded payload.
+	kubectl -n "$NS" get secret "$SECRET_NAME" -o json | jq '{metadata:{name:.metadata.name,namespace:.metadata.namespace,labels:.metadata.labels},type:.type}' >"$EVIDENCE_DIR/secret-identity-before.json"
+	if [[ -n "${CUB_SCOUT_BASELINE_BIN:-}" ]]; then
+		set +e
+		"$TMP_DIR/cub-scout-baseline" trace deployment/release-probe -n "$NS" --format json >"$EVIDENCE_DIR/baseline-corrupt-label.stdout" 2>"$EVIDENCE_DIR/baseline-corrupt-label.stderr"
+		BASELINE_STATUS=$?
+		set -e
+		printf '%s\n' "$BASELINE_STATUS" >"$EVIDENCE_DIR/baseline-corrupt-label.exit-status.txt"
+	fi
+	kubectl -n "$NS" label secret "$SECRET_NAME" version=999 --overwrite >/dev/null
+	kubectl -n "$NS" get secret "$SECRET_NAME" -o json | jq '{metadata:{name:.metadata.name,namespace:.metadata.namespace,labels:.metadata.labels},type:.type}' >"$EVIDENCE_DIR/secret-identity-after.json"
+	set +e
+	"$SCOUT_BIN" trace deployment/release-probe -n "$NS" --format json >"$EVIDENCE_DIR/trace-corrupt-label.stdout" 2>"$EVIDENCE_DIR/trace-corrupt-label.stderr"
+	TRACE_STATUS=$?
+	set -e
+	printf '%s\n' "$TRACE_STATUS" >"$EVIDENCE_DIR/trace-corrupt-label.exit-status.txt"
+	if [[ "$TRACE_STATUS" -eq 0 ]] || ! grep -q 'incomplete or inconsistent identity metadata' "$EVIDENCE_DIR/trace-corrupt-label.stderr"; then
+		echo "expected identity mismatch to fail with explicit incomplete/error evidence" >&2
+		exit 1
+	fi
+	if [[ -n "${CUB_SCOUT_BASELINE_BIN:-}" ]]; then
+		jq -e --arg ns "$NS" '
+		  .summary.ownerType == "Helm" and
+		  ([.chain[] | select(.id.kind == "Deployment" and .id.name == "release-probe" and .id.namespace == $ns)] | length) == 1
+		' "$EVIDENCE_DIR/baseline-corrupt-label.stdout" >"$EVIDENCE_DIR/baseline-corrupt-label-assertion.txt"
+	fi
+fi

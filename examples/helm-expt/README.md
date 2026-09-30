@@ -22,11 +22,36 @@ Before release decoding can be trusted, a valid stored release must retain its
 name, namespace, and positive version. A malformed or over-limit candidate
 Helm Secret must produce explicit incomplete/error evidence from release
 listing, direct lookup, and history; it must never disappear silently and make
-an older version look current or history look empty. A namespace with no Helm
-release Secrets keeps the existing no-record behavior. Decoder limits are 9
+an older version look current or history look empty. If the `owner=helm` query
+returns no candidates, the existing no-record behavior remains; Secrets without
+that discovery label are not enumerated. Decoder limits are 9
 MiB of encoded `data.release`, 6 MiB after base64 decode, and 32 MiB of
 decompressed JSON. Decoder errors identify the failure class without echoing
 secret contents.
+
+Release selection also checks the identity fields on each candidate returned
+by the `owner=helm` Secret query: Secret and requested namespace, decoded
+payload namespace, canonical `sh.helm.release.v1.<name>.v<version>` key,
+`helm.sh/release.v1` type, and the `owner`, `name`, and `version` labels must
+agree. Missing or inconsistent fields return an incomplete/error result; they
+cannot make an older revision appear current. If a query returns repeated
+evidence for one release revision, identical decoded payloads are deduplicated;
+conflicting payloads for that same name/version are ambiguous, independent of
+list order. Latest-release listing, direct release lookup, resource tracing,
+and history use the same checks. Direct lookup/history query `owner=helm`
+records before validating and selecting the requested payload name, so a
+returned candidate with a mismatched `name` label is not hidden by a narrower
+label selector.
+
+These deterministic Secret metadata fixtures are synthetic and mirror the
+storage shape in [Helm v3.17.3](https://github.com/helm/helm/blob/v3.17.3/pkg/storage/storage.go)
+and [v4.0.0](https://github.com/helm/helm/blob/v4.0.0/pkg/storage/storage.go)
+storage code and [Secret drivers](https://github.com/helm/helm/blob/v3.17.3/pkg/storage/driver/secrets.go).
+The corresponding [v4 Secret driver](https://github.com/helm/helm/blob/v4.0.0/pkg/storage/driver/secrets.go)
+uses the same storage metadata shape.
+They are not captured releases or a compatibility result. The separately
+recorded valid-release smoke used Helm v4.1.4; it does not prove malformed-record
+behavior or Helm 3/4 parity.
 
 This work affects standalone `trace` paths that read Helm's Kubernetes Secret
 storage. The same tracer's connected consumer, where present, must preserve the
@@ -64,6 +89,17 @@ Helm `v4.1.4+g05fa379`. It exited 0 and reported Helm ownership with the exact
 was removed and the shared-context result was unchanged. This validates that
 minimal explicit-namespace release only, not malformed live cases or a
 Helm 3/4 compatibility matrix. See [the PR proof](https://github.com/confighub/cub-scout/pull/663).
+
+The same harness supports an optional metadata-only negative identity probe:
+`./examples/helm-expt/reproduce-helm-release-secret-trace.sh --negative-identity`.
+After the valid trace, it changes only the created release Secret's `version`
+label while leaving the payload and key untouched. The current binary must fail
+with explicit incomplete/inconsistent identity evidence. For comparison on the
+same corrupted Secret, set `CUB_SCOUT_BASELINE_BIN` to an absolute path to a
+previously built executable; the script records whether it still reports a
+confident Helm chain. It records Secret metadata only, never `.data` or decoded
+release contents. This negative mode was added for reproducible lead-run proof
+and has not been run by this packet.
 
 ## Helm manifest identity contract (#588, exact matching)
 
