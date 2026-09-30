@@ -160,6 +160,7 @@ func TestBoundedExplainUnknownAndPayloadBoundary(t *testing.T) {
 	evidence := agent.BoundedReadEvidence{Context: "cluster-a", Resource: ref, ObservedAt: time.Date(2026, 9, 11, 12, 0, 0, 0, time.UTC)}
 	summary := buildBoundedExplainSummary(obj, evidence, nil)
 	require.Equal(t, "Unknown", summary.Health, "custom kind collisions are not native workload evidence")
+	require.Equal(t, HealthMeasurementUnmeasured, summary.HealthMeasurement.Status)
 	require.Nil(t, summary.CurrentChange)
 	require.Nil(t, summary.Events)
 	require.Nil(t, summary.ThreeWay)
@@ -171,6 +172,7 @@ func TestBoundedExplainUnknownAndPayloadBoundary(t *testing.T) {
 	failure := buildBoundedExplainSummary(nil, evidence, fmt.Errorf("forbidden"))
 	require.Equal(t, "Unknown", failure.Owner)
 	require.Equal(t, "Unavailable", failure.Health)
+	require.Equal(t, HealthMeasurementUnmeasured, failure.HealthMeasurement.Status)
 	require.Contains(t, strings.Join(failure.Notes, " "), "forbidden")
 	text := renderExplainText(summary, PresentationHuman, true, HintContext{Mode: HintModeDefault})
 	md := renderExplainMarkdown(summary, PresentationHuman, true, HintContext{Mode: HintModeDefault})
@@ -178,6 +180,63 @@ func TestBoundedExplainUnknownAndPayloadBoundary(t *testing.T) {
 		require.Contains(t, output, "cluster-a")
 		require.Contains(t, output, "example.io/v1")
 		require.Contains(t, output, "no source/controller")
+	}
+}
+
+func TestBoundedExplainHealthMeasurementTracksOnlySupportedReadiness(t *testing.T) {
+	evidence := agent.BoundedReadEvidence{Resource: agent.BoundedResourceRef{APIVersion: "apps/v1", Kind: "Deployment", Namespace: "prod", Name: "api"}}
+	obj := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": "apps/v1", "kind": "Deployment",
+		"metadata": map[string]interface{}{"name": "api", "namespace": "prod", "generation": int64(1)},
+		"spec":     map[string]interface{}{"replicas": int64(1)},
+		"status":   map[string]interface{}{"observedGeneration": int64(1), "replicas": int64(1), "readyReplicas": int64(1), "availableReplicas": int64(1)},
+	}}
+	summary := buildBoundedExplainSummary(obj, evidence, nil)
+	require.Equal(t, "InProgress", summary.Health, "preserve the legacy health value")
+	require.Equal(t, HealthMeasurementMeasured, summary.HealthMeasurement.Status)
+	require.Equal(t, "object-local-readiness", summary.HealthMeasurement.Scope)
+	text := renderExplainText(summary, DefaultPresentationMode, false, DefaultHintContext())
+	markdown := renderExplainMarkdown(summary, DefaultPresentationMode, false, DefaultHintContext())
+	require.Contains(t, ansi.Strip(text), "Health measurement: measured (object-local-readiness)")
+	require.Contains(t, markdown, "**Health measurement:** measured (object-local-readiness)")
+}
+
+func TestBoundedExplainObservedWorkloadWithoutReadinessRemainsUnmeasured(t *testing.T) {
+	evidence := agent.BoundedReadEvidence{Resource: agent.BoundedResourceRef{APIVersion: "apps/v1", Kind: "Deployment", Namespace: "prod", Name: "api"}}
+	obj := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": "apps/v1", "kind": "Deployment",
+		"metadata": map[string]interface{}{"name": "api", "namespace": "prod", "generation": int64(1)},
+		"spec":     map[string]interface{}{"replicas": int64(1)},
+		"status":   map[string]interface{}{"observedGeneration": int64(1)},
+	}}
+	summary := buildBoundedExplainSummary(obj, evidence, nil)
+	require.Equal(t, HealthMeasurementUnmeasured, summary.HealthMeasurement.Status)
+	require.Equal(t, "object-local-readiness", summary.HealthMeasurement.Scope)
+	require.Equal(t, "InProgress", summary.Health, "legacy model value remains unchanged")
+}
+
+func TestBoundedExplainReadinessCountersRequireValidNonnegativeIntegers(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		value interface{}
+		want  string
+	}{
+		{name: "zero is evidence", value: int64(0), want: HealthMeasurementMeasured},
+		{name: "null is missing", value: nil, want: HealthMeasurementUnmeasured},
+		{name: "string is malformed", value: "1", want: HealthMeasurementUnmeasured},
+		{name: "object is malformed", value: map[string]interface{}{"count": int64(1)}, want: HealthMeasurementUnmeasured},
+		{name: "negative is invalid", value: int64(-1), want: HealthMeasurementUnmeasured},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			obj := &unstructured.Unstructured{Object: map[string]interface{}{
+				"apiVersion": "apps/v1", "kind": "Deployment",
+				"metadata": map[string]interface{}{"name": "api", "namespace": "prod"},
+				"spec":     map[string]interface{}{"replicas": int64(1)},
+				"status":   map[string]interface{}{"readyReplicas": tc.value},
+			}}
+			summary := buildBoundedExplainSummary(obj, agent.BoundedReadEvidence{}, nil)
+			require.Equal(t, tc.want, summary.HealthMeasurement.Status)
+		})
 	}
 }
 

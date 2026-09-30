@@ -31,6 +31,12 @@ sequentially, so timestamps and runtime status can change during recording.
 The [first paired smoke](reports/2026-09-30-fair-attribution-smoke.md) answered
 correctly in both arms and cost more with scout; no benefit is assumed.
 
+The `changed-by-checkout` and attribution-contract smokes were file-only:
+ordinary tools were Read, Glob and Grep, plus harness task, skill and search
+tools; Bash, kubectl, Helm, jq and Python were unavailable. Neither satisfies
+roadmap Experiment A. Before a further paid attribution campaign, preflight
+safe, equivalent ordinary command access for both arms.
+
 ## Run
 
 Needs Claude Code 2.1.269 or later, logged in. Runs count against that account.
@@ -215,6 +221,14 @@ is recorded in standalone mode, and regenerates every case's `scaffold.sh`
 (`record.py --scaffolds-only` does only that, from the committed export).
 `test/unit/evals_fixtures_test.go` fails if a scaffold drifts from the
 recording.
+
+The `owner-unlabelled` case reuses the recorded `hotfix-worker` export and MCP
+answer, where legacy `health` is `Unavailable` while `currentChange.verdict` is
+`PASS`. Its new `healthMeasurement` field is a deterministic offline extension
+for #620, derived from the recorded partial-trace answer and the current
+contract, not a fresh live recording; the remaining answer fields retain their
+recorded provenance. This case exercises the meaning of that distinction but
+does not replace live end-to-end verification of the updated tool response.
 
 ### The scale scenario
 
@@ -501,3 +515,21 @@ Two earlier attempts are not counted: the harness could not find the export
 `/`; both are fixed above. Before the stand-in controllers were added, the
 baseline deduced "manual" from the absence of any controller and guessed
 right on `changed-by-checkout`; the stand-ins remove that shortcut.
+
+### Health measurement contract fixture
+
+`health-measurement-contract` is a product-contract-only check outside
+`benchmark-v1`. Its exact-object and MCP evidence is a genuine, sequential,
+read-only before/after observation recorded on 2026-09-30 for
+`Deployment/team-02/auth`. The object UID and resourceVersion match across
+observations; the calls were sequential, not atomic. `proof.json` carries source
+IDs and SHA-256 values. The case-scoped export contains only the matching
+Deployment, and the fixture-owned scaffold writes the accompanying proof files.
+The prompt instructs the model to read saved evidence and avoid MCP calls;
+this is not an enforced tool-isolation boundary. The regex grader checks only
+the final answer, so any future run must also audit its trace for unexpected
+tool use before claiming compliance with that instruction. This recorded-input
+product-contract check is intended to run with `--ablation none`; it
+is not a paired quality or savings measurement. `record.py --scaffolds-only`
+prints when it preserves this custom scaffold; the unit test validates its
+export and proof output. No eval run or paid grader has been run for this case.

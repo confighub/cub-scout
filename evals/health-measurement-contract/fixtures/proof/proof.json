@@ -1,0 +1,19 @@
+{
+  "date": "2026-09-30",
+  "context": "kind-scout-evals-scale",
+  "resource": "apps/v1 Deployment team-02/auth",
+  "beforeSource": "v2.12.4 at 11c3e38",
+  "afterSource": "8637c81",
+  "privateKubeconfig": true,
+  "cubHiddenFromPath": true,
+  "sameUidAndResourceVersionBeforeAfter": true,
+  "mutations": "none; all calls read-only",
+  "files": {
+    "after-explain.json": "5fba5c61bef92d22a9cef065ce1c99cec79351ceaed33a3c2f6a5a38e940436b",
+    "after-mcp.json": "293290ed75d8c3e430e31b73c27f8bfff7028e24d46fd2a853d0a736bbb1a8d0",
+    "after-object.json": "5604893ddfc9c6cfab3789932400e02f330769bffe2cb241929d310a623f9f3e",
+    "before-explain.json": "f1b799472037e978758a4cdd6033724df753ef1134c84758461ec1b2c9332353",
+    "before-mcp.json": "6215940853d3448eaf92e63b766cf25c13822dde04f03fae9045c8cceb9445a7",
+    "before-object.json": "5604893ddfc9c6cfab3789932400e02f330769bffe2cb241929d310a623f9f3e"
+  }
+}

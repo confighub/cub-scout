@@ -5,6 +5,10 @@
   "source": "https://github.com/acme/platform-config.git (path: ./apps/payments, revision: main@sha1:abc1234)",
   "deployedVia": "GitRepository/platform-config -\u003e Kustomization/payments -\u003e Deployment/payments-api",
   "health": "Healthy",
+  "healthMeasurement": {
+    "status": "measured",
+    "scope": "controller-chain"
+  },
   "risks": "Not assessed",
   "drift": "Unknown"
 }
