@@ -1,3 +1,6 @@
+//go:build integration
+// +build integration
+
 // Package mapstatus provides golden tests for the map status CLI command contract.
 //
 // These tests verify that the map status command behaves as documented in:
@@ -11,7 +14,7 @@
 //   - Cluster unreachable (error case)
 //
 // Each test sets up and tears down its own fixtures to ensure independence.
-// Tests skip if no Kubernetes cluster is available.
+// Tests require -tags=integration and skip if no Kubernetes cluster is available.
 //
 // Reference: docs/reference/cli-contract.md, docs/reference/health-failure-states.md
 //
