@@ -180,8 +180,8 @@ func TestNewMCPGateway_ToolDescriptionsCoverRepresentativeIntentEdges(t *testing
 		},
 		{
 			tool:     "explain",
-			intent:   "Was this known Deployment edited by hand?",
-			contains: []string{"use this directly as a first read", "resource-level mutation evidence", "known exact field", "malformed, absent, unrecognized, or shared ambiguous evidence remains unknown", "does not order writes by time or identify a person"},
+			intent:   "Which manager is recorded for this known Deployment's exact image field?",
+			contains: []string{"use this directly as a first read", "resource-level mutation evidence", "known exact field", "pass field_path", "only that path's observed manager names", "Do not load doctor, map, trace, or compare first just to rediscover manager evidence", "malformed, absent, unrecognized, or shared ambiguous evidence remains unknown", "without resource-level fallback", "does not order writes by time or identify a person"},
 		},
 		{
 			tool:     "trace",
