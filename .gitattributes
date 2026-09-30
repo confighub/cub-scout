@@ -1,0 +1,3 @@
+# Scaffold exports are generated from evals/fixtures/**/cluster by record.py.
+# Review the source recordings; unit tests verify every embedded copy matches.
+evals/**/scaffold.sh linguist-generated=true

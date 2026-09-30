@@ -20,7 +20,7 @@
     "progress": {
       "phase": "stalled",
       "clockSource": "status.conditions[Progressing].lastUpdateTime",
-      "progressAgeSeconds": 132
+      "progressAgeSeconds": 30
     },
     "verdict": "BLOCK",
     "reason": "runtime_failed",
@@ -32,13 +32,13 @@
       "observedGeneration": 2,
       "podReasons": [
         {
-          "pod": "orders-5f8df669d4-wcvxs",
+          "pod": "orders-5f8df669d4-pd8kq",
           "container": "orders",
-          "reason": "ImagePullBackOff",
-          "message": "Back-off pulling image \"registry.k8s.io/pause:9.9.9-orders\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k8s.io/pa…"
+          "reason": "ErrImagePull",
+          "message": "rpc error: code = NotFound desc = failed to pull and unpack image \"registry.k8s.io/pause:9.9.9-orders\": failed to resolve reference \"registry.k8s.io/pause:9.9.9…"
         }
       ],
-      "observedAt": "2026-09-27T07:57:59Z"
+      "observedAt": "2026-09-30T17:27:46Z"
     }
   },
   "events": {
@@ -48,22 +48,22 @@
         "reason": "ScalingReplicaSet",
         "message": "Scaled up replica set orders-5f8df669d4 from 0 to 1",
         "count": 1,
-        "age": "2m",
-        "lastSeen": "2026-09-27T08:55:16+01:00",
+        "age": "1m",
+        "lastSeen": "2026-09-30T18:26:45+01:00",
         "severity": "info",
         "source": "deployment-controller",
-        "firstSeen": "2026-09-27T08:55:16+01:00"
+        "firstSeen": "2026-09-30T18:26:45+01:00"
       },
       {
         "type": "Normal",
         "reason": "ScalingReplicaSet",
         "message": "Scaled up replica set orders-6555986955 from 0 to 2",
         "count": 1,
-        "age": "3m",
-        "lastSeen": "2026-09-27T08:54:36+01:00",
+        "age": "1m",
+        "lastSeen": "2026-09-30T18:26:05+01:00",
         "severity": "info",
         "source": "deployment-controller",
-        "firstSeen": "2026-09-27T08:54:36+01:00"
+        "firstSeen": "2026-09-30T18:26:05+01:00"
       }
     ],
     "totalCount": 2,

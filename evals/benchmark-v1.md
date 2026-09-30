@@ -6,22 +6,23 @@ It is a design manifest, not a runnable suite or evidence of savings. The
 machine-readable source is [benchmark-v1.json](benchmark-v1.json).
 
 Existing case directories are mapped only where their current prompt covers
-the frozen question. Those recordings do not automatically qualify as a fair
-benchmark: current attribution cases lack managedFields in the baseline export,
-so existing mappings are marked `existing_needs_equal_evidence` until the full
-evidence contract is checked. Unmapped entries are `planned`; this manifest does not claim those prompts, fixtures, or graders
-exist. The three live-only scale cases remain separate from these 24 questions.
+the frozen question. The September 30 refresh now includes managedFields in
+both arms' exports and validates the four attribution manager/cause pairs.
+Main-scenario mappings are `existing_refreshed_fixture`; the scale scout arm
+still reads live data, so those mappings are `existing_needs_snapshot_binding`.
+Neither status means the controlled benchmark ran. Unmapped entries remain
+`planned`; the three live-only scale cases remain a separate experiment.
 
 | Group | ID | Frozen question | Current mapping/status |
 |---|---|---|---|
-| Inventory | INV-01 | Owner counts at scale | `scale/scale-ownership-counts` — equal evidence pending |
-| Inventory | INV-02 | Exact unmanaged list at scale | `scale/scale-unmanaged` — equal evidence pending |
-| Inventory | INV-03 | Simple direct ownership label lookup | `owner-confighub` — equal evidence pending |
+| Inventory | INV-01 | Owner counts at scale | `scale/scale-ownership-counts` — snapshot binding pending |
+| Inventory | INV-02 | Exact unmanaged list at scale | `scale/scale-unmanaged` — snapshot binding pending |
+| Inventory | INV-03 | Simple direct ownership label lookup | `owner-confighub` — fixtures refreshed; benchmark run pending |
 | Inventory | INV-04 | Partial/RBAC inventory without false orphan claims | Planned |
-| Attribution | ATR-01 | Manual set-image attribution | `changed-by-checkout` — equal evidence pending |
-| Attribution | ATR-02 | Manual scale attribution | `changed-by-cart` — equal evidence pending |
-| Attribution | ATR-03 | Controller-only change | `changed-by-payments` — equal evidence pending |
-| Attribution | ATR-04 | Copied Argo instance label versus tracking identity | `argo-label-vs-tracking-id` — equal evidence pending |
+| Attribution | ATR-01 | Manual set-image attribution | `changed-by-checkout` — fixtures refreshed; benchmark run pending |
+| Attribution | ATR-02 | Manual scale attribution | `changed-by-cart` — fixtures refreshed; benchmark run pending |
+| Attribution | ATR-03 | Controller-only change | `changed-by-payments` — fixtures refreshed; benchmark run pending |
+| Attribution | ATR-04 | Copied Argo instance label versus tracking identity | `argo-label-vs-tracking-id` — fixtures refreshed; benchmark run pending |
 | Delivery identity | DEL-01 | Flux applied digest | Planned; identity is digest-based, never timestamp-derived |
 | Delivery identity | DEL-02 | Argo publication not consumed | Planned |
 | Delivery identity | DEL-03 | Sveltos inferred revision versus exact proof | Planned; include missing and stale identity |
@@ -65,7 +66,7 @@ aggregate estimate. A partial campaign cannot support a complete-suite headline.
 The execution plan budgets 3 paired repeats for diagnosis, followed by 10 per
 arm as the starting point for release evidence. It sets a $20 smoke cap and a
 $200 baseline cap; its $1.25 per arm-run is historical planning arithmetic, not
-a current price quote. Before any paid run, pin and date model pricing, complete
+a current price quote. Before the full paid baseline, pin and date model pricing, complete
 all 24 prompts and references, prove equal evidence, check grader failures
 offline, and preflight authentication, provider limits, and cost accounting.
 This packet authorizes no paid command.

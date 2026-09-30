@@ -9,6 +9,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: argocd
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: argocd
     resourceVersion: "509"
     uid: 9f4ef108-337d-4e55-87f0-f16b7b9df394
@@ -23,6 +37,17 @@ items:
     creationTimestamp: "2026-09-27T12:38:10Z"
     labels:
       kubernetes.io/metadata.name: default
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kube-apiserver
+      operation: Update
+      time: "2026-09-27T12:38:10Z"
     name: default
     resourceVersion: "22"
     uid: 6a95af6a-8919-4ae0-b119-ae3fbbf188f7
@@ -40,6 +65,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: flux-system
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: flux-system
     resourceVersion: "506"
     uid: c58a33c5-6c0a-4632-9eaf-1b5178b6d4d9
@@ -54,6 +93,17 @@ items:
     creationTimestamp: "2026-09-27T12:38:10Z"
     labels:
       kubernetes.io/metadata.name: kube-node-lease
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kube-apiserver
+      operation: Update
+      time: "2026-09-27T12:38:10Z"
     name: kube-node-lease
     resourceVersion: "30"
     uid: dbdcfb8b-2d5a-4a20-b0b7-2ce426044a46
@@ -68,6 +118,17 @@ items:
     creationTimestamp: "2026-09-27T12:38:10Z"
     labels:
       kubernetes.io/metadata.name: kube-public
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kube-apiserver
+      operation: Update
+      time: "2026-09-27T12:38:10Z"
     name: kube-public
     resourceVersion: "18"
     uid: f2ae7f7a-d8bc-499d-b857-d4c012b106dd
@@ -82,6 +143,17 @@ items:
     creationTimestamp: "2026-09-27T12:38:10Z"
     labels:
       kubernetes.io/metadata.name: kube-system
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kube-apiserver
+      operation: Update
+      time: "2026-09-27T12:38:10Z"
     name: kube-system
     resourceVersion: "10"
     uid: af60a91d-b0c3-4a8f-8182-819eaba20488
@@ -99,6 +171,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:13Z"
     labels:
       kubernetes.io/metadata.name: local-path-storage
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:13Z"
     name: local-path-storage
     resourceVersion: "275"
     uid: e24d94f0-2603-4e19-80b6-eeb724eb8505
@@ -116,6 +202,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-01
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-01
     resourceVersion: "440"
     uid: 15908e38-21f4-439f-a935-536d122e1352
@@ -133,6 +233,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-02
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-02
     resourceVersion: "443"
     uid: 47659cdf-1db5-4bbf-9411-3534cacb9f3c
@@ -150,6 +264,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-03
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-03
     resourceVersion: "446"
     uid: b65fcbf0-9cb2-440c-a963-64f33a9f5582
@@ -167,6 +295,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-04
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-04
     resourceVersion: "449"
     uid: 28f3ae81-d5ca-41d3-a0ac-a3aa40d190f6
@@ -184,6 +326,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-05
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-05
     resourceVersion: "452"
     uid: 4409e041-b82e-4619-acdd-4434dbc1780c
@@ -201,6 +357,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-06
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-06
     resourceVersion: "455"
     uid: 8288cdca-a435-4ffb-9205-6fdc4dfcc78b
@@ -218,6 +388,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-07
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-07
     resourceVersion: "457"
     uid: 0b4b70a6-6b08-4135-b968-8e976425a519
@@ -235,6 +419,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-08
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-08
     resourceVersion: "461"
     uid: c1b51a3b-0558-4ab5-a0b8-436d6150414c
@@ -252,6 +450,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-09
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-09
     resourceVersion: "464"
     uid: 0c1d9a1d-5147-4e70-b20e-2ca4b5934071
@@ -269,6 +481,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-10
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-10
     resourceVersion: "467"
     uid: 9ec5628c-81a4-481d-934b-c4d74fb35e13
@@ -286,6 +512,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-11
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-11
     resourceVersion: "470"
     uid: 6e1a581f-c045-4d74-93d9-33a474f8dc92
@@ -303,6 +543,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-12
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-12
     resourceVersion: "473"
     uid: ac614341-e4e6-43c8-bff5-cf231967bee1
@@ -320,6 +574,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-13
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-13
     resourceVersion: "476"
     uid: a24067aa-10c9-4981-b329-fadbd5bfaef7
@@ -337,6 +605,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-14
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-14
     resourceVersion: "479"
     uid: 3e24ffc6-695c-408d-ba76-63e893a9e419
@@ -354,6 +636,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-15
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-15
     resourceVersion: "482"
     uid: 93147712-d7df-459f-bac5-d4f18275d940
@@ -371,6 +667,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-16
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-16
     resourceVersion: "485"
     uid: 6ad831ab-d744-4027-b20e-af78793f9d58
@@ -388,6 +698,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-17
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-17
     resourceVersion: "488"
     uid: 96393b5a-986e-4f8b-9444-f4af445d32d9
@@ -405,6 +729,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-18
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-18
     resourceVersion: "491"
     uid: 1f00084b-3534-4717-956d-22a7c881ce74
@@ -422,6 +760,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-19
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-19
     resourceVersion: "494"
     uid: fca503aa-68cc-4b60-ba6e-832c02dafbb0
@@ -439,6 +791,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-20
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-20
     resourceVersion: "495"
     uid: c397585d-0b37-4a6e-af67-e8a347c32cd1
@@ -456,6 +822,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-21
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-21
     resourceVersion: "496"
     uid: 72acd118-2be7-4790-b8dc-d4f1b153b0e7
@@ -473,6 +853,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-22
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-22
     resourceVersion: "497"
     uid: 394eb0e6-58c0-4c2e-ab5f-000f3d596b44
@@ -490,6 +884,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-23
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-23
     resourceVersion: "498"
     uid: 8696585d-41f0-4e68-9831-63862f1212d4
@@ -507,6 +915,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-24
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-24
     resourceVersion: "499"
     uid: 96aa6954-0db9-44bb-9b13-b858c481b454
@@ -524,6 +946,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-25
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-25
     resourceVersion: "500"
     uid: 6042d558-9f08-4312-ae46-017efb76fce7
@@ -541,6 +977,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-26
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-26
     resourceVersion: "501"
     uid: 60a26326-d819-4744-aed3-cf6a56d07e77
@@ -558,6 +1008,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-27
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-27
     resourceVersion: "502"
     uid: 88249fbf-131e-4811-bd54-8e26896ece00
@@ -575,6 +1039,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-28
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-28
     resourceVersion: "503"
     uid: 16332d9b-c628-47d9-85a1-6825763f3d30
@@ -592,6 +1070,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-29
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-29
     resourceVersion: "504"
     uid: 18648acb-1c20-49cc-ac6b-e8b839995a59
@@ -609,6 +1101,20 @@ items:
     creationTimestamp: "2026-09-27T12:38:31Z"
     labels:
       kubernetes.io/metadata.name: team-30
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:kubernetes.io/metadata.name: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: team-30
     resourceVersion: "505"
     uid: aa1cee87-bbf4-4c7d-9b5f-310fc5e0d7cd

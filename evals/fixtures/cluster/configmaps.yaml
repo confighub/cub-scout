@@ -8,35 +8,53 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","data":{"application.resourceTrackingMethod":"annotation"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"argocd-cm","app.kubernetes.io/part-of":"argocd"},"name":"argocd-cm","namespace":"argocd"}}
-    creationTimestamp: "2026-09-27T07:54:35Z"
+    creationTimestamp: "2026-09-30T17:26:04Z"
     labels:
       app.kubernetes.io/name: argocd-cm
       app.kubernetes.io/part-of: argocd
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:application.resourceTrackingMethod: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+          f:labels:
+            .: {}
+            f:app.kubernetes.io/name: {}
+            f:app.kubernetes.io/part-of: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-30T17:26:04Z"
     name: argocd-cm
     namespace: argocd
-    resourceVersion: "543"
-    uid: f4ce2319-d47f-4459-8617-5780ce10f448
+    resourceVersion: "591"
+    uid: 5dca27bf-3922-449c-a319-f41630abaef4
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
+      MIIDBTCCAe2gAwIBAgIIWUa9VX43iL0wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MzAxNzIwMThaFw0zNjA5MjcxNzI1MThaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
-      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
-      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
-      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
-      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
-      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
-      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
-      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
-      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
-      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
-      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
-      7VvZs8oGo4WN
+      AoIBAQC905mrW6RKsScGGPDvqpLm9wT8DmxbTLzPQTkNFyUlRQtQLmKTbrANUVcj
+      Z7d3WeEoRp5fnZa8VEiNTsrfZeglyOXHJ16Cz4raXXDbXJpZsT1W1cm3DSGkPXXz
+      TmGDRaaNujw8YLR2bCL4xGDezxWlMJLPmC4VnrL6L9vYLhtzWpgA5g5NGpPzT+Jb
+      cHgIkLuxxPO0Frt04WqfNgyhBW/tDEIF9jT5AcUNr8fkJcaAuKvYQ8+ZxhFdtNhV
+      pvRZ4YyI9bL4lm5e5Ij04WaFfvkzSKOqnrOrpzoTcfZ28IVFgwv8LF3baUSBVoR8
+      oOga4fGBa6oJbkHSTDG7nhvFD82xAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBT7DSzfNTmPMkxmokmdM4njS7LnCDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB0dhhi/LH+
+      lcd7aT9PLKgwfZRSMmlQdcz4rVsnOFL9tTSiQk87O/GvVRBEEWaOz8SulJtBGGHe
+      z2Wo7a5Vp6ci8yPuX4Aj7II0bizb6bvH6glk4dCZuj8p6Na/e+hk/eQP+6HFtUQe
+      tS9YUfoVuOLEU0INVhP9IHny+nRzbyrCQmK+M6+4HaHbRiOrKxyxUTP+HVEoeu3p
+      26cfe9NZhmDEmGUf1lY39iiyMI49fwA/ecUZLaUd2y7zXV3hUSAD67xyN1VedTsB
+      Zp8L+nEGqe0T+HzpDVDS+BCDjlSOtqCMDY1duyLQtqeDIOkzlqt53atcYV2OxKg+
+      KkDXpFcvkrMj
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -45,32 +63,46 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:54:35Z"
+    creationTimestamp: "2026-09-30T17:26:04Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-30T17:26:04Z"
     name: kube-root-ca.crt
     namespace: argocd
-    resourceVersion: "488"
-    uid: 84cbd4a7-5208-4aa9-97c1-8797f9041098
+    resourceVersion: "526"
+    uid: c132c45e-35ba-4375-b37a-ee6a20da10ba
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
+      MIIDBTCCAe2gAwIBAgIIWUa9VX43iL0wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MzAxNzIwMThaFw0zNjA5MjcxNzI1MThaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
-      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
-      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
-      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
-      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
-      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
-      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
-      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
-      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
-      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
-      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
-      7VvZs8oGo4WN
+      AoIBAQC905mrW6RKsScGGPDvqpLm9wT8DmxbTLzPQTkNFyUlRQtQLmKTbrANUVcj
+      Z7d3WeEoRp5fnZa8VEiNTsrfZeglyOXHJ16Cz4raXXDbXJpZsT1W1cm3DSGkPXXz
+      TmGDRaaNujw8YLR2bCL4xGDezxWlMJLPmC4VnrL6L9vYLhtzWpgA5g5NGpPzT+Jb
+      cHgIkLuxxPO0Frt04WqfNgyhBW/tDEIF9jT5AcUNr8fkJcaAuKvYQ8+ZxhFdtNhV
+      pvRZ4YyI9bL4lm5e5Ij04WaFfvkzSKOqnrOrpzoTcfZ28IVFgwv8LF3baUSBVoR8
+      oOga4fGBa6oJbkHSTDG7nhvFD82xAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBT7DSzfNTmPMkxmokmdM4njS7LnCDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB0dhhi/LH+
+      lcd7aT9PLKgwfZRSMmlQdcz4rVsnOFL9tTSiQk87O/GvVRBEEWaOz8SulJtBGGHe
+      z2Wo7a5Vp6ci8yPuX4Aj7II0bizb6bvH6glk4dCZuj8p6Na/e+hk/eQP+6HFtUQe
+      tS9YUfoVuOLEU0INVhP9IHny+nRzbyrCQmK+M6+4HaHbRiOrKxyxUTP+HVEoeu3p
+      26cfe9NZhmDEmGUf1lY39iiyMI49fwA/ecUZLaUd2y7zXV3hUSAD67xyN1VedTsB
+      Zp8L+nEGqe0T+HzpDVDS+BCDjlSOtqCMDY1duyLQtqeDIOkzlqt53atcYV2OxKg+
+      KkDXpFcvkrMj
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -79,32 +111,46 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:54:35Z"
+    creationTimestamp: "2026-09-30T17:26:04Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-30T17:26:04Z"
     name: kube-root-ca.crt
     namespace: billing
-    resourceVersion: "540"
-    uid: 73393bfc-3e57-4c6b-abb5-74fca40de870
+    resourceVersion: "584"
+    uid: d75c914b-025e-4ba2-8ee0-caf2c32261bd
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
+      MIIDBTCCAe2gAwIBAgIIWUa9VX43iL0wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MzAxNzIwMThaFw0zNjA5MjcxNzI1MThaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
-      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
-      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
-      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
-      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
-      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
-      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
-      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
-      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
-      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
-      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
-      7VvZs8oGo4WN
+      AoIBAQC905mrW6RKsScGGPDvqpLm9wT8DmxbTLzPQTkNFyUlRQtQLmKTbrANUVcj
+      Z7d3WeEoRp5fnZa8VEiNTsrfZeglyOXHJ16Cz4raXXDbXJpZsT1W1cm3DSGkPXXz
+      TmGDRaaNujw8YLR2bCL4xGDezxWlMJLPmC4VnrL6L9vYLhtzWpgA5g5NGpPzT+Jb
+      cHgIkLuxxPO0Frt04WqfNgyhBW/tDEIF9jT5AcUNr8fkJcaAuKvYQ8+ZxhFdtNhV
+      pvRZ4YyI9bL4lm5e5Ij04WaFfvkzSKOqnrOrpzoTcfZ28IVFgwv8LF3baUSBVoR8
+      oOga4fGBa6oJbkHSTDG7nhvFD82xAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBT7DSzfNTmPMkxmokmdM4njS7LnCDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB0dhhi/LH+
+      lcd7aT9PLKgwfZRSMmlQdcz4rVsnOFL9tTSiQk87O/GvVRBEEWaOz8SulJtBGGHe
+      z2Wo7a5Vp6ci8yPuX4Aj7II0bizb6bvH6glk4dCZuj8p6Na/e+hk/eQP+6HFtUQe
+      tS9YUfoVuOLEU0INVhP9IHny+nRzbyrCQmK+M6+4HaHbRiOrKxyxUTP+HVEoeu3p
+      26cfe9NZhmDEmGUf1lY39iiyMI49fwA/ecUZLaUd2y7zXV3hUSAD67xyN1VedTsB
+      Zp8L+nEGqe0T+HzpDVDS+BCDjlSOtqCMDY1duyLQtqeDIOkzlqt53atcYV2OxKg+
+      KkDXpFcvkrMj
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -113,32 +159,46 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:54:12Z"
+    creationTimestamp: "2026-09-30T17:25:33Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-30T17:25:33Z"
     name: kube-root-ca.crt
     namespace: default
-    resourceVersion: "348"
-    uid: c6507718-c1f5-4617-adbd-07be1c163e7e
+    resourceVersion: "363"
+    uid: 7b3cc2e5-8d37-4bea-89d8-7560d2725425
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
+      MIIDBTCCAe2gAwIBAgIIWUa9VX43iL0wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MzAxNzIwMThaFw0zNjA5MjcxNzI1MThaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
-      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
-      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
-      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
-      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
-      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
-      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
-      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
-      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
-      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
-      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
-      7VvZs8oGo4WN
+      AoIBAQC905mrW6RKsScGGPDvqpLm9wT8DmxbTLzPQTkNFyUlRQtQLmKTbrANUVcj
+      Z7d3WeEoRp5fnZa8VEiNTsrfZeglyOXHJ16Cz4raXXDbXJpZsT1W1cm3DSGkPXXz
+      TmGDRaaNujw8YLR2bCL4xGDezxWlMJLPmC4VnrL6L9vYLhtzWpgA5g5NGpPzT+Jb
+      cHgIkLuxxPO0Frt04WqfNgyhBW/tDEIF9jT5AcUNr8fkJcaAuKvYQ8+ZxhFdtNhV
+      pvRZ4YyI9bL4lm5e5Ij04WaFfvkzSKOqnrOrpzoTcfZ28IVFgwv8LF3baUSBVoR8
+      oOga4fGBa6oJbkHSTDG7nhvFD82xAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBT7DSzfNTmPMkxmokmdM4njS7LnCDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB0dhhi/LH+
+      lcd7aT9PLKgwfZRSMmlQdcz4rVsnOFL9tTSiQk87O/GvVRBEEWaOz8SulJtBGGHe
+      z2Wo7a5Vp6ci8yPuX4Aj7II0bizb6bvH6glk4dCZuj8p6Na/e+hk/eQP+6HFtUQe
+      tS9YUfoVuOLEU0INVhP9IHny+nRzbyrCQmK+M6+4HaHbRiOrKxyxUTP+HVEoeu3p
+      26cfe9NZhmDEmGUf1lY39iiyMI49fwA/ecUZLaUd2y7zXV3hUSAD67xyN1VedTsB
+      Zp8L+nEGqe0T+HzpDVDS+BCDjlSOtqCMDY1duyLQtqeDIOkzlqt53atcYV2OxKg+
+      KkDXpFcvkrMj
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -147,32 +207,46 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:54:35Z"
+    creationTimestamp: "2026-09-30T17:26:04Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-30T17:26:04Z"
     name: kube-root-ca.crt
     namespace: flux-system
-    resourceVersion: "486"
-    uid: 682ae8e4-c72a-4149-bab8-f2a9361c7d8c
+    resourceVersion: "522"
+    uid: f0230c53-a0cf-4373-86d0-04833ed901da
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
+      MIIDBTCCAe2gAwIBAgIIWUa9VX43iL0wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MzAxNzIwMThaFw0zNjA5MjcxNzI1MThaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
-      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
-      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
-      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
-      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
-      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
-      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
-      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
-      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
-      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
-      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
-      7VvZs8oGo4WN
+      AoIBAQC905mrW6RKsScGGPDvqpLm9wT8DmxbTLzPQTkNFyUlRQtQLmKTbrANUVcj
+      Z7d3WeEoRp5fnZa8VEiNTsrfZeglyOXHJ16Cz4raXXDbXJpZsT1W1cm3DSGkPXXz
+      TmGDRaaNujw8YLR2bCL4xGDezxWlMJLPmC4VnrL6L9vYLhtzWpgA5g5NGpPzT+Jb
+      cHgIkLuxxPO0Frt04WqfNgyhBW/tDEIF9jT5AcUNr8fkJcaAuKvYQ8+ZxhFdtNhV
+      pvRZ4YyI9bL4lm5e5Ij04WaFfvkzSKOqnrOrpzoTcfZ28IVFgwv8LF3baUSBVoR8
+      oOga4fGBa6oJbkHSTDG7nhvFD82xAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBT7DSzfNTmPMkxmokmdM4njS7LnCDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB0dhhi/LH+
+      lcd7aT9PLKgwfZRSMmlQdcz4rVsnOFL9tTSiQk87O/GvVRBEEWaOz8SulJtBGGHe
+      z2Wo7a5Vp6ci8yPuX4Aj7II0bizb6bvH6glk4dCZuj8p6Na/e+hk/eQP+6HFtUQe
+      tS9YUfoVuOLEU0INVhP9IHny+nRzbyrCQmK+M6+4HaHbRiOrKxyxUTP+HVEoeu3p
+      26cfe9NZhmDEmGUf1lY39iiyMI49fwA/ecUZLaUd2y7zXV3hUSAD67xyN1VedTsB
+      Zp8L+nEGqe0T+HzpDVDS+BCDjlSOtqCMDY1duyLQtqeDIOkzlqt53atcYV2OxKg+
+      KkDXpFcvkrMj
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -181,32 +255,46 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:54:35Z"
+    creationTimestamp: "2026-09-30T17:26:04Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-30T17:26:04Z"
     name: kube-root-ca.crt
     namespace: inventory
-    resourceVersion: "523"
-    uid: 54d0209c-2482-489b-b7e2-05a741a12968
+    resourceVersion: "558"
+    uid: b539714b-23a7-421f-97d8-0fceb3a98460
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
+      MIIDBTCCAe2gAwIBAgIIWUa9VX43iL0wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MzAxNzIwMThaFw0zNjA5MjcxNzI1MThaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
-      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
-      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
-      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
-      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
-      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
-      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
-      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
-      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
-      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
-      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
-      7VvZs8oGo4WN
+      AoIBAQC905mrW6RKsScGGPDvqpLm9wT8DmxbTLzPQTkNFyUlRQtQLmKTbrANUVcj
+      Z7d3WeEoRp5fnZa8VEiNTsrfZeglyOXHJ16Cz4raXXDbXJpZsT1W1cm3DSGkPXXz
+      TmGDRaaNujw8YLR2bCL4xGDezxWlMJLPmC4VnrL6L9vYLhtzWpgA5g5NGpPzT+Jb
+      cHgIkLuxxPO0Frt04WqfNgyhBW/tDEIF9jT5AcUNr8fkJcaAuKvYQ8+ZxhFdtNhV
+      pvRZ4YyI9bL4lm5e5Ij04WaFfvkzSKOqnrOrpzoTcfZ28IVFgwv8LF3baUSBVoR8
+      oOga4fGBa6oJbkHSTDG7nhvFD82xAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBT7DSzfNTmPMkxmokmdM4njS7LnCDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB0dhhi/LH+
+      lcd7aT9PLKgwfZRSMmlQdcz4rVsnOFL9tTSiQk87O/GvVRBEEWaOz8SulJtBGGHe
+      z2Wo7a5Vp6ci8yPuX4Aj7II0bizb6bvH6glk4dCZuj8p6Na/e+hk/eQP+6HFtUQe
+      tS9YUfoVuOLEU0INVhP9IHny+nRzbyrCQmK+M6+4HaHbRiOrKxyxUTP+HVEoeu3p
+      26cfe9NZhmDEmGUf1lY39iiyMI49fwA/ecUZLaUd2y7zXV3hUSAD67xyN1VedTsB
+      Zp8L+nEGqe0T+HzpDVDS+BCDjlSOtqCMDY1duyLQtqeDIOkzlqt53atcYV2OxKg+
+      KkDXpFcvkrMj
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -215,20 +303,34 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:54:12Z"
+    creationTimestamp: "2026-09-30T17:25:33Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-30T17:25:33Z"
     name: kube-root-ca.crt
     namespace: kube-node-lease
-    resourceVersion: "349"
-    uid: dc68447e-108d-43a2-bf06-0fc5fe706006
+    resourceVersion: "364"
+    uid: 361297b5-26c2-4243-98f1-e6e0bdcf6043
 - apiVersion: v1
   data:
-    jws-kubeconfig-abcdef: eyJhbGciOiJIUzI1NiIsImtpZCI6ImFiY2RlZiJ9..Q8M0mWKBftkT0lyx48jLvwaCApdRhrKzasTQD7HJcR0
+    jws-kubeconfig-abcdef: eyJhbGciOiJIUzI1NiIsImtpZCI6ImFiY2RlZiJ9..1Rij2I5m6PDLZ7qngE2EBGRKS0XAKkOO0_O_3Luqo5M
     kubeconfig: |
       apiVersion: v1
       clusters:
       - cluster:
-          certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCVENDQWUyZ0F3SUJBZ0lJSE15OWwzK0Y2bm93RFFZSktvWklodmNOQVFFTEJRQXdGVEVUTUJFR0ExVUUKQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TmpBNU1qY3dOelE1TURCYUZ3MHpOakE1TWpRd056VTBNREJhTUJVeApFekFSQmdOVkJBTVRDbXQxWW1WeWJtVjBaWE13Z2dFaU1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLCkFvSUJBUUMyc0s4MUVKZ1o1MVRiMUNsdEV5ZmJmZ2xEcnBQWm9lVCtvcWQ0MjVMZVdBNmdkZVhDczcyaktLdVcKMXFjOTRla3dLZVlmV3QxWTk2N1VzVmtBeFNNY1NmV3Z5cWl5d3p4N3VPWit5cWpYTWk5MnpCNkJ5cmlpVGpVVwozTWk2c2lrM3hxYkhTMnRkU0g3T2FvaUkwQUttdzR6c3FzK3phWkZURTMzMTlZWlFUWnUyQ3VTUWlaYjQ2YVlaCnZ1TXJYN0pHNDNscFo5bGRnbFA0UVZyMWhhcHpLbUJ0MHBwaXcrVGY2VzZBNVFMKzBzdnBqSnNBUzBaS1owSUYKeGR6ajNvSitZMnBxY1gremR3SXYyYTlxQ3YyazdXNGdJd1YzN0o4TlZYSHdvaGY0T3hlUnlwTzZFZC9Yd2hoTgpGaHhsM24wQ1R3S3F2ekxsdnRlNXhJaWprZG1yQWdNQkFBR2pXVEJYTUE0R0ExVWREd0VCL3dRRUF3SUNwREFQCkJnTlZIUk1CQWY4RUJUQURBUUgvTUIwR0ExVWREZ1FXQkJTMUFxbzQ1RDRFUCtDZ00xVzJiL2xlWWxwcG16QVYKQmdOVkhSRUVEakFNZ2dwcmRXSmxjbTVsZEdWek1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQjlCODB0UzNRVwpCeVEwSktNL2ZEWVBFRGlmUW1iSUo5M3AvVE8xeXJEREo0S3RmWmRKK2pJRVFKUFdNUGJBL3RZSTRMOXpvN25OCjlDOE1uV1h4WFZBSWxZUzVwRGNPT0pWckVLQnVTTEZ1ZWhVT2xlT3dWVDNLNzU3SFNEU1dtOWtkLzFZYVlyZW0KVzdWVTZIMEp5a2FneUU3MzFVd0d3MmRlL2szbm9pN2x5Y2J0cDJMalZUQUx6eW15MmNaZSthN0o3ZzhqbVhUOApzMUVQZDFmUmFuOWM2WmdTYWxvc2hZc0Nmc3FSV3Fab0ZvNzZtZUxrYkRzWDhyTGRSOS8vZXpJT05QcVJEWjZCCmJ0SzJScXhLQ2FCN09mQnhweTZSbTF2SDJMODRtRTJiTHEyQ0hYdjZsZ04yTFFEZXl2RExEWjJHU2RMUHYvRXcKN1Z2WnM4b0dvNFdOCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
-          server: https://scout-evals-control-plane:6443
+          certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCVENDQWUyZ0F3SUJBZ0lJV1VhOVZYNDNpTDB3RFFZSktvWklodmNOQVFFTEJRQXdGVEVUTUJFR0ExVUUKQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TmpBNU16QXhOekl3TVRoYUZ3MHpOakE1TWpjeE56STFNVGhhTUJVeApFekFSQmdOVkJBTVRDbXQxWW1WeWJtVjBaWE13Z2dFaU1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLCkFvSUJBUUM5MDVtclc2UktzU2NHR1BEdnFwTG05d1Q4RG14YlRMelBRVGtORnlVbFJRdFFMbUtUYnJBTlVWY2oKWjdkM1dlRW9ScDVmblphOFZFaU5Uc3JmWmVnbHlPWEhKMTZDejRyYVhYRGJYSnBac1QxVzFjbTNEU0drUFhYegpUbUdEUmFhTnVqdzhZTFIyYkNMNHhHRGV6eFdsTUpMUG1DNFZuckw2TDl2WUxodHpXcGdBNWc1TkdwUHpUK0piCmNIZ0lrTHV4eFBPMEZydDA0V3FmTmd5aEJXL3RERUlGOWpUNUFjVU5yOGZrSmNhQXVLdllROCtaeGhGZHROaFYKcHZSWjRZeUk5Ykw0bG01ZTVJajA0V2FGZnZrelNLT3Fuck9ycHpvVGNmWjI4SVZGZ3d2OExGM2JhVVNCVm9SOApvT2dhNGZHQmE2b0pia0hTVERHN25odkZEODJ4QWdNQkFBR2pXVEJYTUE0R0ExVWREd0VCL3dRRUF3SUNwREFQCkJnTlZIUk1CQWY4RUJUQURBUUgvTUIwR0ExVWREZ1FXQkJUN0RTemZOVG1QTWt4bW9rbWRNNG5qUzdMbkNEQVYKQmdOVkhSRUVEakFNZ2dwcmRXSmxjbTVsZEdWek1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQjBkaGhpL0xIKwpsY2Q3YVQ5UExLZ3dmWlJTTW1sUWRjejRyVnNuT0ZMOXRUU2lRazg3Ty9HdlZSQkVFV2FPejhTdWxKdEJHR0hlCnoyV283YTVWcDZjaTh5UHVYNEFqN0lJMGJpemI2YnZINmdsazRkQ1p1ajhwNk5hL2UraGsvZVFQKzZIRnRVUWUKdFM5WVVmb1Z1T0xFVTBJTlZoUDlJSG55K25SemJ5ckNRbUsrTTYrNEhhSGJSaU9yS3h5eFVUUCtIVkVvZXUzcAoyNmNmZTlOWmhtREVtR1VmMWxZMzlpaXlNSTQ5ZndBL2VjVVpMYVVkMnk3elhWM2hVU0FENjd4eU4xVmVkVHNCClpwOEwrbkVHcWUwVCtIenBEVkRTK0JDRGpsU090cUNNRFkxZHV5TFF0cWVESU9remxxdDUzYXRjWVYyT3hLZysKS2tEWHBGY3Zrck1qCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+          server: https://scout-evals-fair-20260930-control-plane:6443
         name: ""
       contexts: null
       current-context: ""
@@ -236,32 +338,50 @@ items:
       users: null
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-27T07:54:05Z"
+    creationTimestamp: "2026-09-30T17:25:26Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:kubeconfig: {}
+      manager: kubeadm
+      operation: Update
+      time: "2026-09-30T17:25:26Z"
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          f:jws-kubeconfig-abcdef: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-30T17:25:33Z"
     name: cluster-info
     namespace: kube-public
-    resourceVersion: "328"
-    uid: 73391ad2-06e8-491f-ba1b-5a5c03bd6176
+    resourceVersion: "372"
+    uid: 4d4455c5-8d2e-4efb-b364-a2dc81424f8a
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
+      MIIDBTCCAe2gAwIBAgIIWUa9VX43iL0wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MzAxNzIwMThaFw0zNjA5MjcxNzI1MThaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
-      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
-      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
-      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
-      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
-      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
-      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
-      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
-      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
-      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
-      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
-      7VvZs8oGo4WN
+      AoIBAQC905mrW6RKsScGGPDvqpLm9wT8DmxbTLzPQTkNFyUlRQtQLmKTbrANUVcj
+      Z7d3WeEoRp5fnZa8VEiNTsrfZeglyOXHJ16Cz4raXXDbXJpZsT1W1cm3DSGkPXXz
+      TmGDRaaNujw8YLR2bCL4xGDezxWlMJLPmC4VnrL6L9vYLhtzWpgA5g5NGpPzT+Jb
+      cHgIkLuxxPO0Frt04WqfNgyhBW/tDEIF9jT5AcUNr8fkJcaAuKvYQ8+ZxhFdtNhV
+      pvRZ4YyI9bL4lm5e5Ij04WaFfvkzSKOqnrOrpzoTcfZ28IVFgwv8LF3baUSBVoR8
+      oOga4fGBa6oJbkHSTDG7nhvFD82xAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBT7DSzfNTmPMkxmokmdM4njS7LnCDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB0dhhi/LH+
+      lcd7aT9PLKgwfZRSMmlQdcz4rVsnOFL9tTSiQk87O/GvVRBEEWaOz8SulJtBGGHe
+      z2Wo7a5Vp6ci8yPuX4Aj7II0bizb6bvH6glk4dCZuj8p6Na/e+hk/eQP+6HFtUQe
+      tS9YUfoVuOLEU0INVhP9IHny+nRzbyrCQmK+M6+4HaHbRiOrKxyxUTP+HVEoeu3p
+      26cfe9NZhmDEmGUf1lY39iiyMI49fwA/ecUZLaUd2y7zXV3hUSAD67xyN1VedTsB
+      Zp8L+nEGqe0T+HzpDVDS+BCDjlSOtqCMDY1duyLQtqeDIOkzlqt53atcYV2OxKg+
+      KkDXpFcvkrMj
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -270,11 +390,25 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:54:12Z"
+    creationTimestamp: "2026-09-30T17:25:33Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-30T17:25:33Z"
     name: kube-root-ca.crt
     namespace: kube-public
-    resourceVersion: "350"
-    uid: e79daffe-889b-47ac-b0bf-99b161733d03
+    resourceVersion: "359"
+    uid: ebc38c18-849b-4a23-b640-93af9593651b
 - apiVersion: v1
   data:
     Corefile: |
@@ -303,74 +437,109 @@ items:
       }
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-27T07:54:05Z"
+    creationTimestamp: "2026-09-30T17:25:27Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:Corefile: {}
+      manager: kubeadm
+      operation: Update
+      time: "2026-09-30T17:25:27Z"
     name: coredns
     namespace: kube-system
-    resourceVersion: "227"
-    uid: c09d1b29-90ac-47f3-aa9b-0fb6ddd8a91e
+    resourceVersion: "263"
+    uid: 17ef9b10-ee03-4b8b-8afc-3725d24cd180
 - apiVersion: v1
   data:
     client-ca-file: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
+      MIIDBTCCAe2gAwIBAgIIWUa9VX43iL0wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MzAxNzIwMThaFw0zNjA5MjcxNzI1MThaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
-      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
-      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
-      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
-      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
-      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
-      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
-      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
-      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
-      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
-      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
-      7VvZs8oGo4WN
+      AoIBAQC905mrW6RKsScGGPDvqpLm9wT8DmxbTLzPQTkNFyUlRQtQLmKTbrANUVcj
+      Z7d3WeEoRp5fnZa8VEiNTsrfZeglyOXHJ16Cz4raXXDbXJpZsT1W1cm3DSGkPXXz
+      TmGDRaaNujw8YLR2bCL4xGDezxWlMJLPmC4VnrL6L9vYLhtzWpgA5g5NGpPzT+Jb
+      cHgIkLuxxPO0Frt04WqfNgyhBW/tDEIF9jT5AcUNr8fkJcaAuKvYQ8+ZxhFdtNhV
+      pvRZ4YyI9bL4lm5e5Ij04WaFfvkzSKOqnrOrpzoTcfZ28IVFgwv8LF3baUSBVoR8
+      oOga4fGBa6oJbkHSTDG7nhvFD82xAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBT7DSzfNTmPMkxmokmdM4njS7LnCDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB0dhhi/LH+
+      lcd7aT9PLKgwfZRSMmlQdcz4rVsnOFL9tTSiQk87O/GvVRBEEWaOz8SulJtBGGHe
+      z2Wo7a5Vp6ci8yPuX4Aj7II0bizb6bvH6glk4dCZuj8p6Na/e+hk/eQP+6HFtUQe
+      tS9YUfoVuOLEU0INVhP9IHny+nRzbyrCQmK+M6+4HaHbRiOrKxyxUTP+HVEoeu3p
+      26cfe9NZhmDEmGUf1lY39iiyMI49fwA/ecUZLaUd2y7zXV3hUSAD67xyN1VedTsB
+      Zp8L+nEGqe0T+HzpDVDS+BCDjlSOtqCMDY1duyLQtqeDIOkzlqt53atcYV2OxKg+
+      KkDXpFcvkrMj
       -----END CERTIFICATE-----
     requestheader-allowed-names: '["front-proxy-client"]'
     requestheader-client-ca-file: |
       -----BEGIN CERTIFICATE-----
-      MIIDETCCAfmgAwIBAgIIQJYyFa4xqyQwDQYJKoZIhvcNAQELBQAwGTEXMBUGA1UE
-      AxMOZnJvbnQtcHJveHktY2EwHhcNMjYwOTI3MDc0OTAwWhcNMzYwOTI0MDc1NDAw
+      MIIDETCCAfmgAwIBAgIIRW51s3u9vdswDQYJKoZIhvcNAQELBQAwGTEXMBUGA1UE
+      AxMOZnJvbnQtcHJveHktY2EwHhcNMjYwOTMwMTcyMDE4WhcNMzYwOTI3MTcyNTE4
       WjAZMRcwFQYDVQQDEw5mcm9udC1wcm94eS1jYTCCASIwDQYJKoZIhvcNAQEBBQAD
-      ggEPADCCAQoCggEBAMpdFdCarwwgQ5AjcMdZPoRmflezqjlRnWsSoJ4Xe4uTT/Pe
-      r0OUdCIqxIOO0HA6UdPVW1LV/JyppJ5Aenvbv/tKN+6CA8W4yeFgqTUqaRPpG8jR
-      DkIEwlEgx1Yd3XwdG1kj5X9YVmvjjcGczOA49heB32LUNzArFMY2Lxy53VDkCeEx
-      jndW5rOVqHF5EvC7pAhbcSD0kkGI8N3GlpJ+fLOjuohzTDjT8To7FCvIQMUjC575
-      jXfsz2/R4rzfilb9QIUFqLc/wvDiT08Oo7nO29qW3rj77oXJuMajqxrms4ebZB5n
-      2OSrMPswLSw2YfmGGbp0fMWE4nRhDYrpYfr0rw0CAwEAAaNdMFswDgYDVR0PAQH/
-      BAQDAgKkMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFDhIN36ByEqGO6izb99V
-      rnkrRtT/MBkGA1UdEQQSMBCCDmZyb250LXByb3h5LWNhMA0GCSqGSIb3DQEBCwUA
-      A4IBAQBVR7cLHf8gp6+IwWoPDE45OAl2Iau9umtqGyLhBlXoxVdhddQVc93CZ0DX
-      yHfz6nIVYwTBk6uXS8TwUolefxP9FzCekiyLhC/MSsZY2JozTW1ObH50RtL+W2dl
-      jztMB/1MFd3yjlt+LnWscFQ+zUaAJA/pklTZnzaC4IdvX/prUbDeJi3Y+/QzkzAl
-      6gtfACiebXEaEI91ni9X+1U60ARoh3I9EKjlhfCXpZBhSo1gkNwgFLfpleh2o6u5
-      ItBnEg4vXmL+6gE4S1cF2zLvpAW0cOcjBepM9ljMBny2hMe2INVE1WSzoP91XeDt
-      oykx521of2xlIRxPVJZDuXRbjpH+
+      ggEPADCCAQoCggEBANWMXoNQm7yfRG+hAjQmU2a9o8tuvg98XD7nRGW+TRR8NL+1
+      MprBNVClU2sXsvL1WvUpPX9mX3M1kF9GaIwkSIpzj4mqRDf2x0p+ifDUI8zbeEbe
+      1KaHum7XfcFVjey0MjJ98kQee6v6oOpZYwKQdWpAlCS+HTJZbcuXiqaeYcNNOvCM
+      3gv7AC1bJG960cPINDsJIGqX1a+uD4HYO8+L/qVsOz84/TfcLg4zVPSJ0f2YoXr0
+      7A2Xt9uludV/zYEkl+z4PYrBvDkD/OhAAOuHlmvrAfpQ7sm7BBl+ql7OM9qTDqVF
+      Y8IQ4MJ0G4zQvicJkyAk9v6NrrB1KUuQWx9oqM8CAwEAAaNdMFswDgYDVR0PAQH/
+      BAQDAgKkMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFFM2xCRDmlXnol4RYuz6
+      CIhEb/jsMBkGA1UdEQQSMBCCDmZyb250LXByb3h5LWNhMA0GCSqGSIb3DQEBCwUA
+      A4IBAQBRay8G3GDuzwznvB1yP9BfMnx66rO9IOBHMmlBu8UmGxEkeEgfyzbRNilg
+      B/BUO9h4jTCWJAHKA5SDD01wmaSXFTIIqocs1dLwup3xFW8nj7MV+0fUGq77YeRQ
+      JkQGujsrOON8px57LirKLJQmajGbFJPZcl7+WtGoihqZOAoSUlFwY5qlLZQ5GQZ2
+      5/igfCjfn9lCIMe76spfLW70E+bIjjv+7OJ62LZFEpzjQU5kzfjtdX47K0TQgwfe
+      n/C51pRU2t8IbvRjGq/NbQT81wOycjdIlWxYYdMNL9y7Ckhova0fR7/X4wZzwZZ+
+      Rhdt/0bRkQ0hMrcABoHdfSiRptUm
       -----END CERTIFICATE-----
     requestheader-extra-headers-prefix: '["X-Remote-Extra-"]'
     requestheader-group-headers: '["X-Remote-Group"]'
     requestheader-username-headers: '["X-Remote-User"]'
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-27T07:54:03Z"
+    creationTimestamp: "2026-09-30T17:25:24Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:client-ca-file: {}
+          f:requestheader-allowed-names: {}
+          f:requestheader-client-ca-file: {}
+          f:requestheader-extra-headers-prefix: {}
+          f:requestheader-group-headers: {}
+          f:requestheader-username-headers: {}
+      manager: kube-apiserver
+      operation: Update
+      time: "2026-09-30T17:25:24Z"
     name: extension-apiserver-authentication
     namespace: kube-system
     resourceVersion: "29"
-    uid: 8f6f3c37-4363-4a48-97a5-5327305dc8e1
+    uid: e6be608a-e608-494f-9937-da1e69a943a1
 - apiVersion: v1
   data:
-    since: "2026-09-27"
+    since: "2026-09-30"
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-27T07:54:04Z"
+    creationTimestamp: "2026-09-30T17:25:24Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:since: {}
+      manager: kube-apiserver
+      operation: Update
+      time: "2026-09-30T17:25:24Z"
     name: kube-apiserver-legacy-service-account-token-tracking
     namespace: kube-system
-    resourceVersion: "59"
-    uid: 43521415-83d4-487e-a0d2-48b67d9a8520
+    resourceVersion: "37"
+    uid: db8604d6-f8fe-4214-bb94-84c9a5f386e8
 - apiVersion: v1
   data:
     config.conf: |-
@@ -447,7 +616,7 @@ items:
       clusters:
       - cluster:
           certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-          server: https://scout-evals-control-plane:6443
+          server: https://scout-evals-fair-20260930-control-plane:6443
         name: default
       contexts:
       - context:
@@ -462,34 +631,49 @@ items:
           tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-27T07:54:06Z"
+    creationTimestamp: "2026-09-30T17:25:27Z"
     labels:
       app: kube-proxy
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:config.conf: {}
+          f:kubeconfig.conf: {}
+        f:metadata:
+          f:labels:
+            .: {}
+            f:app: {}
+      manager: kubeadm
+      operation: Update
+      time: "2026-09-30T17:25:27Z"
     name: kube-proxy
     namespace: kube-system
-    resourceVersion: "241"
-    uid: 78a78007-33dc-45ce-b484-685eecb0c4d5
+    resourceVersion: "270"
+    uid: 02a5971f-20d7-443d-9a1a-5c15f4e65099
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
+      MIIDBTCCAe2gAwIBAgIIWUa9VX43iL0wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MzAxNzIwMThaFw0zNjA5MjcxNzI1MThaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
-      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
-      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
-      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
-      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
-      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
-      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
-      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
-      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
-      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
-      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
-      7VvZs8oGo4WN
+      AoIBAQC905mrW6RKsScGGPDvqpLm9wT8DmxbTLzPQTkNFyUlRQtQLmKTbrANUVcj
+      Z7d3WeEoRp5fnZa8VEiNTsrfZeglyOXHJ16Cz4raXXDbXJpZsT1W1cm3DSGkPXXz
+      TmGDRaaNujw8YLR2bCL4xGDezxWlMJLPmC4VnrL6L9vYLhtzWpgA5g5NGpPzT+Jb
+      cHgIkLuxxPO0Frt04WqfNgyhBW/tDEIF9jT5AcUNr8fkJcaAuKvYQ8+ZxhFdtNhV
+      pvRZ4YyI9bL4lm5e5Ij04WaFfvkzSKOqnrOrpzoTcfZ28IVFgwv8LF3baUSBVoR8
+      oOga4fGBa6oJbkHSTDG7nhvFD82xAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBT7DSzfNTmPMkxmokmdM4njS7LnCDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB0dhhi/LH+
+      lcd7aT9PLKgwfZRSMmlQdcz4rVsnOFL9tTSiQk87O/GvVRBEEWaOz8SulJtBGGHe
+      z2Wo7a5Vp6ci8yPuX4Aj7II0bizb6bvH6glk4dCZuj8p6Na/e+hk/eQP+6HFtUQe
+      tS9YUfoVuOLEU0INVhP9IHny+nRzbyrCQmK+M6+4HaHbRiOrKxyxUTP+HVEoeu3p
+      26cfe9NZhmDEmGUf1lY39iiyMI49fwA/ecUZLaUd2y7zXV3hUSAD67xyN1VedTsB
+      Zp8L+nEGqe0T+HzpDVDS+BCDjlSOtqCMDY1duyLQtqeDIOkzlqt53atcYV2OxKg+
+      KkDXpFcvkrMj
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -498,11 +682,25 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:54:12Z"
+    creationTimestamp: "2026-09-30T17:25:33Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-30T17:25:33Z"
     name: kube-root-ca.crt
     namespace: kube-system
-    resourceVersion: "351"
-    uid: 00280e40-4fbc-4ca9-8be2-0881584b6be4
+    resourceVersion: "360"
+    uid: ff21c81e-706c-41b5-a071-bd1d51e2c9c4
 - apiVersion: v1
   data:
     ClusterConfiguration: |
@@ -517,8 +715,8 @@ items:
       caCertificateValidityPeriod: 87600h0m0s
       certificateValidityPeriod: 8760h0m0s
       certificatesDir: /etc/kubernetes/pki
-      clusterName: scout-evals
-      controlPlaneEndpoint: scout-evals-control-plane:6443
+      clusterName: scout-evals-fair-20260930
+      controlPlaneEndpoint: scout-evals-fair-20260930-control-plane:6443
       controllerManager:
         extraArgs:
         - name: enable-hostpath-provisioner
@@ -539,11 +737,21 @@ items:
       scheduler: {}
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-27T07:54:05Z"
+    creationTimestamp: "2026-09-30T17:25:26Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ClusterConfiguration: {}
+      manager: kubeadm
+      operation: Update
+      time: "2026-09-30T17:25:26Z"
     name: kubeadm-config
     namespace: kube-system
-    resourceVersion: "211"
-    uid: 53f2290d-3ca2-46f8-ad2d-639893bb0357
+    resourceVersion: "246"
+    uid: 9b978ec1-23f0-47c4-b291-4e4f0537fc84
 - apiVersion: v1
   data:
     kubelet: |
@@ -604,32 +812,42 @@ items:
       volumeStatsAggPeriod: 0s
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-09-27T07:54:05Z"
+    creationTimestamp: "2026-09-30T17:25:26Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:kubelet: {}
+      manager: kubeadm
+      operation: Update
+      time: "2026-09-30T17:25:26Z"
     name: kubelet-config
     namespace: kube-system
-    resourceVersion: "214"
-    uid: 044e34a6-8ccd-4022-a75f-fb8b1d6b24bb
+    resourceVersion: "249"
+    uid: bc5931dc-0de5-40fe-9467-730aabfa7431
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
+      MIIDBTCCAe2gAwIBAgIIWUa9VX43iL0wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MzAxNzIwMThaFw0zNjA5MjcxNzI1MThaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
-      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
-      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
-      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
-      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
-      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
-      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
-      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
-      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
-      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
-      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
-      7VvZs8oGo4WN
+      AoIBAQC905mrW6RKsScGGPDvqpLm9wT8DmxbTLzPQTkNFyUlRQtQLmKTbrANUVcj
+      Z7d3WeEoRp5fnZa8VEiNTsrfZeglyOXHJ16Cz4raXXDbXJpZsT1W1cm3DSGkPXXz
+      TmGDRaaNujw8YLR2bCL4xGDezxWlMJLPmC4VnrL6L9vYLhtzWpgA5g5NGpPzT+Jb
+      cHgIkLuxxPO0Frt04WqfNgyhBW/tDEIF9jT5AcUNr8fkJcaAuKvYQ8+ZxhFdtNhV
+      pvRZ4YyI9bL4lm5e5Ij04WaFfvkzSKOqnrOrpzoTcfZ28IVFgwv8LF3baUSBVoR8
+      oOga4fGBa6oJbkHSTDG7nhvFD82xAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBT7DSzfNTmPMkxmokmdM4njS7LnCDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB0dhhi/LH+
+      lcd7aT9PLKgwfZRSMmlQdcz4rVsnOFL9tTSiQk87O/GvVRBEEWaOz8SulJtBGGHe
+      z2Wo7a5Vp6ci8yPuX4Aj7II0bizb6bvH6glk4dCZuj8p6Na/e+hk/eQP+6HFtUQe
+      tS9YUfoVuOLEU0INVhP9IHny+nRzbyrCQmK+M6+4HaHbRiOrKxyxUTP+HVEoeu3p
+      26cfe9NZhmDEmGUf1lY39iiyMI49fwA/ecUZLaUd2y7zXV3hUSAD67xyN1VedTsB
+      Zp8L+nEGqe0T+HzpDVDS+BCDjlSOtqCMDY1duyLQtqeDIOkzlqt53atcYV2OxKg+
+      KkDXpFcvkrMj
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -638,11 +856,25 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:54:12Z"
+    creationTimestamp: "2026-09-30T17:25:33Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-30T17:25:33Z"
     name: kube-root-ca.crt
     namespace: local-path-storage
-    resourceVersion: "352"
-    uid: 6dea3ba8-7961-417f-b6e3-ac489d20a5d0
+    resourceVersion: "362"
+    uid: cd2602fd-2e5d-4983-8a48-901d60f1f20e
 - apiVersion: v1
   data:
     config.json: |-
@@ -682,32 +914,49 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","data":{"config.json":"{\n        \"nodePathMap\":[\n        {\n                \"node\":\"DEFAULT_PATH_FOR_NON_LISTED_NODES\",\n                \"paths\":[\"/var/local-path-provisioner\"]\n        }\n        ]\n}","helperPod.yaml":"apiVersion: v1\nkind: Pod\nmetadata:\n  name: helper-pod\nspec:\n  priorityClassName: system-node-critical\n  tolerations:\n    - key: node.kubernetes.io/disk-pressure\n      operator: Exists\n      effect: NoSchedule\n  containers:\n  - name: helper-pod\n    image: docker.io/kindest/local-path-helper:v20251211-v0.29.0-alpha-100-g82a92c5d\n    imagePullPolicy: IfNotPresent","setup":"#!/bin/sh\nset -eu\nmkdir -m 0777 -p \"$VOL_DIR\"","teardown":"#!/bin/sh\nset -eu\nrm -rf \"$VOL_DIR\""},"kind":"ConfigMap","metadata":{"annotations":{},"name":"local-path-config","namespace":"local-path-storage"}}
-    creationTimestamp: "2026-09-27T07:54:07Z"
+    creationTimestamp: "2026-09-30T17:25:30Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:config.json: {}
+          f:helperPod.yaml: {}
+          f:setup: {}
+          f:teardown: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-30T17:25:30Z"
     name: local-path-config
     namespace: local-path-storage
-    resourceVersion: "285"
-    uid: 0a4cfd91-f7c1-45e7-ac65-6c597f5b6be5
+    resourceVersion: "338"
+    uid: e105827b-4a11-4c96-9380-3e99f144e53d
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
+      MIIDBTCCAe2gAwIBAgIIWUa9VX43iL0wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MzAxNzIwMThaFw0zNjA5MjcxNzI1MThaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
-      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
-      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
-      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
-      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
-      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
-      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
-      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
-      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
-      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
-      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
-      7VvZs8oGo4WN
+      AoIBAQC905mrW6RKsScGGPDvqpLm9wT8DmxbTLzPQTkNFyUlRQtQLmKTbrANUVcj
+      Z7d3WeEoRp5fnZa8VEiNTsrfZeglyOXHJ16Cz4raXXDbXJpZsT1W1cm3DSGkPXXz
+      TmGDRaaNujw8YLR2bCL4xGDezxWlMJLPmC4VnrL6L9vYLhtzWpgA5g5NGpPzT+Jb
+      cHgIkLuxxPO0Frt04WqfNgyhBW/tDEIF9jT5AcUNr8fkJcaAuKvYQ8+ZxhFdtNhV
+      pvRZ4YyI9bL4lm5e5Ij04WaFfvkzSKOqnrOrpzoTcfZ28IVFgwv8LF3baUSBVoR8
+      oOga4fGBa6oJbkHSTDG7nhvFD82xAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBT7DSzfNTmPMkxmokmdM4njS7LnCDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB0dhhi/LH+
+      lcd7aT9PLKgwfZRSMmlQdcz4rVsnOFL9tTSiQk87O/GvVRBEEWaOz8SulJtBGGHe
+      z2Wo7a5Vp6ci8yPuX4Aj7II0bizb6bvH6glk4dCZuj8p6Na/e+hk/eQP+6HFtUQe
+      tS9YUfoVuOLEU0INVhP9IHny+nRzbyrCQmK+M6+4HaHbRiOrKxyxUTP+HVEoeu3p
+      26cfe9NZhmDEmGUf1lY39iiyMI49fwA/ecUZLaUd2y7zXV3hUSAD67xyN1VedTsB
+      Zp8L+nEGqe0T+HzpDVDS+BCDjlSOtqCMDY1duyLQtqeDIOkzlqt53atcYV2OxKg+
+      KkDXpFcvkrMj
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -716,32 +965,46 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:54:35Z"
+    creationTimestamp: "2026-09-30T17:26:04Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-30T17:26:04Z"
     name: kube-root-ca.crt
     namespace: payments
-    resourceVersion: "518"
-    uid: 69055564-422a-4ad9-8bcc-31198bcba4d3
+    resourceVersion: "549"
+    uid: f54e5f55-b733-430e-9402-50c0d8e5588f
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
+      MIIDBTCCAe2gAwIBAgIIWUa9VX43iL0wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MzAxNzIwMThaFw0zNjA5MjcxNzI1MThaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
-      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
-      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
-      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
-      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
-      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
-      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
-      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
-      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
-      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
-      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
-      7VvZs8oGo4WN
+      AoIBAQC905mrW6RKsScGGPDvqpLm9wT8DmxbTLzPQTkNFyUlRQtQLmKTbrANUVcj
+      Z7d3WeEoRp5fnZa8VEiNTsrfZeglyOXHJ16Cz4raXXDbXJpZsT1W1cm3DSGkPXXz
+      TmGDRaaNujw8YLR2bCL4xGDezxWlMJLPmC4VnrL6L9vYLhtzWpgA5g5NGpPzT+Jb
+      cHgIkLuxxPO0Frt04WqfNgyhBW/tDEIF9jT5AcUNr8fkJcaAuKvYQ8+ZxhFdtNhV
+      pvRZ4YyI9bL4lm5e5Ij04WaFfvkzSKOqnrOrpzoTcfZ28IVFgwv8LF3baUSBVoR8
+      oOga4fGBa6oJbkHSTDG7nhvFD82xAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBT7DSzfNTmPMkxmokmdM4njS7LnCDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB0dhhi/LH+
+      lcd7aT9PLKgwfZRSMmlQdcz4rVsnOFL9tTSiQk87O/GvVRBEEWaOz8SulJtBGGHe
+      z2Wo7a5Vp6ci8yPuX4Aj7II0bizb6bvH6glk4dCZuj8p6Na/e+hk/eQP+6HFtUQe
+      tS9YUfoVuOLEU0INVhP9IHny+nRzbyrCQmK+M6+4HaHbRiOrKxyxUTP+HVEoeu3p
+      26cfe9NZhmDEmGUf1lY39iiyMI49fwA/ecUZLaUd2y7zXV3hUSAD67xyN1VedTsB
+      Zp8L+nEGqe0T+HzpDVDS+BCDjlSOtqCMDY1duyLQtqeDIOkzlqt53atcYV2OxKg+
+      KkDXpFcvkrMj
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -750,32 +1013,46 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:54:35Z"
+    creationTimestamp: "2026-09-30T17:26:04Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-30T17:26:04Z"
     name: kube-root-ca.crt
     namespace: shop
-    resourceVersion: "482"
-    uid: c6a053a7-b431-4f1f-9ada-a343fee69743
+    resourceVersion: "520"
+    uid: aa0aac08-04dc-44ab-8a29-3b69b1a014f2
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIHMy9l3+F6nowDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjA5MjcwNzQ5MDBaFw0zNjA5MjQwNzU0MDBaMBUx
+      MIIDBTCCAe2gAwIBAgIIWUa9VX43iL0wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjA5MzAxNzIwMThaFw0zNjA5MjcxNzI1MThaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQC2sK81EJgZ51Tb1CltEyfbfglDrpPZoeT+oqd425LeWA6gdeXCs72jKKuW
-      1qc94ekwKeYfWt1Y967UsVkAxSMcSfWvyqiywzx7uOZ+yqjXMi92zB6ByriiTjUW
-      3Mi6sik3xqbHS2tdSH7OaoiI0AKmw4zsqs+zaZFTE3319YZQTZu2CuSQiZb46aYZ
-      vuMrX7JG43lpZ9ldglP4QVr1hapzKmBt0ppiw+Tf6W6A5QL+0svpjJsAS0ZKZ0IF
-      xdzj3oJ+Y2pqcX+zdwIv2a9qCv2k7W4gIwV37J8NVXHwohf4OxeRypO6Ed/XwhhN
-      Fhxl3n0CTwKqvzLlvte5xIijkdmrAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS1Aqo45D4EP+CgM1W2b/leYlppmzAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB9B80tS3QW
-      ByQ0JKM/fDYPEDifQmbIJ93p/TO1yrDDJ4KtfZdJ+jIEQJPWMPbA/tYI4L9zo7nN
-      9C8MnWXxXVAIlYS5pDcOOJVrEKBuSLFuehUOleOwVT3K757HSDSWm9kd/1YaYrem
-      W7VU6H0JykagyE731UwGw2de/k3noi7lycbtp2LjVTALzymy2cZe+a7J7g8jmXT8
-      s1EPd1fRan9c6ZgSaloshYsCfsqRWqZoFo76meLkbDsX8rLdR9//ezIONPqRDZ6B
-      btK2RqxKCaB7OfBxpy6Rm1vH2L84mE2bLq2CHXv6lgN2LQDeyvDLDZ2GSdLPv/Ew
-      7VvZs8oGo4WN
+      AoIBAQC905mrW6RKsScGGPDvqpLm9wT8DmxbTLzPQTkNFyUlRQtQLmKTbrANUVcj
+      Z7d3WeEoRp5fnZa8VEiNTsrfZeglyOXHJ16Cz4raXXDbXJpZsT1W1cm3DSGkPXXz
+      TmGDRaaNujw8YLR2bCL4xGDezxWlMJLPmC4VnrL6L9vYLhtzWpgA5g5NGpPzT+Jb
+      cHgIkLuxxPO0Frt04WqfNgyhBW/tDEIF9jT5AcUNr8fkJcaAuKvYQ8+ZxhFdtNhV
+      pvRZ4YyI9bL4lm5e5Ij04WaFfvkzSKOqnrOrpzoTcfZ28IVFgwv8LF3baUSBVoR8
+      oOga4fGBa6oJbkHSTDG7nhvFD82xAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBT7DSzfNTmPMkxmokmdM4njS7LnCDAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQB0dhhi/LH+
+      lcd7aT9PLKgwfZRSMmlQdcz4rVsnOFL9tTSiQk87O/GvVRBEEWaOz8SulJtBGGHe
+      z2Wo7a5Vp6ci8yPuX4Aj7II0bizb6bvH6glk4dCZuj8p6Na/e+hk/eQP+6HFtUQe
+      tS9YUfoVuOLEU0INVhP9IHny+nRzbyrCQmK+M6+4HaHbRiOrKxyxUTP+HVEoeu3p
+      26cfe9NZhmDEmGUf1lY39iiyMI49fwA/ecUZLaUd2y7zXV3hUSAD67xyN1VedTsB
+      Zp8L+nEGqe0T+HzpDVDS+BCDjlSOtqCMDY1duyLQtqeDIOkzlqt53atcYV2OxKg+
+      KkDXpFcvkrMj
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -784,11 +1061,25 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-09-27T07:54:35Z"
+    creationTimestamp: "2026-09-30T17:26:04Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-30T17:26:04Z"
     name: kube-root-ca.crt
     namespace: temp-testing
-    resourceVersion: "528"
-    uid: fcaa37cd-8170-48ba-87b6-b4054bc395f3
+    resourceVersion: "563"
+    uid: e1d5ffb1-e813-4fcb-8b36-3f57da25ea7c
 kind: List
 metadata:
   resourceVersion: ""
