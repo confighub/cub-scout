@@ -38,6 +38,35 @@ class PreparationGuards(unittest.TestCase):
                 runner.run_owned([sys.executable, '-c', 'raise SystemExit(99)'], root)
             self.assertEqual(heartbeat.read_bytes(), final)
 
+    def test_pair_runner_cleans_group_on_external_signals(self):
+        import json
+        import signal
+        import time
+        for signum in (signal.SIGINT, signal.SIGTERM):
+            with self.subTest(signum=signum), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                (root / 'plugin').mkdir()
+                heartbeat = root / 'heartbeat'
+                child = "import signal,time,pathlib; signal.signal(signal.SIGTERM,signal.SIG_IGN); p=pathlib.Path(" + repr(str(heartbeat)) + "); " + "\nwhile True: p.write_text(str(time.monotonic())); time.sleep(.02)"
+                parent = "import subprocess,sys,signal,time; signal.signal(signal.SIGTERM,signal.SIG_IGN); subprocess.Popen([sys.executable,'-c'," + repr(child) + "]); time.sleep(60)"
+                driver = "import sys; sys.path.insert(0," + repr(str(ROOT)) + "); from run_pair import run_owned; from pathlib import Path; raise SystemExit(run_owned(" + repr([sys.executable, '-c', parent]) + ",Path(" + repr(str(root)) + "),timeout=5,grace=.1))"
+                process = subprocess.Popen([sys.executable, '-c', driver])
+                try:
+                    deadline = time.monotonic() + 3
+                    while not heartbeat.exists() and time.monotonic() < deadline:
+                        time.sleep(.02)
+                    self.assertTrue(heartbeat.exists())
+                    process.send_signal(signum)
+                    self.assertEqual(process.wait(timeout=8), 128 + signum)
+                    last = heartbeat.read_bytes()
+                    time.sleep(.1)
+                    self.assertEqual(heartbeat.read_bytes(), last)
+                    self.assertEqual(json.loads((root / 'completion.json').read_text())['interruptedBySignal'], signum)
+                finally:
+                    if process.poll() is None:
+                        process.terminate()
+                        process.wait(timeout=8)
+
     def test_purpose_configuration_preserves_plumbing_and_makes_economy_neutral(self):
         import json
         with tempfile.TemporaryDirectory() as tmp:

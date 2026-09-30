@@ -28,6 +28,11 @@ def stop_owned_group(pgid, grace):
         pass
 
 
+class RunInterrupted(BaseException):
+    def __init__(self, signum):
+        self.signum = signum
+
+
 def run_owned(command, root, timeout=210, grace=10):
     # Exclusive launch marker also rejects concurrent launches in this output.
     with (root / 'launch.json').open('x') as launch:
@@ -36,25 +41,42 @@ def run_owned(command, root, timeout=210, grace=10):
         env = {**os.environ, 'CLAUDE_CODE_DISABLE_FAST_MODE': '1'}
         started = time.monotonic()
         with (root / 'run.stdout').open('x') as stdout, (root / 'run.stderr').open('x') as stderr:
-            process = subprocess.Popen(command, cwd=root / 'plugin', env=env,
-                                       stdout=stdout, stderr=stderr, start_new_session=True)
-            json.dump({'pid': process.pid, 'pgid': process.pid, 'command': command,
-                       'timeoutSeconds': timeout, 'terminationGraceSeconds': grace,
-                       'fastModeDisabled': True}, launch)
-            launch.flush()
+            previous = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
+            def interrupted(signum, frame):
+                raise RunInterrupted(signum)
+            process = None
             timed_out = False
+            interrupted_by = None
             try:
+                for sig in previous:
+                    signal.signal(sig, interrupted)
+                process = subprocess.Popen(command, cwd=root / 'plugin', env=env,
+                                           stdout=stdout, stderr=stderr, start_new_session=True)
+                json.dump({'pid': process.pid, 'pgid': process.pid, 'command': command,
+                           'timeoutSeconds': timeout, 'terminationGraceSeconds': grace,
+                           'fastModeDisabled': True}, launch)
+                launch.flush()
                 code = process.wait(timeout=timeout)
             except subprocess.TimeoutExpired:
                 timed_out = True
                 code = 124
+            except RunInterrupted as exc:
+                interrupted_by = exc.signum
+                code = 128 + exc.signum
             finally:
-                # Includes surviving descendants after the launcher exits. This
-                # addresses this owned group, not detached/global processes.
-                stop_owned_group(process.pid, grace)
-                process.wait()
+                try:
+                    # Repeated cancellation cannot interrupt bounded cleanup.
+                    for sig in previous:
+                        signal.signal(sig, signal.SIG_IGN)
+                    if process is not None:
+                        stop_owned_group(process.pid, grace)
+                        process.wait()
+                finally:
+                    for sig, handler in previous.items():
+                        signal.signal(sig, handler)
         (root / 'completion.json').write_text(json.dumps({
-            'exit': code, 'timedOut': timed_out, 'seconds': round(time.monotonic()-started, 3),
+            'exit': code, 'timedOut': timed_out, 'interruptedBySignal': interrupted_by,
+            'seconds': round(time.monotonic()-started, 3),
             'resultExists': (root / 'result.json').exists(),
         }, indent=2) + '\n')
         return code

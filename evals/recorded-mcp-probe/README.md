@@ -86,7 +86,7 @@ python3 evals/recorded-mcp-probe/run_pair.py /tmp/cub-scout-recorded-economy-pro
 
 The runner verifies the prepared plugin and binary hashes, refuses an existing
 launch/result, records its owned PID/process group, and terminates that group
-on timeout or launcher exit (TERM, then KILL after a ten-second grace period).
+on timeout, SIGINT/SIGTERM cancellation or launcher exit (TERM, then KILL after a ten-second grace period).
 It does not scan or signal unrelated processes, and does not claim to control
 processes that deliberately detach from that group. Failures preserve logs and
 partial results; they are not retried. Inspect those artifacts before making
