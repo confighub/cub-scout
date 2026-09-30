@@ -29,7 +29,7 @@ For the **exhaustive stable surface** (all contracted commands, flags, exit code
 | `doctor` | One-command cluster health summary | v1.4 |
 | `explain` | Plain-English ownership and lineage for one resource | v1.4 |
 | `impact` | Connected blast-radius preview for one unit | v1.6 |
-| `fleet outliers` | Connected cluster-drift outlier report | v1.6 |
+| `fleet outliers` | Deprecated connected comparison; planned removal in 3.0 absent validated cross-cluster identity | v1.6 |
 | `trace` | Show GitOps ownership chain | v0.5 |
 | `watch --webhook <url>` | Stream observation events to webhook/file sinks | v1.7 |
 | `bot` | Run the watch engine as an in-cluster observation bot | v2.8 |
@@ -513,14 +513,20 @@ joined, and the notes count them.
 
 ## fleet outliers
 
-Identify clusters that diverge from fleet norms (connected mode).
+Deprecated in 2.x; planned for removal in 3.0 unless stable cross-cluster
+identity and fixture-backed comparisons justify retaining or rebuilding it.
+This command remains available for compatibility in 2.x, but it does not
+provide a reliable fleet-outlier analysis. See the
+[3.0 migration note](../migration-3.0.md#fleet-outliers).
 
 ```bash
 cub-scout fleet outliers [flags]
 ```
 
-Requires ConfigHub authentication and at least two clusters with target data
-in the spaces it reads.
+Requires ConfigHub authentication and a selected space (`--space` or
+`CUB_SPACE`; `*` is refused). Use only when you need to inspect the command's
+existing 2.x behavior; do not treat its output as proof of cross-cluster
+lineage or fleet divergence.
 
 ### Examples
 
@@ -538,20 +544,21 @@ cub-scout fleet outliers --json
 | `--json` | Output as JSON (shorthand for `--format json`) |
 | `--space` | ConfigHub space to compare within; one space, not `*` (default: `CUB_SPACE`) |
 
-The comparison reads exactly one ConfigHub space, passed to `cub` as an explicit
-`--space` and reported in a `scope` block (`space`, `spaceSource`). `--space '*'`
-is refused: units are matched by slug and clusters by target slug, and both are
-unique only within a space. With no space from either source the command
-refuses.
-
-Only units found on two or more clusters are compared, and
-`summary.comparedUnitCount` says how many were. Within one ConfigHub space each
-unit has a single target, so on data read from ConfigHub the count is `0`. The command then says
-that nothing was compared (`notes` in JSON, "Not compared" in text), and calls
-no cluster consistent and no cluster missing a unit. Comparing the same
-application across spaces needs unit lineage, tracked in
-[#562](https://github.com/confighub/cub-scout/issues/562). A failed `cub` read
-is reported with `cub`'s own reason.
+The command reads one ConfigHub space, passed to `cub` as an explicit `--space`
+and reported in a `scope` block (`space`, `spaceSource`). `--space '*'` is
+refused because units and targets are matched by slugs that are unique only
+within a space. The command requires at least two distinct target slugs; fewer
+than two returns `fleet comparison requires 2+ clusters`. In JSON,
+`summary.comparedUnitCount` counts unit slugs present on two or more targets.
+Within one space each unit has one target, so normal ConfigHub data yields no
+such units. In that case the command reports that nothing was compared
+(`notes` in JSON, “Not compared” in text); it does not call a cluster
+consistent or missing a unit. This safeguard does not make the command a
+useful outlier analysis. Slugs are not stable cross-space identity, and
+`HeadRevisionNum` is a per-unit counter that cannot be compared between
+different units. Do not infer lineage by matching names across spaces.
+`map fleet` provides inventory, not an equivalent lineage or outlier
+comparison. See [#562](https://github.com/confighub/cub-scout/issues/562).
 
 ---
 

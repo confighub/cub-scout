@@ -66,12 +66,16 @@ cub auth login
 cub-scout compare three-way --scope namespace/<namespace>
 cub-scout history deploy/<name> -n <namespace> --space <space>
 cub-scout impact <unit> --space <space>
-cub-scout fleet outliers --space <space>
 cub-scout audit list --since 7d --space <space>
 ```
 
 Each of these reads one named ConfigHub space: pass `--space`, or export
 `CUB_SPACE`. `cub` has no default space, so with neither they refuse.
+
+`fleet outliers` remains available in 2.x but is deprecated for planned
+removal in 3.0. Its current single-space comparison cannot establish reliable
+cross-cluster lineage; no equivalent replacement is available yet. See the
+[3.0 migration note](../migration-3.0.md#fleet-outliers).
 
 Then:
 - [Canonical Import Path](../howto/import-to-confighub.md)
