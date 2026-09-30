@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('prepare', ROOT / 'prepare.py')
@@ -96,6 +97,91 @@ class PreparationGuards(unittest.TestCase):
             manifest = json.loads((plugin / '.claude-plugin/plugin.json').read_text())
             self.assertEqual(manifest['description'], 'Recorded-only evidence for a Kubernetes resource question.')
             self.assertEqual(original_manifest, (ROOT / 'template/plugin/.claude-plugin/plugin.json.in').read_bytes())
+
+    def test_economy_skill_adds_generic_route_without_changing_prompt_or_recording(self):
+        import json
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            plugins = {}
+            for purpose in ('economy', 'economy-skill'):
+                plugin = base / purpose
+                shutil.copytree(ROOT / 'template/plugin', plugin)
+                manifest_template = plugin / '.claude-plugin/plugin.json.in'
+                (plugin / '.claude-plugin/plugin.json').write_bytes(manifest_template.read_bytes())
+                prepare.configure_purpose(plugin, purpose)
+                case = plugin / 'evals/recorded-explain-mcp'
+                fixtures = case / 'fixtures'
+                fixtures.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(prepare.SOURCE_FIXTURE, fixtures / 'deployments.yaml')
+                (fixtures / 'recording.json').write_text('{"kind":"recorded input"}\n')
+                plugins[purpose] = plugin
+
+            plain_case = plugins['economy'] / 'evals/recorded-explain-mcp'
+            skill_case = plugins['economy-skill'] / 'evals/recorded-explain-mcp'
+            self.assertEqual((plain_case / 'prompt.md').read_bytes(), (skill_case / 'prompt.md').read_bytes())
+            self.assertEqual((plain_case / 'case.yaml').read_bytes(), (skill_case / 'case.yaml').read_bytes())
+            self.assertEqual((plain_case / 'graders/answer.md').read_bytes(), (skill_case / 'graders/answer.md').read_bytes())
+            self.assertFalse((plain_case / 'graders/tool-called.md').exists())
+            self.assertFalse((skill_case / 'graders/tool-called.md').exists())
+            self.assertEqual((plain_case / 'fixtures/deployments.yaml').read_bytes(), (skill_case / 'fixtures/deployments.yaml').read_bytes())
+            self.assertEqual((plain_case / 'fixtures/recording.json').read_bytes(), (skill_case / 'fixtures/recording.json').read_bytes())
+
+            ordinary = plugins['economy'] / 'skills'
+            routed = plugins['economy-skill'] / 'skills/recorded-field-attribution/SKILL.md'
+            self.assertFalse(ordinary.exists())
+            self.assertTrue(routed.is_file())
+            skill = routed.read_text()
+            self.assertIn('known resource and exact canonical field path', skill)
+            self.assertIn('field_path', skill)
+            self.assertIn('Raw recorded object evidence may still be read', skill)
+            self.assertIn('unknown', skill)
+            self.assertIn('latest writer', skill)
+            for fixture_specific in ('checkout', 'kubectl-set', 'shop-apps', 'Flux', '305614fa67327ba3'):
+                self.assertNotIn(fixture_specific, skill)
+
+            plain_manifest = json.loads((plugins['economy'] / '.claude-plugin/plugin.json').read_text())
+            routed_manifest = json.loads((plugins['economy-skill'] / '.claude-plugin/plugin.json').read_text())
+            self.assertEqual(plain_manifest, routed_manifest)
+            self.assertEqual(routed_manifest['description'], 'Recorded-only evidence for a Kubernetes resource question.')
+
+    def test_pair_runner_accepts_economy_skill_with_same_bounded_policy_without_running(self):
+        import json
+        spec = importlib.util.spec_from_file_location('run_pair', ROOT / 'run_pair.py')
+        runner = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(runner)
+        for purpose in ('economy', 'economy-skill'):
+            with self.subTest(purpose=purpose), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                plugin = root / 'plugin'
+                plugin.mkdir()
+                marker = plugin / 'marker'
+                marker.write_text(purpose)
+                binary = root / 'cub-scout'
+                binary.write_text('pinned-test-binary')
+                prepared = {
+                    'purpose': purpose,
+                    'modelRun': False,
+                    'binary': str(binary),
+                    'binarySha256': prepare.sha256(binary),
+                    'generatedPluginFiles': {'marker': prepare.sha256(marker)},
+                }
+                (root / 'prepared.json').write_text(json.dumps(prepared))
+                captured = {}
+                def fake_run_owned(command, run_root):
+                    captured['command'] = command
+                    captured['root'] = run_root
+                    return 0
+                with mock.patch.object(runner, 'run_owned', side_effect=fake_run_owned), \
+                     mock.patch.object(sys, 'argv', ['run_pair.py', str(root)]):
+                    self.assertEqual(runner.main(), 0)
+                self.assertEqual(captured['root'], root.resolve())
+                command = captured['command']
+                self.assertIn('--runs', command)
+                self.assertEqual(command[command.index('--runs') + 1], '1')
+                self.assertEqual(command[command.index('--concurrency') + 1], '1')
+                self.assertEqual(command[command.index('--max-cost-usd') + 1], '1')
+                self.assertIn('--keep-temp', command)
+                self.assertIn('--allow-real-servers', command)
 
     def test_invalid_purpose_is_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:

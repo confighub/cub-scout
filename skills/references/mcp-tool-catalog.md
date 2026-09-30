@@ -64,9 +64,9 @@ the catalog from a running server.
 |---|---|
 | Wraps | `cub-scout explain <resource> [-n <ns>] --format json` |
 | Required args | `resource` (string — `kind/name` form) |
-| Optional args | `namespace` (string); `bounded`, `refresh` (boolean); `api_version`, `context` (strings, required for bounded reads); unreleased v2.11 `expected_revision` (immutable commit/digest, requires bounded) |
-| Returns | Plain-English per-resource report: ownership, health/drift, recent events, structured `nextSteps[]` |
-| When to load | AFTER `doctor` or `map` once narrowed to one resource. The Diagnose verb-group's primary entry point. |
+| Optional args | `namespace` (string); `field_path` (exact canonical managedFields path); `bounded`, `refresh` (boolean); `api_version`, `context` (strings, required for bounded reads); unreleased v2.11 `expected_revision` (immutable commit/digest, requires bounded) |
+| Returns | Plain-English per-resource report: ownership, health/drift, recent events, structured `nextSteps[]`; with `field_path`, also a path-scoped manager-evidence block while keeping the normal resource summary |
+| When to load | For a known resource and exact canonical field path, call directly with `field_path`; do not run doctor, map, trace, or compare first solely to rediscover manager evidence. If the resource/scope is unknown or the user needs health/inventory, load `doctor`/`map` first. Missing or ambiguous field evidence remains unknown and does not fall back to resource-level summary. Manager evidence does not identify a person or latest writer. |
 
 ### `gitops_status`
 
