@@ -151,8 +151,9 @@ without changing scout's existing verdict meaning; (3) prove or explicitly lack
 revision binding; (4) retain source messages explaining unknown health;
 (5) add scoped ClusterSummary and continuous-health evidence with separate
 semantics; (6) import sanitized fixtures with source/version provenance;
-(7) retain the maintainer's decision to provide a fallback reporter, but resolve
-its default and race-safe ownership under [#600] before enabling publication.
+(7) provide the fallback reporter with the adopted explicit connected-bot
+opt-in default (D5); resolve race-safe ownership and storage details under
+[#600] before enabling publication. Standalone never publishes.
 
 ## Measuring whether cub scout saves users money
 
