@@ -92,6 +92,40 @@ func TestRecordedExplainUsesSamePureObjectFactsWithoutLiveEnvelope(t *testing.T)
 	}
 }
 
+func TestRecordedExplainOmitsLiveFollowupsWithoutChangingLiveHints(t *testing.T) {
+	identity := recordedObjectIdentity{APIVersion: "apps/v1", Kind: "Deployment", Namespace: "prod", Name: "api"}
+	snapshot := recordedExplainTestSnapshot(t, recordedExplainDeployment)
+	recorded, err := recordedExplainSummary(snapshot, identity, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	recorded = withExplainJSONHints(recorded, HintContext{})
+	if len(recorded.NextSteps) != 0 {
+		t.Fatalf("recorded result must not suggest live follow-up commands: %#v", recorded.NextSteps)
+	}
+	wire, err := json.Marshal(recorded)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(wire), `"nextSteps"`) {
+		t.Fatalf("recorded JSON includes live follow-up hints: %s", wire)
+	}
+
+	// The guard is specific to immutable recordings; live bounded answers keep
+	// their existing structured guidance.
+	selected, err := snapshot.selectObject(identity)
+	if err != nil {
+		t.Fatal(err)
+	}
+	live := buildBoundedExplainSummary(selected.Object, agent.BoundedReadEvidence{Resource: agent.BoundedResourceRef{
+		APIVersion: identity.APIVersion, Kind: identity.Kind, Namespace: identity.Namespace, Name: identity.Name,
+	}}, nil, "")
+	live = withExplainJSONHints(live, HintContext{})
+	if len(live.NextSteps) == 0 {
+		t.Fatal("live bounded explain unexpectedly lost structured next steps")
+	}
+}
+
 func TestRecordedExplainMalformedReadinessNumberRemainsUnknown(t *testing.T) {
 	input := strings.Replace(recordedExplainDeployment, "readyReplicas: 1", "readyReplicas: true", 1)
 	snapshot := recordedExplainTestSnapshot(t, input)
@@ -378,6 +412,9 @@ func TestRecordedExplainSurfacesShareFactsFromFullRecordedBaseline(t *testing.T)
 	if err := json.Unmarshal(cliOutput, &cliSummary); err != nil {
 		t.Fatalf("decode recorded CLI summary: %v", err)
 	}
+	if len(cliSummary.NextSteps) != 0 || strings.Contains(string(cliOutput), `"nextSteps"`) {
+		t.Fatalf("recorded CLI JSON suggests live follow-up commands: %s", cliOutput)
+	}
 
 	gateway := newRecordedMCPGateway(snapshot)
 	response := gateway.callTool(context.Background(), json.RawMessage(`{"name":"explain","arguments":{"api_version":"apps/v1","kind":"Deployment","namespace":"shop","name":"checkout","field_path":".spec.template.spec.containers[name=\"checkout\"].image"}}`))
@@ -388,6 +425,9 @@ func TestRecordedExplainSurfacesShareFactsFromFullRecordedBaseline(t *testing.T)
 	var mcpSummary ExplainSummary
 	if err := json.Unmarshal([]byte(content[0]["text"]), &mcpSummary); err != nil {
 		t.Fatalf("decode recorded MCP summary: %v", err)
+	}
+	if len(mcpSummary.NextSteps) != 0 || strings.Contains(content[0]["text"], `"nextSteps"`) {
+		t.Fatalf("recorded MCP JSON suggests live follow-up commands: %s", content[0]["text"])
 	}
 	if !reflect.DeepEqual(cliSummary, mcpSummary) || cliSummary.RecordedInput == nil || cliSummary.RecordedInput.SHA256 != "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8" {
 		t.Fatalf("CLI/MCP summaries diverged or lost provenance:\nCLI=%#v\nMCP=%#v", cliSummary, mcpSummary)

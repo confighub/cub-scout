@@ -245,6 +245,14 @@ func outputExplainSummary(summary ExplainSummary, format string, invCtx Invocati
 }
 
 func withExplainJSONHints(summary ExplainSummary, hintCtx HintContext) ExplainSummary {
+	// Recorded input is immutable historical evidence. Offering commands that
+	// query the live cluster or ConfigHub would imply that this answer came
+	// from a current observation, so keep recorded JSON/MCP answers actionable
+	// only when a caller has actually made a live observation.
+	if summary.RecordedInput != nil {
+		summary.NextSteps = nil
+		return summary
+	}
 	hints := explainHintsWithContext(summary, hintCtx)
 	if chHint := explainConfigHubHint(summary); chHint != nil {
 		hints = append(hints, *chHint)
