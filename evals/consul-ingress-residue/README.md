@@ -41,10 +41,9 @@ limits. The source file SHA-256 values are:
 
 ## Reproduce and verify the pinned files
 
-From a clone of `confighub/helm-expt`, run:
+From a clone of `confighub/helm-expt` that contains the pinned commit, run:
 
 ```sh
-git checkout --detach 9ab4c753a888dc305a3c07956c9f8f5a19eb70a0
 git show 9ab4c753a888dc305a3c07956c9f8f5a19eb70a0:runs/live-helm-confighub-compare/hashicorp-consul-secure-mesh-existing-secrets/receipt.yaml | shasum -a 256
 git show 9ab4c753a888dc305a3c07956c9f8f5a19eb70a0:runs/live-helm-confighub-compare/hashicorp-consul-secure-mesh-existing-secrets/argocd-core-child.json | shasum -a 256
 ```

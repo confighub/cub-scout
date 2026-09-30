@@ -18,7 +18,6 @@
     "files_are_distinct_recorded_artifacts": true,
     "atomic_join_established": false,
     "current_live_state_established": false,
-    "full_kubernetes_object_snapshot": false,
-    "residual_cause_established": false
+    "full_kubernetes_object_snapshot": false
   }
 }

@@ -104,7 +104,8 @@ func TestConsulHLT03PinnedReceiptAndChildCapture(t *testing.T) {
 				Name      string `json:"name"`
 				Status    string `json:"status"`
 				Health    struct {
-					Status string `json:"status"`
+					Status  string  `json:"status"`
+					Message *string `json:"message"`
 				} `json:"health"`
 			} `json:"resources"`
 		} `json:"status"`
@@ -119,6 +120,9 @@ func TestConsulHLT03PinnedReceiptAndChildCapture(t *testing.T) {
 	for _, r := range child.Status.Resources {
 		if r.Kind == "Ingress" && r.Namespace == "consul" && r.Name == "consul-consul-ui" {
 			foundIngress = r.Status == "Synced" && r.Health.Status == "Progressing"
+			if r.Health.Message != nil && *r.Health.Message != "" {
+				t.Fatalf("the exact Ingress carries an unreviewed cause message: %q", *r.Health.Message)
+			}
 		}
 	}
 	if !foundIngress {
@@ -145,13 +149,12 @@ func TestConsulHLT03PinnedReceiptAndChildCapture(t *testing.T) {
 			AtomicJoin bool `json:"atomic_join_established"`
 			Current    bool `json:"current_live_state_established"`
 			FullK8s    bool `json:"full_kubernetes_object_snapshot"`
-			Cause      bool `json:"residual_cause_established"`
 		} `json:"limits"`
 	}
 	if err := json.Unmarshal(provenanceBytes, &provenance); err != nil {
 		t.Fatalf("decode bounded source provenance: %v", err)
 	}
-	if provenance.Format != "pinned-public-recording/v1" || provenance.Repository != "confighub/helm-expt" || provenance.Revision != "9ab4c753a888dc305a3c07956c9f8f5a19eb70a0" || len(provenance.Files) != 2 || provenance.Files[0].SHA != sha256Hex(receiptBytes) || provenance.Files[1].SHA != sha256Hex(childBytes) || provenance.Limits.AtomicJoin || provenance.Limits.Current || provenance.Limits.FullK8s || provenance.Limits.Cause {
+	if provenance.Format != "pinned-public-recording/v1" || provenance.Repository != "confighub/helm-expt" || provenance.Revision != "9ab4c753a888dc305a3c07956c9f8f5a19eb70a0" || len(provenance.Files) != 2 || provenance.Files[0].SHA != sha256Hex(receiptBytes) || provenance.Files[1].SHA != sha256Hex(childBytes) || provenance.Limits.AtomicJoin || provenance.Limits.Current || provenance.Limits.FullK8s || strings.Contains(string(provenanceBytes), "residual_cause") {
 		t.Fatalf("unexpected provenance or unsupported scope claim: %+v", provenance)
 	}
 
