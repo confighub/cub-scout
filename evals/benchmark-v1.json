@@ -176,23 +176,55 @@
         {
           "id": "DEL-03",
           "question": "Sveltos inferred revision versus exact proof",
-          "status": "planned",
-          "existing_case": null,
+          "status": "recorded_projection_prepared_not_run",
+          "existing_case": "evals/sveltos-inferred-revision",
           "reference": "Separate inferred revision from exact applied identity and state the evidence source.",
           "controls": [
             "Missing and stale identity must not be upgraded to exact proof"
-          ]
+          ],
+          "evidence_refresh": "2026-10-01",
+          "source_provenance": {
+            "repository": "confighub/sveltos-confighub",
+            "revision": "8187910f9fe226e109e55c4d9c7c0e21297ff424",
+            "fixture_files_sha256": {
+              "fixtures/receipt/sveltos-oci-delivery-proof.yaml": "9aa3ac57090001aa5b37e5a91c095aaca95ea2a91edcbb2bdb77fe526aa857b2",
+              "fixtures/source-doc/known-behaviours-excerpt.md": "142a9dfd6119e4d3fff6cdf82b99ebae26ace4f5286992706a19b4e470ec7751",
+              "fixtures/source-doc/onboard-excerpt.md": "c32e6ffa43b150517ef5afded1ee2ab50401e25071199f0b0a0b7c76ed096b4b"
+            },
+            "limits": "Pinned documentation excerpts and separate delivery receipt; clusters/artifacts are not joined to one runtime observation. Shortened inferred status revision is not an exact runtime digest. No fresh capture."
+          },
+          "remaining_controls": [
+            "Missing/stale runtime identity input variants remain pending; negative grader answers do not replace input controls."
+          ],
+          "benchmark_admission": "Source projection prepared and mapped for review; not run or admitted. Full benchmark remains non-executable pending remaining cases, input controls and equal-tool/protocol gates."
         },
         {
           "id": "DEL-04",
           "question": "OCI manifest/bundle/image mismatch and Helm lifecycle boundary",
-          "status": "planned",
-          "existing_case": null,
+          "status": "recorded_projection_prepared_not_run",
+          "existing_case": "evals/oci-identity-lifecycle",
           "reference": "Join installer input, rendered configuration, output manifest, bundle content, and running image by exact identities.",
           "controls": [
             "Render parity does not prove lifecycle hooks executed",
             "No identity inference from mutable tags"
-          ]
+          ],
+          "evidence_refresh": "2026-10-01",
+          "source_provenance": {
+            "repository": "confighub/helm-expt",
+            "revision": "9ab4c753a888dc305a3c07956c9f8f5a19eb70a0",
+            "fixture_files_sha256": {
+              "fixtures/evidence/catalog-delivery-proof.yaml": "0734c0be8c931e96fee18917b66aaae619954a3c467a384e8cbc60e002da4d38",
+              "fixtures/evidence/installer-publication-receipt.yaml": "ccf8623f8d5328461e909448865e918ac01454bbf99225714672bf23eec6c0d3",
+              "fixtures/evidence/oci-evidence-chain.yaml": "e9816912866968552b93e31ea6ac7b919bdea0536c05d8ba72ff32bf91f5f43e",
+              "fixtures/evidence/render-intent.yaml": "4e88c279923b1ff1d025e4f1c2f4f8eae572e70363d4bf211498bdf35de1c21a",
+              "fixtures/evidence/render-receipt.yaml": "a67ac02c888bcf56b4adac6a6cf481c001bc59e26d8618cfba1af8988bb0fd09"
+            },
+            "limits": "Pinned public receipts, not raw Kubernetes or OCI/bundle bytes. Image reference is not runtime image ID; hook and policy execution are unknown. No independent digest recomputation or fresh capture."
+          },
+          "remaining_controls": [
+            "A divergent OCI identity input and mutable-tag counterexample remain pending; negative grader answers do not replace input controls."
+          ],
+          "benchmark_admission": "Source projection prepared and mapped for review; not run or admitted. Full benchmark remains non-executable pending remaining cases, input controls and equal-tool/protocol gates."
         }
       ]
     },
@@ -272,7 +304,7 @@
               "gitrepository.yaml": "7818566407d732608fdd66d707c9c5f2d916532e14737ae1f885d8a74b7a602d",
               "kustomization.yaml": "c39803bd27015532c72fb62725af23d17de3cfff539162818fe3bb906f7b6d86"
             },
-            "limits": "Raw captured Kubernetes objects and applied manifests, not an atomic/current snapshot. The captured interval is 22:17:57–22:18:44 UTC. Flux readiness and Kubernetes workload status are separate observations; no application-level health test was recorded. Full benchmark and equal-tool/protocol admission remain pending."
+            "limits": "Raw captured Kubernetes objects and applied manifests, not an atomic/current snapshot. The captured interval is 22:17:57\u201322:18:44 UTC. Flux readiness and Kubernetes workload status are separate observations; no application-level health test was recorded. Full benchmark and equal-tool/protocol admission remain pending."
           },
           "benchmark_admission": "Raw capture scaffold and deterministic correctness contract prepared; not run. Full benchmark remains non-executable pending all case and protocol gates."
         },

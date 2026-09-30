@@ -15,9 +15,9 @@ latest writer; exact-field counterexamples are tracked in [#649](https://github.
 Neither status means the controlled benchmark ran. DEL-01 and DEL-02 are pinned
 public-source projections, not raw cluster snapshots; both are prepared and
 unrun, and their evidence limits are recorded per case. The 24 cases currently
-comprise 5 refreshed fixtures, 2 scale cases needing snapshot binding, 4
+comprise 5 refreshed fixtures, 2 scale cases needing snapshot binding, 6
 recorded projections prepared but not run, one raw recording prepared but not
-run, and 12 planned cases. HLT-03 is a receipt-backed pair of public recorded
+run, and 10 planned cases. HLT-03 is a receipt-backed pair of public recorded
 files, not a full Kubernetes snapshot; its receipt-level workload pass and
 child Application Ingress residue are separate evidence facts. HLT-02 is the
 raw recording. Unmapped entries remain `planned`; the three live-only scale
@@ -35,8 +35,8 @@ cases remain a separate experiment.
 | Attribution | ATR-04 | Copied Argo instance label versus tracking identity | `argo-label-vs-tracking-id` — fixtures refreshed; benchmark run pending |
 | Delivery identity | DEL-01 | Flux applied digest | `flux-applied-digest` — pinned public run-log projection prepared, not run; exact apps digest and Git revision shown |
 | Delivery identity | DEL-02 | Argo publication not consumed | `argo-published-release-lag` — pinned narrative projection prepared, not run; exact old/new digests and replica counts absent |
-| Delivery identity | DEL-03 | Sveltos inferred revision versus exact proof | Planned; include missing and stale identity |
-| Delivery identity | DEL-04 | OCI identity mismatch and Helm lifecycle boundary | Planned; render parity does not prove hooks executed |
+| Delivery identity | DEL-03 | Sveltos inferred revision versus exact proof | `sveltos-inferred-revision` — source/receipt projection prepared, not run; missing/stale input variants pending |
+| Delivery identity | DEL-04 | OCI identity mismatch and Helm lifecycle boundary | `oci-identity-lifecycle` — receipt projection prepared, not run; divergent-identity and mutable-tag inputs pending |
 | Health | HLT-01 | Sveltos Provisioned after workload failure | `sveltos-hlt-01-health` — recorded Part B projection prepared, not run; prerequisite state is separate from health |
 | Health | HLT-02 | Flux Ready without workload checks | `flux-ready-without-health` — raw 2026-09-30 capture prepared, not run; Ready, wait/check configuration, Deployment availability, UID chain, and exact source/applied revision kept separate |
 | Health | HLT-03 | Consul convergence with Ingress residue | `consul-ingress-residue` — pinned receipt + child Application capture prepared, not run; workload pass does not override watched Ingress |

@@ -390,7 +390,7 @@ func TestOCIIdentityLifecycleCaseDocumentsRecordedLimits(t *testing.T) {
 		}
 	}
 	for _, phrase := range []string{
-		"prepared-not-run", "not mapped into `benchmark-v1`", "not a raw Kubernetes snapshot",
+		"prepared-not-run", "mapped in `benchmark-v1`", "not admitted to the paid baseline", "not a raw Kubernetes snapshot",
 		"or raw OCI/bundle bytes", "raw runtime image identity is outside",
 		"not current-state evidence", "delivery, not policy execution",
 		"independent digest recomputation is outside the fixture",
