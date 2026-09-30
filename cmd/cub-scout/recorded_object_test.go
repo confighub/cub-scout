@@ -6,6 +6,7 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -109,6 +110,39 @@ func TestLoadRecordedObjectAllowsExplicitEmptyClusterNamespace(t *testing.T) {
 	}
 	if got.Object.GetNamespace() != "" || got.Object.GetName() != "worker" {
 		t.Fatalf("unexpected cluster-scoped identity: %#v", got.Object.Object)
+	}
+}
+
+func TestLoadRecordedObjectPreservesKubernetesIntegerTypesAndPrecision(t *testing.T) {
+	const large = int64(9007199254740993) // one above the exact IEEE-754 integer range
+	input := fmt.Sprintf(`{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"api","namespace":"prod","generation":%d},"spec":{"replicas":%d},"status":{"replicas":%d,"readyReplicas":%d}}`, large, large, large, large)
+	var legacy map[string]interface{}
+	if err := json.Unmarshal([]byte(input), &legacy); err != nil {
+		t.Fatal(err)
+	}
+	if got, found, err := unstructured.NestedInt64(legacy, "status", "readyReplicas"); err == nil || found || got != 0 {
+		t.Fatalf("legacy encoding/json map unexpectedly supplied a Kubernetes int64: got=%d found=%v err=%v", got, found, err)
+	}
+	got, err := loadRecordedObject(strings.NewReader(input), recordedDeploymentIdentity)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range [][]string{{"metadata", "generation"}, {"spec", "replicas"}, {"status", "replicas"}, {"status", "readyReplicas"}} {
+		value, found, err := unstructured.NestedInt64(got.Object.Object, path...)
+		if err != nil || !found || value != large {
+			t.Fatalf("%v integer = %d found=%v err=%v, want exact int64 %d", path, value, found, err, large)
+		}
+	}
+	yamlInput := fmt.Sprintf("apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: api\n  namespace: prod\n  generation: %d\nspec:\n  replicas: %d\nstatus:\n  replicas: %d\n  readyReplicas: %d\n", large, large, large, large)
+	yamlGot, err := loadRecordedObject(strings.NewReader(yamlInput), recordedDeploymentIdentity)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range [][]string{{"metadata", "generation"}, {"spec", "replicas"}, {"status", "replicas"}, {"status", "readyReplicas"}} {
+		value, found, err := unstructured.NestedInt64(yamlGot.Object.Object, path...)
+		if err != nil || !found || value != large {
+			t.Fatalf("YAML %v integer = %d found=%v err=%v, want exact int64 %d", path, value, found, err, large)
+		}
 	}
 }
 

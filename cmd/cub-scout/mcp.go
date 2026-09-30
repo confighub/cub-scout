@@ -65,13 +65,19 @@ Connected tools are sourced from read-only cub CLI queries.
 
 Doctor is the first troubleshooting and tool-choice entrypoint.
 Connected tools add governed lookup, intended configuration, receipts, and
-convergence facts once scope is known.`,
+convergence facts once scope is known.
+
+With --recording FILE, only the exact-object recorded explain tool is exposed;
+the input is fixed at startup and calls cannot request live or connected tools.`,
 	RunE: runMCPServe,
 }
+
+var mcpRecording string
 
 func init() {
 	rootCmd.AddCommand(mcpCmd)
 	mcpCmd.AddCommand(mcpServeCmd)
+	mcpServeCmd.Flags().StringVar(&mcpRecording, "recording", "", "Serve only exact-object explain from this immutable local YAML/JSON recording")
 }
 
 type mcpToolRunner func(ctx context.Context, args []string) (string, error)
@@ -164,6 +170,13 @@ type mcpError struct {
 }
 
 func runMCPServe(cmd *cobra.Command, args []string) error {
+	if cmd.Flags().Changed("recording") || mcpRecording != "" {
+		snapshot, err := readRecordedObjectSnapshot(mcpRecording)
+		if err != nil {
+			return err
+		}
+		return serveMCP(cmd.Context(), os.Stdin, os.Stdout, newRecordedMCPGateway(snapshot))
+	}
 	gateway := newMCPServeGateway(boundedMCPRunner(runMCPToolCommand), runMCPConnectedToolCommand)
 	return serveMCP(cmd.Context(), os.Stdin, os.Stdout, gateway)
 }

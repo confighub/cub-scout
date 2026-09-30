@@ -147,6 +147,13 @@ cub-scout explain <kind> <name> [flags]
 | `--confighub-space` | string | resource ConfigHub space | ConfigHub space for delivery evidence; `*` is allowed only as an explicit all-spaces read |
 | `--confighub-since` | string | 24h | Lookback window for ConfigHub release/event evidence |
 | `--confighub-stale-after` | string | 15m | Treat live-status observations older than this as stale |
+| `--bounded` | bool | false | Read one exact live API object without controller or connected enrichment |
+| `--api-version` | string | - | Exact API version; required with `--bounded` or `--recording` |
+| `--kube-context` | string | - | Explicit context for `--bounded` only |
+| `--refresh` | bool | false | Bypass bounded session reuse; for `--bounded` only |
+| `--expected-revision` | string | - | Compare immutable controller-reported revision; for `--bounded` only |
+| `--recording` | string | - | Use a bounded local YAML/JSON recording; requires exact API version and explicit namespace |
+| `--tui` | bool | false | Open the one-object recorded viewer; requires `--recording` |
 
 ### Stable Output Rules
 
@@ -213,6 +220,24 @@ a ConfigHub context and is stripped before plugin invocation.
   cancellation-notification handling; TUI cancellation and read timeouts apply.
 
 See [bounded resource evidence](../../examples/bounded-resource-read/).
+
+### Recorded Explain
+
+`explain --recording FILE --api-version VERSION --namespace NS Kind/name`
+uses an immutable, bounded local input and exact `apiVersion`, Kind, namespace,
+and name matching. The namespace flag must be explicitly present; pass
+`--namespace=""` for an empty recorded namespace. The path rejects bounded
+live reads, kube contexts, refresh, expected revisions, and ConfigHub
+enrichment. `--field-path` remains available for exact managedFields
+attribution. `--tui` shows the same one-object facts without creating a map or
+cluster inventory.
+
+Recorded JSON carries `recordedInput` provenance and omits `resourceRead`,
+`currentChange`, and `controllerRevision`. No capture time is inferred from
+file or object timestamps. Built-in ownership rules are used without reading
+host custom-detector files; unknown or unmeasured results remain explicit.
+See [recorded object loader](../../examples/recorded-object-loader/) for the
+bounded identity, provenance, omissions, and input limits.
 
 #### Expected Controller Revision (Unreleased v2.11)
 
@@ -358,11 +383,16 @@ Read-only MCP gateway over stdio.
 
 ```bash
 cub-scout mcp serve
+cub-scout mcp serve --recording objects.yaml
 ```
 
 ### Stable Behavior
 
 - The MCP gateway remains read-only.
+- With `--recording FILE`, it reads and freezes one bounded input at startup,
+  exposes only exact-object `explain`, and has no live/connected runner. The
+  tool request accepts exact identity fields but no recording path or live
+  options. Without the flag, the normal tool set below is unchanged.
 - Standalone tool set includes:
   - `doctor`
   - `explain`

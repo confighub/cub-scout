@@ -365,6 +365,11 @@ cub-scout explain deployment/payments-api -n prod --format md
 # v2.10.0: one exact object, without enrichment
 ./cub-scout explain Deployment/payments-api -n prod --bounded \
   --api-version apps/v1 --kube-context my-cluster --format json
+# Offline replay from an exact object in a YAML/JSON recording
+./cub-scout explain Deployment/checkout -n shop --recording objects.yaml \
+  --api-version apps/v1 --format json
+./cub-scout explain Deployment/checkout -n shop --recording objects.yaml \
+  --api-version apps/v1 --tui
 ```
 
 ### Flags
@@ -381,10 +386,22 @@ cub-scout explain deployment/payments-api -n prod --format md
 | `--confighub-since` | Lookback window for ConfigHub release/event evidence (default: `24h`) |
 | `--confighub-stale-after` | Treat live-status writeback older than this as stale (default: `15m`) |
 | `--bounded` | v2.10.0: read only an exact API object; no source/controller, ConfigHub, related-pod, event, or drift enrichment |
-| `--api-version` | Required with `--bounded`; exact API version, e.g. `apps/v1` |
+| `--api-version` | Required with `--bounded` or `--recording`; exact API version, e.g. `apps/v1` |
 | `--kube-context` | Required with `--bounded`; explicit kube context, without changing current-context or colliding with the `cub` host's ConfigHub `--context` flag |
 | `--refresh` | Bypass bounded session reuse; separate CLI invocations already start with an empty cache |
 | `--expected-revision` | Unreleased v2.11: with `--bounded`, compare an explicit full lowercase 40-hex Git commit or `sha256:` + 64 lowercase hex digits against a supported controller report; not delivery or application-health proof |
+| `--recording` | Read one exact object from a bounded local YAML/JSON recording; requires `--api-version` and an explicitly supplied `--namespace` (use `--namespace=""` for an empty namespace) |
+| `--tui` | With `--recording`, open an interactive single-object viewer without loading cluster inventory |
+
+Recorded explain is an offline, fixed-input path. It selects exact
+`apiVersion`, Kind, namespace, and name; it rejects live-read, context,
+refresh, revision, and ConfigHub options. The input is bounded and parsed once.
+JSON reports its hash and identity under `recordedInput`, not `resourceRead`.
+It does not infer a capture time, so freshness and time-dependent rollout
+conclusions are omitted. Built-in ownership rules apply; mutable host custom
+detector configuration is not read. `mcp serve --recording FILE` similarly
+fixes the input at server startup and exposes only an exact-object `explain`
+tool; MCP calls cannot choose file paths.
 
 `--with-confighub` is opt-in and read-only. For `explain`, connected release,
 unit-event, and live-status reads run only when the resource itself exposes a
@@ -2057,7 +2074,13 @@ Serve MCP over stdio and expose read-only tools.
 
 ```bash
 cub-scout mcp serve
+cub-scout mcp serve --recording objects.yaml
 ```
+
+With `--recording FILE`, the server parses and fixes the bounded input at
+startup and exposes only exact-object `explain`. Tool calls cannot provide a
+path or select live/connected operations. Without that flag, the normal
+standalone and connected tool sets described below remain available.
 
 #### Notes
 

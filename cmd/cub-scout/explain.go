@@ -26,6 +26,8 @@ var (
 	explainConfigHubSpace      string
 	explainConfigHubSince      string
 	explainConfigHubStaleAfter string
+	explainRecording           string
+	explainTUI                 bool
 )
 
 var explainCmd = &cobra.Command{
@@ -37,6 +39,7 @@ Examples:
   cub-scout explain deploy/my-app -n prod
   cub-scout explain Deployment my-app -n prod --format json
   cub-scout explain deployment/my-app -n prod --format md
+  cub-scout explain Deployment api -n prod --api-version apps/v1 --recording objects.yaml
 `,
 	Args: cobra.RangeArgs(1, 2),
 	RunE: runExplain,
@@ -50,10 +53,12 @@ func init() {
 	explainCmd.Flags().StringVar(&explainPresentation, "presentation", "", PresentationModeHelp())
 	explainCmd.Flags().StringVar(&explainHintMode, "hint-mode", "", HintModeHelp())
 	explainCmd.Flags().BoolVar(&explainBounded, "bounded", false, "Read only the exact API object, without controller or connected enrichment")
-	explainCmd.Flags().StringVar(&explainAPIVersion, "api-version", "", "Exact API version for --bounded (for example apps/v1)")
+	explainCmd.Flags().StringVar(&explainAPIVersion, "api-version", "", "Exact API version for --bounded or --recording (for example apps/v1)")
 	explainCmd.Flags().StringVar(&explainContext, "kube-context", "", "Explicit kube context for --bounded; does not change the current context")
 	explainCmd.Flags().BoolVar(&explainRefresh, "refresh", false, "Bypass bounded session reuse (CLI processes always start with an empty cache)")
 	explainCmd.Flags().StringVar(&explainExpectedRevision, "expected-revision", "", "Compare a full Git commit or sha256 digest with the selected controller report (requires --bounded; not workload delivery proof)")
+	explainCmd.Flags().StringVar(&explainRecording, "recording", "", "Read the exact object from a local recorded YAML/JSON input (offline; requires --api-version and explicit --namespace)")
+	explainCmd.Flags().BoolVar(&explainTUI, "tui", false, "Open an interactive single-object viewer (requires --recording; does not load cluster inventory)")
 	explainCmd.Flags().BoolVar(&explainWithConfigHub, "with-confighub", false, "Include bounded ConfigHub delivery evidence when the resource exposes exact ConfigHub correlation")
 	explainCmd.Flags().StringVar(&explainConfigHubSpace, "confighub-space", "", "ConfigHub space for delivery evidence (default: resource ConfigHub space; use '*' explicitly for all spaces)")
 	explainCmd.Flags().StringVar(&explainConfigHubSince, "confighub-since", "24h", "Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w)")
@@ -63,6 +68,7 @@ func init() {
 // ExplainSummary is the canonical model for explain output.
 type ExplainSummary struct {
 	ResourceRead             *agent.BoundedReadEvidence        `json:"resourceRead,omitempty"`
+	RecordedInput            *RecordedInputEvidence            `json:"recordedInput,omitempty"`
 	ConfigHubOrigin          *agent.ConfigHubOriginEvidence    `json:"configHubOrigin,omitempty"`
 	ControllerRevision       *agent.ControllerRevisionEvidence `json:"controllerRevision,omitempty"`
 	Omissions                []agent.Omission                  `json:"omissions,omitempty"`
@@ -111,6 +117,17 @@ type ExplainSummary struct {
 	FieldAttribution *FieldAttributionSummary `json:"fieldAttribution,omitempty"`
 }
 
+// RecordedInputEvidence identifies the immutable raw source used by offline
+// explain. It deliberately has no live observation timestamp or source path.
+type RecordedInputEvidence struct {
+	Kind        string                   `json:"kind"`
+	Identity    agent.BoundedResourceRef `json:"identity"`
+	SHA256      string                   `json:"sha256"`
+	Bytes       int                      `json:"bytes"`
+	Documents   int                      `json:"documents"`
+	ObjectCount int                      `json:"objectCount"`
+}
+
 // FieldAttributionSummary reports only manager evidence for one requested
 // canonical path. It never infers write order or human identity.
 type FieldAttributionSummary struct {
@@ -143,6 +160,12 @@ func runExplain(cmd *cobra.Command, args []string) error {
 	}
 	if format != "text" && format != "json" && format != "md" {
 		return fmt.Errorf("invalid --format %q (valid: text, json, md)", explainFormat)
+	}
+	if cmd.Flags().Changed("recording") || explainRecording != "" {
+		return runRecordedExplainCLI(cmd, args, format)
+	}
+	if explainTUI || cmd.Flags().Changed("tui") {
+		return fmt.Errorf("--tui requires --recording")
 	}
 	if explainFieldPath != "" {
 		if err := agent.ValidateCanonicalFieldPath(explainFieldPath); err != nil {
@@ -824,6 +847,9 @@ func renderExplainText(summary ExplainSummary, mode PresentationMode, explicitMo
 	if summary.ResourceRead != nil {
 		fmt.Fprintf(&b, "  %s %s\n", label("Resource read"), formatBoundedRead(summary.ResourceRead))
 	}
+	if summary.RecordedInput != nil {
+		fmt.Fprintf(&b, "  %s %s\n", label("Recorded input"), formatRecordedInput(summary.RecordedInput))
+	}
 	if summary.ConfigHubOrigin != nil {
 		fmt.Fprintf(&b, "  %s %s\n", label("Origin annotation"), summary.ConfigHubOrigin.Summary())
 	}
@@ -861,6 +887,12 @@ func renderExplainText(summary ExplainSummary, mode PresentationMode, explicitMo
 			fmt.Fprintf(&b, "    - %s\n", Yellow(note))
 		}
 	}
+	if summary.RecordedInput != nil && len(summary.Omissions) > 0 {
+		fmt.Fprintf(&b, "  %s\n", label("Evidence omissions"))
+		for _, omission := range summary.Omissions {
+			fmt.Fprintf(&b, "    - %s: %s\n", omission.Missing, omission.Reason)
+		}
+	}
 
 	// Three-way disagreement section (connected mode only)
 	if summary.ThreeWay != nil && summary.ThreeWay.IsDisagreement() {
@@ -880,12 +912,14 @@ func renderExplainText(summary ExplainSummary, mode PresentationMode, explicitMo
 		}
 	}
 
-	hints := explainTryNextHintsWithContext(summary, hintCtx)
-	if len(hints) > 0 {
-		if explicitMode {
-			b.WriteString(renderTryNextSectionWithMode(hints, mode))
-		} else {
-			b.WriteString(renderTryNextSection(hints))
+	if summary.RecordedInput == nil {
+		hints := explainTryNextHintsWithContext(summary, hintCtx)
+		if len(hints) > 0 {
+			if explicitMode {
+				b.WriteString(renderTryNextSectionWithMode(hints, mode))
+			} else {
+				b.WriteString(renderTryNextSection(hints))
+			}
 		}
 	}
 	// Add ConfigHub GUI suggestion if available
@@ -907,6 +941,16 @@ func formatHealthMeasurement(measurement *HealthMeasurement) string {
 		formatted += ": " + measurement.Reason
 	}
 	return formatted
+}
+
+func formatRecordedInput(input *RecordedInputEvidence) string {
+	if input == nil {
+		return ""
+	}
+	identity := input.Identity
+	return fmt.Sprintf("%s; identity=%s %s namespace=%q name=%q; sha256=%s; %d bytes, %d documents, %d objects",
+		input.Kind, identity.APIVersion, identity.Kind, identity.Namespace, identity.Name,
+		input.SHA256, input.Bytes, input.Documents, input.ObjectCount)
 }
 
 // colorExplainOwner colors the owner field based on its content.
@@ -1037,6 +1081,9 @@ func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explic
 	if summary.ResourceRead != nil {
 		fmt.Fprintf(&b, "- **Resource read:** %s\n", formatBoundedRead(summary.ResourceRead))
 	}
+	if summary.RecordedInput != nil {
+		fmt.Fprintf(&b, "- **Recorded input:** %s\n", formatRecordedInput(summary.RecordedInput))
+	}
 	if summary.ConfigHubOrigin != nil {
 		fmt.Fprintf(&b, "- **Origin annotation:** %s\n", summary.ConfigHubOrigin.Summary())
 	}
@@ -1074,6 +1121,12 @@ func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explic
 			fmt.Fprintf(&b, "  - %s\n", note)
 		}
 	}
+	if summary.RecordedInput != nil && len(summary.Omissions) > 0 {
+		fmt.Fprintf(&b, "- **Evidence omissions:**\n")
+		for _, omission := range summary.Omissions {
+			fmt.Fprintf(&b, "  - `%s`: %s\n", omission.Missing, omission.Reason)
+		}
+	}
 
 	// Three-way disagreement section (connected mode only)
 	if summary.ThreeWay != nil && summary.ThreeWay.IsDisagreement() {
@@ -1085,10 +1138,12 @@ func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explic
 		b.WriteString(renderEventsMarkdown(summary.Events, mode, explicitMode))
 	}
 
-	if explicitMode {
-		b.WriteString(renderTryNextMarkdownWithMode(explainTryNextHintsWithContext(summary, hintCtx), mode))
-	} else {
-		b.WriteString(renderTryNextMarkdown(explainTryNextHintsWithContext(summary, hintCtx)))
+	if summary.RecordedInput == nil {
+		if explicitMode {
+			b.WriteString(renderTryNextMarkdownWithMode(explainTryNextHintsWithContext(summary, hintCtx), mode))
+		} else {
+			b.WriteString(renderTryNextMarkdown(explainTryNextHintsWithContext(summary, hintCtx)))
+		}
 	}
 	// Add ConfigHub link if available
 	if summary.ConfigHubURL != "" {

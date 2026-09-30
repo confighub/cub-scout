@@ -1,0 +1,14 @@
+# FIXTURE-OWNED-SCAFFOLD: validate its raw source hash and output bytes in test/unit.
+schema_version: "1.1"
+name: recorded-explain-contract
+context:
+  scaffold_script: scaffold.sh
+---
+name: recorded-explain-contract
+description: "Prepared product-contract case over the complete recorded deployments List; not a CLI/MCP execution or benchmark-v1 run."
+expected_outcome: "Return exact JSON facts for the recorded checkout Deployment, separate recorded provenance from live read evidence, and preserve omissions."
+tags: [recorded-explain, product-contract, prepared-not-run]
+max_turns: 8
+timeout_seconds: 300
+allowed_tools: [Read, Glob, Grep, Skill]
+---

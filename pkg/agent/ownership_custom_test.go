@@ -46,6 +46,47 @@ detectors:
 	}
 }
 
+func TestDetectOwnershipBuiltinNeverReadsMutableCustomDetectorConfig(t *testing.T) {
+	tmpDir := t.TempDir()
+	detectors := filepath.Join(tmpDir, "detectors.yaml")
+	if err := os.WriteFile(detectors, []byte(`
+detectors:
+  - name: local-owner
+    labels:
+      - key: platform.example/managed-by
+        value: controller
+    owner_name: Initial Owner
+    owner_type: custom
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(customDetectorsEnvVar, detectors)
+	resource := newTestResource("prod", "api", map[string]string{"platform.example/managed-by": "controller"}, nil)
+	if got := DetectOwnershipBuiltin(resource); got.Type != OwnerUnknown {
+		t.Fatalf("built-in-only owner = %#v, want unknown", got)
+	}
+	if got := DetectOwnership(resource); got.Type != OwnerCustom || got.Name != "Initial Owner" {
+		t.Fatalf("normal detector = %#v, want initial custom detector", got)
+	}
+	if err := os.WriteFile(detectors, []byte(`
+detectors:
+  - name: local-owner
+    labels:
+      - key: platform.example/managed-by
+        value: controller
+    owner_name: Changed Owner
+    owner_type: custom
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if got := DetectOwnershipBuiltin(resource); got.Type != OwnerUnknown {
+		t.Fatalf("built-in-only owner changed after config mutation: %#v", got)
+	}
+	if got := DetectOwnership(resource); got.Type != OwnerCustom || got.Name != "Changed Owner" {
+		t.Fatalf("normal detector did not observe config change: %#v", got)
+	}
+}
+
 func TestDetectOwnership_CustomDetectorPrecedence(t *testing.T) {
 	tmpDir := t.TempDir()
 	detectors := filepath.Join(tmpDir, "detectors.yaml")

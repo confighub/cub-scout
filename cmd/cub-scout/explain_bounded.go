@@ -193,6 +193,53 @@ func buildBoundedExplainSummary(obj *unstructured.Unstructured, evidence agent.B
 	if obj == nil {
 		return summary
 	}
+	observedAt := evidence.ObservedAt
+	populateObjectExplainFacts(&summary, obj, fieldPathArg(fieldPaths), &observedAt, false)
+	return summary
+}
+
+func fieldPathArg(fieldPaths []string) string {
+	if len(fieldPaths) > 0 {
+		return fieldPaths[0]
+	}
+	return ""
+}
+
+// buildRecordedExplainSummary derives only object-local facts. It intentionally
+// has no clock or controller evidence and never populates ResourceRead.
+func buildRecordedExplainSummary(recorded recordedObject, identity recordedObjectIdentity, fieldPath string) ExplainSummary {
+	ref := agent.BoundedResourceRef{APIVersion: identity.APIVersion, Kind: identity.Kind, Namespace: identity.Namespace, Name: identity.Name}
+	summary := ExplainSummary{
+		Resource: identity.Kind + "/" + identity.Name, Namespace: identity.Namespace,
+		Owner: "Unknown", Health: "Unknown",
+		HealthMeasurement: &HealthMeasurement{Status: HealthMeasurementUnmeasured, Scope: "object-local-readiness", Reason: "No supported object-local readiness result was present in the recorded object."},
+		Source:            "Not assessed (recorded object)", DeployedVia: "Not assessed (recorded object)",
+		Risks: "Not assessed (recorded object)", Drift: "Not assessed (recorded object)",
+		RecordedInput: &RecordedInputEvidence{
+			Kind: "kubernetes-object-recording", Identity: ref, SHA256: recorded.Provenance.SHA256,
+			Bytes: recorded.Provenance.Bytes, Documents: recorded.Provenance.Documents, ObjectCount: recorded.Provenance.ObjectCount,
+		},
+		Omissions: []agent.Omission{
+			{Missing: "trusted-capture-time", Reason: "The recording has no trusted capture-time metadata; time-dependent rollout and freshness conclusions are omitted.", Severity: "info"},
+			{Missing: "controller-revision-evidence", Reason: "Recorded object input does not establish a controller-reported revision.", Severity: "info"},
+			{Missing: "source-controller-evidence", Reason: "Recorded object input does not query controller sources, ConfigHub, or delivery history.", Severity: "info"},
+			{Missing: "related-pod-event-evidence", Reason: "Recorded object input does not query related pods or events.", Severity: "info"},
+			{Missing: "desired-live-comparison", Reason: "No desired configuration or drift/scan assessment was included in the recording.", Severity: "info"},
+		},
+		Notes: []string{
+			"Recorded object evidence only; this result does not observe current cluster state.",
+			"Object-local readiness is not proof of delivery completion or application success.",
+			"No current-change, controller-revision, freshness, event, or ConfigHub conclusion was computed.",
+		},
+	}
+	populateObjectExplainFacts(&summary, recorded.Object, fieldPath, nil, true)
+	return summary
+}
+
+// populateObjectExplainFacts contains the computations shared by live bounded
+// explain and recorded explain. A nil observedAt explicitly disables the
+// time-dependent rollout calculation.
+func populateObjectExplainFacts(summary *ExplainSummary, obj *unstructured.Unstructured, fieldPath string, observedAt *time.Time, builtinOwnershipOnly bool) {
 	origin, omission := agent.BuildConfigHubOriginEvidence(obj)
 	summary.ConfigHubOrigin = origin
 	if omission != nil {
@@ -201,7 +248,13 @@ func buildBoundedExplainSummary(obj *unstructured.Unstructured, evidence agent.B
 	} else {
 		summary.Notes = append(summary.Notes, "Origin metadata identifies an observed source claim only; no release, target, component, variant, or cluster binding was verified.")
 	}
-	owner := agent.DetectOwnership(obj)
+	var owner agent.Ownership
+	if builtinOwnershipOnly {
+		owner = agent.DetectOwnershipBuiltin(obj)
+		summary.Omissions = append(summary.Omissions, agent.Omission{Missing: "custom-ownership-detectors", Reason: "Recorded explain uses deterministic built-in ownership rules and does not read mutable host custom-detector configuration.", Severity: "info"})
+	} else {
+		owner = agent.DetectOwnership(obj)
+	}
 	if owner.Type != agent.OwnerUnknown && owner.Type != "" {
 		summary.Owner = mapsvc.DisplayOwner(owner.Type)
 	}
@@ -215,8 +268,10 @@ func buildBoundedExplainSummary(obj *unstructured.Unstructured, evidence agent.B
 		if boundedHasReadinessEvidence(obj) {
 			summary.HealthMeasurement = &HealthMeasurement{Status: HealthMeasurementMeasured, Scope: "object-local-readiness"}
 		}
-		if decision, ok := agent.BuildRolloutDecisionForWorkload(obj, nil, 0, evidence.ObservedAt); ok {
-			summary.CurrentChange = &decision
+		if observedAt != nil {
+			if decision, ok := agent.BuildRolloutDecisionForWorkload(obj, nil, 0, *observedAt); ok {
+				summary.CurrentChange = &decision
+			}
 		}
 	} else if boundedHasReadyCondition(obj) {
 		st, _ := agent.WorkloadConvergence(obj)
@@ -227,10 +282,9 @@ func buildBoundedExplainSummary(obj *unstructured.Unstructured, evidence agent.B
 	}
 	attr := agent.AttributeFieldMutation(obj, owner)
 	summary.MutationCause, summary.MutationManager = attr.Cause, attr.ManagerHint
-	if len(fieldPaths) > 0 && fieldPaths[0] != "" {
-		summary.FieldAttribution = fieldAttributionSummary(obj, owner, fieldPaths[0])
+	if fieldPath != "" {
+		summary.FieldAttribution = fieldAttributionSummary(obj, owner, fieldPath)
 	}
-	return summary
 }
 
 func boundedHasReadinessEvidence(obj *unstructured.Unstructured) bool {
