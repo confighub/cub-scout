@@ -294,12 +294,16 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		// This single product-contract case owns a complete raw List fixture and
-		// uses a copy-based scaffold rather than embedding the suite-wide export.
-		// Validate it through its dedicated hash-and-execution assertions; keep
-		// every other case on the generic embedded-export path below.
+		// These product-contract cases own their fixed evidence and use
+		// copy-based scaffolds rather than embedding the suite-wide export.
+		// Validate each through dedicated assertions; keep remaining cases on the
+		// generic embedded-export path below.
 		if filepath.Base(caseDir) == "recorded-explain-contract" {
 			checkRecordedExplainCaseScaffold(t, caseDir)
+			continue
+		}
+		if filepath.Base(caseDir) == "flux-ready-without-health" {
+			checkFluxHLT02ScaffoldBytes(t, caseDir)
 			continue
 		}
 		if !strings.Contains(string(data), "scaffold_script: scaffold.sh") {

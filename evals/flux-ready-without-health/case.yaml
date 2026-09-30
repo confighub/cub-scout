@@ -1,0 +1,5 @@
+# FIXTURE-OWNED-SCAFFOLD: copy the pinned raw capture unchanged to both arms.
+schema_version: "1.1"
+name: flux-ready-without-health
+context:
+  scaffold_script: scaffold.sh
