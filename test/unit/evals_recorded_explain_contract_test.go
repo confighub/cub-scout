@@ -16,6 +16,11 @@ import (
 
 func TestRecordedExplainContractFixtureAndScaffoldArePinned(t *testing.T) {
 	caseRoot := filepath.Join("..", "..", "evals", "recorded-explain-contract")
+	checkRecordedExplainCaseScaffold(t, caseRoot)
+}
+
+func checkRecordedExplainCaseScaffold(t *testing.T, caseRoot string) {
+	t.Helper()
 	fixture, err := os.ReadFile(filepath.Join(caseRoot, "fixtures", "deployments.yaml"))
 	if err != nil {
 		t.Fatal(err)
