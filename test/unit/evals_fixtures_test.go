@@ -306,6 +306,10 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			checkFluxHLT02ScaffoldBytes(t, caseDir)
 			continue
 		}
+		if filepath.Base(caseDir) == "sveltos-inferred-revision" {
+			checkSveltosInferredRevisionCaseScaffold(t, caseDir)
+			continue
+		}
 		if !strings.Contains(string(data), "scaffold_script: scaffold.sh") {
 			// Live-only cases read the cluster through cub-scout, not an export.
 			prompt, _ := os.ReadFile(filepath.Join(filepath.Dir(caseYAML), "prompt.md"))
