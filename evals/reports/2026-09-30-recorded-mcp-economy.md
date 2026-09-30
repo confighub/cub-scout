@@ -27,8 +27,8 @@ value. No post-hoc regrade or prompt repair was performed. With zero answers
 passing the correctness grader, cost per verified answer is undefined. The
 small observed cost difference is not a savings result.
 
-The case requested `runsPerCase: 3`, but the documented invocation explicitly
-overrode this with `--runs 1`, producing one run per arm; this is a recorded
+The result reports `runsPerCase: 3`, reflecting the default because the case
+has no `runs` override. The invocation used `--runs 1`, producing one run per arm; this is a recorded
 override, not an accidental partial suite. Both runs completed with three turns
 under `maxTurns: 8`. The result is `partial: false`, while the CLI exited 1
 because neither answer passed. It was not timed out or interrupted. The runs
