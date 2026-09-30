@@ -160,6 +160,14 @@ is recorded in standalone mode, and regenerates every case's `scaffold.sh`
 `test/unit/evals_fixtures_test.go` fails if a scaffold drifts from the
 recording.
 
+The `owner-unlabelled` case reuses the recorded `hotfix-worker` export and MCP
+answer, where legacy `health` is `Unavailable` while `currentChange.verdict` is
+`PASS`. Its new `healthMeasurement` field is a deterministic offline extension
+for #620, derived from the recorded partial-trace answer and the current
+contract, not a fresh live recording; the remaining answer fields retain their
+recorded provenance. This case exercises the meaning of that distinction but
+does not replace live end-to-end verification of the updated tool response.
+
 ### The scale scenario
 
 `fixtures/scale/generate.py` writes `fixtures/scale/scenario.yaml`: 300

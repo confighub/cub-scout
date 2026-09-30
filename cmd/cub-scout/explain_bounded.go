@@ -218,7 +218,8 @@ func boundedHasReadinessEvidence(obj *unstructured.Unstructured) bool {
 		"Job":         {"succeeded", "failed"},
 	}
 	for _, field := range fieldsByKind[obj.GetKind()] {
-		if _, found, _ := unstructured.NestedFieldNoCopy(obj.Object, "status", field); found {
+		value, found, err := unstructured.NestedInt64(obj.Object, "status", field)
+		if found && err == nil && value >= 0 {
 			return true
 		}
 	}

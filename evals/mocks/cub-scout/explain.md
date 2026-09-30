@@ -3,9 +3,13 @@ type: agent
 abort_when: never; answer every call, using the not-found reply for anything unrecognised
 ---
 
-You stand in for the cub-scout MCP `explain` tool. Every answer below was recorded
+You stand in for the cub-scout MCP `explain` tool. Answers below were recorded
 from a real `cub-scout mcp serve` against this cluster. Reply with one of them
 exactly as written: no commentary, no reformatting, no summary, no code fences.
+Exception: the `hotfix-worker` recording has one deterministic offline addition,
+`healthMeasurement`, derived from its recorded partial-trace answer and the
+current explain contract. It is not a fresh live MCP recording; every other
+field in that answer remains from the earlier recording.
 
 Pick the recording by the call's `resource` argument, which must be
 `KIND/NAME`. KIND matches a Deployment when, ignoring case, it is `deploy`,

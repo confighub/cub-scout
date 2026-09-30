@@ -215,6 +215,31 @@ func TestBoundedExplainObservedWorkloadWithoutReadinessRemainsUnmeasured(t *test
 	require.Equal(t, "InProgress", summary.Health, "legacy model value remains unchanged")
 }
 
+func TestBoundedExplainReadinessCountersRequireValidNonnegativeIntegers(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		value interface{}
+		want  string
+	}{
+		{name: "zero is evidence", value: int64(0), want: HealthMeasurementMeasured},
+		{name: "null is missing", value: nil, want: HealthMeasurementUnmeasured},
+		{name: "string is malformed", value: "1", want: HealthMeasurementUnmeasured},
+		{name: "object is malformed", value: map[string]interface{}{"count": int64(1)}, want: HealthMeasurementUnmeasured},
+		{name: "negative is invalid", value: int64(-1), want: HealthMeasurementUnmeasured},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			obj := &unstructured.Unstructured{Object: map[string]interface{}{
+				"apiVersion": "apps/v1", "kind": "Deployment",
+				"metadata": map[string]interface{}{"name": "api", "namespace": "prod"},
+				"spec":     map[string]interface{}{"replicas": int64(1)},
+				"status":   map[string]interface{}{"readyReplicas": tc.value},
+			}}
+			summary := buildBoundedExplainSummary(obj, agent.BoundedReadEvidence{}, nil)
+			require.Equal(t, tc.want, summary.HealthMeasurement.Status)
+		})
+	}
+}
+
 func TestBoundedExplainTUISelectionCancellationAndLateResults(t *testing.T) {
 	m := LocalClusterModel{ready: true, width: 100, height: 30, contextName: "cluster-a", boundedContext: "cluster-a", entries: []MapEntry{
 		{APIVersion: "apps/v1", Kind: "Deployment", Namespace: "team-b", Name: "api"},

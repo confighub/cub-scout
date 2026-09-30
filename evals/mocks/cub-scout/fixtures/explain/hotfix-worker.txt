@@ -5,6 +5,11 @@
   "source": "unknown",
   "deployedVia": "partial trace only",
   "health": "Unavailable",
+  "healthMeasurement": {
+    "status": "unmeasured",
+    "scope": "controller-chain",
+    "reason": "No controller-chain health result was observed."
+  },
   "risks": "Not assessed",
   "drift": "Unknown",
   "notes": [
