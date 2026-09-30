@@ -1,0 +1,804 @@
+apiVersion: "catalog.confighub.com/v1alpha1"
+kind: "SveltosOciDeliveryProofReceipt"
+metadata:
+  name: "kyverno-fleet-canary"
+spec:
+  recordedAt: "2026-08-14T16:41:11.683Z"
+  flow:
+    path: "source -> one reviewed base record in ConfigHub -> one variant per cluster -> approval per variant -> ConfigHub release -> the ConfigHub OCI gateway -> Sveltos -> Kubernetes"
+    canary: "wave one approved and delivered the pilot cluster's record alone; the second cluster's record stayed complete, addressed, and gate-armed with no approval until wave two approved its own revision"
+    mapping: "ConfigHub holds one record per cluster, so this receipt answers which cluster runs which revision without reading a Sveltos selector or a cluster"
+  source:
+    base:
+      path: "examples/sveltos/kyverno-fleet/clusterprofile-base.yaml"
+      rawSha256: "1f493e84789a79dbc550e536172eac2c0fc13c4071ca82e8364485999f8cb8b8"
+    variants:
+      path: "examples/sveltos/kyverno-fleet/variants.yaml"
+      rawSha256: "5e240ccd25d5b1daf3cb5facebeb866d238b0061a5443b06dbaa77daf65df8c8"
+    sourceLock: "examples/sveltos/kyverno-fleet/source-lock.yaml"
+    gatewayRecord: "docs/planning/remote-url-oci-probe.md"
+  revisions:
+    base:
+      baseline: "b1-fc4edcc6e753"
+    clusters:
+      hx-sveltos-fleet-pilot:
+        baseline: "r1-f47c83fff450"
+      hx-sveltos-fleet-second:
+        baseline: "r1-beafac691115"
+  policy:
+    organization: "helm-catalog"
+    profile: "catalog-standard"
+    resourceClass: "system-configuration"
+    filter:
+      ref: "platform/helm-catalog-prod-gates"
+      id: "8784a447-0e4d-4471-b924-eae5377778a2"
+      hash: "31133ade3ebd259030d3d2ef559e6aec14a62590779fbce9c0d13b188f717dc1"
+      triggerRefs:
+        - "platform/aicr-training-images-pinned"
+        - "platform/aicr-training-secret-refs"
+        - "platform/digest-pinned-images"
+        - "platform/lifecycle-route-evidence"
+        - "platform/probes-declared"
+        - "platform/require-approval"
+        - "platform/vet-placeholders"
+        - "platform/vet-schemas"
+      triggerIds:
+        - "04746183-327b-484e-b061-91d2c7753a76"
+        - "1823a4c6-9743-467a-8e9a-5e1893e31d17"
+        - "2651b7cc-31a2-4833-adde-11e018656dee"
+        - "3f5dd412-1cf2-4583-a73a-12817f899c87"
+        - "4d7664a3-9ac0-4160-868f-95eaa0b59f8f"
+        - "5ce74cb1-7129-43c8-a48c-a0ba4322de3d"
+        - "894ba8a0-eb84-4105-9557-4854f3739cf2"
+        - "9d281daf-79f4-4244-84cc-fbde411e3c11"
+    approvalGate: "platform/require-approval/vet-approvedby"
+    targetHost:
+      space: "bitnami-redis-27-0-0-default-pilot-live-20260705"
+      worker: "server-worker"
+  prerequisite:
+    source: "https://raw.githubusercontent.com/projectsveltos/sveltos/v1.13.0/manifest/manifest.yaml"
+    version: "v1.13.0"
+    manifestSha256: "5538558ad428617153f963318f22e70eb32fa949e9e0f07e07f02a0db700e2d7"
+    addonControllerImage: "docker.io/projectsveltos/addon-controller:v1.13.0-ch"
+    pinnedAddonControllerImage: "docker.io/projectsveltos/addon-controller:v1.13.0"
+    addonControllerImageOverridden: true
+    addonControllerImageLines: 2
+    objectCount: 102
+    crdCount: 29
+    appliedObjectCount: 98
+    omittedOptionalServiceMonitorCount: 4
+    deployments:
+      -
+        name: "access-manager"
+        desired: 1
+        updated: 1
+        ready: 1
+        available: 1
+        observedGenerationMatches: true
+      -
+        name: "addon-controller"
+        desired: 1
+        updated: 1
+        ready: 1
+        available: 1
+        observedGenerationMatches: true
+      -
+        name: "classifier-manager"
+        desired: 1
+        updated: 1
+        ready: 1
+        available: 1
+        observedGenerationMatches: true
+      -
+        name: "event-manager"
+        desired: 1
+        updated: 1
+        ready: 1
+        available: 1
+        observedGenerationMatches: true
+      -
+        name: "hc-manager"
+        desired: 1
+        updated: 1
+        ready: 1
+        available: 1
+        observedGenerationMatches: true
+      -
+        name: "mcp-server"
+        desired: 1
+        updated: 1
+        ready: 1
+        available: 1
+        observedGenerationMatches: true
+      -
+        name: "sc-manager"
+        desired: 1
+        updated: 1
+        ready: 1
+        available: 1
+        observedGenerationMatches: true
+      -
+        name: "shard-controller"
+        desired: 1
+        updated: 1
+        ready: 1
+        available: 1
+        observedGenerationMatches: true
+      -
+        name: "sveltos-agent-manager"
+        desired: 1
+        updated: 1
+        ready: 1
+        available: 1
+        observedGenerationMatches: true
+      -
+        name: "techsupport-controller"
+        desired: 1
+        updated: 1
+        ready: 1
+        available: 1
+        observedGenerationMatches: true
+    installationMethod: "pinned manifest applied as a management-cluster prerequisite"
+  base:
+    space: "hx-sveltos-oci-base-20260814164111"
+    unit: "clusterprofile"
+    revisionId: "b1-fc4edcc6e753"
+    revision: 3
+    contentHash: 804348990
+    target: "none"
+    published: false
+    reachesCluster: false
+    note: "The base carries no target and its Space is never published, so it reaches no cluster on its own."
+  variants:
+    -
+      cluster: "hx-sveltos-fleet-pilot"
+      role: "workload"
+      environment: "staging"
+      wave: 1
+      space: "hx-sveltos-fleet-pilot-20260814164111"
+      gatewayReference: "oci://oci.hub.confighub.com/space/hx-sveltos-fleet-pilot-20260814164111:latest"
+      unit: "clusterprofile"
+      profile: "kyverno-hx-sveltos-fleet-pilot"
+      clusterRef:
+        apiVersion: "lib.projectsveltos.io/v1beta1"
+        kind: "SveltosCluster"
+        name: "hx-sveltos-fleet-pilot"
+        namespace: "projectsveltos"
+      upstream:
+        space: "hx-sveltos-oci-base-20260814164111"
+        unit: "clusterprofile"
+        unitLinked: true
+        revisionAtClone: 3
+      departures:
+        metadata.name: "kyverno-hx-sveltos-fleet-pilot"
+        spec.clusterRefs:
+          -
+            apiVersion: "lib.projectsveltos.io/v1beta1"
+            kind: "SveltosCluster"
+            name: "hx-sveltos-fleet-pilot"
+            namespace: "projectsveltos"
+        spec.stopMatchingBehavior: "WithdrawPolicies"
+      departedFields:
+        - "metadata.name"
+        - "spec.clusterRefs"
+        - "spec.stopMatchingBehavior"
+      target:
+        name: "hx-sveltos-fleet-pilot"
+        host: "bitnami-redis-27-0-0-default-pilot-live-20260705"
+        ref: "bitnami-redis-27-0-0-default-pilot-live-20260705/hx-sveltos-fleet-pilot"
+        id: "91700bcb-4b37-46dd-80c1-b8e8913cbb83"
+        provider: "OCI"
+      records:
+        -
+          stage: "baseline"
+          wave: 1
+          cluster: "hx-sveltos-fleet-pilot"
+          space: "hx-sveltos-fleet-pilot-20260814164111"
+          revisionId: "r1-f47c83fff450"
+          contentHash: 318280145
+          beforeApproval:
+            result: "blocked"
+            gate: "platform/require-approval/vet-approvedby"
+            observation: "apply-gate-present-approval-absent"
+            dryRun: false
+            exitCode: 0
+          approval:
+            revision: 3
+            recordedApprovals: 1
+            approverIdentityRecordedInReceipt: false
+            contentHashUnchanged: true
+          afterApproval:
+            result: "allowed"
+            observation: "approval-recorded"
+            dryRun: false
+            exitCode: 0
+          release:
+            space: "hx-sveltos-fleet-pilot-20260814164111"
+            reference: "oci://oci.hub.confighub.com/space/hx-sveltos-fleet-pilot-20260814164111:latest"
+            tag: "latest"
+            manifestDigest: "sha256:d2083bf32b4b70ddffc7375a4990dcc78299bc80369708641315d12be5b5183b"
+            bundleDigest: "sha256:d334393efaf4474c5ad30f328c115b7249f66494d1145cd85c416846d8f8dc45"
+            releaseId: "00b520f5-147e-4fc5-aa5d-34b7397944c0"
+          delivery:
+            result: "pass"
+            profile: "sveltos-oci-delivery-hx-sveltos-fleet-pilot-bootstrap"
+            cluster: "hx-sveltos-fleet-mgmt-20260814164111"
+            reviewedProfile: "kyverno-hx-sveltos-fleet-pilot"
+            reference: "oci://oci.hub.confighub.com/space/hx-sveltos-fleet-pilot-20260814164111:latest"
+            releaseManifestDigest: "sha256:d2083bf32b4b70ddffc7375a4990dcc78299bc80369708641315d12be5b5183b"
+            interval: "1m0s"
+            status: "Provisioned"
+            profileMatchesApprovedRevision: true
+    -
+      cluster: "hx-sveltos-fleet-second"
+      role: "workload"
+      environment: "staging"
+      wave: 2
+      space: "hx-sveltos-fleet-second-20260814164111"
+      gatewayReference: "oci://oci.hub.confighub.com/space/hx-sveltos-fleet-second-20260814164111:latest"
+      unit: "clusterprofile"
+      profile: "kyverno-hx-sveltos-fleet-second"
+      clusterRef:
+        apiVersion: "lib.projectsveltos.io/v1beta1"
+        kind: "SveltosCluster"
+        name: "hx-sveltos-fleet-second"
+        namespace: "projectsveltos"
+      upstream:
+        space: "hx-sveltos-oci-base-20260814164111"
+        unit: "clusterprofile"
+        unitLinked: true
+        revisionAtClone: 3
+      departures:
+        metadata.name: "kyverno-hx-sveltos-fleet-second"
+        spec.clusterRefs:
+          -
+            apiVersion: "lib.projectsveltos.io/v1beta1"
+            kind: "SveltosCluster"
+            name: "hx-sveltos-fleet-second"
+            namespace: "projectsveltos"
+        spec.stopMatchingBehavior: "WithdrawPolicies"
+      departedFields:
+        - "metadata.name"
+        - "spec.clusterRefs"
+        - "spec.stopMatchingBehavior"
+      target:
+        name: "hx-sveltos-fleet-second"
+        host: "bitnami-redis-27-0-0-default-pilot-live-20260705"
+        ref: "bitnami-redis-27-0-0-default-pilot-live-20260705/hx-sveltos-fleet-second"
+        id: "48558c03-e475-4962-a948-645a9c9efd69"
+        provider: "OCI"
+      records:
+        -
+          stage: "baseline"
+          wave: 2
+          cluster: "hx-sveltos-fleet-second"
+          space: "hx-sveltos-fleet-second-20260814164111"
+          revisionId: "r1-beafac691115"
+          contentHash: -799012327
+          beforeApproval:
+            result: "blocked"
+            gate: "platform/require-approval/vet-approvedby"
+            observation: "apply-gate-present-approval-absent"
+            dryRun: false
+            exitCode: 0
+          approval:
+            revision: 3
+            recordedApprovals: 1
+            approverIdentityRecordedInReceipt: false
+            contentHashUnchanged: true
+          afterApproval:
+            result: "allowed"
+            observation: "approval-recorded"
+            dryRun: false
+            exitCode: 0
+          release:
+            space: "hx-sveltos-fleet-second-20260814164111"
+            reference: "oci://oci.hub.confighub.com/space/hx-sveltos-fleet-second-20260814164111:latest"
+            tag: "latest"
+            manifestDigest: "sha256:a19f336eed78a34bbe2b6ef17b42465e967fbf963184736c3c16ffbbfbbdb959"
+            bundleDigest: "sha256:ee9091ec6f0495ccb8ec779c9da61d1546a278d2a835b7dd1882a6b68be4b129"
+            releaseId: "d29c27e6-d407-4cc6-ad57-0371bbc92cc8"
+          delivery:
+            result: "pass"
+            profile: "sveltos-oci-delivery-hx-sveltos-fleet-second-bootstrap"
+            cluster: "hx-sveltos-fleet-mgmt-20260814164111"
+            reviewedProfile: "kyverno-hx-sveltos-fleet-second"
+            reference: "oci://oci.hub.confighub.com/space/hx-sveltos-fleet-second-20260814164111:latest"
+            releaseManifestDigest: "sha256:a19f336eed78a34bbe2b6ef17b42465e967fbf963184736c3c16ffbbfbbdb959"
+            interval: "1m0s"
+            status: "Provisioned"
+            profileMatchesApprovedRevision: true
+    -
+      cluster: "hx-sveltos-fleet-mgmt"
+      role: "management"
+      environment: "management"
+      wave: 0
+      space: "hx-sveltos-fleet-mgmt-20260814164111"
+      gatewayReference: "oci://oci.hub.confighub.com/space/hx-sveltos-fleet-mgmt-20260814164111:latest"
+      unit: "clusterprofile"
+      profile: "sveltos-oci-delivery-hx-sveltos-fleet-pilot-bootstrap,sveltos-oci-delivery-hx-sveltos-fleet-second-bootstrap"
+      selector:
+        role: "management"
+      upstream: null
+      departures:
+        {}
+      departedFields:
+        []
+      bootstrapProfiles:
+        -
+          profile: "sveltos-oci-delivery-hx-sveltos-fleet-pilot-bootstrap"
+          cluster: "hx-sveltos-fleet-pilot"
+          space: "hx-sveltos-fleet-pilot-20260814164111"
+          reference: "oci://oci.hub.confighub.com/space/hx-sveltos-fleet-pilot-20260814164111:latest"
+        -
+          profile: "sveltos-oci-delivery-hx-sveltos-fleet-second-bootstrap"
+          cluster: "hx-sveltos-fleet-second"
+          space: "hx-sveltos-fleet-second-20260814164111"
+          reference: "oci://oci.hub.confighub.com/space/hx-sveltos-fleet-second-20260814164111:latest"
+      boundary:
+        appliedOutOfBandWith: "kubectl"
+        firstRevisionDeliveredThroughGateway: false
+        laterRevisionsGovernedInConfigHub: true
+        reason: "This record is what lets the management cluster fetch from the gateway, so its first revision cannot arrive through the gateway. It is applied once as cluster setup, and ConfigHub governs every revision after that under the same approval gate."
+      target:
+        name: "hx-sveltos-fleet-mgmt"
+        host: "bitnami-redis-27-0-0-default-pilot-live-20260705"
+        ref: "bitnami-redis-27-0-0-default-pilot-live-20260705/hx-sveltos-fleet-mgmt"
+        id: "a396f5a8-30f7-42fd-932e-99bbfaa7142a"
+        provider: "OCI"
+      records:
+        -
+          stage: "baseline"
+          wave: 0
+          cluster: "hx-sveltos-fleet-mgmt"
+          space: "hx-sveltos-fleet-mgmt-20260814164111"
+          revisionId: "m1-c5b91faa32ec"
+          contentHash: 495043877
+          beforeApproval:
+            result: "blocked"
+            gate: "platform/require-approval/vet-approvedby"
+            observation: "apply-gate-present-approval-absent"
+            dryRun: false
+            exitCode: 0
+          approval:
+            revision: 3
+            recordedApprovals: 1
+            approverIdentityRecordedInReceipt: false
+            contentHashUnchanged: true
+          afterApproval:
+            result: "allowed"
+            observation: "approval-recorded"
+            dryRun: false
+            exitCode: 0
+          release: null
+  advance:
+    evidenceGated: true
+    rule: "No wave's approval is requested until the preceding checkpoint shows every cluster the wave depends on reporting healthy: the whole fleet at the baseline for wave one, the environment the previous wave promoted after that. Each wave records the evidence that unlocked it."
+  waves:
+    -
+      wave: 1
+      environment: "staging"
+      unlockedBy:
+        precedingCheckpointId: "baseline"
+        environment: "baseline"
+        clusters:
+          -
+            cluster: "hx-sveltos-fleet-pilot-20260814164111"
+            logicalCluster: "hx-sveltos-fleet-pilot"
+            environment: "staging"
+            result: "pass"
+          -
+            cluster: "hx-sveltos-fleet-second-20260814164111"
+            logicalCluster: "hx-sveltos-fleet-second"
+            environment: "staging"
+            result: "pass"
+        approvalFollowedEvidence: true
+      selection:
+        scope: "cub unit list --space \"*\""
+        query: "Labels.Proof = 'sveltos-oci-delivery' AND Labels.Run = '20260814164111' AND Labels.Record = 'variant' AND Labels.Wave = '1'"
+        matched:
+          - "hx-sveltos-fleet-pilot-20260814164111/clusterprofile"
+      approval:
+        command: "cub unit approve --space \"*\" --where <query> --revision HeadRevisionNum"
+        appliedAsOneOperation: true
+        members: 1
+        recordedApprovals: 1
+      held:
+        cluster: "hx-sveltos-fleet-second"
+        space: "hx-sveltos-fleet-second-20260814164111"
+        gate: "platform/require-approval/vet-approvedby"
+        observation:
+          gateArmed: true
+          recordedApprovals: 0
+        releasePublished: false
+        addressedBy: "sveltos-oci-delivery-hx-sveltos-fleet-second-bootstrap"
+        note: "complete, addressed, and inert until its own approval"
+      clusters:
+        -
+          cluster: "hx-sveltos-fleet-pilot"
+          space: "hx-sveltos-fleet-pilot-20260814164111"
+          revision: 3
+          revisionId: "r1-f47c83fff450"
+          recordedApprovals: 1
+          releaseManifestDigest: "sha256:d2083bf32b4b70ddffc7375a4990dcc78299bc80369708641315d12be5b5183b"
+    -
+      wave: 2
+      environment: "staging"
+      unlockedBy:
+        precedingCheckpointId: "after-wave-1"
+        environment: "staging"
+        clusters:
+          -
+            cluster: "hx-sveltos-fleet-pilot-20260814164111"
+            logicalCluster: "hx-sveltos-fleet-pilot"
+            environment: "staging"
+            result: "pass"
+        approvalFollowedEvidence: true
+      selection:
+        scope: "cub unit list --space \"*\""
+        query: "Labels.Proof = 'sveltos-oci-delivery' AND Labels.Run = '20260814164111' AND Labels.Record = 'variant' AND Labels.Wave = '2'"
+        matched:
+          - "hx-sveltos-fleet-second-20260814164111/clusterprofile"
+      approval:
+        command: "cub unit approve --space \"*\" --where <query> --revision HeadRevisionNum"
+        appliedAsOneOperation: true
+        members: 1
+        recordedApprovals: 1
+      held: null
+      clusters:
+        -
+          cluster: "hx-sveltos-fleet-second"
+          space: "hx-sveltos-fleet-second-20260814164111"
+          revision: 3
+          revisionId: "r1-beafac691115"
+          recordedApprovals: 1
+          releaseManifestDigest: "sha256:a19f336eed78a34bbe2b6ef17b42465e967fbf963184736c3c16ffbbfbbdb959"
+  gatewayDelivery:
+    host: "oci.hub.confighub.com"
+    tag: "latest"
+    interval: "1m0s"
+    deploymentType: "Remote"
+    fetchedBy: "the Sveltos addon controller on the management cluster"
+    addonControllerImage: "docker.io/projectsveltos/addon-controller:v1.13.0-ch"
+    secret:
+      name: "confighub-gateway"
+      namespace: "projectsveltos"
+      type: "addons.projectsveltos.io/cluster-profile"
+      key: "token"
+      source: "cub auth get-token"
+      storedInRepository: false
+      tokenRecordedInReceipt: false
+      removedWithClusters: true
+    bootstrap:
+      profiles:
+        -
+          profile: "sveltos-oci-delivery-hx-sveltos-fleet-pilot-bootstrap"
+          cluster: "hx-sveltos-fleet-pilot"
+          space: "hx-sveltos-fleet-pilot-20260814164111"
+          reference: "oci://oci.hub.confighub.com/space/hx-sveltos-fleet-pilot-20260814164111:latest"
+        -
+          profile: "sveltos-oci-delivery-hx-sveltos-fleet-second-bootstrap"
+          cluster: "hx-sveltos-fleet-second"
+          space: "hx-sveltos-fleet-second-20260814164111"
+          reference: "oci://oci.hub.confighub.com/space/hx-sveltos-fleet-second-20260814164111:latest"
+      interval: "1m0s"
+      deploymentType: "Remote"
+      clusterSelector:
+        role: "management"
+      secret:
+        name: "confighub-gateway"
+        namespace: "projectsveltos"
+      appliedWith: "kubectl as management-cluster setup"
+      changedByPromotion: false
+    clusters:
+      hx-sveltos-fleet-pilot:
+        space: "hx-sveltos-fleet-pilot-20260814164111"
+        reference: "oci://oci.hub.confighub.com/space/hx-sveltos-fleet-pilot-20260814164111:latest"
+        bootstrapProfile: "sveltos-oci-delivery-hx-sveltos-fleet-pilot-bootstrap"
+        releaseManifestDigest: "sha256:d2083bf32b4b70ddffc7375a4990dcc78299bc80369708641315d12be5b5183b"
+      hx-sveltos-fleet-second:
+        space: "hx-sveltos-fleet-second-20260814164111"
+        reference: "oci://oci.hub.confighub.com/space/hx-sveltos-fleet-second-20260814164111:latest"
+        bootstrapProfile: "sveltos-oci-delivery-hx-sveltos-fleet-second-bootstrap"
+        releaseManifestDigest: "sha256:a19f336eed78a34bbe2b6ef17b42465e967fbf963184736c3c16ffbbfbbdb959"
+    waves:
+      -
+        wave: 1
+        environment: "staging"
+        clusters:
+          -
+            cluster: "hx-sveltos-fleet-pilot"
+            releaseManifestDigest: "sha256:d2083bf32b4b70ddffc7375a4990dcc78299bc80369708641315d12be5b5183b"
+      -
+        wave: 2
+        environment: "staging"
+        clusters:
+          -
+            cluster: "hx-sveltos-fleet-second"
+            releaseManifestDigest: "sha256:a19f336eed78a34bbe2b6ef17b42465e967fbf963184736c3c16ffbbfbbdb959"
+  fleet:
+    managementCluster: "hx-sveltos-fleet-mgmt-20260814164111"
+    creationCommand: "kind create cluster"
+    managementRegistration:
+      method: "programmatic SveltosCluster registration of the management cluster"
+      namespace: "projectsveltos"
+      cluster: "management"
+      labels:
+        role: "management"
+      credential:
+        type: "short-lived Kubernetes service-account token"
+        duration: "2h"
+        storedInRepository: false
+        removedWithClusters: true
+      ready: true
+      kubernetesVersion: "v1.35.0"
+    registrations:
+      -
+        method: "programmatic SveltosCluster registration"
+        namespace: "projectsveltos"
+        cluster: "hx-sveltos-fleet-pilot"
+        kindCluster: "hx-sveltos-fleet-pilot-20260814164111"
+        labels:
+          environment: "staging"
+          sveltos-agent: "present"
+        credential:
+          type: "short-lived Kubernetes service-account token"
+          duration: "2h"
+          storedInRepository: false
+          removedWithClusters: true
+        ready: true
+        kubernetesVersion: "v1.35.0"
+      -
+        method: "programmatic SveltosCluster registration"
+        namespace: "projectsveltos"
+        cluster: "hx-sveltos-fleet-second"
+        kindCluster: "hx-sveltos-fleet-second-20260814164111"
+        labels:
+          environment: "staging"
+          sveltos-agent: "present"
+        credential:
+          type: "short-lived Kubernetes service-account token"
+          duration: "2h"
+          storedInRepository: false
+          removedWithClusters: true
+        ready: true
+        kubernetesVersion: "v1.35.0"
+  checkpoints:
+    -
+      id: "baseline"
+      deliveredWaves: 0
+      observations:
+        -
+          cluster: "hx-sveltos-fleet-pilot-20260814164111"
+          logicalCluster: "hx-sveltos-fleet-pilot"
+          environment: "staging"
+          wave: 1
+          expected: "untouched"
+          expectedRevisionId: null
+          observation:
+            result: "pass"
+            state: "untouched"
+            namespacePresent: false
+            deploymentCount: 0
+            helmReleaseCount: 0
+        -
+          cluster: "hx-sveltos-fleet-second-20260814164111"
+          logicalCluster: "hx-sveltos-fleet-second"
+          environment: "staging"
+          wave: 2
+          expected: "untouched"
+          expectedRevisionId: null
+          observation:
+            result: "pass"
+            state: "untouched"
+            namespacePresent: false
+            deploymentCount: 0
+            helmReleaseCount: 0
+    -
+      id: "after-wave-1"
+      deliveredWaves: 1
+      observations:
+        -
+          cluster: "hx-sveltos-fleet-pilot-20260814164111"
+          logicalCluster: "hx-sveltos-fleet-pilot"
+          environment: "staging"
+          wave: 1
+          expected: "converged-at-approved-revision"
+          expectedRevisionId: "r1-f47c83fff450"
+          observation:
+            result: "pass"
+            clusterSummary: "projectsveltos/kyverno-hx-sveltos-fleet-pilot-sveltos-hx-sveltos-fleet-pilot"
+            helmFeatureStatus: "Provisioned"
+            helmRelease:
+              name: "kyverno"
+              namespace: "kyverno"
+              chart: "kyverno-3.8.1"
+              status: "deployed"
+            admissionReplicas:
+              desired: 3
+              available: 3
+            deployments:
+              -
+                name: "kyverno-admission-controller"
+                desired: 3
+                available: 3
+                observedGenerationMatches: true
+              -
+                name: "kyverno-background-controller"
+                desired: 1
+                available: 1
+                observedGenerationMatches: true
+              -
+                name: "kyverno-cleanup-controller"
+                desired: 1
+                available: 1
+                observedGenerationMatches: true
+              -
+                name: "kyverno-reports-controller"
+                desired: 1
+                available: 1
+                observedGenerationMatches: true
+        -
+          cluster: "hx-sveltos-fleet-second-20260814164111"
+          logicalCluster: "hx-sveltos-fleet-second"
+          environment: "staging"
+          wave: 2
+          expected: "untouched"
+          expectedRevisionId: null
+          observation:
+            result: "pass"
+            state: "untouched"
+            namespacePresent: false
+            deploymentCount: 0
+            helmReleaseCount: 0
+    -
+      id: "after-wave-2"
+      deliveredWaves: 2
+      observations:
+        -
+          cluster: "hx-sveltos-fleet-pilot-20260814164111"
+          logicalCluster: "hx-sveltos-fleet-pilot"
+          environment: "staging"
+          wave: 1
+          expected: "converged-at-approved-revision"
+          expectedRevisionId: "r1-f47c83fff450"
+          observation:
+            result: "pass"
+            clusterSummary: "projectsveltos/kyverno-hx-sveltos-fleet-pilot-sveltos-hx-sveltos-fleet-pilot"
+            helmFeatureStatus: "Provisioned"
+            helmRelease:
+              name: "kyverno"
+              namespace: "kyverno"
+              chart: "kyverno-3.8.1"
+              status: "deployed"
+            admissionReplicas:
+              desired: 3
+              available: 3
+            deployments:
+              -
+                name: "kyverno-admission-controller"
+                desired: 3
+                available: 3
+                observedGenerationMatches: true
+              -
+                name: "kyverno-background-controller"
+                desired: 1
+                available: 1
+                observedGenerationMatches: true
+              -
+                name: "kyverno-cleanup-controller"
+                desired: 1
+                available: 1
+                observedGenerationMatches: true
+              -
+                name: "kyverno-reports-controller"
+                desired: 1
+                available: 1
+                observedGenerationMatches: true
+        -
+          cluster: "hx-sveltos-fleet-second-20260814164111"
+          logicalCluster: "hx-sveltos-fleet-second"
+          environment: "staging"
+          wave: 2
+          expected: "converged-at-approved-revision"
+          expectedRevisionId: "r1-beafac691115"
+          observation:
+            result: "pass"
+            clusterSummary: "projectsveltos/kyverno-hx-sveltos-fleet-second-sveltos-hx-sveltos-fleet-second"
+            helmFeatureStatus: "Provisioned"
+            helmRelease:
+              name: "kyverno"
+              namespace: "kyverno"
+              chart: "kyverno-3.8.1"
+              status: "deployed"
+            admissionReplicas:
+              desired: 3
+              available: 3
+            deployments:
+              -
+                name: "kyverno-admission-controller"
+                desired: 3
+                available: 3
+                observedGenerationMatches: true
+              -
+                name: "kyverno-background-controller"
+                desired: 1
+                available: 1
+                observedGenerationMatches: true
+              -
+                name: "kyverno-cleanup-controller"
+                desired: 1
+                available: 1
+                observedGenerationMatches: true
+              -
+                name: "kyverno-reports-controller"
+                desired: 1
+                available: 1
+                observedGenerationMatches: true
+  driftRepair:
+    clusters:
+      -
+        cluster: "hx-sveltos-fleet-pilot-20260814164111"
+        logicalCluster: "hx-sveltos-fleet-pilot"
+        deployment: "kyverno-admission-controller"
+        from: 3
+        droppedTo: 1
+        restoredTo: 3
+        result: "pass"
+      -
+        cluster: "hx-sveltos-fleet-second-20260814164111"
+        logicalCluster: "hx-sveltos-fleet-second"
+        deployment: "kyverno-admission-controller"
+        from: 3
+        droppedTo: 1
+        restoredTo: 3
+        result: "pass"
+  cleanup:
+    mode: "kept"
+    keptDeliberately: true
+    results:
+      probeSpace: "pass"
+      managementCluster: "kept"
+      workloadClusters: "kept"
+      policySpaces: "kept"
+      localFiles: "pass"
+    kept:
+      -
+        kind: "kind cluster"
+        name: "hx-sveltos-fleet-mgmt-20260814164111"
+        removeWith: "kind delete cluster --name hx-sveltos-fleet-mgmt-20260814164111"
+      -
+        kind: "kind cluster"
+        name: "hx-sveltos-fleet-pilot-20260814164111"
+        removeWith: "kind delete cluster --name hx-sveltos-fleet-pilot-20260814164111"
+      -
+        kind: "kind cluster"
+        name: "hx-sveltos-fleet-second-20260814164111"
+        removeWith: "kind delete cluster --name hx-sveltos-fleet-second-20260814164111"
+      -
+        kind: "ConfigHub Space"
+        name: "hx-sveltos-oci-base-20260814164111"
+        removeWith: "cub space delete hx-sveltos-oci-base-20260814164111 --recursive-force"
+      -
+        kind: "ConfigHub Space"
+        name: "hx-sveltos-fleet-pilot-20260814164111"
+        removeWith: "cub space delete hx-sveltos-fleet-pilot-20260814164111 --recursive-force"
+      -
+        kind: "ConfigHub Space"
+        name: "hx-sveltos-fleet-second-20260814164111"
+        removeWith: "cub space delete hx-sveltos-fleet-second-20260814164111 --recursive-force"
+      -
+        kind: "ConfigHub Space"
+        name: "hx-sveltos-fleet-mgmt-20260814164111"
+        removeWith: "cub space delete hx-sveltos-fleet-mgmt-20260814164111 --recursive-force"
+  limits:
+    - "The pinned Sveltos controllers were installed directly as a prerequisite on the throwaway management cluster."
+    - "The reviewed ClusterProfiles, not the Sveltos controller installation, were delivered through ConfigHub and its OCI gateway."
+    - "The management record was applied out of band with kubectl, because it is the record that opens the gateway path."
+    - "The gateway serves each release as a gzipped tar layer, so the run needs an addon controller that gunzips. The image it ran is recorded above."
+    - "The management cluster read the gateway with the operator's own ConfigHub token, taken once at the start of the run and removed with the clusters."
+    - "The proof used two local kind workload clusters, a pilot and a second cluster in the same staging environment. It does not prove a large production fleet."
+    - "No selector was edited anywhere in this run: widening the rollout meant approving the second cluster's own record."
+status:
+  result: "pass"
+  claim: "ConfigHub held one record per cluster over a shared base: the pilot cluster's record was approved and delivered first, published as its own release and fetched by Sveltos from the ConfigHub OCI gateway at its own manifest digest. The second cluster's record stayed complete, addressed, and gate-armed with zero approvals and no release served for its Space until wave two approved its own revision, converging at a distinct digest. Each wave's approval was gated on the preceding checkpoint reporting the clusters it depends on healthy, and injected drift was repaired back to the reviewed replica count on both clusters once the canary completed."
