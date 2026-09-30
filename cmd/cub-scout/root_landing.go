@@ -39,26 +39,31 @@ func renderRootLanding(w io.Writer, firstRun bool) {
 	fmt.Fprintln(w, "cub-scout - GitOps explorer for agents")
 	fmt.Fprintln(w)
 
+	// The example commands follow the invocation form the user chose, so a
+	// `cub scout` plugin user is shown `cub scout ...` lines to copy. Both
+	// forms are nine characters wide, so the columns stay aligned.
+	bin := preferInvocationForm("cub-scout")
+
 	if firstRun {
 		fmt.Fprintln(w, "WELCOME TO CUB-SCOUT")
 		fmt.Fprintln(w, "Start with three commands to get an aha in under a minute:")
-		fmt.Fprintln(w, "  cub-scout quickstart --yes  Guided first-run walkthrough")
-		fmt.Fprintln(w, "  cub-scout doctor            One-command cluster summary")
-		fmt.Fprintln(w, "  cub-scout map               Interactive TUI (press ? for help)")
+		fmt.Fprintf(w, "  %s quickstart --yes  Guided first-run walkthrough\n", bin)
+		fmt.Fprintf(w, "  %s doctor            One-command cluster summary\n", bin)
+		fmt.Fprintf(w, "  %s map               Interactive TUI (press ? for help)\n", bin)
 		fmt.Fprintln(w)
 	}
 
 	fmt.Fprintln(w, "Quick start:")
-	fmt.Fprintln(w, "  cub-scout quickstart       Guided first-run tour")
-	fmt.Fprintln(w, "  cub-scout doctor           Cluster health summary")
-	fmt.Fprintln(w, "  cub-scout map              Interactive TUI (press ? for help)")
-	fmt.Fprintln(w, "  cub-scout explain deploy/x -n <namespace>  Explain one resource")
-	fmt.Fprintln(w, "  cub-scout tree ownership   See resources by GitOps owner")
-	fmt.Fprintln(w, "  cub-scout trace deploy/x   Trace a resource to Git")
-	fmt.Fprintln(w, "  cub-scout map list --json  JSON output for automation")
-	fmt.Fprintln(w, "  cub-scout import --dry-run Preview ConfigHub import (connected)")
+	fmt.Fprintf(w, "  %s quickstart       Guided first-run tour\n", bin)
+	fmt.Fprintf(w, "  %s doctor           Cluster health summary\n", bin)
+	fmt.Fprintf(w, "  %s map              Interactive TUI (press ? for help)\n", bin)
+	fmt.Fprintf(w, "  %s explain deploy/x -n <namespace>  Explain one resource\n", bin)
+	fmt.Fprintf(w, "  %s tree ownership   See resources by GitOps owner\n", bin)
+	fmt.Fprintf(w, "  %s trace deploy/x   Trace a resource to Git\n", bin)
+	fmt.Fprintf(w, "  %s map list --json  JSON output for automation\n", bin)
+	fmt.Fprintf(w, "  %s import --dry-run Preview ConfigHub import (connected)\n", bin)
 	fmt.Fprintln(w)
-	fmt.Fprintln(w, "Run 'cub-scout --help' for all commands")
+	fmt.Fprintf(w, "Run '%s --help' for all commands\n", bin)
 }
 
 func forcedFirstRunFromEnv() (bool, bool) {

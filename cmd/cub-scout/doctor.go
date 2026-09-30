@@ -832,7 +832,7 @@ func buildDoctorSummary(entries []MapEntry, findings []scan.NormalizedFinding, c
 		}
 		summary.ThreeWay = &DoctorThreeWaySummary{
 			Available: true,
-			Hint:      fmt.Sprintf("cub-scout compare three-way%s", nsFlag),
+			Hint:      preferInvocationForm(fmt.Sprintf("cub-scout compare three-way%s", nsFlag)),
 		}
 	}
 

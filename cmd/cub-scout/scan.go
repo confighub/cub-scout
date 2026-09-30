@@ -259,7 +259,7 @@ func listKPOLPolicies(provider scan.Provider) error {
 			p.ID, sevColor, p.Severity, colorReset, name, p.Category)
 	}
 
-	fmt.Printf("\n%sRun 'cub-scout scan' to check for violations%s\n\n", colorDim, colorReset)
+	fmt.Printf("\n%sRun '%s' to check for violations%s\n\n", colorDim, preferInvocationForm("cub-scout scan"), colorReset)
 	return nil
 }
 
@@ -696,15 +696,15 @@ func outputCombinedHuman(kyvernoResult *agent.ScanResult, stateResult *agent.Sta
 	// Next steps when --explain is used
 	if scanExplain {
 		fmt.Printf("%sNEXT STEPS:%s\n", colorBold, colorReset)
-		fmt.Printf("→ See all patterns:        cub-scout scan --list\n")
-		fmt.Printf("→ Scan a YAML file:        cub-scout scan --file manifest.yaml\n")
-		fmt.Printf("→ Trace failing resource:  cub-scout trace <kind>/<name> -n <namespace>\n")
+		fmt.Printf("→ See all patterns:        %s\n", preferInvocationForm("cub-scout scan --list"))
+		fmt.Printf("→ Scan a YAML file:        %s\n", preferInvocationForm("cub-scout scan --file manifest.yaml"))
+		fmt.Printf("→ Trace failing resource:  %s\n", preferInvocationForm("cub-scout trace <kind>/<name> -n <namespace>"))
 		fmt.Printf("→ Visual guide:            docs/diagrams/risk-categories.svg\n")
 		fmt.Printf("\n")
 	}
 
 	// ConfigHub hook hint
-	fmt.Printf("%s🔗 Track violations in ConfigHub: cub-scout scan --confighub%s\n\n", colorDim, colorReset)
+	fmt.Printf("%s🔗 Track violations in ConfigHub: %s%s\n\n", colorDim, preferInvocationForm("cub-scout scan --confighub"), colorReset)
 
 	return nil
 }
