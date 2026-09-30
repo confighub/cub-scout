@@ -16,6 +16,28 @@ prepare = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prepare)
 
 class PreparationGuards(unittest.TestCase):
+    def test_pair_runner_stops_owned_descendants_and_refuses_relaunch(self):
+        import json
+        import time
+        runner_spec = importlib.util.spec_from_file_location('run_pair', ROOT / 'run_pair.py')
+        runner = importlib.util.module_from_spec(runner_spec)
+        runner_spec.loader.exec_module(runner)
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / 'plugin').mkdir()
+            heartbeat = root / 'heartbeat'
+            child = "import signal,time,pathlib; signal.signal(signal.SIGTERM,signal.SIG_IGN); p=pathlib.Path(" + repr(str(heartbeat)) + "); " + "\nwhile True: p.write_text(str(time.monotonic())); time.sleep(.02)"
+            parent = "import subprocess,sys,signal,time; signal.signal(signal.SIGTERM,signal.SIG_IGN); subprocess.Popen([sys.executable,'-c'," + repr(child) + "]); time.sleep(60)"
+            self.assertEqual(runner.run_owned([sys.executable, '-c', parent], root, timeout=.4, grace=.1), 124)
+            self.assertTrue(heartbeat.exists())
+            final = heartbeat.read_bytes()
+            time.sleep(.1)
+            self.assertEqual(heartbeat.read_bytes(), final)
+            self.assertTrue(json.loads((root / 'completion.json').read_text())['timedOut'])
+            with self.assertRaises(FileExistsError):
+                runner.run_owned([sys.executable, '-c', 'raise SystemExit(99)'], root)
+            self.assertEqual(heartbeat.read_bytes(), final)
+
     def test_purpose_configuration_preserves_plumbing_and_makes_economy_neutral(self):
         import json
         with tempfile.TemporaryDirectory() as tmp:

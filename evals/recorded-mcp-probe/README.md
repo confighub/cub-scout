@@ -81,23 +81,16 @@ through a bounded outer wrapper (210 seconds) that propagates timeout/failure
 and never retries:
 
 ```sh
-python3 - <<'PY'
-import os, subprocess
-
-env = {**os.environ, "CLAUDE_CODE_DISABLE_FAST_MODE": "1"}
-command = [
-    "claude", "plugin", "eval", "/tmp/cub-scout-recorded-economy-probe/plugin",
-    "--scaffold", "--case", "recorded-explain-mcp", "--runs", "1",
-    "--concurrency", "1", "--ablation", "with-without", "--mocks", "record",
-    "--allow-real-servers", "--allow-tools",
-    "mcp__plugin_recorded-mcp-probe_cub-scout__explain",
-    "--model", "claude-haiku-4-5-20251001", "--max-cost-usd", "1",
-    "--no-publish", "--trust-plugin", "--keep-temp", "--json",
-    "/tmp/cub-scout-recorded-economy-probe/result.json",
-]
-raise SystemExit(subprocess.run(command, env=env, timeout=210).returncode)
-PY
+python3 evals/recorded-mcp-probe/run_pair.py /tmp/cub-scout-recorded-economy-probe
 ```
+
+The runner verifies the prepared plugin and binary hashes, refuses an existing
+launch/result, records its owned PID/process group, and terminates that group
+on timeout or launcher exit (TERM, then KILL after a ten-second grace period).
+It does not scan or signal unrelated processes, and does not claim to control
+processes that deliberately detach from that group. Failures preserve logs and
+partial results; they are not retried. Inspect those artifacts before making
+any spend or completion claim.
 
 The `max_turns: 8` setting does not resolve the historical mismatch between
 configured max turns and observed turns. Before interpreting any future result,
