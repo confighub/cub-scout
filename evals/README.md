@@ -31,6 +31,12 @@ sequentially, so timestamps and runtime status can change during recording.
 The [first paired smoke](reports/2026-09-30-fair-attribution-smoke.md) answered
 correctly in both arms and cost more with scout; no benefit is assumed.
 
+The `changed-by-checkout` and attribution-contract smokes were file-only:
+ordinary tools were Read, Glob and Grep, plus harness task, skill and search
+tools; Bash, kubectl, Helm, jq and Python were unavailable. Neither satisfies
+roadmap Experiment A. Before a further paid attribution campaign, preflight
+safe, equivalent ordinary command access for both arms.
+
 ## Run
 
 Needs Claude Code 2.1.269 or later, logged in. Runs count against that account.

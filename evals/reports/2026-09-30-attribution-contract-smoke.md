@@ -45,6 +45,12 @@ output tokens were 627 versus 516. These observations do not isolate context
 or cache effects from order or variance. The changed prompt and answer format
 also prevent attributing differences from the earlier smoke to routing alone.
 
+Tool-access limit: this was a file-only smoke. Ordinary tools were Read, Glob
+and Grep, plus harness task, skill and search tools; Bash, kubectl, Helm, jq and
+Python were unavailable. This does **not** satisfy roadmap Experiment A.
+Preflight safe, equivalent ordinary command access for both arms before a
+further paid attribution campaign.
+
 ## Reproduction and retained evidence
 
 ```bash
