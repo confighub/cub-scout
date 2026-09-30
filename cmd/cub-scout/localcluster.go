@@ -137,22 +137,23 @@ func (m LocalClusterModel) getEffectiveQueries() []SavedQuery {
 
 // LocalClusterModel represents the local cluster TUI state
 type LocalClusterModel struct {
-	entries        []MapEntry
-	gitops         []GitOpsResource
-	gitSources     []GitSourceInfo // Git sources (GitRepository, OCIRepository, HelmRepository)
-	width          int
-	height         int
-	ready          bool
-	loading        bool
-	err            error
-	cursor         int
-	view           localView
-	spinner        spinner.Model
-	keymap         localKeyMap
-	statusMsg      string
-	clusterName    string
-	contextName    string               // kubectl context name
-	clusterBinding *localClusterBinding // Session-pinned inventory config; never serialized.
+	entries                []MapEntry
+	gitops                 []GitOpsResource
+	gitSources             []GitSourceInfo // Git sources (GitRepository, OCIRepository, HelmRepository)
+	width                  int
+	height                 int
+	ready                  bool
+	loading                bool
+	err                    error
+	cursor                 int
+	view                   localView
+	spinner                spinner.Model
+	keymap                 localKeyMap
+	statusMsg              string
+	clusterName            string
+	contextName            string               // kubectl context name
+	clusterBinding         *localClusterBinding // Session-pinned inventory config; never serialized.
+	explicitClusterContext bool                 // Unsupported unbound actions fail closed in this mode.
 
 	// Connection status (checked async on startup)
 	connectionMode string // "offline", "online", "connected"
@@ -257,6 +258,8 @@ type LocalClusterModel struct {
 	// loadLocalClusterData and checkConnectionStatus from clobbering test fixtures.
 	noInit bool
 }
+
+const explicitContextUnsupportedAction = "This action is unavailable with --kube-context until it can honor the selected binding. Inventory and bounded explain remain available."
 
 // GitOpsResource represents a Flux/ArgoCD resource
 type GitOpsResource struct {
@@ -499,6 +502,10 @@ func initialLocalModel() LocalClusterModel {
 // initialLocalModelWithOpts creates a LocalClusterModel with the given view options.
 // This enables CLI ↔ TUI symmetry: flags like --owner, --namespace are passed through.
 func initialLocalModelWithOpts(opts ViewOptions) LocalClusterModel {
+	return initialLocalModelWithBinding(opts, nil)
+}
+
+func initialLocalModelWithBinding(opts ViewOptions, binding *localClusterBinding) LocalClusterModel {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
@@ -513,19 +520,25 @@ func initialLocalModelWithOpts(opts ViewOptions) LocalClusterModel {
 	}
 
 	contextName := getCurrentContext()
-	clusterBinding := resolveLegacyLocalClusterBinding(contextName)
+	if binding == nil {
+		binding = resolveLegacyLocalClusterBinding(contextName)
+	}
+	if binding.context != "" {
+		contextName = binding.context
+	}
 
 	m := LocalClusterModel{
-		loading:        true,
-		spinner:        s,
-		keymap:         defaultLocalKeyMap(),
-		view:           viewDashboard,
-		clusterName:    clusterName,
-		contextName:    contextName,
-		clusterBinding: clusterBinding,
-		panelPane:      vp,
-		viewOpts:       opts,
-		connectionMode: hub.QuickMode().String(), // Instant display; async check refines later
+		loading:                true,
+		spinner:                s,
+		keymap:                 defaultLocalKeyMap(),
+		view:                   viewDashboard,
+		clusterName:            clusterName,
+		contextName:            contextName,
+		clusterBinding:         binding,
+		explicitClusterContext: binding.explicit,
+		panelPane:              vp,
+		viewOpts:               opts,
+		connectionMode:         hub.QuickMode().String(), // Instant display; async check refines later
 	}
 
 	// Restore from snapshot if available and matches current cluster
@@ -1424,6 +1437,12 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			case "enter":
 				if m.cmdInput != "" {
+					if m.explicitClusterContext {
+						m.statusMsg = explicitContextUnsupportedAction
+						m.cmdMode = false
+						m.cmdInput = ""
+						return m, nil
+					}
 					// Save to history
 					m.cmdHistory = append([]string{m.cmdInput}, m.cmdHistory...)
 					if len(m.cmdHistory) > 20 {
@@ -1642,10 +1661,18 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 
 			case key.Matches(msg, m.keymap.ExportHTML) && m.panelView == viewMaps:
+				if m.explicitClusterContext {
+					m.statusMsg = explicitContextUnsupportedAction
+					return m, nil
+				}
 				m.statusMsg = "Exporting graph (html)..."
 				return m, m.runGraphExport("html")
 
 			case key.Matches(msg, m.keymap.ExportSVG) && m.panelView == viewMaps:
+				if m.explicitClusterContext {
+					m.statusMsg = explicitContextUnsupportedAction
+					return m, nil
+				}
 				m.statusMsg = "Exporting graph (svg)..."
 				return m, m.runGraphExport("svg")
 
@@ -1788,6 +1815,10 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case key.Matches(msg, m.keymap.Shell):
+			if m.explicitClusterContext {
+				m.statusMsg = explicitContextUnsupportedAction
+				return m, nil
+			}
 			m.shellMode = true
 			return m, m.runShellOut()
 
@@ -1943,6 +1974,10 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case key.Matches(msg, m.keymap.Trace):
+			if m.explicitClusterContext {
+				m.statusMsg = explicitContextUnsupportedAction
+				return m, nil
+			}
 			// Open trace picker with available resources
 			m.traceMode = true
 			m.traceCursor = 0
@@ -1950,6 +1985,10 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case key.Matches(msg, m.keymap.Scan):
+			if m.explicitClusterContext {
+				m.statusMsg = explicitContextUnsupportedAction
+				return m, nil
+			}
 			// Run scan and show results
 			m.scanMode = true
 			m.scanLoading = true
@@ -1958,6 +1997,10 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, m.runScan()
 
 		case key.Matches(msg, m.keymap.Import):
+			if m.explicitClusterContext {
+				m.statusMsg = explicitContextUnsupportedAction
+				return m, nil
+			}
 			m.switchToImport = true
 			saveSnapshot(&m)
 			return m, tea.Quit
@@ -1980,6 +2023,10 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case key.Matches(msg, m.keymap.Command):
+			if m.explicitClusterContext {
+				m.statusMsg = explicitContextUnsupportedAction
+				return m, nil
+			}
 			m.cmdMode = true
 			m.cmdInput = ""
 			m.cmdHistoryIdx = -1
@@ -2007,6 +2054,9 @@ func runAuthLogin() tea.Msg {
 // This is session-scoped: no dotfile modifications, completion sourced from temp file.
 func (m *LocalClusterModel) runShellOut() tea.Cmd {
 	return func() tea.Msg {
+		if m.explicitClusterContext {
+			return shellExitMsg{err: fmt.Errorf("%s", explicitContextUnsupportedAction)}
+		}
 		// Detect user's shell
 		shell := os.Getenv("SHELL")
 		if shell == "" {
@@ -2714,6 +2764,12 @@ func (m LocalClusterModel) renderHelp() string {
 	b.WriteString("  " + lcNameStyle.Render("S") + "  Scan for risk issues\n")
 	b.WriteString("  " + lcNameStyle.Render("e/E") + "  Export graph from MAPS panel (HTML/SVG)\n")
 	b.WriteString("  " + lcNameStyle.Render("I") + "  Import wizard (bring workloads to ConfigHub)\n")
+	if m.explicitClusterContext {
+		b.WriteString("\n")
+		b.WriteString(lcSectionStyle.Render("SELECTED CONTEXT LIMITS"))
+		b.WriteString("\n")
+		b.WriteString("  Inventory and bounded explain use the selected context. Trace, scan, graph export, command mode, shell and import are disabled because they do not yet honor this binding.\n")
+	}
 	b.WriteString("\n")
 
 	b.WriteString(lcSectionStyle.Render("COMMAND PALETTE"))
@@ -5780,6 +5836,9 @@ func traceOwnerSupportedInTUI(owner string) bool {
 // runTrace runs the trace command for a given item
 func (m LocalClusterModel) runTrace(item TraceItem) tea.Cmd {
 	return func() tea.Msg {
+		if m.explicitClusterContext {
+			return traceResultMsg{err: fmt.Errorf("%s", explicitContextUnsupportedAction)}
+		}
 		var output string
 		var err error
 		var secrets *agent.SecretEvidenceResult
@@ -5942,6 +6001,9 @@ func getTraceResourceGVR(kind string) schema.GroupVersionResource {
 // runScan runs the scan command
 func (m LocalClusterModel) runScan() tea.Cmd {
 	return func() tea.Msg {
+		if m.explicitClusterContext {
+			return scanResultMsg{err: fmt.Errorf("%s", explicitContextUnsupportedAction)}
+		}
 		// Run cub-scout scan command
 		cmd := exec.Command("./cub-scout", "scan")
 		out, err := cmd.CombinedOutput()
@@ -6008,6 +6070,9 @@ func runGraphExportViaCLI(format, outputPath string) error {
 
 func (m LocalClusterModel) runGraphExport(format string) tea.Cmd {
 	return func() tea.Msg {
+		if m.explicitClusterContext {
+			return graphExportMsg{format: format, err: fmt.Errorf("%s", explicitContextUnsupportedAction)}
+		}
 		normalized := strings.ToLower(strings.TrimSpace(format))
 		if normalized == "" {
 			normalized = "html"
@@ -6586,29 +6651,29 @@ type LocalClusterResult struct {
 }
 
 // runLocalClusterTUI launches the Go-native local cluster TUI
-// Returns: (switchToHub, hubContext, switchToImport, error)
-func runLocalClusterTUI() (bool, string, bool, error) {
+// Returns: (switchToHub, hubContext, switchToImport, captured binding, error)
+func runLocalClusterTUI(binding *localClusterBinding) (bool, string, bool, *localClusterBinding, error) {
 	// #111: Validate owner flag before launching TUI
 	if sharedViewOpts.Owner != "" {
 		if err := ValidateOwner(sharedViewOpts.Owner); err != nil {
-			return false, "", false, err
+			return false, "", false, binding, err
 		}
 		// Normalize to canonical case
 		sharedViewOpts.Owner = NormalizeOwner(sharedViewOpts.Owner)
 	}
 
-	m := initialLocalModel()
+	m := initialLocalModelWithBinding(sharedViewOpts, binding)
 	p := tea.NewProgram(m, tea.WithAltScreen())
 
 	finalModel, err := p.Run()
 	if err != nil {
-		return false, "", false, err
+		return false, "", false, binding, err
 	}
 
 	// Check if user wants to switch modes
 	if fm, ok := finalModel.(LocalClusterModel); ok {
-		return fm.switchToHub, fm.hubContext, fm.switchToImport, nil
+		return fm.switchToHub, fm.hubContext, fm.switchToImport, fm.clusterBinding, nil
 	}
 
-	return false, "", false, nil
+	return false, "", false, binding, nil
 }

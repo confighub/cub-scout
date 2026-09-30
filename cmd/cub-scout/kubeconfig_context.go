@@ -69,9 +69,17 @@ func resolveClusterConfig(
 // never rendered or serialized; refreshes reuse the same selection and
 // credentials instead of consulting a possibly changed current context.
 type localClusterBinding struct {
-	config  *rest.Config
-	context string
-	err     error
+	config   *rest.Config
+	context  string
+	explicit bool
+	err      error
+}
+
+// clusterContextSelection is a per-invocation selection. An omitted selection
+// preserves legacy behavior; an explicitly provided name is strict.
+type clusterContextSelection struct {
+	name     string
+	explicit bool
 }
 
 func resolveLegacyLocalClusterBinding(contextName string) *localClusterBinding {
@@ -90,4 +98,14 @@ func resolveLocalClusterBinding(
 		inClusterConfig,
 	)
 	return &localClusterBinding{config: config, context: boundContext, err: err}
+}
+
+func resolveLocalClusterBindingForSelection(selection clusterContextSelection) *localClusterBinding {
+	config, boundContext, err := resolveClusterConfig(
+		selection.name,
+		selection.explicit,
+		clientcmd.NewDefaultClientConfigLoadingRules(),
+		rest.InClusterConfig,
+	)
+	return &localClusterBinding{config: config, context: boundContext, explicit: selection.explicit, err: err}
 }

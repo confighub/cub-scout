@@ -116,9 +116,27 @@ KUBECONFIG=/tmp/scout-offline-validation.kubeconfig go test ./cmd/cub-scout \
 ```
 
 The test uses temporary HTTP servers and a temporary kubeconfig; it does not
-call a live cluster. This is a partial #599 foundation, not a global context
-selection guarantee. Trace and other subprocess/shell paths, mode switching,
-and explicit context-selection surfaces remain outside this packet.
+call a live cluster. This is the initial #599 binding foundation, not a global
+context selection guarantee. The scoped selector proof below describes the
+explicit-mode limits; broader subprocess and selector coverage remains pending.
+
+### Scoped explicit context selection proof
+
+The scoped selector slice adds a strict named context to `map list`, its MCP
+`map` tool (`context` input), and TUI startup (`map --kube-context`). Omission
+preserves the existing default behavior; an explicitly empty or missing name
+errors without falling back. Deterministic two-server tests show that CLI and
+TUI inventory requests reach only the selected endpoint, preserve kubeconfig
+bytes, and remain on the captured endpoint after same-name kubeconfig edits
+and a local-to-Hub-to-local TUI round trip. The MCP test verifies that the
+selected context is forwarded to the CLI invocation; it does not make an MCP
+request against the two test servers. TUI bounded explain shares the captured
+binding. In explicit mode, trace, scan, graph export, arbitrary command mode,
+shell, and import are unavailable until each action has a verified binding
+path; pure rendering remains available. With `map --hub`, the selector applies
+only if the user switches into the local TUI; it does not select a ConfigHub
+context. This does not claim context selection for other commands or all of
+#599.
 
 ## Next Decision
 
