@@ -6,6 +6,8 @@ Use [#645](https://github.com/confighub/cub-scout/issues/645) for the current
 queue; this checkpoint covers merged work through `1669305`. The maintainer's
 continuous-execution authorization remains active. Do not repeat release work
 or treat the historical review restrictions below as the adopted policy.
+Earlier dated snapshots below preserve history; where status or decisions
+conflict, this checkpoint and the live tracker take precedence.
 
 - #658 added exact-field attribution to CLI, MCP and the TUI; #659 routes a
   known-resource/known-field question directly to that evidence. Observed field
