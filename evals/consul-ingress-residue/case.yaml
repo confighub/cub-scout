@@ -1,0 +1,5 @@
+# FIXTURE-OWNED-SCAFFOLD: pinned public receipt and child Application capture.
+schema_version: "1.1"
+name: consul-ingress-residue
+context:
+  scaffold_script: scaffold.sh

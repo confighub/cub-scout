@@ -302,12 +302,22 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			checkRecordedExplainCaseScaffold(t, caseDir)
 			continue
 		}
+		if filepath.Base(caseDir) == "consul-ingress-residue" {
+			checkConsulHLT03Scaffold(t, caseDir)
+			continue
+		}
 		if filepath.Base(caseDir) == "flux-ready-without-health" {
 			checkFluxHLT02ScaffoldBytes(t, caseDir)
 			continue
 		}
 		if filepath.Base(caseDir) == "sveltos-inferred-revision" {
 			checkSveltosInferredRevisionCaseScaffold(t, caseDir)
+			continue
+		}
+		// DEL-04 is a receipt-only case: it owns immutable public source
+		// receipts, not the unrelated suite-wide Kubernetes resource export.
+		if filepath.Base(caseDir) == "oci-identity-lifecycle" {
+			checkOCIIdentityLifecycleScaffold(t, caseDir)
 			continue
 		}
 		if !strings.Contains(string(data), "scaffold_script: scaffold.sh") {
