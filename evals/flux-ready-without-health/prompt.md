@@ -37,8 +37,9 @@ or `UNKNOWN` for each revision; `MATCH`, `MISMATCH`, or `UNKNOWN` for
 `NOT_RECORDED`, `PERFORMED`, or `UNKNOWN` for `application_level_check`.
 
 For `uid_chain`, use exactly
-`deployment:<uid>;replicaset:<uid>;pod:<uid>` using the captured UIDs when all
-three owner UID links match, otherwise use `UNKNOWN`. Flux Ready is a reconciliation
+`deployment:<uid>;replicaset:<uid>;pod:<uid>` using the captured UIDs when both
+controller-owner links match (Pod → ReplicaSet and ReplicaSet → Deployment),
+otherwise use `UNKNOWN`. Flux Ready is a reconciliation
 condition; do not treat it as a workload-health result when the configured
 wait/checks do not establish that result. Keep direct workload observations
 separate from controller status. Do not infer application-level health, a
