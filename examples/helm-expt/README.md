@@ -89,6 +89,14 @@ releases, no records, denied Secret listing, malformed encodings/data,
 oversize expansion, invalid identity metadata, and an older valid record beside
 a bad candidate in either listing order.
 
+Helm's release time wrapper serializes a zero `time.Time` as `""`; this is a
+valid stored value for fields such as `info.deleted` on a newly deployed
+release. The decoder treats omitted, `null`, and empty-string timestamps as
+zero/unknown, preserves valid RFC3339 timestamps, and rejects malformed or
+non-string values. This is deterministic decoder compatibility coverage
+(`#676`), not evidence from a Helm 3 live matrix; Helm 4 compatibility remains
+unclaimed by this change.
+
 On 2026-09-30, the lead ran this smoke at source `e8e7523` for #663 using
 Helm `v4.1.4+g05fa379`. It exited 0 and reported Helm ownership with the exact
 `Deployment/helm-release-decode/release-probe` chain node. The owned cluster

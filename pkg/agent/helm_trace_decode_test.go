@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -92,6 +93,98 @@ func TestHelmDecodeRejectsMalformedAndUnidentifiedReleaseRecords(t *testing.T) {
 	got, err := tracer.decodeRelease(gzipAndBase64(t, validReleaseJSON()))
 	if err != nil || got == nil || got.Name != "web" || got.Namespace != "default" || got.Version != 2 {
 		t.Fatalf("valid release decode = (%+v, %v)", got, err)
+	}
+}
+
+func TestHelmDecodeAcceptsEmptyDeletedTimestamp(t *testing.T) {
+	data := []byte(`{"name":"web","namespace":"default","version":2,"info":{"first_deployed":"2026-09-30T10:11:12.123456789+01:00","last_deployed":"2026-09-30T10:11:13Z","deleted":"","description":"install complete","status":"deployed"}}`)
+	got, err := NewHelmTracer(fake.NewSimpleClientset()).decodeRelease(gzipAndBase64(t, data))
+	if err != nil {
+		t.Fatalf("decodeRelease() failed for Helm 3 zero deleted timestamp: %v", err)
+	}
+	if !got.Info.Deleted.IsZero() {
+		t.Fatalf("deleted timestamp = %s; want zero time for Helm 3 empty string", got.Info.Deleted)
+	}
+	first, _ := time.Parse(time.RFC3339Nano, "2026-09-30T10:11:12.123456789+01:00")
+	last, _ := time.Parse(time.RFC3339Nano, "2026-09-30T10:11:13Z")
+	if !got.Info.FirstDeployed.Equal(first) || !got.Info.LastDeployed.Equal(last) {
+		t.Fatalf("deployed timestamps changed: first=%s last=%s", got.Info.FirstDeployed, got.Info.LastDeployed)
+	}
+	if got.Info.Status != "deployed" || got.Info.Description != "install complete" {
+		t.Fatalf("non-time release info changed: status=%q description=%q", got.Info.Status, got.Info.Description)
+	}
+}
+
+func TestHelmReleaseInfoZeroAndValidTimestamps(t *testing.T) {
+	fields := []struct {
+		name string
+		get  func(helmReleaseInfo) time.Time
+	}{
+		{"first_deployed", func(i helmReleaseInfo) time.Time { return i.FirstDeployed }},
+		{"last_deployed", func(i helmReleaseInfo) time.Time { return i.LastDeployed }},
+		{"deleted", func(i helmReleaseInfo) time.Time { return i.Deleted }},
+	}
+	for _, field := range fields {
+		t.Run(field.name+" zero encodings", func(t *testing.T) {
+			for _, value := range []string{`""`, `null`} {
+				var got helmReleaseInfo
+				if err := json.Unmarshal([]byte(`{"`+field.name+`":`+value+`}`), &got); err != nil {
+					t.Fatalf("unmarshal %s: %v", value, err)
+				}
+				if !field.get(got).IsZero() {
+					t.Errorf("%s=%s, want zero", field.name, field.get(got))
+				}
+			}
+			var got helmReleaseInfo
+			if err := json.Unmarshal([]byte(`{"status":"deployed"}`), &got); err != nil || !field.get(got).IsZero() {
+				t.Fatalf("omitted %s: time=%s err=%v, want zero and no error", field.name, field.get(got), err)
+			}
+		})
+	}
+	const timestamp = "2026-09-30T10:11:12.123456789+01:30"
+	for _, field := range fields {
+		t.Run(field.name+" RFC3339Nano", func(t *testing.T) {
+			var got helmReleaseInfo
+			if err := json.Unmarshal([]byte(`{"`+field.name+`":"`+timestamp+`"}`), &got); err != nil {
+				t.Fatalf("unmarshal valid timestamp: %v", err)
+			}
+			want, _ := time.Parse(time.RFC3339Nano, timestamp)
+			if !field.get(got).Equal(want) {
+				t.Fatalf("%s=%s, want %s", field.name, field.get(got), want)
+			}
+		})
+	}
+}
+
+func TestHelmReleaseInfoRejectsMalformedTimestampsAndClearsOnReuse(t *testing.T) {
+	fields := []string{"first_deployed", "last_deployed", "deleted"}
+	for _, field := range fields {
+		for _, value := range []string{`"not-a-time"`, `17`, `true`, `{}`, `[]`} {
+			t.Run(field+"/"+value, func(t *testing.T) {
+				var got helmReleaseInfo
+				err := json.Unmarshal([]byte(`{"`+field+`":`+value+`}`), &got)
+				if err == nil {
+					t.Fatalf("accepted invalid %s value %s", field, value)
+				}
+			})
+		}
+	}
+	seed := time.Date(2024, time.January, 2, 3, 4, 5, 0, time.UTC)
+	for _, value := range []string{`""`, `null`} {
+		got := helmReleaseInfo{FirstDeployed: seed, LastDeployed: seed, Deleted: seed}
+		if err := json.Unmarshal([]byte(`{"first_deployed":`+value+`,"last_deployed":`+value+`,"deleted":`+value+`}`), &got); err != nil {
+			t.Fatalf("decode reused value %s: %v", value, err)
+		}
+		if !got.FirstDeployed.IsZero() || !got.LastDeployed.IsZero() || !got.Deleted.IsZero() {
+			t.Fatalf("timestamps retained after %s decode: %+v", value, got)
+		}
+	}
+	got := helmReleaseInfo{FirstDeployed: seed, LastDeployed: seed, Deleted: seed, Status: "prior"}
+	if err := json.Unmarshal([]byte(`{"deleted":[]}`), &got); err == nil {
+		t.Fatal("malformed timestamp accepted")
+	}
+	if !got.FirstDeployed.Equal(seed) || !got.LastDeployed.Equal(seed) || !got.Deleted.Equal(seed) || got.Status != "prior" {
+		t.Fatalf("receiver mutated after failed decode: %+v", got)
 	}
 }
 
