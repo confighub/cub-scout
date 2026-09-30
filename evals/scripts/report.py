@@ -27,9 +27,30 @@ from collections import defaultdict
 ARMS = ("with", "without")
 
 
+def cost_value(value):
+    finite = not isinstance(value, float) or math.isfinite(value)
+    return (isinstance(value, (int, float)) and not isinstance(value, bool) and
+            finite and value >= 0)
+
+
 def run_cost(run):
-    mocks = ((run.get("mocks") or {}).get("calls") or {}).get("costUsd") or 0
-    return (run.get("costUsd") or 0) + (run.get("judgeCostUsd") or 0) + mocks
+    """Return attributable spend, or None if any present spend field is invalid."""
+    if not isinstance(run, dict) or "costUsd" not in run or not cost_value(run["costUsd"]):
+        return None
+    total = run["costUsd"]
+    if "judgeCostUsd" in run:
+        if not cost_value(run["judgeCostUsd"]):
+            return None
+        total += run["judgeCostUsd"]
+    if "mocks" in run:
+        mocks = run["mocks"]
+        if not isinstance(mocks, dict) or not isinstance(mocks.get("calls"), dict):
+            return None
+        mock_cost = mocks["calls"].get("costUsd")
+        if not cost_value(mock_cost):
+            return None
+        total += mock_cost
+    return total
 
 
 def case_tags(case):
@@ -119,12 +140,15 @@ def summarise(runs):
     if n == 0:
         return None
     score = sum(r.get("score") or 0 for r in runs)
-    cost = sum(run_cost(r) for r in runs)
+    run_costs = [run_cost(r) for r in runs]
+    costs_known = all(cost is not None for cost in run_costs)
+    cost = sum(run_costs) / n if costs_known else None
+    total_cost = sum(run_costs) if costs_known else None
     return {
         "runs": n,
         "score": score / n,
-        "cost": cost / n,
-        "per_score": cost / score if score > 0 else None,
+        "cost": cost,
+        "per_score": total_cost / score if costs_known and score > 0 else None,
         "turns": sum(r.get("turns") or 0 for r in runs) / n,
         "seconds": sum(r.get("durationSeconds") or 0 for r in runs) / n,
         "errors": sum(1 for r in runs if r.get("error")),
@@ -182,27 +206,30 @@ def verified_summary(runs):
     statuses = [verified_answer(run, run.get("_grader_definitions")) for run in runs]
     known = [status for status in statuses if status is not None]
     verified = sum(status is True for status in known)
-    cost = sum(run_cost(run) for run in runs)
+    run_costs = [run_cost(run) for run in runs]
+    unknown_cost = sum(cost is None for cost in run_costs)
+    cost = sum(cost for cost in run_costs if cost is not None) if unknown_cost == 0 else None
     unknown = len(statuses) - len(known)
-    per_verified = None if unknown or not verified else cost / verified
+    per_verified = None if unknown or unknown_cost or not verified else cost / verified
     return {"runs": len(runs), "verified": verified, "known": len(known),
-            "unknown": unknown, "cost": cost, "per_verified": per_verified}
+            "unknown": unknown, "unknown_cost": unknown_cost, "cost": cost,
+            "per_verified": per_verified}
 
 
 def verified_table(rows):
-    out = ["| Case/group | Arm | Runs | Verified | Unknown | $/run | $/verified |",
-           "|---|---|---:|---:|---:|---:|---:|"]
+    out = ["| Case/group | Arm | Runs | Verified | Unknown answer | Unknown cost | $/run | $/verified |",
+           "|---|---|---:|---:|---:|---:|---:|---:|"]
     for label, by_arm in rows:
         for arm in ARMS:
             s = by_arm.get(arm)
             if s is None:
-                out.append("| %s | %s | 0 | 0 | 0 | n/a | n/a |" % (label if arm == "with" else "", arm))
+                out.append("| %s | %s | 0 | 0 | 0 | 0 | n/a | n/a |" % (label if arm == "with" else "", arm))
                 continue
-            per = "UNKNOWN" if s["unknown"] else "n/a" if s["per_verified"] is None else "$%.2f" % s["per_verified"]
-            cost_per_run = "n/a" if not s["runs"] else "$%.2f" % (s["cost"] / s["runs"])
-            out.append("| %s | %s | %d | %d/%d | %d | %s | %s |" %
+            per = "UNKNOWN" if s["unknown"] or s["unknown_cost"] else "n/a" if s["per_verified"] is None else "$%.2f" % s["per_verified"]
+            cost_per_run = "UNKNOWN" if s["unknown_cost"] else "n/a" if not s["runs"] else "$%.2f" % (s["cost"] / s["runs"])
+            out.append("| %s | %s | %d | %d/%d | %d | %d | %s | %s |" %
                        (label if arm == "with" else "", arm, s["runs"], s["verified"],
-                        s["known"], s["unknown"], cost_per_run, per))
+                        s["known"], s["unknown"], s["unknown_cost"], cost_per_run, per))
     return "\n".join(out)
 
 
@@ -210,7 +237,8 @@ def fmt(s):
     if s is None:
         return "| – | – | – | – | – | – |"
     per = "n/a" if s["per_score"] is None else "$%.2f" % s["per_score"]
-    return "| %d | %.2f | $%.2f | %s | %.1f | %.0f |" % (s["runs"], s["score"], s["cost"], per, s["turns"], s["seconds"])
+    cost = "UNKNOWN" if s["cost"] is None else "$%.2f" % s["cost"]
+    return "| %d | %.2f | %s | %s | %.1f | %.0f |" % (s["runs"], s["score"], cost, per, s["turns"], s["seconds"])
 
 
 HEADER = "| {label} | Arm | Runs | Score | $/run | $/score | Turns | Seconds |\n|---|---|---|---|---|---|---|---|"
