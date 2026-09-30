@@ -1,0 +1,20 @@
+{
+  "recordedAt": "2026-09-30",
+  "sourceCommit": "de30079a697134df4c79219f811e8e210ad6ffda",
+  "context": "kind-scout-evals-scale",
+  "scope": "scale raw exports only; MCP arm remains live",
+  "managedFields": true,
+  "notes": [
+    "Read-only refresh of existing named context; no scale-cluster resources changed.",
+    "This is not a historical result update or an atomic match to later live reads."
+  ],
+  "files": {
+    "evals/fixtures/scale/cluster/configmaps.yaml": "fc7bce49a84edb5065e4c441bc9936ee906ee976567dbd80bae5fe282f4eb68f",
+    "evals/fixtures/scale/cluster/deployments.yaml": "822716e41eaf59674cec8b52913b2613c76932b578c45d54285f71747dd228b6",
+    "evals/fixtures/scale/cluster/events.yaml": "3764ff2668f35d131c98ae3cd8acbf40ae06c32888424f4e58de7bf6e0f707bd",
+    "evals/fixtures/scale/cluster/namespaces.yaml": "9c02dbb607f9ffd7e232292bfa5fb3fb1167f67b7b4ca9031c14a7cb1993b1f0",
+    "evals/fixtures/scale/cluster/pods.yaml": "eb4934b6b747acc370291984172c3b1729ee56eceb7e1d516b2b0eaf29a0d8ae",
+    "evals/fixtures/scale/cluster/replicasets.yaml": "e868ab510d43ca66ab3203b6d735ad8edc66a5fb28c497ad48e9c23707f5de68",
+    "evals/fixtures/scale/cluster/services.yaml": "c7984a35c6742a8bdf4b5d1b6d32fcfed0f04d649c069a05819fa96e9b8ae57a"
+  }
+}

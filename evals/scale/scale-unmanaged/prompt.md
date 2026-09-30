@@ -8,4 +8,4 @@ timeout_seconds: 900
 allowed_tools: [Read, Glob, Grep, Skill]
 ---
 
-I exported my cluster's state with `kubectl get -o yaml` into the `cluster` directory in the current working directory (namespaces, deployments, replicasets, pods, services, configmaps, events). Use whatever tools you have available. The workloads are the Deployments in the `team-*` namespaces. Which of these Deployments are managed by none of Flux, Argo CD, Helm or ConfigHub? Finish with one line `UNMANAGED: <comma-separated namespace/name>`.
+I exported my cluster's state with `kubectl get -o yaml --show-managed-fields` into the `cluster` directory in the current working directory (namespaces, deployments, replicasets, pods, services, configmaps, events). Use whatever tools you have available. The workloads are the Deployments in the `team-*` namespaces. Which of these Deployments are managed by none of Flux, Argo CD, Helm or ConfigHub? Finish with one line `UNMANAGED: <comma-separated namespace/name>`.

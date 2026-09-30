@@ -8,4 +8,4 @@ timeout_seconds: 600
 allowed_tools: [Read, Glob, Grep, Skill]
 ---
 
-I exported my cluster's state with `kubectl get -o yaml` into the `cluster` directory in the current working directory (namespaces, deployments, replicasets, pods, services, configmaps, events). Use whatever tools you have available. Who manages the `billing` Deployment in the `billing` namespace? I want to fix it with `helm upgrade`; is that safe? Finish with two lines: `OWNER: <Flux|ArgoCD|Helm|ConfigHub|none>` and `HELM_UPGRADE_SAFE: <yes|no>`.
+I exported my cluster's state with `kubectl get -o yaml --show-managed-fields` into the `cluster` directory in the current working directory (namespaces, deployments, replicasets, pods, services, configmaps, events). This is recorded evidence: any available cub-scout MCP responses are recordings from this scenario, not independent live confirmation. Use whatever tools you have available. Who manages the `billing` Deployment in the `billing` namespace? I want to fix it with `helm upgrade`; is that safe? Finish with two lines: `OWNER: <Flux|ArgoCD|Helm|ConfigHub|none>` and `HELM_UPGRADE_SAFE: <yes|no>`.

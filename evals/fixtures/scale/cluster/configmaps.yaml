@@ -30,6 +30,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: argocd
     resourceVersion: "558"
@@ -64,6 +78,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:19Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:19Z"
     name: kube-root-ca.crt
     namespace: default
     resourceVersion: "330"
@@ -98,6 +126,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: flux-system
     resourceVersion: "555"
@@ -132,13 +174,26 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:19Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:19Z"
     name: kube-root-ca.crt
     namespace: kube-node-lease
     resourceVersion: "331"
     uid: 11be7d96-469d-43eb-bdb4-83457024fada
 - apiVersion: v1
   data:
-    jws-kubeconfig-abcdef: eyJhbGciOiJIUzI1NiIsImtpZCI6ImFiY2RlZiJ9..eg8EDjCiD2HF8JiKAxnmeXyAOspeYOdQ9y8p8EsutKs
     kubeconfig: |
       apiVersion: v1
       clusters:
@@ -153,9 +208,19 @@ items:
   kind: ConfigMap
   metadata:
     creationTimestamp: "2026-09-27T12:38:11Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:kubeconfig: {}
+      manager: kubeadm
+      operation: Update
+      time: "2026-09-27T12:38:11Z"
     name: cluster-info
     namespace: kube-public
-    resourceVersion: "328"
+    resourceVersion: "116559"
     uid: a4cae70f-5606-4954-a28c-130341db0c72
 - apiVersion: v1
   data:
@@ -187,6 +252,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:19Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:19Z"
     name: kube-root-ca.crt
     namespace: kube-public
     resourceVersion: "332"
@@ -220,6 +299,16 @@ items:
   kind: ConfigMap
   metadata:
     creationTimestamp: "2026-09-27T12:38:11Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:Corefile: {}
+      manager: kubeadm
+      operation: Update
+      time: "2026-09-27T12:38:11Z"
     name: coredns
     namespace: kube-system
     resourceVersion: "226"
@@ -273,6 +362,21 @@ items:
   kind: ConfigMap
   metadata:
     creationTimestamp: "2026-09-27T12:38:10Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:client-ca-file: {}
+          f:requestheader-allowed-names: {}
+          f:requestheader-client-ca-file: {}
+          f:requestheader-extra-headers-prefix: {}
+          f:requestheader-group-headers: {}
+          f:requestheader-username-headers: {}
+      manager: kube-apiserver
+      operation: Update
+      time: "2026-09-27T12:38:10Z"
     name: extension-apiserver-authentication
     namespace: kube-system
     resourceVersion: "27"
@@ -283,6 +387,16 @@ items:
   kind: ConfigMap
   metadata:
     creationTimestamp: "2026-09-27T12:38:10Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:since: {}
+      manager: kube-apiserver
+      operation: Update
+      time: "2026-09-27T12:38:10Z"
     name: kube-apiserver-legacy-service-account-token-tracking
     namespace: kube-system
     resourceVersion: "65"
@@ -381,6 +495,21 @@ items:
     creationTimestamp: "2026-09-27T12:38:12Z"
     labels:
       app: kube-proxy
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:config.conf: {}
+          f:kubeconfig.conf: {}
+        f:metadata:
+          f:labels:
+            .: {}
+            f:app: {}
+      manager: kubeadm
+      operation: Update
+      time: "2026-09-27T12:38:12Z"
     name: kube-proxy
     namespace: kube-system
     resourceVersion: "241"
@@ -415,6 +544,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:19Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:19Z"
     name: kube-root-ca.crt
     namespace: kube-system
     resourceVersion: "333"
@@ -456,6 +599,16 @@ items:
   kind: ConfigMap
   metadata:
     creationTimestamp: "2026-09-27T12:38:11Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ClusterConfiguration: {}
+      manager: kubeadm
+      operation: Update
+      time: "2026-09-27T12:38:11Z"
     name: kubeadm-config
     namespace: kube-system
     resourceVersion: "210"
@@ -521,6 +674,16 @@ items:
   kind: ConfigMap
   metadata:
     creationTimestamp: "2026-09-27T12:38:11Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:kubelet: {}
+      manager: kubeadm
+      operation: Update
+      time: "2026-09-27T12:38:11Z"
     name: kubelet-config
     namespace: kube-system
     resourceVersion: "213"
@@ -555,6 +718,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:19Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:19Z"
     name: kube-root-ca.crt
     namespace: local-path-storage
     resourceVersion: "334"
@@ -599,6 +776,23 @@ items:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","data":{"config.json":"{\n        \"nodePathMap\":[\n        {\n                \"node\":\"DEFAULT_PATH_FOR_NON_LISTED_NODES\",\n                \"paths\":[\"/var/local-path-provisioner\"]\n        }\n        ]\n}","helperPod.yaml":"apiVersion: v1\nkind: Pod\nmetadata:\n  name: helper-pod\nspec:\n  priorityClassName: system-node-critical\n  tolerations:\n    - key: node.kubernetes.io/disk-pressure\n      operator: Exists\n      effect: NoSchedule\n  containers:\n  - name: helper-pod\n    image: docker.io/kindest/local-path-helper:v20251211-v0.29.0-alpha-100-g82a92c5d\n    imagePullPolicy: IfNotPresent","setup":"#!/bin/sh\nset -eu\nmkdir -m 0777 -p \"$VOL_DIR\"","teardown":"#!/bin/sh\nset -eu\nrm -rf \"$VOL_DIR\""},"kind":"ConfigMap","metadata":{"annotations":{},"name":"local-path-config","namespace":"local-path-storage"}}
     creationTimestamp: "2026-09-27T12:38:13Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:config.json: {}
+          f:helperPod.yaml: {}
+          f:setup: {}
+          f:teardown: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: "2026-09-27T12:38:13Z"
     name: local-path-config
     namespace: local-path-storage
     resourceVersion: "283"
@@ -633,6 +827,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-01
     resourceVersion: "442"
@@ -667,6 +875,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-02
     resourceVersion: "444"
@@ -701,6 +923,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-03
     resourceVersion: "448"
@@ -735,6 +971,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-04
     resourceVersion: "450"
@@ -769,6 +1019,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-05
     resourceVersion: "453"
@@ -803,6 +1067,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-06
     resourceVersion: "456"
@@ -837,6 +1115,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-07
     resourceVersion: "459"
@@ -871,6 +1163,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-08
     resourceVersion: "462"
@@ -905,6 +1211,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-09
     resourceVersion: "466"
@@ -939,6 +1259,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-10
     resourceVersion: "468"
@@ -973,6 +1307,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-11
     resourceVersion: "472"
@@ -1007,6 +1355,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-12
     resourceVersion: "475"
@@ -1041,6 +1403,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-13
     resourceVersion: "478"
@@ -1075,6 +1451,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-14
     resourceVersion: "480"
@@ -1109,6 +1499,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-15
     resourceVersion: "483"
@@ -1143,6 +1547,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-16
     resourceVersion: "487"
@@ -1177,6 +1595,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-17
     resourceVersion: "490"
@@ -1211,6 +1643,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-18
     resourceVersion: "492"
@@ -1245,6 +1691,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-19
     resourceVersion: "508"
@@ -1279,6 +1739,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-20
     resourceVersion: "511"
@@ -1313,6 +1787,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-21
     resourceVersion: "513"
@@ -1347,6 +1835,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-22
     resourceVersion: "516"
@@ -1381,6 +1883,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-23
     resourceVersion: "519"
@@ -1415,6 +1931,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-24
     resourceVersion: "525"
@@ -1449,6 +1979,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-25
     resourceVersion: "527"
@@ -1483,6 +2027,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-26
     resourceVersion: "533"
@@ -1517,6 +2075,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-27
     resourceVersion: "536"
@@ -1551,6 +2123,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-28
     resourceVersion: "541"
@@ -1585,6 +2171,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-29
     resourceVersion: "545"
@@ -1619,6 +2219,20 @@ items:
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
     creationTimestamp: "2026-09-27T12:38:31Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-09-27T12:38:31Z"
     name: kube-root-ca.crt
     namespace: team-30
     resourceVersion: "550"

@@ -18,22 +18,22 @@
         "reason": "ScalingReplicaSet",
         "message": "Scaled up replica set orders-5f8df669d4 from 0 to 1",
         "count": 1,
-        "age": "2m",
+        "age": "59s",
         "severity": "info",
         "source": "deployment-controller",
-        "firstSeen": "2026-09-27T08:55:16+01:00",
-        "lastSeen": "2026-09-27T08:55:16+01:00"
+        "firstSeen": "2026-09-30T18:26:45+01:00",
+        "lastSeen": "2026-09-30T18:26:45+01:00"
       },
       {
         "type": "Normal",
         "reason": "ScalingReplicaSet",
         "message": "Scaled up replica set orders-6555986955 from 0 to 2",
         "count": 1,
-        "age": "3m",
+        "age": "1m",
         "severity": "info",
         "source": "deployment-controller",
-        "firstSeen": "2026-09-27T08:54:36+01:00",
-        "lastSeen": "2026-09-27T08:54:36+01:00"
+        "firstSeen": "2026-09-30T18:26:05+01:00",
+        "lastSeen": "2026-09-30T18:26:05+01:00"
       }
     ],
     "totalCount": 2,

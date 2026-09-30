@@ -1,0 +1,37 @@
+{
+  "partial": true,
+  "partialReason": "synthetic interrupted fixture",
+  "status": "partial",
+  "config": {"model": "claude-test", "runs": 1},
+  "costUsd": 2.5,
+  "judgeCostUsd": 0.4,
+  "cases": [
+    {
+      "name": "synthetic",
+      "dir": "test/fixtures/evals-regrade/cases/supported",
+      "arms": {
+        "with": [
+          {"tracePath": "traces/good.jsonl", "costUsd": 0.12, "judgeCostUsd": 0.03, "mocks": {"calls": {"costUsd": 0.01}}},
+          {"tracePath": "traces/suffix.jsonl"},
+          {"tracePath": "traces/empty.jsonl"},
+          {"tracePath": "traces/interrupted.jsonl", "error": "turn limit reached"},
+          {"tracePath": "traces/missing.jsonl"},
+          {"tracePath": "../outside.jsonl"}
+        ],
+        "without": [
+          {"tracePath": "traces/good.jsonl"}
+        ]
+      }
+    },
+    {
+      "name": "unsupported",
+      "dir": "test/fixtures/evals-regrade/cases/unsupported",
+      "arms": {"with": [{"tracePath": "traces/good.jsonl", "costUsd": 0.2}]}
+    },
+    {
+      "name": "escaped-case-dir",
+      "dir": "../../../../tmp",
+      "arms": {"with": [{"tracePath": "traces/good.jsonl"}]}
+    }
+  ]
+}

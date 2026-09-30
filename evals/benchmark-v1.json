@@ -1,0 +1,344 @@
+{
+  "manifest_version": 1,
+  "title": "cub-scout P1 verified-answer benchmark",
+  "status": "frozen_design_not_executable",
+  "source": "docs/roadmap-3.0-execution.md#balanced-first-suite-24-cases-six-equally-weighted-groups",
+  "created": "2026-09-30",
+  "claim_scope": "Named tasks, pinned model/version, evidence condition, fixture revision, and run date only; no general savings claim until roadmap gates pass.",
+  "groups": [
+    {
+      "id": "inventory",
+      "weight": 0.1666666667,
+      "cases": [
+        {
+          "id": "INV-01",
+          "question": "Owner counts at scale",
+          "status": "existing_needs_snapshot_binding",
+          "existing_case": "evals/scale/scale-ownership-counts",
+          "reference": "Exact counts by owner; verify each category from explicit ownership metadata and count each Deployment once.",
+          "controls": [
+            "No heuristic ownership",
+            "Missing metadata remains unknown/Native only when the inventory is complete"
+          ],
+          "evidence_refresh": "2026-09-30",
+          "benchmark_admission": "pending frozen protocol run; fixture refresh is not a savings result"
+        },
+        {
+          "id": "INV-02",
+          "question": "Exact unmanaged list at scale",
+          "status": "existing_needs_snapshot_binding",
+          "existing_case": "evals/scale/scale-unmanaged",
+          "reference": "Exact namespace/name set, with no missing, duplicate, extra, or suffixed identities.",
+          "controls": [
+            "RBAC or partial-list uncertainty must not produce an unmanaged claim"
+          ],
+          "evidence_refresh": "2026-09-30",
+          "benchmark_admission": "pending frozen protocol run; fixture refresh is not a savings result"
+        },
+        {
+          "id": "INV-03",
+          "question": "Simple direct ownership label lookup where standalone Claude should do well",
+          "status": "existing_refreshed_fixture",
+          "existing_case": "evals/owner-confighub",
+          "reference": "ConfigHub ownership follows the exact confighub.com/UnitSlug label; explain the observed evidence.",
+          "controls": [
+            "No inference from names or workload shape"
+          ],
+          "evidence_refresh": "2026-09-30",
+          "benchmark_admission": "pending frozen protocol run; fixture refresh is not a savings result"
+        },
+        {
+          "id": "INV-04",
+          "question": "Partial/RBAC inventory without false orphan claims",
+          "status": "planned",
+          "existing_case": null,
+          "reference": "Report readable resources and omissions; do not classify inaccessible or omitted resources as unmanaged.",
+          "controls": [
+            "Explicitly distinguish empty, denied, and incomplete results"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "attribution",
+      "weight": 0.1666666667,
+      "cases": [
+        {
+          "id": "ATR-01",
+          "question": "Manual set-image attribution",
+          "status": "existing_refreshed_fixture",
+          "existing_case": "evals/changed-by-checkout",
+          "reference": "Identify kubectl set image as the manager of the observed image change only when managedFields supports it.",
+          "controls": [
+            "Same full raw evidence, including managedFields, in both arms"
+          ],
+          "evidence_refresh": "2026-09-30",
+          "benchmark_admission": "pending frozen protocol run; fixture refresh is not a savings result"
+        },
+        {
+          "id": "ATR-02",
+          "question": "Manual scale attribution",
+          "status": "existing_refreshed_fixture",
+          "existing_case": "evals/changed-by-cart",
+          "reference": "Attribute replica change to kubectl scale only when field-manager evidence supports it.",
+          "controls": [
+            "Do not mistake controller reconciliation for the most recent human edit"
+          ],
+          "evidence_refresh": "2026-09-30",
+          "benchmark_admission": "pending frozen protocol run; fixture refresh is not a savings result"
+        },
+        {
+          "id": "ATR-03",
+          "question": "Controller-only change",
+          "status": "existing_refreshed_fixture",
+          "existing_case": "evals/changed-by-payments",
+          "reference": "Report Helm/controller as manager when no human mutation is evidenced.",
+          "controls": [
+            "Do not invent a manual edit"
+          ],
+          "evidence_refresh": "2026-09-30",
+          "benchmark_admission": "pending frozen protocol run; fixture refresh is not a savings result"
+        },
+        {
+          "id": "ATR-04",
+          "question": "Copied Argo instance label versus tracking identity",
+          "status": "existing_refreshed_fixture",
+          "existing_case": "evals/argo-label-vs-tracking-id",
+          "reference": "Resolve Application from tracking-id under annotation tracking; flag the stale copied instance label.",
+          "controls": [
+            "Equal raw evidence including Argo configuration and tracking annotation in both arms"
+          ],
+          "evidence_refresh": "2026-09-30",
+          "benchmark_admission": "pending frozen protocol run; fixture refresh is not a savings result"
+        }
+      ]
+    },
+    {
+      "id": "delivery_identity",
+      "weight": 0.1666666667,
+      "cases": [
+        {
+          "id": "DEL-01",
+          "question": "Flux applied digest",
+          "status": "planned",
+          "existing_case": null,
+          "reference": "Match exact applied digest to the workload and source revision; timestamp alone is not release identity.",
+          "controls": [
+            "Missing or stale digest must remain unknown"
+          ]
+        },
+        {
+          "id": "DEL-02",
+          "question": "Argo published release not consumed",
+          "status": "planned",
+          "existing_case": null,
+          "reference": "Distinguish publication from reconciliation/consumption; a new published artifact does not prove the workload adopted it.",
+          "controls": [
+            "Include stale tag and refresh-state negative evidence"
+          ]
+        },
+        {
+          "id": "DEL-03",
+          "question": "Sveltos inferred revision versus exact proof",
+          "status": "planned",
+          "existing_case": null,
+          "reference": "Separate inferred revision from exact applied identity and state the evidence source.",
+          "controls": [
+            "Missing and stale identity must not be upgraded to exact proof"
+          ]
+        },
+        {
+          "id": "DEL-04",
+          "question": "OCI manifest/bundle/image mismatch and Helm lifecycle boundary",
+          "status": "planned",
+          "existing_case": null,
+          "reference": "Join installer input, rendered configuration, output manifest, bundle content, and running image by exact identities.",
+          "controls": [
+            "Render parity does not prove lifecycle hooks executed",
+            "No identity inference from mutable tags"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "health",
+      "weight": 0.1666666667,
+      "cases": [
+        {
+          "id": "HLT-01",
+          "question": "Sveltos Provisioned after workload failure",
+          "status": "planned",
+          "existing_case": null,
+          "reference": "Keep gate acceptance/prerequisite state separate from workload health and release approval.",
+          "controls": [
+            "Provisioned plus a failed workload is not healthy"
+          ]
+        },
+        {
+          "id": "HLT-02",
+          "question": "Flux Ready without workload checks",
+          "status": "planned",
+          "existing_case": null,
+          "reference": "Report Ready as controller status; report workload health only when checks ran and evidence supports it.",
+          "controls": [
+            "No health claim from Ready alone"
+          ]
+        },
+        {
+          "id": "HLT-03",
+          "question": "Consul workloads converge with named Ingress residue",
+          "status": "planned",
+          "existing_case": null,
+          "reference": "Name the first incomplete stage and residual Ingress; workload convergence is not total success.",
+          "controls": [
+            "Do not collapse partial completion into PASS"
+          ]
+        },
+        {
+          "id": "HLT-04",
+          "question": "Missing, old, or renewed report timestamps",
+          "status": "planned",
+          "existing_case": null,
+          "reference": "Report release identity and health separately; a refreshed report timestamp does not refresh its underlying health checks or prove a release digest.",
+          "controls": [
+            "Test clock skew, old checks in a refreshed report, and stale timestamp renewal"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "prerequisites_graph",
+      "weight": 0.1666666667,
+      "cases": [
+        {
+          "id": "PRE-01",
+          "question": "Missing CRD prerequisite",
+          "status": "planned",
+          "existing_case": null,
+          "reference": "Name the absent CRD and dependent operation; separate prerequisite absence from workload health.",
+          "controls": [
+            "Do not claim controller failure when the prerequisite was never present"
+          ]
+        },
+        {
+          "id": "PRE-02",
+          "question": "Kubernetes topology and cloud prerequisite",
+          "status": "planned",
+          "existing_case": null,
+          "reference": "Identify the concrete missing cloud API, secret, or schedulable-node/topology prerequisite.",
+          "controls": [
+            "Do not generalize beyond observed prerequisites"
+          ]
+        },
+        {
+          "id": "PRE-03",
+          "question": "Argo/Crossplane child-chain failure",
+          "status": "planned",
+          "existing_case": null,
+          "reference": "Trace parent to the failing child and name its failure evidence.",
+          "controls": [
+            "Parent Synced/Ready does not substitute for child coverage"
+          ]
+        },
+        {
+          "id": "PRE-04",
+          "question": "Kubara intended hub/spoke placement with missing live observations",
+          "status": "planned",
+          "existing_case": null,
+          "reference": "Keep intended target placement separate from observed live state.",
+          "controls": [
+            "Missing observations are unknown, not unmanaged or unhealthy"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reuse_limits",
+      "weight": 0.1666666667,
+      "cases": [
+        {
+          "id": "RUL-01",
+          "question": "Repeated question using a dated snapshot",
+          "status": "planned",
+          "existing_case": null,
+          "reference": "Answer from the stated snapshot and expose its timestamp and age; do not imply it is current live state.",
+          "controls": [
+            "Dated evidence cannot renew itself"
+          ]
+        },
+        {
+          "id": "RUL-02",
+          "question": "Cache invalidation after identity change",
+          "status": "planned",
+          "existing_case": null,
+          "reference": "Detect identity change and invalidate reused evidence before answering.",
+          "controls": [
+            "Test stale and changed UID/digest identities"
+          ]
+        },
+        {
+          "id": "RUL-03",
+          "question": "Denied cluster alongside a readable cluster with explicit context",
+          "status": "planned",
+          "existing_case": null,
+          "reference": "Report the denied target independently; honor the explicitly requested context and leave shared/current context unchanged.",
+          "controls": [
+            "Readable cluster data must not fill denied-cluster gaps",
+            "No implicit context switching"
+          ]
+        },
+        {
+          "id": "RUL-04",
+          "question": "Unsupported workload/image proof",
+          "status": "planned",
+          "existing_case": null,
+          "reference": "Return unknown when the workload/image relationship is unsupported or lacks identity evidence.",
+          "controls": [
+            "No tag-based or name-based image proof"
+          ]
+        }
+      ]
+    }
+  ],
+  "protocol": {
+    "arms": [
+      "standalone Claude with ordinary read-only tools",
+      "same Claude with cub-scout"
+    ],
+    "paired": true,
+    "arm_order": "randomized within pair, using a recorded fixed seed",
+    "model": "pin exact model identifier and Claude Code version before any paid run; currently unselected",
+    "evidence": "Both arms receive identical complete raw workload evidence, including managedFields, object metadata, status, relevant events, controller configuration and source identity. No treatment-only evidence.",
+    "correctness": "Binary verified success: every mandatory positive-weight non-tool_used grader is present exactly once and passed=true; any missing/malformed correctness metadata is unknown; any run error is unverified. tool_used indicators do not affect answer success.",
+    "cost": "Count actual spend for every arm and retry, including errors, mocks, judge calls and orchestration where attributable. Record provider/API dollars, harness estimates, account credits and tokens separately. If actual credits cannot be attributed, mark them not measured; do not infer from balances. Zero verified answers means cost per verified answer is undefined/infinite.",
+    "attempts": "Start with 3 paired repeats for diagnosis; retain each raw result and retry with linked attempt ID. Count interrupted attempts as failures and include all attempt costs in estimates; partial campaigns cannot support complete-suite headlines. Ten repeats per arm are the release-evidence starting point, not a significance guarantee.",
+    "cost_envelopes": {
+      "finish_live_only_cap_usd": 15,
+      "smoke_cap_usd": 20,
+      "baseline_cap_usd": 200,
+      "planning_rate_usd_per_arm_run": 1.25,
+      "planning_rate_note": "Historical planning arithmetic, not a current quote or guaranteed bill; pin and date actual model pricing before paid execution."
+    },
+    "gates": {
+      "quality": "No lower observed verified-success rate; paired 95% interval must not extend below -2 percentage points.",
+      "dollars": "At least 20% lower task-balanced cost per verified answer, with paired task-level bootstrap interval excluding no saving.",
+      "credits": "At least 20% lower attributable account-credit cost or explicitly report credits not measured and publish token/list-price evidence.",
+      "time": "Target 20% lower median; report p95 and investigate regressions above 10%.",
+      "mechanism": "Measure calls, bytes, duplicate reads, reasoning turns, and plugin/schema overhead."
+    }
+  },
+  "execution": {
+    "paid_runs_authorized_by_this_manifest": false,
+    "implementation_status": "design_only",
+    "required_before_execution": [
+      "all 24 prompts and deterministic references frozen",
+      "all cases have mandatory negative controls",
+      "equal-information evidence packets verified byte-for-byte",
+      "pinned model/version and dated pricing recorded",
+      "actual-cost/credit accounting route identified or limitations marked",
+      "runner authentication and provider limits preflighted",
+      "offline grader failure checks pass"
+    ],
+    "no_paid_command": "Do not execute a paid command until the case set is complete and these gates are approved."
+  }
+}

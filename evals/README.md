@@ -13,6 +13,24 @@ runs with the cub-scout plugin loaded and again without it, and the difference
 This is the pilot: thirteen cases on one recorded scenario, and three on a 300-Deployment scale scenario. The first suite of 20–30
 cases, a scheduled CI run and published results come next.
 
+## Main scenario evidence refresh (2026-09-30)
+
+The main scenario was re-recorded in an isolated disposable cluster after the
+recorder gained `--show-managed-fields`. Both arms now receive the full field
+manager evidence for attribution. Source revision and file hashes are in
+[the recording manifest](fixtures/recording-2026-09-30.json). The old result
+tables below describe their original evidence; they are not results on these
+new fixtures. The scale raw exports were also refreshed read-only from the
+existing named scale context; [their manifest](fixtures/scale/recording-2026-09-30.json)
+records provenance. Its scout arm remains live, so runtime observations can
+change after capture.
+
+The scenario uses representative field-manager names and controller labels;
+real GitOps controllers are not installed. The raw dump and MCP capture occur
+sequentially, so timestamps and runtime status can change during recording.
+The [first paired smoke](reports/2026-09-30-fair-attribution-smoke.md) answered
+correctly in both arms and cost more with scout; no benefit is assumed.
+
 ## Run
 
 Needs Claude Code 2.1.269 or later, logged in. Runs count against that account.
@@ -42,15 +60,23 @@ with `--json`, then:
 evals/scripts/report.py evals/results/<run>.json [more.json ...] --by-tag
 ```
 
-It prints, per case and per tag, for each arm: mean score, cost per run, cost
-per correct answer, turns and seconds. Cost per run includes the agent, judge
-graders and agent mocks. **Cost per correct answer** (total cost divided by
-total score) is the headline: an arm that is cheap per run but rarely right is
-expensive per correct answer. Runs that ended in an error are counted and
-listed, because their cost was spent. Input completeness is reported before the
-tables. Use `--require-complete` for a gate: partial or unverified completeness
-exits non-zero while still printing the observed costs and scores. A completed
-run is not necessarily a passing run; correctness remains a separate metric.
+It prints the legacy harness score and cost tables, plus a binary verified
+answer table when the result contains grader definitions. The legacy `$/score`
+is total run cost divided by the fractional harness score. It is retained for
+diagnostics and continuity; it is not a binary correctness rate or evidence of
+general savings. The binary table checks positive-weight graders embedded in
+the result, excluding every `tool_used` grader even if it contributed to the
+harness score. It cannot verify that those embedded patterns are the current
+case graders; use the offline regrader below for that. Cost includes agent,
+judge grader and mock spend, including runs that ended in errors or hit a turn
+limit. Schema-v1 `costUsd` is already inclusive: `judgeCostUsd` and
+`mocks.calls.costUsd` are breakdowns, not extra amounts to add. This is verified
+against Claude Code 2.1.274 and its saved primary/mock cost records; see the
+[producer's result documentation](https://code.claude.com/docs/en/plugin-evals#json-result).
+Missing, invalid or inconsistent spend is unknown, never free. Input completeness is reported before the tables. Use
+`--require-complete` for a gate: partial or unverified completeness exits
+non-zero while still printing the observed costs and scores. A completed run
+is not necessarily a passing run; correctness remains a separate metric.
 Completeness uses the producer's `partial` flag and per-case planned run counts;
 it cannot discover a case omitted entirely from a falsely complete artifact.
 
@@ -62,9 +88,45 @@ Do not pool different models, versions, evidence conditions or grader revisions
 into one headline number. The reporter combines observations; it does not prove
 that the input experiments are comparable.
 
-From the pilot (one run per case per arm, 2026-09-26/27):
+### Regrade saved transcripts against current graders
 
-| Group | Arm | Score | $/run | $/correct | Turns |
+The report's binary table uses grader definitions embedded in the result. To
+audit saved runs against the regex graders currently in each case's
+`graders/` directory, run the offline transcript regrader:
+
+```bash
+evals/scripts/regrade.py evals/results/<run>.json \
+  --out evals/results/<run>.regraded-current.json
+```
+
+It reads the terminal `type: result` text from each saved transcript, checks
+all current regex graders, and excludes `tool_used` indicators entirely. An
+error or interrupted run fails; missing traces, unsupported grader formats,
+malformed metadata and paths outside allowed directories are unknown. The new
+audit is separate from the source result and records its hash, current grader
+hashes, run indexes, outcomes and spend/model metadata. The command does not
+rerun agents or judges. By default traces must resolve inside the input result
+file's directory. Some harness artifacts keep traces elsewhere; allow only a
+reviewed directory explicitly with repeatable `--trace-root` flags:
+
+```bash
+evals/scripts/regrade.py evals/results/<run>.json \
+  --trace-root /path/to/reviewed/traces \
+  --out evals/results/<run>.regraded-current.json
+```
+
+The current execution priority and evidence rules are in
+[`docs/roadmap-3.0-execution.md`](../docs/roadmap-3.0-execution.md) and
+[#645](https://github.com/confighub/cub-scout/issues/645).
+
+Historical pilot table (one run per case per arm, 2026-09-26/27):
+
+**Superseded accounting:** the original reporter added judge/mock breakdowns
+twice. These recorded-suite dollar columns preserve the old published figures
+for audit only; regenerate from the original JSON with the corrected reporter
+before using them. Live scale runs with mocks disabled are unaffected.
+
+| Group | Arm | Historical harness score | $/run | Historical $/score | Turns |
 |---|---|---|---|---|---|
 | All 13 cases | with | 0.97 | $0.70 | $0.72 | 15.2 |
 | | without | 0.67 | $0.52 | $0.78 | 14.5 |
@@ -73,27 +135,23 @@ From the pilot (one run per case per arm, 2026-09-26/27):
 | Pitfalls | with | 1.00 | $0.68 | $0.68 | 13.5 |
 | | without | 0.75 | $0.32 | $0.42 | 9.8 |
 
-On this small scenario cub-scout costs more per run: the plugin adds its skill
-descriptions and tool schemas to every session. It pays for itself where the
-export cannot answer. At scale, over three runs per case on 300 Deployments,
-cub-scout was right 9 of 9 times against 8 of 9, 11% cheaper per correct
-answer, and 36% cheaper and 28% faster where one call answers the question;
-where the agent had both sources it spent the savings cross-checking cub-scout
-against the export (see Scale results below).
+These are exploratory historical harness results, not current strict transcript
+regrades or a general savings claim. The attribution rows compare unequal
+evidence: the original baseline export lacked `metadata.managedFields`, while cub-scout
+could read it. On this small scenario the plugin costs more per run, partly
+because its skill descriptions and tool schemas are added to every session.
+The scale tables below also retain their original historical scores and cost
+ratios; they do not establish general savings.
 
 ## Design
 
-- **Both arms see the same workload scenario, with an attribution evidence gap.**
-  Each recorded case's `scaffold.sh` writes a
-  `kubectl get -o yaml` export of the scenario into the run's workspace as
-  `./cluster/`, with the files embedded (a first attempt with `add_dirs` left
-  the agent unable to find the directory). The without-cub-scout arm answers
-  from that export alone. The with-cub-scout arm also gets the plugin's skills
-  and cub-scout's MCP tools. For labels and status, `Δ` measures the additional
-  tool access on that export. For attribution, the baseline export lacks managedFields while
-  cub-scout has them: that result measures extra evidence access as well as
-  tooling. It does not isolate an advantage on equal information. A matched
-  managedFields baseline remains required before making that claim.
+- **Both arms receive the same full raw export.** Each main-scenario case's
+  `scaffold.sh` writes `kubectl get -o yaml --show-managed-fields` evidence into
+  `./cluster/`. The baseline reads this export; the scout arm also receives
+  skills and MCP recordings from the scenario. Prompts declare that these are
+  recorded responses, not independent live confirmation. The historical
+  attribution runs omitted managedFields from the baseline; their reported
+  advantage must not be transferred to this refreshed design.
 - **MCP answers are recordings.** `mocks/cub-scout/` answers `doctor`, `map`,
   `scan`, `gitops_status`, `trace` and `explain` with what a standalone
   `cub-scout mcp serve` returned for the scenario. `trace` and `explain` are
@@ -118,13 +176,11 @@ against the export (see Scale results below).
   Flux-managed chart), `flux-installed-but-not-working` (controller pods but no
   Flux objects) and `argo-label-vs-tracking-id` (a copied label contradicting
   the tracking-id; this case found #628).
-- **Cases the export cannot answer.** The five ownership and diagnosis cases
-  can be answered from labels and status in the export; the first run showed
-  agents grep the export and never call cub-scout there, so Δ is about 0 by
-  design. The four `changed-by-*` cases ask who made the most recent change.
-  That lives in `metadata.managedFields`, which `kubectl get -o yaml` omits and
-  cub-scout's `explain` reports as `mutationCause` / `mutationManager`. This
-  is where Δ should show.
+- **Attribution is now answerable from both sources.** The four
+  `changed-by-*` cases ask about the most recent non-status writer. The export
+  includes `metadata.managedFields`; explain reports `mutationCause` and
+  `mutationManager`. The measurement question is whether scout saves work when
+  both arms have those facts, not whether access to extra facts helps.
 - **Reference answers.** Each `prompt.md` has an `expected_outcome` saying where
   in the export, and in cub-scout's output, the answer comes from.
 
@@ -205,8 +261,8 @@ evals/scripts/record.py kind-scout-evals-scale --scenario scale
 kind delete cluster --name scout-evals-scale
 ```
 
-This scenario tests the claim that cub-scout is cheaper for an agent on a
-large cluster. It also exposed #633: before that fix, `doctor` reported 302
+This scenario explores agent work on a large cluster; it does not establish a
+general cost advantage. It also exposed #633: before that fix, `doctor` reported 302
 warnings here, one per idle Deployment and DaemonSet. `map` for the whole
 cluster is about 270 KB, more than Claude Code accepts from one MCP call by
 default; the MCP `map` tool filters only by namespace.
@@ -215,19 +271,19 @@ default; the MCP `map` tool filters only by namespace.
 
 One run per case per arm, same model; recorded with #634, before #637.
 
-| Case | With | Without | $/correct with | $/correct without | Turns with / without |
+| Case | With | Without | Historical $/score with | Historical $/score without | Turns with / without |
 |---|---|---|---|---|---|
 | scale-ownership-counts | 1.00 | 0.00 (turn cap) | $1.27 | n/a | 43 / 31 |
 | scale-unmanaged | 1.00 | 0.00 (turn cap) | $1.51 | n/a | 36 / 31 |
 | scale-whats-failing | 1.00 | 1.00 | $1.03 | $0.94 | 26 / 32 |
 | **All three** | **1.00** | **0.33** | **$1.27** | **$4.35** | 35 / 31 |
 
-On 300 Deployments cub-scout was cheaper per run ($1.27 against $1.45), about
-20% faster (178 s against 222 s), and 3.4 times cheaper per correct answer. The
-two baseline failures were the 30-turn budget running out while counting and
-classifying by grep, not wrong answers; with a larger budget they would have
-cost more. `scale-whats-failing` came out even: `doctor` answered it in one
-call, and the baseline found the two failing pods by grep.
+This one-run pilot is exploratory and superseded by the three-run data below.
+Its historical harness scores gave a $/score ratio, not a validated binary
+correctness comparison. The two baseline errors hit the 30-turn budget while
+counting and classifying by grep; their answers were not verified successes.
+`scale-whats-failing` scored evenly: `doctor` answered it in one call, and the
+baseline found the two failing pods by grep.
 
 cub-scout's own weak point here: its whole-cluster `map` answer (268 KB) is
 larger than an MCP result may be, so Claude Code saved it to a file and the
@@ -239,7 +295,7 @@ should cut both turns and cost.
 Three runs per case per arm; the with-cub-scout arm against a live
 `cub-scout mcp serve` with #637's `map` filters and modes; $22.13 in total.
 
-| Case | Arm | Correct | $/run | $/correct | Turns | Seconds |
+| Case | Arm | Historical harness passes | $/run | Historical $/score | Turns | Seconds |
 |---|---|---|---|---|---|---|
 | scale-ownership-counts | with | 3/3 | $0.85 | $0.85 | 23.3 | 190 |
 | | without | 3/3 | $1.33 | $1.33 | 39.7 | 265 |
@@ -250,14 +306,16 @@ Three runs per case per arm; the with-cub-scout arm against a live
 | **All** | with | **9/9** | $1.23 | **$1.23** | 26.9 | 254 |
 | | without | 8/9 | $1.23 | $1.38 | 32.3 | 229 |
 
-With three runs the picture is more modest than the one-run pilot's 3.4
-times: cub-scout was right every time, 11% cheaper per correct answer, and
-clearly cheaper and faster where one call answers the question (owner counts:
-36% cheaper, 28% faster). It was slower and dearer on the unmanaged list, and
-the transcripts say why: each run had the right list within two `map` calls,
-then kept verifying it against the export (16 to 27 greps, or five `trace`
-and four `explain` calls and a sub-agent). The "same evidence" design gives
-the cub-scout arm two sources and it cross-checks one against the other.
+The table preserves the historical harness scores and ratios from this
+three-run pilot. Those figures are exploratory and do not establish general
+savings; use the binary transcript regrader for current-pattern correctness.
+The recorded harness reported all nine cub-scout runs and eight baseline runs
+passing its checks. It was slower and dearer on the unmanaged list, and the
+transcripts say why: each run had the right list within two `map` calls, then
+kept verifying it against the export (16 to 27 greps, or five `trace` and four
+`explain` calls and a sub-agent). The arms had different evidence access: the
+cub-scout arm had both live tool evidence and the export, and cross-checked
+them.
 
 Two follow-ups: a live-only variant for the scale cases (cub-scout against a
 live cluster, no export, versus the export alone), which is how agents meet
@@ -383,7 +441,7 @@ One run per case per arm, Claude Code 2.1.274 with its default model
 runs. One run each is enough to see where the difference is, not to measure
 its size; the 3-run suite comes next.
 
-| Case | With | Without | Δ | cub-scout used |
+| Case | With | Without | Historical harness score Δ | cub-scout used |
 |---|---|---|---|---|
 | changed-by-checkout | 1.00 | 0.00 | +1.00 | skill, `explain` |
 | changed-by-cart | 1.00 | 0.00 | +1.00 | skills, `explain` |
@@ -395,11 +453,13 @@ its size; the 3-run suite comes next.
 | owner-unlabelled | 1.00 | 1.00 | 0 | `trace` |
 | why-payments-broken | 1.00 | 1.00 | 0 | none |
 
-Mean Δ +0.33. Where the answer is in labels or status, both arms are right and
-cub-scout adds nothing. Where it is in managedFields, only the cub-scout arm
-answers; every baseline said UNKNOWN (honest) rather than guessing. The
-control and both negative cases passed in both arms: no invented hand edit,
-owner or commit.
+These are original exploratory harness scores, not current strict transcript
+regrades. Mean historical score Δ was +0.33. Where the answer is in labels or
+status, both arms scored as right. For hand-edit attribution, the baseline
+export omitted `metadata.managedFields` while the cub-scout arm could inspect
+it; every baseline said UNKNOWN rather than guessing. That is an unequal
+evidence result, not an equal-information comparison. The control and both
+negative cases passed in both arms: no invented hand edit, owner or commit.
 
 `list-unmanaged` asked about "any GitOps tool or ConfigHub", and both arms
 reasonably counted a Helm release as unmanaged. The question now names Flux,
@@ -421,15 +481,15 @@ Observed on the way, for follow-up:
 One run per arm, same model, v2.12.3 plus #625 and #629. $6.46 including a
 rerun.
 
-| Case | With | Without | Δ | cub-scout used |
+| Case | With | Without | Historical harness score Δ | cub-scout used |
 |---|---|---|---|---|
 | rollout-stuck-looks-healthy | 1.00 | 1.00 | 0 | a skill |
 | flux-helm-not-plain-helm | 1.00 | 1.00 | 0 | `trace` |
 | flux-installed-but-not-working | 1.00 | 1.00 | 0 | `gitops_status`, `doctor`, `explain` |
 | argo-label-vs-tracking-id | 1.00 | 1.00 | 0 | `trace`, the `observe-argocd` skill |
 
-Where the evidence is in the export, this model reads it carefully enough to
-avoid the traps: `Available=True` beside `ProgressDeadlineExceeded`, Flux's
+In this historical pilot, where the evidence is in the export, this model read
+it carefully enough to avoid the traps: `Available=True` beside `ProgressDeadlineExceeded`, Flux's
 labels beside Helm's, the tracking-id beside a copied label. The first run of
 `flux-installed-but-not-working` showed Δ +1.00 only because the baseline hit
 the 300-second limit mid-investigation; with 600 seconds it answered correctly,
@@ -437,10 +497,12 @@ so that Δ is not counted. `argo-label-vs-tracking-id` found #628: before #629,
 cub-scout named the Application from the copied label, so its answer would have
 been wrong while the baseline's was right.
 
-So far cub-scout's measured advantage is evidence the export lacks
-(managedFields). Next candidates: evidence spread across many objects, and
-questions where cub-scout's verdicts save an agent from reading thousands of
-lines, measured by turns and cost as well as score.
+In these historical exploratory runs, the clearest difference was attribution
+evidence missing from the baseline export (`managedFields`). Because the arms
+had unequal evidence, this does not establish an equal-information advantage.
+Next candidates: evidence spread across many objects, and questions where
+cub-scout's verdicts save an agent from reading thousands of lines, measured by
+turns and cost as well as score.
 
 Two earlier attempts are not counted: the harness could not find the export
 (`add_dirs`), and the fixed mocks could not key on a resource containing

@@ -43,6 +43,16 @@ scheduled in stage 2 of the [Path to 3.0](#path-to-30) rather than for a named
 version. Until implemented, their existing unknown/unsupported limits remain
 unchanged.
 
+### v2.12.4 Patch (Published 2026-09-30)
+
+[Release notes](releases/v2.12.4.md). Published from `11c3e38`, including the six
+agent-facing correctness fixes (#625, #629, #630, #631, #634, #637), invocation
+hints (#640) and eval-harness completeness work (#643). Archive checksums,
+macOS/Linux entry points, explicit-context inventory and Homebrew hashes passed.
+Current install/version references point to v2.12.4. Anonymous container pulls
+still fail (#520). Harness changes and smaller outputs do not establish a
+controlled cost or credit savings result; execution continues in #645.
+
 ### v2.12.3 Patch (Published 2026-09-26)
 
 [Release notes](releases/v2.12.3.md). Two fixes: `explain` and `trace` report
@@ -50,7 +60,7 @@ the owner from ownership detection instead of the tracer that ran
 ([#617](https://github.com/confighub/cub-scout/issues/617)), and
 `cub-scout mcp serve` accepts the MCP stdio transport's newline-delimited
 JSON, so MCP clients can connect (#616). Published from tag `v2.12.3` at
-`eec8da3`; install and version references point at it.
+`eec8da3`; current install references have since moved to v2.12.4.
 
 ### v2.12.2 Patch (Published 2026-09-26)
 
@@ -59,7 +69,7 @@ refusal when cub is older than its ConfigHub server
 ([#608](https://github.com/confighub/cub-scout/issues/608)), and exact ConfigHub
 unit-event outcomes in `map activity` and `doctor` (part of
 [#561](https://github.com/confighub/cub-scout/issues/561)). Published from tag
-`v2.12.2` at `35a41cf`; install and version references point at it.
+`v2.12.2` at `35a41cf`; current install references have since moved to v2.12.4.
 
 ### Image Verification Release Gate
 
