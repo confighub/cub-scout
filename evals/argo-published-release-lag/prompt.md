@@ -1,0 +1,3 @@
+Read only the recorded public-source excerpt at `cluster/argo-publication-lag.yaml`. Determine whether publication alone established that the Application had consumed the new release before refresh. State the observed pre-refresh release relation, the reported transition, and whether exact old/new digests or replica counts are shown. Distinguish the guide's measured narrative from a raw Kubernetes snapshot; do not invent values absent from the excerpt.
+
+Return one bare JSON object, no Markdown or explanation, with exactly these keys in this order: `consumed_before_refresh`, `pre_refresh_state`, `transition`, `exact_digests_and_counts`. Use `UNKNOWN` where the excerpt supplies no exact value.

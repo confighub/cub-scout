@@ -1,0 +1,14 @@
+---
+# FIXTURE-OWNED-SCAFFOLD: validate against this case's pinned source projection.
+schema_version: "1.1"
+name: argo-published-release-lag
+context:
+  scaffold_script: scaffold.sh
+---
+name: argo-published-release-lag
+description: "DEL-02 pinned Argo guide measurement excerpt; prepared, not run."
+tags: [benchmark-v1, DEL-02, delivery, recorded-source]
+max_turns: 4
+timeout_seconds: 90
+allowed_tools: [Read, Grep]
+---

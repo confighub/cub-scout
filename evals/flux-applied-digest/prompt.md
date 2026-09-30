@@ -1,0 +1,3 @@
+Read only the recorded source excerpt at `cluster/flux-applied-digest.yaml`. Identify the exact apps release digest and the Git revision reported during the handover. Explain the kind of evidence this excerpt is and any material limit on treating it as a raw live snapshot. Do not infer an identity from its timestamp.
+
+Return one bare JSON object, no Markdown or explanation, with exactly these keys in this order: `ready_apps_digest`, `source_revision`, `evidence_kind`, `snapshot_limit`. Use `UNKNOWN` for any value the excerpt does not establish. The source revision must be the complete value if present; do not shorten it.
