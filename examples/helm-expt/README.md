@@ -56,6 +56,28 @@ releases, no records, denied Secret listing, malformed encodings/data,
 oversize expansion, invalid identity metadata, and an older valid record beside
 a bad candidate in either listing order.
 
+## Helm manifest identity contract (#588, exact matching)
+
+Success criteria: a resource trace may identify a release only when one parsed
+manifest document has the exact caller-canonicalized `kind`, exact
+`metadata.name`, and an explicit `metadata.namespace` equal to the requested
+namespace. The existing tracer API has no `apiVersion` input, so API version
+cannot narrow candidates; duplicate matching documents or releases, including
+matches at different API versions, are ambiguous and must return an explicit
+error. Namespace omission by the caller or a candidate document is unresolved;
+Helm release namespace defaults and cluster/custom-resource scope are not
+inferred. Malformed, non-object, or unsupported nonempty manifest documents
+must return an explicit error rather than turn unreadable data into a confirmed
+absence. Empty and comment-only YAML documents are ignored.
+
+The fixture set in `pkg/agent/testdata/helm-manifest-identity/` covers one
+explicit exact match (including nested, comment, and prefix lookalikes), wrong
+and omitted namespaces, malformed/unsupported or apiVersion-less documents
+(including malformed evidence after an otherwise exact match), and duplicate
+identities at the same or different API versions. Tests reverse candidate
+document and release order; only a unique exact match may produce a managed
+trace. No Kubernetes API discovery or scope guess is introduced.
+
 ## Runnable Demo (Self-Contained)
 
 The rest of this page is the full integration narrative against a real

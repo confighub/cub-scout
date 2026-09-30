@@ -1,0 +1,4 @@
+kind: Deployment
+metadata:
+  name: api
+  namespace: team-a

@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"gopkg.in/yaml.v3"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -54,18 +55,32 @@ func (h *HelmTracer) Available() bool {
 
 // Trace finds the Helm release that manages a resource and builds the ownership chain
 func (h *HelmTracer) Trace(ctx context.Context, kind, name, namespace string) (*TraceResult, error) {
+	if strings.TrimSpace(kind) == "" || strings.TrimSpace(name) == "" {
+		return nil, fmt.Errorf("Helm resource identity is incomplete")
+	}
+	if strings.TrimSpace(namespace) == "" {
+		return nil, fmt.Errorf("Helm resource namespace is unresolved; refusing to infer namespace or scope")
+	}
+
 	// Find the Helm release in the namespace
 	releases, err := h.listReleases(ctx, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("list helm releases: %w", err)
 	}
 
-	// Find the release that manages this resource
+	// Match structured manifest identities. A partial or ambiguous match must
+	// never be promoted to an ownership claim.
 	var matchedRelease *helmRelease
 	for _, rel := range releases {
-		if h.releaseManagesResource(rel, kind, name) {
+		matched, err := releaseManifestMatchesResource(rel, kind, name, namespace)
+		if err != nil {
+			return nil, fmt.Errorf("cannot establish Helm manifest identity: %w", err)
+		}
+		if matched && matchedRelease != nil {
+			return nil, fmt.Errorf("multiple Helm releases contain the requested manifest identity")
+		}
+		if matched {
 			matchedRelease = rel
-			break
 		}
 	}
 
@@ -263,28 +278,98 @@ func (h *HelmTracer) decodeRelease(data []byte) (*helmRelease, error) {
 	return &release, nil
 }
 
-// releaseManagesResource checks if a Helm release manages a specific resource
-func (h *HelmTracer) releaseManagesResource(release *helmRelease, kind, name string) bool {
-	// Check the manifest for the resource
-	// The manifest is a multi-document YAML string
-	manifest := release.Manifest
+type helmManifestIdentity struct {
+	apiVersion       string
+	kind             string
+	name             string
+	namespace        string
+	namespacePresent bool
+}
 
-	// Simple check: look for the resource in the manifest
-	// Format: kind: <Kind> and name: <name>
-	kindLower := strings.ToLower(kind)
-	nameLower := strings.ToLower(name)
-
-	// Split manifest into documents
-	docs := strings.Split(manifest, "---")
-	for _, doc := range docs {
-		docLower := strings.ToLower(doc)
-		if strings.Contains(docLower, "kind: "+kindLower) &&
-			strings.Contains(docLower, "name: "+nameLower) {
-			return true
-		}
+// releaseManifestMatchesResource compares parsed manifest metadata rather than
+// YAML substrings. Trace currently receives no apiVersion, so all candidate
+// documents at that identity are counted and duplicates remain ambiguous.
+func releaseManifestMatchesResource(release *helmRelease, kind, name, namespace string) (bool, error) {
+	identities, err := parseHelmManifestIdentities(release.Manifest)
+	if err != nil {
+		return false, err
 	}
 
-	return false
+	matches := 0
+	matchedAPIVersions := make(map[string]struct{})
+	for _, identity := range identities {
+		if identity.kind != kind || identity.name != name {
+			continue
+		}
+		if !identity.namespacePresent || strings.TrimSpace(identity.namespace) == "" {
+			return false, fmt.Errorf("manifest namespace is absent for the requested kind and name")
+		}
+		if identity.namespace == namespace {
+			matches++
+			matchedAPIVersions[identity.apiVersion] = struct{}{}
+		}
+	}
+	if matches > 1 {
+		if len(matchedAPIVersions) > 1 {
+			return false, fmt.Errorf("multiple manifest API versions match the requested identity; Trace has no apiVersion input")
+		}
+		return false, fmt.Errorf("multiple manifest documents match the requested identity")
+	}
+	return matches == 1, nil
+}
+
+// parseHelmManifestIdentities validates every nonempty document before any
+// absence claim. It retains only the fields needed for identity matching and
+// reports generic errors so stored manifest content is never echoed.
+func parseHelmManifestIdentities(manifest string) ([]helmManifestIdentity, error) {
+	type manifestMetadata struct {
+		Name      *string `yaml:"name"`
+		Namespace *string `yaml:"namespace"`
+	}
+	type manifestObject struct {
+		APIVersion *string           `yaml:"apiVersion"`
+		Kind       *string           `yaml:"kind"`
+		Metadata   *manifestMetadata `yaml:"metadata"`
+	}
+
+	decoder := yaml.NewDecoder(strings.NewReader(manifest))
+	var identities []helmManifestIdentity
+	for {
+		var document yaml.Node
+		if err := decoder.Decode(&document); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, fmt.Errorf("malformed Helm manifest document")
+		}
+		if len(document.Content) == 0 {
+			continue
+		}
+		root := document.Content[0]
+		if root.Kind == yaml.ScalarNode && root.Tag == "!!null" && root.Value == "" {
+			continue
+		}
+		if root.Kind != yaml.MappingNode {
+			return nil, fmt.Errorf("unsupported non-object Helm manifest document")
+		}
+		var object manifestObject
+		if err := root.Decode(&object); err != nil || object.APIVersion == nil || strings.TrimSpace(*object.APIVersion) == "" ||
+			object.Kind == nil || strings.TrimSpace(*object.Kind) == "" || object.Metadata == nil ||
+			object.Metadata.Name == nil || strings.TrimSpace(*object.Metadata.Name) == "" {
+			return nil, fmt.Errorf("unsupported Helm manifest identity document")
+		}
+		identity := helmManifestIdentity{
+			apiVersion: *object.APIVersion,
+			kind:       *object.Kind,
+			name:       *object.Metadata.Name,
+		}
+		if object.Metadata.Namespace != nil {
+			identity.namespace = *object.Metadata.Namespace
+			identity.namespacePresent = true
+		}
+		identities = append(identities, identity)
+	}
+	return identities, nil
 }
 
 // buildTraceResult builds a TraceResult from a Helm release
