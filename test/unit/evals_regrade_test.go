@@ -104,8 +104,22 @@ func TestEvalRegradeSavedTranscripts(t *testing.T) {
 	if got := audit.Cases[1].Arms["with"][0].Outcome; got != "unknown" {
 		t.Errorf("unsupported grader outcome = %q, want unknown", got)
 	}
+	unsupportedPath := filepath.Join(root, "test", "fixtures", "evals-regrade", "cases", "unsupported", "graders", "unsupported.md")
+	unsupportedBytes, err := os.ReadFile(unsupportedPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	unsupportedHash := sha256.Sum256(unsupportedBytes)
+	if hashes := audit.Cases[1].GraderHashes; len(hashes) != 1 ||
+		hashes[0].Path != "test/fixtures/evals-regrade/cases/unsupported/graders/unsupported.md" ||
+		hashes[0].SHA256 != hex.EncodeToString(unsupportedHash[:]) {
+		t.Errorf("unsupported grader provenance was lost: %+v", hashes)
+	}
 	if got := audit.Cases[2].Arms["with"][0].Outcome; got != "unknown" {
 		t.Errorf("escaped case directory outcome = %q, want unknown", got)
+	}
+	if hashes := audit.Cases[2].GraderHashes; len(hashes) != 0 {
+		t.Errorf("malformed/escaped case invented grader hashes: %+v", hashes)
 	}
 	if got := gotRuns[5].Outcome; got != "unknown" {
 		t.Errorf("trace outside default input root outcome = %q, want unknown", got)

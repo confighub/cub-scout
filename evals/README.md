@@ -69,7 +69,11 @@ the result, excluding every `tool_used` grader even if it contributed to the
 harness score. It cannot verify that those embedded patterns are the current
 case graders; use the offline regrader below for that. Cost includes agent,
 judge grader and mock spend, including runs that ended in errors or hit a turn
-limit. Input completeness is reported before the tables. Use
+limit. Schema-v1 `costUsd` is already inclusive: `judgeCostUsd` and
+`mocks.calls.costUsd` are breakdowns, not extra amounts to add. This is verified
+against Claude Code 2.1.274 and its saved primary/mock cost records; see the
+[producer's result documentation](https://code.claude.com/docs/en/plugin-evals#json-result).
+Missing, invalid or inconsistent spend is unknown, never free. Input completeness is reported before the tables. Use
 `--require-complete` for a gate: partial or unverified completeness exits
 non-zero while still printing the observed costs and scores. A completed run
 is not necessarily a passing run; correctness remains a separate metric.
@@ -115,7 +119,12 @@ The current execution priority and evidence rules are in
 [`docs/roadmap-3.0-execution.md`](../docs/roadmap-3.0-execution.md) and
 [#645](https://github.com/confighub/cub-scout/issues/645).
 
-From the pilot (one run per case per arm, 2026-09-26/27):
+Historical pilot table (one run per case per arm, 2026-09-26/27):
+
+**Superseded accounting:** the original reporter added judge/mock breakdowns
+twice. These recorded-suite dollar columns preserve the old published figures
+for audit only; regenerate from the original JSON with the corrected reporter
+before using them. Live scale runs with mocks disabled are unaffected.
 
 | Group | Arm | Historical harness score | $/run | Historical $/score | Turns |
 |---|---|---|---|---|---|

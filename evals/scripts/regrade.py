@@ -37,9 +37,8 @@ class TraceError(ValueError):
         self.metadata = metadata or {}
 
 
-def parse_grader(path):
+def parse_grader(path, raw):
     """Parse the repo's deliberately small grader frontmatter subset."""
-    raw = path.read_bytes()
     text = raw.decode("utf-8")
     if not text.startswith("---\n"):
         raise ValueError("missing YAML frontmatter")
@@ -83,7 +82,7 @@ def parse_grader(path):
     return {"kind": "regex", "pattern": pattern, "compiled": compiled, "sha256": sha256(raw)}
 
 
-def graders_for_case(case):
+def graders_for_case(case, hashes):
     directory = case.get("dir")
     if not isinstance(directory, str) or not directory:
         raise ValueError("case dir is missing or malformed")
@@ -96,16 +95,23 @@ def graders_for_case(case):
     files = sorted(graders_dir.glob("*.md"))
     if not files:
         raise ValueError("no current grader files")
-    parsed = []
-    hashes = []
+    safe_files = []
     for path in files:
         resolved = path.resolve()
         if not contained(resolved, graders_dir):
             raise ValueError("grader file escapes grader directory")
-        hashes.append({"path": resolved.relative_to(ROOT).as_posix(), "sha256": sha256(resolved.read_bytes())})
-        definition = parse_grader(resolved)
+        safe_files.append(resolved)
+
+    sources = []
+    for path in safe_files:
+        raw = path.read_bytes()
+        hashes.append({"path": path.relative_to(ROOT).as_posix(), "sha256": sha256(raw)})
+        sources.append((path, raw))
+    parsed = []
+    for path, raw in sources:
+        definition = parse_grader(path, raw)
         if definition["kind"] != TOOL_TYPE:
-            parsed.append((resolved.name, definition))
+            parsed.append((path.name, definition))
     if not parsed:
         raise ValueError("no required regex graders (tool_used graders are excluded)")
     return parsed, hashes
@@ -201,10 +207,11 @@ def audit(source_path, explicit_trace_roots=None):
             cases_out.append({**label, "graderHashes": [], "arms": {}, "reason": "case metadata is malformed"})
             continue
         try:
-            graders, hashes = graders_for_case(case)
+            hashes = []
+            graders, hashes = graders_for_case(case, hashes)
             load_error = None
         except (OSError, UnicodeError, ValueError) as exc:
-            graders, hashes, load_error = [], [], str(exc)
+            graders, load_error = [], str(exc)
         arms_out = {}
         arms = case.get("arms")
         if not isinstance(arms, dict):

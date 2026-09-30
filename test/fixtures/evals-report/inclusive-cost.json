@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "partial": false,
+  "suite": {"ablation": "none"},
+  "cases": [{
+    "name": "inclusive-mock-cost",
+    "graders": [{"name": "answer", "type": "regex"}],
+    "runsPerCase": 1,
+    "arms": {"with": [{
+      "score": 1,
+      "costUsd": 0.6431775,
+      "judgeCostUsd": 0,
+      "mocks": {"calls": {"costUsd": 0.024624}},
+      "graders": [{"name": "answer", "passed": true}]
+    }]}
+  }]
+}

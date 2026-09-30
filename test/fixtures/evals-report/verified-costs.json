@@ -5,7 +5,7 @@
   "cases": [{
     "name": "invalid-spend",
     "graders": [{"name": "answer", "type": "regex"}],
-    "runsPerCase": 7,
+    "runsPerCase": 8,
     "arms": {"with": [
       {"score": 1, "graders": [{"name": "answer", "passed": true}]},
       {"score": 1, "costUsd": null, "graders": [{"name": "answer", "passed": true}]},
@@ -13,7 +13,8 @@
       {"score": 1, "costUsd": -0.1, "graders": [{"name": "answer", "passed": true}]},
       {"score": 1, "costUsd": true, "graders": [{"name": "answer", "passed": true}]},
       {"score": 1, "costUsd": 1, "judgeCostUsd": null, "graders": [{"name": "answer", "passed": true}]},
-      {"score": 1, "costUsd": 1, "mocks": {"calls": {}}, "graders": [{"name": "answer", "passed": true}]}
+      {"score": 1, "costUsd": 1, "mocks": {"calls": {}}, "graders": [{"name": "answer", "passed": true}]},
+      {"score": 1, "costUsd": 1, "judgeCostUsd": 0.8, "mocks": {"calls": {"costUsd": 0.3}}, "graders": [{"name": "answer", "passed": true}]}
     ]}
   }, {
     "name": "optional-spend-absent",

@@ -10,6 +10,8 @@ the frozen question. The September 30 refresh now includes managedFields in
 both arms' exports and validates the four attribution manager/cause pairs.
 Main-scenario mappings are `existing_refreshed_fixture`; the scale scout arm
 still reads live data, so those mappings are `existing_needs_snapshot_binding`.
+Resource-level mutation manager/cause parity does not prove a particular field's
+latest writer; exact-field counterexamples are tracked in [#649](https://github.com/confighub/cub-scout/issues/649).
 Neither status means the controlled benchmark ran. Unmapped entries remain
 `planned`; the three live-only scale cases remain a separate experiment.
 
