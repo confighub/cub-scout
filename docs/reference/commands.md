@@ -91,7 +91,8 @@ cub-scout map [flags]
 
 | Flag | Description |
 |------|-------------|
-| `--hub` | ConfigHub hierarchy view |
+| `--hub` | Start in the ConfigHub hierarchy view; `--kube-context`, if given, applies when switching to the local TUI and does not select a ConfigHub context |
+| `--kube-context` | Use this exact kubeconfig context for local TUI inventory and bounded explain; missing names fail without fallback. In this mode trace, scan, graph export, command mode, shell, and import are disabled until they honor the binding |
 | `-n, --namespace` | Filter by namespace |
 | `-q, --query` | Resource query filter |
 
@@ -170,12 +171,16 @@ cub-scout map list [flags]
 | `--names-only` | Show names only |
 | `--summary` | Show counts by owner and kind (after filters) instead of the entries |
 | `--explain` | Show explanatory content |
+| `--kube-context` | Use this exact kubeconfig context for this inventory read; missing or empty names fail without fallback |
 
 ### Examples
 
 ```bash
 # List all resources
 cub-scout map list
+
+# Read inventory from one exact kubeconfig context
+cub-scout map list --kube-context staging-admin
 
 # Filter by namespace
 cub-scout map list -n production

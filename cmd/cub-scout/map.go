@@ -26,6 +26,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/confighub/cub-scout/internal/mapsvc"
 	"github.com/confighub/cub-scout/pkg/agent"
@@ -96,7 +98,13 @@ PLAIN TEXT MODE:
   cub-scout map list         # Scriptable output
   cub-scout map list -q "owner=Native"   # Query filter
 
-Local cluster mode reads from your current kubectl context.
+Local cluster mode reads from your current kubectl context by default. On
+map or map list, --kube-context <name> selects one exact kubeconfig
+context for the inventory read; a missing selected name is an error.
+With --hub, that selection is used only if you later switch to the local TUI;
+it does not select a ConfigHub context. In selected-context TUI mode, trace,
+scan, graph export, command mode, shell and import are disabled until they can
+honor the captured binding.
 Hub mode requires ConfigHub authentication (cub auth login).
 
 Pipeline source semantics (TUI p view):
@@ -110,26 +118,67 @@ Pipeline source semantics (TUI p view):
 
 // runMapTUI launches the interactive TUI dashboard
 func runMapTUI(cmd *cobra.Command, args []string) error {
+	selection, err := clusterContextSelectionFromFlag(cmd)
+	if err != nil {
+		return err
+	}
+	var binding *localClusterBinding
+	if selection.explicit {
+		binding = resolveLocalClusterBindingForSelection(selection)
+		if binding.err != nil {
+			return fmt.Errorf("resolve selected Kubernetes context: %w", binding.err)
+		}
+	}
 	// If --hub flag is set, start with ConfigHub hierarchy TUI
 	if mapHub {
-		return runHierarchyWithSwitch(cmd, args)
+		return runHierarchyWithSwitch(cmd, args, binding)
 	}
 
 	// Start with local cluster TUI (Go-native)
-	return runLocalClusterWithSwitch()
+	return runLocalClusterWithSwitch(binding)
+}
+
+func clusterContextSelectionFromFlag(cmd *cobra.Command) (clusterContextSelection, error) {
+	flag := cmd.Flags().Lookup("kube-context")
+	if flag == nil || !flag.Changed {
+		return clusterContextSelection{}, nil
+	}
+	name, err := cmd.Flags().GetString("kube-context")
+	if err != nil {
+		return clusterContextSelection{}, err
+	}
+	if strings.TrimSpace(name) == "" {
+		return clusterContextSelection{}, fmt.Errorf("--kube-context requires a non-empty context name")
+	}
+	return clusterContextSelection{name: name, explicit: true}, nil
 }
 
 // runLocalClusterWithSwitch runs the local cluster TUI and handles mode switching
-func runLocalClusterWithSwitch() error {
+func runLocalClusterWithSwitch(binding *localClusterBinding) error {
+	if binding == nil {
+		binding = resolveLegacyLocalClusterBinding(getCurrentContext())
+	}
+	return runLocalClusterWithSwitchUsing(binding, runLocalClusterTUI, runHierarchyLoopWithContext, RunImportWizard)
+}
+
+type localClusterTUIRunner func(*localClusterBinding) (bool, string, bool, *localClusterBinding, error)
+
+func runLocalClusterWithSwitchUsing(binding *localClusterBinding, runTUI localClusterTUIRunner, runHub func(string) (bool, error), runImport func() error) error {
 	for {
-		switchToHub, hubContext, switchToImport, err := runLocalClusterTUI()
+		switchToHub, hubContext, switchToImport, nextBinding, err := runTUI(binding)
 		if err != nil {
 			return err
+		}
+		if nextBinding != nil {
+			binding = nextBinding
 		}
 
 		// Handle import wizard switch
 		if switchToImport {
-			if err := RunImportWizard(); err != nil {
+			if binding.explicit {
+				return fmt.Errorf("import is unavailable with --kube-context until the import flow honors the selected binding")
+			}
+			if err := runImport(); err != nil {
 				return err
 			}
 			// After import wizard, return to local cluster TUI
@@ -142,7 +191,7 @@ func runLocalClusterWithSwitch() error {
 		}
 
 		// User wants to switch to ConfigHub mode - pass context
-		switchToLocal, err := runHierarchyLoopWithContext(hubContext)
+		switchToLocal, err := runHub(hubContext)
 		if err != nil {
 			return err
 		}
@@ -152,12 +201,13 @@ func runLocalClusterWithSwitch() error {
 			return nil
 		}
 
-		// User wants to switch back to local cluster mode - loop continues
+		// User wants to switch back to local cluster mode - loop continues with
+		// the same captured binding.
 	}
 }
 
 // runHierarchyWithSwitch runs hierarchy TUI and handles mode switching
-func runHierarchyWithSwitch(cmd *cobra.Command, args []string) error {
+func runHierarchyWithSwitch(cmd *cobra.Command, args []string, binding *localClusterBinding) error {
 	for {
 		// Start without context (user explicitly chose --hub)
 		switchToLocal, err := runHierarchyLoopWithContext("")
@@ -171,13 +221,22 @@ func runHierarchyWithSwitch(cmd *cobra.Command, args []string) error {
 		}
 
 		// User wants to switch to local cluster mode
-		switchToHub, hubContext, switchToImport, err := runLocalClusterTUI()
+		if binding == nil {
+			binding = resolveLegacyLocalClusterBinding(getCurrentContext())
+		}
+		switchToHub, hubContext, switchToImport, nextBinding, err := runLocalClusterTUI(binding)
 		if err != nil {
 			return err
+		}
+		if nextBinding != nil {
+			binding = nextBinding
 		}
 
 		// Handle import wizard switch
 		if switchToImport {
+			if binding.explicit {
+				return fmt.Errorf("import is unavailable with --kube-context until the import flow honors the selected binding")
+			}
 			if err := RunImportWizard(); err != nil {
 				return err
 			}
@@ -610,6 +669,7 @@ func init() {
 
 	// Hub flag (same as 'map hub' subcommand)
 	mapCmd.Flags().BoolVar(&mapHub, "hub", false, "Launch ConfigHub hierarchy TUI (requires cub auth)")
+	mapCmd.Flags().String("kube-context", "", "Use this exact Kubernetes context for TUI inventory and bounded explain")
 
 	// Shared view flags (CLI ↔ TUI symmetry: --owner, --namespace, --depth, --kind)
 	AddSharedViewFlags(mapCmd)
@@ -623,6 +683,7 @@ func init() {
 	mapCmd.PersistentFlags().BoolVar(&mapVerbose, "verbose", false, "Show additional details")
 
 	// List-specific flags
+	mapListCmd.Flags().String("kube-context", "", "Use this exact Kubernetes context for this inventory read")
 	mapListCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
 	mapListCmd.Flags().StringVar(&mapKind, "kind", "", "Filter by resource kind")
 	mapListCmd.Flags().StringVar(&mapOwner, "owner", "", "Filter by owner (Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, Terraform, ConfigHub, Native)")
@@ -702,6 +763,10 @@ func init() {
 
 func runMapList(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
+	selection, err := clusterContextSelectionFromFlag(cmd)
+	if err != nil {
+		return err
+	}
 
 	// #111: Validate owner flag before doing any work
 	if mapOwner != "" {
@@ -722,10 +787,23 @@ func runMapList(cmd *cobra.Command, args []string) error {
 	}
 
 	// Normal mode: collect from cluster
-	return runMapListFromCluster(ctx)
+	return runMapListFromClusterWithSelection(ctx, selection)
 }
 
 func runMapListFromCluster(ctx context.Context) error {
+	cfg, err := buildConfig()
+	return runMapListFromClusterWithConfig(ctx, cfg, err)
+}
+
+func runMapListFromClusterWithSelection(ctx context.Context, selection clusterContextSelection) error {
+	if !selection.explicit {
+		return runMapListFromCluster(ctx)
+	}
+	cfg, _, err := resolveClusterConfig(selection.name, true, clientcmd.NewDefaultClientConfigLoadingRules(), rest.InClusterConfig)
+	return runMapListFromClusterWithConfig(ctx, cfg, err)
+}
+
+func runMapListFromClusterWithConfig(ctx context.Context, cfg *rest.Config, configErr error) error {
 	debug := os.Getenv("CUB_SCOUT_DEBUG") != ""
 	var startTotal time.Time
 	if debug {
@@ -733,9 +811,11 @@ func runMapListFromCluster(ctx context.Context) error {
 	}
 
 	// Build Kubernetes config
-	cfg, err := buildConfig()
-	if err != nil {
-		return withKubeRecoveryHint(fmt.Errorf("build kubernetes config: %w", err), "cub-scout map list")
+	if configErr != nil {
+		return withKubeRecoveryHint(fmt.Errorf("build kubernetes config: %w", configErr), "cub-scout map list")
+	}
+	if cfg == nil {
+		return withKubeRecoveryHint(fmt.Errorf("build kubernetes config: no config resolved"), "cub-scout map list")
 	}
 
 	// Create dynamic client

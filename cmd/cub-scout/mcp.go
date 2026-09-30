@@ -284,11 +284,15 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"map": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "map",
-				Description: "Standalone resource inventory with ownership classification (map list --json). Use for 'what's running in this cluster or namespace?', 'how many does Flux manage?' and 'which workloads are unmanaged?', especially when the user wants more meaning than raw `kubectl get` output. On a large cluster the full list can be too big for your context: ask for summary=true (counts by owner and kind) or names_only=true, and filter with kind, owner or query (for example kind=Deployment, owner=Native). DO NOT load for bare 'what's broken?' or one-resource root cause; use doctor first for health, then explain for a specific resource.",
+				Description: "Standalone resource inventory with ownership classification (map list --json). Use for 'what's running in this cluster or namespace?', 'how many does Flux manage?' and 'which workloads are unmanaged?', especially when the user wants more meaning than raw `kubectl get` output. On a large cluster the full list can be too big for your context: ask for summary=true (counts by owner and kind) or names_only=true, and filter with kind, owner or query (for example kind=Deployment, owner=Native). The optional context selects one exact kubeconfig context for this inventory read; absent context keeps the current default. DO NOT load for bare 'what's broken?' or one-resource root cause; use doctor first for health, then explain for a specific resource.",
 				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
+						"context": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional exact kubeconfig context for this map inventory read. When supplied, a missing or empty name fails; it never falls back to the current or in-cluster context.",
+						},
 						"namespace": map[string]interface{}{
 							"type":        "string",
 							"description": "Optional namespace filter.",
@@ -332,6 +336,13 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 					return nil, fmt.Errorf("choose at most one of summary, names_only and count")
 				}
 				args := []string{"map", "list", "--json"}
+				if raw, present := arguments["context"]; present {
+					contextName, ok := raw.(string)
+					if !ok || strings.TrimSpace(contextName) == "" {
+						return nil, fmt.Errorf("context must be a non-empty kubeconfig context name")
+					}
+					args = append(args, "--kube-context", contextName)
+				}
 				for _, f := range []struct{ arg, flag string }{
 					{"namespace", "--namespace"}, {"kind", "--kind"}, {"owner", "--owner"}, {"query", "--query"},
 				} {

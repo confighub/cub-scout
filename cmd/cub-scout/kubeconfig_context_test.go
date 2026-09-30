@@ -11,10 +11,13 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
 
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -204,6 +207,226 @@ func TestLocalClusterTUIRefreshUsesPinnedKubeconfigContext(t *testing.T) {
 	require.Equal(t, "alpha", loaded.boundedContext)
 	require.Positive(t, alpha.requests.Load())
 	require.Zero(t, beta.requests.Load(), "TUI refresh must not switch to changed current-context")
+}
+
+func TestMapListExplicitContextSelectsOnlyNamedServerWithoutConfigMutation(t *testing.T) {
+	t.Setenv("KUBERNETES_SERVICE_HOST", "")
+	t.Setenv("CUB_SCOUT_TEST_MAP_ENTRIES_JSON", "")
+	var alphaRequests, betaRequests atomic.Int32
+	server := func(requests *atomic.Int32) *httptest.Server {
+		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			requests.Add(1)
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = fmt.Fprint(w, `{"apiVersion":"v1","kind":"List","metadata":{},"items":[]}`)
+		}))
+	}
+	alpha := server(&alphaRequests)
+	beta := server(&betaRequests)
+	defer alpha.Close()
+	defer beta.Close()
+	path, before := resolverKubeconfig(t, "alpha", map[string]string{"alpha": alpha.URL, "beta": beta.URL})
+	t.Setenv("KUBECONFIG", path)
+
+	flag := mapListCmd.Flags().Lookup("kube-context")
+	require.NotNil(t, flag)
+	oldValue, oldChanged := flag.Value.String(), flag.Changed
+	t.Cleanup(func() {
+		_ = flag.Value.Set(oldValue)
+		flag.Changed = oldChanged
+	})
+	for _, tc := range []struct {
+		name     string
+		value    string
+		changed  bool
+		selected string
+		wantErr  string
+	}{
+		{name: "selected beta", value: "beta", changed: true, selected: "beta"},
+		{name: "omitted uses current alpha", value: "", changed: false, selected: "alpha"},
+		{name: "missing explicit name fails", value: "missing", changed: true, wantErr: "missing"},
+		{name: "empty explicit name fails", value: "  ", changed: true, wantErr: "non-empty"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			beforeAlpha, beforeBeta := alphaRequests.Load(), betaRequests.Load()
+			require.NoError(t, flag.Value.Set(tc.value))
+			flag.Changed = tc.changed
+			err := runMapList(mapListCmd, nil)
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
+			if tc.wantErr != "" {
+				require.Equal(t, beforeAlpha, alphaRequests.Load())
+				require.Equal(t, beforeBeta, betaRequests.Load(), "invalid explicit contexts must not fall back")
+			} else if tc.selected == "alpha" {
+				require.Greater(t, alphaRequests.Load(), beforeAlpha)
+				require.Equal(t, beforeBeta, betaRequests.Load())
+			} else {
+				require.Equal(t, beforeAlpha, alphaRequests.Load())
+				require.Greater(t, betaRequests.Load(), beforeBeta)
+			}
+		})
+	}
+	after, err := os.ReadFile(path)
+	require.NoError(t, err)
+	require.Equal(t, before, after, "map list context selection must not rewrite kubeconfig")
+	for _, unsupported := range []*cobra.Command{mapStatusCmd, mapFleetCmd, mapActivityCmd} {
+		require.Nil(t, unsupported.Flags().Lookup("kube-context"), "%s must not inherit the map list-only flag", unsupported.Name())
+	}
+}
+
+func TestMapTUISelectionBindsInventoryAndBoundedExplainAndSurvivesHandoff(t *testing.T) {
+	t.Setenv("KUBERNETES_SERVICE_HOST", "")
+	var alphaRequests, betaRequests atomic.Int32
+	server := func(requests *atomic.Int32) *httptest.Server {
+		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			requests.Add(1)
+			w.Header().Set("Content-Type", "application/json")
+			if strings.HasSuffix(r.URL.Path, "/deployments/api") {
+				_, _ = fmt.Fprint(w, `{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"api","namespace":"team-a","managedFields":[]},"spec":{},"status":{}}`)
+				return
+			}
+			_, _ = fmt.Fprint(w, `{"apiVersion":"v1","kind":"List","metadata":{},"items":[]}`)
+		}))
+	}
+	alpha, beta := server(&alphaRequests), server(&betaRequests)
+	defer alpha.Close()
+	defer beta.Close()
+	path, before := resolverKubeconfig(t, "alpha", map[string]string{"alpha": alpha.URL, "beta": beta.URL})
+	t.Setenv("KUBECONFIG", path)
+	mapFlag := mapCmd.Flags().Lookup("kube-context")
+	require.NotNil(t, mapFlag)
+	oldMapValue, oldMapChanged := mapFlag.Value.String(), mapFlag.Changed
+	t.Cleanup(func() { _ = mapFlag.Value.Set(oldMapValue); mapFlag.Changed = oldMapChanged })
+	require.NoError(t, mapFlag.Value.Set("beta"))
+	mapFlag.Changed = true
+	selection, err := clusterContextSelectionFromFlag(mapCmd)
+	require.NoError(t, err)
+	require.Equal(t, clusterContextSelection{name: "beta", explicit: true}, selection)
+	binding := resolveLocalClusterBindingForSelection(selection)
+	require.NoError(t, binding.err)
+	require.True(t, binding.explicit)
+	model := initialLocalModelWithBinding(ViewOptions{}, binding)
+	loaded := model.loadLocalClusterData().(localDataLoadedMsg)
+	require.NoError(t, loaded.err)
+	require.Equal(t, "beta", loaded.boundedContext)
+	require.Zero(t, alphaRequests.Load())
+	require.Positive(t, betaRequests.Load())
+	afterInventory, err := os.ReadFile(path)
+	require.NoError(t, err)
+	require.Equal(t, before, afterInventory, "TUI selection and inventory reads must not mutate kubeconfig")
+
+	model.entries = []MapEntry{{APIVersion: "apps/v1", Kind: "Deployment", Namespace: "team-a", Name: "api"}}
+	model.boundedContext = loaded.boundedContext
+	model.openBoundedExplain()
+	beforeBeta := betaRequests.Load()
+	// Retarget beta's name to alpha; the selected model and bounded session
+	// must continue using the config captured at startup.
+	raw, err := clientcmd.LoadFromFile(path)
+	require.NoError(t, err)
+	raw.Clusters["beta-cluster"].Server = alpha.URL
+	updated, err := clientcmd.Write(*raw)
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(path, updated, 0600))
+	cmd := model.boundedPanel.read(false)
+	require.NotNil(t, cmd)
+	_ = cmd().(boundedExplainMsg)
+	require.Greater(t, betaRequests.Load(), beforeBeta)
+	require.Zero(t, alphaRequests.Load(), "bounded explain must not follow a same-name kubeconfig retarget")
+
+	// Exercise the production local→Hub→local control-loop seam. The Hub may
+	// run while the same-name kubeconfig entry changes, but re-entry gets the
+	// exact captured binding object back.
+	calls := 0
+	err = runLocalClusterWithSwitchUsing(binding,
+		func(got *localClusterBinding) (bool, string, bool, *localClusterBinding, error) {
+			calls++
+			require.Same(t, binding, got)
+			if calls == 1 {
+				return true, "hub-app", false, got, nil
+			}
+			return false, "", false, got, nil
+		},
+		func(string) (bool, error) { return true, nil },
+		func() error { t.Fatal("explicit context must never enter import wizard"); return nil },
+	)
+	require.NoError(t, err)
+	require.Equal(t, 2, calls)
+	model = initialLocalModelWithBinding(ViewOptions{}, binding)
+	require.Equal(t, beta.URL, model.clusterBinding.config.Host)
+	loaded = model.loadLocalClusterData().(localDataLoadedMsg)
+	require.NoError(t, loaded.err)
+	require.Positive(t, betaRequests.Load())
+	require.Zero(t, alphaRequests.Load())
+}
+
+func TestMapCommandContextFlagIsLocalAndExplicitEmptyFails(t *testing.T) {
+	mapFlag := mapCmd.Flags().Lookup("kube-context")
+	listFlag := mapListCmd.Flags().Lookup("kube-context")
+	require.NotNil(t, mapFlag)
+	require.NotNil(t, listFlag)
+	for _, unsupported := range []*cobra.Command{mapStatusCmd, mapFleetCmd, mapActivityCmd} {
+		require.Nil(t, unsupported.InheritedFlags().Lookup("kube-context"), "%s must not inherit a context flag", unsupported.Name())
+	}
+	oldValue, oldChanged := mapFlag.Value.String(), mapFlag.Changed
+	t.Cleanup(func() { _ = mapFlag.Value.Set(oldValue); mapFlag.Changed = oldChanged })
+	path, _ := resolverKubeconfig(t, "default", map[string]string{"default": "http://127.0.0.1:1"})
+	t.Setenv("KUBECONFIG", path)
+	for _, tc := range []struct{ value, want string }{{"", "non-empty"}, {"missing", "missing"}} {
+		require.NoError(t, mapFlag.Value.Set(tc.value))
+		mapFlag.Changed = true
+		err := runMapTUI(mapCmd, nil)
+		require.ErrorContains(t, err, tc.want)
+	}
+}
+
+func TestExplicitContextTUIActionsFailClosed(t *testing.T) {
+	server := newCountedKubeServer(t)
+	binDir := t.TempDir()
+	marker := filepath.Join(binDir, "spawned")
+	script := "#!/bin/sh\nprintf invoked >> \"$SCOUT_ACTION_MARKER\"\n"
+	for _, name := range []string{"cub-scout", "flux", "fake-command", "shell"} {
+		path := filepath.Join(binDir, name)
+		require.NoError(t, os.WriteFile(path, []byte(script), 0o755))
+	}
+	t.Setenv("PATH", binDir)
+	t.Setenv("SCOUT_ACTION_MARKER", marker)
+	t.Setenv("SHELL", filepath.Join(binDir, "shell"))
+	t.Chdir(binDir)
+	oldGraphExport := runGraphExportCommand
+	runGraphExportCommand = func(string, string) error {
+		_, err := os.Stat(marker)
+		return err
+	}
+	t.Cleanup(func() { runGraphExportCommand = oldGraphExport })
+
+	model := LocalClusterModel{explicitClusterContext: true, keymap: defaultLocalKeyMap()}
+	trace := model.runTrace(TraceItem{Kind: "Deployment", Name: "api", Namespace: "team-a", Owner: "Flux"})().(traceResultMsg)
+	require.ErrorContains(t, trace.err, "unavailable with --kube-context")
+	scan := model.runScan()().(scanResultMsg)
+	require.ErrorContains(t, scan.err, "unavailable with --kube-context")
+	graph := model.runGraphExport("svg")().(graphExportMsg)
+	require.ErrorContains(t, graph.err, "unavailable with --kube-context")
+	shell := model.runShellOut()().(shellExitMsg)
+	require.ErrorContains(t, shell.err, "unavailable with --kube-context")
+	require.Zero(t, server.requests.Load(), "blocked TUI actions must not make an API read")
+	updated, cmd := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("I")})
+	require.Nil(t, cmd)
+	require.False(t, updated.(LocalClusterModel).switchToImport)
+	require.Contains(t, updated.(LocalClusterModel).statusMsg, "unavailable with --kube-context")
+	updated, cmd = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(":")})
+	require.Nil(t, cmd)
+	require.False(t, updated.(LocalClusterModel).cmdMode)
+
+	model.cmdMode = true // Also defend against a stale/pre-opened command prompt.
+	model.cmdInput = "fake-command"
+	updated, cmd = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	require.Nil(t, cmd)
+	require.False(t, updated.(LocalClusterModel).cmdRunning)
+	require.False(t, updated.(LocalClusterModel).cmdMode)
+	_, err := os.Stat(marker)
+	require.True(t, os.IsNotExist(err), "blocked actions must not spawn subprocesses")
 }
 
 func TestResolveClusterConfigParallelSelectionsStayIndependent(t *testing.T) {
