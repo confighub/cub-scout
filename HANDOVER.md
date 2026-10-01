@@ -1,11 +1,53 @@
 # cub-scout execution handover
 
 **Current snapshot:** 2026-10-01. Verified merged baseline:
-[`c69d7b49`](https://github.com/confighub/cub-scout/commit/c69d7b498a90854d522a008dc05a76623b2423ba).
+[`23e1ec42`](https://github.com/confighub/cub-scout/commit/23e1ec4227ecf06b9add1b3da6e5bc44e797bb98).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
 order, quality gates, budgets and decisions.
+
+## Laptop-close checkpoint — 2026-10-01
+
+- Main is `23e1ec4227ecf06b9add1b3da6e5bc44e797bb98`: #756 merged after
+  independent review, build/full Go and all enabled exact-head CI passed.
+  ConfigHub unit/target slugs now match case-sensitively; ID precedence remains.
+- Draft #754 (`codex/trace-rendered-diff`, readonly-auth-provider worktree)
+  contains source-truth and caller-rendered Trace comparisons. Product pin
+  `fb3c76b6fc28d72f6ccea99fd9f38040c5b58b65` passes build/full offline Go.
+  TUI source-truth now refreshes the ConfigHub session at each deliberate
+  observation; its expired/recovered-session regression failed before the fix.
+- The combined CLI / real MCP subprocess / actual TUI proof **passed** at
+  `/tmp/scout-source-truth-diff-proof-4`. All 13 action phases retained the
+  selected endpoint and expected read outcomes. Cluster deletion, node absence,
+  credential/source-worktree removal and shared-config integrity passed.
+  [The derived report](evals/trace-context-live/combined-report.json) preserves
+  source/artifact hashes and the three failed attempts. Raw receipts are also
+  retained under ignored `evals/results/source-truth-diff-20261001/` in this
+  worktree. This is synthetic Application evidence on real kind API/RBAC, with
+  a deliberately failing ConfigHub stub; no controller reconciliation, real
+  governance evidence, model run or cost-savings claim.
+- Main was merged into #754 at `2b38101a`; the only conflict was eval fixture
+  routing, resolved by retaining all cases. The exact scaffold check passes.
+  Resume with independent derived-report review and final exact-head CI before
+  making #754 ready or merging. The tested proof pin remains immutable.
+- Draft #757 (`codex/gitops-status-context`, doctor-scan-context worktree)
+  is saved at `00e1375e`, including runtime-omission repair `93fe6fb8` and main.
+  Focused tests and before/after regressions pass; build/full Go, owned proof
+  and final exact-head CI remain pending. The merge retained both eval routes.
+- #755 is the next planned three-way comparison binding packet, not started.
+  Its cheaper-model design audit covers discovery, LIVE reads, Git-source and
+  rollout enrichment, plus the missing TUI entry. See the issue for budget.
+- Updated integration findings from newer cub-argo/cub-flux and Sveltos sources
+  are on #645 (comment 5932706485). Plugin status reporters write ConfigHub;
+  Scout must read evidence rather than invoke those reporters.
+- v2.13 is **not released**. Its baseline and genuine governance fixtures are
+  still missing. Paid evals remain stopped; no new model/provider run is
+  authorized. Keep shared clusters/configuration and retained failed evidence.
+
+No local cluster proof or full-suite process remains running at this checkpoint.
+GitHub CI may continue remotely after pushes. Closing the lid does not complete
+any pending release gate. Resume from these branches and receipts, not a new run.
 
 ## Current work and evidence
 

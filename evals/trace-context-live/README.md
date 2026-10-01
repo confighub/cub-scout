@@ -109,7 +109,7 @@ fixture reads. It does not demonstrate a real Argo reconciliation, general
 cluster identity, ConfigHub behavior, controller writes, or all credential
 provider types. Only the scoped attempt-three result above is claimed.
 
-## Combined source-truth and rendered-diff proof preparation
+## Combined source-truth and rendered-diff proof
 
 The helper now includes a separately gated `source-truth-diff` mode for the
 integrated #750/#751 routes. Attempt one failed on an incomplete synthetic
@@ -117,7 +117,7 @@ Application fixture: its missing `status.resources` prevented an exact workload
 link. The product correctly refused the link. The failed receipt is retained at
 `/tmp/scout-source-truth-diff-proof-1`; owned-cluster deletion, node absence and
 shared-config integrity checks passed. The fixture is corrected for a new attempt;
-no accepted combined proof is claimed yet. Attempt two passed its action
+that first attempt is retained as failed evidence. Attempt two passed its action
 assertions but failed final validation because requests and phase markers used
 different log files. Its failed receipt remains at
 `/tmp/scout-source-truth-diff-proof-2`; cleanup and shared-config integrity passed.
@@ -127,17 +127,21 @@ passed the API action checks but found that reopening source-truth reused a
 cached ConfigHub session check. Its failed receipt is retained at
 `/tmp/scout-source-truth-diff-proof-3`; cleanup passed. The product now refreshes
 the gate once per deliberate TUI observation, with an expired/recovered-session
-regression and full offline Go validation. The next attempt uses that new pin. The
+regression and full offline Go validation. Attempt four uses that new pin and passed all 13 action phases. Its receipt is
+retained at `/tmp/scout-source-truth-diff-proof-4`; the derived
+[combined report](combined-report.json) records exact source/artifact hashes,
+request evidence and all three earlier failures. Cleanup removed the owned
+cluster, source worktree and private credentials; shared configuration stayed
+unchanged. The
 `COMBINED_SOURCE_PIN` in `capture.py` records the reviewed candidate
 `fb3c76b6fc28d72f6ccea99fd9f38040c5b58b65`; the capture also requires that
 commit to be an ancestor of `HEAD` before building binaries or creating cluster
 resources. The helper and pinned product are now integrated, and the helper
-review repairs pass 29 offline tests. The corrected combined live capture remains pending. The attempt-three Trace-only receipt
+review repairs pass 30 offline tests. The combined capture passed on the pinned product. The attempt-three Trace-only receipt
 above remains the separate historical proof; it is not evidence for these
 newer routes.
 
-After the root integration selects and commits the exact source pin, the
-intended invocation is:
+To reproduce using a fresh output directory:
 
 ```sh
 PYTHONDONTWRITEBYTECODE=1 python3 evals/trace-context-live/capture.py \
@@ -176,10 +180,10 @@ Proxy threads are joined before cluster cleanup. The TUI probe writes phase
 markers to the same private JSONL log, allowing each event batch to be
 validated against its own selected endpoint and target response.
 
-This intended proof covers local API binding, read-only request behavior,
+This accepted proof covers local API binding, read-only request behavior,
 RBAC denial, and synthetic Application evidence only. It cannot establish a
 real ConfigHub read or approval, controller reconciliation, workload
-convergence, or model/cost savings. No passing combined receipt exists yet.
+convergence, or model/cost savings. The accepted receipt is scoped to these synthetic fixture reads.
 
 ## Offline acceptance tests
 
