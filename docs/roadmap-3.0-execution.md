@@ -42,6 +42,32 @@ no cluster mutation, no new fleet membership model, and no renderer hidden in
 `import --git-path`. ConfigHub fact publication has a distinct, explicit write
 boundary even though observing the cluster remains read-only.
 
+## Execution checkpoint — 2026-10-01 (23:48 UTC on September 30)
+
+Main is `61b05bf`; v2.12.4 remains the published release. #681/#682, the negative
+routing report #684, the next-minor fleet-outliers notice #685, evidence cases
+#686/#687/#688 and delivery mappings #690 are merged. The fixed 24-case design
+now has 10 planned cases, five refreshed cases, two awaiting snapshot binding,
+six prepared projections and one prepared raw recording. It is still
+non-executable; input controls and equal-tool/protocol gates remain pending.
+
+#689 adds one recorded ownership model across CLI, TUI and MCP, with exact
+input hash/scope and unknown capture time/completeness. The full offline suite,
+binary surface proof on 302 input/300 selected Deployments, independent review
+and required CI passed. This enables the next offline scale-binding packet;
+it is not an agent-cost result. Its preparation/preflight draft is in review
+repair, with no model run or new local cluster capture. Economical count-only and
+no-marker-only views remain follow-up work under #604. PRE-01/02 remain planned:
+source renders and narrative receipts do not establish raw destination failures.
+
+Paid execution is unchanged at $4.2655744 estimated inclusive list price;
+development dollars/credits remain unmeasured and the $200 baseline tranche
+is unspent. No savings claim is established. Continue with bounded cheap
+workers at normal speed; the external governance/storage/access gates remain
+unresolved. See the [current handover](../HANDOVER.md) and
+[#645](https://github.com/confighub/cub-scout/issues/645) for the execution queue.
+The older dated checkpoint below is historical.
+
 ## Execution checkpoint — 2026-09-30 (status as of 22:45 UTC)
 
 v2.12.4 is published at `11c3e38`, with the six correctness fixes and reviewed

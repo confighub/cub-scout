@@ -1,5 +1,47 @@
 # cub-scout Handover for the Next AI Coder
 
+## 2026-10-01: Recorded inventory and delivery evidence checkpoint
+
+As of 2026-09-30 23:48 UTC (October 1 in London), merged main is `61b05bf`.
+The [official tracker #645](https://github.com/confighub/cub-scout/issues/645)
+contains the live execution queue. This section supersedes earlier status
+snapshots below. v2.12.4 is still the published release; these changes are
+unreleased. Continuous execution remains authorized, with cheap bounded
+workers and normal speed. Do not repeat P0 publication.
+
+- #681/#682 and the negative routing report #684 are merged. Both recent
+  economy pairs failed both binary answer checks; neither demonstrates savings.
+- #685 prepares the fleet-outliers deprecation notice for the next 2.x minor.
+  No runtime removal or published notice window has started.
+- #686/#687/#688 add the Consul, OCI and Sveltos evidence cases; #690 maps the
+  two delivery cases with eight verified fixture hashes. The fixed suite has
+  **10 planned, five refreshed, two awaiting snapshot binding, six prepared
+  projections and one prepared raw recording**. It remains non-executable and
+  the manifest does not authorize paid runs. Missing/stale and divergent
+  identity input controls remain pending; negative grader answers do not
+  substitute for those controls.
+- #689 adds recorded ownership inventory through CLI, TUI and MCP. Use
+  `map list --recording FILE --api-version VERSION --kind KIND`; exact namespace
+  or literal namespace-prefix scope is optional. Recorded MCP now exposes
+  `map` and `explain`, with no live runner. Input hashes, scope and detector
+  evidence are explicit; capture time/completeness stay unknown. The full
+  offline suite, actual binary CLI/MCP/TUI proof and required CI passed.
+  The proof selected 300 of 302 Deployments and preserved the input bytes.
+- Next: prepare and review the offline equal-evidence scale preflight under
+  #603, then bind INV-01/02. Its first draft needs stronger source-pin and
+  owned-process timeout handling; no preflight/model run has been launched.
+  Count-only/no-marker-only views remain a separate cost optimization.
+  PRE-01/02 still need raw destination absent/present controls: existing Helm
+  and Kubara receipts cannot substitute for runtime prerequisite observations.
+
+Paid execution remains **$4.2655744 estimated inclusive list price**, with the
+$200 baseline tranche unspent. No additional paid evaluation or local cluster capture occurred in this
+packet. Development dollars/credits remain unmeasured; aggregate token telemetry
+cannot certify the provisional credit envelope. The savings gate has not passed.
+#591 genuine attestation fixtures, #597 current gate-evaluation evidence, #600
+schema/storage agreement and GHCR access remain unresolved. All promotion argv,
+including dry-run, remain prohibited. Preserve private traces and shared clusters.
+
 ## 2026-09-30: Post-release implementation checkpoint
 
 Use [#645](https://github.com/confighub/cub-scout/issues/645) for the current
