@@ -2,7 +2,7 @@
   "schema": "combined-runtime-diagnostic-report.v1",
   "date": "2026-10-01",
   "issue": 740,
-  "status": "failed",
+  "status": "passed-diagnostic-only",
   "paidAdmission": false,
   "claim": "Synthetic provider wiring diagnostic only; no model quality, billing or savings evidence",
   "attempts": [
@@ -34,7 +34,9 @@
             "providerAttemptsPassed": true,
             "toolResultsCorrelated": false,
             "apiRequests": 1
-          }
+          },
+          "advertisedScoutSkills": 0,
+          "mapResultCaptures": []
         },
         "treatment": {
           "status": "failed",
@@ -180,7 +182,9 @@
             "providerAttemptsPassed": true,
             "toolResultsCorrelated": false,
             "apiRequests": 1
-          }
+          },
+          "advertisedScoutSkills": 0,
+          "mapResultCaptures": []
         },
         "treatment": {
           "status": "failed",
@@ -201,7 +205,9 @@
             "providerAttemptsPassed": false,
             "toolResultsCorrelated": false,
             "apiRequests": 1
-          }
+          },
+          "advertisedScoutSkills": 0,
+          "mapResultCaptures": []
         }
       },
       "rawFiles": {
@@ -338,15 +344,552 @@
           "sha256": "be006bcb70d3f8292eb621b343b0b231ff29cb81d17c6fee51412bc9e418cd44"
         }
       }
+    },
+    {
+      "attempt": 3,
+      "status": "failed",
+      "sourceRevision": "e2dd588b760bdb9ac3d3654c005c1a68cd04f556",
+      "elapsedSeconds": 6.1884529162198305,
+      "outerTimeout": false,
+      "exitCode": 1,
+      "helperUnchanged": true,
+      "arms": {
+        "baseline": {
+          "status": "passed",
+          "error": null,
+          "securityVerified": true,
+          "payloadExitCode": 0,
+          "containerAbsenceVerified": true,
+          "pluginUnchanged": true,
+          "payload": {
+            "returnCode": 0,
+            "runStatus": "completed",
+            "fileReadPassed": true,
+            "kubectlReadPassed": true,
+            "refusalPassed": true,
+            "mcpMapPassed": true,
+            "skillsAdvertised": false,
+            "providerReceivedCount": 6,
+            "providerAttemptsPassed": true,
+            "toolResultsCorrelated": true,
+            "apiRequests": 1
+          },
+          "advertisedScoutSkills": 0,
+          "mapResultCaptures": []
+        },
+        "treatment": {
+          "status": "failed",
+          "error": "owned container differs from exact runtime/isolation profile",
+          "securityVerified": false,
+          "payloadExitCode": null,
+          "containerAbsenceVerified": true,
+          "pluginUnchanged": true
+        }
+      },
+      "rawFiles": {
+        "run3/baseline-docker-op-01-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run3/baseline-docker-op-01-stdout.bin": {
+          "bytes": 65,
+          "sha256": "b065664e8e6269bcbae9b7106580ebbc50545d875807e6467571f7a8fdae5789"
+        },
+        "run3/baseline-docker-op-02-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run3/baseline-docker-op-02-stdout.bin": {
+          "bytes": 4918,
+          "sha256": "c7885546eb67f08d3fb286a77db8d1d0ecdc8a791b3d82162b109b57e95e6ebb"
+        },
+        "run3/baseline-docker-op-03-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run3/baseline-docker-op-03-stdout.bin": {
+          "bytes": 65,
+          "sha256": "b065664e8e6269bcbae9b7106580ebbc50545d875807e6467571f7a8fdae5789"
+        },
+        "run3/baseline-docker-op-04-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run3/baseline-docker-op-04-stdout.bin": {
+          "bytes": 2,
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "run3/baseline-docker-op-05-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run3/baseline-docker-op-05-stdout.bin": {
+          "bytes": 5465,
+          "sha256": "ebe06041f56f41532d97b20c3030725fae8167669fb046153ff267b136f8a3ac"
+        },
+        "run3/baseline-docker-op-06-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run3/baseline-docker-op-06-stdout.bin": {
+          "bytes": 1906717,
+          "sha256": "9453b9b89757ac932d1fe6228f9c31d3a64ef782c22425b8595de07d0ac96909"
+        },
+        "run3/baseline.identity.json": {
+          "bytes": 158,
+          "sha256": "5170572816b78c0c46888d9eb3ed40d758841625e721d3448da1fa25640e5991"
+        },
+        "run3/baseline.payload.json": {
+          "bytes": 1914276,
+          "sha256": "ca5d0a4dd9de41e53d3f93bcf86db4fb1a712fcf6c6031b0de5dd6ff0365e43e"
+        },
+        "run3/run.json": {
+          "bytes": 49406,
+          "sha256": "20eb78a3b9f5bb26b1aa17c02c4bbe5e06417197b89ba38d61b2ada71e5cb553"
+        },
+        "run3/treatment-docker-op-01-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run3/treatment-docker-op-01-stdout.bin": {
+          "bytes": 65,
+          "sha256": "205bae8d26c086ed99c11e70a7705064bfebc66613762ab15cd87e73c1ffecb6"
+        },
+        "run3/treatment-docker-op-02-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run3/treatment-docker-op-02-stdout.bin": {
+          "bytes": 5241,
+          "sha256": "3d30b1d7a49d1ef9cdf9cdce4b0ead437e54816844b2b913b43040455d9c797e"
+        },
+        "run3/treatment.identity.json": {
+          "bytes": 158,
+          "sha256": "cbb4b6a1251eda200394f4dfb0302a39ec55506a79a6ef7414bc5426377031d8"
+        },
+        "proof3/result.json": {
+          "bytes": 750,
+          "sha256": "920270b97ded49a2fb9cdb17c3e2c1bf0867e20a0f0f7359908d6aa5de529c66"
+        },
+        "proof3/stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "proof3/stdout.bin": {
+          "bytes": 118,
+          "sha256": "10d9339e7154883fc0fdd17c230def43b420d5be0b9f9853a504827112ee9dbb"
+        },
+        "run3-wrapper.py": {
+          "bytes": 1842,
+          "sha256": "1e72acc204cdfdc02ac6ac568cc19f4d4b83f25560049461e21b2ab84e4104e4"
+        }
+      }
+    },
+    {
+      "attempt": 4,
+      "status": "failed",
+      "sourceRevision": "8b75e260144117e93ff3e5b2f174d3237166ed51",
+      "elapsedSeconds": 8.843360375147313,
+      "outerTimeout": false,
+      "exitCode": 1,
+      "helperUnchanged": true,
+      "arms": {
+        "baseline": {
+          "status": "passed",
+          "error": null,
+          "securityVerified": true,
+          "payloadExitCode": 0,
+          "containerAbsenceVerified": true,
+          "pluginUnchanged": true,
+          "payload": {
+            "returnCode": 0,
+            "runStatus": "completed",
+            "fileReadPassed": true,
+            "kubectlReadPassed": true,
+            "refusalPassed": true,
+            "mcpMapPassed": true,
+            "skillsAdvertised": false,
+            "providerReceivedCount": 6,
+            "providerAttemptsPassed": true,
+            "toolResultsCorrelated": true,
+            "apiRequests": 1
+          },
+          "advertisedScoutSkills": 0,
+          "mapResultCaptures": []
+        },
+        "treatment": {
+          "status": "failed",
+          "error": "arm payload is incomplete or failed",
+          "securityVerified": true,
+          "payloadExitCode": 1,
+          "containerAbsenceVerified": true,
+          "pluginUnchanged": true,
+          "payload": {
+            "returnCode": 0,
+            "runStatus": "completed",
+            "fileReadPassed": true,
+            "kubectlReadPassed": true,
+            "refusalPassed": true,
+            "mcpMapPassed": false,
+            "skillsAdvertised": true,
+            "providerReceivedCount": 8,
+            "providerAttemptsPassed": false,
+            "toolResultsCorrelated": true,
+            "apiRequests": 1
+          },
+          "advertisedScoutSkills": 35,
+          "mapResultCaptures": []
+        }
+      },
+      "rawFiles": {
+        "run4/baseline-docker-op-01-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run4/baseline-docker-op-01-stdout.bin": {
+          "bytes": 65,
+          "sha256": "fa27a8cc63d40278597f0e678fbe566a1fc122dbc027cd4325ef747639630882"
+        },
+        "run4/baseline-docker-op-02-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run4/baseline-docker-op-02-stdout.bin": {
+          "bytes": 4918,
+          "sha256": "2b9fc3b8421e2153cb612dd1e34fb3cef3e4b1f75ce5aa982dcfe9561460ad91"
+        },
+        "run4/baseline-docker-op-03-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run4/baseline-docker-op-03-stdout.bin": {
+          "bytes": 65,
+          "sha256": "fa27a8cc63d40278597f0e678fbe566a1fc122dbc027cd4325ef747639630882"
+        },
+        "run4/baseline-docker-op-04-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run4/baseline-docker-op-04-stdout.bin": {
+          "bytes": 2,
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "run4/baseline-docker-op-05-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run4/baseline-docker-op-05-stdout.bin": {
+          "bytes": 5465,
+          "sha256": "4d8467802af55931bfa1dde2620cdcac67189d087c8ba1110fb704a4b5cffe8d"
+        },
+        "run4/baseline-docker-op-06-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run4/baseline-docker-op-06-stdout.bin": {
+          "bytes": 1906717,
+          "sha256": "50aadb2d56c74258c6b55baa7f58755ed360700862f429027e085c589a895dd4"
+        },
+        "run4/baseline.identity.json": {
+          "bytes": 158,
+          "sha256": "f9ab44d192ab02f1d8dccc511e721b4e61a8051db245d1a8a472d3c7eb1ffb56"
+        },
+        "run4/baseline.payload.json": {
+          "bytes": 1914276,
+          "sha256": "9546f08b415882958d71bc210f3433d372c8da4aff3c1fa519f597e313702467"
+        },
+        "run4/run.json": {
+          "bytes": 51563,
+          "sha256": "8f2c771583a58989c0ad730b26c994669f26133a52a0e4843cd0490411dd1ae1"
+        },
+        "run4/treatment-docker-op-01-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run4/treatment-docker-op-01-stdout.bin": {
+          "bytes": 65,
+          "sha256": "9bfdde79221636e23ab0b2d0bce482e6ffafc43208304485d532d6f514b78759"
+        },
+        "run4/treatment-docker-op-02-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run4/treatment-docker-op-02-stdout.bin": {
+          "bytes": 5239,
+          "sha256": "5e77e08faa4c80fe5d887fb378fdf806a138b4e570a340cafb470a7f1ced10c4"
+        },
+        "run4/treatment-docker-op-03-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run4/treatment-docker-op-03-stdout.bin": {
+          "bytes": 65,
+          "sha256": "9bfdde79221636e23ab0b2d0bce482e6ffafc43208304485d532d6f514b78759"
+        },
+        "run4/treatment-docker-op-04-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run4/treatment-docker-op-04-stdout.bin": {
+          "bytes": 2,
+          "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+        },
+        "run4/treatment-docker-op-05-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run4/treatment-docker-op-05-stdout.bin": {
+          "bytes": 5786,
+          "sha256": "ecc71eab53e3f5586dfd9121ebf781c043caee7bd93c016364d225f977ce291a"
+        },
+        "run4/treatment-docker-op-06-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run4/treatment-docker-op-06-stdout.bin": {
+          "bytes": 2989569,
+          "sha256": "e6d0973aaeaea8381dc3ea2d620ecfcc3892e5b902e47b5c0aa3c6b89e59aba9"
+        },
+        "run4/treatment.identity.json": {
+          "bytes": 158,
+          "sha256": "54a9e66c39fea6282ea2118592d39227ee744310b0f825db7bee9b509ec2e235"
+        },
+        "run4/treatment.payload.json": {
+          "bytes": 3000269,
+          "sha256": "178626eb8b22f75d9199e7e75f5af412309bd7679c7c8252a6d6931ac0274424"
+        },
+        "proof4/result.json": {
+          "bytes": 749,
+          "sha256": "0b072490235412bc3dee9fcb55115ee06c5c65e9b05ab6e7be922b5a64aa5ab5"
+        },
+        "proof4/stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "proof4/stdout.bin": {
+          "bytes": 118,
+          "sha256": "cc65c23fbc2456f5d4aaa599f4f1f18824cfcae0ea34a6d77a3b25ce281638da"
+        },
+        "run4-wrapper.py": {
+          "bytes": 1842,
+          "sha256": "e6206f8729b136e5fef20b1971074a18058e66d0607085ad1bba7093ccffc755"
+        }
+      }
+    },
+    {
+      "attempt": 5,
+      "status": "passed",
+      "sourceRevision": "1b80b8c47fa6c08b97c595ca3a9a0ba53832b0a6",
+      "elapsedSeconds": 9.09142483305186,
+      "outerTimeout": false,
+      "exitCode": 0,
+      "helperUnchanged": true,
+      "arms": {
+        "baseline": {
+          "status": "passed",
+          "error": null,
+          "securityVerified": true,
+          "payloadExitCode": 0,
+          "containerAbsenceVerified": true,
+          "pluginUnchanged": true,
+          "payload": {
+            "returnCode": 0,
+            "runStatus": "completed",
+            "fileReadPassed": true,
+            "kubectlReadPassed": true,
+            "refusalPassed": true,
+            "mcpMapPassed": true,
+            "skillsAdvertised": false,
+            "providerReceivedCount": 6,
+            "providerAttemptsPassed": true,
+            "toolResultsCorrelated": true,
+            "apiRequests": 1
+          },
+          "advertisedScoutSkills": 0,
+          "mapResultCaptures": []
+        },
+        "treatment": {
+          "status": "passed",
+          "error": null,
+          "securityVerified": true,
+          "payloadExitCode": 0,
+          "containerAbsenceVerified": true,
+          "pluginUnchanged": true,
+          "payload": {
+            "returnCode": 0,
+            "runStatus": "completed",
+            "fileReadPassed": true,
+            "kubectlReadPassed": true,
+            "refusalPassed": true,
+            "mcpMapPassed": true,
+            "skillsAdvertised": true,
+            "providerReceivedCount": 8,
+            "providerAttemptsPassed": true,
+            "toolResultsCorrelated": true,
+            "apiRequests": 1
+          },
+          "advertisedScoutSkills": 35,
+          "mapResultCaptures": [
+            {
+              "source": "persisted",
+              "bytes": 90892,
+              "sha256": "db4956a58fe8e69057b2b6640de01beb017aeb22e6901a4769e1cb24b36f3d1b"
+            }
+          ]
+        }
+      },
+      "rawFiles": {
+        "run5/baseline-docker-op-01-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run5/baseline-docker-op-01-stdout.bin": {
+          "bytes": 65,
+          "sha256": "f504914dcc990086adfcb2697072263597e5393e6a02bdc572a7917b4fb62025"
+        },
+        "run5/baseline-docker-op-02-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run5/baseline-docker-op-02-stdout.bin": {
+          "bytes": 4918,
+          "sha256": "473f219f20271b3c1e0fd75202d0ceb93c2513653af01d13a9d3f5fa06e4458b"
+        },
+        "run5/baseline-docker-op-03-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run5/baseline-docker-op-03-stdout.bin": {
+          "bytes": 65,
+          "sha256": "f504914dcc990086adfcb2697072263597e5393e6a02bdc572a7917b4fb62025"
+        },
+        "run5/baseline-docker-op-04-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run5/baseline-docker-op-04-stdout.bin": {
+          "bytes": 2,
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "run5/baseline-docker-op-05-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run5/baseline-docker-op-05-stdout.bin": {
+          "bytes": 5465,
+          "sha256": "50bc9c9db317f42f83be5f7afa4d5e0bf7388557cb549d000d61ab3d0f310951"
+        },
+        "run5/baseline-docker-op-06-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run5/baseline-docker-op-06-stdout.bin": {
+          "bytes": 1906736,
+          "sha256": "7c5cac406daa1e767657c57059464919a33d3e2a4c44d14a464b8085de2f6ed4"
+        },
+        "run5/baseline.identity.json": {
+          "bytes": 158,
+          "sha256": "6d5dfb3062755dfa45cbb76140d08b7467801281cbda6b06de178fe3df7a8bec"
+        },
+        "run5/baseline.payload.json": {
+          "bytes": 1914299,
+          "sha256": "9606c5859ab413fef6d44a90fa118565093badadd0c0f72fd0b5a7cda690d5d6"
+        },
+        "run5/run.json": {
+          "bytes": 52148,
+          "sha256": "a439d4b7024505508dc0b3d54c6e0825b8cfd855cac9a1a3ab03ef3cb29323c7"
+        },
+        "run5/treatment-docker-op-01-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run5/treatment-docker-op-01-stdout.bin": {
+          "bytes": 65,
+          "sha256": "e13099b0d92a58b3717906c61f8722ebcbd5f8960cb31601d2d8817e04da014c"
+        },
+        "run5/treatment-docker-op-02-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run5/treatment-docker-op-02-stdout.bin": {
+          "bytes": 5241,
+          "sha256": "a9e6a152e8afa33b8a1c649a8a6c2b9b7c02c2d350c6aa5aa4ee3e816b754397"
+        },
+        "run5/treatment-docker-op-03-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run5/treatment-docker-op-03-stdout.bin": {
+          "bytes": 65,
+          "sha256": "e13099b0d92a58b3717906c61f8722ebcbd5f8960cb31601d2d8817e04da014c"
+        },
+        "run5/treatment-docker-op-04-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run5/treatment-docker-op-04-stdout.bin": {
+          "bytes": 2,
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "run5/treatment-docker-op-05-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run5/treatment-docker-op-05-stdout.bin": {
+          "bytes": 5788,
+          "sha256": "847b8e53fd7114392aa2bd43035d87a45d7713098116113e9e4ec35ab95eab09"
+        },
+        "run5/treatment-docker-op-06-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run5/treatment-docker-op-06-stdout.bin": {
+          "bytes": 3353865,
+          "sha256": "ba1a16028d59ec85f5ee492d01c586d8ce026d8da3ebbc8452ed26628a8e1995"
+        },
+        "run5/treatment.identity.json": {
+          "bytes": 158,
+          "sha256": "f914e01341694543704000b4bccbcc3ecaaed207240b96efec63fd63d0ae7521"
+        },
+        "run5/treatment.payload.json": {
+          "bytes": 3364682,
+          "sha256": "d78c8998a1f05a744a40f7b781bd88f72cfc4039b1a0cf44e39af1724c637580"
+        },
+        "proof5/result.json": {
+          "bytes": 748,
+          "sha256": "af2b100adb2aeca86e7eefe35d31aec4b2fd6e2fee016849373cfed792c5514d"
+        },
+        "proof5/stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "proof5/stdout.bin": {
+          "bytes": 118,
+          "sha256": "63de92938f2e417af742e38af51e53b9c0f707fcd1ff692bbe4df24b059cc134"
+        },
+        "run5-wrapper.py": {
+          "bytes": 1842,
+          "sha256": "bc203d8a7abe7e8402fa5d69a97024cca5a3cb514a82363c0df9f48bfd9051e6"
+        }
+      }
     }
   ],
   "privateArchive": "evals/results/combined-recorded-runtime-20261001",
   "stagingRetention": "Readonly host stages remain in the corresponding private /tmp run directories; binary copies are not duplicated in this archive.",
   "unresolved": [
-    "Provider response tool-use blocks include a type field absent from CLI event projections; exact semantic correlation needs a reviewed projection.",
-    "CLI augments provider-bound tool results with reminders; strict byte equality currently fails. Read output needs exact transformation analysis.",
-    "Treatment advertises all 35 staged skill names in initial request messages, not the system field inspected by the current validator; no skill use/value is established.",
-    "Recorded MCP map result is persisted by Claude because its 88.8 KB output exceeds inline limits; the preview is not complete result evidence.",
-    "Treatment received one rejected unexpected request whose path the current receipt redacts; do not classify or allow it without direct evidence."
-  ]
+    "No real model, answer-quality, actual provider billing or credits measurement.",
+    "No full24-case execution/admission or general tool-parity proof.",
+    "No skill-use/value proof from advertised skill names.",
+    "No lossless OS process inventory; owned-container absence proves lifetime termination.",
+    "Host staging retained; not removed by container cleanup."
+  ],
+  "resolvedDiagnosticFailures": [
+    "Attempts1-4 remain failed; no result was reclassified.",
+    "Nested plugin mountpoint and Bash final newline fixed after attempt1.",
+    "Strict observed CLI projection, structured skill listing, and persisted result capture introduced before attempt3.",
+    "Exact mount comparison made order-independent after attempt3; duplicate/unexpected mounts still fail.",
+    "Attempt4 identified the optional token-count route; attempt5 retains its authenticated bounded request and explicit404. Unknown requests remain failures.",
+    "Attempt5 captures and independently validates the full90892-byte MCP result before container cleanup; the model received a preview, not the complete persisted body."
+  ],
+  "successfulSourceRevision": "1b80b8c47fa6c08b97c595ca3a9a0ba53832b0a6"
 }

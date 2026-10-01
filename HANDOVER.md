@@ -69,15 +69,15 @@ order, quality gates, budgets and decisions.
   frozen 24 questions requires installed Helm release history. Inventory
   questions concern supplied rows, with original-cluster completeness unknown.
   Equal meaningful tool access remains required; every tool need not be called.
-- [#740](https://github.com/confighub/cub-scout/issues/740) builds one combined
-  offline two-arm runtime diagnostic using the pinned Linux CLI, synthetic
-  provider and recorded API/MCP. Source review found staging, cleanup and
-  receipt-validation defects; reviewed fixes passed 14 offline tests. Two
-  actual attempts failed in 7.379 and 11.130 seconds with verified container
-  cleanup. CLI transport differences, persisted MCP output and a rejected
-  unknown request remain unresolved; see the
-  [diagnostic report](evals/reports/2026-10-01-combined-runtime.json). Paid
-  admission remains stopped.
+- [#740](https://github.com/confighub/cub-scout/issues/740) now has a passed
+  combined offline two-arm diagnostic in PR #741 at source 1b80b8c, in 9.091
+  seconds. Both real CLIs completed required tools; treatment advertised 35
+  skills and produced one complete validated recorded map result. Both owned
+  containers were removed and input hashes verified. All four earlier failed
+  attempts remain retained in the
+  [diagnostic report](evals/reports/2026-10-01-combined-runtime.json). Eighteen
+  offline tests pass. This is not full24 execution, skill-use value, billing,
+  savings evidence or paid admission; those gates remain stopped.
 - General ordinary-tool parity, API/Helm route coverage, complete descendant
   accounting and paid admission remain unresolved. External #591/#597/#600
   still require their own authoritative evidence and agreement.

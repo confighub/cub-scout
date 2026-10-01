@@ -1,15 +1,30 @@
 # Combined recorded runtime diagnostic
 
-This executable two-arm diagnostic remains **failed**, separate from the frozen
-benchmark, admission audit and historical results. Two actual attempts are
-retained in the [report](../reports/2026-10-01-combined-runtime.json): 7.379 seconds
-at c40bf9f and 11.130 seconds at 4b65288. Both verified owned-container cleanup;
-neither passed the paired receipt contract. The first exposed missing nested
-mount staging and Bash newline handling, repaired before the second. The second
-exposed CLI/provider event-shape differences, reminder augmentation, skill
-advertisement in messages, persisted MCP output, and one rejected unknown
-request. These are runtime findings, not successful admission. No real model
-or external provider was contacted.
+This executable two-arm diagnostic **passed on attempt five** at source
+`1b80b8c47fa6c08b97c595ca3a9a0ba53832b0a6` in 9.091 seconds. It remains separate
+from the frozen benchmark and paid admission. Both arms completed real Read,
+recorded kubectl and explicit Task/Agent refusal controls. Treatment advertised
+35 pinned skills and made one recorded map call; its complete 90,892-byte result
+was retained and validated before container removal. The model received a
+preview, not the complete persisted body. Both containers were verified absent;
+shared staged inputs and treatment plugin hashes were unchanged.
+
+The [report](../reports/2026-10-01-combined-runtime.json) retains all five attempts:
+
+| Attempt | Source | Seconds | Outcome |
+| --- | --- | ---: | --- |
+| 1 | c40bf9f | 7.379 | Failed: nested mountpoint and Bash newline comparison |
+| 2 | 4b65288 | 11.130 | Failed: CLI transport, skill listing, persisted map and unknown request |
+| 3 | e2dd588 | 6.188 | Failed: correct mounts returned in a different order; baseline passed |
+| 4 | 8b75e26 | 8.843 | Failed: persisted-path parser; token-count route identified |
+| 5 | 1b80b8c | 9.091 | Passed the bounded diagnostic contract |
+
+All five attempts verified owned-container cleanup. Baseline attempt five had
+six provider-endpoint requests (five scripted messages plus startup probe);
+treatment had eight (six messages, startup probe and one declined token-count
+request). These are fake-provider requests, not model calls or billing evidence.
+No real model, external provider or live cluster was contacted. Eighteen offline
+tests passed; raw-event and mount-order regressions failed before their fixes.
 
 `run_pair.py` creates two fresh containers from the pinned Linux asset archive.
 Both arms receive the same seven recorded scale files and PRE-01 replay packet.
@@ -41,8 +56,7 @@ the separately prepared pinned asset archive and a named local Docker context.
 Staged tool and plugin copies remain beneath that private output directory for
 inspection; container removal does not mean host staging removal. The diagnostic
 uses fixed baseline-then-treatment order, not a randomized benchmark.
-A further invocation requires a reviewed fix for the recorded failures. The
-invocation shape is:
+No repeat is needed for the proved source. The reproducible invocation shape is:
 
 ```sh
 PYTHONDONTWRITEBYTECODE=1 python3 evals/combined-recorded-runtime/run_pair.py \
@@ -52,7 +66,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 evals/combined-recorded-runtime/run_pair.py \
 
 Do not run this command until the source and exact invocation have been reviewed.
 Unknown CLI flag/plugin semantics fail closed and are not asserted by the pure
-tests. The two attempts above used real CLI/container execution and local listeners
+tests. The five attempts above used real CLI/container execution and local listeners
 after source review. No live cluster or real model provider was accessed.
 
 Offline checks use synthetic dictionaries, response fixtures, and temporary
