@@ -75,6 +75,11 @@ class Pre02PackageTests(unittest.TestCase):
         for name, expected in RAW_HASHES.items():
             with self.subTest(name=name):
                 self.assertEqual(file_sha(FIXTURES / name), expected)
+
+    @unittest.skipUnless(ARCHIVE.is_dir(), "private capture archive is not distributed with the checkout")
+    def test_optional_private_archive_matches_pinned_fixtures(self):
+        for name, expected in RAW_HASHES.items():
+            with self.subTest(name=name):
                 self.assertEqual(file_sha(ARCHIVE / name), expected)
                 self.assertEqual((FIXTURES / name).read_bytes(), (ARCHIVE / name).read_bytes())
         self.assertEqual(file_sha(ARCHIVE / "capture-scope.json"), file_sha(FIXTURES / "capture-scope.json"))
