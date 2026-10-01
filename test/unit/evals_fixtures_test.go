@@ -307,6 +307,10 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			checkTraceContextBindingScaffold(t, caseDir)
 			continue
 		}
+		if filepath.Base(caseDir) == "trace-rendered-diff-contract" {
+			checkTraceRenderedDiffScaffold(t, caseDir)
+			continue
+		}
 		if filepath.Base(caseDir) == "recorded-explain-contract" {
 			checkRecordedExplainCaseScaffold(t, caseDir)
 			continue

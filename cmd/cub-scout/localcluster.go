@@ -46,6 +46,7 @@ type TUISnapshot struct {
 }
 
 const snapshotVersion = "1.0"
+const traceDiffTimeout = 30 * time.Second
 
 func getSnapshotPath() string {
 	home, _ := os.UserHomeDir()
@@ -1380,6 +1381,9 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		m.traceDiffLoading = false
+		if m.traceDiffCancel != nil {
+			m.traceDiffCancel()
+		}
 		m.traceDiffCancel = nil
 		m.traceDiffOutput = msg.output
 		m.traceDiffError = msg.err
@@ -1669,7 +1673,7 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.traceDiffAPIVersion = strings.TrimSpace(m.traceDiffInput)
 					m.traceDiffInput = ""
 					m.traceDiffPrompt = ""
-					ctx, cancel := context.WithCancel(context.Background())
+					ctx, cancel := context.WithTimeout(context.Background(), traceDiffTimeout)
 					m.traceDiffCancel = cancel
 					m.traceDiffRequestID++
 					m.traceDiffLoading = true

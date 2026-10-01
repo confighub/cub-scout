@@ -113,10 +113,13 @@ last-applied manifest (which can embed Secret payloads) and report
 absent. Non-Secret last-applied metadata retains its existing representation.
 `trace --diff --desired-file PATH --format json` returns a
 `traceDiffObservation` with `status`, `comparison`, `coverage`, `source`,
-`context`, exact `resource`, optional bounded `read` evidence, field summary,
-differences, and omissions. `source.kind` is `local-rendered`;
-`source.reference` is the local operand reference and `source.digest` is omitted whenever the input
-contains a Secret. `comparison` is `authored-fields-only` and `coverage` is
+`context`, exact `resource`, `scopeDiscoveryReads`, optional bounded `read`
+evidence, field summary, differences, and omissions. `scopeDiscoveryReads`
+counts a separate discovery GET made only to resolve a desired object's scope;
+it is not included in `read.reads`, which belongs to the bounded object reader.
+`source.kind` is `local-rendered`; `source.reference` is the local operand
+reference and `source.digest` is omitted whenever the input contains a Secret.
+`comparison` is `authored-fields-only` and `coverage` is
 `one-selected-object`: this does not claim controller-rendered desired state,
 object-set completeness, or predict a future reconciliation. Status separates
 `matched`, `changed`, `missing`, and `inconclusive`; Secret payload comparison

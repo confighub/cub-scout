@@ -9,10 +9,13 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
 	"github.com/stretchr/testify/require"
 )
 
@@ -124,6 +127,7 @@ func TestTraceDiffNamespaceUsesExactManifestNamespaceOrFailsClosed(t *testing.T)
 	withoutNamespace := traceDiffManifest(t, "apiVersion: apps/v1\nkind: Deployment\nmetadata: {name: api}\nspec: {replicas: 1}\n")
 	_, err = observeTraceDiffWithAPIVersion(context.Background(), session, "Deployment", "api", "", "apps/v1", withoutNamespace)
 	require.ErrorContains(t, err, "has no namespace")
+	require.ErrorContains(t, err, "scope discovery GETs=1")
 	require.Equal(t, int32(1), requests.Load(), "only the namespaced-scope discovery may be read; no live object GET")
 
 	requests.Store(0)
@@ -131,6 +135,7 @@ func TestTraceDiffNamespaceUsesExactManifestNamespaceOrFailsClosed(t *testing.T)
 	got, err = observeTraceDiffWithAPIVersion(context.Background(), session, "Deployment", "api", "team-a", "apps/v1", withNamespaceFlag)
 	require.NoError(t, err, "-n can supply a missing namespace for a namespaced resource")
 	require.Equal(t, "team-a", got.Resource.Namespace)
+	require.Equal(t, 1, got.ScopeDiscoveryReads, "scope selection GET is distinct from bounded-reader request counts")
 	require.Equal(t, int32(3), requests.Load(), "scope discovery, bounded-reader discovery, and exact live GET use the supplied namespace")
 
 	requests.Store(0)
@@ -142,6 +147,62 @@ func TestTraceDiffNamespaceUsesExactManifestNamespaceOrFailsClosed(t *testing.T)
 	_, err = observeTraceDiffWithAPIVersion(context.Background(), session, "Deployment", "api", "team-b", "apps/v1", withNamespace)
 	require.ErrorContains(t, err, "does not match")
 	require.Zero(t, requests.Load(), "namespace mismatch fails before API reads")
+}
+
+func TestTraceDiffRejectsInvalidOperandIdentityBeforeAnyDiscovery(t *testing.T) {
+	var requests atomic.Int32
+	server := httptest.NewServer(traceDiffHandler(t, "", "", http.StatusOK, &requests))
+	defer server.Close()
+	session := traceDiffSession(t, server.URL, "alpha")
+	for _, tc := range []struct {
+		name, manifest, kind, objectName, namespace string
+		want                                        string
+	}{
+		{name: "api version", manifest: "apiVersion: apps//v1\nkind: Deployment\nmetadata: {name: api, namespace: team-a}\n", kind: "Deployment", objectName: "api", want: "invalid Kubernetes identity"},
+		{name: "name", manifest: "apiVersion: apps/v1\nkind: Deployment\nmetadata: {name: bad_name, namespace: team-a}\n", kind: "Deployment", objectName: "bad_name", want: "invalid Kubernetes identity"},
+		{name: "kind", manifest: "apiVersion: apps/v1\nkind: Bad Kind\nmetadata: {name: api}\n", kind: "Bad Kind", objectName: "api", want: "invalid Kubernetes identity"},
+		{name: "manifest namespace", manifest: "apiVersion: apps/v1\nkind: Deployment\nmetadata: {name: api, namespace: Team_A}\n", kind: "Deployment", objectName: "api", want: "invalid Kubernetes identity"},
+		{name: "requested namespace", manifest: "apiVersion: apps/v1\nkind: Deployment\nmetadata: {name: api}\n", kind: "Deployment", objectName: "api", namespace: "BAD_NS", want: "requested namespace is invalid"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			requests.Store(0)
+			_, err := observeTraceDiff(context.Background(), session, tc.kind, tc.objectName, tc.namespace, traceDiffManifest(t, tc.manifest))
+			require.ErrorContains(t, err, tc.want)
+			require.Zero(t, requests.Load(), "malformed identity must fail before discovery or object reads")
+		})
+	}
+}
+
+func TestTraceDiffMarkdownCarriesIdentityReadEvidenceAndEscapesCells(t *testing.T) {
+	observedAt := time.Date(2026, 10, 1, 12, 13, 14, 0, time.UTC)
+	result := &traceDiffObservation{
+		Status: traceDiffStatusChanged, Comparison: "authored-fields-only", Coverage: "one-selected-object",
+		Source:  traceDiffSource{Kind: "local-rendered", Reference: "manifest.yaml", Digest: "digest"},
+		Context: "alpha", Resource: agent.BoundedResourceRef{APIVersion: "apps/v1", Kind: "Deployment", Namespace: "team-a", Name: "api"},
+		ScopeDiscoveryReads: 1,
+		Read:                &agent.BoundedReadEvidence{UID: "uid-alpha", ResourceVersion: "9", ObservedAt: observedAt, Reads: agent.BoundedReadCounts{Discovery: 1, Object: 1}},
+		Differences:         []agent.ObjectSetFieldDiff{{Field: "spec.note|name", Desired: "wanted|one\nline", Live: "has`tick"}},
+	}
+	var output strings.Builder
+	require.NoError(t, renderTraceDiffObservationMarkdown(&output, result))
+	markdown := output.String()
+	for _, want := range []string{
+		"apps/v1 Deployment team-a/api", "2026-10-01T12:13:14Z",
+		"scope discovery=1; bounded reader discovery=1 object=1", "spec.note\\|name",
+		"wanted\\|one<br>line", "has&#96;tick",
+	} {
+		require.Contains(t, markdown, want)
+	}
+}
+
+func TestTraceDiffTUIResultCancelsCompletedContext(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	model := LocalClusterModel{traceMode: true, traceDiffMode: true, traceDiffLoading: true, traceDiffRequestID: 3, traceDiffCancel: cancel}
+	updated, _ := model.Update(traceDiffResultMsg{requestID: 3, output: "complete"})
+	model = updated.(LocalClusterModel)
+	require.ErrorIs(t, ctx.Err(), context.Canceled)
+	require.False(t, model.traceDiffLoading)
+	require.Nil(t, model.traceDiffCancel)
 }
 
 func TestTraceDiffRejectsNamespaceForClusterScopedDesiredObject(t *testing.T) {
@@ -162,6 +223,7 @@ func TestTraceDiffRejectsNamespaceForClusterScopedDesiredObject(t *testing.T) {
 	desired := traceDiffManifest(t, "apiVersion: v1\nkind: Namespace\nmetadata: {name: team-a}\n")
 	_, err := observeTraceDiffWithAPIVersion(context.Background(), session, "Namespace", "team-a", "team-a", "v1", desired)
 	require.ErrorContains(t, err, "cluster-scoped")
+	require.ErrorContains(t, err, "scope discovery GETs=1")
 	require.Equal(t, int32(1), requests.Load(), "scope discovery only; no resource GET")
 }
 

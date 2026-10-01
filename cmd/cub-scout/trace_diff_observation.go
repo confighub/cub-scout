@@ -42,16 +42,17 @@ type traceDiffSource struct {
 // traceDiffObservation is the bounded result of comparing one selected
 // rendered object with one object read through a captured Kubernetes session.
 type traceDiffObservation struct {
-	Status      string                     `json:"status"`
-	Comparison  string                     `json:"comparison"`
-	Coverage    string                     `json:"coverage"`
-	Source      traceDiffSource            `json:"source"`
-	Context     string                     `json:"context"`
-	Resource    agent.BoundedResourceRef   `json:"resource"`
-	Read        *agent.BoundedReadEvidence `json:"read,omitempty"`
-	Summary     agent.ObjectSetDiffSummary `json:"summary"`
-	Differences []agent.ObjectSetFieldDiff `json:"differences,omitempty"`
-	Omissions   []string                   `json:"omissions,omitempty"`
+	Status              string                     `json:"status"`
+	Comparison          string                     `json:"comparison"`
+	Coverage            string                     `json:"coverage"`
+	Source              traceDiffSource            `json:"source"`
+	Context             string                     `json:"context"`
+	Resource            agent.BoundedResourceRef   `json:"resource"`
+	ScopeDiscoveryReads int                        `json:"scopeDiscoveryReads"`
+	Read                *agent.BoundedReadEvidence `json:"read,omitempty"`
+	Summary             agent.ObjectSetDiffSummary `json:"summary"`
+	Differences         []agent.ObjectSetFieldDiff `json:"differences,omitempty"`
+	Omissions           []string                   `json:"omissions,omitempty"`
 }
 
 // observeTraceDiff compares an exact object from an already-rendered local
@@ -83,9 +84,16 @@ func observeTraceDiffWithAPIVersion(ctx context.Context, session *traceSession, 
 	if err != nil {
 		return nil, err
 	}
-	desired, err = resolveTraceDiffNamespace(ctx, session, desired, strings.TrimSpace(namespace))
-	if err != nil {
+	requestedNamespace := strings.TrimSpace(namespace)
+	if requestedNamespace != "" && len(validation.IsDNS1123Label(requestedNamespace)) != 0 {
+		return nil, fmt.Errorf("requested namespace is invalid")
+	}
+	if err := validateTraceDiffDesired(desired); err != nil {
 		return nil, err
+	}
+	desired, scopeReads, err := resolveTraceDiffNamespace(ctx, session, desired, requestedNamespace)
+	if err != nil {
+		return nil, fmt.Errorf("%w (scope discovery GETs=%d)", err, scopeReads)
 	}
 	if err := validateTraceDiffDesired(desired); err != nil {
 		return nil, err
@@ -98,12 +106,13 @@ func observeTraceDiffWithAPIVersion(ctx context.Context, session *traceSession, 
 		Name:       desired.GetName(),
 	}
 	result := &traceDiffObservation{
-		Comparison: "authored-fields-only",
-		Coverage:   "one-selected-object",
-		Source:     traceDiffSource{Kind: "local-rendered", Reference: source.Ref, Digest: source.Digest, ObjectCount: len(objects)},
-		Context:    session.contextLabel(),
-		Resource:   resource,
-		Summary:    agent.ObjectSetDiffSummary{Total: 1},
+		Comparison:          "authored-fields-only",
+		Coverage:            "one-selected-object",
+		Source:              traceDiffSource{Kind: "local-rendered", Reference: source.Ref, Digest: source.Digest, ObjectCount: len(objects)},
+		Context:             session.contextLabel(),
+		Resource:            resource,
+		ScopeDiscoveryReads: scopeReads,
+		Summary:             agent.ObjectSetDiffSummary{Total: 1},
 	}
 	// The source digest covers whole files, so withhold it if a Secret document
 	// appears anywhere in the operand. The bounded reader deliberately refuses
@@ -177,52 +186,52 @@ func observeTraceDiffWithAPIVersion(ctx context.Context, session *traceSession, 
 	return result, nil
 }
 
-func resolveTraceDiffNamespace(ctx context.Context, session *traceSession, desired *unstructured.Unstructured, requestedNamespace string) (*unstructured.Unstructured, error) {
+func resolveTraceDiffNamespace(ctx context.Context, session *traceSession, desired *unstructured.Unstructured, requestedNamespace string) (*unstructured.Unstructured, int, error) {
 	if desired == nil {
-		return nil, fmt.Errorf("desired object identity is incomplete")
+		return nil, 0, fmt.Errorf("desired object identity is incomplete")
 	}
 	if desired.GetNamespace() != "" {
 		if requestedNamespace != "" && desired.GetNamespace() != requestedNamespace {
-			return nil, fmt.Errorf("desired object namespace does not match the requested namespace")
+			return nil, 0, fmt.Errorf("desired object namespace does not match the requested namespace")
 		}
-		return desired, nil
+		return desired, 0, nil
 	}
 	gv, err := schema.ParseGroupVersion(desired.GetAPIVersion())
 	if err != nil {
-		return nil, fmt.Errorf("desired API version is invalid")
+		return nil, 0, fmt.Errorf("desired API version is invalid")
 	}
 	client, err := session.discoveryClient()
 	if err != nil {
-		return nil, fmt.Errorf("unable to determine desired resource scope")
+		return nil, 0, fmt.Errorf("unable to determine desired resource scope")
 	}
 	resources, err := client.ServerResourcesForGroupVersion(gv.String())
 	if err != nil {
-		return nil, fmt.Errorf("unable to determine desired resource scope")
+		return nil, 1, fmt.Errorf("unable to determine desired resource scope")
 	}
 	var namespaced *bool
 	for _, resource := range resources.APIResources {
 		if resource.Kind == desired.GetKind() {
 			scope := resource.Namespaced
 			if namespaced != nil && *namespaced != scope {
-				return nil, fmt.Errorf("desired resource scope is ambiguous")
+				return nil, 1, fmt.Errorf("desired resource scope is ambiguous")
 			}
 			namespaced = &scope
 		}
 	}
 	if namespaced == nil {
-		return nil, fmt.Errorf("desired resource scope is unavailable for %s %s", desired.GetAPIVersion(), desired.GetKind())
+		return nil, 1, fmt.Errorf("desired resource scope is unavailable for %s %s", desired.GetAPIVersion(), desired.GetKind())
 	}
 	if *namespaced {
 		if requestedNamespace == "" {
-			return nil, fmt.Errorf("desired namespaced object has no namespace; pass -n to supply its exact namespace")
+			return nil, 1, fmt.Errorf("desired namespaced object has no namespace; pass -n to supply its exact namespace")
 		}
 		desired.SetNamespace(requestedNamespace)
-		return desired, nil
+		return desired, 1, nil
 	}
 	if requestedNamespace != "" {
-		return nil, fmt.Errorf("cluster-scoped desired object cannot be combined with -n")
+		return nil, 1, fmt.Errorf("cluster-scoped desired object cannot be combined with -n")
 	}
-	return desired, nil
+	return desired, 1, nil
 }
 
 func runTraceDiffObservation(ctx context.Context, selection clusterContextSelection, kind, name, namespace, apiVersion, desiredFile string) error {
@@ -328,7 +337,7 @@ func renderTraceDiffObservationHuman(w io.Writer, result *traceDiffObservation) 
 		return err
 	}
 	if result.Read != nil {
-		if _, err := fmt.Fprintf(w, "Live read: UID=%s resourceVersion=%s observedAt=%s (GETs discovery=%d object=%d)\n", result.Read.UID, result.Read.ResourceVersion, result.Read.ObservedAt.UTC().Format(time.RFC3339), result.Read.Reads.Discovery, result.Read.Reads.Object); err != nil {
+		if _, err := fmt.Fprintf(w, "Live read: UID=%s resourceVersion=%s observedAt=%s (scope discovery GETs=%d; bounded-reader GETs discovery=%d object=%d)\n", result.Read.UID, result.Read.ResourceVersion, result.Read.ObservedAt.UTC().Format(time.RFC3339), result.ScopeDiscoveryReads, result.Read.Reads.Discovery, result.Read.Reads.Object); err != nil {
 			return err
 		}
 	}
@@ -350,7 +359,7 @@ func renderTraceDiffObservationHuman(w io.Writer, result *traceDiffObservation) 
 
 func renderTraceDiffObservationMarkdown(w io.Writer, result *traceDiffObservation) error {
 	resource := result.Resource
-	if _, err := fmt.Fprintf(w, "## Trace diff: %s\n\n- Comparison: `%s`\n- Desired operand: `%s` (`%s`, ref `%s`)\n- Context: `%s`\n- Resource: `%s %s/%s`\n- Live UID: `%s`\n- Live resourceVersion: `%s`\n- Result: **%s**\n- Coverage: `%s`; no object-set closure or next-reconcile prediction\n", result.Status, result.Comparison, result.Source.Kind, result.Source.Digest, result.Source.Reference, result.Context, resource.APIVersion, resource.Namespace, resource.Name, readUID(result.Read), readResourceVersion(result.Read), result.Status, result.Coverage); err != nil {
+	if _, err := fmt.Fprintf(w, "## Trace diff: %s\n\n- Comparison: `%s`\n- Desired operand: `%s` (`%s`, ref `%s`)\n- Context: `%s`\n- Resource: `%s %s %s/%s`\n- Live UID: `%s`\n- Live resourceVersion: `%s`\n- Live observed at: `%s`\n- API GETs: scope discovery=%d; bounded reader discovery=%d object=%d\n- Result: **%s**\n- Coverage: `%s`; no object-set closure or next-reconcile prediction\n", result.Status, result.Comparison, result.Source.Kind, result.Source.Digest, result.Source.Reference, result.Context, resource.APIVersion, resource.Kind, resource.Namespace, resource.Name, readUID(result.Read), readResourceVersion(result.Read), readObservedAt(result.Read), result.ScopeDiscoveryReads, readDiscoveryCount(result.Read), readObjectCount(result.Read), result.Status, result.Coverage); err != nil {
 		return err
 	}
 	for _, omission := range result.Omissions {
@@ -363,12 +372,37 @@ func renderTraceDiffObservationMarkdown(w io.Writer, result *traceDiffObservatio
 			return err
 		}
 		for _, difference := range result.Differences {
-			if _, err := fmt.Fprintf(w, "| `%s` | `%s` | `%s` |\n", difference.Field, difference.Desired, difference.Live); err != nil {
+			if _, err := fmt.Fprintf(w, "| `%s` | `%s` | `%s` |\n", markdownCell(difference.Field), markdownCell(difference.Desired), markdownCell(difference.Live)); err != nil {
 				return err
 			}
 		}
 	}
 	return nil
+}
+
+func readObservedAt(read *agent.BoundedReadEvidence) string {
+	if read == nil || read.ObservedAt.IsZero() {
+		return "unavailable"
+	}
+	return read.ObservedAt.UTC().Format(time.RFC3339)
+}
+
+func readDiscoveryCount(read *agent.BoundedReadEvidence) int {
+	if read == nil {
+		return 0
+	}
+	return read.Reads.Discovery
+}
+
+func readObjectCount(read *agent.BoundedReadEvidence) int {
+	if read == nil {
+		return 0
+	}
+	return read.Reads.Object
+}
+
+func markdownCell(value string) string {
+	return strings.NewReplacer("\\", "\\\\", "|", "\\|", "\r", "", "\n", "<br>", "`", "&#96;").Replace(value)
 }
 
 func readUID(read *agent.BoundedReadEvidence) string {
