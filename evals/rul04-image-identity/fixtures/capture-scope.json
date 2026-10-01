@@ -1,0 +1,58 @@
+{
+  "schema": "rul04-image-identity-scope.v1",
+  "capture": {
+    "startedAt": "2026-10-01T03:15:20Z",
+    "endedAt": "2026-10-01T03:15:53Z",
+    "atomicSnapshot": false,
+    "cleanupVerified": true,
+    "sourceRevision": "fd4963872b9875bed01b9c4a2fdbab5c6db2e635",
+    "captureScriptSha256": "e5cfd045e485cf67a87af97b0c823ebcf365d8ae9d6189368e05d166fb0b60dc",
+    "kindVersion": "v0.31.0",
+    "nodeImage": "kindest/node:v1.35.0@sha256:4613778f3cfcd10e615029370f5786704559103cf27bef934597ba562b269661",
+    "clusterName": "scout-rul04-20261001031520-ed534841fe"
+  },
+  "authoredBundle": {
+    "reference": "oci://example.invalid/config@sha256:db4858ffbe9b6d60ce30dfec5fab0c45a818f5c6045e03db2ff0a5449114a628",
+    "layoutHelperSourceRevision": "68d4f4e03aa3fcb0a1af7df1987d87c26a707b62",
+    "layoutHelperSha256": "cb863138c8fb3c540ff55df38fee0a2121f1430e93cbcb472867ef8e741dd83a",
+    "desiredManifestFile": "desired-statefulset.yaml",
+    "desiredManifestBytes": 387,
+    "desiredManifestSha256": "f1b06b67456667f073a01e602ecd5ba35dc70eb9ce76b2d7023bca025a4e2541",
+    "meaning": "Recorded capture metadata for a local unsigned authored-configuration bundle; OCI layout blobs are not included in these staged files."
+  },
+  "productBinary": {
+    "sourceRevision": "eec6d442279955af0f1fc39c637252ac8eb0f081",
+    "sha256": "7d20aa7bb33b477dfd88afb2f53b1a6f773a5a4ffbcff7f81d8dcbfeb5a12bab"
+  },
+  "observations": [
+    {
+      "method": "GET",
+      "path": "/apis/apps/v1/namespaces/rul04-image-identity/statefulsets/rul04-pause",
+      "startedAt": "2026-10-01T03:15:52Z",
+      "endedAt": "2026-10-01T03:15:52Z",
+      "httpStatus": 200,
+      "rawFile": "statefulset.json",
+      "rawBytes": 3140,
+      "rawSha256": "6e51fce81ff19b1bd548b312e510d01e098dfab7cd9c962fdf1cf273d1aa32ab"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/namespaces/rul04-image-identity/pods",
+      "startedAt": "2026-10-01T03:15:52Z",
+      "endedAt": "2026-10-01T03:15:52Z",
+      "httpStatus": 200,
+      "rawFile": "pods.json",
+      "rawBytes": 5257,
+      "rawSha256": "b6cbaae55242a2074e7b2ea9db2ed82dd641c3e1e6fbf1552cb40e2d9f4ae9ab"
+    }
+  ],
+  "sharedKubeconfigSha256": {
+    "before": "910415d445ded06e3bd337c51cbabe8ce385684b1e35c1cb7ce57776d0ba2ad1",
+    "after": "910415d445ded06e3bd337c51cbabe8ce385684b1e35c1cb7ce57776d0ba2ad1"
+  },
+  "limitations": [
+    "The two API responses are sequential observations, not an atomic snapshot.",
+    "No Argo/Flux controller object or applied-source receipt was captured.",
+    "The OCI reference identifies the authored configuration bundle only."
+  ]
+}

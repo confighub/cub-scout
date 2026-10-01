@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: rul04-pause
+  namespace: rul04-image-identity
+  labels:
+    app: rul04-pause
+spec:
+  serviceName: rul04-pause
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rul04-pause
+  template:
+    metadata:
+      labels:
+        app: rul04-pause
+    spec:
+      containers:
+      - name: pause
+        image: registry.k8s.io/pause:3.10
