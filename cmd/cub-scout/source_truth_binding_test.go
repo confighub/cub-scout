@@ -50,6 +50,7 @@ func TestMCPSourceTruthContextIsTypedAndForwarded(t *testing.T) {
 
 func TestSourceTruthCLIExplicitContextBindsRuntimeAndArgoAfterRetarget(t *testing.T) {
 	alpha := newSourceTruthHTTPFixture(t, "alpha")
+	alpha.listObservedRevision = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 	beta := newSourceTruthHTTPFixture(t, "beta")
 	path := filepath.Join(t.TempDir(), "config")
 	before := writeTraceKubeconfig(t, path, "beta-context", alpha.URL, beta.URL)
@@ -378,13 +379,14 @@ func TestSourceTruthTUIDiscardsLateResultAfterCloseAndReopen(t *testing.T) {
 }
 
 type sourceTruthHTTPFixture struct {
-	URL              string
-	server           *httptest.Server
-	mu               sync.Mutex
-	requests         map[string]int
-	denyArgo         bool
-	observedRevision string
-	multiSource      bool
+	URL                  string
+	server               *httptest.Server
+	mu                   sync.Mutex
+	requests             map[string]int
+	denyArgo             bool
+	observedRevision     string
+	listObservedRevision string
+	multiSource          bool
 }
 
 func newSourceTruthHTTPFixture(t *testing.T, marker string) *sourceTruthHTTPFixture {
@@ -413,7 +415,7 @@ func newSourceTruthHTTPFixture(t *testing.T, marker string) *sourceTruthHTTPFixt
 				t.Errorf("Argo lookup must be bounded to the observed application name; query=%s", r.URL.RawQuery)
 			}
 			writeTraceFixtureJSON(w, map[string]interface{}{"apiVersion": "argoproj.io/v1alpha1", "kind": "ApplicationList", "metadata": map[string]interface{}{}, "items": []interface{}{
-				sourceTruthTestApplication("argo-system", "https://git.example/repo", "declared-target", f.observedRevision, "team-a", f.multiSource),
+				sourceTruthTestApplication("argo-system", "https://git.example/repo", "declared-target", firstNonEmpty(f.listObservedRevision, f.observedRevision), "team-a", f.multiSource),
 				sourceTruthTestApplication("other-system", "https://attacker.invalid/wrong", "wrong", "wrong", "team-b", false),
 			}})
 		case "/apis/argoproj.io/v1alpha1/namespaces/argo-system/applications/api":

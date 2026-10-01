@@ -472,16 +472,6 @@ func controllerSurfaceFromArgoWithSession(ctx context.Context, session *traceSes
 	if !ok {
 		return nil, fmt.Errorf("runtime resource does not identify exactly one matching Argo Application")
 	}
-	var selectedApplication *unstructured.Unstructured
-	for i := range apps {
-		if apps[i].GetName() == appName && apps[i].GetNamespace() == appNamespace {
-			selectedApplication = &apps[i]
-			break
-		}
-	}
-	if selectedApplication == nil {
-		return nil, fmt.Errorf("selected Argo Application %s/%s was not present in the Kubernetes response", appNamespace, appName)
-	}
 	tracer := agent.NewArgoTracerWithKubernetesClient(dyn)
 	result, err := tracer.TraceApplicationInNamespace(ctx, appName, appNamespace)
 	if err != nil {
@@ -497,7 +487,14 @@ func controllerSurfaceFromArgoWithSession(ctx context.Context, session *traceSes
 	// Applications require per-source observed revisions and remain unanchored.
 	observedRevision := ""
 	if !result.MultiSource {
-		observedRevision, _, _ = unstructured.NestedString(selectedApplication.Object, "status", "sync", "revision")
+		// Use the same exact GET that supplied source and health, not the
+		// earlier namespace-discovery LIST, which may contain an older revision.
+		for _, link := range result.Chain {
+			if link.Kind == "Application" && link.Name == appName && link.Namespace == appNamespace {
+				observedRevision = link.Revision
+				break
+			}
+		}
 	}
 	return &agent.ControllerSurface{Kind: "Argo", Source: strings.TrimSpace(firstNonEmpty(root.URL, root.Kind)), RevisionOrDigest: strings.TrimSpace(observedRevision), Health: controllerHealthLabel(root.Ready, root.Status), MultiSource: result.MultiSource}, nil
 }
