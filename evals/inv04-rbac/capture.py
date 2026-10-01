@@ -396,7 +396,7 @@ def _fresh_output(path: Path) -> Path:
     return path
 
 
-def capture(shared_config: Path, binary: Path, output: Path) -> int:
+def capture(shared_config: Path, binary: Path, output: Path, after_observation: Callable | None = None) -> int:
     out = _fresh_output(output)
     started = utc_now()
     shared_before = sha256(shared_config.read_bytes())
@@ -537,8 +537,10 @@ def capture(shared_config: Path, binary: Path, output: Path) -> int:
             map_args = ["map", "list", "--namespace", scope, "--kind", "Deployment",
                         "--ownership-evidence", "--format", "json", "--kube-context", "inv04-observer"]
             scout_started = utc_now()
+            scout_clock = time.monotonic()
             code, stdout, stderr = run_bounded([str(binary), *map_args], COMMAND_TIMEOUT,
                                                dict(env_base, KUBECONFIG=str(observer_config)))
+            scout_elapsed = time.monotonic() - scout_clock
             scout_ended = utc_now()
             if token.encode() in stdout or token.encode() in stderr:
                 raise CaptureError("Scout output unexpectedly contained observer credentials")
@@ -548,9 +550,12 @@ def capture(shared_config: Path, binary: Path, output: Path) -> int:
             _write(out / map_stderr_name, stderr)
             records[-1]["scout"] = {"argv": map_args, "exitCode": code, "stdoutFile": map_stdout_name,
                                      "startedAt": scout_started, "endedAt": scout_ended,
+                                     "elapsedSeconds": scout_elapsed,
                                      "stdoutSha256": sha256(stdout), "stdoutBytes": len(stdout),
                                      "stderrFile": map_stderr_name, "stderrSha256": sha256(stderr),
                                      "stderrBytes": len(stderr)}
+            if after_observation is not None:
+                after_observation(out, scope, observer_config, token, records[-1])
     except BaseException as exc:
         # Keep only safe step-level diagnostics; never serialize command output or credential-bearing config.
         errors.append(str(exc) if isinstance(exc, CaptureError) else type(exc).__name__)
