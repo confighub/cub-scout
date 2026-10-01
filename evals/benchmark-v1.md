@@ -17,9 +17,10 @@ latest writer; exact-field counterexamples are tracked in [#649](https://github.
 None of these statuses means the controlled benchmark ran. DEL-01 and DEL-02 are pinned
 public-source projections, not raw cluster snapshots; both are prepared and
 unrun, and their evidence limits are recorded per case. The 24 cases currently
-comprise 5 refreshed fixtures, 2 recorded scale bindings prepared but not run, 7
-recorded projections prepared but not run, six raw recordings prepared but not
-run, one synthetic source replay fixture prepared but not run, and 3 planned
+<<<<<<< HEAD
+comprise 5 refreshed fixtures, 2 recorded scale bindings prepared but not run, 8
+recorded projections prepared but not run, 6 raw recordings prepared but not
+run, 1 synthetic source replay fixtures prepared but not run, and 2 planned
 cases. HLT-03 is a receipt-backed pair of public recorded
 files, not a full Kubernetes snapshot; its receipt-level workload pass and
 child Application Ingress residue are separate evidence facts. HLT-02, INV-04, PRE-01,
@@ -45,8 +46,13 @@ cases remain a separate experiment.
 | Health | HLT-03 | Consul convergence with Ingress residue | `consul-ingress-residue` — pinned receipt + child Application capture prepared, not run; workload pass does not override watched Ingress |
 | Health | HLT-04 | Missing, old, or renewed report timestamps | `sveltos-hlt-04-report-freshness` — synthetic producer replay prepared, not run as a model case; no actual check-execution or applied-digest proof |
 | Prerequisites / graph | PRE-01 | Missing CRD prerequisite | `pre01-crd` — actual sequential CRD/ServiceMonitor API reads and dependent apply outputs prepared, not run; route 404 bodies are preserved as untyped responses; registration is not health |
+<<<<<<< HEAD
 | Prerequisites / graph | PRE-02 | Kubernetes topology and cloud prerequisite | `pre02-node-selector` — first independently reviewed owned-kind selector recording prepared, not run; scheduling is not application health |
 | Prerequisites / graph | PRE-03 | Argo/Crossplane child-chain failure | Planned |
+=======
+| Prerequisites / graph | PRE-02 | Kubernetes topology/cloud prerequisite | Planned |
+| Prerequisites / graph | PRE-03 | Argo/Crossplane child-chain failure | `pre03-argo-child-failure` — retained historical Argo-only parent→child→Pod failure chain prepared, not run; no Crossplane claim, non-atomic and not current |
+>>>>>>> origin/main
 | Prerequisites / graph | PRE-04 | Hub/spoke intended placement with missing live observations | `kubara-hub-spoke-placement` — pinned desired/config projection prepared, not run; no live observations consumed |
 | Reuse / limits | RUL-01 | Repeated question using a dated snapshot | Planned; snapshot age remains visible |
 | Reuse / limits | RUL-02 | Cache invalidation after identity change | Planned; missing/stale identity stays unresolved |

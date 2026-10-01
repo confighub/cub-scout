@@ -326,6 +326,10 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			checkPRE01CRDScaffold(t, caseDir)
 			continue
 		}
+		if filepath.Base(caseDir) == "pre03-argo-child-failure" {
+			checkPRE03Scaffold(t, caseDir)
+			continue
+		}
 		if filepath.Base(caseDir) == "rul03-context" {
 			checkRUL03ContextScaffold(t, caseDir)
 			continue
