@@ -1,0 +1,169 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/url"
+	"os"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/stretchr/testify/require"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+)
+
+type contextTUIRequest struct {
+	Method string `json:"method"`
+	Path   string `json:"path"`
+	Status int    `json:"status"`
+}
+type contextTUITransport struct {
+	mu       sync.Mutex
+	requests []contextTUIRequest
+}
+
+func (r *contextTUITransport) snapshot() []contextTUIRequest {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return append([]contextTUIRequest(nil), r.requests...)
+}
+
+func TestDoctorScanOwnedTUIProof(t *testing.T) {
+	if os.Getenv("SCOUT_CONTEXT_TUI_EXECUTE") != "1" {
+		t.Skip("explicit owned-cluster capture only")
+	}
+	configPath := os.Getenv("SCOUT_CONTEXT_TUI_CONFIG")
+	outputPath := os.Getenv("SCOUT_CONTEXT_TUI_RESULT")
+	ownedCluster := os.Getenv("SCOUT_CONTEXT_OWNED_CLUSTER")
+	require.True(t, strings.HasPrefix(ownedCluster, "scout-docscan-"))
+	require.NotEmpty(t, configPath)
+	require.Equal(t, configPath, os.Getenv("KUBECONFIG"))
+	require.NotEmpty(t, outputPath)
+	require.Equal(t, "legacy", os.Getenv("CUB_SCOUT_SCAN_PROVIDER"))
+	require.Equal(t, "true", os.Getenv("CUB_SCOUT_OFFLINE"))
+	data, err := clientcmd.LoadFromFile(configPath)
+	require.NoError(t, err)
+	for _, identity := range data.AuthInfos {
+		require.Nil(t, identity.Exec, "probe must not invoke credential helpers")
+		require.Nil(t, identity.AuthProvider)
+		require.Empty(t, identity.TokenFile)
+		require.Empty(t, identity.ClientCertificate)
+		require.Empty(t, identity.ClientKey)
+	}
+	for _, name := range []string{"doctor-allowed", "doctor-denied"} {
+		require.Contains(t, data.Contexts, name)
+		require.Equal(t, "kind-"+ownedCluster, data.Contexts[name].Cluster)
+	}
+	checks := map[string]bool{}
+	phases := map[string][]contextTUIRequest{}
+	views := map[string]string{}
+	t.Cleanup(func() {
+		report := map[string]any{"schema": "doctor-scan-context-tui-live.v1", "passed": !t.Failed(), "checks": checks, "requests": phases, "views": views, "scope": "one owned cluster, actual model S/close/S events; no terminal-emulator proof"}
+		encoded, err := json.MarshalIndent(report, "", "  ")
+		if err == nil {
+			err = os.WriteFile(outputPath, append(encoded, '\n'), 0600)
+		}
+		if err != nil {
+			t.Errorf("write TUI evidence: %v", err)
+		}
+	})
+	makeModel := func(name string) (LocalClusterModel, *contextTUITransport) {
+		cfg, selected, err := resolveClusterConfig(name, true, &clientcmd.ClientConfigLoadingRules{ExplicitPath: configPath}, nil)
+		require.NoError(t, err)
+		endpoint, err := url.Parse(cfg.Host)
+		require.NoError(t, err)
+		require.Equal(t, "https", endpoint.Scheme)
+		require.Contains(t, []string{"127.0.0.1", "localhost", "::1"}, endpoint.Hostname())
+		cfg = rest.CopyConfig(cfg)
+		cfg.Timeout = 5 * time.Second
+		cfg.QPS, cfg.Burst = 50, 50
+		recorder := &contextTUITransport{}
+		// Every constructed client receives its own wrapped base transport but shares
+		// only the synchronized request recorder.
+		cfg.WrapTransport = func(next http.RoundTripper) http.RoundTripper {
+			return contextTUIRoundTripFunc(func(request *http.Request) (*http.Response, error) {
+				if request.Method != http.MethodGet {
+					return nil, fmt.Errorf("owned TUI probe refuses non-GET request")
+				}
+				response, err := next.RoundTrip(request)
+				status := 0
+				if response != nil {
+					status = response.StatusCode
+				}
+				recorder.mu.Lock()
+				recorder.requests = append(recorder.requests, contextTUIRequest{request.Method, request.URL.Path, status})
+				recorder.mu.Unlock()
+				return response, err
+			})
+		}
+		return LocalClusterModel{explicitClusterContext: true, clusterBinding: &localClusterBinding{config: cfg, context: selected, explicit: true}, keymap: defaultLocalKeyMap()}, recorder
+	}
+	run := func(model LocalClusterModel, recorder *contextTUITransport, phase, selected string, denied bool) LocalClusterModel {
+		before := len(recorder.snapshot())
+		next, command := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("S")})
+		require.NotNil(t, command)
+		model = next.(LocalClusterModel)
+		require.True(t, model.scanMode)
+		message := command().(scanResultMsg)
+		next, _ = model.Update(message)
+		model = next.(LocalClusterModel)
+		records := recorder.snapshot()[before:]
+		phases[phase] = records
+		view := model.renderScan()
+		views[phase] = view
+		require.NoError(t, message.err)
+		require.Contains(t, view, "Kubernetes context: "+selected)
+		require.NotEmpty(t, records)
+		wantStatus := 200
+		if denied {
+			wantStatus = 403
+		}
+		podRead := false
+		for _, record := range records {
+			require.Equal(t, "GET", record.Method)
+			if record.Path == "/api/v1/pods" {
+				podRead = true
+				require.Equal(t, wantStatus, record.Status, "every pod read must use the selected credentials")
+			}
+			if !denied {
+				require.NotEqual(t, 403, record.Status)
+			}
+		}
+		require.True(t, podRead, "actual pod read must prove the selected credentials")
+		if denied {
+			require.NotEmpty(t, message.warnings)
+			require.Contains(t, view, "Access denied")
+			require.NotContains(t, view, "No issues found")
+		}
+		checks[phase] = true
+		return model
+	}
+	allowed, recorder := makeModel("doctor-allowed")
+	allowed = run(allowed, recorder, "allowed-open", "doctor-allowed", false)
+	next, _ := allowed.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	allowed = next.(LocalClusterModel)
+	require.False(t, allowed.scanMode)
+	// Change only this probe's private config copy: ambient selection and the
+	// selected context's credentials now point at the denied account.
+	data.CurrentContext = "doctor-denied"
+	data.Contexts["doctor-allowed"].AuthInfo = "doctor-denied-user"
+	changed, err := clientcmd.Write(*data)
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(configPath, changed, 0600))
+	run(allowed, recorder, "allowed-reopen-after-retarget", "doctor-allowed", false)
+	denied, deniedRecorder := makeModel("doctor-denied")
+	run(denied, deniedRecorder, "denied-open", "doctor-denied", true)
+	after, err := os.ReadFile(configPath)
+	require.NoError(t, err)
+	require.Equal(t, changed, after, "TUI reads must not rewrite even the private probe config")
+	checks["private-config-not-rewritten"] = true
+}
+
+type contextTUIRoundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f contextTUIRoundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }

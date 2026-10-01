@@ -124,6 +124,46 @@ class ObservationAcceptanceTests(unittest.TestCase):
                 capture.validate_observations(rows, 2)
 
 
+class TUIAcceptanceTests(unittest.TestCase):
+    def proof(self):
+        phases = ("allowed-open", "allowed-reopen-after-retarget", "denied-open")
+        return {"schema": "doctor-scan-context-tui-live.v1", "passed": True,
+                "checks": {key: True for key in (*phases, "private-config-not-rewritten")},
+                "requests": {key: [{"method": "GET", "path": "/api/v1/pods", "status": 403 if key == "denied-open" else 200}] for key in phases},
+                "views": {key: "Kubernetes context: " + ("doctor-denied Access denied" if key == "denied-open" else "doctor-allowed") for key in phases}}
+
+    def test_accepts_complete_proof(self):
+        capture.validate_tui(self.proof())
+
+    def test_rejects_missing_or_false_check(self):
+        for value in (False, 1, None):
+            data = self.proof()
+            data["checks"]["allowed-reopen-after-retarget"] = value
+            with self.assertRaises(RuntimeError):
+                capture.validate_tui(data)
+
+    def test_rejects_missing_wrong_or_mutating_requests(self):
+        for requests in ([], [{"method": "GET", "path": "/api/v1/pods", "status": 200}],
+                         [{"method": "POST", "path": "/api/v1/pods", "status": 403}]):
+            data = self.proof()
+            data["requests"]["denied-open"] = requests
+            with self.assertRaises(RuntimeError):
+                capture.validate_tui(data)
+
+    def test_rejects_mixed_pod_credentials(self):
+        data = self.proof()
+        data["requests"]["denied-open"].append({"method": "GET", "path": "/api/v1/pods", "status": 200})
+        with self.assertRaisesRegex(RuntimeError, "credential evidence"):
+            capture.validate_tui(data)
+
+    def test_rejects_hidden_denial_or_wrong_selection(self):
+        for view in ("Kubernetes context: ambient Access denied", "Kubernetes context: doctor-denied No issues found"):
+            data = self.proof()
+            data["views"]["denied-open"] = view
+            with self.assertRaises(RuntimeError):
+                capture.validate_tui(data)
+
+
 class LifecycleEvidenceTests(unittest.TestCase):
     def invoke(self, *, missing_tools=False, create_ok=False):
         with tempfile.TemporaryDirectory(dir="/tmp", prefix="scout-proof-unit-") as tmp:
@@ -136,7 +176,9 @@ class LifecycleEvidenceTests(unittest.TestCase):
                 seen.append(argv)
                 args = argv[1:]
                 result = {"argv": argv, "exitCode": 0, "stdout": "", "stderr": "", "failure": None}
-                if args == ["version"]:
+                if "worktree" in args and "add" in args:
+                    (Path(args[args.index("--detach") + 1]) / "cmd" / "cub-scout").mkdir(parents=True)
+                elif args == ["version"]:
                     result["stdout"] = "kind " + capture.KIND_VERSION
                 elif args == ["context", "show"]:
                     result["stdout"] = "desktop-linux"

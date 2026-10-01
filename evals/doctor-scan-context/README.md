@@ -1,13 +1,13 @@
 # Doctor and scan context proof (#743)
 
-Prepared, opt-in, serial before/after CLI proof on one uniquely named disposable
+Prepared, opt-in, serial before/after CLI and fixed-source TUI proof on one uniquely named disposable
 kind cluster. **The first live attempt failed a validator expectation; no complete
 accepted proof exists yet.** The retained [failure report](../reports/2026-10-01-doctor-scan-context.json)
 records successful cleanup and unchanged shared/private configs. The validator
 expected a raw service-account name in scan warnings, while the pinned scanner
 projects typed Forbidden errors as scoped `Access denied` warnings. Separate
 offline revalidation matches the corrected exact warning contract and preserves
-the original failed receipt. A live TUI check is still required before acceptance.
+the original failed receipt. The prepared live TUI probe is still required before acceptance.
 
 Old source: `98fe0183a932e32be3cbc9c04aae8f1d7124740d`.
 Reviewed fixed product source: `5b3629752f354b257f7e667aa2c4f0126b35562b`.
@@ -35,6 +35,15 @@ cross-cluster identity: the fake-server/provider tests supply those proofs. An e
 allowed state scan alone is not endpoint-routing proof. Old binaries must reject the
 unsupported selector; this is a CLI before/after demonstration, not a test-revert
 proof for every nested-reader change.
+
+The fixed-source Go probe drives the actual model's `S`, close and `S` events
+against the owned API. It records GET paths/statuses and rendered views. After the
+first allowed scan it changes only a separate private config copy to select denied
+credentials; the captured model must still read Pods successfully. A newly bound
+denied model must receive HTTP 403 and render missing coverage with its context.
+Both configs are removed after the attempt. This is model-event and rendering
+proof against a live API, not terminal-emulator or full interactive navigation proof.
+The helper compiles the probe before cluster creation and records its template hash.
 
 Context names remain selection labels, not stable cluster IDs. This lane does not
 prove ConfigHub joins, fleet behavior, Commander integration or model-cost savings.
@@ -76,7 +85,7 @@ fixtures. They cover command failure retention, timeout/output limits, zero exec
 after deadline, credential redaction, missing executables, complete structured CLI
 controls, wrong context/count, false-empty denial, unrelated warnings, timeout
 masquerading as denial, missing/duplicate observations, and mocked setup/create/cleanup
-failures. The lifecycle tests replace every external command; they are not live proof.
+failures, plus TUI request/status/rendering acceptance controls. The lifecycle tests replace every external command; they are not live proof.
 
 ## Live invocation after review
 

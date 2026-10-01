@@ -186,6 +186,32 @@ def validate_observations(records: list[dict], expected_resource_count: int) -> 
             raise RuntimeError(phase + " " + command + " failed structured acceptance: " + str(exc)) from None
 
 
+def validate_tui(data: dict) -> None:
+    """Require real request and rendering evidence for each actual S action."""
+    phases = ("allowed-open", "allowed-reopen-after-retarget", "denied-open")
+    if data.get("schema") != "doctor-scan-context-tui-live.v1" or data.get("passed") is not True:
+        raise RuntimeError("TUI proof missing successful versioned result")
+    checks = data.get("checks", {})
+    if any(checks.get(key) is not True for key in (*phases, "private-config-not-rewritten")):
+        raise RuntimeError("TUI proof checks incomplete")
+    for phase in phases:
+        denied = phase == "denied-open"
+        requests = data.get("requests", {}).get(phase, [])
+        view = data.get("views", {}).get(phase, "")
+        selected = "doctor-denied" if denied else "doctor-allowed"
+        if not requests or any(r.get("method") != "GET" for r in requests):
+            raise RuntimeError("TUI proof lacks read-only request evidence")
+        pod_reads = [r for r in requests if r.get("path") == "/api/v1/pods"]
+        if not pod_reads or any(r.get("status") != (403 if denied else 200) for r in pod_reads):
+            raise RuntimeError("TUI proof lacks exact pod credential evidence")
+        if not denied and any(r.get("status") == 403 for r in requests):
+            raise RuntimeError("allowed TUI proof contains denial")
+        if "Kubernetes context: " + selected not in view:
+            raise RuntimeError("TUI proof missing selected context")
+        if denied and ("Access denied" not in view or "No issues found" in view):
+            raise RuntimeError("TUI proof hides denied coverage")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--execute", action="store_true")
@@ -221,6 +247,7 @@ def main() -> int:
         cluster = "scout-docscan-" + uuid.uuid4().hex[:10]
         work = Path(tempfile.mkdtemp(prefix="scout-docscan-", dir="/tmp"))
         private_config = work / "kubeconfig"
+        tui_config = work / "tui.kubeconfig"
         binaries = work / "bin"
         binaries.mkdir(mode=0o700)
         shims = work / "shims"
@@ -295,6 +322,16 @@ def main() -> int:
                 raise RuntimeError("built source does not match exact source pin")
             receipt[label + "SourceCommit"] = commit
 
+        template = Path(__file__).with_name("tui_live_test.go.txt")
+        receipt["tuiProbeSha256"] = digest(template)
+        probe_source = work / "source-fixed" / "cmd" / "cub-scout" / "doctor_scan_owned_tui_live_test.go"
+        with probe_source.open("x") as target:
+            target.write(template.read_text())
+        tui_binary = binaries / "doctor-scan-tui.test"
+        record_command(receipt, "tui-build", [tools["go"], "-C", str(work / "source-fixed"),
+                       "test", "-c", "-o", str(tui_binary), "./cmd/cub-scout"],
+                       env=env, deadline=deadline, timeout=300)
+
         existing = record_command(receipt, "cluster-name-check", [tools["kind"], "get", "clusters"], env=env, deadline=deadline)
         if cluster in existing["stdout"].splitlines():
             raise RuntimeError("generated cluster name already exists")
@@ -361,6 +398,18 @@ def main() -> int:
                 binary = str(binaries / "cub-scout-fixed")
                 record_observation(receipt, "fixed-" + context, [binary, *command, "--kube-context", context], env=kube, deadline=deadline)
         validate_observations(receipt["commands"], receipt["fixtureResourceCount"])
+        # The TUI deliberately retargets only its own copy; CLI config stays unchanged.
+        shutil.copyfile(private_config, tui_config)
+        tui_config.chmod(0o600)
+        tui_result = output / "tui-result.json"
+        tui_env = {**kube, "KUBECONFIG": str(tui_config), "SCOUT_CONTEXT_TUI_EXECUTE": "1",
+                   "SCOUT_CONTEXT_TUI_CONFIG": str(tui_config), "SCOUT_CONTEXT_TUI_RESULT": str(tui_result),
+                   "SCOUT_CONTEXT_OWNED_CLUSTER": cluster}
+        record_command(receipt, "tui-live", [str(tui_binary), "-test.run", "^TestDoctorScanOwnedTUIProof$",
+                       "-test.count=1", "-test.v", "-test.timeout=90s"], env=tui_env, deadline=deadline, timeout=100)
+        tui_data = json.loads(tui_result.read_text())
+        receipt["tuiResultSha256"] = digest(tui_result)
+        validate_tui(tui_data)
         receipt["acceptance"] = "passed"
     except BaseException as exc:
         receipt["acceptance"] = "failed"
@@ -405,10 +454,11 @@ def main() -> int:
             if not succeeded(result):
                 cleanup_errors.append("temporary source worktree removal failed")
         # Receipts retain outputs; private credentials are removed even on failure.
-        try:
-            private_config.unlink(missing_ok=True)
-        except OSError:
-            cleanup_errors.append("private credentials removal failed")
+        for credential_file in (private_config, tui_config):
+            try:
+                credential_file.unlink(missing_ok=True)
+            except OSError:
+                cleanup_errors.append("private credentials removal failed: " + credential_file.name)
         try:
             receipt["sharedKubeconfigSha256After"] = digest(shared)
             receipt["sharedKubeconfigUnchanged"] = (receipt["sharedKubeconfigSha256Before"] == receipt["sharedKubeconfigSha256After"])
