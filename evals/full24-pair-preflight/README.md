@@ -6,12 +6,13 @@ not start Claude, a model/provider, Docker, Kubernetes, Helm, an MCP server, a
 client query, or a grader. It does not make benchmark admission or quality,
 cost, savings, credits, or billing claims.
 
-Run from the repository root with the existing PRE-01 Python environment (which
-pins PyYAML 6.0.3):
+Run from the repository root using a Python environment with PyYAML 6.0.3
+(the existing `evals/pre01-crd/requirements.txt` pin). CI reuses its PRE-01
+virtual environment; the local proof used the already available system Python:
 
 ```sh
-PYTHONDONTWRITEBYTECODE=1 /tmp/scout-pre01-ci/bin/python evals/full24-pair-preflight/prepare.py --out /tmp/cub-scout-full24-preflight
-PYTHONDONTWRITEBYTECODE=1 /tmp/scout-pre01-ci/bin/python evals/full24-pair-preflight/prepare.py --out /tmp/cub-scout-full24-preflight --verify
+PYTHONDONTWRITEBYTECODE=1 python3 evals/full24-pair-preflight/prepare.py --out /tmp/cub-scout-full24-preflight
+PYTHONDONTWRITEBYTECODE=1 python3 evals/full24-pair-preflight/prepare.py --out /tmp/cub-scout-full24-preflight --verify
 ```
 
 `arms/without/cases/` and `arms/with/cases/` contain the same frozen question,
@@ -58,3 +59,8 @@ binary-correctness/cost and trace-admission interfaces remain
 `evals/scripts/report.py` and `evals/scripts/admission_audit.py`; this packet
 does not fabricate their run results. Frozen defaults and historical reports
 are unchanged.
+
+A future runtime must mount only the selected case or authored-control arm,
+plus its allowed treatment delta. Never mount the entire preparation root or
+other cases: sibling originals, private references and control acceptance data
+are host-side preparation material, not extra model evidence.

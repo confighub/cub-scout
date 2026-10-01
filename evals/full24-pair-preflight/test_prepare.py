@@ -90,6 +90,12 @@ class Full24PreparationTests(unittest.TestCase):
             self._mutate(path, json.dumps(changed).encode(), lambda: prepare.validate(self.out))
         self.assertEqual(path.read_bytes(), original)
 
+    def test_report_cannot_reweight_frozen_groups(self):
+        path = self.out / "preflight.json"
+        value = json.loads(path.read_bytes())
+        value["groups"][0]["weight"] = 1
+        self._mutate(path, json.dumps(value).encode(), lambda: prepare.validate(self.out))
+
     def test_frozen_question_reference_control_and_tool_grant_are_source_bound(self):
         path = self.out / "preflight.json"
         original = path.read_bytes()

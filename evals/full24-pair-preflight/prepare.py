@@ -55,9 +55,11 @@ AUTHORED_CONTROLS = {
         "kind": "authored-input-variant-not-a-new-question",
         "mutations": [
             {"file": "cluster/sveltos-oci-delivery-proof.yaml", "operation": "withhold_receipt_identity_fields",
-             "fields": ["receipt.cluster", "receipt.release.releaseId", "receipt.release.releaseManifestDigest"]},
-            {"file": "cluster/source-metadata.json", "operation": "mark_status_row_stale",
-             "basis": "authored fixture clock is later than the recorded row interval; not a new observation"},
+             "fields": ["spec.variants"], "output": "delivery-receipt.yaml"},
+            {"file": "fixtures/source-doc/onboard-excerpt.md", "operation": "withhold_UAT_row_identity",
+             "output": "status-excerpt.md"},
+            {"file": "stale-control-marker.json", "operation": "author_explicit_clock_interval",
+             "basis": "synthetic 30-day interval exceeds one-day budget; source status timestamp remains unknown"},
         ],
         "prohibited_inference": "Do not claim current/stable cross-artifact cluster or release identity from absent/stale identity fields.",
         "status": "authored-control-not-run",
@@ -66,9 +68,10 @@ AUTHORED_CONTROLS = {
         "id": "del04-divergent-identity-mutable-tag-input-control.v1",
         "kind": "authored-input-variant-not-a-new-question",
         "mutations": [
-            {"file": "evidence/oci-identity-lifecycle/catalog-delivery-proof.yaml", "operation": "add_authored_tag_observation",
-             "values_derived_from": ["oci-evidence-chain.yaml", "catalog-delivery-proof.yaml"],
-             "condition": "same mutable tag is shown at two receipt times with distinct recorded digests; no new runtime identity"},
+            {"file": "fixtures/evidence/oci-evidence-chain.yaml", "operation": "author_same_role_digest_conflict",
+             "field": "spec.boundaries.delivery.digest",
+             "output": "source-chain-authored-conflict.yaml",
+             "condition": "same delivery reference has contradictory digests in original/authored copies; no tag lookup or new observation"},
         ],
         "prohibited_inference": "Do not collapse a mutable tag or divergent receipt digests into a single verified current artifact identity.",
         "status": "authored-control-not-run",
@@ -272,7 +275,7 @@ def _parse_static_heredocs(script: bytes) -> dict[str, bytes]:
         if not m:
             raise PreparationError("scaffold is outside audited static-heredoc/copy subset")
         name, marker = m.groups()
-        if name in outputs:
+        if "cluster/" + name in outputs:
             raise PreparationError("scaffold writes duplicate evidence path")
         i += 1
         content: list[str] = []
@@ -506,9 +509,13 @@ def _authored_control_payload(case_id: str, source_case: Path) -> tuple[dict, di
         prompt = ("DEL-03 authored input-control variant (non-weighted, not a new frozen question). "
                   "Read the redacted status excerpt, redacted receipt and control marker. This is an "
                   "authored omission/staleness input derived from pinned source bytes, not a capture. "
-                  "Treat missing identity as unknown and do not join artifacts.\n").encode()
-        acceptance = {"status_cluster": "UNKNOWN", "status_revision": "UNKNOWN", "status_revision_basis": "UNKNOWN",
-                      "receipt_cluster": "UNKNOWN", "runtime_sveltos_digest": "UNKNOWN", "cross_artifact_join": "UNESTABLISHED"}
+                  "For the original eu-central-uat1 target, can the redacted row and receipt variant still bind identity? "
+                  "Assess only the supplied authored interval for freshness. Return one JSON object with "
+                  "status_target_binding and receipt_variant_binding (ESTABLISHED or UNESTABLISHED), "
+                  "authored_interval_freshness (FRESH, STALE, or UNKNOWN), runtime_sveltos_digest "
+                  "(directly bound digest or UNKNOWN), and cross_artifact_join (ESTABLISHED or UNESTABLISHED).\n").encode()
+        acceptance = {"status_target_binding": "UNESTABLISHED", "receipt_variant_binding": "UNESTABLISHED",
+                      "authored_interval_freshness": "STALE", "runtime_sveltos_digest": "UNKNOWN", "cross_artifact_join": "UNESTABLISHED"}
     else:
         chain = (source_case / "fixtures/evidence/oci-evidence-chain.yaml").read_text()
         original = _yaml_load(chain)
@@ -523,7 +530,7 @@ def _authored_control_payload(case_id: str, source_case: Path) -> tuple[dict, di
         conflict["spec"]["boundaries"]["delivery"]["digest"] = source_digest
         control = {"schema": "del04-authored-divergent-identity-input.v1", "sourceFixtureSha256": source_facts,
                    "mutableTag": "latest", "originalDeliveryDigest": delivery["digest"],
-                   "authoredConflictingOutputDigest": source_digest,
+                   "authoredConflictingDeliveryDigest": source_digest,
                    "mutation": "authored copy changes the delivery digest for the same latest OCI reference to a different already-recorded source digest",
                    "evidenceKind": "authored-conflicting-receipt-not-a-capture"}
         files = {"source-chain-original.yaml": chain.encode(),
@@ -663,95 +670,8 @@ def prepare(out: Path) -> dict:
         control_root = controls_root / case_id
         control_root.mkdir(parents=True)
         source_case = REPO / cases[case_id]["existing_case"]
-        source_facts = {p.relative_to(source_case).as_posix(): digest(p.read_bytes())
-                        for p in sorted((source_case / "fixtures").rglob("*")) if p.is_file()}
-        if case_id == "DEL-03":
-            onboard = (source_case / "fixtures/source-doc/onboard-excerpt.md").read_text()
-            if "eu-central-uat1" not in onboard:
-                raise PreparationError("DEL-03 pinned status row no longer has its expected identity anchor")
-            stale_status, substitutions = re.subn(r"(?m)^eu-central-uat1\s+mer-kyverno-eu-central-uat1",
-                                                   "UNKNOWN UNKNOWN", onboard, count=1)
-            if substitutions != 1:
-                raise PreparationError("DEL-03 status identity row could not be safely redacted")
-            receipt_path = source_case / "fixtures/receipt/sveltos-oci-delivery-proof.yaml"
-            receipt_obj = _yaml_load(receipt_path.read_text())
-            spec_obj = receipt_obj.get("spec", {})
-            variants = spec_obj.get("variants")
-            if not isinstance(variants, list) or not variants:
-                raise PreparationError("DEL-03 receipt no longer has spec.variants identity entries")
-            # Preserve the exact source receipt separately. Replace each
-            # identity-bearing variant subtree in this authored copy with only
-            # a source hash, so clusterRef/revision/release joins cannot leak.
-            if not all(isinstance(variant, dict) for variant in variants):
-                raise PreparationError("DEL-03 receipt spec.variants entry is malformed")
-            spec_obj["variants"] = [{"identity": "WITHHELD_BY_CONTROL",
-                                     "sourceVariantSha256": digest(json.dumps(v, sort_keys=True, separators=(",", ":")).encode())}
-                                    for v in variants]
-            stale_receipt = yaml.safe_dump(receipt_obj, sort_keys=False, allow_unicode=True)
-            recorded_at = spec_obj.get("recordedAt")
-            stale_marker = {
-                "schema": "authored-stale-marker.v1",
-                "sourceRecordedAt": recorded_at,
-                "authoredInterval": {"statusObservedAt": "2026-09-01T00:00:00Z", "evaluatedAt": "2026-10-01T00:00:00Z",
-                                     "maxAgeSeconds": 86400, "elapsedSeconds": 2592000, "result": "STALE"},
-                "freshnessRule": "authored interval only; source status-row timestamp is absent",
-                "classification": "STALE_CONTROL_ONLY; no source observation time is asserted",
-                "sourceFixtureSha256": source_facts,
-            }
-            control_input = {
-                "schema": "del03-authored-missing-stale-input.v1",
-                "sourceFixtureSha256": source_facts,
-                "staleStatusMarker": stale_marker,
-                "evidenceKind": "authored-redacted-control-not-a-capture",
-            }
-            acceptance = {"status_cluster": "UNKNOWN", "status_revision": "UNKNOWN", "status_revision_basis": "UNKNOWN",
-                          "receipt_cluster": "UNKNOWN",
-                          "runtime_sveltos_digest": "UNKNOWN", "cross_artifact_join": "UNESTABLISHED"}
-            control_prompt = ("DEL-03 authored input-control variant (non-weighted, not a new frozen question). "
-                              "Read the redacted status excerpt, redacted receipt and control marker. This is an "
-                              "authored omission/staleness input derived from pinned source bytes, not a capture. "
-                              "Treat missing identity as unknown and do not join artifacts.\n")
-            control_files = {
-                "status-excerpt.md": stale_status.encode(),
-                "delivery-receipt.yaml": stale_receipt.encode(),
-                "stale-control-marker.json": json.dumps(stale_marker, indent=2).encode() + b"\n",
-            }
-        else:
-            chain = (source_case / "fixtures/evidence/oci-evidence-chain.yaml").read_text()
-            chain_obj = _yaml_load(chain)
-            boundary = chain_obj.get("spec", {}).get("boundaries", {})
-            old_output_digest = boundary.get("outputOci", {}).get("digest")
-            old_delivery_digest = boundary.get("delivery", {}).get("digest")
-            conflicting_digest = boundary.get("source", {}).get("digest")
-            if (not isinstance(old_output_digest, str) or not isinstance(conflicting_digest, str) or
-                    old_output_digest == conflicting_digest or not str(boundary.get("outputOci", {}).get("reference", "")).endswith(":latest")):
-                raise PreparationError("DEL-04 source lacks same-role mutable-tag identity for authored divergence control")
-            # Change the outputOci digest in an authored copy to the recorded
-            # source-stage digest. The original file remains intact beside it.
-            chain_obj["spec"]["boundaries"]["delivery"]["digest"] = conflicting_digest
-            divergent_chain = yaml.safe_dump(chain_obj, sort_keys=False, allow_unicode=True)
-            control_input = {
-                "schema": "del04-authored-divergent-identity-input.v1",
-                "sourceFixtureSha256": source_facts,
-                "mutableTag": "latest",
-                "originalDeliveryDigest": old_delivery_digest,
-                "authoredConflictingOutputDigest": conflicting_digest,
-                "mutation": "authored copy changes the delivery digest for the same latest OCI reference to a different already-recorded source digest",
-                "evidenceKind": "authored-conflicting-receipt-not-a-capture",
-            }
-            acceptance = {"delivery_digest_consistency": "CONFLICT_UNRESOLVED", "current_cluster_state": "UNKNOWN", "runtime_image_id": "UNKNOWN",
-                          "independent_bundle_verification": "UNKNOWN", "mutable_tag_current_identity": "UNKNOWN"}
-            control_prompt = ("DEL-04 authored input-control variant (non-weighted, not a new frozen question). "
-                              "Compare the unchanged source receipt and the explicitly authored conflicting copy. "
-                              "The altered receipt is a negative control, not an observation. Do not infer which "
-                              "digest the mutable tag currently resolves to.\n")
-            control_files = {
-                "source-chain-original.yaml": chain.encode(),
-                "source-chain-authored-conflict.yaml": divergent_chain.encode(),
-                "divergence-control.json": json.dumps(control_input, indent=2).encode() + b"\n",
-            }
-        acceptance_bytes = json.dumps(acceptance, indent=2).encode() + b"\n"
-        prompt_bytes = control_prompt.encode()
+        control_binding, control_files, prompt_bytes, acceptance_bytes, control_bytes = _authored_control_payload(case_id, source_case)
+        source_facts = control_binding["sourceFixtureSha256"]
         for name, data in control_files.items():
             _write_bytes(control_root, "input/" + name, data)
         _write_bytes(control_root, "input/prompt.md", prompt_bytes)
@@ -760,7 +680,7 @@ def prepare(out: Path) -> dict:
             for name, data in control_files.items():
                 _write_bytes(control_root, f"arms/{arm}/" + name, data)
         _write_bytes(control_root, "oracle/acceptance.json", acceptance_bytes)
-        _write_bytes(control_root, "control.json", json.dumps(spec | {"sourceFixtureSha256": source_facts}, indent=2).encode() + b"\n")
+        _write_bytes(control_root, "control.json", control_bytes)
         controls_report[case_id] = {"id": spec["id"], "sourceFixtureSha256": source_facts,
                                     "inputFiles": {name: digest(data) for name, data in control_files.items()},
                                     "promptSha256": digest(prompt_bytes),
@@ -826,6 +746,9 @@ def validate(root: Path) -> dict:
         raise PreparationError("preflight case set is missing, duplicate, or extra")
     current_manifest = json.loads(manifest_bytes)
     expected, groups = _case_index(current_manifest)
+    if (report.get("caseCount") != len(expected) or report.get("frozenSemanticsSha256") != FROZEN_SEMANTICS_SHA256 or
+            report.get("groups") != [{"id": g["id"], "weight": g["weight"], "caseCount": len(g["cases"])} for g in current_manifest["groups"]]):
+        raise PreparationError("report case count, frozen semantics or group weights drifted")
     modules = _strict_modules()
     expected_common_tree = {}
     expected_oracle_tree = {}
@@ -1017,8 +940,8 @@ def validate(root: Path) -> dict:
             variants = receipt.get("spec", {}).get("variants")
             if (not isinstance(variants, list) or not variants or
                     any(set(v) != {"identity", "sourceVariantSha256"} or v["identity"] != "WITHHELD_BY_CONTROL" for v in variants) or
-                    acceptance != {"status_cluster": "UNKNOWN", "status_revision": "UNKNOWN", "status_revision_basis": "UNKNOWN",
-                                   "receipt_cluster": "UNKNOWN", "runtime_sveltos_digest": "UNKNOWN", "cross_artifact_join": "UNESTABLISHED"}):
+                    acceptance != {"status_target_binding": "UNESTABLISHED", "receipt_variant_binding": "UNESTABLISHED",
+                                   "authored_interval_freshness": "STALE", "runtime_sveltos_digest": "UNKNOWN", "cross_artifact_join": "UNESTABLISHED"}):
                 raise PreparationError("DEL-03 authored control no longer rejects unsupported identity/join")
         else:
             original = _yaml_load(control_files["source-chain-original.yaml"].read_text())
