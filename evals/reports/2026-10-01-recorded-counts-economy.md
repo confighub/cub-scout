@@ -62,7 +62,7 @@ The result's `promptMarkdown` is the staged question body, with no frontmatter
 expected answer. This checks that recorded prompt field, not every hidden model
 request. No sealed run homes were opened. Retain the failure and reconcile
 turn limits, recursive delegation, actual tool names/grants and descendant costs
-offline before another paid diagnostic. Full24 admission stays closed.
+offline before another paid diagnostic. [#704](https://github.com/confighub/cub-scout/issues/704) tracks the first offline admission-audit packet; it does not itself fix enforcement. Full24 admission stays closed.
 
 ## Accounting and custody
 
