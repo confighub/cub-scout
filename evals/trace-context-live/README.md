@@ -109,6 +109,63 @@ fixture reads. It does not demonstrate a real Argo reconciliation, general
 cluster identity, ConfigHub behavior, controller writes, or all credential
 provider types. Only the scoped attempt-three result above is claimed.
 
+## Combined source-truth and rendered-diff proof preparation
+
+The helper now includes a separately gated `source-truth-diff` mode for the
+integrated #750/#751 routes. It is prepared but **has not been run**. The
+`COMBINED_SOURCE_PIN` in `capture.py` records the reviewed candidate
+`a508e83840c54843a6461727ca71a417e4ccdbad`; the capture also requires that
+commit to be an ancestor of `HEAD`. This helper checkout does not yet contain
+that commit, so the mode stops before creating its output directory or any
+cluster resources. Execution remains pending independent helper review and
+integration of the pinned product commit. The attempt-three Trace-only receipt
+above remains the separate historical proof; it is not evidence for these
+newer routes.
+
+After the root integration selects and commits the exact source pin, the
+intended invocation is:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 evals/trace-context-live/capture.py \
+  --mode source-truth-diff \
+  --execute \
+  --integrity-only-shared-kubeconfig /explicit/path/to/kubeconfig-to-hash-only \
+  --output-dir /tmp/scout-source-truth-diff-proof
+```
+
+The combined fixture keeps the existing owned kind lifecycle. Its synthetic
+Argo Application has a fixed observed revision; its zero-replica Deployment
+has exact ConfigHub unit/space metadata. The ConfigHub shim answers only
+`cub auth status`, then records and deliberately fails the exact unit read.
+An allowed source-truth result must therefore retain `BLOCK` and the unit-read
+omission; the denied runtime context must not attempt a unit read. No real cub
+binary, ConfigHub server, or auth session is used.
+
+CLI and MCP diff cases use local, already-rendered Deployment manifests for
+matched, changed, missing, and denied outcomes, with exact `apps/v1` identity.
+MCP calls use stdio `tools/call` for both `compare_source_truth` and the
+existing `trace` tool's diff arguments. The injected TUI test sends real
+`LocalClusterModel.Update` events for `Y` plus `git-argo`, then `T`, `d`, the
+rendered-file path, and `apps/v1`. It retargets only the disposable TUI
+kubeconfig and checks that the already-captured binding stays on its original
+loopback endpoint. A separate denied selection must remain inconclusive.
+
+For the child-process paths, two random loopback-only HTTP listeners bind the
+allowed and denied contexts. The listeners keep the corresponding credentials
+server-side and forward only explicit GET routes to the owned kind API using
+the owned CA for upstream TLS verification. The observation kubeconfig has no
+upstream CA, certificate, key, or token. The proxy rejects other paths and all
+HTTP verbs before forwarding, bounds concurrency, request time, response size,
+and receipt size, and records only action markers plus method/path/status.
+Proxy threads are joined before cluster cleanup. The TUI probe writes phase
+markers to the same private JSONL log, allowing each event batch to be
+validated against its own selected endpoint and target response.
+
+This intended proof covers local API binding, read-only request behavior,
+RBAC denial, and synthetic Application evidence only. It cannot establish a
+real ConfigHub read or approval, controller reconciliation, workload
+convergence, or model/cost savings. No combined receipt exists yet.
+
 ## Offline acceptance tests
 
 ```sh
@@ -120,7 +177,11 @@ These tests use only synthetic records and short local Python children. They
 reject missing/wrong target or context evidence, a native/empty result passed
 off as denied coverage, non-GET TUI traffic, cleanup deletion after uncertain
 creation, and failure to remove a source worktree left by a pre-cluster build
-failure. They do not compile product code or contact a cluster.
+failure. Combined-mode checks also reject missing or reordered action evidence,
+wrong proxy endpoint or object identity, unassigned API requests, non-GET
+methods, false source-truth PASS, and a ConfigHub result other than the exact
+recorded unit-read failure. They do not compile product code or contact a
+cluster.
 
 ## Future invocation
 

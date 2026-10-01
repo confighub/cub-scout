@@ -6,6 +6,7 @@ No cluster, provider, model, or auth operation occurs unless --execute is given.
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import json
 import os
@@ -15,13 +16,25 @@ import shlex
 import shutil
 import signal
 import subprocess
+import ssl
 import tempfile
 import time
 import uuid
 
+try:
+    from . import api_proxy
+except ImportError:  # direct script execution
+    import api_proxy
+
 REPO = Path(__file__).resolve().parents[2]
 OLD_SOURCE = "8cdb27b0bc9db17f5c0d1b59628b67cd3936ed6c"
 FIXED_SOURCE = "24074d858e8e2411ce2ba3e94340ec5646395eed"
+# Reviewed product candidate supplied by the root integration. Capture still
+# requires this commit to be an ancestor of HEAD, so it remains unrunnable
+# from this helper branch until the product commit is integrated here.
+COMBINED_SOURCE_PIN = "a508e83840c54843a6461727ca71a417e4ccdbad"
+CONFIGHUB_UNIT = "scout-context-unit"
+CONFIGHUB_SPACE = "scout-context-space"
 NAMESPACE = "scout-trace-context-proof"
 DEPLOYMENT = "scout-context-marker"
 NATIVE_DEPLOYMENT = "scout-native-marker"
@@ -44,7 +57,8 @@ def digest(path: Path) -> str:
 
 
 def run(argv: list[str], *, env: dict[str, str], timeout: float = 90,
-        deadline: float | None = None, max_output: int = MAX_OUTPUT) -> dict:
+        deadline: float | None = None, max_output: int = MAX_OUTPUT,
+        input_data: bytes | None = None) -> dict:
     """Run only this command group, retaining bounded partial output on failure."""
     started = time.monotonic()
     end = min(started + timeout, deadline) if deadline is not None else started + timeout
@@ -56,9 +70,14 @@ def run(argv: list[str], *, env: dict[str, str], timeout: float = 90,
     try:
         if end <= started:
             raise TimeoutError("overall proof deadline expired before command")
-        proc = subprocess.Popen(argv, env=env, stdin=subprocess.DEVNULL,
+        proc = subprocess.Popen(argv, env=env,
+                                stdin=subprocess.PIPE if input_data is not None else subprocess.DEVNULL,
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 start_new_session=True)
+        if input_data is not None:
+            assert proc.stdin is not None
+            proc.stdin.write(input_data)
+            proc.stdin.close()
         for name in buffers:
             selector.register(getattr(proc, name), selectors.EVENT_READ, name)
         while selector.get_map() or proc.poll() is None:
@@ -273,6 +292,14 @@ def fixed_phase(context: str, command: str) -> str:
     return ("fixed-allowed" if context == ALLOWED_CONTEXT else "fixed-denied") + "-" + command
 
 
+def require_combined_source_pin() -> str:
+    if not COMBINED_SOURCE_PIN:
+        raise RuntimeError("integrated source pin has not been selected")
+    if len(COMBINED_SOURCE_PIN) != 40 or any(char not in "0123456789abcdef" for char in COMBINED_SOURCE_PIN):
+        raise RuntimeError("integrated source pin must be a lowercase full Git commit")
+    return COMBINED_SOURCE_PIN
+
+
 def observation_env(base: dict[str, str], *, private_home: Path, shims: Path,
                     kubeconfig: Path) -> dict[str, str]:
     """Keep product commands inside a private HOME/XDG and fail-closed PATH."""
@@ -283,9 +310,18 @@ def observation_env(base: dict[str, str], *, private_home: Path, shims: Path,
             "KUBECONFIG": str(kubeconfig)}
 
 
-def create_observation_shims(shims: Path, kubectl_path: str) -> dict[str, Path]:
+def create_observation_shims(shims: Path, kubectl_path: str, *, combined: bool = False) -> dict[str, Path]:
     """Block all external tools except one exact private-config Argo fallback GET."""
     kubectl = shlex.quote(kubectl_path)
+    cub_script = (("#!/bin/sh\n"
+                   "if [ \"$#\" -eq 2 ] && [ \"$1\" = auth ] && [ \"$2\" = status ]; then\n"
+                   "  printf '%s\\n' '{\"type\":\"call\",\"argv\":[\"cub\",\"auth\",\"status\"],\"exitCode\":0}' >> \"$SCOUT_TRACE_CUB_LOG\"\n"
+                   "  exit 0\nfi\n"
+                   f"if [ \"$#\" -eq 7 ] && [ \"$1\" = unit ] && [ \"$2\" = get ] && [ \"$3\" = {CONFIGHUB_UNIT} ] && [ \"$4\" = -o ] && [ \"$5\" = json ] && [ \"$6\" = --space ] && [ \"$7\" = {CONFIGHUB_SPACE} ]; then\n"
+                   f"  printf '%s\\n' '{{\"type\":\"call\",\"argv\":[\"cub\",\"unit\",\"get\",\"{CONFIGHUB_UNIT}\",\"-o\",\"json\",\"--space\",\"{CONFIGHUB_SPACE}\"],\"exitCode\":73,\"result\":\"recorded unit lookup unavailable in owned proof\"}}' >> \"$SCOUT_TRACE_CUB_LOG\"\n"
+                   "  echo 'recorded unit lookup unavailable in owned proof' >&2\n  exit 73\nfi\n"
+                   "echo 'refusing unexpected ConfigHub command' >&2\nexit 97\n") if combined else
+                  "#!/bin/sh\necho 'blocked ConfigHub command' >&2\nexit 97\n")
     specs = {
         "argocd": ("#!/bin/sh\nif [ \"$#\" -eq 2 ] && [ \"$1\" = version ] && [ \"$2\" = --client ]; then\n"
                    "  echo 'owned proof CLI shim'; exit 0\nfi\n"
@@ -296,7 +332,7 @@ def create_observation_shims(shims: Path, kubectl_path: str) -> dict[str, Path]:
                     "echo 'refusing unexpected owned kubectl operation' >&2; exit 97\n"),
         "flux": "#!/bin/sh\necho 'blocked external Flux command' >&2\nexit 97\n",
         "helm": "#!/bin/sh\necho 'blocked external Helm command' >&2\nexit 97\n",
-        "cub": "#!/bin/sh\necho 'blocked ConfigHub command' >&2\nexit 97\n",
+        "cub": cub_script,
     }
     paths = {}
     for name, contents in specs.items():
@@ -307,7 +343,7 @@ def create_observation_shims(shims: Path, kubectl_path: str) -> dict[str, Path]:
     return paths
 
 
-def _write_fixture(work: Path) -> Path:
+def _write_fixture(work: Path, *, source_truth: bool = False) -> Path:
     fixture = work / "trace-owned-fixture.yaml"
     fixture.write_text(f'''apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -364,15 +400,412 @@ spec:
       - name: pause
         image: registry.k8s.io/pause:3.10
 ''')
+    if source_truth:
+        _install_source_truth_fixture(fixture)
     return fixture
+
+
+def _install_source_truth_fixture(fixture: Path) -> None:
+    text = fixture.read_text()
+    text = text.replace(
+        f"    argocd.argoproj.io/instance: {APPLICATION}\nspec:",
+        f"    argocd.argoproj.io/instance: {APPLICATION}\n"
+        f"    confighub.com/UnitSlug: {CONFIGHUB_UNIT}\n"
+        f"  annotations:\n    confighub.com/SpaceName: {CONFIGHUB_SPACE}\nspec:", 1)
+    text = text.replace(
+        f"    namespace: {NAMESPACE}\n---\napiVersion: apps/v1\nkind: Deployment",
+        f"    namespace: {NAMESPACE}\n"
+        "status:\n"
+        "  sync:\n"
+        "    revision: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+        "  health:\n"
+        "    status: Healthy\n"
+        "---\napiVersion: apps/v1\nkind: Deployment", 1)
+    fixture.write_text(text)
+
+
+def _write_rendered_inputs(work: Path) -> dict[str, Path]:
+    inputs = work / "rendered"
+    inputs.mkdir(mode=0o700)
+    paths = {}
+    for label, name, replicas in (
+            ("matched", DEPLOYMENT, 0), ("changed", DEPLOYMENT, 1),
+            ("missing", "scout-context-missing", 0)):
+        path = inputs / (label + ".yaml")
+        path.write_text(f'''apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {name}
+  namespace: {NAMESPACE}
+spec:
+  replicas: {replicas}
+''')
+        paths[label] = path
+    return paths
+
+
+def _proxy_pair(config: dict, private_dir: Path):
+    clusters = {row["name"]: row["cluster"] for row in config.get("clusters", [])}
+    users = {row["name"]: row["user"] for row in config.get("users", [])}
+    contexts = {row["name"]: row["context"] for row in config.get("contexts", [])}
+    try:
+        allowed_context = contexts[ALLOWED_CONTEXT]
+        denied_context = contexts[DENIED_CONTEXT]
+        allowed_cluster = clusters[allowed_context["cluster"]]
+        denied_cluster = clusters[denied_context["cluster"]]
+        allowed_user = users[allowed_context["user"]]
+        denied_user = users[denied_context["user"]]
+        if allowed_cluster["server"] != denied_cluster["server"]:
+            raise RuntimeError("proof contexts do not target the same owned API")
+    except (KeyError, TypeError) as exc:
+        raise RuntimeError("owned proof contexts lack exact API binding data") from exc
+    cert_paths = []
+    try:
+        allowed_tls, allowed_auth, cert_paths = api_proxy.upstream_credentials(
+            allowed_cluster, {"user": allowed_user}, private_dir=private_dir, label="allowed")
+        denied_tls, denied_auth, denied_paths = api_proxy.upstream_credentials(
+            denied_cluster, {"user": denied_user}, private_dir=private_dir, label="denied")
+        cert_paths.extend(denied_paths)
+    except Exception:
+        for path in cert_paths:
+            path.unlink(missing_ok=True)
+        raise
+    active_proxies = []
+    try:
+        allowed = api_proxy.ReadOnlyAPIProxy(label="allowed", upstream=allowed_cluster["server"],
+            tls=allowed_tls, authorization=allowed_auth, namespace=NAMESPACE,
+            deployment=DEPLOYMENT, application=APPLICATION,
+            missing_deployment="scout-context-missing", event_log=private_dir / "api-events.jsonl")
+        active_proxies.append(allowed)
+        denied = api_proxy.ReadOnlyAPIProxy(label="denied", upstream=denied_cluster["server"],
+            tls=denied_tls, authorization=denied_auth, namespace=NAMESPACE,
+            deployment=DEPLOYMENT, application=APPLICATION,
+            missing_deployment="scout-context-missing", event_log=private_dir / "api-events.jsonl")
+        active_proxies.append(denied)
+    except Exception:
+        for proxy in reversed(active_proxies):
+            proxy.close()
+        for path in cert_paths + denied_paths:
+            path.unlink(missing_ok=True)
+        raise
+    try:
+        projected = api_proxy.observation_kubeconfig(config, allowed_endpoint=allowed.endpoint,
+            denied_endpoint=denied.endpoint, allowed_cluster_name="proof-allowed-api",
+            denied_cluster_name="proof-denied-api", allowed_context=ALLOWED_CONTEXT,
+            denied_context=DENIED_CONTEXT, namespace=NAMESPACE)
+    except Exception:
+        for proxy in reversed(active_proxies):
+            proxy.close()
+        for path in cert_paths:
+            path.unlink(missing_ok=True)
+        raise
+    return active_proxies, projected, cert_paths
+
+
+def _proxy_records(proxies, *, clear: bool = False) -> list[dict]:
+    return [row for proxy in proxies for row in proxy.snapshot(clear=clear)]
+
+
+def _mark_api_phase(path: Path, phase: str) -> None:
+    data = json.dumps({"type": "phase", "phase": phase}, separators=(",", ":")).encode() + b"\n"
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+    try:
+        os.write(fd, data)
+    finally:
+        os.close(fd)
+
+
+def _mark_cub_phase(path: Path, phase: str) -> None:
+    data = json.dumps({"type": "phase", "phase": phase}, separators=(",", ":")).encode() + b"\n"
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+    try:
+        os.write(fd, data)
+    finally:
+        os.close(fd)
+
+
+def _combined_action(receipt: dict, *, phase: str, command: str, argv: list[str],
+                     result: dict, api_records: list[dict], cub_records: list[dict],
+                     tool_arguments: dict | None = None) -> None:
+    action = {"phase": phase, "command": command, "argv": argv,
+              "exitCode": result.get("exitCode"), "failure": result.get("failure"),
+              "stdout": result.get("stdout", ""), "stderr": result.get("stderr", ""),
+              "apiRequests": api_records, "cubArgv": cub_records}
+    if tool_arguments is not None:
+        action["mcpToolArguments"] = tool_arguments
+    receipt.setdefault("actions", []).append(action)
+    if result.get("failure") or result.get("exitCode") != 0:
+        raise RuntimeError("combined observation command failed in phase " + phase)
+
+
+def _new_cub_records(log_path: Path, old_bytes: int) -> list[dict]:
+    if not log_path.exists():
+        return []
+    data = log_path.read_bytes()[old_bytes:].decode("utf-8", "replace")
+    rows = []
+    for line in data.splitlines():
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            raise RuntimeError("ConfigHub shim wrote malformed argv evidence") from None
+        if isinstance(row, dict) and row.get("type") == "phase":
+            continue
+        if not isinstance(row, dict) or row.get("type") != "call" or not isinstance(row.get("argv"), list):
+            raise RuntimeError("ConfigHub shim wrote invalid argv evidence")
+        rows.append(row)
+    return rows
+
+
+def _mcp_payload(tool: str, arguments: dict) -> bytes:
+    messages = [
+        {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {
+            "protocolVersion": "2024-11-05", "capabilities": {},
+            "clientInfo": {"name": "owned-proof", "version": "1"}}},
+        {"jsonrpc": "2.0", "method": "notifications/initialized", "params": {}},
+        {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {
+            "name": tool, "arguments": arguments}},
+    ]
+    payload = "".join(json.dumps(message, separators=(",", ":")) + "\n" for message in messages).encode()
+    return payload
+
+
+def _decode_json_output(result: dict, label: str) -> dict:
+    try:
+        value = json.loads(result.get("stdout", ""))
+    except (TypeError, json.JSONDecodeError):
+        raise RuntimeError(label + " did not return a JSON document") from None
+    if not isinstance(value, dict):
+        raise RuntimeError(label + " returned a non-object JSON value")
+    return value
+
+
+def _mcp_call_result(result: dict) -> dict:
+    messages = []
+    for line in result.get("stdout", "").splitlines():
+        try:
+            value = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(value, dict):
+            messages.append(value)
+    response = next((value for value in messages if value.get("id") == 2), None)
+    if response is None:
+        raise RuntimeError("MCP stdio session omitted tools/call response")
+    return api_proxy.mcp_result_json(response)
+
+
+def _combined_source_truth_action(*, phase: str, body: dict, context: str,
+                                  endpoint: str, rows: list[dict], cub_rows: list[dict],
+                                  unit_failure: bool) -> None:
+    api_proxy.validate_source_truth(body, context=context, require_unit_failure=unit_failure)
+    target_path = f"/apis/apps/v1/namespaces/{NAMESPACE}/deployments/{DEPLOYMENT}"
+    status = 200 if endpoint == "allowed" else 403
+    api_proxy.validate_api_records(rows, endpoint=endpoint, target_path=target_path, target_status=status)
+    errors = body.get("collection_errors", [])
+    if endpoint == "denied":
+        if not any(DENIED_USER in str(error) for error in errors):
+            raise RuntimeError(phase + " lost exact denied-user evidence")
+        if any("unit" in json.dumps(row).lower() for row in cub_rows):
+            raise RuntimeError(phase + " attempted ConfigHub unit access after runtime denial")
+    else:
+        app_path = f"/apis/argoproj.io/v1alpha1/namespaces/{NAMESPACE}/applications/{APPLICATION}"
+        if not any(row.get("path") == app_path and row.get("status") == 200 for row in rows):
+            raise RuntimeError(phase + " did not read the exact Argo Application")
+        if not any(row.get("argv") == ["cub", "unit", "get", CONFIGHUB_UNIT,
+                                       "-o", "json", "--space", CONFIGHUB_SPACE] and
+                   row.get("exitCode") == 73 for row in cub_rows):
+            raise RuntimeError(phase + " omitted the explicit failed ConfigHub unit read")
+    if not any(row.get("argv") == ["cub", "auth", "status"] and row.get("exitCode") == 0 for row in cub_rows):
+        raise RuntimeError(phase + " omitted the exact ConfigHub connected-gate check")
+
+
+def _run_combined_action_flow(*, receipt: dict, binary: str, tui_binary: str,
+                              cli_env: dict, tui_env_base: dict, proxies: list,
+                              cub_log: Path, event_log: Path, rendered: dict[str, Path],
+                              tui_config: Path, deadline: float, output: Path) -> None:
+    phases = ["cli-source-truth-allowed", "cli-source-truth-denied",
+              "cli-diff-matched", "cli-diff-changed", "cli-diff-missing", "cli-diff-denied",
+              "mcp-source-truth", "mcp-diff-matched", "mcp-diff-denied",
+              "tui-source-truth-allowed", "tui-source-truth-reopen-after-retarget",
+              "tui-diff-allowed", "tui-diff-denied"]
+    event_log.write_text("")
+    event_log.chmod(0o600)
+    cub_log.write_text("")
+    cub_log.chmod(0o600)
+    receipt["desiredInputs"] = {name: {"path": str(path), "sha256": digest(path),
+                                         "role": "local already-rendered Kubernetes input"}
+                                for name, path in rendered.items()}
+
+    def invoke(phase: str, command: str, argv: list[str], env: dict,
+               *, tool_arguments: dict | None = None,
+               mcp_tool: str | None = None) -> tuple[dict, list[dict], list[dict]]:
+        _mark_api_phase(event_log, phase)
+        _mark_cub_phase(cub_log, phase)
+        api_records = _proxy_records(proxies, clear=True)
+        if api_records:
+            raise RuntimeError("proxy request escaped its recorded action boundary")
+        old_bytes = cub_log.stat().st_size if cub_log.exists() else 0
+        payload = _mcp_payload(mcp_tool, tool_arguments["arguments"]) if mcp_tool and tool_arguments else None
+        result = run(argv, env=env, timeout=90, deadline=deadline, input_data=payload)
+        rows = _proxy_records(proxies, clear=True)
+        cub_rows = _new_cub_records(cub_log, old_bytes)
+        _combined_action(receipt, phase=phase, command=command, argv=argv, result=result,
+                         api_records=rows, cub_records=cub_rows, tool_arguments=tool_arguments)
+        return result, rows, cub_rows
+
+    target = "Deployment/" + DEPLOYMENT
+    for context, endpoint in ((ALLOWED_CONTEXT, "allowed"), (DENIED_CONTEXT, "denied")):
+        phase = "cli-source-truth-allowed" if endpoint == "allowed" else "cli-source-truth-denied"
+        argv = [binary, "compare", "source-truth", target, "-n", NAMESPACE,
+                "--strategy", "git-argo", "--kube-context", context, "--format", "json"]
+        result, rows, cub_rows = invoke(phase, "cli", argv, cli_env)
+        _combined_source_truth_action(phase=phase, body=_decode_json_output(result, phase),
+            context=context, endpoint=endpoint, rows=rows, cub_rows=cub_rows,
+            unit_failure=endpoint == "allowed")
+
+    diff_cases = (("matched", ALLOWED_CONTEXT, "allowed", "matched", DEPLOYMENT, 200),
+                  ("changed", ALLOWED_CONTEXT, "allowed", "changed", DEPLOYMENT, 200),
+                  ("missing", ALLOWED_CONTEXT, "allowed", "missing", "scout-context-missing", 404),
+                  ("denied", DENIED_CONTEXT, "denied", "inconclusive", DEPLOYMENT, 403))
+    for label, context, endpoint, status, name, api_status in diff_cases:
+        phase = "cli-diff-" + label
+        argv = [binary, "trace", "deployment/" + name, "-n", NAMESPACE, "--diff",
+                "--desired-file", str(rendered[label]), "--api-version", "apps/v1",
+                "--kube-context", context, "--format", "json"]
+        result, rows, cub_rows = invoke(phase, "cli", argv, cli_env)
+        api_proxy.validate_diff(_decode_json_output(result, phase), context=context, status=status,
+                                namespace=NAMESPACE, name=name)
+        path = f"/apis/apps/v1/namespaces/{NAMESPACE}/deployments/{name}"
+        api_proxy.validate_api_records(rows, endpoint=endpoint, target_path=path, target_status=api_status)
+        if cub_rows:
+            raise RuntimeError(phase + " unexpectedly invoked ConfigHub")
+
+    truth_args = {"target": target, "namespace": NAMESPACE, "strategy": "git-argo", "context": ALLOWED_CONTEXT}
+    result, rows, cub_rows = invoke("mcp-source-truth", "mcp-stdio", [binary, "mcp", "serve"], cli_env,
+                                    tool_arguments={"tool": "compare_source_truth", "arguments": truth_args},
+                                    mcp_tool="compare_source_truth")
+    body = _mcp_call_result(result)
+    _combined_source_truth_action(phase="mcp-source-truth", body=body, context=ALLOWED_CONTEXT,
+        endpoint="allowed", rows=rows, cub_rows=cub_rows, unit_failure=True)
+
+    for label, context, endpoint, status, phase in (
+            ("matched", ALLOWED_CONTEXT, "allowed", "matched", "mcp-diff-matched"),
+            ("denied", DENIED_CONTEXT, "denied", "inconclusive", "mcp-diff-denied")):
+        name = DEPLOYMENT
+        tool_arguments = {"resource": "Deployment/" + name, "namespace": NAMESPACE,
+                          "context": context, "diff": True,
+                          "desired_file": str(rendered[label]), "api_version": "apps/v1"}
+        result, rows, cub_rows = invoke(phase, "mcp-stdio", [binary, "mcp", "serve"], cli_env,
+                                        tool_arguments={"tool": "trace", "arguments": tool_arguments}, mcp_tool="trace")
+        body = _mcp_call_result(result)
+        api_proxy.validate_diff(body, context=context, status=status, namespace=NAMESPACE, name=name)
+        target_path = f"/apis/apps/v1/namespaces/{NAMESPACE}/deployments/{name}"
+        api_proxy.validate_api_records(rows, endpoint=endpoint, target_path=target_path,
+                                       target_status=200 if endpoint == "allowed" else 403)
+        if cub_rows:
+            raise RuntimeError(phase + " unexpectedly invoked ConfigHub")
+
+    shutil.copyfile(cli_env["KUBECONFIG"], tui_config)
+    tui_config.chmod(0o600)
+    tui_result = output / "combined-tui-result.json"
+    tui_env = observation_env(tui_env_base, private_home=Path(tui_env_base["HOME"]),
+        shims=Path(tui_env_base["PATH"]), kubeconfig=tui_config)
+    tui_env.update({"SCOUT_TRACE_COMBINED_EXECUTE": "1",
+        "SCOUT_TRACE_COMBINED_TUI_CONFIG": str(tui_config),
+        "SCOUT_TRACE_COMBINED_TUI_RESULT": str(tui_result),
+        "SCOUT_TRACE_COMBINED_DESIRED_FILE": str(rendered["matched"]),
+        "SCOUT_TRACE_COMBINED_EVENT_LOG": str(event_log),
+        "SCOUT_TRACE_COMBINED_CUB_LOG": str(cub_log)})
+    old_bytes = cub_log.stat().st_size if cub_log.exists() else 0
+    tui_result_run = run([tui_binary, "-test.run", "^TestCombinedSourceTruthAndTraceDiffOwnedTUI$",
+                          "-test.count=1", "-test.v", "-test.timeout=120s"], env=tui_env,
+                         timeout=140, deadline=deadline)
+    tui_rows = _proxy_records(proxies, clear=True)
+    tui_cub_rows = _new_cub_records(cub_log, old_bytes)
+    _combined_action(receipt, phase="tui-live", command="tui-update-tests",
+        argv=[tui_binary, "-test.run", "^TestCombinedSourceTruthAndTraceDiffOwnedTUI$",
+              "-test.count=1", "-test.v", "-test.timeout=120s"], result=tui_result_run,
+        api_records=tui_rows, cub_records=tui_cub_rows)
+    if not tui_result.exists():
+        raise RuntimeError("combined TUI probe did not write its result")
+    tui_data = _decode_json_output({"stdout": tui_result.read_text()}, "combined TUI probe")
+    if tui_data.get("schema") != "trace-source-truth-diff-owned-tui.v1" or tui_data.get("passed") is not True:
+        raise RuntimeError("combined TUI probe failed its actual Update path")
+    expected_checks = ("source-truth-allowed", "source-truth-reopen-after-retarget",
+                       "diff-allowed", "diff-denied", "private-config-retarget-stable", "denied-is-inconclusive")
+    if any(tui_data.get("checks", {}).get(name) is not True for name in expected_checks):
+        raise RuntimeError("combined TUI probe omitted a required action")
+    statuses = tui_data.get("statuses", {})
+    if statuses.get("source-truth-allowed") != "BLOCK" or statuses.get("source-truth-reopen-after-retarget") != "BLOCK":
+        raise RuntimeError("combined TUI ConfigHub failure was not retained as BLOCK")
+    views = tui_data.get("views", {})
+    if any("recorded unit lookup unavailable in owned proof" not in views.get(name, "")
+           for name in ("source-truth-allowed", "source-truth-reopen-after-retarget")):
+        raise RuntimeError("combined TUI hid the explicit ConfigHub fixture error")
+    receipt["tuiResultSha256"] = digest(tui_result)
+    receipt["tuiConfigSha256"] = tui_data.get("privateConfigSha256")
+    receipt["apiEventLogSha256"] = digest(event_log)
+    expected_api = {
+        "cli-source-truth-allowed": ("allowed", TARGET_PATH, 200),
+        "cli-source-truth-denied": ("denied", TARGET_PATH, 403),
+        "cli-diff-matched": ("allowed", TARGET_PATH, 200),
+        "cli-diff-changed": ("allowed", TARGET_PATH, 200),
+        "cli-diff-missing": ("allowed", f"/apis/apps/v1/namespaces/{NAMESPACE}/deployments/scout-context-missing", 404),
+        "cli-diff-denied": ("denied", TARGET_PATH, 403),
+        "mcp-source-truth": ("allowed", TARGET_PATH, 200),
+        "mcp-diff-matched": ("allowed", TARGET_PATH, 200),
+        "mcp-diff-denied": ("denied", TARGET_PATH, 403),
+        "tui-source-truth-allowed": ("allowed", TARGET_PATH, 200),
+        "tui-source-truth-reopen-after-retarget": ("allowed", TARGET_PATH, 200),
+        "tui-diff-allowed": ("allowed", TARGET_PATH, 200),
+        "tui-diff-denied": ("denied", TARGET_PATH, 403),
+    }
+    grouped = api_proxy.group_action_events(event_log, phases)
+    cub_grouped = api_proxy.group_cub_events(cub_log, phases)
+    for phase, (endpoint, path, status) in expected_api.items():
+        rows = grouped[phase]
+        api_proxy.validate_api_records(rows, endpoint=endpoint, target_path=path, target_status=status)
+        allowed_paths = {path, "/version", "/api", "/api/v1", "/apis", "/apis/apps",
+                         "/apis/apps/v1", "/apis/argoproj.io", "/apis/argoproj.io/v1alpha1",
+                         f"/apis/argoproj.io/v1alpha1/applications",
+                         f"/apis/argoproj.io/v1alpha1/namespaces/{NAMESPACE}/applications/{APPLICATION}"}
+        if any(row.get("path") not in allowed_paths for row in rows):
+            raise RuntimeError(phase + " read an API route outside its exact proof allowlist")
+        if phase in ("cli-source-truth-allowed", "mcp-source-truth",
+                     "tui-source-truth-allowed", "tui-source-truth-reopen-after-retarget"):
+            app_path = f"/apis/argoproj.io/v1alpha1/namespaces/{NAMESPACE}/applications/{APPLICATION}"
+            if not any(row.get("path") == app_path and row.get("status") == 200 for row in rows):
+                raise RuntimeError(phase + " lacks its exact Application GET")
+    auth_argv = ["cub", "auth", "status"]
+    unit_argv = ["cub", "unit", "get", CONFIGHUB_UNIT, "-o", "json", "--space", CONFIGHUB_SPACE]
+    expected_cub = {
+        "cli-source-truth-allowed": [(auth_argv, 0), (unit_argv, 73)],
+        "cli-source-truth-denied": [(auth_argv, 0)],
+        "cli-diff-matched": [], "cli-diff-changed": [], "cli-diff-missing": [], "cli-diff-denied": [],
+        "mcp-source-truth": [(auth_argv, 0), (auth_argv, 0), (unit_argv, 73)],
+        "mcp-diff-matched": [(auth_argv, 0)], "mcp-diff-denied": [(auth_argv, 0)],
+        "tui-source-truth-allowed": [(auth_argv, 0), (unit_argv, 73)],
+        "tui-source-truth-reopen-after-retarget": [(auth_argv, 0), (unit_argv, 73)],
+        "tui-diff-allowed": [], "tui-diff-denied": [],
+    }
+    for phase, expected in expected_cub.items():
+        actual = [(row.get("argv"), row.get("exitCode")) for row in cub_grouped[phase]]
+        if actual != expected:
+            raise RuntimeError(phase + " ConfigHub child command sequence differed from the exact stub contract")
+    receipt["apiEventPhases"] = {phase: grouped[phase] for phase in phases}
+    receipt["cubArgvPhases"] = {phase: cub_grouped[phase] for phase in phases}
+    receipt["acceptance"] = "passed"
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--execute", action="store_true")
+    parser.add_argument("--mode", choices=("trace-context", "source-truth-diff"), default="trace-context")
     parser.add_argument("--integrity-only-shared-kubeconfig", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
+    combined = args.mode == "source-truth-diff"
+    combined_pin = require_combined_source_pin() if combined else ""
     if not args.execute:
         parser.error("refusing to run without --execute")
     shared_arg = args.integrity_only_shared_kubeconfig.expanduser().absolute()
@@ -392,6 +825,7 @@ def main() -> int:
 
     work = None
     private_config = None
+    observation_config = None
     tui_config = None
     worktrees: list[Path] = []
     tools: dict[str, str | None] = {}
@@ -401,7 +835,11 @@ def main() -> int:
     creation_attempted = False
     signal_handlers = {}
     cleanup_errors: list[str] = []
-    receipt = {"schema": "trace-context-owned-kind.v1", "oldSource": OLD_SOURCE,
+    proxies = []
+    proxy_cert_paths = []
+    receipt = {"schema": "trace-source-truth-diff-owned-kind.v1" if combined else "trace-context-owned-kind.v1",
+               "oldSource": None if combined else OLD_SOURCE,
+               "integratedSource": combined_pin if combined else None,
                "fixedSource": FIXED_SOURCE, "commands": [],
                "sharedKubeconfigSha256Before": digest(shared)}
     try:
@@ -414,6 +852,7 @@ def main() -> int:
         work = Path(tempfile.mkdtemp(prefix="scout-trace-context-", dir="/tmp"))
         os.chmod(work, 0o700)
         private_config, tui_config = work / "kubeconfig", work / "tui.kubeconfig"
+        observation_config = work / "observation.kubeconfig" if combined else private_config
         binaries = work / "bin"
         binaries.mkdir(mode=0o700)
         private_home = work / "home"
@@ -421,16 +860,23 @@ def main() -> int:
         env = {key: value for key, value in os.environ.items()
                if key in ("PATH", "HOME", "TMPDIR", "LANG", "LC_ALL")}
         env.update({"GOPROXY": "off", "GOSUMDB": "off", "GOTOOLCHAIN": "local",
-                    "CUB_SCOUT_OFFLINE": "true", "CUB_SCOUT_SCAN_PROVIDER": "legacy",
+                    "CUB_SCOUT_SCAN_PROVIDER": "legacy",
                     "KUBECONFIG": str(private_config)})
+        if not combined:
+            env["CUB_SCOUT_OFFLINE"] = "true"
         for key in ("CUB_SPACE", "CUB_SCOUT_TEST_TRACE_JSON", "CUB_SCOUT_TEST_TRACE_ARTIFACTS_JSON",
                     "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy"):
             env.pop(key, None)
         shims = work / "shims"
         shims.mkdir(mode=0o700)
         observation_env_base = {**env, "SCOUT_TRACE_OLD_CONTEXT": ALLOWED_CONTEXT}
-        shim_paths = create_observation_shims(shims, tools["kubectl"])
-        cli_env = observation_env(observation_env_base, private_home=private_home, shims=shims, kubeconfig=private_config)
+        cub_log = work / "cub-argv.jsonl"
+        if combined:
+            observation_env_base["SCOUT_TRACE_CUB_LOG"] = str(cub_log)
+            cub_log.touch(mode=0o600)
+            cub_log.chmod(0o600)
+        shim_paths = create_observation_shims(shims, tools["kubectl"], combined=combined)
+        cli_env = observation_env(observation_env_base, private_home=private_home, shims=shims, kubeconfig=observation_config)
         receipt["observationShims"] = {name: digest(path) for name, path in shim_paths.items()}
         deadline = time.monotonic() + MAX_SECONDS
         def interrupt(signum, _frame):
@@ -441,8 +887,11 @@ def main() -> int:
         clean = record_command(receipt, "source-clean", [tools["git"], "-C", str(REPO), "status", "--porcelain"], env=env, deadline=deadline)
         if clean["stdout"].strip():
             raise RuntimeError("capture checkout must be committed and clean")
-        record_command(receipt, "fixed-source-ancestor", [tools["git"], "-C", str(REPO), "merge-base", "--is-ancestor", FIXED_SOURCE, "HEAD"], env=env, deadline=deadline)
-        record_command(receipt, "old-source-ancestor", [tools["git"], "-C", str(REPO), "merge-base", "--is-ancestor", OLD_SOURCE, FIXED_SOURCE], env=env, deadline=deadline)
+        if combined:
+            record_command(receipt, "integrated-source-ancestor", [tools["git"], "-C", str(REPO), "merge-base", "--is-ancestor", combined_pin, "HEAD"], env=env, deadline=deadline)
+        else:
+            record_command(receipt, "fixed-source-ancestor", [tools["git"], "-C", str(REPO), "merge-base", "--is-ancestor", FIXED_SOURCE, "HEAD"], env=env, deadline=deadline)
+            record_command(receipt, "old-source-ancestor", [tools["git"], "-C", str(REPO), "merge-base", "--is-ancestor", OLD_SOURCE, FIXED_SOURCE], env=env, deadline=deadline)
         receipt["captureScriptSha256"] = digest(Path(__file__))
         version = record_command(receipt, "kind-version", [tools["kind"], "version"], env=env, deadline=deadline)["stdout"].split()
         if len(version) < 2 or version[:2] != ["kind", KIND_VERSION]:
@@ -461,9 +910,10 @@ def main() -> int:
         receipt["nodeImage"] = NODE_IMAGE
         receipt["toolPins"] = {name: {"path": path, "sha256": digest(Path(path))} for name, path in tools.items()}
 
-        # Build both exact product sources and compile the source-injected TUI probe
-        # before asking kind to create anything.
-        for label, ref in (("old", OLD_SOURCE), ("fixed", FIXED_SOURCE)):
+        # Build the exact source(s) and compile the injected TUI probe before
+        # asking kind to create anything.
+        source_specs = (("combined", combined_pin),) if combined else (("old", OLD_SOURCE), ("fixed", FIXED_SOURCE))
+        for label, ref in source_specs:
             checkout = work / ("source-" + label)
             worktrees.append(checkout)
             record_command(receipt, label + "-worktree", [tools["git"], "-C", str(REPO), "worktree", "add", "--detach", str(checkout), ref], env=env, deadline=deadline)
@@ -472,15 +922,17 @@ def main() -> int:
             commit = record_command(receipt, label + "-source", [tools["git"], "-C", str(checkout), "rev-parse", "HEAD"], env=env, deadline=deadline)["stdout"].strip()
             if commit != ref:
                 raise RuntimeError(label + " binary does not match the exact source pin")
-            receipt[label + "SourceCommit"] = commit
-            receipt[label + "BinarySha256"] = digest(binary)
-        template = Path(__file__).with_name("tui_live_test.go.txt")
+            receipt["integratedSourceCommit" if combined else label + "SourceCommit"] = commit
+            receipt["integratedBinarySha256" if combined else label + "BinarySha256"] = digest(binary)
+        template = Path(__file__).with_name("combined_live_test.go.txt" if combined else "tui_live_test.go.txt")
         receipt["tuiProbeSha256"] = digest(template)
-        probe = work / "source-fixed" / "cmd" / "cub-scout" / "trace_context_owned_live_test.go"
+        source_label = "combined" if combined else "fixed"
+        probe_name = "trace_source_truth_diff_owned_live_test.go" if combined else "trace_context_owned_live_test.go"
+        probe = work / ("source-" + source_label) / "cmd" / "cub-scout" / probe_name
         with probe.open("x") as stream:
             stream.write(template.read_text())
-        tui_binary = binaries / "trace-context-tui.test"
-        record_command(receipt, "tui-build", [tools["go"], "-C", str(work / "source-fixed"), "test", "-c", "-o", str(tui_binary), "./cmd/cub-scout"], env=env, deadline=deadline, timeout=300)
+        tui_binary = binaries / ("trace-source-truth-diff-tui.test" if combined else "trace-context-tui.test")
+        record_command(receipt, "tui-build", [tools["go"], "-C", str(work / ("source-" + source_label)), "test", "-c", "-o", str(tui_binary), "./cmd/cub-scout"], env=env, deadline=deadline, timeout=300)
         receipt["tuiBinarySha256"] = digest(tui_binary)
 
         cluster = "scout-trace-" + uuid.uuid4().hex[:10]
@@ -524,7 +976,7 @@ spec:
 ''')
             record_command(receipt, "fixture-application-crd", [kubectl, "apply", "--context", ALLOWED_CONTEXT, "-f", str(crd_path)], env=kube, deadline=deadline)
             record_command(receipt, "fixture-crd-ready", [kubectl, "wait", "--context", ALLOWED_CONTEXT, "--for=condition=Established", "--timeout=30s", "crd/applications.argoproj.io"], env=kube, deadline=deadline, timeout=40)
-            fixture = _write_fixture(work)
+            fixture = _write_fixture(work, source_truth=combined)
             record_command(receipt, "fixture-apply", [kubectl, "apply", "--context", ALLOWED_CONTEXT, "-f", str(fixture)], env=kube, deadline=deadline)
             record_command(receipt, "fixture-service-account", [kubectl, "-n", NAMESPACE, "create", "serviceaccount", "trace-denied", "--context", ALLOWED_CONTEXT], env=kube, deadline=deadline)
             token = record_command(receipt, "denied-token", [kubectl, "-n", NAMESPACE, "create", "token", "trace-denied", "--duration=10m", "--context", ALLOWED_CONTEXT], env=kube, deadline=deadline, secret=True)
@@ -554,45 +1006,75 @@ spec:
                 raise RuntimeError("owned fixture differs from exact Application/Deployment identities")
             receipt["fixtureIdentities"] = [{"kind": item["kind"], "namespace": item["metadata"]["namespace"],
                                               "name": item["metadata"]["name"], "uid": item["metadata"]["uid"]} for item in items]
-            receipt["fixtureScope"] = "synthetic Argo Application CRD/object, Argo-labeled zero-replica Deployment, and unlabelled zero-replica Native control; no Argo controller/reconciliation"
-            receipt["privateKubeconfigSha256BeforeReads"] = digest(private_config)
-
-            for command, args_for_command in (
-                ("normal", ["trace", "deployment/" + DEPLOYMENT, "-n", NAMESPACE, "--format", "json"]),
-                ("reverse", ["trace", "deployment/" + DEPLOYMENT, "-n", NAMESPACE, "--reverse", "--json"]),
-            ):
-                binary = str(binaries / "cub-scout-old")
-                record_observation(receipt, "old-ambient-" + command, command, [binary, *args_for_command], env=cli_env, deadline=deadline)
-                record_observation(receipt, "old-explicit-" + command, command,
-                                   [binary, *args_for_command, "--kube-context", DENIED_CONTEXT], env=cli_env, deadline=deadline)
+            receipt["fixtureScope"] = ("synthetic Argo Application CRD/object, Argo-labeled zero-replica Deployment with exact ConfigHub unit metadata, and unlabelled Native control; no Argo controller/reconciliation" if combined else
+                "synthetic Argo Application CRD/object, Argo-labeled zero-replica Deployment, and unlabelled zero-replica Native control; no Argo controller/reconciliation")
+            if combined:
+                workloads = {item["metadata"]["name"]: item for item in items if item["kind"] == "Deployment"}
+                target_object = workloads.get(DEPLOYMENT, {})
+                labels = target_object.get("metadata", {}).get("labels", {})
+                annotations = target_object.get("metadata", {}).get("annotations", {})
+                app_object = next((item for item in items if item["kind"] == "Application" and item["metadata"]["name"] == APPLICATION), {})
+                if labels.get("confighub.com/UnitSlug") != CONFIGHUB_UNIT or annotations.get("confighub.com/SpaceName") != CONFIGHUB_SPACE:
+                    raise RuntimeError("source-truth fixture lacks exact ConfigHub unit identity")
+                if app_object.get("status", {}).get("sync", {}).get("revision") != "a" * 40:
+                    raise RuntimeError("source-truth fixture lacks its observed Argo revision")
+                proxies, projected, proxy_cert_paths = _proxy_pair(config, work)
+                observation_config.write_text(json.dumps(projected) + "\n")
+                observation_config.chmod(0o600)
+                cli_env["KUBECONFIG"] = str(observation_config)
+                receipt["apiBindingMode"] = "two loopback endpoints; credentials held by forwarding proxy; upstream TLS CA verified; GET-only exact route allowlist"
+                receipt["proxyEndpoints"] = {proxy.label: proxy.endpoint for proxy in proxies}
+                receipt["observationKubeconfigSha256BeforeReads"] = digest(observation_config)
+                rendered = _write_rendered_inputs(work)
+                event_log = output / "api-events.jsonl"
+                binary = str(binaries / "cub-scout-combined")
+                _run_combined_action_flow(receipt=receipt, binary=binary, tui_binary=str(tui_binary),
+                    cli_env=cli_env, tui_env_base=observation_env_base, proxies=proxies,
+                    cub_log=cub_log, event_log=event_log, rendered=rendered, tui_config=tui_config,
+                    deadline=deadline, output=output)
+                receipt["observationKubeconfigSha256AfterReads"] = digest(observation_config)
+                receipt["privateKubeconfigUnchangedDuringCLI"] = (
+                    receipt["observationKubeconfigSha256BeforeReads"] == receipt["observationKubeconfigSha256AfterReads"])
+                if not receipt["privateKubeconfigUnchangedDuringCLI"]:
+                    raise RuntimeError("combined observation changed its credential-free kubeconfig")
+            else:
+                receipt["privateKubeconfigSha256BeforeReads"] = digest(private_config)
+                for command, args_for_command in (
+                    ("normal", ["trace", "deployment/" + DEPLOYMENT, "-n", NAMESPACE, "--format", "json"]),
+                    ("reverse", ["trace", "deployment/" + DEPLOYMENT, "-n", NAMESPACE, "--reverse", "--json"]),
+                ):
+                    binary = str(binaries / "cub-scout-old")
+                    record_observation(receipt, "old-ambient-" + command, command, [binary, *args_for_command], env=cli_env, deadline=deadline)
+                    record_observation(receipt, "old-explicit-" + command, command,
+                                       [binary, *args_for_command, "--kube-context", DENIED_CONTEXT], env=cli_env, deadline=deadline)
+                    fixed = str(binaries / "cub-scout-fixed")
+                    for context in (ALLOWED_CONTEXT, DENIED_CONTEXT):
+                        record_observation(receipt, fixed_phase(context, command), command,
+                                           [fixed, *args_for_command, "--kube-context", context], env=cli_env, deadline=deadline)
                 fixed = str(binaries / "cub-scout-fixed")
+                native_args = ["trace", "deployment/" + NATIVE_DEPLOYMENT, "-n", NAMESPACE, "--reverse", "--format", "json"]
                 for context in (ALLOWED_CONTEXT, DENIED_CONTEXT):
-                    record_observation(receipt, fixed_phase(context, command), command,
-                                       [fixed, *args_for_command, "--kube-context", context], env=cli_env, deadline=deadline)
-            fixed = str(binaries / "cub-scout-fixed")
-            native_args = ["trace", "deployment/" + NATIVE_DEPLOYMENT, "-n", NAMESPACE, "--reverse", "--format", "json"]
-            for context in (ALLOWED_CONTEXT, DENIED_CONTEXT):
-                result_phase = "fixed-allowed-native-reverse" if context == ALLOWED_CONTEXT else "fixed-denied-native-reverse"
-                record_observation(receipt, result_phase, "reverse",
-                                   [fixed, *native_args, "--kube-context", context], env=cli_env, deadline=deadline)
-            validate_observations(receipt["commands"])
-            receipt["privateKubeconfigSha256AfterCLI"] = digest(private_config)
-            receipt["privateKubeconfigUnchangedDuringCLI"] = receipt["privateKubeconfigSha256BeforeReads"] == receipt["privateKubeconfigSha256AfterCLI"]
-            if not receipt["privateKubeconfigUnchangedDuringCLI"]:
-                raise RuntimeError("Trace CLI changed its private kubeconfig")
+                    result_phase = "fixed-allowed-native-reverse" if context == ALLOWED_CONTEXT else "fixed-denied-native-reverse"
+                    record_observation(receipt, result_phase, "reverse",
+                                       [fixed, *native_args, "--kube-context", context], env=cli_env, deadline=deadline)
+                validate_observations(receipt["commands"])
+                receipt["privateKubeconfigSha256AfterCLI"] = digest(private_config)
+                receipt["privateKubeconfigUnchangedDuringCLI"] = receipt["privateKubeconfigSha256BeforeReads"] == receipt["privateKubeconfigSha256AfterCLI"]
+                if not receipt["privateKubeconfigUnchangedDuringCLI"]:
+                    raise RuntimeError("Trace CLI changed its private kubeconfig")
 
-            shutil.copyfile(private_config, tui_config)
-            tui_config.chmod(0o600)
-            tui_result = output / "tui-result.json"
-            tui_env = {**observation_env(observation_env_base, private_home=private_home, shims=shims, kubeconfig=tui_config),
-                       "SCOUT_TRACE_OLD_CONTEXT": ALLOWED_CONTEXT, "SCOUT_TRACE_TUI_EXECUTE": "1",
-                       "SCOUT_TRACE_TUI_CONFIG": str(tui_config), "SCOUT_TRACE_TUI_RESULT": str(tui_result)}
-            record_command(receipt, "tui-live", [str(tui_binary), "-test.run", "^TestTraceContextOwnedTUI$",
-                           "-test.count=1", "-test.v", "-test.timeout=90s"], env=tui_env, deadline=deadline, timeout=100)
-            tui_data = json.loads(tui_result.read_text())
-            receipt["tuiResultSha256"] = digest(tui_result)
-            validate_tui(tui_data)
-            receipt["tuiKubeconfigSha256BeforeAndAfter"] = tui_data.get("privateConfigSha256BeforeAfter")
+                shutil.copyfile(private_config, tui_config)
+                tui_config.chmod(0o600)
+                tui_result = output / "tui-result.json"
+                tui_env = {**observation_env(observation_env_base, private_home=private_home, shims=shims, kubeconfig=tui_config),
+                           "SCOUT_TRACE_OLD_CONTEXT": ALLOWED_CONTEXT, "SCOUT_TRACE_TUI_EXECUTE": "1",
+                           "SCOUT_TRACE_TUI_CONFIG": str(tui_config), "SCOUT_TRACE_TUI_RESULT": str(tui_result)}
+                record_command(receipt, "tui-live", [str(tui_binary), "-test.run", "^TestTraceContextOwnedTUI$",
+                               "-test.count=1", "-test.v", "-test.timeout=90s"], env=tui_env, deadline=deadline, timeout=100)
+                tui_data = json.loads(tui_result.read_text())
+                receipt["tuiResultSha256"] = digest(tui_result)
+                validate_tui(tui_data)
+                receipt["tuiKubeconfigSha256BeforeAndAfter"] = tui_data.get("privateConfigSha256BeforeAfter")
             receipt["acceptance"] = "passed"
         except BaseException as exc:
             receipt["acceptance"] = "failed"
@@ -605,6 +1087,11 @@ spec:
     finally:
         for signum, handler in signal_handlers.items():
             signal.signal(signum, handler)
+        for proxy in reversed(proxies):
+            try:
+                proxy.close()
+            except Exception:
+                cleanup_errors.append("owned loopback API proxy did not stop cleanly")
         cleanup_env = {**env, "KUBECONFIG": str(private_config)} if env and private_config else env
         if cluster is not None and tools.get("kind") and tools.get("docker"):
             cleanup_errors.extend(cleanup_cluster(receipt, name=cluster, created=created,
@@ -612,7 +1099,7 @@ spec:
                                                    env=cleanup_env, deadline=time.monotonic() + 120))
         if tools.get("git"):
             cleanup_errors.extend(cleanup_worktrees(receipt, repo=REPO, git=tools["git"], worktrees=worktrees, env=env))
-        for path in (private_config, tui_config):
+        for path in (private_config, observation_config, tui_config, *proxy_cert_paths):
             try:
                 if path is not None:
                     path.unlink(missing_ok=True)
