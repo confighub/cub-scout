@@ -1,0 +1,46 @@
+{
+  "schema": "pre02-node-selector-recording.v1",
+  "case": "PRE-02",
+  "classification": "independently reviewed raw recording; prepared, not run as a benchmark",
+  "capture": {
+    "sourceRevision": "4b113710948882eda501e14aacca2d5cec1168ae",
+    "captureScriptSha256": "ec4f7f8e9d2d2ca6257abc5029f2e01b33203794a5782c22ba13895bedd31230",
+    "startedAt": "2026-10-01T06:02:50Z",
+    "endedAt": "2026-10-01T06:03:28Z",
+    "elapsedSeconds": 38.45680758310482,
+    "context": "one fresh invocation-owned local kind cluster",
+    "kindVersion": "v0.31.0",
+    "nodeImage": "kindest/node:v1.35.0@sha256:4613778f3cfcd10e615029370f5786704559103cf27bef934597ba562b269661",
+    "atomicSnapshot": false,
+    "wrapper": {
+      "exitCode": 0,
+      "elapsedSeconds": 38.57530829194002,
+      "timedOut": false,
+      "proofSha256": "70e3ed10ad0963510cd97699bb15137792a44f90c1a579ad081823ef38234179"
+    },
+    "cleanupVerified": true,
+    "sharedKubeconfigUnchanged": true,
+    "rawFilesSha256": {
+      "before-pod.json": "dec5c8fae0f71860f1309aee1be0455b355b6ea3abbb921360ebd306343adefd",
+      "before-nodes.json": "9808755e4df180b936aa2b68db5ce84aef3bca84b61cc9b2db8a64b007e7374a",
+      "before-events.json": "78b187ef42464644a815b8676bf8743fc7eb491f163f35b334d73bccf531f50e",
+      "after-pod.json": "f264204dc296d06590bc357691a1b95db08222f4ac68b3c38935d6ef200832c3",
+      "after-nodes.json": "263097f6d314cac3a7d673b4db7a38f36c437bd2fa1a2d402bb2c0a0dd807ee9",
+      "after-events.json": "4acce317a3a539b80d4fbb7eb7977dc313a888952caa8b64f2096243d40ee3ae"
+    },
+    "captureScopeSha256": "d103f77e8b0a54ad563b5754d129a5cbdc0b789f35b9e0e5374d4c35fb13299f",
+    "primaryArchive": "evals/results/pre02-node-selector-20261001",
+    "independentEvidenceReview": "accepted"
+  },
+  "limits": {
+    "cloudApiAccessed": false,
+    "secretRead": false,
+    "capacityInferred": false,
+    "readinessOrApplicationHealthProven": false,
+    "modelRun": false,
+    "benchmarkRun": false,
+    "paidRunAuthorized": false,
+    "developmentDollars": null,
+    "credits": null
+  }
+}

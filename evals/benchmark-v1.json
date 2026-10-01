@@ -517,22 +517,62 @@
         {
           "id": "PRE-02",
           "question": "Kubernetes topology and cloud prerequisite",
-          "status": "planned",
-          "existing_case": null,
+          "status": "raw_recording_prepared_not_run",
+          "existing_case": "evals/pre02-node-selector",
           "reference": "Identify the concrete missing cloud API, secret, or schedulable-node/topology prerequisite.",
           "controls": [
             "Do not generalize beyond observed prerequisites"
-          ]
+          ],
+          "source_provenance": {
+            "capture_source_commit": "4b113710948882eda501e14aacca2d5cec1168ae",
+            "capture_script_sha256": "ec4f7f8e9d2d2ca6257abc5029f2e01b33203794a5782c22ba13895bedd31230",
+            "capture_scope_sha256": "d103f77e8b0a54ad563b5754d129a5cbdc0b789f35b9e0e5374d4c35fb13299f",
+            "raw_files_sha256": {
+              "before-pod.json": "dec5c8fae0f71860f1309aee1be0455b355b6ea3abbb921360ebd306343adefd",
+              "before-nodes.json": "9808755e4df180b936aa2b68db5ce84aef3bca84b61cc9b2db8a64b007e7374a",
+              "before-events.json": "78b187ef42464644a815b8676bf8743fc7eb491f163f35b334d73bccf531f50e",
+              "after-pod.json": "f264204dc296d06590bc357691a1b95db08222f4ac68b3c38935d6ef200832c3",
+              "after-nodes.json": "263097f6d314cac3a7d673b4db7a38f36c437bd2fa1a2d402bb2c0a0dd807ee9",
+              "after-events.json": "4acce317a3a539b80d4fbb7eb7977dc313a888952caa8b64f2096243d40ee3ae"
+            },
+            "atomic_snapshot": false,
+            "capture_started_at": "2026-10-01T06:02:50Z",
+            "capture_ended_at": "2026-10-01T06:03:28Z",
+            "helper_elapsed_seconds": 38.45680758310482,
+            "wrapper_exit_code": 0,
+            "wrapper_elapsed_seconds": 38.57530829194002,
+            "cleanup_verified": true,
+            "shared_kubeconfig_unchanged": true,
+            "limitations": "One owned local kind lifecycle with sequential API reads. The capture is not a Kubara replay and does not establish cloud configuration, capacity, readiness, application health, or fleet-wide topology."
+          },
+          "benchmark_admission": "Raw capture and strict correctness contract prepared; not run. Full benchmark remains non-executable and this manifest does not authorize paid runs."
         },
         {
           "id": "PRE-03",
           "question": "Argo/Crossplane child-chain failure",
-          "status": "planned",
-          "existing_case": null,
+          "status": "recorded_projection_prepared_not_run",
+          "existing_case": "evals/pre03-argo-child-failure",
           "reference": "Trace parent to the failing child and name its failure evidence.",
           "controls": [
             "Parent Synced/Ready does not substitute for child coverage"
-          ]
+          ],
+          "evidence_refresh": "2026-10-01",
+          "source_provenance": {
+            "repository": "confighub/helm-expt",
+            "revision": "9ab4c753a888dc305a3c07956c9f8f5a19eb70a0",
+            "fixture_files_sha256": {
+              "argocd-core-child-tree.txt": "5063434140df63adb2949f8287a88898e7d1c2c2f70a416a7ca3446e3d5a61f3",
+              "argocd-core-child.json": "c8e5c7476a8b0f3a7941587957b63caaa651247715ed537be3a6f3795f0e3ffe",
+              "argocd-core-root-tree.txt": "ff14e194abf60ebfed7429c30ae2c87548875a068a3bca920c10a3b60dd24411",
+              "argocd-core-root.json": "5f2fe7e6f3200327567b50abd695a8bbeb85f7c6d5f4e92976798bb5a8e36fff",
+              "capture-scope.json": "a1b64893b8df6ab27200e2b0f08e6bbb1f4413ac8694bfbdb6a24c6f485c5878",
+              "events.txt": "2adf884044616c0a66e01a9f1460e4f7c61579c89a8c7282ec4adc5c007b4526",
+              "pod-describe.txt": "4b1f8b55eccecd18a1e0d2b1b537eef08ddd4bc3323c0b8bf64faf905948d3a7"
+            },
+            "report": "evals/reports/2026-10-01-pre03-argo-child-failure.json",
+            "limits": "Argo-only retained historical chain: parent Synced/Healthy, tracked child Synced/Progressing, and a descendant Pod ImagePullBackOff with exact ErrImagePull/NotFound evidence. No Crossplane chain or broader coverage claim. Sequential, non-atomic, not current; source cleanup fields conflict."
+          },
+          "benchmark_admission": "Prepared Argo-only recorded projection; not run or admitted. Crossplane branch remains unclaimed; full suite remains non-executable pending remaining cases and equal-tool/protocol gates."
         },
         {
           "id": "PRE-04",
@@ -564,22 +604,68 @@
         {
           "id": "RUL-01",
           "question": "Repeated question using a dated snapshot",
-          "status": "planned",
-          "existing_case": null,
+          "status": "raw_recording_prepared_not_run",
+          "existing_case": "evals/rul01-dated-snapshot",
           "reference": "Answer from the stated snapshot and expose its timestamp and age; do not imply it is current live state.",
           "controls": [
             "Dated evidence cannot renew itself"
-          ]
+          ],
+          "evidence_refresh": "2026-10-01",
+          "source_provenance": {
+            "reused_case": "PRE-02 retained after-Pod response; same historical observation, not an independent capture",
+            "source_commit": "4b113710948882eda501e14aacca2d5cec1168ae",
+            "source_helper_sha256": "ec4f7f8e9d2d2ca6257abc5029f2e01b33203794a5782c22ba13895bedd31230",
+            "source_provenance_sha256": "472314079b74bff1a374d5e55eb44a12db2e2ffeaa189b30dc659423bc95398a",
+            "raw_file": "evals/rul01-dated-snapshot/fixtures/after-pod.json",
+            "raw_bytes": 5355,
+            "raw_sha256": "f264204dc296d06590bc357691a1b95db08222f4ac68b3c38935d6ef200832c3",
+            "request": {
+              "phase": "after",
+              "method": "GET",
+              "path": "/api/v1/namespaces/pre02-node-selector/pods/scout-pre02-selector",
+              "http_status": 200,
+              "started_at": "2026-10-01T06:03:25Z",
+              "ended_at": "2026-10-01T06:03:25Z",
+              "elapsed_seconds": 0.01204633410088718,
+              "logged_timestamp_precision_seconds": 1
+            },
+            "authored_test_clocks": [
+              "2026-10-01T06:08:25Z",
+              "2026-10-01T06:13:25Z"
+            ],
+            "limits": "Age arithmetic is relative to the logged request-end second, with one-second timestamp resolution. Same observation reused from PRE-02; no independent capture, current-state, product capture-time capability, or savings claim."
+          },
+          "benchmark_admission": "Prepared, not run or admitted. Frozen suite remains non-executable pending protocol gates and remaining cases."
         },
         {
           "id": "RUL-02",
           "question": "Cache invalidation after identity change",
-          "status": "planned",
-          "existing_case": null,
+          "status": "synthetic_source_replay_prepared_not_run",
+          "existing_case": "evals/rul02-cache-replay",
           "reference": "Detect identity change and invalidate reused evidence before answering.",
           "controls": [
             "Test stale and changed UID/digest identities"
-          ]
+          ],
+          "evidence_refresh": "2026-10-01",
+          "source_provenance": {
+            "repository": "confighub/cub-scout",
+            "capture_source_revision": "f7ad343740fb9c1ac488a06117c63466810afaa8",
+            "test": "pkg/agent/bounded_read_replay_test.go:TestBoundedReadRUL02IdentityCacheReplay",
+            "actual_result_sha256": "a4ce6bfe7f1951c215914c3eab0b787739f14cfb1e6d7475ed869a5e975a5d4b",
+            "execution_seconds": 3.837292250012979,
+            "exit_code": 0,
+            "timed_out": false,
+            "input_kind": "authored_httptest_responses_and_clock",
+            "limits": "Source-pinned offline reader replay with a fixed clock and authored local HTTP responses; configured cache-hit responses were not served. Demonstrates only the recorded steps, not live state, automatic/push invalidation, a general freshness guarantee, model performance, or savings.",
+            "source_file_sha256": {
+              "pkg/agent/bounded_read_replay_test.go": "6f1c0514958483fa10477bcafe2ba9936bd7e14341a5f807d976b0728c15ee32",
+              "pkg/agent/testdata/rul02-cache-replay.json": "718f81a8eae1a1c136343659e6ee3320a63b7b0826b2273c9955943e0b440e95",
+              "pkg/agent/bounded_read.go": "227ce841dce3a4072efb7c8f4b24c1cbd3838fc674e698cd5d2fb1ad2302953b"
+            }
+          },
+          "paid": false,
+          "executable": false,
+          "benchmark_admission": "Synthetic source replay prepared and reviewed; not run as a model evaluation or admitted. Full suite remains non-executable and this mapping does not authorize paid runs."
         },
         {
           "id": "RUL-03",

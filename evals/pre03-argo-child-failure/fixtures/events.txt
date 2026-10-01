@@ -1,0 +1,25 @@
+LAST SEEN   TYPE      REASON                    OBJECT                                                    MESSAGE
+23m         Normal    Starting                  node/helm-expt-parity-spark-mqghfthi-196o-control-plane
+23m         Normal    Starting                  node/helm-expt-parity-spark-mqghfthi-196o-control-plane   Starting kubelet.
+23m         Normal    NodeAllocatableEnforced   node/helm-expt-parity-spark-mqghfthi-196o-control-plane   Updated Node Allocatable limit across pods
+23m         Normal    NodeHasSufficientMemory   node/helm-expt-parity-spark-mqghfthi-196o-control-plane   Node helm-expt-parity-spark-mqghfthi-196o-control-plane status is now: NodeHasSufficientMemory
+23m         Normal    NodeHasNoDiskPressure     node/helm-expt-parity-spark-mqghfthi-196o-control-plane   Node helm-expt-parity-spark-mqghfthi-196o-control-plane status is now: NodeHasNoDiskPressure
+23m         Normal    NodeHasSufficientPID      node/helm-expt-parity-spark-mqghfthi-196o-control-plane   Node helm-expt-parity-spark-mqghfthi-196o-control-plane status is now: NodeHasSufficientPID
+23m         Normal    RegisteredNode            node/helm-expt-parity-spark-mqghfthi-196o-control-plane   Node helm-expt-parity-spark-mqghfthi-196o-control-plane event: Registered Node helm-expt-parity-spark-mqghfthi-196o-control-plane in Controller
+23m         Normal    NodeReady                 node/helm-expt-parity-spark-mqghfthi-196o-control-plane   Node helm-expt-parity-spark-mqghfthi-196o-control-plane status is now: NodeReady
+13m         Normal    Scheduled                 pod/spark-master-0                                        Successfully assigned default/spark-master-0 to helm-expt-parity-spark-mqghfthi-196o-control-plane
+13m         Normal    SuccessfulCreate          statefulset/spark-worker                                  Create Pod spark-worker-0 in StatefulSet spark-worker successful
+13m         Normal    NoPods                    poddisruptionbudget/spark-worker                          No matching pods found
+13m         Normal    NoPods                    poddisruptionbudget/spark-master                          No matching pods found
+13m         Normal    SuccessfulCreate          statefulset/spark-master                                  Create Pod spark-master-0 in StatefulSet spark-master successful
+13m         Normal    Scheduled                 pod/spark-worker-0                                        Successfully assigned default/spark-worker-0 to helm-expt-parity-spark-mqghfthi-196o-control-plane
+10m         Normal    Pulling                   pod/spark-master-0                                        Pulling image "docker.io/bitnami/spark:4.0.0-debian-12-r20"
+10m         Warning   Failed                    pod/spark-master-0                                        Failed to pull image "docker.io/bitnami/spark:4.0.0-debian-12-r20": rpc error: code = NotFound desc = failed to pull and unpack image "docker.io/bitnami/spark:4.0.0-debian-12-r20": failed to resolve reference "docker.io/bitnami/spark:4.0.0-debian-12-r20": docker.io/bitnami/spark:4.0.0-debian-12-r20: not found
+10m         Warning   Failed                    pod/spark-master-0                                        Error: ErrImagePull
+10m         Normal    Pulling                   pod/spark-worker-0                                        Pulling image "docker.io/bitnami/spark:4.0.0-debian-12-r20"
+10m         Warning   Failed                    pod/spark-worker-0                                        Failed to pull image "docker.io/bitnami/spark:4.0.0-debian-12-r20": rpc error: code = NotFound desc = failed to pull and unpack image "docker.io/bitnami/spark:4.0.0-debian-12-r20": failed to resolve reference "docker.io/bitnami/spark:4.0.0-debian-12-r20": docker.io/bitnami/spark:4.0.0-debian-12-r20: not found
+10m         Warning   Failed                    pod/spark-worker-0                                        Error: ErrImagePull
+3m41s       Warning   Failed                    pod/spark-master-0                                        Error: ImagePullBackOff
+3m41s       Normal    BackOff                   pod/spark-master-0                                        Back-off pulling image "docker.io/bitnami/spark:4.0.0-debian-12-r20"
+3m35s       Normal    BackOff                   pod/spark-worker-0                                        Back-off pulling image "docker.io/bitnami/spark:4.0.0-debian-12-r20"
+3m35s       Warning   Failed                    pod/spark-worker-0                                        Error: ImagePullBackOff

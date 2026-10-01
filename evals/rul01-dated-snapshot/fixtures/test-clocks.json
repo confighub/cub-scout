@@ -1,0 +1,14 @@
+{
+  "schema": "rul01.authored-test-clocks.v1",
+  "classification": "explicit authored as-of inputs; neither capture times nor current time",
+  "clocks": [
+    {
+      "id": "test_clock_1",
+      "asOf": "2026-10-01T06:08:25Z"
+    },
+    {
+      "id": "test_clock_2",
+      "asOf": "2026-10-01T06:13:25Z"
+    }
+  ]
+}

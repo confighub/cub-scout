@@ -60,6 +60,9 @@ class ReceiptTests(unittest.TestCase):
   with self.assertRaises(m.CaptureError):m._validate_results(b'{"schema":"x","schema":"y"}')
   v=self.valid_results(); v["results"][0]["stdout"]="x"*(m.CAP+1)
   with self.assertRaises(m.CaptureError):m._validate_results(json.dumps(v).encode())
+ def test_strict_json_rejects_nonfinite_numbers(self):
+  for raw in (b'{"v":NaN}',b'{"v":1e999}'):
+   with self.assertRaises(m.CaptureError):m.strict_json(raw,"test payload")
  def test_results_reject_wrong_version_and_boolean_timing(self):
   v=self.valid_results(); v["results"][0]["versionMatched"]=False
   with self.assertRaises(m.CaptureError):m._validate_results(json.dumps(v).encode())
@@ -88,6 +91,12 @@ class ReceiptTests(unittest.TestCase):
   raw=json.dumps(obj).encode()
   with self.assertRaises(m.CaptureError):m.validate_inspect(raw,name,owner,Path("/tmp/stage"))
   obj["HostConfig"]["NetworkMode"]="bridge"
+  with self.assertRaises(m.CaptureError):m.validate_inspect(json.dumps(obj).encode(),name,owner,Path("/tmp/stage"))
+ def test_inspection_rejects_unexpected_mount(self):
+  name="scout-linux-ver-0123456789abcdef"; owner="a"*32; ident="b"*64
+  obj={"Id":ident,"Name":"/"+name,"Image":m.IMAGE_ID,"Config":{"Image":m.IMAGE_ID,"User":"65534:65534","Labels":{m.OWNER_LABEL:owner}},
+   "HostConfig":{"ReadonlyRootfs":True,"NetworkMode":"none","CapDrop":["ALL"],"SecurityOpt":["no-new-privileges"],"Privileged":False,"CapAdd":[],"PidsLimit":64,"Memory":1073741824,"NanoCpus":1000000000,"Tmpfs":{"/tmp":"rw,nosuid,nodev,size=64m,uid=65534,gid=65534"}},
+   "Mounts":[{"Type":"bind","Source":"/tmp/stage","Destination":"/tools","RW":False},{"Type":"volume","Source":"unexpected","Destination":"/data","RW":False}],"State":{"Status":"created"}}
   with self.assertRaises(m.CaptureError):m.validate_inspect(json.dumps(obj).encode(),name,owner,Path("/tmp/stage"))
  def test_output_and_mount_use_canonical_parent(self):
   with tempfile.TemporaryDirectory(dir="/tmp") as td:
