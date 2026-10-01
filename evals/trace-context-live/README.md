@@ -122,9 +122,14 @@ assertions but failed final validation because requests and phase markers used
 different log files. Its failed receipt remains at
 `/tmp/scout-source-truth-diff-proof-2`; cleanup and shared-config integrity passed.
 The helper now passes one explicit event-log path to both proxies and the action
-markers, with a failing-before/passing-after offline regression. The
+markers, with a failing-before/passing-after offline regression. Attempt three
+passed the API action checks but found that reopening source-truth reused a
+cached ConfigHub session check. Its failed receipt is retained at
+`/tmp/scout-source-truth-diff-proof-3`; cleanup passed. The product now refreshes
+the gate once per deliberate TUI observation, with an expired/recovered-session
+regression and full offline Go validation. The next attempt uses that new pin. The
 `COMBINED_SOURCE_PIN` in `capture.py` records the reviewed candidate
-`a508e83840c54843a6461727ca71a417e4ccdbad`; the capture also requires that
+`fb3c76b6fc28d72f6ccea99fd9f38040c5b58b65`; the capture also requires that
 commit to be an ancestor of `HEAD` before building binaries or creating cluster
 resources. The helper and pinned product are now integrated, and the helper
 review repairs pass 29 offline tests. The corrected combined live capture remains pending. The attempt-three Trace-only receipt

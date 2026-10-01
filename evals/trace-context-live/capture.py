@@ -32,7 +32,7 @@ FIXED_SOURCE = "24074d858e8e2411ce2ba3e94340ec5646395eed"
 # Reviewed product candidate supplied by the root integration. Capture still
 # requires this commit to be an ancestor of HEAD, so it remains unrunnable
 # from this helper branch until the product commit is integrated here.
-COMBINED_SOURCE_PIN = "a508e83840c54843a6461727ca71a417e4ccdbad"
+COMBINED_SOURCE_PIN = "fb3c76b6fc28d72f6ccea99fd9f38040c5b58b65"
 CONFIGHUB_UNIT = "scout-context-unit"
 CONFIGHUB_SPACE = "scout-context-space"
 NAMESPACE = "scout-trace-context-proof"
