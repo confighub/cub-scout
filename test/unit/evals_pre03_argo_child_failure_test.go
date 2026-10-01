@@ -292,7 +292,6 @@ func TestPRE03FixturePinsChainAndStrictAnswer(t *testing.T) {
 		mutate func(pre03Answer) []byte
 	}{
 		{"missing-field", func(v pre03Answer) []byte {
-			v.EvidenceFiles = ""
 			b, _ := json.Marshal(v)
 			return bytes.Replace(b, []byte(`,"evidence_files":"capture-scope.json+argocd-core-root.json+argocd-core-child.json+argocd-core-root-tree.txt+argocd-core-child-tree.txt+pod-describe.txt+events.txt"`), nil, 1)
 		}},
