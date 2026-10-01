@@ -1,8 +1,12 @@
 # Watch cache namespace proof (#735)
 
 This is an opt-in, read-only comparison harness for the namespace-reuse fix in
-`cmd/cub-scout/observation_watch.go`. It has not been run against a cluster.
-No live behavior or performance result is claimed.
+`cmd/cub-scout/observation_watch.go`. The second owned-kind before/after run
+passed; its concise machine summary is
+[`live-proof-report.json`](live-proof-report.json), bound to the local raw
+archive at `evals/results/watch-cache-namespace-20261001`. The first attempt
+failed its overly narrow fixture validator and is retained as a failed attempt,
+not counted as a pass.
 
 ## Machine acceptance contract
 
@@ -11,7 +15,9 @@ and after `7611908afeb361b15a03d2687ccdaff6c504a811`. Both phases use one fresh
 local kind cluster and the same three namespaces/ConfigMaps, sequentially and
 without fixture changes. A namespaced service account has `get`, `list`, and
 `watch` only for ConfigMaps in A and B. It has no binding in the denied
-namespace and no cluster role.
+namespace and no cluster role. Kubernetes also created a `kube-root-ca.crt`
+ConfigMap in each namespace. The successful comparison retains those objects
+in the full list rather than assuming the fixture is the only ConfigMap.
 
 The probe records exact dynamic-client HTTP method/path/watch/status tuples and
 compares sorted `(namespace, name, UID)` identities. The direct API control
@@ -81,9 +87,20 @@ in the mode-0700 output directory. Private kubeconfig files are removed after
 cleanup. The helper has a 10-minute overall probe deadline and bounded
 per-command/startup/cleanup limits.
 
-The live proof is deliberately narrow: it does not measure cache freshness,
-reconnect behavior, storage bounds, complete inventory coverage, or production
-latency. The before/after phases are sequential, not an atomic snapshot. No
-live cluster proof has yet been performed.
+The observed invalid namespaced Nodes request returned 403 Forbidden. The
+probe installed an empty synthetic cluster-scope Nodes lister so it could
+exercise cache fallback; this proves that the fixed code reaches the API and
+preserves the observed denial, not that the server reached route validation or
+that a Nodes informer was watched. The run is deliberately narrow: it does not
+measure cache freshness, reconnect behavior, storage bounds, complete inventory
+coverage, or production latency. The before/after phases are sequential, not
+an atomic snapshot.
 
-The invalid namespaced Nodes request may be denied with 403 before route validation. This control proves API fallback and preservation of the observed error, not that the server reached a particular routing stage. Additional controller-created ConfigMaps remain in the full-list comparison; the fixture UID check selects the named object.
+Run 1 at helper checkout `d6ed908ae85ac11aa20346e29bb6ff5e203f6164` stopped
+after the old-source probe because the validator expected one ConfigMap per
+namespace, while Kubernetes had added `kube-root-ca.crt`; its before result and
+cleanup were retained. The corrected validator checks the named fixture UID
+while preserving full-list equality. Run 2 used the same pinned old/fixed
+product sources, same fixture during both phases, and completed both phases
+with verified cleanup and unchanged shared-config hash. See the report for
+artifact digests and exact machine outcomes.

@@ -1,7 +1,7 @@
 # cub-scout execution handover
 
 **Current snapshot:** 2026-10-01. Verified merged baseline:
-[`7dfa5db`](https://github.com/confighub/cub-scout/commit/7dfa5dbb2894aa268d4cbf6d8fb1acbdf45a1d82).
+[`572bc71`](https://github.com/confighub/cub-scout/commit/572bc71e40b6f5f229844f25922c6df04fe0d0ef).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
@@ -40,10 +40,11 @@ order, quality gates, budgets and decisions.
   passed in 4.610 seconds inside an inspected network-none container; cleanup
   and unchanged inputs were verified. Both earlier failed attempts remain
   recorded. This proves version execution, not installation or tool parity.
-- [PR #734](https://github.com/confighub/cub-scout/pull/734) prepares opt-in strict
+- [PR #734](https://github.com/confighub/cub-scout/pull/734) merged opt-in strict
   answer contracts for five legacy cases, preserving historical defaults and
-  results. Source review and nine offline tests passed. A CI merge conflict was
-  resolved by retaining every guard; final-head checks are pending at dcb77cbe.
+  results. [PR #736](https://github.com/confighub/cub-scout/pull/736) merged the
+  bounded PRE-01 real-kubectl gate. [PR #737](https://github.com/confighub/cub-scout/pull/737)
+  also merged after its required checks passed.
 - [#732](https://github.com/confighub/cub-scout/issues/732) passed its first
   real-kubectl recorded-response gate at source 75ef04b9 in 3.503 seconds.
   Six exact reads: three captured 404s produced normal exit-1 errors; three
@@ -52,9 +53,15 @@ order, quality gates, budgets and decisions.
   Eighteen offline guards passed, with old-source assertion failures. Proof
   packaging is pending. No general discovery, Helm, MCP, model or savings proof.
 - [#735](https://github.com/confighub/cub-scout/issues/735) fixes cross-namespace
-  watch-cache reuse. Source review and six HTTP tests passed; old logic returned
-  a false empty result for another namespace. An executable owned-cluster
-  before/after probe is being prepared, not run. Stream freshness, store limits
+  watch-cache reuse. The owned-kind before/after probe passed on one unchanged
+  fixture: the pinned old source showed exactly four expected false-empty/error
+  mismatches, and the fixed source passed all six checks with matching direct
+  identities and preserved denials. Cleanup and shared-config integrity were
+  verified. The concise report binds the local raw archive in
+  [the proof README](evals/watch-cache-namespace/README.md); packaging is not yet
+  published, and the product fix remains unmerged. The Nodes case used an empty
+  synthetic cluster-scope lister and observed a 403 fallback; it does not prove
+  route validation or Nodes informer coverage. Stream freshness, store limits
   and reconnect/410 coverage remain under #539.
 - General ordinary-tool parity, API/Helm route coverage, complete descendant
   accounting and paid admission remain unresolved. External #591/#597/#600
@@ -146,8 +153,8 @@ permission gates to already authorized routine work.
 
 ## Resume here
 
-Check #645, then finish #734 exact-head CI and #732 proof packaging. Review
-and run #735's owned before/after probe before its behavior change merges.
+Check #645, finish #732 proof packaging, and independently review the #735 proof
+package before publishing its already-passing owned before/after result.
 Continue actual tool parity and process/cost accounting under #709; six raw
 kubectl reads are only one bounded prerequisite. External dependencies #591 (genuine attestations), #597
 (current gate evidence), #600 (fact storage/schema agreement), and GHCR access
