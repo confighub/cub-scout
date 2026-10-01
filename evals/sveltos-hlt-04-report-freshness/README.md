@@ -22,6 +22,7 @@ claims about an actual Sveltos check or ConfigHub report:
 | Case | Expected producer behavior |
 |---|---|
 | No held annotation | Write the synthetic report with the fixed reporter `observedAt`. |
+| Existing held report with `observedAt` omitted | Rewrite it; this is distinct from a wholly absent annotation. |
 | Same held report at +1 minute | Do not write; semantic fields are unchanged and held time is within refresh. |
 | Same inputs at +16 minutes | Write again with a new reporter `observedAt`; health, message, and inferred revision remain equal. Source input hashes and separately authored synthetic check-execution evidence remain unchanged. |
 | Malformed held `observedAt` | Rewrite; malformed time is not accepted as fresh. |
@@ -40,7 +41,14 @@ real controller executed a check then. No fixture field or summary renames
 
 The source pin is commit
 `8187910f9fe226e109e55c4d9c7c0e21297ff424` at the local repository
-`/Users/alexis/code/sveltos-confighub-work`. The helper verifies:
+`/Users/alexis/code/sveltos-confighub-work`. The helper verifies an exact inventory and SHA-256 for every exported file:
+`go.mod`, `go.sum`, the complete `internal/onboard/` tree, and the complete
+`chartrender/` package imported by `charts.go`, including tests and fixtures. It
+rejects missing, extra, or hash-mismatched files. The summary lookup uses the exact
+`projectsveltos.io/cluster-profile-name` label; the separate health-check
+profile label remains as defined by upstream.
+
+The helper verifies:
 
 - `internal/onboard/status.go` SHA-256
   `1a20679c5302c7fa7b54a0fab2da8017fd85ffc7ef796f8b031ef98bfbc4c32a`
@@ -53,13 +61,20 @@ macOS deny-network sandbox. The explicit replay command uses
 `GOTOOLCHAIN=local`, `GOPROXY=off`, `GOSUMDB=off`, a private Go build cache,
 network-denying `sandbox-exec`, and only
 `go test ./internal/onboard -run '^TestHLT04OfflineReplay$' -count=1 -v`.
-It caps the test at 120 seconds and combined stdout/stderr at 4 MiB. Missing
-dependencies fail offline; nothing is fetched or installed. Each invocation
+It caps total elapsed time at 90 seconds and combined stdout/stderr at 4 MiB.
+Missing dependencies fail offline; nothing is fetched or installed. Each invocation
 requires a fresh private output directory and preserves its pinned source,
-stdout/stderr, hashes, tool pins, status, and cleanup record there.
+stdout/stderr, hashes, tool pins, status, and cleanup record there. It accepts
+success only after checking exact case names/results, per-case raw fixture
+inputs, held annotation before/after, computed reports, exact write patches,
+and confirmed owned-process-group cleanup plus parent reaping. Failure, timeout,
+output overflow, or unconfirmed cleanup stays failed and preserves partial
+output/provenance privately.
 
-No helper invocation has run. After independent review, a future isolated
-offline replay would use a fresh output path, for example:
+A network-denied `go test -c` compile-only preflight passed after this repair;
+the resulting binary was not run. No producer replay or helper invocation has
+run. After independent review, a future isolated offline replay would use a
+fresh output path, for example:
 
 ```sh
 python3 evals/sveltos-hlt-04-report-freshness/replay.py --execute \
