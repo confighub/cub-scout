@@ -35,6 +35,10 @@ func (m LocalClusterModel) runSourceTruth(item TraceItem, strategy agent.SourceT
 		if err := ctx.Err(); err != nil {
 			return sourceTruthResultMsg{err: err, generation: generation, item: item, strategy: strategy, contextName: contextName}
 		}
+		// Each deliberate collection is a new observation boundary: a TUI can
+		// outlive login or logout in another terminal. Refresh once, then reuse
+		// that gate answer throughout this observation.
+		_ = refreshConfigHubReads()
 		if err := requireConfigHubFor("TUI source-truth"); err != nil {
 			return sourceTruthResultMsg{err: err, generation: generation, item: item, strategy: strategy, contextName: contextName}
 		}

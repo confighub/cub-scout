@@ -501,3 +501,41 @@ func TestSourceTruthFluxCleanupFailureWithholdsSurface(t *testing.T) {
 		})
 	}
 }
+
+func TestSourceTruthTUIRefreshesConfigHubSessionPerObservation(t *testing.T) {
+	alpha := newSourceTruthHTTPFixture(t, "alpha")
+	path := filepath.Join(t.TempDir(), "config")
+	writeTraceKubeconfig(t, path, "alpha-context", alpha.URL, alpha.URL)
+	t.Setenv("KUBECONFIG", path)
+	binding := resolveLocalClusterBindingForSelection(clusterContextSelection{name: "alpha-context", explicit: true})
+	require.NoError(t, binding.err)
+	model := LocalClusterModel{clusterBinding: binding}
+	var answer error
+	calls := answerGateWith(t, &answer)
+	require.NoError(t, configHubReads()) // A prior observation cached a live session.
+	oldCollect := sourceTruthCollectFn
+	t.Cleanup(func() { sourceTruthCollectFn = oldCollect })
+	collections := 0
+	sourceTruthCollectFn = func(context.Context, *traceSession, string, string, string, agent.SourceTruthStrategy) sourceTruthObservation {
+		collections++
+		return sourceTruthObservation{}
+	}
+	item := TraceItem{Kind: "Deployment", Name: "api", Namespace: "team-a"}
+	observe := func() sourceTruthResultMsg {
+		return model.runSourceTruth(item, agent.StrategyGitArgo, 1, context.Background())().(sourceTruthResultMsg)
+	}
+	require.NoError(t, observe().err)
+	answer = errors.New("session expired")
+	require.ErrorContains(t, observe().err, "session expired")
+	require.Equal(t, 1, collections, "an expired session must not reuse the previous successful gate")
+	answer = nil
+	require.NoError(t, observe().err)
+	require.Equal(t, 2, collections, "logging in again must recover on the next explicit observation")
+	require.Equal(t, 4, *calls, "one prior check and one refresh per observation")
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	message := model.runSourceTruth(item, agent.StrategyGitArgo, 2, ctx)().(sourceTruthResultMsg)
+	require.ErrorIs(t, message.err, context.Canceled)
+	require.Equal(t, 4, *calls, "cancelled actions must not check auth")
+	require.Empty(t, alpha.allRequests())
+}
