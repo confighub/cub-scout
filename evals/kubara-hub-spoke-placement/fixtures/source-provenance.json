@@ -1,0 +1,28 @@
+{
+  "schema": "kubara.desired-placement-source-provenance.v1",
+  "sourceRepository": "https://github.com/confighub/kubara-confighub",
+  "sourceRevision": "cef6e7337884c6196c3b7c35cec587b8faf07447",
+  "evidenceKind": "desired source configuration plus generated desired-matrix projection; not a raw cluster capture",
+  "files": [
+    {
+      "fixture": "desired-matrix.json",
+      "sourcePath": "data/kubara-platform-matrix/desired-matrix.json",
+      "sha256": "e4e111557d4df457ac327c20baf09e5f2f8080cf698eb1767b12ba96962c0ee8"
+    },
+    {
+      "fixture": "config.yaml",
+      "sourcePath": "examples/kubara/current-platform/source/config.yaml",
+      "sha256": "7260fe438066413c1bc44b5f674e4441e3ae9873146e860d4188ef518abc1211"
+    }
+  ],
+  "scope": {
+    "liveReceiptConsumed": false,
+    "parsedObservationCells": 0,
+    "liveReads": 0,
+    "limitations": [
+      "The matrix records intended/current-config placement and explicitly unknown observations only.",
+      "It does not establish current cluster state, installation, health, or absence of resources.",
+      "The later live-receipt-consuming matrix and live mini-IDP receipt are deliberately excluded."
+    ]
+  }
+}
