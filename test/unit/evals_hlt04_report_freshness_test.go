@@ -363,11 +363,7 @@ func TestHLT04ManifestCountsAndFrozenQuestion(t *testing.T) {
 			}
 		}
 	}
-<<<<<<< HEAD
 	if !found || counts["planned"] != 2 || counts["existing_refreshed_fixture"] != 5 || counts["recorded_snapshot_binding_prepared_not_run"] != 2 || counts["recorded_projection_prepared_not_run"] != 8 || counts["raw_recording_prepared_not_run"] != 6 || counts["synthetic_source_replay_prepared_not_run"] != 1 {
-=======
-	if !found || counts["planned"] != 2 || counts["existing_refreshed_fixture"] != 5 || counts["recorded_snapshot_binding_prepared_not_run"] != 2 || counts["recorded_projection_prepared_not_run"] != 8 || counts["raw_recording_prepared_not_run"] != 6 || counts["synthetic_source_replay_prepared_not_run"] != 1 {
->>>>>>> origin/main
 		t.Fatalf("benchmark readiness counts changed: found=%v counts=%v", found, counts)
 	}
 }
