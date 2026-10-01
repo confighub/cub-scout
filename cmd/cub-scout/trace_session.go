@@ -14,6 +14,7 @@ import (
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -223,30 +224,39 @@ func collectTraceArtifactsWithTraceSessionAndErrors(ctx context.Context, session
 	}
 	sources := make([]agent.ChainLink, 0, 4)
 	for _, link := range result.Chain {
-		if isTraceSourceKind(link.Kind) {
+		if isTraceSourceKind(link.Kind) && kindToGVR(link.Kind).Resource != "" {
 			sources = append(sources, link)
 		}
 	}
 	if len(sources) == 0 {
 		return artifacts, nil
 	}
+	var readErrors []error
+	readableSources := make([]agent.ChainLink, 0, len(sources))
+	for _, source := range sources {
+		if err := validateTraceArtifactIdentity(source); err != nil {
+			readErrors = append(readErrors, err)
+			continue
+		}
+		readableSources = append(readableSources, source)
+	}
+	if len(readableSources) == 0 {
+		return artifacts, readErrors
+	}
 	if session == nil {
-		readErrors := make([]error, 0, len(sources))
-		for _, source := range sources {
+		for _, source := range readableSources {
 			readErrors = append(readErrors, fmt.Errorf("artifact metadata unavailable for %s/%s/%s: trace session is unavailable", source.Kind, source.Namespace, source.Name))
 		}
 		return artifacts, readErrors
 	}
 	dynClient, err := session.dynamicClient()
 	if err != nil {
-		readErrors := make([]error, 0, len(sources))
-		for _, source := range sources {
+		for _, source := range readableSources {
 			readErrors = append(readErrors, fmt.Errorf("artifact metadata unavailable for %s/%s/%s: %w", source.Kind, source.Namespace, source.Name, err))
 		}
 		return artifacts, readErrors
 	}
-	var readErrors []error
-	for _, source := range sources {
+	for _, source := range readableSources {
 		gvr := kindToGVR(source.Kind)
 		if gvr.Resource == "" {
 			continue
@@ -272,6 +282,22 @@ func collectTraceArtifactsWithTraceSessionAndErrors(ctx context.Context, session
 		artifacts[traceArtifactKey(source.Kind, source.Namespace, source.Name)] = normalizeTraceArtifact(source.Kind, artifact)
 	}
 	return artifacts, readErrors
+}
+
+func validateTraceArtifactIdentity(source agent.ChainLink) error {
+	reason := ""
+	switch {
+	case strings.TrimSpace(source.Name) == "" || strings.TrimSpace(source.Name) != source.Name || len(validation.IsDNS1123Subdomain(source.Name)) != 0:
+		reason = "exact Kubernetes source name is missing or invalid"
+	case strings.TrimSpace(source.Namespace) == "":
+		reason = "exact Kubernetes source namespace is required"
+	case strings.TrimSpace(source.Namespace) != source.Namespace || len(validation.IsDNS1123Label(source.Namespace)) != 0:
+		reason = "exact Kubernetes source namespace is invalid"
+	}
+	if reason == "" {
+		return nil
+	}
+	return fmt.Errorf("artifact metadata unavailable for %s/%s/%s: %s", source.Kind, source.Namespace, source.Name, reason)
 }
 
 // newTraceSessionFromBinding preserves the same parsed proxy provenance used by

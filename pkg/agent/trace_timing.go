@@ -6,12 +6,14 @@ package agent
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/client-go/dynamic"
 )
 
@@ -61,6 +63,9 @@ func (e *TimingEnricher) readResourceTiming(ctx context.Context, kind, name, nam
 	if gvr.Resource == "" {
 		return nil, nil
 	}
+	if err := validateTimingIdentity(kind, name, namespace); err != nil {
+		return nil, err
+	}
 	if e == nil || e.client == nil {
 		return nil, timingReadError(kind, name, namespace, "Kubernetes client is unavailable")
 	}
@@ -84,6 +89,22 @@ func (e *TimingEnricher) readResourceTiming(ctx context.Context, kind, name, nam
 	}
 
 	return extractTimingFromResource(resource, kind), nil
+}
+
+func validateTimingIdentity(kind, name, namespace string) error {
+	reason := ""
+	switch {
+	case strings.TrimSpace(name) == "" || strings.TrimSpace(name) != name || len(validation.IsDNS1123Subdomain(name)) != 0:
+		reason = "exact Kubernetes name is missing or invalid"
+	case strings.TrimSpace(namespace) == "":
+		reason = "exact Kubernetes namespace is required"
+	case strings.TrimSpace(namespace) != namespace || len(validation.IsDNS1123Label(namespace)) != 0:
+		reason = "exact Kubernetes namespace is invalid"
+	}
+	if reason == "" {
+		return nil
+	}
+	return timingReadError(kind, name, namespace, reason)
 }
 
 func timingReadError(kind, name, namespace, reason string) error {
