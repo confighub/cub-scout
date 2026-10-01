@@ -1,7 +1,7 @@
 # cub-scout execution handover
 
 **Current snapshot:** 2026-10-01. Verified merged baseline:
-[`8cdb27b`](https://github.com/confighub/cub-scout/commit/8cdb27b0bc9db17f5c0d1b59628b67cd3936ed6c).
+[`f05716a1`](https://github.com/confighub/cub-scout/commit/f05716a1fe227ecbf0fde8b4e8f8ef95d0771e13).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
@@ -73,7 +73,9 @@ order, quality gates, budgets and decisions.
 - [PR #749](https://github.com/confighub/cub-scout/pull/749) supplies the missing
   Trace Markdown unit-event rows under #561, preserving Result/Status and
   missing values. Independent diff review, offline build and full Go tests pass
-  at `7c68ea66`; exact-head CI is pending. Its example is typed fixture output,
+  at `7c68ea66`. Enabled exact-head CI checks passed in run `36860479725`;
+  optional Connected/Demo/Full Verification were skipped. PR #749 merged at
+  `f05716a1`. Its example is typed fixture output,
   not a new server capture. The broader #561 scope stays open.
 
 - The fixed benchmark retains 24 questions and six equally weighted groups.
