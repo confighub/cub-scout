@@ -125,13 +125,6 @@ func runSourceTruth(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	if strings.TrimSpace(name) == "" {
-		return fmt.Errorf("source-truth requires a non-empty workload name")
-	}
-	if strings.TrimSpace(sourceTruthNamespace) == "" {
-		return fmt.Errorf("source-truth requires a workload namespace with -n/--namespace")
-	}
-
 	selection, err := clusterContextSelectionFromFlag(cmd)
 	if err != nil {
 		return err
@@ -153,12 +146,29 @@ func runSourceTruth(cmd *cobra.Command, args []string) error {
 		return outputSourceTruth(os.Stdout, evidence, format)
 	}
 
-	session, err := newTraceSessionForSelection(selection)
-	if err != nil {
-		return fmt.Errorf("resolve selected Kubernetes context: %w", err)
+	var session *traceSession
+	if selection.explicit {
+		// Validate a named context before any Kubernetes request. This only
+		// resolves local kubeconfig data and does not contact the selected API.
+		session, err = newTraceSessionForSelection(selection)
+		if err != nil {
+			return fmt.Errorf("resolve selected Kubernetes context: %w", err)
+		}
 	}
 	if err := requireConfigHubFor("compare source-truth"); err != nil {
 		return err
+	}
+	if strings.TrimSpace(name) == "" {
+		return fmt.Errorf("source-truth requires a non-empty workload name")
+	}
+	if strings.TrimSpace(sourceTruthNamespace) == "" {
+		return fmt.Errorf("source-truth requires a workload namespace with -n/--namespace")
+	}
+	if session == nil {
+		session, err = newTraceSessionForSelection(selection)
+		if err != nil {
+			return fmt.Errorf("resolve selected Kubernetes context: %w", err)
+		}
 	}
 	observation := collectSourceTruthObservation(cmd.Context(), session, kind, name, sourceTruthNamespace, strategy)
 	return outputSourceTruth(os.Stdout, observation.Evidence, format)
@@ -462,6 +472,16 @@ func controllerSurfaceFromArgoWithSession(ctx context.Context, session *traceSes
 	if !ok {
 		return nil, fmt.Errorf("runtime resource does not identify exactly one matching Argo Application")
 	}
+	var selectedApplication *unstructured.Unstructured
+	for i := range apps {
+		if apps[i].GetName() == appName && apps[i].GetNamespace() == appNamespace {
+			selectedApplication = &apps[i]
+			break
+		}
+	}
+	if selectedApplication == nil {
+		return nil, fmt.Errorf("selected Argo Application %s/%s was not present in the Kubernetes response", appNamespace, appName)
+	}
 	tracer := agent.NewArgoTracerWithKubernetesClient(dyn)
 	result, err := tracer.TraceApplicationInNamespace(ctx, appName, appNamespace)
 	if err != nil {
@@ -471,7 +491,15 @@ func controllerSurfaceFromArgoWithSession(ctx context.Context, session *traceSes
 		return nil, fmt.Errorf("Argo Application %s/%s did not provide a source chain", appNamespace, appName)
 	}
 	root := result.Chain[0]
-	return &agent.ControllerSurface{Kind: "Argo", Source: strings.TrimSpace(firstNonEmpty(root.URL, root.Kind)), RevisionOrDigest: strings.TrimSpace(root.Revision), Health: controllerHealthLabel(root.Ready, root.Status), MultiSource: result.MultiSource}, nil
+	// ChainLink.Revision is spec.source.targetRevision (the desired selector,
+	// often a branch such as "main"). Source-truth compares the controller's
+	// observed anchor, which Argo exposes as status.sync.revision. Multi-source
+	// Applications require per-source observed revisions and remain unanchored.
+	observedRevision := ""
+	if !result.MultiSource {
+		observedRevision, _, _ = unstructured.NestedString(selectedApplication.Object, "status", "sync", "revision")
+	}
+	return &agent.ControllerSurface{Kind: "Argo", Source: strings.TrimSpace(firstNonEmpty(root.URL, root.Kind)), RevisionOrDigest: strings.TrimSpace(observedRevision), Health: controllerHealthLabel(root.Ready, root.Status), MultiSource: result.MultiSource}, nil
 }
 
 func controllerSurfaceFromFluxWithSession(ctx context.Context, session *traceSession, kind, name, namespace string) (*agent.ControllerSurface, error) {

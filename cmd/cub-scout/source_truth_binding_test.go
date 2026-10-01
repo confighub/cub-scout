@@ -76,6 +76,7 @@ func TestSourceTruthCLIExplicitContextBindsRuntimeAndArgoAfterRetarget(t *testin
 	require.NoError(t, json.Unmarshal([]byte(output), &evidence))
 	require.Equal(t, "alpha-context", evidence.Context)
 	require.Equal(t, agent.StatusPASS, evidence.Status)
+	require.Equal(t, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", evidence.Surfaces.Controller.RevisionOrDigest, "Argo's observed sync revision, not spec.source.targetRevision, is the comparison anchor")
 	require.Equal(t, 1, unitReads, "ConfigHub lookup is retained and separate from Kubernetes context selection")
 	require.Greater(t, alpha.count(http.MethodGet, "/apis/apps/v1/namespaces/team-a/deployments/api"), 0)
 	require.Greater(t, alpha.count(http.MethodGet, "/apis/argoproj.io/v1alpha1/applications"), 0)
@@ -83,6 +84,45 @@ func TestSourceTruthCLIExplicitContextBindsRuntimeAndArgoAfterRetarget(t *testin
 	require.Zero(t, alpha.count(http.MethodGet, "/apis/argoproj.io/v1alpha1/namespaces/other-system/applications/api"))
 	require.Equal(t, before, mustReadFile(t, path), "the caller kubeconfig must remain unchanged")
 	require.Empty(t, beta.allRequests(), "selected context must not fall through to ambient current-context")
+}
+
+func TestSourceTruthArgoMissingObservedRevisionIsUnavailable(t *testing.T) {
+	alpha := newSourceTruthHTTPFixture(t, "alpha")
+	alpha.observedRevision = ""
+	path := filepath.Join(t.TempDir(), "config")
+	writeTraceKubeconfig(t, path, "alpha-context", alpha.URL, alpha.URL)
+	t.Setenv("KUBECONFIG", path)
+	oldUnitGet := sourceTruthUnitGet
+	t.Cleanup(func() { sourceTruthUnitGet = oldUnitGet })
+	sourceTruthUnitGet = func(context.Context, string, string) ([]byte, error) {
+		return []byte(`{"HeadRevisionNum":3,"SpaceID":"space-id","UnitID":"unit-id"}`), nil
+	}
+	session, err := newTraceSessionForSelection(clusterContextSelection{name: "alpha-context", explicit: true})
+	require.NoError(t, err)
+	observed := collectSourceTruthObservation(context.Background(), session, "Deployment", "api", "team-a", agent.StrategyGitArgo)
+	require.NotNil(t, observed.Evidence.Surfaces.Controller)
+	require.Empty(t, observed.Evidence.Surfaces.Controller.RevisionOrDigest)
+	require.NotEqual(t, agent.StatusPASS, observed.Evidence.Status)
+}
+
+func TestSourceTruthArgoMultiSourceRevisionIsUnavailable(t *testing.T) {
+	alpha := newSourceTruthHTTPFixture(t, "alpha")
+	alpha.multiSource = true
+	path := filepath.Join(t.TempDir(), "config")
+	writeTraceKubeconfig(t, path, "alpha-context", alpha.URL, alpha.URL)
+	t.Setenv("KUBECONFIG", path)
+	oldUnitGet := sourceTruthUnitGet
+	t.Cleanup(func() { sourceTruthUnitGet = oldUnitGet })
+	sourceTruthUnitGet = func(context.Context, string, string) ([]byte, error) {
+		return []byte(`{"HeadRevisionNum":3,"SpaceID":"space-id","UnitID":"unit-id"}`), nil
+	}
+	session, err := newTraceSessionForSelection(clusterContextSelection{name: "alpha-context", explicit: true})
+	require.NoError(t, err)
+	observed := collectSourceTruthObservation(context.Background(), session, "Deployment", "api", "team-a", agent.StrategyGitArgo)
+	require.NotNil(t, observed.Evidence.Surfaces.Controller)
+	require.True(t, observed.Evidence.Surfaces.Controller.MultiSource)
+	require.Empty(t, observed.Evidence.Surfaces.Controller.RevisionOrDigest)
+	require.NotEqual(t, agent.StatusPASS, observed.Evidence.Status)
 }
 
 func TestSourceTruthDeniedControllerCannotProducePass(t *testing.T) {
@@ -338,16 +378,18 @@ func TestSourceTruthTUIDiscardsLateResultAfterCloseAndReopen(t *testing.T) {
 }
 
 type sourceTruthHTTPFixture struct {
-	URL      string
-	server   *httptest.Server
-	mu       sync.Mutex
-	requests map[string]int
-	denyArgo bool
+	URL              string
+	server           *httptest.Server
+	mu               sync.Mutex
+	requests         map[string]int
+	denyArgo         bool
+	observedRevision string
+	multiSource      bool
 }
 
 func newSourceTruthHTTPFixture(t *testing.T, marker string) *sourceTruthHTTPFixture {
 	t.Helper()
-	f := &sourceTruthHTTPFixture{requests: map[string]int{}}
+	f := &sourceTruthHTTPFixture{requests: map[string]int{}, observedRevision: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
 	f.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		f.mu.Lock()
 		key := r.Method + " " + r.URL.Path
@@ -371,19 +413,11 @@ func newSourceTruthHTTPFixture(t *testing.T, marker string) *sourceTruthHTTPFixt
 				t.Errorf("Argo lookup must be bounded to the observed application name; query=%s", r.URL.RawQuery)
 			}
 			writeTraceFixtureJSON(w, map[string]interface{}{"apiVersion": "argoproj.io/v1alpha1", "kind": "ApplicationList", "metadata": map[string]interface{}{}, "items": []interface{}{
-				map[string]interface{}{
-					"apiVersion": "argoproj.io/v1alpha1", "kind": "Application", "metadata": map[string]interface{}{"name": "api", "namespace": "argo-system"},
-					"spec":   map[string]interface{}{"source": map[string]interface{}{"repoURL": "https://git.example/repo", "targetRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},
-					"status": map[string]interface{}{"sync": map[string]interface{}{"status": "Synced", "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}, "health": map[string]interface{}{"status": "Healthy"}, "resources": []interface{}{map[string]interface{}{"kind": "Deployment", "name": "api", "namespace": "team-a"}}},
-				},
-				map[string]interface{}{
-					"apiVersion": "argoproj.io/v1alpha1", "kind": "Application", "metadata": map[string]interface{}{"name": "api", "namespace": "other-system"},
-					"spec":   map[string]interface{}{"source": map[string]interface{}{"repoURL": "https://attacker.invalid/wrong", "targetRevision": "wrong"}},
-					"status": map[string]interface{}{"sync": map[string]interface{}{"status": "Synced", "revision": "wrong"}, "health": map[string]interface{}{"status": "Healthy"}, "resources": []interface{}{map[string]interface{}{"kind": "Deployment", "name": "api", "namespace": "team-b"}}},
-				},
+				sourceTruthTestApplication("argo-system", "https://git.example/repo", "declared-target", f.observedRevision, "team-a", f.multiSource),
+				sourceTruthTestApplication("other-system", "https://attacker.invalid/wrong", "wrong", "wrong", "team-b", false),
 			}})
 		case "/apis/argoproj.io/v1alpha1/namespaces/argo-system/applications/api":
-			writeTraceFixtureJSON(w, map[string]interface{}{"apiVersion": "argoproj.io/v1alpha1", "kind": "Application", "metadata": map[string]interface{}{"name": "api", "namespace": "argo-system"}, "spec": map[string]interface{}{"source": map[string]interface{}{"repoURL": "https://git.example/repo", "targetRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}}, "status": map[string]interface{}{"sync": map[string]interface{}{"status": "Synced", "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}, "health": map[string]interface{}{"status": "Healthy"}}})
+			writeTraceFixtureJSON(w, sourceTruthTestApplication("argo-system", "https://git.example/repo", "declared-target", f.observedRevision, "team-a", f.multiSource))
 		default:
 			http.NotFound(w, r)
 		}
@@ -391,6 +425,26 @@ func newSourceTruthHTTPFixture(t *testing.T, marker string) *sourceTruthHTTPFixt
 	f.URL = f.server.URL
 	t.Cleanup(f.server.Close)
 	return f
+}
+
+func sourceTruthTestApplication(appNamespace, repo, targetRevision, observedRevision, workloadNamespace string, multiSource bool) map[string]interface{} {
+	source := map[string]interface{}{"repoURL": repo, "targetRevision": targetRevision}
+	spec := map[string]interface{}{"destination": map[string]interface{}{"namespace": workloadNamespace}}
+	if multiSource {
+		spec["sources"] = []interface{}{source, map[string]interface{}{"repoURL": "https://charts.example.invalid", "chart": "api", "targetRevision": "1.0"}}
+	} else {
+		spec["source"] = source
+	}
+	return map[string]interface{}{
+		"apiVersion": "argoproj.io/v1alpha1", "kind": "Application",
+		"metadata": map[string]interface{}{"name": "api", "namespace": appNamespace},
+		"spec":     spec,
+		"status": map[string]interface{}{
+			"sync":      map[string]interface{}{"status": "Synced", "revision": observedRevision},
+			"health":    map[string]interface{}{"status": "Healthy"},
+			"resources": []interface{}{map[string]interface{}{"kind": "Deployment", "name": "api", "namespace": workloadNamespace}},
+		},
+	}
 }
 
 func (f *sourceTruthHTTPFixture) allRequests() map[string]int {
