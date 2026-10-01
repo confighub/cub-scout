@@ -38,7 +38,7 @@ sync use `Synced`, `OutOfSync`, or `Unknown`. Timestamp and revision fields are
 their literal source strings or `MISSING` when absent.
 
 For `check_receipt`, choose exactly one of `AUTHORED_SYNTHETIC_NOT_CONTROLLER_EVIDENCE`,
-`SEPARATE_SYNTHETIC_RECEIPT`, `NO_RECEIPT`, or `UNKNOWN`. For
+`CONTROLLER_EXECUTION_RECEIPT`, `NO_RECEIPT`, or `UNKNOWN`. For
 `last_transition_time_role`, choose exactly one of
 `CONDITION_TRANSITION_NOT_CHECK_EXECUTION`, `CHECK_EXECUTION_TIME`,
 `NOT_PRESENT`, or `UNKNOWN`. For `evidence_scope`, choose exactly one of

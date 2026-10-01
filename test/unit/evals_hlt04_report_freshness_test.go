@@ -153,7 +153,7 @@ func TestHLT04FixtureHashesSchemaAndStrictAnswer(t *testing.T) {
 		t.Fatal(err)
 	}
 	promptText := string(prompt)
-	for _, required := range []string{"minified, single-line JSON", "UNKNOWN", "renewal_proves_new_check", "future_timestamp_proves_freshness", "SEPARATE_SYNTHETIC_RECEIPT", "CONDITION_TRANSITION_NOT_CHECK_EXECUTION", "MIXED_EVIDENCE"} {
+	for _, required := range []string{"minified, single-line JSON", "UNKNOWN", "renewal_proves_new_check", "future_timestamp_proves_freshness", "CONTROLLER_EXECUTION_RECEIPT", "CONDITION_TRANSITION_NOT_CHECK_EXECUTION", "MIXED_EVIDENCE"} {
 		if !strings.Contains(promptText, required) {
 			t.Errorf("prompt is missing answer-format/vocabulary definition %q", required)
 		}
