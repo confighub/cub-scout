@@ -96,6 +96,12 @@ messages while retaining the known chain. An unavailable Events read is not an
 empty event history. Consumers must not turn omitted evidence into healthy or
 unmanaged verdicts. Legacy/offline fixtures may omit both fields.
 
+For an Argo synthetic `Source` link, `summary.source.url` preserves the repository
+URL and optional `summary.source.revision` preserves the declared target revision.
+This is not proof of the revision applied to workloads. The synthetic link does
+not invent a Kubernetes field path or ownership label. Flux artifact revisions
+retain their existing `summary.source.artifact.revision` representation.
+
 CLI and TUI normal Trace observations share one captured Kubernetes binding and
 one evidence model. The TUI projects that model with the same human renderer;
 JSON preserves the same partial-result warnings, including timing, Secret-reference

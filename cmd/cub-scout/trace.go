@@ -1212,9 +1212,11 @@ func buildTraceSummary(result *agent.TraceResult, chain []mapsvc.ChainNode, arti
 			var url string
 			var revision string
 			for _, link := range result.Chain {
-				if link.Kind == node.ID.Kind && link.Name == node.ID.Name {
+				if link.Kind == node.ID.Kind && link.Name == node.ID.Name && link.Namespace == node.ID.Namespace {
 					url = link.URL
-					revision = link.Revision
+					if link.Kind == "Source" {
+						revision = link.Revision
+					}
 					break
 				}
 			}
