@@ -3284,15 +3284,21 @@ cub-scout map list -q "labels[app]=frontend"
 ```bash
 ./cub-scout map list --recording objects.yaml --api-version apps/v1 --kind Deployment --format json
 ./cub-scout map list --recording objects.yaml --api-version apps/v1 --kind Deployment --namespace-prefix team- --format md
+./cub-scout map list --recording objects.yaml --api-version apps/v1 --kind Deployment --namespace-prefix team- --owner Native --format json
+./cub-scout map list --recording objects.yaml --api-version apps/v1 --kind Deployment --namespace-prefix team- --summary --format json
 ./cub-scout map list --recording objects.yaml --api-version apps/v1 --kind Deployment --namespace prod --tui
 ```
 
 Both `--api-version` and `--kind` are required, exact and case-sensitive.
 Optional `--namespace` (including an explicitly empty value) and non-empty
-literal `--namespace-prefix` are mutually exclusive. ASCII, JSON, Markdown
-and the dedicated read-only TUI share one ownership model. The recorded MCP
-`map` tool accepts required `api_version` and `kind`, and optional `namespace`
-or `namespace_prefix`, with the same meaning.
+literal `--namespace-prefix` are mutually exclusive. Optional `--owner` accepts
+one exact canonical built-in category, including `Kubernetes` (owner reference)
+and `Native` (no built-in marker); it combines with the other scope filters.
+`--summary` returns a distinct summary schema with no per-resource rows and
+visible guidance for requesting them. ASCII, JSON, Markdown and the dedicated
+read-only TUI share the same report/summary model. The recorded MCP `map` tool
+accepts required `api_version` and `kind`, and optional `namespace`,
+`namespace_prefix`, `owner`, or `summary: true` with the same meaning.
 
 The result identifies input bytes by SHA-256 and reports selected and excluded
 object counts. Capture time and completeness are unknown. Native means no
@@ -3302,8 +3308,9 @@ No health or omitted-object claims are inferred. Duplicate full object
 identities anywhere in the input fail before filtering. The existing 4 MiB,
 128-document, 512-object limits apply.
 
-Recorded mode rejects context, owner/query/time filters, summary/count/names-only
-shortcuts, explanatory/verbose modes and positional arguments. `--ownership-evidence`
-is redundant: recorded results always include detector evidence. `--tui` cannot
-combine with output-format options. The recording-specific API/prefix/TUI flags
-require `--recording`. See the [offline example](../../examples/recorded-inventory/).
+Recorded mode rejects context, query/time filters, count/names-only shortcuts,
+explanatory/verbose modes and positional arguments. `--ownership-evidence` is
+redundant for the full response: recorded results always include detector
+evidence. `--summary` intentionally omits per-object detector evidence.
+`--tui` cannot combine with output-format options. The recording-specific
+API/prefix/TUI flags require `--recording`. See the [offline example](../../examples/recorded-inventory/).
