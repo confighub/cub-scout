@@ -1,6 +1,6 @@
 # Trace case-sensitive ConfigHub slugs
 
-This is an opt-in recorded interpretation case for the v2.13 Trace join
+This is an opt-in synthetic interpretation case for the v2.13 Trace join
 contract. Both eval arms receive the same files. The Trace payload is a
 synthetic typed model fixture; the candidate rows are mocked bounded connected
 inputs. Neither is a live server capture or a paid eval result.

@@ -2,7 +2,7 @@
 name: trace-case-sensitive-slugs
 description: "Interpret Trace delivery evidence without joining case-distinct ConfigHub slugs."
 expected_outcome: "Reject opposite-case unit/target slugs; preserve exact no-match omissions and stronger ID rules."
-tags: [product-contract, trace, confighub, identity, recorded]
+tags: [product-contract, trace, confighub, identity, synthetic]
 max_turns: 4
 timeout_seconds: 90
 allowed_tools: [Read, Grep]
