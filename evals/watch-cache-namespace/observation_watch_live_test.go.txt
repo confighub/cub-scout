@@ -241,13 +241,15 @@ func TestWatchNamespaceLiveProbe(t *testing.T) {
 	}
 	mismatches := []string{}
 	checks := map[string]bool{}
-	if errA != nil || directA == nil || len(directA.Items) != 1 || directA.Items[0].GetName() != name || directA.Items[0].GetNamespace() != namespaceA || directA.Items[0].GetUID() == "" {
+	fixtureA := namedWatchNamespaceUID(directA, namespaceA, name)
+	fixtureB := namedWatchNamespaceUID(directB, namespaceB, name)
+	if errA != nil || fixtureA == "" {
 		mismatches = append(mismatches, "direct-team-a-fixture-identity")
 	}
-	if errB != nil || directB == nil || len(directB.Items) != 1 || directB.Items[0].GetName() != name || directB.Items[0].GetNamespace() != namespaceB || directB.Items[0].GetUID() == "" {
+	if errB != nil || fixtureB == "" {
 		mismatches = append(mismatches, "direct-team-b-fixture-identity")
 	}
-	if errA == nil && errB == nil && directA != nil && directB != nil && len(directA.Items) > 0 && len(directB.Items) > 0 && directA.Items[0].GetUID() != directB.Items[0].GetUID() {
+	if errA == nil && errB == nil && fixtureA != "" && fixtureB != "" && fixtureA != fixtureB {
 		checks["sameNameDifferentUID"] = true
 	} else {
 		mismatches = append(mismatches, "fixture-uid-collision-check")
@@ -354,4 +356,22 @@ func sameWatchNamespaceIdentity(left, right *unstructured.UnstructuredList) bool
 		}
 	}
 	return true
+}
+
+// Other namespace ConfigMaps, including the controller-created root CA, remain
+// in the full-list comparison. Only the named fixture supplies this UID check.
+func namedWatchNamespaceUID(list *unstructured.UnstructuredList, namespace, name string) string {
+	if list == nil {
+		return ""
+	}
+	uid := ""
+	for _, item := range list.Items {
+		if item.GetNamespace() == namespace && item.GetName() == name {
+			if uid != "" {
+				return ""
+			}
+			uid = string(item.GetUID())
+		}
+	}
+	return uid
 }

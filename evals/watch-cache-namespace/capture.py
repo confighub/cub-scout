@@ -218,13 +218,14 @@ def validate_probe_result(variant: str, exit_code: int, result: dict,
         raise CaptureError(variant + " probe namespaces are not distinct")
     direct_a = identities(direct.get("teamA"), namespace_a)
     direct_b = identities(direct.get("teamB"), namespace_b)
-    if (len(direct_a) != 1 or direct_a[0][1] != config_map_name
-            or len(direct_b) != 1 or direct_b[0][1] != config_map_name
-            or direct_a[0][2] == direct_b[0][2]):
+    fixture_a = [row for row in direct_a if row[1] == config_map_name]
+    fixture_b = [row for row in direct_b if row[1] == config_map_name]
+    if (len(fixture_a) != 1 or len(fixture_b) != 1
+            or fixture_a[0][2] == fixture_b[0][2]):
         raise CaptureError(variant + " direct reads do not prove same-name distinct-UID objects")
     if expected_fixture_uids is not None and (
-            direct_a[0][2] != expected_fixture_uids.get(namespace_a)
-            or direct_b[0][2] != expected_fixture_uids.get(namespace_b)):
+            fixture_a[0][2] != expected_fixture_uids.get(namespace_a)
+            or fixture_b[0][2] != expected_fixture_uids.get(namespace_b)):
         raise CaptureError(variant + " direct API identity differs from the admin-verified fixture UIDs")
     if (direct.get("teamAError") != "success" or direct.get("teamBError") != "success"
             or direct.get("allError") != "Forbidden" or direct.get("deniedError") != "Forbidden"

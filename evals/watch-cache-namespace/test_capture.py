@@ -68,6 +68,20 @@ class WatchNamespaceCaptureTests(unittest.TestCase):
         self.assertEqual(set(accepted_before["mismatches"]), capture.EXPECTED_OLD_MISMATCHES)
         self.assertEqual(accepted_after["mismatches"], [])
 
+    def test_extra_controller_configmaps_preserve_full_list_comparison(self):
+        for variant, code in (("before", 1), ("after", 0)):
+            result = self.fixture_result(variant)
+            for team, ns in (("teamA", result["namespaceA"]), ("teamB", result["namespaceB"])):
+                row = {"namespace": ns, "name": "kube-root-ca.crt", "uid": ns + "-ca"}
+                result["direct"][team].append(row)
+                if team == "teamA" or variant == "after":
+                    result["watch"][team].append(dict(row))
+            capture.validate_probe_result(variant, code, result,
+                                         {result["namespaceA"]: "uid-a", result["namespaceB"]: "uid-b"})
+            result["watch"]["teamA"].pop()
+            with self.assertRaises(capture.CaptureError):
+                capture.validate_probe_result(variant, code, result)
+
     def test_old_probe_rejects_missing_expected_false_empty_evidence(self):
         result = self.fixture_result("before")
         result["mismatches"].remove("all-namespace-fallback-and-denial")
