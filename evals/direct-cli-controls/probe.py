@@ -9,6 +9,7 @@ import http.server
 import json
 import math
 import os
+import re
 from pathlib import Path
 import platform
 import re
@@ -35,6 +36,8 @@ PINNED_MODEL = "claude-haiku-4-5-20251001"
 FAKE_KEY = "sk-ant-api03-cub-scout-offline-fake-key"
 PROMPT = "Return exactly: offline-probe-terminal"
 READ_TIMEOUT = 2.0
+SCENARIOS = ("wiring", "task-denial", "agent-denial", "turn-limit")
+READ_SENTINEL = "OFFLINE_READ_FIXTURE_ONLY_7f3c"
 
 
 class ProbeError(RuntimeError):
@@ -98,6 +101,21 @@ def private_output(path: Path) -> Path:
     return path
 
 
+def scenario_plan(scenario: str, root: Path) -> tuple[str, int, str | None, str]:
+    if scenario not in SCENARIOS: raise ProbeError("unknown scenario")
+    if scenario in ("task-denial", "agent-denial"):
+        tool_name = "Task" if scenario == "task-denial" else "Agent"
+        return (f"Try the synthetic {tool_name} delegation once with the harmless fixed task, then return the fixed terminal marker.",
+                2, None, "one synthetic named delegation then terminal")
+    if scenario == "turn-limit":
+        fixture = root / "read-fixture.txt"
+        fixture.write_text(READ_SENTINEL+"\n"); os.chmod(fixture, 0o600)
+        path = str(fixture)
+        return (f"Use Read repeatedly on the private synthetic fixture at {path}; do not access any other path.",
+                1, path, "Read tool-use on every provider request")
+    return PROMPT, 1, None, "fixed terminal response"
+
+
 def minimal_env(config_dir: Path, port: int) -> dict[str, str]:
     return {
         "PATH": "/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin",
@@ -123,16 +141,141 @@ def sandbox_prefix(port: int) -> list[str]:
     return sandbox_prefix_for_test(platform.system(), shutil.which("sandbox-exec"), port)
 
 
-def validate_probe(stdout: bytes, requests: list[dict], return_code: int) -> dict:
-    if type(return_code) is not int or return_code != 0:
-        raise ProbeError("CLI did not exit successfully")
+def _request_body(record):
+    body = strict_json(record["body"])
+    if not isinstance(body, dict): raise ProbeError("provider request JSON is not an object")
+    return body
+
+
+def _response_tool_uses(record):
+    try:
+        raw = base64.b64decode(record["response_body_base64"], validate=True)
+        uses = []
+        if record["response_content_type"] == "application/json":
+            response = strict_json(raw)
+            blocks = response.get("content", []) if isinstance(response, dict) else []
+            uses.extend(block for block in blocks if isinstance(block, dict) and block.get("type") == "tool_use")
+        elif record["response_content_type"] == "text/event-stream":
+            partial = {}
+            for line in raw.splitlines():
+                if not line.startswith(b"data: "): continue
+                event = strict_json(line[6:])
+                if not isinstance(event, dict): raise ValueError("SSE event is not an object")
+                block_data = event.get("content_block")
+                if event.get("type") == "content_block_start" and isinstance(block_data, dict) and block_data.get("type") == "tool_use":
+                    partial[event.get("index")] = {"type":"tool_use", "id":block_data.get("id"),
+                        "name":block_data.get("name"), "input":dict(block_data.get("input") or {})}
+                elif event.get("type") == "content_block_delta" and isinstance(event.get("delta"), dict) and event["delta"].get("type") == "input_json_delta":
+                    index = event.get("index")
+                    if index not in partial: raise ValueError("tool input delta has no start")
+                    delta = event["delta"].get("partial_json")
+                    if not isinstance(delta, str): raise ValueError("tool input delta is malformed")
+                    partial[index]["_partial"] = partial[index].get("_partial", "") + delta
+                elif event.get("type") == "content_block_stop" and event.get("index") in partial:
+                    block = partial.pop(event["index"])
+                    if "_partial" in block: block["input"] = strict_json(block.pop("_partial"))
+                    uses.append(block)
+            if partial: raise ValueError("unterminated tool-use block")
+        else:
+            raise ProbeError("mock response has unsupported content type")
+        return uses
+    except ProbeError:
+        raise
+    except (ValueError, TypeError, KeyError, AttributeError):
+        raise ProbeError("mock tool-use response is malformed") from None
+
+
+def scenario_exchange_facts(requests):
+    uses, results = {}, {}
+    for index, record in enumerate(requests, 1):
+        body = _request_body(record)
+        request_use_ids, request_result_ids = set(), set()
+        for message in body.get("messages", []):
+            if not isinstance(message, dict): continue
+            content = message.get("content", [])
+            if not isinstance(content, list): continue
+            for block in content:
+                if not isinstance(block, dict): continue
+                if message.get("role") == "assistant" and block.get("type") == "tool_use":
+                    item = {"id":block.get("id"), "name":block.get("name"), "input":block.get("input")}
+                    if item["id"] in request_use_ids: raise ProbeError("duplicate tool-use ID in one provider request")
+                    request_use_ids.add(item["id"])
+                    if item["id"] in uses and uses[item["id"]] != item: raise ProbeError("assistant tool-use changed across request snapshots")
+                    uses[item["id"]] = item
+                if message.get("role") == "user" and block.get("type") == "tool_result":
+                    item = {"id":block.get("tool_use_id"), "is_error":block.get("is_error") is True,
+                                    "content":block.get("content"),
+                                    "content_sha256":sha256(json.dumps(block.get("content"), sort_keys=True).encode()),
+                                    "request_index":index}
+                    if item["id"] in request_result_ids: raise ProbeError("duplicate tool-result ID in one provider request")
+                    request_result_ids.add(item["id"])
+                    if item["id"] in results and (results[item["id"]]["content_sha256"] != item["content_sha256"]
+                            or results[item["id"]]["is_error"] != item["is_error"]):
+                        raise ProbeError("tool-result changed across request snapshots")
+                    results.setdefault(item["id"], item)
+    mock_uses = []
+    for record in requests: mock_uses.extend(_response_tool_uses(record))
+    ids = [item.get("id") for item in mock_uses]
+    if any(not isinstance(item, str) for item in ids) or len(set(ids)) != len(ids):
+        raise ProbeError("mock tool-use IDs are missing or duplicated")
+    return mock_uses, list(results.values())
+
+
+def cli_tool_events(events):
+    uses, results = {}, {}
+    for event in events:
+        if not isinstance(event, dict): continue
+        message = event.get("message")
+        if not isinstance(message, dict): continue
+        blocks = message.get("content", [])
+        for block in blocks if isinstance(blocks, list) else []:
+            if not isinstance(block, dict): continue
+            if event.get("type") == "assistant" and block.get("type") == "tool_use":
+                item = {"id":block.get("id"), "name":block.get("name"), "input":block.get("input")}
+                if not isinstance(item["id"], str) or item["id"] in uses:
+                    raise ProbeError("CLI output has missing or duplicate tool-use IDs")
+                uses[item["id"]] = item
+            elif event.get("type") == "user" and block.get("type") == "tool_result":
+                ident = block.get("tool_use_id")
+                if not isinstance(ident, str) or ident in results:
+                    raise ProbeError("CLI output has missing or duplicate tool-result IDs")
+                results[ident] = {"id":ident, "is_error":block.get("is_error") is True,
+                    "content":block.get("content")}
+    return list(uses.values()), list(results.values())
+
+
+def explicit_denial(content, tool_name: str) -> bool:
+    if isinstance(content, str):
+        texts = [content]
+    elif isinstance(content, list):
+        texts = [item["text"] for item in content if isinstance(item, dict)
+                 and item.get("type") == "text" and isinstance(item.get("text"), str)]
+        if len(texts) != len(content):
+            return False
+    else:
+        return False
+    # Exact authored fixtures and the observed pinned-CLI refusal only. Do not
+    # accept a denial prefix followed by contradictory execution claims.
+    known = {
+        f"{tool_name} is disallowed",
+        f"{tool_name} is disallowed by this session",
+        f"No such tool available: {tool_name}",
+        f"<tool_use_error>Error: No such tool available: {tool_name}. "
+        f"{tool_name} is disabled for this session, in subagents as well as here.</tool_use_error>",
+    }
+    return len(texts) == 1 and texts[0] in known
+
+
+def validate_probe(stdout: bytes, requests: list[dict], return_code: int,
+                   scenario: str = "wiring", run_status: str = "completed",
+                   fixture_path: str | None = None, max_turns: int = 1) -> dict:
+    if scenario not in SCENARIOS: raise ProbeError("unknown scenario")
+    if type(return_code) is not int: raise ProbeError("CLI return code must be an exact integer")
     if not requests or len(requests) > MAX_REQUESTS:
         raise ProbeError("missing or excessive provider request count")
     inventories = []
     for record in requests:
-        body = strict_json(record["body"])
-        if not isinstance(body, dict):
-            raise ProbeError("provider request JSON is not an object")
+        body = _request_body(record)
         if body.get("model") != PINNED_MODEL:
             raise ProbeError("provider request model differs from the pinned mock label")
         tools = body.get("tools")
@@ -152,14 +295,125 @@ def validate_probe(stdout: bytes, requests: list[dict], return_code: int) -> dic
     if len(terminals) != 1:
         raise ProbeError("expected exactly one terminal result")
     terminal = terminals[0]
-    if (terminal.get("subtype") != "success" or terminal.get("is_error") is True
-            or terminal.get("result") != "offline-probe-terminal"):
-        raise ProbeError("terminal result did not match the expected successful fixture")
+    mock_uses, tool_results = scenario_exchange_facts(requests)
+    cli_uses, cli_results = cli_tool_events(events)
+    outbound_uses = {}
+    for record in requests:
+        seen_this_request = set()
+        for message in _request_body(record).get("messages", []):
+            if not isinstance(message, dict) or message.get("role") != "assistant": continue
+            blocks = message.get("content", [])
+            for block in blocks if isinstance(blocks, list) else []:
+                if isinstance(block, dict) and block.get("type") == "tool_use":
+                    item = {"id":block.get("id"), "name":block.get("name"), "input":block.get("input")}
+                    if not isinstance(item["id"], str): raise ProbeError("outbound tool-use ID is missing")
+                    if item["id"] in seen_this_request: raise ProbeError("duplicate outbound tool-use ID in one request")
+                    seen_this_request.add(item["id"])
+                    if item["id"] in outbound_uses and outbound_uses[item["id"]] != item:
+                        raise ProbeError("outbound tool-use changed across request snapshots")
+                    outbound_uses[item["id"]] = item
+    for ident, call in outbound_uses.items():
+        if not any(all(item.get(k) == call.get(k) for k in ("id", "name", "input")) for item in mock_uses):
+            raise ProbeError("outbound assistant tool-use is absent from exact mock response")
+    if scenario in ("wiring", "task-denial", "agent-denial"):
+        if run_status != "completed" or return_code != 0:
+            raise ProbeError("scenario did not complete normally")
+        if (terminal.get("subtype") != "success" or terminal.get("is_error") is True
+                or terminal.get("result") != "offline-probe-terminal"):
+            raise ProbeError("terminal result did not match the expected successful fixture")
+    if scenario == "wiring" and (mock_uses or tool_results):
+        raise ProbeError("wiring scenario unexpectedly contained tool exchanges")
+    if scenario in ("task-denial", "agent-denial"):
+        expected = "Task" if scenario == "task-denial" else "Agent"
+        matching = [use for use in mock_uses if use.get("name") == expected]
+        if len(matching) != 1 or len(mock_uses) != 1 or len(tool_results) != 1:
+            raise ProbeError("expected one explicit synthetic delegation tool-use response")
+        call = matching[0]
+        expected_input = {"description":"Offline harmless check", "prompt":"Return only the fixed synthetic terminal marker.", "subagent_type":"general-purpose"}
+        if call.get("input") != expected_input:
+            raise ProbeError("delegation request input differs from the safe authored fixture")
+        correlated = [item for item in tool_results if item["id"] == call["id"]]
+        if len(correlated) != 1 or correlated[0]["is_error"] is not True:
+            raise ProbeError("no matching observed tool_result error proves delegation refusal")
+        cli_call = [item for item in cli_uses if item["id"] == call["id"] and
+                    all(item.get(k) == call.get(k) for k in ("id", "name", "input"))]
+        cli_result = [item for item in cli_results if item["id"] == call["id"]]
+        if len(cli_call) != 1 or len(cli_result) != 1 or cli_result[0]["is_error"] is not True:
+            raise ProbeError("CLI output does not independently show the delegation error event")
+        if len(cli_uses) != 1 or len(cli_results) != 1:
+            raise ProbeError("delegation scenario contains extra CLI tool events")
+        if (not explicit_denial(correlated[0]["content"], expected)
+                or not explicit_denial(cli_result[0]["content"], expected)):
+            raise ProbeError("tool_result is_error lacks explicit named unavailable/disallowed error text")
+        cli_result_hash = sha256(json.dumps(cli_result[0]["content"], sort_keys=True).encode())
+        if cli_result_hash != correlated[0]["content_sha256"]:
+            raise ProbeError("CLI and provider request contain conflicting tool_result errors")
+        if any(item["id"] == call["id"] and not item["is_error"] for item in tool_results):
+            raise ProbeError("delegation call has a non-error tool result")
+        return {"scenario":scenario, "terminal_subtype":terminal["subtype"],
+                "tool_inventory":["Read"], "attempted_tool":expected,
+                "tool_result_error":{k:correlated[0][k] for k in ("id", "is_error", "content_sha256")}}
+    if scenario == "turn-limit":
+        if terminal.get("subtype") != "error_max_turns" or run_status != "completed":
+            raise ProbeError("actual turn-limit terminal result was not observed; timeout is not evidence")
+        if type(return_code) is not int or type(max_turns) is not int or max_turns != 1:
+            raise ProbeError("CLI exit code missing for turn-limit result")
+        reads = [use for use in mock_uses if use.get("name") == "Read"]
+        if not reads or len(reads) != len(mock_uses) or len(reads) > 3 or not 1 <= len(requests) <= 3:
+            raise ProbeError("turn-limit scenario lacks bounded Read tool-use evidence")
+        num_turns = terminal.get("num_turns")
+        if type(num_turns) is not int or not 1 <= num_turns <= max_turns:
+            raise ProbeError("turn-limit terminal num_turns is missing or inconsistent with its cap")
+        if terminal.get("is_error") is not True:
+            raise ProbeError("turn-limit terminal is not explicitly marked as an error")
+        if len(requests) > max_turns:
+            raise ProbeError("observed model request count exceeds the configured turn cap")
+        if any(not any(cli_use.get("id") == use.get("id") and
+                       all(cli_use.get(k) == use.get(k) for k in ("id", "name", "input"))
+                       for cli_use in cli_uses) for use in reads):
+            raise ProbeError("CLI output does not show every synthetic Read tool-use event")
+        if any(use.get("input") != {"file_path":fixture_path} for use in reads):
+            raise ProbeError("Read tool-use escaped the private synthetic fixture")
+        read_ids = {use["id"] for use in reads}
+        if len(cli_uses) != len(reads) or {use["id"] for use in cli_uses} != read_ids:
+            raise ProbeError("CLI output contains missing or extra executed tool-use events")
+        if any(not any(all(cli_use.get(k) == read.get(k) for k in ("id", "name", "input"))
+                           for read in reads) for cli_use in cli_uses):
+            raise ProbeError("CLI Read tool-use differs from the authored mock response")
+        if any(result["id"] not in read_ids for result in tool_results + cli_results):
+            raise ProbeError("turn-limit evidence contains an orphan or extra tool result")
+        if any(result["id"] not in read_ids for result in cli_results):
+            raise ProbeError("turn-limit evidence contains an orphan CLI tool result")
+        cli_result_by_id = {result["id"]: result for result in cli_results}
+        if len(cli_result_by_id) != len(read_ids) or set(cli_result_by_id) != read_ids:
+            raise ProbeError("CLI output does not account for every executed Read result")
+        for ident in read_ids:
+            cli_result = cli_result_by_id[ident]
+            if cli_result["is_error"] or READ_SENTINEL not in json.dumps(cli_result["content"]):
+                raise ProbeError("CLI Read result is not a successful fixture read")
+        provider_by_id = {result["id"]: result for result in tool_results}
+        if provider_by_id and set(provider_by_id) != read_ids:
+            raise ProbeError("provider request only partially accounts for Read results")
+        if not provider_by_id and len(requests) != 1:
+            raise ProbeError("provider request history omits executed Read results")
+        for ident, provider_result in provider_by_id.items():
+            cli_result = cli_result_by_id[ident]
+            if (provider_result["is_error"] or provider_result["content"] != cli_result["content"]
+                    or READ_SENTINEL not in json.dumps(provider_result["content"])):
+                raise ProbeError("provider and CLI Read results do not match successful fixture content")
+        return {"scenario":scenario, "terminal_subtype":terminal["subtype"],
+                "return_code":return_code, "num_turns":num_turns,
+                "model_request_count":len(requests), "tool_inventory":["Read"],
+                "read_tool_uses":len(reads), "read_tool_results":len(cli_results),
+                "provider_read_results":len(provider_by_id),
+                "read_result_sha256":[sha256(json.dumps(cli_result_by_id[i]["content"], sort_keys=True).encode())
+                                       for i in sorted(read_ids)]}
     return {"terminal_type": "result", "terminal_subtype": "success",
-            "terminal_text": "offline-probe-terminal", "tool_inventory": ["Read"]}
+            "terminal_text": "offline-probe-terminal", "tool_inventory": ["Read"], "scenario":scenario}
 
 
-def validate_final_snapshot(stdout, requests, return_code, received, cleanup, startup_requests=0):
+def validate_final_snapshot(stdout, requests, return_code, received, cleanup, startup_requests=0,
+                            scenario="wiring", run_status="completed", fixture_path=None, max_turns=1):
     if type(startup_requests) is not int or startup_requests not in (0, 1):
         raise ProbeError("unexpected startup request count")
     if (type(received) is not int or received != len(requests)+startup_requests
@@ -168,7 +422,7 @@ def validate_final_snapshot(stdout, requests, return_code, received, cleanup, st
     if any(cleanup.get(key) is not True for key in
            ("server_shutdown_complete", "handlers_joined", "server_thread_joined")):
         raise ProbeError("fixture server cleanup was not verified")
-    return validate_probe(stdout, requests, return_code)
+    return validate_probe(stdout, requests, return_code, scenario, run_status, fixture_path, max_turns)
 
 
 def validate_transport(connections, events, accepted_requests):
@@ -199,7 +453,30 @@ def validate_transport(connections, events, accepted_requests):
             raise ProbeError("rejected or incomplete HTTP connection prevents acceptance")
 
 
-def response_for(stream: bool) -> tuple[str, bytes]:
+def response_for(stream: bool, scenario: str = "wiring", response_index: int = 1,
+                 fixture_path: str | None = None) -> tuple[str, bytes]:
+    tool_name = None
+    tool_input = None
+    if scenario in ("task-denial", "agent-denial") and response_index == 1:
+        tool_name = "Task" if scenario == "task-denial" else "Agent"
+        tool_input = {"description":"Offline harmless check", "prompt":"Return only the fixed synthetic terminal marker.", "subagent_type":"general-purpose"}
+    elif scenario == "turn-limit":
+        tool_name = "Read"
+        tool_input = {"file_path":fixture_path}
+    if tool_name:
+        call = {"type":"tool_use", "id":f"toolu_offline_{tool_name.lower()}_{response_index}",
+                "name":tool_name, "input":tool_input}
+        if stream:
+            events = [
+                {"type":"message_start", "message":{"id":f"msg_offline_{response_index}", "type":"message", "role":"assistant", "model":PINNED_MODEL, "content":[], "stop_reason":None, "stop_sequence":None, "usage":{"input_tokens":1,"output_tokens":1}}},
+                {"type":"content_block_start", "index":0, "content_block":{"type":"tool_use", "id":call["id"], "name":tool_name, "input":{}}},
+                {"type":"content_block_delta", "index":0, "delta":{"type":"input_json_delta", "partial_json":json.dumps(tool_input, separators=(",",":"))}},
+                {"type":"content_block_stop", "index":0},
+                {"type":"message_delta", "delta":{"stop_reason":"tool_use","stop_sequence":None}, "usage":{"output_tokens":1}},
+                {"type":"message_stop"},
+            ]
+            return "text/event-stream", b"".join(b"event: "+e["type"].encode()+b"\ndata: "+json.dumps(e).encode()+b"\n\n" for e in events)
+        return "application/json", json.dumps({"id":f"msg_offline_{response_index}","type":"message","role":"assistant","model":PINNED_MODEL,"content":[call],"stop_reason":"tool_use","stop_sequence":None,"usage":{"input_tokens":1,"output_tokens":1}}).encode()
     if stream:
         events = [
             {"type": "message_start", "message": {"id": "msg_offline_fixture", "type": "message", "role": "assistant", "model": PINNED_MODEL, "content": [], "stop_reason": None, "stop_sequence": None, "usage": {"input_tokens": 1, "output_tokens": 1}}},
@@ -222,7 +499,8 @@ def reserve_request(count: list[int], lock: threading.Lock, limit: int = MAX_REQ
 
 
 def handle_request(method: str, path: str, headers: dict, body: bytes, records: list[dict], lock: threading.Lock,
-                   count: list[int], reserved_ordinal: int | None = None) -> tuple[int, str, bytes]:
+                   count: list[int], reserved_ordinal: int | None = None, scenario: str = "wiring",
+                   fixture_path: str | None = None) -> tuple[int, str, bytes]:
     """Pure bounded request decision; only safe metadata/raw valid body is retained."""
     if reserved_ordinal is not None:
         ordinal = reserved_ordinal
@@ -252,12 +530,13 @@ def handle_request(method: str, path: str, headers: dict, body: bytes, records: 
     if not isinstance(parsed, dict) or type(parsed.get("stream")) is not bool:
         return 400, "application/json", b'{"error":"stream must be boolean"}'
     # No auth header/value is retained. Accepted body is kept byte-for-byte.
+    kind, payload = response_for(parsed["stream"], scenario, len(records)+1, fixture_path)
     with lock:
         records.append({"path": path, "auth_kind": "x-api-key" if auth else "bearer",
                         "content_type": headers.get("content-type", ""),
                         "body_base64": base64.b64encode(body).decode("ascii"),
-                        "body": body.decode("utf-8")})
-    kind, payload = response_for(parsed["stream"])
+                        "body": body.decode("utf-8"), "response_content_type":kind,
+                        "response_body_base64":base64.b64encode(payload).decode("ascii")})
     return 200, kind, payload
 
 
@@ -339,7 +618,8 @@ def read_bounded_body(reader, length: int, timeout: float = READ_TIMEOUT) -> byt
     return bytes(data)
 
 
-def handler_type(records: list[dict], lock: threading.Lock, count: list[int], preflight_path: str):
+def handler_type(records: list[dict], lock: threading.Lock, count: list[int], preflight_path: str,
+                 scenario: str = "wiring", fixture_path: str | None = None):
     class Handler(http.server.BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
         def setup(self):
@@ -410,7 +690,7 @@ def handler_type(records: list[dict], lock: threading.Lock, count: list[int], pr
                 except ValueError:
                     status, kind, payload = 400, "application/json", b'{"error":"incomplete body"}'
                 else:
-                    status, kind, payload = handle_request(self.command, self.path, {k.lower(): v for k, v in self.headers.items()}, body, records, lock, count, reserved_ordinal=ordinal)
+                    status, kind, payload = handle_request(self.command, self.path, {k.lower(): v for k, v in self.headers.items()}, body, records, lock, count, reserved_ordinal=ordinal, scenario=scenario, fixture_path=fixture_path)
                     if status == 200: self._audit_kind = "accepted"
             self.send_response(status)
             self.send_header("Content-Type", kind)
@@ -473,10 +753,7 @@ def run_bounded(argv: list[str], env: dict[str, str], cwd: Path, deadline: float
                     raise ProcessFailure("CLI output exceeded bound", status)
                 target.extend(chunk)
         rc = proc.wait()
-        if rc:
-            status = "nonzero_exit"
-            raise ProcessFailure("CLI exited nonzero", status)
-        status = "success"
+        status = "completed"
         return rc, bytes(captured["out"]), bytes(captured["err"]), status
     except ProcessFailure as exc:
         exc.stdout, exc.stderr = bytes(captured["out"]), bytes(captured["err"])
@@ -521,7 +798,8 @@ def persist_trace(root: Path, record: dict, stdout: bytes, stderr: bytes, reques
         write_private(root, "provenance.json", encoded)
 
 
-def execute(output: Path, cli: Path, expected_hash: str, expected_version: str) -> dict:
+def execute(output: Path, cli: Path, expected_hash: str, expected_version: str,
+            scenario: str = "wiring") -> dict:
     started = time.monotonic()
     wall_started = time.time()
     deadline = started + OVERALL_TIMEOUT - 5.0  # Reserve bounded teardown within the 90-second wall.
@@ -551,8 +829,14 @@ def execute(output: Path, cli: Path, expected_hash: str, expected_version: str) 
         if actual_hash != PINNED_SHA256: raise ProbeError("executable hash does not match fixed pin")
         record["cli_path"] = str(cli)
         record["cli_sha256_actual"] = actual_hash
+        if scenario not in SCENARIOS: raise ProbeError("unknown scenario")
+        record["scenario"] = scenario
+        prompt, max_turns, fixture_path, response_policy = scenario_plan(scenario, root)
+        record["max_turns"] = max_turns
+        record["fixture_path"] = fixture_path
+        record["scenario_response_policy"] = response_policy
         preflight_path = "/__offline_preflight_" + secrets.token_hex(16)
-        server = FixtureServer(("127.0.0.1", 0), handler_type(records, lock, count, preflight_path), request_count=count, request_lock=lock)
+        server = FixtureServer(("127.0.0.1", 0), handler_type(records, lock, count, preflight_path, scenario, fixture_path), request_count=count, request_lock=lock)
         server.timeout = 0.2
         port = server.server_address[1]
         thread = threading.Thread(target=server.serve_forever, kwargs={"poll_interval": 0.1}, daemon=True)
@@ -581,9 +865,9 @@ def execute(output: Path, cli: Path, expected_hash: str, expected_version: str) 
         argv = prefix + [str(cli), "--bare", "--print", "--verbose", "--output-format", "stream-json",
             "--model", PINNED_MODEL,
             "--no-session-persistence", "--tools", "Read", "--disallowedTools", "Task,Agent",
-            "--strict-mcp-config", "--mcp-config", str(mcp), "--setting-sources", "", "--max-turns", "1",
-            "--max-budget-usd", "0.05", PROMPT]
-        record["cli_argv"] = argv
+            "--strict-mcp-config", "--mcp-config", str(mcp), "--setting-sources", "", "--max-turns", str(max_turns),
+            "--max-budget-usd", "0.05", prompt]
+        record["cli_argv"] = argv[:-1] + ["<synthetic-prompt-redacted>"]
         rc, stdout, stderr, status = run_bounded(argv, env, root, min(deadline, time.monotonic()+CLI_TIMEOUT))
         record.update({"return_code": rc, "run_status": status, "stdout_sha256": sha256(stdout),
                        "stderr_sha256": sha256(stderr)})
@@ -629,7 +913,8 @@ def execute(output: Path, cli: Path, expected_hash: str, expected_version: str) 
     try:
         validate_transport(record["connection_count"], record["connection_events"], len(request_snapshot))
         record["observed"] = validate_final_snapshot(stdout, request_snapshot, rc, count[0], cleanup,
-            sum(e.get("kind") == "startup-declined" for e in record["connection_events"]))
+            sum(e.get("kind") == "startup-declined" for e in record["connection_events"]),
+            scenario, record.get("run_status", "error"), record.get("fixture_path"), record.get("max_turns", 1))
     except (ProbeError, ValueError, TypeError) as exc:
         record["run_status"] = "validation_failed"
         record["error"] = str(exc)
@@ -645,11 +930,12 @@ def main() -> int:
     parser.add_argument("--cli", type=Path, default=Path(PINNED_CLI))
     parser.add_argument("--expected-sha256", default=PINNED_SHA256)
     parser.add_argument("--expected-version", default=PINNED_VERSION)
+    parser.add_argument("--scenario", choices=SCENARIOS, default="wiring")
     parser.add_argument("--execute", action="store_true")
     args = parser.parse_args()
     if not args.execute: parser.error("refusing to run without explicit --execute")
     try:
-        result = execute(args.output, args.cli, args.expected_sha256, args.expected_version)
+        result = execute(args.output, args.cli, args.expected_sha256, args.expected_version, args.scenario)
     except (ProbeError, OSError, subprocess.SubprocessError, KeyboardInterrupt) as exc:
         print(f"probe refused/failed: {exc}", file=sys.stderr); return 2
     print(json.dumps({k: result.get(k) for k in ("return_code", "request_count", "run_status", "cli_version_pin", "cli_sha256_pin")}, indent=2))

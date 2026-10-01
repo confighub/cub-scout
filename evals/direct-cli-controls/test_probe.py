@@ -17,7 +17,8 @@ probe = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(probe)
 
 
-def request(body=None, auth=None, path="/v1/messages", method="POST", headers=None):
+def request(body=None, auth=None, path="/v1/messages", method="POST", headers=None,
+            scenario="wiring", response_index=None, fixture_path=None):
     content = dict(body or {"tools": [{"name": "Read"}], "stream": True}) if not isinstance(body, bytes) else None
     if content is not None: content.setdefault("model", probe.PINNED_MODEL)
     payload = body if isinstance(body, bytes) else json.dumps(content).encode()
@@ -25,8 +26,21 @@ def request(body=None, auth=None, path="/v1/messages", method="POST", headers=No
               "x-api-key": probe.FAKE_KEY if auth is None else auth}
     values.update(headers or {})
     recs, count, lock = [], [0], threading.Lock()
-    result = probe.handle_request(method, path, values, payload, recs, lock, count)
+    result = probe.handle_request(method, path, values, payload, recs, lock, count,
+                                  scenario=scenario, fixture_path=fixture_path)
     return result, recs, count
+
+
+def exchange_record(messages, scenario, response_index, fixture_path=None):
+    body = {"model":probe.PINNED_MODEL, "tools":[{"name":"Read"}], "stream":True,
+            "messages":messages}
+    result, records, _ = request(body, scenario=scenario, fixture_path=fixture_path)
+    if result[0] != 200: raise AssertionError("synthetic provider fixture rejected its authored request")
+    record = records[0]
+    content_type, response = probe.response_for(True, scenario, response_index, fixture_path)
+    record["response_content_type"] = content_type
+    record["response_body_base64"] = base64.b64encode(response).decode()
+    return record, response
 
 
 def terminal(subtype="success", text="offline-probe-terminal", **extra):
@@ -141,6 +155,24 @@ class OfflineContracts(unittest.TestCase):
         with self.assertRaises(probe.ProbeError):
             probe.sandbox_prefix_for_test("Linux", "/fake/sandbox", 123)
 
+    def test_scenario_plan_preserves_default_and_sets_independent_limits(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self.assertEqual(probe.scenario_plan("wiring", root),
+                             (probe.PROMPT, 1, None, "fixed terminal response"))
+            for scenario in ("task-denial", "agent-denial"):
+                prompt, turns, fixture, policy = probe.scenario_plan(scenario, root)
+                self.assertEqual(turns, 2)
+                self.assertIsNone(fixture)
+                self.assertIn("harmless fixed task", prompt)
+                self.assertEqual(policy, "one synthetic named delegation then terminal")
+            prompt, turns, fixture, policy = probe.scenario_plan("turn-limit", root)
+            self.assertEqual(turns, 1)
+            self.assertEqual(Path(fixture).read_text(), probe.READ_SENTINEL+"\n")
+            self.assertEqual(Path(fixture).stat().st_mode & 0o777, 0o600)
+            self.assertIn(fixture, prompt)
+            self.assertEqual(policy, "Read tool-use on every provider request")
+
     def test_parsing_accepts_one_exact_success_and_inventory(self):
         _, records, _ = request()
         observed = probe.validate_probe(terminal(), records, 0)
@@ -148,6 +180,115 @@ class OfflineContracts(unittest.TestCase):
         self.assertEqual(observed["terminal_text"], "offline-probe-terminal")
         _, wrong_model, _ = request({"model": "ignored-model-flag", "tools": [{"name": "Read"}], "stream": True})
         with self.assertRaises(probe.ProbeError): probe.validate_probe(terminal(), wrong_model, 0)
+
+    def test_task_and_agent_denials_require_matching_tool_result_errors(self):
+        for scenario, tool in (("task-denial", "Task"), ("agent-denial", "Agent")):
+            with self.subTest(scenario=scenario):
+                first, first_response = exchange_record([], scenario, 1)
+                call = probe._response_tool_uses(first)[0]
+                result = {"type":"tool_result", "tool_use_id":call["id"], "is_error":True,
+                  "content":[{"type":"text", "text":f"{tool} is disallowed by this session"}]}
+                second, _ = exchange_record([{"role":"assistant", "content":[call]},
+                    {"role":"user", "content":[result]}], scenario, 2)
+                cli = [{"type":"assistant", "message":{"content":[call]}},
+                       {"type":"user", "message":{"content":[result]}},
+                       {"type":"result", "subtype":"success", "result":"offline-probe-terminal"}]
+                observed = probe.validate_probe(b"\n".join(json.dumps(e).encode() for e in cli),
+                    [first, second], 0, scenario=scenario)
+                self.assertEqual(observed["attempted_tool"], tool)
+                self.assertTrue(observed["tool_result_error"]["is_error"])
+                accepted = dict(result, is_error=False)
+                bad, _ = exchange_record([{"role":"assistant", "content":[call]},
+                    {"role":"user", "content":[accepted]}], scenario, 2)
+                bad_cli = [cli[0], {"type":"user", "message":{"content":[accepted]}}, cli[2]]
+                with self.assertRaises(probe.ProbeError):
+                    probe.validate_probe(b"\n".join(json.dumps(e).encode() for e in bad_cli),
+                        [first, bad], 0, scenario=scenario)
+                generic = dict(result, content=[{"type":"text", "text":"Tool execution failed"}])
+                generic_record, _ = exchange_record([{"role":"assistant", "content":[call]},
+                    {"role":"user", "content":[generic]}], scenario, 2)
+                generic_cli = [cli[0], {"type":"user", "message":{"content":[generic]}}, cli[2]]
+                with self.assertRaises(probe.ProbeError):
+                    probe.validate_probe(b"\n".join(json.dumps(e).encode() for e in generic_cli),
+                        [first, generic_record], 0, scenario=scenario)
+                with self.assertRaises(probe.ProbeError):
+                    probe.validate_probe(json.dumps(cli[-1]).encode(), [first, second], 0, scenario=scenario)
+                for wording in (f"{tool} started successfully; child task failed with permission denied reading /tmp/file",
+                                f"{tool} launched; downstream API unavailable",
+                                f"No such tool available: {tool}"):
+                    valid = dict(result, content=[{"type":"text", "text":wording}])
+                    rec, _ = exchange_record([{"role":"assistant", "content":[call]},
+                        {"role":"user", "content":[valid]}], scenario, 2)
+                    out = [cli[0], {"type":"user", "message":{"content":[valid]}}, cli[2]]
+                    accepted = False
+                    try:
+                        probe.validate_probe(b"\n".join(json.dumps(e).encode() for e in out),
+                                             [first, rec], 0, scenario=scenario)
+                        accepted = True
+                    except probe.ProbeError:
+                        pass
+                    self.assertEqual(accepted, wording == f"No such tool available: {tool}")
+
+    def test_turn_limit_requires_successful_fixture_read_and_cap_terminal(self):
+        fixture = "/private/offline/read-fixture.txt"
+        first, _ = exchange_record([], "turn-limit", 1, fixture)
+        call1 = probe._response_tool_uses(first)[0]
+        result1 = {"type":"tool_result", "tool_use_id":call1["id"], "content":[{"type":"text", "text":probe.READ_SENTINEL}]}
+        second, _ = exchange_record([{"role":"assistant", "content":[call1]},
+            {"role":"user", "content":[result1]}], "turn-limit", 2, fixture)
+        call2 = probe._response_tool_uses(second)[0]
+        result2 = {"type":"tool_result", "tool_use_id":call2["id"], "content":[{"type":"text", "text":probe.READ_SENTINEL}]}
+        cli = [{"type":"assistant", "message":{"content":[call1]}},
+               {"type":"user", "message":{"content":[result1]}},
+               {"type":"assistant", "message":{"content":[call2]}},
+               {"type":"user", "message":{"content":[result2]}},
+               {"type":"result", "subtype":"error_max_turns", "num_turns":1, "is_error":True}]
+        payload = b"\n".join(json.dumps(e).encode() for e in cli)
+        with self.assertRaises(probe.ProbeError):
+            probe.validate_probe(payload, [first, second], 1, scenario="turn-limit",
+                                 fixture_path=fixture, max_turns=1)
+        timeout = b"\n".join(json.dumps(e).encode() for e in cli[:-1])
+        with self.assertRaises(probe.ProbeError):
+            probe.validate_probe(timeout, [first, second], 1, scenario="turn-limit",
+                                 fixture_path=fixture, max_turns=1)
+        wrong_path = dict(call1, input={"file_path":"/etc/passwd"})
+        bad, _ = exchange_record([], "turn-limit", 1, fixture)
+        bad["response_body_base64"] = base64.b64encode(probe.response_for(True,"turn-limit",1,"/etc/passwd")[1]).decode()
+        with self.assertRaises(probe.ProbeError):
+            probe.validate_probe(payload, [bad, second], 1, scenario="turn-limit",
+                                 fixture_path=fixture, max_turns=1)
+
+    def test_turn_limit_accepts_one_tool_round_when_cap_stops_next_request(self):
+        fixture = "/private/offline/read-fixture.txt"
+        only_request, _ = exchange_record([], "turn-limit", 1, fixture)
+        call = probe._response_tool_uses(only_request)[0]
+        result = {"type":"tool_result", "tool_use_id":call["id"], "content":[{"type":"text", "text":probe.READ_SENTINEL}]}
+        cli = [{"type":"assistant", "message":{"content":[call]}},
+               {"type":"user", "message":{"content":[result]}},
+               {"type":"result", "subtype":"error_max_turns", "num_turns":1, "is_error":True}]
+        payload = b"\n".join(json.dumps(e).encode() for e in cli)
+        observed = probe.validate_probe(payload, [only_request], 1, scenario="turn-limit",
+                                        fixture_path=fixture, max_turns=1)
+        self.assertEqual(observed["model_request_count"], 1)
+        self.assertEqual(observed["num_turns"], 1)
+        with self.assertRaises(probe.ProbeError):
+            probe.validate_probe(payload, [only_request], 1, scenario="turn-limit",
+                                 run_status="timeout", fixture_path=fixture, max_turns=1)
+        for altered in (
+            dict(cli[-1], num_turns=17),
+            dict(cli[-1], is_error=False),
+        ):
+            invalid = cli[:-1] + [altered]
+            with self.assertRaises(probe.ProbeError):
+                probe.validate_probe(b"\n".join(json.dumps(e).encode() for e in invalid),
+                                     [only_request], 1, scenario="turn-limit",
+                                     fixture_path=fixture, max_turns=1)
+        extra = cli[:-1] + [{"type":"assistant", "message":{"content":[
+            {"type":"tool_use", "id":"extra", "name":"Bash", "input":{}}]}}, cli[-1]]
+        with self.assertRaises(probe.ProbeError):
+            probe.validate_probe(b"\n".join(json.dumps(e).encode() for e in extra),
+                                 [only_request], 1, scenario="turn-limit",
+                                 fixture_path=fixture, max_turns=1)
 
     def test_terminal_truth_rejects_rc_error_max_turns_text_and_is_error(self):
         _, records, _ = request()
@@ -157,6 +298,7 @@ class OfflineContracts(unittest.TestCase):
         for payload, rc in cases:
             with self.subTest(payload=payload, rc=rc), self.assertRaises(probe.ProbeError):
                 probe.validate_probe(payload, records, rc)
+        with self.assertRaises(probe.ProbeError): probe.validate_probe(terminal(), records, False)
 
     def test_inventory_must_be_exact_read_only_list(self):
         for tools in ([], [{"name": "Bash"}], [{"name": "Read"}, {"name": "Read"}], [{"name": "Read"}, {"name": "Agent"}]):
@@ -190,7 +332,7 @@ class OfflineContracts(unittest.TestCase):
             with self.subTest(interrupted=interrupted), tempfile.TemporaryDirectory() as td:
                 state = {}
                 cli = Path(td)/"fake-cli"; cli.write_bytes(b"fixture"); cli.chmod(0o700)
-                def handler(records, lock, count, path):
+                def handler(records, lock, count, path, *scenario_args):
                     state.update(records=records, count=count)
                     return object
                 class Server:
@@ -210,7 +352,7 @@ class OfflineContracts(unittest.TestCase):
                         return True
                 def run(*a, **kw):
                     if interrupted: signal.raise_signal(signal.SIGTERM)
-                    return 0, terminal(), b"", "success"
+                    return 0, terminal(), b"", "completed"
                 old_handler = signal.getsignal(signal.SIGTERM)
                 output = Path(td)/"out"
                 with mock.patch.object(probe, "PINNED_CLI", str(cli)), \
@@ -274,6 +416,55 @@ class OfflineContracts(unittest.TestCase):
         self.assertIn(b"offline-probe-terminal", payload)
         self.assertFalse(json.loads(records[0]["body"])["stream"])
         self.assertTrue(probe.response_for(True)[0] == "text/event-stream")
+
+    def test_adversarial_mock_responses_are_named_safe_and_turn_policy_repeats_read(self):
+        for scenario, name in (("task-denial", "Task"), ("agent-denial", "Agent")):
+            kind, payload = probe.response_for(True, scenario, 1)
+            self.assertEqual(kind, "text/event-stream")
+            record = {"response_content_type":kind,
+                      "response_body_base64":base64.b64encode(payload).decode()}
+            call = probe._response_tool_uses(record)[0]
+            self.assertEqual(call["name"], name)
+            self.assertNotIn("Bash", json.dumps(call["input"]))
+        calls = []
+        for index in (1, 2, 3):
+            kind, payload = probe.response_for(True, "turn-limit", index, "/private/read-fixture.txt")
+            record = {"response_content_type":kind,
+                      "response_body_base64":base64.b64encode(payload).decode()}
+            calls.append(probe._response_tool_uses(record)[0])
+        self.assertEqual([call["name"] for call in calls], ["Read"]*3)
+        self.assertEqual([call["input"]["file_path"] for call in calls], ["/private/read-fixture.txt"]*3)
+        self.assertEqual(len({call["id"] for call in calls}), 3)
+
+    def test_observed_pinned_cli_refusal_is_exact_not_a_prefix(self):
+        for tool in ("Task", "Agent"):
+            observed = (f"<tool_use_error>Error: No such tool available: {tool}. "
+                        f"{tool} is disabled for this session, in subagents as well as here.</tool_use_error>")
+            self.assertTrue(probe.explicit_denial(observed, tool))
+            self.assertTrue(probe.explicit_denial([{"type":"text", "text":observed}], tool))
+            for value in (observed+" but execution succeeded", "prefix "+observed,
+                          f"No such tool available: {tool}; started anyway",
+                          [{"type":"text", "text":observed}, {"type":"text", "text":"started anyway"}],
+                          observed.replace(tool, "Bash")):
+                self.assertFalse(probe.explicit_denial(value, tool))
+
+    def test_cli_tool_event_ids_reject_duplicates(self):
+        call = {"type":"tool_use", "id":"u1", "name":"Read", "input":{"file_path":"/safe"}}
+        event = {"type":"assistant", "message":{"content":[call]}}
+        with self.assertRaises(probe.ProbeError): probe.cli_tool_events([event, event])
+
+    def test_request_snapshot_conflicting_tool_result_error_flags_fail(self):
+        call = {"type":"tool_use", "id":"u1", "name":"Task", "input":
+                {"description":"Offline harmless check", "prompt":"Return only the fixed synthetic terminal marker.", "subagent_type":"general-purpose"}}
+        err = {"type":"tool_result", "tool_use_id":"u1", "is_error":True,
+               "content":[{"type":"text", "text":"Task is disallowed"}]}
+        body = {"model":probe.PINNED_MODEL, "tools":[{"name":"Read"}], "stream":True,
+                "messages":[{"role":"assistant","content":[call]},{"role":"user","content":[err]}]}
+        _, first, _ = request(body, scenario="task-denial")
+        conflict = dict(err, is_error=False)
+        body["messages"][-1] = {"role":"user", "content":[conflict]}
+        _, second, _ = request(body, scenario="task-denial")
+        with self.assertRaises(probe.ProbeError): probe.scenario_exchange_facts(first+second)
 
     def test_request_limit_is_atomic_under_concurrency(self):
         records, count, lock = [], [0], threading.Lock()

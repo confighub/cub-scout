@@ -1,0 +1,484 @@
+{
+  "schema": "direct-cli-adversarial-controls.v1",
+  "executable": {
+    "path": "/opt/homebrew/Caskroom/claude-code/2.1.274/claude",
+    "versionByPin": "2.1.274",
+    "sha256": "3509913f9d1576316c8845b88837f8fd3bbbcf26625833ac82cfb6b8985da94a"
+  },
+  "attempts": [
+    {
+      "attempt": "task-first",
+      "sourceRevision": "87e12e585dd44378709ac054ff6f3488c264ba5f",
+      "helperSha256": "ab9d1dedcbdce7cda23c21d09eb76d02a7aff9868585d7a291e1cd486a22c444",
+      "scenario": "task-denial",
+      "accepted": false,
+      "helperExitCode": 2,
+      "cliExitCode": 0,
+      "startedAt": "2026-10-01T04:49:24.687724+00:00",
+      "elapsedSeconds": 0.571,
+      "failure": "tool_result is_error lacks explicit named unavailable/disallowed error text",
+      "requestedMaxTurns": 2,
+      "terminal": {
+        "type": "result",
+        "subtype": "success",
+        "is_error": false,
+        "num_turns": 2,
+        "result": "offline-probe-terminal",
+        "errors": null
+      },
+      "httpRequestCount": 3,
+      "modelRequestCount": 2,
+      "connectionCount": 4,
+      "connectionEvents": [
+        {
+          "id": 1,
+          "kind": "preflight",
+          "httpStatus": 204,
+          "requestLineBytes": 68,
+          "requestLineSha256": "1bcf12f5d20d2bf2d30be85c86e507a5507ba0810ac18e55356f767e042065b0",
+          "method": "GET",
+          "pathWithoutQuery": "/__offline_preflight_9e750023ca9df33de45ac54db20286d1"
+        },
+        {
+          "id": 2,
+          "kind": "startup-declined",
+          "httpStatus": 404,
+          "requestLineBytes": 26,
+          "requestLineSha256": "f29c567737010aa9aa240f3a4a66ea04b8f33b18c6484213a16ab2d4dde60b62",
+          "method": "HEAD",
+          "pathWithoutQuery": "/api/hello"
+        },
+        {
+          "id": 3,
+          "kind": "accepted",
+          "httpStatus": 200,
+          "requestLineBytes": 38,
+          "requestLineSha256": "5c756a134ba748aa6319f63228bc547333447276a5eb50299ab2ea58dfdb9fbd",
+          "method": "POST",
+          "pathWithoutQuery": "/v1/messages"
+        },
+        {
+          "id": 4,
+          "kind": "accepted",
+          "httpStatus": 200,
+          "requestLineBytes": 38,
+          "requestLineSha256": "5c756a134ba748aa6319f63228bc547333447276a5eb50299ab2ea58dfdb9fbd",
+          "method": "POST",
+          "pathWithoutQuery": "/v1/messages"
+        }
+      ],
+      "observed": null,
+      "stdoutSha256": "e3f9788427ec435e05cae91f2378854c368a1c5f1a2ac3240ed3a73fe62afc5a",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cleanup": {
+        "server_shutdown_attempted": true,
+        "server_thread_joined": true,
+        "server_shutdown_complete": true,
+        "handlers_joined": true
+      },
+      "mockRequests": [
+        {
+          "path": "/v1/messages?beta=true",
+          "model": "claude-haiku-4-5-20251001",
+          "tools": [
+            "Read"
+          ],
+          "stream": true,
+          "bytes": 1902,
+          "sha256": "96b2232d10e1fac72713da50a7d7daf2f4fa904c80f4891fc21123c1f3b68c1d",
+          "responseSha256": "dca1a25c658a87edd55a1783542b22bcaefd3f8fe57b700dc2918cc4dc022946"
+        },
+        {
+          "path": "/v1/messages?beta=true",
+          "model": "claude-haiku-4-5-20251001",
+          "tools": [
+            "Read"
+          ],
+          "stream": true,
+          "bytes": 2391,
+          "sha256": "de05b669318a8df175607121356ce9cbeb00961f239ab0a93e23178214b6f7a7",
+          "responseSha256": "8b86678f5ac97185c9b296b04e35eeb51f3fca3aaac8df5f94b9d71901af47fa"
+        }
+      ],
+      "toolEvents": [
+        {
+          "type": "tool_use",
+          "id": "toolu_offline_task_1",
+          "name": "Task",
+          "inputSha256": "fd92baa25e7f3529eb8b703a75bb8e8ae5367e87943b6b74e0da20c67966f45f"
+        },
+        {
+          "type": "tool_result",
+          "id": "toolu_offline_task_1",
+          "isErrorField": true,
+          "contentSha256": "432b23173b52bfc88e0faea99a54615312bf41b35f7bf36db0c59ee736d1377f",
+          "exactRefusalText": "<tool_use_error>Error: No such tool available: Task. Task is disabled for this session, in subagents as well as here.</tool_use_error>"
+        }
+      ]
+    },
+    {
+      "attempt": "task-repeat1",
+      "sourceRevision": "721856bc233813049a219e6ed6c799cab8140597",
+      "helperSha256": "1c5c229bddaddd2b3801a5eca8a0cba9686f0ed4150262ef7af619fb803c427d",
+      "scenario": "task-denial",
+      "accepted": true,
+      "helperExitCode": 0,
+      "cliExitCode": 0,
+      "startedAt": "2026-10-01T04:50:45.924794+00:00",
+      "elapsedSeconds": 0.556,
+      "failure": null,
+      "requestedMaxTurns": 2,
+      "terminal": {
+        "type": "result",
+        "subtype": "success",
+        "is_error": false,
+        "num_turns": 2,
+        "result": "offline-probe-terminal",
+        "errors": null
+      },
+      "httpRequestCount": 3,
+      "modelRequestCount": 2,
+      "connectionCount": 4,
+      "connectionEvents": [
+        {
+          "id": 1,
+          "kind": "preflight",
+          "httpStatus": 204,
+          "requestLineBytes": 68,
+          "requestLineSha256": "fab20e4b86955467a6d114f0e686706296aa3eab2bc43ccc7d27247f500e99fd",
+          "method": "GET",
+          "pathWithoutQuery": "/__offline_preflight_18c01be09870d0e25722595589efa5c2"
+        },
+        {
+          "id": 2,
+          "kind": "startup-declined",
+          "httpStatus": 404,
+          "requestLineBytes": 26,
+          "requestLineSha256": "f29c567737010aa9aa240f3a4a66ea04b8f33b18c6484213a16ab2d4dde60b62",
+          "method": "HEAD",
+          "pathWithoutQuery": "/api/hello"
+        },
+        {
+          "id": 3,
+          "kind": "accepted",
+          "httpStatus": 200,
+          "requestLineBytes": 38,
+          "requestLineSha256": "5c756a134ba748aa6319f63228bc547333447276a5eb50299ab2ea58dfdb9fbd",
+          "method": "POST",
+          "pathWithoutQuery": "/v1/messages"
+        },
+        {
+          "id": 4,
+          "kind": "accepted",
+          "httpStatus": 200,
+          "requestLineBytes": 38,
+          "requestLineSha256": "5c756a134ba748aa6319f63228bc547333447276a5eb50299ab2ea58dfdb9fbd",
+          "method": "POST",
+          "pathWithoutQuery": "/v1/messages"
+        }
+      ],
+      "observed": {
+        "scenario": "task-denial",
+        "terminal_subtype": "success",
+        "tool_inventory": [
+          "Read"
+        ],
+        "attempted_tool": "Task",
+        "tool_result_error": {
+          "id": "toolu_offline_task_1",
+          "is_error": true,
+          "content_sha256": "432b23173b52bfc88e0faea99a54615312bf41b35f7bf36db0c59ee736d1377f"
+        }
+      },
+      "stdoutSha256": "9a57c47cfd4ef884d0dbd16127fd86fac3e85e18f2121100599c9492f8145635",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cleanup": {
+        "server_shutdown_attempted": true,
+        "server_thread_joined": true,
+        "server_shutdown_complete": true,
+        "handlers_joined": true
+      },
+      "mockRequests": [
+        {
+          "path": "/v1/messages?beta=true",
+          "model": "claude-haiku-4-5-20251001",
+          "tools": [
+            "Read"
+          ],
+          "stream": true,
+          "bytes": 1910,
+          "sha256": "d6e0411af9b250cfd54e818d8238855caaf37768145787402d00c98f55afaa91",
+          "responseSha256": "dca1a25c658a87edd55a1783542b22bcaefd3f8fe57b700dc2918cc4dc022946"
+        },
+        {
+          "path": "/v1/messages?beta=true",
+          "model": "claude-haiku-4-5-20251001",
+          "tools": [
+            "Read"
+          ],
+          "stream": true,
+          "bytes": 2399,
+          "sha256": "9c92bac233657ef5beb42cd1dafabd13f5a0455e72d59ff83350694c87fc5f54",
+          "responseSha256": "8b86678f5ac97185c9b296b04e35eeb51f3fca3aaac8df5f94b9d71901af47fa"
+        }
+      ],
+      "toolEvents": [
+        {
+          "type": "tool_use",
+          "id": "toolu_offline_task_1",
+          "name": "Task",
+          "inputSha256": "fd92baa25e7f3529eb8b703a75bb8e8ae5367e87943b6b74e0da20c67966f45f"
+        },
+        {
+          "type": "tool_result",
+          "id": "toolu_offline_task_1",
+          "isErrorField": true,
+          "contentSha256": "432b23173b52bfc88e0faea99a54615312bf41b35f7bf36db0c59ee736d1377f",
+          "exactRefusalText": "<tool_use_error>Error: No such tool available: Task. Task is disabled for this session, in subagents as well as here.</tool_use_error>"
+        }
+      ]
+    },
+    {
+      "attempt": "agent-first",
+      "sourceRevision": "721856bc233813049a219e6ed6c799cab8140597",
+      "helperSha256": "1c5c229bddaddd2b3801a5eca8a0cba9686f0ed4150262ef7af619fb803c427d",
+      "scenario": "agent-denial",
+      "accepted": true,
+      "helperExitCode": 0,
+      "cliExitCode": 0,
+      "startedAt": "2026-10-01T04:50:53.379366+00:00",
+      "elapsedSeconds": 0.532,
+      "failure": null,
+      "requestedMaxTurns": 2,
+      "terminal": {
+        "type": "result",
+        "subtype": "success",
+        "is_error": false,
+        "num_turns": 2,
+        "result": "offline-probe-terminal",
+        "errors": null
+      },
+      "httpRequestCount": 3,
+      "modelRequestCount": 2,
+      "connectionCount": 4,
+      "connectionEvents": [
+        {
+          "id": 1,
+          "kind": "preflight",
+          "httpStatus": 204,
+          "requestLineBytes": 68,
+          "requestLineSha256": "ec1ab979cd014cddbcf7160477176db113665967279482d530327425a8db8bfc",
+          "method": "GET",
+          "pathWithoutQuery": "/__offline_preflight_2835743bdb2379be28c67b01b93ce4a8"
+        },
+        {
+          "id": 2,
+          "kind": "startup-declined",
+          "httpStatus": 404,
+          "requestLineBytes": 26,
+          "requestLineSha256": "f29c567737010aa9aa240f3a4a66ea04b8f33b18c6484213a16ab2d4dde60b62",
+          "method": "HEAD",
+          "pathWithoutQuery": "/api/hello"
+        },
+        {
+          "id": 3,
+          "kind": "accepted",
+          "httpStatus": 200,
+          "requestLineBytes": 38,
+          "requestLineSha256": "5c756a134ba748aa6319f63228bc547333447276a5eb50299ab2ea58dfdb9fbd",
+          "method": "POST",
+          "pathWithoutQuery": "/v1/messages"
+        },
+        {
+          "id": 4,
+          "kind": "accepted",
+          "httpStatus": 200,
+          "requestLineBytes": 38,
+          "requestLineSha256": "5c756a134ba748aa6319f63228bc547333447276a5eb50299ab2ea58dfdb9fbd",
+          "method": "POST",
+          "pathWithoutQuery": "/v1/messages"
+        }
+      ],
+      "observed": {
+        "scenario": "agent-denial",
+        "terminal_subtype": "success",
+        "tool_inventory": [
+          "Read"
+        ],
+        "attempted_tool": "Agent",
+        "tool_result_error": {
+          "id": "toolu_offline_agent_1",
+          "is_error": true,
+          "content_sha256": "2ca5332038cfca13af822fe163b69bd755fd5105383d8fcc6facdea90276e553"
+        }
+      },
+      "stdoutSha256": "27fbd7990a490bcbc33e104b15858f9e0e6870c681ef2d412862cf96e2e2bffd",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cleanup": {
+        "server_shutdown_attempted": true,
+        "server_thread_joined": true,
+        "server_shutdown_complete": true,
+        "handlers_joined": true
+      },
+      "mockRequests": [
+        {
+          "path": "/v1/messages?beta=true",
+          "model": "claude-haiku-4-5-20251001",
+          "tools": [
+            "Read"
+          ],
+          "stream": true,
+          "bytes": 1904,
+          "sha256": "d5a1930a17ac30bd7da7b9216c1bac853c54af46d725e284436d6660c19f74eb",
+          "responseSha256": "2a39cafcb1786ccda774b48abf724e6283fa4bea95a995f0ab5d0d7fe322c335"
+        },
+        {
+          "path": "/v1/messages?beta=true",
+          "model": "claude-haiku-4-5-20251001",
+          "tools": [
+            "Read"
+          ],
+          "stream": true,
+          "bytes": 2398,
+          "sha256": "ef6b7d1bea1081471956c6ba50d7c31c10965a52f5b42f257ca0e3bbffa97613",
+          "responseSha256": "8b86678f5ac97185c9b296b04e35eeb51f3fca3aaac8df5f94b9d71901af47fa"
+        }
+      ],
+      "toolEvents": [
+        {
+          "type": "tool_use",
+          "id": "toolu_offline_agent_1",
+          "name": "Agent",
+          "inputSha256": "fd92baa25e7f3529eb8b703a75bb8e8ae5367e87943b6b74e0da20c67966f45f"
+        },
+        {
+          "type": "tool_result",
+          "id": "toolu_offline_agent_1",
+          "isErrorField": true,
+          "contentSha256": "2ca5332038cfca13af822fe163b69bd755fd5105383d8fcc6facdea90276e553",
+          "exactRefusalText": "<tool_use_error>Error: No such tool available: Agent. Agent is disabled for this session, in subagents as well as here.</tool_use_error>"
+        }
+      ]
+    },
+    {
+      "attempt": "turn-limit-first",
+      "sourceRevision": "721856bc233813049a219e6ed6c799cab8140597",
+      "helperSha256": "1c5c229bddaddd2b3801a5eca8a0cba9686f0ed4150262ef7af619fb803c427d",
+      "scenario": "turn-limit",
+      "accepted": false,
+      "helperExitCode": 2,
+      "cliExitCode": 1,
+      "startedAt": "2026-10-01T04:51:03.799829+00:00",
+      "elapsedSeconds": 0.536,
+      "failure": "turn-limit terminal num_turns is missing or inconsistent with its cap",
+      "requestedMaxTurns": 1,
+      "terminal": {
+        "type": "result",
+        "subtype": "error_max_turns",
+        "is_error": true,
+        "num_turns": 2,
+        "result": null,
+        "errors": [
+          "Reached maximum number of turns (1)"
+        ]
+      },
+      "httpRequestCount": 2,
+      "modelRequestCount": 1,
+      "connectionCount": 3,
+      "connectionEvents": [
+        {
+          "id": 1,
+          "kind": "preflight",
+          "httpStatus": 204,
+          "requestLineBytes": 68,
+          "requestLineSha256": "c7f37746a0b247ba94648c35da72fe4f758582e53ad3c5aa8f7da0783cdaa848",
+          "method": "GET",
+          "pathWithoutQuery": "/__offline_preflight_473d57ee862521ee5ad82d78ed7be0da"
+        },
+        {
+          "id": 2,
+          "kind": "startup-declined",
+          "httpStatus": 404,
+          "requestLineBytes": 26,
+          "requestLineSha256": "f29c567737010aa9aa240f3a4a66ea04b8f33b18c6484213a16ab2d4dde60b62",
+          "method": "HEAD",
+          "pathWithoutQuery": "/api/hello"
+        },
+        {
+          "id": 3,
+          "kind": "accepted",
+          "httpStatus": 200,
+          "requestLineBytes": 38,
+          "requestLineSha256": "5c756a134ba748aa6319f63228bc547333447276a5eb50299ab2ea58dfdb9fbd",
+          "method": "POST",
+          "pathWithoutQuery": "/v1/messages"
+        }
+      ],
+      "observed": null,
+      "stdoutSha256": "0ee9d382d753ceb8ae9d30f5b89c3d2fbad42b94702d8164db9e110d4d446089",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cleanup": {
+        "server_shutdown_attempted": true,
+        "server_thread_joined": true,
+        "server_shutdown_complete": true,
+        "handlers_joined": true
+      },
+      "mockRequests": [
+        {
+          "path": "/v1/messages?beta=true",
+          "model": "claude-haiku-4-5-20251001",
+          "tools": [
+            "Read"
+          ],
+          "stream": true,
+          "bytes": 1939,
+          "sha256": "6297f15a8795f61302da56f1b99dc0af386877ca6ea50997c2bb81b7af5fdcda",
+          "responseSha256": "bb10487d33290a71e6b0481b7b0431804d0edb4154f601603367f45906cac929"
+        }
+      ],
+      "toolEvents": [
+        {
+          "type": "tool_use",
+          "id": "toolu_offline_read_1",
+          "name": "Read",
+          "inputSha256": "614b68c28e94f830370c00234f4864dbd0e38a935cd82aec6986be0fb00f362c"
+        },
+        {
+          "type": "tool_result",
+          "id": "toolu_offline_read_1",
+          "isErrorField": null,
+          "contentSha256": "7e3179187d48153e224484e15116fa7fa1bfc9a3aa73a6a7e68be849f060887d",
+          "privateFixtureMarkerPresent": true
+        }
+      ]
+    }
+  ],
+  "conclusion": {
+    "taskNamedRefusalObserved": true,
+    "agentNamedRefusalObserved": true,
+    "turnLimitHarnessAccepted": false,
+    "turnLimitObservedModelRequests": 1,
+    "turnLimitObservedSuccessfulReads": 1,
+    "turnLimitReportedTurns": 2,
+    "turnLimitRequestedTurns": 1,
+    "turnCounterSemanticsResolved": false,
+    "fullBenchmarkAdmitted": false,
+    "paidEvaluationAuthorized": false
+  },
+  "realProviderRequests": 0,
+  "realModelInference": false,
+  "costs": {
+    "mockUsageIsAuthoredFixture": true,
+    "reportedEstimatedEvalTotalUSD": 4.38666035,
+    "completeLatestPaidDiagnosticAccounting": false,
+    "credits": null,
+    "developmentDollars": null
+  },
+  "privateArchive": "evals/results/direct-cli-adversarial-20261001",
+  "limits": [
+    "Named unavailable-tool errors are actual observations of this pinned minimal mock configuration, not full treatment or all-child-process proof",
+    "Read run stopped after one model request, returned error_max_turns and exit1 but reported num_turns2; validator rejected counter mismatch",
+    "The failed Task matcher run and failed turn-counter run remain failed; no retroactive waiver",
+    "No provider billing, quality, credits or savings claim; raw prompts/config remain private"
+  ]
+}
