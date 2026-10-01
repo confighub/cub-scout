@@ -1668,8 +1668,14 @@ cub-scout is the *evidence provider*; Pilot is the acceptance judge. The
 command never mutates, repairs, approves, or infers authority.
 
 ```bash
-cub-scout compare source-truth <kind>/<name> -n <namespace> --strategy <name>
+./cub-scout compare source-truth <kind>/<name> -n <namespace> --strategy <name> [--kube-context <context>] [--format json|ascii|md]
 ```
+
+An explicit `--kube-context` binds runtime and Kubernetes-controller reads to
+that exact kubeconfig context. It does not select a ConfigHub context. The
+emitted `context` is only the selected kubeconfig context label, not a stable
+cluster identity. JSON remains the canonical evidence contract; `ascii` and
+`md` render the same facts for people.
 
 ### Strategies
 
@@ -1736,7 +1742,8 @@ cub scout compare source-truth Deployment rag-server -n demo --strategy git-argo
 ### Requirements
 
 - Connected mode: a logged-in `cub` CLI (`cub auth login`), in either invocation form (`cub scout compare source-truth ...` or `cub-scout compare source-truth ...`)
-- Argo CD CLI on PATH for `*-argo` strategies; Flux CLI for `*-flux`
+- Kubernetes access to the selected context. Argo Application resources are read from Kubernetes directly; an Argo CD server context and Kubernetes context are distinct.
+- Flux CLI on PATH for `*-flux` strategies. The child process receives a private kubeconfig captured from the selected binding.
 - Reachable kubeconfig pointing at the cluster running the workload
 
 ### Flags
@@ -1745,7 +1752,8 @@ cub scout compare source-truth Deployment rag-server -n demo --strategy git-argo
 |------|-------------|
 | `-n, --namespace` | Namespace of the resource (required for namespaced kinds) |
 | `--strategy` | Declared delivery path (required) |
-| `--format` | Output format. v0.1: `json` |
+| `--kube-context` | Exact kubeconfig context for runtime and controller Kubernetes reads; missing or invalid explicit names fail without ambient fallback |
+| `--format` | Output format: `json`, `ascii`, or `md` |
 
 ### Limitations
 

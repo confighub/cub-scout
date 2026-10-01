@@ -91,6 +91,11 @@ func observeTrace(ctx context.Context, session *traceSession, kind, name, namesp
 				// Workload tracking metadata usually identifies the Application's
 				// name but not its namespace. Resolve uniquely, never guess.
 				result, err = argo.TraceApplicationInNamespace(ctx, ownership.Name, ownership.Namespace)
+				if err == nil && result != nil {
+					// The Application is the provenance chain, not the selected
+					// observation target. Keep CLI and TUI anchored to the workload.
+					result.Object = agent.ResourceRef{Kind: kind, Name: name, Namespace: namespace}
+				}
 			} else {
 				err = fmt.Errorf("Argo ownership does not identify an Application")
 			}

@@ -1,0 +1,19 @@
+{
+  "declared_strategy": "Git -> Argo -> Kubernetes",
+  "context": "alpha",
+  "collection_errors": ["controller: forbidden"],
+  "status": "BLOCK",
+  "source_truth": "BLOCKED",
+  "outlier": "controller",
+  "surfaces": {
+    "confighub": {"space": "demo", "unit": "api", "revision": "3"},
+    "runtime": {
+      "resource": "Deployment/api in team-a",
+      "field": "spec.template.spec.containers[0].image",
+      "value": "example.invalid/api:abc12345",
+      "health": "Current"
+    }
+  },
+  "proof_gaps": ["controller.source", "controller.revision_or_digest"],
+  "safe_next_action": "Check Kubernetes access to the controller resource."
+}

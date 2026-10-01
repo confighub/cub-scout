@@ -212,6 +212,20 @@ type LocalClusterModel struct {
 	traceDiffRequestID  uint64
 	traceDiffCancel     context.CancelFunc
 
+	// Source-truth mode selects an explicit strategy for the selected workload,
+	// then renders the shared CLI/MCP evidence model.
+	sourceTruthMode           bool
+	sourceTruthLoading        bool
+	sourceTruthCursor         int
+	sourceTruthItem           TraceItem
+	sourceTruthEvidence       *agent.SourceTruthEvidence
+	sourceTruthError          error
+	sourceTruthGeneration     uint64
+	sourceTruthStrategy       agent.SourceTruthStrategy
+	sourceTruthContext        context.Context
+	sourceTruthCancel         context.CancelFunc
+	sourceTruthBindingContext string
+
 	// Scan mode
 	scanMode       bool           // In scan result mode
 	scanOutput     string         // Output from scan command
@@ -1341,6 +1355,24 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case sourceTruthResultMsg:
+		if !m.sourceTruthMode || msg.generation != m.sourceTruthGeneration || msg.item != m.sourceTruthItem || msg.strategy != m.sourceTruthStrategy || msg.contextName != m.sourceTruthBindingContext {
+			return m, nil
+		}
+		m.sourceTruthLoading = false
+		if m.sourceTruthCancel != nil {
+			m.sourceTruthCancel()
+		}
+		m.sourceTruthCancel = nil
+		m.sourceTruthContext = nil
+		if msg.err != nil {
+			m.sourceTruthError = msg.err
+		} else {
+			evidence := msg.evidence
+			m.sourceTruthEvidence = &evidence
+		}
+		return m, nil
+
 	case localAuthCheckMsg:
 		if msg.authenticated {
 			m.switchToHub = true
@@ -1453,6 +1485,63 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Handle help mode
 		if m.helpMode {
 			m.helpMode = false
+			return m, nil
+		}
+
+		if m.sourceTruthMode {
+			strategies := agent.AllStrategies()
+			if m.sourceTruthLoading {
+				if msg.String() == "esc" || msg.String() == "q" {
+					if m.sourceTruthCancel != nil {
+						m.sourceTruthCancel()
+						m.sourceTruthCancel = nil
+					}
+					m.sourceTruthGeneration++
+					m.sourceTruthMode = false
+					m.sourceTruthLoading = false
+					m.sourceTruthContext = nil
+				}
+				return m, nil
+			}
+			if m.sourceTruthEvidence != nil || m.sourceTruthError != nil {
+				if m.sourceTruthCancel != nil {
+					m.sourceTruthCancel()
+				}
+				m.sourceTruthMode = false
+				m.sourceTruthGeneration++
+				m.sourceTruthCancel = nil
+				m.sourceTruthContext = nil
+				m.sourceTruthEvidence = nil
+				m.sourceTruthError = nil
+				return m, nil
+			}
+			switch msg.String() {
+			case "esc", "q":
+				if m.sourceTruthCancel != nil {
+					m.sourceTruthCancel()
+					m.sourceTruthCancel = nil
+				}
+				m.sourceTruthGeneration++
+				m.sourceTruthMode = false
+				return m, nil
+			case "up", "k":
+				if m.sourceTruthCursor > 0 {
+					m.sourceTruthCursor--
+				}
+				return m, nil
+			case "down", "j":
+				if m.sourceTruthCursor < len(strategies)-1 {
+					m.sourceTruthCursor++
+				}
+				return m, nil
+			case "enter":
+				if m.sourceTruthCursor >= 0 && m.sourceTruthCursor < len(strategies) {
+					m.sourceTruthStrategy = strategies[m.sourceTruthCursor]
+					m.sourceTruthContext, m.sourceTruthCancel = context.WithTimeout(context.Background(), 2*time.Minute)
+					m.sourceTruthLoading = true
+					return m, m.runSourceTruth(m.sourceTruthItem, m.sourceTruthStrategy, m.sourceTruthGeneration, m.sourceTruthContext)
+				}
+			}
 			return m, nil
 		}
 
@@ -2135,6 +2224,35 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.traceItems = m.buildTraceItems()
 			return m, nil
 
+		case msg.String() == "Y":
+			if m.clusterBinding == nil || m.clusterBinding.config == nil || m.clusterBinding.err != nil {
+				m.statusMsg = "Source-truth Kubernetes binding is unavailable"
+				return m, nil
+			}
+			entries := m.getFilteredEntries()
+			if m.cursor < 0 || m.cursor >= len(entries) {
+				m.statusMsg = "Select a workload before requesting source-truth evidence"
+				return m, nil
+			}
+			entry := entries[m.cursor]
+			if normalizeKind(entry.Kind) != "Deployment" && normalizeKind(entry.Kind) != "StatefulSet" && normalizeKind(entry.Kind) != "DaemonSet" {
+				m.statusMsg = "Source-truth currently supports Deployment, StatefulSet, and DaemonSet"
+				return m, nil
+			}
+			m.sourceTruthItem = TraceItem{Kind: normalizeKind(entry.Kind), Name: entry.Name, Namespace: entry.Namespace}
+			if m.sourceTruthCancel != nil {
+				m.sourceTruthCancel()
+			}
+			m.sourceTruthGeneration++
+			m.sourceTruthCursor = 0
+			m.sourceTruthEvidence = nil
+			m.sourceTruthError = nil
+			m.sourceTruthMode = true
+			m.sourceTruthContext = nil
+			m.sourceTruthCancel = nil
+			m.sourceTruthBindingContext = m.clusterBinding.context
+			return m, nil
+
 		case key.Matches(msg, m.keymap.Scan):
 			// Run scan and show results
 			m.scanMode = true
@@ -2577,6 +2695,9 @@ func (m LocalClusterModel) View() string {
 	if m.queryMode {
 		return m.renderQuerySelector()
 	}
+	if m.sourceTruthMode {
+		return m.renderSourceTruth()
+	}
 
 	// Trace mode (picker or result)
 	if m.traceMode {
@@ -2936,6 +3057,7 @@ func (m LocalClusterModel) renderHelp() string {
 	b.WriteString("  " + lcNameStyle.Render("C") + "  Suggest commands (context-aware)\n")
 	b.WriteString("  " + lcNameStyle.Render("Q") + "  Saved queries (filter resources)\n")
 	b.WriteString("  " + lcNameStyle.Render("T") + "  Trace ownership chain\n")
+	b.WriteString("  " + lcNameStyle.Render("Y") + "  Source-truth evidence for the selected workload (choose the declared strategy)\n")
 	b.WriteString("  " + lcNameStyle.Render("Ctrl+e") + "  Bounded resource evidence (Enter reads, r refreshes, Esc returns)\n")
 	b.WriteString("  " + lcNameStyle.Render("S") + "  Scan for risk issues\n")
 	b.WriteString("  " + lcNameStyle.Render("e/E") + "  Export graph from MAPS panel (HTML/SVG)\n")
@@ -2944,7 +3066,7 @@ func (m LocalClusterModel) renderHelp() string {
 		b.WriteString("\n")
 		b.WriteString(lcSectionStyle.Render("SELECTED CONTEXT LIMITS"))
 		b.WriteString("\n")
-		b.WriteString("  Inventory, bounded explain, scan and trace use the selected context. Graph export, command mode, shell and import are disabled because they do not yet honor this binding.\n")
+		b.WriteString("  Inventory, bounded explain, scan, trace and source-truth use the selected context. Graph export, command mode, shell and import are disabled because they do not yet honor this binding.\n")
 	}
 	b.WriteString("\n")
 

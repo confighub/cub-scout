@@ -638,7 +638,8 @@ func TestMCPGatewayHandleRequest_ToolsCallCompareSourceTruth(t *testing.T) {
 			"arguments":{
 				"target":"Deployment/rag-server",
 				"namespace":"demo",
-				"strategy":"confighub-oci-flux"
+				"strategy":"confighub-oci-flux",
+				"context":"alpha-context"
 			}
 		}`),
 	}
@@ -655,6 +656,7 @@ func TestMCPGatewayHandleRequest_ToolsCallCompareSourceTruth(t *testing.T) {
 		"compare", "source-truth", "Deployment/rag-server",
 		"-n", "demo",
 		"--strategy", "confighub-oci-flux",
+		"--kube-context", "alpha-context",
 		"--format", "json",
 	}
 	if !reflect.DeepEqual(gotStandaloneArgs, wantStandalone) {

@@ -705,6 +705,10 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 							"description": sourceTruthStrategySchemaDescription(),
 							"enum":        sourceTruthStrategySchemaValues(),
 						},
+						"context": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional exact kubeconfig context for Kubernetes runtime and controller reads; does not select a ConfigHub context.",
+						},
 					},
 					"required":             []string{"target", "namespace", "strategy"},
 					"additionalProperties": false,
@@ -723,12 +727,19 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				if strategy == "" {
 					return nil, fmt.Errorf("missing required argument: strategy")
 				}
-				return []string{
+				args := []string{
 					"compare", "source-truth", target,
 					"-n", namespace,
 					"--strategy", strategy,
-					"--format", "json",
-				}, nil
+				}
+				if raw, present := arguments["context"]; present {
+					contextName, ok := raw.(string)
+					if !ok || strings.TrimSpace(contextName) == "" {
+						return nil, fmt.Errorf("context must be a non-empty kubeconfig context name when provided")
+					}
+					args = append(args, "--kube-context", strings.TrimSpace(contextName))
+				}
+				return append(args, "--format", "json"), nil
 			},
 		}
 		tools["confighub_changesets"] = mcpTool{

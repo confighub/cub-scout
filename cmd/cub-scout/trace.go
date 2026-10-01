@@ -22,7 +22,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/rest"
 
 	"github.com/confighub/cub-scout/v2/internal/mapsvc"
 	"github.com/confighub/cub-scout/v2/pkg/agent"
@@ -355,17 +354,6 @@ type traceResourceLocator struct {
 	Namespaced bool
 }
 
-func fetchProviderConfigResource(ctx context.Context, cfg *rest.Config, dynClient dynamic.Interface, name, namespace string) (*unstructured.Unstructured, error) {
-	locators, err := discoverProviderConfigLocators(cfg)
-	if err != nil {
-		return nil, err
-	}
-	if len(locators) == 0 {
-		return nil, fmt.Errorf("ProviderConfig CRD not found in API discovery")
-	}
-	return fetchResourceWithLocators(ctx, dynClient, "ProviderConfig", name, namespace, locators)
-}
-
 func fetchProviderConfigResourceWithTraceSession(ctx context.Context, session *traceSession, dynClient dynamic.Interface, name, namespace string) (*unstructured.Unstructured, error) {
 	if session == nil {
 		return nil, fmt.Errorf("trace session is unavailable")
@@ -383,20 +371,6 @@ func fetchProviderConfigResourceWithTraceSession(ctx context.Context, session *t
 		return nil, fmt.Errorf("ProviderConfig CRD not found in API discovery")
 	}
 	return fetchResourceWithLocators(ctx, dynClient, "ProviderConfig", name, namespace, locators)
-}
-
-func discoverProviderConfigLocators(cfg *rest.Config) ([]traceResourceLocator, error) {
-	discoveryClient, err := discovery.NewDiscoveryClientForConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	resourceLists, err := discoveryClient.ServerPreferredResources()
-	if err != nil && !discovery.IsGroupDiscoveryFailedError(err) {
-		return nil, err
-	}
-
-	return providerConfigLocatorsFromAPIResourceLists(resourceLists), nil
 }
 
 func providerConfigLocatorsFromAPIResourceLists(resourceLists []*v1.APIResourceList) []traceResourceLocator {
@@ -791,19 +765,6 @@ func normalizeKind(kind string) string {
 	}
 }
 
-// enrichTraceWithTiming adds timing information to trace chain links
-func enrichTraceWithTiming(ctx context.Context, result *agent.TraceResult) {
-	cfg, err := buildConfig()
-	if err != nil {
-		return
-	}
-	session, err := newTraceSession(cfg, "")
-	if err != nil {
-		return
-	}
-	enrichTraceWithTimingSession(ctx, session, result)
-}
-
 func enrichTraceWithTimingSession(ctx context.Context, session *traceSession, result *agent.TraceResult) {
 	if result == nil {
 		return
@@ -826,19 +787,6 @@ func enrichTraceWithTimingSession(ctx context.Context, session *traceSession, re
 	for _, readErr := range readErrors {
 		result.Error = appendSentence(result.Error, readErr.Error())
 	}
-}
-
-// detectCrossOwnerReferences detects cross-owner references in a resource
-func detectCrossOwnerReferences(ctx context.Context, kind, name, namespace string, resourceOwner *agent.Ownership) ([]agent.CrossReference, error) {
-	cfg, err := buildConfig()
-	if err != nil {
-		return nil, err
-	}
-	session, err := newTraceSession(cfg, "")
-	if err != nil {
-		return nil, err
-	}
-	return detectCrossOwnerReferencesWithTraceSession(ctx, session, kind, name, namespace, resourceOwner)
 }
 
 func detectCrossOwnerReferencesWithTraceSession(ctx context.Context, session *traceSession, kind, name, namespace string, resourceOwner *agent.Ownership) ([]agent.CrossReference, error) {
@@ -1423,15 +1371,6 @@ func outputTraceMarkdown(result *agent.TraceResult, artifacts map[string]mapsvc.
 	return nil
 }
 
-// runReverseTrace performs a reverse trace using one captured legacy binding.
-func runReverseTrace(ctx context.Context, kind, name, namespace string) error {
-	session, err := newDefaultTraceSession()
-	if err != nil {
-		return fmt.Errorf("failed to capture Kubernetes trace session: %w", err)
-	}
-	return runReverseTraceWithSession(ctx, session, kind, name, namespace)
-}
-
 // runReverseTraceWithSession performs every Kubernetes read through the supplied
 // invocation binding and renders the requested reverse-trace representation.
 func runReverseTraceWithSession(ctx context.Context, session *traceSession, kind, name, namespace string) error {
@@ -1450,6 +1389,18 @@ func runReverseTraceWithSession(ctx context.Context, session *traceSession, kind
 	dynClient, err := session.dynamicClient()
 	if err != nil {
 		return fmt.Errorf("failed to create dynamic client for reverse trace: %w", err)
+	}
+	if kind == "Application" && namespace == "" {
+		// Match normal direct Application tracing: resolve only a unique name
+		// through the captured API, never guess an Application namespace.
+		application, err := agent.NewArgoTracerWithKubernetesClient(dynClient).TraceApplicationInNamespace(ctx, name, "")
+		if err != nil {
+			return fmt.Errorf("resolve reverse Application namespace: %w", err)
+		}
+		if application == nil || application.Object.Namespace == "" {
+			return fmt.Errorf("reverse Application namespace is unavailable; specify -n")
+		}
+		namespace = application.Object.Namespace
 	}
 	result, err := agent.NewReverseTracer(dynClient).Trace(ctx, kind, name, namespace)
 	if err != nil {
@@ -2629,18 +2580,6 @@ func mergeTraceArtifacts(base, updates map[string]mapsvc.TraceArtifactRef) map[s
 	return merged
 }
 
-func collectTraceArtifacts(ctx context.Context, result *agent.TraceResult) map[string]mapsvc.TraceArtifactRef {
-	cfg, err := buildConfig()
-	if err != nil {
-		return map[string]mapsvc.TraceArtifactRef{}
-	}
-	session, err := newTraceSession(cfg, getCurrentContext())
-	if err != nil {
-		return map[string]mapsvc.TraceArtifactRef{}
-	}
-	return collectTraceArtifactsWithTraceSession(ctx, session, result)
-}
-
 func artifactForLink(link agent.ChainLink, artifacts map[string]mapsvc.TraceArtifactRef) mapsvc.TraceArtifactRef {
 	if len(artifacts) > 0 {
 		if artifact, ok := lookupTraceArtifact(link.Kind, link.Namespace, link.Name, artifacts); ok {
@@ -2812,24 +2751,4 @@ func loadAndRenderTraceFromJSON(path string, invCtx InvocationContext) error {
 	default:
 		return outputTraceHuman(&result, artifacts, invCtx)
 	}
-}
-
-// collectSecretEvidence fetches a resource and collects secret evidence from it.
-// Returns nil if the resource doesn't support secret evidence collection.
-//
-// Supported kinds (v0.15):
-// - Workloads: Deployment, StatefulSet, DaemonSet, Pod
-// - Flux sources: GitRepository, HelmRepository, Bucket
-// - Flux deployers: Kustomization, HelmRelease
-// - Crossplane: ProviderConfig
-func collectSecretEvidence(ctx context.Context, kind, name, namespace string) *agent.SecretEvidenceResult {
-	cfg, err := buildConfig()
-	if err != nil {
-		return nil
-	}
-	session, err := newTraceSession(cfg, getCurrentContext())
-	if err != nil {
-		return nil
-	}
-	return collectSecretEvidenceWithTraceSession(ctx, session, kind, name, namespace)
 }
