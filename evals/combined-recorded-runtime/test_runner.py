@@ -37,6 +37,7 @@ class RunnerTests(unittest.TestCase):
                     self.assertTrue((stage / "evals/recorded-scale/preflight.py").is_file())
                     self.assertTrue((stage / "evals/direct-cli-controls/probe.py").is_file())
                     self.assertTrue((stage / "payload.py").is_file())
+                    self.assertEqual((stage / "plugin").is_dir(), arm == "treatment")
                 self.assertNotIn("bin/cub-scout", stages["baseline"])
                 self.assertIn("bin/cub-scout", stages["treatment"])
                 self.assertEqual({k: v for k, v in stages["baseline"].items() if k != "_stageFiles"},
@@ -74,6 +75,13 @@ class RunnerTests(unittest.TestCase):
                 changed = copy.deepcopy(value); mutate(changed)
                 with self.assertRaises((ValueError, RuntimeError)):
                     runner.inspect_runtime(json.dumps(changed).encode(), name, owner, stage, plugin, finished=True)
+
+    def test_bash_transport_only_allows_one_final_newline_removed(self):
+        expected = '{"captured":true}\n'
+        self.assertTrue(payload.exact_bash_body(expected, expected))
+        self.assertTrue(payload.exact_bash_body(expected[:-1], expected))
+        for actual in ('prefix' + expected, expected + 'suffix', '{ "captured":true}', '{"captured":false}'):
+            self.assertFalse(payload.exact_bash_body(actual, expected))
 
     def test_tool_schedule_only_uses_expected_safe_tools(self):
         names = [{"name": "mcp__cub-scout__map"}, {"name": "mcp__cub-scout__explain"}]

@@ -27,6 +27,12 @@ def load(name, path):
 def json_bytes(value): return json.dumps(value, separators=(",", ":"), ensure_ascii=False).encode()
 
 
+def exact_bash_body(actual, expected):
+    # Claude's Bash result omits the final line terminator; no other content
+    # normalization or JSON reserialization is permitted.
+    return isinstance(actual, str) and actual in (expected, expected.removesuffix("\n"))
+
+
 def tool_plan(arm, available):
     plan = [
         ("Read", {"file_path": "/tools/evidence/events.yaml"}),
@@ -373,7 +379,7 @@ def main():
     api_body_text = expected_api_route["body"].decode("utf-8", "replace") if expected_api_route else ""
     bash_ok = bool(bash_use and isinstance(bash_use.get("input"), dict)
         and bash_use["input"].get("command") == f"/tools/kubectl --kubeconfig /tmp/kubeconfig --context recorded get --raw {READ_PATH}"
-        and bash_result and bash_result.get("is_error") is not True and api_body_text in result_text(bash_result))
+        and bash_result and bash_result.get("is_error") is not True and exact_bash_body(result_text(bash_result), api_body_text))
     api_ok = (api.requests_seen == 1 and len(api.records) == 1 and api.records[0].get("captured") is True
               and api.records[0].get("path") == READ_PATH and not api.coverage_failure)
     terminal_events = []

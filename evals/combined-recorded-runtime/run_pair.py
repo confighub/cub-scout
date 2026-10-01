@@ -93,6 +93,9 @@ def stage_common(stage: Path, assets: Path, *, include_scout: bool):
             raise ValueError("staging directory must be empty and owned by this run")
     else:
         stage.mkdir(mode=0o700)
+    # Docker cannot create a nested mountpoint beneath a readonly parent bind.
+    if include_scout:
+        (stage / "plugin").mkdir(mode=0o555)
     evidence = stage / "evidence"; evidence.mkdir(mode=0o700)
     pins = {}
     for filename, digest in RAW_PINS.items():
