@@ -115,10 +115,9 @@ The helper now includes a separately gated `source-truth-diff` mode for the
 integrated #750/#751 routes. It is prepared but **has not been run**. The
 `COMBINED_SOURCE_PIN` in `capture.py` records the reviewed candidate
 `a508e83840c54843a6461727ca71a417e4ccdbad`; the capture also requires that
-commit to be an ancestor of `HEAD`. This helper checkout does not yet contain
-that commit, so the mode stops before creating its output directory or any
-cluster resources. Execution remains pending independent helper review and
-integration of the pinned product commit. The attempt-three Trace-only receipt
+commit to be an ancestor of `HEAD` before building binaries or creating cluster
+resources. The helper and pinned product are now integrated, and the helper
+review repairs pass 29 offline tests. The combined live capture remains pending. The attempt-three Trace-only receipt
 above remains the separate historical proof; it is not evidence for these
 newer routes.
 
@@ -141,8 +140,9 @@ An allowed source-truth result must therefore retain `BLOCK` and the unit-read
 omission; the denied runtime context must not attempt a unit read. No real cub
 binary, ConfigHub server, or auth session is used.
 
-CLI and MCP diff cases use local, already-rendered Deployment manifests for
-matched, changed, missing, and denied outcomes, with exact `apps/v1` identity.
+CLI diff cases use local, already-rendered Deployment manifests for matched,
+changed, missing, and denied outcomes, with exact `apps/v1` identity. MCP
+exercises the matched and denied diff cases.
 MCP calls use stdio `tools/call` for both `compare_source_truth` and the
 existing `trace` tool's diff arguments. The injected TUI test sends real
 `LocalClusterModel.Update` events for `Y` plus `git-argo`, then `T`, `d`, the
