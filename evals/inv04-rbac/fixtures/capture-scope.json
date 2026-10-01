@@ -1,0 +1,76 @@
+{
+  "schema": "inv04.rbac.recorded-evidence.v1",
+  "captureDate": "2026-10-01",
+  "captureWindow": {
+    "startedAt": "2026-10-01T01:41:39Z",
+    "endedAt": "2026-10-01T01:41:53Z",
+    "atomic": false,
+    "sequence": "three bounded namespaced GETs, in order; timestamps do not imply one atomic snapshot"
+  },
+  "source": {
+    "captureHarnessRevision": "faad29c120ab772324bd48caf8c5be12e5bfc20d",
+    "captureHarnessSha256": "865a385a2e263ff3a4eea2bd4771783655813c4067d9aa147bdbd38864dffb69",
+    "productBinaryRevision": "a99d7d4387740fd2c9ccb183f81ea8004c2e7206",
+    "productBinarySha256": "9b36a5b571499c9798ebf1440c7f3d68fd10d513f66920339d6f32e375a005d3",
+    "kindVersion": "kind v0.31.0 go1.25.5 darwin/arm64",
+    "kubernetesServerVersion": "v1.35.0"
+  },
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/apis/apps/v1/namespaces/inv04-readable-populated/deployments",
+      "httpStatus": 200,
+      "startedAt": "2026-10-01T01:41:39Z",
+      "endedAt": "2026-10-01T01:41:39Z",
+      "file": "readable-populated-deployments.json",
+      "sha256": "c98c09f2cb1675b58455ae124d0584ecc948394013fbb0b437c39f6b35e4a1b6",
+      "bytes": 7156,
+      "elapsedSeconds": 0.012091124895960093
+    },
+    {
+      "method": "GET",
+      "path": "/apis/apps/v1/namespaces/inv04-readable-empty/deployments",
+      "httpStatus": 200,
+      "startedAt": "2026-10-01T01:41:46Z",
+      "endedAt": "2026-10-01T01:41:46Z",
+      "file": "readable-empty-deployments.json",
+      "sha256": "8d70075f02a75588293ec2b45c8b765cf39d8d268366418ce76dce61386e1aaf",
+      "bytes": 97,
+      "elapsedSeconds": 0.007582833990454674
+    },
+    {
+      "method": "GET",
+      "path": "/apis/apps/v1/namespaces/inv04-denied/deployments",
+      "httpStatus": 403,
+      "startedAt": "2026-10-01T01:41:52Z",
+      "endedAt": "2026-10-01T01:41:53Z",
+      "file": "denied-deployments.json",
+      "sha256": "e80dc99c4fd3f8325744d2e030dea4ad1e5fe4cf19056d62d52c198f632077d5",
+      "bytes": 356,
+      "elapsedSeconds": 0.07752904202789068
+    }
+  ],
+  "custody": {
+    "captureElapsedSeconds": 50.65828875009902,
+    "cleanupVerified": true,
+    "sharedKubeconfigUnchanged": true,
+    "privateAdminKubeconfigUnchangedBeforeCleanup": true,
+    "privateObserverKubeconfigUnchanged": true,
+    "excluded": [
+      "kubeconfig contents",
+      "bearer tokens",
+      "client keys/certificates",
+      "Secret objects and payloads",
+      "literal manifests",
+      "Scout stdout answer documents"
+    ]
+  },
+  "limitations": [
+    "Only the three named Deployment list requests are represented.",
+    "The requests were sequential, not an atomic inventory.",
+    "A denied list is unknown for that namespace; it does not establish an empty namespace.",
+    "A readable empty Deployment list is scoped to that namespace, resource kind, and capture time.",
+    "Native/no_known_marker is a cub-scout classification, not an orphan conclusion; Scout answer output is not part of this evidence packet.",
+    "Other resource kinds and broader cluster completeness are not established."
+  ]
+}
