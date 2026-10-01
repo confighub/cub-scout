@@ -604,12 +604,38 @@
         {
           "id": "RUL-01",
           "question": "Repeated question using a dated snapshot",
-          "status": "planned",
-          "existing_case": null,
+          "status": "raw_recording_prepared_not_run",
+          "existing_case": "evals/rul01-dated-snapshot",
           "reference": "Answer from the stated snapshot and expose its timestamp and age; do not imply it is current live state.",
           "controls": [
             "Dated evidence cannot renew itself"
-          ]
+          ],
+          "evidence_refresh": "2026-10-01",
+          "source_provenance": {
+            "reused_case": "PRE-02 retained after-Pod response; same historical observation, not an independent capture",
+            "source_commit": "4b113710948882eda501e14aacca2d5cec1168ae",
+            "source_helper_sha256": "ec4f7f8e9d2d2ca6257abc5029f2e01b33203794a5782c22ba13895bedd31230",
+            "source_provenance_sha256": "472314079b74bff1a374d5e55eb44a12db2e2ffeaa189b30dc659423bc95398a",
+            "raw_file": "evals/rul01-dated-snapshot/fixtures/after-pod.json",
+            "raw_bytes": 5355,
+            "raw_sha256": "f264204dc296d06590bc357691a1b95db08222f4ac68b3c38935d6ef200832c3",
+            "request": {
+              "phase": "after",
+              "method": "GET",
+              "path": "/api/v1/namespaces/pre02-node-selector/pods/scout-pre02-selector",
+              "http_status": 200,
+              "started_at": "2026-10-01T06:03:25Z",
+              "ended_at": "2026-10-01T06:03:25Z",
+              "elapsed_seconds": 0.01204633410088718,
+              "logged_timestamp_precision_seconds": 1
+            },
+            "authored_test_clocks": [
+              "2026-10-01T06:08:25Z",
+              "2026-10-01T06:13:25Z"
+            ],
+            "limits": "Age arithmetic is relative to the logged request-end second, with one-second timestamp resolution. Same observation reused from PRE-02; no independent capture, current-state, product capture-time capability, or savings claim."
+          },
+          "benchmark_admission": "Prepared, not run or admitted. Frozen suite remains non-executable pending protocol gates and remaining cases."
         },
         {
           "id": "RUL-02",

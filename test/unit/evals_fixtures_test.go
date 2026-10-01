@@ -349,6 +349,10 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			checkRUL04ImageIdentityScaffold(t, caseDir)
 			continue
 		}
+		if filepath.Base(caseDir) == "rul01-dated-snapshot" {
+			checkRUL01DatedSnapshotScaffold(t, caseDir)
+			continue
+		}
 		if filepath.Base(caseDir) == "sveltos-hlt-04-report-freshness" {
 			checkHLT04Scaffold(t, caseDir)
 			continue

@@ -1,0 +1,5 @@
+# FIXTURE-OWNED-SCAFFOLD: stage one raw observation and neutral time receipt.
+schema_version: "1.1"
+name: rul01-dated-snapshot
+context:
+  scaffold_script: scaffold.sh

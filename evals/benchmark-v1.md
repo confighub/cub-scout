@@ -48,7 +48,7 @@ cases remain a separate experiment.
 | Prerequisites / graph | PRE-02 | Kubernetes topology and cloud prerequisite | `pre02-node-selector` — first independently reviewed owned-kind selector recording prepared, not run; scheduling is not application health |
 | Prerequisites / graph | PRE-03 | Argo/Crossplane child-chain failure | `pre03-argo-child-failure` — retained historical Argo-only parent→child→Pod failure chain prepared, not run; no Crossplane claim, non-atomic and not current |
 | Prerequisites / graph | PRE-04 | Hub/spoke intended placement with missing live observations | `kubara-hub-spoke-placement` — pinned desired/config projection prepared, not run; no live observations consumed |
-| Reuse / limits | RUL-01 | Repeated question using a dated snapshot | Planned; snapshot age remains visible |
+| Reuse / limits | RUL-01 | Repeated question using a dated snapshot | `rul01-dated-snapshot` — PRE-02 Pod response reused with its one-second request-time receipt and authored test clocks; prepared, not run; not live freshness or product capture-time support |
 | Reuse / limits | RUL-02 | Cache invalidation after identity change | Planned; missing/stale identity stays unresolved |
 | Reuse / limits | RUL-03 | Denied cluster beside readable cluster, explicit context | `rul03-context` — raw explicit-context responses and strict answer contract prepared, not run; denied inventory stays unknown |
 | Reuse / limits | RUL-04 | Unsupported workload/image proof | Raw capture prepared, not run: Ready Pod runtime imageID and UID linkage preserved; tag-only authored intent does not establish immutable intended image identity. No applied-source proof. [Case](rul04-image-identity/README.md) |
