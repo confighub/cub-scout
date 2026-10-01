@@ -8,6 +8,7 @@ import copy
 import importlib.util
 import json
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -22,6 +23,9 @@ spec.loader.exec_module(prepare)
 spec = importlib.util.spec_from_file_location("recorded_scale_preflight", ROOT / "preflight.py")
 preflight = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(preflight)
+spec = importlib.util.spec_from_file_location("recorded_scale_regrade", ROOT.parent / "scripts/regrade.py")
+regrade = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(regrade)
 
 
 def expected_report():
@@ -116,7 +120,134 @@ def fake_views_mcp(path: Path, reports: dict, schema: dict | None = None) -> Pat
     return path
 
 
+def grader_pattern(path: Path):
+    text = path.read_text()
+    pattern = re.search(r"^pattern: '(.*)'$", text, re.M)
+    flags = re.search(r"^flags: ([A-Za-z]*)$", text, re.M)
+    return pattern.group(1), flags.group(1) if flags else ""
+
+
+def javascript_regex_matches(node: str, pattern: str, flags: str, candidates: list[str]):
+    payload = json.dumps({"pattern": pattern, "flags": flags, "candidates": candidates})
+    program = ("const p=JSON.parse(process.argv[1]); const r=new RegExp(p.pattern,p.flags); "
+               "process.stdout.write(JSON.stringify(p.candidates.map(s=>r.test(s))));")
+    result = subprocess.run([node, "-e", program, payload], text=True, capture_output=True,
+                            timeout=5, check=True)
+    return json.loads(result.stdout)
+
+
+def python_regrader_matches(path: Path, candidates: list[str]):
+    grader = regrade.parse_grader(path, path.read_bytes())
+    return [bool(grader["compiled"].search(candidate)) for candidate in candidates]
+
+
 class RecordedScalePacket(unittest.TestCase):
+    def test_strict_answer_contract_is_opt_in_and_hashes_generated_files(self):
+        node = shutil.which("node")
+        if node is None:
+            self.skipTest("node is needed to exercise the eval harness JavaScript regex dialect")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            legacy_plugin = root / "legacy-plugin"
+            strict_plugin = root / "strict-plugin"
+            legacy_plugin.mkdir()
+            strict_plugin.mkdir()
+            source_bytes = {}
+            for case, (grader, _) in prepare.STRICT_GRADERS.items():
+                case_dir = prepare.REPO / "evals/scale" / case
+                source_bytes[case] = ((case_dir / "prompt.md").read_bytes(),
+                                      (case_dir / "graders" / grader).read_bytes())
+                prepare.stage_case(legacy_plugin, case)
+                prepare.stage_case(strict_plugin, case, prepare.ANSWER_CONTRACT_STRICT)
+                legacy_case = legacy_plugin / "evals/recorded-scale" / case
+                strict_case = strict_plugin / "evals/recorded-scale" / case
+                self.assertEqual((legacy_case / "prompt.md").read_bytes(), source_bytes[case][0])
+                self.assertEqual((legacy_case / "graders" / grader).read_bytes(), source_bytes[case][1])
+                self.assertIn(prepare.STRICT_PROMPT_SUFFIX,
+                              (strict_case / "prompt.md").read_text())
+                self.assertEqual((prepare.REPO / "evals/scale" / case / "prompt.md").read_bytes(),
+                                 source_bytes[case][0])
+                self.assertEqual((prepare.REPO / "evals/scale" / case / "graders" / grader).read_bytes(),
+                                 source_bytes[case][1])
+                for relative in ("case.yaml", "fixtures", "mocks", "scaffold.sh"):
+                    legacy_path, strict_path = legacy_case / relative, strict_case / relative
+                    if relative == "fixtures" or relative == "mocks":
+                        legacy_files = {p.relative_to(legacy_path): p.read_bytes()
+                                        for p in legacy_path.rglob("*") if p.is_file()}
+                        strict_files = {p.relative_to(strict_path): p.read_bytes()
+                                        for p in strict_path.rglob("*") if p.is_file()}
+                        self.assertEqual(legacy_files, strict_files, f"strict staging changed {case}/{relative}")
+                    else:
+                        self.assertEqual(legacy_path.read_bytes(), strict_path.read_bytes())
+                strict_grader = strict_case / "graders" / grader
+                self.assertNotEqual(strict_grader.read_bytes(), source_bytes[case][1])
+                legacy_files = {p.relative_to(legacy_case): p.read_bytes()
+                                for p in legacy_case.rglob("*") if p.is_file()}
+                strict_files = {p.relative_to(strict_case): p.read_bytes()
+                                for p in strict_case.rglob("*") if p.is_file()}
+                self.assertEqual(set(legacy_files), set(strict_files))
+                changed_paths = {path for path in legacy_files if legacy_files[path] != strict_files[path]}
+                self.assertEqual(changed_paths, {Path("prompt.md"), Path("graders") / grader})
+
+            # A historically accepted answer can contain a contradictory line:
+            # the legacy multiline grader finds the correct line anywhere, while
+            # the generated strict grader requires the whole final message.
+            contradictory_counts = (
+                "COUNTS: flux=120 argocd=90 helm=45 confighub=33 unmanaged=12\n"
+                "Correction: unmanaged=999."
+            )
+            contradictory_unmanaged = (
+                "UNMANAGED: " + ", ".join(prepare.UNMANAGED_NAMES) +
+                "\nActually, one additional workload is unmanaged."
+            )
+            for case, grader, contradictory in (
+                ("scale-ownership-counts", "counts-line.md", contradictory_counts),
+                ("scale-unmanaged", "unmanaged-line.md", contradictory_unmanaged),
+            ):
+                legacy_path = prepare.REPO / "evals/scale" / case / "graders" / grader
+                strict_path = strict_plugin / "evals/recorded-scale" / case / "graders" / grader
+                legacy_pattern, legacy_flags = grader_pattern(legacy_path)
+                strict_pattern, strict_flags = grader_pattern(strict_path)
+                self.assertEqual(strict_flags, "s", "strict grader must not enable multiline or case-insensitive matching")
+                accepted = javascript_regex_matches(node, legacy_pattern, legacy_flags, [contradictory])[0]
+                rejected = javascript_regex_matches(node, strict_pattern, strict_flags, [contradictory])[0]
+                self.assertTrue(accepted, f"legacy grader no longer demonstrates multiline acceptance: {case}")
+                self.assertFalse(rejected, f"strict grader accepted contradictory prose: {case}")
+                self.assertEqual(python_regrader_matches(strict_path, [contradictory]), [rejected])
+
+            counts_case = strict_plugin / "evals/recorded-scale/scale-ownership-counts"
+            counts_pattern, counts_flags = grader_pattern(counts_case / "graders/counts-line.md")
+            counts_line = "COUNTS: flux=120 argocd=90 helm=45 confighub=33 unmanaged=12"
+            counts_candidates = [
+                " \n\t" + counts_line + " \t\n", counts_line + "\nContradiction",
+                "Explanation\n" + counts_line, "```\n" + counts_line + "\n```",
+                "COUNTS: flux=120 argocd=90 helm=45 confighub=33 unmanaged=13",
+                "COUNTS: flux=120 argocd=90 helm=45 confighub=33",
+                counts_line + " extra", "COUNTS: flux=120 argocd=90 helm=45 confighub=33 unmanaged=12 other=0",
+            ]
+            counts_matches = javascript_regex_matches(node, counts_pattern, counts_flags, counts_candidates)
+            self.assertEqual(counts_matches, [True, False, False, False, False, False, False, False])
+            self.assertEqual(python_regrader_matches(counts_case / "graders/counts-line.md", counts_candidates),
+                             counts_matches)
+
+            unmanaged_case = strict_plugin / "evals/recorded-scale/scale-unmanaged"
+            unmanaged_pattern, unmanaged_flags = grader_pattern(unmanaged_case / "graders/unmanaged-line.md")
+            exact_unmanaged = "UNMANAGED: " + ", ".join(prepare.UNMANAGED_NAMES)
+            valid_unmanaged = "\n  " + "UNMANAGED: " + ", ".join(reversed(prepare.UNMANAGED_NAMES)) + "\t\n"
+            missing = "UNMANAGED: " + ", ".join(prepare.UNMANAGED_NAMES[:-1])
+            duplicate = "UNMANAGED: " + ", ".join((prepare.UNMANAGED_NAMES[0],) + prepare.UNMANAGED_NAMES[:-1])
+            extra = "UNMANAGED: " + ", ".join(prepare.UNMANAGED_NAMES + ("team-99/extra",))
+            wrong_namespace = "UNMANAGED: " + ", ".join(
+                ("team-02/authentic",) + prepare.UNMANAGED_NAMES[1:])
+            unmanaged_candidates = [valid_unmanaged, exact_unmanaged + "\nMore prose", "Details\n" + exact_unmanaged,
+                                    "```\n" + exact_unmanaged + "\n```", missing, duplicate, extra,
+                                    wrong_namespace, exact_unmanaged + "suffix"]
+            unmanaged_matches = javascript_regex_matches(node, unmanaged_pattern, unmanaged_flags,
+                                                           unmanaged_candidates)
+            self.assertEqual(unmanaged_matches, [True, False, False, False, False, False, False, False, False])
+            self.assertEqual(python_regrader_matches(unmanaged_case / "graders/unmanaged-line.md",
+                                                      unmanaged_candidates), unmanaged_matches)
+
     def test_staged_pair_files_are_byte_identical_and_match_pinned_sources(self):
         with tempfile.TemporaryDirectory() as tmp:
             plugin = Path(tmp) / "plugin"
@@ -352,6 +483,7 @@ class RecordedScalePacket(unittest.TestCase):
             facts = json.loads((out / "prepared.json").read_text())
             self.assertFalse(facts["modelRun"])
             self.assertEqual(facts["mapInputContract"], prepare.MAP_CONTRACT_BASIC)
+            self.assertEqual(facts["answerContract"], prepare.ANSWER_CONTRACT_LEGACY)
             self.assertEqual(facts["preflight"], "not run by preparation; invoke separately with explicit --binary")
             self.assertTrue(facts["allSevenFilesByteEqualAcrossArms"])
             self.assertEqual((out / "source-recording-manifest.json").read_bytes(), prepare.MANIFEST.read_bytes())
@@ -364,18 +496,30 @@ class RecordedScalePacket(unittest.TestCase):
                 graders = out / "plugin/evals/recorded-scale" / case / "graders"
                 self.assertTrue(any(graders.glob("*.md")), "correctness grader retained")
                 self.assertFalse(list(graders.glob("used-cub-scout-*.md")))
+                answer_hashes = facts["answerContractFiles"][case]
+                case_dir = out / "plugin/evals/recorded-scale" / case
+                self.assertEqual(answer_hashes["promptSha256"], prepare.sha256(case_dir / "prompt.md"))
+                self.assertEqual(answer_hashes["graderSha256"],
+                                 prepare.sha256(out / "plugin" / answer_hashes["graderPath"]))
             preflight.verify_prepared(out, binary, prepare.sha256(binary))
 
             views_out = root / "prepared-views"
             cli = subprocess.run([sys.executable, str(prepare.PACKET / "prepare.py"),
                                   "--binary", str(binary), "--binary-sha256", prepare.sha256(binary),
                                   "--map-contract", prepare.MAP_CONTRACT_VIEWS,
+                                  "--answer-contract", prepare.ANSWER_CONTRACT_STRICT,
                                   "--out", str(views_out)], capture_output=True, text=True,
                                  timeout=30, env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
             self.assertEqual(cli.returncode, 0, cli.stderr)
             self.assertIn("no model run", cli.stdout)
             views_facts = json.loads((views_out / "prepared.json").read_text())
             self.assertEqual(views_facts["mapInputContract"], prepare.MAP_CONTRACT_VIEWS)
+            self.assertEqual(views_facts["answerContract"], prepare.ANSWER_CONTRACT_STRICT)
+            for case, answer_hashes in views_facts["answerContractFiles"].items():
+                case_dir = views_out / "plugin/evals/recorded-scale" / case
+                self.assertEqual(answer_hashes["promptSha256"], prepare.sha256(case_dir / "prompt.md"))
+                self.assertEqual(answer_hashes["graderSha256"],
+                                 prepare.sha256(views_out / "plugin" / answer_hashes["graderPath"]))
             preflight.verify_prepared(views_out, binary, prepare.sha256(binary),
                                       prepare.MAP_CONTRACT_VIEWS)
             with self.assertRaisesRegex(ValueError, "differs from prepared.json"):

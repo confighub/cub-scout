@@ -29,7 +29,9 @@ tool arguments. The recorded server process gets a minimal environment with
 an explicit packet-owned kubeconfig containing no clusters, users, or
 contexts; it does not set or reset HOME. This is process configuration, not
 OS-level containment. Ordinary model tools and the two case prompts are copied
-unchanged into both arms. This file-tools-only setup is narrower than
+identically into both arms. The default answer contract copies prompts and
+graders unchanged; the optional strict answer contract modifies generated
+copies identically in both arms. This file-tools-only setup is narrower than
 Experiment A's ordinary kubectl/Helm baseline and cannot establish full
 benchmark comparability.
 
@@ -40,9 +42,19 @@ permissions equal across arms; adding recorded MCP availability remains part
 of the treatment. Neither parity with Experiment A nor benchmark readiness is
 established here.
 
-The staged cases retain their existing answer graders and remove the old
-`used-cub-scout-*` graders. Whether an arm chooses MCP, reads files, or does
+The default staged cases retain their existing answer graders and remove the
+old `used-cub-scout-*` graders. Whether an arm chooses MCP, reads files, or does
 both is an observation for later trace analysis, not a correctness score.
+Strict answer mode is a separate opt-in protocol: it adds the same “only the
+requested answer line” instruction to each generated prompt and replaces only
+the generated copy of that case's answer grader. It requires all five exact
+count fields and values, or exactly the twelve expected unmanaged names once
+each in any order. It permits surrounding whitespace, but rejects fences,
+other prose, extra lines, missing or extra fields/names, duplicates, and altered
+identities. It adds no tool-use correctness requirement and does not change
+tool grants. The historical source prompts, graders, and saved results remain
+unchanged; strict mode is a prospective grading protocol, not a regrade of past
+answers.
 
 ## Prepare and preflight
 
@@ -77,6 +89,7 @@ python3 evals/recorded-scale/prepare.py \
   --binary /absolute/path/to/cub-scout \
   --binary-sha256 EXPECTED_64_CHARACTER_SHA256 \
   --map-contract recorded-map-views.v1 \
+  --answer-contract recorded-scale-answer-line.v1 \
   --out /tmp/cub-scout-recorded-scale-views
 python3 evals/recorded-scale/preflight.py \
   /tmp/cub-scout-recorded-scale-views \
@@ -84,6 +97,15 @@ python3 evals/recorded-scale/preflight.py \
   --binary-sha256 EXPECTED_64_CHARACTER_SHA256 \
   --map-contract recorded-map-views.v1
 ```
+
+The answer-line option is independent of map input selection. Omit it to retain
+`recorded-scale-answer-legacy.v1`; add
+`--answer-contract recorded-scale-answer-line.v1` to select strict grading.
+`prepared.json` records the selected answer contract and SHA-256 hashes for
+each generated prompt and answer grader. The raw input files, map contract,
+binary hash, ordinary tool permissions, and model controls are unchanged by
+this option. The generated prompts are identical across arms. No historical
+run is graded or rescored by preparation.
 
 `prepared.json` records the selected contract. Preflight rejects an explicit
 contract that differs from that record and fails closed if the MCP descriptor

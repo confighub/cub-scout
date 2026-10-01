@@ -24,6 +24,34 @@ CASES = ("scale-ownership-counts", "scale-unmanaged")
 MAP_CONTRACT_BASIC = "recorded-map-basic.v1"
 MAP_CONTRACT_VIEWS = "recorded-map-views.v1"
 MAP_CONTRACTS = (MAP_CONTRACT_BASIC, MAP_CONTRACT_VIEWS)
+ANSWER_CONTRACT_LEGACY = "recorded-scale-answer-legacy.v1"
+ANSWER_CONTRACT_STRICT = "recorded-scale-answer-line.v1"
+ANSWER_CONTRACTS = (ANSWER_CONTRACT_LEGACY, ANSWER_CONTRACT_STRICT)
+STRICT_PROMPT_SUFFIX = (
+    "For this strict-answer variant, the entire final response must contain only the requested answer line. "
+    "Do not include an explanation, heading, Markdown fence, or any other text. Surrounding whitespace is allowed."
+)
+UNMANAGED_NAMES = (
+    "team-02/auth", "team-03/auth", "team-05/cron", "team-05/auth", "team-05/notify",
+    "team-11/api", "team-11/notify", "team-12/web", "team-18/web", "team-19/cron",
+    "team-25/search", "team-30/cache",
+)
+
+
+def strict_unmanaged_pattern() -> str:
+    alternatives = "(?:" + "|".join(re.escape(name) for name in UNMANAGED_NAMES) + ")"
+    present = "".join(
+        "(?=[^\\r\\n]*\\b" + re.escape(name) + r"(?:[ \t]*,|\s*$))"
+        for name in UNMANAGED_NAMES
+    )
+    return (r"^\s*UNMANAGED:[ \t]*" + present + alternatives +
+            r"(?:[ \t]*,[ \t]*" + alternatives + r"){11}[ \t]*\s*$")
+
+
+STRICT_GRADERS = {
+    "scale-ownership-counts": ("counts-line.md", r"^\s*COUNTS:[ \t]*flux=120[ \t]+argocd=90[ \t]+helm=45[ \t]+confighub=33[ \t]+unmanaged=12[ \t]*\s*$"),
+    "scale-unmanaged": ("unmanaged-line.md", strict_unmanaged_pattern()),
+}
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -56,10 +84,23 @@ def write_scaffold(case_dir: Path) -> None:
     script.chmod(0o755)
 
 
-def stage_case(plugin: Path, name: str) -> dict:
+def stage_case(plugin: Path, name: str,
+               answer_contract: str = ANSWER_CONTRACT_LEGACY) -> dict:
+    if answer_contract not in ANSWER_CONTRACTS:
+        raise ValueError(f"unsupported answer contract: {answer_contract}")
     source_case = REPO / "evals/scale" / name
     target_case = plugin / "evals/recorded-scale" / name
     shutil.copytree(source_case, target_case, ignore=shutil.ignore_patterns("scaffold.sh"))
+    if answer_contract == ANSWER_CONTRACT_STRICT:
+        prompt_path = target_case / "prompt.md"
+        prompt_path.write_text(prompt_path.read_text().rstrip() + "\n\n" + STRICT_PROMPT_SUFFIX + "\n")
+        grader_name, pattern = STRICT_GRADERS[name]
+        grader_path = target_case / "graders" / grader_name
+        # The explicit JS dotAll flag is inert here (the patterns use no dot
+        # operator); omitting multiline/case-insensitive flags keeps anchors exact.
+        grader_path.write_text(
+            "---\ntype: regex\npattern: '" + pattern + "'\nflags: s\ntarget: last_message\n---\n"
+        )
     # Keep answer/correctness graders, but do not let prior tool-use checks
     # turn a selected tool into a correctness outcome.
     for grader in (target_case / "graders").glob("used-cub-scout-*.md"):
@@ -91,6 +132,20 @@ def stage_case(plugin: Path, name: str) -> dict:
     return output
 
 
+def answer_contract_facts(plugin: Path) -> dict:
+    facts = {}
+    for case, (grader_name, _) in STRICT_GRADERS.items():
+        case_dir = plugin / "evals/recorded-scale" / case
+        prompt = case_dir / "prompt.md"
+        grader = case_dir / "graders" / grader_name
+        facts[case] = {
+            "promptSha256": sha256(prompt),
+            "graderPath": str(grader.relative_to(plugin)),
+            "graderSha256": sha256(grader),
+        }
+    return facts
+
+
 def generate_wrapper(plugin: Path, binary: Path, binary_hash: str,
                      recording: Path, recording_hash: str, kubeconfig: Path) -> None:
     wrapper = plugin / "bin/recorded-cub-scout"
@@ -110,9 +165,12 @@ def generate_wrapper(plugin: Path, binary: Path, binary_hash: str,
 
 
 def prepare(binary: Path, expected_hash: str, out: Path,
-            map_contract: str = MAP_CONTRACT_BASIC) -> None:
+            map_contract: str = MAP_CONTRACT_BASIC,
+            answer_contract: str = ANSWER_CONTRACT_LEGACY) -> None:
     if map_contract not in MAP_CONTRACTS:
         raise ValueError(f"unsupported map input contract: {map_contract}")
+    if answer_contract not in ANSWER_CONTRACTS:
+        raise ValueError(f"unsupported answer contract: {answer_contract}")
     binary = binary.expanduser().resolve(strict=True)
     out = out.expanduser().resolve()
     if not binary.is_file() or not os.access(binary, os.X_OK):
@@ -138,7 +196,7 @@ def prepare(binary: Path, expected_hash: str, out: Path,
     empty_kubeconfig = out / "kubeconfig-empty"
     empty_kubeconfig.write_text('apiVersion: v1\nkind: Config\nclusters: []\ncontexts: []\nusers: []\ncurrent-context: ""\n')
     generate_wrapper(plugin, binary, expected_hash, mcp_recording, DEPLOYMENT_SHA256, empty_kubeconfig)
-    case_facts = {name: stage_case(plugin, name) for name in CASES}
+    case_facts = {name: stage_case(plugin, name, answer_contract) for name in CASES}
     generated = {str(p.relative_to(plugin)): sha256(p) for p in sorted(plugin.rglob("*")) if p.is_file()}
     facts = {
         "schema": "recorded-scale-preparation.v1", "sourceCommit": SOURCE_COMMIT,
@@ -150,6 +208,8 @@ def prepare(binary: Path, expected_hash: str, out: Path,
         "caseFixtureFacts": case_facts, "allSevenFilesByteEqualAcrossArms": True,
         "mcpToolsExpected": ["explain", "map"], "mcpScope": {"api_version": "apps/v1", "kind": "Deployment", "namespace_prefix": "team-"},
         "mapInputContract": map_contract,
+        "answerContract": answer_contract,
+        "answerContractFiles": answer_contract_facts(plugin),
         "ordinaryToolPermissions": "copied unchanged from existing scale cases in both arms",
         "caseMode": "file-tools-only comparison; narrower than Experiment A kubectl/Helm baseline",
         "toolUseGraders": "removed; any actual tool use is a trace observation, not a correctness score",
@@ -166,9 +226,11 @@ def main() -> None:
     parser.add_argument("--out", required=True, type=Path)
     parser.add_argument("--map-contract", choices=MAP_CONTRACTS, default=MAP_CONTRACT_BASIC,
                         help="Reviewed recorded map input contract to require during preflight")
+    parser.add_argument("--answer-contract", choices=ANSWER_CONTRACTS, default=ANSWER_CONTRACT_LEGACY,
+                        help="Answer-line contract to stage; strict mode changes generated prompt/grader copies only")
     args = parser.parse_args()
     try:
-        prepare(args.binary, args.binary_sha256, args.out, args.map_contract)
+        prepare(args.binary, args.binary_sha256, args.out, args.map_contract, args.answer_contract)
     except Exception as exc:
         parser.error(str(exc))
     print(f"Prepared recorded-scale packet at {args.out.resolve()}; no model run or preflight was launched.")
