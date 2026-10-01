@@ -480,7 +480,7 @@ def execute(output: Path, source_root: Path = SOURCE_ROOT) -> dict[str, Any]:
                        "module_cache_path": str(module_cache), "input_kind": "authored synthetic JSON only"})
         remaining = deadline - time.monotonic()
         if remaining <= 0:
-            raise ReplayError("overall 120-second deadline expired before replay")
+            raise ReplayError(f"overall {DEADLINE_SECONDS}-second deadline expired before replay")
         return_code, stdout, stderr, run_status, cleanup = run_owned(argv, env, root / "pinned-source", remaining)
         _write_private(root / "stdout.bin", stdout)
         _write_private(root / "stderr.bin", stderr)
