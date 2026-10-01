@@ -1,0 +1,29 @@
+Name:               argocd/spark-parity
+Project:            default
+Server:             https://kubernetes.default.svc
+Namespace:          default-oci
+URL:                http://localhost:52991/applications/spark-parity
+Source:
+- Repo:             oci://oci.hub.confighub.com:443/target/helm-expt-parity-spark-mqghfthi-196o-cluster/oci
+  Target:           latest
+  Path:             ./helm-expt-parity-spark-mqghfthi-196o-spark
+SyncWindow:         Sync Allowed
+Sync Policy:        Automated (Prune)
+Sync Status:        Synced to latest (sha256:)
+Health Status:      Progressing
+
+KIND/NAME                                     STATUS  HEALTH       AGE  MESSAGE                                                          REASON
+Namespace/default-oci                         Synced               13m
+Service/spark-master-svc                      Synced  Healthy      13m  service/spark-master-svc serverside-applied
+ServiceAccount/spark                          Synced               13m  serviceaccount/spark serverside-applied
+StatefulSet/spark-worker                      Synced  Progressing  13m  statefulset.apps/spark-worker serverside-applied                 Waiting for 3 pods to be ready...
+├─Pod/spark-worker-0                                  Degraded     13m                                                                   Back-off pulling image "docker.io/bitnami/spark:4.0.0-debian-12-r20": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image "docker.io/bitnami/spark:4.0.0-debian-12-r20": failed to resolve reference "docker.io/bitnami/spark:4.0.0-debian-12-r20": docker.io/bitnami/spark:4.0.0-debian-12-r20: not found
+└─ControllerRevision/spark-worker-6c889fbf84                       13m
+NetworkPolicy/spark-master                    Synced               13m  networkpolicy.networking.k8s.io/spark-master serverside-applied
+PodDisruptionBudget/spark-worker              Synced  Healthy      13m  poddisruptionbudget.policy/spark-worker serverside-applied       PodDisruptionBudget has InsufficientPods
+Service/spark-headless                        Synced  Healthy      13m  service/spark-headless serverside-applied
+StatefulSet/spark-master                      Synced  Progressing  13m  statefulset.apps/spark-master serverside-applied                 Waiting for 1 pods to be ready...
+├─Pod/spark-master-0                                  Degraded     13m                                                                   Back-off pulling image "docker.io/bitnami/spark:4.0.0-debian-12-r20": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image "docker.io/bitnami/spark:4.0.0-debian-12-r20": failed to resolve reference "docker.io/bitnami/spark:4.0.0-debian-12-r20": docker.io/bitnami/spark:4.0.0-debian-12-r20: not found
+└─ControllerRevision/spark-master-5dd99f5654                       13m
+NetworkPolicy/spark-worker                    Synced               13m  networkpolicy.networking.k8s.io/spark-worker serverside-applied
+PodDisruptionBudget/spark-master              Synced  Healthy      13m  poddisruptionbudget.policy/spark-master serverside-applied       PodDisruptionBudget has InsufficientPods
