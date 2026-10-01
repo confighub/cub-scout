@@ -495,6 +495,32 @@ class CombinedProofAcceptanceTests(unittest.TestCase):
                     capture.main()
             self.assertFalse(output.exists())
 
+    def test_proxy_pair_records_requests_in_the_action_marker_log(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp) / "private"
+            work.mkdir()
+            output = Path(tmp) / "output"
+            output.mkdir()
+            event_log = output / "api-events.jsonl"
+            config = {"clusters": [{"name": "owned", "cluster": {"server": "https://127.0.0.1:6443"}}],
+                      "users": [{"name": "allowed", "user": {}}, {"name": "denied", "user": {}}],
+                      "contexts": [{"name": capture.ALLOWED_CONTEXT, "context": {"cluster": "owned", "user": "allowed"}},
+                                   {"name": capture.DENIED_CONTEXT, "context": {"cluster": "owned", "user": "denied"}}]}
+            with patch.object(capture.api_proxy, "upstream_credentials", return_value=(ssl.create_default_context(), "", [])):
+                proxies, _, _ = capture._proxy_pair(config, work, event_log=event_log)
+            try:
+                capture._mark_api_phase(event_log, "allowed-action")
+                proxies[0].record("GET", capture.TARGET_PATH, 200, "forwarded")
+                capture._mark_api_phase(event_log, "denied-action")
+                proxies[1].record("GET", capture.TARGET_PATH, 403, "forwarded")
+                grouped = capture.api_proxy.group_action_events(event_log, ["allowed-action", "denied-action"])
+                self.assertEqual(200, grouped["allowed-action"][0]["status"])
+                self.assertEqual(403, grouped["denied-action"][0]["status"])
+                self.assertFalse((work / "api-events.jsonl").exists())
+            finally:
+                for proxy in proxies:
+                    proxy.close()
+
     def test_combined_fixture_has_exact_source_truth_identity_and_local_inputs(self):
         with tempfile.TemporaryDirectory() as tmp:
             work = Path(tmp)

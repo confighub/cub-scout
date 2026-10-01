@@ -117,7 +117,12 @@ Application fixture: its missing `status.resources` prevented an exact workload
 link. The product correctly refused the link. The failed receipt is retained at
 `/tmp/scout-source-truth-diff-proof-1`; owned-cluster deletion, node absence and
 shared-config integrity checks passed. The fixture is corrected for a new attempt;
-no accepted combined proof is claimed yet. The
+no accepted combined proof is claimed yet. Attempt two passed its action
+assertions but failed final validation because requests and phase markers used
+different log files. Its failed receipt remains at
+`/tmp/scout-source-truth-diff-proof-2`; cleanup and shared-config integrity passed.
+The helper now passes one explicit event-log path to both proxies and the action
+markers, with a failing-before/passing-after offline regression. The
 `COMBINED_SOURCE_PIN` in `capture.py` records the reviewed candidate
 `a508e83840c54843a6461727ca71a417e4ccdbad`; the capture also requires that
 commit to be an ancestor of `HEAD` before building binaries or creating cluster

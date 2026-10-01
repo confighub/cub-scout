@@ -457,7 +457,7 @@ spec:
     return paths
 
 
-def _proxy_pair(config: dict, private_dir: Path):
+def _proxy_pair(config: dict, private_dir: Path, *, event_log: Path):
     clusters = {row["name"]: row["cluster"] for row in config.get("clusters", [])}
     users = {row["name"]: row["user"] for row in config.get("users", [])}
     contexts = {row["name"]: row["context"] for row in config.get("contexts", [])}
@@ -488,12 +488,12 @@ def _proxy_pair(config: dict, private_dir: Path):
         allowed = api_proxy.ReadOnlyAPIProxy(label="allowed", upstream=allowed_cluster["server"],
             tls=allowed_tls, authorization=allowed_auth, namespace=NAMESPACE,
             deployment=DEPLOYMENT, application=APPLICATION,
-            missing_deployment="scout-context-missing", event_log=private_dir / "api-events.jsonl")
+            missing_deployment="scout-context-missing", event_log=event_log)
         active_proxies.append(allowed)
         denied = api_proxy.ReadOnlyAPIProxy(label="denied", upstream=denied_cluster["server"],
             tls=denied_tls, authorization=denied_auth, namespace=NAMESPACE,
             deployment=DEPLOYMENT, application=APPLICATION,
-            missing_deployment="scout-context-missing", event_log=private_dir / "api-events.jsonl")
+            missing_deployment="scout-context-missing", event_log=event_log)
         active_proxies.append(denied)
     except Exception:
         for proxy in reversed(active_proxies):
@@ -1042,7 +1042,8 @@ spec:
                     raise RuntimeError("source-truth fixture lacks the exact managed workload identity")
                 if app_object.get("status", {}).get("sync", {}).get("revision") != "a" * 40:
                     raise RuntimeError("source-truth fixture lacks its observed Argo revision")
-                proxies, projected, proxy_cert_paths = _proxy_pair(config, work)
+                event_log = output / "api-events.jsonl"
+                proxies, projected, proxy_cert_paths = _proxy_pair(config, work, event_log=event_log)
                 observation_config.write_text(json.dumps(projected) + "\n")
                 observation_config.chmod(0o600)
                 cli_env["KUBECONFIG"] = str(observation_config)
@@ -1050,7 +1051,6 @@ spec:
                 receipt["proxyEndpoints"] = {proxy.label: proxy.endpoint for proxy in proxies}
                 receipt["observationKubeconfigSha256BeforeReads"] = digest(observation_config)
                 rendered = _write_rendered_inputs(work)
-                event_log = output / "api-events.jsonl"
                 binary = str(binaries / "cub-scout-combined")
                 _run_combined_action_flow(receipt=receipt, binary=binary, tui_binary=str(tui_binary),
                     cli_env=cli_env, proxies=proxies,
