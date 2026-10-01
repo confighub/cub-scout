@@ -159,6 +159,15 @@ class Pre02ContractTests(unittest.TestCase):
         malformed_nodes["items"][0]["kind"] = "Pod"
         with self.assertRaises(capture.CaptureError):
             capture.validate_nodes(encoded(malformed_nodes), "before")
+        omitted_events = events()
+        for key in ("apiVersion", "kind"):
+            omitted_events["items"][0].pop(key)
+        capture.validate_events(encoded(omitted_events), POD_UID, "before")
+        for key, value in (("apiVersion", "apps/v1"), ("kind", "Pod")):
+            wrong_events = events()
+            wrong_events["items"][0][key] = value
+            with self.subTest(key=key), self.assertRaises(capture.CaptureError):
+                capture.validate_events(encoded(wrong_events), POD_UID, "before")
         malformed_events = events(message=None)
         with self.assertRaises(capture.CaptureError):
             capture.validate_events(encoded(malformed_events), POD_UID, "before")

@@ -248,6 +248,8 @@ def validate_events(body: bytes, pod_uid: str, phase: str) -> dict:
     for event in obj["items"]:
         if not isinstance(event, dict):
             raise CaptureError("EventList contains a malformed item")
+        if event.get("apiVersion", "v1") != "v1" or event.get("kind", "Event") != "Event":
+            raise CaptureError("EventList item has contradictory Kubernetes type metadata")
         event_meta = event.get("metadata")
         involved = event.get("involvedObject")
         if not isinstance(event_meta, dict) or not isinstance(involved, dict):
