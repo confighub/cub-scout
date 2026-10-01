@@ -8,7 +8,7 @@ diagnostic, not a benchmark result or evidence of savings. No retry followed.
 |---|---|---:|---:|---:|
 | Scout package available | Timeout / fail | 17 | 180 | $0.08080895 |
 | No plugin | Timeout / fail | 10 | 180 | $0.040277 |
-| Pair | 0/2 verified | 27 | 360 | $0.12108595 |
+| Pair (sum of arms) | 0/2 verified | 27 | 360 | $0.12108595 |
 
 The owned runner exited 1 after 361.367 seconds without reaching its 390-second
 outer deadline or receiving an interruption. Both case-level deadlines fired.
