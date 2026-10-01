@@ -1,7 +1,7 @@
 # cub-scout execution handover
 
 **Current snapshot:** 2026-10-01. Verified merged baseline:
-[`f05716a1`](https://github.com/confighub/cub-scout/commit/f05716a1fe227ecbf0fde8b4e8f8ef95d0771e13).
+[`c69d7b49`](https://github.com/confighub/cub-scout/commit/c69d7b498a90854d522a008dc05a76623b2423ba).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
@@ -71,7 +71,12 @@ order, quality gates, budgets and decisions.
   six/six/one GETs and retained 403 evidence. Cleanup and config integrity pass.
   Attempt two exposed a real selected-workload identity bug, now fixed with
   a failing-before regression; both failed attempts remain retained. Full
-  controller-desired diff, final integration review and CI remain open. Explicit context with
+  controller-desired diff remains open. The foundation merged in
+  [PR #752](https://github.com/confighub/cub-scout/pull/752), after final review
+  repaired reverse Application namespace resolution. Exact head `4d3f28e9`
+  passed full local Go validation and enabled Unit/Integration/GitOps E2E/Proof
+  Artifact CI in run `36865407426`; Connected/Demo/Full Verification were skipped.
+  Explicit context with
   legacy delegated diff fails before reads. A context label is not a stable
   cluster ID; this packet does not close #599.
 
@@ -82,6 +87,22 @@ order, quality gates, budgets and decisions.
   optional Connected/Demo/Full Verification were skipped. PR #749 merged at
   `f05716a1`. Its example is typed fixture output,
   not a new server capture. The broader #561 scope stays open.
+
+- Source-truth [#750](https://github.com/confighub/cub-scout/issues/750) and
+  rendered-file diff [#751](https://github.com/confighub/cub-scout/issues/751)
+  are integrated locally. Reviews repaired declared-versus-observed Argo
+  revisions, mixed LIST/GET snapshots, the source-truth MCP executable route,
+  scope-discovery cancellation, and failed-read timestamp rendering. Focused
+  regressions pass. The combined full suite found only a stale Trace-picker
+  snapshot; the correction at `d6e0e26b` passes the final build/full Go suite
+  (command package 143.357 seconds). One fixed-source CLI/MCP/TUI owned proof is being prepared, with ConfigHub
+  reads explicitly mocked as failures; it cannot establish genuine server
+  behavior or controller reconciliation. Live proof and CI remain open.
+- GitOps-status context binding [#753](https://github.com/confighub/cub-scout/issues/753)
+  is the next bounded implementation, in a reused clean worktree. Its worker
+  forecast is 30k input/6k output, ceiling 65k/10k, one implementation plus one
+  repair. The separate combined-proof worker forecast is 40k/7k, ceiling
+  85k/12k. These advisory token envelopes are not billing or credits.
 
 - The fixed benchmark retains 24 questions and six equally weighted groups.
   This checkout has **0 planned, 5 refreshed fixtures, 2 prepared recorded
@@ -245,7 +266,8 @@ permission gates to already authorized routine work.
 Check #645, then continue Trace [#746](https://github.com/confighub/cub-scout/issues/746)
 and its explicit rendered-operand diff packet #751, followed by source-truth
 context binding #750 under #599. #743 is merged. Source-truth is committed
-locally with focused tests passing; broader validation and live proof remain.
+locally with reviewed repairs and focused tests passing; combined validation
+and live proof remain. Continue the bounded GitOps-status packet #753 next.
 The immediate target is v2.13, subject to the adopted gates. The full-24
 source preparation under #742 is integrated, but its blinded equal-evidence
 packet and authored input controls do not admit paid execution: recorded MCP
