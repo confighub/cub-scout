@@ -19,7 +19,7 @@ recording. Do not use network or live cluster access.
 Use the neutral step IDs to locate the evidence: step-01 is the initial read;
 step-02 the first unexpired repeat; step-03 the next unexpired read after the
 configured response changes; step-04 the first explicit refresh; step-05 the
-second explicit refresh; step-06 the ordinary read after the TTL boundary;
+second explicit refresh; step-06 the ordinary read at the TTL expiry boundary;
 step-07 the identity-field input; step-08 the refresh using the final response
 input; step-09 the following ordinary read. For each, keep resource identity (UID), image content digest, cache
 result, and observation/expiry times distinct. For step-03, separately report

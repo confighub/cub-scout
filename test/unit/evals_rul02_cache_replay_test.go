@@ -117,6 +117,11 @@ func TestRUL02ReplayFixtureAndEqualArmScaffold(t *testing.T) {
 		t.Fatalf("capture scope missing pinned provenance or overclaims: %+v", scope)
 	}
 
+	checkRUL02Scaffold(t, root)
+}
+
+func checkRUL02Scaffold(t *testing.T, root string) {
+	t.Helper()
 	workspace := t.TempDir()
 	abs, err := filepath.Abs(filepath.Join(root, "scaffold.sh"))
 	if err != nil {
@@ -316,7 +321,7 @@ func TestRUL02CaseSchemaAndPromptFrontmatter(t *testing.T) {
 	}
 	for _, required := range []string{
 		"step-01 is the initial read", "step-02 the first unexpired repeat", "step-03 the next unexpired read after the configured response changes",
-		"step-04 the first explicit refresh", "step-05 the second explicit refresh", "step-06 the ordinary read after the TTL boundary",
+		"step-04 the first explicit refresh", "step-05 the second explicit refresh", "step-06 the ordinary read at the TTL expiry boundary",
 		"step-07 the identity-field input", "step-08 the refresh using the final response", "step-09 the following ordinary",
 		"`YES`, `NO`, or `UNKNOWN`", "`ERROR`, `SUCCESS`, or", "`DEMONSTRATED`, `NOT_DEMONSTRATED`, or `UNKNOWN`",
 		"`ESTABLISHED`, `NOT_ESTABLISHED`, or `UNKNOWN`",
