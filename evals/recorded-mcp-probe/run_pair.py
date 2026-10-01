@@ -33,7 +33,11 @@ class RunInterrupted(BaseException):
         self.signum = signum
 
 
-def run_owned(command, root, timeout=210, grace=10):
+def run_owned(command, root, timeout=210, grace=10, launch_metadata=None):
+    reserved = {'pid', 'pgid', 'command', 'timeoutSeconds',
+                'terminationGraceSeconds', 'fastModeDisabled'}
+    if launch_metadata and reserved.intersection(launch_metadata):
+        raise ValueError('launch metadata cannot override owned-process fields')
     # Exclusive launch marker also rejects concurrent launches in this output.
     with (root / 'launch.json').open('x') as launch:
         if (root / 'result.json').exists():
@@ -52,9 +56,12 @@ def run_owned(command, root, timeout=210, grace=10):
                     signal.signal(sig, interrupted)
                 process = subprocess.Popen(command, cwd=root / 'plugin', env=env,
                                            stdout=stdout, stderr=stderr, start_new_session=True)
-                json.dump({'pid': process.pid, 'pgid': process.pid, 'command': command,
-                           'timeoutSeconds': timeout, 'terminationGraceSeconds': grace,
-                           'fastModeDisabled': True}, launch)
+                metadata = {'pid': process.pid, 'pgid': process.pid, 'command': command,
+                            'timeoutSeconds': timeout, 'terminationGraceSeconds': grace,
+                            'fastModeDisabled': True}
+                if launch_metadata:
+                    metadata.update(launch_metadata)
+                json.dump(metadata, launch, indent=2)
                 launch.flush()
                 code = process.wait(timeout=timeout)
             except subprocess.TimeoutExpired:

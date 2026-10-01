@@ -39,6 +39,17 @@ class PreparationGuards(unittest.TestCase):
                 runner.run_owned([sys.executable, '-c', 'raise SystemExit(99)'], root)
             self.assertEqual(heartbeat.read_bytes(), final)
 
+    def test_pair_runner_metadata_cannot_override_owned_process_record(self):
+        runner_spec = importlib.util.spec_from_file_location('run_pair', ROOT / 'run_pair.py')
+        runner = importlib.util.module_from_spec(runner_spec)
+        runner_spec.loader.exec_module(runner)
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            with self.assertRaisesRegex(ValueError, 'cannot override owned-process fields'):
+                runner.run_owned([sys.executable, '-c', 'pass'], root,
+                                 launch_metadata={'pid': 0})
+            self.assertFalse((root / 'launch.json').exists())
+
     def test_pair_runner_cleans_group_on_external_signals(self):
         import json
         import signal

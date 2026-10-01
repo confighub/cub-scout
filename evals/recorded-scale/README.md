@@ -139,6 +139,62 @@ benchmark admission is claimed here. Existing ordinary-tool permissions,
 prompt/model/cache/time controls, the remaining cases, and protocol gates still
 need review before any separate run is authorized.
 
+## Bounded counts diagnostic (`counts-economy.v1`)
+
+The opt-in `counts-economy.v1` policy prepares one owner-counts package-availability
+diagnostic. It requires `recorded-map-views.v1` and
+`recorded-scale-answer-line.v1`. It changes only the copied counts prompt's
+budget frontmatter from 30 turns / 900 seconds to 12 turns / 180 seconds; the
+question, strict answer instruction, allowed ordinary tools, grader, and seven
+raw fixture files stay pinned. The ordinary tool declaration is the same in
+both arms. The treatment is the cub-scout package (its skills and recorded
+`map`/`explain` MCP tools) compared with no plugin, not an MCP-only contrast.
+This is a file-tools comparison, narrower than Experiment A's kubectl/Helm
+baseline.
+The opt-in packet removes the copied fixed-error MCP mock files for this case,
+so `--mocks record --allow-real-servers` launches the staged recorded server
+instead of substituting those error responses.
+
+Prepare a fresh packet using the reviewed binary and digest:
+
+```sh
+python3 evals/recorded-scale/prepare.py \
+  --binary /absolute/path/to/cub-scout \
+  --binary-sha256 EXPECTED_64_CHARACTER_SHA256 \
+  --map-contract recorded-map-views.v1 \
+  --answer-contract recorded-scale-answer-line.v1 \
+  --policy counts-economy.v1 \
+  --out /tmp/cub-scout-counts-economy
+```
+
+Run the no-model preflight separately, then review the packet and exact command:
+
+```sh
+python3 evals/recorded-scale/preflight.py /tmp/cub-scout-counts-economy \
+  --binary /absolute/path/to/cub-scout \
+  --binary-sha256 EXPECTED_64_CHARACTER_SHA256 \
+  --map-contract recorded-map-views.v1
+python3 evals/recorded-scale/run_counts_pair.py \
+  /tmp/cub-scout-counts-economy --print-command
+```
+
+The runner refuses any other policy/case, validates source, binary, fixture,
+strict grader and staged-file hashes, and prints a dry command without starting
+Claude. Paid execution requires `--execute`. It fixes one serial paired run at
+`claude-haiku-4-5-20251001`, normal speed, no judge, no retry, no publishing,
+with real recorded MCP tools and a 390-second outer deadline plus ten-second
+owned-process cleanup. The `$1` setting is a prelaunch ceiling, not a strict
+in-flight billing stop; an incomplete or over-ceiling attempt must be recorded
+in the spend ledger and stops progression. No second pair follows
+automatically.
+
+After a separately reviewed run, inspect raw traces for actual tool inventories,
+grants, calls, answer, completion and cost. Ordinary inventories must match;
+the treatment may add only the intended recorded `map` and `explain` tools.
+Unexpected tools or calls invalidate the comparison. The runner does not claim
+prelaunch proof of actual runtime grants or savings. This packet does not run a
+model.
+
 ## Offline tests
 
 ```sh

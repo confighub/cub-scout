@@ -19,6 +19,8 @@ SKILLS_SOURCE = REPO / "skills"
 SOURCE_COMMIT = "7f5d38e8881d2f6b22e132b3da57ca60f483e703"
 MANIFEST_SHA256 = "e139701bf9d894ca9dd16ddb302fe0e4f28f3122922030cd9cdda57e8eb3fa22"
 DEPLOYMENT_SHA256 = "822716e41eaf59674cec8b52913b2613c76932b578c45d54285f71747dd228b6"
+COUNTS_PROMPT_SHA256 = "ed6377ec317db257a6df54e37c3d1ebfad3b97c2dd7aed41b2f62b942d7177ec"
+COUNTS_CASE_SHA256 = "e07c6db98f4aa74f460cbc631a5f7daacf4ae6d5925d167b31f6a576d83d2dd1"
 FILES = json.loads(MANIFEST.read_text())["files"]
 CASES = ("scale-ownership-counts", "scale-unmanaged")
 MAP_CONTRACT_BASIC = "recorded-map-basic.v1"
@@ -27,6 +29,18 @@ MAP_CONTRACTS = (MAP_CONTRACT_BASIC, MAP_CONTRACT_VIEWS)
 ANSWER_CONTRACT_LEGACY = "recorded-scale-answer-legacy.v1"
 ANSWER_CONTRACT_STRICT = "recorded-scale-answer-line.v1"
 ANSWER_CONTRACTS = (ANSWER_CONTRACT_LEGACY, ANSWER_CONTRACT_STRICT)
+COUNTS_ECONOMY_POLICY = "counts-economy.v1"
+COUNTS_ECONOMY = {
+    "max_turns": 12,
+    "timeout_seconds": 180,
+    "case": "scale-ownership-counts",
+    "model": "claude-haiku-4-5-20251001",
+    "runs": 1,
+    "concurrency": 1,
+    "pairTimeoutSeconds": 390,
+    "cleanupGraceSeconds": 10,
+    "maxCostUsd": 1,
+}
 STRICT_PROMPT_SUFFIX = (
     "For this strict-answer variant, the entire final response must contain only the requested answer line. "
     "Do not include an explanation, heading, Markdown fence, or any other text. Surrounding whitespace is allowed."
@@ -72,6 +86,14 @@ def verify_sources() -> None:
     if FILES.get("evals/fixtures/scale/cluster/deployments.yaml") != DEPLOYMENT_SHA256:
         raise ValueError("recorded Deployment digest does not match pinned source")
     # Content hashes bind the source even in a shallow checkout; no network fetch.
+
+
+def verify_counts_source() -> None:
+    case = REPO / "evals/scale/scale-ownership-counts"
+    if sha256(case / "prompt.md") != COUNTS_PROMPT_SHA256:
+        raise ValueError("pinned source counts prompt hash mismatch")
+    if sha256(case / "case.yaml") != COUNTS_CASE_SHA256:
+        raise ValueError("pinned source counts case hash mismatch")
 
 
 def write_scaffold(case_dir: Path) -> None:
@@ -146,6 +168,46 @@ def answer_contract_facts(plugin: Path) -> dict:
     return facts
 
 
+def apply_counts_economy_policy(plugin: Path) -> dict:
+    """Set only the copied count prompt's bounded eval controls."""
+    prompt = plugin / "evals/recorded-scale/scale-ownership-counts/prompt.md"
+    original = prompt.read_text()
+    match = re.match(r"\A---\n(.*?)\n---\n(.*)\Z", original, re.DOTALL)
+    if not match:
+        raise ValueError("counts prompt does not have expected frontmatter")
+    frontmatter, body = match.groups()
+    if not re.search(r"(?m)^max_turns: 30$", frontmatter) or not re.search(r"(?m)^timeout_seconds: 900$", frontmatter):
+        raise ValueError("counts prompt source budget differs from reviewed baseline")
+    diagnostic_frontmatter = re.sub(r"(?m)^max_turns: 30$", "max_turns: 12", frontmatter)
+    diagnostic_frontmatter = re.sub(r"(?m)^timeout_seconds: 900$", "timeout_seconds: 180", diagnostic_frontmatter)
+    prompt.write_text(f"---\n{diagnostic_frontmatter}\n---\n{body}")
+    mocks = plugin / "evals/recorded-scale/scale-ownership-counts/mocks/cub-scout"
+    if mocks.exists():
+        shutil.rmtree(mocks)
+    return {
+        "schema": COUNTS_ECONOMY_POLICY,
+        "originalMaxTurns": 30,
+        "originalTimeoutSeconds": 900,
+        "maxTurns": COUNTS_ECONOMY["max_turns"],
+        "timeoutSeconds": COUNTS_ECONOMY["timeout_seconds"],
+        "case": COUNTS_ECONOMY["case"],
+        "model": COUNTS_ECONOMY["model"],
+        "runs": COUNTS_ECONOMY["runs"],
+        "concurrency": COUNTS_ECONOMY["concurrency"],
+        "pairTimeoutSeconds": COUNTS_ECONOMY["pairTimeoutSeconds"],
+        "cleanupGraceSeconds": COUNTS_ECONOMY["cleanupGraceSeconds"],
+        "maxCostUsd": COUNTS_ECONOMY["maxCostUsd"],
+        "speed": "normal",
+        "judge": "none",
+        "retry": "none",
+        "publish": False,
+        "originalPromptSha256": COUNTS_PROMPT_SHA256,
+        "diagnosticPromptSha256": sha256(prompt),
+        "promptBodySha256": sha256_bytes(body.encode()),
+        "mockToolOverridesRemoved": True,
+    }
+
+
 def generate_wrapper(plugin: Path, binary: Path, binary_hash: str,
                      recording: Path, recording_hash: str, kubeconfig: Path) -> None:
     wrapper = plugin / "bin/recorded-cub-scout"
@@ -166,11 +228,19 @@ def generate_wrapper(plugin: Path, binary: Path, binary_hash: str,
 
 def prepare(binary: Path, expected_hash: str, out: Path,
             map_contract: str = MAP_CONTRACT_BASIC,
-            answer_contract: str = ANSWER_CONTRACT_LEGACY) -> None:
+            answer_contract: str = ANSWER_CONTRACT_LEGACY,
+            policy: str | None = None) -> None:
     if map_contract not in MAP_CONTRACTS:
         raise ValueError(f"unsupported map input contract: {map_contract}")
     if answer_contract not in ANSWER_CONTRACTS:
         raise ValueError(f"unsupported answer contract: {answer_contract}")
+    if policy not in (None, COUNTS_ECONOMY_POLICY):
+        raise ValueError(f"unsupported preparation policy: {policy}")
+    if policy == COUNTS_ECONOMY_POLICY and (map_contract != MAP_CONTRACT_VIEWS or
+                                             answer_contract != ANSWER_CONTRACT_STRICT):
+        raise ValueError("counts-economy.v1 requires recorded-map-views.v1 and the strict answer-line contract")
+    if policy == COUNTS_ECONOMY_POLICY:
+        verify_counts_source()
     binary = binary.expanduser().resolve(strict=True)
     out = out.expanduser().resolve()
     if not binary.is_file() or not os.access(binary, os.X_OK):
@@ -197,6 +267,9 @@ def prepare(binary: Path, expected_hash: str, out: Path,
     empty_kubeconfig.write_text('apiVersion: v1\nkind: Config\nclusters: []\ncontexts: []\nusers: []\ncurrent-context: ""\n')
     generate_wrapper(plugin, binary, expected_hash, mcp_recording, DEPLOYMENT_SHA256, empty_kubeconfig)
     case_facts = {name: stage_case(plugin, name, answer_contract) for name in CASES}
+    policy_facts = None
+    if policy == COUNTS_ECONOMY_POLICY:
+        policy_facts = apply_counts_economy_policy(plugin)
     generated = {str(p.relative_to(plugin)): sha256(p) for p in sorted(plugin.rglob("*")) if p.is_file()}
     facts = {
         "schema": "recorded-scale-preparation.v1", "sourceCommit": SOURCE_COMMIT,
@@ -216,6 +289,8 @@ def prepare(binary: Path, expected_hash: str, out: Path,
         "modelRun": False, "preflight": "not run by preparation; invoke separately with explicit --binary",
         "generatedPluginFiles": generated,
     }
+    if policy_facts is not None:
+        facts["policy"] = policy_facts
     (out / "prepared.json").write_text(json.dumps(facts, indent=2, sort_keys=True) + "\n")
 
 
@@ -228,9 +303,11 @@ def main() -> None:
                         help="Reviewed recorded map input contract to require during preflight")
     parser.add_argument("--answer-contract", choices=ANSWER_CONTRACTS, default=ANSWER_CONTRACT_LEGACY,
                         help="Answer-line contract to stage; strict mode changes generated prompt/grader copies only")
+    parser.add_argument("--policy", choices=(COUNTS_ECONOMY_POLICY,),
+                        help="Explicit bounded diagnostic policy; requires strict answer and map views contracts")
     args = parser.parse_args()
     try:
-        prepare(args.binary, args.binary_sha256, args.out, args.map_contract, args.answer_contract)
+        prepare(args.binary, args.binary_sha256, args.out, args.map_contract, args.answer_contract, args.policy)
     except Exception as exc:
         parser.error(str(exc))
     print(f"Prepared recorded-scale packet at {args.out.resolve()}; no model run or preflight was launched.")
