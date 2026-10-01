@@ -12,6 +12,19 @@ and five raw recordings. These additions remain prepared, not run: the suite
 is non-executable and paid runs remain stopped. No paid restart or savings
 claim is authorized.
 
+## October 1 checkpoint: actual delegation probes and turn counter
+
+The [adversarial CLI report](evals/reports/2026-10-01-direct-cli-adversarial.json) records explicit named Task and Agent refusal
+errors from the pinned CLI under fake-provider controls. Both completed with
+Read-only inventories and reconciled transport. The Read-loop stopped after one
+model request and a successful private-fixture Read, then returned
+`error_max_turns`; reported `num_turns: 2` disagreed with requested limit1 and
+failed the harness. Counter semantics remain unresolved. Prior failed attempts
+stay failed. This proves neither full treatment nor complete process-tree or
+paid accounting. #709/#603 remain open; paid evals are stopped and the reported
+estimate remains $4.38666035. No dollar/credit savings claim follows.
+
+
 ## October 1 checkpoint: isolated CLI wiring
 
 The [direct CLI offline report](evals/reports/2026-10-01-direct-cli-offline-probe.json) retains three failed attempts and one
