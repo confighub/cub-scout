@@ -1,5 +1,17 @@
 # Delivery plan to cub scout 3.0
 
+## October 1 checkpoint: RUL-03 explicit-context recording
+
+The reviewed [RUL-03 capture](../evals/reports/2026-10-01-rul03-context.json)
+preserves one 403 response for a denied explicit context and one Deployment
+List response from a distinct readable context. Denied inventory stays unknown;
+the observations are sequential, not an atomic snapshot. The fixed 24-case
+manifest now has five planned cases, five refreshed fixtures, two prepared
+recorded bindings, seven prepared projections, and five prepared raw
+recordings. RUL-03 is prepared, not run. P1 remains non-executable and paid
+runs remain stopped; this checkpoint does not authorize a paid restart or
+make a savings claim.
+
 ## October 1 checkpoint: isolated CLI wiring
 
 The [direct CLI offline report](../evals/reports/2026-10-01-direct-cli-offline-probe.json) retains three failed attempts and one

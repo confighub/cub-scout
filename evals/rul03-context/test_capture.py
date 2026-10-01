@@ -10,6 +10,7 @@ import tempfile
 import time
 import unittest
 import urllib.error
+import warnings
 from unittest.mock import patch
 
 HERE = Path(__file__).resolve().parent
@@ -75,8 +76,10 @@ class CaptureContractTests(unittest.TestCase):
             fixture_dir.mkdir(parents=True)
             (fixture_dir / "generated.yaml").write_text("generated: true\n")
             scenario = {"cases": str(root / "*" / "case.yaml"), "fixtures": str(root / "fixtures"), "live": False}
-            self.assertEqual(record.scenario_cases(scenario), [str(case)])
-            record.write_scaffolds(scenario)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", ResourceWarning)
+                self.assertEqual(record.scenario_cases(scenario), [str(case)])
+                record.write_scaffolds(scenario)
             self.assertEqual(scaffold.read_text(), authored)
 
     def test_two_owned_cluster_names_are_distinct_and_fit_node_label(self):

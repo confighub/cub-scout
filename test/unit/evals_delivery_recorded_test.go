@@ -324,6 +324,26 @@ func TestFluxHLT02CaseMetadataUsesSingleSchemaAndPromptFrontmatter(t *testing.T)
 
 func TestRUL03RecordedCaseContractAndScaffold(t *testing.T) {
 	root := filepath.Join("..", "..", "evals", "rul03-context")
+	reportBytes, err := os.ReadFile(filepath.Join("..", "..", "evals", "reports", "2026-10-01-rul03-context.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var report struct {
+		Prior struct {
+			Revision    string  `json:"captureSourceRevision"`
+			HelperExit  int     `json:"helperExit"`
+			WrapperExit int     `json:"wrapperExit"`
+			Seconds     float64 `json:"wrapperSeconds"`
+			Error       string  `json:"error"`
+			Operations  int     `json:"operations"`
+		} `json:"priorFailedPreflight"`
+	}
+	if err := json.Unmarshal(reportBytes, &report); err != nil {
+		t.Fatal(err)
+	}
+	if report.Prior.Revision != "365dd9b169b7b7e02293ae934b1d31b149d46b96" || report.Prior.HelperExit != 1 || report.Prior.WrapperExit != 0 || report.Prior.Seconds != 0.6500765418168157 || report.Prior.Error != "could not identify local Docker context" || report.Prior.Operations != 0 {
+		t.Fatalf("prior failed preflight evidence changed: %+v", report.Prior)
+	}
 	caseData, err := os.ReadFile(filepath.Join(root, "case.yaml"))
 	if err != nil {
 		t.Fatal(err)

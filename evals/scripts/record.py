@@ -50,23 +50,8 @@ SCENARIOS = {
 
 
 def scenario_cases(sc):
-    cases = []
-    for path in glob.glob(sc["cases"]):
-        case_dir = os.path.dirname(path)
-        with open(path) as case_file:
-            declares_scaffold = "scaffold_script: scaffold.sh" in case_file.read()
-        if declares_scaffold or fixture_owned_scaffold(os.path.join(case_dir, "scaffold.sh")):
-            cases.append(case_dir)
-    return sorted(cases)
-
-
-def fixture_owned_scaffold(path):
-    """A case-specific scaffold is routed into the scenario but never regenerated."""
-    try:
-        with open(path) as existing:
-            return any(line.startswith("# FIXTURE-OWNED:") for _, line in zip(range(3), existing))
-    except OSError:
-        return False
+    return sorted(os.path.dirname(p) for p in glob.glob(sc["cases"])
+                  if "scaffold_script: scaffold.sh" in open(p).read())
 
 
 def mcp_session(binary, env, calls):
@@ -178,15 +163,16 @@ def write_scaffolds(sc):
     for path in sorted(glob.glob(os.path.join(cluster, "*.yaml"))):
         name = os.path.basename(path)
         script.append("cat > cluster/%s <<'CUB_SCOUT_EVAL_EOF'" % name)
-        with open(path) as fixture:
-            script.append(fixture.read().rstrip("\n"))
+        script.append(open(path).read().rstrip("\n"))
         script.append("CUB_SCOUT_EVAL_EOF")
     body = "\n".join(script) + "\n"
     for case in scenario_cases(sc):
         dest = os.path.join(case, "scaffold.sh")
-        if fixture_owned_scaffold(dest):
-            print("preserving fixture-owned scaffold: %s (validated from case fixtures)" % dest)
-            continue
+        if os.path.isfile(dest):
+            with open(dest) as existing:
+                if any(line.startswith("# FIXTURE-OWNED:") for _, line in zip(range(3), existing)):
+                    print("preserving fixture-owned scaffold: %s (validated from case fixtures)" % dest)
+                    continue
         open(dest, "w").write(body)
         os.chmod(dest, 0o755)
 

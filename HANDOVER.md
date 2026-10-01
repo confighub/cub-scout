@@ -1,5 +1,17 @@
 # cub-scout Handover for the Next AI Coder
 
+## 2026-10-01: RUL-03 explicit-context evidence prepared
+
+RUL-03 now has a reviewed, sequential two-context recording and strict case
+contract; see the [capture report](evals/reports/2026-10-01-rul03-context.json).
+The denied context returned HTTP 403 and its inventory remains unknown; the
+separate readable context returned one Deployment. The current context and
+shared kubeconfig stayed unchanged. The fixed 24-case manifest now has five
+planned, five refreshed, two prepared recorded bindings, seven projections,
+and five raw recordings. These additions remain prepared, not run: the suite
+is non-executable and paid runs remain stopped. No paid restart or savings
+claim is authorized.
+
 ## October 1 checkpoint: isolated CLI wiring
 
 The [direct CLI offline report](evals/reports/2026-10-01-direct-cli-offline-probe.json) retains three failed attempts and one

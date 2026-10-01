@@ -83,6 +83,14 @@
   },
   "priorFailedPreflight": {
     "classification": "failed preflight; retained separately, not used as model evidence",
+    "captureSourceRevision": "365dd9b169b7b7e02293ae934b1d31b149d46b96",
+    "captureScriptSha256": "708019a46f734b11774f979725f4ef11fcf786041f31928b477948b204fa7b64",
+    "helperExit": 1,
+    "wrapperExit": 0,
+    "wrapperSeconds": 0.6500765418168157,
+    "error": "could not identify local Docker context",
+    "cause": "OrbStack's resolved docker-tools executable rejected argv0; no cluster creation was attempted.",
+    "correction": "The reviewed source preserves the selected docker launcher argv0 while validating and hashing the resolved executable.",
     "operations": 0,
     "sharedKubeconfigUnchanged": true
   }
