@@ -76,6 +76,41 @@ class OfflineContracts(unittest.TestCase):
         self.assertIn(b"429", invoke(raw))
         self.assertEqual(len(records), 1)
 
+    def test_startup_head_is_explicitly_declined_and_counted(self):
+        records, count, lock, events = [], [0], threading.Lock(), []
+        class MemorySocket:
+            def __init__(self, raw): self.raw, self.output = raw, bytearray()
+            def makefile(self, *args): return io.BytesIO(self.raw)
+            def settimeout(self, value): pass
+            def sendall(self, data): self.output.extend(data)
+        class Server:
+            def request_ordinal(self, request): return len(events)+1
+            def audit_connection(self, event): events.append(event)
+        handler = probe.handler_type(records, lock, count, "/private-preflight")
+        def invoke(raw):
+            sock = MemorySocket(raw)
+            handler(sock, ("127.0.0.1", 1234), Server())
+            return bytes(sock.output)
+        self.assertIn(b"404 Not Found", invoke(b"HEAD /api/hello HTTP/1.1\r\nHost: localhost\r\n\r\n"))
+        self.assertEqual(count[0], 1)
+        self.assertEqual(records, [])
+        self.assertEqual(events[0]["kind"], "startup-declined")
+        typed = [{"id": 1, "kind": "preflight", "httpStatus": 204},
+                 {**events[0], "id": 2}]
+        probe.validate_transport(2, typed, 0)
+        for extra in (b"Content-Length: 1\r\n", b"Transfer-Encoding: chunked\r\n"):
+            invoke(b"HEAD /api/hello HTTP/1.1\r\nHost: localhost\r\n"+extra+b"\r\n")
+            self.assertEqual(events[-1]["kind"], "rejected")
+        invoke(b"HEAD /api/hello?extra=1 HTTP/1.1\r\nHost: localhost\r\n\r\n")
+        self.assertEqual(events[-1]["kind"], "rejected")
+        with self.assertRaises(probe.ProbeError):
+            probe.validate_transport(3, typed+[{**typed[1], "id": 3}], 0)
+        _, accepted, _ = request()
+        cleanup = dict(server_shutdown_complete=True, handlers_joined=True, server_thread_joined=True)
+        probe.validate_final_snapshot(terminal(), accepted, 0, 2, cleanup, 1)
+        with self.assertRaises(probe.ProbeError):
+            probe.validate_final_snapshot(terminal(), accepted, 0, 2, cleanup, 0)
+
     def test_transport_requires_complete_typed_zero_byte_eof_evidence(self):
         valid = [{"id": 1, "kind": "preflight", "httpStatus": 204},
                  {"id": 2, "kind": "accepted", "httpStatus": 200},

@@ -159,8 +159,10 @@ def validate_probe(stdout: bytes, requests: list[dict], return_code: int) -> dic
             "terminal_text": "offline-probe-terminal", "tool_inventory": ["Read"]}
 
 
-def validate_final_snapshot(stdout, requests, return_code, received, cleanup):
-    if (type(received) is not int or received != len(requests)
+def validate_final_snapshot(stdout, requests, return_code, received, cleanup, startup_requests=0):
+    if type(startup_requests) is not int or startup_requests not in (0, 1):
+        raise ProbeError("unexpected startup request count")
+    if (type(received) is not int or received != len(requests)+startup_requests
             or received > MAX_REQUESTS):
         raise ProbeError("received requests exceed or differ from accepted captured requests")
     if any(cleanup.get(key) is not True for key in
@@ -178,12 +180,18 @@ def validate_transport(connections, events, accepted_requests):
     kinds = [e.get("kind") for e in events]
     if kinds.count("preflight") != 1 or kinds.count("accepted") != accepted_requests:
         raise ProbeError("connection evidence disagrees with preflight or accepted requests")
+    if kinds.count("startup-declined") > 1:
+        raise ProbeError("repeated startup request")
     for event in events:
         kind = event.get("kind")
         if kind == "empty-eof":
             if (event.get("requestLineBytes") != 0 or event.get("httpStatus") is not None
                     or event.get("requestLineSha256") != sha256(b"")):
                 raise ProbeError("empty connection lacks exact zero-byte EOF evidence")
+        elif kind == "startup-declined":
+            if (event.get("httpStatus") != 404 or event.get("method") != "HEAD"
+                    or event.get("pathWithoutQuery") != "/api/hello"):
+                raise ProbeError("startup request evidence differs from exact declined route")
         elif kind in ("preflight", "accepted"):
             if event.get("httpStatus") != (204 if kind == "preflight" else 200):
                 raise ProbeError("connection response status disagrees with its classification")
@@ -373,6 +381,15 @@ def handler_type(records: list[dict], lock: threading.Lock, count: list[int], pr
             if ordinal > MAX_REQUESTS:
                 self.send_error(429, "request limit")
                 return
+            # Observed CLI startup capability check. Explicitly decline it:
+            # this fixture is not an alternate provider and offers no inference
+            # at this route. Count it, close it, and never retain its headers.
+            if (self.command == "HEAD" and self.path == "/api/hello"
+                    and self.headers.get_all("content-length", []) in ([], ["0"])
+                    and not self.headers.get_all("transfer-encoding")):
+                self._audit_kind = "startup-declined"
+                self.send_response(404); self.send_header("Content-Length", "0")
+                self.send_header("Connection", "close"); self.end_headers(); return
             if (len(self.headers.get_all("x-api-key", [])) > 1
                     or len(self.headers.get_all("authorization", [])) > 1
                     or len(self.headers.get_all("content-length", [])) != 1
@@ -611,7 +628,8 @@ def execute(output: Path, cli: Path, expected_hash: str, expected_version: str) 
             restore_signals(previous_signals)
     try:
         validate_transport(record["connection_count"], record["connection_events"], len(request_snapshot))
-        record["observed"] = validate_final_snapshot(stdout, request_snapshot, rc, count[0], cleanup)
+        record["observed"] = validate_final_snapshot(stdout, request_snapshot, rc, count[0], cleanup,
+            sum(e.get("kind") == "startup-declined" for e in record["connection_events"]))
     except (ProbeError, ValueError, TypeError) as exc:
         record["run_status"] = "validation_failed"
         record["error"] = str(exc)
