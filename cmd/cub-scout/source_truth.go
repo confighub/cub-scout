@@ -22,6 +22,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -30,6 +31,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/confighub/cub-scout/v2/pkg/agent"
@@ -39,7 +43,19 @@ var (
 	sourceTruthNamespace string
 	sourceTruthStrategy  string
 	sourceTruthFormat    string
+	sourceTruthContext   string
 )
+
+type sourceTruthObservation struct {
+	Evidence        agent.SourceTruthEvidence
+	RuntimeError    error
+	ControllerError error
+	ConfigHubError  error
+}
+
+var sourceTruthUnitGet = func(ctx context.Context, unit, space string) ([]byte, error) {
+	return cubStdout(ctx, withConfigHubSpace([]string{"unit", "get", unit, "-o", "json"}, space)...)
+}
 
 var sourceTruthCmd = &cobra.Command{
 	Use:   "source-truth <kind>/<name> | <kind> <name>",
@@ -68,6 +84,7 @@ Examples:
   cub-scout compare source-truth deploy/rag-server -n demo --strategy confighub-oci-flux
   cub scout compare source-truth Deployment rag-server -n demo --strategy git-argo
   cub-scout compare source-truth statefulset/db -n prod --strategy helm-flux
+  cub-scout compare source-truth deploy/api -n prod --strategy git-argo --kube-context prod-west
 
 Supports Deployment, StatefulSet, DaemonSet. Other kinds emit ASK.`,
 	Args: cobra.RangeArgs(1, 2),
@@ -92,13 +109,14 @@ func init() {
 	combinedCmd.AddCommand(sourceTruthCmd)
 	sourceTruthCmd.Flags().StringVarP(&sourceTruthNamespace, "namespace", "n", "", "Namespace of the resource (required for namespaced kinds)")
 	sourceTruthCmd.Flags().StringVar(&sourceTruthStrategy, "strategy", "", sourceTruthStrategyFlagHelp())
-	sourceTruthCmd.Flags().StringVar(&sourceTruthFormat, "format", "json", "Output format: json")
+	sourceTruthCmd.Flags().StringVar(&sourceTruthFormat, "format", "json", "Output format: ascii, json, md")
+	sourceTruthCmd.Flags().StringVar(&sourceTruthContext, "kube-context", "", "Select one exact kubeconfig context for runtime and controller reads")
 }
 
 func runSourceTruth(cmd *cobra.Command, args []string) error {
 	format := strings.ToLower(strings.TrimSpace(sourceTruthFormat))
-	if format != "json" {
-		return fmt.Errorf("invalid --format %q (v0.1 supports: json)", sourceTruthFormat)
+	if format != "json" && format != "ascii" && format != "md" {
+		return fmt.Errorf("invalid --format %q (valid: ascii, json, md)", sourceTruthFormat)
 	}
 
 	// Parse positional arg(s) using the same helper explain uses, so the
@@ -107,56 +125,43 @@ func runSourceTruth(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-
-	// Strategy validation. Empty/unknown still produces a valid evidence
-	// document (ASK + UNKNOWN per the council); the CLI surfaces it as
-	// JSON output and exits 0 so Pilot receives the structured "I don't
-	// know" rather than a CLI error.
-	strategy, ok := agent.ParseStrategy(sourceTruthStrategy)
-	if !ok {
-		return emitEvidence(agent.Derive("", agent.SourceTruthSurfaces{}))
+	if strings.TrimSpace(name) == "" {
+		return fmt.Errorf("source-truth requires a non-empty workload name")
+	}
+	if strings.TrimSpace(sourceTruthNamespace) == "" {
+		return fmt.Errorf("source-truth requires a workload namespace with -n/--namespace")
 	}
 
-	// Connected-mode gate: source-truth is meaningless without the
-	// ConfigHub surface. Refuse early rather than emit a half-evidence
-	// document — the operator should know they are not connected.
+	selection, err := clusterContextSelectionFromFlag(cmd)
+	if err != nil {
+		return err
+	}
+	// An unknown strategy remains an offline ASK result when the option is
+	// omitted. When the caller explicitly names a context, still validate that
+	// selection before returning the ASK document so invalid input never gets
+	// silently accepted or mistaken for the default binding.
+	strategy, ok := agent.ParseStrategy(sourceTruthStrategy)
+	if !ok {
+		evidence := agent.Derive("", agent.SourceTruthSurfaces{})
+		if selection.explicit {
+			session, err := newTraceSessionForSelection(selection)
+			if err != nil {
+				return fmt.Errorf("resolve selected Kubernetes context: %w", err)
+			}
+			evidence.Context = session.contextLabel()
+		}
+		return outputSourceTruth(os.Stdout, evidence, format)
+	}
+
+	session, err := newTraceSessionForSelection(selection)
+	if err != nil {
+		return fmt.Errorf("resolve selected Kubernetes context: %w", err)
+	}
 	if err := requireConfigHubFor("compare source-truth"); err != nil {
 		return err
 	}
-
-	ctx := cmd.Context()
-
-	// Fetch the runtime surface first because we need its labels to look
-	// up the ConfigHub Unit, and the runtime image is the canonical
-	// "what is actually running" value the contract asks for.
-	runtime, runtimeObj, runtimeErr := collectRuntimeSurface(ctx, kind, name, sourceTruthNamespace)
-	if runtimeErr != nil {
-		// Runtime is unfetchable — BLOCK. Pilot must not accept evidence
-		// where we cannot read the cluster.
-		return emitEvidence(agent.Derive(strategy, agent.SourceTruthSurfaces{
-			Controller: nil, // also unfetched in this branch; caller sees
-			Runtime:    nil, // paired naming in BLOCK message
-		}))
-	}
-
-	// ConfigHub surface from the runtime object's labels. If the workload
-	// is not labelled as ConfigHub-managed, the surface is absent — that
-	// is a hard BLOCK, since the strategy declares ConfigHub authority.
-	chSurface, chErr := collectConfigHubSurface(ctx, runtimeObj)
-	_ = chErr // surfaced via nil
-
-	// Controller surface from the existing tracers. Tracer selection is
-	// strategy-aware: Argo strategies try the Argo tracer; Flux strategies
-	// try Flux. We do *not* fall back across controllers — that would
-	// hide the strategy-mismatch trap the contract is supposed to catch.
-	ctrlSurface := collectControllerSurface(ctx, strategy, kind, name, sourceTruthNamespace)
-
-	ev := agent.Derive(strategy, agent.SourceTruthSurfaces{
-		ConfigHub:  chSurface,
-		Controller: ctrlSurface,
-		Runtime:    runtime,
-	})
-	return emitEvidence(ev)
+	observation := collectSourceTruthObservation(cmd.Context(), session, kind, name, sourceTruthNamespace, strategy)
+	return outputSourceTruth(os.Stdout, observation.Evidence, format)
 }
 
 // emitEvidence prints the JSON contract to stdout. Delegates to
@@ -165,6 +170,58 @@ func runSourceTruth(cmd *cobra.Command, args []string) error {
 // identical.
 func emitEvidence(ev agent.SourceTruthEvidence) error {
 	return agent.EncodeEvidence(os.Stdout, ev)
+}
+
+func outputSourceTruth(w io.Writer, ev agent.SourceTruthEvidence, format string) error {
+	switch strings.ToLower(strings.TrimSpace(format)) {
+	case "json":
+		return agent.EncodeEvidence(w, ev)
+	case "md":
+		_, err := io.WriteString(w, renderSourceTruthMarkdown(ev))
+		return err
+	default:
+		_, err := io.WriteString(w, renderSourceTruthASCII(ev))
+		return err
+	}
+}
+
+// collectSourceTruthObservation shares the complete evidence path between CLI
+// and TUI. Kubernetes reads use one captured session; `cub unit get` remains a
+// distinct ConfigHub server-side read.
+func collectSourceTruthObservation(ctx context.Context, session *traceSession, kind, name, namespace string, strategy agent.SourceTruthStrategy) sourceTruthObservation {
+	observation := sourceTruthObservation{}
+	var runtimeSurface *agent.RuntimeSurface
+	var workload *runtimeWorkload
+	if session == nil {
+		observation.RuntimeError = fmt.Errorf("selected Kubernetes session is unavailable")
+	} else {
+		runtimeSurface, workload, observation.RuntimeError = collectRuntimeSurfaceWithTraceSession(ctx, session, kind, name, namespace)
+	}
+	var configHubSurface *agent.ConfigHubSurface
+	if observation.RuntimeError == nil {
+		configHubSurface, observation.ConfigHubError = collectConfigHubSurface(ctx, workload)
+	} else {
+		observation.ConfigHubError = fmt.Errorf("ConfigHub lookup skipped because the runtime object was unavailable")
+	}
+	var controllerSurface *agent.ControllerSurface
+	if observation.RuntimeError == nil && session != nil {
+		controllerSurface, observation.ControllerError = collectControllerSurfaceWithTraceSession(ctx, session, strategy, kind, name, namespace, workload)
+	} else {
+		observation.ControllerError = fmt.Errorf("controller lookup skipped because the runtime object was unavailable")
+	}
+	observation.Evidence = agent.Derive(strategy, agent.SourceTruthSurfaces{ConfigHub: configHubSurface, Controller: controllerSurface, Runtime: runtimeSurface})
+	if session != nil {
+		observation.Evidence.Context = session.contextLabel()
+	}
+	for _, item := range []struct {
+		name string
+		err  error
+	}{{"runtime", observation.RuntimeError}, {"ConfigHub", observation.ConfigHubError}, {"controller", observation.ControllerError}} {
+		if item.err != nil {
+			observation.Evidence.CollectionErrors = append(observation.Evidence.CollectionErrors, item.name+": "+item.err.Error())
+		}
+	}
+	return observation
 }
 
 // runtimeWorkload is a thin sum type over the typed apps/v1 workloads
@@ -177,6 +234,7 @@ type runtimeWorkload struct {
 	Name        string
 	Labels      map[string]string
 	Annotations map[string]string
+	Object      *unstructured.Unstructured
 
 	// Exactly one of these is set.
 	Deployment  *appsv1.Deployment
@@ -196,7 +254,21 @@ func collectRuntimeSurface(ctx context.Context, kind, name, namespace string) (*
 	if err != nil {
 		return nil, nil, &agent.CollectionError{Surface: "runtime", Reason: "create clientset: " + err.Error()}
 	}
+	return collectRuntimeSurfaceWithClient(ctx, cs, kind, name, namespace)
+}
 
+func collectRuntimeSurfaceWithTraceSession(ctx context.Context, session *traceSession, kind, name, namespace string) (*agent.RuntimeSurface, *runtimeWorkload, error) {
+	if session == nil {
+		return nil, nil, &agent.CollectionError{Surface: "runtime", Reason: "selected Kubernetes session is unavailable"}
+	}
+	client, err := session.kubernetesClient()
+	if err != nil {
+		return nil, nil, &agent.CollectionError{Surface: "runtime", Reason: "create clientset: " + err.Error()}
+	}
+	return collectRuntimeSurfaceWithClient(ctx, client, kind, name, namespace)
+}
+
+func collectRuntimeSurfaceWithClient(ctx context.Context, cs kubernetes.Interface, kind, name, namespace string) (*agent.RuntimeSurface, *runtimeWorkload, error) {
 	rw := &runtimeWorkload{Kind: kind, Namespace: namespace, Name: name}
 
 	switch normalizeKind(kind) {
@@ -208,6 +280,7 @@ func collectRuntimeSurface(ctx context.Context, kind, name, namespace string) (*
 		rw.Deployment = d
 		rw.Labels = d.Labels
 		rw.Annotations = d.Annotations
+		rw.Object = sourceTruthObjectFromTyped("Deployment", d.Name, d.Namespace, d.Labels, d.Annotations)
 		return &agent.RuntimeSurface{
 			Resource: fmt.Sprintf("Deployment/%s in %s", name, namespace),
 			Field:    "spec.template.spec.containers[0].image",
@@ -223,6 +296,7 @@ func collectRuntimeSurface(ctx context.Context, kind, name, namespace string) (*
 		rw.StatefulSet = s
 		rw.Labels = s.Labels
 		rw.Annotations = s.Annotations
+		rw.Object = sourceTruthObjectFromTyped("StatefulSet", s.Name, s.Namespace, s.Labels, s.Annotations)
 		return &agent.RuntimeSurface{
 			Resource: fmt.Sprintf("StatefulSet/%s in %s", name, namespace),
 			Field:    "spec.template.spec.containers[0].image",
@@ -238,6 +312,7 @@ func collectRuntimeSurface(ctx context.Context, kind, name, namespace string) (*
 		rw.DaemonSet = ds
 		rw.Labels = ds.Labels
 		rw.Annotations = ds.Annotations
+		rw.Object = sourceTruthObjectFromTyped("DaemonSet", ds.Name, ds.Namespace, ds.Labels, ds.Annotations)
 		return &agent.RuntimeSurface{
 			Resource: fmt.Sprintf("DaemonSet/%s in %s", name, namespace),
 			Field:    "spec.template.spec.containers[0].image",
@@ -254,6 +329,20 @@ func collectRuntimeSurface(ctx context.Context, kind, name, namespace string) (*
 			Reason:  fmt.Sprintf("kind %q not supported in v0.1 (supported: Deployment, StatefulSet, DaemonSet)", kind),
 		}
 	}
+}
+
+func sourceTruthObjectFromTyped(kind, name, namespace string, labels, annotations map[string]string) *unstructured.Unstructured {
+	stringMap := func(values map[string]string) map[string]interface{} {
+		out := make(map[string]interface{}, len(values))
+		for key, value := range values {
+			out[key] = value
+		}
+		return out
+	}
+	return &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": "apps/v1", "kind": kind,
+		"metadata": map[string]interface{}{"name": name, "namespace": namespace, "labels": stringMap(labels), "annotations": stringMap(annotations)},
+	}}
 }
 
 // collectConfigHubSurface looks up the ConfigHub unit identified by
@@ -281,7 +370,7 @@ func collectConfigHubSurface(ctx context.Context, rw *runtimeWorkload) (*agent.C
 		}
 	}
 
-	unitJSON, err := cubStdout(ctx, withConfigHubSpace([]string{"unit", "get", unitSlug, "-o", "json"}, space)...)
+	unitJSON, err := sourceTruthUnitGet(ctx, unitSlug, space)
 	if err != nil {
 		return nil, &agent.CollectionError{Surface: "confighub", Reason: "cub unit get failed: " + err.Error()}
 	}
@@ -325,6 +414,89 @@ func collectControllerSurface(ctx context.Context, strategy agent.SourceTruthStr
 		return controllerSurfaceFromArgo(ctx, kind, name, namespace)
 	}
 	return controllerSurfaceFromFlux(ctx, kind, name, namespace)
+}
+
+func collectControllerSurfaceWithTraceSession(ctx context.Context, session *traceSession, strategy agent.SourceTruthStrategy, kind, name, namespace string, workload *runtimeWorkload) (*agent.ControllerSurface, error) {
+	if session == nil {
+		return nil, fmt.Errorf("selected Kubernetes session is unavailable")
+	}
+	if strategy.ExpectsArgoController() {
+		return controllerSurfaceFromArgoWithSession(ctx, session, workload)
+	}
+	return controllerSurfaceFromFluxWithSession(ctx, session, kind, name, namespace)
+}
+
+// controllerSurfaceFromArgoWithSession resolves the Application from explicit
+// workload tracking metadata, uses a name field selector, and verifies exact
+// resource membership. It never consults an Argo CD server context or guesses
+// an Application namespace.
+func controllerSurfaceFromArgoWithSession(ctx context.Context, session *traceSession, workload *runtimeWorkload) (*agent.ControllerSurface, error) {
+	if workload == nil || workload.Object == nil {
+		return nil, fmt.Errorf("Argo controller lookup requires the observed runtime object")
+	}
+	dyn, err := session.dynamicClient()
+	if err != nil {
+		return nil, err
+	}
+	names := preferredArgoApplicationNames(workload.Object)
+	if len(names) == 0 {
+		return nil, fmt.Errorf("runtime metadata does not identify an Argo Application")
+	}
+	appResource := dyn.Resource(schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"})
+	apps := make([]unstructured.Unstructured, 0, len(names))
+	for appName := range names {
+		list, listErr := appResource.Namespace("").List(ctx, metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector("metadata.name", appName).String()})
+		if listErr != nil {
+			return nil, fmt.Errorf("list Argo Applications named %q from selected cluster: %w", appName, listErr)
+		}
+		if list == nil {
+			return nil, fmt.Errorf("list Argo Applications named %q returned an empty response", appName)
+		}
+		for i := range list.Items {
+			if list.Items[i].GetName() == appName {
+				apps = append(apps, list.Items[i])
+			}
+		}
+	}
+	appName, appNamespace, ok := selectArgoApplicationForResource(workload.Object, apps)
+	if !ok {
+		return nil, fmt.Errorf("runtime resource does not identify exactly one matching Argo Application")
+	}
+	tracer := agent.NewArgoTracerWithKubernetesClient(dyn)
+	result, err := tracer.TraceApplicationInNamespace(ctx, appName, appNamespace)
+	if err != nil {
+		return nil, fmt.Errorf("read Argo Application %s/%s from selected cluster: %w", appNamespace, appName, err)
+	}
+	if result == nil || len(result.Chain) == 0 {
+		return nil, fmt.Errorf("Argo Application %s/%s did not provide a source chain", appNamespace, appName)
+	}
+	root := result.Chain[0]
+	return &agent.ControllerSurface{Kind: "Argo", Source: strings.TrimSpace(firstNonEmpty(root.URL, root.Kind)), RevisionOrDigest: strings.TrimSpace(root.Revision), Health: controllerHealthLabel(root.Ready, root.Status), MultiSource: result.MultiSource}, nil
+}
+
+func controllerSurfaceFromFluxWithSession(ctx context.Context, session *traceSession, kind, name, namespace string) (*agent.ControllerSurface, error) {
+	tracer, cleanup, err := capturedTraceFluxFactory(session)
+	if cleanup != nil {
+		defer cleanup()
+	}
+	if err != nil {
+		return nil, fmt.Errorf("bind Flux to selected Kubernetes context: %w", err)
+	}
+	if tracer == nil || !tracer.Available() {
+		return nil, fmt.Errorf("Flux CLI is unavailable for the selected Kubernetes context")
+	}
+	result, err := tracer.Trace(ctx, kind, name, namespace)
+	if err != nil {
+		return nil, fmt.Errorf("Flux trace failed in selected Kubernetes context: %w", err)
+	}
+	if result == nil || strings.TrimSpace(result.Error) != "" || len(result.Chain) == 0 {
+		if result != nil && strings.TrimSpace(result.Error) != "" {
+			return nil, fmt.Errorf("Flux returned no usable controller chain: %s", strings.TrimSpace(result.Error))
+		}
+		return nil, fmt.Errorf("Flux returned no usable controller chain")
+	}
+	root := result.Chain[0]
+	return &agent.ControllerSurface{Kind: "Flux", Source: strings.TrimSpace(firstNonEmpty(root.URL, root.Kind)), RevisionOrDigest: strings.TrimSpace(root.Revision), Health: controllerHealthLabel(root.Ready, root.Status)}, nil
 }
 
 func controllerSurfaceFromArgo(ctx context.Context, kind, name, namespace string) *agent.ControllerSurface {

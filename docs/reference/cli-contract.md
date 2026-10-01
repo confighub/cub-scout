@@ -455,7 +455,9 @@ cub-scout mcp serve --recording objects.yaml
   - `target` (required string)
   - `namespace` (required string)
   - `strategy` (required enum, same values as `compare source-truth`)
+  - `context` (optional exact kubeconfig context for runtime and Kubernetes controller reads; this does not select ConfigHub context)
 - Backed by `cub-scout compare source-truth --format json`
+- An explicitly supplied empty or missing context is rejected before Kubernetes reads; the default loader is used only when the option is omitted.
 
 - Tool name: `confighub_k8s_resources`
 - Availability: connected mode only

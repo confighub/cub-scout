@@ -1498,6 +1498,8 @@ For the highest-value connected/read-only surfaces, it may also add `structuredC
 - `compare_three_way` returns parsed CLI JSON under `structuredContent.data`
 - `compare_three_way` may mirror `confighubUrl`, `confighubRevisionsUrl`, and `nextSteps` from the CLI JSON at the top level of `structuredContent`
 - `compare_source_truth` returns parsed CLI JSON under `structuredContent.data`; its `strategy` enum matches the CLI strategy registry.
+- `compare source-truth --kube-context <name>` binds both Kubernetes reads to the exact named kubeconfig context. Omitting the flag keeps the normal default loader; an invalid explicit name fails closed. Argo Applications are read as Kubernetes resources; an Argo CD server context is not a kubeconfig context.
+- Source-truth evidence may include additive `context` (the selected context label, not stable cluster identity) and `collection_errors[]` fields. A failed or denied runtime/controller/ConfigHub fetch remains absent evidence and cannot produce PASS.
 - `confighub_units`, `confighub_unit_get`, and `confighub_changesets` may add:
   - `structuredContent.data`
   - `structuredContent.nextSteps`

@@ -244,10 +244,10 @@ type ConfigHubSurface struct {
 // ControllerSurface is what cub-scout reads from the GitOps controller
 // (Flux or Argo) via the existing tracers.
 type ControllerSurface struct {
-	Kind             string `json:"kind,omitempty"`              // "Argo" | "Flux"
-	Source           string `json:"source,omitempty"`            // observed source URL/identifier
+	Kind             string `json:"kind,omitempty"`               // "Argo" | "Flux"
+	Source           string `json:"source,omitempty"`             // observed source URL/identifier
 	RevisionOrDigest string `json:"revision_or_digest,omitempty"` // SHA, digest, tag the controller observed
-	Health           string `json:"health,omitempty"`            // human label: "Ready", "Reconciling", etc.
+	Health           string `json:"health,omitempty"`             // human label: "Ready", "Reconciling", etc.
 
 	// MultiSource is true when the controller observes multiple sources
 	// (Argo CD's spec.sources[] with len > 1). cub-scout parses the first
@@ -278,7 +278,10 @@ type SourceTruthSurfaces struct {
 // Pilot consumes. Field order in the JSON output mirrors the council's
 // example to keep diffs reviewable.
 type SourceTruthEvidence struct {
-	DeclaredStrategy string              `json:"declared_strategy"`
+	DeclaredStrategy string `json:"declared_strategy"`
+	// Context is the selected Kubernetes context label, not a stable cluster ID.
+	Context          string              `json:"context,omitempty"`
+	CollectionErrors []string            `json:"collection_errors,omitempty"`
 	Status           SourceTruthStatus   `json:"status"`
 	SourceTruth      SourceTruthVerdict  `json:"source_truth"`
 	Outlier          SourceTruthOutlier  `json:"outlier"`
