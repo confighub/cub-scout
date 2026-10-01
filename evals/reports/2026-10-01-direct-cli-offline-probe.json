@@ -1,0 +1,314 @@
+{
+  "schema": "direct-cli-offline-probe-result.v2",
+  "latestWiringAccepted": true,
+  "scope": "minimal fake-provider CLI wiring only",
+  "attempts": [
+    {
+      "schema": "direct-cli-offline-probe-result.v1",
+      "sourceRevision": "2ae3fdd2e1d4c21c1a3d64a2f0abbcd84a22ba62",
+      "helperSha256": "1633c18cfee71dc270352dc9044c3b7f8386da7273ac69253c34295d101d1853",
+      "accepted": false,
+      "helperExitCode": 2,
+      "cliExitCode": 0,
+      "startedAt": "2026-10-01T04:18:52.899751+00:00",
+      "endedAt": "2026-10-01T04:18:53.466930+00:00",
+      "elapsedSeconds": 0.567,
+      "failure": "received requests exceed or differ from accepted captured requests",
+      "legacyConnectionCounter": 2,
+      "acceptedMockRequestCount": 1,
+      "unexplainedAdditionalConnection": true,
+      "counterLimit": "process_request counts TCP connections; extra connection content/status was not retained, so request accounting is not admitted",
+      "executable": {
+        "path": "/opt/homebrew/Caskroom/claude-code/2.1.274/claude",
+        "versionByPin": "2.1.274",
+        "sha256": "3509913f9d1576316c8845b88837f8fd3bbbcf26625833ac82cfb6b8985da94a"
+      },
+      "initialization": {
+        "tools": [
+          "Read"
+        ],
+        "mcp_servers": [],
+        "model": "claude-haiku-4-5-20251001",
+        "apiKeySource": "ANTHROPIC_API_KEY",
+        "claude_code_version": "2.1.274",
+        "plugins": [],
+        "fast_mode_state": "off",
+        "fast_mode_disabled_reason": "disabled_by_env"
+      },
+      "builtinSkillsAdvertised": [
+        "deep-research",
+        "dataviz",
+        "update-config",
+        "verify",
+        "debug",
+        "code-review",
+        "simplify",
+        "batch",
+        "fewer-permission-prompts",
+        "doctor",
+        "loop",
+        "claude-api",
+        "workflow-authoring",
+        "run",
+        "run-skill-generator"
+      ],
+      "terminal": {
+        "type": "result",
+        "subtype": "success",
+        "is_error": false,
+        "num_turns": 1,
+        "result": "offline-probe-terminal",
+        "duration_ms": 27,
+        "duration_api_ms": 16
+      },
+      "mockRequests": [
+        {
+          "path": "/v1/messages?beta=true",
+          "model": "claude-haiku-4-5-20251001",
+          "tools": [
+            "Read"
+          ],
+          "stream": true,
+          "bytes": 1832,
+          "sha256": "feb6abe9e129dd33ec829a0bde4757f4a54ef4259f3e33a42e5da536f23d8d8a"
+        }
+      ],
+      "stdoutSha256": "d0312f451717db40102f4652273b36dec2174c4327a6c6da1db885fe51e7c4e3",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cleanup": {
+        "server_shutdown_attempted": true,
+        "server_thread_joined": true,
+        "server_shutdown_complete": true,
+        "handlers_joined": true
+      },
+      "realProviderRequests": 0,
+      "realModelInference": false,
+      "paidEvaluationAuthorized": false,
+      "costs": {
+        "mockUsageIsAuthoredFixture": true,
+        "reportedEstimatedEvalTotalUSD": 4.38666035,
+        "latestDiagnosticAccountingComplete": false,
+        "credits": null,
+        "developmentDollars": null
+      },
+      "privateArchive": "evals/results/direct-cli-mock-20261001",
+      "limits": [
+        "Not full Experiment A; only minimal mock wiring inspected",
+        "No delegation-denial, turn-limit enforcement, provider billing, quality or credit claim",
+        "Raw client/system prompts and private config are intentionally not published",
+        "No repeat until connection/request accounting is corrected and reviewed"
+      ]
+    },
+    {
+      "attempt": 2,
+      "sourceRevision": "6ee4bd42ddd1e41e7d748bc25e6470541dafa3a7",
+      "helperSha256": "12241a4163009010e52e82b3a14583415e12fe33416b11d354dc0765ff9ac1bd",
+      "accepted": false,
+      "helperExitCode": 2,
+      "cliExitCode": 0,
+      "startedAt": "2026-10-01T04:26:52.906623+00:00",
+      "endedAt": "2026-10-01T04:26:53.482031+00:00",
+      "elapsedSeconds": 0.575,
+      "failure": "rejected or incomplete HTTP connection prevents acceptance",
+      "httpRequestCount": 2,
+      "connectionCount": 3,
+      "connectionEvents": [
+        {
+          "id": 1,
+          "kind": "preflight",
+          "httpStatus": 204,
+          "requestLineBytes": 68,
+          "requestLineSha256": "ef4272ef56916f72579316d306a26650d3f9456a5e314a2ffa6805966646b010"
+        },
+        {
+          "id": 2,
+          "kind": "rejected",
+          "httpStatus": 400,
+          "requestLineBytes": 26,
+          "requestLineSha256": "f29c567737010aa9aa240f3a4a66ea04b8f33b18c6484213a16ab2d4dde60b62"
+        },
+        {
+          "id": 3,
+          "kind": "accepted",
+          "httpStatus": 200,
+          "requestLineBytes": 38,
+          "requestLineSha256": "5c756a134ba748aa6319f63228bc547333447276a5eb50299ab2ea58dfdb9fbd"
+        }
+      ],
+      "observed": null,
+      "stdoutSha256": "d377ff87408764be03e67fedd1264541ff69a43b2ad0d21b69af936bf7d4f9ff",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cleanup": {
+        "server_shutdown_attempted": true,
+        "server_thread_joined": true,
+        "server_shutdown_complete": true,
+        "handlers_joined": true
+      },
+      "mockRequests": [
+        {
+          "path": "/v1/messages?beta=true",
+          "model": "claude-haiku-4-5-20251001",
+          "tools": [
+            "Read"
+          ],
+          "stream": true,
+          "bytes": 1840,
+          "sha256": "f203ff3861ae2d3754c6f270101d820b6a9c33205128fe16a09b3e86b2be5f20"
+        }
+      ]
+    },
+    {
+      "attempt": 3,
+      "sourceRevision": "21027cf958fc1882943024dce476abd3285e8c4d",
+      "helperSha256": "0a2255d7f3e3b72c610911ddf936aebd01ba470167109bc06e9f6af2bc7dc720",
+      "accepted": false,
+      "helperExitCode": 2,
+      "cliExitCode": 0,
+      "startedAt": "2026-10-01T04:28:58.407518+00:00",
+      "endedAt": "2026-10-01T04:28:59.048795+00:00",
+      "elapsedSeconds": 0.641,
+      "failure": "rejected or incomplete HTTP connection prevents acceptance",
+      "httpRequestCount": 2,
+      "connectionCount": 3,
+      "connectionEvents": [
+        {
+          "id": 1,
+          "kind": "preflight",
+          "httpStatus": 204,
+          "requestLineBytes": 68,
+          "requestLineSha256": "a6a135a13595ec6a6d65121214451c7f398022940dc14c9129e9ce96eb53c511",
+          "method": "GET",
+          "pathWithoutQuery": "/__offline_preflight_0ab23d87e11b0e8df2b751995aafbe12"
+        },
+        {
+          "id": 2,
+          "kind": "rejected",
+          "httpStatus": 400,
+          "requestLineBytes": 26,
+          "requestLineSha256": "f29c567737010aa9aa240f3a4a66ea04b8f33b18c6484213a16ab2d4dde60b62",
+          "method": "HEAD",
+          "pathWithoutQuery": "/api/hello"
+        },
+        {
+          "id": 3,
+          "kind": "accepted",
+          "httpStatus": 200,
+          "requestLineBytes": 38,
+          "requestLineSha256": "5c756a134ba748aa6319f63228bc547333447276a5eb50299ab2ea58dfdb9fbd",
+          "method": "POST",
+          "pathWithoutQuery": "/v1/messages"
+        }
+      ],
+      "observed": null,
+      "stdoutSha256": "8a5acc2fe667b198fe4c45c5ae7d2356006f9f7aa572a06c32af3a7e08a3b04a",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cleanup": {
+        "server_shutdown_attempted": true,
+        "server_thread_joined": true,
+        "server_shutdown_complete": true,
+        "handlers_joined": true
+      },
+      "mockRequests": [
+        {
+          "path": "/v1/messages?beta=true",
+          "model": "claude-haiku-4-5-20251001",
+          "tools": [
+            "Read"
+          ],
+          "stream": true,
+          "bytes": 1840,
+          "sha256": "938ed70b3beb2ce089b64e2fa01b94c93ad2caa9b280ab8af1afd0cf0b3a9991"
+        }
+      ]
+    },
+    {
+      "attempt": 4,
+      "sourceRevision": "27c6c84e68e03b50c476e9cc385e814ba23ea68e",
+      "helperSha256": "d23f96e4adc3c84b3a733328066de1a81c2675afb4eaa0c2fc32a0fc03de7366",
+      "accepted": true,
+      "helperExitCode": 0,
+      "cliExitCode": 0,
+      "startedAt": "2026-10-01T04:32:29.464552+00:00",
+      "endedAt": "2026-10-01T04:32:30.138889+00:00",
+      "elapsedSeconds": 0.674,
+      "failure": null,
+      "httpRequestCount": 2,
+      "connectionCount": 3,
+      "connectionEvents": [
+        {
+          "id": 1,
+          "kind": "preflight",
+          "httpStatus": 204,
+          "requestLineBytes": 68,
+          "requestLineSha256": "f48d19dc182c56ceb9a6466d3bb8ee8e9b3cbe6e74913db9e64793f1b440f2d7",
+          "method": "GET",
+          "pathWithoutQuery": "/__offline_preflight_9ef7e95b2bcb4f6f448e42582502f9be"
+        },
+        {
+          "id": 2,
+          "kind": "startup-declined",
+          "httpStatus": 404,
+          "requestLineBytes": 26,
+          "requestLineSha256": "f29c567737010aa9aa240f3a4a66ea04b8f33b18c6484213a16ab2d4dde60b62",
+          "method": "HEAD",
+          "pathWithoutQuery": "/api/hello"
+        },
+        {
+          "id": 3,
+          "kind": "accepted",
+          "httpStatus": 200,
+          "requestLineBytes": 38,
+          "requestLineSha256": "5c756a134ba748aa6319f63228bc547333447276a5eb50299ab2ea58dfdb9fbd",
+          "method": "POST",
+          "pathWithoutQuery": "/v1/messages"
+        }
+      ],
+      "observed": {
+        "terminal_type": "result",
+        "terminal_subtype": "success",
+        "terminal_text": "offline-probe-terminal",
+        "tool_inventory": [
+          "Read"
+        ]
+      },
+      "stdoutSha256": "a4f9cbf425e634ecbfddafb5d2e2f025cf0ad2f62ee706a79ed27ef4132a637b",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cleanup": {
+        "server_shutdown_attempted": true,
+        "server_thread_joined": true,
+        "server_shutdown_complete": true,
+        "handlers_joined": true
+      },
+      "mockRequests": [
+        {
+          "path": "/v1/messages?beta=true",
+          "model": "claude-haiku-4-5-20251001",
+          "tools": [
+            "Read"
+          ],
+          "stream": true,
+          "bytes": 1840,
+          "sha256": "231919343d116a173aab3ca835363798d7baf4da81236838815e9a09517f5eb2"
+        }
+      ]
+    }
+  ],
+  "realProviderRequests": 0,
+  "realModelInference": false,
+  "paidEvaluationAuthorized": false,
+  "costs": {
+    "mockUsageIsAuthoredFixture": true,
+    "reportedEstimatedEvalTotalUSD": 4.38666035,
+    "latestDiagnosticAccountingComplete": false,
+    "credits": null,
+    "developmentDollars": null
+  },
+  "privateArchive": "evals/results/direct-cli-mock-20261001",
+  "limits": [
+    "Three failed attempts remain failed; first extra connection cannot be retrospectively identified",
+    "Not full Experiment A: built-in skills advertised; no treatment plugin/MCP measured",
+    "No actual delegation-denial or repeated turn-limit enforcement yet",
+    "No provider billing, whole-tree accounting, quality, credit or savings claim",
+    "Raw client/system prompts and private config are intentionally not published"
+  ]
+}

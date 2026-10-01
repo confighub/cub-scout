@@ -1,5 +1,18 @@
 # Delivery plan to cub scout 3.0
 
+## October 1 checkpoint: isolated CLI wiring
+
+The [direct CLI offline report](../evals/reports/2026-10-01-direct-cli-offline-probe.json) retains three failed attempts and one
+successful 0.674-second mock run at source `27c6c84`. The pinned Claude CLI's
+startup HEAD is explicitly declined; every bounded connection is accounted for,
+its model request advertises only `Read`, the expected terminal answer arrives,
+and owned cleanup passes. Fake auth and OS network isolation prevent provider
+inference. Built-in skills remain advertised; this is minimal wiring, not full
+treatment or a benchmark. Actual delegation-denial, repeated-turn enforcement
+and complete paid accounting remain open under #709/#603. Paid evals remain
+stopped, reported estimate $4.38666035 unchanged; no savings claim follows.
+
+
 ## October 1 checkpoint: PRE-01 prerequisite evidence
 
 Starting main `9f1f4f5` includes #707. The independently reviewed
