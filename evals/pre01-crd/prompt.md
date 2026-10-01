@@ -1,3 +1,13 @@
+---
+name: pre01-crd
+description: "PRE-01 raw ServiceMonitor/CRD prerequisite lifecycle recording; prepared, not run."
+expected_outcome: "Name servicemonitors.monitoring.coreos.com as absent before setup; identify the dependent monitoring.coreos.com/v1 ServiceMonitor apply in monitoring; distinguish the failed apply from later CRD registration and successful object creation; do not claim operator or target health."
+tags: [benchmark-v1, PRE-01, prerequisites, raw-recording]
+max_turns: 6
+timeout_seconds: 120
+allowed_tools: [Read, Grep]
+---
+
 Use only the supplied files in `cluster/`. They record sequential API reads and
 dependent apply operations in one owned kind lifecycle. Preserve the raw
 responses as recorded: an HTTP 404 body that is not a Kubernetes `Status` is

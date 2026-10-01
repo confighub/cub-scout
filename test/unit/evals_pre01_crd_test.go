@@ -5,12 +5,15 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
+
+	"gopkg.in/yaml.v3"
 )
 
 func checkPRE01CRDScaffold(t *testing.T, root string) {
@@ -175,8 +178,16 @@ func TestPRE01RawRecordingAndStrictAnswerContract(t *testing.T) {
 	}
 
 	prompt := string(mustRead(t, filepath.Join(root, "prompt.md")))
+	if !strings.HasPrefix(prompt, "---\n") {
+		t.Fatal("prompt.md is missing execution frontmatter")
+	}
+	frontmatterEnd := strings.Index(prompt[4:], "\n---\n")
+	if frontmatterEnd < 0 {
+		t.Fatal("prompt.md frontmatter is unterminated")
+	}
+	promptBody := prompt[4+frontmatterEnd+5:]
 	for _, leaked := range []string{"774c4c4e-97b9-40b4-801d-39efe8d2b81b", "kube-prometheus-stack-kube-state-metrics", "ad5a1b97-abcc-4146-9443-4ce1b9500495"} {
-		if strings.Contains(prompt, leaked) {
+		if strings.Contains(promptBody, leaked) {
 			t.Errorf("prompt leaks answer literal %q", leaked)
 		}
 	}
@@ -202,6 +213,64 @@ func TestPRE01RawRecordingAndStrictAnswerContract(t *testing.T) {
 	} {
 		if re.MatchString(invalid) {
 			t.Errorf("strict grader accepted invalid answer: %.100s", invalid)
+		}
+	}
+}
+
+func TestPRE01CaseSchemaAndPromptFrontmatterAreSeparated(t *testing.T) {
+	root := filepath.Join("..", "..", "evals", "pre01-crd")
+	caseData := mustRead(t, filepath.Join(root, "case.yaml"))
+	var schema struct {
+		SchemaVersion string `yaml:"schema_version"`
+		Name          string `yaml:"name"`
+		Context       struct {
+			Scaffold string `yaml:"scaffold_script"`
+		} `yaml:"context"`
+	}
+	decoder := yaml.NewDecoder(bytes.NewReader(caseData))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(&schema); err != nil {
+		t.Fatalf("decode PRE-01 case schema: %v", err)
+	}
+	var extra any
+	if err := decoder.Decode(&extra); err != io.EOF {
+		t.Fatalf("case.yaml must be exactly one schema document, second decode=%v", err)
+	}
+	if schema.SchemaVersion != "1.1" || schema.Name != "pre01-crd" || schema.Context.Scaffold != "scaffold.sh" {
+		t.Fatalf("case schema or scaffold declaration invalid: %+v", schema)
+	}
+	prompt := string(mustRead(t, filepath.Join(root, "prompt.md")))
+	if !strings.HasPrefix(prompt, "---\n") {
+		t.Fatal("prompt.md is missing execution frontmatter")
+	}
+	end := strings.Index(prompt[4:], "\n---\n")
+	if end < 0 {
+		t.Fatal("prompt.md frontmatter is unterminated")
+	}
+	var execution struct {
+		Name            string   `yaml:"name"`
+		Description     string   `yaml:"description"`
+		ExpectedOutcome string   `yaml:"expected_outcome"`
+		Tags            []string `yaml:"tags"`
+		MaxTurns        int      `yaml:"max_turns"`
+		TimeoutSeconds  int      `yaml:"timeout_seconds"`
+		AllowedTools    []string `yaml:"allowed_tools"`
+	}
+	execDecoder := yaml.NewDecoder(strings.NewReader(prompt[4 : 4+end]))
+	execDecoder.KnownFields(true)
+	if err := execDecoder.Decode(&execution); err != nil {
+		t.Fatalf("decode PRE-01 prompt frontmatter: %v", err)
+	}
+	if execution.Name != schema.Name || execution.Description == "" || execution.ExpectedOutcome == "" || execution.MaxTurns != 6 || execution.TimeoutSeconds != 120 || len(execution.AllowedTools) != 2 || execution.AllowedTools[0] != "Read" || execution.AllowedTools[1] != "Grep" {
+		t.Fatalf("invalid PRE-01 prompt frontmatter: %+v", execution)
+	}
+	if !strings.Contains(strings.Join(execution.Tags, ","), "PRE-01") {
+		t.Fatalf("prompt metadata lacks PRE-01 tag: %+v", execution.Tags)
+	}
+	body := prompt[4+end+5:]
+	for _, expected := range []string{"servicemonitors.monitoring.coreos.com", "774c4c4e-97b9-40b4-801d-39efe8d2b81b", "kube-prometheus-stack-kube-state-metrics", "ad5a1b97-abcc-4146-9443-4ce1b9500495"} {
+		if strings.Contains(body, expected) {
+			t.Errorf("prompt body contains expected answer literal %q", expected)
 		}
 	}
 }

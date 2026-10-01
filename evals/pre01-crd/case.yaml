@@ -3,11 +3,3 @@ schema_version: "1.1"
 name: pre01-crd
 context:
   scaffold_script: scaffold.sh
----
-name: pre01-crd
-description: "PRE-01 raw ServiceMonitor/CRD prerequisite lifecycle recording; prepared, not run."
-expected_outcome: "Name servicemonitors.monitoring.coreos.com as absent before setup; identify the dependent monitoring.coreos.com/v1 ServiceMonitor apply in monitoring; distinguish the failed apply from later CRD registration and successful object creation; do not claim operator or target health."
-tags: [benchmark-v1, PRE-01, prerequisites, raw-recording]
-max_turns: 6
-timeout_seconds: 120
-allowed_tools: [Read, Grep]
