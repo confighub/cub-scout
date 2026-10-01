@@ -455,8 +455,15 @@ def capture(shared_config: Path, binary: Path, output: Path) -> int:
         marker_bytes = (json.dumps(marker, sort_keys=True, indent=2) + "\n").encode()
         _write(out / "owned-cluster-marker.json", marker_bytes)
         owner_marker_sha = sha256(marker_bytes)
-        _call("kind", ["create", "cluster", "--name", cluster, "--image", NODE_IMAGE,
-                       "--kubeconfig", str(admin_config), "--wait", "120s"], 180, env_base)
+        # This command has no token or credential payload in argv/output. Retain
+        # kind's setup diagnostics; credential-bearing kubectl calls stay private.
+        create_code, create_out, create_err = run_bounded(
+            [_command("kind"), "create", "cluster", "--name", cluster, "--image", NODE_IMAGE,
+             "--kubeconfig", str(admin_config), "--wait", "120s"], 180, env_base)
+        _write(out / "kind-create-stdout.txt", create_out)
+        _write(out / "kind-create-stderr.txt", create_err)
+        if create_code:
+            raise CaptureError("owned kind cluster creation failed (exit " + str(create_code) + ")")
         os.chmod(admin_config, 0o600)
         admin_initial_hash = sha256(admin_config.read_bytes())
         kubectl = _command("kubectl")
