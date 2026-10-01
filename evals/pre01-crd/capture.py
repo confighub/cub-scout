@@ -335,12 +335,20 @@ def validate_raw(path: str, status: int, body: bytes, phase: str) -> dict:
 
 def prerequisite_receipt_valid(code: int, stdout: bytes, expected: str) -> dict:
     """Validate current prerequisites-met receipt field names and exact fact evidence."""
+    if type(code) is not int or code != 0:
+        raise CaptureError("Scout prerequisite receipt command did not succeed")
     try:
         stmt = json.loads(stdout)
+        if not isinstance(stmt, dict):
+            raise TypeError
         predicate = stmt["predicate"]
+        if not isinstance(predicate, dict):
+            raise TypeError
         if predicate.get("predicateName") != "prerequisites-met":
             raise KeyError
         evidence = predicate["evidence"]["prerequisites"]
+        if not isinstance(evidence, dict):
+            raise TypeError
         facts = evidence["facts"]
         summary = evidence["summary"]
     except (UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError):

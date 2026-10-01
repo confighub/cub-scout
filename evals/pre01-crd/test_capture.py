@@ -98,6 +98,12 @@ class SourceAndEvidenceTests(unittest.TestCase):
             "evidence": {"prerequisites": {"facts": [{"kind": "CRD", "name": capture.CRD_NAME, "status": "missing"}],
                 "summary": {"required": 1, "present": 0, "missing": 1, "inconclusive": 0}}}}}
         self.assertEqual(capture.prerequisite_receipt_valid(0, json.dumps(statement).encode(), "missing")["verdict"], "BLOCK")
+        for code in (1, -15, True):
+            with self.subTest(exit_code=code), self.assertRaises(capture.CaptureError):
+                capture.prerequisite_receipt_valid(code, json.dumps(statement).encode(), "missing")
+        for malformed in ([], {"predicate": []}, {"predicate": {"predicateName": "prerequisites-met", "evidence": {"prerequisites": []}}}):
+            with self.subTest(shape=malformed), self.assertRaises(capture.CaptureError):
+                capture.prerequisite_receipt_valid(0, json.dumps(malformed).encode(), "missing")
         summary = statement["predicate"]["evidence"]["prerequisites"]["summary"]
         for malformed in (
             {"required": True, "present": 0, "missing": 1, "inconclusive": 0},
@@ -132,9 +138,10 @@ class SourceAndEvidenceTests(unittest.TestCase):
                 capture.verify_scout_binary(binary, "0" * 64, "eec6d442279955af0f1fc39c637252ac8eb0f081",
                                             "eec6d442279955af0f1fc39c637252ac8eb0f081")
             # The right bytes/digest cannot bless a caller-selected source revision.
-            with patch.object(capture, "sha256", return_value=capture.SCOUT_SHA256):
+            pinned_sha = "7d20aa7bb33b477dfd88afb2f53b1a6f773a5a4ffbcff7f81d8dcbfeb5a12bab"
+            with patch.object(capture, "sha256", return_value=pinned_sha):
                 with self.assertRaises(capture.CaptureError):
-                    capture.verify_scout_binary(binary, capture.SCOUT_SHA256, "a" * 40, "a" * 40)
+                    capture.verify_scout_binary(binary, pinned_sha, "a" * 40, "a" * 40)
         key = b"test-private-key-material"
         import base64
         encoded = base64.b64encode(key).decode()
