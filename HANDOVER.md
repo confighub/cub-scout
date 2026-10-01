@@ -1,7 +1,7 @@
 # cub-scout execution handover
 
 **Current snapshot:** 2026-10-01. Verified merged baseline:
-[`572bc71`](https://github.com/confighub/cub-scout/commit/572bc71e40b6f5f229844f25922c6df04fe0d0ef).
+[`2034afa`](https://github.com/confighub/cub-scout/commit/2034afa020f196870b09c48aee031f77ba32d98b).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
@@ -70,7 +70,7 @@ order, quality gates, budgets and decisions.
   questions concern supplied rows, with original-cluster completeness unknown.
   Equal meaningful tool access remains required; every tool need not be called.
 - [#740](https://github.com/confighub/cub-scout/issues/740) now has a passed
-  combined offline two-arm diagnostic in PR #741 at source 1b80b8c, in 9.091
+  combined offline two-arm diagnostic merged in PR #741 at source 1b80b8c, in 9.091
   seconds. Both real CLIs completed required tools; treatment advertised 35
   skills and produced one complete validated recorded map result. Both owned
   containers were removed and input hashes verified. All four earlier failed
@@ -168,8 +168,12 @@ permission gates to already authorized routine work.
 
 ## Resume here
 
-Check #645, then complete #735 exact-head CI and merge its reviewed behavior
-fix and already-passing owned before/after proof package.
+Check #645, then integrate the full-24 source preparation under #742. Its
+blinded equal-evidence packet and authored input controls do not admit paid
+execution: recorded MCP binding, actual grants, descendants and accounting
+remain open. Next proceed with the success-defined doctor/scan context packet
+[#743](https://github.com/confighub/cub-scout/issues/743) under #599; product work
+need not wait for paid benchmark admission. #735/#738 and #740/#741 are merged.
 Continue actual tool parity and process/cost accounting under #709; six raw
 kubectl reads are only one bounded prerequisite. External dependencies #591 (genuine attestations), #597
 (current gate evidence), #600 (fact storage/schema agreement), and GHCR access
