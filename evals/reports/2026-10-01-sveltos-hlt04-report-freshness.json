@@ -1,0 +1,42 @@
+{
+  "classification": "actual synthetic-source producer replay; fixture prepared, no benchmark model execution or savings claim",
+  "case": "HLT-04",
+  "fixture": "evals/sveltos-hlt-04-report-freshness",
+  "fixture_files_sha256": {
+    "scenario-evidence.json": "e1ae4cb9cbdaa26488d1ed1b3e920e9cc092703e560cffef83f3a845fe9c9b7c",
+    "source-metadata.json": "a224a85f89ca16cdbe6c0e8734ade6e4503e81573d16fa71fc60b4abd71ea1fb",
+    "synthetic-check-execution-receipt.json": "1352073e9000d280a92b440d1c9789f6fd987af099e04f4b7638804a48ad0e06"
+  },
+  "replay": {
+    "source_repository": "confighub/sveltos-confighub",
+    "source_revision": "8187910f9fe226e109e55c4d9c7c0e21297ff424",
+    "helper_revision": "6a13aeea8809d486513363293b4775a5588f9399",
+    "helper_sha256": "c52554e9b7da0e3f9ff91b1049da24380b815c56ee7ebb5cd547327a6abd3b62",
+    "harness_sha256": "c7e96fa00e8f1d97f54ae7e8e9177f87aafebfc69caf4c1fff86525ce7d1d0f0",
+    "provenance_sha256": "1fdfff81fc8d345c7b0dceae348ffae23ea490b04f1a9a26786e729ebc629810",
+    "stdout_sha256": "68d667fcf9612cafdaa53039571743815a48532c15c33c5e3bd90bb32e5ea3e4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "wrapper_result_sha256": "d53fc48a66c736337425cccee728dd382ffdfbba7e10052ee24e35e92e0ce864",
+    "wrapper_stdout_sha256": "62c0a74e1b1a2a456b5642f44cae75c665f9f5379bdb16f50bae6fa7469c07ae",
+    "return_code": 0,
+    "status": "passed",
+    "elapsed_seconds": 2.7990570068359375,
+    "wrapper_seconds": 2.8440208330284804,
+    "owned_process_group_cleanup_confirmed": true,
+    "parent_reaped": true,
+    "case_count": 8,
+    "evidence_archive": "evals/results/hlt04-replay-20261001 (primary checkout; ignored local archive)",
+    "source_metadata_sha256": "a224a85f89ca16cdbe6c0e8734ade6e4503e81573d16fa71fc60b4abd71ea1fb",
+    "scenario_evidence_sha256": "e1ae4cb9cbdaa26488d1ed1b3e920e9cc092703e560cffef83f3a845fe9c9b7c",
+    "synthetic_check_receipt_sha256": "1352073e9000d280a92b440d1c9789f6fd987af099e04f4b7638804a48ad0e06"
+  },
+  "scope_limits": [
+    "All producer inputs and timestamps are authored synthetic fixtures; there is no live Sveltos or cluster evidence.",
+    "The separate old check receipt is authored synthetic metadata and is not consumed by ReportStatus; it does not prove an actual controller check executed at that time.",
+    "lastTransitionTime is a condition transition time, not a check execution time.",
+    "A refreshed report observedAt does not establish refreshed health checks.",
+    "Revision selection is timestamp-inferred and does not prove the exact applied release digest.",
+    "The future-held timestamp remains unchanged under the tested source behavior.",
+    "No model run, benchmark mapping admission, paid run, cost/savings calculation, or account-credit measurement occurred."
+  ]
+}
