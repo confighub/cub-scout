@@ -1009,6 +1009,7 @@ cub-scout scan [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `-n, --namespace` | string | all | Namespace to scan |
+| `--kube-context` | string | current context | Exact kubeconfig context to bind for the complete Kubernetes observation. A context name is a label, not a stable cluster ID. |
 | `--state` | bool | false | State scan only |
 | `--kyverno` | bool | false | Kyverno scan only |
 | `--dangling` | bool | false | Scan for orphan resources |
@@ -1150,6 +1151,13 @@ cub-scout gitops status [flags]
 | `--confighub-space` | string | `CUB_SPACE` | ConfigHub space for connected evidence; `*` is allowed only as an explicit all-spaces read. With no space from any source the reads are skipped and reported as a `confighub.scope` omission |
 | `--confighub-since` | string | 24h | Lookback window for release/event evidence |
 | `--confighub-stale-after` | string | 15m | Treat live-status observations older than this as stale |
+
+An explicit context is resolved once and shared by backend detection, controller
+coverage, runtime reads, and Kubernetes-backed delivery evidence. A missing or
+empty name fails before Kubernetes reads; it does not fall back to the current
+context or in-cluster credentials. The selector cannot be combined with the
+recorded `CUB_SCOUT_TEST_GITOPS_JSON` fixture hook. ConfigHub service/auth
+selection remains separate from Kubernetes context selection.
 
 ### Output (Plain Text)
 

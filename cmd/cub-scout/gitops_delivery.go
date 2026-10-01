@@ -1250,6 +1250,9 @@ func renderGitOpsStatusMarkdown(summary GitOpsSummary) string {
 	b.WriteString("# GitOps Status\n\n")
 	b.WriteString(fmt.Sprintf("- Backend: `%s`\n", summary.Backend))
 	b.WriteString(fmt.Sprintf("- Transport: `%s`\n", summary.Transport))
+	if summary.Context != "" {
+		b.WriteString(fmt.Sprintf("- Kubernetes context label: %s (not a stable cluster ID)\n", gitOpsMarkdownCodeSpan(summary.Context)))
+	}
 	b.WriteString(fmt.Sprintf("- Healthy deployers: `%d`\n", summary.HealthyCount))
 	b.WriteString(fmt.Sprintf("- Failed deployers: `%d`\n", summary.FailedCount))
 	if summary.ConfigHubTarget != nil {
@@ -1311,6 +1314,35 @@ func renderGitOpsStatusMarkdown(summary GitOpsSummary) string {
 	}
 
 	return b.String()
+}
+
+func gitOpsMarkdownCodeSpan(value string) string {
+	value = strings.Map(func(r rune) rune {
+		if r == '\n' || r == '\r' || r == '\t' {
+			return ' '
+		}
+		if r < 0x20 || r == 0x7f {
+			return -1
+		}
+		return r
+	}, value)
+	longest := 0
+	for i := 0; i < len(value); {
+		if value[i] != '`' {
+			i++
+			continue
+		}
+		j := i
+		for j < len(value) && value[j] == '`' {
+			j++
+		}
+		if j-i > longest {
+			longest = j - i
+		}
+		i = j
+	}
+	delimiter := strings.Repeat("`", longest+1)
+	return delimiter + " " + value + " " + delimiter
 }
 
 func controllerCoverageOmissionsMarkdown(omissions []ControllerCoverageOmission) string {

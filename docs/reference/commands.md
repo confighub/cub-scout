@@ -2559,12 +2559,19 @@ cub-scout gitops status [flags]
 | Flag | Description |
 |------|-------------|
 | `-n, --namespace` | Namespace to scan (empty = all namespaces) |
+| `--kube-context` | Exact kubeconfig context for all Kubernetes reads (context label, not stable cluster ID) |
 | `--format` | Output format: `ascii`, `json`, `md` |
 | `--json` | Output as JSON (shorthand for `--format json`) |
 | `--with-confighub` | Include bounded ConfigHub release, unit-event, and live-status evidence |
 | `--confighub-space` | ConfigHub space for connected evidence (default: `CUB_SPACE`; use `*` explicitly for all spaces) |
 | `--confighub-since` | Lookback window for release/event evidence (default: `24h`) |
 | `--confighub-stale-after` | Treat live-status writeback older than this as stale (default: `15m`) |
+
+An explicit `--kube-context` is resolved once for the complete observation. A
+missing or empty context fails before Kubernetes reads and never falls back to
+the current or in-cluster context. The selector cannot be combined with the
+recorded `CUB_SCOUT_TEST_GITOPS_JSON` fixture hook. ConfigHub service/auth
+selection remains independent.
 
 #### Detected Backends
 

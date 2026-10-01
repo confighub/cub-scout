@@ -967,6 +967,13 @@ instead of silently claiming absence.
 }
 ```
 
+The summary also includes optional `context`, the kubeconfig context label
+captured for its Kubernetes reads. This label is not a stable cluster ID. An
+explicit `--kube-context` applies to backend detection, controller coverage,
+runtime reads, and Kubernetes-backed delivery evidence as one captured
+observation; missing or empty names fail before reads. ConfigHub service/auth
+selection is separate.
+
 ### Field Rules
 
 | Field | Rule |

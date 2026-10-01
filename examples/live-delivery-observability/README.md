@@ -42,6 +42,7 @@ grep -n "kind:\\|event.toolkit.fluxcd.io\\|observedGeneration\\|CrashLoopBackOff
 # Against a cluster with equivalent objects:
 ./cub-scout map activity --owner Flux --format json
 ./cub-scout gitops status --format json
+./cub-scout gitops status --kube-context production --format json
 ./cub-scout gitops status --with-confighub --confighub-space prod --confighub-since 24h --format json
 ./cub-scout gitops status --with-confighub --confighub-space prod --tui
 ./cub-scout explain deployment/api -n prod --format json
@@ -61,6 +62,9 @@ grep -n "kind:\\|event.toolkit.fluxcd.io\\|observedGeneration\\|CrashLoopBackOff
   with `actor`, `subject`, and raw action metadata.
 - `gitops status`, `trace`, and map deployer surfaces should treat the
   aggregate delivery resource as a first-class controller object.
+- `gitops status --kube-context production` binds every Kubernetes read to
+  that named context. The returned `context` is a kubeconfig label, not a
+  stable cluster identity; ConfigHub service/auth selection is separate.
 - `gitops status --with-confighub` should keep release history, unit events,
   live-status writeback, and event-consumer workload evidence separate under
   `deliveryEvidence`. Its versioned `revisionCorrelation` compares the complete

@@ -21,10 +21,11 @@ import (
 )
 
 var (
-	gitopsNamespace string
-	gitopsJSON      bool
-	gitopsFormat    string
-	gitopsTUI       bool
+	gitopsNamespace   string
+	gitopsKubeContext string
+	gitopsJSON        bool
+	gitopsFormat      string
+	gitopsTUI         bool
 
 	gitopsWithConfigHub       bool
 	gitopsConfigHubSpace      string
@@ -99,6 +100,7 @@ func init() {
 	gitopsCmd.AddCommand(gitopsStatusCmd)
 
 	gitopsStatusCmd.Flags().StringVarP(&gitopsNamespace, "namespace", "n", "", "Namespace to scan (default: all namespaces)")
+	gitopsStatusCmd.Flags().StringVar(&gitopsKubeContext, "kube-context", "", "Kubernetes context to inspect (default: current context)")
 	gitopsStatusCmd.Flags().StringVar(&gitopsFormat, "format", "ascii", "Output format: ascii, json, md")
 	gitopsStatusCmd.Flags().BoolVar(&gitopsTUI, "tui", false, "View this GitOps status snapshot in a scrollable terminal viewport")
 	gitopsStatusCmd.Flags().BoolVar(&gitopsJSON, "json", false, "Output as JSON (shorthand for --format json)")
@@ -108,8 +110,13 @@ func init() {
 	gitopsStatusCmd.Flags().StringVar(&gitopsConfigHubStaleAfter, "confighub-stale-after", "15m", "Treat ConfigHub live-status observations older than this as stale")
 }
 
+var newGitOpsStatusSessionForSelection = newTraceSessionForSelection
+
 // GitOpsSummary holds the summary of GitOps status for output
 type GitOpsSummary struct {
+	// Context is the selected kubeconfig context label, not a stable cluster ID.
+	Context string `json:"context,omitempty"`
+
 	// Backend is the detected GitOps backend: flux, argocd, worker, none
 	Backend string `json:"backend"`
 
@@ -272,6 +279,13 @@ func (g GitOpsSummary) GetFailedSourceCount() int {
 
 func runGitOpsStatus(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
+	selection, err := clusterContextSelectionFromFlag(cmd)
+	if err != nil {
+		return err
+	}
+	if selection.explicit && os.Getenv("CUB_SCOUT_TEST_GITOPS_JSON") != "" {
+		return fmt.Errorf("--kube-context applies only to live GitOps status; it cannot be combined with CUB_SCOUT_TEST_GITOPS_JSON")
+	}
 	format, err := normalizeGitOpsStatusFormat(gitopsFormat, gitopsJSON)
 	if err != nil {
 		return err
@@ -296,13 +310,13 @@ func runGitOpsStatus(cmd *cobra.Command, args []string) error {
 		return loadAndRenderGitOpsStatusFromJSON(statusJSONFile, format)
 	}
 
-	// Build k8s config
-	cfg, err := buildConfig()
+	// Capture the selected kubeconfig once. Every Kubernetes reader below shares
+	// this session and its clients; ConfigHub service/auth remains independent.
+	session, err := newGitOpsStatusSessionForSelection(selection)
 	if err != nil {
 		return fmt.Errorf("failed to build kubernetes config: %w", err)
 	}
-
-	dynClient, err := dynamic.NewForConfig(cfg)
+	dynClient, err := session.dynamicClient()
 	if err != nil {
 		return fmt.Errorf("failed to create dynamic client: %w", err)
 	}
@@ -316,6 +330,7 @@ func runGitOpsStatus(cmd *cobra.Command, args []string) error {
 
 	// Build summary
 	summary := buildGitOpsSummary(ctx, dynClient, backendInfo)
+	summary.Context = session.contextLabel()
 	if gitopsWithConfigHub {
 		summary.DeliveryEvidence = collectGitOpsDeliveryEvidence(ctx, dynClient, evidenceOptions)
 	}
@@ -955,6 +970,9 @@ func outputGitOpsStatusHuman(summary GitOpsSummary) error {
 
 	fmt.Printf("  %sBackend:%s   %s%s%s\n", colorDim, colorReset, backendColor, strings.ToUpper(summary.Backend), colorReset)
 	fmt.Printf("  %sTransport:%s %s%s%s\n", colorDim, colorReset, transportColor, strings.ToUpper(summary.Transport), colorReset)
+	if summary.Context != "" {
+		fmt.Printf("  %sContext:%s   %s (kubeconfig label; not a stable cluster ID)\n", colorDim, colorReset, summary.Context)
+	}
 
 	// ConfigHub target if present
 	if summary.ConfigHubTarget != nil {

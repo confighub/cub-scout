@@ -1,0 +1,12 @@
+{
+  "context": "alpha-context",
+  "backend": "worker",
+  "transport": "unknown",
+  "confighubTarget": {"space": "alpha-marker", "target": "target"},
+  "controllerCoverage": [
+    {"family": "Modelplane", "status": "unreadable", "resourceKinds": ["ModelDeployment"], "found": 0,
+      "omissions": [{"resource": "modeldeployments.modelplane.ai/v1alpha1", "reason": "forbidden"}]}
+  ],
+  "healthyCount": 0,
+  "failedCount": 0
+}

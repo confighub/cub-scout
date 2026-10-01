@@ -59,6 +59,7 @@ func buildGitOpsSummaryRecord(summary GitOpsSummary, cluster, namespace string, 
 		Timestamp:     now.UTC(),
 		Type:          "gitops-status",
 		Cluster:       strings.TrimSpace(cluster),
+		ContextLabel:  strings.TrimSpace(summary.Context),
 		Scope: summarystore.Scope{
 			Namespace: strings.TrimSpace(namespace),
 		},
@@ -114,8 +115,14 @@ func persistConnectedGitOpsSummary(summary GitOpsSummary, namespace string) {
 	if !summaryConnectedFn() {
 		return
 	}
-	record := buildGitOpsSummaryRecord(summary, detectSummaryCluster(), namespace, summaryNowFn())
-	if err := persistSummaryRecord(record); err != nil {
+	cluster := strings.TrimSpace(summary.Context)
+	if cluster == "" {
+		// Status is collected against a captured session. An unknown context is
+		// safer than reopening ambient kubeconfig after that observation.
+		cluster = "unknown"
+	}
+	record := buildGitOpsSummaryRecord(summary, cluster, namespace, summaryNowFn())
+	if err := persistSummaryRecordFn(record); err != nil {
 		warnSummaryPersistence(err)
 	}
 }
