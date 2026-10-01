@@ -5,7 +5,11 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -14,8 +18,11 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
+	"k8s.io/client-go/rest"
 	clienttesting "k8s.io/client-go/testing"
+	"k8s.io/client-go/tools/cache"
 )
 
 func watchEntry(id, kind, name, ns, owner string) MapEntry {
@@ -114,9 +121,9 @@ func TestWatchBackedScannerReadsPodsFromCache(t *testing.T) {
 	client := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme,
 		map[schema.GroupVersionResource]string{
 			podsGVR: "PodList",
-			{Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases"}:      "HelmReleaseList",
+			{Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases"}:        "HelmReleaseList",
 			{Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations"}: "KustomizationList",
-			{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}:            "ApplicationList",
+			{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}:             "ApplicationList",
 		},
 		fakePod("p1", "scan"), fakePod("p2", "scan"))
 
@@ -130,7 +137,8 @@ func TestWatchBackedScannerReadsPodsFromCache(t *testing.T) {
 	})
 
 	ctx := context.Background()
-	wb, synced, stop, err := newWatchBackedClient(ctx, client, []schema.GroupVersionResource{podsGVR}, "scan")
+	wb, synced, stop, err := newWatchBackedClient(ctx, client, []schema.GroupVersionResource{podsGVR},
+		map[schema.GroupVersionResource]resourceScope{podsGVR: resourceScopeNamespaced}, "scan")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -175,7 +183,8 @@ func TestWatchBackedClientServesFromCache(t *testing.T) {
 	})
 
 	ctx := context.Background()
-	wb, synced, stop, err := newWatchBackedClient(ctx, client, []schema.GroupVersionResource{depGVR}, "budget")
+	wb, synced, stop, err := newWatchBackedClient(ctx, client, []schema.GroupVersionResource{depGVR},
+		map[schema.GroupVersionResource]resourceScope{depGVR: resourceScopeNamespaced}, "budget")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -216,5 +225,185 @@ func TestWatchBackedClientServesFromCache(t *testing.T) {
 	mu.Unlock()
 	if afterSelector <= afterReads {
 		t.Errorf("selector list should pass through to the API; counts %d -> %d", afterReads, afterSelector)
+	}
+}
+
+func newNamespaceListClient(t *testing.T, handler http.Handler) dynamic.Interface {
+	t.Helper()
+	server := httptest.NewServer(handler)
+	t.Cleanup(server.Close)
+	client, err := dynamic.NewForConfig(&rest.Config{Host: server.URL, QPS: -1, Timeout: 2 * time.Second})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return client
+}
+
+func namespaceCache(t *testing.T, objects ...*unstructured.Unstructured) cache.GenericLister {
+	t.Helper()
+	indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
+	for _, object := range objects {
+		if err := indexer.Add(object.DeepCopy()); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return cache.NewGenericLister(indexer, schema.GroupResource{Group: "apps", Resource: "deployments"})
+}
+
+func writeNamespaceList(w http.ResponseWriter, items ...*unstructured.Unstructured) {
+	encoded := make([]map[string]interface{}, 0, len(items))
+	for _, item := range items {
+		encoded = append(encoded, item.Object)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"apiVersion": "v1", "kind": "DeploymentList",
+		"metadata": map[string]interface{}{"resourceVersion": "7"}, "items": encoded,
+	})
+}
+
+func TestWatchBackedNamespaceScopedCacheFallsBackForOtherAndAllNamespaces(t *testing.T) {
+	gvr := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
+	inA, inB := fakeDeployment("shared", "team-a"), fakeDeployment("shared", "team-b")
+	var mu sync.Mutex
+	requests := []string{}
+	client := newNamespaceListClient(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		requests = append(requests, r.Method+" "+r.URL.Path)
+		mu.Unlock()
+		if r.Method != http.MethodGet || r.URL.Query().Get("watch") != "" {
+			http.Error(w, "unexpected request", http.StatusForbidden)
+			return
+		}
+		switch r.URL.Path {
+		case "/apis/apps/v1/namespaces/team-b/deployments":
+			writeNamespaceList(w, inB)
+		case "/apis/apps/v1/deployments":
+			writeNamespaceList(w, inA, inB)
+		default:
+			http.Error(w, "unexpected path", http.StatusNotFound)
+		}
+	}))
+	wb := &watchBackedClient{Interface: client,
+		listers: map[schema.GroupVersionResource]cache.GenericLister{gvr: namespaceCache(t, inA)},
+		scopes:  map[schema.GroupVersionResource]resourceScope{gvr: resourceScopeNamespaced}, namespace: "team-a"}
+	ctx := context.Background()
+
+	gotA, err := wb.Resource(gvr).Namespace("team-a").List(ctx, metav1.ListOptions{})
+	if err != nil || len(gotA.Items) != 1 || gotA.Items[0].GetNamespace() != "team-a" {
+		t.Fatalf("exact cached namespace read = %#v, %v; want team-a/shared", gotA, err)
+	}
+	gotB, err := wb.Resource(gvr).Namespace("team-b").List(ctx, metav1.ListOptions{})
+	if err != nil || len(gotB.Items) != 1 || gotB.Items[0].GetNamespace() != "team-b" {
+		t.Fatalf("other namespace read = %#v, %v; want live team-b/shared", gotB, err)
+	}
+	gotAll, err := wb.Resource(gvr).List(ctx, metav1.ListOptions{})
+	if err != nil || len(gotAll.Items) != 2 {
+		t.Fatalf("all-namespace read = %#v, %v; want both live objects", gotAll, err)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if len(requests) != 2 || requests[0] != "GET /apis/apps/v1/namespaces/team-b/deployments" || requests[1] != "GET /apis/apps/v1/deployments" {
+		t.Fatalf("live fallback requests = %v, want B and all-namespace LIST", requests)
+	}
+}
+
+func TestWatchBackedAllNamespaceCacheFiltersAndSelectorFallbackPreservesDenial(t *testing.T) {
+	gvr := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
+	inA, inB := fakeDeployment("shared", "team-a"), fakeDeployment("shared", "team-b")
+	var requestCount int
+	client := newNamespaceListClient(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCount++
+		http.Error(w, "forbidden by fixture", http.StatusForbidden)
+	}))
+	wb := &watchBackedClient{Interface: client,
+		listers: map[schema.GroupVersionResource]cache.GenericLister{gvr: namespaceCache(t, inA, inB)},
+		scopes:  map[schema.GroupVersionResource]resourceScope{gvr: resourceScopeNamespaced}}
+	ctx := context.Background()
+	for namespace, want := range map[string]string{"team-a": "team-a", "team-b": "team-b"} {
+		got, err := wb.Resource(gvr).Namespace(namespace).List(ctx, metav1.ListOptions{})
+		if err != nil || len(got.Items) != 1 || got.Items[0].GetNamespace() != want {
+			t.Fatalf("all-scope cache read %q = %#v, %v; want only %s", namespace, got, err, want)
+		}
+	}
+	gotAll, err := wb.Resource(gvr).List(ctx, metav1.ListOptions{})
+	if err != nil || len(gotAll.Items) != 2 {
+		t.Fatalf("all-scope cache root read = %#v, %v; want both objects", gotAll, err)
+	}
+	// A selector is not cacheable. A denied live read stays an error and cannot
+	// be turned into a successful empty list by the cache.
+	if _, err := wb.Resource(gvr).Namespace("team-a").List(ctx, metav1.ListOptions{LabelSelector: "app=api"}); err == nil || !strings.Contains(err.Error(), "forbidden") {
+		t.Fatalf("selector fallback error = %v; want preserved forbidden response", err)
+	}
+	if requestCount != 1 {
+		t.Fatalf("HTTP request count = %d, want only selector fallback", requestCount)
+	}
+}
+
+func TestWatchBackedNamespaceMismatchPreservesDeniedFallback(t *testing.T) {
+	gvr := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
+	inA := fakeDeployment("shared", "team-a")
+	var requests int
+	client := newNamespaceListClient(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		http.Error(w, "forbidden for team-b", http.StatusForbidden)
+	}))
+	wb := &watchBackedClient{Interface: client,
+		listers: map[schema.GroupVersionResource]cache.GenericLister{gvr: namespaceCache(t, inA)},
+		scopes:  map[schema.GroupVersionResource]resourceScope{gvr: resourceScopeNamespaced}, namespace: "team-a"}
+	if _, err := wb.Resource(gvr).Namespace("team-b").List(context.Background(), metav1.ListOptions{}); err == nil || !strings.Contains(err.Error(), "forbidden") {
+		t.Fatalf("team-b fallback error = %v; want preserved forbidden response", err)
+	}
+	if requests != 1 {
+		t.Fatalf("team-b fallback request count = %d, want 1", requests)
+	}
+}
+
+func TestWatchBackedScopedCacheDoesNotGuessClusterScope(t *testing.T) {
+	gvr := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "nodes"}
+	node := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": "v1", "kind": "Node", "metadata": map[string]interface{}{"name": "worker-1"},
+	}}
+	var requests int
+	client := newNamespaceListClient(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		http.Error(w, "namespace is invalid for cluster-scoped resource", http.StatusBadRequest)
+	}))
+	wb := &watchBackedClient{Interface: client,
+		listers: map[schema.GroupVersionResource]cache.GenericLister{gvr: cache.NewGenericLister(
+			func() cache.Indexer {
+				indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{})
+				_ = indexer.Add(node)
+				return indexer
+			}(),
+			schema.GroupResource{Resource: "nodes"})},
+		scopes: map[schema.GroupVersionResource]resourceScope{gvr: resourceScopeCluster}, namespace: "team-a"}
+	if _, err := wb.Resource(gvr).Namespace("team-a").List(context.Background(), metav1.ListOptions{}); err == nil {
+		t.Fatal("cluster-scoped namespaced request unexpectedly returned cached empty success")
+	}
+	if requests != 1 {
+		t.Fatalf("cluster-scope fallback request count = %d, want 1", requests)
+	}
+	allScope := &watchBackedClient{Interface: client,
+		listers: map[schema.GroupVersionResource]cache.GenericLister{gvr: wb.listers[gvr]},
+		scopes:  map[schema.GroupVersionResource]resourceScope{gvr: resourceScopeCluster}}
+	all, err := allScope.Resource(gvr).List(context.Background(), metav1.ListOptions{})
+	if err != nil || len(all.Items) != 1 || all.Items[0].GetName() != "worker-1" {
+		t.Fatalf("all-scope cluster list = %#v, %v; want cached worker-1", all, err)
+	}
+	if _, err := allScope.Resource(gvr).Namespace("team-a").List(context.Background(), metav1.ListOptions{}); err == nil {
+		t.Fatal("all-scope cache answered a namespaced read for a cluster-scoped GVR")
+	}
+	if requests != 2 {
+		t.Fatalf("cluster-scope requests after all-scope reads = %d, want 2 (both invalid namespaced reads fell back)", requests)
+	}
+	unknownScope := &watchBackedClient{Interface: client,
+		listers: map[schema.GroupVersionResource]cache.GenericLister{gvr: wb.listers[gvr]},
+		scopes:  map[schema.GroupVersionResource]resourceScope{gvr: resourceScopeUnknown}}
+	if _, err := unknownScope.Resource(gvr).List(context.Background(), metav1.ListOptions{}); err == nil {
+		t.Fatal("unknown GVR scope unexpectedly returned a cached list")
+	}
+	if requests != 3 {
+		t.Fatalf("unknown-scope fallback request count = %d, want 3", requests)
 	}
 }
