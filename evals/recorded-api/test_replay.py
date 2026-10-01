@@ -147,12 +147,62 @@ class ReplayTests(unittest.TestCase):
         conn.sendall(b"GET /incomplete HTTP/1.1\r\n")
         response = conn.recv(200)
         conn.close()
-        self.assertIn(b"408", response)
+        self.assertEqual(response, b"")  # deadline has elapsed, so no late response is written
         self.stop(server, thread, result)
         event = server.records[0]
-        self.assertEqual(event["reason"], "request-read-timeout")
+        self.assertTrue(event["reason"].startswith("request-read-timeout"))
         self.assertNotIn("path", event)
         self.assertEqual(event["requestTargetSha256"], hashlib.sha256(b"/incomplete").hexdigest())
+
+    def test_slow_trickle_cannot_extend_absolute_request_deadline(self):
+        server, thread, result = self.start(self.absent, read_timeout=0.22, duration=3)
+        conn = socket.create_connection(server.server_address, timeout=1)
+        conn.settimeout(1)
+        began = time.monotonic()
+        conn.sendall(b"GET /incomplete HTTP/1.1\r\nX-Slow: ")
+        try:
+            while time.monotonic() - began < 0.7:
+                conn.sendall(b"a")
+                time.sleep(0.035)  # every inter-byte gap is below read_timeout
+        except OSError:
+            pass
+        elapsed = time.monotonic() - began
+        conn.close()
+        thread.join(timeout=1)
+        self.assertFalse(thread.is_alive(), "slow-trickle handler outlived its absolute deadline")
+        self.assertLess(elapsed, 0.7)
+        self.assertEqual(server.fileno(), -1)
+        self.assertTrue(server.records)
+        self.assertFalse(server.records[0]["captured"])
+        self.assertIn(server.records[0]["reason"].split(";")[0], ("request-read-timeout", "response-write-failed"))
+
+    def test_wall_deadline_applies_during_slow_header_and_stop_interrupts_read(self):
+        server, thread, result = self.start(self.absent, read_timeout=2, duration=0.22)
+        conn = socket.create_connection(server.server_address, timeout=1)
+        try:
+            conn.sendall(b"GET /incomplete HTTP/1.1\r\nX-Slow: a")
+            began = time.monotonic()
+            thread.join(timeout=1)
+            elapsed = time.monotonic() - began
+            self.assertFalse(thread.is_alive(), "wall deadline did not interrupt active read")
+            self.assertLess(elapsed, 0.7)
+            self.assertEqual(result["status"], "wall_limit")
+            self.assertEqual(server.fileno(), -1)
+        finally:
+            conn.close()
+
+        server, thread, result = self.start(self.absent, read_timeout=3, duration=3)
+        conn = socket.create_connection(server.server_address, timeout=1)
+        conn.sendall(b"GET /incomplete HTTP/1.1\r\nX-Wait: ")
+        time.sleep(0.04)
+        began = time.monotonic()
+        server.stop_event.set()
+        thread.join(timeout=0.5)
+        elapsed = time.monotonic() - began
+        self.assertFalse(thread.is_alive(), "stop request left an owned handler running")
+        self.assertLess(elapsed, 0.3)
+        self.assertEqual(server.fileno(), -1)
+        conn.close()
 
     def test_wall_limit_and_rejected_request_are_not_reported_as_complete(self):
         server, thread, result = self.start(self.absent, duration=0.15)

@@ -13,6 +13,7 @@ import json
 import os
 from pathlib import Path
 import re
+import select
 import signal
 import socket
 import socketserver
@@ -309,6 +310,9 @@ class ReplayServer(socketserver.TCPServer):
                     break
                 self.timeout = min(0.1, remaining)
                 self.handle_request()
+                if time.monotonic() >= deadline:
+                    status = "wall_limit"
+                    break
             else:
                 status = "request_rejected" if self.coverage_failure else "stopped"
         except KeyboardInterrupt:
@@ -324,20 +328,60 @@ class _RequestFailure(Exception):
         self.reason = reason
 
 
+class _DeadlineReader:
+    """Unbuffered bounded line reader with one absolute request deadline."""
+    def __init__(self, connection: socket.socket, server: ReplayServer, deadline: float):
+        self.connection = connection
+        self.server = server
+        self.deadline = deadline
+        self.buffer = bytearray()
+
+    def readline(self, limit: int) -> bytes:
+        while True:
+            newline = self.buffer.find(b"\n")
+            if newline >= 0:
+                if newline + 1 > limit:
+                    raise _RequestFailure(400, "line-limit")
+                line = bytes(self.buffer[:newline + 1])
+                del self.buffer[:newline + 1]
+                if not line.endswith(b"\r\n"):
+                    raise _RequestFailure(400, "line-terminator")
+                return line
+            if len(self.buffer) > limit:
+                raise _RequestFailure(400, "line-limit")
+            if self.server.stop_event.is_set():
+                raise _RequestFailure(408, "server-stop-requested")
+            remaining = min(self.deadline, self.server.deadline) - time.monotonic()
+            if remaining <= 0:
+                reason = "overall-wall-limit" if time.monotonic() >= self.server.deadline else "request-read-timeout"
+                raise _RequestFailure(408, reason)
+            try:
+                readable, _, _ = select.select([self.connection], [], [], min(remaining, 0.05))
+                if not readable:
+                    continue
+                chunk = self.connection.recv(min(4096, limit + 1 - len(self.buffer)))
+            except (OSError, ValueError):
+                raise _RequestFailure(408, "request-read-timeout") from None
+            if not chunk:
+                if self.buffer:
+                    raise _RequestFailure(400, "line-terminator")
+                return b""
+            self.buffer.extend(chunk)
+
+
 class ReplayRequestHandler(socketserver.StreamRequestHandler):
-    def _line(self, stream, limit: int) -> bytes:
-        try:
-            line = stream.readline(limit + 1)
-        except (OSError, socket.timeout):
-            raise _RequestFailure(408, "request-read-timeout") from None
-        if len(line) > limit:
-            raise _RequestFailure(400, "line-limit")
-        if line and not line.endswith(b"\r\n"):
-            raise _RequestFailure(400, "line-terminator")
-        return line
+    def setup(self):
+        self.connection = self.request
+        self.rfile = self.wfile = None
+
+    def finish(self):
+        return
+
+    def _line(self, limit: int) -> bytes:
+        return self.reader.readline(limit)
 
     def _parse(self) -> tuple[str, str, dict[str, list[str]]]:
-        request_line = self._line(self.rfile, MAX_REQUEST_LINE)
+        request_line = self._line(MAX_REQUEST_LINE)
         if not request_line:
             raise _RequestFailure(400, "empty-request")
         parts = request_line[:-2].split(b" ")
@@ -358,7 +402,7 @@ class ReplayRequestHandler(socketserver.StreamRequestHandler):
         headers: dict[str, list[str]] = {}
         used, count = 0, 0
         while True:
-            line = self._line(self.rfile, MAX_HEADER_LINE)
+            line = self._line(MAX_HEADER_LINE)
             used += len(line)
             if used > MAX_HEADER_BYTES:
                 raise _RequestFailure(400, "header-byte-limit")
@@ -398,11 +442,22 @@ class ReplayRequestHandler(socketserver.StreamRequestHandler):
             reason = "Replay Error"
         # Content-Type and Content-Length are replay-generated transport fields,
         # not claims about headers on the original Kubernetes response.
-        self.wfile.write(f"HTTP/1.1 {status} {reason}\r\n".encode("ascii"))
-        self.wfile.write(f"Content-Type: {content_type}\r\n".encode("ascii"))
-        self.wfile.write(f"Content-Length: {len(body)}\r\nConnection: close\r\n\r\n".encode("ascii"))
-        self.wfile.write(body)
-        self.wfile.flush()
+        payload = (f"HTTP/1.1 {status} {reason}\r\n"
+                   f"Content-Type: {content_type}\r\n"
+                   f"Content-Length: {len(body)}\r\nConnection: close\r\n\r\n").encode("ascii") + body
+        offset = 0
+        while offset < len(payload):
+            if self.server.stop_event.is_set():
+                raise _RequestFailure(408, "server-stop-requested")
+            remaining = min(self.reader.deadline, self.server.deadline) - time.monotonic()
+            if remaining <= 0:
+                raise _RequestFailure(408, "response-write-deadline")
+            try:
+                _, writable, _ = select.select([], [self.connection], [], min(remaining, 0.05))
+                if writable:
+                    offset += self.connection.send(payload[offset:])
+            except (OSError, ValueError):
+                raise _RequestFailure(408, "response-write-failed") from None
 
     def handle(self) -> None:
         remaining = self.server.deadline - time.monotonic()
@@ -414,7 +469,8 @@ class ReplayRequestHandler(socketserver.StreamRequestHandler):
                                        "responseBodySha256": sha256(ERROR_BODIES[408]),
                                        "captured": False, "sourceRows": []})
             return
-        self.connection.settimeout(min(self.server.read_timeout, remaining))
+        self.reader = _DeadlineReader(self.connection, self.server,
+                                      min(time.monotonic() + self.server.read_timeout, self.server.deadline))
         request_number, over_limit = self.server.record_request()
         method = target = None
         route = None
@@ -446,8 +502,9 @@ class ReplayRequestHandler(socketserver.StreamRequestHandler):
         content_type = "application/json" if is_captured and _looks_json(body) else "text/plain; charset=utf-8" if is_captured else "application/json"
         try:
             self._respond(status, body, content_type=content_type)
-        except (OSError, socket.timeout):
-            reason = reason + ";response-write-failed"
+        except (OSError, socket.timeout, _RequestFailure) as err:
+            write_reason = err.reason if isinstance(err, _RequestFailure) else "response-write-failed"
+            reason = reason + ";" + write_reason
         record = {"requestNumber": request_number,
                   "method": method if isinstance(method, str) else None,
                   "status": status, "reason": reason,
