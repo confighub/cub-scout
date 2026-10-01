@@ -90,6 +90,18 @@ An omitted selector keeps legacy behavior. Empty or unknown explicit names fail
 without falling back, and fixture, file, and policy-list modes reject the live
 selector. Each command captures a private read-only REST config once, so a later
 change to kubeconfig `current-context` does not redirect nested reads.
+The shared resolver does not give client-go auth providers a kubeconfig writer;
+refresh can authenticate an observation without persisting settings to the source
+file. The current binary links exec authentication but no legacy auth-provider
+plugin; this removes a latent persistence capability, not an observed vendor
+credential rewrite. A local TLS regression test with a test-registered provider covers success and failure for explicit
+and omitted selectors. This does not sandbox configured exec helpers or freeze
+all referenced credential files. Run it without cluster access:
+
+```sh
+go test ./cmd/cub-scout -run '^TestResolveClusterConfigAuthProviderNeverPersistsSharedConfig$' -count=1
+```
+
 
 Doctor reports unreadable inventory/rollout coverage as warnings, including in
 JSON. An absent optional controller API is distinct from a denied request.
