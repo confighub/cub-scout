@@ -308,9 +308,31 @@ func TestRUL02CaseSchemaAndPromptFrontmatter(t *testing.T) {
 		t.Fatalf("invalid execution frontmatter: %+v", execution)
 	}
 	body := prompt[4+end+5:]
+	flatBody := strings.Join(strings.Fields(body), " ")
 	for _, leak := range []string{"uid-A", "uid-B", strings.Repeat("a", 64), "2026-09-30T12:00:00Z"} {
-		if strings.Contains(body, leak) {
+		if strings.Contains(flatBody, leak) {
 			t.Errorf("prompt leaks answer literal %q", leak)
+		}
+	}
+	for _, required := range []string{
+		"step-01 is the initial read", "step-02 the first unexpired repeat", "step-03 the next unexpired read after the configured response changes",
+		"step-04 the first explicit refresh", "step-05 the second explicit refresh", "step-06 the ordinary read after the TTL boundary",
+		"step-07 the identity-field input", "step-08 the refresh using the final response", "step-09 the following ordinary",
+		"`YES`, `NO`, or `UNKNOWN`", "`ERROR`, `SUCCESS`, or", "`DEMONSTRATED`, `NOT_DEMONSTRATED`, or `UNKNOWN`",
+		"`ESTABLISHED`, `NOT_ESTABLISHED`, or `UNKNOWN`",
+	} {
+		if !strings.Contains(flatBody, required) {
+			t.Errorf("prompt must preserve neutral step mapping and all answer alternatives; missing %q", required)
+		}
+	}
+	for _, disclosed := range []string{
+		"`changed_response_before_refresh_served` is `NO`", "failed operations are `ERROR`",
+		"both `automatic_invalidation` and `push_invalidation` are `NOT_DEMONSTRATED`",
+		"`freshness_guarantee` is `NOT_ESTABLISHED`",
+		"step-05 the next same-UID refresh", "step-07 the response with missing identity", "step-08 the failed refresh",
+	} {
+		if strings.Contains(flatBody, disclosed) {
+			t.Errorf("prompt discloses expected answer vocabulary %q", disclosed)
 		}
 	}
 }

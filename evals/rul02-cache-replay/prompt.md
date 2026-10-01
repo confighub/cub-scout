@@ -11,18 +11,23 @@ allowed_tools: [Read, Grep]
 Use only the two files in `cluster/`. The replay JSON contains authored clock
 and response configuration under each `input`, actual HTTP requests and
 responses under `requests`, and the object and bounded-read evidence actually
-returned by the reader. Configured responses on a cache hit were not served.
+returned by the reader. Treat configured responses as authored state; compare
+them with the request trace to determine what the reader actually received.
 This is an authored local API replay with a fixed clock, not a live-cluster
 recording. Do not use network or live cluster access.
 
-Compare the first read, unexpired reads, refreshes, and the read after expiry.
-Keep resource identity (UID), image content digest, and observation/expiry
-times distinct. For each cache hit, distinguish the configured response from
-the object returned and from actual HTTP requests. Report missing UID and
-digest as unknown; do not infer them from the name or mutable tag. Explain what
-the failed refresh and following ordinary read establish about reuse. The
-record does not establish push/automatic invalidation, present-day cluster
-state, or a freshness guarantee outside the recorded fixed-clock steps.
+Use the neutral step IDs to locate the evidence: step-01 is the initial read;
+step-02 the first unexpired repeat; step-03 the next unexpired read after the
+configured response changes; step-04 the first explicit refresh; step-05 the
+second explicit refresh; step-06 the ordinary read after the TTL boundary;
+step-07 the identity-field input; step-08 the refresh using the final response
+input; step-09 the following ordinary read. For each, keep resource identity (UID), image content digest, cache
+result, and observation/expiry times distinct. For step-03, separately report
+the configured response, whether that response was served, and the object
+returned. For identity fields, copy observed values; when absent, represent
+them as `UNKNOWN`, and do not infer them from a name or mutable tag. Use the
+complete record to assess whether automatic or push invalidation and a
+freshness guarantee are demonstrated; do not infer current live state.
 
 Return one bare JSON object with exactly these string-valued keys in this
 order, without prose or additional properties:
@@ -38,11 +43,13 @@ order, without prose or additional properties:
 `read_after_failed_refresh`, `automatic_invalidation`, `push_invalidation`,
 `freshness_guarantee`, `evidence`.
 
-Use only the declared values: read results are `MISS`, `HIT`, or `REFRESH`;
-`changed_response_before_refresh_served` is `NO`; missing identity values are
-`UNKNOWN`; failed operations are `ERROR`; both `automatic_invalidation` and
-`push_invalidation` are `NOT_DEMONSTRATED`; and `freshness_guarantee` is
-`NOT_ESTABLISHED`. UID, digest, and timestamps must be copied exactly from the
-supplied JSON. Digests are the full `sha256:<64 hex>` values from immutable
-image references. The
-evidence value is exactly `rul02-cache-replay.json+capture-scope.json`.
+Select from these declared alternatives based on the supplied evidence:
+read results are `MISS`, `HIT`, or `REFRESH`;
+`changed_response_before_refresh_served` is `YES`, `NO`, or `UNKNOWN`;
+`failed_refresh` and `read_after_failed_refresh` are `ERROR`, `SUCCESS`, or
+`UNKNOWN`; `automatic_invalidation` and `push_invalidation` are
+`DEMONSTRATED`, `NOT_DEMONSTRATED`, or `UNKNOWN`; and `freshness_guarantee` is
+`ESTABLISHED`, `NOT_ESTABLISHED`, or `UNKNOWN`. UID, digest, and timestamps
+must be copied exactly from the supplied JSON. Digests are the full
+`sha256:<64 hex>` values from immutable image references. The evidence value
+is exactly `rul02-cache-replay.json+capture-scope.json`.
