@@ -48,6 +48,35 @@ type cacheReplayStep struct {
 	Error           string `json:"error"`
 }
 
+type cacheReplayHTTPRecord struct {
+	Method string `json:"method"`
+	Path   string `json:"path"`
+	Status int    `json:"status"`
+	Body   string `json:"body"`
+	SHA256 string `json:"sha256"`
+}
+
+type cacheReplayInputRecord struct {
+	StepID  string `json:"stepId"`
+	Clock   string `json:"clock"`
+	Refresh bool   `json:"refresh"`
+}
+
+type cacheReplayActualStep struct {
+	Input                  cacheReplayInputRecord  `json:"input"`
+	ReturnedObject         interface{}             `json:"returnedObject"`
+	Evidence               BoundedReadEvidence     `json:"evidence"`
+	ErrorClassification    string                  `json:"errorClassification"`
+	Requests               []cacheReplayHTTPRecord `json:"requests"`
+	CumulativeRequestCount int                     `json:"cumulativeRequestCount"`
+}
+
+type cacheReplayActualRecord struct {
+	Schema   string                  `json:"schema"`
+	Resource BoundedResourceRef      `json:"resource"`
+	Steps    []cacheReplayActualStep `json:"steps"`
+}
+
 type cacheReplayDocument struct {
 	Schema string `json:"schema"`
 	Scope  struct {
@@ -84,29 +113,32 @@ func TestBoundedReadRUL02IdentityCacheReplay(t *testing.T) {
 	var mu sync.Mutex
 	currentResponse := "objectA"
 	var served []string
+	var httpRecords []cacheReplayHTTPRecord
 	var requestCount int
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		mu.Lock()
 		defer mu.Unlock()
 		requestCount++
-		if r.Method != http.MethodGet {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
+		status, body := http.StatusNotFound, "404 page not found\n"
 		responseName := ""
-		if r.URL.Path == replay.Responses["discovery"].Path {
+		if r.Method != http.MethodGet {
+			status, body = http.StatusMethodNotAllowed, "method not allowed\n"
+		} else if r.URL.Path == replay.Responses["discovery"].Path {
 			responseName = "discovery"
 		} else if r.URL.Path == replay.Responses["objectA"].Path {
 			responseName = currentResponse
-		} else {
-			http.NotFound(w, r)
-			return
 		}
-		response := replay.Responses[responseName]
-		served = append(served, responseName)
+		if responseName != "" {
+			response := replay.Responses[responseName]
+			status, body = response.Status, response.Body
+			served = append(served, responseName)
+		}
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(response.Status)
-		_, _ = w.Write([]byte(response.Body))
+		w.WriteHeader(status)
+		_, _ = w.Write([]byte(body))
+		digest := sha256.Sum256([]byte(body))
+		httpRecords = append(httpRecords, cacheReplayHTTPRecord{Method: r.Method, Path: r.URL.Path,
+			Status: status, Body: body, SHA256: hex.EncodeToString(digest[:])})
 	}))
 	defer server.Close()
 
@@ -117,10 +149,12 @@ func TestBoundedReadRUL02IdentityCacheReplay(t *testing.T) {
 	reader.now = func() time.Time { return clock }
 	ref := replay.Scope.Resource
 	actual := make([]cacheReplayStep, 0, len(replay.ExpectedSteps))
+	actualRecord := cacheReplayActualRecord{Schema: "bounded-resource-cache-replay-result.v1", Resource: ref}
 
 	for i, want := range replay.ExpectedSteps {
 		clock, err = time.Parse(time.RFC3339, want.At)
 		require.NoError(t, err, "step %s clock", want.Name)
+		mu.Lock()
 		switch want.Name {
 		case "initial-object-a", "unexpired-cache-hit":
 			currentResponse = "objectA"
@@ -135,8 +169,11 @@ func TestBoundedReadRUL02IdentityCacheReplay(t *testing.T) {
 		case "failed-refresh", "ordinary-read-after-failed-refresh":
 			currentResponse = "objectUnavailable"
 		default:
+			mu.Unlock()
 			t.Fatalf("unexpected replay step %q", want.Name)
 		}
+		requestStart := len(httpRecords)
+		mu.Unlock()
 
 		obj, evidence, readErr := reader.Read(context.Background(), ref, want.Refresh)
 		step := cacheReplayStep{Name: want.Name, At: want.At, Refresh: want.Refresh,
@@ -166,6 +203,8 @@ func TestBoundedReadRUL02IdentityCacheReplay(t *testing.T) {
 		}
 		mu.Lock()
 		step.RequestCount = requestCount
+		stepRequests := append([]cacheReplayHTTPRecord(nil), httpRecords[requestStart:]...)
+		cumulativeRequestCount := requestCount
 		mu.Unlock()
 
 		require.Equal(t, want, step, "step %d (%s)", i, want.Name)
@@ -174,6 +213,24 @@ func TestBoundedReadRUL02IdentityCacheReplay(t *testing.T) {
 			require.NotContains(t, step.Image, "@sha256:", "digest must not be inferred from a mutable tag")
 		}
 		actual = append(actual, step)
+		stepID := fmt.Sprintf("step-%02d", i+1)
+		classification := "none"
+		if readErr != nil {
+			if strings.Contains(readErr.Error(), "bounded object unavailable") {
+				classification = "bounded_object_unavailable"
+			} else {
+				classification = fmt.Sprintf("unexpected_%T", readErr)
+			}
+		}
+		var returned interface{}
+		if obj != nil {
+			returned = obj.Object
+		}
+		actualRecord.Steps = append(actualRecord.Steps, cacheReplayActualStep{
+			Input:          cacheReplayInputRecord{StepID: stepID, Clock: want.At, Refresh: want.Refresh},
+			ReturnedObject: returned, Evidence: evidence, ErrorClassification: classification,
+			Requests: stepRequests, CumulativeRequestCount: cumulativeRequestCount,
+		})
 	}
 
 	mu.Lock()
@@ -181,4 +238,7 @@ func TestBoundedReadRUL02IdentityCacheReplay(t *testing.T) {
 	mu.Unlock()
 	require.Equal(t, replay.ServedResponseSequence, actualServed)
 	require.True(t, reflect.DeepEqual(replay.ExpectedSteps, actual))
+	recorded, err := json.Marshal(actualRecord)
+	require.NoError(t, err)
+	t.Logf("RUL02_REPLAY_JSON=%s", recorded)
 }
