@@ -108,25 +108,15 @@ cub-scout trace deploy/payment-api -n payments
 
 Shows every layer from Git to live cluster.
 
-### 2. Diff Live vs Desired
+### 2. Compare a Rendered Object with Live
 
 ```bash
-cub-scout trace deploy/payment-api -n payments --diff
+cub-scout trace deploy/payment-api -n payments --diff \
+  --desired-file ./rendered-manifests --api-version apps/v1
 ```
 
-Shows what would change on next reconciliation.
-
-```
-┌─ DIFF: payment-api ──────────────────────────────────────────────────────────┐
-│                                                                              │
-│  spec.replicas:                                                              │
-│    - live:    5     (kubectl edit)                                          │
-│    + desired: 2     (from Git)                                              │
-│                                                                              │
-│  ⚠ This resource will revert on next Flux reconciliation                    │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+This compares authored fields from one already-rendered object with its live
+counterpart. It does not prove what a controller will apply next.
 
 ### 3. Find Orphans (Break-Glass Leftovers)
 
@@ -144,7 +134,7 @@ Shows resources created outside GitOps — often from incident response.
 |----------|-----|
 | **Pin chart versions** | Always specify exact version in HelmRelease |
 | **Override all critical values** | Don't rely on chart defaults |
-| **Use trace --diff** | Before upgrading, see what will change |
+| **Compare rendered input with trace --diff** | Inspect one object's authored fields against live state; this does not predict reconciliation |
 | **Check for orphans** | After incidents, clean up manual changes |
 | **Test upgrades in staging** | Catch clobbering before production |
 
@@ -166,9 +156,10 @@ kubectl scale deploy podinfo -n podinfo --replicas=5
 watch kubectl get deploy podinfo -n podinfo
 # Within 5 minutes: replicas goes back to 2
 
-# 4. cub-scout shows the danger
-cub-scout trace deploy/podinfo -n podinfo --diff
-# Shows: live=5, desired=2, will reconcile!
+# 4. Compare against manifests rendered by your existing workflow
+cub-scout trace deploy/podinfo -n podinfo --diff \
+  --desired-file ./rendered-manifests --api-version apps/v1
+# Compares one local rendered object with live state; it does not predict controller behavior.
 ```
 
 ---

@@ -35,7 +35,9 @@ var (
 	traceFormat              string // output format: ascii, json
 	traceApp                 string // For direct Argo app tracing
 	traceReverse             bool   // Reverse trace - walk ownerReferences up
-	traceDiff                bool   // Show diff between live and desired state
+	traceDiff                bool   // Compare rendered desired input with live state
+	traceDesiredFile         string // Caller-supplied already-rendered operand for safe diff mode
+	traceAPIVersion          string // Optional exact API version to disambiguate desired documents
 	traceExplain             bool   // Show explanatory content for learning
 	traceHistory             bool   // Show deployment history
 	traceLimit               int    // Limit number of history entries
@@ -92,8 +94,8 @@ Examples:
   # Reverse trace - start from any resource (e.g., a Pod) and walk up
   cub-scout trace pod/nginx-7d9b8c-x4k2p -n prod --reverse
 
-  # Show diff between live state and desired state from Git
-  cub-scout trace deployment/nginx -n demo --diff
+  # Compare one already-rendered object with the selected live object
+  cub-scout trace deployment/nginx -n demo --diff --desired-file ./rendered --api-version apps/v1
 
   # Output as JSON
   cub-scout trace deployment/nginx -n demo --json
@@ -110,16 +112,20 @@ Reverse trace (--reverse) walks ownerReferences to find:
   - The K8s ownership chain (Pod → ReplicaSet → Deployment)
   - The controller owner (Flux, ArgoCD, Sveltos, Modelplane, Helm, or Native)
 
-Diff mode (--diff) shows what would change if GitOps reconciled:
-  - For Flux: runs 'flux diff kustomization' or 'flux diff helmrelease'
-  - For ArgoCD: runs 'argocd app diff'
-  - Useful for debugging "why isn't my change applying?" and upgrade tracing
+Diff mode (--diff) compares one caller-rendered object with one live object:
+  - Requires --desired-file; cub-scout does not render Git or predict reconciliation
+  - Reports the selected context and exact live-read evidence
+  - Controller-desired diffs are not yet supported
+
+Render manifests with your existing tool (for example, helm template or
+kustomize build), then pass that output with --desired-file. The former
+automatic controller CLI diff delegation is disabled.
 
 Trace context troubleshooting (ArgoCD):
   - Select the Kubernetes context with --kube-context
   - Specify the Application namespace with -n
   - Kubernetes Application read permission is required; Argo server login is not used
-  - Explicit context is not supported with the legacy delegated --diff path
+  - Rendered diff reads the selected Kubernetes API directly; controller-rendered desired state is not yet supported
 `,
 	Args: cobra.RangeArgs(0, 2),
 	RunE: runTrace,
@@ -134,7 +140,9 @@ func init() {
 	traceCmd.Flags().BoolVar(&traceJSON, "json", false, "Output as JSON (deprecated: use --format json)")
 	traceCmd.Flags().StringVar(&traceApp, "app", "", "Trace Argo CD application by name")
 	traceCmd.Flags().BoolVarP(&traceReverse, "reverse", "r", false, "Reverse trace - walk ownerReferences up to find GitOps source")
-	traceCmd.Flags().BoolVarP(&traceDiff, "diff", "d", false, "Show diff between live state and desired state from Git")
+	traceCmd.Flags().BoolVarP(&traceDiff, "diff", "d", false, "Compare one already-rendered object with the selected live object")
+	traceCmd.Flags().StringVar(&traceDesiredFile, "desired-file", "", "Already-rendered local manifest file/directory to compare (requires --diff)")
+	traceCmd.Flags().StringVar(&traceAPIVersion, "api-version", "", "Exact desired API version when same-name documents are ambiguous (requires --diff --desired-file)")
 	traceCmd.Flags().BoolVar(&traceExplain, "explain", false, "Show explanatory content to help learn GitOps concepts")
 	traceCmd.Flags().BoolVar(&traceHistory, "history", false, "Show deployment history (who deployed what, when)")
 	traceCmd.Flags().IntVar(&traceLimit, "limit", 10, "Limit number of history entries (default: 10)")
@@ -158,8 +166,14 @@ func runTrace(cmd *cobra.Command, args []string) error {
 	if selection.explicit && (os.Getenv("CUB_SCOUT_TEST_TRACE_JSON") != "" || os.Getenv("CUB_SCOUT_TEST_TRACE_ARTIFACTS_JSON") != "") {
 		return fmt.Errorf("--kube-context cannot be combined with trace fixture input")
 	}
-	if selection.explicit && traceDiff {
-		return fmt.Errorf("--kube-context cannot be used with delegated --diff: controller diff binding is not supported")
+	if traceDiff && !traceReverse && (os.Getenv("CUB_SCOUT_TEST_TRACE_JSON") != "" || os.Getenv("CUB_SCOUT_TEST_TRACE_ARTIFACTS_JSON") != "") {
+		return fmt.Errorf("--diff cannot be combined with trace fixture input")
+	}
+	if traceDesiredFile != "" && !traceDiff {
+		return fmt.Errorf("--desired-file requires --diff")
+	}
+	if traceAPIVersion != "" && (!traceDiff || strings.TrimSpace(traceDesiredFile) == "") {
+		return fmt.Errorf("--api-version requires --diff --desired-file")
 	}
 	effectiveFormat := traceFormat
 	if traceJSON && effectiveFormat == "ascii" {
@@ -207,13 +221,19 @@ func runTrace(cmd *cobra.Command, args []string) error {
 	kind = normalizeKind(kind)
 
 	// Default namespace
-	if traceNamespace == "" && kind != "Application" {
+	if traceNamespace == "" && kind != "Application" && !(traceDiff && !traceReverse) {
 		traceNamespace = "flux-system"
 	}
 
 	// Preserve legacy reverse precedence when both mode flags are supplied.
 	if traceDiff && !traceReverse {
-		return runTraceDiff(ctx, kind, name, traceNamespace)
+		if strings.TrimSpace(traceDesiredFile) == "" {
+			return fmt.Errorf("trace --diff now requires --desired-file <already-rendered-file-or-directory>; render manifests with your existing tool (for example, helm template or kustomize build) and retry. Controller-desired diffs are not yet supported")
+		}
+		return runTraceDiffObservation(ctx, selection, kind, name, traceNamespace, traceAPIVersion, traceDesiredFile)
+	}
+	if (traceDesiredFile != "" || traceAPIVersion != "") && traceReverse {
+		return fmt.Errorf("--desired-file and --api-version cannot be combined with --reverse")
 	}
 
 	// The shared observer owns all reads; presentation only projects its result.

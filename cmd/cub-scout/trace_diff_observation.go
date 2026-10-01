@@ -5,9 +5,13 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -39,6 +43,8 @@ type traceDiffSource struct {
 // rendered object with one object read through a captured Kubernetes session.
 type traceDiffObservation struct {
 	Status      string                     `json:"status"`
+	Comparison  string                     `json:"comparison"`
+	Coverage    string                     `json:"coverage"`
 	Source      traceDiffSource            `json:"source"`
 	Context     string                     `json:"context"`
 	Resource    agent.BoundedResourceRef   `json:"resource"`
@@ -52,6 +58,10 @@ type traceDiffObservation struct {
 // file/directory with the corresponding object read through session. It does
 // not render, invoke controller clients, list for extras, sign, or persist.
 func observeTraceDiff(ctx context.Context, session *traceSession, kind, name, namespace, alreadyRenderedPath string) (*traceDiffObservation, error) {
+	return observeTraceDiffWithAPIVersion(ctx, session, kind, name, namespace, "", alreadyRenderedPath)
+}
+
+func observeTraceDiffWithAPIVersion(ctx context.Context, session *traceSession, kind, name, namespace, apiVersion, alreadyRenderedPath string) (*traceDiffObservation, error) {
 	if session == nil {
 		return nil, fmt.Errorf("trace diff requires a captured Kubernetes session")
 	}
@@ -69,7 +79,11 @@ func observeTraceDiff(ctx context.Context, session *traceSession, kind, name, na
 		// Parser diagnostics can contain snippets from user-supplied YAML.
 		return nil, fmt.Errorf("unable to parse already-rendered trace diff input")
 	}
-	desired, err := selectTraceDiffDesired(objects, kind, name, strings.TrimSpace(namespace))
+	desired, err := selectTraceDiffDesiredVersion(objects, kind, name, strings.TrimSpace(namespace), strings.TrimSpace(apiVersion))
+	if err != nil {
+		return nil, err
+	}
+	desired, err = resolveTraceDiffNamespace(ctx, session, desired, strings.TrimSpace(namespace))
 	if err != nil {
 		return nil, err
 	}
@@ -84,10 +98,12 @@ func observeTraceDiff(ctx context.Context, session *traceSession, kind, name, na
 		Name:       desired.GetName(),
 	}
 	result := &traceDiffObservation{
-		Source:   traceDiffSource{Kind: "local-rendered", Reference: source.Ref, Digest: source.Digest, ObjectCount: len(objects)},
-		Context:  session.contextLabel(),
-		Resource: resource,
-		Summary:  agent.ObjectSetDiffSummary{Total: 1},
+		Comparison: "authored-fields-only",
+		Coverage:   "one-selected-object",
+		Source:     traceDiffSource{Kind: "local-rendered", Reference: source.Ref, Digest: source.Digest, ObjectCount: len(objects)},
+		Context:    session.contextLabel(),
+		Resource:   resource,
+		Summary:    agent.ObjectSetDiffSummary{Total: 1},
 	}
 	// The source digest covers whole files, so withhold it if a Secret document
 	// appears anywhere in the operand. The bounded reader deliberately refuses
@@ -161,33 +177,212 @@ func observeTraceDiff(ctx context.Context, session *traceSession, kind, name, na
 	return result, nil
 }
 
+func resolveTraceDiffNamespace(ctx context.Context, session *traceSession, desired *unstructured.Unstructured, requestedNamespace string) (*unstructured.Unstructured, error) {
+	if desired == nil {
+		return nil, fmt.Errorf("desired object identity is incomplete")
+	}
+	if desired.GetNamespace() != "" {
+		if requestedNamespace != "" && desired.GetNamespace() != requestedNamespace {
+			return nil, fmt.Errorf("desired object namespace does not match the requested namespace")
+		}
+		return desired, nil
+	}
+	gv, err := schema.ParseGroupVersion(desired.GetAPIVersion())
+	if err != nil {
+		return nil, fmt.Errorf("desired API version is invalid")
+	}
+	client, err := session.discoveryClient()
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine desired resource scope")
+	}
+	resources, err := client.ServerResourcesForGroupVersion(gv.String())
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine desired resource scope")
+	}
+	var namespaced *bool
+	for _, resource := range resources.APIResources {
+		if resource.Kind == desired.GetKind() {
+			scope := resource.Namespaced
+			if namespaced != nil && *namespaced != scope {
+				return nil, fmt.Errorf("desired resource scope is ambiguous")
+			}
+			namespaced = &scope
+		}
+	}
+	if namespaced == nil {
+		return nil, fmt.Errorf("desired resource scope is unavailable for %s %s", desired.GetAPIVersion(), desired.GetKind())
+	}
+	if *namespaced {
+		if requestedNamespace == "" {
+			return nil, fmt.Errorf("desired namespaced object has no namespace; pass -n to supply its exact namespace")
+		}
+		desired.SetNamespace(requestedNamespace)
+		return desired, nil
+	}
+	if requestedNamespace != "" {
+		return nil, fmt.Errorf("cluster-scoped desired object cannot be combined with -n")
+	}
+	return desired, nil
+}
+
+func runTraceDiffObservation(ctx context.Context, selection clusterContextSelection, kind, name, namespace, apiVersion, desiredFile string) error {
+	format := traceFormat
+	if traceJSON && format == "ascii" {
+		format = "json"
+	}
+	if format != "ascii" && format != "json" && format != "md" {
+		return fmt.Errorf("unsupported trace format %q (supported: ascii, json, md)", format)
+	}
+	session, err := newTraceSessionForSelection(selection)
+	if err != nil {
+		return fmt.Errorf("failed to capture Kubernetes trace session: %w", err)
+	}
+	result, err := observeTraceDiffWithAPIVersion(ctx, session, kind, name, namespace, apiVersion, desiredFile)
+	if err != nil {
+		return err
+	}
+	return renderTraceDiffObservation(os.Stdout, result, format)
+}
+
 func selectTraceDiffDesired(objects []*unstructured.Unstructured, kind, name, namespace string) (*unstructured.Unstructured, error) {
+	return selectTraceDiffDesiredVersion(objects, kind, name, namespace, "")
+}
+
+func selectTraceDiffDesiredVersion(objects []*unstructured.Unstructured, kind, name, namespace, apiVersion string) (*unstructured.Unstructured, error) {
+	if apiVersion != "" {
+		gv, err := schema.ParseGroupVersion(apiVersion)
+		if err != nil || gv.String() != apiVersion || !traceDiffVersionPattern.MatchString(gv.Version) || (gv.Group != "" && len(validation.IsDNS1123Subdomain(gv.Group)) != 0) {
+			return nil, fmt.Errorf("desired API version is invalid")
+		}
+	}
 	var matches []*unstructured.Unstructured
+	var namespaceMismatch bool
 	for _, obj := range objects {
 		if obj == nil || !strings.EqualFold(obj.GetKind(), kind) || obj.GetName() != name {
 			continue
 		}
+		if apiVersion != "" && obj.GetAPIVersion() != apiVersion {
+			continue
+		}
 		if namespace != "" && obj.GetNamespace() != "" && obj.GetNamespace() != namespace {
+			namespaceMismatch = true
 			continue
 		}
 		matches = append(matches, obj)
 	}
 	switch len(matches) {
 	case 0:
+		if namespaceMismatch {
+			return nil, fmt.Errorf("desired object namespace does not match the requested namespace")
+		}
 		return nil, fmt.Errorf("desired object %s/%s was not found in the rendered input", kind, name)
 	case 1:
-		selected := matches[0].DeepCopy()
-		if namespace != "" {
-			if selected.GetNamespace() == "" {
-				selected.SetNamespace(namespace)
-			} else if selected.GetNamespace() != namespace {
-				return nil, fmt.Errorf("desired object namespace does not match the requested namespace")
-			}
-		}
-		return selected, nil
+		return matches[0].DeepCopy(), nil
 	default:
 		return nil, fmt.Errorf("desired object %s/%s is ambiguous; specify a namespace and unique API version", kind, name)
 	}
+}
+
+func renderTraceDiffObservation(w io.Writer, result *traceDiffObservation, format string) error {
+	if result == nil {
+		return fmt.Errorf("trace diff observation is unavailable")
+	}
+	switch format {
+	case "json":
+		data, err := json.MarshalIndent(result, "", "  ")
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Fprintln(w, string(data))
+		return err
+	case "ascii":
+		return renderTraceDiffObservationHuman(w, result)
+	case "md":
+		return renderTraceDiffObservationMarkdown(w, result)
+	default:
+		return fmt.Errorf("unsupported trace diff format %q (supported: ascii, json, md)", format)
+	}
+}
+
+func renderTraceDiffObservationHuman(w io.Writer, result *traceDiffObservation) error {
+	resource := result.Resource
+	if _, err := fmt.Fprintf(w, "Trace diff (local rendered input vs observed live; %s)\nSource: %s %s", result.Comparison, result.Source.Kind, result.Source.Reference); err != nil {
+		return err
+	}
+	if result.Source.Digest != "" {
+		if _, err := fmt.Fprintf(w, " (sha256: %s)", result.Source.Digest); err != nil {
+			return err
+		}
+	}
+	if _, err := fmt.Fprintf(w, "\nContext: %s\nResource: %s %s", result.Context, resource.APIVersion, resource.Kind); err != nil {
+		return err
+	}
+	if resource.Namespace != "" {
+		if _, err := fmt.Fprintf(w, " %s/%s", resource.Namespace, resource.Name); err != nil {
+			return err
+		}
+	} else if _, err := fmt.Fprintf(w, " %s", resource.Name); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(w, "\nResult: %s\n", result.Status); err != nil {
+		return err
+	}
+	if result.Read != nil {
+		if _, err := fmt.Fprintf(w, "Live read: UID=%s resourceVersion=%s observedAt=%s (GETs discovery=%d object=%d)\n", result.Read.UID, result.Read.ResourceVersion, result.Read.ObservedAt.UTC().Format(time.RFC3339), result.Read.Reads.Discovery, result.Read.Reads.Object); err != nil {
+			return err
+		}
+	}
+	if _, err := fmt.Fprintf(w, "Coverage: %s; no object-set closure or next-reconcile prediction\n", result.Coverage); err != nil {
+		return err
+	}
+	for _, omission := range result.Omissions {
+		if _, err := fmt.Fprintf(w, "Omission: %s\n", omission); err != nil {
+			return err
+		}
+	}
+	for _, difference := range result.Differences {
+		if _, err := fmt.Fprintf(w, "- %s: desired=%q live=%q\n", difference.Field, difference.Desired, difference.Live); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func renderTraceDiffObservationMarkdown(w io.Writer, result *traceDiffObservation) error {
+	resource := result.Resource
+	if _, err := fmt.Fprintf(w, "## Trace diff: %s\n\n- Comparison: `%s`\n- Desired operand: `%s` (`%s`, ref `%s`)\n- Context: `%s`\n- Resource: `%s %s/%s`\n- Live UID: `%s`\n- Live resourceVersion: `%s`\n- Result: **%s**\n- Coverage: `%s`; no object-set closure or next-reconcile prediction\n", result.Status, result.Comparison, result.Source.Kind, result.Source.Digest, result.Source.Reference, result.Context, resource.APIVersion, resource.Namespace, resource.Name, readUID(result.Read), readResourceVersion(result.Read), result.Status, result.Coverage); err != nil {
+		return err
+	}
+	for _, omission := range result.Omissions {
+		if _, err := fmt.Fprintf(w, "\nOmission: %s\n", omission); err != nil {
+			return err
+		}
+	}
+	if len(result.Differences) > 0 {
+		if _, err := fmt.Fprintln(w, "\n| Field | Desired | Live |\n|---|---|---|"); err != nil {
+			return err
+		}
+		for _, difference := range result.Differences {
+			if _, err := fmt.Fprintf(w, "| `%s` | `%s` | `%s` |\n", difference.Field, difference.Desired, difference.Live); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func readUID(read *agent.BoundedReadEvidence) string {
+	if read == nil {
+		return ""
+	}
+	return read.UID
+}
+
+func readResourceVersion(read *agent.BoundedReadEvidence) string {
+	if read == nil {
+		return ""
+	}
+	return read.ResourceVersion
 }
 
 func validateTraceDiffDesired(obj *unstructured.Unstructured) error {

@@ -111,9 +111,17 @@ failures alongside known chains. Reverse Secret observations omit the saved
 last-applied manifest (which can embed Secret payloads) and report
 `orphanMeta.lastAppliedConfigOmission`; this does not mean the annotation was
 absent. Non-Secret last-applied metadata retains its existing representation.
-The local rendered-manifest comparison helper
-has no public JSON contract yet. Full diff integration and remaining end-to-end
-proof remain tracked by #746.
+`trace --diff --desired-file PATH --format json` returns a
+`traceDiffObservation` with `status`, `comparison`, `coverage`, `source`,
+`context`, exact `resource`, optional bounded `read` evidence, field summary,
+differences, and omissions. `source.kind` is `local-rendered`;
+`source.reference` is the local operand reference and `source.digest` is omitted whenever the input
+contains a Secret. `comparison` is `authored-fields-only` and `coverage` is
+`one-selected-object`: this does not claim controller-rendered desired state,
+object-set completeness, or predict a future reconciliation. Status separates
+`matched`, `changed`, `missing`, and `inconclusive`; Secret payload comparison
+is inconclusive and never emits its payload. Controller-rendered Flux/Argo,
+installed-Helm, and other provider operands remain open under #746.
 
 ## Map Ownership Diagnostics
 

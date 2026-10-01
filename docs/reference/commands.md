@@ -888,11 +888,13 @@ cub-scout trace <kind/name> [flags]
 
 | Flag | Description |
 |------|-------------|
-| `-n, --namespace` | Namespace of the resource |
-| `--kube-context` | Exact kubeconfig context for normal and reverse Trace; missing or empty names fail without fallback. Not supported with delegated `--diff` or fixture input |
+| `-n, --namespace` | Namespace of the resource; for rendered diff, omitted namespace comes from the selected manifest object |
+| `--kube-context` | Exact kubeconfig context for normal, reverse, and rendered diff; missing or empty names fail without fallback. Not supported with fixture input |
 | `--app` | Trace ArgoCD Application by name |
 | `-r, --reverse` | Reverse trace (walk up ownerReferences, show orphan metadata) |
-| `-d, --diff` | Show diff between live and Git state |
+| `-d, --diff` | Compare one caller-rendered object with the selected live object; requires `--desired-file` |
+| `--desired-file` | Already-rendered local manifest file or directory; cub-scout does not render it |
+| `--api-version` | Exact API version when matching desired documents need disambiguation |
 | `--artifacts` | Include source artifact provenance (`url`, `revision`, `digest`, `lastUpdateTime`) |
 | `--format` | Output format: `ascii`, `json`, `md` (default: ascii) |
 | `--json` | Output as JSON (shorthand for `--format json`) |
@@ -926,8 +928,10 @@ cub-scout trace pod/nginx-abc123 -n prod --reverse
 # Reverse trace shows orphan metadata for native resources
 cub-scout trace deployment/debug-nginx -n default --reverse
 
-# Show what would change on reconciliation
-cub-scout trace deployment/nginx -n demo --diff
+# Compare one already-rendered object with the live object (no rendering or
+# next-reconciliation prediction is performed by cub-scout)
+helm template web ./chart -n demo > /tmp/web-rendered.yaml
+cub-scout trace deployment/nginx -n demo --diff --desired-file /tmp/web-rendered.yaml --api-version apps/v1 --format json
 
 # Show source artifact provenance (read-only)
 cub-scout trace deployment/nginx -n demo --artifacts
@@ -962,10 +966,16 @@ cluster ID. The TUI Trace view reuses the binding captured by its resource view.
 ```
 
 Omitting the selector preserves the default loader. A supplied selector cannot
-be combined with fixture input or the legacy delegated `--diff` path; these
-combinations fail before observation. Controller diff binding and its read-only
-contract remain unfinished under #746. The local rendered-manifest comparison
-helper is not yet a public CLI capability or a substitute for that contract.
+be combined with fixture input. `trace --diff` without `--desired-file` now
+fails before reads: render manifests with an existing tool, such as `helm
+template` or `kustomize build`, then pass the resulting file or directory.
+Without `-n`, a namespaced object's manifest namespace is used exactly; when
+the manifest omits it, `-n` is required and must identify a namespaced GVK.
+Multiple same-name objects are ambiguous unless narrowed by namespace and, when
+needed, `--api-version`. The comparison is authored-field-only for one object;
+it is not controller desired state, resource-set closure, or a prediction of
+the next reconciliation. Controller-rendered and installed-Helm operands
+remain open under #746.
 
 ### Argo Observation Scope
 
