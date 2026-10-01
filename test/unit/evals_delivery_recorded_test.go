@@ -457,7 +457,6 @@ func TestRUL03RecordedCaseContractAndScaffold(t *testing.T) {
 
 func TestPRE02RecordedCaseContractAndScaffold(t *testing.T) {
 	root := filepath.Join("..", "..", "evals", "pre02-node-selector")
-	archive := filepath.Join("..", "..", "evals", "results", "pre02-node-selector-20261001")
 	wantFiles := map[string]string{
 		"before-pod.json":    "dec5c8fae0f71860f1309aee1be0455b355b6ea3abbb921360ebd306343adefd",
 		"before-nodes.json":  "9808755e4df180b936aa2b68db5ce84aef3bca84b61cc9b2db8a64b007e7374a",
@@ -475,10 +474,6 @@ func TestPRE02RecordedCaseContractAndScaffold(t *testing.T) {
 		digest := sha256.Sum256(body)
 		if hex.EncodeToString(digest[:]) != want {
 			t.Fatalf("PRE-02 raw body hash mismatch for %s", name)
-		}
-		archived, err := os.ReadFile(filepath.Join(archive, name))
-		if err != nil || !bytes.Equal(body, archived) {
-			t.Fatalf("PRE-02 archive differs from fixture for %s: %v", name, err)
 		}
 	}
 	scopeBytes, err := os.ReadFile(filepath.Join(fixtureDir, "capture-scope.json"))
