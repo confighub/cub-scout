@@ -678,7 +678,7 @@ func matchTraceUnitEvents(correlation agent.TraceDeliveryCorrelation, events []C
 				continue
 			}
 			matchedBy = append(matchedBy, "unitEvent.unitId==confighub.unitId")
-		case correlation.UnitSlug != "" && strings.EqualFold(event.Unit, correlation.UnitSlug):
+		case correlation.UnitSlug != "" && event.Unit == correlation.UnitSlug:
 			spaceMatch, spaceBy := traceSpaceMatches(correlation, event.Space, event.SpaceID)
 			if !spaceMatch {
 				continue
@@ -764,7 +764,7 @@ func traceTargetMatches(correlation agent.TraceDeliveryCorrelation, target, targ
 		}
 		return false, ""
 	}
-	if correlation.Target != "" && target != "" && strings.EqualFold(correlation.Target, target) {
+	if correlation.Target != "" && target != "" && correlation.Target == target {
 		return true, "target"
 	}
 	return false, ""

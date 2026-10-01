@@ -1,0 +1,12 @@
+{
+  "fixtureKind": "mocked-bounded-connected-input",
+  "rows": {
+    "unitEvents": [{"eventId": "wrong-unit-case", "unit": "paymentsapi", "space": "prod"}],
+    "releases": [{"releaseId": "wrong-target-case", "target": "west", "space": "prod"}]
+  },
+  "identityControls": {
+    "slugComparison": "exact-case-sensitive",
+    "unitIdAndTargetIdPrecedence": "when both IDs are present, IDs decide",
+    "uuidIdCase": "case-insensitive"
+  }
+}
