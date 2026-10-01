@@ -1,6 +1,6 @@
 # cub-scout execution handover
 
-**Current snapshot:** 2026-10-01 06:30 UTC. `origin/main` is
+**Current snapshot:** 2026-10-01 05:32 UTC. `origin/main` is
 [`8e39ef7`](https://github.com/confighub/cub-scout/commit/8e39ef78238e93768666e0ca6d65a3e7145cf34b).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
@@ -11,14 +11,16 @@ order, quality gates, budgets and decisions.
 
 - The fixed benchmark has 24 questions in six equally weighted groups. Main
   currently has **5 planned, 5 refreshed, 2 prepared recorded bindings, 7
-  prepared projections and 5 prepared raw recordings**. PR #715 merged as
+  prepared projections and 5 prepared raw recordings**.
+  [PR #715](https://github.com/confighub/cub-scout/pull/715) merged as
   [`8e39ef7`](https://github.com/confighub/cub-scout/commit/8e39ef78238e93768666e0ca6d65a3e7145cf34b)
   with Unit, Integration, GitOps E2E and Proof Artifact checks passing; Full
   Verification, Connected E2E and Demo Tests were skipped. Its
-  [RUL-03 capture report](evals/reports/2026-10-01-rul03-context.json) records
-  distinct denied/readable contexts and sequential responses. A 403 means
-  unknown, not empty. The fixture is prepared, not a model run. All counts are
-  preparation statuses, never execution/admission.
+  [RUL-03 capture report](evals/reports/2026-10-01-rul03-context.json) and
+  [case README](evals/rul03-context/README.md) retain source pins and scope. The
+  capture records distinct denied/readable contexts and sequential responses.
+  A 403 means unknown, not empty. The fixture is prepared, not a model run.
+  All counts are preparation statuses, never execution/admission.
 - Issue [#717](https://github.com/confighub/cub-scout/issues/717) prepares an
   offline HLT-04 producer replay pinned to
   `confighub/sveltos-confighub@8187910f9fe226e109e55c4d9c7c0e21297ff424`.
@@ -64,7 +66,9 @@ fixed; prepared cases and reduced output bytes do not relax them.
   explicitly marked resources under the adopted packet. Do not use ConfigHub
   promotion/action commands; every promotion argv, including dry-run, remains
   prohibited. Pilot is the separate acceptance judge and ConfigHub is the
-  authority. Product ownership/health detection is not model judgement.
+  authority. Product ownership/health detection is not model judgement. Keep
+  the shared ConfigHub server, credentials, and context unchanged; no shared
+  server write path is authorized.
 - Parse explicit evidence. Missing data is unknown, not proof of absence,
   health, freshness, identity, ownership, execution, or success. Keep raw
   observations separate from derived conclusions, and preserve partial/error
@@ -72,9 +76,12 @@ fixed; prepared cases and reduced output bytes do not relax them.
 - Select clusters with an explicit private kubeconfig and context. For offline
   Go tests use a verified empty kubeconfig **file**, e.g.
   `/tmp/scout-offline-validation.kubeconfig`; an empty `KUBECONFIG` value can
-  select the shared default. `kind create` may switch global kubectl context;
+  select the shared default. Cluster-mutating tests require the integration tag
+  and a private kubeconfig. `kind create` may switch global kubectl context;
   owned capture scripts must use private config and explicit contexts and must
   verify shared config integrity. Never treat that shared context as disposable.
+  Disposable test-cluster creation/cleanup is permitted only inside the owned
+  capture boundary; it does not authorize product writes to a shared cluster.
 - Preserve ignored evaluation archives and private traces; never inspect sealed
   run homes. Stop only processes created by your retained command/session, with
   verified ancestry and process-group ownership; never scan process names and
@@ -87,9 +94,10 @@ fixed; prepared cases and reduced output bytes do not relax them.
   preserve failed evidence.
 - Follow [AGENTS.md](AGENTS.md): use `./cub-scout`, read the current command
   contracts, build and test with an explicit offline config, and keep CLI/TUI
-  semantics aligned. Check the installed `cub` CLI's current help. `cub gitops discover` and `cub gitops import` were removed; cub-scout's `import --git-path`
-  is a local preview and does not do SDK rendering. Do not claim unsupported
-  commands or renderer behavior.
+  semantics aligned. Check the installed `cub` CLI current help. The `cub gitops`
+  command group, including `discover` and `import`, was removed in July 2026 with
+  no replacement. cub-scout's `import --git-path` is a local preview and does not
+  do SDK rendering. Do not claim unsupported commands or renderer behavior.
 - Maintain source/input/output hashes, source and tool versions, scope,
   commands, timing, errors, omissions and cleanup receipts. Keep before/after
   observations distinct; never silently repair or overwrite failed evidence.
@@ -99,14 +107,16 @@ fixed; prepared cases and reduced output bytes do not relax them.
 
 The maintainer's standing authorization covers implementation, routine public
 GitHub synchronization, and merging reviewed changes after required checks;
-releases remain within the adopted release gates. It does not authorize private
-ConfigHub publication or public/secret gists. Do not add permission gates to
-already authorized routine work.
+reviewed releases may proceed within the adopted release gates. It does not
+authorize private ConfigHub publication or public/secret gists. Do not add
+permission gates to already authorized routine work.
 
 ## Resume here
 
 Check #645, then complete the bounded HLT-04 source replay and owned-container
-isolation packets. Keep the benchmark non-executable and paid work stopped while
+isolation packets. External dependencies #591 (genuine attestations), #597
+(current gate evidence), #600 (fact storage/schema agreement), and GHCR access
+remain unresolved. Keep the benchmark non-executable and paid work stopped while
 tool, evidence, process or cost gates remain unresolved. The adopted plan's
 ordered packets and external dependencies control next steps. Replace this
 current checkpoint in place at the next handover; retain run chronology in
