@@ -21,7 +21,7 @@ import uuid
 
 REPO = Path(__file__).resolve().parents[2]
 OLD_SOURCE = "8cdb27b0bc9db17f5c0d1b59628b67cd3936ed6c"
-FIXED_SOURCE = "3a056e5e72d7236badc76d6d0090cbcb1752aba0"
+FIXED_SOURCE = "24074d858e8e2411ce2ba3e94340ec5646395eed"
 NAMESPACE = "scout-trace-context-proof"
 DEPLOYMENT = "scout-context-marker"
 NATIVE_DEPLOYMENT = "scout-native-marker"

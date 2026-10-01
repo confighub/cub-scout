@@ -6,7 +6,7 @@ remain gated until the helper and its cleanup/evidence paths receive an
 independent review.
 
 The old source pin is `8cdb27b0bc9db17f5c0d1b59628b67cd3936ed6c`; the fixed
-source pin is `3a056e5e72d7236badc76d6d0090cbcb1752aba0`. The helper requires a
+source pin is `24074d858e8e2411ce2ba3e94340ec5646395eed`. The helper requires a
 clean checkout containing the fixed pin as an ancestor. It compiles both CLI
 binaries and compiles the fixed-source TUI probe **before** it creates a
 cluster. The fixed source build and full Go suite were independently reported
@@ -42,6 +42,15 @@ CLI shim rejected its availability check, and the old reverse route returned
 ASCII with `--format json`. Its failed receipt is retained. The owned cluster,
 private credentials and source worktrees were removed, with shared kubeconfig
 unchanged. The corrected helper has 16 passing offline tests.
+
+The second attempt at `/tmp/scout-trace-context-proof-2` passed the CLI
+acceptance checks but failed the TUI target-identity assertion: the selected
+Deployment was replaced by its Argo Application in the human result. Its
+cleanup and shared/private config integrity checks passed. The product fix
+retains the selected workload and preserves the Application provenance chain;
+a new observer/rendering regression fails before that fix. Independent review,
+focused tests, and the full Go suite pass at the new fixed source pin above.
+Both failed attempts remain failed and retained.
 
 The additional fixed-source reverse control requires the unlabelled Deployment
 to report `native` under the allowed context, while its denied read must retain
