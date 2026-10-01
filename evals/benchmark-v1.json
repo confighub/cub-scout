@@ -124,12 +124,31 @@
         {
           "id": "INV-04",
           "question": "Partial/RBAC inventory without false orphan claims",
-          "status": "planned",
-          "existing_case": null,
+          "status": "raw_recording_prepared_not_run",
+          "existing_case": "evals/inv04-rbac",
           "reference": "Report readable resources and omissions; do not classify inaccessible or omitted resources as unmanaged.",
           "controls": [
             "Explicitly distinguish empty, denied, and incomplete results"
-          ]
+          ],
+          "evidence_refresh": "2026-10-01",
+          "source_provenance": {
+            "repository": "confighub/cub-scout",
+            "capture_source_commit": "faad29c120ab772324bd48caf8c5be12e5bfc20d",
+            "product_revision": "a99d7d4387740fd2c9ccb183f81ea8004c2e7206",
+            "product_binary_sha256": "9b36a5b571499c9798ebf1440c7f3d68fd10d513f66920339d6f32e375a005d3",
+            "document": "evals/inv04-rbac/fixtures/",
+            "capture_started_at": "2026-10-01T01:41:39Z",
+            "capture_ended_at": "2026-10-01T01:41:53Z",
+            "atomic_snapshot": false,
+            "raw_files_sha256": {
+              "capture-scope.json": "c8a098daf301f02cc362968b8c78e3551fcf30e54453e46aea205a80a9180bb3",
+              "denied-deployments.json": "e80dc99c4fd3f8325744d2e030dea4ad1e5fe4cf19056d62d52c198f632077d5",
+              "readable-empty-deployments.json": "8d70075f02a75588293ec2b45c8b765cf39d8d268366418ce76dce61386e1aaf",
+              "readable-populated-deployments.json": "c98c09f2cb1675b58455ae124d0584ecc948394013fbb0b437c39f6b35e4a1b6"
+            },
+            "limits": "Three sequential scoped API responses plus derived request/source metadata, not an atomic or complete cluster inventory. Equal raw evidence is prepared; actual harness grants and benchmark admission remain pending."
+          },
+          "benchmark_admission": "Raw capture and strict correctness contract prepared; not run. Full benchmark remains non-executable and this manifest does not authorize paid runs."
         }
       ]
     },

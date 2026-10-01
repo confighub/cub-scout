@@ -1,5 +1,28 @@
 # cub-scout Handover for the Next AI Coder
 
+## 2026-10-01: INV-04 actual RBAC evidence
+
+This packet starts from merged baseline `c8073a2`; v2.12.4 remains published.
+INV-04 now contains genuine scoped API responses: two readable Deployments,
+a successful empty DeploymentList, and HTTP 403 Forbidden. Capture source
+`faad29c` used the pinned `a99d7d4` binary. The corrected 50.658-second run
+verified owned cleanup and unchanged shared/private configs before cleanup.
+Two setup failures remain recorded; generated node names exceeded 63 characters
+before the length fix. See [capture details](evals/inv04-rbac/README.md).
+
+The fixed 24 cases now comprise **8 planned, five refreshed, two prepared
+recorded bindings, seven prepared projections and two prepared raw recordings**.
+Questions and weights are unchanged. The suite remains non-executable; no
+model run, paid authorization, or savings claim follows from fixture preparation.
+Scout's derived output is excluded from the identical raw-evidence scaffolds.
+The capture also exposed broad collection despite a Kind filter; request-scope
+optimization is tracked under #599 with parity and before/after proof required.
+
+Paid evaluation remains $4.2655744 estimated inclusive list price; development
+dollars/credits are unmeasured. One bounded cheap packaging worker and independent
+review were used, with no maximum-speed service. Remaining queue and external
+gates are in [#645](https://github.com/confighub/cub-scout/issues/645).
+
 ## 2026-10-01: Recorded binding and compact response checkpoint
 
 Status as of 01:15 UTC: merged code baseline is `a99d7d4`; v2.12.4 remains the

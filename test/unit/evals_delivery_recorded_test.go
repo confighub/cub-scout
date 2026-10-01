@@ -449,6 +449,13 @@ func TestDeliveryCaseMappingsKeepBenchmarkUnexecutable(t *testing.T) {
 			counts[c.Status]++
 			if c.ID == "DEL-01" || c.ID == "DEL-02" {
 				found[c.ID] = c.Status == "recorded_projection_prepared_not_run" && c.ExistingCase != "" && c.Provenance.Projection != ""
+			} else if c.ID == "INV-04" {
+				found[c.ID] = c.Status == "raw_recording_prepared_not_run" && c.ExistingCase == "evals/inv04-rbac" && !c.Provenance.AtomicSnapshot && len(c.Provenance.RawFiles) == len(inv04FixtureHashes)
+				for name, want := range inv04FixtureHashes {
+					if c.Provenance.RawFiles[name] != want {
+						t.Fatalf("INV-04 mapping hash mismatch: %s", name)
+					}
+				}
 			} else if c.ID == "HLT-02" {
 				found[c.ID] = c.Status == "raw_recording_prepared_not_run" && c.ExistingCase == "evals/flux-ready-without-health" && c.Provenance.Binding == "fe81b64dc4e259d76cff54cda0ca084e44bbedd367a35f6619694d89394940b3"
 				hlt02Provenance.Binding = c.Provenance.Binding
@@ -460,7 +467,7 @@ func TestDeliveryCaseMappingsKeepBenchmarkUnexecutable(t *testing.T) {
 			}
 		}
 	}
-	if m.Status != "frozen_design_not_executable" || m.Execution.Paid || !found["DEL-01"] || !found["DEL-02"] || !found["HLT-02"] || counts["planned"] != 9 || counts["existing_refreshed_fixture"] != 5 || counts["recorded_snapshot_binding_prepared_not_run"] != 2 || counts["recorded_projection_prepared_not_run"] != 7 || counts["raw_recording_prepared_not_run"] != 1 {
+	if m.Status != "frozen_design_not_executable" || m.Execution.Paid || !found["DEL-01"] || !found["DEL-02"] || !found["HLT-02"] || !found["INV-04"] || counts["planned"] != 8 || counts["existing_refreshed_fixture"] != 5 || counts["recorded_snapshot_binding_prepared_not_run"] != 2 || counts["recorded_projection_prepared_not_run"] != 7 || counts["raw_recording_prepared_not_run"] != 2 {
 		t.Fatalf("case preparation changed benchmark gates or readiness: status=%q paid=%v mappings=%v counts=%v", m.Status, m.Execution.Paid, found, counts)
 	}
 	if hlt02Provenance.SourceRevision != "sha1:7732dde28be8cf8c42c096d94efbd8ce4a9d0a19" || hlt02Provenance.AppliedRevision != hlt02Provenance.SourceRevision || hlt02Provenance.AtomicSnapshot {
