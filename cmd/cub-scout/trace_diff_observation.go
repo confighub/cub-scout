@@ -15,6 +15,7 @@ import (
 
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -204,8 +205,16 @@ func resolveTraceDiffNamespace(ctx context.Context, session *traceSession, desir
 	if err != nil {
 		return nil, 0, fmt.Errorf("unable to determine desired resource scope")
 	}
-	resources, err := client.ServerResourcesForGroupVersion(gv.String())
-	if err != nil {
+	// DiscoveryClient's convenience method uses context.TODO. Issue the same
+	// exact discovery GET with the operation context and a bounded deadline.
+	discoveryContext, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	path := "/apis/" + gv.String()
+	if gv.Group == "" {
+		path = "/api/" + gv.Version
+	}
+	resources := &metav1.APIResourceList{}
+	if err := client.RESTClient().Get().AbsPath(path).Do(discoveryContext).Into(resources); err != nil {
 		return nil, 1, fmt.Errorf("unable to determine desired resource scope")
 	}
 	var namespaced *bool
@@ -336,8 +345,13 @@ func renderTraceDiffObservationHuman(w io.Writer, result *traceDiffObservation) 
 	if _, err := fmt.Fprintf(w, "\nResult: %s\n", result.Status); err != nil {
 		return err
 	}
-	if result.Read != nil {
+	if result.Read != nil && result.Read.Available {
 		if _, err := fmt.Fprintf(w, "Live read: UID=%s resourceVersion=%s observedAt=%s (scope discovery GETs=%d; bounded-reader GETs discovery=%d object=%d)\n", result.Read.UID, result.Read.ResourceVersion, result.Read.ObservedAt.UTC().Format(time.RFC3339), result.ScopeDiscoveryReads, result.Read.Reads.Discovery, result.Read.Reads.Object); err != nil {
+			return err
+		}
+	}
+	if result.Read != nil && !result.Read.Available {
+		if _, err := fmt.Fprintf(w, "Live read unavailable (scope discovery GETs=%d; bounded-reader GETs discovery=%d object=%d)\n", result.ScopeDiscoveryReads, result.Read.Reads.Discovery, result.Read.Reads.Object); err != nil {
 			return err
 		}
 	}
