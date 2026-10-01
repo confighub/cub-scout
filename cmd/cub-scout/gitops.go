@@ -24,6 +24,7 @@ var (
 	gitopsNamespace string
 	gitopsJSON      bool
 	gitopsFormat    string
+	gitopsTUI       bool
 
 	gitopsWithConfigHub       bool
 	gitopsConfigHubSpace      string
@@ -55,6 +56,9 @@ Examples:
 
   # Include bounded ConfigHub release/event/live-status evidence
   cub-scout gitops status --with-confighub --confighub-space prod --confighub-since 24h
+
+  # Open one read-only snapshot in a scrollable viewport
+  cub-scout gitops status --with-confighub --confighub-space prod --tui
 `,
 }
 
@@ -83,6 +87,9 @@ Examples:
 
   # Include bounded ConfigHub release/event/live-status evidence
   cub-scout gitops status --with-confighub --confighub-space prod --confighub-since 24h
+
+  # Open one collected status snapshot in a scrollable viewport
+  cub-scout gitops status --with-confighub --confighub-space prod --tui
 `,
 	RunE: runGitOpsStatus,
 }
@@ -93,6 +100,7 @@ func init() {
 
 	gitopsStatusCmd.Flags().StringVarP(&gitopsNamespace, "namespace", "n", "", "Namespace to scan (default: all namespaces)")
 	gitopsStatusCmd.Flags().StringVar(&gitopsFormat, "format", "ascii", "Output format: ascii, json, md")
+	gitopsStatusCmd.Flags().BoolVar(&gitopsTUI, "tui", false, "View this GitOps status snapshot in a scrollable terminal viewport")
 	gitopsStatusCmd.Flags().BoolVar(&gitopsJSON, "json", false, "Output as JSON (shorthand for --format json)")
 	gitopsStatusCmd.Flags().BoolVar(&gitopsWithConfigHub, "with-confighub", false, "Include bounded ConfigHub release, unit-event, and live-status evidence")
 	gitopsStatusCmd.Flags().StringVar(&gitopsConfigHubSpace, "confighub-space", "", "ConfigHub space for connected evidence (default: CUB_SPACE; use '*' explicitly for all spaces)")
@@ -268,6 +276,9 @@ func runGitOpsStatus(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	if err := validateGitOpsTUIFormat(gitopsTUI, cmd.Flags().Changed("format"), cmd.Flags().Changed("json")); err != nil {
+		return err
+	}
 	evidenceOptions, err := gitOpsDeliveryEvidenceOptionsFromFlags(ctx)
 	if err != nil {
 		return err
@@ -275,6 +286,13 @@ func runGitOpsStatus(cmd *cobra.Command, args []string) error {
 
 	// TEST HOOK: Load status data from JSON file to bypass cluster access in tests.
 	if statusJSONFile := os.Getenv("CUB_SCOUT_TEST_GITOPS_JSON"); statusJSONFile != "" {
+		if gitopsTUI {
+			summary, err := readGitOpsStatusJSON(statusJSONFile)
+			if err != nil {
+				return err
+			}
+			return runGitOpsStatusTUI(ctx, summary)
+		}
 		return loadAndRenderGitOpsStatusFromJSON(statusJSONFile, format)
 	}
 
@@ -304,6 +322,9 @@ func runGitOpsStatus(cmd *cobra.Command, args []string) error {
 
 	// Connected-mode durability: persist sync/drift summary snapshot for query/trend workflows.
 	persistConnectedGitOpsSummary(summary, gitopsNamespace)
+	if gitopsTUI {
+		return runGitOpsStatusTUI(ctx, summary)
+	}
 
 	// Output
 	switch format {
@@ -314,6 +335,13 @@ func runGitOpsStatus(cmd *cobra.Command, args []string) error {
 	default:
 		return outputGitOpsStatusHuman(summary)
 	}
+}
+
+func validateGitOpsTUIFormat(tui, formatChanged, legacyJSONChanged bool) error {
+	if tui && (formatChanged || legacyJSONChanged) {
+		return fmt.Errorf("--tui cannot be combined with output format options")
+	}
+	return nil
 }
 
 // buildGitOpsSummary builds a GitOpsSummary from the detected backend info
@@ -1273,16 +1301,10 @@ func outputDeployerStatus(dep DeployerStatus) {
 
 // loadAndRenderGitOpsStatusFromJSON loads status from JSON file for testing
 func loadAndRenderGitOpsStatusFromJSON(path, format string) error {
-	data, err := os.ReadFile(path)
+	summary, err := readGitOpsStatusJSON(path)
 	if err != nil {
-		return fmt.Errorf("failed to read gitops JSON: %w", err)
+		return err
 	}
-
-	var summary GitOpsSummary
-	if err := json.Unmarshal(data, &summary); err != nil {
-		return fmt.Errorf("failed to parse gitops JSON: %w", err)
-	}
-
 	switch format {
 	case "json":
 		return outputGitOpsStatusJSON(summary)
@@ -1291,4 +1313,17 @@ func loadAndRenderGitOpsStatusFromJSON(path, format string) error {
 	default:
 		return outputGitOpsStatusHuman(summary)
 	}
+}
+
+func readGitOpsStatusJSON(path string) (GitOpsSummary, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return GitOpsSummary{}, fmt.Errorf("failed to read gitops JSON: %w", err)
+	}
+
+	var summary GitOpsSummary
+	if err := json.Unmarshal(data, &summary); err != nil {
+		return GitOpsSummary{}, fmt.Errorf("failed to parse gitops JSON: %w", err)
+	}
+	return summary, nil
 }
