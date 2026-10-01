@@ -73,7 +73,7 @@ def capture_map_content(content, tool_id, root=Path("/tmp/claude-config/projects
     text = content if isinstance(content, str) else "\n".join(x.get("text", "") for x in content if isinstance(x, dict))
     receipt = {"source": "inline", "path": None}
     if text.startswith("<persisted-output>\n"):
-        match = re.search(r"^Full output saved to: ([^\n]+)$", text, re.MULTILINE)
+        match = re.search(r"^Output too large \([0-9]+(?:\.[0-9]+)?KB\)\. Full output saved to: ([^\n]+)$", text, re.MULTILINE)
         if not match: raise ValueError("persisted map path missing")
         path = Path(match.group(1))
         relative = path.relative_to(root)
@@ -218,7 +218,7 @@ class Provider(http.server.ThreadingHTTPServer):
                 try:
                     if ordinal > MAX_REQUESTS: status = 429
                     elif self.command != "POST": status = 405
-                    elif self.path not in ("/v1/messages", "/v1/messages?beta=true"): status = 404
+                    elif self.path not in ("/v1/messages", "/v1/messages?beta=true", "/v1/messages/count_tokens?beta=true"): status = 404
                     elif (self.headers.get_all("x-api-key", []) != [FAKE_KEY]
                           or self.headers.get_all("authorization", [])
                           or self.headers.get_all("content-length", []) != [self.headers.get("content-length", "")]
@@ -237,7 +237,11 @@ class Provider(http.server.ThreadingHTTPServer):
                             if self._timed_out or time.monotonic() > read_deadline: status = 408
                             else:
                                 parsed = json.loads(body.decode("utf-8", "strict"), object_pairs_hook=unique_pairs)
-                                if not isinstance(parsed, dict) or type(parsed.get("stream")) is not bool: status = 400
+                                if isinstance(parsed, dict) and self.path == "/v1/messages/count_tokens?beta=true":
+                                    status = 404
+                                    safe.update({"kind": "token-count-declined", "authKind": "x-api-key",
+                                                 "bodyBase64": base64.b64encode(body).decode(), "bodyBytes": len(body), "bodySha256": sha(body)})
+                                elif not isinstance(parsed, dict) or type(parsed.get("stream")) is not bool: status = 400
                                 elif time.monotonic() >= outer.deadline: status = 408
                                 else:
                                     with outer.lock:
@@ -382,9 +386,10 @@ def main():
     expected_names = [name for name, _ in expected]
     expected_final_requests = len(expected) + 1
     startup = [row for row in provider.connections if row.get("kind") == "startup-declined"]
+    token_counts = [row for row in provider.connections if row.get("kind") == "token-count-declined"]
     provider_attempts_ok = (provider.received <= MAX_REQUESTS and len(provider.records) == expected_final_requests
-        and all(row.get("kind") in ("accepted", "startup-declined") for row in provider.connections)
-        and len(startup) <= 1 and len(provider.connections) == provider.received
+        and all(row.get("kind") in ("accepted", "startup-declined", "token-count-declined") for row in provider.connections)
+        and len(startup) <= 1 and len(token_counts) <= 1 and len(provider.connections) == provider.received
         and sum(row.get("kind") == "accepted" for row in provider.connections) == len(provider.records))
     matched_results = {item.get("id"): item for item in provider_results}
     cli_result_map = {item.get("id"): item for item in cli_results}
@@ -405,6 +410,7 @@ def main():
         refusal_ok = refusal_ok and bool(use and result and result.get("is_error") is True and direct.explicit_denial(result.get("content"), name))
     map_ok = True
     map_results = []
+    map_error = None
     if arm == "treatment":
         map_use = next((item for item in cli_uses if str(item.get("name", "")).endswith("__map")), None)
         map_result = next((item for item in cli_results if map_use and item.get("id") == map_use.get("id")), None)
@@ -416,7 +422,9 @@ def main():
                 parsed_map, captured_map = capture_map_content(content, map_use["id"])
                 scale.validate_report(parsed_map)
                 map_results = [captured_map]
-            except (ValueError, TypeError, OSError): map_ok = False
+            except (ValueError, TypeError, OSError) as exc:
+                map_ok = False
+                map_error = type(exc).__name__ + ": " + str(exc)[:180]
     observed_tools = provider.records[0].get("inventoryNames", []) if provider.records else []
     builtins = [name for name in observed_tools if name in ("Read", "Bash")]
     mcp_inventory = [name for name in observed_tools if isinstance(name, str) and name.startswith("mcp__")]
@@ -480,7 +488,7 @@ def main():
         "fileReadPassed": read_ok, "kubectlReadPassed": bash_ok,
         "providerAttemptsPassed": provider_attempts_ok, "toolResultsCorrelated": result_equivalence,
         "refusalPassed": refusal_ok, "mcpMapPassed": map_ok, "mcpMapResult": map_results,
-        "mcpMapResultValidated": map_ok,
+        "mcpMapResultValidated": map_ok, "mcpMapError": map_error,
         "helm": {"argv": ["/tools/helm", "version", "--short"], "exitCode": helm_rc,
                  "status": helm_status, "stdoutBytes": len(helm_stdout), "stdoutSha256": sha(helm_stdout),
                  "stderrBytes": len(helm_stderr), "stderrSha256": sha(helm_stderr)},

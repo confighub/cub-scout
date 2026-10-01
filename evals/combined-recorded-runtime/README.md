@@ -70,5 +70,9 @@ counter is not usage or billing. Skill names must occur in the structured
 available-skills message listing. A persisted MCP result is read only from its
 exact private session/tool-result path, with symlink and 1-MiB size checks, then
 retained and independently checked with the existing recorded-map validator.
-This does not mean the model saw the complete persisted result. Unexpected
+This does not mean the model saw the complete persisted result. Unknown
 request paths are retained with a bound and hash but still fail acceptance.
+The observed `POST /v1/messages/count_tokens?beta=true` request may receive one
+explicit 404 decline per arm after fake-key authentication and bounded JSON
+capture. It counts toward the eight-request limit; no token count is fabricated.
+This local unavailable-service behavior is not a paid-provider billing claim.

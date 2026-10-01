@@ -138,6 +138,21 @@ class ContractTests(unittest.TestCase):
             value.update(stdoutBase64=base64.b64encode(raw).decode(), stdoutBytes=len(raw), stdoutSha256=digest(raw))
             with self.assertRaises(contract.ContractError): contract.validate_arm_payload(value, "baseline")
 
+    def test_observed_token_count_decline_is_bounded_and_not_unknown_traffic(self):
+        value = arm_payload("treatment")
+        body = b'{"model":"synthetic","messages":[]}'
+        row = {"ordinal": len(value["providerConnections"]) + 1, "kind": "token-count-declined",
+               "method": "POST", "path": "/v1/messages/count_tokens?beta=true", "status": 404,
+               "authKind": "x-api-key", "bodyBase64": base64.b64encode(body).decode(),
+               "bodyBytes": len(body), "bodySha256": digest(body)}
+        value["providerConnections"].append(row); value["providerReceivedCount"] += 1
+        contract.validate_arm_payload(value, "treatment")
+        for field, changed in (("path", "/unknown"), ("method", "GET"), ("authKind", None), ("status", 200), ("bodySha256", "0" * 64)):
+            broken = copy.deepcopy(value); broken["providerConnections"][-1][field] = changed
+            with self.assertRaises(contract.ContractError): contract.validate_arm_payload(broken, "treatment")
+        value["providerConnections"].append({**row, "ordinal": row["ordinal"] + 1}); value["providerReceivedCount"] += 1
+        with self.assertRaises(contract.ContractError): contract.validate_arm_payload(value, "treatment")
+
     def test_pair_validator_requires_matching_stages_and_explicit_binary_delta(self):
         arms = {}
         for name in ("baseline", "treatment"):

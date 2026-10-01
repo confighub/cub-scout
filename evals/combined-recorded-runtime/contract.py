@@ -207,9 +207,10 @@ def validate_arm_payload(value: dict, expected_arm: str) -> dict:
     _strict_int(provider_count, "provider received count", 1, MAX_REQUESTS)
     connections = value.get("providerConnections")
     _need(isinstance(connections, list) and len(connections) == provider_count and
-          all(isinstance(row, dict) and row.get("kind") in ("accepted", "startup-declined") for row in connections)
+          all(isinstance(row, dict) and row.get("kind") in ("accepted", "startup-declined", "token-count-declined") for row in connections)
           and sum(row.get("kind") == "accepted" for row in connections) == len(requests)
-          and sum(row.get("kind") == "startup-declined" for row in connections) <= 1,
+          and sum(row.get("kind") == "startup-declined" for row in connections) <= 1
+          and sum(row.get("kind") == "token-count-declined" for row in connections) <= 1,
           "provider attempts include unexplained or rejected traffic")
     ordinals = [_strict_int(row.get("ordinal"), "provider connection ordinal", 1, MAX_REQUESTS)
                 for row in connections]
@@ -218,6 +219,14 @@ def validate_arm_payload(value: dict, expected_arm: str) -> dict:
         if row.get("kind") == "startup-declined":
             _need(row.get("method") == "HEAD" and row.get("path") == "/api/hello" and row.get("status") == 404,
                   "provider startup request differs from the one allowed declined probe")
+        if row.get("kind") == "token-count-declined":
+            _need(row.get("method") == "POST" and row.get("path") == "/v1/messages/count_tokens?beta=true"
+                  and row.get("status") == 404 and row.get("authKind") == "x-api-key",
+                  "token-count decline differs from observed unavailable local route")
+            count_body = _strict_b64(row.get("bodyBase64"), "token-count request body")
+            _need(len(count_body) <= MAX_REQUEST_BODY and len(count_body) == row.get("bodyBytes")
+                  and hashlib.sha256(count_body).hexdigest() == row.get("bodySha256")
+                  and isinstance(strict_json(count_body), dict), "token-count request bytes/hash invalid")
     parser = _probe_parser()
     helper_spec = importlib.util.spec_from_file_location("combined_payload_helpers", Path(__file__).with_name("payload.py"))
     transport = importlib.util.module_from_spec(helper_spec); helper_spec.loader.exec_module(transport)

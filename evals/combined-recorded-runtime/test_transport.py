@@ -37,7 +37,7 @@ class TransportTests(unittest.TestCase):
             path = directory / 'toolu_combined_treatment_5.json'
             raw = json.dumps([{'type': 'text', 'text': '{"full":"body"}'}]).encode()
             path.write_bytes(raw)
-            content = '<persisted-output>\nOutput too large.\nFull output saved to: ' + str(path) + '\n\nPreview: deliberately incomplete\n</persisted-output>'
+            content = '<persisted-output>\nOutput too large (88.8KB). Full output saved to: ' + str(path) + '\n\nPreview: deliberately incomplete\n</persisted-output>'
             value, receipt = payload.capture_map_content(content, 'toolu_combined_treatment_5', root)
             self.assertEqual(value, {'full': 'body'})
             self.assertEqual(base64.b64decode(receipt['bodyBase64']), raw)
