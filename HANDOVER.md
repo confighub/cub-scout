@@ -1,7 +1,7 @@
 # cub-scout execution handover
 
-**Current snapshot:** 2026-10-01 05:58 UTC. Verified main baseline:
-[`92d0fd2`](https://github.com/confighub/cub-scout/commit/92d0fd2bb31854d03c6bfc8c9c265af54807e063).
+**Current snapshot:** 2026-10-01. Verified merged baseline:
+[`660e830`](https://github.com/confighub/cub-scout/commit/660e8303f82652e1553dfdb20f65741c9a426ee5).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
@@ -9,50 +9,50 @@ order, quality gates, budgets and decisions.
 
 ## Current work and evidence
 
-- The fixed benchmark has 24 questions in six equally weighted groups. Main
-  has **4 planned, 5 refreshed, 2 prepared recorded bindings, 7
-  prepared projections, 5 prepared raw recordings and 1 prepared synthetic
-  source replay** in this checkout.
-  [PR #715](https://github.com/confighub/cub-scout/pull/715) merged as
-  [`8e39ef7`](https://github.com/confighub/cub-scout/commit/8e39ef78238e93768666e0ca6d65a3e7145cf34b)
-  with Unit, Integration, GitOps E2E and Proof Artifact checks passing; Full
-  Verification, Connected E2E and Demo Tests were skipped. Its
-  [RUL-03 capture report](evals/reports/2026-10-01-rul03-context.json) and
-  [case README](evals/rul03-context/README.md) retain source pins and scope. The
-  capture records distinct denied/readable contexts and sequential responses.
-  A 403 means unknown, not empty. The fixture is prepared, not a model run.
-  All counts are preparation statuses, never execution/admission.
-- Issue [#717](https://github.com/confighub/cub-scout/issues/717) prepares an
-  offline HLT-04 producer replay pinned to
-  `confighub/sveltos-confighub@8187910f9fe226e109e55c4d9c7c0e21297ff424`.
-  The first network-denied producer replay passed in 2.844 seconds at helper
-  source `6a13aee`, with eight synthetic controls and verified owned cleanup.
-  The [equal-arm fixture](evals/sveltos-hlt-04-report-freshness/README.md) and
-  strict answer contract are prepared and independently reviewed, not model-run.
-  Its [report](evals/reports/2026-10-01-sveltos-hlt04-report-freshness.json)
-  preserves the source pins and all eight controls.
-  It is not raw live evidence, a real check-execution record, or a model run.
-- [PR #716](https://github.com/confighub/cub-scout/pull/716) merged the separate
-  [single-round analysis](evals/reports/2026-10-01-direct-cli-round-accounting.json):
-  one observed Read round, with terminal `num_turns: 2` kept opaque. The original
-  harness failure is preserved. Named Task/Agent refusals are mock evidence;
-  full treatment and complete paid accounting remain unadmitted.
-- [PR #721](https://github.com/confighub/cub-scout/pull/721) merged the
-  [container result](evals/reports/2026-10-01-container-isolation.json): seven
-  payload assertions and configuration inspections passed, but the original run
-  remains failed on cleanup parsing. A separate exact-ID inspection confirms
-  absence with matching response hashes. The parser repair has regression
-  coverage; no container rerun or paid admission follows.
-- [#722](https://github.com/confighub/cub-scout/issues/722) prepares PRE-02
-  before/after node-selector evidence on an owned cluster. Its repaired helper
-  is in independent source review; no live capture has run.
-- Recent raw evidence is linked from the [execution plan](docs/roadmap-3.0-execution.md)
-  and #645. HLT-02 and RUL-04 observations are sequential, not an atomic
-  snapshot or proof of current state. A Ready Pod runtime image ID does not
-  prove immutable intended identity when the declared image is a tag. The
-  pinned Helm 3.22/4.1 matrix covers named install/upgrade paths only; it does
-  not close #588 or establish hook, CRD, rollback, conflict or default-apply
-  behavior.
+- The fixed benchmark retains 24 questions and six equally weighted groups.
+  This checkout has **0 planned, 5 refreshed fixtures, 2 prepared recorded
+  bindings, 8 prepared projections, 7 prepared raw recordings and 2 prepared
+  synthetic source replays**. These are preparation statuses, not model
+  execution or admission. Older-case grader and runtime gates remain open.
+- [PR #727](https://github.com/confighub/cub-scout/pull/727) integrates three
+  independently reviewed cases to share one final CI cycle. PRE-02's owned
+  node-selector capture passed in 38.575 seconds with cleanup and unchanged
+  shared configuration: scheduling is not application health.
+  [RUL-01](evals/rul01-dated-snapshot/README.md) reuses that exact Pod response
+  and its request receipt; authored clocks yield 300/600 seconds at one-second
+  timestamp resolution, without renewing freshness. It is not a second capture.
+  [RUL-02](evals/rul02-cache-replay/README.md) retains the actual 3.837-second
+  local production-cache replay; authored inputs are distinct from served
+  responses and returned results. Valid hits preserve observation times;
+  refresh/expiry fetch changed identity/content; failed refresh evicts success.
+  No push invalidation, live freshness or cost-saving claim follows.
+- [PR #728](https://github.com/confighub/cub-scout/pull/728) passed required
+  checks and merged the historical Helm-experiment Argo parent/child/Pod case.
+  Parent health does not establish child health. Its source pins, sequential
+  capture, missing response times and conflicting cleanup fields remain explicit.
+  This does not establish Crossplane coverage or a complete/current graph.
+- [PR #723](https://github.com/confighub/cub-scout/pull/723) merged the reviewed
+  [HLT-04 synthetic producer replay](evals/sveltos-hlt-04-report-freshness/README.md).
+  Eight controls passed at a pinned Sveltos integration source; a report renewal
+  is not proof of a new health check, exact applied digest or live controller run.
+- [#729](https://github.com/confighub/cub-scout/issues/729) prepares a bounded
+  PRE-01 API replay for real-tool plumbing. Exact recorded routes preserve
+  source status/body; missing routes cannot become absence. Absolute deadlines
+  and backpressure guards have red/green proof. Real kubectl coverage is pending.
+- [#730](https://github.com/confighub/cub-scout/issues/730) prepares a no-model
+  Linux version/ABI gate. Exact Linux Claude 2.1.274, kubectl 1.36.0 and Helm 4.1.4
+  artifacts have published-checksum and signature verification; a pinned Linux
+  scout build also exists. Downloaded targets have not run or been installed.
+  Version compatibility, ordinary-tool parity, discovery/Helm route coverage,
+  complete descendant accounting and paid admission remain unresolved.
+- Earlier evidence remains bounded: [#715](https://github.com/confighub/cub-scout/pull/715)
+  records distinct denied/readable contexts (403 is unknown, not empty);
+  [#716](https://github.com/confighub/cub-scout/pull/716) separates one mock Read
+  round from opaque `num_turns: 2`; [#721](https://github.com/confighub/cub-scout/pull/721)
+  preserves the original failed container receipt and separate exact-ID absence
+  proof. HLT-02/RUL-04 are sequential observations; runtime image identity does
+  not supply missing intended identity. The named Helm matrix does not close
+  #588's hooks, CRDs, rollback, conflicts or default-apply behavior.
 
 ## Evaluation status
 
@@ -132,9 +132,11 @@ permission gates to already authorized routine work.
 
 ## Resume here
 
-Check #645, then finish PRE-02 source review and its bounded capture. The next
-runtime packet must pin Linux tools and an honest recorded API/Helm evidence
-interface; #709 records the scoped subprocess-policy decision. External dependencies #591 (genuine attestations), #597
+Check #645, then complete exact-head review and CI for the combined PRE-02,
+RUL-01 and RUL-02 package. All 24 fixtures are prepared; benchmark admission
+remains pending. Advance #729 recorded API coverage and #730 Linux version/ABI
+validation, then actual tool parity and process/cost accounting. #709 records
+the scoped subprocess-policy decision. External dependencies #591 (genuine attestations), #597
 (current gate evidence), #600 (fact storage/schema agreement), and GHCR access
 remain unresolved. Keep the benchmark non-executable and paid work stopped while
 tool, evidence, process or cost gates remain unresolved. The adopted plan's

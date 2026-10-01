@@ -1,0 +1,38 @@
+{
+  "schema": "rul02-cache-replay-scope.v1",
+  "evidenceFile": "rul02-cache-replay.json",
+  "evidenceSha256": "a4ce6bfe7f1951c215914c3eab0b787739f14cfb1e6d7475ed869a5e975a5d4b",
+  "source": {
+    "repository": "confighub/cub-scout",
+    "revision": "f7ad343740fb9c1ac488a06117c63466810afaa8",
+    "test": "pkg/agent/bounded_read_replay_test.go:TestBoundedReadRUL02IdentityCacheReplay",
+    "sha256": {
+      "pkg/agent/bounded_read_replay_test.go": "6f1c0514958483fa10477bcafe2ba9936bd7e14341a5f807d976b0728c15ee32",
+      "pkg/agent/testdata/rul02-cache-replay.json": "718f81a8eae1a1c136343659e6ee3320a63b7b0826b2273c9955943e0b440e95",
+      "pkg/agent/bounded_read.go": "227ce841dce3a4072efb7c8f4b24c1cbd3838fc674e698cd5d2fb1ad2302953b"
+    }
+  },
+  "execution": {
+    "startedAt": "2026-10-01T06:23:30.545672+00:00",
+    "elapsedSeconds": 3.837292250012979,
+    "exitCode": 0,
+    "timedOut": false,
+    "goVersion": "go version go1.26.2 darwin/arm64",
+    "modelRun": false,
+    "liveClusterRun": false
+  },
+  "stdoutSha256": "ca7d9d52f43146106a92c7e37d978cc3687d005df49968e38c1ddd9912513329",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "inputKind": "authored_httptest_responses_and_clock",
+  "scope": {
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "namespace": "team-a",
+    "name": "api"
+  },
+  "limitations": [
+    "The clock and API responses are authored inputs to a local httptest replay, not live-cluster observations.",
+    "The replay does not establish push or automatic cache invalidation, current cluster state, or a general freshness guarantee.",
+    "No production behavior was changed; no model or paid benchmark run was performed."
+  ]
+}

@@ -78,17 +78,29 @@ jobs:
       - name: Run offline RUL-04 capture guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest evals/rul04-image-identity/test_capture.py
 
+      - name: Run offline RUL-01 dated-snapshot guards
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/rul01-dated-snapshot -v
+
       - name: Run offline PRE-01 capture guards
         run: |
           python3 -m venv /tmp/scout-pre01-ci
           /tmp/scout-pre01-ci/bin/python -m pip install -r evals/pre01-crd/requirements.txt
           PYTHONDONTWRITEBYTECODE=1 /tmp/scout-pre01-ci/bin/python -m unittest discover -s evals/pre01-crd -v
 
+      - name: Run offline PRE-01 recorded API replay guards
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/recorded-api -v
+
+      - name: Run offline Linux runtime version gate guards
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest evals/linux-runtime-versions/test_prepare.py
+
       - name: Run offline RUL-03 capture and fixture-routing guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/rul03-context -v
 
       - name: Run offline legacy strict-answer packet guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/legacy-strict-cases -v
+
+      - name: Run offline PRE-02 capture and fixture-routing guards
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/pre02-node-selector -v
 
       - name: Run offline container isolation guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/container-isolation -v
