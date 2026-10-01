@@ -1,6 +1,6 @@
 # cub-scout execution handover
 
-**Current snapshot:** 2026-10-01 05:32 UTC. `origin/main` is
+**Current snapshot:** 2026-10-01 05:38 UTC. Verified main baseline:
 [`8e39ef7`](https://github.com/confighub/cub-scout/commit/8e39ef78238e93768666e0ca6d65a3e7145cf34b).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
@@ -24,9 +24,15 @@ order, quality gates, budgets and decisions.
 - Issue [#717](https://github.com/confighub/cub-scout/issues/717) prepares an
   offline HLT-04 producer replay pinned to
   `confighub/sveltos-confighub@8187910f9fe226e109e55c4d9c7c0e21297ff424`.
-  It uses authored synthetic inputs and is unrun; a source review repair and
-  network-denied compile preflight remain before replay. It is not raw live
-  evidence, a check-execution record, or a model case.
+  The first network-denied producer replay passed in 2.844 seconds at helper
+  source `6a13aee`, with eight synthetic controls and verified owned cleanup.
+  The retained evidence is in independent review; packaging remains pending.
+  It is not raw live evidence, a real check-execution record, or a model run.
+- [PR #716](https://github.com/confighub/cub-scout/pull/716) merged the separate
+  [single-round analysis](evals/reports/2026-10-01-direct-cli-round-accounting.json):
+  one observed Read round, with terminal `num_turns: 2` kept opaque. The original
+  harness failure is preserved. Named Task/Agent refusals are mock evidence;
+  full treatment and complete paid accounting remain unadmitted.
 - Issue [#718](https://github.com/confighub/cub-scout/issues/718) prepares an
   owned offline container boundary for broader eval tools. It has not run.
 - Recent raw evidence is linked from the [execution plan](docs/roadmap-3.0-execution.md)
@@ -61,7 +67,9 @@ fixed; prepared cases and reduced output bytes do not relax them.
 ## Operating boundaries
 
 - cub-scout product workflows are deterministic and read-only. They do not
-  mutate clusters, publish facts, or make ConfigHub/Pilot decisions. Owned
+  mutate clusters or make ConfigHub/Pilot decisions. Standalone never publishes
+  facts; connected publication has a separate explicit write boundary under
+  the adopted D5/D6 gates. Owned
   disposable test/capture harnesses may bootstrap and clean up only their
   explicitly marked resources under the adopted packet. Do not use ConfigHub
   promotion/action commands; every promotion argv, including dry-run, remains
@@ -76,7 +84,7 @@ fixed; prepared cases and reduced output bytes do not relax them.
 - Select clusters with an explicit private kubeconfig and context. For offline
   Go tests use a verified empty kubeconfig **file**, e.g.
   `/tmp/scout-offline-validation.kubeconfig`; an empty `KUBECONFIG` value can
-  select the shared default. Cluster-mutating tests require the integration tag
+  select the shared default. Go tests that mutate clusters require the integration tag
   and a private kubeconfig. `kind create` may switch global kubectl context;
   owned capture scripts must use private config and explicit contexts and must
   verify shared config integrity. Never treat that shared context as disposable.
