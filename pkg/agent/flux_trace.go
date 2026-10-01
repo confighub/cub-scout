@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -19,6 +20,16 @@ import (
 type FluxTracer struct {
 	// fluxPath is the path to the flux CLI (default: "flux")
 	fluxPath string
+	// Explicit binding is opt-in and is used only by rich Trace sessions.
+	kubeconfigPath string
+	kubeContext    string
+	bound          bool
+}
+
+// NewFluxTracerWithKubeconfig binds Flux to a private, captured Trace kubeconfig.
+// The legacy constructors intentionally keep their ambient behavior.
+func NewFluxTracerWithKubeconfig(path, contextName string) *FluxTracer {
+	return &FluxTracer{fluxPath: "flux", kubeconfigPath: path, kubeContext: contextName, bound: true}
 }
 
 // NewFluxTracer creates a new Flux tracer
@@ -42,19 +53,39 @@ func (f *FluxTracer) ToolName() string {
 
 // Available checks if the flux CLI is installed
 func (f *FluxTracer) Available() bool {
+	if f.bound {
+		if strings.TrimSpace(f.kubeconfigPath) == "" || strings.TrimSpace(f.kubeContext) == "" {
+			return false
+		}
+		info, err := os.Stat(f.kubeconfigPath)
+		if err != nil || info.IsDir() {
+			return false
+		}
+		_, err = exec.LookPath(f.fluxPath)
+		return err == nil
+	}
 	cmd := exec.Command(f.fluxPath, "version", "--client")
 	return cmd.Run() == nil
 }
 
 // Trace runs flux trace and parses the output
 func (f *FluxTracer) Trace(ctx context.Context, kind, name, namespace string) (*TraceResult, error) {
+	if f.bound && (strings.TrimSpace(f.kubeconfigPath) == "" || strings.TrimSpace(f.kubeContext) == "" || !f.Available()) {
+		return nil, fmt.Errorf("flux trace requires a valid captured kubeconfig and context")
+	}
 	// Build command: flux trace <kind> <name> -n <namespace>
 	args := []string{"trace", strings.ToLower(kind), name}
 	if namespace != "" {
 		args = append(args, "-n", namespace)
 	}
+	if f.bound {
+		args = append(args, "--kubeconfig", f.kubeconfigPath, "--context", f.kubeContext)
+	}
 
 	cmd := exec.CommandContext(ctx, f.fluxPath, args...)
+	if f.bound {
+		cmd.Env = withKubeconfig(os.Environ(), f.kubeconfigPath)
+	}
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -109,6 +140,17 @@ func (f *FluxTracer) Trace(ctx context.Context, kind, name, namespace string) (*
 
 	// Parse the output
 	return f.parseTraceOutput(output, kind, name, namespace)
+}
+
+func withKubeconfig(environment []string, path string) []string {
+	result := make([]string, 0, len(environment)+1)
+	for _, entry := range environment {
+		if strings.HasPrefix(strings.ToUpper(entry), "KUBECONFIG=") {
+			continue
+		}
+		result = append(result, entry)
+	}
+	return append(result, "KUBECONFIG="+path)
 }
 
 // parseTraceOutput parses the flux trace text output into a TraceResult
