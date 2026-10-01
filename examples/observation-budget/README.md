@@ -144,16 +144,15 @@ counts real dynamic-client HTTP requests, and returns a denied response for the
 selector and invalid cluster-scope fallbacks. It does not create or contact a
 Kubernetes cluster.
 
-Before claiming live-cluster behavior, repeat the same read-only comparison on
-an explicitly owned test cluster: select a namespaced GVR and two namespaces
-that each contain an object with the same name; create a watch-backed client
-scoped to the first namespace; compare its exact namespace/name set for reads
-in the watched namespace, the other namespace, and all namespaces against
-direct unwrapped dynamic-client LIST results. Record API request paths (or
-equivalent API audit evidence) to show that the exact watched read was served
-from cache and the other/all reads reached the API. Include a cluster-scoped
-GVR check where the API rejects a namespaced URL. No such live proof is claimed
-by this local test.
+An opt-in owned-kind harness now makes that comparison executable. Its
+acceptance gates, exact invocation, private-kubeconfig handling, source pins,
+cleanup checks, and proof limits are in
+[`evals/watch-cache-namespace/README.md`](../../evals/watch-cache-namespace/README.md).
+It creates the two same-name ConfigMaps, exercises direct and watch-backed
+production clients, records exact HTTP paths/statuses and namespace/name/UID
+identities, and tests denied and cluster-scope fallback behavior against both
+pinned source revisions. The helper has not been run; no live-cluster result is
+claimed. Run it only after independent review of that helper.
 
 ### Scoped explicit context selection proof
 

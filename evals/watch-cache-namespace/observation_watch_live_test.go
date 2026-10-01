@@ -1,0 +1,357 @@
+// Copyright (C) ConfigHub, Inc.
+// SPDX-License-Identifier: MIT
+
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/url"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/tools/clientcmd"
+)
+
+const watchNamespaceLiveSchema = "watch-cache-namespace-live-probe.v1"
+
+type watchNamespaceIdentity struct {
+	Namespace string `json:"namespace"`
+	Name      string `json:"name"`
+	UID       string `json:"uid"`
+}
+
+type watchNamespaceRequest struct {
+	Method string `json:"method"`
+	Path   string `json:"path"`
+	Watch  bool   `json:"watch"`
+	Status int    `json:"status"`
+}
+
+type watchNamespaceCounter struct {
+	mu       sync.Mutex
+	requests []watchNamespaceRequest
+}
+
+type watchNamespaceRoundTripper struct {
+	base    http.RoundTripper
+	counter *watchNamespaceCounter
+}
+
+func (rt watchNamespaceRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
+	response, err := rt.base.RoundTrip(request)
+	status := 0
+	if response != nil {
+		status = response.StatusCode
+	}
+	rt.counter.mu.Lock()
+	rt.counter.requests = append(rt.counter.requests, watchNamespaceRequest{
+		Method: request.Method, Path: request.URL.Path,
+		Watch: request.URL.Query().Get("watch") == "true", Status: status,
+	})
+	rt.counter.mu.Unlock()
+	return response, err
+}
+
+func (c *watchNamespaceCounter) snapshot() []watchNamespaceRequest {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return append([]watchNamespaceRequest(nil), c.requests...)
+}
+
+func watchNamespaceCountList(requests []watchNamespaceRequest, path string) int {
+	count := 0
+	for _, request := range requests {
+		if request.Method == http.MethodGet && request.Path == path && !request.Watch {
+			count++
+		}
+	}
+	return count
+}
+
+func watchNamespaceList(ctx context.Context, client dynamic.Interface, gvr schema.GroupVersionResource, namespace string) (*unstructured.UnstructuredList, error) {
+	if namespace == "" {
+		return client.Resource(gvr).List(ctx, metav1.ListOptions{})
+	}
+	return client.Resource(gvr).Namespace(namespace).List(ctx, metav1.ListOptions{})
+}
+
+func watchNamespaceIdentities(list *unstructured.UnstructuredList) []watchNamespaceIdentity {
+	if list == nil {
+		return nil
+	}
+	identities := make([]watchNamespaceIdentity, 0, len(list.Items))
+	for _, item := range list.Items {
+		identities = append(identities, watchNamespaceIdentity{Namespace: item.GetNamespace(), Name: item.GetName(), UID: string(item.GetUID())})
+	}
+	sort.Slice(identities, func(i, j int) bool {
+		if identities[i].Namespace != identities[j].Namespace {
+			return identities[i].Namespace < identities[j].Namespace
+		}
+		if identities[i].Name != identities[j].Name {
+			return identities[i].Name < identities[j].Name
+		}
+		return identities[i].UID < identities[j].UID
+	})
+	return identities
+}
+
+func watchNamespaceReason(err error) string {
+	if err == nil {
+		return "success"
+	}
+	if apierrors.IsForbidden(err) {
+		return "Forbidden"
+	}
+	if apierrors.IsNotFound(err) {
+		return "NotFound"
+	}
+	if apierrors.IsBadRequest(err) {
+		return "BadRequest"
+	}
+	return "other_error"
+}
+
+func watchNamespaceNewClient(t *testing.T, privateConfig string, expectedContext string, counter *watchNamespaceCounter) dynamic.Interface {
+	t.Helper()
+	if privateConfig == "" || filepath.IsAbs(privateConfig) == false || os.Getenv("KUBECONFIG") != privateConfig {
+		t.Fatal("probe requires KUBECONFIG to equal its explicit private config path")
+	}
+	info, err := os.Lstat(privateConfig)
+	if err != nil || !info.Mode().IsRegular() || info.Mode().Perm()&0077 != 0 {
+		t.Fatal("explicit kubeconfig must be a private regular file")
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		t.Fatal("explicit kubeconfig must not be a symlink")
+	}
+	raw, err := clientcmd.LoadFromFile(privateConfig)
+	ownedCluster := os.Getenv("SCOUT_WNS_OWNED_CLUSTER")
+	if err != nil || raw.CurrentContext != expectedContext || ownedCluster == "" || expectedContext != "kind-"+ownedCluster || !strings.HasPrefix(ownedCluster, "scout-watch-ns-") {
+		t.Fatal("explicit kubeconfig does not select the invocation-owned context")
+	}
+	clusterContext, ok := raw.Contexts[raw.CurrentContext]
+	if !ok {
+		t.Fatal("explicit kubeconfig current context is missing")
+	}
+	cluster, ok := raw.Clusters[clusterContext.Cluster]
+	if !ok {
+		t.Fatal("explicit kubeconfig current cluster is missing")
+	}
+	server, err := url.Parse(cluster.Server)
+	if err != nil || server.Scheme != "https" || (server.Hostname() != "127.0.0.1" && server.Hostname() != "localhost" && server.Hostname() != "::1") || server.User != nil {
+		t.Fatal("explicit kubeconfig API endpoint is not a local owned-kind endpoint")
+	}
+	loading := &clientcmd.ClientConfigLoadingRules{ExplicitPath: privateConfig}
+	delayed := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loading, &clientcmd.ConfigOverrides{CurrentContext: expectedContext})
+	config, err := delayed.ClientConfig()
+	if err != nil {
+		t.Fatal("could not load explicit private kubeconfig")
+	}
+	config.QPS = 20
+	config.Burst = 30
+	config.Timeout = 10 * time.Second
+	if counter != nil {
+		config.WrapTransport = func(base http.RoundTripper) http.RoundTripper {
+			return watchNamespaceRoundTripper{base: base, counter: counter}
+		}
+	}
+	client, err := dynamic.NewForConfig(config)
+	if err != nil {
+		t.Fatal("could not create dynamic client from explicit private kubeconfig")
+	}
+	return client
+}
+
+// TestWatchNamespaceLiveProbe is intentionally opt-in. The runner supplies only
+// a freshly-created local kind kubeconfig and runs this one test against pinned
+// source revisions. Ordinary `go test` never reads kubeconfig or contacts a cluster.
+func TestWatchNamespaceLiveProbe(t *testing.T) {
+	if os.Getenv("SCOUT_WNS_LIVE_PROBE") != "1" {
+		t.Skip("set only by the reviewed owned-kind capture helper")
+	}
+	resultPath := os.Getenv("SCOUT_WNS_RESULT_PATH")
+	variant := os.Getenv("SCOUT_WNS_VARIANT")
+	namespaceA, namespaceB := os.Getenv("SCOUT_WNS_NAMESPACE_A"), os.Getenv("SCOUT_WNS_NAMESPACE_B")
+	deniedNamespace, name := os.Getenv("SCOUT_WNS_DENIED_NAMESPACE"), os.Getenv("SCOUT_WNS_CONFIGMAP_NAME")
+	expectedContext := os.Getenv("SCOUT_WNS_EXPECTED_CONTEXT")
+	privateConfig := os.Getenv("SCOUT_WNS_PRIVATE_KUBECONFIG")
+	if resultPath == "" || variant == "" || namespaceA == "" || namespaceB == "" || deniedNamespace == "" || name == "" || expectedContext == "" {
+		t.Fatal("live probe arguments are incomplete")
+	}
+	result := map[string]interface{}{
+		"schema": watchNamespaceLiveSchema, "variant": variant, "namespaceA": namespaceA,
+		"namespaceB": namespaceB, "deniedNamespace": deniedNamespace, "configMapName": name,
+		"mismatches": []string{}, "checks": map[string]bool{},
+	}
+	defer func() {
+		if value := recover(); value != nil {
+			result["panic"] = fmt.Sprintf("%T", value)
+			t.Errorf("probe panicked (%T)", value)
+		}
+		encoded, err := json.MarshalIndent(result, "", "  ")
+		if err == nil {
+			file, createErr := os.OpenFile(resultPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+			if createErr == nil {
+				_, _ = file.Write(append(encoded, '\n'))
+				_ = file.Sync()
+				_ = file.Close()
+			} else {
+				t.Errorf("could not retain probe result: %v", createErr)
+			}
+		}
+	}()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 75*time.Second)
+	defer cancel()
+	directCounter, watchCounter := &watchNamespaceCounter{}, &watchNamespaceCounter{}
+	direct := watchNamespaceNewClient(t, privateConfig, expectedContext, directCounter)
+	watched := watchNamespaceNewClient(t, privateConfig, expectedContext, watchCounter)
+	configMapGVR := schema.GroupVersionResource{Version: "v1", Resource: "configmaps"}
+	clusterNodeGVR := schema.GroupVersionResource{Version: "v1", Resource: "nodes"}
+	pathA := "/api/v1/namespaces/" + namespaceA + "/configmaps"
+	pathB := "/api/v1/namespaces/" + namespaceB + "/configmaps"
+	pathDenied := "/api/v1/namespaces/" + deniedNamespace + "/configmaps"
+	pathAll := "/api/v1/configmaps"
+	pathNodeNamespaced := "/api/v1/namespaces/" + namespaceA + "/nodes"
+
+	directA, errA := watchNamespaceList(ctx, direct, configMapGVR, namespaceA)
+	directB, errB := watchNamespaceList(ctx, direct, configMapGVR, namespaceB)
+	directAll, errAll := watchNamespaceList(ctx, direct, configMapGVR, "")
+	directDenied, errDenied := watchNamespaceList(ctx, direct, configMapGVR, deniedNamespace)
+	directNode, errNode := watchNamespaceList(ctx, direct, clusterNodeGVR, namespaceA)
+	directRecords := directCounter.snapshot()
+	result["direct"] = map[string]interface{}{
+		"teamA": watchNamespaceIdentities(directA), "teamAError": watchNamespaceReason(errA),
+		"teamB": watchNamespaceIdentities(directB), "teamBError": watchNamespaceReason(errB),
+		"allError": watchNamespaceReason(errAll), "deniedError": watchNamespaceReason(errDenied),
+		"clusterScopedNamespacedError": watchNamespaceReason(errNode), "requests": directRecords,
+	}
+	mismatches := []string{}
+	checks := map[string]bool{}
+	if errA != nil || directA == nil || len(directA.Items) != 1 || directA.Items[0].GetName() != name || directA.Items[0].GetNamespace() != namespaceA || directA.Items[0].GetUID() == "" {
+		mismatches = append(mismatches, "direct-team-a-fixture-identity")
+	}
+	if errB != nil || directB == nil || len(directB.Items) != 1 || directB.Items[0].GetName() != name || directB.Items[0].GetNamespace() != namespaceB || directB.Items[0].GetUID() == "" {
+		mismatches = append(mismatches, "direct-team-b-fixture-identity")
+	}
+	if errA == nil && errB == nil && directA != nil && directB != nil && len(directA.Items) > 0 && len(directB.Items) > 0 && directA.Items[0].GetUID() != directB.Items[0].GetUID() {
+		checks["sameNameDifferentUID"] = true
+	} else {
+		mismatches = append(mismatches, "fixture-uid-collision-check")
+	}
+	if !apierrors.IsForbidden(errAll) || directAll != nil {
+		mismatches = append(mismatches, "direct-all-namespace-must-be-forbidden")
+	}
+	if !apierrors.IsForbidden(errDenied) || directDenied != nil {
+		mismatches = append(mismatches, "direct-denied-namespace-must-be-forbidden")
+	}
+	if (!apierrors.IsNotFound(errNode) && !apierrors.IsBadRequest(errNode)) || directNode != nil {
+		mismatches = append(mismatches, "direct-cluster-scope-invalid-namespace-control")
+	}
+
+	if len(mismatches) == 0 {
+		watchClient, synced, stop, err := newWatchBackedClient(ctx, watched,
+			[]schema.GroupVersionResource{configMapGVR},
+			map[schema.GroupVersionResource]resourceScope{configMapGVR: resourceScopeNamespaced}, namespaceA)
+		if err != nil {
+			mismatches = append(mismatches, "watch-cache-startup")
+		} else {
+			defer stop()
+			if len(synced) != 1 || synced[0] != configMapGVR {
+				mismatches = append(mismatches, "watch-cache-sync-coverage")
+			}
+			// Install only an empty synthetic cluster-scope lister to make sure
+			// an invalid namespaced List cannot be mistaken for a cache miss.
+			nodes := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{})
+			watchClient.listers[clusterNodeGVR] = cache.NewGenericLister(nodes, clusterNodeGVR.GroupResource())
+			watchClient.scopes[clusterNodeGVR] = resourceScopeCluster
+
+			beforeA := watchNamespaceCountList(watchCounter.snapshot(), pathA)
+			cachedA, cachedAErr := watchNamespaceList(ctx, watchClient, configMapGVR, namespaceA)
+			afterA := watchNamespaceCountList(watchCounter.snapshot(), pathA)
+			if cachedAErr != nil || !sameWatchNamespaceIdentity(cachedA, directA) || beforeA != afterA {
+				mismatches = append(mismatches, "team-a-exact-cache-hit")
+			} else {
+				checks["teamAExactCacheHit"] = true
+			}
+
+			beforeB := watchNamespaceCountList(watchCounter.snapshot(), pathB)
+			cachedB, cachedBErr := watchNamespaceList(ctx, watchClient, configMapGVR, namespaceB)
+			afterB := watchNamespaceCountList(watchCounter.snapshot(), pathB)
+			if cachedBErr != nil || !sameWatchNamespaceIdentity(cachedB, directB) || afterB != beforeB+1 {
+				mismatches = append(mismatches, "team-b-fallback-and-identity")
+			} else {
+				checks["teamBFallbackAndIdentity"] = true
+			}
+
+			beforeAll := watchNamespaceCountList(watchCounter.snapshot(), pathAll)
+			cachedAll, cachedAllErr := watchNamespaceList(ctx, watchClient, configMapGVR, "")
+			afterAll := watchNamespaceCountList(watchCounter.snapshot(), pathAll)
+			if !apierrors.IsForbidden(cachedAllErr) || cachedAll != nil || afterAll != beforeAll+1 || watchNamespaceReason(cachedAllErr) != watchNamespaceReason(errAll) {
+				mismatches = append(mismatches, "all-namespace-fallback-and-denial")
+			} else {
+				checks["allNamespaceFallbackPreservesDenial"] = true
+			}
+
+			beforeDenied := watchNamespaceCountList(watchCounter.snapshot(), pathDenied)
+			cachedDenied, cachedDeniedErr := watchNamespaceList(ctx, watchClient, configMapGVR, deniedNamespace)
+			afterDenied := watchNamespaceCountList(watchCounter.snapshot(), pathDenied)
+			if !apierrors.IsForbidden(cachedDeniedErr) || cachedDenied != nil || afterDenied != beforeDenied+1 || watchNamespaceReason(cachedDeniedErr) != watchNamespaceReason(errDenied) {
+				mismatches = append(mismatches, "denied-namespace-fallback-preserves-denial")
+			} else {
+				checks["deniedNamespaceFallbackPreservesDenial"] = true
+			}
+
+			beforeNode := watchNamespaceCountList(watchCounter.snapshot(), pathNodeNamespaced)
+			cachedNode, cachedNodeErr := watchNamespaceList(ctx, watchClient, clusterNodeGVR, namespaceA)
+			afterNode := watchNamespaceCountList(watchCounter.snapshot(), pathNodeNamespaced)
+			if (!apierrors.IsNotFound(cachedNodeErr) && !apierrors.IsBadRequest(cachedNodeErr)) || cachedNode != nil || afterNode != beforeNode+1 || watchNamespaceReason(cachedNodeErr) != watchNamespaceReason(errNode) {
+				mismatches = append(mismatches, "cluster-scope-fallback-and-error")
+			} else {
+				checks["clusterScopeFallbackPreservesError"] = true
+			}
+			result["watchRequests"] = watchCounter.snapshot()
+			result["watch"] = map[string]interface{}{
+				"teamA": watchNamespaceIdentities(cachedA), "teamAError": watchNamespaceReason(cachedAErr),
+				"teamB": watchNamespaceIdentities(cachedB), "teamBError": watchNamespaceReason(cachedBErr),
+				"allError": watchNamespaceReason(cachedAllErr), "deniedError": watchNamespaceReason(cachedDeniedErr),
+				"clusterScopedNamespacedError": watchNamespaceReason(cachedNodeErr),
+			}
+		}
+	}
+	result["checks"] = checks
+	result["mismatches"] = mismatches
+	result["directRequests"] = directRecords
+	if len(mismatches) > 0 {
+		t.Errorf("live namespace cache proof has mismatches: %s", strings.Join(mismatches, ","))
+	}
+}
+
+func sameWatchNamespaceIdentity(left, right *unstructured.UnstructuredList) bool {
+	if left == nil || right == nil {
+		return false
+	}
+	leftIDs, rightIDs := watchNamespaceIdentities(left), watchNamespaceIdentities(right)
+	if len(leftIDs) != len(rightIDs) {
+		return false
+	}
+	for i := range leftIDs {
+		if leftIDs[i] != rightIDs[i] {
+			return false
+		}
+	}
+	return true
+}
