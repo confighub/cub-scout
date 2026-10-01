@@ -1,0 +1,26 @@
+{
+  "case": "RUL-01",
+  "status": "prepared_not_run",
+  "source_case": "PRE-02 retained after-Pod response; reused, not an independent capture",
+  "source_commit": "4b113710948882eda501e14aacca2d5cec1168ae",
+  "source_helper_sha256": "ec4f7f8e9d2d2ca6257abc5029f2e01b33203794a5782c22ba13895bedd31230",
+  "source_provenance_sha256": "472314079b74bff1a374d5e55eb44a12db2e2ffeaa189b30dc659423bc95398a",
+  "raw_file": "evals/rul01-dated-snapshot/fixtures/after-pod.json",
+  "raw_bytes": 5355,
+  "raw_sha256": "f264204dc296d06590bc357691a1b95db08222f4ac68b3c38935d6ef200832c3",
+  "request": {
+    "method": "GET",
+    "path": "/api/v1/namespaces/pre02-node-selector/pods/scout-pre02-selector",
+    "http_status": 200,
+    "started_at": "2026-10-01T06:03:25Z",
+    "ended_at": "2026-10-01T06:03:25Z",
+    "elapsed_seconds": 0.01204633410088718,
+    "printed_timestamp_precision_seconds": 1
+  },
+  "test_clocks": ["2026-10-01T06:08:25Z", "2026-10-01T06:13:25Z"],
+  "computed_ages_seconds": [300, 600],
+  "scope": "Historical fixture arithmetic only. No current-state, exact-instant, new-capture, product capture-time capability, or savings claim.",
+  "model_run": false,
+  "provider_run": false,
+  "cluster_run": false
+}

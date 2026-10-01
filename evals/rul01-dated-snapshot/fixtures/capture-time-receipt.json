@@ -1,0 +1,28 @@
+{
+  "schema": "rul01.capture-time-binding.v1",
+  "classification": "neutral request-time receipt, bound to one retained raw response",
+  "source": {
+    "repository": "confighub/cub-scout",
+    "captureSourceCommit": "4b113710948882eda501e14aacca2d5cec1168ae",
+    "captureHelperSha256": "ec4f7f8e9d2d2ca6257abc5029f2e01b33203794a5782c22ba13895bedd31230",
+    "sourceProvenanceSha256": "472314079b74bff1a374d5e55eb44a12db2e2ffeaa189b30dc659423bc95398a",
+    "rawFile": "after-pod.json",
+    "rawBytes": 5355,
+    "rawSha256": "f264204dc296d06590bc357691a1b95db08222f4ac68b3c38935d6ef200832c3"
+  },
+  "request": {
+    "phase": "after",
+    "method": "GET",
+    "path": "/api/v1/namespaces/pre02-node-selector/pods/scout-pre02-selector",
+    "httpStatus": 200,
+    "startedAt": "2026-10-01T06:03:25Z",
+    "endedAt": "2026-10-01T06:03:25Z",
+    "elapsedSeconds": 0.01204633410088718,
+    "loggedTimestampPrecisionSeconds": 1,
+    "timeMeaning": "request logging timestamps for this response; not a timestamp for an atomic multi-response snapshot"
+  },
+  "captureScope": {
+    "atomicSnapshot": false,
+    "clusterContext": "one fresh invocation-owned local kind cluster"
+  }
+}
