@@ -6,11 +6,13 @@ requirements are Experiment A in `docs/roadmap-3.0-execution.md` and
 `evals/ordinary-tool-parity-v1.md`: same pinned Claude, same complete raw
 packet (including `managedFields`) byte-for-byte, and baseline access to usable
 ordinary read-only kubectl/Helm/file tools. The model need not invoke every
-advertised tool in every case. Use the case's prompt and `allowed_tools` as the
-per-case boundary. Where a prompt says “only” supplied files, a live query or
-extra transport request is not allowed. File reads are the required minimum
-for every case below; kubectl is conditional and Helm release queries are not
-required by any frozen question.
+advertised tool in every case. Preserve explicit case tool grants and restrictions
+on live access or replaying historical commands. “Only supplied files” limits
+the evidence; it does not by itself forbid an allowed local tool from parsing
+those same bytes through the documented transport. The table identifies source
+evidence and required facts, not a mandatory tool sequence or an instruction to
+read every available file. Kubectl queries are conditional; installed Helm
+release queries are not required by any frozen question.
 
 `authored-projection` is permissible only under the v1 clarification: retain the
 unchanged source packet and map every response field/row to exact source bytes
