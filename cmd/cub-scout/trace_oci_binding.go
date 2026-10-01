@@ -31,6 +31,14 @@ func confirmTraceOCISource(ctx context.Context, result *agent.TraceResult, c *ag
 	confirmTraceOCISourceUsing(ctx, result, c, traceOCISourceReadFn)
 }
 
+func confirmTraceOCISourceForDelivery(ctx context.Context, session *traceSession, bound bool, result *agent.TraceResult, c *agent.TraceDeliveryCorrelation) {
+	if bound {
+		confirmTraceOCISourceWithTraceSession(ctx, session, result, c)
+		return
+	}
+	confirmTraceOCISource(ctx, result, c)
+}
+
 func confirmTraceOCISourceWithTraceSession(ctx context.Context, session *traceSession, result *agent.TraceResult, c *agent.TraceDeliveryCorrelation) {
 	read := func(ctx context.Context, ref agent.BoundedResourceRef) (*unstructured.Unstructured, agent.BoundedReadEvidence, error) {
 		if session == nil {

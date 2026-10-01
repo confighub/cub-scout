@@ -88,7 +88,7 @@ func TestConfirmTraceOCISourceUsesTraceSessionEndpoint(t *testing.T) {
 	require.Zero(t, retarget.requests, "OCI confirmation must not reread a retargeted config")
 }
 
-func TestConfirmTraceOCISourceWithMissingSessionDoesNotUseLegacyReader(t *testing.T) {
+func TestConfigHubTraceWithMissingSessionDoesNotUseLegacyOCIReader(t *testing.T) {
 	previous := traceOCISourceReadFn
 	t.Cleanup(func() { traceOCISourceReadFn = previous })
 	calls := 0
@@ -101,7 +101,7 @@ func TestConfirmTraceOCISourceWithMissingSessionDoesNotUseLegacyReader(t *testin
 		{Kind: "Application", Name: "api", Namespace: "delivery"},
 	}}
 	c := agent.TraceDeliveryCorrelation{OCIIdentityStatus: "exact", OCIDigest: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
-	confirmTraceOCISourceWithTraceSession(context.Background(), nil, result, &c)
+	confirmTraceOCISourceForDelivery(context.Background(), nil, true, result, &c)
 	require.Zero(t, calls, "missing bound session must not select the legacy ambient reader")
 	require.Equal(t, "unverified-source", c.OCIIdentityStatus)
 	require.NotNil(t, c.OCISourceRead)

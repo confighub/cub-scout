@@ -85,11 +85,7 @@ func attachTraceConfigHubDeliveryEvidenceForSession(ctx context.Context, result 
 	}
 
 	correlation := buildTraceDeliveryCorrelation(result)
-	if !bound {
-		confirmTraceOCISource(ctx, result, &correlation)
-	} else {
-		confirmTraceOCISourceWithTraceSession(ctx, session, result, &correlation)
-	}
+	confirmTraceOCISourceForDelivery(ctx, session, bound, result, &correlation)
 	confirmTraceOCIRegistry(&correlation)
 	opts, preflightOmissions := traceGitOpsDeliveryOptions(flags, correlation)
 	if opts.Now.IsZero() {
