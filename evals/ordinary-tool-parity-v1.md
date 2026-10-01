@@ -2,6 +2,11 @@
 
 **Status:** supplemental protocol clarification; not benchmark admission. This note is scoped to Experiment A under [#603](https://github.com/confighub/cub-scout/issues/603). It does not change the frozen 24 questions, six group weights, correctness or statistical rules, cost accounting, budgets, paid-run stop, or runtime/descendant gates in the [3.0 execution plan](../docs/roadmap-3.0-execution.md) and [benchmark manifest](benchmark-v1.json). Process containment/accounting remains separately tracked by [#709](https://github.com/confighub/cub-scout/issues/709).
 
+The case-by-case minimum file reads and optional source-backed client queries are
+listed in the [ordinary-tool query plan](ordinary-tool-query-plan-v1.md). That
+plan is a coverage aid only; it does not require every case to invoke kubectl or
+Helm, and it does not establish full-suite admission.
+
 ## Equal evidence and transport
 
 Experiment A requires both arms to receive the same complete raw workload evidence, including `managedFields`, and the manifest requires equal-information evidence packets to be byte-identical. These requirements apply to the immutable input packet. They do not require every ordinary-tool HTTP response to be a historically captured, byte-exact Kubernetes API response. A recorded ordinary-tool arm may use the real pinned kubectl (or Helm) against a transparent, deterministic read-only transport derived from the same packet, if each response is labeled as a source-captured response or an authored projection. This is a recorded comparison method, not live-cluster behavior.
