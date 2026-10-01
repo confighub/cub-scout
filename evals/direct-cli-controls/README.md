@@ -2,7 +2,7 @@
 
 Termination signals enter bounded cleanup; repeat signals are suppressed during
 teardown and the original handlers are restored. Requests are snapshotted only
-after the server and handlers join. Rejected or excess arrivals fail acceptance,
+after the server and handlers join. Unexpected rejected or excess arrivals fail acceptance,
 and the final snapshot is retained on validation failure. The synthetic request
 pins the Haiku model label for reproducibility; no provider model runs and all
 mock usage values are authored fixture data.
@@ -15,16 +15,22 @@ not full Experiment A and does not show treatment plugin or skill value. The
 reported evaluation estimate remains `$4.38666035`; provider dollars, credits,
 and local development costs remain separate unknowns.
 
-The first actual CLI invocation on October 1 at source `2ae3fdd` failed probe
-acceptance after 0.567 seconds. It exposed exactly `Read`, used the pinned model
-label and returned the expected terminal text, but the connection counter was
-two while only one accepted request was retained. The extra connection is
-unexplained: the current counter counts TCP connections rather than parsed
-HTTP requests. The run is not admitted or retroactively waived. See the
-[retained result](../reports/2026-10-01-direct-cli-offline-probe.json).
-No real provider or model inference was invoked. The corrected helper now separates bounded TCP connections from parsed HTTP
-requests and retains per-connection classifications. A repeat still requires
-review of this correction; the first run remains failed. Runtime execution requires the explicit `--execute` switch and is bound in code to the
+Four actual CLI attempts are retained in the
+[result report](../reports/2026-10-01-direct-cli-offline-probe.json).
+The first failed because its TCP counter differed from accepted HTTP requests;
+its extra connection remains unexplained. Two later diagnostic attempts retained
+complete transport evidence and identified `HEAD /api/hello` as a startup request.
+Both failed acceptance with HTTP 400. The final reviewed helper explicitly
+declines that exact bodyless startup route with 404, counts it against the HTTP
+limit, and accepts at most one such event. No model inference is provided there.
+
+The fourth attempt at source `27c6c84` passed in 0.674 seconds: three connections
+(private preflight 204, startup decline 404, model POST 200), two parsed HTTP
+requests excluding preflight, exactly one captured model request advertising
+`Read`, expected successful terminal text, and verified cleanup. Earlier attempts
+remain failed. This is minimal wiring proof only; actual malicious delegation
+responses and repeated-turn enforcement remain follow-up work under #709.
+Runtime execution requires the explicit `--execute` switch and is bound to the
 reviewed absolute regular executable
 `/opt/homebrew/Caskroom/claude-code/2.1.274/claude`, SHA-256
 `3509913f9d1576316c8845b88837f8fd3bbbcf26625833ac82cfb6b8985da94a`, and
@@ -54,15 +60,17 @@ firewall setting is changed.
 
 The fixture accepts only POST `/v1/messages` (and the SDK beta query form),
 and only the exact fake `x-api-key` or fake bearer header. It selects JSON or
-SSE from the request body's boolean `stream` field. It rejects malformed
-lengths/JSON, unexpected methods/paths/auth, oversized bodies, and requests
+SSE from the request body's boolean `stream` field. It separately declines one exact bodyless `HEAD /api/hello` with 404.
+It rejects malformed lengths/JSON, unexpected methods/paths/auth, oversized bodies, and requests
 past the four-HTTP-request bound. TCP connections have a separate limit of
 eight, including the preflight connection, with at most four active handlers.
 Counters saturate at limit+1 on overflow and fail acceptance. Exact zero-byte
 EOFs are recorded as empty connections; partial, malformed, denied or timed-out
 requests do not qualify. Every connection must have a unique retained event.
-Preflight and accepted-request events must reconcile with parsed HTTP counts.
-Request-line lengths and hashes are retained without unknown auth or URL text. Per-connection reads have a two-second deadline;
+Preflight, declined startup and accepted-request events must reconcile with
+parsed HTTP counts.
+Request-line lengths/hashes and bounded method/query-free path diagnostics are
+retained; headers and query values are not. Per-connection reads have a two-second deadline;
 the overall run has a 90-second wall bound including reserved teardown. At
 most four fixture workers run concurrently. Only accepted synthetic requests
 are retained, with raw body bytes base64-encoded and decoded for inspection;
