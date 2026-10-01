@@ -70,7 +70,7 @@ cub-scout auto-detects the owner and shows the full delivery chain.
 
 Under the hood:
   - Flux resources: uses 'flux trace'
-  - ArgoCD resources: uses 'argocd app get'
+  - ArgoCD resources: reads Application CRs from the selected Kubernetes cluster
   - Helm resources: reads release metadata
   - Sveltos resources: reads Profile/ClusterProfile owner and reference annotations
   - Modelplane resources: reads Modelplane API objects, labels, ownerRefs, and status
@@ -127,7 +127,7 @@ Trace context troubleshooting (ArgoCD):
 func init() {
 	rootCmd.AddCommand(traceCmd)
 
-	traceCmd.Flags().StringVarP(&traceNamespace, "namespace", "n", "", "Namespace of the resource (default: flux-system)")
+	traceCmd.Flags().StringVarP(&traceNamespace, "namespace", "n", "", "Namespace of the resource (default: flux-system; Application names must be unique if omitted)")
 	traceCmd.Flags().StringVar(&traceFormat, "format", "ascii", "Output format: ascii, json, md")
 	traceCmd.Flags().BoolVar(&traceJSON, "json", false, "Output as JSON (deprecated: use --format json)")
 	traceCmd.Flags().StringVar(&traceApp, "app", "", "Trace Argo CD application by name")
@@ -169,9 +169,6 @@ func runTrace(cmd *cobra.Command, args []string) error {
 		// Direct Argo app trace
 		kind = "Application"
 		name = traceApp
-		if traceNamespace == "" {
-			traceNamespace = "argocd"
-		}
 	} else if len(args) == 0 {
 		return fmt.Errorf("usage: cub-scout trace <kind/name> or cub-scout trace <kind> <name>")
 	} else if len(args) == 1 {
@@ -191,7 +188,7 @@ func runTrace(cmd *cobra.Command, args []string) error {
 	kind = normalizeKind(kind)
 
 	// Default namespace
-	if traceNamespace == "" {
+	if traceNamespace == "" && kind != "Application" {
 		traceNamespace = "flux-system"
 	}
 
@@ -205,226 +202,30 @@ func runTrace(cmd *cobra.Command, args []string) error {
 		return runTraceDiff(ctx, kind, name, traceNamespace)
 	}
 
-	// Create appropriate tracer
-	var result *agent.TraceResult
-
-	// Resolve effective format early (--format takes precedence over deprecated --json)
+	// The shared observer owns all reads; presentation only projects its result.
 	effectiveFormat := traceFormat
 	if traceJSON && effectiveFormat == "ascii" {
 		effectiveFormat = "json"
 	}
-
-	// If --app flag was used, go directly to Argo tracer
-	if traceApp != "" {
-		var session *traceSession
-		if traceWithConfigHub || traceArtifacts {
-			// This enrichment is optional; retain the Argo result if the local
-			// Kubernetes session cannot be captured.
-			session, _ = newDefaultTraceSession()
-		}
-		tracer := agent.NewArgoTracer()
-		if !tracer.Available() {
-			return fmt.Errorf("argocd CLI not found - install from https://argo-cd.readthedocs.io/en/stable/cli_installation/")
-		}
-		appResult, appErr := tracer.TraceApplication(ctx, name)
-		if appErr != nil {
-			return fmt.Errorf("trace failed: %w", appErr)
-		}
-		if traceWithConfigHub {
-			dynClient := enrichTraceConfigHubFromLiveWithTraceSession(ctx, session, appResult, kind, name, traceNamespace)
-			attachTraceConfigHubDeliveryEvidenceWithTraceSession(ctx, appResult, dynClient, session, traceConfigHubDeliveryFlags{
-				Enabled:    true,
-				Namespace:  traceNamespace,
-				Space:      traceConfigHubSpace,
-				Since:      traceConfigHubSince,
-				StaleAfter: traceConfigHubStaleAfter,
-			})
-		}
-		artifacts := buildUnknownTraceArtifacts(appResult)
-		if traceArtifacts {
-			artifacts = mergeTraceArtifacts(artifacts, collectTraceArtifactsWithTraceSession(ctx, session, appResult))
-		}
-		if effectiveFormat == "json" {
-			return outputTraceJSONv014(appResult, kind, name, traceNamespace, artifacts)
-		}
-		if effectiveFormat == "md" {
-			return outputTraceMarkdown(appResult, artifacts, invCtx)
-		}
-		return outputTraceHuman(appResult, artifacts, invCtx)
-	}
-
-	// Capture one Kubernetes binding for every in-process reader in this trace.
-	traceSession, sessionErr := newDefaultTraceSession()
-	if sessionErr != nil {
-		return fmt.Errorf("failed to capture Kubernetes trace session: %w", sessionErr)
-	}
-
-	// Detect ownership to choose the right tracer
-	ownership, err := detectResourceOwnershipWithTraceSession(ctx, traceSession, kind, name, traceNamespace)
+	session, err := newDefaultTraceSession()
 	if err != nil {
-		return fmt.Errorf("ownership detection failed for %s/%s in %s: %w", kind, name, traceNamespace, err)
+		return fmt.Errorf("failed to capture Kubernetes trace session: %w", err)
 	}
-
-	switch ownership.Type {
-	case agent.OwnerFlux:
-		tracer := agent.NewFluxTracer()
-		if !tracer.Available() {
-			return fmt.Errorf("flux CLI not found - install from https://fluxcd.io/docs/installation/")
-		}
-		result, err = tracer.Trace(ctx, kind, name, traceNamespace)
-
-	case agent.OwnerArgo:
-		tracer := agent.NewArgoTracer()
-		if !tracer.Available() {
-			return fmt.Errorf("argocd CLI not found - install from https://argo-cd.readthedocs.io/en/stable/cli_installation/")
-		}
-		// For Argo, we trace the Application
-		if kind == "Application" {
-			result, err = tracer.TraceApplication(ctx, name)
-		} else {
-			// Need to find the owning Application
-			if ownership.Name != "" {
-				result, err = tracer.TraceApplication(ctx, ownership.Name)
-			} else {
-				return fmt.Errorf("for Argo-managed resources, use --app flag to specify the Application")
-			}
-		}
-
-	case agent.OwnerHelm:
-		// Get k8s client for Helm tracing (reads release secrets)
-		clientset, clientErr := traceSession.kubernetesClient()
-		if clientErr != nil {
-			if help, ok := agent.FormatHelmContextError(clientErr.Error()); ok {
-				return fmt.Errorf("%s", help)
-			}
-			return fmt.Errorf("failed to create kubernetes client: %w", clientErr)
-		}
-		tracer := agent.NewHelmTracer(clientset)
-		if ownership.Name != "" {
-			result, err = tracer.TraceRelease(ctx, ownership.Name, traceNamespace)
-		} else {
-			result, err = tracer.Trace(ctx, kind, name, traceNamespace)
-		}
-		if err != nil {
-			if help, ok := agent.FormatHelmContextError(err.Error()); ok {
-				return fmt.Errorf("%s", help)
-			}
-		}
-		// Helm-via-ArgoCD template mode fallback:
-		// If Helm labels are present but no release secret exists, try tracing via
-		// an Argo Application that explicitly reports this resource.
-		if shouldAttemptHelmViaArgoFallback(ownership, result) {
-			dynClient, dynErr := traceSession.dynamicClient()
-			if dynErr == nil {
-				fallbackResult, fallbackOwnership, fallbackUsed := tryHelmViaArgoFallback(
-					ctx,
-					dynClient,
-					kind,
-					name,
-					traceNamespace,
-					ownership,
-					result,
-					func(ctx context.Context, appName, appNamespace string) (*agent.TraceResult, error) {
-						argoTracer := agent.NewArgoTracer()
-						return argoTracer.Trace(ctx, "Application", appName, appNamespace)
-					},
-				)
-				if fallbackUsed {
-					result = fallbackResult
-					ownership = fallbackOwnership
-					err = nil
-				}
-			}
-		}
-
-	case agent.OwnerCustom:
-		result = buildCustomOwnerUnsupportedTraceResult(kind, name, traceNamespace, ownership)
-
-	case agent.OwnerSveltos:
-		dynClient, dynErr := traceSession.dynamicClient()
-		if dynErr != nil {
-			return fmt.Errorf("failed to create dynamic client: %w", dynErr)
-		}
-		result = buildSveltosObservedTraceResult(ctx, dynClient, kind, name, traceNamespace, ownership)
-
-	case agent.OwnerModelplane:
-		dynClient, dynErr := traceSession.dynamicClient()
-		if dynErr != nil {
-			return fmt.Errorf("failed to create dynamic client: %w", dynErr)
-		}
-		result = buildModelplaneObservedTraceResult(ctx, dynClient, kind, name, traceNamespace, ownership)
-
-	case agent.OwnerCrossplane:
-		result = buildCrossplaneObservedTraceResult(kind, name, traceNamespace, ownership)
-
-	default:
-		// Try Flux first, then Argo, then report not managed
-		fluxTracer := agent.NewFluxTracer()
-		argoTracer := agent.NewArgoTracer()
-
-		if fluxTracer.Available() {
-			result, err = fluxTracer.Trace(ctx, kind, name, traceNamespace)
-			if err == nil && result.Error == "" {
-				break
-			}
-		}
-
-		if argoTracer.Available() && kind == "Application" {
-			result, err = argoTracer.TraceApplication(ctx, name)
-			if err == nil && result.Error == "" {
-				break
-			}
-		}
-
-		if result == nil || (result.Error != "" && !strings.Contains(result.Error, "not managed")) {
-			return fmt.Errorf("resource not managed by a detected GitOps tool")
-		}
-	}
-
+	observation, err := observeTrace(ctx, session, kind, name, traceNamespace, traceObservationOptions{
+		DirectApplication: kind == "Application",
+		Artifacts:         traceArtifacts,
+		Flux:              capturedTraceFluxFactory,
+		Delivery: traceConfigHubDeliveryFlags{
+			Enabled: traceWithConfigHub, Namespace: traceNamespace,
+			Space: traceConfigHubSpace, Since: traceConfigHubSince, StaleAfter: traceConfigHubStaleAfter,
+		},
+	})
 	if err != nil {
-		return fmt.Errorf("trace failed: %w", err)
+		return err
 	}
-	result.DetectedOwner = ownership.Type
-
-	// Enrich chain links with timing information
-	if len(result.Chain) > 0 {
-		enrichTraceWithTimingSession(ctx, traceSession, result)
-	}
-
-	// Detect cross-owner references if we have a workload
-	if kind == "Deployment" || kind == "StatefulSet" || kind == "DaemonSet" || kind == "Pod" {
-		crossRefs, crossErr := detectCrossOwnerReferencesWithTraceSession(ctx, traceSession, kind, name, traceNamespace, ownership)
-		if crossErr == nil && len(crossRefs) > 0 {
-			result.CrossReferences = crossRefs
-		}
-	}
-
-	// Collect secret evidence for workloads and Flux resources
-	secretEvidence := collectSecretEvidenceWithTraceSession(ctx, traceSession, kind, name, traceNamespace)
-	if secretEvidence != nil && secretEvidence.Summary.Total > 0 {
-		result.Secrets = secretEvidence
-	}
-
-	// Collect recent events for the traced resource
-	events, eventsErr := fetchResourceEventsWithTraceSession(ctx, traceSession, traceNamespace, kind, name)
-	if eventsErr == nil && events != nil && len(events.Events) > 0 {
-		result.Events = events
-	}
-
-	if traceWithConfigHub {
-		dynClient := enrichTraceConfigHubFromLiveWithTraceSession(ctx, traceSession, result, kind, name, traceNamespace)
-		attachTraceConfigHubDeliveryEvidenceWithTraceSession(ctx, result, dynClient, traceSession, traceConfigHubDeliveryFlags{
-			Enabled:    true,
-			Namespace:  traceNamespace,
-			Space:      traceConfigHubSpace,
-			Since:      traceConfigHubSince,
-			StaleAfter: traceConfigHubStaleAfter,
-		})
-	}
-
-	artifacts := buildUnknownTraceArtifacts(result)
-	if traceArtifacts {
-		artifacts = mergeTraceArtifacts(artifacts, collectTraceArtifactsWithTraceSession(ctx, traceSession, result))
+	result, artifacts := observation.Result, observation.Artifacts
+	if traceNamespace == "" && result.Object.Namespace != "" {
+		traceNamespace = result.Object.Namespace
 	}
 
 	// Output results (effectiveFormat was resolved earlier)
@@ -1181,6 +982,11 @@ func convertTraceToV014(result *agent.TraceResult, kind, name, namespace string,
 		output.Secrets = convertSecretEvidence(result.Secrets)
 	}
 
+	output.Context = result.Context
+	if result.Error != "" {
+		output.Warnings = []string{result.Error}
+	}
+
 	// Add events if present
 	if result.Events != nil && len(result.Events.Events) > 0 {
 		output.Events = convertResourceEvents(result.Events)
@@ -1476,6 +1282,9 @@ func outputTraceMarkdown(result *agent.TraceResult, artifacts map[string]mapsvc.
 	_ = invCtx // Markdown output is uniform across presentation modes
 	// Markdown header
 	fmt.Printf("## Trace: %s\n\n", result.Object.String())
+	if result.Context != "" {
+		fmt.Printf("Selected Kubernetes context: %s\n\n", result.Context)
+	}
 	fmt.Println("```")
 
 	if result.Error != "" && len(result.Chain) == 0 {

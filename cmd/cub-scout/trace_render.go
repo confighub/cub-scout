@@ -83,6 +83,10 @@ func renderTraceHuman(w io.Writer, result *agent.TraceResult, artifacts map[stri
 	}
 	fmt.Fprintf(w, "\n")
 
+	if result.Context != "" {
+		fmt.Fprintf(w, "Selected Kubernetes context: %s\n\n", result.Context)
+	}
+
 	// Explanatory content when --explain is used
 	if options.Explain {
 		fmt.Fprintf(w, "%s%sOWNERSHIP CHAIN EXPLAINED%s\n", colorBold, colorWhite, colorReset)

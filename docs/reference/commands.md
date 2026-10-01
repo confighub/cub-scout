@@ -947,19 +947,21 @@ writeback. A space-only release match is intentionally not considered
 object-level evidence, and wildcard `--confighub-space '*'` is not treated as
 an exact resource space.
 
-### Argo Context Troubleshooting
+### Argo Observation Scope
 
-If trace fails due to stale/invalid Argo endpoint context, run:
+Normal Trace reads the Application CR from the captured Kubernetes binding. It
+requires Kubernetes read access, not an Argo server login. Use an exact namespace:
 
 ```bash
-argocd context
-argocd app list
-argocd logout <server>
-argocd login <server>
-cub-scout trace --app <app-name>
+./cub-scout trace --app frontend -n delivery --format json
 ```
 
-See `docs/howto/trace-context-troubleshooting.md` for the full flow.
+Without `-n`, Application lookup filters by name across namespaces and requires
+exactly one match. Multiple matches produce an ambiguity error; Scout does not
+choose a conventional namespace. Check the selected Kubernetes context and
+Application namespace when evidence is unavailable. Partial read failures remain
+visible alongside the known chain. The external `--diff` path has a separate
+scope contract; its complete context binding remains open in #746.
 
 ### Supported Sources
 

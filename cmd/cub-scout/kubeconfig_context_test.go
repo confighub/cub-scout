@@ -491,7 +491,7 @@ func TestExplicitContextTUIActionsFailClosed(t *testing.T) {
 
 	model := LocalClusterModel{explicitClusterContext: true, keymap: defaultLocalKeyMap()}
 	trace := model.runTrace(TraceItem{Kind: "Deployment", Name: "api", Namespace: "team-a", Owner: "Flux"})().(traceResultMsg)
-	require.ErrorContains(t, trace.err, "unavailable with --kube-context")
+	require.ErrorContains(t, trace.err, "trace cluster binding is unavailable")
 	scan := model.runScan()().(scanResultMsg)
 	require.ErrorContains(t, scan.err, "selected Kubernetes context is unavailable")
 	graph := model.runGraphExport("svg")().(graphExportMsg)

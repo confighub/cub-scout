@@ -2017,8 +2017,8 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case key.Matches(msg, m.keymap.Trace):
-			if m.explicitClusterContext {
-				m.statusMsg = explicitContextUnsupportedAction
+			if m.clusterBinding == nil || m.clusterBinding.config == nil || m.clusterBinding.err != nil {
+				m.statusMsg = "Trace cluster binding is unavailable"
 				return m, nil
 			}
 			// Open trace picker with available resources
@@ -5904,68 +5904,26 @@ func traceOwnerSupportedInTUI(owner string) bool {
 // runTrace runs the trace command for a given item
 func (m LocalClusterModel) runTrace(item TraceItem) tea.Cmd {
 	return func() tea.Msg {
-		if m.explicitClusterContext {
-			return traceResultMsg{err: fmt.Errorf("%s", explicitContextUnsupportedAction)}
+		session, err := newTraceSessionFromBinding(m.clusterBinding)
+		if err != nil {
+			return traceResultMsg{err: err}
 		}
-		var output string
-		var err error
-		var secrets *agent.SecretEvidenceResult
-
-		switch item.Owner {
-		case "Flux":
-			// Use flux trace command
-			cmd := exec.Command("flux", "trace", strings.ToLower(item.Kind), item.Name, "-n", item.Namespace)
-			out, cmdErr := cmd.CombinedOutput()
-			output = string(out)
-			if cmdErr != nil {
-				// Try alternative: if tracing a workload, trace the kustomization
-				if item.Kind == "Deployment" || item.Kind == "StatefulSet" || item.Kind == "DaemonSet" {
-					cmd = exec.Command("flux", "trace", strings.ToLower(item.Kind)+"/"+item.Name, "-n", item.Namespace)
-					out, cmdErr = cmd.CombinedOutput()
-					output = string(out)
-				}
-				if cmdErr != nil {
-					// Detect context/connectivity issues and provide remediation
-					if help, ok := agent.FormatFluxContextError(output); ok {
-						err = fmt.Errorf("%s", help)
-						output = ""
-					} else if output == "" {
-						err = cmdErr
-					}
-				}
-			}
-
-		case "ArgoCD":
-			// Use argocd app get command
-			if item.Kind == "Application" {
-				cmd := exec.Command("argocd", "app", "get", item.Name, "-o", "wide")
-				out, cmdErr := cmd.CombinedOutput()
-				output = string(out)
-				if cmdErr != nil {
-					// Detect context/connectivity issues and provide remediation
-					if help, ok := agent.FormatArgoContextError(output); ok {
-						err = fmt.Errorf("%s", help)
-						output = ""
-					} else {
-						err = cmdErr
-					}
-				}
-			} else {
-				// For workloads, try to find the parent Application
-				output = fmt.Sprintf("ArgoCD trace for %s/%s\n\nTo trace this resource, find its parent Application in the argocd namespace.", item.Namespace, item.Name)
-			}
-
-		case "Sveltos", "Modelplane", "Crossplane", "Helm":
-			output, err = runCubScoutTraceForTUI(item)
-
-		default:
-			output = fmt.Sprintf("No first-class trace path found for %s/%s\n\nThis resource is not managed by a trace-supported owner.", item.Namespace, item.Name)
+		observation, err := observeTrace(context.Background(), session, item.Kind, item.Name, item.Namespace, traceObservationOptions{
+			DirectApplication: item.Kind == "Application",
+			Flux:              capturedTraceFluxFactory,
+		})
+		if err != nil {
+			return traceResultMsg{err: err}
 		}
-
-		// Collect secret evidence for workloads and Flux deployers/sources
-		secrets = collectTraceSecretEvidence(item)
-
-		return traceResultMsg{output: output, err: err, secrets: secrets}
+		invocation, err := NewInvocationContext("human", TransportTUI)
+		if err != nil {
+			return traceResultMsg{err: err}
+		}
+		var output strings.Builder
+		err = renderTraceHuman(&output, observation.Result, observation.Artifacts, invocation, traceHumanOptions{Limit: 10})
+		// The shared renderer includes secret evidence; do not append a second
+		// independent rendering or issue another Secret read in the TUI.
+		return traceResultMsg{output: output.String(), err: err}
 	}
 }
 

@@ -889,9 +889,19 @@ cub-scout trace <kind> <name> -n <namespace> [flags]
 | Owner | Underlying Tool | Behavior |
 |-------|-----------------|----------|
 | Flux | `flux trace` | Shows GitRepo -> Kustomization/HelmRelease -> Resource |
-| ArgoCD | `argocd app get` | Shows Application -> Resource |
+| ArgoCD | Kubernetes Application CR read | Shows Application -> Resource; exact namespace or unique name required |
 | Helm | Release metadata | Shows chart, version, values |
 | Native | N/A | Shows "not managed by GitOps" |
+
+Normal Trace captures its Kubernetes configuration once and uses it for the
+owner-specific resolver and enrichments. Argo observation reads Application CRs
+through that binding without an Argo server login. `--app` or an Application
+selector without `-n` resolves a unique matching name across namespaces; an
+ambiguous name requires an explicit namespace. It never guesses `argocd`.
+Other resource selectors retain the `flux-system` namespace default.
+
+Partial warnings and the selected context label appear in JSON and human output.
+The label is not a stable cluster ID. Reverse/diff integration remains in #746.
 
 ### ConfigHub Delivery Evidence
 

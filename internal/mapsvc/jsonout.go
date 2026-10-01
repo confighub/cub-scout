@@ -358,6 +358,9 @@ func normalizeKind(kind string) string {
 
 // TraceOutput is the v0.14 JSON schema for `trace <resource>`.
 type TraceOutput struct {
+	Context  string   `json:"context,omitempty"`  // Selection label, not a stable cluster identity.
+	Warnings []string `json:"warnings,omitempty"` // Missing/partial evidence must survive JSON projection.
+
 	Command          string                       `json:"command"`
 	Target           ResourceID                   `json:"target"`
 	Chain            []ChainNode                  `json:"chain"`

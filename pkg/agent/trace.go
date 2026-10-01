@@ -14,6 +14,9 @@ import (
 
 // TraceResult represents the full ownership chain for a resource
 type TraceResult struct {
+	// Context is the selected Kubernetes context label, not a stable cluster ID.
+	Context string `json:"context,omitempty"`
+
 	// Object is the resource being traced
 	Object ResourceRef `json:"object"`
 

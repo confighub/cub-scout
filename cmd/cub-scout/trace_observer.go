@@ -141,6 +141,10 @@ func observeTrace(ctx context.Context, session *traceSession, kind, name, namesp
 	if result == nil {
 		return nil, fmt.Errorf("trace returned no observation")
 	}
+	if namespace == "" && opts.DirectApplication {
+		namespace = result.Object.Namespace
+	}
+	result.Context = session.contextLabel()
 	result.DetectedOwner = ownership.Type
 	if len(result.Chain) > 0 {
 		enrichTraceWithTimingSession(ctx, session, result)
@@ -173,4 +177,14 @@ func observeTrace(ctx context.Context, session *traceSession, kind, name, namesp
 		artifacts = mergeTraceArtifacts(artifacts, collectTraceArtifactsWithTraceSession(ctx, session, result))
 	}
 	return &traceObservation{Result: result, Artifacts: artifacts}, nil
+}
+
+// capturedTraceFluxFactory keeps child credentials private and scoped to the
+// same session as in-process readers. observeTrace invokes cleanup on every exit.
+func capturedTraceFluxFactory(session *traceSession) (agent.Tracer, func() error, error) {
+	config, err := session.createChildKubeconfig()
+	if err != nil {
+		return nil, nil, err
+	}
+	return agent.NewFluxTracerWithKubeconfig(config.Path, config.Context), config.Cleanup, nil
 }

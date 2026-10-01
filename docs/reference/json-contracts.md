@@ -87,6 +87,20 @@ For MCP, the current rule is:
 3. the wrapped CLI surface remains the contract source of truth
 4. selected connected tools may add `structuredContent` with parsed data plus read-only trust guidance
 
+## Trace Observation Scope and Partial Results
+
+Normal `trace --format json` adds optional top-level `context` and `warnings`.
+`context` is the selected Kubernetes context label, not a stable cluster ID or
+proof of a ConfigHub Target binding. `warnings` preserves incomplete-evidence
+messages while retaining the known chain. An unavailable Events read is not an
+empty event history. Consumers must not turn omitted evidence into healthy or
+unmanaged verdicts. Legacy/offline fixtures may omit both fields.
+
+CLI and TUI normal Trace observations share one captured Kubernetes binding and
+one evidence model. The TUI projects that model with the same human renderer;
+JSON preserves the same partial-result warnings. Reverse/diff integration and
+the complete explicit-selector contract remain tracked by #746.
+
 ## Map Ownership Diagnostics
 
 `map list --ownership-evidence --format json` and MCP `map` with

@@ -1,7 +1,7 @@
 # cub-scout execution handover
 
 **Current snapshot:** 2026-10-01. Verified merged baseline:
-[`2188a08`](https://github.com/confighub/cub-scout/commit/2188a089bacb91cd0a769772b58c8abcb1a10793).
+[`8cdb27b`](https://github.com/confighub/cub-scout/commit/8cdb27b0bc9db17f5c0d1b59628b67cd3936ed6c).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
@@ -12,8 +12,9 @@ order, quality gates, budgets and decisions.
 - [#744](https://github.com/confighub/cub-scout/issues/744) merged after its
   required CI passed; #742 is closed. The reviewed baseline contains ten
   guards and the source-only full-24 preparation, with no paid admission.
-- [#743](https://github.com/confighub/cub-scout/issues/743) is the active
-  bounded doctor/live-scan context packet under #599. Context selection is an
+- [#743](https://github.com/confighub/cub-scout/issues/743) is closed after
+  doctor/live-scan context packet [#745](https://github.com/confighub/cub-scout/pull/745)
+  merged under #599. Context selection is an
   invocation-local Kubernetes binding; its context-name label is not a stable
   observed cluster identity. Other surfaces still need their own complete
   bindings, and this slice does not close #599.
@@ -29,10 +30,33 @@ order, quality gates, budgets and decisions.
   preserved. Fixed product source `5b362975` passed local build/full Go validation;
   23 offline helper/recorded-case guards pass. The new file-only agent contract
   case has captured fixtures; paid agent execution remains unrun under the stop. CI's E2E package exhausted its 120-second limit
-  as the final smoke test began, so the limit is now 180 seconds; final-head CI
-  remains required. Two
+  as the final smoke test began, so the limit is now 180 seconds. Final head
+  `07e22b94` passed Unit, Integration and GitOps E2E in run `36852331432`;
+  optional Connected/Demo/Full Verification were skipped. Two
   behavior-specific regression probes caught missing shared Doctor context/human
   warnings and missing scan JSON/TUI context before the corresponding repairs.
+
+- [#747](https://github.com/confighub/cub-scout/issues/747) is closed after
+  [#748](https://github.com/confighub/cub-scout/pull/748) merged. The shared
+  resolver no longer supplies an auth-provider config writer. A test-registered
+  provider refreshed credentials for actual local TLS requests without changing
+  the source kubeconfig; the old resolver rewrote the isolated fixture. Local
+  full Go tests, independent review and exact-head CI (`36853834498`) passed.
+  This removes a latent capability; the shipped binary links no legacy provider
+  plugin. It does not sandbox exec-auth helpers.
+- [#746](https://github.com/confighub/cub-scout/issues/746) is the current Trace
+  context packet, **not complete**. The working branch has a shared captured
+  observation engine, a writer-based full human renderer, direct bound Argo
+  Application reads and private Flux child kubeconfig support. CLI normal Trace
+  and TUI T/Enter actions use that model. Local two-server tests retain context A
+  after the source kubeconfig points to B. File-backed TLS/token credentials are
+  captured before clients are created; exec helpers retain their refresh behavior.
+  Static proxy provenance comes from the same parsed configuration snapshot,
+  never callback sampling. JSON now retains context labels and partial warnings.
+  Explicit CLI/MCP selectors, reverse/diff integration, complete omission coverage,
+  final review and before/after owned-cluster proof remain open. This normal
+  Trace checkpoint passed build and the full offline Go suite (command package
+  157.213 seconds); later selector/reverse/diff edits need their own final checks. A context label is not a stable cluster ID. No paid evals ran for this work.
 
 - The fixed benchmark retains 24 questions and six equally weighted groups.
   This checkout has **0 planned, 5 refreshed fixtures, 2 prepared recorded
