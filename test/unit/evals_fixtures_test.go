@@ -345,6 +345,10 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			checkRUL04ImageIdentityScaffold(t, caseDir)
 			continue
 		}
+		if filepath.Base(caseDir) == "sveltos-hlt-04-report-freshness" {
+			checkHLT04Scaffold(t, caseDir)
+			continue
+		}
 		// DEL-04 is a receipt-only case: it owns immutable public source
 		// receipts, not the unrelated suite-wide Kubernetes resource export.
 		if filepath.Base(caseDir) == "oci-identity-lifecycle" {

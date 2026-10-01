@@ -19,7 +19,8 @@ public-source projections, not raw cluster snapshots; both are prepared and
 unrun, and their evidence limits are recorded per case. The 24 cases currently
 comprise 5 refreshed fixtures, 2 recorded scale bindings prepared but not run, 7
 recorded projections prepared but not run, six raw recordings prepared but not
-run, and 4 planned cases. HLT-03 is a receipt-backed pair of public recorded
+run, one synthetic source replay fixture prepared but not run, and 3 planned
+cases. HLT-03 is a receipt-backed pair of public recorded
 files, not a full Kubernetes snapshot; its receipt-level workload pass and
 child Application Ingress residue are separate evidence facts. HLT-02, INV-04, PRE-01,
 RUL-03, RUL-04, and PRE-02 are raw recordings. Unmapped entries remain `planned`; the three live-only scale
@@ -42,7 +43,7 @@ cases remain a separate experiment.
 | Health | HLT-01 | Sveltos Provisioned after workload failure | `sveltos-hlt-01-health` — recorded Part B projection prepared, not run; prerequisite state is separate from health |
 | Health | HLT-02 | Flux Ready without workload checks | `flux-ready-without-health` — raw 2026-09-30 capture prepared, not run; Ready, wait/check configuration, Deployment availability, UID chain, and exact source/applied revision kept separate |
 | Health | HLT-03 | Consul convergence with Ingress residue | `consul-ingress-residue` — pinned receipt + child Application capture prepared, not run; workload pass does not override watched Ingress |
-| Health | HLT-04 | Missing, old, or renewed report timestamps | Planned; report freshness, release identity, and health are separate facts |
+| Health | HLT-04 | Missing, old, or renewed report timestamps | `sveltos-hlt-04-report-freshness` — synthetic producer replay prepared, not run as a model case; no actual check-execution or applied-digest proof |
 | Prerequisites / graph | PRE-01 | Missing CRD prerequisite | `pre01-crd` — actual sequential CRD/ServiceMonitor API reads and dependent apply outputs prepared, not run; route 404 bodies are preserved as untyped responses; registration is not health |
 | Prerequisites / graph | PRE-02 | Kubernetes topology and cloud prerequisite | `pre02-node-selector` — first independently reviewed owned-kind selector recording prepared, not run; scheduling is not application health |
 | Prerequisites / graph | PRE-03 | Argo/Crossplane child-chain failure | Planned |
