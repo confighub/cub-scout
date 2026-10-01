@@ -87,6 +87,9 @@ jobs:
       - name: Run offline PRE-01 recorded API replay guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/recorded-api -v
 
+      - name: Run offline Linux runtime version gate guards
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest evals/linux-runtime-versions/test_prepare.py
+
       - name: Run offline RUL-03 capture and fixture-routing guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/rul03-context -v
 

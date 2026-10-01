@@ -1,6 +1,6 @@
 # Linux arm64 runtime version gate
 
-This source-only packet prepares a single local, offline container gate for four pinned Linux/arm64 executables. It is a runtime prerequisite check, not ordinary-tool parity, a benchmark result, or evidence that an asset is installed. The helper has **not** been run against Docker or the target binaries as part of this source change; a reviewer must approve and invoke it separately.
+This helper performs one local, offline container gate for four pinned Linux/arm64 executables. It is a runtime prerequisite check, not ordinary-tool parity, a benchmark result, or evidence that an asset is installed. Three attempts were made: attempts 1 and 2 failed, and attempt 3 passed all four version checks. See the [machine-readable attempt report](../reports/2026-10-01-linux-runtime-versions.json) for source revisions, proof hashes, output hashes, and bounded outcomes.
 
 The gate checks these archived inputs by byte count, SHA-256, ELF class/endianness, and AArch64 machine ID before staging and again after the container exits:
 
@@ -11,7 +11,7 @@ The gate checks these archived inputs by byte count, SHA-256, ELF class/endianne
 | `helm` | 59048120 | `4d6e3a69e6203094d564d5d4e94325b1f7209421dc7e832a96d2510295e03f1d` | Helm v4.1.4 |
 | `cub-scout` | 75481252 | `5dac8765612592b60ec076f102c1810fbbce94b52236b3577ab3f65219e17fa6` | source-built version string |
 
-The expected archived source-built cub-scout revision is `0d0fd7d54e5b3b1f16d27df6fa299950388873d6`. Its binary was built for Linux/arm64 with CGO disabled and module/toolchain network access disabled. A source-built version string is not a published release-version claim. The assets and their acquisition/signature/checksum records are in the primary ignored archive at `/Users/alexis/code/cub-scout/evals/results/linux-runtime-assets-20261001`; this helper neither downloads nor re-verifies the upstream signatures.
+The expected archived source-built cub-scout revision is `0d0fd7d54e5b3b1f16d27df6fa299950388873d6`. Its binary was built for Linux/arm64 with CGO disabled and module/toolchain network access disabled. A source-built version string is not a published release-version claim. The assets and their acquisition/signature/checksum records are in the primary ignored archive at `evals/results/linux-runtime-assets-20261001`; this helper neither downloads nor re-verifies the upstream signatures.
 
 The execution creates one newly named and labeled container from cached image ID `sha256:cdbd05fb6f457ca275ff51ce00d93d865ca0b6a25f5ffb08262d94f6835771e5`, after confirming that the explicitly named Docker context resolves to a local Unix socket. Every Docker request uses that context. Pulls/builds are disabled. The container has network mode `none`, read-only root filesystem, UID/GID 65534, dropped capabilities, no-new-privileges, 64 process limit, 1 GiB memory, one CPU, one read-only `/tools` bind mount, and a private 64 MiB `/tmp` tmpfs with `nosuid,nodev`. A private HOME/config/TMPDIR and minimal environment are set inside the payload; host HOME, credentials, kubeconfig, proxy, and Docker socket are not mounted or passed into the container. These are configured/inspected limits; they are not stress tests of resource exhaustion.
 
@@ -29,11 +29,11 @@ After separate review, the intended local invocation is:
 ```sh
 python3 evals/linux-runtime-versions/prepare.py \
   --execute \
-  --assets /Users/alexis/code/cub-scout/evals/results/linux-runtime-assets-20261001/assets \
-  --docker-binary /usr/local/bin/docker \
+  --assets evals/results/linux-runtime-assets-20261001/assets \
+  --docker-binary "$(command -v docker)" \
   --docker-context orbstack \
   --image-id sha256:cdbd05fb6f457ca275ff51ce00d93d865ca0b6a25f5ffb08262d94f6835771e5 \
-  --output-dir /tmp/cub-scout-linux-runtime-versions-20261001-r1
+  --output-dir /tmp/cub-scout-linux-runtime-versions-run4
 ```
 
 The output path must be new and under `/tmp` or `/var/tmp`; it contains a receipt and bounded raw version output. The payload is authored source, not an external dependency. Offline source tests can be run without Docker or target binary execution:
