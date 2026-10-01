@@ -1,5 +1,30 @@
 # Delivery plan to cub scout 3.0
 
+## October 1 checkpoint: PRE-01 prerequisite evidence
+
+Starting main `9f1f4f5` includes #707. The independently reviewed
+[PRE-01 capture](../evals/reports/2026-10-01-pre01-crd.json) supplies raw
+missing-CRD and registered-CRD controls for the same authored ServiceMonitor.
+The successful 39.06-second repeat follows a retained 34.66-second failed
+attempt; unregistered-route 404 and typed object NotFound are separate facts.
+Owned cleanup and config integrity passed. No controller-health or model-cost
+claim follows from API registration. Derived Scout receipts are excluded from
+model evidence.
+
+PRE-01 preparation leaves six planned, five refreshed, two prepared recorded
+bindings, seven prepared projections and four prepared raw recordings across
+the fixed 24 cases. Questions, references, controls and weights are unchanged.
+P1 remains open: the suite is non-executable and paid evals remain stopped until
+runtime tool/turn/accounting admission is demonstrated. The direct Claude CLI
+control audit in [#603](https://github.com/confighub/cub-scout/issues/603#issuecomment-5924332867)
+is a candidate offline investigation, not execution proof or paid authorization.
+Follow-up [#709](https://github.com/confighub/cub-scout/issues/709) has passed a
+synthetic OS network-isolation preflight; no Claude CLI or provider was invoked.
+Reported estimated eval spend remains $4.38666035; diagnostic completeness,
+development dollars and credits remain unresolved or unmeasured. The plan's
+cost and quality gates have not changed.
+
+
 ## Latest execution checkpoint — trace admission and image identity
 
 #705 merged as `13928ca` after independent review and required CI. Its offline

@@ -1,5 +1,32 @@
 # cub-scout Handover for the Next AI Coder
 
+## 2026-10-01: PRE-01 actual CRD prerequisite controls
+
+Main baseline `9f1f4f5` includes #707's RUL-04 raw recording. PRE-01 now has
+reviewed actual absent/present controls from capture source `682160f` at
+03:56:53–03:57:30 UTC. The same authored ServiceMonitor fails with a missing
+GVK before registration, then is created after the pinned chart CRD becomes
+Established. Nine raw API responses preserve exact CRD absence, route
+registration and object identity separately. See the
+[proof report](evals/reports/2026-10-01-pre01-crd.json).
+
+The successful repeat took 39.06 seconds; the initial 34.66-second failure is
+retained. It exposed plain-text 404s for unregistered API routes, which are not
+typed object NotFound evidence. Owned cleanup and shared/private config
+integrity passed for both attempts. Source-pinned offline guards pass 17/17;
+regression tests fail against the earlier helpers. No operator was installed,
+and CRD/object registration does not establish controller or workload health.
+Scout prerequisite receipts remain separate derived diagnostics.
+
+The fixed 24-case manifest has six planned cases, five refreshed cases, two
+prepared recorded bindings, seven prepared projections and four prepared raw
+recordings. It remains non-executable and paid execution is not admitted.
+No model run occurred; the reported estimated eval ledger remains $4.38666035,
+with the latest diagnostic's accounting completeness unresolved. Dollars per
+verified answer and credits remain unproven. One cheap worker per bounded
+packet and independent review continue; no maximum-speed service is requested.
+
+
 ## 2026-10-01: Trace admission and RUL-04 raw capture
 
 Main baseline `13928ca` includes #705: an offline trace-completeness audit,
