@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 from pathlib import Path, PurePosixPath
 import platform
@@ -160,8 +161,21 @@ def parse_result_summaries(stdout: bytes) -> list[dict[str, Any]]:
                 raise ReplayError(f"duplicate JSON key in replay summary: {key}")
             result[key] = value
         return result
+    def reject_constant(value):
+        raise ReplayError(f"non-finite JSON number: {value}")
+    def finite_float(value):
+        number = float(value)
+        if not math.isfinite(number):
+            reject_constant(value)
+        return number
+    def decode(value):
+        try:
+            return json.loads(value, object_pairs_hook=unique_pairs,
+                              parse_constant=reject_constant, parse_float=finite_float)
+        except (TypeError, ValueError) as exc:
+            raise ReplayError(f"invalid replay JSON: {exc}") from exc
     try:
-        parsed = [json.loads(line, object_pairs_hook=unique_pairs) for line in lines]
+        parsed = [decode(line) for line in lines]
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise ReplayError("structured replay result is malformed") from exc
     if any(not isinstance(item, dict) or item.get("schema") != "sveltos-hlt04-offline-replay.v1"
@@ -177,7 +191,8 @@ def parse_result_summaries(stdout: bytes) -> list[dict[str, Any]]:
                 "old-held-report-renewal", "malformed-held-report-time", "future-held-report-time",
                 "clock-skew-control", "pre-apply-transition-control"}
     names = [case.get("name") for case in all_cases if isinstance(case, dict)]
-    if len(names) != len(all_cases) or len(names) != len(set(names)) or set(names) != expected:
+    if (len(names) != len(all_cases) or any(not isinstance(name, str) for name in names)
+            or len(names) != len(set(names)) or set(names) != expected):
         raise ReplayError("case result set is missing, duplicated, or unexpected")
     expected_write = {
         "missing-held-report-time": True, "missing-observed-at-field": True,
@@ -199,6 +214,29 @@ def parse_result_summaries(stdout: bytes) -> list[dict[str, Any]]:
             raise ReplayError("writing case did not preserve exact patch bytes")
         if not case["wrote"] and evidence["write_patch"] is not None:
             raise ReplayError("non-writing case unexpectedly preserved a write patch")
+        if any(key in case for key in ("held_before", "held_after", "computed_report", "write_patch", "raw_inputs")):
+            raise ReplayError("case duplicates its authoritative evidence fields")
+        raw = evidence["raw_inputs"]
+        required = {"clusterprofiles", "clustersummaries", "clusterhealthchecks", "published_releases"}
+        if set(raw) != required or not isinstance(raw["published_releases"], list):
+            raise ReplayError("raw authored input inventory is incomplete")
+        if any(not isinstance(raw[key], dict) or not isinstance(raw[key].get("items"), list)
+               for key in required - {"published_releases"}):
+            raise ReplayError("raw authored list inputs are malformed")
+        computed = evidence["computed_report"]
+        if any(not isinstance(computed.get(key), str) or not computed[key]
+               for key in ("source", "observedAt", "healthStatus", "syncStatus")):
+            raise ReplayError("computed report is incomplete")
+        if evidence.get("synthetic_now") != computed["observedAt"]:
+            raise ReplayError("computed report time differs from the injected clock")
+        if case["wrote"]:
+            patch = decode(evidence["write_patch"])
+            if (not isinstance(patch, dict) or not isinstance(patch.get("Annotations"), dict)
+                    or patch["Annotations"].get("confighub.com/live-status") != evidence["held_after"]
+                    or decode(evidence["held_after"]) != computed):
+                raise ReplayError("written patch, held annotation and computed report disagree")
+        elif evidence["held_after"] != evidence["held_before"] or not isinstance(decode(evidence["held_after"]), dict):
+            raise ReplayError("skipped write changed or omitted the held annotation")
         if case["name"] in {"young-held-report", "future-held-report-time"} and case.get("why") != "unchanged":
             raise ReplayError("skip case lacks the producer's unchanged result")
         if case["name"] == "old-held-report-renewal" and (
@@ -207,11 +245,13 @@ def parse_result_summaries(stdout: bytes) -> list[dict[str, Any]]:
             raise ReplayError("renewal case changed source/check evidence claims")
         if case["name"] == "missing-observed-at-field":
             try:
-                held = json.loads(evidence["held_before"])
+                held = decode(evidence["held_before"])
             except json.JSONDecodeError as exc:
                 raise ReplayError("missing-observedAt control has malformed held JSON") from exc
             if not isinstance(held, dict) or "observedAt" in held:
                 raise ReplayError("missing-observedAt control does not represent an existing report")
+            if held != {key: value for key, value in computed.items() if key != "observedAt"}:
+                raise ReplayError("missing-observedAt control changes semantic status as well as time")
     if parsed[1].get("clock_skew_control", {}).get("release_digest_proven") is not False:
         raise ReplayError("clock-skew case overclaims digest proof")
     if parsed[1].get("pre_apply_transition_control", {}).get("last_transition_time_is_check_execution_time") is not False:
@@ -440,7 +480,7 @@ def execute(output: Path, source_root: Path = SOURCE_ROOT) -> dict[str, Any]:
                        "module_cache_path": str(module_cache), "input_kind": "authored synthetic JSON only"})
         remaining = deadline - time.monotonic()
         if remaining <= 0:
-            raise ReplayError("overall 90-second deadline expired before compile")
+            raise ReplayError("overall 120-second deadline expired before replay")
         return_code, stdout, stderr, run_status, cleanup = run_owned(argv, env, root / "pinned-source", remaining)
         _write_private(root / "stdout.bin", stdout)
         _write_private(root / "stderr.bin", stderr)

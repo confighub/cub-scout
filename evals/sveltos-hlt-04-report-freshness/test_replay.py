@@ -46,10 +46,17 @@ class ReplayHelperTests(unittest.TestCase):
         cases = []
         for name in names:
             wrote = name not in ("young-held-report", "future-held-report-time")
-            held_before = '{"source":"synthetic"}' if name == "missing-observed-at-field" else "old"
+            import json
+            computed = {"source": "synthetic", "observedAt": "2026-10-01T12:10:00Z",
+                        "healthStatus": "Degraded", "syncStatus": "Synced"}
+            held_before = json.dumps({key: value for key, value in computed.items() if key != "observedAt"})
+            held_after = json.dumps(computed) if wrote else held_before
             case = {"name": name, "wrote": wrote, "evidence": {
-                "raw_inputs": {"authored": "{}"}, "held_before": held_before, "held_after": "new",
-                "computed_report": {"source": "synthetic"}, "write_patch": "e30=" if wrote else None,
+                "raw_inputs": {"clusterprofiles": {"items": []}, "clustersummaries": {"items": []},
+                               "clusterhealthchecks": {"items": []}, "published_releases": []},
+                "held_before": held_before, "held_after": held_after,
+                "computed_report": computed, "synthetic_now": computed["observedAt"],
+                "write_patch": json.dumps({"Annotations": {"confighub.com/live-status": held_after}}) if wrote else None,
             }}
             if name in ("young-held-report", "future-held-report-time"):
                 case["why"] = "unchanged"
@@ -72,7 +79,7 @@ class ReplayHelperTests(unittest.TestCase):
                                       b'"schema": "sveltos-hlt04-offline-replay.v1", "schema": "other"', 1)
         with self.assertRaises(replay.ReplayError):
             replay.parse_result_summaries(duplicate_key)
-        for mutation in ("drop", "duplicate", "missing_evidence", "wrong_write_type", "bad_patch"):
+        for mutation in ("drop", "duplicate", "missing_evidence", "wrong_write_type", "bad_patch", "changed_skip", "conflicting_patch", "wrong_source", "duplicate_evidence", "incomplete_inputs", "nonfinite"):
             rows = json.loads(valid.splitlines()[0].split(b" ", 1)[1]), json.loads(valid.splitlines()[1].split(b" ", 1)[1])
             cases = rows[0]["cases"]
             if mutation == "drop":
@@ -85,6 +92,18 @@ class ReplayHelperTests(unittest.TestCase):
                 cases[0]["wrote"] = "true"
             elif mutation == "bad_patch":
                 cases[0]["evidence"]["write_patch"] = None
+            elif mutation == "changed_skip":
+                cases[2]["evidence"]["held_after"] = "{}"
+            elif mutation == "conflicting_patch":
+                cases[0]["evidence"]["write_patch"] = "{}"
+            elif mutation == "wrong_source":
+                cases[1]["evidence"]["held_before"] = '{"source":"other"}'
+            elif mutation == "duplicate_evidence":
+                cases[0]["held_after"] = "contradictory"
+            elif mutation == "incomplete_inputs":
+                cases[0]["evidence"]["raw_inputs"] = {}
+            elif mutation == "nonfinite":
+                cases[0]["evidence"]["raw_inputs"]["published_releases"] = [float("nan")]
             bad = ("HLT04_RESULT " + json.dumps(rows[0]) + "\nHLT04_RESULT " + json.dumps(rows[1]) + "\n").encode()
             with self.subTest(mutation=mutation), self.assertRaises(replay.ReplayError):
                 replay.parse_result_summaries(bad)

@@ -138,10 +138,11 @@ func (f *hlt04Fixture) report(t *testing.T) StatusReport {
 	f.lastReportStatus = reports[0].Status
 	var patch any
 	if len(f.patches) > patchCount {
-		patch = append([]byte(nil), f.patches[len(f.patches)-1]...)
+		patch = string(f.patches[len(f.patches)-1])
 	}
 	f.lastEvidence = map[string]any{"raw_inputs": inputs, "held_before": f.heldBefore,
-		"held_after": f.held, "computed_report": reports[0].Status, "write_patch": patch}
+		"held_after": f.held, "computed_report": reports[0].Status, "write_patch": patch,
+		"synthetic_now": f.now.UTC().Format(time.RFC3339)}
 	return reports[0]
 }
 
@@ -252,7 +253,12 @@ func TestHLT04OfflineReplay(t *testing.T) {
 
 		// Existing held report omits observedAt entirely (distinct from no annotation).
 		missingTimeFixture := newHLT04Fixture(t, hlt04Applied, "2026-10-01T12:01:00Z", baseRelease)
-		missingTimeFixture.held = `{"source":"cub-scout","app":"demo-prod","healthStatus":"Degraded","syncStatus":"Synced","revision":"sha256:synthetic-release-a"}`
+		var missingTimeDoc map[string]any
+		if err := json.Unmarshal(hlt04JSON(t, initial.Status), &missingTimeDoc); err != nil {
+			t.Fatal(err)
+		}
+		delete(missingTimeDoc, "observedAt")
+		missingTimeFixture.held = string(hlt04JSON(t, missingTimeDoc))
 		missingTime := missingTimeFixture.report(t)
 		missingTimeEvidence := missingTimeFixture.lastEvidence
 		if !missingTime.Wrote {
@@ -267,28 +273,18 @@ func TestHLT04OfflineReplay(t *testing.T) {
 			"write_annotation_sha256": []string{hlt04Hash([]byte(f.writes[0])), hlt04Hash([]byte(f.writes[1])), hlt04Hash([]byte(f.writes[2]))},
 			"synthetic_check_execution_evidence": map[string]any{
 				"synthetic": true, "completed_at": "2026-10-01T12:05:00Z",
-				"sha256": initialCheckHash, "consumed_by_reporter": false,
+				"raw_json": string(f.checkEvidence),
+				"sha256":   initialCheckHash, "consumed_by_reporter": false,
 			},
 			"cases": []map[string]any{
-				{"name": "missing-held-report-time", "evidence": initialEvidence, "wrote": initial.Wrote, "report_observed_at": initial.Status.ObservedAt,
-					"health": initial.Status.HealthStatus, "revision": initial.Status.Revision, "report": initial.Status,
-					"raw_inputs": hlt04RawInputs(f), "held_before": "", "held_after": f.held, "computed_report": initial.Status, "write_patch": f.patches[0]},
-				{"name": "missing-observed-at-field", "evidence": missingTimeEvidence, "wrote": missingTime.Wrote, "raw_inputs": hlt04RawInputs(missingTimeFixture),
-					"held_before": missingTimeFixture.heldBefore, "held_after": missingTimeFixture.held, "computed_report": missingTime.Status,
-					"write_patch": missingTimeFixture.patches[0]},
-				{"name": "young-held-report", "evidence": skippedEvidence, "wrote": skipped.Wrote, "why": skipped.Why, "raw_inputs": hlt04RawInputs(f),
-					"held_before": f.heldBefore, "held_after": f.held, "computed_report": skipped.Status, "write_patch": nil},
-				{"name": "old-held-report-renewal", "evidence": renewedEvidence, "wrote": renewed.Wrote, "report_observed_at": renewed.Status.ObservedAt,
-					"health": renewed.Status.HealthStatus, "revision": renewed.Status.Revision, "report": renewed.Status,
+				{"name": "missing-held-report-time", "evidence": initialEvidence, "wrote": initial.Wrote},
+				{"name": "missing-observed-at-field", "evidence": missingTimeEvidence, "wrote": missingTime.Wrote},
+				{"name": "young-held-report", "evidence": skippedEvidence, "wrote": skipped.Wrote, "why": skipped.Why},
+				{"name": "old-held-report-renewal", "evidence": renewedEvidence, "wrote": renewed.Wrote,
 					"source_input_hashes_unchanged": true, "synthetic_check_evidence_sha256": initialCheckHash,
-					"synthetic_check_evidence_consumed_by_reporter": false, "raw_inputs": hlt04RawInputs(f),
-					"held_before": f.heldBefore, "held_after": f.held, "computed_report": renewed.Status, "write_patch": f.patches[len(f.patches)-1]},
-				{"name": "malformed-held-report-time", "evidence": malformedResultEvidence, "wrote": malformedResult.Wrote, "report": malformedResult.Status,
-					"raw_inputs": hlt04RawInputs(f), "held_before": f.heldBefore, "held_after": f.held,
-					"computed_report": malformedResult.Status, "write_patch": f.patches[len(f.patches)-1]},
-				{"name": "future-held-report-time", "evidence": futureResultEvidence, "wrote": futureResult.Wrote, "why": futureResult.Why,
-					"computed_report": futureResult.Status, "raw_inputs": hlt04RawInputs(f), "held_before": f.heldBefore,
-					"held_after": f.held, "write_patch": nil},
+					"synthetic_check_evidence_consumed_by_reporter": false},
+				{"name": "malformed-held-report-time", "evidence": malformedResultEvidence, "wrote": malformedResult.Wrote},
+				{"name": "future-held-report-time", "evidence": futureResultEvidence, "wrote": futureResult.Wrote, "why": futureResult.Why},
 			},
 		}
 		encoded, err := json.Marshal(result)
@@ -330,10 +326,8 @@ func TestHLT04OfflineReplay(t *testing.T) {
 			"pre_apply_transition_control": map[string]any{"health": transition.Status.HealthStatus,
 				"last_transition_time_is_check_execution_time": false},
 			"cases": []map[string]any{
-				{"name": "clock-skew-control", "wrote": clockSkew.Wrote, "evidence": clockSkewEvidence, "raw_inputs": hlt04RawInputs(f), "held_before": "", "held_after": f.held,
-					"computed_report": clockSkew.Status, "write_patch": f.patches[0]},
-				{"name": "pre-apply-transition-control", "wrote": transition.Wrote, "evidence": transitionEvidence, "raw_inputs": hlt04RawInputs(transitionFixture), "held_before": "", "held_after": transitionFixture.held,
-					"computed_report": transition.Status, "write_patch": transitionFixture.patches[0]},
+				{"name": "clock-skew-control", "wrote": clockSkew.Wrote, "evidence": clockSkewEvidence},
+				{"name": "pre-apply-transition-control", "wrote": transition.Wrote, "evidence": transitionEvidence},
 			},
 			"synthetic_fixture_only": true,
 		}
