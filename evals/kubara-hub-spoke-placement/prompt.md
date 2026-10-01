@@ -22,10 +22,28 @@ from desired state.
 Return one bare JSON object with exactly these string-valued keys, each once,
 in any order and with no surrounding or contradictory prose:
 
-`component`, `selected_version`, `hub_cluster`, `spoke_clusters`,
-`cert_manager_placement`, `cert_manager_live_observation_fields`,
-`spoke_argo_placement`, `spoke_argo_live_observation`, `unknown_interpretation`,
-`evidence`.
+`component`, `selected_version`, `hub_cluster`, `hub_intent`, `spoke_clusters`,
+`spoke_intent`, `cert_manager_observed_version`, `cert_manager_argo_sync`,
+`cert_manager_health`, `cert_manager_readiness`, `spoke_argo_placement`,
+`spoke_argo_live_observation`, `unknown_interpretation`, `evidence`.
 
-Use the literal `UNKNOWN` when an observation is not established. The final
-field should name the supplied files that support the answer, not a live source.
+Use these output formats and enum values; they define the answer encoding, not
+the factual answers:
+
+- `selected_version`: `<chart>@<version>`.
+- `spoke_clusters`: comma-separated names in the order their cert-manager rows
+  appear in `desired-matrix.json`.
+- `hub_intent`, `spoke_intent`: `selected`, `not_selected`, or `UNKNOWN`.
+- `cert_manager_observed_version`: the observed version or `UNKNOWN`.
+- `cert_manager_argo_sync`: `Synced`, `OutOfSync`, or `UNKNOWN`.
+- `cert_manager_health`: `Healthy`, `Progressing`, `Degraded`, or `UNKNOWN`.
+- `cert_manager_readiness`: `READY`, `NOT_READY`, or `UNKNOWN`.
+  These four cert-manager observation fields each summarize all four selected
+  cells; use `UNKNOWN` if the source does not establish that observation.
+- `spoke_argo_placement`: `hub-managed`, `selected-locally`, `not-selected`,
+  or `UNKNOWN`.
+- `spoke_argo_live_observation`: `OBSERVED` or `UNKNOWN`.
+- `unknown_interpretation`: `not_disabled_unmanaged_or_unhealthy`, `disabled`,
+  `unmanaged`, or `unhealthy`.
+- `evidence`: supplied filenames joined with `+`, in this order:
+  `desired-matrix.json+config.yaml`.

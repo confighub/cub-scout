@@ -36,8 +36,8 @@ scope are also recorded in `fixtures/source-provenance.json`.
 The grader checks the exact JSON answer contract in JavaScript-compatible
 regex and rejects wrong cluster roles, omitted or extra/duplicate fields,
 claims of live health/installation, and interpretations that turn unknown into
-disabled/unmanaged/unhealthy. The required observation field covers version,
-sync, health, and readiness across all four cert-manager cells. It does not
+disabled/unmanaged/unhealthy. Four separate required observation fields report
+version, sync, health, and readiness across all four cert-manager cells. It does not
 grade arbitrary explanatory quality.
 
 ## Reproduce the prepared input

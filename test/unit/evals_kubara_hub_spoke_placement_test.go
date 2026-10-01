@@ -296,7 +296,24 @@ func checkKubaraPlacementMetadata(t *testing.T, root string) {
 		t.Fatalf("invalid execution frontmatter: %+v", frontmatter)
 	}
 	body := prompt[4+end+5:]
-	for _, leaked := range []string{"hx-app-dev", "hx-app-staging", "v1.21.0", "hub-managed", "VERSION_SYNC_HEALTH_READINESS_UNKNOWN_for_all_four_cells"} {
+	for _, contract := range []string{
+		"`selected_version`: `<chart>@<version>`",
+		"comma-separated names in the order",
+		"`hub_intent`, `spoke_intent`: `selected`, `not_selected`, or `UNKNOWN`",
+		"`cert_manager_observed_version`: the observed version or `UNKNOWN`",
+		"`cert_manager_argo_sync`: `Synced`, `OutOfSync`, or `UNKNOWN`",
+		"`cert_manager_health`: `Healthy`, `Progressing`, `Degraded`, or `UNKNOWN`",
+		"`cert_manager_readiness`: `READY`, `NOT_READY`, or `UNKNOWN`",
+		"These four cert-manager observation fields each summarize all four selected",
+		"`spoke_argo_placement`: `hub-managed`, `selected-locally`, `not-selected`,",
+		"`unknown_interpretation`: `not_disabled_unmanaged_or_unhealthy`, `disabled`,",
+		"`desired-matrix.json+config.yaml`",
+	} {
+		if !strings.Contains(body, contract) {
+			t.Errorf("prompt does not disclose answer format contract %q", contract)
+		}
+	}
+	for _, leaked := range []string{"hx-app-dev", "hx-app-staging", "v1.21.0", "VERSION_SYNC_HEALTH_READINESS_UNKNOWN_for_all_four_cells"} {
 		if strings.Contains(body, leaked) {
 			t.Errorf("prompt body leaks reference answer %q", leaked)
 		}
@@ -314,12 +331,12 @@ func checkKubaraPlacementGrader(t *testing.T, root string) {
 		t.Fatalf("grader lacks single-quoted regex pattern: %s", grader)
 	}
 	pattern := string(match[1])
-	good := `{"component":"cert-manager","selected_version":"jetstack/cert-manager@v1.21.0","hub_cluster":"hx-app-dev","spoke_clusters":"hx-app-staging,hx-app-prod-a,hx-app-prod-b","cert_manager_placement":"selected_on_hub_and_all_three_spokes","cert_manager_live_observation_fields":"VERSION_SYNC_HEALTH_READINESS_UNKNOWN_for_all_four_cells","spoke_argo_placement":"hub-managed","spoke_argo_live_observation":"UNKNOWN","unknown_interpretation":"not_disabled_unmanaged_or_unhealthy","evidence":"desired-matrix.json+config.yaml"}`
+	good := `{"component":"cert-manager","selected_version":"jetstack/cert-manager@v1.21.0","hub_cluster":"hx-app-dev","hub_intent":"selected","spoke_clusters":"hx-app-staging,hx-app-prod-a,hx-app-prod-b","spoke_intent":"selected","cert_manager_observed_version":"UNKNOWN","cert_manager_argo_sync":"UNKNOWN","cert_manager_health":"UNKNOWN","cert_manager_readiness":"UNKNOWN","spoke_argo_placement":"hub-managed","spoke_argo_live_observation":"UNKNOWN","unknown_interpretation":"not_disabled_unmanaged_or_unhealthy","evidence":"desired-matrix.json+config.yaml"}`
 	var answer map[string]string
 	if err := json.Unmarshal([]byte(good), &answer); err != nil {
 		t.Fatal(err)
 	}
-	keys := []string{"evidence", "unknown_interpretation", "spoke_argo_live_observation", "spoke_argo_placement", "cert_manager_live_observation_fields", "cert_manager_placement", "spoke_clusters", "hub_cluster", "selected_version", "component"}
+	keys := []string{"evidence", "unknown_interpretation", "spoke_argo_live_observation", "spoke_argo_placement", "cert_manager_readiness", "cert_manager_health", "cert_manager_argo_sync", "cert_manager_observed_version", "spoke_intent", "spoke_clusters", "hub_intent", "hub_cluster", "selected_version", "component"}
 	var reordered strings.Builder
 	reordered.WriteByte('{')
 	for i, key := range keys {
@@ -341,8 +358,8 @@ func checkKubaraPlacementGrader(t *testing.T, root string) {
 	bad := []string{
 		strings.Replace(good, `"hub_cluster":"hx-app-dev"`, `"hub_cluster":"hx-app-staging"`, 1),
 		strings.Replace(good, `"spoke_clusters":"hx-app-staging,hx-app-prod-a,hx-app-prod-b"`, `"spoke_clusters":"hx-app-dev"`, 1),
-		strings.Replace(good, `"cert_manager_live_observation_fields":"VERSION_SYNC_HEALTH_READINESS_UNKNOWN_for_all_four_cells"`, `"cert_manager_live_observation_fields":"Healthy"`, 1),
-		strings.Replace(good, `"cert_manager_placement":"selected_on_hub_and_all_three_spokes"`, `"cert_manager_placement":"disabled"`, 1),
+		strings.Replace(good, `"cert_manager_health":"UNKNOWN"`, `"cert_manager_health":"Healthy"`, 1),
+		strings.Replace(good, `"spoke_intent":"selected"`, `"spoke_intent":"not_selected"`, 1),
 		strings.Replace(good, `"unknown_interpretation":"not_disabled_unmanaged_or_unhealthy"`, `"unknown_interpretation":"unmanaged"`, 1),
 		strings.Replace(good, `"spoke_argo_placement":"hub-managed"`, `"spoke_argo_placement":"installed"`, 1),
 		strings.Replace(good, `,"evidence":"desired-matrix.json+config.yaml"`, "", 1),
