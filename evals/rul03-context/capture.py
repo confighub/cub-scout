@@ -391,8 +391,14 @@ def cleanup_owned_clusters(kind: Path, attempts: list[dict], marker: dict, owner
         return {"verified": False, "deleted": [], "errors": ["duplicate attempted cluster identity"]}
     if any(not isinstance(name, str) or not owns_cluster(marker, name, owner_pid) for name in names):
         return {"verified": False, "deleted": [], "errors": ["cleanup ownership marker did not match generated cluster names"]}
+    config_by_name = {item["name"]: Path(item.get("kubeconfigPath", ""))
+                      for item in attempts if isinstance(item, dict) and item.get("attempted")}
+    if any(not str(path) or path.is_symlink() or not path.is_file() for path in config_by_name.values()):
+        return {"verified": False, "deleted": [], "errors": ["private kubeconfig unavailable; cleanup refused"]}
+    cleanup_env = dict(env)
+    cleanup_env["KUBECONFIG"] = str(config_by_name[names[0]])
     try:
-        code, out, _err = runner(kind, ["get", "clusters"], 10, env, deadline)
+        code, out, _err = runner(kind, ["get", "clusters"], 10, cleanup_env, deadline)
         if code:
             raise CaptureError("could not list clusters before cleanup")
         existing = out.decode("utf-8", "replace").splitlines()
@@ -407,7 +413,10 @@ def cleanup_owned_clusters(kind: Path, attempts: list[dict], marker: dict, owner
             errors.append("refused to delete cluster without owned marker")
             continue
         try:
-            code, _out, _err = runner(kind, ["delete", "cluster", "--name", name], 30, env, deadline)
+            private_config = config_by_name[name]
+            delete_env = dict(env, KUBECONFIG=str(private_config))
+            code, _out, _err = runner(kind, ["delete", "cluster", "--name", name,
+                                               "--kubeconfig", str(private_config)], 30, delete_env, deadline)
             if code:
                 errors.append("owned cluster deletion failed: " + name)
             else:
@@ -415,7 +424,7 @@ def cleanup_owned_clusters(kind: Path, attempts: list[dict], marker: dict, owner
         except Exception:
             errors.append("owned cluster deletion failed: " + name)
     try:
-        code, out, _err = runner(kind, ["get", "clusters"], 10, env, deadline)
+        code, out, _err = runner(kind, ["get", "clusters"], 10, cleanup_env, deadline)
         if code:
             raise CaptureError("could not verify owned cluster cleanup")
         after = out.decode("utf-8", "replace").splitlines()
@@ -497,6 +506,8 @@ def capture(shared_config: Path, output: Path, kind_binary: Path, kubectl_binary
     attempts: list[dict] = []
     temp = Path(tempfile.mkdtemp(prefix="scout-rul03-private-"))
     os.chmod(temp, 0o700)
+    kind_private_config = temp / "kind-private.kubeconfig"
+    _write(kind_private_config, b"apiVersion: v1\nkind: Config\nclusters: []\ncontexts: []\nusers: []\n")
     admin_configs = {role: temp / (role + ".admin.kubeconfig") for role in ("denied", "readable")}
     observer_config = temp / "observer.kubeconfig"
     cluster_names = [owned_cluster_name(role) for role in ("denied", "readable")]
@@ -537,6 +548,7 @@ def capture(shared_config: Path, output: Path, kind_binary: Path, kubectl_binary
             if not binary.is_file():
                 raise CaptureError("required local tool is unavailable: " + name)
         docker_env = dict(os.environ)
+        docker_env["KUBECONFIG"] = str(kind_private_config)
         require_local_docker(docker_binary, docker_env, deadline)
         docker_local = True
         code, stdout, _stderr = _command(kind_binary, ["version"], 10, docker_env, deadline)
@@ -568,7 +580,8 @@ def capture(shared_config: Path, output: Path, kind_binary: Path, kubectl_binary
             cmd_clock = time.monotonic()
             code, out_bytes, err_bytes, create_error = None, b"", b"", None
             try:
-                code, out_bytes, err_bytes = _command(kind_binary, args, 90, docker_env, deadline)
+                create_env = dict(docker_env, KUBECONFIG=str(admin))
+                code, out_bytes, err_bytes = _command(kind_binary, args, 90, create_env, deadline)
             except BaseException as error:
                 create_error = error
             if admin.exists() and admin.is_file() and not admin.is_symlink():
@@ -676,9 +689,7 @@ def capture(shared_config: Path, output: Path, kind_binary: Path, kubectl_binary
         if signal_state is not None:
             _disable_capture_signals(signal_state)
         cleanup_env = dict(os.environ)
-        cleanup = cleanup_owned_clusters(kind_binary, attempts, marker, owner_pid, cleanup_env,
-                                          runner=_command, timeout=CLEANUP_TIMEOUT)
-        errors.extend(cleanup["errors"])
+        private_hashes["adminBeforeCleanup"] = {}
         try:
             shared_after = sha256(shared_config.read_bytes())
         except OSError:
@@ -688,7 +699,6 @@ def capture(shared_config: Path, output: Path, kind_binary: Path, kubectl_binary
             if path.is_file() and not path.is_symlink():
                 current_hash = sha256(path.read_bytes())
                 private_hashes.setdefault("adminInitial", {})
-                private_hashes.setdefault("adminBeforeCleanup", {})
                 private_hashes["adminBeforeCleanup"][role] = current_hash
                 matching_attempt = next((item for item in attempts if item["role"] == role), {})
                 if matching_attempt.get("adminInitialSha256") and matching_attempt["adminInitialSha256"] != current_hash:
@@ -702,6 +712,15 @@ def capture(shared_config: Path, output: Path, kind_binary: Path, kubectl_binary
                 private_hashes["observerCurrentContextBeforeCleanup"] = observer_config_before_after(observer_config.read_bytes(), observer_default)
             except CaptureError:
                 errors.append("private observer current-context did not remain readable default")
+        cleanup = cleanup_owned_clusters(kind_binary, attempts, marker, owner_pid, cleanup_env,
+                                          runner=_command, timeout=CLEANUP_TIMEOUT)
+        errors.extend(cleanup["errors"])
+        private_hashes["adminAfterCleanup"] = {}
+        for role, path in admin_configs.items():
+            if path.is_file() and not path.is_symlink():
+                private_hashes["adminAfterCleanup"][role] = sha256(path.read_bytes())
+        if observer_config.is_file() and not observer_config.is_symlink():
+            private_hashes["observerAfterCleanup"] = sha256(observer_config.read_bytes())
         shutil.rmtree(temp, ignore_errors=True)
         if signal_state is not None:
             _restore_capture_signals(signal_state)

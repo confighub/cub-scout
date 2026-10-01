@@ -240,24 +240,42 @@ class CaptureContractTests(unittest.TestCase):
             run.assert_not_called()
 
     def test_cleanup_after_partial_create_deletes_only_marked_attempts(self):
-        names = [capture.owned_cluster_name(role, "261001010203", nonce) for role, nonce in (("denied", "11111111"), ("readable", "22222222"))]
-        state = {"clusters": [names[0], names[1], "unrelated-cluster"], "calls": []}
-        marker = {"schema": "rul03-owned-clusters.v1", "ownerPid": 99, "clusterNames": names}
-        def runner(_binary, args, _timeout, _env, _deadline):
-            state["calls"].append(args)
-            if args == ["get", "clusters"]:
-                return 0, ("\n".join(state["clusters"]) + "\n").encode(), b""
-            if args[:3] == ["delete", "cluster", "--name"]:
-                state["clusters"].remove(args[3])
-                return 0, b"", b""
-            raise AssertionError(args)
+        with tempfile.TemporaryDirectory() as td:
+            private = Path(td) / "admin.kubeconfig"
+            private.write_text("private")
+            name = capture.owned_cluster_name("denied", "261001010203", "11111111")
+            state = {"clusters": [name, "unrelated-cluster"], "calls": []}
+            marker = {"schema": "rul03-owned-clusters.v1", "ownerPid": 99, "clusterNames": [name]}
+            def runner(_binary, args, _timeout, env, _deadline):
+                state["calls"].append((args, env.copy()))
+                self.assertEqual(env.get("KUBECONFIG"), str(private))
+                if args == ["get", "clusters"]:
+                    return 0, ("\n".join(state["clusters"]) + "\n").encode(), b""
+                if args == ["delete", "cluster", "--name", name, "--kubeconfig", str(private)]:
+                    state["clusters"].remove(name)
+                    return 0, b"", b""
+                raise AssertionError(args)
+            result = capture.cleanup_owned_clusters(Path("kind"),
+                [{"name": name, "attempted": True, "kubeconfigPath": str(private)}],
+                marker, 99, {"KUBECONFIG": "/shared/default"}, runner=runner)
+            self.assertTrue(result["verified"])
+            self.assertEqual(state["clusters"], ["unrelated-cluster"])
+            self.assertEqual(result["deleted"], [name])
+            delete_args, delete_env = next(call for call in state["calls"] if call[0][0] == "delete")
+            self.assertEqual(delete_args[-2:], ["--kubeconfig", str(private)])
+            self.assertEqual(delete_env["KUBECONFIG"], str(private))
+            self.assertFalse(any("unrelated-cluster" in args for args, _env in state["calls"]))
+
+    def test_cleanup_never_falls_back_when_private_kubeconfig_is_missing(self):
+        name = capture.owned_cluster_name("denied", "261001010203", "44444444")
+        marker = {"schema": "rul03-owned-clusters.v1", "ownerPid": 99, "clusterNames": [name]}
         result = capture.cleanup_owned_clusters(Path("kind"),
-            [{"name": names[0], "attempted": True}, {"name": names[1], "attempted": False}],
-            marker, 99, {}, runner=runner)
-        self.assertTrue(result["verified"])
-        self.assertEqual(state["clusters"], [names[1], "unrelated-cluster"])
-        self.assertEqual(result["deleted"], [names[0]])
-        self.assertFalse(any("unrelated-cluster" in args for args in state["calls"]))
+            [{"name": name, "attempted": True, "kubeconfigPath": "/missing/private-config"}],
+            marker, 99, {"KUBECONFIG": "/shared/default"},
+            runner=lambda *_args: self.fail("missing private config must refuse before kind query"))
+        self.assertFalse(result["verified"])
+        self.assertEqual(result["deleted"], [])
+        self.assertIn("private kubeconfig unavailable", result["errors"][0])
 
     def test_cleanup_refuses_mismatched_ownership_marker(self):
         name = capture.owned_cluster_name("denied", "261001010203", "33333333")
@@ -303,19 +321,26 @@ class CaptureContractTests(unittest.TestCase):
                 if tool == "kind" and args == ["version"]:
                     return 0, b"kind v0.31.0\n", b""
                 if tool == "kind" and args == ["get", "clusters"]:
+                    self.assertNotEqual(_env.get("KUBECONFIG"), str(shared))
+                    self.assertTrue(Path(_env.get("KUBECONFIG", "")).is_file())
                     return 0, ("\n".join(clusters) + ("\n" if clusters else "")).encode(), b""
                 if tool == "kind" and args[:2] == ["create", "cluster"]:
                     name = args[args.index("--name") + 1]
                     admin = Path(args[args.index("--kubeconfig") + 1])
+                    self.assertEqual(_env.get("KUBECONFIG"), str(admin))
+                    self.assertNotEqual(_env.get("KUBECONFIG"), str(shared))
                     admin.write_bytes(b"private-admin-config-" + name.encode())
                     clusters.append(name)
                     if name == names["readable"]:
                         raise capture.CaptureInterrupted("simulated signal during partial create")
                     return 0, b"created\n", b""
                 if tool == "kind" and args[:3] == ["delete", "cluster", "--name"]:
+                    self.assertIn("--kubeconfig", args)
+                    self.assertEqual(_env.get("KUBECONFIG"), args[args.index("--kubeconfig") + 1])
                     name = args[3]
                     deleted.append(name)
                     clusters.remove(name)
+                    Path(_env["KUBECONFIG"]).write_bytes(b"mutated-by-private-cleanup")
                     return 0, b"", b""
                 if tool == "kubectl" and "apply" in args:
                     return 0, b"applied\n", b""
@@ -339,15 +364,20 @@ class CaptureContractTests(unittest.TestCase):
                  patch.object(capture.inv04, "_command", return_value=str(binaries["git"])), \
                  patch.object(capture, "owned_cluster_name", side_effect=fake_name), \
                  patch.object(capture, "_command", side_effect=fake_command), \
-                 patch.dict(capture.os.environ, {"DOCKER_HOST": ""}), \
+                 patch.dict(capture.os.environ, {"DOCKER_HOST": "", "KUBECONFIG": str(shared)}), \
                  patch.object(capture, "_install_capture_deadline", return_value=object()), \
                  patch.object(capture, "_disable_capture_signals"), patch.object(capture, "_restore_capture_signals"):
                 result = capture.capture(shared, out, binaries["kind"], binaries["kubectl"], binaries["docker"])
             self.assertEqual(result, 1)
-            self.assertEqual(set(deleted), set(names.values()))
+            self.assertEqual(set(deleted), set(names.values()), (json.loads((out / "provenance.json").read_text())["errors"],
+                                                                  json.loads((out / "provenance.json").read_text())["cleanup"]))
             self.assertEqual(clusters, [])
             provenance = json.loads((out / "provenance.json").read_text())
             self.assertTrue(provenance["cleanup"]["verified"])
+            self.assertEqual(provenance["privateKubeconfigSha256"]["adminBeforeCleanup"]["denied"],
+                             provenance["privateKubeconfigSha256"]["adminInitial"]["denied"])
+            self.assertNotEqual(provenance["privateKubeconfigSha256"]["adminAfterCleanup"]["denied"],
+                                provenance["privateKubeconfigSha256"]["adminBeforeCleanup"]["denied"])
             self.assertTrue(any(operation.get("errorType") == "CaptureInterrupted" for operation in provenance["operations"]))
             self.assertEqual(provenance["sharedKubeconfigSha256"]["before"], provenance["sharedKubeconfigSha256"]["after"])
             self.assertEqual((out.stat().st_mode & 0o777), 0o700)
