@@ -1,5 +1,24 @@
 # Delivery plan to cub scout 3.0
 
+## Latest execution checkpoint — 2026-10-01
+
+#701 merged as `59ef366`, with required CI and same-observer live proof for
+Kind-scoped map collection. Facts/omissions remain explainable; this is request
+and output reduction, not measured agent savings.
+
+The [bounded counts diagnostic](../evals/reports/2026-10-01-recorded-counts-economy.md)
+at source `88cdbe32` timed out in both arms (0/2 verified answers). Recursive
+subagents, incomplete descendant tool/cost evidence and a reported turn-limit
+discrepancy prevent protocol admission. No retry follows; resolve these offline
+before spending again. The full24 benchmark remains non-executable.
+
+The ledger adds $0.12108595 producer-reported cost: recorded total
+**$4.38666035**, smoke **$1.91745385**, live-only **$2.4692065**, baseline **$0**.
+Complete spend for this diagnostic is unresolved; these are reported estimates,
+not verified all-in billing. Account credits and development dollars remain
+unmeasured. Older dated snapshots below retain their historical totals.
+
+
 Adopted 2026-09-30 by the maintainer: “make this official, github sync, then
 proceed. execute your plan without stopping - loop until done.” This is the
 execution companion to the [authoritative roadmap](roadmap.md#path-to-30).
