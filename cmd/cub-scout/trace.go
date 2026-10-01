@@ -1704,8 +1704,8 @@ func runTraceDiff(ctx context.Context, kind, name, namespace string) error {
 	}
 	ownership, err := detectResourceOwnershipWithTraceSession(ctx, session, kind, name, namespace)
 	if err != nil {
-		// Try to infer from kind
-		ownership = &agent.Ownership{Type: agent.OwnerUnknown}
+		// Missing access is not evidence that this resource is unmanaged.
+		return fmt.Errorf("cannot establish ownership for diff of %s/%s in %s: %w", kind, name, namespace, err)
 	}
 
 	switch ownership.Type {
