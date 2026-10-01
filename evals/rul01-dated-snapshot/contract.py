@@ -4,6 +4,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).parent
 RAW = ROOT / "fixtures" / "after-pod.json"
@@ -31,7 +32,7 @@ def _json(data):
 
 
 def _time(value):
-    if not isinstance(value, str):
+    if not isinstance(value, str) or re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", value) is None:
         raise ContractError("timestamp must be a string")
     try:
         parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
@@ -48,6 +49,8 @@ def validate(raw_bytes=None, receipt_bytes=None, clocks_bytes=None):
     receipt_bytes = RECEIPT.read_bytes() if receipt_bytes is None else receipt_bytes
     clocks_bytes = CLOCKS.read_bytes() if clocks_bytes is None else clocks_bytes
     receipt, clocks, pod = _json(receipt_bytes), _json(clocks_bytes), _json(raw_bytes)
+    if not isinstance(receipt, dict) or not isinstance(clocks, dict):
+        raise ContractError("receipt and clock inputs must be JSON objects")
     source, request = receipt.get("source"), receipt.get("request")
     if receipt.get("schema") != "rul01.capture-time-binding.v1" or not isinstance(source, dict) or not isinstance(request, dict):
         raise ContractError("unrecognized receipt")
@@ -61,15 +64,24 @@ def validate(raw_bytes=None, receipt_bytes=None, clocks_bytes=None):
         "4b113710948882eda501e14aacca2d5cec1168ae", "ec4f7f8e9d2d2ca6257abc5029f2e01b33203794a5782c22ba13895bedd31230", "472314079b74bff1a374d5e55eb44a12db2e2ffeaa189b30dc659423bc95398a"):
         raise ContractError("source provenance mismatch")
     start, end = _time(request.get("startedAt")), _time(request.get("endedAt"))
-    if (request.get("phase"), request.get("method"), request.get("path"), request.get("httpStatus"), request.get("loggedTimestampPrecisionSeconds")) != (
-        "after", "GET", "/api/v1/namespaces/pre02-node-selector/pods/scout-pre02-selector", 200, 1):
+    if (request.get("phase"), request.get("method"), request.get("path"), request.get("httpStatus")) != (
+        "after", "GET", "/api/v1/namespaces/pre02-node-selector/pods/scout-pre02-selector", 200):
         raise ContractError("request identity mismatch")
+    precision = request.get("loggedTimestampPrecisionSeconds")
+    if type(precision) is not int or precision != 1:
+        raise ContractError("timestamp precision must be the recorded integer second")
     elapsed = request.get("elapsedSeconds")
     if (request.get("startedAt"), request.get("endedAt"), request.get("timeMeaning")) != (
         "2026-10-01T06:03:25Z", "2026-10-01T06:03:25Z",
         "request logging timestamps for this response; not a timestamp for an atomic multi-response snapshot"):
         raise ContractError("request timestamp binding mismatch")
-    if isinstance(elapsed, bool) or not isinstance(elapsed, (int, float)) or not math.isfinite(elapsed) or abs(elapsed - 0.01204633410088718) > 1e-12 or (end-start).total_seconds() > elapsed + 1:
+    if isinstance(elapsed, bool) or not isinstance(elapsed, (int, float)):
+        raise ContractError("invalid request timing")
+    try:
+        elapsed_seconds = float(elapsed)
+    except (OverflowError, ValueError):
+        raise ContractError("invalid request timing") from None
+    if not math.isfinite(elapsed_seconds) or abs(elapsed_seconds - 0.01204633410088718) > 1e-12 or (end-start).total_seconds() > elapsed_seconds + 1:
         raise ContractError("invalid request timing")
     if not isinstance(pod, dict):
         raise ContractError("raw response is not a Kubernetes object")
@@ -92,7 +104,9 @@ def validate(raw_bytes=None, receipt_bytes=None, clocks_bytes=None):
     entries = clocks.get("clocks")
     if not isinstance(entries, list) or len(entries) != 2 or any(not isinstance(c, dict) for c in entries) or [c.get("id") for c in entries] != ["test_clock_1", "test_clock_2"]:
         raise ContractError("test clocks missing or reordered")
-    parsed = [_time(c["asOf"]) for c in entries]
+    if [c.get("asOf") for c in entries] != ["2026-10-01T06:08:25Z", "2026-10-01T06:13:25Z"]:
+        raise ContractError("authored test clock binding mismatch")
+    parsed = [_time(c.get("asOf")) for c in entries]
     age = [int((clock-end).total_seconds()) for clock in parsed]
     if age != [300, 600]:
         raise ContractError("test clock binding mismatch")
@@ -107,7 +121,7 @@ def validate_or_unknown(raw_bytes=None, receipt_bytes=None, clocks_bytes=None):
     """Return explicit unknown facts instead of guessing when binding fails."""
     try:
         return {"evidence_binding": "VERIFIED", **validate(raw_bytes, receipt_bytes, clocks_bytes)}
-    except ContractError:
+    except (ContractError, OSError):
         return {"evidence_binding": "UNKNOWN", "identity": "UNKNOWN", "uid": "UNKNOWN",
                 "scheduled": "UNKNOWN", "startedAt": "UNKNOWN", "endedAt": "UNKNOWN",
                 "creationTimestamp": "UNKNOWN", "conditionTransition": "UNKNOWN",

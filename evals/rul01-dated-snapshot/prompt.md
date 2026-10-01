@@ -23,7 +23,8 @@ request-end second at each test clock. The clocks are explicit arithmetic
 inputs, not current time. Repeating the question does not refresh the snapshot.
 Current live state is unknown.
 
-Return exactly one compact JSON object and no prose, with precisely these keys
+Return exactly one minified single-line JSON object (no whitespace outside
+strings) and no prose, with precisely these keys
 in this order, all values strings:
 `evidence_binding`, `resource_identity`, `resource_uid`,
 `recorded_scheduling_state`, `resource_created_at_utc`,

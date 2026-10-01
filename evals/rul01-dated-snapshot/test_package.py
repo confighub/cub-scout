@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import re
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).parent
 spec = importlib.util.spec_from_file_location("rul01_contract", ROOT / "contract.py")
@@ -45,6 +46,28 @@ class DatedSnapshotTests(unittest.TestCase):
         with self.assertRaises(contract.ContractError): contract.validate(json.dumps(pod).encode(), receipt, clocks)
         pod = json.loads(raw); pod["status"]["conditions"].append(dict(next(c for c in pod["status"]["conditions"] if c["type"] == "PodScheduled")))
         with self.assertRaises(contract.ContractError): contract.validate(json.dumps(pod).encode(), receipt, clocks)
+
+    def test_malformed_or_missing_inputs_become_explicit_unknown(self):
+        raw, receipt, clocks = self.files()
+        cases = (
+            (raw, b"null", clocks), (raw, b"[]", clocks),
+            (raw, receipt, b"null"), (raw, receipt, b"[]"),
+            (b"null", receipt, clocks),
+            (raw, receipt, clocks.replace(b'"asOf": "2026-10-01T06:08:25Z"', b'"asOf": null')),
+            (raw, receipt, clocks.replace(b"06:08:25Z", b"06:08:25.5Z")),
+            (raw, receipt.replace(b'"loggedTimestampPrecisionSeconds": 1', b'"loggedTimestampPrecisionSeconds": true'), clocks),
+            (raw, receipt.replace(b'"elapsedSeconds": 0.01204633410088718', b'"elapsedSeconds": 1e10000'), clocks),
+            (raw, receipt.replace(b'"startedAt": "2026-10-01T06:03:25Z"', b'"startedAt": "2026-10-01T06:03:25.5Z"'), clocks),
+        )
+        for args in cases:
+            with self.subTest(receipt=args[1][:40], clocks=args[2][:40]):
+                self.assertEqual(contract.validate_or_unknown(*args)["evidence_binding"], "UNKNOWN")
+
+    def test_missing_fixture_file_is_explicitly_unknown(self):
+        with patch.object(contract, "RECEIPT", ROOT / "fixtures" / "missing-receipt.json"):
+            result = contract.validate_or_unknown()
+        self.assertEqual(result["evidence_binding"], "UNKNOWN")
+        self.assertEqual(result["endedAt"], "UNKNOWN")
 
     def test_fixture_scaffold_stages_same_hash_bound_bytes(self):
         script = (ROOT / "scaffold.sh").read_text()
