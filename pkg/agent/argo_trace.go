@@ -12,6 +12,13 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 )
 
 // ArgoTracer implements Tracer for Argo CD
@@ -20,6 +27,15 @@ type ArgoTracer struct {
 	argocdPath string
 	// kubectlPath is the path to kubectl (default: "kubectl")
 	kubectlPath string
+	// boundClient is set only by NewArgoTracerWithKubernetesClient. When
+	// explicitlyBound is true, all Application reads use this client and never
+	// fall back to argocd, kubectl, or ambient kubeconfig.
+	boundClient     dynamic.Interface
+	explicitlyBound bool
+}
+
+var argoApplicationResource = schema.GroupVersionResource{
+	Group: "argoproj.io", Version: "v1alpha1", Resource: "applications",
 }
 
 // NewArgoTracer creates a new Argo CD tracer
@@ -52,6 +68,18 @@ func NewArgoTracerWithPaths(argocdPath, kubectlPath string) *ArgoTracer {
 	}
 }
 
+// NewArgoTracerWithKubernetesClient creates an explicitly bound Argo tracer.
+// It reads Application custom resources through client only; a nil client is
+// retained as an explicit unavailable binding and never falls back to a CLI.
+func NewArgoTracerWithKubernetesClient(client dynamic.Interface) *ArgoTracer {
+	return &ArgoTracer{
+		argocdPath:      "argocd",
+		kubectlPath:     "kubectl",
+		boundClient:     client,
+		explicitlyBound: true,
+	}
+}
+
 // ToolName returns "argocd"
 func (a *ArgoTracer) ToolName() string {
 	return "argocd"
@@ -59,6 +87,9 @@ func (a *ArgoTracer) ToolName() string {
 
 // Available checks if the argocd CLI is installed and logged in
 func (a *ArgoTracer) Available() bool {
+	if a.explicitlyBound {
+		return a.boundClient != nil
+	}
 	cmd := exec.Command(a.argocdPath, "version", "--client")
 	return cmd.Run() == nil
 }
@@ -68,6 +99,9 @@ func (a *ArgoTracer) Trace(ctx context.Context, kind, name, namespace string) (*
 	// For Argo, we need to find the Application that manages this resource
 	// If kind is "Application", trace it directly
 	if kind == "Application" {
+		if a.explicitlyBound {
+			return a.TraceApplicationInNamespace(ctx, name, namespace)
+		}
 		return a.traceApplication(ctx, name, namespace)
 	}
 
@@ -78,7 +112,83 @@ func (a *ArgoTracer) Trace(ctx context.Context, kind, name, namespace string) (*
 
 // TraceApplication traces an Argo CD Application
 func (a *ArgoTracer) TraceApplication(ctx context.Context, appName string) (*TraceResult, error) {
+	if a.explicitlyBound {
+		return a.TraceApplicationInNamespace(ctx, appName, "")
+	}
 	return a.traceApplication(ctx, appName, "")
+}
+
+// TraceApplicationInNamespace traces an Application by exact Kubernetes
+// namespace when provided. With an empty namespace, the bound mode lists
+// Applications and requires exactly one matching name; it never guesses the
+// conventional "argocd" namespace.
+func (a *ArgoTracer) TraceApplicationInNamespace(ctx context.Context, appName, namespace string) (*TraceResult, error) {
+	if !a.explicitlyBound {
+		return a.traceApplication(ctx, appName, namespace)
+	}
+	return a.traceBoundApplication(ctx, appName, namespace)
+}
+
+func (a *ArgoTracer) traceBoundApplication(ctx context.Context, appName, namespace string) (*TraceResult, error) {
+	if a.boundClient == nil {
+		return nil, fmt.Errorf("explicitly bound Argo trace requires a bound Kubernetes client")
+	}
+	if strings.TrimSpace(appName) == "" {
+		return nil, fmt.Errorf("Argo Application name is empty")
+	}
+
+	resource := a.boundClient.Resource(argoApplicationResource)
+	var selected *unstructured.Unstructured
+	if namespace != "" {
+		obj, err := resource.Namespace(namespace).Get(ctx, appName, metav1.GetOptions{})
+		if err != nil {
+			if errors.IsNotFound(err) {
+				return nil, fmt.Errorf("Argo Application %q not found in namespace %q", appName, namespace)
+			}
+			return nil, fmt.Errorf("read Argo Application %q in namespace %q: %w", appName, namespace, err)
+		}
+		if obj == nil {
+			return nil, fmt.Errorf("read Argo Application %q in namespace %q returned an empty object", appName, namespace)
+		}
+		selected = obj
+	} else {
+		list, err := resource.List(ctx, metav1.ListOptions{
+			FieldSelector: fields.OneTermEqualSelector("metadata.name", appName).String(),
+		})
+		if err != nil {
+			return nil, fmt.Errorf("list Argo Applications to resolve %q: %w", appName, err)
+		}
+		if list == nil {
+			return nil, fmt.Errorf("list Argo Applications to resolve %q returned an empty list", appName)
+		}
+		matches := make([]*unstructured.Unstructured, 0, 1)
+		for i := range list.Items {
+			if list.Items[i].GetName() == appName {
+				matches = append(matches, &list.Items[i])
+			}
+		}
+		switch len(matches) {
+		case 0:
+			return nil, fmt.Errorf("Argo Application %q not found", appName)
+		case 1:
+			selected = matches[0]
+		default:
+			return nil, fmt.Errorf("Argo Application %q is ambiguous across %d namespaces; specify its namespace", appName, len(matches))
+		}
+	}
+
+	if selected.GetName() != appName || strings.TrimSpace(selected.GetNamespace()) == "" || (namespace != "" && selected.GetNamespace() != namespace) {
+		return nil, fmt.Errorf("Argo Application read returned an object with mismatched identity (requested %s/%s, got %s/%s)", namespace, appName, selected.GetNamespace(), selected.GetName())
+	}
+	if selected.GetKind() != "Application" || selected.GetAPIVersion() != "argoproj.io/v1alpha1" {
+		return nil, fmt.Errorf("Argo Application read returned malformed identity for %s/%s: apiVersion=%q kind=%q", selected.GetNamespace(), selected.GetName(), selected.GetAPIVersion(), selected.GetKind())
+	}
+
+	data, err := json.Marshal(selected.Object)
+	if err != nil {
+		return nil, fmt.Errorf("marshal bound Argo Application %s/%s: %w", selected.GetNamespace(), selected.GetName(), err)
+	}
+	return a.parseAppOutput(data, appName, selected.GetNamespace())
 }
 
 // traceApplication gets the full status of an Argo CD Application
@@ -220,8 +330,8 @@ type argoApp struct {
 		OwnerReferences []argoOwnerRef    `json:"ownerReferences,omitempty"`
 	} `json:"metadata"`
 	Spec struct {
-		Source  argoSource   `json:"source"`
-		Sources []argoSource `json:"sources,omitempty"`
+		Source      argoSource   `json:"source"`
+		Sources     []argoSource `json:"sources,omitempty"`
 		Destination struct {
 			Server    string `json:"server"`
 			Namespace string `json:"namespace"`
@@ -546,6 +656,9 @@ func (a *ArgoTracer) TraceByOwnership(ctx context.Context, ownership Ownership) 
 	}
 
 	// The ownership.Name is the Application name
+	if a.explicitlyBound {
+		return a.TraceApplicationInNamespace(ctx, ownership.Name, ownership.Namespace)
+	}
 	return a.TraceApplication(ctx, ownership.Name)
 }
 

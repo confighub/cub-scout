@@ -92,7 +92,7 @@ cub-scout map [flags]
 | Flag | Description |
 |------|-------------|
 | `--hub` | Start in the ConfigHub hierarchy view; `--kube-context`, if given, applies when switching to the local TUI and does not select a ConfigHub context |
-| `--kube-context` | Use this exact kubeconfig context for local TUI inventory, bounded explain and scan; missing names fail without fallback. In this mode trace, graph export, command mode, shell, and import are disabled until they honor the binding |
+| `--kube-context` | Use this exact kubeconfig context for local TUI inventory, bounded explain, scan and trace; missing names fail without fallback. In this mode graph export, command mode, shell, and import are disabled until they honor the binding |
 | `-n, --namespace` | Filter by namespace |
 | `-q, --query` | Resource query filter |
 
@@ -889,6 +889,7 @@ cub-scout trace <kind/name> [flags]
 | Flag | Description |
 |------|-------------|
 | `-n, --namespace` | Namespace of the resource |
+| `--kube-context` | Exact kubeconfig context for normal and reverse Trace; missing or empty names fail without fallback. Not supported with delegated `--diff` or fixture input |
 | `--app` | Trace ArgoCD Application by name |
 | `-r, --reverse` | Reverse trace (walk up ownerReferences, show orphan metadata) |
 | `-d, --diff` | Show diff between live and Git state |
@@ -947,19 +948,42 @@ writeback. A space-only release match is intentionally not considered
 object-level evidence, and wildcard `--confighub-space '*'` is not treated as
 an exact resource space.
 
-### Argo Context Troubleshooting
+### Context selection
 
-If trace fails due to stale/invalid Argo endpoint context, run:
+Normal and reverse Trace capture one Kubernetes binding for the invocation.
+`--kube-context` selects an exact kubeconfig context without modifying
+`current-context`. MCP Trace accepts the corresponding typed `context` argument.
+JSON and human output identify the selected context; this label is not a stable
+cluster ID. The TUI Trace view reuses the binding captured by its resource view.
 
 ```bash
-argocd context
-argocd app list
-argocd logout <server>
-argocd login <server>
-cub-scout trace --app <app-name>
+./cub-scout trace --app frontend -n delivery --kube-context staging --format json
+./cub-scout trace pod/api-abc -n team-a --reverse --kube-context staging --format md
 ```
 
-See `docs/howto/trace-context-troubleshooting.md` for the full flow.
+Omitting the selector preserves the default loader. A supplied selector cannot
+be combined with fixture input or the legacy delegated `--diff` path; these
+combinations fail before observation. Controller diff binding and its read-only
+contract remain unfinished under #746. The local rendered-manifest comparison
+helper is not yet a public CLI capability or a substitute for that contract.
+
+### Argo Observation Scope
+
+Normal Trace reads the Application CR from the captured Kubernetes binding. It
+requires Kubernetes read access, not an Argo server login. Use an exact namespace:
+
+```bash
+./cub-scout trace --app frontend -n delivery --format json
+```
+
+Without `-n`, Application lookup filters by name across namespaces and requires
+exactly one match. Multiple matches produce an ambiguity error; Scout does not
+choose a conventional namespace. Check the selected Kubernetes context and
+Application namespace when evidence is unavailable. Partial read failures remain
+visible alongside the known chain. The external `--diff` path has a separate
+scope contract; its complete context binding remains open in #746. See the
+[diff operand and read-only contract](../proposals/trace-diff-read-contract.md)
+for the remaining provider and compatibility gates.
 
 ### Supported Sources
 

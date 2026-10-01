@@ -1,7 +1,7 @@
 # cub-scout execution handover
 
 **Current snapshot:** 2026-10-01. Verified merged baseline:
-[`2188a08`](https://github.com/confighub/cub-scout/commit/2188a089bacb91cd0a769772b58c8abcb1a10793).
+[`f05716a1`](https://github.com/confighub/cub-scout/commit/f05716a1fe227ecbf0fde8b4e8f8ef95d0771e13).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
@@ -12,8 +12,9 @@ order, quality gates, budgets and decisions.
 - [#744](https://github.com/confighub/cub-scout/issues/744) merged after its
   required CI passed; #742 is closed. The reviewed baseline contains ten
   guards and the source-only full-24 preparation, with no paid admission.
-- [#743](https://github.com/confighub/cub-scout/issues/743) is the active
-  bounded doctor/live-scan context packet under #599. Context selection is an
+- [#743](https://github.com/confighub/cub-scout/issues/743) is closed after
+  doctor/live-scan context packet [#745](https://github.com/confighub/cub-scout/pull/745)
+  merged under #599. Context selection is an
   invocation-local Kubernetes binding; its context-name label is not a stable
   observed cluster identity. Other surfaces still need their own complete
   bindings, and this slice does not close #599.
@@ -29,10 +30,58 @@ order, quality gates, budgets and decisions.
   preserved. Fixed product source `5b362975` passed local build/full Go validation;
   23 offline helper/recorded-case guards pass. The new file-only agent contract
   case has captured fixtures; paid agent execution remains unrun under the stop. CI's E2E package exhausted its 120-second limit
-  as the final smoke test began, so the limit is now 180 seconds; final-head CI
-  remains required. Two
+  as the final smoke test began, so the limit is now 180 seconds. Final head
+  `07e22b94` passed Unit, Integration and GitOps E2E in run `36852331432`;
+  optional Connected/Demo/Full Verification were skipped. Two
   behavior-specific regression probes caught missing shared Doctor context/human
   warnings and missing scan JSON/TUI context before the corresponding repairs.
+
+- [#747](https://github.com/confighub/cub-scout/issues/747) is closed after
+  [#748](https://github.com/confighub/cub-scout/pull/748) merged. The shared
+  resolver no longer supplies an auth-provider config writer. A test-registered
+  provider refreshed credentials for actual local TLS requests without changing
+  the source kubeconfig; the old resolver rewrote the isolated fixture. Local
+  full Go tests, independent review and exact-head CI (`36853834498`) passed.
+  This removes a latent capability; the shipped binary links no legacy provider
+  plugin. It does not sandbox exec-auth helpers.
+- [#746](https://github.com/confighub/cub-scout/issues/746) is the current Trace
+  context packet, **not complete**. The working branch has a shared captured
+  observation engine, a writer-based full human renderer, direct bound Argo
+  Application reads and private Flux child kubeconfig support. CLI normal Trace
+  and TUI T/Enter actions use that model. Local two-server tests retain context A
+  after the source kubeconfig points to B. File-backed TLS/token credentials are
+  captured before clients are created; exec helpers retain their refresh behavior.
+  Static proxy provenance comes from the same parsed configuration snapshot,
+  never callback sampling. JSON now retains context labels and partial warnings.
+  Explicit CLI/MCP selectors and reverse observations are now implemented,
+  with partial timing/Secret/artifact evidence preserved. Reverse Secret saved
+  manifests are omitted explicitly. Generic Argo source summaries preserve the
+  declared target revision without fabricating ownership evidence; Flux artifact
+  JSON retains its existing shape.
+  The [MCP process proof](evals/trace-context-binding/README.md) passed its final
+  local-fixture capture: four GETs, zero ambient Beta requests, explicit denied
+  evidence and verified private cleanup. It exercises the real stdio server and
+  child processes, not a live cluster or real RBAC. Binary/source association
+  limits and earlier attempts remain recorded. Its three Python tests and the
+  exact recorded-case scaffold guard pass; paid agent execution remains unrun.
+  The first combined full-Go run found two Flux golden changes and a scaffold
+  mismatch; both are repaired and targeted tests pass. The fresh build and full offline Go suite pass at `24074d85`. The
+  [owned-kind proof](evals/trace-context-live/README.md) passed on attempt three:
+  allowed/denied CLI reads and actual TUI open/reopen/denied actions, with
+  six/six/one GETs and retained 403 evidence. Cleanup and config integrity pass.
+  Attempt two exposed a real selected-workload identity bug, now fixed with
+  a failing-before regression; both failed attempts remain retained. Full
+  controller-desired diff, final integration review and CI remain open. Explicit context with
+  legacy delegated diff fails before reads. A context label is not a stable
+  cluster ID; this packet does not close #599.
+
+- [PR #749](https://github.com/confighub/cub-scout/pull/749) supplies the missing
+  Trace Markdown unit-event rows under #561, preserving Result/Status and
+  missing values. Independent diff review, offline build and full Go tests pass
+  at `7c68ea66`. Enabled exact-head CI checks passed in run `36860479725`;
+  optional Connected/Demo/Full Verification were skipped. PR #749 merged at
+  `f05716a1`. Its example is typed fixture output,
+  not a new server capture. The broader #561 scope stays open.
 
 - The fixed benchmark retains 24 questions and six equally weighted groups.
   This checkout has **0 planned, 5 refreshed fixtures, 2 prepared recorded
@@ -193,8 +242,11 @@ permission gates to already authorized routine work.
 
 ## Resume here
 
-Check #645, then complete the success-defined doctor/scan context packet
-[#743](https://github.com/confighub/cub-scout/issues/743) under #599. The full-24
+Check #645, then continue Trace [#746](https://github.com/confighub/cub-scout/issues/746)
+and its explicit rendered-operand diff packet #751, followed by source-truth
+context binding #750 under #599. #743 is merged. Source-truth is committed
+locally with focused tests passing; broader validation and live proof remain.
+The immediate target is v2.13, subject to the adopted gates. The full-24
 source preparation under #742 is integrated, but its blinded equal-evidence
 packet and authored input controls do not admit paid execution: recorded MCP
 binding, actual grants, descendants and accounting remain open. Product work

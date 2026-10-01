@@ -4,6 +4,7 @@
 package unit
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -302,6 +303,10 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			checkDoctorScanContextScaffold(t, caseDir)
 			continue
 		}
+		if filepath.Base(caseDir) == "trace-context-binding" {
+			checkTraceContextBindingScaffold(t, caseDir)
+			continue
+		}
 		if filepath.Base(caseDir) == "recorded-explain-contract" {
 			checkRecordedExplainCaseScaffold(t, caseDir)
 			continue
@@ -395,6 +400,48 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			name := filepath.Base(src)
 			if got, ok := written[name]; !ok || got != strings.TrimRight(string(want), "\n") {
 				t.Errorf("%s/scaffold.sh does not write its recorded %s; regenerate from the case's fixture source", caseDir, name)
+			}
+		}
+	}
+}
+
+// The context-binding case carries three reviewed MCP process records, not
+// the suite-wide Kubernetes YAML export. Execute its copy scaffold and verify
+// the exact local evidence set without manufacturing cluster fixtures.
+func checkTraceContextBindingScaffold(t *testing.T, root string) {
+	t.Helper()
+	caseData, err := os.ReadFile(filepath.Join(root, "case.yaml"))
+	if err != nil || !strings.Contains(string(caseData), "FIXTURE-OWNED-SCAFFOLD") || !strings.Contains(string(caseData), "scaffold_script: scaffold.sh") {
+		t.Fatalf("trace context case does not declare its fixture-owned scaffold: %v", err)
+	}
+	wantNames := []string{"provenance.json", "trace-allowed.json", "trace-denied.json"}
+	scaffold, err := filepath.Abs(filepath.Join(root, "scaffold.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for attempt := 0; attempt < 2; attempt++ {
+		workspace := t.TempDir()
+		cmd := exec.Command("bash", scaffold)
+		cmd.Dir = workspace
+		cmd.Env = offlineKubeconfigEnvironment()
+		if output, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("trace context scaffold: %v: %s", err, output)
+		}
+		staged, err := os.ReadDir(filepath.Join(workspace, "cluster"))
+		if err != nil || len(staged) != len(wantNames) {
+			t.Fatalf("trace context scaffold inventory: count=%d err=%v", len(staged), err)
+		}
+		for i, entry := range staged {
+			if entry.IsDir() || entry.Name() != wantNames[i] {
+				t.Fatalf("trace context scaffold entry[%d]=%q, want %q regular file", i, entry.Name(), wantNames[i])
+			}
+			want, err := os.ReadFile(filepath.Join(root, "fixtures", entry.Name()))
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, err := os.ReadFile(filepath.Join(workspace, "cluster", entry.Name()))
+			if err != nil || !bytes.Equal(got, want) {
+				t.Fatalf("trace context scaffold changed %s: %v", entry.Name(), err)
 			}
 		}
 	}

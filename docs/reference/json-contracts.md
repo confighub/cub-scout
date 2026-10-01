@@ -87,6 +87,34 @@ For MCP, the current rule is:
 3. the wrapped CLI surface remains the contract source of truth
 4. selected connected tools may add `structuredContent` with parsed data plus read-only trust guidance
 
+## Trace Observation Scope and Partial Results
+
+Normal `trace --format json` adds optional top-level `context` and `warnings`.
+`context` is the selected Kubernetes context label, not a stable cluster ID or
+proof of a ConfigHub Target binding. `warnings` preserves incomplete-evidence
+messages while retaining the known chain. An unavailable Events read is not an
+empty event history. Consumers must not turn omitted evidence into healthy or
+unmanaged verdicts. Legacy/offline fixtures may omit both fields.
+
+For an Argo synthetic `Source` link, `summary.source.url` preserves the repository
+URL and optional `summary.source.revision` preserves the declared target revision.
+This is not proof of the revision applied to workloads. The synthetic link does
+not invent a Kubernetes field path or ownership label. Flux artifact revisions
+retain their existing `summary.source.artifact.revision` representation.
+
+CLI and TUI normal Trace observations share one captured Kubernetes binding and
+one evidence model. The TUI projects that model with the same human renderer;
+JSON preserves the same partial-result warnings, including timing, Secret-reference
+and artifact read omissions. The reverse JSON model remains separate and adds an
+optional `context` selection label; its existing `error` field carries partial
+failures alongside known chains. Reverse Secret observations omit the saved
+last-applied manifest (which can embed Secret payloads) and report
+`orphanMeta.lastAppliedConfigOmission`; this does not mean the annotation was
+absent. Non-Secret last-applied metadata retains its existing representation.
+The local rendered-manifest comparison helper
+has no public JSON contract yet. Full diff integration and remaining end-to-end
+proof remain tracked by #746.
+
 ## Map Ownership Diagnostics
 
 `map list --ownership-evidence --format json` and MCP `map` with

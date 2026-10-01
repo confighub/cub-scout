@@ -267,6 +267,7 @@ func TestInferRole(t *testing.T) {
 		expected string
 	}{
 		{"GitRepository", RoleSource},
+		{"Source", RoleSource},
 		{"OCIRepository", RoleSource},
 		{"ConfigHub OCI", RoleSource},
 		{"HelmRepository", RoleSource},
@@ -459,6 +460,7 @@ func TestInferDeliveryStage(t *testing.T) {
 	}{
 		// Sources
 		{"GitRepository", StageSource},
+		{"Source", StageSource},
 		{"HelmRepository", StageSource},
 		{"Bucket", StageSource},
 		{"SveltosReference", StageSource},

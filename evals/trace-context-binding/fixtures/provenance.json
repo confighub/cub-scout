@@ -1,0 +1,45 @@
+{
+  "kind": "local-http-mcp-process-proof",
+  "binarySHA256": "09aa59e7a5c4d0e75c6089396e7f5e7444e6a1b50ef51aa411cc003754b85d60",
+  "passed": true,
+  "captureScriptSHA256": "10d5eff000cb12a18c7998d3fcf4bf153f8051553433937d7b76ad5e4c1a7d70",
+  "productCommit": "c70bb96326b8c344b644b213b0fc080a8b4d2f3b",
+  "buildProvenanceLimit": "productCommit records checkout HEAD and binarySHA256 pins the executable; this receipt does not prove the binary was built from a clean tree at that commit",
+  "calls": 4,
+  "requests": [
+    {
+      "endpoint": "alpha",
+      "method": "GET",
+      "path": "/apis/argoproj.io/v1alpha1/namespaces/delivery/applications/api",
+      "denied": false,
+      "status": 200
+    },
+    {
+      "endpoint": "alpha",
+      "method": "GET",
+      "path": "/apis/argoproj.io/v1alpha1/namespaces/delivery/applications/api",
+      "denied": false,
+      "status": 200
+    },
+    {
+      "endpoint": "alpha",
+      "method": "GET",
+      "path": "/api/v1/namespaces/delivery/events?fieldSelector=involvedObject.name%3Dapi%2CinvolvedObject.kind%3DApplication",
+      "denied": false,
+      "status": 403
+    },
+    {
+      "endpoint": "denied",
+      "method": "GET",
+      "path": "/apis/argoproj.io/v1alpha1/namespaces/delivery/applications/api",
+      "denied": true,
+      "status": 403
+    }
+  ],
+  "kubeconfigUnchanged": true,
+  "scope": "real Scout MCP stdio and subprocesses; local HTTP fixtures, not a live cluster",
+  "modelExecution": "not run",
+  "elapsedSeconds": 1.69,
+  "privateConfigRemoved": true,
+  "listenersStopped": true
+}

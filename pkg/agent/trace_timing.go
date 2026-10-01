@@ -5,11 +5,15 @@ package agent
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/client-go/dynamic"
 )
 
@@ -25,21 +29,39 @@ func NewTimingEnricher(client dynamic.Interface) *TimingEnricher {
 
 // EnrichChainWithTiming adds LastTransitionTime to chain links by fetching resource status
 func (e *TimingEnricher) EnrichChainWithTiming(ctx context.Context, chain []ChainLink) []ChainLink {
+	chain, _ = e.EnrichChainWithTimingAndErrors(ctx, chain)
+	return chain
+}
+
+// EnrichChainWithTimingAndErrors enriches each supported link once and
+// returns safe, source-specific omissions for reads that failed. A successful
+// read without timing metadata is not an omission.
+func (e *TimingEnricher) EnrichChainWithTimingAndErrors(ctx context.Context, chain []ChainLink) ([]ChainLink, []error) {
+	var readErrors []error
 	for i := range chain {
 		link := &chain[i]
-		timing := e.getResourceTiming(ctx, link.Kind, link.Name, link.Namespace)
+		timing, err := e.readResourceTiming(ctx, link.Kind, link.Name, link.Namespace)
+		if err != nil {
+			readErrors = append(readErrors, err)
+			continue
+		}
 		if timing != nil {
 			link.LastTransitionTime = timing
 		}
 	}
-	return chain
+	return chain, readErrors
 }
 
-// getResourceTiming fetches a resource and extracts its timing information
-func (e *TimingEnricher) getResourceTiming(ctx context.Context, kind, name, namespace string) *time.Time {
+func (e *TimingEnricher) readResourceTiming(ctx context.Context, kind, name, namespace string) (*time.Time, error) {
 	gvr := kindToTimingGVR(kind)
 	if gvr.Resource == "" {
-		return nil
+		return nil, nil
+	}
+	if err := validateTimingIdentity(kind, name, namespace); err != nil {
+		return nil, err
+	}
+	if e == nil || e.client == nil {
+		return nil, timingReadError(kind, name, namespace, "Kubernetes client is unavailable")
 	}
 
 	var resource *unstructured.Unstructured
@@ -51,10 +73,40 @@ func (e *TimingEnricher) getResourceTiming(ctx context.Context, kind, name, name
 		resource, err = e.client.Resource(gvr).Get(ctx, name, metav1.GetOptions{})
 	}
 	if err != nil {
-		return nil
+		reason := "read failed"
+		if apierrors.IsForbidden(err) {
+			reason = "forbidden"
+		} else if apierrors.IsNotFound(err) {
+			reason = "not found"
+		}
+		return nil, timingReadError(kind, name, namespace, reason)
 	}
 
-	return extractTimingFromResource(resource, kind)
+	return extractTimingFromResource(resource, kind), nil
+}
+
+func validateTimingIdentity(kind, name, namespace string) error {
+	reason := ""
+	switch {
+	case strings.TrimSpace(name) == "" || strings.TrimSpace(name) != name || len(validation.IsDNS1123Subdomain(name)) != 0:
+		reason = "exact Kubernetes name is missing or invalid"
+	case strings.TrimSpace(namespace) == "":
+		reason = "exact Kubernetes namespace is required"
+	case strings.TrimSpace(namespace) != namespace || len(validation.IsDNS1123Label(namespace)) != 0:
+		reason = "exact Kubernetes namespace is invalid"
+	}
+	if reason == "" {
+		return nil
+	}
+	return timingReadError(kind, name, namespace, reason)
+}
+
+func timingReadError(kind, name, namespace, reason string) error {
+	resource := kind + "/" + name
+	if namespace != "" {
+		resource = kind + "/" + namespace + "/" + name
+	}
+	return fmt.Errorf("timing unavailable for %s: %s", resource, reason)
 }
 
 // extractTimingFromResource extracts the appropriate timestamp from a resource

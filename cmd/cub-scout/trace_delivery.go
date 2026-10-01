@@ -7,6 +7,8 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 	"time"
 
@@ -49,6 +51,21 @@ func enrichTraceConfigHubFromLive(ctx context.Context, result *agent.TraceResult
 	return dynClient
 }
 
+func enrichTraceConfigHubFromLiveWithTraceSession(ctx context.Context, session *traceSession, result *agent.TraceResult, kind, name, namespace string) dynamic.Interface {
+	if result == nil || session == nil {
+		return nil
+	}
+	dynClient, err := session.dynamicClient()
+	if err != nil {
+		return nil
+	}
+	obj, err := fetchTraceResource(ctx, dynClient, kind, name, namespace)
+	if err == nil && obj != nil {
+		enrichTraceConfigHubFromObject(result, obj)
+	}
+	return dynClient
+}
+
 func enrichTraceConfigHubFromObject(result *agent.TraceResult, obj *unstructured.Unstructured) {
 	if result == nil || obj == nil {
 		return
@@ -57,12 +74,20 @@ func enrichTraceConfigHubFromObject(result *agent.TraceResult, obj *unstructured
 }
 
 func attachTraceConfigHubDeliveryEvidence(ctx context.Context, result *agent.TraceResult, dynClient dynamic.Interface, flags traceConfigHubDeliveryFlags) {
+	attachTraceConfigHubDeliveryEvidenceForSession(ctx, result, dynClient, nil, false, flags)
+}
+
+func attachTraceConfigHubDeliveryEvidenceWithTraceSession(ctx context.Context, result *agent.TraceResult, dynClient dynamic.Interface, session *traceSession, flags traceConfigHubDeliveryFlags) {
+	attachTraceConfigHubDeliveryEvidenceForSession(ctx, result, dynClient, session, true, flags)
+}
+
+func attachTraceConfigHubDeliveryEvidenceForSession(ctx context.Context, result *agent.TraceResult, dynClient dynamic.Interface, session *traceSession, bound bool, flags traceConfigHubDeliveryFlags) {
 	if result == nil || !flags.Enabled {
 		return
 	}
 
 	correlation := buildTraceDeliveryCorrelation(result)
-	confirmTraceOCISource(ctx, result, &correlation)
+	confirmTraceOCISourceForDelivery(ctx, session, bound, result, &correlation)
 	confirmTraceOCIRegistry(&correlation)
 	opts, preflightOmissions := traceGitOpsDeliveryOptions(flags, correlation)
 	if opts.Now.IsZero() {
@@ -831,11 +856,15 @@ func tracePublishedSummary(releases []agent.TraceDeliveryRelease) string {
 }
 
 func renderTraceDeliveryEvidenceHuman(evidence *agent.TraceDeliveryEvidence) {
+	renderTraceDeliveryEvidenceHumanTo(os.Stdout, evidence)
+}
+
+func renderTraceDeliveryEvidenceHumanTo(w io.Writer, evidence *agent.TraceDeliveryEvidence) {
 	if evidence == nil {
 		return
 	}
-	fmt.Printf("\n")
-	fmt.Printf("%s%sConfigHub delivery evidence:%s\n", colorBold, colorWhite, colorReset)
+	fmt.Fprintf(w, "\n")
+	fmt.Fprintf(w, "%s%sConfigHub delivery evidence:%s\n", colorBold, colorWhite, colorReset)
 	corr := evidence.Correlation
 	identity := []string{}
 	if corr.UnitSlug != "" {
@@ -851,10 +880,10 @@ func renderTraceDeliveryEvidenceHuman(evidence *agent.TraceDeliveryEvidence) {
 		identity = append(identity, "app="+corr.Application)
 	}
 	if len(identity) > 0 {
-		fmt.Printf("  %sCorrelation:%s %s\n", colorDim, colorReset, strings.Join(identity, " "))
+		fmt.Fprintf(w, "  %sCorrelation:%s %s\n", colorDim, colorReset, strings.Join(identity, " "))
 	}
 	if evidence.LiveStatus != nil {
-		fmt.Printf("  %sLive status:%s app=%s sync=%s health=%s op=%s delivery=%s app-health=%s freshness=%s\n",
+		fmt.Fprintf(w, "  %sLive status:%s app=%s sync=%s health=%s op=%s delivery=%s app-health=%s freshness=%s\n",
 			colorDim,
 			colorReset,
 			firstNonEmpty(evidence.LiveStatus.App, "-"),
@@ -867,12 +896,12 @@ func renderTraceDeliveryEvidenceHuman(evidence *agent.TraceDeliveryEvidence) {
 		)
 	}
 	if len(evidence.Releases) > 0 {
-		fmt.Printf("  %sRecent releases:%s\n", colorDim, colorReset)
+		fmt.Fprintf(w, "  %sRecent releases:%s\n", colorDim, colorReset)
 		exactOCI := traceReleaseRowsHaveManifestJoin(evidence.Releases)
 		for _, release := range evidence.Releases {
 			name := configHubReleaseDisplayName(release.Slug, release.BundleBaseName, release.ReleaseNum, release.ReleaseID)
 			if exactOCI {
-				fmt.Printf("    - %s target=%s published=%s manifestDigest=%s at=%s\n",
+				fmt.Fprintf(w, "    - %s target=%s published=%s manifestDigest=%s at=%s\n",
 					name,
 					firstNonEmpty(release.Target, release.TargetID, "-"),
 					configHubPublishedText(release.Published),
@@ -881,7 +910,7 @@ func renderTraceDeliveryEvidenceHuman(evidence *agent.TraceDeliveryEvidence) {
 				)
 				continue
 			}
-			fmt.Printf("    - %s target=%s published=%s digest=%s at=%s\n",
+			fmt.Fprintf(w, "    - %s target=%s published=%s digest=%s at=%s\n",
 				name,
 				firstNonEmpty(release.Target, release.TargetID, "-"),
 				configHubPublishedText(release.Published),
@@ -891,9 +920,9 @@ func renderTraceDeliveryEvidenceHuman(evidence *agent.TraceDeliveryEvidence) {
 		}
 	}
 	if len(evidence.UnitEvents) > 0 {
-		fmt.Printf("  %sRecent unit events:%s\n", colorDim, colorReset)
+		fmt.Fprintf(w, "  %sRecent unit events:%s\n", colorDim, colorReset)
 		for _, event := range evidence.UnitEvents {
-			fmt.Printf("    - %s unit=%s %s at=%s\n",
+			fmt.Fprintf(w, "    - %s unit=%s %s at=%s\n",
 				firstNonEmpty(event.Action, "-"),
 				firstNonEmpty(event.Unit, event.UnitID, "-"),
 				configHubUnitEventOutcome(event.Result, event.Status),
@@ -902,13 +931,13 @@ func renderTraceDeliveryEvidenceHuman(evidence *agent.TraceDeliveryEvidence) {
 		}
 	}
 	if len(evidence.EventConsumers) > 0 {
-		fmt.Printf("  %sEvent consumers:%s\n", colorDim, colorReset)
+		fmt.Fprintf(w, "  %sEvent consumers:%s\n", colorDim, colorReset)
 		for _, consumer := range evidence.EventConsumers {
 			state := "not ready"
 			if consumer.Ready {
 				state = "ready"
 			}
-			fmt.Printf("    - %s/%s %s (%d/%d ready)\n",
+			fmt.Fprintf(w, "    - %s/%s %s (%d/%d ready)\n",
 				firstNonEmpty(consumer.Namespace, "-"),
 				consumer.Name,
 				state,
@@ -918,15 +947,15 @@ func renderTraceDeliveryEvidenceHuman(evidence *agent.TraceDeliveryEvidence) {
 		}
 	}
 	if len(evidence.Omissions) > 0 {
-		fmt.Printf("  %sOmissions:%s\n", colorDim, colorReset)
+		fmt.Fprintf(w, "  %sOmissions:%s\n", colorDim, colorReset)
 		for _, omission := range evidence.Omissions {
-			fmt.Printf("    - %s: %s\n", omission.Layer, omission.Reason)
+			fmt.Fprintf(w, "    - %s: %s\n", omission.Layer, omission.Reason)
 		}
 	}
 	if len(evidence.Notes) > 0 {
-		fmt.Printf("  %sNotes:%s\n", colorDim, colorReset)
+		fmt.Fprintf(w, "  %sNotes:%s\n", colorDim, colorReset)
 		for _, note := range evidence.Notes {
-			fmt.Printf("    - %s\n", note)
+			fmt.Fprintf(w, "    - %s\n", note)
 		}
 	}
 }

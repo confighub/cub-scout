@@ -22,14 +22,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 
 	"github.com/confighub/cub-scout/v2/internal/mapsvc"
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
 
 var (
+	traceKubeContext         string
 	traceNamespace           string
 	traceJSON                bool   // deprecated: use --format json
 	traceFormat              string // output format: ascii, json
@@ -71,7 +70,7 @@ cub-scout auto-detects the owner and shows the full delivery chain.
 
 Under the hood:
   - Flux resources: uses 'flux trace'
-  - ArgoCD resources: uses 'argocd app get'
+  - ArgoCD resources: reads Application CRs from the selected Kubernetes cluster
   - Helm resources: reads release metadata
   - Sveltos resources: reads Profile/ClusterProfile owner and reference annotations
   - Modelplane resources: reads Modelplane API objects, labels, ownerRefs, and status
@@ -116,10 +115,10 @@ Diff mode (--diff) shows what would change if GitOps reconciled:
   - Useful for debugging "why isn't my change applying?" and upgrade tracing
 
 Trace context troubleshooting (ArgoCD):
-  - argocd context
-  - argocd app list
-  - argocd logout <server>
-  - argocd login <server>
+  - Select the Kubernetes context with --kube-context
+  - Specify the Application namespace with -n
+  - Kubernetes Application read permission is required; Argo server login is not used
+  - Explicit context is not supported with the legacy delegated --diff path
 `,
 	Args: cobra.RangeArgs(0, 2),
 	RunE: runTrace,
@@ -128,7 +127,8 @@ Trace context troubleshooting (ArgoCD):
 func init() {
 	rootCmd.AddCommand(traceCmd)
 
-	traceCmd.Flags().StringVarP(&traceNamespace, "namespace", "n", "", "Namespace of the resource (default: flux-system)")
+	traceCmd.Flags().StringVar(&traceKubeContext, "kube-context", "", "Use this exact Kubernetes context for trace reads")
+	traceCmd.Flags().StringVarP(&traceNamespace, "namespace", "n", "", "Namespace of the resource (default: flux-system; Application names must be unique if omitted)")
 	traceCmd.Flags().StringVar(&traceFormat, "format", "ascii", "Output format: ascii, json, md")
 	traceCmd.Flags().BoolVar(&traceJSON, "json", false, "Output as JSON (deprecated: use --format json)")
 	traceCmd.Flags().StringVar(&traceApp, "app", "", "Trace Argo CD application by name")
@@ -150,6 +150,23 @@ func init() {
 
 func runTrace(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
+	selection, err := clusterContextSelectionFromFlag(cmd)
+	if err != nil {
+		return err
+	}
+	if selection.explicit && (os.Getenv("CUB_SCOUT_TEST_TRACE_JSON") != "" || os.Getenv("CUB_SCOUT_TEST_TRACE_ARTIFACTS_JSON") != "") {
+		return fmt.Errorf("--kube-context cannot be combined with trace fixture input")
+	}
+	if selection.explicit && traceDiff {
+		return fmt.Errorf("--kube-context cannot be used with delegated --diff: controller diff binding is not supported")
+	}
+	effectiveFormat := traceFormat
+	if traceJSON && effectiveFormat == "ascii" {
+		effectiveFormat = "json"
+	}
+	if effectiveFormat != "ascii" && effectiveFormat != "json" && effectiveFormat != "md" {
+		return fmt.Errorf("unsupported trace format %q (supported: ascii, json, md)", effectiveFormat)
+	}
 
 	// Build invocation context with presentation mode resolution
 	invCtx, err := NewInvocationContext(tracePresentation, TransportCLI)
@@ -170,9 +187,6 @@ func runTrace(cmd *cobra.Command, args []string) error {
 		// Direct Argo app trace
 		kind = "Application"
 		name = traceApp
-		if traceNamespace == "" {
-			traceNamespace = "argocd"
-		}
 	} else if len(args) == 0 {
 		return fmt.Errorf("usage: cub-scout trace <kind/name> or cub-scout trace <kind> <name>")
 	} else if len(args) == 1 {
@@ -192,243 +206,38 @@ func runTrace(cmd *cobra.Command, args []string) error {
 	kind = normalizeKind(kind)
 
 	// Default namespace
-	if traceNamespace == "" {
+	if traceNamespace == "" && kind != "Application" {
 		traceNamespace = "flux-system"
 	}
 
-	// Handle reverse trace
-	if traceReverse {
-		return runReverseTrace(ctx, kind, name, traceNamespace)
-	}
-
-	// Handle diff mode
-	if traceDiff {
+	// Preserve legacy reverse precedence when both mode flags are supplied.
+	if traceDiff && !traceReverse {
 		return runTraceDiff(ctx, kind, name, traceNamespace)
 	}
 
-	// Create appropriate tracer
-	var result *agent.TraceResult
-
-	// Resolve effective format early (--format takes precedence over deprecated --json)
-	effectiveFormat := traceFormat
-	if traceJSON && effectiveFormat == "ascii" {
-		effectiveFormat = "json"
-	}
-
-	// If --app flag was used, go directly to Argo tracer
-	if traceApp != "" {
-		tracer := agent.NewArgoTracer()
-		if !tracer.Available() {
-			return fmt.Errorf("argocd CLI not found - install from https://argo-cd.readthedocs.io/en/stable/cli_installation/")
-		}
-		appResult, appErr := tracer.TraceApplication(ctx, name)
-		if appErr != nil {
-			return fmt.Errorf("trace failed: %w", appErr)
-		}
-		if traceWithConfigHub {
-			dynClient := enrichTraceConfigHubFromLive(ctx, appResult, kind, name, traceNamespace)
-			attachTraceConfigHubDeliveryEvidence(ctx, appResult, dynClient, traceConfigHubDeliveryFlags{
-				Enabled:    true,
-				Namespace:  traceNamespace,
-				Space:      traceConfigHubSpace,
-				Since:      traceConfigHubSince,
-				StaleAfter: traceConfigHubStaleAfter,
-			})
-		}
-		artifacts := buildUnknownTraceArtifacts(appResult)
-		if traceArtifacts {
-			artifacts = mergeTraceArtifacts(artifacts, collectTraceArtifacts(ctx, appResult))
-		}
-		if effectiveFormat == "json" {
-			return outputTraceJSONv014(appResult, kind, name, traceNamespace, artifacts)
-		}
-		if effectiveFormat == "md" {
-			return outputTraceMarkdown(appResult, artifacts, invCtx)
-		}
-		return outputTraceHuman(appResult, artifacts, invCtx)
-	}
-
-	// Detect ownership to choose the right tracer
-	ownership, err := detectResourceOwnership(ctx, kind, name, traceNamespace)
+	// The shared observer owns all reads; presentation only projects its result.
+	session, err := newTraceSessionForSelection(selection)
 	if err != nil {
-		return fmt.Errorf("ownership detection failed for %s/%s in %s: %w", kind, name, traceNamespace, err)
+		return fmt.Errorf("failed to capture Kubernetes trace session: %w", err)
 	}
-
-	switch ownership.Type {
-	case agent.OwnerFlux:
-		tracer := agent.NewFluxTracer()
-		if !tracer.Available() {
-			return fmt.Errorf("flux CLI not found - install from https://fluxcd.io/docs/installation/")
-		}
-		result, err = tracer.Trace(ctx, kind, name, traceNamespace)
-
-	case agent.OwnerArgo:
-		tracer := agent.NewArgoTracer()
-		if !tracer.Available() {
-			return fmt.Errorf("argocd CLI not found - install from https://argo-cd.readthedocs.io/en/stable/cli_installation/")
-		}
-		// For Argo, we trace the Application
-		if kind == "Application" {
-			result, err = tracer.TraceApplication(ctx, name)
-		} else {
-			// Need to find the owning Application
-			if ownership.Name != "" {
-				result, err = tracer.TraceApplication(ctx, ownership.Name)
-			} else {
-				return fmt.Errorf("for Argo-managed resources, use --app flag to specify the Application")
-			}
-		}
-
-	case agent.OwnerHelm:
-		// Get k8s client for Helm tracing (reads release secrets)
-		cfg, cfgErr := buildConfig()
-		if cfgErr != nil {
-			if help, ok := agent.FormatHelmContextError(cfgErr.Error()); ok {
-				return fmt.Errorf("%s", help)
-			}
-			return fmt.Errorf("failed to build kubeconfig: %w", cfgErr)
-		}
-		clientset, clientErr := kubernetes.NewForConfig(cfg)
-		if clientErr != nil {
-			if help, ok := agent.FormatHelmContextError(clientErr.Error()); ok {
-				return fmt.Errorf("%s", help)
-			}
-			return fmt.Errorf("failed to create kubernetes client: %w", clientErr)
-		}
-		tracer := agent.NewHelmTracer(clientset)
-		if ownership.Name != "" {
-			result, err = tracer.TraceRelease(ctx, ownership.Name, traceNamespace)
-		} else {
-			result, err = tracer.Trace(ctx, kind, name, traceNamespace)
-		}
-		if err != nil {
-			if help, ok := agent.FormatHelmContextError(err.Error()); ok {
-				return fmt.Errorf("%s", help)
-			}
-		}
-		// Helm-via-ArgoCD template mode fallback:
-		// If Helm labels are present but no release secret exists, try tracing via
-		// an Argo Application that explicitly reports this resource.
-		if shouldAttemptHelmViaArgoFallback(ownership, result) {
-			dynClient, dynErr := dynamic.NewForConfig(cfg)
-			if dynErr == nil {
-				fallbackResult, fallbackOwnership, fallbackUsed := tryHelmViaArgoFallback(
-					ctx,
-					dynClient,
-					kind,
-					name,
-					traceNamespace,
-					ownership,
-					result,
-					func(ctx context.Context, appName, appNamespace string) (*agent.TraceResult, error) {
-						argoTracer := agent.NewArgoTracer()
-						return argoTracer.Trace(ctx, "Application", appName, appNamespace)
-					},
-				)
-				if fallbackUsed {
-					result = fallbackResult
-					ownership = fallbackOwnership
-					err = nil
-				}
-			}
-		}
-
-	case agent.OwnerCustom:
-		result = buildCustomOwnerUnsupportedTraceResult(kind, name, traceNamespace, ownership)
-
-	case agent.OwnerSveltos:
-		cfg, cfgErr := buildConfig()
-		if cfgErr != nil {
-			return fmt.Errorf("failed to build kubeconfig: %w", cfgErr)
-		}
-		dynClient, dynErr := dynamic.NewForConfig(cfg)
-		if dynErr != nil {
-			return fmt.Errorf("failed to create dynamic client: %w", dynErr)
-		}
-		result = buildSveltosObservedTraceResult(ctx, dynClient, kind, name, traceNamespace, ownership)
-
-	case agent.OwnerModelplane:
-		cfg, cfgErr := buildConfig()
-		if cfgErr != nil {
-			return fmt.Errorf("failed to build kubeconfig: %w", cfgErr)
-		}
-		dynClient, dynErr := dynamic.NewForConfig(cfg)
-		if dynErr != nil {
-			return fmt.Errorf("failed to create dynamic client: %w", dynErr)
-		}
-		result = buildModelplaneObservedTraceResult(ctx, dynClient, kind, name, traceNamespace, ownership)
-
-	case agent.OwnerCrossplane:
-		result = buildCrossplaneObservedTraceResult(kind, name, traceNamespace, ownership)
-
-	default:
-		// Try Flux first, then Argo, then report not managed
-		fluxTracer := agent.NewFluxTracer()
-		argoTracer := agent.NewArgoTracer()
-
-		if fluxTracer.Available() {
-			result, err = fluxTracer.Trace(ctx, kind, name, traceNamespace)
-			if err == nil && result.Error == "" {
-				break
-			}
-		}
-
-		if argoTracer.Available() && kind == "Application" {
-			result, err = argoTracer.TraceApplication(ctx, name)
-			if err == nil && result.Error == "" {
-				break
-			}
-		}
-
-		if result == nil || (result.Error != "" && !strings.Contains(result.Error, "not managed")) {
-			return fmt.Errorf("resource not managed by a detected GitOps tool")
-		}
+	if traceReverse {
+		return runReverseTraceWithSession(ctx, session, kind, name, traceNamespace)
 	}
-
+	observation, err := observeTrace(ctx, session, kind, name, traceNamespace, traceObservationOptions{
+		DirectApplication: kind == "Application",
+		Artifacts:         traceArtifacts,
+		Flux:              capturedTraceFluxFactory,
+		Delivery: traceConfigHubDeliveryFlags{
+			Enabled: traceWithConfigHub, Namespace: traceNamespace,
+			Space: traceConfigHubSpace, Since: traceConfigHubSince, StaleAfter: traceConfigHubStaleAfter,
+		},
+	})
 	if err != nil {
-		return fmt.Errorf("trace failed: %w", err)
+		return err
 	}
-	result.DetectedOwner = ownership.Type
-
-	// Enrich chain links with timing information
-	if len(result.Chain) > 0 {
-		enrichTraceWithTiming(ctx, result)
-	}
-
-	// Detect cross-owner references if we have a workload
-	if kind == "Deployment" || kind == "StatefulSet" || kind == "DaemonSet" || kind == "Pod" {
-		crossRefs, crossErr := detectCrossOwnerReferences(ctx, kind, name, traceNamespace, ownership)
-		if crossErr == nil && len(crossRefs) > 0 {
-			result.CrossReferences = crossRefs
-		}
-	}
-
-	// Collect secret evidence for workloads and Flux resources
-	secretEvidence := collectSecretEvidence(ctx, kind, name, traceNamespace)
-	if secretEvidence != nil && secretEvidence.Summary.Total > 0 {
-		result.Secrets = secretEvidence
-	}
-
-	// Collect recent events for the traced resource
-	events, eventsErr := fetchResourceEvents(ctx, traceNamespace, kind, name)
-	if eventsErr == nil && events != nil && len(events.Events) > 0 {
-		result.Events = events
-	}
-
-	if traceWithConfigHub {
-		dynClient := enrichTraceConfigHubFromLive(ctx, result, kind, name, traceNamespace)
-		attachTraceConfigHubDeliveryEvidence(ctx, result, dynClient, traceConfigHubDeliveryFlags{
-			Enabled:    true,
-			Namespace:  traceNamespace,
-			Space:      traceConfigHubSpace,
-			Since:      traceConfigHubSince,
-			StaleAfter: traceConfigHubStaleAfter,
-		})
-	}
-
-	artifacts := buildUnknownTraceArtifacts(result)
-	if traceArtifacts {
-		artifacts = mergeTraceArtifacts(artifacts, collectTraceArtifacts(ctx, result))
+	result, artifacts := observation.Result, observation.Artifacts
+	if traceNamespace == "" && result.Object.Namespace != "" {
+		traceNamespace = result.Object.Namespace
 	}
 
 	// Output results (effectiveFormat was resolved earlier)
@@ -525,29 +334,23 @@ type traceResourceLocator struct {
 	Namespaced bool
 }
 
-func fetchProviderConfigResource(ctx context.Context, cfg *rest.Config, dynClient dynamic.Interface, name, namespace string) (*unstructured.Unstructured, error) {
-	locators, err := discoverProviderConfigLocators(cfg)
+func fetchProviderConfigResourceWithTraceSession(ctx context.Context, session *traceSession, dynClient dynamic.Interface, name, namespace string) (*unstructured.Unstructured, error) {
+	if session == nil {
+		return nil, fmt.Errorf("trace session is unavailable")
+	}
+	client, err := session.discoveryClient()
 	if err != nil {
 		return nil, err
 	}
+	resourceLists, err := client.ServerPreferredResources()
+	if err != nil && !discovery.IsGroupDiscoveryFailedError(err) {
+		return nil, err
+	}
+	locators := providerConfigLocatorsFromAPIResourceLists(resourceLists)
 	if len(locators) == 0 {
 		return nil, fmt.Errorf("ProviderConfig CRD not found in API discovery")
 	}
 	return fetchResourceWithLocators(ctx, dynClient, "ProviderConfig", name, namespace, locators)
-}
-
-func discoverProviderConfigLocators(cfg *rest.Config) ([]traceResourceLocator, error) {
-	discoveryClient, err := discovery.NewDiscoveryClientForConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	resourceLists, err := discoveryClient.ServerPreferredResources()
-	if err != nil && !discovery.IsGroupDiscoveryFailedError(err) {
-		return nil, err
-	}
-
-	return providerConfigLocatorsFromAPIResourceLists(resourceLists), nil
 }
 
 func providerConfigLocatorsFromAPIResourceLists(resourceLists []*v1.APIResourceList) []traceResourceLocator {
@@ -942,48 +745,47 @@ func normalizeKind(kind string) string {
 	}
 }
 
-// enrichTraceWithTiming adds timing information to trace chain links
-func enrichTraceWithTiming(ctx context.Context, result *agent.TraceResult) {
-	cfg, err := buildConfig()
-	if err != nil {
+func enrichTraceWithTimingSession(ctx context.Context, session *traceSession, result *agent.TraceResult) {
+	if result == nil {
 		return
 	}
-
-	dynClient, err := dynamic.NewForConfig(cfg)
-	if err != nil {
+	if session == nil {
+		_, readErrors := agent.NewTimingEnricher(nil).EnrichChainWithTimingAndErrors(ctx, result.Chain)
+		for _, readErr := range readErrors {
+			result.Error = appendSentence(result.Error, readErr.Error())
+		}
 		return
 	}
-
+	dynClient, err := session.dynamicClient()
+	if err != nil {
+		result.Error = appendSentence(result.Error, "timing enrichment unavailable: Kubernetes client is unavailable")
+		return
+	}
 	enricher := agent.NewTimingEnricher(dynClient)
-	result.Chain = enricher.EnrichChainWithTiming(ctx, result.Chain)
+	var readErrors []error
+	result.Chain, readErrors = enricher.EnrichChainWithTimingAndErrors(ctx, result.Chain)
+	for _, readErr := range readErrors {
+		result.Error = appendSentence(result.Error, readErr.Error())
+	}
 }
 
-// detectCrossOwnerReferences detects cross-owner references in a resource
-func detectCrossOwnerReferences(ctx context.Context, kind, name, namespace string, resourceOwner *agent.Ownership) ([]agent.CrossReference, error) {
-	cfg, err := buildConfig()
+func detectCrossOwnerReferencesWithTraceSession(ctx context.Context, session *traceSession, kind, name, namespace string, resourceOwner *agent.Ownership) ([]agent.CrossReference, error) {
+	if session == nil {
+		return nil, fmt.Errorf("trace session is unavailable")
+	}
+	dynClient, err := session.dynamicClient()
 	if err != nil {
 		return nil, err
 	}
-
-	dynClient, err := dynamic.NewForConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	// Fetch the resource
 	gvr := kindToGVR(kind)
 	if gvr.Resource == "" {
 		return nil, fmt.Errorf("unknown resource kind: %s", kind)
 	}
-
 	resource, err := dynClient.Resource(gvr).Namespace(namespace).Get(ctx, name, v1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-
-	// Detect cross-references
-	detector := agent.NewCrossRefDetector(dynClient)
-	return detector.DetectCrossReferences(ctx, resource, resourceOwner)
+	return agent.NewCrossRefDetector(dynClient).DetectCrossReferences(ctx, resource, resourceOwner)
 }
 
 // detectResourceOwnership fetches the resource and detects its owner
@@ -992,15 +794,24 @@ func detectResourceOwnership(ctx context.Context, kind, name, namespace string) 
 	if err != nil {
 		return nil, err
 	}
-
-	dynClient, err := dynamic.NewForConfig(cfg)
+	session, err := newTraceSession(cfg, "")
 	if err != nil {
 		return nil, err
 	}
+	return detectResourceOwnershipWithTraceSession(ctx, session, kind, name, namespace)
+}
 
+func detectResourceOwnershipWithTraceSession(ctx context.Context, session *traceSession, kind, name, namespace string) (*agent.Ownership, error) {
+	if session == nil {
+		return nil, fmt.Errorf("trace session is unavailable")
+	}
+	dynClient, err := session.dynamicClient()
+	if err != nil {
+		return nil, err
+	}
 	var resource *unstructured.Unstructured
 	if kind == "ProviderConfig" {
-		resource, err = fetchProviderConfigResource(ctx, cfg, dynClient, name, namespace)
+		resource, err = fetchProviderConfigResourceWithTraceSession(ctx, session, dynClient, name, namespace)
 	} else if spec, ok := controllerResourceByKind(kind); ok {
 		resource, err = getControllerResource(ctx, dynClient, spec, name, namespace)
 	} else {
@@ -1013,18 +824,9 @@ func detectResourceOwnership(ctx context.Context, kind, name, namespace string) 
 	if err != nil {
 		return nil, err
 	}
-
-	// Detect ownership
 	ownership := agent.DetectOwnership(resource)
 	if ownership.Type == agent.OwnerUnknown && isCrossplaneProviderConfig(resource) {
-		ownership = agent.Ownership{
-			Type:       agent.OwnerCrossplane,
-			SubType:    "providerconfig",
-			Name:       resource.GetName(),
-			Namespace:  resource.GetNamespace(),
-			Source:     "apiGroup:" + resource.GroupVersionKind().Group,
-			Confidence: "high",
-		}
+		ownership = agent.Ownership{Type: agent.OwnerCrossplane, SubType: "providerconfig", Name: resource.GetName(), Namespace: resource.GetNamespace(), Source: "apiGroup:" + resource.GroupVersionKind().Group, Confidence: "high"}
 	}
 	return &ownership, nil
 }
@@ -1153,6 +955,11 @@ func convertTraceToV014(result *agent.TraceResult, kind, name, namespace string,
 		output.Secrets = convertSecretEvidence(result.Secrets)
 	}
 
+	output.Context = result.Context
+	if result.Error != "" {
+		output.Warnings = []string{result.Error}
+	}
+
 	// Add events if present
 	if result.Events != nil && len(result.Events.Events) > 0 {
 		output.Events = convertResourceEvents(result.Events)
@@ -1262,8 +1069,11 @@ func buildEvidence(link agent.ChainLink, tool string) []mapsvc.Evidence {
 
 	switch role {
 	case mapsvc.RoleSource:
-		// Source: evidence from URL field
-		if link.URL != "" {
+		// Kubernetes-backed source resources expose spec.url. Argo's synthetic
+		// Source link comes from Application.spec.source(s), whose exact path is
+		// not retained here, so do not claim that the URL was a standalone
+		// Kubernetes spec.url observation.
+		if link.Kind != "Source" && link.URL != "" {
 			evidence = append(evidence, mapsvc.Evidence{
 				Type:  mapsvc.EvidenceField,
 				Key:   "spec.url",
@@ -1348,9 +1158,13 @@ func buildTraceSummary(result *agent.TraceResult, chain []mapsvc.ChainNode, arti
 		case mapsvc.RoleSource:
 			// Find URL from original chain
 			var url string
+			var revision string
 			for _, link := range result.Chain {
-				if link.Kind == node.ID.Kind && link.Name == node.ID.Name {
+				if link.Kind == node.ID.Kind && link.Name == node.ID.Name && link.Namespace == node.ID.Namespace {
 					url = link.URL
+					if link.Kind == "Source" {
+						revision = link.Revision
+					}
 					break
 				}
 			}
@@ -1359,6 +1173,7 @@ func buildTraceSummary(result *agent.TraceResult, chain []mapsvc.ChainNode, arti
 				Namespace: node.ID.Namespace,
 				Name:      node.ID.Name,
 				URL:       url,
+				Revision:  revision,
 			}
 			if traceArtifacts {
 				if art, ok := lookupTraceArtifact(node.ID.Kind, node.ID.Namespace, node.ID.Name, artifacts); ok {
@@ -1428,408 +1243,18 @@ func normalizeToolToOwner(tool string) string {
 	}
 }
 
-// outputTraceHuman outputs the trace result in human-readable format with colors
+// outputTraceHuman preserves the CLI stdout and exit-code contract while
+// delegating all content to the shared writer-based renderer.
 func outputTraceHuman(result *agent.TraceResult, artifacts map[string]mapsvc.TraceArtifactRef, invCtx InvocationContext) error {
-	mode := invCtx.Mode()
-	explicitMode := invCtx.IsExplicit()
-
-	// Header - varies by presentation mode
-	fmt.Printf("\n")
-	if explicitMode {
-		heading := TraceHeading(mode, result.Object.String())
-		if mode == PresentationAI {
-			fmt.Printf("%s\n", heading)
-		} else {
-			fmt.Printf("%s%s%s\n", colorBold, heading, colorReset)
-		}
-		// Intro - shows ownership tool for AI mode
-		if intro := TraceIntro(mode, result.Tool); intro != "" {
-			fmt.Printf("%s\n", intro)
-		}
-	} else {
-		// Legacy format
-		fmt.Printf("%s%sTRACE:%s %s%s%s\n", colorBold, colorCyan, colorReset, colorBold, result.Object.String(), colorReset)
-	}
-	fmt.Printf("\n")
-
-	// Explanatory content when --explain is used
-	if traceExplain {
-		fmt.Printf("%s%sOWNERSHIP CHAIN EXPLAINED%s\n", colorBold, colorWhite, colorReset)
-		fmt.Printf("%s════════════════════════════════════════════════════════════════════%s\n", colorDim, colorReset)
-		fmt.Printf("GitOps creates a chain from Git to running pods:\n\n")
-		fmt.Printf("  %sGit Repository%s (source of truth)\n", colorPurple, colorReset)
-		fmt.Printf("       %s↓%s GitOps controller watches for changes\n", colorDim, colorReset)
-		fmt.Printf("  %sKustomization/HelmRelease%s (applies manifests)\n", colorCyan, colorReset)
-		fmt.Printf("       %s↓%s Creates/updates\n", colorDim, colorReset)
-		fmt.Printf("  %sDeployment%s (desired state)\n", colorGreen, colorReset)
-		fmt.Printf("       %s↓%s K8s controller creates\n", colorDim, colorReset)
-		fmt.Printf("  %sReplicaSet → Pods%s (running containers)\n", colorYellow, colorReset)
-		fmt.Printf("\n")
-		fmt.Printf("%sThe trace below shows this chain for your resource:%s\n", colorDim, colorReset)
-		fmt.Printf("\n")
-	}
-
-	if result.Error != "" && len(result.Chain) == 0 {
-		// Per cli-contract.md: Native/unmanaged resources show warning and exit 1
-		fmt.Printf("  %s[warning] %s%s\n\n", colorYellow, result.Error, colorReset)
+	err := renderTraceHuman(os.Stdout, result, artifacts, invCtx, traceHumanOptions{
+		Explain: traceExplain, Artifacts: traceArtifacts, History: traceHistory, Limit: traceLimit,
+	})
+	if _, noChain := err.(traceNoChainError); noChain {
+		// Preserve the historical CLI contract: the warning is on stdout and
+		// this condition exits 1 without Cobra printing a second error line.
 		os.Exit(1)
-		return nil // unreachable but required for compiler
 	}
-	if result.Error != "" {
-		// Degraded mode: still render available chain, but make missing context explicit.
-		fmt.Printf("  %s[warning] %s%s\n\n", colorYellow, result.Error, colorReset)
-	}
-
-	// Chain heading for explicit presentation modes
-	if explicitMode {
-		if heading := TraceChainHeading(mode); heading != "" {
-			if mode == PresentationAI {
-				fmt.Printf("%s\n", heading)
-			} else {
-				fmt.Printf("%s%s%s\n", colorBold, heading, colorReset)
-			}
-		}
-	}
-
-	// Print chain
-	for i, link := range result.Chain {
-		prefix := "  "
-		if i > 0 {
-			// Add tree connector with color
-			prefix = strings.Repeat("    ", i-1) + fmt.Sprintf("    %s└─▶%s ", colorDim, colorReset)
-		}
-
-		// Status icon with color
-		var icon, iconColor string
-		if link.Ready {
-			icon = SymOK
-			iconColor = colorGreen
-		} else {
-			icon = SymError
-			iconColor = colorRed
-		}
-
-		// Kind color based on type
-		kindColor := colorWhite
-		switch link.Kind {
-		case "GitRepository", "OCIRepository", "HelmRepository", "Bucket", "Source", "SveltosReference", "EventSource", "ModelCache", "InferenceClass", "InferenceCluster":
-			kindColor = colorPurple
-		case "ConfigHub OCI":
-			kindColor = colorBlue // ConfigHub gets blue
-		case "Kustomization", "HelmRelease", "HelmChart", "ClusterProfile", "Profile", "EventTrigger", "ClusterHealthCheck", "ClusterPromotion", "ModelDeployment", "ModelService", "InferenceGateway":
-			kindColor = colorCyan
-		case "Application":
-			kindColor = colorBlue
-		case "Deployment", "StatefulSet", "DaemonSet", "ModelReplica", "ModelEndpoint":
-			kindColor = colorGreen
-		case "Service", "ConfigMap", "Secret":
-			kindColor = colorYellow
-		}
-
-		// Main line with colors
-		fmt.Printf("%s%s%s%s %s%s%s/%s%s\n", prefix, iconColor, icon, colorReset, kindColor, link.Kind, colorReset, colorBold, link.Name+colorReset)
-
-		// Details (indented) with dim colors
-		detailPrefix := strings.Repeat("    ", i) + fmt.Sprintf("    %s│%s ", colorDim, colorReset)
-		if i == len(result.Chain)-1 {
-			detailPrefix = strings.Repeat("    ", i) + "      "
-		}
-
-		if link.Namespace != "" && link.Namespace != result.Object.Namespace {
-			fmt.Printf("%s%sNamespace:%s %s\n", detailPrefix, colorDim, colorReset, link.Namespace)
-		}
-
-		// Show OCI source details for ConfigHub OCI sources
-		if link.OCISource != nil && link.OCISource.IsConfigHub {
-			if link.OCISource.Space != "" {
-				fmt.Printf("%s%sSpace:%s %s%s%s\n", detailPrefix, colorDim, colorReset, colorCyan, link.OCISource.Space, colorReset)
-			}
-			if link.OCISource.Target != "" {
-				fmt.Printf("%s%sTarget:%s %s%s%s\n", detailPrefix, colorDim, colorReset, colorCyan, link.OCISource.Target, colorReset)
-			}
-			if link.OCISource.Instance != "" {
-				fmt.Printf("%s%sRegistry:%s %s%s%s\n", detailPrefix, colorDim, colorReset, colorBlue, link.OCISource.Registry, colorReset)
-			}
-		} else if link.URL != "" {
-			// Show URL for non-ConfigHub sources
-			fmt.Printf("%s%sURL:%s %s%s%s\n", detailPrefix, colorDim, colorReset, colorBlue, link.URL, colorReset)
-		}
-
-		if link.Path != "" {
-			fmt.Printf("%s%sPath:%s %s\n", detailPrefix, colorDim, colorReset, link.Path)
-		}
-		if link.Revision != "" {
-			fmt.Printf("%s%sRevision:%s %s%s%s\n", detailPrefix, colorDim, colorReset, colorPurple, link.Revision, colorReset)
-		}
-		if traceArtifacts && isTraceSourceKind(link.Kind) {
-			artifact := artifactForLink(link, artifacts)
-			fmt.Printf("%s%sArtifact URL:%s %s\n", detailPrefix, colorDim, colorReset, artifact.URL)
-			fmt.Printf("%s%sArtifact Revision:%s %s\n", detailPrefix, colorDim, colorReset, artifact.Revision)
-			fmt.Printf("%s%sArtifact Digest:%s %s\n", detailPrefix, colorDim, colorReset, artifact.Digest)
-			fmt.Printf("%s%sArtifact Updated:%s %s\n", detailPrefix, colorDim, colorReset, artifact.LastUpdateTime)
-		}
-		if link.Status != "" {
-			statusColor := colorGreen
-			if !link.Ready {
-				statusColor = colorYellow
-			}
-			fmt.Printf("%s%sStatus:%s %s%s%s\n", detailPrefix, colorDim, colorReset, statusColor, link.Status, colorReset)
-		}
-		// Show elapsed time if available
-		if link.LastTransitionTime != nil {
-			elapsed := time.Since(*link.LastTransitionTime)
-			elapsedStr := formatElapsed(elapsed)
-			elapsedColor := colorDim
-			// Highlight if stuck (e.g., reconciling for more than 5 minutes)
-			if !link.Ready && elapsed > 5*time.Minute {
-				elapsedColor = colorYellow
-				elapsedStr += " ⚠"
-			}
-			fmt.Printf("%s%sElapsed:%s %s%s%s\n", detailPrefix, colorDim, colorReset, elapsedColor, elapsedStr, colorReset)
-		}
-		if link.Message != "" && !link.Ready {
-			fmt.Printf("%s%sError:%s %s%s%s\n", detailPrefix, colorRed, colorReset, colorRed, link.Message, colorReset)
-		}
-		// Add spacing line
-		if i < len(result.Chain)-1 {
-			fmt.Printf("%s%s│%s\n", strings.Repeat("    ", i)+"    ", colorDim, colorReset)
-		}
-	}
-
-	// Show cross-owner references if detected
-	if len(result.CrossReferences) > 0 {
-		fmt.Printf("\n")
-		fmt.Printf("%s%s⚠ Cross-owner references detected:%s\n", colorBold, colorYellow, colorReset)
-		for _, ref := range result.CrossReferences {
-			ownerColor := colorWhite
-			ownerType := "unknown"
-			if ref.Owner != nil {
-				ownerType = ref.Owner.Type
-				switch ownerType {
-				case "flux":
-					ownerColor = colorCyan
-				case "argo":
-					ownerColor = colorPurple
-				case "crossplane":
-					ownerColor = colorBlue
-				case "helm":
-					ownerColor = colorYellow
-				}
-			}
-
-			statusIcon := SymOK
-			statusColor := colorGreen
-			if ref.Status == "missing" {
-				statusIcon = SymError
-				statusColor = colorRed
-			} else if ref.Status == "pending" {
-				statusIcon = "⏳"
-				statusColor = colorYellow
-			}
-
-			fmt.Printf("  %s%s%s %s%s/%s%s %s(owner: %s%s%s)%s\n",
-				statusColor, statusIcon, colorReset,
-				colorWhite, ref.Ref.Kind, ref.Ref.Name, colorReset,
-				colorDim, ownerColor, ownerType, colorDim, colorReset)
-
-			if ref.RefType != "" {
-				fmt.Printf("      %sreferenced via: %s%s\n", colorDim, ref.RefType, colorReset)
-			}
-			if ref.Owner != nil && ref.Owner.Name != "" {
-				fmt.Printf("      %smanaged by: %s%s\n", colorDim, ref.Owner.Name, colorReset)
-			}
-			if ref.Message != "" && ref.Status != "exists" {
-				fmt.Printf("      %s%s%s\n", colorRed, ref.Message, colorReset)
-			}
-		}
-		fmt.Printf("\n")
-		fmt.Printf("%s  💡 These resources are managed by different tools.%s\n", colorDim, colorReset)
-		fmt.Printf("%s     Changes to one tool won't automatically update the other.%s\n", colorDim, colorReset)
-	}
-
-	// Show secret evidence if present
-	if result.Secrets != nil && result.Secrets.Summary.Total > 0 {
-		fmt.Printf("\n")
-		if result.Secrets.HasIssues() {
-			fmt.Printf("%s%s⚠ Secret evidence:%s\n", colorBold, colorYellow, colorReset)
-		} else {
-			fmt.Printf("%s%s✓ Secret evidence:%s\n", colorBold, colorGreen, colorReset)
-		}
-
-		for _, s := range result.Secrets.Secrets {
-			var statusIcon, statusColor string
-			switch s.Status {
-			case agent.SecretStatusPresent:
-				statusIcon = SymOK
-				statusColor = colorGreen
-			case agent.SecretStatusMissing:
-				statusIcon = SymError
-				statusColor = colorRed
-			case agent.SecretStatusUnreadable:
-				statusIcon = "🔒"
-				statusColor = colorYellow
-			default:
-				statusIcon = "?"
-				statusColor = colorYellow
-			}
-
-			optionalTag := ""
-			if s.Optional {
-				optionalTag = fmt.Sprintf(" %s(optional)%s", colorDim, colorReset)
-			}
-
-			fmt.Printf("  %s%s%s %sSecret/%s%s %s[%s]%s%s\n",
-				statusColor, statusIcon, colorReset,
-				colorWhite, s.Name, colorReset,
-				statusColor, s.Status, colorReset,
-				optionalTag)
-
-			fmt.Printf("      %sreferenced via: %s%s\n", colorDim, s.RefType, colorReset)
-
-			if s.Status == agent.SecretStatusPresent && s.SecretType != "" {
-				fmt.Printf("      %stype: %s%s\n", colorDim, s.SecretType, colorReset)
-			}
-			if s.Owner != nil && s.Owner.Name != "" {
-				fmt.Printf("      %smanaged by: %s (%s)%s\n", colorDim, s.Owner.Name, s.Owner.Type, colorReset)
-			}
-			if s.StatusReason != "" && s.Status != agent.SecretStatusPresent {
-				fmt.Printf("      %s%s%s\n", colorRed, s.StatusReason, colorReset)
-			}
-		}
-
-		// Summary line
-		fmt.Printf("\n")
-		fmt.Printf("  %s%d secrets (%d present, %d missing, %d unreadable)%s\n",
-			colorDim,
-			result.Secrets.Summary.Total,
-			result.Secrets.Summary.Present,
-			result.Secrets.Summary.Missing,
-			result.Secrets.Summary.Unreadable,
-			colorReset)
-	}
-
-	// Show recent events if present
-	if result.Events != nil && len(result.Events.Events) > 0 {
-		fmt.Printf("\n")
-		if result.Events.WarningCount > 0 || result.Events.ErrorCount > 0 {
-			fmt.Printf("%s%s⚠ Recent events:%s\n", colorBold, colorYellow, colorReset)
-		} else {
-			fmt.Printf("%s%sRecent events:%s\n", colorBold, colorWhite, colorReset)
-		}
-
-		for _, ev := range result.Events.Events {
-			var icon, iconColor string
-			switch ev.Severity {
-			case "error":
-				icon = SymError
-				iconColor = colorRed
-			case "warning":
-				icon = "⚠"
-				iconColor = colorYellow
-			default:
-				icon = "○"
-				iconColor = colorDim
-			}
-
-			countStr := ""
-			if ev.Count > 1 {
-				countStr = fmt.Sprintf(" (x%d)", ev.Count)
-			}
-			detail := formatEventActionDetail(ev.Action)
-			if detail != "" {
-				detail = " [" + detail + "]"
-			}
-
-			fmt.Printf("  %s%s%s %s%s%s %s%s: %s%s\n",
-				iconColor, icon, colorReset,
-				colorDim, ev.Age, colorReset,
-				ev.Reason,
-				detail,
-				ev.Message,
-				countStr,
-			)
-		}
-
-		// Summary line
-		if result.Events.TotalCount > len(result.Events.Events) {
-			fmt.Printf("\n  %s%d of %d events shown (warnings/errors prioritized)%s\n",
-				colorDim,
-				len(result.Events.Events),
-				result.Events.TotalCount,
-				colorReset)
-		}
-	}
-
-	renderTraceDeliveryEvidenceHuman(result.DeliveryEvidence)
-
-	// Show history if requested and available
-	if traceHistory && len(result.History) > 0 {
-		fmt.Printf("\n")
-		fmt.Printf("%s%sHistory:%s\n", colorBold, colorWhite, colorReset)
-		limit := traceLimit
-		if limit > len(result.History) {
-			limit = len(result.History)
-		}
-		for i := 0; i < limit; i++ {
-			h := result.History[i]
-			timeStr := h.Timestamp.Format("2006-01-02 15:04")
-			statusColor := colorGreen
-			if h.Status == "failed" || h.Status == "superseded" {
-				statusColor = colorYellow
-			}
-			fmt.Printf("  %s%-16s%s  %s%-20s%s  %s%s%s",
-				colorDim, timeStr, colorReset,
-				colorPurple, truncate(h.Revision, 20), colorReset,
-				statusColor, h.Status, colorReset)
-			if h.Source != "" {
-				fmt.Printf("  %s%s%s", colorDim, h.Source, colorReset)
-			}
-			fmt.Printf("\n")
-		}
-		if len(result.History) > limit {
-			fmt.Printf("  %s... and %d more (use --limit to show more)%s\n", colorDim, len(result.History)-limit, colorReset)
-		}
-	} else if traceHistory {
-		fmt.Printf("\n")
-		fmt.Printf("%s%sHistory:%s %sNo history available%s\n", colorBold, colorWhite, colorReset, colorDim, colorReset)
-	}
-
-	// Summary
-	fmt.Printf("\n")
-	if result.FullyManaged {
-		fmt.Printf("%s%s✓ All levels in sync.%s Managed by %s%s%s.\n", colorBold, colorGreen, colorReset, colorCyan, result.Tool, colorReset)
-	} else {
-		// Find the broken link
-		for _, link := range result.Chain {
-			if !link.Ready {
-				fmt.Printf("%s%s⚠ Chain broken at %s/%s%s\n", colorBold, colorYellow, link.Kind, link.Name, colorReset)
-				if link.Message != "" {
-					fmt.Printf("  %s%s%s\n", colorRed, link.Message, colorReset)
-				}
-				break
-			}
-		}
-	}
-
-	// Next steps and diagram link when --explain is used
-	if traceExplain {
-		fmt.Printf("\n")
-		fmt.Printf("%sNEXT STEPS:%s\n", colorBold, colorReset)
-		fmt.Printf("→ See orphan resources:    cub-scout map orphans\n")
-		fmt.Printf("→ Show diff from Git:      cub-scout trace %s -n %s --diff\n", result.Object.String(), result.Object.Namespace)
-		fmt.Printf("→ Visual guide:            docs/diagrams/ownership-detection.svg\n")
-	}
-
-	// Outro - only for explicit AI mode
-	if explicitMode {
-		if outro := TraceOutro(mode); outro != "" {
-			fmt.Printf("\n%s\n", outro)
-		}
-	}
-
-	fmt.Printf("\n")
-
-	return nil
+	return err
 }
 
 // outputTraceMarkdown outputs the trace in markdown format (thin wrapper over ASCII, no colors).
@@ -1838,6 +1263,9 @@ func outputTraceMarkdown(result *agent.TraceResult, artifacts map[string]mapsvc.
 	_ = invCtx // Markdown output is uniform across presentation modes
 	// Markdown header
 	fmt.Printf("## Trace: %s\n\n", result.Object.String())
+	if result.Context != "" {
+		fmt.Printf("Selected Kubernetes context: %s\n\n", result.Context)
+	}
 	fmt.Println("```")
 
 	if result.Error != "" && len(result.Chain) == 0 {
@@ -1923,67 +1351,116 @@ func outputTraceMarkdown(result *agent.TraceResult, artifacts map[string]mapsvc.
 	return nil
 }
 
-// runReverseTrace performs a reverse trace - walking ownerReferences up to find GitOps source
-func runReverseTrace(ctx context.Context, kind, name, namespace string) error {
-	cfg, err := buildConfig()
-	if err != nil {
-		return fmt.Errorf("failed to build kubeconfig: %w", err)
+// runReverseTraceWithSession performs every Kubernetes read through the supplied
+// invocation binding and renders the requested reverse-trace representation.
+func runReverseTraceWithSession(ctx context.Context, session *traceSession, kind, name, namespace string) error {
+	format := traceFormat
+	if traceJSON && format == "ascii" {
+		format = "json"
 	}
-
-	dynClient, err := dynamic.NewForConfig(cfg)
-	if err != nil {
-		return fmt.Errorf("failed to create dynamic client: %w", err)
+	switch format {
+	case "ascii", "json", "md":
+	default:
+		return fmt.Errorf("unsupported trace format %q (supported: ascii, json, md)", format)
 	}
-
-	tracer := agent.NewReverseTracer(dynClient)
-	result, err := tracer.Trace(ctx, kind, name, namespace)
+	if session == nil {
+		return fmt.Errorf("reverse trace requires a captured trace session")
+	}
+	dynClient, err := session.dynamicClient()
+	if err != nil {
+		return fmt.Errorf("failed to create dynamic client for reverse trace: %w", err)
+	}
+	if kind == "Application" && namespace == "" {
+		// Match normal direct Application tracing: resolve only a unique name
+		// through the captured API, never guess an Application namespace.
+		application, err := agent.NewArgoTracerWithKubernetesClient(dynClient).TraceApplicationInNamespace(ctx, name, "")
+		if err != nil {
+			return fmt.Errorf("resolve reverse Application namespace: %w", err)
+		}
+		if application == nil || application.Object.Namespace == "" {
+			return fmt.Errorf("reverse Application namespace is unavailable; specify -n")
+		}
+		namespace = application.Object.Namespace
+	}
+	result, err := agent.NewReverseTracer(dynClient).Trace(ctx, kind, name, namespace)
 	if err != nil {
 		return fmt.Errorf("reverse trace failed: %w", err)
 	}
+	result.Context = session.contextLabel()
 
-	if traceJSON {
+	switch format {
+	case "json":
 		return outputReverseTraceJSON(result)
+	case "md":
+		return renderReverseTraceMarkdown(os.Stdout, result)
+	default:
+		return outputReverseTraceHuman(result)
 	}
-	return outputReverseTraceHuman(result)
 }
 
-// outputReverseTraceJSON outputs the reverse trace result as JSON
+// outputReverseTraceJSON outputs the reverse trace result in the existing JSON model.
 func outputReverseTraceJSON(result *agent.ReverseTraceResult) error {
-	enc := json.NewEncoder(os.Stdout)
+	return outputReverseTraceJSONTo(os.Stdout, result)
+}
+
+func outputReverseTraceJSONTo(w io.Writer, result *agent.ReverseTraceResult) error {
+	if result == nil {
+		return fmt.Errorf("reverse trace result is nil")
+	}
+	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	return enc.Encode(result)
 }
 
-// outputReverseTraceHuman outputs the reverse trace result in human-readable format
+// outputReverseTraceHuman preserves the CLI stdout wrapper for the shared renderer.
 func outputReverseTraceHuman(result *agent.ReverseTraceResult) error {
-	fmt.Printf("\n")
-	fmt.Printf("%s%sREVERSE TRACE:%s %s%s%s\n", colorBold, colorCyan, colorReset, colorBold, result.Object.String(), colorReset)
-	fmt.Printf("\n")
+	return renderReverseTraceHuman(os.Stdout, result, traceExplain)
+}
+
+// renderReverseTraceHuman writes the complete human projection without reading
+// global flags, accessing cluster state, or exiting the process.
+func renderReverseTraceHuman(w io.Writer, result *agent.ReverseTraceResult, explain bool) error {
+	if w == nil {
+		return fmt.Errorf("reverse trace output writer is nil")
+	}
+	if result == nil {
+		return fmt.Errorf("reverse trace result is nil")
+	}
+	trackedWriter := &traceHumanWriter{writer: w}
+	w = trackedWriter
+	fmt.Fprintf(w, "\n")
+	fmt.Fprintf(w, "%s%sREVERSE TRACE:%s %s%s%s\n", colorBold, colorCyan, colorReset, colorBold, result.Object.String(), colorReset)
+	fmt.Fprintf(w, "\n")
+	if result.Context != "" {
+		fmt.Fprintf(w, "Kubernetes context: %s (selection label; not a stable cluster ID)\n\n", result.Context)
+	}
 
 	// Explanatory content when --explain is used
-	if traceExplain {
-		fmt.Printf("%s%sREVERSE TRACE EXPLAINED%s\n", colorBold, colorWhite, colorReset)
-		fmt.Printf("%s════════════════════════════════════════════════════════════════════%s\n", colorDim, colorReset)
-		fmt.Printf("Reverse trace walks UP the ownership chain:\n\n")
-		fmt.Printf("  %sPod%s (running container)\n", colorYellow, colorReset)
-		fmt.Printf("       %s↑%s K8s ownerReference\n", colorDim, colorReset)
-		fmt.Printf("  %sReplicaSet%s (manages pod replicas)\n", colorBlue, colorReset)
-		fmt.Printf("       %s↑%s K8s ownerReference\n", colorDim, colorReset)
-		fmt.Printf("  %sDeployment%s (desired state)\n", colorGreen, colorReset)
-		fmt.Printf("       %s↑%s GitOps labels detected\n", colorDim, colorReset)
-		fmt.Printf("  %sGitOps Owner%s (Flux/ArgoCD/Helm)\n", colorCyan, colorReset)
-		fmt.Printf("\n")
-		fmt.Printf("%sThis shows how your resource is managed:%s\n", colorDim, colorReset)
-		fmt.Printf("\n")
+	if explain {
+		fmt.Fprintf(w, "%s%sREVERSE TRACE EXPLAINED%s\n", colorBold, colorWhite, colorReset)
+		fmt.Fprintf(w, "%s════════════════════════════════════════════════════════════════════%s\n", colorDim, colorReset)
+		fmt.Fprintf(w, "Reverse trace walks UP the ownership chain:\n\n")
+		fmt.Fprintf(w, "  %sPod%s (running container)\n", colorYellow, colorReset)
+		fmt.Fprintf(w, "       %s↑%s K8s ownerReference\n", colorDim, colorReset)
+		fmt.Fprintf(w, "  %sReplicaSet%s (manages pod replicas)\n", colorBlue, colorReset)
+		fmt.Fprintf(w, "       %s↑%s K8s ownerReference\n", colorDim, colorReset)
+		fmt.Fprintf(w, "  %sDeployment%s (desired state)\n", colorGreen, colorReset)
+		fmt.Fprintf(w, "       %s↑%s GitOps labels detected\n", colorDim, colorReset)
+		fmt.Fprintf(w, "  %sGitOps Owner%s (Flux/ArgoCD/Helm)\n", colorCyan, colorReset)
+		fmt.Fprintf(w, "\n")
+		fmt.Fprintf(w, "%sThis shows how your resource is managed:%s\n", colorDim, colorReset)
+		fmt.Fprintf(w, "\n")
 	}
 
 	if result.Error != "" {
-		fmt.Printf("  %s⚠ %s%s\n\n", colorYellow, result.Error, colorReset)
-		return nil
+		fmt.Fprintf(w, "  %s⚠ %s%s\n\n", colorYellow, result.Error, colorReset)
+		if len(result.K8sChain) == 0 && len(result.GitOpsChain) == 0 {
+			return trackedWriter.err
+		}
 	}
 
 	// Print K8s ownership chain
-	fmt.Printf("%s%sK8s Ownership Chain:%s\n", colorBold, colorWhite, colorReset)
+	fmt.Fprintf(w, "%s%sK8s Ownership Chain:%s\n", colorBold, colorWhite, colorReset)
 	for i, link := range result.K8sChain {
 		prefix := ""
 		if i > 0 {
@@ -2013,11 +1490,11 @@ func outputReverseTraceHuman(result *agent.ReverseTraceResult) error {
 			kindColor = colorCyan
 		}
 
-		fmt.Printf("%s%s%s%s %s%s%s/%s%s%s", prefix, iconColor, icon, colorReset, kindColor, link.Kind, colorReset, colorBold, link.Name, colorReset)
+		fmt.Fprintf(w, "%s%s%s%s %s%s%s/%s%s%s", prefix, iconColor, icon, colorReset, kindColor, link.Kind, colorReset, colorBold, link.Name, colorReset)
 		if link.Status != "" {
-			fmt.Printf(" %s(%s)%s", colorDim, link.Status, colorReset)
+			fmt.Fprintf(w, " %s(%s)%s", colorDim, link.Status, colorReset)
 		}
-		fmt.Printf("\n")
+		fmt.Fprintf(w, "\n")
 	}
 
 	// If this looks platform-composition managed, show resolver lineage.
@@ -2025,15 +1502,15 @@ func outputReverseTraceHuman(result *agent.ReverseTraceResult) error {
 	// from already-fetched objects.
 	if len(result.Objects) > 0 {
 		if lineage, ok := agent.ResolveCrossplaneLineage(result.Objects[0], result.Objects); ok {
-			fmt.Print(renderCrossplaneLineageHuman(lineage))
+			fmt.Fprint(w, renderCrossplaneLineageHuman(lineage))
 		} else if lineage, ok := agent.ResolveKroLineage(result.Objects[0], result.Objects); ok {
-			fmt.Print(renderKroLineageHuman(lineage))
+			fmt.Fprint(w, renderKroLineageHuman(lineage))
 		}
 	}
 
 	// Print ownership detection result
-	fmt.Printf("\n")
-	fmt.Printf("%s%sDetected Owner:%s ", colorBold, colorWhite, colorReset)
+	fmt.Fprintf(w, "\n")
+	fmt.Fprintf(w, "%s%sDetected Owner:%s ", colorBold, colorWhite, colorReset)
 
 	ownerColor := colorWhite
 	switch result.Owner {
@@ -2051,86 +1528,136 @@ func outputReverseTraceHuman(result *agent.ReverseTraceResult) error {
 		ownerColor = colorRed
 	}
 
-	fmt.Printf("%s%s%s", ownerColor, strings.ToUpper(result.Owner), colorReset)
+	fmt.Fprintf(w, "%s%s%s", ownerColor, strings.ToUpper(result.Owner), colorReset)
 	if result.OwnerDetails != nil && result.OwnerDetails.Name != "" {
-		fmt.Printf(" %s(managed by %s)%s", colorDim, result.OwnerDetails.Name, colorReset)
+		fmt.Fprintf(w, " %s(managed by %s)%s", colorDim, result.OwnerDetails.Name, colorReset)
 	}
-	fmt.Printf("\n")
+	fmt.Fprintf(w, "\n")
 
 	// If native, show warning and orphan metadata
 	if result.Owner == "native" {
-		fmt.Printf("\n")
-		fmt.Printf("%s⚠ This resource is NOT managed by GitOps%s\n", colorYellow, colorReset)
-		fmt.Printf("%s  • It will be lost if the cluster is rebuilt%s\n", colorDim, colorReset)
-		fmt.Printf("%s  • No audit trail in Git%s\n", colorDim, colorReset)
-		fmt.Printf("%s  • Consider importing to GitOps: cub-scout import%s\n", colorDim, colorReset)
+		fmt.Fprintf(w, "\n")
+		fmt.Fprintf(w, "%s⚠ No recognized GitOps ownership metadata was found for this resource.%s\n", colorYellow, colorReset)
 
 		// Show orphan metadata if available
 		if result.OrphanMeta != nil {
-			fmt.Printf("\n")
-			fmt.Printf("%s%sOrphan Metadata:%s\n", colorBold, colorWhite, colorReset)
+			fmt.Fprintf(w, "\n")
+			fmt.Fprintf(w, "%s%sOrphan Metadata:%s\n", colorBold, colorWhite, colorReset)
 
 			if result.OrphanMeta.CreatedAt != nil {
-				fmt.Printf("  %sCreated:%s %s\n", colorDim, colorReset, result.OrphanMeta.CreatedAt.Format("2006-01-02 15:04:05 MST"))
+				fmt.Fprintf(w, "  %sCreated:%s %s\n", colorDim, colorReset, result.OrphanMeta.CreatedAt.Format("2006-01-02 15:04:05 MST"))
 			}
 
 			// Show relevant labels
 			if len(result.OrphanMeta.Labels) > 0 {
-				fmt.Printf("  %sLabels:%s\n", colorDim, colorReset)
+				fmt.Fprintf(w, "  %sLabels:%s\n", colorDim, colorReset)
 				for k, v := range result.OrphanMeta.Labels {
 					// Skip internal labels
 					if strings.HasPrefix(k, "kubernetes.io/") ||
 						strings.HasPrefix(k, "k8s.io/") {
 						continue
 					}
-					fmt.Printf("    %s=%s\n", k, v)
+					fmt.Fprintf(w, "    %s=%s\n", k, v)
 				}
 			}
 
 			// Show last-applied-configuration hint
-			if result.OrphanMeta.LastAppliedConfig != "" {
-				fmt.Printf("\n")
-				fmt.Printf("%s%slast-applied-configuration found%s\n", colorBold, colorGreen, colorReset)
-				fmt.Printf("%s  This resource was created via 'kubectl apply'.%s\n", colorDim, colorReset)
-				fmt.Printf("%s  The original manifest is available in the annotation.%s\n", colorDim, colorReset)
-
-				// Show a truncated preview
-				config := result.OrphanMeta.LastAppliedConfig
-				if len(config) > 200 {
-					fmt.Printf("\n  %sManifest preview (first 200 chars):%s\n", colorDim, colorReset)
-					fmt.Printf("  %s%s...%s\n", colorDim, config[:200], colorReset)
-				}
-
-				fmt.Printf("\n  %s💡 To see full manifest:%s\n", colorDim, colorReset)
-				if result.TopResource != nil {
-					fmt.Printf("  kubectl get %s %s -n %s -o jsonpath='{.metadata.annotations.kubectl\\.kubernetes\\.io/last-applied-configuration}' | jq .\n",
-						strings.ToLower(result.TopResource.Kind),
-						result.TopResource.Name,
-						result.TopResource.Namespace)
+			if result.OrphanMeta.LastAppliedConfigOmission != "" {
+				fmt.Fprintf(w, "\n  %s\n", result.OrphanMeta.LastAppliedConfigOmission)
+			} else if result.OrphanMeta.LastAppliedConfig != "" {
+				fmt.Fprintf(w, "\n")
+				fmt.Fprintf(w, "%s%slast-applied-configuration annotation is present%s\n", colorBold, colorGreen, colorReset)
+				fmt.Fprintf(w, "%s  Its presence does not establish how this resource was created.%s\n", colorDim, colorReset)
+				if result.TopResource == nil || !strings.EqualFold(result.TopResource.Kind, "Secret") {
+					fmt.Fprintf(w, "\n  %sTo inspect the annotation, query this resource explicitly.%s\n", colorDim, colorReset)
 				}
 			} else {
-				fmt.Printf("\n")
-				fmt.Printf("%s%sNo last-applied-configuration%s\n", colorBold, colorYellow, colorReset)
-				fmt.Printf("%s  This resource was likely created via 'kubectl create' (not 'kubectl apply').%s\n", colorDim, colorReset)
-				fmt.Printf("%s  The original manifest is not recoverable from the cluster.%s\n", colorDim, colorReset)
+				fmt.Fprintf(w, "\n")
+				fmt.Fprintf(w, "%s%sNo last-applied-configuration annotation was found.%s\n", colorBold, colorYellow, colorReset)
+				fmt.Fprintf(w, "%s  Its absence does not establish how this resource was created or whether its source is recoverable.%s\n", colorDim, colorReset)
 			}
 		}
 	}
 
 	// If GitOps managed, suggest full trace
 	if result.Owner == "flux" || result.Owner == "argo" {
-		fmt.Printf("\n")
-		fmt.Printf("%s💡 For full GitOps chain, run:%s\n", colorDim, colorReset)
+		fmt.Fprintf(w, "\n")
+		fmt.Fprintf(w, "%s💡 For full GitOps chain, run:%s\n", colorDim, colorReset)
 		if result.TopResource != nil {
-			fmt.Printf("   cub-scout trace %s/%s -n %s\n",
-				strings.ToLower(result.TopResource.Kind),
-				result.TopResource.Name,
-				result.TopResource.Namespace)
+			if result.Context == "in-cluster" {
+				fmt.Fprintf(w, "   Follow-up command withheld: this label does not distinguish a named context from in-cluster credentials.\n")
+			} else {
+				selector := ""
+				if result.Context != "" {
+					selector = " --kube-context '" + strings.ReplaceAll(result.Context, "'", "'\"'\"'") + "'"
+				}
+				fmt.Fprintf(w, "   ./cub-scout trace %s/%s -n %s%s\n",
+					strings.ToLower(result.TopResource.Kind), result.TopResource.Name,
+					result.TopResource.Namespace, selector)
+			}
 		}
 	}
 
-	fmt.Printf("\n")
-	return nil
+	fmt.Fprintf(w, "\n")
+	return trackedWriter.err
+
+}
+
+func renderReverseTraceMarkdown(w io.Writer, result *agent.ReverseTraceResult) error {
+	if w == nil {
+		return fmt.Errorf("reverse trace output writer is nil")
+	}
+	if result == nil {
+		return fmt.Errorf("reverse trace result is nil")
+	}
+	trackedWriter := &traceHumanWriter{writer: w}
+	w = trackedWriter
+	fmt.Fprintf(w, "## Reverse trace: %s\n\n", result.Object.String())
+	if result.Context != "" {
+		fmt.Fprintf(w, "Kubernetes context: %s (selection label; not a stable cluster ID)\n\n", result.Context)
+	}
+	if result.Error != "" {
+		fmt.Fprintf(w, "> [warning] %s\n\n", result.Error)
+	}
+	if len(result.K8sChain) > 0 {
+		fmt.Fprintf(w, "### Kubernetes ownership chain\n\n")
+		for _, link := range result.K8sChain {
+			fmt.Fprintf(w, "- %s/%s", link.Kind, link.Name)
+			if link.Namespace != "" {
+				fmt.Fprintf(w, " in %s", link.Namespace)
+			}
+			if link.Status != "" {
+				fmt.Fprintf(w, " — %s", link.Status)
+			}
+			fmt.Fprintf(w, "\n")
+		}
+		fmt.Fprintf(w, "\n")
+	}
+	if len(result.GitOpsChain) > 0 {
+		fmt.Fprintf(w, "### GitOps chain\n\n")
+		for _, link := range result.GitOpsChain {
+			fmt.Fprintf(w, "- %s/%s", link.Kind, link.Name)
+			if link.Namespace != "" {
+				fmt.Fprintf(w, " in %s", link.Namespace)
+			}
+			if link.Status != "" {
+				fmt.Fprintf(w, " — %s", link.Status)
+			}
+			fmt.Fprintf(w, "\n")
+		}
+		fmt.Fprintf(w, "\n")
+	}
+	if result.Owner != "" {
+		fmt.Fprintf(w, "Detected owner: **%s**", strings.ToUpper(result.Owner))
+		if result.OwnerDetails != nil && result.OwnerDetails.Name != "" {
+			fmt.Fprintf(w, " (managed by %s)", result.OwnerDetails.Name)
+		}
+		fmt.Fprintf(w, "\n")
+	}
+	if result.OrphanMeta != nil && result.OrphanMeta.LastAppliedConfigOmission != "" {
+		fmt.Fprintf(w, "\n> [omission] %s\n", result.OrphanMeta.LastAppliedConfigOmission)
+	}
+	return trackedWriter.err
 }
 
 // runTraceDiff shows the diff between live state and desired state from Git
@@ -2167,10 +1694,14 @@ func runTraceDiff(ctx context.Context, kind, name, namespace string) error {
 	}
 
 	// For other resources, detect ownership to choose the right diff tool
-	ownership, err := detectResourceOwnership(ctx, kind, name, namespace)
+	session, err := newDefaultTraceSession()
 	if err != nil {
-		// Try to infer from kind
-		ownership = &agent.Ownership{Type: agent.OwnerUnknown}
+		return err
+	}
+	ownership, err := detectResourceOwnershipWithTraceSession(ctx, session, kind, name, namespace)
+	if err != nil {
+		// Missing access is not evidence that this resource is unmanaged.
+		return fmt.Errorf("cannot establish ownership for diff of %s/%s in %s: %w", kind, name, namespace, err)
 	}
 
 	switch ownership.Type {
@@ -3029,62 +2560,6 @@ func mergeTraceArtifacts(base, updates map[string]mapsvc.TraceArtifactRef) map[s
 	return merged
 }
 
-func collectTraceArtifacts(ctx context.Context, result *agent.TraceResult) map[string]mapsvc.TraceArtifactRef {
-	artifacts := make(map[string]mapsvc.TraceArtifactRef)
-	if result == nil || len(result.Chain) == 0 {
-		return artifacts
-	}
-
-	sources := make([]agent.ChainLink, 0, 4)
-	for _, link := range result.Chain {
-		if isTraceSourceKind(link.Kind) {
-			sources = append(sources, link)
-		}
-	}
-	if len(sources) == 0 {
-		return artifacts
-	}
-
-	cfg, err := buildConfig()
-	if err != nil {
-		return artifacts
-	}
-	dynClient, err := dynamic.NewForConfig(cfg)
-	if err != nil {
-		return artifacts
-	}
-
-	for _, source := range sources {
-		gvr := kindToGVR(source.Kind)
-		if gvr.Resource == "" {
-			continue
-		}
-		obj, err := dynClient.Resource(gvr).Namespace(source.Namespace).Get(ctx, source.Name, v1.GetOptions{})
-		if err != nil {
-			continue
-		}
-
-		artifact := traceArtifactUnknownForKind(source.Kind)
-		if v, ok, _ := unstructured.NestedString(obj.Object, "status", "artifact", "url"); ok && strings.TrimSpace(v) != "" {
-			artifact.URL = v
-		}
-		if v, ok, _ := unstructured.NestedString(obj.Object, "status", "artifact", "revision"); ok && strings.TrimSpace(v) != "" {
-			artifact.Revision = v
-		}
-		if v, ok, _ := unstructured.NestedString(obj.Object, "status", "artifact", "digest"); ok && strings.TrimSpace(v) != "" {
-			artifact.Digest = v
-		}
-		if v, ok, _ := unstructured.NestedString(obj.Object, "status", "artifact", "lastUpdateTime"); ok && strings.TrimSpace(v) != "" {
-			artifact.LastUpdateTime = v
-		}
-
-		key := traceArtifactKey(source.Kind, source.Namespace, source.Name)
-		artifacts[key] = normalizeTraceArtifact(source.Kind, artifact)
-	}
-
-	return artifacts
-}
-
 func artifactForLink(link agent.ChainLink, artifacts map[string]mapsvc.TraceArtifactRef) mapsvc.TraceArtifactRef {
 	if len(artifacts) > 0 {
 		if artifact, ok := lookupTraceArtifact(link.Kind, link.Namespace, link.Name, artifacts); ok {
@@ -3256,63 +2731,4 @@ func loadAndRenderTraceFromJSON(path string, invCtx InvocationContext) error {
 	default:
 		return outputTraceHuman(&result, artifacts, invCtx)
 	}
-}
-
-// collectSecretEvidence fetches a resource and collects secret evidence from it.
-// Returns nil if the resource doesn't support secret evidence collection.
-//
-// Supported kinds (v0.15):
-// - Workloads: Deployment, StatefulSet, DaemonSet, Pod
-// - Flux sources: GitRepository, HelmRepository, Bucket
-// - Flux deployers: Kustomization, HelmRelease
-// - Crossplane: ProviderConfig
-func collectSecretEvidence(ctx context.Context, kind, name, namespace string) *agent.SecretEvidenceResult {
-	// Only collect for supported kinds
-	supportedKinds := map[string]bool{
-		"Deployment":     true,
-		"StatefulSet":    true,
-		"DaemonSet":      true,
-		"Pod":            true,
-		"GitRepository":  true,
-		"HelmRepository": true,
-		"Bucket":         true,
-		"Kustomization":  true,
-		"HelmRelease":    true,
-		"ProviderConfig": true,
-	}
-	if !supportedKinds[kind] {
-		return nil
-	}
-
-	cfg, err := buildConfig()
-	if err != nil {
-		return nil
-	}
-
-	dynClient, err := dynamic.NewForConfig(cfg)
-	if err != nil {
-		return nil
-	}
-
-	var resource *unstructured.Unstructured
-	if kind == "ProviderConfig" {
-		resource, err = fetchProviderConfigResource(ctx, cfg, dynClient, name, namespace)
-	} else {
-		gvr := kindToGVR(kind)
-		if gvr.Resource == "" {
-			return nil
-		}
-		resource, err = dynClient.Resource(gvr).Namespace(namespace).Get(ctx, name, v1.GetOptions{})
-	}
-	if err != nil {
-		return nil
-	}
-
-	collector := agent.NewSecretEvidenceCollector(dynClient)
-	result, err := collector.CollectFromResource(ctx, resource)
-	if err != nil {
-		return nil
-	}
-
-	return result
 }

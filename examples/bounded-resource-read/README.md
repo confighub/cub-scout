@@ -235,3 +235,29 @@ and conflict rejection are verified by the synthetic fixture tests above.
 Authenticated live ConfigHub integration is not part of this read path. The
 separate v2.9 release check remains blocked by expired local auth; the published
 bot image also still needs anonymous registry-pull verification in #520.
+
+### Trace session credential capture
+
+Trace's in-process observation session captures configured CA, client certificate,
+client key and bearer-token file contents before constructing any session client.
+Inline TLS data takes precedence over TLS file references. A configured token
+file takes precedence over an inline bearer token; an unreadable or empty token
+file fails capture instead of falling back to that inline token. Capture errors
+exclude credential values and file paths. Scout never rewrites these files.
+
+A running session uses the captured file contents. Start a new invocation to pick
+up rotated file credentials. Configured exec-auth helpers retain their refresh
+behavior; Scout does not sandbox those helpers or capture arbitrary files they
+read. This session primitive does not establish external Trace subprocess,
+MCP or TUI context parity by itself; that complete integration is tracked in #746.
+
+Reproduce the credential-file regression without a cluster or user credentials:
+
+```bash
+KUBECONFIG=/tmp/scout-offline-validation.kubeconfig GOPROXY=off GOTOOLCHAIN=local \
+  go test ./cmd/cub-scout -run 'TestTraceSessionCapturesCredentialFilesBeforeFirstRead|TestTraceSessionCredentialFileCaptureFailsClosed|TestTraceSessionCredentialDataOverridesFiles' -count=1
+```
+
+The local TLS fixture changes its CA/token files before the first client is
+created and verifies the original credentials are still used. Missing-file and
+inline-data fixtures cover fail-closed capture, redacted errors and precedence.

@@ -870,6 +870,7 @@ cub-scout trace <kind> <name> -n <namespace> [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `-n, --namespace` | string | flux-system | Resource namespace |
+| `--kube-context` | string | omitted | Exact context for normal/reverse Trace; explicit empty/missing selections and fixture/diff combinations fail before observation |
 | `--app` | string | - | Trace Argo CD app by name |
 | `-r, --reverse` | bool | false | Walk ownerRefs up |
 | `-d, --diff` | bool | false | Show Git vs live diff |
@@ -889,9 +890,25 @@ cub-scout trace <kind> <name> -n <namespace> [flags]
 | Owner | Underlying Tool | Behavior |
 |-------|-----------------|----------|
 | Flux | `flux trace` | Shows GitRepo -> Kustomization/HelmRelease -> Resource |
-| ArgoCD | `argocd app get` | Shows Application -> Resource |
+| ArgoCD | Kubernetes Application CR read | Shows Application -> Resource; exact namespace or unique name required |
 | Helm | Release metadata | Shows chart, version, values |
 | Native | N/A | Shows "not managed by GitOps" |
+
+Normal Trace captures its Kubernetes configuration once and uses it for the
+owner-specific resolver and enrichments. Argo observation reads Application CRs
+through that binding without an Argo server login. `--app` or an Application
+selector without `-n` resolves a unique matching name across namespaces; an
+ambiguous name requires an explicit namespace. It never guesses `argocd`.
+Other resource selectors retain the `flux-system` namespace default.
+
+Partial warnings and the selected context label appear in JSON and human output.
+The label is not a stable cluster ID. Normal and reverse CLI reads use the same
+captured invocation binding. MCP Trace forwards its typed `context` argument to
+`--kube-context`; omission preserves the legacy loader. Explicit selection rejects
+both trace/artifact fixture hooks. With no selector, legacy `--reverse` precedence
+when both `--reverse` and `--diff` are supplied is retained. Explicit selection
+with delegated `--diff` is refused before observation; full diff integration and
+remaining end-to-end proof are still open in #746.
 
 ### ConfigHub Delivery Evidence
 
