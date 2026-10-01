@@ -579,6 +579,15 @@ resource read fails, `fieldAttribution` remains present with `unknown`, the
 requested path, and an availability reason. The object is omitted only when no
 field path was requested.
 
+### Explicit scan context and coverage additions
+
+Live `scan --kube-context <name> --json` and `--normalized-json` include the optional
+`kubernetesContext` selection label. It is not a stable cluster ID. Omitting the
+selector preserves the legacy output shape. The normalized schema retains
+`scan.normalized.v1` with additive optional `kubernetesContext` and `warnings`
+fields; `warnings[]` preserves Kyverno errors and state-scan coverage warnings
+alongside findings, instead of treating failed reads as zero known issues.
+
 ### DoctorSummary context and coverage additions
 
 Live `doctor --format json` results may include `kubernetesContext`, the label of

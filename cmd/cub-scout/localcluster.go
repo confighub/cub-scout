@@ -6079,6 +6079,12 @@ func (m LocalClusterModel) runScan() tea.Cmd {
 			if err != nil {
 				return scanResultMsg{err: err}
 			}
+			if result == nil {
+				return scanResultMsg{err: fmt.Errorf("scan provider returned no result")}
+			}
+			copied := *result
+			copied.KubernetesContext = m.clusterBinding.context
+			result = &copied
 			data, err := json.MarshalIndent(result, "", "  ")
 			if err != nil {
 				return scanResultMsg{err: err}
@@ -6480,6 +6486,10 @@ func (m LocalClusterModel) renderScan() string {
 	b.WriteString("\n")
 	b.WriteString(lcHeaderStyle.Render("╰────────────────────────────────────────────────────────────────╯"))
 	b.WriteString("\n\n")
+
+	if m.explicitClusterContext && m.clusterBinding != nil && m.clusterBinding.context != "" {
+		fmt.Fprintf(&b, "Kubernetes context: %s (selection label; not a stable cluster ID)\n\n", m.clusterBinding.context)
+	}
 
 	// Loading state
 	if m.scanLoading {

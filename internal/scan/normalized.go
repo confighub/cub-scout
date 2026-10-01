@@ -2,6 +2,7 @@ package scan
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -25,10 +26,12 @@ type NormalizedFinding struct {
 
 // NormalizedResult wraps all normalized findings with metadata.
 type NormalizedResult struct {
-	SchemaVersion string              `json:"schema_version"`
-	ScannedAt     time.Time           `json:"scanned_at"`
-	Findings      []NormalizedFinding `json:"findings"`
-	Summary       NormalizedSummary   `json:"summary"`
+	KubernetesContext string              `json:"kubernetesContext,omitempty"`
+	Warnings          []string            `json:"warnings,omitempty"`
+	SchemaVersion     string              `json:"schema_version"`
+	ScannedAt         time.Time           `json:"scanned_at"`
+	Findings          []NormalizedFinding `json:"findings"`
+	Summary           NormalizedSummary   `json:"summary"`
 }
 
 // NormalizedSummary counts findings by severity.
@@ -216,9 +219,30 @@ func Normalize(combined *CombinedResult) *NormalizedResult {
 	}
 
 	return &NormalizedResult{
-		SchemaVersion: NormalizedSchemaVersion,
-		ScannedAt:     scannedAt,
-		Findings:      findings,
-		Summary:       summary,
+		SchemaVersion:     NormalizedSchemaVersion,
+		ScannedAt:         scannedAt,
+		KubernetesContext: combined.KubernetesContext,
+		Warnings:          CoverageWarnings(combined),
+		Findings:          findings,
+		Summary:           summary,
 	}
+}
+
+// CoverageWarnings preserves partial scanner coverage across transports.
+func CoverageWarnings(result *CombinedResult) []string {
+	if result == nil {
+		return []string{"scan provider returned no result"}
+	}
+	var warnings []string
+	if result.Kyverno != nil && strings.TrimSpace(result.Kyverno.Error) != "" {
+		warnings = append(warnings, "Kyverno scan: "+strings.TrimSpace(result.Kyverno.Error))
+	}
+	if result.State != nil {
+		for _, warning := range result.State.Warnings {
+			if strings.TrimSpace(warning) != "" {
+				warnings = append(warnings, "state scan: "+strings.TrimSpace(warning))
+			}
+		}
+	}
+	return warnings
 }

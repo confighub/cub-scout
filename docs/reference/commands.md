@@ -1183,7 +1183,9 @@ cub-scout scan --list
 ```
 
 Explicit selection uses one captured client configuration and labels any persisted
-local summary with that selected context. Empty or missing names fail without
+local summary with that selected context. JSON, normalized JSON, human output and
+the TUI preserve this selection label; it is not a stable cluster ID. Normalized
+JSON also retains coverage warnings. Empty or missing names fail without
 ambient/in-cluster fallback. In an explicitly bound local TUI, `S` scans with the
 session's captured configuration; close and reopen the scan to refresh it. Editing
 the kubeconfig during that session does not redirect the scan. Partial coverage

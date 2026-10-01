@@ -97,6 +97,7 @@ func TestExplicitContextTUIScanReopenUsesCapturedEndpoint(t *testing.T) {
 		next, _ = model.Update(msg)
 		model = next.(LocalClusterModel)
 		require.False(t, model.scanLoading)
+		require.Contains(t, model.renderScan(), "Kubernetes context: beta")
 		require.Greater(t, beta.requests.Load(), before)
 		require.Zero(t, alpha.requests.Load())
 	}
@@ -131,4 +132,89 @@ func TestExplicitDoctorHintsNeverOfferUnboundFollowups(t *testing.T) {
 		require.Contains(t, hint.Rationale, "no context-safe")
 	}
 	require.Equal(t, "cub scout doctor --format json --kube-context 'selected'", hints[5].Command)
+}
+
+func TestScanSelectedScopeSurvivesOutputFormats(t *testing.T) {
+	t.Setenv("CUB_SCOUT_OFFLINE", "true")
+	t.Setenv("PATH", t.TempDir())
+	t.Setenv("CUB_SCOUT_TEST_SCAN_JSON", "")
+	server := newCountedKubeServer(t)
+	path, _ := resolverKubeconfig(t, "beta", map[string]string{"beta": server.server.URL})
+	t.Setenv("KUBECONFIG", path)
+	oldProvider, oldConnected := selectScanProviderFn, summaryConnectedFn
+	defer func() { selectScanProviderFn, summaryConnectedFn = oldProvider, oldConnected }()
+	summaryConnectedFn = func() bool { return false }
+	selectScanProviderFn = func(scan.ProviderConfig) scan.Provider {
+		return &captureScanProvider{result: &scan.CombinedResult{State: &agent.StateScanResult{Warnings: []string{"fixture partial coverage"}}}}
+	}
+	flag := scanCmd.Flags().Lookup("kube-context")
+	oldValue, oldChanged := flag.Value.String(), flag.Changed
+	oldJSON, oldNormalized := scanJSON, scanNormalizedJSON
+	defer func() {
+		_ = flag.Value.Set(oldValue)
+		flag.Changed = oldChanged
+		scanJSON, scanNormalizedJSON = oldJSON, oldNormalized
+	}()
+	require.NoError(t, flag.Value.Set("beta"))
+	flag.Changed = true
+	scanCmd.SetContext(context.Background())
+	for _, format := range []string{"json", "normalized-json", "ascii"} {
+		t.Run(format, func(t *testing.T) {
+			scanJSON, scanNormalizedJSON = format == "json", format == "normalized-json"
+			output := captureStdout(t, func() { require.NoError(t, runScan(scanCmd, nil)) })
+			if format == "ascii" {
+				require.Contains(t, output, "Kubernetes context: beta")
+				require.Contains(t, output, "fixture partial coverage")
+				require.NotContains(t, output, "No issues found")
+				return
+			}
+			var data map[string]any
+			require.NoError(t, json.Unmarshal([]byte(output), &data))
+			require.Equal(t, "beta", data["kubernetesContext"])
+			if format == "normalized-json" {
+				require.Contains(t, fmt.Sprint(data["warnings"]), "fixture partial coverage")
+			}
+		})
+	}
+}
+
+func TestDoctorConcurrentBindingsKeepDistinctObservedInventories(t *testing.T) {
+	t.Setenv("CUB_SCOUT_OFFLINE", "true")
+	t.Setenv("CUB_SCOUT_SCAN_PROVIDER", "legacy")
+	t.Setenv("PATH", t.TempDir())
+	server := func(count int) *httptest.Server {
+		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			items := []any{}
+			if r.URL.Path == "/api/v1/configmaps" {
+				for i := 0; i < count; i++ {
+					items = append(items, map[string]any{"apiVersion": "v1", "kind": "ConfigMap", "metadata": map[string]string{"name": fmt.Sprintf("same-%d", i), "namespace": "team-a", "uid": fmt.Sprintf("scope-%d-%d", count, i)}})
+				}
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"apiVersion": "v1", "kind": "List", "items": items})
+		}))
+	}
+	alpha, beta := server(1), server(2)
+	defer alpha.Close()
+	defer beta.Close()
+	type observation struct {
+		name   string
+		result ObserveScopeSummaryResult
+		err    error
+	}
+	results := make(chan observation, 2)
+	for name, endpoint := range map[string]string{"alpha": alpha.URL, "beta": beta.URL} {
+		go func(name, endpoint string) {
+			binding := &localClusterBinding{config: &rest.Config{Host: endpoint, QPS: 1000, Burst: 1000}, context: name, explicit: true}
+			result, err := ObserveScopeSummary(context.Background(), ObserveScopeSummaryRequest{ClusterBinding: binding})
+			results <- observation{name, result, err}
+		}(name, endpoint)
+	}
+	for range 2 {
+		got := <-results
+		require.NoError(t, got.err)
+		require.Equal(t, got.name, got.result.Summary.KubernetesContext)
+		want := map[string]int{"alpha": 1, "beta": 2}[got.name]
+		require.Equal(t, want, got.result.Summary.Resources.Total, "counts must come from this invocation's actual endpoint")
+	}
 }

@@ -17,6 +17,14 @@ order, quality gates, budgets and decisions.
   invocation-local Kubernetes binding; its context-name label is not a stable
   observed cluster identity. Other surfaces still need their own complete
   bindings, and this slice does not close #599.
+  [PR #745](https://github.com/confighub/cub-scout/pull/745) carries the implementation,
+  denial/partial/unreachable and concurrent-binding tests, and TUI scan reopening
+  against a retargeted kubeconfig. Doctor and scan preserve the selected label
+  and coverage warnings across their outputs; normalized scan fields are additive.
+  The prepared [owned-cluster proof](evals/doctor-scan-context/README.md) remains
+  **unrun**, with its fixed-source pin unset pending final validation. Two
+  behavior-specific regression probes caught missing shared Doctor context/human
+  warnings and missing scan JSON/TUI context before the corresponding repairs.
 
 - The fixed benchmark retains 24 questions and six equally weighted groups.
   This checkout has **0 planned, 5 refreshed fixtures, 2 prepared recorded

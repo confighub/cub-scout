@@ -142,6 +142,8 @@ def validate_observations(records: list[dict], expected_resource_count: int) -> 
             continue
         try:
             data = json.loads(row["stdout"])
+            if phase.startswith("fixed") and data["kubernetesContext"] != ("doctor-denied" if denied else "doctor-allowed"):
+                raise ValueError("wrong selected context")
             if command == "doctor":
                 if data["namespace"] != "scout-context-proof":
                     raise ValueError("wrong namespace")

@@ -81,7 +81,7 @@ class ObservationAcceptanceTests(unittest.TestCase):
                 body = {"namespace": "scout-context-proof", "resources": {"total": 0 if denied else 2},
                         "kubernetesContext": "doctor-denied" if denied else "doctor-allowed", "warnings": [denial] if denied else []}
                 if command == "scan":
-                    body = {"state": {"summary": {}, "warnings": [denial] if denied else []}}
+                    body = {"kubernetesContext": "doctor-denied" if denied else "doctor-allowed", "state": {"summary": {}, "warnings": [denial] if denied else []}}
                 records.append({"phase": phase, "argv": ["/private/cub-scout", command],
                                 "exitCode": 1 if phase == "old-explicit-denial" else 0,
                                 "stdout": json.dumps(body), "stderr": "unknown flag: --kube-context" if phase == "old-explicit-denial" else "",
@@ -93,13 +93,13 @@ class ObservationAcceptanceTests(unittest.TestCase):
 
     def test_clean_empty_denied_result_is_not_accepted(self):
         rows = self.observations()
-        rows[-1]["stdout"] = json.dumps({"state": {"summary": {}, "warnings": []}})
+        rows[-1]["stdout"] = json.dumps({"kubernetesContext": "doctor-denied", "state": {"summary": {}, "warnings": []}})
         with self.assertRaisesRegex(RuntimeError, "denied service-account"):
             capture.validate_observations(rows, 2)
 
     def test_unrelated_warning_is_not_denial_proof(self):
         rows = self.observations()
-        rows[-1]["stdout"] = json.dumps({"state": {"summary": {}, "warnings": ["warning: optional API missing"]}})
+        rows[-1]["stdout"] = json.dumps({"kubernetesContext": "doctor-denied", "state": {"summary": {}, "warnings": ["warning: optional API missing"]}})
         with self.assertRaises(RuntimeError):
             capture.validate_observations(rows, 2)
 
