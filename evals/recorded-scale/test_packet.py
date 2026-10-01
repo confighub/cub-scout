@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Offline tests for recorded scale staging and preflight validation."""
 import hashlib
+import contextlib
+import io
 import os
 import signal
 import time
@@ -23,6 +25,9 @@ spec.loader.exec_module(prepare)
 spec = importlib.util.spec_from_file_location("recorded_scale_preflight", ROOT / "preflight.py")
 preflight = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(preflight)
+spec = importlib.util.spec_from_file_location("recorded_scale_counts_runner", ROOT / "run_counts_pair.py")
+counts_runner = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(counts_runner)
 spec = importlib.util.spec_from_file_location("recorded_scale_regrade", ROOT.parent / "scripts/regrade.py")
 regrade = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(regrade)
@@ -525,6 +530,134 @@ class RecordedScalePacket(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "differs from prepared.json"):
                 preflight.verify_prepared(views_out, binary, prepare.sha256(binary),
                                           prepare.MAP_CONTRACT_BASIC)
+
+    def test_counts_economy_policy_is_opt_in_and_preserves_question_and_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            binary = root / "cub-scout"
+            binary.write_text("#!/bin/sh\nexit 0\n")
+            binary.chmod(0o700)
+            with self.assertRaisesRegex(ValueError, "requires recorded-map-views"):
+                prepare.prepare(binary, prepare.sha256(binary), root / "wrong-contract",
+                                prepare.MAP_CONTRACT_BASIC, prepare.ANSWER_CONTRACT_STRICT,
+                                prepare.COUNTS_ECONOMY_POLICY)
+            self.assertFalse((root / "wrong-contract").exists())
+            default = root / "default"
+            prepare.prepare(binary, prepare.sha256(binary), default,
+                            prepare.MAP_CONTRACT_VIEWS, prepare.ANSWER_CONTRACT_STRICT)
+            default_facts = json.loads((default / "prepared.json").read_text())
+            self.assertNotIn("policy", default_facts)
+            self.assertEqual((default / "plugin/evals/recorded-scale/scale-ownership-counts/prompt.md").read_text(),
+                             (prepare.REPO / "evals/scale/scale-ownership-counts/prompt.md").read_text().rstrip() +
+                             "\n\n" + prepare.STRICT_PROMPT_SUFFIX + "\n")
+
+            out = root / "counts-economy"
+            prepare.prepare(binary, prepare.sha256(binary), out, prepare.MAP_CONTRACT_VIEWS,
+                            prepare.ANSWER_CONTRACT_STRICT, prepare.COUNTS_ECONOMY_POLICY)
+            facts = json.loads((out / "prepared.json").read_text())
+            self.assertEqual(facts["policy"]["schema"], "counts-economy.v1")
+            prompt_path = out / "plugin/evals/recorded-scale/scale-ownership-counts/prompt.md"
+            prompt = prompt_path.read_text()
+            self.assertIn("max_turns: 12", prompt)
+            self.assertIn("timeout_seconds: 180", prompt)
+            self.assertIn("allowed_tools: [Read, Glob, Grep, Skill]", prompt)
+            self.assertIn("Finish with one line exactly in this form", prompt)
+            self.assertEqual(facts["policy"]["promptBodySha256"],
+                             hashlib.sha256(prompt.split("---\n", 2)[2].encode()).hexdigest())
+            counts_fixtures = out / "plugin/evals/recorded-scale/scale-ownership-counts/fixtures"
+            other_fixtures = out / "plugin/evals/recorded-scale/scale-unmanaged/fixtures"
+            self.assertEqual({p.name: p.read_bytes() for p in counts_fixtures.iterdir()},
+                             {p.name: p.read_bytes() for p in other_fixtures.iterdir()})
+            self.assertEqual(counts_runner.verify_policy_packet(out), facts)
+            command = counts_runner.build_command(out)
+            self.assertIn("scale-ownership-counts", command)
+            self.assertIn("--max-cost-usd", command)
+            self.assertEqual(command[command.index("--model") + 1], prepare.COUNTS_ECONOMY["model"])
+            self.assertEqual(command[command.index("--runs") + 1], "1")
+            self.assertEqual(command[command.index("--concurrency") + 1], "1")
+            self.assertNotIn("--judge-model", command)
+            self.assertIn("--no-publish", command)
+            self.assertNotIn("--publish-report", command)
+            self.assertEqual(command[command.index("--allow-tools") + 1:
+                                     command.index("--model")], [
+                                         "mcp__plugin_cub-scout_cub-scout__map",
+                                         "mcp__plugin_cub-scout_cub-scout__explain"])
+            self.assertFalse((out / "plugin/evals/recorded-scale/scale-ownership-counts/mocks/cub-scout").exists())
+            with contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit):
+                    counts_runner.main([str(out)])
+
+            prompt_path.write_text(prompt.replace("allowed_tools: [Read, Glob, Grep, Skill]",
+                                                  "allowed_tools: [Bash]"))
+            mutated_facts = json.loads((out / "prepared.json").read_text())
+            mutated_facts["generatedPluginFiles"]["evals/recorded-scale/scale-ownership-counts/prompt.md"] = prepare.sha256(prompt_path)
+            mutated_facts["answerContractFiles"]["scale-ownership-counts"]["promptSha256"] = prepare.sha256(prompt_path)
+            (out / "prepared.json").write_text(json.dumps(mutated_facts))
+            with self.assertRaisesRegex(ValueError, "diagnostic prompt"):
+                counts_runner.verify_policy_packet(out)
+
+    def test_counts_economy_rejects_wrong_policy_and_fixture_or_grader_mutations(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            binary = root / "cub-scout"
+            binary.write_text("#!/bin/sh\nexit 0\n")
+            binary.chmod(0o700)
+            out = root / "counts-economy"
+            prepare.prepare(binary, prepare.sha256(binary), out, prepare.MAP_CONTRACT_VIEWS,
+                            prepare.ANSWER_CONTRACT_STRICT, prepare.COUNTS_ECONOMY_POLICY)
+            facts_path = out / "prepared.json"
+            facts = json.loads(facts_path.read_text())
+            facts["policy"]["timeoutSeconds"] = 900
+            facts_path.write_text(json.dumps(facts))
+            with self.assertRaisesRegex(ValueError, "policy fields"):
+                counts_runner.verify_policy_packet(out)
+
+            prepare.prepare(binary, prepare.sha256(binary), root / "counts-economy-2",
+                            prepare.MAP_CONTRACT_VIEWS, prepare.ANSWER_CONTRACT_STRICT,
+                            prepare.COUNTS_ECONOMY_POLICY)
+            out = root / "counts-economy-2"
+            grader = out / "plugin/evals/recorded-scale/scale-ownership-counts/graders/counts-line.md"
+            grader.write_text(grader.read_text() + "\n")
+            with self.assertRaisesRegex(ValueError, "generated plugin file hash mismatch"):
+                counts_runner.verify_policy_packet(out)
+
+            prepare.prepare(binary, prepare.sha256(binary), root / "counts-economy-3",
+                            prepare.MAP_CONTRACT_VIEWS, prepare.ANSWER_CONTRACT_STRICT,
+                            prepare.COUNTS_ECONOMY_POLICY)
+            out = root / "counts-economy-3"
+            fixture = out / "plugin/evals/recorded-scale/scale-ownership-counts/fixtures/deployments.yaml"
+            fixture.write_bytes(fixture.read_bytes() + b"# mutation\n")
+            with self.assertRaisesRegex(ValueError, "generated plugin file hash mismatch"):
+                counts_runner.verify_policy_packet(out)
+
+            prepare.prepare(binary, prepare.sha256(binary), root / "counts-economy-4",
+                            prepare.MAP_CONTRACT_VIEWS, prepare.ANSWER_CONTRACT_STRICT,
+                            prepare.COUNTS_ECONOMY_POLICY)
+            out = root / "counts-economy-4"
+            grader_dir = out / "plugin/evals/recorded-scale/scale-ownership-counts/graders"
+            extra_grader = grader_dir / "extra.md"
+            extra_grader.write_text("---\ntype: regex\npattern: '.*'\n---\n")
+            facts_path = out / "prepared.json"
+            facts = json.loads(facts_path.read_text())
+            facts["generatedPluginFiles"]["evals/recorded-scale/scale-ownership-counts/graders/extra.md"] = prepare.sha256(extra_grader)
+            facts_path.write_text(json.dumps(facts))
+            with self.assertRaisesRegex(ValueError, "exactly the strict answer grader"):
+                counts_runner.verify_policy_packet(out)
+
+            prepare.prepare(binary, prepare.sha256(binary), root / "counts-economy-5",
+                            prepare.MAP_CONTRACT_VIEWS, prepare.ANSWER_CONTRACT_STRICT,
+                            prepare.COUNTS_ECONOMY_POLICY)
+            out = root / "counts-economy-5"
+            manifest_path = out / "plugin/.claude-plugin/plugin.json"
+            manifest = json.loads(manifest_path.read_text())
+            manifest["mcpServers"]["cub-scout"]["command"] = "/tmp/unexpected-server"
+            manifest_path.write_text(json.dumps(manifest))
+            facts_path = out / "prepared.json"
+            facts = json.loads(facts_path.read_text())
+            facts["generatedPluginFiles"][".claude-plugin/plugin.json"] = prepare.sha256(manifest_path)
+            facts_path.write_text(json.dumps(facts))
+            with self.assertRaisesRegex(ValueError, "MCP server set changed"):
+                counts_runner.verify_policy_packet(out)
 
     def test_mcp_rejects_unsupported_tool_and_live_args_and_holds_startup_snapshot(self):
         with tempfile.TemporaryDirectory() as tmp:
