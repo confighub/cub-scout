@@ -18,8 +18,8 @@ None of these statuses means the controlled benchmark ran. DEL-01 and DEL-02 are
 public-source projections, not raw cluster snapshots; both are prepared and
 unrun, and their evidence limits are recorded per case. The 24 cases currently
 comprise 5 refreshed fixtures, 2 recorded scale bindings prepared but not run, 8
-recorded projections prepared but not run, 6 raw recordings prepared but not
-run, 1 synthetic source replay fixtures prepared but not run, and 2 planned
+recorded projections prepared but not run, 7 raw recordings prepared but not
+run, 2 synthetic source replay fixtures prepared but not run, and 0 planned
 cases. HLT-03 is a receipt-backed pair of public recorded
 files, not a full Kubernetes snapshot; its receipt-level workload pass and
 child Application Ingress residue are separate evidence facts. HLT-02, INV-04, PRE-01,
@@ -49,7 +49,7 @@ cases remain a separate experiment.
 | Prerequisites / graph | PRE-03 | Argo/Crossplane child-chain failure | `pre03-argo-child-failure` — retained historical Argo-only parent→child→Pod failure chain prepared, not run; no Crossplane claim, non-atomic and not current |
 | Prerequisites / graph | PRE-04 | Hub/spoke intended placement with missing live observations | `kubara-hub-spoke-placement` — pinned desired/config projection prepared, not run; no live observations consumed |
 | Reuse / limits | RUL-01 | Repeated question using a dated snapshot | `rul01-dated-snapshot` — PRE-02 Pod response reused with its one-second request-time receipt and authored test clocks; prepared, not run; not live freshness or product capture-time support |
-| Reuse / limits | RUL-02 | Cache invalidation after identity change | Planned; missing/stale identity stays unresolved |
+| Reuse / limits | RUL-02 | Cache invalidation after identity change | `rul02-cache-replay` — source-pinned synthetic reader replay prepared, not run as a model evaluation; no automatic invalidation or general freshness claim |
 | Reuse / limits | RUL-03 | Denied cluster beside readable cluster, explicit context | `rul03-context` — raw explicit-context responses and strict answer contract prepared, not run; denied inventory stays unknown |
 | Reuse / limits | RUL-04 | Unsupported workload/image proof | Raw capture prepared, not run: Ready Pod runtime imageID and UID linkage preserved; tag-only authored intent does not establish immutable intended image identity. No applied-source proof. [Case](rul04-image-identity/README.md) |
 

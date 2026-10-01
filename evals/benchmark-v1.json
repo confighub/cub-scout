@@ -640,12 +640,32 @@
         {
           "id": "RUL-02",
           "question": "Cache invalidation after identity change",
-          "status": "planned",
-          "existing_case": null,
+          "status": "synthetic_source_replay_prepared_not_run",
+          "existing_case": "evals/rul02-cache-replay",
           "reference": "Detect identity change and invalidate reused evidence before answering.",
           "controls": [
             "Test stale and changed UID/digest identities"
-          ]
+          ],
+          "evidence_refresh": "2026-10-01",
+          "source_provenance": {
+            "repository": "confighub/cub-scout",
+            "capture_source_revision": "f7ad343740fb9c1ac488a06117c63466810afaa8",
+            "test": "pkg/agent/bounded_read_replay_test.go:TestBoundedReadRUL02IdentityCacheReplay",
+            "actual_result_sha256": "a4ce6bfe7f1951c215914c3eab0b787739f14cfb1e6d7475ed869a5e975a5d4b",
+            "execution_seconds": 3.837292250012979,
+            "exit_code": 0,
+            "timed_out": false,
+            "input_kind": "authored_httptest_responses_and_clock",
+            "limits": "Source-pinned offline reader replay with a fixed clock and authored local HTTP responses; configured cache-hit responses were not served. Demonstrates only the recorded steps, not live state, automatic/push invalidation, a general freshness guarantee, model performance, or savings.",
+            "source_file_sha256": {
+              "pkg/agent/bounded_read_replay_test.go": "6f1c0514958483fa10477bcafe2ba9936bd7e14341a5f807d976b0728c15ee32",
+              "pkg/agent/testdata/rul02-cache-replay.json": "718f81a8eae1a1c136343659e6ee3320a63b7b0826b2273c9955943e0b440e95",
+              "pkg/agent/bounded_read.go": "227ce841dce3a4072efb7c8f4b24c1cbd3838fc674e698cd5d2fb1ad2302953b"
+            }
+          },
+          "paid": false,
+          "executable": false,
+          "benchmark_admission": "Synthetic source replay prepared and reviewed; not run as a model evaluation or admitted. Full suite remains non-executable and this mapping does not authorize paid runs."
         },
         {
           "id": "RUL-03",

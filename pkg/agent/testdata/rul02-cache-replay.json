@@ -1,0 +1,282 @@
+{
+  "schema": "bounded-resource-cache-replay.v1",
+  "scope": {
+    "context": "recorded-test-cluster",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespace": "team-a",
+      "name": "api"
+    },
+    "clockStart": "2026-09-30T12:00:00Z",
+    "ttlSeconds": 15,
+    "limitations": [
+      "This is a deterministic httptest API replay, not a live-cluster recording.",
+      "A non-refresh cache hit may remain stale until TTL expiry.",
+      "Identity changes are observed only after explicit refresh or expiry.",
+      "No inference is made from the resource name when UID or digest is absent."
+    ]
+  },
+  "responses": {
+    "discovery": {
+      "status": 200,
+      "path": "/apis/apps/v1",
+      "body": "{\"groupVersion\":\"apps/v1\",\"resources\":[{\"name\":\"deployments\",\"kind\":\"Deployment\",\"namespaced\":true,\"verbs\":[\"get\"]}]}",
+      "sha256": "7b8e29291c094c85c20d069b40a347fd71066f6f148148ead412eb73b139ddff"
+    },
+    "objectA": {
+      "status": 200,
+      "path": "/apis/apps/v1/namespaces/team-a/deployments/api",
+      "body": "{\"apiVersion\":\"apps/v1\",\"kind\":\"Deployment\",\"metadata\":{\"name\":\"api\",\"namespace\":\"team-a\",\"uid\":\"uid-A\",\"resourceVersion\":\"10\"},\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"api\",\"image\":\"registry.example/api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}]}}}}",
+      "sha256": "f719a614dac029806e7749f046def55e8c452ced4818a0bf5dfcbce4a9caaf85"
+    },
+    "objectB": {
+      "status": 200,
+      "path": "/apis/apps/v1/namespaces/team-a/deployments/api",
+      "body": "{\"apiVersion\":\"apps/v1\",\"kind\":\"Deployment\",\"metadata\":{\"name\":\"api\",\"namespace\":\"team-a\",\"uid\":\"uid-B\",\"resourceVersion\":\"11\"},\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"api\",\"image\":\"registry.example/api@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\"}]}}}}",
+      "sha256": "52af64ac08c2557de324606890d015cc2e7b894c721a01177529075a6227ed36"
+    },
+    "objectC": {
+      "status": 200,
+      "path": "/apis/apps/v1/namespaces/team-a/deployments/api",
+      "body": "{\"apiVersion\":\"apps/v1\",\"kind\":\"Deployment\",\"metadata\":{\"name\":\"api\",\"namespace\":\"team-a\",\"uid\":\"uid-B\",\"resourceVersion\":\"12\"},\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"api\",\"image\":\"registry.example/api@sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\"}]}}}}",
+      "sha256": "9c9331bf209530b895e5c0df1a671b4115f78ed79ad8346dd6642685c1fc7c3c"
+    },
+    "objectD": {
+      "status": 200,
+      "path": "/apis/apps/v1/namespaces/team-a/deployments/api",
+      "body": "{\"apiVersion\":\"apps/v1\",\"kind\":\"Deployment\",\"metadata\":{\"name\":\"api\",\"namespace\":\"team-a\",\"uid\":\"uid-C\",\"resourceVersion\":\"13\"},\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"api\",\"image\":\"registry.example/api@sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd\"}]}}}}",
+      "sha256": "291db0da85bff50c0d2a259864fe70c4d3fc09f8d17ef98e8ceca5e0c66ed281"
+    },
+    "objectMissingIdentity": {
+      "status": 200,
+      "path": "/apis/apps/v1/namespaces/team-a/deployments/api",
+      "body": "{\"apiVersion\":\"apps/v1\",\"kind\":\"Deployment\",\"metadata\":{\"name\":\"api\",\"namespace\":\"team-a\",\"resourceVersion\":\"14\"},\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"api\",\"image\":\"registry.example/api:latest\"}]}}}}",
+      "sha256": "b7268a11539185209554e685ff3ed009e3a2e015157139b62df3233c2bee0153"
+    },
+    "objectUnavailable": {
+      "status": 503,
+      "path": "/apis/apps/v1/namespaces/team-a/deployments/api",
+      "body": "{\"apiVersion\":\"v1\",\"kind\":\"Status\",\"status\":\"Failure\",\"reason\":\"ServiceUnavailable\",\"code\":503}",
+      "sha256": "39112ee8f13e5a916647c98d04a55738ca1dfeabe8c17042e19d310dee891544"
+    }
+  },
+  "expectedSteps": [
+    {
+      "name": "step-01",
+      "at": "2026-09-30T12:00:00Z",
+      "refresh": false,
+      "uid": "uid-A",
+      "resourceVersion": "10",
+      "image": "registry.example/api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "cache": "miss",
+      "available": true,
+      "observedAt": "2026-09-30T12:00:00Z",
+      "expiresAt": "2026-09-30T12:00:15Z",
+      "discoveryReads": 1,
+      "objectReads": 1,
+      "requestCount": 2,
+      "error": ""
+    },
+    {
+      "name": "step-02",
+      "at": "2026-09-30T12:00:02Z",
+      "refresh": false,
+      "uid": "uid-A",
+      "resourceVersion": "10",
+      "image": "registry.example/api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "cache": "hit",
+      "available": true,
+      "observedAt": "2026-09-30T12:00:00Z",
+      "expiresAt": "2026-09-30T12:00:15Z",
+      "discoveryReads": 0,
+      "objectReads": 0,
+      "requestCount": 2,
+      "error": ""
+    },
+    {
+      "name": "step-03",
+      "at": "2026-09-30T12:00:03Z",
+      "refresh": false,
+      "uid": "uid-A",
+      "resourceVersion": "10",
+      "image": "registry.example/api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "cache": "hit",
+      "available": true,
+      "observedAt": "2026-09-30T12:00:00Z",
+      "expiresAt": "2026-09-30T12:00:15Z",
+      "discoveryReads": 0,
+      "objectReads": 0,
+      "requestCount": 2,
+      "error": ""
+    },
+    {
+      "name": "step-04",
+      "at": "2026-09-30T12:00:04Z",
+      "refresh": true,
+      "uid": "uid-B",
+      "resourceVersion": "11",
+      "image": "registry.example/api@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "cache": "refresh",
+      "available": true,
+      "observedAt": "2026-09-30T12:00:04Z",
+      "expiresAt": "2026-09-30T12:00:19Z",
+      "discoveryReads": 1,
+      "objectReads": 1,
+      "requestCount": 4,
+      "error": ""
+    },
+    {
+      "name": "step-05",
+      "at": "2026-09-30T12:00:05Z",
+      "refresh": true,
+      "uid": "uid-B",
+      "resourceVersion": "12",
+      "image": "registry.example/api@sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "cache": "refresh",
+      "available": true,
+      "observedAt": "2026-09-30T12:00:05Z",
+      "expiresAt": "2026-09-30T12:00:20Z",
+      "discoveryReads": 1,
+      "objectReads": 1,
+      "requestCount": 6,
+      "error": ""
+    },
+    {
+      "name": "step-06",
+      "at": "2026-09-30T12:00:20Z",
+      "refresh": false,
+      "uid": "uid-C",
+      "resourceVersion": "13",
+      "image": "registry.example/api@sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "cache": "miss",
+      "available": true,
+      "observedAt": "2026-09-30T12:00:20Z",
+      "expiresAt": "2026-09-30T12:00:35Z",
+      "discoveryReads": 1,
+      "objectReads": 1,
+      "requestCount": 8,
+      "error": ""
+    },
+    {
+      "name": "step-07",
+      "at": "2026-09-30T12:00:21Z",
+      "refresh": true,
+      "uid": "",
+      "resourceVersion": "14",
+      "image": "registry.example/api:latest",
+      "cache": "refresh",
+      "available": true,
+      "observedAt": "2026-09-30T12:00:21Z",
+      "expiresAt": "2026-09-30T12:00:36Z",
+      "discoveryReads": 1,
+      "objectReads": 1,
+      "requestCount": 10,
+      "error": ""
+    },
+    {
+      "name": "step-08",
+      "at": "2026-09-30T12:00:22Z",
+      "refresh": true,
+      "uid": "",
+      "resourceVersion": "",
+      "image": "",
+      "cache": "refresh",
+      "available": false,
+      "observedAt": "",
+      "expiresAt": "",
+      "discoveryReads": 1,
+      "objectReads": 1,
+      "requestCount": 12,
+      "error": "object unavailable"
+    },
+    {
+      "name": "step-09",
+      "at": "2026-09-30T12:00:23Z",
+      "refresh": false,
+      "uid": "",
+      "resourceVersion": "",
+      "image": "",
+      "cache": "miss",
+      "available": false,
+      "observedAt": "",
+      "expiresAt": "",
+      "discoveryReads": 1,
+      "objectReads": 1,
+      "requestCount": 14,
+      "error": "object unavailable"
+    }
+  ],
+  "servedResponseSequence": [
+    "discovery",
+    "objectA",
+    "discovery",
+    "objectB",
+    "discovery",
+    "objectC",
+    "discovery",
+    "objectD",
+    "discovery",
+    "objectMissingIdentity",
+    "discovery",
+    "objectUnavailable",
+    "discovery",
+    "objectUnavailable"
+  ],
+  "inputs": [
+    {
+      "stepId": "step-01",
+      "clock": "2026-09-30T12:00:00Z",
+      "refresh": false,
+      "responseKey": "objectA"
+    },
+    {
+      "stepId": "step-02",
+      "clock": "2026-09-30T12:00:02Z",
+      "refresh": false,
+      "responseKey": "objectA"
+    },
+    {
+      "stepId": "step-03",
+      "clock": "2026-09-30T12:00:03Z",
+      "refresh": false,
+      "responseKey": "objectB"
+    },
+    {
+      "stepId": "step-04",
+      "clock": "2026-09-30T12:00:04Z",
+      "refresh": true,
+      "responseKey": "objectB"
+    },
+    {
+      "stepId": "step-05",
+      "clock": "2026-09-30T12:00:05Z",
+      "refresh": true,
+      "responseKey": "objectC"
+    },
+    {
+      "stepId": "step-06",
+      "clock": "2026-09-30T12:00:20Z",
+      "refresh": false,
+      "responseKey": "objectD"
+    },
+    {
+      "stepId": "step-07",
+      "clock": "2026-09-30T12:00:21Z",
+      "refresh": true,
+      "responseKey": "objectMissingIdentity"
+    },
+    {
+      "stepId": "step-08",
+      "clock": "2026-09-30T12:00:22Z",
+      "refresh": true,
+      "responseKey": "objectUnavailable"
+    },
+    {
+      "stepId": "step-09",
+      "clock": "2026-09-30T12:00:23Z",
+      "refresh": false,
+      "responseKey": "objectUnavailable"
+    }
+  ]
+}

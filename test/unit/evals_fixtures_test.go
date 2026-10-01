@@ -330,6 +330,10 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			checkPRE03Scaffold(t, caseDir)
 			continue
 		}
+		if filepath.Base(caseDir) == "rul02-cache-replay" {
+			checkRUL02Scaffold(t, caseDir)
+			continue
+		}
 		if filepath.Base(caseDir) == "rul03-context" {
 			checkRUL03ContextScaffold(t, caseDir)
 			continue
