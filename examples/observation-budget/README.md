@@ -120,6 +120,40 @@ call a live cluster. This is the initial #599 binding foundation, not a global
 context selection guarantee. The scoped selector proof below describes the
 explicit-mode limits; broader subprocess and selector coverage remains pending.
 
+### Namespace boundaries for watch-backed LIST (#735)
+
+The watch-backed dynamic client serves a cached LIST only when the requested
+namespace is covered by the informer. A cache started for `team-a` may answer
+`team-a` reads, but a `team-b` or all-namespace read must go to the API. An
+all-scope cache can answer either namespace after filtering its objects. The
+client also carries the discovery-reported resource scope: a namespaced request
+for a cluster-scoped resource, or any request whose scope is unknown, falls
+through rather than being represented as an empty cached list. Selectors,
+pagination and resource-version reads continue to use the API.
+
+Reproduce the deterministic production-client HTTP proof:
+
+```sh
+KUBECONFIG=/tmp/scout-offline-validation.kubeconfig go test ./cmd/cub-scout \
+  -run '^(TestWatchBackedNamespaceScopedCacheFallsBackForOtherAndAllNamespaces|TestWatchBackedAllNamespaceCacheFiltersAndSelectorFallbackPreservesDenial|TestWatchBackedNamespaceMismatchPreservesDeniedFallback|TestWatchBackedScopedCacheDoesNotGuessClusterScope)$' \
+  -count=1 -v
+```
+
+The loopback API fixture contains same-name objects in `team-a` and `team-b`,
+counts real dynamic-client HTTP requests, and returns a denied response for the
+selector and invalid cluster-scope fallbacks. It does not create or contact a
+Kubernetes cluster.
+
+An opt-in owned-kind harness now makes that comparison executable. Its
+acceptance gates, exact invocation, private-kubeconfig handling, source pins,
+cleanup checks, and proof limits are in
+[`evals/watch-cache-namespace/README.md`](../../evals/watch-cache-namespace/README.md).
+It creates the two same-name ConfigMaps, exercises direct and watch-backed
+production clients, records exact HTTP paths/statuses and namespace/name/UID
+identities, and tests denied and cluster-scope fallback behavior against both
+pinned source revisions. The helper has not been run; no live-cluster result is
+claimed. Run it only after independent review of that helper.
+
 ### Scoped explicit context selection proof
 
 The scoped selector slice adds a strict named context to `map list`, its MCP

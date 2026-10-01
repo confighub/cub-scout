@@ -9,6 +9,9 @@ distinguishes identical raw input packets from authored deterministic
 transports and lists current per-case evidence gaps. It does not alter cases,
 weights, gates, or paid-run authorization; full Experiment A remains
 non-executable until its existing admission requirements pass.
+The [ordinary-tool query plan](ordinary-tool-query-plan-v1.md) maps the minimum
+case evidence reads and distinguishes optional kubectl/Helm availability from
+queries a frozen task actually requires; it is not an admission decision.
 
 Existing case directories are mapped only where their current prompt covers
 the frozen question. The September 30 refresh now includes managedFields in

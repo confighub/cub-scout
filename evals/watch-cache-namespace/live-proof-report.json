@@ -1,0 +1,150 @@
+{
+  "interpretation": "This is a narrow passing regression proof for namespace-cache fallback and observed-error preservation. It does not establish broad informer coverage or general cache correctness.",
+  "published": false,
+  "rawArchive": {
+    "proof1Sha256ByFile": "stderr.txt=d79f5efe1b7eab6abe9203103d5021c7113b238a04d2494020a731b8ed016e2d|stdout.txt=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855|wrapper.json=ee99ebd20f6245c9735ae6390f8eec094de5f278c7570ae543701f146e576b78",
+    "proof2Sha256ByFile": "stderr.txt=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855|stdout.txt=b66600d5c755733b0b81938a65cfd14c9374eab3768b6d2e1dbe0335dc6de65a|wrapper.json=be24f751dda3f5ea47d76ea4168b3807ece8d96f2878039fe1dd4f3faf932bda",
+    "relativeRoot": "evals/results/watch-cache-namespace-20261001",
+    "run1Sha256ByFile": "after-compile-stderr.txt=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855|after-compile-stdout.txt=8aa825699fd1070887eaee89415a888840d090322fe47634aefff9ca1f73f4b8|before-compile-stderr.txt=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855|before-compile-stdout.txt=3c329e71ad9cd0bda54ff0b6b76b0eda5ab30c4dd6aac08f9e9cf96a21c09f7e|before-probe-result.json=ee0a5bc3c186d77b92292f475982df3fe6955fff24f828d12e8307210e0d3660|before-probe-stderr.txt=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855|before-probe-stdout.txt=932bd501475403ae7417e74a3aff11725e1fc5649c4390ec4a2578d99391b71d|literal-fixtures.yaml=6a0433caf33d84f0259394f70b7ac1c94e807e8b3d82f0244e265ae3bff5d7f0|owned-cluster-marker.json=5d0bb889f4561285cbc3eac5e62202a1ed151283a72fdd97c16adea57664a945|provenance.json=2b081001729e1ed4e3f822c8ae18447040e27210124e1a01702d2d4eeef12854",
+    "run1WrapperSha256": "f9746fddc11c20d365df564c9c3f5b3f0e9d25db17b736aee0a730bbeafb8494",
+    "run2Sha256ByFile": "after-compile-stderr.txt=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855|after-compile-stdout.txt=94c5e6c79d57c6c0e241ebbd540a1a4d418acc7b1a6d1c3b53326ca683204193|after-probe-result.json=6b7382f943b30fa61036c325d08cfb613bdde90a9a9f5035b2bd80f27a45903a|after-probe-stderr.txt=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855|after-probe-stdout.txt=59222d62427935c2b36f50408a5d78b15ac0e8f9abc918fee12109880a82706c|before-compile-stderr.txt=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855|before-compile-stdout.txt=634223907bcba4abf4586f468a96c51d78ae0ba0b697ef037a23c838c3719d1e|before-probe-result.json=471f42c1fa0984f44a960eed28d1b08db7f7e793d4e567cfcd8efac060cb0e15|before-probe-stderr.txt=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855|before-probe-stdout.txt=7b953024983ef967465249c4965cd293e0cfdaeb1f9906e368f624160656b788|literal-fixtures.yaml=7e6cd72aa438c1d97fe70ebc683413efa0acfa92db970421f0fbb1d267ca264d|owned-cluster-marker.json=5b271e12e420168fea5042aeccbf7ed793e1af6a9dbc9cc5611cf2882ab9c269|provenance.json=765874294a101c7601c3e2949f402f62aa209ad2ee8a09e7ea5341f396dd381a",
+    "run2WrapperSha256": "3c2b8004c3b0b0e17c7f98b72148335440e620b349f8da734ca01ded4158ab39"
+  },
+  "run1": {
+    "captureCheckout": "d6ed908ae85ac11aa20346e29bb6ff5e203f6164",
+    "cleanupVerified": true,
+    "provenanceStatus": "validation_failed_before_fixed_source_phase",
+    "reason": "The old-source probe stopped before watch-backed reads because it incorrectly required exactly one ConfigMap in A/B; the API also returned kube-root-ca.crt. No fixed-source phase ran. Capture then reported: before probe omitted HTTP request evidence.",
+    "timedOut": false,
+    "wrapperExitCode": 1
+  },
+  "run2": {
+    "after": {
+      "checks": {
+        "allNamespaceFallbackPreservesDenial": true,
+        "clusterScopeFallbackPreservesError": true,
+        "deniedNamespaceFallbackPreservesDenial": true,
+        "sameNameDifferentUID": true,
+        "teamAExactCacheHit": true,
+        "teamBFallbackAndIdentity": true
+      },
+      "exitCode": 0,
+      "mismatches": [],
+      "requestCounts": {
+        "direct": 5,
+        "watch": 6
+      },
+      "watchStatusByScope": {
+        "allNamespaces": [
+          403
+        ],
+        "deniedNamespace": [
+          403
+        ],
+        "namespaceA": [
+          200
+        ],
+        "namespaceB": [
+          200
+        ],
+        "namespacedClusterResource": [
+          403
+        ]
+      }
+    },
+    "before": {
+      "checks": {
+        "sameNameDifferentUID": true,
+        "teamAExactCacheHit": true
+      },
+      "exitCode": 1,
+      "mismatches": [
+        "team-b-fallback-and-identity",
+        "all-namespace-fallback-and-denial",
+        "denied-namespace-fallback-preserves-denial",
+        "cluster-scope-fallback-and-error"
+      ],
+      "requestCounts": {
+        "direct": 5,
+        "watch": 2
+      }
+    },
+    "captureCheckout": "6857b0d7b449f492ad195ebcc930813410f40460",
+    "cleanupVerified": true,
+    "directHttp": {
+      "A": [
+        200
+      ],
+      "B": [
+        200
+      ],
+      "allNamespaces": [
+        403
+      ],
+      "deniedNamespace": [
+        403
+      ],
+      "namespacedNodes": [
+        403
+      ]
+    },
+    "elapsedSeconds": 84.4724543329794,
+    "endedAt": "2026-10-01T07:59:15Z",
+    "fixture": {
+      "directAndWatchIdentitiesMatch": true,
+      "fullListIncludesControllerConfigMap": true,
+      "sameNameFixtureUIDs": {
+        "scout-watch-ns-20261001075751-f2f739e5-a": "27ab2e53-da36-4f0a-8bcc-989edcf76c42",
+        "scout-watch-ns-20261001075751-f2f739e5-b": "6f8ee2c2-f305-4cb5-8a60-aa27cb96fcf1"
+      },
+      "scope": "two namespaces, same-name ConfigMap in each; observer has namespace Roles in A/B, none in denied, no ClusterRole"
+    },
+    "helperSha256": "d8f929e4f0de6a8588ae99aa795c587bcd25e80d7416e98bce316c88f1221976",
+    "integrityOnlySharedKubeconfigSha256": "910415d445ded06e3bd337c51cbabe8ce385684b1e35c1cb7ce57776d0ba2ad1",
+    "limitations": [
+      "sequential before/after on one owned cluster, not atomic",
+      "Nodes control used a synthetic empty cluster-scope lister; observed 403 proves API fallback/error preservation, not route validation or a Nodes informer",
+      "no freshness, reconnect/410, storage-bound, full-inventory, latency, or savings claim"
+    ],
+    "privateConfigsUnchangedBeforeCleanup": true,
+    "product": {
+      "adaptedProbeSha256": {
+        "after": "536bd0aede3cd0ba8e7f345bd35be21f95da7bb17d0d5db5a07d937ccf7145b1",
+        "before": "198ad41098f3b769c1a277a2988576393db2951e0f5d36c1a3c5cb1a475be5a9"
+      },
+      "after": {
+        "revision": "7611908afeb361b15a03d2687ccdaff6c504a811",
+        "watchSourceSha256": "f7366f94cd9feeabe729aa8e13753114fe0d57383e5ad3102aa3a92cef765c34"
+      },
+      "before": {
+        "revision": "d7f081e88e1841a9557e086a8c0b479c8180008d",
+        "watchSourceSha256": "428c7aa0552d6f8affdca369a595fdee46ca28e5f4299d067a372e73de6a3bc4"
+      },
+      "probeTemplateSha256": "536bd0aede3cd0ba8e7f345bd35be21f95da7bb17d0d5db5a07d937ccf7145b1"
+    },
+    "sharedConfigHashUnchanged": true,
+    "startedAt": "2026-10-01T07:57:51Z",
+    "timedOut": false,
+    "toolPins": {
+      "dockerSha256": "70d5a06adf388bd09b652f47ddc9ca31663a3e5353d24188bdb0054b3014ab3e",
+      "go": {
+        "sha256": "912f19a1a95ffe44a9e349d8283c74eb1d2eace37aad3ca6ef7b9ae321eb709f",
+        "version": "go version go1.26.2 darwin/arm64"
+      },
+      "kind": {
+        "sha256": "19b50bfe8f348d9054076bb1e81c2da28d7cd0a56f8ba42b9d667b051c216109",
+        "version": "kind v0.31.0 go1.25.5 darwin/arm64"
+      },
+      "kubectl": {
+        "sha256": "f91be8422eefc635dc336846b7f747d9b6aaed883b9e914ea7bf4cafcc6a838e",
+        "version": "v1.36.0"
+      },
+      "nodeImage": "kindest/node:v1.35.0@sha256:4613778f3cfcd10e615029370f5786704559103cf27bef934597ba562b269661",
+      "nodeImageRepoDigest": "kindest/node@sha256:4613778f3cfcd10e615029370f5786704559103cf27bef934597ba562b269661",
+      "serverVersion": "v1.35.0"
+    },
+    "wrapperExitCode": 0
+  },
+  "schema": "watch-cache-namespace-live-proof-report.v1",
+  "status": "passed"
+}

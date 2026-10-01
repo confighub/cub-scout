@@ -305,11 +305,11 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 	// setup failure fall back to per-cycle polling rather than degrade coverage.
 	watchBackedActive := false
 	if opts.WatchBacked && !opts.Once {
-		if toWatch, derr := watchableGVRs(cfg, watchBackedCandidateGVRs()); derr != nil {
+		if toWatch, scopes, derr := watchableGVRs(cfg, watchBackedCandidateGVRs()); derr != nil {
 			fmt.Fprintf(os.Stderr, "Warning: --watch-backed discovery failed; falling back to per-cycle polling: %v\n", derr)
 		} else if len(toWatch) == 0 {
 			fmt.Fprintln(os.Stderr, "Warning: --watch-backed found no watchable resource types; falling back to per-cycle polling")
-		} else if wb, syncedGVRs, stopWB, werr := newWatchBackedClient(ctx, dynClient, toWatch, namespace); werr != nil {
+		} else if wb, syncedGVRs, stopWB, werr := newWatchBackedClient(ctx, dynClient, toWatch, scopes, namespace); werr != nil {
 			fmt.Fprintf(os.Stderr, "Warning: --watch-backed setup failed; falling back to per-cycle polling: %v\n", werr)
 		} else {
 			defer stopWB()

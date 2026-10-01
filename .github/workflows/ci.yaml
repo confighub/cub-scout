@@ -81,6 +81,9 @@ jobs:
       - name: Run offline RUL-04 capture guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest evals/rul04-image-identity/test_capture.py
 
+      - name: Run offline watch cache namespace proof guards
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest evals/watch-cache-namespace/test_capture.py -v
+
       - name: Run offline RUL-01 dated-snapshot guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/rul01-dated-snapshot -v
 
