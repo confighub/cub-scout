@@ -79,8 +79,16 @@ type cacheReplayActualRecord struct {
 	Steps     []cacheReplayActualStep `json:"steps"`
 }
 
+type cacheReplayAuthoredInput struct {
+	StepID      string `json:"stepId"`
+	Clock       string `json:"clock"`
+	Refresh     bool   `json:"refresh"`
+	ResponseKey string `json:"responseKey"`
+}
+
 type cacheReplayDocument struct {
-	Schema string `json:"schema"`
+	Inputs []cacheReplayAuthoredInput `json:"inputs"`
+	Schema string                     `json:"schema"`
 	Scope  struct {
 		Context    string             `json:"context"`
 		Resource   BoundedResourceRef `json:"resource"`
@@ -106,6 +114,13 @@ func TestBoundedReadRUL02IdentityCacheReplay(t *testing.T) {
 	require.Equal(t, BoundedResourceRef{APIVersion: "apps/v1", Kind: "Deployment", Namespace: "team-a", Name: "api"}, replay.Scope.Resource)
 	require.Equal(t, 15, replay.Scope.TTLSeconds)
 	require.Len(t, replay.ExpectedSteps, 9)
+	require.Len(t, replay.Inputs, 9)
+	expectedByID := make(map[string]cacheReplayStep, 9)
+	for _, expected := range replay.ExpectedSteps {
+		_, duplicate := expectedByID[expected.Name]
+		require.False(t, duplicate)
+		expectedByID[expected.Name] = expected
+	}
 
 	for name, response := range replay.Responses {
 		digest := sha256.Sum256([]byte(response.Body))
@@ -153,33 +168,22 @@ func TestBoundedReadRUL02IdentityCacheReplay(t *testing.T) {
 	actual := make([]cacheReplayStep, 0, len(replay.ExpectedSteps))
 	actualRecord := cacheReplayActualRecord{Schema: "bounded-resource-cache-replay-result.v1", InputKind: "authored_httptest_responses_and_clock", Resource: ref}
 
-	for i, want := range replay.ExpectedSteps {
-		clock, err = time.Parse(time.RFC3339, want.At)
-		require.NoError(t, err, "step %s clock", want.Name)
+	for i, input := range replay.Inputs {
+		require.Equal(t, fmt.Sprintf("step-%02d", i+1), input.StepID)
+		want, exists := expectedByID[input.StepID]
+		require.True(t, exists)
+		clock, err = time.Parse(time.RFC3339, input.Clock)
+		require.NoError(t, err, "step %s clock", input.StepID)
+		_, responseExists := replay.Responses[input.ResponseKey]
+		require.True(t, responseExists)
 		mu.Lock()
-		switch want.Name {
-		case "initial-object-a", "unexpired-cache-hit":
-			currentResponse = "objectA"
-		case "changed-server-hidden-by-cache", "explicit-refresh-replacement-uid":
-			currentResponse = "objectB"
-		case "explicit-refresh-same-uid-new-digest":
-			currentResponse = "objectC"
-		case "expired-cache-object-d":
-			currentResponse = "objectD"
-		case "missing-uid-and-digest":
-			currentResponse = "objectMissingIdentity"
-		case "failed-refresh", "ordinary-read-after-failed-refresh":
-			currentResponse = "objectUnavailable"
-		default:
-			mu.Unlock()
-			t.Fatalf("unexpected replay step %q", want.Name)
-		}
+		currentResponse = input.ResponseKey
 		requestStart := len(httpRecords)
 		configuredResponse := replay.Responses[currentResponse]
 		mu.Unlock()
 
-		obj, evidence, readErr := reader.Read(context.Background(), ref, want.Refresh)
-		step := cacheReplayStep{Name: want.Name, At: want.At, Refresh: want.Refresh,
+		obj, evidence, readErr := reader.Read(context.Background(), ref, input.Refresh)
+		step := cacheReplayStep{Name: input.StepID, At: input.Clock, Refresh: input.Refresh,
 			Cache: evidence.Cache, Available: evidence.Available,
 			DiscoveryReads: evidence.Reads.Discovery, ObjectReads: evidence.Reads.Object}
 		if !evidence.ObservedAt.IsZero() {
@@ -211,12 +215,12 @@ func TestBoundedReadRUL02IdentityCacheReplay(t *testing.T) {
 		mu.Unlock()
 
 		require.Equal(t, want, step, "step %d (%s)", i, want.Name)
-		if want.Name == "missing-uid-and-digest" {
+		if input.StepID == "step-07" {
 			require.Empty(t, step.UID, "UID must not be inferred from the stable name")
 			require.NotContains(t, step.Image, "@sha256:", "digest must not be inferred from a mutable tag")
 		}
 		actual = append(actual, step)
-		stepID := fmt.Sprintf("step-%02d", i+1)
+		stepID := input.StepID
 		classification := "none"
 		if readErr != nil {
 			if strings.Contains(readErr.Error(), "bounded object unavailable") {
@@ -230,7 +234,7 @@ func TestBoundedReadRUL02IdentityCacheReplay(t *testing.T) {
 			returned = obj.Object
 		}
 		actualRecord.Steps = append(actualRecord.Steps, cacheReplayActualStep{
-			Input:          cacheReplayInputRecord{StepID: stepID, Clock: want.At, Refresh: want.Refresh, ConfiguredObjectResponse: configuredResponse},
+			Input:          cacheReplayInputRecord{StepID: stepID, Clock: input.Clock, Refresh: input.Refresh, ConfiguredObjectResponse: configuredResponse},
 			ReturnedObject: returned, Evidence: evidence, ErrorClassification: classification,
 			Requests: stepRequests, CumulativeRequestCount: cumulativeRequestCount,
 		})

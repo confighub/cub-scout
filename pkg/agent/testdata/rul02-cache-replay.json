@@ -63,7 +63,7 @@
   },
   "expectedSteps": [
     {
-      "name": "initial-object-a",
+      "name": "step-01",
       "at": "2026-09-30T12:00:00Z",
       "refresh": false,
       "uid": "uid-A",
@@ -79,7 +79,7 @@
       "error": ""
     },
     {
-      "name": "unexpired-cache-hit",
+      "name": "step-02",
       "at": "2026-09-30T12:00:02Z",
       "refresh": false,
       "uid": "uid-A",
@@ -95,7 +95,7 @@
       "error": ""
     },
     {
-      "name": "changed-server-hidden-by-cache",
+      "name": "step-03",
       "at": "2026-09-30T12:00:03Z",
       "refresh": false,
       "uid": "uid-A",
@@ -111,7 +111,7 @@
       "error": ""
     },
     {
-      "name": "explicit-refresh-replacement-uid",
+      "name": "step-04",
       "at": "2026-09-30T12:00:04Z",
       "refresh": true,
       "uid": "uid-B",
@@ -127,7 +127,7 @@
       "error": ""
     },
     {
-      "name": "explicit-refresh-same-uid-new-digest",
+      "name": "step-05",
       "at": "2026-09-30T12:00:05Z",
       "refresh": true,
       "uid": "uid-B",
@@ -143,7 +143,7 @@
       "error": ""
     },
     {
-      "name": "expired-cache-object-d",
+      "name": "step-06",
       "at": "2026-09-30T12:00:20Z",
       "refresh": false,
       "uid": "uid-C",
@@ -159,7 +159,7 @@
       "error": ""
     },
     {
-      "name": "missing-uid-and-digest",
+      "name": "step-07",
       "at": "2026-09-30T12:00:21Z",
       "refresh": true,
       "uid": "",
@@ -175,7 +175,7 @@
       "error": ""
     },
     {
-      "name": "failed-refresh",
+      "name": "step-08",
       "at": "2026-09-30T12:00:22Z",
       "refresh": true,
       "uid": "",
@@ -191,7 +191,7 @@
       "error": "object unavailable"
     },
     {
-      "name": "ordinary-read-after-failed-refresh",
+      "name": "step-09",
       "at": "2026-09-30T12:00:23Z",
       "refresh": false,
       "uid": "",
@@ -222,5 +222,61 @@
     "objectUnavailable",
     "discovery",
     "objectUnavailable"
+  ],
+  "inputs": [
+    {
+      "stepId": "step-01",
+      "clock": "2026-09-30T12:00:00Z",
+      "refresh": false,
+      "responseKey": "objectA"
+    },
+    {
+      "stepId": "step-02",
+      "clock": "2026-09-30T12:00:02Z",
+      "refresh": false,
+      "responseKey": "objectA"
+    },
+    {
+      "stepId": "step-03",
+      "clock": "2026-09-30T12:00:03Z",
+      "refresh": false,
+      "responseKey": "objectB"
+    },
+    {
+      "stepId": "step-04",
+      "clock": "2026-09-30T12:00:04Z",
+      "refresh": true,
+      "responseKey": "objectB"
+    },
+    {
+      "stepId": "step-05",
+      "clock": "2026-09-30T12:00:05Z",
+      "refresh": true,
+      "responseKey": "objectC"
+    },
+    {
+      "stepId": "step-06",
+      "clock": "2026-09-30T12:00:20Z",
+      "refresh": false,
+      "responseKey": "objectD"
+    },
+    {
+      "stepId": "step-07",
+      "clock": "2026-09-30T12:00:21Z",
+      "refresh": true,
+      "responseKey": "objectMissingIdentity"
+    },
+    {
+      "stepId": "step-08",
+      "clock": "2026-09-30T12:00:22Z",
+      "refresh": true,
+      "responseKey": "objectUnavailable"
+    },
+    {
+      "stepId": "step-09",
+      "clock": "2026-09-30T12:00:23Z",
+      "refresh": false,
+      "responseKey": "objectUnavailable"
+    }
   ]
 }
