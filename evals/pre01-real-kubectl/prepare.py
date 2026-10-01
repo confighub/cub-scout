@@ -186,6 +186,19 @@ def _expected_routes():
     return {phase: module.load_routes(phase)[0] for phase in ("absent", "present")}
 
 
+def _command_receipt(argv, code, stdout, stderr, elapsed):
+    def facts(data):
+        if not isinstance(data, bytes):
+            return None, None
+        return len(data), sha(data)
+    stdout_bytes, stdout_sha = facts(stdout)
+    stderr_bytes, stderr_sha = facts(stderr)
+    return {"argv": argv, "exitCode": code, "elapsedSeconds": round(elapsed, 6),
+            "stdoutBytes": stdout_bytes, "stderrBytes": stderr_bytes,
+            "stdoutSha256": stdout_sha, "stderrSha256": stderr_sha,
+            "returnedOutputRetained": False}
+
+
 def validate_payload(raw: bytes, expected: dict[str, list[dict]], source_hashes: dict[str, str] | None = None) -> dict:
     result = _strict_json(raw, "gate payload")
     if not isinstance(result, dict) or result.get("schema") != "pre01-real-kubectl-gate.v1" or result.get("status") != "passed":
@@ -276,12 +289,12 @@ def validate_payload(raw: bytes, expected: dict[str, list[dict]], source_hashes:
                     or command.get("error") is not None):
                 raise GateError("kubectl command time or error metadata is invalid")
             stdout = _decode_stream(command, "stdout")
-            _decode_stream(command, "stderr")
+            stderr = _decode_stream(command, "stderr")
             exit_code = command.get("exitCode")
             if type(exit_code) is not int:
                 raise GateError("kubectl exit code is malformed")
-            if status == 404 and exit_code == 0:
-                raise GateError("captured 404 did not fail through kubectl")
+            if status == 404 and (exit_code != 1 or not stderr):
+                raise GateError("captured 404 did not produce the pinned kubectl error exit")
             if status == 200 and (exit_code != 0 or stdout != route["body"]):
                 raise GateError("captured 200 did not return exact response bytes through kubectl")
             argv = command.get("argv")
@@ -295,7 +308,10 @@ def _decode_stream(command: dict, name: str) -> bytes:
         data = __import__("base64").b64decode(command.get(name + "Base64"), validate=True)
     except (ValueError, TypeError):
         raise GateError(f"kubectl {name} evidence is malformed") from None
-    if len(data) != command.get(name + "Bytes") or sha(data) != command.get(name + "Sha256"):
+    byte_count = command.get(name + "Bytes")
+    if (type(byte_count) is not int or byte_count < 0 or byte_count > PER_STREAM_BYTES
+            or len(data) > PER_STREAM_BYTES or len(data) != byte_count
+            or sha(data) != command.get(name + "Sha256")):
         raise GateError(f"kubectl {name} bytes/hash do not reconcile")
     return data
 
@@ -364,10 +380,9 @@ def capture(assets: Path, docker_path: Path, context: str, output_path: Path, *,
                 code, out_bytes, err_bytes = run([str(docker), "--context", context, *args], min(timeout, remaining), env=env, max_output=CAP)
                 return code, out_bytes, err_bytes
             finally:
-                receipt["commands"].append({"argv": [str(docker), "--context", context, *args], "exitCode": code,
-                    "elapsedSeconds": round(time.monotonic() - began, 6), "stdoutBytes": len(out_bytes or b""),
-                    "stderrBytes": len(err_bytes or b""), "stdoutSha256": sha(out_bytes or b""), "stderrSha256": sha(err_bytes or b""),
-                    "returnedOutputRetained": code is not None and args[:2] == ["start", "--attach"]})
+                receipt["commands"].append(_command_receipt(
+                    [str(docker), "--context", context, *args], code, out_bytes, err_bytes,
+                    time.monotonic() - began))
 
         try:
             code, raw, _ = call(["context", "inspect", context, "--format", "{{json .Endpoints.docker.Host}}"], 8)
@@ -396,6 +411,13 @@ def capture(assets: Path, docker_path: Path, context: str, output_path: Path, *,
             code, raw, err = call(["start", "--attach", container_id], EXECUTION_SECONDS)
             (out / "payload.stdout.bin").write_bytes(raw)
             (out / "payload.stderr.bin").write_bytes(err)
+            receipt["commands"][-1]["returnedOutputRetained"] = True
+            try:
+                diagnostic = _strict_json(raw, "gate payload")
+            except GateError:
+                diagnostic = None
+            if isinstance(diagnostic, dict) and diagnostic.get("schema") == "pre01-real-kubectl-gate.v1":
+                _persist_payload_diagnostics(out, diagnostic)
             if code != 0:
                 raise GateError("payload/container did not exit successfully")
             result = validate_payload(raw, expected_routes, source_hashes)
@@ -407,16 +429,6 @@ def capture(assets: Path, docker_path: Path, context: str, output_path: Path, *,
             if code != 0 or summary["exitCode"] != 0:
                 raise GateError("payload/container did not exit successfully")
             (out / "container-after.inspect.json").write_bytes(final_raw)
-            (out / "gate-result.json").write_bytes((json.dumps(result, sort_keys=True, indent=2) + "\n").encode())
-            for phase in result["phases"]:
-                (out / (phase["phase"] + ".replay-trace.json")).write_bytes((json.dumps(phase["replayTrace"], sort_keys=True, indent=2) + "\n").encode())
-                for command in phase["commands"]:
-                    for stream_name in ("stdout", "stderr"):
-                        import base64
-                        data = base64.b64decode(command[stream_name + "Base64"], validate=True)
-                        target = out / f"{phase['phase']}-{command['index']}-{stream_name}.bin"
-                        fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-                        with os.fdopen(fd, "wb") as f: f.write(data)
             receipt["resultStatus"] = result["status"]
         except BaseException as exc:
             error = str(exc)[:240] if isinstance(exc, GateError) else type(exc).__name__
@@ -473,6 +485,39 @@ def capture(assets: Path, docker_path: Path, context: str, output_path: Path, *,
             # Pre-container staging errors leave evidence untouched for diagnosis.
             pass
         raise
+
+
+def _persist_payload_diagnostics(out: Path, payload: dict) -> None:
+    """Retain bounded child evidence on failures without treating it as accepted."""
+    (out / "gate-result.json").write_text(json.dumps(payload, sort_keys=True, indent=2) + "\n")
+    phases = payload.get("phases")
+    if not isinstance(phases, list):
+        return
+    import base64
+    for phase in phases:
+        if not isinstance(phase, dict) or phase.get("phase") not in {"absent", "present"}:
+            continue
+        phase_name = phase["phase"]
+        trace = phase.get("replayTrace")
+        if isinstance(trace, dict):
+            (out / (phase_name + ".replay-trace.json")).write_text(json.dumps(trace, sort_keys=True, indent=2) + "\n")
+        commands = phase.get("commands")
+        if not isinstance(commands, list):
+            continue
+        for command in commands:
+            if not isinstance(command, dict) or type(command.get("index")) is not int or command["index"] not in range(3):
+                continue
+            for stream_name in ("stdout", "stderr"):
+                try:
+                    data = base64.b64decode(command.get(stream_name + "Base64", ""), validate=True)
+                except (ValueError, TypeError):
+                    continue
+                if len(data) > PER_STREAM_BYTES:
+                    continue
+                target = out / f"{phase_name}-{command['index']}-{stream_name}.bin"
+                fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+                with os.fdopen(fd, "wb") as stream:
+                    stream.write(data)
 
 
 def main(argv=None) -> int:

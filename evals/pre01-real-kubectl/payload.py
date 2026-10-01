@@ -182,8 +182,11 @@ def _run_phase(replay, phase: str, deadline: float, *, runtime_dir: Path = Path(
 
     thread = threading.Thread(target=serve, name="owned-recorded-api-replay", daemon=False)
     commands = []
+    phase_error = None
+    started = False
     try:
         thread.start()
+        started = True
         port = server.server_address[1]
         cfg = runtime_dir / ("kubeconfig-" + phase)
         write_private(cfg, _kubeconfig(port))
@@ -201,7 +204,8 @@ def _run_phase(replay, phase: str, deadline: float, *, runtime_dir: Path = Path(
             expected_code = EXPECTED_STATUS[phase][index]
             if result["status"] != "passed" or result["outputTruncated"]:
                 break
-            if (expected_code == 404 and (type(result["exitCode"]) is not int or result["exitCode"] == 0)):
+            if (expected_code == 404 and (type(result["exitCode"]) is not int or result["exitCode"] != 1
+                                          or result["stderrBytes"] == 0)):
                 break
             if expected_code == 200:
                 try:
@@ -210,18 +214,25 @@ def _run_phase(replay, phase: str, deadline: float, *, runtime_dir: Path = Path(
                     break
                 if result["exitCode"] != 0 or stdout != routes[index]["body"]:
                     break
+    except BaseException as exc:
+        phase_error = str(exc)[:160] if isinstance(exc, GateError) else type(exc).__name__
     finally:
         server.stop_event.set()
-        thread.join(timeout=2.5)
-        if thread.is_alive():
+        if started:
+            thread.join(timeout=2.5)
+        else:
+            server.server_close()
+        if started and thread.is_alive():
             server.server_close()
             thread.join(timeout=1.0)
-    if thread.is_alive():
-        raise GateError("owned replay server thread did not stop")
+    if started and thread.is_alive():
+        phase_error = phase_error or "owned replay server thread did not stop"
     trace = replay._trace(ready, server, server_status["value"] or "thread_failed", phase_started, phase_began,
                           server_status["error"])
     trace.update({"kubectlPhaseCommands": len(commands), "kubeconfigSha256": kubeconfig_hash if 'kubeconfig_hash' in locals() else None})
-    return {"phase": phase, "status": "passed" if _check_phase_result(phase, routes, commands, trace) else "failed",
+    passed = _check_phase_result(phase, routes, commands, trace) and phase_error is None
+    return {"phase": phase, "status": "passed" if passed else "failed",
+            **({} if passed else {"error": phase_error or "phase acceptance checks failed"}),
             "startedAt": phase_started, "endedAt": utc_now(), "elapsedSeconds": round(time.monotonic() - phase_began, 6),
             "sourceRows": ready["routes"], "transportReady": {"host": "127.0.0.1", "port": server.server_address[1],
                             "sourceRevision": ready["sourceRevision"], "reportSha256": ready["reportSha256"],
@@ -252,14 +263,17 @@ def _check_phase_result(phase: str, routes: list[dict], commands: list[dict], tr
             stderr = base64.b64decode(cmd.get("stderrBase64", ""), validate=True)
         except (ValueError, TypeError):
             return False
-        if (sha(stdout) != cmd.get("stdoutSha256") or len(stdout) != cmd.get("stdoutBytes")
-                or sha(stderr) != cmd.get("stderrSha256") or len(stderr) != cmd.get("stderrBytes")
+        stdout_size, stderr_size = cmd.get("stdoutBytes"), cmd.get("stderrBytes")
+        if (type(stdout_size) is not int or type(stderr_size) is not int
+                or len(stdout) > COMMAND_OUTPUT_CAP or len(stderr) > COMMAND_OUTPUT_CAP
+                or sha(stdout) != cmd.get("stdoutSha256") or len(stdout) != stdout_size
+                or sha(stderr) != cmd.get("stderrSha256") or len(stderr) != stderr_size
                 or cmd.get("status") != "passed" or cmd.get("outputTruncated") is not False):
             return False
         code = cmd.get("exitCode")
         if type(code) is not int:
             return False
-        if status == 404 and code == 0:
+        if status == 404 and (code != 1 or not stderr):
             return False
         if status == 200 and (code != 0 or stdout != route["body"]):
             return False
@@ -267,13 +281,24 @@ def _check_phase_result(phase: str, routes: list[dict], commands: list[dict], tr
 
 
 def main() -> int:
+    phases = []
     try:
         replay = load_replay()
         started = time.monotonic()
         deadline = started + TOTAL_SECONDS
-        phases = [_run_phase(replay, phase, deadline) for phase in ("absent", "present")]
-        passed = all(phase["status"] == "passed" and phase["listenerCleanupConfirmed"] for phase in phases)
+        for phase_name in ("absent", "present"):
+            try:
+                phase = _run_phase(replay, phase_name, deadline)
+            except BaseException as exc:
+                phase = {"phase": phase_name, "status": "failed",
+                         "error": str(exc)[:160] if isinstance(exc, GateError) else type(exc).__name__,
+                         "commands": [], "replayTrace": None, "listenerCleanupConfirmed": False}
+            phases.append(phase)
+            if phase["status"] != "passed":
+                break
+        passed = len(phases) == 2 and all(phase["status"] == "passed" and phase["listenerCleanupConfirmed"] for phase in phases)
         result = {"schema": "pre01-real-kubectl-gate.v1", "status": "passed" if passed else "failed",
+                  **({} if passed else {"error": "one or more bounded phases failed or were incomplete"}),
                   "source": {"phaseOrder": ["absent", "present"], "atomicSnapshot": False,
                              "kubectlSha256": _file_sha(TOOLS / "kubectl"),
                              "replaySha256": _file_sha(REPLAY_PATH),
@@ -282,13 +307,12 @@ def main() -> int:
                   "limits": {"perCommandSeconds": COMMAND_TIMEOUT, "perStreamBytes": COMMAND_OUTPUT_CAP,
                              "phaseWallSeconds": PHASE_WALL_SECONDS, "totalExecutionSeconds": TOTAL_SECONDS},
                   "elapsedSeconds": round(time.monotonic() - started, 6), "phases": phases}
-        print(json.dumps(result, sort_keys=True, separators=(",", ":")))
-        return 0 if passed else 1
     except BaseException as exc:
         result = {"schema": "pre01-real-kubectl-gate.v1", "status": "failed",
-                  "error": str(exc)[:200] if isinstance(exc, GateError) else type(exc).__name__}
-        print(json.dumps(result, sort_keys=True, separators=(",", ":")))
-        return 1
+                  "error": str(exc)[:200] if isinstance(exc, GateError) else type(exc).__name__,
+                  "phases": phases}
+    print(json.dumps(result, sort_keys=True, separators=(",", ":")))
+    return 0 if result.get("status") == "passed" else 1
 
 
 def _file_sha(path: Path) -> str:

@@ -38,7 +38,7 @@
       "/apis/monitoring.coreos.com/v1/namespaces/monitoring/servicemonitors/kube-prometheus-stack-kube-state-metrics"
     ],
     "expectedHttpStatuses": {"absent": [404, 404, 404], "present": [200, 200, 200]},
-    "acceptance": "Each captured 404 must produce a nonzero kubectl exit; each captured 200 must produce exit zero and stdout exactly matching the pinned response bytes. Each phase trace must prove exactly its three declared GET paths/statuses/body hashes, with no extra, duplicate, unavailable, or malformed request.",
+    "acceptance": "Each captured 404 must produce kubectl exit code 1 with nonempty stderr; each captured 200 must produce exit code 0 and stdout exactly matching the pinned response bytes. Each phase trace must prove exactly its three declared GET paths/statuses/body hashes, with no extra, duplicate, unavailable, or malformed request.",
     "sourceSnapshot": "The original capture is sequential and non-atomic; replay preserves that limitation."
   },
   "bounds": {
@@ -58,7 +58,7 @@
   },
   "validation": {
     "tests": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/pre01-real-kubectl -v",
-    "result": "13 deterministic offline tests pass; tests use authored fake CLI processes and/or the owned loopback replay implementation, not Docker or the real kubectl binary."
+    "result": "18 deterministic offline tests pass; tests use authored fake CLI processes and/or the owned loopback replay implementation, not Docker or the real kubectl binary."
   },
   "limitations": [
     "This is source preparation only; the bounded container invocation remains pending independent review.",

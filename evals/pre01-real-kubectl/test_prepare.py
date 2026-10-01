@@ -10,6 +10,9 @@ import sys
 import tempfile
 import time
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
+from unittest import mock
 
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location("pre01_real_kubectl_prepare", HERE / "prepare.py")
@@ -196,8 +199,15 @@ class SecurityAndContractTests(unittest.TestCase):
                     prepare.validate_payload(json.dumps(candidate).encode(), self.expected)
 
     def test_404_and_200_cli_semantics_are_independently_required(self):
+        for exit_code in (0, 2, -9):
+            result = positive_result(self.expected)
+            result["phases"][0]["commands"][0]["exitCode"] = exit_code
+            with self.subTest(exit_code=exit_code), self.assertRaises(prepare.GateError):
+                prepare.validate_payload(json.dumps(result).encode(), self.expected)
         result = positive_result(self.expected)
-        result["phases"][0]["commands"][0]["exitCode"] = 0
+        result["phases"][0]["commands"][0]["stderrBase64"] = encoded(b"")
+        result["phases"][0]["commands"][0]["stderrBytes"] = 0
+        result["phases"][0]["commands"][0]["stderrSha256"] = digest(b"")
         with self.assertRaises(prepare.GateError):
             prepare.validate_payload(json.dumps(result).encode(), self.expected)
         result = positive_result(self.expected)
@@ -206,6 +216,78 @@ class SecurityAndContractTests(unittest.TestCase):
         result["phases"][1]["commands"][0]["stdoutSha256"] = digest(b"wrong body")
         with self.assertRaises(prepare.GateError):
             prepare.validate_payload(json.dumps(result).encode(), self.expected)
+
+    def test_payload_phase_checker_requires_normal_404_failure_with_stderr(self):
+        result = positive_result(self.expected)
+        phase = result["phases"][0]
+        self.assertTrue(payload._check_phase_result("absent", self.expected["absent"],
+                                                     phase["commands"], phase["replayTrace"]))
+        for exit_code, stderr in ((0, b"not found"), (2, b"not found"), (-9, b"not found"), (1, b"")):
+            mutated = json.loads(json.dumps(phase))
+            command = mutated["commands"][0]
+            command["exitCode"] = exit_code
+            command["stderrBase64"] = encoded(stderr)
+            command["stderrBytes"] = len(stderr)
+            command["stderrSha256"] = digest(stderr)
+            with self.subTest(exit_code=exit_code, stderr=stderr):
+                self.assertFalse(payload._check_phase_result("absent", self.expected["absent"],
+                                                              mutated["commands"], mutated["replayTrace"]))
+
+    def test_stream_metadata_requires_true_bounded_integer_sizes(self):
+        for value in (True, -1, 65537):
+            result = positive_result(self.expected)
+            command = result["phases"][1]["commands"][0]
+            command["stdoutBytes"] = value
+            if value == 65537:
+                oversized = b"x" * value
+                command["stdoutBase64"] = encoded(oversized)
+                command["stdoutSha256"] = digest(oversized)
+            with self.subTest(value=value), self.assertRaises(prepare.GateError):
+                prepare.validate_payload(json.dumps(result).encode(), self.expected)
+
+    def test_failed_second_phase_keeps_first_and_current_partial_evidence(self):
+        first = {"phase": "absent", "status": "passed", "listenerCleanupConfirmed": True,
+                 "commands": [{"index": 0}], "replayTrace": {"phase": "absent"}}
+        second = {"phase": "present", "status": "failed", "listenerCleanupConfirmed": True,
+                  "error": "third read timed out", "commands": [{"index": 0}, {"index": 1}],
+                  "replayTrace": {"phase": "present", "requestsObserved": 2}}
+        stdout = StringIO()
+        with mock.patch.object(payload, "load_replay", return_value=object()), \
+                mock.patch.object(payload, "_run_phase", side_effect=[first, second]), \
+                mock.patch.object(payload, "_file_sha", return_value="a" * 64), \
+                redirect_stdout(stdout):
+            self.assertEqual(payload.main(), 1)
+        result = json.loads(stdout.getvalue())
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual([p["phase"] for p in result["phases"]], ["absent", "present"])
+        self.assertEqual(len(result["phases"][0]["commands"]), 1)
+        self.assertEqual(len(result["phases"][1]["commands"]), 2)
+
+    def test_unavailable_docker_output_is_not_reported_as_empty_bytes(self):
+        unavailable = prepare._command_receipt(["docker", "start"], None, None, None, 0.1)
+        self.assertIsNone(unavailable["stdoutBytes"])
+        self.assertIsNone(unavailable["stderrBytes"])
+        self.assertIsNone(unavailable["stdoutSha256"])
+        self.assertIsNone(unavailable["stderrSha256"])
+        self.assertFalse(unavailable["returnedOutputRetained"])
+        empty = prepare._command_receipt(["docker", "inspect"], 0, b"", b"", 0.1)
+        self.assertEqual(empty["stdoutBytes"], 0)
+        self.assertEqual(empty["stderrBytes"], 0)
+        self.assertEqual(empty["stdoutSha256"], digest(b""))
+
+    def test_partial_gate_diagnostics_are_persisted_without_completion_claim(self):
+        result = {"schema": "pre01-real-kubectl-gate.v1", "status": "failed",
+                  "phases": [{"phase": "absent", "status": "failed",
+                              "commands": [{"index": 0, "stdoutBase64": encoded(b"partial"),
+                                            "stderrBase64": encoded(b"err")}],
+                              "replayTrace": {"requestsObserved": 1}}]}
+        with tempfile.TemporaryDirectory(dir="/tmp") as td:
+            out = Path(td)
+            prepare._persist_payload_diagnostics(out, result)
+            self.assertEqual(json.loads((out / "gate-result.json").read_text())["status"], "failed")
+            self.assertEqual((out / "absent.replay-trace.json").read_bytes(), b'{\n  "requestsObserved": 1\n}\n')
+            self.assertEqual((out / "absent-0-stdout.bin").read_bytes(), b"partial")
+            self.assertEqual((out / "absent-0-stderr.bin").read_bytes(), b"err")
 
     def test_result_schema_and_source_hash_must_be_pinned(self):
         result = positive_result(self.expected)
