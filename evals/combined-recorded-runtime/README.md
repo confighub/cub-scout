@@ -61,3 +61,14 @@ staging only:
 ```sh
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/combined-recorded-runtime -v
 ```
+
+The prospective CLI transport projection is specific to Claude 2.1.274. It
+compares tool ID/name/input fields and permits only the observed generated
+`total_tokens` reminder suffix, plus removal of the final TAB on an empty
+numbered Read line. Raw CLI and provider bytes are both retained; the reminder
+counter is not usage or billing. Skill names must occur in the structured
+available-skills message listing. A persisted MCP result is read only from its
+exact private session/tool-result path, with symlink and 1-MiB size checks, then
+retained and independently checked with the existing recorded-map validator.
+This does not mean the model saw the complete persisted result. Unexpected
+request paths are retained with a bound and hash but still fail acceptance.

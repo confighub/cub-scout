@@ -33,6 +33,73 @@ def exact_bash_body(actual, expected):
     return isinstance(actual, str) and actual in (expected, expected.removesuffix("\n"))
 
 
+def correlated_result(cli, provider, tool_name):
+    """Only the observed 2.1.274 projection; retain both original byte streams."""
+    if cli == provider:
+        return True
+    if not isinstance(cli, str) or not isinstance(provider, str):
+        return False
+    candidates = [cli]
+    # Read line-number output ends with an empty numbered line and a TAB. The
+    # provider projection removes that TAB, not arbitrary file whitespace.
+    if tool_name == "Read" and re.search(r"\n[0-9]+\t$", cli):
+        candidates.append(cli[:-1])
+    for candidate in candidates:
+        if provider.startswith(candidate):
+            suffix = provider[len(candidate):]
+            if re.fullmatch(r"\n\n<system-reminder>\n<total_tokens>[0-9]{1,9} tokens left</total_tokens>\n</system-reminder>", suffix):
+                return True
+    return False
+
+
+def advertised_skill_names(body):
+    header = "<system-reminder>\nThe following skills are available for use with the Skill tool:\n\n"
+    listings = []
+    for message in body.get("messages", []):
+        if not isinstance(message, dict) or message.get("role") != "user": continue
+        content = message.get("content", [])
+        for block in content if isinstance(content, list) else []:
+            if not isinstance(block, dict) or block.get("type") != "text": continue
+            text = block.get("text", "")
+            if text.startswith(header) and text.endswith("\n</system-reminder>"):
+                listings.append(text)
+    if len(listings) != 1:
+        return []
+    return re.findall(r"^- cub-scout:([a-z0-9-]+)(?::[^\n]*)?$", listings[0], flags=re.MULTILINE)
+
+
+def capture_map_content(content, tool_id, root=Path("/tmp/claude-config/projects/-tmp")):
+    """Capture the exact owned result before container removal, never its preview."""
+    text = content if isinstance(content, str) else "\n".join(x.get("text", "") for x in content if isinstance(x, dict))
+    receipt = {"source": "inline", "path": None}
+    if text.startswith("<persisted-output>\n"):
+        match = re.search(r"^Full output saved to: ([^\n]+)$", text, re.MULTILINE)
+        if not match: raise ValueError("persisted map path missing")
+        path = Path(match.group(1))
+        relative = path.relative_to(root)
+        if (len(relative.parts) != 3 or not re.fullmatch(r"[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}", relative.parts[0])
+            or relative.parts[1] != "tool-results" or relative.parts[2] != tool_id + ".json"):
+            raise ValueError("persisted map path is not the owned tool result")
+        if root.is_symlink() or any(x.is_symlink() for x in (path, *path.parents)):
+            raise ValueError("persisted map path contains symlink")
+        import stat
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+        with os.fdopen(fd, "rb") as stream:
+            facts = os.fstat(stream.fileno())
+            if not stat.S_ISREG(facts.st_mode) or facts.st_size > MAX_BODY: raise ValueError("persisted map file exceeds bound")
+            raw = stream.read(MAX_BODY + 1)
+        if len(raw) > MAX_BODY: raise ValueError("persisted map grew beyond bound")
+        receipt.update(source="persisted", path=str(path))
+    else:
+        raw = text.encode()
+    parsed = json.loads(raw, object_pairs_hook=unique_pairs)
+    if isinstance(parsed, list):
+        if len(parsed) != 1 or parsed[0].get("type") != "text": raise ValueError("map content envelope differs")
+        parsed = json.loads(parsed[0]["text"], object_pairs_hook=unique_pairs)
+    receipt.update(bytes=len(raw), sha256=sha(raw), bodyBase64=base64.b64encode(raw).decode())
+    return parsed, receipt
+
+
 def tool_plan(arm, available):
     plan = [
         ("Read", {"file_path": "/tools/evidence/events.yaml"}),
@@ -192,8 +259,9 @@ class Provider(http.server.ThreadingHTTPServer):
                 if self._timed_out:
                     return
                 safe["status"] = status
-                if self.path not in ("/v1/messages", "/v1/messages?beta=true"):
-                    safe["path"] = "<unexpected>"
+                safe["pathSha256"] = sha(self.path.encode())
+                safe["path"] = self.path[:1024]
+                safe["pathTruncated"] = len(self.path) > 1024
                 with outer.lock: outer.connections.append(safe)
                 try: self.reply(status, response_kind, response)
                 except OSError: pass
@@ -322,7 +390,8 @@ def main():
     cli_result_map = {item.get("id"): item for item in cli_results}
     result_equivalence = (set(matched_results) == set(cli_result_map) and all(
         matched_results[ident].get("is_error") == cli_result_map[ident].get("is_error")
-        and matched_results[ident].get("content_sha256") == sha(json.dumps(cli_result_map[ident].get("content"), sort_keys=True).encode())
+        and correlated_result(cli_result_map[ident].get("content"), matched_results[ident].get("content"),
+                              next((u.get("name") for u in cli_uses if u.get("id") == ident), ""))
         for ident in matched_results))
     tool_ok = ([x.get("name") for x in cli_uses] == expected_names == [x.get("name") for x in provider_uses]
                and [x.get("input") for x in cli_uses] == [x.get("input") for x in provider_uses]
@@ -344,8 +413,10 @@ def main():
             content = map_result.get("content")
             text = content if isinstance(content, str) else "\n".join(x.get("text", "") for x in content if isinstance(x, dict))
             try:
-                scale.validate_report(json.loads(text)); map_results = [{"sha256": sha(text.encode()), "bytes": len(text.encode())}]
-            except (ValueError, TypeError): map_ok = False
+                parsed_map, captured_map = capture_map_content(content, map_use["id"])
+                scale.validate_report(parsed_map)
+                map_results = [captured_map]
+            except (ValueError, TypeError, OSError): map_ok = False
     observed_tools = provider.records[0].get("inventoryNames", []) if provider.records else []
     builtins = [name for name in observed_tools if name in ("Read", "Bash")]
     mcp_inventory = [name for name in observed_tools if isinstance(name, str) and name.startswith("mcp__")]
@@ -358,11 +429,10 @@ def main():
     exact_inventory = {"Read", "Bash"} | ({"Skill", "mcp__cub-scout__map", "mcp__cub-scout__explain"} if arm == "treatment" else set())
     inventory_ok = inventory_ok and set(observed_tools) == exact_inventory and len(observed_tools) == len(exact_inventory)
     expected_skill_names = sorted(p.parent.name for p in (TOOLS / "plugin/skills").rglob("SKILL.md")) if arm == "treatment" else []
-    advertised_text = system_text(first_body.get("system"))
-    advertised_skills = [name for name in expected_skill_names if re.search(r"(?<![A-Za-z0-9_-])" + re.escape(name) + r"(?![A-Za-z0-9_-])", advertised_text)]
+    advertised_skills = advertised_skill_names(first_body)
     skill_signal = {"expectedCount": len(expected_skill_names), "advertisedCount": len(advertised_skills),
                     "advertisedNames": advertised_skills, "sourceDirectoryCount": len(expected_skill_names)}
-    skills_ok = (len(expected_skill_names) == 35 and len(advertised_skills) == 35) if arm == "treatment" else not (TOOLS / "plugin/skills").exists()
+    skills_ok = (len(expected_skill_names) == 35 and sorted(advertised_skills) == expected_skill_names) if arm == "treatment" else not (TOOLS / "plugin/skills").exists()
     def result_text(result):
         content = result.get("content")
         if isinstance(content, str): return content

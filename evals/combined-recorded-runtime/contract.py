@@ -219,6 +219,8 @@ def validate_arm_payload(value: dict, expected_arm: str) -> dict:
             _need(row.get("method") == "HEAD" and row.get("path") == "/api/hello" and row.get("status") == 404,
                   "provider startup request differs from the one allowed declined probe")
     parser = _probe_parser()
+    helper_spec = importlib.util.spec_from_file_location("combined_payload_helpers", Path(__file__).with_name("payload.py"))
+    transport = importlib.util.module_from_spec(helper_spec); helper_spec.loader.exec_module(transport)
     provider_uses, provider_results = parser.scenario_exchange_facts(safe_requests)
     cli_uses = value.get("cliToolUses"); cli_results = value.get("cliToolResults")
     _need(isinstance(cli_uses, list) and isinstance(cli_results, list), "CLI tool events missing")
@@ -241,7 +243,8 @@ def validate_arm_payload(value: dict, expected_arm: str) -> dict:
     for cli_result, provider_result in zip(cli_results, provider_results):
         raw_content = json.dumps(cli_result.get("content"), sort_keys=True).encode()
         _need(cli_result.get("is_error") == provider_result.get("is_error")
-              and hashlib.sha256(raw_content).hexdigest() == provider_result.get("content_sha256"),
+              and transport.correlated_result(cli_result.get("content"), provider_result.get("content"),
+                  next((u["name"] for u in cli_uses if u["id"] == cli_result["id"]), "")),
               "provider and CLI tool-result content/flags disagree")
     for name in ("Task", "Agent"):
         use = next((x for x in cli_uses if x.get("name") == name), None)
@@ -258,6 +261,25 @@ def validate_arm_payload(value: dict, expected_arm: str) -> dict:
               and value.get("skillSignal", {}).get("advertisedCount") == SKILL_COUNT
               and value.get("mcpMapPassed") is True, "treatment skills/MCP evidence incomplete")
         _need(value.get("mcpMapResultValidated") is True, "existing recorded-scale result validator did not pass")
+        expected_skills = sorted(p.parent.name for p in (Path(__file__).resolve().parents[2] / "skills").rglob("SKILL.md"))
+        _need(len(expected_skills) == SKILL_COUNT and
+              sorted(transport.advertised_skill_names(strict_json(requests[0]["body"]))) == expected_skills,
+              "actual provider request lacks the exact staged skill listing")
+        captures = value.get("mcpMapResult")
+        _need(isinstance(captures, list) and len(captures) == 1, "complete map result capture missing")
+        capture = captures[0]
+        raw_map = _strict_b64(capture.get("bodyBase64"), "map body")
+        _need(len(raw_map) <= MAX_REQUEST_BODY and len(raw_map) == capture.get("bytes") and
+              hashlib.sha256(raw_map).hexdigest() == capture.get("sha256"), "captured map bytes/hash mismatch")
+        parsed_map = strict_json(raw_map)
+        if isinstance(parsed_map, list):
+            _need(len(parsed_map) == 1 and parsed_map[0].get("type") == "text", "unexpected map content envelope")
+            parsed_map = strict_json(parsed_map[0]["text"])
+        scale_spec = importlib.util.spec_from_file_location("combined_scale_validator", Path(__file__).resolve().parents[1] / "recorded-scale/preflight.py")
+        scale = importlib.util.module_from_spec(scale_spec); scale_spec.loader.exec_module(scale)
+        try: scale.validate_report(parsed_map)
+        except (ValueError, TypeError, AttributeError) as exc: raise ContractError("complete recorded map invalid") from exc
+
     else:
         _need(value.get("skillsAdvertised") is False and value.get("mcpMapPassed") is True,
               "baseline unexpectedly received plugin or MCP")

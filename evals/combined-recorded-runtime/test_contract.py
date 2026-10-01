@@ -24,13 +24,28 @@ direct = load("combined_runtime_direct_parser", HERE.parent / "direct-cli-contro
 def digest(raw): return hashlib.sha256(raw).hexdigest()
 
 
+def map_fixture():
+    scale = load("combined_scale_fixture", HERE.parent / "recorded-scale/preflight.py")
+    resources = []
+    for owner, count in scale.EXPECTED_COUNTS.items():
+        for n in range(count):
+            namespace, name = scale.NO_MARKER[n].split("/") if owner == "Native" else ("team-01", owner.lower() + str(n))
+            resources.append({"apiVersion": "apps/v1", "kind": "Deployment", "namespace": namespace, "name": name, "owner": owner})
+    return {"schema": "map-list-recorded.v1", "provenance": {"objectCount": 302, "sha256": scale.DEPLOYMENT_SHA256,
+            "captureTime": "unknown", "captureCompleteness": "unknown"},
+            "scope": {"apiVersion": "apps/v1", "kind": "Deployment", "namespacePrefix": "team-"},
+            "selectedCount": 300, "excludedFromScopeCount": 2, "ownerCounts": scale.EXPECTED_COUNTS, "resources": resources}
+
+
 def arm_payload(arm):
     treatment = arm == "treatment"
     tools = [{"name": "Read"}, {"name": "Bash"}]
     if treatment:
         tools += [{"name": "Skill"}, {"name": "mcp__cub-scout__map"}, {"name": "mcp__cub-scout__explain"}]
     plan = payload.tool_plan(arm, tools)
-    history, requests = [], []
+    listing = "<system-reminder>\nThe following skills are available for use with the Skill tool:\n\n" + "\n".join("- cub-scout:" + p.parent.name for p in sorted((HERE.parents[1] / "skills").rglob("SKILL.md"))) + "\n</system-reminder>"
+    history = [{"role": "user", "content": [{"type": "text", "text": listing}]}] if treatment else []
+    requests = []
     uses, results = [], []
     for index in range(1, len(plan) + 2):
         content_type, response = payload.provider_response(False, arm, index, tools)
@@ -55,6 +70,9 @@ def arm_payload(arm):
                 is_error = True
             elif name == "Read":
                 result_content = [{"type": "text", "text": "eventTime: null\nfieldPath: spec.containers{cron}"}]
+                is_error = False
+            elif name.endswith("__map"):
+                result_content = [{"type": "text", "text": json.dumps(map_fixture())}]
                 is_error = False
             else:
                 result_content = [{"type": "text", "text": "synthetic recorded result"}]
@@ -85,6 +103,8 @@ def arm_payload(arm):
         "skillsAdvertised": treatment, "skillsPassed": True,
         "skillSignal": {"advertisedCount": 35 if treatment else 0},
         "mcpMapPassed": True, "mcpMapResultValidated": True, "helmAvailable": True,
+        "mcpMapResult": [{"source": "inline", "path": None, "bytes": len(json.dumps(map_fixture()).encode()),
+                          "sha256": digest(json.dumps(map_fixture()).encode()), "bodyBase64": base64.b64encode(json.dumps(map_fixture()).encode()).decode()}] if treatment else [],
         "helm": {"argv": ["/tools/helm", "version", "--short"], "exitCode": 0,
                  "status": "completed", "stdoutBytes": 4, "stdoutSha256": digest(b"v4.1")},
         "terminalText": "offline-probe-terminal", "elapsedSeconds": 3,
