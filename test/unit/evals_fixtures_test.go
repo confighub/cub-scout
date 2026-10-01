@@ -311,6 +311,10 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			checkGitOpsStatusContextScaffold(t, caseDir)
 			continue
 		}
+		if filepath.Base(caseDir) == "trace-case-sensitive-slugs" {
+			checkTraceCaseSensitiveSlugsScaffold(t, caseDir)
+			continue
+		}
 		if filepath.Base(caseDir) == "recorded-explain-contract" {
 			checkRecordedExplainCaseScaffold(t, caseDir)
 			continue
@@ -509,6 +513,99 @@ func checkTraceContextBindingScaffold(t *testing.T, root string) {
 				t.Fatalf("trace context scaffold changed %s: %v", entry.Name(), err)
 			}
 		}
+	}
+}
+
+// The slug-join case owns a synthetic Trace model plus mocked connected rows,
+// not the suite-wide export or a server recording. Validate exact staging and
+// the negative join represented by those inputs.
+func checkTraceCaseSensitiveSlugsScaffold(t *testing.T, root string) {
+	t.Helper()
+	caseData, err := os.ReadFile(filepath.Join(root, "case.yaml"))
+	if err != nil || !strings.Contains(string(caseData), "FIXTURE-OWNED-SCAFFOLD") || !strings.Contains(string(caseData), "scaffold_script: scaffold.sh") {
+		t.Fatalf("trace slug case does not declare its fixture-owned scaffold: %v", err)
+	}
+	wantNames := []string{"connected-rows.json", "trace-evidence.json"}
+	scaffold, err := filepath.Abs(filepath.Join(root, "scaffold.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	workspace := t.TempDir()
+	cmd := exec.Command("bash", scaffold)
+	cmd.Dir = workspace
+	cmd.Env = offlineKubeconfigEnvironment()
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("trace slug scaffold: %v: %s", err, output)
+	}
+	staged, err := os.ReadDir(filepath.Join(workspace, "cluster"))
+	if err != nil || len(staged) != len(wantNames) {
+		t.Fatalf("trace slug scaffold inventory: count=%d err=%v", len(staged), err)
+	}
+	for i, name := range wantNames {
+		if staged[i].IsDir() || staged[i].Name() != name {
+			t.Fatalf("trace slug scaffold entry[%d]=%q, want %q regular file", i, staged[i].Name(), name)
+		}
+		want, err := os.ReadFile(filepath.Join(root, "fixtures", name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, err := os.ReadFile(filepath.Join(workspace, "cluster", name))
+		if err != nil || !bytes.Equal(got, want) {
+			t.Fatalf("trace slug scaffold changed %s: %v", name, err)
+		}
+	}
+	var trace struct {
+		FixtureKind string `json:"fixtureKind"`
+		Trace       struct {
+			Correlation struct {
+				UnitSlug string `json:"unitSlug"`
+				Target   string `json:"target"`
+			} `json:"correlation"`
+			DeliveryEvidence struct {
+				Releases   []json.RawMessage `json:"releases"`
+				UnitEvents []json.RawMessage `json:"unitEvents"`
+				Omissions  []struct {
+					Layer  string `json:"layer"`
+					Reason string `json:"reason"`
+				} `json:"omissions"`
+			} `json:"deliveryEvidence"`
+		} `json:"trace"`
+	}
+	traceBytes, err := os.ReadFile(filepath.Join(root, "fixtures", "trace-evidence.json"))
+	if err != nil || json.Unmarshal(traceBytes, &trace) != nil {
+		t.Fatalf("read/parse synthetic trace fixture: %v", err)
+	}
+	var rows struct {
+		FixtureKind string `json:"fixtureKind"`
+		Rows        struct {
+			UnitEvents []struct {
+				Unit string `json:"unit"`
+			} `json:"unitEvents"`
+			Releases []struct {
+				Target string `json:"target"`
+			} `json:"releases"`
+		} `json:"rows"`
+	}
+	rowsBytes, err := os.ReadFile(filepath.Join(root, "fixtures", "connected-rows.json"))
+	if err != nil || json.Unmarshal(rowsBytes, &rows) != nil {
+		t.Fatalf("read/parse mocked connected rows: %v", err)
+	}
+	if trace.FixtureKind != "synthetic-shared-trace-model" || rows.FixtureKind != "mocked-bounded-connected-input" ||
+		trace.Trace.Correlation.UnitSlug != "PaymentsAPI" || trace.Trace.Correlation.Target != "West" ||
+		len(rows.Rows.UnitEvents) != 1 || rows.Rows.UnitEvents[0].Unit != "paymentsapi" ||
+		len(rows.Rows.Releases) != 1 || rows.Rows.Releases[0].Target != "west" ||
+		len(trace.Trace.DeliveryEvidence.UnitEvents) != 0 || len(trace.Trace.DeliveryEvidence.Releases) != 0 {
+		t.Fatalf("synthetic opposite-case candidates should be omitted: trace=%+v rows=%+v", trace, rows)
+	}
+	seen := map[string]bool{}
+	for _, omission := range trace.Trace.DeliveryEvidence.Omissions {
+		if !strings.Contains(omission.Reason, "no ") {
+			t.Errorf("omission %q does not explain missing evidence: %q", omission.Layer, omission.Reason)
+		}
+		seen[omission.Layer] = true
+	}
+	if !seen["confighub.releases"] || !seen["confighub.unitEvents"] {
+		t.Errorf("case mismatch needs both no-match omissions, got %v", seen)
 	}
 }
 
