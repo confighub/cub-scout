@@ -113,7 +113,7 @@ class MockLifecycleTests(unittest.TestCase):
    for n in m.EXPECTED:
     f=assets/n; f.write_bytes(data); expected[n]=(len(data),hashlib.sha256(data).hexdigest())
    old=m.EXPECTED.copy(); m.EXPECTED.clear(); m.EXPECTED.update(expected)
-   image=m.IMAGE_ID; ident="c"*64; seen=[]; removed=[False]
+   image=m.IMAGE_ID; ident="c"*64; seen=[]; removed=[False]; start_failure=[None]
    def runner(argv,timeout,env=None,max_output=None):
     args=argv[3:]; seen.append((argv,dict(env or {})))
     if args[:2]==["context","inspect"]: return 0,b'"unix:///tmp/docker.sock"',b""
@@ -131,7 +131,9 @@ class MockLifecycleTests(unittest.TestCase):
       return 0,json.dumps(obj).encode(),b""
      return 1,b"",("Error response from daemon: No such container: "+target+"\n").encode()
     if args[:2]==["container","rm"]: removed[0]=True; return 0,b"",b""
-    if args[:1]==["start"]: return 0,payload_result,b""
+    if args[:1]==["start"]:
+     if start_failure[0]: raise m._inv04.CaptureError(start_failure[0])
+     return 0,payload_result,b""
     raise AssertionError(args)
    created_name=[""]; created_owner=[""]; stage_seen=[None]
    # Capture generates identifiers internally; observe create argv, then answer later calls.
@@ -156,6 +158,19 @@ class MockLifecycleTests(unittest.TestCase):
     self.assertFalse((out/"tools").exists())
     self.assertTrue(all(call[0][1:3]==["--context","local"] for call in seen))
     self.assertTrue(all("DOCKER_HOST" not in call[1] for call in seen))
+    for mode,message in (("timeout","command timed out: docker"),("overflow","command output exceeded limit: docker")):
+     removed[0]=False; start_failure[0]=message
+     failed_out=root/("result-"+mode)
+     self.assertEqual(m.capture(assets,Path("/bin/echo"),"local",failed_out,runner=recording_runner),1)
+     failed=json.loads((failed_out/"receipt.json").read_text())
+     start_record=next(op for op in failed["commands"] if op["operation"]=="start --attach")
+     self.assertEqual(start_record["outputCapture"],"unavailable")
+     self.assertFalse(start_record["rawOutputRetained"])
+     self.assertIsNone(start_record["stdoutBytes"])
+     self.assertIsNone(start_record["stdoutSha256"])
+     self.assertEqual(start_record["captureFailure"],message)
+     self.assertTrue(failed["containerCleanup"]["verifiedAbsent"])
+     self.assertFalse((failed_out/"version-payload.stdout.bin").exists())
    finally:
     m.EXPECTED.clear(); m.EXPECTED.update(old)
 

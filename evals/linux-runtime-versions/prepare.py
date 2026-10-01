@@ -220,14 +220,25 @@ def capture(assets:Path,docker_path:Path,context:str,output_path:Path,*,runner=N
  def call(args,timeout=10):
   remaining=exec_deadline-time.monotonic()
   if remaining<=0: raise CaptureError("overall execution deadline expired")
-  began=time.monotonic(); started=now(); code=out=err=None
+  began=time.monotonic(); started=now(); code=out=err=None; failure=None
   try:
    code,out,err=run([str(docker),"--context",context,*args],min(timeout,remaining),env=env,max_output=CAP*32)
+   if type(code) is not int or not isinstance(out,bytes) or not isinstance(err,bytes):
+    raise CaptureError("bounded command runner returned an incomplete result")
    return code,out,err
+  except BaseException as exc:
+   failure=str(exc)[:200] if isinstance(exc,(_inv04.CaptureError,CaptureError)) else type(exc).__name__
+   raise
   finally:
-   receipt["commands"].append({"operation":" ".join(args[:2]),"arguments":args,"startedAt":started,"endedAt":now(),
-    "elapsedSeconds":time.monotonic()-began,"exitCode":code,"stdoutBytes":len(out or b""),"stderrBytes":len(err or b""),
-    "stdoutSha256":sha(out or b""),"stderrSha256":sha(err or b""),"rawOutputRetained":args[:2]==["start","--attach"]})
+   output_available=code is not None and isinstance(out,bytes) and isinstance(err,bytes)
+   record={"operation":" ".join(args[:2]),"arguments":args,"startedAt":started,"endedAt":now(),
+    "elapsedSeconds":time.monotonic()-began,"exitCode":code,
+    "stdoutBytes":len(out) if output_available else None,"stderrBytes":len(err) if output_available else None,
+    "stdoutSha256":sha(out) if output_available else None,"stderrSha256":sha(err) if output_available else None,
+    "outputCapture":"available-not-retained" if output_available else "unavailable",
+    "rawOutputRetained":False}
+   if failure: record["captureFailure"]=failure
+   receipt["commands"].append(record)
  try:
   code,raw,err=call(["context","inspect",context,"--format","{{json .Endpoints.docker.Host}}"],8)
   if code: raise CaptureError("explicit Docker context inspection failed")
@@ -247,6 +258,8 @@ def capture(assets:Path,docker_path:Path,context:str,output_path:Path,*,runner=N
   receipt["containerConfigurationInspectVerified"]=True
   code,raw,err=call(["start","--attach",container_id],EXECUTION_SECONDS)
   write_new(out/"version-payload.stdout.bin",raw); write_new(out/"version-payload.stderr.bin",err)
+  receipt["commands"][-1].update({"outputCapture":"retained","rawOutputRetained":True,
+   "rawOutputFiles":["version-payload.stdout.bin","version-payload.stderr.bin"]})
   receipt["containerStartExitCode"]=code
   code2,inspect_bytes,inspect_err=call(["container","inspect","--format","{{json .}}",container_id],6)
   if code2: raise CaptureError("could not inspect completed container")
