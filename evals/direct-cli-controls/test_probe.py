@@ -1,6 +1,7 @@
 import base64
 import importlib.util
 import json
+import io
 import os
 import signal
 from pathlib import Path
@@ -35,6 +36,58 @@ def terminal(subtype="success", text="offline-probe-terminal", **extra):
 
 
 class OfflineContracts(unittest.TestCase):
+    def test_http_messages_and_empty_connections_have_separate_evidence(self):
+        records, count, lock, events = [], [0], threading.Lock(), []
+        class MemorySocket:
+            def __init__(self, raw): self.raw, self.output = raw, bytearray()
+            def makefile(self, *args): return io.BytesIO(self.raw)
+            def settimeout(self, value): pass
+            def sendall(self, data): self.output.extend(data)
+        class Server:
+            def request_ordinal(self, request): return len(events)+1
+            def audit_connection(self, event): events.append(event)
+        handler = probe.handler_type(records, lock, count, "/private-preflight")
+        server = Server()
+        def invoke(raw):
+            sock = MemorySocket(raw)
+            handler(sock, ("127.0.0.1", 1234), server)
+            return bytes(sock.output)
+        invoke(b"GET /private-preflight HTTP/1.1\r\nHost: localhost\r\n\r\n")
+        self.assertEqual(count[0], 0)
+        invoke(b"")
+        self.assertEqual(count[0], 0)
+        body = json.dumps({"model": probe.PINNED_MODEL, "tools": [{"name": "Read"}], "stream": True}).encode()
+        raw = (b"POST /v1/messages?beta=true HTTP/1.1\r\nHost: localhost\r\nx-api-key: "
+               + probe.FAKE_KEY.encode()+b"\r\nContent-Length: "+str(len(body)).encode()+b"\r\n\r\n"+body)
+        self.assertIn(b"200 OK", invoke(raw))
+        self.assertEqual(count[0], 1)
+        self.assertEqual([e["kind"] for e in events], ["preflight", "empty-eof", "accepted"])
+        probe.validate_transport(3, events, 1)
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0]["body"].encode(), body)
+        self.assertIn(b"401 Unauthorized", invoke(raw.replace(probe.FAKE_KEY.encode(), b"invalid")))
+        self.assertEqual(count[0], 2)
+        self.assertEqual(events[-1]["kind"], "rejected")
+        with self.assertRaises(probe.ProbeError): probe.validate_transport(4, events, 1)
+        count[0] = probe.MAX_REQUESTS
+        self.assertIn(b"429", invoke(raw))
+        self.assertEqual(len(records), 1)
+
+    def test_transport_requires_complete_typed_zero_byte_eof_evidence(self):
+        valid = [{"id": 1, "kind": "preflight", "httpStatus": 204},
+                 {"id": 2, "kind": "accepted", "httpStatus": 200},
+                 {"id": 3, "kind": "empty-eof", "httpStatus": None,
+                  "requestLineBytes": 0, "requestLineSha256": probe.sha256(b"")}]
+        probe.validate_transport(3, valid, 1)
+        for changes in ({"kind": "incomplete"}, {"requestLineBytes": 1},
+                        {"httpStatus": 400}, {"requestLineSha256": "0"*64}, {"id": 2}):
+            broken = valid[:2]+[{**valid[2], **changes}]
+            with self.subTest(changes=changes), self.assertRaises(probe.ProbeError):
+                probe.validate_transport(3, broken, 1)
+        for total in (2, 4, probe.MAX_CONNECTIONS+1):
+            with self.subTest(total=total), self.assertRaises(probe.ProbeError):
+                probe.validate_transport(total, valid, 1)
+
     def test_environment_uses_only_fake_auth_and_correct_controls(self):
         env = probe.minimal_env(Path("/private/config"), 1234)
         self.assertNotIn("HOME", env)
@@ -104,7 +157,9 @@ class OfflineContracts(unittest.TestCase):
                     return object
                 class Server:
                     server_address = ("127.0.0.1", 12345)
-                    def __init__(self, *a, **kw): pass
+                    def __init__(self, *a, **kw):
+                        self.connection_count = [1]
+                        self.connection_events = [{"id": 1, "kind": "preflight", "httpStatus": 204}]
                     def serve_forever(self, **kw): pass
                     def shutdown(self): state["shutdown"] = True
                     def server_close(self): state["closed"] = True
@@ -112,6 +167,8 @@ class OfflineContracts(unittest.TestCase):
                         if not interrupted:
                             _, records, _ = request()
                             state["records"].extend(records); state["count"][0] = 1
+                            self.connection_count[0] = 2
+                            self.connection_events.append({"id": 2, "kind": "accepted", "httpStatus": 200})
                         return True
                 def run(*a, **kw):
                     if interrupted: signal.raise_signal(signal.SIGTERM)

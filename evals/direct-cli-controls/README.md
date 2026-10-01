@@ -22,8 +22,9 @@ two while only one accepted request was retained. The extra connection is
 unexplained: the current counter counts TCP connections rather than parsed
 HTTP requests. The run is not admitted or retroactively waived. See the
 [retained result](../reports/2026-10-01-direct-cli-offline-probe.json).
-No real provider or model inference was invoked. A repeat requires corrected,
-reviewed connection/request accounting. Runtime execution requires the explicit `--execute` switch and is bound in code to the
+No real provider or model inference was invoked. The corrected helper now separates bounded TCP connections from parsed HTTP
+requests and retains per-connection classifications. A repeat still requires
+review of this correction; the first run remains failed. Runtime execution requires the explicit `--execute` switch and is bound in code to the
 reviewed absolute regular executable
 `/opt/homebrew/Caskroom/claude-code/2.1.274/claude`, SHA-256
 `3509913f9d1576316c8845b88837f8fd3bbbcf26625833ac82cfb6b8985da94a`, and
@@ -55,8 +56,13 @@ The fixture accepts only POST `/v1/messages` (and the SDK beta query form),
 and only the exact fake `x-api-key` or fake bearer header. It selects JSON or
 SSE from the request body's boolean `stream` field. It rejects malformed
 lengths/JSON, unexpected methods/paths/auth, oversized bodies, and requests
-past the current four-connection bound. This must be separated from parsed
-HTTP-request accounting before the next acceptance attempt. Per-connection reads have a two-second deadline;
+past the four-HTTP-request bound. TCP connections have a separate limit of
+eight, including the preflight connection, with at most four active handlers.
+Counters saturate at limit+1 on overflow and fail acceptance. Exact zero-byte
+EOFs are recorded as empty connections; partial, malformed, denied or timed-out
+requests do not qualify. Every connection must have a unique retained event.
+Preflight and accepted-request events must reconcile with parsed HTTP counts.
+Request-line lengths and hashes are retained without unknown auth or URL text. Per-connection reads have a two-second deadline;
 the overall run has a 90-second wall bound including reserved teardown. At
 most four fixture workers run concurrently. Only accepted synthetic requests
 are retained, with raw body bytes base64-encoded and decoded for inspection;

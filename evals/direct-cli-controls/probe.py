@@ -25,6 +25,7 @@ import time
 MAX_BODY = 2 * 1024 * 1024
 MAX_OUTPUT = 2 * 1024 * 1024
 MAX_REQUESTS = 4
+MAX_CONNECTIONS = 8
 OVERALL_TIMEOUT = 90.0
 CLI_TIMEOUT = 60.0
 PINNED_VERSION = "2.1.274"
@@ -168,6 +169,28 @@ def validate_final_snapshot(stdout, requests, return_code, received, cleanup):
     return validate_probe(stdout, requests, return_code)
 
 
+def validate_transport(connections, events, accepted_requests):
+    if (type(connections) is not int or not 1 <= connections <= MAX_CONNECTIONS
+            or len(events) != connections):
+        raise ProbeError("connection evidence is incomplete or exceeds its bound")
+    if sorted(e.get("id", -1) for e in events) != list(range(1, connections+1)):
+        raise ProbeError("connection identities are missing or duplicated")
+    kinds = [e.get("kind") for e in events]
+    if kinds.count("preflight") != 1 or kinds.count("accepted") != accepted_requests:
+        raise ProbeError("connection evidence disagrees with preflight or accepted requests")
+    for event in events:
+        kind = event.get("kind")
+        if kind == "empty-eof":
+            if (event.get("requestLineBytes") != 0 or event.get("httpStatus") is not None
+                    or event.get("requestLineSha256") != sha256(b"")):
+                raise ProbeError("empty connection lacks exact zero-byte EOF evidence")
+        elif kind in ("preflight", "accepted"):
+            if event.get("httpStatus") != (204 if kind == "preflight" else 200):
+                raise ProbeError("connection response status disagrees with its classification")
+        else:
+            raise ProbeError("rejected or incomplete HTTP connection prevents acceptance")
+
+
 def response_for(stream: bool) -> tuple[str, bytes]:
     if stream:
         events = [
@@ -183,10 +206,10 @@ def response_for(stream: bool) -> tuple[str, bytes]:
     return "application/json", json.dumps(value).encode()
 
 
-def reserve_request(count: list[int], lock: threading.Lock) -> int:
+def reserve_request(count: list[int], lock: threading.Lock, limit: int = MAX_REQUESTS) -> int:
     """Count valid and rejected arrivals, saturating after one over-limit marker."""
     with lock:
-        count[0] = min(MAX_REQUESTS+1, count[0]+1)
+        count[0] = min(limit+1, count[0]+1)
         return count[0]
 
 
@@ -239,23 +262,34 @@ class FixtureServer(http.server.ThreadingHTTPServer):
         self._worker_lock = threading.Lock()
         self._workers = set()
         self._request_count = request_count
+        self.connection_count = [0]
+        self.connection_events = []
         self._request_lock = request_lock
         self._request_ordinals = {}
         self._thread_ordinal = threading.local()
         super().__init__(*args, **kwargs)
     def process_request(self, request, client_address):
-        ordinal = reserve_request(self._request_count, self._request_lock)
-        if ordinal > MAX_REQUESTS:
+        ordinal = reserve_request(self.connection_count, self._request_lock, MAX_CONNECTIONS)
+        if ordinal > MAX_CONNECTIONS:
             self.shutdown_request(request)
             return
         if not self._worker_slots.acquire(blocking=False):
+            self.audit_connection({"id": ordinal, "kind": "capacity-rejected"})
             self.shutdown_request(request)
             return
-        with self._worker_lock: self._request_ordinals[id(request)] = ordinal
+        worker = threading.Thread(target=self.process_request_thread,
+                                  args=(request, client_address), daemon=self.daemon_threads)
+        # Register before start, so teardown cannot miss a scheduled worker
+        # that has not yet entered process_request_thread.
+        with self._worker_lock:
+            self._request_ordinals[id(request)] = ordinal
+            self._workers.add(worker)
         try:
-            super().process_request(request, client_address)
+            worker.start()
         except BaseException:
-            with self._worker_lock: self._request_ordinals.pop(id(request), None)
+            with self._worker_lock:
+                self._request_ordinals.pop(id(request), None)
+                self._workers.discard(worker)
             self._worker_slots.release()
             raise
     def process_request_thread(self, request, client_address):
@@ -272,6 +306,9 @@ class FixtureServer(http.server.ThreadingHTTPServer):
             self._worker_slots.release()
     def request_ordinal(self, request):
         return self._thread_ordinal.value
+    def audit_connection(self, event):
+        with self._request_lock:
+            self.connection_events.append(event)
     def join_workers(self, timeout: float):
         deadline = time.monotonic()+timeout
         while time.monotonic() < deadline:
@@ -300,12 +337,38 @@ def handler_type(records: list[dict], lock: threading.Lock, count: list[int], pr
         def setup(self):
             super().setup()
             self.request.settimeout(READ_TIMEOUT)
+            self._audit_kind = "incomplete"
+            self._audit_status = None
+        def send_response(self, code, message=None):
+            self._audit_status = code
+            super().send_response(code, message)
+        def finish(self):
+            try:
+                super().finish()
+            finally:
+                line = getattr(self, "raw_requestline", None)
+                kind = self._audit_kind
+                # Only an actual zero-byte EOF is an empty TCP connection.
+                # A timeout, partial line, malformed request or denied request
+                # remains incomplete/rejected and cannot pass acceptance.
+                if line == b"" and self._audit_status is None:
+                    kind = "empty-eof"
+                self.server.audit_connection({
+                    "id": self.server.request_ordinal(self.request),
+                    "kind": kind, "httpStatus": self._audit_status,
+                    "requestLineBytes": None if line is None else len(line),
+                    "requestLineSha256": None if line is None else sha256(line),
+                })
         def _dispatch(self):
-            ordinal = self.server.request_ordinal(self.request)
             if self.command == "GET" and self.path == preflight_path:
-                with lock: count[0] = max(0, count[0]-1)
+                self._audit_kind = "preflight"
                 self.send_response(204); self.send_header("Content-Length", "0")
                 self.send_header("Connection", "close"); self.end_headers(); return
+            ordinal = reserve_request(count, lock)
+            self._audit_kind = "rejected"
+            if ordinal > MAX_REQUESTS:
+                self.send_error(429, "request limit")
+                return
             if (len(self.headers.get_all("x-api-key", [])) > 1
                     or len(self.headers.get_all("authorization", [])) > 1
                     or len(self.headers.get_all("content-length", [])) != 1
@@ -327,6 +390,7 @@ def handler_type(records: list[dict], lock: threading.Lock, count: list[int], pr
                     status, kind, payload = 400, "application/json", b'{"error":"incomplete body"}'
                 else:
                     status, kind, payload = handle_request(self.command, self.path, {k.lower(): v for k, v in self.headers.items()}, body, records, lock, count, reserved_ordinal=ordinal)
+                    if status == 200: self._audit_kind = "accepted"
             self.send_response(status)
             self.send_header("Content-Type", kind)
             self.send_header("Content-Length", str(len(payload)))
@@ -533,11 +597,16 @@ def execute(output: Path, cli: Path, expected_hash: str, expected_version: str) 
         with lock:
             record["request_count"] = count[0]
             request_snapshot = list(records)
+            record["connection_count"] = server.connection_count[0] if server is not None else 0
+            record["connection_events"] = list(server.connection_events) if server is not None else []
+            record["connection_limit_exceeded"] = record["connection_count"] > MAX_CONNECTIONS
+            record["request_limit_exceeded"] = count[0] > MAX_REQUESTS
         try:
             persist_trace(root, record, stdout, stderr, request_snapshot)
         finally:
             restore_signals(previous_signals)
     try:
+        validate_transport(record["connection_count"], record["connection_events"], len(request_snapshot))
         record["observed"] = validate_final_snapshot(stdout, request_snapshot, rc, count[0], cleanup)
     except (ProbeError, ValueError, TypeError) as exc:
         record["run_status"] = "validation_failed"
