@@ -56,6 +56,17 @@ order, quality gates, budgets and decisions.
   a false empty result for another namespace. An executable owned-cluster
   before/after probe is being prepared, not run. Stream freshness, store limits
   and reconnect/410 coverage remain under #539.
+- [PR #739](https://github.com/confighub/cub-scout/pull/739) merged the
+  [ordinary-tool query plan](evals/ordinary-tool-query-plan-v1.md). None of the
+  frozen 24 questions requires installed Helm release history. Inventory
+  questions concern supplied rows, with original-cluster completeness unknown.
+  Equal meaningful tool access remains required; every tool need not be called.
+- [#740](https://github.com/confighub/cub-scout/issues/740) builds one combined
+  offline two-arm runtime diagnostic using the pinned Linux CLI, synthetic
+  provider and recorded API/MCP. Source review found staging, cleanup and
+  receipt-validation defects; the consolidated repair and lead review fixes
+  are covered by offline tests. Actual runtime verification remains pending;
+  pure tests do not establish runtime success or paid admission.
 - General ordinary-tool parity, API/Helm route coverage, complete descendant
   accounting and paid admission remain unresolved. External #591/#597/#600
   still require their own authoritative evidence and agreement.

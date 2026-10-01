@@ -349,6 +349,8 @@ def main():
              (arm == "treatment" and len(mcp_inventory) == 2
               and sum(name.endswith("__map") for name in mcp_inventory) == 1
                           and sum(name.endswith("__explain") for name in mcp_inventory) == 1)))
+    exact_inventory = {"Read", "Bash"} | ({"Skill", "mcp__cub-scout__map", "mcp__cub-scout__explain"} if arm == "treatment" else set())
+    inventory_ok = inventory_ok and set(observed_tools) == exact_inventory and len(observed_tools) == len(exact_inventory)
     expected_skill_names = sorted(p.parent.name for p in (TOOLS / "plugin/skills").rglob("SKILL.md")) if arm == "treatment" else []
     advertised_text = system_text(first_body.get("system"))
     advertised_skills = [name for name in expected_skill_names if re.search(r"(?<![A-Za-z0-9_-])" + re.escape(name) + r"(?![A-Za-z0-9_-])", advertised_text)]

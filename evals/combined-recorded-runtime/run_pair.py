@@ -182,7 +182,7 @@ def custom_create_args(name: str, owner: str, stage: Path, *, plugin: Path | Non
     if plugin is not None:
         args += ["--mount", "type=bind,src=" + str(plugin.resolve()) + ",dst=/tools/plugin,readonly"]
     args += [IMAGE_ID, "/usr/bin/env", "-i", "PATH=/tools:/usr/bin:/bin", "HOME=/tmp/private-home",
-             "LANG=C.UTF-8", "PYTHONDONTWRITEBYTECODE=1", "python3", "/tools/payload.py",
+             "LANG=C.UTF-8", "PYTHONDONTWRITEBYTECODE=1", "/usr/local/bin/python3", "/tools/payload.py",
              "treatment" if plugin else "baseline"]
     return args
 
@@ -229,10 +229,11 @@ def run_arm(docker, context, env, stage, plugin, output, deadline, run):
               "created": False, "securityVerified": False, "cleanup": {"attempted": False, "verifiedAbsent": False},
               "startedAt": now(), "operations": []}
     known_id = ""; started = time.monotonic(); arm_deadline = min(deadline, started + EXECUTION_SECONDS + CLEANUP_SECONDS)
+    write_new(output / (arm + ".identity.json"), (json.dumps({"name": name, "ownerLabel": OWNER_LABEL, "owner": owner}) + "\n").encode())
     operation_number = 0
     def call(args, sec, max_output=DOCKER_OUTPUT_CAP):
         nonlocal operation_number
-        remaining = min(arm_deadline, deadline) - time.monotonic()
+        remaining = min(arm_deadline, deadline) - CLEANUP_SECONDS - time.monotonic()
         if remaining <= 0: raise TimeoutError("pair or arm deadline expired")
         t0 = time.monotonic(); code, out, err = run([str(docker), "--context", context, *args], min(sec, remaining), env=env, max_output=max_output)
         operation_number += 1
@@ -325,7 +326,13 @@ def run_pair(assets: Path, docker_path: Path, context: str, output: Path, *, run
                 skillfacts = stage_treatment_plugin(plugin, stage)
                 stage.chmod(0o555)
             stages[arm] = stage; plugins[arm] = plugin; staged[arm] = {"common": commonpins, "skills": skillfacts if plugin else None}
+            plugin_before = {p.relative_to(plugin).as_posix(): file_sha(p) for p in sorted(plugin.rglob("*")) if p.is_file()} if plugin else {}
             arm_result = run_arm(docker, context, env, stage, plugin, out, deadline, command_runner)
+            plugin_after = {p.relative_to(plugin).as_posix(): file_sha(p) for p in sorted(plugin.rglob("*")) if p.is_file()} if plugin else {}
+            arm_result["pluginIntegrity"] = {"before": plugin_before, "after": plugin_after, "unchanged": plugin_before == plugin_after}
+            if plugin_before != plugin_after:
+                arm_result["status"] = "failed"
+                arm_result["error"] = "treatment plugin changed during execution"
             arm_result["stageInventory"] = {"files": sorted(p.relative_to(stage).as_posix() for p in stage.rglob("*") if p.is_file()),
                 "sha256": sha(json.dumps({p.relative_to(stage).as_posix(): file_sha(p) for p in sorted(stage.rglob("*")) if p.is_file()}, sort_keys=True, separators=(",", ":")).encode())}
             arm_result["stageFacts"] = staged[arm]

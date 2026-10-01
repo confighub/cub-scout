@@ -270,11 +270,15 @@ def validate_arm_payload(value: dict, expected_arm: str) -> dict:
     _need(value.get("helmAvailable") is True, "Helm availability was not observed")
     events = []
     for line in stdout.splitlines():
-        try:
-            event = strict_json(line)
-            if isinstance(event, dict): events.append(event)
-        except ContractError:
-            continue
+        event = strict_json(line)
+        _need(isinstance(event, dict), "raw CLI event is not an object")
+        events.append(event)
+    try:
+        raw_uses, raw_results = parser.cli_tool_events(events)
+    except Exception as exc:
+        raise ContractError("raw CLI tool-event stream is invalid") from exc
+    _need(raw_uses == cli_uses and raw_results == cli_results,
+          "reported CLI tool facts differ from raw CLI output")
     terminal_events = [event for event in events if event.get("type") == "result"]
     terminal = value.get("terminalText")
     _need(len(terminal_events) == 1 and terminal == "offline-probe-terminal"

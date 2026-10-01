@@ -66,7 +66,12 @@ def arm_payload(arm):
                             {"role": "user", "content": [result]}])
     terminal_event = {"type": "result", "subtype": "success", "is_error": False,
                       "result": "offline-probe-terminal"}
-    stdout = (json.dumps(terminal_event, separators=(",", ":")) + "\n").encode()
+    events = []
+    for use, result in zip(uses, results):
+        events.append({"type": "assistant", "message": {"content": [{"type": "tool_use", **use}]}})
+        events.append({"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": result["id"], "content": result["content"], "is_error": result["is_error"]}]}})
+    events.append(terminal_event)
+    stdout = ("\n".join(json.dumps(event, separators=(",", ":")) for event in events) + "\n").encode()
     return {"schema": "combined-runtime-arm-payload.v1", "arm": arm, "status": "passed",
         "returnCode": 0, "runStatus": "completed", "processError": None,
         "stdoutBase64": base64.b64encode(stdout).decode(), "stderrBase64": "",
@@ -105,6 +110,13 @@ class ContractTests(unittest.TestCase):
         for mutate in mutations:
             value = arm_payload("treatment"); mutate(value)
             with self.assertRaises(contract.ContractError): contract.validate_arm_payload(value, "treatment")
+
+    def test_raw_cli_missing_tools_or_malformed_events_cannot_pass(self):
+        for raw in (b'{"type":"result","subtype":"success","is_error":false,"result":"offline-probe-terminal"}\n',
+                    base64.b64decode(arm_payload("baseline")["stdoutBase64"]) + b'{truncated\n'):
+            value = arm_payload("baseline")
+            value.update(stdoutBase64=base64.b64encode(raw).decode(), stdoutBytes=len(raw), stdoutSha256=digest(raw))
+            with self.assertRaises(contract.ContractError): contract.validate_arm_payload(value, "baseline")
 
     def test_pair_validator_requires_matching_stages_and_explicit_binary_delta(self):
         arms = {}

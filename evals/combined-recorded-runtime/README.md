@@ -34,6 +34,9 @@ requests/responses, and Docker operation logs under a new directory beneath
 `/tmp`; its read-only staging directories and treatment plugin are retained
 there as source-hash evidence. Failures remain failed diagnostics; there is no paid retry. It requires
 the separately prepared pinned asset archive and a named local Docker context.
+Staged tool and plugin copies remain beneath that private output directory for
+inspection; container removal does not mean host staging removal. The diagnostic
+uses fixed baseline-then-treatment order, not a randomized benchmark.
 After source review, the invocation shape is:
 
 ```sh
