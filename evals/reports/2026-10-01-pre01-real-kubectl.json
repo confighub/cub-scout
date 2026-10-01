@@ -1,0 +1,405 @@
+{
+  "schema": "pre01-real-kubectl-capture.v1",
+  "case": "PRE-01",
+  "issue": 732,
+  "status": "passed",
+  "execution": {
+    "dockerInvoked": true,
+    "kubectlInvoked": true,
+    "clusterAccess": false,
+    "providerRequests": 0,
+    "modelInference": false,
+    "paidEvaluation": false,
+    "developmentCostUsd": null
+  },
+  "source": {
+    "executedSourceRevision": "75ef04b902747e652c5bc9144ce939bcb34c7ad6",
+    "recordedApiRevision": "17c2a6af330021621b730c4e5b5b1f0c4c2c9081",
+    "versionGateSourceRevision": "f2589083ad8c954d3ef671b548af4f90427046cf",
+    "helperSha256": "9330fa2630000b7b0f255967a2a865ff089c19c7e8a0874aeac9363bec99a5d3",
+    "payloadSha256": "a0047bfd401571807e3fea7955979cc1ec2af9b0ca53097928657cd0825e6d3e",
+    "runtimeHelperSha256": "35af85e2ba82909572d9a9832d997dff392185c60cfbad530a3fec76183b4bd9",
+    "replaySha256": "5b147c7bfe409a93d9e20e6d5994e653e3c524e082722068471bd6e7aa7d8d93",
+    "kubectl": {
+      "bytes": 55640226,
+      "elf": "ELF64 little-endian AArch64",
+      "name": "kubectl",
+      "sha256": "9f9d9c44a7b5264515ac9da5991584e2395bd50662e651132337e7b4d0c56f8f"
+    },
+    "cachedContainerImage": "sha256:cdbd05fb6f457ca275ff51ce00d93d865ca0b6a25f5ffb08262d94f6835771e5",
+    "pinnedInputs": {
+      "evals/pre01-crd/fixtures/capture-scope.json": "6d39e83612d52f5124bad2dd63b27b30b94cce492eb70223f759248de71bfec4",
+      "evals/recorded-api/replay.py": "5b147c7bfe409a93d9e20e6d5994e653e3c524e082722068471bd6e7aa7d8d93",
+      "evals/reports/2026-10-01-pre01-crd.json": "5585ecd0298e2b6f4201a638cdc0aeab9cdeb0dfab38d3b52e090cc3cb8f5c0a"
+    }
+  },
+  "run": {
+    "wrapperExitCode": 0,
+    "wrapperElapsedSeconds": 3.5030475000385195,
+    "wrapperTimeout": false,
+    "gateElapsedSeconds": 0.776613,
+    "receiptElapsedSeconds": 3.294271,
+    "cleanupElapsedSeconds": 0.345796,
+    "containerConfigurationInspectVerified": true,
+    "configuredBoundsVerified": true,
+    "containerExitCode": 0,
+    "containerNetwork": "none",
+    "containerReadOnlyRootfs": true,
+    "containerUser": "65534:65534",
+    "ownedContainerAbsentAfterCleanup": true,
+    "stagingCleanupVerified": true,
+    "phases": [
+      {
+        "phase": "absent",
+        "status": "passed",
+        "elapsedSeconds": 0.536137,
+        "listenerCleanupConfirmed": true,
+        "requestCount": 3,
+        "coverageComplete": false,
+        "commands": [
+          {
+            "index": 0,
+            "argv": [
+              "/tools/kubectl",
+              "--kubeconfig",
+              "/tmp/kubeconfig-absent",
+              "--context",
+              "recorded",
+              "get",
+              "--raw",
+              "/apis/apiextensions.k8s.io/v1/customresourcedefinitions/servicemonitors.monitoring.coreos.com"
+            ],
+            "path": "/apis/apiextensions.k8s.io/v1/customresourcedefinitions/servicemonitors.monitoring.coreos.com",
+            "apiResponse": {
+              "httpStatus": 404,
+              "bytes": 336,
+              "sha256": "661902cf15f640cf0cfbcb7d5df71d36ac2d9ac6041f1b92429e66704c1614c0",
+              "requestNumber": 1
+            },
+            "kubectl": {
+              "exitCode": 1,
+              "stdout": {
+                "bytes": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "stderr": {
+                "bytes": 127,
+                "sha256": "f6811f1ecfba142f0b94d442cefb8b6d3df76d9d61f3c5914c05a93f49171e0a"
+              }
+            }
+          },
+          {
+            "index": 1,
+            "argv": [
+              "/tools/kubectl",
+              "--kubeconfig",
+              "/tmp/kubeconfig-absent",
+              "--context",
+              "recorded",
+              "get",
+              "--raw",
+              "/apis/monitoring.coreos.com/v1"
+            ],
+            "path": "/apis/monitoring.coreos.com/v1",
+            "apiResponse": {
+              "httpStatus": 404,
+              "bytes": 19,
+              "sha256": "b16e15764b8bc06c5c3f9f19bc8b99fa48e7894aa5a6ccdad65da49bbf564793",
+              "requestNumber": 2
+            },
+            "kubectl": {
+              "exitCode": 1,
+              "stdout": {
+                "bytes": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "stderr": {
+                "bytes": 79,
+                "sha256": "d0c11b5c05387133bd1858624fb93fdf84b297ed0dcc032e8a0165c8580a9141"
+              }
+            }
+          },
+          {
+            "index": 2,
+            "argv": [
+              "/tools/kubectl",
+              "--kubeconfig",
+              "/tmp/kubeconfig-absent",
+              "--context",
+              "recorded",
+              "get",
+              "--raw",
+              "/apis/monitoring.coreos.com/v1/namespaces/monitoring/servicemonitors/kube-prometheus-stack-kube-state-metrics"
+            ],
+            "path": "/apis/monitoring.coreos.com/v1/namespaces/monitoring/servicemonitors/kube-prometheus-stack-kube-state-metrics",
+            "apiResponse": {
+              "httpStatus": 404,
+              "bytes": 19,
+              "sha256": "b16e15764b8bc06c5c3f9f19bc8b99fa48e7894aa5a6ccdad65da49bbf564793",
+              "requestNumber": 3
+            },
+            "kubectl": {
+              "exitCode": 1,
+              "stdout": {
+                "bytes": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "stderr": {
+                "bytes": 79,
+                "sha256": "d0c11b5c05387133bd1858624fb93fdf84b297ed0dcc032e8a0165c8580a9141"
+              }
+            }
+          }
+        ],
+        "traceSha256": "91c5b2a69be82e91537605831734a907065ff23aa2074fc219ba155a7a6e30ee"
+      },
+      {
+        "phase": "present",
+        "status": "passed",
+        "elapsedSeconds": 0.182212,
+        "listenerCleanupConfirmed": true,
+        "requestCount": 3,
+        "coverageComplete": false,
+        "commands": [
+          {
+            "index": 0,
+            "argv": [
+              "/tools/kubectl",
+              "--kubeconfig",
+              "/tmp/kubeconfig-present",
+              "--context",
+              "recorded",
+              "get",
+              "--raw",
+              "/apis/apiextensions.k8s.io/v1/customresourcedefinitions/servicemonitors.monitoring.coreos.com"
+            ],
+            "path": "/apis/apiextensions.k8s.io/v1/customresourcedefinitions/servicemonitors.monitoring.coreos.com",
+            "apiResponse": {
+              "httpStatus": 200,
+              "bytes": 44289,
+              "sha256": "a5e571a80d5882cc9294cfabc27e0e6cefead3612e8e880afb885e3bf60f3e3c",
+              "requestNumber": 1
+            },
+            "kubectl": {
+              "exitCode": 0,
+              "stdout": {
+                "bytes": 44289,
+                "sha256": "a5e571a80d5882cc9294cfabc27e0e6cefead3612e8e880afb885e3bf60f3e3c"
+              },
+              "stderr": {
+                "bytes": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              }
+            }
+          },
+          {
+            "index": 1,
+            "argv": [
+              "/tools/kubectl",
+              "--kubeconfig",
+              "/tmp/kubeconfig-present",
+              "--context",
+              "recorded",
+              "get",
+              "--raw",
+              "/apis/monitoring.coreos.com/v1"
+            ],
+            "path": "/apis/monitoring.coreos.com/v1",
+            "apiResponse": {
+              "httpStatus": 200,
+              "bytes": 509,
+              "sha256": "e791bb13f75f7767dd2c40df7485653342b0894ca58fd3af17b1b03ed087c1a8",
+              "requestNumber": 2
+            },
+            "kubectl": {
+              "exitCode": 0,
+              "stdout": {
+                "bytes": 509,
+                "sha256": "e791bb13f75f7767dd2c40df7485653342b0894ca58fd3af17b1b03ed087c1a8"
+              },
+              "stderr": {
+                "bytes": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              }
+            }
+          },
+          {
+            "index": 2,
+            "argv": [
+              "/tools/kubectl",
+              "--kubeconfig",
+              "/tmp/kubeconfig-present",
+              "--context",
+              "recorded",
+              "get",
+              "--raw",
+              "/apis/monitoring.coreos.com/v1/namespaces/monitoring/servicemonitors/kube-prometheus-stack-kube-state-metrics"
+            ],
+            "path": "/apis/monitoring.coreos.com/v1/namespaces/monitoring/servicemonitors/kube-prometheus-stack-kube-state-metrics",
+            "apiResponse": {
+              "httpStatus": 200,
+              "bytes": 2355,
+              "sha256": "78836df757ca3eb79f25bb0190f03d465fb282b455b8a27e79fbef67247a650e",
+              "requestNumber": 3
+            },
+            "kubectl": {
+              "exitCode": 0,
+              "stdout": {
+                "bytes": 2355,
+                "sha256": "78836df757ca3eb79f25bb0190f03d465fb282b455b8a27e79fbef67247a650e"
+              },
+              "stderr": {
+                "bytes": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              }
+            }
+          }
+        ],
+        "traceSha256": "3e8ff3dfa8d30e40ae93daebab9115ee89604e5151512a958f8f19e59adacfbb"
+      }
+    ],
+    "scope": "Six exact GET --raw requests to local recorded responses only; no target cluster/provider."
+  },
+  "contract": {
+    "phaseOrder": [
+      "absent",
+      "present"
+    ],
+    "commandsPerPhase": 3,
+    "totalKubectlCommands": 6,
+    "paths": [
+      "/apis/apiextensions.k8s.io/v1/customresourcedefinitions/servicemonitors.monitoring.coreos.com",
+      "/apis/monitoring.coreos.com/v1",
+      "/apis/monitoring.coreos.com/v1/namespaces/monitoring/servicemonitors/kube-prometheus-stack-kube-state-metrics"
+    ],
+    "expectedHttpStatuses": {
+      "absent": [
+        404,
+        404,
+        404
+      ],
+      "present": [
+        200,
+        200,
+        200
+      ]
+    },
+    "acceptance": "Absent phase returned HTTP 404 at each exact route and kubectl exit 1 with captured stderr. Present phase returned HTTP 200 and kubectl exit 0 with stdout byte-identical to each pinned response. Each phase trace records exactly three expected requests; no unavailable routes."
+  },
+  "sourceSnapshot": "The source capture is sequential and non-atomic; this replay preserves that limitation.",
+  "evidence": {
+    "archive": "evals/results/pre01-real-kubectl-20261001/",
+    "wrapperResult": {
+      "bytes": 867,
+      "sha256": "b6b9924ccf22c2b70f70cdca48a271e8da4e5bc7b35f8d6467c5d25d0f3d6ab1"
+    },
+    "wrapperScript": {
+      "bytes": 1881,
+      "sha256": "b9654620be0d0d31e98cf86b9a4293ab68cdd6982967394d11e668a30facfdf5"
+    },
+    "rawFiles": {
+      "run1/receipt.json": {
+        "bytes": 14752,
+        "sha256": "59de05bd90c2173ebaaf07ca946dd7f7e53a2e7a640f1c0947c4df11325e686f"
+      },
+      "run1/gate-result.json": {
+        "bytes": 86952,
+        "sha256": "d155c00d90b01813d04c9457580014628df1b7acd0a53fb7a3adf2cbbdaf3849"
+      },
+      "run1/payload.stdout.bin": {
+        "bytes": 79451,
+        "sha256": "6ada964315c809cf699aa54ab7bda655d5bbcb75f19301f04dbbb42ec759e1e9"
+      },
+      "run1/payload.stderr.bin": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "run1/absent.replay-trace.json": {
+        "bytes": 4364,
+        "sha256": "91c5b2a69be82e91537605831734a907065ff23aa2074fc219ba155a7a6e30ee"
+      },
+      "run1/present.replay-trace.json": {
+        "bytes": 3638,
+        "sha256": "3e8ff3dfa8d30e40ae93daebab9115ee89604e5151512a958f8f19e59adacfbb"
+      },
+      "run1/absent-0-stdout.bin": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "run1/absent-0-stderr.bin": {
+        "bytes": 127,
+        "sha256": "f6811f1ecfba142f0b94d442cefb8b6d3df76d9d61f3c5914c05a93f49171e0a"
+      },
+      "run1/absent-1-stdout.bin": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "run1/absent-1-stderr.bin": {
+        "bytes": 79,
+        "sha256": "d0c11b5c05387133bd1858624fb93fdf84b297ed0dcc032e8a0165c8580a9141"
+      },
+      "run1/absent-2-stdout.bin": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "run1/absent-2-stderr.bin": {
+        "bytes": 79,
+        "sha256": "d0c11b5c05387133bd1858624fb93fdf84b297ed0dcc032e8a0165c8580a9141"
+      },
+      "run1/present-0-stdout.bin": {
+        "bytes": 44289,
+        "sha256": "a5e571a80d5882cc9294cfabc27e0e6cefead3612e8e880afb885e3bf60f3e3c"
+      },
+      "run1/present-0-stderr.bin": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "run1/present-1-stdout.bin": {
+        "bytes": 509,
+        "sha256": "e791bb13f75f7767dd2c40df7485653342b0894ca58fd3af17b1b03ed087c1a8"
+      },
+      "run1/present-1-stderr.bin": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "run1/present-2-stdout.bin": {
+        "bytes": 2355,
+        "sha256": "78836df757ca3eb79f25bb0190f03d465fb282b455b8a27e79fbef67247a650e"
+      },
+      "run1/present-2-stderr.bin": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "proof1/result.json": {
+        "bytes": 867,
+        "sha256": "b6b9924ccf22c2b70f70cdca48a271e8da4e5bc7b35f8d6467c5d25d0f3d6ab1"
+      },
+      "proof1/stdout.bin": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "proof1/stderr.bin": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "run1-wrapper.py": {
+        "bytes": 1881,
+        "sha256": "b9654620be0d0d31e98cf86b9a4293ab68cdd6982967394d11e668a30facfdf5"
+      }
+    },
+    "containerInspectBodies": "not copied into this report; retained only in the private local archive"
+  },
+  "limits": {
+    "cleanupSeconds": 30,
+    "executionSeconds": 60,
+    "perKubectlCommandSeconds": 5,
+    "perPhaseReplaySeconds": 24,
+    "perStreamBytes": 65536,
+    "totalSeconds": 90
+  },
+  "limitations": [
+    "This validates only the six recorded raw API calls through the pinned kubectl and local replay transport.",
+    "It does not establish broad API discovery compatibility, Helm coverage, ordinary-tool parity, live cluster state, model quality, savings, or paid benchmark admission.",
+    "No API-server headers/TLS semantics or additional routes were exercised."
+  ]
+}
