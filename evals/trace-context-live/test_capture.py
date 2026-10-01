@@ -503,6 +503,8 @@ class CombinedProofAcceptanceTests(unittest.TestCase):
             self.assertIn("confighub.com/UnitSlug: " + capture.CONFIGHUB_UNIT, text)
             self.assertIn("confighub.com/SpaceName: " + capture.CONFIGHUB_SPACE, text)
             self.assertIn("revision: " + "a" * 40, text)
+            application = text.split("---", 1)[0]
+            self.assertIn("  resources:\n  - group: apps\n    version: v1\n    kind: Deployment\n    namespace: " + capture.NAMESPACE + "\n    name: " + capture.DEPLOYMENT, application)
             rendered = capture._write_rendered_inputs(work)
             self.assertEqual({"matched", "changed", "missing"}, set(rendered))
             self.assertIn("replicas: 0", rendered["matched"].read_text())

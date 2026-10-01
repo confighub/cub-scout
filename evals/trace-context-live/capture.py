@@ -427,6 +427,12 @@ def _install_source_truth_fixture(fixture: Path) -> None:
         "    revision: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
         "  health:\n"
         "    status: Healthy\n"
+        "  resources:\n"
+        "  - group: apps\n"
+        "    version: v1\n"
+        "    kind: Deployment\n"
+        f"    namespace: {NAMESPACE}\n"
+        f"    name: {DEPLOYMENT}\n"
         "---\napiVersion: apps/v1\nkind: Deployment", 1)
     fixture.write_text(text)
 
@@ -685,7 +691,7 @@ def _run_combined_action_flow(*, receipt: dict, binary: str, tui_binary: str,
     for label, context, endpoint, status, name, api_status in diff_cases:
         phase = "cli-diff-" + label
         argv = [binary, "trace", "deployment/" + name, "-n", NAMESPACE, "--diff",
-                "--desired-file", str(rendered[label]), "--api-version", "apps/v1",
+                "--desired-file", str(rendered["matched" if label == "denied" else label]), "--api-version", "apps/v1",
                 "--kube-context", context, "--format", "json"]
         result, rows, cub_rows = invoke(phase, "cli", argv, cli_env)
         api_proxy.validate_diff(_decode_json_output(result, phase), context=context, status=status,
@@ -709,7 +715,7 @@ def _run_combined_action_flow(*, receipt: dict, binary: str, tui_binary: str,
         name = DEPLOYMENT
         tool_arguments = {"resource": "Deployment/" + name, "namespace": NAMESPACE,
                           "context": context, "diff": True,
-                          "desired_file": str(rendered[label]), "api_version": "apps/v1"}
+                          "desired_file": str(rendered["matched" if label == "denied" else label]), "api_version": "apps/v1"}
         result, rows, cub_rows = invoke(phase, "mcp-stdio", [binary, "mcp", "serve"], cli_env,
                                         tool_arguments={"tool": "trace", "arguments": tool_arguments}, mcp_tool="trace")
         body = _mcp_call_result(result)
@@ -1032,6 +1038,8 @@ spec:
                 app_object = next((item for item in items if item["kind"] == "Application" and item["metadata"]["name"] == APPLICATION), {})
                 if labels.get("confighub.com/UnitSlug") != CONFIGHUB_UNIT or annotations.get("confighub.com/SpaceName") != CONFIGHUB_SPACE:
                     raise RuntimeError("source-truth fixture lacks exact ConfigHub unit identity")
+                if app_object.get("status", {}).get("resources") != [{"group": "apps", "version": "v1", "kind": "Deployment", "namespace": NAMESPACE, "name": DEPLOYMENT}]:
+                    raise RuntimeError("source-truth fixture lacks the exact managed workload identity")
                 if app_object.get("status", {}).get("sync", {}).get("revision") != "a" * 40:
                     raise RuntimeError("source-truth fixture lacks its observed Argo revision")
                 proxies, projected, proxy_cert_paths = _proxy_pair(config, work)

@@ -112,12 +112,17 @@ provider types. Only the scoped attempt-three result above is claimed.
 ## Combined source-truth and rendered-diff proof preparation
 
 The helper now includes a separately gated `source-truth-diff` mode for the
-integrated #750/#751 routes. It is prepared but **has not been run**. The
+integrated #750/#751 routes. Attempt one failed on an incomplete synthetic
+Application fixture: its missing `status.resources` prevented an exact workload
+link. The product correctly refused the link. The failed receipt is retained at
+`/tmp/scout-source-truth-diff-proof-1`; owned-cluster deletion, node absence and
+shared-config integrity checks passed. The fixture is corrected for a new attempt;
+no accepted combined proof is claimed yet. The
 `COMBINED_SOURCE_PIN` in `capture.py` records the reviewed candidate
 `a508e83840c54843a6461727ca71a417e4ccdbad`; the capture also requires that
 commit to be an ancestor of `HEAD` before building binaries or creating cluster
 resources. The helper and pinned product are now integrated, and the helper
-review repairs pass 29 offline tests. The combined live capture remains pending. The attempt-three Trace-only receipt
+review repairs pass 29 offline tests. The corrected combined live capture remains pending. The attempt-three Trace-only receipt
 above remains the separate historical proof; it is not evidence for these
 newer routes.
 
@@ -164,7 +169,7 @@ validated against its own selected endpoint and target response.
 This intended proof covers local API binding, read-only request behavior,
 RBAC denial, and synthetic Application evidence only. It cannot establish a
 real ConfigHub read or approval, controller reconciliation, workload
-convergence, or model/cost savings. No combined receipt exists yet.
+convergence, or model/cost savings. No passing combined receipt exists yet.
 
 ## Offline acceptance tests
 
