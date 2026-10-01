@@ -96,6 +96,9 @@ jobs:
       - name: Run offline RUL-03 capture and fixture-routing guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/rul03-context -v
 
+      - name: Run offline legacy strict-answer packet guards
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/legacy-strict-cases -v
+
       - name: Run offline PRE-02 capture and fixture-routing guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/pre02-node-selector -v
 
