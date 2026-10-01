@@ -3,8 +3,8 @@
 `round_accounting_v1.py` is a separate, offline analysis validator for the
 retained single-Read stop captured by the earlier direct CLI probe. It does not
 replace or amend `probe.py`'s legacy validator, the source run status, or any
-historical report. The original `validation_failed` status and exit code 1 are
-carried into the analysis record.
+historical report. The original `validation_failed` status and CLI exit code 1 are
+carried into the analysis record; the original helper exit remains 2.
 
 Acceptance is deliberately narrow. The validator requires the exact retained
 synthetic provider request and mock response, exactly one pinned-model request
@@ -35,8 +35,11 @@ This schema covers only a single synthetic Read response and its one successful
 fixture result. It does not define general SDK turn semantics, parallel tool
 rounds, full-process accounting, provider billing, credits, benchmark admission,
 or the complete Experiment A treatment. The 24-case protocol and existing
-reports remain unchanged. The analysis can be applied later to the retained
-local bytes without invoking a CLI or provider.
+reports remain unchanged. The [October 1 offline reanalysis](../reports/2026-10-01-direct-cli-round-accounting.json)
+accepted one observed model request and one tool-use round, with two HTTP
+requests including the startup HEAD, three connections including preflight,
+and terminal-reported `num_turns: 2`. It used retained local bytes without
+invoking a CLI or provider. Original validation failure remains unchanged.
 
 Pure fixture checks:
 
