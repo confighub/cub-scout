@@ -1,0 +1,11 @@
+# Linux arm64 runtime version gate — source preparation
+
+**Status:** prepared for independent review; not executed. This report is source/test preparation only. It does not assert that any downloaded tool runs on Linux or that a version check passed.
+
+The helper at `evals/linux-runtime-versions/prepare.py` is designed to verify four archived Linux/arm64 files against exact size and SHA-256 pins, create one invocation-owned container from the cached image ID `sha256:cdbd05fb6f457ca275ff51ce00d93d865ca0b6a25f5ffb08262d94f6835771e5`, execute four serial version-only commands, retain exact bounded command output, and remove only its owned container. It refuses to run without `--execute`. Docker use, target binary execution, downloads, installation, package updates, image pulls, model/provider calls, and cluster access were not performed while preparing this packet.
+
+The input pins are the accepted archive records for Claude Code 2.1.274 (`2db904daea17addff9de557ba26a725916888aa7b546e2c5dd989c20d9d49ab3`), kubectl v1.36.0 (`9f9d9c44a7b5264515ac9da5991584e2395bd50662e651132337e7b4d0c56f8f`), Helm v4.1.4 (`4d6e3a69e6203094d564d5d4e94325b1f7209421dc7e832a96d2510295e03f1d`), and source-built cub-scout (`5dac8765612592b60ec076f102c1810fbbce94b52236b3577ab3f65219e17fa6`, source revision `0d0fd7d54e5b3b1f16d27df6fa299950388873d6`). The archived acquisition and verification materials are under `evals/results/linux-runtime-assets-20261001/` in the primary checkout; this helper does not repeat upstream signature verification.
+
+The container configuration is bounded to network-none, a read-only root, UID/GID 65534, dropped capabilities, no-new-privileges, 64 PIDs, 1 GiB memory, one CPU, one read-only `/tools` mount, and a private 64 MiB `/tmp` tmpfs. Execution is capped at 45 seconds, cleanup at 30 seconds, and total runtime at 80 seconds; each version subprocess has an 8-second timeout and 32 KiB per-stream cap. These are requested/inspected configuration constraints, not resource saturation tests.
+
+Offline verification: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest evals/linux-runtime-versions/test_prepare.py` passed 10 tests, including a fully mocked lifecycle through successful checks and exact owned-container cleanup. `git diff --check` passed. No live gate result or installability claim is available until separate review and invocation.
