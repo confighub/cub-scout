@@ -65,8 +65,7 @@ order, quality gates, budgets and decisions.
   limits and earlier attempts remain recorded. Its three Python tests and the
   exact recorded-case scaffold guard pass; paid agent execution remains unrun.
   The first combined full-Go run found two Flux golden changes and a scaffold
-  mismatch; both are repaired and targeted tests pass. A fresh full suite is
-  running at `3a056e5e`. Full controller-desired diff, owned before/after live
+  mismatch; both are repaired and targeted tests pass. The fresh build and full offline Go suite pass at `3a056e5e`. Full controller-desired diff, owned before/after live
   proof, final independent review and CI remain open. Explicit context with
   legacy delegated diff fails before reads. A context label is not a stable
   cluster ID; this packet does not close #599.
