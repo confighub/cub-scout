@@ -9,6 +9,7 @@ import http.server
 import json
 import math
 import os
+import re
 from pathlib import Path
 import platform
 import re
@@ -244,18 +245,24 @@ def cli_tool_events(events):
 
 
 def explicit_denial(content, tool_name: str) -> bool:
-    texts = []
-    def collect(value):
-        if isinstance(value, str): texts.append(value.lower())
-        elif isinstance(value, dict):
-            if isinstance(value.get("text"), str): texts.append(value["text"].lower())
-            for item in value.values(): collect(item)
-        elif isinstance(value, list):
-            for item in value: collect(item)
-    collect(content)
-    joined = " ".join(texts)
-    return tool_name.lower() in joined and any(phrase in joined for phrase in
-        ("not allowed", "disallowed", "unavailable", "not available", "disabled", "permission denied", "cannot use"))
+    if isinstance(content, str):
+        texts = [content]
+    elif isinstance(content, list):
+        texts = [item["text"] for item in content if isinstance(item, dict)
+                 and item.get("type") == "text" and isinstance(item.get("text"), str)]
+        if len(texts) != len(content):
+            return False
+    else:
+        return False
+    name = re.escape(tool_name)
+    patterns = (
+        rf"(?:the\s+)?{name}(?:\s+tool)?\s+(?:is|was)\s+(?:not\s+allowed|disallowed|unavailable|not\s+available|disabled)\b",
+        rf"(?:the\s+)?{name}(?:\s+tool)?\s+is\s+not\s+permitted\b",
+        rf"no\s+such\s+tool\s+(?:is\s+)?(?:available|allowed)\s*:\s*{name}\b",
+        rf"{name}(?:\s+tool)?\s+(?:is\s+)?not\s+available\b",
+    )
+    return any(re.fullmatch(rf"\s*(?:error:\s*)?{pattern}(?:\b|:)?.*", text,
+                            flags=re.IGNORECASE | re.DOTALL) for text in texts for pattern in patterns)
 
 
 def validate_probe(stdout: bytes, requests: list[dict], return_code: int,
@@ -348,38 +355,58 @@ def validate_probe(stdout: bytes, requests: list[dict], return_code: int,
     if scenario == "turn-limit":
         if terminal.get("subtype") != "error_max_turns" or run_status != "completed":
             raise ProbeError("actual turn-limit terminal result was not observed; timeout is not evidence")
-        if type(return_code) is not int or max_turns != 1:
+        if type(return_code) is not int or type(max_turns) is not int or max_turns != 1:
             raise ProbeError("CLI exit code missing for turn-limit result")
         reads = [use for use in mock_uses if use.get("name") == "Read"]
         if not reads or len(reads) != len(mock_uses) or len(reads) > 3 or not 1 <= len(requests) <= 3:
             raise ProbeError("turn-limit scenario lacks bounded Read tool-use evidence")
         num_turns = terminal.get("num_turns")
-        if type(num_turns) is not int or num_turns < 1:
-            raise ProbeError("turn-limit terminal lacks an exact positive num_turns value")
+        if type(num_turns) is not int or not 1 <= num_turns <= max_turns:
+            raise ProbeError("turn-limit terminal num_turns is missing or inconsistent with its cap")
+        if terminal.get("is_error") is not True:
+            raise ProbeError("turn-limit terminal is not explicitly marked as an error")
+        if len(requests) > max_turns:
+            raise ProbeError("observed model request count exceeds the configured turn cap")
         if any(not any(cli_use.get("id") == use.get("id") and
                        all(cli_use.get(k) == use.get(k) for k in ("id", "name", "input"))
                        for cli_use in cli_uses) for use in reads):
             raise ProbeError("CLI output does not show every synthetic Read tool-use event")
         if any(use.get("input") != {"file_path":fixture_path} for use in reads):
             raise ProbeError("Read tool-use escaped the private synthetic fixture")
-        correlated = [result for result in tool_results if result["id"] in {use["id"] for use in reads}]
-        if any(result["id"] not in {use["id"] for use in reads} or result["is_error"]
-               for result in tool_results):
-            raise ProbeError("successful fixture Read tool_result evidence is missing")
-        cli_read_results = [result for result in cli_results if result["id"] in {use["id"] for use in reads}
-                            and not result["is_error"] and READ_SENTINEL in json.dumps(result["content"])]
-        request_and_cli_text = json.dumps([result["content"] for result in correlated + cli_read_results])
-        if not correlated and not cli_read_results:
-            raise ProbeError("successful fixture Read tool_result evidence is missing")
-        if READ_SENTINEL not in request_and_cli_text:
-            raise ProbeError("successful Read tool_result lacks the private fixture marker")
-        if not cli_read_results:
-            raise ProbeError("CLI output lacks a successful fixture Read tool_result")
+        read_ids = {use["id"] for use in reads}
+        if len(cli_uses) != len(reads) or {use["id"] for use in cli_uses} != read_ids:
+            raise ProbeError("CLI output contains missing or extra executed tool-use events")
+        if any(not any(all(cli_use.get(k) == read.get(k) for k in ("id", "name", "input"))
+                           for read in reads) for cli_use in cli_uses):
+            raise ProbeError("CLI Read tool-use differs from the authored mock response")
+        if any(result["id"] not in read_ids for result in tool_results + cli_results):
+            raise ProbeError("turn-limit evidence contains an orphan or extra tool result")
+        if any(result["id"] not in read_ids for result in cli_results):
+            raise ProbeError("turn-limit evidence contains an orphan CLI tool result")
+        cli_result_by_id = {result["id"]: result for result in cli_results}
+        if len(cli_result_by_id) != len(read_ids) or set(cli_result_by_id) != read_ids:
+            raise ProbeError("CLI output does not account for every executed Read result")
+        for ident in read_ids:
+            cli_result = cli_result_by_id[ident]
+            if cli_result["is_error"] or READ_SENTINEL not in json.dumps(cli_result["content"]):
+                raise ProbeError("CLI Read result is not a successful fixture read")
+        provider_by_id = {result["id"]: result for result in tool_results}
+        if provider_by_id and set(provider_by_id) != read_ids:
+            raise ProbeError("provider request only partially accounts for Read results")
+        if not provider_by_id and len(requests) != 1:
+            raise ProbeError("provider request history omits executed Read results")
+        for ident, provider_result in provider_by_id.items():
+            cli_result = cli_result_by_id[ident]
+            if (provider_result["is_error"] or provider_result["content"] != cli_result["content"]
+                    or READ_SENTINEL not in json.dumps(provider_result["content"])):
+                raise ProbeError("provider and CLI Read results do not match successful fixture content")
         return {"scenario":scenario, "terminal_subtype":terminal["subtype"],
                 "return_code":return_code, "num_turns":num_turns,
                 "model_request_count":len(requests), "tool_inventory":["Read"],
-                "read_tool_uses":len(reads), "read_tool_results":len(correlated),
-                "read_result_sha256":[result["content_sha256"] for result in correlated]}
+                "read_tool_uses":len(reads), "read_tool_results":len(cli_results),
+                "provider_read_results":len(provider_by_id),
+                "read_result_sha256":[sha256(json.dumps(cli_result_by_id[i]["content"], sort_keys=True).encode())
+                                       for i in sorted(read_ids)]}
     return {"terminal_type": "result", "terminal_subtype": "success",
             "terminal_text": "offline-probe-terminal", "tool_inventory": ["Read"], "scenario":scenario}
 

@@ -213,6 +213,21 @@ class OfflineContracts(unittest.TestCase):
                         [first, generic_record], 0, scenario=scenario)
                 with self.assertRaises(probe.ProbeError):
                     probe.validate_probe(json.dumps(cli[-1]).encode(), [first, second], 0, scenario=scenario)
+                for wording in (f"{tool} started successfully; child task failed with permission denied reading /tmp/file",
+                                f"{tool} launched; downstream API unavailable",
+                                f"No such tool available: {tool}"):
+                    valid = dict(result, content=[{"type":"text", "text":wording}])
+                    rec, _ = exchange_record([{"role":"assistant", "content":[call]},
+                        {"role":"user", "content":[valid]}], scenario, 2)
+                    out = [cli[0], {"type":"user", "message":{"content":[valid]}}, cli[2]]
+                    accepted = False
+                    try:
+                        probe.validate_probe(b"\n".join(json.dumps(e).encode() for e in out),
+                                             [first, rec], 0, scenario=scenario)
+                        accepted = True
+                    except probe.ProbeError:
+                        pass
+                    self.assertEqual(accepted, wording == f"No such tool available: {tool}")
 
     def test_turn_limit_requires_successful_fixture_read_and_cap_terminal(self):
         fixture = "/private/offline/read-fixture.txt"
@@ -229,12 +244,9 @@ class OfflineContracts(unittest.TestCase):
                {"type":"user", "message":{"content":[result2]}},
                {"type":"result", "subtype":"error_max_turns", "num_turns":1, "is_error":True}]
         payload = b"\n".join(json.dumps(e).encode() for e in cli)
-        result = probe.validate_probe(payload, [first, second], 1, scenario="turn-limit",
-                                      fixture_path=fixture, max_turns=1)
-        self.assertEqual(result["terminal_subtype"], "error_max_turns")
         with self.assertRaises(probe.ProbeError):
             probe.validate_probe(payload, [first, second], 1, scenario="turn-limit",
-                                 fixture_path=fixture, max_turns=2)
+                                 fixture_path=fixture, max_turns=1)
         timeout = b"\n".join(json.dumps(e).encode() for e in cli[:-1])
         with self.assertRaises(probe.ProbeError):
             probe.validate_probe(timeout, [first, second], 1, scenario="turn-limit",
@@ -253,7 +265,7 @@ class OfflineContracts(unittest.TestCase):
         result = {"type":"tool_result", "tool_use_id":call["id"], "content":[{"type":"text", "text":probe.READ_SENTINEL}]}
         cli = [{"type":"assistant", "message":{"content":[call]}},
                {"type":"user", "message":{"content":[result]}},
-               {"type":"result", "subtype":"error_max_turns", "num_turns":1}]
+               {"type":"result", "subtype":"error_max_turns", "num_turns":1, "is_error":True}]
         payload = b"\n".join(json.dumps(e).encode() for e in cli)
         observed = probe.validate_probe(payload, [only_request], 1, scenario="turn-limit",
                                         fixture_path=fixture, max_turns=1)
@@ -262,6 +274,21 @@ class OfflineContracts(unittest.TestCase):
         with self.assertRaises(probe.ProbeError):
             probe.validate_probe(payload, [only_request], 1, scenario="turn-limit",
                                  run_status="timeout", fixture_path=fixture, max_turns=1)
+        for altered in (
+            dict(cli[-1], num_turns=17),
+            dict(cli[-1], is_error=False),
+        ):
+            invalid = cli[:-1] + [altered]
+            with self.assertRaises(probe.ProbeError):
+                probe.validate_probe(b"\n".join(json.dumps(e).encode() for e in invalid),
+                                     [only_request], 1, scenario="turn-limit",
+                                     fixture_path=fixture, max_turns=1)
+        extra = cli[:-1] + [{"type":"assistant", "message":{"content":[
+            {"type":"tool_use", "id":"extra", "name":"Bash", "input":{}}]}}, cli[-1]]
+        with self.assertRaises(probe.ProbeError):
+            probe.validate_probe(b"\n".join(json.dumps(e).encode() for e in extra),
+                                 [only_request], 1, scenario="turn-limit",
+                                 fixture_path=fixture, max_turns=1)
 
     def test_terminal_truth_rejects_rc_error_max_turns_text_and_is_error(self):
         _, records, _ = request()
