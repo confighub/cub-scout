@@ -1603,7 +1603,9 @@ func renderReverseTraceHuman(w io.Writer, result *agent.ReverseTraceResult, expl
 			}
 
 			// Show last-applied-configuration hint
-			if result.OrphanMeta.LastAppliedConfig != "" {
+			if result.OrphanMeta.LastAppliedConfigOmission != "" {
+				fmt.Fprintf(w, "\n  %s\n", result.OrphanMeta.LastAppliedConfigOmission)
+			} else if result.OrphanMeta.LastAppliedConfig != "" {
 				fmt.Fprintf(w, "\n")
 				fmt.Fprintf(w, "%s%slast-applied-configuration annotation is present%s\n", colorBold, colorGreen, colorReset)
 				fmt.Fprintf(w, "%s  Its presence does not establish how this resource was created.%s\n", colorDim, colorReset)
@@ -1692,6 +1694,9 @@ func renderReverseTraceMarkdown(w io.Writer, result *agent.ReverseTraceResult) e
 			fmt.Fprintf(w, " (managed by %s)", result.OwnerDetails.Name)
 		}
 		fmt.Fprintf(w, "\n")
+	}
+	if result.OrphanMeta != nil && result.OrphanMeta.LastAppliedConfigOmission != "" {
+		fmt.Fprintf(w, "\n> [omission] %s\n", result.OrphanMeta.LastAppliedConfigOmission)
 	}
 	return trackedWriter.err
 }

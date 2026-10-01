@@ -173,3 +173,24 @@ func TestTraceScopedFollowupHintsPreserveOrWithholdBinding(t *testing.T) {
 	require.Contains(t, out.String(), "Follow-up command withheld")
 	require.NotContains(t, out.String(), "./cub-scout trace")
 }
+
+func TestReverseTraceSecretOmissionPreservedAcrossRenderers(t *testing.T) {
+	result := &agent.ReverseTraceResult{Object: agent.ResourceRef{Kind: "Secret", Name: "credentials", Namespace: "team-a"}, Owner: "native", OrphanMeta: &agent.OrphanMetadata{LastAppliedConfigOmission: "Secret last-applied configuration omitted because it may contain payloads"}}
+	for _, format := range []string{"ascii", "md", "json"} {
+		t.Run(format, func(t *testing.T) {
+			var out bytes.Buffer
+			var err error
+			switch format {
+			case "ascii":
+				err = renderReverseTraceHuman(&out, result, false)
+			case "md":
+				err = renderReverseTraceMarkdown(&out, result)
+			case "json":
+				err = outputReverseTraceJSONTo(&out, result)
+			}
+			require.NoError(t, err)
+			require.Contains(t, out.String(), result.OrphanMeta.LastAppliedConfigOmission)
+			require.NotContains(t, out.String(), "No last-applied-configuration annotation was found")
+		})
+	}
+}

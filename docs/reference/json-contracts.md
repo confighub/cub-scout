@@ -101,7 +101,11 @@ one evidence model. The TUI projects that model with the same human renderer;
 JSON preserves the same partial-result warnings, including timing, Secret-reference
 and artifact read omissions. The reverse JSON model remains separate and adds an
 optional `context` selection label; its existing `error` field carries partial
-failures alongside known chains. The local rendered-manifest comparison helper
+failures alongside known chains. Reverse Secret observations omit the saved
+last-applied manifest (which can embed Secret payloads) and report
+`orphanMeta.lastAppliedConfigOmission`; this does not mean the annotation was
+absent. Non-Secret last-applied metadata retains its existing representation.
+The local rendered-manifest comparison helper
 has no public JSON contract yet. Full diff integration and remaining end-to-end
 proof remain tracked by #746.
 

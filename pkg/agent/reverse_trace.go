@@ -67,6 +67,9 @@ type OrphanMetadata struct {
 	// LastAppliedConfig is the kubectl.kubernetes.io/last-applied-configuration annotation
 	LastAppliedConfig string `json:"lastAppliedConfig,omitempty"`
 
+	// LastAppliedConfigOmission explains withheld annotations that may embed payloads.
+	LastAppliedConfigOmission string `json:"lastAppliedConfigOmission,omitempty"`
+
 	// CreatedAt is when the resource was created
 	CreatedAt *time.Time `json:"createdAt,omitempty"`
 
@@ -209,7 +212,11 @@ func extractOrphanMetadata(resource *unstructured.Unstructured) *OrphanMetadata 
 	annotations := resource.GetAnnotations()
 	if annotations != nil {
 		if lastApplied, ok := annotations["kubectl.kubernetes.io/last-applied-configuration"]; ok {
-			meta.LastAppliedConfig = lastApplied
+			if resource.GetKind() == "Secret" {
+				meta.LastAppliedConfigOmission = "Secret last-applied configuration omitted because it may contain payloads"
+			} else {
+				meta.LastAppliedConfig = lastApplied
+			}
 		}
 
 		// Copy other annotations (excluding last-applied-config which can be large)
