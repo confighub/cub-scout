@@ -58,11 +58,26 @@ order, quality gates, budgets and decisions.
   mismatches, and the fixed source passed all six checks with matching direct
   identities and preserved denials. Cleanup and shared-config integrity were
   verified. The concise report binds the local raw archive in
-  [the proof README](evals/watch-cache-namespace/README.md); packaging is not yet
-  published, and the product fix remains unmerged. The Nodes case used an empty
+  [the proof README](evals/watch-cache-namespace/README.md). Product fix and
+  proof packaging merged in [PR #738](https://github.com/confighub/cub-scout/pull/738)
+  after required checks passed; the private raw archive remains local. The Nodes case used an empty
   synthetic cluster-scope lister and observed a 403 fallback; it does not prove
   route validation or Nodes informer coverage. Stream freshness, store limits
   and reconnect/410 coverage remain under #539.
+- [PR #739](https://github.com/confighub/cub-scout/pull/739) merged the
+  [ordinary-tool query plan](evals/ordinary-tool-query-plan-v1.md). None of the
+  frozen 24 questions requires installed Helm release history. Inventory
+  questions concern supplied rows, with original-cluster completeness unknown.
+  Equal meaningful tool access remains required; every tool need not be called.
+- [#740](https://github.com/confighub/cub-scout/issues/740) now has a passed
+  combined offline two-arm diagnostic in PR #741 at source 1b80b8c, in 9.091
+  seconds. Both real CLIs completed required tools; treatment advertised 35
+  skills and produced one complete validated recorded map result. Both owned
+  containers were removed and input hashes verified. All four earlier failed
+  attempts remain retained in the
+  [diagnostic report](evals/reports/2026-10-01-combined-runtime.json). Eighteen
+  offline tests pass. This is not full24 execution, skill-use value, billing,
+  savings evidence or paid admission; those gates remain stopped.
 - General ordinary-tool parity, API/Helm route coverage, complete descendant
   accounting and paid admission remain unresolved. External #591/#597/#600
   still require their own authoritative evidence and agreement.
