@@ -1370,67 +1370,103 @@ func outputTraceMarkdown(result *agent.TraceResult, artifacts map[string]mapsvc.
 	return nil
 }
 
-// runReverseTrace performs a reverse trace - walking ownerReferences up to find GitOps source
+// runReverseTrace performs a reverse trace using one captured legacy binding.
 func runReverseTrace(ctx context.Context, kind, name, namespace string) error {
 	session, err := newDefaultTraceSession()
 	if err != nil {
 		return fmt.Errorf("failed to capture Kubernetes trace session: %w", err)
 	}
+	return runReverseTraceWithSession(ctx, session, kind, name, namespace)
+}
 
+// runReverseTraceWithSession performs every Kubernetes read through the supplied
+// invocation binding and renders the requested reverse-trace representation.
+func runReverseTraceWithSession(ctx context.Context, session *traceSession, kind, name, namespace string) error {
+	if session == nil {
+		return fmt.Errorf("reverse trace requires a captured trace session")
+	}
 	dynClient, err := session.dynamicClient()
 	if err != nil {
-		return fmt.Errorf("failed to create dynamic client: %w", err)
+		return fmt.Errorf("failed to create dynamic client for reverse trace: %w", err)
 	}
-
-	tracer := agent.NewReverseTracer(dynClient)
-	result, err := tracer.Trace(ctx, kind, name, namespace)
+	result, err := agent.NewReverseTracer(dynClient).Trace(ctx, kind, name, namespace)
 	if err != nil {
 		return fmt.Errorf("reverse trace failed: %w", err)
 	}
+	result.Context = session.contextLabel()
 
-	if traceJSON {
-		return outputReverseTraceJSON(result)
+	format := traceFormat
+	if traceJSON && format == "ascii" {
+		format = "json"
 	}
-	return outputReverseTraceHuman(result)
+	switch format {
+	case "json":
+		return outputReverseTraceJSON(result)
+	case "md":
+		return renderReverseTraceMarkdown(os.Stdout, result)
+	default:
+		return outputReverseTraceHuman(result)
+	}
 }
 
-// outputReverseTraceJSON outputs the reverse trace result as JSON
+// outputReverseTraceJSON outputs the reverse trace result in the existing JSON model.
 func outputReverseTraceJSON(result *agent.ReverseTraceResult) error {
-	enc := json.NewEncoder(os.Stdout)
+	return outputReverseTraceJSONTo(os.Stdout, result)
+}
+
+func outputReverseTraceJSONTo(w io.Writer, result *agent.ReverseTraceResult) error {
+	if result == nil {
+		return fmt.Errorf("reverse trace result is nil")
+	}
+	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	return enc.Encode(result)
 }
 
-// outputReverseTraceHuman outputs the reverse trace result in human-readable format
+// outputReverseTraceHuman preserves the CLI stdout wrapper for the shared renderer.
 func outputReverseTraceHuman(result *agent.ReverseTraceResult) error {
-	fmt.Printf("\n")
-	fmt.Printf("%s%sREVERSE TRACE:%s %s%s%s\n", colorBold, colorCyan, colorReset, colorBold, result.Object.String(), colorReset)
-	fmt.Printf("\n")
+	return renderReverseTraceHuman(os.Stdout, result, traceExplain)
+}
+
+// renderReverseTraceHuman writes the complete human projection without reading
+// global flags, accessing cluster state, or exiting the process.
+func renderReverseTraceHuman(w io.Writer, result *agent.ReverseTraceResult, explain bool) error {
+	if result == nil {
+		return fmt.Errorf("reverse trace result is nil")
+	}
+	fmt.Fprintf(w, "\n")
+	fmt.Fprintf(w, "%s%sREVERSE TRACE:%s %s%s%s\n", colorBold, colorCyan, colorReset, colorBold, result.Object.String(), colorReset)
+	fmt.Fprintf(w, "\n")
+	if result.Context != "" {
+		fmt.Fprintf(w, "Kubernetes context: %s (selection label; not a stable cluster ID)\n\n", result.Context)
+	}
 
 	// Explanatory content when --explain is used
-	if traceExplain {
-		fmt.Printf("%s%sREVERSE TRACE EXPLAINED%s\n", colorBold, colorWhite, colorReset)
-		fmt.Printf("%s════════════════════════════════════════════════════════════════════%s\n", colorDim, colorReset)
-		fmt.Printf("Reverse trace walks UP the ownership chain:\n\n")
-		fmt.Printf("  %sPod%s (running container)\n", colorYellow, colorReset)
-		fmt.Printf("       %s↑%s K8s ownerReference\n", colorDim, colorReset)
-		fmt.Printf("  %sReplicaSet%s (manages pod replicas)\n", colorBlue, colorReset)
-		fmt.Printf("       %s↑%s K8s ownerReference\n", colorDim, colorReset)
-		fmt.Printf("  %sDeployment%s (desired state)\n", colorGreen, colorReset)
-		fmt.Printf("       %s↑%s GitOps labels detected\n", colorDim, colorReset)
-		fmt.Printf("  %sGitOps Owner%s (Flux/ArgoCD/Helm)\n", colorCyan, colorReset)
-		fmt.Printf("\n")
-		fmt.Printf("%sThis shows how your resource is managed:%s\n", colorDim, colorReset)
-		fmt.Printf("\n")
+	if explain {
+		fmt.Fprintf(w, "%s%sREVERSE TRACE EXPLAINED%s\n", colorBold, colorWhite, colorReset)
+		fmt.Fprintf(w, "%s════════════════════════════════════════════════════════════════════%s\n", colorDim, colorReset)
+		fmt.Fprintf(w, "Reverse trace walks UP the ownership chain:\n\n")
+		fmt.Fprintf(w, "  %sPod%s (running container)\n", colorYellow, colorReset)
+		fmt.Fprintf(w, "       %s↑%s K8s ownerReference\n", colorDim, colorReset)
+		fmt.Fprintf(w, "  %sReplicaSet%s (manages pod replicas)\n", colorBlue, colorReset)
+		fmt.Fprintf(w, "       %s↑%s K8s ownerReference\n", colorDim, colorReset)
+		fmt.Fprintf(w, "  %sDeployment%s (desired state)\n", colorGreen, colorReset)
+		fmt.Fprintf(w, "       %s↑%s GitOps labels detected\n", colorDim, colorReset)
+		fmt.Fprintf(w, "  %sGitOps Owner%s (Flux/ArgoCD/Helm)\n", colorCyan, colorReset)
+		fmt.Fprintf(w, "\n")
+		fmt.Fprintf(w, "%sThis shows how your resource is managed:%s\n", colorDim, colorReset)
+		fmt.Fprintf(w, "\n")
 	}
 
 	if result.Error != "" {
-		fmt.Printf("  %s⚠ %s%s\n\n", colorYellow, result.Error, colorReset)
-		return nil
+		fmt.Fprintf(w, "  %s⚠ %s%s\n\n", colorYellow, result.Error, colorReset)
+		if len(result.K8sChain) == 0 && len(result.GitOpsChain) == 0 {
+			return nil
+		}
 	}
 
 	// Print K8s ownership chain
-	fmt.Printf("%s%sK8s Ownership Chain:%s\n", colorBold, colorWhite, colorReset)
+	fmt.Fprintf(w, "%s%sK8s Ownership Chain:%s\n", colorBold, colorWhite, colorReset)
 	for i, link := range result.K8sChain {
 		prefix := ""
 		if i > 0 {
@@ -1460,11 +1496,11 @@ func outputReverseTraceHuman(result *agent.ReverseTraceResult) error {
 			kindColor = colorCyan
 		}
 
-		fmt.Printf("%s%s%s%s %s%s%s/%s%s%s", prefix, iconColor, icon, colorReset, kindColor, link.Kind, colorReset, colorBold, link.Name, colorReset)
+		fmt.Fprintf(w, "%s%s%s%s %s%s%s/%s%s%s", prefix, iconColor, icon, colorReset, kindColor, link.Kind, colorReset, colorBold, link.Name, colorReset)
 		if link.Status != "" {
-			fmt.Printf(" %s(%s)%s", colorDim, link.Status, colorReset)
+			fmt.Fprintf(w, " %s(%s)%s", colorDim, link.Status, colorReset)
 		}
-		fmt.Printf("\n")
+		fmt.Fprintf(w, "\n")
 	}
 
 	// If this looks platform-composition managed, show resolver lineage.
@@ -1472,15 +1508,15 @@ func outputReverseTraceHuman(result *agent.ReverseTraceResult) error {
 	// from already-fetched objects.
 	if len(result.Objects) > 0 {
 		if lineage, ok := agent.ResolveCrossplaneLineage(result.Objects[0], result.Objects); ok {
-			fmt.Print(renderCrossplaneLineageHuman(lineage))
+			fmt.Fprint(w, renderCrossplaneLineageHuman(lineage))
 		} else if lineage, ok := agent.ResolveKroLineage(result.Objects[0], result.Objects); ok {
-			fmt.Print(renderKroLineageHuman(lineage))
+			fmt.Fprint(w, renderKroLineageHuman(lineage))
 		}
 	}
 
 	// Print ownership detection result
-	fmt.Printf("\n")
-	fmt.Printf("%s%sDetected Owner:%s ", colorBold, colorWhite, colorReset)
+	fmt.Fprintf(w, "\n")
+	fmt.Fprintf(w, "%s%sDetected Owner:%s ", colorBold, colorWhite, colorReset)
 
 	ownerColor := colorWhite
 	switch result.Owner {
@@ -1498,85 +1534,135 @@ func outputReverseTraceHuman(result *agent.ReverseTraceResult) error {
 		ownerColor = colorRed
 	}
 
-	fmt.Printf("%s%s%s", ownerColor, strings.ToUpper(result.Owner), colorReset)
+	fmt.Fprintf(w, "%s%s%s", ownerColor, strings.ToUpper(result.Owner), colorReset)
 	if result.OwnerDetails != nil && result.OwnerDetails.Name != "" {
-		fmt.Printf(" %s(managed by %s)%s", colorDim, result.OwnerDetails.Name, colorReset)
+		fmt.Fprintf(w, " %s(managed by %s)%s", colorDim, result.OwnerDetails.Name, colorReset)
 	}
-	fmt.Printf("\n")
+	fmt.Fprintf(w, "\n")
 
 	// If native, show warning and orphan metadata
 	if result.Owner == "native" {
-		fmt.Printf("\n")
-		fmt.Printf("%s⚠ This resource is NOT managed by GitOps%s\n", colorYellow, colorReset)
-		fmt.Printf("%s  • It will be lost if the cluster is rebuilt%s\n", colorDim, colorReset)
-		fmt.Printf("%s  • No audit trail in Git%s\n", colorDim, colorReset)
-		fmt.Printf("%s  • Consider importing to GitOps: cub-scout import%s\n", colorDim, colorReset)
+		fmt.Fprintf(w, "\n")
+		fmt.Fprintf(w, "%s⚠ This resource is NOT managed by GitOps%s\n", colorYellow, colorReset)
+		fmt.Fprintf(w, "%s  • It will be lost if the cluster is rebuilt%s\n", colorDim, colorReset)
+		fmt.Fprintf(w, "%s  • No audit trail in Git%s\n", colorDim, colorReset)
+		fmt.Fprintf(w, "%s  • Consider importing to GitOps: cub-scout import%s\n", colorDim, colorReset)
 
 		// Show orphan metadata if available
 		if result.OrphanMeta != nil {
-			fmt.Printf("\n")
-			fmt.Printf("%s%sOrphan Metadata:%s\n", colorBold, colorWhite, colorReset)
+			fmt.Fprintf(w, "\n")
+			fmt.Fprintf(w, "%s%sOrphan Metadata:%s\n", colorBold, colorWhite, colorReset)
 
 			if result.OrphanMeta.CreatedAt != nil {
-				fmt.Printf("  %sCreated:%s %s\n", colorDim, colorReset, result.OrphanMeta.CreatedAt.Format("2006-01-02 15:04:05 MST"))
+				fmt.Fprintf(w, "  %sCreated:%s %s\n", colorDim, colorReset, result.OrphanMeta.CreatedAt.Format("2006-01-02 15:04:05 MST"))
 			}
 
 			// Show relevant labels
 			if len(result.OrphanMeta.Labels) > 0 {
-				fmt.Printf("  %sLabels:%s\n", colorDim, colorReset)
+				fmt.Fprintf(w, "  %sLabels:%s\n", colorDim, colorReset)
 				for k, v := range result.OrphanMeta.Labels {
 					// Skip internal labels
 					if strings.HasPrefix(k, "kubernetes.io/") ||
 						strings.HasPrefix(k, "k8s.io/") {
 						continue
 					}
-					fmt.Printf("    %s=%s\n", k, v)
+					fmt.Fprintf(w, "    %s=%s\n", k, v)
 				}
 			}
 
 			// Show last-applied-configuration hint
 			if result.OrphanMeta.LastAppliedConfig != "" {
-				fmt.Printf("\n")
-				fmt.Printf("%s%slast-applied-configuration found%s\n", colorBold, colorGreen, colorReset)
-				fmt.Printf("%s  This resource was created via 'kubectl apply'.%s\n", colorDim, colorReset)
-				fmt.Printf("%s  The original manifest is available in the annotation.%s\n", colorDim, colorReset)
+				fmt.Fprintf(w, "\n")
+				fmt.Fprintf(w, "%s%slast-applied-configuration found%s\n", colorBold, colorGreen, colorReset)
+				fmt.Fprintf(w, "%s  This resource was created via 'kubectl apply'.%s\n", colorDim, colorReset)
+				fmt.Fprintf(w, "%s  The original manifest is available in the annotation.%s\n", colorDim, colorReset)
 
 				// Show a truncated preview
 				config := result.OrphanMeta.LastAppliedConfig
 				if len(config) > 200 {
-					fmt.Printf("\n  %sManifest preview (first 200 chars):%s\n", colorDim, colorReset)
-					fmt.Printf("  %s%s...%s\n", colorDim, config[:200], colorReset)
+					fmt.Fprintf(w, "\n  %sManifest preview (first 200 chars):%s\n", colorDim, colorReset)
+					fmt.Fprintf(w, "  %s%s...%s\n", colorDim, config[:200], colorReset)
 				}
 
-				fmt.Printf("\n  %s💡 To see full manifest:%s\n", colorDim, colorReset)
+				fmt.Fprintf(w, "\n  %s💡 To see full manifest:%s\n", colorDim, colorReset)
 				if result.TopResource != nil {
-					fmt.Printf("  kubectl get %s %s -n %s -o jsonpath='{.metadata.annotations.kubectl\\.kubernetes\\.io/last-applied-configuration}' | jq .\n",
+					fmt.Fprintf(w, "  kubectl get %s %s -n %s -o jsonpath='{.metadata.annotations.kubectl\\.kubernetes\\.io/last-applied-configuration}' | jq .\n",
 						strings.ToLower(result.TopResource.Kind),
 						result.TopResource.Name,
 						result.TopResource.Namespace)
 				}
 			} else {
-				fmt.Printf("\n")
-				fmt.Printf("%s%sNo last-applied-configuration%s\n", colorBold, colorYellow, colorReset)
-				fmt.Printf("%s  This resource was likely created via 'kubectl create' (not 'kubectl apply').%s\n", colorDim, colorReset)
-				fmt.Printf("%s  The original manifest is not recoverable from the cluster.%s\n", colorDim, colorReset)
+				fmt.Fprintf(w, "\n")
+				fmt.Fprintf(w, "%s%sNo last-applied-configuration%s\n", colorBold, colorYellow, colorReset)
+				fmt.Fprintf(w, "%s  This resource was likely created via 'kubectl create' (not 'kubectl apply').%s\n", colorDim, colorReset)
+				fmt.Fprintf(w, "%s  The original manifest is not recoverable from the cluster.%s\n", colorDim, colorReset)
 			}
 		}
 	}
 
 	// If GitOps managed, suggest full trace
 	if result.Owner == "flux" || result.Owner == "argo" {
-		fmt.Printf("\n")
-		fmt.Printf("%s💡 For full GitOps chain, run:%s\n", colorDim, colorReset)
+		fmt.Fprintf(w, "\n")
+		fmt.Fprintf(w, "%s💡 For full GitOps chain, run:%s\n", colorDim, colorReset)
 		if result.TopResource != nil {
-			fmt.Printf("   cub-scout trace %s/%s -n %s\n",
+			fmt.Fprintf(w, "   cub-scout trace %s/%s -n %s\n",
 				strings.ToLower(result.TopResource.Kind),
 				result.TopResource.Name,
 				result.TopResource.Namespace)
 		}
 	}
 
-	fmt.Printf("\n")
+	fmt.Fprintf(w, "\n")
+	return nil
+
+}
+
+func renderReverseTraceMarkdown(w io.Writer, result *agent.ReverseTraceResult) error {
+	if result == nil {
+		return fmt.Errorf("reverse trace result is nil")
+	}
+	fmt.Fprintf(w, "## Reverse trace: %s\n\n", result.Object.String())
+	if result.Context != "" {
+		fmt.Fprintf(w, "Kubernetes context: %s (selection label; not a stable cluster ID)\n\n", result.Context)
+	}
+	if result.Error != "" {
+		fmt.Fprintf(w, "> [warning] %s\n\n", result.Error)
+	}
+	if len(result.K8sChain) > 0 {
+		fmt.Fprintf(w, "### Kubernetes ownership chain\n\n")
+		for _, link := range result.K8sChain {
+			fmt.Fprintf(w, "- %s/%s", link.Kind, link.Name)
+			if link.Namespace != "" {
+				fmt.Fprintf(w, " in %s", link.Namespace)
+			}
+			if link.Status != "" {
+				fmt.Fprintf(w, " — %s", link.Status)
+			}
+			fmt.Fprintf(w, "\n")
+		}
+		fmt.Fprintf(w, "\n")
+	}
+	if len(result.GitOpsChain) > 0 {
+		fmt.Fprintf(w, "### GitOps chain\n\n")
+		for _, link := range result.GitOpsChain {
+			fmt.Fprintf(w, "- %s/%s", link.Kind, link.Name)
+			if link.Namespace != "" {
+				fmt.Fprintf(w, " in %s", link.Namespace)
+			}
+			if link.Status != "" {
+				fmt.Fprintf(w, " — %s", link.Status)
+			}
+			fmt.Fprintf(w, "\n")
+		}
+		fmt.Fprintf(w, "\n")
+	}
+	if result.Owner != "" {
+		fmt.Fprintf(w, "Detected owner: **%s**", strings.ToUpper(result.Owner))
+		if result.OwnerDetails != nil && result.OwnerDetails.Name != "" {
+			fmt.Fprintf(w, " (managed by %s)", result.OwnerDetails.Name)
+		}
+		fmt.Fprintf(w, "\n")
+	}
 	return nil
 }
 

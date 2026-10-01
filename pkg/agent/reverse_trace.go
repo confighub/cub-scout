@@ -26,6 +26,9 @@ func NewReverseTracer(client dynamic.Interface) *ReverseTracer {
 
 // ReverseTraceResult contains the full chain from resource to Git source
 type ReverseTraceResult struct {
+	// Context is the selected Kubernetes context label, not a stable cluster ID.
+	Context string `json:"context,omitempty"`
+
 	// Object is the starting resource
 	Object ResourceRef `json:"object"`
 
