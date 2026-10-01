@@ -52,12 +52,6 @@ func (e *TimingEnricher) EnrichChainWithTimingAndErrors(ctx context.Context, cha
 	return chain, readErrors
 }
 
-// getResourceTiming fetches a resource and extracts its timing information
-func (e *TimingEnricher) getResourceTiming(ctx context.Context, kind, name, namespace string) *time.Time {
-	timing, _ := e.readResourceTiming(ctx, kind, name, namespace)
-	return timing
-}
-
 func (e *TimingEnricher) readResourceTiming(ctx context.Context, kind, name, namespace string) (*time.Time, error) {
 	gvr := kindToTimingGVR(kind)
 	if gvr.Resource == "" {
