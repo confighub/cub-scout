@@ -869,7 +869,7 @@ func runMapListFromClusterWithConfigAndDiagnostics(ctx context.Context, cfg *res
 	}
 
 	// Resource types to scan (defaults + optional custom CRD config)
-	resources := collectMapResourceList()
+	resources := mapResourcesForKind(collectMapResourceList(), mapKind)
 
 	var startList time.Time
 	if debug {
