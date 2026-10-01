@@ -1,0 +1,15 @@
+{
+  "fixtureKind": "synthetic-shared-trace-model",
+  "trace": {
+    "target": {"kind": "Deployment", "namespace": "prod", "name": "api"},
+    "correlation": {"unitSlug": "PaymentsAPI", "space": "prod", "target": "West"},
+    "deliveryEvidence": {
+      "releases": [],
+      "unitEvents": [],
+      "omissions": [
+        {"layer": "confighub.releases", "reason": "no release row matched the traced resource by exact space plus target within the bounded evidence", "impact": "bounded release evidence cannot establish an exact row for this object"},
+        {"layer": "confighub.unitEvents", "reason": "no unit-event row matched the traced resource by exact unit ID or unit slug plus space", "impact": "recent unit-level event evidence is omitted for this object"}
+      ]
+    }
+  }
+}
