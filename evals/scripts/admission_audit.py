@@ -41,21 +41,22 @@ def inside(path, root):
 
 
 def safe_location(path):
-    """Reject private/sealed run homes and home-directory trace access."""
+    """Allow repository fixtures and explicit temp out roots, refuse home/sealed paths."""
     parts = path.parts
-    if any(part.lower() in {"sealed", "home"} for part in parts):
+    if "sealed" in {part.lower() for part in parts} or ".claude" in parts:
         return False
-    if ".claude" in parts:
-        return False
-    # Repository fixtures/results are allowed inside the checkout; other
-    # locations under the user's home are not trace inputs.
-    if inside(path, USER_HOME) and not inside(path, REPO_ROOT):
+    if inside(path, REPO_ROOT):
+        relative_parts = path.relative_to(REPO_ROOT).parts
+        if any(part.lower() == "home" for part in relative_parts):
+            return False
+        return True
+    if "home" in {part.lower() for part in parts} or inside(path, USER_HOME):
         return False
     return True
 
 
 def bounded_read(path, limit):
-    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
     try:
         descriptor = os.open(path, flags)
     except OSError as exc:
@@ -120,16 +121,6 @@ def content_blocks(record):
     return content if isinstance(content, list) else []
 
 
-def walk_objects(value):
-    if isinstance(value, dict):
-        yield value
-        for child in value.values():
-            yield from walk_objects(child)
-    elif isinstance(value, list):
-        for child in value:
-            yield from walk_objects(child)
-
-
 def analyze_trace(records):
     init_records = [r for r in records if r.get("type") == "system" and r.get("subtype") == "init"]
     terminal_records = [r for r in records if r.get("type") == "result"]
@@ -161,8 +152,9 @@ def analyze_trace(records):
     progress_mentions_tasks = False
     progress_lifecycle = []
     progress_records = 0
-    max_depth = 0
     task_starts = {}
+    task_start_tool_ids = {}
+    task_progress_events = []
     completed_task_ids = set()
     for record in records:
         if record.get("type") == "assistant":
@@ -201,14 +193,19 @@ def analyze_trace(records):
         if record.get("type") == "system" and subtype == "task_started":
             task_id = record.get("task_id")
             depth = record.get("spawn_depth")
-            if not isinstance(task_id, str) or not task_id or type(depth) is not int or not 0 <= depth <= 100:
-                reasons.append("task_started record has malformed task_id or spawn_depth")
+            tool_use_id = record.get("tool_use_id")
+            if not isinstance(task_id, str) or not task_id:
+                reasons.append("task_started record has malformed task_id")
             key = task_id if isinstance(task_id, str) else f"unknown-{len(task_starts)}"
             if key in task_starts:
                 reasons.append("trace contains a duplicate task_started task_id")
-            task_starts[key] = depth
-            if type(depth) is int and 0 <= depth <= 100:
-                max_depth = max(max_depth, depth)
+            task_starts[key] = depth if type(depth) is int and 0 <= depth <= 100 else None
+            if type(depth) is not int or not 0 <= depth <= 100:
+                reasons.append("task_started record has malformed spawn_depth")
+            if isinstance(tool_use_id, str) and tool_use_id:
+                task_start_tool_ids[tool_use_id] = key
+            elif tool_use_id is not None:
+                reasons.append("task_started record has malformed tool_use_id")
         if record.get("type") == "system" and subtype in {"task_notification", "task_completed"}:
             task_id, status = record.get("task_id"), record.get("status")
             if isinstance(task_id, str) and isinstance(status, str) and status.lower() in {"completed", "complete", "finished", "success"}:
@@ -219,21 +216,20 @@ def analyze_trace(records):
             if is_task_progress:
                 progress_mentions_tasks = True
                 last_tool = record.get("last_tool_name")
+                progress_task_id = record.get("task_id")
+                progress_depth = record.get("spawn_depth")
+                task_progress_events.append({"taskId": progress_task_id,
+                                             "spawnDepthReported": progress_depth,
+                                             "lastToolName": last_tool})
                 if isinstance(last_tool, str) and last_tool.startswith("mcp__"):
                     progress_mcp.add(last_tool)
                     progress_mcp_events.append({"taskId": record.get("task_id"),
-                                                "spawnDepth": record.get("spawn_depth"),
+                                                "spawnDepthReported": record.get("spawn_depth"),
                                                 "lastToolName": last_tool})
-                if not isinstance(record.get("task_id"), str) or not isinstance(last_tool, str):
-                    reasons.append("task_progress record has malformed task_id or last_tool_name")
-            for obj in walk_objects(record):
-                for key in ("depth", "taskDepth", "task_depth", "spawn_depth"):
-                    val = obj.get(key)
-                    if type(val) is int and 0 <= val <= 100:
-                        max_depth = max(max_depth, val)
-                status = obj.get("status")
-                if isinstance(status, str) and ("task" in str(obj.get("type", "")).lower() or "task" in str(obj.get("kind", "")).lower()):
-                    progress_lifecycle.append(status.lower())
+                if not isinstance(progress_task_id, str) or not progress_task_id:
+                    reasons.append("task_progress record has malformed task_id")
+                if not isinstance(last_tool, str) or not last_tool:
+                    reasons.append("task_progress record has malformed last_tool_name")
             # Only exact structured event fields count; arbitrary trace prose
             # is never normalized into a tool identifier.
     outstanding = [name for use_id, name in task_ids.items() if use_id.startswith("anonymous-") or use_id not in result_ids]
@@ -242,8 +238,51 @@ def analyze_trace(records):
     unresolved_started = sorted(task_id for task_id in task_starts if task_id not in completed_task_ids)
     if unresolved_started:
         reasons.append("task_started records lack explicit completed task notifications")
-    if progress_mentions_tasks and not any(s in {"completed", "complete", "finished", "success"} for s in progress_lifecycle):
-        reasons.append("progress mentions nested tasks without explicit completion evidence")
+    for event in task_progress_events:
+        task_id, reported_depth = event["taskId"], event["spawnDepthReported"]
+        if not isinstance(task_id, str) or task_id not in task_starts:
+            reasons.append("task_progress has no matching task_started record for its exact task_id")
+            event["spawnDepthResolved"] = None
+            continue
+        started_depth = task_starts[task_id]
+        if reported_depth is None:
+            event["spawnDepthResolved"] = started_depth
+            if started_depth is None:
+                reasons.append("task_progress depth is unknown and task_started has no valid depth")
+        elif type(reported_depth) is not int or not 0 <= reported_depth <= 100:
+            event["spawnDepthResolved"] = started_depth
+            reasons.append("task_progress spawn_depth is malformed")
+        elif started_depth is None:
+            event["spawnDepthResolved"] = None
+            reasons.append("task_progress has a depth but matching task_started depth is unknown")
+        elif reported_depth != started_depth:
+            event["spawnDepthResolved"] = None
+            reasons.append("task_progress spawn_depth conflicts with matching task_started depth")
+        else:
+            event["spawnDepthResolved"] = started_depth
+    if task_progress_events:
+        progress_ids = {event["taskId"] for event in task_progress_events if isinstance(event["taskId"], str)}
+        unmatched_completions = completed_task_ids - progress_ids - set(task_starts)
+        if unmatched_completions:
+            reasons.append("task completion notification has no matching task_started/task_progress task_id")
+        for task_id in progress_ids:
+            if task_id not in completed_task_ids:
+                reasons.append(f"task_progress task_id {task_id} lacks its own completion notification")
+    if task_starts:
+        reasons.append("descendant inventory/cost coverage is unavailable for spawned tasks")
+    unmatched_task_tool_ids = [use_id for use_id in task_ids
+                               if use_id.startswith("anonymous-") or use_id not in task_start_tool_ids]
+    for use_id in task_ids:
+        if use_id.startswith("anonymous-") or use_id not in task_start_tool_ids:
+            reasons.append("visible Task/Agent tool-use lacks matching task_started tool_use_id")
+    has_task_evidence = bool(task_starts or task_progress_events or task_ids)
+    unknown_depth = (any(depth is None for depth in task_starts.values()) or
+                     any(event.get("spawnDepthResolved") is None for event in task_progress_events) or
+                     bool(unmatched_task_tool_ids))
+    known_depths = [depth for depth in task_starts.values() if type(depth) is int]
+    known_depths.extend(event["spawnDepthResolved"] for event in task_progress_events
+                        if type(event.get("spawnDepthResolved")) is int)
+    task_depth = None if has_task_evidence and unknown_depth else max(known_depths, default=0)
     if progress_mcp:
         reasons.append("nested progress mentions MCP without auditable call bodies")
     if tools is not None:
@@ -279,10 +318,11 @@ def analyze_trace(records):
                                     "mentionsNestedTasks": progress_mentions_tasks,
                                     "recordCount": progress_records,
                                     "taskLifecycleStatuses": progress_lifecycle},
-        "taskDepthMaxObserved": max_depth if max_depth else (1 if task_ids else 0),
+        "taskDepthMaxObserved": task_depth,
         "unresolvedTaskCalls": len(outstanding),
         "taskStarted": [{"taskId": task_id, "spawnDepth": depth} for task_id, depth in task_starts.items()],
         "unresolvedStartedTaskIds": unresolved_started,
+        "taskProgressEvents": task_progress_events,
         "reasons": reasons,
     }
 
@@ -390,8 +430,12 @@ def audit(source_path, trace_root_paths, expected_arms, expected_runs):
                     run_reasons.append("reported turns are missing or malformed")
                 elif max_turns is not None and turns > max_turns:
                     run_reasons.append(f"reported turns {turns} exceed declared maxTurns {max_turns}")
-                if run.get("error"):
-                    run_reasons.append("producer reports an error, timeout, or interruption")
+                if "error" in run and run["error"] is not None:
+                    error_value = run["error"]
+                    if not isinstance(error_value, str) or not error_value.strip():
+                        run_reasons.append("producer run.error field is malformed")
+                    else:
+                        run_reasons.append("producer reports an error, timeout, or interruption")
                 run_cost = run.get("costUsd")
                 if (isinstance(run_cost, bool) or not isinstance(run_cost, (int, float)) or
                         not math.isfinite(run_cost) or run_cost < 0):

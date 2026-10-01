@@ -1,9 +1,13 @@
 """Synthetic, offline tests for admission_audit.py (no harness invocation)."""
 import importlib.util
 import json
+import os
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 SCRIPT = Path(__file__).with_name("admission_audit.py")
@@ -137,6 +141,110 @@ class AdmissionAuditTest(unittest.TestCase):
         self.write_traces()
         arm = self.audit()["cases"][0]["arms"]["with"][0]
         self.assertEqual(arm["nestedProgressEvidence"]["mcpMentions"], [])
+
+    def test_task_progress_depth_is_resolved_from_exact_task_id(self):
+        self.records.insert(1, {"type": "system", "subtype": "task_started", "task_id": "child",
+                                "tool_use_id": "toolu_child", "spawn_depth": 2})
+        self.records.insert(2, {"type": "system", "subtype": "task_progress", "task_id": "child",
+                                "last_tool_name": "Read"})
+        self.write_traces()
+        arm = self.audit()["cases"][0]["arms"]["with"][0]
+        self.assertEqual(arm["taskDepthMaxObserved"], 2)
+        self.assertEqual(arm["taskProgressEvents"][0]["spawnDepthResolved"], 2)
+        self.assertTrue(any("descendant inventory/cost coverage" in r for r in arm["reasons"]))
+
+    def test_unknown_task_depth_is_none_and_blocks_admission(self):
+        self.records.insert(1, {"type": "system", "subtype": "task_progress", "task_id": "child",
+                                "last_tool_name": "Read"})
+        self.write_traces()
+        arm = self.audit()["cases"][0]["arms"]["with"][0]
+        self.assertIsNone(arm["taskDepthMaxObserved"])
+        self.assertIsNone(arm["taskProgressEvents"][0]["spawnDepthResolved"])
+        self.assertTrue(any("no matching task_started" in r for r in arm["reasons"]))
+
+    def test_progress_depth_cannot_be_resolved_from_malformed_start_depth(self):
+        self.records.insert(1, {"type": "system", "subtype": "task_started", "task_id": "child",
+                                "spawn_depth": "one"})
+        self.records.insert(2, {"type": "system", "subtype": "task_progress", "task_id": "child",
+                                "last_tool_name": "Read"})
+        self.write_traces()
+        arm = self.audit()["cases"][0]["arms"]["with"][0]
+        self.assertIsNone(arm["taskDepthMaxObserved"])
+        self.assertIsNone(arm["taskProgressEvents"][0]["spawnDepthResolved"])
+        self.assertTrue(any("malformed spawn_depth" in r for r in arm["reasons"]))
+
+    def test_wrong_negative_and_conflicting_task_depths_rejected(self):
+        for reported, reason in (("two", "malformed"), (-1, "malformed"), (3, "conflicts")):
+            with self.subTest(reported=reported):
+                self.records = [
+                    {"type": "system", "subtype": "init", "model": "claude-haiku-4-5", "tools": ["Read", "Glob"]},
+                    {"type": "system", "subtype": "task_started", "task_id": "child", "spawn_depth": 2},
+                    {"type": "system", "subtype": "task_progress", "task_id": "child", "spawn_depth": reported,
+                     "last_tool_name": "Read"},
+                    {"type": "result", "subtype": "success", "is_error": False, "result": "answer"},
+                ]
+                self.write_traces()
+                arm = self.audit()["cases"][0]["arms"]["with"][0]
+                self.assertFalse(arm["admitted"])
+                self.assertTrue(any(reason in r for r in arm["reasons"]))
+                if reported == 3:
+                    self.assertIsNone(arm["taskDepthMaxObserved"])
+
+    def test_progress_a_and_completion_b_without_starts_are_not_admitted(self):
+        self.records.insert(1, {"type": "system", "subtype": "task_progress", "task_id": "A",
+                                "spawn_depth": 1, "last_tool_name": "Read"})
+        self.records.insert(2, {"type": "system", "subtype": "task_notification", "task_id": "B",
+                                "status": "completed"})
+        self.write_traces()
+        arm = self.audit()["cases"][0]["arms"]["with"][0]
+        self.assertFalse(arm["admitted"])
+        self.assertTrue(any("exact task_id" in r for r in arm["reasons"]))
+        self.assertTrue(any("no matching task_started/task_progress" in r for r in arm["reasons"]))
+
+    def test_task_completion_does_not_certify_descendant_accounting(self):
+        self.records.insert(1, {"type": "system", "subtype": "task_started", "task_id": "child",
+                                "spawn_depth": 1})
+        self.records.insert(2, {"type": "system", "subtype": "task_progress", "task_id": "child",
+                                "spawn_depth": 1, "last_tool_name": "Read"})
+        self.records.insert(3, {"type": "system", "subtype": "task_notification", "task_id": "child",
+                                "status": "completed"})
+        self.write_traces()
+        arm = self.audit()["cases"][0]["arms"]["with"][0]
+        self.assertFalse(arm["admitted"])
+        self.assertTrue(any("descendant inventory/cost coverage" in r for r in arm["reasons"]))
+
+    def test_malformed_error_values_are_rejected(self):
+        for value in (False, 0, "", {}, []):
+            with self.subTest(value=value):
+                self.data["cases"][0]["arms"]["with"][0]["error"] = value
+                self.write_result()
+                arm = self.audit()["cases"][0]["arms"]["with"][0]
+                self.assertFalse(arm["admitted"])
+                self.assertTrue(any("error field is malformed" in r for r in arm["reasons"]))
+
+    def test_fifo_trace_is_rejected_without_blocking(self):
+        fifo = self.out / "trace.fifo"
+        os.mkfifo(fifo)
+        self.data["cases"][0]["arms"]["with"][0]["tracePath"] = str(fifo)
+        self.write_result()
+        output = self.root / "fifo-audit.json"
+        completed = subprocess.run(
+            [sys.executable, str(SCRIPT), str(self.result), "--trace-root", str(self.out),
+             "--expected-arms", "with,without", "--expected-runs", "1", "--out", str(output)],
+            capture_output=True, text=True, timeout=3,
+        )
+        self.assertEqual(completed.returncode, 2)
+        report = json.loads(output.read_text(encoding="utf-8"))
+        self.assertIn("regular non-symlink file", report["cases"][0]["arms"]["with"][0]["reasons"][0])
+
+    def test_linux_repo_path_exception_does_not_allow_nested_home_or_other_home(self):
+        linux_repo = Path("/home/runner/work/cub-scout/cub-scout")
+        linux_home = Path("/home/runner")
+        with patch.object(audit_module, "REPO_ROOT", linux_repo), patch.object(audit_module, "USER_HOME", linux_home):
+            self.assertTrue(audit_module.safe_location(linux_repo / "evals/trace-admission-example/out"))
+            self.assertFalse(audit_module.safe_location(linux_repo / "evals/home/out"))
+            self.assertFalse(audit_module.safe_location(linux_home / ".ssh/out"))
+            self.assertFalse(audit_module.safe_location(linux_repo / "sealed/out"))
 
     def test_source_partial_true_and_bad_cost_block_admission(self):
         self.data["partial"] = True
