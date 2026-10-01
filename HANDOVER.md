@@ -2,7 +2,7 @@
 
 ## 2026-10-01: Recorded binding and compact response checkpoint
 
-Status as of 00:40 UTC: merged code baseline is `624c7cf`; v2.12.4 remains the
+Status as of 01:15 UTC: merged code baseline is `a99d7d4`; v2.12.4 remains the
 published release. The following work is unreleased. This section supersedes
 older snapshots below; [#645](https://github.com/confighub/cub-scout/issues/645)
 is the live execution queue. Continuous execution remains authorized.
@@ -19,8 +19,8 @@ is the live execution queue. Continuous execution remains authorized.
   Counts are 302 parsed / 300 selected / 2 excluded, with exactly twelve Native
   entries. Native means no built-in owner marker, not proof of an orphan.
   Capture time and completeness remain unknown.
-- The fixed 24-case mapping now has **10 planned, five refreshed, two recorded
-  bindings prepared but not run, six prepared projections and one prepared raw
+- The fixed 24-case mapping now has **9 planned, five refreshed, two recorded
+  bindings prepared but not run, seven prepared projections and one prepared raw
   recording**. All questions and group weights are unchanged. Both scale arms
   receive the same seven raw exports; recorded MCP reads the Deployment export.
   The full suite remains non-executable. Harness MCP grants, actual ordinary
@@ -32,11 +32,19 @@ is the live execution queue. Continuous execution remains authorized.
   read-only live standalone viewport check passed. Live before/after JSON was
   equal on the scale cluster (backend none); kubeconfig bytes stayed unchanged.
   No live ConfigHub correlation is certified. Required CI passed.
-- Next: complete the opt-in strict answer-contract packet
-  under #603. Historical scale grading could accept a correct final line with
-  contradictory prose. New strict instructions and grading must apply equally
-  to both arms; historical prompts/results must not be regraded silently.
-  PRE-01/02 still need genuine raw absent/present destination controls.
+- #696 synchronized the previous binding checkpoint. #697 (`b15db0f`) adds
+  opt-in strict generated answer grading, preserving historical prompts/results.
+  Fourteen guard tests and pinned four-view offline preflight (1.77s) passed.
+- #698 (`a99d7d4`, reviewed at `df275a9`) prepares PRE-04 from pinned Kubara
+  desired-matrix/config files. It separates intended placement from unknown
+  live observations. The one review repair declares the strict answer encoding;
+  focused tests, final independent review and required CI passed. This is a
+  source projection, not a live capture or model result.
+- Next: one cheap worker prepares the INV-04 owned-cluster capture script
+  under #603. Lead reviews before any serial live run. Populated, successfully
+  empty and permission-denied inventory must remain distinct. No shared cluster
+  mutation or paid/model run is authorized by this packet. PRE-01/02 still need
+  raw destination controls; PRE-03 lacks a captured linked Argo/Crossplane failure.
 
 CLI JSON sizes (78,427 full / 660 summary / 2,940 Native-filtered / 630 Native
 summary bytes) are not measured dollar, credit or time savings. Paid execution
