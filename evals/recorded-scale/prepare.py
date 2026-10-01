@@ -21,6 +21,9 @@ MANIFEST_SHA256 = "e139701bf9d894ca9dd16ddb302fe0e4f28f3122922030cd9cdda57e8eb3f
 DEPLOYMENT_SHA256 = "822716e41eaf59674cec8b52913b2613c76932b578c45d54285f71747dd228b6"
 FILES = json.loads(MANIFEST.read_text())["files"]
 CASES = ("scale-ownership-counts", "scale-unmanaged")
+MAP_CONTRACT_BASIC = "recorded-map-basic.v1"
+MAP_CONTRACT_VIEWS = "recorded-map-views.v1"
+MAP_CONTRACTS = (MAP_CONTRACT_BASIC, MAP_CONTRACT_VIEWS)
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -106,7 +109,10 @@ def generate_wrapper(plugin: Path, binary: Path, binary_hash: str,
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
 
 
-def prepare(binary: Path, expected_hash: str, out: Path) -> None:
+def prepare(binary: Path, expected_hash: str, out: Path,
+            map_contract: str = MAP_CONTRACT_BASIC) -> None:
+    if map_contract not in MAP_CONTRACTS:
+        raise ValueError(f"unsupported map input contract: {map_contract}")
     binary = binary.expanduser().resolve(strict=True)
     out = out.expanduser().resolve()
     if not binary.is_file() or not os.access(binary, os.X_OK):
@@ -143,6 +149,7 @@ def prepare(binary: Path, expected_hash: str, out: Path) -> None:
         "recordingManifestSha256": MANIFEST_SHA256, "deploymentRecordingSha256": DEPLOYMENT_SHA256,
         "caseFixtureFacts": case_facts, "allSevenFilesByteEqualAcrossArms": True,
         "mcpToolsExpected": ["explain", "map"], "mcpScope": {"api_version": "apps/v1", "kind": "Deployment", "namespace_prefix": "team-"},
+        "mapInputContract": map_contract,
         "ordinaryToolPermissions": "copied unchanged from existing scale cases in both arms",
         "caseMode": "file-tools-only comparison; narrower than Experiment A kubectl/Helm baseline",
         "toolUseGraders": "removed; any actual tool use is a trace observation, not a correctness score",
@@ -157,9 +164,11 @@ def main() -> None:
     parser.add_argument("--binary", required=True, type=Path)
     parser.add_argument("--binary-sha256", required=True)
     parser.add_argument("--out", required=True, type=Path)
+    parser.add_argument("--map-contract", choices=MAP_CONTRACTS, default=MAP_CONTRACT_BASIC,
+                        help="Reviewed recorded map input contract to require during preflight")
     args = parser.parse_args()
     try:
-        prepare(args.binary, args.binary_sha256, args.out)
+        prepare(args.binary, args.binary_sha256, args.out, args.map_contract)
     except Exception as exc:
         parser.error(str(exc))
     print(f"Prepared recorded-scale packet at {args.out.resolve()}; no model run or preflight was launched.")

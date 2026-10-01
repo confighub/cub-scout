@@ -67,6 +67,37 @@ python3 evals/recorded-scale/preflight.py \
   --binary-sha256 EXPECTED_64_CHARACTER_SHA256
 ```
 
+The default named map input contract is `recorded-map-basic.v1`, preserving the
+original four-string-field request (`api_version`, `kind`, `namespace`, and
+`namespace_prefix`). The product's opt-in views contract can be selected
+explicitly when preparing a packet:
+
+```sh
+python3 evals/recorded-scale/prepare.py \
+  --binary /absolute/path/to/cub-scout \
+  --binary-sha256 EXPECTED_64_CHARACTER_SHA256 \
+  --map-contract recorded-map-views.v1 \
+  --out /tmp/cub-scout-recorded-scale-views
+python3 evals/recorded-scale/preflight.py \
+  /tmp/cub-scout-recorded-scale-views \
+  --binary /absolute/path/to/cub-scout \
+  --binary-sha256 EXPECTED_64_CHARACTER_SHA256 \
+  --map-contract recorded-map-views.v1
+```
+
+`prepared.json` records the selected contract. Preflight rejects an explicit
+contract that differs from that record and fails closed if the MCP descriptor
+does not match. `recorded-map-views.v1` permits exactly those four string fields
+plus canonical `owner` and boolean `summary`, still requires exact
+`api_version` and `kind`, and rejects extra properties. Its offline checks
+compare full, summary, Native-filtered, and Native-summary output across CLI
+and MCP: 300/12 selected rows, 2/290 excluded, matching provenance and counts,
+and summaries with a separate schema, explicit `view: summary`, no `resources`
+field, and per-object evidence guidance. No model or live calls are part of
+preflight. This packet is only prepared pending lead review and an explicit
+pinned-binary preflight; it does not establish benchmark admission or spend
+savings.
+
 Preflight checks the CLI and MCP produce the same map report, verifies the
 302 parsed / 300 selected / 2 excluded scope and owner totals, confirms the 12
 Native identities, and rejects unsupported live tool/argument requests. It
