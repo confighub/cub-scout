@@ -33,6 +33,35 @@ def pod(image_id="docker-pullable://pause@sha256:"+"a"*64):
 
 
 class CaptureValidationTests(unittest.TestCase):
+    def test_boolean_counters_and_missing_collection_version_are_rejected(self):
+        for section,key in (("spec","replicas"),("status","observedGeneration"),("status","readyReplicas"),("status","currentReplicas"),("status","replicas")):
+            obj=statefulset(); obj[section][key]=True
+            with self.subTest(section=section,key=key),self.assertRaises(capture.inv04.CaptureError):
+                capture.validate_statefulset(json.dumps(obj).encode())
+        obj=pod(); del obj["metadata"]["resourceVersion"]
+        with self.assertRaises(capture.inv04.CaptureError):
+            capture.validate_pods(json.dumps(obj).encode(),{"uid":"ss-uid"})
+
+    def test_empty_stderr_is_not_a_credential_leak(self):
+        self.assertTrue(capture.credentials_absent(b"", "token", (b"private",)))
+
+    def test_plain_digest_runtime_id_is_supported(self):
+        self.assertTrue(capture.valid_image_id("sha256:"+"a"*64))
+
+    def test_empty_diagnostics_are_safe_and_individual_private_keys_are_not(self):
+        import base64
+        key=b"PRIVATE TEST KEY CONTENT"
+        encoded=base64.b64encode(key)
+        config=b"users:\n- user:\n    client-key-data: "+encoded+b"\n"
+        material=capture.private_material({},config)
+        self.assertTrue(capture.credentials_absent(b"", "token", material))
+        self.assertFalse(capture.credentials_absent(key, "token", material))
+        self.assertFalse(capture.credentials_absent(encoded, "token", material))
+        self.assertTrue(capture.valid_image_id("sha256:"+"a"*64))
+        malformed=pod(); malformed["items"][0]["metadata"]=None
+        with self.assertRaises(capture.inv04.CaptureError):
+            capture.validate_pods(json.dumps(malformed).encode(),{"uid":"ss-uid"})
+
     def test_intent_requires_tag_only_and_records_no_digest(self):
         info=capture.validate_statefulset(json.dumps(statefulset()).encode())
         self.assertFalse(info["intendedImageHasImmutableDigest"])

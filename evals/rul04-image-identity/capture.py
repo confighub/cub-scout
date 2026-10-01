@@ -22,6 +22,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+sys.dont_write_bytecode = True
 HERE = Path(__file__).resolve().parent
 INV04_PATH = HERE.parent / "inv04-rbac" / "capture.py"
 spec = importlib.util.spec_from_file_location("inv04_capture_util", INV04_PATH)
@@ -117,10 +118,11 @@ def validate_statefulset(body: bytes) -> dict:
         raise inv04.CaptureError("StatefulSet intended tag changed or is ambiguous")
     if "@sha256:" in containers[0]["image"]:
         raise inv04.CaptureError("fixture intent unexpectedly contains an immutable digest")
-    if spec.get("replicas") != 1 or not isinstance(spec.get("selector"), dict) or spec["selector"].get("matchLabels") != {"app": WORKLOAD}:
+    if type(spec.get("replicas")) is not int or spec["replicas"] != 1 or not isinstance(spec.get("selector"), dict) or spec["selector"].get("matchLabels") != {"app": WORKLOAD}:
         raise inv04.CaptureError("StatefulSet selector/replica contract changed")
     status = obj.get("status", {})
-    if (not isinstance(status, dict) or status.get("observedGeneration") != meta["generation"]
+    if (not isinstance(status, dict) or any(type(status.get(key)) is not int for key in ("observedGeneration","readyReplicas","currentReplicas","replicas"))
+            or status.get("observedGeneration") != meta["generation"]
             or status.get("readyReplicas") != 1 or status.get("currentReplicas") != 1 or status.get("replicas") != 1):
         raise inv04.CaptureError("StatefulSet readiness/generation status is incomplete")
     return {"uid": meta["uid"], "resourceVersion": meta["resourceVersion"],
@@ -138,12 +140,15 @@ def validate_pods(body: bytes, ss: dict) -> dict:
         raise inv04.CaptureError("raw PodList response is malformed") from None
     if obj.get("apiVersion") != "v1" or obj.get("kind") != "PodList" or not isinstance(items, list):
         raise inv04.CaptureError("Pod response is not a PodList")
+    if not isinstance(obj.get("metadata"),dict) or not nonempty_string(obj["metadata"].get("resourceVersion")):
+        raise inv04.CaptureError("PodList collection resourceVersion is missing")
     if not isinstance(ss, dict) or not nonempty_string(ss.get("uid")):
         raise inv04.CaptureError("captured StatefulSet UID is invalid")
     matches = []
     for pod in items:
         if not isinstance(pod, dict): raise inv04.CaptureError("PodList contains a non-object item")
         meta = pod.get("metadata", {})
+        if not isinstance(meta, dict): raise inv04.CaptureError("Pod metadata is malformed")
         refs = meta.get("ownerReferences", [])
         if not isinstance(meta, dict) or not isinstance(refs, list) or any(not isinstance(ref, dict) for ref in refs):
             raise inv04.CaptureError("Pod metadata/ownerReferences are malformed")
@@ -190,7 +195,7 @@ def positive_int(value): return isinstance(value,int) and not isinstance(value,b
 
 
 def valid_image_id(value):
-    return nonempty_string(value) and re.fullmatch(r"(?:[a-z][a-z0-9+.-]*://)?[^\s@]+(?:@sha256:[0-9a-f]{64}|sha256:[0-9a-f]{64})",value) is not None
+    return nonempty_string(value) and re.fullmatch(r"(?:[a-z][a-z0-9+.-]*://)?(?:[^\s@]+@)?sha256:[0-9a-f]{64}",value) is not None
 
 
 def owned_cluster_name() -> str:
@@ -236,7 +241,22 @@ def check_path(path: str) -> None:
 
 
 def credentials_absent(data: bytes, token: str, private_configs: tuple[bytes,...]) -> bool:
-    return bool(data) and (not token or token.encode() not in data) and all(not value or value not in data for value in private_configs)
+    return (not token or token.encode() not in data) and all(not value or value not in data for value in private_configs)
+
+
+def private_material(raw_config: dict, config_bytes: bytes) -> tuple[bytes,...]:
+    """Check individual credentials as well as whole config documents, in memory."""
+    values=[config_bytes]
+    for match in re.finditer(rb"(?m)^\s*(?:client-key-data|client-certificate-data):\s*([A-Za-z0-9+/=]+)\s*$",config_bytes):
+        values.extend((match[1],base64.b64decode(match[1],validate=True)))
+    for user in raw_config.get("users", []):
+        for key,value in user.get("user", {}).items():
+            if key in ("client-key-data", "client-certificate-data", "token", "password") and isinstance(value,str) and value:
+                values.append(value.encode())
+                if key.endswith("-data"):
+                    try: values.append(base64.b64decode(value,validate=True))
+                    except ValueError: raise inv04.CaptureError("private credential encoding is malformed") from None
+    return tuple(values)
 
 
 def verify_hash(path: Path, expected: str) -> str:
@@ -371,15 +391,16 @@ def main(argv=None) -> int:
             create_attempted = True
             code, stdout, stderr = inv04.run_bounded([inv04._command("kind"), "create", "cluster", "--name", cluster,
                 "--image", inv04.NODE_IMAGE, "--kubeconfig", str(admin), "--wait", "120s"], 180, env)
-            if code: raise inv04.CaptureError("owned cluster creation failed")
-            if not credentials_absent(stdout+b"\n"+stderr,"",(admin.read_bytes(),)):
+            admin_bytes=admin.read_bytes() if admin.exists() else b""
+            if not credentials_absent(stdout+b"\n"+stderr,"",private_material({},admin_bytes)):
                 raise inv04.CaptureError("kind creation diagnostics contain private config")
             inv04._write(out / "kind-create-stdout.txt", stdout); inv04._write(out / "kind-create-stderr.txt", stderr)
+            if code: raise inv04.CaptureError("owned cluster creation failed")
             kubectl = inv04._command("kubectl")
             code, helper_out, helper_err = inv04.run_bounded([str(helper), str(desired), str(layout)], 30, env, max_output=65536)
             if inv04.sha256(helper.read_bytes())!=helper_sha: raise inv04.CaptureError("layout-helper executable changed during run")
             if code: raise inv04.CaptureError("local OCI layout helper failed")
-            if not credentials_absent(helper_out+b"\n"+helper_err,"",(admin.read_bytes(),)):
+            if not credentials_absent(helper_out+b"\n"+helper_err,"",private_material({},admin.read_bytes())):
                 raise inv04.CaptureError("layout-helper output contains private config")
             bundle_ref = helper_out.decode("ascii", "strict").strip()
             if not __import__("re").fullmatch(r"oci://[^/@\s]+(?:/[^@\s]+)*@sha256:[0-9a-f]{64}", bundle_ref):
@@ -400,13 +421,14 @@ def main(argv=None) -> int:
             token=inv04._call("kubectl", ["--context", "kind-"+cluster, "create", "token", "rul04-observer", "-n", NAMESPACE, "--duration=900s"], 15, env).decode().strip()
             inv04._write(observer, observer_config(server, ca64, token)); os.chmod(observer, 0o600)
             admin_private=admin.read_bytes()
+            private_values=private_material(raw,admin_private)+(observer.read_bytes(),)
             private_before={"admin":inv04.sha256(admin_private),"observer":inv04.sha256(observer.read_bytes())}
             paths=[("statefulset.json", f"/apis/apps/v1/namespaces/{NAMESPACE}/statefulsets/{WORKLOAD}"),
                    ("pods.json", f"/api/v1/namespaces/{NAMESPACE}/pods")]
             ss_info=None
             for name,path in paths:
                 validation=capture_raw_observation(name,path,server,ca,token,ss_info,observations,out,
-                    (admin_private,observer.read_bytes()))
+                    private_values)
                 if name=="statefulset.json": ss_info=validation
             if scout:
                 argv=[str(scout),"release","check","--bundle",bundle_ref,"--oci-layout",str(layout),
@@ -414,14 +436,15 @@ def main(argv=None) -> int:
                     "--kube-context","rul04-observer","--check-running-image","--format","json"]
                 code, stdout, stderr=inv04.run_bounded(argv,45,dict(env,KUBECONFIG=str(observer)))
                 if inv04.sha256(scout.read_bytes())!=args.expected_scout_sha256: raise inv04.CaptureError("Scout executable changed during capture")
-                if not credentials_absent(stdout,token,(admin_private,observer.read_bytes())) or not credentials_absent(stderr,token,(admin_private,observer.read_bytes())):
+                if not credentials_absent(stdout,token,private_values) or not credentials_absent(stderr,token,private_values):
                     raise inv04.CaptureError("Scout output contains private credential material")
-                derived_validation=validate_scout_result(code,stdout)
                 inv04._write(out/"scout-derived-output.json",stdout)
                 inv04._write(out/"scout-derived-stderr.txt",stderr)
-                observations.append({"derivedScout":{"argv":argv,"exitCode":code,"stdoutSha256":inv04.sha256(stdout),
+                derived_record={"argv":argv,"exitCode":code,"stdoutSha256":inv04.sha256(stdout),
                     "stderrSha256":inv04.sha256(stderr),"stdoutFile":"scout-derived-output.json",
-                    "stderrFile":"scout-derived-stderr.txt","isRawModelEvidence":False,"validation":derived_validation}})
+                    "stderrFile":"scout-derived-stderr.txt","isRawModelEvidence":False}
+                observations.append({"derivedScout":derived_record})
+                derived_record["validation"]=validate_scout_result(code,stdout)
         except BaseException as e:
             errors.append(str(e) if isinstance(e, inv04.CaptureError) else type(e).__name__)
         finally:

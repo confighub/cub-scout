@@ -30,7 +30,8 @@ local binaries. Output must be a new path. The helper creates exactly one
 uniquely named kind cluster, applies only its fixture, uses a temporary private
 admin kubeconfig for setup/cleanup, creates a namespaced get/list-only observer
 for StatefulSets and Pods, then deletes and verifies deletion of the owned
-cluster. No cluster-wide credentials or Secrets are observed.
+cluster. The observer never reads Secret resources. Temporary admin credentials
+are used only for fixture setup and cleanup, then removed.
 
 ```sh
 python3 evals/rul04-image-identity/capture.py \
@@ -60,8 +61,7 @@ tokens or kubeconfig contents.
 The capture is intentionally not run as part of implementation. Offline guards:
 
 ```sh
-python3 -m unittest evals/rul04-image-identity/test_capture.py
-python3 -m py_compile evals/rul04-image-identity/capture.py evals/rul04-image-identity/test_capture.py
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest evals/rul04-image-identity/test_capture.py
 ```
 
 The case is only prepared after a lead-reviewed real capture. It does not admit
