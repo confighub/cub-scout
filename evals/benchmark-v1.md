@@ -8,14 +8,16 @@ machine-readable source is [benchmark-v1.json](benchmark-v1.json).
 Existing case directories are mapped only where their current prompt covers
 the frozen question. The September 30 refresh now includes managedFields in
 both arms' exports and validates the four attribution manager/cause pairs.
-Main-scenario mappings are `existing_refreshed_fixture`; the scale scout arm
-still reads live data, so those mappings are `existing_needs_snapshot_binding`.
+Main-scenario mappings are `existing_refreshed_fixture`. INV-01/02 now have
+`recorded_snapshot_binding_prepared_not_run` mappings via the explicit
+[recorded-scale preparation packet](recorded-scale/README.md). Historical scale
+cases remain unchanged; their recorded variants are generated outside the repo.
 Resource-level mutation manager/cause parity does not prove a particular field's
 latest writer; exact-field counterexamples are tracked in [#649](https://github.com/confighub/cub-scout/issues/649).
-Neither status means the controlled benchmark ran. DEL-01 and DEL-02 are pinned
+None of these statuses means the controlled benchmark ran. DEL-01 and DEL-02 are pinned
 public-source projections, not raw cluster snapshots; both are prepared and
 unrun, and their evidence limits are recorded per case. The 24 cases currently
-comprise 5 refreshed fixtures, 2 scale cases needing snapshot binding, 6
+comprise 5 refreshed fixtures, 2 recorded scale bindings prepared but not run, 6
 recorded projections prepared but not run, one raw recording prepared but not
 run, and 10 planned cases. HLT-03 is a receipt-backed pair of public recorded
 files, not a full Kubernetes snapshot; its receipt-level workload pass and
@@ -25,8 +27,8 @@ cases remain a separate experiment.
 
 | Group | ID | Frozen question | Current mapping/status |
 |---|---|---|---|
-| Inventory | INV-01 | Owner counts at scale | `scale/scale-ownership-counts` — snapshot binding pending |
-| Inventory | INV-02 | Exact unmanaged list at scale | `scale/scale-unmanaged` — snapshot binding pending |
+| Inventory | INV-01 | Owner counts at scale | `scale/scale-ownership-counts` — recorded binding prepared, not run; tool/grader admission pending |
+| Inventory | INV-02 | Exact unmanaged list at scale | `scale/scale-unmanaged` — recorded binding prepared, not run; tool/grader admission pending |
 | Inventory | INV-03 | Simple direct ownership label lookup | `owner-confighub` — fixtures refreshed; benchmark run pending |
 | Inventory | INV-04 | Partial/RBAC inventory without false orphan claims | Planned |
 | Attribution | ATR-01 | Manual set-image attribution | `changed-by-checkout` — fixtures refreshed; benchmark run pending |
@@ -49,6 +51,23 @@ cases remain a separate experiment.
 | Reuse / limits | RUL-02 | Cache invalidation after identity change | Planned; missing/stale identity stays unresolved |
 | Reuse / limits | RUL-03 | Denied cluster beside readable cluster, explicit context | Planned; context cannot change implicitly |
 | Reuse / limits | RUL-04 | Unsupported workload/image proof | Planned; unknown where proof is unsupported |
+
+## Recorded scale binding limits
+
+PRs #692–#694 prepare equal seven-file inputs and verify full/summary/Native/
+Native-summary CLI/MCP parity for 300 selected Deployments out of 302 parsed.
+The manifest pins the source recording, preparation revision and tested binary.
+This is no-model preparation proof. The generated variants retain the original
+questions and ordinary tool declarations, remove tool-use correctness graders,
+and bind recorded MCP to the Deployment export. Both arms receive all seven
+raw files. The historical live comparison and its results are unchanged.
+
+Actual harness MCP grants and ordinary-tool parity remain unverified. This
+file-tools-only setup is narrower than Experiment A's kubectl/Helm baseline.
+The legacy final-line graders can miss contradictory prose; an opt-in strict
+answer contract is separate pending work. Product capture time/completeness stay
+unknown. These mappings do not admit the cases to paid execution, make the full
+suite executable, or establish cost savings.
 
 ## Frozen comparison rules
 

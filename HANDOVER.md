@@ -1,5 +1,59 @@
 # cub-scout Handover for the Next AI Coder
 
+## 2026-10-01: Recorded binding and compact response checkpoint
+
+Status as of 00:40 UTC: merged code baseline is `624c7cf`; v2.12.4 remains the
+published release. The following work is unreleased. This section supersedes
+older snapshots below; [#645](https://github.com/confighub/cub-scout/issues/645)
+is the live execution queue. Continuous execution remains authorized.
+
+- #691 synchronized the preceding checkpoint. #692 (`186bdbd`) adds a pinned
+  no-model scale preparation/preflight; #693 (`14e0344`) adds recorded owner
+  filtering and a distinct summary schema; #694 (`93a7d53`) explicitly binds
+  the preflight to the reviewed basic or views contract. Independent review
+  and required Unit/Integration/GitOps/Proof checks passed for each. Skipped
+  Connected/Demo/Full Verification jobs remain unverified.
+- Default recorded JSON is byte-identical. CLI/MCP/TUI proof passed; the new
+  summary/filter views report scope, provenance and omissions. The actual
+  four-view CLI/MCP preflight passed in 1.88 seconds on a hash-pinned binary.
+  Counts are 302 parsed / 300 selected / 2 excluded, with exactly twelve Native
+  entries. Native means no built-in owner marker, not proof of an orphan.
+  Capture time and completeness remain unknown.
+- The fixed 24-case mapping now has **10 planned, five refreshed, two recorded
+  bindings prepared but not run, six prepared projections and one prepared raw
+  recording**. All questions and group weights are unchanged. Both scale arms
+  receive the same seven raw exports; recorded MCP reads the Deployment export.
+  The full suite remains non-executable. Harness MCP grants, actual ordinary
+  tool parity, grading and other protocol gates remain pending; file-tools-only
+  staging is narrower than Experiment A's kubectl/Helm baseline.
+- #695 (`624c7cf`, reviewed at `4e7bd10`) adds same-SpaceID reported
+  revision/manifest-digest correlation and `gitops status --tui`. Independent
+  review, full offline tests (158.18s), synthetic CLI/MCP/TUI replay and a
+  read-only live standalone viewport check passed. Live before/after JSON was
+  equal on the scale cluster (backend none); kubeconfig bytes stayed unchanged.
+  No live ConfigHub correlation is certified. Required CI passed.
+- Next: complete the opt-in strict answer-contract packet
+  under #603. Historical scale grading could accept a correct final line with
+  contradictory prose. New strict instructions and grading must apply equally
+  to both arms; historical prompts/results must not be regraded silently.
+  PRE-01/02 still need genuine raw absent/present destination controls.
+
+CLI JSON sizes (78,427 full / 660 summary / 2,940 Native-filtered / 630 Native
+summary bytes) are not measured dollar, credit or time savings. Paid execution
+is unchanged at **$4.2655744 estimated inclusive list price**; the $200 baseline
+tranche remains unspent. Development dollars/credits remain unmeasured. Use
+bounded cheap implementation lanes, one repair before lead ownership, no
+recursive agents and no maximum-speed service. No paid retry is queued.
+
+Initial proof failures and corrections are retained in PRs #694/#695: a test
+child-start race (fixed with bounded test readiness), an overly specific prose
+assertion and an unsupported live-check flag. They are not hidden passes.
+For `gitops status`, select an explicit private kubeconfig; that command does
+not expose the `--kube-context` flag available on some other surfaces.
+#591 genuine attestations, #597 gate semantics, #600 storage/publication
+agreement and GHCR access remain unresolved. All promotion argv, including
+dry-run, remain prohibited. Preserve private traces and shared clusters.
+
 ## 2026-10-01: Recorded inventory and delivery evidence checkpoint
 
 As of 2026-09-30 23:48 UTC (October 1 in London), merged main is `61b05bf`.

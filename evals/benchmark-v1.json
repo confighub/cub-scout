@@ -13,7 +13,7 @@
         {
           "id": "INV-01",
           "question": "Owner counts at scale",
-          "status": "existing_needs_snapshot_binding",
+          "status": "recorded_snapshot_binding_prepared_not_run",
           "existing_case": "evals/scale/scale-ownership-counts",
           "reference": "Exact counts by owner; verify each category from explicit ownership metadata and count each Deployment once.",
           "controls": [
@@ -21,19 +21,75 @@
             "Missing metadata remains unknown/Native only when the inventory is complete"
           ],
           "evidence_refresh": "2026-09-30",
-          "benchmark_admission": "pending frozen protocol run; fixture refresh is not a savings result"
+          "benchmark_admission": "not admitted: prepared recorded binding only; tool/grader/protocol gates and model run pending",
+          "recorded_binding": {
+            "preparation": "evals/recorded-scale/prepare.py",
+            "preflight": "evals/recorded-scale/preflight.py",
+            "map_input_contract": "recorded-map-views.v1",
+            "generated_case": "evals/recorded-scale/scale-ownership-counts",
+            "source_manifest": "evals/fixtures/scale/recording-2026-09-30.json",
+            "source_manifest_sha256": "e139701bf9d894ca9dd16ddb302fe0e4f28f3122922030cd9cdda57e8eb3fa22",
+            "deployment_recording_sha256": "822716e41eaf59674cec8b52913b2613c76932b578c45d54285f71747dd228b6",
+            "equal_raw_files": 7,
+            "preparation_commit": "ca37a41b49d6f64ab5bb4c8c537553e987419e8a",
+            "verified_binary_source": "10c223dfdf792cb37ec61acfcbcc57983dabd29b",
+            "verified_binary_sha256": "cdf37333b942ccd8112855863e14632684b175e7b1482a6bb61e96792203816b",
+            "scope": {
+              "apiVersion": "apps/v1",
+              "kind": "Deployment",
+              "namespacePrefix": "team-"
+            },
+            "offline_preflight": "passed full/summary/Native/Native-summary CLI and MCP parity; no model run",
+            "prepared_at": "2026-10-01",
+            "proof": "https://github.com/confighub/cub-scout/pull/694",
+            "limitations": [
+              "Generated cases are outside the repository and must be prepared explicitly; the historical existing_case remains unchanged.",
+              "Recorded MCP reads the Deployment export; both arms receive all seven byte-identical raw exports.",
+              "Capture time and completeness stay unknown in product output; no current cluster claim.",
+              "Harness MCP permission admission and actual ordinary-tool parity remain unverified; file-tools-only staging is narrower than Experiment A.",
+              "Legacy final-line graders do not verify surrounding prose; the strict answer-contract packet is separate pending work."
+            ]
+          }
         },
         {
           "id": "INV-02",
           "question": "Exact unmanaged list at scale",
-          "status": "existing_needs_snapshot_binding",
+          "status": "recorded_snapshot_binding_prepared_not_run",
           "existing_case": "evals/scale/scale-unmanaged",
           "reference": "Exact namespace/name set, with no missing, duplicate, extra, or suffixed identities.",
           "controls": [
             "RBAC or partial-list uncertainty must not produce an unmanaged claim"
           ],
           "evidence_refresh": "2026-09-30",
-          "benchmark_admission": "pending frozen protocol run; fixture refresh is not a savings result"
+          "benchmark_admission": "not admitted: prepared recorded binding only; tool/grader/protocol gates and model run pending",
+          "recorded_binding": {
+            "preparation": "evals/recorded-scale/prepare.py",
+            "preflight": "evals/recorded-scale/preflight.py",
+            "map_input_contract": "recorded-map-views.v1",
+            "generated_case": "evals/recorded-scale/scale-unmanaged",
+            "source_manifest": "evals/fixtures/scale/recording-2026-09-30.json",
+            "source_manifest_sha256": "e139701bf9d894ca9dd16ddb302fe0e4f28f3122922030cd9cdda57e8eb3fa22",
+            "deployment_recording_sha256": "822716e41eaf59674cec8b52913b2613c76932b578c45d54285f71747dd228b6",
+            "equal_raw_files": 7,
+            "preparation_commit": "ca37a41b49d6f64ab5bb4c8c537553e987419e8a",
+            "verified_binary_source": "10c223dfdf792cb37ec61acfcbcc57983dabd29b",
+            "verified_binary_sha256": "cdf37333b942ccd8112855863e14632684b175e7b1482a6bb61e96792203816b",
+            "scope": {
+              "apiVersion": "apps/v1",
+              "kind": "Deployment",
+              "namespacePrefix": "team-"
+            },
+            "offline_preflight": "passed full/summary/Native/Native-summary CLI and MCP parity; no model run",
+            "prepared_at": "2026-10-01",
+            "proof": "https://github.com/confighub/cub-scout/pull/694",
+            "limitations": [
+              "Generated cases are outside the repository and must be prepared explicitly; the historical existing_case remains unchanged.",
+              "Recorded MCP reads the Deployment export; both arms receive all seven byte-identical raw exports.",
+              "Capture time and completeness stay unknown in product output; no current cluster claim.",
+              "Harness MCP permission admission and actual ordinary-tool parity remain unverified; file-tools-only staging is narrower than Experiment A.",
+              "Legacy final-line graders do not verify surrounding prose; the strict answer-contract packet is separate pending work."
+            ]
+          }
         },
         {
           "id": "INV-03",
@@ -480,7 +536,8 @@
       "pinned model/version and dated pricing recorded",
       "actual-cost/credit accounting route identified or limitations marked",
       "runner authentication and provider limits preflighted",
-      "offline grader failure checks pass"
+      "offline grader failure checks pass",
+      "actual ordinary-tool parity and MCP operator grants verified; surrounding-answer claims covered by the declared grading protocol"
     ],
     "no_paid_command": "Do not execute a paid command until the case set is complete and these gates are approved."
   }
