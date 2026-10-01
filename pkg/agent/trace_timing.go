@@ -5,8 +5,10 @@ package agent
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -25,21 +27,42 @@ func NewTimingEnricher(client dynamic.Interface) *TimingEnricher {
 
 // EnrichChainWithTiming adds LastTransitionTime to chain links by fetching resource status
 func (e *TimingEnricher) EnrichChainWithTiming(ctx context.Context, chain []ChainLink) []ChainLink {
+	chain, _ = e.EnrichChainWithTimingAndErrors(ctx, chain)
+	return chain
+}
+
+// EnrichChainWithTimingAndErrors enriches each supported link once and
+// returns safe, source-specific omissions for reads that failed. A successful
+// read without timing metadata is not an omission.
+func (e *TimingEnricher) EnrichChainWithTimingAndErrors(ctx context.Context, chain []ChainLink) ([]ChainLink, []error) {
+	var readErrors []error
 	for i := range chain {
 		link := &chain[i]
-		timing := e.getResourceTiming(ctx, link.Kind, link.Name, link.Namespace)
+		timing, err := e.readResourceTiming(ctx, link.Kind, link.Name, link.Namespace)
+		if err != nil {
+			readErrors = append(readErrors, err)
+			continue
+		}
 		if timing != nil {
 			link.LastTransitionTime = timing
 		}
 	}
-	return chain
+	return chain, readErrors
 }
 
 // getResourceTiming fetches a resource and extracts its timing information
 func (e *TimingEnricher) getResourceTiming(ctx context.Context, kind, name, namespace string) *time.Time {
+	timing, _ := e.readResourceTiming(ctx, kind, name, namespace)
+	return timing
+}
+
+func (e *TimingEnricher) readResourceTiming(ctx context.Context, kind, name, namespace string) (*time.Time, error) {
 	gvr := kindToTimingGVR(kind)
 	if gvr.Resource == "" {
-		return nil
+		return nil, nil
+	}
+	if e == nil || e.client == nil {
+		return nil, timingReadError(kind, name, namespace, "Kubernetes client is unavailable")
 	}
 
 	var resource *unstructured.Unstructured
@@ -51,10 +74,24 @@ func (e *TimingEnricher) getResourceTiming(ctx context.Context, kind, name, name
 		resource, err = e.client.Resource(gvr).Get(ctx, name, metav1.GetOptions{})
 	}
 	if err != nil {
-		return nil
+		reason := "read failed"
+		if apierrors.IsForbidden(err) {
+			reason = "forbidden"
+		} else if apierrors.IsNotFound(err) {
+			reason = "not found"
+		}
+		return nil, timingReadError(kind, name, namespace, reason)
 	}
 
-	return extractTimingFromResource(resource, kind)
+	return extractTimingFromResource(resource, kind), nil
+}
+
+func timingReadError(kind, name, namespace, reason string) error {
+	resource := kind + "/" + name
+	if namespace != "" {
+		resource = kind + "/" + namespace + "/" + name
+	}
+	return fmt.Errorf("timing unavailable for %s: %s", resource, reason)
 }
 
 // extractTimingFromResource extracts the appropriate timestamp from a resource

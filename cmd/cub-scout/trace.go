@@ -772,15 +772,27 @@ func enrichTraceWithTiming(ctx context.Context, result *agent.TraceResult) {
 }
 
 func enrichTraceWithTimingSession(ctx context.Context, session *traceSession, result *agent.TraceResult) {
-	if result == nil || session == nil {
+	if result == nil {
+		return
+	}
+	if session == nil {
+		_, readErrors := agent.NewTimingEnricher(nil).EnrichChainWithTimingAndErrors(ctx, result.Chain)
+		for _, readErr := range readErrors {
+			result.Error = appendSentence(result.Error, readErr.Error())
+		}
 		return
 	}
 	dynClient, err := session.dynamicClient()
 	if err != nil {
+		result.Error = appendSentence(result.Error, "timing enrichment unavailable: Kubernetes client is unavailable")
 		return
 	}
 	enricher := agent.NewTimingEnricher(dynClient)
-	result.Chain = enricher.EnrichChainWithTiming(ctx, result.Chain)
+	var readErrors []error
+	result.Chain, readErrors = enricher.EnrichChainWithTimingAndErrors(ctx, result.Chain)
+	for _, readErr := range readErrors {
+		result.Error = appendSentence(result.Error, readErr.Error())
+	}
 }
 
 // detectCrossOwnerReferences detects cross-owner references in a resource
