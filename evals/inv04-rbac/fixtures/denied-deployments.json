@@ -1,0 +1,1 @@
+{"kind":"Status","apiVersion":"v1","metadata":{},"status":"Failure","message":"deployments.apps is forbidden: User \"system:serviceaccount:inv04-readable-populated:inv04-observer\" cannot list resource \"deployments\" in API group \"apps\" in the namespace \"inv04-denied\"","reason":"Forbidden","details":{"group":"apps","kind":"deployments"},"code":403}

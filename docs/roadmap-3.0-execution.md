@@ -42,6 +42,19 @@ no cluster mutation, no new fleet membership model, and no renderer hidden in
 `import --git-path`. ConfigHub fact publication has a distinct, explicit write
 boundary even though observing the cluster remains read-only.
 
+## Execution checkpoint — 2026-10-01: INV-04
+
+From merged baseline `c8073a2`, INV-04 adds actual scoped populated/empty/403
+responses with equal raw evidence and a strict answer contract. Corrected capture
+passed in 50.658 seconds with owned cleanup and unchanged shared config; two
+setup failures and the node-name fix remain documented. See the
+[current handover](../HANDOVER.md) and [case evidence](../evals/inv04-rbac/README.md).
+The 24-case suite now has eight planned, five refreshed, two prepared bindings,
+seven prepared projections and two prepared raw recordings. It is still
+non-executable; tool grants and protocol admission are pending. No model or paid
+run occurred. Broad filtered collection is a measured optimization candidate,
+not dollar or credit savings. Earlier checkpoints below are historical.
+
 ## Execution checkpoint — 2026-10-01 (01:15 UTC)
 
 Code baseline is `a99d7d4`. #691–#694 are merged with review and required CI: current

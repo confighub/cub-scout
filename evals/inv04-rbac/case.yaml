@@ -1,0 +1,5 @@
+# FIXTURE-OWNED-SCAFFOLD: stages the identical bounded raw capture for both arms.
+schema_version: "1.1"
+name: inv04-rbac
+context:
+  scaffold_script: scaffold.sh

@@ -18,11 +18,11 @@ None of these statuses means the controlled benchmark ran. DEL-01 and DEL-02 are
 public-source projections, not raw cluster snapshots; both are prepared and
 unrun, and their evidence limits are recorded per case. The 24 cases currently
 comprise 5 refreshed fixtures, 2 recorded scale bindings prepared but not run, 7
-recorded projections prepared but not run, one raw recording prepared but not
-run, and 9 planned cases. HLT-03 is a receipt-backed pair of public recorded
+recorded projections prepared but not run, two raw recordings prepared but not
+run, and 8 planned cases. HLT-03 is a receipt-backed pair of public recorded
 files, not a full Kubernetes snapshot; its receipt-level workload pass and
-child Application Ingress residue are separate evidence facts. HLT-02 is the
-raw recording. Unmapped entries remain `planned`; the three live-only scale
+child Application Ingress residue are separate evidence facts. HLT-02 and INV-04 are
+raw recordings. Unmapped entries remain `planned`; the three live-only scale
 cases remain a separate experiment.
 
 | Group | ID | Frozen question | Current mapping/status |
@@ -30,7 +30,7 @@ cases remain a separate experiment.
 | Inventory | INV-01 | Owner counts at scale | `scale/scale-ownership-counts` — recorded binding prepared, not run; tool/grader admission pending |
 | Inventory | INV-02 | Exact unmanaged list at scale | `scale/scale-unmanaged` — recorded binding prepared, not run; tool/grader admission pending |
 | Inventory | INV-03 | Simple direct ownership label lookup | `owner-confighub` — fixtures refreshed; benchmark run pending |
-| Inventory | INV-04 | Partial/RBAC inventory without false orphan claims | Planned |
+| Inventory | INV-04 | Partial/RBAC inventory without false orphan claims | `inv04-rbac` — actual scoped populated/empty/403 responses prepared, not run; denied inventory stays unknown |
 | Attribution | ATR-01 | Manual set-image attribution | `changed-by-checkout` — fixtures refreshed; benchmark run pending |
 | Attribution | ATR-02 | Manual scale attribution | `changed-by-cart` — fixtures refreshed; benchmark run pending |
 | Attribution | ATR-03 | Controller-only change | `changed-by-payments` — fixtures refreshed; benchmark run pending |
