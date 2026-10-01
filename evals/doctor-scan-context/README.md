@@ -1,7 +1,13 @@
 # Doctor and scan context proof (#743)
 
 Prepared, opt-in, serial before/after CLI proof on one uniquely named disposable
-kind cluster. **The live lane has not been run.**
+kind cluster. **The first live attempt failed a validator expectation; no complete
+accepted proof exists yet.** The retained [failure report](../reports/2026-10-01-doctor-scan-context.json)
+records successful cleanup and unchanged shared/private configs. The validator
+expected a raw service-account name in scan warnings, while the pinned scanner
+projects typed Forbidden errors as scoped `Access denied` warnings. Separate
+offline revalidation matches the corrected exact warning contract and preserves
+the original failed receipt. A live TUI check is still required before acceptance.
 
 Old source: `98fe0183a932e32be3cbc9c04aae8f1d7124740d`.
 Reviewed fixed product source: `5b3629752f354b257f7e667aa2c4f0126b35562b`.
@@ -17,7 +23,11 @@ a Deployment and ConfigMap. The Deployment has zero replicas, so no application
 image is pulled. The helper waits for the namespace controller's `kube-root-ca.crt` ConfigMap
 and records all three exact Deployment/ConfigMap identities and UIDs. Doctor must
 report that directly verified inventory count for the allowed context, and zero observed resources with exact denial evidence for the
-denied context. Fixed Doctor JSON must name the selected context explicitly.
+denied context. Fixed Doctor and scan JSON must name the selected context explicitly.
+Doctor retains the raw denied principal; scan retains the exact scoped warning
+multiset produced by `formatScanWarning`. An unchanged private-config hash binds
+the paired observations to the same context configuration. Arbitrary warning
+strings do not satisfy the denial control.
 
 Scan must return structured state results or an explicit denial from the selected
 service account. This deliberately does **not** prove nonempty scan findings or

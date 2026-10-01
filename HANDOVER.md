@@ -22,8 +22,12 @@ order, quality gates, budgets and decisions.
   against a retargeted kubeconfig. Doctor and scan preserve the selected label
   and coverage warnings across their outputs; normalized scan fields are additive.
   The prepared [owned-cluster proof](evals/doctor-scan-context/README.md) remains
-  **unrun**; the fixed source is pinned to `5b362975` after local build/full Go
-  validation. CI and the owned-cluster acceptance still remain required. Two
+  failed its first live attempt because the validator expected raw principal
+  text rather than the scanner's scoped denial warnings. The original receipt
+  is preserved; cleanup and both config-integrity checks passed. Corrected offline
+  revalidation matches the CLI observations, but a live TUI check and complete
+  accepted capture remain outstanding. Fixed product source `5b362975` passed
+  local build/full Go validation. Two
   behavior-specific regression probes caught missing shared Doctor context/human
   warnings and missing scan JSON/TUI context before the corresponding repairs.
 

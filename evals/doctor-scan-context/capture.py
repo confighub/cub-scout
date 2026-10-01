@@ -2,6 +2,7 @@
 """Prepare an opt-in serial owned-kind #743 before/after CLI proof."""
 from __future__ import annotations
 
+from collections import Counter
 import argparse
 import hashlib
 import json
@@ -115,6 +116,17 @@ def record_observation(receipt: dict, phase: str, argv: list[str], *, env: dict,
     return result
 
 
+# Exact state-scanner Forbidden projection for the pinned --state fixture.
+# Identity is retained separately by the paired doctor denial and unchanged
+# private-config hash; scanner warnings intentionally omit the raw principal.
+EXPECTED_STATE_DENIALS = [
+    "Access denied: " + resource + " (namespace: scout-context-proof) (check RBAC permissions)"
+    for resource in ("helmreleases.helm.toolkit.fluxcd.io", "kustomizations.kustomize.toolkit.fluxcd.io",
+                     "applications.argoproj.io", "pods.", "helmreleases.helm.toolkit.fluxcd.io",
+                     "kustomizations.kustomize.toolkit.fluxcd.io")
+]
+
+
 def validate_observations(records: list[dict], expected_resource_count: int) -> None:
     """Require the named allowed/denied CLI outcomes, not arbitrary warning text."""
     if type(expected_resource_count) is not int or expected_resource_count < 2:
@@ -163,8 +175,11 @@ def validate_observations(records: list[dict], expected_resource_count: int) -> 
                 warnings = state.get("warnings", [])
             if not isinstance(warnings, list) or any(not isinstance(w, str) for w in warnings):
                 raise ValueError("malformed coverage warnings")
-            if denied and not any("forbidden" in w.lower() and denied_user in w for w in warnings):
-                raise ValueError("missing exact denied service-account evidence")
+            if denied:
+                if command == "doctor" and not any("forbidden" in w.lower() and denied_user in w for w in warnings):
+                    raise ValueError("missing exact denied service-account evidence")
+                if command == "scan" and Counter(warnings) != Counter(EXPECTED_STATE_DENIALS):
+                    raise ValueError("missing exact scoped state denial evidence")
             if not denied and any("forbidden" in w.lower() for w in warnings):
                 raise ValueError("allowed observation unexpectedly denied")
         except (ValueError, KeyError, TypeError) as exc:
