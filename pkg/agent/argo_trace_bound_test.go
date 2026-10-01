@@ -15,6 +15,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
@@ -92,7 +93,10 @@ func TestBoundArgoTracerGetsExactNamespaceAndReusesParser(t *testing.T) {
 
 func TestBoundArgoTracerListsOnlyToRequireUniqueName(t *testing.T) {
 	t.Run("one exact name succeeds", func(t *testing.T) {
-		client := newBoundArgoFake(boundArgoApplication("checkout", "team-b", "https://example.invalid/b.git", "b"))
+		client := newBoundArgoFake(
+			boundArgoApplication("another-app", "unrelated", "https://example.invalid/other.git", "other"),
+			boundArgoApplication("checkout", "team-b", "https://example.invalid/b.git", "b"),
+		)
 		result, err := NewArgoTracerWithKubernetesClient(client).TraceApplication(context.Background(), "checkout")
 		if err != nil {
 			t.Fatalf("TraceApplication() error = %v", err)
@@ -103,6 +107,10 @@ func TestBoundArgoTracerListsOnlyToRequireUniqueName(t *testing.T) {
 		actions := client.Actions()
 		if len(actions) != 1 || actions[0].GetVerb() != "list" || actions[0].GetNamespace() != "" {
 			t.Fatalf("actions = %#v, want one all-namespace list", actions)
+		}
+		listAction, ok := actions[0].(ktesting.ListAction)
+		if !ok || listAction.GetListRestrictions().Fields.String() != fields.OneTermEqualSelector("metadata.name", "checkout").String() {
+			t.Fatalf("list field selector = %v, want metadata.name=checkout", listAction)
 		}
 	})
 
@@ -161,6 +169,28 @@ func TestBoundArgoTracerReportsMissingDeniedAndMalformedReads(t *testing.T) {
 		_, err := NewArgoTracerWithKubernetesClient(client).TraceApplicationInNamespace(context.Background(), "checkout", "team-a")
 		if err == nil {
 			t.Fatal("expected malformed Application error")
+		}
+	})
+
+	t.Run("nil get object", func(t *testing.T) {
+		client := newBoundArgoFake()
+		client.PrependReactor("get", "applications", func(ktesting.Action) (bool, runtime.Object, error) {
+			return true, nil, nil
+		})
+		_, err := NewArgoTracerWithKubernetesClient(client).TraceApplicationInNamespace(context.Background(), "checkout", "team-a")
+		if err == nil || !strings.Contains(err.Error(), "empty object") {
+			t.Fatalf("error = %v, want empty object failure", err)
+		}
+	})
+
+	t.Run("nil list", func(t *testing.T) {
+		client := newBoundArgoFake()
+		client.PrependReactor("list", "applications", func(ktesting.Action) (bool, runtime.Object, error) {
+			return true, nil, nil
+		})
+		_, err := NewArgoTracerWithKubernetesClient(client).TraceApplication(context.Background(), "checkout")
+		if err == nil || !strings.Contains(err.Error(), "empty list") {
+			t.Fatalf("error = %v, want empty list failure", err)
 		}
 	})
 }

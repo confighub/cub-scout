@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 )
@@ -146,11 +147,19 @@ func (a *ArgoTracer) traceBoundApplication(ctx context.Context, appName, namespa
 			}
 			return nil, fmt.Errorf("read Argo Application %q in namespace %q: %w", appName, namespace, err)
 		}
+		if obj == nil {
+			return nil, fmt.Errorf("read Argo Application %q in namespace %q returned an empty object", appName, namespace)
+		}
 		selected = obj
 	} else {
-		list, err := resource.List(ctx, metav1.ListOptions{})
+		list, err := resource.List(ctx, metav1.ListOptions{
+			FieldSelector: fields.OneTermEqualSelector("metadata.name", appName).String(),
+		})
 		if err != nil {
 			return nil, fmt.Errorf("list Argo Applications to resolve %q: %w", appName, err)
+		}
+		if list == nil {
+			return nil, fmt.Errorf("list Argo Applications to resolve %q returned an empty list", appName)
 		}
 		matches := make([]*unstructured.Unstructured, 0, 1)
 		for i := range list.Items {
