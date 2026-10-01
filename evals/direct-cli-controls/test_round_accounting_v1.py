@@ -51,7 +51,7 @@ def evidence(*, copied_result=False):
             "return_code": 1, "request_count": 1, "connection_count": 2,
             "connection_events": transport, "cleanup": cleanup, "fixture_path": FIXTURE,
             "requested_limit": 1, "original_run_status": "validation_failed",
-            "original_error": "legacy validation rejected terminal num_turns comparison"}
+            "original_error": accounting.LEGACY_COUNTER_ERROR}
 
 
 def validate(data):
@@ -65,6 +65,7 @@ class RoundAccountingV1Tests(unittest.TestCase):
         self.assertEqual(result["analysis_outcome"], "accepted_single_round_stop")
         self.assertEqual(result["requested_limit"], 1)
         self.assertEqual(result["observed_model_requests"], 1)
+        self.assertEqual(result["observed_http_requests"], 1)
         self.assertEqual(result["observed_tool_use_rounds"], 1)
         self.assertEqual(result["reported_terminal_num_turns"], 2)
         self.assertEqual(result["original_run_status"], "validation_failed")
@@ -81,15 +82,25 @@ class RoundAccountingV1Tests(unittest.TestCase):
         with self.assertRaises(accounting.RoundAccountingError):
             validate(data)
 
-    def test_matching_outbound_result_is_checked(self):
-        result = validate(evidence(copied_result=True))
-        self.assertTrue(result["provider_result_copied"])
+    def test_first_request_cannot_contain_copied_tool_history(self):
         data = evidence(copied_result=True)
-        body = json.loads(data["requests"][0]["body"])
-        body["messages"][-1]["content"][0]["content"] = [{"type": "text", "text": "different"}]
-        data["requests"][0]["body"] = json.dumps(body)
         with self.assertRaises(accounting.RoundAccountingError):
             validate(data)
+
+    def test_accepts_three_connections_with_one_exact_startup_decline(self):
+        data = evidence()
+        data["request_count"] = 2  # HTTP: one declined startup HEAD plus the accepted model POST.
+        data["connection_count"] = 3
+        data["connection_events"] = [
+            {"id": 1, "kind": "preflight", "httpStatus": 204},
+            {"id": 2, "kind": "startup-declined", "httpStatus": 404,
+             "method": "HEAD", "pathWithoutQuery": "/api/hello"},
+            {"id": 3, "kind": "accepted", "httpStatus": 200},
+        ]
+        result = validate(data)
+        self.assertEqual(result["observed_http_requests"], 2)
+        self.assertEqual(result["observed_model_requests"], 1)
+        self.assertEqual(result["connection_count"], 3)
 
     def test_missing_duplicate_extra_wrong_path_or_error_tool_evidence_fails(self):
         base = evidence()
@@ -107,6 +118,7 @@ class RoundAccountingV1Tests(unittest.TestCase):
         mutations = [
             ("requested_limit", 2), ("return_code", 0), ("request_count", 2),
             ("connection_count", 3), ("original_run_status", "timeout"),
+            ("original_error", "some other validation error"),
         ]
         for key, value in mutations:
             data = evidence(); data[key] = value
@@ -123,6 +135,22 @@ class RoundAccountingV1Tests(unittest.TestCase):
         data = evidence(); data["connection_events"].append({"id": 3, "kind": "empty-eof"})
         with self.assertRaises(accounting.RoundAccountingError):
             validate(data)
+
+    def test_malformed_shapes_and_noninteger_counters_fail_as_typed_errors(self):
+        for key, value in (("cleanup", None), ("connection_events", None),
+                           ("requests", None), ("stdout", None),
+                           ("request_count", True), ("request_count", 1.0),
+                           ("connection_count", True), ("connection_count", 2.0),
+                           ("requested_limit", True), ("return_code", True)):
+            data = evidence(); data[key] = value
+            with self.subTest(key=key, value=value), self.assertRaises(accounting.RoundAccountingError):
+                validate(data)
+        for reported in (True, 2.0):
+            data = evidence(); cli = [json.loads(line) for line in data["stdout"].splitlines()]
+            cli[-1]["num_turns"] = reported
+            data["stdout"] = b"\n".join(json.dumps(event).encode() for event in cli)
+            with self.subTest(reported=reported), self.assertRaises(accounting.RoundAccountingError):
+                validate(data)
 
 
 if __name__ == "__main__":

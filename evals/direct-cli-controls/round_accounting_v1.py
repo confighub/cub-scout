@@ -18,6 +18,7 @@ import probe as lowlevel
 SCHEMA = "direct-cli-round-accounting.v1"
 MODEL = lowlevel.PINNED_MODEL
 FIXTURE_MARKER = lowlevel.READ_SENTINEL
+LEGACY_COUNTER_ERROR = "turn-limit terminal num_turns is missing or inconsistent with its cap"
 
 
 class RoundAccountingError(ValueError):
@@ -39,25 +40,40 @@ def validate_round_accounting_v1(*, requests: list[dict[str, Any]], stdout: byte
     ``num_turns`` is recorded as an opaque terminal-reported field. It is not
     compared to the requested cap and never interpreted as request/billing data.
     """
-    if requested_limit != 1 or type(requested_limit) is not int:
+    if type(requested_limit) is not int or requested_limit != 1:
         _fail("this accounting contract is limited to requested limit 1")
-    if original_run_status != "validation_failed" or not isinstance(original_error, str) or not original_error:
-        _fail("source run must retain its original validation_failed status and error")
+    if (original_run_status != "validation_failed" or original_error != LEGACY_COUNTER_ERROR):
+        _fail("source run does not carry the exact legacy num_turns validation failure")
+    if not isinstance(requests, list) or not requests or any(not isinstance(item, dict) for item in requests):
+        _fail("retained provider requests are malformed")
+    if not isinstance(stdout, bytes):
+        _fail("captured CLI output must be bytes")
     if return_code != 1 or type(return_code) is not int:
         _fail("captured CLI return code is not the expected explicit exit 1")
-    if type(request_count) is not int or request_count != 1 or len(requests) != 1:
-        _fail("captured accepted model request count is not exactly one")
+    if type(request_count) is not int or request_count not in (1, 2) or len(requests) != 1:
+        _fail("HTTP request count or captured model request count is outside the one-round bound")
+    if not isinstance(cleanup, dict):
+        _fail("cleanup evidence is malformed")
     if any(cleanup.get(key) is not True for key in
            ("server_shutdown_complete", "handlers_joined", "server_thread_joined")):
         _fail("fixture server or handler cleanup is incomplete")
-    if connection_count != 2 or type(connection_count) is not int or len(connection_events) != 2:
-        _fail("connection count is not exactly preflight plus one model request")
+    if (type(connection_count) is not int or connection_count != request_count + 1
+            or not isinstance(connection_events, list) or len(connection_events) != connection_count
+            or any(not isinstance(event, dict) for event in connection_events)):
+        _fail("TCP connection count does not equal HTTP request count plus preflight")
     try:
-        lowlevel.validate_transport(connection_count, connection_events, accepted_requests=1)
+        lowlevel.validate_transport(connection_count, connection_events, accepted_requests=len(requests))
     except (lowlevel.ProbeError, ValueError, TypeError, AttributeError) as exc:
         _fail(f"transport evidence is invalid: {exc}")
-    if {event.get("kind") for event in connection_events} != {"preflight", "accepted"}:
+    startup_count = sum(event.get("kind") == "startup-declined" for event in connection_events)
+    if startup_count not in (0, 1) or {event.get("kind") for event in connection_events} != (
+            {"preflight", "accepted"} if startup_count == 0 else
+            {"preflight", "startup-declined", "accepted"}):
         _fail("transport includes an extra or missing connection")
+    if request_count != len(requests) + startup_count:
+        _fail("HTTP request count differs from accepted model and declined startup requests")
+    if not isinstance(fixture_path, str) or not fixture_path:
+        _fail("private fixture path is malformed")
 
     record = requests[0]
     try:
@@ -69,11 +85,26 @@ def validate_round_accounting_v1(*, requests: list[dict[str, Any]], stdout: byte
         if record.get("auth_kind") not in ("x-api-key", "bearer"):
             _fail("retained accepted request lacks safe synthetic-auth classification")
         body = lowlevel._request_body(record)
+        messages = body.get("messages")
+        if not isinstance(messages, list) or not messages:
+            _fail("first model request has malformed message history")
+        for message in messages:
+            if not isinstance(message, dict):
+                _fail("first model request has malformed message history")
+            blocks = message.get("content")
+            if isinstance(blocks, list):
+                if any(not isinstance(block, dict) or not isinstance(block.get("type"), str)
+                       for block in blocks):
+                    _fail("first model request has malformed content blocks")
+                if any(block.get("type") in ("tool_use", "tool_result") for block in blocks):
+                    _fail("first and sole provider request cannot contain future tool history")
+            elif not isinstance(blocks, str):
+                _fail("first model request has malformed message content")
         mock_uses, provider_results = lowlevel.scenario_exchange_facts(requests)
         response_uses = lowlevel._response_tool_uses(record)
         events = [lowlevel.strict_json(line) for line in stdout.splitlines() if line.strip()]
         cli_uses, cli_results = lowlevel.cli_tool_events(events)
-    except (lowlevel.ProbeError, ValueError, TypeError, KeyError) as exc:
+    except (lowlevel.ProbeError, ValueError, TypeError, KeyError, AttributeError) as exc:
         _fail(f"retained request/response/CLI evidence cannot be parsed: {exc}")
     if body.get("model") != MODEL:
         _fail("captured request model label differs from the pinned mock label")
@@ -109,14 +140,8 @@ def validate_round_accounting_v1(*, requests: list[dict[str, Any]], stdout: byte
 
     if any(use_item.get("id") != use["id"] or use_item != use for use_item in mock_uses):
         _fail("response tool-use facts are inconsistent")
-    if len(provider_results) > 1:
-        _fail("provider request contains extra tool results")
     if provider_results:
-        result = provider_results[0]
-        if (result.get("id") != use["id"] or result.get("is_error")
-                or result.get("content") != cli_result.get("content")
-                or FIXTURE_MARKER not in json.dumps(result.get("content"), sort_keys=True)):
-            _fail("outbound provider tool_result does not match the successful CLI result")
+        _fail("first and sole provider request unexpectedly contains tool-result history")
 
     return {
         "schema": SCHEMA,
@@ -125,7 +150,8 @@ def validate_round_accounting_v1(*, requests: list[dict[str, Any]], stdout: byte
         "original_return_code": return_code,
         "original_error": original_error,
         "requested_limit": requested_limit,
-        "observed_model_requests": request_count,
+        "observed_http_requests": request_count,
+        "observed_model_requests": len(requests),
         "observed_tool_use_rounds": 1,
         "reported_terminal_num_turns": reported,
         "terminal_subtype": terminal["subtype"],
@@ -133,7 +159,6 @@ def validate_round_accounting_v1(*, requests: list[dict[str, Any]], stdout: byte
         "read_tool_use_id": use["id"],
         "fixture_result_sha256": hashlib.sha256(
             json.dumps(cli_result.get("content"), sort_keys=True).encode()).hexdigest(),
-        "provider_result_copied": bool(provider_results),
         "connection_count": connection_count,
         "cleanup_verified": True,
     }

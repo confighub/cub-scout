@@ -10,11 +10,14 @@ Acceptance is deliberately narrow. The validator requires the exact retained
 synthetic provider request and mock response, exactly one pinned-model request
 advertising only `Read`, one matching fixture-path Read tool-use, one successful
 CLI tool result containing the fixture marker, an explicit
-`error_max_turns`/`is_error: true` terminal with exit code 1, the preflight plus
-one accepted connection, and verified server/handler cleanup. If the provider
-request history contains a copied tool result, it must match the CLI result by
-ID and exact content. It rejects missing, duplicate, conflicting, extra, timed
-out, and incomplete evidence.
+`error_max_turns`/`is_error: true` terminal with exit code 1, and verified
+server/handler cleanup. HTTP `request_count` is separate from model request
+count: it includes the one accepted POST and permits zero or one exactly
+evidenced startup HEAD decline. TCP connections reconcile to one preflight
+connection plus those HTTP requests. The first and sole provider request must
+not contain tool-use/result history, since that would imply an unobserved prior
+round. Missing, duplicate, conflicting, extra, timed out, and incomplete
+evidence is rejected.
 
 The result reports `requested_limit`, `observed_model_requests`,
 `observed_tool_use_rounds`, and `reported_terminal_num_turns` independently.
@@ -22,6 +25,11 @@ The terminal counter is preserved as an opaque positive integer. This validator
 does not equate it to the requested limit, model requests, tool rounds, tokens,
 or billed calls. The observed stop is accepted from reconciled request/tool/
 terminal/transport evidence, not from that scalar.
+
+The source run must retain the exact legacy error
+`turn-limit terminal num_turns is missing or inconsistent with its cap`; a
+different validation error, timeout, or runner failure cannot be replayed as
+this accounting case.
 
 This schema covers only a single synthetic Read response and its one successful
 fixture result. It does not define general SDK turn semantics, parallel tool
