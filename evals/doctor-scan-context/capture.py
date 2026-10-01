@@ -17,8 +17,8 @@ import uuid
 
 REPO = Path(__file__).resolve().parents[2]
 OLD_SOURCE = "98fe0183a932e32be3cbc9c04aae8f1d7124740d"
-# Replace with the reviewed implementation commit before considering execution.
-FIXED_SOURCE = "REPLACE_AFTER_IMPLEMENTATION_COMMIT"
+# Reviewed product revision: local build/full Go suite passed before capture.
+FIXED_SOURCE = "5b3629752f354b257f7e667aa2c4f0126b35562b"
 
 
 def digest(path: Path) -> str:

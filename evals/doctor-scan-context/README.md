@@ -1,11 +1,11 @@
 # Doctor and scan context proof (#743)
 
 Prepared, opt-in, serial before/after CLI proof on one uniquely named disposable
-kind cluster. **The live lane has not been run.** The fixed source pin is still
-a placeholder, so execution currently fails before creating files or running tools.
+kind cluster. **The live lane has not been run.**
 
-Old source: `98fe0183a932e32be3cbc9c04aae8f1d7124740d`. Set the fixed source to the
-reviewed implementation commit only after product review and offline tests pass.
+Old source: `98fe0183a932e32be3cbc9c04aae8f1d7124740d`.
+Reviewed fixed product source: `5b3629752f354b257f7e667aa2c4f0126b35562b`.
+The local build and full Go suite passed at that revision before pinning it.
 The capture checkout must be clean and contain that source as an ancestor.
 
 ## What this lane proves

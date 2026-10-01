@@ -22,7 +22,8 @@ order, quality gates, budgets and decisions.
   against a retargeted kubeconfig. Doctor and scan preserve the selected label
   and coverage warnings across their outputs; normalized scan fields are additive.
   The prepared [owned-cluster proof](evals/doctor-scan-context/README.md) remains
-  **unrun**, with its fixed-source pin unset pending final validation. Two
+  **unrun**; the fixed source is pinned to `5b362975` after local build/full Go
+  validation. CI and the owned-cluster acceptance still remain required. Two
   behavior-specific regression probes caught missing shared Doctor context/human
   warnings and missing scan JSON/TUI context before the corresponding repairs.
 
