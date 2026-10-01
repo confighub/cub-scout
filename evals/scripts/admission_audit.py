@@ -76,10 +76,39 @@ def bounded_read(path, limit):
     return raw
 
 
+def finite_number(value):
+    try:
+        return math.isfinite(value)
+    except (TypeError, OverflowError):
+        return False
+
+
+def strict_json_loads(raw):
+    def reject_constant(value):
+        raise ValueError("non-finite JSON number: " + value)
+
+    def parse_float(value):
+        number = float(value)
+        if not finite_number(number):
+            raise ValueError("non-finite JSON number")
+        return number
+
+    def unique_object(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("duplicate JSON object key: " + repr(key))
+            result[key] = value
+        return result
+
+    return json.loads(raw, parse_constant=reject_constant, parse_float=parse_float,
+                      object_pairs_hook=unique_object)
+
+
 def load_json_file(path, limit):
     raw = bounded_read(path, limit)
     try:
-        return raw, json.loads(raw)
+        return raw, strict_json_loads(raw)
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise ValueError("input is not valid UTF-8 JSON") from exc
 
@@ -100,7 +129,7 @@ def parse_trace(path):
         if len(records) >= MAX_TRACE_RECORDS:
             raise ValueError("trace exceeds the record-count limit")
         try:
-            item = json.loads(line)
+            item = strict_json_loads(line)
         except json.JSONDecodeError as exc:
             raise ValueError("trace contains malformed JSON") from exc
         if not isinstance(item, dict) or not isinstance(item.get("type"), str):
@@ -386,7 +415,7 @@ def audit(source_path, trace_root_paths, expected_arms, expected_runs):
 
     cases_out = []
     source_cost = result.get("costUsd")
-    if isinstance(source_cost, bool) or not isinstance(source_cost, (int, float)) or not math.isfinite(source_cost) or source_cost < 0:
+    if isinstance(source_cost, bool) or not isinstance(source_cost, (int, float)) or not finite_number(source_cost) or source_cost < 0:
         source_cost = None
     for index, case in enumerate(cases):
         reasons = []
@@ -438,15 +467,15 @@ def audit(source_path, trace_root_paths, expected_arms, expected_runs):
                         run_reasons.append("producer reports an error, timeout, or interruption")
                 run_cost = run.get("costUsd")
                 if (isinstance(run_cost, bool) or not isinstance(run_cost, (int, float)) or
-                        not math.isfinite(run_cost) or run_cost < 0):
+                        not finite_number(run_cost) or run_cost < 0):
                     run_reasons.append("reported run costUsd is missing or malformed")
                 timeout = case.get("timeoutSeconds")
                 duration = run.get("durationSeconds")
-                if (isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or timeout <= 0):
+                if (isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not finite_number(timeout) or timeout <= 0):
                     run_reasons.append("declared timeoutSeconds is missing or malformed")
-                if (isinstance(duration, bool) or not isinstance(duration, (int, float)) or not math.isfinite(duration) or duration < 0):
+                if (isinstance(duration, bool) or not isinstance(duration, (int, float)) or not finite_number(duration) or duration < 0):
                     run_reasons.append("reported durationSeconds is missing or malformed")
-                elif isinstance(timeout, (int, float)) and not isinstance(timeout, bool) and math.isfinite(timeout) and duration >= timeout:
+                elif isinstance(timeout, (int, float)) and not isinstance(timeout, bool) and finite_number(timeout) and duration >= timeout:
                     run_reasons.append("reported duration reached or exceeded case timeout")
                 try:
                     path, trace_raw, trace = trace_for(run, source_parent, roots)

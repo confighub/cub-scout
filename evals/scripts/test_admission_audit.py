@@ -286,6 +286,41 @@ class AdmissionAuditTest(unittest.TestCase):
         self.assertFalse(case["ordinaryInventoryComparison"]["equal"])
         self.assertEqual(case["status"], "NOT_ADMITTED")
 
+    def test_nonfinite_source_json_rejected(self):
+        for number in ("NaN", "Infinity", "-Infinity", "1e999"):
+            with self.subTest(number=number):
+                raw = json.dumps(self.data).replace('"costUsd": 0.4', '"costUsd": ' + number, 1)
+                self.result.write_text(raw)
+                with self.assertRaisesRegex(ValueError, "non-finite JSON number"):
+                    self.audit()
+
+    def test_duplicate_source_keys_rejected(self):
+        self.result.write_text(json.dumps(self.data).replace('"partial": false',
+                               '"partial": true, "partial": false', 1))
+        with self.assertRaisesRegex(ValueError, "duplicate JSON object key"):
+            self.audit()
+
+    def test_ambiguous_or_nonfinite_trace_json_rejected(self):
+        for record in (
+            '{"type":"result","subtype":"success","is_error":true,"is_error":false,"result":"answer"}',
+            '{"type":"result","subtype":"success","is_error":false,"result":"answer","cost":NaN}',
+        ):
+            with self.subTest(record=record):
+                lines = [json.dumps(r) for r in self.records[:-1]] + [record]
+                (self.out / "with.jsonl").write_text("\n".join(lines) + "\n")
+                report = self.audit()
+                self.assertEqual(report["status"], "NOT_ADMITTED")
+                reasons = report["cases"][0]["arms"]["with"][0]["reasons"]
+                self.assertTrue(any("JSON" in reason for reason in reasons))
+
+    def test_oversized_integer_cost_is_unknown_without_overflow(self):
+        self.data["costUsd"] = 10 ** 400
+        self.data["cases"][0]["arms"]["with"][0]["costUsd"] = 10 ** 400
+        self.write_result()
+        report = self.audit()
+        self.assertEqual(report["status"], "NOT_ADMITTED")
+        self.assertIsNone(report["producerCostUsdObservedUnreconciled"])
+
     def test_malformed_trace_record_rejected(self):
         (self.out / "with.jsonl").write_text('{"type":"system"}\nnot json\n', encoding="utf-8")
         report = self.audit()
