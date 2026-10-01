@@ -697,7 +697,6 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				}
 				return append(args, "--format", "json"), nil
 			},
-			Runner: connectedRunner,
 		}
 		tools["confighub_changesets"] = mcpTool{
 			Descriptor: mcpToolDescriptor{

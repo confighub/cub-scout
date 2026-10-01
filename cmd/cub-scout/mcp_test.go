@@ -603,7 +603,7 @@ func TestMCPGatewayHandleRequest_ToolsCallCompareThreeWay(t *testing.T) {
 // truth JSON under `data` so agents can read evidence directly without
 // re-parsing the text content.
 func TestMCPGatewayHandleRequest_ToolsCallCompareSourceTruth(t *testing.T) {
-	var gotConnectedArgs []string
+	var gotStandaloneArgs []string
 
 	// Synthetic source-truth payload that mirrors the contract types in
 	// pkg/agent/source_truth.go. Field names must match exactly, since
@@ -621,11 +621,11 @@ func TestMCPGatewayHandleRequest_ToolsCallCompareSourceTruth(t *testing.T) {
 	}`
 
 	gateway := newMCPGatewayWithMode(
-		nil,
 		func(ctx context.Context, args []string) (string, error) {
-			gotConnectedArgs = append([]string(nil), args...)
+			gotStandaloneArgs = append([]string(nil), args...)
 			return syntheticPayload, nil
 		},
+		nil,
 		true,
 	)
 
@@ -652,15 +652,15 @@ func TestMCPGatewayHandleRequest_ToolsCallCompareSourceTruth(t *testing.T) {
 		t.Fatalf("unexpected rpc error: %+v", resp.Error)
 	}
 
-	wantConnected := []string{
+	wantStandalone := []string{
 		"compare", "source-truth", "Deployment/rag-server",
 		"-n", "demo",
 		"--strategy", "confighub-oci-flux",
 		"--kube-context", "alpha-context",
 		"--format", "json",
 	}
-	if !reflect.DeepEqual(gotConnectedArgs, wantConnected) {
-		t.Fatalf("connected args = %v, want %v", gotConnectedArgs, wantConnected)
+	if !reflect.DeepEqual(gotStandaloneArgs, wantStandalone) {
+		t.Fatalf("standalone args = %v, want %v", gotStandaloneArgs, wantStandalone)
 	}
 
 	var result struct {

@@ -25,7 +25,7 @@ func TestMCPSourceTruthContextIsTypedAndForwarded(t *testing.T) {
 		captured = append([]string(nil), args...)
 		return strings.Join(args, " "), nil
 	}
-	gateway := newMCPGatewayWithMode(nil, runner, true)
+	gateway := newMCPGatewayWithMode(runner, nil, true)
 	params, err := json.Marshal(map[string]interface{}{
 		"name":      "compare_source_truth",
 		"arguments": map[string]interface{}{"target": "Deployment/api", "namespace": "team-a", "strategy": "git-argo", "context": "alpha-context"},
