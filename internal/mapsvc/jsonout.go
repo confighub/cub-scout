@@ -401,7 +401,8 @@ type TraceSourceRef struct {
 	Kind      string            `json:"kind"`
 	Namespace string            `json:"namespace"`
 	Name      string            `json:"name"`
-	URL       string            `json:"url,omitempty"` // Git URL for GitRepository, registry for OCI
+	URL       string            `json:"url,omitempty"`      // Git URL for GitRepository, registry for OCI
+	Revision  string            `json:"revision,omitempty"` // Declared source revision, not necessarily the applied revision.
 	Artifact  *TraceArtifactRef `json:"artifact,omitempty"`
 }
 
@@ -515,7 +516,7 @@ const (
 // InferRole determines the role of a chain node based on its Kind.
 func InferRole(kind string) string {
 	switch kind {
-	case "GitRepository", "OCIRepository", "ConfigHub OCI", "HelmRepository", "Bucket", "SveltosReference", "EventSource", "ModelCache", "InferenceClass", "InferenceCluster":
+	case "Source", "GitRepository", "OCIRepository", "ConfigHub OCI", "HelmRepository", "Bucket", "SveltosReference", "EventSource", "ModelCache", "InferenceClass", "InferenceCluster":
 		return RoleSource
 	case "Kustomization", "HelmRelease", "Application", "ClusterProfile", "Profile", "EventTrigger", "ClusterHealthCheck", "ClusterPromotion", "ModelDeployment", "ModelService", "InferenceGateway":
 		return RoleDeployer
@@ -581,7 +582,7 @@ const (
 // Returns "" for kinds that don't map to a known stage.
 func InferDeliveryStage(kind string) string {
 	switch kind {
-	case "GitRepository", "HelmRepository", "Bucket", "SveltosReference", "EventSource", "ModelCache", "InferenceClass", "InferenceCluster":
+	case "Source", "GitRepository", "HelmRepository", "Bucket", "SveltosReference", "EventSource", "ModelCache", "InferenceClass", "InferenceCluster":
 		return StageSource
 	case "OCIRepository", "ConfigHub OCI":
 		return StageArtifact

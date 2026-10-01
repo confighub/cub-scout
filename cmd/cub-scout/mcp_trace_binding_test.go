@@ -73,6 +73,13 @@ func TestMCPTraceCallRunsParserAndBindsExplicitContext(t *testing.T) {
 	require.NoError(t, json.Unmarshal([]byte(wire.Content[0].Text), &output))
 	require.Equal(t, "alpha-context", output.Context)
 	require.Len(t, output.Chain, 2)
+	require.Equal(t, "Source", output.Chain[0].ID.Kind)
+	require.Equal(t, "source", output.Chain[0].Role)
+	require.Equal(t, "source", output.Chain[0].DeliveryStage)
+	require.Empty(t, output.Chain[0].Evidence)
+	require.NotNil(t, output.Summary.Source)
+	require.Equal(t, "https://git.example.invalid/alpha/repo.git", output.Summary.Source.URL)
+	require.Equal(t, "alpha-revision", output.Summary.Source.Revision)
 	chainJSON, err := json.Marshal(output.Chain)
 	require.NoError(t, err)
 	require.Contains(t, string(chainJSON), "alpha/repo")
@@ -173,7 +180,7 @@ func newMCPTraceBindingServer(t *testing.T, marker string) *mcpTraceBindingServe
 		switch r.URL.Path {
 		case "/apis/argoproj.io/v1alpha1/namespaces/delivery/applications/api":
 			w.Header().Set("Content-Type", "application/json")
-			_, _ = fmt.Fprintf(w, `{"apiVersion":"argoproj.io/v1alpha1","kind":"Application","metadata":{"name":"api","namespace":"delivery","uid":"%s-application"},"spec":{"source":{"repoURL":"https://git.example.invalid/%s/repo.git","targetRevision":"%s-revision","path":"."}},"status":{"sync":{"status":"Synced","revision":"%s-revision"},"health":{"status":"Healthy"}}}`, marker, marker, marker, marker)
+			_, _ = fmt.Fprintf(w, `{"apiVersion":"argoproj.io/v1alpha1","kind":"Application","metadata":{"name":"api","namespace":"delivery","uid":"%s-application"},"spec":{"source":{"repoURL":"https://git.example.invalid/%s/repo.git","targetRevision":"%s-revision","path":"."}},"status":{"sync":{"status":"Synced","revision":"%s-observed"},"health":{"status":"Healthy"}}}`, marker, marker, marker, marker)
 
 		case "/api/v1/namespaces/delivery/events":
 			writeTraceStatus(w, http.StatusForbidden, "events unavailable")

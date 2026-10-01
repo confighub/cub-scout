@@ -1121,8 +1121,11 @@ func buildEvidence(link agent.ChainLink, tool string) []mapsvc.Evidence {
 
 	switch role {
 	case mapsvc.RoleSource:
-		// Source: evidence from URL field
-		if link.URL != "" {
+		// Kubernetes-backed source resources expose spec.url. Argo's synthetic
+		// Source link comes from Application.spec.source(s), whose exact path is
+		// not retained here, so do not claim that the URL was a standalone
+		// Kubernetes spec.url observation.
+		if link.Kind != "Source" && link.URL != "" {
 			evidence = append(evidence, mapsvc.Evidence{
 				Type:  mapsvc.EvidenceField,
 				Key:   "spec.url",
@@ -1207,9 +1210,11 @@ func buildTraceSummary(result *agent.TraceResult, chain []mapsvc.ChainNode, arti
 		case mapsvc.RoleSource:
 			// Find URL from original chain
 			var url string
+			var revision string
 			for _, link := range result.Chain {
 				if link.Kind == node.ID.Kind && link.Name == node.ID.Name {
 					url = link.URL
+					revision = link.Revision
 					break
 				}
 			}
@@ -1218,6 +1223,7 @@ func buildTraceSummary(result *agent.TraceResult, chain []mapsvc.ChainNode, arti
 				Namespace: node.ID.Namespace,
 				Name:      node.ID.Name,
 				URL:       url,
+				Revision:  revision,
 			}
 			if traceArtifacts {
 				if art, ok := lookupTraceArtifact(node.ID.Kind, node.ID.Namespace, node.ID.Name, artifacts); ok {
