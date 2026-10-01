@@ -134,9 +134,7 @@ func TestRecordedMapRejectsLiveOptionsAndInvalidScope(t *testing.T) {
 	cases := [][]string{
 		{"--recording", path, "--kube-context", "ignored"},
 		{"--recording", path, "--query", "@saved"},
-		{"--recording", path, "--owner", "Native"},
 		{"--recording", path, "--since", "1h"},
-		{"--recording", path, "--summary"},
 		{"--recording", path, "--count"},
 		{"--recording", path, "--names-only"},
 		{"--recording", path, "--namespace", "prod", "--namespace-prefix", "pro"},
@@ -166,6 +164,36 @@ func TestRecordedMapRejectsLiveOptionsAndInvalidScope(t *testing.T) {
 		if result["isError"] != true {
 			t.Errorf("MCPaccepted%s:%+v", args, result)
 		}
+	}
+}
+
+func TestRecordedMapOwnershipEvidenceConflictsOnlyWithSummary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "recording.yaml")
+	if err := os.WriteFile(path, []byte(recordedExplainDeployment), 0600); err != nil {
+		t.Fatal(err)
+	}
+	args := []string{"--recording", path, "--api-version", "apps/v1", "--kind", "Deployment", "--ownership-evidence", "--format", "json"}
+	cmd := recordedMapTestCommand()
+	var out bytes.Buffer
+	cmd.SetOut(&out)
+	cmd.SetArgs(args)
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("full recorded output with ownership evidence was rejected: %v", err)
+	}
+	var full RecordedMapReport
+	if err := json.Unmarshal(out.Bytes(), &full); err != nil {
+		t.Fatal(err)
+	}
+	if full.Schema != "map-list-recorded.v1" || len(full.Resources) != 1 || full.Resources[0].OwnershipDetection == nil {
+		t.Fatalf("full recorded output did not preserve detector evidence: %#v", full)
+	}
+
+	cmd = recordedMapTestCommand()
+	cmd.SetOut(&bytes.Buffer{})
+	cmd.SetArgs(append(append([]string(nil), args...), "--summary"))
+	err := cmd.Execute()
+	if err == nil || !strings.Contains(err.Error(), "--ownership-evidence cannot be combined with --summary") {
+		t.Fatalf("summary plus ownership evidence should fail clearly, got %v", err)
 	}
 }
 

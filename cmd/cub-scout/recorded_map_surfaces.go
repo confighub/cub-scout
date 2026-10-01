@@ -66,6 +66,10 @@ func runRecordedMapCLI(cmd *cobra.Command, args []string) error {
 	}
 	tui, _ := cmd.Flags().GetBool("tui")
 	summaryView, _ := cmd.Flags().GetBool("summary")
+	ownershipEvidence, _ := cmd.Flags().GetBool("ownership-evidence")
+	if summaryView && ownershipEvidence {
+		return fmt.Errorf("--ownership-evidence cannot be combined with --summary; summary omits per-object detector evidence")
+	}
 	if tui && (cmd.Flags().Changed("format") || legacyJSON) {
 		return fmt.Errorf("--tui cannot be combined with output format options")
 	}
