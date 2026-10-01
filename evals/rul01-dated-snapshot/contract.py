@@ -27,7 +27,7 @@ def _json(data):
         return result
     try:
         return json.loads(data, object_pairs_hook=pairs, parse_constant=lambda _: (_ for _ in ()).throw(ContractError("non-finite JSON number")))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+    except (UnicodeDecodeError, ValueError) as exc:
         raise ContractError("invalid JSON") from exc
 
 
@@ -58,12 +58,16 @@ def validate(raw_bytes=None, receipt_bytes=None, clocks_bytes=None):
     if not isinstance(scope, dict) or scope.get("atomicSnapshot") is not False:
         raise ContractError("capture scope is not the recorded non-atomic observation")
     digest = hashlib.sha256(raw_bytes).hexdigest()
+    if type(source.get("rawBytes")) is not int:
+        raise ContractError("raw byte count must be an integer")
     if (source.get("rawFile"), source.get("rawBytes"), source.get("rawSha256")) != ("after-pod.json", len(raw_bytes), digest) or digest != EXPECTED_SHA:
         raise ContractError("raw evidence binding mismatch")
     if (source.get("captureSourceCommit"), source.get("captureHelperSha256"), source.get("sourceProvenanceSha256")) != (
         "4b113710948882eda501e14aacca2d5cec1168ae", "ec4f7f8e9d2d2ca6257abc5029f2e01b33203794a5782c22ba13895bedd31230", "472314079b74bff1a374d5e55eb44a12db2e2ffeaa189b30dc659423bc95398a"):
         raise ContractError("source provenance mismatch")
     start, end = _time(request.get("startedAt")), _time(request.get("endedAt"))
+    if type(request.get("httpStatus")) is not int:
+        raise ContractError("HTTP status must be an integer")
     if (request.get("phase"), request.get("method"), request.get("path"), request.get("httpStatus")) != (
         "after", "GET", "/api/v1/namespaces/pre02-node-selector/pods/scout-pre02-selector", 200):
         raise ContractError("request identity mismatch")

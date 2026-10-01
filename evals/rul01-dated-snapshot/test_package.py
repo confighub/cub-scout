@@ -50,6 +50,9 @@ class DatedSnapshotTests(unittest.TestCase):
     def test_malformed_or_missing_inputs_become_explicit_unknown(self):
         raw, receipt, clocks = self.files()
         cases = (
+            (raw, receipt.replace(b'"rawBytes": 5355', b'"rawBytes": 5355.0'), clocks),
+            (raw, receipt.replace(b'"httpStatus": 200', b'"httpStatus": 200.0'), clocks),
+            (raw, receipt.replace(b'"elapsedSeconds": 0.01204633410088718', b'"elapsedSeconds": ' + b'9' * 5000), clocks),
             (raw, b"null", clocks), (raw, b"[]", clocks),
             (raw, receipt, b"null"), (raw, receipt, b"[]"),
             (b"null", receipt, clocks),
