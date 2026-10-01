@@ -64,7 +64,7 @@ MAX_ARCHIVE_BYTES = 8 * 1024 * 1024
 MAX_OUTPUT_BYTES = 4 * 1024 * 1024
 DEADLINE_SECONDS = 90
 TEST_NAME = "TestHLT04OfflineReplay"
-REPLAY_TEST = Path(__file__).parent / "harness" / "hlt04_replay_test.go"
+REPLAY_TEST = Path(__file__).parent / "harness" / "hlt04_replay_test.go.txt"
 
 EXPECTED_CASES = {
     "missing-held-report-time": {"write": True, "reason": "first synthetic report"},

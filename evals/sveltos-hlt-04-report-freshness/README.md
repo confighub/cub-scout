@@ -115,3 +115,9 @@ producer test:
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover \
   -s evals/sveltos-hlt-04-report-freshness -p 'test_*.py' -v
 ```
+
+The injected Go harness is stored as `harness/hlt04_replay_test.go.txt` so the
+cub-scout module does not compile Sveltos-internal code. The replay copies those
+unchanged bytes to `internal/onboard/hlt04_replay_test.go` in the isolated source
+tree. This packaging correction follows the retained initial PR CI failure; it
+does not change or rerun the recorded producer result.
