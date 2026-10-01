@@ -593,10 +593,7 @@
               "2026-10-01T06:08:25Z",
               "2026-10-01T06:13:25Z"
             ],
-            "limits": [
-              "Age arithmetic is relative to the logged request-end second, with one-second timestamp resolution.",
-              "Same observation reused from PRE-02; no independent capture, current-state, product capture-time capability, or savings claim."
-            ]
+            "limits": "Age arithmetic is relative to the logged request-end second, with one-second timestamp resolution. Same observation reused from PRE-02; no independent capture, current-state, product capture-time capability, or savings claim."
           },
           "benchmark_admission": "Prepared, not run or admitted. Frozen suite remains non-executable pending protocol gates and remaining cases."
         },
