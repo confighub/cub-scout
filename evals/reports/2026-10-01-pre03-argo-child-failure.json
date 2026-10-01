@@ -1,0 +1,42 @@
+{
+  "case": "PRE-03 Argo-only child-chain failure",
+  "classification": "historical retained runtime observations prepared as a recorded projection; not model-run or benchmark-admitted",
+  "source_repository": "confighub/helm-expt",
+  "source_revision": "9ab4c753a888dc305a3c07956c9f8f5a19eb70a0",
+  "source_case": "runs/live-helm-confighub-compare/bitnami-spark-ha",
+  "fixture_files_sha256": {
+    "argocd-core-child-tree.txt": "5063434140df63adb2949f8287a88898e7d1c2c2f70a416a7ca3446e3d5a61f3",
+    "argocd-core-child.json": "c8e5c7476a8b0f3a7941587957b63caaa651247715ed537be3a6f3795f0e3ffe",
+    "argocd-core-root-tree.txt": "ff14e194abf60ebfed7429c30ae2c87548875a068a3bca920c10a3b60dd24411",
+    "argocd-core-root.json": "5f2fe7e6f3200327567b50abd695a8bbeb85f7c6d5f4e92976798bb5a8e36fff",
+    "capture-scope.json": "a1b64893b8df6ab27200e2b0f08e6bbb1f4413ac8694bfbdb6a24c6f485c5878",
+    "events.txt": "2adf884044616c0a66e01a9f1460e4f7c61579c89a8c7282ec4adc5c007b4526",
+    "pod-describe.txt": "4b1f8b55eccecd18a1e0d2b1b537eef08ddd4bc3323c0b8bf64faf905948d3a7"
+  },
+  "source_receipt_sha256": "ba2be4b6aec3e9e854a9bedbaf2471a44a617f720545bb6e41ffa79b6707c8bd",
+  "observed_chain": {
+    "parent": "argocd/helm-expt-parity-spark-mqghfthi-196o-cluster",
+    "parent_uid": "493ef705-bc96-4717-8934-961d71043016",
+    "parent_sync": "Synced",
+    "parent_health": "Healthy",
+    "child": "argocd/spark-parity",
+    "child_uid": "7c373d17-c2f2-4041-b85f-d4b93e3de3ac",
+    "child_link": "parent status.resources GVK/namespace/name plus child argocd.argoproj.io/tracking-id",
+    "child_sync": "Synced",
+    "child_health": "Progressing",
+    "failing_path": "StatefulSet/default/spark-worker -> Pod/default/spark-worker-0",
+    "pod_state": "Waiting / ImagePullBackOff; Ready=False",
+    "image": "docker.io/bitnami/spark:4.0.0-debian-12-r20",
+    "failure": "ErrImagePull and ImagePullBackOff; retained event reports registry reference NotFound"
+  },
+  "limits": [
+    "Argo-only coverage. No Crossplane Claim, XR, composed managed resource, or Crossplane conclusion is supplied; this does not close #601.",
+    "The two Argo Application UIDs identify separate objects; their parent-child join is through the parent resource GVK/name/namespace and child tracking annotation, not a UID foreign key.",
+    "Child tree shows a StatefulSet-to-Pod path but not a complete Kubernetes object graph.",
+    "Historical separate responses; not atomic or current. Object creation, transition and reconciledAt values are not response capture times; event ages are relative.",
+    "Source receipt observedAt predates the Application timestamps and is not used as a status capture time; the receipt is not among model-facing evidence files.",
+    "Cleanup is unresolved: receipt cleanup result is blocked while a separate lifecycle field says cleaned-up. No cleanup success claim.",
+    "No model quality, immutable image identity, provider cost, credits, savings or benchmark admission claim."
+  ],
+  "paid_runs_authorized_by_manifest": false
+}
