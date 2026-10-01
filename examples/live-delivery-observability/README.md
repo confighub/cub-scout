@@ -30,6 +30,7 @@ For the operator workflow this fixture supports, see
 | `observed.yaml` | Recorded live objects: aggregate resource, workload, pod symptom, and audited action event. |
 | `confighub-delivery-evidence.json` | Example `gitops status --with-confighub --format json` evidence envelope. |
 | `revision-correlation-cases.json` | Deterministic strict revision-to-manifest-digest correlation cases, including unknown and ambiguous evidence. |
+| `trace-unit-events.md` | Reproducible trace Markdown rendering for correlated unit events. |
 
 ## Review Commands
 

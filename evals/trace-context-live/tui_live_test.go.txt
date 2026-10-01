@@ -1,0 +1,183 @@
+package main
+
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"os"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/stretchr/testify/require"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+)
+
+type traceOwnedRequest struct {
+	Method string `json:"method"`
+	Path   string `json:"path"`
+	Status int    `json:"status"`
+}
+
+type traceOwnedTransport struct {
+	mu       sync.Mutex
+	requests []traceOwnedRequest
+}
+
+func (r *traceOwnedTransport) snapshot() []traceOwnedRequest {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return append([]traceOwnedRequest(nil), r.requests...)
+}
+
+func TestTraceContextOwnedTUI(t *testing.T) {
+	if os.Getenv("SCOUT_TRACE_TUI_EXECUTE") != "1" {
+		t.Skip("explicit owned-kind capture only")
+	}
+	configPath := os.Getenv("SCOUT_TRACE_TUI_CONFIG")
+	outputPath := os.Getenv("SCOUT_TRACE_TUI_RESULT")
+	require.NotEmpty(t, configPath)
+	require.Equal(t, configPath, os.Getenv("KUBECONFIG"))
+	require.NotEmpty(t, outputPath)
+
+	checks := map[string]bool{}
+	selectedContexts := map[string]string{}
+	requests := map[string][]traceOwnedRequest{}
+	views := map[string]string{}
+	configHashes := map[string]string{}
+	t.Cleanup(func() {
+		passed := !t.Failed()
+		report := map[string]any{"schema": "trace-context-owned-tui.v1", "passed": passed,
+			"checks": checks, "selectedContexts": selectedContexts, "requests": requests, "views": views,
+			"privateConfigSha256BeforeAfter": configHashes,
+			"scope": "actual local model T/Enter/reopen events against owned kind API; no terminal-emulator proof"}
+		encoded, err := json.MarshalIndent(report, "", "  ")
+		if err == nil {
+			err = os.WriteFile(outputPath, append(encoded, '\n'), 0600)
+		}
+		if err != nil {
+			t.Errorf("write TUI proof evidence: %v", err)
+		}
+	})
+
+	config, err := clientcmd.LoadFromFile(configPath)
+	require.NoError(t, err)
+	for _, user := range config.AuthInfos {
+		require.Nil(t, user.Exec, "proof config must not execute credential helpers")
+		require.Nil(t, user.AuthProvider)
+		require.Empty(t, user.TokenFile)
+		require.Empty(t, user.ClientCertificate)
+		require.Empty(t, user.ClientKey)
+	}
+	for _, contextName := range []string{"doctor-allowed", "doctor-denied"} {
+		require.Contains(t, config.Contexts, contextName)
+		clusterName := config.Contexts[contextName].Cluster
+		require.NotEmpty(t, clusterName)
+		require.Contains(t, config.Clusters, clusterName)
+		require.Contains(t, []string{"127.0.0.1", "localhost", "::1"}, mustTraceOwnedHost(t, config.Clusters[clusterName].Server))
+	}
+
+	newModel := func(contextName string) (LocalClusterModel, *traceOwnedTransport) {
+		binding := resolveLocalClusterBindingForSelection(clusterContextSelection{name: contextName, explicit: true})
+		require.NoError(t, binding.err)
+		cfg := rest.CopyConfig(binding.config)
+		cfg.Timeout = 5 * time.Second
+		cfg.QPS, cfg.Burst = 50, 50
+		recorder := &traceOwnedTransport{}
+		cfg.WrapTransport = func(next http.RoundTripper) http.RoundTripper {
+			return traceOwnedRoundTripFunc(func(request *http.Request) (*http.Response, error) {
+				if request.Method != http.MethodGet {
+					return nil, fmt.Errorf("owned Trace TUI probe refuses non-GET request")
+				}
+				response, err := next.RoundTrip(request)
+				status := 0
+				if response != nil {
+					status = response.StatusCode
+				}
+				recorder.mu.Lock()
+				recorder.requests = append(recorder.requests, traceOwnedRequest{Method: request.Method, Path: request.URL.Path, Status: status})
+				recorder.mu.Unlock()
+				return response, err
+			})
+		}
+		binding.config = cfg
+		return LocalClusterModel{clusterBinding: binding, explicitClusterContext: true, keymap: defaultLocalKeyMap(),
+			entries: []MapEntry{{Kind: "Deployment", Name: "scout-context-marker", Namespace: "scout-trace-context-proof", Owner: "ArgoCD"}}}, recorder
+	}
+
+	openAndTrace := func(model LocalClusterModel, recorder *traceOwnedTransport, phase, contextName string, denied bool) LocalClusterModel {
+		selectedContexts[phase] = model.clusterBinding.context
+		require.Equal(t, contextName, model.clusterBinding.context)
+		before := len(recorder.snapshot())
+		updated, _ := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("T")})
+		model = updated.(LocalClusterModel)
+		require.True(t, model.traceMode, "actual T binding must open the trace picker")
+		require.Len(t, model.traceItems, 1)
+		updated, command := model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+		model = updated.(LocalClusterModel)
+		require.NotNil(t, command, "actual Enter binding must start trace")
+		message := command().(traceResultMsg)
+		if denied {
+			require.Error(t, message.err)
+			require.Contains(t, strings.ToLower(message.err.Error()), "forbidden")
+			require.Contains(t, message.err.Error(), "system:serviceaccount:scout-trace-context-proof:trace-denied")
+		} else {
+			require.NoError(t, message.err)
+			require.Contains(t, message.output, "Selected Kubernetes context: "+contextName)
+			require.Contains(t, message.output, "scout-context-marker")
+		}
+		updated, _ = model.Update(message)
+		model = updated.(LocalClusterModel)
+		views[phase] = model.renderTrace()
+		allRequests := recorder.snapshot()
+		requests[phase] = append([]traceOwnedRequest(nil), allRequests[before:]...)
+		checks[phase] = true
+		return model
+	}
+
+	allowed, allowedRecorder := newModel("doctor-allowed")
+	allowed = openAndTrace(allowed, allowedRecorder, "allowed-open", "doctor-allowed", false)
+	updated, _ := allowed.Update(tea.KeyMsg{Type: tea.KeyEsc}) // close the result back to picker
+	allowed = updated.(LocalClusterModel)
+	updated, _ = allowed.Update(tea.KeyMsg{Type: tea.KeyEsc}) // close picker
+	allowed = updated.(LocalClusterModel)
+	require.False(t, allowed.traceMode)
+
+	// Retarget only this disposable copy. The existing model must continue to
+	// use the credential snapshot captured before the file changed.
+	config.CurrentContext = "doctor-denied"
+	config.Contexts["doctor-allowed"].AuthInfo = "trace-denied-user"
+	retargeted, err := clientcmd.Write(*config)
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(configPath, retargeted, 0600))
+	beforeReopen := sha256.Sum256(retargeted)
+	configHashes["beforeReopen"] = hex.EncodeToString(beforeReopen[:])
+	allowed = openAndTrace(allowed, allowedRecorder, "allowed-reopen-after-retarget", "doctor-allowed", false)
+	afterReopen, err := os.ReadFile(configPath)
+	require.NoError(t, err)
+	afterHash := sha256.Sum256(afterReopen)
+	configHashes["afterReopen"] = hex.EncodeToString(afterHash[:])
+	require.Equal(t, retargeted, afterReopen, "Trace TUI read must not rewrite its disposable kubeconfig")
+	checks["private-config-retarget-stable"] = true
+	denied, deniedRecorder := newModel("doctor-denied")
+	openAndTrace(denied, deniedRecorder, "denied-open", "doctor-denied", true)
+}
+
+func mustTraceOwnedHost(t *testing.T, server string) string {
+	t.Helper()
+	const prefix = "https://"
+	require.True(t, strings.HasPrefix(server, prefix), "kind API endpoint must use HTTPS")
+	host := strings.SplitN(strings.TrimPrefix(server, prefix), ":", 2)[0]
+	return strings.Trim(host, "[]")
+}
+
+type traceOwnedRoundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f traceOwnedRoundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) {
+	return f(request)
+}
