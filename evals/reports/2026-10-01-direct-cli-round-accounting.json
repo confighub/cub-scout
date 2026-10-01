@@ -1,0 +1,39 @@
+{
+  "classification": "Offline reanalysis of retained fake-provider bytes; no CLI rerun, provider inference, benchmark admission or savings claim",
+  "analysis_source_revision": "dd46137931e959c82b50e40d5ac6e559977b2474",
+  "validator_sha256": "ec8c3a4fdfae16dc95f9a18d762fd55b07a49274cf0f1400d715850b4fd6ffa9",
+  "original_capture_source_revision": "721856bc233813049a219e6ed6c799cab8140597",
+  "original_helper_sha256": "1c5c229bddaddd2b3801a5eca8a0cba9686f0ed4150262ef7af619fb803c427d",
+  "original_cli_sha256": "3509913f9d1576316c8845b88837f8fd3bbbcf26625833ac82cfb6b8985da94a",
+  "input_sha256": {
+    "provenance.json": "5cc96c05bbb04fef42ce2330db5808dc009871fdde388e1038644a69c3d6e890",
+    "requests.json": "535dc2adbf62394a7fba98be873fb2128ad0ed00f8e20346b232d0330c4a6490",
+    "stdout.bin": "0ee9d382d753ceb8ae9d30f5b89c3d2fbad42b94702d8164db9e110d4d446089",
+    "stderr.bin": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "analysis": {
+    "schema": "direct-cli-round-accounting.v1",
+    "analysis_outcome": "accepted_single_round_stop",
+    "original_run_status": "validation_failed",
+    "original_return_code": 1,
+    "original_error": "turn-limit terminal num_turns is missing or inconsistent with its cap",
+    "requested_limit": 1,
+    "observed_http_requests": 2,
+    "observed_model_requests": 1,
+    "observed_tool_use_rounds": 1,
+    "reported_terminal_num_turns": 2,
+    "terminal_subtype": "error_max_turns",
+    "terminal_is_error": true,
+    "read_tool_use_id": "toolu_offline_read_1",
+    "fixture_result_sha256": "7e3179187d48153e224484e15116fa7fa1bfc9a3aa73a6a7e68be849f060887d",
+    "connection_count": 3,
+    "cleanup_verified": true
+  },
+  "limits": [
+    "Original helper validation_failed remains unchanged; its exit was 2, CLI exit 1.",
+    "Terminal num_turns is retained as opaque evidence, not model requests, tokens or billing.",
+    "Only one Read tool-use round in the pinned mock scenario is covered.",
+    "Full treatment, tool parity, complete paid cost accounting and credits remain unadmitted.",
+    "No new CLI, network or model run; reported eval estimate remains $4.38666035."
+  ]
+}
