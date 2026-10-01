@@ -157,8 +157,12 @@ func observeTrace(ctx context.Context, session *traceSession, kind, name, namesp
 			result.Error = appendSentence(result.Error, "Cross-owner references unavailable: "+refErr.Error())
 		}
 	}
-	if secrets := collectSecretEvidenceWithTraceSession(ctx, session, kind, name, namespace); secrets != nil && secrets.Summary.Total > 0 {
+	secrets, secretErr := collectSecretEvidenceWithTraceSessionAndError(ctx, session, kind, name, namespace)
+	if secrets != nil && secrets.Summary.Total > 0 {
 		result.Secrets = secrets
+	}
+	if secretErr != nil {
+		result.Error = appendSentence(result.Error, secretErr.Error())
 	}
 	events, eventErr := fetchResourceEventsWithTraceSession(ctx, session, namespace, kind, name)
 	if eventErr == nil && events != nil && len(events.Events) > 0 {
@@ -174,7 +178,11 @@ func observeTrace(ctx context.Context, session *traceSession, kind, name, namesp
 	}
 	artifacts := buildUnknownTraceArtifacts(result)
 	if opts.Artifacts {
-		artifacts = mergeTraceArtifacts(artifacts, collectTraceArtifactsWithTraceSession(ctx, session, result))
+		observedArtifacts, artifactErrors := collectTraceArtifactsWithTraceSessionAndErrors(ctx, session, result)
+		artifacts = mergeTraceArtifacts(artifacts, observedArtifacts)
+		for _, artifactErr := range artifactErrors {
+			result.Error = appendSentence(result.Error, artifactErr.Error())
+		}
 	}
 	return &traceObservation{Result: result, Artifacts: artifacts}, nil
 }

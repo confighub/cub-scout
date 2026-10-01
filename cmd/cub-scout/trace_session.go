@@ -157,17 +157,28 @@ func fetchResourceEventsWithTraceSession(ctx context.Context, session *traceSess
 }
 
 func collectSecretEvidenceWithTraceSession(ctx context.Context, session *traceSession, kind, name, namespace string) *agent.SecretEvidenceResult {
+	result, _ := collectSecretEvidenceWithTraceSessionAndError(ctx, session, kind, name, namespace)
+	return result
+}
+
+// collectSecretEvidenceWithTraceSessionAndError preserves the legacy
+// map-only behavior through its wrapper while allowing the rich observer to
+// distinguish a failed read from a resource with no secret references.
+func collectSecretEvidenceWithTraceSessionAndError(ctx context.Context, session *traceSession, kind, name, namespace string) (*agent.SecretEvidenceResult, error) {
 	supportedKinds := map[string]bool{
 		"Deployment": true, "StatefulSet": true, "DaemonSet": true, "Pod": true,
 		"GitRepository": true, "HelmRepository": true, "Bucket": true,
 		"Kustomization": true, "HelmRelease": true, "ProviderConfig": true,
 	}
-	if !supportedKinds[kind] || session == nil {
-		return nil
+	if !supportedKinds[kind] {
+		return nil, nil
+	}
+	if session == nil {
+		return nil, fmt.Errorf("secret evidence unavailable for %s/%s in %s: trace session is unavailable", kind, name, namespace)
 	}
 	dynClient, err := session.dynamicClient()
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("secret evidence unavailable for %s/%s in %s: %w", kind, name, namespace, err)
 	}
 	var resource *unstructured.Unstructured
 	if kind == "ProviderConfig" {
@@ -175,24 +186,31 @@ func collectSecretEvidenceWithTraceSession(ctx context.Context, session *traceSe
 	} else {
 		gvr := kindToGVR(kind)
 		if gvr.Resource == "" {
-			return nil
+			return nil, nil
 		}
 		resource, err = dynClient.Resource(gvr).Namespace(namespace).Get(ctx, name, v1.GetOptions{})
 	}
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("secret evidence unavailable for %s/%s in %s: %w", kind, name, namespace, err)
 	}
 	result, err := agent.NewSecretEvidenceCollector(dynClient).CollectFromResource(ctx, resource)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("secret evidence unavailable for %s/%s in %s: %w", kind, name, namespace, err)
 	}
-	return result
+	return result, nil
 }
 
 func collectTraceArtifactsWithTraceSession(ctx context.Context, session *traceSession, result *agent.TraceResult) map[string]mapsvc.TraceArtifactRef {
+	artifacts, _ := collectTraceArtifactsWithTraceSessionAndErrors(ctx, session, result)
+	return artifacts
+}
+
+// collectTraceArtifactsWithTraceSessionAndErrors retains successful artifact
+// metadata alongside source-specific read failures for observer warnings.
+func collectTraceArtifactsWithTraceSessionAndErrors(ctx context.Context, session *traceSession, result *agent.TraceResult) (map[string]mapsvc.TraceArtifactRef, []error) {
 	artifacts := make(map[string]mapsvc.TraceArtifactRef)
-	if result == nil || len(result.Chain) == 0 || session == nil {
-		return artifacts
+	if result == nil || len(result.Chain) == 0 {
+		return artifacts, nil
 	}
 	sources := make([]agent.ChainLink, 0, 4)
 	for _, link := range result.Chain {
@@ -201,12 +219,24 @@ func collectTraceArtifactsWithTraceSession(ctx context.Context, session *traceSe
 		}
 	}
 	if len(sources) == 0 {
-		return artifacts
+		return artifacts, nil
+	}
+	if session == nil {
+		readErrors := make([]error, 0, len(sources))
+		for _, source := range sources {
+			readErrors = append(readErrors, fmt.Errorf("artifact metadata unavailable for %s/%s/%s: trace session is unavailable", source.Kind, source.Namespace, source.Name))
+		}
+		return artifacts, readErrors
 	}
 	dynClient, err := session.dynamicClient()
 	if err != nil {
-		return artifacts
+		readErrors := make([]error, 0, len(sources))
+		for _, source := range sources {
+			readErrors = append(readErrors, fmt.Errorf("artifact metadata unavailable for %s/%s/%s: %w", source.Kind, source.Namespace, source.Name, err))
+		}
+		return artifacts, readErrors
 	}
+	var readErrors []error
 	for _, source := range sources {
 		gvr := kindToGVR(source.Kind)
 		if gvr.Resource == "" {
@@ -214,6 +244,7 @@ func collectTraceArtifactsWithTraceSession(ctx context.Context, session *traceSe
 		}
 		obj, err := dynClient.Resource(gvr).Namespace(source.Namespace).Get(ctx, source.Name, v1.GetOptions{})
 		if err != nil {
+			readErrors = append(readErrors, fmt.Errorf("artifact metadata unavailable for %s/%s/%s: %w", source.Kind, source.Namespace, source.Name, err))
 			continue
 		}
 		artifact := traceArtifactUnknownForKind(source.Kind)
@@ -231,7 +262,7 @@ func collectTraceArtifactsWithTraceSession(ctx context.Context, session *traceSe
 		}
 		artifacts[traceArtifactKey(source.Kind, source.Namespace, source.Name)] = normalizeTraceArtifact(source.Kind, artifact)
 	}
-	return artifacts
+	return artifacts, readErrors
 }
 
 // newTraceSessionFromBinding preserves the same parsed proxy provenance used by
