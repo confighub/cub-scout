@@ -2480,6 +2480,7 @@ CLI `map list --recording` and the recorded MCP `map` tool return the same envel
 | `scope.apiVersion`, `scope.kind` | Required exact case-sensitive selection |
 | `scope.namespace` | Optional exact namespace; explicit empty string is meaningful |
 | `scope.namespacePrefix` | Optional literal prefix, mutually exclusive with namespace |
+| `scope.owner` | Optional exact canonical built-in owner filter |
 | `selectedCount`, `excludedFromScopeCount` | Selected and filtered-out parsed objects, not omitted cluster objects |
 | `ownerCounts` | Counts by built-in owner classification for the selected objects |
 | `resources[]` | Exact API version/Kind/namespace/name, owner, optional owner details, ownershipDetection |
@@ -2492,3 +2493,16 @@ contract. No health, cluster identity, capture-omission list, path, raw object
 payload or current-time claim is emitted. All full identities must be unique,
 even outside the requested scope. The original input hash changes when bytes
 outside that scope change; scoped ownership may remain identical.
+
+`map list --recording ... --summary` and recorded MCP `map` with `summary: true`
+return `map-list-recorded-summary.v1`, a separate schema with `view: "summary"`,
+the same provenance and combined scope counts, and owner counts. It deliberately
+has no `resources` field; `perObjectEvidenceGuide` explains how to request rows.
+This cannot be mistaken for an empty full inventory. `--owner` / MCP `owner`
+accepts one exact canonical category (`Flux`, `ArgoCD`, `Sveltos`, `Modelplane`,
+`Crossplane`, `kro`, `Helm`, `Terraform`, `ConfigHub`, `Kubernetes`, or `Native`).
+Kubernetes denotes a built-in Kubernetes owner-reference marker; Native denotes
+no supported built-in marker. Selected and excluded counts apply to the
+combined API version, Kind, namespace and owner filters. The default full report
+remains `map-list-recorded.v1`; an omitted owner does not add a field to its
+scope.

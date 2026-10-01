@@ -15,6 +15,7 @@ import (
 )
 
 const recordedMapSchema = "map-list-recorded.v1"
+const recordedMapSummarySchema = "map-list-recorded-summary.v1"
 
 // RecordedMapScope selects objects from an immutable recording. A nil
 // Namespace means any namespace; a non-nil pointer selects that exact value,
@@ -26,6 +27,7 @@ type RecordedMapScope struct {
 	Kind            string  `json:"kind"`
 	Namespace       *string `json:"namespace,omitempty"`
 	NamespacePrefix string  `json:"namespacePrefix,omitempty"`
+	Owner           string  `json:"owner,omitempty"`
 }
 
 // RecordedMapProvenance identifies only the bytes supplied to this model. It
@@ -64,6 +66,19 @@ type RecordedMapReport struct {
 	ExcludedFromScope int                   `json:"excludedFromScopeCount"`
 	OwnerCounts       map[string]int        `json:"ownerCounts"`
 	Resources         []RecordedMapResource `json:"resources"`
+}
+
+// RecordedMapSummary intentionally has no resource rows. Its separate schema
+// and view marker distinguish an omitted-row summary from an empty inventory.
+type RecordedMapSummary struct {
+	Schema                 string                `json:"schema"`
+	View                   string                `json:"view"`
+	Provenance             RecordedMapProvenance `json:"provenance"`
+	Scope                  RecordedMapScope      `json:"scope"`
+	SelectedCount          int                   `json:"selectedCount"`
+	ExcludedFromScope      int                   `json:"excludedFromScopeCount"`
+	OwnerCounts            map[string]int        `json:"ownerCounts"`
+	PerObjectEvidenceGuide string                `json:"perObjectEvidenceGuide"`
 }
 
 // buildRecordedMapReport is a pure projection of a previously parsed
@@ -109,6 +124,9 @@ func buildRecordedMapReport(snapshot recordedObjectSnapshot, scope RecordedMapSc
 		}
 		ownership := agent.DetectOwnershipBuiltin(obj)
 		owner := recordedMapOwner(ownership)
+		if scope.Owner != "" && owner != scope.Owner {
+			continue
+		}
 		resource := RecordedMapResource{
 			APIVersion:         obj.GetAPIVersion(),
 			Kind:               obj.GetKind(),
@@ -162,11 +180,28 @@ func buildRecordedMapReport(snapshot recordedObjectSnapshot, scope RecordedMapSc
 			CaptureTime:         "unknown",
 			CaptureCompleteness: "unknown",
 		},
-		Scope:             RecordedMapScope{APIVersion: scope.APIVersion, Kind: scope.Kind, Namespace: namespace, NamespacePrefix: scope.NamespacePrefix},
+		Scope:             RecordedMapScope{APIVersion: scope.APIVersion, Kind: scope.Kind, Namespace: namespace, NamespacePrefix: scope.NamespacePrefix, Owner: scope.Owner},
 		SelectedCount:     len(resources),
 		ExcludedFromScope: len(snapshot.Objects) - len(resources),
 		OwnerCounts:       ownerCounts,
 		Resources:         resources,
+	}, nil
+}
+
+func buildRecordedMapSummary(snapshot recordedObjectSnapshot, scope RecordedMapScope) (RecordedMapSummary, error) {
+	report, err := buildRecordedMapReport(snapshot, scope)
+	if err != nil {
+		return RecordedMapSummary{}, err
+	}
+	return RecordedMapSummary{
+		Schema:                 recordedMapSummarySchema,
+		View:                   "summary",
+		Provenance:             report.Provenance,
+		Scope:                  report.Scope,
+		SelectedCount:          report.SelectedCount,
+		ExcludedFromScope:      report.ExcludedFromScope,
+		OwnerCounts:            report.OwnerCounts,
+		PerObjectEvidenceGuide: "Per-object detector evidence is omitted in this summary; request the full recorded inventory without summary to inspect selected resources.",
 	}, nil
 }
 
@@ -182,6 +217,9 @@ func validateRecordedMapScope(scope RecordedMapScope) error {
 	}
 	if !validRecordedIdentityValue(scope.NamespacePrefix, true) {
 		return fmt.Errorf("recorded inventory scope has an invalid namespace prefix")
+	}
+	if scope.Owner != "" && !isCanonicalRecordedOwner(scope.Owner) {
+		return fmt.Errorf("recorded inventory owner must be one of the canonical built-in owners: %s", strings.Join(recordedMapOwnerNames, ", "))
 	}
 	return nil
 }
@@ -212,6 +250,17 @@ func recordedMapScopeMatches(scope RecordedMapScope, obj *unstructured.Unstructu
 		return obj.GetNamespace() == *scope.Namespace
 	}
 	return scope.NamespacePrefix == "" || strings.HasPrefix(obj.GetNamespace(), scope.NamespacePrefix)
+}
+
+var recordedMapOwnerNames = []string{"Flux", "ArgoCD", "Sveltos", "Modelplane", "Crossplane", "kro", "Helm", "Terraform", "ConfigHub", "Kubernetes", "Native"}
+
+func isCanonicalRecordedOwner(owner string) bool {
+	for _, canonical := range recordedMapOwnerNames {
+		if owner == canonical {
+			return true
+		}
+	}
+	return false
 }
 
 func recordedMapOwner(ownership agent.Ownership) string {

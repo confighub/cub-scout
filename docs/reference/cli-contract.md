@@ -1884,14 +1884,21 @@ Each entry includes `freshness.status`:
 `map list --recording FILE --api-version VERSION --kind KIND` reads only the
 bounded local recording. Exact case-sensitive API version and Kind are required.
 Optional exact `--namespace` and literal non-empty `--namespace-prefix` are
-mutually exclusive. `--format ascii|json|md` and `--tui` share one deterministic
-model; `--tui` rejects explicit output-format flags. Recorded mode rejects live
-context, saved query, owner/time filters and summary/count/names-only shortcuts.
-It never falls back to a live read, even for invalid or missing inputs.
+mutually exclusive. `--owner` accepts an exact canonical built-in category,
+including `Kubernetes` and `Native`, and combines with the API version, Kind and
+namespace filters. `--summary` returns a separate `map-list-recorded-summary.v1`
+view with selected/excluded counts and owner counts but no resource rows;
+`--format ascii|json|md` and the dedicated TUI show that row omission and how
+to request per-object evidence. The default full response remains
+`map-list-recorded.v1`. Recorded mode rejects live context, saved query,
+time filters, count/names-only shortcuts, and explanatory/verbose modes. It
+never falls back to a live read, even for invalid or missing inputs.
 
-JSON uses `map-list-recorded.v1`; detector evidence is always present. Selected
-and excluded counts describe only the supplied file. Capture time and capture
-completeness remain unknown, and Native is a no-built-in-marker result, not
-an orphan finding. No custom host detector configuration is read. An empty
-selection is a successful empty answer, whereas an empty input or any duplicate
-full identity is an error. Ordinary live map output is unchanged.
+Full JSON uses `map-list-recorded.v1`; detector evidence is always present.
+Summary JSON uses `map-list-recorded-summary.v1` with `view: "summary"` and no
+`resources` field. Selected and excluded counts describe only the supplied file
+and the combined scope. Capture time and capture completeness remain unknown,
+and Native is a no-built-in-marker result, not an orphan finding. No custom
+host detector configuration is read. An empty selection is a successful empty
+answer, whereas an empty input or any duplicate full identity is an error.
+Ordinary live map output is unchanged.

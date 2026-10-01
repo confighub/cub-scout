@@ -116,7 +116,9 @@ items:
   metadata: {name: api, namespace: outside}
 `
 	snapshot := loadRecordedMapTestSnapshot(t, []byte(raw))
-	_, err := buildRecordedMapReport(snapshot, scaleRecordedMapScope())
+	scope := scaleRecordedMapScope()
+	scope.Owner = "Flux"
+	_, err := buildRecordedMapReport(snapshot, scope)
 	if err == nil || !strings.Contains(err.Error(), "duplicate full identity") {
 		t.Fatalf("duplicate outside requested prefix must fail before filtering, got %v", err)
 	}

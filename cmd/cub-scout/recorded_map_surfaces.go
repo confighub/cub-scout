@@ -32,7 +32,7 @@ func runRecordedMapCLI(cmd *cobra.Command, args []string) error {
 	if len(args) != 0 {
 		return fmt.Errorf("recorded map list accepts no positional arguments")
 	}
-	for _, name := range []string{"kube-context", "owner", "query", "since", "count", "names-only", "summary", "explain", "verbose"} {
+	for _, name := range []string{"kube-context", "query", "since", "count", "names-only", "explain", "verbose"} {
 		if cmd.Flags().Changed(name) {
 			return fmt.Errorf("--recording cannot be combined with --%s", name)
 		}
@@ -42,6 +42,10 @@ func runRecordedMapCLI(cmd *cobra.Command, args []string) error {
 	scope.APIVersion, _ = cmd.Flags().GetString("api-version")
 	scope.Kind, _ = cmd.Flags().GetString("kind")
 	scope.NamespacePrefix, _ = cmd.Flags().GetString("namespace-prefix")
+	scope.Owner, _ = cmd.Flags().GetString("owner")
+	if cmd.Flags().Changed("owner") && scope.Owner == "" {
+		return fmt.Errorf("--owner requires a canonical built-in owner")
+	}
 	if cmd.Flags().Changed("namespace") {
 		ns, _ := cmd.Flags().GetString("namespace")
 		scope.Namespace = &ns
@@ -61,12 +65,28 @@ func runRecordedMapCLI(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("recorded map format must be ascii, json, or md")
 	}
 	tui, _ := cmd.Flags().GetBool("tui")
+	summaryView, _ := cmd.Flags().GetBool("summary")
+	ownershipEvidence, _ := cmd.Flags().GetBool("ownership-evidence")
+	if summaryView && ownershipEvidence {
+		return fmt.Errorf("--ownership-evidence cannot be combined with --summary; summary omits per-object detector evidence")
+	}
 	if tui && (cmd.Flags().Changed("format") || legacyJSON) {
 		return fmt.Errorf("--tui cannot be combined with output format options")
 	}
 	snapshot, err := readRecordedObjectSnapshot(path)
 	if err != nil {
 		return err
+	}
+	if summaryView {
+		summary, err := buildRecordedMapSummary(snapshot, scope)
+		if err != nil {
+			return err
+		}
+		if tui {
+			_, err = tea.NewProgram(newRecordedMapSummaryViewer(summary)).Run()
+			return err
+		}
+		return writeRecordedMapSummary(cmd.OutOrStdout(), summary, format)
 	}
 	report, err := buildRecordedMapReport(snapshot, scope)
 	if err != nil {
@@ -87,6 +107,17 @@ func writeRecordedMapReport(out io.Writer, report RecordedMapReport, format stri
 		return fmt.Errorf("recorded map format must be ascii, json, or md")
 	}
 	_, err := io.WriteString(out, renderRecordedMapReport(report, format))
+	return err
+}
+
+func writeRecordedMapSummary(out io.Writer, summary RecordedMapSummary, format string) error {
+	if format == "json" {
+		return json.NewEncoder(out).Encode(summary)
+	}
+	if format != "ascii" && format != "md" {
+		return fmt.Errorf("recorded map format must be ascii, json, or md")
+	}
+	_, err := io.WriteString(out, renderRecordedMapSummary(summary, format))
 	return err
 }
 
@@ -124,6 +155,26 @@ func renderRecordedMapReport(report RecordedMapReport, format string) string {
 	return b.String()
 }
 
+func renderRecordedMapSummary(summary RecordedMapSummary, format string) string {
+	var b strings.Builder
+	b.WriteString("RECORDED INVENTORY SUMMARY — static evidence; no live cluster was read\n")
+	fmt.Fprintf(&b, "Input SHA-256: %s\nBytes: %d; documents: %d; objects: %d\n", summary.Provenance.SHA256, summary.Provenance.Bytes, summary.Provenance.Documents, summary.Provenance.ObjectCount)
+	fmt.Fprintf(&b, "Capture time: %s; capture completeness: %s\n", summary.Provenance.CaptureTime, summary.Provenance.CaptureCompleteness)
+	scope, _ := json.Marshal(summary.Scope)
+	fmt.Fprintf(&b, "View: summary\nScope: %s\nSelected: %d; excluded by scope: %d\n", scope, summary.SelectedCount, summary.ExcludedFromScope)
+	b.WriteString("Objects absent from this recording are unknown. Native means no built-in owner marker observed; it does not prove an orphan.\n")
+	owners := make([]string, 0, len(summary.OwnerCounts))
+	for owner := range summary.OwnerCounts {
+		owners = append(owners, owner)
+	}
+	sort.Strings(owners)
+	for _, owner := range owners {
+		fmt.Fprintf(&b, "%s: %d\n", owner, summary.OwnerCounts[owner])
+	}
+	fmt.Fprintf(&b, "\n%s\n", recordedMapDisplayCell(summary.PerObjectEvidenceGuide, format))
+	return b.String()
+}
+
 func recordedMapDisplayCell(value, format string) string {
 	value = strings.Map(func(r rune) rune {
 		if r < 32 || r == 127 {
@@ -141,33 +192,63 @@ func recordedMapDisplayCell(value, format string) string {
 
 func recordedMapTool(snapshot recordedObjectSnapshot) mcpTool {
 	return mcpTool{
-		Descriptor: mcpToolDescriptor{Name: "map", Description: "Count and list built-in ownership markers from the immutable recording. Returns input hash, exact selection scope, owner counts and per-object detector evidence. No live cluster is read; capture completeness and time are unknown. Native means no built-in marker, not an orphan.", Annotations: &mcpToolAnnotations{ReadOnlyHint: true}, InputSchema: map[string]interface{}{
+		Descriptor: mcpToolDescriptor{Name: "map", Description: "Count and list built-in ownership markers from the immutable recording. Optional owner selects one canonical built-in owner; summary=true returns counts without per-object rows. No live cluster is read; capture completeness and time are unknown. Native means no built-in marker, not an orphan.", Annotations: &mcpToolAnnotations{ReadOnlyHint: true}, InputSchema: map[string]interface{}{
 			"type": "object", "properties": map[string]interface{}{
 				"api_version":      map[string]interface{}{"type": "string", "description": "Required exact case-sensitive apiVersion."},
 				"kind":             map[string]interface{}{"type": "string", "description": "Required exact case-sensitive kind."},
 				"namespace":        map[string]interface{}{"type": "string", "description": "Optional exact namespace, including empty; cannot combine with namespace_prefix."},
 				"namespace_prefix": map[string]interface{}{"type": "string", "minLength": 1, "description": "Optional non-empty literal case-sensitive namespace prefix."},
+				"owner":            map[string]interface{}{"type": "string", "enum": recordedMapOwnerNames, "description": "Optional exact canonical built-in owner, including Kubernetes and Native."},
+				"summary":          map[string]interface{}{"type": "boolean", "description": "Return selected/excluded and owner counts without per-object rows."},
 			}, "required": []string{"api_version", "kind"}, "additionalProperties": false,
 		}},
 		BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
 			scope := RecordedMapScope{}
+			summary := false
 			for key, value := range arguments {
-				s, ok := value.(string)
-				if !ok {
-					return nil, fmt.Errorf("%s must be a string", key)
-				}
 				switch key {
 				case "api_version":
+					s, ok := value.(string)
+					if !ok {
+						return nil, fmt.Errorf("%s must be a string", key)
+					}
 					scope.APIVersion = s
 				case "kind":
+					s, ok := value.(string)
+					if !ok {
+						return nil, fmt.Errorf("%s must be a string", key)
+					}
 					scope.Kind = s
 				case "namespace":
+					s, ok := value.(string)
+					if !ok {
+						return nil, fmt.Errorf("%s must be a string", key)
+					}
 					scope.Namespace = &s
+				case "owner":
+					s, ok := value.(string)
+					if !ok {
+						return nil, fmt.Errorf("%s must be a string", key)
+					}
+					if s == "" {
+						return nil, fmt.Errorf("owner must be a canonical built-in owner")
+					}
+					scope.Owner = s
 				case "namespace_prefix":
+					s, ok := value.(string)
+					if !ok {
+						return nil, fmt.Errorf("%s must be a string", key)
+					}
 					if s == "" {
 						return nil, fmt.Errorf("namespace_prefix must be non-empty")
 					}
 					scope.NamespacePrefix = s
+				case "summary":
+					var ok bool
+					summary, ok = value.(bool)
+					if !ok {
+						return nil, fmt.Errorf("summary must be a boolean")
+					}
 				default:
 					return nil, fmt.Errorf("unsupported recorded map argument %q", key)
 				}
@@ -175,7 +256,11 @@ func recordedMapTool(snapshot recordedObjectSnapshot) mcpTool {
 			if err := validateRecordedMapScope(scope); err != nil {
 				return nil, err
 			}
-			raw, err := json.Marshal(scope)
+			request := struct {
+				Scope   RecordedMapScope `json:"scope"`
+				Summary bool             `json:"summary,omitempty"`
+			}{Scope: scope, Summary: summary}
+			raw, err := json.Marshal(request)
 			return []string{string(raw)}, err
 		},
 		Runner: func(ctx context.Context, args []string) (string, error) {
@@ -185,15 +270,24 @@ func recordedMapTool(snapshot recordedObjectSnapshot) mcpTool {
 			if len(args) != 1 {
 				return "", fmt.Errorf("invalid recorded map scope")
 			}
-			var scope RecordedMapScope
-			if err := json.Unmarshal([]byte(args[0]), &scope); err != nil {
+			var request struct {
+				Scope   RecordedMapScope `json:"scope"`
+				Summary bool             `json:"summary"`
+			}
+			if err := json.Unmarshal([]byte(args[0]), &request); err != nil {
 				return "", fmt.Errorf("invalid recorded map scope")
 			}
-			report, err := buildRecordedMapReport(snapshot, scope)
+			var response interface{}
+			var err error
+			if request.Summary {
+				response, err = buildRecordedMapSummary(snapshot, request.Scope)
+			} else {
+				response, err = buildRecordedMapReport(snapshot, request.Scope)
+			}
 			if err != nil {
 				return "", err
 			}
-			raw, err := json.Marshal(report)
+			raw, err := json.Marshal(response)
 			return string(raw), err
 		},
 	}
@@ -205,7 +299,14 @@ type recordedMapViewer struct {
 }
 
 func newRecordedMapViewer(report RecordedMapReport) recordedMapViewer {
-	content := renderRecordedMapReport(report, "ascii")
+	return newRecordedMapViewerContent(renderRecordedMapReport(report, "ascii"))
+}
+
+func newRecordedMapSummaryViewer(summary RecordedMapSummary) recordedMapViewer {
+	return newRecordedMapViewerContent(renderRecordedMapSummary(summary, "ascii"))
+}
+
+func newRecordedMapViewerContent(content string) recordedMapViewer {
 	vp := viewport.New(80, 20)
 	vp.SetContent(wrapRecordedExplainText(content, 76))
 	return recordedMapViewer{content: content, viewport: vp}
