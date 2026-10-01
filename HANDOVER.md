@@ -132,9 +132,11 @@ permission gates to already authorized routine work.
 
 ## Resume here
 
-Check #645, then finish PRE-02 source review and its bounded capture. The next
-runtime packet must pin Linux tools and an honest recorded API/Helm evidence
-interface; #709 records the scoped subprocess-policy decision. External dependencies #591 (genuine attestations), #597
+Check #645, then complete exact-head review and CI for the combined PRE-02,
+RUL-01 and RUL-02 package. All 24 fixtures are prepared; benchmark admission
+remains pending. Advance #729 recorded API coverage and #730 Linux version/ABI
+validation, then actual tool parity and process/cost accounting. #709 records
+the scoped subprocess-policy decision. External dependencies #591 (genuine attestations), #597
 (current gate evidence), #600 (fact storage/schema agreement), and GHCR access
 remain unresolved. Keep the benchmark non-executable and paid work stopped while
 tool, evidence, process or cost gates remain unresolved. The adopted plan's
