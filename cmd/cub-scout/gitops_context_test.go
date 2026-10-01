@@ -142,14 +142,14 @@ func TestGitOpsStatusExplicitContextUsesCapturedEndpointAfterRetarget(t *testing
 	require.Equal(t, alpha.server.URL, resolved.Host)
 	require.Equal(t, "alpha-token", resolved.BearerToken)
 	oldSessionFactory := newGitOpsStatusSessionForSelection
+	var retargetedBytes []byte
 	newGitOpsStatusSessionForSelection = func(selection clusterContextSelection) (*traceSession, error) {
 		session, err := newTraceSessionForSelection(selection)
 		if err != nil {
 			return nil, err
 		}
 		require.Equal(t, "alpha-token", session.config.BearerToken)
-		retargeted := gitOpsContextKubeconfig(t, path, "beta", beta, beta)
-		_ = retargeted
+		retargetedBytes = gitOpsContextKubeconfig(t, path, "beta", beta, beta)
 		return session, nil
 	}
 	t.Cleanup(func() { newGitOpsStatusSessionForSelection = oldSessionFactory })
@@ -171,7 +171,8 @@ func TestGitOpsStatusExplicitContextUsesCapturedEndpointAfterRetarget(t *testing
 	require.Contains(t, alpha.requests, "GET /api/v1/namespaces/team/pods")
 	after, readErr := os.ReadFile(path)
 	require.NoError(t, readErr)
-	require.NotEqual(t, before, after, "the test retargeted the source file after capture")
+	require.NotEqual(t, before, retargetedBytes, "the test retargeted the source file after capture")
+	require.Equal(t, retargetedBytes, after, "the command must not modify the already-retargeted source kubeconfig")
 	require.Contains(t, string(after), beta.server.URL)
 }
 
