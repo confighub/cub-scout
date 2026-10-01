@@ -1,10 +1,20 @@
 # Offline container-isolation preparation
 
-This source packet prepares one bounded isolation proof. It has not invoked
-Docker, a product CLI, a cluster, a model, or a network endpoint. A later
-reviewer may run at most one offline container preflight after source review.
+The first bounded preflight ran on October 1 at source `47e15c6`. Its payload
+passed all seven assertions and exited 0; both configuration inspections passed.
+The helper nevertheless returned 1 because cleanup's exact missing-container
+parser rejected Docker's single stdout newline. The original failed receipt is
+preserved. A separate read-only inspection of the same owned full container ID
+returned the exact missing-container error with byte hashes matching the original
+cleanup response, confirming absence. The parser repair accepts only empty stdout
+or that single formatting newline; regression tests fail before and pass after
+the repair. No container rerun was needed or performed.
+
+See the [retained result report](../reports/2026-10-01-container-isolation.json).
 This is not equal ordinary-tool access, runtime model accounting, provider
-billing/credits, answer quality, or paid-evaluation admission.
+billing/credits, answer quality, or paid-evaluation admission. The private raw
+archive is `evals/results/container-isolation-20261001/`; the report excludes
+private marker paths and full inspect data.
 
 `prepare.py` requires `--execute`, an explicit Docker launcher, an explicit
 Docker context, the exact cached image ID
@@ -68,5 +78,5 @@ Pure tests mock all process calls and never execute Docker or the payload:
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/container-isolation -v
 ```
 
-A successful later probe would still be an isolation-preparation result, not
-full tool parity or model/provider evaluation evidence.
+Further runtime integration requires a separately reviewed packet; this result
+does not establish full tool parity or model/provider evaluation evidence.
