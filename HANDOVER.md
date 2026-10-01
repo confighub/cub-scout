@@ -1,7 +1,7 @@
 # cub-scout execution handover
 
 **Current snapshot:** 2026-10-01. Verified merged baseline:
-[`660e830`](https://github.com/confighub/cub-scout/commit/660e8303f82652e1553dfdb20f65741c9a426ee5).
+[`7dfa5db`](https://github.com/confighub/cub-scout/commit/7dfa5dbb2894aa268d4cbf6d8fb1acbdf45a1d82).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
@@ -15,7 +15,7 @@ order, quality gates, budgets and decisions.
   synthetic source replays**. These are preparation statuses, not model
   execution or admission. Older-case grader and runtime gates remain open.
 - [PR #727](https://github.com/confighub/cub-scout/pull/727) integrates three
-  independently reviewed cases to share one final CI cycle. PRE-02's owned
+  independently reviewed cases in one final CI cycle and has merged. PRE-02's owned
   node-selector capture passed in 38.575 seconds with cleanup and unchanged
   shared configuration: scheduling is not application health.
   [RUL-01](evals/rul01-dated-snapshot/README.md) reuses that exact Pod response
@@ -35,16 +35,30 @@ order, quality gates, budgets and decisions.
   [HLT-04 synthetic producer replay](evals/sveltos-hlt-04-report-freshness/README.md).
   Eight controls passed at a pinned Sveltos integration source; a report renewal
   is not proof of a new health check, exact applied digest or live controller run.
-- [#729](https://github.com/confighub/cub-scout/issues/729) prepares a bounded
-  PRE-01 API replay for real-tool plumbing. Exact recorded routes preserve
-  source status/body; missing routes cannot become absence. Absolute deadlines
-  and backpressure guards have red/green proof. Real kubectl coverage is pending.
-- [#730](https://github.com/confighub/cub-scout/issues/730) prepares a no-model
-  Linux version/ABI gate. Exact Linux Claude 2.1.274, kubectl 1.36.0 and Helm 4.1.4
-  artifacts have published-checksum and signature verification; a pinned Linux
-  scout build also exists. Downloaded targets have not run or been installed.
-  Version compatibility, ordinary-tool parity, discovery/Helm route coverage,
-  complete descendant accounting and paid admission remain unresolved.
+- [PR #733](https://github.com/confighub/cub-scout/pull/733) merged the bounded
+  PRE-01 API replay and actual Linux version/ABI proof. Four pinned binaries
+  passed in 4.610 seconds inside an inspected network-none container; cleanup
+  and unchanged inputs were verified. Both earlier failed attempts remain
+  recorded. This proves version execution, not installation or tool parity.
+- [PR #734](https://github.com/confighub/cub-scout/pull/734) prepares opt-in strict
+  answer contracts for five legacy cases, preserving historical defaults and
+  results. Source review and nine offline tests passed. A CI merge conflict was
+  resolved by retaining every guard; final-head checks are pending at dcb77cbe.
+- [#732](https://github.com/confighub/cub-scout/issues/732) passed its first
+  real-kubectl recorded-response gate at source 75ef04b9 in 3.503 seconds.
+  Six exact reads: three captured 404s produced normal exit-1 errors; three
+  captured 200s returned byte-exact responses. Both listeners and the owned
+  container were cleaned up; configured isolation and input hashes verified.
+  Eighteen offline guards passed, with old-source assertion failures. Proof
+  packaging is pending. No general discovery, Helm, MCP, model or savings proof.
+- [#735](https://github.com/confighub/cub-scout/issues/735) fixes cross-namespace
+  watch-cache reuse. Source review and six HTTP tests passed; old logic returned
+  a false empty result for another namespace. An executable owned-cluster
+  before/after probe is being prepared, not run. Stream freshness, store limits
+  and reconnect/410 coverage remain under #539.
+- General ordinary-tool parity, API/Helm route coverage, complete descendant
+  accounting and paid admission remain unresolved. External #591/#597/#600
+  still require their own authoritative evidence and agreement.
 - Earlier evidence remains bounded: [#715](https://github.com/confighub/cub-scout/pull/715)
   records distinct denied/readable contexts (403 is unknown, not empty);
   [#716](https://github.com/confighub/cub-scout/pull/716) separates one mock Read
@@ -132,11 +146,10 @@ permission gates to already authorized routine work.
 
 ## Resume here
 
-Check #645, then complete exact-head review and CI for the combined PRE-02,
-RUL-01 and RUL-02 package. All 24 fixtures are prepared; benchmark admission
-remains pending. Advance #729 recorded API coverage and #730 Linux version/ABI
-validation, then actual tool parity and process/cost accounting. #709 records
-the scoped subprocess-policy decision. External dependencies #591 (genuine attestations), #597
+Check #645, then finish #734 exact-head CI and #732 proof packaging. Review
+and run #735's owned before/after probe before its behavior change merges.
+Continue actual tool parity and process/cost accounting under #709; six raw
+kubectl reads are only one bounded prerequisite. External dependencies #591 (genuine attestations), #597
 (current gate evidence), #600 (fact storage/schema agreement), and GHCR access
 remain unresolved. Keep the benchmark non-executable and paid work stopped while
 tool, evidence, process or cost gates remain unresolved. The adopted plan's
