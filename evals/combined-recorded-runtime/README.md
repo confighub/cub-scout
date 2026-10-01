@@ -1,11 +1,15 @@
 # Combined recorded runtime diagnostic
 
-This source packet provides an executable, two-arm diagnostic runner and a
-strict receipt validator. It is deliberately separate from the frozen
-benchmark, admission audit, and historical results. The runner has **not** been
-invoked; the CLI arguments, plugin loading, tool schedule, and cleanup behavior
-remain unverified at runtime. The next invocation requires independent source
-review.
+This executable two-arm diagnostic remains **failed**, separate from the frozen
+benchmark, admission audit and historical results. Two actual attempts are
+retained in the [report](../reports/2026-10-01-combined-runtime.json): 7.379 seconds
+at c40bf9f and 11.130 seconds at 4b65288. Both verified owned-container cleanup;
+neither passed the paired receipt contract. The first exposed missing nested
+mount staging and Bash newline handling, repaired before the second. The second
+exposed CLI/provider event-shape differences, reminder augmentation, skill
+advertisement in messages, persisted MCP output, and one rejected unknown
+request. These are runtime findings, not successful admission. No real model
+or external provider was contacted.
 
 `run_pair.py` creates two fresh containers from the pinned Linux asset archive.
 Both arms receive the same seven recorded scale files and PRE-01 replay packet.
@@ -37,7 +41,8 @@ the separately prepared pinned asset archive and a named local Docker context.
 Staged tool and plugin copies remain beneath that private output directory for
 inspection; container removal does not mean host staging removal. The diagnostic
 uses fixed baseline-then-treatment order, not a randomized benchmark.
-After source review, the invocation shape is:
+A further invocation requires a reviewed fix for the recorded failures. The
+invocation shape is:
 
 ```sh
 PYTHONDONTWRITEBYTECODE=1 python3 evals/combined-recorded-runtime/run_pair.py \
@@ -47,8 +52,8 @@ PYTHONDONTWRITEBYTECODE=1 python3 evals/combined-recorded-runtime/run_pair.py \
 
 Do not run this command until the source and exact invocation have been reviewed.
 Unknown CLI flag/plugin semantics fail closed and are not asserted by the pure
-tests. No CLI, container, Docker command, provider, network listener, or cluster
-was run while implementing this packet.
+tests. The two attempts above used real CLI/container execution and local listeners
+after source review. No live cluster or real model provider was accessed.
 
 Offline checks use synthetic dictionaries, response fixtures, and temporary
 staging only:

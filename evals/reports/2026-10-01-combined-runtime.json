@@ -1,0 +1,352 @@
+{
+  "schema": "combined-runtime-diagnostic-report.v1",
+  "date": "2026-10-01",
+  "issue": 740,
+  "status": "failed",
+  "paidAdmission": false,
+  "claim": "Synthetic provider wiring diagnostic only; no model quality, billing or savings evidence",
+  "attempts": [
+    {
+      "attempt": 1,
+      "status": "failed",
+      "sourceRevision": "c40bf9fa97ab4cf2a29d7f16685e640bfc4815e5",
+      "elapsedSeconds": 7.379480500007048,
+      "outerTimeout": false,
+      "exitCode": 1,
+      "helperUnchanged": true,
+      "arms": {
+        "baseline": {
+          "status": "failed",
+          "error": "arm payload is incomplete or failed",
+          "securityVerified": true,
+          "payloadExitCode": 1,
+          "containerAbsenceVerified": true,
+          "pluginUnchanged": true,
+          "payload": {
+            "returnCode": 0,
+            "runStatus": "completed",
+            "fileReadPassed": true,
+            "kubectlReadPassed": false,
+            "refusalPassed": true,
+            "mcpMapPassed": true,
+            "skillsAdvertised": false,
+            "providerReceivedCount": 6,
+            "providerAttemptsPassed": true,
+            "toolResultsCorrelated": false,
+            "apiRequests": 1
+          }
+        },
+        "treatment": {
+          "status": "failed",
+          "error": "container start failed",
+          "securityVerified": true,
+          "payloadExitCode": null,
+          "containerAbsenceVerified": true,
+          "pluginUnchanged": true
+        }
+      },
+      "rawFiles": {
+        "run1/baseline-docker-op-01-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run1/baseline-docker-op-01-stdout.bin": {
+          "bytes": 65,
+          "sha256": "43fcce34422f7c63fd7dbd6b645fd05ad28e331ec760f74e498c8ca4a54db143"
+        },
+        "run1/baseline-docker-op-02-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run1/baseline-docker-op-02-stdout.bin": {
+          "bytes": 4918,
+          "sha256": "304f3e08803c73a8e02c1a62de297ded26cc2018c6a88047d6bd3d90911e33fa"
+        },
+        "run1/baseline-docker-op-03-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run1/baseline-docker-op-03-stdout.bin": {
+          "bytes": 65,
+          "sha256": "43fcce34422f7c63fd7dbd6b645fd05ad28e331ec760f74e498c8ca4a54db143"
+        },
+        "run1/baseline-docker-op-04-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run1/baseline-docker-op-04-stdout.bin": {
+          "bytes": 2,
+          "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+        },
+        "run1/baseline-docker-op-05-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run1/baseline-docker-op-05-stdout.bin": {
+          "bytes": 5465,
+          "sha256": "1e80c714b91c2cacd4bda41c57b3e673f6ec2a34f77bf1fbd5d0a0cc656d5110"
+        },
+        "run1/baseline-docker-op-06-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run1/baseline-docker-op-06-stdout.bin": {
+          "bytes": 1905698,
+          "sha256": "c43850bac3c79145bcdc8ecffa34767925bda7699d8eb7ecff6c24a3867471af"
+        },
+        "run1/baseline.identity.json": {
+          "bytes": 158,
+          "sha256": "fe4e52b6f2dc139f190c2f7f90e01e96a9a4e74b512b61b6362922d3cfcd4369"
+        },
+        "run1/baseline.payload.json": {
+          "bytes": 1913077,
+          "sha256": "22b702b3fe9c79a8ad816793d878429b357e5132eccafa55739e9170136f25d5"
+        },
+        "run1/run.json": {
+          "bytes": 49453,
+          "sha256": "123ffdcaf2e451291d0f14250b202beaaf7709d23619fc959883f283271f8be0"
+        },
+        "run1/treatment-docker-op-01-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run1/treatment-docker-op-01-stdout.bin": {
+          "bytes": 65,
+          "sha256": "2984be0a2b2286e91ef0f59323704368d383a4f0cf01f39b594e8263912bf8f9"
+        },
+        "run1/treatment-docker-op-02-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run1/treatment-docker-op-02-stdout.bin": {
+          "bytes": 5241,
+          "sha256": "51ecf84284971d3bb997557ba422d52fae7410cc269417cd953f854ad62629c2"
+        },
+        "run1/treatment-docker-op-03-stderr.bin": {
+          "bytes": 636,
+          "sha256": "3f61cc18e6eec21f967e025870c79ab89dc23608ff150fea8247b8c76c65b8ea"
+        },
+        "run1/treatment-docker-op-03-stdout.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run1/treatment.identity.json": {
+          "bytes": 158,
+          "sha256": "b1cb124ecacee013144b864268b8529d036bd94b745dbee935c61daf2314064d"
+        },
+        "proof1/result.json": {
+          "bytes": 749,
+          "sha256": "d51d7ba9ff257c93bb33f548c17256ba4911ef5eff8d5463bc3ab28f02c5be83"
+        },
+        "proof1/stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "proof1/stdout.bin": {
+          "bytes": 118,
+          "sha256": "2eb10dc7abf475338e4773fb1c740c3507a76670bc9737ddc40be86d9d33965f"
+        },
+        "run1-wrapper.py": {
+          "bytes": 1842,
+          "sha256": "2374cfeee7ca76b78c35eec59b9a67101e0c8d64055e38716a0fcb74b7ef5a08"
+        }
+      }
+    },
+    {
+      "attempt": 2,
+      "status": "failed",
+      "sourceRevision": "4b652882495c98e9e7e89c21b6b6defd28149481",
+      "elapsedSeconds": 11.1301070000045,
+      "outerTimeout": false,
+      "exitCode": 1,
+      "helperUnchanged": true,
+      "arms": {
+        "baseline": {
+          "status": "failed",
+          "error": "arm payload is incomplete or failed",
+          "securityVerified": true,
+          "payloadExitCode": 1,
+          "containerAbsenceVerified": true,
+          "pluginUnchanged": true,
+          "payload": {
+            "returnCode": 0,
+            "runStatus": "completed",
+            "fileReadPassed": true,
+            "kubectlReadPassed": true,
+            "refusalPassed": true,
+            "mcpMapPassed": true,
+            "skillsAdvertised": false,
+            "providerReceivedCount": 6,
+            "providerAttemptsPassed": true,
+            "toolResultsCorrelated": false,
+            "apiRequests": 1
+          }
+        },
+        "treatment": {
+          "status": "failed",
+          "error": "arm payload is incomplete or failed",
+          "securityVerified": true,
+          "payloadExitCode": 1,
+          "containerAbsenceVerified": true,
+          "pluginUnchanged": true,
+          "payload": {
+            "returnCode": 0,
+            "runStatus": "completed",
+            "fileReadPassed": true,
+            "kubectlReadPassed": true,
+            "refusalPassed": true,
+            "mcpMapPassed": false,
+            "skillsAdvertised": false,
+            "providerReceivedCount": 8,
+            "providerAttemptsPassed": false,
+            "toolResultsCorrelated": false,
+            "apiRequests": 1
+          }
+        }
+      },
+      "rawFiles": {
+        "run2/baseline-docker-op-01-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/baseline-docker-op-01-stdout.bin": {
+          "bytes": 65,
+          "sha256": "8d7f286b217adf97403fc8d72a74302e83fce9fc1acf9eaa865c3de9b9732658"
+        },
+        "run2/baseline-docker-op-02-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/baseline-docker-op-02-stdout.bin": {
+          "bytes": 4918,
+          "sha256": "dfbc04532dfd79d9b39b438789b816a2c6f115cd507aaef851f3b7511ef82aa2"
+        },
+        "run2/baseline-docker-op-03-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/baseline-docker-op-03-stdout.bin": {
+          "bytes": 65,
+          "sha256": "8d7f286b217adf97403fc8d72a74302e83fce9fc1acf9eaa865c3de9b9732658"
+        },
+        "run2/baseline-docker-op-04-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/baseline-docker-op-04-stdout.bin": {
+          "bytes": 2,
+          "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+        },
+        "run2/baseline-docker-op-05-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/baseline-docker-op-05-stdout.bin": {
+          "bytes": 5465,
+          "sha256": "e1fde23ef9594d0e216238933f1a288ea85d93ff30b08efaa697fbba7f387ca6"
+        },
+        "run2/baseline-docker-op-06-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/baseline-docker-op-06-stdout.bin": {
+          "bytes": 1905702,
+          "sha256": "5d819da2a4ef7145e058d760a119df36362026ff95a487d752b379ae97feca11"
+        },
+        "run2/baseline.identity.json": {
+          "bytes": 158,
+          "sha256": "185ac864580fafedb89b955232001c7092a2f3dccbe171ddf335ac3759e36247"
+        },
+        "run2/baseline.payload.json": {
+          "bytes": 1913081,
+          "sha256": "0c4726303075e414be4fdb9385662b4989d54a8da62368369edd0d860453901c"
+        },
+        "run2/run.json": {
+          "bytes": 51176,
+          "sha256": "307d9ca69c5a35e4fe27bb1f395e7f01e83ed2b596cf6d6ad93016128036f392"
+        },
+        "run2/treatment-docker-op-01-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/treatment-docker-op-01-stdout.bin": {
+          "bytes": 65,
+          "sha256": "e29bc7b49c0f1f9fcb882870e9c8d1e772d767f8ff52c0a9f9447b159cc44db4"
+        },
+        "run2/treatment-docker-op-02-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/treatment-docker-op-02-stdout.bin": {
+          "bytes": 5241,
+          "sha256": "f6f64b136d0ef5b89f0058726774bc0b7822bbf63d62dd8bad967f0a6fcae009"
+        },
+        "run2/treatment-docker-op-03-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/treatment-docker-op-03-stdout.bin": {
+          "bytes": 65,
+          "sha256": "e29bc7b49c0f1f9fcb882870e9c8d1e772d767f8ff52c0a9f9447b159cc44db4"
+        },
+        "run2/treatment-docker-op-04-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/treatment-docker-op-04-stdout.bin": {
+          "bytes": 2,
+          "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+        },
+        "run2/treatment-docker-op-05-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/treatment-docker-op-05-stdout.bin": {
+          "bytes": 5788,
+          "sha256": "6275ec2693154c94c4357d44efcf8bf12193460a2b6b616c3f4783267eeebbbc"
+        },
+        "run2/treatment-docker-op-06-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/treatment-docker-op-06-stdout.bin": {
+          "bytes": 2987365,
+          "sha256": "76bf436e0f61b0b1b68d89eb8e11e317185d14cc10ac257e60c57b52c86778dd"
+        },
+        "run2/treatment.identity.json": {
+          "bytes": 158,
+          "sha256": "7208612f87856a690800c41e126b30510b7f46014e7f899f6d54301c04bd5a7d"
+        },
+        "run2/treatment.payload.json": {
+          "bytes": 2997563,
+          "sha256": "7b3a9d39fa1e6d268f181295d695c25bffd98bc8447508f299bdc51f23eab612"
+        },
+        "proof2/result.json": {
+          "bytes": 748,
+          "sha256": "0a22b854145ec46de1a4b67bd5566aec6f344f4faa9786023084008287304348"
+        },
+        "proof2/stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "proof2/stdout.bin": {
+          "bytes": 118,
+          "sha256": "2343d80d90aecd57897ffd756632dabe12abce288352676c66a141d1ad81e26f"
+        },
+        "run2-wrapper.py": {
+          "bytes": 1842,
+          "sha256": "be006bcb70d3f8292eb621b343b0b231ff29cb81d17c6fee51412bc9e418cd44"
+        }
+      }
+    }
+  ],
+  "privateArchive": "evals/results/combined-recorded-runtime-20261001",
+  "stagingRetention": "Readonly host stages remain in the corresponding private /tmp run directories; binary copies are not duplicated in this archive.",
+  "unresolved": [
+    "Provider response tool-use blocks include a type field absent from CLI event projections; exact semantic correlation needs a reviewed projection.",
+    "CLI augments provider-bound tool results with reminders; strict byte equality currently fails. Read output needs exact transformation analysis.",
+    "Treatment advertises all 35 staged skill names in initial request messages, not the system field inspected by the current validator; no skill use/value is established.",
+    "Recorded MCP map result is persisted by Claude because its 88.8 KB output exceeds inline limits; the preview is not complete result evidence.",
+    "Treatment received one rejected unexpected request whose path the current receipt redacts; do not classify or allow it without direct evidence."
+  ]
+}

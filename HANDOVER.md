@@ -72,9 +72,12 @@ order, quality gates, budgets and decisions.
 - [#740](https://github.com/confighub/cub-scout/issues/740) builds one combined
   offline two-arm runtime diagnostic using the pinned Linux CLI, synthetic
   provider and recorded API/MCP. Source review found staging, cleanup and
-  receipt-validation defects; the consolidated repair and lead review fixes
-  are covered by offline tests. Actual runtime verification remains pending;
-  pure tests do not establish runtime success or paid admission.
+  receipt-validation defects; reviewed fixes passed 14 offline tests. Two
+  actual attempts failed in 7.379 and 11.130 seconds with verified container
+  cleanup. CLI transport differences, persisted MCP output and a rejected
+  unknown request remain unresolved; see the
+  [diagnostic report](evals/reports/2026-10-01-combined-runtime.json). Paid
+  admission remains stopped.
 - General ordinary-tool parity, API/Helm route coverage, complete descendant
   accounting and paid admission remain unresolved. External #591/#597/#600
   still require their own authoritative evidence and agreement.
