@@ -57,9 +57,10 @@ type cacheReplayHTTPRecord struct {
 }
 
 type cacheReplayInputRecord struct {
-	StepID  string `json:"stepId"`
-	Clock   string `json:"clock"`
-	Refresh bool   `json:"refresh"`
+	StepID                   string              `json:"stepId"`
+	Clock                    string              `json:"clock"`
+	Refresh                  bool                `json:"refresh"`
+	ConfiguredObjectResponse cacheReplayResponse `json:"configuredObjectResponse"`
 }
 
 type cacheReplayActualStep struct {
@@ -72,9 +73,10 @@ type cacheReplayActualStep struct {
 }
 
 type cacheReplayActualRecord struct {
-	Schema   string                  `json:"schema"`
-	Resource BoundedResourceRef      `json:"resource"`
-	Steps    []cacheReplayActualStep `json:"steps"`
+	Schema    string                  `json:"schema"`
+	InputKind string                  `json:"inputKind"`
+	Resource  BoundedResourceRef      `json:"resource"`
+	Steps     []cacheReplayActualStep `json:"steps"`
 }
 
 type cacheReplayDocument struct {
@@ -149,7 +151,7 @@ func TestBoundedReadRUL02IdentityCacheReplay(t *testing.T) {
 	reader.now = func() time.Time { return clock }
 	ref := replay.Scope.Resource
 	actual := make([]cacheReplayStep, 0, len(replay.ExpectedSteps))
-	actualRecord := cacheReplayActualRecord{Schema: "bounded-resource-cache-replay-result.v1", Resource: ref}
+	actualRecord := cacheReplayActualRecord{Schema: "bounded-resource-cache-replay-result.v1", InputKind: "authored_httptest_responses_and_clock", Resource: ref}
 
 	for i, want := range replay.ExpectedSteps {
 		clock, err = time.Parse(time.RFC3339, want.At)
@@ -173,6 +175,7 @@ func TestBoundedReadRUL02IdentityCacheReplay(t *testing.T) {
 			t.Fatalf("unexpected replay step %q", want.Name)
 		}
 		requestStart := len(httpRecords)
+		configuredResponse := replay.Responses[currentResponse]
 		mu.Unlock()
 
 		obj, evidence, readErr := reader.Read(context.Background(), ref, want.Refresh)
@@ -227,7 +230,7 @@ func TestBoundedReadRUL02IdentityCacheReplay(t *testing.T) {
 			returned = obj.Object
 		}
 		actualRecord.Steps = append(actualRecord.Steps, cacheReplayActualStep{
-			Input:          cacheReplayInputRecord{StepID: stepID, Clock: want.At, Refresh: want.Refresh},
+			Input:          cacheReplayInputRecord{StepID: stepID, Clock: want.At, Refresh: want.Refresh, ConfiguredObjectResponse: configuredResponse},
 			ReturnedObject: returned, Evidence: evidence, ErrorClassification: classification,
 			Requests: stepRequests, CumulativeRequestCount: cumulativeRequestCount,
 		})

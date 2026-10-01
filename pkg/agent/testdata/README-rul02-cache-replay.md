@@ -11,3 +11,7 @@ KUBECONFIG=/tmp/scout-offline-validation.kubeconfig go test ./pkg/agent -run '^T
 ```
 
 Current status: source and authored fixture prepared; only compile-only validation has run. The replay result record has not yet been emitted by executing the test. This exercises authored loopback responses only. It is not a live-cluster recording, cache-push invalidation claim, freshness guarantee before TTL/refresh, savings result, or benchmark admission. The frozen benchmark mapping, prompts, and weights are unchanged.
+
+Each emitted input also retains the authored server response configured for that
+step, even when a cache hit performs no HTTP request. This distinguishes changed
+fixture state from actual served responses without calling it a live observation.
