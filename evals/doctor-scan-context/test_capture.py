@@ -62,6 +62,15 @@ class CommandEvidenceTests(unittest.TestCase):
         self.assertIn("FileNotFoundError", receipt["commands"][0]["failure"])
 
 
+    def test_observation_transport_failure_stops_after_retaining_evidence(self):
+        receipt = {"commands": []}
+        failure = {"argv": ["owned-command"], "exitCode": -9, "stdout": "partial evidence", "stderr": "", "failure": "InterruptedError"}
+        with patch.object(capture, "run", return_value=failure):
+            with self.assertRaisesRegex(RuntimeError, "observation transport failed"):
+                capture.record_observation(receipt, "fixed-doctor-denied", ["owned-command"], env={}, deadline=time.monotonic()+5)
+        self.assertEqual("partial evidence", receipt["commands"][0]["stdout"])
+
+
 class ObservationAcceptanceTests(unittest.TestCase):
     def observations(self):
         records = []
@@ -80,25 +89,25 @@ class ObservationAcceptanceTests(unittest.TestCase):
         return records
 
     def test_complete_structured_controls(self):
-        capture.validate_observations(self.observations())
+        capture.validate_observations(self.observations(), 2)
 
     def test_clean_empty_denied_result_is_not_accepted(self):
         rows = self.observations()
         rows[-1]["stdout"] = json.dumps({"state": {"summary": {}, "warnings": []}})
         with self.assertRaisesRegex(RuntimeError, "denied service-account"):
-            capture.validate_observations(rows)
+            capture.validate_observations(rows, 2)
 
     def test_unrelated_warning_is_not_denial_proof(self):
         rows = self.observations()
         rows[-1]["stdout"] = json.dumps({"state": {"summary": {}, "warnings": ["warning: optional API missing"]}})
         with self.assertRaises(RuntimeError):
-            capture.validate_observations(rows)
+            capture.validate_observations(rows, 2)
 
     def test_timeout_is_not_a_denied_result(self):
         rows = self.observations()
         rows[-1].update(exitCode=-9, failure="TimeoutError", stderr="forbidden")
         with self.assertRaisesRegex(RuntimeError, "transport failure"):
-            capture.validate_observations(rows)
+            capture.validate_observations(rows, 2)
 
     def test_wrong_context_and_fixture_count_fail(self):
         for field, value in (("kubernetesContext", "ambient"), ("resources", {"total": 0})):
@@ -107,12 +116,12 @@ class ObservationAcceptanceTests(unittest.TestCase):
             body[field] = value
             rows[4]["stdout"] = json.dumps(body)
             with self.assertRaises(RuntimeError):
-                capture.validate_observations(rows)
+                capture.validate_observations(rows, 2)
 
     def test_missing_or_duplicated_commands_fail(self):
         for rows in (self.observations()[:-1], self.observations() + [self.observations()[0]]):
             with self.assertRaisesRegex(RuntimeError, "incomplete or duplicated"):
-                capture.validate_observations(rows)
+                capture.validate_observations(rows, 2)
 
 
 class LifecycleEvidenceTests(unittest.TestCase):

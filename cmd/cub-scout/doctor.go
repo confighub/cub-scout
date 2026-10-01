@@ -263,9 +263,12 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Print any warnings from the seam (CLI-specific concern)
-	for _, w := range result.Warnings {
-		fmt.Fprintf(os.Stderr, "Note: %s\n", w)
+	// JSON consumers get structured warnings and a stderr diagnostic. ASCII
+	// renders them in the shared summary so every human transport preserves them.
+	if format == "json" {
+		for _, w := range result.Warnings {
+			fmt.Fprintf(os.Stderr, "Note: %s\n", w)
+		}
 	}
 
 	summary := result.Summary
@@ -301,19 +304,29 @@ func bindDoctorHintContext(hints []Hint, contextName string) []Hint {
 	quoted := "'" + strings.ReplaceAll(contextName, "'", "'\"'\"'") + "'"
 	for i := range hints {
 		command := strings.TrimSpace(hints[i].Command)
-		if strings.Contains(command, " trace") || strings.HasPrefix(command, "trace") {
-			hints[i].Command = ""
-			hints[i].Rationale = "Trace does not yet support Kubernetes context selection; no context-safe trace command is available."
+		if command == "" {
 			continue
 		}
-		if strings.Contains(command, "--kube-context") {
-			continue
+		words := strings.Fields(command)
+		if len(words) > 0 && (words[0] == "cub-scout" || words[0] == "./cub-scout") {
+			words = words[1:]
+		} else if len(words) > 1 && words[0] == "cub" && words[1] == "scout" {
+			words = words[2:]
+		} else {
+			words = nil
 		}
-		// Only pin follow-ups whose current CLI surfaces accept the selector.
-		if strings.Contains(command, " doctor") || strings.HasPrefix(command, "doctor") ||
-			strings.Contains(command, " scan") || strings.HasPrefix(command, "scan") ||
-			strings.Contains(command, " map list") || strings.HasPrefix(command, "map list") {
+		supported := len(words) > 0 && (words[0] == "doctor" || words[0] == "scan" || (len(words) > 1 && words[0] == "map" && words[1] == "list"))
+		if supported && !strings.Contains(command, "--kube-context") {
 			hints[i].Command = command + " --kube-context " + quoted
+			continue
+		}
+		// Do not leave actionable ambient-context commands beside scoped evidence.
+		// Pre-existing selectors are not presumed to match this binding either.
+		hints[i].Command = ""
+		if len(words) > 0 && words[0] == "trace" {
+			hints[i].Rationale += " (no context-safe trace command is available for this selection)"
+		} else {
+			hints[i].Rationale += " (no context-safe command is available for this selection)"
 		}
 	}
 	return hints
@@ -449,18 +462,9 @@ func collectDoctorFindingsWithConfig(ctx context.Context, namespace string, cfg 
 
 	normalized := scan.Normalize(result)
 	if normalized == nil {
-		return nil, nil
+		return nil, scanWarningsError(result)
 	}
 	return normalized.Findings, scanWarningsError(result)
-}
-
-func collectDoctorRollouts(ctx context.Context, namespace string, topN int) (*DoctorRolloutSummary, error) {
-	cfg, err := buildConfig()
-	if err != nil {
-		return nil, fmt.Errorf("build kubernetes config: %w", err)
-	}
-
-	return collectDoctorRolloutsWithConfig(ctx, namespace, topN, cfg)
 }
 
 func collectDoctorRolloutsWithBinding(ctx context.Context, namespace string, topN int, binding *localClusterBinding) (*DoctorRolloutSummary, error) {
@@ -558,15 +562,6 @@ func validateDoctorConfigHubRequest(req ObserveScopeSummaryRequest) error {
 		return fmt.Errorf("invalid --confighub-stale-after: %w", err)
 	}
 	return nil
-}
-
-func collectDoctorDeliveryEvidence(ctx context.Context, namespace string, req ObserveScopeSummaryRequest) (*GitOpsDeliveryEvidence, error) {
-	cfg, err := buildConfig()
-	if err != nil {
-		return nil, fmt.Errorf("build kubernetes config: %w", err)
-	}
-
-	return collectDoctorDeliveryEvidenceWithConfig(ctx, namespace, req, cfg)
 }
 
 func collectDoctorDeliveryEvidenceWithBinding(ctx context.Context, namespace string, req ObserveScopeSummaryRequest, binding *localClusterBinding) (*GitOpsDeliveryEvidence, error) {
@@ -1045,6 +1040,14 @@ func renderDoctorASCII(summary DoctorSummary, mode PresentationMode, explicitMod
 	}
 	if summary.KubernetesContext != "" {
 		fmt.Fprintf(&b, "Kubernetes context: %s (selection label; not a stable cluster ID)\n", summary.KubernetesContext)
+	}
+
+	if len(summary.Warnings) > 0 {
+		fmt.Fprintln(&b, "Coverage incomplete — counts describe observed resources, not all resources:")
+		for _, warning := range summary.Warnings {
+			fmt.Fprintf(&b, "  - %s\n", warning)
+		}
+		fmt.Fprintln(&b)
 	}
 
 	total := summary.Resources.Total

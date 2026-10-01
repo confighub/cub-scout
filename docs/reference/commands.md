@@ -92,7 +92,7 @@ cub-scout map [flags]
 | Flag | Description |
 |------|-------------|
 | `--hub` | Start in the ConfigHub hierarchy view; `--kube-context`, if given, applies when switching to the local TUI and does not select a ConfigHub context |
-| `--kube-context` | Use this exact kubeconfig context for local TUI inventory and bounded explain; missing names fail without fallback. In this mode trace, scan, graph export, command mode, shell, and import are disabled until they honor the binding |
+| `--kube-context` | Use this exact kubeconfig context for local TUI inventory, bounded explain and scan; missing names fail without fallback. In this mode trace, graph export, command mode, shell, and import are disabled until they honor the binding |
 | `-n, --namespace` | Filter by namespace |
 | `-q, --query` | Resource query filter |
 
@@ -328,12 +328,24 @@ cub-scout doctor --format json
 cub-scout doctor --with-confighub --confighub-space prod --format json
 ```
 
+A live invocation captures its Kubernetes config once. The context name is a
+selection label, not a stable cluster ID. Partial or denied inventory, risk and
+rollout reads remain visible in JSON `warnings` and human coverage output;
+counts describe observed resources. Unsupported follow-up commands are withheld
+rather than silently using the ambient context. Fixture input cannot be combined
+with an explicit context. Omitting the flag preserves the normal context choice.
+
+```bash
+./cub-scout doctor --kube-context staging-admin -n production --format json
+```
+
 ### Flags
 
 | Flag | Description |
 |------|-------------|
 | `--format` | Output format: `ascii`, `json` |
 | `-n, --namespace` | Namespace scope (default: all namespaces) |
+| `--kube-context` | Bind every Kubernetes sub-read to this exact context; an empty or missing name fails without fallback |
 | `--top` | Number of top issues to include (default: `3`) |
 | `--presentation` | Narrative framing for ASCII output: `human`, `ai`, `paired`. Omit the flag to keep the legacy/default render path. JSON is unchanged. |
 | `--hint-mode` | Recommendation ranking for `TRY NEXT`: `default`, `beginner`, `operator`. JSON is unchanged. |
@@ -1144,6 +1156,7 @@ cub-scout scan [flags]
 | Flag | Description |
 |------|-------------|
 | `-n, --namespace` | Namespace to scan |
+| `--kube-context` | Select the exact context for live reads; rejected with `--file`, `--list`, or fixture input |
 | `--state` | State scan only (stuck reconciliations) |
 | `--kyverno` | Kyverno scan only |
 | `--timing-bombs` | Scan for expiring certs/quotas |
@@ -1168,6 +1181,16 @@ cub-scout scan --file deployment.yaml
 # List all known risk patterns
 cub-scout scan --list
 ```
+
+Explicit selection uses one captured client configuration and labels any persisted
+local summary with that selected context. Empty or missing names fail without
+ambient/in-cluster fallback. In an explicitly bound local TUI, `S` scans with the
+session's captured configuration; close and reopen the scan to refresh it. Editing
+the kubeconfig during that session does not redirect the scan. Partial coverage
+warnings appear alongside known findings.
+
+The MCP `doctor` and `scan` tools accept an optional nonempty string `context`,
+forwarded as `--kube-context`. This does not select a ConfigHub context.
 
 Provider behavior:
 - `scan --file`: uses `confighub-scan` / `cub-scan` when available, otherwise legacy scanner.

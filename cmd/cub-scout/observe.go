@@ -124,6 +124,13 @@ func observeScopeSummaryFromCluster(ctx context.Context, namespace, namespaceLab
 	}
 
 	result.Summary = buildDoctorSummary(entries, findings, cluster, namespaceLabel, topN)
+	if req.ClusterBinding != nil {
+		result.Summary.KubernetesContext = req.ClusterBinding.context
+		if req.ClusterBinding.explicit {
+			// The existing three-way command has no explicit Kubernetes selector.
+			result.Summary.ThreeWay = nil
+		}
+	}
 	rollouts, rolloutsErr := collectDoctorRolloutsWithBinding(ctx, namespace, topN, req.ClusterBinding)
 	if rolloutsErr != nil {
 		result.Warnings = append(result.Warnings, fmt.Sprintf("rollout evidence unavailable: %v", rolloutsErr))

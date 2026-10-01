@@ -93,6 +93,7 @@ cub-scout doctor [flags]
 |------|------|---------|-------------|
 | `-n, --namespace` | string | all | Namespace scope |
 | `--format` | string | ascii | Output format: `ascii`, `json` |
+| `--kube-context` | string | omitted | Exact Kubernetes context; empty/missing names fail before observation, without fallback |
 | `--top` | int | 3 | Number of top issues to include |
 | `--presentation` | string | legacy/default render path | Narrative framing for ASCII output: `human`, `ai`, `paired`. Omitting the flag keeps the legacy/default render path. JSON is unchanged. |
 | `--hint-mode` | string | default | Recommendation ranking for `TRY NEXT`: `default`, `beginner`, `operator`. JSON is unchanged. |
@@ -104,6 +105,12 @@ cub-scout doctor [flags]
 ### Stable Output Rules
 
 - JSON is the canonical contract for `doctor`.
+- Live results include `kubernetesContext` when a context label is available; this
+  is not a stable cluster ID. `warnings[]` preserves incomplete inventory, scan
+  and rollout coverage alongside observed facts and counts. Human rendering
+  carries the same warnings. Unsupported context-bound follow-ups are unavailable.
+- All Kubernetes sub-reads share one invocation-local configuration. An explicit
+  selector cannot be combined with doctor fixture input.
 - JSON may include `rollouts` when live workload rollout evidence is available:
   total workloads, PASS/WATCH/BLOCK/INCONCLUSIVE counts, and top non-PASS
   `currentChanges[]` bounded by `--top`.
@@ -422,6 +429,7 @@ cub-scout mcp serve --recording objects.yaml
 
 - Tool name: `doctor`
 - Parameters:
+  - `context` (optional nonempty string, forwarded to `--kube-context`)
   - `namespace` (optional string)
   - `top` (optional integer)
   - `with_confighub` (optional boolean)

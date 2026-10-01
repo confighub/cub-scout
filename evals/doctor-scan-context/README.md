@@ -14,8 +14,9 @@ Two private contexts use the same owned cluster: an administrator and a short-li
 service-account token with no read grants. The ambient context stays allowed;
 explicit denied requests must not fall back to it. The isolated namespace contains
 a Deployment and ConfigMap. The Deployment has zero replicas, so no application
-image is pulled. Doctor must report the fixture's two inventory resources for the
-allowed context, and zero observed resources with exact denial evidence for the
+image is pulled. The helper waits for the namespace controller's `kube-root-ca.crt` ConfigMap
+and records all three exact Deployment/ConfigMap identities and UIDs. Doctor must
+report that directly verified inventory count for the allowed context, and zero observed resources with exact denial evidence for the
 denied context. Fixed Doctor JSON must name the selected context explicitly.
 
 Scan must return structured state results or an explicit denial from the selected

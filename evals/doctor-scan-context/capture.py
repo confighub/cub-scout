@@ -105,8 +105,20 @@ def record_command(receipt: dict, phase: str, argv: list[str], *, env: dict,
     return result
 
 
-def validate_observations(records: list[dict]) -> None:
+def record_observation(receipt: dict, phase: str, argv: list[str], *, env: dict,
+                       deadline: float) -> dict:
+    """A semantic nonzero exit may be expected; a transport failure stops work."""
+    result = run(argv, env=env, deadline=deadline)
+    receipt["commands"].append({"phase": phase, **result})
+    if result.get("failure"):
+        raise RuntimeError("observation transport failed in phase " + phase)
+    return result
+
+
+def validate_observations(records: list[dict], expected_resource_count: int) -> None:
     """Require the named allowed/denied CLI outcomes, not arbitrary warning text."""
+    if type(expected_resource_count) is not int or expected_resource_count < 2:
+        raise RuntimeError("fixture resource count lacks direct inventory evidence")
     expected = {(phase, command) for phase in (
         "old-ambient-allowed", "old-explicit-denial", "fixed-doctor-allowed", "fixed-doctor-denied")
         for command in ("doctor", "scan")}
@@ -136,7 +148,7 @@ def validate_observations(records: list[dict]) -> None:
                 if phase.startswith("fixed") and data["kubernetesContext"] != ("doctor-denied" if denied else "doctor-allowed"):
                     raise ValueError("wrong selected context")
                 total = data["resources"]["total"]
-                if type(total) is not int or (denied and total != 0) or (not denied and total != 2):
+                if type(total) is not int or (denied and total != 0) or (not denied and total != expected_resource_count):
                     raise ValueError("unexpected isolated fixture resource count")
                 warnings = data.get("warnings", [])
             else:
@@ -205,7 +217,7 @@ def main() -> int:
         offline_config.write_text("apiVersion: v1\nkind: Config\nclusters: []\ncontexts: []\nusers: []\ncurrent-context: \"\"\n")
         env.update({"KUBECONFIG": str(offline_config),
                     "GOPROXY": "off", "GOSUMDB": "off", "GOTOOLCHAIN": "local",
-                    "CUB_SCOUT_SCAN_PROVIDER": "legacy",
+                    "CUB_SCOUT_SCAN_PROVIDER": "legacy", "CUB_SCOUT_OFFLINE": "true",
                     "PATH": str(shims) + os.pathsep + os.environ.get("PATH", "")})
         env.pop("CUB_SPACE", None)
         env.pop("CUB_SCOUT_TEST_SCAN_JSON", None)
@@ -291,6 +303,17 @@ def main() -> int:
              "--context", "doctor-allowed"],
         ):
             record_command(receipt, "fixture", argv, env=kube, deadline=deadline)
+        # Namespace controllers add kube-root-ca.crt. Wait for that real object
+        # rather than pretending our two authored manifests are the full inventory.
+        record_command(receipt, "namespace-ca-ready", [kubectl, "--context", "doctor-allowed", "-n", "scout-context-proof", "wait", "--for=create", "configmap/kube-root-ca.crt", "--timeout=30s"], env=kube, deadline=deadline, timeout=40)
+        fixture_inventory = record_command(receipt, "fixture-inventory", [kubectl, "--context", "doctor-allowed", "-n", "scout-context-proof", "get", "deployments,configmaps", "-o", "json"], env=kube, deadline=deadline)
+        items = json.loads(fixture_inventory["stdout"])["items"]
+        expected_names = {("Deployment", "scout-context-marker"), ("ConfigMap", "scout-context-marker"), ("ConfigMap", "kube-root-ca.crt")}
+        actual_names = {(item["kind"], item["metadata"]["name"]) for item in items}
+        if len(items) != len(expected_names) or actual_names != expected_names or any(not item["metadata"].get("uid") or item["metadata"].get("namespace") != "scout-context-proof" for item in items):
+            raise RuntimeError("owned fixture inventory differs from exact expected identities")
+        receipt["fixtureResourceCount"] = len(items)
+        receipt["fixtureIdentities"] = [{"kind": item["kind"], "namespace": item["metadata"]["namespace"], "name": item["metadata"]["name"], "uid": item["metadata"]["uid"]} for item in items]
         token = record_command(receipt, "denied-token", [kubectl, "-n", "scout-context-proof", "create", "token", "doctor-denied",
                      "--duration=10m", "--context", "doctor-allowed"], env=kube, deadline=deadline, secret=True)
         if token["exitCode"] != 0 or not token["stdout"].strip():
@@ -312,18 +335,15 @@ def main() -> int:
         # The old command has no selector surface; prove its exact rejection.
         for command in (("doctor", "--namespace", "scout-context-proof", "--format", "json"), ("scan", "--namespace", "scout-context-proof", "--state", "--json")):
             binary = str(binaries / "cub-scout-old")
-            baseline = run([binary, *command], env=kube, deadline=deadline)
-            receipt["commands"].append({"phase": "old-ambient-allowed", **baseline})
-            result = run([binary, *command, "--kube-context", "doctor-denied"], env=kube, deadline=deadline)
-            receipt["commands"].append({"phase": "old-explicit-denial", **result})
+            record_observation(receipt, "old-ambient-allowed", [binary, *command], env=kube, deadline=deadline)
+            record_observation(receipt, "old-explicit-denial", [binary, *command, "--kube-context", "doctor-denied"], env=kube, deadline=deadline)
         # Compare fixed-source reads against the same owned endpoint with
         # admin credentials and with a token that has no read grants.
         for context in ("doctor-allowed", "doctor-denied"):
             for command in (("doctor", "--namespace", "scout-context-proof", "--format", "json"), ("scan", "--namespace", "scout-context-proof", "--state", "--json")):
                 binary = str(binaries / "cub-scout-fixed")
-                result = run([binary, *command, "--kube-context", context], env=kube, deadline=deadline)
-                receipt["commands"].append({"phase": "fixed-" + context, **result})
-        validate_observations(receipt["commands"])
+                record_observation(receipt, "fixed-" + context, [binary, *command, "--kube-context", context], env=kube, deadline=deadline)
+        validate_observations(receipt["commands"], receipt["fixtureResourceCount"])
         receipt["acceptance"] = "passed"
     except BaseException as exc:
         receipt["acceptance"] = "failed"

@@ -109,6 +109,12 @@ func TestResolveClusterConfigExplicitContextUsesOnlyNamedServer(t *testing.T) {
 }
 
 func TestDoctorNestedReadsStayOnCapturedContextAfterKubeconfigRetarget(t *testing.T) {
+	t.Setenv("CUB_SCOUT_OFFLINE", "true")
+	t.Setenv("CLUSTER_NAME", "")
+	t.Setenv("PATH", t.TempDir())
+	oldGate := requireGitOpsConfigHubFn
+	requireGitOpsConfigHubFn = func() error { return fmt.Errorf("recorded ConfigHub unavailable") }
+	t.Cleanup(func() { requireGitOpsConfigHubFn = oldGate })
 	markedServer := func(marker, uid string) *countedKubeServer {
 		server := &countedKubeServer{}
 		server.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -136,8 +142,6 @@ func TestDoctorNestedReadsStayOnCapturedContextAfterKubeconfigRetarget(t *testin
 	require.NoError(t, err)
 	binding := &localClusterBinding{config: config, context: selected, explicit: true}
 
-	data, err := os.ReadFile(path)
-	require.NoError(t, err)
 	retargeted, loadErr := clientcmd.LoadFromFile(path)
 	require.NoError(t, loadErr)
 	retargeted.Clusters["beta-cluster"].Server = alpha.server.URL
@@ -166,18 +170,30 @@ func TestDoctorNestedReadsStayOnCapturedContextAfterKubeconfigRetarget(t *testin
 	require.Zero(t, alpha.requests.Load(), "inventory must not use ambient endpoint")
 
 	before = beta.requests.Load()
-	_, _ = collectDoctorFindingsWithBinding(context.Background(), "", binding)
+	findings, err := collectDoctorFindingsWithBinding(context.Background(), "", binding)
+	require.NoError(t, err)
+	require.Empty(t, findings, "empty runtime fixtures contain no risk finding")
 	require.Greater(t, beta.requests.Load(), before, "findings provider must use selected endpoint")
 	require.Zero(t, alpha.requests.Load(), "findings provider must not use ambient endpoint")
 	before = beta.requests.Load()
-	_, _ = collectDoctorRolloutsWithBinding(context.Background(), "", 3, binding)
+	rollouts, err := collectDoctorRolloutsWithBinding(context.Background(), "", 3, binding)
+	require.NoError(t, err)
+	require.NotNil(t, rollouts)
+	require.Equal(t, 1, rollouts.Total, "selected deployment must appear in rollout evidence")
 	require.Greater(t, beta.requests.Load(), before, "rollout reader must use selected endpoint")
 	require.Zero(t, alpha.requests.Load(), "rollout reader must not use ambient endpoint")
 	before = beta.requests.Load()
-	_, _ = collectDoctorDeliveryEvidenceWithBinding(context.Background(), "", ObserveScopeSummaryRequest{WithConfigHub: true}, binding)
+	delivery, err := collectDoctorDeliveryEvidenceWithBinding(context.Background(), "", ObserveScopeSummaryRequest{WithConfigHub: true}, binding)
+	require.NoError(t, err)
+	require.NotNil(t, delivery)
+	require.Empty(t, delivery.EventConsumers, "fixture deployment has no consumer identity")
+	require.Contains(t, delivery.Omissions, GitOpsDeliveryEvidenceOmission{Layer: "confighub", Reason: "recorded ConfigHub unavailable", Impact: "release, unit-event, and live-status evidence are omitted"})
 	require.Greater(t, beta.requests.Load(), before, "delivery evidence reader must use selected endpoint")
 	require.Zero(t, alpha.requests.Load(), "delivery reader must not use ambient endpoint")
 	require.Zero(t, alpha.requests.Load(), "later kubeconfig current-context changes must not redirect reads")
+	after, err := os.ReadFile(path)
+	require.NoError(t, err)
+	require.Equal(t, data, after, "nested readers never rewrite kubeconfig")
 }
 
 func TestResolveClusterConfigMissingExplicitContextFailsWithoutCredentialFallback(t *testing.T) {

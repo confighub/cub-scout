@@ -93,10 +93,6 @@ func persistSummaryRecord(record summarystore.Record) error {
 	return store.Write(record)
 }
 
-func persistConnectedScanSummary(result *scan.CombinedResult, namespace string) {
-	persistConnectedScanSummaryForCluster(result, namespace, "")
-}
-
 func persistConnectedScanSummaryForCluster(result *scan.CombinedResult, namespace, cluster string) {
 	if !summaryConnectedFn() {
 		return
