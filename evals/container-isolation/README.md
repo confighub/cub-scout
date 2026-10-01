@@ -31,6 +31,13 @@ non-loopback socket attempt from one explicitly spawned child. It reads no
 real host-sensitive paths and makes no successful remote request. It never
 claims process creation is prohibited.
 
+The marker assertion uses the exact canonical host marker file created inside
+the private output directory. The helper verifies that file exists and is
+unchanged before and after the payload, passes only its path string into the
+inline payload, and confirms the path is not mounted. Since the container has
+its own private `/tmp`, the in-container check demonstrates that the host file
+is unavailable at that path without probing other host paths.
+
 The helper caps stdout and stderr independently at 1 MiB, bounds payload
 execution to 30 seconds, cleanup to 15 seconds, and overall lifetime to 60
 seconds. It inspects the exact newly created container and checks its owner
@@ -43,10 +50,17 @@ container; it does not prove descendants were never spawned.
 The receipt distinguishes **configured and inspect-verified** settings from
 **demonstrated** payload assertions. CPU, memory, and pids bounds are not
 stress-tested; passing the payload does not demonstrate saturation behavior.
-The receipt hashes the helper, payload, image ID and authored fixture, records
+The receipt hashes the helper, injected payload, Docker executable (including
+requested launcher and resolved target paths), reused INV04 runner, image ID
+and authored fixture, records
 operation status/timing and bounded-output hashes, and checks that the host
 fixture and synthetic marker stayed unchanged. Raw full Docker-inspect output
 is validated in memory and not written to the receipt or output files.
+Container ownership (exact generated name, ID, and owner label) is checked
+separately from configuration validation, so a container created by this run
+can still be removed if one of its settings fails inspection. Missing-container
+recognition requires one exact Docker error line for the exact target with no
+stdout or contradictory output. A receipt write failure fails the capture.
 
 Pure tests mock all process calls and never execute Docker or the payload:
 

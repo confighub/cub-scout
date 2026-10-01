@@ -30,6 +30,7 @@ def inspect_object(*, state="created", owner=OWNER):
         "HostConfig": {"ReadonlyRootfs": True, "NetworkMode": "none", "CapDrop": ["ALL"],
                        "SecurityOpt": ["no-new-privileges:true"], "PidsLimit": 32,
                        "Memory": 268435456, "NanoCpus": 500000000,
+                       "Privileged": False, "CapAdd": [], "PidMode": "private", "IpcMode": "private",
                        "Tmpfs": {"/tmp": "rw,noexec,nosuid,size=16777216,uid=65534,gid=65534"}},
         "Mounts": [{"Type": "bind", "Source": str(fixture), "Destination": "/fixture/input.txt", "RW": False}],
         "State": {"Status": state, "ExitCode": 0 if state == "exited" else 0},
@@ -92,8 +93,11 @@ class IsolationSourceTests(unittest.TestCase):
                 prepare._safe_output(repo / "inside", repo_root=repo)
 
     def test_create_command_has_only_expected_mount_and_explicit_bounds(self):
-        args = prepare.build_container_args("scout-isolation-0123456789abcdef", OWNER,
-                                            prepare.FIXTURE, "/scout-host-marker-" + OWNER)
+        with tempfile.TemporaryDirectory() as td:
+            marker = Path(td) / "marker.txt"
+            marker.write_text("host only")
+            args = prepare.build_container_args("scout-isolation-0123456789abcdef", OWNER,
+                                                prepare.FIXTURE, str(marker.resolve()))
         self.assertEqual(args[:2], ["container", "create"])
         self.assertIn("--pull=never", args)
         self.assertIn("--network=none", args)
@@ -136,6 +140,25 @@ class IsolationSourceTests(unittest.TestCase):
         with self.assertRaises(prepare.CaptureError):
             prepare.validate_owned_inspect(json.dumps(obj).encode(), name="scout-isolation-0123456789abcdef",
                                            owner=OWNER, fixture=prepare.FIXTURE)
+        for field, value in (("Privileged", True), ("CapAdd", ["SYS_ADMIN"]),
+                             ("PidMode", "host"), ("IpcMode", "host")):
+            obj = inspect_object()
+            obj["HostConfig"][field] = value
+            with self.subTest(field=field), self.assertRaises(prepare.CaptureError):
+                prepare.validate_owned_inspect(json.dumps(obj).encode(), name="scout-isolation-0123456789abcdef",
+                                               owner=OWNER, fixture=prepare.FIXTURE)
+        for tmpfs in ("rw,noexec,nosuid,size=16777216,uid=65534,gid=65534,fake=noexec",
+                      "rw,noexec,nosuid,size=16777216,uid=65534,gid=65534,uid=0"):
+            obj = inspect_object()
+            obj["HostConfig"]["Tmpfs"]["/tmp"] = tmpfs
+            with self.subTest(tmpfs=tmpfs), self.assertRaises(prepare.CaptureError):
+                prepare.validate_owned_inspect(json.dumps(obj).encode(), name="scout-isolation-0123456789abcdef",
+                                               owner=OWNER, fixture=prepare.FIXTURE)
+        obj = inspect_object(state="exited")
+        obj["State"]["ExitCode"] = False
+        with self.assertRaises(prepare.CaptureError):
+            prepare.validate_owned_inspect(json.dumps(obj).encode(), name="scout-isolation-0123456789abcdef",
+                                           owner=OWNER, fixture=prepare.FIXTURE, require_running_state=True)
 
     def test_payload_contract_requires_all_true_assertions_and_no_extra_fields(self):
         parsed = prepare.validate_payload(good_payload())
@@ -150,12 +173,20 @@ class IsolationSourceTests(unittest.TestCase):
                 prepare.validate_payload(value)
         with self.assertRaises(prepare.CaptureError):
             prepare.validate_payload(good_payload(), b"unexpected stderr")
+        for bad in (b'{"schema":"container-isolation-payload.v1","schema":"other"}',
+                    b'{"value":1e999}', b'{"value":NaN}'):
+            with self.subTest(bad=bad), self.assertRaises(prepare.CaptureError):
+                prepare.validate_payload(bad)
 
     def test_payload_is_python_source_and_generated_marker_is_not_a_mount(self):
-        args = prepare.build_container_args("scout-isolation-0123456789abcdef", OWNER,
-                                            prepare.FIXTURE, "/scout-host-marker-" + OWNER)
+        with tempfile.TemporaryDirectory() as td:
+            marker = Path(td) / "host-marker.txt"
+            marker.write_text("host only")
+            args = prepare.build_container_args("scout-isolation-0123456789abcdef", OWNER,
+                                                prepare.FIXTURE, str(marker.resolve()))
         source = args[args.index("python") + 2]
         compile(source, "container-payload", "exec")
+        self.assertIn(str(marker.resolve()), source)
         self.assertIn("synthetic_host_marker_unavailable", source)
         self.assertIn("203.0.113.1", source)
         self.assertEqual(args.count("--mount"), 1)
@@ -235,6 +266,31 @@ class IsolationSourceTests(unittest.TestCase):
             self.assertFalse((output / "inspect-owned-container.stdout.bin").exists())
             self.assertFalse((output / "inspect-container-result.stdout.bin").exists())
             self.assertFalse(receipt["commands"][2]["outputFilesRetained"])
+            marker_path = Path(receipt["hostMarkerContainerPath"])
+            self.assertTrue(marker_path.is_file())
+            self.assertEqual(receipt["hostMarkerSha256"], receipt["hostMarkerAfterSha256"])
+            self.assertEqual(receipt["hostMarkerUnavailableInContainer"], True)
+            self.assertEqual(receipt["dockerLauncher"]["sha256"], prepare.sha256(docker_file.read_bytes()))
+            self.assertEqual(receipt["inv04Runner"]["sha256"], prepare.sha256(prepare.INV04.read_bytes()))
+            create = next(command for command in commands if command[3:5] == ["container", "create"])
+            self.assertEqual(create.count("--mount"), 1)
+            mount_value = create[create.index("--mount") + 1]
+            self.assertNotIn(str(marker_path), mount_value)
+            self.assertEqual(receipt["injectedPayloadSha256"], prepare.sha256(create[create.index("python") + 2].encode()))
+            # A lost receipt is a failed capture even if the mocked payload passed.
+            state = "created"
+            obj["State"] = {"Status": "created", "ExitCode": 0}
+            failed_receipt_output = root / "capture-no-receipt"
+            original_write = prepare._write
+            def fail_receipt(path, content):
+                if path.name == "receipt.json":
+                    raise OSError("synthetic receipt write failure")
+                return original_write(path, content)
+            with patch.object(prepare, "_write", side_effect=fail_receipt):
+                failed_result = prepare.capture(docker_file, "local", prepare.IMAGE_ID,
+                                                failed_receipt_output, runner=runner)
+            self.assertEqual(failed_result, 1)
+            self.assertFalse((failed_receipt_output / "receipt.json").exists())
 
     def test_uncertain_cleanup_is_failure_and_never_deletes_unowned_container(self):
         wrong = inspect_object(owner="someone-else")
@@ -284,6 +340,65 @@ class IsolationSourceTests(unittest.TestCase):
         self.assertFalse(result["verifiedAbsent"])
         self.assertIn("TimeoutExpired", result["errors"][0])
         self.assertFalse(prepare._is_exact_missing(1, b"", b"no such object", "scout-isolation-name"))
+
+    def test_missing_container_error_must_be_exact_and_uncontradicted(self):
+        target = "scout-isolation-review-missing-20261001"
+        exact = b"\nError response from daemon: No such container: " + target.encode() + b"\n"
+        self.assertTrue(prepare._is_exact_missing(1, b"", exact, target))
+        for code, stdout, stderr in (
+            (0, b"", exact), (1, b"partial", exact), (1, b"", exact + b"\nother failure\n"),
+            (1, b"", b"Error response from daemon: No such container: " + target.encode() + b"suffix"),
+            (1, b"", b"Error response from daemon: No such container: " + target.encode() + b"-other"),
+            (True, b"", exact), (1, b"", exact.replace(b"No such container", b"no such container")),
+        ):
+            with self.subTest(code=code, stderr=stderr):
+                self.assertFalse(prepare._is_exact_missing(code, stdout, stderr, target))
+
+    def test_owned_container_with_bad_config_is_still_removed(self):
+        obj = inspect_object()
+        obj["HostConfig"]["Privileged"] = True
+        state = "present"
+        calls = []
+        def runner(argv, timeout, env=None, max_output=None):
+            nonlocal state
+            calls.append(argv)
+            if argv[-4:-2] == ["container", "rm"]:
+                state = "removed"
+                return 0, b"", b""
+            if state == "removed":
+                target = argv[-1]
+                return 1, b"", b"Error response from daemon: No such container: " + target.encode()
+            return 0, json.dumps(obj).encode(), b""
+        result = prepare.cleanup_owned_container(Path("/usr/local/bin/docker"), "local",
+            "scout-isolation-0123456789abcdef", OWNER, prepare.FIXTURE, {}, time.monotonic() + 10,
+            runner=runner, known_id=CONTAINER_ID)
+        self.assertTrue(result["verifiedAbsent"])
+        self.assertEqual([command[-1] for command in calls if command[-4:-2] == ["container", "rm"]], [CONTAINER_ID])
+
+    def test_cleanup_exact_absence_and_wrong_id_are_distinguished(self):
+        name = "scout-isolation-0123456789abcdef"
+        absent_calls = []
+        def absent(argv, timeout, env=None, max_output=None):
+            absent_calls.append(argv)
+            return 1, b"", b"\nError response from daemon: No such container: " + name.encode() + b"\n"
+        absent_result = prepare.cleanup_owned_container(Path("/usr/local/bin/docker"), "local", name,
+            OWNER, prepare.FIXTURE, {}, time.monotonic() + 10, runner=absent)
+        self.assertTrue(absent_result["verifiedAbsent"])
+        self.assertEqual(len(absent_calls), 1)
+
+        wrong_id = inspect_object()
+        wrong_id["Id"] = "c" * 64
+        calls = []
+        def inspect_wrong_id(argv, timeout, env=None, max_output=None):
+            calls.append(argv)
+            return 0, json.dumps(wrong_id).encode(), b""
+        result = prepare.cleanup_owned_container(Path("/usr/local/bin/docker"), "local", name,
+            OWNER, prepare.FIXTURE, {}, time.monotonic() + 10, runner=inspect_wrong_id,
+            known_id=CONTAINER_ID)
+        self.assertFalse(result["verifiedAbsent"])
+        self.assertTrue(result["errors"])
+        self.assertEqual(len(calls), 1)
+        self.assertFalse(any(command[-4:-2] == ["container", "rm"] for command in calls))
 
     def test_failed_remove_with_container_still_present_is_not_cleanup_success(self):
         obj = inspect_object()

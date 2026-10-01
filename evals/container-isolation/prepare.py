@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -51,6 +52,36 @@ class CaptureInterrupted(CaptureError):
 
 def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def strict_json(data: bytes, description: str) -> Any:
+    def unique(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise CaptureError(f"{description} contains a duplicate JSON key")
+            result[key] = value
+        return result
+    def reject_constant(value):
+        raise CaptureError(f"{description} contains a non-finite JSON value")
+    def finite_float(value):
+        parsed = float(value)
+        if not math.isfinite(parsed):
+            raise CaptureError(f"{description} contains a non-finite JSON value")
+        return parsed
+    try:
+        return json.loads(data.decode("utf-8", "strict"), object_pairs_hook=unique,
+                          parse_constant=reject_constant, parse_float=finite_float)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        raise CaptureError(f"{description} is malformed JSON") from None
 
 
 def utc_now() -> str:
@@ -183,7 +214,15 @@ def build_container_args(name: str, owner: str, fixture: Path, marker_path: str,
         raise CaptureError("authored fixture is missing, changed, or unsafe")
     if any(char in str(fixture.absolute()) for char in ",\r\n\x00"):
         raise CaptureError("authored fixture path cannot be safely represented in Docker mount syntax")
-    if not re.fullmatch(r"/scout-host-marker-[0-9a-f]{32}", marker_path):
+    marker_file = Path(marker_path)
+    try:
+        marker_canonical = marker_file.resolve(strict=True)
+    except OSError:
+        raise CaptureError("synthetic host marker file is unavailable") from None
+    temp_roots = {Path(tempfile.gettempdir()).resolve(), Path("/tmp").resolve(), Path("/var/tmp").resolve()}
+    if (not marker_file.is_absolute() or marker_file.as_posix() != marker_path
+            or marker_canonical != marker_file or marker_file.is_symlink() or not marker_file.is_file()
+            or not any(marker_file == root or root in marker_file.parents for root in temp_roots)):
         raise CaptureError("synthetic host marker path is unsafe")
     payload_path = HERE / "payload.py"
     if payload_path.is_symlink() or not payload_path.is_file():
@@ -207,10 +246,7 @@ def build_container_args(name: str, owner: str, fixture: Path, marker_path: str,
 
 
 def _one_inspect(data: bytes) -> dict:
-    try:
-        value = json.loads(data)
-    except (json.JSONDecodeError, UnicodeDecodeError):
-        raise CaptureError("container inspect response is malformed") from None
+    value = strict_json(data, "container inspect response")
     if isinstance(value, list) and len(value) == 1 and isinstance(value[0], dict):
         return value[0]
     if isinstance(value, dict):
@@ -218,9 +254,7 @@ def _one_inspect(data: bytes) -> dict:
     raise CaptureError("container inspect response must identify exactly one container")
 
 
-def validate_owned_inspect(data: bytes, *, name: str, owner: str, fixture: Path,
-                           require_running_state: bool = False) -> tuple[str, dict]:
-    obj = _one_inspect(data)
+def validate_owned_identity(obj: dict, *, name: str, owner: str) -> str:
     ident = obj.get("Id")
     raw_config = obj.get("Config")
     labels = raw_config.get("Labels") if isinstance(raw_config, dict) else None
@@ -228,6 +262,28 @@ def validate_owned_inspect(data: bytes, *, name: str, owner: str, fixture: Path,
             or obj.get("Name") != "/" + name or not isinstance(labels, dict)
             or labels.get(OWNER_LABEL) != owner):
         raise CaptureError("container ownership marker/name did not match this run")
+    return ident
+
+
+def _tmpfs_tokens(value: str) -> set[str]:
+    tokens = value.split(",")
+    if len(tokens) != len(set(tokens)) or any(not token for token in tokens):
+        raise CaptureError("bounded /tmp tmpfs options are malformed")
+    token_set = set(tokens)
+    accepted = [
+        {"rw", "noexec", "nosuid", "size=16777216", "uid=65534", "gid=65534"},
+        {"rw", "noexec", "nosuid", "size=16m", "uid=65534", "gid=65534"},
+    ]
+    if token_set not in accepted:
+        raise CaptureError("bounded /tmp tmpfs options differ from the exact reviewed setting")
+    return token_set
+
+
+def validate_owned_inspect(data: bytes, *, name: str, owner: str, fixture: Path,
+                           require_running_state: bool = False) -> tuple[str, dict]:
+    obj = _one_inspect(data)
+    ident = validate_owned_identity(obj, name=name, owner=owner)
+    raw_config = obj.get("Config")
     config, host = raw_config, obj.get("HostConfig")
     if not isinstance(config, dict) or not isinstance(host, dict):
         raise CaptureError("container inspect configuration is malformed")
@@ -239,17 +295,22 @@ def validate_owned_inspect(data: bytes, *, name: str, owner: str, fixture: Path,
         raise CaptureError("container inspect image ID differs from reviewed pin")
     if config.get("User") != "65534:65534" or host.get("ReadonlyRootfs") is not True:
         raise CaptureError("container user or read-only rootfs setting differs")
-    if host.get("NetworkMode") != "none" or "ALL" not in host.get("CapDrop", []):
+    if host.get("NetworkMode") != "none" or host.get("CapDrop") != ["ALL"]:
         raise CaptureError("container network or capability-drop setting differs")
-    if not any(value in ("no-new-privileges", "no-new-privileges:true")
-               for value in host.get("SecurityOpt", [])):
+    security_options = host.get("SecurityOpt", [])
+    if (any(not isinstance(value, str) for value in security_options)
+            or set(security_options) not in ({"no-new-privileges"}, {"no-new-privileges:true"})):
         raise CaptureError("container no-new-privileges setting is absent")
+    if (host.get("Privileged") is not False or host.get("CapAdd") not in (None, [])
+            or host.get("PidMode") not in (None, "", "private")
+            or host.get("IpcMode") not in (None, "", "private")):
+        raise CaptureError("container privilege, capability-add, PID, or IPC setting is unsafe")
     if host.get("PidsLimit") != 32 or host.get("Memory") != 268435456 or host.get("NanoCpus") != 500000000:
         raise CaptureError("container resource settings differ from configured bounds")
     tmpfs = host.get("Tmpfs", {}).get("/tmp", "")
-    if (not isinstance(tmpfs, str) or not all(part in tmpfs for part in ("rw", "noexec", "nosuid"))
-            or not any(size in tmpfs for size in ("size=16777216", "size=16m"))):
+    if not isinstance(tmpfs, str):
         raise CaptureError("private bounded /tmp tmpfs setting is absent")
+    _tmpfs_tokens(tmpfs)
     mounts = obj.get("Mounts")
     if not isinstance(mounts, list) or any(not isinstance(mount, dict) for mount in mounts):
         raise CaptureError("container inspect mount list is malformed")
@@ -269,7 +330,8 @@ def validate_owned_inspect(data: bytes, *, name: str, owner: str, fixture: Path,
     state = obj.get("State", {})
     if not isinstance(state, dict):
         raise CaptureError("container inspect state is malformed")
-    if require_running_state and state.get("Status") != "exited":
+    if require_running_state and (state.get("Status") != "exited"
+                                  or type(state.get("ExitCode")) is not int or state.get("ExitCode") != 0):
         raise CaptureError("container did not exit before inspection")
     selected = {"containerId": ident, "name": name, "imageId": config["Image"],
                 "user": config["User"], "readOnlyRootfs": host["ReadonlyRootfs"],
@@ -285,10 +347,7 @@ def validate_owned_inspect(data: bytes, *, name: str, owner: str, fixture: Path,
 def validate_payload(stdout: bytes, stderr: bytes = b"") -> dict:
     if stderr.strip():
         raise CaptureError("container payload wrote unexpected stderr")
-    try:
-        value = json.loads(stdout.decode("utf-8", "strict"))
-    except (json.JSONDecodeError, UnicodeDecodeError):
-        raise CaptureError("container payload output is not valid JSON") from None
+    value = strict_json(stdout, "container payload output")
     if not isinstance(value, dict) or set(value) != {"schema", "assertions", "childProcessAttempted"}:
         raise CaptureError("container payload assertion object has unexpected/missing fields")
     assertions = value.get("assertions")
@@ -310,11 +369,15 @@ def _inspect_by_name(docker: Path, context: str, target: str, env: dict[str, str
 
 
 def _is_exact_missing(code: int, stdout: bytes, stderr: bytes, target: str) -> bool:
-    if code == 0:
+    if type(code) is not int or code == 0 or stdout != b"" or not target:
         return False
-    message = (stdout + stderr).decode("utf-8", "replace").lower()
-    target = target.lower()
-    return ("no such object: " + target) in message or ("no such container: " + target) in message
+    try:
+        lines = [line.strip() for line in stderr.decode("utf-8", "strict").splitlines() if line.strip()]
+    except UnicodeDecodeError:
+        return False
+    expected = {"Error response from daemon: No such container: " + target,
+                "Error: No such object: " + target}
+    return len(lines) == 1 and lines[0] in expected
 
 
 def cleanup_owned_container(docker: Path, context: str, name: str, owner: str, fixture: Path,
@@ -335,7 +398,9 @@ def cleanup_owned_container(docker: Path, context: str, name: str, owner: str, f
                 result["verifiedAbsent"] = True
                 return result
             raise CaptureError("owned container inspection failed; cleanup is uncertain")
-        ident, _selected = validate_owned_inspect(data, name=name, owner=owner, fixture=fixture)
+        # Ownership is sufficient to authorize removal; configuration failure must
+        # not leak a container this invocation created and can safely identify.
+        ident = validate_owned_identity(_one_inspect(data), name=name, owner=owner)
         if known_id and ident != known_id:
             raise CaptureError("container ID changed before cleanup")
         result["containerId"] = ident
@@ -394,9 +459,11 @@ def capture(docker_path: Path, docker_context: str, image_id: str, output_path: 
     out = _safe_output(output_path)
     owner = uuid.uuid4().hex
     name = "scout-isolation-" + uuid.uuid4().hex[:16]
-    marker_path = "/scout-host-marker-" + owner
     host_marker = out / ("host-marker-" + owner + ".txt")
     _write(host_marker, b"synthetic host-only marker; intentionally not mounted\n")
+    marker_path = str(host_marker.resolve(strict=True))
+    if not host_marker.is_file() or host_marker.is_symlink():
+        raise CaptureError("synthetic host marker is not a regular owned file")
     marker_hash = sha256(host_marker.read_bytes())
     fixture_hash = sha256(fixture.read_bytes())
     payload_path = HERE / "payload.py"
@@ -406,6 +473,9 @@ def capture(docker_path: Path, docker_context: str, image_id: str, output_path: 
     payload_source = payload_path.read_bytes()
     helper_source = helper_path.read_bytes()
     helper_hash = sha256(helper_source)
+    docker_target = docker.resolve(strict=True)
+    docker_binary_hash = sha256_file(docker_target)
+    inv04_hash = sha256(INV04.read_bytes())
     started_at, start_clock = utc_now(), time.monotonic()
     total_deadline = start_clock + TOTAL_TIMEOUT
     execution_deadline = start_clock + TOTAL_TIMEOUT - CLEANUP_TIMEOUT
@@ -487,6 +557,7 @@ def capture(docker_path: Path, docker_context: str, image_id: str, output_path: 
             raise CaptureError("pinned image is not cached locally")
         image_actual = validate_image_inspect(image_out)
         args = build_container_args(name, owner, fixture, marker_path, payload_source=payload_source)
+        injected_payload = args[args.index("python") + 2].encode("utf-8")
         create_attempted = True
         code, raw_id, _ = call(args, "create-owned-container", 10)
         if code:
@@ -507,12 +578,19 @@ def capture(docker_path: Path, docker_context: str, image_id: str, output_path: 
             raise CaptureError("could not inspect completed container")
         container_id, inspected = validate_owned_inspect(final_inspect, name=name, owner=owner,
                                                          fixture=fixture, require_running_state=True)
-        if inspected.get("exitCode") != 0 or start_code != 0:
+        if type(inspected.get("exitCode")) is not int or inspected.get("exitCode") != 0 or type(start_code) is not int or start_code != 0:
             raise CaptureError("container payload did not exit successfully")
         assertions = validate_payload(stdout, stderr)
         receipt.update({"imageId": image_actual, "dockerContext": docker_context,
                         "dockerEndpointKind": "local-unix-socket", "container": inspected,
-                        "demonstratedAssertions": assertions})
+                        "demonstratedAssertions": assertions,
+                        "demonstratedBounds": {"networkNone": assertions.get("non_loopback_child_network_denied") is True,
+                                               "readOnlyFixture": assertions.get("fixture_write_denied") is True,
+                                               "readOnlyRootfsOutsideTmp": assertions.get("outside_tmp_write_denied") is True,
+                                               "writableTmpfs": assertions.get("tmp_write_allowed") is True,
+                                               "loopbackOnlyHTTP": assertions.get("loopback_http_ok") is True},
+                        "hostMarkerContainerPath": marker_path,
+                        "hostMarkerUnavailableInContainer": assertions.get("synthetic_host_marker_unavailable") is True})
     except BaseException as exc:
         error = str(exc)[:300] if isinstance(exc, CaptureError) else type(exc).__name__
     finally:
@@ -540,11 +618,14 @@ def capture(docker_path: Path, docker_context: str, image_id: str, output_path: 
         try:
             payload_after = sha256(payload_path.read_bytes())
             helper_after = sha256(helper_path.read_bytes())
+            inv04_after = sha256(INV04.read_bytes())
         except OSError:
-            payload_after = helper_after = ""
-        if payload_after != sha256(payload_source) or helper_after != helper_hash:
+            payload_after = helper_after = inv04_after = ""
+        if payload_after != sha256(payload_source) or helper_after != helper_hash or inv04_after != inv04_hash:
             error = error or "helper or payload source changed during run"
         try:
+            if host_marker.is_symlink() or not host_marker.is_file():
+                raise OSError("host marker was replaced or removed")
             marker_after = sha256(host_marker.read_bytes())
         except OSError:
             marker_after = ""
@@ -554,10 +635,16 @@ def capture(docker_path: Path, docker_context: str, image_id: str, output_path: 
                         "sourceRevision": source_revision,
                         "helperSha256": helper_hash,
                         "payloadSha256": sha256(payload_source),
+                        "injectedPayloadSha256": sha256(injected_payload) if "injected_payload" in locals() else None,
+                        "dockerLauncher": {"requestedPath": str(docker), "resolvedPath": str(docker_target),
+                                           "sha256": docker_binary_hash},
+                        "inv04Runner": {"path": str(INV04), "sha256": inv04_hash,
+                                        "afterSha256": inv04_after},
                         "fixtureSha256": fixture_hash,
                         "fixtureAfterSha256": fixture_after,
                         "hostMarkerSha256": marker_hash,
                         "hostMarkerAfterSha256": marker_after,
+                        "hostMarkerPath": str(host_marker.resolve()),
                         "executionSecondsLimit": EXECUTION_TIMEOUT,
                         "cleanupSecondsLimit": CLEANUP_TIMEOUT,
                         "totalSecondsLimit": TOTAL_TIMEOUT,
@@ -566,15 +653,16 @@ def capture(docker_path: Path, docker_context: str, image_id: str, output_path: 
                         "startedAt": started_at,
                         "endedAt": utc_now(),
                         "elapsedSeconds": time.monotonic() - start_clock,
-                        "limits": {"stdoutBytesEach": MAX_OUTPUT, "stderrBytesEach": MAX_OUTPUT,
-                                   "noDockerSocketMount": True, "noHomeMount": True,
-                                   "noKubeconfigMount": True, "networkNoneConfigured": True},
+                        "limits": {"stdoutBytesEach": MAX_OUTPUT, "stderrBytesEach": MAX_OUTPUT},
+                        "requestedMountPolicy": "no Docker socket, home, kubeconfig, or credentials are mounted; one fixture bind only",
                         "error": error})
+        receipt_written = False
         try:
             _write(out / "receipt.json", (json.dumps(receipt, sort_keys=True, indent=2) + "\n").encode())
-        except OSError:
-            pass
-    return 0 if receipt.get("status") == "passed" else 1
+            receipt_written = True
+        except Exception:
+            receipt_written = False
+    return 0 if receipt_written and receipt.get("status") == "passed" else 1
 
 
 def main(argv: list[str] | None = None) -> int:
