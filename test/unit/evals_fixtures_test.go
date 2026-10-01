@@ -322,6 +322,10 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			checkINV04RBACScaffold(t, caseDir)
 			continue
 		}
+		if filepath.Base(caseDir) == "rul04-image-identity" {
+			checkRUL04ImageIdentityScaffold(t, caseDir)
+			continue
+		}
 		// DEL-04 is a receipt-only case: it owns immutable public source
 		// receipts, not the unrelated suite-wide Kubernetes resource export.
 		if filepath.Base(caseDir) == "oci-identity-lifecycle" {

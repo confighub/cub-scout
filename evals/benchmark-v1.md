@@ -18,10 +18,10 @@ None of these statuses means the controlled benchmark ran. DEL-01 and DEL-02 are
 public-source projections, not raw cluster snapshots; both are prepared and
 unrun, and their evidence limits are recorded per case. The 24 cases currently
 comprise 5 refreshed fixtures, 2 recorded scale bindings prepared but not run, 7
-recorded projections prepared but not run, two raw recordings prepared but not
-run, and 8 planned cases. HLT-03 is a receipt-backed pair of public recorded
+recorded projections prepared but not run, three raw recordings prepared but not
+run, and 7 planned cases. HLT-03 is a receipt-backed pair of public recorded
 files, not a full Kubernetes snapshot; its receipt-level workload pass and
-child Application Ingress residue are separate evidence facts. HLT-02 and INV-04 are
+child Application Ingress residue are separate evidence facts. HLT-02, INV-04 and RUL-04 are
 raw recordings. Unmapped entries remain `planned`; the three live-only scale
 cases remain a separate experiment.
 
@@ -50,7 +50,7 @@ cases remain a separate experiment.
 | Reuse / limits | RUL-01 | Repeated question using a dated snapshot | Planned; snapshot age remains visible |
 | Reuse / limits | RUL-02 | Cache invalidation after identity change | Planned; missing/stale identity stays unresolved |
 | Reuse / limits | RUL-03 | Denied cluster beside readable cluster, explicit context | Planned; context cannot change implicitly |
-| Reuse / limits | RUL-04 | Unsupported workload/image proof | Planned; unknown where proof is unsupported |
+| Reuse / limits | RUL-04 | Unsupported workload/image proof | Raw capture prepared, not run: Ready Pod runtime imageID and UID linkage preserved; tag-only authored intent does not establish immutable intended image identity. No applied-source proof. [Case](rul04-image-identity/README.md) |
 
 ## Recorded scale binding limits
 

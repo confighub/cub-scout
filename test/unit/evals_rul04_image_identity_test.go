@@ -24,7 +24,11 @@ var rul04Files = map[string]string{
 }
 
 func TestRUL04RawCaptureAndEqualScaffold(t *testing.T) {
-	root := filepath.Join("..", "..", "evals", "rul04-image-identity")
+	checkRUL04ImageIdentityScaffold(t, filepath.Join("..", "..", "evals", "rul04-image-identity"))
+}
+
+func checkRUL04ImageIdentityScaffold(t *testing.T, root string) {
+	t.Helper()
 	files := make(map[string][]byte, len(rul04Files))
 	for name, want := range rul04Files {
 		b, err := os.ReadFile(filepath.Join(root, "fixtures", name))
@@ -138,6 +142,10 @@ func TestRUL04RawCaptureAndEqualScaffold(t *testing.T) {
 		cmd.Dir = workspace
 		if out, err := cmd.CombinedOutput(); err != nil {
 			t.Fatalf("scaffold arm %d: %v: %s", arm, err, out)
+		}
+		entries, err := os.ReadDir(filepath.Join(workspace, "cluster"))
+		if err != nil || len(entries) != len(files) {
+			t.Fatalf("arm %d staged unexpected evidence files: %v", arm, err)
 		}
 		for name, want := range files {
 			got, err := os.ReadFile(filepath.Join(workspace, "cluster", name))

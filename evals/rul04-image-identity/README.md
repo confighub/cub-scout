@@ -85,3 +85,8 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest evals/rul04-image-identity/test_ca
 
 The case is only prepared after a lead-reviewed real capture. It does not admit
 RUL-04 to a paid suite or change frozen question, answer, controls, or weights.
+
+The checked-in prompt currently declares Read/Grep file tools. It is prepared
+evidence and a correctness contract, not a completed Experiment A tool binding.
+Runtime tool grants, equal ordinary-tool access and any recorded Scout tool
+binding still require protocol admission before a model comparison.

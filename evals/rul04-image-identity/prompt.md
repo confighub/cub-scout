@@ -11,7 +11,7 @@ allowed_tools: [Read, Grep]
 Use only the four files in `cluster/`. They contain the literal authored
 StatefulSet manifest, raw StatefulSet GET, raw namespace PodList, and factual
 capture scope. The reads were sequential and are not an atomic snapshot. Do not
-use network, cluster access, or other tools to fill gaps.
+use network, cluster access, or evidence outside those files to fill gaps.
 
 Determine the captured StatefulSet and Pod identities from their actual UID and
 owner-reference fields. Report the Pod's runtime image and exact `imageID`, and
