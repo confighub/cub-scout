@@ -65,8 +65,13 @@ order, quality gates, budgets and decisions.
   limits and earlier attempts remain recorded. Its three Python tests and the
   exact recorded-case scaffold guard pass; paid agent execution remains unrun.
   The first combined full-Go run found two Flux golden changes and a scaffold
-  mismatch; both are repaired and targeted tests pass. The fresh build and full offline Go suite pass at `3a056e5e`. Full controller-desired diff, owned before/after live
-  proof, final independent review and CI remain open. Explicit context with
+  mismatch; both are repaired and targeted tests pass. The fresh build and full offline Go suite pass at `24074d85`. The
+  [owned-kind proof](evals/trace-context-live/README.md) passed on attempt three:
+  allowed/denied CLI reads and actual TUI open/reopen/denied actions, with
+  six/six/one GETs and retained 403 evidence. Cleanup and config integrity pass.
+  Attempt two exposed a real selected-workload identity bug, now fixed with
+  a failing-before regression; both failed attempts remain retained. Full
+  controller-desired diff, final integration review and CI remain open. Explicit context with
   legacy delegated diff fails before reads. A context label is not a stable
   cluster ID; this packet does not close #599.
 
@@ -237,8 +242,11 @@ permission gates to already authorized routine work.
 
 ## Resume here
 
-Check #645, then complete the success-defined doctor/scan context packet
-[#743](https://github.com/confighub/cub-scout/issues/743) under #599. The full-24
+Check #645, then continue Trace [#746](https://github.com/confighub/cub-scout/issues/746)
+and its explicit rendered-operand diff packet #751, followed by source-truth
+context binding #750 under #599. #743 is merged. Source-truth is committed
+locally with focused tests passing; broader validation and live proof remain.
+The immediate target is v2.13, subject to the adopted gates. The full-24
 source preparation under #742 is integrated, but its blinded equal-evidence
 packet and authored input controls do not admit paid execution: recorded MCP
 binding, actual grants, descendants and accounting remain open. Product work

@@ -1,9 +1,11 @@
 # Owned-kind Trace context proof
 
-This is a prepared, opt-in before/after proof for CLI Trace context selection
-and the local TUI Trace binding. **The live capture has not been run.** It must
-remain gated until the helper and its cleanup/evidence paths receive an
-independent review.
+The owned before/after capture **passed on attempt three** on 2026-10-01,
+after independent helper and product review. The [derived report](report.json)
+records CLI observations, per-action TUI requests, source/binary pins and cleanup.
+The original receipt is retained at `/tmp/scout-trace-context-proof-3/receipt.json`;
+its digest links the summary to that local record. This proves scoped context
+binding against a real Kubernetes API and RBAC, not Argo reconciliation.
 
 The old source pin is `8cdb27b0bc9db17f5c0d1b59628b67cd3936ed6c`; the fixed
 source pin is `24074d858e8e2411ce2ba3e94340ec5646395eed`. The helper requires a
@@ -68,6 +70,12 @@ the original captured binding. A newly bound denied model must receive HTTP
 events, binding, requests, and rendering; it is not a terminal-emulator or
 manual-navigation proof.
 
+The successful TUI actions made six GETs on initial open, six on reopen after
+private config retargeting, and one denied GET (403) in the newly bound denied
+model. The owned cluster and source worktrees were removed; private kubeconfigs
+were absent after cleanup. Shared kubeconfig and CLI private config integrity
+passed. No model evaluation or cost-saving result follows from this capture.
+
 ## Boundaries and cleanup
 
 - The shared kubeconfig path is only hashed before and after; its contents are
@@ -99,7 +107,7 @@ manual-navigation proof.
 The proof demonstrates context binding and denied coverage for these owned
 fixture reads. It does not demonstrate a real Argo reconciliation, general
 cluster identity, ConfigHub behavior, controller writes, or all credential
-provider types. No live attempt or result is claimed here.
+provider types. Only the scoped attempt-three result above is claimed.
 
 ## Offline acceptance tests
 
