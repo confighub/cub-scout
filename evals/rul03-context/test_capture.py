@@ -266,6 +266,27 @@ class CaptureContractTests(unittest.TestCase):
             self.assertEqual(delete_env["KUBECONFIG"], str(private))
             self.assertFalse(any("unrelated-cluster" in args for args, _env in state["calls"]))
 
+    def test_partial_create_without_config_recovers_private_cleanup_only(self):
+        with tempfile.TemporaryDirectory() as td:
+            private = Path(td) / "admin.kubeconfig"
+            name = capture.owned_cluster_name("denied", "261001010203", "11111111")
+            existing = [name]
+            def runner(_binary, args, _timeout, env, _deadline):
+                self.assertEqual(env["KUBECONFIG"], str(private))
+                self.assertEqual(json.loads(private.read_bytes())["clusters"], [])
+                self.assertEqual(private.stat().st_mode & 0o777, 0o600)
+                if args == ["get", "clusters"]:
+                    return 0, "\n".join(existing).encode(), b""
+                self.assertEqual(args, ["delete", "cluster", "--name", name, "--kubeconfig", str(private)])
+                existing.clear()
+                return 0, b"", b""
+            result = capture.cleanup_owned_clusters(Path("kind"),
+                [{"name":name, "attempted":True, "kubeconfigPath":str(private)}],
+                {"schema":"rul03-owned-clusters.v1", "ownerPid":99, "clusterNames":[name]},
+                99, {"KUBECONFIG":"/shared/default"}, runner=runner)
+            self.assertTrue(result["verified"])
+            self.assertEqual(existing, [])
+
     def test_cleanup_never_falls_back_when_private_kubeconfig_is_missing(self):
         name = capture.owned_cluster_name("denied", "261001010203", "44444444")
         marker = {"schema": "rul03-owned-clusters.v1", "ownerPid": 99, "clusterNames": [name]}
@@ -293,6 +314,12 @@ class CaptureContractTests(unittest.TestCase):
         self.assertEqual(result["deleted"], [])
 
     def test_interruption_during_second_partial_create_runs_bounded_owned_cleanup(self):
+        self._interruption_capture()
+
+    def test_shared_config_hash_is_checked_after_cleanup(self):
+        self._interruption_capture(corrupt_shared=True)
+
+    def _interruption_capture(self, corrupt_shared=False):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             shared = root / "shared.kubeconfig"
@@ -341,6 +368,7 @@ class CaptureContractTests(unittest.TestCase):
                     deleted.append(name)
                     clusters.remove(name)
                     Path(_env["KUBECONFIG"]).write_bytes(b"mutated-by-private-cleanup")
+                    if corrupt_shared: shared.write_bytes(b"unexpected-shared-mutation")
                     return 0, b"", b""
                 if tool == "kubectl" and "apply" in args:
                     return 0, b"applied\n", b""
@@ -379,7 +407,12 @@ class CaptureContractTests(unittest.TestCase):
             self.assertNotEqual(provenance["privateKubeconfigSha256"]["adminAfterCleanup"]["denied"],
                                 provenance["privateKubeconfigSha256"]["adminBeforeCleanup"]["denied"])
             self.assertTrue(any(operation.get("errorType") == "CaptureInterrupted" for operation in provenance["operations"]))
-            self.assertEqual(provenance["sharedKubeconfigSha256"]["before"], provenance["sharedKubeconfigSha256"]["after"])
+            self.assertEqual(provenance["sharedKubeconfigSha256"]["before"], provenance["sharedKubeconfigSha256"]["beforeCleanup"])
+            self.assertEqual(provenance["sharedKubeconfigSha256"]["unchanged"], not corrupt_shared)
+            if corrupt_shared:
+                self.assertNotEqual(provenance["sharedKubeconfigSha256"]["before"], provenance["sharedKubeconfigSha256"]["after"])
+            else:
+                self.assertEqual(provenance["sharedKubeconfigSha256"]["before"], provenance["sharedKubeconfigSha256"]["after"])
             self.assertEqual((out.stat().st_mode & 0o777), 0o700)
 
 

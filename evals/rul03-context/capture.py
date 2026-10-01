@@ -393,7 +393,21 @@ def cleanup_owned_clusters(kind: Path, attempts: list[dict], marker: dict, owner
         return {"verified": False, "deleted": [], "errors": ["cleanup ownership marker did not match generated cluster names"]}
     config_by_name = {item["name"]: Path(item.get("kubeconfigPath", ""))
                       for item in attempts if isinstance(item, dict) and item.get("attempted")}
-    if any(not str(path) or path.is_symlink() or not path.is_file() for path in config_by_name.values()):
+    # A partial kind create may leave a container before writing kubeconfig.
+    # Recover only within the already-created private directory, never through
+    # a default config or a symlink. Empty config is sufficient for deletion.
+    try:
+        for path in config_by_name.values():
+            parent = path.parent
+            if (not path.is_absolute() or parent.is_symlink() or not parent.is_dir()
+                    or parent.stat().st_uid != os.getuid()
+                    or parent.stat().st_mode & 0o077 or path.is_symlink()):
+                raise CaptureError("private kubeconfig directory is unavailable")
+            if not path.exists():
+                _write(path, b'{"apiVersion":"v1","kind":"Config","clusters":[],"users":[],"contexts":[],"current-context":""}\n')
+            if not path.is_file():
+                raise CaptureError("private kubeconfig is not a regular file")
+    except (OSError, CaptureError):
         return {"verified": False, "deleted": [], "errors": ["private kubeconfig unavailable; cleanup refused"]}
     cleanup_env = dict(env)
     cleanup_env["KUBECONFIG"] = str(config_by_name[names[0]])
@@ -691,10 +705,10 @@ def capture(shared_config: Path, output: Path, kind_binary: Path, kubectl_binary
         cleanup_env = dict(os.environ)
         private_hashes["adminBeforeCleanup"] = {}
         try:
-            shared_after = sha256(shared_config.read_bytes())
+            shared_before_cleanup = sha256(shared_config.read_bytes())
         except OSError:
-            shared_after = ""
-            errors.append("shared kubeconfig could not be re-read after capture")
+            shared_before_cleanup = ""
+            errors.append("shared kubeconfig could not be read before cleanup")
         for role, path in admin_configs.items():
             if path.is_file() and not path.is_symlink():
                 current_hash = sha256(path.read_bytes())
@@ -715,6 +729,11 @@ def capture(shared_config: Path, output: Path, kind_binary: Path, kubectl_binary
         cleanup = cleanup_owned_clusters(kind_binary, attempts, marker, owner_pid, cleanup_env,
                                           runner=_command, timeout=CLEANUP_TIMEOUT)
         errors.extend(cleanup["errors"])
+        try:
+            shared_after = sha256(shared_config.read_bytes())
+        except OSError:
+            shared_after = ""
+            errors.append("shared kubeconfig could not be read after cleanup")
         private_hashes["adminAfterCleanup"] = {}
         for role, path in admin_configs.items():
             if path.is_file() and not path.is_symlink():
@@ -739,7 +758,7 @@ def capture(shared_config: Path, output: Path, kind_binary: Path, kubectl_binary
             "observerCurrentContext": {"before": observer_default, "after": observer_context_after if "observer_context_after" in locals() else ""},
             "deploymentsVerifiedByAdmin": deployments, "operations": operations, "observations": observations,
             "privateKubeconfigSha256": private_hashes,
-            "sharedKubeconfigSha256": {"before": shared_before, "after": shared_after_value,
+            "sharedKubeconfigSha256": {"before": shared_before, "beforeCleanup": shared_before_cleanup, "after": shared_after_value,
                                        "unchanged": bool(shared_after_value and shared_before == shared_after_value)},
             "cleanup": cleanup, "errors": errors,
             "exclusions": ["kubeconfig contents", "bearer tokens", "admin client keys/certificates", "Secrets"],
