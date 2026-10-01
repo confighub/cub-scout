@@ -13,6 +13,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location("recorded_scale_prepare", ROOT / "prepare.py")
@@ -72,8 +73,8 @@ def expected_views_reports():
 
 def views_map_schema():
     return {"type": "object", "properties": {
-        **{key: {"type": "string"} for key in
-           ("api_version", "kind", "namespace", "namespace_prefix")},
+        **{key: {"type": "string"} for key in ("api_version", "kind", "namespace")},
+        "namespace_prefix": {"type": "string", "minLength": 1},
         "owner": {"type": "string", "enum": list(preflight.VIEW_OWNERS)},
         "summary": {"type": "boolean"}},
         "required": ["api_version", "kind"], "additionalProperties": False}
@@ -140,14 +141,15 @@ class RecordedScalePacket(unittest.TestCase):
                           "required": ["api_version", "kind"], "additionalProperties": False}
         self.assertFalse(preflight.exact_map_schema(invalid_schema))
         views_schema = {"type": "object", "properties": {
-            **{key: {"type": "string"} for key in
-               ("api_version", "kind", "namespace", "namespace_prefix")},
+            **{key: {"type": "string"} for key in ("api_version", "kind", "namespace")},
+            "namespace_prefix": {"type": "string", "minLength": 1},
             "owner": {"type": "string", "enum": list(preflight.VIEW_OWNERS)},
             "summary": {"type": "boolean"}},
             "required": ["api_version", "kind"], "additionalProperties": False}
         self.assertTrue(preflight.exact_map_schema(views_schema, preflight.MAP_CONTRACT_VIEWS))
         for mutation in ("extra-property", "summary-string", "owner-enum", "owner-required",
-                         "allows-extra", "extra-keyword", "noncanonical-enum"):
+                         "allows-extra", "extra-keyword", "noncanonical-enum", "kind-enum",
+                         "wrong-prefix-minimum", "missing-prefix-minimum", "summary-enum"):
             schema = copy.deepcopy(views_schema)
             if mutation == "extra-property":
                 schema["properties"]["context"] = {"type": "string"}
@@ -161,6 +163,14 @@ class RecordedScalePacket(unittest.TestCase):
                 schema["additionalProperties"] = True
             elif mutation == "extra-keyword":
                 schema["not"] = {"required": ["summary"]}
+            elif mutation == "kind-enum":
+                schema["properties"]["kind"]["enum"] = ["Deployment"]
+            elif mutation == "wrong-prefix-minimum":
+                schema["properties"]["namespace_prefix"]["minLength"] = 0
+            elif mutation == "missing-prefix-minimum":
+                del schema["properties"]["namespace_prefix"]["minLength"]
+            elif mutation == "summary-enum":
+                schema["properties"]["summary"]["enum"] = [True, False]
             else:
                 schema["properties"]["owner"]["enum"][0] = "Unknown"
             with self.subTest(schema_mutation=mutation):
@@ -187,7 +197,7 @@ class RecordedScalePacket(unittest.TestCase):
         preflight.validate_views_reports(reports)
         for mutation in ("summary-schema", "summary-view", "summary-rows", "summary-guide",
                          "summary-counts", "native-owner", "native-name", "native-excluded",
-                         "provenance", "missing-variant"):
+                         "native-detector-detail", "provenance", "missing-variant"):
             changed = copy.deepcopy(reports)
             if mutation == "summary-schema":
                 changed["summary"]["schema"] = "map-list-recorded.v1"
@@ -205,6 +215,8 @@ class RecordedScalePacket(unittest.TestCase):
                 changed["native"]["resources"][0]["name"] = "wrong"
             elif mutation == "native-excluded":
                 changed["native"]["excludedFromScopeCount"] = 289
+            elif mutation == "native-detector-detail":
+                changed["native"]["resources"][0]["ownershipDetection"]["status"] = "unknown"
             elif mutation == "provenance":
                 changed["native-summary"]["provenance"]["sha256"] = "0" * 64
             else:
@@ -421,8 +433,23 @@ for line in sys.stdin:
             recording = root / "recording"
             recording.write_bytes(b"original")
             started = __import__("time").monotonic()
-            with self.assertRaises(TimeoutError):
-                preflight.call_map_stdio(wrapper, kubeconfig, recording, timeout=0.3)
+            original_popen = preflight.subprocess.Popen
+
+            def start_after_heartbeat(*args, **kwargs):
+                process = original_popen(*args, **kwargs)
+                ready_by = __import__("time").monotonic() + 2
+                while not heartbeat.exists() and __import__("time").monotonic() < ready_by:
+                    __import__("time").sleep(0.01)
+                if not heartbeat.exists():
+                    preflight.stop_owned_group(process.pid, grace=0.05, process=process)
+                    raise AssertionError("owned descendant did not reach its heartbeat readiness signal")
+                return process
+
+            # Synchronize only the test fixture's child startup. This keeps the
+            # production 0.3s timeout and drain/kill assertions unchanged.
+            with mock.patch.object(preflight.subprocess, "Popen", side_effect=start_after_heartbeat):
+                with self.assertRaises(TimeoutError):
+                    preflight.call_map_stdio(wrapper, kubeconfig, recording, timeout=0.3)
             self.assertLess(__import__("time").monotonic() - started, 3)
             self.assertEqual(recording.read_bytes(), b"original")
             self.assertTrue(heartbeat.exists())

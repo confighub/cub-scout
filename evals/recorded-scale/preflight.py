@@ -71,6 +71,10 @@ def exact_map_schema(schema: dict, contract: str = MAP_CONTRACT_BASIC) -> bool:
             return False
         if "minLength" in prop and (name != "namespace_prefix" or prop["minLength"] != 1 or isinstance(prop["minLength"], bool)):
             return False
+        if "enum" in prop and not (contract == MAP_CONTRACT_VIEWS and name == "owner"):
+            return False
+    if contract == MAP_CONTRACT_VIEWS and properties["namespace_prefix"].get("minLength") != 1:
+        return False
     if contract == MAP_CONTRACT_VIEWS:
         enum = properties["owner"].get("enum")
         if (not isinstance(enum, list) or not all(isinstance(value, str) for value in enum) or
@@ -256,6 +260,12 @@ def validate_views_reports(reports: dict) -> None:
         for field in ("provenance", "scope", "selectedCount", "excludedFromScopeCount", "ownerCounts"):
             if summary.get(field) != full.get(field):
                 raise ValueError(f"{summary_name} does not match full report {field}")
+    full_native = [resource for resource in reports["full"]["resources"] if resource["owner"] == "Native"]
+    native_rows = reports["native"]["resources"]
+    identity = lambda resource: (resource["apiVersion"], resource["kind"],
+                                 resource["namespace"], resource["name"])
+    if sorted(full_native, key=identity) != sorted(native_rows, key=identity):
+        raise ValueError("Native-filtered rows differ from the full inventory detector evidence")
 
 
 def call_map_stdio(wrapper: Path, kubeconfig: Path, recording: Path,
