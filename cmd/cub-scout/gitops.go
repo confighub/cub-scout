@@ -193,11 +193,12 @@ type DeployerStatus struct {
 	SourceRef string `json:"sourceRef,omitempty"`
 
 	// Argo-specific fields
-	SyncStatus    string         `json:"syncStatus,omitempty"`
-	HealthStatus  string         `json:"healthStatus,omitempty"`
-	PodReady      int            `json:"podReady,omitempty"`
-	PodTotal      int            `json:"podTotal,omitempty"`
-	RuntimeIssues []RuntimeIssue `json:"runtimeIssues,omitempty"`
+	SyncStatus      string           `json:"syncStatus,omitempty"`
+	HealthStatus    string           `json:"healthStatus,omitempty"`
+	PodReady        int              `json:"podReady,omitempty"`
+	PodTotal        int              `json:"podTotal,omitempty"`
+	RuntimeIssues   []RuntimeIssue   `json:"runtimeIssues,omitempty"`
+	RuntimeOmission *RuntimeOmission `json:"runtimeOmission,omitempty"`
 
 	// Revision information
 	LastAppliedRevision   string `json:"lastAppliedRevision,omitempty"`
@@ -208,6 +209,13 @@ type DeployerStatus struct {
 type RuntimeIssue struct {
 	Reason string `json:"reason"`
 	Count  int    `json:"count"`
+}
+
+// RuntimeOmission records why Argo runtime Pod evidence is unavailable. It is
+// separate from the controller-reported health and never represents zero Pods.
+type RuntimeOmission struct {
+	Resource string `json:"resource"`
+	Reason   string `json:"reason"`
 }
 
 // IsHealthy returns true if the deployer is healthy
@@ -709,6 +717,21 @@ func gitOpsCoverageOmissionReason(err error) string {
 	}
 }
 
+func gitOpsRuntimeOmissionReason(err error) string {
+	switch {
+	case apierrors.IsForbidden(err):
+		return "forbidden"
+	case apierrors.IsUnauthorized(err):
+		return "unauthorized"
+	case apierrors.IsTimeout(err):
+		return "timeout"
+	case apierrors.IsNotFound(err):
+		return "not_found"
+	default:
+		return "list_failed"
+	}
+}
+
 func controllerCoverageResourceID(spec controllerResourceSpec) string {
 	if spec.GVR.Group == "" {
 		return fmt.Sprintf("%s/%s", spec.GVR.Version, spec.GVR.Resource)
@@ -777,7 +800,15 @@ func fetchDeployerResource(ctx context.Context, client dynamic.Interface, ref ag
 }
 
 func enrichArgoApplicationRuntimeStatus(ctx context.Context, client dynamic.Interface, status *DeployerStatus, app *unstructured.Unstructured) {
-	if client == nil || status == nil || app == nil {
+	if status == nil {
+		return
+	}
+	if client == nil {
+		status.RuntimeOmission = &RuntimeOmission{Resource: "pods", Reason: "client_unavailable"}
+		return
+	}
+	if app == nil {
+		status.RuntimeOmission = &RuntimeOmission{Resource: "pods", Reason: "application_metadata_missing"}
 		return
 	}
 
@@ -786,24 +817,29 @@ func enrichArgoApplicationRuntimeStatus(ctx context.Context, client dynamic.Inte
 		appName = strings.TrimSpace(app.GetName())
 	}
 	if appName == "" {
+		status.RuntimeOmission = &RuntimeOmission{Resource: "pods", Reason: "application_name_missing"}
 		return
 	}
 
 	destinationNamespace, _, _ := unstructured.NestedString(app.Object, "spec", "destination", "namespace")
 	destinationNamespace = strings.TrimSpace(destinationNamespace)
 	if destinationNamespace == "" {
+		status.RuntimeOmission = &RuntimeOmission{Resource: "pods", Reason: "destination_namespace_missing"}
 		return
 	}
 
 	podsGVR := kindToGVR("Pod")
 	if podsGVR.Resource == "" {
+		status.RuntimeOmission = &RuntimeOmission{Resource: "pods", Reason: "resource_unsupported"}
 		return
 	}
 
 	podList, err := client.Resource(podsGVR).Namespace(destinationNamespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
+		status.RuntimeOmission = &RuntimeOmission{Resource: "pods", Reason: gitOpsRuntimeOmissionReason(err)}
 		return
 	}
+	status.RuntimeOmission = nil
 
 	issueCounts := map[string]int{}
 	for i := range podList.Items {
@@ -1283,6 +1319,9 @@ func outputDeployerStatus(dep DeployerStatus) {
 			for _, issue := range dep.RuntimeIssues {
 				fmt.Printf("        %s: %d pod(s)\n", issue.Reason, issue.Count)
 			}
+		}
+		if dep.RuntimeOmission != nil {
+			fmt.Printf("      Runtime evidence omitted: %s (%s)\n", dep.RuntimeOmission.Resource, dep.RuntimeOmission.Reason)
 		}
 	}
 

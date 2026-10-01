@@ -419,7 +419,7 @@ func checkGitOpsStatusContextScaffold(t *testing.T, root string) {
 		t.Fatalf("GitOps context case does not declare its fixture-owned scaffold: %v", err)
 	}
 	hashes := map[string]string{
-		"alpha.json": "d93071a643f8c33b7ad86e05cf79558142160ab26e218415a07f28c542172499",
+		"alpha.json": "758a676bde8f23aa235158e273a1324dfb5b332a39ae66a075c506dbc20392c9",
 		"beta.json":  "fd2c3cdd7f1084c41388c7124c02fa6ae8009cf8750c1947666a6750df0b233a",
 	}
 	for name, want := range hashes {

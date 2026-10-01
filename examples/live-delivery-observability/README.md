@@ -65,6 +65,8 @@ grep -n "kind:\\|event.toolkit.fluxcd.io\\|observedGeneration\\|CrashLoopBackOff
 - `gitops status --kube-context production` binds every Kubernetes read to
   that named context. The returned `context` is a kubeconfig label, not a
   stable cluster identity; ConfigHub service/auth selection is separate.
+- Argo `runtimeOmission` records a denied or unscoped destination-Pod read
+  separately from Argo's reported health; it never means zero Pods.
 - `gitops status --with-confighub` should keep release history, unit events,
   live-status writeback, and event-consumer workload evidence separate under
   `deliveryEvidence`. Its versioned `revisionCorrelation` compares the complete

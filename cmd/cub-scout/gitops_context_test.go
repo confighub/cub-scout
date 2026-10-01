@@ -29,6 +29,7 @@ type gitOpsContextServer struct {
 	requests []string
 	tokens   []string
 	caData   []byte
+	denyPods bool
 }
 
 func newGitOpsContextServer(t *testing.T, marker string, deny bool) *gitOpsContextServer {
@@ -38,6 +39,10 @@ func newGitOpsContextServer(t *testing.T, marker string, deny bool) *gitOpsConte
 		s.requests = append(s.requests, r.Method+" "+r.URL.Path)
 		s.tokens = append(s.tokens, r.Header.Get("Authorization"))
 		w.Header().Set("Content-Type", "application/json")
+		if s.denyPods && strings.HasSuffix(r.URL.Path, "/pods") {
+			http.Error(w, `{"kind":"Status","apiVersion":"v1","status":"Failure","reason":"Forbidden"}`, http.StatusForbidden)
+			return
+		}
 		if deny && strings.Contains(r.URL.Path, "/modeldeployments") {
 			http.Error(w, `{"kind":"Status","apiVersion":"v1","status":"Failure","reason":"Forbidden"}`, http.StatusForbidden)
 			return
@@ -223,6 +228,43 @@ func TestGitOpsStatusDeniedControllerAPIIsVisibleOnSelectedEndpoint(t *testing.T
 	require.Contains(t, strings.Join(alpha.requests, "\n"), "GET /apis/modelplane.ai/v1alpha1/modeldeployments")
 	require.Empty(t, beta.requests)
 	require.Equal(t, "alpha", summary.Context)
+}
+
+func TestGitOpsStatusRuntimeReadDenialIsExplicitAndDoesNotChangeArgoHealth(t *testing.T) {
+	prepareGitOpsContextState(t)
+	alpha := newGitOpsContextServer(t, "alpha-space", false)
+	alpha.denyPods = true
+	beta := newGitOpsContextServer(t, "beta-space", false)
+	path := filepath.Join(t.TempDir(), "config")
+	gitOpsContextKubeconfig(t, path, "beta", alpha, beta)
+	t.Setenv("KUBECONFIG", path)
+	t.Setenv("CUB_SCOUT_TEST_GITOPS_JSON", "")
+	output, err := runGitOpsStatusArgs(t, "gitops", "status", "--kube-context", "alpha", "--format", "json")
+	require.NoError(t, err)
+	var summary GitOpsSummary
+	require.NoError(t, json.Unmarshal([]byte(output), &summary))
+	require.Len(t, summary.Deployers, 1)
+	app := summary.Deployers[0]
+	require.Equal(t, "Application", app.Kind)
+	require.True(t, app.Ready, "a runtime read denial must not overwrite controller-reported health")
+	require.Equal(t, "Healthy", app.HealthStatus)
+	require.Zero(t, app.PodTotal, "a denied read is not evidence that zero pods exist")
+	require.Empty(t, app.RuntimeIssues)
+	var deployer map[string]interface{}
+	encoded, marshalErr := json.Marshal(app)
+	require.NoError(t, marshalErr)
+	require.NoError(t, json.Unmarshal(encoded, &deployer))
+	omission, ok := deployer["runtimeOmission"].(map[string]interface{})
+	require.True(t, ok, "JSON must expose the omitted runtime read: %s", encoded)
+	require.Equal(t, "pods", omission["resource"])
+	require.Equal(t, "forbidden", omission["reason"])
+	require.Contains(t, alpha.requests, "GET /api/v1/namespaces/team/pods")
+	require.Empty(t, beta.requests)
+
+	human := captureStdout(t, func() { outputDeployerStatus(app) })
+	require.Contains(t, human, "Runtime evidence omitted: pods (forbidden)")
+	require.Contains(t, renderGitOpsStatusMarkdown(summary), "pods: forbidden")
+	require.Contains(t, newGitOpsStatusTUIModel(summary).content, "pods: forbidden")
 }
 
 func TestGitOpsStatusRejectsExplicitContextWithRecordedFixtureBeforeReads(t *testing.T) {

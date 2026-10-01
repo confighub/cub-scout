@@ -988,6 +988,14 @@ selection is separate.
 | `omissions[].reason` | One of `forbidden`, `unauthorized`, `timeout`, or `list_failed`. |
 | `omissions[].message` | Raw Kubernetes/client error message when available; callers should not parse it for decisions. |
 
+An Argo `Application` deployer may also include `runtimeOmission` when the
+separate destination-Pod read is unavailable or its namespace metadata is
+missing. It reports only the resource (`pods`) and a bounded reason such as
+`forbidden` or `destination_namespace_missing`; it does not overwrite
+controller-reported `ready`, `healthStatus`, or `stage`. Missing/denied runtime
+reads are not evidence of zero Pods, and no arbitrary API error payload is
+included.
+
 ## Observation Evidence Contract
 
 `observation` describes where cub-scout read an observed fact from and when the

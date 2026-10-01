@@ -1293,10 +1293,14 @@ func renderGitOpsStatusMarkdown(summary GitOpsSummary) string {
 
 	if len(summary.Deployers) > 0 {
 		b.WriteString("\n## Deployers\n\n")
-		b.WriteString("| Kind | Namespace | Name | Ready | Stage | Sync | Health | Message |\n")
-		b.WriteString("|---|---|---|---|---|---|---|---|\n")
+		b.WriteString("| Kind | Namespace | Name | Ready | Stage | Sync | Health | Message | Runtime omission |\n")
+		b.WriteString("|---|---|---|---|---|---|---|---|---|\n")
 		for _, dep := range summary.Deployers {
-			b.WriteString(fmt.Sprintf("| %s | %s | %s | %t | %s | %s | %s | %s |\n",
+			runtimeOmission := "-"
+			if dep.RuntimeOmission != nil {
+				runtimeOmission = dep.RuntimeOmission.Resource + ": " + dep.RuntimeOmission.Reason
+			}
+			b.WriteString(fmt.Sprintf("| %s | %s | %s | %t | %s | %s | %s | %s | %s |\n",
 				dep.Kind,
 				dep.Namespace,
 				dep.Name,
@@ -1305,6 +1309,7 @@ func renderGitOpsStatusMarkdown(summary GitOpsSummary) string {
 				firstNonEmpty(dep.SyncStatus, "-"),
 				firstNonEmpty(dep.HealthStatus, "-"),
 				firstNonEmpty(dep.Message, "-"),
+				runtimeOmission,
 			))
 		}
 	}
