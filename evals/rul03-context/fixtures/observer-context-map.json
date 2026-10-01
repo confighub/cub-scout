@@ -1,0 +1,14 @@
+{
+  "contexts": {
+    "rul03-denied": {
+      "caSha256": "8ba7c8e5f075b688c3fea3d980bcfc073325774e60d5a7fe6f08d8e9557d458e",
+      "server": "https://127.0.0.1:59742"
+    },
+    "rul03-readable": {
+      "caSha256": "2df88494340ffc9d1a432e9afd875888126b47fd11b0fac703fa73e61e61aee7",
+      "server": "https://127.0.0.1:59757"
+    }
+  },
+  "currentContext": "rul03-readable",
+  "schema": "rul03-observer-context-map.v1"
+}
