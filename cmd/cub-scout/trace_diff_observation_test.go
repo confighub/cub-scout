@@ -190,6 +190,26 @@ func TestObserveTraceDiffSecretWithholdsPayloadAndDigest(t *testing.T) {
 	require.Zero(t, requests.Load(), "bounded reader intentionally excludes Secrets")
 }
 
+func TestObserveTraceDiffRejectsMalformedSecretIdentityBeforeReads(t *testing.T) {
+	var requests atomic.Int32
+	server := httptest.NewServer(traceDiffHandler(t, "", "", http.StatusOK, &requests))
+	defer server.Close()
+	session := traceDiffSession(t, server.URL, "alpha")
+	cases := []struct{ name, body string }{
+		{"apiVersion", "apiVersion: invalid group/version\nkind: Secret\nmetadata: {name: db, namespace: team-a}\ndata: {password: c2VjcmV0}\n"},
+		{"name", "apiVersion: v1\nkind: Secret\nmetadata: {name: Invalid_Name, namespace: team-a}\ndata: {password: c2VjcmV0}\n"},
+		{"namespace", "apiVersion: v1\nkind: Secret\nmetadata: {name: db, namespace: Invalid_NS}\ndata: {password: c2VjcmV0}\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			requests.Store(0)
+			_, err := observeTraceDiff(context.Background(), session, "Secret", "db", "", traceDiffManifest(t, tc.body))
+			require.ErrorContains(t, err, "invalid Kubernetes identity")
+			require.Zero(t, requests.Load(), "malformed Secret identity must fail before API reads")
+		})
+	}
+}
+
 func TestObserveTraceDiffIgnoresStatusAndUnrequestedDefaults(t *testing.T) {
 	var requests atomic.Int32
 	server := httptest.NewServer(traceDiffHandler(t, "/apis/apps/v1/namespaces/team-a/deployments/api", `{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"api","namespace":"team-a","uid":"uid-1","resourceVersion":"9","generation":3},"spec":{"replicas":1,"revisionHistoryLimit":10},"status":{"availableReplicas":1}}`, http.StatusOK, &requests))

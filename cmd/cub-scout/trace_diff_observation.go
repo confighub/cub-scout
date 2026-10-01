@@ -6,11 +6,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 const (
@@ -19,6 +22,9 @@ const (
 	traceDiffStatusMissing      = "missing"
 	traceDiffStatusInconclusive = "inconclusive"
 )
+
+var traceDiffKindPattern = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
+var traceDiffVersionPattern = regexp.MustCompile(`^[a-z][a-z0-9]*$`)
 
 // traceDiffSource describes a local, already-rendered operand. This is not a
 // claim about a controller's current render or intended state.
@@ -187,6 +193,16 @@ func selectTraceDiffDesired(objects []*unstructured.Unstructured, kind, name, na
 func validateTraceDiffDesired(obj *unstructured.Unstructured) error {
 	if obj == nil || strings.TrimSpace(obj.GetAPIVersion()) == "" || strings.TrimSpace(obj.GetKind()) == "" || strings.TrimSpace(obj.GetName()) == "" {
 		return fmt.Errorf("selected desired object has an incomplete Kubernetes identity")
+	}
+	gv, err := schema.ParseGroupVersion(obj.GetAPIVersion())
+	if err != nil || !traceDiffVersionPattern.MatchString(gv.Version) || (gv.Group != "" && len(validation.IsDNS1123Subdomain(gv.Group)) != 0) {
+		return fmt.Errorf("selected desired object has an invalid Kubernetes identity")
+	}
+	if !traceDiffKindPattern.MatchString(obj.GetKind()) || len(validation.IsDNS1123Subdomain(obj.GetName())) != 0 {
+		return fmt.Errorf("selected desired object has an invalid Kubernetes identity")
+	}
+	if namespace := obj.GetNamespace(); namespace != "" && len(validation.IsDNS1123Label(namespace)) != 0 {
+		return fmt.Errorf("selected desired object has an invalid Kubernetes identity")
 	}
 	return nil
 }
