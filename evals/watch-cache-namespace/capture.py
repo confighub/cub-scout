@@ -35,7 +35,7 @@ _INV04_SPEC.loader.exec_module(inv04)
 
 OLD_SOURCE = "d7f081e88e1841a9557e086a8c0b479c8180008d"
 NEW_SOURCE = "7611908afeb361b15a03d2687ccdaff6c504a811"
-GO_PROBE = HERE / "observation_watch_live_test.go"
+GO_PROBE = HERE / "observation_watch_live_test.go.txt"
 SCHEMA = "watch-cache-namespace-owned-proof.v1"
 EXPECTED_OLD_MISMATCHES = {
     "team-b-fallback-and-identity",
@@ -228,7 +228,7 @@ def validate_probe_result(variant: str, exit_code: int, result: dict,
         raise CaptureError(variant + " direct API identity differs from the admin-verified fixture UIDs")
     if (direct.get("teamAError") != "success" or direct.get("teamBError") != "success"
             or direct.get("allError") != "Forbidden" or direct.get("deniedError") != "Forbidden"
-            or direct.get("clusterScopedNamespacedError") not in ("NotFound", "BadRequest")):
+            or direct.get("clusterScopedNamespacedError") not in ("NotFound", "BadRequest", "Forbidden")):
         raise CaptureError(variant + " direct read outcomes differ from the required controls")
     paths = {
         "teamA": "/api/v1/namespaces/" + namespace_a + "/configmaps",
@@ -249,8 +249,9 @@ def validate_probe_result(variant: str, exit_code: int, result: dict,
             or 403 not in statuses(direct_records, paths["all"])
             or 403 not in statuses(direct_records, paths["denied"])):
         raise CaptureError(variant + " direct API status controls differ from the fixture contract")
-    if not any(status in (400, 404) for status in statuses(direct_records, paths["nodes"])):
-        raise CaptureError(variant + " direct cluster-scope invalid-namespace control was not a 400/404")
+    node_statuses = statuses(direct_records, paths["nodes"])
+    if not any(status in (400, 403, 404) for status in node_statuses):
+        raise CaptureError(variant + " direct cluster-scope invalid-namespace control was not an API error")
     if variant == "before":
         if exit_code == 0 or set(mismatches) != EXPECTED_OLD_MISMATCHES:
             raise CaptureError("pinned old source did not show exactly the expected namespace-cache regression")
@@ -275,13 +276,13 @@ def validate_probe_result(variant: str, exit_code: int, result: dict,
                 or identities(watched.get("teamB"), namespace_b) != direct_b
                 or watched.get("teamAError") != "success" or watched.get("teamBError") != "success"
                 or watched.get("allError") != "Forbidden" or watched.get("deniedError") != "Forbidden"
-                or watched.get("clusterScopedNamespacedError") not in ("NotFound", "BadRequest")):
+                or watched.get("clusterScopedNamespacedError") not in ("NotFound", "BadRequest", "Forbidden")):
             raise CaptureError("fixed-source outcomes/identities differ from direct API evidence")
         for path, expected in ((paths["teamB"], 200), (paths["all"], 403), (paths["denied"], 403)):
             if expected not in statuses(result["watchRequests"], path):
                 raise CaptureError("fixed source did not retain the expected fallback status for " + path)
-        if not any(status in (400, 404) for status in statuses(result["watchRequests"], paths["nodes"])):
-            raise CaptureError("fixed source did not retain the cluster-scope API fallback status")
+        if not node_statuses[0] in statuses(result["watchRequests"], paths["nodes"]):
+            raise CaptureError("fixed source did not retain the direct cluster-scope API fallback status")
     else:
         raise CaptureError("unknown probe variant")
     return {"variant": variant, "exitCode": exit_code, "mismatches": mismatches,
@@ -368,15 +369,27 @@ def _probe_environment(base_env: dict[str, str], kubeconfig: Path, context_name:
     return private_env
 
 
+def _go_worktree_argv(worktree: Path, args: list[str]) -> list[str]:
+    """Pin Go's package root without changing the helper process cwd."""
+    return ["go", "-C", str(worktree.resolve()), *args]
+
+
+def _compile_environment(base_env: dict[str, str], go_cache: Path,
+                        empty_kubeconfig: Path) -> dict[str, str]:
+    env = {key: value for key, value in base_env.items()
+           if key in ("PATH", "HOME", "TMPDIR", "LANG", "LC_ALL")}
+    env.update({"GOPROXY": "off", "GOSUMDB": "off", "GOTOOLCHAIN": "local",
+                "GOCACHE": str(go_cache), "KUBECONFIG": str(empty_kubeconfig)})
+    return env
+
+
 def _compile_probe(worktree: Path, variant: str, deadline: float,
-                   base_env: dict[str, str], go_cache: Path) -> tuple[int, bytes, bytes, float]:
-    compile_env = {key: value for key, value in base_env.items()
-                   if key in ("PATH", "HOME", "TMPDIR", "LANG", "LC_ALL")}
-    compile_env.update({"GOPROXY": "off", "GOSUMDB": "off", "GOTOOLCHAIN": "local",
-                        "GOCACHE": str(go_cache)})
+                   base_env: dict[str, str], go_cache: Path,
+                   empty_kubeconfig: Path) -> tuple[int, bytes, bytes, float]:
+    compile_env = _compile_environment(base_env, go_cache, empty_kubeconfig)
     started = time.monotonic()
-    code, stdout, stderr = _run(["go", "test", "./cmd/cub-scout", "-run", "^$", "-count=1"],
-                                180, env=compile_env, max_output=MAX_OUTPUT, deadline=deadline)
+    argv = _go_worktree_argv(worktree, ["test", "./cmd/cub-scout", "-run", "^$", "-count=1"])
+    code, stdout, stderr = _run(argv, 180, env=compile_env, max_output=MAX_OUTPUT, deadline=deadline)
     return code, stdout, stderr, round(time.monotonic() - started, 3)
 
 
@@ -386,7 +399,8 @@ def _run_probe(worktree: Path, variant: str, kubeconfig: Path, context_name: str
     private_env = _probe_environment(base_env, kubeconfig, context_name, variant,
                                      namespaces, cm_name, result_path, go_cache)
     command = ["go", "test", "./cmd/cub-scout", "-run", "^TestWatchNamespaceLiveProbe$", "-count=1", "-v"]
-    code, stdout, stderr = _run(command, 220, env=private_env, max_output=MAX_OUTPUT, deadline=deadline)
+    argv = _go_worktree_argv(worktree, command[1:])
+    code, stdout, stderr = _run(argv, 220, env=private_env, max_output=MAX_OUTPUT, deadline=deadline)
     try:
         result = json.loads(result_path.read_text())
     except (OSError, json.JSONDecodeError):
@@ -484,22 +498,27 @@ def capture(output: Path, shared_config_hash_source: Path) -> dict:
             source_records[label]["adaptedProbeSha256"] = test_hash
 
         # Compile both pinned source/probe pairs before creating any cluster.
-        # No KUBECONFIG is present in this process environment and -run '^$'
-        # executes no Go tests.
+        # Compile against an explicit empty, private kubeconfig. No caller or
+        # shared credentials are inherited, and -run '^$' executes no tests.
         compile_base_env = {key: value for key, value in os.environ.items()
                             if key in ("PATH", "HOME", "TMPDIR", "LANG", "LC_ALL")}
+        offline_kubeconfig = private / "offline-empty.kubeconfig"
+        _write(offline_kubeconfig, b"")
         for label, tree in (("before", old_tree), ("after", new_tree)):
             compile_started = utc_now()
             code, stdout, stderr, elapsed = _compile_probe(tree, label, deadline,
-                                                           compile_base_env, private / "go-cache")
+                                                           compile_base_env, private / "go-cache",
+                                                           offline_kubeconfig)
             _write(out / (label + "-compile-stdout.txt"), stdout)
             _write(out / (label + "-compile-stderr.txt"), stderr)
             operation = {"operation": "offline-go-probe-compile", "variant": label,
                          "sourceRevision": OLD_SOURCE if label == "before" else NEW_SOURCE,
                          "startedAt": compile_started, "endedAt": utc_now(),
                          "elapsedSeconds": elapsed, "exitCode": code,
-                         "argv": ["go", "test", "./cmd/cub-scout", "-run", "^$", "-count=1"],
-                         "networkDownloadsDisabled": True, "kubeconfigProvided": False}
+                         "argv": _go_worktree_argv(tree, ["test", "./cmd/cub-scout", "-run", "^$", "-count=1"]),
+                         "workingDirectory": str(tree.resolve()),
+                         "networkDownloadsDisabled": True, "kubeconfigProvided": True,
+                         "kubeconfigIsEmpty": offline_kubeconfig.stat().st_size == 0}
             operations.append(operation)
             if code:
                 raise CaptureError(label + " Go probe compile-only preflight failed before cluster creation")
@@ -559,7 +578,8 @@ def capture(output: Path, shared_config_hash_source: Path) -> dict:
             phase = validate_probe_result(label, code, result, source_records.get("fixtureUIDs", {}))
             phase_records.append(phase)
             phase["startedAt"], phase["endedAt"], phase["elapsedSeconds"] = probe_started, ended_at, probe_elapsed
-            phase["argv"] = ["go", "test", "./cmd/cub-scout", "-run", "^TestWatchNamespaceLiveProbe$", "-count=1", "-v"]
+            phase["argv"] = _go_worktree_argv(tree, ["test", "./cmd/cub-scout", "-run", "^TestWatchNamespaceLiveProbe$", "-count=1", "-v"])
+            phase["workingDirectory"] = str(tree.resolve())
             phase["workingSourceRevision"] = OLD_SOURCE if label == "before" else NEW_SOURCE
             phase["resultFile"] = result_path.name
             phase["resultSha256"] = sha256_file(result_path)
@@ -576,6 +596,15 @@ def capture(output: Path, shared_config_hash_source: Path) -> dict:
                 inv04._suppress_capture_signals(signal_state)
             except Exception:
                 pass
+        # Record private config bytes before kind cleanup. The kind deletion
+        # command may legitimately rewrite/remove the admin context itself.
+        for label, path in (("adminBeforeCleanup", admin), ("observerBeforeCleanup", observer)):
+            if path.is_file():
+                private_hashes[label] = sha256_file(path)
+        if private_hashes.get("adminInitial") and private_hashes.get("adminBeforeCleanup") != private_hashes["adminInitial"]:
+            errors.append("private admin kubeconfig changed during capture")
+        if private_hashes.get("observerInitial") and private_hashes.get("observerBeforeCleanup") != private_hashes["observerInitial"]:
+            errors.append("private observer kubeconfig changed during capture")
         try:
             cleanup_started, cleanup_clock = utc_now(), time.monotonic()
             if create_attempted:
@@ -595,13 +624,6 @@ def capture(output: Path, shared_config_hash_source: Path) -> dict:
         except Exception:
             cleanup_verified = False
             errors.append("owned kind cleanup could not be confirmed")
-        for label, path in (("adminBeforeCleanup", admin), ("observerBeforeCleanup", observer)):
-            if path.is_file():
-                private_hashes[label] = sha256_file(path)
-        if private_hashes.get("adminInitial") and private_hashes.get("adminBeforeCleanup") != private_hashes["adminInitial"]:
-            errors.append("private admin kubeconfig changed during capture")
-        if private_hashes.get("observerInitial") and private_hashes.get("observerBeforeCleanup") != private_hashes["observerInitial"]:
-            errors.append("private observer kubeconfig changed during capture")
         try:
             shared_after = sha256_file(shared_config_hash_source)
         except Exception:

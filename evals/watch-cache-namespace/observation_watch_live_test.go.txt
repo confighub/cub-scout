@@ -258,7 +258,7 @@ func TestWatchNamespaceLiveProbe(t *testing.T) {
 	if !apierrors.IsForbidden(errDenied) || directDenied != nil {
 		mismatches = append(mismatches, "direct-denied-namespace-must-be-forbidden")
 	}
-	if (!apierrors.IsNotFound(errNode) && !apierrors.IsBadRequest(errNode)) || directNode != nil {
+	if (!apierrors.IsNotFound(errNode) && !apierrors.IsBadRequest(errNode) && !apierrors.IsForbidden(errNode)) || directNode != nil {
 		mismatches = append(mismatches, "direct-cluster-scope-invalid-namespace-control")
 	}
 
@@ -318,7 +318,7 @@ func TestWatchNamespaceLiveProbe(t *testing.T) {
 			beforeNode := watchNamespaceCountList(watchCounter.snapshot(), pathNodeNamespaced)
 			cachedNode, cachedNodeErr := watchNamespaceList(ctx, watchClient, clusterNodeGVR, namespaceA)
 			afterNode := watchNamespaceCountList(watchCounter.snapshot(), pathNodeNamespaced)
-			if (!apierrors.IsNotFound(cachedNodeErr) && !apierrors.IsBadRequest(cachedNodeErr)) || cachedNode != nil || afterNode != beforeNode+1 || watchNamespaceReason(cachedNodeErr) != watchNamespaceReason(errNode) {
+			if (!apierrors.IsNotFound(cachedNodeErr) && !apierrors.IsBadRequest(cachedNodeErr) && !apierrors.IsForbidden(cachedNodeErr)) || cachedNode != nil || afterNode != beforeNode+1 || watchNamespaceReason(cachedNodeErr) != watchNamespaceReason(errNode) {
 				mismatches = append(mismatches, "cluster-scope-fallback-and-error")
 			} else {
 				checks["clusterScopeFallbackPreservesError"] = true

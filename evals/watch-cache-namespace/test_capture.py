@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
 
 HERE = Path(__file__).resolve().parent
 SPEC = importlib.util.spec_from_file_location("watch_namespace_capture", HERE / "capture.py")
@@ -96,9 +97,17 @@ class WatchNamespaceCaptureTests(unittest.TestCase):
         with self.assertRaisesRegex(capture.CaptureError, "all five exact API paths"):
             capture.validate_probe_result("after", 0, result)
         result = self.fixture_result("after")
-        result["directRequests"][-1]["status"] = 403
-        with self.assertRaisesRegex(capture.CaptureError, "400/404"):
+        result["directRequests"][-1]["status"] = 500
+        with self.assertRaisesRegex(capture.CaptureError, "API error"):
             capture.validate_probe_result("after", 0, result)
+
+    def test_cluster_scope_control_preserves_an_authorization_denial(self):
+        result = self.fixture_result("after")
+        result["directRequests"][-1]["status"] = 403
+        result["watchRequests"][-1]["status"] = 403
+        result["direct"]["clusterScopedNamespacedError"] = "Forbidden"
+        result["watch"]["clusterScopedNamespacedError"] = "Forbidden"
+        self.assertTrue(capture.validate_probe_result("after", 0, result)["checks"])
 
     def test_validator_rejects_malformed_or_aliased_scope_identity(self):
         result = self.fixture_result("after")
@@ -111,12 +120,57 @@ class WatchNamespaceCaptureTests(unittest.TestCase):
             capture.validate_probe_result("after", 0, result)
 
     def test_old_adapter_changes_only_constructor_and_probe_scope_injection(self):
-        source = (HERE / "observation_watch_live_test.go").read_bytes()
+        source = (HERE / "observation_watch_live_test.go.txt").read_bytes()
         adapted = capture._old_adapter(source)
         self.assertEqual(adapted.count(b"newWatchBackedClient(ctx, watched,"), 1)
         self.assertIn(b"[]schema.GroupVersionResource{configMapGVR}, namespaceA)", adapted)
         self.assertNotIn(b"resourceScope", adapted)
         self.assertIn(b"func cacheableList", (capture.REPO / "cmd/cub-scout/observation_watch.go").read_bytes())
+
+    def test_probe_commands_are_bound_to_each_absolute_source_worktree(self):
+        before = Path("/tmp/probe-before").resolve()
+        after = Path("/tmp/probe-after").resolve()
+        before_argv = capture._go_worktree_argv(before, ["test", "./cmd/cub-scout", "-run", "^$"])
+        after_argv = capture._go_worktree_argv(after, ["test", "./cmd/cub-scout", "-run", "^$"])
+        self.assertEqual(before_argv[:3], ["go", "-C", str(before)])
+        self.assertEqual(after_argv[:3], ["go", "-C", str(after)])
+        self.assertNotEqual(before_argv, after_argv)
+
+    def test_compile_and_probe_pass_source_worktree_in_go_argv(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            tree = root / "source"
+            tree.mkdir()
+            empty = root / "empty.kubeconfig"
+            empty.write_bytes(b"")
+            with mock.patch.object(capture, "_run", return_value=(0, b"", b"")) as run:
+                capture._compile_probe(tree, "before", capture.time.monotonic() + 10,
+                                       {"PATH": "/safe", "KUBECONFIG": "/shared"},
+                                       root / "cache", empty)
+                compile_args, compile_kwargs = run.call_args
+                self.assertEqual(compile_args[0][:3], ["go", "-C", str(tree.resolve())])
+                self.assertEqual(compile_kwargs["env"]["KUBECONFIG"], str(empty))
+                self.assertEqual(compile_kwargs["env"]["GOPROXY"], "off")
+
+                run.reset_mock()
+                capture._run_probe(tree, "after", root / "observer.kubeconfig", "kind-own",
+                                   ("a", "b", "denied"), "same-name", root / "missing.json",
+                                   capture.time.monotonic() + 10, {"PATH": "/safe"}, root / "cache")
+                probe_args, probe_kwargs = run.call_args
+                self.assertEqual(probe_args[0][:3], ["go", "-C", str(tree.resolve())])
+                self.assertEqual(probe_kwargs["env"]["KUBECONFIG"], str(root / "observer.kubeconfig"))
+
+    def test_compile_env_uses_an_explicit_empty_private_kubeconfig(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            config = root / "empty.kubeconfig"
+            config.write_bytes(b"")
+            env = capture._compile_environment({"PATH": "/safe/bin", "KUBECONFIG": "/shared/config"},
+                                               root / "go-cache", config)
+            self.assertEqual(env["KUBECONFIG"], str(config))
+            self.assertEqual(config.stat().st_size, 0)
+            self.assertEqual(env["GOPROXY"], "off")
+            self.assertEqual(env["GOSUMDB"], "off")
 
     def test_private_observer_config_rejects_non_loopback_endpoint(self):
         with self.assertRaisesRegex(capture.CaptureError, "non-loopback"):

@@ -16,8 +16,11 @@ namespace and no cluster role.
 The probe records exact dynamic-client HTTP method/path/watch/status tuples and
 compares sorted `(namespace, name, UID)` identities. The direct API control
 must return the same-name ConfigMap in both A and B, a Forbidden result for an
-all-namespace list, a Forbidden result for the denied namespace, and a 400/404
-for a namespaced URL to cluster-scoped Nodes. The old source must fail exactly
+all-namespace list, a Forbidden result for the denied namespace, and an API
+error (Forbidden, BadRequest, or NotFound) for a namespaced URL to
+cluster-scoped Nodes. The fixed-source probe must preserve the exact observed
+direct API error rather than assuming which authorization/routing layer
+rejects that invalid request. The old source must fail exactly
 these cache-reuse checks: B, all namespaces, denied namespace, and the
 cluster-scoped request. The A cache hit remains correct. The fixed source must
 pass every comparison, issue live fallback LISTs for B/all/denied/cluster
@@ -35,14 +38,16 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest evals/watch-cache-namespace/test_c
 ```
 
 The Go probe source is copied only into two isolated temporary source
-worktrees. The old-source adapter alters its constructor call and adds no
-scope-map field; it does not patch `cacheableList` or any old product source.
-After independent review, the runner compiles both probe/source pairs with
-`go test ./cmd/cub-scout -run '^$' -count=1` before creating a cluster. That
-stage has no kubeconfig in its environment, executes no tests, and has Go
-module/toolchain downloads disabled. Only after both compile steps pass does it
-create the owned cluster and run the single live probe test with the explicit
-private observer config.
+worktrees. The template is named `.go.txt`, so package discovery never compiles
+it as a separate package. The old-source adapter alters its constructor call
+and adds no scope-map field; it does not patch `cacheableList` or any old
+product source. After independent review, the runner compiles both probe/source
+pairs using `go -C <absolute-source-worktree> test ./cmd/cub-scout -run '^$'
+-count=1` before creating a cluster. Each command has both an explicit
+Go `-C` worktree, plus a private empty `KUBECONFIG`; it executes no tests and
+has Go module/toolchain downloads disabled. Only after both compile
+steps pass does it create the owned cluster and run the single live probe test
+from each pinned worktree with the explicit private observer config.
 
 ## Reviewed invocation shape (do not run before independent review)
 
