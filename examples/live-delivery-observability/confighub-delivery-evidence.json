@@ -34,21 +34,36 @@
           "syncStatus": "Synced",
           "healthStatus": "Healthy",
           "operationPhase": "Succeeded",
-          "revision": "sha256:abc123",
+          "revision": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "observedAt": "2026-09-10T11:55:00Z",
           "freshness": "fresh",
           "freshnessSeconds": 300,
+          "revisionCorrelation": {
+            "schema": "confighub.reportedRevisionReleaseCorrelation.v1",
+            "state": "digest_match",
+            "reason": "reported revision exactly matches one returned same-space manifest digest",
+            "observedMatchCount": 1,
+            "candidates": [
+              {
+                "releaseId": "synthetic-release-match"
+              }
+            ],
+            "coverage": "returned_rows",
+            "coverageScope": "parsed rows returned by the existing bounded release query; completeness of all matching server history is not asserted",
+            "limitation": "exact non-empty SpaceID-scoped revision equality with manifestDigest is correlation only; it does not prove a release was fetched, applied, executed, or accepted by a gate"
+          },
           "deliveryVerdict": "PASS",
           "applicationHealthVerdict": "PASS"
         }
       ],
       "releases": [
         {
-          "releaseId": "22222222-2222-4222-8222-222222222222",
+          "releaseId": "synthetic-release-match",
           "space": "prod",
           "spaceId": "sp-123",
           "targetId": "55555555-5555-4555-8555-555555555555",
           "digest": "sha256:abc123",
+          "manifestDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "bundleBaseName": "prod",
           "releaseNum": 42,
           "published": true,

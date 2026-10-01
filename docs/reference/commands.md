@@ -501,6 +501,7 @@ cub-scout impact shared-db-config --space platform --json
 |------|-------------|
 | `--format` | Output format: `ascii`, `json`, `md` |
 | `--json` | Output as JSON (shorthand for `--format json`) |
+| `--tui` | Open one read-only status snapshot in a scrollable viewport; cannot be combined with `--format` or `--json` |
 | `--space` | ConfigHub space of the unit; one space, not `*` (default: `CUB_SPACE`). Units and their dependency links are matched by slug, which is unique only within a space. With no space from either source the command refuses |
 
 Output names the space read (`scope` in JSON). Dependents are counted from
@@ -2632,6 +2633,23 @@ stale, malformed, or disconnected evidence is reported under
 Deployment reads for `app=argobot` and `app.kubernetes.io/name=argobot`; it
 searches all namespaces when allowed and reports a scope omission if RBAC forces
 fallback to the requested namespace.
+
+When both live status and release history are available, each live-status row
+may include a versioned `revisionCorrelation` fact. It compares the complete
+reported `sha256:<64 lowercase hex>` revision with release `manifestDigest`
+values from the same exact non-empty `SpaceID` in the already bounded time
+window. The `coverage` field describes parsed rows returned by that query only;
+it does not assert that all matching server history was returned. It never
+compares the bundle `digest`, slug, timestamps, or a trimmed display value.
+Missing, malformed, partial, or ambiguous evidence remains
+`unknown` or `ambiguous`; a match means only string equality with a bounded
+release record and does not prove that a controller fetched, applied, or
+executed that release or that a gate accepted it. This fact does not change
+freshness or delivery/application-health verdicts.
+
+`--tui` renders the same collected status as a read-once scrollable viewport.
+Use `--with-confighub` to include the optional connected evidence. The viewport
+does not poll or add reads.
 
 **v2.10.1 freshness correction:** a reported success or failure
 needs a valid timestamp at or before the observation clock and within

@@ -199,7 +199,7 @@ func TestCollectGitOpsDeliveryEvidence_BoundsConfigHubReadsAndKeepsOmissionsStru
 		calls = append(calls, append([]string(nil), args...))
 		switch {
 		case reflect.DeepEqual(args, gitOpsConfigHubSpaceListArgs("payments-prod")):
-			return `[{"Space":{"Slug":"payments-prod","SpaceID":"sp-123","Annotations":{"confighub.com/live-status":"{\"source\":\"argobot\",\"app\":\"payments-prod\",\"syncStatus\":\"Synced\",\"healthStatus\":\"Healthy\",\"operationPhase\":\"Succeeded\",\"revision\":\"sha256:abc\",\"observedAt\":\"2026-09-10T11:55:00Z\"}"}}}]`, nil
+			return `[{"Space":{"Slug":"payments-prod","SpaceID":"33333333-3333-4333-8333-333333333333","Annotations":{"confighub.com/live-status":"{\"source\":\"argobot\",\"app\":\"payments-prod\",\"syncStatus\":\"Synced\",\"healthStatus\":\"Healthy\",\"operationPhase\":\"Succeeded\",\"revision\":\"sha256:0df04e007c0d5d8b2e89eec57ced4d16a2f738edff7ed43e830f652dc11897cf\",\"observedAt\":\"2026-09-10T11:55:00Z\"}"}}}]`, nil
 		case len(args) > 1 && args[0] == "release" && args[1] == "list":
 			// The recorded server shape, not an invented one: see recordedV05ReleaseList.
 			return recordedV05ReleaseList, nil
@@ -240,6 +240,13 @@ func TestCollectGitOpsDeliveryEvidence_BoundsConfigHubReadsAndKeepsOmissionsStru
 	}
 	if len(evidence.ConfigHub.LiveStatuses) != 1 || evidence.ConfigHub.LiveStatuses[0].DeliveryVerdict != agent.VerdictPASS {
 		t.Fatalf("live statuses = %+v, want one PASS status", evidence.ConfigHub.LiveStatuses)
+	}
+	correlation := evidence.ConfigHub.LiveStatuses[0].RevisionCorrelation
+	if correlation == nil || correlation.State != "digest_match" || correlation.ObservedMatchCount != 1 {
+		t.Fatalf("reported revision correlation = %+v, want one exact bounded match", correlation)
+	}
+	if !strings.Contains(renderGitOpsStatusMarkdown(GitOpsSummary{DeliveryEvidence: evidence}), "digest_match") {
+		t.Fatal("Markdown output omitted the correlation surface")
 	}
 	if len(evidence.ConfigHub.Releases) != 1 || evidence.ConfigHub.Releases[0].TargetID != "55555555-5555-4555-8555-555555555555" {
 		t.Fatalf("releases = %+v, want one parsed release", evidence.ConfigHub.Releases)
@@ -308,11 +315,13 @@ func TestBuildConfigHubReleaseEvidence_ParsesRecordedV05ReleaseShape(t *testing.
 		// It is the only field that joins a Release to what a controller
 		// pulled: against a live server the registry's Docker-Content-Digest
 		// equals ManifestDigest, and differs from Digest.
-		ManifestDigest: "sha256:0df04e007c0d5d8b2e89eec57ced4d16a2f738edff7ed43e830f652dc11897cf",
-		BundleBaseName: "payments-prod",
-		ReleaseNum:     1,
-		Published:      boolPtr(true),
-		CreatedAt:      "2026-09-03T15:02:09.791039Z",
+		ManifestDigest:    "sha256:0df04e007c0d5d8b2e89eec57ced4d16a2f738edff7ed43e830f652dc11897cf",
+		BundleBaseName:    "payments-prod",
+		ReleaseNum:        1,
+		Published:         boolPtr(true),
+		CreatedAt:         "2026-09-03T15:02:09.791039Z",
+		spaceIDRaw:        "33333333-3333-4333-8333-333333333333",
+		manifestDigestRaw: "sha256:0df04e007c0d5d8b2e89eec57ced4d16a2f738edff7ed43e830f652dc11897cf",
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("release evidence =\n  %+v\nwant\n  %+v", got, want)

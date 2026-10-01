@@ -8,7 +8,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -88,20 +90,60 @@ func (e *ConfigHubDeliveryEvidence) unitEventsInWindow() []ConfigHubUnitEventEvi
 }
 
 type ConfigHubLiveStatusEvidence struct {
-	Space                    string               `json:"space,omitempty"`
-	SpaceID                  string               `json:"spaceId,omitempty"`
-	Source                   string               `json:"source,omitempty"`
-	App                      string               `json:"app,omitempty"`
-	SyncStatus               string               `json:"syncStatus,omitempty"`
-	HealthStatus             string               `json:"healthStatus,omitempty"`
-	OperationPhase           string               `json:"operationPhase,omitempty"`
-	Revision                 string               `json:"revision,omitempty"`
-	Message                  string               `json:"message,omitempty"`
-	ObservedAt               string               `json:"observedAt,omitempty"`
-	Freshness                string               `json:"freshness"`
-	FreshnessSeconds         int64                `json:"freshnessSeconds,omitempty"`
-	DeliveryVerdict          agent.ReceiptVerdict `json:"deliveryVerdict"`
-	ApplicationHealthVerdict agent.ReceiptVerdict `json:"applicationHealthVerdict"`
+	Space                    string                        `json:"space,omitempty"`
+	SpaceID                  string                        `json:"spaceId,omitempty"`
+	Source                   string                        `json:"source,omitempty"`
+	App                      string                        `json:"app,omitempty"`
+	SyncStatus               string                        `json:"syncStatus,omitempty"`
+	HealthStatus             string                        `json:"healthStatus,omitempty"`
+	OperationPhase           string                        `json:"operationPhase,omitempty"`
+	Revision                 string                        `json:"revision,omitempty"`
+	RevisionCorrelation      *ConfigHubRevisionCorrelation `json:"revisionCorrelation,omitempty"`
+	Message                  string                        `json:"message,omitempty"`
+	ObservedAt               string                        `json:"observedAt,omitempty"`
+	Freshness                string                        `json:"freshness"`
+	FreshnessSeconds         int64                         `json:"freshnessSeconds,omitempty"`
+	DeliveryVerdict          agent.ReceiptVerdict          `json:"deliveryVerdict"`
+	ApplicationHealthVerdict agent.ReceiptVerdict          `json:"applicationHealthVerdict"`
+	spaceIDRaw               string
+	revisionRaw              string
+}
+
+const configHubRevisionCorrelationSchema = "confighub.reportedRevisionReleaseCorrelation.v1"
+const maxRevisionCorrelationCandidates = 3
+
+var completeSHA256Digest = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
+
+// ConfigHubRevisionCorrelation records only whether an exact reported revision
+// string equals a bounded release ManifestDigest in the same SpaceID. It does
+// not prove that a controller fetched, applied, or executed that release.
+type ConfigHubRevisionCorrelation struct {
+	Schema              string                        `json:"schema"`
+	State               string                        `json:"state"`
+	Reason              string                        `json:"reason,omitempty"`
+	ObservedMatchCount  int                           `json:"observedMatchCount,omitempty"`
+	Candidates          []ConfigHubRevisionCandidate  `json:"candidates,omitempty"`
+	CandidatesOmitted   int                           `json:"candidatesOmitted,omitempty"`
+	ReportedRevisionRaw string                        `json:"reportedRevisionRaw,omitempty"`
+	ReportedSpaceIDRaw  string                        `json:"reportedSpaceIdRaw,omitempty"`
+	InvalidRowCount     int                           `json:"invalidRowCount,omitempty"`
+	InvalidRows         []ConfigHubRevisionInvalidRow `json:"invalidRows,omitempty"`
+	InvalidRowsOmitted  int                           `json:"invalidRowsOmitted,omitempty"`
+	Coverage            string                        `json:"coverage"`
+	CoverageScope       string                        `json:"coverageScope"`
+	Limitation          string                        `json:"limitation"`
+}
+
+type ConfigHubRevisionCandidate struct {
+	ReleaseID string `json:"releaseId,omitempty"`
+	Slug      string `json:"slug,omitempty"`
+}
+
+type ConfigHubRevisionInvalidRow struct {
+	Reason         string `json:"reason"`
+	ReleaseID      string `json:"releaseId,omitempty"`
+	SpaceIDRaw     string `json:"spaceIdRaw"`
+	ManifestDigest string `json:"manifestDigestRaw"`
 }
 
 type ConfigHubReleaseEvidence struct {
@@ -127,8 +169,10 @@ type ConfigHubReleaseEvidence struct {
 	// Published reports whether the Release is currently served to its Target.
 	// ConfigHub clears it when a Release is withdrawn and keeps the row. Nil
 	// means the server did not report it, which is not the same as false.
-	Published *bool  `json:"published,omitempty"`
-	CreatedAt string `json:"createdAt,omitempty"`
+	Published         *bool  `json:"published,omitempty"`
+	CreatedAt         string `json:"createdAt,omitempty"`
+	spaceIDRaw        string
+	manifestDigestRaw string
 }
 
 type ConfigHubUnitEventEvidence struct {
@@ -325,9 +369,15 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 			Impact:  "recent release publishing evidence is unavailable",
 			Command: "cub " + strings.Join(releaseArgs, " "),
 		})
+		correlateConfigHubReportedRevisions(evidence.ConfigHub.LiveStatuses, nil, "unavailable")
 	} else {
 		releases, omissions := buildConfigHubReleaseEvidence(rawReleases, 0)
 		evidence.ConfigHub.ReleasesTotal = len(releases)
+		coverage := "returned_rows"
+		if len(omissions) > 0 {
+			coverage = "partial_returned_rows"
+		}
+		correlateConfigHubReportedRevisions(evidence.ConfigHub.LiveStatuses, releases, coverage)
 		omissions = append(omissions, trimReleaseEvidence(&releases, rowLimit)...)
 		evidence.ConfigHub.Releases = releases
 		evidence.Omissions = append(evidence.Omissions, omissions...)
@@ -455,6 +505,7 @@ func configHubLiveStatusFromSpaceItem(item map[string]interface{}, now time.Time
 	annotation := strings.TrimSpace(annotations[configHubLiveStatusAnnotation])
 	space := mcpFirstString(spaceObj, "Slug", "slug", "Name", "name")
 	spaceID := mcpFirstString(spaceObj, "SpaceID", "spaceId", "ID", "id")
+	spaceIDRaw := firstRawString(spaceObj, "SpaceID", "spaceId", "ID", "id")
 	if annotation == "" {
 		return ConfigHubLiveStatusEvidence{}, false, GitOpsDeliveryEvidenceOmission{
 			Layer:  "confighub.liveStatus",
@@ -484,6 +535,8 @@ func configHubLiveStatusFromSpaceItem(item map[string]interface{}, now time.Time
 		Message:        mcpFirstString(statusMap, "message", "Message"),
 		ObservedAt:     mcpFirstString(statusMap, "observedAt", "ObservedAt", "observed_at"),
 		Freshness:      "unknown",
+		spaceIDRaw:     spaceIDRaw,
+		revisionRaw:    firstRawString(statusMap, "revision", "Revision"),
 	}
 
 	observedAt, validTime := parseConfigHubObservedAt(status.ObservedAt)
@@ -593,7 +646,14 @@ func buildConfigHubReleaseEvidence(raw string, maxItems int) ([]ConfigHubRelease
 	if omission.Layer != "" {
 		return nil, []GitOpsDeliveryEvidenceOmission{omission}
 	}
-	_ = payload
+	omissions := []GitOpsDeliveryEvidenceOmission{}
+	if count, rowsValid := rawEvidenceRowCount(payload); !rowsValid || count != len(items) {
+		omissions = append(omissions, GitOpsDeliveryEvidenceOmission{
+			Layer:  "confighub.releases",
+			Reason: "release list contained non-object or unsupported rows; digest correlation coverage is incomplete",
+			Impact: "an omitted row may change whether a same-space release digest matched",
+		})
+	}
 
 	releases := make([]ConfigHubReleaseEvidence, 0, len(items))
 	for _, item := range items {
@@ -602,19 +662,22 @@ func buildConfigHubReleaseEvidence(raw string, maxItems int) ([]ConfigHubRelease
 			releaseObj = item
 		}
 		space, spaceID := configHubRelatedRef(item, releaseObj, "Space")
+		spaceIDRaw := rawRelatedSpaceID(item, releaseObj)
 		target, targetID := configHubRelatedRef(item, releaseObj, "Target")
 
 		release := ConfigHubReleaseEvidence{
-			Slug:           mcpFirstString(releaseObj, "Slug", "slug", "Name", "name"),
-			ReleaseID:      mcpFirstString(releaseObj, "ReleaseID", "releaseId", "ID", "id"),
-			Space:          space,
-			SpaceID:        spaceID,
-			Target:         target,
-			TargetID:       targetID,
-			Digest:         mcpFirstString(releaseObj, "Digest", "digest", "BundleDigest", "bundleDigest"),
-			ManifestDigest: mcpFirstString(releaseObj, "ManifestDigest", "manifestDigest", "OCIManifestDigest", "ociManifestDigest"),
-			BundleBaseName: mcpFirstString(releaseObj, "BundleBaseName", "bundleBaseName", "Bundle", "bundle"),
-			CreatedAt:      mcpFirstString(releaseObj, "CreatedAt", "createdAt", "Timestamp", "timestamp"),
+			Slug:              mcpFirstString(releaseObj, "Slug", "slug", "Name", "name"),
+			ReleaseID:         mcpFirstString(releaseObj, "ReleaseID", "releaseId", "ID", "id"),
+			Space:             space,
+			SpaceID:           spaceID,
+			Target:            target,
+			TargetID:          targetID,
+			Digest:            mcpFirstString(releaseObj, "Digest", "digest", "BundleDigest", "bundleDigest"),
+			ManifestDigest:    mcpFirstString(releaseObj, "ManifestDigest", "manifestDigest", "OCIManifestDigest", "ociManifestDigest"),
+			BundleBaseName:    mcpFirstString(releaseObj, "BundleBaseName", "bundleBaseName", "Bundle", "bundle"),
+			CreatedAt:         mcpFirstString(releaseObj, "CreatedAt", "createdAt", "Timestamp", "timestamp"),
+			spaceIDRaw:        spaceIDRaw,
+			manifestDigestRaw: firstRawString(releaseObj, "ManifestDigest", "manifestDigest", "OCIManifestDigest", "ociManifestDigest"),
 		}
 		if value, ok := mcpFirstInt(releaseObj, "RevisionNum", "revisionNum", "RevisionNumber", "revisionNumber"); ok {
 			release.RevisionNum = value
@@ -631,8 +694,143 @@ func buildConfigHubReleaseEvidence(raw string, maxItems int) ([]ConfigHubRelease
 	sort.Slice(releases, func(i, j int) bool {
 		return evidenceTimeAfter(releases[i].CreatedAt, releases[j].CreatedAt)
 	})
-	omissions := trimReleaseEvidence(&releases, maxItems)
+	omissions = append(omissions, trimReleaseEvidence(&releases, maxItems)...)
 	return releases, omissions
+}
+
+func rawEvidenceRowCount(payload interface{}) (int, bool) {
+	if rows, ok := payload.([]interface{}); ok {
+		valid := true
+		for _, row := range rows {
+			if _, ok := row.(map[string]interface{}); !ok {
+				valid = false
+			}
+		}
+		return len(rows), valid
+	}
+	if object, ok := payload.(map[string]interface{}); ok {
+		for _, key := range []string{"items", "Items", "data", "Data", "results", "Results", "releases", "Releases"} {
+			if rows, ok := object[key].([]interface{}); ok {
+				valid := true
+				for _, row := range rows {
+					if _, ok := row.(map[string]interface{}); !ok {
+						valid = false
+					}
+				}
+				return len(rows), valid
+			}
+		}
+		return 1, true
+	}
+	return 0, false
+}
+
+func firstRawString(item map[string]interface{}, keys ...string) string {
+	for _, key := range keys {
+		if value, ok := item[key].(string); ok {
+			return value
+		}
+	}
+	return ""
+}
+
+func rawRelatedSpaceID(item, row map[string]interface{}) string {
+	for _, source := range []map[string]interface{}{item, row} {
+		if related := mcpNestedMap(source, "Space", "space"); related != nil {
+			if value := firstRawString(related, "SpaceID", "spaceId", "ID", "id"); value != "" {
+				return value
+			}
+		}
+	}
+	return firstRawString(row, "SpaceID", "spaceId")
+}
+
+func correlateConfigHubReportedRevisions(statuses []ConfigHubLiveStatusEvidence, releases []ConfigHubReleaseEvidence, coverage string) {
+	for i := range statuses {
+		status := &statuses[i]
+		correlation := &ConfigHubRevisionCorrelation{
+			Schema:        configHubRevisionCorrelationSchema,
+			State:         "unknown",
+			Coverage:      coverage,
+			CoverageScope: "parsed rows returned by the existing bounded release query; completeness of all matching server history is not asserted",
+			Limitation:    "exact non-empty SpaceID-scoped revision equality with manifestDigest is correlation only; it does not prove a release was fetched, applied, executed, or accepted by a gate",
+		}
+		if status.revisionRaw != status.Revision {
+			correlation.ReportedRevisionRaw = status.revisionRaw
+		}
+		if status.spaceIDRaw != status.SpaceID {
+			correlation.ReportedSpaceIDRaw = status.spaceIDRaw
+		}
+		status.RevisionCorrelation = correlation
+		switch {
+		case coverage == "unavailable":
+			correlation.Reason = "bounded release query is unavailable"
+		case strings.TrimSpace(status.spaceIDRaw) == "" || strings.TrimSpace(status.spaceIDRaw) != status.spaceIDRaw:
+			correlation.Reason = "live status has no exact non-empty SpaceID"
+		case !completeSHA256Digest.MatchString(status.revisionRaw):
+			correlation.Reason = "reported revision is not a complete lowercase sha256 digest"
+		default:
+			matches := make([]ConfigHubRevisionCandidate, 0)
+			invalidRows := make([]ConfigHubRevisionInvalidRow, 0)
+			incomplete := false
+			for _, release := range releases {
+				if strings.TrimSpace(release.spaceIDRaw) == "" || strings.TrimSpace(release.spaceIDRaw) != release.spaceIDRaw {
+					incomplete = true
+					invalidRows = append(invalidRows, ConfigHubRevisionInvalidRow{Reason: "missing_or_invalid_space_id", ReleaseID: release.ReleaseID, SpaceIDRaw: release.spaceIDRaw, ManifestDigest: release.manifestDigestRaw})
+					continue
+				}
+				if release.spaceIDRaw != status.spaceIDRaw {
+					continue
+				}
+				if !completeSHA256Digest.MatchString(release.manifestDigestRaw) {
+					incomplete = true
+					invalidRows = append(invalidRows, ConfigHubRevisionInvalidRow{Reason: "missing_or_malformed_manifest_digest", ReleaseID: release.ReleaseID, SpaceIDRaw: release.spaceIDRaw, ManifestDigest: release.manifestDigestRaw})
+					continue
+				}
+				if release.manifestDigestRaw == status.revisionRaw {
+					matches = append(matches, ConfigHubRevisionCandidate{ReleaseID: release.ReleaseID, Slug: release.Slug})
+				}
+			}
+			sort.Slice(invalidRows, func(i, j int) bool {
+				if invalidRows[i].ReleaseID != invalidRows[j].ReleaseID {
+					return invalidRows[i].ReleaseID < invalidRows[j].ReleaseID
+				}
+				if invalidRows[i].SpaceIDRaw != invalidRows[j].SpaceIDRaw {
+					return invalidRows[i].SpaceIDRaw < invalidRows[j].SpaceIDRaw
+				}
+				return invalidRows[i].ManifestDigest < invalidRows[j].ManifestDigest
+			})
+			correlation.InvalidRowCount = len(invalidRows)
+			if len(invalidRows) > maxRevisionCorrelationCandidates {
+				correlation.InvalidRowsOmitted = len(invalidRows) - maxRevisionCorrelationCandidates
+				invalidRows = invalidRows[:maxRevisionCorrelationCandidates]
+			}
+			correlation.InvalidRows = invalidRows
+			sort.Slice(matches, func(i, j int) bool {
+				if matches[i].ReleaseID != matches[j].ReleaseID {
+					return matches[i].ReleaseID < matches[j].ReleaseID
+				}
+				return matches[i].Slug < matches[j].Slug
+			})
+			correlation.ObservedMatchCount = len(matches)
+			if len(matches) > 1 {
+				correlation.State = "ambiguous"
+				correlation.Reason = "multiple bounded releases have the same manifest digest; specific release identity is ambiguous"
+			} else if incomplete || coverage != "returned_rows" {
+				correlation.Reason = "returned same-space release rows are incomplete; absence or uniqueness cannot be established"
+			} else if len(matches) == 1 {
+				correlation.State = "digest_match"
+				correlation.Reason = "reported revision exactly matches one returned same-space manifest digest"
+			} else {
+				correlation.Reason = "no matching manifest digest found among returned rows in the bounded same-space release query"
+			}
+			if len(matches) > maxRevisionCorrelationCandidates {
+				correlation.CandidatesOmitted = len(matches) - maxRevisionCorrelationCandidates
+				matches = matches[:maxRevisionCorrelationCandidates]
+			}
+			correlation.Candidates = matches
+		}
+	}
 }
 
 // configHubRelatedRef reads the slug and ID of an entity related to a list row.
@@ -1005,6 +1203,9 @@ func outputGitOpsDeliveryEvidenceHuman(evidence *GitOpsDeliveryEvidence) {
 				status.ApplicationHealthVerdict,
 				status.Freshness,
 			)
+			if status.RevisionCorrelation != nil {
+				fmt.Printf("      reported revision correlation: %s\n", configHubRevisionCorrelationText(status.RevisionCorrelation))
+			}
 		}
 	}
 	if evidence.ConfigHub != nil && len(evidence.ConfigHub.Releases) > 0 {
@@ -1040,6 +1241,11 @@ func outputGitOpsDeliveryEvidenceHuman(evidence *GitOpsDeliveryEvidence) {
 }
 
 func outputGitOpsStatusMarkdown(summary GitOpsSummary) error {
+	fmt.Print(renderGitOpsStatusMarkdown(summary))
+	return nil
+}
+
+func renderGitOpsStatusMarkdown(summary GitOpsSummary) string {
 	var b strings.Builder
 	b.WriteString("# GitOps Status\n\n")
 	b.WriteString(fmt.Sprintf("- Backend: `%s`\n", summary.Backend))
@@ -1104,8 +1310,7 @@ func outputGitOpsStatusMarkdown(summary GitOpsSummary) error {
 		renderGitOpsDeliveryEvidenceMarkdown(&b, summary.DeliveryEvidence)
 	}
 
-	fmt.Print(b.String())
-	return nil
+	return b.String()
 }
 
 func controllerCoverageOmissionsMarkdown(omissions []ControllerCoverageOmission) string {
@@ -1142,10 +1347,14 @@ func renderGitOpsDeliveryEvidenceMarkdown(b *strings.Builder, evidence *GitOpsDe
 
 	if evidence.ConfigHub != nil && len(evidence.ConfigHub.LiveStatuses) > 0 {
 		b.WriteString("\n### Live Status Writeback\n\n")
-		b.WriteString("| Space | App | Sync | Health | Operation | Delivery | App Health | Freshness |\n")
-		b.WriteString("|---|---|---|---|---|---|---|---|\n")
+		b.WriteString("| Space | App | Sync | Health | Operation | Delivery | App Health | Freshness | Reported revision correlation (not runtime proof) |\n")
+		b.WriteString("|---|---|---|---|---|---|---|---|---|\n")
 		for _, status := range evidence.ConfigHub.LiveStatuses {
-			b.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s | %s | %s | %s |\n",
+			correlation := "-"
+			if status.RevisionCorrelation != nil {
+				correlation = configHubRevisionCorrelationText(status.RevisionCorrelation)
+			}
+			b.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s | %s | %s | %s | %s |\n",
 				firstNonEmpty(status.Space, "-"),
 				firstNonEmpty(status.App, "-"),
 				firstNonEmpty(status.SyncStatus, "-"),
@@ -1154,6 +1363,7 @@ func renderGitOpsDeliveryEvidenceMarkdown(b *strings.Builder, evidence *GitOpsDe
 				status.DeliveryVerdict,
 				status.ApplicationHealthVerdict,
 				status.Freshness,
+				correlation,
 			))
 		}
 	}
@@ -1164,4 +1374,45 @@ func renderGitOpsDeliveryEvidenceMarkdown(b *strings.Builder, evidence *GitOpsDe
 			b.WriteString(fmt.Sprintf("- `%s`: %s\n", omission.Layer, omission.Reason))
 		}
 	}
+}
+
+func configHubRevisionCorrelationText(correlation *ConfigHubRevisionCorrelation) string {
+	if correlation == nil {
+		return "-"
+	}
+	parts := []string{correlation.State, correlation.Reason}
+	if correlation.ReportedRevisionRaw != "" {
+		parts = append(parts, "raw revision="+quoteCorrelationValue(correlation.ReportedRevisionRaw))
+	}
+	if correlation.ReportedSpaceIDRaw != "" {
+		parts = append(parts, "raw SpaceID="+quoteCorrelationValue(correlation.ReportedSpaceIDRaw))
+	}
+	if correlation.ObservedMatchCount > 0 {
+		candidates := make([]string, 0, len(correlation.Candidates))
+		for _, candidate := range correlation.Candidates {
+			label := firstNonEmpty(candidate.ReleaseID, candidate.Slug, "unknown release identity")
+			candidates = append(candidates, quoteCorrelationValue(label))
+		}
+		parts = append(parts, fmt.Sprintf("observed matches=%d [%s]", correlation.ObservedMatchCount, strings.Join(candidates, ", ")))
+		if correlation.CandidatesOmitted > 0 {
+			parts = append(parts, fmt.Sprintf("%d candidate(s) omitted", correlation.CandidatesOmitted))
+		}
+	}
+	if len(correlation.InvalidRows) > 0 {
+		invalid := make([]string, 0, len(correlation.InvalidRows))
+		for _, row := range correlation.InvalidRows {
+			id := quoteCorrelationValue(firstNonEmpty(row.ReleaseID, "unknown release identity"))
+			invalid = append(invalid, fmt.Sprintf("%s release=%s SpaceID=%s manifestDigest=%s", row.Reason, id, quoteCorrelationValue(row.SpaceIDRaw), quoteCorrelationValue(row.ManifestDigest)))
+		}
+		parts = append(parts, "invalid returned rows=["+strings.Join(invalid, "; ")+"]")
+		if correlation.InvalidRowsOmitted > 0 {
+			parts = append(parts, fmt.Sprintf("%d invalid row(s) omitted", correlation.InvalidRowsOmitted))
+		}
+	}
+	parts = append(parts, correlation.Limitation)
+	return strings.Join(parts, "; ")
+}
+
+func quoteCorrelationValue(value string) string {
+	return strings.ReplaceAll(strconv.Quote(value), "|", "\\|")
 }

@@ -236,7 +236,7 @@ func TestNewMCPGateway_ToolDescriptionsCoverRepresentativeIntentEdges(t *testing
 		{
 			tool:     "gitops_status",
 			intent:   "Is this deployed and which controller families did you check?",
-			contains: []string{"delegated delivery is healthy", "controller families cub-scout actually inspected", "read-only evidence"},
+			contains: []string{"delegated delivery is healthy", "controller families cub-scout actually inspected", "reported full digest", "not proof of fetch", "read-only evidence"},
 		},
 		{
 			tool:     "confighub_releases",
@@ -342,7 +342,7 @@ func TestMCPGatewayHandleRequest_ToolsCallGitOpsStatus(t *testing.T) {
 	var gotArgs []string
 	gateway := newMCPGateway(func(ctx context.Context, args []string) (string, error) {
 		gotArgs = append([]string(nil), args...)
-		return `{"backend":"flux","controllerCoverage":[{"family":"Flux","status":"found","found":1}]}`, nil
+		return `{"backend":"flux","controllerCoverage":[{"family":"Flux","status":"found","found":1}],"deliveryEvidence":{"configHub":{"liveStatuses":[{"revisionCorrelation":{"schema":"confighub.reportedRevisionReleaseCorrelation.v1","state":"digest_match","coverage":"complete","limitation":"correlation only"}}]}}}`, nil
 	})
 
 	req := mcpRequest{
@@ -398,6 +398,23 @@ func TestMCPGatewayHandleRequest_ToolsCallGitOpsStatus(t *testing.T) {
 	}
 	if _, ok := result.StructuredContent.Data["controllerCoverage"]; !ok {
 		t.Fatalf("structured data missing controllerCoverage: %+v", result.StructuredContent.Data)
+	}
+	delivery, ok := result.StructuredContent.Data["deliveryEvidence"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("MCP structured data omitted delivery evidence: %+v", result.StructuredContent.Data)
+	}
+	configHub, ok := delivery["configHub"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("MCP structured data omitted ConfigHub evidence: %+v", delivery)
+	}
+	statuses, ok := configHub["liveStatuses"].([]interface{})
+	if !ok || len(statuses) != 1 {
+		t.Fatalf("MCP live statuses = %+v", configHub["liveStatuses"])
+	}
+	status, _ := statuses[0].(map[string]interface{})
+	corr, _ := status["revisionCorrelation"].(map[string]interface{})
+	if corr["state"] != "digest_match" || corr["schema"] != configHubRevisionCorrelationSchema {
+		t.Fatalf("MCP correlation = %+v", corr)
 	}
 }
 

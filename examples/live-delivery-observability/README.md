@@ -15,6 +15,10 @@ The files are review fixtures, not a guaranteed `kubectl apply` recipe. Some
 objects include `status` fields that are normally written by controllers or the
 API server.
 
+The revision-correlation values in `confighub-delivery-evidence.json` are
+synthetic illustrative values, not a captured live ConfigHub result or a claim
+about historical release delivery.
+
 For the operator workflow this fixture supports, see
 [`docs/howto/delivery-readiness-decision.md`](../../docs/howto/delivery-readiness-decision.md).
 
@@ -25,6 +29,7 @@ For the operator workflow this fixture supports, see
 | `desired.yaml` | Intended Deployment shape used as the comparison baseline. |
 | `observed.yaml` | Recorded live objects: aggregate resource, workload, pod symptom, and audited action event. |
 | `confighub-delivery-evidence.json` | Example `gitops status --with-confighub --format json` evidence envelope. |
+| `revision-correlation-cases.json` | Deterministic strict revision-to-manifest-digest correlation cases, including unknown and ambiguous evidence. |
 
 ## Review Commands
 
@@ -37,6 +42,7 @@ grep -n "kind:\\|event.toolkit.fluxcd.io\\|observedGeneration\\|CrashLoopBackOff
 ./cub-scout map activity --owner Flux --format json
 ./cub-scout gitops status --format json
 ./cub-scout gitops status --with-confighub --confighub-space prod --confighub-since 24h --format json
+./cub-scout gitops status --with-confighub --confighub-space prod --tui
 ./cub-scout explain deployment/api -n prod --format json
 ./cub-scout doctor -n prod --format json
 
@@ -56,7 +62,18 @@ grep -n "kind:\\|event.toolkit.fluxcd.io\\|observedGeneration\\|CrashLoopBackOff
   aggregate delivery resource as a first-class controller object.
 - `gitops status --with-confighub` should keep release history, unit events,
   live-status writeback, and event-consumer workload evidence separate under
-  `deliveryEvidence`.
+  `deliveryEvidence`. Its versioned `revisionCorrelation` compares the complete
+  reported SHA-256 revision string only with `manifestDigest` values from the
+  same exact non-empty ConfigHub SpaceID among rows returned by the existing
+  bounded release query. `coverage` describes those returned rows only; it does
+  not assert complete server history or pagination.
+  A match is string correlation only; it does not prove fetch, application,
+  execution, or gate acceptance. Missing or incomplete evidence stays unknown,
+  and duplicate matching release digests remain ambiguous. Report freshness is
+  still separate from this comparison.
+- `gitops status --tui` displays one collected status snapshot in a scrollable
+  viewport. Add `--with-confighub` to opt in to connected evidence; the TUI does
+  not poll or make additional reads.
 - `map activity --with-confighub` should keep ConfigHub activity rows separate,
   and may attach live-status `deliveryEvidence` to matching Argo Application
   rows only when a non-wildcard ConfigHub space, observed Application Space ID,
@@ -73,7 +90,7 @@ grep -n "kind:\\|event.toolkit.fluxcd.io\\|observedGeneration\\|CrashLoopBackOff
 Run the offline correlation and read-budget proof from the repository root:
 
 ```bash
-go test ./cmd/cub-scout -run 'TestActivityDeliveryIdentityAndReadBudget' -count=1
+go test ./cmd/cub-scout -run 'TestActivityDeliveryIdentityAndReadBudget|TestConfigHubReportedRevisionCorrelation|TestConfigHubRevisionCorrelation|TestGitOpsStatusTUI' -count=1
 ```
 
 The fixture preserves an Argo failure even when separate ConfigHub evidence
@@ -124,8 +141,10 @@ delivery verdict, and absence of `BLOCK` is not equivalent to `PASS`.
 
 No live authentication, production cursor or cluster writes are used by this
 proof. Authenticated intended-state mapping remains separate. The existing
-standalone/companion bounded TUI panels do not consume connected writeback, so
-this fix does not add that TUI capability or change their cache contracts.
+standalone/companion bounded panels still do not consume connected writeback.
+The separate `gitops status --tui` option is a single collected status snapshot,
+including `--with-confighub` only when explicitly requested; it does not poll
+or change those panels' cache contracts.
 
 ### Packaged-Binary Smoke
 

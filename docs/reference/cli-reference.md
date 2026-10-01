@@ -65,7 +65,7 @@ Source of truth:
 | `compare source-truth` | Read-only source-truth evidence for Pilot acceptance (#393) | [Command Reference](commands.md#compare-source-truth) | - |
 | `compare three-way` | Connected DRY/WET/LIVE comparison; `--source-path <local-checkout>` opts into stage-B `gitSource.file:line` back-resolution for raw-YAML sources | [Command Reference](commands.md#compare-three-way) | [Connect and compare](../../examples/connect-and-compare/) |
 | `fleet outliers` | Deprecated 2.x comparison; planned removal in 3.0 absent validated cross-cluster identity; no equivalent replacement yet | [Command Reference](commands.md#fleet-outliers) | [Fleet import](../../examples/fleet-import/) |
-| `gitops status` | GitOps pipeline health plus optional bounded ConfigHub delivery evidence | [Command Reference](commands.md#gitops-v014) | [Live delivery observability](../../examples/live-delivery-observability/) |
+| `gitops status` | GitOps pipeline health plus optional bounded ConfigHub delivery evidence; `--tui` opens the same read-once snapshot in a viewport | [Command Reference](commands.md#gitops-v014) | [Live delivery observability](../../examples/live-delivery-observability/) |
 | `import apply` | Apply an import proposal JSON | [Command Reference](commands.md#import-apply) | [Import from live](../../examples/import-from-live/) |
 | `import argocd` | Import one ArgoCD Application | [Command Reference](commands.md#import-argocd) | [Argo import demo](../../examples/argo-import-confighub-demo/) |
 | `import cluster-aggregator` | Aggregate multiple import proposals | [Command Reference](commands.md#import-cluster-aggregator) | [Fleet import](../../examples/fleet-import/) |

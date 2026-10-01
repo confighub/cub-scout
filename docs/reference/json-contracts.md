@@ -1075,10 +1075,20 @@ Sveltos, Modelplane, ConfigHub, or Kubernetes as the status authority.
           "syncStatus": "Synced",
           "healthStatus": "Healthy",
           "operationPhase": "Succeeded",
-          "revision": "sha256:abc",
+          "revision": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "observedAt": "2026-09-10T11:55:00Z",
           "freshness": "fresh",
           "freshnessSeconds": 300,
+          "revisionCorrelation": {
+            "schema": "confighub.reportedRevisionReleaseCorrelation.v1",
+            "state": "digest_match",
+            "reason": "reported revision exactly matches one returned same-space manifest digest",
+            "observedMatchCount": 1,
+            "candidates": [{"releaseId": "synthetic-release-match"}],
+            "coverage": "returned_rows",
+            "coverageScope": "parsed rows returned by the existing bounded release query; completeness of all matching server history is not asserted",
+            "limitation": "exact non-empty SpaceID-scoped revision equality with manifestDigest is correlation only; it does not prove a release was fetched, applied, executed, or accepted by a gate"
+          },
           "deliveryVerdict": "PASS",
           "applicationHealthVerdict": "PASS"
         }
@@ -1089,7 +1099,8 @@ Sveltos, Modelplane, ConfigHub, or Kubernetes as the status authority.
           "space": "prod",
           "spaceId": "sp-123",
           "targetId": "55555555-5555-4555-8555-555555555555",
-          "digest": "sha256:abc",
+          "digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "manifestDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "bundleBaseName": "prod",
           "releaseNum": 42,
           "published": true,
@@ -1134,6 +1145,28 @@ Sveltos, Modelplane, ConfigHub, or Kubernetes as the status authority.
   }
 }
 ```
+
+The digest values above are synthetic contract examples. `revisionCorrelation`
+is emitted on `gitops status --with-confighub` live-status rows. It compares the
+untrimmed reported revision against complete lowercase SHA-256
+`manifestDigest` values only, scoped by the exact non-empty `SpaceID`; it never
+uses the release bundle `digest`, slug or timestamps.
+
+| `revisionCorrelation` field | Contract |
+|---|---|
+| `schema` | Fixed version marker `confighub.reportedRevisionReleaseCorrelation.v1`. |
+| `state` | `digest_match` means one exact matching returned row; `ambiguous` means multiple returned rows match; `unknown` covers missing/malformed evidence, incomplete/unavailable rows, or no match among returned rows. No state asserts fetch, apply, execution or gate acceptance. |
+| `observedMatchCount`, `candidates`, `candidatesOmitted` | Count all matching returned rows; show at most three sorted by release ID then slug and report the omitted candidate count. They describe returned rows only. |
+| `coverage` | `returned_rows`, `partial_returned_rows`, or `unavailable`; this records parsing/read coverage of the existing bounded query, not completeness of all server history or pagination. `coverageScope` says so explicitly. |
+| `reportedRevisionRaw`, `reportedSpaceIdRaw` | Present when the original annotation value differs from the legacy trimmed display value; these preserve rejected whitespace for diagnosis. They do not change the existing `revision` or `spaceId` fields. |
+| `invalidRowCount`, `invalidRows`, `invalidRowsOmitted` | Count returned release rows with unusable SpaceID or manifest digest; at most three sorted rows retain the raw SpaceID/digest and reason. These are returned-row diagnostics, not evidence about omitted server history. |
+| `reason`, `limitation`, `coverageScope` | Explain the result and its evidence boundary. |
+
+This field is additive: it does not change `revision`, report freshness,
+`deliveryVerdict`, or `applicationHealthVerdict`, and adds no ConfigHub reads.
+The opt-in `gitops status --tui` displays the same collected summary in a
+read-once scrollable viewport; the MCP `gitops_status` JSON includes the same
+field when its `with_confighub` option is used.
 
 ### Field Rules
 
