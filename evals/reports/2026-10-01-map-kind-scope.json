@@ -1,0 +1,68 @@
+{
+  "schema": "map-kind-request-scope-proof.v1",
+  "captureSourceRevision": "35c9bf4846c1d3d6959d5918f314ad42453c4393",
+  "oldProductSource": "a99d7d4387740fd2c9ccb183f81ea8004c2e7206",
+  "oldBinarySha256": "9b36a5b571499c9798ebf1440c7f3d68fd10d513f66920339d6f32e375a005d3",
+  "newProductSource": "eec6d442279955af0f1fc39c637252ac8eb0f081",
+  "newBinarySha256": "7d20aa7bb33b477dfd88afb2f53b1a6f773a5a4ffbcff7f81d8dcbfeb5a12bab",
+  "captureScriptSha256": "67f8c9cc62a4392c95916928ee99b28d7eb5b914104316c86c9526e5606910a9",
+  "comparisonDriverSha256": "71e0357bdf95f92d9cede9de073c686e91f0728b279f46eaeda3ffd47aef8ccb",
+  "kindVersion": "kind v0.31.0 go1.25.5 darwin/arm64",
+  "nodeImage": "kindest/node:v1.35.0@sha256:4613778f3cfcd10e615029370f5786704559103cf27bef934597ba562b269661",
+  "startedAt": "2026-10-01T02:07:01Z",
+  "endedAt": "2026-10-01T02:07:53Z",
+  "captureElapsedSeconds": 52.65396245918237,
+  "cleanupVerified": true,
+  "sharedKubeconfigUnchanged": true,
+  "privateConfigsUnchangedBeforeCleanup": true,
+  "comparisons": [
+    {
+      "namespace": "inv04-readable-populated",
+      "httpStatus": 200,
+      "rawSha256": "12109d6bbd66cb08a6ad0953e1f76ccf8d5002635a69b3b9d6ebd9c787bdbf21",
+      "oldBytes": 8324,
+      "newBytes": 1018,
+      "oldSeconds": 6.518089541001245,
+      "newSeconds": 1.3034556659404188,
+      "oldOmissions": 41,
+      "newOmissions": 1,
+      "oldOutputSha256": "51bbb5fe5ea6ac30a501eaf3b8e7195548dfecaa2e11cb5f77baab78e1d2f2da",
+      "newOutputSha256": "02cf4f95d05782df6b090f586634f1ae1d15bbd70d542abcb0c040723cb1ab02"
+    },
+    {
+      "namespace": "inv04-readable-empty",
+      "httpStatus": 200,
+      "rawSha256": "f2cdc03e67047e3cc79005586c0c077b1397a33eb94e514bce3b7f37bba03ec7",
+      "oldBytes": 7463,
+      "newBytes": 317,
+      "oldSeconds": 6.423825499834493,
+      "newSeconds": 0.03115291683934629,
+      "oldOmissions": 41,
+      "newOmissions": 1,
+      "oldOutputSha256": "b53a3672e07705b77faa69d1f94c66e578ea09419fafb8009b9e6d2d4e9a0c5a",
+      "newOutputSha256": "4a649bb6dff7cddf424fa90841e33c994b72bc3ce0fad4a4145c780b2fafc8ef"
+    },
+    {
+      "namespace": "inv04-denied",
+      "httpStatus": 403,
+      "rawSha256": "e80dc99c4fd3f8325744d2e030dea4ad1e5fe4cf19056d62d52c198f632077d5",
+      "oldBytes": 7287,
+      "newBytes": 461,
+      "oldSeconds": 6.425207208143547,
+      "newSeconds": 0.04113329201936722,
+      "oldOmissions": 42,
+      "newOmissions": 2,
+      "oldOutputSha256": "ff73c8e8be079552aee7929c319e7110d60b1f55f69199730990e0b4889a919f",
+      "newOutputSha256": "3bcaef2c164f458770e6712ed183e8e4aea65d9b2ccf301680c478e80d7d7f70"
+    }
+  ],
+  "retainedProvenanceSha256": "a049e1297dc785eb2bd71588a272ff21c7badbf844031ff0c9272581ef07bc68",
+  "retainedEvidenceDirectory": "/tmp/scout-map-kind-live-evidence",
+  "limitations": [
+    "Sequential old-first/new-second commands, not randomized or a statistically powered latency benchmark.",
+    "42-to-2 HTTP request reduction is measured by deterministic request-path tests; live wire request counts were not captured.",
+    "No model was run and no agent dollar or credit savings were measured.",
+    "MCP/TUI latency was not measured; MCP kind argument dispatch and product rendering remain covered by existing tests.",
+    "Prepared INV-04 fixture and benchmark admission remain unchanged."
+  ]
+}
