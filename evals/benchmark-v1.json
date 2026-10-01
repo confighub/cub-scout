@@ -433,12 +433,34 @@
         {
           "id": "HLT-04",
           "question": "Missing, old, or renewed report timestamps",
-          "status": "planned",
-          "existing_case": null,
+          "status": "synthetic_source_replay_prepared_not_run",
+          "existing_case": "evals/sveltos-hlt-04-report-freshness",
           "reference": "Report release identity and health separately; a refreshed report timestamp does not refresh its underlying health checks or prove a release digest.",
           "controls": [
             "Test clock skew, old checks in a refreshed report, and stale timestamp renewal"
-          ]
+          ],
+          "evidence_refresh": "2026-10-01",
+          "benchmark_admission": "not admitted: synthetic source replay fixture prepared; no model run, live check evidence, or benchmark admission",
+          "source_provenance": {
+            "repository": "confighub/sveltos-confighub",
+            "revision": "8187910f9fe226e109e55c4d9c7c0e21297ff424",
+            "helper_revision": "6a13aeea8809d486513363293b4775a5588f9399",
+            "helper_sha256": "c52554e9b7da0e3f9ff91b1049da24380b815c56ee7ebb5cd547327a6abd3b62",
+            "harness_sha256": "c7e96fa00e8f1d97f54ae7e8e9177f87aafebfc69caf4c1fff86525ce7d1d0f0",
+            "replay_report": "evals/reports/2026-10-01-sveltos-hlt04-report-freshness.json",
+            "fixture_files_sha256": {
+              "scenario-evidence.json": "e1ae4cb9cbdaa26488d1ed1b3e920e9cc092703e560cffef83f3a845fe9c9b7c",
+              "source-metadata.json": "a224a85f89ca16cdbe6c0e8734ade6e4503e81573d16fa71fc60b4abd71ea1fb",
+              "synthetic-check-execution-receipt.json": "1352073e9000d280a92b440d1c9789f6fd987af099e04f4b7638804a48ad0e06"
+            },
+            "replay_provenance_sha256": "1fdfff81fc8d345c7b0dceae348ffae23ea490b04f1a9a26786e729ebc629810",
+            "stdout_sha256": "68d667fcf9612cafdaa53039571743815a48532c15c33c5e3bd90bb32e5ea3e4",
+            "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "outer_wrapper_seconds": 2.8440208330284804,
+            "cleanup_confirmed": true,
+            "parent_reaped": true,
+            "limits": "Authored synthetic source-contract replay only; old check receipt is not producer input; no live controller check, exact applied digest, model result, benchmark admission, or savings claim."
+          }
         }
       ]
     },
