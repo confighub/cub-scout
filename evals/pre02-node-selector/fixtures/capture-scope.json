@@ -1,0 +1,137 @@
+{
+  "capture": {
+    "atomicSnapshot": false,
+    "captureContext": "one fresh invocation-owned local kind cluster",
+    "captureElapsedSeconds": 38.45680758310482,
+    "captureEndedAt": "2026-10-01T06:03:28Z",
+    "captureScriptSha256": "ec4f7f8e9d2d2ca6257abc5029f2e01b33203794a5782c22ba13895bedd31230",
+    "captureStartedAt": "2026-10-01T06:02:50Z",
+    "dockerContextName": "orbstack",
+    "kindVersion": "v0.31.0",
+    "limits": {
+      "benchmarkRun": false,
+      "capacityInferred": false,
+      "cloudApiAccessed": false,
+      "modelRun": false,
+      "ownedClusterCleanupVerified": true,
+      "readinessOrApplicationHealthAssessed": false,
+      "secretRead": false,
+      "sharedKubeconfigUnchanged": true,
+      "sharedKubeconfigUsedForClusterAccess": false
+    },
+    "nodeImage": "kindest/node:v1.35.0@sha256:4613778f3cfcd10e615029370f5786704559103cf27bef934597ba562b269661",
+    "observations": [
+      {
+        "endedAt": "2026-10-01T06:03:25Z",
+        "httpStatus": 200,
+        "method": "GET",
+        "path": "/api/v1/namespaces/pre02-node-selector/pods/scout-pre02-selector",
+        "phase": "before",
+        "rawBytes": 3416,
+        "rawFile": "before-pod.json",
+        "rawSha256": "dec5c8fae0f71860f1309aee1be0455b355b6ea3abbb921360ebd306343adefd",
+        "startedAt": "2026-10-01T06:03:25Z"
+      },
+      {
+        "endedAt": "2026-10-01T06:03:25Z",
+        "httpStatus": 200,
+        "method": "GET",
+        "path": "/api/v1/nodes",
+        "phase": "before",
+        "rawBytes": 5234,
+        "rawFile": "before-nodes.json",
+        "rawSha256": "9808755e4df180b936aa2b68db5ce84aef3bca84b61cc9b2db8a64b007e7374a",
+        "startedAt": "2026-10-01T06:03:25Z"
+      },
+      {
+        "endedAt": "2026-10-01T06:03:25Z",
+        "httpStatus": 200,
+        "method": "GET",
+        "path": "/api/v1/namespaces/pre02-node-selector/events?fieldSelector=involvedObject.uid=b5fa45bb-3aa4-4ec2-aa97-c329ea564317",
+        "phase": "before",
+        "rawBytes": 1263,
+        "rawFile": "before-events.json",
+        "rawSha256": "78b187ef42464644a815b8676bf8743fc7eb491f163f35b334d73bccf531f50e",
+        "startedAt": "2026-10-01T06:03:25Z"
+      },
+      {
+        "endedAt": "2026-10-01T06:03:25Z",
+        "httpStatus": 200,
+        "method": "GET",
+        "path": "/api/v1/namespaces/pre02-node-selector/pods/scout-pre02-selector",
+        "phase": "after",
+        "rawBytes": 5355,
+        "rawFile": "after-pod.json",
+        "rawSha256": "f264204dc296d06590bc357691a1b95db08222f4ac68b3c38935d6ef200832c3",
+        "startedAt": "2026-10-01T06:03:25Z"
+      },
+      {
+        "endedAt": "2026-10-01T06:03:25Z",
+        "httpStatus": 200,
+        "method": "GET",
+        "path": "/api/v1/nodes",
+        "phase": "after",
+        "rawBytes": 5454,
+        "rawFile": "after-nodes.json",
+        "rawSha256": "263097f6d314cac3a7d673b4db7a38f36c437bd2fa1a2d402bb2c0a0dd807ee9",
+        "startedAt": "2026-10-01T06:03:25Z"
+      },
+      {
+        "endedAt": "2026-10-01T06:03:25Z",
+        "httpStatus": 200,
+        "method": "GET",
+        "path": "/api/v1/namespaces/pre02-node-selector/events?fieldSelector=involvedObject.uid=b5fa45bb-3aa4-4ec2-aa97-c329ea564317",
+        "phase": "after",
+        "rawBytes": 2362,
+        "rawFile": "after-events.json",
+        "rawSha256": "4acce317a3a539b80d4fbb7eb7977dc313a888952caa8b64f2096243d40ee3ae",
+        "startedAt": "2026-10-01T06:03:25Z"
+      }
+    ],
+    "phaseOrder": [
+      "before Pod, NodeList, UID-filtered EventList GETs",
+      "one node-label operation on the owned cluster",
+      "after Pod, NodeList, UID-filtered EventList GETs"
+    ],
+    "preObservationWait": {
+      "attemptCount": 1,
+      "elapsedSeconds": 0.019422749988734722,
+      "endedAt": "2026-10-01T06:03:25Z",
+      "relationship": "The poll body hashes match the corresponding retained before-phase Pod and EventList bodies.",
+      "requests": [
+        {
+          "bodyRetainedSeparately": false,
+          "bodySha256": "dec5c8fae0f71860f1309aee1be0455b355b6ea3abbb921360ebd306343adefd",
+          "elapsedSeconds": 0.01235591690056026,
+          "httpStatus": 200,
+          "method": "GET",
+          "path": "/api/v1/namespaces/pre02-node-selector/pods/scout-pre02-selector"
+        },
+        {
+          "bodyRetainedSeparately": false,
+          "bodySha256": "78b187ef42464644a815b8676bf8743fc7eb491f163f35b334d73bccf531f50e",
+          "elapsedSeconds": 0.004559374880045652,
+          "httpStatus": 200,
+          "method": "GET",
+          "path": "/api/v1/namespaces/pre02-node-selector/events?fieldSelector=involvedObject.uid=b5fa45bb-3aa4-4ec2-aa97-c329ea564317"
+        }
+      ],
+      "startedAt": "2026-10-01T06:03:25Z"
+    },
+    "rawFilesSha256": {
+      "after-events.json": "4acce317a3a539b80d4fbb7eb7977dc313a888952caa8b64f2096243d40ee3ae",
+      "after-nodes.json": "263097f6d314cac3a7d673b4db7a38f36c437bd2fa1a2d402bb2c0a0dd807ee9",
+      "after-pod.json": "f264204dc296d06590bc357691a1b95db08222f4ac68b3c38935d6ef200832c3",
+      "before-events.json": "78b187ef42464644a815b8676bf8743fc7eb491f163f35b334d73bccf531f50e",
+      "before-nodes.json": "9808755e4df180b936aa2b68db5ce84aef3bca84b61cc9b2db8a64b007e7374a",
+      "before-pod.json": "dec5c8fae0f71860f1309aee1be0455b355b6ea3abbb921360ebd306343adefd"
+    },
+    "sourceRevision": "4b113710948882eda501e14aacca2d5cec1168ae",
+    "wrapperElapsedSeconds": 38.57530829194002,
+    "wrapperExitCode": 0,
+    "wrapperTimedOut": false
+  },
+  "case": "PRE-02",
+  "classification": "neutral source/capture metadata; six files listed here are unmodified raw API responses",
+  "schema": "pre02-node-selector-capture-scope.v1"
+}

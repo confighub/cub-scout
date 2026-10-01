@@ -330,12 +330,31 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			checkPRE03Scaffold(t, caseDir)
 			continue
 		}
+		if filepath.Base(caseDir) == "rul02-cache-replay" {
+			checkRUL02Scaffold(t, caseDir)
+			continue
+		}
 		if filepath.Base(caseDir) == "rul03-context" {
 			checkRUL03ContextScaffold(t, caseDir)
 			continue
 		}
+		if filepath.Base(caseDir) == "pre02-node-selector" {
+			checkPRE02Scaffold(t, caseDir, map[string]string{
+				"before-pod.json":    "dec5c8fae0f71860f1309aee1be0455b355b6ea3abbb921360ebd306343adefd",
+				"before-nodes.json":  "9808755e4df180b936aa2b68db5ce84aef3bca84b61cc9b2db8a64b007e7374a",
+				"before-events.json": "78b187ef42464644a815b8676bf8743fc7eb491f163f35b334d73bccf531f50e",
+				"after-pod.json":     "f264204dc296d06590bc357691a1b95db08222f4ac68b3c38935d6ef200832c3",
+				"after-nodes.json":   "263097f6d314cac3a7d673b4db7a38f36c437bd2fa1a2d402bb2c0a0dd807ee9",
+				"after-events.json":  "4acce317a3a539b80d4fbb7eb7977dc313a888952caa8b64f2096243d40ee3ae",
+			})
+			continue
+		}
 		if filepath.Base(caseDir) == "rul04-image-identity" {
 			checkRUL04ImageIdentityScaffold(t, caseDir)
+			continue
+		}
+		if filepath.Base(caseDir) == "rul01-dated-snapshot" {
+			checkRUL01DatedSnapshotScaffold(t, caseDir)
 			continue
 		}
 		if filepath.Base(caseDir) == "sveltos-hlt-04-report-freshness" {

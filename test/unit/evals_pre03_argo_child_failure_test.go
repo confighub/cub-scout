@@ -487,7 +487,7 @@ func TestPRE03ManifestAndScaffold(t *testing.T) {
 			}
 		}
 	}
-	if !found || counts["planned"] != 3 || counts["existing_refreshed_fixture"] != 5 || counts["recorded_snapshot_binding_prepared_not_run"] != 2 || counts["recorded_projection_prepared_not_run"] != 8 || counts["raw_recording_prepared_not_run"] != 5 || counts["synthetic_source_replay_prepared_not_run"] != 1 {
+	if !found || counts["planned"] != 0 || counts["existing_refreshed_fixture"] != 5 || counts["recorded_snapshot_binding_prepared_not_run"] != 2 || counts["recorded_projection_prepared_not_run"] != 8 || counts["raw_recording_prepared_not_run"] != 7 || counts["synthetic_source_replay_prepared_not_run"] != 2 {
 		t.Fatalf("readiness counts changed unexpectedly: %v", counts)
 	}
 	checkPRE03Scaffold(t, filepath.Clean(pre03CaseRoot))
