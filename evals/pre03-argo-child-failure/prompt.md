@@ -41,6 +41,12 @@ Encoding vocabulary:
 - Application health: `Healthy`, `Progressing`, `Degraded`, or `UNKNOWN`.
 - Resource references, names, tracking IDs, image, and failure message: exact
   literal text from the supplied files; use `MISSING` if absent.
+- Reference field formats: `parent_application` and `child_application` are
+  `<namespace>/<name>`; `failing_pod` is `<namespace>/<name>`;
+  `parent_tracked_child` and `failing_statefulset` are
+  `<apiVersion> <Kind> <namespace>/<name>`, preserving the literal API version,
+  kind, namespace, and name from the source observation. Use `MISSING` if a
+  required component is absent; do not convert between these formats.
 - Pod state: `WAITING_IMAGE_PULL_BACK_OFF`, `RUNNING_READY`, `TERMINATED`, or
   `UNKNOWN`.
 - Pod failure class: `ERRIMAGEPULL_AND_IMAGEPULLBACKOFF`, `OTHER_FAILURE`,

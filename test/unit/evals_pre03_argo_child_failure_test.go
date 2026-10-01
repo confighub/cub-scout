@@ -384,6 +384,24 @@ func pre03FailureMessage(t *testing.T, events string) string {
 	return ""
 }
 
+func TestPRE03PromptDefinesReferenceFieldFormats(t *testing.T) {
+	prompt, err := os.ReadFile(filepath.Join(pre03CaseRoot, "prompt.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, format := range []string{
+		"`parent_application` and `child_application` are\n  `<namespace>/<name>`",
+		"`failing_pod` is `<namespace>/<name>`",
+		"`parent_tracked_child` and `failing_statefulset` are\n  `<apiVersion> <Kind> <namespace>/<name>`",
+		"preserving the literal API version,\n  kind, namespace, and name from the source observation",
+		"do not convert between these formats",
+	} {
+		if !strings.Contains(string(prompt), format) {
+			t.Errorf("PRE-03 prompt omits reference format rule %q", format)
+		}
+	}
+}
+
 func TestPRE03ManifestAndScaffold(t *testing.T) {
 	data, err := os.ReadFile(filepath.Join("..", "..", "evals", "benchmark-v1.json"))
 	if err != nil {
