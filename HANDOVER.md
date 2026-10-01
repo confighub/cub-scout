@@ -21,13 +21,15 @@ order, quality gates, budgets and decisions.
   denial/partial/unreachable and concurrent-binding tests, and TUI scan reopening
   against a retargeted kubeconfig. Doctor and scan preserve the selected label
   and coverage warnings across their outputs; normalized scan fields are additive.
-  The prepared [owned-cluster proof](evals/doctor-scan-context/README.md) remains
-  failed its first live attempt because the validator expected raw principal
-  text rather than the scanner's scoped denial warnings. The original receipt
-  is preserved; cleanup and both config-integrity checks passed. Corrected offline
-  revalidation matches the CLI observations, but a live TUI check and complete
-  accepted capture remain outstanding. Fixed product source `5b362975` passed
-  local build/full Go validation. Two
+  The [owned-cluster proof](evals/doctor-scan-context/README.md) passed on its
+  second attempt: eight CLI observations plus actual TUI S/close/S after private
+  config retargeting and a separately bound denied scan. Pod reads returned
+  200/200/403; each TUI action made seven GETs. Cleanup, credential removal and
+  shared/CLI-config integrity passed. The first validator-failure receipt remains
+  preserved. Fixed product source `5b362975` passed local build/full Go validation;
+  21 offline helper guards pass. CI's E2E package exhausted its 120-second limit
+  as the final smoke test began, so the limit is now 180 seconds; final-head CI
+  remains required. Two
   behavior-specific regression probes caught missing shared Doctor context/human
   warnings and missing scan JSON/TUI context before the corresponding repairs.
 

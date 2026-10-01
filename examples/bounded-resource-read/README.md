@@ -100,7 +100,9 @@ observed cluster ID.
 
 The two-context owned-cluster before/after procedure is prepared in
 [`evals/doctor-scan-context/README.md`](../../evals/doctor-scan-context/README.md).
-It has not been run and makes no live-cluster claim.
+Its second attempt passed on 2026-10-01, including actual TUI scan events against
+the owned API. The linked report preserves the failed first attempt and states
+the one-cluster, model-event and empty-state-scan limits.
 
 ## Evidence And Limits
 

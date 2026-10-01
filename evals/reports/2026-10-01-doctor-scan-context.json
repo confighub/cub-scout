@@ -1,25 +1,76 @@
 {
   "schema": "doctor-scan-context-proof-summary.v1",
-  "status": "failed_validator_expectation",
+  "status": "passed",
   "productSource": "5b3629752f354b257f7e667aa2c4f0126b35562b",
   "oldSource": "98fe0183a932e32be3cbc9c04aae8f1d7124740d",
-  "captureSource": "1c5e9a8504913ad403eed0e8cfb5a4da4452e7c4",
-  "rawArchive": "evals/results/doctor-scan-context-20261001/attempt1",
-  "receiptSha256": "1f7afd5ff66d90323e0c389b0fc0ab8eddb75c62569b201074128abcda6898f6",
-  "commandElapsedSecondsSum": 71.172,
-  "failure": "RuntimeError: fixed-doctor-denied scan failed structured acceptance: missing exact denied service-account evidence",
+  "captureSource": "39e6aea",
+  "rawArchive": "evals/results/doctor-scan-context-20261001/attempt2",
+  "receiptSha256": "fe14242589d909a82311189656325123492b962d92f43833a3be1776ce19245d",
+  "tuiResultSha256": "7793c1d96c1e4895b6a69f71d03e57905292e3ca43838d29770b5761656fc85f",
+  "tuiProbeSha256": "bac420af062ec0bc05ed5f861259fbf0dbcbaa0b4149793203250fc306c03174",
+  "captureScriptSha256": "4b870721b37a31986ca640382c7cdbf9473ee267f581175fb0203b38e59aad01",
+  "commandElapsedSecondsSum": 81.039,
   "sharedKubeconfigUnchanged": true,
   "privateKubeconfigUnchangedDuringReads": true,
   "cleanupErrors": [],
+  "ownedNodeAbsenceVerified": true,
+  "privateCredentialsRemoved": true,
+  "cliObservationCount": 8,
+  "fixtureResourceCount": 3,
+  "tui": {
+    "checks": {
+      "allowed-open": true,
+      "allowed-reopen-after-retarget": true,
+      "denied-open": true,
+      "private-config-not-rewritten": true
+    },
+    "requestsByPhase": {
+      "allowed-open": 7,
+      "allowed-reopen-after-retarget": 7,
+      "denied-open": 7
+    },
+    "podHTTPStatusByPhase": {
+      "allowed-open": [
+        200
+      ],
+      "allowed-reopen-after-retarget": [
+        200
+      ],
+      "denied-open": [
+        403
+      ]
+    }
+  },
   "limits": [
-    "This failed attempt is not accepted live proof.",
-    "Scanner formats typed Forbidden errors as scoped Access denied warnings without the raw service-account name; the validator expected the wrong output contract.",
-    "Live TUI acceptance remains unrun.",
-    "No fleet, production ConfigHub mapping, or model-cost savings proof."
+    "One owned cluster with two credential contexts; context names are not stable cluster identities.",
+    "Live TUI proof drives actual model events/rendering, not a terminal emulator or full navigation.",
+    "Allowed CLI state scan is empty; nonempty findings and distinct endpoints have deterministic fake-server tests.",
+    "No fleet, authenticated production ConfigHub mapping, or model-cost savings proof.",
+    "Command duration sum excludes Python overhead and is not total wall-clock time."
   ],
-  "offlineRevalidation": {
-    "status": "cli_observations_match_corrected_contract",
-    "validatorSha256": "2ecfd4e1a67e1adc630ae1dfdc8f94d66800dc749780887c510b21ada1c57a11",
-    "note": "Separate offline revalidation of the original receipt; does not change its failed acceptance or establish live TUI proof."
+  "priorFailedAttempt": {
+    "schema": "doctor-scan-context-proof-summary.v1",
+    "status": "failed_validator_expectation",
+    "productSource": "5b3629752f354b257f7e667aa2c4f0126b35562b",
+    "oldSource": "98fe0183a932e32be3cbc9c04aae8f1d7124740d",
+    "captureSource": "1c5e9a8504913ad403eed0e8cfb5a4da4452e7c4",
+    "rawArchive": "evals/results/doctor-scan-context-20261001/attempt1",
+    "receiptSha256": "1f7afd5ff66d90323e0c389b0fc0ab8eddb75c62569b201074128abcda6898f6",
+    "commandElapsedSecondsSum": 71.172,
+    "failure": "RuntimeError: fixed-doctor-denied scan failed structured acceptance: missing exact denied service-account evidence",
+    "sharedKubeconfigUnchanged": true,
+    "privateKubeconfigUnchangedDuringReads": true,
+    "cleanupErrors": [],
+    "limits": [
+      "This failed attempt is not accepted live proof.",
+      "Scanner formats typed Forbidden errors as scoped Access denied warnings without the raw service-account name; the validator expected the wrong output contract.",
+      "Live TUI acceptance remains unrun.",
+      "No fleet, production ConfigHub mapping, or model-cost savings proof."
+    ],
+    "offlineRevalidation": {
+      "status": "cli_observations_match_corrected_contract",
+      "validatorSha256": "2ecfd4e1a67e1adc630ae1dfdc8f94d66800dc749780887c510b21ada1c57a11",
+      "note": "Separate offline revalidation of the original receipt; does not change its failed acceptance or establish live TUI proof."
+    }
   }
 }

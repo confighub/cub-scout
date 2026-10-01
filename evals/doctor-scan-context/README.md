@@ -1,13 +1,17 @@
 # Doctor and scan context proof (#743)
 
-Prepared, opt-in, serial before/after CLI and fixed-source TUI proof on one uniquely named disposable
-kind cluster. **The first live attempt failed a validator expectation; no complete
-accepted proof exists yet.** The retained [failure report](../reports/2026-10-01-doctor-scan-context.json)
-records successful cleanup and unchanged shared/private configs. The validator
-expected a raw service-account name in scan warnings, while the pinned scanner
-projects typed Forbidden errors as scoped `Access denied` warnings. Separate
-offline revalidation matches the corrected exact warning contract and preserves
-the original failed receipt. The prepared live TUI probe is still required before acceptance.
+Opt-in, serial before/after CLI and fixed-source TUI proof on one uniquely named
+disposable kind cluster. **The second live attempt passed on 2026-10-01.** The
+[report](../reports/2026-10-01-doctor-scan-context.json) records eight CLI outcomes,
+three actual TUI scan actions, successful cleanup, removed credentials and unchanged
+shared/CLI configs. Each TUI action made seven GETs; allowed/reopened Pod reads
+returned 200 and denied Pod reads returned 403 with visible coverage warnings.
+Command durations sum to 81.039 seconds, excluding Python overhead.
+
+The first attempt failed because its validator expected a raw service-account
+name in scan warnings instead of the scanner's scoped `Access denied` projection.
+Its original failed receipt remains preserved separately; the accepted attempt
+uses the corrected exact warning contract and adds live TUI evidence.
 
 Old source: `98fe0183a932e32be3cbc9c04aae8f1d7124740d`.
 Reviewed fixed product source: `5b3629752f354b257f7e667aa2c4f0126b35562b`.
@@ -92,7 +96,8 @@ failures, plus TUI request/status/rendering acceptance controls. The lifecycle t
 Review the finalized source pin, helper, fixture acceptance and cleanup paths before
 running under the adopted owned-cluster authorization. No fresh user approval is
 required for the already authorized packet; an independent code/evidence review is
-still required. The next live step is pending that review, not user permission.
+still required. The accepted second attempt followed a bounded independent review. Future changes
+require the same review discipline before rerunning.
 
 ```sh
 PYTHONDONTWRITEBYTECODE=1 python3 evals/doctor-scan-context/capture.py \
