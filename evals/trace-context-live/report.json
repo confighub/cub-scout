@@ -1,0 +1,225 @@
+{
+  "schema": "trace-context-owned-kind.v1",
+  "oldSource": "8cdb27b0bc9db17f5c0d1b59628b67cd3936ed6c",
+  "fixedSource": "24074d858e8e2411ce2ba3e94340ec5646395eed",
+  "oldBinarySha256": "f95728de81daec3e096a48cee7017be4ebfe6e6da71530d094434c72ade6e746",
+  "fixedBinarySha256": "96884bbce39bd26c6a5a0a4d58cb8172a7387dd7ba76d6a930814511c0cb5332",
+  "tuiProbeSha256": "6ec0d18e5efea1cc819cc339a7d90b247d9f3891ac1597fc4b8bfc677ca3256a",
+  "tuiBinarySha256": "a5e35f49e9d1f535b6a8bd832d7e38718ff678d9cfa58f0a16e3a2b5f65b0a9c",
+  "captureScriptSha256": "0bb8280a9ba00dd16a5a6c024736651df014ab660a1a8f105b9acd4cd3a9fb6d",
+  "nodeImage": "kindest/node:v1.35.0@sha256:4613778f3cfcd10e615029370f5786704559103cf27bef934597ba562b269661",
+  "fixtureIdentities": [
+    {
+      "kind": "Deployment",
+      "namespace": "scout-trace-context-proof",
+      "name": "scout-context-marker",
+      "uid": "1fbef82a-bbe9-406b-9911-64967b1d1074"
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "scout-trace-context-proof",
+      "name": "scout-native-marker",
+      "uid": "904ae572-6cba-4199-8ad5-0f5d9f22018b"
+    },
+    {
+      "kind": "Application",
+      "namespace": "scout-trace-context-proof",
+      "name": "scout-context-app",
+      "uid": "7f141681-8daf-4eeb-8fa6-16e239f0a392"
+    }
+  ],
+  "fixtureScope": "synthetic Argo Application CRD/object, Argo-labeled zero-replica Deployment, and unlabelled zero-replica Native control; no Argo controller/reconciliation",
+  "acceptance": "passed",
+  "sharedKubeconfigUnchanged": true,
+  "privateKubeconfigUnchangedDuringCLI": true,
+  "cleanupErrors": [],
+  "receiptSha256": "bbc829e8e940a4e8fef3c896ff6cca4d0420659022028092084b59a1e2404931",
+  "scope": "Derived summary of retained local attempt 3; synthetic Application object, real kind API/RBAC, no controller reconciliation or model evaluation.",
+  "observations": [
+    {
+      "phase": "old-ambient-normal",
+      "exitCode": 0,
+      "stdout": "{\n  \"command\": \"trace\",\n  \"target\": {\n    \"kind\": \"Deployment\",\n    \"namespace\": \"scout-trace-context-proof\",\n    \"name\": \"scout-context-marker\"\n  },\n  \"chain\": [\n    {\n      \"id\": {\n        \"kind\": \"Source\",\n        \"namespace\": \"\",\n        \"name\": \"example.invalid/owned-fixture\"\n      },\n      \"role\": \"workload\",\n      \"relationship\": \"managed-by\",\n      \"evidence\": [\n        {\n          \"type\": \"label\",\n          \"key\": \"argocd.argoproj.io/instance\",\n          \"value\": \"\",\n          \"path\": \"metadata.labels\"\n        }\n      ]\n    },\n    {\n      \"id\": {\n        \"kind\": \"Application\",\n        \"namespace\": \"scout-trace-context-proof\",\n        \"name\": \"scout-context-app\"\n      },\n      \"role\": \"deployer\",\n      \"relationship\": \"applies\",\n      \"evidence\": null,\n      \"deliveryStage\": \"deployer\"\n    }\n  ],\n  \"summary\": {\n    \"ownerType\": \"ArgoCD\",\n    \"source\": null,\n    \"deployer\": {\n      \"kind\": \"Application\",\n      \"namespace\": \"scout-trace-context-proof\",\n      \"name\": \"scout-context-app\"\n    }\n  }\n}\n",
+      "stderr": "",
+      "elapsedSeconds": 19.975
+    },
+    {
+      "phase": "old-explicit-normal",
+      "exitCode": 1,
+      "stdout": "",
+      "stderr": "Error: unknown flag: --kube-context\n",
+      "elapsedSeconds": 0.026
+    },
+    {
+      "phase": "fixed-allowed-normal",
+      "exitCode": 0,
+      "stdout": "{\n  \"context\": \"doctor-allowed\",\n  \"command\": \"trace\",\n  \"target\": {\n    \"kind\": \"Deployment\",\n    \"namespace\": \"scout-trace-context-proof\",\n    \"name\": \"scout-context-marker\"\n  },\n  \"chain\": [\n    {\n      \"id\": {\n        \"kind\": \"Source\",\n        \"namespace\": \"\",\n        \"name\": \"example.invalid/owned-fixture\"\n      },\n      \"role\": \"source\",\n      \"relationship\": \"sources\",\n      \"evidence\": null,\n      \"deliveryStage\": \"source\",\n      \"originalSource\": \"git:https://example.invalid/owned-fixture.git\"\n    },\n    {\n      \"id\": {\n        \"kind\": \"Application\",\n        \"namespace\": \"scout-trace-context-proof\",\n        \"name\": \"scout-context-app\"\n      },\n      \"role\": \"deployer\",\n      \"relationship\": \"applies\",\n      \"evidence\": null,\n      \"deliveryStage\": \"deployer\"\n    }\n  ],\n  \"summary\": {\n    \"ownerType\": \"ArgoCD\",\n    \"source\": {\n      \"kind\": \"Source\",\n      \"namespace\": \"\",\n      \"name\": \"example.invalid/owned-fixture\",\n      \"url\": \"https://example.invalid/owned-fixture.git\",\n      \"revision\": \"owned-kind-proof\"\n    },\n    \"deployer\": {\n      \"kind\": \"Application\",\n      \"namespace\": \"scout-trace-context-proof\",\n      \"name\": \"scout-context-app\"\n    }\n  }\n}\n",
+      "stderr": "",
+      "elapsedSeconds": 2.681
+    },
+    {
+      "phase": "fixed-denied-normal",
+      "exitCode": 1,
+      "stdout": "",
+      "stderr": "Error: ownership detection failed for Deployment/scout-context-marker in scout-trace-context-proof: deployments.apps \"scout-context-marker\" is forbidden: User \"system:serviceaccount:scout-trace-context-proof:trace-denied\" cannot get resource \"deployments\" in API group \"apps\" in the namespace \"scout-trace-context-proof\"\n",
+      "elapsedSeconds": 0.028
+    },
+    {
+      "phase": "old-ambient-reverse",
+      "exitCode": 0,
+      "stdout": "{\n  \"object\": {\n    \"kind\": \"Deployment\",\n    \"name\": \"scout-context-marker\",\n    \"namespace\": \"scout-trace-context-proof\"\n  },\n  \"k8sChain\": [\n    {\n      \"kind\": \"Deployment\",\n      \"name\": \"scout-context-marker\",\n      \"namespace\": \"scout-trace-context-proof\",\n      \"ready\": true,\n      \"status\": \"\",\n      \"statusReason\": \"MinimumReplicasAvailable\",\n      \"lastTransitionTime\": \"2026-10-01T13:51:40+01:00\",\n      \"message\": \"Deployment has minimum availability.\"\n    }\n  ],\n  \"owner\": \"argo\",\n  \"ownerDetails\": {\n    \"type\": \"argo\",\n    \"subType\": \"application\",\n    \"name\": \"scout-context-app\",\n    \"source\": \"label:argocd.argoproj.io/instance\",\n    \"confidence\": \"medium\"\n  },\n  \"topResource\": {\n    \"kind\": \"Deployment\",\n    \"name\": \"scout-context-marker\",\n    \"namespace\": \"scout-trace-context-proof\"\n  },\n  \"tracedAt\": \"2026-10-01T13:52:03.140389+01:00\"\n}\n",
+      "stderr": "Flag --json has been deprecated, use --format json instead\n",
+      "elapsedSeconds": 0.026
+    },
+    {
+      "phase": "old-explicit-reverse",
+      "exitCode": 1,
+      "stdout": "",
+      "stderr": "Error: unknown flag: --kube-context\n",
+      "elapsedSeconds": 0.015
+    },
+    {
+      "phase": "fixed-allowed-reverse",
+      "exitCode": 0,
+      "stdout": "{\n  \"context\": \"doctor-allowed\",\n  \"object\": {\n    \"kind\": \"Deployment\",\n    \"name\": \"scout-context-marker\",\n    \"namespace\": \"scout-trace-context-proof\"\n  },\n  \"k8sChain\": [\n    {\n      \"kind\": \"Deployment\",\n      \"name\": \"scout-context-marker\",\n      \"namespace\": \"scout-trace-context-proof\",\n      \"ready\": true,\n      \"status\": \"\",\n      \"statusReason\": \"MinimumReplicasAvailable\",\n      \"lastTransitionTime\": \"2026-10-01T13:51:40+01:00\",\n      \"message\": \"Deployment has minimum availability.\"\n    }\n  ],\n  \"owner\": \"argo\",\n  \"ownerDetails\": {\n    \"type\": \"argo\",\n    \"subType\": \"application\",\n    \"name\": \"scout-context-app\",\n    \"source\": \"label:argocd.argoproj.io/instance\",\n    \"confidence\": \"medium\"\n  },\n  \"topResource\": {\n    \"kind\": \"Deployment\",\n    \"name\": \"scout-context-marker\",\n    \"namespace\": \"scout-trace-context-proof\"\n  },\n  \"tracedAt\": \"2026-10-01T13:52:03.176255+01:00\"\n}\n",
+      "stderr": "Flag --json has been deprecated, use --format json instead\n",
+      "elapsedSeconds": 0.02
+    },
+    {
+      "phase": "fixed-denied-reverse",
+      "exitCode": 0,
+      "stdout": "{\n  \"context\": \"doctor-denied\",\n  \"object\": {\n    \"kind\": \"Deployment\",\n    \"name\": \"scout-context-marker\",\n    \"namespace\": \"scout-trace-context-proof\"\n  },\n  \"k8sChain\": [],\n  \"owner\": \"\",\n  \"error\": \"failed to get resource: deployments.apps \\\"scout-context-marker\\\" is forbidden: User \\\"system:serviceaccount:scout-trace-context-proof:trace-denied\\\" cannot get resource \\\"deployments\\\" in API group \\\"apps\\\" in the namespace \\\"scout-trace-context-proof\\\"\",\n  \"tracedAt\": \"2026-10-01T13:52:03.197214+01:00\"\n}\n",
+      "stderr": "Flag --json has been deprecated, use --format json instead\n",
+      "elapsedSeconds": 0.024
+    },
+    {
+      "phase": "fixed-allowed-native-reverse",
+      "exitCode": 0,
+      "stdout": "{\n  \"context\": \"doctor-allowed\",\n  \"object\": {\n    \"kind\": \"Deployment\",\n    \"name\": \"scout-native-marker\",\n    \"namespace\": \"scout-trace-context-proof\"\n  },\n  \"k8sChain\": [\n    {\n      \"kind\": \"Deployment\",\n      \"name\": \"scout-native-marker\",\n      \"namespace\": \"scout-trace-context-proof\",\n      \"ready\": true,\n      \"status\": \"\",\n      \"statusReason\": \"MinimumReplicasAvailable\",\n      \"lastTransitionTime\": \"2026-10-01T13:51:40+01:00\",\n      \"message\": \"Deployment has minimum availability.\"\n    }\n  ],\n  \"owner\": \"native\",\n  \"ownerDetails\": {\n    \"type\": \"unknown\"\n  },\n  \"topResource\": {\n    \"kind\": \"Deployment\",\n    \"name\": \"scout-native-marker\",\n    \"namespace\": \"scout-trace-context-proof\"\n  },\n  \"orphanMeta\": {\n    \"lastAppliedConfig\": \"{\\\"apiVersion\\\":\\\"apps/v1\\\",\\\"kind\\\":\\\"Deployment\\\",\\\"metadata\\\":{\\\"annotations\\\":{},\\\"name\\\":\\\"scout-native-marker\\\",\\\"namespace\\\":\\\"scout-trace-context-proof\\\"},\\\"spec\\\":{\\\"replicas\\\":0,\\\"selector\\\":{\\\"matchLabels\\\":{\\\"app.kubernetes.io/name\\\":\\\"scout-native-marker\\\"}},\\\"template\\\":{\\\"metadata\\\":{\\\"labels\\\":{\\\"app.kubernetes.io/name\\\":\\\"scout-native-marker\\\"}},\\\"spec\\\":{\\\"containers\\\":[{\\\"image\\\":\\\"registry.k8s.io/pause:3.10\\\",\\\"name\\\":\\\"pause\\\"}]}}}}\\n\",\n    \"createdAt\": \"2026-10-01T13:51:40+01:00\",\n    \"annotations\": {\n      \"deployment.kubernetes.io/revision\": \"1\"\n    }\n  },\n  \"tracedAt\": \"2026-10-01T13:52:03.221876+01:00\"\n}\n",
+      "stderr": "",
+      "elapsedSeconds": 0.022
+    },
+    {
+      "phase": "fixed-denied-native-reverse",
+      "exitCode": 0,
+      "stdout": "{\n  \"context\": \"doctor-denied\",\n  \"object\": {\n    \"kind\": \"Deployment\",\n    \"name\": \"scout-native-marker\",\n    \"namespace\": \"scout-trace-context-proof\"\n  },\n  \"k8sChain\": [],\n  \"owner\": \"\",\n  \"error\": \"failed to get resource: deployments.apps \\\"scout-native-marker\\\" is forbidden: User \\\"system:serviceaccount:scout-trace-context-proof:trace-denied\\\" cannot get resource \\\"deployments\\\" in API group \\\"apps\\\" in the namespace \\\"scout-trace-context-proof\\\"\",\n  \"tracedAt\": \"2026-10-01T13:52:03.243998+01:00\"\n}\n",
+      "stderr": "",
+      "elapsedSeconds": 0.021
+    }
+  ],
+  "tui": {
+    "schema": "trace-context-owned-tui.v1",
+    "scope": "actual local model T/Enter/reopen events against owned kind API; no terminal-emulator proof",
+    "checks": {
+      "allowed-open": true,
+      "allowed-reopen-after-retarget": true,
+      "denied-open": true,
+      "private-config-retarget-stable": true
+    },
+    "passed": true,
+    "requests": {
+      "allowed-open": [
+        {
+          "method": "GET",
+          "path": "/apis/apps/v1/namespaces/scout-trace-context-proof/deployments/scout-context-marker",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/apis/argoproj.io/v1alpha1/applications",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/apis/argoproj.io/v1alpha1/namespaces/scout-trace-context-proof/applications/scout-context-app",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/apis/apps/v1/namespaces/scout-trace-context-proof/deployments/scout-context-marker",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/apis/apps/v1/namespaces/scout-trace-context-proof/deployments/scout-context-marker",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/namespaces/scout-trace-context-proof/events",
+          "status": 200
+        }
+      ],
+      "allowed-reopen-after-retarget": [
+        {
+          "method": "GET",
+          "path": "/apis/apps/v1/namespaces/scout-trace-context-proof/deployments/scout-context-marker",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/apis/argoproj.io/v1alpha1/applications",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/apis/argoproj.io/v1alpha1/namespaces/scout-trace-context-proof/applications/scout-context-app",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/apis/apps/v1/namespaces/scout-trace-context-proof/deployments/scout-context-marker",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/apis/apps/v1/namespaces/scout-trace-context-proof/deployments/scout-context-marker",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/namespaces/scout-trace-context-proof/events",
+          "status": 200
+        }
+      ],
+      "denied-open": [
+        {
+          "method": "GET",
+          "path": "/apis/apps/v1/namespaces/scout-trace-context-proof/deployments/scout-context-marker",
+          "status": 403
+        }
+      ]
+    },
+    "selectedContexts": {
+      "allowed-open": "doctor-allowed",
+      "allowed-reopen-after-retarget": "doctor-allowed",
+      "denied-open": "doctor-denied"
+    }
+  },
+  "cleanup": [
+    {
+      "phase": "cleanup-owned-cluster",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "Deleting cluster \"scout-trace-ab95056644\" ...\nDeleted nodes: [\"scout-trace-ab95056644-control-plane\"]\n"
+    },
+    {
+      "phase": "verify-owned-nodes-absent",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "phase": "cleanup-source-worktree",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "phase": "cleanup-source-worktree",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}
