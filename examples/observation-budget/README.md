@@ -120,6 +120,41 @@ call a live cluster. This is the initial #599 binding foundation, not a global
 context selection guarantee. The scoped selector proof below describes the
 explicit-mode limits; broader subprocess and selector coverage remains pending.
 
+### Namespace boundaries for watch-backed LIST (#735)
+
+The watch-backed dynamic client serves a cached LIST only when the requested
+namespace is covered by the informer. A cache started for `team-a` may answer
+`team-a` reads, but a `team-b` or all-namespace read must go to the API. An
+all-scope cache can answer either namespace after filtering its objects. The
+client also carries the discovery-reported resource scope: a namespaced request
+for a cluster-scoped resource, or any request whose scope is unknown, falls
+through rather than being represented as an empty cached list. Selectors,
+pagination and resource-version reads continue to use the API.
+
+Reproduce the deterministic production-client HTTP proof:
+
+```sh
+KUBECONFIG=/tmp/scout-offline-validation.kubeconfig go test ./cmd/cub-scout \
+  -run '^(TestWatchBackedNamespaceScopedCacheFallsBackForOtherAndAllNamespaces|TestWatchBackedAllNamespaceCacheFiltersAndSelectorFallbackPreservesDenial|TestWatchBackedNamespaceMismatchPreservesDeniedFallback|TestWatchBackedScopedCacheDoesNotGuessClusterScope)$' \
+  -count=1 -v
+```
+
+The loopback API fixture contains same-name objects in `team-a` and `team-b`,
+counts real dynamic-client HTTP requests, and returns a denied response for the
+selector and invalid cluster-scope fallbacks. It does not create or contact a
+Kubernetes cluster.
+
+Before claiming live-cluster behavior, repeat the same read-only comparison on
+an explicitly owned test cluster: select a namespaced GVR and two namespaces
+that each contain an object with the same name; create a watch-backed client
+scoped to the first namespace; compare its exact namespace/name set for reads
+in the watched namespace, the other namespace, and all namespaces against
+direct unwrapped dynamic-client LIST results. Record API request paths (or
+equivalent API audit evidence) to show that the exact watched read was served
+from cache and the other/all reads reached the API. Include a cluster-scoped
+GVR check where the API rejects a namespaced URL. No such live proof is claimed
+by this local test.
+
 ### Scoped explicit context selection proof
 
 The scoped selector slice adds a strict named context to `map list`, its MCP
