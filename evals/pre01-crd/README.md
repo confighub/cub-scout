@@ -84,8 +84,8 @@ failed/unknown when evidence is missing or denied.
 The command requires `--execute` as an explicit acknowledgement and requires
 all source and executable paths, full revisions, SHA-256 pins, kubeconfig path
 and fresh output path as arguments. A dry-run or actual capture is not part of
-this source-preparation packet; do not invoke the capture until independent
-review the helper and its pins before any separately authorized bounded serial live capture.
+this source-preparation packet. Review the helper and its pins before any
+separately authorized bounded serial live capture.
 
 ## Offline checks
 
@@ -102,3 +102,45 @@ always run. CI installs `requirements.txt` and runs those guards; the external
 checkout audit remains optional when that separate checkout is not available.
 No test creates a cluster or makes a network/model call. These checks do not
 replace review, live capture acceptance or later case/scaffold preparation.
+
+
+# PRE-01 raw CRD prerequisite recording
+
+This case packages the independently accepted capture from 2026-10-01. It is
+prepared for review, not run as a benchmark and not admitted to paid execution.
+The fixture contains nine byte-preserved API response bodies, the authored
+normalized ServiceMonitor applied in both phases, both dependent-apply
+stdout/stderr pairs, and a factual capture-scope index. `scaffold.sh` copies the
+same files into each arm's `cluster/` directory.
+
+The capture used one owned kind cluster and serial absent/present phases; it is
+not an atomic snapshot. The CRD was absent on the exact CRD read before and
+after the failed dependent apply. The discovery and object routes initially
+returned raw `404 page not found` bodies, which are preserved and are not
+typed Kubernetes object-level NotFound responses. After creating only the
+CRD, the CRD GET showed `Established=True`, API discovery listed
+ServiceMonitor, a typed object NotFound preceded the repeated apply, and the
+final GET returned the created object. Those facts establish API registration
+and resource creation only. No operator or controller was installed, so
+reconciliation, Prometheus discovery, and target health were not measured.
+
+Source provenance pins the helm-expt revision and full source-file hashes,
+PyYAML 6.0.3 normalization, capture helper revision/hash, cub-scout source and
+binary hash, and timestamps. The 3.87 MB authored CRD source file and its
+normalized duplicate are intentionally excluded: the exact registered CRD API
+response is present. The authored ServiceMonitor is included as normalized
+YAML; normalization changes formatting, anchors, and comments while retaining
+the selected parsed mapping. See `fixtures/capture-scope.json` for the raw file
+inventory, hashes, observed request ordering and operation status/times.
+
+The raw fixture omits derived Scout prerequisite receipts and their validation,
+credential-bearing kubeconfigs or tokens, credentials/config hashes, owned
+cluster marker, Kubernetes caches, and unrelated setup output. The old CRD
+source projection is not substituted for the actual API response. Raw API
+bodies and dependent apply outputs remain unchanged.
+
+The strict grader requires one exact JSON object and rejects extra keys,
+duplicate keys, extra prose, unsupported values, incorrect object identity, or
+claims of health. Offline staging/hash and grader-negative tests do not make a
+model call or contact a cluster. Preparation does not establish harness
+ordinary-tool/MCP parity and does not authorize paid runs.

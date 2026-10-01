@@ -322,6 +322,10 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			checkINV04RBACScaffold(t, caseDir)
 			continue
 		}
+		if filepath.Base(caseDir) == "pre01-crd" {
+			checkPRE01CRDScaffold(t, caseDir)
+			continue
+		}
 		if filepath.Base(caseDir) == "rul04-image-identity" {
 			checkRUL04ImageIdentityScaffold(t, caseDir)
 			continue

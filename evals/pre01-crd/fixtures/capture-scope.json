@@ -1,0 +1,260 @@
+{
+  "authoredSource": {
+    "normalization": "PyYAML safe_load_all selects the unique pinned object; safe_dump preserves parsed fields but changes formatting, anchors and comments",
+    "normalizer": {
+      "name": "PyYAML",
+      "version": "6.0.3"
+    },
+    "selectedCRDSource": {
+      "apiVersion": "apiextensions.k8s.io/v1",
+      "fullNormalizedCRDFileIncluded": false,
+      "kind": "CustomResourceDefinition",
+      "name": "servicemonitors.monitoring.coreos.com",
+      "normalizedYamlSha256": "289ff9d8ff715e715854ae641c79173eb1d7bc23ed54bd4719d9488c16616681",
+      "sourceObjectSha256": "8276ed1792b96fc6ba62e0a52074d3e3513bcdb235f9a2f48956e8debe2082a5"
+    },
+    "serviceMonitor": {
+      "apiVersion": "monitoring.coreos.com/v1",
+      "file": "servicemonitor.normalized.yaml",
+      "kind": "ServiceMonitor",
+      "name": "kube-prometheus-stack-kube-state-metrics",
+      "namespace": "monitoring",
+      "normalizedYamlSha256": "8379723ecf51a8776c6dceeedbd7101cbb9838c94feef4cd21bd5eb75f603b75",
+      "sourceObjectSha256": "581743ab3b836ae759de8f212f122ce67a3d7379755d4a628d55620a62739ff4"
+    },
+    "sourceFiles": {
+      "data/base-variant-records/records/prometheus-community-kube-prometheus-stack-87-19-2-no-crds.yaml": {
+        "bytes": 41463,
+        "sha256": "d915b20d548433314ceee42cb9db29ed75b1009a04ba6da81bddf0011ec75153"
+      },
+      "packages/prometheus-community/kube-prometheus-stack/87.19.2/prerequisites/kube-prometheus-stack-lifecycle/default-crds.yaml": {
+        "bytes": 3870160,
+        "sha256": "bba9c3c345520981690399f86ad6a33ce45c9dac61f89721e1a5730f8f1ed964"
+      },
+      "recipes/prometheus-community/kube-prometheus-stack/87.19.2/revisions/no-crds/r001/rendered/release-objects.yaml": {
+        "bytes": 658990,
+        "sha256": "86d54113ec12fcea838d30e7e2ff6722de375bd0f6cc0e09ab8a14078c941446"
+      }
+    }
+  },
+  "capture": {
+    "atomicSnapshot": false,
+    "captureScriptSha256": "4c2390164be8a1651e836fe4d8b5a5245ca21fd6fca266f99bfd645d1bcc3800",
+    "captureSourceCommit": "682160f4cf536a8a16e48ebf237976609d3d1c5f",
+    "endedAt": "2026-10-01T03:57:30Z",
+    "productBinarySha256": "7d20aa7bb33b477dfd88afb2f53b1a6f773a5a4ffbcff7f81d8dcbfeb5a12bab",
+    "productSourceRevision": "eec6d442279955af0f1fc39c637252ac8eb0f081",
+    "sourceRepository": "confighub/helm-expt",
+    "sourceRevision": "9ab4c753a888dc305a3c07956c9f8f5a19eb70a0",
+    "startedAt": "2026-10-01T03:56:53Z",
+    "wrapperElapsedSeconds": 39.05986745818518,
+    "wrapperEndedAt": "2026-10-01T03:57:30Z",
+    "wrapperProofResult": "exit 0",
+    "wrapperStartedAt": "2026-10-01T03:56:51Z"
+  },
+  "dependentOperations": [
+    {
+      "endedAt": "2026-10-01T03:57:26Z",
+      "exitCode": 1,
+      "operation": "apply-authored-servicemonitor",
+      "phase": "absent",
+      "startedAt": "2026-10-01T03:57:25Z",
+      "stderrFile": "absent-apply.stderr.txt",
+      "stderrSha256": "eec841cdc7ba8979d51398d7dc9a753ea8d2a8efb13d32312596a37863cb2c1b",
+      "stdoutFile": "absent-apply.stdout.txt",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "endedAt": "2026-10-01T03:57:28Z",
+      "exitCode": 0,
+      "operation": "apply-authored-servicemonitor",
+      "phase": "present",
+      "startedAt": "2026-10-01T03:57:26Z",
+      "stderrFile": "present-apply.stderr.txt",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutFile": "present-apply.stdout.txt",
+      "stdoutSha256": "daabc3a7462204b0ba9a99bd0893b37872cbeb0a5954ac8d6a2756ba70acf505"
+    }
+  ],
+  "files": {
+    "absent-after-apply-crd.json": {
+      "bytes": 336,
+      "sha256": "661902cf15f640cf0cfbcb7d5df71d36ac2d9ac6041f1b92429e66704c1614c0"
+    },
+    "absent-after-apply-servicemonitor.body": {
+      "bytes": 19,
+      "sha256": "b16e15764b8bc06c5c3f9f19bc8b99fa48e7894aa5a6ccdad65da49bbf564793"
+    },
+    "absent-apply.stderr.txt": {
+      "bytes": 313,
+      "sha256": "eec841cdc7ba8979d51398d7dc9a753ea8d2a8efb13d32312596a37863cb2c1b"
+    },
+    "absent-apply.stdout.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "absent-crd.json": {
+      "bytes": 336,
+      "sha256": "661902cf15f640cf0cfbcb7d5df71d36ac2d9ac6041f1b92429e66704c1614c0"
+    },
+    "absent-discovery.body": {
+      "bytes": 19,
+      "sha256": "b16e15764b8bc06c5c3f9f19bc8b99fa48e7894aa5a6ccdad65da49bbf564793"
+    },
+    "absent-servicemonitor.body": {
+      "bytes": 19,
+      "sha256": "b16e15764b8bc06c5c3f9f19bc8b99fa48e7894aa5a6ccdad65da49bbf564793"
+    },
+    "present-apply.stderr.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "present-apply.stdout.txt": {
+      "bytes": 86,
+      "sha256": "daabc3a7462204b0ba9a99bd0893b37872cbeb0a5954ac8d6a2756ba70acf505"
+    },
+    "present-before-apply-servicemonitor.json": {
+      "bytes": 324,
+      "sha256": "d6ad3cd3caf021eda33553b022d71402a909db0cb5f2faad407075eff973efd6"
+    },
+    "present-crd.json": {
+      "bytes": 44289,
+      "sha256": "a5e571a80d5882cc9294cfabc27e0e6cefead3612e8e880afb885e3bf60f3e3c"
+    },
+    "present-discovery.json": {
+      "bytes": 509,
+      "sha256": "e791bb13f75f7767dd2c40df7485653342b0894ca58fd3af17b1b03ed087c1a8"
+    },
+    "present-servicemonitor.json": {
+      "bytes": 2355,
+      "sha256": "78836df757ca3eb79f25bb0190f03d465fb282b455b8a27e79fbef67247a650e"
+    },
+    "servicemonitor.normalized.yaml": {
+      "bytes": 728,
+      "sha256": "8379723ecf51a8776c6dceeedbd7101cbb9838c94feef4cd21bd5eb75f603b75"
+    }
+  },
+  "requests": [
+    {
+      "elapsedSeconds": 0.007913082838058472,
+      "endedAt": "2026-10-01T03:57:25Z",
+      "httpStatus": 404,
+      "method": "GET",
+      "path": "/apis/apiextensions.k8s.io/v1/customresourcedefinitions/servicemonitors.monitoring.coreos.com",
+      "phase": "absent",
+      "rawBytes": 336,
+      "rawFile": "absent-crd.json",
+      "rawSha256": "661902cf15f640cf0cfbcb7d5df71d36ac2d9ac6041f1b92429e66704c1614c0",
+      "startedAt": "2026-10-01T03:57:25Z"
+    },
+    {
+      "elapsedSeconds": 0.003076875116676092,
+      "endedAt": "2026-10-01T03:57:25Z",
+      "httpStatus": 404,
+      "method": "GET",
+      "path": "/apis/monitoring.coreos.com/v1",
+      "phase": "absent",
+      "rawBytes": 19,
+      "rawFile": "absent-discovery.body",
+      "rawSha256": "b16e15764b8bc06c5c3f9f19bc8b99fa48e7894aa5a6ccdad65da49bbf564793",
+      "startedAt": "2026-10-01T03:57:25Z"
+    },
+    {
+      "elapsedSeconds": 0.0034855420235544443,
+      "endedAt": "2026-10-01T03:57:25Z",
+      "httpStatus": 404,
+      "method": "GET",
+      "path": "/apis/monitoring.coreos.com/v1/namespaces/monitoring/servicemonitors/kube-prometheus-stack-kube-state-metrics",
+      "phase": "absent",
+      "rawBytes": 19,
+      "rawFile": "absent-servicemonitor.body",
+      "rawSha256": "b16e15764b8bc06c5c3f9f19bc8b99fa48e7894aa5a6ccdad65da49bbf564793",
+      "startedAt": "2026-10-01T03:57:25Z"
+    },
+    {
+      "elapsedSeconds": 0.003864874830469489,
+      "endedAt": "2026-10-01T03:57:26Z",
+      "httpStatus": 404,
+      "method": "GET",
+      "path": "/apis/apiextensions.k8s.io/v1/customresourcedefinitions/servicemonitors.monitoring.coreos.com",
+      "phase": "absent",
+      "rawBytes": 336,
+      "rawFile": "absent-after-apply-crd.json",
+      "rawSha256": "661902cf15f640cf0cfbcb7d5df71d36ac2d9ac6041f1b92429e66704c1614c0",
+      "startedAt": "2026-10-01T03:57:26Z"
+    },
+    {
+      "elapsedSeconds": 0.0028926250524818897,
+      "endedAt": "2026-10-01T03:57:26Z",
+      "httpStatus": 404,
+      "method": "GET",
+      "path": "/apis/monitoring.coreos.com/v1/namespaces/monitoring/servicemonitors/kube-prometheus-stack-kube-state-metrics",
+      "phase": "absent",
+      "rawBytes": 19,
+      "rawFile": "absent-after-apply-servicemonitor.body",
+      "rawSha256": "b16e15764b8bc06c5c3f9f19bc8b99fa48e7894aa5a6ccdad65da49bbf564793",
+      "startedAt": "2026-10-01T03:57:26Z"
+    },
+    {
+      "elapsedSeconds": 0.006838750094175339,
+      "endedAt": "2026-10-01T03:57:26Z",
+      "httpStatus": 200,
+      "method": "GET",
+      "path": "/apis/apiextensions.k8s.io/v1/customresourcedefinitions/servicemonitors.monitoring.coreos.com",
+      "phase": "present",
+      "rawBytes": 44289,
+      "rawFile": "present-crd.json",
+      "rawSha256": "a5e571a80d5882cc9294cfabc27e0e6cefead3612e8e880afb885e3bf60f3e3c",
+      "startedAt": "2026-10-01T03:57:26Z"
+    },
+    {
+      "elapsedSeconds": 0.0029470829758793116,
+      "endedAt": "2026-10-01T03:57:26Z",
+      "httpStatus": 200,
+      "method": "GET",
+      "path": "/apis/monitoring.coreos.com/v1",
+      "phase": "present",
+      "rawBytes": 509,
+      "rawFile": "present-discovery.json",
+      "rawSha256": "e791bb13f75f7767dd2c40df7485653342b0894ca58fd3af17b1b03ed087c1a8",
+      "startedAt": "2026-10-01T03:57:26Z"
+    },
+    {
+      "elapsedSeconds": 0.013769084122031927,
+      "endedAt": "2026-10-01T03:57:26Z",
+      "httpStatus": 404,
+      "method": "GET",
+      "path": "/apis/monitoring.coreos.com/v1/namespaces/monitoring/servicemonitors/kube-prometheus-stack-kube-state-metrics",
+      "phase": "present-before-apply",
+      "rawBytes": 324,
+      "rawFile": "present-before-apply-servicemonitor.json",
+      "rawSha256": "d6ad3cd3caf021eda33553b022d71402a909db0cb5f2faad407075eff973efd6",
+      "startedAt": "2026-10-01T03:57:26Z"
+    },
+    {
+      "elapsedSeconds": 0.0039603752084076405,
+      "endedAt": "2026-10-01T03:57:28Z",
+      "httpStatus": 200,
+      "method": "GET",
+      "path": "/apis/monitoring.coreos.com/v1/namespaces/monitoring/servicemonitors/kube-prometheus-stack-kube-state-metrics",
+      "phase": "present",
+      "rawBytes": 2355,
+      "rawFile": "present-servicemonitor.json",
+      "rawSha256": "78836df757ca3eb79f25bb0190f03d465fb282b455b8a27e79fbef67247a650e",
+      "startedAt": "2026-10-01T03:57:28Z"
+    }
+  ],
+  "schema": "pre01-crd-capture-scope.v1",
+  "scope": {
+    "clusterName": "scout-pre01-20261001035653-2202b949",
+    "limitations": [
+      "Raw API responses are preserved byte-for-byte, including non-Kubernetes route 404 bodies.",
+      "The full 3.87 MB authored CRD source file and its normalized duplicate are not staged; the registered CRD GET body is staged.",
+      "No operator or controller was installed; API registration does not measure discovery by an operator or target health."
+    ],
+    "operationCount": 2,
+    "requestCount": 9,
+    "sequence": "one owned kind cluster; requests and operations are ordered by recorded phase and time",
+    "setupOperation": "fixture-create-only-pinned-crd"
+  }
+}

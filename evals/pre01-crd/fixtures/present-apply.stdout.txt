@@ -1,0 +1,1 @@
+servicemonitor.monitoring.coreos.com/kube-prometheus-stack-kube-state-metrics created
