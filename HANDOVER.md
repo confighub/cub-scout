@@ -53,10 +53,29 @@ order, quality gates, budgets and decisions.
   captured before clients are created; exec helpers retain their refresh behavior.
   Static proxy provenance comes from the same parsed configuration snapshot,
   never callback sampling. JSON now retains context labels and partial warnings.
-  Explicit CLI/MCP selectors, reverse/diff integration, complete omission coverage,
-  final review and before/after owned-cluster proof remain open. This normal
-  Trace checkpoint passed build and the full offline Go suite (command package
-  157.213 seconds); later selector/reverse/diff edits need their own final checks. A context label is not a stable cluster ID. No paid evals ran for this work.
+  Explicit CLI/MCP selectors and reverse observations are now implemented,
+  with partial timing/Secret/artifact evidence preserved. Reverse Secret saved
+  manifests are omitted explicitly. Generic Argo source summaries preserve the
+  declared target revision without fabricating ownership evidence; Flux artifact
+  JSON retains its existing shape.
+  The [MCP process proof](evals/trace-context-binding/README.md) passed its final
+  local-fixture capture: four GETs, zero ambient Beta requests, explicit denied
+  evidence and verified private cleanup. It exercises the real stdio server and
+  child processes, not a live cluster or real RBAC. Binary/source association
+  limits and earlier attempts remain recorded. Its three Python tests and the
+  exact recorded-case scaffold guard pass; paid agent execution remains unrun.
+  The first combined full-Go run found two Flux golden changes and a scaffold
+  mismatch; both are repaired and targeted tests pass. A fresh full suite is
+  running at `3a056e5e`. Full controller-desired diff, owned before/after live
+  proof, final independent review and CI remain open. Explicit context with
+  legacy delegated diff fails before reads. A context label is not a stable
+  cluster ID; this packet does not close #599.
+
+- [PR #749](https://github.com/confighub/cub-scout/pull/749) supplies the missing
+  Trace Markdown unit-event rows under #561, preserving Result/Status and
+  missing values. Independent diff review, offline build and full Go tests pass
+  at `7c68ea66`; exact-head CI is pending. Its example is typed fixture output,
+  not a new server capture. The broader #561 scope stays open.
 
 - The fixed benchmark retains 24 questions and six equally weighted groups.
   This checkout has **0 planned, 5 refreshed fixtures, 2 prepared recorded
