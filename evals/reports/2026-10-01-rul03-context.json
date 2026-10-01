@@ -1,0 +1,89 @@
+{
+  "classification": "raw evidence preparation; no model execution or savings claim",
+  "capture": {
+    "atomicSnapshot": false,
+    "captureSourceRevision": "e61506e0335ab8033635f477da8f2c4ad43dc060",
+    "captureScriptSha256": "501daae70b0f0a7ef52c7e873356e984b24d6f17594431444adbbf35987a10b0",
+    "cleanup": {
+      "verified": true,
+      "deletedOwnedClusters": 2
+    },
+    "elapsedSeconds": 65.29452516697347,
+    "endedAt": "2026-10-01T04:55:29.053Z",
+    "errors": [],
+    "kindVersion": "kind v0.31.0 go1.25.5 darwin/arm64",
+    "nodeImage": "kindest/node:v1.35.0@sha256:4613778f3cfcd10e615029370f5786704559103cf27bef934597ba562b269661",
+    "observerCurrentContext": {
+      "before": "rul03-readable",
+      "after": "rul03-readable"
+    },
+    "observations": [
+      {
+        "context": "rul03-denied",
+        "currentContext": "rul03-readable",
+        "explicitContext": true,
+        "method": "GET",
+        "path": "/apis/apps/v1/namespaces/rul03-proof/deployments",
+        "startedAt": "2026-10-01T04:55:26.571Z",
+        "endedAt": "2026-10-01T04:55:26.607Z",
+        "httpStatus": 403,
+        "rawFile": "rul03-denied-deployments.body",
+        "rawSha256": "fc5cad6498d731f454f2b859a528b00ab69450481804c89a42939512b0dc6978"
+      },
+      {
+        "context": "rul03-readable",
+        "currentContext": "rul03-readable",
+        "explicitContext": true,
+        "method": "GET",
+        "path": "/apis/apps/v1/namespaces/rul03-proof/deployments",
+        "startedAt": "2026-10-01T04:55:26.607Z",
+        "endedAt": "2026-10-01T04:55:26.616Z",
+        "httpStatus": 200,
+        "rawFile": "rul03-readable-deployments.body",
+        "rawSha256": "e0102f91e1417c8554ed377352b50450f2376e69d40632f109ea012c5c1560a2"
+      }
+    ],
+    "privateKubeconfigSha256": {
+      "adminInitial": {
+        "denied": "b6d2b9b90f3ab9bb221e7c99027357cc52eff186176b1a589abd540a3b2d6ed6",
+        "readable": "2e45c50c5605220dd5fdc86012e7695b8b14a45e5b1b5c444c999c9f9f18005a"
+      },
+      "adminBeforeCleanup": {
+        "denied": "b6d2b9b90f3ab9bb221e7c99027357cc52eff186176b1a589abd540a3b2d6ed6",
+        "readable": "2e45c50c5605220dd5fdc86012e7695b8b14a45e5b1b5c444c999c9f9f18005a"
+      },
+      "adminAfterCleanup": {
+        "denied": "5d060abdde881925da9ff44be7c4d582b24352af5bae028ac8717373e12b4fba",
+        "readable": "5d060abdde881925da9ff44be7c4d582b24352af5bae028ac8717373e12b4fba"
+      },
+      "observerInitial": "377150c990f058dfe6f2a6ba2e2ddd19f13ee986936866599c58536eee3b1a80",
+      "observerBeforeCleanup": "377150c990f058dfe6f2a6ba2e2ddd19f13ee986936866599c58536eee3b1a80",
+      "observerAfterCleanup": "377150c990f058dfe6f2a6ba2e2ddd19f13ee986936866599c58536eee3b1a80"
+    },
+    "rawFilesSha256": {
+      "capture-scope.json": "9b05333216fd5daa609266c67c5fee6bdd5ba82487563ff39be26fa24131dc35",
+      "observer-context-map.json": "19a2b434661e8ed3d52934c69340cb8773fbd78a8416ff9e245a72e057fc7c09",
+      "rul03-denied-deployments.body": "fc5cad6498d731f454f2b859a528b00ab69450481804c89a42939512b0dc6978",
+      "rul03-readable-deployments.body": "e0102f91e1417c8554ed377352b50450f2376e69d40632f109ea012c5c1560a2"
+    },
+    "sharedKubeconfigSha256": {
+      "before": "910415d445ded06e3bd337c51cbabe8ce385684b1e35c1cb7ce57776d0ba2ad1",
+      "beforeCleanup": "910415d445ded06e3bd337c51cbabe8ce385684b1e35c1cb7ce57776d0ba2ad1",
+      "after": "910415d445ded06e3bd337c51cbabe8ce385684b1e35c1cb7ce57776d0ba2ad1",
+      "unchanged": true
+    },
+    "startedAt": "2026-10-01T04:54:23.759Z"
+  },
+  "rawEvidenceMeaning": "The denied context returned HTTP 403 for a Deployment list request; denied inventory remains unknown. The separately named readable context returned one Deployment object. The current context remained the readable context before and after explicit queries. These observations were sequential and are not an atomic or fleet-wide snapshot.",
+  "wrapper": {
+    "exit": 0,
+    "seconds": 65.3587125421036,
+    "endedAt": "2026-10-01T04:55:29.067Z",
+    "provenanceExists": true
+  },
+  "priorFailedPreflight": {
+    "classification": "failed preflight; retained separately, not used as model evidence",
+    "operations": 0,
+    "sharedKubeconfigUnchanged": true
+  }
+}

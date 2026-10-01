@@ -1,62 +1,67 @@
-# RUL-03 explicit-context capture preparation
+# RUL-03 explicit-context recording
 
-This packet prepares source and offline proof for one bounded RUL-03 capture.
-It has not run a cluster or model and does not alter the frozen benchmark
-mapping. The helper requires an explicit `--execute` flag and explicit paths
-for the existing shared kubeconfig (hash-only), kind, kubectl, Docker, and a
-new output directory. It never uses the shared kubeconfig for cluster calls.
+This case contains one reviewed, bounded capture with two explicit Kubernetes
+contexts. The denied context returned HTTP 403 to a namespaced Deployment List
+request. The readable context returned one Deployment with its captured UID.
+The explicitly requested contexts mapped to distinct local API servers while
+the observer kubeconfig's default stayed `rul03-readable` before and after both
+requests. A 403 means the denied inventory is unknown; it is not an empty list.
 
-The capture creates two uniquely named kind clusters using the exact kind and
-cached node-image pins inherited from `evals/inv04-rbac/capture.py`. Each gets
-its own private admin kubeconfig, namespace, observer ServiceAccount, and one
-Deployment. Only the readable cluster gets a namespace-scoped Role and
-RoleBinding for Deployment `get` and `list`. Admin-side setup verification
-checks that the authored Deployment exists on each server before the observer
-requests.
+The two response bodies are copied byte-for-byte from the reviewed capture.
+`observer-context-map.json` is likewise copied exactly. `capture-scope.json` is
+derived capture metadata that records the source/helper pins, request context,
+path, status, timestamps, and response hashes; it is not a Kubernetes object.
+The scaffold stages exactly these four files identically for both benchmark
+arms. It excludes setup manifests and apply logs, admin-side object checks,
+private kubeconfigs, credentials, and the full capture provenance.
 
-One private observer kubeconfig contains two separately bound contexts and
-uses the readable context as its current default. The capture resolves each
-requested context by name and sends only the allowlisted namespaced Deployment
-List GET to that context's loopback TLS server. It does not consult or mutate
-`current-context`; the denied read is made first with the explicit denied
-context. The two server endpoints and CA identities must differ. The raw HTTP
-response bodies, HTTP status, timestamps, content type, elapsed time, and
-SHA-256 are retained. A typed Kubernetes `Status/Forbidden` is denied evidence;
-its message and details must identify the ServiceAccount's `list deployments`
-denial in namespace `rul03-proof`. It is never converted into an empty list. A
-successful list must contain the one exact authored Deployment and its
-UID/resourceVersion.
+## Reviewed capture
 
-The helper uses bounded process groups, a 240-second overall deadline plus a
-separate 90-second cleanup window, 45-second default command deadlines (90
-seconds for each bounded kind create), a 2 MiB process-output cap, and a 4 MiB
-API-body cap. Output directories are new,
-outside the repository, and mode `0700`; files are created exclusively with
-mode `0600`. It records partial command evidence, including interrupted
-creation attempts. Cleanup checks ownership markers and deletes only the two
-generated cluster names, then verifies both are absent. Shared kubeconfig
-hashes and private-config hashes are recorded; no credentials or config bytes
-are written to capture output.
+The accepted run completed 2026-10-01 04:54:23.759–04:55:29.053 UTC in 65.29
+seconds (wrapper exit 0, 65.36 seconds). It used capture source revision
+`e61506e0335ab8033635f477da8f2c4ad43dc060`, helper SHA-256
+`501daae70b0f0a7ef52c7e873356e984b24d6f17594431444adbbf35987a10b0`, kind
+`v0.31.0`, and pinned node image
+`kindest/node:v1.35.0@sha256:4613778f3cfcd10e615029370f5786704559103cf27bef934597ba562b269661`.
+The two raw response hashes and context binding are pinned in `capture-scope.json`
+and [`benchmark-v1.json`](../benchmark-v1.json); complete non-secret factual
+run details are in the [RUL-03 report](../reports/2026-10-01-rul03-context.json).
 
-The offline tests exercise context-to-endpoint binding despite a readable
-default, typed `403` versus a real nonempty `DeploymentList`, malformed bodies,
-request/output limits, explicit command construction, safe output creation,
-and cleanup after a simulated interruption during partial second-cluster
-creation. They make no cluster, network, CLI, or model calls. The independent
-actual capture and later fixture packaging remain separate review steps. Even
-if captured successfully, this evidence supports only two explicit
-namespace-scoped observations; it does not support cross-cluster aggregation,
-ownership, workload health, or savings claims.
+Shared kubeconfig hashes matched before the run, before cleanup, and after it.
+The observer configuration hash and default context remained unchanged. The
+private admin config hashes matched their initial values before cleanup and
+changed during cleanup; the report distinguishes these phases. Both newly owned
+clusters were deleted and verified absent. The earlier failed preflight stopped
+before cluster creation, is retained separately, and did not contribute model
+input.
 
-Run the offline test suite with bytecode disabled:
+These are two sequential observations, not an atomic snapshot, fleet result, or
+health/ownership claim. In particular, the readable result must not be used to
+fill the denied context's inventory. The frozen benchmark remains
+non-executable and no model or paid evaluation was run.
+
+## Capture helper and offline guards
+
+`capture.py` is a bounded source-preparation helper, not needed to consume this
+recording. It requires `--execute`, explicit local tool paths, explicit shared
+kubeconfig path for hash-only integrity checks, and a new output path. It uses
+two uniquely named owned kind clusters, private per-cluster kubeconfigs, and a
+private observer-only kubeconfig; every query names its context explicitly.
+It uses the pinned kind/node versions inherited from INV-04, limits the overall
+run to 240 seconds plus a 90-second cleanup window, caps command output at
+2 MiB and API bodies at 4 MiB, retains partial-operation evidence, and only
+deletes clusters covered by the run's ownership marker. Cleanup fails closed if
+a per-cluster private kubeconfig is absent; shared `KUBECONFIG` is never used as
+a fallback.
+
+The offline tests exercise explicit context/server bindings, strict forbidden
+versus list responses, output limits, ownership cleanup, and interrupted
+partial creation. They do not call a cluster, network, product CLI, or model:
 
 ```sh
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/rul03-context -v
 ```
 
-The first actual preflight stopped before cluster creation: resolving OrbStack's
-`docker` launcher to `docker-tools` changed argv[0] and broke CLI dispatch. The
-helper now validates the resolved regular executable while preserving its
-launcher path; file hashes still cover the resolved executable bytes. Missing
-private configs after partial creation can be replaced with empty configs only
-inside the existing owner-private directory, never through shared defaults.
+The prompt, grader, and recorded files prepare a correctness contract only.
+Tool permissions, equal ordinary-tool admission, benchmark protocol review, and
+any future evaluation remain separate gates.

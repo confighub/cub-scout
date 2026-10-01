@@ -1,0 +1,43 @@
+{
+  "atomicSnapshot": false,
+  "captureScriptSha256": "501daae70b0f0a7ef52c7e873356e984b24d6f17594431444adbbf35987a10b0",
+  "captureSourceRevision": "e61506e0335ab8033635f477da8f2c4ad43dc060",
+  "classification": "capture metadata; observer-context-map.json and response bodies are the raw captured files",
+  "observations": [
+    {
+      "contentType": "application/json",
+      "context": "rul03-denied",
+      "currentContext": "rul03-readable",
+      "elapsedSeconds": 0.029478291980922222,
+      "endedAt": "2026-10-01T04:55:26.607Z",
+      "explicitContext": true,
+      "httpStatus": 403,
+      "method": "GET",
+      "path": "/apis/apps/v1/namespaces/rul03-proof/deployments",
+      "rawBytes": 342,
+      "rawFile": "rul03-denied-deployments.body",
+      "rawSha256": "fc5cad6498d731f454f2b859a528b00ab69450481804c89a42939512b0dc6978",
+      "startedAt": "2026-10-01T04:55:26.571Z"
+    },
+    {
+      "contentType": "application/json",
+      "context": "rul03-readable",
+      "currentContext": "rul03-readable",
+      "elapsedSeconds": 0.007869916036725044,
+      "endedAt": "2026-10-01T04:55:26.616Z",
+      "explicitContext": true,
+      "httpStatus": 200,
+      "method": "GET",
+      "path": "/apis/apps/v1/namespaces/rul03-proof/deployments",
+      "rawBytes": 3605,
+      "rawFile": "rul03-readable-deployments.body",
+      "rawSha256": "e0102f91e1417c8554ed377352b50450f2376e69d40632f109ea012c5c1560a2",
+      "startedAt": "2026-10-01T04:55:26.607Z"
+    }
+  ],
+  "observerCurrentContext": {
+    "after": "rul03-readable",
+    "before": "rul03-readable"
+  },
+  "schema": "rul03-context-capture-scope.v1"
+}

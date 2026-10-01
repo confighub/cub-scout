@@ -322,6 +322,162 @@ func TestFluxHLT02CaseMetadataUsesSingleSchemaAndPromptFrontmatter(t *testing.T)
 	}
 }
 
+func TestRUL03RecordedCaseContractAndScaffold(t *testing.T) {
+	root := filepath.Join("..", "..", "evals", "rul03-context")
+	caseData, err := os.ReadFile(filepath.Join(root, "case.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var schema struct {
+		SchemaVersion string `yaml:"schema_version"`
+		Name          string `yaml:"name"`
+		Context       struct {
+			Scaffold string `yaml:"scaffold_script"`
+		} `yaml:"context"`
+	}
+	decoder := yaml.NewDecoder(bytes.NewReader(caseData))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(&schema); err != nil {
+		t.Fatalf("decode case schema: %v", err)
+	}
+	var extra any
+	if err := decoder.Decode(&extra); err != io.EOF {
+		t.Fatalf("case.yaml must contain exactly one document, second decode=%v", err)
+	}
+	if schema.SchemaVersion != "1.1" || schema.Name != "rul03-context" || schema.Context.Scaffold != "scaffold.sh" {
+		t.Fatalf("case schema/scaffold invalid: %+v", schema)
+	}
+	prompt, err := os.ReadFile(filepath.Join(root, "prompt.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(prompt)
+	if !strings.HasPrefix(text, "---\n") {
+		t.Fatal("prompt missing execution frontmatter")
+	}
+	end := strings.Index(text[4:], "\n---\n")
+	if end < 0 {
+		t.Fatal("prompt frontmatter unterminated")
+	}
+	var execution struct {
+		Name            string   `yaml:"name"`
+		Description     string   `yaml:"description"`
+		ExpectedOutcome string   `yaml:"expected_outcome"`
+		Tags            []string `yaml:"tags"`
+		MaxTurns        int      `yaml:"max_turns"`
+		TimeoutSeconds  int      `yaml:"timeout_seconds"`
+		AllowedTools    []string `yaml:"allowed_tools"`
+	}
+	execDecoder := yaml.NewDecoder(strings.NewReader(text[4 : 4+end]))
+	execDecoder.KnownFields(true)
+	if err := execDecoder.Decode(&execution); err != nil {
+		t.Fatalf("decode prompt frontmatter: %v", err)
+	}
+	if execution.Name != schema.Name || execution.Description == "" || execution.ExpectedOutcome == "" || execution.MaxTurns != 6 || execution.TimeoutSeconds != 120 || len(execution.AllowedTools) != 2 || execution.AllowedTools[0] != "Read" || execution.AllowedTools[1] != "Grep" {
+		t.Fatalf("prompt execution metadata invalid: %+v", execution)
+	}
+	body := text[4+end+5:]
+	for _, leak := range []string{"0b1a3bbe-dd77-42d4-96c6-f0577aee7710", `"denied_context":"rul03-denied"`, `"deployment_name":"rul03-probe"`} {
+		if strings.Contains(body, leak) {
+			t.Fatalf("prompt body leaks expected answer token %q", leak)
+		}
+	}
+	grader, err := os.ReadFile(filepath.Join(root, "graders", "verified-answer.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	patternLine := regexp.MustCompile(`(?m)^pattern: '(.*)'$`).FindSubmatch(grader)
+	if len(patternLine) != 2 {
+		t.Fatal("grader pattern missing")
+	}
+	pattern, err := regexp.Compile(string(patternLine[1]))
+	if err != nil {
+		t.Fatalf("grader is not a valid strict regex: %v", err)
+	}
+	type answer struct {
+		DeniedContext        string `json:"denied_context"`
+		DeniedHTTPStatus     string `json:"denied_http_status"`
+		DeniedListResult     string `json:"denied_list_result"`
+		DeniedInventory      string `json:"denied_inventory"`
+		ReadableContext      string `json:"readable_context"`
+		ReadableListCount    string `json:"readable_list_count"`
+		DeploymentNamespace  string `json:"deployment_namespace"`
+		DeploymentName       string `json:"deployment_name"`
+		DeploymentUID        string `json:"deployment_uid"`
+		DefaultContextBefore string `json:"default_context_before"`
+		DefaultContextAfter  string `json:"default_context_after"`
+		ObservationScope     string `json:"observation_scope"`
+		Evidence             string `json:"evidence"`
+	}
+	want := answer{"rul03-denied", "403", "FORBIDDEN", "UNKNOWN", "rul03-readable", "1", "rul03-proof", "rul03-probe", "0b1a3bbe-dd77-42d4-96c6-f0577aee7710", "rul03-readable", "rul03-readable", "SEQUENTIAL_NON_ATOMIC", "capture-scope.json+observer-context-map.json+rul03-denied-deployments.body+rul03-readable-deployments.body"}
+	good, err := json.Marshal(want)
+	if err != nil || !pattern.Match(good) {
+		t.Fatalf("strict grader rejected expected answer: %v %s", err, good)
+	}
+	wrongUID := want
+	wrongUID.DeploymentUID = "different-uid"
+	wrong, _ := json.Marshal(wrongUID)
+	invalidAnswers := [][]byte{
+		wrong,
+		bytes.Replace(good, []byte(`"denied_inventory":"UNKNOWN"`), []byte(`"denied_inventory":"EMPTY"`), 1),
+		bytes.Replace(good, []byte(`"denied_context":"rul03-denied"`), []byte(`"denied_context":"rul03-readable"`), 1),
+		bytes.Replace(good, []byte(`"readable_context":"rul03-readable"`), []byte(`"readable_context":"rul03-denied"`), 1),
+		bytes.Replace(good, []byte(`"deployment_uid":"0b1a3bbe-dd77-42d4-96c6-f0577aee7710",`), nil, 1),
+		bytes.Replace(good, []byte(`"default_context_after":"rul03-readable"`), []byte(`"default_context_after":"rul03-denied"`), 1),
+		append(append([]byte{}, good...), []byte(` {"extra":"value"}`)...),
+		append([]byte("prose "), good...),
+	}
+	for i, invalid := range invalidAnswers {
+		if pattern.Match(invalid) {
+			t.Fatalf("strict grader accepted invalid answer variant %d: %s", i, invalid)
+		}
+	}
+	scaffold, err := filepath.Abs(filepath.Join(root, "scaffold.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantFiles := map[string]string{
+		"capture-scope.json":              "9b05333216fd5daa609266c67c5fee6bdd5ba82487563ff39be26fa24131dc35",
+		"observer-context-map.json":       "19a2b434661e8ed3d52934c69340cb8773fbd78a8416ff9e245a72e057fc7c09",
+		"rul03-denied-deployments.body":   "fc5cad6498d731f454f2b859a528b00ab69450481804c89a42939512b0dc6978",
+		"rul03-readable-deployments.body": "e0102f91e1417c8554ed377352b50450f2376e69d40632f109ea012c5c1560a2",
+	}
+	outputs := make([]map[string][]byte, 2)
+	for run := range outputs {
+		workspace := t.TempDir()
+		cmd := exec.Command("bash", scaffold)
+		cmd.Dir = workspace
+		cmd.Env = append(os.Environ(), "KUBECONFIG=/tmp/scout-offline-validation.kubeconfig")
+		if output, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("scaffold run %d: %v: %s", run, err, output)
+		}
+		entries, err := os.ReadDir(filepath.Join(workspace, "cluster"))
+		if err != nil || len(entries) != len(wantFiles) {
+			t.Fatalf("scaffold output inventory: entries=%d err=%v", len(entries), err)
+		}
+		outputs[run] = map[string][]byte{}
+		for _, entry := range entries {
+			if entry.IsDir() {
+				t.Fatalf("unexpected scaffold directory %s", entry.Name())
+			}
+			got, err := os.ReadFile(filepath.Join(workspace, "cluster", entry.Name()))
+			if err != nil {
+				t.Fatal(err)
+			}
+			hash := sha256.Sum256(got)
+			if hex.EncodeToString(hash[:]) != wantFiles[entry.Name()] {
+				t.Fatalf("scaffold file %s hash mismatch", entry.Name())
+			}
+			outputs[run][entry.Name()] = got
+		}
+	}
+	for name, first := range outputs[0] {
+		if !bytes.Equal(first, outputs[1][name]) {
+			t.Fatalf("benchmark arms receive different bytes for %s", name)
+		}
+	}
+}
+
 func TestFluxHLT02ScaffoldPreservesIdenticalRawEvidence(t *testing.T) {
 	checkFluxHLT02ScaffoldBytes(t, filepath.Join("..", "..", "evals", "flux-ready-without-health"))
 }
@@ -472,12 +628,25 @@ func TestDeliveryCaseMappingsKeepBenchmarkUnexecutable(t *testing.T) {
 						t.Fatalf("RUL-04 mapping hash mismatch: %s got=%s want=%s", name, c.Provenance.RawFiles[name], want)
 					}
 				}
+			} else if c.ID == "RUL-03" {
+				rul03Files := map[string]string{
+					"capture-scope.json":              "9b05333216fd5daa609266c67c5fee6bdd5ba82487563ff39be26fa24131dc35",
+					"observer-context-map.json":       "19a2b434661e8ed3d52934c69340cb8773fbd78a8416ff9e245a72e057fc7c09",
+					"rul03-denied-deployments.body":   "fc5cad6498d731f454f2b859a528b00ab69450481804c89a42939512b0dc6978",
+					"rul03-readable-deployments.body": "e0102f91e1417c8554ed377352b50450f2376e69d40632f109ea012c5c1560a2",
+				}
+				found[c.ID] = c.Status == "raw_recording_prepared_not_run" && c.ExistingCase == "evals/rul03-context" && !c.Provenance.AtomicSnapshot && len(c.Provenance.RawFiles) == len(rul03Files) && c.Provenance.CaptureSourceCommit == "e61506e0335ab8033635f477da8f2c4ad43dc060"
+				for name, want := range rul03Files {
+					if c.Provenance.RawFiles[name] != want {
+						t.Fatalf("RUL-03 mapping hash mismatch: %s got=%s want=%s", name, c.Provenance.RawFiles[name], want)
+					}
+				}
 			} else if c.ID == "PRE-01" {
 				found[c.ID] = c.Status == "raw_recording_prepared_not_run" && c.ExistingCase == "evals/pre01-crd" && !c.Provenance.AtomicSnapshot && len(c.Provenance.RawFiles) == 15
 			}
 		}
 	}
-	if m.Status != "frozen_design_not_executable" || m.Execution.Paid || !found["DEL-01"] || !found["DEL-02"] || !found["HLT-02"] || !found["INV-04"] || !found["RUL-04"] || !found["PRE-01"] || counts["planned"] != 6 || counts["existing_refreshed_fixture"] != 5 || counts["recorded_snapshot_binding_prepared_not_run"] != 2 || counts["recorded_projection_prepared_not_run"] != 7 || counts["raw_recording_prepared_not_run"] != 4 {
+	if m.Status != "frozen_design_not_executable" || m.Execution.Paid || !found["DEL-01"] || !found["DEL-02"] || !found["HLT-02"] || !found["INV-04"] || !found["RUL-04"] || !found["PRE-01"] || !found["RUL-03"] || counts["planned"] != 5 || counts["existing_refreshed_fixture"] != 5 || counts["recorded_snapshot_binding_prepared_not_run"] != 2 || counts["recorded_projection_prepared_not_run"] != 7 || counts["raw_recording_prepared_not_run"] != 5 {
 		t.Fatalf("case preparation changed benchmark gates or readiness: status=%q paid=%v mappings=%v counts=%v", m.Status, m.Execution.Paid, found, counts)
 	}
 	if hlt02Provenance.SourceRevision != "sha1:7732dde28be8cf8c42c096d94efbd8ce4a9d0a19" || hlt02Provenance.AppliedRevision != hlt02Provenance.SourceRevision || hlt02Provenance.AtomicSnapshot {

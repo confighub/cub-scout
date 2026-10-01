@@ -1,0 +1,1 @@
+{"kind":"Status","apiVersion":"v1","metadata":{},"status":"Failure","message":"deployments.apps is forbidden: User \"system:serviceaccount:rul03-proof:rul03-observer\" cannot list resource \"deployments\" in API group \"apps\" in the namespace \"rul03-proof\"","reason":"Forbidden","details":{"group":"apps","kind":"deployments"},"code":403}

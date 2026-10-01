@@ -58,6 +58,27 @@ class Opener:
 
 
 class CaptureContractTests(unittest.TestCase):
+    def test_record_script_discovers_and_preserves_fixture_owned_scaffold(self):
+        record_spec = importlib.util.spec_from_file_location("rul03_record", HERE.parent / "scripts" / "record.py")
+        record = importlib.util.module_from_spec(record_spec)
+        assert record_spec and record_spec.loader
+        record_spec.loader.exec_module(record)
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            case = root / "rul03-context"
+            case.mkdir()
+            (case / "case.yaml").write_text("schema_version: '1.1'\ncontext:\n  scaffold_script: scaffold.sh\n")
+            scaffold = case / "scaffold.sh"
+            authored = "#!/usr/bin/env bash\n# FIXTURE-OWNED: exact raw fixture routing\nexit 0\n"
+            scaffold.write_text(authored)
+            fixture_dir = root / "fixtures" / "cluster"
+            fixture_dir.mkdir(parents=True)
+            (fixture_dir / "generated.yaml").write_text("generated: true\n")
+            scenario = {"cases": str(root / "*" / "case.yaml"), "fixtures": str(root / "fixtures"), "live": False}
+            self.assertEqual(record.scenario_cases(scenario), [str(case)])
+            record.write_scaffolds(scenario)
+            self.assertEqual(scaffold.read_text(), authored)
+
     def test_two_owned_cluster_names_are_distinct_and_fit_node_label(self):
         denied = capture.owned_cluster_name("denied", "261001010203", "01234567")
         readable = capture.owned_cluster_name("readable", "261001010203", "89abcdef")
