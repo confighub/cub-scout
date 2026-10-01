@@ -1,5 +1,12 @@
 # Direct Claude CLI offline controls probe
 
+Termination signals enter bounded cleanup; repeat signals are suppressed during
+teardown and the original handlers are restored. Requests are snapshotted only
+after the server and handlers join. Rejected or excess arrivals fail acceptance,
+and the final snapshot is retained on validation failure. The synthetic request
+pins the Haiku model label for reproducibility; no provider model runs and all
+mock usage values are authored fixture data.
+
 This is a diagnostic wiring harness for one direct Claude CLI run against a
 synthetic loopback provider. It does not contact a real provider, validate
 billing or subscription credits, measure answer quality, establish delegation

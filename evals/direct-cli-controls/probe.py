@@ -7,6 +7,7 @@ import base64
 import hashlib
 import http.server
 import json
+import math
 import os
 from pathlib import Path
 import platform
@@ -29,6 +30,7 @@ CLI_TIMEOUT = 60.0
 PINNED_VERSION = "2.1.274"
 PINNED_SHA256 = "3509913f9d1576316c8845b88837f8fd3bbbcf26625833ac82cfb6b8985da94a"
 PINNED_CLI = "/opt/homebrew/Caskroom/claude-code/2.1.274/claude"
+PINNED_MODEL = "claude-haiku-4-5-20251001"
 FAKE_KEY = "sk-ant-api03-cub-scout-offline-fake-key"
 PROMPT = "Return exactly: offline-probe-terminal"
 READ_TIMEOUT = 2.0
@@ -63,7 +65,27 @@ def strict_json(data: bytes | str):
                 raise ValueError("duplicate JSON key")
             result[key] = value
         return result
-    return json.loads(data, object_pairs_hook=pairs)
+    def invalid(value):
+        raise ValueError("non-finite JSON number")
+    def finite(value):
+        number = float(value)
+        if not math.isfinite(number): invalid(value)
+        return number
+    return json.loads(data, object_pairs_hook=pairs, parse_constant=invalid, parse_float=finite)
+
+
+def arm_signals():
+    previous = {}
+    def interrupted(signum, frame):
+        raise KeyboardInterrupt("probe interrupted")
+    for signum in (signal.SIGTERM, signal.SIGINT):
+        previous[signum] = signal.getsignal(signum)
+        signal.signal(signum, interrupted)
+    return previous
+
+
+def restore_signals(previous):
+    for signum, handler in previous.items(): signal.signal(signum, handler)
 
 
 def private_output(path: Path) -> Path:
@@ -134,10 +156,20 @@ def validate_probe(stdout: bytes, requests: list[dict], return_code: int) -> dic
             "terminal_text": "offline-probe-terminal", "tool_inventory": ["Read"]}
 
 
+def validate_final_snapshot(stdout, requests, return_code, received, cleanup):
+    if (type(received) is not int or received != len(requests)
+            or received > MAX_REQUESTS):
+        raise ProbeError("received requests exceed or differ from accepted captured requests")
+    if any(cleanup.get(key) is not True for key in
+           ("server_shutdown_complete", "handlers_joined", "server_thread_joined")):
+        raise ProbeError("fixture server cleanup was not verified")
+    return validate_probe(stdout, requests, return_code)
+
+
 def response_for(stream: bool) -> tuple[str, bytes]:
     if stream:
         events = [
-            {"type": "message_start", "message": {"id": "msg_offline_fixture", "type": "message", "role": "assistant", "model": "offline-fixture", "content": [], "stop_reason": None, "stop_sequence": None, "usage": {"input_tokens": 1, "output_tokens": 1}}},
+            {"type": "message_start", "message": {"id": "msg_offline_fixture", "type": "message", "role": "assistant", "model": PINNED_MODEL, "content": [], "stop_reason": None, "stop_sequence": None, "usage": {"input_tokens": 1, "output_tokens": 1}}},
             {"type": "content_block_start", "index": 0, "content_block": {"type": "text", "text": ""}},
             {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "offline-probe-terminal"}},
             {"type": "content_block_stop", "index": 0},
@@ -145,7 +177,7 @@ def response_for(stream: bool) -> tuple[str, bytes]:
             {"type": "message_stop"},
         ]
         return "text/event-stream", b"".join(b"event: " + e["type"].encode() + b"\ndata: " + json.dumps(e).encode() + b"\n\n" for e in events)
-    value = {"id": "msg_offline_fixture", "type": "message", "role": "assistant", "model": "offline-fixture", "content": [{"type": "text", "text": "offline-probe-terminal"}], "stop_reason": "end_turn", "stop_sequence": None, "usage": {"input_tokens": 1, "output_tokens": 1}}
+    value = {"id": "msg_offline_fixture", "type": "message", "role": "assistant", "model": PINNED_MODEL, "content": [{"type": "text", "text": "offline-probe-terminal"}], "stop_reason": "end_turn", "stop_sequence": None, "usage": {"input_tokens": 1, "output_tokens": 1}}
     return "application/json", json.dumps(value).encode()
 
 
@@ -405,7 +437,7 @@ def persist_trace(root: Path, record: dict, stdout: bytes, stderr: bytes, reques
 def execute(output: Path, cli: Path, expected_hash: str, expected_version: str) -> dict:
     started = time.monotonic()
     wall_started = time.time()
-    deadline = started + OVERALL_TIMEOUT - 3.0  # Reserve bounded teardown within the 90-second wall.
+    deadline = started + OVERALL_TIMEOUT - 5.0  # Reserve bounded teardown within the 90-second wall.
     root = private_output(output)
     config = root / "config"
     records: list[dict] = []
@@ -416,7 +448,9 @@ def execute(output: Path, cli: Path, expected_hash: str, expected_version: str) 
     record = {"started_at": wall_started, "helper_sha256": sha256(Path(__file__).read_bytes()),
               "python": sys.version, "platform": platform.platform(), "output_dir": str(root),
               "config_dir_retained_private": str(config), "cli_version_pin": PINNED_VERSION,
-              "cli_sha256_pin": PINNED_SHA256, "cli_argv": [], "request_count": 0}
+              "cli_sha256_pin": PINNED_SHA256, "cli_argv": [], "request_count": 0,
+              "mock_model_label": PINNED_MODEL, "provider_model_invoked": False}
+    previous_signals = arm_signals()
     try:
         config.mkdir(mode=0o700)
         os.chmod(config, 0o700)
@@ -458,16 +492,14 @@ def execute(output: Path, cli: Path, expected_hash: str, expected_version: str) 
         mcp = root / "empty-mcp.json"
         mcp.write_text('{"mcpServers":{}}\n'); os.chmod(mcp, 0o600)
         argv = prefix + [str(cli), "--bare", "--print", "--verbose", "--output-format", "stream-json",
+            "--model", PINNED_MODEL,
             "--no-session-persistence", "--tools", "Read", "--disallowedTools", "Task,Agent",
             "--strict-mcp-config", "--mcp-config", str(mcp), "--setting-sources", "", "--max-turns", "1",
             "--max-budget-usd", "0.05", PROMPT]
         record["cli_argv"] = argv
         rc, stdout, stderr, status = run_bounded(argv, env, root, min(deadline, time.monotonic()+CLI_TIMEOUT))
-        write_private(root, "stdout.bin", stdout); write_private(root, "stderr.bin", stderr)
-        write_private(root, "requests.json", json.dumps(records, indent=2).encode()+b"\n")
         record.update({"return_code": rc, "run_status": status, "stdout_sha256": sha256(stdout),
-                       "stderr_sha256": sha256(stderr), "request_count": count[0],
-                       "observed": validate_probe(stdout, records, rc)})
+                       "stderr_sha256": sha256(stderr)})
     except BaseException as exc:
         record["run_status"] = getattr(exc, "status", "error")
         record["error"] = str(exc)
@@ -477,6 +509,9 @@ def execute(output: Path, cli: Path, expected_hash: str, expected_version: str) 
         record["stderr_sha256"] = sha256(stderr)
         raise
     finally:
+        # Convert the first termination signal to a normal failure path, then
+        # suppress repeats while bounded owned cleanup and evidence writes run.
+        for signum in previous_signals: signal.signal(signum, signal.SIG_IGN)
         cleanup = {"server_shutdown_attempted": server is not None, "server_thread_joined": False}
         if server is not None:
             try:
@@ -496,7 +531,18 @@ def execute(output: Path, cli: Path, expected_hash: str, expected_version: str) 
         with lock:
             record["request_count"] = count[0]
             request_snapshot = list(records)
+        try:
+            persist_trace(root, record, stdout, stderr, request_snapshot)
+        finally:
+            restore_signals(previous_signals)
+    try:
+        record["observed"] = validate_final_snapshot(stdout, request_snapshot, rc, count[0], cleanup)
+    except (ProbeError, ValueError, TypeError) as exc:
+        record["run_status"] = "validation_failed"
+        record["error"] = str(exc)
         persist_trace(root, record, stdout, stderr, request_snapshot)
+        raise ProbeError(str(exc)) from None
+    persist_trace(root, record, stdout, stderr, request_snapshot)
     return record
 
 
@@ -511,7 +557,7 @@ def main() -> int:
     if not args.execute: parser.error("refusing to run without explicit --execute")
     try:
         result = execute(args.output, args.cli, args.expected_sha256, args.expected_version)
-    except (ProbeError, OSError, subprocess.SubprocessError) as exc:
+    except (ProbeError, OSError, subprocess.SubprocessError, KeyboardInterrupt) as exc:
         print(f"probe refused/failed: {exc}", file=sys.stderr); return 2
     print(json.dumps({k: result.get(k) for k in ("return_code", "request_count", "run_status", "cli_version_pin", "cli_sha256_pin")}, indent=2))
     return 0

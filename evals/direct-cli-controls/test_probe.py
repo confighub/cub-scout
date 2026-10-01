@@ -2,6 +2,7 @@ import base64
 import importlib.util
 import json
 import os
+import signal
 from pathlib import Path
 import sys
 import tempfile
@@ -71,6 +72,69 @@ class OfflineContracts(unittest.TestCase):
     def test_strict_json_rejects_duplicate_keys(self):
         with self.assertRaises(ValueError):
             probe.strict_json('{"stream":true,"stream":false}')
+        for value in ("NaN", "Infinity", "-Infinity", "1e999"):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                probe.strict_json('{"value":'+value+'}')
+
+    def test_final_snapshot_rejects_rejected_arrivals_and_unjoined_handlers(self):
+        _, records, _ = request()
+        cleanup = {"server_shutdown_complete": True, "handlers_joined": True,
+                   "server_thread_joined": True}
+        probe.validate_final_snapshot(terminal(), records, 0, 1, cleanup)
+        for received in (0, 2, probe.MAX_REQUESTS+1, True):
+            with self.subTest(received=received), self.assertRaises(probe.ProbeError):
+                probe.validate_final_snapshot(terminal(), records, 0, received, cleanup)
+        for key in cleanup:
+            with self.subTest(key=key), self.assertRaises(probe.ProbeError):
+                probe.validate_final_snapshot(terminal(), records, 0, 1, {**cleanup, key: False})
+
+    def test_execute_snapshots_after_join_and_sigterm_preserves_cleanup(self):
+        # Mock the entire network/CLI boundary. The late record arrives only
+        # during handler join; the former early write lost it permanently.
+        for interrupted in (False, True):
+            with self.subTest(interrupted=interrupted), tempfile.TemporaryDirectory() as td:
+                state = {}
+                cli = Path(td)/"fake-cli"; cli.write_bytes(b"fixture"); cli.chmod(0o700)
+                def handler(records, lock, count, path):
+                    state.update(records=records, count=count)
+                    return object
+                class Server:
+                    server_address = ("127.0.0.1", 12345)
+                    def __init__(self, *a, **kw): pass
+                    def serve_forever(self, **kw): pass
+                    def shutdown(self): state["shutdown"] = True
+                    def server_close(self): state["closed"] = True
+                    def join_workers(self, timeout):
+                        if not interrupted:
+                            _, records, _ = request()
+                            state["records"].extend(records); state["count"][0] = 1
+                        return True
+                def run(*a, **kw):
+                    if interrupted: signal.raise_signal(signal.SIGTERM)
+                    return 0, terminal(), b"", "success"
+                old_handler = signal.getsignal(signal.SIGTERM)
+                output = Path(td)/"out"
+                with mock.patch.object(probe, "PINNED_CLI", str(cli)), \
+                     mock.patch.object(probe.platform, "system", return_value="Darwin"), \
+                     mock.patch.object(probe.platform, "platform", return_value="synthetic-platform"), \
+                     mock.patch.object(probe, "sha256_file", return_value=probe.PINNED_SHA256), \
+                     mock.patch.object(probe, "FixtureServer", Server), \
+                     mock.patch.object(probe, "handler_type", side_effect=handler), \
+                     mock.patch.object(probe, "sandbox_prefix", return_value=["/synthetic/sandbox"]), \
+                     mock.patch.object(probe.subprocess, "run", return_value=mock.Mock(returncode=0)), \
+                     mock.patch.object(probe, "run_bounded", side_effect=run):
+                    if interrupted:
+                        with self.assertRaises(KeyboardInterrupt):
+                            probe.execute(output, cli, probe.PINNED_SHA256, probe.PINNED_VERSION)
+                    else:
+                        probe.execute(output, cli, probe.PINNED_SHA256, probe.PINNED_VERSION)
+                self.assertTrue(state["shutdown"] and state["closed"])
+                self.assertIs(signal.getsignal(signal.SIGTERM), old_handler)
+                saved = json.loads((output/"requests.json").read_text())
+                self.assertEqual(len(saved), 0 if interrupted else 1)
+                provenance = json.loads((output/"provenance.json").read_text())
+                self.assertTrue(provenance["cleanup"]["handlers_joined"])
+                self.assertEqual("observed" in provenance, not interrupted)
 
     def test_body_auth_path_method_and_stream_validation(self):
         good_body = b'{"tools":[{"name":"Read"}],"stream":true}'
