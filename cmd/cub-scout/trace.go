@@ -1370,6 +1370,18 @@ func runReverseTraceWithSession(ctx context.Context, session *traceSession, kind
 	if err != nil {
 		return fmt.Errorf("failed to create dynamic client for reverse trace: %w", err)
 	}
+	if kind == "Application" && namespace == "" {
+		// Match normal direct Application tracing: resolve only a unique name
+		// through the captured API, never guess an Application namespace.
+		application, err := agent.NewArgoTracerWithKubernetesClient(dynClient).TraceApplicationInNamespace(ctx, name, "")
+		if err != nil {
+			return fmt.Errorf("resolve reverse Application namespace: %w", err)
+		}
+		if application == nil || application.Object.Namespace == "" {
+			return fmt.Errorf("reverse Application namespace is unavailable; specify -n")
+		}
+		namespace = application.Object.Namespace
+	}
 	result, err := agent.NewReverseTracer(dynClient).Trace(ctx, kind, name, namespace)
 	if err != nil {
 		return fmt.Errorf("reverse trace failed: %w", err)

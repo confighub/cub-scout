@@ -107,7 +107,7 @@ passed. No model evaluation or cost-saving result follows from this capture.
 The proof demonstrates context binding and denied coverage for these owned
 fixture reads. It does not demonstrate a real Argo reconciliation, general
 cluster identity, ConfigHub behavior, controller writes, or all credential
-provider types. No live attempt or result is claimed here.
+provider types. Only the scoped attempt-three result above is claimed.
 
 ## Offline acceptance tests
 
