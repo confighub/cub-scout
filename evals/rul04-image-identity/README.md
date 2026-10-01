@@ -21,6 +21,25 @@ output and is never raw model evidence. Current `release check` may report the
 controller binding unsupported/inconclusive for StatefulSet; that result does
 not turn the fixture into applied-source proof.
 
+## Actual capture — 2026-10-01
+
+The reviewed capture completed at 03:15:20–03:15:53 UTC in 33.78 seconds,
+from helper source `fd4963872b9875bed01b9c4a2fdbab5c6db2e635`. See the
+[full scoped proof](../reports/2026-10-01-rul04-image-identity.json) for binary,
+source, raw response hashes and timestamps. Both raw API requests returned 200.
+The Pod was Running and Ready, linked to StatefulSet UID
+`c260243a-e06c-4529-b514-c977de02f5bc`, with runtime image ID
+`sha256:afb61768ce381961ca0beff95337601f29dc70ff3ed14e5e4b3e5699057e6aa8`.
+No immutable intended image digest is authored in the configuration.
+
+The separate Scout run returned configuration PASS and workloads PASS,
+controller INCONCLUSIVE, and running-image unknown with
+`workload-ownership-unsupported`. It made no Pod reads for that unsupported
+image tier; the raw Pod response was independently captured by the same
+observer. This is not an applied-source, immutable-image, or savings claim.
+The owned cluster was removed; shared config bytes and private configs before
+cleanup were unchanged. The two raw reads are sequential, not atomic.
+
 ## Run after lead review
 
 Prerequisites: local Docker engine, pinned kind `v0.31.0` and node image from
