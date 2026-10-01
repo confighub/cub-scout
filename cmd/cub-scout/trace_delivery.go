@@ -954,6 +954,17 @@ func renderTraceDeliveryEvidenceMarkdown(evidence *agent.TraceDeliveryEvidence) 
 				firstNonEmpty(release.CreatedAt, "-"))
 		}
 	}
+	if len(evidence.UnitEvents) > 0 {
+		fmt.Printf("  Recent unit events:\n")
+		for _, event := range evidence.UnitEvents {
+			fmt.Printf("    - %s unit=%s %s at=%s\n",
+				firstNonEmpty(event.Action, "-"),
+				firstNonEmpty(event.Unit, event.UnitID, "-"),
+				configHubUnitEventOutcome(event.Result, event.Status),
+				firstNonEmpty(event.CreatedAt, "-"),
+			)
+		}
+	}
 	if len(evidence.Omissions) > 0 {
 		fmt.Printf("  Omissions:\n")
 		for _, omission := range evidence.Omissions {

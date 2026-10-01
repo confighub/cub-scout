@@ -598,6 +598,33 @@ func TestTraceDeliveryRenderersExposeExactManifestJoin(t *testing.T) {
 	}
 }
 
+func TestTraceDeliveryMarkdownRendersUnitEvents(t *testing.T) {
+	evidence := &agent.TraceDeliveryEvidence{
+		UnitEvents: []agent.TraceDeliveryUnitEvent{
+			{Action: "Apply", Unit: "payments-api", Result: "None", Status: "Applied", CreatedAt: "2026-09-30T12:00:00Z"},
+			{UnitID: "unit-456"},
+		},
+	}
+
+	out := captureStdout(t, func() { renderTraceDeliveryEvidenceMarkdown(evidence) })
+	for _, want := range []string{
+		"Recent unit events:",
+		"Apply unit=payments-api result=None status=Applied at=2026-09-30T12:00:00Z",
+		"- unit=unit-456 result=- status=- at=-",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("Markdown output missing %q:\n%s", want, out)
+		}
+	}
+
+	empty := captureStdout(t, func() {
+		renderTraceDeliveryEvidenceMarkdown(&agent.TraceDeliveryEvidence{})
+	})
+	if strings.Contains(empty, "Recent unit events:") {
+		t.Errorf("empty unit events should not emit a section:\n%s", empty)
+	}
+}
+
 // A release joins to what was actually pulled, by manifest digest.
 //
 // The values here are from a release published to a live ConfigHub v0.5.1
