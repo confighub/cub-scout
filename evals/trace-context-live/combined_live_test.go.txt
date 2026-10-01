@@ -66,15 +66,17 @@ func TestCombinedSourceTruthAndTraceDiffOwnedTUI(t *testing.T) {
 		binding := resolveLocalClusterBindingForSelection(clusterContextSelection{name: contextName, explicit: true})
 		require.NoError(t, binding.err)
 		return LocalClusterModel{clusterBinding: binding, explicitClusterContext: true,
-			keymap: defaultLocalKeyMap(),
+			keymap:  defaultLocalKeyMap(),
 			entries: []MapEntry{{Kind: "Deployment", Name: "scout-context-marker", Namespace: "scout-trace-context-proof", Owner: "ArgoCD"}},
-			cursor: 0}
+			cursor:  0}
 	}
 
 	runSourceTruth := func(model LocalClusterModel, phase, contextName string) LocalClusterModel {
-		markPhase(phase)
-		contexts[phase] = model.clusterBinding.context
-		updated, _ := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("Y")})
+		eventPhase := "tui-" + phase
+		markPhase(eventPhase)
+		contexts[eventPhase] = model.clusterBinding.context
+		updated, command := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("Y")})
+		require.Nil(t, command, "Y picker event must not read before strategy selection")
 		model = updated.(LocalClusterModel)
 		require.True(t, model.sourceTruthMode, "actual Y key must open strategy selection")
 		strategies := agent.AllStrategies()
@@ -86,50 +88,61 @@ func TestCombinedSourceTruthAndTraceDiffOwnedTUI(t *testing.T) {
 		}
 		require.GreaterOrEqual(t, gitArgo, 0)
 		for model.sourceTruthCursor < gitArgo {
-			updated, _ = model.Update(tea.KeyMsg{Type: tea.KeyDown})
+			updated, command = model.Update(tea.KeyMsg{Type: tea.KeyDown})
+			require.Nil(t, command, "strategy picker movement must not start a read")
 			model = updated.(LocalClusterModel)
 		}
-		updated, command := model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+		updated, command = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
 		model = updated.(LocalClusterModel)
 		require.NotNil(t, command, "strategy Enter must start the shared source-truth collector")
 		message := command().(sourceTruthResultMsg)
 		require.NoError(t, message.err)
 		require.Equal(t, agent.StatusBLOCK, message.evidence.Status, "recorded ConfigHub read failure must never become PASS")
 		require.Equal(t, contextName, message.contextName)
-		updated, _ = model.Update(message)
+		updated, command = model.Update(message)
+		require.Nil(t, command, "result projection must not start another read")
 		model = updated.(LocalClusterModel)
 		views[phase] = model.renderSourceTruth()
 		statuses[phase] = string(message.evidence.Status)
 		require.Contains(t, views[phase], "recorded unit lookup unavailable in owned proof")
 		checks[phase] = true
+		updated, command = model.Update(tea.KeyMsg{Type: tea.KeyEsc})
+		require.Nil(t, command, "closing the source-truth view must not start a read")
+		model = updated.(LocalClusterModel)
+		require.False(t, model.sourceTruthMode, "Esc must close source-truth before another action")
 		return model
 	}
 
 	runDiff := func(model LocalClusterModel, phase, contextName, expectedStatus string) LocalClusterModel {
-		markPhase(phase)
-		contexts[phase] = model.clusterBinding.context
-		updated, _ := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("T")})
+		eventPhase := "tui-" + phase
+		markPhase(eventPhase)
+		contexts[eventPhase] = model.clusterBinding.context
+		updated, command := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("T")})
+		require.Nil(t, command, "T picker event must not read before selection")
 		model = updated.(LocalClusterModel)
 		require.True(t, model.traceMode, "actual T key must open trace selection")
 		require.Len(t, model.traceItems, 1)
-		updated, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")})
+		updated, command = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")})
+		require.Nil(t, command, "d prompt event must not read before rendered input")
 		model = updated.(LocalClusterModel)
 		require.True(t, model.traceDiffMode, "actual d key must open rendered-input prompt")
 		for _, event := range []tea.KeyMsg{
 			{Type: tea.KeyRunes, Runes: []rune(desiredPath)},
 			{Type: tea.KeyEnter},
 			{Type: tea.KeyRunes, Runes: []rune("apps/v1")},
-			{Type: tea.KeyEnter},
 		} {
 			updated, command := model.Update(event)
+			require.Nil(t, command, "rendered-input prompt event must not read before final confirmation")
 			model = updated.(LocalClusterModel)
-			if command != nil {
-				message := command().(traceDiffResultMsg)
-				require.NoError(t, message.err)
-				updated, _ = model.Update(message)
-				model = updated.(LocalClusterModel)
-			}
 		}
+		updated, command = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+		require.NotNil(t, command, "final API-version Enter must start exactly the shared diff read")
+		model = updated.(LocalClusterModel)
+		message := command().(traceDiffResultMsg)
+		require.NoError(t, message.err)
+		updated, command = model.Update(message)
+		require.Nil(t, command, "diff result projection must not start another read")
+		model = updated.(LocalClusterModel)
 		views[phase] = model.traceDiffOutput
 		require.Contains(t, model.traceDiffOutput, "Result: "+expectedStatus)
 		require.Contains(t, model.traceDiffOutput, "Context: "+contextName)
@@ -138,7 +151,7 @@ func TestCombinedSourceTruthAndTraceDiffOwnedTUI(t *testing.T) {
 	}
 
 	model := newModel("doctor-allowed")
-	runSourceTruth(model, "source-truth-allowed", "doctor-allowed")
+	model = runSourceTruth(model, "source-truth-allowed", "doctor-allowed")
 	// Retarget only this private file. The model's captured binding must still
 	// use the allowed endpoint for the next Y and T/d actions.
 	config, err := clientcmd.LoadFromFile(configPath)

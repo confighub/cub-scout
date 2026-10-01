@@ -276,6 +276,21 @@ class IsolationHelperTests(unittest.TestCase):
             self.assertEqual(str(root / "private.kubeconfig"), env["KUBECONFIG"])
             self.assertEqual("x", env["TOKEN"])
 
+    def test_tui_retarget_preserves_only_sanitized_home_and_shim_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            cli = capture.observation_env({"PATH": "/ambient/bin", "HOME": "/ambient/home",
+                                           "LANG": "C"},
+                private_home=root / "private-home", shims=root / "shims",
+                kubeconfig=root / "allowed.kubeconfig")
+            tui = capture.tui_observation_env(cli, root / "tui.kubeconfig")
+            self.assertEqual(str(root / "shims"), tui["PATH"])
+            self.assertEqual(str(root / "private-home"), tui["HOME"])
+            self.assertEqual(str(root / "tui.kubeconfig"), tui["KUBECONFIG"])
+            self.assertNotEqual("/ambient/bin", tui["PATH"])
+            self.assertNotEqual("/ambient/home", tui["HOME"])
+            self.assertEqual("C", tui["LANG"])
+
     def test_argo_shim_allows_only_availability_and_forces_owned_fallback(self):
         with tempfile.TemporaryDirectory() as tmp:
             shims = Path(tmp)
@@ -398,7 +413,7 @@ class CombinedProofAcceptanceTests(unittest.TestCase):
         source_truth = {"context": "doctor-allowed", "status": "BLOCK", "source_truth": "BLOCKED",
                         "collection_errors": ["ConfigHub: recorded unit lookup unavailable in owned proof"]}
         for result in (
-            {"structuredContent": source_truth, "isError": False},
+            {"structuredContent": {"data": source_truth}, "isError": False},
             {"content": [{"type": "text", "text": json.dumps(source_truth)}], "isError": False},
         ):
             response = {"jsonrpc": "2.0", "id": 2, "result": result}
@@ -413,6 +428,10 @@ class CombinedProofAcceptanceTests(unittest.TestCase):
         fake_pass = dict(source_truth, status="PASS", source_truth="MATCH")
         with self.assertRaisesRegex(RuntimeError, "clean source-truth"):
             api_proxy.validate_source_truth(fake_pass, context="doctor-allowed")
+        malformed_structured = {"jsonrpc": "2.0", "id": 2,
+            "result": {"structuredContent": {"status": "BLOCK"}, "isError": False}}
+        with self.assertRaisesRegex(RuntimeError, "data object"):
+            api_proxy.mcp_result_json(malformed_structured)
 
     def test_diff_status_validation_keeps_exact_target_and_observation(self):
         def body(status, name="api", context="doctor-allowed"):
@@ -454,6 +473,14 @@ class CombinedProofAcceptanceTests(unittest.TestCase):
                 capture.require_combined_source_pin()
         with patch.object(capture, "COMBINED_SOURCE_PIN", "d" * 40):
             self.assertEqual("d" * 40, capture.require_combined_source_pin())
+
+    def test_mcp_startup_contract_requires_both_exact_auth_checks(self):
+        auth = {"argv": ["cub", "auth", "status"], "exitCode": 0}
+        capture._validate_cub_auth_only("mcp-diff", [dict(auth), dict(auth)])
+        for rows in ([dict(auth)], [dict(auth), dict(auth), dict(auth)],
+                     [dict(auth), {"argv": ["cub", "unit", "get"], "exitCode": 73}]):
+            with self.assertRaisesRegex(RuntimeError, "auth-only contract"):
+                capture._validate_cub_auth_only("mcp-diff", rows)
 
     def test_combined_mode_pin_gate_precedes_output_creation(self):
         with tempfile.TemporaryDirectory(dir="/tmp") as tmp:

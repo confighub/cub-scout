@@ -310,6 +310,13 @@ def observation_env(base: dict[str, str], *, private_home: Path, shims: Path,
             "KUBECONFIG": str(kubeconfig)}
 
 
+def tui_observation_env(cli_env: dict[str, str], kubeconfig: Path) -> dict[str, str]:
+    """Retarget an already sanitized child environment to the private TUI config."""
+    env = dict(cli_env)
+    env["KUBECONFIG"] = str(kubeconfig)
+    return env
+
+
 def create_observation_shims(shims: Path, kubectl_path: str, *, combined: bool = False) -> dict[str, Path]:
     """Block all external tools except one exact private-config Argo fallback GET."""
     kubectl = shlex.quote(kubectl_path)
@@ -619,8 +626,16 @@ def _combined_source_truth_action(*, phase: str, body: dict, context: str,
         raise RuntimeError(phase + " omitted the exact ConfigHub connected-gate check")
 
 
+def _validate_cub_auth_only(phase: str, cub_rows: list[dict]) -> None:
+    # MCP startup checks once, then the tools/call session check refreshes it.
+    expected = [{"argv": ["cub", "auth", "status"], "exitCode": 0}] * 2
+    actual = [{"argv": row.get("argv"), "exitCode": row.get("exitCode")} for row in cub_rows]
+    if actual != expected:
+        raise RuntimeError(phase + " ConfigHub startup calls differed from the exact auth-only contract")
+
+
 def _run_combined_action_flow(*, receipt: dict, binary: str, tui_binary: str,
-                              cli_env: dict, tui_env_base: dict, proxies: list,
+                              cli_env: dict, proxies: list,
                               cub_log: Path, event_log: Path, rendered: dict[str, Path],
                               tui_config: Path, deadline: float, output: Path) -> None:
     phases = ["cli-source-truth-allowed", "cli-source-truth-denied",
@@ -702,14 +717,14 @@ def _run_combined_action_flow(*, receipt: dict, binary: str, tui_binary: str,
         target_path = f"/apis/apps/v1/namespaces/{NAMESPACE}/deployments/{name}"
         api_proxy.validate_api_records(rows, endpoint=endpoint, target_path=target_path,
                                        target_status=200 if endpoint == "allowed" else 403)
-        if cub_rows:
-            raise RuntimeError(phase + " unexpectedly invoked ConfigHub")
+        _validate_cub_auth_only(phase, cub_rows)
 
     shutil.copyfile(cli_env["KUBECONFIG"], tui_config)
     tui_config.chmod(0o600)
     tui_result = output / "combined-tui-result.json"
-    tui_env = observation_env(tui_env_base, private_home=Path(tui_env_base["HOME"]),
-        shims=Path(tui_env_base["PATH"]), kubeconfig=tui_config)
+    # cli_env already has a private HOME/PATH and no ambient ConfigHub setup.
+    # Only switch its kubeconfig to the TUI's private, retargetable copy.
+    tui_env = tui_observation_env(cli_env, tui_config)
     tui_env.update({"SCOUT_TRACE_COMBINED_EXECUTE": "1",
         "SCOUT_TRACE_COMBINED_TUI_CONFIG": str(tui_config),
         "SCOUT_TRACE_COMBINED_TUI_RESULT": str(tui_result),
@@ -782,8 +797,9 @@ def _run_combined_action_flow(*, receipt: dict, binary: str, tui_binary: str,
         "cli-source-truth-allowed": [(auth_argv, 0), (unit_argv, 73)],
         "cli-source-truth-denied": [(auth_argv, 0)],
         "cli-diff-matched": [], "cli-diff-changed": [], "cli-diff-missing": [], "cli-diff-denied": [],
-        "mcp-source-truth": [(auth_argv, 0), (auth_argv, 0), (unit_argv, 73)],
-        "mcp-diff-matched": [(auth_argv, 0)], "mcp-diff-denied": [(auth_argv, 0)],
+        "mcp-source-truth": [(auth_argv, 0), (auth_argv, 0), (auth_argv, 0), (unit_argv, 73)],
+        "mcp-diff-matched": [(auth_argv, 0), (auth_argv, 0)],
+        "mcp-diff-denied": [(auth_argv, 0), (auth_argv, 0)],
         "tui-source-truth-allowed": [(auth_argv, 0), (unit_argv, 73)],
         "tui-source-truth-reopen-after-retarget": [(auth_argv, 0), (unit_argv, 73)],
         "tui-diff-allowed": [], "tui-diff-denied": [],
@@ -1029,7 +1045,7 @@ spec:
                 event_log = output / "api-events.jsonl"
                 binary = str(binaries / "cub-scout-combined")
                 _run_combined_action_flow(receipt=receipt, binary=binary, tui_binary=str(tui_binary),
-                    cli_env=cli_env, tui_env_base=observation_env_base, proxies=proxies,
+                    cli_env=cli_env, proxies=proxies,
                     cub_log=cub_log, event_log=event_log, rendered=rendered, tui_config=tui_config,
                     deadline=deadline, output=output)
                 receipt["observationKubeconfigSha256AfterReads"] = digest(observation_config)

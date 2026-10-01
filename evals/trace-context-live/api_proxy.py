@@ -362,7 +362,10 @@ def mcp_result_json(response: dict) -> dict:
         raise RuntimeError("MCP tools/call returned an error result")
     structured = result.get("structuredContent")
     if isinstance(structured, dict):
-        return structured
+        payload = structured.get("data")
+        if isinstance(payload, dict):
+            return payload
+        raise RuntimeError("MCP structuredContent omitted its data object")
     content = result.get("content")
     if not isinstance(content, list):
         raise RuntimeError("MCP tools/call omitted content")
