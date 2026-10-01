@@ -20,8 +20,9 @@ The unique CRD must be the real namespaced v1 CRD with matching group, kind,
 plural, served/storage flags and no conversion webhook. Duplicates, source
 drift, unsupported conversion and identity mismatch fail closed.
 
-The helper depends on PyYAML; this implementation and its offline proof use
-PyYAML 6.0.3. The helper does not install packages. PyYAML parses all source
+The helper depends on PyYAML; install the pinned dependency with
+`python3 -m pip install -r evals/pre01-crd/requirements.txt`. This
+implementation and its offline proof use PyYAML 6.0.3. The helper does not install packages. PyYAML parses all source
 documents, selects the single matching mapping and serializes that mapping as normalized YAML. The source repository remains
 unchanged. Output includes source file hashes/byte counts, parsed-object
 hashes, normalized-file hashes and an explicit note that normalization
@@ -73,17 +74,20 @@ The command requires `--execute` as an explicit acknowledgement and requires
 all source and executable paths, full revisions, SHA-256 pins, kubeconfig path
 and fresh output path as arguments. A dry-run or actual capture is not part of
 this source-preparation packet; do not invoke the capture until independent
-review authorizes the bounded serial run.
+review the helper and its pins before any separately authorized bounded serial live capture.
 
 ## Offline checks
 
-Run the focused suite with bytecode disabled:
+Run the focused suite with bytecode disabled after installing the pinned
+PyYAML requirement:
 
 ```sh
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/pre01-crd -v
 ```
 
-To additionally verify the pinned commit blobs in an external checkout, set
-`HELM_EXPT_SOURCE` to a clone containing that commit before running the same suite. No
-test creates a cluster or makes a network/model call. These checks do not
+The pinned external-source audit is optional: set `HELM_EXPT_SOURCE` to a clone
+containing the pinned commit to enable it. Regular source and semantic guards
+always run. CI installs `requirements.txt` and runs those guards; the external
+checkout audit remains optional when that separate checkout is not available.
+No test creates a cluster or makes a network/model call. These checks do not
 replace review, live capture acceptance or later case/scaffold preparation.

@@ -96,8 +96,20 @@ class SourceAndEvidenceTests(unittest.TestCase):
     def test_typed_scout_receipt_validates_only_exact_crd_fact(self):
         statement = {"predicate": {"predicateName": "prerequisites-met", "verdict": "BLOCK",
             "evidence": {"prerequisites": {"facts": [{"kind": "CRD", "name": capture.CRD_NAME, "status": "missing"}],
-                "summary": {"required": 1, "missing": 1}}}}}
+                "summary": {"required": 1, "present": 0, "missing": 1, "inconclusive": 0}}}}}
         self.assertEqual(capture.prerequisite_receipt_valid(0, json.dumps(statement).encode(), "missing")["verdict"], "BLOCK")
+        summary = statement["predicate"]["evidence"]["prerequisites"]["summary"]
+        for malformed in (
+            {"required": True, "present": 0, "missing": 1, "inconclusive": 0},
+            {"required": 1, "present": 1, "missing": 1, "inconclusive": 0},
+            {"required": 1, "present": 0, "missing": 0, "inconclusive": 1},
+            {"required": 1, "present": 0, "missing": 1},
+            [],
+        ):
+            statement["predicate"]["evidence"]["prerequisites"]["summary"] = malformed
+            with self.subTest(summary=malformed), self.assertRaises(capture.CaptureError):
+                capture.prerequisite_receipt_valid(0, json.dumps(statement).encode(), "missing")
+        statement["predicate"]["evidence"]["prerequisites"]["summary"] = summary
         statement["predicate"]["evidence"]["prerequisites"]["facts"].append({"kind": "Secret", "name": "x", "status": "present"})
         with self.assertRaises(capture.CaptureError): capture.prerequisite_receipt_valid(0, json.dumps(statement).encode(), "missing")
 
@@ -119,6 +131,10 @@ class SourceAndEvidenceTests(unittest.TestCase):
             with self.assertRaises(capture.CaptureError):
                 capture.verify_scout_binary(binary, "0" * 64, "eec6d442279955af0f1fc39c637252ac8eb0f081",
                                             "eec6d442279955af0f1fc39c637252ac8eb0f081")
+            # The right bytes/digest cannot bless a caller-selected source revision.
+            with patch.object(capture, "sha256", return_value=capture.SCOUT_SHA256):
+                with self.assertRaises(capture.CaptureError):
+                    capture.verify_scout_binary(binary, capture.SCOUT_SHA256, "a" * 40, "a" * 40)
         key = b"test-private-key-material"
         import base64
         encoded = base64.b64encode(key).decode()
@@ -167,7 +183,7 @@ class SourceAndEvidenceTests(unittest.TestCase):
             observer = root / "observer.kubeconfig"; observer.write_bytes(b"private-config")
             stmt = {"predicate": {"predicateName": "prerequisites-met", "verdict": "BLOCK",
                 "evidence": {"prerequisites": {"facts": [{"kind": "CRD", "name": capture.CRD_NAME, "status": "missing"}],
-                    "summary": {"required": 1, "missing": 1}}}}}
+                    "summary": {"required": 1, "present": 0, "missing": 1, "inconclusive": 0}}}}}
             with patch.object(capture.inv04, "run_bounded", return_value=(0, json.dumps(stmt).encode(), b"")) as run:
                 result = capture.run_scout_receipt(scout, root / "admin", observer, "absent",
                     "eec6d442279955af0f1fc39c637252ac8eb0f081", "missing", output, "token", (b"admin-private",))

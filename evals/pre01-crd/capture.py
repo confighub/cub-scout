@@ -37,6 +37,8 @@ assert spec and spec.loader
 spec.loader.exec_module(inv04)
 
 SOURCE_REVISION = "9ab4c753a888dc305a3c07956c9f8f5a19eb70a0"
+SCOUT_SOURCE_REVISION = "eec6d442279955af0f1fc39c637252ac8eb0f081"
+SCOUT_SHA256 = "7d20aa7bb33b477dfd88afb2f53b1a6f773a5a4ffbcff7f81d8dcbfeb5a12bab"
 SERVICE_MONITOR_PATH = "recipes/prometheus-community/kube-prometheus-stack/87.19.2/revisions/no-crds/r001/rendered/release-objects.yaml"
 RECORD_PATH = "data/base-variant-records/records/prometheus-community-kube-prometheus-stack-87-19-2-no-crds.yaml"
 CRD_PATH = "packages/prometheus-community/kube-prometheus-stack/87.19.2/prerequisites/kube-prometheus-stack-lifecycle/default-crds.yaml"
@@ -247,16 +249,16 @@ def prepare_output(path: Path) -> Path:
 
 
 def verify_scout_binary(path: Path, expected_sha: str, source_revision: str, expected_revision: str) -> str:
-    if source_revision != expected_revision or not re.fullmatch(r"[0-9a-f]{40,64}", source_revision):
+    if source_revision != SCOUT_SOURCE_REVISION or expected_revision != SCOUT_SOURCE_REVISION:
         raise CaptureError("Scout source revision differs from the reviewed executable revision")
-    if not re.fullmatch(r"[0-9a-f]{64}", expected_sha):
-        raise CaptureError("expected Scout SHA-256 is malformed")
+    if expected_sha != SCOUT_SHA256:
+        raise CaptureError("Scout SHA-256 must equal the reviewed executable pin")
     candidate = path.expanduser().absolute()
     if candidate.is_symlink(): raise CaptureError("Scout executable must not be a symlink")
     binary = candidate.resolve(strict=True)
     if not binary.is_file() or not os.access(binary, os.X_OK): raise CaptureError("Scout executable is invalid")
     actual = sha256(binary.read_bytes())
-    if actual != expected_sha or actual != "7d20aa7bb33b477dfd88afb2f53b1a6f773a5a4ffbcff7f81d8dcbfeb5a12bab":
+    if actual != expected_sha or actual != SCOUT_SHA256:
         raise CaptureError("Scout executable does not match the reviewed SHA-256 pin")
     return actual
 
@@ -343,10 +345,19 @@ def prerequisite_receipt_valid(code: int, stdout: bytes, expected: str) -> dict:
         summary = evidence["summary"]
     except (UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError):
         raise CaptureError("Scout output is not the current typed prerequisites receipt") from None
-    wanted = [f for f in facts if isinstance(f, dict) and f.get("kind") == "CRD" and f.get("name") == CRD_NAME]
-    if code != 0 or len(facts) != 1 or len(wanted) != 1 or wanted[0].get("status") != expected:
+    if expected not in ("missing", "present") or not isinstance(facts, list) or len(facts) != 1:
         raise CaptureError("Scout prerequisite receipt did not validate the single declared CRD fact")
-    if summary.get("required") != 1 or summary.get(expected) != 1:
+    fact = facts[0]
+    if (not isinstance(fact, dict) or fact.get("kind") != "CRD" or fact.get("name") != CRD_NAME
+            or fact.get("status") != expected):
+        raise CaptureError("Scout prerequisite receipt did not validate the single declared CRD fact")
+    categories = ("required", "present", "missing", "inconclusive")
+    if not isinstance(summary, dict) or any(type(summary.get(key)) is not int for key in categories):
+        raise CaptureError("Scout prerequisite receipt summary is malformed")
+    counts = {key: summary[key] for key in categories}
+    expected_counts = {"required": 1, "present": int(expected == "present"),
+                       "missing": int(expected == "missing"), "inconclusive": 0}
+    if counts != expected_counts or counts["required"] != counts["present"] + counts["missing"] + counts["inconclusive"]:
         raise CaptureError("Scout prerequisite receipt summary disagrees with its exact fact")
     verdict = predicate.get("verdict")
     expected_verdict = "PASS" if expected == "present" else "BLOCK"
@@ -695,8 +706,10 @@ def main(argv=None) -> int:
                     RECORD_PATH: args.expected_record_sha256, CRD_PATH: args.expected_crd_sha256}
         if args.source_revision != SOURCE_REVISION:
             raise CaptureError("source revision must equal the reviewed pinned commit")
-        if args.scout_source_revision != args.expected_scout_revision or not re.fullmatch(r"[0-9a-f]{40,64}", args.scout_source_revision):
+        if args.scout_source_revision != SCOUT_SOURCE_REVISION or args.expected_scout_revision != SCOUT_SOURCE_REVISION:
             raise CaptureError("Scout source revision differs from the reviewed executable revision")
+        if args.expected_scout_sha256 != SCOUT_SHA256:
+            raise CaptureError("Scout SHA-256 must equal the reviewed executable pin")
         for digest in (*supplied.values(), args.expected_scout_sha256):
             if not re.fullmatch(r"[0-9a-f]{64}", digest):
                 raise CaptureError("a supplied SHA-256 pin is malformed")
