@@ -22,7 +22,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
 	"github.com/confighub/cub-scout/v2/internal/mapsvc"
@@ -217,6 +216,12 @@ func runTrace(cmd *cobra.Command, args []string) error {
 
 	// If --app flag was used, go directly to Argo tracer
 	if traceApp != "" {
+		var session *traceSession
+		if traceWithConfigHub || traceArtifacts {
+			// This enrichment is optional; retain the Argo result if the local
+			// Kubernetes session cannot be captured.
+			session, _ = newDefaultTraceSession()
+		}
 		tracer := agent.NewArgoTracer()
 		if !tracer.Available() {
 			return fmt.Errorf("argocd CLI not found - install from https://argo-cd.readthedocs.io/en/stable/cli_installation/")
@@ -226,8 +231,8 @@ func runTrace(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("trace failed: %w", appErr)
 		}
 		if traceWithConfigHub {
-			dynClient := enrichTraceConfigHubFromLive(ctx, appResult, kind, name, traceNamespace)
-			attachTraceConfigHubDeliveryEvidence(ctx, appResult, dynClient, traceConfigHubDeliveryFlags{
+			dynClient := enrichTraceConfigHubFromLiveWithTraceSession(ctx, session, appResult, kind, name, traceNamespace)
+			attachTraceConfigHubDeliveryEvidenceWithTraceSession(ctx, appResult, dynClient, session, traceConfigHubDeliveryFlags{
 				Enabled:    true,
 				Namespace:  traceNamespace,
 				Space:      traceConfigHubSpace,
@@ -237,7 +242,7 @@ func runTrace(cmd *cobra.Command, args []string) error {
 		}
 		artifacts := buildUnknownTraceArtifacts(appResult)
 		if traceArtifacts {
-			artifacts = mergeTraceArtifacts(artifacts, collectTraceArtifacts(ctx, appResult))
+			artifacts = mergeTraceArtifacts(artifacts, collectTraceArtifactsWithTraceSession(ctx, session, appResult))
 		}
 		if effectiveFormat == "json" {
 			return outputTraceJSONv014(appResult, kind, name, traceNamespace, artifacts)
@@ -248,8 +253,14 @@ func runTrace(cmd *cobra.Command, args []string) error {
 		return outputTraceHuman(appResult, artifacts, invCtx)
 	}
 
+	// Capture one Kubernetes binding for every in-process reader in this trace.
+	traceSession, sessionErr := newDefaultTraceSession()
+	if sessionErr != nil {
+		return fmt.Errorf("failed to capture Kubernetes trace session: %w", sessionErr)
+	}
+
 	// Detect ownership to choose the right tracer
-	ownership, err := detectResourceOwnership(ctx, kind, name, traceNamespace)
+	ownership, err := detectResourceOwnershipWithTraceSession(ctx, traceSession, kind, name, traceNamespace)
 	if err != nil {
 		return fmt.Errorf("ownership detection failed for %s/%s in %s: %w", kind, name, traceNamespace, err)
 	}
@@ -281,14 +292,7 @@ func runTrace(cmd *cobra.Command, args []string) error {
 
 	case agent.OwnerHelm:
 		// Get k8s client for Helm tracing (reads release secrets)
-		cfg, cfgErr := buildConfig()
-		if cfgErr != nil {
-			if help, ok := agent.FormatHelmContextError(cfgErr.Error()); ok {
-				return fmt.Errorf("%s", help)
-			}
-			return fmt.Errorf("failed to build kubeconfig: %w", cfgErr)
-		}
-		clientset, clientErr := kubernetes.NewForConfig(cfg)
+		clientset, clientErr := traceSession.kubernetesClient()
 		if clientErr != nil {
 			if help, ok := agent.FormatHelmContextError(clientErr.Error()); ok {
 				return fmt.Errorf("%s", help)
@@ -310,7 +314,7 @@ func runTrace(cmd *cobra.Command, args []string) error {
 		// If Helm labels are present but no release secret exists, try tracing via
 		// an Argo Application that explicitly reports this resource.
 		if shouldAttemptHelmViaArgoFallback(ownership, result) {
-			dynClient, dynErr := dynamic.NewForConfig(cfg)
+			dynClient, dynErr := traceSession.dynamicClient()
 			if dynErr == nil {
 				fallbackResult, fallbackOwnership, fallbackUsed := tryHelmViaArgoFallback(
 					ctx,
@@ -337,22 +341,14 @@ func runTrace(cmd *cobra.Command, args []string) error {
 		result = buildCustomOwnerUnsupportedTraceResult(kind, name, traceNamespace, ownership)
 
 	case agent.OwnerSveltos:
-		cfg, cfgErr := buildConfig()
-		if cfgErr != nil {
-			return fmt.Errorf("failed to build kubeconfig: %w", cfgErr)
-		}
-		dynClient, dynErr := dynamic.NewForConfig(cfg)
+		dynClient, dynErr := traceSession.dynamicClient()
 		if dynErr != nil {
 			return fmt.Errorf("failed to create dynamic client: %w", dynErr)
 		}
 		result = buildSveltosObservedTraceResult(ctx, dynClient, kind, name, traceNamespace, ownership)
 
 	case agent.OwnerModelplane:
-		cfg, cfgErr := buildConfig()
-		if cfgErr != nil {
-			return fmt.Errorf("failed to build kubeconfig: %w", cfgErr)
-		}
-		dynClient, dynErr := dynamic.NewForConfig(cfg)
+		dynClient, dynErr := traceSession.dynamicClient()
 		if dynErr != nil {
 			return fmt.Errorf("failed to create dynamic client: %w", dynErr)
 		}
@@ -392,32 +388,32 @@ func runTrace(cmd *cobra.Command, args []string) error {
 
 	// Enrich chain links with timing information
 	if len(result.Chain) > 0 {
-		enrichTraceWithTiming(ctx, result)
+		enrichTraceWithTimingSession(ctx, traceSession, result)
 	}
 
 	// Detect cross-owner references if we have a workload
 	if kind == "Deployment" || kind == "StatefulSet" || kind == "DaemonSet" || kind == "Pod" {
-		crossRefs, crossErr := detectCrossOwnerReferences(ctx, kind, name, traceNamespace, ownership)
+		crossRefs, crossErr := detectCrossOwnerReferencesWithTraceSession(ctx, traceSession, kind, name, traceNamespace, ownership)
 		if crossErr == nil && len(crossRefs) > 0 {
 			result.CrossReferences = crossRefs
 		}
 	}
 
 	// Collect secret evidence for workloads and Flux resources
-	secretEvidence := collectSecretEvidence(ctx, kind, name, traceNamespace)
+	secretEvidence := collectSecretEvidenceWithTraceSession(ctx, traceSession, kind, name, traceNamespace)
 	if secretEvidence != nil && secretEvidence.Summary.Total > 0 {
 		result.Secrets = secretEvidence
 	}
 
 	// Collect recent events for the traced resource
-	events, eventsErr := fetchResourceEvents(ctx, traceNamespace, kind, name)
+	events, eventsErr := fetchResourceEventsWithTraceSession(ctx, traceSession, traceNamespace, kind, name)
 	if eventsErr == nil && events != nil && len(events.Events) > 0 {
 		result.Events = events
 	}
 
 	if traceWithConfigHub {
-		dynClient := enrichTraceConfigHubFromLive(ctx, result, kind, name, traceNamespace)
-		attachTraceConfigHubDeliveryEvidence(ctx, result, dynClient, traceConfigHubDeliveryFlags{
+		dynClient := enrichTraceConfigHubFromLiveWithTraceSession(ctx, traceSession, result, kind, name, traceNamespace)
+		attachTraceConfigHubDeliveryEvidenceWithTraceSession(ctx, result, dynClient, traceSession, traceConfigHubDeliveryFlags{
 			Enabled:    true,
 			Namespace:  traceNamespace,
 			Space:      traceConfigHubSpace,
@@ -428,7 +424,7 @@ func runTrace(cmd *cobra.Command, args []string) error {
 
 	artifacts := buildUnknownTraceArtifacts(result)
 	if traceArtifacts {
-		artifacts = mergeTraceArtifacts(artifacts, collectTraceArtifacts(ctx, result))
+		artifacts = mergeTraceArtifacts(artifacts, collectTraceArtifactsWithTraceSession(ctx, traceSession, result))
 	}
 
 	// Output results (effectiveFormat was resolved earlier)
@@ -530,6 +526,25 @@ func fetchProviderConfigResource(ctx context.Context, cfg *rest.Config, dynClien
 	if err != nil {
 		return nil, err
 	}
+	if len(locators) == 0 {
+		return nil, fmt.Errorf("ProviderConfig CRD not found in API discovery")
+	}
+	return fetchResourceWithLocators(ctx, dynClient, "ProviderConfig", name, namespace, locators)
+}
+
+func fetchProviderConfigResourceWithTraceSession(ctx context.Context, session *traceSession, dynClient dynamic.Interface, name, namespace string) (*unstructured.Unstructured, error) {
+	if session == nil {
+		return nil, fmt.Errorf("trace session is unavailable")
+	}
+	client, err := session.discoveryClient()
+	if err != nil {
+		return nil, err
+	}
+	resourceLists, err := client.ServerPreferredResources()
+	if err != nil && !discovery.IsGroupDiscoveryFailedError(err) {
+		return nil, err
+	}
+	locators := providerConfigLocatorsFromAPIResourceLists(resourceLists)
 	if len(locators) == 0 {
 		return nil, fmt.Errorf("ProviderConfig CRD not found in API discovery")
 	}
@@ -948,12 +963,21 @@ func enrichTraceWithTiming(ctx context.Context, result *agent.TraceResult) {
 	if err != nil {
 		return
 	}
-
-	dynClient, err := dynamic.NewForConfig(cfg)
+	session, err := newTraceSession(cfg, "")
 	if err != nil {
 		return
 	}
+	enrichTraceWithTimingSession(ctx, session, result)
+}
 
+func enrichTraceWithTimingSession(ctx context.Context, session *traceSession, result *agent.TraceResult) {
+	if result == nil || session == nil {
+		return
+	}
+	dynClient, err := session.dynamicClient()
+	if err != nil {
+		return
+	}
 	enricher := agent.NewTimingEnricher(dynClient)
 	result.Chain = enricher.EnrichChainWithTiming(ctx, result.Chain)
 }
@@ -964,26 +988,30 @@ func detectCrossOwnerReferences(ctx context.Context, kind, name, namespace strin
 	if err != nil {
 		return nil, err
 	}
-
-	dynClient, err := dynamic.NewForConfig(cfg)
+	session, err := newTraceSession(cfg, "")
 	if err != nil {
 		return nil, err
 	}
+	return detectCrossOwnerReferencesWithTraceSession(ctx, session, kind, name, namespace, resourceOwner)
+}
 
-	// Fetch the resource
+func detectCrossOwnerReferencesWithTraceSession(ctx context.Context, session *traceSession, kind, name, namespace string, resourceOwner *agent.Ownership) ([]agent.CrossReference, error) {
+	if session == nil {
+		return nil, fmt.Errorf("trace session is unavailable")
+	}
+	dynClient, err := session.dynamicClient()
+	if err != nil {
+		return nil, err
+	}
 	gvr := kindToGVR(kind)
 	if gvr.Resource == "" {
 		return nil, fmt.Errorf("unknown resource kind: %s", kind)
 	}
-
 	resource, err := dynClient.Resource(gvr).Namespace(namespace).Get(ctx, name, v1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-
-	// Detect cross-references
-	detector := agent.NewCrossRefDetector(dynClient)
-	return detector.DetectCrossReferences(ctx, resource, resourceOwner)
+	return agent.NewCrossRefDetector(dynClient).DetectCrossReferences(ctx, resource, resourceOwner)
 }
 
 // detectResourceOwnership fetches the resource and detects its owner
@@ -992,15 +1020,24 @@ func detectResourceOwnership(ctx context.Context, kind, name, namespace string) 
 	if err != nil {
 		return nil, err
 	}
-
-	dynClient, err := dynamic.NewForConfig(cfg)
+	session, err := newTraceSession(cfg, "")
 	if err != nil {
 		return nil, err
 	}
+	return detectResourceOwnershipWithTraceSession(ctx, session, kind, name, namespace)
+}
 
+func detectResourceOwnershipWithTraceSession(ctx context.Context, session *traceSession, kind, name, namespace string) (*agent.Ownership, error) {
+	if session == nil {
+		return nil, fmt.Errorf("trace session is unavailable")
+	}
+	dynClient, err := session.dynamicClient()
+	if err != nil {
+		return nil, err
+	}
 	var resource *unstructured.Unstructured
 	if kind == "ProviderConfig" {
-		resource, err = fetchProviderConfigResource(ctx, cfg, dynClient, name, namespace)
+		resource, err = fetchProviderConfigResourceWithTraceSession(ctx, session, dynClient, name, namespace)
 	} else if spec, ok := controllerResourceByKind(kind); ok {
 		resource, err = getControllerResource(ctx, dynClient, spec, name, namespace)
 	} else {
@@ -1013,18 +1050,9 @@ func detectResourceOwnership(ctx context.Context, kind, name, namespace string) 
 	if err != nil {
 		return nil, err
 	}
-
-	// Detect ownership
 	ownership := agent.DetectOwnership(resource)
 	if ownership.Type == agent.OwnerUnknown && isCrossplaneProviderConfig(resource) {
-		ownership = agent.Ownership{
-			Type:       agent.OwnerCrossplane,
-			SubType:    "providerconfig",
-			Name:       resource.GetName(),
-			Namespace:  resource.GetNamespace(),
-			Source:     "apiGroup:" + resource.GroupVersionKind().Group,
-			Confidence: "high",
-		}
+		ownership = agent.Ownership{Type: agent.OwnerCrossplane, SubType: "providerconfig", Name: resource.GetName(), Namespace: resource.GetNamespace(), Source: "apiGroup:" + resource.GroupVersionKind().Group, Confidence: "high"}
 	}
 	return &ownership, nil
 }
@@ -1925,12 +1953,12 @@ func outputTraceMarkdown(result *agent.TraceResult, artifacts map[string]mapsvc.
 
 // runReverseTrace performs a reverse trace - walking ownerReferences up to find GitOps source
 func runReverseTrace(ctx context.Context, kind, name, namespace string) error {
-	cfg, err := buildConfig()
+	session, err := newDefaultTraceSession()
 	if err != nil {
-		return fmt.Errorf("failed to build kubeconfig: %w", err)
+		return fmt.Errorf("failed to capture Kubernetes trace session: %w", err)
 	}
 
-	dynClient, err := dynamic.NewForConfig(cfg)
+	dynClient, err := session.dynamicClient()
 	if err != nil {
 		return fmt.Errorf("failed to create dynamic client: %w", err)
 	}
@@ -2167,7 +2195,11 @@ func runTraceDiff(ctx context.Context, kind, name, namespace string) error {
 	}
 
 	// For other resources, detect ownership to choose the right diff tool
-	ownership, err := detectResourceOwnership(ctx, kind, name, namespace)
+	session, err := newDefaultTraceSession()
+	if err != nil {
+		return err
+	}
+	ownership, err := detectResourceOwnershipWithTraceSession(ctx, session, kind, name, namespace)
 	if err != nil {
 		// Try to infer from kind
 		ownership = &agent.Ownership{Type: agent.OwnerUnknown}
@@ -3030,59 +3062,15 @@ func mergeTraceArtifacts(base, updates map[string]mapsvc.TraceArtifactRef) map[s
 }
 
 func collectTraceArtifacts(ctx context.Context, result *agent.TraceResult) map[string]mapsvc.TraceArtifactRef {
-	artifacts := make(map[string]mapsvc.TraceArtifactRef)
-	if result == nil || len(result.Chain) == 0 {
-		return artifacts
-	}
-
-	sources := make([]agent.ChainLink, 0, 4)
-	for _, link := range result.Chain {
-		if isTraceSourceKind(link.Kind) {
-			sources = append(sources, link)
-		}
-	}
-	if len(sources) == 0 {
-		return artifacts
-	}
-
 	cfg, err := buildConfig()
 	if err != nil {
-		return artifacts
+		return map[string]mapsvc.TraceArtifactRef{}
 	}
-	dynClient, err := dynamic.NewForConfig(cfg)
+	session, err := newTraceSession(cfg, getCurrentContext())
 	if err != nil {
-		return artifacts
+		return map[string]mapsvc.TraceArtifactRef{}
 	}
-
-	for _, source := range sources {
-		gvr := kindToGVR(source.Kind)
-		if gvr.Resource == "" {
-			continue
-		}
-		obj, err := dynClient.Resource(gvr).Namespace(source.Namespace).Get(ctx, source.Name, v1.GetOptions{})
-		if err != nil {
-			continue
-		}
-
-		artifact := traceArtifactUnknownForKind(source.Kind)
-		if v, ok, _ := unstructured.NestedString(obj.Object, "status", "artifact", "url"); ok && strings.TrimSpace(v) != "" {
-			artifact.URL = v
-		}
-		if v, ok, _ := unstructured.NestedString(obj.Object, "status", "artifact", "revision"); ok && strings.TrimSpace(v) != "" {
-			artifact.Revision = v
-		}
-		if v, ok, _ := unstructured.NestedString(obj.Object, "status", "artifact", "digest"); ok && strings.TrimSpace(v) != "" {
-			artifact.Digest = v
-		}
-		if v, ok, _ := unstructured.NestedString(obj.Object, "status", "artifact", "lastUpdateTime"); ok && strings.TrimSpace(v) != "" {
-			artifact.LastUpdateTime = v
-		}
-
-		key := traceArtifactKey(source.Kind, source.Namespace, source.Name)
-		artifacts[key] = normalizeTraceArtifact(source.Kind, artifact)
-	}
-
-	return artifacts
+	return collectTraceArtifactsWithTraceSession(ctx, session, result)
 }
 
 func artifactForLink(link agent.ChainLink, artifacts map[string]mapsvc.TraceArtifactRef) mapsvc.TraceArtifactRef {
@@ -3267,52 +3255,13 @@ func loadAndRenderTraceFromJSON(path string, invCtx InvocationContext) error {
 // - Flux deployers: Kustomization, HelmRelease
 // - Crossplane: ProviderConfig
 func collectSecretEvidence(ctx context.Context, kind, name, namespace string) *agent.SecretEvidenceResult {
-	// Only collect for supported kinds
-	supportedKinds := map[string]bool{
-		"Deployment":     true,
-		"StatefulSet":    true,
-		"DaemonSet":      true,
-		"Pod":            true,
-		"GitRepository":  true,
-		"HelmRepository": true,
-		"Bucket":         true,
-		"Kustomization":  true,
-		"HelmRelease":    true,
-		"ProviderConfig": true,
-	}
-	if !supportedKinds[kind] {
-		return nil
-	}
-
 	cfg, err := buildConfig()
 	if err != nil {
 		return nil
 	}
-
-	dynClient, err := dynamic.NewForConfig(cfg)
+	session, err := newTraceSession(cfg, getCurrentContext())
 	if err != nil {
 		return nil
 	}
-
-	var resource *unstructured.Unstructured
-	if kind == "ProviderConfig" {
-		resource, err = fetchProviderConfigResource(ctx, cfg, dynClient, name, namespace)
-	} else {
-		gvr := kindToGVR(kind)
-		if gvr.Resource == "" {
-			return nil
-		}
-		resource, err = dynClient.Resource(gvr).Namespace(namespace).Get(ctx, name, v1.GetOptions{})
-	}
-	if err != nil {
-		return nil
-	}
-
-	collector := agent.NewSecretEvidenceCollector(dynClient)
-	result, err := collector.CollectFromResource(ctx, resource)
-	if err != nil {
-		return nil
-	}
-
-	return result
+	return collectSecretEvidenceWithTraceSession(ctx, session, kind, name, namespace)
 }

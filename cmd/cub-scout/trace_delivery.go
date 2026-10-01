@@ -49,6 +49,21 @@ func enrichTraceConfigHubFromLive(ctx context.Context, result *agent.TraceResult
 	return dynClient
 }
 
+func enrichTraceConfigHubFromLiveWithTraceSession(ctx context.Context, session *traceSession, result *agent.TraceResult, kind, name, namespace string) dynamic.Interface {
+	if result == nil || session == nil {
+		return nil
+	}
+	dynClient, err := session.dynamicClient()
+	if err != nil {
+		return nil
+	}
+	obj, err := fetchTraceResource(ctx, dynClient, kind, name, namespace)
+	if err == nil && obj != nil {
+		enrichTraceConfigHubFromObject(result, obj)
+	}
+	return dynClient
+}
+
 func enrichTraceConfigHubFromObject(result *agent.TraceResult, obj *unstructured.Unstructured) {
 	if result == nil || obj == nil {
 		return
@@ -57,12 +72,24 @@ func enrichTraceConfigHubFromObject(result *agent.TraceResult, obj *unstructured
 }
 
 func attachTraceConfigHubDeliveryEvidence(ctx context.Context, result *agent.TraceResult, dynClient dynamic.Interface, flags traceConfigHubDeliveryFlags) {
+	attachTraceConfigHubDeliveryEvidenceForSession(ctx, result, dynClient, nil, false, flags)
+}
+
+func attachTraceConfigHubDeliveryEvidenceWithTraceSession(ctx context.Context, result *agent.TraceResult, dynClient dynamic.Interface, session *traceSession, flags traceConfigHubDeliveryFlags) {
+	attachTraceConfigHubDeliveryEvidenceForSession(ctx, result, dynClient, session, true, flags)
+}
+
+func attachTraceConfigHubDeliveryEvidenceForSession(ctx context.Context, result *agent.TraceResult, dynClient dynamic.Interface, session *traceSession, bound bool, flags traceConfigHubDeliveryFlags) {
 	if result == nil || !flags.Enabled {
 		return
 	}
 
 	correlation := buildTraceDeliveryCorrelation(result)
-	confirmTraceOCISource(ctx, result, &correlation)
+	if !bound {
+		confirmTraceOCISource(ctx, result, &correlation)
+	} else {
+		confirmTraceOCISourceWithTraceSession(ctx, session, result, &correlation)
+	}
 	confirmTraceOCIRegistry(&correlation)
 	opts, preflightOmissions := traceGitOpsDeliveryOptions(flags, correlation)
 	if opts.Now.IsZero() {

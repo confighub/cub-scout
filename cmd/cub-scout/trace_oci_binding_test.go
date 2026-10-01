@@ -10,6 +10,7 @@ import (
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/rest"
 )
 
 func TestTraceOCISourceBinding(t *testing.T) {
@@ -64,4 +65,44 @@ func TestConfirmTraceOCISourceUsesBoundedReadAndFailsClosed(t *testing.T) {
 	rows, omission := matchTraceReleases(c, []ConfigHubReleaseEvidence{{Space: "apps", ManifestDigest: digest}})
 	require.Empty(t, rows)
 	require.Contains(t, omission.Reason, "unverified-source")
+}
+
+func TestConfirmTraceOCISourceUsesTraceSessionEndpoint(t *testing.T) {
+	selected := newReleaseFixture(t, "argo")
+	retarget := newReleaseFixture(t, "argo")
+	digest := firstOCIDigest(selected.options.Bundle)
+	config := &rest.Config{Host: selected.host}
+	session, err := newTraceSession(config, "selected-context")
+	require.NoError(t, err)
+	config.Host = retarget.host
+
+	result := &agent.TraceResult{Tool: "argocd", Chain: []agent.ChainLink{
+		{Kind: "ConfigHub OCI", OCISource: &agent.OCISourceInfo{Raw: "oci://example.invalid/config", IsConfigHub: true}},
+		{Kind: "Application", Name: "api", Namespace: "delivery", Revision: digest},
+	}}
+	c := agent.TraceDeliveryCorrelation{OCIIdentityStatus: "exact", OCIDigest: digest}
+	confirmTraceOCISourceWithTraceSession(context.Background(), session, result, &c)
+	require.True(t, c.OCISourceVerified)
+	require.Equal(t, agent.BoundedReadCounts{Discovery: 1, Object: 1}, c.OCISourceRead.Reads)
+	require.Greater(t, selected.requests, 0, "OCI confirmation should read the captured API endpoint")
+	require.Zero(t, retarget.requests, "OCI confirmation must not reread a retargeted config")
+}
+
+func TestConfirmTraceOCISourceWithMissingSessionDoesNotUseLegacyReader(t *testing.T) {
+	previous := traceOCISourceReadFn
+	t.Cleanup(func() { traceOCISourceReadFn = previous })
+	calls := 0
+	traceOCISourceReadFn = func(context.Context, agent.BoundedResourceRef) (*unstructured.Unstructured, agent.BoundedReadEvidence, error) {
+		calls++
+		return nil, agent.BoundedReadEvidence{}, nil
+	}
+	result := &agent.TraceResult{Tool: "argocd", Chain: []agent.ChainLink{
+		{Kind: "ConfigHub OCI", OCISource: &agent.OCISourceInfo{Raw: "oci://example.invalid/config", IsConfigHub: true}},
+		{Kind: "Application", Name: "api", Namespace: "delivery"},
+	}}
+	c := agent.TraceDeliveryCorrelation{OCIIdentityStatus: "exact", OCIDigest: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
+	confirmTraceOCISourceWithTraceSession(context.Background(), nil, result, &c)
+	require.Zero(t, calls, "missing bound session must not select the legacy ambient reader")
+	require.Equal(t, "unverified-source", c.OCIIdentityStatus)
+	require.NotNil(t, c.OCISourceRead)
 }

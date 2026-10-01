@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"strings"
 
@@ -27,6 +28,28 @@ var traceOCISourceReadFn = func(ctx context.Context, ref agent.BoundedResourceRe
 // A trace can carry a new spec URL beside an old status revision. Bind the
 // reported revision to its current source before joining connected history.
 func confirmTraceOCISource(ctx context.Context, result *agent.TraceResult, c *agent.TraceDeliveryCorrelation) {
+	confirmTraceOCISourceUsing(ctx, result, c, traceOCISourceReadFn)
+}
+
+func confirmTraceOCISourceWithTraceSession(ctx context.Context, session *traceSession, result *agent.TraceResult, c *agent.TraceDeliveryCorrelation) {
+	read := func(ctx context.Context, ref agent.BoundedResourceRef) (*unstructured.Unstructured, agent.BoundedReadEvidence, error) {
+		if session == nil {
+			return nil, agent.BoundedReadEvidence{}, fmt.Errorf("trace session is unavailable")
+		}
+		config, err := session.restConfig()
+		if err != nil {
+			return nil, agent.BoundedReadEvidence{}, err
+		}
+		reader, err := agent.NewBoundedResourceReader(config, session.contextLabel())
+		if err != nil {
+			return nil, agent.BoundedReadEvidence{}, err
+		}
+		return reader.Read(ctx, ref, true)
+	}
+	confirmTraceOCISourceUsing(ctx, result, c, read)
+}
+
+func confirmTraceOCISourceUsing(ctx context.Context, result *agent.TraceResult, c *agent.TraceDeliveryCorrelation, read func(context.Context, agent.BoundedResourceRef) (*unstructured.Unstructured, agent.BoundedReadEvidence, error)) {
 	if result == nil || c.OCIIdentityStatus != "exact" {
 		return
 	}
@@ -44,7 +67,7 @@ func confirmTraceOCISource(ctx context.Context, result *agent.TraceResult, c *ag
 			ref = agent.BoundedResourceRef{APIVersion: "argoproj.io/v1alpha1", Kind: "Application", Namespace: link.Namespace, Name: link.Name}
 		}
 	}
-	obj, e, err := traceOCISourceReadFn(ctx, ref)
+	obj, e, err := read(ctx, ref)
 	c.OCISourceRead = &e
 	if err != nil || !traceOCISourceBindingMatches(obj, sourceURL, c.OCIDigest) {
 		c.OCIIdentityStatus = "unverified-source"
