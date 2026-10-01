@@ -1,0 +1,326 @@
+{
+  "attempts": [
+    {
+      "attempt": 1,
+      "cleanupVerifiedAbsent": true,
+      "failure": {
+        "phase": "pre-start container inspection",
+        "rawInspectionIncluded": false,
+        "reportedCheck": "container must have one read-only /tools bind and only the private /tmp tmpfs",
+        "rootCause": "Specific discrepancy is inferred only: the inspection body was not retained, so attribution beyond the helper error is not independently verified."
+      },
+      "helperElapsedSeconds": 1.804422709159553,
+      "helperStatus": "failed",
+      "integrity": {
+        "payloadSha256": "588ee5195089aead13344388fef01bfcd974a4ce65271a5701a9f65935a08978"
+      },
+      "receipt": {
+        "bytes": 9032,
+        "sha256": "a2302d07820b5a8699ed62aa32229234031c79b195fa154c458674b7e25f330b"
+      },
+      "sourceRevision": "fba2b1276ff14c7f6e219d76b57313f5215da615",
+      "wrapper": {
+        "elapsedSeconds": 2.967471541836858,
+        "exitCode": 1,
+        "helperSha256": "18e482260986730420cacced931e610394b3e322ccd3df23a62e0708a4930227",
+        "outerTimeout": false,
+        "receiptExists": true,
+        "result": {
+          "bytes": 793,
+          "sha256": "3c728d4ed5ecac7146ea2358756f7ec8bd2fbf5eefad2e311a9d7216d7a20dc6"
+        },
+        "stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    },
+    {
+      "attempt": 2,
+      "cleanupVerifiedAbsent": true,
+      "failure": {
+        "detail": "All four target commands exited 0; the source-built cub-scout checker rejected its version line with build-description text. This attempt remains failed.",
+        "phase": "version-output validation",
+        "reportedCheck": "version payload container did not exit successfully"
+      },
+      "helperElapsedSeconds": 3.7120819999836385,
+      "helperStatus": "failed",
+      "integrity": {
+        "payloadSha256": "588ee5195089aead13344388fef01bfcd974a4ce65271a5701a9f65935a08978"
+      },
+      "observedCommands": [
+        {
+          "exitCode": 0,
+          "name": "claude",
+          "status": "passed",
+          "stderrBytes": 0,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdoutBytes": 22,
+          "stdoutSha256": "5136bdeed234f35db463969bcf3daee1a1c3005a7f5de2204e4d6067809a4a81",
+          "versionMatched": true
+        },
+        {
+          "exitCode": 0,
+          "name": "kubectl",
+          "status": "passed",
+          "stderrBytes": 0,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdoutBytes": 339,
+          "stdoutSha256": "9f7966c6116978b24bc54c0023b72e2bc40da313704760be672f7df514affac3",
+          "versionMatched": true
+        },
+        {
+          "exitCode": 0,
+          "name": "helm",
+          "status": "passed",
+          "stderrBytes": 0,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdoutBytes": 16,
+          "stdoutSha256": "9d8e6fd1f0635d358a6c3d3078370e9a56c2340f3efe96ea3bed9134a434caf0",
+          "versionMatched": true
+        },
+        {
+          "exitCode": 0,
+          "name": "cub-scout",
+          "status": "failed",
+          "stderrBytes": 0,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdoutBytes": 38,
+          "stdoutSha256": "39c1a76b5747eabf216d890c01de309940dff49381ff2d801977655de2fc0287",
+          "versionMatched": false
+        }
+      ],
+      "payloadOutput": {
+        "stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 2663,
+          "sha256": "1d210ea15484075c68700336f0b1ed89ad89281074f3958cbb89d132be0001b7"
+        }
+      },
+      "receipt": {
+        "bytes": 10575,
+        "sha256": "72d50a0febf194733cd0f71110b01bb67476c5eebc454d3c85fb959bb550e55d"
+      },
+      "sourceRevision": "ebafbf18b633c6b3ac21ca03810d09ecb30c3046",
+      "wrapper": {
+        "elapsedSeconds": 4.685641458956525,
+        "exitCode": 1,
+        "helperSha256": "35af85e2ba82909572d9a9832d997dff392185c60cfbad530a3fec76183b4bd9",
+        "outerTimeout": false,
+        "receiptExists": true,
+        "result": {
+          "bytes": 793,
+          "sha256": "5c071fcce6afca8ca0bdb1c9f3b4b180301bbcea60a25d0beed3fee69fe09468"
+        },
+        "stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    },
+    {
+      "attempt": 3,
+      "cleanupVerifiedAbsent": true,
+      "configurationInspectionVerified": true,
+      "helperElapsedSeconds": 3.6687929169274867,
+      "helperStatus": "passed",
+      "integrity": {
+        "helperSha256": "35af85e2ba82909572d9a9832d997dff392185c60cfbad530a3fec76183b4bd9",
+        "payloadSha256": "b37a3190acee63e69a8ba1effb022db2cd4b889b3d8d5dd1f1e8352a80dd6c1e",
+        "receipt": {
+          "bytes": 12614,
+          "sha256": "b099b692c8f65fed483215eeeacc00ce8998db839173c815af86098d21fd4733"
+        }
+      },
+      "payloadOutput": {
+        "stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 2660,
+          "sha256": "59440af342448611807db193cd779250dd50398d6e9db16508f4c4f0f7cae804"
+        }
+      },
+      "rawOutputs": [
+        {
+          "bytes": 22,
+          "file": "claude.stdout.bin",
+          "sha256": "5136bdeed234f35db463969bcf3daee1a1c3005a7f5de2204e4d6067809a4a81"
+        },
+        {
+          "bytes": 0,
+          "file": "claude.stderr.bin",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "bytes": 339,
+          "file": "kubectl.stdout.bin",
+          "sha256": "9f7966c6116978b24bc54c0023b72e2bc40da313704760be672f7df514affac3"
+        },
+        {
+          "bytes": 0,
+          "file": "kubectl.stderr.bin",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "bytes": 16,
+          "file": "helm.stdout.bin",
+          "sha256": "9d8e6fd1f0635d358a6c3d3078370e9a56c2340f3efe96ea3bed9134a434caf0"
+        },
+        {
+          "bytes": 0,
+          "file": "helm.stderr.bin",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "bytes": 38,
+          "file": "cub-scout.stdout.bin",
+          "sha256": "39c1a76b5747eabf216d890c01de309940dff49381ff2d801977655de2fc0287"
+        },
+        {
+          "bytes": 0,
+          "file": "cub-scout.stderr.bin",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "receipt": {
+        "bytes": 12614,
+        "sha256": "b099b692c8f65fed483215eeeacc00ce8998db839173c815af86098d21fd4733"
+      },
+      "sourceAndStagedInputsUnchanged": true,
+      "sourceRevision": "f2589083ad8c954d3ef671b548af4f90427046cf",
+      "status": "passed",
+      "versionCommands": [
+        {
+          "elapsedSeconds": 0.16048511397093534,
+          "exitCode": 0,
+          "name": "claude",
+          "stderrBytes": 0,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdout": "2.1.274 (Claude Code)\n",
+          "stdoutBytes": 22,
+          "stdoutSha256": "5136bdeed234f35db463969bcf3daee1a1c3005a7f5de2204e4d6067809a4a81"
+        },
+        {
+          "elapsedSeconds": 0.19775967299938202,
+          "exitCode": 0,
+          "name": "kubectl",
+          "stderrBytes": 0,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdout": "{\n  \"clientVersion\": {\n    \"major\": \"1\",\n    \"minor\": \"36\",\n    \"gitVersion\": \"v1.36.0\",\n    \"gitCommit\": \"ecf6decece6a6de25a57aad9ba90b6ce580f6f78\",\n    \"gitTreeState\": \"clean\",\n    \"buildDate\": \"2026-04-22T13:54:45Z\",\n    \"goVersion\": \"go1.26.2\",\n    \"compiler\": \"gc\",\n    \"platform\": \"linux/arm64\"\n  },\n  \"kustomizeVersion\": \"v5.8.1\"\n}\n",
+          "stdoutBytes": 339,
+          "stdoutSha256": "9f7966c6116978b24bc54c0023b72e2bc40da313704760be672f7df514affac3"
+        },
+        {
+          "elapsedSeconds": 0.10987731907516718,
+          "exitCode": 0,
+          "name": "helm",
+          "stderrBytes": 0,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdout": "v4.1.4+g05fa379\n",
+          "stdoutBytes": 16,
+          "stdoutSha256": "9d8e6fd1f0635d358a6c3d3078370e9a56c2340f3efe96ea3bed9134a434caf0"
+        },
+        {
+          "elapsedSeconds": 0.19369158404879272,
+          "exitCode": 0,
+          "name": "cub-scout",
+          "stderrBytes": 0,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdout": "cub-scout version dev (built unknown)\n",
+          "stdoutBytes": 38,
+          "stdoutSha256": "39c1a76b5747eabf216d890c01de309940dff49381ff2d801977655de2fc0287"
+        }
+      ],
+      "wrapper": {
+        "elapsedSeconds": 4.610487916972488,
+        "exitCode": 0,
+        "helperSha256": "35af85e2ba82909572d9a9832d997dff392185c60cfbad530a3fec76183b4bd9",
+        "outerTimeout": false,
+        "receiptExists": true,
+        "result": {
+          "bytes": 793,
+          "sha256": "fc447270b813b81d8e4aebec6b5edbe595216a8dbeeb0b3688b2145c6986f0c5"
+        },
+        "stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    }
+  ],
+  "finalResult": {
+    "attempt": 3,
+    "containerCleanupVerifiedAbsent": true,
+    "inspectedBounds": {
+      "capDrop": [
+        "ALL"
+      ],
+      "memoryBytes": 1073741824,
+      "nanoCpus": 1000000000,
+      "network": "none",
+      "noNewPrivileges": true,
+      "oneReadOnlyToolsBind": true,
+      "pidsLimit": 64,
+      "privateTmpfsBytes": 67108864,
+      "readOnlyRootfs": true,
+      "user": "65534:65534"
+    },
+    "notDemonstrated": [
+      "resource saturation",
+      "installation",
+      "ordinary-tool parity",
+      "any cluster operation",
+      "model/provider use"
+    ],
+    "privateRawInspectionPublished": false,
+    "wrapperElapsedSeconds": 4.610487916972488
+  },
+  "recordedAt": "2026-10-01",
+  "schema": "linux-runtime-version-gate-report.v1",
+  "scope": "One local offline container run of four pinned Linux arm64 binaries using version-only commands. Runtime prerequisite evidence only; not installation, benchmark, ordinary-tool parity, cluster, or model/provider evidence.",
+  "runtimeEnvironment": {
+    "cachedImageId": "sha256:cdbd05fb6f457ca275ff51ce00d93d865ca0b6a25f5ffb08262d94f6835771e5",
+    "dockerContextEndpointKind": "local-unix-socket",
+    "downloadsOrImagePulls": false,
+    "installationPerformed": false
+  },
+  "sourceAssets": {
+    "archive": "evals/results/linux-runtime-assets-20261001/assets",
+    "claude": {
+      "bytes": 230482160,
+      "sha256": "2db904daea17addff9de557ba26a725916888aa7b546e2c5dd989c20d9d49ab3"
+    },
+    "cubScout": {
+      "bytes": 75481252,
+      "installed": false,
+      "sha256": "5dac8765612592b60ec076f102c1810fbbce94b52236b3577ab3f65219e17fa6",
+      "sourceRevision": "0d0fd7d54e5b3b1f16d27df6fa299950388873d6"
+    },
+    "helm": {
+      "bytes": 59048120,
+      "sha256": "4d6e3a69e6203094d564d5d4e94325b1f7209421dc7e832a96d2510295e03f1d"
+    },
+    "kubectl": {
+      "bytes": 55640226,
+      "sha256": "9f9d9c44a7b5264515ac9da5991584e2395bd50662e651132337e7b4d0c56f8f"
+    }
+  },
+  "status": "passed"
+}
