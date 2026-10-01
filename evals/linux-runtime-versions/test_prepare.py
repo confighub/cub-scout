@@ -72,6 +72,11 @@ class ReceiptTests(unittest.TestCase):
   self.assertEqual(p.COMMANDS[1][1],["/tools/kubectl","version","--client","--output=json"])
   self.assertEqual(p.COMMANDS[2][1],["/tools/helm","version","--short"])
   self.assertEqual(p.COMMANDS[3][1],["./cub-scout","version"])
+ def test_source_built_scout_version_includes_build_date(self):
+  p=load_payload()
+  self.assertTrue(p.scout_version_matches("cub-scout version dev (built unknown)\n"))
+  for text in ("cub-scout version dev\n", "cub-scout version v2.12.4 (built unknown)\n", "cub-scout version dev (built unknown)\nextra\n", ""):
+   self.assertFalse(p.scout_version_matches(text))
  def test_docker_environment_drops_host_proxy_and_auth_variables(self):
   env=m.docker_env({"PATH":"/bin","HOME":"/private/home","DOCKER_HOST":"tcp://remote","HTTPS_PROXY":"https://proxy","KUBECONFIG":"/private/kubeconfig","AWS_SECRET_ACCESS_KEY":"secret"})
   self.assertEqual(env,{"PATH":"/bin","HOME":"/private/home"})

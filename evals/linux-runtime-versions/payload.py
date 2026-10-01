@@ -21,6 +21,12 @@ CAP = 32768
 TIMEOUT = 8
 
 
+def scout_version_matches(text):
+    # This exact pinned binary was built without release linker flags.
+    # cmd/cub-scout/main.go includes both BuildTag and BuildDate.
+    return text == "cub-scout version dev (built unknown)\n"
+
+
 def run_one(name, argv, pattern):
     began = time.monotonic()
     proc = subprocess.Popen(argv, cwd="/tools", stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
@@ -71,7 +77,7 @@ def run_one(name, argv, pattern):
     try: text = out.decode("utf-8", "strict")
     except UnicodeDecodeError: text = ""
     if name == "cub-scout":
-        matched = bool(re.search(r"(?m)^cub-scout version \S+\s*$", text))
+        matched = scout_version_matches(text)
     else:
         matched = bool(re.search(pattern, (out+b"\n"+err).decode("utf-8", "replace")))
     code = None if error else proc.returncode
