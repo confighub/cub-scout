@@ -106,6 +106,24 @@ def validate_round_accounting_v1(*, requests: list[dict[str, Any]], stdout: byte
         cli_uses, cli_results = lowlevel.cli_tool_events(events)
     except (lowlevel.ProbeError, ValueError, TypeError, KeyError, AttributeError) as exc:
         _fail(f"retained request/response/CLI evidence cannot be parsed: {exc}")
+    # This contract covers only the observed single-round event sequence. Do
+    # not silently ignore unknown events, post-terminal work, or malformed
+    # result flags through the more permissive shared event extractor.
+    sequence = list(events)
+    if sequence and isinstance(sequence[0], dict) and sequence[0].get("type") == "system" and sequence[0].get("subtype") == "init":
+        sequence = sequence[1:]
+    if (len(sequence) != 3 or any(not isinstance(event, dict) for event in sequence)
+            or [event.get("type") for event in sequence] != ["assistant", "user", "result"]):
+        _fail("CLI evidence is not an ordered single tool-use/result/terminal sequence")
+    for event, expected_type in zip(sequence[:2], ("tool_use", "tool_result")):
+        message = event.get("message")
+        blocks = message.get("content") if isinstance(message, dict) else None
+        if (not isinstance(blocks, list) or len(blocks) != 1
+                or not isinstance(blocks[0], dict) or blocks[0].get("type") != expected_type):
+            _fail("CLI evidence contains extra or malformed tool blocks")
+    result_block = sequence[1]["message"]["content"][0]
+    if "is_error" in result_block and result_block["is_error"] is not False:
+        _fail("Read result error flag is not an explicit success")
     if body.get("model") != MODEL:
         _fail("captured request model label differs from the pinned mock label")
     tools = body.get("tools")

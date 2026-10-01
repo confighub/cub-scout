@@ -136,6 +136,24 @@ class RoundAccountingV1Tests(unittest.TestCase):
         with self.assertRaises(accounting.RoundAccountingError):
             validate(data)
 
+    def test_unknown_reordered_or_malformed_cli_events_fail(self):
+        for variant in ("unknown", "reordered", "nonobject", "bad_error_flag", "extra_block"):
+            data = evidence()
+            events = [json.loads(line) for line in data["stdout"].splitlines()]
+            if variant == "unknown":
+                events.insert(1, {"type": "unexpected"})
+            elif variant == "reordered":
+                events = [events[0], events[2], events[1]]
+            elif variant == "nonobject":
+                events.insert(0, [])
+            elif variant == "bad_error_flag":
+                events[1]["message"]["content"][0]["is_error"] = "true"
+            else:
+                events[1]["message"]["content"].append({"type": "text", "text": "extra"})
+            data["stdout"] = b"\n".join(json.dumps(event).encode() for event in events)
+            with self.subTest(variant=variant), self.assertRaises(accounting.RoundAccountingError):
+                validate(data)
+
     def test_malformed_shapes_and_noninteger_counters_fail_as_typed_errors(self):
         for key, value in (("cleanup", None), ("connection_events", None),
                            ("requests", None), ("stdout", None),
