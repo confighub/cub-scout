@@ -4,6 +4,11 @@ This freezes the 24 questions and six equally weighted groups from the P1
 section of [the 3.0 execution plan](../docs/roadmap-3.0-execution.md#balanced-first-suite-24-cases-six-equally-weighted-groups).
 It is a design manifest, not a runnable suite or evidence of savings. The
 machine-readable source is [benchmark-v1.json](benchmark-v1.json).
+The supplemental [recorded ordinary-tool parity v1 clarification](ordinary-tool-parity-v1.md)
+distinguishes identical raw input packets from authored deterministic
+transports and lists current per-case evidence gaps. It does not alter cases,
+weights, gates, or paid-run authorization; full Experiment A remains
+non-executable until its existing admission requirements pass.
 
 Existing case directories are mapped only where their current prompt covers
 the frozen question. The September 30 refresh now includes managedFields in

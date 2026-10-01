@@ -5,6 +5,12 @@
   "source": "docs/roadmap-3.0-execution.md#balanced-first-suite-24-cases-six-equally-weighted-groups",
   "created": "2026-09-30",
   "claim_scope": "Named tasks, pinned model/version, evidence condition, fixture revision, and run date only; no general savings claim until roadmap gates pass.",
+  "ordinary_tool_evidence_protocol": {
+    "version": "recorded-ordinary-tool-parity.v1",
+    "document": "evals/ordinary-tool-parity-v1.md",
+    "status": "supplemental_clarification_not_admission",
+    "scope": "Clarifies raw packet equality versus provenance-labeled authored transport; frozen cases, weights, execution status, and gates are unchanged."
+  },
   "groups": [
     {
       "id": "inventory",

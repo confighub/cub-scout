@@ -187,6 +187,14 @@ skills/MCP and access to that same raw evidence. Scout's discovery/schema cost
 is included. The model may cross-check: that is a real cost to improve, not a
 reason to remove baseline access selectively.
 
+The supplemental [recorded ordinary-tool parity v1 clarification](../evals/ordinary-tool-parity-v1.md)
+distinguishes the byte-identical raw evidence packet from any deterministic,
+authored API transport used by real read-only clients. It identifies current
+case-level coverage gaps; it does not establish parity or change Experiment A's
+evidence, quality, cost, process, or admission gates. The clarification is
+scoped under [#603](https://github.com/confighub/cub-scout/issues/603); process
+accounting remains under [#709](https://github.com/confighub/cub-scout/issues/709).
+
 **B: realistic workflow comparison.** Scout-only live tools versus the normal
 operator baseline with equivalent live read-only access; export-only comparisons
 are separately labeled historical workflow experiments. Run from a frozen/reset
