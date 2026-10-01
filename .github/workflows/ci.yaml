@@ -72,6 +72,9 @@ jobs:
       - name: Run offline direct CLI control guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/direct-cli-controls -v
 
+      - name: Run combined recorded runtime receipt contract
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/combined-recorded-runtime -v
+
       - name: Run offline HLT-04 replay guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/sveltos-hlt-04-report-freshness -p 'test_*.py' -v
 
