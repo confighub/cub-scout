@@ -1,5 +1,24 @@
 # cub-scout Handover for the Next AI Coder
 
+## 2026-10-01: Trace admission and RUL-04 raw capture
+
+Main baseline `13928ca` includes #705: an offline trace-completeness audit,
+33 passing guards and independently reviewed rejection of the retained failed
+counts pair. Required Unit/Integration/GitOps/Proof CI passed. This closes #704,
+not external runtime limit enforcement or missing descendant cost accounting.
+Further paid evals remain stopped; reported estimated total is unchanged at
+$4.38666035, with completeness of the latest diagnostic cost unresolved.
+
+RUL-04 has a reviewed actual capture from source `fd496387` at
+03:15:20–03:15:53 UTC (33.78 seconds). A Ready Pod's actual runtime image ID and
+StatefulSet UID link are preserved; immutable intended image identity remains
+unknown because authored intent uses a tag. Local OCI bytes do not prove a
+controller applied that source. See the [capture proof](evals/reports/2026-10-01-rul04-image-identity.json).
+Scoped raw reads, owned cleanup and config integrity passed. Scout's derived
+output is separate from raw model evidence. Fixture preparation is not a model
+result or paid-suite admission; #645 remains the live execution queue.
+
+
 ## 2026-10-01: Request scope merged; counts diagnostic timed out
 
 Main baseline `59ef366` includes #701: filtered map requests retain resource

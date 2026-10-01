@@ -537,12 +537,35 @@
         {
           "id": "RUL-04",
           "question": "Unsupported workload/image proof",
-          "status": "planned",
-          "existing_case": null,
+          "status": "raw_recording_prepared_not_run",
+          "existing_case": "evals/rul04-image-identity",
           "reference": "Return unknown when the workload/image relationship is unsupported or lacks identity evidence.",
           "controls": [
             "No tag-based or name-based image proof"
-          ]
+          ],
+          "evidence_refresh": "2026-10-01",
+          "source_provenance": {
+            "repository": "confighub/cub-scout",
+            "capture_source_commit": "fd4963872b9875bed01b9c4a2fdbab5c6db2e635",
+            "capture_script_sha256": "e5cfd045e485cf67a87af97b0c823ebcf365d8ae9d6189368e05d166fb0b60dc",
+            "product_revision": "eec6d442279955af0f1fc39c637252ac8eb0f081",
+            "product_binary_sha256": "7d20aa7bb33b477dfd88afb2f53b1a6f773a5a4ffbcff7f81d8dcbfeb5a12bab",
+            "oci_layout_helper_revision": "68d4f4e03aa3fcb0a1af7df1987d87c26a707b62",
+            "oci_layout_helper_sha256": "cb863138c8fb3c540ff55df38fee0a2121f1430e93cbcb472867ef8e741dd83a",
+            "bundle_ref": "oci://example.invalid/config@sha256:db4858ffbe9b6d60ce30dfec5fab0c45a818f5c6045e03db2ff0a5449114a628",
+            "document": "evals/rul04-image-identity/fixtures/",
+            "capture_started_at": "2026-10-01T03:15:20Z",
+            "capture_ended_at": "2026-10-01T03:15:53Z",
+            "atomic_snapshot": false,
+            "raw_files_sha256": {
+              "capture-scope.json": "c64b226696b1b4962ee67f9ac16fb71b60d58b3837c90532c8a09ded2daef6a1",
+              "desired-statefulset.yaml": "f1b06b67456667f073a01e602ecd5ba35dc70eb9ce76b2d7023bca025a4e2541",
+              "pods.json": "b6cbaae55242a2074e7b2ea9db2ed82dd641c3e1e6fbf1552cb40e2d9f4ae9ab",
+              "statefulset.json": "6e51fce81ff19b1bd548b312e510d01e098dfab7cd9c962fdf1cf273d1aa32ab"
+            },
+            "limits": "Two sequential namespaced Kubernetes API responses plus authored desired YAML and factual capture scope; no controller object or applied-source receipt. The Ready Pod has a real imageID, while authored intent is tag-only. Equal raw evidence is prepared; no model run or paid admission."
+          },
+          "benchmark_admission": "Raw capture and strict correctness contract prepared; not run. Full benchmark remains non-executable and this manifest does not authorize paid runs."
         }
       ]
     }

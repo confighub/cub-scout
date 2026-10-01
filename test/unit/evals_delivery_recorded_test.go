@@ -417,13 +417,14 @@ func TestDeliveryCaseMappingsKeepBenchmarkUnexecutable(t *testing.T) {
 				Status       string `json:"status"`
 				ExistingCase string `json:"existing_case"`
 				Provenance   struct {
-					Projection       string            `json:"projection_sha256"`
-					Binding          string            `json:"raw_capture_binding_sha256"`
-					RawFiles         map[string]string `json:"raw_files_sha256"`
-					AppliedManifests map[string]string `json:"applied_manifest_sha256"`
-					SourceRevision   string            `json:"source_revision"`
-					AppliedRevision  string            `json:"applied_revision"`
-					AtomicSnapshot   bool              `json:"atomic_snapshot"`
+					Projection          string            `json:"projection_sha256"`
+					Binding             string            `json:"raw_capture_binding_sha256"`
+					RawFiles            map[string]string `json:"raw_files_sha256"`
+					AppliedManifests    map[string]string `json:"applied_manifest_sha256"`
+					SourceRevision      string            `json:"source_revision"`
+					CaptureSourceCommit string            `json:"capture_source_commit"`
+					AppliedRevision     string            `json:"applied_revision"`
+					AtomicSnapshot      bool              `json:"atomic_snapshot"`
 				} `json:"source_provenance"`
 			} `json:"cases"`
 		} `json:"groups"`
@@ -464,10 +465,17 @@ func TestDeliveryCaseMappingsKeepBenchmarkUnexecutable(t *testing.T) {
 				hlt02Provenance.SourceRevision = c.Provenance.SourceRevision
 				hlt02Provenance.AppliedRevision = c.Provenance.AppliedRevision
 				hlt02Provenance.AtomicSnapshot = c.Provenance.AtomicSnapshot
+			} else if c.ID == "RUL-04" {
+				found[c.ID] = c.Status == "raw_recording_prepared_not_run" && c.ExistingCase == "evals/rul04-image-identity" && !c.Provenance.AtomicSnapshot && len(c.Provenance.RawFiles) == len(rul04Files) && c.Provenance.CaptureSourceCommit == "fd4963872b9875bed01b9c4a2fdbab5c6db2e635"
+				for name, want := range rul04Files {
+					if c.Provenance.RawFiles[name] != want {
+						t.Fatalf("RUL-04 mapping hash mismatch: %s got=%s want=%s", name, c.Provenance.RawFiles[name], want)
+					}
+				}
 			}
 		}
 	}
-	if m.Status != "frozen_design_not_executable" || m.Execution.Paid || !found["DEL-01"] || !found["DEL-02"] || !found["HLT-02"] || !found["INV-04"] || counts["planned"] != 8 || counts["existing_refreshed_fixture"] != 5 || counts["recorded_snapshot_binding_prepared_not_run"] != 2 || counts["recorded_projection_prepared_not_run"] != 7 || counts["raw_recording_prepared_not_run"] != 2 {
+	if m.Status != "frozen_design_not_executable" || m.Execution.Paid || !found["DEL-01"] || !found["DEL-02"] || !found["HLT-02"] || !found["INV-04"] || !found["RUL-04"] || counts["planned"] != 7 || counts["existing_refreshed_fixture"] != 5 || counts["recorded_snapshot_binding_prepared_not_run"] != 2 || counts["recorded_projection_prepared_not_run"] != 7 || counts["raw_recording_prepared_not_run"] != 3 {
 		t.Fatalf("case preparation changed benchmark gates or readiness: status=%q paid=%v mappings=%v counts=%v", m.Status, m.Execution.Paid, found, counts)
 	}
 	if hlt02Provenance.SourceRevision != "sha1:7732dde28be8cf8c42c096d94efbd8ce4a9d0a19" || hlt02Provenance.AppliedRevision != hlt02Provenance.SourceRevision || hlt02Provenance.AtomicSnapshot {

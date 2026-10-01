@@ -1,0 +1,129 @@
+{
+  "capture": {
+    "atomicSnapshot": false,
+    "bundleRef": "oci://example.invalid/config@sha256:db4858ffbe9b6d60ce30dfec5fab0c45a818f5c6045e03db2ff0a5449114a628",
+    "captureScriptSha256": "e5cfd045e485cf67a87af97b0c823ebcf365d8ae9d6189368e05d166fb0b60dc",
+    "cleanupVerified": true,
+    "clusterName": "scout-rul04-20261001031520-ed534841fe",
+    "endedAt": "2026-10-01T03:15:53Z",
+    "errors": [],
+    "kindVersion": "v0.31.0",
+    "layoutHelperSha256": "cb863138c8fb3c540ff55df38fee0a2121f1430e93cbcb472867ef8e741dd83a",
+    "layoutHelperSourceRevision": "68d4f4e03aa3fcb0a1af7df1987d87c26a707b62",
+    "limitations": [
+      "no Argo/Flux controller or applied-source proof",
+      "OCI ref pins authored configuration bytes only",
+      "tag-only authored image cannot be matched to immutable intended digest from runtime imageID alone",
+      "two sequential namespace-scoped read-only API responses; not atomic or cluster-complete"
+    ],
+    "nodeImage": "kindest/node:v1.35.0@sha256:4613778f3cfcd10e615029370f5786704559103cf27bef934597ba562b269661",
+    "observations": [
+      {
+        "elapsedSeconds": 0.005301332799717784,
+        "endedAt": "2026-10-01T03:15:52Z",
+        "httpStatus": 200,
+        "method": "GET",
+        "path": "/apis/apps/v1/namespaces/rul04-image-identity/statefulsets/rul04-pause",
+        "rawBytes": 3140,
+        "rawFile": "statefulset.json",
+        "rawSha256": "6e51fce81ff19b1bd548b312e510d01e098dfab7cd9c962fdf1cf273d1aa32ab",
+        "startedAt": "2026-10-01T03:15:52Z",
+        "validation": {
+          "generation": 1,
+          "intendedImage": "registry.k8s.io/pause:3.10",
+          "intendedImageHasImmutableDigest": false,
+          "observedGeneration": 1,
+          "readyReplicas": 1,
+          "resourceVersion": "467",
+          "uid": "c260243a-e06c-4529-b514-c977de02f5bc"
+        }
+      },
+      {
+        "elapsedSeconds": 0.0029747500084340572,
+        "endedAt": "2026-10-01T03:15:52Z",
+        "httpStatus": 200,
+        "method": "GET",
+        "path": "/api/v1/namespaces/rul04-image-identity/pods",
+        "rawBytes": 5257,
+        "rawFile": "pods.json",
+        "rawSha256": "b6cbaae55242a2074e7b2ea9db2ed82dd641c3e1e6fbf1552cb40e2d9f4ae9ab",
+        "startedAt": "2026-10-01T03:15:52Z",
+        "validation": {
+          "identityConclusion": "runtime imageID observed; tag-only authored intent does not identify an immutable intended digest",
+          "ownerUID": "c260243a-e06c-4529-b514-c977de02f5bc",
+          "phase": "Running",
+          "podName": "rul04-pause-0",
+          "podUID": "76d359cb-8889-479c-9de4-74597bf40424",
+          "ready": true,
+          "runtimeImage": "registry.k8s.io/pause:3.10",
+          "runtimeImageID": "sha256:afb61768ce381961ca0beff95337601f29dc70ff3ed14e5e4b3e5699057e6aa8"
+        }
+      },
+      {
+        "derivedScout": {
+          "argv": [
+            "/private/tmp/cub-scout-map-kind-eec6d44",
+            "release",
+            "check",
+            "--bundle",
+            "oci://example.invalid/config@sha256:db4858ffbe9b6d60ce30dfec5fab0c45a818f5c6045e03db2ff0a5449114a628",
+            "--oci-layout",
+            "/private/tmp/scout-rul04-live-evidence-20261001/oci-layout",
+            "--controller",
+            "StatefulSet/rul04-pause",
+            "--api-version",
+            "apps/v1",
+            "--controller-namespace",
+            "rul04-image-identity",
+            "--kube-context",
+            "rul04-observer",
+            "--check-running-image",
+            "--format",
+            "json"
+          ],
+          "exitCode": 0,
+          "isRawModelEvidence": false,
+          "stderrFile": "scout-derived-stderr.txt",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdoutFile": "scout-derived-output.json",
+          "stdoutSha256": "d80d22eea9b5624778eed81857510076edda82f22ca8b1807f0bb51c41c6738b",
+          "validation": {
+            "reason": "workload-ownership-unsupported",
+            "verdict": "unknown"
+          }
+        }
+      }
+    ],
+    "ociLayoutHelperSha256": "cb863138c8fb3c540ff55df38fee0a2121f1430e93cbcb472867ef8e741dd83a",
+    "ociLayoutPath": "/private/tmp/scout-rul04-live-evidence-20261001/oci-layout",
+    "ownedClusterMarkerSha256": "5197d1a4c089d7e2f61a24343856232a50e3c8e42691f13858428b0b123fa352",
+    "privateKubeconfigSha256": {
+      "before": {
+        "admin": "8d3e3e544d39d7fa2b62e510321af001d2257992ef17d743fbb288fa377cb04a",
+        "observer": "dabdb42c06d9e90cca34c43c1c66b6f3b637bb26538061e2f6c423bd37f57111"
+      },
+      "beforeCleanup": {
+        "admin": "8d3e3e544d39d7fa2b62e510321af001d2257992ef17d743fbb288fa377cb04a",
+        "observer": "dabdb42c06d9e90cca34c43c1c66b6f3b637bb26538061e2f6c423bd37f57111"
+      }
+    },
+    "schema": "rul04-image-identity-capture.v1",
+    "scoutBinarySha256": "7d20aa7bb33b477dfd88afb2f53b1a6f773a5a4ffbcff7f81d8dcbfeb5a12bab",
+    "scoutSourceRevision": "eec6d442279955af0f1fc39c637252ac8eb0f081",
+    "sharedKubeconfigSha256": {
+      "after": "910415d445ded06e3bd337c51cbabe8ce385684b1e35c1cb7ce57776d0ba2ad1",
+      "before": "910415d445ded06e3bd337c51cbabe8ce385684b1e35c1cb7ce57776d0ba2ad1"
+    },
+    "sourceRevision": "fd4963872b9875bed01b9c4a2fdbab5c6db2e635",
+    "startedAt": "2026-10-01T03:15:20Z"
+  },
+  "classification": "raw evidence preparation; no model execution or savings claim",
+  "rawEvidenceMeaning": "runtime imageID is observed; authored intended image is tag-only; source application is unproved",
+  "scoutDerivedMeaning": "configuration and workload stages pass; controller and running-image stages inconclusive; not staged model evidence",
+  "wrapper": {
+    "endedAt": "2026-10-01T03:15:53Z",
+    "exit": 0,
+    "provenanceExists": true,
+    "seconds": 33.780684292083606
+  }
+}

@@ -1,5 +1,21 @@
 # Delivery plan to cub scout 3.0
 
+## Latest execution checkpoint — trace admission and image identity
+
+#705 merged as `13928ca` after independent review and required CI. Its offline
+audit rejects incomplete trace/cost evidence; it does not repair external model
+runtime enforcement or supply missing descendant usage. Paid runs remain stopped,
+with reported estimated spend unchanged at $4.38666035 and the latest diagnostic's
+complete spend unresolved.
+
+The [RUL-04 capture](../evals/reports/2026-10-01-rul04-image-identity.json) completed
+in 33.78 seconds on an owned cluster. Exact raw StatefulSet/Pod responses preserve
+a Ready Pod's runtime digest and UID linkage, while tag-only authored intent
+leaves immutable intended identity unknown. Cleanup and config integrity passed.
+No applied-source or savings claim follows. Case preparation remains distinct
+from admission of the fixed24 suite; follow #645 for the current packet.
+
+
 ## Latest execution checkpoint — 2026-10-01
 
 #701 merged as `59ef366`, with required CI and same-observer live proof for
