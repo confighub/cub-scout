@@ -1,49 +1,44 @@
-# PRE-02 node-selector source capture
+# PRE-02 Kubernetes selector prerequisite
 
-This is a source-only helper for the frozen PRE-02 prerequisite question. The
-authored fixture creates one Pod with an explicit `nodeSelector`,
-`imagePullPolicy: Never`, and a cached pause image on a newly owned, pinned kind
-cluster. It waits within the execution deadline for the Pod to become
-Unschedulable with a UID-correlated selector-mismatch event, then retains
-sequential raw Pod, NodeList, and UID-filtered EventList responses before adding
-one label to the owned node. It captures the same three resources after the
-scheduler binds the same Pod UID to that node.
+This case stages the first independently reviewed PRE-02 capture from
+2026-10-01. It is a prepared, unrun benchmark case; the frozen comparison
+remains non-executable and paid evaluation is not authorized. Both arms get
+the same six unmodified API response bodies and the same factual capture-scope
+index through the fixture-owned scaffold.
 
-The before phase must show no matching node, `PodScheduled=False` with reason
-`Unschedulable`, and a UID-correlated `FailedScheduling` event naming a selector
-mismatch. The after phase must show the same Pod UID and authored workload spec,
-with only the legitimate scheduler-written `spec.nodeName` binding added, the
-one added node label, `PodScheduled=True`, and a matching `nodeName`. Historical failure
-Events are retained but do not override current scheduling evidence. This does
-not test node readiness, workload health, cloud APIs, credentials, or capacity.
+The capture used one fresh invocation-owned local kind cluster and two serial
+read phases around a single node-label operation. The observations are not an
+atomic snapshot. The before Pod and UID-correlated scheduler EventList record
+an unschedulable state; the after Pod is scheduled to the labeled node. The
+after EventList retains the earlier FailedScheduling event as well as a
+Scheduled event. The Pod's Ready condition in the after response is false, so
+scheduling must not be described as application readiness or health.
 
-The observer can only GET the authored Pod, list Nodes, and list Events in the
-fixture namespace. Setup and the one node-label change use a private admin
-kubeconfig and the explicit context of the generated cluster. Cleanup is
-limited to a cluster name and owner marker created by this invocation. Shared
-kubeconfig bytes are hashed before and after but never used for cluster access.
-The capture is bounded to 120 seconds of setup/observation, 30 seconds of
-cleanup, 2 MiB per command stream and API body, and a 150-second overall
-ceiling. Credentials and raw kubeconfigs are never written to the output.
+The capture did not access a cloud API or read a Secret, and it does not
+establish a capacity explanation. It records one local fixture lifecycle, not
+a general topology result or Kubara replay. `fixtures/capture-scope.json`
+contains the capture source revision and helper hash, timings, context type,
+request paths/statuses, raw-file hashes, and the bounded pre-observation poll
+(its body hashes match the retained before Pod/EventList bodies; poll bodies
+are not separately staged). It excludes setup RBAC, admin and
+observer kubeconfigs, credentials, raw provenance, and derived answer
+conclusions. The local primary evidence archive is
+`evals/results/pre02-node-selector-20261001`; the committed case fixtures are
+the staged review package.
 
-This authored selector experiment is inspired by the topology prerequisite
-lesson; it is not a replay of Kubara live evidence. No raw capture has been run
-or reviewed. PRE-02 remains planned until a successful source-reviewed capture
-and separate equal-arm packaging/strict grading are complete. No benchmark
-mapping or paid evaluation admission is implied.
+The answer prompt defines the output enums and canonical key order. The strict
+grader accepts exactly the evidence-backed JSON object, with string values,
+no whitespace, duplicate or extra properties, or surrounding prose. It
+requires both Pod UID observations, scheduling facts, selector evidence,
+node identity, historical-event treatment, and explicit scope limits.
 
-Run pure guards offline:
-
-```sh
-PYTHONDONTWRITEBYTECODE=1 python3 -m unittest evals/pre02-node-selector/test_capture.py -v
-```
-
-Actual capture requires lead review and an explicit `--execute` invocation with
-a new output directory:
+Run source and packaging guards offline:
 
 ```sh
-python3 evals/pre02-node-selector/capture.py \
-  --execute \
-  --shared-kubeconfig /absolute/path/to/existing-kubeconfig \
-  --output-dir /tmp/new-pre02-capture
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/pre02-node-selector -v
+KUBECONFIG=/tmp/scout-offline-validation.kubeconfig go test ./test/unit -run 'TestPRE02|TestDeliveryCaseMappingsKeepBenchmarkUnexecutable' -count=1
 ```
+
+The Python lifecycle test is mocked. No test creates a cluster, uses a network,
+or invokes a model. These checks do not establish harness tool parity, admit
+the case to the paid benchmark, or measure savings.

@@ -1,0 +1,4 @@
+type: regex
+pattern: '^\{"prerequisite":"NODE_SELECTOR_LABEL","before_pod_uid":"b5fa45bb-3aa4-4ec2-aa97-c329ea564317","before_scheduling":"FALSE_UNSCHEDULABLE","selector":"scout-pre02-zone=fixture-zone","before_matching_nodes":"0","before_event":"UID_CORRELATED_SELECTOR_MISMATCH","after_pod_uid":"b5fa45bb-3aa4-4ec2-aa97-c329ea564317","after_scheduling":"TRUE","after_node":"scout-pre02-20261001060250-3cb9509cd3-control-plane","after_selector_label":"scout-pre02-zone=fixture-zone","historical_failed_scheduling_event":"RETAINED_NOT_CURRENT_FAILURE","health_scope":"SCHEDULING_ONLY_NO_HEALTH_CONCLUSION","cloud_api":"NOT_OBSERVED","secret":"NOT_OBSERVED","capacity":"NOT_INFERRED","evidence":"capture-scope\.json\+before-pod\.json\+before-nodes\.json\+before-events\.json\+after-pod\.json\+after-nodes\.json\+after-events\.json"\}$'
+flags: s
+target: last_message

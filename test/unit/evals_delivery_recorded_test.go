@@ -455,6 +455,271 @@ func TestRUL03RecordedCaseContractAndScaffold(t *testing.T) {
 	checkRUL03ContextScaffold(t, root)
 }
 
+func TestPRE02RecordedCaseContractAndScaffold(t *testing.T) {
+	root := filepath.Join("..", "..", "evals", "pre02-node-selector")
+	archive := filepath.Join("..", "..", "evals", "results", "pre02-node-selector-20261001")
+	wantFiles := map[string]string{
+		"before-pod.json":    "dec5c8fae0f71860f1309aee1be0455b355b6ea3abbb921360ebd306343adefd",
+		"before-nodes.json":  "9808755e4df180b936aa2b68db5ce84aef3bca84b61cc9b2db8a64b007e7374a",
+		"before-events.json": "78b187ef42464644a815b8676bf8743fc7eb491f163f35b334d73bccf531f50e",
+		"after-pod.json":     "f264204dc296d06590bc357691a1b95db08222f4ac68b3c38935d6ef200832c3",
+		"after-nodes.json":   "263097f6d314cac3a7d673b4db7a38f36c437bd2fa1a2d402bb2c0a0dd807ee9",
+		"after-events.json":  "4acce317a3a539b80d4fbb7eb7977dc313a888952caa8b64f2096243d40ee3ae",
+	}
+	fixtureDir := filepath.Join(root, "fixtures")
+	for name, want := range wantFiles {
+		body, err := os.ReadFile(filepath.Join(fixtureDir, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		digest := sha256.Sum256(body)
+		if hex.EncodeToString(digest[:]) != want {
+			t.Fatalf("PRE-02 raw body hash mismatch for %s", name)
+		}
+		archived, err := os.ReadFile(filepath.Join(archive, name))
+		if err != nil || !bytes.Equal(body, archived) {
+			t.Fatalf("PRE-02 archive differs from fixture for %s: %v", name, err)
+		}
+	}
+	scopeBytes, err := os.ReadFile(filepath.Join(fixtureDir, "capture-scope.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	scopeHash := sha256.Sum256(scopeBytes)
+	if hex.EncodeToString(scopeHash[:]) != "d103f77e8b0a54ad563b5754d129a5cbdc0b789f35b9e0e5374d4c35fb13299f" {
+		t.Fatal("PRE-02 scope metadata hash mismatch")
+	}
+	var scope struct {
+		Schema  string `json:"schema"`
+		Capture struct {
+			SourceRevision string            `json:"sourceRevision"`
+			RawFiles       map[string]string `json:"rawFilesSha256"`
+			Atomic         bool              `json:"atomicSnapshot"`
+		} `json:"capture"`
+	}
+	if err := json.Unmarshal(scopeBytes, &scope); err != nil {
+		t.Fatal(err)
+	}
+	if scope.Schema != "pre02-node-selector-capture-scope.v1" || scope.Capture.SourceRevision != "4b113710948882eda501e14aacca2d5cec1168ae" || scope.Capture.Atomic || len(scope.Capture.RawFiles) != len(wantFiles) {
+		t.Fatalf("PRE-02 capture scope/schema mismatch: %+v", scope)
+	}
+	for name, want := range wantFiles {
+		if scope.Capture.RawFiles[name] != want {
+			t.Fatalf("PRE-02 capture-scope raw hash mismatch for %s", name)
+		}
+	}
+
+	caseBytes, err := os.ReadFile(filepath.Join(root, "case.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var schema struct {
+		SchemaVersion string `yaml:"schema_version"`
+		Name          string `yaml:"name"`
+		Context       struct {
+			Scaffold string `yaml:"scaffold_script"`
+		} `yaml:"context"`
+	}
+	decoder := yaml.NewDecoder(bytes.NewReader(caseBytes))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(&schema); err != nil {
+		t.Fatalf("decode PRE-02 case schema: %v", err)
+	}
+	var extra any
+	if err := decoder.Decode(&extra); err != io.EOF {
+		t.Fatalf("case.yaml must contain exactly one schema document: %v", err)
+	}
+	if schema.SchemaVersion != "1.1" || schema.Name != "pre02-node-selector" || schema.Context.Scaffold != "scaffold.sh" {
+		t.Fatalf("PRE-02 case schema/scaffold mismatch: %+v", schema)
+	}
+	promptBytes, err := os.ReadFile(filepath.Join(root, "prompt.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	prompt := string(promptBytes)
+	if !strings.HasPrefix(prompt, "---\n") {
+		t.Fatal("PRE-02 prompt missing execution frontmatter")
+	}
+	frontmatterEnd := strings.Index(prompt[4:], "\n---\n")
+	if frontmatterEnd < 0 {
+		t.Fatal("PRE-02 prompt frontmatter is unterminated")
+	}
+	var execution struct {
+		Name            string   `yaml:"name"`
+		Description     string   `yaml:"description"`
+		ExpectedOutcome string   `yaml:"expected_outcome"`
+		Tags            []string `yaml:"tags"`
+		MaxTurns        int      `yaml:"max_turns"`
+		TimeoutSeconds  int      `yaml:"timeout_seconds"`
+		AllowedTools    []string `yaml:"allowed_tools"`
+	}
+	execDecoder := yaml.NewDecoder(strings.NewReader(prompt[4 : 4+frontmatterEnd]))
+	execDecoder.KnownFields(true)
+	if err := execDecoder.Decode(&execution); err != nil {
+		t.Fatalf("decode PRE-02 prompt frontmatter: %v", err)
+	}
+	if execution.Name != schema.Name || execution.Description == "" || execution.ExpectedOutcome == "" || len(execution.Tags) == 0 || execution.MaxTurns != 6 || execution.TimeoutSeconds != 120 || len(execution.AllowedTools) != 2 || execution.AllowedTools[0] != "Read" || execution.AllowedTools[1] != "Grep" {
+		t.Fatalf("PRE-02 prompt frontmatter mismatch: %+v", execution)
+	}
+	promptBody := prompt[4+frontmatterEnd+5:]
+	for _, leak := range []string{"b5fa45bb-3aa4-4ec2-aa97-c329ea564317", "scout-pre02-20261001060250-3cb9509cd3-control-plane", "scout-pre02-zone=fixture-zone"} {
+		if strings.Contains(promptBody, leak) {
+			t.Fatalf("PRE-02 prompt leaks expected answer token %q", leak)
+		}
+	}
+
+	graderBytes, err := os.ReadFile(filepath.Join(root, "graders", "verified-answer.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var grader struct {
+		Type    string `yaml:"type"`
+		Pattern string `yaml:"pattern"`
+		Flags   string `yaml:"flags"`
+		Target  string `yaml:"target"`
+	}
+	graderDecoder := yaml.NewDecoder(bytes.NewReader(graderBytes))
+	graderDecoder.KnownFields(true)
+	if err := graderDecoder.Decode(&grader); err != nil {
+		t.Fatalf("decode PRE-02 strict grader: %v", err)
+	}
+	pattern, err := regexp.Compile(grader.Pattern)
+	if err != nil || grader.Type != "regex" || grader.Flags != "s" || grader.Target != "last_message" {
+		t.Fatalf("PRE-02 grader is invalid: %v %+v", err, grader)
+	}
+	type answer struct {
+		Prerequisite  string `json:"prerequisite"`
+		BeforeUID     string `json:"before_pod_uid"`
+		BeforeSched   string `json:"before_scheduling"`
+		Selector      string `json:"selector"`
+		BeforeMatches string `json:"before_matching_nodes"`
+		BeforeEvent   string `json:"before_event"`
+		AfterUID      string `json:"after_pod_uid"`
+		AfterSched    string `json:"after_scheduling"`
+		AfterNode     string `json:"after_node"`
+		AfterLabel    string `json:"after_selector_label"`
+		StaleEvent    string `json:"historical_failed_scheduling_event"`
+		HealthScope   string `json:"health_scope"`
+		CloudAPI      string `json:"cloud_api"`
+		Secret        string `json:"secret"`
+		Capacity      string `json:"capacity"`
+		Evidence      string `json:"evidence"`
+	}
+	wantAnswer := answer{"NODE_SELECTOR_LABEL", "b5fa45bb-3aa4-4ec2-aa97-c329ea564317", "FALSE_UNSCHEDULABLE", "scout-pre02-zone=fixture-zone", "0", "UID_CORRELATED_SELECTOR_MISMATCH", "b5fa45bb-3aa4-4ec2-aa97-c329ea564317", "TRUE", "scout-pre02-20261001060250-3cb9509cd3-control-plane", "scout-pre02-zone=fixture-zone", "RETAINED_NOT_CURRENT_FAILURE", "SCHEDULING_ONLY_NO_HEALTH_CONCLUSION", "NOT_OBSERVED", "NOT_OBSERVED", "NOT_INFERRED", "capture-scope.json+before-pod.json+before-nodes.json+before-events.json+after-pod.json+after-nodes.json+after-events.json"}
+	good, err := json.Marshal(wantAnswer)
+	if err != nil || !pattern.Match(good) {
+		t.Fatalf("PRE-02 strict grader rejected the exact answer: %v %s", err, good)
+	}
+	wrong := wantAnswer
+	wrong.BeforeUID = "different"
+	wrongJSON, _ := json.Marshal(wrong)
+	invalid := [][]byte{wrongJSON,
+		bytes.Replace(good, []byte(`"prerequisite":"NODE_SELECTOR_LABEL"`), []byte(`"prerequisite":"UNKNOWN"`), 1),
+		bytes.Replace(good, []byte(`"before_matching_nodes":"0"`), []byte(`"before_matching_nodes":0`), 1),
+		append(bytes.TrimSuffix(good, []byte("}")), []byte(`,"extra":"x"}`)...),
+		append(bytes.TrimSuffix(good, []byte("}")), []byte(`,"prerequisite":"NODE_SELECTOR_LABEL"}`)...),
+		append(bytes.TrimSuffix(good, []byte("}")), []byte(`,"cloud_api":NaN}`)...),
+		append([]byte("prose "), good...), append(good, []byte("\n")...),
+		bytes.Replace(good, []byte(`,"before_pod_uid"`), []byte(`, "before_pod_uid"`), 1),
+	}
+	for i, bad := range invalid {
+		if pattern.Match(bad) {
+			t.Fatalf("PRE-02 strict grader accepted invalid answer %d: %s", i, bad)
+		}
+	}
+	checkPRE02Scaffold(t, root, wantFiles)
+
+	reportBytes, err := os.ReadFile(filepath.Join("..", "..", "evals", "reports", "2026-10-01-pre02-node-selector.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var report struct {
+		Classification string `json:"classification"`
+		Capture        struct {
+			SourceRevision string `json:"sourceRevision"`
+			Wrapper        struct {
+				Exit int `json:"exitCode"`
+			} `json:"wrapper"`
+			RawFiles map[string]string `json:"rawFilesSha256"`
+		} `json:"capture"`
+		Limits struct {
+			ModelRun       bool `json:"modelRun"`
+			BenchmarkRun   bool `json:"benchmarkRun"`
+			PaidAuthorized bool `json:"paidRunAuthorized"`
+		} `json:"limits"`
+	}
+	if err := json.Unmarshal(reportBytes, &report); err != nil {
+		t.Fatal(err)
+	}
+	if report.Classification != "independently reviewed raw recording; prepared, not run as a benchmark" || report.Capture.SourceRevision != "4b113710948882eda501e14aacca2d5cec1168ae" || report.Capture.Wrapper.Exit != 0 || report.Limits.ModelRun || report.Limits.BenchmarkRun || report.Limits.PaidAuthorized {
+		t.Fatalf("PRE-02 replay report overstates capture/admission: %+v", report)
+	}
+}
+
+func checkPRE02Scaffold(t *testing.T, root string, wantFiles map[string]string) {
+	t.Helper()
+	files := make(map[string]string, len(wantFiles)+1)
+	for name, hash := range wantFiles {
+		files[name] = hash
+	}
+	scope := filepath.Join(root, "fixtures", "capture-scope.json")
+	scopeBytes, err := os.ReadFile(scope)
+	if err != nil {
+		t.Fatal(err)
+	}
+	scopeHash := sha256.Sum256(scopeBytes)
+	files["capture-scope.json"] = hex.EncodeToString(scopeHash[:])
+	scaffold, err := filepath.Abs(filepath.Join(root, "scaffold.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	outputs := make([]map[string][]byte, 2)
+	for run := range outputs {
+		workspace := t.TempDir()
+		cmd := exec.Command("bash", scaffold)
+		cmd.Dir = workspace
+		cmd.Env = offlineKubeconfigEnvironment()
+		if output, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("PRE-02 scaffold run %d: %v: %s", run, err, output)
+		}
+		entries, err := os.ReadDir(filepath.Join(workspace, "cluster"))
+		if err != nil || len(entries) != len(files) {
+			t.Fatalf("PRE-02 scaffold inventory: count=%d err=%v", len(entries), err)
+		}
+		outputs[run] = make(map[string][]byte, len(files))
+		for _, entry := range entries {
+			if entry.IsDir() {
+				t.Fatalf("unexpected PRE-02 staged directory %s", entry.Name())
+			}
+			got, err := os.ReadFile(filepath.Join(workspace, "cluster", entry.Name()))
+			if err != nil {
+				t.Fatal(err)
+			}
+			digest := sha256.Sum256(got)
+			if hex.EncodeToString(digest[:]) != files[entry.Name()] {
+				t.Fatalf("PRE-02 staged hash mismatch for %s", entry.Name())
+			}
+			outputs[run][entry.Name()] = got
+		}
+	}
+	for name, first := range outputs[0] {
+		if !bytes.Equal(first, outputs[1][name]) {
+			t.Fatalf("PRE-02 arms received unequal bytes for %s", name)
+		}
+	}
+}
+
+func offlineKubeconfigEnvironment() []string {
+	env := os.Environ()
+	filtered := env[:0]
+	for _, item := range env {
+		if !strings.HasPrefix(item, "KUBECONFIG=") {
+			filtered = append(filtered, item)
+		}
+	}
+	return append(filtered, "KUBECONFIG=/tmp/scout-offline-validation.kubeconfig")
+}
+
 func checkRUL03ContextScaffold(t *testing.T, root string) {
 	t.Helper()
 	scaffold, err := filepath.Abs(filepath.Join(root, "scaffold.sh"))
@@ -601,6 +866,7 @@ func TestDeliveryCaseMappingsKeepBenchmarkUnexecutable(t *testing.T) {
 					Projection          string            `json:"projection_sha256"`
 					Binding             string            `json:"raw_capture_binding_sha256"`
 					RawFiles            map[string]string `json:"raw_files_sha256"`
+					CaptureScopeSha256  string            `json:"capture_scope_sha256"`
 					AppliedManifests    map[string]string `json:"applied_manifest_sha256"`
 					SourceRevision      string            `json:"source_revision"`
 					CaptureSourceCommit string            `json:"capture_source_commit"`
@@ -668,10 +934,25 @@ func TestDeliveryCaseMappingsKeepBenchmarkUnexecutable(t *testing.T) {
 				}
 			} else if c.ID == "PRE-01" {
 				found[c.ID] = c.Status == "raw_recording_prepared_not_run" && c.ExistingCase == "evals/pre01-crd" && !c.Provenance.AtomicSnapshot && len(c.Provenance.RawFiles) == 15
+			} else if c.ID == "PRE-02" {
+				pre02Files := map[string]string{
+					"before-pod.json":    "dec5c8fae0f71860f1309aee1be0455b355b6ea3abbb921360ebd306343adefd",
+					"before-nodes.json":  "9808755e4df180b936aa2b68db5ce84aef3bca84b61cc9b2db8a64b007e7374a",
+					"before-events.json": "78b187ef42464644a815b8676bf8743fc7eb491f163f35b334d73bccf531f50e",
+					"after-pod.json":     "f264204dc296d06590bc357691a1b95db08222f4ac68b3c38935d6ef200832c3",
+					"after-nodes.json":   "263097f6d314cac3a7d673b4db7a38f36c437bd2fa1a2d402bb2c0a0dd807ee9",
+					"after-events.json":  "4acce317a3a539b80d4fbb7eb7977dc313a888952caa8b64f2096243d40ee3ae",
+				}
+				found[c.ID] = c.Status == "raw_recording_prepared_not_run" && c.ExistingCase == "evals/pre02-node-selector" && !c.Provenance.AtomicSnapshot && len(c.Provenance.RawFiles) == len(pre02Files) && c.Provenance.CaptureSourceCommit == "4b113710948882eda501e14aacca2d5cec1168ae" && c.Provenance.CaptureScopeSha256 == "d103f77e8b0a54ad563b5754d129a5cbdc0b789f35b9e0e5374d4c35fb13299f"
+				for name, want := range pre02Files {
+					if c.Provenance.RawFiles[name] != want {
+						t.Fatalf("PRE-02 mapping hash mismatch: %s got=%s want=%s", name, c.Provenance.RawFiles[name], want)
+					}
+				}
 			}
 		}
 	}
-	if m.Status != "frozen_design_not_executable" || m.Execution.Paid || !found["DEL-01"] || !found["DEL-02"] || !found["HLT-02"] || !found["INV-04"] || !found["RUL-04"] || !found["PRE-01"] || !found["RUL-03"] || counts["planned"] != 5 || counts["existing_refreshed_fixture"] != 5 || counts["recorded_snapshot_binding_prepared_not_run"] != 2 || counts["recorded_projection_prepared_not_run"] != 7 || counts["raw_recording_prepared_not_run"] != 5 {
+	if m.Status != "frozen_design_not_executable" || m.Execution.Paid || !found["DEL-01"] || !found["DEL-02"] || !found["HLT-02"] || !found["INV-04"] || !found["RUL-04"] || !found["PRE-01"] || !found["PRE-02"] || !found["RUL-03"] || counts["planned"] != 4 || counts["existing_refreshed_fixture"] != 5 || counts["recorded_snapshot_binding_prepared_not_run"] != 2 || counts["recorded_projection_prepared_not_run"] != 7 || counts["raw_recording_prepared_not_run"] != 6 {
 		t.Fatalf("case preparation changed benchmark gates or readiness: status=%q paid=%v mappings=%v counts=%v", m.Status, m.Execution.Paid, found, counts)
 	}
 	if hlt02Provenance.SourceRevision != "sha1:7732dde28be8cf8c42c096d94efbd8ce4a9d0a19" || hlt02Provenance.AppliedRevision != hlt02Provenance.SourceRevision || hlt02Provenance.AtomicSnapshot {

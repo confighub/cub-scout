@@ -495,12 +495,35 @@
         {
           "id": "PRE-02",
           "question": "Kubernetes topology and cloud prerequisite",
-          "status": "planned",
-          "existing_case": null,
+          "status": "raw_recording_prepared_not_run",
+          "existing_case": "evals/pre02-node-selector",
           "reference": "Identify the concrete missing cloud API, secret, or schedulable-node/topology prerequisite.",
           "controls": [
             "Do not generalize beyond observed prerequisites"
-          ]
+          ],
+          "source_provenance": {
+            "capture_source_commit": "4b113710948882eda501e14aacca2d5cec1168ae",
+            "capture_script_sha256": "ec4f7f8e9d2d2ca6257abc5029f2e01b33203794a5782c22ba13895bedd31230",
+            "capture_scope_sha256": "d103f77e8b0a54ad563b5754d129a5cbdc0b789f35b9e0e5374d4c35fb13299f",
+            "raw_files_sha256": {
+              "before-pod.json": "dec5c8fae0f71860f1309aee1be0455b355b6ea3abbb921360ebd306343adefd",
+              "before-nodes.json": "9808755e4df180b936aa2b68db5ce84aef3bca84b61cc9b2db8a64b007e7374a",
+              "before-events.json": "78b187ef42464644a815b8676bf8743fc7eb491f163f35b334d73bccf531f50e",
+              "after-pod.json": "f264204dc296d06590bc357691a1b95db08222f4ac68b3c38935d6ef200832c3",
+              "after-nodes.json": "263097f6d314cac3a7d673b4db7a38f36c437bd2fa1a2d402bb2c0a0dd807ee9",
+              "after-events.json": "4acce317a3a539b80d4fbb7eb7977dc313a888952caa8b64f2096243d40ee3ae"
+            },
+            "atomic_snapshot": false,
+            "capture_started_at": "2026-10-01T06:02:50Z",
+            "capture_ended_at": "2026-10-01T06:03:28Z",
+            "helper_elapsed_seconds": 38.45680758310482,
+            "wrapper_exit_code": 0,
+            "wrapper_elapsed_seconds": 38.57530829194002,
+            "cleanup_verified": true,
+            "shared_kubeconfig_unchanged": true,
+            "limitations": "One owned local kind lifecycle with sequential API reads. The capture is not a Kubara replay and does not establish cloud configuration, capacity, readiness, application health, or fleet-wide topology."
+          },
+          "benchmark_admission": "Raw capture and strict correctness contract prepared; not run. Full benchmark remains non-executable and this manifest does not authorize paid runs."
         },
         {
           "id": "PRE-03",
