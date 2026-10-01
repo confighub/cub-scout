@@ -981,7 +981,9 @@ exactly one match. Multiple matches produce an ambiguity error; Scout does not
 choose a conventional namespace. Check the selected Kubernetes context and
 Application namespace when evidence is unavailable. Partial read failures remain
 visible alongside the known chain. The external `--diff` path has a separate
-scope contract; its complete context binding remains open in #746.
+scope contract; its complete context binding remains open in #746. See the
+[diff operand and read-only contract](../proposals/trace-diff-read-contract.md)
+for the remaining provider and compatibility gates.
 
 ### Supported Sources
 
