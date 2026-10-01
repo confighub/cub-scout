@@ -81,6 +81,9 @@ jobs:
           /tmp/scout-pre01-ci/bin/python -m pip install -r evals/pre01-crd/requirements.txt
           PYTHONDONTWRITEBYTECODE=1 /tmp/scout-pre01-ci/bin/python -m unittest discover -s evals/pre01-crd -v
 
+      - name: Run offline RUL-03 capture and fixture-routing guards
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/rul03-context -v
+
       - name: Run unit tests
         run: go test ./... -v -covermode=atomic -coverprofile=coverage.out
 
