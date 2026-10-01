@@ -23,9 +23,8 @@ import (
 
 // traceSession pins the Kubernetes endpoint and context label for one rich
 // Trace invocation. Its clients are created lazily from the private config.
-// Kubeconfig file references inside credentials remain external references;
-// binding those credentials for subprocesses is handled by the later child
-// client stage.
+// Credential files are captured with the session; configured exec plugins
+// retain their own refresh behavior. Subprocess binding is a separate stage.
 type traceSession struct {
 	config  *rest.Config
 	context string
@@ -48,7 +47,11 @@ func newTraceSession(config *rest.Config, contextLabel string) (*traceSession, e
 	if config.Host == "" {
 		return nil, fmt.Errorf("trace session requires a Kubernetes API server address")
 	}
-	return &traceSession{config: copyTraceRESTConfig(config), context: contextLabel}, nil
+	captured := copyTraceRESTConfig(config)
+	if err := captureTraceCredentialFiles(captured); err != nil {
+		return nil, err
+	}
+	return &traceSession{config: captured, context: contextLabel}, nil
 }
 
 func newDefaultTraceSession() (*traceSession, error) {
