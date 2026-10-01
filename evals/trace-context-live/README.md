@@ -33,6 +33,16 @@ Deployment:
 | Fixed source, explicit allowed context | Exact target, selected context label, Argo identity, and synthetic source URL. |
 | Fixed source, explicit denied context | Normal trace must fail with the exact denied service-account identity; reverse trace must retain its forbidden error and target identity. Neither is accepted as Native or clean output. |
 
+Both sources use the legacy `--json` alias for reverse observations because the
+old source ignored `--format json` on that route. This proof tests context
+binding; the normal/reverse format contract has separate deterministic tests.
+
+The first attempt at `/tmp/scout-trace-context-proof-1` failed: the old-source
+CLI shim rejected its availability check, and the old reverse route returned
+ASCII with `--format json`. Its failed receipt is retained. The owned cluster,
+private credentials and source worktrees were removed, with shared kubeconfig
+unchanged. The corrected helper has 16 passing offline tests.
+
 The additional fixed-source reverse control requires the unlabelled Deployment
 to report `native` under the allowed context, while its denied read must retain
 the RBAC error and must not report `native`. This keeps “unmanaged” separate

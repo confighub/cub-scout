@@ -287,7 +287,9 @@ def create_observation_shims(shims: Path, kubectl_path: str) -> dict[str, Path]:
     """Block all external tools except one exact private-config Argo fallback GET."""
     kubectl = shlex.quote(kubectl_path)
     specs = {
-        "argocd": "#!/bin/sh\necho 'FATA[0000] server address unspecified' >&2\nexit 1\n",
+        "argocd": ("#!/bin/sh\nif [ \"$#\" -eq 2 ] && [ \"$1\" = version ] && [ \"$2\" = --client ]; then\n"
+                   "  echo 'owned proof CLI shim'; exit 0\nfi\n"
+                   "echo 'FATA[0000] server address unspecified' >&2\nexit 1\n"),
         "kubectl": ("#!/bin/sh\nif [ \"$#\" -eq 5 ] && [ \"$1\" = get ] && [ \"$2\" = applications.argoproj.io ] && "
                     "[ \"$3\" = --all-namespaces ] && [ \"$4\" = -o ] && [ \"$5\" = json ]; then\n"
                     f"  exec {kubectl} \"$@\" --context \"$SCOUT_TRACE_OLD_CONTEXT\"\nfi\n"
@@ -557,7 +559,7 @@ spec:
 
             for command, args_for_command in (
                 ("normal", ["trace", "deployment/" + DEPLOYMENT, "-n", NAMESPACE, "--format", "json"]),
-                ("reverse", ["trace", "deployment/" + DEPLOYMENT, "-n", NAMESPACE, "--reverse", "--format", "json"]),
+                ("reverse", ["trace", "deployment/" + DEPLOYMENT, "-n", NAMESPACE, "--reverse", "--json"]),
             ):
                 binary = str(binaries / "cub-scout-old")
                 record_observation(receipt, "old-ambient-" + command, command, [binary, *args_for_command], env=cli_env, deadline=deadline)

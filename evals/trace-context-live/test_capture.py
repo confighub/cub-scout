@@ -271,6 +271,18 @@ class IsolationHelperTests(unittest.TestCase):
             self.assertEqual(str(root / "private.kubeconfig"), env["KUBECONFIG"])
             self.assertEqual("x", env["TOKEN"])
 
+    def test_argo_shim_allows_only_availability_and_forces_owned_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            shims = Path(tmp)
+            paths = capture.create_observation_shims(shims, "/not/invoked/kubectl")
+            for args, expected in ((["version", "--client"], 0),
+                                   (["app", "get", "fixture", "-o", "json"], 1),
+                                   (["login", "remote.invalid"], 1)):
+                result = capture.run([str(paths["argocd"]), *args], env={"PATH": str(shims)}, timeout=2)
+                self.assertEqual(expected, result["exitCode"])
+                if expected:
+                    self.assertIn("server address unspecified", result["stderr"])
+
     def test_shims_quote_kubectl_and_deny_unowned_tools(self):
         with tempfile.TemporaryDirectory() as tmp:
             shims = Path(tmp) / "private shims"
