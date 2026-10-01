@@ -1,0 +1,88 @@
+{
+  "schema": "full24-source-preflight-proof.v1",
+  "date": "2026-10-01",
+  "sourceCommit": "9f36e545f156be2506a9e9e4694a1dc50cce6c13",
+  "preparerSha256": "d40ab9435678b4f0a8f1dff9f0cf3966ea6390438327672724443e74d6553cc6",
+  "pythonVersion": "3.14.4",
+  "pyyamlVersion": "6.0.3",
+  "commands": [
+    "PYTHONDONTWRITEBYTECODE=1 python3 evals/full24-pair-preflight/prepare.py --out /tmp/cub-scout-full24-preflight-reviewed-20261001",
+    "PYTHONDONTWRITEBYTECODE=1 python3 evals/full24-pair-preflight/prepare.py --out /tmp/cub-scout-full24-preflight-reviewed-20261001 --verify"
+  ],
+  "prepareExitCode": 0,
+  "verifyExitCode": 0,
+  "status": "prepared_source_only_not_run_not_admitted",
+  "caseCount": 24,
+  "groups": [
+    {
+      "caseCount": 4,
+      "id": "inventory",
+      "weight": 0.1666666667
+    },
+    {
+      "caseCount": 4,
+      "id": "attribution",
+      "weight": 0.1666666667
+    },
+    {
+      "caseCount": 4,
+      "id": "delivery_identity",
+      "weight": 0.1666666667
+    },
+    {
+      "caseCount": 4,
+      "id": "health",
+      "weight": 0.1666666667
+    },
+    {
+      "caseCount": 4,
+      "id": "prerequisites_graph",
+      "weight": 0.1666666667
+    },
+    {
+      "caseCount": 4,
+      "id": "reuse_limits",
+      "weight": 0.1666666667
+    }
+  ],
+  "frozenSemanticsSha256": "6fad0fdd92562792c0046bb8cf92f6c1a441035c57ad3d7a0733e801d3e47bae",
+  "scaleDataset": {
+    "captureCompleteness": "unknown",
+    "deploymentSha256": "822716e41eaf59674cec8b52913b2613c76932b578c45d54285f71747dd228b6",
+    "excluded": 2,
+    "parsed": 302,
+    "scope": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespacePrefix": "team-"
+    },
+    "selected": 300,
+    "sourceManifestSha256": "e139701bf9d894ca9dd16ddb302fe0e4f28f3122922030cd9cdda57e8eb3fa22"
+  },
+  "skillsCount": 35,
+  "rawReport": {
+    "path": "evals/results/full24-pair-preflight-20261001/preflight.json",
+    "sha256": "8af37b210bcec3abeded734b3ba5026483866d3335cbe44b9c0d288539e7f2c4",
+    "bytes": 136727
+  },
+  "authoredInputControls": {
+    "DEL-03": {
+      "id": "del03-missing-stale-identity-input-control.v1",
+      "status": "authored-control-not-run"
+    },
+    "DEL-04": {
+      "id": "del04-divergent-identity-mutable-tag-input-control.v1",
+      "status": "authored-control-not-run"
+    }
+  },
+  "offlineTests": {
+    "passed": 10,
+    "seconds": 4.635
+  },
+  "limits": [
+    "Source preparation and byte/contract validation only; no model, provider, container, client or cluster was invoked by these commands.",
+    "The two authored control inputs are prepared, not model-tested; originals and historical defaults remain unchanged.",
+    "Treatment MCP binding is inert/pending; actual grants, descendants, accounting and paid admission remain open.",
+    "Original-cluster completeness, benchmark quality, billing, credits and savings are not established."
+  ]
+}
