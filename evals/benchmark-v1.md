@@ -17,9 +17,9 @@ latest writer; exact-field counterexamples are tracked in [#649](https://github.
 None of these statuses means the controlled benchmark ran. DEL-01 and DEL-02 are pinned
 public-source projections, not raw cluster snapshots; both are prepared and
 unrun, and their evidence limits are recorded per case. The 24 cases currently
-comprise 5 refreshed fixtures, 2 recorded scale bindings prepared but not run, 6
+comprise 5 refreshed fixtures, 2 recorded scale bindings prepared but not run, 7
 recorded projections prepared but not run, one raw recording prepared but not
-run, and 10 planned cases. HLT-03 is a receipt-backed pair of public recorded
+run, and 9 planned cases. HLT-03 is a receipt-backed pair of public recorded
 files, not a full Kubernetes snapshot; its receipt-level workload pass and
 child Application Ingress residue are separate evidence facts. HLT-02 is the
 raw recording. Unmapped entries remain `planned`; the three live-only scale
@@ -46,7 +46,7 @@ cases remain a separate experiment.
 | Prerequisites / graph | PRE-01 | Missing CRD prerequisite | Planned |
 | Prerequisites / graph | PRE-02 | Kubernetes topology/cloud prerequisite | Planned |
 | Prerequisites / graph | PRE-03 | Argo/Crossplane child-chain failure | Planned |
-| Prerequisites / graph | PRE-04 | Hub/spoke intended placement with missing live observations | Planned |
+| Prerequisites / graph | PRE-04 | Hub/spoke intended placement with missing live observations | `kubara-hub-spoke-placement` — pinned desired/config projection prepared, not run; no live observations consumed |
 | Reuse / limits | RUL-01 | Repeated question using a dated snapshot | Planned; snapshot age remains visible |
 | Reuse / limits | RUL-02 | Cache invalidation after identity change | Planned; missing/stale identity stays unresolved |
 | Reuse / limits | RUL-03 | Denied cluster beside readable cluster, explicit context | Planned; context cannot change implicitly |
@@ -65,8 +65,10 @@ raw files. The historical live comparison and its results are unchanged.
 Actual harness MCP grants and ordinary-tool parity remain unverified. This
 file-tools-only setup is narrower than Experiment A's kubectl/Helm baseline.
 The legacy final-line graders can miss contradictory prose; an opt-in strict
-answer contract is separate pending work. Product capture time/completeness stay
-unknown. These mappings do not admit the cases to paid execution, make the full
+answer contract (`recorded-scale-answer-line.v1`, #697) is now explicitly selectable,
+with generated prompt/grader hashes and a passed no-model preflight recorded in
+the manifest. It preserves historical results; harness admission remains pending.
+Product capture time/completeness stay unknown. These mappings do not admit the cases to paid execution, make the full
 suite executable, or establish cost savings.
 
 ## Frozen comparison rules

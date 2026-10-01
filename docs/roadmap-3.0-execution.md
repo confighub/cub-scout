@@ -42,9 +42,9 @@ no cluster mutation, no new fleet membership model, and no renderer hidden in
 `import --git-path`. ConfigHub fact publication has a distinct, explicit write
 boundary even though observing the cluster remains read-only.
 
-## Execution checkpoint — 2026-10-01 (00:40 UTC)
+## Execution checkpoint — 2026-10-01 (01:15 UTC)
 
-Code baseline is `624c7cf`. #691–#694 are merged with review and required CI: current
+Code baseline is `a99d7d4`. #691–#694 are merged with review and required CI: current
 handover, pinned recorded scale preparation, opt-in recorded summary/owner
 views and explicit basic/views preflight contracts. Default JSON remains
 byte-identical. The four-view CLI/MCP binary preflight passed; product output
@@ -52,11 +52,16 @@ retains input hashes, scope, unknown capture time/completeness and the Native
 ownership limitation. Smaller responses alone do not establish agent savings.
 
 INV-01/02 now map to **prepared recorded bindings, not model runs**. The fixed
-24-case design comprises 10 planned, five refreshed, two prepared bindings,
-six prepared projections and one prepared raw recording. It remains
+24-case design comprises 9 planned, five refreshed, two prepared bindings,
+seven prepared projections and one prepared raw recording. It remains
 non-executable. Actual tool/grant parity and grading gates are pending;
 file-tools-only staging is narrower than the full standalone-tool comparison.
-The strict answer-contract packet is opt-in and preserves historical results.
+The strict answer-contract packet #697 is merged, opt-in and preserves historical
+results; its pinned four-view preflight passed without a model run. #698 prepares
+the Kubara desired-placement case with explicit unknown live observations,
+source hashes and strict answer encoding. Both passed review and required CI.
+Next is bounded INV-04 permission-denial capture preparation; lead reviews the
+script before running one owned cluster. No paid run is queued.
 
 Revision-correlation PR #695 is merged as `624c7cf` after review, local
 validation and required CI. Its digest equality must not imply execution or gate

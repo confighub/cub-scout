@@ -47,8 +47,17 @@
               "Recorded MCP reads the Deployment export; both arms receive all seven byte-identical raw exports.",
               "Capture time and completeness stay unknown in product output; no current cluster claim.",
               "Harness MCP permission admission and actual ordinary-tool parity remain unverified; file-tools-only staging is narrower than Experiment A.",
-              "Legacy final-line graders do not verify surrounding prose; the strict answer-contract packet is separate pending work."
-            ]
+              "Legacy final-line graders do not verify surrounding prose. The strict variant is explicit, prospective and prepared/unrun; historical prompts and results are unchanged."
+            ],
+            "strict_answer_variant": {
+              "contract": "recorded-scale-answer-line.v1",
+              "selection": "explicit --answer-contract recorded-scale-answer-line.v1; default remains legacy",
+              "preparation_commit": "0e1de42560c67e58f5ada9b600fd56791d26e704",
+              "prompt_sha256": "8b693cba673edf6e46cdff7d2e5b1633c6f3a3aa0c4d967a97965123202cbfe3",
+              "grader_sha256": "8da7a99ae4c7d5056216b43462887905edd43c186e77f42326ae4ecc0c387822",
+              "offline_preflight": "passed four-view pinned CLI/MCP preflight; no model run",
+              "proof": "https://github.com/confighub/cub-scout/pull/697"
+            }
           }
         },
         {
@@ -87,8 +96,17 @@
               "Recorded MCP reads the Deployment export; both arms receive all seven byte-identical raw exports.",
               "Capture time and completeness stay unknown in product output; no current cluster claim.",
               "Harness MCP permission admission and actual ordinary-tool parity remain unverified; file-tools-only staging is narrower than Experiment A.",
-              "Legacy final-line graders do not verify surrounding prose; the strict answer-contract packet is separate pending work."
-            ]
+              "Legacy final-line graders do not verify surrounding prose. The strict variant is explicit, prospective and prepared/unrun; historical prompts and results are unchanged."
+            ],
+            "strict_answer_variant": {
+              "contract": "recorded-scale-answer-line.v1",
+              "selection": "explicit --answer-contract recorded-scale-answer-line.v1; default remains legacy",
+              "preparation_commit": "0e1de42560c67e58f5ada9b600fd56791d26e704",
+              "prompt_sha256": "35d5aee14c7162efe7986597fcbec66fb133b6cf8ddf9a3b4b46dc90db6aa4ac",
+              "grader_sha256": "b4a10854890e0a653bb4323552e4441933a3e0d48042667634f59d11fad0a496",
+              "offline_preflight": "passed four-view pinned CLI/MCP preflight; no model run",
+              "proof": "https://github.com/confighub/cub-scout/pull/697"
+            }
           }
         },
         {
@@ -442,12 +460,23 @@
         {
           "id": "PRE-04",
           "question": "Kubara intended hub/spoke placement with missing live observations",
-          "status": "planned",
-          "existing_case": null,
+          "status": "recorded_projection_prepared_not_run",
+          "existing_case": "evals/kubara-hub-spoke-placement",
           "reference": "Keep intended target placement separate from observed live state.",
           "controls": [
             "Missing observations are unknown, not unmanaged or unhealthy"
-          ]
+          ],
+          "evidence_refresh": "2026-10-01",
+          "source_provenance": {
+            "repository": "confighub/kubara-confighub",
+            "revision": "cef6e7337884c6196c3b7c35cec587b8faf07447",
+            "fixture_files_sha256": {
+              "fixtures/desired-matrix.json": "e4e111557d4df457ac327c20baf09e5f2f8080cf698eb1767b12ba96962c0ee8",
+              "fixtures/config.yaml": "7260fe438066413c1bc44b5f674e4441e3ae9873146e860d4188ef518abc1211"
+            },
+            "limits": "Pinned authored source config and desired-matrix projection; zero parsed live observation cells and no live receipt consumed. Intended placement is not observed installation, health or ownership. Not a raw cluster capture or current-state proof."
+          },
+          "benchmark_admission": "Prepared and reviewed source-projection case; not run or admitted. Full suite remains non-executable pending remaining cases and equal-tool/protocol gates."
         }
       ]
     },
