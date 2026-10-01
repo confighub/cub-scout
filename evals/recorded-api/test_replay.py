@@ -10,6 +10,7 @@ import tempfile
 import threading
 import time
 import unittest
+from types import SimpleNamespace
 
 HERE = Path(__file__).resolve().parent
 SPEC = importlib.util.spec_from_file_location("recorded_api_replay", HERE / "replay.py")
@@ -286,6 +287,32 @@ class ReplayTests(unittest.TestCase):
             link.symlink_to(out, target_is_directory=True)
             with self.assertRaises(replay.ReplayError):
                 replay.create_output_dir(link)
+
+    def test_response_backpressure_cannot_exceed_absolute_deadline(self):
+        sender, receiver = socket.socketpair()
+        sender.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 1024)
+        handler = object.__new__(replay.ReplayRequestHandler)
+        handler.request = sender
+        handler.setup()
+        deadline = time.monotonic() + 0.1
+        handler.server = SimpleNamespace(stop_event=threading.Event(), deadline=deadline)
+        handler.reader = SimpleNamespace(deadline=deadline)
+        # This owned timer also releases a regressed blocking writer, so the
+        # negative test fails within a bound rather than leaking a thread.
+        release = threading.Timer(0.6, receiver.close)
+        release.start()
+        started = time.monotonic()
+        try:
+            with self.assertRaises(replay._RequestFailure):
+                handler._respond(200, b"x" * replay.MAX_BODY_BYTES)
+            self.assertLess(time.monotonic() - started, 0.4)
+            self.assertFalse(sender.getblocking())
+        finally:
+            receiver.close()
+            sender.close()
+            release.cancel()
+            release.join(timeout=1)
+            self.assertFalse(release.is_alive())
 
     def test_bad_phase_and_request_caps_reject(self):
         with self.assertRaisesRegex(replay.ReplayError, "explicitly absent or present"):

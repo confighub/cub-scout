@@ -372,6 +372,7 @@ class _DeadlineReader:
 class ReplayRequestHandler(socketserver.StreamRequestHandler):
     def setup(self):
         self.connection = self.request
+        self.connection.setblocking(False)
         self.rfile = self.wfile = None
 
     def finish(self):
