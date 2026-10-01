@@ -52,6 +52,12 @@ class _Opener:
 
 
 class CaptureTests(unittest.TestCase):
+    def test_kind_version_requires_exact_release_token(self):
+        capture.require_kind_version("kind v0.31.0 go1.25.5 darwin/arm64")
+        for version in ("kind v0.31.0-debug", "kind v0.31.0-alpha", "kind v0.31.01", "v0.31.0", "other v0.31.0"):
+            with self.subTest(version=version), self.assertRaises(capture.CaptureError):
+                capture.require_kind_version(version)
+
     def test_observer_config_contains_only_endpoint_ca_and_token(self):
         config = json.loads(capture.observer_kubeconfig("https://127.0.0.1:6443", "Q0E=", "observer-token"))
         self.assertEqual(config["current-context"], "inv04-observer")

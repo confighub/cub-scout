@@ -298,6 +298,12 @@ def _restore_capture_signals(state) -> None:
         signal.setitimer(signal.ITIMER_REAL, delay, prior_timer[1])
 
 
+def require_kind_version(version: str) -> None:
+    fields = version.split()
+    if len(fields) < 2 or fields[0] != "kind" or fields[1] != KIND_VERSION:
+        raise CaptureError("kind version does not match pinned capture requirement")
+
+
 def verified_node_repo_digest(image_inspect: bytes) -> str:
     try:
         inspected = json.loads(image_inspect)
@@ -400,8 +406,7 @@ def capture(shared_config: Path, binary: Path, output: Path) -> int:
     preflight_env = dict(os.environ)
     require_local_docker(preflight_env)
     kind = _call("kind", ["version"], 10).decode("utf-8", "replace").strip()
-    if KIND_VERSION not in kind:
-        raise CaptureError("kind version does not match pinned capture requirement")
+    require_kind_version(kind)
     node_inspect = _call("docker", ["image", "inspect", NODE_IMAGE], 15)
     node_repo_digest = verified_node_repo_digest(node_inspect)
     for name in ("kubectl", "kind", "docker"):
