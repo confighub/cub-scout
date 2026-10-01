@@ -3,14 +3,17 @@
 This is a source-only helper for the frozen PRE-02 prerequisite question. The
 authored fixture creates one Pod with an explicit `nodeSelector`,
 `imagePullPolicy: Never`, and a cached pause image on a newly owned, pinned kind
-cluster. It captures sequential raw Pod, NodeList, and UID-filtered EventList
-responses before adding one label to the owned node, then captures the same
-three resources after the scheduler binds the same Pod UID to that node.
+cluster. It waits within the execution deadline for the Pod to become
+Unschedulable with a UID-correlated selector-mismatch event, then retains
+sequential raw Pod, NodeList, and UID-filtered EventList responses before adding
+one label to the owned node. It captures the same three resources after the
+scheduler binds the same Pod UID to that node.
 
 The before phase must show no matching node, `PodScheduled=False` with reason
 `Unschedulable`, and a UID-correlated `FailedScheduling` event naming a selector
-mismatch. The after phase must show the same Pod spec and UID, the one added
-node label, `PodScheduled=True`, and a matching `nodeName`. Historical failure
+mismatch. The after phase must show the same Pod UID and authored workload spec,
+with only the legitimate scheduler-written `spec.nodeName` binding added, the
+one added node label, `PodScheduled=True`, and a matching `nodeName`. Historical failure
 Events are retained but do not override current scheduling evidence. This does
 not test node readiness, workload health, cloud APIs, credentials, or capacity.
 

@@ -27,7 +27,7 @@ import uuid
 
 sys.dont_write_bytecode = True
 HERE = Path(__file__).resolve().parent
-REPO = HERE.parents[2]
+REPO = HERE.parents[1]
 INV04_PATH = HERE.parent / "inv04-rbac" / "capture.py"
 _spec = importlib.util.spec_from_file_location("pre02_inv04_capture", INV04_PATH)
 inv04 = importlib.util.module_from_spec(_spec)
@@ -49,6 +49,7 @@ LABEL_VALUE = "fixture-zone"
 MAX_BODY = 2 * 1024 * 1024
 MAX_COMMAND_OUTPUT = 2 * 1024 * 1024
 EXECUTION_SECONDS = 120
+PREREQUISITE_WAIT_SECONDS = 30
 CLEANUP_SECONDS = 30
 TOTAL_SECONDS = 150
 API_POD = f"/api/v1/namespaces/{NAMESPACE}/pods/{POD_NAME}"
@@ -151,6 +152,8 @@ def _identity(obj: dict, kind: str, name: str | None = None) -> tuple[dict, dict
 
 def validate_pod(body: bytes, phase: str) -> dict:
     obj = strict_json(body, "Pod response")
+    if not isinstance(obj, dict):
+        raise CaptureError("Pod response must be a JSON object")
     pod, metadata = _identity(obj, "Pod", POD_NAME)
     if metadata.get("namespace") != NAMESPACE:
         raise CaptureError("Pod response namespace differs from authored namespace")
@@ -177,24 +180,25 @@ def validate_pod(body: bytes, phase: str) -> dict:
         if (condition.get("status") != "False" or condition.get("reason") != "Unschedulable"
                 or not nonempty(condition.get("message"))):
             raise CaptureError("before Pod response does not prove Unschedulable")
-        if status.get("nodeName"):
+        if spec.get("nodeName"):
             raise CaptureError("before Pod is already bound to a node")
         message = condition["message"].lower()
         if "selector" not in message and "affinity" not in message:
             raise CaptureError("before Pod condition does not identify node selector/affinity")
     elif phase == "after":
-        if condition.get("status") != "True" or not nonempty(status.get("nodeName")):
+        if condition.get("status") != "True" or not nonempty(spec.get("nodeName")):
             raise CaptureError("after Pod response does not prove scheduling to a node")
     else:
         raise CaptureError("unexpected Pod phase")
     return {"uid": metadata["uid"], "resourceVersion": metadata["resourceVersion"],
-            "spec": spec, "nodeName": status.get("nodeName"), "podScheduled": condition,
+            "spec": spec, "nodeName": spec.get("nodeName"), "podScheduled": condition,
             "phase": phase}
 
 
 def validate_nodes(body: bytes, phase: str, expected_node_name: str | None = None) -> dict:
     obj = strict_json(body, "NodeList response")
-    if obj.get("apiVersion") != "v1" or obj.get("kind") != "NodeList" or not isinstance(obj.get("items"), list):
+    if (not isinstance(obj, dict) or obj.get("apiVersion") != "v1" or obj.get("kind") != "NodeList"
+            or not isinstance(obj.get("items"), list)):
         raise CaptureError("raw node response is not a NodeList")
     meta = obj.get("metadata")
     if not isinstance(meta, dict) or not nonempty(meta.get("resourceVersion")):
@@ -202,7 +206,14 @@ def validate_nodes(body: bytes, phase: str, expected_node_name: str | None = Non
     nodes = []
     names = set()
     for node in obj["items"]:
-        node, node_meta = _identity(node, "Node")
+        if not isinstance(node, dict):
+            raise CaptureError("NodeList contains a non-object item")
+        if node.get("apiVersion", "v1") != "v1" or node.get("kind", "Node") != "Node":
+            raise CaptureError("NodeList item has contradictory Kubernetes type metadata")
+        node_meta = node.get("metadata")
+        if (not isinstance(node_meta, dict) or not nonempty(node_meta.get("uid"))
+                or not nonempty(node_meta.get("resourceVersion"))):
+            raise CaptureError("NodeList item lacks UID/resourceVersion")
         name = node_meta.get("name")
         labels = node_meta.get("labels")
         if not nonempty(name) or name in names or not isinstance(labels, dict):
@@ -227,7 +238,8 @@ def validate_nodes(body: bytes, phase: str, expected_node_name: str | None = Non
 
 def validate_events(body: bytes, pod_uid: str, phase: str) -> dict:
     obj = strict_json(body, "EventList response")
-    if obj.get("apiVersion") != "v1" or obj.get("kind") != "EventList" or not isinstance(obj.get("items"), list):
+    if (not isinstance(obj, dict) or obj.get("apiVersion") != "v1" or obj.get("kind") != "EventList"
+            or not isinstance(obj.get("items"), list)):
         raise CaptureError("raw event response is not an EventList")
     meta = obj.get("metadata")
     if not isinstance(meta, dict) or not nonempty(meta.get("resourceVersion")):
@@ -253,7 +265,10 @@ def validate_events(body: bytes, pod_uid: str, phase: str) -> dict:
                   and event.get("reason") == "FailedScheduling"]
         if not failed:
             raise CaptureError("before EventList lacks a UID-correlated FailedScheduling event")
-        messages = [event.get("message", "").lower() for event in failed]
+        messages = [event.get("message") for event in failed]
+        if any(not isinstance(message, str) for message in messages):
+            raise CaptureError("FailedScheduling event message is malformed")
+        messages = [message.lower() for message in messages]
         if not any(("node(s) didn't match pod's node affinity/selector" in message
                     or "didn't match pod's node affinity/selector" in message)
                    for message in messages if isinstance(message, str)):
@@ -279,8 +294,13 @@ def validate_transition(before_pod: dict, before_nodes: dict,
                         after_pod: dict, after_nodes: dict) -> dict:
     if before_pod.get("uid") != after_pod.get("uid"):
         raise CaptureError("Pod UID changed across the selector-only transition")
-    if before_pod.get("spec") != after_pod.get("spec"):
-        raise CaptureError("Pod spec changed across the selector-only transition")
+    before_spec, after_spec = dict(before_pod.get("spec", {})), dict(after_pod.get("spec", {}))
+    if before_spec.get("nodeName"):
+        raise CaptureError("before Pod spec unexpectedly has a node binding")
+    after_binding = after_spec.pop("nodeName", None)
+    before_spec.pop("nodeName", None)
+    if before_spec != after_spec or after_binding != after_pod.get("nodeName"):
+        raise CaptureError("Pod spec changed beyond the legitimate scheduler node binding")
     first = {node["name"]: node for node in before_nodes["nodes"]}
     last = {node["name"]: node for node in after_nodes["nodes"]}
     if set(first) != set(last):
@@ -301,7 +321,7 @@ def validate_transition(before_pod: dict, before_nodes: dict,
         raise CaptureError("the owned transition did not add only the selector label to the scheduled node")
     if after_nodes["matchingNodeNames"] != [after_pod["nodeName"]]:
         raise CaptureError("scheduled node does not uniquely satisfy the authored selector")
-    return {"podUIDUnchanged": True, "podSpecUnchanged": True,
+    return {"podUIDUnchanged": True, "podSpecUnchangedExceptSchedulerNodeName": True,
             "nodeMembershipUnchanged": True, "onlySelectorLabelChanged": True,
             "scheduledNode": after_pod["nodeName"],
             "conclusion": "selector prerequisite satisfied; scheduling is not readiness or application health"}
@@ -426,6 +446,58 @@ def capture_api(out: Path, phase: str, name: str, path: str, server: str, ca: by
         records.append(record)
 
 
+def wait_for_unschedulable_pod(server: str, ca: bytes, token: str,
+                               private: tuple[bytes, ...], *, api_reader=None,
+                               deadline: float, observations: list[dict] | None = None) -> dict:
+    """Wait read-only for scheduler evidence without replacing retained phase artifacts."""
+    wait_deadline = min(deadline, time.monotonic() + PREREQUISITE_WAIT_SECONDS)
+    read = fetch_api if api_reader is None else api_reader
+    observations = [] if observations is None else observations
+    pod_uid = None
+    while time.monotonic() < wait_deadline:
+        tick = time.monotonic()
+        entry = {"startedAt": inv04.utc_now()}
+        try:
+            status, pod_body, pod_elapsed = read(server, ca, token, API_POD,
+                timeout=min(10.0, wait_deadline - time.monotonic()))
+            if len(pod_body) > MAX_BODY or not credentials_absent(pod_body, token, private):
+                raise CaptureError("prerequisite poll Pod response violates body/credential bounds")
+            entry.update({"podHttpStatus": status, "podSha256": sha256(pod_body),
+                          "podElapsedSeconds": pod_elapsed})
+            if status != 200:
+                raise CaptureError("prerequisite poll Pod GET did not return HTTP 200")
+            current_pod = validate_pod(pod_body, "before")
+            if pod_uid is not None and current_pod["uid"] != pod_uid:
+                raise CaptureError("Pod UID changed while awaiting scheduler evidence")
+            pod_uid = current_pod["uid"]
+            path = API_EVENTS_PREFIX + urllib.parse.quote(pod_uid, safe="")
+            status, event_body, event_elapsed = read(server, ca, token, path,
+                timeout=min(10.0, wait_deadline - time.monotonic()))
+            if len(event_body) > MAX_BODY or not credentials_absent(event_body, token, private):
+                raise CaptureError("prerequisite poll EventList violates body/credential bounds")
+            entry.update({"eventsHttpStatus": status, "eventsSha256": sha256(event_body),
+                          "eventsElapsedSeconds": event_elapsed})
+            if status != 200:
+                raise CaptureError("prerequisite poll EventList GET did not return HTTP 200")
+            validate_events(event_body, pod_uid, "before")
+            entry["validation"] = "Pod Unschedulable and UID-correlated FailedScheduling selector mismatch observed"
+            entry["endedAt"] = inv04.utc_now()
+            entry["elapsedSeconds"] = time.monotonic() - tick
+            observations.append(entry)
+            return current_pod
+        except CaptureError as error:
+            entry["error"] = str(error)[:250]
+        except Exception as error:
+            entry["error"] = type(error).__name__
+        entry["endedAt"] = inv04.utc_now()
+        entry["elapsedSeconds"] = time.monotonic() - tick
+        observations.append(entry)
+        remaining = wait_deadline - time.monotonic()
+        if remaining > 0:
+            time.sleep(min(1.0, remaining))
+    raise CaptureError("timed out waiting for PodScheduled=False/Unschedulable and UID-correlated FailedScheduling event")
+
+
 def capture(shared_kubeconfig: Path, output: Path, *, runner=None, api_reader=None) -> int:
     out = inv04._fresh_output(output)
     shared = shared_kubeconfig.expanduser().absolute()
@@ -460,6 +532,10 @@ def capture(shared_kubeconfig: Path, output: Path, *, runner=None, api_reader=No
     cleanup_verified = False
     private_before: dict[str, str] = {}
     private_before_cleanup: dict[str, str] = {}
+    private_after_cleanup: dict[str, str] = {}
+    helper_paths = (Path(__file__), INV04_PATH, RUL04_PATH)
+    helper_hashes_before = {str(path): sha256_file(path) for path in helper_paths}
+    prerequisite_wait: list[dict] = []
     source_revision = ""
     pins: dict = {}
     signal_state = None
@@ -537,6 +613,9 @@ def capture(shared_kubeconfig: Path, output: Path, *, runner=None, api_reader=No
         endpoint = strict_json(endpoint_bytes, "Docker context endpoint")
         if not isinstance(endpoint, str) or not endpoint.startswith("unix://"):
             raise CaptureError("selected Docker context is not a local Unix socket")
+        env["DOCKER_CONTEXT"] = context
+        pins["dockerContext"] = {"name": context, "endpoint": endpoint,
+                                  "selectionPinnedInEnvironment": True}
         code, version_bytes, _ = call("kind-version", [kind, "version"], 10)
         if code != 0:
             raise CaptureError("could not read local kind version")
@@ -585,9 +664,15 @@ def capture(shared_kubeconfig: Path, output: Path, *, runner=None, api_reader=No
         private_material = rul04.private_material(raw_config, admin_bytes) + (observer.read_bytes(),)
         private_before = {"admin": sha256(admin_bytes), "observer": sha256(observer.read_bytes())}
 
+        waited_pod = wait_for_unschedulable_pod(
+            server, ca_pem, token, private_material, api_reader=api_reader,
+            deadline=execution_deadline, observations=prerequisite_wait)
+
         before_pod_body, before_pod = capture_api(out, "before", "before-pod.json", API_POD,
             server, ca_pem, token, None, private_material, records, api_reader=api_reader,
             deadline=execution_deadline)
+        if before_pod["uid"] != waited_pod["uid"]:
+            raise CaptureError("Pod UID changed between scheduler prerequisite wait and retained before snapshot")
         before_nodes_body, before_nodes = capture_api(out, "before", "before-nodes.json", API_NODES,
             server, ca_pem, token, before_pod["uid"], private_material, records,
             api_reader=api_reader, deadline=execution_deadline)
@@ -643,6 +728,13 @@ def capture(shared_kubeconfig: Path, output: Path, *, runner=None, api_reader=No
             inv04._suppress_capture_signals(signal_state)
         if create_attempted:
             try:
+                for label, path in (("admin", admin), ("observer", observer)):
+                    try:
+                        private_before_cleanup[label] = sha256_file(path)
+                    except OSError:
+                        private_before_cleanup[label] = ""
+                    if label in private_before and private_before_cleanup[label] != private_before[label]:
+                        errors.append(label + " private kubeconfig changed before owned-cluster cleanup")
                 marker_doc = strict_json((out / "owned-cluster-marker.json").read_bytes(), "ownership marker")
                 if not owns_cluster(marker_doc, cluster, os.getpid()):
                     raise CaptureError("owned-cluster marker failed ownership validation")
@@ -675,11 +767,9 @@ def capture(shared_kubeconfig: Path, output: Path, *, runner=None, api_reader=No
             cleanup_verified = True
         for label, path in (("admin", admin), ("observer", observer)):
             try:
-                private_before_cleanup[label] = sha256_file(path)
+                private_after_cleanup[label] = sha256_file(path)
             except OSError:
-                private_before_cleanup[label] = ""
-            if label in private_before and private_before_cleanup[label] != private_before[label]:
-                errors.append(label + " private kubeconfig changed during capture")
+                private_after_cleanup[label] = ""
         shutil.rmtree(temp, ignore_errors=True)
         if signal_state is not None:
             inv04._restore_capture_signals(signal_state)
@@ -693,11 +783,20 @@ def capture(shared_kubeconfig: Path, output: Path, *, runner=None, api_reader=No
         errors.append("shared kubeconfig changed during capture")
     if not cleanup_verified:
         errors.append("owned cluster cleanup is uncertain")
+    helper_hashes_after = {}
+    for path in helper_paths:
+        try:
+            helper_hashes_after[str(path)] = sha256_file(path)
+        except OSError:
+            helper_hashes_after[str(path)] = ""
+    if helper_hashes_before != helper_hashes_after:
+        errors.append("capture or dependency source changed during run")
     status = "passed" if not errors and transition is not None and len(records) == 6 else "failed"
     receipt.update({"status": status, "sourceRevision": source_revision or None,
-        "captureScriptSha256": sha256_file(Path(__file__)), "inv04Runner": {"path": str(INV04_PATH),
-        "sha256": sha256_file(INV04_PATH)}, "rul04ObserverHelpers": {"path": str(RUL04_PATH),
-        "sha256": sha256_file(RUL04_PATH)}, "toolPins": pins, "kindNodeImage": inv04.NODE_IMAGE,
+        "sourceHashes": {"before": helper_hashes_before, "after": helper_hashes_after},
+        "inv04Runner": {"path": str(INV04_PATH), "sha256": helper_hashes_after.get(str(INV04_PATH), "")},
+        "rul04ObserverHelpers": {"path": str(RUL04_PATH),
+        "sha256": helper_hashes_after.get(str(RUL04_PATH), "")}, "toolPins": pins, "kindNodeImage": inv04.NODE_IMAGE,
         "kindVersionRequired": inv04.KIND_VERSION, "clusterName": cluster,
         "ownedClusterMarkerSha256": owner_hash, "fixtureSha256": sha256(MANIFEST),
         "fixturePath": "fixture.yaml", "labelMutation": {"nodeLabelKey": LABEL_KEY,
@@ -708,13 +807,16 @@ def capture(shared_kubeconfig: Path, output: Path, *, runner=None, api_reader=No
         "after": ["after-pod.json", "after-nodes.json", "after-events.json"]},
         "observations": records, "transition": transition,
         "sharedKubeconfigSha256": {"before": shared_before, "after": shared_after},
-        "privateKubeconfigSha256": {"before": private_before, "beforeCleanup": private_before_cleanup},
+        "privateKubeconfigSha256": {"before": private_before, "beforeCleanup": private_before_cleanup,
+                                     "afterCleanup": private_after_cleanup},
         "cleanupVerified": cleanup_verified, "commands": commands,
+        "prerequisiteWait": prerequisite_wait,
         "timing": {"startedAt": started_at, "endedAt": inv04.utc_now(),
                    "elapsedSeconds": time.monotonic() - began, "executionLimitSeconds": EXECUTION_SECONDS,
                    "cleanupLimitSeconds": CLEANUP_SECONDS, "totalLimitSeconds": TOTAL_SECONDS},
         "outputLimits": {"apiBodyBytes": MAX_BODY, "commandBytesEach": MAX_COMMAND_OUTPUT},
-        "claims": {"prerequisite": "node selector label absent before and satisfied after on the same owned cluster",
+        "claims": {"prerequisite": ("verified: node selector label absent before and satisfied after on the same owned cluster"
+                                     if status == "passed" else "not verified: capture did not complete successfully"),
                    "cloudAPI": "not observed", "secret": "not observed", "capacity": "not inferred",
                    "readinessOrHealth": "not assessed"}, "error": errors})
     try:

@@ -22,14 +22,14 @@ def pod(*, scheduled=False, uid=POD_UID, selector_value=capture.LABEL_VALUE, spe
     spec = {"restartPolicy": "Never", "nodeSelector": {capture.LABEL_KEY: selector_value},
             "containers": [{"name": capture.CONTAINER_NAME, "image": capture.IMAGE,
                             "imagePullPolicy": "Never"}]}
+    if scheduled:
+        spec["nodeName"] = NODE_NAME
     if spec_change:
         spec.update(spec_change)
     condition = {"type": "PodScheduled", "status": "True" if scheduled else "False",
                  "reason": "" if scheduled else "Unschedulable",
                  "message": "scheduled" if scheduled else "0/1 nodes are available: 1 node(s) didn't match pod's node affinity/selector."}
     status = {"conditions": [condition], "phase": "Pending" if not scheduled else "Pending"}
-    if scheduled:
-        status["nodeName"] = NODE_NAME
     return {"apiVersion": "v1", "kind": "Pod", "metadata": {"name": capture.POD_NAME,
         "namespace": capture.NAMESPACE, "uid": uid, "resourceVersion": "17" if not scheduled else "23"},
         "spec": spec, "status": status}
@@ -37,7 +37,7 @@ def pod(*, scheduled=False, uid=POD_UID, selector_value=capture.LABEL_VALUE, spe
 
 def nodes(*, labelled=False, names=(NODE_NAME,)):
     return {"apiVersion": "v1", "kind": "NodeList", "metadata": {"resourceVersion": "10" if not labelled else "19"},
-        "items": [{"apiVersion": "v1", "kind": "Node", "metadata": {"name": name,
+        "items": [{"metadata": {"name": name,
             "uid": "node-uid-" + name, "resourceVersion": "9" if not labelled else "18",
             "labels": {"kubernetes.io/hostname": name, **({capture.LABEL_KEY: capture.LABEL_VALUE}
                 if labelled and name == NODE_NAME else {})}}} for name in names]}
@@ -56,6 +56,9 @@ def encoded(value):
 
 
 class Pre02ContractTests(unittest.TestCase):
+    def test_repository_path_points_at_checkout_root(self):
+        self.assertEqual(capture.REPO, Path(__file__).resolve().parents[2])
+
     def test_authored_fixture_is_single_pod_with_selector_and_no_external_prerequisites(self):
         docs = [json.loads(doc) for doc in capture.MANIFEST.decode().split("\n---\n")]
         pods = [doc for doc in docs if doc.get("kind") == "Pod"]
@@ -122,7 +125,7 @@ class Pre02ContractTests(unittest.TestCase):
         after_nodes = capture.validate_nodes(encoded(nodes(labelled=True)), "after", NODE_NAME)
         result = capture.validate_transition(before_pod, before_nodes, after_pod, after_nodes)
         self.assertTrue(result["podUIDUnchanged"])
-        self.assertTrue(result["podSpecUnchanged"])
+        self.assertTrue(result["podSpecUnchangedExceptSchedulerNodeName"])
         self.assertIn("not readiness", result["conclusion"])
         with self.assertRaises(capture.CaptureError):
             capture.validate_transition(before_pod, before_nodes,
@@ -130,6 +133,11 @@ class Pre02ContractTests(unittest.TestCase):
         with self.assertRaises(capture.CaptureError):
             capture.validate_transition(before_pod, before_nodes,
                 capture.validate_pod(encoded(pod(scheduled=True, spec_change={"priority": 1})), "after"), after_nodes)
+        with self.assertRaises(capture.CaptureError):
+            capture.validate_transition(before_pod, before_nodes,
+                capture.validate_pod(encoded(pod(scheduled=True,
+                    spec_change={"containers": [{"name": capture.CONTAINER_NAME,
+                        "image": "different", "imagePullPolicy": "Never"}]})), "after"), after_nodes)
         changed_node = nodes(labelled=True)
         changed_node["items"][0]["metadata"]["labels"]["example.com/other"] = "mutation"
         with self.assertRaises(capture.CaptureError):
@@ -138,6 +146,36 @@ class Pre02ContractTests(unittest.TestCase):
         with self.assertRaises(capture.CaptureError):
             capture.validate_transition(before_pod, before_nodes, after_pod,
                 capture.validate_nodes(encoded(nodes(labelled=True, names=("replacement",))), "after", NODE_NAME))
+
+    def test_kubernetes_shape_edges_return_capture_errors(self):
+        for body in (b"[]", b"null", b'"Pod"'):
+            with self.subTest(body=body), self.assertRaises(capture.CaptureError):
+                capture.validate_pod(body, "before")
+            with self.subTest(body=body), self.assertRaises(capture.CaptureError):
+                capture.validate_nodes(body, "before")
+            with self.subTest(body=body), self.assertRaises(capture.CaptureError):
+                capture.validate_events(body, POD_UID, "before")
+        malformed_nodes = nodes()
+        malformed_nodes["items"][0]["kind"] = "Pod"
+        with self.assertRaises(capture.CaptureError):
+            capture.validate_nodes(encoded(malformed_nodes), "before")
+        malformed_events = events(message=None)
+        with self.assertRaises(capture.CaptureError):
+            capture.validate_events(encoded(malformed_events), POD_UID, "before")
+
+    def test_prerequisite_wait_retains_bounded_failed_poll_log(self):
+        observations = []
+        def no_events(server, ca, token, path, timeout=10):
+            if path == capture.API_POD:
+                return 200, encoded(pod()), 0.001
+            return 200, encoded({"apiVersion": "v1", "kind": "EventList",
+                "metadata": {"resourceVersion": "18"}, "items": []}), 0.001
+        with self.assertRaises(capture.CaptureError):
+            capture.wait_for_unschedulable_pod("https://127.0.0.1:6443", b"ca", "token", (),
+                api_reader=no_events, deadline=time.monotonic() + 0.01, observations=observations)
+        self.assertTrue(observations)
+        self.assertIn("FailedScheduling", observations[0]["error"])
+        self.assertIn("eventsSha256", observations[0])
 
     def test_api_allowlist_and_strict_json_reject_ambiguous_shapes(self):
         capture.validate_api_path(capture.API_POD)
@@ -210,6 +248,7 @@ class MockLifecycleTests(unittest.TestCase):
             existing = set()
             mutation_commands = []
             api_counts = {capture.API_POD: 0, capture.API_NODES: 0, "events": 0}
+            admin_kubeconfig = None
             def fake_runner(argv, timeout, env=None, max_output=None):
                 self.assertLessEqual(timeout, capture.EXECUTION_SECONDS)
                 self.assertLessEqual(max_output, capture.MAX_COMMAND_OUTPUT)
@@ -226,13 +265,17 @@ class MockLifecycleTests(unittest.TestCase):
                 if name == "kind" and args == ["version"]:
                     return 0, ("kind " + capture.inv04.KIND_VERSION + "\n").encode(), b""
                 if name == "docker" and args[:2] == ["image", "inspect"]:
+                    self.assertEqual(env.get("DOCKER_CONTEXT"), "local")
                     return 0, json.dumps([{"RepoDigests": ["kindest/node@" + node_digest]}]).encode(), b""
                 if name == "kind" and args == ["get", "clusters"]:
                     return 0, ("\n".join(sorted(existing)) + "\n").encode(), b""
                 if name == "kind" and args[:3] == ["create", "cluster", "--name"]:
+                    self.assertEqual(env.get("DOCKER_CONTEXT"), "local")
                     cluster = args[3]
                     existing.add(cluster)
                     kube = Path(args[args.index("--kubeconfig") + 1])
+                    nonlocal admin_kubeconfig
+                    admin_kubeconfig = kube
                     kube.write_text("admin-private-material")
                     return 0, b"created\n", b""
                 if name == "kubectl" and "apply" in args:
@@ -249,6 +292,7 @@ class MockLifecycleTests(unittest.TestCase):
                     return 0, b"pod condition met\n", b""
                 if name == "kind" and args[:2] == ["delete", "cluster"]:
                     existing.discard(args[args.index("--name") + 1])
+                    admin_kubeconfig.write_text("cleanup rewrote admin context")
                     return 0, b"deleted\n", b""
                 raise AssertionError(argv)
 
@@ -257,7 +301,7 @@ class MockLifecycleTests(unittest.TestCase):
                 self.assertLessEqual(timeout, 10)
                 if path == capture.API_POD:
                     api_counts[path] += 1
-                    return 200, encoded(pod(scheduled=api_counts[path] == 2)), 0.001
+                    return 200, encoded(pod(scheduled=api_counts[path] >= 3)), 0.001
                 if path == capture.API_NODES:
                     api_counts[path] += 1
                     return 200, encoded(nodes(labelled=api_counts[path] == 2)), 0.001
@@ -273,12 +317,17 @@ class MockLifecycleTests(unittest.TestCase):
             self.assertEqual(result, 0)
             self.assertEqual(existing, set())
             self.assertEqual(len(mutation_commands), 1)
-            self.assertEqual(api_counts, {capture.API_POD: 2, capture.API_NODES: 2, "events": 2})
+            self.assertEqual(api_counts, {capture.API_POD: 3, capture.API_NODES: 2, "events": 3})
             receipt = json.loads((out / "provenance.json").read_text())
             self.assertEqual(receipt["status"], "passed")
             self.assertTrue(receipt["cleanupVerified"])
-            self.assertTrue(receipt["transition"]["podSpecUnchanged"])
+            self.assertTrue(receipt["transition"]["podSpecUnchangedExceptSchedulerNodeName"])
             self.assertEqual(receipt["claims"]["cloudAPI"], "not observed")
+            self.assertTrue(receipt["claims"]["prerequisite"].startswith("verified:"))
+            self.assertNotEqual(receipt["privateKubeconfigSha256"]["before"]["admin"],
+                                receipt["privateKubeconfigSha256"]["afterCleanup"]["admin"])
+            self.assertEqual(receipt["privateKubeconfigSha256"]["before"]["admin"],
+                             receipt["privateKubeconfigSha256"]["beforeCleanup"]["admin"])
             self.assertEqual(receipt["sharedKubeconfigSha256"]["before"], receipt["sharedKubeconfigSha256"]["after"])
             self.assertNotIn(b"observer-secret-token", (out / "provenance.json").read_bytes())
             for filename in ("before-pod.json", "before-nodes.json", "before-events.json",
