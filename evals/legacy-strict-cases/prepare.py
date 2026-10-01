@@ -19,7 +19,7 @@ REPO = Path(__file__).resolve().parents[2]
 CONTRACT = "legacy-answer-line.v1"
 SOURCE_COMMIT = "660e8303f82652e1553dfdb20f65741c9a426ee5"
 MANIFEST_PATH = "evals/benchmark-v1.json"
-MANIFEST_SHA256 = "ab35d5f277f344f45780333eea970ac03151bf80efee9b8a84d8d71fd8fb2de6"
+SEMANTICS_PROJECTION_SHA256 = "b30f26be745cbd576f66a11890eff66e5082490381784182aeb1a8b24c366f74"
 CASES = {
     "INV-03": {
         "directory": "owner-confighub",
@@ -38,10 +38,12 @@ CASES = {
         "prompt_suffix": (
             "For this prospective strict variant, output exactly one plain-text line and no other text. "
             "Use this schema: CHANGED_BY: <MANUAL_TOOL|CONTROLLER|UNKNOWN> | MANAGER: <exact field manager|UNKNOWN> | "
-            "FIELD: <exact field path|UNKNOWN> | HUMAN: <identified person|UNKNOWN> | "
-            "COMMAND: <literal argv|UNKNOWN> | SCOPE: recorded evidence only. A manager name does not establish a person or argv."
+            "FIELD_PATH: <exact field path|UNKNOWN> | HUMAN_ACTOR: <identified person|UNKNOWN> | "
+            "COMMAND: <literal argv|UNKNOWN> | SCOPE: recorded evidence only; no live confirmation; no Git desired state provided. "
+            "A manager name does not establish a person or argv."
         ),
-        "answer": "CHANGED_BY: MANUAL_TOOL | MANAGER: kubectl-set | FIELD: spec.template.spec.containers[name=checkout].image | HUMAN: UNKNOWN | COMMAND: UNKNOWN | SCOPE: recorded evidence only",
+        "answer": "CHANGED_BY: MANUAL_TOOL | MANAGER: kubectl-set | FIELD_PATH: spec.template.spec.containers[name=checkout].image | HUMAN_ACTOR: UNKNOWN | COMMAND: UNKNOWN | SCOPE: recorded evidence only; no live confirmation; no Git desired state provided",
+        "strip_structured_block": True,
     },
     "ATR-02": {
         "directory": "changed-by-cart",
@@ -49,34 +51,43 @@ CASES = {
         "prompt_suffix": (
             "For this prospective strict variant, output exactly one plain-text line and no other text. "
             "Use this schema: CHANGED_BY: <MANUAL_TOOL|CONTROLLER|UNKNOWN> | MANAGER: <exact field manager|UNKNOWN> | "
-            "FIELD: <exact field path|UNKNOWN> | SUBRESOURCE: <recorded subresource|none|UNKNOWN> | "
-            "HUMAN: <identified person|UNKNOWN> | COMMAND: <literal argv|UNKNOWN> | SCOPE: recorded evidence only. "
+            "FIELD_PATH: <exact field path|UNKNOWN> | SUBRESOURCE: <recorded subresource|none|UNKNOWN> | "
+            "HUMAN_ACTOR: <identified person|UNKNOWN> | COMMAND: <literal argv|UNKNOWN> | SCOPE: recorded evidence only. "
             "A manager name does not establish a person or argv."
         ),
-        "answer": "CHANGED_BY: MANUAL_TOOL | MANAGER: kubectl | FIELD: spec.replicas | SUBRESOURCE: scale | HUMAN: UNKNOWN | COMMAND: UNKNOWN | SCOPE: recorded evidence only",
+        "answer": "CHANGED_BY: MANUAL_TOOL | MANAGER: kubectl | FIELD_PATH: spec.replicas | SUBRESOURCE: scale | HUMAN_ACTOR: UNKNOWN | COMMAND: UNKNOWN | SCOPE: recorded evidence only",
     },
     "ATR-03": {
         "directory": "changed-by-payments",
         "answer_grader": "changed-by-line.md",
         "prompt_suffix": (
             "For this prospective strict variant, output exactly one plain-text line and no other text. "
-            "Use this schema: CHANGED_BY: <MANUAL_TOOL|CONTROLLER|UNKNOWN> | MANAGER: <exact field manager|UNKNOWN> | "
-            "EVIDENCE: <which non-status fields the manager owns and whether a manual manager is recorded> | "
-            "HUMAN: <identified person|UNKNOWN> | COMMAND: <literal argv|UNKNOWN> | SCOPE: recorded evidence only. "
-            "Do not infer a person or command from a manager name."
+            "Use this schema: NON_STATUS_MANAGER: <exact managedFields manager|UNKNOWN> | "
+            "MANUAL_CHANGE: <EVIDENCED|NOT_EVIDENCED|UNKNOWN> | HUMAN_ACTOR: <identified person|UNKNOWN> | "
+            "COMMAND: <literal argv|UNKNOWN> | SCOPE: recorded evidence only. "
+            "Use NOT_EVIDENCED only when no manual non-status manager is recorded; do not infer a person or command from a manager name."
         ),
-        "answer": "CHANGED_BY: CONTROLLER | MANAGER: helm | EVIDENCE: Helm owns non-status fields; no manual non-status manager is recorded | HUMAN: UNKNOWN | COMMAND: UNKNOWN | SCOPE: recorded evidence only",
+        "answer": "NON_STATUS_MANAGER: helm | MANUAL_CHANGE: NOT_EVIDENCED | HUMAN_ACTOR: UNKNOWN | COMMAND: UNKNOWN | SCOPE: recorded evidence only",
     },
     "ATR-04": {
         "directory": "argo-label-vs-tracking-id",
         "answer_grader": "application-line.md",
         "prompt_suffix": (
             "For this prospective strict variant, output exactly one plain-text line and no other text. "
-            "Use this schema: APPLICATION: <name|UNKNOWN> | EVIDENCE: <tracking-id, configured tracking mode, and how the instance label relates> | "
-            "SCOPE: recorded evidence only. Apply the configured Argo resource-tracking method; do not treat conflicting identifiers as interchangeable."
+            "Use this schema: APPLICATION: <name|UNKNOWN> | TRACKING_MODE: <annotation|label|UNKNOWN> | "
+            "TRACKING_ID_APPLICATION: <name|UNKNOWN> | INSTANCE_LABEL_APPLICATION: <name|UNKNOWN> | "
+            "TRACKING_SOURCE: <TRACKING_ID|INSTANCE_LABEL|UNKNOWN> | SCOPE: recorded evidence only. "
+            "Use the configured Argo tracking mode to select between the recorded identifiers; do not treat the fields as interchangeable."
         ),
-        "answer": "APPLICATION: payments | EVIDENCE: tracking-id payments:apps/Deployment:shop/ledger wins under annotation tracking; instance label storefront is stale | SCOPE: recorded evidence only",
+        "answer": "APPLICATION: payments | TRACKING_MODE: annotation | TRACKING_ID_APPLICATION: payments | INSTANCE_LABEL_APPLICATION: storefront | TRACKING_SOURCE: TRACKING_ID | SCOPE: recorded evidence only",
     },
+}
+
+LEGACY_OUTPUT_TAILS = {
+    "owner-confighub": " Finish with one line `OWNER: <Flux|ArgoCD|Helm|ConfigHub|none>`.",
+    "changed-by-cart": " Finish with one line `CHANGED_BY: <Argo CD if it made the most recent change, the command a person used if someone did, or UNKNOWN>`.",
+    "changed-by-payments": " Finish with one line `CHANGED_BY: <Helm if it made the most recent change, the command a person used if someone did, or UNKNOWN>`.",
+    "argo-label-vs-tracking-id": " Finish with one line `APPLICATION: <name, or UNKNOWN>`.",
 }
 
 # Each source case is content-pinned, including its historical grader and exact
@@ -157,12 +168,28 @@ def grader_bytes(answer: str) -> bytes:
     return ("---\ntype: regex\npattern: '" + pattern + "'\nflags: s\ntarget: last_message\n---\n").encode()
 
 
-def strict_prompt(source: bytes, suffix: str) -> bytes:
+def strict_prompt(source: bytes, case_id: str, suffix: str) -> bytes:
     try:
         text = source.decode("utf-8", "strict")
     except UnicodeDecodeError:
         raise PacketError("source prompt is not UTF-8") from None
-    return (text.rstrip() + "\n\n" + suffix + "\n").encode("utf-8")
+    match = re.fullmatch(r"(---\n.*?\n---\n)(.*)", text, re.DOTALL)
+    if not match:
+        raise PacketError(f"{case_id} source prompt frontmatter is malformed")
+    frontmatter, body = match.groups()
+    if CASES[case_id].get("strip_structured_block"):
+        marker = "\n\nThis case measures a narrow answer contract, not freeform prose safety."
+        index = body.find(marker)
+        if index < 0:
+            raise PacketError(f"{case_id} legacy structured answer block changed")
+        body = body[:index].rstrip()
+    else:
+        tail = LEGACY_OUTPUT_TAILS.get(CASES[case_id]["directory"])
+        body_without_trailing_ws = body.rstrip()
+        if not tail or not body_without_trailing_ws.endswith(tail):
+            raise PacketError(f"{case_id} legacy output instruction changed")
+        body = body_without_trailing_ws[:-len(tail)].rstrip()
+    return (frontmatter + body + "\n\n" + suffix + "\n").encode("utf-8")
 
 
 def _file_hashes(root: Path) -> dict[str, str]:
@@ -173,11 +200,41 @@ def _file_hashes(root: Path) -> dict[str, str]:
             for p in paths if p.is_file()}
 
 
+def _semantics_projection(manifest_value: dict) -> dict:
+    group_by_case = {case["id"]: group["id"]
+                     for group in manifest_value["groups"] for case in group["cases"]}
+    case_index = {case["id"]: case for group in manifest_value["groups"] for case in group["cases"]}
+    selected = []
+    for case_id in CASES:
+        case = case_index.get(case_id)
+        if case is None:
+            raise PacketError(f"frozen case {case_id} is missing from benchmark manifest")
+        selected.append({key: case.get(key) for key in
+                         ("id", "existing_case", "question", "reference", "controls")}
+                        | {"group": group_by_case[case_id]})
+    return {
+        "schema": "legacy-case-semantics.v1",
+        "groupWeights": [{"id": group["id"], "weight": group["weight"]}
+                         for group in manifest_value["groups"]],
+        "cases": selected,
+    }
+
+
 def verify_source() -> dict:
     manifest = REPO / MANIFEST_PATH
-    if not manifest.is_file() or sha256(manifest.read_bytes()) != MANIFEST_SHA256:
-        raise PacketError("frozen benchmark manifest does not match its source pin")
-    manifest_value = json.loads(manifest.read_text())
+    if not manifest.is_file():
+        raise PacketError("frozen benchmark manifest is missing")
+    manifest_bytes = manifest.read_bytes()
+    try:
+        manifest_value = json.loads(manifest_bytes)
+        projection = _semantics_projection(manifest_value)
+    except (json.JSONDecodeError, KeyError, TypeError):
+        raise PacketError("frozen benchmark manifest is malformed") from None
+    projection_bytes = json.dumps(projection, sort_keys=True, separators=(",", ":"),
+                                  ensure_ascii=False).encode()
+    semantics_hash = sha256(projection_bytes)
+    if semantics_hash != SEMANTICS_PROJECTION_SHA256:
+        raise PacketError("frozen selected case semantics or group weights changed")
     case_index = {case["id"]: case for group in manifest_value["groups"] for case in group["cases"]}
     if set(CASES) - set(case_index):
         raise PacketError("one or more frozen case references are missing")
@@ -212,7 +269,8 @@ def verify_source() -> dict:
         path = control_root / relative
         if not path.is_file() or sha256(path.read_bytes()) != expected:
             raise PacketError("owner-unlabelled negative-control source changed")
-    return {"manifestSha256": MANIFEST_SHA256, "cases": source_facts,
+    return {"manifestSha256": sha256(manifest_bytes),
+            "semanticsProjectionSha256": semantics_hash, "cases": source_facts,
             "negativeControls": ["evals/owner-unlabelled", "ATR-03 changed-by-payments"]}
 
 
@@ -220,7 +278,7 @@ def _expected_tree(case_id: str, source_root: Path) -> dict[str, bytes]:
     spec = CASES[case_id]
     files = {relative: (source_root / relative).read_bytes()
              for relative in SOURCE_PINS[spec["directory"]]}
-    files["prompt.md"] = strict_prompt(files["prompt.md"], spec["prompt_suffix"])
+    files["prompt.md"] = strict_prompt(files["prompt.md"], case_id, spec["prompt_suffix"])
     files.pop("graders/" + spec["answer_grader"])
     files["graders/verified-answer.md"] = grader_bytes(spec["answer"])
     return files
@@ -268,6 +326,7 @@ def prepare(out: Path, contract: str | None = None) -> dict:
             "contract": CONTRACT,
             "sourceCommit": SOURCE_COMMIT,
             "manifestSha256": source_facts["manifestSha256"],
+            "semanticsProjectionSha256": source_facts["semanticsProjectionSha256"],
             "caseIds": list(CASES),
             "cases": source_facts["cases"],
             "negativeControls": source_facts["negativeControls"],
@@ -301,6 +360,7 @@ def verify_prepared(root: Path, contract: str | None = None) -> dict:
         raise PacketError("prepared metadata is malformed") from None
     if (facts.get("schema") != "legacy-strict-answer-preparation.v1" or facts.get("contract") != CONTRACT
             or facts.get("manifestSha256") != source_facts["manifestSha256"]
+            or facts.get("semanticsProjectionSha256") != source_facts["semanticsProjectionSha256"]
             or facts.get("caseIds") != list(CASES) or facts.get("modelRun") is not False):
         raise PacketError("prepared packet identity or case set changed")
     expected_top = {"prepared.json"}

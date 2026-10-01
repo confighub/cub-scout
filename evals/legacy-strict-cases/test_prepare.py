@@ -25,7 +25,8 @@ class StrictLegacyPacketTests(unittest.TestCase):
                 prepare.prepare(Path(temp) / "implicit")
             facts = prepare.verify_source()
             self.assertEqual(set(facts["cases"]), set(prepare.CASES))
-            self.assertEqual(facts["manifestSha256"], prepare.MANIFEST_SHA256)
+            self.assertEqual(len(facts["manifestSha256"]), 64)
+            self.assertEqual(facts["semanticsProjectionSha256"], prepare.SEMANTICS_PROJECTION_SHA256)
             self.assertEqual(facts["negativeControls"], ["evals/owner-unlabelled", "ATR-03 changed-by-payments"])
 
     def test_canonical_answers_match_and_contradictions_or_extra_content_fail(self):
@@ -48,13 +49,15 @@ class StrictLegacyPacketTests(unittest.TestCase):
     def test_answer_contracts_bind_field_manager_person_and_scope(self):
         mutations = {
             "INV-03": ["UnitSlug=inventory", "recorded evidence only"],
-            "ATR-01": ["MANAGER: kubectl-set", "FIELD: spec.template.spec.containers[name=checkout].image",
-                       "HUMAN: UNKNOWN", "COMMAND: UNKNOWN", "SCOPE: recorded evidence only"],
-            "ATR-02": ["MANAGER: kubectl", "FIELD: spec.replicas", "SUBRESOURCE: scale",
-                       "HUMAN: UNKNOWN", "COMMAND: UNKNOWN", "SCOPE: recorded evidence only"],
-            "ATR-03": ["MANAGER: helm", "HUMAN: UNKNOWN", "COMMAND: UNKNOWN", "SCOPE: recorded evidence only"],
-            "ATR-04": ["APPLICATION: payments", "tracking-id payments:", "annotation tracking",
-                       "instance label storefront", "SCOPE: recorded evidence only"],
+            "ATR-01": ["MANAGER: kubectl-set", "FIELD_PATH: spec.template.spec.containers[name=checkout].image",
+                       "HUMAN_ACTOR: UNKNOWN", "COMMAND: UNKNOWN", "SCOPE: recorded evidence only"],
+            "ATR-02": ["MANAGER: kubectl", "FIELD_PATH: spec.replicas", "SUBRESOURCE: scale",
+                       "HUMAN_ACTOR: UNKNOWN", "COMMAND: UNKNOWN", "SCOPE: recorded evidence only"],
+            "ATR-03": ["NON_STATUS_MANAGER: helm", "MANUAL_CHANGE: NOT_EVIDENCED",
+                       "HUMAN_ACTOR: UNKNOWN", "COMMAND: UNKNOWN", "SCOPE: recorded evidence only"],
+            "ATR-04": ["APPLICATION: payments", "TRACKING_MODE: annotation",
+                       "TRACKING_ID_APPLICATION: payments", "INSTANCE_LABEL_APPLICATION: storefront",
+                       "TRACKING_SOURCE: TRACKING_ID", "SCOPE: recorded evidence only"],
         }
         for case_id, required in mutations.items():
             spec = prepare.CASES[case_id]
@@ -66,6 +69,8 @@ class StrictLegacyPacketTests(unittest.TestCase):
                     self.assertNotRegex(spec["answer"].replace(item, replacement), pattern)
         self.assertNotIn("payments", prepare.CASES["ATR-04"]["prompt_suffix"])
         self.assertNotIn("ConfigHub", prepare.CASES["INV-03"]["prompt_suffix"])
+        self.assertNotIn("stale", prepare.CASES["ATR-04"]["prompt_suffix"].lower())
+        self.assertNotIn("payments", prepare.CASES["ATR-03"]["prompt_suffix"])
 
     def test_actual_report_schema_counts_one_default_weight_regex_not_tool_indicators(self):
         # The harness report schema uses the embedded definition's default
@@ -102,8 +107,14 @@ class StrictLegacyPacketTests(unittest.TestCase):
                                  (prepare.REPO / "evals" / spec["directory"] / "scaffold.sh").read_bytes())
                 staged_prompt = (with_root / "prompt.md").read_bytes()
                 source_prompt = (prepare.REPO / "evals" / spec["directory"] / "prompt.md").read_bytes()
-                self.assertEqual(staged_prompt, prepare.strict_prompt(source_prompt, spec["prompt_suffix"]))
+                self.assertEqual(staged_prompt, prepare.strict_prompt(source_prompt, case_id, spec["prompt_suffix"]))
                 self.assertNotIn(spec["answer"].encode(), staged_prompt)
+                body = staged_prompt.split(b"---\n", 2)[-1]
+                self.assertNotIn(b"Finish with one line", body)
+                if case_id == "ATR-01":
+                    self.assertNotIn(b"This case measures a narrow answer contract", body)
+                    self.assertEqual(body.count(b"FIELD_PATH:"), 1)
+                    self.assertEqual(body.count(b"HUMAN_ACTOR:"), 1)
                 self.assertFalse((with_root / "graders" / spec["answer_grader"]).exists())
                 self.assertTrue((with_root / "graders/verified-answer.md").is_file())
                 graders = list((with_root / "graders").glob("*.md"))
@@ -158,6 +169,62 @@ class StrictLegacyPacketTests(unittest.TestCase):
                     prepare.prepare(Path(temp) / "unused", "legacy")
             finally:
                 prepare.REPO = original_repo
+
+    def _fake_repo(self, root):
+        fake_repo = root / "repo"
+        (fake_repo / "evals").mkdir(parents=True)
+        shutil.copy2(prepare.REPO / prepare.MANIFEST_PATH, fake_repo / prepare.MANIFEST_PATH)
+        for spec in prepare.CASES.values():
+            shutil.copytree(prepare.REPO / "evals" / spec["directory"],
+                            fake_repo / "evals" / spec["directory"])
+        shutil.copytree(prepare.REPO / "evals/owner-unlabelled", fake_repo / "evals/owner-unlabelled")
+        return fake_repo
+
+    def test_manifest_projection_allows_unrelated_preparation_change_but_binds_full_digest(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            fake_repo = self._fake_repo(root)
+            manifest_path = fake_repo / prepare.MANIFEST_PATH
+            manifest = json.loads(manifest_path.read_text())
+            manifest["groups"][0]["cases"][2]["benchmark_admission"] = "updated unrelated preparation note"
+            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
+            original_repo = prepare.REPO
+            try:
+                prepare.REPO = fake_repo
+                out = root / "packet"
+                facts = prepare.prepare(out, prepare.CONTRACT)
+                self.assertNotEqual(facts["manifestSha256"],
+                                    prepare.sha256((original_repo / prepare.MANIFEST_PATH).read_bytes()))
+                self.assertEqual(prepare.verify_prepared(out, prepare.CONTRACT), facts)
+                manifest["groups"][0]["cases"][2]["benchmark_admission"] = "another unrelated edit"
+                manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
+                with self.assertRaisesRegex(prepare.PacketError, "packet identity"):
+                    prepare.verify_prepared(out, prepare.CONTRACT)
+            finally:
+                prepare.REPO = original_repo
+
+    def test_manifest_projection_rejects_frozen_question_reference_control_and_weight_changes(self):
+        mutations = (
+            lambda value: value["groups"][0]["cases"][2].__setitem__("question", "changed"),
+            lambda value: value["groups"][0]["cases"][2].__setitem__("reference", "changed"),
+            lambda value: value["groups"][0]["cases"][2].__setitem__("controls", ["changed"]),
+            lambda value: value["groups"][0].__setitem__("weight", 0.2),
+        )
+        for mutate in mutations:
+            with self.subTest(mutate=mutate), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                fake_repo = self._fake_repo(root)
+                manifest_path = fake_repo / prepare.MANIFEST_PATH
+                manifest = json.loads(manifest_path.read_text())
+                mutate(manifest)
+                manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
+                original_repo = prepare.REPO
+                try:
+                    prepare.REPO = fake_repo
+                    with self.assertRaisesRegex(prepare.PacketError, "selected case semantics or group weights"):
+                        prepare.verify_source()
+                finally:
+                    prepare.REPO = original_repo
 
 
 if __name__ == "__main__":

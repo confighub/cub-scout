@@ -22,18 +22,22 @@ prompt and answer grader differ from its pinned source; `case.yaml`, tool-use
 indicator graders, and `scaffold.sh` remain byte-identical. Both staged arms
 are byte-identical. The raw scaffold is the same complete recorded Kubernetes
 export described in [`../README.md`](../README.md); no scaffold is executed
-during preparation. `prepared.json` records the frozen manifest digest, source
-and generated file hashes, case references, and arm equality. Verification
-rejects changed source inputs, changed/missing/extra staged files, and
+during preparation. The generator pins a canonical projection of the five
+selected questions, references, controls, bindings, and all six group weights.
+`prepared.json` also records the exact full-manifest digest seen at preparation
+time, plus source and generated file hashes, case references, and arm equality.
+This permits unrelated manifest metadata to change before preparation while
+still making later verification reject any full-manifest change. Verification
+also rejects changed source inputs, changed/missing/extra staged files, and
 symlinks.
 
 The generated answer schemas distinguish an API field manager from a human
 actor and literal argv, use `UNKNOWN` where the recording does not identify a
-person or command, and state recorded-evidence-only scope. The Argo answer
-schema requires the configured annotation tracking method and the conflicting
-instance label to be explained together. The expected answers live only in
-the grader definitions; the generated prompts give a format and evidence
-boundary, not the answer values.
+person or command, and state recorded-evidence-only scope. ATR-03 uses explicit
+manager and manual-change evidence fields; ATR-04 separately records tracking
+mode, both observed identifiers, and which source is selected. The expected
+answers live only in the grader definitions; the generated prompts give
+formats and allowed alternatives, not the answer values.
 
 The generator writes one correctness `regex` grader per case, anchored to the
 entire `last_message`, with no multiline or case-insensitive flag. It also
