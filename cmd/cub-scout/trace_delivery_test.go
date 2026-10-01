@@ -4,7 +4,9 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -475,6 +477,117 @@ func TestTraceJoins_ConflictingIDsBeatMatchingSlugs(t *testing.T) {
 	if strings.Join(ids, ",") != "same-unit,slug-only" {
 		t.Fatalf("joined events = %v, want same-unit and slug-only; other-unit shares the slug but not the unit ID", ids)
 	}
+}
+
+func TestTraceConfigHubSlugJoinsAreCaseSensitive(t *testing.T) {
+	unitID := "123e4567-e89b-12d3-a456-426614174000"
+	upperUnitID := "123E4567-E89B-12D3-A456-426614174000"
+	targetID := "223e4567-e89b-12d3-a456-426614174000"
+	upperTargetID := "223E4567-E89B-12D3-A456-426614174000"
+
+	for _, reverse := range []bool{false, true} {
+		events := []ConfigHubUnitEventEvidence{
+			{EventID: "same-case", Unit: "PaymentsAPI", Space: "prod"},
+			{EventID: "wrong-case", Unit: "paymentsapi", Space: "prod"},
+		}
+		if reverse {
+			events[0], events[1] = events[1], events[0]
+		}
+		got, omission := matchTraceUnitEvents(agent.TraceDeliveryCorrelation{
+			UnitSlug: "PaymentsAPI", Space: "prod",
+		}, events)
+		if len(got) != 1 || got[0].EventID != "same-case" {
+			t.Errorf("reverse=%v: joined events = %+v, want only same-case slug; opposite case must not cross-join", reverse, got)
+		}
+		if omission.Layer != "" {
+			t.Errorf("reverse=%v: omission = %+v, want none when an exact event matched", reverse, omission)
+		}
+
+		got, omission = matchTraceUnitEvents(agent.TraceDeliveryCorrelation{
+			UnitSlug: "PaymentsAPI", Space: "prod",
+		}, []ConfigHubUnitEventEvidence{{EventID: "wrong-case", Unit: "paymentsapi", Space: "prod"}})
+		if len(got) != 0 || omission.Reason != "no unit-event row matched the traced resource by exact unit ID or unit slug plus space" {
+			t.Errorf("reverse=%v: case-mismatched event = %+v, omission=%+v; want no event and explainable no-match", reverse, got, omission)
+		}
+	}
+
+	correlation := agent.TraceDeliveryCorrelation{Target: "West", TargetID: targetID}
+	if ok, _ := traceTargetMatches(correlation, "West", ""); !ok {
+		t.Fatal("exact-case target slug did not match")
+	}
+	if ok, _ := traceTargetMatches(correlation, "west", ""); ok {
+		t.Fatal("opposite-case target slug matched")
+	}
+	if ok, _ := traceTargetMatches(correlation, "elsewhere", upperTargetID); !ok {
+		t.Fatal("UUID target IDs should retain case-insensitive identity matching")
+	}
+	if ok, _ := traceTargetMatches(correlation, "West", "different-id"); ok {
+		t.Fatal("matching slug overrode conflicting target IDs")
+	}
+
+	got, _ := matchTraceUnitEvents(agent.TraceDeliveryCorrelation{
+		UnitSlug: "PaymentsAPI", UnitID: unitID, Space: "prod",
+	}, []ConfigHubUnitEventEvidence{
+		{EventID: "same-unit-id", Unit: "unrelated", UnitID: upperUnitID, Space: "prod"},
+		{EventID: "wrong-unit-id", Unit: "PaymentsAPI", UnitID: "different-id", Space: "prod"},
+	})
+	if len(got) != 1 || got[0].EventID != "same-unit-id" {
+		t.Fatalf("UUID unit-ID precedence/case normalization produced %+v; want only same-unit-id", got)
+	}
+}
+
+func TestTraceSlugMismatchStaysOmittedInSharedCLIAndTUIEvidence(t *testing.T) {
+	result := &agent.TraceResult{
+		Object: agent.ResourceRef{Kind: "Deployment", Name: "api", Namespace: "prod"},
+		Tool:   "argocd",
+	}
+	correlation := agent.TraceDeliveryCorrelation{UnitSlug: "PaymentsAPI", Space: "prod", Target: "West"}
+	raw := &GitOpsDeliveryEvidence{
+		ObservedAt: time.Date(2026, 10, 1, 12, 0, 0, 0, time.UTC),
+		Scope:      GitOpsDeliveryEvidenceScope{Space: "prod", Since: "24h", MaxItems: 10},
+		ConfigHub: &ConfigHubDeliveryEvidence{
+			Releases:   []ConfigHubReleaseEvidence{{ReleaseID: "wrong-target", Space: "prod", Target: "west"}},
+			UnitEvents: []ConfigHubUnitEventEvidence{{EventID: "wrong-unit", Space: "prod", Unit: "paymentsapi"}},
+		},
+	}
+	result.DeliveryEvidence = correlateTraceDeliveryEvidence(result, raw, correlation, nil)
+	if result.DeliveryEvidence == nil || len(result.DeliveryEvidence.Releases) != 0 || len(result.DeliveryEvidence.UnitEvents) != 0 {
+		t.Fatalf("shared observation attached opposite-case candidates: %+v", result.DeliveryEvidence)
+	}
+	if !hasTraceDeliveryOmission(result.DeliveryEvidence.Omissions, "confighub.releases", "no release row matched") ||
+		!hasTraceDeliveryOmission(result.DeliveryEvidence.Omissions, "confighub.unitEvents", "no unit-event row matched") {
+		t.Fatalf("case mismatch should remain explicit as incomplete correlation: %+v", result.DeliveryEvidence.Omissions)
+	}
+
+	// CLI JSON and TUI human rendering project the same correlated model.
+	cli := convertTraceToV014(result, "Deployment", "api", "prod", nil)
+	if cli.DeliveryEvidence == nil || len(cli.DeliveryEvidence.Releases) != 0 || len(cli.DeliveryEvidence.UnitEvents) != 0 ||
+		!hasTraceDeliveryOmission(cli.DeliveryEvidence.Omissions, "confighub.releases", "no release row matched") ||
+		!hasTraceDeliveryOmission(cli.DeliveryEvidence.Omissions, "confighub.unitEvents", "no unit-event row matched") {
+		t.Fatalf("CLI JSON model did not preserve the safe omission: %+v", cli.DeliveryEvidence)
+	}
+	encoded, err := json.Marshal(cli)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(encoded, []byte("wrong-target")) || bytes.Contains(encoded, []byte("wrong-unit")) {
+		t.Fatalf("CLI projection leaked a case-mismatched row: %s", encoded)
+	}
+	var tui bytes.Buffer
+	renderTraceDeliveryEvidenceHumanTo(&tui, result.DeliveryEvidence)
+	if strings.Contains(tui.String(), "wrong-target") || strings.Contains(tui.String(), "wrong-unit") ||
+		!strings.Contains(tui.String(), "no unit-event row matched") || !strings.Contains(tui.String(), "no release row matched") {
+		t.Fatalf("TUI projection did not retain safe omission evidence: %s", tui.String())
+	}
+}
+
+func hasTraceDeliveryOmission(omissions []agent.TraceDeliveryOmission, layer, reasonSubstring string) bool {
+	for _, omission := range omissions {
+		if omission.Layer == layer && strings.Contains(omission.Reason, reasonSubstring) {
+			return true
+		}
+	}
+	return false
 }
 
 // A resource that carries a unit label but names no space joins only through
