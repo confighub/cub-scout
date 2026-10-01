@@ -1,0 +1,83 @@
+Name:             spark-worker-0
+Namespace:        default
+Priority:         0
+Service Account:  spark
+Node:             helm-expt-parity-spark-mqghfthi-196o-control-plane/192.168.97.2
+Start Time:       Tue, 16 Jun 2026 11:21:30 +0100
+Labels:           app.kubernetes.io/component=worker
+                  app.kubernetes.io/instance=spark
+                  app.kubernetes.io/managed-by=Helm
+                  app.kubernetes.io/name=spark
+                  app.kubernetes.io/version=4.0.0
+                  apps.kubernetes.io/pod-index=0
+                  controller-revision-hash=spark-worker-6c889fbf84
+                  helm.sh/chart=spark-10.0.3
+                  statefulset.kubernetes.io/pod-name=spark-worker-0
+Annotations:      <none>
+Status:           Pending
+IP:               10.244.0.15
+IPs:
+  IP:           10.244.0.15
+Controlled By:  StatefulSet/spark-worker
+Containers:
+  spark-worker:
+    Container ID:
+    Image:           docker.io/bitnami/spark:4.0.0-debian-12-r20
+    Image ID:
+    Port:            8080/TCP (http)
+    Host Port:       0/TCP (http)
+    SeccompProfile:  RuntimeDefault
+    State:           Waiting
+      Reason:        ImagePullBackOff
+    Ready:           False
+    Restart Count:   0
+    Limits:
+      cpu:                750m
+      ephemeral-storage:  2Gi
+      memory:             768Mi
+    Requests:
+      cpu:                500m
+      ephemeral-storage:  50Mi
+      memory:             512Mi
+    Liveness:             tcp-socket :8080 delay=180s timeout=5s period=20s #success=1 #failure=6
+    Readiness:            http-get http://:8080/ delay=30s timeout=5s period=10s #success=1 #failure=6
+    Startup:              http-get http://:8080/ delay=30s timeout=5s period=10s #success=1 #failure=6
+    Environment:
+      SPARK_MODE:               worker
+      BITNAMI_DEBUG:            false
+      SPARK_DAEMON_MEMORY:
+      SPARK_WORKER_WEBUI_PORT:  8080
+      SPARK_DAEMON_JAVA_OPTS:
+      SPARK_MASTER_URL:         spark://spark-master-svc:7077
+      SPARK_WORKER_OPTS:
+    Mounts:
+      /opt/bitnami/spark/conf from empty-dir (rw,path="app-conf-dir")
+      /opt/bitnami/spark/logs from empty-dir (rw,path="app-logs-dir")
+      /opt/bitnami/spark/tmp from empty-dir (rw,path="app-tmp-dir")
+      /opt/bitnami/spark/work from empty-dir (rw,path="app-work-dir")
+      /tmp from empty-dir (rw,path="tmp-dir")
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True
+  Initialized                 True
+  Ready                       False
+  ContainersReady             False
+  PodScheduled                True
+Volumes:
+  empty-dir:
+    Type:        EmptyDir (a temporary directory that shares a pod's lifetime)
+    Medium:
+    SizeLimit:   <unset>
+QoS Class:       Burstable
+Node-Selectors:  <none>
+Tolerations:     node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                 node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason     Age                   From               Message
+  ----     ------     ----                  ----               -------
+  Normal   Scheduled  13m                   default-scheduler  Successfully assigned default/spark-worker-0 to helm-expt-parity-spark-mqghfthi-196o-control-plane
+  Normal   Pulling    10m (x5 over 13m)     kubelet            spec.containers{spark-worker}: Pulling image "docker.io/bitnami/spark:4.0.0-debian-12-r20"
+  Warning  Failed     10m (x5 over 13m)     kubelet            spec.containers{spark-worker}: Failed to pull image "docker.io/bitnami/spark:4.0.0-debian-12-r20": rpc error: code = NotFound desc = failed to pull and unpack image "docker.io/bitnami/spark:4.0.0-debian-12-r20": failed to resolve reference "docker.io/bitnami/spark:4.0.0-debian-12-r20": docker.io/bitnami/spark:4.0.0-debian-12-r20: not found
+  Warning  Failed     10m (x5 over 13m)     kubelet            spec.containers{spark-worker}: Error: ErrImagePull
+  Normal   BackOff    3m35s (x42 over 13m)  kubelet            spec.containers{spark-worker}: Back-off pulling image "docker.io/bitnami/spark:4.0.0-debian-12-r20"
+  Warning  Failed     3m35s (x42 over 13m)  kubelet            spec.containers{spark-worker}: Error: ImagePullBackOff

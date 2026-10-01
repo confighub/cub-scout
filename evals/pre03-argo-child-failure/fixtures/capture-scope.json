@@ -1,0 +1,62 @@
+{
+  "cleanup": {
+    "interpretation": "receipt fields conflict; cleanup is not confirmed",
+    "source_receipt_cleanup_result": "blocked",
+    "source_receipt_lifecycle_value": "cleaned-up"
+  },
+  "run_id": "helm-expt-parity-spark-mqghfthi-196o",
+  "schema": "pre03-argo-child-evidence.v1",
+  "scope": {
+    "classification": "historical retained runtime observation",
+    "controller_branch": "Argo-only parent/child Application chain",
+    "crossplane": "no Crossplane Claim/XR/composed managed-resource evidence is included",
+    "current_state": "not established",
+    "parent_child_join": "parent status resource GVK/namespace/name plus child tracking-id; the two Application UIDs are distinct and no UID foreign-key between them is supplied",
+    "pod_join": "child tree shows StatefulSet to Pod nesting; no complete Kubernetes object graph is claimed",
+    "sequence": "separate Argo application and pod diagnostic responses; sequential, not atomic"
+  },
+  "source_case": "bitnami-spark-ha",
+  "source_file_sha256": {
+    "argocd-core-child-tree.txt": "5063434140df63adb2949f8287a88898e7d1c2c2f70a416a7ca3446e3d5a61f3",
+    "argocd-core-child.json": "c8e5c7476a8b0f3a7941587957b63caaa651247715ed537be3a6f3795f0e3ffe",
+    "argocd-core-root-tree.txt": "ff14e194abf60ebfed7429c30ae2c87548875a068a3bca920c10a3b60dd24411",
+    "argocd-core-root.json": "5f2fe7e6f3200327567b50abd695a8bbeb85f7c6d5f4e92976798bb5a8e36fff",
+    "events.txt": "2adf884044616c0a66e01a9f1460e4f7c61579c89a8c7282ec4adc5c007b4526",
+    "pod-describe.txt": "4b1f8b55eccecd18a1e0d2b1b537eef08ddd4bc3323c0b8bf64faf905948d3a7"
+  },
+  "source_files": {
+    "argocd-core-child-tree.txt": "runs/live-helm-confighub-compare/bitnami-spark-ha/argocd-core-child-tree.txt",
+    "argocd-core-child.json": "runs/live-helm-confighub-compare/bitnami-spark-ha/argocd-core-child.json",
+    "argocd-core-root-tree.txt": "runs/live-helm-confighub-compare/bitnami-spark-ha/argocd-core-root-tree.txt",
+    "argocd-core-root.json": "runs/live-helm-confighub-compare/bitnami-spark-ha/argocd-core-root.json",
+    "events.txt": "runs/live-helm-confighub-compare/bitnami-spark-ha/runtime-diagnostics/confighub-oci-argo/default/events.txt",
+    "pod-describe.txt": "runs/live-helm-confighub-compare/bitnami-spark-ha/runtime-diagnostics/confighub-oci-argo/default/spark-worker-0/describe.txt"
+  },
+  "source_git_blob": {
+    "argocd-core-child-tree.txt": "7d2222eaac7aea65ed4c923feb5be3ffe784b807",
+    "argocd-core-child.json": "d7cd66b16862f937accb25fa77787e38d45262d7",
+    "argocd-core-root-tree.txt": "069399dab0ef44b2fdac4a82054ad2125ab7fa28",
+    "argocd-core-root.json": "64e5075ba2256e0a799996f5cd98c2d02a672f94",
+    "events.txt": "d36cecd6170ee4f1fecb325b6ff98ea06660cfe1",
+    "pod-describe.txt": "21b8fc2e8114a3f4d482c064886afd7ade80a869"
+  },
+  "source_receipt": {
+    "included_as_model_evidence": false,
+    "observedAt": "2026-06-16T10:11:41Z",
+    "path": "runs/live-helm-confighub-compare/bitnami-spark-ha/receipt.yaml",
+    "sha256": "ba2be4b6aec3e9e854a9bedbaf2471a44a617f720545bb6e41ffa79b6707c8bd"
+  },
+  "source_repository": "confighub/helm-expt",
+  "source_revision": "9ab4c753a888dc305a3c07956c9f8f5a19eb70a0",
+  "timestamps": {
+    "child_created": "2026-06-16T10:27:43Z",
+    "child_health_transition": "2026-06-16T10:27:45Z",
+    "child_reconciled": "2026-06-16T10:34:36Z",
+    "meaning": "Values below are object creation, condition-transition, and reconcile timestamps from separate source responses, not file-response capture times.",
+    "parent_created": "2026-06-16T10:13:17Z",
+    "parent_health_transition": "2026-06-16T10:13:25Z",
+    "parent_reconciled": "2026-06-16T10:34:55Z",
+    "pod_event_ages": "relative ages in the describe/tree outputs; no absolute event response capture timestamp supplied",
+    "response_capture_times": "not supplied per file"
+  }
+}

@@ -527,12 +527,29 @@
         {
           "id": "PRE-03",
           "question": "Argo/Crossplane child-chain failure",
-          "status": "planned",
-          "existing_case": null,
+          "status": "recorded_projection_prepared_not_run",
+          "existing_case": "evals/pre03-argo-child-failure",
           "reference": "Trace parent to the failing child and name its failure evidence.",
           "controls": [
             "Parent Synced/Ready does not substitute for child coverage"
-          ]
+          ],
+          "evidence_refresh": "2026-10-01",
+          "source_provenance": {
+            "repository": "confighub/helm-expt",
+            "revision": "9ab4c753a888dc305a3c07956c9f8f5a19eb70a0",
+            "fixture_files_sha256": {
+              "argocd-core-child-tree.txt": "5063434140df63adb2949f8287a88898e7d1c2c2f70a416a7ca3446e3d5a61f3",
+              "argocd-core-child.json": "c8e5c7476a8b0f3a7941587957b63caaa651247715ed537be3a6f3795f0e3ffe",
+              "argocd-core-root-tree.txt": "ff14e194abf60ebfed7429c30ae2c87548875a068a3bca920c10a3b60dd24411",
+              "argocd-core-root.json": "5f2fe7e6f3200327567b50abd695a8bbeb85f7c6d5f4e92976798bb5a8e36fff",
+              "capture-scope.json": "a1b64893b8df6ab27200e2b0f08e6bbb1f4413ac8694bfbdb6a24c6f485c5878",
+              "events.txt": "2adf884044616c0a66e01a9f1460e4f7c61579c89a8c7282ec4adc5c007b4526",
+              "pod-describe.txt": "4b1f8b55eccecd18a1e0d2b1b537eef08ddd4bc3323c0b8bf64faf905948d3a7"
+            },
+            "report": "evals/reports/2026-10-01-pre03-argo-child-failure.json",
+            "limits": "Argo-only retained historical chain: parent Synced/Healthy, tracked child Synced/Progressing, and a descendant Pod ImagePullBackOff with exact ErrImagePull/NotFound evidence. No Crossplane chain or broader coverage claim. Sequential, non-atomic, not current; source cleanup fields conflict."
+          },
+          "benchmark_admission": "Prepared Argo-only recorded projection; not run or admitted. Crossplane branch remains unclaimed; full suite remains non-executable pending remaining cases and equal-tool/protocol gates."
         },
         {
           "id": "PRE-04",
