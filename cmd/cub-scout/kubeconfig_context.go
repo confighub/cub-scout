@@ -57,7 +57,10 @@ func resolveClusterConfig(
 		}
 	}
 
-	clientConfig := clientcmd.NewNonInteractiveClientConfig(*raw, selected, &clientcmd.ConfigOverrides{}, rules)
+	// Loading is complete. Supplying ConfigAccess here would install an auth
+	// provider persister that can rewrite kubeconfig during credential refresh.
+	// A nil access keeps authentication working with client-go's no-op persister.
+	clientConfig := clientcmd.NewNonInteractiveClientConfig(*raw, selected, &clientcmd.ConfigOverrides{}, nil)
 	config, err := clientConfig.ClientConfig()
 	if err != nil {
 		return nil, "", fmt.Errorf("build Kubernetes config for context %q: %w", selected, err)
