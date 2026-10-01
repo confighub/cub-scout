@@ -17,7 +17,9 @@ SPEC.loader.exec_module(probe)
 
 
 def request(body=None, auth=None, path="/v1/messages", method="POST", headers=None):
-    payload = body if isinstance(body, bytes) else json.dumps(body or {"tools": [{"name": "Read"}], "stream": True}).encode()
+    content = dict(body or {"tools": [{"name": "Read"}], "stream": True}) if not isinstance(body, bytes) else None
+    if content is not None: content.setdefault("model", probe.PINNED_MODEL)
+    payload = body if isinstance(body, bytes) else json.dumps(content).encode()
     values = {"content-length": str(len(payload)), "content-type": "application/json",
               "x-api-key": probe.FAKE_KEY if auth is None else auth}
     values.update(headers or {})
@@ -53,6 +55,8 @@ class OfflineContracts(unittest.TestCase):
         observed = probe.validate_probe(terminal(), records, 0)
         self.assertEqual(observed["tool_inventory"], ["Read"])
         self.assertEqual(observed["terminal_text"], "offline-probe-terminal")
+        _, wrong_model, _ = request({"model": "ignored-model-flag", "tools": [{"name": "Read"}], "stream": True})
+        with self.assertRaises(probe.ProbeError): probe.validate_probe(terminal(), wrong_model, 0)
 
     def test_terminal_truth_rejects_rc_error_max_turns_text_and_is_error(self):
         _, records, _ = request()

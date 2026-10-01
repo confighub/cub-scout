@@ -132,6 +132,8 @@ def validate_probe(stdout: bytes, requests: list[dict], return_code: int) -> dic
         body = strict_json(record["body"])
         if not isinstance(body, dict):
             raise ProbeError("provider request JSON is not an object")
+        if body.get("model") != PINNED_MODEL:
+            raise ProbeError("provider request model differs from the pinned mock label")
         tools = body.get("tools")
         if not isinstance(tools, list) or any(not isinstance(t, dict) for t in tools):
             raise ProbeError("provider request lacks a valid tool inventory")
