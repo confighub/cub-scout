@@ -216,7 +216,7 @@ class RecordedScalePacket(unittest.TestCase):
             elif mutation == "native-excluded":
                 changed["native"]["excludedFromScopeCount"] = 289
             elif mutation == "native-detector-detail":
-                changed["native"]["resources"][0]["ownershipDetection"]["status"] = "unknown"
+                changed["native"]["resources"][0]["ownershipDetection"]["source"] = "different-detector"
             elif mutation == "provenance":
                 changed["native-summary"]["provenance"]["sha256"] = "0" * 64
             else:
@@ -441,7 +441,13 @@ for line in sys.stdin:
                 while not heartbeat.exists() and __import__("time").monotonic() < ready_by:
                     __import__("time").sleep(0.01)
                 if not heartbeat.exists():
-                    preflight.stop_owned_group(process.pid, grace=0.05, process=process)
+                    try:
+                        preflight.stop_owned_group(process.pid, grace=0.05, process=process)
+                        process.wait(timeout=1)
+                    finally:
+                        for pipe in (process.stdin, process.stdout, process.stderr):
+                            if pipe is not None:
+                                pipe.close()
                     raise AssertionError("owned descendant did not reach its heartbeat readiness signal")
                 return process
 
