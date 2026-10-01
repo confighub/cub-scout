@@ -239,6 +239,16 @@ class CaptureContractTests(unittest.TestCase):
             self.assertEqual(error.exception.code, 2)
             run.assert_not_called()
 
+    def test_tool_launcher_name_is_preserved_after_regular_target_validation(self):
+        with tempfile.TemporaryDirectory() as td:
+            target = Path(td) / "docker-tools"
+            target.write_bytes(b"synthetic executable"); target.chmod(0o700)
+            launcher = Path(td) / "docker"; launcher.symlink_to(target)
+            self.assertEqual(capture._tool(launcher), launcher)
+            self.assertEqual(capture.sha256(launcher.read_bytes()), capture.sha256(target.read_bytes()))
+            target.chmod(0o600)
+            with self.assertRaises(capture.CaptureError): capture._tool(launcher)
+
     def test_cleanup_after_partial_create_deletes_only_marked_attempts(self):
         with tempfile.TemporaryDirectory() as td:
             private = Path(td) / "admin.kubeconfig"

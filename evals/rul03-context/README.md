@@ -53,3 +53,10 @@ Run the offline test suite with bytecode disabled:
 ```sh
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/rul03-context -v
 ```
+
+The first actual preflight stopped before cluster creation: resolving OrbStack's
+`docker` launcher to `docker-tools` changed argv[0] and broke CLI dispatch. The
+helper now validates the resolved regular executable while preserving its
+launcher path; file hashes still cover the resolved executable bytes. Missing
+private configs after partial creation can be replaced with empty configs only
+inside the existing owner-private directory, never through shared defaults.

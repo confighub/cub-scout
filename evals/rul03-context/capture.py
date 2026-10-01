@@ -328,12 +328,12 @@ def _command(binary: Path, args: list[str], timeout: float, env: dict[str, str],
 
 def _tool(path: Path) -> Path:
     candidate = path.expanduser().absolute()
-    if candidate.is_symlink():
-        raise CaptureError("tool binary must not be a symlink")
+    # Preserve the launcher name for argv[0]-dispatched installations such as
+    # OrbStack's docker -> docker-tools. Hashing still reads the resolved bytes.
     resolved = candidate.resolve(strict=True)
     if not resolved.is_file() or not os.access(resolved, os.X_OK):
         raise CaptureError("tool binary is not executable")
-    return resolved
+    return candidate
 
 
 def require_local_docker(docker: Path, env: dict[str, str], deadline: float) -> None:
