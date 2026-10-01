@@ -14,8 +14,11 @@ is exported with local `git archive` and is never edited.
 
 The frozen HLT-04 question, reference, controls, and group weight are unchanged.
 The manifest maps HLT-04 to this fixture with status
-`synthetic_source_replay_prepared_not_run`. The fixture has a strict exact-answer
-grader and a copy-only scaffold that gives both arms byte-identical files.
+`synthetic_source_replay_prepared_not_run`. The fixture has a strict exact-answer grader and a copy-only scaffold that gives
+both arms byte-identical files. The prompt specifies minified one-line JSON,
+exact key order, and neutral value vocabularies. The grader pins the
+source-supported answer and checks that renewal or a future timestamp is not
+treated as proof of a new check or freshness.
 
 ## Expected results
 

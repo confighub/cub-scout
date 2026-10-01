@@ -67,12 +67,14 @@ type hlt04AnswerRow struct {
 }
 
 type hlt04Answer struct {
-	Records                    []hlt04AnswerRow `json:"records"`
-	CheckReceipt               string           `json:"check_receipt"`
-	CheckReceiptConsumed       string           `json:"check_receipt_consumed"`
-	LastTransitionTimeRole     string           `json:"last_transition_time_role"`
-	AppliedReleaseDigestProven string           `json:"applied_release_digest_proven"`
-	EvidenceScope              string           `json:"evidence_scope"`
+	Records                        []hlt04AnswerRow `json:"records"`
+	CheckReceipt                   string           `json:"check_receipt"`
+	CheckReceiptConsumed           string           `json:"check_receipt_consumed"`
+	LastTransitionTimeRole         string           `json:"last_transition_time_role"`
+	AppliedReleaseDigestProven     string           `json:"applied_release_digest_proven"`
+	EvidenceScope                  string           `json:"evidence_scope"`
+	RenewalProvesNewCheck          string           `json:"renewal_proves_new_check"`
+	FutureTimestampProvesFreshness string           `json:"future_timestamp_proves_freshness"`
 }
 
 func TestHLT04FixtureHashesSchemaAndStrictAnswer(t *testing.T) {
@@ -151,6 +153,11 @@ func TestHLT04FixtureHashesSchemaAndStrictAnswer(t *testing.T) {
 		t.Fatal(err)
 	}
 	promptText := string(prompt)
+	for _, required := range []string{"minified, single-line JSON", "UNKNOWN", "renewal_proves_new_check", "future_timestamp_proves_freshness", "SEPARATE_SYNTHETIC_RECEIPT", "CONDITION_TRANSITION_NOT_CHECK_EXECUTION", "MIXED_EVIDENCE"} {
+		if !strings.Contains(promptText, required) {
+			t.Errorf("prompt is missing answer-format/vocabulary definition %q", required)
+		}
+	}
 	if !strings.HasPrefix(promptText, "---\n") {
 		t.Fatal("prompt frontmatter missing")
 	}
@@ -175,7 +182,8 @@ func TestHLT04FixtureHashesSchemaAndStrictAnswer(t *testing.T) {
 	answer := hlt04Answer{Records: make([]hlt04AnswerRow, 0, len(evidence.Records)),
 		CheckReceipt: "AUTHORED_SYNTHETIC_NOT_CONTROLLER_EVIDENCE", CheckReceiptConsumed: "NO",
 		LastTransitionTimeRole:     "CONDITION_TRANSITION_NOT_CHECK_EXECUTION",
-		AppliedReleaseDigestProven: "NO", EvidenceScope: "SYNTHETIC_SOURCE_CONTRACT_ONLY"}
+		AppliedReleaseDigestProven: "NO", EvidenceScope: "SYNTHETIC_SOURCE_CONTRACT_ONLY",
+		RenewalProvesNewCheck: "NO", FutureTimestampProvesFreshness: "NO"}
 	for i, record := range evidence.Records {
 		wantID := "R" + string(rune('0'+(i+1)/10)) + string(rune('0'+(i+1)%10))
 		if record.ID != wantID || len(record.RawInputs) != 4 || record.SyntheticNow == "" || len(record.ComputedReport) == 0 {
@@ -261,6 +269,23 @@ func TestHLT04FixtureHashesSchemaAndStrictAnswer(t *testing.T) {
 			b, _ := json.Marshal(v)
 			return bytes.Replace(b, []byte(`"computed_observed_at":"2026-10-01T12:10:00Z"`), []byte(`"computed_observed_at":NaN`), 1)
 		}},
+		{"renewal-claim-yes", func(v hlt04Answer) []byte { v.RenewalProvesNewCheck = "YES"; b, _ := json.Marshal(v); return b }},
+		{"renewal-claim-unknown", func(v hlt04Answer) []byte { v.RenewalProvesNewCheck = "UNKNOWN"; b, _ := json.Marshal(v); return b }},
+		{"future-timestamp-claim-yes", func(v hlt04Answer) []byte {
+			v.FutureTimestampProvesFreshness = "YES"
+			b, _ := json.Marshal(v)
+			return b
+		}},
+		{"future-timestamp-claim-unknown", func(v hlt04Answer) []byte {
+			v.FutureTimestampProvesFreshness = "UNKNOWN"
+			b, _ := json.Marshal(v)
+			return b
+		}},
+		{"noncanonical-whitespace", func(v hlt04Answer) []byte {
+			b, _ := json.Marshal(v)
+			return bytes.Replace(b, []byte(`"records":`), []byte(`"records": `), 1)
+		}},
+		{"trailing-newline", func(v hlt04Answer) []byte { b, _ := json.Marshal(v); return append(b, '\n') }},
 		{"duplicate-key", func(v hlt04Answer) []byte {
 			b, _ := json.Marshal(v)
 			return bytes.Replace(b, []byte(`"check_receipt":"AUTHORED_SYNTHETIC_NOT_CONTROLLER_EVIDENCE"`), []byte(`"check_receipt":"AUTHORED_SYNTHETIC_NOT_CONTROLLER_EVIDENCE","check_receipt":"CONTROLLER_CONFIRMED"`), 1)
@@ -275,7 +300,7 @@ func TestHLT04FixtureHashesSchemaAndStrictAnswer(t *testing.T) {
 			t.Errorf("strict grader accepted %s: %s", tc.name, candidate)
 		}
 	}
-	for _, answerLeak := range []string{"sha256:synthetic-release-a", "sha256:synthetic-older", "2026-10-01T12:26:00Z", "AUTHORED_SYNTHETIC_NOT_CONTROLLER_EVIDENCE"} {
+	for _, answerLeak := range []string{"sha256:synthetic-release-a", "sha256:synthetic-older", "2026-10-01T12:26:00Z"} {
 		if bytes.Contains(prompt, []byte(answerLeak)) {
 			t.Errorf("prompt leaks answer token %q", answerLeak)
 		}
