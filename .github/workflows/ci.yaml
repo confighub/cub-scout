@@ -84,6 +84,9 @@ jobs:
       - name: Run offline RUL-03 capture and fixture-routing guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/rul03-context -v
 
+      - name: Run offline container isolation guards
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/container-isolation -v
+
       - name: Run unit tests
         run: go test ./... -v -covermode=atomic -coverprofile=coverage.out
 
