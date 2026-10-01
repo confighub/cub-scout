@@ -108,3 +108,14 @@ PYTHONDONTWRITEBYTECODE=1 python3 evals/doctor-scan-context/capture.py \
 
 Use a fresh output directory for every attempt. Inspect the retained receipt and
 cleanup status on failure before retrying; do not overwrite failed evidence.
+
+## Recorded agent contract case
+
+`case.yaml`, `prompt.md` and `scaffold.sh` give both arms the four byte-identical
+fixed-source CLI outputs and their provenance. The question checks selected context,
+observed inventory and unknown denied coverage. This standalone product case does
+not alter the frozen 24-case benchmark. Fixture hashes and deterministic positive/
+negative grader controls are tested by `test_case.py`; old outputs lacking the
+context fields cannot satisfy the recorded contract. **Agent execution and scores
+remain unrun** under the paid-evaluation stop. These controls are not agent results,
+routing-through-MCP proof, or cost savings.

@@ -24,8 +24,8 @@ the catalog from a running server.
 |---|---|
 | Wraps | `cub-scout doctor --format json` |
 | Required args | — |
-| Optional args | `namespace` (string — scope filter); `top` (integer — number of top issues; default 3); `with_confighub` (boolean); `confighub_space` (string); `confighub_since` (string); `confighub_stale_after` (string) |
-| Returns | Cluster health summary + rollout evidence + optional bounded delivery evidence + top issues + structured `nextSteps[]` |
+| Optional args | `context` (nonempty Kubernetes context, forwarded as `--kube-context`); `namespace` (string — scope filter); `top` (integer — number of top issues; default 3); `with_confighub` (boolean); `confighub_space` (string); `confighub_since` (string); `confighub_stale_after` (string) |
+| Returns | Cluster health summary + rollout evidence + optional bounded delivery evidence + top issues + structured `nextSteps[]`; selected `kubernetesContext` label and partial-coverage `warnings[]` |
 | When to load (per the registered description) | FIRST standalone tool for "what's wrong?" / "what's broken?" / compact cluster or namespace health summary. Before `explain`, `trace`, or `scan` when the user has not narrowed to one resource. |
 
 ### `map`
@@ -44,8 +44,8 @@ the catalog from a running server.
 |---|---|
 | Wraps | `cub-scout scan --json` |
 | Required args | — |
-| Optional args | `namespace` (string) |
-| Returns | Risk/misconfiguration findings, severity-sorted |
+| Optional args | `namespace` (string); `context` (nonempty Kubernetes context, forwarded as `--kube-context`) |
+| Returns | Risk/misconfiguration findings, severity-sorted; selected `kubernetesContext` label and provider coverage warnings |
 | When to load | AFTER `doctor` when the user wants detailed risk findings. Not a governed promotion gate. |
 
 ### `trace`

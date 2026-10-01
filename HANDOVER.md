@@ -27,7 +27,8 @@ order, quality gates, budgets and decisions.
   200/200/403; each TUI action made seven GETs. Cleanup, credential removal and
   shared/CLI-config integrity passed. The first validator-failure receipt remains
   preserved. Fixed product source `5b362975` passed local build/full Go validation;
-  21 offline helper guards pass. CI's E2E package exhausted its 120-second limit
+  23 offline helper/recorded-case guards pass. The new file-only agent contract
+  case has captured fixtures; paid agent execution remains unrun under the stop. CI's E2E package exhausted its 120-second limit
   as the final smoke test began, so the limit is now 180 seconds; final-head CI
   remains required. Two
   behavior-specific regression probes caught missing shared Doctor context/human
