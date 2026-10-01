@@ -1,5 +1,30 @@
 # cub-scout Handover for the Next AI Coder
 
+## 2026-10-01: Request scope merged; counts diagnostic timed out
+
+Main baseline `59ef366` includes #701: filtered map requests retain resource
+facts and truthful omissions with fewer unrelated collections. Required CI and
+same-observer live before/after proof passed; see the
+[scoped proof](docs/howto/map-kind-request-scope.md). Output bytes and deterministic
+request reductions are not agent-dollar results. v2.12.4 remains published.
+
+The single reviewed `counts-economy.v1` Haiku pair at preparation `88cdbe32`
+timed out in both arms. No retry followed. Its
+[report](evals/reports/2026-10-01-recorded-counts-economy.md) records 0/2 verified
+answers, recursive task depth three, incomplete descendant MCP/usage evidence,
+and 17 reported treatment turns against maxTurns12. Top-level tool inventories
+match, but full runtime grant/limit/accounting admission fails. No general
+savings claim follows. Further paid runs stop pending offline reconciliation.
+
+Recorded estimated spend is now **$4.38666035** (smoke **$1.91745385**, live
+**$2.4692065**, baseline **$0**). The new diagnostic contributes $0.12108595
+producer-reported cost whose completeness is unresolved; this total is not a
+certified all-in bill. Credits and development dollars remain unmeasured.
+The fixed24 manifest remains unchanged and non-executable. Preserve the ignored
+trace archive and external prepared packet; do not access sealed run homes.
+[#645](https://github.com/confighub/cub-scout/issues/645) remains the live queue.
+
+
 ## 2026-10-01: INV-04 actual RBAC evidence
 
 This packet starts from merged baseline `c8073a2`; v2.12.4 remains published.
