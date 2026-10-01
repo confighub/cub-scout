@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -291,6 +292,7 @@ func TestSourceTruthTUIEventUsesSharedCollectorAndRenderer(t *testing.T) {
 	require.NoError(t, binding.err)
 	model := LocalClusterModel{ready: true, cursor: 0, clusterBinding: binding, entries: []MapEntry{{Kind: "Deployment", Name: "api", Namespace: "team-a"}}}
 	updated, cmd := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("Y")})
+	require.Nil(t, cmd, "opening the strategy picker must not read")
 	model = updated.(LocalClusterModel)
 	require.True(t, model.sourceTruthMode)
 	for i, strategy := range agent.AllStrategies() {
@@ -470,4 +472,32 @@ func mustReadFile(t *testing.T, path string) []byte {
 	b, err := os.ReadFile(path)
 	require.NoError(t, err)
 	return b
+}
+
+func TestSourceTruthFluxCleanupFailureWithholdsSurface(t *testing.T) {
+	for _, factoryFails := range []bool{false, true} {
+		name := "successful observation"
+		if factoryFails {
+			name = "failed factory"
+		}
+		t.Run(name, func(t *testing.T) {
+			calls := 0
+			factoryErr := errors.New("binding failed")
+			factory := func(*traceSession) (agent.Tracer, func() error, error) {
+				cleanup := func() error { calls++; return errors.New("private /secret/credential/path") }
+				if factoryFails {
+					return nil, cleanup, factoryErr
+				}
+				return omissionTestTracer{result: &agent.TraceResult{Chain: []agent.ChainLink{{Kind: "GitRepository", URL: "https://example.invalid/repo", Revision: "abc"}}}}, cleanup, nil
+			}
+			surface, err := controllerSurfaceFromFluxWithFactory(context.Background(), nil, "Kustomization", "app", "team-a", factory)
+			require.Nil(t, surface)
+			require.ErrorContains(t, err, "unable to remove private Flux credentials")
+			require.NotContains(t, err.Error(), "/secret/credential/path")
+			require.Equal(t, 1, calls)
+			if factoryFails {
+				require.ErrorIs(t, err, factoryErr)
+			}
+		})
+	}
 }

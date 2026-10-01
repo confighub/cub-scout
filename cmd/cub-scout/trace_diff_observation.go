@@ -262,10 +262,6 @@ func runTraceDiffObservation(ctx context.Context, selection clusterContextSelect
 	return renderTraceDiffObservation(os.Stdout, result, format)
 }
 
-func selectTraceDiffDesired(objects []*unstructured.Unstructured, kind, name, namespace string) (*unstructured.Unstructured, error) {
-	return selectTraceDiffDesiredVersion(objects, kind, name, namespace, "")
-}
-
 func selectTraceDiffDesiredVersion(objects []*unstructured.Unstructured, kind, name, namespace, apiVersion string) (*unstructured.Unstructured, error) {
 	if apiVersion != "" {
 		gv, err := schema.ParseGroupVersion(apiVersion)

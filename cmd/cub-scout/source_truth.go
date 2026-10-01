@@ -21,6 +21,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -172,14 +173,6 @@ func runSourceTruth(cmd *cobra.Command, args []string) error {
 	}
 	observation := collectSourceTruthObservation(cmd.Context(), session, kind, name, sourceTruthNamespace, strategy)
 	return outputSourceTruth(os.Stdout, observation.Evidence, format)
-}
-
-// emitEvidence prints the JSON contract to stdout. Delegates to
-// agent.EncodeEvidence so the bytes the CLI emits and the bytes the
-// producer fixture suite asserts against (#395) are guaranteed
-// identical.
-func emitEvidence(ev agent.SourceTruthEvidence) error {
-	return agent.EncodeEvidence(os.Stdout, ev)
 }
 
 func outputSourceTruth(w io.Writer, ev agent.SourceTruthEvidence, format string) error {
@@ -500,9 +493,20 @@ func controllerSurfaceFromArgoWithSession(ctx context.Context, session *traceSes
 }
 
 func controllerSurfaceFromFluxWithSession(ctx context.Context, session *traceSession, kind, name, namespace string) (*agent.ControllerSurface, error) {
-	tracer, cleanup, err := capturedTraceFluxFactory(session)
+	return controllerSurfaceFromFluxWithFactory(ctx, session, kind, name, namespace, capturedTraceFluxFactory)
+}
+
+func controllerSurfaceFromFluxWithFactory(ctx context.Context, session *traceSession, kind, name, namespace string, factory func(*traceSession) (agent.Tracer, func() error, error)) (surface *agent.ControllerSurface, returnErr error) {
+	tracer, cleanup, err := factory(session)
 	if cleanup != nil {
-		defer cleanup()
+		defer func() {
+			if err := cleanup(); err != nil {
+				// Do not expose private credential paths or return successful
+				// collection when those credentials could not be removed.
+				surface = nil
+				returnErr = errors.Join(returnErr, fmt.Errorf("unable to remove private Flux credentials"))
+			}
+		}()
 	}
 	if err != nil {
 		return nil, fmt.Errorf("bind Flux to selected Kubernetes context: %w", err)

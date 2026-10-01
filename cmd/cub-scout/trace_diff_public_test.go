@@ -267,21 +267,26 @@ func TestTraceDiffTUIExplicitPathUsesBoundSessionAndRetainsSelection(t *testing.
 		traceMode: true, traceItems: []TraceItem{{Kind: "Deployment", Name: "api", Namespace: "team-a", Owner: "Flux"}},
 	}
 	updated, cmd := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")})
+	require.Nil(t, cmd, "picker input must not start a read")
 	model = updated.(LocalClusterModel)
 	require.True(t, model.traceDiffMode)
-	for _, r := range []rune(traceDiffManifest(t, "apiVersion: apps/v1\nkind: Deployment\nmetadata: {name: api, namespace: team-a}\nspec: {replicas: 1}\n")) {
+	for _, r := range traceDiffManifest(t, "apiVersion: apps/v1\nkind: Deployment\nmetadata: {name: api, namespace: team-a}\nspec: {replicas: 1}\n") {
 		updated, cmd = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+		require.Nil(t, cmd, "picker input must not start a read")
 		model = updated.(LocalClusterModel)
 	}
 	updated, cmd = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	require.Nil(t, cmd, "picker input must not start a read")
 	model = updated.(LocalClusterModel)
 	require.Equal(t, "api-version", model.traceDiffPrompt)
-	for _, r := range []rune("apps/v1") {
+	for _, r := range "apps/v1" {
 		updated, cmd = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+		require.Nil(t, cmd, "picker input must not start a read")
 		model = updated.(LocalClusterModel)
 	}
 	updated, cmd = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	model = updated.(LocalClusterModel)
+
 	require.NotNil(t, cmd)
 	message := cmd().(traceDiffResultMsg)
 	require.NoError(t, message.err)
