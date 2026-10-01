@@ -79,11 +79,19 @@ class ReceiptTests(unittest.TestCase):
   name="scout-linux-ver-0123456789abcdef"; owner="a"*32; ident="b"*64
   obj={"Id":ident,"Name":"/"+name,"Image":m.IMAGE_ID,"Config":{"Image":m.IMAGE_ID,"User":"65534:65534","Labels":{m.OWNER_LABEL:owner}},
    "HostConfig":{"ReadonlyRootfs":True,"NetworkMode":"none","CapDrop":["ALL"],"SecurityOpt":["no-new-privileges"],"Privileged":False,"CapAdd":[],"PidsLimit":64,"Memory":1073741824,"NanoCpus":1000000000,"Tmpfs":{"/tmp":"rw,nosuid,nodev,size=64m,uid=65534,gid=65534"}},
-   "Mounts":[{"Type":"bind","Source":"/tmp/stage","Destination":"/tools","RW":False}],"State":{"Status":"created"}}
+   "Mounts":[{"Type":"bind","Source":"/definitely-wrong-stage","Destination":"/tools","RW":False}],"State":{"Status":"created"}}
   raw=json.dumps(obj).encode()
   with self.assertRaises(m.CaptureError):m.validate_inspect(raw,name,owner,Path("/tmp/stage"))
   obj["HostConfig"]["NetworkMode"]="bridge"
   with self.assertRaises(m.CaptureError):m.validate_inspect(json.dumps(obj).encode(),name,owner,Path("/tmp/stage"))
+ def test_output_and_mount_use_canonical_parent(self):
+  with tempfile.TemporaryDirectory(dir="/tmp") as td:
+   root=Path(td); real=root/"real"; real.mkdir(); alias=root/"alias"; alias.symlink_to(real, target_is_directory=True)
+   output=m.safe_output(alias/"output")
+   self.assertEqual(output,real.resolve()/"output")
+   stage=output/"tools"; stage.mkdir()
+   args=m.build_create_args("scout-linux-ver-0123456789abcdef","a"*32,stage)
+   self.assertIn("type=bind,src="+str(stage.resolve())+",dst=/tools,readonly",args)
  def test_cleanup_missing_requires_exact_target_line(self):
   exact=b"Error response from daemon: No such container: x\n"
   self.assertTrue(m._exact_missing(1,b"",exact,"x"))

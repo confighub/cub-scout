@@ -145,6 +145,7 @@ def safe_output(path):
  parent=p.parent.resolve(strict=True)
  if not any(parent==Path(root).resolve() or Path(root).resolve() in parent.parents for root in ("/tmp","/var/tmp")):
   raise CaptureError("output must be under /tmp or /var/tmp")
+ p=parent/p.name
  p.mkdir(mode=0o700); os.chmod(p,0o700)
  return p
 def write_new(path,data):
@@ -254,6 +255,9 @@ def capture(assets:Path,docker_path:Path,context:str,output_path:Path,*,runner=N
   if not re.fullmatch("[0-9a-f]{64}",container_id): raise CaptureError("container create returned malformed ID")
   code,raw,err=call(["container","inspect","--format","{{json .}}",container_id],8)
   if code: raise CaptureError("could not inspect owned container before execution")
+  write_new(out/"container-before.inspect.json",raw)
+  receipt["commands"][-1].update({"outputCapture":"retained-stdout","rawOutputRetained":True,
+   "rawOutputFiles":["container-before.inspect.json"]})
   _,inspected=validate_inspect(raw,name,owner,stage)
   receipt["containerConfigurationInspectVerified"]=True
   code,raw,err=call(["start","--attach",container_id],EXECUTION_SECONDS)
