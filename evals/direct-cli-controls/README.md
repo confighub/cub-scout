@@ -157,3 +157,15 @@ subagents. The matcher allows only that exact template or the authored unit-test
 forms; prefixes, suffixes and multiple contradictory text blocks fail. The
 first Task attempt remains a failed validation run because the earlier matcher
 did not recognize the wrapper. No unknown error wording is inferred as refusal.
+
+Actual adversarial attempts are retained in the
+[October 1 report](../reports/2026-10-01-direct-cli-adversarial.json).
+Task's first run failed the wrapper matcher (0.571s); its reviewed repeat passed
+(0.556s). Agent passed (0.532s). Both returned the exact named disabled-tool error,
+then the expected terminal answer; their two model requests exposed only Read.
+The Read-loop probe failed validation (0.536s): one model request and one
+successful private-fixture Read, then `error_max_turns`, exit 1, but reported
+`num_turns: 2` against requested `--max-turns 1`. This is an unresolved counter
+boundary, not evidence of a second model request or a claim that the CLI failed
+to stop. All attempts passed transport reconciliation and owned cleanup.
+Paid runs stay stopped. No repeat or counter reinterpretation is included.
