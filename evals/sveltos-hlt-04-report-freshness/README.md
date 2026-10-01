@@ -1,6 +1,10 @@
-# HLT-04 offline report-freshness producer replay
+# HLT-04 report-freshness synthetic source replay
 
-This source-only harness prepares an isolated test tree from the pinned
+The pinned producer replay completed on 2026-10-01 and produced a model-case
+fixture for later review. The fixture is prepared, not executed as a benchmark
+case: no model was run and the frozen benchmark remains non-executable.
+
+The replay used an isolated test tree from the pinned
 `confighub/sveltos-confighub` source and injects a Go test that calls that
 revision's real `internal/onboard.ReportStatus` with an in-memory `Runner`, a
 fixed clock, and an in-memory writer. The Runner accepts only five authored
@@ -8,10 +12,10 @@ JSON reads; every unexpected command fails. No `kubectl`, `cub`, cluster,
 provider, or live source process is run by the harness. The repository source
 is exported with local `git archive` and is never edited.
 
-The frozen benchmark question, wording, controls, and weight are unchanged.
-This packet does not add an HLT-04 case mapping, prompt/grader, or benchmark
-admission. No replay has been executed yet. An independent review is required
-before the one offline replay.
+The frozen HLT-04 question, reference, controls, and group weight are unchanged.
+The manifest maps HLT-04 to this fixture with status
+`synthetic_source_replay_prepared_not_run`. The fixture has a strict exact-answer
+grader and a copy-only scaffold that gives both arms byte-identical files.
 
 ## Expected results
 
@@ -41,7 +45,7 @@ real controller executed a check then. No fixture field or summary renames
 
 The source pin is commit
 `8187910f9fe226e109e55c4d9c7c0e21297ff424` at the local repository
-`/Users/alexis/code/sveltos-confighub-work`. The helper verifies an exact inventory and SHA-256 for every exported file:
+`/Users/alexis/code/sveltos-confighub-work`. The helper verified an exact inventory and SHA-256 for every exported file:
 `go.mod`, `go.sum`, the complete `internal/onboard/` tree, and the complete
 `chartrender/` package imported by `charts.go`, including tests and fixtures. It
 rejects missing, extra, or hash-mismatched files. The summary lookup uses the exact
@@ -57,11 +61,17 @@ The helper verifies:
 
 It refuses a missing local commit/tool/cache, existing output path, symlink,
 unexpected archive entry, hash mismatch, unsupported platform, or unavailable
-macOS deny-network sandbox. The explicit replay command uses
+macOS deny-network sandbox. The retained replay used
 `GOTOOLCHAIN=local`, `GOPROXY=off`, `GOSUMDB=off`, a private Go build cache,
 network-denying `sandbox-exec`, and only
 `go test ./internal/onboard -run '^TestHLT04OfflineReplay$' -count=1 -v`.
-It caps total elapsed time at 90 seconds and combined stdout/stderr at 4 MiB.
+It finished with exit 0 in 2.799 seconds (outer wrapper 2.844 seconds), with
+confirmed process-group cleanup and parent reaping. Captured stdout/stderr,
+provenance, wrapper record, and their hashes are summarized in
+[the replay report](../reports/2026-10-01-sveltos-hlt04-report-freshness.json);
+the full raw archive remains under the primary checkout's ignored
+`evals/results/hlt04-replay-20261001` directory. The helper caps total elapsed
+time at 90 seconds and combined stdout/stderr at 4 MiB.
 Missing dependencies fail offline; nothing is fetched or installed. Each invocation
 requires a fresh private output directory and preserves its pinned source,
 stdout/stderr, hashes, tool pins, status, and cleanup record there. It accepts
@@ -71,23 +81,27 @@ and confirmed owned-process-group cleanup plus parent reaping. Failure, timeout,
 output overflow, or unconfirmed cleanup stays failed and preserves partial
 output/provenance privately.
 
-A network-denied `go test -c` compile-only preflight passed after this repair;
-the resulting binary was not run. No producer replay or helper invocation has
-run. After independent review, a future isolated offline replay would use a
-fresh output path, for example:
+The report and fixture identify the run as synthetic source-contract evidence,
+not a live recording. The Go test used only its authored inputs and in-memory
+Runner/clock/writer; it ran no `kubectl` or `cub` command. A later source change
+requires a new reviewed replay; this packet does not rerun it. The replay helper was invoked once with this command shape; the output path below
+is the retained evidence directory:
 
 ```sh
 python3 evals/sveltos-hlt-04-report-freshness/replay.py --execute \
   --source-root /Users/alexis/code/sveltos-confighub-work \
-  --output /tmp/scout-hlt04-offline-replay-review
+  --output /tmp/scout-hlt04-replay-evidence-20261001
 ```
 
-That command is documented, not authorized or executed in this source-only
-packet. It does not run a benchmark arm or create a model-facing case. The
-proposal and existing HLT-01 transcript remain the evidence references; the
-transcript contains no raw report timestamps or controller check-execution
-time. HLT-04 cannot claim live clock behavior, actual check age, applied
-release identity, provider cost, or benchmark result from this replay.
+The retained invocation completed successfully. It does not run a
+benchmark arm. HLT-04 makes no claim about live clock behavior, actual check
+age, an exact applied release digest, provider cost, account credits, or a
+benchmark result. The report records that the check receipt is separately
+authored synthetic metadata, is not consumed by `ReportStatus`, and cannot
+prove a controller executed a check at its timestamp. A renewed reporter
+`observedAt` does not imply renewed health checks; `lastTransitionTime` remains
+only a condition transition; release identity is timestamp-inferred; and the
+future-held timestamp is retained under the tested source behavior.
 
 ## Pure helper checks
 

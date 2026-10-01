@@ -1,0 +1,948 @@
+{
+  "schema": "hlt04-scenario-evidence.v1",
+  "records": [
+    {
+      "id": "R01",
+      "synthetic_now": "2026-10-01T12:10:00Z",
+      "raw_inputs": {
+        "clusterhealthchecks": {
+          "items": [
+            {
+              "metadata": {
+                "labels": {
+                  "sveltos.confighub.com/profile": "demo"
+                },
+                "name": "demo-health"
+              },
+              "status": {
+                "clusterCondition": [
+                  {
+                    "clusterInfo": {
+                      "cluster": {
+                        "name": "demo",
+                        "namespace": "projectsveltos"
+                      }
+                    },
+                    "conditions": [
+                      {
+                        "lastTransitionTime": "2026-10-01T12:01:00Z",
+                        "message": "Deployment: demo/api status is Degraded",
+                        "name": "workloads",
+                        "status": "False",
+                        "type": "HealthCheck:workloads"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "clusterprofiles": {
+          "items": [
+            {
+              "metadata": {
+                "name": "demo-prod"
+              },
+              "spec": {
+                "policyRefs": [
+                  {
+                    "deploymentType": "Remote",
+                    "remoteURL": {
+                      "url": "oci://oci.hub.confighub.com/space/demo:latest"
+                    }
+                  }
+                ],
+                "validateHealths": [
+                  {
+                    "name": "demo-workloads"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "clustersummaries": {
+          "items": [
+            {
+              "metadata": {
+                "labels": {
+                  "projectsveltos.io/cluster-profile-name": "demo-prod"
+                }
+              },
+              "spec": {
+                "clusterName": "demo",
+                "clusterNamespace": "projectsveltos"
+              },
+              "status": {
+                "deployedGVKs": [
+                  {
+                    "deployedGroupVersionKind": [
+                      "Deployment.v1.apps"
+                    ]
+                  }
+                ],
+                "featureSummaries": [
+                  {
+                    "featureID": "Resources",
+                    "lastAppliedTime": "2026-10-01T12:00:00Z",
+                    "status": "Provisioned"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "published_releases": [
+          {
+            "Release": {
+              "CreatedAt": "2026-10-01T11:59:00Z",
+              "ManifestDigest": "sha256:synthetic-release-a",
+              "Published": true,
+              "ReleaseNum": 1
+            }
+          }
+        ]
+      },
+      "held_before": "",
+      "held_after": "{\"source\":\"sveltos\",\"app\":\"demo-prod\",\"syncStatus\":\"Synced\",\"healthStatus\":\"Degraded\",\"operationPhase\":\"Succeeded\",\"revision\":\"sha256:synthetic-release-a\",\"message\":\"ClusterHealthCheck demo-health: Deployment: demo/api status is Degraded\",\"observedAt\":\"2026-10-01T12:10:00Z\"}",
+      "computed_report": {
+        "app": "demo-prod",
+        "healthStatus": "Degraded",
+        "message": "ClusterHealthCheck demo-health: Deployment: demo/api status is Degraded",
+        "observedAt": "2026-10-01T12:10:00Z",
+        "operationPhase": "Succeeded",
+        "revision": "sha256:synthetic-release-a",
+        "source": "sveltos",
+        "syncStatus": "Synced"
+      },
+      "write_patch": "{\"Annotations\":{\"confighub.com/live-status\":\"{\\\"source\\\":\\\"sveltos\\\",\\\"app\\\":\\\"demo-prod\\\",\\\"syncStatus\\\":\\\"Synced\\\",\\\"healthStatus\\\":\\\"Degraded\\\",\\\"operationPhase\\\":\\\"Succeeded\\\",\\\"revision\\\":\\\"sha256:synthetic-release-a\\\",\\\"message\\\":\\\"ClusterHealthCheck demo-health: Deployment: demo/api status is Degraded\\\",\\\"observedAt\\\":\\\"2026-10-01T12:10:00Z\\\"}\"}}"
+    },
+    {
+      "id": "R02",
+      "synthetic_now": "2026-10-01T12:10:00Z",
+      "raw_inputs": {
+        "clusterhealthchecks": {
+          "items": [
+            {
+              "metadata": {
+                "labels": {
+                  "sveltos.confighub.com/profile": "demo"
+                },
+                "name": "demo-health"
+              },
+              "status": {
+                "clusterCondition": [
+                  {
+                    "clusterInfo": {
+                      "cluster": {
+                        "name": "demo",
+                        "namespace": "projectsveltos"
+                      }
+                    },
+                    "conditions": [
+                      {
+                        "lastTransitionTime": "2026-10-01T12:01:00Z",
+                        "message": "Deployment: demo/api status is Degraded",
+                        "name": "workloads",
+                        "status": "False",
+                        "type": "HealthCheck:workloads"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "clusterprofiles": {
+          "items": [
+            {
+              "metadata": {
+                "name": "demo-prod"
+              },
+              "spec": {
+                "policyRefs": [
+                  {
+                    "deploymentType": "Remote",
+                    "remoteURL": {
+                      "url": "oci://oci.hub.confighub.com/space/demo:latest"
+                    }
+                  }
+                ],
+                "validateHealths": [
+                  {
+                    "name": "demo-workloads"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "clustersummaries": {
+          "items": [
+            {
+              "metadata": {
+                "labels": {
+                  "projectsveltos.io/cluster-profile-name": "demo-prod"
+                }
+              },
+              "spec": {
+                "clusterName": "demo",
+                "clusterNamespace": "projectsveltos"
+              },
+              "status": {
+                "deployedGVKs": [
+                  {
+                    "deployedGroupVersionKind": [
+                      "Deployment.v1.apps"
+                    ]
+                  }
+                ],
+                "featureSummaries": [
+                  {
+                    "featureID": "Resources",
+                    "lastAppliedTime": "2026-10-01T12:00:00Z",
+                    "status": "Provisioned"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "published_releases": [
+          {
+            "Release": {
+              "CreatedAt": "2026-10-01T11:59:00Z",
+              "ManifestDigest": "sha256:synthetic-release-a",
+              "Published": true,
+              "ReleaseNum": 1
+            }
+          }
+        ]
+      },
+      "held_before": "{\"app\":\"demo-prod\",\"healthStatus\":\"Degraded\",\"message\":\"ClusterHealthCheck demo-health: Deployment: demo/api status is Degraded\",\"operationPhase\":\"Succeeded\",\"revision\":\"sha256:synthetic-release-a\",\"source\":\"sveltos\",\"syncStatus\":\"Synced\"}",
+      "held_after": "{\"source\":\"sveltos\",\"app\":\"demo-prod\",\"syncStatus\":\"Synced\",\"healthStatus\":\"Degraded\",\"operationPhase\":\"Succeeded\",\"revision\":\"sha256:synthetic-release-a\",\"message\":\"ClusterHealthCheck demo-health: Deployment: demo/api status is Degraded\",\"observedAt\":\"2026-10-01T12:10:00Z\"}",
+      "computed_report": {
+        "app": "demo-prod",
+        "healthStatus": "Degraded",
+        "message": "ClusterHealthCheck demo-health: Deployment: demo/api status is Degraded",
+        "observedAt": "2026-10-01T12:10:00Z",
+        "operationPhase": "Succeeded",
+        "revision": "sha256:synthetic-release-a",
+        "source": "sveltos",
+        "syncStatus": "Synced"
+      },
+      "write_patch": "{\"Annotations\":{\"confighub.com/live-status\":\"{\\\"source\\\":\\\"sveltos\\\",\\\"app\\\":\\\"demo-prod\\\",\\\"syncStatus\\\":\\\"Synced\\\",\\\"healthStatus\\\":\\\"Degraded\\\",\\\"operationPhase\\\":\\\"Succeeded\\\",\\\"revision\\\":\\\"sha256:synthetic-release-a\\\",\\\"message\\\":\\\"ClusterHealthCheck demo-health: Deployment: demo/api status is Degraded\\\",\\\"observedAt\\\":\\\"2026-10-01T12:10:00Z\\\"}\"}}"
+    },
+    {
+      "id": "R03",
+      "synthetic_now": "2026-10-01T12:11:00Z",
+      "raw_inputs": {
+        "clusterhealthchecks": {
+          "items": [
+            {
+              "metadata": {
+                "labels": {
+                  "sveltos.confighub.com/profile": "demo"
+                },
+                "name": "demo-health"
+              },
+              "status": {
+                "clusterCondition": [
+                  {
+                    "clusterInfo": {
+                      "cluster": {
+                        "name": "demo",
+                        "namespace": "projectsveltos"
+                      }
+                    },
+                    "conditions": [
+                      {
+                        "lastTransitionTime": "2026-10-01T12:01:00Z",
+                        "message": "Deployment: demo/api status is Degraded",
+                        "name": "workloads",
+                        "status": "False",
+                        "type": "HealthCheck:workloads"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "clusterprofiles": {
+          "items": [
+            {
+              "metadata": {
+                "name": "demo-prod"
+              },
+              "spec": {
+                "policyRefs": [
+                  {
+                    "deploymentType": "Remote",
+                    "remoteURL": {
+                      "url": "oci://oci.hub.confighub.com/space/demo:latest"
+                    }
+                  }
+                ],
+                "validateHealths": [
+                  {
+                    "name": "demo-workloads"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "clustersummaries": {
+          "items": [
+            {
+              "metadata": {
+                "labels": {
+                  "projectsveltos.io/cluster-profile-name": "demo-prod"
+                }
+              },
+              "spec": {
+                "clusterName": "demo",
+                "clusterNamespace": "projectsveltos"
+              },
+              "status": {
+                "deployedGVKs": [
+                  {
+                    "deployedGroupVersionKind": [
+                      "Deployment.v1.apps"
+                    ]
+                  }
+                ],
+                "featureSummaries": [
+                  {
+                    "featureID": "Resources",
+                    "lastAppliedTime": "2026-10-01T12:00:00Z",
+                    "status": "Provisioned"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "published_releases": [
+          {
+            "Release": {
+              "CreatedAt": "2026-10-01T11:59:00Z",
+              "ManifestDigest": "sha256:synthetic-release-a",
+              "Published": true,
+              "ReleaseNum": 1
+            }
+          }
+        ]
+      },
+      "held_before": "{\"source\":\"sveltos\",\"app\":\"demo-prod\",\"syncStatus\":\"Synced\",\"healthStatus\":\"Degraded\",\"operationPhase\":\"Succeeded\",\"revision\":\"sha256:synthetic-release-a\",\"message\":\"ClusterHealthCheck demo-health: Deployment: demo/api status is Degraded\",\"observedAt\":\"2026-10-01T12:10:00Z\"}",
+      "held_after": "{\"source\":\"sveltos\",\"app\":\"demo-prod\",\"syncStatus\":\"Synced\",\"healthStatus\":\"Degraded\",\"operationPhase\":\"Succeeded\",\"revision\":\"sha256:synthetic-release-a\",\"message\":\"ClusterHealthCheck demo-health: Deployment: demo/api status is Degraded\",\"observedAt\":\"2026-10-01T12:10:00Z\"}",
+      "computed_report": {
+        "app": "demo-prod",
+        "healthStatus": "Degraded",
+        "message": "ClusterHealthCheck demo-health: Deployment: demo/api status is Degraded",
+        "observedAt": "2026-10-01T12:11:00Z",
+        "operationPhase": "Succeeded",
+        "revision": "sha256:synthetic-release-a",
+        "source": "sveltos",
+        "syncStatus": "Synced"
+      },
+      "write_patch": null
+    },
+    {
+      "id": "R04",
+      "synthetic_now": "2026-10-01T12:26:00Z",
+      "raw_inputs": {
+        "clusterhealthchecks": {
+          "items": [
+            {
+              "metadata": {
+                "labels": {
+                  "sveltos.confighub.com/profile": "demo"
+                },
+                "name": "demo-health"
+              },
+              "status": {
+                "clusterCondition": [
+                  {
+                    "clusterInfo": {
+                      "cluster": {
+                        "name": "demo",
+                        "namespace": "projectsveltos"
+                      }
+                    },
+                    "conditions": [
+                      {
+                        "lastTransitionTime": "2026-10-01T12:01:00Z",
+                        "message": "Deployment: demo/api status is Degraded",
+                        "name": "workloads",
+                        "status": "False",
+                        "type": "HealthCheck:workloads"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "clusterprofiles": {
+          "items": [
+            {
+              "metadata": {
+                "name": "demo-prod"
+              },
+              "spec": {
+                "policyRefs": [
+                  {
+                    "deploymentType": "Remote",
+                    "remoteURL": {
+                      "url": "oci://oci.hub.confighub.com/space/demo:latest"
+                    }
+                  }
+                ],
+                "validateHealths": [
+                  {
+                    "name": "demo-workloads"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "clustersummaries": {
+          "items": [
+            {
+              "metadata": {
+                "labels": {
+                  "projectsveltos.io/cluster-profile-name": "demo-prod"
+                }
+              },
+              "spec": {
+                "clusterName": "demo",
+                "clusterNamespace": "projectsveltos"
+              },
+              "status": {
+                "deployedGVKs": [
+                  {
+                    "deployedGroupVersionKind": [
+                      "Deployment.v1.apps"
+                    ]
+                  }
+                ],
+                "featureSummaries": [
+                  {
+                    "featureID": "Resources",
+                    "lastAppliedTime": "2026-10-01T12:00:00Z",
+                    "status": "Provisioned"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "published_releases": [
+          {
+            "Release": {
+              "CreatedAt": "2026-10-01T11:59:00Z",
+              "ManifestDigest": "sha256:synthetic-release-a",
+              "Published": true,
+              "ReleaseNum": 1
+            }
+          }
+        ]
+      },
+      "held_before": "{\"source\":\"sveltos\",\"app\":\"demo-prod\",\"syncStatus\":\"Synced\",\"healthStatus\":\"Degraded\",\"operationPhase\":\"Succeeded\",\"revision\":\"sha256:synthetic-release-a\",\"message\":\"ClusterHealthCheck demo-health: Deployment: demo/api status is Degraded\",\"observedAt\":\"2026-10-01T12:10:00Z\"}",
+      "held_after": "{\"source\":\"sveltos\",\"app\":\"demo-prod\",\"syncStatus\":\"Synced\",\"healthStatus\":\"Degraded\",\"operationPhase\":\"Succeeded\",\"revision\":\"sha256:synthetic-release-a\",\"message\":\"ClusterHealthCheck demo-health: Deployment: demo/api status is Degraded\",\"observedAt\":\"2026-10-01T12:26:00Z\"}",
+      "computed_report": {
+        "app": "demo-prod",
+        "healthStatus": "Degraded",
+        "message": "ClusterHealthCheck demo-health: Deployment: demo/api status is Degraded",
+        "observedAt": "2026-10-01T12:26:00Z",
+        "operationPhase": "Succeeded",
+        "revision": "sha256:synthetic-release-a",
+        "source": "sveltos",
+        "syncStatus": "Synced"
+      },
+      "write_patch": "{\"Annotations\":{\"confighub.com/live-status\":\"{\\\"source\\\":\\\"sveltos\\\",\\\"app\\\":\\\"demo-prod\\\",\\\"syncStatus\\\":\\\"Synced\\\",\\\"healthStatus\\\":\\\"Degraded\\\",\\\"operationPhase\\\":\\\"Succeeded\\\",\\\"revision\\\":\\\"sha256:synthetic-release-a\\\",\\\"message\\\":\\\"ClusterHealthCheck demo-health: Deployment: demo/api status is Degraded\\\",\\\"observedAt\\\":\\\"2026-10-01T12:26:00Z\\\"}\"}}"
+    },
+    {
+      "id": "R05",
+      "synthetic_now": "2026-10-01T12:30:00Z",
+      "raw_inputs": {
+        "clusterhealthchecks": {
+          "items": [
+            {
+              "metadata": {
+                "labels": {
+                  "sveltos.confighub.com/profile": "demo"
+                },
+                "name": "demo-health"
+              },
+              "status": {
+                "clusterCondition": [
+                  {
+                    "clusterInfo": {
+                      "cluster": {
+                        "name": "demo",
+                        "namespace": "projectsveltos"
+                      }
+                    },
+                    "conditions": [
+                      {
+                        "lastTransitionTime": "2026-10-01T12:01:00Z",
+                        "message": "Deployment: demo/api status is Degraded",
+                        "name": "workloads",
+                        "status": "False",
+                        "type": "HealthCheck:workloads"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "clusterprofiles": {
+          "items": [
+            {
+              "metadata": {
+                "name": "demo-prod"
+              },
+              "spec": {
+                "policyRefs": [
+                  {
+                    "deploymentType": "Remote",
+                    "remoteURL": {
+                      "url": "oci://oci.hub.confighub.com/space/demo:latest"
+                    }
+                  }
+                ],
+                "validateHealths": [
+                  {
+                    "name": "demo-workloads"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "clustersummaries": {
+          "items": [
+            {
+              "metadata": {
+                "labels": {
+                  "projectsveltos.io/cluster-profile-name": "demo-prod"
+                }
+              },
+              "spec": {
+                "clusterName": "demo",
+                "clusterNamespace": "projectsveltos"
+              },
+              "status": {
+                "deployedGVKs": [
+                  {
+                    "deployedGroupVersionKind": [
+                      "Deployment.v1.apps"
+                    ]
+                  }
+                ],
+                "featureSummaries": [
+                  {
+                    "featureID": "Resources",
+                    "lastAppliedTime": "2026-10-01T12:00:00Z",
+                    "status": "Provisioned"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "published_releases": [
+          {
+            "Release": {
+              "CreatedAt": "2026-10-01T11:59:00Z",
+              "ManifestDigest": "sha256:synthetic-release-a",
+              "Published": true,
+              "ReleaseNum": 1
+            }
+          }
+        ]
+      },
+      "held_before": "{\"source\":\"sveltos\",\"app\":\"demo-prod\",\"syncStatus\":\"Synced\",\"healthStatus\":\"Degraded\",\"operationPhase\":\"Succeeded\",\"revision\":\"sha256:synthetic-release-a\",\"message\":\"ClusterHealthCheck demo-health: Deployment: demo/api status is Degraded\",\"observedAt\":\"not-a-time\"}",
+      "held_after": "{\"source\":\"sveltos\",\"app\":\"demo-prod\",\"syncStatus\":\"Synced\",\"healthStatus\":\"Degraded\",\"operationPhase\":\"Succeeded\",\"revision\":\"sha256:synthetic-release-a\",\"message\":\"ClusterHealthCheck demo-health: Deployment: demo/api status is Degraded\",\"observedAt\":\"2026-10-01T12:30:00Z\"}",
+      "computed_report": {
+        "app": "demo-prod",
+        "healthStatus": "Degraded",
+        "message": "ClusterHealthCheck demo-health: Deployment: demo/api status is Degraded",
+        "observedAt": "2026-10-01T12:30:00Z",
+        "operationPhase": "Succeeded",
+        "revision": "sha256:synthetic-release-a",
+        "source": "sveltos",
+        "syncStatus": "Synced"
+      },
+      "write_patch": "{\"Annotations\":{\"confighub.com/live-status\":\"{\\\"source\\\":\\\"sveltos\\\",\\\"app\\\":\\\"demo-prod\\\",\\\"syncStatus\\\":\\\"Synced\\\",\\\"healthStatus\\\":\\\"Degraded\\\",\\\"operationPhase\\\":\\\"Succeeded\\\",\\\"revision\\\":\\\"sha256:synthetic-release-a\\\",\\\"message\\\":\\\"ClusterHealthCheck demo-health: Deployment: demo/api status is Degraded\\\",\\\"observedAt\\\":\\\"2026-10-01T12:30:00Z\\\"}\"}}"
+    },
+    {
+      "id": "R06",
+      "synthetic_now": "2026-10-01T12:30:00Z",
+      "raw_inputs": {
+        "clusterhealthchecks": {
+          "items": [
+            {
+              "metadata": {
+                "labels": {
+                  "sveltos.confighub.com/profile": "demo"
+                },
+                "name": "demo-health"
+              },
+              "status": {
+                "clusterCondition": [
+                  {
+                    "clusterInfo": {
+                      "cluster": {
+                        "name": "demo",
+                        "namespace": "projectsveltos"
+                      }
+                    },
+                    "conditions": [
+                      {
+                        "lastTransitionTime": "2026-10-01T12:01:00Z",
+                        "message": "Deployment: demo/api status is Degraded",
+                        "name": "workloads",
+                        "status": "False",
+                        "type": "HealthCheck:workloads"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "clusterprofiles": {
+          "items": [
+            {
+              "metadata": {
+                "name": "demo-prod"
+              },
+              "spec": {
+                "policyRefs": [
+                  {
+                    "deploymentType": "Remote",
+                    "remoteURL": {
+                      "url": "oci://oci.hub.confighub.com/space/demo:latest"
+                    }
+                  }
+                ],
+                "validateHealths": [
+                  {
+                    "name": "demo-workloads"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "clustersummaries": {
+          "items": [
+            {
+              "metadata": {
+                "labels": {
+                  "projectsveltos.io/cluster-profile-name": "demo-prod"
+                }
+              },
+              "spec": {
+                "clusterName": "demo",
+                "clusterNamespace": "projectsveltos"
+              },
+              "status": {
+                "deployedGVKs": [
+                  {
+                    "deployedGroupVersionKind": [
+                      "Deployment.v1.apps"
+                    ]
+                  }
+                ],
+                "featureSummaries": [
+                  {
+                    "featureID": "Resources",
+                    "lastAppliedTime": "2026-10-01T12:00:00Z",
+                    "status": "Provisioned"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "published_releases": [
+          {
+            "Release": {
+              "CreatedAt": "2026-10-01T11:59:00Z",
+              "ManifestDigest": "sha256:synthetic-release-a",
+              "Published": true,
+              "ReleaseNum": 1
+            }
+          }
+        ]
+      },
+      "held_before": "{\"source\":\"sveltos\",\"app\":\"demo-prod\",\"syncStatus\":\"Synced\",\"healthStatus\":\"Degraded\",\"operationPhase\":\"Succeeded\",\"revision\":\"sha256:synthetic-release-a\",\"message\":\"ClusterHealthCheck demo-health: Deployment: demo/api status is Degraded\",\"observedAt\":\"2026-10-02T12:30:00Z\"}",
+      "held_after": "{\"source\":\"sveltos\",\"app\":\"demo-prod\",\"syncStatus\":\"Synced\",\"healthStatus\":\"Degraded\",\"operationPhase\":\"Succeeded\",\"revision\":\"sha256:synthetic-release-a\",\"message\":\"ClusterHealthCheck demo-health: Deployment: demo/api status is Degraded\",\"observedAt\":\"2026-10-02T12:30:00Z\"}",
+      "computed_report": {
+        "app": "demo-prod",
+        "healthStatus": "Degraded",
+        "message": "ClusterHealthCheck demo-health: Deployment: demo/api status is Degraded",
+        "observedAt": "2026-10-01T12:30:00Z",
+        "operationPhase": "Succeeded",
+        "revision": "sha256:synthetic-release-a",
+        "source": "sveltos",
+        "syncStatus": "Synced"
+      },
+      "write_patch": null
+    },
+    {
+      "id": "R07",
+      "synthetic_now": "2026-10-01T12:10:00Z",
+      "raw_inputs": {
+        "clusterhealthchecks": {
+          "items": [
+            {
+              "metadata": {
+                "labels": {
+                  "sveltos.confighub.com/profile": "demo"
+                },
+                "name": "demo-health"
+              },
+              "status": {
+                "clusterCondition": [
+                  {
+                    "clusterInfo": {
+                      "cluster": {
+                        "name": "demo",
+                        "namespace": "projectsveltos"
+                      }
+                    },
+                    "conditions": [
+                      {
+                        "lastTransitionTime": "2026-10-01T12:01:00Z",
+                        "message": "Deployment: demo/api status is Degraded",
+                        "name": "workloads",
+                        "status": "False",
+                        "type": "HealthCheck:workloads"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "clusterprofiles": {
+          "items": [
+            {
+              "metadata": {
+                "name": "demo-prod"
+              },
+              "spec": {
+                "policyRefs": [
+                  {
+                    "deploymentType": "Remote",
+                    "remoteURL": {
+                      "url": "oci://oci.hub.confighub.com/space/demo:latest"
+                    }
+                  }
+                ],
+                "validateHealths": [
+                  {
+                    "name": "demo-workloads"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "clustersummaries": {
+          "items": [
+            {
+              "metadata": {
+                "labels": {
+                  "projectsveltos.io/cluster-profile-name": "demo-prod"
+                }
+              },
+              "spec": {
+                "clusterName": "demo",
+                "clusterNamespace": "projectsveltos"
+              },
+              "status": {
+                "deployedGVKs": [
+                  {
+                    "deployedGroupVersionKind": [
+                      "Deployment.v1.apps"
+                    ]
+                  }
+                ],
+                "featureSummaries": [
+                  {
+                    "featureID": "Resources",
+                    "lastAppliedTime": "2026-10-01T12:00:00Z",
+                    "status": "Provisioned"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "published_releases": [
+          {
+            "Release": {
+              "CreatedAt": "2026-10-01T11:59:00Z",
+              "ManifestDigest": "sha256:synthetic-older",
+              "Published": true,
+              "ReleaseNum": 1
+            }
+          },
+          {
+            "Release": {
+              "CreatedAt": "2026-10-01T12:01:00Z",
+              "ManifestDigest": "sha256:synthetic-newer",
+              "Published": true,
+              "ReleaseNum": 2
+            }
+          }
+        ]
+      },
+      "held_before": "",
+      "held_after": "{\"source\":\"sveltos\",\"app\":\"demo-prod\",\"syncStatus\":\"OutOfSync\",\"healthStatus\":\"Progressing\",\"operationPhase\":\"Running\",\"revision\":\"sha256:synthetic-older\",\"message\":\"release 2, created 2026-10-01T12:01:00Z, not applied yet\",\"observedAt\":\"2026-10-01T12:10:00Z\"}",
+      "computed_report": {
+        "app": "demo-prod",
+        "healthStatus": "Progressing",
+        "message": "release 2, created 2026-10-01T12:01:00Z, not applied yet",
+        "observedAt": "2026-10-01T12:10:00Z",
+        "operationPhase": "Running",
+        "revision": "sha256:synthetic-older",
+        "source": "sveltos",
+        "syncStatus": "OutOfSync"
+      },
+      "write_patch": "{\"Annotations\":{\"confighub.com/live-status\":\"{\\\"source\\\":\\\"sveltos\\\",\\\"app\\\":\\\"demo-prod\\\",\\\"syncStatus\\\":\\\"OutOfSync\\\",\\\"healthStatus\\\":\\\"Progressing\\\",\\\"operationPhase\\\":\\\"Running\\\",\\\"revision\\\":\\\"sha256:synthetic-older\\\",\\\"message\\\":\\\"release 2, created 2026-10-01T12:01:00Z, not applied yet\\\",\\\"observedAt\\\":\\\"2026-10-01T12:10:00Z\\\"}\"}}"
+    },
+    {
+      "id": "R08",
+      "synthetic_now": "2026-10-01T12:10:00Z",
+      "raw_inputs": {
+        "clusterhealthchecks": {
+          "items": [
+            {
+              "metadata": {
+                "labels": {
+                  "sveltos.confighub.com/profile": "demo"
+                },
+                "name": "demo-health"
+              },
+              "status": {
+                "clusterCondition": [
+                  {
+                    "clusterInfo": {
+                      "cluster": {
+                        "name": "demo",
+                        "namespace": "projectsveltos"
+                      }
+                    },
+                    "conditions": [
+                      {
+                        "lastTransitionTime": "2026-10-01T11:59:00Z",
+                        "message": "Deployment: demo/api status is Degraded",
+                        "name": "workloads",
+                        "status": "False",
+                        "type": "HealthCheck:workloads"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "clusterprofiles": {
+          "items": [
+            {
+              "metadata": {
+                "name": "demo-prod"
+              },
+              "spec": {
+                "policyRefs": [
+                  {
+                    "deploymentType": "Remote",
+                    "remoteURL": {
+                      "url": "oci://oci.hub.confighub.com/space/demo:latest"
+                    }
+                  }
+                ],
+                "validateHealths": [
+                  {
+                    "name": "demo-workloads"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "clustersummaries": {
+          "items": [
+            {
+              "metadata": {
+                "labels": {
+                  "projectsveltos.io/cluster-profile-name": "demo-prod"
+                }
+              },
+              "spec": {
+                "clusterName": "demo",
+                "clusterNamespace": "projectsveltos"
+              },
+              "status": {
+                "deployedGVKs": [
+                  {
+                    "deployedGroupVersionKind": [
+                      "Deployment.v1.apps"
+                    ]
+                  }
+                ],
+                "featureSummaries": [
+                  {
+                    "featureID": "Resources",
+                    "lastAppliedTime": "2026-10-01T12:00:00Z",
+                    "status": "Provisioned"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "published_releases": [
+          {
+            "Release": {
+              "CreatedAt": "2026-10-01T11:59:00Z",
+              "ManifestDigest": "sha256:synthetic-older",
+              "Published": true,
+              "ReleaseNum": 1
+            }
+          }
+        ]
+      },
+      "held_before": "",
+      "held_after": "{\"source\":\"sveltos\",\"app\":\"demo-prod\",\"syncStatus\":\"Synced\",\"healthStatus\":\"Healthy\",\"operationPhase\":\"Succeeded\",\"revision\":\"sha256:synthetic-older\",\"observedAt\":\"2026-10-01T12:10:00Z\"}",
+      "computed_report": {
+        "app": "demo-prod",
+        "healthStatus": "Healthy",
+        "observedAt": "2026-10-01T12:10:00Z",
+        "operationPhase": "Succeeded",
+        "revision": "sha256:synthetic-older",
+        "source": "sveltos",
+        "syncStatus": "Synced"
+      },
+      "write_patch": "{\"Annotations\":{\"confighub.com/live-status\":\"{\\\"source\\\":\\\"sveltos\\\",\\\"app\\\":\\\"demo-prod\\\",\\\"syncStatus\\\":\\\"Synced\\\",\\\"healthStatus\\\":\\\"Healthy\\\",\\\"operationPhase\\\":\\\"Succeeded\\\",\\\"revision\\\":\\\"sha256:synthetic-older\\\",\\\"observedAt\\\":\\\"2026-10-01T12:10:00Z\\\"}\"}}"
+    }
+  ]
+}

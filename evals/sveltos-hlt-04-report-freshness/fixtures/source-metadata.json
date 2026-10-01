@@ -1,0 +1,126 @@
+{
+  "schema": "hlt04-synthetic-source-metadata.v1",
+  "evidence_class": "authored_synthetic_json",
+  "source_repository": "confighub/sveltos-confighub",
+  "source_revision": "8187910f9fe226e109e55c4d9c7c0e21297ff424",
+  "source_file_sha256": {
+    "chartrender/README.md": "1ee21d182721b4ed21edec7416cced26e3dd5eca33e813b7af97bbcffc574ce4",
+    "chartrender/chartrender.go": "8a245abe52d93a4a2947caa07630d75825b3e15c26e95b9b426d192caee62452",
+    "chartrender/chartrender_test.go": "f8a2527d2c600610b19276f61c8403114437736ae9a041506859bb85566732db",
+    "chartrender/compare.go": "3def6a768376da6399cfc58959eaccc036903dc73f281bb44f6f4b0bd8c77ad1",
+    "chartrender/compare_test.go": "74cde493fdb1aa9e332907e4d62157dd1a8017c97ab793f5bd3c860713ff769a",
+    "go.mod": "e480afbdc90c7571cbdee94a91008d04732b7cf3e07c4844fd9512112f2c3eec",
+    "go.sum": "3b453000ed3ac0098f9d002ff575e32f247b6ad21e3ee64f6b7d5ce8b3848efd",
+    "internal/onboard/charts.go": "8d9cb70a6163d94cc2f435d47405a43a6694a406b4cf89b35fbf9cdbc0136f6e",
+    "internal/onboard/check.go": "51d4d1f0dc1845e488cbedac24d8169204f321bda99ba942eec7f4828ede84b3",
+    "internal/onboard/check_test.go": "2f02bd128db33e1b56c6e0eb92884a228d56f1a4267a8b6f82c82eade5f70e03",
+    "internal/onboard/component.go": "7bdf88c7fe1010811f60ca7c3fddbffa04073f757e48481db0fa83c30f83e2c5",
+    "internal/onboard/delivery.go": "a259557743f943cfc16b8f7ad83d810e0d1b2ee29863ef6e6d3ca33ae010b882",
+    "internal/onboard/departures.go": "4de1ba8682a5dc7e47dac90fde69be5782528d6d68abaa1cfd14312331dd4b8c",
+    "internal/onboard/facts.go": "ede17dd813d766be87f3b7982056181dd0866da37fa034d2b61bb55c850b0bb3",
+    "internal/onboard/facts_test.go": "3df665eae94b01c3bff75872e9cdeaba53bbd5bb304c08301a92b79585a4c2b8",
+    "internal/onboard/gates.go": "0f0f10f94ab985e32edfad9a8581d7b221e283b87f849677b283f7d4fe87b252",
+    "internal/onboard/gates_test.go": "62703026a19bfa9f6428447cc263ce1dca24e01269711f1154765fc01ec29026",
+    "internal/onboard/health.go": "c8443c6b8cb2a7c6d58ee77d2dcfadb9d084dc122a4add7c1c6238be7df84add",
+    "internal/onboard/health_test.go": "2fc10c0faa5f80f34f2084c34a712616557bd0b1931203580949f5495e64e5ff",
+    "internal/onboard/impact.go": "951bf5e2bc9a5cedb861513cc357e863098196d20712c1ef87f5d08227afa22f",
+    "internal/onboard/impact_test.go": "0a28c36a20dc568e00df87a62ed2ff4dedfeefa5f5d594e5c9bd9c799e979cff",
+    "internal/onboard/live.go": "c99a928e747b905aacd0caae5439cd5742fbcea9ddbb55487b335be5d9523f52",
+    "internal/onboard/management_test.go": "2a2505256173ffe4694f8f06dff753de2e5cf0b6edd1f6643f5f63fe68c74a90",
+    "internal/onboard/onboard_test.go": "137a6066d9b5ba9978acb9df7b2458d29da399fbbc64e61749a52dae322c56d9",
+    "internal/onboard/plan.go": "9d695998c673e2baf1759f73b2e28a68d9829281e4c09b1db89475191c8a293b",
+    "internal/onboard/policyset.go": "14d334c60d3b8dbff93971b8f4b4375ea07846a9469aacbd4d0629e89e33dcfc",
+    "internal/onboard/render.go": "bfc7052fd56a9002a8952f8be5e4fac0914a2de3c1f3c57b6fd805f7d4a655b4",
+    "internal/onboard/status.go": "1a20679c5302c7fa7b54a0fab2da8017fd85ffc7ef796f8b031ef98bfbc4c32a",
+    "internal/onboard/status_test.go": "e2e7178602233ff161513697b3e4aab0e376789898589956d9e6e915b87b52d5",
+    "internal/onboard/testdata/renders/ingress-nginx-4-15-1-aac043a2.json.gz": "98a816b8a895595c55e8632be629243018b99bc8c7c28bd6f54991e3bf361d5b",
+    "internal/onboard/testdata/renders/kyverno-3-8-1-f3ce047f.json.gz": "df1d3c1fb9e343f55382e3edbf0ecd645f2807f862375f04bb1e5614ed73c5a6",
+    "internal/onboard/watch.go": "3df439907a4741699028afbd3d9a0254a54ecb45acfae4a82376818593b85d81",
+    "internal/onboard/watch_test.go": "aad57dfa4d7d07c99e814ace2921411a17606aa0b0f6a2c475cf70b081be489d",
+    "internal/onboard/write.go": "bb196987583530348e7f9bc006527f4be7acdfdf7dbbc728193a3ad23273966b",
+    "internal/onboard/yaml.go": "57c8ba0bbaa2b038eea05bf0fff87f4539f2a66f83dc73a7226e2990444a344c"
+  },
+  "producer_entrypoint": "internal/onboard.ReportStatus",
+  "replay": {
+    "helper_revision": "6a13aeea8809d486513363293b4775a5588f9399",
+    "helper_sha256": "c52554e9b7da0e3f9ff91b1049da24380b815c56ee7ebb5cd547327a6abd3b62",
+    "harness_sha256": "c7e96fa00e8f1d97f54ae7e8e9177f87aafebfc69caf4c1fff86525ce7d1d0f0",
+    "status": "passed",
+    "return_code": 0,
+    "elapsed_seconds": 2.7990570068359375,
+    "wrapper_seconds": 2.8440208330284804,
+    "wrapper_exit": 0,
+    "owned_process_group_cleanup_confirmed": true,
+    "parent_reaped": true,
+    "network_policy": "deny-all sandbox; GOPROXY=off; GOSUMDB=off",
+    "producer_test_executed": true,
+    "go_version": "go version go1.26.2 darwin/arm64"
+  },
+  "captured_output_sha256": {
+    "stdout.bin": "68d667fcf9612cafdaa53039571743815a48532c15c33c5e3bd90bb32e5ea3e4",
+    "stderr.bin": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "provenance.json": "1fdfff81fc8d345c7b0dceae348ffae23ea490b04f1a9a26786e729ebc629810"
+  },
+  "record_count": 8,
+  "receipt_file": "synthetic-check-execution-receipt.json",
+  "producer_input_sha256_by_record": {
+    "R01": {
+      "clusterhealthchecks": "664b5cd076124a753761f8015b538f4e7e578b5ff6aa9386631261f01e8e3662",
+      "clusterprofiles": "30052bdad2aaf944eae84c988c8b95108858bfb40f1f077f5a8322c4dd8d3a02",
+      "clustersummaries": "054beac88b91e8a85467928c9cc86d27b938281842d9a95d1d0d2cd48939c4db",
+      "published_releases": "d1deaf2e0adcde0f00e1077367a69326fc2ae9f6afe5e41038fa6091e015e94f"
+    },
+    "R02": {
+      "clusterhealthchecks": "664b5cd076124a753761f8015b538f4e7e578b5ff6aa9386631261f01e8e3662",
+      "clusterprofiles": "30052bdad2aaf944eae84c988c8b95108858bfb40f1f077f5a8322c4dd8d3a02",
+      "clustersummaries": "054beac88b91e8a85467928c9cc86d27b938281842d9a95d1d0d2cd48939c4db",
+      "published_releases": "d1deaf2e0adcde0f00e1077367a69326fc2ae9f6afe5e41038fa6091e015e94f"
+    },
+    "R03": {
+      "clusterhealthchecks": "664b5cd076124a753761f8015b538f4e7e578b5ff6aa9386631261f01e8e3662",
+      "clusterprofiles": "30052bdad2aaf944eae84c988c8b95108858bfb40f1f077f5a8322c4dd8d3a02",
+      "clustersummaries": "054beac88b91e8a85467928c9cc86d27b938281842d9a95d1d0d2cd48939c4db",
+      "published_releases": "d1deaf2e0adcde0f00e1077367a69326fc2ae9f6afe5e41038fa6091e015e94f"
+    },
+    "R04": {
+      "clusterhealthchecks": "664b5cd076124a753761f8015b538f4e7e578b5ff6aa9386631261f01e8e3662",
+      "clusterprofiles": "30052bdad2aaf944eae84c988c8b95108858bfb40f1f077f5a8322c4dd8d3a02",
+      "clustersummaries": "054beac88b91e8a85467928c9cc86d27b938281842d9a95d1d0d2cd48939c4db",
+      "published_releases": "d1deaf2e0adcde0f00e1077367a69326fc2ae9f6afe5e41038fa6091e015e94f"
+    },
+    "R05": {
+      "clusterhealthchecks": "664b5cd076124a753761f8015b538f4e7e578b5ff6aa9386631261f01e8e3662",
+      "clusterprofiles": "30052bdad2aaf944eae84c988c8b95108858bfb40f1f077f5a8322c4dd8d3a02",
+      "clustersummaries": "054beac88b91e8a85467928c9cc86d27b938281842d9a95d1d0d2cd48939c4db",
+      "published_releases": "d1deaf2e0adcde0f00e1077367a69326fc2ae9f6afe5e41038fa6091e015e94f"
+    },
+    "R06": {
+      "clusterhealthchecks": "664b5cd076124a753761f8015b538f4e7e578b5ff6aa9386631261f01e8e3662",
+      "clusterprofiles": "30052bdad2aaf944eae84c988c8b95108858bfb40f1f077f5a8322c4dd8d3a02",
+      "clustersummaries": "054beac88b91e8a85467928c9cc86d27b938281842d9a95d1d0d2cd48939c4db",
+      "published_releases": "d1deaf2e0adcde0f00e1077367a69326fc2ae9f6afe5e41038fa6091e015e94f"
+    },
+    "R07": {
+      "clusterhealthchecks": "664b5cd076124a753761f8015b538f4e7e578b5ff6aa9386631261f01e8e3662",
+      "clusterprofiles": "30052bdad2aaf944eae84c988c8b95108858bfb40f1f077f5a8322c4dd8d3a02",
+      "clustersummaries": "054beac88b91e8a85467928c9cc86d27b938281842d9a95d1d0d2cd48939c4db",
+      "published_releases": "00f0eed1642de5f882d50ac3578e4302c5d9be4cd4be84442f1d16fb084c54ed"
+    },
+    "R08": {
+      "clusterhealthchecks": "3a12d724d9e30b37f5d1027218cd452eccf607e3dfc14e00ccfc4c6cff61675a",
+      "clusterprofiles": "30052bdad2aaf944eae84c988c8b95108858bfb40f1f077f5a8322c4dd8d3a02",
+      "clustersummaries": "054beac88b91e8a85467928c9cc86d27b938281842d9a95d1d0d2cd48939c4db",
+      "published_releases": "563e80f92d88a8ff9cf3f9917de8e8e70d5ea128c149679f9fb9c46f51cee01e"
+    }
+  },
+  "producer_input_artifacts": [
+    "clusterprofiles",
+    "clustersummaries",
+    "clusterhealthchecks",
+    "published_releases"
+  ],
+  "other_authored_fixture_artifacts": [
+    "synthetic-check-execution-receipt.json"
+  ],
+  "synthetic_check_receipt_sha256": "1352073e9000d280a92b440d1c9789f6fd987af099e04f4b7638804a48ad0e06"
+}
