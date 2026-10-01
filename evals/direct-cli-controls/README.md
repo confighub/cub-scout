@@ -15,8 +15,15 @@ not full Experiment A and does not show treatment plugin or skill value. The
 reported evaluation estimate remains `$4.38666035`; provider dollars, credits,
 and local development costs remain separate unknowns.
 
-No CLI/model/provider invocation has been made by this helper change. Runtime
-execution requires the explicit `--execute` switch and is bound in code to the
+The first actual CLI invocation on October 1 at source `2ae3fdd` failed probe
+acceptance after 0.567 seconds. It exposed exactly `Read`, used the pinned model
+label and returned the expected terminal text, but the connection counter was
+two while only one accepted request was retained. The extra connection is
+unexplained: the current counter counts TCP connections rather than parsed
+HTTP requests. The run is not admitted or retroactively waived. See the
+[retained result](../reports/2026-10-01-direct-cli-offline-probe.json).
+No real provider or model inference was invoked. A repeat requires corrected,
+reviewed connection/request accounting. Runtime execution requires the explicit `--execute` switch and is bound in code to the
 reviewed absolute regular executable
 `/opt/homebrew/Caskroom/claude-code/2.1.274/claude`, SHA-256
 `3509913f9d1576316c8845b88837f8fd3bbbcf26625833ac82cfb6b8985da94a`, and
@@ -28,9 +35,11 @@ rejected.
 The helper creates a fresh mode-0700 output directory and private
 `CLAUDE_CONFIG_DIR`, then retains that private directory and its synthetic
 contents in the output. It builds the child environment from scratch: there is
-no `HOME`, inherited caller environment, credential helper, OAuth token,
-keychain access, hook, plugin, or skill. The only API credential is a literal
-fake key. `--bare` is API-key-only according to the previously reviewed local
+no `HOME` override or copied caller environment/configuration, credential
+helper, or OAuth token. The only API credential is a literal fake key. The
+actual init trace still advertised built-in skills/agents/commands; it showed
+empty MCP/plugin lists and only `Read` in the model request tool inventory.
+Do not claim the built-in skill inventory is empty. `--bare` is API-key-only according to the previously reviewed local
 CLI help; no OAuth or subscription-credit behavior is inferred. Explicit
 environment controls disable nonessential traffic and fast mode.
 
@@ -46,7 +55,8 @@ The fixture accepts only POST `/v1/messages` (and the SDK beta query form),
 and only the exact fake `x-api-key` or fake bearer header. It selects JSON or
 SSE from the request body's boolean `stream` field. It rejects malformed
 lengths/JSON, unexpected methods/paths/auth, oversized bodies, and requests
-past the four-request bound. Per-connection reads have a two-second deadline;
+past the current four-connection bound. This must be separated from parsed
+HTTP-request accounting before the next acceptance attempt. Per-connection reads have a two-second deadline;
 the overall run has a 90-second wall bound including reserved teardown. At
 most four fixture workers run concurrently. Only accepted synthetic requests
 are retained, with raw body bytes base64-encoded and decoded for inspection;
@@ -86,7 +96,9 @@ python3 evals/direct-cli-controls/probe.py --execute \
   --output /tmp/scout-direct-cli-mock-probe-reviewed
 ```
 
-That command has not been run. Any later comparison must retain the frozen
+The first invocation used a separate dated output path and is retained as a
+failed probe; the example path above is not an authorization to retry. Any
+later comparison must retain the frozen
 24-case protocol, equal ordinary-tool treatment, and full treatment
 skills/MCP. Changing runners requires an explicit recorded protocol revision
 before paid admission. `--safe-mode` must not silently strip treatment. No
