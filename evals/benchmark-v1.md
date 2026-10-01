@@ -19,7 +19,7 @@ public-source projections, not raw cluster snapshots; both are prepared and
 unrun, and their evidence limits are recorded per case. The 24 cases currently
 comprise 5 refreshed fixtures, 2 recorded scale bindings prepared but not run, 7
 recorded projections prepared but not run, five raw recordings prepared but not
-run, one synthetic source replay fixture prepared but not run, and 4 planned
+run, two synthetic source replay fixtures prepared but not run, and 3 planned
 cases. HLT-03 is a receipt-backed pair of public recorded
 files, not a full Kubernetes snapshot; its receipt-level workload pass and
 child Application Ingress residue are separate evidence facts. HLT-02, INV-04, PRE-01,

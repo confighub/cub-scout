@@ -671,7 +671,7 @@ func TestDeliveryCaseMappingsKeepBenchmarkUnexecutable(t *testing.T) {
 			}
 		}
 	}
-	if m.Status != "frozen_design_not_executable" || m.Execution.Paid || !found["DEL-01"] || !found["DEL-02"] || !found["HLT-02"] || !found["INV-04"] || !found["RUL-04"] || !found["PRE-01"] || !found["RUL-03"] || counts["planned"] != 4 || counts["existing_refreshed_fixture"] != 5 || counts["recorded_snapshot_binding_prepared_not_run"] != 2 || counts["recorded_projection_prepared_not_run"] != 7 || counts["raw_recording_prepared_not_run"] != 5 {
+	if m.Status != "frozen_design_not_executable" || m.Execution.Paid || !found["DEL-01"] || !found["DEL-02"] || !found["HLT-02"] || !found["INV-04"] || !found["RUL-04"] || !found["PRE-01"] || !found["RUL-03"] || counts["planned"] != 3 || counts["existing_refreshed_fixture"] != 5 || counts["recorded_snapshot_binding_prepared_not_run"] != 2 || counts["recorded_projection_prepared_not_run"] != 7 || counts["raw_recording_prepared_not_run"] != 5 {
 		t.Fatalf("case preparation changed benchmark gates or readiness: status=%q paid=%v mappings=%v counts=%v", m.Status, m.Execution.Paid, found, counts)
 	}
 	if hlt02Provenance.SourceRevision != "sha1:7732dde28be8cf8c42c096d94efbd8ce4a9d0a19" || hlt02Provenance.AppliedRevision != hlt02Provenance.SourceRevision || hlt02Provenance.AtomicSnapshot {
