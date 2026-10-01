@@ -264,7 +264,7 @@ type LocalClusterModel struct {
 	noInit bool
 }
 
-const explicitContextUnsupportedAction = "This action is unavailable with --kube-context until it can honor the selected binding. Inventory and bounded explain remain available."
+const explicitContextUnsupportedAction = "This action is unavailable with --kube-context until it can honor the selected binding. Inventory, bounded explain, scan and trace remain available."
 
 // GitOpsResource represents a Flux/ArgoCD resource
 type GitOpsResource struct {
@@ -2836,7 +2836,7 @@ func (m LocalClusterModel) renderHelp() string {
 		b.WriteString("\n")
 		b.WriteString(lcSectionStyle.Render("SELECTED CONTEXT LIMITS"))
 		b.WriteString("\n")
-		b.WriteString("  Inventory and bounded explain use the selected context. Trace, scan, graph export, command mode, shell and import are disabled because they do not yet honor this binding.\n")
+		b.WriteString("  Inventory, bounded explain, scan and trace use the selected context. Graph export, command mode, shell and import are disabled because they do not yet honor this binding.\n")
 	}
 	b.WriteString("\n")
 

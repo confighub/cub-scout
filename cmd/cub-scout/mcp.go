@@ -440,6 +440,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
+						"context": map[string]interface{}{"type": "string", "description": "Optional exact kubeconfig context for all trace reads. Empty or missing named contexts fail without fallback."},
 						"resource": map[string]interface{}{
 							"type":        "string",
 							"description": "Resource selector as kind/name (for example deployment/api).",
@@ -459,6 +460,13 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 					return nil, fmt.Errorf("missing required argument: resource")
 				}
 				args := []string{"trace", resource}
+				if raw, present := arguments["context"]; present {
+					value, ok := raw.(string)
+					if !ok || strings.TrimSpace(value) == "" {
+						return nil, fmt.Errorf("context must be a non-empty kubeconfig context name")
+					}
+					args = append(args, "--kube-context", value)
+				}
 				if ns := argString(arguments, "namespace"); ns != "" {
 					args = append(args, "-n", ns)
 				}

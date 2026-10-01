@@ -457,8 +457,12 @@ func renderTraceHuman(w io.Writer, result *agent.TraceResult, artifacts map[stri
 	if options.Explain {
 		fmt.Fprintf(w, "\n")
 		fmt.Fprintf(w, "%sNEXT STEPS:%s\n", colorBold, colorReset)
-		fmt.Fprintf(w, "→ See orphan resources:    cub-scout map orphans\n")
-		fmt.Fprintf(w, "→ Show diff from Git:      cub-scout trace %s -n %s --diff\n", result.Object.String(), result.Object.Namespace)
+		if result.Context == "" {
+			fmt.Fprintf(w, "→ See orphan resources:    cub-scout map orphans\n")
+			fmt.Fprintf(w, "→ Show diff from Git:      cub-scout trace %s -n %s --diff\n", result.Object.String(), result.Object.Namespace)
+		} else {
+			fmt.Fprintf(w, "→ Orphan and delegated diff follow-ups are withheld: these paths cannot preserve this captured binding.\n")
+		}
 		fmt.Fprintf(w, "→ Visual guide:            docs/diagrams/ownership-detection.svg\n")
 	}
 

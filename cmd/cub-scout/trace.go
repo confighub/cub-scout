@@ -29,6 +29,7 @@ import (
 )
 
 var (
+	traceKubeContext         string
 	traceNamespace           string
 	traceJSON                bool   // deprecated: use --format json
 	traceFormat              string // output format: ascii, json
@@ -115,10 +116,10 @@ Diff mode (--diff) shows what would change if GitOps reconciled:
   - Useful for debugging "why isn't my change applying?" and upgrade tracing
 
 Trace context troubleshooting (ArgoCD):
-  - argocd context
-  - argocd app list
-  - argocd logout <server>
-  - argocd login <server>
+  - Select the Kubernetes context with --kube-context
+  - Specify the Application namespace with -n
+  - Kubernetes Application read permission is required; Argo server login is not used
+  - Explicit context is not supported with the legacy delegated --diff path
 `,
 	Args: cobra.RangeArgs(0, 2),
 	RunE: runTrace,
@@ -127,6 +128,7 @@ Trace context troubleshooting (ArgoCD):
 func init() {
 	rootCmd.AddCommand(traceCmd)
 
+	traceCmd.Flags().StringVar(&traceKubeContext, "kube-context", "", "Use this exact Kubernetes context for trace reads")
 	traceCmd.Flags().StringVarP(&traceNamespace, "namespace", "n", "", "Namespace of the resource (default: flux-system; Application names must be unique if omitted)")
 	traceCmd.Flags().StringVar(&traceFormat, "format", "ascii", "Output format: ascii, json, md")
 	traceCmd.Flags().BoolVar(&traceJSON, "json", false, "Output as JSON (deprecated: use --format json)")
@@ -149,6 +151,23 @@ func init() {
 
 func runTrace(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
+	selection, err := clusterContextSelectionFromFlag(cmd)
+	if err != nil {
+		return err
+	}
+	if selection.explicit && (os.Getenv("CUB_SCOUT_TEST_TRACE_JSON") != "" || os.Getenv("CUB_SCOUT_TEST_TRACE_ARTIFACTS_JSON") != "") {
+		return fmt.Errorf("--kube-context cannot be combined with trace fixture input")
+	}
+	if selection.explicit && traceDiff {
+		return fmt.Errorf("--kube-context cannot be used with delegated --diff: controller diff binding is not supported")
+	}
+	effectiveFormat := traceFormat
+	if traceJSON && effectiveFormat == "ascii" {
+		effectiveFormat = "json"
+	}
+	if effectiveFormat != "ascii" && effectiveFormat != "json" && effectiveFormat != "md" {
+		return fmt.Errorf("unsupported trace format %q (supported: ascii, json, md)", effectiveFormat)
+	}
 
 	// Build invocation context with presentation mode resolution
 	invCtx, err := NewInvocationContext(tracePresentation, TransportCLI)
@@ -192,24 +211,18 @@ func runTrace(cmd *cobra.Command, args []string) error {
 		traceNamespace = "flux-system"
 	}
 
-	// Handle reverse trace
-	if traceReverse {
-		return runReverseTrace(ctx, kind, name, traceNamespace)
-	}
-
-	// Handle diff mode
-	if traceDiff {
+	// Preserve legacy reverse precedence when both mode flags are supplied.
+	if traceDiff && !traceReverse {
 		return runTraceDiff(ctx, kind, name, traceNamespace)
 	}
 
 	// The shared observer owns all reads; presentation only projects its result.
-	effectiveFormat := traceFormat
-	if traceJSON && effectiveFormat == "ascii" {
-		effectiveFormat = "json"
-	}
-	session, err := newDefaultTraceSession()
+	session, err := newTraceSessionForSelection(selection)
 	if err != nil {
 		return fmt.Errorf("failed to capture Kubernetes trace session: %w", err)
+	}
+	if traceReverse {
+		return runReverseTraceWithSession(ctx, session, kind, name, traceNamespace)
 	}
 	observation, err := observeTrace(ctx, session, kind, name, traceNamespace, traceObservationOptions{
 		DirectApplication: kind == "Application",
@@ -1610,10 +1623,17 @@ func renderReverseTraceHuman(w io.Writer, result *agent.ReverseTraceResult, expl
 		fmt.Fprintf(w, "\n")
 		fmt.Fprintf(w, "%s💡 For full GitOps chain, run:%s\n", colorDim, colorReset)
 		if result.TopResource != nil {
-			fmt.Fprintf(w, "   cub-scout trace %s/%s -n %s\n",
-				strings.ToLower(result.TopResource.Kind),
-				result.TopResource.Name,
-				result.TopResource.Namespace)
+			if result.Context == "in-cluster" {
+				fmt.Fprintf(w, "   Follow-up command withheld: this label does not distinguish a named context from in-cluster credentials.\n")
+			} else {
+				selector := ""
+				if result.Context != "" {
+					selector = " --kube-context '" + strings.ReplaceAll(result.Context, "'", "'\"'\"'") + "'"
+				}
+				fmt.Fprintf(w, "   ./cub-scout trace %s/%s -n %s%s\n",
+					strings.ToLower(result.TopResource.Kind), result.TopResource.Name,
+					result.TopResource.Namespace, selector)
+			}
 		}
 	}
 

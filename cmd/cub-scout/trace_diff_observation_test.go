@@ -203,7 +203,11 @@ func TestObserveTraceDiffRejectsMalformedSecretIdentityBeforeReads(t *testing.T)
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			requests.Store(0)
-			_, err := observeTraceDiff(context.Background(), session, "Secret", "db", "", traceDiffManifest(t, tc.body))
+			name := "db"
+			if tc.name == "name" {
+				name = "Invalid_Name"
+			}
+			_, err := observeTraceDiff(context.Background(), session, "Secret", name, "", traceDiffManifest(t, tc.body))
 			require.ErrorContains(t, err, "invalid Kubernetes identity")
 			require.Zero(t, requests.Load(), "malformed Secret identity must fail before API reads")
 		})

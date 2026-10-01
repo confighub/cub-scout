@@ -92,7 +92,7 @@ cub-scout map [flags]
 | Flag | Description |
 |------|-------------|
 | `--hub` | Start in the ConfigHub hierarchy view; `--kube-context`, if given, applies when switching to the local TUI and does not select a ConfigHub context |
-| `--kube-context` | Use this exact kubeconfig context for local TUI inventory, bounded explain and scan; missing names fail without fallback. In this mode trace, graph export, command mode, shell, and import are disabled until they honor the binding |
+| `--kube-context` | Use this exact kubeconfig context for local TUI inventory, bounded explain, scan and trace; missing names fail without fallback. In this mode graph export, command mode, shell, and import are disabled until they honor the binding |
 | `-n, --namespace` | Filter by namespace |
 | `-q, --query` | Resource query filter |
 
@@ -889,6 +889,7 @@ cub-scout trace <kind/name> [flags]
 | Flag | Description |
 |------|-------------|
 | `-n, --namespace` | Namespace of the resource |
+| `--kube-context` | Exact kubeconfig context for normal and reverse Trace; missing or empty names fail without fallback. Not supported with delegated `--diff` or fixture input |
 | `--app` | Trace ArgoCD Application by name |
 | `-r, --reverse` | Reverse trace (walk up ownerReferences, show orphan metadata) |
 | `-d, --diff` | Show diff between live and Git state |
@@ -946,6 +947,25 @@ or Argo Application name plus exact resource/flag space for live-status
 writeback. A space-only release match is intentionally not considered
 object-level evidence, and wildcard `--confighub-space '*'` is not treated as
 an exact resource space.
+
+### Context selection
+
+Normal and reverse Trace capture one Kubernetes binding for the invocation.
+`--kube-context` selects an exact kubeconfig context without modifying
+`current-context`. MCP Trace accepts the corresponding typed `context` argument.
+JSON and human output identify the selected context; this label is not a stable
+cluster ID. The TUI Trace view reuses the binding captured by its resource view.
+
+```bash
+./cub-scout trace --app frontend -n delivery --kube-context staging --format json
+./cub-scout trace pod/api-abc -n team-a --reverse --kube-context staging --format md
+```
+
+Omitting the selector preserves the default loader. A supplied selector cannot
+be combined with fixture input or the legacy delegated `--diff` path; these
+combinations fail before observation. Controller diff binding and its read-only
+contract remain unfinished under #746. The local rendered-manifest comparison
+helper is not yet a public CLI capability or a substitute for that contract.
 
 ### Argo Observation Scope
 

@@ -55,6 +55,15 @@ func newTraceSession(config *rest.Config, contextLabel string) (*traceSession, e
 	return &traceSession{config: captured, context: contextLabel}, nil
 }
 
+// newTraceSessionForSelection preserves the legacy default loader when omitted,
+// and resolves explicit selections without ambient or in-cluster fallback.
+func newTraceSessionForSelection(selection clusterContextSelection) (*traceSession, error) {
+	if !selection.explicit {
+		return newDefaultTraceSession()
+	}
+	return newTraceSessionFromBinding(resolveLocalClusterBindingForSelection(selection))
+}
+
 func newDefaultTraceSession() (*traceSession, error) {
 	kubeconfig := os.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
