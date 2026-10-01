@@ -36,19 +36,24 @@ cluster. No cluster-wide credentials or Secrets are observed.
 python3 evals/rul04-image-identity/capture.py \
   --execute \
   --shared-kubeconfig "$KUBECONFIG" \
-  --cub-scout-binary /absolute/path/to/pinned-cub-scout \
-  --source-revision <full-source-commit> \
+  --expected-layout-helper-sha256 <reviewed-64-hex-sha256> \
+  --layout-helper-source-revision <full-source-commit> \
   --oci-layout-helper /absolute/path/to/create-layout \
   --scout-binary /absolute/path/to/pinned-cub-scout \
+  --expected-scout-sha256 <reviewed-64-hex-sha256> \
+  --scout-source-revision <full-source-commit> \
   --output-dir /tmp/new-rul04-capture
 ```
 
-`--scout-binary` is optional. If present, the helper invokes `release check`
+The required local OCI helper must match the reviewed SHA-256; its source
+revision is recorded. The capture checkout must be clean, and its commit and
+helper script hash are recorded separately. `--scout-binary` plus its two pin
+arguments are optional as a group. If present, the helper invokes `release check`
 with explicit `StatefulSet/rul04-pause`, `apps/v1`, namespace and observer
 context, writing only separate derived output. The OCI layout helper writes a
 new layout under the output directory without registry/network publication.
 Capture has bounded command/API outputs and deadlines, exact response-body
-hashes, binary/script/source identifiers, non-atomic sequencing and cleanup
+hashes, expected and observed executable hashes, source identifiers, non-atomic sequencing and cleanup
 provenance. It rejects reuse of an output directory and never stores bearer
 tokens or kubeconfig contents.
 
