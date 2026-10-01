@@ -26,8 +26,9 @@ import (
 // Credential files are captured with the session; configured exec plugins
 // retain their own refresh behavior. Subprocess binding is a separate stage.
 type traceSession struct {
-	config  *rest.Config
-	context string
+	config   *rest.Config
+	context  string
+	proxyURL string // Static proxy parsed with this config; empty means no provenance.
 
 	dynamicOnce   sync.Once
 	dynamic       dynamic.Interface
@@ -60,14 +61,19 @@ func newDefaultTraceSession() (*traceSession, error) {
 		home, _ := os.UserHomeDir()
 		kubeconfig = home + "/.kube/config"
 	}
-	config, contextLabel, err := resolveClusterConfig("", false, &clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfig}, rest.InClusterConfig)
+	config, contextLabel, proxyURL, err := resolveClusterConfigWithProxy("", false, &clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfig}, rest.InClusterConfig)
 	if err != nil {
 		return nil, err
 	}
 	if contextLabel == "" {
 		contextLabel = "in-cluster"
 	}
-	return newTraceSession(config, contextLabel)
+	session, err := newTraceSession(config, contextLabel)
+	if err != nil {
+		return nil, err
+	}
+	session.proxyURL = proxyURL
+	return session, nil
 }
 
 func copyTraceRESTConfig(config *rest.Config) *rest.Config {
@@ -226,4 +232,21 @@ func collectTraceArtifactsWithTraceSession(ctx context.Context, session *traceSe
 		artifacts[traceArtifactKey(source.Kind, source.Namespace, source.Name)] = normalizeTraceArtifact(source.Kind, artifact)
 	}
 	return artifacts
+}
+
+// newTraceSessionFromBinding preserves the same parsed proxy provenance used by
+// the selected inventory binding; it does not reread a context or kubeconfig.
+func newTraceSessionFromBinding(binding *localClusterBinding) (*traceSession, error) {
+	if binding == nil {
+		return nil, fmt.Errorf("trace cluster binding is unavailable")
+	}
+	if binding.err != nil {
+		return nil, binding.err
+	}
+	session, err := newTraceSession(binding.config, binding.context)
+	if err != nil {
+		return nil, err
+	}
+	session.proxyURL = binding.proxyURL
+	return session, nil
 }

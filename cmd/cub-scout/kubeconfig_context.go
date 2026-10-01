@@ -22,6 +22,19 @@ func resolveClusterConfig(
 	rules *clientcmd.ClientConfigLoadingRules,
 	inClusterConfig func() (*rest.Config, error),
 ) (*rest.Config, string, error) {
+	config, selected, _, err := resolveClusterConfigWithProxy(contextName, explicit, rules, inClusterConfig)
+	return config, selected, err
+}
+
+// resolveClusterConfigWithProxy also returns the parsed static proxy-url from
+// the selected cluster, without another config read. It is private provenance
+// for child client binding, never evidence to display or serialize as output.
+func resolveClusterConfigWithProxy(
+	contextName string,
+	explicit bool,
+	rules *clientcmd.ClientConfigLoadingRules,
+	inClusterConfig func() (*rest.Config, error),
+) (*rest.Config, string, string, error) {
 	if rules == nil {
 		rules = clientcmd.NewDefaultClientConfigLoadingRules()
 	}
@@ -33,19 +46,19 @@ func resolveClusterConfig(
 	rules = &readRules
 
 	if explicit && strings.TrimSpace(contextName) == "" {
-		return nil, "", fmt.Errorf("explicit Kubernetes context name is empty")
+		return nil, "", "", fmt.Errorf("explicit Kubernetes context name is empty")
 	}
 
 	if !explicit && inClusterConfig != nil {
 		config, err := inClusterConfig()
 		if err == nil && config != nil {
-			return rest.CopyConfig(config), "", nil
+			return rest.CopyConfig(config), "", "", nil
 		}
 	}
 
 	raw, err := rules.Load()
 	if err != nil {
-		return nil, "", fmt.Errorf("load kubeconfig: %w", err)
+		return nil, "", "", fmt.Errorf("load kubeconfig: %w", err)
 	}
 	selected := contextName
 	if !explicit && selected == "" {
@@ -53,16 +66,24 @@ func resolveClusterConfig(
 	}
 	if explicit {
 		if _, ok := raw.Contexts[selected]; !ok {
-			return nil, "", fmt.Errorf("Kubernetes context %q was not found in kubeconfig", selected)
+			return nil, "", "", fmt.Errorf("Kubernetes context %q was not found in kubeconfig", selected)
 		}
 	}
 
 	clientConfig := clientcmd.NewNonInteractiveClientConfig(*raw, selected, &clientcmd.ConfigOverrides{}, rules)
 	config, err := clientConfig.ClientConfig()
 	if err != nil {
-		return nil, "", fmt.Errorf("build Kubernetes config for context %q: %w", selected, err)
+		return nil, "", "", fmt.Errorf("build Kubernetes config for context %q: %w", selected, err)
 	}
-	return rest.CopyConfig(config), selected, nil
+	// Preserve parsed proxy provenance with the same loaded snapshot. A REST
+	// callback cannot be identified as static by probing or reflecting on it.
+	proxyURL := ""
+	if selectedContext := raw.Contexts[selected]; selectedContext != nil {
+		if selectedCluster := raw.Clusters[selectedContext.Cluster]; selectedCluster != nil {
+			proxyURL = selectedCluster.ProxyURL
+		}
+	}
+	return rest.CopyConfig(config), selected, proxyURL, nil
 }
 
 // localClusterBinding is the TUI's private, session-pinned client config. It is
@@ -70,6 +91,7 @@ func resolveClusterConfig(
 // credentials instead of consulting a possibly changed current context.
 type localClusterBinding struct {
 	config   *rest.Config
+	proxyURL string // Parsed from the same selected kubeconfig snapshot.
 	context  string
 	explicit bool
 	err      error
@@ -91,21 +113,21 @@ func resolveLocalClusterBinding(
 	rules *clientcmd.ClientConfigLoadingRules,
 	inClusterConfig func() (*rest.Config, error),
 ) *localClusterBinding {
-	config, boundContext, err := resolveClusterConfig(
+	config, boundContext, proxyURL, err := resolveClusterConfigWithProxy(
 		contextName,
 		false,
 		rules,
 		inClusterConfig,
 	)
-	return &localClusterBinding{config: config, context: boundContext, err: err}
+	return &localClusterBinding{config: config, context: boundContext, proxyURL: proxyURL, err: err}
 }
 
 func resolveLocalClusterBindingForSelection(selection clusterContextSelection) *localClusterBinding {
-	config, boundContext, err := resolveClusterConfig(
+	config, boundContext, proxyURL, err := resolveClusterConfigWithProxy(
 		selection.name,
 		selection.explicit,
 		clientcmd.NewDefaultClientConfigLoadingRules(),
 		rest.InClusterConfig,
 	)
-	return &localClusterBinding{config: config, context: boundContext, explicit: selection.explicit, err: err}
+	return &localClusterBinding{config: config, context: boundContext, proxyURL: proxyURL, explicit: selection.explicit, err: err}
 }
