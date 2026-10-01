@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -167,5 +168,79 @@ func TestReverseTraceRenderersRejectNilResult(t *testing.T) {
 	}
 	if err := renderReverseTraceMarkdown(&bytes.Buffer{}, nil); err == nil {
 		t.Fatal("Markdown renderer accepted nil result")
+	}
+}
+
+type failingReverseTraceWriter struct{ err error }
+
+func (w failingReverseTraceWriter) Write([]byte) (int, error) { return 0, w.err }
+
+func TestReverseTraceRenderersReturnWriterErrorsOnAllPaths(t *testing.T) {
+	wantErr := errors.New("reverse output unavailable")
+	for name, result := range map[string]*agent.ReverseTraceResult{
+		"empty error":   {Object: agent.ResourceRef{Kind: "Pod", Name: "api"}, Error: "denied"},
+		"partial chain": {Object: agent.ResourceRef{Kind: "Pod", Name: "api"}, Error: "owner denied", K8sChain: []agent.ChainLink{{Kind: "Pod", Name: "api"}}},
+		"complete":      {Object: agent.ResourceRef{Kind: "Pod", Name: "api"}, K8sChain: []agent.ChainLink{{Kind: "Pod", Name: "api"}}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if err := renderReverseTraceHuman(failingReverseTraceWriter{wantErr}, result, false); !errors.Is(err, wantErr) {
+				t.Errorf("human writer error = %v, want %v", err, wantErr)
+			}
+			if err := renderReverseTraceMarkdown(failingReverseTraceWriter{wantErr}, result); !errors.Is(err, wantErr) {
+				t.Errorf("Markdown writer error = %v, want %v", err, wantErr)
+			}
+		})
+	}
+}
+
+func TestReverseTraceNativeWordingIsConservativeAndSecretPreviewRedacted(t *testing.T) {
+	result := &agent.ReverseTraceResult{
+		Object:      agent.ResourceRef{Kind: "Secret", Name: "credentials", Namespace: "team-a"},
+		Owner:       "native",
+		TopResource: &agent.ResourceRef{Kind: "Secret", Name: "credentials", Namespace: "team-a"},
+		OrphanMeta:  &agent.OrphanMetadata{LastAppliedConfig: `{"data":{"token":"must-not-appear"}}`},
+	}
+	var human bytes.Buffer
+	if err := renderReverseTraceHuman(&human, result, false); err != nil {
+		t.Fatal(err)
+	}
+	text := human.String()
+	for _, want := range []string{"No recognized GitOps ownership metadata", "presence does not establish how this resource was created"} {
+		if !strings.Contains(text, want) {
+			t.Errorf("human output missing %q:\n%s", want, text)
+		}
+	}
+	for _, forbidden := range []string{"will be lost", "No audit trail", "likely created", "not recoverable", "must-not-appear", `kubectl get secret`} {
+		if strings.Contains(strings.ToLower(text), strings.ToLower(forbidden)) {
+			t.Errorf("human output contains unsupported/sensitive text %q:\n%s", forbidden, text)
+		}
+	}
+}
+
+func TestReverseTraceRejectsUnsupportedFormatBeforeClientReads(t *testing.T) {
+	var reads atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		reads.Add(1)
+		http.NotFound(w, r)
+	}))
+	defer server.Close()
+	path, _ := resolverKubeconfig(t, "alpha", map[string]string{"alpha": server.URL})
+	config, selected, err := resolveClusterConfig("alpha", true, resolverRules(path), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	session, err := newTraceSession(config, selected)
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldFormat, oldJSON := traceFormat, traceJSON
+	traceFormat, traceJSON = "invalid", false
+	t.Cleanup(func() { traceFormat, traceJSON = oldFormat, oldJSON })
+	err = runReverseTraceWithSession(context.Background(), session, "Deployment", "api", "team-a")
+	if err == nil || !strings.Contains(err.Error(), "unsupported trace format") {
+		t.Fatalf("unsupported format error = %v", err)
+	}
+	if got := reads.Load(); got != 0 {
+		t.Fatalf("unsupported format performed %d Kubernetes reads", got)
 	}
 }

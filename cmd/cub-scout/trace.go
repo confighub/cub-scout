@@ -1382,6 +1382,15 @@ func runReverseTrace(ctx context.Context, kind, name, namespace string) error {
 // runReverseTraceWithSession performs every Kubernetes read through the supplied
 // invocation binding and renders the requested reverse-trace representation.
 func runReverseTraceWithSession(ctx context.Context, session *traceSession, kind, name, namespace string) error {
+	format := traceFormat
+	if traceJSON && format == "ascii" {
+		format = "json"
+	}
+	switch format {
+	case "ascii", "json", "md":
+	default:
+		return fmt.Errorf("unsupported trace format %q (supported: ascii, json, md)", format)
+	}
 	if session == nil {
 		return fmt.Errorf("reverse trace requires a captured trace session")
 	}
@@ -1395,10 +1404,6 @@ func runReverseTraceWithSession(ctx context.Context, session *traceSession, kind
 	}
 	result.Context = session.contextLabel()
 
-	format := traceFormat
-	if traceJSON && format == "ascii" {
-		format = "json"
-	}
 	switch format {
 	case "json":
 		return outputReverseTraceJSON(result)
@@ -1431,9 +1436,14 @@ func outputReverseTraceHuman(result *agent.ReverseTraceResult) error {
 // renderReverseTraceHuman writes the complete human projection without reading
 // global flags, accessing cluster state, or exiting the process.
 func renderReverseTraceHuman(w io.Writer, result *agent.ReverseTraceResult, explain bool) error {
+	if w == nil {
+		return fmt.Errorf("reverse trace output writer is nil")
+	}
 	if result == nil {
 		return fmt.Errorf("reverse trace result is nil")
 	}
+	trackedWriter := &traceHumanWriter{writer: w}
+	w = trackedWriter
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "%s%sREVERSE TRACE:%s %s%s%s\n", colorBold, colorCyan, colorReset, colorBold, result.Object.String(), colorReset)
 	fmt.Fprintf(w, "\n")
@@ -1461,7 +1471,7 @@ func renderReverseTraceHuman(w io.Writer, result *agent.ReverseTraceResult, expl
 	if result.Error != "" {
 		fmt.Fprintf(w, "  %s⚠ %s%s\n\n", colorYellow, result.Error, colorReset)
 		if len(result.K8sChain) == 0 && len(result.GitOpsChain) == 0 {
-			return nil
+			return trackedWriter.err
 		}
 	}
 
@@ -1543,10 +1553,7 @@ func renderReverseTraceHuman(w io.Writer, result *agent.ReverseTraceResult, expl
 	// If native, show warning and orphan metadata
 	if result.Owner == "native" {
 		fmt.Fprintf(w, "\n")
-		fmt.Fprintf(w, "%s⚠ This resource is NOT managed by GitOps%s\n", colorYellow, colorReset)
-		fmt.Fprintf(w, "%s  • It will be lost if the cluster is rebuilt%s\n", colorDim, colorReset)
-		fmt.Fprintf(w, "%s  • No audit trail in Git%s\n", colorDim, colorReset)
-		fmt.Fprintf(w, "%s  • Consider importing to GitOps: cub-scout import%s\n", colorDim, colorReset)
+		fmt.Fprintf(w, "%s⚠ No recognized GitOps ownership metadata was found for this resource.%s\n", colorYellow, colorReset)
 
 		// Show orphan metadata if available
 		if result.OrphanMeta != nil {
@@ -1573,29 +1580,15 @@ func renderReverseTraceHuman(w io.Writer, result *agent.ReverseTraceResult, expl
 			// Show last-applied-configuration hint
 			if result.OrphanMeta.LastAppliedConfig != "" {
 				fmt.Fprintf(w, "\n")
-				fmt.Fprintf(w, "%s%slast-applied-configuration found%s\n", colorBold, colorGreen, colorReset)
-				fmt.Fprintf(w, "%s  This resource was created via 'kubectl apply'.%s\n", colorDim, colorReset)
-				fmt.Fprintf(w, "%s  The original manifest is available in the annotation.%s\n", colorDim, colorReset)
-
-				// Show a truncated preview
-				config := result.OrphanMeta.LastAppliedConfig
-				if len(config) > 200 {
-					fmt.Fprintf(w, "\n  %sManifest preview (first 200 chars):%s\n", colorDim, colorReset)
-					fmt.Fprintf(w, "  %s%s...%s\n", colorDim, config[:200], colorReset)
-				}
-
-				fmt.Fprintf(w, "\n  %s💡 To see full manifest:%s\n", colorDim, colorReset)
-				if result.TopResource != nil {
-					fmt.Fprintf(w, "  kubectl get %s %s -n %s -o jsonpath='{.metadata.annotations.kubectl\\.kubernetes\\.io/last-applied-configuration}' | jq .\n",
-						strings.ToLower(result.TopResource.Kind),
-						result.TopResource.Name,
-						result.TopResource.Namespace)
+				fmt.Fprintf(w, "%s%slast-applied-configuration annotation is present%s\n", colorBold, colorGreen, colorReset)
+				fmt.Fprintf(w, "%s  Its presence does not establish how this resource was created.%s\n", colorDim, colorReset)
+				if result.TopResource == nil || !strings.EqualFold(result.TopResource.Kind, "Secret") {
+					fmt.Fprintf(w, "\n  %sTo inspect the annotation, query this resource explicitly.%s\n", colorDim, colorReset)
 				}
 			} else {
 				fmt.Fprintf(w, "\n")
-				fmt.Fprintf(w, "%s%sNo last-applied-configuration%s\n", colorBold, colorYellow, colorReset)
-				fmt.Fprintf(w, "%s  This resource was likely created via 'kubectl create' (not 'kubectl apply').%s\n", colorDim, colorReset)
-				fmt.Fprintf(w, "%s  The original manifest is not recoverable from the cluster.%s\n", colorDim, colorReset)
+				fmt.Fprintf(w, "%s%sNo last-applied-configuration annotation was found.%s\n", colorBold, colorYellow, colorReset)
+				fmt.Fprintf(w, "%s  Its absence does not establish how this resource was created or whether its source is recoverable.%s\n", colorDim, colorReset)
 			}
 		}
 	}
@@ -1613,14 +1606,19 @@ func renderReverseTraceHuman(w io.Writer, result *agent.ReverseTraceResult, expl
 	}
 
 	fmt.Fprintf(w, "\n")
-	return nil
+	return trackedWriter.err
 
 }
 
 func renderReverseTraceMarkdown(w io.Writer, result *agent.ReverseTraceResult) error {
+	if w == nil {
+		return fmt.Errorf("reverse trace output writer is nil")
+	}
 	if result == nil {
 		return fmt.Errorf("reverse trace result is nil")
 	}
+	trackedWriter := &traceHumanWriter{writer: w}
+	w = trackedWriter
 	fmt.Fprintf(w, "## Reverse trace: %s\n\n", result.Object.String())
 	if result.Context != "" {
 		fmt.Fprintf(w, "Kubernetes context: %s (selection label; not a stable cluster ID)\n\n", result.Context)
@@ -1663,7 +1661,7 @@ func renderReverseTraceMarkdown(w io.Writer, result *agent.ReverseTraceResult) e
 		}
 		fmt.Fprintf(w, "\n")
 	}
-	return nil
+	return trackedWriter.err
 }
 
 // runTraceDiff shows the diff between live state and desired state from Git
