@@ -42,6 +42,32 @@ no cluster mutation, no new fleet membership model, and no renderer hidden in
 `import --git-path`. ConfigHub fact publication has a distinct, explicit write
 boundary even though observing the cluster remains read-only.
 
+## Execution checkpoint — 2026-10-01 (00:40 UTC)
+
+Code baseline is `624c7cf`. #691–#694 are merged with review and required CI: current
+handover, pinned recorded scale preparation, opt-in recorded summary/owner
+views and explicit basic/views preflight contracts. Default JSON remains
+byte-identical. The four-view CLI/MCP binary preflight passed; product output
+retains input hashes, scope, unknown capture time/completeness and the Native
+ownership limitation. Smaller responses alone do not establish agent savings.
+
+INV-01/02 now map to **prepared recorded bindings, not model runs**. The fixed
+24-case design comprises 10 planned, five refreshed, two prepared bindings,
+six prepared projections and one prepared raw recording. It remains
+non-executable. Actual tool/grant parity and grading gates are pending;
+file-tools-only staging is narrower than the full standalone-tool comparison.
+The strict answer-contract packet is opt-in and preserves historical results.
+
+Revision-correlation PR #695 is merged as `624c7cf` after review, local
+validation and required CI. Its digest equality must not imply execution or gate
+acceptance; live ConfigHub correlation remains unverified. v2.12.4 is still
+the published release. Paid execution remains $4.2655744 estimated inclusive
+list price, development dollars/credits are unmeasured, and no paid retry is
+queued. Continue bounded cheap workers at normal speed under
+[#645](https://github.com/confighub/cub-scout/issues/645). See the
+[current handover](../HANDOVER.md) for validation limits and external gates.
+Earlier checkpoints below are historical.
+
 ## Execution checkpoint — 2026-10-01 (23:48 UTC on September 30)
 
 Main is `61b05bf`; v2.12.4 remains the published release. #681/#682, the negative
