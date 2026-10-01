@@ -48,7 +48,7 @@ cases remain a separate experiment.
 | Prerequisites / graph | PRE-03 | Argo/Crossplane child-chain failure | Planned |
 | Prerequisites / graph | PRE-04 | Hub/spoke intended placement with missing live observations | `kubara-hub-spoke-placement` — pinned desired/config projection prepared, not run; no live observations consumed |
 | Reuse / limits | RUL-01 | Repeated question using a dated snapshot | Planned; snapshot age remains visible |
-| Reuse / limits | RUL-02 | Cache invalidation after identity change | Planned; missing/stale identity stays unresolved |
+| Reuse / limits | RUL-02 | Cache invalidation after identity change | `rul02-cache-replay` — source-pinned synthetic reader replay prepared, not run as a model evaluation; no automatic invalidation or general freshness claim |
 | Reuse / limits | RUL-03 | Denied cluster beside readable cluster, explicit context | `rul03-context` — raw explicit-context responses and strict answer contract prepared, not run; denied inventory stays unknown |
 | Reuse / limits | RUL-04 | Unsupported workload/image proof | Raw capture prepared, not run: Ready Pod runtime imageID and UID linkage preserved; tag-only authored intent does not establish immutable intended image identity. No applied-source proof. [Case](rul04-image-identity/README.md) |
 

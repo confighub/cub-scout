@@ -10,7 +10,7 @@ Run from the repository root with an explicit offline kubeconfig:
 KUBECONFIG=/tmp/scout-offline-validation.kubeconfig go test ./pkg/agent -run '^TestBoundedReadRUL02IdentityCacheReplay$' -count=1 -v
 ```
 
-Current status: source and authored fixture prepared; only compile-only validation has run. The replay result record has not yet been emitted by executing the test. This exercises authored loopback responses only. It is not a live-cluster recording, cache-push invalidation claim, freshness guarantee before TTL/refresh, savings result, or benchmark admission. The frozen benchmark mapping, prompts, and weights are unchanged.
+Reviewed replay status: the named test passed once at source revision `f7ad343740fb9c1ac488a06117c63466810afaa8` in 3.837292250012979 seconds, exit 0, without timeout. Its byte-exact extracted output and wrapper proof are retained in the ignored `evals/results/rul02-cache-replay-20261001/` archive. The packaged equal-arm fixture is `evals/rul02-cache-replay/fixtures/rul02-cache-replay.json`; its source pins and neutral scope are in `capture-scope.json`. The replay exercises authored loopback responses only. It is not a live-cluster recording, cache-push invalidation claim, freshness guarantee outside its fixed steps, savings result, or paid benchmark run. The frozen question, reference, controls, and weights are unchanged; benchmark admission remains false and the suite non-executable.
 
 Each emitted input also retains the authored server response configured for that
 step, even when a cache hit performs no HTTP request. This distinguishes changed
