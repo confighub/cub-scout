@@ -436,6 +436,18 @@ class OfflineContracts(unittest.TestCase):
         self.assertEqual([call["input"]["file_path"] for call in calls], ["/private/read-fixture.txt"]*3)
         self.assertEqual(len({call["id"] for call in calls}), 3)
 
+    def test_observed_pinned_cli_refusal_is_exact_not_a_prefix(self):
+        for tool in ("Task", "Agent"):
+            observed = (f"<tool_use_error>Error: No such tool available: {tool}. "
+                        f"{tool} is disabled for this session, in subagents as well as here.</tool_use_error>")
+            self.assertTrue(probe.explicit_denial(observed, tool))
+            self.assertTrue(probe.explicit_denial([{"type":"text", "text":observed}], tool))
+            for value in (observed+" but execution succeeded", "prefix "+observed,
+                          f"No such tool available: {tool}; started anyway",
+                          [{"type":"text", "text":observed}, {"type":"text", "text":"started anyway"}],
+                          observed.replace(tool, "Bash")):
+                self.assertFalse(probe.explicit_denial(value, tool))
+
     def test_cli_tool_event_ids_reject_duplicates(self):
         call = {"type":"tool_use", "id":"u1", "name":"Read", "input":{"file_path":"/safe"}}
         event = {"type":"assistant", "message":{"content":[call]}}

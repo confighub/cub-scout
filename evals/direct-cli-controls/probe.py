@@ -254,15 +254,16 @@ def explicit_denial(content, tool_name: str) -> bool:
             return False
     else:
         return False
-    name = re.escape(tool_name)
-    patterns = (
-        rf"(?:the\s+)?{name}(?:\s+tool)?\s+(?:is|was)\s+(?:not\s+allowed|disallowed|unavailable|not\s+available|disabled)\b",
-        rf"(?:the\s+)?{name}(?:\s+tool)?\s+is\s+not\s+permitted\b",
-        rf"no\s+such\s+tool\s+(?:is\s+)?(?:available|allowed)\s*:\s*{name}\b",
-        rf"{name}(?:\s+tool)?\s+(?:is\s+)?not\s+available\b",
-    )
-    return any(re.fullmatch(rf"\s*(?:error:\s*)?{pattern}(?:\b|:)?.*", text,
-                            flags=re.IGNORECASE | re.DOTALL) for text in texts for pattern in patterns)
+    # Exact authored fixtures and the observed pinned-CLI refusal only. Do not
+    # accept a denial prefix followed by contradictory execution claims.
+    known = {
+        f"{tool_name} is disallowed",
+        f"{tool_name} is disallowed by this session",
+        f"No such tool available: {tool_name}",
+        f"<tool_use_error>Error: No such tool available: {tool_name}. "
+        f"{tool_name} is disabled for this session, in subagents as well as here.</tool_use_error>",
+    }
+    return len(texts) == 1 and texts[0] in known
 
 
 def validate_probe(stdout: bytes, requests: list[dict], return_code: int,

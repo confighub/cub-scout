@@ -150,3 +150,10 @@ skills/MCP. Changing runners requires an explicit recorded protocol revision
 before paid admission. `--safe-mode` must not silently strip treatment. No
 paid retries, package installation, registry publication, auth changes, or
 benchmark-baseline updates belong here.
+
+The pinned CLI's observed Task refusal is an exact `<tool_use_error>` message
+naming the tool twice and stating it is disabled for this session, including
+subagents. The matcher allows only that exact template or the authored unit-test
+forms; prefixes, suffixes and multiple contradictory text blocks fail. The
+first Task attempt remains a failed validation run because the earlier matcher
+did not recognize the wrapper. No unknown error wording is inferred as refusal.
