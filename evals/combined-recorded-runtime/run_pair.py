@@ -212,7 +212,7 @@ def inspect_runtime(raw: bytes, name: str, owner: str, stage: Path, plugin: Path
         or host.get("IpcMode") not in (None, "", "private")
         or host.get("SecurityOpt") not in (["no-new-privileges"], ["no-new-privileges:true"])
         or host.get("PidsLimit") != 64 or host.get("Memory") != 1073741824 or host.get("NanoCpus") != 1000000000
-        or host.get("Privileged") is not False or actual != expected
+        or host.get("Privileged") is not False or len(actual) != len(expected) or set(actual) != set(expected)
         or any(m.get("RW") is not False for m in binds)):
         raise ValueError("owned container differs from exact runtime/isolation profile")
     tmp = host.get("Tmpfs")

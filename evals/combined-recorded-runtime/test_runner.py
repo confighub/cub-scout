@@ -69,7 +69,10 @@ class RunnerTests(unittest.TestCase):
                            {"Type": "bind", "Source": str(plugin), "Destination": "/tools/plugin", "RW": False}],
                 "State": {"Status": "exited", "ExitCode": 0}}
             self.assertEqual(runner.inspect_runtime(json.dumps(value).encode(), name, owner, stage, plugin, finished=True), "b" * 64)
-            for mutate in (lambda x: x["HostConfig"].update(CapAdd=["NET_ADMIN"]),
+            reordered = copy.deepcopy(value); reordered["Mounts"].reverse()
+            self.assertEqual(runner.inspect_runtime(json.dumps(reordered).encode(), name, owner, stage, plugin), "b" * 64)
+            for mutate in (lambda x: x["Mounts"].append(copy.deepcopy(x["Mounts"][0])),
+                           lambda x: x["HostConfig"].update(CapAdd=["NET_ADMIN"]),
                            lambda x: x["Mounts"].append({"Type": "volume", "Destination": "/etc"}),
                            lambda x: x["Config"]["Labels"].update({runner.OWNER_LABEL: "c" * 32})):
                 changed = copy.deepcopy(value); mutate(changed)
