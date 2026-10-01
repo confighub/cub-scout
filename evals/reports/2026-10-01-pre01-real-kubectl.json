@@ -1,0 +1,68 @@
+{
+  "schema": "pre01-real-kubectl-source-preparation.v1",
+  "case": "PRE-01",
+  "issue": 732,
+  "status": "prepared_not_run",
+  "execution": {
+    "dockerInvoked": false,
+    "kubectlInvoked": false,
+    "clusterAccess": false,
+    "providerRequests": 0,
+    "modelInference": false,
+    "paidEvaluation": false,
+    "developmentCostUsd": null
+  },
+  "source": {
+    "recordedApiRevision": "17c2a6af330021621b730c4e5b5b1f0c4c2c9081",
+    "versionGateSourceRevision": "f2589083ad8c954d3ef671b548af4f90427046cf",
+    "kubectl": {
+      "bytes": 55640226,
+      "sha256": "9f9d9c44a7b5264515ac9da5991584e2395bd50662e651132337e7b4d0c56f8f",
+      "platform": "Linux arm64",
+      "observedVersion": "not rerun; inherited from separately reviewed version gate"
+    },
+    "cachedContainerImage": "sha256:cdbd05fb6f457ca275ff51ce00d93d865ca0b6a25f5ffb08262d94f6835771e5",
+    "pinnedInputs": {
+      "evals/recorded-api/replay.py": "5b147c7bfe409a93d9e20e6d5994e653e3c524e082722068471bd6e7aa7d8d93",
+      "evals/reports/2026-10-01-pre01-crd.json": "5585ecd0298e2b6f4201a638cdc0aeab9cdeb0dfab38d3b52e090cc3cb8f5c0a",
+      "evals/pre01-crd/fixtures/capture-scope.json": "6d39e83612d52f5124bad2dd63b27b30b94cce492eb70223f759248de71bfec4"
+    }
+  },
+  "preparedContract": {
+    "phases": ["absent", "present"],
+    "commandsPerPhase": 3,
+    "totalKubectlCommands": 6,
+    "paths": [
+      "/apis/apiextensions.k8s.io/v1/customresourcedefinitions/servicemonitors.monitoring.coreos.com",
+      "/apis/monitoring.coreos.com/v1",
+      "/apis/monitoring.coreos.com/v1/namespaces/monitoring/servicemonitors/kube-prometheus-stack-kube-state-metrics"
+    ],
+    "expectedHttpStatuses": {"absent": [404, 404, 404], "present": [200, 200, 200]},
+    "acceptance": "Each captured 404 must produce a nonzero kubectl exit; each captured 200 must produce exit zero and stdout exactly matching the pinned response bytes. Each phase trace must prove exactly its three declared GET paths/statuses/body hashes, with no extra, duplicate, unavailable, or malformed request.",
+    "sourceSnapshot": "The original capture is sequential and non-atomic; replay preserves that limitation."
+  },
+  "bounds": {
+    "containerNetwork": "none",
+    "containerUser": "65534:65534",
+    "readonlyRootFilesystem": true,
+    "capabilitiesDropped": "ALL",
+    "noNewPrivileges": true,
+    "pids": 64,
+    "memoryBytes": 1073741824,
+    "cpus": 1,
+    "privateTmpBytes": 67108864,
+    "perCommandSeconds": 5,
+    "perStreamBytes": 65536,
+    "executionSeconds": 60,
+    "ownedCleanupSeconds": 30
+  },
+  "validation": {
+    "tests": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/pre01-real-kubectl -v",
+    "result": "13 deterministic offline tests pass; tests use authored fake CLI processes and/or the owned loopback replay implementation, not Docker or the real kubectl binary."
+  },
+  "limitations": [
+    "This is source preparation only; the bounded container invocation remains pending independent review.",
+    "This proves no broad Kubernetes discovery behavior, Helm API coverage, ordinary-tool parity, live cluster state, model quality, cost savings, or paid benchmark admission.",
+    "The packet covers only six captured raw API requests; general kubectl discovery and additional routes remain out of scope."
+  ]
+}
