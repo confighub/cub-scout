@@ -52,6 +52,13 @@ class _Opener:
 
 
 class CaptureTests(unittest.TestCase):
+    def test_owned_node_name_fits_dns_label(self):
+        names = [capture.owned_cluster_name() for _ in range(8)]
+        self.assertEqual(len(set(names)), len(names))
+        for name in names:
+            self.assertLessEqual(len(name + "-control-plane"), 63)
+            self.assertRegex(name, r"^scout-inv04-rbac-[0-9a-z-]+$")
+
     def test_kind_version_requires_exact_release_token(self):
         capture.require_kind_version("kind v0.31.0 go1.25.5 darwin/arm64")
         for version in ("kind v0.31.0-debug", "kind v0.31.0-alpha", "kind v0.31.01", "v0.31.0", "other v0.31.0"):

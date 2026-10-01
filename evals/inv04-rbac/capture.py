@@ -52,6 +52,14 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
+def owned_cluster_name() -> str:
+    # kind appends "-control-plane"; keep the entire DNS label below 64 bytes.
+    name = "scout-inv04-rbac-" + datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S") + "-" + uuid.uuid4().hex[:12]
+    if len(name + "-control-plane") > 63 or not re.fullmatch(r"scout-inv04-rbac-[0-9a-z-]+", name):
+        raise CaptureError("generated node name is invalid")
+    return name
+
+
 def build_manifests() -> bytes:
     """Literal low-risk workload and namespace-scoped read-only observer setup."""
     docs = [
@@ -418,10 +426,7 @@ def capture(shared_config: Path, binary: Path, output: Path) -> int:
     if binary_sha != PRODUCT_BINARY_SHA256:
         raise CaptureError("cub-scout binary does not match the pinned local build")
     scripts_sha = sha256(Path(__file__).read_bytes())
-    task_id = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S") + "-" + str(os.getpid()) + "-" + uuid.uuid4().hex[:12]
-    cluster = "scout-inv04-rbac-" + task_id.lower()
-    if not re.fullmatch(r"scout-inv04-rbac-[0-9a-z-]+", cluster):
-        raise CaptureError("generated cluster name is invalid")
+    cluster = owned_cluster_name()
     temp = Path(tempfile.mkdtemp(prefix="scout-inv04-private-"))
     os.chmod(temp, 0o700)
     admin_config = temp / "admin.kubeconfig"
