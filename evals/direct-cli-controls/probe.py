@@ -353,11 +353,15 @@ def handler_type(records: list[dict], lock: threading.Lock, count: list[int], pr
                 # remains incomplete/rejected and cannot pass acceptance.
                 if line == b"" and self._audit_status is None:
                     kind = "empty-eof"
+                method = getattr(self, "command", None)
+                path = getattr(self, "path", "").partition("?")[0].partition("#")[0]
                 self.server.audit_connection({
                     "id": self.server.request_ordinal(self.request),
                     "kind": kind, "httpStatus": self._audit_status,
                     "requestLineBytes": None if line is None else len(line),
                     "requestLineSha256": None if line is None else sha256(line),
+                    "method": method if isinstance(method, str) and re.fullmatch(r"[A-Z]{1,16}", method) else None,
+                    "pathWithoutQuery": path if re.fullmatch(r"/[A-Za-z0-9_./-]{0,255}", path) else None,
                 })
         def _dispatch(self):
             if self.command == "GET" and self.path == preflight_path:
