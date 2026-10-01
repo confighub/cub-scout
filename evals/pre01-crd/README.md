@@ -45,6 +45,17 @@ and the namespaced ServiceMonitor. It retains raw HTTP bodies, including
 non-200 bodies, with status, time, byte count and SHA-256. A Kubernetes
 `Status/NotFound` HTTP 404 is absence; 403, malformed NotFound, transport
 failure or denied reads leave acceptance unknown and fail the capture.
+For the absent phase only, the two unregistered group/version routes may return
+the apiserver's exact plain-text `404 page not found` body. This is recorded as
+`route-unregistered`, not object absence; the exact CRD GET must independently
+return a typed Kubernetes NotFound. The present-phase object absence checkpoint
+still requires typed NotFound. These potentially non-JSON bodies use `.body`.
+
+The first actual attempt at capture source `e87c4d8624ec75e880713cd7846cdf3396148593`
+stopped on that plain-text discovery response after confirming the CRD's typed
+404. The failed attempt is retained, not an accepted case; owned cleanup and
+shared/private config integrity passed. A regression guard now preserves the
+distinction between route registration and object existence.
 
 One cluster runs two serial phases. The absent phase records CRD/discovery/
 object reads and the actual failed apply of the normalized authored

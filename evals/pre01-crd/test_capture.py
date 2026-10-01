@@ -93,6 +93,21 @@ class SourceAndEvidenceTests(unittest.TestCase):
         present["metadata"]["uid"] = ""
         with self.assertRaises(capture.CaptureError): capture.validate_raw(capture.API_PATHS[2], 200, json.dumps(present).encode(), "present")
 
+    def test_unregistered_route_404_does_not_prove_object_absence(self):
+        body = b"404 page not found\n"
+        for path in capture.API_PATHS[1:]:
+            result = capture.validate_raw(path, 404, body, "absent")
+            self.assertEqual(result["status"], "route-unregistered")
+            self.assertFalse(result["objectAbsenceProven"])
+            for phase in ("present", "present-before-apply"):
+                with self.subTest(path=path, phase=phase), self.assertRaises(capture.CaptureError):
+                    capture.validate_raw(path, 404, body, phase)
+        for path, code, raw in ((capture.API_PATHS[0], 404, body),
+                                (capture.API_PATHS[1], 403, body),
+                                (capture.API_PATHS[1], 404, b"upstream unavailable")):
+            with self.subTest(path=path, code=code), self.assertRaises(capture.CaptureError):
+                capture.validate_raw(path, code, raw, "absent")
+
     def test_typed_scout_receipt_validates_only_exact_crd_fact(self):
         statement = {"predicate": {"predicateName": "prerequisites-met", "verdict": "BLOCK",
             "evidence": {"prerequisites": {"facts": [{"kind": "CRD", "name": capture.CRD_NAME, "status": "missing"}],

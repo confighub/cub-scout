@@ -267,6 +267,13 @@ def validate_raw(path: str, status: int, body: bytes, phase: str) -> dict:
     """404 is absence; denied/unavailable evidence remains UNKNOWN and fails capture."""
     check_api_path(path)
     if status == 404:
+        # The generic apiserver router returns this body for an unregistered
+        # group/version. It is route evidence, never a typed object NotFound.
+        # The capture separately requires the exact CRD GET's typed NotFound.
+        if (phase == "absent" and path in API_PATHS[1:]
+                and body == b"404 page not found\n"):
+            return {"status": "route-unregistered", "httpStatus": 404,
+                    "objectAbsenceProven": False}
         try:
             missing = json.loads(body)
         except (UnicodeDecodeError, json.JSONDecodeError):
@@ -604,14 +611,16 @@ def capture(args, sources: dict, out: Path, shared: Path, scout: Path) -> int:
             phase_validations = {}
             if phase == "absent":
                 for path, label in zip(API_PATHS, ("crd", "discovery", "servicemonitor")):
-                    phase_validations[label] = capture_api(phase, path, phase + "-" + label + ".json", server, ca, token,
+                    suffix = ".json" if path == API_PATHS[0] else ".body"
+                    phase_validations[label] = capture_api(phase, path, phase + "-" + label + suffix, server, ca, token,
                                                            private, out, records)
                 scout_receipts.append(run_scout_receipt(scout, admin, observer, phase, args.scout_source_revision, "missing", out, token, private))
                 operation = run_apply(kubectl, admin, cluster, sm_file, out / ("cache-" + phase), out, phase, token, private)
                 operations.append(operation)
                 if not operation["accepted"]: errors.append("dependent ServiceMonitor apply had unexpected absent result")
                 for path, label in ((API_PATHS[0], "crd"), (API_PATHS[2], "servicemonitor")):
-                    capture_api("absent", path, "absent-after-apply-" + label + ".json", server, ca, token,
+                    suffix = ".json" if path == API_PATHS[0] else ".body"
+                    capture_api("absent", path, "absent-after-apply-" + label + suffix, server, ca, token,
                                 private, out, records)
                 # Install only the real, pinned chart CRD. `create` avoids a client-side
                 # last-applied annotation on the large authored document.
