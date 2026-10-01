@@ -72,6 +72,36 @@ does not offer reads from it. Normal in-cluster map/watch/bot behavior remains
 available; use explicit standalone `explain --bounded` when a kubeconfig context
 is known.
 
+## Explicit Context For Doctor And Live Scan
+
+Doctor and live `scan` accept `--kube-context` to bind every Kubernetes
+sub-read to one exact kubeconfig context for that invocation:
+
+```sh
+./cub-scout doctor --kube-context staging --format json
+./cub-scout scan --kube-context staging --json
+```
+
+The corresponding MCP tools accept a string `context` input. For example,
+`doctor` takes `{ "context": "staging" }` and `scan` takes
+`{ "context": "staging", "namespace": "team-a" }`. Kubernetes uses
+`--kube-context`; the host's `--context` remains reserved for ConfigHub.
+An omitted selector keeps legacy behavior. Empty or unknown explicit names fail
+without falling back, and fixture, file, and policy-list modes reject the live
+selector. Each command captures a private read-only REST config once, so a later
+change to kubeconfig `current-context` does not redirect nested reads.
+
+Doctor reports unreadable inventory/rollout coverage as warnings, including in
+JSON. An absent optional controller API is distinct from a denied request.
+Connected ConfigHub delivery evidence remains separately opt-in and scoped;
+matching a context name to a ConfigHub target does not establish cluster
+identity. The reported context label is only a selection label, never a stable
+observed cluster ID.
+
+The two-context owned-cluster before/after procedure is prepared in
+[`evals/doctor-scan-context/README.md`](../../evals/doctor-scan-context/README.md).
+It has not been run and makes no live-cluster claim.
+
 ## Evidence And Limits
 
 - `resourceRead.available` means an identity-matching object was read, not that

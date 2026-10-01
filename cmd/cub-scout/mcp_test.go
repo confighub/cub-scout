@@ -29,6 +29,28 @@ func TestNewMCPGateway_ToolsIncludeStandaloneSet(t *testing.T) {
 	}
 }
 
+func TestMCPDoctorAndScanForwardTypedKubernetesContext(t *testing.T) {
+	gateway := newMCPGateway(nil)
+	for _, name := range []string{"doctor", "scan"} {
+		tool := gateway.tools[name]
+		args, err := tool.BuildArgs(map[string]interface{}{"context": "cluster-b"})
+		if err != nil {
+			t.Fatalf("%s BuildArgs: %v", name, err)
+		}
+		joined := strings.Join(args, " ")
+		if !strings.Contains(joined, "--kube-context cluster-b") {
+			t.Fatalf("%s args = %v", name, args)
+		}
+		if _, err := tool.BuildArgs(map[string]interface{}{"context": 42}); err == nil {
+			t.Fatalf("%s accepted non-string context", name)
+		}
+		empty, err := tool.BuildArgs(map[string]interface{}{"context": ""})
+		if err != nil || !strings.Contains(strings.Join(empty, " "), "--kube-context") {
+			t.Fatalf("%s did not forward explicit empty context for strict CLI rejection: %v %v", name, empty, err)
+		}
+	}
+}
+
 func TestNewMCPGatewayWithMode_ConnectedAddsConfigHubTools(t *testing.T) {
 	gateway := newMCPGatewayWithMode(nil, nil, true)
 	tools := gateway.toolsForList()

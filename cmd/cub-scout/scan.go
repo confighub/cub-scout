@@ -16,6 +16,8 @@ import (
 
 	"github.com/confighub/cub-scout/v2/internal/scan"
 	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 var (
@@ -34,7 +36,10 @@ var (
 	scanExplain           bool
 	scanNormalizedJSON    bool
 	scanFailOn            string
+	scanKubeContext       string
 )
+
+var selectScanProviderFn = scan.SelectProvider
 
 var scanCmd = &cobra.Command{
 	Use:   "scan [flags]",
@@ -106,6 +111,7 @@ func init() {
 	scanCmd.Flags().BoolVar(&scanExplain, "explain", false, "Show explanatory content to help learn GitOps risk concepts")
 	scanCmd.Flags().BoolVar(&scanNormalizedJSON, "normalized-json", false, "Output normalized findings JSON (scan.normalized.v1 schema)")
 	scanCmd.Flags().StringVar(&scanFailOn, "fail-on", "", "Exit 1 when findings at or above threshold: info, warning, critical (default: no exit-on-findings)")
+	scanCmd.Flags().StringVar(&scanKubeContext, "kube-context", "", "Use this exact Kubernetes context for all live scan reads")
 }
 
 // CombinedScanResult is the legacy type name, preserved for compatibility
@@ -129,20 +135,27 @@ func scanConfigHubNote(verbose bool) string {
 
 func runScan(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
+	selection, err := clusterContextSelectionFromFlag(cmd)
+	if err != nil {
+		return err
+	}
+	if selection.explicit && (scanList || scanFile != "" || os.Getenv("CUB_SCOUT_TEST_SCAN_JSON") != "") {
+		return fmt.Errorf("--kube-context applies only to live cluster scans")
+	}
 
 	// Check ConfigHub connection for full scan capabilities.
 	// --list and --file modes work with embedded patterns; cluster scanning
 	// benefits from the ConfigHub pattern database when connected.
 	// Currently: embedded patterns are sufficient for all scan modes.
 	// Future: when pattern DB is fully API-hosted, enforce auth for cluster scans.
-	if !scanList && scanFile == "" {
+	if !scanList && scanFile == "" && !selection.explicit {
 		if note := scanConfigHubNote(scanVerbose); note != "" {
 			fmt.Fprintln(os.Stderr, note)
 		}
 	}
 
 	// Create scan provider (auto-selects cub-scan when available)
-	provider := scan.SelectProvider(scan.ProviderConfig{})
+	provider := selectScanProviderFn(scan.ProviderConfig{})
 
 	// List mode - show all KPOL policies
 	if scanList {
@@ -161,7 +174,12 @@ func runScan(cmd *cobra.Command, args []string) error {
 	}
 
 	// Build k8s config
-	cfg, err := buildConfig()
+	var cfg *rest.Config
+	if selection.explicit {
+		cfg, _, err = resolveClusterConfig(selection.name, true, clientcmd.NewDefaultClientConfigLoadingRules(), rest.InClusterConfig)
+	} else {
+		cfg, err = buildConfig()
+	}
 	if err != nil {
 		return fmt.Errorf("failed to build kubernetes config: %w", err)
 	}
@@ -195,9 +213,16 @@ func runScan(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	if warningErr := scanWarningsError(result); warningErr != nil {
+		fmt.Fprintln(os.Stderr, "Warning:", warningErr)
+	}
 
 	// Connected-mode durability: persist normalized summary artifacts for later query/trend views.
-	persistConnectedScanSummary(result, scanNamespace)
+	clusterLabel := ""
+	if selection.explicit {
+		clusterLabel = selection.name
+	}
+	persistConnectedScanSummaryForCluster(result, scanNamespace, clusterLabel)
 
 	// Handle Kyverno-only mode where Kyverno is not installed
 	if scanKyvernoOnly && result.Kyverno == nil && !runState {
@@ -229,13 +254,56 @@ func runScan(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func scanWarnings(result *scan.CombinedResult) []string {
+	if result == nil {
+		return []string{"scan provider returned no result"}
+	}
+	var warnings []string
+	if result.Kyverno != nil && strings.TrimSpace(result.Kyverno.Error) != "" {
+		warnings = append(warnings, "Kyverno scan: "+strings.TrimSpace(result.Kyverno.Error))
+	}
+	if result.State != nil {
+		for _, warning := range result.State.Warnings {
+			if strings.TrimSpace(warning) != "" {
+				warnings = append(warnings, "state scan: "+strings.TrimSpace(warning))
+			}
+		}
+	}
+	return warnings
+}
+
+func scanWarningsError(result *scan.CombinedResult) error {
+	warnings := scanWarnings(result)
+	if len(warnings) == 0 {
+		return nil
+	}
+	return fmt.Errorf("scan coverage incomplete: %s", strings.Join(warnings, "; "))
+}
+
+func scanFindingsForTUI(result *scan.CombinedResult) ([]scanFinding, map[string]int) {
+	findings := []scanFinding{}
+	categories := map[string]int{}
+	normalized := scan.Normalize(result)
+	if normalized == nil {
+		return findings, categories
+	}
+	for _, finding := range normalized.Findings {
+		category := strings.ToUpper(strings.TrimSpace(finding.Category))
+		if category == "" {
+			category = "UNCATEGORIZED"
+		}
+		findings = append(findings, scanFinding{CCVE: finding.ID, Severity: strings.ToLower(finding.Severity), Category: category, Resource: finding.Resource, Namespace: finding.Namespace, Message: finding.Message})
+		categories[category]++
+	}
+	return findings, categories
+}
+
 // listKPOLPolicies lists all policies via the scan provider.
 func listKPOLPolicies(provider scan.Provider) error {
 	policies, err := provider.ListPolicies()
 	if err != nil {
 		return err
 	}
-
 	if scanJSON {
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")

@@ -15,10 +15,12 @@ import (
 	"github.com/confighub/cub-scout/v2/internal/scan"
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 	"github.com/spf13/cobra"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 )
 
 var (
@@ -32,8 +34,11 @@ var (
 	doctorConfigHubSpace      string
 	doctorConfigHubSince      string
 	doctorConfigHubStaleAfter string
+	doctorKubeContext         string
 
-	collectDoctorDeliveryEvidenceFn = collectDoctorDeliveryEvidence
+	collectDoctorDeliveryEvidenceFn = func(ctx context.Context, namespace string, req ObserveScopeSummaryRequest, binding *localClusterBinding) (*GitOpsDeliveryEvidence, error) {
+		return collectDoctorDeliveryEvidenceWithBinding(ctx, namespace, req, binding)
+	}
 )
 
 var doctorCmd = &cobra.Command{
@@ -63,22 +68,25 @@ func init() {
 	doctorCmd.Flags().StringVar(&doctorConfigHubSpace, "confighub-space", "", "ConfigHub space for connected delivery evidence (default: CUB_SPACE; use '*' explicitly for all spaces)")
 	doctorCmd.Flags().StringVar(&doctorConfigHubSince, "confighub-since", "24h", "Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w)")
 	doctorCmd.Flags().StringVar(&doctorConfigHubStaleAfter, "confighub-stale-after", "15m", "Treat ConfigHub live-status observations older than this as stale")
+	doctorCmd.Flags().StringVar(&doctorKubeContext, "kube-context", "", "Use this exact Kubernetes context for all doctor reads")
 }
 
 // DoctorSummary is the canonical model behind both ASCII and JSON output.
 type DoctorSummary struct {
-	Cluster   string                 `json:"cluster"`
-	Namespace string                 `json:"namespace"`
-	Resources DoctorResourceSummary  `json:"resources"`
-	Ownership DoctorOwnershipSummary `json:"ownership"`
-	Health    DoctorHealthSummary    `json:"health"`
-	Risks     DoctorRiskSummary      `json:"risks"`
-	Drift     DoctorDriftSummary     `json:"drift"`
-	Rollouts  *DoctorRolloutSummary  `json:"rollouts,omitempty"`
-	Delivery  *DoctorDeliverySummary `json:"delivery,omitempty"`
-	ThreeWay  *DoctorThreeWaySummary `json:"threeWay,omitempty"`
-	TopIssues []DoctorIssue          `json:"topIssues,omitempty"`
-	NextSteps []StructuredHint       `json:"nextSteps,omitempty"` // Structured action-typed hints for AI/MCP
+	Cluster           string                 `json:"cluster"`
+	KubernetesContext string                 `json:"kubernetesContext,omitempty"`
+	Namespace         string                 `json:"namespace"`
+	Resources         DoctorResourceSummary  `json:"resources"`
+	Ownership         DoctorOwnershipSummary `json:"ownership"`
+	Health            DoctorHealthSummary    `json:"health"`
+	Risks             DoctorRiskSummary      `json:"risks"`
+	Drift             DoctorDriftSummary     `json:"drift"`
+	Rollouts          *DoctorRolloutSummary  `json:"rollouts,omitempty"`
+	Delivery          *DoctorDeliverySummary `json:"delivery,omitempty"`
+	ThreeWay          *DoctorThreeWaySummary `json:"threeWay,omitempty"`
+	TopIssues         []DoctorIssue          `json:"topIssues,omitempty"`
+	NextSteps         []StructuredHint       `json:"nextSteps,omitempty"` // Structured action-typed hints for AI/MCP
+	Warnings          []string               `json:"warnings,omitempty"`
 
 	// DeliveryEvidence is the raw bounded evidence envelope behind Delivery.
 	// It is present only when --with-confighub is requested.
@@ -219,10 +227,24 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
+	selection, err := clusterContextSelectionFromFlag(cmd)
+	if err != nil {
+		return err
+	}
+	if fixturePath := os.Getenv("CUB_SCOUT_TEST_DOCTOR_INPUT_JSON"); fixturePath != "" && selection.explicit {
+		return fmt.Errorf("--kube-context cannot be combined with doctor fixture input")
+	}
+	fixturePath := os.Getenv("CUB_SCOUT_TEST_DOCTOR_INPUT_JSON")
+	var binding *localClusterBinding
+	if fixturePath == "" {
+		binding = resolveLocalClusterBindingForSelection(selection)
+		if binding.err != nil {
+			return binding.err
+		}
+	}
 
 	// Call the shared capability seam
 	// Fixture path is passed explicitly rather than read inside the seam
-	fixturePath := os.Getenv("CUB_SCOUT_TEST_DOCTOR_INPUT_JSON")
 	result, err := ObserveScopeSummary(cmd.Context(), ObserveScopeSummaryRequest{
 		Namespace:           doctorNamespace,
 		TopIssues:           doctorTopIssues,
@@ -231,6 +253,7 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		ConfigHubSpace:      doctorConfigHubSpace,
 		ConfigHubSince:      doctorConfigHubSince,
 		ConfigHubStaleAfter: doctorConfigHubStaleAfter,
+		ClusterBinding:      binding,
 	})
 	if err != nil {
 		// Only apply kube recovery hints for cluster-path errors, not fixture errors
@@ -246,6 +269,9 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 	}
 
 	summary := result.Summary
+	if binding != nil && binding.context != "" {
+		summary.KubernetesContext = binding.context
+	}
 
 	switch format {
 	case "json":
@@ -255,6 +281,7 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		if len(hints) > 3 {
 			hints = hints[:3]
 		}
+		hints = bindDoctorHintContext(hints, summary.KubernetesContext)
 		summary.NextSteps = HintsToStructured(hints)
 
 		enc := json.NewEncoder(os.Stdout)
@@ -267,11 +294,57 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 	}
 }
 
+func bindDoctorHintContext(hints []Hint, contextName string) []Hint {
+	if strings.TrimSpace(contextName) == "" {
+		return hints
+	}
+	quoted := "'" + strings.ReplaceAll(contextName, "'", "'\"'\"'") + "'"
+	for i := range hints {
+		command := strings.TrimSpace(hints[i].Command)
+		if strings.Contains(command, " trace") || strings.HasPrefix(command, "trace") {
+			hints[i].Command = ""
+			hints[i].Rationale = "Trace does not yet support Kubernetes context selection; no context-safe trace command is available."
+			continue
+		}
+		if strings.Contains(command, "--kube-context") {
+			continue
+		}
+		// Only pin follow-ups whose current CLI surfaces accept the selector.
+		if strings.Contains(command, " doctor") || strings.HasPrefix(command, "doctor") ||
+			strings.Contains(command, " scan") || strings.HasPrefix(command, "scan") ||
+			strings.Contains(command, " map list") || strings.HasPrefix(command, "map list") {
+			hints[i].Command = command + " --kube-context " + quoted
+		}
+	}
+	return hints
+}
+
+func doctorTryNextHintsBoundToContext(summary DoctorSummary, hintCtx HintContext) []string {
+	hints := doctorHintsWithContext(summary, hintCtx)
+	sortHints(hints)
+	if len(hints) > 3 {
+		hints = hints[:3]
+	}
+	return hintsToStrings(bindDoctorHintContext(hints, summary.KubernetesContext))
+}
+
 func collectDoctorEntries(ctx context.Context, namespace string) ([]MapEntry, string, error) {
 	cfg, err := buildConfig()
 	if err != nil {
 		return nil, "", fmt.Errorf("build kubernetes config: %w", err)
 	}
+	return collectDoctorEntriesWithConfig(ctx, namespace, cfg)
+}
+
+func collectDoctorEntriesWithBinding(ctx context.Context, namespace string, binding *localClusterBinding) ([]MapEntry, string, error) {
+	if binding == nil || binding.config == nil {
+		return nil, "", fmt.Errorf("Kubernetes context binding has no config")
+	}
+	entries, cluster, err := collectDoctorEntriesWithConfig(ctx, namespace, binding.config)
+	return entries, cluster, err
+}
+
+func collectDoctorEntriesWithConfig(ctx context.Context, namespace string, cfg *rest.Config) ([]MapEntry, string, error) {
 
 	dynClient, err := dynamic.NewForConfig(cfg)
 	if err != nil {
@@ -297,10 +370,14 @@ func collectDoctorEntries(ctx context.Context, namespace string) ([]MapEntry, st
 	}
 	resources = append(resources, firstClassControllerGVRs()...)
 
+	var failures []string
 	for _, gvr := range resources {
 		if namespace != "" {
 			l, err := dynClient.Resource(gvr).Namespace(namespace).List(ctx, v1.ListOptions{})
 			if err != nil {
+				if !optionalAPIUnavailable(gvr, err) {
+					failures = append(failures, fmt.Sprintf("%s: %v", gvr.Resource, err))
+				}
 				continue
 			}
 			for _, item := range l.Items {
@@ -310,6 +387,9 @@ func collectDoctorEntries(ctx context.Context, namespace string) ([]MapEntry, st
 		} else {
 			l, err := dynClient.Resource(gvr).List(ctx, v1.ListOptions{})
 			if err != nil {
+				if !optionalAPIUnavailable(gvr, err) {
+					failures = append(failures, fmt.Sprintf("%s: %v", gvr.Resource, err))
+				}
 				continue
 			}
 			for _, item := range l.Items {
@@ -319,7 +399,21 @@ func collectDoctorEntries(ctx context.Context, namespace string) ([]MapEntry, st
 		}
 	}
 
+	if len(failures) > 0 {
+		return entries, clusterName, fmt.Errorf("inventory is partial (%d list(s) unreadable): %s", len(failures), strings.Join(failures, "; "))
+	}
 	return entries, clusterName, nil
+}
+
+func optionalAPIUnavailable(gvr schema.GroupVersionResource, err error) bool {
+	optionalGroups := map[string]bool{
+		"source.toolkit.fluxcd.io": true, "kustomize.toolkit.fluxcd.io": true,
+		"helm.toolkit.fluxcd.io": true, "argoproj.io": true,
+		"fluxcd.controlplane.io": true, "config.projectsveltos.io": true,
+		"lib.projectsveltos.io": true, "modelplane.ai": true,
+		"infrastructure.modelplane.ai": true,
+	}
+	return optionalGroups[gvr.Group] && apierrors.IsNotFound(err) && strings.Contains(strings.ToLower(err.Error()), "requested resource")
 }
 
 func collectDoctorFindings(ctx context.Context, namespace string) ([]scan.NormalizedFinding, error) {
@@ -328,7 +422,18 @@ func collectDoctorFindings(ctx context.Context, namespace string) ([]scan.Normal
 		return nil, fmt.Errorf("build kubernetes config: %w", err)
 	}
 
-	provider := scan.SelectProvider(scan.ProviderConfig{})
+	return collectDoctorFindingsWithConfig(ctx, namespace, cfg)
+}
+
+func collectDoctorFindingsWithBinding(ctx context.Context, namespace string, binding *localClusterBinding) ([]scan.NormalizedFinding, error) {
+	if binding == nil || binding.config == nil {
+		return nil, fmt.Errorf("Kubernetes context binding has no config")
+	}
+	return collectDoctorFindingsWithConfig(ctx, namespace, binding.config)
+}
+
+func collectDoctorFindingsWithConfig(ctx context.Context, namespace string, cfg *rest.Config) ([]scan.NormalizedFinding, error) {
+	provider := selectScanProviderFn(scan.ProviderConfig{})
 	threshold, _ := time.ParseDuration("5m")
 
 	result, err := provider.ScanCluster(ctx, scan.ClusterScanOpts{
@@ -346,7 +451,7 @@ func collectDoctorFindings(ctx context.Context, namespace string) ([]scan.Normal
 	if normalized == nil {
 		return nil, nil
 	}
-	return normalized.Findings, nil
+	return normalized.Findings, scanWarningsError(result)
 }
 
 func collectDoctorRollouts(ctx context.Context, namespace string, topN int) (*DoctorRolloutSummary, error) {
@@ -355,6 +460,17 @@ func collectDoctorRollouts(ctx context.Context, namespace string, topN int) (*Do
 		return nil, fmt.Errorf("build kubernetes config: %w", err)
 	}
 
+	return collectDoctorRolloutsWithConfig(ctx, namespace, topN, cfg)
+}
+
+func collectDoctorRolloutsWithBinding(ctx context.Context, namespace string, topN int, binding *localClusterBinding) (*DoctorRolloutSummary, error) {
+	if binding == nil || binding.config == nil {
+		return nil, fmt.Errorf("Kubernetes context binding has no config")
+	}
+	return collectDoctorRolloutsWithConfig(ctx, namespace, topN, binding.config)
+}
+
+func collectDoctorRolloutsWithConfig(ctx context.Context, namespace string, topN int, cfg *rest.Config) (*DoctorRolloutSummary, error) {
 	dynClient, err := dynamic.NewForConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("create dynamic client: %w", err)
@@ -362,6 +478,7 @@ func collectDoctorRollouts(ctx context.Context, namespace string, topN int) (*Do
 
 	observedAt := time.Now().UTC()
 	decisions := []agent.RolloutDecision{}
+	var listFailures []string
 	for _, gvr := range []schema.GroupVersionResource{
 		{Group: "apps", Version: "v1", Resource: "deployments"},
 		{Group: "apps", Version: "v1", Resource: "statefulsets"},
@@ -384,6 +501,9 @@ func collectDoctorRollouts(ctx context.Context, namespace string, topN int) (*Do
 			}
 		}
 		if listErr != nil {
+			if !optionalAPIUnavailable(gvr, listErr) {
+				listFailures = append(listFailures, fmt.Sprintf("%s: %v", gvr.Resource, listErr))
+			}
 			continue
 		}
 
@@ -405,6 +525,9 @@ func collectDoctorRollouts(ctx context.Context, namespace string, topN int) (*Do
 		}
 	}
 
+	if len(listFailures) > 0 {
+		return buildDoctorRolloutSummary(decisions, topN), fmt.Errorf("rollout coverage incomplete (%d list(s) unreadable): %s", len(listFailures), strings.Join(listFailures, "; "))
+	}
 	if len(decisions) == 0 {
 		return nil, nil
 	}
@@ -443,6 +566,17 @@ func collectDoctorDeliveryEvidence(ctx context.Context, namespace string, req Ob
 		return nil, fmt.Errorf("build kubernetes config: %w", err)
 	}
 
+	return collectDoctorDeliveryEvidenceWithConfig(ctx, namespace, req, cfg)
+}
+
+func collectDoctorDeliveryEvidenceWithBinding(ctx context.Context, namespace string, req ObserveScopeSummaryRequest, binding *localClusterBinding) (*GitOpsDeliveryEvidence, error) {
+	if binding == nil || binding.config == nil {
+		return nil, fmt.Errorf("Kubernetes context binding has no config")
+	}
+	return collectDoctorDeliveryEvidenceWithConfig(ctx, namespace, req, binding.config)
+}
+
+func collectDoctorDeliveryEvidenceWithConfig(ctx context.Context, namespace string, req ObserveScopeSummaryRequest, cfg *rest.Config) (*GitOpsDeliveryEvidence, error) {
 	dynClient, err := dynamic.NewForConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("create dynamic client: %w", err)
@@ -909,6 +1043,9 @@ func renderDoctorASCII(summary DoctorSummary, mode PresentationMode, explicitMod
 		fmt.Fprintf(&b, "%s: %s (namespace: %s)\n", Bold("Cluster"), summary.Cluster, summary.Namespace)
 		fmt.Fprintf(&b, "%s: %d total\n\n", Bold("Resources"), summary.Resources.Total)
 	}
+	if summary.KubernetesContext != "" {
+		fmt.Fprintf(&b, "Kubernetes context: %s (selection label; not a stable cluster ID)\n", summary.KubernetesContext)
+	}
 
 	total := summary.Resources.Total
 	fmt.Fprintf(&b, "%s\n", sectionLabel("Ownership"))
@@ -1057,7 +1194,7 @@ func renderDoctorASCII(summary DoctorSummary, mode PresentationMode, explicitMod
 		}
 	}
 
-	hints := doctorTryNextHintsWithContext(summary, hintCtx)
+	hints := doctorTryNextHintsBoundToContext(summary, hintCtx)
 	if len(hints) > 0 {
 		if explicitMode {
 			b.WriteString(renderTryNextSectionWithMode(hints, mode))

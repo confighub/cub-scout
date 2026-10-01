@@ -108,6 +108,78 @@ func TestResolveClusterConfigExplicitContextUsesOnlyNamedServer(t *testing.T) {
 	require.Equal(t, before, after, "resolving a named context must not rewrite kubeconfig")
 }
 
+func TestDoctorNestedReadsStayOnCapturedContextAfterKubeconfigRetarget(t *testing.T) {
+	markedServer := func(marker, uid string) *countedKubeServer {
+		server := &countedKubeServer{}
+		server.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server.requests.Add(1)
+			server.mu.Lock()
+			server.paths = append(server.paths, r.Method+" "+r.URL.Path)
+			server.mu.Unlock()
+			w.Header().Set("Content-Type", "application/json")
+			if r.URL.Path == "/apis/apps/v1/deployments" {
+				_, _ = fmt.Fprintf(w, `{"apiVersion":"apps/v1","kind":"DeploymentList","metadata":{},"items":[{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"same","namespace":"team-a","uid":%q,"labels":{"proof":%q}},"spec":{},"status":{}}]}`, uid, marker)
+				return
+			}
+			_, _ = fmt.Fprint(w, `{"apiVersion":"v1","kind":"NamespaceList","metadata":{},"items":[]}`)
+		}))
+		t.Cleanup(server.server.Close)
+		return server
+	}
+	alpha := markedServer("alpha", "alpha-uid")
+	beta := markedServer("beta", "beta-uid")
+	path, _ := resolverKubeconfig(t, "gamma", map[string]string{"alpha": alpha.server.URL, "beta": beta.server.URL, "gamma": alpha.server.URL})
+	t.Setenv("KUBECONFIG", path)
+	// Use the same resolver rules as the CLI, while keeping the test independent
+	// of the machine's default kubeconfig.
+	config, selected, err := resolveClusterConfig("beta", true, resolverRules(path), nil)
+	require.NoError(t, err)
+	binding := &localClusterBinding{config: config, context: selected, explicit: true}
+
+	data, err := os.ReadFile(path)
+	require.NoError(t, err)
+	retargeted, loadErr := clientcmd.LoadFromFile(path)
+	require.NoError(t, loadErr)
+	retargeted.Clusters["beta-cluster"].Server = alpha.server.URL
+	retargeted.CurrentContext = "alpha"
+	data, writeErr := clientcmd.Write(*retargeted)
+	require.NoError(t, writeErr)
+	require.NoError(t, os.WriteFile(path, data, 0600))
+
+	t.Setenv("CUB_SCOUT_SCAN_PROVIDER", "legacy")
+	t.Setenv("CUB_SPACE", "")
+	before := beta.requests.Load()
+	entries, cluster, err := collectDoctorEntriesWithBinding(context.Background(), "", binding)
+	require.NoError(t, err)
+	require.Equal(t, "default", cluster, "context names must not be represented as stable cluster IDs")
+	require.Contains(t, beta.requestPaths(), "GET /apis/apps/v1/deployments")
+	foundMarker := false
+	for _, entry := range entries {
+		if entry.Name == "same" && entry.Kind == "Deployment" {
+			foundMarker = true
+			require.Equal(t, "beta", entry.Labels["proof"])
+			require.Equal(t, "default", entry.ClusterName)
+		}
+	}
+	require.True(t, foundMarker, "selected server's colliding deployment identity should be observed")
+	require.Greater(t, beta.requests.Load(), before, "inventory must use selected server")
+	require.Zero(t, alpha.requests.Load(), "inventory must not use ambient endpoint")
+
+	before = beta.requests.Load()
+	_, _ = collectDoctorFindingsWithBinding(context.Background(), "", binding)
+	require.Greater(t, beta.requests.Load(), before, "findings provider must use selected endpoint")
+	require.Zero(t, alpha.requests.Load(), "findings provider must not use ambient endpoint")
+	before = beta.requests.Load()
+	_, _ = collectDoctorRolloutsWithBinding(context.Background(), "", 3, binding)
+	require.Greater(t, beta.requests.Load(), before, "rollout reader must use selected endpoint")
+	require.Zero(t, alpha.requests.Load(), "rollout reader must not use ambient endpoint")
+	before = beta.requests.Load()
+	_, _ = collectDoctorDeliveryEvidenceWithBinding(context.Background(), "", ObserveScopeSummaryRequest{WithConfigHub: true}, binding)
+	require.Greater(t, beta.requests.Load(), before, "delivery evidence reader must use selected endpoint")
+	require.Zero(t, alpha.requests.Load(), "delivery reader must not use ambient endpoint")
+	require.Zero(t, alpha.requests.Load(), "later kubeconfig current-context changes must not redirect reads")
+}
+
 func TestResolveClusterConfigMissingExplicitContextFailsWithoutCredentialFallback(t *testing.T) {
 	alpha := newCountedKubeServer(t)
 	path, before := resolverKubeconfig(t, "", map[string]string{"default": alpha.server.URL})
@@ -405,7 +477,7 @@ func TestExplicitContextTUIActionsFailClosed(t *testing.T) {
 	trace := model.runTrace(TraceItem{Kind: "Deployment", Name: "api", Namespace: "team-a", Owner: "Flux"})().(traceResultMsg)
 	require.ErrorContains(t, trace.err, "unavailable with --kube-context")
 	scan := model.runScan()().(scanResultMsg)
-	require.ErrorContains(t, scan.err, "unavailable with --kube-context")
+	require.ErrorContains(t, scan.err, "selected Kubernetes context is unavailable")
 	graph := model.runGraphExport("svg")().(graphExportMsg)
 	require.ErrorContains(t, graph.err, "unavailable with --kube-context")
 	shell := model.runShellOut()().(shellExitMsg)
@@ -427,6 +499,37 @@ func TestExplicitContextTUIActionsFailClosed(t *testing.T) {
 	require.False(t, updated.(LocalClusterModel).cmdMode)
 	_, err := os.Stat(marker)
 	require.True(t, os.IsNotExist(err), "blocked actions must not spawn subprocesses")
+}
+
+func TestExplicitContextTUISScanKeyUsesPinnedProvider(t *testing.T) {
+	alpha := newCountedKubeServer(t)
+	beta := newCountedKubeServer(t)
+	path, _ := resolverKubeconfig(t, "alpha", map[string]string{"alpha": alpha.server.URL, "beta": beta.server.URL})
+	config, selected, err := resolveClusterConfig("beta", true, resolverRules(path), nil)
+	require.NoError(t, err)
+	model := LocalClusterModel{explicitClusterContext: true, clusterBinding: &localClusterBinding{config: config, context: selected, explicit: true}, keymap: defaultLocalKeyMap()}
+	updated, cmd := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("S")})
+	require.NotNil(t, cmd, "the visible TUI scan action must run with the explicit binding")
+	require.True(t, updated.(LocalClusterModel).scanMode)
+	result := cmd().(scanResultMsg)
+	require.NotContains(t, fmt.Sprint(result.err), explicitContextUnsupportedAction)
+	require.Positive(t, beta.requests.Load(), "TUI scan should use the selected API server")
+	require.Zero(t, alpha.requests.Load(), "TUI scan must not consult the ambient current context")
+}
+
+func TestDoctorHintCommandsPreserveOnlySupportedContextSurfaces(t *testing.T) {
+	hints := bindDoctorHintContext([]Hint{
+		{Command: "cub-scout doctor --format json"},
+		{Command: "cub-scout scan --json"},
+		{Command: "cub-scout map list --format json"},
+		{Command: "cub-scout trace Deployment/api --format json"},
+	}, "team's-cluster")
+	require.Contains(t, hints[0].Command, `--kube-context 'team'"'"'s-cluster'`)
+	require.Contains(t, hints[1].Command, "--kube-context")
+	require.Contains(t, hints[2].Command, "--kube-context")
+	require.NotContains(t, hints[3].Command, "--kube-context", "unsupported trace surface must not receive the selector")
+	require.Empty(t, hints[3].Command, "a trace command would silently use the ambient context")
+	require.Contains(t, hints[3].Rationale, "no context-safe trace command")
 }
 
 func TestResolveClusterConfigParallelSelectionsStayIndependent(t *testing.T) {

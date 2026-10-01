@@ -43,6 +43,8 @@ type ObserveScopeSummaryRequest struct {
 	// FixturePath, if non-empty, reads input from a fixture file instead of the cluster.
 	// This is for testing; callers should not set this in production.
 	FixturePath string
+	// ClusterBinding pins every Kubernetes read in this invocation.
+	ClusterBinding *localClusterBinding
 }
 
 // ObserveScopeSummaryResult contains the summary and any warnings from the operation.
@@ -80,6 +82,13 @@ func ObserveScopeSummary(ctx context.Context, req ObserveScopeSummaryRequest) (O
 		return ObserveScopeSummaryResult{Summary: summary}, err
 	}
 
+	if req.ClusterBinding == nil {
+		binding := resolveLocalClusterBindingForSelection(clusterContextSelection{})
+		if binding.err != nil {
+			return ObserveScopeSummaryResult{}, binding.err
+		}
+		req.ClusterBinding = binding
+	}
 	return observeScopeSummaryFromCluster(ctx, req.Namespace, namespaceLabel, topN, req)
 }
 
@@ -102,35 +111,35 @@ func observeScopeSummaryFromFixture(path, namespaceLabel string, topN int) (Doct
 func observeScopeSummaryFromCluster(ctx context.Context, namespace, namespaceLabel string, topN int, req ObserveScopeSummaryRequest) (ObserveScopeSummaryResult, error) {
 	var result ObserveScopeSummaryResult
 
-	entries, cluster, err := collectDoctorEntries(ctx, namespace)
+	entries, cluster, err := collectDoctorEntriesWithBinding(ctx, namespace, req.ClusterBinding)
 	if err != nil {
-		// Return raw error - let caller decide how to phrase recovery hints
-		return result, err
+		result.Warnings = append(result.Warnings, fmt.Sprintf("inventory coverage incomplete: %v", err))
 	}
 
-	findings, err := collectDoctorFindings(ctx, namespace)
+	findings, err := collectDoctorFindingsWithBinding(ctx, namespace, req.ClusterBinding)
 	if err != nil {
 		// Degrade gracefully if scanning is unavailable.
 		// Return warning in result rather than writing to stderr.
 		result.Warnings = append(result.Warnings, fmt.Sprintf("risk scan unavailable: %v", err))
-		findings = nil
 	}
 
 	result.Summary = buildDoctorSummary(entries, findings, cluster, namespaceLabel, topN)
-	rollouts, rolloutsErr := collectDoctorRollouts(ctx, namespace, topN)
+	rollouts, rolloutsErr := collectDoctorRolloutsWithBinding(ctx, namespace, topN, req.ClusterBinding)
 	if rolloutsErr != nil {
 		result.Warnings = append(result.Warnings, fmt.Sprintf("rollout evidence unavailable: %v", rolloutsErr))
-	} else if rollouts != nil && rollouts.Total > 0 {
+	}
+	if rollouts != nil && (rollouts.Total > 0 || rolloutsErr != nil) {
 		result.Summary.Rollouts = rollouts
 	}
 	if req.WithConfigHub {
-		evidence, evidenceErr := collectDoctorDeliveryEvidenceFn(ctx, namespace, req)
+		evidence, evidenceErr := collectDoctorDeliveryEvidenceFn(ctx, namespace, req, req.ClusterBinding)
 		if evidenceErr != nil {
 			result.Warnings = append(result.Warnings, fmt.Sprintf("ConfigHub delivery evidence unavailable: %v", evidenceErr))
 		} else {
 			attachDoctorDeliveryEvidence(&result.Summary, evidence, topN)
 		}
 	}
+	result.Summary.Warnings = append([]string(nil), result.Warnings...)
 	return result, nil
 }
 

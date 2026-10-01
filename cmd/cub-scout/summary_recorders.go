@@ -14,6 +14,7 @@ import (
 )
 
 var summaryConnectedFn = configHubReadsAvailable
+var persistSummaryRecordFn = persistSummaryRecord
 
 func buildScanSummaryRecord(result *scan.CombinedResult, cluster, namespace string, now time.Time) (summarystore.Record, error) {
 	if result == nil {
@@ -93,15 +94,22 @@ func persistSummaryRecord(record summarystore.Record) error {
 }
 
 func persistConnectedScanSummary(result *scan.CombinedResult, namespace string) {
+	persistConnectedScanSummaryForCluster(result, namespace, "")
+}
+
+func persistConnectedScanSummaryForCluster(result *scan.CombinedResult, namespace, cluster string) {
 	if !summaryConnectedFn() {
 		return
 	}
-	record, err := buildScanSummaryRecord(result, detectSummaryCluster(), namespace, summaryNowFn())
+	if strings.TrimSpace(cluster) == "" {
+		cluster = detectSummaryCluster()
+	}
+	record, err := buildScanSummaryRecord(result, cluster, namespace, summaryNowFn())
 	if err != nil {
 		warnSummaryPersistence(err)
 		return
 	}
-	if err := persistSummaryRecord(record); err != nil {
+	if err := persistSummaryRecordFn(record); err != nil {
 		warnSummaryPersistence(err)
 	}
 }
