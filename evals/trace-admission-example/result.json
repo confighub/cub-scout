@@ -1,0 +1,17 @@
+{
+  "partial": false,
+  "costUsd": 0.02,
+  "suite": {"modelOverride": "claude-haiku-4-5"},
+  "cases": [
+    {
+      "name": "synthetic-complete-pair",
+      "runsPerCase": 3,
+      "maxTurns": 4,
+      "timeoutSeconds": 30,
+      "arms": {
+        "with": [{"tracePath": "out/with.jsonl", "turns": 2, "durationSeconds": 4, "costUsd": 0.01}],
+        "without": [{"tracePath": "out/without.jsonl", "turns": 2, "durationSeconds": 4, "costUsd": 0.01}]
+      }
+    }
+  ]
+}
