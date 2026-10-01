@@ -1,0 +1,89 @@
+{
+  "schema": "container-isolation-report.v1",
+  "date": "2026-10-01",
+  "issue": 718,
+  "scope": "One owned offline container; no model, provider, cluster or paid evaluation",
+  "source_revision": "47e15c6f83d82ffe99419ecc7eca233dd5039ca2",
+  "helper_sha256": "7728ec5f5d8dc789f1b739d20e120f4facac4882532891561129f11b366c4454",
+  "payload_sha256": "b39f48a19157cc3ad3d12a09f37d5508efd3f851c42a333b792a6b2ca5c5f570",
+  "injected_payload_sha256": "5288761c7f529f5028a67773161ccf0a3b7fba5e1a9e5354b237062e881edc87",
+  "image_id": "sha256:cdbd05fb6f457ca275ff51ce00d93d865ca0b6a25f5ffb08262d94f6835771e5",
+  "docker_launcher": {
+    "requestedPath": "/usr/local/bin/docker",
+    "resolvedPath": "/Applications/OrbStack.app/Contents/MacOS/xbin/docker-tools",
+    "sha256": "70d5a06adf388bd09b652f47ddc9ca31663a3e5353d24188bdb0054b3014ab3e"
+  },
+  "reused_runner_sha256": "67f8c9cc62a4392c95916928ee99b28d7eb5b914104316c86c9526e5606910a9",
+  "original_run": {
+    "status": "failed",
+    "helper_exit_code": 1,
+    "outer_timeout": false,
+    "wrapper_elapsed_seconds": 1.8764204168692231,
+    "helper_elapsed_seconds": 1.707544666947797,
+    "payload_exit_code": 0,
+    "configuration_inspect_verified": true,
+    "assertions": {
+      "fixture_read_exact": true,
+      "fixture_write_denied": true,
+      "loopback_http_ok": true,
+      "non_loopback_child_network_denied": true,
+      "outside_tmp_write_denied": true,
+      "synthetic_host_marker_unavailable": true,
+      "tmp_write_allowed": true
+    },
+    "cleanup_verified_absent": false,
+    "cleanup_errors": [
+      "owned container remains or absence could not be verified"
+    ],
+    "remove_exit_code": 0
+  },
+  "followup_read_only_absence": {
+    "container_id": "f100995e108b6847547eab3cea46821f02cdebc4ff3187ffbbdd20a662b95e82",
+    "exit_code": 1,
+    "stdout_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "stderr_sha256": "ca859d9a3d7e4a341c68df55f06b169e5fe3a1e9ebde5ee35793ab0762c938e2",
+    "matches_original_cleanup_response_hashes": true,
+    "stdout": "one newline",
+    "stderr": "exact No such container message naming the owned full ID",
+    "verified_absent": true
+  },
+  "parser_repair": {
+    "revision": "1c8b75d",
+    "description": "Accept empty stdout or exactly one formatting newline; all other stdout remains rejected. Exact target error and no contradictory errors remain required.",
+    "regression": "Updated test fails against original parser; all 18 pure tests pass with repair. No container rerun; original failed status preserved."
+  },
+  "configured_resources": {
+    "capDrop": [
+      "ALL"
+    ],
+    "memoryBytes": 268435456,
+    "nanoCpus": 500000000,
+    "network": "none",
+    "noNewPrivileges": true,
+    "pidsLimit": 32,
+    "readOnlyRootfs": true,
+    "tmpfs": {
+      "noexec": true,
+      "nosuid": true,
+      "path": "/tmp",
+      "sizeBytes": 16777216
+    },
+    "user": "65534:65534"
+  },
+  "unchanged_inputs": {
+    "fixture_sha256": "f115116046ae007b898ddc2379e656d289ea6b9dd6cc382afe8440c2ea8da368",
+    "fixture_unchanged": true,
+    "synthetic_marker_unchanged": true
+  },
+  "payload_output": {
+    "stdout_sha256": "f95d777c98fd77d3129bd5cbeedde4dd445957f389dd826881fb3daf2a9a9719",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "limits": [
+    "Original helper run failed cleanup parsing; separate read-only absence proof does not change that result.",
+    "One child was intentionally spawned. Resource caps are inspect-verified configuration, not saturation tests.",
+    "Loopback HTTP succeeded and one child socket to documentation address was denied; no arbitrary workload isolation theorem.",
+    "No Claude runtime, ordinary-tool parity, treatment skills/MCP, provider accounting, answer quality, dollar/credit savings or paid admission."
+  ],
+  "paid_evaluation_admitted": false
+}
