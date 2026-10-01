@@ -449,12 +449,48 @@
         {
           "id": "PRE-01",
           "question": "Missing CRD prerequisite",
-          "status": "planned",
-          "existing_case": null,
+          "status": "raw_recording_prepared_not_run",
+          "existing_case": "evals/pre01-crd",
           "reference": "Name the absent CRD and dependent operation; separate prerequisite absence from workload health.",
           "controls": [
             "Do not claim controller failure when the prerequisite was never present"
-          ]
+          ],
+          "source_provenance": {
+            "repository": "confighub/cub-scout",
+            "capture_source_commit": "682160f4cf536a8a16e48ebf237976609d3d1c5f",
+            "capture_script_sha256": "4c2390164be8a1651e836fe4d8b5a5245ca21fd6fca266f99bfd645d1bcc3800",
+            "product_revision": "eec6d442279955af0f1fc39c637252ac8eb0f081",
+            "product_binary_sha256": "7d20aa7bb33b477dfd88afb2f53b1a6f773a5a4ffbcff7f81d8dcbfeb5a12bab",
+            "source_repository": "confighub/helm-expt",
+            "source_revision": "9ab4c753a888dc305a3c07956c9f8f5a19eb70a0",
+            "capture_started_at": "2026-10-01T03:56:53Z",
+            "capture_ended_at": "2026-10-01T03:57:30Z",
+            "atomic_snapshot": false,
+            "raw_files_sha256": {
+              "absent-after-apply-crd.json": "661902cf15f640cf0cfbcb7d5df71d36ac2d9ac6041f1b92429e66704c1614c0",
+              "absent-after-apply-servicemonitor.body": "b16e15764b8bc06c5c3f9f19bc8b99fa48e7894aa5a6ccdad65da49bbf564793",
+              "absent-apply.stderr.txt": "eec841cdc7ba8979d51398d7dc9a753ea8d2a8efb13d32312596a37863cb2c1b",
+              "absent-apply.stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "absent-crd.json": "661902cf15f640cf0cfbcb7d5df71d36ac2d9ac6041f1b92429e66704c1614c0",
+              "absent-discovery.body": "b16e15764b8bc06c5c3f9f19bc8b99fa48e7894aa5a6ccdad65da49bbf564793",
+              "absent-servicemonitor.body": "b16e15764b8bc06c5c3f9f19bc8b99fa48e7894aa5a6ccdad65da49bbf564793",
+              "present-apply.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "present-apply.stdout.txt": "daabc3a7462204b0ba9a99bd0893b37872cbeb0a5954ac8d6a2756ba70acf505",
+              "present-before-apply-servicemonitor.json": "d6ad3cd3caf021eda33553b022d71402a909db0cb5f2faad407075eff973efd6",
+              "present-crd.json": "a5e571a80d5882cc9294cfabc27e0e6cefead3612e8e880afb885e3bf60f3e3c",
+              "present-discovery.json": "e791bb13f75f7767dd2c40df7485653342b0894ca58fd3af17b1b03ed087c1a8",
+              "present-servicemonitor.json": "78836df757ca3eb79f25bb0190f03d465fb282b455b8a27e79fbef67247a650e",
+              "servicemonitor.normalized.yaml": "8379723ecf51a8776c6dceeedbd7101cbb9838c94feef4cd21bd5eb75f603b75",
+              "capture-scope.json": "6d39e83612d52f5124bad2dd63b27b30b94cce492eb70223f759248de71bfec4"
+            },
+            "limits": "Nine sequential Kubernetes API observations and two dependent apply outputs from one owned kind cluster, plus the authored normalized ServiceMonitor and factual scope. Discovery-route 404 bodies are plain HTTP text, not typed object NotFound. Full authored CRD file and its normalized duplicate are excluded; the registered CRD response is retained. No operator or target health evidence. Equal evidence is prepared, not run.",
+            "source_files_sha256": {
+              "data/base-variant-records/records/prometheus-community-kube-prometheus-stack-87-19-2-no-crds.yaml": "d915b20d548433314ceee42cb9db29ed75b1009a04ba6da81bddf0011ec75153",
+              "packages/prometheus-community/kube-prometheus-stack/87.19.2/prerequisites/kube-prometheus-stack-lifecycle/default-crds.yaml": "bba9c3c345520981690399f86ad6a33ce45c9dac61f89721e1a5730f8f1ed964",
+              "recipes/prometheus-community/kube-prometheus-stack/87.19.2/revisions/no-crds/r001/rendered/release-objects.yaml": "86d54113ec12fcea838d30e7e2ff6722de375bd0f6cc0e09ab8a14078c941446"
+            }
+          },
+          "benchmark_admission": "Raw capture and strict correctness contract prepared; not run. Full benchmark remains non-executable and this manifest does not authorize paid runs."
         },
         {
           "id": "PRE-02",

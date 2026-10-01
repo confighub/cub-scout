@@ -1,0 +1,1 @@
+{"kind":"Status","apiVersion":"v1","metadata":{},"status":"Failure","message":"servicemonitors.monitoring.coreos.com \"kube-prometheus-stack-kube-state-metrics\" not found","reason":"NotFound","details":{"name":"kube-prometheus-stack-kube-state-metrics","group":"monitoring.coreos.com","kind":"servicemonitors"},"code":404}
