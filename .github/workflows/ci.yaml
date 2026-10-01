@@ -66,6 +66,9 @@ jobs:
       - name: Check CLI guide parity
         run: ./scripts/check-cli-guide-parity.sh
 
+      - name: Run offline eval trace admission tests
+        run: python3 evals/scripts/test_admission_audit.py
+
       - name: Run unit tests
         run: go test ./... -v -covermode=atomic -coverprofile=coverage.out
 

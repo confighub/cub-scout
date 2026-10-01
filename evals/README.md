@@ -149,6 +149,40 @@ evals/scripts/regrade.py evals/results/<run>.json \
   --out evals/results/<run>.regraded-current.json
 ```
 
+### Conservative trace admission audit
+
+`evals/scripts/admission_audit.py` is a separate, read-only postflight. It does
+not grade answers, rewrite source results, launch an agent or judge, or change
+the historical cost report. The caller must provide the expected arm set and
+run count explicitly; `runsPerCase` metadata in the producer result is shown
+but never treated as the plan. The audit hashes the aggregate and every trace,
+records terminal/init/tool/MCP/task evidence, checks declared turns and time
+bounds, and keeps producer cost as an unreconciled reported estimate. A
+NOT_ADMITTED result is not a cost of zero and does not imply an answer failed
+its grader.
+
+For an offline demonstration with a synthetic complete pair:
+
+```bash
+python3 evals/scripts/admission_audit.py evals/trace-admission-example/result.json \
+  --trace-root evals/trace-admission-example/out \
+  --expected-arms with,without --expected-runs 1 \
+  --out /tmp/cub-scout-trace-admission-example.json
+```
+
+Trace roots must be explicitly reviewed `out` directories. The auditor
+refuses home/sealed paths, symlink escapes, unbounded inputs, and traces outside
+those roots; it never follows paths inferred from suite metadata. Copying a
+trace out of a protected run home is a separate data-handling decision and is
+not performed by this command. Exact top-level ordinary tool inventory parity
+does not establish nested task/tool parity. Nested progress that mentions MCP
+without a visible call body blocks admission; the tool is not counted as zero.
+Task progress without explicit completion evidence likewise blocks admission.
+The producer's partial flag and run-count defaults do not override the caller's
+plan. Init inventories do not prove actual runtime grants; check those against
+separate harness evidence. The audit is trace-completeness evidence only, not
+correctness, cost reconciliation or savings proof.
+
 The current execution priority and evidence rules are in
 [`docs/roadmap-3.0-execution.md`](../docs/roadmap-3.0-execution.md) and
 [#645](https://github.com/confighub/cub-scout/issues/645).
