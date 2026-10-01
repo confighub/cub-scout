@@ -241,6 +241,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
+						"context": map[string]interface{}{"type": "string", "description": "Optional exact Kubernetes kubeconfig context for every doctor read; never inferred from ConfigHub target names."},
 						"namespace": map[string]interface{}{
 							"type":        "string",
 							"description": "Optional namespace scope (default: all namespaces).",
@@ -271,6 +272,13 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 			},
 			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
 				args := []string{"doctor", "--format", "json"}
+				if raw, present := arguments["context"]; present {
+					value, ok := raw.(string)
+					if !ok {
+						return nil, fmt.Errorf("context must be a string")
+					}
+					args = append(args, "--kube-context", value)
+				}
 				if ns := argString(arguments, "namespace"); ns != "" {
 					args = append(args, "-n", ns)
 				}
@@ -400,6 +408,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
+						"context": map[string]interface{}{"type": "string", "description": "Optional exact Kubernetes kubeconfig context for this live scan."},
 						"namespace": map[string]interface{}{
 							"type":        "string",
 							"description": "Optional namespace filter.",
@@ -410,6 +419,13 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 			},
 			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
 				args := []string{"scan", "--json"}
+				if raw, present := arguments["context"]; present {
+					value, ok := raw.(string)
+					if !ok {
+						return nil, fmt.Errorf("context must be a string")
+					}
+					args = append(args, "--kube-context", value)
+				}
 				if ns := argString(arguments, "namespace"); ns != "" {
 					args = append(args, "-n", ns)
 				}

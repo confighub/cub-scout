@@ -16,6 +16,8 @@ import (
 
 	"github.com/confighub/cub-scout/v2/internal/scan"
 	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 var (
@@ -34,7 +36,10 @@ var (
 	scanExplain           bool
 	scanNormalizedJSON    bool
 	scanFailOn            string
+	scanKubeContext       string
 )
+
+var selectScanProviderFn = scan.SelectProvider
 
 var scanCmd = &cobra.Command{
 	Use:   "scan [flags]",
@@ -106,6 +111,7 @@ func init() {
 	scanCmd.Flags().BoolVar(&scanExplain, "explain", false, "Show explanatory content to help learn GitOps risk concepts")
 	scanCmd.Flags().BoolVar(&scanNormalizedJSON, "normalized-json", false, "Output normalized findings JSON (scan.normalized.v1 schema)")
 	scanCmd.Flags().StringVar(&scanFailOn, "fail-on", "", "Exit 1 when findings at or above threshold: info, warning, critical (default: no exit-on-findings)")
+	scanCmd.Flags().StringVar(&scanKubeContext, "kube-context", "", "Use this exact Kubernetes context for all live scan reads")
 }
 
 // CombinedScanResult is the legacy type name, preserved for compatibility
@@ -129,20 +135,27 @@ func scanConfigHubNote(verbose bool) string {
 
 func runScan(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
+	selection, err := clusterContextSelectionFromFlag(cmd)
+	if err != nil {
+		return err
+	}
+	if selection.explicit && (scanList || scanFile != "" || os.Getenv("CUB_SCOUT_TEST_SCAN_JSON") != "") {
+		return fmt.Errorf("--kube-context applies only to live cluster scans")
+	}
 
 	// Check ConfigHub connection for full scan capabilities.
 	// --list and --file modes work with embedded patterns; cluster scanning
 	// benefits from the ConfigHub pattern database when connected.
 	// Currently: embedded patterns are sufficient for all scan modes.
 	// Future: when pattern DB is fully API-hosted, enforce auth for cluster scans.
-	if !scanList && scanFile == "" {
+	if !scanList && scanFile == "" && !selection.explicit {
 		if note := scanConfigHubNote(scanVerbose); note != "" {
 			fmt.Fprintln(os.Stderr, note)
 		}
 	}
 
 	// Create scan provider (auto-selects cub-scan when available)
-	provider := scan.SelectProvider(scan.ProviderConfig{})
+	provider := selectScanProviderFn(scan.ProviderConfig{})
 
 	// List mode - show all KPOL policies
 	if scanList {
@@ -161,7 +174,12 @@ func runScan(cmd *cobra.Command, args []string) error {
 	}
 
 	// Build k8s config
-	cfg, err := buildConfig()
+	var cfg *rest.Config
+	if selection.explicit {
+		cfg, _, err = resolveClusterConfig(selection.name, true, clientcmd.NewDefaultClientConfigLoadingRules(), rest.InClusterConfig)
+	} else {
+		cfg, err = buildConfig()
+	}
 	if err != nil {
 		return fmt.Errorf("failed to build kubernetes config: %w", err)
 	}
@@ -195,22 +213,31 @@ func runScan(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	if result == nil {
+		return fmt.Errorf("scan provider returned no result")
+	}
+	// Selection metadata belongs to this invocation, not provider-owned storage.
+	copied := *result
+	result = &copied
+	if selection.explicit {
+		result.KubernetesContext = selection.name
+	}
+	// Availability probing alone does not distinguish an absent CRD from denied
+	// access. Preserve unknown coverage rather than declaring not-installed.
+	if scanKyvernoOnly && result.Kyverno == nil && !runState {
+		result.Kyverno = &agent.ScanResult{Error: "Kyverno PolicyReport evidence unavailable"}
+	}
+
+	if warningErr := scanWarningsError(result); warningErr != nil {
+		fmt.Fprintln(os.Stderr, "Warning:", warningErr)
+	}
 
 	// Connected-mode durability: persist normalized summary artifacts for later query/trend views.
-	persistConnectedScanSummary(result, scanNamespace)
-
-	// Handle Kyverno-only mode where Kyverno is not installed
-	if scanKyvernoOnly && result.Kyverno == nil && !runState {
-		if scanJSON || scanNormalizedJSON {
-			return outputCombinedJSON(&CombinedScanResult{
-				Kyverno: &agent.ScanResult{Error: "Kyverno not installed or PolicyReport CRD not found"},
-			})
-		}
-		fmt.Printf("\n%s⚠ Kyverno not installed%s\n", colorYellow, colorReset)
-		fmt.Printf("  PolicyReport CRD not found in cluster.\n")
-		fmt.Printf("  Install Kyverno: https://kyverno.io/docs/installation/\n\n")
-		return nil
+	clusterLabel := ""
+	if selection.explicit {
+		clusterLabel = selection.name
 	}
+	persistConnectedScanSummaryForCluster(result, scanNamespace, clusterLabel)
 
 	// Output results
 	if scanNormalizedJSON {
@@ -219,7 +246,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 	if scanJSON {
 		return outputCombinedJSON(result)
 	}
-	if err := outputCombinedHuman(result.Kyverno, result.State, result.TimingBombs, result.Unresolved, result.Dangling); err != nil {
+	if err := outputCombinedHuman(result.Kyverno, result.State, result.TimingBombs, result.Unresolved, result.Dangling, result.KubernetesContext); err != nil {
 		return err
 	}
 	if result.LifecycleHazards != nil {
@@ -229,13 +256,42 @@ func runScan(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func scanWarnings(result *scan.CombinedResult) []string {
+	return scan.CoverageWarnings(result)
+}
+
+func scanWarningsError(result *scan.CombinedResult) error {
+	warnings := scanWarnings(result)
+	if len(warnings) == 0 {
+		return nil
+	}
+	return fmt.Errorf("scan coverage incomplete: %s", strings.Join(warnings, "; "))
+}
+
+func scanFindingsForTUI(result *scan.CombinedResult) ([]scanFinding, map[string]int) {
+	findings := []scanFinding{}
+	categories := map[string]int{}
+	normalized := scan.Normalize(result)
+	if normalized == nil {
+		return findings, categories
+	}
+	for _, finding := range normalized.Findings {
+		category := strings.ToUpper(strings.TrimSpace(finding.Category))
+		if category == "" {
+			category = "UNCATEGORIZED"
+		}
+		findings = append(findings, scanFinding{CCVE: finding.ID, Severity: strings.ToLower(finding.Severity), Category: category, Resource: finding.Resource, Namespace: finding.Namespace, Message: finding.Message})
+		categories[category]++
+	}
+	return findings, categories
+}
+
 // listKPOLPolicies lists all policies via the scan provider.
 func listKPOLPolicies(provider scan.Provider) error {
 	policies, err := provider.ListPolicies()
 	if err != nil {
 		return err
 	}
-
 	if scanJSON {
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
@@ -318,8 +374,22 @@ func severityColor(severity string) string {
 }
 
 // outputCombinedHuman outputs Kyverno, state, timing bomb, unresolved, and dangling results in human-readable format
-func outputCombinedHuman(kyvernoResult *agent.ScanResult, stateResult *agent.StateScanResult, timingBombResult *agent.TimingBombResult, unresolvedResult *agent.UnresolvedResult, danglingResult *agent.DanglingResult) error {
+func outputCombinedHuman(kyvernoResult *agent.ScanResult, stateResult *agent.StateScanResult, timingBombResult *agent.TimingBombResult, unresolvedResult *agent.UnresolvedResult, danglingResult *agent.DanglingResult, contexts ...string) error {
 	fmt.Printf("\n")
+	contextLabel := ""
+	if len(contexts) > 0 {
+		contextLabel = contexts[0]
+	}
+	if contextLabel != "" {
+		fmt.Printf("Kubernetes context: %s (selection label; not a stable cluster ID)\n", contextLabel)
+	}
+	warnings := scanWarnings(&CombinedScanResult{Kyverno: kyvernoResult, State: stateResult})
+	if len(warnings) > 0 {
+		fmt.Println("Coverage incomplete:")
+		for _, warning := range warnings {
+			fmt.Printf("  - %s\n", warning)
+		}
+	}
 
 	// Explanatory content when --explain is used
 	if scanExplain {
@@ -690,7 +760,11 @@ func outputCombinedHuman(kyvernoResult *agent.ScanResult, stateResult *agent.Sta
 	}
 
 	if !hasOutput {
-		fmt.Printf("%s%s✓ No issues found%s\n\n", colorBold, colorGreen, colorReset)
+		if len(warnings) > 0 {
+			fmt.Println("No findings in readable evidence; coverage incomplete.")
+		} else {
+			fmt.Printf("%s%s✓ No issues found%s\n\n", colorBold, colorGreen, colorReset)
+		}
 	}
 
 	// Next steps when --explain is used
@@ -698,13 +772,19 @@ func outputCombinedHuman(kyvernoResult *agent.ScanResult, stateResult *agent.Sta
 		fmt.Printf("%sNEXT STEPS:%s\n", colorBold, colorReset)
 		fmt.Printf("→ See all patterns:        %s\n", preferInvocationForm("cub-scout scan --list"))
 		fmt.Printf("→ Scan a YAML file:        %s\n", preferInvocationForm("cub-scout scan --file manifest.yaml"))
-		fmt.Printf("→ Trace failing resource:  %s\n", preferInvocationForm("cub-scout trace <kind>/<name> -n <namespace>"))
+		if contextLabel == "" {
+			fmt.Printf("→ Trace failing resource:  %s\n", preferInvocationForm("cub-scout trace <kind>/<name> -n <namespace>"))
+		} else {
+			fmt.Println("Trace follow-up unavailable: no context-safe trace command for this selection.")
+		}
 		fmt.Printf("→ Visual guide:            docs/diagrams/risk-categories.svg\n")
 		fmt.Printf("\n")
 	}
 
 	// ConfigHub hook hint
-	fmt.Printf("%s🔗 Track violations in ConfigHub: %s%s\n\n", colorDim, preferInvocationForm("cub-scout scan --confighub"), colorReset)
+	if contextLabel == "" {
+		fmt.Printf("%s🔗 Track violations in ConfigHub: %s%s\n\n", colorDim, preferInvocationForm("cub-scout scan --confighub"), colorReset)
+	}
 
 	return nil
 }
@@ -1140,5 +1220,5 @@ func loadAndRenderScanFromJSON(path string) error {
 	if scanJSON {
 		return outputCombinedJSON(&result)
 	}
-	return outputCombinedHuman(result.Kyverno, result.State, result.TimingBombs, result.Unresolved, result.Dangling)
+	return outputCombinedHuman(result.Kyverno, result.State, result.TimingBombs, result.Unresolved, result.Dangling, result.KubernetesContext)
 }

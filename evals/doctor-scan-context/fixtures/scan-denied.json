@@ -1,0 +1,23 @@
+{
+  "kubernetesContext": "doctor-denied",
+  "state": {
+    "scannedAt": "2026-10-01T11:46:18.773403+01:00",
+    "findings": [],
+    "summary": {
+      "helmReleaseStuck": 0,
+      "kustomizationStuck": 0,
+      "applicationStuck": 0,
+      "silentFailures": 0,
+      "runtimeFailures": 0,
+      "total": 0
+    },
+    "warnings": [
+      "Access denied: helmreleases.helm.toolkit.fluxcd.io (namespace: scout-context-proof) (check RBAC permissions)",
+      "Access denied: kustomizations.kustomize.toolkit.fluxcd.io (namespace: scout-context-proof) (check RBAC permissions)",
+      "Access denied: applications.argoproj.io (namespace: scout-context-proof) (check RBAC permissions)",
+      "Access denied: pods. (namespace: scout-context-proof) (check RBAC permissions)",
+      "Access denied: helmreleases.helm.toolkit.fluxcd.io (namespace: scout-context-proof) (check RBAC permissions)",
+      "Access denied: kustomizations.kustomize.toolkit.fluxcd.io (namespace: scout-context-proof) (check RBAC permissions)"
+    ]
+  }
+}

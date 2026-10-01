@@ -1,0 +1,69 @@
+{
+  "schema": "doctor-scan-context-recorded-case.v1",
+  "status": "prepared_not_model_run",
+  "productSource": "5b3629752f354b257f7e667aa2c4f0126b35562b",
+  "receiptSha256": "fe14242589d909a82311189656325123492b962d92f43833a3be1776ce19245d",
+  "scope": "Sequential CLI stdout on one owned cluster using allowed and denied credentials; not an atomic snapshot, stable cluster identity, TUI run or savings benchmark.",
+  "files": {
+    "doctor-allowed.json": {
+      "sha256": "ab7feb633a35697dad9ebc654baf69d9eca56522e4aaa84c88fea75b87d5ed9a",
+      "phase": "fixed-doctor-allowed",
+      "exitCode": 0,
+      "argv": [
+        "./cub-scout",
+        "doctor",
+        "--namespace",
+        "scout-context-proof",
+        "--format",
+        "json",
+        "--kube-context",
+        "doctor-allowed"
+      ]
+    },
+    "scan-allowed.json": {
+      "sha256": "86b087042ea3c513fd4953d2a9357a2767c52d92b8bbb33021081d1c031904c6",
+      "phase": "fixed-doctor-allowed",
+      "exitCode": 0,
+      "argv": [
+        "./cub-scout",
+        "scan",
+        "--namespace",
+        "scout-context-proof",
+        "--state",
+        "--json",
+        "--kube-context",
+        "doctor-allowed"
+      ]
+    },
+    "doctor-denied.json": {
+      "sha256": "31b277a39111c68a9bb4cf492c5f2fd5ab8591cadd59c434983c2bbdbadf56f0",
+      "phase": "fixed-doctor-denied",
+      "exitCode": 0,
+      "argv": [
+        "./cub-scout",
+        "doctor",
+        "--namespace",
+        "scout-context-proof",
+        "--format",
+        "json",
+        "--kube-context",
+        "doctor-denied"
+      ]
+    },
+    "scan-denied.json": {
+      "sha256": "72144261960ec97c7ac370ec857216114fe9865b0b4c8453af66fd882a5ee9c8",
+      "phase": "fixed-doctor-denied",
+      "exitCode": 0,
+      "argv": [
+        "./cub-scout",
+        "scan",
+        "--namespace",
+        "scout-context-proof",
+        "--state",
+        "--json",
+        "--kube-context",
+        "doctor-denied"
+      ]
+    }
+  }
+}

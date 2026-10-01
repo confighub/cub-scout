@@ -1,13 +1,38 @@
 # cub-scout execution handover
 
 **Current snapshot:** 2026-10-01. Verified merged baseline:
-[`2034afa`](https://github.com/confighub/cub-scout/commit/2034afa020f196870b09c48aee031f77ba32d98b).
+[`2188a08`](https://github.com/confighub/cub-scout/commit/2188a089bacb91cd0a769772b58c8abcb1a10793).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
 order, quality gates, budgets and decisions.
 
 ## Current work and evidence
+
+- [#744](https://github.com/confighub/cub-scout/issues/744) merged after its
+  required CI passed; #742 is closed. The reviewed baseline contains ten
+  guards and the source-only full-24 preparation, with no paid admission.
+- [#743](https://github.com/confighub/cub-scout/issues/743) is the active
+  bounded doctor/live-scan context packet under #599. Context selection is an
+  invocation-local Kubernetes binding; its context-name label is not a stable
+  observed cluster identity. Other surfaces still need their own complete
+  bindings, and this slice does not close #599.
+  [PR #745](https://github.com/confighub/cub-scout/pull/745) carries the implementation,
+  denial/partial/unreachable and concurrent-binding tests, and TUI scan reopening
+  against a retargeted kubeconfig. Doctor and scan preserve the selected label
+  and coverage warnings across their outputs; normalized scan fields are additive.
+  The [owned-cluster proof](evals/doctor-scan-context/README.md) passed on its
+  second attempt: eight CLI observations plus actual TUI S/close/S after private
+  config retargeting and a separately bound denied scan. Pod reads returned
+  200/200/403; each TUI action made seven GETs. Cleanup, credential removal and
+  shared/CLI-config integrity passed. The first validator-failure receipt remains
+  preserved. Fixed product source `5b362975` passed local build/full Go validation;
+  23 offline helper/recorded-case guards pass. The new file-only agent contract
+  case has captured fixtures; paid agent execution remains unrun under the stop. CI's E2E package exhausted its 120-second limit
+  as the final smoke test began, so the limit is now 180 seconds; final-head CI
+  remains required. Two
+  behavior-specific regression probes caught missing shared Doctor context/human
+  warnings and missing scan JSON/TUI context before the corresponding repairs.
 
 - The fixed benchmark retains 24 questions and six equally weighted groups.
   This checkout has **0 planned, 5 refreshed fixtures, 2 prepared recorded
@@ -168,11 +193,11 @@ permission gates to already authorized routine work.
 
 ## Resume here
 
-Check #645, then integrate the full-24 source preparation under #742. Its
-blinded equal-evidence packet and authored input controls do not admit paid
-execution: recorded MCP binding, actual grants, descendants and accounting
-remain open. Next proceed with the success-defined doctor/scan context packet
-[#743](https://github.com/confighub/cub-scout/issues/743) under #599; product work
+Check #645, then complete the success-defined doctor/scan context packet
+[#743](https://github.com/confighub/cub-scout/issues/743) under #599. The full-24
+source preparation under #742 is integrated, but its blinded equal-evidence
+packet and authored input controls do not admit paid execution: recorded MCP
+binding, actual grants, descendants and accounting remain open. Product work
 need not wait for paid benchmark admission. #735/#738 and #740/#741 are merged.
 Continue actual tool parity and process/cost accounting under #709; six raw
 kubectl reads are only one bounded prerequisite. External dependencies #591 (genuine attestations), #597

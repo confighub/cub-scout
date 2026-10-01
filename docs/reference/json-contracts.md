@@ -579,6 +579,28 @@ resource read fails, `fieldAttribution` remains present with `unknown`, the
 requested path, and an availability reason. The object is omitted only when no
 field path was requested.
 
+### Explicit scan context and coverage additions
+
+Live `scan --kube-context <name> --json` and `--normalized-json` include the optional
+`kubernetesContext` selection label. It is not a stable cluster ID. Omitting the
+selector preserves the legacy output shape. The normalized schema retains
+`scan.normalized.v1` with additive optional `kubernetesContext` and `warnings`
+fields; `warnings[]` preserves Kyverno errors and state-scan coverage warnings
+alongside findings, instead of treating failed reads as zero known issues.
+
+### DoctorSummary context and coverage additions
+
+Live `doctor --format json` results may include `kubernetesContext`, the label of
+the captured kubeconfig selection. It is not a stable cluster ID or an authenticated
+ConfigHub Target binding. The legacy `cluster` field retains its existing meaning.
+
+`warnings[]` contains strings describing incomplete inventory, scanner or rollout
+coverage. The array is omitted when empty. Preserve warnings when consuming counts:
+zero observed resources or findings is not proof of an empty or healthy cluster
+when those reads were denied or unreachable. Known resources and findings remain
+available alongside warnings. Human output displays the same partial coverage.
+Offline fixture results do not acquire a context label from the ambient kubeconfig.
+
 ### DoctorSummary rollout additions (doctor --format json)
 
 When live workload rollout evidence is available, `doctor --format json`

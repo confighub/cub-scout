@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/confighub/cub-scout/v2/internal/scan"
+
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -203,6 +205,7 @@ type LocalClusterModel struct {
 	scanOutput     string         // Output from scan command
 	scanLoading    bool           // Is scan running
 	scanError      error          // Scan error if any
+	scanWarnings   []string       // Partial coverage omissions from an otherwise useful scan
 	scanFindings   []scanFinding  // Parsed findings
 	scanCategories map[string]int // Category counts
 
@@ -468,6 +471,7 @@ type traceResultMsg struct {
 type scanResultMsg struct {
 	output     string
 	err        error
+	warnings   []string
 	findings   []scanFinding  // Parsed findings for category display
 	categories map[string]int // Category counts
 }
@@ -1358,6 +1362,7 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.scanLoading = false
 		m.scanOutput = msg.output
 		m.scanError = msg.err
+		m.scanWarnings = msg.warnings
 		m.scanFindings = msg.findings
 		m.scanCategories = msg.categories
 		return m, nil
@@ -1658,6 +1663,7 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.scanMode = false
 				m.scanOutput = ""
 				m.scanError = nil
+				m.scanWarnings = nil
 				m.scanFindings = nil
 				m.scanCategories = nil
 				return m, nil
@@ -2022,15 +2028,12 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case key.Matches(msg, m.keymap.Scan):
-			if m.explicitClusterContext {
-				m.statusMsg = explicitContextUnsupportedAction
-				return m, nil
-			}
 			// Run scan and show results
 			m.scanMode = true
 			m.scanLoading = true
 			m.scanOutput = ""
 			m.scanError = nil
+			m.scanWarnings = nil
 			return m, m.runScan()
 
 		case key.Matches(msg, m.keymap.Import):
@@ -6067,7 +6070,28 @@ func getTraceResourceGVR(kind string) schema.GroupVersionResource {
 func (m LocalClusterModel) runScan() tea.Cmd {
 	return func() tea.Msg {
 		if m.explicitClusterContext {
-			return scanResultMsg{err: fmt.Errorf("%s", explicitContextUnsupportedAction)}
+			if m.clusterBinding == nil || m.clusterBinding.config == nil {
+				return scanResultMsg{err: fmt.Errorf("selected Kubernetes context is unavailable: %v", bindingError(m.clusterBinding))}
+			}
+			provider := selectScanProviderFn(scan.ProviderConfig{})
+			threshold, _ := time.ParseDuration("5m")
+			result, err := provider.ScanCluster(context.Background(), scan.ClusterScanOpts{Config: m.clusterBinding.config, RunKyverno: true, RunState: true, Threshold: threshold})
+			if err != nil {
+				return scanResultMsg{err: err}
+			}
+			if result == nil {
+				return scanResultMsg{err: fmt.Errorf("scan provider returned no result")}
+			}
+			copied := *result
+			copied.KubernetesContext = m.clusterBinding.context
+			result = &copied
+			data, err := json.MarshalIndent(result, "", "  ")
+			if err != nil {
+				return scanResultMsg{err: err}
+			}
+			output := string(data)
+			findings, categories := scanFindingsForTUI(result)
+			return scanResultMsg{output: output, warnings: scanWarnings(result), findings: findings, categories: categories}
 		}
 		// Run cub-scout scan command
 		cmd := exec.Command("./cub-scout", "scan")
@@ -6089,6 +6113,16 @@ func (m LocalClusterModel) runScan() tea.Cmd {
 			categories: categories,
 		}
 	}
+}
+
+func bindingError(binding *localClusterBinding) error {
+	if binding == nil {
+		return fmt.Errorf("no context binding captured")
+	}
+	if binding.err != nil {
+		return binding.err
+	}
+	return fmt.Errorf("no Kubernetes client config captured")
 }
 
 var runGraphExportCommand = runGraphExportViaCLI
@@ -6453,6 +6487,10 @@ func (m LocalClusterModel) renderScan() string {
 	b.WriteString(lcHeaderStyle.Render("╰────────────────────────────────────────────────────────────────╯"))
 	b.WriteString("\n\n")
 
+	if m.explicitClusterContext && m.clusterBinding != nil && m.clusterBinding.context != "" {
+		fmt.Fprintf(&b, "Kubernetes context: %s (selection label; not a stable cluster ID)\n\n", m.clusterBinding.context)
+	}
+
 	// Loading state
 	if m.scanLoading {
 		b.WriteString("  " + m.spinner.View() + " Scanning for configuration issues...\n")
@@ -6462,10 +6500,21 @@ func (m LocalClusterModel) renderScan() string {
 
 	// Show error if any
 	if m.scanError != nil {
-		b.WriteString(lcErrStyle.Render("Error running scan: "+m.scanError.Error()) + "\n\n")
-		b.WriteString(lcDimStyle.Render("Make sure cub-scout is in your PATH or run from project root.") + "\n")
+		if m.explicitClusterContext {
+			b.WriteString(lcErrStyle.Render("Selected Kubernetes context scan failed: "+m.scanError.Error()) + "\n\n")
+			b.WriteString(lcDimStyle.Render("Check read access and API reachability for the selected context.") + "\n")
+		} else {
+			b.WriteString(lcErrStyle.Render("Error running scan: "+m.scanError.Error()) + "\n\n")
+			b.WriteString(lcDimStyle.Render("Make sure cub-scout is in your PATH or run from project root.") + "\n")
+		}
 		b.WriteString("\n" + lcDimStyle.Render("Press any key to return") + "\n")
 		return b.String()
+	}
+	for _, warning := range m.scanWarnings {
+		b.WriteString(lcWarnStyle.Render("Partial scan coverage: "+warning) + "\n")
+	}
+	if len(m.scanWarnings) > 0 {
+		b.WriteString("\n")
 	}
 
 	// Show scan output with category grouping

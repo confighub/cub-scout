@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -9,6 +10,45 @@ import (
 	"github.com/confighub/cub-scout/v2/internal/scan"
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
+
+func TestRunDoctorContextRejectsInvalidAndFixtureModesBeforeReads(t *testing.T) {
+	server := newCountedKubeServer(t)
+	path, _ := resolverKubeconfig(t, "alpha", map[string]string{"alpha": server.server.URL})
+	t.Setenv("KUBECONFIG", path)
+	flag := doctorCmd.Flags().Lookup("kube-context")
+	oldValue, oldChanged := flag.Value.String(), flag.Changed
+	oldFormat, oldFixture := doctorFormat, os.Getenv("CUB_SCOUT_TEST_DOCTOR_INPUT_JSON")
+	doctorFormat = "json"
+	doctorCmd.SetContext(context.Background())
+	t.Cleanup(func() {
+		_ = flag.Value.Set(oldValue)
+		flag.Changed = oldChanged
+		doctorFormat = oldFormat
+		_ = os.Setenv("CUB_SCOUT_TEST_DOCTOR_INPUT_JSON", oldFixture)
+	})
+	if err := flag.Value.Set("missing"); err != nil {
+		t.Fatal(err)
+	}
+	flag.Changed = true
+	if err := runDoctor(doctorCmd, nil); err == nil || !strings.Contains(err.Error(), "not found") {
+		t.Fatalf("unknown context error = %v", err)
+	}
+	if server.requests.Load() != 0 {
+		t.Fatalf("unknown context made %d API requests", server.requests.Load())
+	}
+	if err := os.Setenv("CUB_SCOUT_TEST_DOCTOR_INPUT_JSON", "unused-fixture.json"); err != nil {
+		t.Fatal(err)
+	}
+	if err := flag.Value.Set("alpha"); err != nil {
+		t.Fatal(err)
+	}
+	if err := runDoctor(doctorCmd, nil); err == nil || !strings.Contains(err.Error(), "cannot be combined") {
+		t.Fatalf("explicit context fixture error = %v", err)
+	}
+	if server.requests.Load() != 0 {
+		t.Fatalf("context fixture rejection made %d API requests", server.requests.Load())
+	}
+}
 
 func TestBuildDoctorSummary_ComputesCoreSections(t *testing.T) {
 	entries := []MapEntry{

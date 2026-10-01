@@ -298,6 +298,10 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 		// copy-based scaffolds rather than embedding the suite-wide export.
 		// Validate each through dedicated assertions; keep remaining cases on the
 		// generic embedded-export path below.
+		if filepath.Base(caseDir) == "doctor-scan-context" {
+			checkDoctorScanContextScaffold(t, caseDir)
+			continue
+		}
 		if filepath.Base(caseDir) == "recorded-explain-contract" {
 			checkRecordedExplainCaseScaffold(t, caseDir)
 			continue
@@ -414,4 +418,49 @@ func scaffoldFiles(script string) map[string]string {
 		files[name] = strings.Join(body, "\n")
 	}
 	return files
+}
+
+// This product case owns exact captured CLI outputs, not the unrelated main
+// scenario export. Check each arm's actual scaffold result against reviewed pins.
+func checkDoctorScanContextScaffold(t *testing.T, root string) {
+	t.Helper()
+	scaffold, err := filepath.Abs(filepath.Join(root, "scaffold.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	hashes := map[string]string{
+		"doctor-allowed.json": "ab7feb633a35697dad9ebc654baf69d9eca56522e4aaa84c88fea75b87d5ed9a",
+		"doctor-denied.json":  "31b277a39111c68a9bb4cf492c5f2fd5ab8591cadd59c434983c2bbdbadf56f0",
+		"provenance.json":     "edff45c8a236d62f5c73718dfa2cbb9fccfc4eacb47ad5526e7d24e634bc4a69",
+		"scan-allowed.json":   "86b087042ea3c513fd4953d2a9357a2767c52d92b8bbb33021081d1c031904c6",
+		"scan-denied.json":    "72144261960ec97c7ac370ec857216114fe9865b0b4c8453af66fd882a5ee9c8",
+	}
+	for run := 0; run < 2; run++ {
+		workspace := t.TempDir()
+		cmd := exec.Command("bash", scaffold)
+		cmd.Dir = workspace
+		cmd.Env = offlineKubeconfigEnvironment()
+		if output, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("context scaffold: %v: %s", err, output)
+		}
+		staged := filepath.Join(workspace, "cluster")
+		files, err := os.ReadDir(staged)
+		if err != nil || len(files) != len(hashes) {
+			t.Fatalf("context scaffold inventory: count=%d err=%v", len(files), err)
+		}
+		for _, file := range files {
+			want, ok := hashes[file.Name()]
+			if !ok || file.IsDir() {
+				t.Fatalf("unexpected context scaffold entry %q", file.Name())
+			}
+			data, err := os.ReadFile(filepath.Join(staged, file.Name()))
+			if err != nil {
+				t.Fatal(err)
+			}
+			sum := sha256.Sum256(data)
+			if hex.EncodeToString(sum[:]) != want {
+				t.Errorf("context scaffold hash mismatch: %s", file.Name())
+			}
+		}
+	}
 }

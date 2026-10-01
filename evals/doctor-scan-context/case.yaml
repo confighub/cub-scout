@@ -1,0 +1,5 @@
+# FIXTURE-OWNED-SCAFFOLD: recorded Doctor/scan outputs; validated independently of the main cluster export.
+schema_version: "1.1"
+name: doctor-scan-context
+context:
+  scaffold_script: scaffold.sh

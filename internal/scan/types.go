@@ -57,13 +57,15 @@ type FileScanOpts struct {
 // to preserve serialization compatibility with golden tests and the
 // CUB_SCOUT_TEST_SCAN_JSON test hook.
 type CombinedResult struct {
-	Kyverno          *agent.ScanResult            `json:"kyverno,omitempty"`
-	State            *agent.StateScanResult       `json:"state,omitempty"`
-	TimingBombs      *agent.TimingBombResult      `json:"timingBombs,omitempty"`
-	Unresolved       *agent.UnresolvedResult      `json:"unresolved,omitempty"`
-	Dangling         *agent.DanglingResult        `json:"dangling,omitempty"`
-	LifecycleHazards *agent.LifecycleHazardResult `json:"lifecycleHazards,omitempty"`
-	Static           *agent.StaticScanResult      `json:"static,omitempty"`
+	// KubernetesContext is a selection label, not a stable cluster identity.
+	KubernetesContext string                       `json:"kubernetesContext,omitempty"`
+	Kyverno           *agent.ScanResult            `json:"kyverno,omitempty"`
+	State             *agent.StateScanResult       `json:"state,omitempty"`
+	TimingBombs       *agent.TimingBombResult      `json:"timingBombs,omitempty"`
+	Unresolved        *agent.UnresolvedResult      `json:"unresolved,omitempty"`
+	Dangling          *agent.DanglingResult        `json:"dangling,omitempty"`
+	LifecycleHazards  *agent.LifecycleHazardResult `json:"lifecycleHazards,omitempty"`
+	Static            *agent.StaticScanResult      `json:"static,omitempty"`
 }
 
 // PolicyEntry represents a policy in the catalog listing.
