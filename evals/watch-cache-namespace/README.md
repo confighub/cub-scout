@@ -85,3 +85,5 @@ The live proof is deliberately narrow: it does not measure cache freshness,
 reconnect behavior, storage bounds, complete inventory coverage, or production
 latency. The before/after phases are sequential, not an atomic snapshot. No
 live cluster proof has yet been performed.
+
+The invalid namespaced Nodes request may be denied with 403 before route validation. This control proves API fallback and preservation of the observed error, not that the server reached a particular routing stage. Additional controller-created ConfigMaps remain in the full-list comparison; the fixture UID check selects the named object.
