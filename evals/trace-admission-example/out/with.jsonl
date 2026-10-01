@@ -1,0 +1,3 @@
+{"type":"system","subtype":"init","model":"claude-haiku-4-5","tools":["Glob","Read","Skill"]}
+{"type":"assistant","message":{"content":[{"type":"text","text":"answer"}]}}
+{"type":"result","subtype":"success","is_error":false,"result":"answer"}
