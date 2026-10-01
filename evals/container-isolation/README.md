@@ -60,7 +60,7 @@ Container ownership (exact generated name, ID, and owner label) is checked
 separately from configuration validation, so a container created by this run
 can still be removed if one of its settings fails inspection. Missing-container
 recognition requires one exact Docker error line for the exact target with no
-stdout or contradictory output. A receipt write failure fails the capture.
+stdout (apart from one observed formatting newline) or contradictory output. A receipt write failure fails the capture.
 
 Pure tests mock all process calls and never execute Docker or the payload:
 

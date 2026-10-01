@@ -369,7 +369,7 @@ def _inspect_by_name(docker: Path, context: str, target: str, env: dict[str, str
 
 
 def _is_exact_missing(code: int, stdout: bytes, stderr: bytes, target: str) -> bool:
-    if type(code) is not int or code == 0 or stdout != b"" or not target:
+    if type(code) is not int or code == 0 or stdout not in (b"", b"\n") or not target:
         return False
     try:
         lines = [line.strip() for line in stderr.decode("utf-8", "strict").splitlines() if line.strip()]

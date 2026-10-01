@@ -345,7 +345,9 @@ class IsolationSourceTests(unittest.TestCase):
         target = "scout-isolation-review-missing-20261001"
         exact = b"\nError response from daemon: No such container: " + target.encode() + b"\n"
         self.assertTrue(prepare._is_exact_missing(1, b"", exact, target))
+        self.assertTrue(prepare._is_exact_missing(1, b"\n", exact, target))
         for code, stdout, stderr in (
+            (1, b"\n\n", exact), (1, b" ", exact),
             (0, b"", exact), (1, b"partial", exact), (1, b"", exact + b"\nother failure\n"),
             (1, b"", b"Error response from daemon: No such container: " + target.encode() + b"suffix"),
             (1, b"", b"Error response from daemon: No such container: " + target.encode() + b"-other"),
