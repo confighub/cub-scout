@@ -58,8 +58,9 @@ order, quality gates, budgets and decisions.
   mismatches, and the fixed source passed all six checks with matching direct
   identities and preserved denials. Cleanup and shared-config integrity were
   verified. The concise report binds the local raw archive in
-  [the proof README](evals/watch-cache-namespace/README.md); packaging is not yet
-  published, and the product fix remains unmerged. The Nodes case used an empty
+  [the proof README](evals/watch-cache-namespace/README.md). Product fix and
+  proof packaging merged in [PR #738](https://github.com/confighub/cub-scout/pull/738)
+  after required checks passed; the private raw archive remains local. The Nodes case used an empty
   synthetic cluster-scope lister and observed a 403 fallback; it does not prove
   route validation or Nodes informer coverage. Stream freshness, store limits
   and reconnect/410 coverage remain under #539.
