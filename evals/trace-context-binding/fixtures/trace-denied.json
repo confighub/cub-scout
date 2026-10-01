@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "text": "tool command failed (trace application/api --kube-context denied -n delivery --format json): Error: trace failed: read Argo Application \"api\" in namespace \"delivery\": fixture read denied",
+      "type": "text"
+    }
+  ],
+  "isError": true
+}

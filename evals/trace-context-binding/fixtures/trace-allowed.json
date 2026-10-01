@@ -1,0 +1,52 @@
+{
+  "context": "alpha",
+  "warnings": [
+    "Events unavailable: failed to list events: fixture read denied"
+  ],
+  "command": "trace",
+  "target": {
+    "kind": "Application",
+    "namespace": "delivery",
+    "name": "api"
+  },
+  "chain": [
+    {
+      "id": {
+        "kind": "Source",
+        "namespace": "",
+        "name": "team/repo"
+      },
+      "role": "source",
+      "relationship": "sources",
+      "evidence": null,
+      "deliveryStage": "source",
+      "originalSource": "git:https://alpha.example.invalid/team/repo.git"
+    },
+    {
+      "id": {
+        "kind": "Application",
+        "namespace": "delivery",
+        "name": "api"
+      },
+      "role": "deployer",
+      "relationship": "applies",
+      "evidence": null,
+      "deliveryStage": "deployer"
+    }
+  ],
+  "summary": {
+    "ownerType": "ArgoCD",
+    "source": {
+      "kind": "Source",
+      "namespace": "",
+      "name": "team/repo",
+      "url": "https://alpha.example.invalid/team/repo.git",
+      "revision": "alpha-branch"
+    },
+    "deployer": {
+      "kind": "Application",
+      "namespace": "delivery",
+      "name": "api"
+    }
+  }
+}
