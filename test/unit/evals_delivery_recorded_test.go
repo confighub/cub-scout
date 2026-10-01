@@ -452,6 +452,11 @@ func TestRUL03RecordedCaseContractAndScaffold(t *testing.T) {
 			t.Fatalf("strict grader accepted invalid answer variant %d: %s", i, invalid)
 		}
 	}
+	checkRUL03ContextScaffold(t, root)
+}
+
+func checkRUL03ContextScaffold(t *testing.T, root string) {
+	t.Helper()
 	scaffold, err := filepath.Abs(filepath.Join(root, "scaffold.sh"))
 	if err != nil {
 		t.Fatal(err)

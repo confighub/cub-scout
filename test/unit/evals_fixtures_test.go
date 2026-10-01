@@ -326,6 +326,10 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			checkPRE01CRDScaffold(t, caseDir)
 			continue
 		}
+		if filepath.Base(caseDir) == "rul03-context" {
+			checkRUL03ContextScaffold(t, caseDir)
+			continue
+		}
 		if filepath.Base(caseDir) == "rul04-image-identity" {
 			checkRUL04ImageIdentityScaffold(t, caseDir)
 			continue
