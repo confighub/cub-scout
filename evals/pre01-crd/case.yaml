@@ -1,0 +1,5 @@
+# FIXTURE-OWNED-SCAFFOLD: stages identical raw captured evidence for both arms.
+schema_version: "1.1"
+name: pre01-crd
+context:
+  scaffold_script: scaffold.sh

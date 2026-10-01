@@ -1,0 +1,2 @@
+error: resource mapping not found for name: "kube-prometheus-stack-kube-state-metrics" namespace: "monitoring" from "/private/tmp/scout-pre01-live-evidence-20261001-repeat1/servicemonitor.normalized.yaml": no matches for kind "ServiceMonitor" in version "monitoring.coreos.com/v1"
+ensure CRDs are installed first
