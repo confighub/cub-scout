@@ -51,7 +51,7 @@ order, quality gates, budgets and decisions.
   captured 200s returned byte-exact responses. Both listeners and the owned
   container were cleaned up; configured isolation and input hashes verified.
   Eighteen offline guards passed, with old-source assertion failures. Proof
-  packaging is pending. No general discovery, Helm, MCP, model or savings proof.
+  packaging merged in #736. No general discovery, Helm, MCP, model or savings proof.
 - [#735](https://github.com/confighub/cub-scout/issues/735) fixes cross-namespace
   watch-cache reuse. The owned-kind before/after probe passed on one unchanged
   fixture: the pinned old source showed exactly four expected false-empty/error
@@ -153,8 +153,8 @@ permission gates to already authorized routine work.
 
 ## Resume here
 
-Check #645, finish #732 proof packaging, and independently review the #735 proof
-package before publishing its already-passing owned before/after result.
+Check #645, then complete #735 exact-head CI and merge its reviewed behavior
+fix and already-passing owned before/after proof package.
 Continue actual tool parity and process/cost accounting under #709; six raw
 kubectl reads are only one bounded prerequisite. External dependencies #591 (genuine attestations), #597
 (current gate evidence), #600 (fact storage/schema agreement), and GHCR access
