@@ -22,6 +22,19 @@ about historical release delivery.
 For the operator workflow this fixture supports, see
 [`docs/howto/delivery-readiness-decision.md`](../../docs/howto/delivery-readiness-decision.md).
 
+The rollout reader's client-binding contract is exercised offline by
+`TestFetchRolloutDecisionFromCapturedClient` in
+`cmd/cub-scout/observe_rollout_client_test.go`. Its synthetic Deployment and
+label-selected Pod responses validate the same runtime-symptom evidence shape
+against two distinct TLS endpoints, including denial and cancellation. This is
+an internal shared-reader foundation for #755; three-way comparison context
+selection is still pending. Missing workload evidence remains unavailable;
+denied Pod reads preserve the existing workload-only decision behavior.
+
+```bash
+go test ./cmd/cub-scout -run TestFetchRolloutDecisionFrom -count=1
+```
+
 ## Files
 
 | File | Purpose |

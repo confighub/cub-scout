@@ -262,15 +262,29 @@ func fetchRolloutDecision(ctx context.Context, namespace, kind, name string) (*a
 	if err != nil {
 		return nil, false
 	}
-	gvr := kindToGVR(kind)
-	if gvr.Resource == "" {
-		return nil, false
-	}
 	dynClient, err := dynamic.NewForConfig(cfg)
 	if err != nil {
 		return nil, false
 	}
 
+	return fetchRolloutDecisionFrom(ctx, dynClient, namespace, kind, name)
+}
+
+// fetchRolloutDecisionFrom keeps the workload and related Pod reads on one
+// caller-supplied client. Captured sessions can use this without reloading the
+// ambient kubeconfig. Missing workload evidence remains best-effort unavailable;
+// Pod read failures retain the existing workload-only decision behavior.
+func fetchRolloutDecisionFrom(ctx context.Context, dynClient dynamic.Interface, namespace, kind, name string) (*agent.RolloutDecision, bool) {
+	if dynClient == nil || !agent.IsRolloutWorkloadKind(kind) {
+		return nil, false
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	gvr := kindToGVR(kind)
+	if gvr.Resource == "" {
+		return nil, false
+	}
 	obj, err := dynClient.Resource(gvr).Namespace(namespace).Get(ctx, name, v1.GetOptions{})
 	if err != nil {
 		return nil, false
