@@ -111,9 +111,20 @@ failures alongside known chains. Reverse Secret observations omit the saved
 last-applied manifest (which can embed Secret payloads) and report
 `orphanMeta.lastAppliedConfigOmission`; this does not mean the annotation was
 absent. Non-Secret last-applied metadata retains its existing representation.
-The local rendered-manifest comparison helper
-has no public JSON contract yet. Full diff integration and remaining end-to-end
-proof remain tracked by #746.
+`trace --diff --desired-file PATH --format json` returns a
+`traceDiffObservation` with `status`, `comparison`, `coverage`, `source`,
+`context`, exact `resource`, `scopeDiscoveryReads`, optional bounded `read`
+evidence, field summary, differences, and omissions. `scopeDiscoveryReads`
+counts a separate discovery GET made only to resolve a desired object's scope;
+it is not included in `read.reads`, which belongs to the bounded object reader.
+`source.kind` is `local-rendered`; `source.reference` is the local operand
+reference and `source.digest` is omitted whenever the input contains a Secret.
+`comparison` is `authored-fields-only` and `coverage` is
+`one-selected-object`: this does not claim controller-rendered desired state,
+object-set completeness, or predict a future reconciliation. Status separates
+`matched`, `changed`, `missing`, and `inconclusive`; Secret payload comparison
+is inconclusive and never emits its payload. Controller-rendered Flux/Argo,
+installed-Helm, and other provider operands remain open under #746.
 
 ## Map Ownership Diagnostics
 
@@ -1513,6 +1524,8 @@ For the highest-value connected/read-only surfaces, it may also add `structuredC
 - `compare_three_way` returns parsed CLI JSON under `structuredContent.data`
 - `compare_three_way` may mirror `confighubUrl`, `confighubRevisionsUrl`, and `nextSteps` from the CLI JSON at the top level of `structuredContent`
 - `compare_source_truth` returns parsed CLI JSON under `structuredContent.data`; its `strategy` enum matches the CLI strategy registry.
+- `compare source-truth --kube-context <name>` binds both Kubernetes reads to the exact named kubeconfig context. Omitting the flag keeps the normal default loader; an invalid explicit name fails closed. Argo Applications are read as Kubernetes resources; an Argo CD server context is not a kubeconfig context.
+- Source-truth evidence may include additive `context` (the selected context label, not stable cluster identity) and `collection_errors[]` fields. A failed or denied runtime/controller/ConfigHub fetch remains absent evidence and cannot produce PASS.
 - `confighub_units`, `confighub_unit_get`, and `confighub_changesets` may add:
   - `structuredContent.data`
   - `structuredContent.nextSteps`

@@ -6,10 +6,11 @@ portion; it does not declare that packet complete or alter the roadmap gates.
 
 ## Current implementation and evidence
 
-Normal/reverse Trace use a captured Kubernetes binding. Explicit context with
-legacy delegated `--diff` is currently rejected before reads. With no selector,
-the old diff delegates still exist; they are not accepted proof of read-only,
-context-bound observation and have not been run against shared infrastructure.
+Normal/reverse Trace and the public local-rendered diff use a captured
+Kubernetes binding. `trace --diff` without `--desired-file` now fails before
+reads with migration guidance; it no longer invokes Flux, Argo, or Helm diff
+delegates. `trace --diff --desired-file FILE` compares one already-rendered
+object with one exact live object. It is not controller desired state.
 
 The upstream source audit used Flux revision
 `04acaec6161ac4fb1a82ffafa88901c03271d34f` and Argo revision
@@ -48,22 +49,23 @@ payloads and their content digests are omitted; omission is never a clean result
 
 ## Implementation sequence and compatibility
 
-1. Finish the existing local-rendered-vs-live primitive, shared rendering and
-   deterministic proof. It must remain clearly labeled; this alone cannot
-   satisfy full controller-desired diff functionality.
-2. Define the public desired-operand selector and its CLI/MCP/TUI projections,
-   including validation before any provider/child call. Do not route a supplied
-   context into the current ambient external delegates.
+1. The local-rendered-vs-live primitive, CLI/MCP/TUI projection, safe
+   no-operand migration behavior, and deterministic endpoint-binding proof are
+   now implemented. Remaining final integration review and release gates do
+   not change its scope: it remains authored-field-only for one object.
+2. Define additional desired-operand selectors/providers without changing the
+   meaning of the local-rendered mode. Validate every operand before any
+   provider/child call; do not route a supplied context into ambient external
+   delegates.
 3. Establish each controller's desired-observation provider independently:
    exact source/destination binding, authenticated provenance where available,
    no refresh/reconcile/server-dry-run side effects, and named unavailable
    states when the provider cannot supply its rendered operand. Scout does not
    acquire a hidden rendering engine to fill this gap.
-4. Remove the unsafe delegate route only with an explicit compatibility note,
-   migration examples and independent review. Preserve a useful comparison
-   capability; do not silently relabel local input as controller desired state.
-   Any temporarily unavailable controller-desired provider stays an explicit
-   unresolved dependency under #746, not a closed feature claim.
+4. The unsafe public delegate route has been removed with compatibility
+   guidance and a rendered-input example. Continue to keep unavailable
+   controller-desired providers explicit under #746; the local comparison does
+   not close the complete diff request.
 
 ## Success proof before public integration
 
@@ -78,6 +80,7 @@ payloads and their content digests are omitted; omission is never a clean result
 - Before/fixed behavior proof, disposable owned-cluster capture, independent
   review, build/full suite and exact-head CI before packet completion.
 
-The current helper proves only local operand selection and bound live reads.
-Controller-desired providers, public comparison UI and the final live proof are
-still missing; their absence must stay visible in status and release claims.
+The current public comparison proves only local operand selection and bound
+live reads. Controller-desired providers, installed-Helm operands, and final
+release/live proof remain missing; their absence must stay visible in status
+and release claims.

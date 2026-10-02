@@ -435,7 +435,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"trace": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "trace",
-				Description: "Exact ownership and source chain for one resource (trace --format json). Use when the user needs the resource's owner, deployer, or GitOps/source chain after the resource is known. This answers ownership/source lineage, not which field writer made a change; do not call trace just to confirm an explain result about manual-edit attribution. DO NOT load for broad cluster status or first-pass troubleshooting; use doctor when the resource or problem scope is still unclear.",
+				Description: "Exact ownership and source chain for one resource (trace --format json). Use when the user needs the resource's owner, deployer, or GitOps/source chain after the resource is known. Optional diff compares one object from an already-rendered local manifest with the selected live object; it is authored-field-only, not controller desired state, resource-set completeness, or a next-reconciliation prediction. This answers ownership/source lineage, not which field writer made a change; do not call trace just to confirm an explain result about manual-edit attribution. DO NOT load for broad cluster status or first-pass troubleshooting; use doctor when the resource or problem scope is still unclear.",
 				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
@@ -448,6 +448,18 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						"namespace": map[string]interface{}{
 							"type":        "string",
 							"description": "Optional namespace override.",
+						},
+						"diff": map[string]interface{}{
+							"type":        "boolean",
+							"description": "Compare one object from an already-rendered local file/directory with the selected live object. This is not controller desired state.",
+						},
+						"desired_file": map[string]interface{}{
+							"type":        "string",
+							"description": "Local path to already-rendered Kubernetes manifests; required when diff is true.",
+						},
+						"api_version": map[string]interface{}{
+							"type":        "string",
+							"description": "Exact API version to disambiguate same-kind/name documents in the rendered input.",
 						},
 					},
 					"required":             []string{"resource"},
@@ -469,6 +481,38 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				}
 				if ns := argString(arguments, "namespace"); ns != "" {
 					args = append(args, "-n", ns)
+				}
+				diff := false
+				if raw, present := arguments["diff"]; present {
+					var ok bool
+					diff, ok = raw.(bool)
+					if !ok {
+						return nil, fmt.Errorf("diff must be a boolean")
+					}
+				}
+				desiredFile, filePresent := arguments["desired_file"]
+				if filePresent {
+					path, ok := desiredFile.(string)
+					if !ok || strings.TrimSpace(path) == "" {
+						return nil, fmt.Errorf("desired_file must be a non-empty local path")
+					}
+					if !diff {
+						return nil, fmt.Errorf("desired_file requires diff=true")
+					}
+					args = append(args, "--diff", "--desired-file", path)
+				} else if diff {
+					return nil, fmt.Errorf("diff requires desired_file with already-rendered manifests")
+				}
+				apiVersion, versionPresent := arguments["api_version"]
+				if versionPresent {
+					version, ok := apiVersion.(string)
+					if !ok || strings.TrimSpace(version) == "" {
+						return nil, fmt.Errorf("api_version must be a non-empty API version")
+					}
+					if !diff || !filePresent {
+						return nil, fmt.Errorf("api_version requires diff and desired_file")
+					}
+					args = append(args, "--api-version", version)
 				}
 				args = append(args, "--format", "json")
 				return args, nil
@@ -672,6 +716,10 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 							"description": sourceTruthStrategySchemaDescription(),
 							"enum":        sourceTruthStrategySchemaValues(),
 						},
+						"context": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional exact kubeconfig context for Kubernetes runtime and controller reads; does not select a ConfigHub context.",
+						},
 					},
 					"required":             []string{"target", "namespace", "strategy"},
 					"additionalProperties": false,
@@ -690,12 +738,19 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				if strategy == "" {
 					return nil, fmt.Errorf("missing required argument: strategy")
 				}
-				return []string{
+				args := []string{
 					"compare", "source-truth", target,
 					"-n", namespace,
 					"--strategy", strategy,
-					"--format", "json",
-				}, nil
+				}
+				if raw, present := arguments["context"]; present {
+					contextName, ok := raw.(string)
+					if !ok || strings.TrimSpace(contextName) == "" {
+						return nil, fmt.Errorf("context must be a non-empty kubeconfig context name when provided")
+					}
+					args = append(args, "--kube-context", strings.TrimSpace(contextName))
+				}
+				return append(args, "--format", "json"), nil
 			},
 		}
 		tools["confighub_changesets"] = mcpTool{

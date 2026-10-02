@@ -11,4 +11,4 @@ SELECT RESOURCE TO TRACE
   Application  argocd/guestbook (ArgoCD)
 
 ─────────────────────────────────────────────────────────────────
-↑/↓ select  Enter trace  Esc cancel
+↑/↓ select  Enter trace  d compare rendered input  Esc cancel

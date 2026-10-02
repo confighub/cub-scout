@@ -455,7 +455,9 @@ cub-scout mcp serve --recording objects.yaml
   - `target` (required string)
   - `namespace` (required string)
   - `strategy` (required enum, same values as `compare source-truth`)
+  - `context` (optional exact kubeconfig context for runtime and Kubernetes controller reads; this does not select ConfigHub context)
 - Backed by `cub-scout compare source-truth --format json`
+- An explicitly supplied empty or missing context is rejected before Kubernetes reads; the default loader is used only when the option is omitted.
 
 - Tool name: `confighub_k8s_resources`
 - Availability: connected mode only
@@ -869,11 +871,13 @@ cub-scout trace <kind> <name> -n <namespace> [flags]
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `-n, --namespace` | string | flux-system | Resource namespace |
-| `--kube-context` | string | omitted | Exact context for normal/reverse Trace; explicit empty/missing selections and fixture/diff combinations fail before observation |
+| `-n, --namespace` | string | flux-system for normal trace; rendered manifest namespace for `--diff` when omitted | Resource namespace; for diff, an explicit value must match or supply the selected namespaced manifest object |
+| `--kube-context` | string | omitted | Exact context for normal/reverse Trace and rendered diff; explicit empty/missing selections and fixture combinations fail before observation |
 | `--app` | string | - | Trace Argo CD app by name |
 | `-r, --reverse` | bool | false | Walk ownerRefs up |
-| `-d, --diff` | bool | false | Show Git vs live diff |
+| `-d, --diff` | bool | false | Compare one object from caller-rendered input with one live object; requires `--desired-file` |
+| `--desired-file` | path | - | Already-rendered local manifest file/directory for `--diff`; cub-scout does not render it |
+| `--api-version` | string | - | Exact desired API version when otherwise matching documents are ambiguous |
 | `--history` | bool | false | Show deployment history |
 | `--artifacts` | bool | false | Include source artifact provenance |
 | `--format` | string | ascii | Output format: ascii, json, md |
@@ -902,13 +906,17 @@ ambiguous name requires an explicit namespace. It never guesses `argocd`.
 Other resource selectors retain the `flux-system` namespace default.
 
 Partial warnings and the selected context label appear in JSON and human output.
-The label is not a stable cluster ID. Normal and reverse CLI reads use the same
+The label is not a stable cluster ID. Normal, reverse, and rendered-diff CLI reads use the same
 captured invocation binding. MCP Trace forwards its typed `context` argument to
 `--kube-context`; omission preserves the legacy loader. Explicit selection rejects
 both trace/artifact fixture hooks. With no selector, legacy `--reverse` precedence
 when both `--reverse` and `--diff` are supplied is retained. Explicit selection
-with delegated `--diff` is refused before observation; full diff integration and
-remaining end-to-end proof are still open in #746.
+with `--diff` but no `--desired-file` fails before reads. Pass output already
+rendered by your existing tool (for example, `helm template` or `kustomize
+build`). This compares authored fields for one selected object only. It is not a
+controller render, does not prove resource-set completeness, and does not
+predict the next reconciliation. Controller-desired and installed-Helm operands
+remain open in #746.
 
 ### ConfigHub Delivery Evidence
 

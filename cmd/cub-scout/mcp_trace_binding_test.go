@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/confighub/cub-scout/v2/internal/mapsvc"
@@ -133,6 +134,37 @@ func TestMCPTraceCallRejectsInvalidAndMissingContextsWithoutReads(t *testing.T) 
 			require.Equal(t, 0, beta.requestCount())
 		})
 	}
+}
+
+func TestMCPTraceCallRunsBoundRenderedDiffThroughCLIModel(t *testing.T) {
+	setupMCPTraceParserState(t)
+	var alphaRequests, betaRequests atomic.Int32
+	alpha := httptest.NewServer(traceDiffHandler(t, "/apis/apps/v1/namespaces/delivery/deployments/api", `{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"api","namespace":"delivery","uid":"alpha-uid","resourceVersion":"12"},"spec":{"replicas":2}}`, http.StatusOK, &alphaRequests))
+	defer alpha.Close()
+	beta := httptest.NewServer(traceDiffHandler(t, "/apis/apps/v1/namespaces/delivery/deployments/api", `{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"api","namespace":"delivery","uid":"beta-uid"},"spec":{"replicas":9}}`, http.StatusOK, &betaRequests))
+	defer beta.Close()
+	configPath := filepath.Join(t.TempDir(), "config")
+	writeTraceKubeconfig(t, configPath, "beta-context", alpha.URL, beta.URL)
+	t.Setenv("KUBECONFIG", configPath)
+	desired := traceDiffManifest(t, "apiVersion: apps/v1\nkind: Deployment\nmetadata: {name: api, namespace: delivery}\nspec: {replicas: 1}\n")
+	var args []string
+	gateway := newMCPGateway(mcpTraceParserRunner(t, &args))
+	response := mcpTraceCall(gateway, map[string]interface{}{
+		"resource": "deployment/api", "context": "alpha-context", "namespace": "delivery",
+		"diff": true, "desired_file": desired, "api_version": "apps/v1",
+	})
+	require.Nil(t, response.Error)
+	wire := decodeMCPResult(t, response.Result)
+	require.False(t, wire.IsError)
+	var result traceDiffObservation
+	require.NoError(t, json.Unmarshal([]byte(wire.Content[0].Text), &result))
+	require.Equal(t, "changed", result.Status)
+	require.Equal(t, "alpha-context", result.Context)
+	require.Equal(t, "alpha-uid", result.Read.UID)
+	require.Equal(t, "local-rendered", result.Source.Kind)
+	require.Equal(t, []string{"trace", "deployment/api", "--kube-context", "alpha-context", "-n", "delivery", "--diff", "--desired-file", desired, "--api-version", "apps/v1", "--format", "json"}, args)
+	require.Equal(t, int32(2), alphaRequests.Load())
+	require.Zero(t, betaRequests.Load())
 }
 
 type mcpTraceResultWire struct {

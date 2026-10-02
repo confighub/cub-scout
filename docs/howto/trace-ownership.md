@@ -80,27 +80,23 @@ cub-scout trace deploy/podinfo -n podinfo
 
 ---
 
-## Trace with Diff
+## Compare a Rendered Object
 
-See what would change on next reconciliation:
+Compare one object from manifests rendered by your existing workflow with the
+exact live object:
 
 ```bash
-cub-scout trace deploy/podinfo -n podinfo --diff
+cub-scout trace deploy/podinfo -n podinfo --diff \
+  --desired-file ./rendered-manifests --api-version apps/v1
 ```
 
-**Output:**
+This reports authored-field differences for that object only. It does not
+render Git or controller state, establish resource-set completeness, or
+predict what a future Flux/Argo reconciliation will do.
 
-```
-┌─ DIFF: podinfo ──────────────────────────────────────────────────────────────┐
-│                                                                              │
-│  spec.replicas:                                                              │
-│    - live:    5     (kubectl edit)                                          │
-│    + desired: 2     (from Git)                                              │
-│                                                                              │
-│  ⚠ This resource will revert on next Flux reconciliation                    │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+The result identifies the selected context and live UID/resourceVersion,
+reports authored-field differences, and labels coverage as one selected
+object. A difference does not establish what a controller will apply next.
 
 ---
 

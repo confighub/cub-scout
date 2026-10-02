@@ -57,9 +57,13 @@ It detects Argo ownership, traces lineage, and reports health.
 # Full trace: Application → Deployment → ReplicaSet → Pod
 ./cub-scout trace deploy/api -n myapp-prod
 
-# With diff (live vs desired)
-./cub-scout trace deploy/api -n myapp-prod --diff
+# Compare one object from manifests you have already rendered with the live object
+./cub-scout trace deploy/api -n myapp-prod --diff \
+  --desired-file /path/to/rendered-manifests --api-version apps/v1
 ```
+
+This is an authored-field comparison of one local rendered object, not an
+Argo controller render or a prediction of its next reconciliation.
 
 ### 4. Git repo inspection
 

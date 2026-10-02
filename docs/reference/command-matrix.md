@@ -154,7 +154,9 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `-n, --namespace` | Namespace of the resource |
 | `--app` | Trace ArgoCD app by name |
 | `-r, --reverse` | Reverse trace (walk ownerRefs up) |
-| `--diff` | Show what would change on next reconciliation |
+| `--diff` | Compare one caller-rendered object with one live object; requires `--desired-file` |
+| `--desired-file` | Already-rendered manifest file/directory; no rendering is performed |
+| `--api-version` | Exact desired API version to disambiguate documents |
 | `--artifacts` | Include source artifact provenance fields |
 | `--format` | Output format (`ascii`, `json`, `md`) |
 | `--json` | Output as JSON |

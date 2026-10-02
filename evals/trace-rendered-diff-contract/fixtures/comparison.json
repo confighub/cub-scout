@@ -1,0 +1,48 @@
+{
+  "status": "changed",
+  "comparison": "authored-fields-only",
+  "coverage": "one-selected-object",
+  "source": {
+    "kind": "local-rendered",
+    "reference": "desired.yaml",
+    "objectCount": 1
+  },
+  "context": "alpha-context",
+  "resource": {
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "namespace": "shop",
+    "name": "checkout"
+  },
+  "scopeDiscoveryReads": 0,
+  "read": {
+    "available": true,
+    "context": "alpha-context",
+    "resource": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "namespace": "shop",
+      "name": "checkout"
+    },
+    "uid": "synthetic-uid-alpha",
+    "resourceVersion": "17",
+    "observedAt": "2026-10-01T12:13:14Z",
+    "expiresAt": "2026-10-01T12:13:29Z",
+    "cache": "miss",
+    "reads": {
+      "discovery": 1,
+      "object": 1
+    }
+  },
+  "summary": {
+    "total": 1,
+    "changed": 1
+  },
+  "differences": [
+    {
+      "field": "spec.replicas",
+      "desired": "2",
+      "live": "1"
+    }
+  ]
+}

@@ -311,6 +311,14 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			checkGitOpsStatusContextScaffold(t, caseDir)
 			continue
 		}
+		if filepath.Base(caseDir) == "trace-rendered-diff-contract" {
+			checkTraceRenderedDiffScaffold(t, caseDir)
+			continue
+		}
+		if filepath.Base(caseDir) == "source-truth-context" {
+			checkSourceTruthContextScaffold(t, caseDir)
+			continue
+		}
 		if filepath.Base(caseDir) == "trace-case-sensitive-slugs" {
 			checkTraceCaseSensitiveSlugsScaffold(t, caseDir)
 			continue
@@ -470,6 +478,47 @@ func checkGitOpsStatusContextScaffold(t *testing.T, root string) {
 		got, err := os.ReadFile(filepath.Join(workspace, "recorded", entry.Name()))
 		if err != nil || !bytes.Equal(got, want) {
 			t.Fatalf("GitOps context scaffold changed %s: %v", entry.Name(), err)
+		}
+	}
+}
+
+// The source-truth context case carries one synthetic contract fixture, not
+// the suite-wide Kubernetes YAML export. Validate its exact one-file scaffold.
+func checkSourceTruthContextScaffold(t *testing.T, root string) {
+	t.Helper()
+	caseData, err := os.ReadFile(filepath.Join(root, "case.yaml"))
+	if err != nil || !strings.Contains(string(caseData), "FIXTURE-OWNED-SCAFFOLD") || !strings.Contains(string(caseData), "scaffold_script: scaffold.sh") {
+		t.Fatalf("source-truth context case does not declare its fixture-owned scaffold: %v", err)
+	}
+	wantNames := []string{"source-truth.json"}
+	scaffold, err := filepath.Abs(filepath.Join(root, "scaffold.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for attempt := 0; attempt < 2; attempt++ {
+		workspace := t.TempDir()
+		cmd := exec.Command("bash", scaffold)
+		cmd.Dir = workspace
+		cmd.Env = offlineKubeconfigEnvironment()
+		if output, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("source-truth context scaffold: %v: %s", err, output)
+		}
+		staged, err := os.ReadDir(filepath.Join(workspace, "cluster"))
+		if err != nil || len(staged) != len(wantNames) {
+			t.Fatalf("source-truth context scaffold inventory: count=%d err=%v", len(staged), err)
+		}
+		for i, entry := range staged {
+			if entry.IsDir() || entry.Name() != wantNames[i] {
+				t.Fatalf("source-truth context scaffold entry[%d]=%q, want %q regular file", i, entry.Name(), wantNames[i])
+			}
+			want, err := os.ReadFile(filepath.Join(root, "fixtures", entry.Name()))
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, err := os.ReadFile(filepath.Join(workspace, "cluster", entry.Name()))
+			if err != nil || !bytes.Equal(got, want) {
+				t.Fatalf("source-truth context scaffold changed %s: %v", entry.Name(), err)
+			}
 		}
 	}
 }

@@ -109,6 +109,82 @@ fixture reads. It does not demonstrate a real Argo reconciliation, general
 cluster identity, ConfigHub behavior, controller writes, or all credential
 provider types. Only the scoped attempt-three result above is claimed.
 
+## Combined source-truth and rendered-diff proof
+
+The helper now includes a separately gated `source-truth-diff` mode for the
+integrated #750/#751 routes. Attempt one failed on an incomplete synthetic
+Application fixture: its missing `status.resources` prevented an exact workload
+link. The product correctly refused the link. The failed receipt is retained at
+`/tmp/scout-source-truth-diff-proof-1`; owned-cluster deletion, node absence and
+shared-config integrity checks passed. The fixture is corrected for a new attempt;
+that first attempt is retained as failed evidence. Attempt two passed its action
+assertions but failed final validation because requests and phase markers used
+different log files. Its failed receipt remains at
+`/tmp/scout-source-truth-diff-proof-2`; cleanup and shared-config integrity passed.
+The helper now passes one explicit event-log path to both proxies and the action
+markers, with a failing-before/passing-after offline regression. Attempt three
+passed the API action checks but found that reopening source-truth reused a
+cached ConfigHub session check. Its failed receipt is retained at
+`/tmp/scout-source-truth-diff-proof-3`; cleanup passed. The product now refreshes
+the gate once per deliberate TUI observation, with an expired/recovered-session
+regression and full offline Go validation. Attempt four uses that new pin and passed all 13 action phases. Its receipt is
+retained at `/tmp/scout-source-truth-diff-proof-4`; the derived
+[combined report](combined-report.json) records exact source/artifact hashes,
+request evidence and all three earlier failures. Cleanup removed the owned
+cluster, source worktree and private credentials; shared configuration stayed
+unchanged. The
+`COMBINED_SOURCE_PIN` in `capture.py` records the reviewed candidate
+`fb3c76b6fc28d72f6ccea99fd9f38040c5b58b65`; the capture also requires that
+commit to be an ancestor of `HEAD` before building binaries or creating cluster
+resources. The helper and pinned product are now integrated, and the helper
+review repairs pass 30 offline tests. The combined capture passed on the pinned product. The attempt-three Trace-only receipt
+above remains the separate historical proof; it is not evidence for these
+newer routes.
+
+To reproduce using a fresh output directory:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 evals/trace-context-live/capture.py \
+  --mode source-truth-diff \
+  --execute \
+  --integrity-only-shared-kubeconfig /explicit/path/to/kubeconfig-to-hash-only \
+  --output-dir /tmp/scout-source-truth-diff-proof
+```
+
+The combined fixture keeps the existing owned kind lifecycle. Its synthetic
+Argo Application has a fixed observed revision; its zero-replica Deployment
+has exact ConfigHub unit/space metadata. The ConfigHub shim answers only
+`cub auth status`, then records and deliberately fails the exact unit read.
+An allowed source-truth result must therefore retain `BLOCK` and the unit-read
+omission; the denied runtime context must not attempt a unit read. No real cub
+binary, ConfigHub server, or auth session is used.
+
+CLI diff cases use local, already-rendered Deployment manifests for matched,
+changed, missing, and denied outcomes, with exact `apps/v1` identity. MCP
+exercises the matched and denied diff cases.
+MCP calls use stdio `tools/call` for both `compare_source_truth` and the
+existing `trace` tool's diff arguments. The injected TUI test sends real
+`LocalClusterModel.Update` events for `Y` plus `git-argo`, then `T`, `d`, the
+rendered-file path, and `apps/v1`. It retargets only the disposable TUI
+kubeconfig and checks that the already-captured binding stays on its original
+loopback endpoint. A separate denied selection must remain inconclusive.
+
+For the child-process paths, two random loopback-only HTTP listeners bind the
+allowed and denied contexts. The listeners keep the corresponding credentials
+server-side and forward only explicit GET routes to the owned kind API using
+the owned CA for upstream TLS verification. The observation kubeconfig has no
+upstream CA, certificate, key, or token. The proxy rejects other paths and all
+HTTP verbs before forwarding, bounds concurrency, request time, response size,
+and receipt size, and records only action markers plus method/path/status.
+Proxy threads are joined before cluster cleanup. The TUI probe writes phase
+markers to the same private JSONL log, allowing each event batch to be
+validated against its own selected endpoint and target response.
+
+This accepted proof covers local API binding, read-only request behavior,
+RBAC denial, and synthetic Application evidence only. It cannot establish a
+real ConfigHub read or approval, controller reconciliation, workload
+convergence, or model/cost savings. The accepted receipt is scoped to these synthetic fixture reads.
+
 ## Offline acceptance tests
 
 ```sh
@@ -120,7 +196,11 @@ These tests use only synthetic records and short local Python children. They
 reject missing/wrong target or context evidence, a native/empty result passed
 off as denied coverage, non-GET TUI traffic, cleanup deletion after uncertain
 creation, and failure to remove a source worktree left by a pre-cluster build
-failure. They do not compile product code or contact a cluster.
+failure. Combined-mode checks also reject missing or reordered action evidence,
+wrong proxy endpoint or object identity, unassigned API requests, non-GET
+methods, false source-truth PASS, and a ConfigHub result other than the exact
+recorded unit-read failure. They do not compile product code or contact a
+cluster.
 
 ## Future invocation
 

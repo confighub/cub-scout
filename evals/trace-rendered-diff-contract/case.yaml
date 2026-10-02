@@ -1,0 +1,13 @@
+# FIXTURE-OWNED-SCAFFOLD: synthetic offline comparison interpretation; no model run.
+schema_version: "1.1"
+name: trace-rendered-diff-contract
+context:
+  scaffold_script: scaffold.sh
+---
+name: trace-rendered-diff-contract
+description: "Interpret a synthetic local-rendered Trace comparison without claiming controller intent or future reconciliation."
+expected_outcome: "Report exact selected identity and bounded read evidence, label authored-field comparison for one object, preserve source role, and avoid prediction/completeness claims."
+tags: [product-contract, trace, rendered-diff, synthetic, prepared-not-run]
+max_turns: 6
+timeout_seconds: 120
+allowed_tools: [Read, Grep]
