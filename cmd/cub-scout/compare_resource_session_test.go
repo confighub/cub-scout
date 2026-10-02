@@ -48,7 +48,7 @@ func newCompareSessionFixture(t *testing.T, marker string) *compareSessionFixtur
 		assert.Equal(t, http.MethodGet, r.Method)
 		assert.Equal(t, "Bearer "+marker+"-token", r.Header.Get("Authorization"))
 		w.Header().Set("Content-Type", "application/json")
-		status := 200
+		var status int
 		switch r.URL.Path {
 		case "/apis/apps/v1/namespaces/team/deployments/app":
 			status = f.workloadStatus
