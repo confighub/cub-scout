@@ -9,6 +9,18 @@ order, quality gates, budgets and decisions.
 
 ## Resumed execution — 2026-10-02
 
+- #757 owned-kind attempt 1 failed at the TUI probe's unbound Home key after
+  six CLI/MCP allowed/controller-denied/Pods-denied observations passed.
+  Its failed receipt/logs are retained under ignored
+  `evals/results/gitops-status-context-20261002/attempt-1/`. Owned cluster/nodes
+  and private files were removed; the shared kubeconfig remained unchanged.
+  The harness also checked admin config integrity after kind cleanup edited it.
+  Repairs use PgUp with an actual offline viewport action regression, and seal
+  read integrity after proxy drain but before kind deletion. Independent Luna
+  review admits one bounded rerun; 17 Python controls and the pinned viewport
+  action test pass (`/tmp/scout757-attempt1-repair-tests.txt`,
+  `/tmp/scout757-viewport-repair.txt`). No final live acceptance yet.
+
 - Fresh-chat #757 helper review found and repaired a selector-proof gap and
   request/log finalization race. All observation configs now contain distinct
   selected and ambient proxy endpoints; final receipts drain proxies before

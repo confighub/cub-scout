@@ -76,7 +76,15 @@ The offline tests cover environment exclusion, exact auth argv/counts and secret
 redaction, actual loopback proxy refusal/closure, wrong-context and hidden-denial
 controls, real MCP result-envelope dispatch, immutable-config tampering, and
 failure/interrupt receipt retention with cleanup exceptions. The TUI template
-checks a changed viewport YOffset/view, return-to-top state, actual `tea.QuitMsg`,
+checks a changed viewport YOffset/view, PgUp return-to-top state, actual `tea.QuitMsg`,
 and unchanged summary/config. Pinned-source compilation passed; owned-kind execution remains
 pending; no terminal-emulator, refresh navigation, controller reconciliation,
 real ConfigHub service, or paid model evaluation is claimed.
+
+The first owned-kind attempt is retained at `/tmp/scout757-owned-kind-proof-1`.
+Six CLI/MCP observations passed; the TUI probe failed because Home is not a
+viewport binding. Its private admin config hash was also incorrectly checked
+after kind deletion edited that setup config. Both are harness failures; the
+receipt remains failed. Cluster/node/private-directory removal and shared
+config integrity passed. The repair uses PgUp and tests the same viewport
+actions offline, and seals upstream read integrity before kind cleanup.

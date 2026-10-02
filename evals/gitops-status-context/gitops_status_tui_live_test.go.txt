@@ -26,6 +26,27 @@ func TestGitOpsStatusOwnedTUI(t *testing.T) {
 	var summary GitOpsSummary
 	if err := json.Unmarshal([]byte(output), &summary); err != nil { t.Fatal(err) }
 	if summary.Context != contextName { t.Fatalf("selected context = %q", summary.Context) }
+	content, checks := exerciseOwnedGitOpsViewport(t, summary)
+	after, err := os.ReadFile(configPath)
+	if err != nil { t.Fatal(err) }
+	checks["immutableSummary"] = checks["immutableSummary"] && bytes.Equal(before, after)
+	for name, passed := range checks { if !passed { t.Fatalf("model action %s failed", name) } }
+	data := map[string]interface{}{"schema": "gitops-status-context-tui.v1", "passed": true,
+		"context": summary.Context, "view": content, "checks": checks}
+	encoded, err := json.MarshalIndent(data, "", "  ")
+	if err != nil { t.Fatal(err) }
+	if err := os.WriteFile(resultPath, append(encoded, '\n'), 0600); err != nil { t.Fatal(err) }
+}
+
+// Run this offline before live admission. It exercises the same production
+// viewport actions as the live probe without collecting Kubernetes evidence.
+func TestGitOpsStatusOwnedViewportControls(t *testing.T) {
+    _, checks := exerciseOwnedGitOpsViewport(t, GitOpsSummary{Context: "offline-viewport"})
+    for name, passed := range checks { if !passed { t.Fatalf("model action %s failed", name) } }
+}
+
+func exerciseOwnedGitOpsViewport(t *testing.T, summary GitOpsSummary) (string, map[string]bool) {
+    t.Helper()
 	model := newGitOpsStatusTUIModel(summary)
 	content := model.content
 	// A short viewport forces this real summary to overflow, so PgDown must
@@ -39,18 +60,12 @@ func TestGitOpsStatusOwnedTUI(t *testing.T) {
 	updated, _ = model.Update(tea.KeyMsg{Type: tea.KeyPgDown})
 	model = updated.(*gitOpsStatusTUIModel)
 	checks["scroll"] = model.viewport.YOffset > beforeOffset && model.View() != beforeView
-	updated, _ = model.Update(tea.KeyMsg{Type: tea.KeyHome})
+	updated, _ = model.Update(tea.KeyMsg{Type: tea.KeyPgUp})
 	model = updated.(*gitOpsStatusTUIModel)
 	checks["scrollBack"] = model.viewport.YOffset == beforeOffset && model.View() == beforeView
 	_, quit := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
 	if quit != nil { _, checks["quit"] = quit().(tea.QuitMsg) }
-	after, err := os.ReadFile(configPath)
-	if err != nil { t.Fatal(err) }
-	checks["immutableSummary"] = model.content == content && bytes.Equal(before, after)
-	for name, passed := range checks { if !passed { t.Fatalf("model action %s failed", name) } }
-	data := map[string]interface{}{"schema": "gitops-status-context-tui.v1", "passed": true,
-		"context": summary.Context, "view": model.content, "checks": checks}
-	encoded, err := json.MarshalIndent(data, "", "  ")
-	if err != nil { t.Fatal(err) }
-	if err := os.WriteFile(resultPath, append(encoded, '\n'), 0600); err != nil { t.Fatal(err) }
+
+    checks["immutableSummary"] = model.content == content
+    return content, checks
 }

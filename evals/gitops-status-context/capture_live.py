@@ -580,15 +580,8 @@ spec:
                     receipt.setdefault("retainedLogHashes", {})[log] = digest(output / log)
             except BaseException:
                 cleanup_errors.append("retained log hashing failed")
-        for cleanup in (
-            lambda: _lifecycle.cleanup_cluster(receipt, name=cluster, created=created, creation_attempted=attempted,
-                tools=tools, env=env, deadline=cleanup_deadline),
-            lambda: _lifecycle.cleanup_worktrees(receipt, repo=REPO, git=tools["git"], worktrees=worktrees, env=env),
-        ):
-            try:
-                cleanup_errors.extend(cleanup())
-            except BaseException:
-                cleanup_errors.append("owned lifecycle cleanup raised an exception")
+        # kind delete edits its own admin kubeconfig. Seal read integrity before
+        # that intentional setup/cleanup mutation, after all readers have stopped.
         try:
             receipt["sharedKubeconfigSha256After"] = digest(shared)
             receipt["sharedKubeconfigUnchanged"] = receipt["sharedKubeconfigSha256Before"] == receipt["sharedKubeconfigSha256After"]
@@ -598,6 +591,15 @@ spec:
             receipt["sharedKubeconfigUnchanged"] = False
             receipt["privateKubeconfigUnchangedDuringReads"] = False
             cleanup_errors.append("kubeconfig integrity check failed")
+        for cleanup in (
+            lambda: _lifecycle.cleanup_cluster(receipt, name=cluster, created=created, creation_attempted=attempted,
+                tools=tools, env=env, deadline=cleanup_deadline),
+            lambda: _lifecycle.cleanup_worktrees(receipt, repo=REPO, git=tools["git"], worktrees=worktrees, env=env),
+        ):
+            try:
+                cleanup_errors.extend(cleanup())
+            except BaseException:
+                cleanup_errors.append("owned lifecycle cleanup raised an exception")
         try:
             verify_immutable_configs(receipt, configs)
         except (OSError, RuntimeError):
