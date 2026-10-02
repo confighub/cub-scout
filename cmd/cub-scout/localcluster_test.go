@@ -948,7 +948,7 @@ func TestLocalClusterHelpViewContent(t *testing.T) {
 
 	view := m.View()
 
-	expectedKeys := []string{"VIEWS", "NAVIGATION", "ACTIONS", "COMMAND PALETTE"}
+	expectedKeys := []string{"VIEWS", "NAVIGATION", "ACTIONS", "Y  Source-truth evidence", "choose the declared strategy", "COMMAND PALETTE"}
 	for _, key := range expectedKeys {
 		if !bytes.Contains([]byte(view), []byte(key)) {
 			t.Errorf("expected help view to contain '%s'", key)

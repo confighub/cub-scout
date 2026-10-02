@@ -21,12 +21,15 @@ func prepareTraceSelectionTest(t *testing.T) {
 	t.Helper()
 	oldNS, oldFormat, oldApp, oldPresentation := traceNamespace, traceFormat, traceApp, tracePresentation
 	oldJSON, oldReverse, oldDiff, oldArtifacts, oldConnected := traceJSON, traceReverse, traceDiff, traceArtifacts, traceWithConfigHub
+	oldDesiredFile, oldAPIVersion := traceDesiredFile, traceAPIVersion
 	t.Cleanup(func() {
 		traceNamespace, traceFormat, traceApp, tracePresentation = oldNS, oldFormat, oldApp, oldPresentation
 		traceJSON, traceReverse, traceDiff, traceArtifacts, traceWithConfigHub = oldJSON, oldReverse, oldDiff, oldArtifacts, oldConnected
+		traceDesiredFile, traceAPIVersion = oldDesiredFile, oldAPIVersion
 	})
 	traceNamespace, traceFormat, traceApp, tracePresentation = "delivery", "json", "api", ""
 	traceJSON, traceReverse, traceDiff, traceArtifacts, traceWithConfigHub = false, false, false, false, false
+	traceDesiredFile, traceAPIVersion = "", ""
 	t.Setenv("CUB_SCOUT_TEST_TRACE_JSON", "")
 	t.Setenv("CUB_SCOUT_TEST_TRACE_ARTIFACTS_JSON", "")
 	t.Setenv("KUBERNETES_SERVICE_HOST", "")
@@ -74,7 +77,7 @@ func TestTraceCLIInvalidSelectionAndCombinationsReadNothing(t *testing.T) {
 		{name: "empty", selected: "", format: "json", want: "non-empty"},
 		{name: "unknown", selected: "missing", format: "json", want: "missing"},
 		{name: "fixture", selected: "alpha-context", fixture: "absent-fixture.json", format: "json", want: "fixture input"},
-		{name: "delegated diff", selected: "alpha-context", format: "json", diff: true, want: "controller diff binding"},
+		{name: "diff operand required", selected: "alpha-context", format: "json", diff: true, want: "--desired-file"},
 		{name: "format", selected: "alpha-context", format: "invalid", want: "unsupported trace format"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

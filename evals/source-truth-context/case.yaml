@@ -1,0 +1,5 @@
+# FIXTURE-OWNED-SCAFFOLD: synthetic serialized shape mirrors deterministic tests, not a live capture.
+schema_version: "1.1"
+name: source-truth-context
+context:
+  scaffold_script: scaffold.sh

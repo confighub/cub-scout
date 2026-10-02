@@ -1,0 +1,526 @@
+{
+  "schema": "trace-source-truth-diff-owned-kind.v1",
+  "integratedSourceCommit": "fb3c76b6fc28d72f6ccea99fd9f38040c5b58b65",
+  "integratedBinarySha256": "7174c5b40b54857b2356c7fa7eea67842bb4407a6bbc67de5783e7c649eb75d4",
+  "captureScriptSha256": "bace770fdb4944648b02d2d851ee5b192a6ab50eeaee1a8258b39c47e2c8f410",
+  "tuiProbeSha256": "86e30877362f2d8919359346996d49867081142f59d03b1a14bcfb6e5e66a6e9",
+  "tuiBinarySha256": "9dc247578383ada826ced39c517f029bbce18ad7ed9da7df42c120201036d5ea",
+  "nodeImage": "kindest/node:v1.35.0@sha256:4613778f3cfcd10e615029370f5786704559103cf27bef934597ba562b269661",
+  "fixtureScope": "synthetic Argo Application CRD/object, Argo-labeled zero-replica Deployment with exact ConfigHub unit metadata, and unlabelled Native control; no Argo controller/reconciliation",
+  "fixtureIdentities": [
+    {
+      "kind": "Deployment",
+      "namespace": "scout-trace-context-proof",
+      "name": "scout-context-marker",
+      "uid": "cbde3197-9156-45b7-b55e-a1cfd88101d2"
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "scout-trace-context-proof",
+      "name": "scout-native-marker",
+      "uid": "7946bd29-b4c2-49fb-b6ac-eac2f5124b5e"
+    },
+    {
+      "kind": "Application",
+      "namespace": "scout-trace-context-proof",
+      "name": "scout-context-app",
+      "uid": "2c80fff9-cb83-47ad-9240-2d5335186ff2"
+    }
+  ],
+  "apiBindingMode": "two loopback endpoints; credentials held by forwarding proxy; upstream TLS CA verified; GET-only exact route allowlist",
+  "acceptance": "passed",
+  "sharedKubeconfigUnchanged": true,
+  "privateKubeconfigUnchangedDuringCLI": true,
+  "cleanupErrors": [],
+  "apiEventPhases": {
+    "cli-source-truth-allowed": [
+      {
+        "endpoint": "allowed",
+        "method": "GET",
+        "path": "/apis/apps/v1/namespaces/scout-trace-context-proof/deployments/scout-context-marker",
+        "status": 200,
+        "disposition": "forwarded"
+      },
+      {
+        "endpoint": "allowed",
+        "method": "GET",
+        "path": "/apis/argoproj.io/v1alpha1/applications",
+        "status": 200,
+        "disposition": "forwarded"
+      },
+      {
+        "endpoint": "allowed",
+        "method": "GET",
+        "path": "/apis/argoproj.io/v1alpha1/namespaces/scout-trace-context-proof/applications/scout-context-app",
+        "status": 200,
+        "disposition": "forwarded"
+      }
+    ],
+    "cli-source-truth-denied": [
+      {
+        "endpoint": "denied",
+        "method": "GET",
+        "path": "/apis/apps/v1/namespaces/scout-trace-context-proof/deployments/scout-context-marker",
+        "status": 403,
+        "disposition": "forwarded"
+      }
+    ],
+    "cli-diff-matched": [
+      {
+        "endpoint": "allowed",
+        "method": "GET",
+        "path": "/apis/apps/v1",
+        "status": 200,
+        "disposition": "forwarded"
+      },
+      {
+        "endpoint": "allowed",
+        "method": "GET",
+        "path": "/apis/apps/v1/namespaces/scout-trace-context-proof/deployments/scout-context-marker",
+        "status": 200,
+        "disposition": "forwarded"
+      }
+    ],
+    "cli-diff-changed": [
+      {
+        "endpoint": "allowed",
+        "method": "GET",
+        "path": "/apis/apps/v1",
+        "status": 200,
+        "disposition": "forwarded"
+      },
+      {
+        "endpoint": "allowed",
+        "method": "GET",
+        "path": "/apis/apps/v1/namespaces/scout-trace-context-proof/deployments/scout-context-marker",
+        "status": 200,
+        "disposition": "forwarded"
+      }
+    ],
+    "cli-diff-missing": [
+      {
+        "endpoint": "allowed",
+        "method": "GET",
+        "path": "/apis/apps/v1",
+        "status": 200,
+        "disposition": "forwarded"
+      },
+      {
+        "endpoint": "allowed",
+        "method": "GET",
+        "path": "/apis/apps/v1/namespaces/scout-trace-context-proof/deployments/scout-context-missing",
+        "status": 404,
+        "disposition": "forwarded"
+      }
+    ],
+    "cli-diff-denied": [
+      {
+        "endpoint": "denied",
+        "method": "GET",
+        "path": "/apis/apps/v1",
+        "status": 200,
+        "disposition": "forwarded"
+      },
+      {
+        "endpoint": "denied",
+        "method": "GET",
+        "path": "/apis/apps/v1/namespaces/scout-trace-context-proof/deployments/scout-context-marker",
+        "status": 403,
+        "disposition": "forwarded"
+      }
+    ],
+    "mcp-source-truth": [
+      {
+        "endpoint": "allowed",
+        "method": "GET",
+        "path": "/apis/apps/v1/namespaces/scout-trace-context-proof/deployments/scout-context-marker",
+        "status": 200,
+        "disposition": "forwarded"
+      },
+      {
+        "endpoint": "allowed",
+        "method": "GET",
+        "path": "/apis/argoproj.io/v1alpha1/applications",
+        "status": 200,
+        "disposition": "forwarded"
+      },
+      {
+        "endpoint": "allowed",
+        "method": "GET",
+        "path": "/apis/argoproj.io/v1alpha1/namespaces/scout-trace-context-proof/applications/scout-context-app",
+        "status": 200,
+        "disposition": "forwarded"
+      }
+    ],
+    "mcp-diff-matched": [
+      {
+        "endpoint": "allowed",
+        "method": "GET",
+        "path": "/apis/apps/v1",
+        "status": 200,
+        "disposition": "forwarded"
+      },
+      {
+        "endpoint": "allowed",
+        "method": "GET",
+        "path": "/apis/apps/v1/namespaces/scout-trace-context-proof/deployments/scout-context-marker",
+        "status": 200,
+        "disposition": "forwarded"
+      }
+    ],
+    "mcp-diff-denied": [
+      {
+        "endpoint": "denied",
+        "method": "GET",
+        "path": "/apis/apps/v1",
+        "status": 200,
+        "disposition": "forwarded"
+      },
+      {
+        "endpoint": "denied",
+        "method": "GET",
+        "path": "/apis/apps/v1/namespaces/scout-trace-context-proof/deployments/scout-context-marker",
+        "status": 403,
+        "disposition": "forwarded"
+      }
+    ],
+    "tui-source-truth-allowed": [
+      {
+        "endpoint": "allowed",
+        "method": "GET",
+        "path": "/apis/apps/v1/namespaces/scout-trace-context-proof/deployments/scout-context-marker",
+        "status": 200,
+        "disposition": "forwarded"
+      },
+      {
+        "endpoint": "allowed",
+        "method": "GET",
+        "path": "/apis/argoproj.io/v1alpha1/applications",
+        "status": 200,
+        "disposition": "forwarded"
+      },
+      {
+        "endpoint": "allowed",
+        "method": "GET",
+        "path": "/apis/argoproj.io/v1alpha1/namespaces/scout-trace-context-proof/applications/scout-context-app",
+        "status": 200,
+        "disposition": "forwarded"
+      }
+    ],
+    "tui-source-truth-reopen-after-retarget": [
+      {
+        "endpoint": "allowed",
+        "method": "GET",
+        "path": "/apis/apps/v1/namespaces/scout-trace-context-proof/deployments/scout-context-marker",
+        "status": 200,
+        "disposition": "forwarded"
+      },
+      {
+        "endpoint": "allowed",
+        "method": "GET",
+        "path": "/apis/argoproj.io/v1alpha1/applications",
+        "status": 200,
+        "disposition": "forwarded"
+      },
+      {
+        "endpoint": "allowed",
+        "method": "GET",
+        "path": "/apis/argoproj.io/v1alpha1/namespaces/scout-trace-context-proof/applications/scout-context-app",
+        "status": 200,
+        "disposition": "forwarded"
+      }
+    ],
+    "tui-diff-allowed": [
+      {
+        "endpoint": "allowed",
+        "method": "GET",
+        "path": "/apis/apps/v1",
+        "status": 200,
+        "disposition": "forwarded"
+      },
+      {
+        "endpoint": "allowed",
+        "method": "GET",
+        "path": "/apis/apps/v1/namespaces/scout-trace-context-proof/deployments/scout-context-marker",
+        "status": 200,
+        "disposition": "forwarded"
+      }
+    ],
+    "tui-diff-denied": [
+      {
+        "endpoint": "denied",
+        "method": "GET",
+        "path": "/apis/apps/v1",
+        "status": 200,
+        "disposition": "forwarded"
+      },
+      {
+        "endpoint": "denied",
+        "method": "GET",
+        "path": "/apis/apps/v1/namespaces/scout-trace-context-proof/deployments/scout-context-marker",
+        "status": 403,
+        "disposition": "forwarded"
+      }
+    ]
+  },
+  "cubArgvPhases": {
+    "cli-source-truth-allowed": [
+      {
+        "type": "call",
+        "argv": [
+          "cub",
+          "auth",
+          "status"
+        ],
+        "exitCode": 0
+      },
+      {
+        "type": "call",
+        "argv": [
+          "cub",
+          "unit",
+          "get",
+          "scout-context-unit",
+          "-o",
+          "json",
+          "--space",
+          "scout-context-space"
+        ],
+        "exitCode": 73,
+        "result": "recorded unit lookup unavailable in owned proof"
+      }
+    ],
+    "cli-source-truth-denied": [
+      {
+        "type": "call",
+        "argv": [
+          "cub",
+          "auth",
+          "status"
+        ],
+        "exitCode": 0
+      }
+    ],
+    "cli-diff-matched": [],
+    "cli-diff-changed": [],
+    "cli-diff-missing": [],
+    "cli-diff-denied": [],
+    "mcp-source-truth": [
+      {
+        "type": "call",
+        "argv": [
+          "cub",
+          "auth",
+          "status"
+        ],
+        "exitCode": 0
+      },
+      {
+        "type": "call",
+        "argv": [
+          "cub",
+          "auth",
+          "status"
+        ],
+        "exitCode": 0
+      },
+      {
+        "type": "call",
+        "argv": [
+          "cub",
+          "auth",
+          "status"
+        ],
+        "exitCode": 0
+      },
+      {
+        "type": "call",
+        "argv": [
+          "cub",
+          "unit",
+          "get",
+          "scout-context-unit",
+          "-o",
+          "json",
+          "--space",
+          "scout-context-space"
+        ],
+        "exitCode": 73,
+        "result": "recorded unit lookup unavailable in owned proof"
+      }
+    ],
+    "mcp-diff-matched": [
+      {
+        "type": "call",
+        "argv": [
+          "cub",
+          "auth",
+          "status"
+        ],
+        "exitCode": 0
+      },
+      {
+        "type": "call",
+        "argv": [
+          "cub",
+          "auth",
+          "status"
+        ],
+        "exitCode": 0
+      }
+    ],
+    "mcp-diff-denied": [
+      {
+        "type": "call",
+        "argv": [
+          "cub",
+          "auth",
+          "status"
+        ],
+        "exitCode": 0
+      },
+      {
+        "type": "call",
+        "argv": [
+          "cub",
+          "auth",
+          "status"
+        ],
+        "exitCode": 0
+      }
+    ],
+    "tui-source-truth-allowed": [
+      {
+        "type": "call",
+        "argv": [
+          "cub",
+          "auth",
+          "status"
+        ],
+        "exitCode": 0
+      },
+      {
+        "type": "call",
+        "argv": [
+          "cub",
+          "unit",
+          "get",
+          "scout-context-unit",
+          "-o",
+          "json",
+          "--space",
+          "scout-context-space"
+        ],
+        "exitCode": 73,
+        "result": "recorded unit lookup unavailable in owned proof"
+      }
+    ],
+    "tui-source-truth-reopen-after-retarget": [
+      {
+        "type": "call",
+        "argv": [
+          "cub",
+          "auth",
+          "status"
+        ],
+        "exitCode": 0
+      },
+      {
+        "type": "call",
+        "argv": [
+          "cub",
+          "unit",
+          "get",
+          "scout-context-unit",
+          "-o",
+          "json",
+          "--space",
+          "scout-context-space"
+        ],
+        "exitCode": 73,
+        "result": "recorded unit lookup unavailable in owned proof"
+      }
+    ],
+    "tui-diff-allowed": [],
+    "tui-diff-denied": []
+  },
+  "receiptSha256": "335ef91126e852a59f805f39ac5ae5d20e1651b0e07cc609d93e49a67150e878",
+  "apiEventLogSha256": "334d14f0a6fcbb22de81cf6f2f159415bc5411ae722b5fe9238ec138e5a67d28",
+  "tuiResult": {
+    "checks": {
+      "denied-is-inconclusive": true,
+      "diff-allowed": true,
+      "diff-denied": true,
+      "private-config-retarget-stable": true,
+      "source-truth-allowed": true,
+      "source-truth-reopen-after-retarget": true
+    },
+    "contexts": {
+      "tui-diff-allowed": "doctor-allowed",
+      "tui-diff-denied": "doctor-denied",
+      "tui-source-truth-allowed": "doctor-allowed",
+      "tui-source-truth-reopen-after-retarget": "doctor-allowed"
+    },
+    "passed": true,
+    "privateConfigSha256": {
+      "afterActions": "a8580ce3acedfe6deae5412abe667bfbd946834c5476e8ed603bdf6a02f9988a",
+      "afterRetarget": "a8580ce3acedfe6deae5412abe667bfbd946834c5476e8ed603bdf6a02f9988a"
+    },
+    "schema": "trace-source-truth-diff-owned-tui.v1",
+    "scope": "actual LocalClusterModel Y/strategy and T/d/path/API-version Update events; endpoint requests recorded by the parent loopback proxy",
+    "statuses": {
+      "source-truth-allowed": "BLOCK",
+      "source-truth-reopen-after-retarget": "BLOCK"
+    },
+    "views": {
+      "diff-allowed": "Trace diff (local rendered input vs observed live; authored-fields-only)\nSource: local-rendered /tmp/scout-trace-context-r9mo1odv/rendered/matched.yaml (sha256: 193f3df47d164e49995cf1458d0bfd2d4e73bf82ca4430756f34cc16929b7c2b)\nContext: doctor-allowed\nResource: apps/v1 Deployment scout-trace-context-proof/scout-context-marker\nResult: matched\nLive read: UID=cbde3197-9156-45b7-b55e-a1cfd88101d2 resourceVersion=483 observedAt=2026-10-01T13:49:27Z (scope discovery GETs=0; bounded-reader GETs discovery=1 object=1)\nCoverage: one-selected-object; no object-set closure or next-reconcile prediction\n",
+      "diff-denied": "Trace diff (local rendered input vs observed live; authored-fields-only)\nSource: local-rendered /tmp/scout-trace-context-r9mo1odv/rendered/matched.yaml (sha256: 193f3df47d164e49995cf1458d0bfd2d4e73bf82ca4430756f34cc16929b7c2b)\nContext: doctor-denied\nResource: apps/v1 Deployment scout-trace-context-proof/scout-context-marker\nResult: inconclusive\nLive read unavailable (scope discovery GETs=0; bounded-reader GETs discovery=1 object=1)\nCoverage: one-selected-object; no object-set closure or next-reconcile prediction\nOmission: live object could not be read; comparison is inconclusive\n",
+      "source-truth-allowed": "SOURCE-TRUTH EVIDENCE\n\nSource truth: BLOCKED (BLOCK)\nStrategy: Git -> Argo -> Kubernetes\nSelected Kubernetes context: doctor-allowed (label, not stable cluster identity)\nOutlier: unknown\n\nEvidence surfaces\n  ConfigHub: unavailable\n  Controller: Argo source=https://example.invalid/owned-fixture.git revision/digest=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa health=Unknown\n  Runtime: Deployment/scout-context-marker in scout-trace-context-proof spec.template.spec.containers[0].image=registry.k8s.io/pause:3.10 health=Current\nCollection errors:\n  - ConfigHub: confighub: cub unit get failed: exit status 73: recorded unit lookup unavailable in owned proof\nNext: Read-only diagnostic: cannot fetch ConfigHub (verify `cub` auth and connectivity). Resolve the auth/CLI gap and re-run.\n\nPress any key to return",
+      "source-truth-reopen-after-retarget": "SOURCE-TRUTH EVIDENCE\n\nSource truth: BLOCKED (BLOCK)\nStrategy: Git -> Argo -> Kubernetes\nSelected Kubernetes context: doctor-allowed (label, not stable cluster identity)\nOutlier: unknown\n\nEvidence surfaces\n  ConfigHub: unavailable\n  Controller: Argo source=https://example.invalid/owned-fixture.git revision/digest=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa health=Unknown\n  Runtime: Deployment/scout-context-marker in scout-trace-context-proof spec.template.spec.containers[0].image=registry.k8s.io/pause:3.10 health=Current\nCollection errors:\n  - ConfigHub: confighub: cub unit get failed: exit status 73: recorded unit lookup unavailable in owned proof\nNext: Read-only diagnostic: cannot fetch ConfigHub (verify `cub` auth and connectivity). Resolve the auth/CLI gap and re-run.\n\nPress any key to return"
+    }
+  },
+  "scope": "Owned kind API/RBAC with synthetic Application metadata; exact endpoint binding through credential-holding loopback proxies; ConfigHub unit read is a deliberate failing stub. No real controller reconciliation, real ConfigHub server, model execution or cost-savings proof.",
+  "cleanupCommands": [
+    {
+      "phase": "cleanup-owned-cluster",
+      "exitCode": 0,
+      "stdout": ""
+    },
+    {
+      "phase": "verify-owned-nodes-absent",
+      "exitCode": 0,
+      "stdout": ""
+    },
+    {
+      "phase": "cleanup-source-worktree",
+      "exitCode": 0,
+      "stdout": ""
+    }
+  ],
+  "previousFailedAttempts": [
+    {
+      "attempt": 1,
+      "receiptSha256": "7298d6ae76e6e62b9c6a161d5bad6677febb0c008667be602a8c195faa93b685",
+      "acceptance": "failed",
+      "error": "RuntimeError: cli-source-truth-allowed did not read the exact Argo Application",
+      "cleanupErrors": [],
+      "sharedKubeconfigUnchanged": true
+    },
+    {
+      "attempt": 2,
+      "receiptSha256": "4d7f5c4582371f34181f74c1ac892bf9d128274cd58349ac89b637db973f116a",
+      "acceptance": "failed",
+      "error": "RuntimeError: an action phase has no Kubernetes request evidence",
+      "cleanupErrors": [],
+      "sharedKubeconfigUnchanged": true
+    },
+    {
+      "attempt": 3,
+      "receiptSha256": "fd6a8ee0ce224e879b6c53a8e2ae4c2eebe6d292d8f149497f914cf70a82ee23",
+      "acceptance": "failed",
+      "error": "RuntimeError: tui-source-truth-reopen-after-retarget ConfigHub child command sequence differed from the exact stub contract",
+      "cleanupErrors": [],
+      "sharedKubeconfigUnchanged": true
+    }
+  ]
+}

@@ -46,6 +46,7 @@ type TUISnapshot struct {
 }
 
 const snapshotVersion = "1.0"
+const traceDiffTimeout = 30 * time.Second
 
 func getSnapshotPath() string {
 	home, _ := os.UserHomeDir()
@@ -192,13 +193,38 @@ type LocalClusterModel struct {
 	boundedContext string // Exact kubeconfig context used to load the inventory; empty for in-cluster auth.
 
 	// Trace mode
-	traceMode    bool                        // In trace picker mode
-	traceCursor  int                         // Cursor in trace picker
-	traceItems   []TraceItem                 // Items available to trace
-	traceOutput  string                      // Output from trace command
-	traceLoading bool                        // Is trace running
-	traceError   error                       // Trace error if any
-	traceSecrets *agent.SecretEvidenceResult // Secret evidence for traced resource
+	traceMode           bool                        // In trace picker mode
+	traceCursor         int                         // Cursor in trace picker
+	traceItems          []TraceItem                 // Items available to trace
+	traceOutput         string                      // Output from trace command
+	traceLoading        bool                        // Is trace running
+	traceError          error                       // Trace error if any
+	traceSecrets        *agent.SecretEvidenceResult // Secret evidence for traced resource
+	traceDiffMode       bool
+	traceDiffPrompt     string
+	traceDiffInput      string
+	traceDiffPath       string
+	traceDiffAPIVersion string
+	traceDiffItem       TraceItem
+	traceDiffLoading    bool
+	traceDiffOutput     string
+	traceDiffError      error
+	traceDiffRequestID  uint64
+	traceDiffCancel     context.CancelFunc
+
+	// Source-truth mode selects an explicit strategy for the selected workload,
+	// then renders the shared CLI/MCP evidence model.
+	sourceTruthMode           bool
+	sourceTruthLoading        bool
+	sourceTruthCursor         int
+	sourceTruthItem           TraceItem
+	sourceTruthEvidence       *agent.SourceTruthEvidence
+	sourceTruthError          error
+	sourceTruthGeneration     uint64
+	sourceTruthStrategy       agent.SourceTruthStrategy
+	sourceTruthContext        context.Context
+	sourceTruthCancel         context.CancelFunc
+	sourceTruthBindingContext string
 
 	// Scan mode
 	scanMode       bool           // In scan result mode
@@ -466,6 +492,12 @@ type traceResultMsg struct {
 	output  string
 	err     error
 	secrets *agent.SecretEvidenceResult
+}
+
+type traceDiffResultMsg struct {
+	requestID uint64
+	output    string
+	err       error
 }
 
 type scanResultMsg struct {
@@ -1323,6 +1355,24 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case sourceTruthResultMsg:
+		if !m.sourceTruthMode || msg.generation != m.sourceTruthGeneration || msg.item != m.sourceTruthItem || msg.strategy != m.sourceTruthStrategy || msg.contextName != m.sourceTruthBindingContext {
+			return m, nil
+		}
+		m.sourceTruthLoading = false
+		if m.sourceTruthCancel != nil {
+			m.sourceTruthCancel()
+		}
+		m.sourceTruthCancel = nil
+		m.sourceTruthContext = nil
+		if msg.err != nil {
+			m.sourceTruthError = msg.err
+		} else {
+			evidence := msg.evidence
+			m.sourceTruthEvidence = &evidence
+		}
+		return m, nil
+
 	case localAuthCheckMsg:
 		if msg.authenticated {
 			m.switchToHub = true
@@ -1356,6 +1406,19 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.traceOutput = msg.output
 		m.traceError = msg.err
 		m.traceSecrets = msg.secrets
+		return m, nil
+
+	case traceDiffResultMsg:
+		if msg.requestID != m.traceDiffRequestID || !m.traceDiffMode || !m.traceDiffLoading {
+			return m, nil
+		}
+		m.traceDiffLoading = false
+		if m.traceDiffCancel != nil {
+			m.traceDiffCancel()
+		}
+		m.traceDiffCancel = nil
+		m.traceDiffOutput = msg.output
+		m.traceDiffError = msg.err
 		return m, nil
 
 	case scanResultMsg:
@@ -1422,6 +1485,63 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Handle help mode
 		if m.helpMode {
 			m.helpMode = false
+			return m, nil
+		}
+
+		if m.sourceTruthMode {
+			strategies := agent.AllStrategies()
+			if m.sourceTruthLoading {
+				if msg.String() == "esc" || msg.String() == "q" {
+					if m.sourceTruthCancel != nil {
+						m.sourceTruthCancel()
+						m.sourceTruthCancel = nil
+					}
+					m.sourceTruthGeneration++
+					m.sourceTruthMode = false
+					m.sourceTruthLoading = false
+					m.sourceTruthContext = nil
+				}
+				return m, nil
+			}
+			if m.sourceTruthEvidence != nil || m.sourceTruthError != nil {
+				if m.sourceTruthCancel != nil {
+					m.sourceTruthCancel()
+				}
+				m.sourceTruthMode = false
+				m.sourceTruthGeneration++
+				m.sourceTruthCancel = nil
+				m.sourceTruthContext = nil
+				m.sourceTruthEvidence = nil
+				m.sourceTruthError = nil
+				return m, nil
+			}
+			switch msg.String() {
+			case "esc", "q":
+				if m.sourceTruthCancel != nil {
+					m.sourceTruthCancel()
+					m.sourceTruthCancel = nil
+				}
+				m.sourceTruthGeneration++
+				m.sourceTruthMode = false
+				return m, nil
+			case "up", "k":
+				if m.sourceTruthCursor > 0 {
+					m.sourceTruthCursor--
+				}
+				return m, nil
+			case "down", "j":
+				if m.sourceTruthCursor < len(strategies)-1 {
+					m.sourceTruthCursor++
+				}
+				return m, nil
+			case "enter":
+				if m.sourceTruthCursor >= 0 && m.sourceTruthCursor < len(strategies) {
+					m.sourceTruthStrategy = strategies[m.sourceTruthCursor]
+					m.sourceTruthContext, m.sourceTruthCancel = context.WithTimeout(context.Background(), 2*time.Minute)
+					m.sourceTruthLoading = true
+					return m, m.runSourceTruth(m.sourceTruthItem, m.sourceTruthStrategy, m.sourceTruthGeneration, m.sourceTruthContext)
+				}
+			}
 			return m, nil
 		}
 
@@ -1589,6 +1709,71 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Handle trace mode (trace picker or result view)
 		if m.traceMode {
+			if m.traceDiffMode {
+				if m.traceDiffLoading {
+					if msg.String() == "esc" || msg.String() == "q" {
+						if m.traceDiffCancel != nil {
+							m.traceDiffCancel()
+						}
+						m.traceDiffRequestID++
+						m.traceDiffLoading = false
+						m.traceDiffCancel = nil
+						m.traceDiffMode = false
+						m.traceDiffOutput = ""
+						m.traceDiffError = nil
+					}
+					return m, nil
+				}
+				if m.traceDiffOutput != "" || m.traceDiffError != nil {
+					m.traceDiffMode = false
+					m.traceDiffOutput = ""
+					m.traceDiffError = nil
+					m.traceDiffPath = ""
+					m.traceDiffAPIVersion = ""
+					m.traceDiffInput = ""
+					m.traceDiffPrompt = ""
+					return m, nil
+				}
+				switch msg.String() {
+				case "esc":
+					m.traceDiffMode = false
+					m.traceDiffPath = ""
+					m.traceDiffAPIVersion = ""
+					m.traceDiffInput = ""
+					m.traceDiffPrompt = ""
+					return m, nil
+				case "backspace":
+					runes := []rune(m.traceDiffInput)
+					if len(runes) > 0 {
+						m.traceDiffInput = string(runes[:len(runes)-1])
+					}
+					return m, nil
+				case "enter":
+					if m.traceDiffPrompt == "path" {
+						if strings.TrimSpace(m.traceDiffInput) == "" {
+							m.traceDiffError = fmt.Errorf("enter a path to already-rendered manifests")
+							return m, nil
+						}
+						m.traceDiffPath = m.traceDiffInput
+						m.traceDiffInput = ""
+						m.traceDiffPrompt = "api-version"
+						return m, nil
+					}
+					m.traceDiffAPIVersion = strings.TrimSpace(m.traceDiffInput)
+					m.traceDiffInput = ""
+					m.traceDiffPrompt = ""
+					ctx, cancel := context.WithTimeout(context.Background(), traceDiffTimeout)
+					m.traceDiffCancel = cancel
+					m.traceDiffRequestID++
+					m.traceDiffLoading = true
+					return m, m.runTraceDiff(ctx, m.traceDiffRequestID, m.traceDiffItem, m.traceDiffPath, m.traceDiffAPIVersion)
+				default:
+					if msg.Type == tea.KeyRunes {
+						m.traceDiffInput += string(msg.Runes)
+					}
+					return m, nil
+				}
+			}
 			if m.traceLoading {
 				// Waiting for trace to complete, only allow quit
 				if msg.String() == "q" || msg.String() == "esc" {
@@ -1633,6 +1818,18 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "down", "j":
 				if m.traceCursor < len(m.traceItems)-1 {
 					m.traceCursor++
+				}
+				return m, nil
+			case "d":
+				if m.traceCursor >= 0 && m.traceCursor < len(m.traceItems) {
+					m.traceDiffItem = m.traceItems[m.traceCursor]
+					m.traceDiffMode = true
+					m.traceDiffPrompt = "path"
+					m.traceDiffInput = ""
+					m.traceDiffPath = ""
+					m.traceDiffAPIVersion = ""
+					m.traceDiffOutput = ""
+					m.traceDiffError = nil
 				}
 				return m, nil
 			}
@@ -2025,6 +2222,35 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.traceMode = true
 			m.traceCursor = 0
 			m.traceItems = m.buildTraceItems()
+			return m, nil
+
+		case msg.String() == "Y":
+			if m.clusterBinding == nil || m.clusterBinding.config == nil || m.clusterBinding.err != nil {
+				m.statusMsg = "Source-truth Kubernetes binding is unavailable"
+				return m, nil
+			}
+			entries := m.getFilteredEntries()
+			if m.cursor < 0 || m.cursor >= len(entries) {
+				m.statusMsg = "Select a workload before requesting source-truth evidence"
+				return m, nil
+			}
+			entry := entries[m.cursor]
+			if normalizeKind(entry.Kind) != "Deployment" && normalizeKind(entry.Kind) != "StatefulSet" && normalizeKind(entry.Kind) != "DaemonSet" {
+				m.statusMsg = "Source-truth currently supports Deployment, StatefulSet, and DaemonSet"
+				return m, nil
+			}
+			m.sourceTruthItem = TraceItem{Kind: normalizeKind(entry.Kind), Name: entry.Name, Namespace: entry.Namespace}
+			if m.sourceTruthCancel != nil {
+				m.sourceTruthCancel()
+			}
+			m.sourceTruthGeneration++
+			m.sourceTruthCursor = 0
+			m.sourceTruthEvidence = nil
+			m.sourceTruthError = nil
+			m.sourceTruthMode = true
+			m.sourceTruthContext = nil
+			m.sourceTruthCancel = nil
+			m.sourceTruthBindingContext = m.clusterBinding.context
 			return m, nil
 
 		case key.Matches(msg, m.keymap.Scan):
@@ -2469,6 +2695,9 @@ func (m LocalClusterModel) View() string {
 	if m.queryMode {
 		return m.renderQuerySelector()
 	}
+	if m.sourceTruthMode {
+		return m.renderSourceTruth()
+	}
 
 	// Trace mode (picker or result)
 	if m.traceMode {
@@ -2828,6 +3057,7 @@ func (m LocalClusterModel) renderHelp() string {
 	b.WriteString("  " + lcNameStyle.Render("C") + "  Suggest commands (context-aware)\n")
 	b.WriteString("  " + lcNameStyle.Render("Q") + "  Saved queries (filter resources)\n")
 	b.WriteString("  " + lcNameStyle.Render("T") + "  Trace ownership chain\n")
+	b.WriteString("  " + lcNameStyle.Render("Y") + "  Source-truth evidence for the selected workload (choose the declared strategy)\n")
 	b.WriteString("  " + lcNameStyle.Render("Ctrl+e") + "  Bounded resource evidence (Enter reads, r refreshes, Esc returns)\n")
 	b.WriteString("  " + lcNameStyle.Render("S") + "  Scan for risk issues\n")
 	b.WriteString("  " + lcNameStyle.Render("e/E") + "  Export graph from MAPS panel (HTML/SVG)\n")
@@ -2836,7 +3066,7 @@ func (m LocalClusterModel) renderHelp() string {
 		b.WriteString("\n")
 		b.WriteString(lcSectionStyle.Render("SELECTED CONTEXT LIMITS"))
 		b.WriteString("\n")
-		b.WriteString("  Inventory, bounded explain, scan and trace use the selected context. Graph export, command mode, shell and import are disabled because they do not yet honor this binding.\n")
+		b.WriteString("  Inventory, bounded explain, scan, trace and source-truth use the selected context. Graph export, command mode, shell and import are disabled because they do not yet honor this binding.\n")
 	}
 	b.WriteString("\n")
 
@@ -5927,6 +6157,22 @@ func (m LocalClusterModel) runTrace(item TraceItem) tea.Cmd {
 	}
 }
 
+func (m LocalClusterModel) runTraceDiff(ctx context.Context, requestID uint64, item TraceItem, desiredPath, apiVersion string) tea.Cmd {
+	return func() tea.Msg {
+		session, err := newTraceSessionFromBinding(m.clusterBinding)
+		if err != nil {
+			return traceDiffResultMsg{requestID: requestID, err: err}
+		}
+		observation, err := observeTraceDiffWithAPIVersion(ctx, session, item.Kind, item.Name, item.Namespace, apiVersion, desiredPath)
+		if err != nil {
+			return traceDiffResultMsg{requestID: requestID, err: err}
+		}
+		var output strings.Builder
+		err = renderTraceDiffObservation(&output, observation, "ascii")
+		return traceDiffResultMsg{requestID: requestID, output: output.String(), err: err}
+	}
+}
+
 func runCubScoutTraceForTUI(item TraceItem) (string, error) {
 	exe, err := os.Executable()
 	if err != nil {
@@ -6303,6 +6549,31 @@ func (m LocalClusterModel) renderTrace() string {
 	b.WriteString("\n")
 	b.WriteString(lcHeaderStyle.Render("╰────────────────────────────────────────────────────────────────╯"))
 	b.WriteString("\n\n")
+	if m.traceDiffLoading {
+		b.WriteString("  " + m.spinner.View() + " Comparing local rendered input with the selected live object...\n")
+		b.WriteString("\n" + lcDimStyle.Render("Authored fields only; this does not predict reconciliation. Press Esc to cancel.") + "\n")
+		return b.String()
+	}
+	if m.traceDiffMode {
+		if m.traceDiffOutput != "" {
+			b.WriteString(m.traceDiffOutput)
+			b.WriteString("\n" + lcDimStyle.Render("Press any key to return to the same selection") + "\n")
+			return b.String()
+		}
+		if m.traceDiffError != nil {
+			b.WriteString(lcErrStyle.Render("Error: "+m.traceDiffError.Error()) + "\n")
+			b.WriteString("\n" + lcDimStyle.Render("Press any key to return to the same selection") + "\n")
+			return b.String()
+		}
+		if m.traceDiffPrompt == "path" {
+			b.WriteString("  Path to already-rendered manifest file or directory:\n\n  ")
+		} else {
+			b.WriteString("  Exact API version to disambiguate, or press Enter to select a unique document:\n\n  ")
+		}
+		b.WriteString(m.traceDiffInput + "▏\n")
+		b.WriteString("\n" + lcDimStyle.Render("Enter to continue · Esc to cancel · input is local rendered data, not controller desired state") + "\n")
+		return b.String()
+	}
 
 	// Loading state
 	if m.traceLoading {
@@ -6428,7 +6699,7 @@ func (m LocalClusterModel) renderTrace() string {
 	b.WriteString("\n")
 	b.WriteString(lcDimStyle.Render("─────────────────────────────────────────────────────────────────"))
 	b.WriteString("\n")
-	b.WriteString(lcDimStyle.Render("↑/↓ select  Enter trace  Esc cancel"))
+	b.WriteString(lcDimStyle.Render("↑/↓ select  Enter trace  d compare rendered input  Esc cancel"))
 	b.WriteString("\n")
 
 	return b.String()

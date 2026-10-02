@@ -1,0 +1,178 @@
+package main
+
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"os"
+	"strings"
+	"testing"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"github.com/stretchr/testify/require"
+	"k8s.io/client-go/tools/clientcmd"
+)
+
+func TestCombinedSourceTruthAndTraceDiffOwnedTUI(t *testing.T) {
+	if os.Getenv("SCOUT_TRACE_COMBINED_EXECUTE") != "1" {
+		t.Skip("explicit combined owned-kind capture only")
+	}
+	configPath := os.Getenv("SCOUT_TRACE_COMBINED_TUI_CONFIG")
+	outputPath := os.Getenv("SCOUT_TRACE_COMBINED_TUI_RESULT")
+	desiredPath := os.Getenv("SCOUT_TRACE_COMBINED_DESIRED_FILE")
+	eventLogPath := os.Getenv("SCOUT_TRACE_COMBINED_EVENT_LOG")
+	cubLogPath := os.Getenv("SCOUT_TRACE_COMBINED_CUB_LOG")
+	require.NotEmpty(t, configPath)
+	require.Equal(t, configPath, os.Getenv("KUBECONFIG"))
+	require.NotEmpty(t, outputPath)
+	require.NotEmpty(t, desiredPath)
+	require.NotEmpty(t, eventLogPath)
+	require.NotEmpty(t, cubLogPath)
+	markPhase := func(phase string) {
+		t.Helper()
+		for _, path := range []string{eventLogPath, cubLogPath} {
+			file, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND, 0600)
+			require.NoError(t, err)
+			data, err := json.Marshal(map[string]string{"type": "phase", "phase": phase})
+			require.NoError(t, err)
+			_, writeErr := file.Write(append(data, '\n'))
+			require.NoError(t, writeErr)
+			require.NoError(t, file.Close())
+		}
+	}
+
+	checks := map[string]bool{}
+	contexts := map[string]string{}
+	views := map[string]string{}
+	configHashes := map[string]string{}
+	statuses := map[string]string{}
+	t.Cleanup(func() {
+		encoded, err := json.MarshalIndent(map[string]any{
+			"schema": "trace-source-truth-diff-owned-tui.v1", "passed": !t.Failed(),
+			"checks": checks, "contexts": contexts, "views": views,
+			"statuses": statuses, "privateConfigSha256": configHashes,
+			"scope": "actual LocalClusterModel Y/strategy and T/d/path/API-version Update events; endpoint requests recorded by the parent loopback proxy",
+		}, "", "  ")
+		if err == nil {
+			err = os.WriteFile(outputPath, append(encoded, '\n'), 0600)
+		}
+		if err != nil {
+			t.Errorf("write combined TUI evidence: %v", err)
+		}
+	})
+
+	newModel := func(contextName string) LocalClusterModel {
+		binding := resolveLocalClusterBindingForSelection(clusterContextSelection{name: contextName, explicit: true})
+		require.NoError(t, binding.err)
+		return LocalClusterModel{clusterBinding: binding, explicitClusterContext: true,
+			keymap:  defaultLocalKeyMap(),
+			entries: []MapEntry{{Kind: "Deployment", Name: "scout-context-marker", Namespace: "scout-trace-context-proof", Owner: "ArgoCD"}},
+			cursor:  0}
+	}
+
+	runSourceTruth := func(model LocalClusterModel, phase, contextName string) LocalClusterModel {
+		eventPhase := "tui-" + phase
+		markPhase(eventPhase)
+		contexts[eventPhase] = model.clusterBinding.context
+		updated, command := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("Y")})
+		require.Nil(t, command, "Y picker event must not read before strategy selection")
+		model = updated.(LocalClusterModel)
+		require.True(t, model.sourceTruthMode, "actual Y key must open strategy selection")
+		strategies := agent.AllStrategies()
+		gitArgo := -1
+		for index, strategy := range strategies {
+			if strategy == agent.StrategyGitArgo {
+				gitArgo = index
+			}
+		}
+		require.GreaterOrEqual(t, gitArgo, 0)
+		for model.sourceTruthCursor < gitArgo {
+			updated, command = model.Update(tea.KeyMsg{Type: tea.KeyDown})
+			require.Nil(t, command, "strategy picker movement must not start a read")
+			model = updated.(LocalClusterModel)
+		}
+		updated, command = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+		model = updated.(LocalClusterModel)
+		require.NotNil(t, command, "strategy Enter must start the shared source-truth collector")
+		message := command().(sourceTruthResultMsg)
+		require.NoError(t, message.err)
+		require.Equal(t, agent.StatusBLOCK, message.evidence.Status, "recorded ConfigHub read failure must never become PASS")
+		require.Equal(t, contextName, message.contextName)
+		updated, command = model.Update(message)
+		require.Nil(t, command, "result projection must not start another read")
+		model = updated.(LocalClusterModel)
+		views[phase] = model.renderSourceTruth()
+		statuses[phase] = string(message.evidence.Status)
+		require.Contains(t, views[phase], "recorded unit lookup unavailable in owned proof")
+		checks[phase] = true
+		updated, command = model.Update(tea.KeyMsg{Type: tea.KeyEsc})
+		require.Nil(t, command, "closing the source-truth view must not start a read")
+		model = updated.(LocalClusterModel)
+		require.False(t, model.sourceTruthMode, "Esc must close source-truth before another action")
+		return model
+	}
+
+	runDiff := func(model LocalClusterModel, phase, contextName, expectedStatus string) LocalClusterModel {
+		eventPhase := "tui-" + phase
+		markPhase(eventPhase)
+		contexts[eventPhase] = model.clusterBinding.context
+		updated, command := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("T")})
+		require.Nil(t, command, "T picker event must not read before selection")
+		model = updated.(LocalClusterModel)
+		require.True(t, model.traceMode, "actual T key must open trace selection")
+		require.Len(t, model.traceItems, 1)
+		updated, command = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")})
+		require.Nil(t, command, "d prompt event must not read before rendered input")
+		model = updated.(LocalClusterModel)
+		require.True(t, model.traceDiffMode, "actual d key must open rendered-input prompt")
+		for _, event := range []tea.KeyMsg{
+			{Type: tea.KeyRunes, Runes: []rune(desiredPath)},
+			{Type: tea.KeyEnter},
+			{Type: tea.KeyRunes, Runes: []rune("apps/v1")},
+		} {
+			updated, command := model.Update(event)
+			require.Nil(t, command, "rendered-input prompt event must not read before final confirmation")
+			model = updated.(LocalClusterModel)
+		}
+		updated, command = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+		require.NotNil(t, command, "final API-version Enter must start exactly the shared diff read")
+		model = updated.(LocalClusterModel)
+		message := command().(traceDiffResultMsg)
+		require.NoError(t, message.err)
+		updated, command = model.Update(message)
+		require.Nil(t, command, "diff result projection must not start another read")
+		model = updated.(LocalClusterModel)
+		views[phase] = model.traceDiffOutput
+		require.Contains(t, model.traceDiffOutput, "Result: "+expectedStatus)
+		require.Contains(t, model.traceDiffOutput, "Context: "+contextName)
+		checks[phase] = true
+		return model
+	}
+
+	model := newModel("doctor-allowed")
+	model = runSourceTruth(model, "source-truth-allowed", "doctor-allowed")
+	// Retarget only this private file. The model's captured binding must still
+	// use the allowed endpoint for the next Y and T/d actions.
+	config, err := clientcmd.LoadFromFile(configPath)
+	require.NoError(t, err)
+	config.Contexts["doctor-allowed"].Cluster = config.Contexts["doctor-denied"].Cluster
+	retargeted, err := clientcmd.Write(*config)
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(configPath, retargeted, 0600))
+	before := sha256.Sum256(retargeted)
+	configHashes["afterRetarget"] = hex.EncodeToString(before[:])
+	model = runSourceTruth(model, "source-truth-reopen-after-retarget", "doctor-allowed")
+	runDiff(model, "diff-allowed", "doctor-allowed", "matched")
+	after, err := os.ReadFile(configPath)
+	require.NoError(t, err)
+	afterHash := sha256.Sum256(after)
+	configHashes["afterActions"] = hex.EncodeToString(afterHash[:])
+	require.Equal(t, retargeted, after, "TUI actions must not rewrite private kubeconfig")
+	checks["private-config-retarget-stable"] = true
+	denied := newModel("doctor-denied")
+	denied = runDiff(denied, "diff-denied", "doctor-denied", "inconclusive")
+	require.Contains(t, denied.traceDiffOutput, "Result: inconclusive")
+	require.True(t, strings.Contains(strings.ToLower(denied.traceDiffOutput), "unavailable"))
+	checks["denied-is-inconclusive"] = true
+}
