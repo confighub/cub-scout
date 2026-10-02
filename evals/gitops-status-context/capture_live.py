@@ -389,7 +389,7 @@ def _execute_capture(args, parser) -> int:
         attempted = True
         record_command(receipt, "create-owned-cluster", [tools["kind"], "create", "cluster", "--name", cluster,
                        "--image", NODE_IMAGE, "--kubeconfig", str(private_config), "--wait", "90s"],
-                       env={**env, "KUBECONFIG": str(private_config)}, deadline=deadline, timeout=150)
+                       env={**env, "KUBECONFIG": str(private_config)}, deadline=deadline, timeout=240)
         created = True
         os.chmod(private_config, 0o600)
         receipt["clusterCreationSucceeded"] = True

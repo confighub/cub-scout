@@ -97,3 +97,15 @@ integrity and all owned cleanup passed. The repaired validator is now tested
 against an actual offline production viewport artifact and the retained live
 artifact; neither changes the failed attempt's acceptance. Independent review
 admits a new bounded run. Product context/runtime/MCP review found no blocker.
+
+Attempt 3 stopped at clean-checkout preflight because review imports generated
+Python bytecode; only those generated files were removed. Attempt 4 timed out
+at the 150-second kind startup ceiling before observations. Its uncertain
+node was retained for explicit ownership review, then root verified its exact
+name/labels/pinned image and recorded pre-create absence before deleting only
+that owned cluster with a fresh private cleanup config. The separate
+`ownership-cleanup.json` verifies node absence and shared config integrity;
+the failed receipt is unchanged. Both attempts are retained under ignored
+`evals/results/gitops-status-context-20261002/`. Independent review admits
+a serial retry with a 240-second startup ceiling within the original global
+600-second bound and unchanged 90-second Kubernetes readiness wait.

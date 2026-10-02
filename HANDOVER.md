@@ -9,6 +9,15 @@ order, quality gates, budgets and decisions.
 
 ## Resumed execution — 2026-10-02
 
+- #757 attempts 3/4 remain failed and retained: generated-bytecode clean-check
+  refusal (no cluster) and a 150-second owned-kind control-plane startup
+  timeout. Root reviewed exact node identity/labels/image and pre-create
+  cluster-name absence before deleting the uncertain invocation-owned node
+  using a fresh private cleanup config. Separate `ownership-cleanup.json`
+  verifies node absence/shared integrity; original receipt is unchanged.
+  Independent review admits a 240-second startup limit within the unchanged
+  600-second overall deadline. No final live acceptance or merge yet.
+
 - #757 attempt 2 failed only at the helper's unpadded-context Markdown check.
   Actual viewport actions and shared/upstream read integrity passed, as did
   owned cleanup. Its failed receipt is retained under ignored
