@@ -9,6 +9,15 @@ order, quality gates, budgets and decisions.
 
 ## Resumed execution — 2026-10-02
 
+- Fresh-chat #757 helper review found and repaired a selector-proof gap and
+  request/log finalization race. All observation configs now contain distinct
+  selected and ambient proxy endpoints; final receipts drain proxies before
+  guarded snapshots/hashes. Independent Luna review accepted both repairs.
+  Seventeen offline controls and pinned `00e1375e` TUI probe compilation pass
+  (`/tmp/scout757-finalization-review-tests.txt`, `/tmp/scout757-tui-compile.txt`).
+  One serial owned-kind lane is admitted; execution/results remain pending.
+  Balance 2,531.317311 leaves 199.394875 under the original unchanged ceiling.
+
 - #754 merged at `f2e708ac`; #750 and #751 are closed. Independent final
   report review verified the immutable proof pins, request/receipt hashes,
   cleanup and all three retained failures. Exact-head CI `36871797848` passed.

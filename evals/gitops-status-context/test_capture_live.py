@@ -94,17 +94,17 @@ class StatusValidationTests(unittest.TestCase):
         self.assertEqual("tools/call", rows[2]["method"])
         self.assertEqual({"context": capture.ALLOWED, "namespace": capture.NAMESPACE}, rows[2]["params"]["arguments"])
 
-    def test_live_execution_is_unconditionally_not_admitted(self):
+    def test_live_execution_requires_explicit_execute_before_side_effects(self):
         with tempfile.TemporaryDirectory(dir="/tmp") as tmp:
             shared = Path(tmp) / "shared-never-read"
             output = Path(tmp) / "must-not-be-created"
-            argv = ["capture_live.py", "--execute", "--integrity-only-shared-kubeconfig", str(shared),
+            argv = ["capture_live.py", "--integrity-only-shared-kubeconfig", str(shared),
                     "--output-dir", str(output)]
             with patch.object(sys, "argv", argv), patch.object(capture.shutil, "which") as which:
                 stderr = io.StringIO()
                 with contextlib.redirect_stderr(stderr), self.assertRaises(SystemExit):
                     capture.main()
-                self.assertIn("NOT ADMITTED", stderr.getvalue())
+                self.assertIn("refusing to run without --execute", stderr.getvalue())
             which.assert_not_called()
             self.assertFalse(shared.exists())
             self.assertFalse(output.exists())
@@ -147,8 +147,9 @@ class IsolationTests(unittest.TestCase):
     def test_immutable_credential_free_observation_config(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            proxy = type("Proxy", (), {"label": capture.ALLOWED, "endpoint": "http://127.0.0.1:1234"})()
-            config = capture._proxy_kubeconfig(capture.ALLOWED, [proxy])
+            proxies = [type("Proxy", (), {"label": label, "endpoint": f"http://127.0.0.1:{1234+i}"})()
+                       for i, label in enumerate((capture.ALLOWED, capture.CONTROLLER_DENIED, capture.PODS_DENIED))]
+            config = capture._proxy_kubeconfig(capture.ALLOWED, proxies)
             self.assertEqual({}, config["users"][0]["user"])
             path = root / "config"
             capture.write_private(path, json.dumps(config), immutable=True)
@@ -159,6 +160,19 @@ class IsolationTests(unittest.TestCase):
             path.write_text("changed")
             with self.assertRaisesRegex(RuntimeError, "changed"):
                 capture.verify_immutable_configs({}, {path: before})
+
+    def test_selected_binding_differs_from_ambient_for_every_action(self):
+        proxies = [type("Proxy", (), {"label": label, "endpoint": f"http://127.0.0.1:{1234+i}"})()
+                   for i, label in enumerate((capture.ALLOWED, capture.CONTROLLER_DENIED, capture.PODS_DENIED))]
+        for selected in (capture.ALLOWED, capture.CONTROLLER_DENIED, capture.PODS_DENIED):
+            config = capture._proxy_kubeconfig(selected, proxies)
+            self.assertNotEqual(selected, config["current-context"])
+            self.assertEqual({p.label for p in proxies}, {row["name"] for row in config["contexts"]})
+            bindings = {row["name"]: row["context"]["cluster"] for row in config["contexts"]}
+            endpoints = {row["name"]: row["cluster"]["server"] for row in config["clusters"]}
+            self.assertNotEqual(endpoints[bindings[selected]], endpoints[bindings[config["current-context"]]])
+        with self.assertRaisesRegex(RuntimeError, "distinct selected and ambient"):
+            capture._proxy_kubeconfig(capture.ALLOWED, proxies[:1])
 
     def test_exact_proxy_routes_queries_and_mutations_fail_closed(self):
         route = f"/api/v1/namespaces/{capture.NAMESPACE}/pods"
@@ -212,8 +226,7 @@ class IsolationTests(unittest.TestCase):
         self.assertEqual(90, run.call_args.kwargs["timeout"])
 
     def test_failure_receipt_and_private_cleanup_after_exception(self):
-        # All commands/proxies are mocked. This exercises dormant lifecycle
-        # finalization directly; main's unconditional admission guard is intact.
+        # All commands/proxies are mocked. Exercise failure finalization directly.
         with tempfile.TemporaryDirectory(dir="/tmp") as tmp:
             root = Path(tmp)
             shared = root / "integrity-only"
@@ -237,6 +250,27 @@ class IsolationTests(unittest.TestCase):
                 self.assertIsNone(receipt["retainedWorkDirectory"])
                 self.assertIn("owned lifecycle cleanup raised an exception", receipt["cleanupErrors"])
                 self.assertEqual(0o600, (output / "receipt.json").stat().st_mode & 0o777)
+
+    def test_final_snapshot_failure_cannot_skip_owned_cleanup(self):
+        with tempfile.TemporaryDirectory(dir="/tmp") as tmp:
+            root = Path(tmp)
+            shared = root / "integrity-only"
+            shared.write_text("dummy integrity bytes")
+            output = root / "receipt"
+            args = argparse.Namespace(integrity_only_shared_kubeconfig=shared, output_dir=output)
+            with patch.object(capture.shutil, "which", return_value="/fake/tool"), \
+                 patch.object(capture, "record_command", side_effect=RuntimeError("offline stop")), \
+                 patch.object(capture, "snapshot_proxies", side_effect=RuntimeError("offline snapshot failure")), \
+                 patch.object(capture._lifecycle, "cleanup_cluster", return_value=[]) as cluster, \
+                 patch.object(capture._lifecycle, "cleanup_worktrees", return_value=[]) as worktrees:
+                with self.assertRaisesRegex(RuntimeError, "offline stop"):
+                    capture._execute_capture(args, argparse.ArgumentParser())
+            cluster.assert_called_once()
+            worktrees.assert_called_once()
+            receipt = json.loads((output / "receipt.json").read_text())
+            self.assertEqual("failed", receipt["acceptance"])
+            self.assertIn("final API snapshot failed", receipt["cleanupErrors"])
+            self.assertTrue(receipt["privateDirectoryRemoved"])
 
     def test_cleanup_reuses_owned_cluster_rules_for_uncertain_creation(self):
         receipt = {"commands": []}

@@ -282,12 +282,11 @@ def main() -> int:
     args = parser.parse_args()
     if not args.execute:
         parser.error("refusing to run without --execute")
-    parser.error("GitOps owned-kind capture is NOT ADMITTED; independent root review is required before any live execution")
     return _execute_capture(args, parser)
 
 
 def _execute_capture(args, parser) -> int:
-    """Dormant lifecycle; offline tests inject tools, never bypass admission live."""
+    """Reviewed opt-in lifecycle; offline controls inject tools without live reads."""
     requested = args.integrity_only_shared_kubeconfig.expanduser().absolute()
     if requested.is_symlink():
         parser.error("integrity-only kubeconfig must not be a symlink")
@@ -559,10 +558,6 @@ spec:
                 signal.signal(signum, handler)
             except BaseException:
                 cleanup_errors.append("signal handler restoration failed")
-        receipt["pendingAPIRequests"] = snapshot_proxies(proxies)
-        for log in ("api-events.jsonl", "cub-shim.jsonl"):
-            if (output / log).exists():
-                receipt.setdefault("retainedLogHashes", {})[log] = digest(output / log)
         receipt["clusterCreationAttempted"] = attempted
         receipt["clusterCreationSucceeded"] = created
         cleanup_deadline = time.monotonic() + 120
@@ -571,6 +566,20 @@ spec:
                 proxy.close()
             except BaseException:
                 cleanup_errors.append("owned read-only API proxy did not stop cleanly")
+        # Stop handlers before the final snapshot/hash, and never let evidence
+        # finalization errors skip owned-cluster or credential cleanup.
+        try:
+            receipt["pendingAPIRequests"] = snapshot_proxies(proxies)
+            if receipt["pendingAPIRequests"]:
+                cleanup_errors.append("unvalidated Kubernetes traffic remained after observations")
+        except BaseException:
+            cleanup_errors.append("final API snapshot failed")
+        for log in ("api-events.jsonl", "cub-shim.jsonl"):
+            try:
+                if (output / log).exists():
+                    receipt.setdefault("retainedLogHashes", {})[log] = digest(output / log)
+            except BaseException:
+                cleanup_errors.append("retained log hashing failed")
         for cleanup in (
             lambda: _lifecycle.cleanup_cluster(receipt, name=cluster, created=created, creation_attempted=attempted,
                 tools=tools, env=env, deadline=cleanup_deadline),
@@ -671,11 +680,15 @@ def _allowed_paths() -> frozenset[str]:
 
 
 def _proxy_kubeconfig(context: str, proxies: list) -> dict:
-    proxy = next(item for item in proxies if item.label == context)
-    return {"apiVersion": "v1", "kind": "Config", "current-context": context,
-            "clusters": [{"name": "owned-api-proxy", "cluster": {"server": proxy.endpoint}}],
+    labels = [proxy.label for proxy in proxies]
+    if len(labels) < 2 or len(set(labels)) != len(labels) or context not in labels:
+        raise RuntimeError("selector proof requires distinct selected and ambient bindings")
+    ambient = next(label for label in labels if label != context)
+    return {"apiVersion": "v1", "kind": "Config", "current-context": ambient,
+            "clusters": [{"name": proxy.label, "cluster": {"server": proxy.endpoint}} for proxy in proxies],
             "users": [{"name": "anonymous-proof-proxy", "user": {}}],
-            "contexts": [{"name": context, "context": {"cluster": "owned-api-proxy", "user": "anonymous-proof-proxy", "namespace": NAMESPACE}}]}
+            "contexts": [{"name": proxy.label, "context": {"cluster": proxy.label,
+                "user": "anonymous-proof-proxy", "namespace": NAMESPACE}} for proxy in proxies]}
 
 
 def _rbac_yaml(service_account: str, *, deny_modelplane=False, deny_pods=False) -> str:

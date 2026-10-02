@@ -17,14 +17,14 @@ tool, and the immutable GitOps status TUI summary. It shares the bounded command
 runner/receipt primitives from `evals/doctor-scan-context/capture.py` and the
 GET-only forwarding proxy from `evals/trace-context-live/api_proxy.py`.
 
-**This helper is not admitted for live execution.** `--execute` currently exits
-before reading the shared kubeconfig or creating output. The bounded repair adds private observation HOME/XDG and restricted PATH,
-exact synthetic auth-call controls, and retained failure/cleanup evidence. Do
-not remove that refusal until the helper and compiled probe are independently
-reviewed. Offline controls are preparation, not live acceptance.
-No owned-kind cluster was created for this draft.
+**Admitted for one serial owned-kind lane on 2026-10-02**, after root semantic
+review, independent Luna review and pinned-source TUI probe compilation.
+Review found and repaired selected-equals-ambient configurations and a final
+request/log race during cleanup. Seventeen offline controls pass. Execution
+still requires `--execute`, existing pinned tools/image and a clean checkout.
+No live acceptance is claimed by this admission checkpoint.
 
-The proposed synthetic fixture has an Argo Application on an inert
+The synthetic fixture has an Argo Application on an inert
 `example.invalid` source and two synthetic CRDs: Argo Application and
 ModelDeployment. It does not install or claim to exercise either controller.
 Three private context bindings are planned: admin allowed, a service account
@@ -61,6 +61,9 @@ mutations, and arbitrary object names fail closed. All endpoint snapshots are
 validated together, including unexpected endpoint traffic. CLI/MCP/TUI require
 exact Application-list, Application-object and Pod-read evidence; denial must
 occur on its expected exact route and unexpected forbidden reads fail.
+Each observation config contains all three proxy bindings and sets its current
+context to a different endpoint from the explicit selector. Cross-endpoint
+requests fail the action receipt, so ambient fallback cannot pass.
 Credential-free observation configs are mode 0400 and hashed before/after;
 owned upstream credentials stay outside product environments and command logs.
 The receipt hashes source/binaries, helper dependencies, fixture/CRD/RBAC,
@@ -74,6 +77,6 @@ redaction, actual loopback proxy refusal/closure, wrong-context and hidden-denia
 controls, real MCP result-envelope dispatch, immutable-config tampering, and
 failure/interrupt receipt retention with cleanup exceptions. The TUI template
 checks a changed viewport YOffset/view, return-to-top state, actual `tea.QuitMsg`,
-and unchanged summary/config. Compilation and owned-kind execution remain
+and unchanged summary/config. Pinned-source compilation passed; owned-kind execution remains
 pending; no terminal-emulator, refresh navigation, controller reconciliation,
 real ConfigHub service, or paid model evaluation is claimed.
