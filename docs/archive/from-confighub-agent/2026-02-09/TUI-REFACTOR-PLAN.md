@@ -504,7 +504,7 @@ Leave `runCubCommand` as-is. It will be replaced wholesale during merge. Refacto
 
 ---
 
-## Code Review: 2026-01-13 (Brian-style Review)
+## Code Review: 2026-01-13 (Strict Review)
 
 ### Issues Found
 

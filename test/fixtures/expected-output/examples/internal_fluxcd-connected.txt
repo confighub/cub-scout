@@ -1,8 +1,8 @@
 
    🔥 7 FAILURE(S)   atk
 
-  Deployers  1/5
-  Workloads  14/18
+  Deployers  0/4
+  Workloads  13/17
 
   PROBLEMS
   ────────────────────────────────────────────────
@@ -19,13 +19,12 @@
   ────────────────────────────────────────────────
 ✗ ?@?  →  example-app  →  0 resources
 ⏸ company/infrastructure@main  →  monitoring-stack  →  0 resources
-✓ argoproj/argocd-example-apps.git/guestbook@HEAD  →  example-jesper-argocd  →  example-jesper-argocd
 ✗ company/frontend/k8s@HEAD  →  frontend-app  →  demo-payments
 
   OWNERSHIP
   ────────────────────────────────────────────────
-  ConfigHub(4) Native(14)
-  ████░░░░░░░░░░░░░░
+  ConfigHub(4) Native(13)
+  ████░░░░░░░░░░░░░
 
   ConfigHub Hierarchy:
   Org → Space → Unit (with Resources, Targets, Workers)
@@ -154,7 +153,7 @@
       ├── backend @ rev 4 → cluster-target
       ├── ollama @ rev 3 → cluster-target
       ├── frontend @ rev 4 → cluster-target
-    └── alexis-actions-bridge (1 units, 0 targets, 0 workers)
+    └── user-actions-bridge (1 units, 0 targets, 0 workers)
       ├── cub-helm-cert-manager-wf @ rev 6
     └── actions-cert-manager (0 units, 5 targets, 1 workers)
     └── cloud-bear-base (4 units, 0 targets, 0 workers)
@@ -560,12 +559,7 @@
       ├── backend @ rev 4 → asia
       ├── postgres @ rev 2 → asia
       ├── namespace @ rev 2 → asia
-    └── jesper-fluxcd (4 units, 0 targets, 0 workers)
-      ├── frontend @ rev 1
-      ├── order-processor @ rev 1
-      ├── payment-api @ rev 1
-      ├── postgresql @ rev 1
-    └── jesper-argocd (4 units, 0 targets, 0 workers)
+    └── internal-fluxcd (4 units, 0 targets, 0 workers)
       ├── frontend @ rev 1
       ├── order-processor @ rev 1
       ├── payment-api @ rev 1
@@ -579,7 +573,7 @@
 
   Kubecon NA 2025 CH (org: org_01K7J69W7TZ49CYY7GT9CXNY9R)
 
-  alexis@confighub.com Organization (org: org_01KA4E47YT6AYN1X824ZATS34D)
+  user@example.com Organization (org: org_01KA4E47YT6AYN1X824ZATS34D)
 
   Cluster Resources with ConfigHub Labels:
   orders-prod / order-processor @ rev 89  [demo-orders/order-processor]

@@ -5,7 +5,7 @@
   "summary": "Added input validation and improved API error handling.",
   "changes": [
     {
-      "file": "/Users/alexis/Public/github-repos/cub-scout/internal/api/handler.go",
+      "file": "/home/user/src/cub-scout/internal/api/handler.go",
       "type": "modified",
       "highlights": [
         "Validated required fields before processing",

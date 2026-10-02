@@ -114,7 +114,7 @@ Fleet extension set:
 
 Consolidated from:
 
-- `/Users/alexis/Public/github-repos/confighub-agent/planning/VIEW-TIERS.md`
-- `/Users/alexis/Public/github-repos/confighub-agent/planning/RM-MOCKUPS.md`
-- `/Users/alexis/Public/github-repos/confighub-agent/planning/PRODUCT-PLAN-LAUNCH.md` (reusable product sections)
+- `~/Public/github-repos/confighub-agent/planning/VIEW-TIERS.md`
+- `~/Public/github-repos/confighub-agent/planning/RM-MOCKUPS.md`
+- `~/Public/github-repos/confighub-agent/planning/PRODUCT-PLAN-LAUNCH.md` (reusable product sections)
 

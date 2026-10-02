@@ -11,6 +11,6 @@ Set Theme "Dracula"
 Set Padding 20
 
 # Run tree command
-Type "cd /Users/alexis/Public/github-repos/cub-scout && ./cub-scout tree runtime"
+Type "cd ~/Public/github-repos/cub-scout && ./cub-scout tree runtime"
 Enter
 Sleep 4s

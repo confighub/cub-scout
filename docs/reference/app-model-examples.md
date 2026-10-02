@@ -150,17 +150,17 @@ confighub ▾
 
 ---
 
-## Example 4: Enterprise Pattern (Jesper Examples)
+## Example 4: Enterprise Pattern (Internal Examples)
 
-Real spaces: `jesper-argocd`, `jesper-fluxcd`, `example-jesper-argocd-team`
+Real spaces: `internal-argocd`, `internal-fluxcd`, `example-internal-argocd-team`
 
 ### Flat View
 
 ```
 confighub ▾
-├─ example-jesper-argocd-team
-├─ jesper-argocd
-└─ jesper-fluxcd
+├─ example-internal-argocd-team
+├─ internal-argocd
+└─ internal-fluxcd
 ```
 
 ### App View (press B)
@@ -172,13 +172,13 @@ confighub ▾
 │  └─ (none detected)
 │
 └─ Apps                              3 spaces
-   ├─ example-jesper-argocd-team         ArgoCD example
+   ├─ example-internal-argocd-team         ArgoCD example
    │  └─ Deployer: ArgoCD
    │  └─ Units: podinfo, nginx, redis
-   ├─ jesper-argocd                      ArgoCD workspace
+   ├─ internal-argocd                      ArgoCD workspace
    │  └─ Deployer: ArgoCD
    │  └─ Units: app-of-apps, applicationsets
-   └─ jesper-fluxcd                      FluxCD workspace
+   └─ internal-fluxcd                      FluxCD workspace
       └─ Deployer: Flux
       └─ Units: kustomization-apps, helmreleases
 ```
@@ -445,7 +445,7 @@ These mappings are working defaults, not immutable doctrine. Domain-to-platform 
 | **KubeCon Demo** | `platform-*` (workers, targets) | `app*-dev`, `app*-prod` (units) |
 | **TraderX** | `*-base`, `*-infra` | `*-prod-{region}` |
 | **curious-cub** | `*-base`, `*-infra` | `*-dev`, `*-staging`, `*-prod` |
-| **Enterprise/Jesper** | (none) | Per-deployer workspaces |
+| **Enterprise/Internal** | (none) | Per-deployer workspaces |
 | **Banko (Flux)** | `platform/` (versioned) | `clusters/*`, `apps/` |
 | **Arnie (ArgoCD)** | `base/`, `variants/` | `envs/*` (one per environment) |
 

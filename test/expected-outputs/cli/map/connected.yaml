@@ -149,7 +149,7 @@ sample_output: |
   Context:
     Organization: confighub
     Space: tutorial
-    User: alexis@example.com
+    User: user@example.com
 
   Organizations:
     confighub (3 spaces)

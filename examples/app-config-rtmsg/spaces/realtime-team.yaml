@@ -19,7 +19,7 @@ spec:
       role: admin
     - email: bob@rtmsg.io
       role: editor
-    - email: charlie@rtmsg.io
+    - email: carol@rtmsg.io
       role: viewer
 
   # Units in this space

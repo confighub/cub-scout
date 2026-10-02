@@ -10,6 +10,6 @@ Set Height 500
 Set Theme "Dracula"
 Set Padding 20
 
-Type "cd /Users/alexis/Public/github-repos/cub-scout && ./cub-scout trace deploy/frontend -n boutique"
+Type "cd ~/Public/github-repos/cub-scout && ./cub-scout trace deploy/frontend -n boutique"
 Enter
 Sleep 4s

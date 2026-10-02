@@ -1,6 +1,6 @@
 # TUI + GUI: One Product, Two Aspects
 
-**For Jesper** — Why TUI and GUI solve the same core problem and must be joined up.
+**For the team** — Why TUI and GUI solve the same core problem and must be joined up.
 
 ## Industry Direction: OpenTUI
 
@@ -96,10 +96,10 @@ cub-agent migrate             # Full wizard: discover → plan → execute
 
 ## Addressing Concerns
 
-### "There are lots of competing TUIs" (Jesper)
+### "There are lots of competing TUIs"
 Those compete on cluster viz. We compete on **joined-up journeys** across DRY→WET→LIVE. No one else connects terminal to WET store.
 
-### "We'll lose focus" (Jesper)
+### "We'll lose focus"
 Focus comes from joined-up journeys, not dropping TUI. UX must understand CLI+TUI+GUI together. GUI focuses on what GUI does better (complex viz, Git import, fleet). TUI focuses on what TUI does better (quick queries, execution, feedback loop).
 
 ### "TUI is vibe coded"

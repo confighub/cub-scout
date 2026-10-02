@@ -6,7 +6,7 @@ This directory contains expected map output for standard ConfigHub examples.
 
 ## Quick Reference: What You Should See
 
-### jesper_argocd (Argo CD Example)
+### internal_argocd (Argo CD Example)
 
 **Scenario:** Multi-namespace Argo CD deployment with intentional failures for demo purposes.
 
@@ -26,12 +26,12 @@ This directory contains expected map output for standard ConfigHub examples.
 - 29% GitOps coverage — 12 Native (orphan) resources for demo
 
 **Namespaces created:**
-- `example-jesper-argocd` — Argo CD resources
+- `example-internal-argocd` — Argo CD resources
 - `demo-payments` — Payment service (with failures)
 - `demo-orders` — Order service (with failures)
 - `confighub` — Flux bridge (with failure)
 
-### jesper_fluxcd (Flux CD Example)
+### internal_fluxcd (Flux CD Example)
 
 **Scenario:** Multi-namespace Flux CD deployment with Kustomizations and HelmReleases.
 
@@ -40,7 +40,7 @@ This directory contains expected map output for standard ConfigHub examples.
 - HelmRelease pipeline shown
 - Ownership detection shows Flux-managed resources
 
-### Connected Mode (jesper_argocd-connected.txt)
+### Connected Mode (internal_argocd-connected.txt)
 
 When connected to ConfigHub, you see additional context:
 
@@ -48,8 +48,8 @@ When connected to ConfigHub, you see additional context:
 ┌─ CONFIGHUB ────────────────────────────────────────────────────────────┐
 │  Org: ConfigHub                                                        │
 │  └─ Hub: user@example.com                                          │
-│     └─ App: example-jesper-argocd-team                            │
-│        └─ Unit: example-jesper-argocd ✓                                │
+│     └─ App: example-internal-argocd-team                          │
+│        └─ Unit: example-internal-argocd ✓                              │
 │           ├─ Status: Ready                                             │
 │           └─ Target: dev-kubernetes-yaml-kind-atk                      │
 └────────────────────────────────────────────────────────────────────────┘
@@ -61,7 +61,7 @@ When connected to ConfigHub, you see additional context:
 
 ```bash
 ./test/atk/examples --capture              # Capture all examples
-./test/atk/examples --capture jesper_argocd   # Capture specific example
+./test/atk/examples --capture internal_argocd   # Capture specific example
 ```
 
 The capture process:
@@ -77,8 +77,8 @@ The capture process:
 
 | Example | GitHub Repo | What It Shows |
 |---------|-------------|---------------|
-| **jesper_argocd** | confighubai/examples-internal/argocd | Argo CD with intentional failures |
-| **jesper_fluxcd** | confighubai/examples-internal/fluxcd | Flux CD with Kustomizations |
+| **internal_argocd** | confighubai/examples-internal/argocd | Argo CD with intentional failures |
+| **internal_fluxcd** | confighubai/examples-internal/fluxcd | Flux CD with Kustomizations |
 | **global_app** | confighub/examples/global-app | Multi-cluster global app |
 | **helm_platform** | confighub/examples/helm-platform-components | Helm platform components |
 | **vm_fleet** | confighub/examples/vm-fleet | VM fleet management |
@@ -144,14 +144,14 @@ Fixtures may need regeneration when:
 ./test/atk/examples --capture
 
 # Regenerate one
-./test/atk/examples --capture jesper_argocd
+./test/atk/examples --capture internal_argocd
 ```
 
 ---
 
 ## Notes
 
-- **Jesper examples** require access to `confighubai/examples-internal` (private)
+- **Internal examples** require access to `confighubai/examples-internal` (private)
 - **Public examples** work with any GitHub account
 - Fixtures are cluster-specific (your results may vary slightly)
 - Connected mode fixtures require ConfigHub authentication

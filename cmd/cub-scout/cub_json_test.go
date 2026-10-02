@@ -45,7 +45,7 @@ func TestParseCubUnitListJSON_AcceptsNestedAndFlatShapes(t *testing.T) {
 
 func TestParseCubContextJSON_AcceptsCamelAndPascalCase(t *testing.T) {
 	raw := []byte(`{
-		"name": "alexis@example.com",
+		"name": "user@example.com",
 		"coordinate": {"serverURL": "https://hub.example.com", "organizationID": "org-1"},
 		"settings": {"defaultSpace": "payments"}
 	}`)
@@ -54,7 +54,7 @@ func TestParseCubContextJSON_AcceptsCamelAndPascalCase(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parseCubContextJSON() error = %v", err)
 	}
-	if ctx.Name != "alexis@example.com" || ctx.Coordinate.ServerURL != "https://hub.example.com" || ctx.Settings.DefaultSpace != "payments" {
+	if ctx.Name != "user@example.com" || ctx.Coordinate.ServerURL != "https://hub.example.com" || ctx.Settings.DefaultSpace != "payments" {
 		t.Fatalf("ctx = %+v, want parsed context fields", ctx)
 	}
 }

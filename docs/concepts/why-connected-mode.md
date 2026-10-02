@@ -48,8 +48,8 @@ When connected to ConfigHub, `cub-scout` can use:
 ## Interface Boundaries (Authoritative)
 
 - `cub` CLI is the external interface contract for connected workflows.
-- `confighub-agent` depends on `cub` command behavior (arguments, exit codes, stdout/JSON shape), documented in `/Users/alexis/Public/github-repos/confighub-agent/README.md:16`.
-- `cub-scout` connected mode depends on `cub auth login` semantics (credential/session creation and context resolution), documented in `/Users/alexis/Public/github-repos/cub-scout/README.md:80`.
+- `confighub-agent` depends on `cub` command behavior (arguments, exit codes, stdout/JSON shape), documented in `~/Public/github-repos/confighub-agent/README.md:16`.
+- `cub-scout` connected mode depends on `cub auth login` semantics (credential/session creation and context resolution), documented in `~/Public/github-repos/cub-scout/README.md:80`.
 - Standalone `cub-scout` must continue to function without `cub`.
 
 This is the ownership split:

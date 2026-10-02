@@ -2,7 +2,7 @@
 
 Real-world examples demonstrating cub-scout's ownership detection across multiple GitOps patterns.
 
-> **Source:** Based on [Google's Online Boutique](https://github.com/GoogleCloudPlatform/microservices-demo) (microservices-demo), adapted from [Brian's KubeCon 2025 demos](https://github.com/confighub-kubecon-2025).
+> **Source:** Based on [Google's Online Boutique](https://github.com/GoogleCloudPlatform/microservices-demo) (microservices-demo), adapted from [the team's KubeCon 2025 demos](https://github.com/confighub-kubecon-2025).
 
 ---
 
@@ -617,7 +617,7 @@ kubectl get deployment frontend -n apptique-dev -o yaml | grep -A10 labels
 
 ## Source Apps
 
-The `source/` directory contains copies of Brian's KubeCon 2025 demo repos:
+The `source/` directory contains copies of the team's KubeCon 2025 demo repos:
 
 | Repo | Description |
 |------|-------------|

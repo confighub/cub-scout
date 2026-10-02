@@ -1,7 +1,7 @@
 # Modular Architecture for ConfigHub Agent
 
 > **Status:** Planning
-> **Authors:** Alexis, Claude
+> **Authors:** The maintainer, Claude
 > **Date:** 2026-01-12
 
 ## Executive Summary

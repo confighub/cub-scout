@@ -11,7 +11,7 @@ Set Theme "Dracula"
 Set Padding 20
 
 # Navigate and run
-Type "cd /Users/alexis/Public/github-repos/cub-scout && ./cub-scout map"
+Type "cd ~/Public/github-repos/cub-scout && ./cub-scout map"
 Enter
 Sleep 6s
 

@@ -17,7 +17,7 @@
   },
   {
     "kind": "Deployment",
-    "name": "app-charlie",
+    "name": "app-delta",
     "namespace": "cub-scout-golden-deployers",
     "status": "Ready",
     "ready": true,

@@ -21,7 +21,7 @@ Expected fixture counts:
 | ApplicationSet -> generated visibility in tree git | false | false | intentional gap (tracked by #132) | Not yet surfaced in current `tree git` output |
 
 ## Raw outputs
-- v0.4.0 tree ownership JSON:   /Users/alexis/public/github-repos/cub-scout/test/regression/output/20260208-222216/v0.4.0.tree.ownership.json
-- v0.19.6 tree ownership JSON:   /Users/alexis/public/github-repos/cub-scout/test/regression/output/20260208-222216/v0.19.6.tree.ownership.json
-- v0.4.0 tree git JSON:   /Users/alexis/public/github-repos/cub-scout/test/regression/output/20260208-222216/v0.4.0.tree.git.json
-- v0.19.6 tree git JSON:   /Users/alexis/public/github-repos/cub-scout/test/regression/output/20260208-222216/v0.19.6.tree.git.json
+- v0.4.0 tree ownership JSON:   ~/public/github-repos/cub-scout/test/regression/output/20260208-222216/v0.4.0.tree.ownership.json
+- v0.19.6 tree ownership JSON:   ~/public/github-repos/cub-scout/test/regression/output/20260208-222216/v0.19.6.tree.ownership.json
+- v0.4.0 tree git JSON:   ~/public/github-repos/cub-scout/test/regression/output/20260208-222216/v0.4.0.tree.git.json
+- v0.19.6 tree git JSON:   ~/public/github-repos/cub-scout/test/regression/output/20260208-222216/v0.19.6.tree.git.json
