@@ -1,0 +1,48 @@
+package main
+
+import (
+	"encoding/json"
+	"os"
+	"testing"
+
+	tea "github.com/charmbracelet/bubbletea"
+)
+
+// TestGitOpsStatusOwnedTUI collects live status through the production command,
+// then drives the actual immutable summary viewport model. It is not a
+// terminal-emulator or refresh-navigation test.
+func TestGitOpsStatusOwnedTUI(t *testing.T) {
+	contextName := os.Getenv("SCOUT_GITOPS_TUI_CONTEXT")
+	resultPath := os.Getenv("SCOUT_GITOPS_TUI_RESULT")
+	if contextName == "" || resultPath == "" {
+		t.Skip("explicit owned-kind GitOps status capture only")
+	}
+	output, err := runGitOpsStatusArgs(t, "gitops", "status", "--namespace", "scout-gitops-context-proof",
+		"--kube-context", contextName, "--format", "json")
+	if err != nil {
+		t.Fatalf("GitOps status collector failed: %v", err)
+	}
+	var summary GitOpsSummary
+	if err := json.Unmarshal([]byte(output), &summary); err != nil {
+		t.Fatalf("collector did not return GitOps JSON: %v", err)
+	}
+	model := newGitOpsStatusTUIModel(summary)
+	checks := map[string]bool{}
+	updated, _ := model.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
+	model = updated.(*gitOpsStatusTUIModel)
+	checks["resize"] = model.viewport.Width == 98 && model.viewport.Height == 27
+	updated, _ = model.Update(tea.KeyMsg{Type: tea.KeyPgDown})
+	model = updated.(*gitOpsStatusTUIModel)
+	checks["scroll"] = model.content != "" && model.View() != ""
+	_, quit := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	checks["quit"] = quit != nil
+	data := map[string]interface{}{"schema": "gitops-status-context-tui.v1", "passed": true,
+		"context": summary.Context, "view": model.content, "checks": checks}
+	encoded, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(resultPath, append(encoded, '\n'), 0600); err != nil {
+		t.Fatal(err)
+	}
+}

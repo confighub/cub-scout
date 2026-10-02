@@ -1,13 +1,51 @@
 # cub-scout execution handover
 
-**Current snapshot:** 2026-10-01. Verified merged baseline:
-[`23e1ec42`](https://github.com/confighub/cub-scout/commit/23e1ec4227ecf06b9add1b3da6e5bc44e797bb98).
+**Current snapshot:** 2026-10-02. Verified merged baseline:
+[`f2e708ac`](https://github.com/confighub/cub-scout/commit/f2e708ac43c9fedf068569acc97aae351163c737).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
 order, quality gates, budgets and decisions.
 
-## Laptop-close checkpoint — 2026-10-01
+## Resumed execution — 2026-10-02
+
+- #754 merged at `f2e708ac`; #750 and #751 are closed. Independent final
+  report review verified the immutable proof pins, request/receipt hashes,
+  cleanup and all three retained failures. Exact-head CI `36871797848` passed.
+  A redundant helper rerun timed out in two 2-second subprocess checks; the
+  merge tool batch incorrectly continued before that result was inspected.
+  The unchanged rerun passed all 30 tests in 2.028 seconds. Both outcomes and
+  the sequencing error are recorded on #645 (comment 5946755724); the failed
+  run does not replace or invalidate the separate accepted live receipt.
+- #757 build and full offline Go suite passed at `00e1375e`, with log
+  `/tmp/scout757-resume-full-go-test.txt`. That head's enabled CI also passed
+  (`36871814280`). Main was merged at `f4c65ae7`, retaining all four relevant
+  eval scaffold routes. The post-merge build, focused GitOps/source-truth tests
+  and exact scaffold guard pass (`/tmp/scout757-main-merge-focused.txt` and
+  `/tmp/scout757-main-merge-scaffolds.txt`). Owned-kind CLI/MCP/TUI proof,
+  helper/report review and final-head CI remain open. No new live proof or paid
+  evaluation is claimed.
+  The new `evals/gitops-status-context/capture_live.py` is an explicitly disabled
+  draft: `--execute` refuses before side effects, covered by an offline test.
+  Seven offline acceptance controls pass. Before admission, repair private
+  HOME/XDG/restricted PATH isolation and expected `cub` auth calls, then review
+  exact API paths/query handling, MCP responses, cleanup and the TUI probe.
+  The bounded cheaper-worker pass stopped here; do not remove the refusal as
+  a shortcut or describe these draft controls as live evidence.
+- SDK adoption is tracked in [#758](https://github.com/confighub/cub-scout/issues/758).
+  A bounded cheaper-agent inventory selected source-truth's exact-space
+  Unit/head-revision read as the first shared CLI/MCP/TUI candidate. SDK
+  v0.8.0 requires Go 1.25, while Scout declares 1.24. Typed read-only adapters,
+  deliberate auth refresh, immutable observation sessions, scope/cancellation
+  tests and overhead measurements precede adoption. No SDK dependency or
+  implementation has been added. This is not a wholesale v2.13 migration gate
+  or proof of agent dollar/credit savings.
+- #755 and the v2.13 paired baseline/genuine governance fixtures remain open.
+  Paid evals remain stopped. #599 and #746 are not complete.
+
+## Historical laptop-close checkpoint — 2026-10-01
+
+The following records the saved state before the resumed execution above.
 
 - Main is `23e1ec4227ecf06b9add1b3da6e5bc44e797bb98`: #756 merged after
   independent review, build/full Go and all enabled exact-head CI passed.
