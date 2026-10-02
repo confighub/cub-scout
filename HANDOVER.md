@@ -27,7 +27,7 @@ order, quality gates, budgets and decisions.
   evaluation is claimed.
   The new `evals/gitops-status-context/capture_live.py` is an explicitly disabled
   draft: `--execute` refuses before side effects, covered by an offline test.
-  Seven offline acceptance controls pass. Before admission, repair private
+  The first draft had seven passing controls. A subsequent Sol repair now has 15 passing offline controls; independent review and compile-only TUI validation remain pending. Before admission, repair private
   HOME/XDG/restricted PATH isolation and expected `cub` auth calls, then review
   exact API paths/query handling, MCP responses, cleanup and the TUI probe.
   The bounded cheaper-worker pass stopped here; do not remove the refusal as

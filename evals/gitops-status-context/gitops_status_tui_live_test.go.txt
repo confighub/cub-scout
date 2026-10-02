@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"testing"
@@ -8,41 +9,48 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// TestGitOpsStatusOwnedTUI collects live status through the production command,
-// then drives the actual immutable summary viewport model. It is not a
-// terminal-emulator or refresh-navigation test.
+// Collect through the real Cobra command, without collector/auth seams, then
+// drive the real viewport. This is not terminal UX or refresh-navigation proof.
 func TestGitOpsStatusOwnedTUI(t *testing.T) {
 	contextName := os.Getenv("SCOUT_GITOPS_TUI_CONTEXT")
 	resultPath := os.Getenv("SCOUT_GITOPS_TUI_RESULT")
 	if contextName == "" || resultPath == "" {
 		t.Skip("explicit owned-kind GitOps status capture only")
 	}
+	configPath := os.Getenv("KUBECONFIG")
+	before, err := os.ReadFile(configPath)
+	if err != nil { t.Fatal(err) }
 	output, err := runGitOpsStatusArgs(t, "gitops", "status", "--namespace", "scout-gitops-context-proof",
 		"--kube-context", contextName, "--format", "json")
-	if err != nil {
-		t.Fatalf("GitOps status collector failed: %v", err)
-	}
+	if err != nil { t.Fatalf("GitOps status collector failed: %v", err) }
 	var summary GitOpsSummary
-	if err := json.Unmarshal([]byte(output), &summary); err != nil {
-		t.Fatalf("collector did not return GitOps JSON: %v", err)
-	}
+	if err := json.Unmarshal([]byte(output), &summary); err != nil { t.Fatal(err) }
+	if summary.Context != contextName { t.Fatalf("selected context = %q", summary.Context) }
 	model := newGitOpsStatusTUIModel(summary)
-	checks := map[string]bool{}
-	updated, _ := model.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
+	content := model.content
+	// A short viewport forces this real summary to overflow, so PgDown must
+	// advance the actual YOffset and alter the rendered viewport.
+	updated, _ := model.Update(tea.WindowSizeMsg{Width: 60, Height: 8})
 	model = updated.(*gitOpsStatusTUIModel)
-	checks["resize"] = model.viewport.Width == 98 && model.viewport.Height == 27
+	checks := map[string]bool{"resize": model.viewport.Width == 58 && model.viewport.Height == 5}
+	if model.viewport.TotalLineCount() <= model.viewport.Height { t.Fatal("summary does not overflow probe viewport") }
+	beforeView := model.View()
+	beforeOffset := model.viewport.YOffset
 	updated, _ = model.Update(tea.KeyMsg{Type: tea.KeyPgDown})
 	model = updated.(*gitOpsStatusTUIModel)
-	checks["scroll"] = model.content != "" && model.View() != ""
+	checks["scroll"] = model.viewport.YOffset > beforeOffset && model.View() != beforeView
+	updated, _ = model.Update(tea.KeyMsg{Type: tea.KeyHome})
+	model = updated.(*gitOpsStatusTUIModel)
+	checks["scrollBack"] = model.viewport.YOffset == beforeOffset && model.View() == beforeView
 	_, quit := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
-	checks["quit"] = quit != nil
+	if quit != nil { _, checks["quit"] = quit().(tea.QuitMsg) }
+	after, err := os.ReadFile(configPath)
+	if err != nil { t.Fatal(err) }
+	checks["immutableSummary"] = model.content == content && bytes.Equal(before, after)
+	for name, passed := range checks { if !passed { t.Fatalf("model action %s failed", name) } }
 	data := map[string]interface{}{"schema": "gitops-status-context-tui.v1", "passed": true,
 		"context": summary.Context, "view": model.content, "checks": checks}
 	encoded, err := json.MarshalIndent(data, "", "  ")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(resultPath, append(encoded, '\n'), 0600); err != nil {
-		t.Fatal(err)
-	}
+	if err != nil { t.Fatal(err) }
+	if err := os.WriteFile(resultPath, append(encoded, '\n'), 0600); err != nil { t.Fatal(err) }
 }
