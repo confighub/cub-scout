@@ -1,11 +1,27 @@
 # cub-scout execution handover
 
 **Current snapshot:** 2026-10-02. Verified merged baseline:
-[`fbc8c733`](https://github.com/confighub/cub-scout/commit/fbc8c7330932383a803bc3bd166a9eab58adb658).
+[`7181d992`](https://github.com/confighub/cub-scout/commit/7181d9921aa1eeb36381313bb9935aae0367e27b).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
 order, quality gates, budgets and decisions.
+
+## Captured LIVE reader — implementation checkpoint
+
+The bounded #755 LIVE/Git-source session foundation is implemented and
+independently reviewed; targeted tests, offline build and full Go suite pass;
+exact-head CI/merge remain pending. The existing ambient loader is unchanged.
+The captured path binds workload, source tracing and ConfigHub link discovery
+to the supplied session; partial summaries retain errors. Argo ambiguity and
+multi-source omissions remain explicit; Flux cleanup failure discards the
+anchor. Synthetic TLS/factory contracts are not real controller/server proof.
+No public selector or invocation wiring was added; #755 remains open.
+
+Latest shared balance 2,091.9568535 leaves 60.0344175 under the total 900-credit
+ceiling. Reserve at least 25 before further dispatch. The unexplained initial
+216.6857800 shared decline remains charged conservatively. No full-#755
+completion forecast, SDK migration, paid eval, release or savings claim.
 
 ## Budget extension — 2026-10-02
 

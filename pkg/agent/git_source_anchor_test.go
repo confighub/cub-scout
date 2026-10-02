@@ -178,3 +178,41 @@ func selectArgoDispatchKey(obj *unstructured.Unstructured, owner Ownership) stri
 	}
 	return "Trace:" + obj.GetKind() + "/" + obj.GetName()
 }
+
+func TestGitSourceAnchorFromTrace(t *testing.T) {
+	for _, tc := range []struct {
+		name              string
+		result            *TraceResult
+		wantType, wantURL string
+	}{
+		{name: "nil"},
+		{name: "empty chain", result: &TraceResult{}},
+		{name: "missing source", result: &TraceResult{Chain: []ChainLink{{Kind: "Deployment"}}}},
+		{name: "raw", result: &TraceResult{Chain: []ChainLink{{Kind: "Source", URL: " https://raw.invalid/repo ", Path: "manifests"}}}, wantURL: "https://raw.invalid/repo"},
+		{name: "Helm", result: &TraceResult{Chain: []ChainLink{{Kind: "GitRepository", URL: "https://helm.invalid/repo"}, {Kind: "HelmChart"}}}, wantURL: "https://helm.invalid/repo", wantType: GitSourceTypeHelm},
+		{name: "Kustomize", result: &TraceResult{Chain: []ChainLink{{Kind: "GitRepository", URL: "https://kustomize.invalid/repo"}, {Kind: "Kustomization"}}}, wantURL: "https://kustomize.invalid/repo", wantType: GitSourceTypeKustomize},
+		{name: "multi-source retains first projection and original gap", result: &TraceResult{MultiSource: true, Error: "partial", Chain: []ChainLink{{Kind: "Source", URL: "https://first.invalid/repo"}, {Kind: "Application"}}}, wantURL: "https://first.invalid/repo"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			anchor := GitSourceAnchorFromTrace(tc.result)
+			if tc.wantURL == "" {
+				if anchor != nil {
+					t.Fatalf("unexpected anchor: %+v", anchor)
+				}
+				return
+			}
+			if anchor == nil || anchor.RepoURL != tc.wantURL || anchor.SourceType != tc.wantType {
+				t.Fatalf("anchor = %+v, want URL %q, type %q", anchor, tc.wantURL, tc.wantType)
+			}
+			if tc.wantType != "" && anchor.Resolution != GitSourceTemplatedNotResolved {
+				t.Fatalf("templated resolution = %q", anchor.Resolution)
+			}
+			if tc.wantType == "" && anchor.Resolution != "" {
+				t.Fatalf("raw resolution = %q", anchor.Resolution)
+			}
+			if tc.result.MultiSource && tc.result.Error != "partial" {
+				t.Fatal("conversion erased partial trace evidence")
+			}
+		})
+	}
+}
