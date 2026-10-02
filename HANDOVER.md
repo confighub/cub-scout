@@ -1,7 +1,7 @@
 # cub-scout execution handover
 
 **Current snapshot:** 2026-10-02. Verified merged baseline:
-[`f2e708ac`](https://github.com/confighub/cub-scout/commit/f2e708ac43c9fedf068569acc97aae351163c737).
+[`fbc8c733`](https://github.com/confighub/cub-scout/commit/fbc8c7330932383a803bc3bd166a9eab58adb658).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
@@ -32,12 +32,19 @@ order, quality gates, budgets and decisions.
 - Product `00e1375e` passed build/full offline Go
   (`/tmp/scout757-resume-full-go-test.txt`); main merge `f4c65ae7` passed focused
   GitOps/source-truth and exact scaffold checks. Independent product review
-  found no blocker. Independent final proof/report review passed; exact final-head CI/merge
-  remain pending. Inspect results before a separate match-head merge call.
-- Budget baseline remains 2,931.922436; latest balance 2,439.853093 leaves
-  107.930657 under the unchanged original 600-credit ceiling. No new #755
-  dispatch while the current packet is being finalized; reassess its total
-  implementation/review/proof cost before dispatch. Effective speed telemetry
+  found no blocker. Independent final proof/report review passed. Exact product head
+  `f156ac6e` passed enabled Unit/Integration/GitOps E2E/Proof Artifact in run
+  `36983931044`; Connected/Demo/Full Verification were skipped. Results were
+  inspected before the separate match-head merge call. #757 merged at
+  `fbc8c733`, closing #753. This worktree was fast-forwarded to that merge;
+  any newer checkpoint commits contain only handover/budget bookkeeping.
+- Budget baseline remains 2,931.922436; latest balance 2398.824320 leaves
+  66.901884 under the unchanged original 600-credit ceiling. Conservative
+  decline is 533.098116. New work would have only
+  41.901884 credits before the original no-new-dispatch threshold.
+  Stop here rather than dispatch #755 without a defensible total-cost forecast
+  covering implementation/review/full tests/owned proof. This checkpoint does
+  not reset or increase the cap. Effective speed telemetry
   remains unavailable; no speed override was requested.
 - #755 three-way context binding remains unimplemented. #599/#746 remain open.
   SDK #758 is deferred, not a v2.13 whole-SDK migration mandate. Its recorded
@@ -48,6 +55,10 @@ order, quality gates, budgets and decisions.
   does not establish a permitted GET prerequisite-evaluation endpoint. Empty
   scoped order lists do not prove ungoverned state; no POST/promote/dry-run
   action calls are authorized. v2.12.4 remains the published release.
+
+No local proof/build/full-suite process remains running. The merged-main CI
+may continue remotely; the inspected pre-merge gate is complete. Raw receipts
+and source pins are retained. No paid eval or v2.13 release was run.
 
 ## Historical laptop-close checkpoint — 2026-10-01
 
