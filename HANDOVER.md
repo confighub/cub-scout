@@ -7,6 +7,16 @@ Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
 order, quality gates, budgets and decisions.
 
+## Budget extension — 2026-10-02
+
+User granted 300 more credits: total ceiling 900, original baseline retained,
+hard floor 2,031.922436 and dispatch-stop threshold 2,056.922436. First balance
+2,133.4559585 leaves 101.5335225 below that ceiling. The unexpected 216.6857800
+shared-account decline since the previous check is being charged conservatively
+pending attribution; no new implementation had been dispatched. Continue with
+a bounded #755 shared-reader packet only after admission. SDK #758 remains
+tracked and deferred; v2.13 context completion comes first.
+
 ## Rollout foundation checkpoint — 2026-10-02
 
 - #760 merged at `7181d992`, tested head `d0d9aa32`. Extracted
