@@ -1,11 +1,27 @@
 # cub-scout execution handover
 
 **Current snapshot:** 2026-10-02. Verified merged baseline:
-[`7181d992`](https://github.com/confighub/cub-scout/commit/7181d9921aa1eeb36381313bb9935aae0367e27b).
+[`94e6edf3`](https://github.com/confighub/cub-scout/commit/94e6edf339e0cd410994563fb7a7c57c52e18c09).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
 order, quality gates, budgets and decisions.
+
+## Captured LIVE reader — merged checkpoint
+
+#761 merged at `94e6edf3`, tested head `efbac5ba`. Independent review, targeted
+TLS/factory contracts, offline build/full Go and exact-head CI run 37026828296
+passed. Enabled CI: Unit Tests, Integration Tests, GitOps E2E, Proof Artifact.
+Connected E2E, Demo Tests and Full Verification skipped. One test-only redundant
+assignment was corrected after lint caught it; production code was unchanged.
+
+User requests continued progress toward v2.13. Latest shared balance
+2,054.6347935 leaves 22.7123575 under the total 900 ceiling and crosses the
+2,056.922436 stop-new-dispatch threshold. No further implementation/review/proof
+packet is admitted. A budget extension is pending; initial 216.6857800 unexplained
+shared decline stays conservatively charged. The SDK stays deferred. Full #755
+scope/session/report/MCP/CLI/TUI wiring and remaining v2.13 governance/baseline
+release gates are pending; no paid eval or release permission is inferred.
 
 ## Captured LIVE reader — implementation checkpoint
 
