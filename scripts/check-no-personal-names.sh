@@ -10,6 +10,7 @@
 # Scope notes:
 #   - Every tracked file is in scope. This script is the only exclusion,
 #     because it must hold the pattern. Keep names out of its prose too.
+#   - Binary files are scanned too; a hit prints as "Binary file ... matches".
 #   - The match is whole-word and case-insensitive (git grep -w). A bare first
 #     name matches; a longer identifier that merely contains one (for example
 #     a GitHub handle) does not.
@@ -22,6 +23,9 @@ PATTERN='alexis|jesper|brian|charlie'
 SELF="scripts/check-no-personal-names.sh"
 
 cd "$(git rev-parse --show-toplevel)"
+
+# Match bytes, so binary files are scanned the same way in every locale.
+export LC_ALL=C
 
 echo "Checking tracked files for personal names..."
 echo ""

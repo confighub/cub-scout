@@ -38,3 +38,7 @@ tmp/
 test/regression/output/
 .claude/
 LIVE
+
+# Python bytecode
+__pycache__/
+*.pyc
