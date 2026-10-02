@@ -653,6 +653,154 @@ func loadCompareLiveSnapshot(ctx context.Context, kind, name, namespace string) 
 	return summary, nil
 }
 
+// loadCompareLiveSnapshotWithTraceSession is an internal shared-reader
+// foundation. Every Kubernetes read, including source tracing, uses session.
+// A non-empty summary with an error means LIVE was read but enrichment is
+// incomplete; adapters must retain that error rather than claim full coverage.
+// The ambient loader above deliberately preserves its existing behavior.
+func loadCompareLiveSnapshotWithTraceSession(ctx context.Context, session *traceSession, kind, name, namespace string) (compareSideSummary, error) {
+	return loadCompareLiveSnapshotWithTraceSessionAndFlux(ctx, session, kind, name, namespace, capturedTraceFluxFactory)
+}
+
+func loadCompareLiveSnapshotWithTraceSessionAndFlux(ctx context.Context, session *traceSession, kind, name, namespace string, fluxFactory func(*traceSession) (agent.Tracer, func() error, error)) (compareSideSummary, error) {
+	gvr := kindToGVR(kind)
+	if gvr.Resource == "" {
+		return compareSideSummary{}, fmt.Errorf("unsupported resource kind %q for compare mode", kind)
+	}
+	dyn, err := session.dynamicClient()
+	if err != nil {
+		return compareSideSummary{}, fmt.Errorf("build dynamic client: %w", err)
+	}
+	obj, err := dyn.Resource(gvr).Namespace(namespace).Get(ctx, name, v1.GetOptions{})
+	if err != nil {
+		return compareSideSummary{}, err
+	}
+	summary := summarizeCompareLiveObject(obj)
+	summary.GitSource, err = collectCompareGitSourceWithTraceSession(ctx, session, obj, fluxFactory)
+	if summary.UnitSlug != "" {
+		return summary, err
+	}
+	link, linkErr := resolveCompareConfigHubLinkFn(ctx, dyn, obj)
+	if linkErr != nil {
+		return summary, errors.Join(err, fmt.Errorf("ConfigHub link enrichment unavailable: %w", linkErr))
+	}
+	summary.UnitSlug = strings.TrimSpace(link.UnitSlug)
+	if summary.SpaceName == "" {
+		summary.SpaceName = strings.TrimSpace(link.SpaceName)
+	}
+	if summary.SpaceID == "" {
+		summary.SpaceID = strings.TrimSpace(link.SpaceID)
+	}
+	return summary, err
+}
+
+func collectCompareGitSourceWithTraceSession(ctx context.Context, session *traceSession, obj *unstructured.Unstructured, fluxFactory func(*traceSession) (agent.Tracer, func() error, error)) (anchor *agent.GitSourceAnchor, returnErr error) {
+	if obj == nil {
+		return nil, nil
+	}
+	if session == nil || session.config == nil {
+		return nil, fmt.Errorf("Git source enrichment unavailable: trace session is unavailable")
+	}
+	owner := agent.DetectOwnership(obj)
+	var result *agent.TraceResult
+	var err error
+	var argoErr error
+	if obj.GetKind() == "Application" || owner.Type == agent.OwnerArgo || owner.Type == agent.OwnerConfigHub {
+		dyn, clientErr := session.dynamicClient()
+		if clientErr != nil {
+			return nil, clientErr
+		}
+		tracer := agent.NewArgoTracerWithKubernetesClient(dyn)
+		if obj.GetKind() == "Application" {
+			result, err = tracer.TraceApplicationInNamespace(ctx, obj.GetName(), obj.GetNamespace())
+		} else if owner.Type == agent.OwnerArgo && owner.Name != "" {
+			result, err = tracer.TraceApplicationInNamespace(ctx, owner.Name, owner.Namespace)
+		} else {
+			// A ConfigHub unit name/space is not an Application identity. Only
+			// explicit Argo metadata can authorize an Argo source read.
+			appName := argoApplicationNameFromResource(obj)
+			if appName != "" {
+				result, err = tracer.TraceApplicationInNamespace(ctx, appName, "")
+			}
+		}
+		if err == nil {
+			anchor = agent.GitSourceAnchorFromTrace(result)
+		}
+		if owner.Type != agent.OwnerConfigHub || obj.GetKind() == "Application" || anchor != nil {
+			return anchor, compareGitSourceObservationError(result, err)
+		}
+		if result != nil || err != nil {
+			argoErr = compareGitSourceObservationError(result, err)
+		}
+		// ConfigHub without an Argo anchor keeps the established Flux
+		// fallback, on this same captured session and the actual workload.
+	} else if owner.Type != agent.OwnerFlux {
+		return nil, nil
+	}
+	// Even a successful Flux fallback must retain an attempted Argo read's
+	// omission; that failure is not evidence of absent Argo provenance.
+	defer func() { returnErr = errors.Join(argoErr, returnErr) }()
+	if ctx.Err() != nil {
+		return nil, fmt.Errorf("Git source enrichment unavailable: %w", ctx.Err())
+	}
+	if fluxFactory == nil {
+		return nil, fmt.Errorf("Git source enrichment unavailable: captured Flux adapter is unavailable")
+	}
+	tracer, cleanup, setupErr := fluxFactory(session)
+	if cleanup != nil {
+		defer func() {
+			if cleanupErr := cleanup(); cleanupErr != nil {
+				anchor = nil
+				returnErr = errors.Join(returnErr, fmt.Errorf("unable to remove temporary Trace credentials"))
+			}
+		}()
+	}
+	if setupErr != nil {
+		return nil, fmt.Errorf("Git source enrichment unavailable: %w", setupErr)
+	}
+	if tracer == nil || !tracer.Available() {
+		return nil, fmt.Errorf("Git source enrichment unavailable: flux CLI is unavailable")
+	}
+	if owner.Type == agent.OwnerFlux && owner.Name != "" && obj.GetKind() != "Kustomization" && obj.GetKind() != "HelmRelease" {
+		ownerTracer, ok := tracer.(interface {
+			TraceByOwnership(context.Context, agent.Ownership) (*agent.TraceResult, error)
+		})
+		if !ok {
+			return nil, fmt.Errorf("Git source enrichment unavailable: Flux adapter cannot trace ownership")
+		}
+		result, err = ownerTracer.TraceByOwnership(ctx, owner)
+	} else {
+		result, err = tracer.Trace(ctx, obj.GetKind(), obj.GetName(), obj.GetNamespace())
+	}
+	if err != nil {
+		return nil, compareGitSourceObservationError(result, err)
+	}
+	return agent.GitSourceAnchorFromTrace(result), compareGitSourceObservationError(result, nil)
+}
+
+func compareGitSourceObservationError(result *agent.TraceResult, err error) error {
+	if err != nil {
+		return fmt.Errorf("Git source enrichment unavailable: %w", err)
+	}
+	if result == nil {
+		return fmt.Errorf("Git source enrichment unavailable: trace contains no source anchor")
+	}
+	var partialErr error
+	if result.Error != "" {
+		partialErr = fmt.Errorf("Git source enrichment incomplete: %s", result.Error)
+	}
+	if result.MultiSource {
+		partialErr = errors.Join(partialErr, fmt.Errorf("Git source enrichment incomplete: only the first of multiple declared sources was parsed"))
+	}
+	if partialErr != nil {
+		return partialErr
+	}
+	if agent.GitSourceAnchorFromTrace(result) == nil {
+		return fmt.Errorf("Git source enrichment unavailable: trace contains no source anchor")
+	}
+	return nil
+}
+
 func summarizeCompareLiveObject(obj *unstructured.Unstructured) compareSideSummary {
 	labels := obj.GetLabels()
 	annotations := obj.GetAnnotations()

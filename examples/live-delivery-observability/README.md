@@ -35,6 +35,19 @@ denied Pod reads preserve the existing workload-only decision behavior.
 go test ./cmd/cub-scout -run TestFetchRolloutDecisionFrom -count=1
 ```
 
+`TestCompareLiveSnapshot` in `cmd/cub-scout/compare_resource_session_test.go`
+also checks an internal captured-session LIVE reader: workload, Argo source,
+ConfigHub link discovery and a bound Flux adapter use the selected endpoint
+after the private source kubeconfig is retargeted. Denied, ambiguous or
+multi-source evidence stays incomplete; credential cleanup failure discards
+the anchor. These recorded TLS contracts require no live cluster or ConfigHub
+server. This reader is not yet wired into three-way comparison, and its future
+adapters must retain errors accompanying partial LIVE summaries.
+
+```bash
+go test ./cmd/cub-scout ./pkg/agent -run 'TestCompareLiveSnapshot|TestCompareGitSourceUnavailableInput|TestGitSourceAnchorFromTrace' -count=1
+```
+
 ## Files
 
 | File | Purpose |

@@ -252,3 +252,14 @@ func anchorWithTemplatedSource(chain []ChainLink) *GitSourceAnchor {
 	}
 	return anchor
 }
+
+// GitSourceAnchorFromTrace converts an observed trace into the existing source
+// anchor projection. It performs no reads. A multi-source trace projects its
+// first parsed source, as the legacy collector does; callers must retain the
+// trace's MultiSource/Error coverage information separately.
+func GitSourceAnchorFromTrace(result *TraceResult) *GitSourceAnchor {
+	if result == nil || len(result.Chain) == 0 {
+		return nil
+	}
+	return anchorWithTemplatedSource(result.Chain)
+}
