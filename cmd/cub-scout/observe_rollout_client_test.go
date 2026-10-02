@@ -126,7 +126,7 @@ type rolloutTransportFunc func(*http.Request) (*http.Response, error)
 func (f rolloutTransportFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
 
 func TestFetchRolloutDecisionFromUnavailableClient(t *testing.T) {
-	decision, ok := fetchRolloutDecisionFrom(nil, nil, "team", "Deployment", "app")
+	decision, ok := fetchRolloutDecisionFrom(context.Background(), nil, "team", "Deployment", "app")
 	require.False(t, ok)
 	require.Nil(t, decision)
 }
