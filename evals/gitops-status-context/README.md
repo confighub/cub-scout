@@ -10,113 +10,70 @@ or ConfigHub service and establish no real RBAC or connected-mode behavior.
 The scaffold only copies the two checked-in JSON files into a temporary
 `recorded/` directory.
 
-## Owned-kind live capture packet (#753)
+## Accepted owned-kind proof (#753)
 
-`capture_live.py` is a draft proof harness for the CLI, MCP stdio `gitops_status`
-tool, and the immutable GitOps status TUI summary. It shares the bounded command
-runner/receipt primitives from `evals/doctor-scan-context/capture.py` and the
-GET-only forwarding proxy from `evals/trace-context-live/api_proxy.py`.
+[The derived report](live-proof-report.json) records accepted attempt 6 on
+2026-10-02. The product source is pinned to
+`00e1375e0380ccf809ee4ef6f22abd47ca3119d1`; the helper/probe source is
+`e7757e13d3c67893d358091c35f3e0d6e27438e2`. Source, binary, fixture,
+RBAC, request-log, TUI-artifact and raw-receipt hashes are retained.
 
-**Admitted for one serial owned-kind lane on 2026-10-02**, after root semantic
-review, independent Luna review and pinned-source TUI probe compilation.
-Review found and repaired selected-equals-ambient configurations and a final
-request/log race during cleanup. Seventeen offline controls pass. Execution
-still requires `--execute`, existing pinned tools/image and a clean checkout.
-No live acceptance is claimed by this admission checkpoint.
+All nine observations passed: CLI, actual MCP stdio subprocess and actual
+summary viewport for allowed, controller-denied and Pod-denied selections.
+Each action made 35 exact GETs through its selected proxy, with no traffic
+on the other endpoints. The ModelDeployment and Pod denials were actual
+upstream 403s on their expected paths. Application controller health remains
+visible beside the separate runtime omission. Every observation config
+contained all three private bindings and a different ambient current context;
+immutable config hashes matched before and after the reads.
 
-The synthetic fixture has an Argo Application on an inert
-`example.invalid` source and two synthetic CRDs: Argo Application and
-ModelDeployment. It does not install or claim to exercise either controller.
-Three private context bindings are planned: admin allowed, a service account
-allowed controller lists except ModelDeployment, and a service account allowed
-the same controller lists but denied Pods. The separate pod denial is required
-because a controller-list denial alone does not prove runtime Pod omission.
-Expected evidence includes a visible Modelplane `unreadable`/`forbidden`
-omission, a `runtimeOmission` for Pods while preserving Application health, and
-the selected kubeconfig label in each output. The label does not identify a
-stable cluster.
+The TUI probe drives production viewport resize, PgDown/PgUp offset and view
+changes, and q yielding `tea.QuitMsg`. An offline Go control emits actual
+production-rendered content for Python validator integration. This establishes
+viewport-model actions, not terminal-emulator UX or refresh navigation.
 
-Run only the offline acceptance controls:
+The fixture uses an inert `example.invalid` Argo source and synthetic Argo
+Application/ModelDeployment CRDs on a real owned kind API/RBAC. It installs no
+Argo or Modelplane controller and proves no reconciliation. Private HOME/XDG
+and a PATH containing only the auth shim exclude ambient credentials, kube
+settings, proxies, plugin mode and the GitOps fixture hook. The shim accepts
+only `cub auth status`, returns synthetic unauthenticated exit 73, and
+records exact per-action counts: CLI 1, MCP 3, TUI 1, old-selector control 0.
+Unexpected argv is redacted and rejected. This is local stub evidence, not
+real ConfigHub authentication, service availability or governance evidence.
+
+The GET-only proxy accepts exact fixture-specific paths and no query
+parameters. Non-GETs, discovery, watches, selectors, other namespaces and
+arbitrary object names fail closed. Newly created CRD storage readiness is
+checked only during bounded setup; observations still require strict HTTP
+status and exact denial evidence. Existing pinned tools/image are required,
+no installs or downloads are allowed, and the entire capture has a 600-second
+bound (kind subprocess 240 seconds, Kubernetes readiness wait 90 seconds).
+
+Accepted cleanup verified owned node absence, source-worktree/private-directory
+removal, unchanged shared kubeconfig, unchanged upstream and observation
+configs during reads, and no pending API requests or cleanup errors. Raw
+artifacts are retained under ignored
+`evals/results/gitops-status-context-20261002/attempt-6/`; the checked-in
+report preserves their hashes and all five failed attempts:
+
+1. Probe used unbound Home; config integrity was checked after kind cleanup.
+2. Probe actions passed, but the helper expected an unpadded Markdown span.
+3. Clean-checkout preflight rejected generated review bytecode; no cluster.
+4. Kind control-plane startup timed out; uncertain node retained for explicit
+   ownership review. A separate `ownership-cleanup.json` verifies exact
+   node identity, pre-create absence, removal and shared config integrity.
+5. ModelDeployment storage returned HTTP 429 during initialization; Scout
+   surfaced a `list_failed` omission and strict validation rejected it.
+
+Every failed receipt remains failed. The repairs, product context/runtime
+changes and admission steps were independently reviewed. Eighteen offline
+controls pass; run them without creating a cluster:
 
 ```sh
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest evals/gitops-status-context/test_capture_live.py -v
 ```
 
-The `gitops_status_tui_live_test.go.txt` probe runs the production status
-collector and drives the actual viewport model's resize, scroll, and quit
-messages. It is not a terminal-emulator test or interactive refresh proof.
-
-The observation environment inherits no ambient tokens, plugin mode, proxies,
-GitOps test hook, kube settings or host tool PATH. Setup/build uses a separate
-environment and absolute tools; observation PATH contains only the `cub` shim.
-It accepts exactly `cub auth status`, returns a synthetic unauthenticated result
-(exit 73), and records a fixed JSON argv. Any other arguments return 97 with a
-redacted rejection marker. Expected calls per process are CLI 1, MCP 3 (startup,
-pre-call session, child status), TUI 1, old unsupported-selector control 0.
-This proves a local stub contract, not real ConfigHub authentication.
-
-The Kubernetes proxy accepts only exact fixture-specific status GET routes
-with no query parameters. Discovery, watches, selectors, other namespaces,
-mutations, and arbitrary object names fail closed. All endpoint snapshots are
-validated together, including unexpected endpoint traffic. CLI/MCP/TUI require
-exact Application-list, Application-object and Pod-read evidence; denial must
-occur on its expected exact route and unexpected forbidden reads fail.
-Each observation config contains all three proxy bindings and sets its current
-context to a different endpoint from the explicit selector. Cross-endpoint
-requests fail the action receipt, so ambient fallback cannot pass.
-Credential-free observation configs are mode 0400 and hashed before/after;
-owned upstream credentials stay outside product environments and command logs.
-The receipt hashes source/binaries, helper dependencies, fixture/CRD/RBAC,
-TUI artifacts and logs. API event logs and partial commands remain available on
-failure; invocation-private files are removed during finalization. Uncertain
-cluster creation retains an inventory and fails instead of deleting resources
-without established ownership.
-
-The offline tests cover environment exclusion, exact auth argv/counts and secret
-redaction, actual loopback proxy refusal/closure, wrong-context and hidden-denial
-controls, real MCP result-envelope dispatch, immutable-config tampering, and
-failure/interrupt receipt retention with cleanup exceptions. The TUI template
-checks a changed viewport YOffset/view, PgUp return-to-top state, actual `tea.QuitMsg`,
-and unchanged summary/config. Pinned-source compilation passed; owned-kind execution remains
-pending; no terminal-emulator, refresh navigation, controller reconciliation,
-real ConfigHub service, or paid model evaluation is claimed.
-
-The first owned-kind attempt is retained at `/tmp/scout757-owned-kind-proof-1`.
-Six CLI/MCP observations passed; the TUI probe failed because Home is not a
-viewport binding. Its private admin config hash was also incorrectly checked
-after kind deletion edited that setup config. Both are harness failures; the
-receipt remains failed. Cluster/node/private-directory removal and shared
-config integrity passed. The repair uses PgUp and tests the same viewport
-actions offline, and seals upstream read integrity before kind cleanup.
-
-Attempt 2 is retained under ignored
-`evals/results/gitops-status-context-20261002/attempt-2/`. Its actual TUI
-viewport actions passed, but the helper expected an unpadded Markdown code
-span while production renders a padded span. Shared and upstream read config
-integrity and all owned cleanup passed. The repaired validator is now tested
-against an actual offline production viewport artifact and the retained live
-artifact; neither changes the failed attempt's acceptance. Independent review
-admits a new bounded run. Product context/runtime/MCP review found no blocker.
-
-Attempt 3 stopped at clean-checkout preflight because review imports generated
-Python bytecode; only those generated files were removed. Attempt 4 timed out
-at the 150-second kind startup ceiling before observations. Its uncertain
-node was retained for explicit ownership review, then root verified its exact
-name/labels/pinned image and recorded pre-create absence before deleting only
-that owned cluster with a fresh private cleanup config. The separate
-`ownership-cleanup.json` verifies node absence and shared config integrity;
-the failed receipt is unchanged. Both attempts are retained under ignored
-`evals/results/gitops-status-context-20261002/`. Independent review admits
-a serial retry with a 240-second startup ceiling within the original global
-600-second bound and unchanged 90-second Kubernetes readiness wait.
-
-Attempt 5 created the cluster but failed strict observation validation when
-the newly established ModelDeployment API returned HTTP 429, `storage is
-(re)initializing`. Scout exposed `list_failed` coverage; no absence was claimed.
-Cleanup and both read config integrity checks passed. Its failed receipt is
-retained under ignored `evals/results/gitops-status-context-20261002/attempt-5/`.
-The independently reviewed repair adds setup-only GET readiness for the two
-synthetic CRD list endpoints, with at most five attempts per endpoint, retrying
-only that storage-initialization error within the existing overall deadline.
-Observation status/denial assertions remain strict. Eighteen offline controls
-pass; admission is for one further serial run, not an acceptance claim.
+No paid model evaluation or measured agent dollar/credit savings is claimed.
+Context labels are not stable cluster identities. This proof does not close
+#599 or the v2.13 release gates.

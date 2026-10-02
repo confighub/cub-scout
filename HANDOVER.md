@@ -9,87 +9,45 @@ order, quality gates, budgets and decisions.
 
 ## Resumed execution — 2026-10-02
 
-- #757 attempt 5 failed strict HTTP validation on the newly established
-  ModelDeployment API's HTTP 429 `storage is (re)initializing`. Scout retained
-  explicit `list_failed` coverage. Cleanup/shared and upstream read integrity
-  passed; failed receipt retained. Independent review admits setup-only
-  exact CRD GET readiness (five attempts maximum, only initialization errors
-  retried, unchanged overall/observation bounds). Eighteen controls pass.
-  One further serial lane is admitted; final acceptance remains pending.
-
-- #757 attempts 3/4 remain failed and retained: generated-bytecode clean-check
-  refusal (no cluster) and a 150-second owned-kind control-plane startup
-  timeout. Root reviewed exact node identity/labels/image and pre-create
-  cluster-name absence before deleting the uncertain invocation-owned node
-  using a fresh private cleanup config. Separate `ownership-cleanup.json`
-  verifies node absence/shared integrity; original receipt is unchanged.
-  Independent review admits a 240-second startup limit within the unchanged
-  600-second overall deadline. No final live acceptance or merge yet.
-
-- #757 attempt 2 failed only at the helper's unpadded-context Markdown check.
-  Actual viewport actions and shared/upstream read integrity passed, as did
-  owned cleanup. Its failed receipt is retained under ignored
-  `evals/results/gitops-status-context-20261002/attempt-2/`. Exact padded
-  Markdown validation now passes against real offline production rendering
-  and that retained live artifact (`/tmp/scout757-renderer-integration.txt`).
-  Seventeen offline controls pass; independent review admits a new bounded
-  run. Independent product review found no blocker in context capture,
-  omissions, output parity, MCP and persisted label. No live acceptance yet.
-
-- #757 owned-kind attempt 1 failed at the TUI probe's unbound Home key after
-  six CLI/MCP allowed/controller-denied/Pods-denied observations passed.
-  Its failed receipt/logs are retained under ignored
-  `evals/results/gitops-status-context-20261002/attempt-1/`. Owned cluster/nodes
-  and private files were removed; the shared kubeconfig remained unchanged.
-  The harness also checked admin config integrity after kind cleanup edited it.
-  Repairs use PgUp with an actual offline viewport action regression, and seal
-  read integrity after proxy drain but before kind deletion. Independent Luna
-  review admits one bounded rerun; 17 Python controls and the pinned viewport
-  action test pass (`/tmp/scout757-attempt1-repair-tests.txt`,
-  `/tmp/scout757-viewport-repair.txt`). No final live acceptance yet.
-
-- Fresh-chat #757 helper review found and repaired a selector-proof gap and
-  request/log finalization race. All observation configs now contain distinct
-  selected and ambient proxy endpoints; final receipts drain proxies before
-  guarded snapshots/hashes. Independent Luna review accepted both repairs.
-  Seventeen offline controls and pinned `00e1375e` TUI probe compilation pass
-  (`/tmp/scout757-finalization-review-tests.txt`, `/tmp/scout757-tui-compile.txt`).
-  One serial owned-kind lane is admitted; execution/results remain pending.
-  Balance 2,531.317311 leaves 199.394875 under the original unchanged ceiling.
-
-- #754 merged at `f2e708ac`; #750 and #751 are closed. Independent final
-  report review verified the immutable proof pins, request/receipt hashes,
-  cleanup and all three retained failures. Exact-head CI `36871797848` passed.
-  A redundant helper rerun timed out in two 2-second subprocess checks; the
-  merge tool batch incorrectly continued before that result was inspected.
-  The unchanged rerun passed all 30 tests in 2.028 seconds. Both outcomes and
-  the sequencing error are recorded on #645 (comment 5946755724); the failed
-  run does not replace or invalidate the separate accepted live receipt.
-- #757 build and full offline Go suite passed at `00e1375e`, with log
-  `/tmp/scout757-resume-full-go-test.txt`. That head's enabled CI also passed
-  (`36871814280`). Main was merged at `f4c65ae7`, retaining all four relevant
-  eval scaffold routes. The post-merge build, focused GitOps/source-truth tests
-  and exact scaffold guard pass (`/tmp/scout757-main-merge-focused.txt` and
-  `/tmp/scout757-main-merge-scaffolds.txt`). Owned-kind CLI/MCP/TUI proof,
-  helper/report review and final-head CI remain open. No new live proof or paid
-  evaluation is claimed.
-  The new `evals/gitops-status-context/capture_live.py` is an explicitly disabled
-  draft: `--execute` refuses before side effects, covered by an offline test.
-  The first draft had seven passing controls. A subsequent Sol repair now has 15 passing offline controls; independent review and compile-only TUI validation remain pending. Before admission, repair private
-  HOME/XDG/restricted PATH isolation and expected `cub` auth calls, then review
-  exact API paths/query handling, MCP responses, cleanup and the TUI probe.
-  The bounded cheaper-worker pass stopped here; do not remove the refusal as
-  a shortcut or describe these draft controls as live evidence.
-- SDK adoption is tracked in [#758](https://github.com/confighub/cub-scout/issues/758).
-  A bounded cheaper-agent inventory selected source-truth's exact-space
-  Unit/head-revision read as the first shared CLI/MCP/TUI candidate. SDK
-  v0.8.0 requires Go 1.25, while Scout declares 1.24. Typed read-only adapters,
-  deliberate auth refresh, immutable observation sessions, scope/cancellation
-  tests and overhead measurements precede adoption. No SDK dependency or
-  implementation has been added. This is not a wholesale v2.13 migration gate
-  or proof of agent dollar/credit savings.
-- #755 and the v2.13 paired baseline/genuine governance fixtures remain open.
-  Paid evals remain stopped. #599 and #746 are not complete.
+- #754 merged at `f2e708ac`; #750/#751 are closed. Its independently reviewed
+  accepted source-truth/rendered-diff proof and retained failures remain at
+  `evals/trace-context-live/combined-report.json`. Do not rerun without cause.
+- #757 now has an accepted owned-kind CLI/MCP/TUI proof on attempt 6.
+  [The report](evals/gitops-status-context/live-proof-report.json) pins product
+  `00e1375e` and helper/probe `e7757e13`, retaining all artifact hashes and five
+  failed attempts. All nine phases made 35 selected-endpoint GETs; real
+  ModelDeployment/Pod 403s remain visible, with controller health preserved.
+  Exact auth stub calls are CLI 1/MCP 3/TUI 1/old 0. Actual viewport actions,
+  shared/upstream/observation config integrity and owned cleanup passed.
+  This is synthetic controller evidence on a real kind API/RBAC, with local
+  unauthenticated ConfigHub stub; no real controllers/server/governance, paid
+  evaluation, terminal UX/refresh navigation or savings claim.
+- Independent helper reviews repaired ambient-equals-selected configurations,
+  snapshot/log cleanup races, unbound Home, padded Markdown validation, slow
+  startup and CRD storage initialization. Eighteen offline controls pass; the
+  pinned actual viewport/renderer integration passes. Raw attempts 1–6 are
+  retained under ignored `evals/results/gitops-status-context-20261002/`.
+  Attempt 4's uncertain node was separately identity-reviewed and removed;
+  its original receipt remains failed beside `ownership-cleanup.json`.
+- Product `00e1375e` passed build/full offline Go
+  (`/tmp/scout757-resume-full-go-test.txt`); main merge `f4c65ae7` passed focused
+  GitOps/source-truth and exact scaffold checks. Independent product review
+  found no blocker. Independent final proof/report review passed; exact final-head CI/merge
+  remain pending. Inspect results before a separate match-head merge call.
+- Budget baseline remains 2,931.922436; latest balance 2,439.853093 leaves
+  107.930657 under the unchanged original 600-credit ceiling. No new #755
+  dispatch while the current packet is being finalized; reassess its total
+  implementation/review/proof cost before dispatch. Effective speed telemetry
+  remains unavailable; no speed override was requested.
+- #755 three-way context binding remains unimplemented. #599/#746 remain open.
+  SDK #758 is deferred, not a v2.13 whole-SDK migration mandate. Its recorded
+  candidate is source-truth's exact-space Unit/head-revision read; SDK v0.8.0
+  requires Go 1.25 while Scout declares 1.24.
+- v2.13 is not released. The paired baseline and genuine #591/#597 governance
+  fixtures remain missing; paid evaluations remain stopped. The SDK inventory
+  does not establish a permitted GET prerequisite-evaluation endpoint. Empty
+  scoped order lists do not prove ungoverned state; no POST/promote/dry-run
+  action calls are authorized. v2.12.4 remains the published release.
 
 ## Historical laptop-close checkpoint — 2026-10-01
 
