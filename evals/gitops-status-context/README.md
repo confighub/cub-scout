@@ -88,3 +88,12 @@ after kind deletion edited that setup config. Both are harness failures; the
 receipt remains failed. Cluster/node/private-directory removal and shared
 config integrity passed. The repair uses PgUp and tests the same viewport
 actions offline, and seals upstream read integrity before kind cleanup.
+
+Attempt 2 is retained under ignored
+`evals/results/gitops-status-context-20261002/attempt-2/`. Its actual TUI
+viewport actions passed, but the helper expected an unpadded Markdown code
+span while production renders a padded span. Shared and upstream read config
+integrity and all owned cleanup passed. The repaired validator is now tested
+against an actual offline production viewport artifact and the retained live
+artifact; neither changes the failed attempt's acceptance. Independent review
+admits a new bounded run. Product context/runtime/MCP review found no blocker.

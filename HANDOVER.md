@@ -9,6 +9,16 @@ order, quality gates, budgets and decisions.
 
 ## Resumed execution — 2026-10-02
 
+- #757 attempt 2 failed only at the helper's unpadded-context Markdown check.
+  Actual viewport actions and shared/upstream read integrity passed, as did
+  owned cleanup. Its failed receipt is retained under ignored
+  `evals/results/gitops-status-context-20261002/attempt-2/`. Exact padded
+  Markdown validation now passes against real offline production rendering
+  and that retained live artifact (`/tmp/scout757-renderer-integration.txt`).
+  Seventeen offline controls pass; independent review admits a new bounded
+  run. Independent product review found no blocker in context capture,
+  omissions, output parity, MCP and persisted label. No live acceptance yet.
+
 - #757 owned-kind attempt 1 failed at the TUI probe's unbound Home key after
   six CLI/MCP allowed/controller-denied/Pods-denied observations passed.
   Its failed receipt/logs are retained under ignored

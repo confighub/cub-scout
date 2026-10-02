@@ -41,8 +41,17 @@ func TestGitOpsStatusOwnedTUI(t *testing.T) {
 // Run this offline before live admission. It exercises the same production
 // viewport actions as the live probe without collecting Kubernetes evidence.
 func TestGitOpsStatusOwnedViewportControls(t *testing.T) {
-    _, checks := exerciseOwnedGitOpsViewport(t, GitOpsSummary{Context: "offline-viewport"})
+    content, checks := exerciseOwnedGitOpsViewport(t, GitOpsSummary{Context: "doctor-allowed"})
     for name, passed := range checks { if !passed { t.Fatalf("model action %s failed", name) } }
+    // The optional artifact feeds the Python validator using real production
+    // rendering instead of hand-written Markdown expected strings.
+    if path := os.Getenv("SCOUT_GITOPS_VIEWPORT_RESULT"); path != "" {
+        data := map[string]interface{}{"schema": "gitops-status-context-tui.v1", "passed": true,
+            "context": "doctor-allowed", "view": content, "checks": checks}
+        encoded, err := json.MarshalIndent(data, "", "  ")
+        if err != nil { t.Fatal(err) }
+        if err := os.WriteFile(path, append(encoded, '\n'), 0600); err != nil { t.Fatal(err) }
+    }
 }
 
 func exerciseOwnedGitOpsViewport(t *testing.T, summary GitOpsSummary) (string, map[string]bool) {

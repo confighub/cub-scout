@@ -78,7 +78,7 @@ class StatusValidationTests(unittest.TestCase):
                 ("controller-denied", capture.CONTROLLER_DENIED, "Modelplane | unreadable | forbidden"),
                 ("pods-denied", capture.PODS_DENIED, "pods: forbidden")):
             data = {"schema": "gitops-status-context-tui.v1", "passed": True, "context": context,
-                    "view": f"- Kubernetes context label: `{context}` (not a stable cluster ID)\n{suffix} Healthy",
+                    "view": f"- Kubernetes context label: ` {context} ` (not a stable cluster ID)\n{suffix} Healthy",
                     "checks": {"resize": True, "scroll": True, "scrollBack": True, "quit": True, "immutableSummary": True}}
             capture.validate_tui_probe(data, context=context, result=result)
         bad = {"schema": "gitops-status-context-tui.v1", "passed": True, "context": capture.ALLOWED,

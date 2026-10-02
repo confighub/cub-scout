@@ -264,7 +264,7 @@ def validate_tui_probe(data: dict, *, context: str, result: str) -> None:
     if data.get("context") != context or context not in (ALLOWED, CONTROLLER_DENIED, PODS_DENIED):
         raise RuntimeError("status TUI probe has an unknown selected context")
     view = data.get("view", "")
-    if f"- Kubernetes context label: `{context}` (not a stable cluster ID)" not in view:
+    if f"- Kubernetes context label: ` {context} ` (not a stable cluster ID)" not in view:
         raise RuntimeError("status TUI view omitted its selected context label")
     if result == "controller-denied" and ("forbidden" not in view.lower() or "unreadable" not in view.lower()):
         raise RuntimeError("status TUI hid controller API denial")
