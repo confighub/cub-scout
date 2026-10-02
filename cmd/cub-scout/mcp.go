@@ -605,6 +605,10 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 							"type":        "string",
 							"description": "Optional Kubernetes namespace scope.",
 						},
+						"context": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional exact kubeconfig context label for all Kubernetes reads. This is a label, not a stable cluster identity.",
+						},
 						"with_confighub": map[string]interface{}{
 							"type":        "boolean",
 							"description": "Include bounded ConfigHub release, unit-event, live-status, and event-consumer evidence. Requires cub auth.",
@@ -627,6 +631,13 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 			},
 			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
 				args := []string{"gitops", "status", "--format", "json"}
+				if raw, exists := arguments["context"]; exists {
+					name, ok := raw.(string)
+					if !ok {
+						return nil, fmt.Errorf("context must be a string")
+					}
+					args = append(args, "--kube-context", name)
+				}
 				if ns := argString(arguments, "namespace"); ns != "" {
 					args = append(args, "-n", ns)
 				}

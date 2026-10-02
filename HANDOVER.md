@@ -1,13 +1,57 @@
 # cub-scout execution handover
 
-**Current snapshot:** 2026-10-01. Verified merged baseline:
-[`23e1ec42`](https://github.com/confighub/cub-scout/commit/23e1ec4227ecf06b9add1b3da6e5bc44e797bb98).
+**Current snapshot:** 2026-10-02. Verified merged baseline:
+[`f2e708ac`](https://github.com/confighub/cub-scout/commit/f2e708ac43c9fedf068569acc97aae351163c737).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
 order, quality gates, budgets and decisions.
 
-## Laptop-close checkpoint — 2026-10-01
+## Resumed execution — 2026-10-02
+
+- #754 merged at `f2e708ac`; #750/#751 are closed. Its independently reviewed
+  accepted source-truth/rendered-diff proof and retained failures remain at
+  `evals/trace-context-live/combined-report.json`. Do not rerun without cause.
+- #757 now has an accepted owned-kind CLI/MCP/TUI proof on attempt 6.
+  [The report](evals/gitops-status-context/live-proof-report.json) pins product
+  `00e1375e` and helper/probe `e7757e13`, retaining all artifact hashes and five
+  failed attempts. All nine phases made 35 selected-endpoint GETs; real
+  ModelDeployment/Pod 403s remain visible, with controller health preserved.
+  Exact auth stub calls are CLI 1/MCP 3/TUI 1/old 0. Actual viewport actions,
+  shared/upstream/observation config integrity and owned cleanup passed.
+  This is synthetic controller evidence on a real kind API/RBAC, with local
+  unauthenticated ConfigHub stub; no real controllers/server/governance, paid
+  evaluation, terminal UX/refresh navigation or savings claim.
+- Independent helper reviews repaired ambient-equals-selected configurations,
+  snapshot/log cleanup races, unbound Home, padded Markdown validation, slow
+  startup and CRD storage initialization. Eighteen offline controls pass; the
+  pinned actual viewport/renderer integration passes. Raw attempts 1–6 are
+  retained under ignored `evals/results/gitops-status-context-20261002/`.
+  Attempt 4's uncertain node was separately identity-reviewed and removed;
+  its original receipt remains failed beside `ownership-cleanup.json`.
+- Product `00e1375e` passed build/full offline Go
+  (`/tmp/scout757-resume-full-go-test.txt`); main merge `f4c65ae7` passed focused
+  GitOps/source-truth and exact scaffold checks. Independent product review
+  found no blocker. Independent final proof/report review passed; exact final-head CI/merge
+  remain pending. Inspect results before a separate match-head merge call.
+- Budget baseline remains 2,931.922436; latest balance 2,439.853093 leaves
+  107.930657 under the unchanged original 600-credit ceiling. No new #755
+  dispatch while the current packet is being finalized; reassess its total
+  implementation/review/proof cost before dispatch. Effective speed telemetry
+  remains unavailable; no speed override was requested.
+- #755 three-way context binding remains unimplemented. #599/#746 remain open.
+  SDK #758 is deferred, not a v2.13 whole-SDK migration mandate. Its recorded
+  candidate is source-truth's exact-space Unit/head-revision read; SDK v0.8.0
+  requires Go 1.25 while Scout declares 1.24.
+- v2.13 is not released. The paired baseline and genuine #591/#597 governance
+  fixtures remain missing; paid evaluations remain stopped. The SDK inventory
+  does not establish a permitted GET prerequisite-evaluation endpoint. Empty
+  scoped order lists do not prove ungoverned state; no POST/promote/dry-run
+  action calls are authorized. v2.12.4 remains the published release.
+
+## Historical laptop-close checkpoint — 2026-10-01
+
+The following records the saved state before the resumed execution above.
 
 - Main is `23e1ec4227ecf06b9add1b3da6e5bc44e797bb98`: #756 merged after
   independent review, build/full Go and all enabled exact-head CI passed.

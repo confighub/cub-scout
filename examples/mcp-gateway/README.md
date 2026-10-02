@@ -51,6 +51,11 @@ The gateway reuses existing CLI JSON command outputs:
 
 That keeps MCP responses aligned with the normal CLI contract.
 
+`gitops_status` accepts an optional string `context`, which maps to
+`gitops status --kube-context`. It binds the command's Kubernetes reads to one
+exact kubeconfig context; the returned context is a label, not a stable cluster
+identity. ConfigHub service/auth selection remains separate.
+
 ## Bounded Live Reads (Unreleased v2.10)
 
 For one exact resource, the `explain` tool accepts an opt-in bounded path:

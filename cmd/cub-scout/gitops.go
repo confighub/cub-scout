@@ -21,10 +21,11 @@ import (
 )
 
 var (
-	gitopsNamespace string
-	gitopsJSON      bool
-	gitopsFormat    string
-	gitopsTUI       bool
+	gitopsNamespace   string
+	gitopsKubeContext string
+	gitopsJSON        bool
+	gitopsFormat      string
+	gitopsTUI         bool
 
 	gitopsWithConfigHub       bool
 	gitopsConfigHubSpace      string
@@ -99,6 +100,7 @@ func init() {
 	gitopsCmd.AddCommand(gitopsStatusCmd)
 
 	gitopsStatusCmd.Flags().StringVarP(&gitopsNamespace, "namespace", "n", "", "Namespace to scan (default: all namespaces)")
+	gitopsStatusCmd.Flags().StringVar(&gitopsKubeContext, "kube-context", "", "Kubernetes context to inspect (default: current context)")
 	gitopsStatusCmd.Flags().StringVar(&gitopsFormat, "format", "ascii", "Output format: ascii, json, md")
 	gitopsStatusCmd.Flags().BoolVar(&gitopsTUI, "tui", false, "View this GitOps status snapshot in a scrollable terminal viewport")
 	gitopsStatusCmd.Flags().BoolVar(&gitopsJSON, "json", false, "Output as JSON (shorthand for --format json)")
@@ -108,8 +110,13 @@ func init() {
 	gitopsStatusCmd.Flags().StringVar(&gitopsConfigHubStaleAfter, "confighub-stale-after", "15m", "Treat ConfigHub live-status observations older than this as stale")
 }
 
+var newGitOpsStatusSessionForSelection = newTraceSessionForSelection
+
 // GitOpsSummary holds the summary of GitOps status for output
 type GitOpsSummary struct {
+	// Context is the selected kubeconfig context label, not a stable cluster ID.
+	Context string `json:"context,omitempty"`
+
 	// Backend is the detected GitOps backend: flux, argocd, worker, none
 	Backend string `json:"backend"`
 
@@ -186,11 +193,12 @@ type DeployerStatus struct {
 	SourceRef string `json:"sourceRef,omitempty"`
 
 	// Argo-specific fields
-	SyncStatus    string         `json:"syncStatus,omitempty"`
-	HealthStatus  string         `json:"healthStatus,omitempty"`
-	PodReady      int            `json:"podReady,omitempty"`
-	PodTotal      int            `json:"podTotal,omitempty"`
-	RuntimeIssues []RuntimeIssue `json:"runtimeIssues,omitempty"`
+	SyncStatus      string           `json:"syncStatus,omitempty"`
+	HealthStatus    string           `json:"healthStatus,omitempty"`
+	PodReady        int              `json:"podReady,omitempty"`
+	PodTotal        int              `json:"podTotal,omitempty"`
+	RuntimeIssues   []RuntimeIssue   `json:"runtimeIssues,omitempty"`
+	RuntimeOmission *RuntimeOmission `json:"runtimeOmission,omitempty"`
 
 	// Revision information
 	LastAppliedRevision   string `json:"lastAppliedRevision,omitempty"`
@@ -201,6 +209,13 @@ type DeployerStatus struct {
 type RuntimeIssue struct {
 	Reason string `json:"reason"`
 	Count  int    `json:"count"`
+}
+
+// RuntimeOmission records why Argo runtime Pod evidence is unavailable. It is
+// separate from the controller-reported health and never represents zero Pods.
+type RuntimeOmission struct {
+	Resource string `json:"resource"`
+	Reason   string `json:"reason"`
 }
 
 // IsHealthy returns true if the deployer is healthy
@@ -272,6 +287,13 @@ func (g GitOpsSummary) GetFailedSourceCount() int {
 
 func runGitOpsStatus(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
+	selection, err := clusterContextSelectionFromFlag(cmd)
+	if err != nil {
+		return err
+	}
+	if selection.explicit && os.Getenv("CUB_SCOUT_TEST_GITOPS_JSON") != "" {
+		return fmt.Errorf("--kube-context applies only to live GitOps status; it cannot be combined with CUB_SCOUT_TEST_GITOPS_JSON")
+	}
 	format, err := normalizeGitOpsStatusFormat(gitopsFormat, gitopsJSON)
 	if err != nil {
 		return err
@@ -296,13 +318,13 @@ func runGitOpsStatus(cmd *cobra.Command, args []string) error {
 		return loadAndRenderGitOpsStatusFromJSON(statusJSONFile, format)
 	}
 
-	// Build k8s config
-	cfg, err := buildConfig()
+	// Capture the selected kubeconfig once. Every Kubernetes reader below shares
+	// this session and its clients; ConfigHub service/auth remains independent.
+	session, err := newGitOpsStatusSessionForSelection(selection)
 	if err != nil {
 		return fmt.Errorf("failed to build kubernetes config: %w", err)
 	}
-
-	dynClient, err := dynamic.NewForConfig(cfg)
+	dynClient, err := session.dynamicClient()
 	if err != nil {
 		return fmt.Errorf("failed to create dynamic client: %w", err)
 	}
@@ -316,6 +338,7 @@ func runGitOpsStatus(cmd *cobra.Command, args []string) error {
 
 	// Build summary
 	summary := buildGitOpsSummary(ctx, dynClient, backendInfo)
+	summary.Context = session.contextLabel()
 	if gitopsWithConfigHub {
 		summary.DeliveryEvidence = collectGitOpsDeliveryEvidence(ctx, dynClient, evidenceOptions)
 	}
@@ -694,6 +717,21 @@ func gitOpsCoverageOmissionReason(err error) string {
 	}
 }
 
+func gitOpsRuntimeOmissionReason(err error) string {
+	switch {
+	case apierrors.IsForbidden(err):
+		return "forbidden"
+	case apierrors.IsUnauthorized(err):
+		return "unauthorized"
+	case apierrors.IsTimeout(err):
+		return "timeout"
+	case apierrors.IsNotFound(err):
+		return "not_found"
+	default:
+		return "list_failed"
+	}
+}
+
 func controllerCoverageResourceID(spec controllerResourceSpec) string {
 	if spec.GVR.Group == "" {
 		return fmt.Sprintf("%s/%s", spec.GVR.Version, spec.GVR.Resource)
@@ -762,7 +800,15 @@ func fetchDeployerResource(ctx context.Context, client dynamic.Interface, ref ag
 }
 
 func enrichArgoApplicationRuntimeStatus(ctx context.Context, client dynamic.Interface, status *DeployerStatus, app *unstructured.Unstructured) {
-	if client == nil || status == nil || app == nil {
+	if status == nil {
+		return
+	}
+	if client == nil {
+		status.RuntimeOmission = &RuntimeOmission{Resource: "pods", Reason: "client_unavailable"}
+		return
+	}
+	if app == nil {
+		status.RuntimeOmission = &RuntimeOmission{Resource: "pods", Reason: "application_metadata_missing"}
 		return
 	}
 
@@ -771,24 +817,29 @@ func enrichArgoApplicationRuntimeStatus(ctx context.Context, client dynamic.Inte
 		appName = strings.TrimSpace(app.GetName())
 	}
 	if appName == "" {
+		status.RuntimeOmission = &RuntimeOmission{Resource: "pods", Reason: "application_name_missing"}
 		return
 	}
 
 	destinationNamespace, _, _ := unstructured.NestedString(app.Object, "spec", "destination", "namespace")
 	destinationNamespace = strings.TrimSpace(destinationNamespace)
 	if destinationNamespace == "" {
+		status.RuntimeOmission = &RuntimeOmission{Resource: "pods", Reason: "destination_namespace_missing"}
 		return
 	}
 
 	podsGVR := kindToGVR("Pod")
 	if podsGVR.Resource == "" {
+		status.RuntimeOmission = &RuntimeOmission{Resource: "pods", Reason: "resource_unsupported"}
 		return
 	}
 
 	podList, err := client.Resource(podsGVR).Namespace(destinationNamespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
+		status.RuntimeOmission = &RuntimeOmission{Resource: "pods", Reason: gitOpsRuntimeOmissionReason(err)}
 		return
 	}
+	status.RuntimeOmission = nil
 
 	issueCounts := map[string]int{}
 	for i := range podList.Items {
@@ -955,6 +1006,9 @@ func outputGitOpsStatusHuman(summary GitOpsSummary) error {
 
 	fmt.Printf("  %sBackend:%s   %s%s%s\n", colorDim, colorReset, backendColor, strings.ToUpper(summary.Backend), colorReset)
 	fmt.Printf("  %sTransport:%s %s%s%s\n", colorDim, colorReset, transportColor, strings.ToUpper(summary.Transport), colorReset)
+	if summary.Context != "" {
+		fmt.Printf("  %sContext:%s   %s (kubeconfig label; not a stable cluster ID)\n", colorDim, colorReset, summary.Context)
+	}
 
 	// ConfigHub target if present
 	if summary.ConfigHubTarget != nil {
@@ -1265,6 +1319,9 @@ func outputDeployerStatus(dep DeployerStatus) {
 			for _, issue := range dep.RuntimeIssues {
 				fmt.Printf("        %s: %d pod(s)\n", issue.Reason, issue.Count)
 			}
+		}
+		if dep.RuntimeOmission != nil {
+			fmt.Printf("      Runtime evidence omitted: %s (%s)\n", dep.RuntimeOmission.Resource, dep.RuntimeOmission.Reason)
 		}
 	}
 

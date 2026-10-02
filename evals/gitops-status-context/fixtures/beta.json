@@ -1,0 +1,11 @@
+{
+  "context": "beta-context",
+  "backend": "worker",
+  "transport": "unknown",
+  "confighubTarget": {"space": "beta-marker", "target": "target"},
+  "controllerCoverage": [
+    {"family": "Modelplane", "status": "not_found", "resourceKinds": ["ModelDeployment"], "found": 0}
+  ],
+  "healthyCount": 0,
+  "failedCount": 0
+}

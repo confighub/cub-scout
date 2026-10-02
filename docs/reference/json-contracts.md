@@ -978,6 +978,13 @@ instead of silently claiming absence.
 }
 ```
 
+The summary also includes optional `context`, the kubeconfig context label
+captured for its Kubernetes reads. This label is not a stable cluster ID. An
+explicit `--kube-context` applies to backend detection, controller coverage,
+runtime reads, and Kubernetes-backed delivery evidence as one captured
+observation; missing or empty names fail before reads. ConfigHub service/auth
+selection is separate.
+
 ### Field Rules
 
 | Field | Rule |
@@ -991,6 +998,14 @@ instead of silently claiming absence.
 | `omissions[].resource` | API resource identifier in `<resource>.<group>/<version>` form when a group exists. |
 | `omissions[].reason` | One of `forbidden`, `unauthorized`, `timeout`, or `list_failed`. |
 | `omissions[].message` | Raw Kubernetes/client error message when available; callers should not parse it for decisions. |
+
+An Argo `Application` deployer may also include `runtimeOmission` when the
+separate destination-Pod read is unavailable or its namespace metadata is
+missing. It reports only the resource (`pods`) and a bounded reason such as
+`forbidden` or `destination_namespace_missing`; it does not overwrite
+controller-reported `ready`, `healthStatus`, or `stage`. Missing/denied runtime
+reads are not evidence of zero Pods, and no arbitrary API error payload is
+included.
 
 ## Observation Evidence Contract
 

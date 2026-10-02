@@ -1,0 +1,271 @@
+{
+  "schema": "gitops-status-context-proof-summary.v1",
+  "acceptance": "passed",
+  "captureHarnessCommit": "e7757e13d3c67893d358091c35f3e0d6e27438e2",
+  "productSourceCommit": "00e1375e0380ccf809ee4ef6f22abd47ca3119d1",
+  "oldProductSourceCommit": "4d3f28e9c4ab912736811c3b4896781f0a55b56b",
+  "receiptSha256": "659c0f5c72876cd58988ec54c0cf0d504dbf61469826080eb11c46050a4759ea",
+  "helperHashes": {
+    "evals/gitops-status-context/capture_live.py": "dc3d2e99b9ed57f7d8ac26900981f4b5c96b8bdb54562a5605057e0cd00492e7",
+    "evals/doctor-scan-context/capture.py": "4b870721b37a31986ca640382c7cdbf9473ee267f581175fb0203b38e59aad01",
+    "evals/trace-context-live/capture.py": "bace770fdb4944648b02d2d851ee5b192a6ab50eeaee1a8258b39c47e2c8f410",
+    "evals/trace-context-live/api_proxy.py": "08623798be826042dbe6457d926c8847f50095c17e910ece50529e2285bb49e6"
+  },
+  "tuiProbeSha256": "0b35f680719d1c2b9ecbecee525d384fa946ab40b3e1b8ed840d08c24b6d1c70",
+  "binaryHashes": {
+    "oldBinarySha256": "9504cf866e358b0c7b961ecd0a2c45c8fd2463eecc1db1fde387efe349905544",
+    "fixedBinarySha256": "eb355c66621d1d15110735addeb8a51e71e8c5dfbeebc8a2c35ea3c70af54b92",
+    "tuiBinarySha256": "e6b7dac9ae375e9808623aad20517dcda5620050a83d5245942a2c24a9dd4ff2"
+  },
+  "scope": "Synthetic inert Argo Application and ModelDeployment CRDs on a real owned kind API/RBAC; synthetic local unauthenticated cub stub.",
+  "limits": [
+    "No installed Argo/Modelplane controller or reconciliation proof",
+    "No real ConfigHub authentication or server/governance evidence",
+    "Viewport-model actions only, not terminal UX or refresh navigation",
+    "Context labels are not stable cluster identity",
+    "No paid model execution or agent dollar/credit savings claim"
+  ],
+  "observations": [
+    {
+      "name": "cli-allowed",
+      "selectedContextLabel": "doctor-allowed",
+      "ambientContextDiffers": true,
+      "requestCount": 35,
+      "httpStatuses": {
+        "404": 30,
+        "200": 5
+      },
+      "syntheticAuthCalls": 1,
+      "expectedForbiddenPath": null,
+      "tuiResultSha256": null
+    },
+    {
+      "name": "mcp-allowed",
+      "selectedContextLabel": "doctor-allowed",
+      "ambientContextDiffers": true,
+      "requestCount": 35,
+      "httpStatuses": {
+        "404": 30,
+        "200": 5
+      },
+      "syntheticAuthCalls": 3,
+      "expectedForbiddenPath": null,
+      "tuiResultSha256": null
+    },
+    {
+      "name": "cli-controller-denied",
+      "selectedContextLabel": "doctor-controller-denied",
+      "ambientContextDiffers": true,
+      "requestCount": 35,
+      "httpStatuses": {
+        "404": 30,
+        "200": 4,
+        "403": 1
+      },
+      "syntheticAuthCalls": 1,
+      "expectedForbiddenPath": "/apis/modelplane.ai/v1alpha1/namespaces/scout-gitops-context-proof/modeldeployments",
+      "tuiResultSha256": null
+    },
+    {
+      "name": "mcp-controller-denied",
+      "selectedContextLabel": "doctor-controller-denied",
+      "ambientContextDiffers": true,
+      "requestCount": 35,
+      "httpStatuses": {
+        "404": 30,
+        "200": 4,
+        "403": 1
+      },
+      "syntheticAuthCalls": 3,
+      "expectedForbiddenPath": "/apis/modelplane.ai/v1alpha1/namespaces/scout-gitops-context-proof/modeldeployments",
+      "tuiResultSha256": null
+    },
+    {
+      "name": "cli-pods-denied",
+      "selectedContextLabel": "doctor-pods-denied",
+      "ambientContextDiffers": true,
+      "requestCount": 35,
+      "httpStatuses": {
+        "404": 30,
+        "200": 4,
+        "403": 1
+      },
+      "syntheticAuthCalls": 1,
+      "expectedForbiddenPath": "/api/v1/namespaces/scout-gitops-context-proof/pods",
+      "tuiResultSha256": null
+    },
+    {
+      "name": "mcp-pods-denied",
+      "selectedContextLabel": "doctor-pods-denied",
+      "ambientContextDiffers": true,
+      "requestCount": 35,
+      "httpStatuses": {
+        "404": 30,
+        "200": 4,
+        "403": 1
+      },
+      "syntheticAuthCalls": 3,
+      "expectedForbiddenPath": "/api/v1/namespaces/scout-gitops-context-proof/pods",
+      "tuiResultSha256": null
+    },
+    {
+      "name": "tui-allowed",
+      "selectedContextLabel": "doctor-allowed",
+      "ambientContextDiffers": true,
+      "requestCount": 35,
+      "httpStatuses": {
+        "404": 30,
+        "200": 5
+      },
+      "syntheticAuthCalls": 1,
+      "expectedForbiddenPath": null,
+      "tuiResultSha256": "efe3a8993aa2d40b8ae4824686d430e2b0a391727cc221ad4bf98d05dbd5be4b"
+    },
+    {
+      "name": "tui-controller-denied",
+      "selectedContextLabel": "doctor-controller-denied",
+      "ambientContextDiffers": true,
+      "requestCount": 35,
+      "httpStatuses": {
+        "404": 30,
+        "200": 4,
+        "403": 1
+      },
+      "syntheticAuthCalls": 1,
+      "expectedForbiddenPath": "/apis/modelplane.ai/v1alpha1/namespaces/scout-gitops-context-proof/modeldeployments",
+      "tuiResultSha256": "4f8bce8733a79f8074f8cc0c83569b4c2ffb3dc61616b3bbed7002a7447fa596"
+    },
+    {
+      "name": "tui-pods-denied",
+      "selectedContextLabel": "doctor-pods-denied",
+      "ambientContextDiffers": true,
+      "requestCount": 35,
+      "httpStatuses": {
+        "404": 30,
+        "200": 4,
+        "403": 1
+      },
+      "syntheticAuthCalls": 1,
+      "expectedForbiddenPath": "/api/v1/namespaces/scout-gitops-context-proof/pods",
+      "tuiResultSha256": "d4c296bb04ead7407507247a55ced2250377d138a535abe4dde7bc48660b7709"
+    }
+  ],
+  "observationConfigs": {
+    "allowed.kubeconfig": {
+      "before": "b735308c2b09e469d992a80e092ed933fda8010de376f6d429422f004f8c4dc1",
+      "after": "b735308c2b09e469d992a80e092ed933fda8010de376f6d429422f004f8c4dc1"
+    },
+    "controller-denied.kubeconfig": {
+      "before": "ca6153395b3d621ffef2b19dd1ab93db85a6cee682c0037ad2739a677044f01f",
+      "after": "ca6153395b3d621ffef2b19dd1ab93db85a6cee682c0037ad2739a677044f01f"
+    },
+    "pods-denied.kubeconfig": {
+      "before": "ca6153395b3d621ffef2b19dd1ab93db85a6cee682c0037ad2739a677044f01f",
+      "after": "ca6153395b3d621ffef2b19dd1ab93db85a6cee682c0037ad2739a677044f01f"
+    }
+  },
+  "cleanup": {
+    "privateDirectoryRemoved": true,
+    "sharedKubeconfigUnchanged": true,
+    "privateKubeconfigUnchangedDuringReads": true,
+    "retainedWorkDirectory": null,
+    "pendingAPIRequests": [],
+    "cleanupErrors": []
+  },
+  "retainedRawArtifacts": "evals/results/gitops-status-context-20261002/attempt-6/",
+  "rawArtifacts": {
+    "api-events.jsonl": "9121e009795fc02a647bdb0018578eb8d930378df3b7307e6014824f09b0b93e",
+    "capture.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cub-shim.jsonl": "70aba007db889b5a8cabf3d90a39ff536c3c5646138f12074fa4f127dc7ee4f3",
+    "receipt.json": "659c0f5c72876cd58988ec54c0cf0d504dbf61469826080eb11c46050a4759ea",
+    "tui-allowed.json": "efe3a8993aa2d40b8ae4824686d430e2b0a391727cc221ad4bf98d05dbd5be4b",
+    "tui-controller-denied.json": "4f8bce8733a79f8074f8cc0c83569b4c2ffb3dc61616b3bbed7002a7447fa596",
+    "tui-pods-denied.json": "d4c296bb04ead7407507247a55ced2250377d138a535abe4dde7bc48660b7709"
+  },
+  "retainedFailures": [
+    {
+      "attempt": 1,
+      "acceptance": "failed",
+      "error": "RuntimeError: command failed in phase tui-allowed; see retained receipt",
+      "receiptSha256": "ca2599b32da3814d17dae18241b2d5a8962593a3c6c34c4c82d5bb3aab8b22d5",
+      "ownedClusterCreated": true,
+      "privateDirectoryRemoved": true,
+      "sharedKubeconfigUnchanged": true,
+      "cleanupErrors": [
+        "unvalidated Kubernetes traffic remained after observations"
+      ],
+      "artifacts": {
+        "api-events.jsonl": "879c220e775342b6a2f99a49e64a494db9e8697827abb0fdb4478cf541152b70",
+        "capture.log": "430fe65154290bc7779e45b6b73d164e23c5c8e352491e98c5e3158aef2d6fbe",
+        "cub-shim.jsonl": "1e2cb351717448d67346424ffe61ee58c7d3aa824ae8fe244577bb79614b2304",
+        "receipt.json": "ca2599b32da3814d17dae18241b2d5a8962593a3c6c34c4c82d5bb3aab8b22d5"
+      }
+    },
+    {
+      "attempt": 2,
+      "acceptance": "failed",
+      "error": "RuntimeError: status TUI view omitted its selected context label",
+      "receiptSha256": "308eb07d242a6bd26233fd02f43b28e9ddd0a9340e9e40c7d617182b5224d728",
+      "ownedClusterCreated": true,
+      "privateDirectoryRemoved": true,
+      "sharedKubeconfigUnchanged": true,
+      "cleanupErrors": [
+        "unvalidated Kubernetes traffic remained after observations"
+      ],
+      "artifacts": {
+        "api-events.jsonl": "879c220e775342b6a2f99a49e64a494db9e8697827abb0fdb4478cf541152b70",
+        "capture.log": "f72c3d274afd47bc8b1cd67a3913ad77bf52abc84aac61e46c4bb49ed0da40ae",
+        "cub-shim.jsonl": "1e2cb351717448d67346424ffe61ee58c7d3aa824ae8fe244577bb79614b2304",
+        "receipt.json": "308eb07d242a6bd26233fd02f43b28e9ddd0a9340e9e40c7d617182b5224d728",
+        "tui-allowed.json": "efe3a8993aa2d40b8ae4824686d430e2b0a391727cc221ad4bf98d05dbd5be4b"
+      }
+    },
+    {
+      "attempt": 3,
+      "acceptance": "failed",
+      "error": "RuntimeError: capture checkout must be committed and clean",
+      "receiptSha256": "e85eda6b5e16301dce4ccfcf97c6b8ba48485efaf3a77deb4d66e0f5eeb73aa1",
+      "ownedClusterCreated": false,
+      "privateDirectoryRemoved": true,
+      "sharedKubeconfigUnchanged": true,
+      "cleanupErrors": [],
+      "artifacts": {
+        "capture.log": "0169bc23ed2fe89983a51687800eb015a5f1681fad0a644a13ac3edb301a85db",
+        "receipt.json": "e85eda6b5e16301dce4ccfcf97c6b8ba48485efaf3a77deb4d66e0f5eeb73aa1"
+      }
+    },
+    {
+      "attempt": 4,
+      "acceptance": "failed",
+      "error": "RuntimeError: command failed in phase create-owned-cluster; see retained receipt",
+      "receiptSha256": "8ef8ba9252863267ff821f119b82f91e27c17d064f780e9f1513f60ec49628bf",
+      "ownedClusterCreated": false,
+      "privateDirectoryRemoved": true,
+      "sharedKubeconfigUnchanged": true,
+      "cleanupErrors": [
+        "creation failed; possible partial resources require ownership review before removal"
+      ],
+      "artifacts": {
+        "capture.log": "327b93928b74ade6a8c6faca6cfea8020f0c405aea0142c2536688a3232f8c6b",
+        "ownership-cleanup.json": "0ecf1a6d55742b8f5fa718577d9143e9ba5b404e063250803068eb6fefe5a970",
+        "receipt.json": "8ef8ba9252863267ff821f119b82f91e27c17d064f780e9f1513f60ec49628bf"
+      }
+    },
+    {
+      "attempt": 5,
+      "acceptance": "failed",
+      "error": "RuntimeError: Kubernetes request returned an unexpected status",
+      "receiptSha256": "80d8aa97aa6f77e9c7c9a37a69944603254d4d1a4d08c328c345ac3045d6345f",
+      "ownedClusterCreated": true,
+      "privateDirectoryRemoved": true,
+      "sharedKubeconfigUnchanged": true,
+      "cleanupErrors": [],
+      "artifacts": {
+        "api-events.jsonl": "c0e36792a320a2e9ce4ce15b00270c5694d70f9e6b701233df0c7ccddca69775",
+        "capture.log": "09c178a6489dece04933a5940a75cf70df17f9496961572e3d956aae786c3198",
+        "cub-shim.jsonl": "10d018efcb88acc6e7ddc09b97277e1354e46567319c7ac3428bd866c320790b",
+        "receipt.json": "80d8aa97aa6f77e9c7c9a37a69944603254d4d1a4d08c328c345ac3045d6345f"
+      }
+    }
+  ]
+}

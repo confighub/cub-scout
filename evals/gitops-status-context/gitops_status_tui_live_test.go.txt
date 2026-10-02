@@ -1,0 +1,80 @@
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"os"
+	"testing"
+
+	tea "github.com/charmbracelet/bubbletea"
+)
+
+// Collect through the real Cobra command, without collector/auth seams, then
+// drive the real viewport. This is not terminal UX or refresh-navigation proof.
+func TestGitOpsStatusOwnedTUI(t *testing.T) {
+	contextName := os.Getenv("SCOUT_GITOPS_TUI_CONTEXT")
+	resultPath := os.Getenv("SCOUT_GITOPS_TUI_RESULT")
+	if contextName == "" || resultPath == "" {
+		t.Skip("explicit owned-kind GitOps status capture only")
+	}
+	configPath := os.Getenv("KUBECONFIG")
+	before, err := os.ReadFile(configPath)
+	if err != nil { t.Fatal(err) }
+	output, err := runGitOpsStatusArgs(t, "gitops", "status", "--namespace", "scout-gitops-context-proof",
+		"--kube-context", contextName, "--format", "json")
+	if err != nil { t.Fatalf("GitOps status collector failed: %v", err) }
+	var summary GitOpsSummary
+	if err := json.Unmarshal([]byte(output), &summary); err != nil { t.Fatal(err) }
+	if summary.Context != contextName { t.Fatalf("selected context = %q", summary.Context) }
+	content, checks := exerciseOwnedGitOpsViewport(t, summary)
+	after, err := os.ReadFile(configPath)
+	if err != nil { t.Fatal(err) }
+	checks["immutableSummary"] = checks["immutableSummary"] && bytes.Equal(before, after)
+	for name, passed := range checks { if !passed { t.Fatalf("model action %s failed", name) } }
+	data := map[string]interface{}{"schema": "gitops-status-context-tui.v1", "passed": true,
+		"context": summary.Context, "view": content, "checks": checks}
+	encoded, err := json.MarshalIndent(data, "", "  ")
+	if err != nil { t.Fatal(err) }
+	if err := os.WriteFile(resultPath, append(encoded, '\n'), 0600); err != nil { t.Fatal(err) }
+}
+
+// Run this offline before live admission. It exercises the same production
+// viewport actions as the live probe without collecting Kubernetes evidence.
+func TestGitOpsStatusOwnedViewportControls(t *testing.T) {
+    content, checks := exerciseOwnedGitOpsViewport(t, GitOpsSummary{Context: "doctor-allowed"})
+    for name, passed := range checks { if !passed { t.Fatalf("model action %s failed", name) } }
+    // The optional artifact feeds the Python validator using real production
+    // rendering instead of hand-written Markdown expected strings.
+    if path := os.Getenv("SCOUT_GITOPS_VIEWPORT_RESULT"); path != "" {
+        data := map[string]interface{}{"schema": "gitops-status-context-tui.v1", "passed": true,
+            "context": "doctor-allowed", "view": content, "checks": checks}
+        encoded, err := json.MarshalIndent(data, "", "  ")
+        if err != nil { t.Fatal(err) }
+        if err := os.WriteFile(path, append(encoded, '\n'), 0600); err != nil { t.Fatal(err) }
+    }
+}
+
+func exerciseOwnedGitOpsViewport(t *testing.T, summary GitOpsSummary) (string, map[string]bool) {
+    t.Helper()
+	model := newGitOpsStatusTUIModel(summary)
+	content := model.content
+	// A short viewport forces this real summary to overflow, so PgDown must
+	// advance the actual YOffset and alter the rendered viewport.
+	updated, _ := model.Update(tea.WindowSizeMsg{Width: 60, Height: 8})
+	model = updated.(*gitOpsStatusTUIModel)
+	checks := map[string]bool{"resize": model.viewport.Width == 58 && model.viewport.Height == 5}
+	if model.viewport.TotalLineCount() <= model.viewport.Height { t.Fatal("summary does not overflow probe viewport") }
+	beforeView := model.View()
+	beforeOffset := model.viewport.YOffset
+	updated, _ = model.Update(tea.KeyMsg{Type: tea.KeyPgDown})
+	model = updated.(*gitOpsStatusTUIModel)
+	checks["scroll"] = model.viewport.YOffset > beforeOffset && model.View() != beforeView
+	updated, _ = model.Update(tea.KeyMsg{Type: tea.KeyPgUp})
+	model = updated.(*gitOpsStatusTUIModel)
+	checks["scrollBack"] = model.viewport.YOffset == beforeOffset && model.View() == beforeView
+	_, quit := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	if quit != nil { _, checks["quit"] = quit().(tea.QuitMsg) }
+
+    checks["immutableSummary"] = model.content == content
+    return content, checks
+}

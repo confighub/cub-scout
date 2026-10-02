@@ -1,0 +1,16 @@
+{
+  "context": "alpha-context",
+  "backend": "worker",
+  "transport": "unknown",
+  "confighubTarget": {"space": "alpha-marker", "target": "target"},
+  "deployers": [
+    {"kind": "Application", "name": "same", "namespace": "team", "ready": true, "stage": "healthy", "healthStatus": "Healthy",
+      "runtimeOmission": {"resource": "pods", "reason": "forbidden"}}
+  ],
+  "controllerCoverage": [
+    {"family": "Modelplane", "status": "unreadable", "resourceKinds": ["ModelDeployment"], "found": 0,
+      "omissions": [{"resource": "modeldeployments.modelplane.ai/v1alpha1", "reason": "forbidden"}]}
+  ],
+  "healthyCount": 1,
+  "failedCount": 0
+}

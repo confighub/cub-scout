@@ -307,6 +307,10 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			checkTraceContextBindingScaffold(t, caseDir)
 			continue
 		}
+		if filepath.Base(caseDir) == "gitops-status-context" {
+			checkGitOpsStatusContextScaffold(t, caseDir)
+			continue
+		}
 		if filepath.Base(caseDir) == "trace-rendered-diff-contract" {
 			checkTraceRenderedDiffScaffold(t, caseDir)
 			continue
@@ -413,6 +417,67 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			if got, ok := written[name]; !ok || got != strings.TrimRight(string(want), "\n") {
 				t.Errorf("%s/scaffold.sh does not write its recorded %s; regenerate from the case's fixture source", caseDir, name)
 			}
+		}
+	}
+}
+
+// This opt-in interpretation case owns two synthetic status summaries. Pin
+// both fixture bytes and the exact copy-only scaffold so eval inputs cannot
+// drift or silently incorporate a live cluster export.
+func checkGitOpsStatusContextScaffold(t *testing.T, root string) {
+	t.Helper()
+	caseData, err := os.ReadFile(filepath.Join(root, "case.yaml"))
+	if err != nil || !strings.Contains(string(caseData), "FIXTURE-OWNED-SCAFFOLD") || !strings.Contains(string(caseData), "scaffold_script: scaffold.sh") {
+		t.Fatalf("GitOps context case does not declare its fixture-owned scaffold: %v", err)
+	}
+	hashes := map[string]string{
+		"alpha.json": "758a676bde8f23aa235158e273a1324dfb5b332a39ae66a075c506dbc20392c9",
+		"beta.json":  "fd2c3cdd7f1084c41388c7124c02fa6ae8009cf8750c1947666a6750df0b233a",
+	}
+	for name, want := range hashes {
+		data, err := os.ReadFile(filepath.Join(root, "fixtures", name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		sum := sha256.Sum256(data)
+		if got := hex.EncodeToString(sum[:]); got != want {
+			t.Fatalf("GitOps context fixture %s hash=%s, want %s", name, got, want)
+		}
+	}
+	script, err := os.ReadFile(filepath.Join(root, "scaffold.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	scriptHash := sha256.Sum256(script)
+	if got := hex.EncodeToString(scriptHash[:]); got != "71d3f5f6aadf9fcd966a7fd1f2781f0abad82b88ab0dda4e786c96e9728db854" {
+		t.Fatalf("GitOps context scaffold hash=%s", got)
+	}
+	workspace := t.TempDir()
+	scaffoldPath, err := filepath.Abs(filepath.Join(root, "scaffold.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	cmd := exec.Command("bash", scaffoldPath)
+	cmd.Dir = workspace
+	cmd.Env = offlineKubeconfigEnvironment()
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("GitOps context scaffold: %v: %s", err, output)
+	}
+	entries, err := os.ReadDir(filepath.Join(workspace, "recorded"))
+	if err != nil || len(entries) != len(hashes) {
+		t.Fatalf("GitOps context scaffold inventory count=%d err=%v", len(entries), err)
+	}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			t.Fatalf("unexpected directory in GitOps context scaffold: %s", entry.Name())
+		}
+		want, err := os.ReadFile(filepath.Join(root, "fixtures", entry.Name()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, err := os.ReadFile(filepath.Join(workspace, "recorded", entry.Name()))
+		if err != nil || !bytes.Equal(got, want) {
+			t.Fatalf("GitOps context scaffold changed %s: %v", entry.Name(), err)
 		}
 	}
 }

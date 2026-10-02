@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -113,6 +114,36 @@ func TestEnrichArgoApplicationRuntimeStatus_AddsPodReadinessAndIssues(t *testing
 	}
 	if issue.Count != 1 {
 		t.Fatalf("expected runtime issue count 1, got %d", issue.Count)
+	}
+}
+
+func TestEnrichArgoApplicationRuntimeStatusMissingNamespaceIsOmittedNotHealthy(t *testing.T) {
+	app := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": "argoproj.io/v1alpha1",
+		"kind":       "Application",
+		"metadata":   map[string]interface{}{"name": "app", "namespace": "argocd"},
+		"spec":       map[string]interface{}{"destination": map[string]interface{}{}},
+	}}
+	client := newGitOpsRuntimeFakeClient()
+	status := &DeployerStatus{Kind: "Application", Name: "app", Ready: true, Stage: "healthy", HealthStatus: "Healthy"}
+	enrichArgoApplicationRuntimeStatus(context.Background(), client, status, app)
+	encoded, err := json.Marshal(status)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var result map[string]interface{}
+	if err := json.Unmarshal(encoded, &result); err != nil {
+		t.Fatal(err)
+	}
+	omission, ok := result["runtimeOmission"].(map[string]interface{})
+	if !ok || omission["resource"] != "pods" || omission["reason"] != "destination_namespace_missing" {
+		t.Fatalf("missing runtime namespace must be explicit and scoped, got: %s", encoded)
+	}
+	if !status.Ready || status.HealthStatus != "Healthy" || status.PodTotal != 0 || len(status.RuntimeIssues) != 0 {
+		t.Fatalf("missing runtime metadata must not invent health or pod evidence: %+v", status)
+	}
+	if actions := client.Actions(); len(actions) != 0 {
+		t.Fatalf("missing namespace should not issue a pod read, got %d actions", len(actions))
 	}
 }
 

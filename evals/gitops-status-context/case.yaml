@@ -1,0 +1,5 @@
+# FIXTURE-OWNED-SCAFFOLD: synthetic recorded GitOps summaries; no model run.
+schema_version: "1.1"
+name: gitops-status-context
+context:
+  scaffold_script: scaffold.sh

@@ -43,14 +43,17 @@ type Metrics struct {
 
 // Record is one persisted connected summary artifact.
 type Record struct {
-	SchemaVersion string                     `json:"schemaVersion"`
-	Timestamp     time.Time                  `json:"timestamp"`
-	Type          string                     `json:"type"`
-	Cluster       string                     `json:"cluster"`
-	Scope         Scope                      `json:"scope,omitempty"`
-	Metrics       Metrics                    `json:"metrics"`
-	Source        string                     `json:"source,omitempty"`
-	Observation   *agent.ObservationEvidence `json:"observation,omitempty"`
+	SchemaVersion string    `json:"schemaVersion"`
+	Timestamp     time.Time `json:"timestamp"`
+	Type          string    `json:"type"`
+	Cluster       string    `json:"cluster"`
+	// ContextLabel is the selected kubeconfig context name, not a stable
+	// Kubernetes cluster identity.
+	ContextLabel string                     `json:"contextLabel,omitempty"`
+	Scope        Scope                      `json:"scope,omitempty"`
+	Metrics      Metrics                    `json:"metrics"`
+	Source       string                     `json:"source,omitempty"`
+	Observation  *agent.ObservationEvidence `json:"observation,omitempty"`
 }
 
 // Query filters persisted records.
