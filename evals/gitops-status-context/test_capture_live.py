@@ -272,6 +272,25 @@ class IsolationTests(unittest.TestCase):
             self.assertIn("final API snapshot failed", receipt["cleanupErrors"])
             self.assertTrue(receipt["privateDirectoryRemoved"])
 
+    def test_fixture_storage_readiness_is_bounded_setup_get_only(self):
+        transient = {"exitCode": 1, "failure": None, "stderr": "storage is (re)initializing", "stdout": ""}
+        app = {"exitCode": 0, "failure": None, "stdout": json.dumps({"kind": "ApplicationList", "items": []})}
+        model = {"exitCode": 0, "failure": None, "stdout": json.dumps({"kind": "ModelDeploymentList", "items": []})}
+        with patch.object(capture, "record_observation", side_effect=[transient, app, model]) as observe, \
+             patch.object(capture.time, "sleep") as sleep:
+            capture.wait_fixture_api_ready({}, kubectl="/private/kubectl", env={"KUBECONFIG": "/private/config"}, deadline=time.monotonic()+30)
+        self.assertEqual(3, observe.call_count)
+        sleep.assert_called_once_with(1)
+        for call in observe.call_args_list:
+            argv = call.args[2]
+            self.assertEqual(["/private/kubectl", "--context", capture.ALLOWED, "get", "--raw"], argv[:5])
+            self.assertIn(f"/namespaces/{capture.NAMESPACE}/", argv[-1])
+        for failure, count in ((transient, 5), ({**transient, "stderr": "Forbidden"}, 1)):
+            with patch.object(capture, "record_observation", return_value=failure) as observe, patch.object(capture.time, "sleep"):
+                with self.assertRaisesRegex(RuntimeError, "bounded setup"):
+                    capture.wait_fixture_api_ready({}, kubectl="/private/kubectl", env={}, deadline=time.monotonic()+30)
+            self.assertEqual(count, observe.call_count)
+
     def test_cleanup_reuses_owned_cluster_rules_for_uncertain_creation(self):
         receipt = {"commands": []}
         with patch.object(capture._lifecycle, "run", return_value={"exitCode": 0, "stdout": "partial-node", "failure": None}) as run:

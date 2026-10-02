@@ -9,6 +9,14 @@ order, quality gates, budgets and decisions.
 
 ## Resumed execution — 2026-10-02
 
+- #757 attempt 5 failed strict HTTP validation on the newly established
+  ModelDeployment API's HTTP 429 `storage is (re)initializing`. Scout retained
+  explicit `list_failed` coverage. Cleanup/shared and upstream read integrity
+  passed; failed receipt retained. Independent review admits setup-only
+  exact CRD GET readiness (five attempts maximum, only initialization errors
+  retried, unchanged overall/observation bounds). Eighteen controls pass.
+  One further serial lane is admitted; final acceptance remains pending.
+
 - #757 attempts 3/4 remain failed and retained: generated-bytecode clean-check
   refusal (no cluster) and a 150-second owned-kind control-plane startup
   timeout. Root reviewed exact node identity/labels/image and pre-create

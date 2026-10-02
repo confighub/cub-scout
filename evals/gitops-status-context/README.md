@@ -109,3 +109,14 @@ the failed receipt is unchanged. Both attempts are retained under ignored
 `evals/results/gitops-status-context-20261002/`. Independent review admits
 a serial retry with a 240-second startup ceiling within the original global
 600-second bound and unchanged 90-second Kubernetes readiness wait.
+
+Attempt 5 created the cluster but failed strict observation validation when
+the newly established ModelDeployment API returned HTTP 429, `storage is
+(re)initializing`. Scout exposed `list_failed` coverage; no absence was claimed.
+Cleanup and both read config integrity checks passed. Its failed receipt is
+retained under ignored `evals/results/gitops-status-context-20261002/attempt-5/`.
+The independently reviewed repair adds setup-only GET readiness for the two
+synthetic CRD list endpoints, with at most five attempts per endpoint, retrying
+only that storage-initialization error within the existing overall deadline.
+Observation status/denial assertions remain strict. Eighteen offline controls
+pass; admission is for one further serial run, not an acceptance claim.

@@ -274,6 +274,28 @@ def validate_tui_probe(data: dict, *, context: str, result: str) -> None:
         raise RuntimeError("status TUI probe omitted actual model actions")
 
 
+
+def wait_fixture_api_ready(receipt: dict, *, kubectl: str, env: dict, deadline: float) -> None:
+    # CRD Established can precede storage initialization. These are setup GETs
+    # only; observation receipts must still reject every unexpected status.
+    for group, resource, kind in (("argoproj.io", "applications", "ApplicationList"),
+                                   ("modelplane.ai", "modeldeployments", "ModelDeploymentList")):
+        route = f"/apis/{group}/v1alpha1/namespaces/{NAMESPACE}/{resource}"
+        for attempt in range(1, 6):
+            result = record_observation(receipt, f"fixture-api-ready-{resource}-{attempt}",
+                [kubectl, "--context", ALLOWED, "get", "--raw", route], env=env, deadline=deadline)
+            if succeeded(result):
+                body = json.loads(result["stdout"])
+                if not isinstance(body, dict) or body.get("kind") != kind or not isinstance(body.get("items"), list):
+                    raise RuntimeError("fixture API readiness returned an unexpected list")
+                break
+            if "storage is (re)initializing" not in result.get("stderr", "") or attempt == 5:
+                raise RuntimeError("synthetic fixture API did not become readable during bounded setup")
+            if time.monotonic() + 1 >= deadline:
+                raise RuntimeError("fixture API readiness exceeded proof deadline")
+            time.sleep(1)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--execute", action="store_true")
@@ -459,6 +481,7 @@ spec:
         # never appear in command arguments, environment or receipts.
         private_config.write_text(json.dumps(config) + "\n")
         private_config.chmod(0o600)
+        wait_fixture_api_ready(receipt, kubectl=kubectl, env=kube_env, deadline=deadline)
         clusters = {row["name"]: row["cluster"] for row in config.get("clusters", [])}
         users = {row["name"]: row["user"] for row in config.get("users", [])}
         contexts = {row["name"]: row["context"] for row in config.get("contexts", [])}
