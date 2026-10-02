@@ -14,7 +14,7 @@
 
 ## Context (Slack Thread 2026-01-14)
 
-**Jesper Joergensen:**
+**A colleague:**
 > As part of discovering how we can make ConfigHub easier to adopt for organizations already using Flux or Argo, we want to "nail" a couple of examples of typical repo structures for both Flux and Argo.
 
 ---

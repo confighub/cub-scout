@@ -183,7 +183,7 @@ ${BOLD}Want more?${NC}
   See: https://confighub.com/docs/getting-started
 
 ${BOLD}Larger scale demos:${NC}
-  Brian's KubeCon 2025 demo (312 units, 3 clusters):
+  The team's KubeCon 2025 demo (312 units, 3 clusters):
   https://github.com/confighub-kubecon-2025
   Slides: https://kccncna2025.sched.com/event/27FeG
 EOF

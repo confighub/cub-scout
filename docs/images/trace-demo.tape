@@ -11,6 +11,6 @@ Set Theme "Dracula"
 Set Padding 20
 
 # Run trace command on a Flux-managed resource
-Type "cd /Users/alexis/Public/github-repos/cub-scout && ./cub-scout trace deploy/order-service-traditional -n demo-traditional"
+Type "cd ~/Public/github-repos/cub-scout && ./cub-scout trace deploy/order-service-traditional -n demo-traditional"
 Enter
 Sleep 4s

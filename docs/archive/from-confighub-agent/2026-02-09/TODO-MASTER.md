@@ -117,8 +117,8 @@ Extend trace to verify source integrity all the way back to origin.
 
 | Example | Status | Needs |
 |---------|--------|-------|
-| `jesper-argocd` | Working | Document outputs |
-| `jesper-fluxcd` | Untested | Verify and document |
+| `internal-argocd` | Working | Document outputs |
+| `internal-fluxcd` | Untested | Verify and document |
 | `vm-fleet` | Untested | Verify with cub CLI |
 | `flux-bridge` | Untested | Test import flow |
 | Enterprise unhealthy | Demo only | Make runnable |
@@ -159,7 +159,7 @@ Extend trace to verify source integrity all the way back to origin.
 
 ### 5A. Session State Persistence
 
-From Brian Grant / Jesper Joergensen feedback.
+From team feedback.
 
 | Task | Effort | Files |
 |------|--------|-------|
@@ -237,7 +237,7 @@ Design doc: [`docs/TUI-SESSION-STATE.md`](https://github.com/confighubai/configh
 - [ ] Review if PROBLEMS.md needs updates
 
 ### From Session 01-10
-- [x] ~~Ask Charlie to review and merge [PR #5: Add bubbletea-based Import Wizard TUI](https://github.com/confighubai/confighub-agent/pull/5)~~ — Merged 2026-01-10
+- [x] ~~Ask a colleague to review and merge [PR #5: Add bubbletea-based Import Wizard TUI](https://github.com/confighubai/confighub-agent/pull/5)~~ — Merged 2026-01-10
 - [x] Created `RENDERED-MANIFEST-PATTERN.md` and `RENDERED-MANIFEST-PATTERN-FULL-PRODUCT.md`
 - [x] Added Boris Mode (verification-driven development) to CLAUDE.md
 - [x] Added Chrome extension setup instructions to CLAUDE.md
@@ -299,7 +299,7 @@ Design doc: [`docs/TUI-SESSION-STATE.md`](https://github.com/confighubai/configh
 | Item | Blocker |
 |------|---------|
 | Hub model migration path | Needs product decision |
-| LIVE vs GIT import UX | Needs Jesper feedback |
+| LIVE vs GIT import UX | Needs team feedback |
 | Which reference architectures to prioritize | Needs IITS input |
 | **Release schema design** | Needs architecture review |
 

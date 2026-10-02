@@ -4,7 +4,7 @@
 #
 # Usage:
 #   ./examples              # Test all examples (repo existence only)
-#   ./examples jesper       # Test Jesper's examples only
+#   ./examples internal     # Test internal examples only
 #   ./examples public       # Test public examples only
 #   ./examples --capture    # Deploy examples, run map, capture output
 #   ./examples --capture global_app  # Capture specific example
@@ -652,7 +652,7 @@ main() {
 
     # Examples to test/capture
     # Public examples: https://docs.confighub.com/get-started/examples/
-    local -a names=(jesper_argocd jesper_fluxcd global_app helm_platform vm_fleet flux_bridge)
+    local -a names=(internal_argocd internal_fluxcd global_app helm_platform vm_fleet flux_bridge)
     local -a paths=(
         "confighubai/examples-internal/argocd"
         "confighubai/examples-internal/fluxcd"
@@ -773,8 +773,8 @@ main() {
 
         # Filter by type
         case "$filter" in
-            jesper)
-                [[ "$name" != jesper_* ]] && continue
+            internal)
+                [[ "$name" != internal_* ]] && continue
                 ;;
             public)
                 [[ "$path" == confighubai/* ]] && continue

@@ -6,7 +6,7 @@ against a hand-authored set of surfaces and a declared strategy.
 
 Pairs with the consumer-side fixtures at
 `confighubai/confighub-ai-demo#264` — every fixture here will get a
-matching acceptance verdict + Charlie-readable receipt on that side.
+matching acceptance verdict + human-readable receipt on that side.
 
 ## Layout
 

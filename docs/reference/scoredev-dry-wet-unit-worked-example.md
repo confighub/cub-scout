@@ -9,7 +9,7 @@ Last updated: 2026-02-28
 This is a complete Score.dev example that matches the same dry/wet unit model used
 in the FluxCD and ArgoCD rendered-pipeline demos.
 
-It is equivalent in structure to Brian's Flux/Argo dry/wet unit solution:
+It is equivalent in structure to the team's Flux/Argo dry/wet unit solution:
 
 1. DRY intent is authored and versioned.
 2. Renderer units produce WET manifests.

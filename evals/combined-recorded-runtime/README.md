@@ -60,7 +60,7 @@ No repeat is needed for the proved source. The reproducible invocation shape is:
 
 ```sh
 PYTHONDONTWRITEBYTECODE=1 python3 evals/combined-recorded-runtime/run_pair.py \
-  --assets /Users/alexis/code/cub-scout/evals/results/linux-runtime-assets-20261001/assets \
+  --assets ~/code/cub-scout/evals/results/linux-runtime-assets-20261001/assets \
   --context <reviewed-local-context> --out /tmp/scout-combined-runtime-<fresh-id>
 ```
 

@@ -48,7 +48,7 @@ real controller executed a check then. No fixture field or summary renames
 
 The source pin is commit
 `8187910f9fe226e109e55c4d9c7c0e21297ff424` at the local repository
-`/Users/alexis/code/sveltos-confighub-work`. The helper verified an exact inventory and SHA-256 for every exported file:
+`~/code/sveltos-confighub-work`. The helper verified an exact inventory and SHA-256 for every exported file:
 `go.mod`, `go.sum`, the complete `internal/onboard/` tree, and the complete
 `chartrender/` package imported by `charts.go`, including tests and fixtures. It
 rejects missing, extra, or hash-mismatched files. The summary lookup uses the exact
@@ -92,7 +92,7 @@ is the retained evidence directory:
 
 ```sh
 python3 evals/sveltos-hlt-04-report-freshness/replay.py --execute \
-  --source-root /Users/alexis/code/sveltos-confighub-work \
+  --source-root ~/code/sveltos-confighub-work \
   --output /tmp/scout-hlt04-replay-evidence-20261001
 ```
 

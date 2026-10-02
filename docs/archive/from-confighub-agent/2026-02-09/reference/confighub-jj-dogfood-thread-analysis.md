@@ -31,9 +31,9 @@
 
 ---
 
-## The Problems (from Jesper #3336, Philipp, and internal feedback)
+## The Problems (from #3336, Philipp, and internal feedback)
 
-### Jesper's Dogfooding Pain Points
+### Dogfooding Pain Points (#3336)
 
 | # | Problem | Quote |
 |---|---------|-------|
@@ -48,11 +48,11 @@
 
 > "Isn't this same thing doomed to happen with units and functions in a space? Some folks do something ad-hoc on the unit level. Then there will eventually be a bunch of triggers on the space level that need to be kept aligned. Eventually the software changes and the triggers in per environment spaces diverge and I end up with an error that none of the lower environments caught and that takes down my production environment."
 
-### Brian's Warning
+### A Colleague's Warning
 
 > "I don't believe that simply performing ETL on config and creating a config data warehouse a la rendered manifest pattern has enough value to be a product."
 
-### Jesper's Value Articulation
+### Value Articulation (#3336)
 
 > "ConfigHub is source of truth for the config data that tracks an actual live resource... It is an operational system of record for what was, is and will be in the real system, and how it evolved."
 
@@ -121,7 +121,7 @@
 
 ### Problem 1: "Deployment is infuriating, can't see what's happening"
 
-**Jesper:** "You don't know what's happening underneath. I use Claude with kubectl all the time."
+**Dogfooding feedback (#3336):** "You don't know what's happening underneath. I use Claude with kubectl all the time."
 
 **Solution: Map + Agent**
 
@@ -157,7 +157,7 @@ You get visibility without committing to the write path. If Worker fails, cub-ag
 
 ### Problem 2: "GitHub is still center of universe"
 
-**Jesper:** "Config starts in github and then evolves into ConfigHub... developing the concept of 'config source' symmetrical to 'config target'."
+**Dogfooding feedback (#3336):** "Config starts in github and then evolves into ConfigHub... developing the concept of 'config source' symmetrical to 'config target'."
 
 **Solution: Git (DRY) → render → Unit (WET) → optional sync-back to Git**
 
@@ -198,7 +198,7 @@ Git push → render → ConfigHub Variant. GitHub is still the trigger. ConfigHu
 
 ### Problem 3: "Organization is hard — space vs unit dichotomy"
 
-**Jesper:** "Dichotomy between 'space oriented' and 'unit oriented' organization... creating a double usage of space as both higher level organizing construct and also 'environment'."
+**Dogfooding feedback (#3336):** "Dichotomy between 'space oriented' and 'unit oriented' organization... creating a double usage of space as both higher level organizing construct and also 'environment'."
 
 **Solution: Three levels with labels — Hub → App Space → Unit (with app/variant labels)**
 
@@ -247,7 +247,7 @@ Hub
 
 ### Problem 4: "Triggers not worth the squeeze"
 
-**Jesper:** "It's very hard to create an intuitive UX when you have many functions that do almost the same thing... it required 6 triggers on a unit with just a few resources."
+**Dogfooding feedback (#3336):** "It's very hard to create an intuitive UX when you have many functions that do almost the same thing... it required 6 triggers on a unit with just a few resources."
 
 **Philipp:** "How would I keep these in-sync if something changes in my app?"
 
@@ -289,7 +289,7 @@ They can't — Actions live on the App Space, not per-Unit. All Units in the App
 
 ### Problem 5: "Variant propagation is unsolved"
 
-**Jesper:** "Propagating some changes while NOT propagating other changes between variants is IMO an unsolved or poorly solved problem in git today."
+**Dogfooding feedback (#3336):** "Propagating some changes while NOT propagating other changes between variants is IMO an unsolved or poorly solved problem in git today."
 
 **Solution: WET configs in Units + selective propagation via Map queries**
 
@@ -319,7 +319,7 @@ cub mutate --space philipp-localdev \
 
 ### Problem 6: "Bulk changes need intent"
 
-**Jesper:** "Performing bulk changes that are grouped by intent is an unsolved problem. For example, update all redis to v2 because of a CVE... in ConfigHub these can be performed as a 'transaction' with documented reason, metadata (links to tickets), audit trail."
+**Dogfooding feedback (#3336):** "Performing bulk changes that are grouped by intent is an unsolved problem. For example, update all redis to v2 because of a CVE... in ConfigHub these can be performed as a 'transaction' with documented reason, metadata (links to tickets), audit trail."
 
 **Solution: Changesets**
 
@@ -405,7 +405,7 @@ This happens when:
 
 ---
 
-## Jesper's "Cut to the Bone" Value
+## The "Cut to the Bone" Value
 
 > "If we really 'cut to the bone', then here's how I see the value: It is challenging to perform changes across a complex topology of config."
 

@@ -499,7 +499,7 @@ RESULT: ✓ PROVEN - cub-scout works at level 'full'
 **CLI Output:**
 ```
 $ ./cub-scout status
-ConfigHub:  ● Connected (alexis@confighub.com)
+ConfigHub:  ● Connected (user@example.com)
 Cluster:    prod-east
 Context:    eks-prod-east
 Worker:     ● bridge-prod (connected)

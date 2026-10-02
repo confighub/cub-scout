@@ -118,7 +118,7 @@ Those belong in roadmap documents.
 
 This guide consolidates product content from:
 
-- `/Users/alexis/Public/github-repos/confighub-agent/planning/RENDERED-MANIFEST-PATTERN.md`
-- `/Users/alexis/Public/github-repos/confighub-agent/planning/RENDERED-MANIFEST-PATTERN-FULL-PRODUCT.md`
-- `/Users/alexis/Public/github-repos/confighub-agent/planning/REPO-SKELETON-TAXONOMY.md`
+- `~/Public/github-repos/confighub-agent/planning/RENDERED-MANIFEST-PATTERN.md`
+- `~/Public/github-repos/confighub-agent/planning/RENDERED-MANIFEST-PATTERN-FULL-PRODUCT.md`
+- `~/Public/github-repos/confighub-agent/planning/REPO-SKELETON-TAXONOMY.md`
 

@@ -184,9 +184,9 @@ The same rules locked into #393 apply here, in code:
 
 The prerequisite has shipped when **all** of the following are true:
 
-1. `find /Users/alexis/code/confighub/internal -iname '*initiative*' -path '*models*'` returns at least one Go file (Path 1)
+1. `find ~/code/confighub/internal -iname '*initiative*' -path '*models*'` returns at least one Go file (Path 1)
    **— OR —**
-   `find /Users/alexis/code/sdk/cmd/cub -iname 'initiative*'` returns CLI files (Path 2 via SDK)
+   `find ~/code/sdk/cmd/cub -iname 'initiative*'` returns CLI files (Path 2 via SDK)
 2. `cub initiative` (or the equivalent helper) responds to `--help`
    without error
 3. The shape returned by `cub initiative get <uuid> -o json` is

@@ -2,7 +2,7 @@
 
 **Status:** Design spec (not yet implemented)
 
-**Source:** Brian Grant / Jesper Joergensen feedback
+**Source:** Team feedback
 
 > "You might want to save where you are session state. Otherwise, you have to start over from scratch and go back to where you are."
 
@@ -261,7 +261,7 @@ ConfigHub GUI could show:
 │     ├─ Started: 2 hours ago                                    │
 │     └─ Workloads: 2 selected, 2 imported                       │
 │                                                                │
-│  brian@confighub.com                                           │
+│  colleague@example.com                                         │
 │  └─ prod-east cluster                                          │
 │     ├─ Step: Review workloads (2/7)                            │
 │     └─ Workloads: 15 detected                                  │

@@ -21,7 +21,7 @@ import time
 from typing import Any
 
 
-SOURCE_ROOT = Path("/Users/alexis/code/sveltos-confighub-work")
+SOURCE_ROOT = Path.home() / "code/sveltos-confighub-work"
 SOURCE_COMMIT = "8187910f9fe226e109e55c4d9c7c0e21297ff424"
 SOURCE_HASHES = {
     "go.mod": "e480afbdc90c7571cbdee94a91008d04732b7cf3e07c4844fd9512112f2c3eec",

@@ -161,7 +161,7 @@ cub-scout demo scenario bigbank-incident
 cub-scout demo list
 ```
 
-For Brian's larger scale demos (312 units, 3 clusters), see:
+For the team's larger scale demos (312 units, 3 clusters), see:
 https://github.com/confighub-kubecon-2025
 
 ---

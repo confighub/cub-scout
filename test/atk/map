@@ -28,7 +28,7 @@
 #   ./map confighub          # ConfigHub hierarchy (Org/Space/Unit/Target/Worker)
 #   ./map --json             # Full data as JSON
 #
-# IaC Philosophy views (Brian Grant):
+# IaC Philosophy views:
 #   ./map drift              # Drift detection - resources diverged from desired state
 #   ./map sprawl             # Configuration sprawl - quantify config sources
 #   ./map bypass             # Factory bypass - changes outside GitOps

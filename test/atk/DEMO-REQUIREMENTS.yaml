@@ -193,7 +193,7 @@ examples:
     workers: []
 
 # ============================================
-# KUBECON DEMO SPACES - Brian's larger demos
+# KUBECON DEMO SPACES - the team's larger demos
 # ============================================
 # These require specific spaces with workers running
 

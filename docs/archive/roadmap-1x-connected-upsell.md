@@ -29,7 +29,7 @@ The goal is to sequence 1.x so we:
 ## ConfigHub interface boundaries
 
 - `cub` CLI is an external interface contract for connected features.
-- `confighub-agent` connected features depend on `cub` command behavior (arguments, exit codes, and stdout/JSON shape), as documented in `/Users/alexis/Public/github-repos/confighub-agent/README.md:16`.
+- `confighub-agent` connected features depend on `cub` command behavior (arguments, exit codes, and stdout/JSON shape), as documented in `~/Public/github-repos/confighub-agent/README.md:16`.
 - `cub-scout` connected mode depends on `cub auth login` semantics (credential/session creation and later context resolution), as documented in `README.md:80`.
 - Standalone cluster exploration in `cub-scout` must remain functional without `cub`.
 

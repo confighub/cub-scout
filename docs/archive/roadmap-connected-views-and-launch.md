@@ -127,6 +127,6 @@ Promote backlog items into release roadmap only when:
 
 Roadmap extraction source docs:
 
-- `/Users/alexis/Public/github-repos/confighub-agent/planning/VIEW-TIERS.md`
-- `/Users/alexis/Public/github-repos/confighub-agent/planning/RM-MOCKUPS.md`
-- `/Users/alexis/Public/github-repos/confighub-agent/planning/PRODUCT-PLAN-LAUNCH.md`
+- `~/Public/github-repos/confighub-agent/planning/VIEW-TIERS.md`
+- `~/Public/github-repos/confighub-agent/planning/RM-MOCKUPS.md`
+- `~/Public/github-repos/confighub-agent/planning/PRODUCT-PLAN-LAUNCH.md`

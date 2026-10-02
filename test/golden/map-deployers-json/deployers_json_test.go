@@ -175,10 +175,10 @@ func TestMapDeployersJSON_MultipleDeployers(t *testing.T) {
 	defer cleanupTestNamespace(t)
 
 	// Create multiple Deployments (created out of alphabetical order to test sorting)
-	createDeployment(t, testNamespace, "app-charlie")
+	createDeployment(t, testNamespace, "app-delta")
 	createDeployment(t, testNamespace, "app-alpha")
 	createDeployment(t, testNamespace, "app-bravo")
-	waitForDeployment(t, testNamespace, "app-charlie")
+	waitForDeployment(t, testNamespace, "app-delta")
 	waitForDeployment(t, testNamespace, "app-alpha")
 	waitForDeployment(t, testNamespace, "app-bravo")
 
