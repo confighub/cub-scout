@@ -35,9 +35,10 @@ Each positive CLI/MCP collection performs these exact selected-endpoint GETs:
 1. Namespaced Deployment GET.
 2. Cluster-wide Application LIST with only
    `fieldSelector=metadata.name=scout-context-app`.
-3. Namespaced Application GET, omitted after source-denied LIST returns 403.
-4. Namespaced Deployment GET for current-change evidence.
-5. Namespaced Pods LIST with only `labelSelector=app=scout-context-marker`,
+   The tracer consumes the complete listed Application without a second GET;
+   source-denied returns an actual 403 on this LIST.
+3. Namespaced Deployment GET for current-change evidence.
+4. Namespaced Pods LIST with only `labelSelector=app=scout-context-marker`,
    returning actual 403 for pods-denied.
 
 There are no discovery reads, arbitrary queries or mutation routes. Request
@@ -47,6 +48,12 @@ pin `94e6edf339e0cd410994563fb7a7c57c52e18c09` receives an extra MCP `context`
 argument and must actually read the other ambient proxy, with zero selected
 requests. Its unchanged gateway ignores that argument; a flag-refusal imitation
 would fail this behavioral control.
+
+Attempt 1 is retained as failed at `/tmp/scout755-owned-kind-proof-1/receipt.json`:
+the initial helper incorrectly expected a second Application GET. The observed
+LIST carried the source anchor, matching the existing tracer implementation.
+The corrected exact contract forbids that unused GET; eighteen offline controls
+pass. Attempt 1's owned cleanup and all configuration integrity checks passed.
 
 The private `cub` shell shim permits only `auth status` (synthetic exit 0) and
 `unit get scout-proof-unit -o json --quiet --space scout-proof-space`

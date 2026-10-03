@@ -63,7 +63,6 @@ PODS_PATH = f"/api/v1/namespaces/{NAMESPACE}/pods"
 REQUESTS = {
     DEPLOYMENT_PATH: {},
     APPLICATION_LIST_PATH: {"fieldSelector": ["metadata.name=" + APPLICATION]},
-    APPLICATION_PATH: {},
     PODS_PATH: {"labelSelector": ["app=" + DEPLOYMENT]},
 }
 _trace_spec = importlib.util.spec_from_file_location(
@@ -265,8 +264,8 @@ def validate_three_way_json(raw: str, *, context: str, result: str) -> dict:
 
 def expected_api_sequence(result: str) -> list[tuple[str, int]]:
     sequence = [(DEPLOYMENT_PATH, 200), (APPLICATION_LIST_PATH, 403 if result == "source-denied" else 200)]
-    if result != "source-denied":
-        sequence.append((APPLICATION_PATH, 200))
+    # Unknown controller namespace is resolved by the complete exact-name
+    # Application LIST. The tracer consumes that object without another GET.
     return sequence + [(DEPLOYMENT_PATH, 200), (PODS_PATH, 403 if result == "pods-denied" else 200)]
 
 

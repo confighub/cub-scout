@@ -193,7 +193,7 @@ class IsolationControls(unittest.TestCase):
             self.assertTrue(capture.allowed_three_way_request(path, query))
             for bad in ({"watch": ["true"]}, {"labelSelector": ["foreign"]}, {**query, "timeout": ["32s"]}):
                 self.assertFalse(capture.allowed_three_way_request(path, bad))
-        for path in ("/version", "/api/v1/secrets", capture.DEPLOYMENT_PATH.replace(capture.NAMESPACE, "shared")):
+        for path in ("/version", "/api/v1/secrets", capture.APPLICATION_PATH, capture.DEPLOYMENT_PATH.replace(capture.NAMESPACE, "shared")):
             self.assertFalse(capture.allowed_three_way_request(path, {}))
         kwargs = dict(label=capture.ALLOWED, tls=ssl.create_default_context(), namespace=capture.NAMESPACE,
             deployment=capture.DEPLOYMENT, application=capture.APPLICATION, missing_deployment="unused")

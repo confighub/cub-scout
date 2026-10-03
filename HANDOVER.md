@@ -24,6 +24,16 @@ kind capture remain required before #755 acceptance or merge. Synthetic auth,
 Unit-read failure and inert Application state cannot close genuine server
 governance, real controller reconciliation or paid baseline gates.
 
+Product pin is `478b1095359c6325d38e89c02e837861fc0f4410`; initial helper/probe
+pin is `ae4a4d49118e79308aab237118ed762dd2c09340`. Owned attempt 1 failed an
+overstated helper request contract: the existing tracer uses the complete
+Application LIST object without a second GET. CLI output retained the correct
+anchor and partial comparison. Failure receipt/raw logs are retained under
+`evals/results/three-way-context-20261003/attempt-1/` and
+`/tmp/scout755-owned-kind-proof-1/`. Owned cleanup, empty pending traffic and
+all configuration-integrity checks passed. A narrowed exact helper contract
+and separately reviewed rerun are required; no acceptance is claimed.
+
 User granted another 300 credits: total ceiling 1,200, original baseline retained,
 hard floor 1,731.922436 and dispatch stop 1,756.922436. First balance 2,048.4852735
 leaves 316.5628375 under that ceiling; weekly included usage has reset. Admit one
