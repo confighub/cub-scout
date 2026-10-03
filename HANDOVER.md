@@ -7,6 +7,15 @@ Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
 order, quality gates, budgets and decisions.
 
+## Full comparison context packet — 2026-10-03
+
+User granted another 300 credits: total ceiling 1,200, original baseline retained,
+hard floor 1,731.922436 and dispatch stop 1,756.922436. First balance 2,048.4852735
+leaves 316.5628375 under that ceiling; weekly included usage has reset. Admit one
+bounded full #755 implementation with merged rollout/LIVE reader foundations,
+then independent review, full validation and separately admitted owned proof.
+SDK remains deferred; paid baseline/governance release gates are not waived.
+
 ## Captured LIVE reader — merged checkpoint
 
 #761 merged at `94e6edf3`, tested head `efbac5ba`. Independent review, targeted
