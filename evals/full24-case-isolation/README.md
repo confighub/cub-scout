@@ -82,3 +82,14 @@ using fake Docker responses. They do not establish actual container execution
 for the other cases. Three initial failed test runs are retained with their
 setup/assertion explanations, alongside source preparation and successful logs.
 No model, provider, MCP or official grader was executed.
+
+## Full matrix follow-up — 2026-10-03
+
+The same fixed probe subsequently passed every ordinary case and both authored
+controls in both arms: 26 pairs, 52 unique containers, all verified absent.
+The initial two pairs were reused; the remaining 24 pairs passed first attempt.
+The independently audited [matrix proof](matrix-proof.json) binds all receipts,
+raw output and stage hashes. This expanded proof is a local follow-up checkpoint
+beyond the inspected #767 CI head. It supersedes the earlier sample's actual
+coverage limit, while preserving all model/tool/MCP/grader/accounting/admission
+limits. Serial timings are diagnostic timings, not a randomised benchmark.

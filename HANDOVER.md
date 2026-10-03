@@ -1,11 +1,31 @@
 # cub-scout execution handover
 
 **Current snapshot:** 2026-10-03. Verified merged baseline:
-[`3abfdd7f`](https://github.com/confighub/cub-scout/commit/3abfdd7fd6d970be47df9f12e2a0e1f01c2f716a).
+[`5aeebc48`](https://github.com/confighub/cub-scout/commit/5aeebc48a6f168865b79d5a228013b9e576695f7).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
 order, quality gates, budgets and decisions.
+
+## Full isolation matrix checkpoint — 2026-10-03
+
+The same reviewed probe/source at `5ff09940` now passes for all 24 ordinary
+cases and both unweighted authored controls in both arms: 26 serial pairs,
+52 unique owned containers, all verified absent. The initial INV-01 and DEL-03
+control pairs were reused, not rerun; 24 remaining pairs passed first attempt
+within the bounded matrix driver. Independent data review verifies every pair,
+stage receipt, staged file and captured command output hash, common-byte parity,
+treatment-only delta, unique ID, and cleanup receipt. Full summary:
+`evals/full24-case-isolation/matrix-proof.json`; raw records:
+`evals/results/full24-case-isolation-20261003/matrix/`. This expanded proof is a
+local follow-up checkpoint, not part of the already inspected #767 CI head.
+It establishes fixed-probe case-mount coverage only. No model/provider/MCP/
+official grader ran; ordinary grants and descendant/accounting/cost remain
+unproved. The next runtime implementation must preserve each case's exact
+source grant (none grants Bash), case budgets and prompt, and replace the inert
+MCP marker with a case-scoped recorded binding. Do not reuse the earlier combined
+diagnostic's broader Read/Bash grants as full-24 grants. Genuine governance
+recordings and final paid-run/release acceptance gates remain explicit.
 
 ## Selected-case isolation runtime — 2026-10-03
 
@@ -25,7 +45,9 @@ Independent review approved the implementation and repaired proof coverage.
 The source/probe commit is `5ff09940`; local fixed-probe proof passed for INV-01 and the DEL-03 authored control
 in both arms: four actual containers, all cleaned up with absence verified.
 See `evals/full24-case-isolation/local-proof.json`; all-24 coverage remains
-offline/fake-Docker only. Separate exact-head CI/merge are pending.
+offline/fake-Docker only. PR #767 merged at `5aeebc48` after inspected exact-head CI `37122926570`
+at `36f672bf`: Unit, Integration, GitOps E2E and Proof Artifact passed;
+optional Connected, Demo and Full Verification skipped.
 Ordinary tool grants remain unenforced, treatment MCP inert, and model/provider/
 official grader/process-cost admission unproved. Paid evaluation stays stopped.
 

@@ -1,0 +1,756 @@
+{
+  "actualContainers": 52,
+  "actualPairs": 26,
+  "armsPerSelection": 2,
+  "attemptsPerSelection": 1,
+  "authoredControls": 2,
+  "claims": {
+    "all24SelectedCaseMountAndFixedProbeVerified": true,
+    "allOwnedContainersVerifiedAbsent": true,
+    "bothAuthoredControlMountAndFixedProbeVerified": true,
+    "mcpUsable": false,
+    "modelExecuted": false,
+    "officialGraderExecuted": false,
+    "ordinaryToolGrantEnforced": false,
+    "paidRunAdmitted": false,
+    "processAccountingComplete": false,
+    "qualityOrSavingsMeasured": false
+  },
+  "codeSha256": {
+    "probe.py": "ff89272d0f2c341efccf714ec449685d5169a665e52b81d085bef8719b2bd5d4",
+    "run_pair.py": "0bce659f7602be882952fb6de4fb10776bee675c78632b595b420bb4a387dad7",
+    "test_runner.py": "fa251c7a10d89498935111d7404139797b68f6e223a8e999c12435a1df3bdb50"
+  },
+  "driverLogSha256": "a68c9f57a08998105bacf4935464ffee611eea80cf4d7e298e616feeecfe67e4",
+  "driverResultSha256": "ef6beb3118511dc2b45589eb140aa997f82473c0d7aa336d127915dd03bcb029",
+  "driverSha256": "3eae10900fffda4c3c365f30390937381976cf1b3811bd083e82903d74ec34c5",
+  "imageId": "sha256:cdbd05fb6f457ca275ff51ce00d93d865ca0b6a25f5ffb08262d94f6835771e5",
+  "initialFailedTestRuns": [
+    "Initial macOS executable-path assumption failed before Docker simulation.",
+    "Second macOS temporary-root assumption failed before Docker simulation.",
+    "Third test assertion expected StageError but size drift was already rejected by the probe check. Same-length mutation now exercises hash verification."
+  ],
+  "limits": [
+    "Fixed probe only, not an adversarial model containment test.",
+    "The cached image supplies operating system and Python files; exact bind scope isolates host evidence only.",
+    "Treatment MCP remains inert, and ordinary model tools are not dispatched.",
+    "Serial diagnostic ordering and timings are not the randomised paid benchmark."
+  ],
+  "offlineTests": {
+    "armsPerCase": 2,
+    "authoredControls": 2,
+    "log": "evals/results/full24-case-isolation-20261003/ten-tests-passed.log",
+    "ordinaryCases": 24,
+    "passed": 10,
+    "runtime": "authored_Docker_responses_only"
+  },
+  "ordinaryCases": 24,
+  "pairs": [
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "196902abab8fb6b6c8aab3e446ce675ff2d26b1638e5467935213d453c1fa111",
+          "fileCount": 58,
+          "operations": 9,
+          "stageReceiptSha256": "7ccf2f90426ae55f635e5be6e3cfabb7bff5b18ef1f81f7e9330c1d23ee16de9",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "f0676c03a1e139b10f22e7b3ad83095b6fa349fb8aba24cbec3c395523f016fa",
+          "fileCount": 9,
+          "operations": 9,
+          "stageReceiptSha256": "8a1a50a53c09015e5a2031195f7ebe0c462f07f5e94a228bacc1e79886c93fbb",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "INV-01",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/inv01-attempt-1",
+      "receiptSha256": "e3b68f3c914a54afe232d8254b8c520410e7611c414e4e8bff8f4987e96cc4c8",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "0194e47ad6f03cc3a74f275f861bf45cc84edbbf27904a56c8dc0c6219b1f23d",
+          "fileCount": 54,
+          "operations": 9,
+          "stageReceiptSha256": "23b935d98d9a3cd9dbbef9372af1f739ee1d2440ec81c882ea41c8cc64b983a9",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "87d4d144f3450d7551c9b75b82ecec987a54f649fda369d6f1fcef4e82e23c5a",
+          "fileCount": 5,
+          "operations": 9,
+          "stageReceiptSha256": "4a077b759506a2d84472e7bd84f3533f6c731aab6af4859a367db0347ef8871d",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "DEL-03",
+      "control": "del03-missing-stale-identity-input-control.v1",
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/del03-control-attempt-1",
+      "receiptSha256": "c4f4717b5ad67a941068edbc4464800527849642e838f52cf93d97b42f288efa",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "5e2fa996389e48131cf5d5c0d2d2c7aad0f49798de723da5773936a1b5968071",
+          "fileCount": 58,
+          "operations": 9,
+          "stageReceiptSha256": "d265a87353fae12b1475268df61476bc8124c5e9b17f3ab7f2ef0a6a6b3e34c1",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "e5df75e44c5702a7df32401a437d3a64b6fb1fbdb6ff5275284d33bd9275a213",
+          "fileCount": 9,
+          "operations": 9,
+          "stageReceiptSha256": "68d2e131b92ba317dc3d4906dcba6ba196c1c65f7fd6a12bc77ba1609dc88d1e",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "ATR-01",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/atr-01-attempt-1",
+      "receiptSha256": "dccbba968e4b9b5760beea61f4e8cfb076388a30f5134957b512cb7725914d58",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "0c8aa3f62fb031bc64b2f96ccd9f6707af0e5c47ab72b192f72af3cea5a45063",
+          "fileCount": 58,
+          "operations": 9,
+          "stageReceiptSha256": "9606efc2d400a668ede5e51d7b11bc25fe43665d1d650eb05ccdca18a918539c",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "fadc4220d8a20d50d68a959119048018dfc81b6cf70850b3b87025417d873fc5",
+          "fileCount": 9,
+          "operations": 9,
+          "stageReceiptSha256": "f1631467d2278364ef4347aedff3d22fa4545c96127c73614b3e30c70523815e",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "ATR-02",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/atr-02-attempt-1",
+      "receiptSha256": "6000f202b9a81a9390cb896aa7a482e0dfb8b0dd802cef4351502225216f8721",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "7d06ad53668819d7c625a9d324af6b1b3849a1ef3aad9e7e3cde7db11ed9a59d",
+          "fileCount": 58,
+          "operations": 9,
+          "stageReceiptSha256": "f4456e4e121ef3856842681d596c8e810de4342130f4f4840e314797b5ad7527",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "0a4287c53a13351161549e1074f80acab708951ecbd4d8405e404ad6bee9cccd",
+          "fileCount": 9,
+          "operations": 9,
+          "stageReceiptSha256": "2aaba65d8a7929b6f42f0020b39c6c5ed1a8823497b812ca88bf738eb85c208c",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "ATR-03",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/atr-03-attempt-1",
+      "receiptSha256": "038618d505538a6c36697f711b5210a059153d507f7cbce4f75ef95709248f54",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "6340a33c72e2677125ee1c4800ed1bbc59ae27e17fc16457ab351c8ee58b3ac0",
+          "fileCount": 58,
+          "operations": 9,
+          "stageReceiptSha256": "8d8aa3a89d862afa574116296a1fd2b88b9c4ac7331341bd6ecfb0a867ba6e15",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "30b30ada45cc9f3bec47a62044fe9b65407d1ed4d9ae1b8e84365cf8c2b278bf",
+          "fileCount": 9,
+          "operations": 9,
+          "stageReceiptSha256": "11127e9117f9e9ca3f8a1dc8a0740567d0f25a171dddb1936c83407f5a58b8b6",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "ATR-04",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/atr-04-attempt-1",
+      "receiptSha256": "37060467bb05bd2cc82842829e2fa1e70b327e920bd3c25bbe2d2aa746171bf0",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "8b8cd7bfec82c3dee5125bff6a26a2747c97fc17eb6e8756ce0b96dfa352a935",
+          "fileCount": 52,
+          "operations": 9,
+          "stageReceiptSha256": "e6c2fc85a1d11c878ae54b27e79dcddbb6926bc71ffb9c2c2f5e81094dbae552",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "1ebc30fe85c60d7f1f5a8712e7e25ab3182f24c0b1c7ed190b5d9bee174a1b92",
+          "fileCount": 3,
+          "operations": 9,
+          "stageReceiptSha256": "7605a624987c47fb65404f0827db119dba19c0b59a07aeb1a618c8d2cb015967",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "DEL-01",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/del-01-attempt-1",
+      "receiptSha256": "f60589e6ef87e5f84a13d42d893c68d378579b7a738738df31bef86d2aaa3f80",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "ea4f2d96558730694579acefd93cbbdd03fcd39a9baf7b36cece0e4272167454",
+          "fileCount": 52,
+          "operations": 9,
+          "stageReceiptSha256": "5cf5dd2fb46ef80e90eeb30d76dbcfe56ff2f05e06335f779c8f7770130c12ab",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "e07d2e15667708ecbec853b8a2beeaee333f18e268f07af3e9bfcbfbb1b9d839",
+          "fileCount": 3,
+          "operations": 9,
+          "stageReceiptSha256": "4b2c4af9bb613c2c0b6f3d7d1f81bda90cce3d1b86dcd40b342e1d1bdfad43d3",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "DEL-02",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/del-02-attempt-1",
+      "receiptSha256": "80d5188673305e38b2b90520147514702e9d40ec52e19d0df9a82fdfac65db81",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "a9f0ed3048a7178f60be6a0e831e449a5d68d832f15c9bbd7e63d0cb17b21fb6",
+          "fileCount": 54,
+          "operations": 9,
+          "stageReceiptSha256": "4e28c268ca9445dddb029045387cfe5a2d324796fd43b9906e07b1926af87eb4",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "eaa9924979138ec552bbfc3a501321f4a611a0c49220a2fd84dfdcbd9531bf8e",
+          "fileCount": 5,
+          "operations": 9,
+          "stageReceiptSha256": "672691ae15712f1bbf10c0574619e9666d80c7a812a4c1d07a9fb7e8fc5eb813",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "DEL-03",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/del-03-attempt-1",
+      "receiptSha256": "9e4f6cff6dee1878ba731e571cf4352ca0409eb65d0797d84441d95ea92491fa",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "db6fb061607c4dd43b45cfef7122268838b56674756f75260e3870a0f0035c21",
+          "fileCount": 56,
+          "operations": 9,
+          "stageReceiptSha256": "2cd8a63d47da199b9721247627dd8279e9c7feff7e98ab19ab04bd6ecc1277df",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "24147e88fa791aaa75e035e94e3b4c5e14eecf77156e28a6e0d21c1ffbfc1ac5",
+          "fileCount": 7,
+          "operations": 9,
+          "stageReceiptSha256": "1dd12c5f0f84d5163ec32f38c561e8cd97aa4f0dabc4e2e0fdc73d78d5f913da",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "DEL-04",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/del-04-attempt-1",
+      "receiptSha256": "69920b2c6ea15d65041247c051daa8c23130a7e705c93c67c5fa2fc21003dfcd",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "6f0efa24a0a959083928d1267655dda7a3da6d03b0b1bf0ff6f8006bdf1194d5",
+          "fileCount": 52,
+          "operations": 9,
+          "stageReceiptSha256": "3ac6ff736705b7b7bbd3839b767d7a0c56eefd9ad2d6b575cbcb595ddce49b04",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "bad990831b706ad1bc312ca9abc4d5032e0fe71ef3188c32e72e9b5a649053a4",
+          "fileCount": 3,
+          "operations": 9,
+          "stageReceiptSha256": "c7b791083cf326a41a9e376c615e0b155f51a20b97c0d1b43fda59a54479958b",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "HLT-01",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/hlt-01-attempt-1",
+      "receiptSha256": "c4ad8e9b9b196e3064d691f8ce969d0c9c1823936d4d200acdb6217aa570e510",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "0e6aeb337d4ff9ffa16206ab1da19513f690408239c66784b4e541906af134d7",
+          "fileCount": 67,
+          "operations": 9,
+          "stageReceiptSha256": "88ec01116d827c280f3acf2d5d06252a887d7eddb827e513f144c7d1c22c5d58",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "56a1cdc0440c7dc368f4124acc5138a623e3a6488d2c464a4ba11837561dbc02",
+          "fileCount": 18,
+          "operations": 9,
+          "stageReceiptSha256": "afe01b2463b73bf8ff9ccf86ef8d0a81c687a8a4732a779b1ec28827e0af1b70",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "HLT-02",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/hlt-02-attempt-1",
+      "receiptSha256": "34cc211db8698033554c53ffd82053fb4bba0bb6677c53345abd419a44761eab",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "2a3f22d85218bd6105f439e3f56b6d028db99aba1faeb42823d832bdda6b0da1",
+          "fileCount": 54,
+          "operations": 9,
+          "stageReceiptSha256": "e5370b7f5a5f8119585c99aa5aeace9802ad87c39af3db1ad7e930af4b317060",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "9dfdc1f74925bedbf4674bffbab4de6016cb886ea78840fdbeb780c9cd0bb4f2",
+          "fileCount": 5,
+          "operations": 9,
+          "stageReceiptSha256": "bcddafdae9700821c5db96e012e60de77e3e2b17e5d03b53774a380a3cf26f79",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "HLT-03",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/hlt-03-attempt-1",
+      "receiptSha256": "e1b64145e20185f83f5e5f9f39150e61754dc62f4407b0cbbb5dbf8ec695aa3a",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "1d9f67b4d224896eee776e3207f4ec09f1bb5087fd11144b3f762f7f9f7804fe",
+          "fileCount": 54,
+          "operations": 9,
+          "stageReceiptSha256": "37bb4f32920b31a606371f1319a6293be01fbde26cc17e89a5f25fa547da471e",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "b13ec487ae968c86b156ca145e0406efec497080337465a6658f1ee7104a07c6",
+          "fileCount": 5,
+          "operations": 9,
+          "stageReceiptSha256": "178e1c50aab4dafe37ef10923c55c5e8346e7771b1c5edc49d5fc92b368759fa",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "HLT-04",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/hlt-04-attempt-1",
+      "receiptSha256": "67ad5a70b9b2b5aa2d369e1d27d034b751d83e348c2645c375eeeec2141c1dab",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "1c267cac542b19cf34155f9d666a46a31c56bf9e69fb4ea7e1cb545534d08ab2",
+          "fileCount": 58,
+          "operations": 9,
+          "stageReceiptSha256": "0a465ae9623b937ac57559cfb87cfba258f1e07bba195ae3360ea40140ff30d4",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "5f8d9b5bbfe02edc8fa23f1539980a501ac54238eb98f94bfd19ad8728d7c977",
+          "fileCount": 9,
+          "operations": 9,
+          "stageReceiptSha256": "5ab2a41abbf4a583a49b0596a175dada681021ed90c5d52c5e25b7603bba4ecb",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "INV-02",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/inv-02-attempt-1",
+      "receiptSha256": "1651124249dcff758497dd838540c12859b007672a942ff63241cccae6dd0e60",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "686fa9a384c395cfc71f74849447c7de075a3c466f582e5f2d7964361a2ae917",
+          "fileCount": 58,
+          "operations": 9,
+          "stageReceiptSha256": "e361ff1991759fae491d2b62d0a22dcf5569835b6aef0a4a5f12314ec9dcf634",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "2aa12f70e7b1d309a17db4fce8328f989e8aadf68de992a1f8e590b6739f8478",
+          "fileCount": 9,
+          "operations": 9,
+          "stageReceiptSha256": "7d7a08c4affb44956f055b7fb14f28702107171484e891bcd97447ee449b5b87",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "INV-03",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/inv-03-attempt-1",
+      "receiptSha256": "21fa505ac1774e6189707e2489f9eac52d52a34e0489318d65b6c8ec0ce03fd3",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "259660b9baaff8748fa965627af91e061e42a355f4fbfe7b1f5c4c06342377fc",
+          "fileCount": 55,
+          "operations": 9,
+          "stageReceiptSha256": "01fdd6f86d0f9fbbfe9b5aa05508a73ffd5c9489ced845b18233110d4b980a08",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "6f8eb6955c4d0b70e977f21db848d00fbf06d155684dc83ef1b8d67765e593e1",
+          "fileCount": 6,
+          "operations": 9,
+          "stageReceiptSha256": "5b2d14171029565abb29836e924c0d7d81959144dc271a8a5a231c75ce174d1b",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "INV-04",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/inv-04-attempt-1",
+      "receiptSha256": "a21c78896254f91294a8d3e1ede7a2db278f5f27d3fdaefab9f999ab62510fe4",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "80ded625d9f42398944a4c2ee5e49ccab62ff9471af4e6ad2d08fac1d079b4b9",
+          "fileCount": 66,
+          "operations": 9,
+          "stageReceiptSha256": "9b73029cb7f9d2635766033d5fc47d0805b04d051bf9d653a2342665edfb7d88",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "d1b35b35ad4ebeb3663baea6c74360ce0d8a03ef9cce3fef7258a452dc3a9ce9",
+          "fileCount": 17,
+          "operations": 9,
+          "stageReceiptSha256": "d1958f5644af5c2e0a5fdc86fd5a40450bc79d964a9df2dc2ac886d559e4ba1e",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "PRE-01",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/pre-01-attempt-1",
+      "receiptSha256": "f02d7b034fa4e2fc7ed3b2543972f4579282569b2254bfe7154840e891062657",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "e1390406bc6c1cf2a1a7a75956fbb1de1a25c627c9e5edfecddb96efd125ed04",
+          "fileCount": 58,
+          "operations": 9,
+          "stageReceiptSha256": "89c8da9e0be929e860c2c9de7d57896e4e9c0c8ab03bb363357e165ccc117b36",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "96fbf914e80ef9acd6697cbe49e360780c0a74a0e3d26c76d8738653ec8ca702",
+          "fileCount": 9,
+          "operations": 9,
+          "stageReceiptSha256": "69b6a5a7daa7d263f48208eb764c292cc75ce18e02a8e711240214ba917d5c86",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "PRE-02",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/pre-02-attempt-1",
+      "receiptSha256": "7817000c3d80da0cecba2bb6b58bfbdfa9dd21918db340d0a7548a938dbc68d4",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "89e56425ee4841104076e788e5a3ecc5e6e8fbb4a3ef4504204f8eeb6eb88c1c",
+          "fileCount": 58,
+          "operations": 9,
+          "stageReceiptSha256": "d7cdde4e4ec531602778db2d0a7188b04b89ef08a9454b99eb01833b816f2946",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "5c6d5122ba321c9d13ca3031f39de747fb4c8040c3a280318c012d96cecb9b46",
+          "fileCount": 9,
+          "operations": 9,
+          "stageReceiptSha256": "92ab9b13a6a7903b0ab91955743ff2df2d31b48b87cc3f410984de1863e90af9",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "PRE-03",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/pre-03-attempt-1",
+      "receiptSha256": "f76492e4d11aeee09aae7d04bcd42302c26ed4f3329b29ea2fdfbf57f3798e56",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "cf6ce821f33aff895faadfb200c94510f3f2bdbc66bf3d30cc381cbff9b191c3",
+          "fileCount": 54,
+          "operations": 9,
+          "stageReceiptSha256": "55ac1c4e3d0d158769813f72195b723b6b41cd09dc57a2bdd98fa2994e96358e",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "041bb5144ce2cbe8f1a48f218a1d218dd7cef48d2d27ab0f100ab95be4d2184f",
+          "fileCount": 5,
+          "operations": 9,
+          "stageReceiptSha256": "4f9dea892c624f5c168c47f946d927981d84e7e8ede194ff7404dd055b27309d",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "PRE-04",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/pre-04-attempt-1",
+      "receiptSha256": "97f74c873b80f0831fa9ffbb8f9af426b4d5f3ed34a76931a6628bad209256ab",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "3b42b9368f4a4a57a0129f59478aade8aee4600be4ddd3538b67afb7529cd030",
+          "fileCount": 54,
+          "operations": 9,
+          "stageReceiptSha256": "6dd4385331c70a07006178b9dd4e1b7d49801d5351d51b2b1011eceead35e0d2",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "88a69eeed450c05f3d70c91501fc7f96299200571dcecbbd9276f27b6f6a6c24",
+          "fileCount": 5,
+          "operations": 9,
+          "stageReceiptSha256": "c78076f6ce7f8a745e17c17c839b00a9baf40f19edeba1ec9e97c73d293e8159",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "RUL-01",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/rul-01-attempt-1",
+      "receiptSha256": "ec91c2fee59e977e746a4abde7b4311e058777b7a9f24fbb06beed949b16aad5",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "b3e09bfe649024b2f4009e783ba06fe9d72f04842d7d2faeb8df43690c598b27",
+          "fileCount": 53,
+          "operations": 9,
+          "stageReceiptSha256": "6fe4aa06a84765825dd896cd4237faea8900b981c86571a7bb52c8deca2b4cee",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "7912e8e765663584a8b4f960985a79a6d9be9ccd2a714b8ba5d03f34ec433ede",
+          "fileCount": 4,
+          "operations": 9,
+          "stageReceiptSha256": "1727916accffd33c36e40e3aa1a7a669fa4a26a0fd17402224bd4fbb77227375",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "RUL-02",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/rul-02-attempt-1",
+      "receiptSha256": "13886b8f476d28574a5d1bc61d02f85f5cc4c4663293b2c88371e302bc7f809b",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "c3593a0cae87c3370ce5594d78535cb6f6952d4896c1e7b88bb537b23bca8a75",
+          "fileCount": 55,
+          "operations": 9,
+          "stageReceiptSha256": "3e6de3bea8fecb9beb69e057a844048fdec35600c90cafa61bcd438b05167418",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "0157c4d3fca0353e2df34661f2a47bb93c3ccb4f2047f8968be2e0cc80fa439e",
+          "fileCount": 6,
+          "operations": 9,
+          "stageReceiptSha256": "b273655c2030371f997b24f8f0413f91ae9d15ca74cbb0c9dbb045f702ced300",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "RUL-03",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/rul-03-attempt-1",
+      "receiptSha256": "bbe2d738a0e8e7d4ad71331e8667d799a8acd4e8d6537f3995ec76985f02a39a",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "cc341c266758d0f758b141feb27fa5bac082f6b25e2e605339939f9dec7820f3",
+          "fileCount": 55,
+          "operations": 9,
+          "stageReceiptSha256": "a4036e53b2bcbfe996406243fb172bb6060e768b613fd1c33cb28f4f01f766d3",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "606ddf204f12408324c1e3bc8a6f7c1cf1ada440366fda761b62caf6f0b06ec7",
+          "fileCount": 6,
+          "operations": 9,
+          "stageReceiptSha256": "050d948b5af4fc589a672c42d469a554bddfded3475e3b9a3d642fa6fb5e12b8",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "RUL-04",
+      "control": null,
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/rul-04-attempt-1",
+      "receiptSha256": "622941c273b1481199e9247595934fe83856c1a0b79911a071066a5138e80815",
+      "status": "isolation_pair_passed_not_admitted"
+    },
+    {
+      "arms": [
+        {
+          "arm": "with",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "d5893d21d26b6b62831d15e42d6ea7d18bf2423feb4378c6cfe936cae5170caa",
+          "fileCount": 54,
+          "operations": 9,
+          "stageReceiptSha256": "f5ea3ae425bdfaf4261efe97e7ac039b57bee00ebe16404399d7b36f7be6e2f4",
+          "status": "isolation_probe_passed"
+        },
+        {
+          "arm": "without",
+          "cleanupVerifiedAbsent": true,
+          "containerId": "16f9277b6075343592bae928221788f62d70707cecfee76accb3a90b01cfcd46",
+          "fileCount": 5,
+          "operations": 9,
+          "stageReceiptSha256": "7ad242430dc984a8f8317bd9e51b7f25ca40122b41ecfc6f0ac406d269f38353",
+          "status": "isolation_probe_passed"
+        }
+      ],
+      "case": "DEL-04",
+      "control": "del04-divergent-identity-mutable-tag-input-control.v1",
+      "rawDirectory": "evals/results/full24-case-isolation-20261003/matrix/del-04-control-attempt-1",
+      "receiptSha256": "52febb243156535380a40bca569815fc4b1fccd61d0aa78336f3ce95dce8e657",
+      "status": "isolation_pair_passed_not_admitted"
+    }
+  ],
+  "schema": "full24-case-isolation-matrix-proof.v1",
+  "sourceCommit": "5ff099403203ad56fc30197670b043b5e3128729",
+  "sourcePreparationReportSha256": "5bbb24f55457068050cc19427b84c53da8cdd113f5dd87f67692d45941e7fa71",
+  "status": "fixed_probe_full_matrix_passed_not_admitted"
+}
