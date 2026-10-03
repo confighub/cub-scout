@@ -93,6 +93,9 @@ jobs:
       - name: Run offline Trace owned context proof guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/trace-context-live -p 'test_*.py' -v
 
+      - name: Run offline three-way owned context proof guards
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/three-way-context-live -p 'test_*.py' -v
+
       - name: Run offline watch cache namespace proof guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest evals/watch-cache-namespace/test_capture.py -v
 

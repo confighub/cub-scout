@@ -1,0 +1,202 @@
+{
+  "schema": "three-way-context-proof-summary.v1",
+  "acceptance": "passed",
+  "productSourceCommit": "478b1095359c6325d38e89c02e837861fc0f4410",
+  "captureHarnessCommit": "dc74eb0f4487c75d7cd1b0e8048fa5502ec107e9",
+  "oldProductSourceCommit": "94e6edf339e0cd410994563fb7a7c57c52e18c09",
+  "receiptSha256": "980de708b1665bdbed0859ff8aa66a44de05cfed9c68fd6f4c839ee0a08f4560",
+  "rawEvidence": "evals/results/three-way-context-20261003/attempt-2",
+  "helperHashes": {
+    "evals/three-way-context-live/capture_live.py": "28724e1a1ecec536e7f8da8c2178ec61a5d59c8abd20377a792746dee336b2ec",
+    "evals/doctor-scan-context/capture.py": "4b870721b37a31986ca640382c7cdbf9473ee267f581175fb0203b38e59aad01",
+    "evals/trace-context-live/capture.py": "bace770fdb4944648b02d2d851ee5b192a6ab50eeaee1a8258b39c47e2c8f410",
+    "evals/trace-context-live/api_proxy.py": "08623798be826042dbe6457d926c8847f50095c17e910ece50529e2285bb49e6"
+  },
+  "tuiProbeSha256": "461a93b49b6afa2bc8794a35022f9fa6dd9961bd5edf6e525f3c90dd4132a668",
+  "binaryHashes": {
+    "oldBinarySha256": "e7c7a4c08b1352185c24b7e8915de321caba3133530d36097bbe09d907528358",
+    "fixedBinarySha256": "671287414c4a3b0429107287f87cd78ea6fc540a8b14f6b8772306e806efa632",
+    "tuiBinarySha256": "58f282d3f651f2ee08fd11a23cb42b1cb3abe95b0362d90f4135ada9647bd1ed"
+  },
+  "toolPins": {
+    "git": {
+      "path": "/opt/homebrew/bin/git",
+      "sha256": "9b19807c702934b8c51fd2da8c2d38053bd7328536546e5a47eb3914dcc7bcde"
+    },
+    "go": {
+      "path": "/opt/homebrew/bin/go",
+      "sha256": "912f19a1a95ffe44a9e349d8283c74eb1d2eace37aad3ca6ef7b9ae321eb709f"
+    },
+    "kind": {
+      "path": "/opt/homebrew/bin/kind",
+      "sha256": "19b50bfe8f348d9054076bb1e81c2da28d7cd0a56f8ba42b9d667b051c216109"
+    },
+    "kubectl": {
+      "path": "/opt/homebrew/bin/kubectl",
+      "sha256": "f91be8422eefc635dc336846b7f747d9b6aaed883b9e914ea7bf4cafcc6a838e"
+    },
+    "docker": {
+      "path": "/usr/local/bin/docker",
+      "sha256": "70d5a06adf388bd09b652f47ddc9ca31663a3e5353d24188bdb0054b3014ab3e"
+    }
+  },
+  "scope": "Inert Argo Application and zero-replica Deployment on one invocation-owned kind API, actual ServiceAccount RBAC, three distinct private proxy bindings; synthetic successful cub auth and exact Unit GET failure73.",
+  "limits": [
+    "No real Argo/Flux controller or reconciliation acceptance",
+    "No real ConfigHub authentication/server/governance evidence",
+    "Same physical cluster; context labels are not stable cluster identity",
+    "Viewport-model resize/scroll/refresh/scope-edit/cancel actions, not terminal UX",
+    "No paid model execution or dollar/credit savings claim"
+  ],
+  "observations": [
+    {
+      "name": "old-mcp-ignored-context",
+      "selectedContextLabel": "three-way-allowed",
+      "ambientContextDiffers": true,
+      "requestCount": 3,
+      "httpStatuses": {
+        "200": 3
+      },
+      "syntheticAuthCalls": 3,
+      "syntheticFailedUnitReads": 1,
+      "tuiResultSha256": null,
+      "actualAmbientContext": "three-way-source-denied",
+      "selectedRequests": 0
+    },
+    {
+      "name": "cli-allowed",
+      "selectedContextLabel": "three-way-allowed",
+      "ambientContextDiffers": true,
+      "requestCount": 4,
+      "httpStatuses": {
+        "200": 4
+      },
+      "syntheticAuthCalls": 1,
+      "syntheticFailedUnitReads": 1,
+      "tuiResultSha256": null
+    },
+    {
+      "name": "mcp-allowed",
+      "selectedContextLabel": "three-way-allowed",
+      "ambientContextDiffers": true,
+      "requestCount": 4,
+      "httpStatuses": {
+        "200": 4
+      },
+      "syntheticAuthCalls": 3,
+      "syntheticFailedUnitReads": 1,
+      "tuiResultSha256": null
+    },
+    {
+      "name": "tui-allowed",
+      "selectedContextLabel": "three-way-allowed",
+      "ambientContextDiffers": true,
+      "requestCount": 12,
+      "httpStatuses": {
+        "200": 12
+      },
+      "syntheticAuthCalls": 3,
+      "syntheticFailedUnitReads": 3,
+      "tuiResultSha256": "de00428cc53b01a994c5526fdce06196675d05c316287fc0016080d45233a75c"
+    },
+    {
+      "name": "cli-source-denied",
+      "selectedContextLabel": "three-way-source-denied",
+      "ambientContextDiffers": true,
+      "requestCount": 4,
+      "httpStatuses": {
+        "200": 3,
+        "403": 1
+      },
+      "syntheticAuthCalls": 1,
+      "syntheticFailedUnitReads": 1,
+      "tuiResultSha256": null
+    },
+    {
+      "name": "mcp-source-denied",
+      "selectedContextLabel": "three-way-source-denied",
+      "ambientContextDiffers": true,
+      "requestCount": 4,
+      "httpStatuses": {
+        "200": 3,
+        "403": 1
+      },
+      "syntheticAuthCalls": 3,
+      "syntheticFailedUnitReads": 1,
+      "tuiResultSha256": null
+    },
+    {
+      "name": "tui-source-denied",
+      "selectedContextLabel": "three-way-source-denied",
+      "ambientContextDiffers": true,
+      "requestCount": 12,
+      "httpStatuses": {
+        "200": 9,
+        "403": 3
+      },
+      "syntheticAuthCalls": 3,
+      "syntheticFailedUnitReads": 3,
+      "tuiResultSha256": "f50e300131fcc4e8e52ebb5eb1ad0303c3c6a0533f5984816de54754f60afc16"
+    },
+    {
+      "name": "cli-pods-denied",
+      "selectedContextLabel": "three-way-pods-denied",
+      "ambientContextDiffers": true,
+      "requestCount": 4,
+      "httpStatuses": {
+        "200": 3,
+        "403": 1
+      },
+      "syntheticAuthCalls": 1,
+      "syntheticFailedUnitReads": 1,
+      "tuiResultSha256": null
+    },
+    {
+      "name": "mcp-pods-denied",
+      "selectedContextLabel": "three-way-pods-denied",
+      "ambientContextDiffers": true,
+      "requestCount": 4,
+      "httpStatuses": {
+        "200": 3,
+        "403": 1
+      },
+      "syntheticAuthCalls": 3,
+      "syntheticFailedUnitReads": 1,
+      "tuiResultSha256": null
+    },
+    {
+      "name": "tui-pods-denied",
+      "selectedContextLabel": "three-way-pods-denied",
+      "ambientContextDiffers": true,
+      "requestCount": 12,
+      "httpStatuses": {
+        "200": 9,
+        "403": 3
+      },
+      "syntheticAuthCalls": 3,
+      "syntheticFailedUnitReads": 3,
+      "tuiResultSha256": "c1866f1e6616b8eb08b884b23ccb2b2801496c3f94deab25cc4bbbcfd121bea5"
+    }
+  ],
+  "cleanup": {
+    "sharedKubeconfigUnchanged": true,
+    "privateKubeconfigUnchangedDuringReads": true,
+    "privateDirectoryRemoved": true,
+    "cleanupErrors": [],
+    "pendingAPIRequests": [],
+    "retainedWorkDirectory": null
+  },
+  "failedAttempts": [
+    {
+      "attempt": 1,
+      "acceptance": "failed",
+      "error": "RuntimeError: exact workload/source/runtime request sequence or counts differed",
+      "receiptSha256": "58e0d823fa335b845f1a4d6e87ee210e109d2da39e8c2078090d85588aa6925b",
+      "rawEvidence": "evals/results/three-way-context-20261003/attempt-1",
+      "cleanupErrors": [],
+      "sharedKubeconfigUnchanged": true,
+      "privateKubeconfigUnchangedDuringReads": true,
+      "privateDirectoryRemoved": true
+    }
+  ]
+}

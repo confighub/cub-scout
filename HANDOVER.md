@@ -34,6 +34,18 @@ anchor and partial comparison. Failure receipt/raw logs are retained under
 all configuration-integrity checks passed. A narrowed exact helper contract
 and separately reviewed rerun are required; no acceptance is claimed.
 
+Attempt 2 passes and independent final receipt/report review accepts its bounded
+scope. Product remains `478b1095`; corrected helper/probe pin is
+`dc74eb0f4487c75d7cd1b0e8048fa5502ec107e9`. Ten phases comprise the actual
+old-MCP ambient-routing control plus nine CLI/MCP/TUI allowed/source-denied/
+Pod-denied phases. Each TUI exercised initial collection, real refresh and
+same-scope edit, resize/scroll/back and cancellation. All comparison agreement
+remains partial. Cleanup/config integrity and raw-log/report hash checks pass.
+Summary: `evals/three-way-context-live/live-proof-report.json`; retained raw
+receipts: `evals/results/three-way-context-20261003/attempt-{1,2}/`. Eighteen
+offline helper controls are also wired into CI. Exact-head CI and merge remain
+pending; #755 is not closed by local acceptance alone.
+
 User granted another 300 credits: total ceiling 1,200, original baseline retained,
 hard floor 1,731.922436 and dispatch stop 1,756.922436. First balance 2,048.4852735
 leaves 316.5628375 under that ceiling; weekly included usage has reset. Admit one

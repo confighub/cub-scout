@@ -4,7 +4,9 @@ One serial owned-kind capture is admitted after product/helper review, offline
 checks and local cached-tool preflight. The immutable product pin is
 `478b1095359c6325d38e89c02e837861fc0f4410`. Execution still requires `--execute`,
 an exact committed helper source and complete tool SHA pins. Pending or invalid
-source pins refuse before tools or configuration reads. No live acceptance yet.
+source pins refuse before tools or configuration reads. Attempt 2 passes with
+independent final receipt/report review; see `live-proof-report.json`. The first
+failed attempt remains retained. Acceptance has the scope and limits below.
 
 The helper shares the reviewed doctor command/evidence primitives, Trace
 process-group runner, ownership cleanup and private observer environment, and
@@ -142,6 +144,7 @@ invocation's cluster/nodes, temporary worktrees and private credentials are
 removed. Uncertain nodes require ownership review. Public receipts, raw logs,
 TUI artifacts and hashes remain; failures and cleanup errors stay failed.
 
-No live acceptance, genuine controller/server/governance, multi-cluster identity,
-paid model evaluation, release, terminal UX or cost-savings claim is established
-by this prepared packet.
+The accepted owned proof establishes selected-binding routing, actual API/RBAC
+denials, partial evidence, model viewport actions and owned cleanup. It establishes
+no genuine controller/server/governance, multi-cluster identity, paid model
+evaluation, release, terminal UX or cost-savings claim.
