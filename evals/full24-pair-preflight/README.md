@@ -70,3 +70,9 @@ preparation and copies only one selected case/arm or declared authored control
 into a read-only model-stage with a separate host receipt. It preserves the
 inert MCP marker. This source-only staging contract does not supply a runtime,
 enforce ordinary-tool grants, execute graders or admit a paid evaluation.
+
+Separate [delivery answer-grader controls](DELIVERY-GRADER-CONTROLS.md) validate
+DEL-01–04 selected graders against source-bound positives and wrong-evidence/
+malformed-output negatives in local Python and Node. They preserve all frozen
+questions, weights, graders and fixtures. Parity is limited to those vectors;
+it is not official evaluator execution, model quality or paid admission.

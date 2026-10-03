@@ -1,23 +1,45 @@
 # cub-scout execution handover
 
 **Current snapshot:** 2026-10-03. Verified merged baseline:
-[`9c7e9578`](https://github.com/confighub/cub-scout/commit/9c7e95786933669823f4ead62e4407345cfea05a).
+[`fbe886d4`](https://github.com/confighub/cub-scout/commit/fbe886d4e11ce1f6d7b5a285dab22b4426a3d17d).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
 order, quality gates, budgets and decisions.
 
+## Offline delivery-grader controls — 2026-10-03
+
+A bounded read-only audit found direct selected-answer controls for 9/24 frozen
+cases; capture/source validation does not count as answer-grader validation.
+Fifteen selected graders lack direct acceptance controls. Admit one DEL-01–04
+family test-only packet, success defined in #645 comment 5966621013. It must
+bind canonical answers to frozen input facts, reject per-field wrong evidence
+and malformed output, and cross-check local Python/Node matching with the exact
+selected flags and `last_message` target. Questions, weights, graders and
+source fixtures stay frozen. Implementation and independent review pass; six
+new delivery tests and the complete sixteen-test source-preflight suite pass.
+Local control engines are Python 3.14.4 / Node v25.9.0; copied log and engine
+metadata: `evals/results/delivery-grader-controls-20261003/`. Separate exact-head
+CI/merge remain pending. Direct offline controls now cover 13/24 selected
+cases, with eleven other cases still missing controls. This does not establish
+the official plugin grader engine, model correctness or full-suite admission.
+Paid runs stay stopped.
+
 ## Offline baseline case staging — 2026-10-03
 
-The next bounded source-only packet is independently reviewed, including one
+#764 merged at `fbe886d4`, with inspected enabled exact-head CI `37104777953`
+at `b452a419` passing Unit, Integration, GitOps E2E and Proof Artifact. Optional
+Connected, Demo and Full Verification skipped. The bounded source-only packet
+is independently reviewed, including one
 consolidated receipt/type/special-file repair. Eight offline guards cover all
 24 cases in both arms, both authored controls, exact treatment delta, source
 and receipt corruption, path/symlink hazards and oracle/sibling injection.
 Actual CLI prepare/stage/verify and wrong-case/malformed-receipt rejection pass;
 raw command records are retained at
 `/private/tmp/scout-full24-case-stage-cli-wuf_qhlz/` and repaired tests at
-`/tmp/scout-full24-case-stage-tests-repaired-20261003.log`. The CI step is wired,
-but separate exact-head CI/merge remain pending. Only `model-stage/` is a future
+`/tmp/scout-full24-case-stage-tests-repaired-20261003.log`. Copied command/test
+records and stage receipt are retained under
+`evals/results/full24-case-stage-20261003/`; CI includes the eight guards. Only `model-stage/` is a future
 mount candidate; the host receipt and source preparation stay outside it.
 The MCP marker remains inert. Tool/sandbox enforcement, usable MCP, selected
 grader controls, runtime/process accounting and attributable cost remain gates.
