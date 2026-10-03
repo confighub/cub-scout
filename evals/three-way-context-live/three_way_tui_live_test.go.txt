@@ -1,0 +1,196 @@
+package main
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"os"
+	"testing"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
+)
+
+const ownedThreeWayNamespace = "scout-three-way-context-proof"
+const ownedThreeWayDeployment = "scout-context-marker"
+
+// Injected only into the pinned temporary product checkout. Collection is the
+// real production session/collector; this does not assert terminal UX.
+func TestThreeWayOwnedTUI(t *testing.T) {
+	label, path := os.Getenv("SCOUT_THREE_WAY_TUI_CONTEXT"), os.Getenv("SCOUT_THREE_WAY_TUI_RESULT")
+	if label == "" || path == "" {
+		t.Skip("explicit owned-kind capture only")
+	}
+	before, err := os.ReadFile(os.Getenv("KUBECONFIG"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	session, err := newTraceSessionForSelection(clusterContextSelection{name: label, explicit: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	scope, err := parseThreeWayScope("deploy/" + ownedThreeWayDeployment)
+	if err != nil {
+		t.Fatal(err)
+	}
+	model := newThreeWayTUIModel(context.Background(), session, scope, threeWayOptions{Namespace: ownedThreeWayNamespace})
+	model.standalone = true
+	initial := collectOwnedThreeWay(t, &model, model.start())
+	rendered, view, checks := exerciseOwnedThreeWayViewport(t, &model, initial)
+
+	updated, cmd := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
+	model = updated.(threeWayTUIModel)
+	refreshed := collectOwnedThreeWay(t, &model, cmd)
+	checks["refresh"] = refreshed.requestID == initial.requestID+1 && refreshed.contextLabel == label && !model.loading
+	updated, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}})
+	model = updated.(threeWayTUIModel)
+	// Use the actual edit route and submit its prefilled identical resource.
+	wasEditing := model.editing && model.input == scope.String()
+	updated, cmd = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	model = updated.(threeWayTUIModel)
+	edited := collectOwnedThreeWay(t, &model, cmd)
+	checks["scopeEdit"] = wasEditing && !model.editing && edited.scope == scope && edited.contextLabel == label && edited.requestID > refreshed.requestID
+	updated, quit := model.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	model = updated.(threeWayTUIModel)
+	if quit != nil {
+		_, checks["quit"] = quit().(tea.QuitMsg)
+	}
+	checks["quit"] = checks["quit"] && model.closed && !model.loading
+	after, err := os.ReadFile(os.Getenv("KUBECONFIG"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	checks["immutableConfig"] = bytes.Equal(before, after)
+	for name, ok := range checks {
+		if !ok {
+			t.Fatalf("model action %s failed", name)
+		}
+	}
+	writeOwnedThreeWayArtifact(t, path, map[string]interface{}{
+		"schema": "three-way-context-tui.v1", "passed": true, "context": label,
+		"report": initial.report, "refreshedReport": refreshed.report, "editedReport": edited.report,
+		"rendered": rendered, "view": view, "checks": checks,
+	})
+}
+
+func collectOwnedThreeWay(t *testing.T, model *threeWayTUIModel, command tea.Cmd) threeWayTUIResultMsg {
+	t.Helper()
+	if command == nil {
+		t.Fatal("real collector command missing")
+	}
+	message, ok := command().(threeWayTUIResultMsg)
+	if !ok || message.err != nil {
+		t.Fatalf("collector result: %#v", message)
+	}
+	updated, _ := model.Update(message)
+	*model = updated.(threeWayTUIModel)
+	if model.loading || model.err != nil || model.output == "" {
+		t.Fatal("collector result not accepted by actual model")
+	}
+	return message
+}
+
+func exerciseOwnedThreeWayViewport(t *testing.T, model *threeWayTUIModel, result threeWayTUIResultMsg) (string, string, map[string]bool) {
+	t.Helper()
+	before, err := json.Marshal(result.report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rendered := model.output
+	updated, _ := model.Update(tea.WindowSizeMsg{Width: 60, Height: 10})
+	*model = updated.(threeWayTUIModel)
+	checks := map[string]bool{"resize": model.viewport.Width == 58 && model.viewport.Height == 3}
+	if model.viewport.TotalLineCount() <= model.viewport.Height {
+		t.Fatal("report does not overflow real viewport")
+	}
+	initialView, offset := model.View(), model.viewport.YOffset
+	updated, _ = model.Update(tea.KeyMsg{Type: tea.KeyPgDown})
+	*model = updated.(threeWayTUIModel)
+	checks["scroll"] = model.viewport.YOffset > offset && model.View() != initialView
+	updated, _ = model.Update(tea.KeyMsg{Type: tea.KeyPgUp})
+	*model = updated.(threeWayTUIModel)
+	checks["scrollBack"] = model.viewport.YOffset == offset && model.View() == initialView
+	after, err := json.Marshal(result.report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	checks["immutableSnapshot"] = bytes.Equal(before, after) && model.output == rendered
+	// Capture a full-height view after actual viewport actions for validation.
+	updated, _ = model.Update(tea.WindowSizeMsg{Width: 120, Height: 1000})
+	*model = updated.(threeWayTUIModel)
+	return rendered, model.View(), checks
+}
+
+func writeOwnedThreeWayArtifact(t *testing.T, path string, data map[string]interface{}) {
+	t.Helper()
+	encoded, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	stream, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := stream.Write(append(encoded, '\n')); err != nil {
+		stream.Close()
+		t.Fatal(err)
+	}
+	if err := stream.Close(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// Offline integration emits actual Go-rendered artifacts. No collector seams
+// are installed in the live probe; this control supplies only a report message.
+func TestThreeWayOwnedViewportControls(t *testing.T) {
+	for _, result := range []string{"allowed", "source-denied", "pods-denied"} {
+		t.Run(result, func(t *testing.T) {
+			label := "three-way-" + result
+			report := threeWayReport{Context: label, Scope: "Deployment/" + ownedThreeWayDeployment,
+				Summary: threeWaySummary{TotalResources: 1, Agreement: AgreementSummary{State: StatePartial,
+					Summary: "Comparison evidence is incomplete; agreement is not established",
+					Sources: SourceCoverage{Cluster: 1, Total: 1}}},
+				Omissions: []threeWayOmission{{Phase: "comparison-sides", Reason: "dry_unavailable"}, {Phase: "comparison-sides", Reason: "wet_unavailable"}},
+				Resources: []threeWayResourceEntry{{Result: compareResourceResult{Resource: "Deployment/" + ownedThreeWayDeployment,
+					Namespace: ownedThreeWayNamespace, Mode: "live-only", Connected: true,
+					Live: compareSideSummary{Source: "cluster", APIVersion: "apps/v1", Kind: "Deployment", Name: ownedThreeWayDeployment,
+						Namespace: ownedThreeWayNamespace, UnitSlug: "scout-proof-unit", SpaceName: "scout-proof-space", Replicas: new(int64)},
+					Notes: []string{"Connected DRY/WET lookup failed: recorded unit lookup unavailable in owned proof"}}, CurrentChange: &agent.RolloutDecision{Resource: agent.ObjectSetObjectID{APIVersion: "apps/v1", Kind: "Deployment", Namespace: ownedThreeWayNamespace, Name: ownedThreeWayDeployment}}}},
+			}
+			if result == "source-denied" {
+				report.Omissions = append(report.Omissions, threeWayOmission{Phase: "live-source-link", Reason: "forbidden"}, threeWayOmission{Phase: "source-coverage", Reason: "source_anchor_unavailable"})
+			} else {
+				report.Resources[0].Result.Live.GitSource = &agent.GitSourceAnchor{RepoURL: "https://example.invalid/owned-proof.git", Revision: "proof-revision", Path: "proof/manifests"}
+				report.Summary.Agreement.Sources.Deployer = 1
+			}
+			if result == "pods-denied" {
+				report.Omissions = append(report.Omissions, threeWayOmission{Phase: "current-change", Reason: "forbidden"})
+			}
+			for index := range report.Omissions {
+				report.Omissions[index].Resource = "Deployment/" + ownedThreeWayDeployment
+				report.Omissions[index].Namespace = ownedThreeWayNamespace
+			}
+			model := newThreeWayTUIModel(context.Background(), &traceSession{context: label}, threeWayScope{ScopeType: threeWayScopeResource, ScopeValue: "Deployment/" + ownedThreeWayDeployment}, threeWayOptions{Namespace: ownedThreeWayNamespace})
+			model.requestID, model.loading, model.standalone = 1, true, true
+			message := threeWayTUIResultMsg{requestID: 1, scope: model.scope, contextLabel: label, report: report}
+			updated, _ := model.Update(message)
+			model = updated.(threeWayTUIModel)
+			rendered, view, checks := exerciseOwnedThreeWayViewport(t, &model, message)
+			_, quit := model.Update(tea.KeyMsg{Type: tea.KeyEsc})
+			if quit != nil {
+				_, checks["quit"] = quit().(tea.QuitMsg)
+			}
+			for name, ok := range checks {
+				if !ok {
+					t.Fatalf("viewport action %s failed", name)
+				}
+			}
+			if directory := os.Getenv("SCOUT_THREE_WAY_VIEWPORT_RESULTS"); directory != "" {
+				writeOwnedThreeWayArtifact(t, directory+"/"+result+".json", map[string]interface{}{
+					"schema": "three-way-context-viewport.v1", "context": label, "report": report,
+					"rendered": rendered, "view": view, "checks": checks,
+				})
+			}
+		})
+	}
+}
