@@ -20,6 +20,8 @@ on:
     inputs:
       level:
         description: 'Test level (smoke, unit, integration, gitops, demos, connected, full)'
+        type: choice
+        options: [smoke, unit, integration, gitops, demos, connected, full]
         required: false
         default: 'integration'
 
@@ -120,6 +122,12 @@ jobs:
       - name: Run offline full-24 case isolation runtime guards
         run: PYTHONDONTWRITEBYTECODE=1 /tmp/scout-pre01-ci/bin/python -m unittest discover -s evals/full24-case-isolation -v
 
+      - name: Check offline workflow selection
+        run: PYTHONDONTWRITEBYTECODE=1 /tmp/scout-pre01-ci/bin/python -m unittest discover -s scripts/ci -p 'test_offline_workflow.py' -v
+
+      - name: Run offline source-bound launch policy guards
+        run: PYTHONDONTWRITEBYTECODE=1 /tmp/scout-pre01-ci/bin/python -m unittest discover -s evals/full24-launch-policy -v
+
       - name: Run existing strict recorded-scale answer controls
         run: PYTHONDONTWRITEBYTECODE=1 /tmp/scout-pre01-ci/bin/python -m unittest discover -s evals/recorded-scale -p 'test_packet.py' -k test_strict_answer_contract_is_opt_in_and_hashes_generated_files -v
 
@@ -187,6 +195,9 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
     needs: unit
+    # Manual smoke/unit runs must not create a cluster. Unknown manual levels
+    # also fail closed to offline jobs. Normal PR/main runs retain live CI.
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.level == 'integration' || github.event.inputs.level == 'gitops' || github.event.inputs.level == 'demos' || github.event.inputs.level == 'connected' || github.event.inputs.level == 'full'
     steps:
       - uses: actions/checkout@v6
 

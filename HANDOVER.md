@@ -7,6 +7,37 @@ Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
 order, quality gates, budgets and decisions.
 
+## Offline runtime checkpoint — 2026-10-03
+
+The user now requests all remaining v2.13 work except live tests. Current topic
+branch: `codex/v213-offline-runtime`. No new container, cluster, ConfigHub,
+registry or paid-model execution is included. Ordinary PR/main CI runs live
+jobs, so do not open/merge this branch while that exclusion applies. Manual
+`level=unit` CI has been corrected to select only Unit and Proof Artifact;
+three condition/graph tests retain the normal PR/main and live-level behavior.
+
+`evals/full24-launch-policy/` preserves all 24 frozen prompts, ordinary grants
+and source budgets in both arms, including both authored controls. Six offline
+contracts pass. Seven treatment cases have exact recorded Deployment-export
+bindings; the remaining 17 explicitly block, with no fabricated tool response.
+Independent review's Python/runtime-asset prerequisite is explicitly held:
+the candidate binds the wrapper source digest but requires independently pinned
+Python/dependencies and inspected immutable assets before execution.
+This is candidate policy, not actual tool enforcement or runtime admission.
+
+The explicit recorded-only host stdio probe passed for all seven bindings with
+the actual local Scout binary: exact tool inventory, map provenance/count,
+explain identity/hash and unsupported live-tool refusal. Request/reply hashes
+and scope are retained in `evals/full24-launch-policy/local-recorded-proof.json`.
+This does not establish the pinned Linux runtime, model tools/skills or full-24
+MCP usability. Offline build, `go test ./...` and `go vet ./...` pass with cached
+dependencies and an explicit empty kubeconfig. A separate temporary consumer
+imports `/v2/pkg/agent` with a local replacement and classifies a Helm-labelled
+Deployment correctly. Existing self-import/distribution guards pass; public
+proxy installation awaits a `/v2` release tag and is not proved by this check.
+Genuine governance captures, full-runtime/evaluator/process/cost admission and
+the final release gates remain pending. SDK #758 remains deferred.
+
 ## Full isolation matrix checkpoint — 2026-10-03
 
 The same reviewed probe/source at `5ff09940` now passes for all 24 ordinary

@@ -1,0 +1,297 @@
+{
+  "binarySha256": "9b77b2031ddb30370ac7fcf3ff7678e0e441aa7c8a6c389ac9fb7c179c1bd45c",
+  "cases": [
+    {
+      "case": "ATR-01",
+      "exitCode": 0,
+      "observed": {
+        "excludedFromScopeCount": 0,
+        "explainIdentity": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "name": "argocd-application-controller",
+          "namespace": "argocd"
+        },
+        "ownerCounts": {
+          "ArgoCD": 2,
+          "ConfigHub": 1,
+          "Flux": 3,
+          "Helm": 1,
+          "Native": 7
+        },
+        "provenance": {
+          "bytes": 67696,
+          "captureCompleteness": "unknown",
+          "captureTime": "unknown",
+          "documents": 1,
+          "kind": "kubernetes-object-recording",
+          "objectCount": 14,
+          "sha256": "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8"
+        },
+        "selectedCount": 14,
+        "tools": [
+          "explain",
+          "map"
+        ],
+        "unsupportedToolRefused": true
+      },
+      "recordingSha256": "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8",
+      "requestSha256": "716356688633bcd0e0a51a19a9d6ccd24878bcdcf0cbd5b74dd00c4887c6382f",
+      "sourceRelativePath": "arms/with/cases/ATR-01/cluster/deployments.yaml",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "4ad730c568068e9b1c264ea88781a06401551a1f6ceb20e04e71cacb9ab255d0"
+    },
+    {
+      "case": "ATR-02",
+      "exitCode": 0,
+      "observed": {
+        "excludedFromScopeCount": 0,
+        "explainIdentity": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "name": "argocd-application-controller",
+          "namespace": "argocd"
+        },
+        "ownerCounts": {
+          "ArgoCD": 2,
+          "ConfigHub": 1,
+          "Flux": 3,
+          "Helm": 1,
+          "Native": 7
+        },
+        "provenance": {
+          "bytes": 67696,
+          "captureCompleteness": "unknown",
+          "captureTime": "unknown",
+          "documents": 1,
+          "kind": "kubernetes-object-recording",
+          "objectCount": 14,
+          "sha256": "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8"
+        },
+        "selectedCount": 14,
+        "tools": [
+          "explain",
+          "map"
+        ],
+        "unsupportedToolRefused": true
+      },
+      "recordingSha256": "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8",
+      "requestSha256": "716356688633bcd0e0a51a19a9d6ccd24878bcdcf0cbd5b74dd00c4887c6382f",
+      "sourceRelativePath": "arms/with/cases/ATR-02/cluster/deployments.yaml",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "4ad730c568068e9b1c264ea88781a06401551a1f6ceb20e04e71cacb9ab255d0"
+    },
+    {
+      "case": "ATR-03",
+      "exitCode": 0,
+      "observed": {
+        "excludedFromScopeCount": 0,
+        "explainIdentity": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "name": "argocd-application-controller",
+          "namespace": "argocd"
+        },
+        "ownerCounts": {
+          "ArgoCD": 2,
+          "ConfigHub": 1,
+          "Flux": 3,
+          "Helm": 1,
+          "Native": 7
+        },
+        "provenance": {
+          "bytes": 67696,
+          "captureCompleteness": "unknown",
+          "captureTime": "unknown",
+          "documents": 1,
+          "kind": "kubernetes-object-recording",
+          "objectCount": 14,
+          "sha256": "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8"
+        },
+        "selectedCount": 14,
+        "tools": [
+          "explain",
+          "map"
+        ],
+        "unsupportedToolRefused": true
+      },
+      "recordingSha256": "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8",
+      "requestSha256": "716356688633bcd0e0a51a19a9d6ccd24878bcdcf0cbd5b74dd00c4887c6382f",
+      "sourceRelativePath": "arms/with/cases/ATR-03/cluster/deployments.yaml",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "4ad730c568068e9b1c264ea88781a06401551a1f6ceb20e04e71cacb9ab255d0"
+    },
+    {
+      "case": "ATR-04",
+      "exitCode": 0,
+      "observed": {
+        "excludedFromScopeCount": 0,
+        "explainIdentity": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "name": "argocd-application-controller",
+          "namespace": "argocd"
+        },
+        "ownerCounts": {
+          "ArgoCD": 2,
+          "ConfigHub": 1,
+          "Flux": 3,
+          "Helm": 1,
+          "Native": 7
+        },
+        "provenance": {
+          "bytes": 67696,
+          "captureCompleteness": "unknown",
+          "captureTime": "unknown",
+          "documents": 1,
+          "kind": "kubernetes-object-recording",
+          "objectCount": 14,
+          "sha256": "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8"
+        },
+        "selectedCount": 14,
+        "tools": [
+          "explain",
+          "map"
+        ],
+        "unsupportedToolRefused": true
+      },
+      "recordingSha256": "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8",
+      "requestSha256": "716356688633bcd0e0a51a19a9d6ccd24878bcdcf0cbd5b74dd00c4887c6382f",
+      "sourceRelativePath": "arms/with/cases/ATR-04/cluster/deployments.yaml",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "4ad730c568068e9b1c264ea88781a06401551a1f6ceb20e04e71cacb9ab255d0"
+    },
+    {
+      "case": "INV-01",
+      "exitCode": 0,
+      "observed": {
+        "excludedFromScopeCount": 0,
+        "explainIdentity": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "name": "coredns",
+          "namespace": "kube-system"
+        },
+        "ownerCounts": {
+          "ArgoCD": 90,
+          "ConfigHub": 33,
+          "Flux": 120,
+          "Helm": 45,
+          "Native": 14
+        },
+        "provenance": {
+          "bytes": 1031673,
+          "captureCompleteness": "unknown",
+          "captureTime": "unknown",
+          "documents": 1,
+          "kind": "kubernetes-object-recording",
+          "objectCount": 302,
+          "sha256": "822716e41eaf59674cec8b52913b2613c76932b578c45d54285f71747dd228b6"
+        },
+        "selectedCount": 302,
+        "tools": [
+          "explain",
+          "map"
+        ],
+        "unsupportedToolRefused": true
+      },
+      "recordingSha256": "822716e41eaf59674cec8b52913b2613c76932b578c45d54285f71747dd228b6",
+      "requestSha256": "81ad9ab5fb7c9b97e47ce7f53fd2f07c65d49a76abf0c8a2880db21436b47b35",
+      "sourceRelativePath": "arms/with/cases/INV-01/cluster/deployments.yaml",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "df27973c26b4285ddda6083c5192778b9e6d37f607041355bd64dd028c2d2a86"
+    },
+    {
+      "case": "INV-02",
+      "exitCode": 0,
+      "observed": {
+        "excludedFromScopeCount": 0,
+        "explainIdentity": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "name": "coredns",
+          "namespace": "kube-system"
+        },
+        "ownerCounts": {
+          "ArgoCD": 90,
+          "ConfigHub": 33,
+          "Flux": 120,
+          "Helm": 45,
+          "Native": 14
+        },
+        "provenance": {
+          "bytes": 1031673,
+          "captureCompleteness": "unknown",
+          "captureTime": "unknown",
+          "documents": 1,
+          "kind": "kubernetes-object-recording",
+          "objectCount": 302,
+          "sha256": "822716e41eaf59674cec8b52913b2613c76932b578c45d54285f71747dd228b6"
+        },
+        "selectedCount": 302,
+        "tools": [
+          "explain",
+          "map"
+        ],
+        "unsupportedToolRefused": true
+      },
+      "recordingSha256": "822716e41eaf59674cec8b52913b2613c76932b578c45d54285f71747dd228b6",
+      "requestSha256": "81ad9ab5fb7c9b97e47ce7f53fd2f07c65d49a76abf0c8a2880db21436b47b35",
+      "sourceRelativePath": "arms/with/cases/INV-02/cluster/deployments.yaml",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "df27973c26b4285ddda6083c5192778b9e6d37f607041355bd64dd028c2d2a86"
+    },
+    {
+      "case": "INV-03",
+      "exitCode": 0,
+      "observed": {
+        "excludedFromScopeCount": 0,
+        "explainIdentity": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "name": "argocd-application-controller",
+          "namespace": "argocd"
+        },
+        "ownerCounts": {
+          "ArgoCD": 2,
+          "ConfigHub": 1,
+          "Flux": 3,
+          "Helm": 1,
+          "Native": 7
+        },
+        "provenance": {
+          "bytes": 67696,
+          "captureCompleteness": "unknown",
+          "captureTime": "unknown",
+          "documents": 1,
+          "kind": "kubernetes-object-recording",
+          "objectCount": 14,
+          "sha256": "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8"
+        },
+        "selectedCount": 14,
+        "tools": [
+          "explain",
+          "map"
+        ],
+        "unsupportedToolRefused": true
+      },
+      "recordingSha256": "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8",
+      "requestSha256": "716356688633bcd0e0a51a19a9d6ccd24878bcdcf0cbd5b74dd00c4887c6382f",
+      "sourceRelativePath": "arms/with/cases/INV-03/cluster/deployments.yaml",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "4ad730c568068e9b1c264ea88781a06401551a1f6ceb20e04e71cacb9ab255d0"
+    }
+  ],
+  "claims": {
+    "actualToolGrantsEnforced": false,
+    "claudeExecuted": false,
+    "containerIsolationProbed": false,
+    "hostRecordedToolsProbed": true,
+    "linuxRuntimePinProbed": false,
+    "paidRunAdmitted": false
+  },
+  "rawArchive": "/private/tmp/scout-v213-recorded-stdio-20261003-final",
+  "rawProofSha256": "8fa1e5c886c4e35e2bde3966dab273d13995b993f9a600196a269e4ae663a298",
+  "schema": "full24-local-recorded-stdio-summary.v1",
+  "scope": "Seven selected source recordings, real locally built Scout; host stdio only."
+}
