@@ -117,6 +117,9 @@ jobs:
       - name: Run offline full-24 selected-case staging guards
         run: PYTHONDONTWRITEBYTECODE=1 /tmp/scout-pre01-ci/bin/python -m unittest discover -s evals/full24-case-stage -v
 
+      - name: Run offline full-24 case isolation runtime guards
+        run: PYTHONDONTWRITEBYTECODE=1 /tmp/scout-pre01-ci/bin/python -m unittest discover -s evals/full24-case-isolation -v
+
       - name: Run existing strict recorded-scale answer controls
         run: PYTHONDONTWRITEBYTECODE=1 /tmp/scout-pre01-ci/bin/python -m unittest discover -s evals/recorded-scale -p 'test_packet.py' -k test_strict_answer_contract_is_opt_in_and_hashes_generated_files -v
 
