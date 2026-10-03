@@ -1,7 +1,7 @@
 # cub-scout execution handover
 
 **Current snapshot:** 2026-10-03. Verified merged baseline:
-[`025f3a71`](https://github.com/confighub/cub-scout/commit/025f3a716e3de4ca4b663a7e027b79706daf4bbc).
+[`3abfdd7f`](https://github.com/confighub/cub-scout/commit/3abfdd7fd6d970be47df9f12e2a0e1f01c2f716a).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
@@ -18,8 +18,10 @@ All 24 selected grader bytes and log hashes are independently checked in
 `evals/full24-pair-preflight/offline-grader-control-proof.json`; raw records:
 `evals/results/all24-grader-controls-20261003/`. Seventeen cases have local
 Python/Node vector checks; seven have Python controls only. CI now also selects
-the existing strict scale grader test. Separate exact-head CI/merge for this
-remaining packet are pending. No frozen questions, weights, graders or fixtures
+the existing strict scale grader test. PR #766 merged at `3abfdd7f` after
+inspected exact-head CI `37106806069` at `a52c7bf7`: Unit, Integration, GitOps
+E2E and Proof Artifact passed; optional Connected, Demo and Full Verification
+skipped. No frozen questions, weights, graders or fixtures
 changed; official evaluator/target integration, actual tool/runtime enforcement,
 usable full-24 recorded MCP, process accounting and attributable cost remain
 admission gates. Paid evaluation stays stopped; v2.13 remains unreleased.
