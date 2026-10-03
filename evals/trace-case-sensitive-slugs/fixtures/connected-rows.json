@@ -1,8 +1,27 @@
 {
   "fixtureKind": "mocked-bounded-connected-input",
   "rows": {
-    "unitEvents": [{"eventId": "wrong-unit-case", "unit": "paymentsapi", "space": "prod"}],
-    "releases": [{"releaseId": "wrong-target-case", "target": "west", "space": "prod"}]
+    "unitEvents": [
+      {
+        "eventId": "wrong-unit-case",
+        "unit": "paymentsapi",
+        "space": "prod"
+      }
+    ],
+    "releases": [
+      {
+        "releaseId": "wrong-target-case",
+        "target": "west",
+        "space": "prod"
+      }
+    ],
+    "liveStatuses": [
+      {
+        "app": "paymentsapi",
+        "space": "prod",
+        "message": "WRONG-CASE-LIVE-STATUS"
+      }
+    ]
   },
   "identityControls": {
     "slugComparison": "exact-case-sensitive",

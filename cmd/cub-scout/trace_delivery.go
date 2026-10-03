@@ -483,9 +483,9 @@ func matchTraceLiveStatus(correlation agent.TraceDeliveryCorrelation, statuses [
 		app := strings.TrimSpace(status.App)
 		matchedBy := []string{spaceBy}
 		switch {
-		case correlation.Application != "" && strings.EqualFold(app, correlation.Application):
+		case correlation.Application != "" && app == correlation.Application:
 			matchedBy = append(matchedBy, "liveStatus.app==chain.application")
-		case correlation.UnitSlug != "" && strings.EqualFold(app, correlation.UnitSlug):
+		case correlation.UnitSlug != "" && app == correlation.UnitSlug:
 			matchedBy = append(matchedBy, "liveStatus.app==confighub.unitSlug")
 		default:
 			continue

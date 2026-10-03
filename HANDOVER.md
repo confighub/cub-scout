@@ -1,13 +1,29 @@
 # cub-scout execution handover
 
-**Current snapshot:** 2026-10-02. Verified merged baseline:
-[`94e6edf3`](https://github.com/confighub/cub-scout/commit/94e6edf339e0cd410994563fb7a7c57c52e18c09).
+**Current snapshot:** 2026-10-03. Verified merged baseline:
+[`cf60006b`](https://github.com/confighub/cub-scout/commit/cf60006b6ef00b952b0a20a96482ffaa86f17832).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
 order, quality gates, budgets and decisions.
 
 ## Full comparison context packet — 2026-10-03
+
+#762 merged at `cf60006b`, closing #755, after inspected exact-head CI
+`37102952826` at `2441718d`. Unit, Integration, GitOps E2E and Proof Artifact
+passed; optional Connected, Demo and Full Verification skipped. Initial CI
+`37102822312` stopped at unused refactor wrappers/test assignment; independently
+reviewed dead-code/test-only cleanup passed targeted checks before the rerun.
+The existing worktree was fast-forwarded to the merge without changing the
+primary checkout. SDK #758 remains deferred; v2.13 is still unreleased.
+
+Next #561 slice: exact-case live-status app/unit-slug joins, preserving space-ID
+precedence and no-match omissions. Success was defined in issue comment
+5966342944 before implementation. Red tests reproduced both cross-joins and
+the shared CLI/TUI leak; fixed tests pass. Independent review, cached build/full
+offline Go, exact scaffold and Python guard checks pass. Separate exact-head
+CI/merge remain pending. Readiness and remaining genuine governance/baseline
+gates are recorded in `docs/releases/v2.13-readiness.md`.
 
 Full #755 product wiring is implemented and independently reviewed. The repaired
 offline build and full Go suite pass. CLI/MCP selectors and the shared scoped TUI

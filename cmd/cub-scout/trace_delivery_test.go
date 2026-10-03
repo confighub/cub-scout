@@ -536,6 +536,49 @@ func TestTraceConfigHubSlugJoinsAreCaseSensitive(t *testing.T) {
 	}
 }
 
+func TestTraceLiveStatusAppJoinsAreCaseSensitive(t *testing.T) {
+	for _, tc := range []struct {
+		name, exact, wrong, matchedBy string
+		correlation                   agent.TraceDeliveryCorrelation
+	}{
+		{name: "application", exact: "checkout", wrong: "Checkout", matchedBy: "liveStatus.app==chain.application", correlation: agent.TraceDeliveryCorrelation{Application: "checkout", Space: "prod"}},
+		{name: "unit", exact: "PaymentsAPI", wrong: "paymentsapi", matchedBy: "liveStatus.app==confighub.unitSlug", correlation: agent.TraceDeliveryCorrelation{UnitSlug: "PaymentsAPI", Space: "prod"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			for _, reverse := range []bool{false, true} {
+				rows := []ConfigHubLiveStatusEvidence{
+					{App: tc.wrong, Space: "prod", Message: "WRONG-CASE-LIVE-STATUS"},
+					{App: tc.exact, Space: "prod", Message: "EXACT-LIVE-STATUS"},
+				}
+				if reverse {
+					rows[0], rows[1] = rows[1], rows[0]
+				}
+				got, ok, omission := matchTraceLiveStatus(tc.correlation, rows)
+				if !ok || got == nil || got.App != tc.exact || got.Message != "EXACT-LIVE-STATUS" || !containsTraceMatch(got.MatchedBy, tc.matchedBy) || omission.Layer != "" {
+					t.Fatalf("reverse=%v: got=%+v ok=%v omission=%+v; want exact-case row and provenance", reverse, got, ok, omission)
+				}
+			}
+			for _, row := range []ConfigHubLiveStatusEvidence{
+				{App: tc.wrong, Space: "prod"}, {App: tc.exact, Space: "other"}, {Space: "prod"}, {App: tc.exact},
+			} {
+				got, ok, omission := matchTraceLiveStatus(tc.correlation, []ConfigHubLiveStatusEvidence{row})
+				if ok || got != nil || omission.Layer != "confighub.liveStatus" || !strings.Contains(omission.Reason, "no live-status writeback matched") {
+					t.Fatalf("row=%+v: got=%+v ok=%v omission=%+v; want explicit no-match", row, got, ok, omission)
+				}
+			}
+			correlation := tc.correlation
+			correlation.SpaceID = "space-a"
+			got, ok, _ := matchTraceLiveStatus(correlation, []ConfigHubLiveStatusEvidence{{App: tc.exact, Space: "renamed", SpaceID: "space-a"}})
+			if !ok || got == nil || !containsTraceMatch(got.MatchedBy, "spaceId") {
+				t.Fatal("exact space ID must preserve its existing precedence across a slug rename")
+			}
+			if _, ok, _ := matchTraceLiveStatus(correlation, []ConfigHubLiveStatusEvidence{{App: tc.exact, Space: "prod", SpaceID: "space-b"}}); ok {
+				t.Fatal("matching slug must not override conflicting space IDs")
+			}
+		})
+	}
+}
+
 func TestTraceSlugMismatchStaysOmittedInSharedCLIAndTUIEvidence(t *testing.T) {
 	result := &agent.TraceResult{
 		Object: agent.ResourceRef{Kind: "Deployment", Name: "api", Namespace: "prod"},
@@ -546,22 +589,25 @@ func TestTraceSlugMismatchStaysOmittedInSharedCLIAndTUIEvidence(t *testing.T) {
 		ObservedAt: time.Date(2026, 10, 1, 12, 0, 0, 0, time.UTC),
 		Scope:      GitOpsDeliveryEvidenceScope{Space: "prod", Since: "24h", MaxItems: 10},
 		ConfigHub: &ConfigHubDeliveryEvidence{
-			Releases:   []ConfigHubReleaseEvidence{{ReleaseID: "wrong-target", Space: "prod", Target: "west"}},
-			UnitEvents: []ConfigHubUnitEventEvidence{{EventID: "wrong-unit", Space: "prod", Unit: "paymentsapi"}},
+			LiveStatuses: []ConfigHubLiveStatusEvidence{{App: "paymentsapi", Space: "prod", Message: "WRONG-CASE-LIVE-STATUS"}},
+			Releases:     []ConfigHubReleaseEvidence{{ReleaseID: "wrong-target", Space: "prod", Target: "west"}},
+			UnitEvents:   []ConfigHubUnitEventEvidence{{EventID: "wrong-unit", Space: "prod", Unit: "paymentsapi"}},
 		},
 	}
 	result.DeliveryEvidence = correlateTraceDeliveryEvidence(result, raw, correlation, nil)
-	if result.DeliveryEvidence == nil || len(result.DeliveryEvidence.Releases) != 0 || len(result.DeliveryEvidence.UnitEvents) != 0 {
+	if result.DeliveryEvidence == nil || result.DeliveryEvidence.LiveStatus != nil || len(result.DeliveryEvidence.Releases) != 0 || len(result.DeliveryEvidence.UnitEvents) != 0 {
 		t.Fatalf("shared observation attached opposite-case candidates: %+v", result.DeliveryEvidence)
 	}
-	if !hasTraceDeliveryOmission(result.DeliveryEvidence.Omissions, "confighub.releases", "no release row matched") ||
+	if !hasTraceDeliveryOmission(result.DeliveryEvidence.Omissions, "confighub.liveStatus", "no live-status writeback matched") ||
+		!hasTraceDeliveryOmission(result.DeliveryEvidence.Omissions, "confighub.releases", "no release row matched") ||
 		!hasTraceDeliveryOmission(result.DeliveryEvidence.Omissions, "confighub.unitEvents", "no unit-event row matched") {
 		t.Fatalf("case mismatch should remain explicit as incomplete correlation: %+v", result.DeliveryEvidence.Omissions)
 	}
 
 	// CLI JSON and TUI human rendering project the same correlated model.
 	cli := convertTraceToV014(result, "Deployment", "api", "prod", nil)
-	if cli.DeliveryEvidence == nil || len(cli.DeliveryEvidence.Releases) != 0 || len(cli.DeliveryEvidence.UnitEvents) != 0 ||
+	if cli.DeliveryEvidence == nil || cli.DeliveryEvidence.LiveStatus != nil || len(cli.DeliveryEvidence.Releases) != 0 || len(cli.DeliveryEvidence.UnitEvents) != 0 ||
+		!hasTraceDeliveryOmission(cli.DeliveryEvidence.Omissions, "confighub.liveStatus", "no live-status writeback matched") ||
 		!hasTraceDeliveryOmission(cli.DeliveryEvidence.Omissions, "confighub.releases", "no release row matched") ||
 		!hasTraceDeliveryOmission(cli.DeliveryEvidence.Omissions, "confighub.unitEvents", "no unit-event row matched") {
 		t.Fatalf("CLI JSON model did not preserve the safe omission: %+v", cli.DeliveryEvidence)
@@ -570,12 +616,13 @@ func TestTraceSlugMismatchStaysOmittedInSharedCLIAndTUIEvidence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if bytes.Contains(encoded, []byte("wrong-target")) || bytes.Contains(encoded, []byte("wrong-unit")) {
+	if bytes.Contains(encoded, []byte("WRONG-CASE-LIVE-STATUS")) || bytes.Contains(encoded, []byte("wrong-target")) || bytes.Contains(encoded, []byte("wrong-unit")) {
 		t.Fatalf("CLI projection leaked a case-mismatched row: %s", encoded)
 	}
 	var tui bytes.Buffer
 	renderTraceDeliveryEvidenceHumanTo(&tui, result.DeliveryEvidence)
-	if strings.Contains(tui.String(), "wrong-target") || strings.Contains(tui.String(), "wrong-unit") ||
+	if strings.Contains(tui.String(), "WRONG-CASE-LIVE-STATUS") || strings.Contains(tui.String(), "wrong-target") || strings.Contains(tui.String(), "wrong-unit") ||
+		!strings.Contains(tui.String(), "no live-status writeback matched") ||
 		!strings.Contains(tui.String(), "no unit-event row matched") || !strings.Contains(tui.String(), "no release row matched") {
 		t.Fatalf("TUI projection did not retain safe omission evidence: %s", tui.String())
 	}
