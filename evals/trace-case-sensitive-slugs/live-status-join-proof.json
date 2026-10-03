@@ -1,0 +1,37 @@
+{
+  "schema": "trace-live-status-slug-regression.v1",
+  "acceptance": "passed",
+  "beforeMatcherSourceCommit": "2441718df7119b76e9cc1be7a8ea7d7d598f6e20",
+  "fixedSourceCommit": "05ab2ed909dbbe5314fc2873fed1159d3e90aaa0",
+  "scope": "Deterministic mocked ConfigHub rows; actual match/correlation functions and shared CLI JSON/TUI human projection. No collector or server request changes.",
+  "before": {
+    "exitCode": 1,
+    "reproduced": [
+      "wrong-case Application live-status join",
+      "wrong-case UnitSlug live-status join",
+      "shared CLI/TUI correlation retained wrong live-status evidence"
+    ],
+    "logSha256": "dda85f76288b39e998fbfc2b0e90299bb155084c8ca593b1abe26542c865a03f"
+  },
+  "after": {
+    "targetedExitCode": 0,
+    "fullGoExitCode": 0,
+    "targetedLogSha256": "4f7f4f7b3d9f28320fb092cd73e47cb70ab551c0415e091cf7ba712986f3b779",
+    "fullGoLogSha256": "e7056cd32b4ebe8d6a7d076908888c6776ac573f80dfaaa4ad529a4f09700d23",
+    "scaffoldLogSha256": "77099f4995562b193b33c7b5835b92d7d4747d5ef151daa76b7c9567ae457f3a",
+    "pythonGuardsLogSha256": "dae421ab5fd294e88f013ac6a18fac3ee62525fa2a5ed00aa6c676871dcb9203"
+  },
+  "sourceHashes": {
+    "cmd/cub-scout/trace_delivery.go": "c62b2745db5462142c304f9d74b237962b1630eada6cfd97da4b838b0e45ab3b",
+    "cmd/cub-scout/trace_delivery_test.go": "9a1458ef068c90fe3f357a7f0fc94921ad8c3a4e1418ceb7ec8ea83d6a5684fd",
+    "evals/trace-case-sensitive-slugs/fixtures/connected-rows.json": "7184187b52da825271123ca05bb36a74b70606093c1f8dc40dcf7a8373da6db1",
+    "evals/trace-case-sensitive-slugs/fixtures/trace-evidence.json": "85936f5b9e4dc9a5a7817392557e02264d5c778b2541c3e163ffc6b6463cc099"
+  },
+  "rawEvidence": "evals/results/trace-live-status-slug-20261003",
+  "limits": [
+    "Mocked bounded connected inputs, not genuine ConfigHub service/governance evidence",
+    "No Kubernetes collection changes or live-cluster acceptance claimed",
+    "Synthetic agent case remains unrun; no paid model or savings result",
+    "This completes only the live-status case-sensitive join slice, not all #561"
+  ]
+}
