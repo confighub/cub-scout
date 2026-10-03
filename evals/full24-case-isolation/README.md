@@ -71,3 +71,14 @@ adversarial model containment, descendant/tool accounting, billing, answer
 quality, cost savings or paid-run admission. It does not contact Kubernetes,
 ConfigHub or an external provider. Those gates remain separate from successful
 case-mount and fixed-probe evidence.
+
+## Local proof — 2026-10-03
+
+At source `5ff09940`, the INV-01 ordinary case and DEL-03 authored control
+both passed in both arms on the first container attempt: four actual owned
+containers, all removed with absence verified. See [proof summary](local-proof.json).
+The ten offline tests cover all 24 ordinary cases and both authored controls
+using fake Docker responses. They do not establish actual container execution
+for the other cases. Three initial failed test runs are retained with their
+setup/assertion explanations, alongside source preparation and successful logs.
+No model, provider, MCP or official grader was executed.

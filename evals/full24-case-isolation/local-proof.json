@@ -1,0 +1,147 @@
+{
+  "actualRuntime": {
+    "containerCount": 4,
+    "pairCount": 2,
+    "pairs": [
+      {
+        "arms": [
+          {
+            "arm": "with",
+            "bytes": 2851114,
+            "cleanupVerifiedAbsent": true,
+            "containerId": "196902abab8fb6b6c8aab3e446ce675ff2d26b1638e5467935213d453c1fa111",
+            "files": 58,
+            "interfaces": [
+              "lo"
+            ],
+            "operations": 9,
+            "probeSha256": "ff89272d0f2c341efccf714ec449685d5169a665e52b81d085bef8719b2bd5d4",
+            "stageReceiptSha256": "7ccf2f90426ae55f635e5be6e3cfabb7bff5b18ef1f81f7e9330c1d23ee16de9",
+            "status": "isolation_probe_passed",
+            "writeDenied": [
+              "/tools/.write-control",
+              "/tmp/stage-alias/.write-control",
+              "/root-write-control"
+            ]
+          },
+          {
+            "arm": "without",
+            "bytes": 2227055,
+            "cleanupVerifiedAbsent": true,
+            "containerId": "f0676c03a1e139b10f22e7b3ad83095b6fa349fb8aba24cbec3c395523f016fa",
+            "files": 9,
+            "interfaces": [
+              "lo"
+            ],
+            "operations": 9,
+            "probeSha256": "ff89272d0f2c341efccf714ec449685d5169a665e52b81d085bef8719b2bd5d4",
+            "stageReceiptSha256": "8a1a50a53c09015e5a2031195f7ebe0c462f07f5e94a228bacc1e79886c93fbb",
+            "status": "isolation_probe_passed",
+            "writeDenied": [
+              "/tools/.write-control",
+              "/tmp/stage-alias/.write-control",
+              "/root-write-control"
+            ]
+          }
+        ],
+        "authoredInputControl": null,
+        "case": "INV-01",
+        "rawDirectory": "evals/results/full24-case-isolation-20261003/inv01-attempt-1",
+        "receiptSha256": "e3b68f3c914a54afe232d8254b8c520410e7611c414e4e8bff8f4987e96cc4c8",
+        "status": "isolation_pair_passed_not_admitted"
+      },
+      {
+        "arms": [
+          {
+            "arm": "with",
+            "bytes": 647906,
+            "cleanupVerifiedAbsent": true,
+            "containerId": "0194e47ad6f03cc3a74f275f861bf45cc84edbbf27904a56c8dc0c6219b1f23d",
+            "files": 54,
+            "interfaces": [
+              "lo"
+            ],
+            "operations": 9,
+            "probeSha256": "ff89272d0f2c341efccf714ec449685d5169a665e52b81d085bef8719b2bd5d4",
+            "stageReceiptSha256": "23b935d98d9a3cd9dbbef9372af1f739ee1d2440ec81c882ea41c8cc64b983a9",
+            "status": "isolation_probe_passed",
+            "writeDenied": [
+              "/tools/.write-control",
+              "/tmp/stage-alias/.write-control",
+              "/root-write-control"
+            ]
+          },
+          {
+            "arm": "without",
+            "bytes": 23847,
+            "cleanupVerifiedAbsent": true,
+            "containerId": "87d4d144f3450d7551c9b75b82ecec987a54f649fda369d6f1fcef4e82e23c5a",
+            "files": 5,
+            "interfaces": [
+              "lo"
+            ],
+            "operations": 9,
+            "probeSha256": "ff89272d0f2c341efccf714ec449685d5169a665e52b81d085bef8719b2bd5d4",
+            "stageReceiptSha256": "4a077b759506a2d84472e7bd84f3533f6c731aab6af4859a367db0347ef8871d",
+            "status": "isolation_probe_passed",
+            "writeDenied": [
+              "/tools/.write-control",
+              "/tmp/stage-alias/.write-control",
+              "/root-write-control"
+            ]
+          }
+        ],
+        "authoredInputControl": "del03-missing-stale-identity-input-control.v1",
+        "case": "DEL-03",
+        "rawDirectory": "evals/results/full24-case-isolation-20261003/del03-control-attempt-1",
+        "receiptSha256": "c4f4717b5ad67a941068edbc4464800527849642e838f52cf93d97b42f288efa",
+        "status": "isolation_pair_passed_not_admitted"
+      }
+    ],
+    "scope": "fixed non-model file hash and write-denial probe; selected INV-01 and DEL-03 control only"
+  },
+  "claims": {
+    "all24ActualContainersExecuted": false,
+    "mcpUsable": false,
+    "modelExecuted": false,
+    "officialGraderExecuted": false,
+    "ordinaryToolGrantEnforced": false,
+    "paidRunAdmitted": false,
+    "processAccountingComplete": false,
+    "qualityOrSavingsMeasured": false,
+    "selectedCaseMountAndFixedProbeVerified": true
+  },
+  "codeSha256": {
+    "probe.py": "ff89272d0f2c341efccf714ec449685d5169a665e52b81d085bef8719b2bd5d4",
+    "run_pair.py": "0bce659f7602be882952fb6de4fb10776bee675c78632b595b420bb4a387dad7",
+    "test_runner.py": "fa251c7a10d89498935111d7404139797b68f6e223a8e999c12435a1df3bdb50"
+  },
+  "imageId": "sha256:cdbd05fb6f457ca275ff51ce00d93d865ca0b6a25f5ffb08262d94f6835771e5",
+  "offlineTests": {
+    "armsPerCase": 2,
+    "authoredControls": 2,
+    "log": "evals/results/full24-case-isolation-20261003/ten-tests-passed.log",
+    "ordinaryCases": 24,
+    "passed": 10,
+    "runtime": "authored_Docker_responses_only"
+  },
+  "retainedFailures": [
+    "Initial macOS executable-path assumption failed before Docker simulation.",
+    "Second macOS temporary-root assumption failed before Docker simulation.",
+    "Third test assertion expected StageError but size drift was already rejected by the probe check. Same-length mutation now exercises hash verification."
+  ],
+  "retainedLogSha256": {
+    "evals/results/full24-case-isolation-20261003/assertion-tests-failed.log": "d93a6370d0bf1c87c6dd67726788a5347982fef7afa831271940db6a690d96c9",
+    "evals/results/full24-case-isolation-20261003/del03-control-cli.log": "0e364d6d9b07f1ceb1a033b322614a249125802542de1db43a946dcc609d1d53",
+    "evals/results/full24-case-isolation-20261003/eight-tests-passed.log": "3f0df91cc5184af9271aa7f60e2892b0339d9c511a7bda9ae81608f123743509",
+    "evals/results/full24-case-isolation-20261003/initial-tests-failed.log": "214592082e0aa702f4073ada8a0b48e5c4cb51f05c648426bbf91fe8bfad9d33",
+    "evals/results/full24-case-isolation-20261003/inv01-cli.log": "1cf6908cf96923963943315b26014165ff634a51e4270735cdbc3ef988ede8fa",
+    "evals/results/full24-case-isolation-20261003/portable-executable-tests-failed.log": "50f6c00411f41a2a61569cd2d3e46f423af28ce57978afe6c23ead6ee5ac8dbd",
+    "evals/results/full24-case-isolation-20261003/source-preparation.log": "cad70ff23b8554c07a510f5387cec921cbfb1641f495504d60fdaa00c389e67c",
+    "evals/results/full24-case-isolation-20261003/ten-tests-passed.log": "0b450af8b439d2cf1bb589fe09bd3be1980b8172c87cbbfba67e9475fc60dcc5"
+  },
+  "schema": "full24-case-isolation-proof.v1",
+  "sourceCommit": "5ff099403203ad56fc30197670b043b5e3128729",
+  "sourcePreparationReportSha256": "5bbb24f55457068050cc19427b84c53da8cdd113f5dd87f67692d45941e7fa71",
+  "status": "fixed_probe_passed_not_admitted"
+}

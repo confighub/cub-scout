@@ -60,7 +60,9 @@ PYTHONDONTWRITEBYTECODE=1 python3 evals/full24-case-stage/stage.py \
 
 The stage is only a future mount candidate. Any later runtime must mount only
 `model-stage/`, never the output root, source preparation tree, host receipt,
-or sibling stage. This packet does not implement or verify that runtime.
+or sibling stage. The separate [case-isolation runner](../full24-case-isolation/README.md)
+implements a fixed non-model container probe; this stager itself does not
+execute or verify a runtime.
 
 Run the bounded source-only tests with:
 

@@ -7,6 +7,28 @@ Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
 order, quality gates, budgets and decisions.
 
+## Selected-case isolation runtime — 2026-10-03
+
+The user authorised further implementation and offline validation, with final
+acceptance gates before release. Success is defined in #645 comment 5969082934.
+The new `evals/full24-case-isolation/` runner uses the existing cached image,
+serial invocation-owned containers, one exact selected `model-stage/` mount per
+arm, no network, read-only root and fixed unprivileged/resource bounds. A fixed
+non-model probe checks complete file hashes and direct/symlink/root write denial;
+actual inspection precedes start and verifies terminal state. All bounded raw
+command outputs, failed receipts and owned cleanup results are retained. Source
+and stage integrity are checked before, after the probe and after cleanup.
+Ten deterministic offline tests pass, covering all 24 cases/both arms and both
+controls plus profile/final-state drift, lost create output, failure/timeout/
+interruption, corrupted input, cleanup uncertainty and cleanup-time mutation.
+Independent review approved the implementation and repaired proof coverage.
+The source/probe commit is `5ff09940`; local fixed-probe proof passed for INV-01 and the DEL-03 authored control
+in both arms: four actual containers, all cleaned up with absence verified.
+See `evals/full24-case-isolation/local-proof.json`; all-24 coverage remains
+offline/fake-Docker only. Separate exact-head CI/merge are pending.
+Ordinary tool grants remain unenforced, treatment MCP inert, and model/provider/
+official grader/process-cost admission unproved. Paid evaluation stays stopped.
+
 ## All-24 offline answer controls — 2026-10-03
 
 The remaining eleven-case packet is independently reviewed. Five focused tests
