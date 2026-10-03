@@ -34,7 +34,7 @@ the catalog from a running server.
 |---|---|
 | Wraps | `cub-scout map list --json` |
 | Required args | — |
-| Optional args | `namespace` (string) |
+| Optional args | `namespace` (string); `context` (nonempty exact kubeconfig context for live inventory) |
 | Returns | Resource inventory with ownership classification per resource |
 | When to load | Broad inventory question. "What's running here?" with ownership awareness. NOT a first stop for "what's broken?" |
 
@@ -54,7 +54,7 @@ the catalog from a running server.
 |---|---|
 | Wraps | `cub-scout trace <resource> [-n <ns>] --format json` |
 | Required args | `resource` (string — `kind/name` form) |
-| Optional args | `namespace` (string) |
+| Optional args | `namespace` (string); `context` (nonempty exact kubeconfig context for all Kubernetes trace reads) |
 | Returns | Ownership and source chain, top-down (controller → source → workload) including secret evidence |
 | When to load | AFTER `doctor` or `explain` once narrowed to one resource. To know where a resource came from. |
 
@@ -74,7 +74,7 @@ the catalog from a running server.
 |---|---|
 | Wraps | `cub-scout gitops status --format json` |
 | Required args | — |
-| Optional args | `namespace` (string); `with_confighub` (boolean); `confighub_space` (string); `confighub_since` (string); `confighub_stale_after` (string) |
+| Optional args | `namespace` (string); `context` (nonempty exact kubeconfig context); `with_confighub` (boolean); `confighub_space` (string); `confighub_since` (string); `confighub_stale_after` (string) |
 | Returns | GitOps/controller backend, transport, sources, deployers, source/build/apply/sync stages, delivery evidence when requested, and `controllerCoverage[]` |
 | When to load | "Is this deployed?" "Is delegated delivery healthy?" "Which controller families did cub-scout actually inspect?" "Is missing status absence or an RBAC/API omission?" Evidence only; never use it to force sync or declare application success by itself. |
 
@@ -113,7 +113,7 @@ CLI is available.
 |---|---|
 | Wraps | `cub-scout compare source-truth <target> -n <ns> --strategy <s> --format json` |
 | Required args | `target` (string — `kind/name`), `namespace` (string), `strategy` (string) |
-| Optional args | — |
+| Optional args | `context` (nonempty exact kubeconfig context) |
 | Returns | Source-truth evidence document: `declared_strategy`, `status` (PASS/WATCH/BLOCK/ASK), `source_truth` verdict (AGREED/MISMATCH/INCOMPLETE/BLOCKED/UNKNOWN), per-surface evidence, `proof_gaps[]`, `safe_next_action` |
 | When to load | "Is this workload's source of truth consistent end-to-end under a declared strategy?" Strategy is **required**, never inferred. The contract refuses to PASS when any required field is missing. NEVER use to approve, repair, or mutate — evidence only. |
 

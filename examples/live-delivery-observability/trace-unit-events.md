@@ -18,7 +18,15 @@ two rows directly and also verifies that an empty event list emits no section.
 
 ## Exact ConfigHub slug joins
 
-Trace joins ConfigHub unit and target **slugs** case-sensitively. If the traced
+Trace joins ConfigHub unit and target **slugs** case-sensitively. Live-status
+writebacks also require exact case for the Application name or unit slug, plus
+the existing exact space identity. A writeback for `paymentsapi` cannot supply
+delivery or health evidence for `PaymentsAPI`; a missing or rejected row keeps
+the explicit `confighub.liveStatus` no-match omission. Deterministic tests cover
+both row orders, missing metadata, conflicting space IDs and the shared CLI/TUI
+projection. These mocked connected inputs require no live API read.
+
+If the traced
 resource identifies unit `PaymentsAPI` in space `prod`, a bounded unit-event
 row for `paymentsapi` is not attached; the Trace evidence keeps its
 `confighub.unitEvents` no-match omission instead. Likewise a target slug `west`
