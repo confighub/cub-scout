@@ -64,3 +64,9 @@ A future runtime must mount only the selected case or authored-control arm,
 plus its allowed treatment delta. Never mount the entire preparation root or
 other cases: sibling originals, private references and control acceptance data
 are host-side preparation material, not extra model evidence.
+
+The [single-case stager](../full24-case-stage/README.md) now validates this
+preparation and copies only one selected case/arm or declared authored control
+into a read-only model-stage with a separate host receipt. It preserves the
+inert MCP marker. This source-only staging contract does not supply a runtime,
+enforce ordinary-tool grants, execute graders or admit a paid evaluation.

@@ -1,11 +1,27 @@
 # cub-scout execution handover
 
 **Current snapshot:** 2026-10-03. Verified merged baseline:
-[`cf60006b`](https://github.com/confighub/cub-scout/commit/cf60006b6ef00b952b0a20a96482ffaa86f17832).
+[`9c7e9578`](https://github.com/confighub/cub-scout/commit/9c7e95786933669823f4ead62e4407345cfea05a).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
 order, quality gates, budgets and decisions.
+
+## Offline baseline case staging — 2026-10-03
+
+The next bounded source-only packet is independently reviewed, including one
+consolidated receipt/type/special-file repair. Eight offline guards cover all
+24 cases in both arms, both authored controls, exact treatment delta, source
+and receipt corruption, path/symlink hazards and oracle/sibling injection.
+Actual CLI prepare/stage/verify and wrong-case/malformed-receipt rejection pass;
+raw command records are retained at
+`/private/tmp/scout-full24-case-stage-cli-wuf_qhlz/` and repaired tests at
+`/tmp/scout-full24-case-stage-tests-repaired-20261003.log`. The CI step is wired,
+but separate exact-head CI/merge remain pending. Only `model-stage/` is a future
+mount candidate; the host receipt and source preparation stay outside it.
+The MCP marker remains inert. Tool/sandbox enforcement, usable MCP, selected
+grader controls, runtime/process accounting and attributable cost remain gates.
+No model, container, grader or server was executed; paid evaluation stays stopped.
 
 ## Full comparison context packet — 2026-10-03
 
@@ -17,12 +33,14 @@ reviewed dead-code/test-only cleanup passed targeted checks before the rerun.
 The existing worktree was fast-forwarded to the merge without changing the
 primary checkout. SDK #758 remains deferred; v2.13 is still unreleased.
 
-Next #561 slice: exact-case live-status app/unit-slug joins, preserving space-ID
-precedence and no-match omissions. Success was defined in issue comment
+#763 merged at `9c7e9578`: exact-case live-status app/unit-slug joins preserve
+space-ID precedence and no-match omissions. Success was defined in issue comment
 5966342944 before implementation. Red tests reproduced both cross-joins and
 the shared CLI/TUI leak; fixed tests pass. Independent review, cached build/full
-offline Go, exact scaffold and Python guard checks pass. Separate exact-head
-CI/merge remain pending. Readiness and remaining genuine governance/baseline
+offline Go, exact scaffold and Python guard checks pass. Inspected exact-head
+CI `37103880991` at `2d815ad2` passed Unit, Integration, GitOps E2E and Proof
+Artifact; Connected, Demo and Full Verification skipped. Broader #561 remains
+open. Readiness and remaining genuine governance/baseline
 gates are recorded in `docs/releases/v2.13-readiness.md`.
 
 Full #755 product wiring is implemented and independently reviewed. The repaired
@@ -35,10 +53,10 @@ suite exposed an intentional footer golden and fixture-owned scaffold routing
 update; the rerun passes. The denied-source behavioral regression is retained.
 
 The separately reviewed live helper has eighteen offline controls plus actual
-Go viewport artifact validation. Product/helper/probe pins and one serial owned
-kind capture remain required before #755 acceptance or merge. Synthetic auth,
-Unit-read failure and inert Application state cannot close genuine server
-governance, real controller reconciliation or paid baseline gates.
+Go viewport artifact validation. Immutable product/helper/probe pins and the
+accepted owned capture are recorded below. Synthetic auth, Unit-read failure
+and inert Application state cannot close genuine server governance, real
+controller reconciliation or paid baseline gates.
 
 Product pin is `478b1095359c6325d38e89c02e837861fc0f4410`; initial helper/probe
 pin is `ae4a4d49118e79308aab237118ed762dd2c09340`. Owned attempt 1 failed an
@@ -48,7 +66,8 @@ anchor and partial comparison. Failure receipt/raw logs are retained under
 `evals/results/three-way-context-20261003/attempt-1/` and
 `/tmp/scout755-owned-kind-proof-1/`. Owned cleanup, empty pending traffic and
 all configuration-integrity checks passed. A narrowed exact helper contract
-and separately reviewed rerun are required; no acceptance is claimed.
+and separately reviewed rerun were required; attempt 2 below provides acceptance
+for that bounded proof. Attempt 1 remains failed.
 
 Attempt 2 passes and independent final receipt/report review accepts its bounded
 scope. Product remains `478b1095`; corrected helper/probe pin is
@@ -59,8 +78,8 @@ same-scope edit, resize/scroll/back and cancellation. All comparison agreement
 remains partial. Cleanup/config integrity and raw-log/report hash checks pass.
 Summary: `evals/three-way-context-live/live-proof-report.json`; retained raw
 receipts: `evals/results/three-way-context-20261003/attempt-{1,2}/`. Eighteen
-offline helper controls are also wired into CI. Exact-head CI and merge remain
-pending; #755 is not closed by local acceptance alone.
+offline helper controls are also wired into CI. The exact-head CI and merge
+record above closes #755; local acceptance alone did not establish closure.
 
 User granted another 300 credits: total ceiling 1,200, original baseline retained,
 hard floor 1,731.922436 and dispatch stop 1,756.922436. First balance 2,048.4852735
