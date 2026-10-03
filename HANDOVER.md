@@ -9,6 +9,21 @@ order, quality gates, budgets and decisions.
 
 ## Full comparison context packet — 2026-10-03
 
+Full #755 product wiring is implemented and independently reviewed. The repaired
+offline build and full Go suite pass. CLI/MCP selectors and the shared scoped TUI
+bind discovery, LIVE/source/link and rollout reads to one captured session;
+View membership uses exact UnitID or space ID plus slug, with separate ConfigHub
+authority. Missing/denied evidence remains partial. Review repaired stale pane
+content, terminal-control handling and shared View eligibility. The initial full
+suite exposed an intentional footer golden and fixture-owned scaffold routing
+update; the rerun passes. The denied-source behavioral regression is retained.
+
+The separately reviewed live helper has eighteen offline controls plus actual
+Go viewport artifact validation. Product/helper/probe pins and one serial owned
+kind capture remain required before #755 acceptance or merge. Synthetic auth,
+Unit-read failure and inert Application state cannot close genuine server
+governance, real controller reconciliation or paid baseline gates.
+
 User granted another 300 credits: total ceiling 1,200, original baseline retained,
 hard floor 1,731.922436 and dispatch stop 1,756.922436. First balance 2,048.4852735
 leaves 316.5628375 under that ceiling; weekly included usage has reset. Admit one

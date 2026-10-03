@@ -666,27 +666,43 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
+						"view":    map[string]interface{}{"type": "string", "description": "View UUID or View Explorer URL; mutually exclusive with scope. Unit membership uses exact UnitID or space ID plus slug."},
+						"context": map[string]interface{}{"type": "string", "description": "Optional exact kubeconfig context for every comparison read. Never inferred from ConfigHub targets; explicit empty or unknown selectors fail without fallback."},
 						"scope": map[string]interface{}{
 							"type":        "string",
-							"description": "Required scope: <kind/name>, resource:<kind/name>, namespace/<ns>, or cluster.",
+							"description": "Scope when view is omitted: <kind/name>, resource:<kind/name>, namespace/<ns>, or cluster.",
 						},
 						"namespace": map[string]interface{}{
 							"type":        "string",
 							"description": "Optional namespace override for resource scope.",
 						},
 					},
-					"required":             []string{"scope"},
+					"anyOf":                []interface{}{map[string]interface{}{"required": []string{"scope"}}, map[string]interface{}{"required": []string{"view"}}},
 					"additionalProperties": false,
 				},
 			},
 			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
-				scope := argString(arguments, "scope")
-				if scope == "" {
-					return nil, fmt.Errorf("missing required argument: scope")
+				scope, view := argString(arguments, "scope"), argString(arguments, "view")
+				if scope == "" && view == "" {
+					return nil, fmt.Errorf("missing required argument: scope or view")
 				}
-				args := []string{"compare", "three-way", "--format", "json", "--scope", scope}
+				if scope != "" && view != "" {
+					return nil, fmt.Errorf("scope and view are mutually exclusive")
+				}
+				flag, value := "--scope", scope
+				if view != "" {
+					flag, value = "--view", view
+				}
+				args := []string{"compare", "three-way", "--format", "json", flag, value}
 				if ns := argString(arguments, "namespace"); ns != "" {
 					args = append(args, "-n", ns)
+				}
+				if raw, present := arguments["context"]; present {
+					value, ok := raw.(string)
+					if !ok || strings.TrimSpace(value) == "" {
+						return nil, fmt.Errorf("context must be a non-empty string")
+					}
+					args = append(args, "--kube-context", value)
 				}
 				return args, nil
 			},

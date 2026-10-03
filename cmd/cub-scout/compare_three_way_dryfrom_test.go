@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"github.com/confighub/cub-scout/v2/pkg/agent"
 	"testing"
 )
 
@@ -28,17 +29,19 @@ func withFakeDryFromLoader(t *testing.T, summaries []*compareSideSummary) {
 // withStandaloneThreeWayLive fakes LIVE (replicas) and forces standalone mode.
 func withStandaloneThreeWayLive(t *testing.T, replicas int64) {
 	t.Helper()
-	prevLive := loadCompareLiveSnapshotFn
-	prevConn := compareConnectedFn
-	loadCompareLiveSnapshotFn = func(_ context.Context, _, name, ns string) (compareSideSummary, error) {
-		r := replicas
-		return compareSideSummary{Source: "cluster", APIVersion: "apps/v1", Kind: "Deployment", Name: name, Namespace: ns, Replicas: &r}, nil
-	}
+	previousCollector, previousConnected := collectThreeWayForSelectionFn, compareConnectedFn
 	compareConnectedFn = func() bool { return false }
-	t.Cleanup(func() {
-		loadCompareLiveSnapshotFn = prevLive
-		compareConnectedFn = prevConn
-	})
+	collectThreeWayForSelectionFn = func(ctx context.Context, _ clusterContextSelection, scope threeWayScope, options threeWayOptions) (threeWayReport, error) {
+		loader := func(_ context.Context, kind, name, ns string) (compareSideSummary, error) {
+			r := replicas
+			return compareSideSummary{Source: "cluster", APIVersion: "apps/v1", Kind: kind, Name: name, Namespace: ns, Replicas: &r}, nil
+		}
+		build := func(ctx context.Context, resource, ns string) (compareResourceResult, error) {
+			return buildCompareResourceResultWithOptions(ctx, resource, ns, compareResourceOptions{Live: loader, DrySummaries: options.DrySummaries})
+		}
+		return assembleThreeWayReport(ctx, scope, options.FailOn, []threeWayTarget{{ResourceArg: scope.ScopeValue, Namespace: options.Namespace}}, build, func(context.Context, threeWayTarget) (*agent.RolloutDecision, bool, error) { return nil, false, nil })
+	}
+	t.Cleanup(func() { collectThreeWayForSelectionFn, compareConnectedFn = previousCollector, previousConnected })
 }
 
 func resetThreeWayFlags(t *testing.T) {
@@ -112,6 +115,9 @@ func TestThreeWay_DryFromFile_Agreed(t *testing.T) {
 	report := runStandaloneThreeWay(t)
 	if report.Summary.MismatchedResources != 0 {
 		t.Fatalf("mismatchedResources=%d want 0", report.Summary.MismatchedResources)
+	}
+	if report.Summary.Agreement.Sources.ConfigHub != 0 {
+		t.Fatal("local rendered DRY must not count as ConfigHub source evidence")
 	}
 	if report.Resources[0].Pattern != PatternAgreed {
 		t.Fatalf("pattern=%v want Agreed", report.Resources[0].Pattern)

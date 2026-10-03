@@ -1562,6 +1562,8 @@ for this flag.
 
 Flags:
 - `--scope` / `--view` (one required; mutually exclusive)
+- `--kube-context <name>` (one exact Kubernetes context captured for the invocation)
+- `--tui` (scoped comparison pane; same collector and ASCII report)
 - `-n, --namespace` (resource scope namespace override)
 - `--dry-from <file|dir>` (standalone rendered YAML as DRY)
 - `--source-path <local-checkout>` (optional raw-YAML file:line enrichment)
@@ -1601,6 +1603,33 @@ Output notes:
 - `--view` resolution chain: `cub view get` → extract `Filter.Where` → `cub unit list --where` → label-match cluster workloads
 
 ---
+
+`--kube-context` binds discovery, LIVE/source/link reads and current-change
+workload/Pods to one captured endpoint and credential selection. Explicit empty
+or unknown names fail before Kubernetes requests. Omission captures the current
+selection once. The returned `context` is a kubeconfig label, not cluster identity
+or a ConfigHub Target binding. ConfigHub View, unit and binding reads retain
+separate server/space authority. Cluster scope includes supported workloads in
+system namespaces. View membership requires exact UnitID or exact space ID plus
+unit slug; a slug alone across spaces is insufficient and remains an omission.
+
+JSON `omissions[]` and the ASCII/Markdown omission lines preserve incomplete
+scope discovery and enrichment. Denied Pods retain workload-only `currentChange`
+evidence; missing/denied sides cannot certify agreement or empty inventory.
+Follow-up Kubernetes commands retain the selected context. `--dry-from` remains
+caller-rendered input, distinct from controller source-truth evidence.
+
+```bash
+./cub-scout compare three-way --scope namespace/prod --kube-context staging --format json
+./cub-scout compare three-way --scope cluster --kube-context staging --tui
+./cub-scout compare three-way --view VIEW_UUID --kube-context staging --tui
+```
+
+In the local map TUI Trace picker, select a workload and press `c` for the same
+comparison. In either pane, `s` edits resource, namespace, cluster or
+`view/UUID` scope; Enter/`r` refreshes, arrows/PgUp/PgDn scroll, and Esc cancels
+and returns to the selected workload. Each request has a 30-second timeout;
+canceled and stale completions cannot replace the current selection.
 
 ### compare object-set
 

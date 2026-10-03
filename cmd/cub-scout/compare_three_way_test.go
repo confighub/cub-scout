@@ -156,6 +156,12 @@ func TestRunCompareThreeWay_JSON(t *testing.T) {
 	}
 	defer func() { buildThreeWayResourceResultFn = prevBuilder }()
 
+	previousCollector := collectThreeWayForSelectionFn
+	collectThreeWayForSelectionFn = func(ctx context.Context, _ clusterContextSelection, scope threeWayScope, options threeWayOptions) (threeWayReport, error) {
+		return buildThreeWayReport(ctx, scope, options.FailOn)
+	}
+	t.Cleanup(func() { collectThreeWayForSelectionFn = previousCollector })
+
 	out := captureStdout(t, func() {
 		if err := runCompareThreeWay(&cobra.Command{}, nil); err != nil {
 			t.Fatalf("runCompareThreeWay() error = %v", err)

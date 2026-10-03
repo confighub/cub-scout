@@ -275,52 +275,65 @@ func fetchRolloutDecision(ctx context.Context, namespace, kind, name string) (*a
 // ambient kubeconfig. Missing workload evidence remains best-effort unavailable;
 // Pod read failures retain the existing workload-only decision behavior.
 func fetchRolloutDecisionFrom(ctx context.Context, dynClient dynamic.Interface, namespace, kind, name string) (*agent.RolloutDecision, bool) {
+	decision, ok, _ := fetchRolloutDecisionFromWithError(ctx, dynClient, namespace, kind, name)
+	return decision, ok
+}
+
+func fetchRolloutDecisionFromWithError(ctx context.Context, dynClient dynamic.Interface, namespace, kind, name string) (*agent.RolloutDecision, bool, error) {
 	if dynClient == nil || !agent.IsRolloutWorkloadKind(kind) {
-		return nil, false
+		return nil, false, nil
 	}
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	gvr := kindToGVR(kind)
 	if gvr.Resource == "" {
-		return nil, false
+		return nil, false, nil
 	}
 	obj, err := dynClient.Resource(gvr).Namespace(namespace).Get(ctx, name, v1.GetOptions{})
 	if err != nil {
-		return nil, false
+		return nil, false, err
 	}
 
-	pods := relatedPodsForRolloutDecision(ctx, dynClient, namespace, obj)
+	pods, podsErr := relatedPodsForRolloutDecisionWithError(ctx, dynClient, namespace, obj)
 	decision, ok := agent.BuildRolloutDecisionForWorkload(obj, pods, 0, time.Now().UTC())
 	if !ok {
-		return nil, false
+		if podsErr != nil {
+			return nil, false, podsErr
+		}
+		return nil, false, fmt.Errorf("current-change workload metadata unavailable")
 	}
-	return &decision, true
+	return &decision, true, podsErr
 }
 
 func relatedPodsForRolloutDecision(ctx context.Context, dynClient dynamic.Interface, namespace string, obj *unstructured.Unstructured) []*unstructured.Unstructured {
+	pods, _ := relatedPodsForRolloutDecisionWithError(ctx, dynClient, namespace, obj)
+	return pods
+}
+
+func relatedPodsForRolloutDecisionWithError(ctx context.Context, dynClient dynamic.Interface, namespace string, obj *unstructured.Unstructured) ([]*unstructured.Unstructured, error) {
 	selector := workloadSelectorMatchLabels(obj)
 	if len(selector) == 0 || namespace == "" {
-		return nil
+		return nil, fmt.Errorf("related Pod scope unavailable: workload selector or namespace missing")
 	}
 	podsGVR := kindToGVR("Pod")
 	if podsGVR.Resource == "" {
-		return nil
+		return nil, nil
 	}
 	labelSelector, err := v1.LabelSelectorAsSelector(&v1.LabelSelector{MatchLabels: selector})
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	list, err := dynClient.Resource(podsGVR).Namespace(namespace).List(ctx, v1.ListOptions{LabelSelector: labelSelector.String()})
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	pods := make([]*unstructured.Unstructured, 0, len(list.Items))
 	for i := range list.Items {
 		item := list.Items[i]
 		pods = append(pods, &item)
 	}
-	return matchPodsBySelector(pods, selector)
+	return matchPodsBySelector(pods, selector), nil
 }
 
 // fetchResourceAttribution loads the live resource and computes mutation-source

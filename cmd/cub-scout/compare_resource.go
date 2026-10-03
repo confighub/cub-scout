@@ -210,7 +210,18 @@ func validateCombinedResourceCompareFlags() error {
 	return nil
 }
 
+type compareResourceOptions struct {
+	ReportBindingErrors bool
+	Live                func(context.Context, string, string, string) (compareSideSummary, error)
+	DrySummaries        []*compareSideSummary
+	SourcePath          string
+}
+
 func buildCompareResourceResult(ctx context.Context, resourceArg, namespace string) (compareResourceResult, error) {
+	return buildCompareResourceResultWithOptions(ctx, resourceArg, namespace, compareResourceOptions{Live: loadCompareLiveSnapshotFn, DrySummaries: compareThreeWayDrySummaries, SourcePath: compareSourcePath})
+}
+
+func buildCompareResourceResultWithOptions(ctx context.Context, resourceArg, namespace string, options compareResourceOptions) (compareResourceResult, error) {
 	kindRaw, name, err := parseResourceArg(resourceArg)
 	if err != nil {
 		return compareResourceResult{}, err
@@ -222,20 +233,29 @@ func buildCompareResourceResult(ctx context.Context, resourceArg, namespace stri
 		ns = "default"
 	}
 
-	live, err := loadCompareLiveSnapshotFn(ctx, kind, name, ns)
-	if err != nil {
+	live, err := options.Live(ctx, kind, name, ns)
+	if err != nil && live.Kind == "" {
 		return compareResourceResult{}, fmt.Errorf("load LIVE snapshot for %s/%s in namespace %s: %w", kind, name, ns, err)
 	}
 	if strings.TrimSpace(live.Source) == "" {
 		live.Source = "cluster"
 	}
 
+	partialNotes := []string{}
+	if err != nil {
+		partialNotes = append(partialNotes, fmt.Sprintf("LIVE enrichment incomplete: %v", err))
+	}
+	finalize := func(result compareResourceResult) compareResourceResult {
+		result.Notes = append(result.Notes, partialNotes...)
+		return finalizeCompareResourceResultWithBindingsOptions(ctx, result, options.SourcePath, options.ReportBindingErrors)
+	}
+
 	// Standalone git/file-as-DRY (#479): when a --dry-from source is loaded,
 	// source the DRY side from it instead of ConfigHub and compare DRY vs LIVE.
 	// WET is unavailable without a deployer/ConfigHub, so it stays nil — the
 	// mismatch detector skips empty sides, so this is a clean DRY-vs-LIVE diff.
-	if compareThreeWayDrySummaries != nil {
-		dry := matchCompareDryFromSummaries(compareThreeWayDrySummaries, kind, name, ns)
+	if options.DrySummaries != nil {
+		dry := matchCompareDryFromSummaries(options.DrySummaries, kind, name, ns)
 		notes := make([]string, 0, 1)
 		mode := "live-only"
 		if dry != nil {
@@ -243,7 +263,7 @@ func buildCompareResourceResult(ctx context.Context, resourceArg, namespace stri
 		} else {
 			notes = append(notes, fmt.Sprintf("No DRY manifest for %s/%s in %s found in the --dry-from source.", kind, name, ns))
 		}
-		return finalizeCompareResourceResultWithBindings(ctx, compareResourceResult{
+		return finalize(compareResourceResult{
 			Resource:  kind + "/" + name,
 			Namespace: ns,
 			Mode:      mode,
@@ -273,7 +293,7 @@ func buildCompareResourceResult(ctx context.Context, resourceArg, namespace stri
 				// slug with no space across the whole organization. DRY/WET from
 				// the wrong unit is worse than none.
 				notes = append(notes, fmt.Sprintf("DRY/WET lookup skipped for unit %s: the LIVE resource carries no ConfigHub space and CUB_SPACE does not name one space.", unitSlug))
-				return finalizeCompareResourceResultWithBindings(ctx, compareResourceResult{
+				return finalize(compareResourceResult{
 					Resource:  kind + "/" + name,
 					Namespace: ns,
 					Mode:      mode,
@@ -306,7 +326,7 @@ func buildCompareResourceResult(ctx context.Context, resourceArg, namespace stri
 				if dryWet.Dry == nil {
 					notes = append(notes, "DRY snapshot unavailable for linked unit.")
 				}
-				return finalizeCompareResourceResultWithBindings(ctx, compareResourceResult{
+				return finalize(compareResourceResult{
 					Resource:  kind + "/" + name,
 					Namespace: ns,
 					Mode:      mode,
@@ -322,7 +342,7 @@ func buildCompareResourceResult(ctx context.Context, resourceArg, namespace stri
 		notes = append(notes, compareNoteConfigHubReadsUnavailable)
 	}
 
-	return finalizeCompareResourceResultWithBindings(ctx, compareResourceResult{
+	return finalize(compareResourceResult{
 		Resource:  kind + "/" + name,
 		Namespace: ns,
 		Mode:      mode,
@@ -962,7 +982,15 @@ func finalizeCompareResourceResult(result compareResourceResult) compareResource
 // the matching FieldBindingSource when the field maps to a known canonical
 // path.
 func finalizeCompareResourceResultWithBindings(ctx context.Context, result compareResourceResult) compareResourceResult {
-	result = finalizeCompareResourceResult(result)
+	return finalizeCompareResourceResultWithBindingsAndSourcePath(ctx, result, compareSourcePath)
+}
+
+func finalizeCompareResourceResultWithBindingsAndSourcePath(ctx context.Context, result compareResourceResult, sourcePath string) compareResourceResult {
+	return finalizeCompareResourceResultWithBindingsOptions(ctx, result, sourcePath, false)
+}
+
+func finalizeCompareResourceResultWithBindingsOptions(ctx context.Context, result compareResourceResult, sourcePath string, reportErrors bool) compareResourceResult {
+	result.Mismatches = detectCompareFieldMismatchesWithSourcePath(result.Dry, result.Wet, result.Live, sourcePath)
 	if !result.Connected {
 		return result
 	}
@@ -970,7 +998,13 @@ func finalizeCompareResourceResultWithBindings(ctx context.Context, result compa
 	if unitID == "" {
 		return result
 	}
-	bindings := collectIncomingBindings(ctx, unitID, result.Live.SpaceName)
+	bindings, err := collectIncomingBindingsWithError(ctx, unitID, firstNonEmpty(result.Live.SpaceName, result.Live.SpaceID))
+	if err != nil {
+		if reportErrors {
+			result.Notes = append(result.Notes, "ConfigHub binding enrichment incomplete: "+threeWayFailureReason(err))
+		}
+		return result
+	}
 	if len(bindings) == 0 {
 		return result
 	}
@@ -991,6 +1025,10 @@ func finalizeCompareResourceResultWithBindings(ctx context.Context, result compa
 }
 
 func detectCompareFieldMismatches(dry, wet *compareSideSummary, live compareSideSummary) []compareFieldMismatch {
+	return detectCompareFieldMismatchesWithSourcePath(dry, wet, live, compareSourcePath)
+}
+
+func detectCompareFieldMismatchesWithSourcePath(dry, wet *compareSideSummary, live compareSideSummary, sourcePath string) []compareFieldMismatch {
 	type compareFieldDescriptor struct {
 		Name    string
 		Extract func(*compareSideSummary) string
@@ -1076,8 +1114,8 @@ func detectCompareFieldMismatches(dry, wet *compareSideSummary, live compareSide
 		// carries its own per-field provenance.
 		if live.GitSource != nil {
 			mismatch.GitSource = live.GitSource
-			if strings.TrimSpace(compareSourcePath) != "" {
-				if anchor := backResolveFieldGitSource(live, field.Name); anchor != nil {
+			if strings.TrimSpace(sourcePath) != "" {
+				if anchor := backResolveFieldGitSourceFromPath(live, field.Name, sourcePath); anchor != nil {
 					mismatch.GitSource = anchor
 				}
 			}
@@ -1096,14 +1134,18 @@ func detectCompareFieldMismatches(dry, wet *compareSideSummary, live compareSide
 // Returns nil when any precondition fails, so callers can fall back to the
 // shared resource-level pointer.
 func backResolveFieldGitSource(live compareSideSummary, fieldName string) *agent.GitSourceAnchor {
-	if strings.TrimSpace(compareSourcePath) == "" || live.GitSource == nil {
+	return backResolveFieldGitSourceFromPath(live, fieldName, compareSourcePath)
+}
+
+func backResolveFieldGitSourceFromPath(live compareSideSummary, fieldName, sourcePath string) *agent.GitSourceAnchor {
+	if strings.TrimSpace(sourcePath) == "" || live.GitSource == nil {
 		return nil
 	}
 	canonicalPath, ok := compareFieldToPath[fieldName]
 	if !ok {
 		return nil
 	}
-	root := strings.TrimSpace(compareSourcePath)
+	root := strings.TrimSpace(sourcePath)
 	if subdir := strings.TrimSpace(live.GitSource.Path); subdir != "" {
 		root = filepath.Join(root, subdir)
 	}

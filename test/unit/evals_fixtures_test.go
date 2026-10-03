@@ -299,6 +299,10 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 		// copy-based scaffolds rather than embedding the suite-wide export.
 		// Validate each through dedicated assertions; keep remaining cases on the
 		// generic embedded-export path below.
+		if filepath.Base(caseDir) == "compare-three-way-context" {
+			checkCompareThreeWayContextScaffold(t, caseDir)
+			continue
+		}
 		if filepath.Base(caseDir) == "doctor-scan-context" {
 			checkDoctorScanContextScaffold(t, caseDir)
 			continue

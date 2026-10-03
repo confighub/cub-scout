@@ -35,3 +35,19 @@ This example proves only fixture-driven evidence:
 
 It does not prove live cluster connectivity, ConfigHub import success,
 or runtime reconciliation state.
+
+## Explicit-context three-way invocation
+
+`compare three-way --kube-context NAME` captures one Kubernetes selection for
+resource, namespace, cluster and View scope. The scoped `--tui` pane and the
+local map Trace picker `c` entry share the same collector/ASCII report. JSON,
+ASCII and Markdown retain context labels and omissions; denied discovery or
+source/Pod enrichment cannot establish agreement or empty inventory. View
+membership requires UnitID or SpaceID plus slug, with separate ConfigHub
+server/space authority. Local rendered DRY is distinct from controller intent.
+
+The [live-delivery example](../live-delivery-observability/README.md#captured-three-way-comparison-contracts-755)
+links reproducible TLS/MCP/TUI contract tests. Its synthetic fixtures prove
+binding/interpretation behavior, not live acceptance, real ConfigHub governance
+or agent savings. The interpretation scaffold in
+`evals/compare-three-way-context/` has no model execution.
