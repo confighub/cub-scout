@@ -1,11 +1,33 @@
 # cub-scout execution handover
 
 **Current snapshot:** 2026-10-03. Verified merged baseline:
-[`025f3a71`](https://github.com/confighub/cub-scout/commit/025f3a716e3de4ca4b663a7e027b79706daf4bbc).
+[`3abfdd7f`](https://github.com/confighub/cub-scout/commit/3abfdd7fd6d970be47df9f12e2a0e1f01c2f716a).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
 order, quality gates, budgets and decisions.
+
+## Selected-case isolation runtime — 2026-10-03
+
+The user authorised further implementation and offline validation, with final
+acceptance gates before release. Success is defined in #645 comment 5969082934.
+The new `evals/full24-case-isolation/` runner uses the existing cached image,
+serial invocation-owned containers, one exact selected `model-stage/` mount per
+arm, no network, read-only root and fixed unprivileged/resource bounds. A fixed
+non-model probe checks complete file hashes and direct/symlink/root write denial;
+actual inspection precedes start and verifies terminal state. All bounded raw
+command outputs, failed receipts and owned cleanup results are retained. Source
+and stage integrity are checked before, after the probe and after cleanup.
+Ten deterministic offline tests pass, covering all 24 cases/both arms and both
+controls plus profile/final-state drift, lost create output, failure/timeout/
+interruption, corrupted input, cleanup uncertainty and cleanup-time mutation.
+Independent review approved the implementation and repaired proof coverage.
+The source/probe commit is `5ff09940`; local fixed-probe proof passed for INV-01 and the DEL-03 authored control
+in both arms: four actual containers, all cleaned up with absence verified.
+See `evals/full24-case-isolation/local-proof.json`; all-24 coverage remains
+offline/fake-Docker only. Separate exact-head CI/merge are pending.
+Ordinary tool grants remain unenforced, treatment MCP inert, and model/provider/
+official grader/process-cost admission unproved. Paid evaluation stays stopped.
 
 ## All-24 offline answer controls — 2026-10-03
 
@@ -18,8 +40,10 @@ All 24 selected grader bytes and log hashes are independently checked in
 `evals/full24-pair-preflight/offline-grader-control-proof.json`; raw records:
 `evals/results/all24-grader-controls-20261003/`. Seventeen cases have local
 Python/Node vector checks; seven have Python controls only. CI now also selects
-the existing strict scale grader test. Separate exact-head CI/merge for this
-remaining packet are pending. No frozen questions, weights, graders or fixtures
+the existing strict scale grader test. PR #766 merged at `3abfdd7f` after
+inspected exact-head CI `37106806069` at `a52c7bf7`: Unit, Integration, GitOps
+E2E and Proof Artifact passed; optional Connected, Demo and Full Verification
+skipped. No frozen questions, weights, graders or fixtures
 changed; official evaluator/target integration, actual tool/runtime enforcement,
 usable full-24 recorded MCP, process accounting and attributable cost remain
 admission gates. Paid evaluation stays stopped; v2.13 remains unreleased.
