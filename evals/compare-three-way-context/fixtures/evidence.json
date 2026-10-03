@@ -1,0 +1,44 @@
+{
+  "provenance": {
+    "kind": "synthetic-example",
+    "modelExecution": "not-run",
+    "liveClusterProof": false,
+    "realConfigHubServerProof": false
+  },
+  "selectedObservation": {
+    "scope": "Deployment/app",
+    "context": "alpha-context",
+    "resource": "Deployment/app",
+    "namespace": "team",
+    "liveImages": ["alpha:v1"],
+    "sourceAnchor": {
+      "repoURL": "https://alpha.invalid/repo",
+      "revision": "alpha-declared-branch",
+      "revisionRole": "declared-target"
+    },
+    "agreement": "partial",
+    "omissions": [
+      {"phase": "current-change", "resource": "Deployment/app", "namespace": "team", "reason": "forbidden"},
+      {"phase": "comparison-sides", "reason": "wet_unavailable"}
+    ],
+    "currentChange": {"verdict": "WATCH", "coverage": "workload-only"},
+    "followup": "cub-scout explain Deployment/app -n team --format json --kube-context alpha-context"
+  },
+  "deniedDiscovery": {
+    "scope": "cluster",
+    "context": "alpha-context",
+    "resources": [],
+    "agreement": "partial",
+    "omissions": [
+      {"phase": "discovery", "resource": "Deployment", "reason": "forbidden"},
+      {"phase": "discovery", "resource": "StatefulSet", "reason": "forbidden"},
+      {"phase": "discovery", "resource": "DaemonSet", "reason": "forbidden"}
+    ]
+  },
+  "viewSelection": {
+    "selectedUnit": {"UnitID": "unit-a", "SpaceID": "space-a", "Slug": "same"},
+    "candidate": {"UnitID": "unit-b", "SpaceID": "space-b", "Slug": "same"},
+    "candidateMembership": "excluded"
+  },
+  "ambientContext": "beta-context"
+}

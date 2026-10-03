@@ -1,11 +1,73 @@
 # cub-scout execution handover
 
 **Current snapshot:** 2026-10-02. Verified merged baseline:
-[`7181d992`](https://github.com/confighub/cub-scout/commit/7181d9921aa1eeb36381313bb9935aae0367e27b).
+[`94e6edf3`](https://github.com/confighub/cub-scout/commit/94e6edf339e0cd410994563fb7a7c57c52e18c09).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
 order, quality gates, budgets and decisions.
+
+## Full comparison context packet — 2026-10-03
+
+Full #755 product wiring is implemented and independently reviewed. The repaired
+offline build and full Go suite pass. CLI/MCP selectors and the shared scoped TUI
+bind discovery, LIVE/source/link and rollout reads to one captured session;
+View membership uses exact UnitID or space ID plus slug, with separate ConfigHub
+authority. Missing/denied evidence remains partial. Review repaired stale pane
+content, terminal-control handling and shared View eligibility. The initial full
+suite exposed an intentional footer golden and fixture-owned scaffold routing
+update; the rerun passes. The denied-source behavioral regression is retained.
+
+The separately reviewed live helper has eighteen offline controls plus actual
+Go viewport artifact validation. Product/helper/probe pins and one serial owned
+kind capture remain required before #755 acceptance or merge. Synthetic auth,
+Unit-read failure and inert Application state cannot close genuine server
+governance, real controller reconciliation or paid baseline gates.
+
+Product pin is `478b1095359c6325d38e89c02e837861fc0f4410`; initial helper/probe
+pin is `ae4a4d49118e79308aab237118ed762dd2c09340`. Owned attempt 1 failed an
+overstated helper request contract: the existing tracer uses the complete
+Application LIST object without a second GET. CLI output retained the correct
+anchor and partial comparison. Failure receipt/raw logs are retained under
+`evals/results/three-way-context-20261003/attempt-1/` and
+`/tmp/scout755-owned-kind-proof-1/`. Owned cleanup, empty pending traffic and
+all configuration-integrity checks passed. A narrowed exact helper contract
+and separately reviewed rerun are required; no acceptance is claimed.
+
+Attempt 2 passes and independent final receipt/report review accepts its bounded
+scope. Product remains `478b1095`; corrected helper/probe pin is
+`dc74eb0f4487c75d7cd1b0e8048fa5502ec107e9`. Ten phases comprise the actual
+old-MCP ambient-routing control plus nine CLI/MCP/TUI allowed/source-denied/
+Pod-denied phases. Each TUI exercised initial collection, real refresh and
+same-scope edit, resize/scroll/back and cancellation. All comparison agreement
+remains partial. Cleanup/config integrity and raw-log/report hash checks pass.
+Summary: `evals/three-way-context-live/live-proof-report.json`; retained raw
+receipts: `evals/results/three-way-context-20261003/attempt-{1,2}/`. Eighteen
+offline helper controls are also wired into CI. Exact-head CI and merge remain
+pending; #755 is not closed by local acceptance alone.
+
+User granted another 300 credits: total ceiling 1,200, original baseline retained,
+hard floor 1,731.922436 and dispatch stop 1,756.922436. First balance 2,048.4852735
+leaves 316.5628375 under that ceiling; weekly included usage has reset. Admit one
+bounded full #755 implementation with merged rollout/LIVE reader foundations,
+then independent review, full validation and separately admitted owned proof.
+SDK remains deferred; paid baseline/governance release gates are not waived.
+
+## Captured LIVE reader — merged checkpoint
+
+#761 merged at `94e6edf3`, tested head `efbac5ba`. Independent review, targeted
+TLS/factory contracts, offline build/full Go and exact-head CI run 37026828296
+passed. Enabled CI: Unit Tests, Integration Tests, GitOps E2E, Proof Artifact.
+Connected E2E, Demo Tests and Full Verification skipped. One test-only redundant
+assignment was corrected after lint caught it; production code was unchanged.
+
+User requests continued progress toward v2.13. Latest shared balance
+2,054.6347935 leaves 22.7123575 under the total 900 ceiling and crosses the
+2,056.922436 stop-new-dispatch threshold. No further implementation/review/proof
+packet is admitted. A budget extension is pending; initial 216.6857800 unexplained
+shared decline stays conservatively charged. The SDK stays deferred. Full #755
+scope/session/report/MCP/CLI/TUI wiring and remaining v2.13 governance/baseline
+release gates are pending; no paid eval or release permission is inferred.
 
 ## Captured LIVE reader — implementation checkpoint
 

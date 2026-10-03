@@ -1,0 +1,5 @@
+# FIXTURE-OWNED-SCAFFOLD: synthetic, unrun; opt-in interpretation case, outside the fixed suite.
+schema_version: "1.1"
+name: compare-three-way-context
+context:
+  scaffold_script: scaffold.sh

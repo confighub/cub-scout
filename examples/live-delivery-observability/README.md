@@ -27,9 +27,9 @@ The rollout reader's client-binding contract is exercised offline by
 `cmd/cub-scout/observe_rollout_client_test.go`. Its synthetic Deployment and
 label-selected Pod responses validate the same runtime-symptom evidence shape
 against two distinct TLS endpoints, including denial and cancellation. This is
-an internal shared-reader foundation for #755; three-way comparison context
-selection is still pending. Missing workload evidence remains unavailable;
-denied Pod reads preserve the existing workload-only decision behavior.
+a shared-reader foundation for #755. The invocation collector now uses its
+error-preserving adapter: denied Pods retain workload-only evidence plus an
+explicit `current-change` omission. Missing workload evidence remains unknown.
 
 ```bash
 go test ./cmd/cub-scout -run TestFetchRolloutDecisionFrom -count=1
@@ -41,8 +41,8 @@ ConfigHub link discovery and a bound Flux adapter use the selected endpoint
 after the private source kubeconfig is retargeted. Denied, ambiguous or
 multi-source evidence stays incomplete; credential cleanup failure discards
 the anchor. These recorded TLS contracts require no live cluster or ConfigHub
-server. This reader is not yet wired into three-way comparison, and its future
-adapters must retain errors accompanying partial LIVE summaries.
+server. The three-way invocation now uses this reader and retains errors accompanying
+partial LIVE summaries. Standalone resource comparison retains its legacy adapter.
 
 ```bash
 go test ./cmd/cub-scout ./pkg/agent -run 'TestCompareLiveSnapshot|TestCompareGitSourceUnavailableInput|TestGitSourceAnchorFromTrace' -count=1
@@ -198,3 +198,34 @@ a cluster. The provider's existing public startup health HEAD still requires
 network reachability; this is not an authenticated connected end-to-end test.
 Without an explicit binary path the test skips. Exact clock boundaries remain
 covered by the fixed-clock source tests above, not this wall-clock smoke.
+
+## Captured three-way comparison contracts (#755)
+
+The private two-endpoint TLS/auth tests in
+`cmd/cub-scout/compare_three_way_context_test.go` exercise resource, namespace,
+cluster and View scopes after the original private kubeconfig is retargeted.
+They cover Argo and a captured Flux factory, current-change Pods, partial/denied
+lists, canceled in-flight reads, omitted selector capture, CLI/MCP dispatch,
+ASCII/JSON/Markdown facts and TUI cancellation/stale-selection guards.
+Separate mocked ConfigHub unit/binding reads check space authority; View
+cross-space slug collisions require exact identity and missing metadata remains
+an omission. These are synthetic contracts, not real controller/server proof.
+
+```bash
+GOPROXY=off GOTOOLCHAIN=local go test ./cmd/cub-scout \
+  -run 'TestThreeWayCaptured|TestThreeWayPartial|TestThreeWayViewCross|TestThreeWayOmitted|TestThreeWayInFlight|TestThreeWayConnectedReads|TestMCPThreeWayActual|TestThreeWayCLIContext|TestThreeWayTUIActions' -count=1
+
+# Against an independently reviewed owned fixture:
+./cub-scout compare three-way --scope deployment/api -n prod \
+  --kube-context production --format json
+./cub-scout compare three-way --scope namespace/prod --kube-context production --tui
+```
+
+Every incomplete scope/snapshot/source/rollout read is reported in `omissions`.
+No absent source, denied Pods or denied empty inventory can certify agreement.
+The context is a kubeconfig label. Local DRY input remains caller-rendered YAML;
+there is no automatic Helm diff or inferred controller intent.
+The opt-in synthetic agent scaffold in `evals/compare-three-way-context/` is
+explicitly unrun. Independent review/full checks and serial owned-cluster
+CLI/MCP/TUI acceptance remain separate gates; this example claims neither live
+acceptance nor real ConfigHub governance evidence.

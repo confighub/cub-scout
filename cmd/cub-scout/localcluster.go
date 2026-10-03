@@ -193,6 +193,8 @@ type LocalClusterModel struct {
 	boundedContext string // Exact kubeconfig context used to load the inventory; empty for in-cluster auth.
 
 	// Trace mode
+	threeWayPane        *threeWayTUIModel
+	threeWayRequestID   uint64
 	traceMode           bool                        // In trace picker mode
 	traceCursor         int                         // Cursor in trace picker
 	traceItems          []TraceItem                 // Items available to trace
@@ -1306,6 +1308,11 @@ func checkConnectionStatus(clusterName string) tea.Cmd {
 func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
+		if m.threeWayPane != nil {
+			updated, _ := m.threeWayPane.Update(msg)
+			pane := updated.(threeWayTUIModel)
+			m.threeWayPane = &pane
+		}
 		m.width = msg.Width
 		m.height = msg.Height
 		m.panelPane.Width = ownershipEvidencePanelWidth(msg.Width)
@@ -1399,6 +1406,15 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case boundedExplainMsg:
 		m.acceptBoundedExplain(msg)
+		return m, nil
+
+	case threeWayTUIResultMsg:
+		if m.threeWayPane != nil {
+			updated, cmd := m.threeWayPane.Update(msg)
+			pane := updated.(threeWayTUIModel)
+			m.threeWayPane = &pane
+			return m, cmd
+		}
 		return m, nil
 
 	case traceResultMsg:
@@ -1707,6 +1723,18 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
+		if m.threeWayPane != nil {
+			updated, cmd := m.threeWayPane.Update(msg)
+			pane := updated.(threeWayTUIModel)
+			m.threeWayRequestID = pane.requestID
+			if pane.closed {
+				m.threeWayPane = nil
+			} else {
+				m.threeWayPane = &pane
+			}
+			return m, cmd
+		}
+
 		// Handle trace mode (trace picker or result view)
 		if m.traceMode {
 			if m.traceDiffMode {
@@ -1820,6 +1848,25 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.traceCursor++
 				}
 				return m, nil
+			case "c":
+				if m.traceCursor >= 0 && m.traceCursor < len(m.traceItems) {
+					item := m.traceItems[m.traceCursor]
+					session, err := newTraceSessionFromBinding(m.clusterBinding)
+					if err != nil {
+						m.traceError = err
+						return m, nil
+					}
+					pane := newThreeWayTUIModel(context.Background(), session, threeWayScope{ScopeType: threeWayScopeResource, ScopeValue: item.Kind + "/" + item.Name}, threeWayOptions{Namespace: item.Namespace})
+					updated, _ := pane.Update(tea.WindowSizeMsg{Width: m.width, Height: m.height})
+					pane = updated.(threeWayTUIModel)
+					pane.requestID = m.threeWayRequestID
+					command := pane.start()
+					m.threeWayRequestID = pane.requestID
+					m.threeWayPane = &pane
+					return m, command
+				}
+				return m, nil
+
 			case "d":
 				if m.traceCursor >= 0 && m.traceCursor < len(m.traceItems) {
 					m.traceDiffItem = m.traceItems[m.traceCursor]
@@ -6541,6 +6588,9 @@ func parseScanOutput(output string) ([]scanFinding, map[string]int) {
 
 // renderTrace renders the trace picker or result view
 func (m LocalClusterModel) renderTrace() string {
+	if m.threeWayPane != nil {
+		return m.threeWayPane.View()
+	}
 	var b strings.Builder
 
 	b.WriteString(lcHeaderStyle.Render("╭────────────────────────────────────────────────────────────────╮"))
@@ -6699,7 +6749,7 @@ func (m LocalClusterModel) renderTrace() string {
 	b.WriteString("\n")
 	b.WriteString(lcDimStyle.Render("─────────────────────────────────────────────────────────────────"))
 	b.WriteString("\n")
-	b.WriteString(lcDimStyle.Render("↑/↓ select  Enter trace  d compare rendered input  Esc cancel"))
+	b.WriteString(lcDimStyle.Render("↑/↓ select  Enter trace  c three-way comparison  d compare rendered input  Esc cancel"))
 	b.WriteString("\n")
 
 	return b.String()

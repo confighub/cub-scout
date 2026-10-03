@@ -119,8 +119,13 @@ var compareLinkRunner linkRunner = func(ctx context.Context, args ...string) ([]
 // matches the rest of the connected enrichment pattern (attribution,
 // gitSource).
 func collectIncomingBindings(ctx context.Context, unitID, space string) []IncomingBinding {
+	bindings, _ := collectIncomingBindingsWithError(ctx, unitID, space)
+	return bindings
+}
+
+func collectIncomingBindingsWithError(ctx context.Context, unitID, space string) ([]IncomingBinding, error) {
 	if strings.TrimSpace(unitID) == "" {
-		return nil
+		return nil, nil
 	}
 	space = strings.TrimSpace(space)
 	if space == "" {
@@ -128,10 +133,17 @@ func collectIncomingBindings(ctx context.Context, unitID, space string) []Incomi
 	}
 	where := fmt.Sprintf("FromUnitID = '%s'", strings.ReplaceAll(unitID, "'", ""))
 	out, err := compareLinkRunner(ctx, "link", "list", "--space", space, "--where", where, "-o", "json", "--quiet")
-	if err != nil || len(out) == 0 {
-		return nil
+	if err != nil {
+		return nil, err
 	}
-	return parseLinkListJSON(out)
+	var rows []json.RawMessage
+	if err := json.Unmarshal(out, &rows); err != nil {
+		return nil, fmt.Errorf("ConfigHub binding response unavailable: %w", err)
+	}
+	if rows == nil {
+		return nil, fmt.Errorf("ConfigHub binding response is not an array")
+	}
+	return parseLinkListJSON(out), nil
 }
 
 // parseLinkListJSON decodes the JSON array `cub link list -o json` returns

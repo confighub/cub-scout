@@ -433,6 +433,27 @@ Source: `pkg/agent/secret_evidence.go`
 
 When `compare three-way --format json` is used, the JSON output includes `summary.agreement` as the compact convergence/coverage summary for the selected scope.
 
+The report adds optional `context` (selected kubeconfig label), `omissions[]`
+(`phase`, optional exact `resource`/`namespace`, normalized `reason`) and
+`viewSelection` (separate ConfigHub `space` and `membership` contract). Missing
+LIVE/source/controller sides, denied discovery or Pods, and unavailable bindings
+remain incomplete evidence. `summary.agreement.state` becomes `partial`; an
+empty resource array after denied discovery does not prove empty inventory.
+`currentChange` can retain workload-only evidence alongside a Pod omission.
+`summary.agreement.sources.deployer` counts actual source anchors, and `cluster`
+counts successful LIVE evidence, rather than inferring either from connectivity.
+The ConfigHub coverage count excludes local `--dry-from` manifests.
+CLI, MCP and TUI use the same invocation collector; ASCII and Markdown retain
+these facts. Legacy fixtures may omit the additive fields.
+
+View membership accepts exact UnitID or exact SpaceID plus unit slug among
+returned filter units. Cross-space slug collisions are excluded; missing
+identity is surfaced as an omission. This query scope never chooses a Kubernetes
+context or establishes a ConfigHub Target binding. `--dry-from` is local rendered
+DRY input, distinct from `compare source-truth` and `trace --diff` semantics.
+An Argo Git source anchor preserves its declared target revision; it does not
+prove that revision was applied to the workload.
+
 ### AgreementSummary Schema
 
 ```json

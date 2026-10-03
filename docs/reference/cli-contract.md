@@ -284,6 +284,8 @@ cub-scout compare three-way --scope <scope> --dry-from <rendered.yaml|dir> [flag
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
+| `--kube-context` | string | omitted | Exact kubeconfig context for every Kubernetes comparison read; explicit empty/unknown selections fail without fallback |
+| `--tui` | bool | false | Scoped pane with the shared collector/report, scope editing, cancellation and timeout |
 | `--scope` | string | required | `<kind/name>`, `resource:<kind/name>`, `namespace/<ns>`, or `cluster` |
 | `--view` | string | - | View UUID or View Explorer URL; mutually exclusive with `--scope` and requires connected mode |
 | `-n, --namespace` | string | - | Namespace override for resource scope |
@@ -297,6 +299,11 @@ cub-scout compare three-way --scope <scope> --dry-from <rendered.yaml|dir> [flag
 
 - JSON is the canonical contract for `compare three-way`.
 - JSON includes `summary.conformance` and `summary.agreement`.
+- Optional `context` is a selected kubeconfig label, not a stable cluster identity.
+- `omissions[]` retains normalized discovery/source/link/rollout/side failures; partial collection (including denied zero-target discovery) cannot establish agreement.
+- Optional `viewSelection` names separate ConfigHub space authority (`*`) and exact UnitID or space-ID-plus-slug membership. Missing identity stays incomplete.
+- CLI `--tui` and the local Trace picker `c` entry reuse the collector and renderer; resource/namespace/cluster/View scope editing preserves the captured binding and selected workload.
+- Follow-up Kubernetes commands preserve the selected context. No automatic controller/Helm diff subprocess is launched.
 - `summary.agreement.state` is one of `agreed`, `converging`, `diverged`, `partial`.
 - `summary.agreement.summary`, `summary.agreement.reasons[]`, and `summary.agreement.sources` are additive facts, not presentation-only text.
 - `confighubUrl` may be present when a representative connected unit ID is known for the scope.
@@ -443,8 +450,9 @@ cub-scout mcp serve --recording objects.yaml
 - Tool name: `compare_three_way`
 - Availability: connected mode only
 - Parameters:
-  - `scope` (required string)
+  - `scope` or `view` (one required nonempty string; mutually exclusive)
   - `namespace` (optional string)
+  - `context` (optional nonempty string, forwarded to `--kube-context`; wrong types and explicit empty selections fail without invoking the runner)
 - Backed by `cub-scout compare three-way --format json`
 
 ### Stable Connected ConfigHub MCP Surfaces

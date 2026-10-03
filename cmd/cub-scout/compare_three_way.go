@@ -64,7 +64,15 @@ type threeWaySummary struct {
 	Agreement           AgreementSummary  `json:"agreement"`
 }
 
+type threeWayViewSelection struct {
+	Space      string `json:"space"`
+	Membership string `json:"membership"`
+}
+
 type threeWayReport struct {
+	ViewSelection         *threeWayViewSelection  `json:"viewSelection,omitempty"`
+	Context               string                  `json:"context,omitempty"`
+	Omissions             []threeWayOmission      `json:"omissions,omitempty"`
 	Scope                 string                  `json:"scope"`
 	ConfigHubURL          string                  `json:"confighubUrl,omitempty"`
 	ConfigHubRevisionsURL string                  `json:"confighubRevisionsUrl,omitempty"`
@@ -86,12 +94,15 @@ const (
 )
 
 var (
-	compareThreeWayScopeRaw string
-	compareThreeWayView     string
-	compareThreeWayFormat   string
-	compareThreeWayJSON     bool
-	compareThreeWayFailOn   string
-	compareThreeWayDryFrom  string
+	compareThreeWayScopeRaw       string
+	compareThreeWayView           string
+	compareThreeWayFormat         string
+	compareThreeWayJSON           bool
+	compareThreeWayFailOn         string
+	compareThreeWayDryFrom        string
+	compareThreeWayContext        string
+	compareThreeWayTUI            bool
+	collectThreeWayForSelectionFn = collectThreeWayForSelection
 
 	buildThreeWayResourceResultFn = buildCompareResourceResult
 	discoverThreeWayNamespacesFn  = discoverNamespacesWithWorkloads
@@ -140,6 +151,8 @@ CI/Automation note:
 
 func init() {
 	combinedCmd.AddCommand(compareThreeWayCmd)
+	compareThreeWayCmd.Flags().StringVar(&compareThreeWayContext, "kube-context", "", "Select one exact kubeconfig context for every Kubernetes comparison read")
+	compareThreeWayCmd.Flags().BoolVar(&compareThreeWayTUI, "tui", false, "Open a scoped comparison pane using the same collector and captured context")
 
 	compareThreeWayCmd.Flags().StringVar(&compareThreeWayScopeRaw, "scope", "", "Scope: <kind/name>, resource:<kind/name>, namespace/<ns>, or cluster")
 	compareThreeWayCmd.Flags().StringVar(&compareThreeWayView, "view", "", "View UUID or View Explorer URL; mutually exclusive with --scope (requires connected mode)")
@@ -156,6 +169,12 @@ func runCompareThreeWay(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("--scope and --view are mutually exclusive")
 	}
 
+	selection, err := clusterContextSelectionFromFlag(cmd)
+	if err != nil {
+		return err
+	}
+	var drySummaries []*compareSideSummary
+
 	// Standalone git/file-as-DRY (#479): load the DRY side from a local
 	// rendered file/dir, so the three-way runs without ConfigHub. Loaded once
 	// here (not per resource) and consumed by buildCompareResourceResult.
@@ -167,8 +186,7 @@ func runCompareThreeWay(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("load --dry-from %s: %w", dryFrom, err)
 		}
-		compareThreeWayDrySummaries = summaries
-		defer func() { compareThreeWayDrySummaries = nil }()
+		drySummaries = summaries
 	}
 
 	var scope threeWayScope
@@ -204,7 +222,15 @@ func runCompareThreeWay(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid --format %q (valid: ascii, json, md)", compareThreeWayFormat)
 	}
 
-	report, err := buildThreeWayReport(cmd.Context(), scope, compareThreeWayFailOn)
+	options := threeWayOptions{LocalDry: strings.TrimSpace(compareThreeWayDryFrom) != "", Namespace: combinedNamespace, FailOn: compareThreeWayFailOn, DrySummaries: drySummaries, SourcePath: compareSourcePath}
+	if compareThreeWayTUI {
+		session, err := newTraceSessionForSelection(selection)
+		if err != nil {
+			return fmt.Errorf("resolve selected Kubernetes context: %w", err)
+		}
+		return runThreeWayTUI(cmd.Context(), session, scope, options)
+	}
+	report, err := collectThreeWayForSelectionFn(cmd.Context(), selection, scope, options)
 	if err != nil {
 		return err
 	}
@@ -269,6 +295,8 @@ func parseThreeWayScope(raw string) (threeWayScope, error) {
 	}
 }
 
+// buildThreeWayReport retains the legacy injectable aggregate adapter. Public
+// CLI/MCP/TUI entry points use collectThreeWayForSelection/WithSession instead.
 func buildThreeWayReport(ctx context.Context, scope threeWayScope, failOnThreshold string) (threeWayReport, error) {
 	if ctx == nil {
 		ctx = context.Background()
@@ -278,7 +306,15 @@ func buildThreeWayReport(ctx context.Context, scope threeWayScope, failOnThresho
 	if err != nil {
 		return threeWayReport{}, err
 	}
+	return assembleThreeWayReport(ctx, scope, failOnThreshold, targets, buildThreeWayResourceResultFn, func(ctx context.Context, target threeWayTarget) (*agent.RolloutDecision, bool, error) {
+		decision, ok := fetchThreeWayRolloutDecision(ctx, target)
+		return decision, ok, nil
+	})
+}
 
+func assembleThreeWayReport(ctx context.Context, scope threeWayScope, failOnThreshold string, targets []threeWayTarget,
+	build func(context.Context, string, string) (compareResourceResult, error),
+	rollout func(context.Context, threeWayTarget) (*agent.RolloutDecision, bool, error)) (threeWayReport, error) {
 	entries := make([]threeWayResourceEntry, 0, len(targets))
 	summary := threeWaySummary{
 		SeverityCounts: map[string]int{},
@@ -290,7 +326,10 @@ func buildThreeWayReport(ctx context.Context, scope threeWayScope, failOnThresho
 	sources := SourceCoverage{Total: len(targets)}
 
 	for _, target := range targets {
-		result, err := buildThreeWayResourceResultFn(ctx, target.ResourceArg, target.Namespace)
+		if err := ctx.Err(); err != nil {
+			return threeWayReport{}, err
+		}
+		result, err := build(ctx, target.ResourceArg, target.Namespace)
 		if err != nil {
 			return threeWayReport{}, err
 		}
@@ -308,13 +347,15 @@ func buildThreeWayReport(ctx context.Context, scope threeWayScope, failOnThresho
 		patternCounts[pattern]++
 
 		// Track source coverage
-		if result.Dry != nil || result.Wet != nil {
+		if result.Connected && (result.Dry != nil || result.Wet != nil) {
 			sources.ConfigHub++
 		}
-		if result.Connected {
-			sources.Deployer++ // Connected implies deployer evidence available
+		if result.Live.GitSource != nil {
+			sources.Deployer++
 		}
-		sources.Cluster++ // We always have LIVE if we're checking the resource
+		if result.Live.Kind != "" {
+			sources.Cluster++
+		}
 
 		entry := threeWayResourceEntry{
 			Result:   result,
@@ -322,8 +363,17 @@ func buildThreeWayReport(ctx context.Context, scope threeWayScope, failOnThresho
 			Causes:   causes,
 			Pattern:  pattern,
 		}
-		if decision, ok := fetchThreeWayRolloutDecision(ctx, target); ok {
+		decision, ok, rolloutErr := rollout(ctx, target)
+		if ok {
 			entry.CurrentChange = decision
+		}
+		if rolloutErr != nil {
+			entry.Result.Notes = append(entry.Result.Notes, "Current-change enrichment incomplete: "+threeWayFailureReason(rolloutErr))
+			entry.Severity, entry.Causes = classifyThreeWayResult(entry.Result)
+			entry.Pattern = PatternUnknown
+			patternCounts[pattern]--
+			patternCounts[PatternUnknown]++
+			severity, causes = entry.Severity, entry.Causes
 		}
 		entries = append(entries, entry)
 
@@ -404,7 +454,13 @@ func buildThreeWayNavigation(report threeWayReport) (string, string, []Structure
 
 	hints := make([]Hint, 0, 3)
 	repeatCommand := compareThreeWayRepeatCommand(report.Scope, entry)
+	if report.Context != "" {
+		repeatCommand += " --kube-context " + shellQuoteArg(report.Context)
+	}
 	explainCommand := compareThreeWayExplainCommand(entry)
+	if explainCommand != "" && report.Context != "" {
+		explainCommand += " --kube-context " + shellQuoteArg(report.Context)
+	}
 	unitCommand := compareThreeWayUnitGetCommand(entry.Result)
 
 	switch report.Summary.Agreement.State {
@@ -604,7 +660,11 @@ func compareThreeWayRepeatCommand(scope string, entry threeWayResourceEntry) str
 	if scope == "" {
 		return ""
 	}
-	args := []string{"cub-scout", "compare", "three-way", "--scope", scope, "--format", "json"}
+	scopeFlag, scopeValue := "--scope", scope
+	if strings.HasPrefix(scope, "view/") {
+		scopeFlag, scopeValue = "--view", strings.TrimPrefix(scope, "view/")
+	}
+	args := []string{"cub-scout", "compare", "three-way", scopeFlag, shellQuoteArg(scopeValue), "--format", "json"}
 	if scope != "cluster" && !strings.HasPrefix(strings.ToLower(scope), "namespace/") {
 		ns := strings.TrimSpace(entry.Result.Namespace)
 		if ns != "" {
@@ -669,6 +729,11 @@ func compareResourceUnitIdentity(result compareResourceResult) (unitSlug, unitID
 // classifyResourcePattern determines the three-way pattern for a resource.
 // This reuses the logic from classifyThreeWayPattern but without sync/health status.
 func classifyResourcePattern(result compareResourceResult) ThreeWayPattern {
+	for _, note := range result.Notes {
+		if strings.Contains(note, "incomplete") {
+			return PatternUnknown
+		}
+	}
 	// Not connected AND no local DRY source = disconnected. A standalone
 	// --dry-from run (#479) is not connected but carries DRY evidence, so it
 	// must not be labeled disconnected.
@@ -892,6 +957,15 @@ func classifyThreeWayResult(result compareResourceResult) (string, []string) {
 func renderThreeWayASCII(report threeWayReport) string {
 	var b strings.Builder
 	b.WriteString(fmt.Sprintf("Three-Way Compare: %s\n", report.Scope))
+	if report.Context != "" {
+		b.WriteString(fmt.Sprintf("Kubernetes context label: %s\n", report.Context))
+	}
+	if report.ViewSelection != nil {
+		b.WriteString("ConfigHub View space scope: " + report.ViewSelection.Space + "; membership: " + report.ViewSelection.Membership + "\n")
+	}
+	for _, omission := range report.Omissions {
+		b.WriteString("Omission: " + omission.String() + "\n")
+	}
 	b.WriteString(fmt.Sprintf("Resources: %d  Connected: %d  DRY/WET/LIVE: %d  Mismatched: %d\n",
 		report.Summary.TotalResources,
 		report.Summary.ConnectedResources,
@@ -959,6 +1033,13 @@ func renderThreeWayASCII(report threeWayReport) string {
 			}
 			b.WriteString(driftLine + "\n")
 		}
+
+		if len(entry.Result.Live.Images) > 0 {
+			b.WriteString("  LIVE images: " + strings.Join(entry.Result.Live.Images, ", ") + "\n")
+		}
+		if entry.Result.Live.GitSource != nil {
+			b.WriteString("  source anchor: " + renderGitSourceASCII(entry.Result.Live.GitSource) + "\n")
+		}
 		if len(entry.Causes) > 0 {
 			b.WriteString("  causes: " + strings.Join(entry.Causes, ", ") + "\n")
 		}
@@ -976,6 +1057,15 @@ func renderThreeWayMarkdown(report threeWayReport) string {
 	var b strings.Builder
 	b.WriteString("# Three-Way Compare\n\n")
 	b.WriteString(fmt.Sprintf("- Scope: `%s`\n", report.Scope))
+	if report.Context != "" {
+		b.WriteString(fmt.Sprintf("- Kubernetes context label: `%s`\n", historyEscapeMarkdown(report.Context)))
+	}
+	if report.ViewSelection != nil {
+		b.WriteString("- ConfigHub View space scope: " + historyEscapeMarkdown(report.ViewSelection.Space) + "; membership: " + historyEscapeMarkdown(report.ViewSelection.Membership) + "\n")
+	}
+	for _, omission := range report.Omissions {
+		b.WriteString("- Omission: " + historyEscapeMarkdown(omission.String()) + "\n")
+	}
 	b.WriteString(fmt.Sprintf("- Resources: `%d`\n", report.Summary.TotalResources))
 	b.WriteString(fmt.Sprintf("- Connected: `%d`\n", report.Summary.ConnectedResources))
 	b.WriteString(fmt.Sprintf("- DRY/WET/LIVE: `%d`\n", report.Summary.DryWetLiveResources))
@@ -1037,6 +1127,17 @@ func renderThreeWayMarkdown(report threeWayReport) string {
 			historyEscapeMarkdown(currentChange),
 			historyEscapeMarkdown(causes),
 		))
+	}
+	for _, entry := range report.Resources {
+		if len(entry.Result.Live.Images) > 0 {
+			b.WriteString("\n- " + historyEscapeMarkdown(entry.Result.Resource) + " LIVE images: " + historyEscapeMarkdown(strings.Join(entry.Result.Live.Images, ", ")) + "\n")
+		}
+		if entry.Result.Live.GitSource != nil {
+			b.WriteString("- Source anchor: " + historyEscapeMarkdown(renderGitSourceASCII(entry.Result.Live.GitSource)) + "\n")
+		}
+		for _, note := range entry.Result.Notes {
+			b.WriteString("\n- " + historyEscapeMarkdown(entry.Result.Resource) + ": " + historyEscapeMarkdown(note) + "\n")
+		}
 	}
 	return b.String()
 }

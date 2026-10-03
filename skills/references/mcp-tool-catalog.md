@@ -102,9 +102,9 @@ CLI is available.
 | Aspect | Detail |
 |---|---|
 | Wraps | `cub-scout compare three-way [...] --format json` |
-| Required args | `scope` (string — namespace/resource selector) |
-| Optional args | `namespace` (string) |
-| Returns | DRY (ConfigHub) / WET (rendered) / LIVE (cluster) three-way comparison with per-field agreement and attribution evidence; rolled-up `summary.agreement` (agreed / converging / diverged / partial) |
+| Required args | one of `scope` (resource/namespace/cluster selector) or `view` (View UUID/URL) |
+| Optional args | `namespace` (string), `context` (nonempty exact kubeconfig context; no target inference) |
+| Returns | DRY (ConfigHub) / WET (rendered) / LIVE (cluster) three-way comparison with per-field agreement and attribution evidence; rolled-up `summary.agreement` (agreed / converging / diverged / partial), context label and explicit omissions; incomplete coverage does not certify agreement |
 | When to load | "Does governed state agree with live state?" "Is this change sign-off-ready?" After scope is identified. |
 
 ### `compare_source_truth`
