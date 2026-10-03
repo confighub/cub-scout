@@ -15,6 +15,11 @@ registry or paid-model execution is included. Ordinary PR/main CI runs live
 jobs, so do not open/merge this branch while that exclusion applies. Manual
 `level=unit` CI has been corrected to select only Unit and Proof Artifact;
 three condition/graph tests retain the normal PR/main and live-level behavior.
+Reviewed code head `df68de81` is pushed. Manual unit-only CI
+[37150688436](https://github.com/confighub/cub-scout/actions/runs/37150688436)
+passed Unit and Proof Artifact; Integration, GitOps, Demo, Connected and Full
+Verification skipped. These are pending live gates. Later documentation-only
+checkpoint commits do not change that tested implementation.
 
 `evals/full24-launch-policy/` preserves all 24 frozen prompts, ordinary grants
 and source budgets in both arms, including both authored controls. Six offline
