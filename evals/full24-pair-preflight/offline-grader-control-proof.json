@@ -1,0 +1,376 @@
+{
+  "schema": "full24-offline-grader-controls.v1",
+  "status": "offline_vectors_passed_not_admitted",
+  "frozenSemanticsSha256": "6fad0fdd92562792c0046bb8cf92f6c1a441035c57ad3d7a0733e801d3e47bae",
+  "caseCount": 24,
+  "engineCoverage": {
+    "pythonAndNode": 17,
+    "pythonOnly": 7,
+    "localPython": "3.14.4",
+    "localNode": "v25.9.0"
+  },
+  "cases": [
+    {
+      "case": "ATR-01",
+      "selectedGrader": {
+        "name": "changed-by-line.md",
+        "source": "generated-strict",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "2a217a0b26f41e44a0d70d24e2ecc327fdd5050e2dfe426e042d313c177f2a1b",
+      "controlEngines": [
+        "Python"
+      ]
+    },
+    {
+      "case": "ATR-02",
+      "selectedGrader": {
+        "name": "changed-by-line.md",
+        "source": "generated-strict",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "430e245cf6125ccc95ccb6fc1cd099d86536252bb4cb9eff710f748bdedb8d6e",
+      "controlEngines": [
+        "Python"
+      ]
+    },
+    {
+      "case": "ATR-03",
+      "selectedGrader": {
+        "name": "changed-by-line.md",
+        "source": "generated-strict",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "dcfd01ad080c06c8dfd5b5bf181a57c3669d7405d1cbadb6676acbeca7591771",
+      "controlEngines": [
+        "Python"
+      ]
+    },
+    {
+      "case": "ATR-04",
+      "selectedGrader": {
+        "name": "application-line.md",
+        "source": "generated-strict",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "e0aafa832982d6fac1c163c35d3b2b825478b8ee9229f49ddfbc7bc33259cf84",
+      "controlEngines": [
+        "Python"
+      ]
+    },
+    {
+      "case": "DEL-01",
+      "selectedGrader": {
+        "name": "verified-answer.md",
+        "source": "case-source",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "cb8cdb633b381d2c7b093e85827f1e45a236cdd2c4a8eae202db679baf321492",
+      "controlEngines": [
+        "Python",
+        "Node"
+      ]
+    },
+    {
+      "case": "DEL-02",
+      "selectedGrader": {
+        "name": "verified-answer.md",
+        "source": "case-source",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "b620bc49915f2f3eab5c691ac2414774fb69a807fb97ee4e337e80f0ad4b8128",
+      "controlEngines": [
+        "Python",
+        "Node"
+      ]
+    },
+    {
+      "case": "DEL-03",
+      "selectedGrader": {
+        "name": "verified-answer.md",
+        "source": "case-source",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "f8bd2c1be4116c526cc71ae66e0946d26cf4f9aed4b6817279d01dfda4f8276b",
+      "controlEngines": [
+        "Python",
+        "Node"
+      ]
+    },
+    {
+      "case": "DEL-04",
+      "selectedGrader": {
+        "name": "verified-answer.md",
+        "source": "case-source",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "ed330653324e1f6c82f7e864d977abef13379fe9894eeb88b01cc1d431b85c40",
+      "controlEngines": [
+        "Python",
+        "Node"
+      ]
+    },
+    {
+      "case": "HLT-01",
+      "selectedGrader": {
+        "name": "health-contract.md",
+        "source": "case-source",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "897bd58be21b282d66db9ff3a6f70b514120101826b1df3d5f0acf13b13ba8bd",
+      "controlEngines": [
+        "Python",
+        "Node"
+      ]
+    },
+    {
+      "case": "HLT-02",
+      "selectedGrader": {
+        "name": "verified-answer.md",
+        "source": "case-source",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "ee2d695863e4564f39906c4732f76037f0161e101072dfc2ad0b86bfd0c54fde",
+      "controlEngines": [
+        "Python",
+        "Node"
+      ]
+    },
+    {
+      "case": "HLT-03",
+      "selectedGrader": {
+        "name": "answer.md",
+        "source": "case-source",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "d55d7b6fe182c1aeb09e93431cb46eb017017eb5f4baa49c4cc1c0967712ac04",
+      "controlEngines": [
+        "Python",
+        "Node"
+      ]
+    },
+    {
+      "case": "HLT-04",
+      "selectedGrader": {
+        "name": "verified-answer.md",
+        "source": "case-source",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "5811aa27942795c0e66cc42025a5358cc173e4aba70572196fb004cef39048db",
+      "controlEngines": [
+        "Python",
+        "Node"
+      ]
+    },
+    {
+      "case": "INV-01",
+      "selectedGrader": {
+        "name": "counts-line.md",
+        "source": "generated-strict",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "8da7a99ae4c7d5056216b43462887905edd43c186e77f42326ae4ecc0c387822",
+      "controlEngines": [
+        "Python",
+        "Node"
+      ]
+    },
+    {
+      "case": "INV-02",
+      "selectedGrader": {
+        "name": "unmanaged-line.md",
+        "source": "generated-strict",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "b4a10854890e0a653bb4323552e4441933a3e0d48042667634f59d11fad0a496",
+      "controlEngines": [
+        "Python",
+        "Node"
+      ]
+    },
+    {
+      "case": "INV-03",
+      "selectedGrader": {
+        "name": "owner-line.md",
+        "source": "generated-strict",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "056f5ef996d7490598b037858ff46696602d9bd2da4ab02f3722fe4023cc6af3",
+      "controlEngines": [
+        "Python"
+      ]
+    },
+    {
+      "case": "INV-04",
+      "selectedGrader": {
+        "name": "verified-answer.md",
+        "source": "case-source",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "d5f1dab770d935f262916a315df3f73670fa78b63090229e4dccdf7a02205805",
+      "controlEngines": [
+        "Python",
+        "Node"
+      ]
+    },
+    {
+      "case": "PRE-01",
+      "selectedGrader": {
+        "name": "verified-answer.md",
+        "source": "case-source",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "ec3d15ec7ce11186b055bbf9c78bb976a6e2bd731284041517d6aa0088d618f7",
+      "controlEngines": [
+        "Python",
+        "Node"
+      ]
+    },
+    {
+      "case": "PRE-02",
+      "selectedGrader": {
+        "name": "verified-answer.md",
+        "source": "case-source",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "2d11e5c55e71e2078b174c9389adb19c5051c6f21de48d185aa021593fff0919",
+      "controlEngines": [
+        "Python"
+      ]
+    },
+    {
+      "case": "PRE-03",
+      "selectedGrader": {
+        "name": "verified-answer.md",
+        "source": "case-source",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "ca5d569635d546d473bd36d2646b5b5e97819340b0628a102ee7855e1a049c0b",
+      "controlEngines": [
+        "Python",
+        "Node"
+      ]
+    },
+    {
+      "case": "PRE-04",
+      "selectedGrader": {
+        "name": "verified-answer.md",
+        "source": "case-source",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "ef64a234c47b68bf95d0d916df0aeee62db9438288d171eaaba8c8ff27e3131b",
+      "controlEngines": [
+        "Python",
+        "Node"
+      ]
+    },
+    {
+      "case": "RUL-01",
+      "selectedGrader": {
+        "name": "verified-answer.md",
+        "source": "case-source",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "730f1da6263e24169faf00e39de4e967d4bacdfcfe5125dc2f418e2eb09e1cd3",
+      "controlEngines": [
+        "Python"
+      ]
+    },
+    {
+      "case": "RUL-02",
+      "selectedGrader": {
+        "name": "verified-answer.md",
+        "source": "case-source",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "78a12fd64bfadb6ebcf8c4ee25deb1c87f1ff2b0ebd429cf2a76bdf4d6b7a712",
+      "controlEngines": [
+        "Python",
+        "Node"
+      ]
+    },
+    {
+      "case": "RUL-03",
+      "selectedGrader": {
+        "name": "verified-answer.md",
+        "source": "case-source",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "113b70069826e378e59116134c9573b6bd10ac51b74a95f73c2af1c2cff2059a",
+      "controlEngines": [
+        "Python",
+        "Node"
+      ]
+    },
+    {
+      "case": "RUL-04",
+      "selectedGrader": {
+        "name": "verified-answer.md",
+        "source": "case-source",
+        "type": "regex",
+        "weight": 1
+      },
+      "selectedGraderSha256": "2a4390550ba9dd4ec1d06d6b3985c2872c3b53c648ec9a9f43a0d4ed3924a09f",
+      "controlEngines": [
+        "Python",
+        "Node"
+      ]
+    }
+  ],
+  "retainedLogs": {
+    "evals/results/all24-grader-controls-20261003/full24-source-preflight.log": "7be5cdadfb7e16948fd52f5a0432fba094c4111802aed3dbc475ae3650cfb825",
+    "evals/results/all24-grader-controls-20261003/combined-loader-failed.log": "111618ae5830f9826f7a278cc37d438655c43e74ebac63dccb228d66c8c7b1bd",
+    "evals/results/all24-grader-controls-20261003/legacy-strict-cases.log": "9c620dcec7011a435909680c9cec59caae3dd708e56145d647588750c1dc247f",
+    "evals/results/all24-grader-controls-20261003/recorded-scale.log": "cfe0913d997d9d8de7514657eaa770d9d88527deb22870328f8148df7334a0e3",
+    "evals/results/all24-grader-controls-20261003/pre02-node-selector.log": "c3a04ac4b29f6fac04348ea0bf6d82ec3dbca9e87ba9a0e5f34ca9e7572d2502",
+    "evals/results/all24-grader-controls-20261003/rul01-dated-snapshot.log": "5c0dd51a04eaa3784a4f4429a816d04ad51fdca608235b1b280a5ba70fb243dd"
+  },
+  "failedLoader": {
+    "path": "evals/results/all24-grader-controls-20261003/combined-loader-failed.log",
+    "status": "setup_failed_before_controls_ran",
+    "recovery": "normal unittest discovery per package; five existing-control tests passed with no skips"
+  },
+  "passedTestMethods": {
+    "sourcePreflightIncludingNewControls": 21,
+    "existingNineCaseControls": 5
+  },
+  "claims": {
+    "officialEvaluatorExecuted": false,
+    "modelOrProviderExecuted": false,
+    "full24RuntimeAdmitted": false,
+    "ordinaryToolGrantsEnforced": false,
+    "recordedMcpUsableForFull24": false,
+    "processAccountingComplete": false,
+    "attributableCostMeasured": false,
+    "savingsProven": false
+  },
+  "limits": [
+    "Controls match authored answer vectors derived from frozen fixture inputs, not model outputs.",
+    "Python/Node agreement is limited to tested vectors; seven existing cases use Python controls only.",
+    "Official evaluator/target integration, runtime/tool enforcement, process accounting and attributable cost remain admission gates.",
+    "Paid evaluation remains stopped; no genuine ConfigHub governance or release proof is supplied."
+  ]
+}

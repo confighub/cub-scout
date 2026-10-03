@@ -76,3 +76,10 @@ DEL-01–04 selected graders against source-bound positives and wrong-evidence/
 malformed-output negatives in local Python and Node. They preserve all frozen
 questions, weights, graders and fixtures. Parity is limited to those vectors;
 it is not official evaluator execution, model quality or paid admission.
+
+The [remaining-family controls](REMAINING-GRADER-CONTROLS.md) add eleven
+source-bound cases. Together with existing legacy, scale, PRE-02 and RUL-01
+controls, all 24 selected cases have offline acceptance/rejection checks. The
+[proof summary](offline-grader-control-proof.json) binds selected grader bytes
+and retained logs, distinguishing 17 Python/Node cases from seven Python-only
+cases. These results do not admit the official evaluator or paid runtime.
