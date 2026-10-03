@@ -18,14 +18,14 @@ three condition/graph tests retain the normal PR/main and live-level behavior.
 
 `evals/full24-launch-policy/` preserves all 24 frozen prompts, ordinary grants
 and source budgets in both arms, including both authored controls. Six offline
-contracts pass. Seven treatment cases have exact recorded Deployment-export
-bindings; the remaining 17 explicitly block, with no fabricated tool response.
+contracts pass. Eleven treatment cases have exact recorded object/export
+bindings; the remaining 13 explicitly block, with no fabricated tool response.
 Independent review's Python/runtime-asset prerequisite is explicitly held:
 the candidate binds the wrapper source digest but requires independently pinned
 Python/dependencies and inspected immutable assets before execution.
 This is candidate policy, not actual tool enforcement or runtime admission.
 
-The explicit recorded-only host stdio probe passed for all seven bindings with
+The explicit recorded-only host stdio probe passed for all eleven bindings with
 the actual local Scout binary: exact tool inventory, map provenance/count,
 explain identity/hash and unsupported live-tool refusal. Request/reply hashes
 and scope are retained in `evals/full24-launch-policy/local-recorded-proof.json`.
@@ -619,24 +619,21 @@ permission gates to already authorized routine work.
 
 ## Resume here
 
-Check #645, then continue Trace [#746](https://github.com/confighub/cub-scout/issues/746)
-and its explicit rendered-operand diff packet #751, followed by source-truth
-context binding #750 under #599. #743 is merged. Source-truth is committed
-locally with reviewed repairs and focused tests passing; combined validation
-and live proof remain. Continue the bounded GitOps-status packet #753 next.
-The immediate target is v2.13, subject to the adopted gates. The full-24
-source preparation under #742 is integrated, but its blinded equal-evidence
-packet and authored input controls do not admit paid execution: recorded MCP
-binding, actual grants, descendants and accounting remain open. Product work
-need not wait for paid benchmark admission. #735/#738 and #740/#741 are merged.
-Continue actual tool parity and process/cost accounting under #709; six raw
-kubectl reads are only one bounded prerequisite. External dependencies #591 (genuine attestations), #597
-(current gate evidence), #600 (fact storage/schema agreement), and GHCR access
-remain unresolved. Keep the benchmark non-executable and paid work stopped while
-tool, evidence, process or cost gates remain unresolved. The adopted plan's
-ordered packets and external dependencies control next steps. Replace this
-current checkpoint in place at the next handover; retain run chronology in
-issues, PRs, reports and Git history rather than prepending dated snapshots.
+Check #645 and the offline checkpoint above. Continue v2.13 on
+`codex/v213-offline-runtime`, preserving the current exclusion of live tests.
+The eleven recorded host bindings do not admit full-24 model execution: remaining
+case bindings, Python/overlay assets, actual grants, official evaluator terminal
+message integration, descendant completion and cost attribution still need
+their bounded offline implementation and review. Do not invent Kubernetes
+objects or evaluated server decisions to fill gaps. Context/Trace/GitOps packets
+#750/#751/#753 and three-way #755 have merged; audit remaining parent scope
+#599/#746 against current code before repeating completed work.
+External #591/#597 still need genuine read-side governance recordings, and #600
+needs storage/schema agreement. SDK #758 stays deferred; `/v2` is already in
+source, with public proxy installation awaiting a release tag. Keep paid work
+stopped until its explicit admission gates pass. Keep this branch unmerged while
+normal PR/main CI would launch excluded live tests. Final acceptance and the
+published paired baseline remain required before release; no gate is waived.
 
 - [Adopted 3.0 execution plan](docs/roadmap-3.0-execution.md)
 - [Tracker #645](https://github.com/confighub/cub-scout/issues/645)

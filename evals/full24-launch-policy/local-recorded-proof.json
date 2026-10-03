@@ -162,6 +162,42 @@
       "stdoutSha256": "4ad730c568068e9b1c264ea88781a06401551a1f6ceb20e04e71cacb9ab255d0"
     },
     {
+      "case": "HLT-02",
+      "exitCode": 0,
+      "observed": {
+        "excludedFromScopeCount": 0,
+        "explainIdentity": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "name": "payment-worker",
+          "namespace": "scout-hlt02"
+        },
+        "ownerCounts": {
+          "Flux": 1
+        },
+        "provenance": {
+          "bytes": 8718,
+          "captureCompleteness": "unknown",
+          "captureTime": "unknown",
+          "documents": 1,
+          "kind": "kubernetes-object-recording",
+          "objectCount": 1,
+          "sha256": "a49278364bd6e1359e4b45e5c963897083d709c8a7883a8c0b92dba03160c792"
+        },
+        "selectedCount": 1,
+        "tools": [
+          "explain",
+          "map"
+        ],
+        "unsupportedToolRefused": true
+      },
+      "recordingSha256": "a49278364bd6e1359e4b45e5c963897083d709c8a7883a8c0b92dba03160c792",
+      "requestSha256": "d5f6620e7e6c9db6e01e94c602b91725cf06413105aab33dbaa7f3bffd7c3ab1",
+      "sourceRelativePath": "arms/with/cases/HLT-02/cluster/deployment.json",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "cc4adc83234be4f0c0b97fefde7a081090ea60106715f244acfef0c4e0c16c01"
+    },
+    {
       "case": "INV-01",
       "exitCode": 0,
       "observed": {
@@ -280,6 +316,114 @@
       "sourceRelativePath": "arms/with/cases/INV-03/cluster/deployments.yaml",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stdoutSha256": "4ad730c568068e9b1c264ea88781a06401551a1f6ceb20e04e71cacb9ab255d0"
+    },
+    {
+      "case": "PRE-02",
+      "exitCode": 0,
+      "observed": {
+        "excludedFromScopeCount": 0,
+        "explainIdentity": {
+          "apiVersion": "v1",
+          "kind": "Pod",
+          "name": "scout-pre02-selector",
+          "namespace": "pre02-node-selector"
+        },
+        "ownerCounts": {
+          "Native": 1
+        },
+        "provenance": {
+          "bytes": 5355,
+          "captureCompleteness": "unknown",
+          "captureTime": "unknown",
+          "documents": 1,
+          "kind": "kubernetes-object-recording",
+          "objectCount": 1,
+          "sha256": "f264204dc296d06590bc357691a1b95db08222f4ac68b3c38935d6ef200832c3"
+        },
+        "selectedCount": 1,
+        "tools": [
+          "explain",
+          "map"
+        ],
+        "unsupportedToolRefused": true
+      },
+      "recordingSha256": "f264204dc296d06590bc357691a1b95db08222f4ac68b3c38935d6ef200832c3",
+      "requestSha256": "0cd3dfad454a44d40ac1e5eefdb854c25393631650795233b83bb149b6a3aef5",
+      "sourceRelativePath": "arms/with/cases/PRE-02/cluster/after-pod.json",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "fa056d156b95f68d487a14d0993b9c94f68a9da8484ca92cbafa139bee735f71"
+    },
+    {
+      "case": "RUL-01",
+      "exitCode": 0,
+      "observed": {
+        "excludedFromScopeCount": 0,
+        "explainIdentity": {
+          "apiVersion": "v1",
+          "kind": "Pod",
+          "name": "scout-pre02-selector",
+          "namespace": "pre02-node-selector"
+        },
+        "ownerCounts": {
+          "Native": 1
+        },
+        "provenance": {
+          "bytes": 5355,
+          "captureCompleteness": "unknown",
+          "captureTime": "unknown",
+          "documents": 1,
+          "kind": "kubernetes-object-recording",
+          "objectCount": 1,
+          "sha256": "f264204dc296d06590bc357691a1b95db08222f4ac68b3c38935d6ef200832c3"
+        },
+        "selectedCount": 1,
+        "tools": [
+          "explain",
+          "map"
+        ],
+        "unsupportedToolRefused": true
+      },
+      "recordingSha256": "f264204dc296d06590bc357691a1b95db08222f4ac68b3c38935d6ef200832c3",
+      "requestSha256": "0cd3dfad454a44d40ac1e5eefdb854c25393631650795233b83bb149b6a3aef5",
+      "sourceRelativePath": "arms/with/cases/RUL-01/cluster/after-pod.json",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "fa056d156b95f68d487a14d0993b9c94f68a9da8484ca92cbafa139bee735f71"
+    },
+    {
+      "case": "RUL-04",
+      "exitCode": 0,
+      "observed": {
+        "excludedFromScopeCount": 0,
+        "explainIdentity": {
+          "apiVersion": "apps/v1",
+          "kind": "StatefulSet",
+          "name": "rul04-pause",
+          "namespace": "rul04-image-identity"
+        },
+        "ownerCounts": {
+          "Native": 1
+        },
+        "provenance": {
+          "bytes": 3140,
+          "captureCompleteness": "unknown",
+          "captureTime": "unknown",
+          "documents": 1,
+          "kind": "kubernetes-object-recording",
+          "objectCount": 1,
+          "sha256": "6e51fce81ff19b1bd548b312e510d01e098dfab7cd9c962fdf1cf273d1aa32ab"
+        },
+        "selectedCount": 1,
+        "tools": [
+          "explain",
+          "map"
+        ],
+        "unsupportedToolRefused": true
+      },
+      "recordingSha256": "6e51fce81ff19b1bd548b312e510d01e098dfab7cd9c962fdf1cf273d1aa32ab",
+      "requestSha256": "62e68bd7641626fd5c888dd222cb1e2953c07abac4d5d06bd11835b78289d8fc",
+      "sourceRelativePath": "arms/with/cases/RUL-04/cluster/statefulset.json",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "0da2d9bdf5214deac12103ee236cfb59d0762cf0ad82238701465bd52784199c"
     }
   ],
   "claims": {
@@ -290,8 +434,8 @@
     "linuxRuntimePinProbed": false,
     "paidRunAdmitted": false
   },
-  "rawArchive": "/private/tmp/scout-v213-recorded-stdio-20261003-final",
-  "rawProofSha256": "8fa1e5c886c4e35e2bde3966dab273d13995b993f9a600196a269e4ae663a298",
+  "rawArchive": "/private/tmp/scout-v213-recorded-stdio-eleven-20261003",
+  "rawProofSha256": "a76a569e5da05b8cdd617d7ef52369dd0ccbf426ae03e71c309195d39f36f53e",
   "schema": "full24-local-recorded-stdio-summary.v1",
-  "scope": "Seven selected source recordings, real locally built Scout; host stdio only."
+  "scope": "Eleven selected source recordings, real locally built Scout; host stdio only. Each snapshot remains separate from other source frames/files."
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate a fixed Deployment-export binding before exec of recorded Scout.
+"""Validate a fixed case/object binding before exec of recorded Scout.
 
 No fallback, kubeconfig lookup, model or dynamic command interpretation.
 The caller must supply the isolated runtime mounts and complete child accounting.
@@ -13,7 +13,10 @@ import stat
 import sys
 
 FIELDS = {'schema', 'case', 'recording', 'recordingSha256', 'binary', 'binarySha256'}
-CASES = {'ATR-01', 'ATR-02', 'ATR-03', 'ATR-04', 'INV-01', 'INV-02', 'INV-03'}
+RECORDINGS = {cid: 'cluster/deployments.yaml' for cid in ('ATR-01', 'ATR-02', 'ATR-03', 'ATR-04', 'INV-01', 'INV-02', 'INV-03')}
+RECORDINGS.update({'HLT-02': 'cluster/deployment.json', 'PRE-02': 'cluster/after-pod.json',
+                   'RUL-01': 'cluster/after-pod.json', 'RUL-04': 'cluster/statefulset.json'})
+CASES = frozenset(RECORDINGS)
 LINUX_SCOUT_PIN = '5dac8765612592b60ec076f102c1810fbbce94b52236b3577ab3f65219e17fa6'
 
 
@@ -43,12 +46,16 @@ def read_regular(path, maximum):
     return raw
 
 
-def validate(binding, expected_case, *, recording_path='/evidence/cluster/deployments.yaml', binary_path='/runtime/cub-scout', trusted_binary_sha256=LINUX_SCOUT_PIN):
+def validate(binding, expected_case, *, recording_path=None, binary_path='/runtime/cub-scout', trusted_binary_sha256=LINUX_SCOUT_PIN):
     # Path overrides support offline unit/stdio tests only. CLI runtime uses the
     # fixed defaults and accepts no argv path override or arbitrary executable.
     if not isinstance(binding, dict) or set(binding) != FIELDS or binding.get('schema') != 'full24-recorded-mcp-exec.v1':
         raise ValueError('invalid binding schema')
-    if (not isinstance(expected_case, str) or expected_case not in CASES or binding.get('case') != expected_case
+    if not isinstance(expected_case, str) or expected_case not in CASES:
+        raise ValueError('unreviewed case selection')
+    if recording_path is None:
+        recording_path = '/evidence/' + RECORDINGS[expected_case]
+    if (binding.get('case') != expected_case
         or binding.get('recording') != recording_path or binding.get('binary') != binary_path):
         raise ValueError('binding selection or fixed paths differ')
     for field in ('recordingSha256', 'binarySha256'):

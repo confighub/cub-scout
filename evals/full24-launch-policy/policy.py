@@ -21,8 +21,11 @@ pin_spec.loader.exec_module(pins)
 SCHEMA = 'full24-launch-policy.v1'
 MODEL = 'claude-haiku-4-5-20251001'
 ORDINARY = {'Read', 'Glob', 'Grep', 'Skill'}
-RECORDED_CASES = frozenset({'ATR-01', 'ATR-02', 'ATR-03', 'ATR-04', 'INV-01', 'INV-02', 'INV-03'})
 RECORDING = 'cluster/deployments.yaml'
+RECORDINGS = {cid: RECORDING for cid in ('ATR-01', 'ATR-02', 'ATR-03', 'ATR-04', 'INV-01', 'INV-02', 'INV-03')}
+RECORDINGS.update({'HLT-02': 'cluster/deployment.json', 'PRE-02': 'cluster/after-pod.json',
+                   'RUL-01': 'cluster/after-pod.json', 'RUL-04': 'cluster/statefulset.json'})
+RECORDED_CASES = frozenset(RECORDINGS)
 MCP_TOOLS = ['mcp__cub-scout__map', 'mcp__cub-scout__explain']
 FALLBACK_BUDGET = {'max_turns': 20, 'timeout_seconds': 600}
 
@@ -36,12 +39,13 @@ def _binding(receipt):
     if case not in RECORDED_CASES:
         return {'status': 'unavailable', 'reason': 'No reviewed recorded-object binding for this case. No live fallback or fabricated tool response.'}
     files = receipt['stagedFiles']
-    if RECORDING not in files:
+    recording = RECORDINGS[case]
+    if recording not in files:
         raise ValueError('reviewed recording missing from selected case')
     return {'status': 'source_bound_candidate_not_probed', 'case': case,
-            'path': '/evidence/' + RECORDING, 'relativePath': RECORDING,
-            'sha256': files[RECORDING], 'tools': MCP_TOOLS,
-            'scope': 'Only the selected Deployment export; no controller health, capture-time or original-cluster completeness claim.'}
+            'path': '/evidence/' + recording, 'relativePath': recording,
+            'sha256': files[recording], 'tools': MCP_TOOLS,
+            'scope': 'Only this exact selected static object/export; other files, before/after frames and contexts remain distinct. No controller health, trusted capture-time or original-cluster completeness claim.'}
 
 
 def _build(receipt, source_report, model_root):

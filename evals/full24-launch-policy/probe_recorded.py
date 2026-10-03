@@ -52,6 +52,8 @@ def check(stdout, recording_sha, identity, object_count, selected_count):
         or type(summary.get('excludedFromScopeCount')) is not int
         or summary['excludedFromScopeCount'] != object_count - selected_count):
         raise ValueError('map scope totals differ from supplied objects')
+    if summary.get('scope') != {'apiVersion': identity['api_version'], 'kind': identity['kind']}:
+        raise ValueError('map exact GVK scope differs')
     owners = summary.get('ownerCounts')
     if (not isinstance(owners, dict) or any(type(v) is not int or v < 0 for v in owners.values())
         or sum(owners.values()) != selected_count):
@@ -72,13 +74,13 @@ def run(source, binary, output):
     output.mkdir(parents=True, exist_ok=False)
     results = []
     for cid in sorted(policy.RECORDED_CASES):
-        recording = source / 'arms/with/cases' / cid / policy.RECORDING
+        recording = source / 'arms/with/cases' / cid / policy.RECORDINGS[cid]
         raw = recorded_server.read_regular(recording, 4 * 1024 * 1024)
         recording_sha = policy.sha(raw)
         objects = []
         for document in yaml.safe_load_all(raw):
             objects.extend(document['items'] if document.get('kind') == 'List' else [document])
-        obj = next(o for o in objects if o['apiVersion'] == 'apps/v1' and o['kind'] == 'Deployment')
+        obj = objects[0]
         identity = {'api_version': obj['apiVersion'], 'kind': obj['kind'],
                     'namespace': obj['metadata']['namespace'], 'name': obj['metadata']['name']}
         binding = {'schema': 'full24-recorded-mcp-exec.v1', 'case': cid,
@@ -92,7 +94,7 @@ def run(source, binary, output):
                 'clientInfo': {'name': 'offline-recorded-probe', 'version': '1'}}},
             {'jsonrpc': '2.0', 'id': 2, 'method': 'tools/list', 'params': {}},
             {'jsonrpc': '2.0', 'id': 3, 'method': 'tools/call', 'params': {
-                'name': 'map', 'arguments': {'api_version': 'apps/v1', 'kind': 'Deployment', 'summary': True}}},
+                'name': 'map', 'arguments': {'api_version': identity['api_version'], 'kind': identity['kind'], 'summary': True}}},
             {'jsonrpc': '2.0', 'id': 4, 'method': 'tools/call', 'params': {'name': 'explain', 'arguments': identity}},
             {'jsonrpc': '2.0', 'id': 5, 'method': 'tools/call', 'params': {'name': 'doctor', 'arguments': {}}}]
         request = ''.join(json.dumps(m) + '\n' for m in messages).encode()
@@ -111,7 +113,7 @@ def run(source, binary, output):
         (output / (cid + '.stderr')).write_bytes(child.stderr)
         if child.returncode != 0:
             raise ValueError('recorded server exited nonzero: ' + cid)
-        selected_count = sum(o.get('apiVersion') == 'apps/v1' and o.get('kind') == 'Deployment' for o in objects)
+        selected_count = sum(o.get('apiVersion') == identity['api_version'] and o.get('kind') == identity['kind'] for o in objects)
         observed = check(child.stdout, recording_sha, identity, len(objects), selected_count)
         if recording_sha != policy.sha(recorded_server.read_regular(recording, 4 * 1024 * 1024)):
             raise ValueError('recording changed during probe')
@@ -123,7 +125,7 @@ def run(source, binary, output):
     if binary_sha != policy.sha(recorded_server.read_regular(binary, 128 * 1024 * 1024)):
         raise ValueError('local executable changed during probe')
     result = {'schema': 'full24-local-recorded-stdio-probe.v1', 'cases': results,
-              'scope': 'Seven selected source recordings, real locally built Scout; host stdio only.',
+              'scope': 'Eleven selected source recordings, real locally built Scout; host stdio only. Each snapshot remains separate from other source frames/files.',
               'claims': {'hostRecordedToolsProbed': True, 'linuxRuntimePinProbed': False,
                          'containerIsolationProbed': False, 'claudeExecuted': False,
                          'actualToolGrantsEnforced': False, 'paidRunAdmitted': False}}

@@ -90,7 +90,12 @@ class PolicyTests(unittest.TestCase):
                 self.assertIsNone(treatment['mcpConfig'])
                 with self.assertRaises(ValueError):
                     policy.exec_binding(treatment)
-        self.assertEqual((supported, blocked), (7, 17))
+        self.assertEqual((supported, blocked), (11, 13))
+        self.assertEqual(policy.RECORDINGS, server.RECORDINGS)
+        for cid, recording in policy.RECORDINGS.items():
+            _, plan = self.stage(cid, 'with')
+            self.assertEqual(plan['recordedMcp']['relativePath'], recording)
+            self.assertEqual(plan['recordedMcp']['sha256'], plan['stageFiles'][recording])
 
     def test_authored_controls_stay_case_bound_without_inherited_original_evidence(self):
         for cid in ('DEL-03', 'DEL-04'):

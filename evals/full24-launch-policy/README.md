@@ -5,6 +5,9 @@ baseline. It does not execute Claude, authorize provider access, or admit a paid
 run. Success was defined before implementation in
 [#645 comment 5972860099](https://github.com/confighub/cub-scout/issues/645#issuecomment-5972860099).
 
+The four-snapshot follow-up was scoped before code in
+[#645 comment 5973024674](https://github.com/confighub/cub-scout/issues/645#issuecomment-5973024674).
+
 `policy.py` reconstructs a candidate from a verified selected-case stage and its
 source preparation. Both arms retain the exact prompt body, ordinary tool grant
 and declared turn/time budget. None of the 24 source grants includes Bash.
@@ -14,8 +17,10 @@ The two authored controls retain their distinct source inputs and prompts.
 
 Baseline candidates have empty strict MCP configuration and no Scout plugin or
 binary. Treatment candidates add only the two recorded Scout tools and the
-source-bound plugin overlay. Only ATR-01–04 and INV-01–03 currently have reviewed
-bindings, each to its exact `cluster/deployments.yaml` bytes. The other 17 cases
+source-bound plugin overlay. ATR-01–04 and INV-01–03 bind their exact `cluster/deployments.yaml` bytes.
+HLT-02 binds `cluster/deployment.json`; PRE-02 and RUL-01 independently bind
+`cluster/after-pod.json`; RUL-04 binds `cluster/statefulset.json`. These eleven
+recordings have explicit object identities. The other 13 cases
 return `blocked_recorded_mcp_binding`, no executable argv and no fabricated tool
 response. Partial observations, distinct contexts and sequential frames must
 not be merged to construct a convenient replacement dataset.
@@ -51,7 +56,7 @@ python3 evals/full24-launch-policy/policy.py \
   --source-prep "$SOURCE_PREP" --stage "$SELECTED_STAGE" --case ATR-01 --arm with
 ```
 
-The separate explicit host probe uses a locally built binary and only the seven
+The separate explicit host probe uses a locally built binary and only the eleven
 immutable source recordings. It sends newline-delimited MCP initialization,
 inventory, map, exact-object explain and an unsupported live-tool request;
 checks reply IDs, recording hashes, exact identity, object counts, unknown
@@ -65,7 +70,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 evals/full24-launch-policy/probe_recorded.py \
   --source-prep "$SOURCE_PREP" --binary "$PWD/cub-scout" --output "$NEW_PROOF_DIR"
 ```
 
-[Local proof](local-recorded-proof.json) records seven passed host stdio probes.
+[Local proof](local-recorded-proof.json) records eleven passed host stdio probes.
 This does not establish the pinned Linux runtime, actual Claude tools/skills,
 all-24 MCP coverage, official evaluator integration, descendants, cost or savings.
 
