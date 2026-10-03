@@ -322,7 +322,7 @@ func TestThreeWayTUIActionsCancelStaleAndPreserveSelection(t *testing.T) {
 	require.Nil(t, model.threeWayPane)
 	require.Equal(t, "app", model.traceItems[model.traceCursor].Name)
 	// Reopening the same selection must not reuse the canceled pane's ID.
-	updated, command = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'c'}})
+	updated, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'c'}})
 	model = updated.(LocalClusterModel)
 	require.NotEqual(t, message.requestID, model.threeWayPane.requestID)
 	updated, _ = model.Update(message)

@@ -970,25 +970,11 @@ func extractCompareImages(obj map[string]interface{}) []string {
 	return images
 }
 
-func finalizeCompareResourceResult(result compareResourceResult) compareResourceResult {
-	result.Mismatches = detectCompareFieldMismatches(result.Dry, result.Wet, result.Live)
-	return result
-}
-
-// finalizeCompareResourceResultWithBindings is finalizeCompareResourceResult
-// plus C1 binding enrichment. Called from buildCompareResourceResult where
-// ctx is available; falls through cleanly when the live unit is unknown.
+// finalizeCompareResourceResultWithBindingsOptions adds C1 binding enrichment
+// and falls through cleanly when the live unit is unknown.
 // C2: after IncomingBindings is populated, walks each mismatch and attaches
 // the matching FieldBindingSource when the field maps to a known canonical
 // path.
-func finalizeCompareResourceResultWithBindings(ctx context.Context, result compareResourceResult) compareResourceResult {
-	return finalizeCompareResourceResultWithBindingsAndSourcePath(ctx, result, compareSourcePath)
-}
-
-func finalizeCompareResourceResultWithBindingsAndSourcePath(ctx context.Context, result compareResourceResult, sourcePath string) compareResourceResult {
-	return finalizeCompareResourceResultWithBindingsOptions(ctx, result, sourcePath, false)
-}
-
 func finalizeCompareResourceResultWithBindingsOptions(ctx context.Context, result compareResourceResult, sourcePath string, reportErrors bool) compareResourceResult {
 	result.Mismatches = detectCompareFieldMismatchesWithSourcePath(result.Dry, result.Wet, result.Live, sourcePath)
 	if !result.Connected {
