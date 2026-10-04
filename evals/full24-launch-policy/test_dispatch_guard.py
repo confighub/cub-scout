@@ -70,6 +70,14 @@ class DispatchGuardTests(unittest.TestCase):
             changed = {**plan, 'selection': selection}
             with self.assertRaises(ValueError):
                 self.call(changed, guard.binding_for(changed), selection_sha, 'Read')
+        for cid in ('DEL-03', 'DEL-04'):
+            control = self.fixture.report['authoredInputControls'][cid]['id']
+            _, authored = self.fixture.stage(cid, 'without', control)
+            authored_sha = guard.digest(guard.encoded(authored['selection']))
+            self.assertTrue(self.call(authored, guard.binding_for(authored), authored_sha, 'Read'))
+            _, _, original_sha = self.documents(cid, 'without')
+            with self.assertRaises(ValueError):
+                self.call(authored, guard.binding_for(authored), original_sha, 'Read')
 
     def test_malformed_duplicate_nonfinite_and_incomplete_events_refuse(self):
         plan, binding, selection_sha = self.documents()

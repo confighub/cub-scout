@@ -2074,6 +2074,36 @@ cub-scout history deploy/my-app -n prod --include-synthetic
 
 ---
 
+### history changeorder
+
+```bash
+./cub-scout history changeorder rollout --space prod --format json
+./cub-scout history changeorder prod/rollout --space prod --format md
+./cub-scout history changeorder rollout --space prod --tui
+```
+
+This connected read requires one exact order slug or ID and an explicit exact
+`--space` slug or ID. It does not use `CUB_SPACE`; wildcard, option-like and
+mismatched qualified selectors are refused before the read. It executes one
+`cub changeorder get <order> -o json --space <space>` and validates the returned
+order and space identity. Malformed, duplicate-key, conflicting or unsupported
+workflow JSON is refused. Unavailable or denied reads return an error, with no
+approval or runtime verdict.
+
+`--format ascii|json|md` (default `ascii`) and `--tui` render the same snapshot.
+Reported Stage/State and stored workflow/prerequisite declarations retain their
+reported order and presence. Evaluated prerequisite, approval, gate, publication
+and advancement outcomes remain **unknown**. `Completed` is a reported Stage,
+not runtime health or convergence. Missing workflow metadata does not establish
+an ungoverned state. The JSON `readContract` identifies the inspected SDK v0.6.8
+parser contract, not the runtime server version. This subcommand does not change
+legacy resource ChangeSet history or evaluate controllers.
+
+[Authored example and success criteria](../../examples/changeorder-read-contract/).
+Genuine connected capture and live CLI/TUI acceptance remain pending.
+
+---
+
 ## audit list
 
 Show connected break-glass accept/reject decisions from ConfigHub ChangeSets.
@@ -2207,12 +2237,12 @@ standalone and connected tool sets described below remain available.
 
 - Standalone tools: `doctor`, `explain`, `gitops_status`, `map`, `scan`, `trace` (via existing cub-scout JSON surfaces).
 - `doctor` is intentionally first: it is the natural first troubleshooting command for AI and MCP clients, including when the problem may be local access uncertainty such as wrong context, stale kubeconfig, or API reachability.
-- Connected tools (when authenticated to ConfigHub): `compare_three_way`, `compare_source_truth`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_resources`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`.
+- Connected tools (when authenticated to ConfigHub): `compare_three_way`, `compare_source_truth`, `confighub_changeorder_get`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_resources`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`.
 - Standalone and read-only: no cluster mutations and no ConfigHub write path.
 - MCP tool descriptors mark every tool with `annotations.readOnlyHint=true`.
 - A command that exits non-zero but prints a JSON answer (for example `trace` on a resource no GitOps tool manages, which exits 1 by the CLI contract) returns that JSON as the tool result, with `isError: true` and a second content item naming the command, its exit status and stderr. Other failures return the error text only.
 - Protocol transport is stdio with newline-delimited JSON-RPC messages, the MCP stdio transport that clients such as Claude Code use. `Content-Length` framed messages, the only framing before v2.13.0, are still accepted; each reply uses the framing of its request.
-- Connected history/status tools require an explicit `space` argument, or `*` when the user explicitly asks for all spaces, so broad ConfigHub reads are deliberate.
+- Connected history/status tools require an explicit `space` argument; `*` is accepted only by tools that support an explicitly requested all-spaces read. `confighub_changeorder_get` always requires one exact space.
 
 #### Tool Parameters
 
@@ -2236,6 +2266,10 @@ standalone and connected tool sets described below remain available.
   - `confighub_space` (optional)
   - `confighub_since` (optional)
   - `confighub_stale_after` (optional)
+- `confighub_changeorder_get`
+  - `changeorder` (required exact slug or ID)
+  - `space` (required exact slug or ID; no `*` or environment fallback)
+  - Returns the same read projection as `history changeorder`; evaluated outcomes remain unknown.
 - `confighub_changesets`
   - `space` (optional)
   - `where` (optional)

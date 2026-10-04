@@ -1,0 +1,68 @@
+{
+  "archivedPreparationReportSha256": "5bbb24f55457068050cc19427b84c53da8cdd113f5dd87f67692d45941e7fa71",
+  "caseCount": 24,
+  "claims": {
+    "archivedArmBytesMatchArchivedReport": true,
+    "freshSourceValidatedAgainstCurrentRepository": true,
+    "frozenQuestionsEvidenceGrantsBudgetsGradersControlsUnchanged": true,
+    "historicalContainerAndStdioProofRevalidatedAtNewMetadata": false,
+    "modelExecuted": false,
+    "paidExecution": false,
+    "runtimeExecuted": false
+  },
+  "currentPreparationReportSha256": "5a24a21fc8b891630de03ac0eaa149559d9a869250bdd7b90348ed0ca9cad96a",
+  "frozenSemanticsSha256": "6fad0fdd92562792c0046bb8cf92f6c1a441035c57ad3d7a0733e801d3e47bae",
+  "schema": "full24-source-refresh-proof.v1",
+  "scope": "offline source metadata refresh only; archived report and current preparation remain distinct",
+  "skillsSourceTreeSha256": {
+    "after": "858f813b04e3e49173ca66d681ab4e86c959344d3c8b2618f508b250306ddc7c",
+    "before": "e9e1d90ec8cd6f7af0904965c9d6911c90daa0476bb9a0ae07888d58e580a6e1"
+  },
+  "treatmentMetadataChanges": {
+    "skills/ai-agent-readonly-context/SKILL.md": {
+      "afterSha256": "a9a1983503025f8df6357413984eb79d15486a7514584f9f10fdedd29731d4ba",
+      "beforeSha256": "b62da9c04d211f490aab55c24c1ae437102446602e15769ae4c29e868f26fad9"
+    },
+    "skills/references/mcp-tool-catalog.md": {
+      "afterSha256": "6400998c9966f64d8d45183063b551d2af0ffa12f2043d74fd14ebd3fd82b9a0",
+      "beforeSha256": "f0968d2d4718b7d164555c63f57aa481311f64e501f6aaf837e62bb0c939c457"
+    }
+  },
+  "unchangedReportFields": [
+    "authoredInputControls",
+    "benchmarkManifest",
+    "caseCount",
+    "cases",
+    "frozenSemanticsSha256",
+    "groups",
+    "legacyRecording",
+    "limits",
+    "officialScaffoldWorkflow",
+    "oracleVisibility",
+    "ordinaryToolQueryPlan",
+    "reportIntegration",
+    "scaleDataset",
+    "schema",
+    "skillsCount",
+    "sourcePreparers",
+    "status",
+    "treatmentMcpBinding"
+  ],
+  "unchangedTrees": {
+    "arms/without": {
+      "fileCount": 179,
+      "treeSha256": "0aec0b4b7b9b78a83c9eadb1d00c28366ac9a44177144e0d04cd431592af7aeb",
+      "unchanged": true
+    },
+    "authored-input-controls": {
+      "fileCount": 28,
+      "treeSha256": "809cf744c189492a7ef5ba85743bb0747745eee044b895e0e668abec3abc7f03",
+      "unchanged": true
+    },
+    "oracle": {
+      "fileCount": 113,
+      "treeSha256": "52c058f43f8eb56da8fe1111bc600804e2d2f39cece6cf5dff12a40b5504574e",
+      "unchanged": true
+    }
+  }
+}

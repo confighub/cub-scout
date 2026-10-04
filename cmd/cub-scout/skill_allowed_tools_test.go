@@ -56,6 +56,7 @@ var readOnlyScoutPaths = map[string]bool{
 	"graph export":              true,
 	"help":                      true,
 	"history":                   true,
+	"history changeorder":       true,
 	"impact":                    true,
 	"import cluster-aggregator": true,
 	"import parse-repo":         true,

@@ -1381,7 +1381,7 @@ ConfigHub event cursors.
 
 ## Connected Read Scope: history, audit list, fleet outliers
 
-`history`, `audit list`, `impact` and `fleet outliers` read the ConfigHub space
+Legacy resource `history`, `audit list`, `impact` and `fleet outliers` read the ConfigHub space
 named by `--space` or `CUB_SPACE` (`*`, every space, where the command accepts
 it) and report it in a `scope` block:
 
@@ -2646,3 +2646,35 @@ no supported built-in marker. Selected and excluded counts apply to the
 combined API version, Kind, namespace and owner filters. The default full report
 remains `map-list-recorded.v1`; an omitted owner does not add a field to its
 scope.
+
+## Exact-space ChangeOrder read
+
+CLI `history changeorder --format json` and connected MCP
+`confighub_changeorder_get` return the same `confighub.changeorderRead.v1`
+projection. MCP returns this projection as JSON text; no new structured-content
+schema is asserted. TUI, ASCII and Markdown show the same captured snapshot.
+
+| Field | Meaning |
+|---|---|
+| `schema` | `confighub.changeorderRead.v1` |
+| `readContract` | Inspected SDK v0.6.8 source commit `4c8d2fc3885fed0d7af6835f2aac0a24387b6221`; a pinned parser contract, not a runtime server version claim |
+| `requested.order`, `requested.space` | Explicit exact selectors; a matching qualified order is normalized to its order component |
+| `changeOrderId`, `slug`, `spaceId`, `spaceSlug` | Validated returned identity. Required IDs and slug must match requested selectors; slug-based space queries require reported exact space slug. Optional related Space identity must agree |
+| `reportedStage`, `reportedState` | Reported strings only; missing/null fields are omitted and described in `omissions`. Empty strings also produce omissions |
+| `workflowId` | Optional reported valid nonzero workflow UUID; not a governing or evaluated-outcome assertion |
+| `workflowDeclaration` | Optional stored SDK-shaped declaration with original field presence, explicit false/zero/empty arrays and array order. PascalCase declaration fields follow pinned source, including Stages, Final, CustomPrerequisites and AttestationPrerequisites |
+| `declarationCoverage` | `reported`, `partial` or `unavailable`: parsing/presence coverage, not governance evaluation or completeness of all server state |
+| `evaluation` | Always `unknown`; this GET exposes no evaluated prerequisite, approval, gate, publication or advancement outcomes |
+| `omissions` | Structured unavailable/partial evidence with reasons; missing workflow never means ungoverned or approved |
+| `limitations` | Separates reported Stage/State, including Completed, from runtime health, live convergence and governance acceptance |
+
+One read uses `cub changeorder get <order> -o json --space <space>`. Exact explicit
+space is required independently of `CUB_SPACE`; wildcards, options and mismatched
+qualified selectors are refused. Invalid UTF-8, duplicate JSON keys, contradictory identities,
+unsupported workflow fields/types, nesting over 64 and responses over 1 MiB are
+refused. Read failure or cancellation returns an error without a success
+projection or inferred outcome. No controller observation, expression execution,
+effective-default filling, mutation or cross-space fallback occurs.
+
+[Authored example](../../examples/changeorder-read-contract/) documents offline
+success criteria and the pending genuine capture and live CLI/TUI acceptance gates.

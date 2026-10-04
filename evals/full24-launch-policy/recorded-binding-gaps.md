@@ -1,10 +1,13 @@
 # Remaining recorded MCP binding contracts
 
-Offline inventory on 2026-10-04, against verified preparation report SHA-256
+Offline inventory on 2026-10-04, against the archived verified preparation report SHA-256
 `5bbb24f55457068050cc19427b84c53da8cdd113f5dd87f67692d45941e7fa71`.
 This is a contract inventory, not execution or new evidence. The eleven existing
 single-object/export bindings remain candidates; these thirteen stay blocked.
-Frozen prompts, source bytes and tool grants are unchanged.
+Frozen prompts, evidence source bytes and tool grants are unchanged. The
+[source refresh proof](source-refresh-proof.json) records the later treatment
+skill metadata update separately; historical runtime proofs retain their original
+source binding.
 
 | Case | Existing source shape | Contract needed before recorded MCP admission |
 |---|---|---|

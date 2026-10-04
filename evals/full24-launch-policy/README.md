@@ -33,6 +33,14 @@ not be merged to construct a convenient replacement dataset.
 The [remaining binding contracts](recorded-binding-gaps.md) name each source
 shape and the identity/scope work needed; this inventory does not unblock them.
 
+The [source refresh proof](source-refresh-proof.json) separates the archived
+preparation used by historical container/stdio proofs from the fresh preparation
+after the ChangeOrder tool documentation update. Only two treatment skill
+metadata files changed. Frozen cases, inputs, prompts, grants, budgets, graders
+and authored controls remain identical. The fresh source passed preparation
+validation and an independent tree/hash review; this does not rerun historical
+runtime proofs or establish model behavior at the refreshed metadata.
+
 `overlay.py` materializes and verifies candidate metadata into a new read-only
 directory. Its Python API is `build(source, stage, case, arm, output)` followed
 by `verify(source, stage, case, arm, output)` (paths are `pathlib.Path` values).

@@ -42,6 +42,42 @@ broader context identity remain open; storage/publication belongs to the later
 phase. SDK #758 stays deferred. Steps 1–2 are advanced, not fully closed; final
 live gates, a published paired baseline and release remain pending.
 
+## Dispatch guard and ChangeOrder read checkpoint — 2026-10-04
+
+The source-bound launch candidate now prepares a PreToolUse dispatch guard in
+both arms. It binds the selected case/control, immutable policy and exact tool
+names; malformed or mismatched events produce a generic denial. Seventeen
+launch-policy contracts include authored DEL-03/DEL-04 controls. This is local
+stdlib/harness proof, not actual Claude hook enforcement. Python/runtime asset
+admission, hook loss/timeout behavior and descendant accounting remain open.
+The thirteen remaining recorded bindings have an explicit source-shape inventory
+in `evals/full24-launch-policy/recorded-binding-gaps.md`; none is newly admitted.
+
+`history changeorder <slug-or-id> --space EXACT --format ascii|json|md [--tui]`
+and connected MCP `confighub_changeorder_get` share one conservative read
+projection. One exact-space GET preserves reported Stage/State and raw workflow
+prerequisite declarations; evaluated outcomes remain unknown. Completed does not
+establish approval or runtime health. Parser contracts are pinned to SDK v0.6.8
+source; no SDK dependency or Go-version migration was made. Deterministic tests,
+a separate authored example/eval and dedicated scaffold validator cover identity,
+malformed/duplicate responses, cancellation and failed-command stdout refusal.
+Genuine cub/server recordings and live CLI/TUI acceptance remain pending; #597
+stays open. Independent review found and repaired one stale tool count.
+The first full Go run caught the missing read-only subcommand classification;
+the one-line test-policy repair passes focused ChangeOrder/skill controls.
+The CLI parity guard also caught a subcommand row in the top-level docs table;
+that row was moved and the guard passes. Both failed logs are retained.
+
+The fresh full-24 preparation validates current skill metadata. Its retained
+`evals/full24-launch-policy/source-refresh-proof.json` distinguishes the archived
+preparation from the refreshed source: only two treatment skill metadata files
+changed, while frozen questions, inputs, grants, budgets, graders and authored
+controls remain identical. Historical container/stdio proof is not revalidated
+at the new metadata by this source-only comparison. No model, cluster or new
+container execution occurred. Cached build/vet, the repaired full offline Go
+suite, 17 launch-policy contracts, three authored ChangeOrder controls, three
+CI condition contracts and read-only/CLI parity/name/diff guards pass.
+
 ## Offline runtime checkpoint — 2026-10-03
 
 The user now requests all remaining v2.13 work except live tests. Current topic
@@ -662,9 +698,10 @@ permission gates to already authorized routine work.
 Check #645 and the offline checkpoint above. Continue v2.13 on
 `codex/v213-offline-runtime`, preserving the current exclusion of live tests.
 The eleven recorded host bindings do not admit full-24 model execution: remaining
-case bindings, Python/overlay assets, actual grants, official evaluator terminal
-message integration, descendant completion and cost attribution still need
-their bounded offline implementation and review. Do not invent Kubernetes
+case bindings, Python/runtime asset admission, actual grants, trusted official
+evaluator terminal integration, descendant completion and cost attribution
+still need bounded implementation and review. The terminal adapter and overlay
+are prepared candidates; their runtime integration remains unproved. Do not invent Kubernetes
 objects or evaluated server decisions to fill gaps. Context/Trace/GitOps packets
 #750/#751/#753 and three-way #755 have merged; audit remaining parent scope
 #599/#746 against current code before repeating completed work.

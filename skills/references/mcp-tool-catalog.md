@@ -11,7 +11,7 @@ The catalog has two tiers:
 - **Standalone tools** — registered always; live reads require kubeconfig; release checks also require a digest-pinned OCI bundle or local layout
 - **Connected tools** — added when `cub auth status` succeeds; require ConfigHub auth
 
-Total: **18 tools** (7 standalone + 11 connected; `release_check` is unreleased v2.11).
+Total: **19 tools** (7 standalone + 12 connected).
 
 ## Standalone tools (7)
 
@@ -92,7 +92,7 @@ Each invocation is a fresh bounded check, not a shared cache. Unsupported or
 ambiguous controller/source/target shapes remain inconclusive. See the
 [example and read budgets](../../examples/oci-release-check/).
 
-## Connected tools (11)
+## Connected tools (12)
 
 Registered only when `cub-scout mcp serve` detects connected mode and the `cub`
 CLI is available.
@@ -121,6 +121,20 @@ The registered MCP `strategy` enum is generated from the same
 `agent.AllStrategies()` registry as the CLI, so Phase 1 and Phase 2 strategy
 values stay in parity. See [source-truth-strategies](source-truth-strategies.md)
 for the full enum.
+
+### `confighub_changeorder_get`
+
+Read one known ChangeOrder's reported Stage/State and stored workflow/prerequisite
+declarations. Requires exact `changeorder` and exact `space` strings; matching
+qualified slugs are accepted, wildcard/options/mismatched paths and environment
+fallback are refused. The connected runner performs one
+`cub changeorder get <order> -o json --space <space>`, verifies returned identity
+and space, and uses the same projection as `history changeorder` (ASCII/JSON/MD
+and `--tui`). Unknown evaluated outcomes stay unknown, including Completed,
+missing workflow and denied reads. No controller health, prerequisite execution,
+approval, publish eligibility or advancement decision is inferred. `readContract`
+pins inspected SDK v0.6.8 source, not runtime server version. Genuine captures
+and live CLI/TUI acceptance remain pending.
 
 ### `confighub_changesets`
 
@@ -221,7 +235,7 @@ The closed catalog is verified by `cmd/cub-scout/mcp_test.go`. The following cub
 | `patterns_detect` | Specialized; CLI invocation is the better surface for this verb |
 | `compare_drift` (file vs live) | Requires a local YAML file argument — awkward to expose over MCP (the file path is relative to the cub-scout process, not the agent) |
 | `compare` (resource mode) | Subsumed by `compare_three_way` in connected mode |
-| `history` | Use `confighub_changesets` instead — same conceptual surface, different naming for the MCP tier |
+| `history <resource>` | Use `confighub_changesets` instead — same conceptual surface, different naming for the MCP tier |
 | `impact` | Considered but deferred; the connected `impact` blast-radius surface is rich enough that MCP exposure needs design |
 | `fleet_outliers` | Considered but deferred; fleet-scope tools need careful agent-side framing |
 | `views_resolve` | Considered but deferred |
@@ -262,7 +276,11 @@ The catalog is discovered with the standard MCP `tools/list` request.
 
 Each tool's `BuildArgs` function transforms the MCP arguments into a cub-scout CLI argv. The MCP server then executes the cub-scout CLI as a subprocess (via the `runner` / `connectedRunner` injection points) and returns the stdout as `content[0].text` in the MCP response. The CLI's `--format json` flag drives the structured output.
 
-For connected tools that wrap `cub` (not cub-scout) — `confighub_changesets`,
+`confighub_changeorder_get` transforms successful cub JSON through its source-pinned
+identity-checked projection before returning it. Failed cub stdout is not exposed
+through the generic retained Scout JSON error path.
+
+For connected tools that wrap `cub` (not cub-scout) — `confighub_changeorder_get`, `confighub_changesets`,
 `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`,
 `confighub_releases`, `confighub_resources`, `confighub_unit_events`,
 `confighub_units`, and `confighub_unit_get` — the runner is `connectedRunner`

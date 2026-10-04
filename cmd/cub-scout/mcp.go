@@ -51,6 +51,7 @@ Additional tools in connected mode (when authenticated to ConfigHub):
   - compare_three_way
   - compare_source_truth
   - confighub_changesets
+  - confighub_changeorder_get
   - confighub_k8s_resources
   - confighub_k8s_types
   - confighub_live_status
@@ -778,6 +779,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				return append(args, "--format", "json"), nil
 			},
 		}
+		tools["confighub_changeorder_get"] = changeOrderMCPTool(connectedRunner)
 		tools["confighub_changesets"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
 				Name:        "confighub_changesets",
