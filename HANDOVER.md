@@ -1192,7 +1192,7 @@ pre-read refusal. The [example](examples/recorded-inventory/#recorded-pages-214-
 uses authored objects rather than a genuine cluster recording. Source review
 found no defect. This limits returned records only: no byte/token cap, model
 savings, whole-input work cap, six-surface conformance or runtime admission claim.
-Independent review accepted the [actual host CLI/MCP process proof](examples/recorded-inventory/offline-pagination-process-proof.json): ten checks, exact retained binary/source/fixture/stream hashes, page union and zero cluster requests at a trap endpoint. Focused recorded race checks, build, vet, full offline Go suite, 31 source-bound launch guards and three workflow guards pass. Exact-head unit-only CI has not yet run for this packet. #604/#596 stay open.
+Independent review accepted the [actual host CLI/MCP process proof](examples/recorded-inventory/offline-pagination-process-proof.json): ten checks, exact retained binary/source/fixture/stream hashes, page union and zero cluster requests at a trap endpoint. Focused recorded race checks, build, vet, full offline Go suite, 31 source-bound launch guards and three workflow guards pass. Initial unit-only CI [37230721947](https://github.com/confighub/cub-scout/actions/runs/37230721947) stopped at an ineffectual cursor initialization. The initialization is repaired; focused race and all ten regenerated process checks pass. Retry CI remains pending. #604/#596 stay open.
 
 ## Resume here
 

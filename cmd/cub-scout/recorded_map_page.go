@@ -159,7 +159,7 @@ func newRecordedMapPagedViewer(report RecordedMapReport, size int, cursor string
 
 func (m recordedMapViewer) updateRecordedPage(key string) recordedMapViewer {
 	pager := *m.pager
-	cursor := pager.Cursor
+	var cursor string
 	if key == "n" {
 		if pager.Page.Pagination.NextCursor == "" {
 			return m
