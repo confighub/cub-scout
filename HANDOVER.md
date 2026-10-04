@@ -16,6 +16,10 @@ success criteria: workflow continuity, scope safety, least privilege, complete
 evidence and cheap reuse/demo. It corrects the older polling-only assessment
 with the existing opt-in watch-backed inventory boundary. Operator assessment
 remains #519; context/parity and efficiency retain their existing issue owners.
+The maintainer subsequently confirmed that the roadmap must deliver a winning
+product. Its outcome scorecard now sets operator diagnosis/onboarding targets,
+scope and reuse proof, and P3–P6 delivery responsibilities alongside the existing
+agent savings gates. Benchmark failures determine the next corrective work.
 Permission profiles and scope-bound investigation history are explicitly indexed
 as design follow-ups in the roadmap checklist. No runtime behavior, frozen
 benchmark, v2.13 scope or release gate changed. Documentation/link/name checks

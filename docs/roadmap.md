@@ -15,6 +15,58 @@
 
 ---
 
+## Winning means verified investigation outcomes
+
+Direction confirmed by the maintainer on 2026-10-04. Scout must earn preference
+through correct answers, safe scope, usable investigations and measured savings.
+These are product targets for the tested workflows, not claims of current
+leadership or additional v2.13 release gates. Product docs describe outcomes
+without naming competing products.
+
+| Outcome | Target before claiming a win | Tracking |
+|---|---|---|
+| Trust | Every mandatory negative control correct: denied reads, wrong revision, stale/deleted observations and missing metadata never become false success, health, approval or orphan claims. Supported-answer success must not regress. | #561/#641/#591/#597, #596 |
+| Operator speed | At least 20% lower median time to an independently verified diagnosis on the preregistered supported tasks; report p95 and investigate any >10% p95 regression. Require uncertainty to support the scoped speed claim, not just a favorable point estimate. | #519 |
+| Agent efficiency | Pass the existing paired quality, 20% cost-per-verified-answer and time targets in the [execution plan](roadmap-3.0-execution.md#metrics-and-adopted-release-thresholds). Actual credits remain unmeasured unless attributable. | #645/#626/#604 |
+| Scope safety | Zero cross-context/space contamination in mandatory collision, cancellation and late-response controls. Show scope and evidence age throughout the workflow; no ambient fallback or global-context mutation. | #599/#746/#596 |
+| First useful result | Target median five minutes for a new user to reach and export a correct explanation in the guided offline scenario. Measure setup and task time separately, retain failed attempts, and validate standalone use without ConfigHub credentials. | #519/#520 |
+| Reuse | Cold/warm/idle/change/denied/reconnect reads meet operation-specific budgets fixed before implementation. Revisiting evidence must not renew its timestamp; stale evidence requires a visible refresh. | #539/#604 |
+
+The operator task set must include finding the affected workload, tracing its
+source/revision, explaining a stuck rollout, assessing a manual field change,
+resolving a stale or wrong-release report, and exporting scoped evidence. Include
+mixed-controller and same-name/denied-scope scenarios as separate strata. Compare
+with an ordinary read-only command workflow and relevant read-only exploration
+workflows using equivalent permissions/evidence and pinned versions. Never score
+an unsupported workflow as a failed supported diagnosis or let broad coverage
+hide weak controller depth. Preregister scoring, participant experience,
+training, task order, cache conditions, repetitions and analysis before running;
+counterbalance learning effects and retain failures.
+
+### Delivery sequence toward the targets
+
+| Stage | What it contributes to winning | Exit evidence |
+|---|---|---|
+| v2.13 / P3 | Trustworthy source/revision/health/governance reads and captured context; finish the current recorded/runtime prerequisites. | Existing release gates, exact identity and negative controls, genuine acceptance and the paired baseline. No gate is waived. |
+| v2.14 / P4 | A complete supported investigation through CLI/TUI with matching facts, safe selection and a guided offline example. Settle #519 workflow integration alongside #596/#599; design permission/history follow-ups before implementation. | Operator assessment protocol and recorded end-to-end controls; genuine acceptance when allowed. Existing standalone use remains useful. |
+| v2.15 / P5 | Cheap ongoing observation, explicit freshness, bounded reuse and retained evidence. Use measured investigation bottlenecks to prioritize #539/#604/#605. | Cold/warm/idle/change/denial/reconnect budgets, operator timings and refreshed paired-agent results within the adopted budgets. |
+| 3.0 / P6 | Publish the supported workflows where Scout earns preference, with reproducible evidence and reliable installation. | Scoped scorecard, uncertainty, limits, checked distribution and migration. A release does not by itself establish a leadership claim. |
+
+### Work selection and failure response
+
+Every feature packet must name the user question, the scorecard outcome it
+improves, the existing issue or newly tracked scope, exact negative controls,
+and a worked example before code. Keep the shared CLI/TUI model and recorded
+fallback; keep cluster mutation outside Scout. Favor removing investigation
+steps, unsupported joins and repeated reads over expanding the command catalog.
+
+After each settled packet, update the scorecard with evidence or mark the result
+pending. If correctness fails, fix it first. If workflow time fails, address the
+measured navigation/diagnosis bottleneck. If cost/load fails, address routing,
+output or read reuse. Do not add unrelated features, change the held-out tasks,
+or relabel failures to obtain a favorable result. Publish unresolved limits and
+reforecast within the existing live/paid admission and spending boundaries.
+
 ## Untracked Backlog Checklist
 
 This checklist tracks ideas from planning docs. Items marked "scoped" had issues filed and
@@ -865,7 +917,7 @@ The UX surface is now **stable and locked**.
 
 ---
 
-## v0.20.0 — Flux Operator Interop Slice
+## v0.20.0 — Controller Interoperability Slice
 
 **Status:** Released (2026-02-12)
 **Theme:** *Read-only operator workflows with stronger runtime evidence*

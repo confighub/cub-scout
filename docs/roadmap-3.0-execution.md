@@ -52,6 +52,24 @@ no cluster mutation, no new fleet membership model, and no renderer hidden in
 `import --git-path`. ConfigHub fact publication has a distinct, explicit write
 boundary even though observing the cluster remains read-only.
 
+## Operator and agent outcome overlay — 2026-10-04
+
+The maintainer confirmed that the roadmap must produce a winning read-only
+investigation product. The [roadmap outcome scorecard](roadmap.md#winning-means-verified-investigation-outcomes)
+adds explicit operator speed, first-use, scope and reuse targets alongside the
+existing agent quality/cost gates. These are targets awaiting proof, not a claim
+of leadership. #519 owns operator assessment, #596/#599 own shared facts and
+scope, and #539/#604 own observation/output efficiency.
+
+P3 completes the current trust/context/release gates. P4 must also settle a
+supported end-to-end operator investigation and its assessment protocol; this
+adds workflow focus alongside the existing conformance work, not a default TUI
+replacement. P5 prioritizes bottlenecks measured in that assessment. P6 publishes
+only scoped, reproducible outcome claims. The frozen 24 agent cases, adopted
+budgets, paid/live admission rules, SDK deferral and current v2.13 release scope
+remain unchanged. Permission profiles and local investigation history remain
+indexed design follow-ups until their contracts and implementation issues exist.
+
 ## Starting snapshot at adoption — before September 30 execution
 
 The following records the pre-execution state, not the current work queue.

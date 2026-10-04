@@ -49,6 +49,11 @@ to v2.13 or replace the adopted release plan.
 | 4. Complete, honest answers | Explain source/revision, applied configuration, workload convergence, drift and evidence freshness together where contracts support the join. | Fixed same-name, wrong-revision, stale-report, deleted-object, missing-metadata and denied-read fixtures. No false delivery, health, orphan or approval claims. #561/#641/#591/#597. |
 | 5. Cheap reuse and easy demonstration | Revisit an investigation cheaply, refresh explicitly, and try a useful scenario without a cluster or model provider. | Measure cold/warm/idle/change/denied/reconnect requests and bytes with cache age visible. Revisit must not renew observation time. Use an authored mixed-controller demo plus an unavailable-evidence case; separate it from genuine live proof. #539/#519/#604. |
 
+The [roadmap outcome scorecard](../roadmap.md#winning-means-verified-investigation-outcomes)
+sets measurable operator, agent, scope, onboarding and reuse targets and assigns
+them to delivery stages. Passing is required for the corresponding product
+claim; none is presented here as an achieved result.
+
 ## Measuring improvement fairly
 
 Use the same supported question, object scale, evidence availability, effective
