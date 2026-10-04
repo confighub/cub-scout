@@ -1270,6 +1270,25 @@ focused race (2.099s), build, vet and held-source-fixed full offline Go suite pa
 Independent review found no issues. No extra reads or live/TUI-process proof.
 Display-key root collisions are separately tracked by #771. Unit-only CI is pending.
 
+## Composition root collision correction #771 (2026-10-04)
+
+The composition model groups by platform/full supplied ResourceRef/presence,
+then assigns legacy keys only to unambiguous display labels. Every collision
+member gets an opaque deterministic encoded-reference suffix. Human root and
+sibling labels qualify colliding API references; child order ties use full refs.
+Present and partial roots remain separate; neither tuple equality nor unknown
+name buckets establish object UID, cluster identity or shared observed ownership.
+
+Four authored [controls](examples/composition-root-collisions/) cover API groups,
+served versions, stale UID, unknown parent metadata, reversed input, legacy
+keys, child ordering, JSON/human and existing loaded trace output. The initial
+valid pre-fix control collapses five references into two trees; the expanded
+corrected control retains six, including unknown metadata. Independent review
+found no findings. Focused race (2.055s), build, vet and held-source-fixed full
+offline Go suite pass. No additional API reads or genuine/TUI-process proof.
+Exact-head unit-only CI is pending. The adjacent kro owner-reference fallback
+correctness problem is recorded before implementation in #772.
+
 ## Resume here
 
 Check #645 and the checkpoint above. Drive the adopted plan through 3.0,

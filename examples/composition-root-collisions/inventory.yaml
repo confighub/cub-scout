@@ -1,0 +1,52 @@
+# Authored offline references, not captured objects or physical identity proof.
+apiVersion: v1
+kind: List
+items:
+- apiVersion: a.crossplane.io/v1
+  kind: CompositeResource
+  metadata: {name: root, namespace: "", uid: parent-a}
+- apiVersion: b.crossplane.io/v1
+  kind: CompositeResource
+  metadata: {name: root, namespace: "", uid: parent-b}
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: child-a
+    namespace: app
+    ownerReferences: [{apiVersion: a.crossplane.io/v1, kind: CompositeResource, name: root, uid: parent-a}]
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: child-b
+    namespace: app
+    ownerReferences: [{apiVersion: b.crossplane.io/v1, kind: CompositeResource, name: root, uid: parent-b}]
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: child-partial
+    namespace: app
+    ownerReferences: [{apiVersion: a.crossplane.io/v1, kind: CompositeResource, name: root, uid: replaced-parent}]
+- apiVersion: a.kro.run/v1alpha1
+  kind: WebApp
+  metadata: {name: site, namespace: app, uid: instance-a}
+- apiVersion: b.kro.run/v1alpha1
+  kind: WebApp
+  metadata: {name: site, namespace: app, uid: instance-b}
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: workload-a
+    namespace: app
+    ownerReferences: [{apiVersion: a.kro.run/v1alpha1, kind: WebApp, name: site, uid: instance-a}]
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: workload-b
+    namespace: app
+    ownerReferences: [{apiVersion: b.kro.run/v1alpha1, kind: WebApp, name: site, uid: instance-b}]
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: child-unknown
+    namespace: app
+    labels: {crossplane.io/composite: root}

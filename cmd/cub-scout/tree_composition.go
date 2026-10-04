@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -145,31 +146,53 @@ func listAllObjectsForComposition(ctx context.Context, dynClient dynamic.Interfa
 	return objs, warnings
 }
 
+// This identifies a supplied presentation reference, not an object UID or cluster.
+// Present/partial references remain separate even when their display names match.
+type compositionRootIdentity struct {
+	Platform string
+	Ref      agent.ResourceRef
+	Present  bool
+}
+
+func compositionReferenceKey(node agent.CrossplaneLineageNode) string {
+	raw, _ := json.Marshal(compositionRootIdentity{Ref: node.Ref, Present: node.Present})
+	return string(raw)
+}
+
+func compositionQualifiedRef(ref agent.ResourceRef, qualify bool) string {
+	label := ref.String()
+	if !qualify {
+		return label
+	}
+	apiVersion := ref.Version
+	if ref.Group != "" {
+		apiVersion = ref.Group + "/" + ref.Version
+	}
+	if apiVersion == "" {
+		apiVersion = "unknown"
+	}
+	return label + " [apiVersion=" + apiVersion + "]"
+}
+
 // buildCompositionIndex groups resources by composition root using platform lineage resolvers.
-// Uses a pre-built index for O(n) instead of O(n²) complexity.
+// Reuses the supplied inventory index without adding collection reads.
 func buildCompositionIndex(objs []*unstructured.Unstructured) map[string]*CrossplaneCompositionTree {
-	byXR := make(map[string]*CrossplaneCompositionTree)
+	byRoot := make(map[compositionRootIdentity]*CrossplaneCompositionTree)
 
 	// Build index once, reuse for all objects
 	idx := agent.NewUnstructuredIndex(objs)
 
 	for _, obj := range objs {
 		if lineage, ok := agent.ResolveCrossplaneLineageWithIndex(obj, idx); ok && lineage != nil {
-			// Skip resources where the XR could not be identified (partial lineage with unknown XR).
-			// This avoids creating spurious groups for XRs that have claim labels but no parent XR.
+			// Skip completely unnamed roots. Named unresolved references remain
+			// provisional partial buckets rather than asserted observed parents.
 			if lineage.Composite.Ref.Name == "" {
 				continue
 			}
 
-			xrKey := "crossplane::" + lineage.Composite.Ref.String()
-			if xrKey == "crossplane::" {
-				xrKey = "crossplane::" + lineage.Composite.Ref.Name
-			}
-			if xrKey == "crossplane::" {
-				continue
-			}
+			xrKey := compositionRootIdentity{Platform: "crossplane", Ref: lineage.Composite.Ref, Present: lineage.Composite.Present}
 
-			node := byXR[xrKey]
+			node := byRoot[xrKey]
 			if node == nil {
 				node = &CrossplaneCompositionTree{
 					Platform: "crossplane",
@@ -178,13 +201,10 @@ func buildCompositionIndex(objs []*unstructured.Unstructured) map[string]*Crossp
 				if lineage.Claim != nil {
 					node.Claim = lineage.Claim
 				}
-				byXR[xrKey] = node
+				byRoot[xrKey] = node
 			}
 
-			// Prefer a present XR/Claim if we see one later.
-			if lineage.Composite.Present && !node.XR.Present {
-				node.XR = lineage.Composite
-			}
+			// Claims enrich only this supplied root reference.
 			if lineage.Claim != nil {
 				if node.Claim == nil || (lineage.Claim.Present && !node.Claim.Present) {
 					node.Claim = lineage.Claim
@@ -203,11 +223,8 @@ func buildCompositionIndex(objs []*unstructured.Unstructured) map[string]*Crossp
 			continue
 		}
 
-		xrKey := "kro::" + lineage.Instance.Ref.String()
-		if xrKey == "kro::" {
-			xrKey = "kro::" + lineage.Instance.Ref.Name
-		}
-		node := byXR[xrKey]
+		xrKey := compositionRootIdentity{Platform: "kro", Ref: lineage.Instance.Ref, Present: lineage.Instance.Present}
+		node := byRoot[xrKey]
 		if node == nil {
 			node = &CrossplaneCompositionTree{
 				Platform: "kro",
@@ -217,12 +234,9 @@ func buildCompositionIndex(objs []*unstructured.Unstructured) map[string]*Crossp
 				def := toCrossplaneLineageNode(*lineage.Definition)
 				node.Claim = &def
 			}
-			byXR[xrKey] = node
+			byRoot[xrKey] = node
 		}
 
-		if lineage.Instance.Present && !node.XR.Present {
-			node.XR = toCrossplaneLineageNode(lineage.Instance)
-		}
 		if lineage.Definition != nil {
 			def := toCrossplaneLineageNode(*lineage.Definition)
 			if node.Claim == nil || (def.Present && !node.Claim.Present) {
@@ -237,12 +251,30 @@ func buildCompositionIndex(objs []*unstructured.Unstructured) map[string]*Crossp
 	}
 
 	// Sort managed for stability.
-	for _, node := range byXR {
+	for _, node := range byRoot {
 		sort.Slice(node.Managed, func(i, j int) bool {
-			return node.Managed[i].Ref.String() < node.Managed[j].Ref.String()
+			left, right := node.Managed[i], node.Managed[j]
+			if left.Ref.String() != right.Ref.String() {
+				return left.Ref.String() < right.Ref.String()
+			}
+			return compositionReferenceKey(left) < compositionReferenceKey(right)
 		})
 	}
 
+	// Project compatibility keys only after all distinct references are collected.
+	counts := make(map[string]int)
+	for identity := range byRoot {
+		counts[identity.Platform+"::"+identity.Ref.String()]++
+	}
+	byXR := make(map[string]*CrossplaneCompositionTree, len(byRoot))
+	for identity, node := range byRoot {
+		key := identity.Platform + "::" + identity.Ref.String()
+		if counts[key] > 1 {
+			raw, _ := json.Marshal(identity) // Fixed string/bool fields cannot fail JSON encoding.
+			key += "::ref=" + base64.RawURLEncoding.EncodeToString(raw)
+		}
+		byXR[key] = node
+	}
 	return byXR
 }
 
@@ -262,6 +294,12 @@ func printCompositionTreeHuman(byXR map[string]*CrossplaneCompositionTree) {
 		xrKeys = append(xrKeys, k)
 	}
 	sort.Strings(xrKeys)
+	rootLabels := make(map[string]int)
+	for _, node := range byXR {
+		if node != nil {
+			rootLabels[node.Platform+"::"+node.XR.Ref.String()]++
+		}
+	}
 
 	for _, xrKey := range xrKeys {
 		node := byXR[xrKey]
@@ -275,7 +313,7 @@ func printCompositionTreeHuman(byXR map[string]*CrossplaneCompositionTree) {
 		}
 
 		// XR/instance line
-		xrLabel := node.XR.Ref.String()
+		xrLabel := compositionQualifiedRef(node.XR.Ref, rootLabels[node.Platform+"::"+node.XR.Ref.String()] > 1)
 		if xrLabel == "" {
 			xrLabel = xrKey
 		}
@@ -297,13 +335,21 @@ func printCompositionTreeHuman(byXR map[string]*CrossplaneCompositionTree) {
 			fmt.Printf("  ├── %s: %s\n", label, claimLabel)
 		}
 
-		// Managed resources
+		// Managed resources with colliding display labels retain their API references.
+		childLabels := make(map[string]map[string]bool)
+		for _, child := range node.Managed {
+			label := child.Ref.String()
+			if childLabels[label] == nil {
+				childLabels[label] = make(map[string]bool)
+			}
+			childLabels[label][compositionReferenceKey(child)] = true
+		}
 		for i, m := range node.Managed {
 			connector := "├──"
 			if i == len(node.Managed)-1 {
 				connector = "└──"
 			}
-			fmt.Printf("  %s %s\n", connector, m.Ref.String())
+			fmt.Printf("  %s %s\n", connector, compositionQualifiedRef(m.Ref, len(childLabels[m.Ref.String()]) > 1))
 		}
 		fmt.Println()
 	}

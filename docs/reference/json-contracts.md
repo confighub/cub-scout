@@ -2855,3 +2855,20 @@ the check. TUI page failure leaves its loaded report and cursor unchanged.
 This is not a cap on display, newline, duplicated MCP content, protocol envelopes,
 transport, tokens or input work. Actual result bytes must be measured separately.
 See the [example](../../examples/recorded-inventory/#report-json-budget-214-candidate).
+
+## Composition tree reference collisions (2.14 candidate)
+
+`tree composition --json` retains its map of composition trees. Keys are opaque
+presentation keys, not stable object IDs. Roots with a unique display reference
+keep the existing `platform::display-reference` key. When distinct supplied
+references share that display label, **all** members receive a deterministic
+`::ref=` suffix containing unpadded base64url JSON of the platform, full
+`ResourceRef` and present/partial state. Read `xr.ref` and `xr.present` rather
+than reconstructing map keys from names. This preserves the unambiguous contract
+while preventing unrelated API groups/served versions or partial observations
+from sharing a present root.
+
+Tuple equality does not establish physical object UID or cluster identity.
+Unknown name-only parent buckets remain provisional and partial; missing
+metadata is not filled. Same-name children of a different full reference remain
+in `managed`. See the [authored collision control](../../examples/composition-root-collisions/).
