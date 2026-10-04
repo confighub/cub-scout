@@ -1,0 +1,40 @@
+{
+  "schema": "scout-linux-candidate-build.v1",
+  "sourceRevision": "5098762b0af1fea7bfea1e915dff90f2581db50b",
+  "retainedEvidencePath": "/private/tmp/scout-v213-sveltos-linux-candidate-20261004",
+  "binary": {
+    "bytes": 75977288,
+    "sha256": "e59564148524cd0c131c26aeca591256d5a2f4490b692a0470e60a7cc782769a",
+    "elfClass": 64,
+    "endianness": "little",
+    "machine": "AArch64"
+  },
+  "build": {
+    "goVersion": "go1.26.2",
+    "moduleVersionMetadata": "v2.12.5-0.20261004174610-5098762b0af1",
+    "target": "linux/arm64",
+    "cgo": false,
+    "trimpath": true,
+    "buildVCS": true,
+    "moduleNetwork": "off",
+    "toolchainDownloads": false,
+    "twoBuildsByteIdentical": true,
+    "vcsModified": false
+  },
+  "claims": {
+    "offlineBuildCandidateVerified": true,
+    "targetExecuted": false,
+    "releaseArtifact": false,
+    "publishedVersion": false,
+    "linuxRuntimeAdmission": false,
+    "full24Admission": false,
+    "modelToolAdmission": false,
+    "savingsEstablished": false
+  },
+  "retainedEvidenceSHA256": {
+    "build-second.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-first.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clone.log": "4ea2ec53e114646230f5aa59671a390d30c673dc1c69ef69e89d7f45344a0c07",
+    "build-info.txt": "05e6bd213d0f528d9fd45b2212664a831141ecb33cc3b73b8099addc586a4df9"
+  }
+}

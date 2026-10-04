@@ -945,6 +945,32 @@ work, not acceptance scope. An independent read-only audit reconstructed the
 6,215-entry inventory and verified all selected blobs/layers and Python assets
 against the receipt without findings.
 
+## Current implementation Linux candidate — 2026-10-04
+
+Reviewed Sveltos source `5098762b0af1fea7bfea1e915dff90f2581db50b` has a new
+[current Linux arm64 build receipt](docs/releases/v2.13-sveltos-linux-candidate.json).
+Two offline CGO-disabled trimpath builds from a clean local checkout are
+byte-identical: 75,977,288 bytes, SHA-256
+`e59564148524cd0c131c26aeca591256d5a2f4490b692a0470e60a7cc782769a`.
+Embedded Go 1.26.2 metadata names the exact revision and modified=false;
+independent static audit accepted the binaries, clean checkout and receipt.
+Retained files are under `/private/tmp/scout-v213-sveltos-linux-candidate-20261004`.
+No target execution or runtime admission is claimed. Earlier build receipts and
+historical runtime pins remain unchanged; this is not a release artifact.
+
+## Verified implementation checkpoint — 2026-10-04
+
+Implementation `5098762b0af1fea7bfea1e915dff90f2581db50b` includes the exact-context
+map protocol and Sveltos facts. Exact-head manual unit-only CI
+[37221782102](https://github.com/confighub/cub-scout/actions/runs/37221782102)
+passed Unit and Proof Artifact. Downloaded
+`/tmp/scout-v213-sveltos-ci-proof-37221782102/proof-matrix.json` matches the exact
+revision, coverage 50.4% against minimum 25.0%, with Integration/GitOps/Demo/
+Connected/Full Verification skipped. Full local offline Go tests, build, vet,
+authored controls, recorded-API and launch-policy guards passed before push.
+The source/rendering/static-asset/build receipts have independent acceptance.
+No live gate, runtime/model admission, release or merge is claimed.
+
 ## Resume here
 
 Check #645 and the offline checkpoint above. Continue v2.13 on
