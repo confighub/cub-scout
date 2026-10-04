@@ -1,0 +1,57 @@
+{
+  "attempts": [
+    {
+      "accepted": false,
+      "compiled": true,
+      "name": "managed-worktree-build",
+      "reason": "Git revision absent from embedded metadata; retained unstamped artifacts"
+    },
+    {
+      "acceptedAsBuildCandidate": true,
+      "compiled": true,
+      "name": "local-exact-commit-checkout-build",
+      "repeatByteIdentical": true
+    }
+  ],
+  "binary": {
+    "bytes": 75903128,
+    "elfClass": 64,
+    "endianness": "little",
+    "machine": "AArch64",
+    "sha256": "feeb1ebc37d6ffed635588ecc30866b7a1027e79517cd4139a3a1f97c3aa0ba5"
+  },
+  "build": {
+    "buildVCS": true,
+    "cgo": false,
+    "goVersion": "go1.26.2",
+    "moduleNetwork": "off",
+    "moduleVersionMetadata": "v2.12.5-0.20261004163351-c646c207eb50",
+    "target": "linux/arm64",
+    "toolchainDownloads": false,
+    "trimpath": true,
+    "twoBuildsByteIdentical": true,
+    "vcsModified": false
+  },
+  "claims": {
+    "full24Admission": false,
+    "linuxRuntimeAdmission": false,
+    "modelToolAdmission": false,
+    "offlineBuildCandidateVerified": true,
+    "publishedVersion": false,
+    "releaseArtifact": false,
+    "savingsEstablished": false,
+    "targetExecuted": false
+  },
+  "retainedEvidenceSHA256": {
+    "build-first.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-info-unstamped.json": "140badc4d5f69ef0b671d14eac361bbd549a3319c97a30aed0c12873da958166",
+    "build-info.json": "2a03f652532fb1e2e170ff9349e5bb7fd24ec40924f64220cd6b261c4a893689",
+    "build-repeat.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-stamped-first.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-stamped-repeat.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "checkout.log": "6cfe9930df0ec486dd9aa46798062f178d025f065dcdff831ed4a49271b0661b",
+    "clone.log": "e26231b7312b5d15c2faab5813d1a287948b30f379cdb9ba88e5a758e1e21b36"
+  },
+  "schema": "scout-linux-candidate-build.v1",
+  "sourceRevision": "c646c207eb504b122f50653e8a5fb8d67bc890dd"
+}

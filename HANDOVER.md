@@ -840,10 +840,15 @@ cover exact source/scope, denial without readable body, foreign report identity,
 counts, malformed/bounded JSON, missing/changed source and reader failure. All
 31 recorded-API controls, three workflow guards and full offline Go suite pass.
 The existing recorded-loader example references these controls. Independent
-source review found no actionable defect. Actual local `./cub-scout` composition
+source and retained host-proof review found no actionable defect. Actual local `./cub-scout` composition
 with private empty HOME/kubeconfig passed; retained bytes/hashes live at
 `/private/tmp/scout-v213-context-inventory-host-proof-20261004`. There was one
 readable CLI call and zero denied calls.
+
+Manual unit-only CI [37217238140](https://github.com/confighub/cub-scout/actions/runs/37217238140)
+at implementation `c646c207eb504b122f50653e8a5fb8d67bc890dd` passed Unit and Proof
+Artifact. Downloaded proof matches that exact SHA: coverage 50.2% / minimum 25.0%,
+with Integration/GitOps/Demo/Connected/Full Verification skipped.
 
 This is an eval-only binding, not a new product CLI/MCP/TUI surface or admitted
 MCP tool. Existing transport module pins, frozen case inputs/grants/prompts and
@@ -851,6 +856,30 @@ budgets are unchanged. RUL-03 remains blocked on tool/runtime admission and the
 new Linux binary pin; full24 remains eleven candidates and thirteen blocked.
 Current-state/runtime admission flags stay false. No live, container, model or
 provider run occurred; SDK #758 remains deferred and v2.13 is unreleased.
+
+## Offline Linux arm64 build candidate — 2026-10-04
+
+Two cached, download-disabled builds from a clean temporary local checkout of
+`c646c207eb504b122f50653e8a5fb8d67bc890dd` produce byte-identical Linux/arm64
+ELF binaries: 75,903,128 bytes, SHA-256
+`feeb1ebc37d6ffed635588ecc30866b7a1027e79517cd4139a3a1f97c3aa0ba5`.
+Go 1.26.2 build metadata reports CGO disabled, trimpath, exact Git revision and
+`vcs.modified=false`. The embedded module pseudo-version is source metadata,
+not a published version. [Build receipt](docs/releases/v2.13-linux-candidate.json)
+and `/private/tmp/scout-v213-linux-candidate-20261004` retain verification,
+metadata, logs and both binaries. Independent read-only audit found no defect.
+
+The first managed-worktree build compiled but omitted VCS metadata because the
+local Go VCS detector expects a `.git` directory; its unstamped artifacts remain
+retained as rejected. Building the same commit in the temporary local checkout
+provided the required source stamp. An initial verifier assumed `(devel)` module
+metadata; it was corrected to validate the reported exact-commit pseudo-version.
+
+The candidate contains recorded DeploymentList support but has not run on Linux
+or been admitted by a runtime/tool gate. Historical runtime pins and accepted
+proofs are unchanged. No target binary, Docker, live cluster, model, provider or
+registry operation ran. Runtime execution remains deferred to the final gates;
+this is a build candidate, not a release artifact or full24 admission.
 
 ## Resume here
 
