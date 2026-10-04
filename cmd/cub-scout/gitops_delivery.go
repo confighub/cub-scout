@@ -1314,6 +1314,8 @@ func renderGitOpsStatusMarkdown(summary GitOpsSummary) string {
 		}
 	}
 
+	b.WriteString(renderSveltosControllerEvidence(summary.SveltosControllerReports, true))
+
 	if summary.DeliveryEvidence != nil {
 		renderGitOpsDeliveryEvidenceMarkdown(&b, summary.DeliveryEvidence)
 	}

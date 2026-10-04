@@ -196,3 +196,24 @@ are not independent source attestation. The pinned Claude hook invocation and
 hook error/timeout behavior still need adversarial runtime acceptance. A hook
 that fails to launch is not proven to block dispatch; these offline tests do
 not admit a paid run or claim actual enforcement.
+
+## Static Linux Python candidate
+
+The [candidate receipt](runtime-python-candidate.json) binds a local cached OCI
+index to its Linux arm64/v8 manifest, configuration and four layer digests/diff
+IDs. A static reconstruction records effective filesystem paths, file hashes,
+modes and links, including Python 3.11, libpython and Python library files. The
+interpreter is AArch64 ELF; it was not executed. Raw archive, inventory and
+one-off audit source remain at `/private/tmp/scout-v213-python-image-20261004`.
+The image inspect ID is the multi-platform index digest, not its configuration
+digest; both the selected platform manifest and configuration are separately
+pinned in the receipt.
+
+Only `docker image inspect` and `docker image save` of an already cached image
+were used. No image pull, container, model or provider run occurred. This proves
+asset availability and static identity, not interpreter compatibility, imported
+dependency closure, isolation, mount enforcement, tool grants or descendant
+accounting. Existing `runtimeAssetAdmission` stays blocked; no historical runtime
+pins, frozen cases or launch policy were changed. Choosing image-native Python
+versus a mounted `/runtime/python3` bundle still requires implementation and
+review before final runtime acceptance.

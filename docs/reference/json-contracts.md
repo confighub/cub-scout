@@ -50,6 +50,7 @@ When fields cross surface boundaries, mapping is explicit (e.g., metadata `creat
 | Trace/explain recent events | This doc (below) | Embedded in `trace` and `explain` JSON (v1.10+) |
 | Compare three-way agreement summary | This doc (below) | Embedded in `compare three-way` JSON |
 | GitOps controller coverage | This doc (below) | Embedded in `gitops status` JSON |
+| Sveltos controller reports | This doc (below) | Optional `sveltosControllerReports` with `sveltos.controllerObservations.v1` |
 | Observation evidence | This doc (below) | Embedded in `snapshot` JSON as `observation`, `summary list` JSON as top-level and per-entry `observation`, `map list` JSON entries as `observation`, and watch/bot events as `observation` |
 | Platform substrate evidence | This doc (below) | Embedded in `map list` JSON as `ownerEvidence`, in watch/bot events as `owner.evidence`, and in receipts as `predicate.evidence.platformSubstrate` |
 | GitOps delivery evidence | This doc (below) | Embedded in `gitops status --with-confighub` and `doctor --with-confighub` JSON |
@@ -1046,6 +1047,38 @@ missing. It reports only the resource (`pods`) and a bounded reason such as
 controller-reported `ready`, `healthStatus`, or `stage`. Missing/denied runtime
 reads are not evidence of zero Pods, and no arbitrary API error payload is
 included.
+
+## Sveltos Controller Report Contract
+
+`gitops status` optionally adds `sveltosControllerReports` with schema
+`sveltos.controllerObservations.v1`. It uses the existing scoped controller list
+reads; no target cluster or workload is fetched. Supported projections are
+`config.projectsveltos.io/v1beta1` ClusterSummary and
+`lib.projectsveltos.io/v1beta1` ClusterHealthCheck.
+
+Each observation carries its source API version/kind/namespace/name/UID,
+`category` (`delivery` or `continuous-health`), `coverage` (`reported`, `partial`
+or `unknown`), raw `reportedCluster` fields and explicit `omissions`.
+ClusterSummary `features[]` preserves feature ID, reported status, failure
+reason/message and optional `lastAppliedTime`. ClusterHealthCheck
+`clusterConditions[]` preserves reported cluster references and condition
+type/status/reason/message/`lastTransitionTime`. References are not joined to
+source objects or workloads. Valid timestamps describe reports, not check
+execution or current freshness; malformed reported timestamps remain visible
+with an omission. `workloadHealth` and `checkFreshness` are always `unknown`.
+
+Reports are deterministically bounded to 32 source observations, 16 features or
+cluster-condition rows per source, 16 total health conditions per source, and
+512 UTF-8 bytes per reported string. Counts describe input entries; corresponding
+`omitted*Count` fields expose excluded entries. Source identity fields are
+cleared with an omission rather than truncated. Missing identity/status, unknown
+API versions, malformed entries and truncated data degrade coverage explicitly.
+Denied list calls remain in `controllerCoverage[]`; no report is fabricated.
+Absent Sveltos objects leave the optional root field absent.
+
+ASCII, Markdown and TUI render these same reports; MCP exposes them under
+`structuredContent.data`. Existing deployer stages and health counts are
+unchanged. See [authored example](../../examples/sveltos-controller-facts/).
 
 ## Observation Evidence Contract
 

@@ -2808,6 +2808,16 @@ and resource kinds cub-scout checked, what was observed, and which list calls
 were omitted because the API server or current RBAC did not allow a safe read.
 Statuses are `found`, `not_found`, `partial`, and `unreadable`.
 
+When Sveltos reports are present, `sveltosControllerReports` preserves
+ClusterSummary delivery features separately from ClusterHealthCheck continuous
+health conditions, including source identity, reported cluster references,
+reported timestamps and omissions. `Provisioned` does not establish current
+workload health; condition transition time does not establish check freshness.
+Both remain unknown. The same report appears in ASCII, Markdown, TUI and MCP,
+without additional target-cluster reads. See the
+[authored replay example](../../examples/sveltos-controller-facts/) and
+[JSON contract](json-contracts.md#sveltos-controller-report-contract).
+
 ---
 
 ## debug

@@ -143,6 +143,9 @@ jobs:
       - name: Run offline recorded typed-list answer controls
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/recorded-typed-list -v
 
+      - name: Run offline Sveltos controller-fact answer controls
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/sveltos-controller-facts -v
+
       - name: Run offline PRE-01 real-kubectl gate guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/pre01-real-kubectl -v
 

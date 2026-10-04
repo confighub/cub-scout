@@ -905,6 +905,46 @@ are unchanged. RUL-03 remains blocked; Linux Python/dependency/mount admission,
 enforced reader wiring and descendant accounting remain open. Full24 remains
 eleven candidates and thirteen blocked. No live/container/model/provider run.
 
+## Sveltos controller reports — 2026-10-04
+
+The #641 read-side packet preserves bounded ClusterSummary delivery features
+and ClusterHealthCheck continuous-health conditions separately from the same
+existing scoped list reads. Raw reported references/timestamps remain facts;
+no name/time joins, release correlation, gate acceptance or check-execution
+freshness is inferred. Workload health and check freshness stay unknown.
+Missing identities/status, unsupported versions, invalid/truncated fields,
+malformed arrays, source/entry caps and forbidden lists have deterministic
+controls. Markdown/ASCII/TUI safely quote external metadata.
+
+An authored [example](examples/sveltos-controller-facts/) and separate opt-in
+answer case are outside the frozen 24. The local CLI/MCP/owned-PTY
+[rendering proof](examples/sveltos-controller-facts/render-proof.json) uses an
+authored summary with empty HOME/kubeconfig and offline mode; it establishes
+propagation, not genuine controller reconciliation or live acceptance. No live,
+container, model, provider or registry run occurred. Broader #641 server gates,
+underlying check execution timestamps and later publication remain open.
+Independent final source/rendering review found no remaining defects. Build,
+repaired full offline Go tests, vet, 37 recorded-API controls, 22 launch-policy
+controls, two authored-answer controls and three workflow guards pass. The
+initial full-suite failure was the new scaffold using a nonstandard heredoc
+delimiter; changing it to the shared validator delimiter repaired exact-byte
+fixture checks. Initial failure logs remain retained.
+
+## Static Linux Python asset candidate — 2026-10-04
+
+A local cached-image export now binds OCI index, selected Linux arm64/v8
+manifest/configuration, four compressed-layer hashes and diff IDs, effective
+filesystem inventory, and Python 3.11 ELF/library/link hashes. The
+[receipt](evals/full24-launch-policy/runtime-python-candidate.json) identifies
+static evidence only; retained archive/audit/inventory live under
+`/private/tmp/scout-v213-python-image-20261004`. No container or target asset was
+executed and no registry/model/provider run occurred. Existing runtime admission
+and historical pins stay unchanged. Python/dependency/mount wiring and actual
+execution/enforcement remain final gates; the candidate reduces asset discovery
+work, not acceptance scope. An independent read-only audit reconstructed the
+6,215-entry inventory and verified all selected blobs/layers and Python assets
+against the receipt without findings.
+
 ## Resume here
 
 Check #645 and the offline checkpoint above. Continue v2.13 on

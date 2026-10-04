@@ -135,6 +135,9 @@ type GitOpsSummary struct {
 	// ControllerCoverage records which controller families were checked.
 	ControllerCoverage []ControllerCoverageStatus `json:"controllerCoverage,omitempty"`
 
+	// SveltosControllerReports keeps delivery and continuous-health reports distinct.
+	SveltosControllerReports *SveltosControllerEvidence `json:"sveltosControllerReports,omitempty"`
+
 	// HealthyCount is the number of healthy deployers
 	HealthyCount int `json:"healthyCount"`
 
@@ -459,7 +462,8 @@ func buildGitOpsSummary(ctx context.Context, client dynamic.Interface, info *age
 		summary.Deployers = append(summary.Deployers, status)
 	}
 
-	controllerDeployers, controllerCoverage := collectFirstClassControllerDeployers(ctx, client, gitopsNamespace)
+	controllerDeployers, controllerCoverage, sveltosReports := collectFirstClassControllerStatus(ctx, client, gitopsNamespace)
+	summary.SveltosControllerReports = sveltosReports
 	coverage = mergeControllerCoverage(coverage, controllerCoverage)
 	summary.ControllerCoverage = coverage
 	if len(controllerDeployers) > 0 {
@@ -482,6 +486,12 @@ func buildGitOpsSummary(ctx context.Context, client dynamic.Interface, info *age
 }
 
 func collectFirstClassControllerDeployers(ctx context.Context, client dynamic.Interface, namespace string) ([]DeployerStatus, []ControllerCoverageStatus) {
+	deployers, coverage, _ := collectFirstClassControllerStatus(ctx, client, namespace)
+	return deployers, coverage
+}
+
+func collectFirstClassControllerStatus(ctx context.Context, client dynamic.Interface, namespace string) ([]DeployerStatus, []ControllerCoverageStatus, *SveltosControllerEvidence) {
+	var sveltosReports *SveltosControllerEvidence
 	out := []DeployerStatus{}
 	coverage := newGitOpsControllerCoverageTracker()
 	for _, spec := range firstClassControllerResources() {
@@ -498,17 +508,23 @@ func collectFirstClassControllerDeployers(ctx context.Context, client dynamic.In
 			}
 			continue
 		}
+		if spec.Owner == "Sveltos" && (spec.Kind == "ClusterSummary" || spec.Kind == "ClusterHealthCheck") {
+			sortSveltosJSON(list.Items)
+		}
 		for i := range list.Items {
 			item := list.Items[i]
 			coverage.addFound(spec.Owner, spec.Kind)
-			if !isControllerDeployerKind(spec.Kind) {
-				continue
-			}
 			if item.GetKind() == "" {
 				item.SetKind(spec.Kind)
 			}
 			if item.GetAPIVersion() == "" {
 				item.SetAPIVersion(spec.GVR.GroupVersion().String())
+			}
+			if spec.Owner == "Sveltos" {
+				appendSveltosObservation(&sveltosReports, &item)
+			}
+			if !isControllerDeployerKind(spec.Kind) {
+				continue
 			}
 			out = append(out, controllerDeployerStatus(&item, spec))
 		}
@@ -522,7 +538,10 @@ func collectFirstClassControllerDeployers(ctx context.Context, client dynamic.In
 		}
 		return out[i].Name < out[j].Name
 	})
-	return out, coverage.statuses()
+	if sveltosReports != nil {
+		sortSveltosJSON(sveltosReports.Observations)
+	}
+	return out, coverage.statuses(), sveltosReports
 }
 
 type gitOpsControllerCoverageTracker struct {
@@ -1020,6 +1039,7 @@ func outputGitOpsStatusHuman(summary GitOpsSummary) error {
 
 	fmt.Printf("\n")
 	outputControllerCoverageHuman(summary.ControllerCoverage)
+	fmt.Print(renderSveltosControllerEvidence(summary.SveltosControllerReports, false))
 
 	// Summary counts
 	if summary.Backend == "none" && len(summary.Deployers) == 0 {

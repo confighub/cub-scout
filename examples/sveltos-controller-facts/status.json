@@ -1,0 +1,72 @@
+{
+  "backend": "controllers",
+  "transport": "unknown",
+  "healthyCount": 0,
+  "failedCount": 0,
+  "sveltosControllerReports": {
+    "schema": "sveltos.controllerObservations.v1",
+    "observations": [
+      {
+        "source": {
+          "apiVersion": "config.projectsveltos.io/v1beta1",
+          "kind": "ClusterSummary",
+          "namespace": "management",
+          "name": "delivery-prod",
+          "uid": "summary-instance"
+        },
+        "category": "delivery",
+        "coverage": "reported",
+        "reportedCluster": {
+          "clusterNamespace": "projectsveltos",
+          "clusterName": "prod",
+          "clusterType": "Sveltos"
+        },
+        "features": [
+          {
+            "featureId": "Resources",
+            "reportedStatus": "Provisioned",
+            "lastAppliedTime": "2026-09-28T10:00:00Z"
+          }
+        ],
+        "featureCount": 1
+      },
+      {
+        "source": {
+          "apiVersion": "lib.projectsveltos.io/v1beta1",
+          "kind": "ClusterHealthCheck",
+          "namespace": "",
+          "name": "workload-watch",
+          "uid": "watch-instance"
+        },
+        "category": "continuous-health",
+        "coverage": "reported",
+        "clusterConditions": [
+          {
+            "reportedCluster": {
+              "apiVersion": "lib.projectsveltos.io/v1beta1",
+              "kind": "SveltosCluster",
+              "namespace": "projectsveltos",
+              "name": "prod",
+              "uid": "target-instance"
+            },
+            "conditions": [
+              {
+                "type": "HealthCheck:workloads",
+                "reportedStatus": "False",
+                "reason": "ReportedUnhealthy",
+                "message": "Deployment api: zero available replicas",
+                "lastTransitionTime": "2026-09-28T10:05:00Z"
+              }
+            ],
+            "conditionCount": 1,
+            "omittedConditionCount": 0
+          }
+        ],
+        "clusterConditionCount": 1
+      }
+    ],
+    "omittedObservationCount": 0,
+    "workloadHealth": "unknown",
+    "checkFreshness": "unknown"
+  }
+}

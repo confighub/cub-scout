@@ -1,0 +1,74 @@
+{
+  "schema": "sveltos.rendering-proof.v1",
+  "scope": "authored-summary rendering and propagation only; no cluster collection or live acceptance",
+  "sourceBase": "369af897201e8b7425b60b620fc15c05381303c0",
+  "sourceTreeModified": true,
+  "binarySha256": "f834fdd7117c53a3831d7b217b246440620a71da30eff3f153867c6e2ca4dff0",
+  "fixtureSha256": "1456f0386045dc6dee1bba9466ec33482f2dfbbac9369676501113e5dfe72b70",
+  "commands": [
+    {
+      "argv": [
+        "./cub-scout",
+        "gitops",
+        "status",
+        "--format",
+        "json"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "./cub-scout",
+        "gitops",
+        "status",
+        "--format",
+        "ascii"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "./cub-scout",
+        "gitops",
+        "status",
+        "--format",
+        "md"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "./cub-scout",
+        "mcp",
+        "serve"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "./cub-scout",
+        "gitops",
+        "status",
+        "--tui"
+      ],
+      "exit": 0
+    }
+  ],
+  "outputs": {
+    "cli-json.stdout": "e00ee5db96c9e893ae632b1a94b6ebdad9c54bc7716024b4d53ae27fe8f448e1",
+    "tui.raw": "313c154aef85270efcbb7df431b05cc53c6861f655c4cb430aec6eb78c8f3ed2",
+    "cli-ascii.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cli-md.stdout": "a0a61321d22a0d98a064658c8c6fc6933842b0029166186eafc51b156adc87aa",
+    "mcp.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "mcp.stdout": "1be17c17ae0b0e68c22854d01101c16594face06f0b6a91ff79d59d3f5e4fbd6",
+    "cli-md.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cli-ascii.stdout": "d7094633312b38ee2f551cc9e247c417abdcf7301a1acf64eb004c0cc27afc41",
+    "cli-json.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "kubeconfig": "3b3c88bbf91d6bdc472fd864c6f1a0f79bb120fa41b749c4e440c0a90a3f89f7",
+    "mcp.stdin": "9e8b485c51903e28d856a01dcbf3a1f7089e8c43e0d80fd408488c0d7d7a488b"
+  },
+  "deliveryAndContinuousHealthSeparate": true,
+  "workloadHealth": "unknown",
+  "checkFreshness": "unknown",
+  "liveCalls": 0
+}
