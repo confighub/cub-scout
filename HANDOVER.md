@@ -815,6 +815,10 @@ live-tool requests refused. Build, vet, focused controls and the repaired full
 its dedicated scaffold registration; the repair pins original bytes and exact
 output inventory, with independent review finding no actionable defect. Failed
 and repaired logs are retained under `/tmp/scout-v213-typed-list-*20261004.log`.
+Manual unit-only CI [37216359170](https://github.com/confighub/cub-scout/actions/runs/37216359170)
+at implementation `aa841535691d6e01303c9f4b90fa1e44aa37f781` passed Unit and Proof
+Artifact. Downloaded proof matches that exact SHA: coverage 50.2% / minimum 25.0%,
+with Integration/GitOps/Demo/Connected/Full Verification skipped.
 This product prerequisite adds no multi-context
 joining or current-state claim. RUL-03 remains blocked and the Linux binary pin
 has not been rebuilt/admitted for this new code; full24 stays eleven candidates
