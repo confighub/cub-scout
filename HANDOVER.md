@@ -724,6 +724,19 @@ reviewed releases may proceed within the adopted release gates. It does not
 authorize private ConfigHub publication or public/secret gists. Do not add
 permission gates to already authorized routine work.
 
+## Exact context frame checkpoint — 2026-10-04
+
+The offline RUL-03 reader in `evals/recorded-api/context_frames.py` requires an
+exact context, GET and raw path. It preserves the selected captured body,
+403/200 status, endpoint/CA identity and source timestamps, with pinned metadata
+and bounded regular-file checks. It does not default to the recorded readable
+current context or fall back after a denied read. Five deterministic controls
+cover exact responses, unavailable requests, missing/changed bytes, symlinks,
+FIFO and oversized input; the combined recorded-api suite has 20 controls.
+This is source-selection preparation, not an MCP binding or model admission.
+The full-24 count remains eleven candidates and thirteen blocked cases. No
+frozen evidence, grants, budgets or product CLI behavior changed.
+
 ## Resume here
 
 Check #645 and the offline checkpoint above. Continue v2.13 on

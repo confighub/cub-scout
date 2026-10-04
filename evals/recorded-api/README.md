@@ -1,4 +1,29 @@
-# PRE-01 recorded Kubernetes API replay
+# Recorded Kubernetes API evidence helpers
+
+## RUL-03 exact context response reader
+
+`context_frames.py` exposes `select_frame(context, method, path)` for the
+existing [RUL-03 case](../rul03-context/README.md). All three selectors are
+mandatory and exact. It returns the byte-preserved response and its captured
+HTTP status, endpoint/CA identity, source row and response times. A request for
+`rul03-denied` returns the retained 403 even though the observer's recorded
+current context is `rul03-readable`. There is no current-context default or
+fallback. Unknown contexts, methods, paths and query variants refuse.
+
+The helper pins the complete scope/context map and selected response body,
+checks bounded regular files, and rejects symlinks, missing files and changed
+bytes. It never reads the unselected response body. The two observations remain
+historical and non-atomic; no present inventory, empty-list or ownership claim
+is generated from a denied response. This pure reader opens no listener and
+launches no executable. Its five deterministic controls run with the existing
+offline test command below and in unit-only CI.
+
+This prepares source selection for a future adapter. RUL-03 remains blocked in
+the full-24 launch policy: the reader is not an MCP tool, runtime enforcement,
+model execution or benchmark admission. Frozen case bytes and tool grants are
+unchanged.
+
+## PRE-01 recorded API replay
 
 This helper serves a small, fixed set of byte-pinned PRE-01 API responses on an
 owned IPv4 loopback listener. It reads only
