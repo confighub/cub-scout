@@ -55,6 +55,20 @@ def fixture(*, config_diff=None, paths=None, repeated_platform=False):
 
 
 class PythonImageTests(unittest.TestCase):
+    def test_public_proof_binds_source_and_redacts_private_command_paths(self):
+        proof = json.loads(image.RECEIPT.with_name('runtime-python-verifier-proof.json').read_bytes())
+        self.assertEqual(proof['verifierSha256'], image.sha(Path(image.__file__).read_bytes()))
+        self.assertEqual(proof['receiptSha256'], image.RECEIPT_SHA256)
+        self.assertRegex(proof['privateProofSha256'], r'^[0-9a-f]{64}$')
+        self.assertIn('exact argv retained', proof['publicCommandPaths'])
+        self.assertEqual([r['exit'] for r in proof['runs']], [0, 2])
+        for run in proof['runs']:
+            self.assertEqual(run['argv'][0], '<host-python>')
+            self.assertEqual(run['argv'][1:3], ['-I', '-S'])
+            self.assertEqual(run['argv'][3], '<source>/evals/full24-launch-policy/python_image.py')
+        self.assertFalse(proof['containerStarted'])
+        self.assertFalse(proof['modelOrProviderRun'])
+
     def test_exact_static_candidate_never_admits_runtime(self):
         raw, expected = fixture()
         result = image.audit_bytes(raw, expected)

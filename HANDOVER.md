@@ -978,14 +978,18 @@ image audit into a repeatable, receipt-pinned offline verifier. Bounded no-follo
 regular-file reads, exact OCI/platform/config/layer hashes and diff IDs,
 whiteout-applied inventory, Python ELF/library/link comparison and metadata/
 member/expanded-size controls refuse changed or unsupported assets. No archive
-extraction, Docker, network or target execution occurs. Eight synthetic negative
+extraction, Docker, network or target execution occurs. Nine synthetic negative
 and positive controls pass; independent source review accepted without findings.
 The [host proof](evals/full24-launch-policy/runtime-python-verifier-proof.json)
 retains actual historical-export success and truncated-copy refusal with exact
 source/stream/interpreter pins. Its explicit runtimeAdmission/targetExecuted
 flags are false. The initial directory-refusal test exposed fdopen preceding
 fstat; fstat/regular-file checks now happen first, with the descriptor closed on
-refusal. Historical candidate receipt and launch-policy admission stay unchanged.
+refusal. Initial exact-head CI `37224032996` caught personal checkout paths in
+the public proof argv. Public paths now use explicit labels, with the exact
+retained private proof digest and a source/path disclosure regression control;
+the repository name guard passes locally. Historical candidate receipt and
+launch-policy admission stay unchanged.
 
 ## Expanded maintainer execution authorization — 2026-10-04
 

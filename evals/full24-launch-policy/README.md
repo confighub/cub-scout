@@ -234,11 +234,12 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/full24-launch-po
 ```
 
 The archive is retained local evidence, not shipped into either model arm.
-Eight synthetic controls exercise identity/corruption, unsafe and duplicate
+Nine synthetic controls exercise identity/corruption, unsafe and duplicate
 paths, JSON nesting, platform/ELF/diff mismatch, compressed/total/member limits,
 whiteouts and regular-file/receipt refusal. The independently reviewable
 [host proof](runtime-python-verifier-proof.json) includes actual success on the
 historical archive and refusal of a truncated copy, under isolated host Python
-with empty HOME and no external dependencies. It records modified source state
-and source hashes. `runtimeAdmission` and `targetExecuted` are explicitly false;
+with no external dependencies. It records modified source state
+and source hashes. Public command paths use labels; exact argv is retained in
+the private proof, whose digest is included. `runtimeAdmission` and `targetExecuted` are explicitly false;
 launch policy, frozen inputs and historical receipts remain unchanged.

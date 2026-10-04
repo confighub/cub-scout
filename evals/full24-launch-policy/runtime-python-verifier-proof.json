@@ -10,10 +10,10 @@
     {
       "label": "positive",
       "argv": [
-        "/opt/homebrew/Cellar/python@3.14/3.14.4/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+        "<host-python>",
         "-I",
         "-S",
-        "/Users/alexis/.codex/worktrees/doctor-scan-context/cub-scout/evals/full24-launch-policy/python_image.py",
+        "<source>/evals/full24-launch-policy/python_image.py",
         "/private/tmp/scout-v213-python-image-20261004/image.tar"
       ],
       "exit": 0,
@@ -23,10 +23,10 @@
     {
       "label": "negative",
       "argv": [
-        "/opt/homebrew/Cellar/python@3.14/3.14.4/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+        "<host-python>",
         "-I",
         "-S",
-        "/Users/alexis/.codex/worktrees/doctor-scan-context/cub-scout/evals/full24-launch-policy/python_image.py",
+        "<source>/evals/full24-launch-policy/python_image.py",
         "/private/tmp/scout-v213-python-verifier-proof-20261004/corrupt.tar"
       ],
       "exit": 2,
@@ -37,5 +37,7 @@
   "scope": "host static archive verification only; target Python not executed; runtime/tool/model admission remains blocked",
   "containerStarted": false,
   "registryContacted": false,
-  "modelOrProviderRun": false
+  "modelOrProviderRun": false,
+  "privateProofSha256": "f370890b6c9e72d027554529c24e8cce28b611d8ff0f23ac3d22674b908faedc",
+  "publicCommandPaths": "host interpreter and source checkout paths replaced with labels; exact argv retained in private proof"
 }
