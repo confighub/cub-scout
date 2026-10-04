@@ -2839,3 +2839,17 @@ API version/Kind/name and check a nonempty supplied UID. If that UID has no
 observed match, evidence adds `xr:owner_uid_not_observed`; with no supplied UID
 and no eligible object, it adds `xr:unresolved`. No scope/GVK is invented for a label-only unresolved
 parent. See the [authored control](../../examples/crossplane-system/#conservative-lineage-control-214-candidate).
+
+
+## Recorded report JSON budget (2.14 candidate)
+
+CLI `--max-report-json-bytes` and recorded MCP `max_report_json_bytes` (integer
+1..4194304) limit canonical UTF-8 JSON **report data** bytes. The existing full,
+summary and page schemas remain unchanged; no budget metadata is inserted into
+those reports. An oversized report returns an explicit error with actual and
+requested byte counts and guidance, without a clipped or empty inventory.
+Invalid limits are refused; an empty selection still includes its envelope in
+the check. TUI page failure leaves its loaded report and cursor unchanged.
+This is not a cap on display, newline, duplicated MCP content, protocol envelopes,
+transport, tokens or input work. Actual result bytes must be measured separately.
+See the [example](../../examples/recorded-inventory/#report-json-budget-214-candidate).

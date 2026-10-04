@@ -317,3 +317,10 @@ and nonempty `cursor` bound to the same recording, scope and size. Incompatible
 with `summary`. Paged responses use `map-list-recorded-page.v1` in text and
 `structuredContent.data`, with full-scope totals and per-page returned count.
 This limits records, not bytes/tokens; default recorded responses are unchanged.
+
+
+Recorded `map` report-data budget (2.14 candidate): optional integer
+`max_report_json_bytes` (1..4194304), for full/summary/page canonical JSON data.
+Oversize is an explicit error without clipping fields or resources. This excludes
+MCP text/structured duplication, protocol/transport bytes, tokens and input work;
+a successful MCP result may exceed this number. Default responses are unchanged.

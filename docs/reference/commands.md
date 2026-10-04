@@ -3499,3 +3499,16 @@ adds page offset/count/continuation. Page size limits rows, not bytes or tokens.
 MCP uses `page_size` and `cursor` and also returns `structuredContent.data`;
 `--tui` provides `n`/`p` navigation using only the loaded snapshot. Default output
 is unchanged. See the [authored example](../../examples/recorded-inventory/#recorded-pages-214-candidate).
+
+
+### Recorded report JSON budget (2.14 candidate)
+
+Recorded `map list --max-report-json-bytes 1..4194304` checks canonical report
+JSON data before ASCII/JSON/Markdown rendering or TUI presentation. MCP uses
+`max_report_json_bytes`. Full, summary and paged modes use the same check;
+oversized reports are refused without clipping evidence. A refused TUI page
+keeps the displayed page and cursor. Reduce page size or request summary.
+This does not cap display/protocol/transport bytes, CLI JSON newline, tokens,
+input work or agent cost; MCP can duplicate report data in text and structured
+content. Defaults are unchanged. See the
+[example](../../examples/recorded-inventory/#report-json-budget-214-candidate).

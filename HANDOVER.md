@@ -1219,9 +1219,37 @@ stopped and its log retained rather than claimed as final evidence. Exact-head
 unit-only CI [37231513695](https://github.com/confighub/cub-scout/actions/runs/37231513695)
 stopped at two now-unused private lookup helpers. Those helpers are removed;
 repaired-source focused Crossplane/composition/kro race, build and vet pass.
-The final full offline Go suite is running and retry CI remains pending. The independently reviewed [2.14 draft](docs/releases/v2.14.0.md)
+A subsequent local full rerun overlapped an incomplete next-packet edit and its
+smoke build failed; that log is retained. The report-budget packet's final combined-source
+full offline Go rerun held production source fixed and passes, also verifying the
+lookup-helper removal. Repaired-source unit-only CI [37231753615](https://github.com/confighub/cub-scout/actions/runs/37231753615)
+passes at `870be241c5c58a2a1c52e77b681a57b78ee22ee1`: 51.0% coverage vs 25.0%,
+with all five nonunit tiers skipped; downloaded proof pins the source/tier result. The independently reviewed [2.14 draft](docs/releases/v2.14.0.md)
 and [readiness checklist](docs/releases/v2.14-readiness.md) preserve adopted P4
 scope, pending controller/six-surface/value gates and 2.13-first ordering.
+
+## 2.14 recorded report JSON budget candidate (2026-10-04)
+
+Success was defined before code in [#604](https://github.com/confighub/cub-scout/issues/604#issuecomment-5984027639).
+Opt-in recorded `--max-report-json-bytes` / MCP `max_report_json_bytes` limits
+canonical UTF-8 report-data JSON bytes (1..4194304) for full, summary or paged
+models. Exact boundaries pass; oversize is an explicit refusal without clipping
+resources, fields or omissions. Invalid/live-mode options fail before reads.
+A refused TUI next page retains the prior page/cursor and displays the error;
+loaded navigation makes no I/O. Default response schemas and output are unchanged.
+This does not cap display, newline, duplicated MCP data/protocol/transport,
+input work, tokens or agent cost. It does not close #604/#596.
+
+Four authored controls cover escaped-byte/full/summary/page/300-row boundaries,
+three CLI formats and pre-read refusal, strict MCP data/result distinction, and
+TUI refusal/recovery. Independent source/example/docs review accepted the packet.
+The [actual host CLI/MCP proof](examples/recorded-inventory/offline-report-budget-process-proof.json)
+passes fourteen checks with zero trap requests and exact retained
+binary/source/fixture/stream hashes: 1277 report JSON bytes, 1278 CLI JSON bytes
+including newline and 2787 MCP result bytes. No genuine/TUI-process/model/runtime
+or savings claim. Focused recorded race (17.610s), build and vet pass; the final
+combined-source full offline Go suite held production source fixed and passes.
+Exact-head unit-only CI has not run for this packet.
 
 ## Resume here
 

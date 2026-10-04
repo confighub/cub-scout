@@ -2008,3 +2008,16 @@ and the recorded TUI share the page model. In `--tui`, `n`/`p` navigate the load
 snapshot, including earlier pages when starting with a cursor, without reads.
 Default unpaged contracts remain unchanged. See the
 [example](../../examples/recorded-inventory/#recorded-pages-214-candidate).
+
+
+### Recorded Report JSON Budget (2.14 candidate)
+
+Opt-in `--max-report-json-bytes 1..4194304` is recorded-only and measures the
+canonical UTF-8 JSON report data, before surface rendering. It covers full,
+summary and paged report envelopes, including an empty selection. Invalid limits
+fail before reads. Exact size passes; oversize fails before any report output.
+No resource/field/omission truncation is permitted. A refused TUI page preserves
+the current loaded page/cursor with an explicit error and no I/O. Budget may
+change between continuation requests without changing cursor selection.
+The limit excludes rendered display, CLI JSON newline, MCP duplication/envelope,
+transport bytes, tokens and input work. No default wire contract changes.

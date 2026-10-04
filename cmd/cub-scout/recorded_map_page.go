@@ -141,19 +141,27 @@ func recordedMapPageSizeArgument(value interface{}) (int, error) {
 }
 
 type recordedMapPager struct {
-	Report RecordedMapReport
-	Page   RecordedMapReport
-	Size   int
-	Cursor string
+	Report     RecordedMapReport
+	Page       RecordedMapReport
+	Size       int
+	Cursor     string
+	JSONBudget int
 }
 
 func newRecordedMapPagedViewer(report RecordedMapReport, size int, cursor string) (recordedMapViewer, error) {
+	return newRecordedMapBudgetedPagedViewer(report, size, cursor, 0)
+}
+
+func newRecordedMapBudgetedPagedViewer(report RecordedMapReport, size int, cursor string, budget int) (recordedMapViewer, error) {
 	page, err := buildRecordedMapPage(report, size, cursor)
 	if err != nil {
 		return recordedMapViewer{}, err
 	}
+	if err := checkRecordedMapJSONBudget(page, budget); err != nil {
+		return recordedMapViewer{}, err
+	}
 	viewer := newRecordedMapViewer(page)
-	viewer.pager = &recordedMapPager{Report: report, Page: page, Size: size, Cursor: cursor}
+	viewer.pager = &recordedMapPager{Report: report, Page: page, Size: size, Cursor: cursor, JSONBudget: budget}
 	return viewer, nil
 }
 
@@ -179,6 +187,11 @@ func (m recordedMapViewer) updateRecordedPage(key string) recordedMapViewer {
 	if err != nil {
 		return m
 	} // Pure loaded model; constructed cursors always match.
+	if err := checkRecordedMapJSONBudget(page, pager.JSONBudget); err != nil {
+		m.pageError = err.Error()
+		return m
+	}
+	m.pageError = ""
 	pager.Cursor, pager.Page = cursor, page
 	m.pager = &pager
 	m.content = renderRecordedMapReport(page, "ascii")

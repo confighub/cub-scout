@@ -72,3 +72,31 @@ Five authored controls in `recorded_map_page_test.go` cover page partitioning,
 full-scope facts, cursor refusals, loaded TUI navigation, CLI/MCP parity and
 pre-read argument refusal. The existing scale fixture remains a separate
 regression control.
+
+
+## Report JSON budget (2.14 candidate)
+
+```bash
+./cub-scout map list --recording examples/recorded-inventory/pagination.yaml --api-version apps/v1 --kind Deployment --namespace-prefix team- --page-size 2 --max-report-json-bytes 2000 --format json
+./cub-scout map list --recording examples/recorded-inventory/pagination.yaml --api-version apps/v1 --kind Deployment --namespace-prefix team- --page-size 2 --max-report-json-bytes 2000 --tui
+```
+
+MCP `map` accepts `max_report_json_bytes` (integer 1..4194304). The option checks
+UTF-8 bytes of the canonical JSON report data for a full, summary or paged view.
+An exact boundary passes; a report one byte over the limit is refused. No rows,
+fields or omissions are clipped. Reduce page size or request summary after a
+refusal. The same check applies before CLI rendering and loaded TUI presentation;
+a refused TUI page keeps the previous page/cursor and shows an error without I/O.
+Changing this budget between continuation calls does not change the selected rows.
+
+This is a **report-data JSON budget**. It does not bound ASCII/Markdown display,
+TUI decoration, the CLI JSON newline, duplicated MCP text plus structured data,
+JSON-RPC envelope, transport, input work, tokens or agent cost. A successful MCP
+result may be larger than the requested report budget. Default reports/schemas
+remain unchanged and empty selection still needs its envelope to fit. Invalid
+limits and live mode are refused before binding or file reads.
+
+Four authored controls in `recorded_map_budget_test.go` cover exact byte
+boundaries/escaping and the 300-resource fixture, unmodified CLI formats and
+pre-read refusals, strict MCP arguments and data-versus-result size, and TUI
+refusal/recovery. These do not close #604/#596 or establish measured savings.

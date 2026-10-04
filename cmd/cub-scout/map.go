@@ -772,8 +772,8 @@ func init() {
 }
 
 func runMapList(cmd *cobra.Command, args []string) error {
-	if (cmd.Flags().Changed("page-size") || cmd.Flags().Changed("cursor")) && !recordedMapRequested(cmd) {
-		return fmt.Errorf("--page-size and --cursor require immutable --recording inventory")
+	if (cmd.Flags().Changed("page-size") || cmd.Flags().Changed("cursor") || cmd.Flags().Changed("max-report-json-bytes")) && !recordedMapRequested(cmd) {
+		return fmt.Errorf("recorded pagination and report budgets require immutable --recording inventory")
 	}
 
 	includeIdentity := mapClusterIdentityRequested(cmd)

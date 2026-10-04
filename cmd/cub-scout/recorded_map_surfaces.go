@@ -22,6 +22,7 @@ func addRecordedMapFlags(cmd *cobra.Command) {
 	cmd.Flags().String("api-version", "", "Required exact apiVersion for --recording")
 	cmd.Flags().String("namespace-prefix", "", "Literal recorded namespace prefix (requires --recording)")
 	cmd.Flags().Bool("tui", false, "View recorded inventory interactively (requires --recording)")
+	cmd.Flags().Int("max-report-json-bytes", 0, "Maximum canonical recorded report JSON bytes (1..4194304; excludes display/transport overhead)")
 	cmd.Flags().Int("page-size", 0, "Maximum records per immutable recorded page (1..500; not a byte/token cap)")
 	cmd.Flags().String("cursor", "", "Continue a recorded page using its source/scope-bound cursor (requires --page-size)")
 }
@@ -75,6 +76,12 @@ func runRecordedMapCLI(cmd *cobra.Command, args []string) error {
 	if tui && (cmd.Flags().Changed("format") || legacyJSON) {
 		return fmt.Errorf("--tui cannot be combined with output format options")
 	}
+	jsonBudget, _ := cmd.Flags().GetInt("max-report-json-bytes")
+	if cmd.Flags().Changed("max-report-json-bytes") {
+		if err := validateRecordedMapJSONBudget(jsonBudget); err != nil {
+			return err
+		}
+	}
 	pageSize, _ := cmd.Flags().GetInt("page-size")
 	cursor, _ := cmd.Flags().GetString("cursor")
 	paged := cmd.Flags().Changed("page-size") || cmd.Flags().Changed("cursor")
@@ -95,6 +102,9 @@ func runRecordedMapCLI(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
+		if err := checkRecordedMapJSONBudget(summary, jsonBudget); err != nil {
+			return err
+		}
 		if tui {
 			_, err = tea.NewProgram(newRecordedMapSummaryViewer(summary)).Run()
 			return err
@@ -107,7 +117,7 @@ func runRecordedMapCLI(cmd *cobra.Command, args []string) error {
 	}
 	if paged {
 		if tui {
-			viewer, err := newRecordedMapPagedViewer(report, pageSize, cursor)
+			viewer, err := newRecordedMapBudgetedPagedViewer(report, pageSize, cursor, jsonBudget)
 			if err != nil {
 				return err
 			}
@@ -118,6 +128,9 @@ func runRecordedMapCLI(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
+	}
+	if err := checkRecordedMapJSONBudget(report, jsonBudget); err != nil {
+		return err
 	}
 	if tui {
 		_, err = tea.NewProgram(newRecordedMapViewer(report)).Run()
@@ -235,20 +248,22 @@ func recordedMapTool(snapshot recordedObjectSnapshot) mcpTool {
 	return mcpTool{
 		Descriptor: mcpToolDescriptor{Name: "map", Description: "Count and list built-in ownership markers from the immutable recording. Optional owner selects one canonical built-in owner; summary=true returns counts without per-object rows. No live cluster is read; capture completeness and time are unknown. Native means no built-in marker, not an orphan.", Annotations: &mcpToolAnnotations{ReadOnlyHint: true}, InputSchema: map[string]interface{}{
 			"type": "object", "properties": map[string]interface{}{
-				"api_version":      map[string]interface{}{"type": "string", "description": "Required exact case-sensitive apiVersion."},
-				"kind":             map[string]interface{}{"type": "string", "description": "Required exact case-sensitive kind."},
-				"namespace":        map[string]interface{}{"type": "string", "description": "Optional exact namespace, including empty; cannot combine with namespace_prefix."},
-				"namespace_prefix": map[string]interface{}{"type": "string", "minLength": 1, "description": "Optional non-empty literal case-sensitive namespace prefix."},
-				"owner":            map[string]interface{}{"type": "string", "enum": recordedMapOwnerNames, "description": "Optional exact canonical built-in owner, including Kubernetes and Native."},
-				"summary":          map[string]interface{}{"type": "boolean", "description": "Return selected/excluded and owner counts without per-object rows."},
-				"page_size":        map[string]interface{}{"type": "integer", "minimum": 1, "maximum": 500, "description": "Opt into record-count pages; not a byte/token cap. Incompatible with summary."},
-				"cursor":           map[string]interface{}{"type": "string", "minLength": 1, "maxLength": 2048, "description": "Canonical continuation bound to this immutable input, scope and page size; requires page_size."},
+				"api_version":           map[string]interface{}{"type": "string", "description": "Required exact case-sensitive apiVersion."},
+				"kind":                  map[string]interface{}{"type": "string", "description": "Required exact case-sensitive kind."},
+				"namespace":             map[string]interface{}{"type": "string", "description": "Optional exact namespace, including empty; cannot combine with namespace_prefix."},
+				"namespace_prefix":      map[string]interface{}{"type": "string", "minLength": 1, "description": "Optional non-empty literal case-sensitive namespace prefix."},
+				"owner":                 map[string]interface{}{"type": "string", "enum": recordedMapOwnerNames, "description": "Optional exact canonical built-in owner, including Kubernetes and Native."},
+				"summary":               map[string]interface{}{"type": "boolean", "description": "Return selected/excluded and owner counts without per-object rows."},
+				"max_report_json_bytes": map[string]interface{}{"type": "integer", "minimum": 1, "maximum": recordedMapMaxReportJSONBytes, "description": "Maximum canonical report-data JSON bytes; excludes display, duplicated MCP content and protocol overhead. Oversized reports are refused, never clipped."},
+				"page_size":             map[string]interface{}{"type": "integer", "minimum": 1, "maximum": 500, "description": "Opt into record-count pages; not a byte/token cap. Incompatible with summary."},
+				"cursor":                map[string]interface{}{"type": "string", "minLength": 1, "maxLength": 2048, "description": "Canonical continuation bound to this immutable input, scope and page size; requires page_size."},
 			}, "required": []string{"api_version", "kind"}, "additionalProperties": false,
 		}},
 		BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
 			scope := RecordedMapScope{}
 			summary := false
 			pageSize := 0
+			jsonBudget := 0
 			cursor := ""
 			for key, value := range arguments {
 				switch key {
@@ -288,6 +303,12 @@ func recordedMapTool(snapshot recordedObjectSnapshot) mcpTool {
 						return nil, fmt.Errorf("namespace_prefix must be non-empty")
 					}
 					scope.NamespacePrefix = s
+				case "max_report_json_bytes":
+					parsed, err := recordedMapJSONBudgetArgument(value)
+					if err != nil {
+						return nil, err
+					}
+					jsonBudget = parsed
 				case "page_size":
 					parsed, err := recordedMapPageSizeArgument(value)
 					if err != nil {
@@ -319,11 +340,12 @@ func recordedMapTool(snapshot recordedObjectSnapshot) mcpTool {
 				}
 			}
 			request := struct {
-				Scope    RecordedMapScope `json:"scope"`
-				Summary  bool             `json:"summary,omitempty"`
-				PageSize int              `json:"pageSize,omitempty"`
-				Cursor   string           `json:"cursor,omitempty"`
-			}{Scope: scope, Summary: summary, PageSize: pageSize, Cursor: cursor}
+				Scope      RecordedMapScope `json:"scope"`
+				Summary    bool             `json:"summary,omitempty"`
+				PageSize   int              `json:"pageSize,omitempty"`
+				JSONBudget int              `json:"maxReportJSONBytes,omitempty"`
+				Cursor     string           `json:"cursor,omitempty"`
+			}{Scope: scope, Summary: summary, PageSize: pageSize, Cursor: cursor, JSONBudget: jsonBudget}
 			raw, err := json.Marshal(request)
 			return []string{string(raw)}, err
 		},
@@ -335,16 +357,22 @@ func recordedMapTool(snapshot recordedObjectSnapshot) mcpTool {
 				return "", fmt.Errorf("invalid recorded map scope")
 			}
 			var request struct {
-				Scope    RecordedMapScope `json:"scope"`
-				Summary  bool             `json:"summary"`
-				PageSize int              `json:"pageSize"`
-				Cursor   string           `json:"cursor"`
+				Scope      RecordedMapScope `json:"scope"`
+				Summary    bool             `json:"summary"`
+				PageSize   int              `json:"pageSize"`
+				JSONBudget int              `json:"maxReportJSONBytes"`
+				Cursor     string           `json:"cursor"`
 			}
 			if err := json.Unmarshal([]byte(args[0]), &request); err != nil {
 				return "", fmt.Errorf("invalid recorded map scope")
 			}
 			if request.PageSize != 0 || request.Cursor != "" {
 				if err := validateRecordedMapPageOptions(request.PageSize, request.Cursor, request.Summary); err != nil {
+					return "", err
+				}
+			}
+			if request.JSONBudget != 0 {
+				if err := validateRecordedMapJSONBudget(request.JSONBudget); err != nil {
 					return "", err
 				}
 			}
@@ -364,15 +392,22 @@ func recordedMapTool(snapshot recordedObjectSnapshot) mcpTool {
 				return "", err
 			}
 			raw, err := json.Marshal(response)
-			return string(raw), err
+			if err != nil {
+				return "", err
+			}
+			if err := checkRecordedMapJSONBudgetBytes(raw, request.JSONBudget); err != nil {
+				return "", err
+			}
+			return string(raw), nil
 		},
 	}
 }
 
 type recordedMapViewer struct {
-	content  string
-	viewport viewport.Model
-	pager    *recordedMapPager
+	content   string
+	viewport  viewport.Model
+	pager     *recordedMapPager
+	pageError string
 }
 
 func newRecordedMapViewer(report RecordedMapReport) recordedMapViewer {
@@ -411,6 +446,9 @@ func (m recordedMapViewer) View() string {
 	hint := "Recorded inventory · q to quit · arrows/page keys to scroll\n"
 	if m.pager != nil {
 		hint = "Recorded inventory · n/p for next/previous page · q to quit · arrows to scroll\n"
+	}
+	if m.pageError != "" {
+		hint += "Page refused: " + m.pageError + "\n"
 	}
 	return hint + m.viewport.View()
 }
