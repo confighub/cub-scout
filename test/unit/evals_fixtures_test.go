@@ -323,6 +323,10 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			checkSourceTruthContextScaffold(t, caseDir)
 			continue
 		}
+		if filepath.Base(caseDir) == "explain-explicit-context" {
+			checkExplainExplicitContextScaffold(t, caseDir)
+			continue
+		}
 		if filepath.Base(caseDir) == "trace-case-sensitive-slugs" {
 			checkTraceCaseSensitiveSlugsScaffold(t, caseDir)
 			continue
@@ -482,6 +486,97 @@ func checkGitOpsStatusContextScaffold(t *testing.T, root string) {
 		got, err := os.ReadFile(filepath.Join(workspace, "recorded", entry.Name()))
 		if err != nil || !bytes.Equal(got, want) {
 			t.Fatalf("GitOps context scaffold changed %s: %v", entry.Name(), err)
+		}
+	}
+}
+
+// The opt-in Explain case stages one authored input, without suite exports,
+// sibling evidence, executable artifacts or oracle files.
+func checkExplainExplicitContextScaffold(t *testing.T, root string) {
+	t.Helper()
+	caseData, err := os.ReadFile(filepath.Join(root, "case.yaml"))
+	if err != nil || !strings.Contains(string(caseData), "FIXTURE-OWNED-SCAFFOLD") || !strings.Contains(string(caseData), "scaffold_script: scaffold.sh") {
+		t.Fatalf("Explain context case must declare its fixture-owned scaffold: %v", err)
+	}
+	source := filepath.Join(root, "fixtures", "inputs.json")
+	want, err := os.ReadFile(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sum := sha256.Sum256(want)
+	if hex.EncodeToString(sum[:]) != "4707c530a58d68667da12ae2102af07b9b64dfd679380a57b8e50093d29ce889" {
+		t.Fatal("Explain authored fixture bytes changed; review the input contract before updating its pin")
+	}
+	var fixture struct {
+		Provenance struct {
+			Kind        string `json:"kind"`
+			LiveCapture bool   `json:"live_capture"`
+		} `json:"provenance"`
+		Contexts map[string]struct {
+			Workload json.RawMessage `json:"workload"`
+		} `json:"contexts"`
+	}
+	if err := json.Unmarshal(want, &fixture); err != nil {
+		t.Fatal(err)
+	}
+	if fixture.Provenance.Kind != "authored" || fixture.Provenance.LiveCapture || len(fixture.Contexts) != 2 ||
+		len(fixture.Contexts["alpha-context"].Workload) == 0 || !bytes.Equal(fixture.Contexts["alpha-context"].Workload, fixture.Contexts["beta-context"].Workload) {
+		t.Fatal("Explain case must retain authored identical workloads in its two contexts")
+	}
+	benchmark := filepath.Join(filepath.Dir(root), "benchmark-v1.json")
+	frozen, err := os.ReadFile(benchmark)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(frozen, []byte("explain-explicit-context")) {
+		t.Fatal("opt-in Explain case must remain outside the frozen benchmark")
+	}
+	scaffold, err := filepath.Abs(filepath.Join(root, "scaffold.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	workspace := t.TempDir()
+	cmd := exec.Command("bash", scaffold)
+	cmd.Dir = workspace
+	cmd.Env = offlineKubeconfigEnvironment()
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("Explain context scaffold: %v: %s", err, output)
+	}
+	var paths []string
+	err = filepath.Walk(workspace, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if path == workspace {
+			return nil
+		}
+		relative, err := filepath.Rel(workspace, path)
+		if err != nil {
+			return err
+		}
+		paths = append(paths, filepath.ToSlash(relative))
+		if relative == "cluster" && !info.IsDir() {
+			t.Fatal("cluster must be a directory")
+		}
+		if relative != "cluster" && !info.Mode().IsRegular() {
+			t.Fatalf("unexpected nonregular scaffold artifact: %s", relative)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(paths) != 2 || paths[0] != "cluster" || paths[1] != "cluster/inputs.json" {
+		t.Fatalf("Explain scaffold must stage only cluster/inputs.json, got %v", paths)
+	}
+	got, err := os.ReadFile(filepath.Join(workspace, "cluster", "inputs.json"))
+	if err != nil || !bytes.Equal(got, want) {
+		t.Fatalf("Explain scaffold changed authored input bytes: %v", err)
+	}
+	for path, before := range map[string][]byte{source: want, benchmark: frozen} {
+		after, err := os.ReadFile(path)
+		if err != nil || !bytes.Equal(before, after) {
+			t.Fatalf("Explain scaffold changed source/frozen suite %s: %v", path, err)
 		}
 	}
 }

@@ -156,15 +156,17 @@ cub-scout explain <kind> <name> [flags]
 | `--confighub-stale-after` | string | 15m | Treat live-status observations older than this as stale |
 | `--bounded` | bool | false | Read one exact live API object without controller or connected enrichment |
 | `--api-version` | string | - | Exact API version; required with `--bounded` or `--recording` |
-| `--kube-context` | string | - | Explicit context for `--bounded` only |
+| `--kube-context` | string | - | Optional exact context for all enriched Kubernetes reads; required with `--bounded`. Explicit empty/missing names fail without fallback |
 | `--refresh` | bool | false | Bypass bounded session reuse; for `--bounded` only |
 | `--expected-revision` | string | - | Compare immutable controller-reported revision; for `--bounded` only |
 | `--recording` | string | - | Use a bounded local YAML/JSON recording; requires exact API version and explicit namespace |
-| `--tui` | bool | false | Open the one-object recorded viewer; requires `--recording` |
+| `--tui` | bool | false | Open a scrollable single-object snapshot of the same Explain summary |
 
 ### Stable Output Rules
 
 - JSON is the canonical contract for `explain`.
+- Explicit-context enriched Explain captures one private endpoint/configuration binding for ownership, lineage, events, field attribution, rollout and connected comparison reads. Static file credentials are snapshotted; configured exec-auth retains its refresh and file-access behavior. Offline tests exercise static bearer tokens. Namespace defaults to `default` when omitted. ConfigHub space/auth is selected separately.
+- `kubernetesContext` is a selection label, not stable cluster identity. Denied evidence remains unknown with structured omissions. Partial comparison operands do not establish agreement.
 - `--presentation` affects text and Markdown framing only.
 - `--hint-mode` affects next-step recommendation ranking only.
 - Omitting `--presentation` preserves the legacy/default text/Markdown render path.

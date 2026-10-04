@@ -1,0 +1,5 @@
+# FIXTURE-OWNED-SCAFFOLD: authored inputs, no live or product-output capture.
+schema_version: "1.1"
+name: explain-explicit-context
+context:
+  scaffold_script: scaffold.sh

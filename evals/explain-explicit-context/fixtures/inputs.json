@@ -1,0 +1,118 @@
+{
+  "provenance": {
+    "kind": "authored",
+    "live_capture": false,
+    "product_contract": "cmd/cub-scout/explain_context_test.go",
+    "related_recorded_example": "evals/rul03-context"
+  },
+  "ambient_context": "beta-context",
+  "request": {
+    "resource": "Deployment/api",
+    "namespace": "team-a",
+    "context": "alpha-context"
+  },
+  "contexts": {
+    "alpha-context": {
+      "workload": {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {
+          "name": "api",
+          "namespace": "team-a",
+          "labels": {
+            "argocd.argoproj.io/instance": "api"
+          }
+        },
+        "spec": {
+          "replicas": 1,
+          "template": {
+            "spec": {
+              "containers": [
+                {
+                  "name": "api",
+                  "image": "example.invalid/api:1"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "application": {
+        "apiVersion": "argoproj.io/v1alpha1",
+        "kind": "Application",
+        "metadata": {
+          "name": "api",
+          "namespace": "delivery"
+        },
+        "spec": {
+          "source": {
+            "repoURL": "https://alpha.invalid/repo",
+            "path": "apps/api"
+          }
+        }
+      }
+    },
+    "beta-context": {
+      "workload": {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {
+          "name": "api",
+          "namespace": "team-a",
+          "labels": {
+            "argocd.argoproj.io/instance": "api"
+          }
+        },
+        "spec": {
+          "replicas": 1,
+          "template": {
+            "spec": {
+              "containers": [
+                {
+                  "name": "api",
+                  "image": "example.invalid/api:1"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "application": {
+        "apiVersion": "argoproj.io/v1alpha1",
+        "kind": "Application",
+        "metadata": {
+          "name": "api",
+          "namespace": "delivery"
+        },
+        "spec": {
+          "source": {
+            "repoURL": "https://beta.invalid/repo",
+            "path": "apps/api"
+          }
+        }
+      }
+    }
+  },
+  "denied": {
+    "request": {
+      "resource": "Deployment/api",
+      "namespace": "team-a",
+      "context": "alpha-context"
+    },
+    "response": {
+      "apiVersion": "v1",
+      "kind": "Status",
+      "reason": "Forbidden",
+      "code": 403
+    }
+  },
+  "omitted_context_request": {
+    "resource": "Deployment/api",
+    "namespace": "team-a"
+  },
+  "contract_limits": {
+    "omitted_context": "legacy_default",
+    "context_is_stable_cluster_identity": false,
+    "genuine_live_acceptance": false
+  }
+}

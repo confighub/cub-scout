@@ -384,6 +384,8 @@ cub-scout explain deploy/payments-api -n prod --with-confighub --format json
 cub-scout explain deploy/payments-api -n prod --presentation ai
 cub-scout explain deploy/payments-api -n prod --hint-mode operator
 cub-scout explain deployment/payments-api -n prod --format md
+./cub-scout explain deployment/payments-api -n prod --kube-context my-cluster --format json
+./cub-scout explain deployment/payments-api -n prod --kube-context my-cluster --tui
 ./cub-scout explain Deployment/checkout -n shop --field-path '.spec.template.spec.containers[name="checkout"].image' --format json
 # v2.10.0: one exact object, without enrichment
 ./cub-scout explain Deployment/payments-api -n prod --bounded \
@@ -410,11 +412,15 @@ cub-scout explain deployment/payments-api -n prod --format md
 | `--confighub-stale-after` | Treat live-status writeback older than this as stale (default: `15m`) |
 | `--bounded` | v2.10.0: read only an exact API object; no source/controller, ConfigHub, related-pod, event, or drift enrichment |
 | `--api-version` | Required with `--bounded` or `--recording`; exact API version, e.g. `apps/v1` |
-| `--kube-context` | Required with `--bounded`; explicit kube context, without changing current-context or colliding with the `cub` host's ConfigHub `--context` flag |
+| `--kube-context` | Optional exact context for every enriched Kubernetes read; required with `--bounded`. Empty or unknown explicit names fail without fallback. Does not change current-context or select ConfigHub context |
 | `--refresh` | Bypass bounded session reuse; separate CLI invocations already start with an empty cache |
 | `--expected-revision` | Unreleased v2.11: with `--bounded`, compare an explicit full lowercase 40-hex Git commit or `sha256:` + 64 lowercase hex digits against a supported controller report; not delivery or application-health proof |
 | `--recording` | Read one exact object from a bounded local YAML/JSON recording; requires `--api-version` and an explicitly supplied `--namespace` (use `--namespace=""` for an empty namespace) |
-| `--tui` | With `--recording`, open an interactive single-object viewer without loading cluster inventory |
+| `--tui` | Open a scrollable single-object snapshot of the same Explain summary; recorded input stays offline |
+
+Explicit-context enriched Explain captures the selected endpoint and configuration.
+Static file credentials are snapshotted; configured exec-auth retains its
+refresh and file-access behavior. Offline context tests exercise static tokens.
 
 Recorded explain is an offline, fixed-input path. It selects exact
 `apiVersion`, Kind, namespace, and name; it rejects live-read, context,

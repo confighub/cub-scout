@@ -565,6 +565,14 @@ ambiguous, report the writer as unknown.
 
 ### ExplainSummary additions (explain --format json)
 
+Explicit-context enriched Explain adds optional `kubernetesContext`, the captured
+kubeconfig selection label (not a stable cluster ID). Its Kubernetes reads share
+one captured endpoint/configuration binding. Static file credentials are
+snapshotted; configured exec-auth retains its refresh and file-access behavior.
+Offline tests exercise static bearer tokens. Denied or incomplete reads retain
+structured `omissions` and explanatory `notes`; ConfigHub space/auth remains
+separate. The default legacy path and offline recorded input omit this label.
+
 ```json
 {
   "resource": "Deployment/api",

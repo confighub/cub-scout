@@ -8,6 +8,9 @@ run. Success was defined before implementation in
 The four-snapshot follow-up was scoped before code in
 [#645 comment 5973024674](https://github.com/confighub/cub-scout/issues/645#issuecomment-5973024674).
 
+The terminal-adapter follow-up was scoped before code in
+[#645 comment 5978432564](https://github.com/confighub/cub-scout/issues/645#issuecomment-5978432564).
+
 `policy.py` reconstructs a candidate from a verified selected-case stage and its
 source preparation. Both arms retain the exact prompt body, ordinary tool grant
 and declared turn/time budget. None of the 24 source grants includes Bash.
@@ -24,6 +27,42 @@ recordings have explicit object identities. The other 13 cases
 return `blocked_recorded_mcp_binding`, no executable argv and no fabricated tool
 response. Partial observations, distinct contexts and sequential frames must
 not be merged to construct a convenient replacement dataset.
+
+`overlay.py` materializes and verifies candidate metadata into a new read-only
+directory. Its Python API is `build(source, stage, case, arm, output)` followed
+by `verify(source, stage, case, arm, output)` (paths are `pathlib.Path` values).
+The baseline contains only its policy and empty strict MCP configuration. The
+treatment copies exact selected-stage skills, a manifest with ambient MCP
+configuration removed, and the pinned wrapper source and case binding. Source,
+stage and overlay cannot overlap; extra files, changed bytes and writable
+entries fail verification. It copies no oracle, sibling case or raw recording.
+This closes offline overlay preparation only: execution assets and immutable
+runtime mounts still require admission.
+
+`evaluate.py` audits a captured terminal JSONL stream against the selected
+source grader using an existing local Node executable. Exactly one final
+`result` record is required; intermediate assistant messages are never graded.
+Errors and budget exits fail, malformed or ambiguous streams remain unknown.
+Authored controls use their separate ordered-JSON acceptance contract with
+weight zero. Reported cost/usage is retained as unreconciled metadata.
+
+The caller must supply a `full24-attempt-binding.v1` JSON object with exactly
+`schema`, `selection` (the launch policy selection),
+`sourcePreparationReportSha256`, `stageReceiptSha256` and `traceSha256`.
+Hashes bind the verified preparation, exact stage receipt and captured trace.
+A future trusted supervisor must establish the binding's provenance; this
+adapter does not prove that a particular runtime produced the trace.
+
+```sh
+python3 evals/full24-launch-policy/evaluate.py \
+  --source-prep "$SOURCE_PREP" --stage "$SELECTED_STAGE" \
+  --case ATR-01 --arm with --trace "$TRACE_JSONL" \
+  --attempt-binding "$ATTEMPT_BINDING" --node "$LOCAL_NODE"
+```
+
+All 24 selected regexes have positive/negative local JavaScript vectors and
+terminal-selection controls. These checks establish neither official evaluator
+execution, paid-run admission, descendant completion nor billing attribution.
 
 The candidate model and previously reviewed Linux binary pins describe future
 assets. All runtime claims remain false. Independent review identified the

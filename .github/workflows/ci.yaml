@@ -128,6 +128,9 @@ jobs:
       - name: Run offline source-bound launch policy guards
         run: PYTHONDONTWRITEBYTECODE=1 /tmp/scout-pre01-ci/bin/python -m unittest discover -s evals/full24-launch-policy -v
 
+      - name: Run offline Explain explicit-context answer controls
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/explain-explicit-context -v
+
       - name: Run existing strict recorded-scale answer controls
         run: PYTHONDONTWRITEBYTECODE=1 /tmp/scout-pre01-ci/bin/python -m unittest discover -s evals/recorded-scale -p 'test_packet.py' -k test_strict_answer_contract_is_opt_in_and_hashes_generated_files -v
 

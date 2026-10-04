@@ -1,11 +1,42 @@
 # cub-scout execution handover
 
-**Current snapshot:** 2026-10-03. Verified merged baseline:
+**Current snapshot:** 2026-10-04. Verified merged baseline:
 [`5aeebc48`](https://github.com/confighub/cub-scout/commit/5aeebc48a6f168865b79d5a228013b9e576695f7).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
 order, quality gates, budgets and decisions.
+
+## Steps 1–2 offline checkpoint — 2026-10-04
+
+The topic packet adds enriched Explain explicit-context selection using one
+captured Kubernetes binding, shared CLI/MCP/TUI snapshot output, exact namespace
+and denied/partial-evidence handling. Defaults are preserved; API-version,
+refresh and expected-revision remain bounded-only. Six deterministic contracts,
+an example and a separate authored opt-in agent case cover this behavior without
+changing the frozen 24-case experiment. Genuine UI/CLI acceptance remains pending.
+
+The terminal adapter binds a selected source/stage/arm/control to captured trace
+hashes, grades only one final successful terminal result with the exact selected
+regex, and retains reported usage/cost as unreconciled metadata. The overlay
+builder prepares and verifies exact selected-stage skills and sanitized plugin
+metadata in a new read-only directory. Thirteen launch-policy contracts and
+three authored Explain controls pass offline; the overlay/adapter have independent
+review. Neither preparation establishes runtime enforcement, official evaluator
+execution, trusted attempt provenance, descendants or billing attribution.
+
+Cached build, full offline `go test ./...`, vet, read-only/CLI parity/name guards
+and three manual-CI condition contracts pass. The first full Go run exposed the
+new case's missing dedicated scaffold validator; its failed log is retained and
+the exact-byte/inventory repair passes the full suite. Unit-only CI for this
+packet must be inspected at its exact committed head before recording acceptance.
+
+The remaining scope is explicit in `docs/releases/v2.13-readiness.md`: 13 recorded
+bindings, pinned runtime assets/actual enforcement, governance captures and
+delivery-health contracts are still open. Full controller-desired operands and
+broader context identity remain open; storage/publication belongs to the later
+phase. SDK #758 stays deferred. Steps 1–2 are advanced, not fully closed; final
+live gates, a published paired baseline and release remain pending.
 
 ## Offline runtime checkpoint — 2026-10-03
 
