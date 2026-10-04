@@ -232,32 +232,6 @@ func (i *UnstructuredIndex) findByGVKNameNamespace(apiVersion, kind, name, names
 	return i.byKey[i.keyFor(apiVersion, kind, name, namespace)]
 }
 
-func (i *UnstructuredIndex) findByResourceRef(ref ResourceRef) *unstructured.Unstructured {
-	// ResourceRef may not contain apiVersion/kind in all cases; fall back to name+namespace scan.
-	if ref.Kind != "" && ref.Group != "" && ref.Version != "" {
-		apiVersion := ref.Group + "/" + ref.Version
-		if u := i.findByGVKNameNamespace(apiVersion, ref.Kind, ref.Name, ref.Namespace); u != nil {
-			return u
-		}
-	}
-	return i.findByNameNamespace(ref.Name, ref.Namespace)
-}
-
-func (i *UnstructuredIndex) findByNameNamespace(name, namespace string) *unstructured.Unstructured {
-	if name == "" {
-		return nil
-	}
-	for _, o := range i.all {
-		if o == nil {
-			continue
-		}
-		if o.GetName() == name && o.GetNamespace() == namespace {
-			return o
-		}
-	}
-	return nil
-}
-
 func (i *UnstructuredIndex) findByName(name string) *unstructured.Unstructured {
 	if name == "" {
 		return nil

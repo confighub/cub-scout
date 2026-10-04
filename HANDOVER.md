@@ -1203,8 +1203,9 @@ unique legal same-namespace or cluster-scoped parent; conflicting kinds/scope
 remain unresolved, with explicit ambiguity evidence. Known-group owner references
 preserve exact served version/type/name and check a supplied UID. Foreign, missing,
 replaced or self parents remain absent with explicit reasons. Claim enrichment
-uses the actual resolved XR and refuses ambiguous/self claims. The generic index
-and other platform resolvers remain unchanged; no reads are added.
+uses the actual resolved XR and refuses ambiguous/self claims. The generic index lookup semantics
+and other platform resolvers remain unchanged; two unused private lookup helpers
+are removed after CI lint, and no reads are added.
 
 Five resolver controls plus a sixth [authored example/render control](examples/crossplane-system/#conservative-lineage-control-214-candidate)
 exercise ordering, locality, duplicate/self candidates, missing/provided/replaced
@@ -1215,7 +1216,10 @@ Crossplane v2 operations/coverage/conditions and graduation remain open in #601/
 Independent final source/example/docs review accepted the packet. Final source
 race/build/vet/full offline Go verification pass; a superseded full test was
 stopped and its log retained rather than claimed as final evidence. Exact-head
-unit-only CI remains pending. The independently reviewed [2.14 draft](docs/releases/v2.14.0.md)
+unit-only CI [37231513695](https://github.com/confighub/cub-scout/actions/runs/37231513695)
+stopped at two now-unused private lookup helpers. Those helpers are removed;
+repaired-source focused Crossplane/composition/kro race, build and vet pass.
+The final full offline Go suite is running and retry CI remains pending. The independently reviewed [2.14 draft](docs/releases/v2.14.0.md)
 and [readiness checklist](docs/releases/v2.14-readiness.md) preserve adopted P4
 scope, pending controller/six-surface/value gates and 2.13-first ordering.
 
