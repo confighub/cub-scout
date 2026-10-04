@@ -1002,6 +1002,28 @@ test exclusion remains until the maintainer answers the pending clarification
 about final live acceptance. No release, merge or paid-model admission is
 inferred from static verification or spending authorization.
 
+## PRE-03 declared-reference foundation — 2026-10-04
+
+The eval-only `argo_child_reference.py` now projects the pinned parent target
+reference separately from parent/child captured identities and controller
+reports. One exact namespace/name reference and child tracking-id name the
+parent; observed GVKs stay unknown because both captures omit top-level type
+fields. Distinct UIDs do not establish a UID foreign key. Reported child resource
+rows remain separate, bounded and historical, with no Pod/tree join or grader
+answer. Bad/missing/drifted/ambiguous source or malformed identity/report refuses.
+Seven controls bring recorded-API tests to 44; all pass. Independent source and
+[host package/output proof](evals/recorded-api/local-argo-reference-proof.json)
+audits accepted without findings. The read-only retained host package lives at
+`/private/tmp/scout-v213-pre03-reference-host-final-20261004`. Initial temporary
+fixture paths followed macOS `/var` symlinks and hit the shared safe-path refusal;
+resolving owned temporary paths made negative tests exercise their intended
+semantic failures. No frozen source bytes, questions, grants/budgets or launch
+policy changed. PRE-03 product/MCP/runtime admission remains blocked; eleven
+candidates/thirteen blocked remains the accepted count.
+
+The [draft v2.13.0 notes](docs/releases/v2.13.0.md) describe candidate scope and
+publication gates explicitly as unreleased; they do not announce a tag.
+
 ## Resume here
 
 Check #645 and the checkpoint above. Drive the adopted plan through 3.0,

@@ -76,7 +76,7 @@ exact readable bytes/scope/provenance; denied callback suppression with the
 other body absent; foreign hash/scope/identity/count refusal; changed or missing
 source refusal before the reader; malformed/duplicate/non-finite/oversized/deep
 report refusal; and reader failure without retry or private error leakage.
-Six deterministic tests extend this directory's suite to 31 tests, automatically
+Seven deterministic tests extend this directory's suite to 31 tests, automatically
 included by its existing unit-only CI step. No product CLI/MCP/TUI surface,
 MCP transport source pin, frozen prompt, evidence or grant changes.
 
@@ -233,3 +233,33 @@ source-captured Helm API route corpus. A later Helm replay needs its own exact
 source evidence. This work makes no full Experiment A, model-answer, billing,
 savings, or paid-run claim. The benchmark manifest, cases, graders and spend
 ledger remain unchanged.
+
+## PRE-03 declared child reference
+
+`argo_child_reference.py` projects three pinned historical files from the
+[existing PRE-03 example](../pre03-argo-child-failure/). The parent status declares
+an exact target group/version/kind/namespace/name, while the child capture's
+namespace/name and tracking ID match that reference. Their UIDs remain distinct;
+no UID foreign key is supplied. Parent/child sync and health reports are separate.
+Reported resources are bounded to 32 rows, text to 512 UTF-8 bytes, and output to
+64 KiB; omitted counts expose bounded rows. Missing/drifted/malformed/ambiguous
+source or tracking identity refuses without a fallback.
+
+Both captures omit top-level API version/kind. `observedGVK` remains `unknown`;
+`declaredTarget` must never be installed as observed child type fields. Capture
+time/current state, atomicity and a full Kubernetes snapshot remain unestablished.
+No Pod/tree join, workload-health decision or grader answer is manufactured.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/recorded-api -p test_argo_child_reference.py -v
+```
+
+Seven deterministic controls cover the genuine source, missing/drifted inputs,
+wrong/ambiguous references, tracking/UID/type overlays, malformed/oversized fields,
+and ordering/bounds. An actual isolated host invocation against a read-only copy
+of the original modules/three captures has [source and stream proof](local-argo-reference-proof.json)
+retained at `/private/tmp/scout-v213-pre03-reference-host-final-20261004`.
+This helper has no executable or MCP entrypoint. It prepares typed captured-field
+reasoning; PRE-03 product recorded-object binding and frozen tool/runtime
+admission remain blocked. Existing policy stays eleven candidates/thirteen
+blocked; frozen prompts, bytes, grants and budgets remain unchanged.

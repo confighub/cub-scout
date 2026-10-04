@@ -1,0 +1,29 @@
+{
+  "argv": [
+    "<host-python>",
+    "-I",
+    "-S",
+    "-B",
+    "/private/tmp/scout-v213-pre03-reference-host-final-20261004/package/run.py"
+  ],
+  "exit": 0,
+  "sourceBase": "362878c82fe28bc409619cf5d73eb04e6227a87d",
+  "sourceTreeModified": true,
+  "packageFileSha256": {
+    "run.py": "9c007c9939eb66a40e5f91ddd0a7e40d94fa5de2cafb4e822c4512dd925ed0e7",
+    "argo_child_reference.py": "937bc9900b57b5ce57d9fb1a4de405783b2f9e4725186aa152aabc4de3ea9d80",
+    "context_frames.py": "63a259fd0e741dc199f6c17ecf44700923f6c1f4cf8e1973c15b623e9353a46d",
+    "fixtures/argocd-core-root.json": "5f2fe7e6f3200327567b50abd695a8bbeb85f7c6d5f4e92976798bb5a8e36fff",
+    "fixtures/capture-scope.json": "a1b64893b8df6ab27200e2b0f08e6bbb1f4413ac8694bfbdb6a24c6f485c5878",
+    "fixtures/argocd-core-child.json": "c8e5c7476a8b0f3a7941587957b63caaa651247715ed537be3a6f3795f0e3ffe"
+  },
+  "hostInterpreterSha256": "5c3ea934d18a7979253ca08ff16151db78a896be29dbc37fd9bf7e7c549593b8",
+  "stdoutSha256": "4c9a54066307b6ca9793994c02c20b9d0bcaf49eec6bd066dbf6b7f9f95cb002",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "schema": "pre03.declared-reference.host-proof.v1",
+  "privateProofSha256": "475c02f9c49da00077b853c510439203819e74984d8be61b3840c2e82034c728",
+  "retainedEvidencePath": "/private/tmp/scout-v213-pre03-reference-host-final-20261004",
+  "scope": "isolated host projection of pinned captured fields only; declared reference separate from unknown observed GVK; no product/MCP/runtime/model admission",
+  "modelOrProviderRun": false,
+  "clusterOrContainerRun": false
+}
