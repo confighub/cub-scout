@@ -1,0 +1,304 @@
+{
+  "schema": "scout-static-distribution-contract.v1",
+  "sourceRevision": "83dade919be18aa594aa393f692bdfae15d71fac",
+  "configurationSHA256": "c30c67fc8c95e636ea70958804288ccebb5acd79a8149dcaf0ea4b56298bb799",
+  "candidateBuildTag": "offline-candidate-83dade91",
+  "buildDateMetadata": "2026-10-04T19:10:46Z",
+  "driverSHA256": "d8745bd0cf3661f73f6db9e455a00d480c0dec612437f045b2dce66a9ddf39aa",
+  "mode": "manual-offline-archive-contract",
+  "targets": [
+    {
+      "os": "linux",
+      "arch": "amd64",
+      "format": "ELF64",
+      "binaryBytes": 58036386,
+      "binarySHA256": "3cd2057d08fda0254102f62d5140873c5f9ec7b97330750fd471e6fad3a1741f",
+      "buildLogSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "buildInfoSHA256": "45ae06c57ce2f770ae66c310c576ed441e68157fccee79327dd1e3ab26ea5090",
+      "archive": "cub-scout_offline-candidate-83dade91_linux_amd64.tar.gz",
+      "archiveBytes": 57736545,
+      "archiveSHA256": "b41ac96f5651428527a2249edc641721dd9fa9b5a70e0c4dce9cb0c59697e0fb",
+      "twoArchiveConstructionsByteIdentical": true,
+      "entries": [
+        {
+          "name": "CLI-GUIDE.md",
+          "sha256": "68bbe42aeb50ffccd86bc5addc3c89cb65f311c0bbf763ccf9b14dcb844122a5",
+          "mode": "0o644"
+        },
+        {
+          "name": "LICENSE",
+          "sha256": "57c9db7c3f16f26affb0c3eb1c3186080fe901810b68b104d7e84992cab4f1ba",
+          "mode": "0o644"
+        },
+        {
+          "name": "README.md",
+          "sha256": "ccee56fb18a90e66368d2e589543001cb759941bc48b20cc1dbd48912a2aea0d",
+          "mode": "0o644"
+        },
+        {
+          "name": "cub-scout",
+          "sha256": "3cd2057d08fda0254102f62d5140873c5f9ec7b97330750fd471e6fad3a1741f",
+          "mode": "0o755"
+        },
+        {
+          "name": "kubectl-cub_scout",
+          "sha256": "3cd2057d08fda0254102f62d5140873c5f9ec7b97330750fd471e6fad3a1741f",
+          "mode": "0o755"
+        },
+        {
+          "name": "main",
+          "sha256": "3cd2057d08fda0254102f62d5140873c5f9ec7b97330750fd471e6fad3a1741f",
+          "mode": "0o755"
+        }
+      ]
+    },
+    {
+      "os": "linux",
+      "arch": "arm64",
+      "format": "ELF64",
+      "binaryBytes": 53870754,
+      "binarySHA256": "59c9a3545f1bd4fbaba3f39df26baea4cacda43b6aa6ba48096d7b87a9b68b79",
+      "buildLogSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "buildInfoSHA256": "09ff7ad54e544a7dcaec6f86a61f3ad59bf7fb443af07fdec94d9c733e83508d",
+      "archive": "cub-scout_offline-candidate-83dade91_linux_arm64.tar.gz",
+      "archiveBytes": 50502838,
+      "archiveSHA256": "257300b4b57d3163a3634682a843305580d1c1f3bcf90fb7fe5deb8f9169b723",
+      "twoArchiveConstructionsByteIdentical": true,
+      "entries": [
+        {
+          "name": "CLI-GUIDE.md",
+          "sha256": "68bbe42aeb50ffccd86bc5addc3c89cb65f311c0bbf763ccf9b14dcb844122a5",
+          "mode": "0o644"
+        },
+        {
+          "name": "LICENSE",
+          "sha256": "57c9db7c3f16f26affb0c3eb1c3186080fe901810b68b104d7e84992cab4f1ba",
+          "mode": "0o644"
+        },
+        {
+          "name": "README.md",
+          "sha256": "ccee56fb18a90e66368d2e589543001cb759941bc48b20cc1dbd48912a2aea0d",
+          "mode": "0o644"
+        },
+        {
+          "name": "cub-scout",
+          "sha256": "59c9a3545f1bd4fbaba3f39df26baea4cacda43b6aa6ba48096d7b87a9b68b79",
+          "mode": "0o755"
+        },
+        {
+          "name": "kubectl-cub_scout",
+          "sha256": "59c9a3545f1bd4fbaba3f39df26baea4cacda43b6aa6ba48096d7b87a9b68b79",
+          "mode": "0o755"
+        },
+        {
+          "name": "main",
+          "sha256": "59c9a3545f1bd4fbaba3f39df26baea4cacda43b6aa6ba48096d7b87a9b68b79",
+          "mode": "0o755"
+        }
+      ]
+    },
+    {
+      "os": "darwin",
+      "arch": "amd64",
+      "format": "Mach-O64",
+      "binaryBytes": 59188800,
+      "binarySHA256": "90356c47844962cd681d9061b9a7375d5a5e47c5e7e7eb7ef36011f8e60a23a3",
+      "buildLogSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "buildInfoSHA256": "0ac3d4d033831cae045a94bf65e82db6e4cda79192708b07960f83f65d1dc4f8",
+      "archive": "cub-scout_offline-candidate-83dade91_darwin_amd64.tar.gz",
+      "archiveBytes": 58665765,
+      "archiveSHA256": "94675f0235e606e79c8a9b64dd06b071fdb9cb637f56393f46e9ca093f7c517c",
+      "twoArchiveConstructionsByteIdentical": true,
+      "entries": [
+        {
+          "name": "CLI-GUIDE.md",
+          "sha256": "68bbe42aeb50ffccd86bc5addc3c89cb65f311c0bbf763ccf9b14dcb844122a5",
+          "mode": "0o644"
+        },
+        {
+          "name": "LICENSE",
+          "sha256": "57c9db7c3f16f26affb0c3eb1c3186080fe901810b68b104d7e84992cab4f1ba",
+          "mode": "0o644"
+        },
+        {
+          "name": "README.md",
+          "sha256": "ccee56fb18a90e66368d2e589543001cb759941bc48b20cc1dbd48912a2aea0d",
+          "mode": "0o644"
+        },
+        {
+          "name": "cub-scout",
+          "sha256": "90356c47844962cd681d9061b9a7375d5a5e47c5e7e7eb7ef36011f8e60a23a3",
+          "mode": "0o755"
+        },
+        {
+          "name": "kubectl-cub_scout",
+          "sha256": "90356c47844962cd681d9061b9a7375d5a5e47c5e7e7eb7ef36011f8e60a23a3",
+          "mode": "0o755"
+        },
+        {
+          "name": "main",
+          "sha256": "90356c47844962cd681d9061b9a7375d5a5e47c5e7e7eb7ef36011f8e60a23a3",
+          "mode": "0o755"
+        }
+      ]
+    },
+    {
+      "os": "darwin",
+      "arch": "arm64",
+      "format": "Mach-O64",
+      "binaryBytes": 55361746,
+      "binarySHA256": "81d6b6a7a99ee58a19a6f09899ce3b4e5be0a564d1b840a6a6868b3e1bf176f7",
+      "buildLogSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "buildInfoSHA256": "0fffd851a69d509762708b78751f3afcf1472b4058aa7184d572ff422deaf2db",
+      "archive": "cub-scout_offline-candidate-83dade91_darwin_arm64.tar.gz",
+      "archiveBytes": 52713119,
+      "archiveSHA256": "30015994f7b25de352716c4646d224e9161411652620d234313940eff335d2a2",
+      "twoArchiveConstructionsByteIdentical": true,
+      "entries": [
+        {
+          "name": "CLI-GUIDE.md",
+          "sha256": "68bbe42aeb50ffccd86bc5addc3c89cb65f311c0bbf763ccf9b14dcb844122a5",
+          "mode": "0o644"
+        },
+        {
+          "name": "LICENSE",
+          "sha256": "57c9db7c3f16f26affb0c3eb1c3186080fe901810b68b104d7e84992cab4f1ba",
+          "mode": "0o644"
+        },
+        {
+          "name": "README.md",
+          "sha256": "ccee56fb18a90e66368d2e589543001cb759941bc48b20cc1dbd48912a2aea0d",
+          "mode": "0o644"
+        },
+        {
+          "name": "cub-scout",
+          "sha256": "81d6b6a7a99ee58a19a6f09899ce3b4e5be0a564d1b840a6a6868b3e1bf176f7",
+          "mode": "0o755"
+        },
+        {
+          "name": "kubectl-cub_scout",
+          "sha256": "81d6b6a7a99ee58a19a6f09899ce3b4e5be0a564d1b840a6a6868b3e1bf176f7",
+          "mode": "0o755"
+        },
+        {
+          "name": "main",
+          "sha256": "81d6b6a7a99ee58a19a6f09899ce3b4e5be0a564d1b840a6a6868b3e1bf176f7",
+          "mode": "0o755"
+        }
+      ]
+    },
+    {
+      "os": "windows",
+      "arch": "amd64",
+      "format": "PE",
+      "binaryBytes": 59421696,
+      "binarySHA256": "f5054ea87f58d8445953d63c0a5acdba43ecf09726dbc8c3b90c36f5fa78c684",
+      "buildLogSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "buildInfoSHA256": "f68659658fc0fe39526c784560c3e66abcbe2bfe06c9e2c01a425945ea2e9c6c",
+      "archive": "cub-scout_offline-candidate-83dade91_windows_amd64.zip",
+      "archiveBytes": 39407006,
+      "archiveSHA256": "4aaf3e1acfdb02744e4ad441a9bd76e8b0cd401f0492ed13b21fdb91d89e4d12",
+      "twoArchiveConstructionsByteIdentical": true,
+      "entries": [
+        {
+          "name": "CLI-GUIDE.md",
+          "sha256": "68bbe42aeb50ffccd86bc5addc3c89cb65f311c0bbf763ccf9b14dcb844122a5",
+          "mode": "0o644"
+        },
+        {
+          "name": "LICENSE",
+          "sha256": "57c9db7c3f16f26affb0c3eb1c3186080fe901810b68b104d7e84992cab4f1ba",
+          "mode": "0o644"
+        },
+        {
+          "name": "README.md",
+          "sha256": "ccee56fb18a90e66368d2e589543001cb759941bc48b20cc1dbd48912a2aea0d",
+          "mode": "0o644"
+        },
+        {
+          "name": "cub-scout.exe",
+          "sha256": "f5054ea87f58d8445953d63c0a5acdba43ecf09726dbc8c3b90c36f5fa78c684",
+          "mode": "0o755"
+        },
+        {
+          "name": "kubectl-cub_scout.exe",
+          "sha256": "f5054ea87f58d8445953d63c0a5acdba43ecf09726dbc8c3b90c36f5fa78c684",
+          "mode": "0o755"
+        }
+      ]
+    },
+    {
+      "os": "windows",
+      "arch": "arm64",
+      "format": "PE",
+      "binaryBytes": 54413312,
+      "binarySHA256": "75601fe8304acc3f6ce3487a0d5bf3db0a6ed60f929d9f774a854ae68b153aaa",
+      "buildLogSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "buildInfoSHA256": "0edfdcab2ada39a3ccd950627f26fbf34fe7560cbe9e50d8e910ff4b8788b68d",
+      "archive": "cub-scout_offline-candidate-83dade91_windows_arm64.zip",
+      "archiveBytes": 33981102,
+      "archiveSHA256": "e102be7f278ea0ba76a389deb9e77b86109c500fc8169b2be715db5edae1a17f",
+      "twoArchiveConstructionsByteIdentical": true,
+      "entries": [
+        {
+          "name": "CLI-GUIDE.md",
+          "sha256": "68bbe42aeb50ffccd86bc5addc3c89cb65f311c0bbf763ccf9b14dcb844122a5",
+          "mode": "0o644"
+        },
+        {
+          "name": "LICENSE",
+          "sha256": "57c9db7c3f16f26affb0c3eb1c3186080fe901810b68b104d7e84992cab4f1ba",
+          "mode": "0o644"
+        },
+        {
+          "name": "README.md",
+          "sha256": "ccee56fb18a90e66368d2e589543001cb759941bc48b20cc1dbd48912a2aea0d",
+          "mode": "0o644"
+        },
+        {
+          "name": "cub-scout.exe",
+          "sha256": "75601fe8304acc3f6ce3487a0d5bf3db0a6ed60f929d9f774a854ae68b153aaa",
+          "mode": "0o755"
+        },
+        {
+          "name": "kubectl-cub_scout.exe",
+          "sha256": "75601fe8304acc3f6ce3487a0d5bf3db0a6ed60f929d9f774a854ae68b153aaa",
+          "mode": "0o755"
+        }
+      ]
+    }
+  ],
+  "claims": {
+    "targetExecuted": false,
+    "runtimeAdmission": false,
+    "releaseArtifact": false,
+    "publishedVersion": false,
+    "actualGoReleaserRun": false,
+    "pluginExecution": false,
+    "publicProxyInstall": false,
+    "modelOrContainerExecuted": false
+  },
+  "negativeControls": [
+    "linux-missing",
+    "linux-extra",
+    "linux-traversal",
+    "linux-content",
+    "linux-mode",
+    "linux-duplicate",
+    "windows-missing",
+    "windows-extra",
+    "windows-traversal",
+    "windows-content",
+    "windows-mode",
+    "windows-duplicate"
+  ],
+  "passed": true,
+  "retainedEvidencePath": "/private/tmp/scout-v213-static-distribution-20261004",
+  "privateProofSHA256": "75f795561dc5412f1c2e50c550c5196b984d107ffa6db32aee722db96e43fe84",
+  "limits": [
+    "Static builds were not executed.",
+    "Archives are manually constructed contract samples, not actual GoReleaser artifacts.",
+    "Binary aliases copy the same target build; plugin and kubectl runtime behavior are not tested by this packet.",
+    "No release hooks, signing, public proxy install, clean-cluster install, model/container or live acceptance."
+  ]
+}

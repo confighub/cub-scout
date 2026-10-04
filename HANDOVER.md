@@ -1101,6 +1101,22 @@ No target execution, runtime/full24/model admission or publication is inferred.
 Independent static audit verified both binaries, exact clean source, metadata
 and retained receipt hashes without target execution.
 
+## Six-target static distribution preparation — 2026-10-04
+
+Clean v2.13 source `83dade91` compiles for Linux/Darwin/Windows on amd64/arm64,
+using CGO-off, trimpath and explicit clean VCS stamping. The BuildTag explicitly
+says `offline-candidate-83dade91`; fixed BuildDate metadata is the source commit
+time for reproducible samples. [Static distribution receipt](docs/releases/v2.13-static-distribution-candidate.json)
+pins six native binaries and manually constructed deterministic archive samples.
+CLI/kubectl aliases are present on all six targets, plugin `main` only on the
+four Linux/Darwin targets, plus README/LICENSE/CLI-GUIDE. Readback validates exact
+root entries, modes and hashes; 12 authored archive corruption/path/duplicate
+controls refuse. Binary aliases copy the same compiled target; no plugin runtime
+acceptance is inferred. No target execution, actual GoReleaser/release hook,
+signing, public proxy/clean-cluster install, model/container execution or release
+is inferred. Independent static audit verified all six target binaries, exact
+archive entries/modes/content and the receipt/config/driver/private proof hashes.
+
 ## Resume here
 
 Check #645 and the checkpoint above. Drive the adopted plan through 3.0,
