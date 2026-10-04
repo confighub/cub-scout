@@ -76,6 +76,14 @@ present, preserving source space/unit identity and revision without another
 request. Missing or conflicting origin remains an omission, not a guessed link.
 See [bounded resource evidence](examples/bounded-resource-read/).
 
+**Unreleased v2.14 candidate:** when switching environments, use
+`./cub-scout map list --kube-context my-cluster --cluster-identity --format json`
+or `./cub-scout map --kube-context my-cluster --cluster-identity` and open `V`.
+This adds one bounded read of the `kube-system` Namespace UID per inventory
+refresh. It shows an observed cluster-instance identifier and identity-reader
+costs; a denial remains unverified. It does not establish a ConfigHub Target
+binding. See [the example and limits](examples/cluster-identity-cost/).
+
 If you prefer JSON first:
 
 ```bash

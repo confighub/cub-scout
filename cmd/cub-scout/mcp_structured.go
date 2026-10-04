@@ -44,6 +44,11 @@ func buildMCPStructuredContent(toolName, output string) interface{} {
 	}
 
 	switch toolName {
+	case "map":
+		if obj, ok := payload.(map[string]interface{}); ok && obj["schema"] == "map-list-cluster-identity.v1" {
+			return mcpWrapStructuredData(payload)
+		}
+		return nil // Preserve legacy map's text-only response contract.
 	case "compare_three_way":
 		return mcpWrapStructuredData(payload)
 	case "compare_source_truth":

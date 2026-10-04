@@ -335,6 +335,10 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 							"type":        "boolean",
 							"description": "Return per-entry canonical ownership detector sources and normalized list omissions. Cannot be combined with summary, names_only, or count.",
 						},
+						"cluster_identity": map[string]interface{}{
+							"type":        "boolean",
+							"description": "Opt in to one extra bounded kube-system Namespace GET on the captured inventory client. Returns a separate cluster-identity envelope retaining identity/list omissions even for empty inventory. cluster.cost covers only the identity reader, not map inventory or authentication. Cannot combine with ownership_evidence, summary, names_only, or count.",
+						},
 						"summary": map[string]interface{}{
 							"type":        "boolean",
 							"description": "Return counts by owner and kind (after filters) instead of the entries.",
@@ -372,7 +376,21 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				if includeEvidence && modes > 0 {
 					return nil, fmt.Errorf("ownership_evidence cannot be combined with summary, names_only, or count")
 				}
+				includeIdentity := false
+				if raw, present := arguments["cluster_identity"]; present {
+					value, ok := raw.(bool)
+					if !ok {
+						return nil, fmt.Errorf("cluster_identity must be a boolean")
+					}
+					includeIdentity = value
+				}
+				if includeIdentity && (includeEvidence || modes > 0) {
+					return nil, fmt.Errorf("cluster_identity cannot be combined with ownership_evidence, summary, names_only, or count")
+				}
 				args := []string{"map", "list", "--json"}
+				if includeIdentity {
+					args = append(args, "--cluster-identity")
+				}
 				if includeEvidence {
 					args = append(args, "--ownership-evidence")
 				}

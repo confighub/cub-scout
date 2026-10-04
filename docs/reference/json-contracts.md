@@ -154,6 +154,68 @@ and performs no additional API reads. `--ownership-evidence` cannot be mixed
 with `--summary`, `--count`, or `--names-only` because those modes do not return
 per-entry diagnostics.
 
+## Opt-in map cluster identity (v2.14 candidate, unreleased)
+
+`map list --cluster-identity --format json` and MCP `map` with
+`cluster_identity: true` opt into `map-list-cluster-identity.v1`:
+
+```json
+{
+  "schema": "map-list-cluster-identity.v1",
+  "cluster": {
+    "context": "selected-context",
+    "apiServer": "https://api.example",
+    "identity": "unverified",
+    "idSource": "v1/Namespace/kube-system",
+    "omission": "forbidden",
+    "cost": {
+      "requestsMade": 1,
+      "responseBodyBytes": 87,
+      "transportErrors": 0,
+      "bodyReadErrors": 0,
+      "durationMillis": 12,
+      "reused": false,
+      "coverage": "selected-kubernetes-transport"
+    }
+  },
+  "clusterCostScope": "identity-reader",
+  "resources": [],
+  "collection": {
+    "status": "partial",
+    "omissions": [{"apiVersion": "apps/v1", "resource": "deployments", "namespace": "team-a", "reason": "forbidden"}]
+  }
+}
+```
+
+This is an illustrative shape, not a live capture or cost measurement. Verified
+identity adds `id` and `observedAt` from the exact `kube-system` Namespace read.
+The Namespace UID identifies that observed instance and may change if it is
+recreated; it is not a ConfigHub Target join or infrastructure identifier.
+Context and client configuration are captured together. Endpoint output omits
+user information, query and fragment fields. Denied/malformed/unreachable
+identity remains `unverified`, without an ID or successful observation time.
+
+The opt-in admits one extra bounded Namespace GET per inventory refresh.
+`cluster.cost` counts only its transport attempts, consumed response bodies and
+duration; inventory/authentication/other-client costs and wire/header bytes are
+excluded. Opaque preexisting transport wrappers mark coverage partial. Existing
+default JSON arrays and ownership-only diagnostics retain their formats and
+read budgets. Compact summary/count/names-only and ownership-only combinations
+are refused before reads; recorded/test-hook inventory cannot admit this lookup.
+
+`collection` retains normalized list omissions independently of identity. A
+successfully empty inventory is distinct from `partial` unreadable lists.
+Pre-read configuration/client failures produce `status: "unavailable"` and
+`unavailableReason`, with zero identity requests and no invented list omission.
+Resource absence is not ownership/orphan or workload-health proof.
+
+ASCII/Markdown and the opt-in standalone TUI's `V` view display the same cluster
+facts. Opening `V` uses loaded evidence; failed refresh replaces the old identity
+and visible panel with unavailable evidence. MCP exposes the original envelope
+under `structuredContent.data` without changing legacy map responses. Wider
+object-reference/whole-command-cost integration and genuine acceptance remain
+open. [Loopback example](../../examples/cluster-identity-cost/README.md).
+
 ## Bounded Resource Read (v2.10.0)
 
 `explain --bounded --format json` and MCP `explain` with `bounded: true` use

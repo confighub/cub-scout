@@ -580,6 +580,7 @@ cub-scout map list [flags]
 | `--names-only` | bool | false | Names only (scripting) |
 | `--summary` | bool | false | Counts by owner and kind after filters, as JSON (`total`, `byOwner`, `byKind`, `byKindOwner`) or text |
 | `--ownership-evidence` | bool | false | Opt into versioned ownership detector diagnostics and normalized list omissions; incompatible with `--summary`, `--count`, and `--names-only` |
+| `--cluster-identity` | bool | false | Unreleased v2.14 candidate: observe the selected cluster Namespace-instance UID with one additional GET; separate identity-only costs and collection status; incompatible with compact and ownership-evidence modes |
 
 ### Owner Values
 
@@ -613,6 +614,16 @@ point-in-time`, and optional cluster/namespace/kind scope. See
 [`json-contracts.md` § Map Ownership Diagnostics](json-contracts.md#map-ownership-diagnostics).
 It does not alter default JSON. The local TUI `V` view presents this evidence
 for its already loaded workload entries.
+
+The unreleased v2.14 candidate adds `map list --cluster-identity --format
+ascii|json|md` and `map --cluster-identity`. Both capture one context/config
+snapshot. JSON selects `map-list-cluster-identity.v1`; the TUI displays identity
+and read costs in `V` using the latest inventory refresh, without another read
+when opening that view. Missing configuration or client initialization produces
+an explicit unavailable collection. A denied identity read leaves returned
+inventory intact and identity unverified. Recorded and test-hook inventory
+cannot be combined with this option. See
+[the candidate JSON contract](json-contracts.md#opt-in-map-cluster-identity-v214-candidate-unreleased).
 
 ### Query Syntax
 

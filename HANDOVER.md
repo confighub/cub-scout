@@ -1089,6 +1089,36 @@ explicit opt-in extra Namespace read, separate identity-only costs and shared
 CLI/MCP/TUI projection. The v2.13 branch remains available for genuine gates
 once the pending live-test clarification is resolved.
 
+## Isolated v2.14 map cluster-identity candidate
+
+On `codex/v214-cluster-evidence`, the opt-in `map --cluster-identity`,
+`map list --cluster-identity --format ascii|json|md`, and MCP `map` argument
+`cluster_identity: true` now project the library evidence through CLI/MCP/TUI.
+This packet is outside the v2.13 candidate. #599 success-before-code comment
+[5983323525](https://github.com/confighub/cub-scout/issues/599#issuecomment-5983323525)
+defines its extra read and degradation boundaries.
+
+The invocation captures context/config together and adds one bounded Namespace
+GET per inventory refresh. The separate `map-list-cluster-identity.v1` envelope
+preserves identity omissions and normalized inventory list omissions separately,
+including empty inventory. Missing config/client initialization returns explicit
+unavailable collection with zero identity reads and generic reasons. Compact,
+ownership-evidence, recorded and test-hook combinations refuse before reads.
+Default map formats/read budgets remain unchanged. Costs cover the identity
+reader only; no object-reference, ConfigHub Target or whole-command-cost join is
+claimed. Opening TUI `V` makes no request; failed refresh clears old identity
+and inventory rows, updates the visible panel and recovers on the next success.
+
+Seven authored loopback/model controls pass, including the race detector.
+Independent review accepted the repaired pre-read failures and refresh behavior.
+Build, vet and read-only/CLI-guide/personal-name guards pass. The actual rebuilt
+CLI in three formats and MCP stdio process pass the authored loopback controls;
+[public proof](examples/cluster-identity-cost/offline-process-proof.json) pins
+source base/diff, binary and private package hashes. No real cluster, TUI process,
+benchmark execution/admission or live acceptance is inferred. The full offline
+Go suite passes; exact-head unit-only CI is pending for this integration checkpoint.
+#599 remains open for wider identity/cost surfaces and genuine acceptance.
+
 ## Resume here
 
 Check #645 and the checkpoint above. Drive the adopted plan through 3.0,

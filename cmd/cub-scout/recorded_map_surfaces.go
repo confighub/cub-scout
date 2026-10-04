@@ -32,7 +32,7 @@ func runRecordedMapCLI(cmd *cobra.Command, args []string) error {
 	if len(args) != 0 {
 		return fmt.Errorf("recorded map list accepts no positional arguments")
 	}
-	for _, name := range []string{"kube-context", "query", "since", "count", "names-only", "explain", "verbose"} {
+	for _, name := range []string{"kube-context", "query", "since", "count", "names-only", "explain", "verbose", "cluster-identity"} {
 		if cmd.Flags().Changed(name) {
 			return fmt.Errorf("--recording cannot be combined with --%s", name)
 		}

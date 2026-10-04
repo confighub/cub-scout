@@ -125,9 +125,10 @@ func runMapTUI(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	var binding *localClusterBinding
-	if selection.explicit {
+	if selection.explicit || mapClusterIdentityRequested(cmd) {
 		binding = resolveLocalClusterBindingForSelection(selection)
-		if binding.err != nil {
+		binding.observeClusterIdentity = mapClusterIdentityRequested(cmd)
+		if binding.err != nil && !binding.observeClusterIdentity {
 			return fmt.Errorf("resolve selected Kubernetes context: %w", binding.err)
 		}
 	}
@@ -675,6 +676,7 @@ func init() {
 	// Hub flag (same as 'map hub' subcommand)
 	mapCmd.Flags().BoolVar(&mapHub, "hub", false, "Launch ConfigHub hierarchy TUI (requires cub auth)")
 	mapCmd.Flags().String("kube-context", "", "Use this exact Kubernetes context for TUI inventory and bounded explain")
+	mapCmd.Flags().Bool("cluster-identity", false, "Observe cluster Namespace-instance identity (one extra GET per inventory refresh)")
 
 	// Shared view flags (CLI ↔ TUI symmetry: --owner, --namespace, --depth, --kind)
 	AddSharedViewFlags(mapCmd)
@@ -690,6 +692,7 @@ func init() {
 	// List-specific flags
 	addRecordedMapFlags(mapListCmd)
 	mapListCmd.Flags().String("kube-context", "", "Use this exact Kubernetes context for this inventory read")
+	mapListCmd.Flags().Bool("cluster-identity", false, "Include observed cluster identity and identity-only read cost in a separate envelope (one extra GET)")
 	mapListCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
 	mapListCmd.Flags().StringVar(&mapKind, "kind", "", "Filter by resource kind")
 	mapListCmd.Flags().StringVar(&mapOwner, "owner", "", "Filter by owner (recorded mode also accepts Kubernetes)")
@@ -769,6 +772,15 @@ func init() {
 }
 
 func runMapList(cmd *cobra.Command, args []string) error {
+	includeIdentity := mapClusterIdentityRequested(cmd)
+	if includeIdentity {
+		if err := validateMapClusterIdentityOptions(); err != nil {
+			return err
+		}
+		if recordedMapRequested(cmd) || os.Getenv("CUB_SCOUT_TEST_MAP_ENTRIES_JSON") != "" {
+			return fmt.Errorf("--cluster-identity requires a captured cluster binding; recorded or test-hook inventory cannot establish it")
+		}
+	}
 	if recordedMapRequested(cmd) {
 		return runRecordedMapCLI(cmd, args)
 	}
@@ -805,6 +817,13 @@ func runMapList(cmd *cobra.Command, args []string) error {
 	}
 
 	// Normal mode: collect from cluster
+	if includeIdentity {
+		binding := resolveLocalClusterBindingForSelection(selection)
+		if binding.err != nil && selection.explicit {
+			binding.context = selection.name // Requested selector only; unverified.
+		}
+		return runMapListFromClusterWithConfigAndIdentity(ctx, binding.config, binding.err, false, binding.context, true)
+	}
 	return runMapListFromClusterWithSelectionAndDiagnostics(ctx, selection, mapOwnershipEvidence)
 }
 
@@ -831,6 +850,15 @@ func runMapListFromClusterWithConfig(ctx context.Context, cfg *rest.Config, conf
 }
 
 func runMapListFromClusterWithConfigAndDiagnostics(ctx context.Context, cfg *rest.Config, configErr error, includeOwnershipEvidence bool) error {
+	return runMapListFromClusterWithConfigAndIdentity(ctx, cfg, configErr, includeOwnershipEvidence, "", false)
+}
+
+func runMapListFromClusterWithConfigAndIdentity(ctx context.Context, cfg *rest.Config, configErr error, includeOwnershipEvidence bool, contextLabel string, includeIdentity bool) error {
+	if includeIdentity {
+		if err := validateMapClusterIdentityOptions(); err != nil {
+			return err
+		}
+	}
 	debug := os.Getenv("CUB_SCOUT_DEBUG") != ""
 	var startTotal time.Time
 	if debug {
@@ -839,15 +867,24 @@ func runMapListFromClusterWithConfigAndDiagnostics(ctx context.Context, cfg *res
 
 	// Build Kubernetes config
 	if configErr != nil {
+		if includeIdentity {
+			return renderMapListFromEntriesWithIdentity(nil, nil, false, unavailableMapClusterIdentity(contextLabel, "cluster_binding_unavailable"), "cluster_binding_unavailable")
+		}
 		return withKubeRecoveryHint(fmt.Errorf("build kubernetes config: %w", configErr), "cub-scout map list")
 	}
 	if cfg == nil {
+		if includeIdentity {
+			return renderMapListFromEntriesWithIdentity(nil, nil, false, unavailableMapClusterIdentity(contextLabel, "cluster_binding_unavailable"), "cluster_binding_unavailable")
+		}
 		return withKubeRecoveryHint(fmt.Errorf("build kubernetes config: no config resolved"), "cub-scout map list")
 	}
 
 	// Create dynamic client
 	dynClient, err := dynamic.NewForConfig(cfg)
 	if err != nil {
+		if includeIdentity {
+			return renderMapListFromEntriesWithIdentity(nil, nil, false, unavailableMapClusterIdentity(contextLabel, "inventory_client_unavailable"), "inventory_client_unavailable")
+		}
 		return withKubeRecoveryHint(fmt.Errorf("create dynamic client: %w", err), "cub-scout map list")
 	}
 
@@ -857,13 +894,17 @@ func runMapListFromClusterWithConfigAndDiagnostics(ctx context.Context, cfg *res
 		clusterName = "default"
 	}
 	observedAt := mapObservationNow().UTC()
+	var clusterIdentity *agent.ClusterIdentityEvidence
+	if includeIdentity {
+		clusterIdentity = observeMapClusterIdentity(ctx, cfg, contextLabel)
+	}
 
 	// Collect resources
 	entries := []MapEntry{}
 	var omissions []mapsvc.CollectionOmission
 	byOwner := map[string]int{} // populated during collection; recomputed after filtering for summary correctness
 	appSetLookup, appSetErr := loadMapApplicationSetLookupWithError(ctx, dynClient, mapNamespace)
-	if includeOwnershipEvidence && appSetErr != nil {
+	if (includeOwnershipEvidence || includeIdentity) && appSetErr != nil {
 		appSetGVR := schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applicationsets"}
 		omissions = append(omissions, mapListCollectionOmission(appSetGVR, mapNamespace, appSetErr))
 	}
@@ -881,7 +922,7 @@ func runMapListFromClusterWithConfigAndDiagnostics(ctx context.Context, cfg *res
 		if mapNamespace != "" {
 			l, err := dynClient.Resource(gvr).Namespace(mapNamespace).List(ctx, v1.ListOptions{})
 			if err != nil {
-				if includeOwnershipEvidence {
+				if includeOwnershipEvidence || includeIdentity {
 					omissions = append(omissions, mapListCollectionOmission(gvr, mapNamespace, err))
 				}
 				continue // Skip resources that don't exist
@@ -892,7 +933,7 @@ func runMapListFromClusterWithConfigAndDiagnostics(ctx context.Context, cfg *res
 		} else {
 			l, err := dynClient.Resource(gvr).List(ctx, v1.ListOptions{})
 			if err != nil {
-				if includeOwnershipEvidence {
+				if includeOwnershipEvidence || includeIdentity {
 					omissions = append(omissions, mapListCollectionOmission(gvr, "", err))
 				}
 				continue
@@ -915,7 +956,7 @@ func runMapListFromClusterWithConfigAndDiagnostics(ctx context.Context, cfg *res
 
 	// NOTE: byOwner is recomputed inside renderMapListFromEntries after filtering
 	// to keep the summary consistent with the displayed table.
-	return renderMapListFromEntriesWithDiagnostics(entries, omissions, includeOwnershipEvidence)
+	return renderMapListFromEntriesWithIdentity(entries, omissions, includeOwnershipEvidence, clusterIdentity, "")
 }
 
 func mapListCollectionOmission(gvr schema.GroupVersionResource, namespace string, err error) mapsvc.CollectionOmission {
@@ -950,6 +991,10 @@ func renderMapListFromEntries(entries []MapEntry) error {
 }
 
 func renderMapListFromEntriesWithDiagnostics(entries []MapEntry, omissions []mapsvc.CollectionOmission, includeOwnershipEvidence bool) error {
+	return renderMapListFromEntriesWithIdentity(entries, omissions, includeOwnershipEvidence, nil, "")
+}
+
+func renderMapListFromEntriesWithIdentity(entries []MapEntry, omissions []mapsvc.CollectionOmission, includeOwnershipEvidence bool, clusterIdentity *agent.ClusterIdentityEvidence, unavailableReason string) error {
 	// Apply filters
 	filtered := []MapEntry{}
 
@@ -1053,12 +1098,28 @@ func renderMapListFromEntriesWithDiagnostics(entries []MapEntry, omissions []map
 	if effectiveFormat == "json" {
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
+		if clusterIdentity != nil {
+			return enc.Encode(mapClusterIdentityOutput{Schema: "map-list-cluster-identity.v1", Cluster: *clusterIdentity, ClusterCostScope: "identity-reader", Resources: entries, Collection: mapClusterCollection(omissions, unavailableReason)})
+		}
 		if includeOwnershipEvidence {
 			return enc.Encode(mapsvc.BuildOwnershipEvidenceOutput(entries, omissions))
 		}
 		return enc.Encode(entries)
 	}
 
+	if clusterIdentity != nil {
+		if effectiveFormat == "md" {
+			fmt.Printf("```text\n%s```\n\n", mapClusterIdentityText(clusterIdentity))
+		} else {
+			fmt.Print(mapClusterIdentityText(clusterIdentity) + "\n")
+		}
+		collection := mapClusterCollection(omissions, unavailableReason)
+		fmt.Printf("Inventory collection: %s (%d list request(s) omitted)\n", collection.Status, len(collection.Omissions))
+		if unavailableReason != "" {
+			fmt.Printf("Inventory unavailable: %q\n", unavailableReason)
+		}
+		printMapListOwnershipOmissions(omissions, true)
+	}
 	if effectiveFormat == "md" {
 		// Markdown output: table format
 		fmt.Println("## Resource Inventory")
