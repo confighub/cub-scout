@@ -1,0 +1,48 @@
+{
+  "schema": "scout-linux-candidate-build.v1",
+  "sourceRevision": "83dade919be18aa594aa393f692bdfae15d71fac",
+  "retainedEvidencePath": "/private/tmp/scout-v213-offline-linux-candidate-20261004",
+  "binary": {
+    "bytes": 75977571,
+    "sha256": "3acd8963d9660de31c3b54d8b1670f0ee7e7c992cdac43d57f04df420e8c4aa2",
+    "elfClass": 64,
+    "endianness": "little",
+    "machine": "AArch64"
+  },
+  "build": {
+    "goVersion": "go1.26.2",
+    "moduleVersionMetadata": "v2.12.5-0.20261004191046-83dade919be1",
+    "target": "linux/arm64",
+    "cgo": false,
+    "trimpath": true,
+    "buildVCS": true,
+    "moduleNetwork": "off",
+    "toolchainDownloads": false,
+    "twoBuildsByteIdentical": true,
+    "vcsModified": false,
+    "explicitBuildVCS": true
+  },
+  "claims": {
+    "offlineBuildCandidateVerified": true,
+    "targetExecuted": false,
+    "releaseArtifact": false,
+    "publishedVersion": false,
+    "linuxRuntimeAdmission": false,
+    "full24Admission": false,
+    "modelToolAdmission": false,
+    "savingsEstablished": false
+  },
+  "retainedEvidenceSHA256": {
+    "build-stamped-first.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-stamped-second.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clone.log": "8e657e235ba084e03f00da10ec9fa916ab7c9337e611d44801c4adbb64fb45a9",
+    "checkout.log": "fbbcf17d7196a31822cbc6b4c37d1e3c11c7ad6bc5bc501402eff2951bb5add4",
+    "build-stamped-info.txt": "e62f4d243fa7c53d43068676eb14b5bfa4aaaf7de9749d7b2a809309730c0717"
+  },
+  "rejectedAttempt": {
+    "reason": "Managed-worktree build omitted embedded VCS metadata; excluded as a source-bound candidate.",
+    "sha256": "d9b7802a7c7677b53b270cb4bf3b1bf5af2165f128a39f19af61636aed5befdf",
+    "buildInfoSHA256": "e950a9bf9c265437cfe0ca79f60d6be74ce344281b0e3dc665afdcec37a1d3d0",
+    "targetExecuted": false
+  }
+}

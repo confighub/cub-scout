@@ -1089,6 +1089,18 @@ explicit opt-in extra Namespace read, separate identity-only costs and shared
 CLI/MCP/TUI projection. The v2.13 branch remains available for genuine gates
 once the pending live-test clarification is resolved.
 
+## Refreshed v2.13 static Linux candidate — 2026-10-04
+
+Clean source `83dade91` now has two byte-identical offline Linux/arm64 builds
+with explicit VCS stamping: exact revision and modified=false, CGO disabled and
+trimpath enabled. [Build receipt](docs/releases/v2.13-offline-linux-candidate.json)
+pins the AArch64 ELF, metadata and private retained logs. A managed-worktree
+attempt omitted VCS metadata; it is retained as rejected rather than relabeled
+source-bound. The prior Sveltos/typed-list candidates remain immutable history.
+No target execution, runtime/full24/model admission or publication is inferred.
+Independent static audit verified both binaries, exact clean source, metadata
+and retained receipt hashes without target execution.
+
 ## Resume here
 
 Check #645 and the checkpoint above. Drive the adopted plan through 3.0,
