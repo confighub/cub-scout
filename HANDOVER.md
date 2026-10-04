@@ -779,6 +779,11 @@ Independent audit verified the retained proof and all source/input/output pins.
 Five pure controls pass, including failed/timed-out artifact retention, bringing
 launch-policy coverage to 22 tests; full
 offline Go tests passed (unit package 47.419s).
+Implementation `2a498cfd` is pushed; unit-only CI
+[37213160950](https://github.com/confighub/cub-scout/actions/runs/37213160950)
+passed at that exact SHA. Downloaded proof confirms 50.2% coverage against 25.0%
+minimum, Unit Tests and Proof Artifact success, and all five nonunit tiers
+skipped. Later documentation checkpoints do not alter tested code.
 
 The admission boundary is explicit: `recorded_response` currently transports
 raw source evidence, not a product Scout inventory/diagnosis capability. It stays
