@@ -1286,7 +1286,7 @@ valid pre-fix control collapses five references into two trees; the expanded
 corrected control retains six, including unknown metadata. Independent review
 found no findings. Focused race (2.055s), build, vet and held-source-fixed full
 offline Go suite pass. No additional API reads or genuine/TUI-process proof.
-Exact-head unit-only CI is pending. The adjacent kro owner-reference fallback
+Exact-head unit-only CI 37234045207 at d1ff9adb passes: 51.1% coverage, all five nonunit tiers skipped. The adjacent kro owner-reference fallback
 correctness problem is recorded before implementation in #772.
 
 ## kro typed owner-reference correction #772 (2026-10-04)
@@ -1307,7 +1307,23 @@ The repaired valid-path baseline exposes eleven false-present cases; an earlier
 fixture-path failure and a compile-repair log remain retained. Final focused
 checks, package race (1.777s/1.979s), build, vet and held-source-fixed full
 offline Go suite pass. Independent review found no issues. Exact-head unit-only
-CI is pending; genuine controller and broader conformance remain open.
+CI 37234681908 at 45836b03 passes: 51.2% coverage against 25.0%, with all five nonunit tiers skipped; genuine controller and broader conformance remain open.
+
+## Current final source checkpoint — 2026-10-04
+
+2.14 source `45836b03a18ea6c496ae84cc895848ca98e62fd4` passes exact-head
+manual unit-only CI [37234681908](https://github.com/confighub/cub-scout/actions/runs/37234681908).
+Downloaded proof pins that SHA, 51.2% coverage/25.0% minimum, unit success and
+all five nonunit tiers skipped. Prior source packets #770/#771 separately pass
+inspected CI 37233529700/37234045207 at their exact heads. No source work is
+left uncommitted. This handover/result bookkeeping does not change production.
+
+The reviewed 2.13 [server read-evidence proposal](https://github.com/confighub/cub-scout/blob/c0140920/docs/proposals/server-governance-read-evidence.md)
+is separately pinned to its candidate branch; production and static distribution
+source pins there are unchanged. Published baseline is freshly verified v2.12.4.
+2.13/2.14 remain unreleased and unmerged while normal CI would launch excluded
+live tiers. Source controls are not genuine server/controller acceptance or a
+published paired benchmark. SDK renderer #758 remains deferred.
 
 ## Resume here
 
