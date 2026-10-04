@@ -52,6 +52,41 @@ mounts, runtime and tool admission still need review before that policy can use
 it. RUL-03 remains blocked; no prompts, grants, budgets or source evidence have
 changed.
 
+### Recorded inventory binding (offline, eval-only)
+
+`context_inventory.py` adds `bind_inventory(context, method, path, map_reader)`.
+It selects one exact pinned response before calling the injected recorded Scout
+map reader. The reader receives only original response bytes and exact
+`apps/v1 Deployment` scope in `rul03-proof`; it returns full recorded-map JSON.
+The binding checks schema, source hash/size/counts, supplied-type count, exact
+scope/resource identities and owner histogram before retaining that projection.
+Ownership remains product output; this helper does not independently re-detect
+it or establish the reader's binary/runtime admission.
+
+A captured 403 yields `coverage: "unreadable"` and `inventory: null`. It never
+calls the reader or loads the readable context's response, even when that
+context was the observer's default. Successful historical evidence yields
+`coverage: "recorded-response"`, never current state or complete cluster
+coverage. Both retain exact capture endpoint, request, row, status and source
+provenance, with `currentStateEstablished` and `runtimeAdmission` false. There
+is no cross-context join, retry, default or fallback.
+
+Success controls use the original [RUL-03 recording](../rul03-context/README.md):
+exact readable bytes/scope/provenance; denied callback suppression with the
+other body absent; foreign hash/scope/identity/count refusal; changed or missing
+source refusal before the reader; malformed/duplicate/non-finite/oversized/deep
+report refusal; and reader failure without retry or private error leakage.
+Six deterministic tests extend this directory's suite to 31 tests, automatically
+included by its existing unit-only CI step. No product CLI/MCP/TUI surface,
+MCP transport source pin, frozen prompt, evidence or grant changes.
+
+The retained actual host CLI/binding smoke at
+`/private/tmp/scout-v213-context-inventory-host-proof-20261004` used the local
+`./cub-scout`, a private empty HOME/kubeconfig and selected original response.
+It validates only host recorded CLI composition: one readable invocation and
+zero denied invocations. It establishes no Linux runtime, MCP/model tool
+admission, live test, containment or savings. RUL-03 remains blocked in full24.
+
 ## PRE-01 recorded API replay
 
 This helper serves a small, fixed set of byte-pinned PRE-01 API responses on an

@@ -83,3 +83,19 @@ Recorded MCP also exposes ownership `map` with exact API version/Kind scope.
 It shares the input hash and bounded parser while rejecting duplicate full
 identities across the entire recording before filtering. See the
 [recorded inventory example](../recorded-inventory/).
+
+## Exact captured-context binding example
+
+The existing RUL-03 response example also validates the eval-only
+[`bind_inventory` adapter](../../evals/recorded-api/README.md#recorded-inventory-binding-offline-eval-only).
+It binds product recorded-map output to one exact captured request; a denied
+request retains unknown inventory without calling the map reader. Run its
+six deterministic controls with:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/recorded-api -p test_context_inventory.py -v
+```
+
+This adapter adds no product context flag or live/fleet behavior. Product
+CLI/MCP/TUI keep the same recorded projection; runtime and tool admission remain
+separate requirements.

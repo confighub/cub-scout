@@ -824,6 +824,34 @@ joining or current-state claim. RUL-03 remains blocked and the Linux binary pin
 has not been rebuilt/admitted for this new code; full24 stays eleven candidates
 and thirteen blocked. No live/container/model/provider run occurred.
 
+## Exact recorded-context inventory binding — 2026-10-04
+
+`evals/recorded-api/context_inventory.py` now binds a full product recorded map
+projection to one exact pinned RUL-03 context/GET/path response. It passes only
+selected original bytes and exact namespaced Deployment scope to an injected
+reader, then validates hash/size/count/type-derivation provenance, schema,
+resource identities and owner histogram. Ownership remains reader output;
+reader binary/runtime admission is separate. A recorded 403 returns unreadable
+coverage and null inventory without invoking the reader or reading another
+context's body. There is no current-context default, join, retry or fallback.
+
+Success criteria were defined before implementation. Six deterministic controls
+cover exact source/scope, denial without readable body, foreign report identity,
+counts, malformed/bounded JSON, missing/changed source and reader failure. All
+31 recorded-API controls, three workflow guards and full offline Go suite pass.
+The existing recorded-loader example references these controls. Independent
+source review found no actionable defect. Actual local `./cub-scout` composition
+with private empty HOME/kubeconfig passed; retained bytes/hashes live at
+`/private/tmp/scout-v213-context-inventory-host-proof-20261004`. There was one
+readable CLI call and zero denied calls.
+
+This is an eval-only binding, not a new product CLI/MCP/TUI surface or admitted
+MCP tool. Existing transport module pins, frozen case inputs/grants/prompts and
+budgets are unchanged. RUL-03 remains blocked on tool/runtime admission and the
+new Linux binary pin; full24 remains eleven candidates and thirteen blocked.
+Current-state/runtime admission flags stay false. No live, container, model or
+provider run occurred; SDK #758 remains deferred and v2.13 is unreleased.
+
 ## Resume here
 
 Check #645 and the offline checkpoint above. Continue v2.13 on

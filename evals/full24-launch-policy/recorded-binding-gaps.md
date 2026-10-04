@@ -23,7 +23,7 @@ source binding.
 | PRE-03 | Parent/child Application fields, tree and pod/event text | Captured Application JSON omits GVK; bind identity from pinned capture provenance. Parent sync does not replace child or pod/event evidence. |
 | PRE-04 | Desired placement matrix and config provenance | Desired component/cluster placement is not observed live inventory; disabled/unobserved states remain distinct. |
 | RUL-02 | Timestamped cache-replay sequence | Explicit frame/cache timing semantics, never collapse replay frames into one current snapshot. |
-| RUL-03 | Context map, readable and denied API response bodies | Exact context/request adapter has a [host stdio proof](local-context-proof.json). Scout's shared loader now accepts the exact readable DeploymentList envelope with explicit derivation provenance. Multi-context/status binding and a new Linux runtime pin remain open; the raw transport tool is not in the frozen grant. Denied inventory stays unknown. |
+| RUL-03 | Context map, readable and denied API response bodies | Exact context/request adapter has a [host stdio proof](local-context-proof.json). Scout's shared loader now accepts the exact readable DeploymentList envelope with explicit derivation provenance. A pure eval-only exact-request inventory binding now validates Scout map source/scope/identity and retains denial as unknown without invoking the reader. Tool/runtime admission and a new Linux runtime pin remain open; the raw transport tool is not in the frozen grant. Denied inventory stays unknown. |
 
 All of these source files remain equally readable in both experiment arms.
 A future adapter must expose only evidence already in the selected case, retain
