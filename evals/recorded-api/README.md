@@ -87,6 +87,43 @@ It validates only host recorded CLI composition: one readable invocation and
 zero denied invocations. It establishes no Linux runtime, MCP/model tool
 admission, live test, containment or savings. RUL-03 remains blocked in full24.
 
+### Prepared exact-context map protocol
+
+`context_inventory_mcp.py` adds a separate eval-only bounded stdio protocol
+adapter. Its sole read-only `map` tool requires exact `context`; GET/path and
+namespaced Deployment scope are fixed by the selected capture. The catalog does
+not expose raw responses, explain, doctor or live tools. Unknown contexts,
+extra method/path/scope arguments, malformed initialization/envelopes and
+notifications cannot execute the reader. The adapter checks the entire outgoing
+JSON-RPC envelope against the byte bound and returns a fixed tool error when
+source/reader/report validation fails, without echoing private inputs.
+
+Startup validates both original pinned contexts before publishing a catalog.
+Each subsequent call binds exactly one request. A captured denial is a successful
+historical evidence read (`isError: false`) with HTTP 403, unreadable coverage and
+null inventory; it never runs the inventory reader. The readable call retains
+validated product map output and exact selected capture provenance. No source
+files or contexts are combined into a new snapshot.
+
+Six pure protocol controls bring this directory's suite to 37 tests. The actual
+host stdio/CLI composition at
+`/private/tmp/scout-v213-context-map-mcp-host-20261004` checks initialization,
+map-only catalog, denied/readable selection, implicit-context refusal and
+unsupported doctor/explain refusal. It records seven replies and one readable
+local `./cub-scout` CLI call, with private empty HOME/kubeconfig, reviewed package
+hashes and interpreter/binary hashes checked before/after. Source base revision
+and modified-tree state are separate from exact adapter hashes. This is a host
+composition check, not filesystem/network containment or trusted runtime mounts.
+
+The module accepts an injected reader through its Python API; it has no executable
+entrypoint, arbitrary binary flag or live fallback. Using the name `map` does not
+by itself admit this eval adapter under a frozen model tool grant. Original
+`context_frames.py`/`context_mcp.py` source pins, source questions/evidence/budgets,
+launch-policy candidates and ordinary grants remain unchanged. Linux Python
+bundle/mount admission, an enforced reader, exact model-tool wiring and complete
+process accounting remain open; RUL-03 is still blocked. The product's
+CLI/MCP/TUI surfaces remain unchanged.
+
 ## PRE-01 recorded API replay
 
 This helper serves a small, fixed set of byte-pinned PRE-01 API responses on an

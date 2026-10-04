@@ -881,6 +881,30 @@ proofs are unchanged. No target binary, Docker, live cluster, model, provider or
 registry operation ran. Runtime execution remains deferred to the final gates;
 this is a build candidate, not a release artifact or full24 admission.
 
+## Prepared exact-context inventory MCP — 2026-10-04
+
+The separate eval-only `context_inventory_mcp.py` presents one read-only map tool
+with a mandatory exact recorded context and fixed request/scope. It reuses the
+reviewed protocol envelope/initialization gate without enabling raw-response,
+explain or live tools. Denial remains a successful historical evidence read with
+HTTP 403, unreadable coverage and null inventory; the reader is never called.
+Reader/source/report failure gives a generic refusal, and the whole outgoing
+JSON-RPC envelope is bounded. Six pure protocol controls bring recorded-API tests
+to 37; all pass, as does the full offline Go suite. Independent source and host
+proof reviews found no actionable defect.
+
+The actual host stdio/CLI composition retained at
+`/private/tmp/scout-v213-context-map-mcp-host-20261004` has seven replies, map-only
+catalog, one readable local Scout invocation and zero denied invocations. The
+[public summary](evals/full24-launch-policy/local-context-map-proof.json) records
+exact package/stream/interpreter/binary hashes and discloses modified source
+state separately from its base revision. This is host composition, not runtime
+containment or model-tool admission. Existing transport source pins, frozen
+launch policy/questions/evidence/grants/budgets and product CLI/MCP/TUI surfaces
+are unchanged. RUL-03 remains blocked; Linux Python/dependency/mount admission,
+enforced reader wiring and descendant accounting remain open. Full24 remains
+eleven candidates and thirteen blocked. No live/container/model/provider run.
+
 ## Resume here
 
 Check #645 and the offline checkpoint above. Continue v2.13 on

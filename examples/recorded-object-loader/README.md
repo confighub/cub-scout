@@ -99,3 +99,13 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/recorded-api -p 
 This adapter adds no product context flag or live/fleet behavior. Product
 CLI/MCP/TUI keep the same recorded projection; runtime and tool admission remain
 separate requirements.
+
+The separate [prepared map protocol](../../evals/recorded-api/README.md#prepared-exact-context-map-protocol)
+uses the same binding through bounded stdio messages. Its offline controls are:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/recorded-api -p test_context_inventory_mcp.py -v
+```
+
+The eval-only catalog has one exact-context map tool; its name alone does not
+establish runtime or frozen model-grant admission.
