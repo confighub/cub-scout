@@ -733,6 +733,12 @@ and bounded regular-file checks. It does not default to the recorded readable
 current context or fall back after a denied read. Five deterministic controls
 cover exact responses, unavailable requests, missing/changed bytes, symlinks,
 FIFO and oversized input; the combined recorded-api suite has 20 controls.
+Independent review found no actionable defects. Full offline `go test ./...`
+passed with the explicit empty kubeconfig. Implementation `bf728b93` is pushed;
+unit-only CI [37199576055](https://github.com/confighub/cub-scout/actions/runs/37199576055)
+passed at that exact SHA. Its downloaded proof confirms 50.2% coverage against
+25.0% minimum, Unit and Proof Artifact success, and all five nonunit tiers
+skipped. Later documentation checkpoints do not change that tested code.
 This is source-selection preparation, not an MCP binding or model admission.
 The full-24 count remains eleven candidates and thirteen blocked cases. No
 frozen evidence, grants, budgets or product CLI behavior changed.
