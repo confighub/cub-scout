@@ -7,6 +7,8 @@ import importlib.util
 import json
 from pathlib import Path
 
+import dispatch_guard
+
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 spec = importlib.util.spec_from_file_location('launch_policy_stager', REPO / 'evals/full24-case-stage/stage.py')
@@ -28,6 +30,13 @@ RECORDINGS.update({'HLT-02': 'cluster/deployment.json', 'PRE-02': 'cluster/after
 RECORDED_CASES = frozenset(RECORDINGS)
 MCP_TOOLS = ['mcp__cub-scout__map', 'mcp__cub-scout__explain']
 FALLBACK_BUDGET = {'max_turns': 20, 'timeout_seconds': 600}
+
+
+def dispatch_settings(selection):
+    selection_sha = sha(dispatch_guard.encoded(selection))
+    command = '/runtime/python3 /runtime/dispatch_guard.py ' + selection['case'] + ' ' + selection['arm'] + ' ' + selection_sha
+    return {'hooks': {'PreToolUse': [{'matcher': '.*', 'hooks': [
+        {'type': 'command', 'command': command, 'timeout': 5}]}]}}
 
 
 def sha(data):
@@ -79,6 +88,7 @@ def _build(receipt, source_report, model_root):
             '--model', MODEL, '--no-session-persistence', '--tools', ordinary,
             '--allowedTools', allowed, '--disallowedTools', 'Task,Agent',
             '--strict-mcp-config', '--mcp-config', '/runtime/mcp.json',
+            '--settings', '/runtime/guard-settings.json',
             '--setting-sources', '', '--max-turns', str(budget['max_turns'])]
     if arm == 'with':
         argv += ['--plugin-dir', '/runtime/plugin']
@@ -101,7 +111,11 @@ def _build(receipt, source_report, model_root):
             'status': 'blocked_unreviewed_python_and_overlay' if arm == 'with' else 'blocked_runtime_not_constructed',
             'wrapper': {'sourceSha256': sha((HERE / 'recorded_server.py').read_bytes()),
                         'runtimePath': '/runtime/recorded_server.py'} if arm == 'with' else None,
-            'python': {'runtimePath': '/runtime/python3', 'trustedSha256': None} if arm == 'with' else None,
+            'python': {'runtimePath': '/runtime/python3', 'trustedSha256': None},
+            'dispatchGuard': {'sourceSha256': sha((HERE / 'dispatch_guard.py').read_bytes()),
+                              'runtimePath': '/runtime/dispatch_guard.py',
+                              'settingsSha256': sha(dispatch_guard.encoded(dispatch_settings(selection))),
+                              'runtimeInvoked': False},
             'rule': 'Before execution, independently pin Python and its runtime dependencies, validate the wrapper against this source digest, and inspect all read-only runtime asset mounts. A policy is never runtime admission.'},
         'argv': argv if ready else None,
         'environment': {'PATH': '/runtime:/usr/bin:/bin', 'HOME': '/tmp/private-home',

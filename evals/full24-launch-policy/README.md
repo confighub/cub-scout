@@ -11,6 +11,9 @@ The four-snapshot follow-up was scoped before code in
 The terminal-adapter follow-up was scoped before code in
 [#645 comment 5978432564](https://github.com/confighub/cub-scout/issues/645#issuecomment-5978432564).
 
+The prepared dispatch guard was scoped before code in
+[#645 comment 5978652786](https://github.com/confighub/cub-scout/issues/645#issuecomment-5978652786).
+
 `policy.py` reconstructs a candidate from a verified selected-case stage and its
 source preparation. Both arms retain the exact prompt body, ordinary tool grant
 and declared turn/time budget. None of the 24 source grants includes Bash.
@@ -27,11 +30,14 @@ recordings have explicit object identities. The other 13 cases
 return `blocked_recorded_mcp_binding`, no executable argv and no fabricated tool
 response. Partial observations, distinct contexts and sequential frames must
 not be merged to construct a convenient replacement dataset.
+The [remaining binding contracts](recorded-binding-gaps.md) name each source
+shape and the identity/scope work needed; this inventory does not unblock them.
 
 `overlay.py` materializes and verifies candidate metadata into a new read-only
 directory. Its Python API is `build(source, stage, case, arm, output)` followed
 by `verify(source, stage, case, arm, output)` (paths are `pathlib.Path` values).
-The baseline contains only its policy and empty strict MCP configuration. The
+Both arms include their policy, strict MCP configuration and prepared dispatch
+guard/settings/binding. The baseline has no Scout binary, plugin or MCP tools. The
 treatment copies exact selected-stage skills, a manifest with ambient MCP
 configuration removed, and the pinned wrapper source and case binding. Source,
 stage and overlay cannot overlap; extra files, changed bytes and writable
@@ -123,3 +129,22 @@ Unit and proof-artifact jobs run; cluster jobs skip. Unknown/empty manual levels
 also fail closed to offline jobs. Normal PR/main CI still includes live jobs,
 so this work stays on a topic branch while live tests are excluded. Skipped live
 jobs are pending gates, never passed gates.
+
+`dispatch_guard.py` implements the documented
+[PreToolUse JSON decision contract](https://code.claude.com/docs/en/hooks).
+Both arms prepare an all-tools hook against the same exact selected ordinary
+grant. Only the treatment can additionally dispatch the exact recorded map and
+explain names. Unknown, write, shell and delegation tools are denied; malformed,
+duplicate, oversized or incomplete event documents are refused. Case, arm,
+control selection and policy digest must match. Refusals never echo tool inputs.
+Permitted calls return no hook permission override and continue through ordinary
+CLI permissions. This checks tool names only; it does not prove file access,
+tool-argument validity, provider scope or skill behavior.
+
+The overlay source-binds and verifies the guard and settings in both arms.
+Python is an unresolved runtime asset in both arms. The host must verify the
+whole policy before immutable mounting: mutually matching runtime hashes alone
+are not independent source attestation. The pinned Claude hook invocation and
+hook error/timeout behavior still need adversarial runtime acceptance. A hook
+that fails to launch is not proven to block dispatch; these offline tests do
+not admit a paid run or claim actual enforcement.

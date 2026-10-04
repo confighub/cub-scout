@@ -30,8 +30,10 @@ class OverlayTests(unittest.TestCase):
                 files = overlay.render(plan, stage / 'model-stage')
                 self.assertFalse(any('oracle' in p or 'cases/' in p or p.startswith('cluster/') for p in files))
                 if arm == 'without':
-                    self.assertEqual(set(files), {'mcp.json', 'launch-policy.json'})
+                    self.assertEqual(set(files), {'mcp.json', 'launch-policy.json', 'dispatch_guard.py',
+                                                 'guard-settings.json', 'dispatch-binding.json'})
                     self.assertEqual(json.loads(files['mcp.json']), {'mcpServers': {}})
+                    self.assertEqual(json.loads(files['dispatch-binding.json'])['recordedTools'], [])
                 else:
                     plugin = json.loads(files['plugin/.claude-plugin/plugin.json'])
                     self.assertNotIn('mcpServers', plugin)

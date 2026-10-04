@@ -5,6 +5,7 @@ from pathlib import Path
 
 import policy
 import recorded_server
+import dispatch_guard
 
 
 def encoded(value):
@@ -15,6 +16,13 @@ def render(launch, model_stage):
     if launch['status'] != 'candidate_not_executed':
         raise ValueError('unreviewed recorded binding cannot produce an overlay')
     files = {'mcp.json': encoded(launch['mcpConfig']), 'launch-policy.json': encoded(launch)}
+    guard = (policy.HERE / 'dispatch_guard.py').read_bytes()
+    settings = encoded(policy.dispatch_settings(launch['selection']))
+    admission = launch['runtimeAssetAdmission']['dispatchGuard']
+    if policy.sha(guard) != admission['sourceSha256'] or policy.sha(settings) != admission['settingsSha256']:
+        raise ValueError('dispatch guard/settings source differs')
+    files.update({'dispatch_guard.py': guard, 'guard-settings.json': settings,
+                  'dispatch-binding.json': encoded(dispatch_guard.binding_for(launch))})
     if launch['selection']['arm'] == 'with':
         manifest_raw = (model_stage / '.claude-plugin/plugin.json').read_bytes()
         if policy.sha(manifest_raw) != launch['stageFiles']['.claude-plugin/plugin.json']:
