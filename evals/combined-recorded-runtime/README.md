@@ -90,3 +90,10 @@ The observed `POST /v1/messages/count_tokens?beta=true` request may receive one
 explicit 404 decline per arm after fake-key authentication and bounded JSON
 capture. It counts toward the eight-request limit; no token count is fabricated.
 This local unavailable-service behavior is not a paid-provider billing claim.
+
+The historical runner still refuses later skill metadata drift. Offline tests
+reconstruct its pinned tree using the exact archived AI-agent skill fixture from
+`1b80b8c47fa6c08b97c595ca3a9a0ba53832b0a6`, verify the original whole-tree hash,
+and separately assert that current ChangeOrder metadata is refused. The runner,
+original source pin and historical runtime receipt are unchanged; these tests
+do not rerun containers or admit refreshed metadata under old proof.

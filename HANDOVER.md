@@ -78,6 +78,13 @@ container execution occurred. Cached build/vet, the repaired full offline Go
 suite, 17 launch-policy contracts, three authored ChangeOrder controls, three
 CI condition contracts and read-only/CLI parity/name/diff guards pass.
 
+Unit-only CI `37194543835` at `dcbb4789` failed the historical combined-runtime
+source-staging test because the current skill metadata no longer matches its v1
+pin. Its runner/contract/receipt remain unchanged. The repair reconstructs the
+original pinned tree from an exact archived skill fixture and separately tests
+current-source drift refusal; all 19 offline controls pass. This preserves the
+historical proof boundary rather than admitting new metadata under old evidence.
+
 ## Offline runtime checkpoint — 2026-10-03
 
 The user now requests all remaining v2.13 work except live tests. Current topic
