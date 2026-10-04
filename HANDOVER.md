@@ -28,8 +28,12 @@ execution, trusted attempt provenance, descendants or billing attribution.
 Cached build, full offline `go test ./...`, vet, read-only/CLI parity/name guards
 and three manual-CI condition contracts pass. The first full Go run exposed the
 new case's missing dedicated scaffold validator; its failed log is retained and
-the exact-byte/inventory repair passes the full suite. Unit-only CI for this
-packet must be inspected at its exact committed head before recording acceptance.
+the exact-byte/inventory repair passes the full suite. Reviewed implementation
+`0a0ef0e5` is pushed. Unit-only CI
+[37192588839](https://github.com/confighub/cub-scout/actions/runs/37192588839)
+passed Unit and Proof Artifact at that exact SHA. Downloaded proof confirms
+50.0% coverage against 25.0% minimum and all five nonunit tiers skipped.
+Later documentation checkpoints do not change that tested implementation.
 
 The remaining scope is explicit in `docs/releases/v2.13-readiness.md`: 13 recorded
 bindings, pinned runtime assets/actual enforcement, governance captures and
