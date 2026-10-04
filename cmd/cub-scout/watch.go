@@ -18,9 +18,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/confighub/cub-scout/v2/internal/mapsvc"
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 )
 
@@ -54,13 +56,14 @@ type watchOptions struct {
 }
 
 type watchEvent struct {
-	Type        string                     `json:"type"`
-	Timestamp   time.Time                  `json:"timestamp"`
-	Observation *agent.ObservationEvidence `json:"observation,omitempty"`
-	Resource    watchEventResource         `json:"resource"`
-	Owner       *watchEventOwner           `json:"owner,omitempty"`
-	Severity    string                     `json:"severity,omitempty"`
-	Details     map[string]interface{}     `json:"details,omitempty"`
+	Collection  *mapsvc.OwnershipEvidenceCollection `json:"collection,omitempty"`
+	Type        string                              `json:"type"`
+	Timestamp   time.Time                           `json:"timestamp"`
+	Observation *agent.ObservationEvidence          `json:"observation,omitempty"`
+	Resource    watchEventResource                  `json:"resource"`
+	Owner       *watchEventOwner                    `json:"owner,omitempty"`
+	Severity    string                              `json:"severity,omitempty"`
+	Details     map[string]interface{}              `json:"details,omitempty"`
 
 	// Receipt is the in-toto Statement v1 envelope (a cub-scout receipt)
 	// built when `--emit-receipt-on` is enabled and this event's type
@@ -81,8 +84,8 @@ type watchEvent struct {
 	// absent) and a warning is written to stderr. This keeps the watch
 	// loop robust against transient cluster-read hiccups.
 	//
-	// All known watch event types build receipts in the current v2
-	// surface; receipt-build volume is controlled by
+	// Four resource/finding event types support receipts; deletion and
+	// collection omissions do not. Receipt-build volume is controlled by
 	// --emit-receipt-batch-cap.
 	Receipt *agent.Statement `json:"receipt,omitempty"`
 }
@@ -110,6 +113,9 @@ type watchFinding struct {
 }
 
 type watchState struct {
+	omissions   []mapsvc.CollectionOmission
+	entryScopes map[string]watchInventoryScope
+	namespace   string
 	entriesByID map[string]MapEntry
 	findings    map[string]watchFinding
 	// observedMode records how inventory for this cycle was read (per-cycle live
@@ -172,6 +178,7 @@ var watchCmd = &cobra.Command{
 Event types:
   - resource.discovered
   - resource.deleted
+  - collection.partial (unreadable inventory lists; v2.14 candidate)
   - ownership.changed
   - drift.detected
   - scan.finding
@@ -190,7 +197,7 @@ func init() {
 	watchCmd.Flags().BoolVar(&watchOnce, "once", false, "Run one collection cycle and exit")
 	watchCmd.Flags().IntVar(&watchMaxQueuedEvents, "max-queued-events", 1000, "Maximum buffered events when webhook is unavailable")
 	watchCmd.Flags().BoolVar(&watchWatchBacked, "watch-backed", false, "Back inventory and the state scan's reads with Kubernetes watch informers so idle cycles read from an in-process cache instead of re-listing each interval. Long-running only. Only served types whose informer syncs are cached; on any setup failure it falls back to per-cycle polling.")
-	watchCmd.Flags().StringVar(&watchEmitReceiptOn, "emit-receipt-on", "", "Comma-separated watch event types to attach a cub-scout receipt to (e.g. 'drift.detected,ownership.changed' or 'all' for all four). Receipt-build failures are non-fatal — the underlying event still emits but the receipt key is omitted (omitempty) and a stderr warning fires. All four known event types build receipts in v2 (#449): drift.detected, ownership.changed, resource.discovered, scan.finding. Per-poll cap controlled by --emit-receipt-batch-cap.")
+	watchCmd.Flags().StringVar(&watchEmitReceiptOn, "emit-receipt-on", "", "Comma-separated watch event types to attach a cub-scout receipt to (e.g. 'drift.detected,ownership.changed' or 'all' for all known types). Receipt-build failures are non-fatal — the underlying event still emits but the receipt key is omitted (omitempty) and a stderr warning fires. Receipt-supported event types: drift.detected, ownership.changed, resource.discovered, scan.finding. Deletion and collection.partial do not build receipts. Per-poll cap controlled by --emit-receipt-batch-cap.")
 	watchCmd.Flags().IntVar(&watchEmitReceiptBatchCap, "emit-receipt-batch-cap", 10, "Per-poll cap on receipt-build attempts (#449 backpressure). When a single poll produces more receipt-eligible events than the cap, the first N get receipts attached and the rest emit with the receipt key omitted plus a single stderr summary line. Set to 0 to disable receipt-build entirely while keeping the flag explicit; set to a large value (e.g. 1000) to effectively disable the cap. Default 10.")
 }
 
@@ -245,10 +252,8 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 
 	// Codex round-6 P2 fix (#463): emit a one-time startup warning when
 	// --emit-receipt-on includes event types that the mapping does NOT
-	// build receipts for. As of #449 all four known event types are
-	// supported; this block is retained for forward-compat — if a
-	// future event type is added without receipt-build support, the
-	// warning fires automatically.
+	// build receipts for. Deletion and collection omissions deliberately
+	// lack receipt support; future unsupported types use the same warning.
 	if len(emitReceiptOn) > 0 {
 		unsupported := unsupportedEmitReceiptTypes(emitReceiptOn)
 		if len(unsupported) > 0 {
@@ -339,6 +344,16 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 		return err
 	}
 	prevState = initial
+	// Initial inventory stays quiet, but missing coverage must be visible now.
+	if len(initial.omissions) > 0 {
+		events := buildWatchEvents(initial, initial, severityFilter, ownerFilter, watchEventNow)
+		queue = appendWatchQueue(queue, events, opts.MaxQueuedEvents)
+		remaining, deliveryErr := flushWatchQueue(ctx, sinks, queue)
+		queue = remaining
+		if deliveryErr != nil {
+			fmt.Fprintf(os.Stderr, "Warning: event delivery failed (buffered %d events): %v\n", len(queue), deliveryErr)
+		}
+	}
 
 	ticker := time.NewTicker(opts.Interval)
 	defer ticker.Stop()
@@ -361,7 +376,7 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 			queue = appendWatchQueue(queue, events, opts.MaxQueuedEvents)
 			remaining, err := flushWatchQueue(ctx, sinks, queue)
 			queue = remaining
-			prevState = curr
+			prevState = watchDiffBaseline(prevState, curr)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Warning: event delivery failed (buffered %d events): %v\n", len(queue), err)
 				continue
@@ -400,7 +415,7 @@ func collectWatchState(ctx context.Context, dynClient dynamic.Interface, namespa
 	// it never serves data across cycles; it also gives both sweeps one
 	// consistent point-in-time view per type.
 	cached := newCycleCachingDynamicClient(dynClient)
-	entries, err := collectWatchEntries(ctx, cached, namespace)
+	entries, scopes, omissions, err := collectWatchEntriesWithDiagnostics(ctx, cached, namespace)
 	if err != nil {
 		return watchState{}, err
 	}
@@ -410,6 +425,7 @@ func collectWatchState(ctx context.Context, dynClient dynamic.Interface, namespa
 	}
 
 	state := watchState{
+		omissions: omissions, entryScopes: scopes, namespace: namespace,
 		entriesByID: make(map[string]MapEntry, len(entries)),
 		findings:    make(map[string]watchFinding, len(findings)),
 	}
@@ -423,6 +439,11 @@ func collectWatchState(ctx context.Context, dynClient dynamic.Interface, namespa
 }
 
 func collectWatchEntries(ctx context.Context, dynClient dynamic.Interface, namespace string) ([]MapEntry, error) {
+	entries, _, _, err := collectWatchEntriesWithDiagnostics(ctx, dynClient, namespace)
+	return entries, err
+}
+
+func collectWatchEntriesWithDiagnostics(ctx context.Context, dynClient dynamic.Interface, namespace string) ([]MapEntry, map[string]watchInventoryScope, []mapsvc.CollectionOmission, error) {
 	clusterName := os.Getenv("CLUSTER_NAME")
 	if clusterName == "" {
 		clusterName = "default"
@@ -430,7 +451,12 @@ func collectWatchEntries(ctx context.Context, dynClient dynamic.Interface, names
 
 	resources := collectWatchResourceList()
 
-	appSetLookup := loadMapApplicationSetLookup(ctx, dynClient, namespace)
+	scopes := map[string]watchInventoryScope{}
+	var omissions []mapsvc.CollectionOmission
+	appSetLookup, appSetErr := loadMapApplicationSetLookupWithError(ctx, dynClient, namespace)
+	if appSetErr != nil {
+		omissions = append(omissions, mapListCollectionOmission(schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applicationsets"}, namespace, appSetErr))
+	}
 
 	entries := make([]MapEntry, 0, 256)
 	byOwner := map[string]int{}
@@ -438,20 +464,30 @@ func collectWatchEntries(ctx context.Context, dynClient dynamic.Interface, names
 		if namespace != "" {
 			l, err := dynClient.Resource(gvr).Namespace(namespace).List(ctx, v1.ListOptions{})
 			if err != nil {
+				omissions = append(omissions, mapListCollectionOmission(gvr, namespace, err))
 				continue
 			}
 			for _, item := range l.Items {
+				before := len(entries)
 				entries = processResourceWithLookup(&item, gvr, clusterName, entries, byOwner, appSetLookup)
+				for _, entry := range entries[before:] {
+					scopes[entry.ID] = watchInventoryScope{APIVersion: gvr.GroupVersion().String(), Resource: gvr.Resource, Namespace: namespace}
+				}
 			}
 			continue
 		}
 
 		l, err := dynClient.Resource(gvr).List(ctx, v1.ListOptions{})
 		if err != nil {
+			omissions = append(omissions, mapListCollectionOmission(gvr, namespace, err))
 			continue
 		}
 		for _, item := range l.Items {
+			before := len(entries)
 			entries = processResourceWithLookup(&item, gvr, clusterName, entries, byOwner, appSetLookup)
+			for _, entry := range entries[before:] {
+				scopes[entry.ID] = watchInventoryScope{APIVersion: gvr.GroupVersion().String(), Resource: gvr.Resource, Namespace: namespace}
+			}
 		}
 	}
 
@@ -464,7 +500,7 @@ func collectWatchEntries(ctx context.Context, dynClient dynamic.Interface, names
 		}
 		return entries[i].Name < entries[j].Name
 	})
-	return entries, nil
+	return entries, scopes, omissions, nil
 }
 
 func collectWatchFindings(ctx context.Context, dynClient dynamic.Interface, namespace string) ([]watchFinding, error) {
@@ -515,6 +551,10 @@ func collectWatchFindings(ctx context.Context, dynClient dynamic.Interface, name
 func buildWatchEvents(prev, curr watchState, severityFilter map[string]struct{}, ownerFilter string, nowFn func() time.Time) []watchEvent {
 	ts := nowFn().UTC()
 	events := make([]watchEvent, 0)
+	if len(curr.omissions) > 0 {
+		collection := mapsvc.BuildOwnershipEvidenceOutput(nil, curr.omissions).Collection
+		events = append(events, watchEvent{Type: "collection.partial", Timestamp: ts, Resource: watchEventResource{Kind: "Collection", Name: "inventory", Namespace: curr.namespace}, Collection: &collection})
+	}
 
 	for id, entry := range curr.entriesByID {
 		prevEntry, existed := prev.entriesByID[id]
@@ -567,7 +607,7 @@ func buildWatchEvents(prev, curr watchState, severityFilter map[string]struct{},
 	// (the loop above only iterates curr); Slice 2 (#539) surfaces it, and it is
 	// how watch-backed mode reports DELETE events. Applies in both modes.
 	for id, prevEntry := range prev.entriesByID {
-		if _, stillPresent := curr.entriesByID[id]; stillPresent {
+		if _, stillPresent := curr.entriesByID[id]; stillPresent || watchInventoryUnreadable(prev, curr, id) {
 			continue
 		}
 		resource := watchEventResource{Kind: prevEntry.Kind, Name: prevEntry.Name, Namespace: prevEntry.Namespace}

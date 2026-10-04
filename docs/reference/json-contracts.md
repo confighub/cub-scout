@@ -154,6 +154,17 @@ and performs no additional API reads. `--ownership-evidence` cannot be mixed
 with `--summary`, `--count`, or `--names-only` because those modes do not return
 per-entry diagnostics.
 
+## Watch inventory omissions (v2.14 candidate, unreleased)
+
+Watch/bot add an optional `collection` field only on `collection.partial`
+events. It uses the shared inventory collection shape: `status: "partial"`
+and normalized, deterministically sorted `omissions`. Such events have a
+synthetic Collection/inventory resource descriptor and event timestamp, with no
+object observation, owner or receipt. A failed LIST does not prove deletion;
+previous entries are private diff history, never renewed current evidence.
+See [event semantics and limits](watch-events.md#event-types) and the
+[offline example](../../examples/watch-collection-omissions/).
+
 ## Opt-in map cluster identity (v2.14 candidate, unreleased)
 
 `map list --cluster-identity --format json` and MCP `map` with
@@ -2639,7 +2650,7 @@ Implementation: `pkg/agent/receipt_aggregate.go`
 each matching event payload inline. Both commands use the same watch event shape
 with an optional `receipt` field carrying the full in-toto Statement.
 
-Event-type set (current; all four supported as of #449):
+Receipt-supported event types (four resource/finding types):
 
 | Event type | Receipt-build? | Notes |
 |------------|---------------|-------|
@@ -2647,7 +2658,13 @@ Event-type set (current; all four supported as of #449):
 | `ownership.changed` | Yes — `applied-matches-spec` auto-detected | Owner shifts often indicate a delivery-chain change worth attesting |
 | `resource.discovered` | Yes — `applied-matches-spec` auto-detected | The discovery moment captures the live state at first observation; backpressure-gated via `--emit-receipt-batch-cap` |
 | `scan.finding` | Yes — `applied-matches-spec` auto-detected | The receipt records the resource state at finding time; the finding detail lives on the event's `details` field; backpressure-gated |
+| `resource.deleted` | No | Known deletion event; no current object read to receipt |
+| `collection.partial` | No | Unreleased v2.14 candidate: collection omission, not an observed object |
 | `all` | Sugar — accepts every known event type |
+
+Selecting either unsupported type explicitly or through `all` emits the startup
+warning and leaves its receipt field absent. See the
+[event reference](watch-events.md#event-types).
 
 **Backpressure (`--emit-receipt-batch-cap N`, default 10):** when a
 single poll produces more receipt-eligible events than the cap, the

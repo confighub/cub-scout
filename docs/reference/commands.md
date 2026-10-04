@@ -1086,13 +1086,14 @@ At least one destination is required: `--webhook` and/or `--output-file`.
 | `--once` | Run one collection cycle and exit |
 | `--max-queued-events` | Max buffered events while webhook is unreachable |
 | `--watch-backed` | Back inventory **and the state scan's reads** with Kubernetes watch informers so idle cycles read from an in-process cache instead of re-listing each interval (Slice 2 of `#539`). The scan's runtime-failure pod read is watch-backed too (pods are cached for the scan but never enter the inventory / ownership map). Long-running only (no effect with `--once`). Only resource types the API server serves and whose informer syncs are cached; a type that isn't served or hasn't synced falls back to a live read. On any setup failure it falls back to per-cycle polling rather than degrade coverage. With this flag, event `observation.mode` is `watch-informer`. |
-| `--emit-receipt-on` | Comma-separated watch event types to attach a `cub-scout receipt` to. As of `#449` these known types build receipts: `drift.detected`, `ownership.changed`, `resource.discovered`, `scan.finding` (plus the sugar `all`). `resource.deleted` is a known type but is never receipted (the object is gone). Receipt-build failures are non-fatal: the watch event still emits but the JSON `receipt` key is **omitted** (the field uses `omitempty`; consumers should check key presence, not null-ness), with a stderr warning. Per-poll backpressure controlled by `--emit-receipt-batch-cap`. |
+| `--emit-receipt-on` | Comma-separated watch event types to attach a `cub-scout receipt` to. As of `#449` these known types build receipts: `drift.detected`, `ownership.changed`, `resource.discovered`, `scan.finding` (plus the sugar `all`). `resource.deleted` and candidate `collection.partial` are known types but never receipted; selecting either or `all` emits the unsupported-receipt startup warning. Receipt-build failures are non-fatal: the watch event still emits but the JSON `receipt` key is **omitted** (the field uses `omitempty`; consumers should check key presence, not null-ness), with a stderr warning. Per-poll backpressure controlled by `--emit-receipt-batch-cap`. |
 | `--emit-receipt-batch-cap` | Per-poll cap on receipt-build attempts (`#449` backpressure). When a single poll produces more receipt-eligible events than the cap, the first N get receipts attached and the rest emit with the receipt key omitted plus a single stderr summary line. Set to 0 to disable receipt-build entirely while keeping the flag explicit; set to a large value (e.g. 1000) to effectively disable the cap. Default 10. |
 
 ### Event Types
 
 - `resource.discovered`
 - `resource.deleted`
+- `collection.partial` (unreleased v2.14 candidate: normalized inventory omissions; no object freshness or receipt)
 - `ownership.changed`
 - `drift.detected`
 - `scan.finding`
