@@ -1192,7 +1192,32 @@ pre-read refusal. The [example](examples/recorded-inventory/#recorded-pages-214-
 uses authored objects rather than a genuine cluster recording. Source review
 found no defect. This limits returned records only: no byte/token cap, model
 savings, whole-input work cap, six-surface conformance or runtime admission claim.
-Independent review accepted the [actual host CLI/MCP process proof](examples/recorded-inventory/offline-pagination-process-proof.json): ten checks, exact retained binary/source/fixture/stream hashes, page union and zero cluster requests at a trap endpoint. Focused recorded race checks, build, vet, full offline Go suite, 31 source-bound launch guards and three workflow guards pass. Initial unit-only CI [37230721947](https://github.com/confighub/cub-scout/actions/runs/37230721947) stopped at an ineffectual cursor initialization. The initialization is repaired; focused race and all ten regenerated process checks pass. Retry CI remains pending. #604/#596 stay open.
+Independent review accepted the [actual host CLI/MCP process proof](examples/recorded-inventory/offline-pagination-process-proof.json): ten checks, exact retained binary/source/fixture/stream hashes, page union and zero cluster requests at a trap endpoint. Focused recorded race checks, build, vet, full offline Go suite, 31 source-bound launch guards and three workflow guards pass. Initial unit-only CI [37230721947](https://github.com/confighub/cub-scout/actions/runs/37230721947) stopped at an ineffectual cursor initialization. The initialization is repaired; focused race and all ten regenerated process checks pass. Repaired-source unit-only CI [37230911360](https://github.com/confighub/cub-scout/actions/runs/37230911360) passes at `b72cefab6a9d67395e565b61a970f04df896fc3c`; its proof is downloaded and all five nonunit tiers remain skipped. #604/#596 stay open.
+
+## 2.14 conservative Crossplane lineage candidate (2026-10-04)
+
+[#769](https://github.com/confighub/cub-scout/issues/769) defines success before
+implementation. Four baseline-negative controls reproduced input-order-dependent
+XR/claim joins and namespaced owner/UID mistakes. Label candidates now require a
+unique legal same-namespace or cluster-scoped parent; conflicting kinds/scope
+remain unresolved, with explicit ambiguity evidence. Known-group owner references
+preserve exact served version/type/name and check a supplied UID. Foreign, missing,
+replaced or self parents remain absent with explicit reasons. Claim enrichment
+uses the actual resolved XR and refuses ambiguous/self claims. The generic index
+and other platform resolvers remain unchanged; no reads are added.
+
+Five resolver controls plus a sixth [authored example/render control](examples/crossplane-system/#conservative-lineage-control-214-candidate)
+exercise ordering, locality, duplicate/self candidates, missing/provided/replaced
+UID and partial-lineage display in the actual reverse CLI renderer, loaded TUI
+text and composition index. Loaded TUI text is not automatic action routing or
+live acceptance. Label-only matches still do not establish UID identity. Full
+Crossplane v2 operations/coverage/conditions and graduation remain open in #601/#594.
+Independent final source/example/docs review accepted the packet. Final source
+race/build/vet/full offline Go verification pass; a superseded full test was
+stopped and its log retained rather than claimed as final evidence. Exact-head
+unit-only CI remains pending. The independently reviewed [2.14 draft](docs/releases/v2.14.0.md)
+and [readiness checklist](docs/releases/v2.14-readiness.md) preserve adopted P4
+scope, pending controller/six-surface/value gates and 2.13-first ordering.
 
 ## Resume here
 

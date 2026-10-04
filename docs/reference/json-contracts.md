@@ -2826,3 +2826,16 @@ effective-default filling, mutation or cross-space fallback occurs.
 
 [Authored example](../../examples/changeorder-read-contract/) documents offline
 success criteria and the pending genuine capture and live CLI/TUI acceptance gates.
+
+
+## Crossplane lineage ambiguity (2.14 candidate)
+
+The existing `CrossplaneLineage` shape is unchanged. Composite/claim nodes may
+remain `present: false` with `evidence` markers `xr:ambiguous` or
+`claim:ambiguous` when multiple eligible supplied objects match. Composite label
+joins restrict parent candidates to the child's namespace or cluster scope;
+they do not establish UID identity. Known-group ownerRef matches preserve exact
+API version/Kind/name and check a nonempty supplied UID. If that UID has no
+observed match, evidence adds `xr:owner_uid_not_observed`; with no supplied UID
+and no eligible object, it adds `xr:unresolved`. No scope/GVK is invented for a label-only unresolved
+parent. See the [authored control](../../examples/crossplane-system/#conservative-lineage-control-214-candidate).
