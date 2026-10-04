@@ -1024,6 +1024,46 @@ candidates/thirteen blocked remains the accepted count.
 The [draft v2.13.0 notes](docs/releases/v2.13.0.md) describe candidate scope and
 publication gates explicitly as unreleased; they do not announce a tag.
 
+Unit-only CI `37224249514` at `362878c8` passed the corrected Python verifier
+packet. CI `37224721435` at `f55dd11e` passed the PRE-03/draft-notes packet.
+Both downloaded proof matrices bind their exact SHA, report 50.4% coverage
+against 25.0% minimum and mark all five nonunit tiers skipped. Earlier failed
+verifier CI remains history; neither passing run establishes live acceptance.
+
+## P4 cluster identity/read-cost foundation — 2026-10-04
+
+The shared `pkg/agent/cluster_identity.go` reader captures one copied REST
+configuration and context label, then reads only the `kube-system` Namespace.
+Verified identity requires its exact reported type/name and observed UID.
+Denial, missing/malformed fields, timeout and unreachable API remain unverified
+with bounded omissions; they do not establish ownership or health. Endpoint
+projection omits user information, query and fragment fields. There is no
+discovery, redirect, REST retry, identity cache or other-context fallback.
+
+The transport meter counts attempts and consumed response-body bytes for this
+reader, including errors. It excludes headers/wire bytes, authentication traffic
+and unrelated clients; an opaque preexisting wrapper marks coverage partial.
+Reads serialize with cancellable waiting for attributable deltas, wall duration
+and reuse=false. The [loopback example](examples/cluster-identity-cost/README.md)
+defines collision-name, copied-config, denied/malformed, cancellation, timeout,
+retry/redirect, byte-count and concurrent controls without a live cluster.
+Independent review identified the shared 2 MiB error-body limit bypassing the
+identity reader's 64 KiB cap; an identity-specific transport cap now bounds all
+statuses, with oversized 403/500 controls passing. Initial logs are retained.
+
+This is a library foundation, not command output or whole-command cost reporting.
+CLI/MCP/TUI integration, merge-safe references, connected Target alignment and
+genuine live acceptance remain open in #599. Existing exact-object read budgets
+are unchanged; adding identity reads to commands requires an explicit budget.
+
+Ten deterministic identity/meter controls, their targeted race run, build, vet
+and repository read-only/parity/name guards pass. The first full offline Go run
+hit the existing 100 ms exec-auth helper-start/cleanup timeout under concurrent
+build/race load; its log is retained. That test passed three isolated repeats,
+then the final full `go test ./...` passed without overlapping build/race jobs.
+Independent review accepted the cap repair and example without remaining
+findings. Exact-head unit-only CI is still required for this new packet.
+
 ## Resume here
 
 Check #645 and the checkpoint above. Drive the adopted plan through 3.0,
