@@ -1268,7 +1268,7 @@ checks Crossplane and kro, reversed input, JSON/human output and the existing
 loaded trace pane. The valid pre-fix control fails; the corrected control,
 focused race (2.099s), build, vet and held-source-fixed full offline Go suite pass.
 Independent review found no issues. No extra reads or live/TUI-process proof.
-Display-key root collisions are separately tracked by #771. Unit-only CI is pending.
+Display-key root collisions are separately tracked by #771. Exact-head unit-only CI 37233529700 at 02be2485 passes: 51.1% coverage, all five nonunit tiers skipped.
 
 ## Composition root collision correction #771 (2026-10-04)
 
@@ -1288,6 +1288,26 @@ found no findings. Focused race (2.055s), build, vet and held-source-fixed full
 offline Go suite pass. No additional API reads or genuine/TUI-process proof.
 Exact-head unit-only CI is pending. The adjacent kro owner-reference fallback
 correctness problem is recorded before implementation in #772.
+
+## kro typed owner-reference correction #772 (2026-10-04)
+
+The kro owner-reference resolver no longer falls back to any same-name object.
+Instance/definition references require a unique exact API version/Kind/name,
+legal locality and supplied UID match; self candidates are excluded. Missing,
+stale or ambiguous evidence remains partial with explicit instance/definition
+reasons. Unobserved instance namespace stays unknown. Metadata-only definition
+lookup and ownership group recognition remain separate, unchanged paths.
+The now-unused private single-result index map/helper were removed; public
+wrapper/Len behavior is unchanged. No new API reads or physical/cluster joins.
+
+Three resolver controls (nine instance and six definition cases plus scope
+ambiguity/self/nil inventory) and one [authored reverse-rendering example](examples/kro-composition/#conservative-owner-reference-control-214-candidate)
+cover reversal, JSON/human and existing loaded TUI/composition partial output.
+The repaired valid-path baseline exposes eleven false-present cases; an earlier
+fixture-path failure and a compile-repair log remain retained. Final focused
+checks, package race (1.777s/1.979s), build, vet and held-source-fixed full
+offline Go suite pass. Independent review found no issues. Exact-head unit-only
+CI is pending; genuine controller and broader conformance remain open.
 
 ## Resume here
 

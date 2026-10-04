@@ -2872,3 +2872,18 @@ Tuple equality does not establish physical object UID or cluster identity.
 Unknown name-only parent buckets remain provisional and partial; missing
 metadata is not filled. Same-name children of a different full reference remain
 in `managed`. See the [authored collision control](../../examples/composition-root-collisions/).
+
+## kro owner-reference lineage omissions (2.14 candidate)
+
+kro instance and definition owner-reference joins require a unique exact supplied
+API version/Kind/name, legal namespace locality and matching UID when present.
+Foreign, stale, duplicate, wrong-type or wrong-version evidence stays
+`present: false`. Additional evidence strings are `instance:` or `definition:`
+followed by `unresolved`, `ambiguous` or `owner_uid_not_observed`. A supplied UID
+with no qualifying observed candidate produces the latter; it does not prove
+that the parent was deleted or is orphaned.
+
+Unobserved instance parent namespace is now empty rather than copied from the
+child. With `present: false`, this means unknown scope, not observed cluster
+scope. Metadata-only definition lookup is unchanged and separately bounded.
+See the [authored control](../../examples/kro-composition/#conservative-owner-reference-control-214-candidate).

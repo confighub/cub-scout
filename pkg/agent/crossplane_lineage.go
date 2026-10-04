@@ -199,37 +199,20 @@ func crossplaneUniqueObject(idx *UnstructuredIndex, target *unstructured.Unstruc
 // It deliberately avoids discovery/pluralization so it can work with arbitrary CRDs.
 //
 // Exported to allow callers to build the index once and reuse it across multiple
-// resolver invocations, avoiding O(n²) index rebuilds on large object sets.
+// resolver invocations without collecting additional objects.
 type UnstructuredIndex struct {
-	byKey map[string]*unstructured.Unstructured
-	all   []*unstructured.Unstructured
+	all []*unstructured.Unstructured
 }
 
 // NewUnstructuredIndex builds an index over the given objects.
 // Build this once and pass to ResolveCrossplaneLineageWithIndex for efficient batch operations.
 func NewUnstructuredIndex(objects []*unstructured.Unstructured) *UnstructuredIndex {
-	idx := &UnstructuredIndex{byKey: make(map[string]*unstructured.Unstructured), all: objects}
-	for _, o := range objects {
-		if o == nil {
-			continue
-		}
-		key := idx.keyFor(o.GetAPIVersion(), o.GetKind(), o.GetName(), o.GetNamespace())
-		idx.byKey[key] = o
-	}
-	return idx
+	return &UnstructuredIndex{all: objects}
 }
 
 // Len returns the number of indexed objects.
 func (i *UnstructuredIndex) Len() int {
 	return len(i.all)
-}
-
-func (i *UnstructuredIndex) keyFor(apiVersion, kind, name, namespace string) string {
-	return apiVersion + "|" + kind + "|" + namespace + "|" + name
-}
-
-func (i *UnstructuredIndex) findByGVKNameNamespace(apiVersion, kind, name, namespace string) *unstructured.Unstructured {
-	return i.byKey[i.keyFor(apiVersion, kind, name, namespace)]
 }
 
 func (i *UnstructuredIndex) findByName(name string) *unstructured.Unstructured {

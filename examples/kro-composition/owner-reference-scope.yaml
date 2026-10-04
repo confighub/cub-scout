@@ -1,0 +1,18 @@
+# Authored offline control, not captured cluster objects.
+apiVersion: v1
+kind: List
+items:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: child
+    namespace: prod
+    uid: child-uid
+    ownerReferences:
+    - {apiVersion: apps.kro.run/v1alpha1, kind: WebApp, name: checkout, uid: old-parent}
+- apiVersion: apps.kro.run/v1alpha1
+  kind: WebApp
+  metadata: {name: checkout, namespace: dev, uid: old-parent}
+- apiVersion: apps.kro.run/v1alpha1
+  kind: WebApp
+  metadata: {name: checkout, namespace: prod, uid: replaced-parent}
