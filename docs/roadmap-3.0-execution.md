@@ -61,6 +61,10 @@ existing agent quality/cost gates. These are targets awaiting proof, not a claim
 of leadership. #519 owns operator assessment, #596/#599 own shared facts and
 scope, and #539/#604 own observation/output efficiency.
 
+The [candidate operator assessment protocol](operator-investigation-assessment.md)
+defines fair task assignment, verification, failure retention and uncertainty
+before participant runs. It is preparation, not a measured result.
+
 P3 completes the current trust/context/release gates. P4 must also settle a
 supported end-to-end operator investigation and its assessment protocol; this
 adds workflow focus alongside the existing conformance work, not a default TUI

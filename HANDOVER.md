@@ -1116,8 +1116,42 @@ CLI in three formats and MCP stdio process pass the authored loopback controls;
 [public proof](examples/cluster-identity-cost/offline-process-proof.json) pins
 source base/diff, binary and private package hashes. No real cluster, TUI process,
 benchmark execution/admission or live acceptance is inferred. The full offline
-Go suite passes; exact-head unit-only CI is pending for this integration checkpoint.
+Go suite passes. Implementation `3713793a` is pushed; unit-only CI
+`37228039860` passed at that exact SHA. Its downloaded proof reports 50.7%
+coverage against the 25.0% minimum and all five nonunit tiers skipped.
 #599 remains open for wider identity/cost surfaces and genuine acceptance.
+
+## v2.14 watch/bot completeness repair and assessment preparation
+
+[#768](https://github.com/confighub/cub-scout/issues/768) was filed with exact
+success controls before implementation after the #596 audit found that denied
+LISTs could become false `resource.deleted` events. The isolated v2.14 repair
+collects normalized omissions with the same requests, records actual successful
+LIST scope privately, refuses deletion for unreadable scope and retains previous
+entries only as private diff history with old timestamps. Recovery avoids false
+discovery; a later successful empty list can establish deletion. The candidate
+`collection.partial` event exposes missing inventory coverage even at startup,
+without object observation/owner/receipt. Owner/severity filters cannot hide it.
+Existing CLI ownership diagnostics and TUI `V` expose inventory omissions.
+Whole-scan, connected/fleet and six-surface conformance remain separate gates.
+
+Five authored controls cover denial/repeated denial/recovery/deletion, actual
+optional-API 404, mixed namespace/type scopes, deterministic omissions, no
+receipt reads and quiet-startup diagnostics through the production loop.
+Independent review accepted source and corrected receipt documentation. The
+repaired focused watch/bot/receipt race run passes. An initial new startup test
+left the global receipt cap changed and caused an existing receipt control to
+fail; cleanup was repaired and the failed log retained. The final build, vet and full offline
+suite pass after the startup repair. Repository guards pass.
+Exact-head unit-only CI remains pending for this packet. No live acceptance or
+release is inferred. [Example](examples/watch-collection-omissions/README.md).
+
+The [candidate operator assessment protocol](docs/operator-investigation-assessment.md)
+for #519 defines matched supported tasks, permission/training parity, independent
+scoring, retained failure penalties, paired uncertainty and the existing speed/
+first-use targets. Independent review accepted it. It is preparation, not a
+participant run, UI replacement, live/paid admission or measured win. Source/task/
+analysis registration and genuine recordings remain prerequisites.
 
 ## Resume here
 
