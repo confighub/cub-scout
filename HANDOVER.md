@@ -7,6 +7,20 @@ Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
 order, quality gates, budgets and decisions.
 
+## Investigation quality direction — 2026-10-04
+
+The maintainer wants Scout to lead on read-only investigation quality for people
+and agents, with no competing-product names in product documentation. The
+updated `docs/reference/explorer-comparison.md` records five priorities and
+success criteria: workflow continuity, scope safety, least privilege, complete
+evidence and cheap reuse/demo. It corrects the older polling-only assessment
+with the existing opt-in watch-backed inventory boundary. Operator assessment
+remains #519; context/parity and efficiency retain their existing issue owners.
+Permission profiles and scope-bound investigation history are explicitly indexed
+as design follow-ups in the roadmap checklist. No runtime behavior, frozen
+benchmark, v2.13 scope or release gate changed. Documentation/link/name checks
+and `go test ./scripts/ci` passed; no live or paid tests ran.
+
 ## Steps 1–2 offline checkpoint — 2026-10-04
 
 The topic packet adds enriched Explain explicit-context selection using one

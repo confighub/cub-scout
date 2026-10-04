@@ -43,6 +43,21 @@ scheduled in stage 2 of the [Path to 3.0](#path-to-30) rather than for a named
 version. Until implemented, their existing unknown/unsupported limits remain
 unchanged.
 
+### Investigation quality follow-up — 2026-10-04
+
+The [investigation acceptance criteria](reference/explorer-comparison.md)
+prioritize coherent operator workflows, scope safety, actual least privilege,
+complete evidence and cheap reuse. Existing work remains in #519/#599/#596,
+#539/#604 and the current evidence queue. This assessment does not widen v2.13
+or claim measured leadership.
+
+- [ ] Define operation-specific read-permission profiles and sensitive-read
+  boundaries, with denied/partial controls and a reproducible RBAC proof. File
+  an implementation issue after settling the profile contract.
+- [ ] Define scope-bound local investigation history, including cancellation,
+  same-name collisions, retention and privacy. Coordinate with #519/#599; file
+  an implementation issue if their existing scope does not cover the design.
+
 ### v2.12.4 Patch (Published 2026-09-30)
 
 [Release notes](releases/v2.12.4.md). Published from `11c3e38`, including the six
