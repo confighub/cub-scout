@@ -85,6 +85,12 @@ original pinned tree from an exact archived skill fixture and separately tests
 current-source drift refusal; all 19 offline controls pass. This preserves the
 historical proof boundary rather than admitting new metadata under old evidence.
 
+Reviewed implementation `e0611783` is pushed. Manual unit-only CI
+[37194709007](https://github.com/confighub/cub-scout/actions/runs/37194709007)
+passed Unit and Proof Artifact. Downloaded proof matches the exact SHA, coverage
+50.2% against 25.0% minimum, and all five nonunit tiers skipped. Later docs-only
+checkpoints do not change this tested implementation. No PR/main merge or release.
+
 ## Offline runtime checkpoint — 2026-10-03
 
 The user now requests all remaining v2.13 work except live tests. Current topic
