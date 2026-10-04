@@ -46,3 +46,32 @@ This is standalone loopback proof, using no cluster or credentials. It does not
 prove connected/fleet identity, whole-command costs, CLI/MCP/TUI conformance,
 merge-safe object references or genuine live acceptance. Those remain open in
 #599 and the [3.0 execution plan](../../docs/roadmap-3.0-execution.md).
+
+## Merge-safe object reference foundation
+
+The pure `NewObservedResourceIdentity` helper requires verified cluster evidence
+and an object's supplied API version, kind, name, UID and namespace consistent
+with an explicitly supplied served API scope. The caller must collect both
+observations with the same captured client and obtain scope from the served API.
+The helper makes no requests and cannot prove that association or atomicity.
+Absent GVK is refused; labels and context names do not fill missing fields.
+
+```sh
+GOPROXY=off GOTOOLCHAIN=local \
+  KUBECONFIG=/tmp/scout-offline-validation.kubeconfig \
+  go test ./pkg/agent -run '^TestObservedResourceIdentity' -count=1 -v
+```
+
+Authored fixture controls use the same `apps/v1 Deployment` named `team-a/api`
+and the same object UID in two same-label cluster observations, with distinct
+Namespace-instance UIDs. Their canonical JSON merge keys differ. Recreated
+object UIDs, API groups, kinds, namespaces and names also differ; equivalent
+served versions retain the same instance key. Core-group and cluster-scoped
+identities are supported without inferring scope from missing namespace.
+Opaque UID delimiters retain exact field boundaries. Unknown cluster identity,
+malformed/missing fields, contradictory scope and invalid exported-field
+mutations are refused. The original object remains unchanged.
+
+These references are library values, not new command fields, a fleet membership
+model, ownership proof, ConfigHub Target identity or a current-state assertion.
+They do not complete #599 or its CLI/MCP/TUI and genuine acceptance gates.

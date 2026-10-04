@@ -1064,6 +1064,21 @@ then the final full `go test ./...` passed without overlapping build/race jobs.
 Independent review accepted the cap repair and example without remaining
 findings. Exact-head unit-only CI is still required for this new packet.
 
+The follow-on `ObservedResourceIdentity` library constructor/key retains actual
+API version and exact group/kind/namespace/name/object UID alongside observed
+cluster-instance identity. Canonical keys omit served version but distinguish
+clusters, API groups and recreated objects, with no context/server fallback or
+GVK derivation. Unknown identity, missing timestamp, malformed metadata/scope and
+invalid exported-key mutations refuse. The caller must supply served scope and
+collect object/cluster evidence with the same captured client; the pure helper
+cannot establish that association, atomicity or current state. Five authored
+controls and the combined identity/meter/reference race run pass; independent
+review accepted the source. The shared example explains collision, version and
+degradation controls. CLI/MCP/TUI fields and connected identity remain open.
+The follow-on build, vet, full offline Go suite and repository guards pass.
+Initial identity implementation `9b9f68f3` is pushed; its exact-head manual
+unit-only CI `37226008155` is in progress, not an acceptance claim.
+
 ## Resume here
 
 Check #645 and the checkpoint above. Drive the adopted plan through 3.0,
