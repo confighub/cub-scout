@@ -1994,3 +1994,17 @@ and Native is a no-built-in-marker result, not an orphan finding. No custom
 host detector configuration is read. An empty selection is a successful empty
 answer, whereas an empty input or any duplicate full identity is an error.
 Ordinary live map output is unchanged.
+
+
+### Recorded Map Pagination (2.14 candidate)
+
+`map list --recording ... --page-size 1..500` slices the complete loaded scope
+into deterministic pages with separate `map-list-recorded-page.v1` JSON. Use
+`--cursor` with the same recording, filters and size for the next page. Cursor
+without size, empty cursor, malformed continuation, summary mode and live mode
+are refused. Counts/owner totals cover the full selected scope. This is a record
+limit, not a byte/token cap or a limit on parsing work. ASCII/JSON/Markdown, MCP
+and the recorded TUI share the page model. In `--tui`, `n`/`p` navigate the loaded
+snapshot, including earlier pages when starting with a cursor, without reads.
+Default unpaged contracts remain unchanged. See the
+[example](../../examples/recorded-inventory/#recorded-pages-214-candidate).

@@ -310,3 +310,10 @@ instead of `runner`. Same execution model; different binary on PATH.
 - Compare-three-way MCP tool: added in the connected-mode trust-surface work
 - Read-only triad: `#410` / `#428`
 - Examples: [`examples/mcp-gateway/`](../../examples/mcp-gateway/), [`examples/ai-integration/`](../../examples/ai-integration/), [`examples/ai-agent-quest/`](../../examples/ai-agent-quest/)
+
+
+Recorded `map` pagination (2.14 candidate): optional integer `page_size` (1..500)
+and nonempty `cursor` bound to the same recording, scope and size. Incompatible
+with `summary`. Paged responses use `map-list-recorded-page.v1` in text and
+`structuredContent.data`, with full-scope totals and per-page returned count.
+This limits records, not bytes/tokens; default recorded responses are unchanged.

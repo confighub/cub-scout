@@ -45,7 +45,7 @@ func buildMCPStructuredContent(toolName, output string) interface{} {
 
 	switch toolName {
 	case "map":
-		if obj, ok := payload.(map[string]interface{}); ok && obj["schema"] == "map-list-cluster-identity.v1" {
+		if obj, ok := payload.(map[string]interface{}); ok && (obj["schema"] == "map-list-cluster-identity.v1" || obj["schema"] == recordedMapPageSchema) {
 			return mcpWrapStructuredData(payload)
 		}
 		return nil // Preserve legacy map's text-only response contract.

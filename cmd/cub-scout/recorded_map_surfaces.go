@@ -22,6 +22,8 @@ func addRecordedMapFlags(cmd *cobra.Command) {
 	cmd.Flags().String("api-version", "", "Required exact apiVersion for --recording")
 	cmd.Flags().String("namespace-prefix", "", "Literal recorded namespace prefix (requires --recording)")
 	cmd.Flags().Bool("tui", false, "View recorded inventory interactively (requires --recording)")
+	cmd.Flags().Int("page-size", 0, "Maximum records per immutable recorded page (1..500; not a byte/token cap)")
+	cmd.Flags().String("cursor", "", "Continue a recorded page using its source/scope-bound cursor (requires --page-size)")
 }
 
 func recordedMapRequested(cmd *cobra.Command) bool {
@@ -73,6 +75,17 @@ func runRecordedMapCLI(cmd *cobra.Command, args []string) error {
 	if tui && (cmd.Flags().Changed("format") || legacyJSON) {
 		return fmt.Errorf("--tui cannot be combined with output format options")
 	}
+	pageSize, _ := cmd.Flags().GetInt("page-size")
+	cursor, _ := cmd.Flags().GetString("cursor")
+	paged := cmd.Flags().Changed("page-size") || cmd.Flags().Changed("cursor")
+	if paged {
+		if cmd.Flags().Changed("cursor") && cursor == "" {
+			return fmt.Errorf("--cursor requires a nonempty recorded continuation")
+		}
+		if err := validateRecordedMapPageOptions(pageSize, cursor, summaryView); err != nil {
+			return err
+		}
+	}
 	snapshot, err := readRecordedObjectSnapshot(path)
 	if err != nil {
 		return err
@@ -91,6 +104,20 @@ func runRecordedMapCLI(cmd *cobra.Command, args []string) error {
 	report, err := buildRecordedMapReport(snapshot, scope)
 	if err != nil {
 		return err
+	}
+	if paged {
+		if tui {
+			viewer, err := newRecordedMapPagedViewer(report, pageSize, cursor)
+			if err != nil {
+				return err
+			}
+			_, err = tea.NewProgram(viewer).Run()
+			return err
+		}
+		report, err = buildRecordedMapPage(report, pageSize, cursor)
+		if err != nil {
+			return err
+		}
 	}
 	if tui {
 		_, err = tea.NewProgram(newRecordedMapViewer(report)).Run()
@@ -131,6 +158,14 @@ func renderRecordedMapReport(report RecordedMapReport, format string) string {
 	}
 	scope, _ := json.Marshal(report.Scope)
 	fmt.Fprintf(&b, "Scope: %s\nSelected: %d; excluded by scope: %d\n", scope, report.SelectedCount, report.ExcludedFromScope)
+	if report.Pagination != nil {
+		page := report.Pagination
+		fmt.Fprintf(&b, "Page: offset %d; returned %d of %d selected; page size %d (record limit, not byte/token cap)\n", page.Offset, page.ReturnedCount, report.SelectedCount, page.PageSize)
+		b.WriteString("Owner totals describe the full matched recording.\n")
+		if page.NextCursor != "" {
+			fmt.Fprintf(&b, "Next cursor: %s\n", page.NextCursor)
+		}
+	}
 	b.WriteString("Objects absent from this recording are unknown. Native means no built-in owner marker observed; it does not prove an orphan.\n")
 	owners := make([]string, 0, len(report.OwnerCounts))
 	for owner := range report.OwnerCounts {
@@ -206,11 +241,15 @@ func recordedMapTool(snapshot recordedObjectSnapshot) mcpTool {
 				"namespace_prefix": map[string]interface{}{"type": "string", "minLength": 1, "description": "Optional non-empty literal case-sensitive namespace prefix."},
 				"owner":            map[string]interface{}{"type": "string", "enum": recordedMapOwnerNames, "description": "Optional exact canonical built-in owner, including Kubernetes and Native."},
 				"summary":          map[string]interface{}{"type": "boolean", "description": "Return selected/excluded and owner counts without per-object rows."},
+				"page_size":        map[string]interface{}{"type": "integer", "minimum": 1, "maximum": 500, "description": "Opt into record-count pages; not a byte/token cap. Incompatible with summary."},
+				"cursor":           map[string]interface{}{"type": "string", "minLength": 1, "maxLength": 2048, "description": "Canonical continuation bound to this immutable input, scope and page size; requires page_size."},
 			}, "required": []string{"api_version", "kind"}, "additionalProperties": false,
 		}},
 		BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
 			scope := RecordedMapScope{}
 			summary := false
+			pageSize := 0
+			cursor := ""
 			for key, value := range arguments {
 				switch key {
 				case "api_version":
@@ -249,6 +288,18 @@ func recordedMapTool(snapshot recordedObjectSnapshot) mcpTool {
 						return nil, fmt.Errorf("namespace_prefix must be non-empty")
 					}
 					scope.NamespacePrefix = s
+				case "page_size":
+					parsed, err := recordedMapPageSizeArgument(value)
+					if err != nil {
+						return nil, err
+					}
+					pageSize = parsed
+				case "cursor":
+					text, ok := value.(string)
+					if !ok || text == "" {
+						return nil, fmt.Errorf("cursor must be a nonempty string")
+					}
+					cursor = text
 				case "summary":
 					var ok bool
 					summary, ok = value.(bool)
@@ -262,10 +313,17 @@ func recordedMapTool(snapshot recordedObjectSnapshot) mcpTool {
 			if err := validateRecordedMapScope(scope); err != nil {
 				return nil, err
 			}
+			if pageSize > 0 || cursor != "" {
+				if err := validateRecordedMapPageOptions(pageSize, cursor, summary); err != nil {
+					return nil, err
+				}
+			}
 			request := struct {
-				Scope   RecordedMapScope `json:"scope"`
-				Summary bool             `json:"summary,omitempty"`
-			}{Scope: scope, Summary: summary}
+				Scope    RecordedMapScope `json:"scope"`
+				Summary  bool             `json:"summary,omitempty"`
+				PageSize int              `json:"pageSize,omitempty"`
+				Cursor   string           `json:"cursor,omitempty"`
+			}{Scope: scope, Summary: summary, PageSize: pageSize, Cursor: cursor}
 			raw, err := json.Marshal(request)
 			return []string{string(raw)}, err
 		},
@@ -277,18 +335,30 @@ func recordedMapTool(snapshot recordedObjectSnapshot) mcpTool {
 				return "", fmt.Errorf("invalid recorded map scope")
 			}
 			var request struct {
-				Scope   RecordedMapScope `json:"scope"`
-				Summary bool             `json:"summary"`
+				Scope    RecordedMapScope `json:"scope"`
+				Summary  bool             `json:"summary"`
+				PageSize int              `json:"pageSize"`
+				Cursor   string           `json:"cursor"`
 			}
 			if err := json.Unmarshal([]byte(args[0]), &request); err != nil {
 				return "", fmt.Errorf("invalid recorded map scope")
+			}
+			if request.PageSize != 0 || request.Cursor != "" {
+				if err := validateRecordedMapPageOptions(request.PageSize, request.Cursor, request.Summary); err != nil {
+					return "", err
+				}
 			}
 			var response interface{}
 			var err error
 			if request.Summary {
 				response, err = buildRecordedMapSummary(snapshot, request.Scope)
 			} else {
-				response, err = buildRecordedMapReport(snapshot, request.Scope)
+				report, buildErr := buildRecordedMapReport(snapshot, request.Scope)
+				err = buildErr
+				if err == nil && request.PageSize > 0 {
+					report, err = buildRecordedMapPage(report, request.PageSize, request.Cursor)
+				}
+				response = report
 			}
 			if err != nil {
 				return "", err
@@ -302,6 +372,7 @@ func recordedMapTool(snapshot recordedObjectSnapshot) mcpTool {
 type recordedMapViewer struct {
 	content  string
 	viewport viewport.Model
+	pager    *recordedMapPager
 }
 
 func newRecordedMapViewer(report RecordedMapReport) recordedMapViewer {
@@ -325,6 +396,9 @@ func (m recordedMapViewer) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.Height = max(1, value.Height-5)
 		m.viewport.SetContent(wrapRecordedExplainText(m.content, m.viewport.Width))
 	case tea.KeyMsg:
+		if m.pager != nil && (value.String() == "n" || value.String() == "p") {
+			return m.updateRecordedPage(value.String()), nil
+		}
 		if value.String() == "q" || value.String() == "esc" || value.String() == "ctrl+c" {
 			return m, tea.Quit
 		}
@@ -334,5 +408,9 @@ func (m recordedMapViewer) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 func (m recordedMapViewer) View() string {
-	return "Recorded inventory · q to quit · arrows/page keys to scroll\n" + m.viewport.View()
+	hint := "Recorded inventory · q to quit · arrows/page keys to scroll\n"
+	if m.pager != nil {
+		hint = "Recorded inventory · n/p for next/previous page · q to quit · arrows to scroll\n"
+	}
+	return hint + m.viewport.View()
 }

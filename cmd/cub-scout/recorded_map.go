@@ -60,13 +60,14 @@ type RecordedMapResource struct {
 // inventory. ExcludedFromScope counts parsed objects filtered out by Scope;
 // it says nothing about resources absent from the recording.
 type RecordedMapReport struct {
-	Schema            string                `json:"schema"`
-	Provenance        RecordedMapProvenance `json:"provenance"`
-	Scope             RecordedMapScope      `json:"scope"`
-	SelectedCount     int                   `json:"selectedCount"`
-	ExcludedFromScope int                   `json:"excludedFromScopeCount"`
-	OwnerCounts       map[string]int        `json:"ownerCounts"`
-	Resources         []RecordedMapResource `json:"resources"`
+	Schema            string                 `json:"schema"`
+	Provenance        RecordedMapProvenance  `json:"provenance"`
+	Scope             RecordedMapScope       `json:"scope"`
+	SelectedCount     int                    `json:"selectedCount"`
+	ExcludedFromScope int                    `json:"excludedFromScopeCount"`
+	OwnerCounts       map[string]int         `json:"ownerCounts"`
+	Resources         []RecordedMapResource  `json:"resources"`
+	Pagination        *RecordedMapPagination `json:"pagination,omitempty"`
 }
 
 // RecordedMapSummary intentionally has no resource rows. Its separate schema

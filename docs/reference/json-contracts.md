@@ -2777,6 +2777,24 @@ combined API version, Kind, namespace and owner filters. The default full report
 remains `map-list-recorded.v1`; an omitted owner does not add a field to its
 scope.
 
+### Recorded pages (`map-list-recorded-page.v1`)
+
+Opt-in CLI `--page-size 1..500` and recorded MCP `page_size` return a separate
+paged schema. All full-report fields remain, with full-scope counts and owner
+totals; only `resources` is sliced. `pagination.pageSize`, `offset` and
+`returnedCount` describe that slice. `pagination.nextCursor` appears only when
+more rows remain. Empty selection has `resources: []`, offset/count zero and no
+cursor. MCP also returns the report under `structuredContent.data`.
+
+The opaque, canonical base64url cursor binds version, input SHA-256, scope SHA-256,
+page size and aligned offset. Input/filter/size changes, malformed or noncanonical
+fields, oversized cursors and invalid boundaries are errors. This is public
+continuation data, not an authorization token. Summary and pagination are mutually
+exclusive. Default full and summary schemas are unchanged. This bounds record
+count only; bytes/tokens, input parsing and full-scope computation are not bounded
+by page size. Capture time/completeness remain unknown. See the
+[authored pagination example](../../examples/recorded-inventory/#recorded-pages-214-candidate).
+
 ## Exact-space ChangeOrder read
 
 CLI `history changeorder --format json` and connected MCP

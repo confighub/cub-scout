@@ -1172,7 +1172,27 @@ identity/explicit-context race checks, build, vet and the full offline Go suite
 pass. A [follow-on actual CLI/MCP loopback proof](examples/cluster-identity-cost/offline-action-guard-process-proof.json)
 retains the exact host binary with source/diff and private stream hashes; the
 first proof remains history. This does not establish live/TUI-process acceptance
-or benchmark admission. Exact-head unit-only CI remains pending for the guard.
+or benchmark admission. Exact-head unit-only CI [37229488632](https://github.com/confighub/cub-scout/actions/runs/37229488632) passes at `97b86867ea1874a90894a61b5f92d0e08ab1039b`: 50.8% coverage vs 25.0%, with all five nonunit tiers skipped.
+
+## 2.14 recorded inventory pagination candidate (2026-10-04)
+
+Success was defined before implementation in [#604](https://github.com/confighub/cub-scout/issues/604#issuecomment-5983790741).
+Opt-in recorded `map list --page-size 1..500` / MCP `page_size` now produce a
+separate `map-list-recorded-page.v1` report. Canonical continuation cursors bind
+exact recording bytes, combined scope, page size and aligned offset. Full-scope
+counts/owner totals and unknown capture time/completeness remain intact; only
+resource rows are paged. Default full/summary contracts remain unchanged.
+Summary/live modes and invalid continuation are refused. ASCII/JSON/Markdown,
+MCP structured data and TUI `n`/`p` share the loaded model; page navigation makes
+no further file/API reads, including earlier pages from a starting cursor.
+
+Five authored controls cover partitioning, invalid cursor/input/filter/size,
+empty pages, loaded navigation, CLI/MCP output, cancellation/unknown tool and
+pre-read refusal. The [example](examples/recorded-inventory/#recorded-pages-214-candidate)
+uses authored objects rather than a genuine cluster recording. Source review
+found no defect. This limits returned records only: no byte/token cap, model
+savings, whole-input work cap, six-surface conformance or runtime admission claim.
+Independent review accepted the [actual host CLI/MCP process proof](examples/recorded-inventory/offline-pagination-process-proof.json): ten checks, exact retained binary/source/fixture/stream hashes, page union and zero cluster requests at a trap endpoint. Focused recorded race checks, build, vet, full offline Go suite, 31 source-bound launch guards and three workflow guards pass. Exact-head unit-only CI has not yet run for this packet. #604/#596 stay open.
 
 ## Resume here
 

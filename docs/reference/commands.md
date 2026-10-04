@@ -3487,3 +3487,15 @@ redundant for the full response: recorded results always include detector
 evidence. `--summary` intentionally omits per-object detector evidence.
 `--tui` cannot combine with output-format options. The recording-specific
 API/prefix/TUI flags require `--recording`. See the [offline example](../../examples/recorded-inventory/).
+
+
+### Recorded ownership pages (2.14 candidate)
+
+Add `--page-size 1..500` to recorded `map list` in ASCII, JSON or Markdown.
+Continue with `--cursor` using the response's next cursor, the same input bytes,
+filters and page size. `--summary` and live map cannot combine with pagination.
+The `map-list-recorded-page.v1` report keeps full-scope counts/owner totals and
+adds page offset/count/continuation. Page size limits rows, not bytes or tokens.
+MCP uses `page_size` and `cursor` and also returns `structuredContent.data`;
+`--tui` provides `n`/`p` navigation using only the loaded snapshot. Default output
+is unchanged. See the [authored example](../../examples/recorded-inventory/#recorded-pages-214-candidate).
