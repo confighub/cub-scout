@@ -2844,7 +2844,9 @@ parent. See the [authored control](../../examples/crossplane-system/#conservativ
 ## Recorded report JSON budget (2.14 candidate)
 
 CLI `--max-report-json-bytes` and recorded MCP `max_report_json_bytes` (integer
-1..4194304) limit canonical UTF-8 JSON **report data** bytes. The existing full,
+1..4194304) limit canonical UTF-8 JSON **report data** bytes: the report
+serializer's compact JSON with its normal string escaping and no trailing newline.
+The existing full,
 summary and page schemas remain unchanged; no budget metadata is inserted into
 those reports. An oversized report returns an explicit error with actual and
 requested byte counts and guidance, without a clipped or empty inventory.

@@ -191,8 +191,8 @@ func buildCompositionIndex(objs []*unstructured.Unstructured) map[string]*Crossp
 				}
 			}
 
-			// Don't add the XR itself as managed.
-			if lineage.Managed.Ref.Name != "" && lineage.Managed.Ref.Name != lineage.Composite.Ref.Name {
+			// A shared name does not identify the same object: compare the full supplied reference.
+			if lineage.Managed.Ref.Name != "" && lineage.Managed.Ref != lineage.Composite.Ref {
 				node.Managed = append(node.Managed, lineage.Managed)
 			}
 			continue
@@ -231,7 +231,7 @@ func buildCompositionIndex(objs []*unstructured.Unstructured) map[string]*Crossp
 		}
 
 		managed := toCrossplaneLineageNode(lineage.Managed)
-		if managed.Ref.Name != "" && managed.Ref.Name != lineage.Instance.Ref.Name {
+		if managed.Ref.Name != "" && managed.Ref != lineage.Instance.Ref {
 			node.Managed = append(node.Managed, managed)
 		}
 	}

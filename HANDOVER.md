@@ -1249,7 +1249,26 @@ binary/source/fixture/stream hashes: 1277 report JSON bytes, 1278 CLI JSON bytes
 including newline and 2787 MCP result bytes. No genuine/TUI-process/model/runtime
 or savings claim. Focused recorded race (17.610s), build and vet pass; the final
 combined-source full offline Go suite held production source fixed and passes.
-Exact-head unit-only CI has not run for this packet.
+Exact-head unit-only CI 37232545407 passes at 51.1% coverage; all five nonunit tiers are skipped.
+
+## Report-budget exact-head CI accepted (2026-10-04)
+
+Commit `5fcf40ecf47bbf2dee5f34a6b74eb99985c9e237` passed manual unit-only
+CI [37232545407](https://github.com/confighub/cub-scout/actions/runs/37232545407).
+Downloaded proof matrix confirms 51.1% coverage against 25.0%, unit success,
+and all five nonunit tiers skipped. This is offline source evidence, not
+release, genuine-server acceptance or benchmark execution admission.
+
+## Same-name composition child correction #770 (2026-10-04)
+
+Composition trees compare full supplied ResourceRef values when excluding a
+parent from its managed children. Different kinds/groups/namespaces sharing
+a name remain visible. The authored [example](examples/composition-same-name/)
+checks Crossplane and kro, reversed input, JSON/human output and the existing
+loaded trace pane. The valid pre-fix control fails; the corrected control,
+focused race (2.099s), build, vet and held-source-fixed full offline Go suite pass.
+Independent review found no issues. No extra reads or live/TUI-process proof.
+Display-key root collisions are separately tracked by #771. Unit-only CI is pending.
 
 ## Resume here
 

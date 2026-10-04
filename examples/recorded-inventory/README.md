@@ -100,3 +100,8 @@ Four authored controls in `recorded_map_budget_test.go` cover exact byte
 boundaries/escaping and the 300-resource fixture, unmodified CLI formats and
 pre-read refusals, strict MCP arguments and data-versus-result size, and TUI
 refusal/recovery. These do not close #604/#596 or establish measured savings.
+
+The [actual host process receipt](offline-report-budget-process-proof.json) records
+fourteen checks and zero cluster requests. In its exact-boundary case, report
+data is 1277 bytes, CLI JSON is 1278 bytes including newline, and the duplicated
+MCP result is 2787 bytes. These counts are fixture-specific output measurements.
