@@ -1117,6 +1117,19 @@ signing, public proxy/clean-cluster install, model/container execution or releas
 is inferred. Independent static audit verified all six target binaries, exact
 archive entries/modes/content and the receipt/config/driver/private proof hashes.
 
+## Server read-evidence dependency proposal (2026-10-04)
+
+The [draft server governance read-evidence proposal](docs/proposals/server-governance-read-evidence.md)
+makes #591/#597's missing authority contract, exact identity/coverage/hash
+semantics and genuine recording packet reviewable. It distinguishes attestation
+coverage, declared prerequisites and evaluated server outcomes; identifies
+version/permission/time/redaction provenance; and preserves GET-only Scout
+boundaries. It proposes requirements, not an existing endpoint or wire schema.
+Independent review accepted the bounded scope and requested explicit credential
+exclusion from capture bundles; that protocol clarification is applied.
+No server outcome, new live run, SDK migration or gate waiver is supplied.
+The current parser/source and static candidate binary pins are unchanged.
+
 ## Resume here
 
 Check #645 and the checkpoint above. Drive the adopted plan through 3.0,
