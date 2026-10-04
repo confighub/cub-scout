@@ -33,13 +33,14 @@ type RecordedMapScope struct {
 // RecordedMapProvenance identifies only the bytes supplied to this model. It
 // deliberately records no path, context, wall-clock time, or live observation.
 type RecordedMapProvenance struct {
-	Kind                string `json:"kind"`
-	SHA256              string `json:"sha256"`
-	Bytes               int    `json:"bytes"`
-	Documents           int    `json:"documents"`
-	ObjectCount         int    `json:"objectCount"`
-	CaptureTime         string `json:"captureTime"`
-	CaptureCompleteness string `json:"captureCompleteness"`
+	Kind                    string `json:"kind"`
+	SHA256                  string `json:"sha256"`
+	Bytes                   int    `json:"bytes"`
+	Documents               int    `json:"documents"`
+	ObjectCount             int    `json:"objectCount"`
+	CaptureTime             string `json:"captureTime"`
+	CaptureCompleteness     string `json:"captureCompleteness"`
+	TypedListDerivedObjects int    `json:"typedListDerivedObjects,omitempty"`
 }
 
 // RecordedMapResource is a compact identity and built-in ownership
@@ -172,13 +173,14 @@ func buildRecordedMapReport(snapshot recordedObjectSnapshot, scope RecordedMapSc
 	return RecordedMapReport{
 		Schema: recordedMapSchema,
 		Provenance: RecordedMapProvenance{
-			Kind:                "kubernetes-object-recording",
-			SHA256:              snapshot.Provenance.SHA256,
-			Bytes:               snapshot.Provenance.Bytes,
-			Documents:           snapshot.Provenance.Documents,
-			ObjectCount:         snapshot.Provenance.ObjectCount,
-			CaptureTime:         "unknown",
-			CaptureCompleteness: "unknown",
+			Kind:                    "kubernetes-object-recording",
+			SHA256:                  snapshot.Provenance.SHA256,
+			Bytes:                   snapshot.Provenance.Bytes,
+			Documents:               snapshot.Provenance.Documents,
+			ObjectCount:             snapshot.Provenance.ObjectCount,
+			CaptureTime:             "unknown",
+			CaptureCompleteness:     "unknown",
+			TypedListDerivedObjects: snapshot.Provenance.TypedListDerivedObjects,
 		},
 		Scope:             RecordedMapScope{APIVersion: scope.APIVersion, Kind: scope.Kind, Namespace: namespace, NamespacePrefix: scope.NamespacePrefix, Owner: scope.Owner},
 		SelectedCount:     len(resources),

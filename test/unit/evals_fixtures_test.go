@@ -335,6 +335,10 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			checkTraceCaseSensitiveSlugsScaffold(t, caseDir)
 			continue
 		}
+		if filepath.Base(caseDir) == "recorded-typed-list" {
+			checkRecordedTypedListScaffold(t, caseDir)
+			continue
+		}
 		if filepath.Base(caseDir) == "recorded-explain-contract" {
 			checkRecordedExplainCaseScaffold(t, caseDir)
 			continue
@@ -682,6 +686,95 @@ func checkChangeOrderReadScaffold(t *testing.T, root string) {
 		after, err := os.ReadFile(path)
 		if err != nil || !bytes.Equal(before, after) {
 			t.Fatalf("ChangeOrder scaffold changed source/frozen suite %s: %v", path, err)
+		}
+	}
+}
+
+func checkRecordedTypedListScaffold(t *testing.T, root string) {
+	t.Helper()
+	caseData, err := os.ReadFile(filepath.Join(root, "case.yaml"))
+	if err != nil || !strings.Contains(string(caseData), "FIXTURE-OWNED-SCAFFOLD") || !strings.Contains(string(caseData), "scaffold_script: scaffold.sh") {
+		t.Fatalf("recorded typed-list case must declare its fixture-owned scaffold: %v", err)
+	}
+	source := filepath.Join(root, "fixtures", "deployments.json")
+	want, err := os.ReadFile(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sum := sha256.Sum256(want)
+	if hex.EncodeToString(sum[:]) != "e0102f91e1417c8554ed377352b50450f2376e69d40632f109ea012c5c1560a2" {
+		t.Fatal("recorded typed-list fixture bytes changed; review the input contract before updating its pin")
+	}
+	original := filepath.Join(filepath.Dir(root), "rul03-context", "fixtures", "rul03-readable-deployments.body")
+	originalBytes, err := os.ReadFile(original)
+	if err != nil || !bytes.Equal(want, originalBytes) {
+		t.Fatalf("typed-list fixture must preserve original recorded response bytes: %v", err)
+	}
+	var fixture struct {
+		APIVersion string                       `json:"apiVersion"`
+		Kind       string                       `json:"kind"`
+		Items      []map[string]json.RawMessage `json:"items"`
+	}
+	if err := json.Unmarshal(want, &fixture); err != nil {
+		t.Fatal(err)
+	}
+	if fixture.APIVersion != "apps/v1" || fixture.Kind != "DeploymentList" || len(fixture.Items) != 1 || fixture.Items[0]["apiVersion"] != nil || fixture.Items[0]["kind"] != nil {
+		t.Fatal("typed-list source must retain its exact envelope and omitted item type")
+	}
+	benchmark := filepath.Join(filepath.Dir(root), "benchmark-v1.json")
+	frozen, err := os.ReadFile(benchmark)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(frozen, []byte("recorded-typed-list")) {
+		t.Fatal("opt-in typed-list case must remain outside the frozen benchmark")
+	}
+	scaffold, err := filepath.Abs(filepath.Join(root, "scaffold.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	workspace := t.TempDir()
+	cmd := exec.Command("bash", scaffold)
+	cmd.Dir = workspace
+	cmd.Env = offlineKubeconfigEnvironment()
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("typed-list read scaffold: %v: %s", err, output)
+	}
+	var paths []string
+	err = filepath.Walk(workspace, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if path == workspace {
+			return nil
+		}
+		relative, err := filepath.Rel(workspace, path)
+		if err != nil {
+			return err
+		}
+		paths = append(paths, filepath.ToSlash(relative))
+		if relative == "cluster" && !info.IsDir() {
+			t.Fatal("cluster must be a directory")
+		}
+		if relative != "cluster" && !info.Mode().IsRegular() {
+			t.Fatalf("unexpected nonregular scaffold artifact: %s", relative)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(paths) != 2 || paths[0] != "cluster" || paths[1] != "cluster/deployments.json" {
+		t.Fatalf("typed-list scaffold must stage only cluster/deployments.json, got %v", paths)
+	}
+	got, err := os.ReadFile(filepath.Join(workspace, "cluster", "deployments.json"))
+	if err != nil || !bytes.Equal(got, want) {
+		t.Fatalf("typed-list scaffold changed authored input bytes: %v", err)
+	}
+	for path, before := range map[string][]byte{source: want, original: originalBytes, benchmark: frozen} {
+		after, err := os.ReadFile(path)
+		if err != nil || !bytes.Equal(before, after) {
+			t.Fatalf("typed-list scaffold changed source/frozen suite %s: %v", path, err)
 		}
 	}
 }

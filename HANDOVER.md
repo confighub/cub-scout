@@ -793,6 +793,33 @@ dependency admission, OS/network containment, descendants, model execution or
 savings. Those proof claims remain false. No live/container/model/provider run
 occurred.
 
+## Recorded DeploymentList product prerequisite — 2026-10-04
+
+The shared recorded-object loader now accepts exact `apps/v1 DeploymentList`
+responses, whose Kubernetes API declaration establishes Deployment item types.
+Only omitted item type fields are supplied; explicit conflicts/null/blank types
+refuse. Metadata, UID/resourceVersion/managedFields and raw source hashes remain
+unchanged. Generic `v1/List` still requires explicit item types; denied Status
+and empty recordings remain refusals. Optional input-wide
+`typedListDerivedObjects` provenance flows through map/list/summary and explain
+JSON, CLI/MCP and ASCII/Markdown/TUI. Zero-count outputs remain unchanged.
+
+Deterministic Go controls exercise the actual pinned RUL-03 body and type/boundary
+negatives, with independent review finding no actionable defect. The new
+authored opt-in `evals/recorded-typed-list` has exact-byte/scaffold and strict
+answer controls, runs in unit-only CI and leaves frozen cases unchanged. The
+local binary passed recorded map/explain CLI and actual MCP stdio checks, retained
+at `/private/tmp/scout-v213-typed-list-host-proof-20261004`; denial and unsupported
+live-tool requests refused. Build, vet, focused controls and the repaired full
+`go test ./...` pass offline. The first full suite found the new case missing
+its dedicated scaffold registration; the repair pins original bytes and exact
+output inventory, with independent review finding no actionable defect. Failed
+and repaired logs are retained under `/tmp/scout-v213-typed-list-*20261004.log`.
+This product prerequisite adds no multi-context
+joining or current-state claim. RUL-03 remains blocked and the Linux binary pin
+has not been rebuilt/admitted for this new code; full24 stays eleven candidates
+and thirteen blocked. No live/container/model/provider run occurred.
+
 ## Resume here
 
 Check #645 and the offline checkpoint above. Continue v2.13 on

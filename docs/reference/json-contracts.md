@@ -203,6 +203,7 @@ uses `recordedInput` for immutable input provenance and deliberately omits
 | `recordedInput.identity` | Exact requested API version, Kind, namespace, and name |
 | `recordedInput.sha256` | SHA-256 of the complete input bytes |
 | `recordedInput.bytes`, `documents`, `objectCount` | Bounded input byte, YAML document, and object counts |
+| `recordedInput.typedListDerivedObjects` | Optional input-wide number of objects whose omitted API version or Kind was supplied by an exact supported typed-list envelope; omitted when zero |
 | `omissions[]` | Includes missing trusted capture time, controller revision, source/controller, related-pod/event, and desired/live evidence |
 
 No file path or capture timestamp is reported. Without separately trusted
@@ -213,6 +214,16 @@ an omission that custom host detector configuration was not read. The recorded
 MCP server loads the file once at startup and exposes recorded `map` and `explain`; requests
 cannot supply paths or select live/connected operations. Raw object payloads,
 including Secret data, are not returned.
+
+The shared loader also accepts exact `apps/v1 DeploymentList` responses. That
+Kubernetes API type declares Deployment items, which may omit their own type
+fields. Missing item types come only from this exact envelope; explicitly
+conflicting, null or blank types refuse. Generic `v1/List` items still require
+their own complete type identity. The original response bytes/hash are retained.
+Recorded map list/summary provenance exposes the same optional
+`typedListDerivedObjects` count, and ASCII/Markdown/TUI explain its source.
+This adds no context identity, trusted capture time or denied/empty inventory
+interpretation. Empty recordings and denied Status responses still refuse.
 
 ### Observed Origin
 

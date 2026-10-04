@@ -140,6 +140,9 @@ jobs:
       - name: Run offline PRE-01 recorded API replay guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/recorded-api -v
 
+      - name: Run offline recorded typed-list answer controls
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/recorded-typed-list -v
+
       - name: Run offline PRE-01 real-kubectl gate guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/pre01-real-kubectl -v
 

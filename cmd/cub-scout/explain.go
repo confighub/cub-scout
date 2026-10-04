@@ -121,12 +121,13 @@ type ExplainSummary struct {
 // RecordedInputEvidence identifies the immutable raw source used by offline
 // explain. It deliberately has no live observation timestamp or source path.
 type RecordedInputEvidence struct {
-	Kind        string                   `json:"kind"`
-	Identity    agent.BoundedResourceRef `json:"identity"`
-	SHA256      string                   `json:"sha256"`
-	Bytes       int                      `json:"bytes"`
-	Documents   int                      `json:"documents"`
-	ObjectCount int                      `json:"objectCount"`
+	Kind                    string                   `json:"kind"`
+	Identity                agent.BoundedResourceRef `json:"identity"`
+	SHA256                  string                   `json:"sha256"`
+	Bytes                   int                      `json:"bytes"`
+	Documents               int                      `json:"documents"`
+	ObjectCount             int                      `json:"objectCount"`
+	TypedListDerivedObjects int                      `json:"typedListDerivedObjects,omitempty"`
 }
 
 // FieldAttributionSummary reports only manager evidence for one requested
@@ -975,9 +976,13 @@ func formatRecordedInput(input *RecordedInputEvidence) string {
 		return ""
 	}
 	identity := input.Identity
-	return fmt.Sprintf("%s; identity=%s %s namespace=%q name=%q; sha256=%s; %d bytes, %d documents, %d objects",
+	text := fmt.Sprintf("%s; identity=%s %s namespace=%q name=%q; sha256=%s; %d bytes, %d documents, %d objects",
 		input.Kind, identity.APIVersion, identity.Kind, identity.Namespace, identity.Name,
 		input.SHA256, input.Bytes, input.Documents, input.ObjectCount)
+	if input.TypedListDerivedObjects > 0 {
+		text += fmt.Sprintf("; input objects with type supplied by typed list envelope: %d", input.TypedListDerivedObjects)
+	}
+	return text
 }
 
 // colorExplainOwner colors the owner field based on its content.
