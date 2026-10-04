@@ -755,6 +755,12 @@ paths, live clients and executable dispatch. Five new transport controls bring
 the recorded-api suite to 25. Independent review identified exponent-overflow
 JSON numbers; finite-float parsing and bounded integers repair that gap, with
 negative vectors. The product MCP catalog and map/explain semantics are unchanged.
+The repaired 25-control suite and full offline `go test ./...` passed. Reviewed
+implementation `387cee05` is pushed; unit-only CI
+[37211787841](https://github.com/confighub/cub-scout/actions/runs/37211787841)
+passed at that exact SHA. Its downloaded proof confirms 50.2% coverage against
+25.0% minimum and all five nonunit tiers skipped. Unit Tests and Proof Artifact
+both succeeded; later documentation checkpoints do not alter tested code.
 The new tool is not granted by the frozen launch policy. RUL-03 remains blocked
 pending tool/runtime admission; the count stays eleven candidates/thirteen
 blocked. No live, container, model or provider execution is claimed.
