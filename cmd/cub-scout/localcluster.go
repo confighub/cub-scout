@@ -294,7 +294,7 @@ type LocalClusterModel struct {
 	noInit bool
 }
 
-const explicitContextUnsupportedAction = "This action is unavailable with --kube-context until it can honor the selected binding. Inventory, bounded explain, scan and trace remain available."
+const explicitContextUnsupportedAction = "This action is unavailable with --kube-context or --cluster-identity until it can honor the selected binding. Inventory, bounded explain, scan and trace remain available."
 
 // GitOpsResource represents a Flux/ArgoCD resource
 type GitOpsResource struct {
@@ -594,7 +594,7 @@ func initialLocalModelWithBinding(opts ViewOptions, binding *localClusterBinding
 		clusterName:            clusterName,
 		contextName:            contextName,
 		clusterBinding:         binding,
-		explicitClusterContext: binding.explicit,
+		explicitClusterContext: binding.explicit || binding.observeClusterIdentity,
 		panelPane:              vp,
 		viewOpts:               opts,
 		connectionMode:         hub.QuickMode().String(), // Instant display; async check refines later

@@ -93,7 +93,7 @@ GOPROXY=off GOTOOLCHAIN=local \
   go test ./cmd/cub-scout -run '^TestMapClusterIdentity' -count=1 -v
 ```
 
-Seven authored loopback controls exercise the production CLI collection and
+Eight authored loopback/model controls exercise the production CLI collection and
 ASCII/JSON/Markdown renderers, MCP argument/schema/data projection, and a
 headless TUI's actual `V` action and visible viewport refresh. They cover a
 captured selection after same-name kubeconfig retargeting; exact Namespace
@@ -123,3 +123,16 @@ makes one, preserving inventory on identity denial. Invalid combinations and an
 unknown explicit context make zero API requests. The proof pins the modified
 source base/diff, binary and private output package. It does not exercise a real
 cluster, a TUI process, benchmark admission or live release acceptance.
+
+In the opt-in identity TUI, implicit current-context selection uses the same
+captured-provider safeguards as an explicit selector. Bounded explain, scan and
+trace retain their bound providers; graph export, shell, import and command mode
+remain unavailable until they can honor the captured binding. These actions
+cannot silently consult a subsequently changed ambient context. Legacy mode is
+unchanged; genuine acceptance remains pending.
+
+The [follow-on process proof](offline-action-guard-process-proof.json) repeats
+those CLI/MCP checks after the implicit-context guard repair, with the exact
+host binary retained in the private package. It remains authored loopback proof;
+the eight model controls exercise the TUI guard rather than a live TUI process.
+The earlier process proof remains the historical first integration checkpoint.

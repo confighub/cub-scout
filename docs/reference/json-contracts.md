@@ -227,6 +227,13 @@ under `structuredContent.data` without changing legacy map responses. Wider
 object-reference/whole-command-cost integration and genuine acceptance remain
 open. [Loopback example](../../examples/cluster-identity-cost/README.md).
 
+In the opt-in identity TUI, implicit current-context selection uses the same
+captured-provider safeguards as an explicit selector. Bounded explain, scan and
+trace retain their bound providers; graph export, shell, import and command mode
+remain unavailable until they can honor the captured binding. These actions
+cannot silently consult a subsequently changed ambient context. Legacy mode is
+unchanged; genuine acceptance remains pending.
+
 ## Bounded Resource Read (v2.10.0)
 
 `explain --bounded --format json` and MCP `explain` with `bounded: true` use

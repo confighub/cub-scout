@@ -319,3 +319,29 @@ func TestMapClusterIdentityHumanTextEscapesControlsAndFenceInjection(t *testing.
 	require.NotContains(t, text, "\nforged")
 	require.NotContains(t, text, "\n```", "quoted values cannot create a Markdown fence line")
 }
+
+func TestMapClusterIdentityImplicitTUIUsesCapturedActionGuards(t *testing.T) {
+	setupMapIdentityFlags(t)
+	fixture := newMapIdentityFixture(t)
+	binding := &localClusterBinding{config: &rest.Config{Host: fixture.server.URL}, context: "captured-current", observeClusterIdentity: true}
+	model := initialLocalModelWithBinding(ViewOptions{}, binding)
+	model.panelMode = false // Saved navigation state must not affect this control.
+	require.True(t, model.explicitClusterContext)
+	require.Same(t, binding, model.clusterBinding)
+	for _, action := range []string{"I", ":"} {
+		updated, cmd := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(action)})
+		require.Nil(t, cmd)
+		result := updated.(LocalClusterModel)
+		require.False(t, result.switchToImport)
+		require.False(t, result.cmdMode)
+		require.Contains(t, result.statusMsg, "--cluster-identity")
+	}
+	shell := model.runShellOut()().(shellExitMsg)
+	require.ErrorContains(t, shell.err, "--cluster-identity")
+	graph := model.runGraphExport("svg")().(graphExportMsg)
+	require.ErrorContains(t, graph.err, "--cluster-identity")
+	require.Zero(t, fixture.allReads.Load())
+	binding.observeClusterIdentity = false
+	legacy := initialLocalModelWithBinding(ViewOptions{}, binding)
+	require.False(t, legacy.explicitClusterContext)
+}

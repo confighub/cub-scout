@@ -1143,7 +1143,10 @@ repaired focused watch/bot/receipt race run passes. An initial new startup test
 left the global receipt cap changed and caused an existing receipt control to
 fail; cleanup was repaired and the failed log retained. The final build, vet and full offline
 suite pass after the startup repair. Repository guards pass.
-Exact-head unit-only CI remains pending for this packet. No live acceptance or
+Implementation `c3eacb72` and protocol checkpoint `1c8da761` are pushed.
+Unit-only CI `37228770033` passed at exact `1c8da761`; its downloaded proof
+reports 50.8% coverage against 25.0% minimum and all five nonunit tiers skipped.
+No live acceptance or
 release is inferred. [Example](examples/watch-collection-omissions/README.md).
 
 The [candidate operator assessment protocol](docs/operator-investigation-assessment.md)
@@ -1152,6 +1155,24 @@ scoring, retained failure penalties, paired uncertainty and the existing speed/
 first-use targets. Independent review accepted it. It is preparation, not a
 participant run, UI replacement, live/paid admission or measured win. Source/task/
 analysis registration and genuine recordings remain prerequisites.
+
+## v2.14 implicit identity TUI action-safety follow-on
+
+Success-before-code #599 comment
+[5983653628](https://github.com/confighub/cub-scout/issues/599#issuecomment-5983653628)
+found that the opt-in implicit-current-context identity session still allowed
+unbound actions to consult ambient context. The shared captured-context guard
+now applies to both explicit selectors and opt-in identity. Bound explain/scan/
+trace keep their captured providers; graph/shell/import/command actions refuse
+until they can honor that binding. Legacy mode is unchanged.
+
+The eighth authored control checks constructor routing, key/action refusals and
+zero reads/process-facing work. Independent review accepted the patch. Focused
+identity/explicit-context race checks, build, vet and the full offline Go suite
+pass. A [follow-on actual CLI/MCP loopback proof](examples/cluster-identity-cost/offline-action-guard-process-proof.json)
+retains the exact host binary with source/diff and private stream hashes; the
+first proof remains history. This does not establish live/TUI-process acceptance
+or benchmark admission. Exact-head unit-only CI remains pending for the guard.
 
 ## Resume here
 
