@@ -217,3 +217,28 @@ accounting. Existing `runtimeAssetAdmission` stays blocked; no historical runtim
 pins, frozen cases or launch policy were changed. Choosing image-native Python
 versus a mounted `/runtime/python3` bundle still requires implementation and
 review before final runtime acceptance.
+
+## Repeatable offline Python image verification
+
+`python_image.py` verifies the retained cached-image export against the exact
+reviewed receipt digest. It accepts one bounded regular archive, refuses
+symlink/archive path ambiguity and metadata duplicates, checks selected OCI
+index/platform/config/layer identities and bounded expanded diff IDs, rebuilds
+whiteout-applied inventory, and checks Python ELF/library/link identities. It
+never extracts archives, starts Docker or executes a target asset. Missing,
+changed, unsupported or corrupt inputs refuse with exit 2 and no success output.
+
+```bash
+python3 -I -S evals/full24-launch-policy/python_image.py /private/tmp/scout-v213-python-image-20261004/image.tar
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/full24-launch-policy -p test_python_image.py -v
+```
+
+The archive is retained local evidence, not shipped into either model arm.
+Eight synthetic controls exercise identity/corruption, unsafe and duplicate
+paths, JSON nesting, platform/ELF/diff mismatch, compressed/total/member limits,
+whiteouts and regular-file/receipt refusal. The independently reviewable
+[host proof](runtime-python-verifier-proof.json) includes actual success on the
+historical archive and refusal of a truncated copy, under isolated host Python
+with empty HOME and no external dependencies. It records modified source state
+and source hashes. `runtimeAdmission` and `targetExecuted` are explicitly false;
+launch policy, frozen inputs and historical receipts remain unchanged.

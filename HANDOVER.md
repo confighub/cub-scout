@@ -971,9 +971,37 @@ authored controls, recorded-API and launch-policy guards passed before push.
 The source/rendering/static-asset/build receipts have independent acceptance.
 No live gate, runtime/model admission, release or merge is claimed.
 
+## Repeatable Python asset verification — 2026-10-04
+
+`evals/full24-launch-policy/python_image.py` turns the retained one-off static
+image audit into a repeatable, receipt-pinned offline verifier. Bounded no-follow
+regular-file reads, exact OCI/platform/config/layer hashes and diff IDs,
+whiteout-applied inventory, Python ELF/library/link comparison and metadata/
+member/expanded-size controls refuse changed or unsupported assets. No archive
+extraction, Docker, network or target execution occurs. Eight synthetic negative
+and positive controls pass; independent source review accepted without findings.
+The [host proof](evals/full24-launch-policy/runtime-python-verifier-proof.json)
+retains actual historical-export success and truncated-copy refusal with exact
+source/stream/interpreter pins. Its explicit runtimeAdmission/targetExecuted
+flags are false. The initial directory-refusal test exposed fdopen preceding
+fstat; fstat/regular-file checks now happen first, with the descriptor closed on
+refusal. Historical candidate receipt and launch-policy admission stay unchanged.
+
+## Expanded maintainer execution authorization — 2026-10-04
+
+The maintainer removed the agent credit-usage cap and instructed execution
+through 2.14 or 3.0, releasing 2.13 on the way. Execute the adopted 3.0 plan with
+incremental 2.13/2.14 releases once their gates pass. The removed cap concerns
+agent execution spending; frozen per-case benchmark grants/budgets and quality/
+publication gates remain unchanged. SDK #758 stays deferred. The earlier live-
+test exclusion remains until the maintainer answers the pending clarification
+about final live acceptance. No release, merge or paid-model admission is
+inferred from static verification or spending authorization.
+
 ## Resume here
 
-Check #645 and the offline checkpoint above. Continue v2.13 on
+Check #645 and the checkpoint above. Drive the adopted plan through 3.0,
+releasing 2.13 and 2.14 as their gates pass. Continue current v2.13 work on
 `codex/v213-offline-runtime`, preserving the current exclusion of live tests.
 The eleven recorded host bindings do not admit full-24 model execution: remaining
 case bindings, Python/runtime asset admission, actual grants, trusted official
