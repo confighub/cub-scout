@@ -127,6 +127,46 @@ PYTHONDONTWRITEBYTECODE=1 python3 evals/full24-launch-policy/probe_recorded.py \
 This does not establish the pinned Linux runtime, actual Claude tools/skills,
 all-24 MCP coverage, official evaluator integration, descendants, cost or savings.
 
+## Separate recorded-response host preflight
+
+`probe_context.py` validates the original RUL-03 treatment stage through the
+public source/stage verifier, then prepares a private read-only package with
+the two reviewed evidence adapter sources, a fixed bootstrap and exactly four
+selected evidence files. Its explicit host probe invokes a hash-selected regular
+Python executable with `-I -S`, an owned HOME/empty kubeconfig and a clean
+environment. No prompt, oracle, skill, plugin or sibling case is supplied to the
+child. The adapter itself has no cluster, network or subprocess client.
+
+The six requests check initialization, the sole read-only `recorded_response`
+tool, exact captured denied/readable responses, an unsupported implicit context
+and refusal to substitute `map`. Responses must retain their original text,
+403/200 status and complete source provenance. Byte/message limits and a
+15-second child timeout bound the preflight. Raw requests, stdout, stderr and a
+proof are retained even after a failed attempt; package, source and interpreter
+are rechecked after the child. Existing outputs, symlinks, input overlaps and
+unreviewed adapter sources refuse before execution.
+
+```sh
+python3 evals/full24-launch-policy/probe_context.py \
+  --source-prep "$SOURCE_PREP" --stage "$RUL03_WITH_STAGE" \
+  --python "$REGULAR_ABSOLUTE_HOST_PYTHON" --python-sha256 "$EXPECTED_HOST_PYTHON_SHA256" \
+  --output "$NEW_PRIVATE_TEMP_PROOF_DIR"
+```
+
+[Host proof](local-context-proof.json) records a passed actual stdio child
+preflight on the verified refreshed source. Five pure deterministic controls
+cover case/arm/control/evidence selection, exact replies, forged/missing/reordered
+results output/interpreter guards and retained failed/timed-out attempts; the launch-policy suite now has 22 tests.
+These controls do not invoke a process. The host preflight is explicit opt-in.
+
+The grant boundary remains deliberate: `recorded_response` is an eval evidence
+transport, not a product Scout inventory/diagnosis capability. It is not granted
+by the frozen launch policy. RUL-03 still blocks; the eleven existing candidates
+and thirteen blocked cases are unchanged. Host Python selection is not runtime
+dependency admission, and read-only package permissions do not prove filesystem
+or network isolation. Complete descendant accounting, model tool enforcement,
+official evaluation, paid admission and measured advantage remain unproved.
+
 Manual CI now honors offline selection:
 
 ```sh

@@ -765,6 +765,29 @@ The new tool is not granted by the frozen launch policy. RUL-03 remains blocked
 pending tool/runtime admission; the count stays eleven candidates/thirteen
 blocked. No live, container, model or provider execution is claimed.
 
+## Source-bound context host preflight — 2026-10-04
+
+`evals/full24-launch-policy/probe_context.py` binds only original RUL-03
+treatment through the public stage/source verifier and reviewed adapter/evidence
+pins. An explicit hash-selected host Python child runs the exact read-only
+package with isolated Python imports and clean environment. Six actual stdio
+requests passed initialization/catalog, exact 403/200 text/status/provenance,
+implicit-context refusal and map-substitution refusal. The private attempt
+retains all input/output bytes; `local-context-proof.json` records their hashes.
+Source, package and interpreter revalidation passed after the child exited.
+Independent audit verified the retained proof and all source/input/output pins.
+Five pure controls pass, including failed/timed-out artifact retention, bringing
+launch-policy coverage to 22 tests; full
+offline Go tests passed (unit package 47.419s).
+
+The admission boundary is explicit: `recorded_response` currently transports
+raw source evidence, not a product Scout inventory/diagnosis capability. It stays
+outside the frozen tool grant, with RUL-03 still blocked and counts unchanged at
+eleven candidates/thirteen blocked. Host stdio success does not prove runtime
+dependency admission, OS/network containment, descendants, model execution or
+savings. Those proof claims remain false. No live/container/model/provider run
+occurred.
+
 ## Resume here
 
 Check #645 and the offline checkpoint above. Continue v2.13 on
