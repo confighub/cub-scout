@@ -1076,8 +1076,18 @@ controls and the combined identity/meter/reference race run pass; independent
 review accepted the source. The shared example explains collision, version and
 degradation controls. CLI/MCP/TUI fields and connected identity remain open.
 The follow-on build, vet, full offline Go suite and repository guards pass.
-Initial identity implementation `9b9f68f3` is pushed; its exact-head manual
-unit-only CI `37226008155` is in progress, not an acceptance claim.
+Initial identity implementation `9b9f68f3` and merge-key implementation
+`0c398086` are pushed. Exact-head unit-only CI `37226008155` and `37226503189`
+both passed; their downloaded proof matrices bind the respective exact SHAs,
+report 50.5% and 50.6% coverage against 25.0% minimum, and mark all five nonunit
+tiers skipped. No live acceptance or release is inferred.
+
+User-visible P4 map integration is isolated on `codex/v214-cluster-evidence`
+in its separate managed worktree, based on `0c398086`. It is not part of the
+v2.13 candidate or a widened release gate. #599 success-before-code defines an
+explicit opt-in extra Namespace read, separate identity-only costs and shared
+CLI/MCP/TUI projection. The v2.13 branch remains available for genuine gates
+once the pending live-test clarification is resolved.
 
 ## Resume here
 
