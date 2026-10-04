@@ -23,7 +23,7 @@ source binding.
 | PRE-03 | Parent/child Application fields, tree and pod/event text | Captured Application JSON omits GVK; bind identity from pinned capture provenance. Parent sync does not replace child or pod/event evidence. |
 | PRE-04 | Desired placement matrix and config provenance | Desired component/cluster placement is not observed live inventory; disabled/unobserved states remain distinct. |
 | RUL-02 | Timestamped cache-replay sequence | Explicit frame/cache timing semantics, never collapse replay frames into one current snapshot. |
-| RUL-03 | Context map, readable and denied API response bodies | Exact context/request source reader is prepared in `../recorded-api/context_frames.py`, with pinned bytes and denial/no-fallback controls. MCP adapter/runtime integration remains blocked; denied evidence stays unknown. |
+| RUL-03 | Context map, readable and denied API response bodies | Exact context/request reader and eval-only `recorded_response` MCP stdio adapter are prepared under `../recorded-api/`, with pinned bytes and denial/no-fallback controls. The new tool is not in the frozen launch grant; runtime/tool admission remains blocked. Denied inventory stays unknown. |
 
 All of these source files remain equally readable in both experiment arms.
 A future adapter must expose only evidence already in the selected case, retain

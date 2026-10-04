@@ -23,6 +23,35 @@ the full-24 launch policy: the reader is not an MCP tool, runtime enforcement,
 model execution or benchmark admission. Frozen case bytes and tool grants are
 unchanged.
 
+### Prepared MCP evidence transport
+
+`context_mcp.py` wraps the reader in an eval-only newline-delimited JSON-RPC
+stdio server. Its sole read-only tool, `recorded_response`, requires exact
+`context`, `method` and `path` arguments. It returns `responseText` unchanged
+alongside capture provenance. Retrieving a recorded 403 succeeds as an evidence
+read (`isError: false`); its provenance still says `httpStatus: 403`. An
+unsupported request is a tool error and never substitutes another context.
+This tool does not present a denied HTTP response as a Kubernetes object or
+imitate the product's `map` and `explain` contracts.
+
+The command-line entry point accepts no overrides and reads only the fixed
+staged `/evidence/cluster` files. Both contexts and metadata must pass source
+pins before initialization publishes any tools. The imported test interface
+accepts a fixture directory for offline validation. Input messages are limited
+to 128 KiB, nesting to 32 levels, integers to 128 digits and each invocation to
+64 messages. Duplicate keys, non-finite values (including exponent overflow),
+malformed requests and unknown tool arguments refuse. No listener, executable,
+live client or oracle is used.
+
+Five transport controls extend the suite to 25 tests, exercising initialization,
+catalog, exact denied/readable responses, strict input bounds and startup
+refusal through byte streams. These are offline MCP protocol checks; they do
+not establish official client interoperability or isolated runtime enforcement.
+The new tool is not granted by the frozen full-24 launch policy. Its source
+mounts, runtime and tool admission still need review before that policy can use
+it. RUL-03 remains blocked; no prompts, grants, budgets or source evidence have
+changed.
+
 ## PRE-01 recorded API replay
 
 This helper serves a small, fixed set of byte-pinned PRE-01 API responses on an

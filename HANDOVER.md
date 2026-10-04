@@ -743,6 +743,22 @@ This is source-selection preparation, not an MCP binding or model admission.
 The full-24 count remains eleven candidates and thirteen blocked cases. No
 frozen evidence, grants, budgets or product CLI behavior changed.
 
+## Recorded-response MCP checkpoint — 2026-10-04
+
+`evals/recorded-api/context_mcp.py` prepares an eval-only stdio evidence adapter
+with one read-only `recorded_response` tool. Exact context/GET/raw path select
+original response text plus capture provenance; a captured 403 remains source
+data and does not become an empty inventory or a substituted readable context.
+All four source files must pass pins before the tool catalog is served. Fixed
+staged evidence paths, strict bounded JSON and message limits exclude dynamic
+paths, live clients and executable dispatch. Five new transport controls bring
+the recorded-api suite to 25. Independent review identified exponent-overflow
+JSON numbers; finite-float parsing and bounded integers repair that gap, with
+negative vectors. The product MCP catalog and map/explain semantics are unchanged.
+The new tool is not granted by the frozen launch policy. RUL-03 remains blocked
+pending tool/runtime admission; the count stays eleven candidates/thirteen
+blocked. No live, container, model or provider execution is claimed.
+
 ## Resume here
 
 Check #645 and the offline checkpoint above. Continue v2.13 on

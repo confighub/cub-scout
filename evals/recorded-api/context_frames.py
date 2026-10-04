@@ -2,6 +2,7 @@
 """Read one exact RUL-03 historical response; no transport or context fallback."""
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import stat
@@ -52,9 +53,20 @@ def _json(raw):
         return result
     def constant(_):
         raise FrameError('non-finite source value')
+    def finite_float(value):
+        result = float(value)
+        if not math.isfinite(result):
+            raise FrameError('non-finite source value')
+        return result
+    def bounded_int(value):
+        if len(value.lstrip('-')) > 128:
+            raise FrameError('source integer exceeds digit bound')
+        return int(value)
     try:
-        return json.loads(raw.decode('utf-8', 'strict'), object_pairs_hook=unique, parse_constant=constant)
-    except (UnicodeError, json.JSONDecodeError, RecursionError):
+        return json.loads(raw.decode('utf-8', 'strict'), object_pairs_hook=unique,
+                          parse_constant=constant, parse_float=finite_float,
+                          parse_int=bounded_int)
+    except (UnicodeError, ValueError, RecursionError):
         raise FrameError('invalid source JSON') from None
 
 
