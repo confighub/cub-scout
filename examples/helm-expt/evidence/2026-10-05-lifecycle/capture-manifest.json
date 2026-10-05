@@ -1,0 +1,1508 @@
+{
+  "schema": "helm.lifecycle.capture.v1",
+  "recordedAt": "2026-10-05T16:24:23.975969+00:00",
+  "status": "genuine-live-lifecycle-matrix-complete",
+  "sourceCommit": "a561d46fe5e4dee1a4c575febfd2492843404c78",
+  "sourceDirtyAtStart": false,
+  "cleanupExit": 0,
+  "publicArtifacts": [
+    {
+      "file": "exit-status.txt",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "file": "explicit-server-forced-plugin-trace.json",
+      "bytes": 3062,
+      "sha256": "3619e12d583709034027a07b84b2481d0d00e95c2217bea77ec73781c5f2cc30"
+    },
+    {
+      "file": "explicit-server-forced-plugin-trace.json.projection.json",
+      "bytes": 1325,
+      "sha256": "7d5df2ed0508a061f1ef6ee8b26d5fe87b12458115b80102c3da4587c4211ab3"
+    },
+    {
+      "file": "explicit-server-forced-standalone-trace.json",
+      "bytes": 3062,
+      "sha256": "3619e12d583709034027a07b84b2481d0d00e95c2217bea77ec73781c5f2cc30"
+    },
+    {
+      "file": "explicit-server-forced-standalone-trace.json.projection.json",
+      "bytes": 1325,
+      "sha256": "7d5df2ed0508a061f1ef6ee8b26d5fe87b12458115b80102c3da4587c4211ab3"
+    },
+    {
+      "file": "fresh-helm3-plugin-trace.json",
+      "bytes": 1921,
+      "sha256": "3b807781506618aa2cd786ac8e183a12e70e340eb34d5ca284a2b0f15e753630"
+    },
+    {
+      "file": "fresh-helm3-plugin-trace.json.projection.json",
+      "bytes": 1307,
+      "sha256": "84fbbac910041b13032638e83bb80bccb630e904d032839302a4e7f56ac4edca"
+    },
+    {
+      "file": "fresh-helm3-standalone-trace.json",
+      "bytes": 1921,
+      "sha256": "3b807781506618aa2cd786ac8e183a12e70e340eb34d5ca284a2b0f15e753630"
+    },
+    {
+      "file": "fresh-helm3-standalone-trace.json.projection.json",
+      "bytes": 1307,
+      "sha256": "84fbbac910041b13032638e83bb80bccb630e904d032839302a4e7f56ac4edca"
+    },
+    {
+      "file": "fresh-helm4-plugin-trace.json",
+      "bytes": 1921,
+      "sha256": "12472ac66d36d605aa6c7fe86b019d00a368cf70f56b9d9d712e9b5fd38d0b99"
+    },
+    {
+      "file": "fresh-helm4-plugin-trace.json.projection.json",
+      "bytes": 1307,
+      "sha256": "0d71f4ff8765e9e06011d5bff59091eaeebc155355f47dae2a3141cffa0a6230"
+    },
+    {
+      "file": "fresh-helm4-standalone-trace.json",
+      "bytes": 1921,
+      "sha256": "12472ac66d36d605aa6c7fe86b019d00a368cf70f56b9d9d712e9b5fd38d0b99"
+    },
+    {
+      "file": "fresh-helm4-standalone-trace.json.projection.json",
+      "bytes": 1307,
+      "sha256": "0d71f4ff8765e9e06011d5bff59091eaeebc155355f47dae2a3141cffa0a6230"
+    },
+    {
+      "file": "helm3-lifecycle-installed-plugin-trace.json",
+      "bytes": 1961,
+      "sha256": "74593809af90003b5450cfdef2321f60a1e838bc9ccdc41913424309a341be78"
+    },
+    {
+      "file": "helm3-lifecycle-installed-plugin-trace.json.projection.json",
+      "bytes": 1346,
+      "sha256": "88fe4d8cf55d25633a1636180149572c65d5946b2c70b7bcd2c374945da78f79"
+    },
+    {
+      "file": "helm3-lifecycle-installed-standalone-trace.json",
+      "bytes": 1961,
+      "sha256": "74593809af90003b5450cfdef2321f60a1e838bc9ccdc41913424309a341be78"
+    },
+    {
+      "file": "helm3-lifecycle-installed-standalone-trace.json.projection.json",
+      "bytes": 1346,
+      "sha256": "88fe4d8cf55d25633a1636180149572c65d5946b2c70b7bcd2c374945da78f79"
+    },
+    {
+      "file": "helm3-lifecycle-rolled-back-plugin-trace.json",
+      "bytes": 2710,
+      "sha256": "d2f705f68da79078488edcc66727f8df9bae00026ddc595cf65752a42d8679fb"
+    },
+    {
+      "file": "helm3-lifecycle-rolled-back-plugin-trace.json.projection.json",
+      "bytes": 1346,
+      "sha256": "88fe4d8cf55d25633a1636180149572c65d5946b2c70b7bcd2c374945da78f79"
+    },
+    {
+      "file": "helm3-lifecycle-rolled-back-standalone-trace.json",
+      "bytes": 2709,
+      "sha256": "b0bc8b932072ac5545e6ace6946b1027680ae447438d4c8254bf85db000810d1"
+    },
+    {
+      "file": "helm3-lifecycle-rolled-back-standalone-trace.json.projection.json",
+      "bytes": 1346,
+      "sha256": "88fe4d8cf55d25633a1636180149572c65d5946b2c70b7bcd2c374945da78f79"
+    },
+    {
+      "file": "helm4-lifecycle-installed-plugin-trace.json",
+      "bytes": 1960,
+      "sha256": "50aead82848ae7fda765edf5f94c6482d5a2a857fa5e0b1a904bc558341b8223"
+    },
+    {
+      "file": "helm4-lifecycle-installed-plugin-trace.json.projection.json",
+      "bytes": 1346,
+      "sha256": "de23ddc1466033726f34cce99fd6bf0fdc48353d291ad38eb9bbb9044b5ebb03"
+    },
+    {
+      "file": "helm4-lifecycle-installed-standalone-trace.json",
+      "bytes": 1960,
+      "sha256": "50aead82848ae7fda765edf5f94c6482d5a2a857fa5e0b1a904bc558341b8223"
+    },
+    {
+      "file": "helm4-lifecycle-installed-standalone-trace.json.projection.json",
+      "bytes": 1346,
+      "sha256": "de23ddc1466033726f34cce99fd6bf0fdc48353d291ad38eb9bbb9044b5ebb03"
+    },
+    {
+      "file": "helm4-lifecycle-rolled-back-plugin-trace.json",
+      "bytes": 2709,
+      "sha256": "253f72b29560ccf76cc2860783856500044faef058f6929c7372a932fd26a6f7"
+    },
+    {
+      "file": "helm4-lifecycle-rolled-back-plugin-trace.json.projection.json",
+      "bytes": 1346,
+      "sha256": "de23ddc1466033726f34cce99fd6bf0fdc48353d291ad38eb9bbb9044b5ebb03"
+    },
+    {
+      "file": "helm4-lifecycle-rolled-back-standalone-trace.json",
+      "bytes": 2709,
+      "sha256": "253f72b29560ccf76cc2860783856500044faef058f6929c7372a932fd26a6f7"
+    },
+    {
+      "file": "helm4-lifecycle-rolled-back-standalone-trace.json.projection.json",
+      "bytes": 1346,
+      "sha256": "de23ddc1466033726f34cce99fd6bf0fdc48353d291ad38eb9bbb9044b5ebb03"
+    },
+    {
+      "file": "kubernetes-version.json",
+      "bytes": 768,
+      "sha256": "ee7b3dafb6898143948f3b88cf77ebda7ae1f9e605ca8690fb2f3c534627f549"
+    },
+    {
+      "file": "lifecycle/apply-transition/after-conflict.json",
+      "bytes": 7988,
+      "sha256": "7ca4726d2b7a9c1e57f3be3f4aafd5151fccf38ed5def6d32f7f5a1aee26c022"
+    },
+    {
+      "file": "lifecycle/apply-transition/conflict.exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "file": "lifecycle/apply-transition/conflict.stderr",
+      "bytes": 430,
+      "sha256": "1bd45eb5aff98fef4872b018b8d6e5b3bbcba062810f87308cc2adadef5462f1"
+    },
+    {
+      "file": "lifecycle/helm3/crd-after-upgrade.json",
+      "bytes": 2270,
+      "sha256": "9ccbb5a74d7ab0870669e55b2b283f029d90b37788d344b60d03268e8f5309e1"
+    },
+    {
+      "file": "lifecycle/helm3/crd-initial.json",
+      "bytes": 2270,
+      "sha256": "9ccbb5a74d7ab0870669e55b2b283f029d90b37788d344b60d03268e8f5309e1"
+    },
+    {
+      "file": "lifecycle/helm3/dependent-after-upgrade.json",
+      "bytes": 640,
+      "sha256": "4df2325b0b5debd2993c482c2684b55f479224201865031c482026975c290131"
+    },
+    {
+      "file": "lifecycle/helm3/dependent-initial.json",
+      "bytes": 639,
+      "sha256": "cc611d0462dab648d413d879022ef19b3e9a1a8126ba8c9808587180f0f2ef05"
+    },
+    {
+      "file": "lifecycle/helm3/dependent-restored.json",
+      "bytes": 639,
+      "sha256": "3d73c2d12bb47f619e8483e836946be323ceca533c10068cb705cdaa7998b9dc"
+    },
+    {
+      "file": "lifecycle/helm3/failed-upgrade.exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "file": "lifecycle/helm3/history-after-failure.json",
+      "bytes": 445,
+      "sha256": "404bcc80d5d66e751e653e123fa07d02ab35636c1c9d6511019f371e959e12f2"
+    },
+    {
+      "file": "lifecycle/helm3/hook-failed.json",
+      "bytes": 3542,
+      "sha256": "add1efb6ae97bf0168e4097a9cbb6bfa1c332a2a20a280e390da78c3239c5cfa"
+    },
+    {
+      "file": "lifecycle/helm3/hook-success.json",
+      "bytes": 3594,
+      "sha256": "156e8205d30e532dfafb8f497b6b0d4d4ff57db2c2175152679b469e235718f8"
+    },
+    {
+      "file": "lifecycle/helm3/hooks-after-delete.json",
+      "bytes": 119,
+      "sha256": "7a779468a2dde976a9b896541df1e4ef805e813093bd5edb40ef1a6eea588edf"
+    },
+    {
+      "file": "lifecycle/helm4/crd-after-upgrade.json",
+      "bytes": 2270,
+      "sha256": "32f894ae02303f2f0183900bd36d6e2372e2fa657c7a48eaf50a316f14da7b8c"
+    },
+    {
+      "file": "lifecycle/helm4/crd-initial.json",
+      "bytes": 2270,
+      "sha256": "32f894ae02303f2f0183900bd36d6e2372e2fa657c7a48eaf50a316f14da7b8c"
+    },
+    {
+      "file": "lifecycle/helm4/dependent-after-upgrade.json",
+      "bytes": 640,
+      "sha256": "492d83bd4568805a1c19e720363217e9883bc9812004bc1a8a03cd60477fdc59"
+    },
+    {
+      "file": "lifecycle/helm4/dependent-initial.json",
+      "bytes": 639,
+      "sha256": "9a6c909fee871863795891137757b3b6843c1863fcc2585081dbdfa083a313d4"
+    },
+    {
+      "file": "lifecycle/helm4/dependent-restored.json",
+      "bytes": 639,
+      "sha256": "e22dd901f797972bc058682a8527a860c22b741cef2fdf66446df328229a8b8d"
+    },
+    {
+      "file": "lifecycle/helm4/failed-upgrade.exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "file": "lifecycle/helm4/history-after-failure.json",
+      "bytes": 480,
+      "sha256": "162ec2618b06f636d8b5fa1f248e46bda1fb2e3dfc305e779ef43f6e765c3f09"
+    },
+    {
+      "file": "lifecycle/helm4/hook-failed.json",
+      "bytes": 3542,
+      "sha256": "8cc77088430bc26ae2a1f72798fd6c25521a7b6e7970b233a2a23f5a8ae37016"
+    },
+    {
+      "file": "lifecycle/helm4/hook-success.json",
+      "bytes": 3594,
+      "sha256": "8218a026f893102def05345c1c2a611cdaa3f47b25f7444dc8f45d5aca3fcd51"
+    },
+    {
+      "file": "lifecycle/helm4/hooks-after-delete.json",
+      "bytes": 119,
+      "sha256": "7a779468a2dde976a9b896541df1e4ef805e813093bd5edb40ef1a6eea588edf"
+    },
+    {
+      "file": "pre-upgrade-helm3-plugin-trace.json",
+      "bytes": 1939,
+      "sha256": "c8b658deff6b22ae15632f9b0ee99466c9f29c61cd5de45f4cf47f3033010ed7"
+    },
+    {
+      "file": "pre-upgrade-helm3-plugin-trace.json.projection.json",
+      "bytes": 1325,
+      "sha256": "7d5df2ed0508a061f1ef6ee8b26d5fe87b12458115b80102c3da4587c4211ab3"
+    },
+    {
+      "file": "pre-upgrade-helm3-standalone-trace.json",
+      "bytes": 1939,
+      "sha256": "c8b658deff6b22ae15632f9b0ee99466c9f29c61cd5de45f4cf47f3033010ed7"
+    },
+    {
+      "file": "pre-upgrade-helm3-standalone-trace.json.projection.json",
+      "bytes": 1325,
+      "sha256": "7d5df2ed0508a061f1ef6ee8b26d5fe87b12458115b80102c3da4587c4211ab3"
+    },
+    {
+      "file": "releases/explicit-server-forced/deployment-evidence.json",
+      "bytes": 2478,
+      "sha256": "c6569e0f4a4053bbefa17f66c6c7f1d310efae6fdc7a1a9d11f09c9f680a5d14"
+    },
+    {
+      "file": "releases/explicit-server-forced/deployment.raw.json",
+      "bytes": 6421,
+      "sha256": "e239e1c7580bbaed1cfbcb95733cdaded7c1ef7cddda54edfe381d1886ceb5ac"
+    },
+    {
+      "file": "releases/explicit-server-forced/release-history.json",
+      "bytes": 848,
+      "sha256": "4cdd0abc98e0792ff6ef002d0f41494e0a456a0bcb485631d7bfe7113029d028"
+    },
+    {
+      "file": "releases/fresh-helm3/deployment-evidence.json",
+      "bytes": 3208,
+      "sha256": "a24851fa7d1054a4d3f8f29c2d7bda1e3a7894949b2fc4db3f84598f201fd1f3"
+    },
+    {
+      "file": "releases/fresh-helm3/deployment.raw.json",
+      "bytes": 7533,
+      "sha256": "23a233e4f2d65bdd6d9baa20b74f13974b0aa6bf5e185ec9ed46b5ae1edf12a0"
+    },
+    {
+      "file": "releases/fresh-helm3/release-history.json",
+      "bytes": 165,
+      "sha256": "ae0c1fd5699fe16f2e39ac760b99b265121a940e43a65f3c668ca3bcbea78358"
+    },
+    {
+      "file": "releases/fresh-helm4/deployment-evidence.json",
+      "bytes": 2472,
+      "sha256": "3795a6534b2e6793644649897cb509a0078e5dfe321842849a63566d83df8759"
+    },
+    {
+      "file": "releases/fresh-helm4/deployment.raw.json",
+      "bytes": 6409,
+      "sha256": "d2a7628c61e4e8c8464ac90fedf3717f9ca0dbdbb2e21212dbd006001a05ed2c"
+    },
+    {
+      "file": "releases/fresh-helm4/release-history.json",
+      "bytes": 165,
+      "sha256": "20842502d6da4d309258887844f99a134346e1cf12c5cde15f59f067c8a4449f"
+    },
+    {
+      "file": "releases/helm3-lifecycle-installed/deployment-evidence.json",
+      "bytes": 3221,
+      "sha256": "ad06b45a62ec43070f68aebae1df5aec6ae639bfc51d95d45c55b76154970654"
+    },
+    {
+      "file": "releases/helm3-lifecycle-installed/deployment.raw.json",
+      "bytes": 7559,
+      "sha256": "8616d82f074ed7d1bbb211ad3212c23af3b6860c9139a4fd480f1c720b7a7828"
+    },
+    {
+      "file": "releases/helm3-lifecycle-installed/release-history.json",
+      "bytes": 165,
+      "sha256": "37aab0ad80c82ecfc1b1f838cb39d0f5e46e073a118550d23e089217c3e361e2"
+    },
+    {
+      "file": "releases/helm3-lifecycle-rolled-back/deployment-evidence.json",
+      "bytes": 3221,
+      "sha256": "5872a9c21f3832f59a18c96b16108dc288fd7ae7aba3ab3a97f8da5329e8b338"
+    },
+    {
+      "file": "releases/helm3-lifecycle-rolled-back/deployment.raw.json",
+      "bytes": 7559,
+      "sha256": "0aed01d6f35129fe59517332437c1e9fbece12919f14d27ddddcb26a2cebe54e"
+    },
+    {
+      "file": "releases/helm3-lifecycle-rolled-back/release-history.json",
+      "bytes": 607,
+      "sha256": "bfb4d1755e2ba2f6d653c01d605995ed54ff1018a51350c292e82a7911f10a5e"
+    },
+    {
+      "file": "releases/helm4-lifecycle-installed/deployment-evidence.json",
+      "bytes": 2485,
+      "sha256": "a262bbe128eb83dec55d99d98e0e85922202480f529003aa6a13a96509536043"
+    },
+    {
+      "file": "releases/helm4-lifecycle-installed/deployment.raw.json",
+      "bytes": 6435,
+      "sha256": "770f45a50962bd3ff7e4ba075f569d5479cf49dbced5babefecc960589621bd4"
+    },
+    {
+      "file": "releases/helm4-lifecycle-installed/release-history.json",
+      "bytes": 164,
+      "sha256": "cb6cde9380fd06452a1b419634dc2c1e9de441708a8099808f9487fd85e211b0"
+    },
+    {
+      "file": "releases/helm4-lifecycle-rolled-back/deployment-evidence.json",
+      "bytes": 2485,
+      "sha256": "46126dbbc87368ddcdee2e2931b35355c2d53797076eef1b82234db5b029bf69"
+    },
+    {
+      "file": "releases/helm4-lifecycle-rolled-back/deployment.raw.json",
+      "bytes": 6435,
+      "sha256": "2a9160c3d8af60c22384ef9af75cb6ea616d0f2da6b6f66c411e08091123218e"
+    },
+    {
+      "file": "releases/helm4-lifecycle-rolled-back/release-history.json",
+      "bytes": 642,
+      "sha256": "42ed3a8c046b4c9fd94b4bdc54224c60fdc8e6e0f78e7908ac9f3cfe4aa069ef"
+    },
+    {
+      "file": "releases/pre-upgrade-helm3/deployment-evidence.json",
+      "bytes": 3214,
+      "sha256": "c973c93841490429af23fb7931b72c63efd5e5565d017e95c60df66737b23b27"
+    },
+    {
+      "file": "releases/pre-upgrade-helm3/deployment.raw.json",
+      "bytes": 7545,
+      "sha256": "b897ddd1d696fc54385a9987d94cb3d4e857cfc49ff983e3ad45bf1dfaab042d"
+    },
+    {
+      "file": "releases/pre-upgrade-helm3/release-history.json",
+      "bytes": 165,
+      "sha256": "7bda3447e86c057397568e2b8a6d0275e9a3a038bc67c9b704ffe436e7839bdb"
+    },
+    {
+      "file": "releases/upgraded-helm4-auto/deployment-evidence.json",
+      "bytes": 3214,
+      "sha256": "b280f41a954025f08fda66c2d35d838ace6e84ca81cda99d8cc0010017d6ecfc"
+    },
+    {
+      "file": "releases/upgraded-helm4-auto/deployment.raw.json",
+      "bytes": 7545,
+      "sha256": "b78be47df05dfff36330abb97987fcd0377536c0b03a16969ce9f3761977e02a"
+    },
+    {
+      "file": "releases/upgraded-helm4-auto/release-history.json",
+      "bytes": 330,
+      "sha256": "a7afec8265ea395fce4647ecf44cfa74363101d3a0bab8f324b320c52e860b08"
+    },
+    {
+      "file": "summary.json",
+      "bytes": 1063,
+      "sha256": "a489f2e2aba7003d0619f9b3e7186d8b18e7367ab9b7cfde8e97949c0c560533"
+    },
+    {
+      "file": "upgraded-helm4-auto-plugin-trace.json",
+      "bytes": 2312,
+      "sha256": "55828ef52e01f70a09185e0ae63d93f4db3627761697ead3909dbc3f381fc273"
+    },
+    {
+      "file": "upgraded-helm4-auto-plugin-trace.json.projection.json",
+      "bytes": 1325,
+      "sha256": "7d5df2ed0508a061f1ef6ee8b26d5fe87b12458115b80102c3da4587c4211ab3"
+    },
+    {
+      "file": "upgraded-helm4-auto-standalone-trace.json",
+      "bytes": 2312,
+      "sha256": "55828ef52e01f70a09185e0ae63d93f4db3627761697ead3909dbc3f381fc273"
+    },
+    {
+      "file": "upgraded-helm4-auto-standalone-trace.json.projection.json",
+      "bytes": 1325,
+      "sha256": "7d5df2ed0508a061f1ef6ee8b26d5fe87b12458115b80102c3da4587c4211ab3"
+    }
+  ],
+  "privateArtifactInventory": [
+    {
+      "file": "chart/Chart.yaml",
+      "bytes": 150,
+      "sha256": "404494c38ce972f61b0b8c601d8123717102184ca9e8796e021eadbad2745bda"
+    },
+    {
+      "file": "chart/templates/deployment.yaml",
+      "bytes": 456,
+      "sha256": "175b7a89ef4d257c6471cd9a5915b32437782b9db1db493811aebcd96945d847"
+    },
+    {
+      "file": "chart/values.yaml",
+      "bytes": 16,
+      "sha256": "5495eb6991f7c134fc9ab2dce6c3a537e06a3f39dd229ee4202343f5e5ddb04c"
+    },
+    {
+      "file": "chart-helm3-lifecycle/Chart.yaml",
+      "bytes": 150,
+      "sha256": "404494c38ce972f61b0b8c601d8123717102184ca9e8796e021eadbad2745bda"
+    },
+    {
+      "file": "chart-helm3-lifecycle/crds/probe.yaml",
+      "bytes": 572,
+      "sha256": "157e24ce93e26758c6ba081608af5e781796cb8d34e7401a2c6c2bcf7549cd90"
+    },
+    {
+      "file": "chart-helm3-lifecycle/templates/deployment.yaml",
+      "bytes": 456,
+      "sha256": "175b7a89ef4d257c6471cd9a5915b32437782b9db1db493811aebcd96945d847"
+    },
+    {
+      "file": "chart-helm3-lifecycle/templates/hook.yaml",
+      "bytes": 577,
+      "sha256": "282151d0e4227f3aba260dca59fbb15158c1902246ceb3eb40a0e59ca7235b2d"
+    },
+    {
+      "file": "chart-helm3-lifecycle/templates/probe.yaml",
+      "bytes": 168,
+      "sha256": "ac0a41bfb5a6d90965b1265bdd68e4e42ef562040859957d70f58d2529d2d0d4"
+    },
+    {
+      "file": "chart-helm3-lifecycle/values.yaml",
+      "bytes": 46,
+      "sha256": "6917572759374bd1cadd1649eb0622af0caaab5afbeaef929aa368e32dfb1a7e"
+    },
+    {
+      "file": "chart-helm4-lifecycle/Chart.yaml",
+      "bytes": 150,
+      "sha256": "404494c38ce972f61b0b8c601d8123717102184ca9e8796e021eadbad2745bda"
+    },
+    {
+      "file": "chart-helm4-lifecycle/crds/probe.yaml",
+      "bytes": 572,
+      "sha256": "582759f5bb33a45f83f88249122576bef6f0185e0cc9365a85975a7a4bd80079"
+    },
+    {
+      "file": "chart-helm4-lifecycle/templates/deployment.yaml",
+      "bytes": 456,
+      "sha256": "175b7a89ef4d257c6471cd9a5915b32437782b9db1db493811aebcd96945d847"
+    },
+    {
+      "file": "chart-helm4-lifecycle/templates/hook.yaml",
+      "bytes": 577,
+      "sha256": "282151d0e4227f3aba260dca59fbb15158c1902246ceb3eb40a0e59ca7235b2d"
+    },
+    {
+      "file": "chart-helm4-lifecycle/templates/probe.yaml",
+      "bytes": 168,
+      "sha256": "ac421fce2d94a73e1c3f2a187ad81c3d83b51c52424718499cb3c0e00ca84d7f"
+    },
+    {
+      "file": "chart-helm4-lifecycle/values.yaml",
+      "bytes": 46,
+      "sha256": "6917572759374bd1cadd1649eb0622af0caaab5afbeaef929aa368e32dfb1a7e"
+    },
+    {
+      "file": "commands.log",
+      "bytes": 86166,
+      "sha256": "8ccf3343324c4e5a26432cff92ba733548d74ccad48d527df9f0ea5ee5e2ddfc"
+    },
+    {
+      "file": "cub-scout-binary.sha256",
+      "bytes": 151,
+      "sha256": "2235a1f3af78cf920989e45350009cd88d55a4d86f4db69dd7e73a33260e22cb"
+    },
+    {
+      "file": "exit-status.txt",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "file": "explicit-server-forced-plugin-trace.json",
+      "bytes": 3062,
+      "sha256": "3619e12d583709034027a07b84b2481d0d00e95c2217bea77ec73781c5f2cc30"
+    },
+    {
+      "file": "explicit-server-forced-plugin-trace.json.projection.json",
+      "bytes": 1325,
+      "sha256": "7d5df2ed0508a061f1ef6ee8b26d5fe87b12458115b80102c3da4587c4211ab3"
+    },
+    {
+      "file": "explicit-server-forced-plugin-trace.json.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "explicit-server-forced-standalone-trace.json",
+      "bytes": 3062,
+      "sha256": "3619e12d583709034027a07b84b2481d0d00e95c2217bea77ec73781c5f2cc30"
+    },
+    {
+      "file": "explicit-server-forced-standalone-trace.json.projection.json",
+      "bytes": 1325,
+      "sha256": "7d5df2ed0508a061f1ef6ee8b26d5fe87b12458115b80102c3da4587c4211ab3"
+    },
+    {
+      "file": "explicit-server-forced-standalone-trace.json.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "fresh-helm3-plugin-trace.json",
+      "bytes": 1921,
+      "sha256": "3b807781506618aa2cd786ac8e183a12e70e340eb34d5ca284a2b0f15e753630"
+    },
+    {
+      "file": "fresh-helm3-plugin-trace.json.projection.json",
+      "bytes": 1307,
+      "sha256": "84fbbac910041b13032638e83bb80bccb630e904d032839302a4e7f56ac4edca"
+    },
+    {
+      "file": "fresh-helm3-plugin-trace.json.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "fresh-helm3-standalone-trace.json",
+      "bytes": 1921,
+      "sha256": "3b807781506618aa2cd786ac8e183a12e70e340eb34d5ca284a2b0f15e753630"
+    },
+    {
+      "file": "fresh-helm3-standalone-trace.json.projection.json",
+      "bytes": 1307,
+      "sha256": "84fbbac910041b13032638e83bb80bccb630e904d032839302a4e7f56ac4edca"
+    },
+    {
+      "file": "fresh-helm3-standalone-trace.json.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "fresh-helm4-plugin-trace.json",
+      "bytes": 1921,
+      "sha256": "12472ac66d36d605aa6c7fe86b019d00a368cf70f56b9d9d712e9b5fd38d0b99"
+    },
+    {
+      "file": "fresh-helm4-plugin-trace.json.projection.json",
+      "bytes": 1307,
+      "sha256": "0d71f4ff8765e9e06011d5bff59091eaeebc155355f47dae2a3141cffa0a6230"
+    },
+    {
+      "file": "fresh-helm4-plugin-trace.json.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "fresh-helm4-standalone-trace.json",
+      "bytes": 1921,
+      "sha256": "12472ac66d36d605aa6c7fe86b019d00a368cf70f56b9d9d712e9b5fd38d0b99"
+    },
+    {
+      "file": "fresh-helm4-standalone-trace.json.projection.json",
+      "bytes": 1307,
+      "sha256": "0d71f4ff8765e9e06011d5bff59091eaeebc155355f47dae2a3141cffa0a6230"
+    },
+    {
+      "file": "fresh-helm4-standalone-trace.json.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "go-version.txt",
+      "bytes": 33,
+      "sha256": "a3d12e3f8d79970b066e2e997bcea464edca36b9feff785b459c6b7a587c7077"
+    },
+    {
+      "file": "helm3-lifecycle-installed-plugin-trace.json",
+      "bytes": 1961,
+      "sha256": "74593809af90003b5450cfdef2321f60a1e838bc9ccdc41913424309a341be78"
+    },
+    {
+      "file": "helm3-lifecycle-installed-plugin-trace.json.projection.json",
+      "bytes": 1346,
+      "sha256": "88fe4d8cf55d25633a1636180149572c65d5946b2c70b7bcd2c374945da78f79"
+    },
+    {
+      "file": "helm3-lifecycle-installed-plugin-trace.json.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "helm3-lifecycle-installed-standalone-trace.json",
+      "bytes": 1961,
+      "sha256": "74593809af90003b5450cfdef2321f60a1e838bc9ccdc41913424309a341be78"
+    },
+    {
+      "file": "helm3-lifecycle-installed-standalone-trace.json.projection.json",
+      "bytes": 1346,
+      "sha256": "88fe4d8cf55d25633a1636180149572c65d5946b2c70b7bcd2c374945da78f79"
+    },
+    {
+      "file": "helm3-lifecycle-installed-standalone-trace.json.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "helm3-lifecycle-rolled-back-plugin-trace.json",
+      "bytes": 2710,
+      "sha256": "d2f705f68da79078488edcc66727f8df9bae00026ddc595cf65752a42d8679fb"
+    },
+    {
+      "file": "helm3-lifecycle-rolled-back-plugin-trace.json.projection.json",
+      "bytes": 1346,
+      "sha256": "88fe4d8cf55d25633a1636180149572c65d5946b2c70b7bcd2c374945da78f79"
+    },
+    {
+      "file": "helm3-lifecycle-rolled-back-plugin-trace.json.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "helm3-lifecycle-rolled-back-standalone-trace.json",
+      "bytes": 2709,
+      "sha256": "b0bc8b932072ac5545e6ace6946b1027680ae447438d4c8254bf85db000810d1"
+    },
+    {
+      "file": "helm3-lifecycle-rolled-back-standalone-trace.json.projection.json",
+      "bytes": 1346,
+      "sha256": "88fe4d8cf55d25633a1636180149572c65d5946b2c70b7bcd2c374945da78f79"
+    },
+    {
+      "file": "helm3-lifecycle-rolled-back-standalone-trace.json.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "helm3-version.txt",
+      "bytes": 54,
+      "sha256": "46088d7e77c3ca8c6ca91ba5447a22c48e58ce45fab02e29adf68eb24d7da7e0"
+    },
+    {
+      "file": "helm4-lifecycle-installed-plugin-trace.json",
+      "bytes": 1960,
+      "sha256": "50aead82848ae7fda765edf5f94c6482d5a2a857fa5e0b1a904bc558341b8223"
+    },
+    {
+      "file": "helm4-lifecycle-installed-plugin-trace.json.projection.json",
+      "bytes": 1346,
+      "sha256": "de23ddc1466033726f34cce99fd6bf0fdc48353d291ad38eb9bbb9044b5ebb03"
+    },
+    {
+      "file": "helm4-lifecycle-installed-plugin-trace.json.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "helm4-lifecycle-installed-standalone-trace.json",
+      "bytes": 1960,
+      "sha256": "50aead82848ae7fda765edf5f94c6482d5a2a857fa5e0b1a904bc558341b8223"
+    },
+    {
+      "file": "helm4-lifecycle-installed-standalone-trace.json.projection.json",
+      "bytes": 1346,
+      "sha256": "de23ddc1466033726f34cce99fd6bf0fdc48353d291ad38eb9bbb9044b5ebb03"
+    },
+    {
+      "file": "helm4-lifecycle-installed-standalone-trace.json.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "helm4-lifecycle-rolled-back-plugin-trace.json",
+      "bytes": 2709,
+      "sha256": "253f72b29560ccf76cc2860783856500044faef058f6929c7372a932fd26a6f7"
+    },
+    {
+      "file": "helm4-lifecycle-rolled-back-plugin-trace.json.projection.json",
+      "bytes": 1346,
+      "sha256": "de23ddc1466033726f34cce99fd6bf0fdc48353d291ad38eb9bbb9044b5ebb03"
+    },
+    {
+      "file": "helm4-lifecycle-rolled-back-plugin-trace.json.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "helm4-lifecycle-rolled-back-standalone-trace.json",
+      "bytes": 2709,
+      "sha256": "253f72b29560ccf76cc2860783856500044faef058f6929c7372a932fd26a6f7"
+    },
+    {
+      "file": "helm4-lifecycle-rolled-back-standalone-trace.json.projection.json",
+      "bytes": 1346,
+      "sha256": "de23ddc1466033726f34cce99fd6bf0fdc48353d291ad38eb9bbb9044b5ebb03"
+    },
+    {
+      "file": "helm4-lifecycle-rolled-back-standalone-trace.json.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "helm4-version.txt",
+      "bytes": 53,
+      "sha256": "807a5069223d0bfd9cf75e733e2655ff385b0460e7194d856a1340a629e200cd"
+    },
+    {
+      "file": "install-helm3-fresh.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "install-helm3-fresh.stdout",
+      "bytes": 127,
+      "sha256": "7cd0e9c8da7401559d914f4f37bfd418ae8b45183527d2fffb6212fc213bd344"
+    },
+    {
+      "file": "install-helm3-upgrade-case.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "install-helm3-upgrade-case.stdout",
+      "bytes": 133,
+      "sha256": "558bc2a37ee1123f2069697512c5fce70af216c7f7e4a11aaec25f3832732818"
+    },
+    {
+      "file": "install-helm4-fresh.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "install-helm4-fresh.stdout",
+      "bytes": 157,
+      "sha256": "2e8753163afb94f471929d6b7895469f39e6f005682eab5792caa09ffb6ca2e8"
+    },
+    {
+      "file": "kind-binary.sha256",
+      "bytes": 89,
+      "sha256": "9809afd0bfbf5b752c7e5ea7bd7f71d4bae9aa8d26b8a789345bc19951b17ac1"
+    },
+    {
+      "file": "kind-create.stderr",
+      "bytes": 904,
+      "sha256": "afcaa71ad371ab75fad295864fe9c6c791dcc02a9c772a4fd9ffcbcf338a0826"
+    },
+    {
+      "file": "kind-create.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "kind-delete.stderr",
+      "bytes": 108,
+      "sha256": "60593c423664af091743ec21681761cc5782007a1b4409cd14add7660635ee0a"
+    },
+    {
+      "file": "kind-delete.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "kind-image.txt",
+      "bytes": 93,
+      "sha256": "9b29c8f851aa6e0fd60845b166525872df6e06e327172c8f47fec65d34be73de"
+    },
+    {
+      "file": "kind-version.txt",
+      "bytes": 35,
+      "sha256": "83636285896f64e111bd9842a1e539fd893c76cae913de4263f293cfe11f1cdd"
+    },
+    {
+      "file": "kubectl-binary.sha256",
+      "bytes": 92,
+      "sha256": "42f7bdc8cc48e3405a09c17e92737eb43d42f092ee1c52c742a2d5e07dbba4ae"
+    },
+    {
+      "file": "kubectl-version.yaml",
+      "bytes": 264,
+      "sha256": "37b84200e2615105a31f54b38bdfdc87f59b74d00689a182166c4f897121ceb5"
+    },
+    {
+      "file": "kubernetes-version.json",
+      "bytes": 768,
+      "sha256": "ee7b3dafb6898143948f3b88cf77ebda7ae1f9e605ca8690fb2f3c534627f549"
+    },
+    {
+      "file": "kubernetes-version.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "lifecycle/apply-transition/after-conflict.json",
+      "bytes": 7988,
+      "sha256": "7ca4726d2b7a9c1e57f3be3f4aafd5151fccf38ed5def6d32f7f5a1aee26c022"
+    },
+    {
+      "file": "lifecycle/apply-transition/conflict.exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "file": "lifecycle/apply-transition/conflict.stderr",
+      "bytes": 430,
+      "sha256": "1bd45eb5aff98fef4872b018b8d6e5b3bbcba062810f87308cc2adadef5462f1"
+    },
+    {
+      "file": "lifecycle/apply-transition/conflict.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "lifecycle/apply-transition/forced.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "lifecycle/apply-transition/forced.stdout",
+      "bytes": 221,
+      "sha256": "62271a275a5f6f91ed6d55761cac89d7d84142dfa7a663755d8c6c477cba0c0c"
+    },
+    {
+      "file": "lifecycle/apply-transition/foreign-apply.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "lifecycle/apply-transition/foreign-apply.stdout",
+      "bytes": 49,
+      "sha256": "90969f787f38ce2d367ffb2bbfb53ade60f2d57f54385504273fceb1fda21078"
+    },
+    {
+      "file": "lifecycle/apply-transition/foreign-field.yaml",
+      "bytes": 118,
+      "sha256": "cc429953cf82621b6b774ecb0d34ec6be8d8d78d08d5fbcfef2d407e9deb9778"
+    },
+    {
+      "file": "lifecycle/helm3/chart-initial.sha256",
+      "bytes": 904,
+      "sha256": "9d1d0774b0e682bb73a423ac4e09e36e66cc049740e056157f85f2c1a59e60e2"
+    },
+    {
+      "file": "lifecycle/helm3/chart-upgrade-crd.sha256",
+      "bytes": 149,
+      "sha256": "6af9313c6fc1aa95e8e2960440805c90eade91c7b78235a424a6e65006d4c763"
+    },
+    {
+      "file": "lifecycle/helm3/crd-after-upgrade.json",
+      "bytes": 2270,
+      "sha256": "9ccbb5a74d7ab0870669e55b2b283f029d90b37788d344b60d03268e8f5309e1"
+    },
+    {
+      "file": "lifecycle/helm3/crd-initial.json",
+      "bytes": 2270,
+      "sha256": "9ccbb5a74d7ab0870669e55b2b283f029d90b37788d344b60d03268e8f5309e1"
+    },
+    {
+      "file": "lifecycle/helm3/crd-wait.stdout",
+      "bytes": 91,
+      "sha256": "675fb1bf296a6b8bee1855065a32451ca1ba0509a9e84a6d2f211c16e27a97f6"
+    },
+    {
+      "file": "lifecycle/helm3/dependent-after-upgrade.json",
+      "bytes": 640,
+      "sha256": "4df2325b0b5debd2993c482c2684b55f479224201865031c482026975c290131"
+    },
+    {
+      "file": "lifecycle/helm3/dependent-initial.json",
+      "bytes": 639,
+      "sha256": "cc611d0462dab648d413d879022ef19b3e9a1a8126ba8c9808587180f0f2ef05"
+    },
+    {
+      "file": "lifecycle/helm3/dependent-restored.json",
+      "bytes": 639,
+      "sha256": "3d73c2d12bb47f619e8483e836946be323ceca533c10068cb705cdaa7998b9dc"
+    },
+    {
+      "file": "lifecycle/helm3/failed-upgrade.exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "file": "lifecycle/helm3/failed-upgrade.stderr",
+      "bytes": 121,
+      "sha256": "b30febe7ad50bd540fbd1915ed522f4a7e32ee97cd0378eee223025f7458edf3"
+    },
+    {
+      "file": "lifecycle/helm3/failed-upgrade.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "lifecycle/helm3/history-after-failure.json",
+      "bytes": 445,
+      "sha256": "404bcc80d5d66e751e653e123fa07d02ab35636c1c9d6511019f371e959e12f2"
+    },
+    {
+      "file": "lifecycle/helm3/hook-delete.stdout",
+      "bytes": 73,
+      "sha256": "c22679f72c24997948162e8c7ee497abca9bef419c84b47cb80c1eb759c4a24f"
+    },
+    {
+      "file": "lifecycle/helm3/hook-failed.json",
+      "bytes": 3542,
+      "sha256": "add1efb6ae97bf0168e4097a9cbb6bfa1c332a2a20a280e390da78c3239c5cfa"
+    },
+    {
+      "file": "lifecycle/helm3/hook-success.json",
+      "bytes": 3594,
+      "sha256": "156e8205d30e532dfafb8f497b6b0d4d4ff57db2c2175152679b469e235718f8"
+    },
+    {
+      "file": "lifecycle/helm3/hooks-after-delete.json",
+      "bytes": 119,
+      "sha256": "7a779468a2dde976a9b896541df1e4ef805e813093bd5edb40ef1a6eea588edf"
+    },
+    {
+      "file": "lifecycle/helm3/hooks-after-rollback.yaml",
+      "bytes": 571,
+      "sha256": "347c729be3eceac1045016aac1c0f33476fe6d6e81c3b8a37f758db1c863a33f"
+    },
+    {
+      "file": "lifecycle/helm3/install.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "lifecycle/helm3/install.stdout",
+      "bytes": 140,
+      "sha256": "0aaac7d0f01677ed95ce4a277444c4c7c9f3fda828deca36611e04afca77ad56"
+    },
+    {
+      "file": "lifecycle/helm3/rollback.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "lifecycle/helm3/rollback.stdout",
+      "bytes": 39,
+      "sha256": "65abefa038c24a2d20301a9ecb0d0fc1bb76e6d6bce4458973a7a1f67e8d2d1e"
+    },
+    {
+      "file": "lifecycle/helm4/chart-initial.sha256",
+      "bytes": 904,
+      "sha256": "ab73f11df71d77ab6e72faca33ecb8219c2d3dd8e55ec0c1e1f2b9a9eaa76820"
+    },
+    {
+      "file": "lifecycle/helm4/chart-upgrade-crd.sha256",
+      "bytes": 149,
+      "sha256": "fdcd3785b4f23ac887b56d33beadc8f03cfc4b7dcb5c7ccd815bd672cd4c9990"
+    },
+    {
+      "file": "lifecycle/helm4/crd-after-upgrade.json",
+      "bytes": 2270,
+      "sha256": "32f894ae02303f2f0183900bd36d6e2372e2fa657c7a48eaf50a316f14da7b8c"
+    },
+    {
+      "file": "lifecycle/helm4/crd-initial.json",
+      "bytes": 2270,
+      "sha256": "32f894ae02303f2f0183900bd36d6e2372e2fa657c7a48eaf50a316f14da7b8c"
+    },
+    {
+      "file": "lifecycle/helm4/crd-wait.stdout",
+      "bytes": 91,
+      "sha256": "a661903d4c5eee5c4f979bb6587e1b4f4092c0712a0c70fd05eef6105e483ff3"
+    },
+    {
+      "file": "lifecycle/helm4/dependent-after-upgrade.json",
+      "bytes": 640,
+      "sha256": "492d83bd4568805a1c19e720363217e9883bc9812004bc1a8a03cd60477fdc59"
+    },
+    {
+      "file": "lifecycle/helm4/dependent-initial.json",
+      "bytes": 639,
+      "sha256": "9a6c909fee871863795891137757b3b6843c1863fcc2585081dbdfa083a313d4"
+    },
+    {
+      "file": "lifecycle/helm4/dependent-restored.json",
+      "bytes": 639,
+      "sha256": "e22dd901f797972bc058682a8527a860c22b741cef2fdf66446df328229a8b8d"
+    },
+    {
+      "file": "lifecycle/helm4/failed-upgrade.exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "file": "lifecycle/helm4/failed-upgrade.stderr",
+      "bytes": 358,
+      "sha256": "9aa1b4c56d811bc3d13b9eff867ae63c176e0c362151b368027619d6509f8449"
+    },
+    {
+      "file": "lifecycle/helm4/failed-upgrade.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "lifecycle/helm4/history-after-failure.json",
+      "bytes": 480,
+      "sha256": "162ec2618b06f636d8b5fa1f248e46bda1fb2e3dfc305e779ef43f6e765c3f09"
+    },
+    {
+      "file": "lifecycle/helm4/hook-delete.stdout",
+      "bytes": 73,
+      "sha256": "ebceee701f84ec3fcb2af012b22bfae1f023daf2c50a006c31d7264d684657d5"
+    },
+    {
+      "file": "lifecycle/helm4/hook-failed.json",
+      "bytes": 3542,
+      "sha256": "8cc77088430bc26ae2a1f72798fd6c25521a7b6e7970b233a2a23f5a8ae37016"
+    },
+    {
+      "file": "lifecycle/helm4/hook-success.json",
+      "bytes": 3594,
+      "sha256": "8218a026f893102def05345c1c2a611cdaa3f47b25f7444dc8f45d5aca3fcd51"
+    },
+    {
+      "file": "lifecycle/helm4/hooks-after-delete.json",
+      "bytes": 119,
+      "sha256": "7a779468a2dde976a9b896541df1e4ef805e813093bd5edb40ef1a6eea588edf"
+    },
+    {
+      "file": "lifecycle/helm4/hooks-after-rollback.yaml",
+      "bytes": 571,
+      "sha256": "22f896c4c1cd52ccfa1975d59033a9e1aee20ffba231c4f11d3f93a5230e916a"
+    },
+    {
+      "file": "lifecycle/helm4/install.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "lifecycle/helm4/install.stdout",
+      "bytes": 170,
+      "sha256": "7dd84c0e364651ae533b2cfd4e5896f6f25481553b749ac700797753a8f2103d"
+    },
+    {
+      "file": "lifecycle/helm4/rollback.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "lifecycle/helm4/rollback.stdout",
+      "bytes": 39,
+      "sha256": "65abefa038c24a2d20301a9ecb0d0fc1bb76e6d6bce4458973a7a1f67e8d2d1e"
+    },
+    {
+      "file": "pre-upgrade-helm3-plugin-trace.json",
+      "bytes": 1939,
+      "sha256": "c8b658deff6b22ae15632f9b0ee99466c9f29c61cd5de45f4cf47f3033010ed7"
+    },
+    {
+      "file": "pre-upgrade-helm3-plugin-trace.json.projection.json",
+      "bytes": 1325,
+      "sha256": "7d5df2ed0508a061f1ef6ee8b26d5fe87b12458115b80102c3da4587c4211ab3"
+    },
+    {
+      "file": "pre-upgrade-helm3-plugin-trace.json.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "pre-upgrade-helm3-standalone-trace.json",
+      "bytes": 1939,
+      "sha256": "c8b658deff6b22ae15632f9b0ee99466c9f29c61cd5de45f4cf47f3033010ed7"
+    },
+    {
+      "file": "pre-upgrade-helm3-standalone-trace.json.projection.json",
+      "bytes": 1325,
+      "sha256": "7d5df2ed0508a061f1ef6ee8b26d5fe87b12458115b80102c3da4587c4211ab3"
+    },
+    {
+      "file": "pre-upgrade-helm3-standalone-trace.json.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/explicit-server-forced/deployment-evidence.json",
+      "bytes": 2478,
+      "sha256": "c6569e0f4a4053bbefa17f66c6c7f1d310efae6fdc7a1a9d11f09c9f680a5d14"
+    },
+    {
+      "file": "releases/explicit-server-forced/deployment.raw.json",
+      "bytes": 6421,
+      "sha256": "e239e1c7580bbaed1cfbcb95733cdaded7c1ef7cddda54edfe381d1886ceb5ac"
+    },
+    {
+      "file": "releases/explicit-server-forced/deployment.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/explicit-server-forced/release-history.json",
+      "bytes": 848,
+      "sha256": "4cdd0abc98e0792ff6ef002d0f41494e0a456a0bcb485631d7bfe7113029d028"
+    },
+    {
+      "file": "releases/explicit-server-forced/release-history.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/explicit-server-forced/secret-names.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/explicit-server-forced/secret-names.txt",
+      "bytes": 172,
+      "sha256": "ef59e783464d552839db7279b0d0442ee8194f868720507c72372edbff69669d"
+    },
+    {
+      "file": "releases/fresh-helm3/deployment-evidence.json",
+      "bytes": 3208,
+      "sha256": "a24851fa7d1054a4d3f8f29c2d7bda1e3a7894949b2fc4db3f84598f201fd1f3"
+    },
+    {
+      "file": "releases/fresh-helm3/deployment.raw.json",
+      "bytes": 7533,
+      "sha256": "23a233e4f2d65bdd6d9baa20b74f13974b0aa6bf5e185ec9ed46b5ae1edf12a0"
+    },
+    {
+      "file": "releases/fresh-helm3/deployment.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/fresh-helm3/release-history.json",
+      "bytes": 165,
+      "sha256": "ae0c1fd5699fe16f2e39ac760b99b265121a940e43a65f3c668ca3bcbea78358"
+    },
+    {
+      "file": "releases/fresh-helm3/release-history.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/fresh-helm3/secret-names.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/fresh-helm3/secret-names.txt",
+      "bytes": 43,
+      "sha256": "49aa748fb02b3fc447d3435ca0563ebcbd37b0afe73476d4d48f0c38f487aacc"
+    },
+    {
+      "file": "releases/fresh-helm4/deployment-evidence.json",
+      "bytes": 2472,
+      "sha256": "3795a6534b2e6793644649897cb509a0078e5dfe321842849a63566d83df8759"
+    },
+    {
+      "file": "releases/fresh-helm4/deployment.raw.json",
+      "bytes": 6409,
+      "sha256": "d2a7628c61e4e8c8464ac90fedf3717f9ca0dbdbb2e21212dbd006001a05ed2c"
+    },
+    {
+      "file": "releases/fresh-helm4/deployment.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/fresh-helm4/release-history.json",
+      "bytes": 165,
+      "sha256": "20842502d6da4d309258887844f99a134346e1cf12c5cde15f59f067c8a4449f"
+    },
+    {
+      "file": "releases/fresh-helm4/release-history.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/fresh-helm4/secret-names.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/fresh-helm4/secret-names.txt",
+      "bytes": 43,
+      "sha256": "49aa748fb02b3fc447d3435ca0563ebcbd37b0afe73476d4d48f0c38f487aacc"
+    },
+    {
+      "file": "releases/helm3-lifecycle-installed/deployment-evidence.json",
+      "bytes": 3221,
+      "sha256": "ad06b45a62ec43070f68aebae1df5aec6ae639bfc51d95d45c55b76154970654"
+    },
+    {
+      "file": "releases/helm3-lifecycle-installed/deployment.raw.json",
+      "bytes": 7559,
+      "sha256": "8616d82f074ed7d1bbb211ad3212c23af3b6860c9139a4fd480f1c720b7a7828"
+    },
+    {
+      "file": "releases/helm3-lifecycle-installed/deployment.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/helm3-lifecycle-installed/release-history.json",
+      "bytes": 165,
+      "sha256": "37aab0ad80c82ecfc1b1f838cb39d0f5e46e073a118550d23e089217c3e361e2"
+    },
+    {
+      "file": "releases/helm3-lifecycle-installed/release-history.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/helm3-lifecycle-installed/secret-names.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/helm3-lifecycle-installed/secret-names.txt",
+      "bytes": 43,
+      "sha256": "49aa748fb02b3fc447d3435ca0563ebcbd37b0afe73476d4d48f0c38f487aacc"
+    },
+    {
+      "file": "releases/helm3-lifecycle-rolled-back/deployment-evidence.json",
+      "bytes": 3221,
+      "sha256": "5872a9c21f3832f59a18c96b16108dc288fd7ae7aba3ab3a97f8da5329e8b338"
+    },
+    {
+      "file": "releases/helm3-lifecycle-rolled-back/deployment.raw.json",
+      "bytes": 7559,
+      "sha256": "0aed01d6f35129fe59517332437c1e9fbece12919f14d27ddddcb26a2cebe54e"
+    },
+    {
+      "file": "releases/helm3-lifecycle-rolled-back/deployment.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/helm3-lifecycle-rolled-back/release-history.json",
+      "bytes": 607,
+      "sha256": "bfb4d1755e2ba2f6d653c01d605995ed54ff1018a51350c292e82a7911f10a5e"
+    },
+    {
+      "file": "releases/helm3-lifecycle-rolled-back/release-history.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/helm3-lifecycle-rolled-back/secret-names.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/helm3-lifecycle-rolled-back/secret-names.txt",
+      "bytes": 129,
+      "sha256": "cfc3036f28915ba406b1dfff42ea5def5a76f7936dcb6d9c399503668ee8c755"
+    },
+    {
+      "file": "releases/helm4-lifecycle-installed/deployment-evidence.json",
+      "bytes": 2485,
+      "sha256": "a262bbe128eb83dec55d99d98e0e85922202480f529003aa6a13a96509536043"
+    },
+    {
+      "file": "releases/helm4-lifecycle-installed/deployment.raw.json",
+      "bytes": 6435,
+      "sha256": "770f45a50962bd3ff7e4ba075f569d5479cf49dbced5babefecc960589621bd4"
+    },
+    {
+      "file": "releases/helm4-lifecycle-installed/deployment.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/helm4-lifecycle-installed/release-history.json",
+      "bytes": 164,
+      "sha256": "cb6cde9380fd06452a1b419634dc2c1e9de441708a8099808f9487fd85e211b0"
+    },
+    {
+      "file": "releases/helm4-lifecycle-installed/release-history.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/helm4-lifecycle-installed/secret-names.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/helm4-lifecycle-installed/secret-names.txt",
+      "bytes": 43,
+      "sha256": "49aa748fb02b3fc447d3435ca0563ebcbd37b0afe73476d4d48f0c38f487aacc"
+    },
+    {
+      "file": "releases/helm4-lifecycle-rolled-back/deployment-evidence.json",
+      "bytes": 2485,
+      "sha256": "46126dbbc87368ddcdee2e2931b35355c2d53797076eef1b82234db5b029bf69"
+    },
+    {
+      "file": "releases/helm4-lifecycle-rolled-back/deployment.raw.json",
+      "bytes": 6435,
+      "sha256": "2a9160c3d8af60c22384ef9af75cb6ea616d0f2da6b6f66c411e08091123218e"
+    },
+    {
+      "file": "releases/helm4-lifecycle-rolled-back/deployment.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/helm4-lifecycle-rolled-back/release-history.json",
+      "bytes": 642,
+      "sha256": "42ed3a8c046b4c9fd94b4bdc54224c60fdc8e6e0f78e7908ac9f3cfe4aa069ef"
+    },
+    {
+      "file": "releases/helm4-lifecycle-rolled-back/release-history.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/helm4-lifecycle-rolled-back/secret-names.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/helm4-lifecycle-rolled-back/secret-names.txt",
+      "bytes": 129,
+      "sha256": "cfc3036f28915ba406b1dfff42ea5def5a76f7936dcb6d9c399503668ee8c755"
+    },
+    {
+      "file": "releases/pre-upgrade-helm3/deployment-evidence.json",
+      "bytes": 3214,
+      "sha256": "c973c93841490429af23fb7931b72c63efd5e5565d017e95c60df66737b23b27"
+    },
+    {
+      "file": "releases/pre-upgrade-helm3/deployment.raw.json",
+      "bytes": 7545,
+      "sha256": "b897ddd1d696fc54385a9987d94cb3d4e857cfc49ff983e3ad45bf1dfaab042d"
+    },
+    {
+      "file": "releases/pre-upgrade-helm3/deployment.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/pre-upgrade-helm3/release-history.json",
+      "bytes": 165,
+      "sha256": "7bda3447e86c057397568e2b8a6d0275e9a3a038bc67c9b704ffe436e7839bdb"
+    },
+    {
+      "file": "releases/pre-upgrade-helm3/release-history.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/pre-upgrade-helm3/secret-names.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/pre-upgrade-helm3/secret-names.txt",
+      "bytes": 43,
+      "sha256": "49aa748fb02b3fc447d3435ca0563ebcbd37b0afe73476d4d48f0c38f487aacc"
+    },
+    {
+      "file": "releases/upgraded-helm4-auto/deployment-evidence.json",
+      "bytes": 3214,
+      "sha256": "b280f41a954025f08fda66c2d35d838ace6e84ca81cda99d8cc0010017d6ecfc"
+    },
+    {
+      "file": "releases/upgraded-helm4-auto/deployment.raw.json",
+      "bytes": 7545,
+      "sha256": "b78be47df05dfff36330abb97987fcd0377536c0b03a16969ce9f3761977e02a"
+    },
+    {
+      "file": "releases/upgraded-helm4-auto/deployment.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/upgraded-helm4-auto/release-history.json",
+      "bytes": 330,
+      "sha256": "a7afec8265ea395fce4647ecf44cfa74363101d3a0bab8f324b320c52e860b08"
+    },
+    {
+      "file": "releases/upgraded-helm4-auto/release-history.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/upgraded-helm4-auto/secret-names.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "releases/upgraded-helm4-auto/secret-names.txt",
+      "bytes": 86,
+      "sha256": "e2497eb0c786d6f0de9c9faf8755cf56cfd241b66bc88cee681a841168f61463"
+    },
+    {
+      "file": "source-status.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "summary.json",
+      "bytes": 1063,
+      "sha256": "a489f2e2aba7003d0619f9b3e7186d8b18e7367ab9b7cfde8e97949c0c560533"
+    },
+    {
+      "file": "upgrade-helm4-auto.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "upgrade-helm4-auto.stdout",
+      "bytes": 221,
+      "sha256": "1368085b2ecc300cb197b8051e03362fb1212c8194f39b646bb10a14b5f2481f"
+    },
+    {
+      "file": "upgraded-helm4-auto-plugin-trace.json",
+      "bytes": 2312,
+      "sha256": "55828ef52e01f70a09185e0ae63d93f4db3627761697ead3909dbc3f381fc273"
+    },
+    {
+      "file": "upgraded-helm4-auto-plugin-trace.json.projection.json",
+      "bytes": 1325,
+      "sha256": "7d5df2ed0508a061f1ef6ee8b26d5fe87b12458115b80102c3da4587c4211ab3"
+    },
+    {
+      "file": "upgraded-helm4-auto-plugin-trace.json.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "upgraded-helm4-auto-standalone-trace.json",
+      "bytes": 2312,
+      "sha256": "55828ef52e01f70a09185e0ae63d93f4db3627761697ead3909dbc3f381fc273"
+    },
+    {
+      "file": "upgraded-helm4-auto-standalone-trace.json.projection.json",
+      "bytes": 1325,
+      "sha256": "7d5df2ed0508a061f1ef6ee8b26d5fe87b12458115b80102c3da4587c4211ab3"
+    },
+    {
+      "file": "upgraded-helm4-auto-standalone-trace.json.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "privateRetention": "Original run retained locally; commands/paths/tool logs excluded from public projection. No raw retained response bytes edited."
+}

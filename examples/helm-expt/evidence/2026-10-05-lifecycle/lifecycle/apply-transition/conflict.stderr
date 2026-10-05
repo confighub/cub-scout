@@ -1,0 +1,2 @@
+level=WARN msg="upgrade failed" name=release-probe error="conflict occurred while applying object matrix-h3-to-h4/release-probe apps/v1, Kind=Deployment: Apply failed with 1 conflict: conflict with \"matrix-foreign\": .spec.replicas"
+Error: UPGRADE FAILED: conflict occurred while applying object matrix-h3-to-h4/release-probe apps/v1, Kind=Deployment: Apply failed with 1 conflict: conflict with "matrix-foreign": .spec.replicas

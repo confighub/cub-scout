@@ -1,0 +1,22 @@
+{
+    "apiVersion": "helm4.scout-matrix.test/v1",
+    "kind": "Probe",
+    "metadata": {
+        "annotations": {
+            "meta.helm.sh/release-name": "release-probe",
+            "meta.helm.sh/release-namespace": "matrix-helm4-lifecycle"
+        },
+        "creationTimestamp": "2026-10-05T16:21:26Z",
+        "generation": 3,
+        "labels": {
+            "app.kubernetes.io/managed-by": "Helm"
+        },
+        "name": "lifecycle-probe",
+        "namespace": "matrix-helm4-lifecycle",
+        "resourceVersion": "883",
+        "uid": "4eeca3d2-aaec-4998-8912-f6580e4c7c0e"
+    },
+    "spec": {
+        "marker": "first"
+    }
+}

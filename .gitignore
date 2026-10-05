@@ -1,6 +1,7 @@
 # Binaries
 /cub-scout
 /kubectl-cub_scout
+/.goreleaser-dist/
 *.exe
 *.dll
 *.so

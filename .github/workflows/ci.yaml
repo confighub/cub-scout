@@ -71,11 +71,19 @@ jobs:
       - name: Check no personal names in committed files
         run: ./scripts/check-no-personal-names.sh
 
+      - name: Verify release hook inputs and ignored output
+        run: |
+          go mod tidy -diff
+          git check-ignore -q .goreleaser-dist/rehearsal.tmp
+
       - name: Verify genuine governance capture packet
         run: python3 scripts/ci/test_governance_capture.py
 
       - name: Verify genuine revision-chain and claim coverage packet
         run: python3 scripts/ci/test_governance_revision_chain.py
+
+      - name: Verify genuine Helm lifecycle capture packet
+        run: python3 scripts/ci/test_helm_lifecycle_capture.py
 
       - name: Test required acceptance control flow
         run: python3 scripts/ci/test_prove_it_works.py

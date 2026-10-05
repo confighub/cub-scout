@@ -1,0 +1,108 @@
+{
+  "context": "kind-scout-helm-version-matrix",
+  "command": "trace",
+  "target": {
+    "kind": "Deployment",
+    "namespace": "matrix-helm3-lifecycle",
+    "name": "release-probe"
+  },
+  "chain": [
+    {
+      "id": {
+        "kind": "HelmChart",
+        "namespace": "",
+        "name": "release-probe"
+      },
+      "role": "workload",
+      "relationship": "managed-by",
+      "evidence": [
+        {
+          "type": "label",
+          "key": "app.kubernetes.io/managed-by",
+          "value": "Helm",
+          "path": "metadata.labels"
+        }
+      ]
+    },
+    {
+      "id": {
+        "kind": "Release",
+        "namespace": "matrix-helm3-lifecycle",
+        "name": "release-probe"
+      },
+      "role": "workload",
+      "relationship": "managed-by",
+      "evidence": [
+        {
+          "type": "label",
+          "key": "app.kubernetes.io/managed-by",
+          "value": "Helm",
+          "path": "metadata.labels"
+        }
+      ]
+    },
+    {
+      "id": {
+        "kind": "Deployment",
+        "namespace": "matrix-helm3-lifecycle",
+        "name": "release-probe"
+      },
+      "role": "workload",
+      "relationship": "managed-by",
+      "evidence": [
+        {
+          "type": "label",
+          "key": "app.kubernetes.io/managed-by",
+          "value": "Helm",
+          "path": "metadata.labels"
+        }
+      ],
+      "deliveryStage": "workload"
+    }
+  ],
+  "summary": {
+    "ownerType": "Helm",
+    "source": null,
+    "deployer": null
+  },
+  "events": {
+    "events": [
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled down replica set release-probe-677b4765bf from 3 to 1",
+        "count": 1,
+        "age": "3s",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-10-05T17:21:23+01:00",
+        "lastSeen": "2026-10-05T17:21:23+01:00"
+      },
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled up replica set release-probe-677b4765bf from 1 to 3",
+        "count": 1,
+        "age": "10s",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-10-05T17:21:16+01:00",
+        "lastSeen": "2026-10-05T17:21:16+01:00"
+      },
+      {
+        "type": "Normal",
+        "reason": "ScalingReplicaSet",
+        "message": "Scaled up replica set release-probe-677b4765bf from 0 to 1",
+        "count": 1,
+        "age": "23s",
+        "severity": "info",
+        "source": "deployment-controller",
+        "firstSeen": "2026-10-05T17:21:03+01:00",
+        "lastSeen": "2026-10-05T17:21:03+01:00"
+      }
+    ],
+    "totalCount": 3,
+    "warningCount": 0,
+    "errorCount": 0
+  }
+}

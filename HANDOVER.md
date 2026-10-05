@@ -27,6 +27,25 @@ order, quality gates, budgets and decisions.
 
 
 
+## Helm lifecycle acceptance and release preparation — 2026-10-05
+
+The complete pinned Helm 3/4 lifecycle harness passed from clean source
+`a561d46f`. The [retained packet](examples/helm-expt/evidence/2026-10-05-lifecycle/NOTICE.md)
+contains 89 unedited outputs: fresh installs, retained-default upgrade, successful
+and failed hook Jobs, failed history, rollback, CRD/dependent-resource lifecycle,
+deleted-hook absence, actual server-side conflict and explicit recovery. Nine
+standalone/plugin projections agree. Owned cluster cleanup passed; seven packet
+checks, harness safety controls and the full Go 1.24 build/test suite pass.
+This closes the sequence's lifecycle matrix run, not wider MCP/TUI, SQL storage,
+connected governance or controller-health acceptance.
+
+The first actual GoReleaser snapshot produced six archives, sixteen binaries,
+checksums, a Homebrew cask and a local Docker image without publishing. It exposed
+missing transitive test checksums and unignored build output; both are repaired.
+All three binary builds now explicitly request VCS stamping. A clean Go 1.24
+rehearsal must validate these repairs before distribution acceptance is claimed.
+Snapshot versions and local image tags do not establish a published release.
+
 ## Post-2.13 continuity commitments — 2026-10-05
 
 The maintainer confirmed all new ideas and findings from `ded6de14` must be

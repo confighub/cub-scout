@@ -1,0 +1,195 @@
+{
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "metadata": {
+        "annotations": {
+            "deployment.kubernetes.io/revision": "1",
+            "meta.helm.sh/release-name": "release-probe",
+            "meta.helm.sh/release-namespace": "matrix-helm3-lifecycle"
+        },
+        "creationTimestamp": "2026-10-05T16:21:03Z",
+        "generation": 3,
+        "labels": {
+            "app.kubernetes.io/managed-by": "Helm",
+            "app.kubernetes.io/name": "release-probe"
+        },
+        "managedFields": [
+            {
+                "apiVersion": "apps/v1",
+                "fieldsType": "FieldsV1",
+                "fieldsV1": {
+                    "f:metadata": {
+                        "f:annotations": {
+                            ".": {},
+                            "f:meta.helm.sh/release-name": {},
+                            "f:meta.helm.sh/release-namespace": {}
+                        },
+                        "f:labels": {
+                            ".": {},
+                            "f:app.kubernetes.io/managed-by": {},
+                            "f:app.kubernetes.io/name": {}
+                        }
+                    },
+                    "f:spec": {
+                        "f:progressDeadlineSeconds": {},
+                        "f:replicas": {},
+                        "f:revisionHistoryLimit": {},
+                        "f:selector": {},
+                        "f:strategy": {
+                            "f:rollingUpdate": {
+                                ".": {},
+                                "f:maxSurge": {},
+                                "f:maxUnavailable": {}
+                            },
+                            "f:type": {}
+                        },
+                        "f:template": {
+                            "f:metadata": {
+                                "f:labels": {
+                                    ".": {},
+                                    "f:app.kubernetes.io/name": {}
+                                }
+                            },
+                            "f:spec": {
+                                "f:containers": {
+                                    "k:{\"name\":\"pause\"}": {
+                                        ".": {},
+                                        "f:image": {},
+                                        "f:imagePullPolicy": {},
+                                        "f:name": {},
+                                        "f:resources": {},
+                                        "f:terminationMessagePath": {},
+                                        "f:terminationMessagePolicy": {}
+                                    }
+                                },
+                                "f:dnsPolicy": {},
+                                "f:restartPolicy": {},
+                                "f:schedulerName": {},
+                                "f:securityContext": {},
+                                "f:terminationGracePeriodSeconds": {}
+                            }
+                        }
+                    }
+                },
+                "manager": "helm",
+                "operation": "Update",
+                "time": "2026-10-05T16:21:23Z"
+            },
+            {
+                "apiVersion": "apps/v1",
+                "fieldsType": "FieldsV1",
+                "fieldsV1": {
+                    "f:metadata": {
+                        "f:annotations": {
+                            "f:deployment.kubernetes.io/revision": {}
+                        }
+                    },
+                    "f:status": {
+                        "f:availableReplicas": {},
+                        "f:conditions": {
+                            ".": {},
+                            "k:{\"type\":\"Available\"}": {
+                                ".": {},
+                                "f:lastTransitionTime": {},
+                                "f:lastUpdateTime": {},
+                                "f:message": {},
+                                "f:reason": {},
+                                "f:status": {},
+                                "f:type": {}
+                            },
+                            "k:{\"type\":\"Progressing\"}": {
+                                ".": {},
+                                "f:lastTransitionTime": {},
+                                "f:lastUpdateTime": {},
+                                "f:message": {},
+                                "f:reason": {},
+                                "f:status": {},
+                                "f:type": {}
+                            }
+                        },
+                        "f:observedGeneration": {},
+                        "f:readyReplicas": {},
+                        "f:replicas": {},
+                        "f:terminatingReplicas": {},
+                        "f:updatedReplicas": {}
+                    }
+                },
+                "manager": "kube-controller-manager",
+                "operation": "Update",
+                "subresource": "status",
+                "time": "2026-10-05T16:21:23Z"
+            }
+        ],
+        "name": "release-probe",
+        "namespace": "matrix-helm3-lifecycle",
+        "resourceVersion": "747",
+        "uid": "64b7fd31-eeef-477e-83ca-77e07c7e2cb2"
+    },
+    "spec": {
+        "progressDeadlineSeconds": 600,
+        "replicas": 1,
+        "revisionHistoryLimit": 10,
+        "selector": {
+            "matchLabels": {
+                "app.kubernetes.io/name": "release-probe"
+            }
+        },
+        "strategy": {
+            "rollingUpdate": {
+                "maxSurge": "25%",
+                "maxUnavailable": "25%"
+            },
+            "type": "RollingUpdate"
+        },
+        "template": {
+            "metadata": {
+                "labels": {
+                    "app.kubernetes.io/name": "release-probe"
+                }
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "image": "registry.k8s.io/pause:3.9",
+                        "imagePullPolicy": "IfNotPresent",
+                        "name": "pause",
+                        "resources": {},
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File"
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "restartPolicy": "Always",
+                "schedulerName": "default-scheduler",
+                "securityContext": {},
+                "terminationGracePeriodSeconds": 30
+            }
+        }
+    },
+    "status": {
+        "availableReplicas": 1,
+        "conditions": [
+            {
+                "lastTransitionTime": "2026-10-05T16:21:03Z",
+                "lastUpdateTime": "2026-10-05T16:21:04Z",
+                "message": "ReplicaSet \"release-probe-677b4765bf\" has successfully progressed.",
+                "reason": "NewReplicaSetAvailable",
+                "status": "True",
+                "type": "Progressing"
+            },
+            {
+                "lastTransitionTime": "2026-10-05T16:21:17Z",
+                "lastUpdateTime": "2026-10-05T16:21:17Z",
+                "message": "Deployment has minimum availability.",
+                "reason": "MinimumReplicasAvailable",
+                "status": "True",
+                "type": "Available"
+            }
+        ],
+        "observedGeneration": 3,
+        "readyReplicas": 1,
+        "replicas": 1,
+        "terminatingReplicas": 0,
+        "updatedReplicas": 1
+    }
+}
