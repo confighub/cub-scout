@@ -41,9 +41,17 @@ The fixture supplies genuine evidence for #591's direct-revision/data-byte
 questions. It does not complete effective/inherited coverage, denied/partial
 list coverage, production adapters or CLI/TUI/MCP acceptance. The ChangeOrder
 has no ChangeWorkflow and supplies no evaluated-stage-prerequisite proof for
-#597. No gate is waived. A repaired parity retry has resolved the target from
-JSON and its exact apps-Space release binding and entered real Helm installation;
-its final receipt is still pending.
+#597. No gate is waived. The fourth serial parity attempt on the isolated v0.8.3
+server passed with real Helm installation, ConfigHub direct apply, OCI/Argo
+Synced/Healthy status and zero semantic object differences. The raw receipt
+SHA-256 is `78ff9a1acbe03616f519f0da5836507f1d2b3e4859e333ce6f9ed26fcc714620`;
+all four raw attempts are retained in the private acceptance evidence archive.
+The disposable parity rigs are cleaned up; the isolated acceptance server stays
+available. Companion issue #2075 repairs typed target discovery, isolated
+CUB_CONFIG kubeconfig selection and root-bound OCI registry selection. Its 12
+deterministic guards pass; full companion verification is running. This is one
+genuine parity check, not complete controller, governance or benchmark acceptance.
+Full candidate CI run 37271241956 is also running at `df07483d`.
 
 ## Required acceptance harness repair — 2026-10-05
 
