@@ -77,6 +77,9 @@ jobs:
       - name: Test required acceptance control flow
         run: python3 scripts/ci/test_prove_it_works.py
 
+      - name: Test connected CI provisioning and required outcomes
+        run: python3 scripts/ci/test_connected_ci.py
+
       - name: Run offline eval trace admission tests
         run: python3 evals/scripts/test_admission_audit.py
 
@@ -438,21 +441,32 @@ jobs:
         with:
           cluster_name: connected-cluster
 
-      - name: Authenticate to ConfigHub
-        if: env.CUB_AUTH_TOKEN != ''
-        run: |
-          echo "$CUB_AUTH_TOKEN" | cub auth login --token -
-        env:
-          CUB_AUTH_TOKEN: ${{ secrets.CUB_AUTH_TOKEN }}
+      - name: Provision authenticated disposable ConfigHub
+        run: bash scripts/ci/setup-connected-server.sh "$RUNNER_TEMP/scout-connected"
 
       - name: Run import dry-run tests
         run: go test -tags=integration ./test/integration/... -run 'TestImportDryRun' -v -timeout 120s
 
       - name: Run import round-trip tests
-        if: env.CUB_AUTH_TOKEN != ''
-        run: go test -tags=integration ./test/integration/... -run 'TestImportFull|TestImportIdempotent|TestImportCleanup' -v -timeout 300s
-        env:
-          CUB_AUTH_TOKEN: ${{ secrets.CUB_AUTH_TOKEN }}
+        run: |
+          go test -tags=integration ./test/integration/... -run '^(TestImportFullRoundTrip|TestImportIdempotent|TestImportCleanup)$' -json -timeout 300s > "$RUNNER_TEMP/scout-connected/roundtrip.json"
+          python3 scripts/ci/require_test_passes.py "$RUNNER_TEMP/scout-connected/roundtrip.json" TestImportFullRoundTrip TestImportIdempotent TestImportCleanup
+
+      - name: Retain connected test outcomes and versions
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: connected-acceptance
+          path: |
+            ${{ runner.temp }}/scout-connected/roundtrip.json
+            ${{ runner.temp }}/scout-connected/version.txt
+
+      - name: Remove disposable ConfigHub server
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/scout-connected/owns-server-cluster" ]]; then
+            kind delete cluster --name scout-ci-connected-server
+          fi
 
   # ==========================================================================
   # Proof artifact (always publish run matrix)

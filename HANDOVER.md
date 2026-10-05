@@ -66,6 +66,21 @@ does not prove authenticated acceptance. GitOps job success retains the existing
 masked-assertion limitation. Issue #774 owns these required repairs. No gate is
 waived and neither v2.13 nor v2.14 is released.
 
+## Connected CI provisioning repair candidate — 2026-10-05
+
+The #774 connected lane now provisions an isolated disposable ConfigHub server
+with checksum-verified cub v0.8.3 and server plugin v0.2.2, and the recorded
+v0.8.3 server image digest. It preserves the workload cluster kubeconfig and
+requires current authentication plus exact client/server versions. Round-trip
+tests run unconditionally; their Go JSON stream must contain passing outcomes
+for TestImportFullRoundTrip, TestImportIdempotent and TestImportCleanup and their
+package. Missing, skipped, failed or truncated results cannot claim acceptance.
+Only the owned server cluster is removed; credentials and installer logs remain
+private. Existing `test/fixtures/import-e2e/` examples exercise the imports.
+Six deterministic guards, workflow-selection tests and shell syntax checks pass.
+Fresh-runner connected acceptance is pending; this repair does not close #774
+or any other release gate.
+
 ## Required acceptance harness repair — 2026-10-05
 
 Issue #773 defines success before the harness repair. Full CI run
