@@ -82,6 +82,9 @@ jobs:
       - name: Verify genuine revision-chain and claim coverage packet
         run: python3 scripts/ci/test_governance_revision_chain.py
 
+      - name: Verify genuine restricted-viewer claim capture
+        run: python3 scripts/ci/test_attestation_viewer_capture.py
+
       - name: Verify genuine Helm lifecycle capture packet
         run: python3 scripts/ci/test_helm_lifecycle_capture.py
 

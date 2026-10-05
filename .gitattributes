@@ -1,3 +1,5 @@
 # Scaffold exports are generated from evals/fixtures/**/cluster by record.py.
 # Review the source recordings; unit tests verify every embedded copy matches.
 evals/**/scaffold.sh linguist-generated=true
+# Preserve cub's unedited trailing blank line; the capture guard checks its hash.
+test/fixtures/confighub-attestations-v083-viewer/viewer-write-denied.stderr whitespace=-blank-at-eof

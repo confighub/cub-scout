@@ -1,0 +1,5 @@
+{
+  "path": "test/fixtures/confighub-attestations-v083-viewer/viewer-receipt.stdout",
+  "fingerprint": "sha256:975d032fe3ece2e8bd6a401f217b2687e9085fad4abc39c660da4371755dc8e8",
+  "valid": true
+}

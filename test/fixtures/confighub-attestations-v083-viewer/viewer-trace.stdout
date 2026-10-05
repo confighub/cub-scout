@@ -1,0 +1,120 @@
+{
+  "context": "kind-scout-v213-server-v083",
+  "warnings": [
+    "resource not managed by Flux"
+  ],
+  "command": "trace",
+  "target": {
+    "kind": "ConfigMap",
+    "namespace": "scout-v213-viewer-rbac-20261005",
+    "name": "contract-config"
+  },
+  "chain": null,
+  "summary": {
+    "ownerType": "Native",
+    "source": null,
+    "deployer": null
+  },
+  "deliveryEvidence": {
+    "source": "confighub",
+    "observedAt": "2026-10-05T18:44:04.044995Z",
+    "scope": {
+      "namespace": "scout-v213-viewer-rbac-20261005",
+      "space": "scout-v213-contract",
+      "spaceSource": "flag",
+      "since": "24h",
+      "staleAfter": "15m0s",
+      "maxItems": 10
+    },
+    "correlation": {
+      "space": "scout-v213-contract",
+      "matchedBy": [
+        "scope.space"
+      ]
+    },
+    "omissions": [
+      {
+        "layer": "eventConsumer",
+        "reason": "no Deployment with label app=argobot or app.kubernetes.io/name=argobot was found",
+        "impact": "evented sync/status feedback may still exist, but cub-scout did not observe the known open-source consumer shape"
+      },
+      {
+        "layer": "confighub.liveStatus",
+        "reason": "space \"scout-v213-contract\" has no confighub.com/live-status annotation",
+        "impact": "no event-consumer status writeback is available for this space"
+      },
+      {
+        "layer": "confighub.liveStatus",
+        "reason": "no live-status writeback matched the traced resource by exact space plus application or unit slug",
+        "impact": "delivery/application health writeback is omitted for this object"
+      },
+      {
+        "layer": "confighub.releases",
+        "reason": "no release row matched the traced resource by exact space plus target within the bounded evidence",
+        "impact": "bounded release evidence cannot establish an exact row for this object"
+      },
+      {
+        "layer": "confighub.unitEvents",
+        "reason": "no unit-event row matched the traced resource by exact unit ID or unit slug plus space",
+        "impact": "recent unit-level event evidence is omitted for this object"
+      },
+      {
+        "layer": "confighub.identity",
+        "reason": "live resource has no ConfigHub unit labels/annotations, Argo application identity, or ConfigHub OCI target",
+        "impact": "delivery evidence cannot be treated as object-level proof"
+      }
+    ],
+    "notes": [
+      "ConfigHub evidence is opt-in, read-only, bounded by space and time window, and does not consume event cursors."
+    ],
+    "attestations": {
+      "source": "confighub-revision-direct-claims",
+      "spaceId": "68843338-f9bd-485c-9a66-5d5aee820247",
+      "unitId": "6221926e-8cc4-4847-a25c-a4104042f640",
+      "unitSlug": "contract-config",
+      "revisionId": "5af31398-fd3d-4ac0-b267-4549eaabef37",
+      "revisionNum": 2,
+      "dataHash": "57ba9d6af1bbb9d87b9632906c74119f8604a3c7e1a7b292a039d928360dbae5",
+      "observedAt": "2026-10-05T18:44:04.044995Z",
+      "coverage": "direct-references-only",
+      "attestations": [
+        {
+          "id": "08f76195-a7c5-496f-84c1-c62424434c6b",
+          "type": "Approval",
+          "result": "Pass",
+          "userId": "3a89ef21-38d2-49ed-8ca1-d3580c48bf14",
+          "createdAt": "2026-10-05T05:45:09.536624Z",
+          "expired": false,
+          "revoked": true,
+          "observedRevocationIds": [
+            "4c3ce460-4ea7-41ea-9371-a68265ddb773"
+          ]
+        },
+        {
+          "id": "af8f67b9-63b8-4604-91d9-de86ec9f5ae8",
+          "type": "Approval",
+          "result": "Fail",
+          "userId": "3a89ef21-38d2-49ed-8ca1-d3580c48bf14",
+          "createdAt": "2026-10-05T05:45:09.684772Z",
+          "expired": false
+        },
+        {
+          "id": "df54a53f-72a7-4914-97b0-bf7b1bae124a",
+          "type": "Approval",
+          "result": "Pass",
+          "userId": "3a89ef21-38d2-49ed-8ca1-d3580c48bf14",
+          "createdAt": "2026-10-05T05:45:09.79533Z",
+          "expiresAt": "2026-10-05T05:45:09.780896Z",
+          "expired": true
+        }
+      ],
+      "omissions": [
+        {
+          "missing": "confighub-attestations",
+          "reason": "Effective/inherited coverage and absence of revocation are not established by revision GET and attestation list.",
+          "severity": "inconclusive"
+        }
+      ]
+    }
+  }
+}

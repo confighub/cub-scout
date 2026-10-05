@@ -63,12 +63,28 @@ standalone receipt omission and absence of the connected tool from MCP listing.
 Go 1.24 build/full tests and final targeted parser/subject/example checks, vet,
 read-only guards and CLI-reference parity pass. These are candidate acceptance
 checks, not final-tag packaging or publication proof. Parent #591 still requires
-effective/inherited coverage and viewer RBAC; evaluated governance, controller,
+effective/inherited coverage; evaluated governance, controller,
 benchmark, complete CI and distribution gates remain open. v2.13 is unreleased.
 The first candidate CI caught a changed pinned skill file in the 35-skill
 benchmark source tree. The skill is restored; definitions live in public
 contracts/examples and the external skill-reference page. All 19 recorded
 runtime contract checks pass with the original source pin unchanged.
+
+The [restricted-viewer packet](test/fixtures/confighub-attestations-v083-viewer/NOTICE.md)
+now exercises an actual organization-role viewer worker with only Space View
+and ViewChildren grants. Cub revision/list, Scout MCP, trace, explain and receipt
+retain the same direct claims, and the receipt fingerprint validates. A metadata
+write receives HTTP 403 and leaves the Unit unchanged. Removing the grants makes
+the reader refuse and explain omit claims explicitly. Active permissions were
+restored; the owned worker, Space and namespace were removed. Three attempts,
+including a repaired harness envelope comparison, are retained. Four packet
+guards pass. This named permission checkpoint does not establish inherited or
+effective coverage, per-entity filtered completeness or every user role.
+
+[CI 37356065283](https://github.com/confighub/cub-scout/actions/runs/37356065283)
+at `7d09072b` passes Unit, Integration, GitOps E2E and Proof Artifact. Full,
+Demo, Connected and Windows are not run by this normal PR invocation and cannot
+be counted as final release acceptance.
 
 ## Accepted native Windows build/runtime proof — 2026-10-05
 

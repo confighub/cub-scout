@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","id":1,"result":{"content":[{"text":"revision read unavailable (unsupported client/server, permission or transport failure)","type":"text"}],"isError":true}}
