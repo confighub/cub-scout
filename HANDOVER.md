@@ -27,6 +27,23 @@ order, quality gates, budgets and decisions.
 
 
 
+## Post-2.13 continuity commitments — 2026-10-05
+
+The maintainer confirmed all new ideas and findings from `ded6de14` must be
+factored into post-2.13 delivery. The [roadmap allocation](docs/roadmap.md#post-213-commitments-from-the-continuity-review)
+assigns all seven areas to existing P4/P5/P6 work with required outcomes:
+foundation reuse, effective configuration/generator provenance, exact-release
+health, investigation continuity, measured efficiency/discovery, standalone
+utility and accurate responsibility/doctrine. The adopted execution plan and
+release tasks 23/31/32/33 now require this reconciliation. P4 contract/examples
+and tracked implementation follow-ups are distinct from shipping capabilities.
+
+Producer-supplied generation records/optional source maps are indexed as a
+new design item. Existing permission/history, Helm input and discovery/metrics
+items remain tracked. Reuse the parser, source-truth, attribution/bindings,
+receipt/digest and explorer/watch models; no Scout renderer or inferred approval.
+The current 2.13 gates and frozen benchmark remain unchanged.
+
 ## Genuine revision-chain coverage follow-up — 2026-10-05
 
 The isolated cub/server v0.8.3 acceptance lane captured 21 additional unedited

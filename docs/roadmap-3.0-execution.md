@@ -89,6 +89,27 @@ The maintainer has authorized all required live tests and removed the agent
 credit cap. Frozen per-case benchmark budgets and technical admission controls
 remain experimental requirements, not a blanket stop on authorized execution.
 
+## Post-2.13 carry-forward
+
+The maintainer explicitly confirmed on 2026-10-05 that all continuity-review
+findings and new ideas belong in post-2.13 work. Apply the
+[seven-row allocation and proof checklist](roadmap.md#post-213-commitments-from-the-continuity-review)
+at P4 integration, not only during final documentation. It covers foundation
+reuse, configuration/generator provenance, exact-release health, investigation
+continuity, efficiency/discovery, standalone utility and accurate doctrine.
+
+P4 must settle the effective Helm-input and producer-supplied generation-record/
+source-map contracts with worked examples, alongside existing #519/#594/#596
+work. Promote accepted runtime slices into scoped issues before implementation;
+this does not imply full templated provenance ships in v2.14. Permission/history
+and generic discovery/metrics designs retain their explicit checkpoints. P5
+extends measured reuse and retained evidence; P6 publishes only proven outcomes.
+Every row must have a supported result, a tracked implementation follow-up or an
+explicit allocated dependency at P4 acceptance. No idea disappears in prose.
+
+Current v2.13 gates and frozen 24 agent cases remain unchanged. Generators render,
+Scout observes; connected evidence enriches a useful standalone investigation.
+
 ## Starting snapshot at adoption — before September 30 execution
 
 The following records the pre-execution state, not the current work queue.

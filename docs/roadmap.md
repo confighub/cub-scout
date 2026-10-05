@@ -83,6 +83,33 @@ Standalone supplied-manifest comparison and install verification already exist;
 do not make connected evidence a prerequisite for these workflows. Preserve
 current release gates and benchmark controls while adding deeper explanations.
 
+## Post-2.13 commitments from the continuity review
+
+Confirmed by the maintainer on 2026-10-05: **all findings and new ideas from
+the [continuity review](reference/configuration-investigation-continuity.md)
+must shape post-2.13 delivery.** This table assigns them to existing work,
+including explicit design checkpoints for gaps that lack settled contracts.
+It adds no v2.13 scope or benchmark cases. A design checkpoint is required work;
+it does not promise an unimplemented capability in v2.14 release notes.
+
+| Carry-forward | Post-2.13 work and existing tracking | Required outcome |
+|---|---|---|
+| Reuse established foundations | P4/v2.14 integration, #596/#594/#519 | Each packet identifies its released parser, source-truth, attribution/binding, receipt or observation component and tests/example. Extend one factual model across interfaces; do not recreate these capabilities. |
+| Effective configuration and generator provenance | P4/v2.14 contract/examples checkpoint under #519/#594/#596; new implementation scope follows the backlog promotion rule | Distinguish controller parentage, recorded generation inputs/tool/output, field writer, binding and raw-YAML source position. Design safe Helm input precedence on top of existing reference/secret findings. Accept producer-supplied generation records/source maps only with exact identity and coverage; otherwise retain unknown. Scout does not render. |
+| Exact-release health | P4 #594/#596/#599, extending #561/#641 proof and #601/#602/#584 adapters | Keep intended revision, controller report, check freshness and workload convergence separate. Wrong release/target, refreshed old health and incomplete populations cannot become PASS. |
+| Investigation continuity | P4/v2.14 #519/#599/#596; retained history extends in P5 #605/#600 | Preserve selection, context, evidence age and export through a supported CLI/TUI investigation. Settle scope-bound local history and operation-specific permission profiles; test denial, cancellation, late replies, collisions and sensitive-read boundaries. |
+| Measured efficiency and useful discovery | P4 #604 output/request contracts and #519 operator protocol; P5 #539/#604/#600/#605 reuse/history | Measure cold/warm/idle/change/denial/reconnect cost and independently correct operator outcomes. Assess generic discovery/on-demand metrics only against named tasks, with caps and unknown semantics; add them through scoped issues if justified. |
+| Standalone usefulness | P4/v2.14 #519 guided standalone/offline workflow and #596 parity; retained in every later release | Demonstrate supplied-manifest comparison/install verification without ConfigHub credentials. Connected intent, bindings/history/governance enrich the same flow; their absence does not disable standalone diagnosis. Live reads still require cluster access. |
+| Responsibility and accurate doctrine | P4 integration/docs and P6/3.0 #595/#520 compatibility/distribution | Generators render, ConfigHub retains intent/governance, controllers reconcile, Scout observes/explains, consumers decide. Keep published/candidate/design/proof labels accurate, snapshot/cache/bundle/receipt semantics distinct, docs links working and product docs free of competitor names. |
+
+At P4 integration, record the status of every row: supported behavior and proof,
+completed design with its implementation issue, or an explicit unresolved
+dependency and allocated follow-up. Carry unresolved design work into the P5
+queue; do not silently drop it or label it shipped. P6 outcome claims require
+the measured result, not merely these allocations. The
+[ordered sequence](releases/v2.13-to-v2.14-sequence.md#v214-complete-p4-evidence-and-investigation-workflows)
+and [execution plan](roadmap-3.0-execution.md#post-213-carry-forward) apply this review.
+
 ## Untracked Backlog Checklist
 
 This checklist tracks ideas from planning docs. Items marked "scoped" had issues filed and
@@ -136,6 +163,12 @@ or claim measured leadership.
   measured operator tasks. Define supported semantics versus generic hints,
   scope/request/memory caps, stale/unknown states and sensitive-read permissions
   before filing any implementation issue.
+- [ ] Design producer-supplied generation records and optional field source maps:
+  exact input/tool-version/output identity, coverage, redaction and supported
+  producer contracts. Reuse source anchors, bindings, rendered-set digests and
+  receipt chains; keep parentage and templated-source unknown states distinct.
+  Complete the P4 contract/example checkpoint, then file scoped implementation
+  issues for accepted producer adapters instead of adding a Scout renderer.
 
 The [October 5 investigation depth assessment](reference/explorer-comparison.md#investigation-depth-assessment--2026-10-05)
 adds concrete operator scenarios under #519 and the existing P4/P5 work. Basic

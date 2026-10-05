@@ -127,3 +127,14 @@ Current execution evidence belongs in [HANDOVER](../../HANDOVER.md),
 [v2.13 readiness](../releases/v2.13-readiness.md) and
 [#645](https://github.com/confighub/cub-scout/issues/645). Historical waivers
 and closed scope-definition issues do not waive today's acceptance requirements.
+
+## Maintainer-confirmed post-2.13 allocation
+
+On 2026-10-05 the maintainer explicitly asked that all review findings and new
+ideas be factored into post-2.13 delivery. The
+[roadmap carry-forward table](../roadmap.md#post-213-commitments-from-the-continuity-review)
+now assigns every finding to P4/P5/P6 with its reused foundation and acceptance
+or design outcome. Tasks 23/31/32/33 in the release sequence apply these
+checkpoints. Producer-supplied generation records/source maps have an explicit
+untracked design entry; accepted runtime work graduates into scoped issues.
+No new v2.13 scope, benchmark case or leadership claim is introduced.
