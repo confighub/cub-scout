@@ -21,7 +21,7 @@
       "tool": "cub-scout",
       "version": "dev"
     },
-    "verifiedAt": "2026-10-05T18:20:07Z",
+    "verifiedAt": "2026-10-05T18:23:19Z",
     "predicateName": "",
     "verdict": "INCONCLUSIVE",
     "evidence": {
@@ -46,6 +46,6 @@
       }
     ],
     "inputAttestations": [],
-    "fingerprint": "sha256:6c5b0f606e3f827d15bf8fb5c82f57e28774858fb27b34abfbf7ab52ffda0fe7"
+    "fingerprint": "sha256:473faefed2762f99d289ab19cec08d2c866e8cd641ad4e0fb5cdf312d5f3e079"
   }
 }

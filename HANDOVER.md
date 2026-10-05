@@ -42,9 +42,11 @@ before adding `confighub-data-sha256` beside the separate canonical subject
 digest. Claim expiry uses the exact second-precision receipt verifiedAt.
 Fingerprint checks and actual plain/enriched receipt verdict comparison pass.
 The [captured examples](examples/receipts/attestations/README.md) retain genuine
-outputs and hashes; all five private acceptance attempts are preserved, including
+outputs and hashes; all private acceptance attempts are preserved, including
 the empty-chain rendering and timestamp-precision failures repaired during the
 run. Setup writes were outside Scout and the owned namespace was deleted.
+The final clean-source run at `31abf38d` also verifies an unauthenticated
+standalone receipt omission and absence of the connected tool from MCP listing.
 
 Go 1.24 build/full tests and final targeted parser/subject/example checks, vet,
 read-only guards and CLI-reference parity pass. These are candidate acceptance

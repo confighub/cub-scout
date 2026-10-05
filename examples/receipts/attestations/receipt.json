@@ -28,7 +28,7 @@
       "tool": "cub-scout",
       "version": "dev"
     },
-    "verifiedAt": "2026-10-05T18:20:08Z",
+    "verifiedAt": "2026-10-05T18:23:19Z",
     "predicateName": "",
     "verdict": "INCONCLUSIVE",
     "evidence": {
@@ -41,7 +41,7 @@
       },
       "deliveryEvidence": {
         "source": "confighub",
-        "observedAt": "2026-10-05T18:20:07.762902Z",
+        "observedAt": "2026-10-05T18:23:19.365612Z",
         "scope": {
           "namespace": "scout-v213-attestation-read-20261005",
           "space": "scout-v213-contract",
@@ -99,7 +99,7 @@
           "revisionId": "5af31398-fd3d-4ac0-b267-4549eaabef37",
           "revisionNum": 2,
           "dataHash": "57ba9d6af1bbb9d87b9632906c74119f8604a3c7e1a7b292a039d928360dbae5",
-          "observedAt": "2026-10-05T18:20:08Z",
+          "observedAt": "2026-10-05T18:23:19Z",
           "coverage": "direct-references-only",
           "attestations": [
             {
@@ -149,7 +149,7 @@
         "revisionId": "5af31398-fd3d-4ac0-b267-4549eaabef37",
         "revisionNum": 2,
         "dataHash": "57ba9d6af1bbb9d87b9632906c74119f8604a3c7e1a7b292a039d928360dbae5",
-        "observedAt": "2026-10-05T18:20:08Z",
+        "observedAt": "2026-10-05T18:23:19Z",
         "coverage": "direct-references-only",
         "attestations": [
           {
@@ -199,6 +199,6 @@
       }
     ],
     "inputAttestations": [],
-    "fingerprint": "sha256:aac72a76098db1d649dd12ae71b0045031ee3010f364a4aa7786cec12beb001e"
+    "fingerprint": "sha256:1c17903b99b054b749b32c19afbc34171fd8f95b091fde4acb002fdcdfafc87e"
   }
 }

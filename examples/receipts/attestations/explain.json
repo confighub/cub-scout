@@ -17,7 +17,7 @@
   ],
   "deliveryEvidence": {
     "source": "confighub",
-    "observedAt": "2026-10-05T18:20:04.793381Z",
+    "observedAt": "2026-10-05T18:23:15.184446Z",
     "scope": {
       "namespace": "scout-v213-attestation-read-20261005",
       "space": "scout-v213-contract",
@@ -75,7 +75,7 @@
       "revisionId": "5af31398-fd3d-4ac0-b267-4549eaabef37",
       "revisionNum": 2,
       "dataHash": "57ba9d6af1bbb9d87b9632906c74119f8604a3c7e1a7b292a039d928360dbae5",
-      "observedAt": "2026-10-05T18:20:04.793381Z",
+      "observedAt": "2026-10-05T18:23:15.184446Z",
       "coverage": "direct-references-only",
       "attestations": [
         {

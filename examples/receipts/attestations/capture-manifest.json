@@ -1,6 +1,6 @@
 {
-  "sourceCommit": "56222fbed268cbc0b8a6cfbff16c353762caee1a",
-  "sourceDirty": true,
+  "sourceCommit": "31abf38d131a6faabc13da6b5674f108f18e3903",
+  "sourceDirty": false,
   "serverVersion": "v0.8.3",
   "serverCommit": "1f92e099f4960a0828d2b51ed54e142e5f051b2a",
   "cubVersion": "v0.8.3",
@@ -16,7 +16,9 @@
     "owned namespace cleanup",
     "live interactive explain TUI through PTY",
     "verified served DataHash and separate canonical subject digest",
-    "claim observation timestamp exactly equals encoded verifiedAt"
+    "claim observation timestamp exactly equals encoded verifiedAt",
+    "standalone receipt has omission and no connected claims",
+    "unauthenticated MCP does not advertise connected claim reader"
   ],
   "previousAttempt": {
     "status": "failed",
@@ -24,9 +26,9 @@
     "retained": "/tmp/scout-v213-attestation-reader-live-20261005"
   },
   "files": {
-    "explain.json": "c42eac6570f5865f24a4e1fa74aa408ec7bc86a184a1ef0fbbbbc2ed0d6dacff",
-    "receipt.json": "90bfd775e7b9828ff45cfe74d021a3916926bca77402e9863e900ac317c3160f",
-    "receipt-without-claims.json": "dbc261b9acbd350e2f0f4eb1f923c7e42f2cb8ff8dd61b86724d16be58e89b41"
+    "explain.json": "d4861faa0bb56d9fa9a0554d9ae99d3a9bb55094ae0c9979ef8c172e83bf4fef",
+    "receipt.json": "3edd6214c9452afd3f1df403a33aff71345762f079b0b32490c104e54515af19",
+    "receipt-without-claims.json": "ad2648869a1872be47f1f01ef4b21916855566c575beda53048e3f2f90135417"
   },
   "retainedAttempts": [
     {
@@ -48,6 +50,12 @@
     {
       "path": "/tmp/scout-v213-attestation-reader-live-20261005-run5",
       "status": "passed all adapter checks"
+    },
+    {
+      "path": "/tmp/scout-v213-attestation-reader-live-20261005-run6",
+      "status": "passed clean source, connected and standalone controls"
     }
-  ]
+  ],
+  "binarySHA256": "c179e82a1449c7d6a6bce3e4e447655f660e0d6ca4591ef4740055cf096bd044",
+  "buildGoVersion": "go1.24.0"
 }

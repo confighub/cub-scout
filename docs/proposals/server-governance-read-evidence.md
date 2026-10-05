@@ -17,9 +17,14 @@ found evaluated gates attached to a promotion response, outside Scout's accepted
 GET boundary. A declaration, `Completed` state or an empty scoped order list
 cannot establish evaluated approval, absence of governance or runtime health.
 
-The attestation track needs genuine unit/revision/attestation recordings with
-exact identities and server provenance. No authored fixture establishes effective
-coverage, revocation, expiry or the byte semantics of Revision DataHash.
+Genuine v0.8.3 recordings and the production adapter now establish direct
+revision-reference claims, observed revocations, expiry and filtered-list
+omissions. [Live adapter acceptance](../../examples/receipts/attestations/README.md)
+also verifies each served revision's bytes against its reported DataHash before
+retaining that digest in a receipt subject. This is a per-read comparison, not
+a global normalization specification. Effective/inherited coverage, query
+completeness and viewer RBAC remain unsupported by this accepted read shape.
+Authored fixtures cannot establish those server authority facts.
 
 ## Required authority contract
 
