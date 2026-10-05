@@ -27,6 +27,33 @@ order, quality gates, budgets and decisions.
 
 
 
+## Release continuity review and latest CI — 2026-10-05
+
+The [deep review](docs/reference/configuration-investigation-continuity.md)
+reconciles 0.x/1.x/2.x foundations with P3–P6, published v2.12.4 source,
+contracts, tests and examples. Current architecture/interface/boundary docs now
+reuse shipped attribution, bindings, generator parsing, receipt and explorer
+work. Obsolete LIVE-only TUI, universal-standalone, import-cluster-mutation and
+SDK-renderer claims are corrected. Old prepublication release-note labels are
+reconciled with actual release records. No runtime contract or gate changes.
+
+The review also distinguishes local TUI cache, snapshot export, debug bundle
+and immutable receipt semantics; removes unsupported redaction/replay promises;
+and restores the bot/freshness sections linked from README. Receipt and OCI
+proposals point to their published successors. Targeted existing source-truth,
+templated-source, raw-YAML, binding, ApplicationSet/import and receipt fingerprint
+tests pass in all three relevant packages. CLI documentation lint, freshness,
+personal-name and modified-document local-link checks pass; `git diff --check`
+is clean. No new runtime behavior or paid evaluation is introduced by this review.
+
+Full candidate CI at `d2105973`, [run 37319218436](https://github.com/confighub/cub-scout/actions/runs/37319218436),
+completed: Unit, Integration, GitOps E2E, Connected E2E and Proof Artifact pass.
+Full Verification and Demo Tests both fail at scanner provisioning because
+`CUB_SCAN_RELEASE_TOKEN` is absent. These are required incomplete checks;
+no exclusion or successful full-CI claim is made. The scoped credential request
+is pending. Documentation revisions after that SHA are not covered by this run.
+Published baseline remains v2.12.4; v2.13 release acceptance remains open.
+
 ## Isolated v0.8.3 server and genuine capture candidate — 2026-10-05
 
 An isolated ConfigHub v0.8.3 server is installed and authenticated. Both server

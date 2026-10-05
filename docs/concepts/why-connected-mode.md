@@ -1,76 +1,70 @@
 # Why Connect cub-scout to ConfigHub
 
-> **Authoritative reference** for the standalone vs connected boundary and interface ownership split.
-> See also: [`docs/roadmap.md`](../roadmap.md) for the full roadmap context.
+> Authoritative standalone/connected responsibility boundary.
+> Reviewed 2026-10-05 against published foundations and current contracts.
 
-## TL;DR
+Scout starts with a useful standalone investigation: what exists, who manages
+it, what is failing, and how available intended configuration compares with the
+cluster. ConfigHub adds durable intended-state context, explicit revision and
+binding records, history and governance evidence where those records exist.
 
-`cub-scout` is a free, read-only cluster explorer.
+## Standalone foundations
 
-- Standalone mode answers: what exists now, who owns it, and what looks risky.
-- Connected mode answers: what should exist, what changed over time, and what this affects across environments.
+With cluster access, Scout supports ownership/trace across supported controller
+families, diagnostics/events, graphs, dependency/risk evidence and scoped reads.
+Supplied rendered manifests enable standalone comparison and install receipts;
+local raw YAML enables opt-in source-file enrichment. Recorded evidence can be
+inspected offline. Live observations require access to the selected cluster.
 
-Connected mode is optional. Standalone remains fully usable without ConfigHub.
+Standalone does not need a ConfigHub account. Its supported single-cluster
+investigation must remain complete and useful without connected credentials.
+This does not mean every command is standalone: connected source-truth,
+ConfigHub history, Views and fleet queries require their documented sources.
 
-## What Standalone Gives You (Free)
+## Connected enrichment
 
-With only Kubernetes access (`kubectl` context), `cub-scout` provides:
+Through supported `cub` interfaces, Scout can read explicitly scoped intent,
+revisions, Links/bindings, Resource indexes, delivery reports and history.
+These add answers the current cluster alone cannot establish, such as the
+recorded upstream unit supplying a field or a stored intended revision.
+Cross-environment comparisons need explicit identity and lineage; they cannot
+be proved by matching names. Governance declarations remain declarations until
+evaluated evidence is available. See the [release continuity review](../reference/configuration-investigation-continuity.md)
+for shipped foundations and open acceptance requirements.
 
-- live ownership and provenance tracing (Flux, Argo CD, Helm, native)
-- health/issue/risk scanning in the current cluster
-- relationship exports (JSON/graph) for debugging and handoff
-- deterministic local workflows that do not mutate cluster state
+## Responsibility split
 
-## Why Standalone Has a Hard Ceiling
+| Participant | Responsibility |
+|-------------|----------------|
+| Generator / installer | Resolve inputs and render resources with its own tooling. |
+| ConfigHub through `cub` | Retain intended state, revision/binding records and workflow authority. |
+| Delivery controller | Reconcile selected sources and report operations/conditions. |
+| Scout | Observe, correlate, explain, compare and export bounded evidence. |
+| User / governing consumer | Decide acceptance and authorize changes. |
 
-A cluster API can only show current observed state. It cannot reliably answer:
+Source parentage, recorded generation inputs/output, and field-level provenance
+are different claims. Scout already supports source anchors, mutation
+attribution, raw-YAML file/line enrichment and connected bindings. A complete
+Helm/Kustomize field map requires render-time evidence; ConfigHub's involvement
+alone does not establish that evidence.
 
-- what changed last week and why
-- whether one cluster is an outlier vs the rest of the fleet
-- what should happen in another environment before a rollout
-- how imported state maps to durable org structure
+## Interface and write boundaries
 
-Those require durable history, indexing, and cross-environment context outside a single cluster.
+The supported `cub` CLI is the connected integration boundary. Standalone
+Scout continues to function without `cub`. `import --git-path` is a local
+structure/import-preview flow. `cub variant upload` ingests already rendered
+resources; Scout does not render through the SDK or call the removed
+`cub gitops` group.
 
-## What Connected Mode Unlocks
+Scout never mutates Kubernetes. Observation and MCP reads remain read-only;
+explicit inventory import or fact publication to ConfigHub is a separate write
+boundary. Connecting does not grant Scout acceptance authority or permission to
+repair the cluster. Receipts record historical checks and integrity, not an
+approval or an authenticated producer by themselves.
 
-When connected to ConfigHub, `cub-scout` can use:
+## Planning references
 
-- intent context (DRY/WET/LIVE)
-- change history and timeline correlations
-- fleet comparison and outlier detection
-- import/adoption workflows (break-glass to managed)
-- dependency-aware impact analysis
-- governance context and approvals metadata
-
-`cub-scout` still remains read-only. Connected mode adds context, not control.
-
-## Interface Boundaries (Authoritative)
-
-- `cub` CLI is the external interface contract for connected workflows.
-- `confighub-agent` depends on `cub` command behavior (arguments, exit codes, stdout/JSON shape), documented in `~/Public/github-repos/confighub-agent/README.md:16`.
-- `cub-scout` connected mode depends on `cub auth login` semantics (credential/session creation and context resolution), documented in `~/Public/github-repos/cub-scout/README.md:80`.
-- Standalone `cub-scout` must continue to function without `cub`.
-
-This is the ownership split:
-
-- `cub-scout`: deterministic discovery, explanation, evidence export
-- ConfigHub: system of record, lifecycle state, migration semantics
-
-## Paid Value Boundary
-
-Connected value is paid because it requires hosted platform capabilities:
-
-- durable multi-tenant storage
-- cross-cluster indexing and query infrastructure
-- fleet/governance APIs
-- retention, auditability, and operations at scale
-
-The CLI remains free and safe to run offline.
-
-## Roadmap Alignment
-
-For sequencing and boundaries:
-
-- `docs/roadmap.md`
-- `docs/roadmap-1x-connected-upsell.md`
+- [Architecture](architecture.md)
+- [Roadmap](../roadmap.md)
+- [Execution plan](../roadmap-3.0-execution.md)
+- [CLI contract](../reference/cli-contract.md)

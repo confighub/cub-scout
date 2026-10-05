@@ -179,7 +179,9 @@ cub-scout import parse-repo --path ./repo --json
 
 Important boundary:
 - `cub-scout` is the read-first explorer and import-preview tool.
-- `cub` remains the intended-state authority and renderer/import lifecycle tool.
+- `cub` exposes ConfigHub intended-state workflows. `cub variant upload` ingests
+  already rendered resources; render them with your own tooling. Scout does not
+  perform SDK rendering or use the removed `cub gitops` command group.
 
 If you need more on adoption/import:
 - [docs/howto/import-to-confighub.md](docs/howto/import-to-confighub.md)

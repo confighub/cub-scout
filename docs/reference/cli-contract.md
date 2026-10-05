@@ -248,7 +248,7 @@ host custom-detector files; unknown or unmeasured results remain explicit.
 See [recorded object loader](../../examples/recorded-object-loader/) for the
 bounded identity, provenance, omissions, and input limits.
 
-#### Expected Controller Revision (Unreleased v2.11)
+#### Expected Controller Revision (v2.11)
 
 `--expected-revision <immutable-id>` requires `--bounded`. Accepted values are
 full lowercase 40-hex Git commits and `sha256:` followed by 64 lowercase hex

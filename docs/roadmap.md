@@ -67,6 +67,22 @@ output or read reuse. Do not add unrelated features, change the held-out tasks,
 or relabel failures to obtain a favorable result. Publish unresolved limits and
 reforecast within the existing live/paid admission and spending boundaries.
 
+## Build on the released configuration evidence
+
+The [release continuity review](reference/configuration-investigation-continuity.md)
+maps the existing ownership/composition/parser, source-truth, attribution,
+binding, receipt, explorer and watch foundations to tests/examples and P3–P6.
+The responsibility split extends those contracts: generators render, ConfigHub
+retains intended-state/workflow records, controllers reconcile, Scout observes
+and explains, and the governing consumer decides. Complete generation records
+and templated field maps require recorded producer evidence; neither is implied
+by a source anchor or ConfigHub connection.
+
+New packets must cite the existing component and the specific missing answer.
+Standalone supplied-manifest comparison and install verification already exist;
+do not make connected evidence a prerequisite for these workflows. Preserve
+current release gates and benchmark controls while adding deeper explanations.
+
 ## Untracked Backlog Checklist
 
 This checklist tracks ideas from planning docs. Items marked "scoped" had issues filed and
@@ -114,6 +130,8 @@ or claim measured leadership.
 - [ ] Assess a read-only effective Helm configuration provenance view: source
   precedence, optional/missing inputs, denied reads and secret redaction. Define
   the interpretation boundary before implementation; this is not SDK rendering.
+  Reuse existing Helm reference counts, missing/optional-input and precedence
+  findings, plus secret dependency evidence; the gap is effective-input explanation.
 - [ ] Assess generic resource discovery and on-demand workload metrics against
   measured operator tasks. Define supported semantics versus generic hints,
   scope/request/memory caps, stale/unknown states and sensitive-read permissions

@@ -2,7 +2,7 @@
 
 ## Current execution status
 
-The current verified status, open packets, paid-run stop, and operating
+The current verified status, open packets, technical admission requirements, and operating
 boundaries are maintained in the [execution handover](../HANDOVER.md) and
 [tracker #645](https://github.com/confighub/cub-scout/issues/645). This pointer
 replaces dated execution snapshots; it does not change the adopted plan below.
@@ -77,6 +77,17 @@ protocol. Evaluate current releases and marked previews independently. The
 roadmap indexes two design follow-ups; neither is implementation scope or a new
 v2.13 gate. Controller breadth and an agent API are foundations; preference
 requires correct deeper answers and measured workflow/cost outcomes.
+
+## Release continuity constraint — 2026-10-05
+
+Use the [release-to-roadmap reuse review](reference/configuration-investigation-continuity.md)
+for current responsibility and provenance boundaries. P3–P6 extend the released
+collectors, attribution/bindings, receipts, explorer and watch models. A new
+packet must name the missing answer and reuse its existing tests/examples;
+controller parentage does not imply a complete generation record or field map.
+The maintainer has authorized all required live tests and removed the agent
+credit cap. Frozen per-case benchmark budgets and technical admission controls
+remain experimental requirements, not a blanket stop on authorized execution.
 
 ## Starting snapshot at adoption — before September 30 execution
 

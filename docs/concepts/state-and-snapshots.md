@@ -1,93 +1,49 @@
-# State and Snapshots in cub-scout
+# State and snapshots in cub-scout
 
 > Status: Current (Deep Dive)
-> Last reviewed: 2026-02-12
+> Last reviewed: 2026-10-05
 > Concepts index: [README.md](README.md)
 
-cub-scout has two distinct state concepts that must not be conflated.
+Local UI state, exported observations, debug bundles and verification receipts
+have different purposes and guarantees. They must not be treated as one artifact.
 
----
+| Artifact | Existing purpose | Boundary |
+|----------|------------------|----------|
+| Local TUI snapshot | Restore a local inventory view from `~/.confighub/sessions/localcluster-snapshot.json` | Mutable local convenience state; not a portable receipt or complete investigation history. |
+| `snapshot` output | Export GSF ownership/resource/relationship observations | JSON written to stdout or a file; no immutable-store or automatic cluster-name redaction guarantee. |
+| Debug bundle | Retain available captured session, drift, events or logs for offline inspection | `bundle inspect`, `bundle replay` and `bundle diff` consume captured evidence; replay does not make it current. |
+| Verification receipt | Record a scoped predicate, evidence, omissions and timestamp | Fingerprinted historical check; immutable local receipt storage is distinct from an ordinary export file. |
 
-## Session State
+## Exporting observed state
 
-**Purpose:** Resume your own work.
+```bash
+./cub-scout snapshot --namespace prod -o state.json
+./cub-scout bundle inspect ./captured-bundle
+./cub-scout bundle replay ./captured-bundle
+```
 
-Session state is personal UI convenience:
-- Last active view/lens
-- Expanded/collapsed nodes
-- Search filters
-- Cursor position
-- Scroll position
+There is no `snapshot create` / `snapshot view` command pair. Snapshot JSON and
+bundle replay are separate contracts. Consult [CLI reference](../reference/cli-reference.md)
+and [JSON contracts](../reference/json-contracts.md) for their supported inputs.
 
-**Properties:**
-- Local only (stored in `~/.cub-scout/sessions/`)
-- Mutable
-- Not sanitized
-- Not deterministic
-- **Not shareable**
+The snapshot exporter retains resource identities and labels. It does not emit
+Secret data values, but identities, labels and other captured artifact content
+can still be sensitive. Logs and user-provided evidence are not universally
+sanitized. Do not describe all exports as automatically safe to share or promise
+that the cluster name is redacted.
 
-Session state is never embedded in snapshots.
+## Freshness and reuse
 
----
+A retained observation describes its capture, not today's state. Local caches
+and bounded read reuse have their own expiry/refresh contracts. Reusing a
+snapshot must preserve its evidence age. Missing capture time or completeness
+must not be inferred. A failed refresh cannot justify presenting old success as
+fresh. Connected intent and history add separate evidence sources; they do not
+renew a retained Kubernetes observation.
 
-## Shareable Views (Snapshots)
-
-**Purpose:** Explain your work to others.
-
-A snapshot is a frozen, deterministic capture of **one hierarchy map** at a point in time:
-- What the cluster looked like
-- Why something was broken
-- Who owned what
-
-**Properties:**
-- Immutable once created
-- Sanitized (no secrets, cluster name redacted)
-- Deterministic (same input = same output)
-- Replayable without cluster access
-- **Shareable**
-
----
-
-## The Distinction
-
-| Aspect | Session State | Snapshot |
-|--------|---------------|----------|
-| Purpose | Resume work | Explain work |
-| Audience | Me | Others |
-| Mutability | Mutable | Immutable |
-| Contains secrets | Possibly | Never |
-| Requires cluster | No | No |
-| Shareable | No | Yes |
-
----
-
-## Related Concepts
-
-### Graph Export vs Snapshot
-
-| Artifact | Purpose |
-|----------|---------|
-| Graph export | Data artifact for CI/diagrams (`cub-scout graph export`) |
-| Snapshot | Replayable debugging artifact with context (`cub-scout snapshot create`) |
-
-Graph exports are raw data. Snapshots include diagnostics, explanations, and are viewable in the TUI.
-
-### Offline Mode
-
-Snapshots enable **offline replay** as a first-class workflow:
-- Incident review without cluster access
-- Onboarding with real examples
-- Security-restricted environments
-
-Use `cub-scout snapshot view <file>` to replay any snapshot.
-
----
-
-## Future: Connected Mode Enrichment
-
-In future releases (v0.6+), Connected Mode may enrich snapshots with:
-- Intent metadata from ConfigHub
-- Historical context ("what changed")
-- Revision information
-
-Snapshots will remain standalone-viewable even when enriched.
+[Receipts and proofs](receipts-and-proofs.md) defines historical integrity.
+[Architecture](architecture.md) and the
+[release continuity review](../reference/configuration-investigation-continuity.md)
+map existing retention foundations to future history/store work. Scope-bound
+investigation history remains a design follow-up, not a feature established by
+this local TUI cache.

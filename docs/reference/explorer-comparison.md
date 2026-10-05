@@ -119,3 +119,22 @@ acceptance stay with their existing authorities. Scout provides evidence and
 safe next reads; adding mutation controls is not a requirement of this plan.
 
 New ideas are indexed in the [roadmap backlog](../roadmap.md#untracked-backlog-checklist).
+
+## Scout Bot And Delivery Bot
+
+Scout's bot observes and emits evidence. A delivery bot triggers its supported
+controller and owns its status writeback. The controller remains the reconciler.
+Scout consumes feedback with explicit identity/freshness checks and adds
+independent live observations; it does not share the event-consumer cursor or
+take over delivery. These are existing complementary responsibilities.
+
+### Current Feedback Verdict Limit
+
+The timestamp correction shipped in [v2.10.1](../releases/v2.10.1.md): missing,
+invalid, zero or future timestamps produce INCONCLUSIVE; stale reports produce
+WATCH, including old failures. Fresh reported success/failure remains reported
+evidence, not independent current application-health proof. Re-reading an
+unchanged report does not renew its timestamp. See the
+[recorded freshness proof](../../examples/live-delivery-observability/#trusting-feedback-freshness).
+Broader producer deletion/history and exact-release checks retain their stated
+limits. This restores the linked doctrine alongside the investigation assessment.
