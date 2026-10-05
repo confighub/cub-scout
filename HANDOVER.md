@@ -12,6 +12,11 @@ historical authorization stops as current blockers. Release when the required
 evidence passes. Use disposable/scoped test resources and preserve shared estates.
 Historical excluded/skipped/unrun records below remain records of those runs.
 
+The task-by-task order from this checkpoint through both releases is in
+[v2.13 → v2.14 release sequence](docs/releases/v2.13-to-v2.14-sequence.md).
+It lists 36 remaining tasks, each with its tests and exit proof, and separates
+pre-publication acceptance from verification of the published artifacts.
+
 
 **Current snapshot:** 2026-10-04. Verified merged baseline:
 [`5aeebc48`](https://github.com/confighub/cub-scout/commit/5aeebc48a6f168865b79d5a228013b9e576695f7).

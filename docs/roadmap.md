@@ -76,6 +76,8 @@ remains future work. Items marked "resolved" had issues filed, implemented, and 
 Tracking: issue **#154** is closed. This checklist is now the live tracker.
 
 Execution is tracked in [#645](https://github.com/confighub/cub-scout/issues/645).
+The current [v2.13 → v2.14 task sequence](releases/v2.13-to-v2.14-sequence.md)
+orders the existing repairs, tests, acceptance gates and publication checks.
 The [September 30 execution plan](roadmap-3.0-execution.md) maps its work
 packets to existing issues, including #603/#626 (measured agent savings),
 #641 (reporter/gate semantics) and #642 (the separate ConfigHub/Pilot benchmark).
