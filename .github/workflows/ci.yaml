@@ -19,9 +19,9 @@ on:
   workflow_dispatch:
     inputs:
       level:
-        description: 'Test level (smoke, unit, integration, gitops, demos, connected, full)'
+        description: 'Test level (smoke, unit, integration, gitops, demos, connected, windows, full)'
         type: choice
-        options: [smoke, unit, integration, gitops, demos, connected, full]
+        options: [smoke, unit, integration, gitops, demos, connected, windows, full]
         required: false
         default: 'integration'
 
@@ -221,8 +221,66 @@ jobs:
           path: cub-scout
 
   # ==========================================================================
-  # Level 2: Integration (needs cluster)
+  # Manual native Windows release runtime admission
   # ==========================================================================
+  windows-runtime:
+    name: Windows Release Runtime (${{ matrix.arch }})
+    if: github.event_name == 'workflow_dispatch' && (github.event.inputs.level == 'windows' || github.event.inputs.level == 'full')
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: windows-2022
+            asset: goreleaser_Windows_x86_64.zip
+            sha256: de61a8e7a064abb14210b16c942facd299643d83341c5cd293f19155a7c8b95f
+          - arch: arm64
+            runner: windows-11-arm
+            asset: goreleaser_Windows_arm64.zip
+            sha256: d2aebc59bee96078c1f529160f170e02ffc96fd5d31b5e33eef66cdd7256f602
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          architecture: ${{ matrix.arch }}
+      - name: Build configured native Windows release binaries
+        shell: pwsh
+        env:
+          GORELEASER_CURRENT_TAG: v2.13.0
+          GOOS: windows
+          GOARCH: ${{ matrix.arch }}
+          GOTOOLCHAIN: local
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $archive = Join-Path $env:RUNNER_TEMP '${{ matrix.asset }}'
+          $tools = Join-Path $env:RUNNER_TEMP 'scout-goreleaser'
+          $proof = Join-Path $env:RUNNER_TEMP 'scout-windows-proof'
+          New-Item -ItemType Directory -Force $proof | Out-Null
+          Invoke-WebRequest 'https://github.com/goreleaser/goreleaser/releases/download/v2.18.2/${{ matrix.asset }}' -OutFile $archive
+          if ((Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne '${{ matrix.sha256 }}') { throw 'GoReleaser checksum mismatch' }
+          Expand-Archive $archive -DestinationPath $tools
+          & (Join-Path $tools 'goreleaser.exe') build --snapshot --clean --single-target --id cub-scout --id kubectl-cub-scout --parallelism 2 --timeout 15m 2>&1 | Tee-Object -FilePath (Join-Path $proof 'build.log')
+          if ($LASTEXITCODE -ne 0) { throw 'Configured Windows build failed' }
+      - name: Verify native source identity and runtime
+        shell: pwsh
+        run: |
+          python scripts/ci/verify_windows_release_runtime.py --arch '${{ matrix.arch }}' --source '${{ github.sha }}' --output '${{ runner.temp }}/scout-windows-proof/runtime.json'
+          if ($LASTEXITCODE -ne 0) { throw 'Native Windows runtime proof failed' }
+      - name: Retain native release runtime proof
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-windows-${{ matrix.arch }}
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/scout-windows-proof/
+            .goreleaser-dist/metadata.json
+            .goreleaser-dist/cub-scout_windows_*/cub-scout.exe
+            .goreleaser-dist/kubectl-cub-scout_windows_*/kubectl-cub_scout.exe
+
   integration:
     name: Integration Tests
     runs-on: ubuntu-latest

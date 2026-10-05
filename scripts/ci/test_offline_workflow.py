@@ -77,7 +77,7 @@ class OfflineWorkflowTests(unittest.TestCase):
         for event in ('push', 'pull_request'):
             self.assertEqual(scheduled(self.jobs, event, ''), base)
         for level in ('integration', 'gitops', 'demos', 'connected', 'full'):
-            extra = {'demos'} if level == 'demos' else {'connected'} if level == 'connected' else {'demos', 'connected', 'full'} if level == 'full' else set()
+            extra = {'demos'} if level == 'demos' else {'connected'} if level == 'connected' else {'demos', 'connected', 'windows-runtime', 'full'} if level == 'full' else set()
             with self.subTest(level=level):
                 self.assertEqual(scheduled(self.jobs, 'workflow_dispatch', level), base | extra)
 
@@ -86,8 +86,29 @@ class OfflineWorkflowTests(unittest.TestCase):
         trigger = self.workflow.get('on', self.workflow.get(True))
         option = trigger['workflow_dispatch']['inputs']['level']
         self.assertEqual(option['type'], 'choice')
-        self.assertEqual(set(option['options']), {'smoke', 'unit', 'integration', 'gitops', 'demos', 'connected', 'full'})
+        self.assertEqual(set(option['options']), {'smoke', 'unit', 'integration', 'gitops', 'demos', 'connected', 'windows', 'full'})
         self.assertEqual(option['default'], 'integration')
+
+    def test_native_windows_lane_is_scoped_and_failure_is_required(self):
+        self.assertEqual(scheduled(self.jobs, 'workflow_dispatch', 'windows'),
+                         {'unit', 'windows-runtime', 'proof-artifact'})
+        job = self.jobs['windows-runtime']
+        self.assertNotIn('continue-on-error', job)
+        targets = job['strategy']['matrix']['include']
+        self.assertEqual({t['arch'] for t in targets}, {'amd64', 'arm64'})
+        self.assertEqual({t['runner'] for t in targets}, {'windows-2022', 'windows-11-arm'})
+        for target in targets:
+            self.assertRegex(target['sha256'], r'^[0-9a-f]{64}$')
+        build = next(s for s in job['steps'] if s.get('name') == 'Build configured native Windows release binaries')
+        self.assertIn('Get-FileHash', build['run'])
+        self.assertIn('--single-target --id cub-scout --id kubectl-cub-scout', build['run'])
+        self.assertIn('$LASTEXITCODE -ne 0', build['run'])
+        self.assertNotIn('if', build)
+        verify = next(s for s in job['steps'] if s.get('name') == 'Verify native source identity and runtime')
+        self.assertNotIn('if', verify)
+        self.assertNotIn('continue-on-error', verify)
+        self.assertIn('verify_windows_release_runtime.py', verify['run'])
+        self.assertIn('$LASTEXITCODE -ne 0', verify['run'])
 
     def test_required_connected_tests_cannot_be_conditional_on_a_secret(self):
         steps = self.jobs['connected']['steps']
