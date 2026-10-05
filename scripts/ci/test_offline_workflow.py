@@ -89,6 +89,27 @@ class OfflineWorkflowTests(unittest.TestCase):
         self.assertEqual(set(option['options']), {'smoke', 'unit', 'integration', 'gitops', 'demos', 'connected', 'full'})
         self.assertEqual(option['default'], 'integration')
 
+    def test_required_connected_tests_cannot_be_conditional_on_a_secret(self):
+        steps = self.jobs['connected']['steps']
+        for name in ('Provision authenticated disposable ConfigHub', 'Run import round-trip tests'):
+            step = next(s for s in steps if s.get('name') == name)
+            self.assertNotIn('if', step)
+            self.assertNotIn('continue-on-error', step)
+        roundtrip = next(s for s in steps if s.get('name') == 'Run import round-trip tests')['run']
+        self.assertIn('require_test_passes.py', roundtrip)
+        for test in ('TestImportFullRoundTrip', 'TestImportIdempotent', 'TestImportCleanup'):
+            self.assertIn(test, roundtrip)
+
+    def test_gitops_and_demo_acceptance_do_not_mask_failure(self):
+        for job in ('gitops', 'demos'):
+            steps = self.jobs[job]['steps']
+            self.assertTrue(any('setup-gitops-controllers.sh' in s.get('run', '') for s in steps))
+            for step in steps:
+                with self.subTest(job=job, step=step.get('name')):
+                    self.assertNotIn('continue-on-error', step)
+                    self.assertNotRegex(step.get('run', ''), r'\|\|\s*(true|echo)\b')
+                    self.assertNotIn('./cub-scout demo ', step.get('run', ''))
+
 
 if __name__ == '__main__':
     unittest.main()

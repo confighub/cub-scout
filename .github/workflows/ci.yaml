@@ -292,23 +292,17 @@ jobs:
         with:
           cluster_name: gitops-cluster
 
-      - name: Install Flux
-        run: |
-          curl -s https://fluxcd.io/install.sh | sudo bash
-          flux install
-
-      - name: Install ArgoCD
-        run: |
-          kubectl create namespace argocd || true
-          # Use server-side apply to avoid oversized last-applied annotations on Argo CRDs.
-          kubectl apply --server-side --force-conflicts -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-          kubectl wait --for=condition=available deployment/argocd-server -n argocd --timeout=180s
+      - name: Install pinned GitOps controllers
+        run: bash scripts/ci/setup-gitops-controllers.sh
 
       - name: Deploy Flux example
         run: |
           kubectl apply -f examples/flux-boutique/boutique.yaml
-          sleep 30  # Wait for Flux to reconcile
-          kubectl wait --for=condition=available deployment --all -n boutique --timeout=120s || true
+          kubectl wait --for=condition=Ready gitrepository/boutique -n boutique --timeout=300s
+          for name in frontend cart checkout payment shipping; do
+            kubectl wait --for=condition=Ready "kustomization/$name" -n boutique --timeout=300s
+            kubectl rollout status "deployment/$name" -n boutique --timeout=300s
+          done
 
       - name: Deploy ArgoCD example
         run: |
@@ -334,26 +328,25 @@ jobs:
               syncOptions:
                 - CreateNamespace=true
           EOF
-          sleep 30  # Wait for ArgoCD to sync
+          kubectl wait --for=jsonpath='{.status.sync.status}'=Synced application/guestbook -n argocd --timeout=300s
+          kubectl wait --for=jsonpath='{.status.health.status}'=Healthy application/guestbook -n argocd --timeout=300s
+          kubectl rollout status deployment/guestbook-ui -n guestbook --timeout=300s
 
       - name: Verify Flux ownership detection
         run: |
-          echo "=== All resources ==="
-          ./cub-scout map list
-
-          echo "=== Flux resources ==="
-          ./cub-scout map list | grep flux || echo "No flux resources (may still be syncing)"
-
-          echo "=== Deployers ==="
+          ./cub-scout map list --json -n boutique > "$RUNNER_TEMP/flux-ownership.json"
+          for name in frontend cart checkout payment shipping; do
+            jq -e --arg name "$name" '[.[] | select(.namespace == "boutique" and .kind == "Deployment" and .name == $name and .owner == "Flux")] | length == 1' "$RUNNER_TEMP/flux-ownership.json"
+          done
           ./cub-scout map deployers
 
       - name: Verify ArgoCD ownership detection
         run: |
-          ./cub-scout map list | grep argo || echo "ArgoCD resources may still be syncing"
+          ./cub-scout map list --json -n guestbook > "$RUNNER_TEMP/argo-ownership.json"
+          jq -e '[.[] | select(.namespace == "guestbook" and .kind == "Deployment" and .name == "guestbook-ui" and .owner == "ArgoCD")] | length == 1' "$RUNNER_TEMP/argo-ownership.json"
 
       - name: Test trace command
-        run: |
-          ./cub-scout trace deployment/cart -n boutique || echo "Trace may fail if resources not ready"
+        run: ./cub-scout trace deployment/cart -n boutique
 
       - name: Test deep-dive
         run: ./cub-scout map deep-dive | head -80
@@ -385,32 +378,30 @@ jobs:
         with:
           cluster_name: demo-cluster
 
-      - name: Install Flux
-        run: |
-          curl -s https://fluxcd.io/install.sh | sudo bash
-          flux install
+      - name: Install pinned GitOps controllers
+        run: bash scripts/ci/setup-gitops-controllers.sh
 
       - name: Run quick demo
         run: |
-          ./cub-scout demo quick
-          ./cub-scout demo quick --cleanup
+          ./cub-scout quickstart demo quick
+          ./cub-scout quickstart demo quick --cleanup
 
       - name: Run ccve demo
         run: |
-          ./cub-scout demo ccve
-          ./cub-scout demo ccve --cleanup
+          ./cub-scout quickstart demo ccve
+          ./cub-scout quickstart demo ccve --cleanup
 
       - name: Run query demo
         run: |
-          ./cub-scout demo query
-          ./cub-scout demo query --cleanup
+          ./cub-scout quickstart demo query
+          ./cub-scout quickstart demo query --cleanup
 
       - name: Run scenarios
         run: |
-          ./cub-scout demo scenario bigbank-incident || true
-          ./cub-scout demo scenario bigbank-incident --cleanup || true
-          ./cub-scout demo scenario break-glass || true
-          ./cub-scout demo scenario break-glass --cleanup || true
+          ./cub-scout quickstart demo scenario bigbank-incident
+          ./cub-scout quickstart demo scenario bigbank-incident --cleanup
+          ./cub-scout quickstart demo scenario break-glass
+          ./cub-scout quickstart demo scenario break-glass --cleanup
 
   # ==========================================================================
   # Level 6: Connected E2E (needs ConfigHub auth, manual trigger)

@@ -78,8 +78,16 @@ package. Missing, skipped, failed or truncated results cannot claim acceptance.
 Only the owned server cluster is removed; credentials and installer logs remain
 private. Existing `test/fixtures/import-e2e/` examples exercise the imports.
 Six deterministic guards, workflow-selection tests and shell syntax checks pass.
-Fresh-runner connected acceptance is pending; this repair does not close #774
-or any other release gate.
+The three authenticated import round trips also pass against the existing
+isolated v0.8.3 server. Fresh-runner connected acceptance is pending; this repair
+does not close #774 or any other release gate.
+
+The next #774 candidate provisions checksum-verified Flux v2.9.6 and Argo CD
+v3.5.3 in both GitOps and demo clusters. Required controller rollouts, source and
+Kustomization readiness, Argo Synced/Healthy and exact workload ownership replace
+the masked echo/true assertions. Demos use the current quickstart command path.
+Workflow guards reject masked acceptance and conditional connected tests.
+Fresh-runner controller/demo outcomes and scanner-backed risk proof remain open.
 
 ## Required acceptance harness repair — 2026-10-05
 
