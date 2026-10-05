@@ -2237,7 +2237,7 @@ standalone and connected tool sets described below remain available.
 
 - Standalone tools: `doctor`, `explain`, `gitops_status`, `map`, `scan`, `trace` (via existing cub-scout JSON surfaces).
 - `doctor` is intentionally first: it is the natural first troubleshooting command for AI and MCP clients, including when the problem may be local access uncertainty such as wrong context, stale kubeconfig, or API reachability.
-- Connected tools (when authenticated to ConfigHub): `compare_three_way`, `compare_source_truth`, `confighub_changeorder_get`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_resources`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`.
+- Connected tools (when authenticated to ConfigHub): `compare_three_way`, `compare_source_truth`, `confighub_attestations`, `confighub_changeorder_get`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_resources`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`.
 - Standalone and read-only: no cluster mutations and no ConfigHub write path.
 - MCP tool descriptors mark every tool with `annotations.readOnlyHint=true`.
 - A command that exits non-zero but prints a JSON answer (for example `trace` on a resource no GitOps tool manages, which exits 1 by the CLI contract) returns that JSON as the tool result, with `isError: true` and a second content item naming the command, its exit status and stderr. Other failures return the error text only.
@@ -2270,6 +2270,12 @@ standalone and connected tool sets described below remain available.
   - `changeorder` (required exact slug or ID)
   - `space` (required exact slug or ID; no `*` or environment fallback)
   - Returns the same read projection as `history changeorder`; evaluated outcomes remain unknown.
+- `confighub_attestations`
+  - `space_id`, `unit` (slug), `revision` (positive integer) are required; `unit_id` is optional.
+  - Select identity from the object's observed combined ConfigHub origin. No wildcard or default space is accepted.
+  - Reads the exact revision and one space-scoped attestation list, with a shared 15-second deadline and 1 MiB per response. Evidence limits are 100 direct references and 1000 list rows.
+  - Returns direct claims, observed expiry and observed revocations. Missing references are omissions; effective/inherited coverage and absence of revocation remain unknown.
+  - The same evidence appears on `trace --with-confighub`, `explain --with-confighub` (including `--tui`), and single-resource `receipt verify --with-confighub`. The live object must supply an unambiguous combined origin with a positive revision; legacy labels alone do not enable the join.
 - `confighub_changesets`
   - `space` (optional)
   - `where` (optional)

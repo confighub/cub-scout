@@ -63,6 +63,7 @@ func TestNewMCPGatewayWithMode_ConnectedAddsConfigHubTools(t *testing.T) {
 	want := []string{
 		"compare_source_truth",
 		"compare_three_way",
+		"confighub_attestations",
 		"confighub_changeorder_get",
 		"confighub_changesets",
 		"confighub_k8s_resources",

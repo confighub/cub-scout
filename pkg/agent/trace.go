@@ -45,6 +45,10 @@ type TraceResult struct {
 	// ConfigHub contains ConfigHub-specific metadata if the resource is managed by ConfigHub
 	ConfigHub *TraceConfigHub `json:"confighub,omitempty"`
 
+	// ConfigHubOrigin is the strictly parsed observed origin, used for exact
+	// connected reads. Legacy metadata alone cannot establish this join.
+	ConfigHubOrigin *ConfigHubOriginEvidence `json:"configHubOrigin,omitempty"`
+
 	// History contains deployment/reconciliation history entries
 	// Ordered from most recent to oldest
 	History []HistoryEntry `json:"history,omitempty"`
@@ -167,16 +171,17 @@ type TraceConfigHub struct {
 // ownership, sync, or application-health authority; consumers should treat it
 // as supporting evidence with explicit correlation rules and omissions.
 type TraceDeliveryEvidence struct {
-	Source         string                       `json:"source"`
-	ObservedAt     time.Time                    `json:"observedAt"`
-	Scope          TraceDeliveryEvidenceScope   `json:"scope"`
-	Correlation    TraceDeliveryCorrelation     `json:"correlation"`
-	LiveStatus     *TraceDeliveryLiveStatus     `json:"liveStatus,omitempty"`
-	Releases       []TraceDeliveryRelease       `json:"releases,omitempty"`
-	UnitEvents     []TraceDeliveryUnitEvent     `json:"unitEvents,omitempty"`
-	EventConsumers []TraceDeliveryEventConsumer `json:"eventConsumers,omitempty"`
-	Omissions      []TraceDeliveryOmission      `json:"omissions,omitempty"`
-	Notes          []string                     `json:"notes,omitempty"`
+	Source         string                         `json:"source"`
+	ObservedAt     time.Time                      `json:"observedAt"`
+	Scope          TraceDeliveryEvidenceScope     `json:"scope"`
+	Correlation    TraceDeliveryCorrelation       `json:"correlation"`
+	LiveStatus     *TraceDeliveryLiveStatus       `json:"liveStatus,omitempty"`
+	Releases       []TraceDeliveryRelease         `json:"releases,omitempty"`
+	UnitEvents     []TraceDeliveryUnitEvent       `json:"unitEvents,omitempty"`
+	EventConsumers []TraceDeliveryEventConsumer   `json:"eventConsumers,omitempty"`
+	Omissions      []TraceDeliveryOmission        `json:"omissions,omitempty"`
+	Notes          []string                       `json:"notes,omitempty"`
+	Attestations   *ConfigHubAttestationsEvidence `json:"attestations,omitempty"`
 }
 
 type TraceDeliveryEvidenceScope struct {

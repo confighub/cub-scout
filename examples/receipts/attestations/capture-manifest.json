@@ -1,0 +1,53 @@
+{
+  "sourceCommit": "56222fbed268cbc0b8a6cfbff16c353762caee1a",
+  "sourceDirty": true,
+  "serverVersion": "v0.8.3",
+  "serverCommit": "1f92e099f4960a0828d2b51ed54e142e5f051b2a",
+  "cubVersion": "v0.8.3",
+  "cubCommit": "468dd09f1c893ce2e18fd018192dcfa96cb1dd34",
+  "authScope": "isolated local administrator; not viewer RBAC proof",
+  "scope": "direct claim read adapter, not intended/live equivalence",
+  "acceptedChecks": [
+    "live MCP exact revision read",
+    "trace ascii/json/md",
+    "explain text/json/md",
+    "receipt fingerprint validation",
+    "unchanged receipt verdict",
+    "owned namespace cleanup",
+    "live interactive explain TUI through PTY",
+    "verified served DataHash and separate canonical subject digest",
+    "claim observation timestamp exactly equals encoded verifiedAt"
+  ],
+  "previousAttempt": {
+    "status": "failed",
+    "reason": "empty controller chain discarded human delivery projection",
+    "retained": "/tmp/scout-v213-attestation-reader-live-20261005"
+  },
+  "files": {
+    "explain.json": "c42eac6570f5865f24a4e1fa74aa408ec7bc86a184a1ef0fbbbbc2ed0d6dacff",
+    "receipt.json": "90bfd775e7b9828ff45cfe74d021a3916926bca77402e9863e900ac317c3160f",
+    "receipt-without-claims.json": "dbc261b9acbd350e2f0f4eb1f923c7e42f2cb8ff8dd61b86724d16be58e89b41"
+  },
+  "retainedAttempts": [
+    {
+      "path": "/tmp/scout-v213-attestation-reader-live-20261005",
+      "status": "failed CLI projection"
+    },
+    {
+      "path": "/tmp/scout-v213-attestation-reader-live-20261005-run2",
+      "status": "passed direct reads"
+    },
+    {
+      "path": "/tmp/scout-v213-attestation-reader-live-20261005-run3",
+      "status": "passed subject/TUI reads"
+    },
+    {
+      "path": "/tmp/scout-v213-attestation-reader-live-20261005-run4",
+      "status": "failed timestamp precision"
+    },
+    {
+      "path": "/tmp/scout-v213-attestation-reader-live-20261005-run5",
+      "status": "passed all adapter checks"
+    }
+  ]
+}

@@ -431,6 +431,7 @@ cub-scout mcp serve --recording objects.yaml
 - `confighub_resources` reads the ConfigHub Resource entity through `cub resource list`; it does not read live cluster state, and it requires an explicit `space`.
 - `confighub_live_status`, `confighub_releases`, and `confighub_unit_events` require explicit space scope. Use `*` only for an intentional all-spaces read.
 - `confighub_changeorder_get` requires an exact `changeorder` and exact `space`, refuses `*` and environment fallback, and returns reported declarations with evaluated outcomes unknown.
+- `confighub_attestations` requires exact `space_id`, unit slug and positive revision. Its two bounded reads expose direct revision claims only. Missing references and missing `Attestations` fields are omissions, never proven absence. Observed revocation is `revoked: true`; an omitted `revoked` means unknown. It does not evaluate workflow approval or change runtime verdicts.
 - `confighub_units` and `confighub_changesets` require `space` (`*` only for a deliberate all-spaces read). `confighub_unit_get` requires `space` unless `unit` is `<space>/<slug>` or a unit ID, and refuses `*`, because one unit lives in one space. The server's `CUB_SPACE` is not consulted: an agent cannot see the environment of the server it calls, and cub (v0.5.2 and later) has no default space.
 - `confighub_k8s_types` and `confighub_k8s_resources` accept a `target` without a `space` only when the target names its own space, as `<space>/<slug>` or a UUID.
 - All MCP tool descriptors advertise `annotations.readOnlyHint=true`.

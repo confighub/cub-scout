@@ -27,6 +27,31 @@ order, quality gates, budgets and decisions.
 
 
 
+## Direct ConfigHub claim and receipt adapters — 2026-10-05
+
+Release-sequence task 8 is implemented and exercised against the isolated
+ConfigHub/cub v0.8.3 server. Exact combined origin selects a revision GET and
+space-scoped attestation list, with bounded output/deadline, ambiguity refusal,
+partial-reference omissions and explicit unknown effective/revocation coverage.
+Trace/explain, the connected `confighub_attestations` MCP tool and receipt
+supporting evidence share the model. Live Explain TUI through a PTY retains the
+same direct Pass/Fail, expiry and observed-revocation facts.
+
+Receipts read the exact revision data and verify its SHA-256 against DataHash
+before adding `confighub-data-sha256` beside the separate canonical subject
+digest. Claim expiry uses the exact second-precision receipt verifiedAt.
+Fingerprint checks and actual plain/enriched receipt verdict comparison pass.
+The [captured examples](examples/receipts/attestations/README.md) retain genuine
+outputs and hashes; all five private acceptance attempts are preserved, including
+the empty-chain rendering and timestamp-precision failures repaired during the
+run. Setup writes were outside Scout and the owned namespace was deleted.
+
+Go 1.24 build/full tests and final targeted parser/subject/example checks, vet,
+read-only guards and CLI-reference parity pass. These are candidate acceptance
+checks, not final-tag packaging or publication proof. Parent #591 still requires
+effective/inherited coverage and viewer RBAC; evaluated governance, controller,
+benchmark, complete CI and distribution gates remain open. v2.13 is unreleased.
+
 ## Accepted native Windows build/runtime proof — 2026-10-05
 
 Both Windows native runtime jobs in [CI 37345184606](https://github.com/confighub/cub-scout/actions/runs/37345184606)

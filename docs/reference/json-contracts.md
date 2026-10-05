@@ -1850,6 +1850,28 @@ ConfigHub.
 
 ### Wire Format
 
+A cub-scout receipt is an in-toto Statement about observed live state. A
+ConfigHub Attestation is an unsigned server entity about intended-config
+revisions; it is not an in-toto Statement. With `--with-confighub`, exact
+combined origin identity can attach direct claims under
+`predicate.evidence.attestations` and `deliveryEvidence.attestations`. These
+supporting facts are fingerprint covered and verdict neutral. Their
+`coverage` is `direct-references-only`, or `direct-references-unavailable`
+when revision GET omitted its reference map. Missing claims appear in
+`omissions`; they are not negative approval evidence. `revoked: true` requires
+a returned revocation entity; omitted `revoked` means unknown. `expired` is
+computed relative to the evidence's explicit `observedAt` (the receipt's
+`verifiedAt` for receipt evidence). `DataHash` in the claim block is reported
+server metadata. The optional `confighub-unit://` receipt subject carries
+`confighub-data-sha256` only after the exact revision data read's raw bytes hash
+to that value. Its separate `sha256` hashes RFC 8785 canonical JSON with
+`schema: confighub-unit-canonical.v1`, `spaceId`, `unitId`, `revisionId`, and
+`objects` in served manifest order. Objects use the existing strict recorded
+manifest parser; the input bytes and canonical representation are distinct
+digest inputs. Data reads or parsing/hash failures leave the subject omitted
+and preserve the runtime verdict. Effective
+coverage and workflow evaluation remain unestablished by this read contract.
+
 The wire format is the **in-toto Statement v1 envelope** (`_type =
 "https://in-toto.io/Statement/v1"`) wrapping the cub-scout predicate URI
 `https://cub-scout.dev/receipt/v1`.

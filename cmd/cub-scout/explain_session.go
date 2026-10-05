@@ -125,7 +125,7 @@ func observeExplainWithSession(ctx context.Context, session *traceSession, kind,
 	}
 	result.Object = agent.ResourceRef{Kind: kind, Name: name, Namespace: namespace}
 	if opts.Delivery.Enabled {
-		result.EnrichWithConfigHub(obj.GetLabels(), obj.GetAnnotations())
+		enrichTraceConfigHubFromObject(result, obj)
 		flags := opts.Delivery
 		flags.Namespace = namespace
 		attachTraceConfigHubDeliveryEvidenceWithTraceSession(ctx, result, dyn, session, flags)

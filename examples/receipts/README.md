@@ -6,6 +6,10 @@ record. CI/CD gates, audit trails, postmortems, and acceptance-judge
 tooling can attach a receipt to a decision and later prove the inputs
 were what they claim to be.
 
+A Scout receipt is an in-toto Statement about observed live state. A ConfigHub
+Attestation is an unsigned server entity about intended-config revisions, not
+an in-toto Statement. See [direct claim evidence](attestations/README.md).
+
 Wire format: **in-toto Statement v1** envelope (`_type =
 "https://in-toto.io/Statement/v1"`) wrapping a cub-scout predicate URI
 `https://cub-scout.dev/receipt/v1`. Current shipping releases use

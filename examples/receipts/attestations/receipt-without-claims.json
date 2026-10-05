@@ -1,0 +1,51 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "k8s-live://v1/ConfigMap/scout-v213-attestation-read-20261005/contract-config",
+      "digest": {
+        "sha256": "62f7984a597828ba11b35e7b57057f9ffdc5f592402567d671190d9d59a89bfa"
+      }
+    }
+  ],
+  "predicateType": "https://cub-scout.dev/receipt/v1",
+  "predicate": {
+    "version": "v1",
+    "claim": "no predicate could be auto-detected for ConfigMap/contract-config in scout-v213-attestation-read-20261005",
+    "scope": {
+      "kind": "ConfigMap",
+      "name": "contract-config",
+      "namespace": "scout-v213-attestation-read-20261005"
+    },
+    "verifier": {
+      "tool": "cub-scout",
+      "version": "dev"
+    },
+    "verifiedAt": "2026-10-05T18:20:07Z",
+    "predicateName": "",
+    "verdict": "INCONCLUSIVE",
+    "evidence": {
+      "attribution": {
+        "cause": "manual-edit",
+        "managerHint": "kubectl-create",
+        "managers": [
+          "kubectl-create"
+        ]
+      }
+    },
+    "omissions": [
+      {
+        "missing": "confighub-unit-subject",
+        "reason": "connected mode but no ConfigHub unit linkage found for this resource",
+        "severity": "info"
+      },
+      {
+        "missing": "auto-detected-predicate",
+        "reason": "no signal for default predicate (detected owner \"unknown\" has no v1 default predicate); pass --predicate, --strategy, or --since",
+        "severity": "info"
+      }
+    ],
+    "inputAttestations": [],
+    "fingerprint": "sha256:6c5b0f606e3f827d15bf8fb5c82f57e28774858fb27b34abfbf7ab52ffda0fe7"
+  }
+}

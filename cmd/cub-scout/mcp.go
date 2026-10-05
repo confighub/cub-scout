@@ -48,6 +48,7 @@ Supported tools in standalone mode:
   - gitops_status
 
 Additional tools in connected mode (when authenticated to ConfigHub):
+  - confighub_attestations
   - compare_three_way
   - compare_source_truth
   - confighub_changesets
@@ -780,6 +781,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 			},
 		}
 		tools["confighub_changeorder_get"] = changeOrderMCPTool(connectedRunner)
+		tools["confighub_attestations"] = configHubAttestationsMCPTool()
 		tools["confighub_changesets"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
 				Name:        "confighub_changesets",
