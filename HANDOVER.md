@@ -127,7 +127,8 @@ checkpoints do not change this tested implementation. No PR/main merge or releas
 The user now requests all remaining v2.13 work except live tests. Current topic
 branch: `codex/v213-offline-runtime`. No new container, cluster, ConfigHub,
 registry or paid-model execution is included. Ordinary PR/main CI runs live
-jobs, so do not open/merge this branch while that exclusion applies. Manual
+jobs. That historical restriction was superseded by the maintainer’s
+2026-10-05 authorization of all required live acceptance. Manual
 `level=unit` CI has been corrected to select only Unit and Proof Artifact;
 three condition/graph tests retain the normal PR/main and live-level behavior.
 Reviewed code head `df68de81` is pushed. Manual unit-only CI
@@ -1010,8 +1011,8 @@ The maintainer removed the agent credit-usage cap and instructed execution
 through 2.14 or 3.0, releasing 2.13 on the way. Execute the adopted 3.0 plan with
 incremental 2.13/2.14 releases once their gates pass. The removed cap concerns
 agent execution spending; frozen per-case benchmark grants/budgets and quality/
-publication gates remain unchanged. SDK #758 stays deferred. The earlier live-
-test exclusion remains until the maintainer answers the pending clarification
+publication gates remain unchanged. SDK #758 stays deferred. At this historical checkpoint, live-test authorization was still awaiting
+clarification. The maintainer superseded that restriction on 2026-10-05.
 about final live acceptance. No release, merge or paid-model admission is
 inferred from static verification or spending authorization.
 
