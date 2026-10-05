@@ -1,6 +1,6 @@
 # Scout investigation quality and acceptance
 
-Updated 2026-10-04. Published baseline: **v2.12.4**. The v2.13 topic branch
+Updated 2026-10-05. Published baseline: **v2.12.4**. The v2.13 topic branch
 contains additional unreleased context and ChangeOrder read work; its current
 status and release gates are in [HANDOVER.md](../../HANDOVER.md) and the
 [v2.13 readiness checklist](../releases/v2.13-readiness.md).
@@ -55,6 +55,38 @@ them to delivery stages. Passing is required for the corresponding product
 claim; none is presented here as an achieved result.
 
 ## Measuring improvement fairly
+
+### Investigation depth assessment — 2026-10-05
+
+Assess current released workflows, including separately marked previews, rather
+than an announcement's older feature set. Live navigation, read-only defaults,
+generic resource browsing, ownership labels and a reusable library are baseline
+capabilities to evaluate; their presence alone cannot establish preference.
+Distinguish ownership identification from controller-specific diagnosis and a
+library API from a shipped agent integration. Do not infer missing features
+from a short announcement or stale documentation.
+
+The separately declared operator assessment under #519 should exercise:
+
+| Investigation | Required Scout answer and negative controls | Existing work |
+|---|---|---|
+| Follow a failure | Symptom → controller/source → inventory/workload → events/logs → scoped export; return navigation retains the selected object and scope. Verify the first failed delivery stage, not just a resource count. | #519/#596/#641 |
+| Revisit live evidence | Keep selection through updates; show stale, reconnecting and restricted coverage. Test disconnect, deletion, delayed responses and namespace/context changes; do not renew timestamps on revisit. Measure requests, bytes and retained memory. | #539/#599/#604 |
+| Explain generated delivery | Join supported source, generator, aggregate inventory and ordered-step evidence by exact identities. Separate reported Ready, prerequisite acceptance, applied revision and workload health; an absent status is unknown. | #594/#596/#641 |
+| Inspect configuration inputs | Assess whether the operator can explain a Helm value's contributing sources and precedence, including missing/optional inputs, permission denial and redacted secrets. Rendering and effective-value interpretation need their own contracts; source-reference detection alone is insufficient. | Design backlog; permission-profile follow-up |
+| Handle unfamiliar resources | Separate browseable objects and generic manager hints from supported semantic ownership, health and lineage. Exercise served-version changes, owner chains, same-name collisions, forbidden discovery, row caps and malicious display text. | #594/#599; extension design backlog |
+| Hand off a diagnosis | Export matching CLI/TUI/MCP facts with exact scope, source/revision identities, observed times and omissions. Verify offline reuse and wrong/stale evidence refusal; an integrity fingerprint is not approval or source authenticity. | #519/#596/#591/#597/#604 |
+
+Use equal permissions and evidence. Exercise denied get/list/watch and sensitive
+reads with real restricted credentials; an application mode toggle is not the
+RBAC boundary. Observe task usefulness before proposing pod metrics, broad
+discovery or more views. Do not assume a continuous watch is free or automatically
+more efficient than a bounded read.
+
+These are assessment criteria and indexed design questions, not implemented
+features, measured advantages, additions to the frozen 24 agent cases or new
+v2.13 release gates. P4 settles the workflow and protocol; P5 addresses measured
+bottlenecks. The adopted quality, release and benchmark gates remain required.
 
 Use the same supported question, object scale, evidence availability, effective
 permissions and failure conditions for each evaluated workflow. Include an

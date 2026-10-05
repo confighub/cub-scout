@@ -70,6 +70,14 @@ budgets, paid/live admission rules, SDK deferral and current v2.13 release scope
 remain unchanged. Permission profiles and local investigation history remain
 indexed design follow-ups until their contracts and implementation issues exist.
 
+The [October 5 investigation depth assessment](reference/explorer-comparison.md#investigation-depth-assessment--2026-10-05)
+specifies failure navigation, live scope changes, generated delivery, configuration
+inputs, unfamiliar resources and evidence handoff for the separate #519 operator
+protocol. Evaluate current releases and marked previews independently. The
+roadmap indexes two design follow-ups; neither is implementation scope or a new
+v2.13 gate. Controller breadth and an agent API are foundations; preference
+requires correct deeper answers and measured workflow/cost outcomes.
+
 ## Starting snapshot at adoption — before September 30 execution
 
 The following records the pre-execution state, not the current work queue.

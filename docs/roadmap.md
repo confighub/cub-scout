@@ -111,6 +111,20 @@ or claim measured leadership.
 - [ ] Define scope-bound local investigation history, including cancellation,
   same-name collisions, retention and privacy. Coordinate with #519/#599; file
   an implementation issue if their existing scope does not cover the design.
+- [ ] Assess a read-only effective Helm configuration provenance view: source
+  precedence, optional/missing inputs, denied reads and secret redaction. Define
+  the interpretation boundary before implementation; this is not SDK rendering.
+- [ ] Assess generic resource discovery and on-demand workload metrics against
+  measured operator tasks. Define supported semantics versus generic hints,
+  scope/request/memory caps, stale/unknown states and sensitive-read permissions
+  before filing any implementation issue.
+
+The [October 5 investigation depth assessment](reference/explorer-comparison.md#investigation-depth-assessment--2026-10-05)
+adds concrete operator scenarios under #519 and the existing P4/P5 work. Basic
+interface breadth is not a winning claim. Evaluate current released workflows
+and previews separately; prove deeper joins, navigation continuity, restricted
+coverage, useful evidence handoff and measured savings. Preserve the current
+v2.13 scope and the frozen 24 agent cases.
 
 ### v2.12.4 Patch (Published 2026-09-30)
 
