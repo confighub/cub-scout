@@ -241,11 +241,21 @@ jobs:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     steps:
+      - name: Preserve canonical source line endings
+        shell: pwsh
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
           architecture: ${{ matrix.arch }}
+      - name: Verify canonical native build inputs
+        shell: pwsh
+        run: |
+          python scripts/ci/verify_windows_release_runtime.py --preflight --arch '${{ matrix.arch }}' --source '${{ github.sha }}' --output '${{ runner.temp }}/scout-windows-proof/source-inputs.json'
+          if ($LASTEXITCODE -ne 0) { throw 'Native Windows source input proof failed' }
       - name: Build configured native Windows release binaries
         shell: pwsh
         env:

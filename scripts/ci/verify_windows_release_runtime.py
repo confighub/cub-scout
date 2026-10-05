@@ -10,6 +10,7 @@ from pathlib import Path
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--preflight', action='store_true')
     parser.add_argument('--arch', choices=['amd64', 'arm64'], required=True)
     parser.add_argument('--source', required=True)
     parser.add_argument('--dist', type=Path, default=Path('.goreleaser-dist'))
@@ -30,6 +31,20 @@ def main():
         args.output.write_text(json.dumps({'status': 'refused-dirty-source',
             'sourceRevision': source, 'gitStatus': status, 'dependencyDiff': diff}, indent=2) + '\n')
         raise SystemExit('Build hooks or outputs dirtied the source checkout:\n' + status + '\n' + diff)
+    if args.preflight:
+        inputs = []
+        for filename in ('go.mod', 'go.sum'):
+            observed = Path(filename).read_bytes()
+            indexed = subprocess.check_output(['git', 'show', 'HEAD:' + filename])
+            if observed != indexed:
+                raise SystemExit(f'{filename} checkout bytes differ from the Git source')
+            inputs.append({'path': filename, 'sha256': hashlib.sha256(observed).hexdigest()})
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps({'schema': 'scout-native-windows-inputs.v1',
+            'sourceRevision': source, 'architecture': args.arch, 'inputs': inputs,
+            'claims': {'canonicalSourceInputsVerified': True, 'runtimeAccepted': False}}, indent=2) + '\n')
+        print('Native Windows canonical source inputs verified')
+        return
     metadata = json.loads((args.dist / 'metadata.json').read_text())
     if metadata['commit'] != source or metadata['version'] != 'v2.13.0-next':
         raise SystemExit('Snapshot metadata does not match the required source/version')
