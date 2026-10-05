@@ -27,6 +27,29 @@ order, quality gates, budgets and decisions.
 
 
 
+## Genuine revision-chain coverage follow-up — 2026-10-05
+
+The isolated cub/server v0.8.3 acceptance lane captured 21 additional unedited
+command outputs in [revision-chain fixtures](test/fixtures/confighub-governance-v083-revision-chain/NOTICE.md).
+Manifest SHA-256: `c3640517a77c5c7ccf9dfb0ca49c358024d6c1440c3f73ba5e91728c09adc285`. Raw stdout/stderr hashes, command-start
+UTC times, statuses and server/client identity are retained. Seven new packet
+checks and the existing seven governance checks pass. The new checks are wired
+into Unit CI; no exact-head CI result is claimed before it runs.
+
+Two direct claim types bind exactly to revision 2. A metadata label update keeps
+revision 2; changed bytes create revision 3; restoring the original bytes creates
+revision 4 with the same DataHash but another RevisionID and no returned
+Attestations field. Same-hash revision equality does not establish inherited
+approval. A filtered SecurityReview list omits an existing Approval reference,
+proving query-limited list coverage cannot establish claim absence. Actual served
+bytes match each sampled DataHash; this is not a general normalization contract.
+
+Setup writes stayed in the owned test unit/space and outside Scout. Authentication
+is the local administrator: viewer RBAC and effective coverage remain open.
+No evaluated governance, production adapter or CLI/TUI/MCP acceptance is claimed.
+The scanner CI secret is still absent; companion PR #2076 remains open.
+Current main remains `5aeebc48`; v2.14 candidate is clean at `7533968c`.
+
 ## Release continuity review and latest CI — 2026-10-05
 
 The [deep review](docs/reference/configuration-investigation-continuity.md)

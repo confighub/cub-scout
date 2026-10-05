@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: revision-coverage
+  namespace: scout-contract
+data:
+  generation: first

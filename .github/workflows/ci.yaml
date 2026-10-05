@@ -74,6 +74,9 @@ jobs:
       - name: Verify genuine governance capture packet
         run: python3 scripts/ci/test_governance_capture.py
 
+      - name: Verify genuine revision-chain and claim coverage packet
+        run: python3 scripts/ci/test_governance_revision_chain.py
+
       - name: Test required acceptance control flow
         run: python3 scripts/ci/test_prove_it_works.py
 

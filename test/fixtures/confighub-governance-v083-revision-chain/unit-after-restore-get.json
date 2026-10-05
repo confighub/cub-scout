@@ -1,0 +1,72 @@
+{
+  "Space": {
+    "CreatedAt": "2026-10-05T05:45:08.691175Z",
+    "DisplayName": "scout-v213-contract",
+    "EntityType": "Space",
+    "OrganizationID": "f45618f7-3007-49f3-864c-44775a311693",
+    "Permissions": {
+      "Manage": {
+        "UserIDs": {
+          "3a89ef21-38d2-49ed-8ca1-d3580c48bf14": true
+        }
+      },
+      "ManageChildren": {
+        "UserIDs": {
+          "3a89ef21-38d2-49ed-8ca1-d3580c48bf14": true
+        }
+      }
+    },
+    "Slug": "scout-v213-contract",
+    "SpaceID": "68843338-f9bd-485c-9a66-5d5aee820247",
+    "UpdatedAt": "2026-10-05T05:45:08.691175Z"
+  },
+  "Unit": {
+    "CreatedAt": "2026-10-05T16:09:38.220119Z",
+    "DataHash": "77aa943df7d3602b8ca7e0e03c5d93a71adf1c1400dbca6777c5ebb430b6e496",
+    "DataSize": 121,
+    "DisplayName": "revision-coverage-20261005",
+    "EntityType": "Unit",
+    "HeadMutationNum": 3,
+    "HeadRevisionID": "921fd4e9-e6a6-487d-b64f-d55d7cf0d146",
+    "HeadRevisionNum": 4,
+    "Labels": {
+      "coverage-probe": "metadata-only"
+    },
+    "LastChangeDescription": "Disposable same-hash revision coverage probe",
+    "OrganizationID": "f45618f7-3007-49f3-864c-44775a311693",
+    "Permissions": {
+      "Manage": {
+        "UserIDs": {
+          "3a89ef21-38d2-49ed-8ca1-d3580c48bf14": true
+        }
+      }
+    },
+    "ProvidedPaths": [
+      {
+        "AttributeName": "resource-name",
+        "DataType": "string",
+        "Details": {
+          "BoundLinkID": "00000000-0000-0000-0000-000000000000",
+          "IsProvided": true,
+          "ProvidedProperties": {
+            "Namespace": "scout-contract",
+            "ResourceType": "v1/ConfigMap",
+            "SubPath-generation": "true"
+          }
+        },
+        "Path": "metadata.name",
+        "ResourceCategory": "Resource",
+        "ResourceName": "scout-contract/revision-coverage",
+        "ResourceNameWithoutScope": "revision-coverage",
+        "ResourceType": "v1/ConfigMap"
+      }
+    ],
+    "Slug": "revision-coverage-20261005",
+    "SpaceID": "68843338-f9bd-485c-9a66-5d5aee820247",
+    "SpaceSlug": "scout-v213-contract",
+    "ToolchainType": "Kubernetes/YAML",
+    "UnitID": "1662495a-37f6-484c-950f-26be7c8914d8",
+    "UpdatedAt": "2026-10-05T16:10:03.474538Z",
+    "Version": 16
+  }
+}
