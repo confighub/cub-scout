@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 # Provision real controllers for disposable GitOps and demo acceptance clusters.
 set -euo pipefail
+: "${GITHUB_PATH:?Expected GitHub Actions path file}"
 root=${RUNNER_TEMP:?Expected disposable runner directory}/scout-controllers
 mkdir -p "$root"
 curl --fail --silent --show-error --location --retry 3 --proto '=https' --proto-redir '=https' \
   https://github.com/fluxcd/flux2/releases/download/v2.9.6/flux_2.9.6_linux_amd64.tar.gz -o "$root/flux.tar.gz"
 printf '%s  %s\n' b4d22673e9246cbd628881f1a9ef3b090085dced291e42d804555cee8e8d42c5 "$root/flux.tar.gz" | sha256sum --check --status
 tar -xzf "$root/flux.tar.gz" -C "$root" flux
+printf '%s\n' "$root" >> "$GITHUB_PATH"
 "$root/flux" install
 kubectl rollout status deployment/source-controller -n flux-system --timeout=300s
 kubectl rollout status deployment/kustomize-controller -n flux-system --timeout=300s

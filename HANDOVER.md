@@ -1308,3 +1308,19 @@ private config. This probe creates no cluster. CI ownership commands now use
 built CLI and an exact recorded map fixture. Risk demos require the private
 scanner and assert the expected finding, rather than trust the demo narrative.
 Fresh-runner rerun is required. Neither release nor #774 is complete.
+
+## Fresh-server connected acceptance — 2026-10-05
+
+CI run 37312841846 at `ae4e60e9` completed. Unit, cluster integration and the
+fresh-server Connected E2E jobs passed. The isolated pinned server/UI install,
+authentication, client/server v0.8.3 checks and all three uncached required import
+round trips completed on the runner; the disposable server was removed. Connected
+acceptance no longer depends on a workstation token or skipped authentication.
+
+GitOps E2E converged both controllers and example workloads and passed exact
+Flux/Argo ownership assertions. Its next trace failed because the installed Flux
+binary was not exported to later steps. The helper now exports its installation
+directory through GITHUB_PATH. Controller observations are retained in the run's
+acceptance artifact. Full Verification failed at the absent private scanner
+release credential; risk/demo and broader release gates remain open. A fresh
+run of the PATH repair is required; #774 and v2.13 are not complete.
