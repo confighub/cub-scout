@@ -53,6 +53,10 @@ read-only guards and CLI-reference parity pass. These are candidate acceptance
 checks, not final-tag packaging or publication proof. Parent #591 still requires
 effective/inherited coverage and viewer RBAC; evaluated governance, controller,
 benchmark, complete CI and distribution gates remain open. v2.13 is unreleased.
+The first candidate CI caught a changed pinned skill file in the 35-skill
+benchmark source tree. The skill is restored; definitions live in public
+contracts/examples and the external skill-reference page. All 19 recorded
+runtime contract checks pass with the original source pin unchanged.
 
 ## Accepted native Windows build/runtime proof — 2026-10-05
 

@@ -1872,6 +1872,12 @@ digest inputs. Data reads or parsing/hash failures leave the subject omitted
 and preserve the runtime verdict. Effective
 coverage and workflow evaluation remain unestablished by this read contract.
 
+`confighub-data-sha256` is Scout's additional digest key for SHA-256 of the
+exact served bytes, encoded as 64 lowercase hexadecimal characters. It is not
+a standard algorithm key; generic consumers may ignore this extension under
+the [in-toto DigestSet rules](https://github.com/in-toto/attestation/blob/main/spec/v1/digest_set.md).
+Digest equality alone never joins claims across different revision identities.
+
 The wire format is the **in-toto Statement v1 envelope** (`_type =
 "https://in-toto.io/Statement/v1"`) wrapping the cub-scout predicate URI
 `https://cub-scout.dev/receipt/v1`.
