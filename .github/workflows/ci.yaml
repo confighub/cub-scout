@@ -274,6 +274,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: native-windows-${{ matrix.arch }}
+          include-hidden-files: true
           if-no-files-found: error
           path: |
             ${{ runner.temp }}/scout-windows-proof/

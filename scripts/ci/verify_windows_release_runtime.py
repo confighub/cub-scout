@@ -23,8 +23,13 @@ def main():
     source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
     if source != args.source:
         raise SystemExit('Checked-out source differs from the dispatched source')
-    if subprocess.check_output(['git', 'status', '--porcelain'], text=True).strip():
-        raise SystemExit('Build hooks or outputs dirtied the source checkout')
+    status = subprocess.check_output(['git', 'status', '--porcelain'], text=True).strip()
+    if status:
+        diff = subprocess.check_output(['git', 'diff', '--', 'go.mod', 'go.sum'], text=True)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps({'status': 'refused-dirty-source',
+            'sourceRevision': source, 'gitStatus': status, 'dependencyDiff': diff}, indent=2) + '\n')
+        raise SystemExit('Build hooks or outputs dirtied the source checkout:\n' + status + '\n' + diff)
     metadata = json.loads((args.dist / 'metadata.json').read_text())
     if metadata['commit'] != source or metadata['version'] != 'v2.13.0-next':
         raise SystemExit('Snapshot metadata does not match the required source/version')
