@@ -13,9 +13,12 @@ readonly HELM4_SHA='11e3c9fb6548fa1661a72000a6a483a31f1c2a0bf300f3d2422270feee18
 readonly CLUSTER='scout-helm-version-matrix'
 
 usage() {
-	echo "usage: HELM3_BIN=/absolute/path/helm-v3.22.0 $0 EMPTY_EVIDENCE_DIR" >&2
+	echo "usage: HELM3_BIN=/absolute/path/helm-v3.22.0 $0 EMPTY_EVIDENCE_DIR [--lifecycle]" >&2
 }
-if [[ $# -ne 1 ]]; then usage; exit 2; fi
+if [[ $# -lt 1 || $# -gt 2 ]]; then usage; exit 2; fi
+if [[ $# -eq 2 && "$2" != --lifecycle ]]; then usage; exit 2; fi
+LIFECYCLE=false
+if [[ ${2:-} == --lifecycle ]]; then LIFECYCLE=true; fi
 EVIDENCE_DIR=$1
 HELM3_BIN=${HELM3_BIN:-}
 BASELINE_SCOUT_BIN=${BASELINE_SCOUT_BIN:-}
@@ -268,6 +271,13 @@ BEFORE_UID=$("$JQ_BIN" -r '.identity.uid' "$EVIDENCE_DIR/releases/pre-upgrade-he
 AFTER_UID=$("$JQ_BIN" -r '.identity.uid' "$EVIDENCE_DIR/releases/upgraded-helm4-auto/deployment-evidence.json")
 [[ -n "$BEFORE_UID" && "$BEFORE_UID" != null && "$BEFORE_UID" == "$AFTER_UID" ]] || fail "Helm 4 upgrade replaced the Deployment instead of updating the same identity"
 
+if [[ "$LIFECYCLE" == true ]]; then
+	shasum -a 256 "$SCRIPT_DIR/helm-lifecycle-matrix.sh" >>"$EVIDENCE_DIR/commands.log"
+	# shellcheck source=helm-lifecycle-matrix.sh
+	source "$SCRIPT_DIR/helm-lifecycle-matrix.sh"
+	run_lifecycle_matrix
+fi
+
 SOURCE_DIRTY=false
 if [[ -n "$(git -C "$REPO_ROOT" status --short)" ]]; then SOURCE_DIRTY=true; fi
 cat >"$EVIDENCE_DIR/summary.json" <<EOF
@@ -285,7 +295,12 @@ cat >"$EVIDENCE_DIR/summary.json" <<EOF
   "sourceCommit": "$(git -C "$REPO_ROOT" rev-parse HEAD)",
   "sourceDirty": $SOURCE_DIRTY,
   "coverage": ["fresh-helm3-install", "fresh-helm4-default-install", "helm3-install-then-helm4-upgrade-server-side-auto"],
-  "notCovered": ["hooks", "CRDs", "rollback", "server-side-conflict-modes"],
+  "lifecycleMatrixCompleted": $LIFECYCLE,
+  "notCovered": ["application-functionality", "connected-governance", "SQL-release-storage"],
   "managedFieldsInterpretation": "recorded observations only; manager metadata alone does not establish apply method"
 }
 EOF
+if [[ "$LIFECYCLE" == false ]]; then
+	"$JQ_BIN" '.notCovered += ["hooks", "CRDs", "rollback", "server-side-conflict-modes"]' "$EVIDENCE_DIR/summary.json" >"$EVIDENCE_DIR/summary.tmp.json"
+	mv "$EVIDENCE_DIR/summary.tmp.json" "$EVIDENCE_DIR/summary.json"
+fi

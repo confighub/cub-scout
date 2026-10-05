@@ -478,3 +478,39 @@ The owned cluster was deleted; shared context/config hashes and other cluster
 names were unchanged. This does not cover hooks, CRDs, rollback or conflicts,
 and manager names alone still do not establish apply method. The earlier
 failed run remains part of the evidence history.
+
+### Extended lifecycle acceptance (v2.13 candidate)
+
+The existing matrix has an opt-in `--lifecycle` lane, sourced from
+`helm-lifecycle-matrix.sh`. This is an acceptance harness, not a Scout renderer
+or migration command. Its required assertions were defined in #588:
+
+- Both pinned Helm versions install a namespaced dependent custom resource after
+  its CRD and retain a successful hook Job's actual Complete condition.
+- A failing post-upgrade hook must fail the Helm command, retain a failed release
+  history row and produce a different Job with a Failed condition.
+- Explicit rollback to revision 1 must restore the dependent configuration and
+  converged replica count; standalone/plugin Scout traces must agree.
+- A changed CRD file must remain separate from the actual CRD: ordinary Helm
+  upgrade does not update the `crds/` resource. This is observed behavior, not
+  evidence that the CRD change was applied.
+- Deleting the retained hook must leave an empty exact-name Job list. Stored hook
+  definitions/history remain historical, not proof of a current Job.
+- A foreign server-side replica-field owner must make an explicit Helm 4
+  server-side transition fail for a conflict without changing that field. An
+  explicit force-conflicts retry must converge with the Deployment trace intact.
+
+```bash
+mkdir /path/to/new-empty-lifecycle-evidence
+HELM3_BIN=/absolute/path/to/helm-v3.22.0 \
+  examples/helm-expt/run-helm-version-matrix.sh \
+  /path/to/new-empty-lifecycle-evidence --lifecycle
+```
+
+The hook uses the official BusyBox 1.37.0 OCI index pinned to
+`sha256:bdf57e528e45e4433820e045b29b4597825a1c9e38353532d90a01445013f82e`;
+all existing Helm/kind pins and owned-cluster cleanup apply. Retain failed runs
+and cleanup status. The summary's `lifecycleMatrixCompleted` is true only after
+these required assertions pass. Application functionality, connected governance
+and SQL release storage remain outside this fixture's proof. No successful live
+result is claimed by the harness implementation itself.
