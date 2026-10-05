@@ -21,6 +21,30 @@ execution queue. The adopted 3.0 plan below remains authoritative for work
 order, quality gates, budgets and decisions.
 
 
+
+## Isolated v0.8.3 server and genuine capture candidate — 2026-10-05
+
+An isolated ConfigHub v0.8.3 server is installed and authenticated. Both server
+and cub CLI report v0.8.3; the existing v0.8.0 server and its data are preserved.
+Server commit is `1f92e099f4960a0828d2b51ed54e142e5f051b2a`; client commit is
+`468dd09f1c893ce2e18fd018192dcfa96cb1dd34`.
+
+`test/fixtures/confighub-governance-v083-recorded/` retains 15 genuine command
+output recordings, command statuses, timestamps and exact output hashes. Seven
+packet checks pass: exact unit/revision identity, served revision bytes matching
+Revision.DataHash, Pass/Fail subjects, immutable claim plus separate revocation,
+actual expiry, absent-ID refusal and an explicitly ungoverned ChangeOrder GET.
+These captures have no edited response fields or credentials. Authentication
+uses the isolated local administrator; read-only viewer RBAC is not claimed.
+
+The fixture supplies genuine evidence for #591's direct-revision/data-byte
+questions. It does not complete effective/inherited coverage, denied/partial
+list coverage, production adapters or CLI/TUI/MCP acceptance. The ChangeOrder
+has no ChangeWorkflow and supplies no evaluated-stage-prerequisite proof for
+#597. No gate is waived. A repaired parity retry has resolved the target from
+JSON and its exact apps-Space release binding and entered real Helm installation;
+its final receipt is still pending.
+
 ## Required acceptance harness repair — 2026-10-05
 
 Issue #773 defines success before the harness repair. Full CI run

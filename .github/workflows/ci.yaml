@@ -71,6 +71,9 @@ jobs:
       - name: Check no personal names in committed files
         run: ./scripts/check-no-personal-names.sh
 
+      - name: Verify genuine governance capture packet
+        run: python3 scripts/ci/test_governance_capture.py
+
       - name: Test required acceptance control flow
         run: python3 scripts/ci/test_prove_it_works.py
 

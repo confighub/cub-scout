@@ -1,0 +1,69 @@
+{
+  "Space": {
+    "CreatedAt": "2026-10-05T05:45:08.691175Z",
+    "DisplayName": "scout-v213-contract",
+    "EntityType": "Space",
+    "OrganizationID": "f45618f7-3007-49f3-864c-44775a311693",
+    "Permissions": {
+      "Manage": {
+        "UserIDs": {
+          "3a89ef21-38d2-49ed-8ca1-d3580c48bf14": true
+        }
+      },
+      "ManageChildren": {
+        "UserIDs": {
+          "3a89ef21-38d2-49ed-8ca1-d3580c48bf14": true
+        }
+      }
+    },
+    "Slug": "scout-v213-contract",
+    "SpaceID": "68843338-f9bd-485c-9a66-5d5aee820247",
+    "UpdatedAt": "2026-10-05T05:45:08.691175Z"
+  },
+  "Unit": {
+    "CreatedAt": "2026-10-05T05:45:08.901582Z",
+    "DataHash": "57ba9d6af1bbb9d87b9632906c74119f8604a3c7e1a7b292a039d928360dbae5",
+    "DataSize": 113,
+    "DisplayName": "contract-config",
+    "EntityType": "Unit",
+    "HeadMutationNum": 1,
+    "HeadRevisionID": "5af31398-fd3d-4ac0-b267-4549eaabef37",
+    "HeadRevisionNum": 2,
+    "LastChangeDescription": "MergeExternal; from /tmp/scout-v213-server-v083-20261005/contracts/unit-input.yaml",
+    "OrganizationID": "f45618f7-3007-49f3-864c-44775a311693",
+    "Permissions": {
+      "Manage": {
+        "UserIDs": {
+          "3a89ef21-38d2-49ed-8ca1-d3580c48bf14": true
+        }
+      }
+    },
+    "ProvidedPaths": [
+      {
+        "AttributeName": "resource-name",
+        "DataType": "string",
+        "Details": {
+          "BoundLinkID": "00000000-0000-0000-0000-000000000000",
+          "IsProvided": true,
+          "ProvidedProperties": {
+            "Namespace": "scout-contract",
+            "ResourceType": "v1/ConfigMap",
+            "SubPath-proof": "true"
+          }
+        },
+        "Path": "metadata.name",
+        "ResourceCategory": "Resource",
+        "ResourceName": "scout-contract/contract-config",
+        "ResourceNameWithoutScope": "contract-config",
+        "ResourceType": "v1/ConfigMap"
+      }
+    ],
+    "Slug": "contract-config",
+    "SpaceID": "68843338-f9bd-485c-9a66-5d5aee820247",
+    "SpaceSlug": "scout-v213-contract",
+    "ToolchainType": "Kubernetes/YAML",
+    "UnitID": "6221926e-8cc4-4847-a25c-a4104042f640",
+    "UpdatedAt": "2026-10-05T05:45:09.169538Z",
+    "Version": 4
+  }
+}

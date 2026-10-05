@@ -1,0 +1,44 @@
+{
+  "Attestation": {
+    "AttestationID": "08f76195-a7c5-496f-84c1-c62424434c6b",
+    "CreatedAt": "2026-10-05T05:45:09.536624Z",
+    "EntityType": "Attestation",
+    "ExpiresAt": "0001-01-01T00:00:00Z",
+    "Note": "Disposable acceptance fixture: positive outcome",
+    "OrganizationID": "f45618f7-3007-49f3-864c-44775a311693",
+    "Permissions": {
+      "Manage": {
+        "UserIDs": {
+          "3a89ef21-38d2-49ed-8ca1-d3580c48bf14": true
+        }
+      }
+    },
+    "Result": "Pass",
+    "SpaceID": "68843338-f9bd-485c-9a66-5d5aee820247",
+    "SpaceSlug": "scout-v213-contract",
+    "Type": "Approval",
+    "UpdatedAt": "2026-10-05T05:45:09.536624Z",
+    "UserID": "3a89ef21-38d2-49ed-8ca1-d3580c48bf14"
+  },
+  "Space": {
+    "CreatedAt": "2026-10-05T05:45:08.691175Z",
+    "DisplayName": "scout-v213-contract",
+    "EntityType": "Space",
+    "OrganizationID": "f45618f7-3007-49f3-864c-44775a311693",
+    "Permissions": {
+      "Manage": {
+        "UserIDs": {
+          "3a89ef21-38d2-49ed-8ca1-d3580c48bf14": true
+        }
+      },
+      "ManageChildren": {
+        "UserIDs": {
+          "3a89ef21-38d2-49ed-8ca1-d3580c48bf14": true
+        }
+      }
+    },
+    "Slug": "scout-v213-contract",
+    "SpaceID": "68843338-f9bd-485c-9a66-5d5aee820247",
+    "UpdatedAt": "2026-10-05T05:45:08.691175Z"
+  }
+}
