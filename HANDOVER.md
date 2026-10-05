@@ -27,6 +27,31 @@ order, quality gates, budgets and decisions.
 
 
 
+## Clean configured packaging proof — 2026-10-05
+
+GoReleaser 2.18.2 completed the actual snapshot hooks from a normal clean checkout
+of `78d86d50` using Go 1.24. Six configured archives and sixteen binaries pass
+checksum/content/source inspection; every binary embeds the exact revision with
+modified=false and CGO disabled. The managed-worktree attempt omitted VCS metadata
+and remains rejected. A local-clone origin initially produced a workstation-path
+Docker source label; correcting that origin and repeating the complete rehearsal
+produced the GitHub source label. A deeper check found the arm64-labelled image
+contained an amd64 binary despite successful emulated execution. The explicit
+Linux amd64 image platform/build selection repairs this mismatch; the repeated
+full rehearsal verifies binary and image architecture independently. All attempts
+remain retained privately.
+
+The [rehearsal receipt](docs/releases/v2.13-goreleaser-rehearsal.md) records actual
+Darwin/Linux arm64/amd64 version/help execution, standalone and kubectl aliases,
+four plugin targets and the nonroot, network-disabled, read-only local image.
+Windows execution, public installs/pulls and final tagged publication remain open.
+Snapshot `v2.13.0-next` and a local image tagged v2.13.0 are not a release.
+Candidate [PR #775](https://github.com/confighub/cub-scout/pull/775) is draft;
+CI 37341835765 at `5df6516e` passed Unit, including release-input and all three
+capture-packet checks; Integration is running. Subsequent image configuration
+and documentation changes are not covered by that run. Complete exact-head
+release acceptance remains required.
+
 ## Helm lifecycle acceptance and release preparation — 2026-10-05
 
 The complete pinned Helm 3/4 lifecycle harness passed from clean source
