@@ -1,0 +1,5 @@
+{
+  "status": "failed_before_python_execution",
+  "reason": "mount source used /tmp alias instead of canonical /private/tmp path",
+  "cleanupVerifiedAbsent": true
+}

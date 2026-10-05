@@ -88,6 +88,9 @@ jobs:
       - name: Verify accepted native Windows runtime receipts
         run: python3 scripts/ci/test_windows_runtime_capture.py
 
+      - name: Verify retained Python substrate execution checkpoint
+        run: python3 scripts/ci/test_python_substrate_capture.py
+
       - name: Test required acceptance control flow
         run: python3 scripts/ci/test_prove_it_works.py
 

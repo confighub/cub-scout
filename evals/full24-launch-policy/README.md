@@ -220,6 +220,12 @@ review before final runtime acceptance.
 
 ## Repeatable offline Python image verification
 
+A later [actual substrate checkpoint](../python-runtime-substrate/README.md)
+executes the separately verified image's Python/stdlib assets and the existing
+PyYAML 6.0.3 requirement, including `-I -S`, under inspected owned-container
+bounds. All attempts and cleanup outcomes are retained. It does not change this
+static verifier or admit the model runtime, overlays, grants or official grader.
+
 `python_image.py` verifies the retained cached-image export against the exact
 reviewed receipt digest. It accepts one bounded regular archive, refuses
 symlink/archive path ambiguity and metadata duplicates, checks selected OCI

@@ -27,6 +27,18 @@ order, quality gates, budgets and decisions.
 
 
 
+## Python dependency runtime checkpoint — 2026-10-05
+
+The [retained execution packet](evals/python-runtime-substrate/README.md) verifies
+the unchanged pinned Python image's interpreter/libpython bytes, eleven standard
+library imports, SQLite, a Python child and the frozen PyYAML 6.0.3 dependency.
+Final startup uses isolated/no-site mode under the existing owned-container
+limits. Four attempts, including the rejected mount path and missing dependency,
+remain visible; every owned container was removed. Five packet guards pass and
+run in Unit CI. No model/provider run occurred. This advances task 15 without
+claiming selected-case mounts, hooks, official grading, grants or full runtime
+admission. Frozen benchmark inputs and skill-tree pins are unchanged.
+
 ## Direct ConfigHub claim and receipt adapters — 2026-10-05
 
 Release-sequence task 8 is implemented and exercised against the isolated

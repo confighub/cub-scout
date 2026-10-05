@@ -1,0 +1,131 @@
+{
+  "schema": "runtime.python-substrate-probe.v1",
+  "scope": "asset/dependency execution checkpoint only; no Claude, Scout, official grading, model, tool-grant or full runtime admission",
+  "sourceCommit": "7d09072b04d300bc03d82e90b4a745d3d2561e95",
+  "imageIndexDigest": "sha256:cdbd05fb6f457ca275ff51ce00d93d865ca0b6a25f5ffb08262d94f6835771e5",
+  "staticInventory": "../full24-launch-policy/runtime-python-candidate.json",
+  "runtime": {
+    "assetSHA256": {
+      "/usr/local/bin/python3.11": "4e19d11f7a2ee55a0247c6ab3326419413fadecf4b7a52d719739cc1a924711b",
+      "/usr/local/lib/libpython3.11.so.1.0": "3c2a42f66af9182178871c2cd433ffff0592bec6f18184a5547f0d3887fca09b"
+    },
+    "child": {
+      "ok": true,
+      "uid": 65534
+    },
+    "executable": "/usr/local/bin/python3",
+    "isolated": 1,
+    "machine": "aarch64",
+    "noSite": 1,
+    "openssl": "OpenSSL 3.5.6 7 Apr 2026",
+    "schema": "python-runtime-probe.v1",
+    "stdlibImports": [
+      "json",
+      "hashlib",
+      "ssl",
+      "sqlite3",
+      "ctypes",
+      "subprocess",
+      "selectors",
+      "urllib.request",
+      "http.server",
+      "tarfile",
+      "gzip"
+    ],
+    "uid": 65534,
+    "version": "3.11.15 (main, Jun 24 2026, 02:14:25) [GCC 14.2.0]",
+    "yamlAvailable": true,
+    "yamlCompiledExtension": true,
+    "yamlVersion": "6.0.3"
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "status": "failed_before_execution_mount_path",
+      "sourceCommit": "7d09072b04d300bc03d82e90b4a745d3d2561e95",
+      "sourceDirty": false,
+      "cleanupVerifiedAbsent": true,
+      "files": {
+        "proof.json": "7b95d9082f5db4d49b042c93a4038ceb772e26e1c43caf453fb7496835a787ca",
+        "before.stdout": "0d238c2297ef45751f7188cb4ba27a2753087977075a8e2387e78ea973192253",
+        "before.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "failure-details.json": "a565105dfc41837e705b1960c3127ccae9b9ebdde3a266b30660bc483ad220a6"
+      },
+      "retainedOriginal": "/private/tmp/scout-v213-python-runtime-20261005-attempt1"
+    },
+    {
+      "attempt": 2,
+      "status": "stdlib_passed_required_pyyaml_missing",
+      "sourceCommit": "7d09072b04d300bc03d82e90b4a745d3d2561e95",
+      "sourceDirty": false,
+      "cleanupVerifiedAbsent": true,
+      "files": {
+        "proof.json": "2648b7db9621fe1c491c61b94be26ee4c9c1a7cb5893bc22b58ef62ad9a840af",
+        "before.stdout": "a5bfdb6b967a712931df3eed23194cffadc3872d90b353205c73bc26842d6d3e",
+        "before.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "python-execution.stdout": "8b6d65654e81ea75228e4d5ff320c17c0d34cd0987029287f8eeb7dc4e06327f",
+        "python-execution.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after.stdout": "140f5437eaae5c9837289b946333bf81a4ba5158c2a879c90d97fc50c07e979b",
+        "after.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retainedOriginal": "/private/tmp/scout-v213-python-runtime-20261005-attempt2"
+    },
+    {
+      "attempt": 3,
+      "status": "python_dependencies_available",
+      "sourceCommit": "7d09072b04d300bc03d82e90b4a745d3d2561e95",
+      "sourceDirty": false,
+      "cleanupVerifiedAbsent": true,
+      "files": {
+        "proof.json": "1cecc60f7c2f3cf0c178d57236548cd5a4ab8c72a5d07511833df4b52c1b1c4d",
+        "before.stdout": "36a5087abbe80595f6292a492b71c156b11b67e7f5fa000aa85595218b2a8e43",
+        "before.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "python-execution.stdout": "3d36540ea7599e4d10d5853588c5c33860cb1acf2c1d10f4f86671e15482a092",
+        "python-execution.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after.stdout": "a2f7fd2af7a586ca936728bb223b3f52cd4b2d1a01055860d59d8f4f7947894f",
+        "after.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "wheel-inventory.json": "96684e20cb9a2e9024069b75798d9845216690e0ded0a59c04a5084e96789e61",
+        "acquisition.json": "bc51334f596556ed3d2d54e4d75aea2776a62fa78248ca77e97af64545a37457"
+      },
+      "retainedOriginal": "/private/tmp/scout-v213-python-runtime-20261005-attempt3"
+    },
+    {
+      "attempt": 4,
+      "status": "python_dependencies_available",
+      "sourceCommit": "7d09072b04d300bc03d82e90b4a745d3d2561e95",
+      "sourceDirty": false,
+      "cleanupVerifiedAbsent": true,
+      "files": {
+        "proof.json": "175c3a075635b32e89928b5e49d3a31ac804f461b4586abf41027b56aff21243",
+        "before.stdout": "2a6914ddddce5da3829778fc95178cc4d58450e01f631db258ed2a6d2849ffc1",
+        "before.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "python-execution.stdout": "507d2907066ade51e5f496e625f8f8531d2ff3986355afcb43da06ccbe41dfa1",
+        "python-execution.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after.stdout": "e1c00a16d46af76d6b4e9522243ec4c629d91cb3d85a9170519a6462f5818258",
+        "after.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "wheel-inventory.json": "96684e20cb9a2e9024069b75798d9845216690e0ded0a59c04a5084e96789e61",
+        "acquisition.json": "bc51334f596556ed3d2d54e4d75aea2776a62fa78248ca77e97af64545a37457"
+      },
+      "retainedOriginal": "/private/tmp/scout-v213-python-runtime-20261005-attempt4"
+    }
+  ],
+  "acquisition": {
+    "version": "6.0.3",
+    "releaseSource": "https://pypi.org/pypi/PyYAML/6.0.3/json",
+    "filename": "pyyaml-6.0.3-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl",
+    "artifactURL": "https://files.pythonhosted.org/packages/0c/62/d2eb46264d4b157dae1275b573017abec435397aa59cbcdab6fc978a8af4/pyyaml-6.0.3-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl",
+    "bytes": 775556,
+    "sha256": "10892704fc220243f5305762e276552a0395f7beb4dbf9b14ec8fd43b57f126c",
+    "requirementsFile": "evals/pre01-crd/requirements.txt",
+    "requirementsSHA256": "0969da99a0bc2a1b71ed50584560f4588a37567ac63af3ddbaf3c4617ca5621a"
+  },
+  "harnessSource": {
+    "retainedPath": "/tmp/scout-v213-python-runtime-probe.py",
+    "sha256": "334719197f1a0ae65623dc43e2fd789612abc718443078f4f7fc17d2e5e3c46a",
+    "limitsHelper": "evals/linux-runtime-versions/prepare.py",
+    "limitsHelperSHA256": "35af85e2ba82909572d9a9832d997dff392185c60cfbad530a3fec76183b4bd9"
+  },
+  "frozenCasesPromptsEvidenceGrantsBudgetsGradersChanged": false,
+  "modelOrProviderRun": false,
+  "runtimeAssetAdmission": "still blocked"
+}
