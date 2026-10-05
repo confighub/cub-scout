@@ -1,0 +1,101 @@
+{
+  "schema": "scout-native-windows-capture.v1",
+  "sourceRevision": "e94ce9cfe4aa9415eb14baa9fcf79b54f79d9603",
+  "runUrl": "https://github.com/confighub/cub-scout/actions/runs/37358802632",
+  "runtimeJobsPassed": true,
+  "publicRecords": [
+    {
+      "path": "amd64/runtime.json",
+      "bytes": 25883,
+      "sha256": "273e6030f73bf41390fd2eb06a67461f9be43ee9f95171c96d59a91ede4c62bd"
+    },
+    {
+      "path": "amd64/source-inputs.json",
+      "bytes": 508,
+      "sha256": "12ae53e5b85b3c687284dac75d60b6a03a31bcafa78c0d70cf5d618dac75f12f"
+    },
+    {
+      "path": "amd64/metadata.json",
+      "bytes": 223,
+      "sha256": "a2d0b6bf95d2e3fdc95a5ebf69ab5821a0144610592173e217b51c8f47531a6c"
+    },
+    {
+      "path": "arm64/runtime.json",
+      "bytes": 25900,
+      "sha256": "4715b32604c8edd02c44dac1b7ac62d67eb49f10d37647bc6224a9a3d7c6f7c2"
+    },
+    {
+      "path": "arm64/source-inputs.json",
+      "bytes": 508,
+      "sha256": "a346117e65ce3f17a683e8a9e32b4639c68eb1e8c2515ef8a679c364c64b9754"
+    },
+    {
+      "path": "arm64/metadata.json",
+      "bytes": 228,
+      "sha256": "950baf917de3f3720d535f43b092d5ae214cfcdcf60a46aab462b2234e91478e"
+    }
+  ],
+  "retainedPrivatePath": "/tmp/scout-v213-windows-e94ce9cf-20261005",
+  "privateArtifactInventory": [
+    {
+      "path": "amd64/_temp/scout-windows-proof/build.log",
+      "bytes": 1535,
+      "sha256": "08d17c6561560dc6ac44c56b79cc4954fefc7f03bb36fc2b027dfb23fa033899"
+    },
+    {
+      "path": "amd64/_temp/scout-windows-proof/runtime.json",
+      "bytes": 25883,
+      "sha256": "273e6030f73bf41390fd2eb06a67461f9be43ee9f95171c96d59a91ede4c62bd"
+    },
+    {
+      "path": "amd64/_temp/scout-windows-proof/source-inputs.json",
+      "bytes": 508,
+      "sha256": "12ae53e5b85b3c687284dac75d60b6a03a31bcafa78c0d70cf5d618dac75f12f"
+    },
+    {
+      "path": "amd64/cub-scout/cub-scout/.goreleaser-dist/cub-scout_windows_amd64_v1/cub-scout.exe",
+      "bytes": 58714624,
+      "sha256": "4bc727e0c693971e011d53f22d75abefcb8ab8c46a6ee3869519bb6be0eccdb2"
+    },
+    {
+      "path": "amd64/cub-scout/cub-scout/.goreleaser-dist/kubectl-cub-scout_windows_amd64_v1/kubectl-cub_scout.exe",
+      "bytes": 58714624,
+      "sha256": "4bc727e0c693971e011d53f22d75abefcb8ab8c46a6ee3869519bb6be0eccdb2"
+    },
+    {
+      "path": "amd64/cub-scout/cub-scout/.goreleaser-dist/metadata.json",
+      "bytes": 223,
+      "sha256": "a2d0b6bf95d2e3fdc95a5ebf69ab5821a0144610592173e217b51c8f47531a6c"
+    },
+    {
+      "path": "arm64/_temp/scout-windows-proof/build.log",
+      "bytes": 1543,
+      "sha256": "a5e2190254d389e7acedaf946bac4f563f41f79d1fd68d93387a887b3b3e9457"
+    },
+    {
+      "path": "arm64/_temp/scout-windows-proof/runtime.json",
+      "bytes": 25900,
+      "sha256": "4715b32604c8edd02c44dac1b7ac62d67eb49f10d37647bc6224a9a3d7c6f7c2"
+    },
+    {
+      "path": "arm64/_temp/scout-windows-proof/source-inputs.json",
+      "bytes": 508,
+      "sha256": "a346117e65ce3f17a683e8a9e32b4639c68eb1e8c2515ef8a679c364c64b9754"
+    },
+    {
+      "path": "arm64/cub-scout/cub-scout/.goreleaser-dist/cub-scout_windows_arm64_v8.0/cub-scout.exe",
+      "bytes": 55066624,
+      "sha256": "ecdcfd39a03dcdc652a2bdcfef3f19a1aa9640163288dbffc3e80986d5cc6c29"
+    },
+    {
+      "path": "arm64/cub-scout/cub-scout/.goreleaser-dist/kubectl-cub-scout_windows_arm64_v8.0/kubectl-cub_scout.exe",
+      "bytes": 55066624,
+      "sha256": "ecdcfd39a03dcdc652a2bdcfef3f19a1aa9640163288dbffc3e80986d5cc6c29"
+    },
+    {
+      "path": "arm64/cub-scout/cub-scout/.goreleaser-dist/metadata.json",
+      "bytes": 228,
+      "sha256": "950baf917de3f3720d535f43b092d5ae214cfcdcf60a46aab462b2234e91478e"
+    }
+  ]
+}

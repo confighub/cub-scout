@@ -89,6 +89,33 @@ class PythonSubstrateCaptureTests(unittest.TestCase):
         self.assertFalse(self.report['frozenCasesPromptsEvidenceGrantsBudgetsGradersChanged'])
         self.assertEqual(self.report['runtimeAssetAdmission'], 'still blocked')
 
+    def test_linux_recorded_checkpoint_retains_selected_source_bindings(self):
+        latest = json.loads((REPO / 'evals/linux-recorded-substrate/report.json').read_text())
+        historical = json.loads((REPO / 'evals/full24-launch-policy/local-recorded-proof.json').read_text())
+        packaging = json.loads((REPO / 'docs/releases/v2.13-goreleaser-e94ce9cf.json').read_text())['artifacts']
+        self.assertEqual(latest['binarySourceCommit'], packaging['sourceRevision'])
+        binaries = [b for b in packaging['binaries'] if b['path'] == 'cub-scout_linux_arm64_v8.0/cub-scout']
+        self.assertEqual(len(binaries), 1)
+        self.assertEqual(latest['binarySHA256'], binaries[0]['sha256'])
+        self.assertEqual(latest['imageIndexDigest'], self.report['imageIndexDigest'])
+        self.assertEqual(latest['status'], 'passed')
+        self.assertFalse(latest['workspaceDirty'])
+        for claim in ('modelOrProviderRun', 'frozenInputsChanged', 'fullRuntimeAdmitted'):
+            self.assertFalse(latest[claim])
+        original = {row['case']: row for row in historical['cases']}
+        self.assertEqual({row['case'] for row in latest['cases']}, set(original))
+        self.assertEqual(len(latest['cases']), 11)
+        wrapper_sha = hashlib.sha256((REPO / 'evals/full24-launch-policy/recorded_server.py').read_bytes()).hexdigest()
+        for row in latest['cases']:
+            prior = original[row['case']]
+            self.assertEqual(list(row['selectedRecording'].values()), [prior['recordingSha256']])
+            self.assertEqual(row['requestSHA256'], prior['requestSha256'])
+            self.assertEqual(row['wrapperSHA256'], wrapper_sha)
+            self.assertEqual(row['observed'], prior['observed'])
+            self.assertTrue(row['ownedContainerAbsent'])
+            self.assertTrue(row['stagedFilesUnchanged'])
+            self.assertEqual(row['cleanupErrors'], [])
+
 
 if __name__ == '__main__':
     unittest.main()

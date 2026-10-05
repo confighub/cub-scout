@@ -1,0 +1,633 @@
+{
+  "schema": "full24-linux-recorded-substrate-checkpoint.v1",
+  "workspaceCommit": "e94ce9cfe4aa9415eb14baa9fcf79b54f79d9603",
+  "workspaceDirty": false,
+  "binarySourceCommit": "e94ce9cfe4aa9415eb14baa9fcf79b54f79d9603",
+  "binarySHA256": "751784d32ff5ea6b1e7ff97a90e38f37424883e3e5a7433059d0129f321be0a6",
+  "imageIndexDigest": "sha256:cdbd05fb6f457ca275ff51ce00d93d865ca0b6a25f5ffb08262d94f6835771e5",
+  "scope": "eleven historical bindings; isolated Python/Scout MCP asset composition; not model/grant/full-suite admission",
+  "modelOrProviderRun": false,
+  "frozenInputsChanged": false,
+  "fullRuntimeAdmitted": false,
+  "status": "passed",
+  "cases": [
+    {
+      "case": "ATR-01",
+      "status": "passed",
+      "selectedRecording": {
+        "cluster/deployments.yaml": "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8"
+      },
+      "requestSHA256": "716356688633bcd0e0a51a19a9d6ccd24878bcdcf0cbd5b74dd00c4887c6382f",
+      "wrapperSHA256": "7742c4a4e28f48c6b315213cdbdef7974626b1b9d4dd8a27bb8d875b2071949d",
+      "observed": {
+        "tools": [
+          "explain",
+          "map"
+        ],
+        "selectedCount": 14,
+        "excludedFromScopeCount": 0,
+        "ownerCounts": {
+          "ArgoCD": 2,
+          "ConfigHub": 1,
+          "Flux": 3,
+          "Helm": 1,
+          "Native": 7
+        },
+        "provenance": {
+          "kind": "kubernetes-object-recording",
+          "sha256": "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8",
+          "bytes": 67696,
+          "documents": 1,
+          "objectCount": 14,
+          "captureTime": "unknown",
+          "captureCompleteness": "unknown"
+        },
+        "explainIdentity": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "namespace": "argocd",
+          "name": "argocd-application-controller"
+        },
+        "unsupportedToolRefused": true
+      },
+      "stagedFilesUnchanged": true,
+      "ownedContainerAbsent": true,
+      "cleanupErrors": [],
+      "retainedRawDirectory": "/private/tmp/scout-v213-linux-recorded-eleven-20261005-attempt1/ATR-01",
+      "rawFilesSHA256": {
+        "after.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "create.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "endpoint.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "endpoint.stdout": "76a228368ea2b8ec2ade244d6c143bbc4d7d669887f7595f0db0972142ab3c1c",
+        "create.stdout": "dc66de4d5d52b53ffa77ffee374e8faba5c98f36e368a3a0d050ca706fa0ac4d",
+        "after.stdout": "757cf73b289caf6f1d954396b3404a4c941650fc4cc1ce8b3a8f77eb6c2713da",
+        "execution.stdout": "2ef9479f822bb74f65c1ee4bbc4d577d371d70d69853323fab37e0832ac75f9e",
+        "before.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "before.stdout": "6e6a62d3251e8e00a5c2f608488e0e6d1954ce6b02cfb2eeccd97ebe2059c16b",
+        "execution.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "proof.json": "1baded97f8ea89062308ff5f1dbe86c63cfbe1a724017d81f3e634eea1e2dfe8"
+      }
+    },
+    {
+      "case": "ATR-02",
+      "status": "passed",
+      "selectedRecording": {
+        "cluster/deployments.yaml": "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8"
+      },
+      "requestSHA256": "716356688633bcd0e0a51a19a9d6ccd24878bcdcf0cbd5b74dd00c4887c6382f",
+      "wrapperSHA256": "7742c4a4e28f48c6b315213cdbdef7974626b1b9d4dd8a27bb8d875b2071949d",
+      "observed": {
+        "tools": [
+          "explain",
+          "map"
+        ],
+        "selectedCount": 14,
+        "excludedFromScopeCount": 0,
+        "ownerCounts": {
+          "ArgoCD": 2,
+          "ConfigHub": 1,
+          "Flux": 3,
+          "Helm": 1,
+          "Native": 7
+        },
+        "provenance": {
+          "kind": "kubernetes-object-recording",
+          "sha256": "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8",
+          "bytes": 67696,
+          "documents": 1,
+          "objectCount": 14,
+          "captureTime": "unknown",
+          "captureCompleteness": "unknown"
+        },
+        "explainIdentity": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "namespace": "argocd",
+          "name": "argocd-application-controller"
+        },
+        "unsupportedToolRefused": true
+      },
+      "stagedFilesUnchanged": true,
+      "ownedContainerAbsent": true,
+      "cleanupErrors": [],
+      "retainedRawDirectory": "/private/tmp/scout-v213-linux-recorded-eleven-20261005-attempt1/ATR-02",
+      "rawFilesSHA256": {
+        "after.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "create.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "endpoint.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "endpoint.stdout": "76a228368ea2b8ec2ade244d6c143bbc4d7d669887f7595f0db0972142ab3c1c",
+        "create.stdout": "f1844a7379c24d7461d588b45d28d5e35de327908cd9ee278d4eaed3f643697a",
+        "after.stdout": "605c4d6a3631f35f688b857980d51a3a3944733588ec7e7d41a4b34d1a95498e",
+        "execution.stdout": "2ef9479f822bb74f65c1ee4bbc4d577d371d70d69853323fab37e0832ac75f9e",
+        "before.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "before.stdout": "bdfe497819b358cfec19b7b3158a369935cdb08d41dd2c022f89efc31c52206d",
+        "execution.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "proof.json": "1fe9bf0b5b12dc5fb186924af615f29f21c60004d98886d5f60ac5f168b5ebaa"
+      }
+    },
+    {
+      "case": "ATR-03",
+      "status": "passed",
+      "selectedRecording": {
+        "cluster/deployments.yaml": "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8"
+      },
+      "requestSHA256": "716356688633bcd0e0a51a19a9d6ccd24878bcdcf0cbd5b74dd00c4887c6382f",
+      "wrapperSHA256": "7742c4a4e28f48c6b315213cdbdef7974626b1b9d4dd8a27bb8d875b2071949d",
+      "observed": {
+        "tools": [
+          "explain",
+          "map"
+        ],
+        "selectedCount": 14,
+        "excludedFromScopeCount": 0,
+        "ownerCounts": {
+          "ArgoCD": 2,
+          "ConfigHub": 1,
+          "Flux": 3,
+          "Helm": 1,
+          "Native": 7
+        },
+        "provenance": {
+          "kind": "kubernetes-object-recording",
+          "sha256": "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8",
+          "bytes": 67696,
+          "documents": 1,
+          "objectCount": 14,
+          "captureTime": "unknown",
+          "captureCompleteness": "unknown"
+        },
+        "explainIdentity": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "namespace": "argocd",
+          "name": "argocd-application-controller"
+        },
+        "unsupportedToolRefused": true
+      },
+      "stagedFilesUnchanged": true,
+      "ownedContainerAbsent": true,
+      "cleanupErrors": [],
+      "retainedRawDirectory": "/private/tmp/scout-v213-linux-recorded-eleven-20261005-attempt1/ATR-03",
+      "rawFilesSHA256": {
+        "after.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "create.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "endpoint.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "endpoint.stdout": "76a228368ea2b8ec2ade244d6c143bbc4d7d669887f7595f0db0972142ab3c1c",
+        "create.stdout": "b4c31bd05f243f4ab3ce41061fb3f26eebdd8f39fed197e762fdb310a778dc03",
+        "after.stdout": "b3f9910839b6e3461a4b422b86f9dac480f6311b473b018ffa97579772b5782e",
+        "execution.stdout": "2ef9479f822bb74f65c1ee4bbc4d577d371d70d69853323fab37e0832ac75f9e",
+        "before.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "before.stdout": "b1c88ea43a65254128dc9cd4410392806f708a1c7d50b3b42aff59941911ab0a",
+        "execution.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "proof.json": "9da98fa46fbd28ad04b0fc96ea786c17b0dd530272b0fed25ab9e9b5edc1c6c9"
+      }
+    },
+    {
+      "case": "ATR-04",
+      "status": "passed",
+      "selectedRecording": {
+        "cluster/deployments.yaml": "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8"
+      },
+      "requestSHA256": "716356688633bcd0e0a51a19a9d6ccd24878bcdcf0cbd5b74dd00c4887c6382f",
+      "wrapperSHA256": "7742c4a4e28f48c6b315213cdbdef7974626b1b9d4dd8a27bb8d875b2071949d",
+      "observed": {
+        "tools": [
+          "explain",
+          "map"
+        ],
+        "selectedCount": 14,
+        "excludedFromScopeCount": 0,
+        "ownerCounts": {
+          "ArgoCD": 2,
+          "ConfigHub": 1,
+          "Flux": 3,
+          "Helm": 1,
+          "Native": 7
+        },
+        "provenance": {
+          "kind": "kubernetes-object-recording",
+          "sha256": "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8",
+          "bytes": 67696,
+          "documents": 1,
+          "objectCount": 14,
+          "captureTime": "unknown",
+          "captureCompleteness": "unknown"
+        },
+        "explainIdentity": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "namespace": "argocd",
+          "name": "argocd-application-controller"
+        },
+        "unsupportedToolRefused": true
+      },
+      "stagedFilesUnchanged": true,
+      "ownedContainerAbsent": true,
+      "cleanupErrors": [],
+      "retainedRawDirectory": "/private/tmp/scout-v213-linux-recorded-eleven-20261005-attempt1/ATR-04",
+      "rawFilesSHA256": {
+        "after.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "create.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "endpoint.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "endpoint.stdout": "76a228368ea2b8ec2ade244d6c143bbc4d7d669887f7595f0db0972142ab3c1c",
+        "create.stdout": "8958df26044d61f6fc611541c5347d2ed950553820233775d5998d335fd3897a",
+        "after.stdout": "47ab4b9cfb08b5d7b519228a62981f719c226fb6413324da23b9f147fd2777fb",
+        "execution.stdout": "2ef9479f822bb74f65c1ee4bbc4d577d371d70d69853323fab37e0832ac75f9e",
+        "before.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "before.stdout": "fbbfead43a3374e21680f98d6f3667a3df51e17f202796c9ce9aadb4e0b5e47a",
+        "execution.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "proof.json": "0b009b2bac64bef25bcc64152f8306254e94d8338380870b6a2e3e4be3291c02"
+      }
+    },
+    {
+      "case": "HLT-02",
+      "status": "passed",
+      "selectedRecording": {
+        "cluster/deployment.json": "a49278364bd6e1359e4b45e5c963897083d709c8a7883a8c0b92dba03160c792"
+      },
+      "requestSHA256": "d5f6620e7e6c9db6e01e94c602b91725cf06413105aab33dbaa7f3bffd7c3ab1",
+      "wrapperSHA256": "7742c4a4e28f48c6b315213cdbdef7974626b1b9d4dd8a27bb8d875b2071949d",
+      "observed": {
+        "tools": [
+          "explain",
+          "map"
+        ],
+        "selectedCount": 1,
+        "excludedFromScopeCount": 0,
+        "ownerCounts": {
+          "Flux": 1
+        },
+        "provenance": {
+          "kind": "kubernetes-object-recording",
+          "sha256": "a49278364bd6e1359e4b45e5c963897083d709c8a7883a8c0b92dba03160c792",
+          "bytes": 8718,
+          "documents": 1,
+          "objectCount": 1,
+          "captureTime": "unknown",
+          "captureCompleteness": "unknown"
+        },
+        "explainIdentity": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "namespace": "scout-hlt02",
+          "name": "payment-worker"
+        },
+        "unsupportedToolRefused": true
+      },
+      "stagedFilesUnchanged": true,
+      "ownedContainerAbsent": true,
+      "cleanupErrors": [],
+      "retainedRawDirectory": "/private/tmp/scout-v213-linux-recorded-eleven-20261005-attempt1/HLT-02",
+      "rawFilesSHA256": {
+        "after.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "create.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "endpoint.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "endpoint.stdout": "76a228368ea2b8ec2ade244d6c143bbc4d7d669887f7595f0db0972142ab3c1c",
+        "create.stdout": "587024ae3e3caaf7cb791c260367af12582b976693807b93c7f73892059beb18",
+        "after.stdout": "261003b8f10a9949c59c5886d98853b29785229f89ebbd126e65cf473b60425e",
+        "execution.stdout": "8ee5a7dcf0ee42007be304166aa24a35e44c48594b093c996cb04d28a21d8ab3",
+        "before.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "before.stdout": "38a1177831d8a7a33d2f601b77da1c41b2831cf538d8f69c8ed8716d56c993d0",
+        "execution.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "proof.json": "b8fc37f9d6edb77f7a84827bd6cf0d551244a3d9c076f02d2932f164b0b6e29c"
+      }
+    },
+    {
+      "case": "INV-01",
+      "status": "passed",
+      "selectedRecording": {
+        "cluster/deployments.yaml": "822716e41eaf59674cec8b52913b2613c76932b578c45d54285f71747dd228b6"
+      },
+      "requestSHA256": "81ad9ab5fb7c9b97e47ce7f53fd2f07c65d49a76abf0c8a2880db21436b47b35",
+      "wrapperSHA256": "7742c4a4e28f48c6b315213cdbdef7974626b1b9d4dd8a27bb8d875b2071949d",
+      "observed": {
+        "tools": [
+          "explain",
+          "map"
+        ],
+        "selectedCount": 302,
+        "excludedFromScopeCount": 0,
+        "ownerCounts": {
+          "ArgoCD": 90,
+          "ConfigHub": 33,
+          "Flux": 120,
+          "Helm": 45,
+          "Native": 14
+        },
+        "provenance": {
+          "kind": "kubernetes-object-recording",
+          "sha256": "822716e41eaf59674cec8b52913b2613c76932b578c45d54285f71747dd228b6",
+          "bytes": 1031673,
+          "documents": 1,
+          "objectCount": 302,
+          "captureTime": "unknown",
+          "captureCompleteness": "unknown"
+        },
+        "explainIdentity": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "namespace": "kube-system",
+          "name": "coredns"
+        },
+        "unsupportedToolRefused": true
+      },
+      "stagedFilesUnchanged": true,
+      "ownedContainerAbsent": true,
+      "cleanupErrors": [],
+      "retainedRawDirectory": "/private/tmp/scout-v213-linux-recorded-eleven-20261005-attempt1/INV-01",
+      "rawFilesSHA256": {
+        "after.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "create.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "endpoint.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "endpoint.stdout": "76a228368ea2b8ec2ade244d6c143bbc4d7d669887f7595f0db0972142ab3c1c",
+        "create.stdout": "e9b736ac4635e05edbc9ab82f65c80fe4ff4a9a8ff4cda4601ed784ed250be43",
+        "after.stdout": "1776fd6b844de60ed557530caece83deec95f54328d4e816cd035559da1ac3d6",
+        "execution.stdout": "ef9e7832775f6026841d574ca89e95ddb6aff317305783daa466d8dad7450a1d",
+        "before.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "before.stdout": "1b3af7a6af28798f9c6accbd402a915b4fa3c8ce6d31e2ea9143bbdb8b7cd062",
+        "execution.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "proof.json": "1354539ed65aa1e9c2f0da2571f46840df017ea8e7827c651ea5ae0735c56331"
+      }
+    },
+    {
+      "case": "INV-02",
+      "status": "passed",
+      "selectedRecording": {
+        "cluster/deployments.yaml": "822716e41eaf59674cec8b52913b2613c76932b578c45d54285f71747dd228b6"
+      },
+      "requestSHA256": "81ad9ab5fb7c9b97e47ce7f53fd2f07c65d49a76abf0c8a2880db21436b47b35",
+      "wrapperSHA256": "7742c4a4e28f48c6b315213cdbdef7974626b1b9d4dd8a27bb8d875b2071949d",
+      "observed": {
+        "tools": [
+          "explain",
+          "map"
+        ],
+        "selectedCount": 302,
+        "excludedFromScopeCount": 0,
+        "ownerCounts": {
+          "ArgoCD": 90,
+          "ConfigHub": 33,
+          "Flux": 120,
+          "Helm": 45,
+          "Native": 14
+        },
+        "provenance": {
+          "kind": "kubernetes-object-recording",
+          "sha256": "822716e41eaf59674cec8b52913b2613c76932b578c45d54285f71747dd228b6",
+          "bytes": 1031673,
+          "documents": 1,
+          "objectCount": 302,
+          "captureTime": "unknown",
+          "captureCompleteness": "unknown"
+        },
+        "explainIdentity": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "namespace": "kube-system",
+          "name": "coredns"
+        },
+        "unsupportedToolRefused": true
+      },
+      "stagedFilesUnchanged": true,
+      "ownedContainerAbsent": true,
+      "cleanupErrors": [],
+      "retainedRawDirectory": "/private/tmp/scout-v213-linux-recorded-eleven-20261005-attempt1/INV-02",
+      "rawFilesSHA256": {
+        "after.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "create.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "endpoint.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "endpoint.stdout": "76a228368ea2b8ec2ade244d6c143bbc4d7d669887f7595f0db0972142ab3c1c",
+        "create.stdout": "b3496e3a59a2c5aa7816f4feb42d4fe3f363a3d614f16fb6b33a03e50fcbbfca",
+        "after.stdout": "683ab2dab55a6428ae632f93c05c110dadfa1a924b4fde58f609c112f2ba723f",
+        "execution.stdout": "ef9e7832775f6026841d574ca89e95ddb6aff317305783daa466d8dad7450a1d",
+        "before.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "before.stdout": "a0e5deb5c64a47797260801494c25b8008cea4cf943a95723cec81c6ad25352a",
+        "execution.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "proof.json": "4c92dd36136e740ef678e22845e8c09f4bcd21aed2723599a3fb2c6af3027c9e"
+      }
+    },
+    {
+      "case": "INV-03",
+      "status": "passed",
+      "selectedRecording": {
+        "cluster/deployments.yaml": "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8"
+      },
+      "requestSHA256": "716356688633bcd0e0a51a19a9d6ccd24878bcdcf0cbd5b74dd00c4887c6382f",
+      "wrapperSHA256": "7742c4a4e28f48c6b315213cdbdef7974626b1b9d4dd8a27bb8d875b2071949d",
+      "observed": {
+        "tools": [
+          "explain",
+          "map"
+        ],
+        "selectedCount": 14,
+        "excludedFromScopeCount": 0,
+        "ownerCounts": {
+          "ArgoCD": 2,
+          "ConfigHub": 1,
+          "Flux": 3,
+          "Helm": 1,
+          "Native": 7
+        },
+        "provenance": {
+          "kind": "kubernetes-object-recording",
+          "sha256": "305614fa67327ba3ff6bea85c3c23f5ba9b57db181155b1c62af25d6f882eca8",
+          "bytes": 67696,
+          "documents": 1,
+          "objectCount": 14,
+          "captureTime": "unknown",
+          "captureCompleteness": "unknown"
+        },
+        "explainIdentity": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "namespace": "argocd",
+          "name": "argocd-application-controller"
+        },
+        "unsupportedToolRefused": true
+      },
+      "stagedFilesUnchanged": true,
+      "ownedContainerAbsent": true,
+      "cleanupErrors": [],
+      "retainedRawDirectory": "/private/tmp/scout-v213-linux-recorded-eleven-20261005-attempt1/INV-03",
+      "rawFilesSHA256": {
+        "after.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "create.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "endpoint.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "endpoint.stdout": "76a228368ea2b8ec2ade244d6c143bbc4d7d669887f7595f0db0972142ab3c1c",
+        "create.stdout": "cfc6400e5160473879b64d7784a7d913933638115c781f9a7487a85a5b3bb507",
+        "after.stdout": "ad69abbe942b0b4ae76c5fdbf09840870ef9ae524fae70559dd90b699283f433",
+        "execution.stdout": "2ef9479f822bb74f65c1ee4bbc4d577d371d70d69853323fab37e0832ac75f9e",
+        "before.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "before.stdout": "a657a1fa46ed39f7a5d62cd77c23a0404045619aec833b0b89a37bca4ae9c54a",
+        "execution.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "proof.json": "3a8048a27f2c195230ad2b7f851744445f063b854ea23aa3ef5ec53c498a5d1a"
+      }
+    },
+    {
+      "case": "PRE-02",
+      "status": "passed",
+      "selectedRecording": {
+        "cluster/after-pod.json": "f264204dc296d06590bc357691a1b95db08222f4ac68b3c38935d6ef200832c3"
+      },
+      "requestSHA256": "0cd3dfad454a44d40ac1e5eefdb854c25393631650795233b83bb149b6a3aef5",
+      "wrapperSHA256": "7742c4a4e28f48c6b315213cdbdef7974626b1b9d4dd8a27bb8d875b2071949d",
+      "observed": {
+        "tools": [
+          "explain",
+          "map"
+        ],
+        "selectedCount": 1,
+        "excludedFromScopeCount": 0,
+        "ownerCounts": {
+          "Native": 1
+        },
+        "provenance": {
+          "kind": "kubernetes-object-recording",
+          "sha256": "f264204dc296d06590bc357691a1b95db08222f4ac68b3c38935d6ef200832c3",
+          "bytes": 5355,
+          "documents": 1,
+          "objectCount": 1,
+          "captureTime": "unknown",
+          "captureCompleteness": "unknown"
+        },
+        "explainIdentity": {
+          "apiVersion": "v1",
+          "kind": "Pod",
+          "namespace": "pre02-node-selector",
+          "name": "scout-pre02-selector"
+        },
+        "unsupportedToolRefused": true
+      },
+      "stagedFilesUnchanged": true,
+      "ownedContainerAbsent": true,
+      "cleanupErrors": [],
+      "retainedRawDirectory": "/private/tmp/scout-v213-linux-recorded-eleven-20261005-attempt1/PRE-02",
+      "rawFilesSHA256": {
+        "after.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "create.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "endpoint.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "endpoint.stdout": "76a228368ea2b8ec2ade244d6c143bbc4d7d669887f7595f0db0972142ab3c1c",
+        "create.stdout": "635d2785908594fe5748700b8f4927b164024b1ad9166b37fbbf36e5f3cfa017",
+        "after.stdout": "d74cc7e0cd86274f3497b683b99af38e122abf3aac45c1841ad7b81188b71a6d",
+        "execution.stdout": "b594a51bf987dd236c1214b08a990bbac5b2a8429877206f6ad4b2a70a5f6397",
+        "before.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "before.stdout": "6f85e2de5402eefa12f1ffb0e4ae54a6b79a931d37d15ce2f5560fb8a1b5ebed",
+        "execution.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "proof.json": "0cf91d9965f7fa2cb7581a69ae8afc1eeb824c998157e5c01f39477a62491876"
+      }
+    },
+    {
+      "case": "RUL-01",
+      "status": "passed",
+      "selectedRecording": {
+        "cluster/after-pod.json": "f264204dc296d06590bc357691a1b95db08222f4ac68b3c38935d6ef200832c3"
+      },
+      "requestSHA256": "0cd3dfad454a44d40ac1e5eefdb854c25393631650795233b83bb149b6a3aef5",
+      "wrapperSHA256": "7742c4a4e28f48c6b315213cdbdef7974626b1b9d4dd8a27bb8d875b2071949d",
+      "observed": {
+        "tools": [
+          "explain",
+          "map"
+        ],
+        "selectedCount": 1,
+        "excludedFromScopeCount": 0,
+        "ownerCounts": {
+          "Native": 1
+        },
+        "provenance": {
+          "kind": "kubernetes-object-recording",
+          "sha256": "f264204dc296d06590bc357691a1b95db08222f4ac68b3c38935d6ef200832c3",
+          "bytes": 5355,
+          "documents": 1,
+          "objectCount": 1,
+          "captureTime": "unknown",
+          "captureCompleteness": "unknown"
+        },
+        "explainIdentity": {
+          "apiVersion": "v1",
+          "kind": "Pod",
+          "namespace": "pre02-node-selector",
+          "name": "scout-pre02-selector"
+        },
+        "unsupportedToolRefused": true
+      },
+      "stagedFilesUnchanged": true,
+      "ownedContainerAbsent": true,
+      "cleanupErrors": [],
+      "retainedRawDirectory": "/private/tmp/scout-v213-linux-recorded-eleven-20261005-attempt1/RUL-01",
+      "rawFilesSHA256": {
+        "after.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "create.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "endpoint.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "endpoint.stdout": "76a228368ea2b8ec2ade244d6c143bbc4d7d669887f7595f0db0972142ab3c1c",
+        "create.stdout": "ee7824e819a1228f82dd3a56e5a147012cd5455765f52b3b4fa8bdc6dc2756f3",
+        "after.stdout": "318b5267c78ee7deda12364a10300c751b6d5247ba7a03ee3d126e281f193217",
+        "execution.stdout": "b594a51bf987dd236c1214b08a990bbac5b2a8429877206f6ad4b2a70a5f6397",
+        "before.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "before.stdout": "9e43f312a55d2f1cd1ec438cac566637675aa8117ec6a05d82ae3f56890ef32b",
+        "execution.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "proof.json": "23d1a68eea9202988830b914ce61cb9b19e634720693a3f69917800aeb3f2206"
+      }
+    },
+    {
+      "case": "RUL-04",
+      "status": "passed",
+      "selectedRecording": {
+        "cluster/statefulset.json": "6e51fce81ff19b1bd548b312e510d01e098dfab7cd9c962fdf1cf273d1aa32ab"
+      },
+      "requestSHA256": "62e68bd7641626fd5c888dd222cb1e2953c07abac4d5d06bd11835b78289d8fc",
+      "wrapperSHA256": "7742c4a4e28f48c6b315213cdbdef7974626b1b9d4dd8a27bb8d875b2071949d",
+      "observed": {
+        "tools": [
+          "explain",
+          "map"
+        ],
+        "selectedCount": 1,
+        "excludedFromScopeCount": 0,
+        "ownerCounts": {
+          "Native": 1
+        },
+        "provenance": {
+          "kind": "kubernetes-object-recording",
+          "sha256": "6e51fce81ff19b1bd548b312e510d01e098dfab7cd9c962fdf1cf273d1aa32ab",
+          "bytes": 3140,
+          "documents": 1,
+          "objectCount": 1,
+          "captureTime": "unknown",
+          "captureCompleteness": "unknown"
+        },
+        "explainIdentity": {
+          "apiVersion": "apps/v1",
+          "kind": "StatefulSet",
+          "namespace": "rul04-image-identity",
+          "name": "rul04-pause"
+        },
+        "unsupportedToolRefused": true
+      },
+      "stagedFilesUnchanged": true,
+      "ownedContainerAbsent": true,
+      "cleanupErrors": [],
+      "retainedRawDirectory": "/private/tmp/scout-v213-linux-recorded-eleven-20261005-attempt1/RUL-04",
+      "rawFilesSHA256": {
+        "after.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "create.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "endpoint.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "endpoint.stdout": "76a228368ea2b8ec2ade244d6c143bbc4d7d669887f7595f0db0972142ab3c1c",
+        "create.stdout": "227abc2e61f2dbe0d06cea38725ca1d794082beea2fcb3f2840202155923bbb4",
+        "after.stdout": "893c42cedfd86fb6d0cebadbe9af01becbfa2e2162778391faf73cee8667c873",
+        "execution.stdout": "9123a387bf8286792d0b82861b01ae7c0b870d33aea972352e9e494dcc13a528",
+        "before.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "before.stdout": "bc49ac7bd40b1e987af711175ced27648c62950252833a620374cfd63ee0fb47",
+        "execution.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "proof.json": "12ea6a31dcfb2833462de089101d81ad5ae9e6f604201f35e3181fdfa29cbf85"
+      }
+    }
+  ],
+  "rawProofSHA256": "fd299613a5d35262ab5794891a8b65a585fbda18a1c750d1333ecb5d30956511",
+  "harness": {
+    "path": "/tmp/scout-v213-linux-recorded-eleven-probe.py",
+    "sha256": "25df831e1abd6c76d532f6701acf279384716744ea682b5503e03865291820d3"
+  },
+  "pythonSubstratePacket": "../python-runtime-substrate/report.json",
+  "packagingReceipt": "/tmp/scout-v213-goreleaser-e94ce9cf-20261005/verified-artifacts.json"
+}

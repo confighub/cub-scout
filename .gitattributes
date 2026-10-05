@@ -3,3 +3,5 @@
 evals/**/scaffold.sh linguist-generated=true
 # Preserve cub's unedited trailing blank line; the capture guard checks its hash.
 test/fixtures/confighub-attestations-v083-viewer/viewer-write-denied.stderr whitespace=-blank-at-eof
+# Native Windows JSON receipts retain their original CRLF bytes and capture hashes.
+docs/releases/v2.13-windows-e94ce9cf/*/*.json -text whitespace=cr-at-eol

@@ -39,6 +39,17 @@ run in Unit CI. No model/provider run occurred. This advances task 15 without
 claiming selected-case mounts, hooks, official grading, grants or full runtime
 admission. Frozen benchmark inputs and skill-tree pins are unchanged.
 
+At clean candidate `e94ce9cf`, [eleven Linux recorded-tool checks](evals/linux-recorded-substrate/README.md)
+now pass actual isolated Python/Scout MCP composition. Each selected recording,
+map/explain projection and unsupported-doctor refusal matches the earlier host
+proof; staged hashes and owned cleanup pass. This is not model/tool-grant,
+baseline-arm parity or complete runtime admission. The latest configured
+[six-archive packaging checkpoint](docs/releases/v2.13-goreleaser-e94ce9cf.md)
+passes sixteen exact source-stamped binaries, 24 Darwin/Linux version/help
+checks and hardened image smoke. Both [native Windows jobs](docs/releases/v2.13-windows-e94ce9cf/NOTICE.md)
+at that same source pass eight actual commands. Old source-bound receipts remain
+intact. Final-tag and public distribution gates remain open.
+
 ## Direct ConfigHub claim and receipt adapters — 2026-10-05
 
 Release-sequence task 8 is implemented and exercised against the isolated

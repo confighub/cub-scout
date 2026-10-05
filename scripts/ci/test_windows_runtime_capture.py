@@ -8,19 +8,21 @@ ROOT = Path(__file__).resolve().parents[2] / 'docs/releases/v2.13-windows-runtim
 
 
 class NativeWindowsCaptureTests(unittest.TestCase):
+    root = ROOT
+
     def test_unedited_public_records_match_manifest(self):
-        manifest = json.loads((ROOT / 'capture-manifest.json').read_text())
+        manifest = json.loads((self.root / 'capture-manifest.json').read_text())
         self.assertEqual(len(manifest['publicRecords']), 6)
         for record in manifest['publicRecords']:
-            data = (ROOT / record['path']).read_bytes()
+            data = (self.root / record['path']).read_bytes()
             self.assertEqual(len(data), record['bytes'])
             self.assertEqual(hashlib.sha256(data).hexdigest(), record['sha256'])
 
     def test_exact_native_source_metadata_and_module_identity(self):
-        manifest = json.loads((ROOT / 'capture-manifest.json').read_text())
+        manifest = json.loads((self.root / 'capture-manifest.json').read_text())
         for arch in ('amd64', 'arm64'):
-            runtime = json.loads((ROOT / arch / 'runtime.json').read_text())
-            metadata = json.loads((ROOT / arch / 'metadata.json').read_text())
+            runtime = json.loads((self.root / arch / 'runtime.json').read_text())
+            metadata = json.loads((self.root / arch / 'metadata.json').read_text())
             self.assertEqual(runtime['sourceRevision'], manifest['sourceRevision'])
             self.assertEqual(runtime['metadata'], metadata)
             self.assertEqual(metadata['commit'], manifest['sourceRevision'])
@@ -42,7 +44,7 @@ class NativeWindowsCaptureTests(unittest.TestCase):
     def test_all_eight_actual_commands_pass_without_publication_claim(self):
         count = 0
         for arch in ('amd64', 'arm64'):
-            runtime = json.loads((ROOT / arch / 'runtime.json').read_text())
+            runtime = json.loads((self.root / arch / 'runtime.json').read_text())
             self.assertFalse(runtime['claims']['published'])
             self.assertFalse(runtime['claims']['clusterBehaviorAccepted'])
             self.assertFalse(runtime['claims']['publicInstallAccepted'])
@@ -57,14 +59,17 @@ class NativeWindowsCaptureTests(unittest.TestCase):
         self.assertEqual(count, 8)
 
     def test_canonical_input_receipts_agree_across_native_architectures(self):
-        amd64 = json.loads((ROOT / 'amd64/source-inputs.json').read_text())
-        arm64 = json.loads((ROOT / 'arm64/source-inputs.json').read_text())
+        amd64 = json.loads((self.root / 'amd64/source-inputs.json').read_text())
+        arm64 = json.loads((self.root / 'arm64/source-inputs.json').read_text())
         self.assertEqual(amd64['inputs'], arm64['inputs'])
         self.assertEqual(amd64['sourceRevision'], arm64['sourceRevision'])
         self.assertEqual({r['path'] for r in amd64['inputs']}, {'go.mod', 'go.sum'})
         for record in (amd64, arm64):
             self.assertTrue(record['claims']['canonicalSourceInputsVerified'])
             self.assertFalse(record['claims']['runtimeAccepted'])
+
+class LatestNativeWindowsCaptureTests(NativeWindowsCaptureTests):
+    root = ROOT.parent / 'v2.13-windows-e94ce9cf'
 
 
 if __name__ == '__main__':
