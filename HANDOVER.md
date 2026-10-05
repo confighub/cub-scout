@@ -49,9 +49,17 @@ all four raw attempts are retained in the private acceptance evidence archive.
 The disposable parity rigs are cleaned up; the isolated acceptance server stays
 available. Companion issue #2075 repairs typed target discovery, isolated
 CUB_CONFIG kubeconfig selection and root-bound OCI registry selection. Its 12
-deterministic guards pass; full companion verification is running. This is one
-genuine parity check, not complete controller, governance or benchmark acceptance.
-Full candidate CI run 37271241956 is also running at `df07483d`.
+deterministic guards and the complete `npm run verify` chain pass. Companion
+[PR #2076](https://github.com/confighub/helm-expt/pull/2076) contains the reviewed
+repair at `467629c00`. This is one genuine parity check, not complete controller,
+governance or benchmark acceptance.
+Full candidate CI run 37271241956 completed at `df07483d`: unit and integration
+passed; Full Verification failed because the runner lacks cub-scan; Demo Tests
+failed because their separate cluster lacks the Argo Application CRD. Connected
+E2E reported success but skipped authentication and import round trips, so it
+does not prove authenticated acceptance. GitOps job success retains the existing
+masked-assertion limitation. Issue #774 owns these required repairs. No gate is
+waived and neither v2.13 nor v2.14 is released.
 
 ## Required acceptance harness repair — 2026-10-05
 
