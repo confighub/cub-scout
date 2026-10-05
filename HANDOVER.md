@@ -1,5 +1,18 @@
 # cub-scout execution handover
 
+## Execution authorization — 2026-10-05
+
+The maintainer explicitly removed the previous test exclusions: “NOTHING is
+'excluded'.” Required live cluster/server/controller tests, runtime/container
+acceptance, genuine captures, full CI and admitted model/benchmark execution are
+now authorized for the 2.13 → 2.14 → 3.0 delivery work. The agent credit cap is
+removed. Preserve frozen experiment inputs/grants and quality/provenance gates;
+resolve technical admission requirements and perform the work rather than treat
+historical authorization stops as current blockers. Release when the required
+evidence passes. Use disposable/scoped test resources and preserve shared estates.
+Historical excluded/skipped/unrun records below remain records of those runs.
+
+
 **Current snapshot:** 2026-10-04. Verified merged baseline:
 [`5aeebc48`](https://github.com/confighub/cub-scout/commit/5aeebc48a6f168865b79d5a228013b9e576695f7).
 The published release is v2.12.4; main includes newer, unreleased work.
@@ -1134,7 +1147,7 @@ The current parser/source and static candidate binary pins are unchanged.
 
 Check #645 and the checkpoint above. Drive the adopted plan through 3.0,
 releasing 2.13 and 2.14 as their gates pass. Continue current v2.13 work on
-`codex/v213-offline-runtime`, preserving the current exclusion of live tests.
+`codex/v213-offline-runtime`, with required live tests now authorized by the 2026-10-05 instruction.
 The eleven recorded host bindings do not admit full-24 model execution: remaining
 case bindings, Python/runtime asset admission, actual grants, trusted official
 evaluator terminal integration, descendant completion and cost attribution
@@ -1145,9 +1158,8 @@ objects or evaluated server decisions to fill gaps. Context/Trace/GitOps packets
 #599/#746 against current code before repeating completed work.
 External #591/#597 still need genuine read-side governance recordings, and #600
 needs storage/schema agreement. SDK #758 stays deferred; `/v2` is already in
-source, with public proxy installation awaiting a release tag. Keep paid work
-stopped until its explicit admission gates pass. Keep this branch unmerged while
-normal PR/main CI would launch excluded live tests. Final acceptance and the
+source, with public proxy installation awaiting a release tag. Resolve runtime/tool/fixture admission requirements, then run the required
+benchmark. Full PR/main CI and release integration are now authorized. Final acceptance and the
 published paired baseline remain required before release; no gate is waived.
 
 - [Adopted 3.0 execution plan](docs/roadmap-3.0-execution.md)

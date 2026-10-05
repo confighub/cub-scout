@@ -51,8 +51,7 @@ never enter retained command/request descriptions or public/private proof
 bundles. Redaction must be documented without removing the join fields
 or changing evaluated outcomes. Keep an access-controlled original if public
 redaction changes bytes, and label each hash's operand. Authored controls remain
-separate from server captures. Existing captures may be inspected offline; this
-proposal does not authorize a new live run.
+separate from server captures. Existing captures may be inspected offline; new live captures are now authorized by the maintainer’s 2026-10-05 instruction.
 
 Required attestation cases from #591: no covering claim, Pass, Fail, revoked,
 expired, multiple types, and referenced IDs unavailable in the list/read. Include
@@ -78,5 +77,5 @@ that absence and leave the gate open.
    then update #591/#597 and the release checklist with exact source/proof pins.
 
 This packet settles the questions to answer; it supplies neither server outcomes
-nor a waiver. Live tests remain excluded by the current user instruction, SDK
+nor a waiver. Required live tests are now authorized by the maintainer on 2026-10-05. SDK
 renderer adoption remains deferred, and the published baseline remains v2.12.4.
