@@ -20,6 +20,31 @@ Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
 order, quality gates, budgets and decisions.
 
+
+## Required acceptance harness repair — 2026-10-05
+
+Issue #773 defines success before the harness repair. Full CI run
+37268214642 selected live tiers and its Full Verification job failed after the
+first successful build. Linux Bash 5.2.37 reproduces that early exit before the
+counter repair and reaches both successful checks afterwards. Seven deterministic
+subprocess guards cover quiet/verbose success and failure, required prerequisites,
+expired authentication, optional provider handling and unknown levels. The local
+`go test ./...` suite passes, and independent review has no remaining findings.
+
+`--level=full` now fails if any selected prerequisite is missing. Other levels
+retain explicit optional-provider accounting and label that result PARTIAL rather
+than full acceptance. Current auth status replaces context existence as the
+connected prerequisite. These guards are harness evidence, not live release proof.
+
+The existing local ConfigHub v0.8.0 administrator-key session was refreshed
+successfully; interactive sign-in is no longer needed. A genuine Helm/ConfigHub
+parity attempt created its disposable cluster and installed Argo CD, then returned
+blocked because the harness could not resolve the created OCI target. The rig was
+cleaned up and the receipt retained in the companion helm-expt workspace under
+`runs/live-helm-confighub-compare/scout-v213-nginx-20261005/receipt.yaml`.
+No release gate is waived by either result. A pinned v0.8.3 server image is
+available for AMD64/ARM64; isolated installation and contract acceptance are next.
+
 ## Investigation quality direction — 2026-10-04
 
 The maintainer wants Scout to lead on read-only investigation quality for people

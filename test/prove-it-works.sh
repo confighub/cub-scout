@@ -107,23 +107,23 @@ run_test() {
         echo ""
         if eval "$cmd"; then
             echo -e "  ${GREEN}✓${NC} $name"
-            ((PASSED++))
+            PASSED=$((PASSED + 1))
             return 0
         else
             echo -e "  ${RED}✗${NC} $name"
-            ((FAILED++))
+            FAILED=$((FAILED + 1))
             return 1
         fi
     else
         if eval "$cmd" > /tmp/test-output.txt 2>&1; then
             echo -e "${GREEN}✓${NC}"
-            ((PASSED++))
+            PASSED=$((PASSED + 1))
             return 0
         else
             echo -e "${RED}✗${NC}"
             echo -e "    ${DIM}Output:${NC}"
             tail -5 /tmp/test-output.txt | sed 's/^/    /'
-            ((FAILED++))
+            FAILED=$((FAILED + 1))
             return 1
         fi
     fi
@@ -132,8 +132,20 @@ run_test() {
 skip_test() {
     local name="$1"
     local reason="$2"
-    echo -e "  ${YELLOW}○${NC} $name ${DIM}(skipped: $reason)${NC}"
-    ((SKIPPED++))
+    echo -e "  ${RED}✗${NC} $name ${DIM}(required prerequisite missing: $reason)${NC}"
+    FAILED=$((FAILED + 1))
+    return 1
+}
+
+optional_test_unavailable() {
+    local name="$1"
+    local reason="$2"
+    if [[ "$LEVEL" == "full" ]]; then
+        skip_test "$name" "$reason"
+    else
+        echo -e "  ${YELLOW}○${NC} $name ${DIM}(optional check unavailable: $reason)${NC}"
+        SKIPPED=$((SKIPPED + 1))
+    fi
 }
 
 check_cluster() {
@@ -149,7 +161,7 @@ check_argocd() {
 }
 
 check_confighub() {
-    command -v cub > /dev/null 2>&1 && cub context get > /dev/null 2>&1
+    command -v cub > /dev/null 2>&1 && cub auth status > /dev/null 2>&1
 }
 
 # Start
@@ -164,13 +176,18 @@ echo ""
 
 # Level ordering
 LEVELS=(smoke unit integration gitops demos examples connected full)
-CURRENT_IDX=0
+CURRENT_IDX=-1
 for i in "${!LEVELS[@]}"; do
     if [[ "${LEVELS[$i]}" == "$LEVEL" ]]; then
         CURRENT_IDX=$i
         break
     fi
 done
+
+if [[ $CURRENT_IDX -lt 0 ]]; then
+    echo "Unknown level: $LEVEL" >&2
+    exit 1
+fi
 
 # =============================================================================
 # LEVEL 0: SMOKE
@@ -230,7 +247,7 @@ if [[ $CURRENT_IDX -ge 2 ]]; then
         if command -v confighub-scan > /dev/null 2>&1 || command -v cub-scan > /dev/null 2>&1; then
             run_test "scan --file (cub-scan detected)" "./cub-scout scan --file test/golden/scan-file/testdata/inputs/clean-deployment.yaml --json > /dev/null"
         else
-            skip_test "scan --file (cub-scan)" "confighub-scan/cub-scan not on PATH"
+            optional_test_unavailable "scan --file (cub-scan)" "confighub-scan/cub-scan not on PATH"
         fi
 
         subsection "Integration Test Suite"
@@ -433,6 +450,11 @@ echo -e "  ${RED}Failed:${NC}  $FAILED"
 echo -e "  ${YELLOW}Skipped:${NC} $SKIPPED"
 echo -e "  ${DIM}Total:${NC}   $TOTAL"
 echo ""
+
+if [[ $FAILED -eq 0 && $SKIPPED -gt 0 ]]; then
+    echo "PARTIAL: selected checks passed; $SKIPPED optional check(s) were not executed. This is not full acceptance."
+    exit 0
+fi
 
 if [[ $FAILED -eq 0 ]]; then
     echo -e "${GREEN}${BOLD}════════════════════════════════════════════════════════════════════${NC}"
