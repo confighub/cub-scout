@@ -1,5 +1,15 @@
 # cub-scout execution handover
 
+## v2.13 scope correction — 2026-10-05
+
+The maintainer confirmed that v2.13 must not depend on a new ConfigHub API.
+Use existing read interfaces; keep unavailable prerequisite evaluations unknown.
+The proposed server-evaluated read is optional post-v2.13 work. Release-sequence
+steps 9–10 now accept the existing ChangeOrder/workflow projections and their
+honest degradation. Historical references to a required upstream enhancement
+below are superseded by this decision. Remaining tests and release gates stay
+in scope; no unavailable result becomes approval, health or release proof.
+
 ## Execution authorization — 2026-10-05
 
 The maintainer explicitly removed the previous test exclusions: “NOTHING is

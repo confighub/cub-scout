@@ -1547,3 +1547,11 @@ ConfigHub is the MCP server (full read-write loop):
 cub-scout provides the read-only MCP gateway — standalone observation + ConfigHub routing when connected.
 
 There is no other hidden work.
+
+### Optional evaluated prerequisite reads after v2.13
+
+The maintainer's 2026-10-05 scope correction removes any new ConfigHub API
+from the v2.13 critical path. Follow-up #597 may adopt a server-evaluated GET
+when an accepted existing interface exposes it. Scout continues to observe
+through existing reads, keeps unavailable evaluations unknown and never writes
+approvals or evaluates server policy. This follow-up does not block v2.13.

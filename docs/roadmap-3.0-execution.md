@@ -148,7 +148,10 @@ past behavior on their named versions; they do not certify today's cluster.
 A specific correction to [#641]: its September 28 description of the Healthy
 triple is not sufficient to specify the contract. The September 30 Sveltos
 measurements distinguish prerequisite acceptance from automatic order advancement.
-P3 must verify each against a pinned ConfigHub server and record exact semantics.
+P3 verifies available observations against the existing pinned server and records
+exact semantics. Per the maintainer's 2026-10-05 scope correction, v2.13 does not
+require a new ConfigHub endpoint: unavailable evaluated prerequisites stay unknown.
+A server-evaluated prerequisite read is optional post-v2.13 work.
 A gate accepting an annotation is a reported fact, not authority for scout to
 approve a release or proof of the release running.
 
