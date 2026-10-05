@@ -46,7 +46,9 @@ export PATH="$root/bin:$PATH"
 export KUBECONFIG="$root/server-input.kubeconfig"
 touch "$root/owns-server-cluster"
 if ! cub server install --cluster-name scout-ci-connected-server \
-  --image ghcr.io/confighubai/confighub@sha256:25fd52e45736cba49388370a036c9563ba3b96f486bd55a012d48129ff7ebd22 --admin-key-name scout-ci-admin \
+  --image ghcr.io/confighubai/confighub@sha256:25fd52e45736cba49388370a036c9563ba3b96f486bd55a012d48129ff7ebd22 \
+  --ui-image ghcr.io/confighub/ui@sha256:0c309aabd400b3bc32f5e9c2a6863ca7188fc8d30c5d581a67c5122c4c342027 \
+  --admin-key-name scout-ci-admin \
   --out-dir "$root/server" > "$root/install.log" 2>&1; then
   echo 'Disposable ConfigHub installation failed; private installer log retained on runner' >&2
   exit 1

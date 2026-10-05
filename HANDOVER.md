@@ -98,8 +98,8 @@ required job. Full acceptance enables pipeline failure propagation, requires
 source/controller waits and exact ownership, asserts the known Grafana risk,
 uses explicit demo fixture setup and runs authenticated imports unconditionally.
 Live imports use `-count=1`; all three pass again without Go test caching on the
-isolated v0.8.3 server. Seven provisioning/outcome guards, eight harness guards
-and six workflow guards pass. These do not close server/controller/benchmark
+isolated v0.8.3 server. Eight provisioning/outcome guards (including actual CI map argv against the CLI),
+eight harness guards and six workflow guards pass. These do not close server/controller/benchmark
 release gates. Full CI at `4df4abea` passed its unit job and is executing cluster integration.
 Its Full Verification job failed at the expected missing-scanner prerequisite;
 the follow-up provider repair has not run there. The latest workflow retains
@@ -1288,3 +1288,23 @@ are immutable history, not current status:
 Retrieve exact prior bytes offline with
 `git show 9e3fa9b765170ad414801ffb5069c9eeb11b2fec:HANDOVER.md` or
 `git show 9e3fa9b765170ad414801ffb5069c9eeb11b2fec:docs/roadmap-3.0-execution.md`.
+
+## Fresh-runner repair findings — 2026-10-05
+
+CI run 37310549210 at `4df4abea` completed: unit and cluster integration passed;
+Full Verification failed at missing scanner; Connected E2E failed during server
+installation; GitOps E2E converged all five Flux workloads and the Argo guestbook
+(Synced/Healthy) before its ownership command rejected the harness's unsupported
+`map list -n` flag. Demo Tests therefore did not run. No acceptance is inferred
+from skipped steps or partial convergence.
+
+Both discovered harness defects are repaired in the next candidate. Installer
+v0.2.2 requires an explicit matching UI image when the server is pinned by digest;
+the CI installer now pins the public v0.8.3 UI index digest too. The released,
+checksum-verified Darwin installer reproduces the missing-UI refusal (exit 1) and
+accepts both explicit image digests in dry-run mode (exit 0), using an isolated
+private config. This probe creates no cluster. CI ownership commands now use
+`--namespace`; an offline test executes their actual workflow argv against the
+built CLI and an exact recorded map fixture. Risk demos require the private
+scanner and assert the expected finding, rather than trust the demo narrative.
+Fresh-runner rerun is required. Neither release nor #774 is complete.

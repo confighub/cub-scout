@@ -291,7 +291,7 @@ if [[ $CURRENT_IDX -ge 3 ]]; then
         done
 
         subsection "Ownership Detection"
-        run_test "Flux ownership" "./cub-scout map list -n boutique --json | jq -e '[.[] | select(.kind == \"Deployment\" and .name == \"cart\" and .owner == \"Flux\")] | length == 1'"
+        run_test "Flux ownership" "./cub-scout map list --namespace boutique --json | jq -e '[.[] | select(.kind == \"Deployment\" and .name == \"cart\" and .owner == \"Flux\")] | length == 1'"
 
         # Create ArgoCD app if not exists
         if ! kubectl get application guestbook -n argocd > /dev/null 2>&1; then
@@ -321,7 +321,7 @@ EOF"
         fi
         run_test "ArgoCD synced" "kubectl wait --for=jsonpath='{.status.sync.status}'=Synced application/guestbook -n argocd --timeout=300s"
         run_test "ArgoCD healthy" "kubectl wait --for=jsonpath='{.status.health.status}'=Healthy application/guestbook -n argocd --timeout=300s"
-        run_test "ArgoCD ownership" "./cub-scout map list -n guestbook --json | jq -e '[.[] | select(.kind == \"Deployment\" and .name == \"guestbook-ui\" and .owner == \"ArgoCD\")] | length == 1'"
+        run_test "ArgoCD ownership" "./cub-scout map list --namespace guestbook --json | jq -e '[.[] | select(.kind == \"Deployment\" and .name == \"guestbook-ui\" and .owner == \"ArgoCD\")] | length == 1'"
 
         subsection "Trace Command"
         run_test "trace flux app" "./cub-scout trace deployment/cart -n boutique"

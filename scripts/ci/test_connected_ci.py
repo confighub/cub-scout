@@ -3,6 +3,7 @@
 import json
 import os
 from pathlib import Path
+import shlex
 import subprocess
 import tempfile
 import unittest
@@ -14,6 +15,26 @@ SETUP = ROOT / "scripts/ci/setup-connected-server.sh"
 
 
 class RequiredOutcomes(unittest.TestCase):
+    def test_ci_map_namespace_argv_is_accepted_by_actual_cli(self):
+        with tempfile.TemporaryDirectory() as directory:
+            fixture = Path(directory) / 'entries.json'
+            fixture.write_text(json.dumps([{
+                'id': 'test/boutique/apps/Deployment/frontend', 'clusterName': 'test',
+                'namespace': 'boutique', 'kind': 'Deployment', 'name': 'frontend',
+                'apiVersion': 'apps/v1', 'owner': 'Flux', 'status': 'Ready',
+            }]))
+            workflow = (ROOT / '.github/workflows/ci.yaml').read_text()
+            command = next(line.strip().split(' > ', 1)[0] for line in workflow.splitlines()
+                           if './cub-scout map list' in line and 'flux-ownership.json' in line)
+            argv = shlex.split(command)
+            argv[0] = str(ROOT / 'cub-scout')
+            result = subprocess.run(argv, capture_output=True, text=True,
+                                    env={**os.environ, 'CUB_SCOUT_TEST_MAP_ENTRIES_JSON': str(fixture)})
+            self.assertEqual(result.returncode, 0, result.stderr)
+            entries = json.loads(result.stdout)
+            self.assertEqual([(entry['namespace'], entry['name'], entry['owner']) for entry in entries],
+                             [('boutique', 'frontend', 'Flux')])
+
     def stream(self, action="pass", package_action="pass"):
         return [json.dumps(event) for event in (
             {"Package": "example", "Test": "TestImport", "Action": action},

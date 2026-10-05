@@ -334,7 +334,7 @@ jobs:
 
       - name: Verify Flux ownership detection
         run: |
-          ./cub-scout map list --json -n boutique > "$RUNNER_TEMP/flux-ownership.json"
+          ./cub-scout map list --json --namespace boutique > "$RUNNER_TEMP/flux-ownership.json"
           for name in frontend cart checkout payment shipping; do
             jq -e --arg name "$name" '[.[] | select(.namespace == "boutique" and .kind == "Deployment" and .name == $name and .owner == "Flux")] | length == 1' "$RUNNER_TEMP/flux-ownership.json"
           done
@@ -342,7 +342,7 @@ jobs:
 
       - name: Verify ArgoCD ownership detection
         run: |
-          ./cub-scout map list --json -n guestbook > "$RUNNER_TEMP/argo-ownership.json"
+          ./cub-scout map list --json --namespace guestbook > "$RUNNER_TEMP/argo-ownership.json"
           jq -e '[.[] | select(.namespace == "guestbook" and .kind == "Deployment" and .name == "guestbook-ui" and .owner == "ArgoCD")] | length == 1' "$RUNNER_TEMP/argo-ownership.json"
 
       - name: Record scoped controller acceptance
@@ -405,10 +405,16 @@ jobs:
           ./cub-scout map list --json | jq -e 'length > 0'
           ./cub-scout quickstart demo quick --cleanup
 
+      - name: Provision scanner for risk demos
+        run: bash scripts/ci/setup-scan-provider.sh
+        env:
+          CUB_SCAN_RELEASE_TOKEN: ${{ secrets.CUB_SCAN_RELEASE_TOKEN }}
+
       - name: Run ccve demo
         run: |
           kubectl apply -f examples/impressive-demo/bad-configs/monitoring-bad.yaml
           ./cub-scout quickstart demo ccve
+          ./cub-scout scan --file examples/impressive-demo/bad-configs/monitoring-bad.yaml --json | jq -e '[.static.findings[] | select(.ccve_id == "CCVE-2025-0027" and .resource_name == "grafana")] | length == 1'
           ./cub-scout quickstart demo ccve --cleanup
 
       - name: Run query demo
