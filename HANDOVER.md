@@ -89,6 +89,19 @@ the masked echo/true assertions. Demos use the current quickstart command path.
 Workflow guards reject masked acceptance and conditional connected tests.
 Fresh-runner controller/demo outcomes and scanner-backed risk proof remain open.
 
+The follow-up full-lane repair provisions both controllers, the isolated server
+and the scanner before acceptance. Scanner v0.7.3 uses its exact release archive
+SHA-256 and reports its version through capabilities; private release download
+needs the repository-scoped read-only `CUB_SCAN_RELEASE_TOKEN` secret, currently
+absent. No workstation credential is copied into CI. Missing access fails the
+required job. Full acceptance enables pipeline failure propagation, requires
+source/controller waits and exact ownership, asserts the known Grafana risk,
+uses explicit demo fixture setup and runs authenticated imports unconditionally.
+Live imports use `-count=1`; all three pass again without Go test caching on the
+isolated v0.8.3 server. Seven provisioning/outcome guards, eight harness guards
+and six workflow guards pass. These do not close server/controller/benchmark
+release gates. Full CI at `4df4abea` is running; the follow-up has not run there.
+
 ## Required acceptance harness repair — 2026-10-05
 
 Issue #773 defines success before the harness repair. Full CI run

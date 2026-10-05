@@ -12,7 +12,7 @@ HELPERS = SOURCE.split("# Helper functions\n", 1)[1].split("# Start\n", 1)[0]
 class VerificationControlFlow(unittest.TestCase):
     def run_bash(self, body, verbose=0):
         return subprocess.run(
-            ["bash", "-c", "set -e\nPASSED=0; FAILED=0; SKIPPED=0\n"
+            ["bash", "-c", "set -eo pipefail\nPASSED=0; FAILED=0; SKIPPED=0\n"
              + f"VERBOSE={verbose}; LEVEL=full\n" + HELPERS + body],
             capture_output=True, text=True,
         )
@@ -32,6 +32,11 @@ class VerificationControlFlow(unittest.TestCase):
                 result = self.run_bash('run_test failure false\necho FALSE_PASS\n', verbose)
                 self.assertNotEqual(result.returncode, 0)
                 self.assertNotIn("FALSE_PASS", result.stdout)
+
+    def test_failed_pipeline_input_cannot_be_hidden_by_consumer(self):
+        result = self.run_bash('run_test pipeline "false | true"\necho FALSE_PASS\n')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn("FALSE_PASS", result.stdout)
 
     def test_missing_prerequisite_cannot_pass(self):
         result = self.run_bash('skip_test Connected "authentication expired"\necho FALSE_PASS\n')

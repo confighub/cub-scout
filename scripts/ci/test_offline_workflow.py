@@ -97,8 +97,18 @@ class OfflineWorkflowTests(unittest.TestCase):
             self.assertNotIn('continue-on-error', step)
         roundtrip = next(s for s in steps if s.get('name') == 'Run import round-trip tests')['run']
         self.assertIn('require_test_passes.py', roundtrip)
+        self.assertIn('-count=1', roundtrip)
         for test in ('TestImportFullRoundTrip', 'TestImportIdempotent', 'TestImportCleanup'):
             self.assertIn(test, roundtrip)
+
+    def test_full_acceptance_requires_all_providers_before_execution(self):
+        steps = self.jobs['full']['steps']
+        acceptance = next(i for i, step in enumerate(steps) if step.get('name') == 'Run prove-it-works')
+        for provider in ('setup-scan-provider.sh', 'setup-gitops-controllers.sh', 'setup-connected-server.sh'):
+            index = next(i for i, step in enumerate(steps) if provider in step.get('run', ''))
+            self.assertLess(index, acceptance)
+            self.assertNotIn('if', steps[index])
+            self.assertNotIn('continue-on-error', steps[index])
 
     def test_gitops_and_demo_acceptance_do_not_mask_failure(self):
         for job in ('gitops', 'demos'):

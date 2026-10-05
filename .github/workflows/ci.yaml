@@ -383,23 +383,30 @@ jobs:
 
       - name: Run quick demo
         run: |
+          kubectl apply -f test/atk/fixtures/flux-basic.yaml -f test/atk/fixtures/argo-basic.yaml
           ./cub-scout quickstart demo quick
+          ./cub-scout map list --json | jq -e 'length > 0'
           ./cub-scout quickstart demo quick --cleanup
 
       - name: Run ccve demo
         run: |
+          kubectl apply -f examples/impressive-demo/bad-configs/monitoring-bad.yaml
           ./cub-scout quickstart demo ccve
           ./cub-scout quickstart demo ccve --cleanup
 
       - name: Run query demo
         run: |
+          kubectl apply -f examples/demos/multi-cluster.yaml
           ./cub-scout quickstart demo query
+          ./cub-scout map list -q 'kind=Deployment AND owner!=Native' --json | jq -e 'length > 0'
           ./cub-scout quickstart demo query --cleanup
 
       - name: Run scenarios
         run: |
+          kubectl apply -f examples/impressive-demo/bad-configs/monitoring-bad.yaml
           ./cub-scout quickstart demo scenario bigbank-incident
           ./cub-scout quickstart demo scenario bigbank-incident --cleanup
+          kubectl apply -f examples/demos/break-glass.yaml
           ./cub-scout quickstart demo scenario break-glass
           ./cub-scout quickstart demo scenario break-glass --cleanup
 
@@ -440,7 +447,7 @@ jobs:
 
       - name: Run import round-trip tests
         run: |
-          go test -tags=integration ./test/integration/... -run '^(TestImportFullRoundTrip|TestImportIdempotent|TestImportCleanup)$' -json -timeout 300s > "$RUNNER_TEMP/scout-connected/roundtrip.json"
+          go test -tags=integration ./test/integration/... -run '^(TestImportFullRoundTrip|TestImportIdempotent|TestImportCleanup)$' -count=1 -json -timeout 300s > "$RUNNER_TEMP/scout-connected/roundtrip.json"
           python3 scripts/ci/require_test_passes.py "$RUNNER_TEMP/scout-connected/roundtrip.json" TestImportFullRoundTrip TestImportIdempotent TestImportCleanup
 
       - name: Retain connected test outcomes and versions
@@ -517,5 +524,23 @@ jobs:
         with:
           cluster_name: full-test-cluster
 
+      - name: Provision required scanner
+        run: bash scripts/ci/setup-scan-provider.sh
+        env:
+          CUB_SCAN_RELEASE_TOKEN: ${{ secrets.CUB_SCAN_RELEASE_TOKEN }}
+
+      - name: Install pinned GitOps controllers
+        run: bash scripts/ci/setup-gitops-controllers.sh
+
+      - name: Provision authenticated disposable ConfigHub
+        run: bash scripts/ci/setup-connected-server.sh "$RUNNER_TEMP/scout-connected"
+
       - name: Run prove-it-works
         run: ./test/prove-it-works.sh --level=full
+
+      - name: Remove disposable ConfigHub server
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/scout-connected/owns-server-cluster" ]]; then
+            kind delete cluster --name scout-ci-connected-server
+          fi

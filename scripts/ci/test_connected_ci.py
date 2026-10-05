@@ -38,6 +38,17 @@ class RequiredOutcomes(unittest.TestCase):
 
 
 class Provisioning(unittest.TestCase):
+    def test_missing_scanner_credential_fails_before_installation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            environment = dict(os.environ)
+            environment.pop('CUB_SCAN_RELEASE_TOKEN', None)
+            environment['RUNNER_TEMP'] = directory
+            result = subprocess.run(['bash', str(ROOT / 'scripts/ci/setup-scan-provider.sh')],
+                                    capture_output=True, text=True, env=environment)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('read-only credential', result.stderr)
+            self.assertFalse((Path(directory) / 'scout-scan-v073').exists())
+
     def run_setup(self, existing_cluster=False, existing_root=False):
         with tempfile.TemporaryDirectory() as directory:
             base = Path(directory)
