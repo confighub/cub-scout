@@ -100,7 +100,11 @@ uses explicit demo fixture setup and runs authenticated imports unconditionally.
 Live imports use `-count=1`; all three pass again without Go test caching on the
 isolated v0.8.3 server. Seven provisioning/outcome guards, eight harness guards
 and six workflow guards pass. These do not close server/controller/benchmark
-release gates. Full CI at `4df4abea` is running; the follow-up has not run there.
+release gates. Full CI at `4df4abea` passed its unit job and is executing cluster integration.
+Its Full Verification job failed at the expected missing-scanner prerequisite;
+the follow-up provider repair has not run there. The latest workflow retains
+scoped Flux/Argo controller objects, ownership JSON and Flux versions as an
+acceptance artifact. It uploads no server keys or installer/auth logs.
 
 ## Required acceptance harness repair — 2026-10-05
 

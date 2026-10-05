@@ -345,6 +345,23 @@ jobs:
           ./cub-scout map list --json -n guestbook > "$RUNNER_TEMP/argo-ownership.json"
           jq -e '[.[] | select(.namespace == "guestbook" and .kind == "Deployment" and .name == "guestbook-ui" and .owner == "ArgoCD")] | length == 1' "$RUNNER_TEMP/argo-ownership.json"
 
+      - name: Record scoped controller acceptance
+        run: |
+          kubectl get applications.argoproj.io guestbook -n argocd -o json > "$RUNNER_TEMP/argo-application.json"
+          kubectl get gitrepositories.source.toolkit.fluxcd.io,kustomizations.kustomize.toolkit.fluxcd.io -n boutique -o json > "$RUNNER_TEMP/flux-delivery.json"
+
+      - name: Retain controller acceptance observations
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gitops-acceptance
+          path: |
+            ${{ runner.temp }}/flux-ownership.json
+            ${{ runner.temp }}/argo-ownership.json
+            ${{ runner.temp }}/argo-application.json
+            ${{ runner.temp }}/flux-delivery.json
+            ${{ runner.temp }}/scout-controllers/flux-version.txt
+
       - name: Test trace command
         run: ./cub-scout trace deployment/cart -n boutique
 
