@@ -1,0 +1,19 @@
+{
+  "schema": "scout-native-windows-inputs.v1",
+  "sourceRevision": "34d0af491319ba31b7d626b5b0715e0580663993",
+  "architecture": "arm64",
+  "inputs": [
+    {
+      "path": "go.mod",
+      "sha256": "f0b2085e02158362ac07f2c9a12af7e5274e246993cc759cc63b1284cce5ea7e"
+    },
+    {
+      "path": "go.sum",
+      "sha256": "3a0f37d5ec1cef0a3f217f993340469a717c4c85fdb934b853a6c99a24e8235f"
+    }
+  ],
+  "claims": {
+    "canonicalSourceInputsVerified": true,
+    "runtimeAccepted": false
+  }
+}

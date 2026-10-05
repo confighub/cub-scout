@@ -1,0 +1,106 @@
+{
+  "schema": "scout-native-windows-capture.v1",
+  "sourceRevision": "34d0af491319ba31b7d626b5b0715e0580663993",
+  "runUrl": "https://github.com/confighub/cub-scout/actions/runs/37345184606",
+  "runtimeJobsPassed": true,
+  "publicRecords": [
+    {
+      "path": "amd64/runtime.json",
+      "bytes": 25883,
+      "sha256": "5fe68564ee7c360df12aa341c8704511bf22d2d372d8ef6200120db90ceac8c2"
+    },
+    {
+      "path": "amd64/source-inputs.json",
+      "bytes": 508,
+      "sha256": "77caae7070e2682f414cd2ef0073628910c4c14e306a85ec64ef6bed04093098"
+    },
+    {
+      "path": "amd64/metadata.json",
+      "bytes": 223,
+      "sha256": "d2801a6a8a6a8c12a09ac57dc79f55900630ea041cb069d3ae225ccfb1a4c274"
+    },
+    {
+      "path": "arm64/runtime.json",
+      "bytes": 25900,
+      "sha256": "2bf0fa84cf16adebc05cb73d381522bc8d44cce6cde0f99bc0911b289caf8874"
+    },
+    {
+      "path": "arm64/source-inputs.json",
+      "bytes": 508,
+      "sha256": "c1ef17d4c27b9619d5cd41e3528c568da264ca547ea0d4c5e83a129a87c7da9b"
+    },
+    {
+      "path": "arm64/metadata.json",
+      "bytes": 228,
+      "sha256": "da989a5e19d57bcb5db0361a0bcb41aa16e8dd9de732097c2dde6376b4a86513"
+    }
+  ],
+  "retainedPrivatePath": "/tmp/scout-v213-windows-tools-20261005",
+  "privateArtifactInventory": [
+    {
+      "path": "amd64/_temp/scout-windows-proof/build.log",
+      "bytes": 1581,
+      "sha256": "405f1d8667e24b1f6d0d165256edfd7f5a6e78b3928097e83211921ebb1af43d"
+    },
+    {
+      "path": "amd64/_temp/scout-windows-proof/runtime.json",
+      "bytes": 25883,
+      "sha256": "5fe68564ee7c360df12aa341c8704511bf22d2d372d8ef6200120db90ceac8c2"
+    },
+    {
+      "path": "amd64/_temp/scout-windows-proof/source-inputs.json",
+      "bytes": 508,
+      "sha256": "77caae7070e2682f414cd2ef0073628910c4c14e306a85ec64ef6bed04093098"
+    },
+    {
+      "path": "amd64/cub-scout/cub-scout/.goreleaser-dist/cub-scout_windows_amd64_v1/cub-scout.exe",
+      "bytes": 58673152,
+      "sha256": "af98b67843aae8ea1d4a5065fde64a95ebcb6dcea776f04f64a761aab25c1dfa"
+    },
+    {
+      "path": "amd64/cub-scout/cub-scout/.goreleaser-dist/kubectl-cub-scout_windows_amd64_v1/kubectl-cub_scout.exe",
+      "bytes": 58673152,
+      "sha256": "af98b67843aae8ea1d4a5065fde64a95ebcb6dcea776f04f64a761aab25c1dfa"
+    },
+    {
+      "path": "amd64/cub-scout/cub-scout/.goreleaser-dist/metadata.json",
+      "bytes": 223,
+      "sha256": "d2801a6a8a6a8c12a09ac57dc79f55900630ea041cb069d3ae225ccfb1a4c274"
+    },
+    {
+      "path": "arm64/_temp/scout-windows-proof/build.log",
+      "bytes": 1589,
+      "sha256": "808f90ae602f8b02dac82f34bd8d6cbbbb59b366d0120a66aef3aa451fea0336"
+    },
+    {
+      "path": "arm64/_temp/scout-windows-proof/runtime.json",
+      "bytes": 25900,
+      "sha256": "2bf0fa84cf16adebc05cb73d381522bc8d44cce6cde0f99bc0911b289caf8874"
+    },
+    {
+      "path": "arm64/_temp/scout-windows-proof/source-inputs.json",
+      "bytes": 508,
+      "sha256": "c1ef17d4c27b9619d5cd41e3528c568da264ca547ea0d4c5e83a129a87c7da9b"
+    },
+    {
+      "path": "arm64/cub-scout/cub-scout/.goreleaser-dist/cub-scout_windows_arm64_v8.0/cub-scout.exe",
+      "bytes": 55029248,
+      "sha256": "996e43f85eddb262b57e9a17899a7e9fe472f8be8a9244a548e6c2aa66b4e633"
+    },
+    {
+      "path": "arm64/cub-scout/cub-scout/.goreleaser-dist/kubectl-cub-scout_windows_arm64_v8.0/kubectl-cub_scout.exe",
+      "bytes": 55029248,
+      "sha256": "996e43f85eddb262b57e9a17899a7e9fe472f8be8a9244a548e6c2aa66b4e633"
+    },
+    {
+      "path": "arm64/cub-scout/cub-scout/.goreleaser-dist/metadata.json",
+      "bytes": 228,
+      "sha256": "da989a5e19d57bcb5db0361a0bcb41aa16e8dd9de732097c2dde6376b4a86513"
+    }
+  ],
+  "limits": [
+    "Configured GoReleaser native snapshot builds, not the earlier Mac-produced archive bytes.",
+    "Version/help smoke, not live cluster behavior or public installation.",
+    "Whole workflow and later source acceptance remain separate."
+  ]
+}

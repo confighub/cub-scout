@@ -85,6 +85,9 @@ jobs:
       - name: Verify genuine Helm lifecycle capture packet
         run: python3 scripts/ci/test_helm_lifecycle_capture.py
 
+      - name: Verify accepted native Windows runtime receipts
+        run: python3 scripts/ci/test_windows_runtime_capture.py
+
       - name: Test required acceptance control flow
         run: python3 scripts/ci/test_prove_it_works.py
 

@@ -27,6 +27,31 @@ order, quality gates, budgets and decisions.
 
 
 
+## Accepted native Windows build/runtime proof — 2026-10-05
+
+Both Windows native runtime jobs in [CI 37345184606](https://github.com/confighub/cub-scout/actions/runs/37345184606)
+pass at clean source `34d0af49`: Windows amd64 and arm64 build the two configured
+GoReleaser IDs with Go 1.24.0 and execute version plus trace help. Exact embedded
+revision, modified=false, /v2 module, CGO disabled and target architecture pass.
+The [six unedited JSON receipts](docs/releases/v2.13-windows-runtime/NOTICE.md)
+retain metadata, command outcomes and canonical go.mod/go.sum input hashes;
+four packet consistency checks pass. Original artifacts, four executables and
+build logs are retained privately and hashed in the public manifest.
+
+Two preceding attempts per architecture failed the source gate: Windows CRLF
+checkout normalization made go.mod appear changed after tidy with no normalized
+Git dependency diff. Disposable runners now preserve canonical LF bytes and
+check them against Git before building; the post-build source check is retained.
+No source reset or skipped hook hides changes. Diagnostic and binary retention
+were also repaired; failed attempts remain records of failure.
+
+These are independent configured native snapshot builds, distinct from the
+Mac-built archive packet at `78d86d50`. They prove basic native Windows execution,
+not live cluster behavior, public installation or final tagged artifacts. No
+Windows plugin is configured. Full workflow/new-head acceptance remains separate.
+Superseded PR/manual runs were cancelled to avoid duplicate work; their completed
+job evidence is preserved. v2.13 remains unreleased, with all adopted gates intact.
+
 ## Clean configured packaging proof — 2026-10-05
 
 GoReleaser 2.18.2 completed the actual snapshot hooks from a normal clean checkout
@@ -44,7 +69,8 @@ remain retained privately.
 The [rehearsal receipt](docs/releases/v2.13-goreleaser-rehearsal.md) records actual
 Darwin/Linux arm64/amd64 version/help execution, standalone and kubectl aliases,
 four plugin targets and the nonroot, network-disabled, read-only local image.
-Windows execution, public installs/pulls and final tagged publication remain open.
+The independent native Windows follow-up above supplies basic runtime proof;
+final-source/tagged acceptance, public installs/pulls and publication remain open.
 Snapshot `v2.13.0-next` and a local image tagged v2.13.0 are not a release.
 Candidate [PR #775](https://github.com/confighub/cub-scout/pull/775) is draft;
 CI 37341835765 at `5df6516e` passed Unit, including release-input and all three
