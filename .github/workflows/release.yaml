@@ -52,3 +52,24 @@ jobs:
           # this, GoReleaser re-released rc5 assets and failed with
           # 422 "already_exists" during asset upload.
           GORELEASER_CURRENT_TAG: ${{ github.ref_name }}
+
+      - name: Update checksum-pinned Homebrew source formula
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 0
+          curl --fail --location --retry 3 "https://github.com/confighub/cub-scout/archive/refs/tags/${RELEASE_TAG}.tar.gz" -o /tmp/scout-source.tar.gz
+          export SOURCE_SHA256=$(sha256sum /tmp/scout-source.tar.gz | cut -d ' ' -f 1)
+          gh api repos/confighub/homebrew-tap/contents/cub-scout.rb > /tmp/scout-formula-current.json
+          python3 - <<'PYTHON'
+          import base64, json, os
+          from pathlib import Path
+          template = Path("packaging/homebrew/cub-scout.rb.in").read_text()
+          content = template.replace("@TAG@", os.environ["RELEASE_TAG"]).replace("@SHA256@", os.environ["SOURCE_SHA256"])
+          current = json.loads(Path("/tmp/scout-formula-current.json").read_text())
+          payload = {"message": "Update cub-scout source formula to " + os.environ["RELEASE_TAG"], "sha": current["sha"], "content": base64.b64encode(content.encode()).decode()}
+          Path("/tmp/scout-formula-update.json").write_text(json.dumps(payload))
+          PYTHON
+          gh api --method PUT repos/confighub/homebrew-tap/contents/cub-scout.rb --input /tmp/scout-formula-update.json

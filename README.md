@@ -53,6 +53,11 @@ cub-scout gitops status   # What do delivery controllers report?
 cub-scout map             # Explore interactively
 ```
 
+Homebrew builds the checksum-pinned release source and installs its Go build
+dependency. If an old cask is installed, run
+`brew uninstall --cask confighub/tap/cub-scout` first.
+
+
 Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.13.1`, then
 `cub scout doctor`. [Installation and verified downloads](docs/getting-started/install.md)
 cover macOS, Linux, Windows, and tagged source builds.

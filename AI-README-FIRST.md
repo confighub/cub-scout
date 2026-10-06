@@ -1,5 +1,9 @@
 # AI Read Me First
 
+**2026-10-06:** [v2.13.1 is published](docs/releases/v2.13.1.md). Start from
+the current handover for v2.14 reconciliation and deferred acceptance work.
+
+
 For new configuration/generator work, start with the
 [release continuity review](docs/reference/configuration-investigation-continuity.md):
 reuse shipped source-truth, attribution/bindings, receipt and explorer contracts.

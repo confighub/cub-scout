@@ -1,5 +1,10 @@
 # Installation
 
+Homebrew uses a checksum-pinned source formula and installs its Go build dependency.
+If a cask is already installed, remove it with `brew uninstall --cask confighub/tap/cub-scout`
+before installing the formula. The unsigned macOS cask has not passed quarantine
+execution; do not bypass macOS security checks.
+
 For v2.13.1, use Homebrew, the `cub` plugin, or the published archives below.
 You do not need a ConfigHub account for standalone cluster observation.
 
