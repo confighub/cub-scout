@@ -83,11 +83,14 @@ func resolveKroInstanceRef(target *unstructured.Unstructured, idx *UnstructuredI
 		}
 		*evidence = append(*evidence, "ownerRef:"+or.APIVersion+"/"+or.Kind)
 		ref := resourceRefFromOwnerRef(or, target.GetNamespace())
-		obj := resolveOwnerRefObject(or, target.GetNamespace(), idx)
+		obj, omission := resolveOwnerRefObject(or, target.GetNamespace(), target, idx)
 		if obj != nil {
 			ref = resourceRefFromUnstructured(obj)
 			return ref, true, obj
 		}
+		// Owner references do not encode the parent's served scope.
+		ref.Namespace = ""
+		*evidence = append(*evidence, "instance:"+omission)
 		return ref, false, nil
 	}
 
@@ -129,8 +132,10 @@ func resolveKroDefinitionRef(target, instanceObj *unstructured.Unstructured, idx
 		}
 		*evidence = append(*evidence, "ownerRef:"+or.APIVersion+"/"+or.Kind)
 		ref := resourceRefFromOwnerRef(or, "")
-		if obj := resolveOwnerRefObject(or, "", idx); obj != nil {
+		if obj, omission := resolveOwnerRefObject(or, "", ownerSource, idx); obj != nil {
 			return resourceRefFromUnstructured(obj), true
+		} else {
+			*evidence = append(*evidence, "definition:"+omission)
 		}
 		return ref, false
 	}
@@ -191,11 +196,30 @@ func resourceRefFromOwnerRef(or metav1.OwnerReference, namespace string) Resourc
 	return ref
 }
 
-func resolveOwnerRefObject(or metav1.OwnerReference, namespace string, idx *UnstructuredIndex) *unstructured.Unstructured {
-	obj := idx.findByGVKNameNamespace(or.APIVersion, or.Kind, or.Name, namespace)
-	if obj != nil {
-		return obj
+// A name alone never establishes an owner-reference join. Require one exact
+// typed/versioned, legally local candidate and the supplied UID when present.
+func resolveOwnerRefObject(or metav1.OwnerReference, namespace string, source *unstructured.Unstructured, idx *UnstructuredIndex) (*unstructured.Unstructured, string) {
+	var match *unstructured.Unstructured
+	if idx != nil {
+		for _, obj := range idx.all {
+			if obj == nil || obj.GetAPIVersion() != or.APIVersion || obj.GetKind() != or.Kind || obj.GetName() != or.Name ||
+				(obj.GetNamespace() != namespace && obj.GetNamespace() != "") || (or.UID != "" && obj.GetUID() != or.UID) {
+				continue
+			}
+			if source != nil && resourceRefFromUnstructured(obj) == resourceRefFromUnstructured(source) {
+				continue
+			}
+			if match != nil {
+				return nil, "ambiguous"
+			}
+			match = obj
+		}
 	}
-	// Fallback for cluster-scoped roots (e.g., definitions) or namespace drift.
-	return idx.findByName(or.Name)
+	if match != nil {
+		return match, ""
+	}
+	if or.UID != "" {
+		return nil, "owner_uid_not_observed"
+	}
+	return nil, "unresolved"
 }

@@ -1,0 +1,78 @@
+{
+  "schema": "offline-map-identity-process-proof.v1",
+  "sourceBase": "83dade919be18aa594aa393f692bdfae15d71fac",
+  "sourceTreeModified": true,
+  "binarySHA256": "5e3080be593061eaa1486c88eca8579b6c548041d51c39c9db7df82f2a2f094b",
+  "liveAcceptance": false,
+  "targetExecuted": false,
+  "checks": [
+    {
+      "name": "default-json",
+      "exit": 0,
+      "identityRequests": 0,
+      "allRequests": 2,
+      "stdoutSHA256": "a679706aa8163c1e008ac799e3bb171ccd8df55897aa16b7d8b0cb92694ecd38"
+    },
+    {
+      "name": "identity-json",
+      "exit": 0,
+      "identityRequests": 1,
+      "allRequests": 3,
+      "stdoutSHA256": "60013557f418a7dd1e6fabc31687fc130d7bfc67780fa5b9f0234dedcb3ea3c3"
+    },
+    {
+      "name": "identity-ascii",
+      "exit": 0,
+      "identityRequests": 1,
+      "allRequests": 3,
+      "stdoutSHA256": "73154af72b2d5bd97868dd95e89bd4b0d10a184cddc9b896cbf31e49640dca11"
+    },
+    {
+      "name": "identity-md",
+      "exit": 0,
+      "identityRequests": 1,
+      "allRequests": 3,
+      "stdoutSHA256": "58b1208a10a5cf2d07b96e755290eda88b67637c0b3e794990a52c164e08f966"
+    },
+    {
+      "name": "denied-json",
+      "exit": 0,
+      "identityRequests": 1,
+      "allRequests": 3,
+      "stdoutSHA256": "924e7c7b9d9f5ee37e2ebdfd0e3b783532ed5daf59fbc65a15a258b1911fbe02"
+    },
+    {
+      "name": "invalid-combination",
+      "exit": 1,
+      "identityRequests": 0,
+      "allRequests": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "unavailable-json",
+      "exit": 0,
+      "identityRequests": 0,
+      "allRequests": 0,
+      "stdoutSHA256": "42544e10346acdaefb6f3fe81194c8e454a006d851b2d6aa91019c64375038dd"
+    },
+    {
+      "name": "mcp-identity",
+      "exit": 0,
+      "identityRequests": 1,
+      "allRequests": 3,
+      "stdoutSHA256": "92325d70920af6543c01d276b73b3337b5a08b018e2259c63d1df057d5150cf7"
+    }
+  ],
+  "passed": true,
+  "fixtureKind": "authored-loopback-http",
+  "privateProofSHA256": "b862aa38bfda178a083b3edec25383af8ee27b039eb6fd30f1cff23ca82bc426",
+  "sourceDiffSHA256": "3347f787019cd27a907dfdd2eb5cc7296305d1442f4c317ef723b18645ca5c60",
+  "driverSHA256": "2b5b2345a42c02b6056154896f69ae03664d14bba7eed776841a2880d55d6622",
+  "tuiProcessAcceptance": false,
+  "limits": [
+    "No real Kubernetes or ConfigHub server was used.",
+    "No benchmark target/model/container execution or runtime admission occurred.",
+    "TUI refresh and visible-panel behavior are covered by deterministic model tests, not this process proof.",
+    "Costs cover only the additional Namespace identity read."
+  ]
+}

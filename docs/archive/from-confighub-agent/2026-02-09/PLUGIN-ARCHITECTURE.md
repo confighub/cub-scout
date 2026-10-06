@@ -641,7 +641,7 @@ const (
 ### Third-Party Plugin Manifest
 
 ```yaml
-name: flux9s
+name: gitops-viewer
 version: 2.1.0
 vendor: Weaveworks
 requires:
@@ -652,12 +652,12 @@ cli:
       subcommands: [reconcile, suspend, resume]
 tui:
   tabs:
-    - name: Flux9s
+    - name: GitOps Viewer
       icon: "⚡"
       order: 50
 monetization:
   upsell:
-    url: "https://flux9s.io/upgrade?source=cub-agent"
+    url: "https://example.org/viewer/upgrade"
 ```
 
 ### Why Deferred

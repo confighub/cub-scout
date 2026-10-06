@@ -50,6 +50,7 @@ const watchEventTypeAll = "all"
 var watchKnownEventTypes = []string{
 	"resource.discovered",
 	"resource.deleted",
+	"collection.partial",
 	"ownership.changed",
 	"drift.detected",
 	"scan.finding",

@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata: {name: e, namespace: team-b}
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata: {name: c, namespace: team-a}
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata: {name: a, namespace: team-a, labels: {app.kubernetes.io/managed-by: Helm}}
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata: {name: d, namespace: team-b}
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata: {name: b, namespace: team-a, labels: {kustomize.toolkit.fluxcd.io/name: apps, kustomize.toolkit.fluxcd.io/namespace: flux-system}}
+- apiVersion: v1
+  kind: ConfigMap
+  metadata: {name: excluded, namespace: team-a}

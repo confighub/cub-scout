@@ -11,16 +11,22 @@ Homebrew source formula repair replaces the stale 2.0.0 formula; unsigned cask
 execution failed under quarantine and is not a passing path. Anonymous GHCR
 pull remains denied (#520).
 
-**Next: v2.14.** Reconcile the prepared `codex/v214-cluster-evidence` branch
-at `7533968c` with released main. Read-only merge preview identified conflicts
-in CI, handover, explain-session, MCP/tests, command/JSON contracts, comparison
-guides, release readiness/notes and roadmaps. No integration is claimed yet.
-Preserve the continuity review's post-2.13 commitments: effective configuration
-provenance, exact-release health, investigation continuity and measured efficiency;
-reuse generator/source-truth/attribution/binding/receipt/cache foundations.
-Generators render, ConfigHub retains intent/governance, controllers reconcile,
-and Scout observes/explains with standalone supplied-manifest usefulness.
-Complete the tracked deferred work below rather than renewing 2.13 publication.
+**Current work: v2.14 integration.** The prepared P4 delta from `9b9f68f3^`
+through `7533968c` is applied to current main on `codex/v214-release-integration`.
+This selects only P4 product/docs changes rather than replaying superseded P3
+history. One example-document conflict was resolved; production files applied
+cleanly. Full integrated tests and fresh owned-cluster identity proof are running.
+No v2.14 publication or broader acceptance is claimed yet.
+
+The [configuration delivery checklist](docs/reference/configuration-investigation-delivery.md)
+turns all seven continuity rows into ordered work with existing foundations and
+acceptance boundaries. New scoped issues are generation provenance #778, safe
+Helm input explanation #779, actual permission profiles #780 and scope-bound
+local continuity #781. These replace untracked design prose and define exact
+fixtures, examples, omissions and runtime proof before implementation. Design
+checkpoints are distinct from shipped producer adapters and measured advantage.
+Standalone supplied-manifest diagnosis remains useful without ConfigHub; generators
+render, ConfigHub retains intent/governance, controllers reconcile, Scout observes.
 
 ## Approved release scope — 2026-10-06
 

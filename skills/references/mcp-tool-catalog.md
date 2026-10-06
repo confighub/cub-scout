@@ -34,8 +34,8 @@ the catalog from a running server.
 |---|---|
 | Wraps | `cub-scout map list --json` |
 | Required args | — |
-| Optional args | `namespace` (string); `context` (nonempty exact kubeconfig context for live inventory) |
-| Returns | Resource inventory with ownership classification per resource |
+| Optional args | `namespace` (string); `context` (nonempty exact kubeconfig context for live inventory); candidate `cluster_identity` (boolean: one extra bounded Namespace GET; excludes compact and ownership-only modes) |
+| Returns | Resource inventory with ownership classification per resource; unreleased v2.14 `cluster_identity: true` uses a separate envelope with observed Namespace-instance identity, identity-reader-only cost and independent collection omissions, including unavailable inventory. Default response remains unchanged. |
 | When to load | Broad inventory question. "What's running here?" with ownership awareness. NOT a first stop for "what's broken?" |
 
 ### `scan`
@@ -310,3 +310,17 @@ instead of `runner`. Same execution model; different binary on PATH.
 - Compare-three-way MCP tool: added in the connected-mode trust-surface work
 - Read-only triad: `#410` / `#428`
 - Examples: [`examples/mcp-gateway/`](../../examples/mcp-gateway/), [`examples/ai-integration/`](../../examples/ai-integration/), [`examples/ai-agent-quest/`](../../examples/ai-agent-quest/)
+
+
+Recorded `map` pagination (2.14 candidate): optional integer `page_size` (1..500)
+and nonempty `cursor` bound to the same recording, scope and size. Incompatible
+with `summary`. Paged responses use `map-list-recorded-page.v1` in text and
+`structuredContent.data`, with full-scope totals and per-page returned count.
+This limits records, not bytes/tokens; default recorded responses are unchanged.
+
+
+Recorded `map` report-data budget (2.14 candidate): optional integer
+`max_report_json_bytes` (1..4194304), for full/summary/page canonical JSON data.
+Oversize is an explicit error without clipping fields or resources. This excludes
+MCP text/structured duplication, protocol/transport bytes, tokens and input work;
+a successful MCP result may exceed this number. Default responses are unchanged.

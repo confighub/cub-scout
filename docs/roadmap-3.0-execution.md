@@ -110,7 +110,10 @@ remain experimental requirements, not a blanket stop on authorized execution.
 The maintainer explicitly confirmed on 2026-10-05 that all continuity-review
 findings and new ideas belong in post-2.13 work. Apply the
 [seven-row allocation and proof checklist](roadmap.md#post-213-commitments-from-the-continuity-review)
-at P4 integration, not only during final documentation. It covers foundation
+at P4 integration, not only during final documentation. The
+[ordered configuration delivery contracts](reference/configuration-investigation-delivery.md)
+assign the new scoped follow-ups to #778/#779/#780/#781 and retain every
+standalone, responsibility, health and measurement checkpoint. It covers foundation
 reuse, configuration/generator provenance, exact-release health, investigation
 continuity, efficiency/discovery, standalone utility and accurate doctrine.
 

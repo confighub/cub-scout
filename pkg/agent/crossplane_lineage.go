@@ -39,7 +39,8 @@ type CrossplaneLineage struct {
 // - OwnerReferences to *.crossplane.io / *.upbound.io groups are used when composite label is absent.
 //
 // The objects slice should include, at minimum, Crossplane XRs and (optionally) Claims.
-// If the XR/Claim objects are not present, the resolver still returns refs with Present=false.
+// Missing, foreign-namespace or ambiguous parents remain Present=false.
+// Label-only joins do not establish UID identity; ownerRef joins check UID when supplied.
 //
 // For batch operations, prefer ResolveCrossplaneLineageWithIndex to avoid O(n²) index rebuilds.
 func ResolveCrossplaneLineage(target *unstructured.Unstructured, objects []*unstructured.Unstructured) (*CrossplaneLineage, bool) {
@@ -73,17 +74,26 @@ func ResolveCrossplaneLineageWithIndex(target *unstructured.Unstructured, idx *U
 	// 1) Determine XR identity
 	var xrRef ResourceRef
 	var xrPresent bool
+	var xrObject *unstructured.Unstructured
 
 	// Prefer the Crossplane default composite label.
 	if compName := target.GetLabels()["crossplane.io/composite"]; compName != "" {
 		lineage.Evidence = append(lineage.Evidence, "label:crossplane.io/composite")
 		// XR kind/group/version are not directly encoded in the label.
 		// XRs use custom API groups defined by XRDs (e.g., database.example.org),
-		// not crossplane.io. Try to find any object by name from provided objects.
-		xrObj := idx.findByName(compName)
+		// not crossplane.io. Resolve only a unique candidate in a legal parent namespace.
+		xrObj, ambiguous := crossplaneUniqueObject(idx, target, func(o *unstructured.Unstructured) bool {
+			return o.GetName() == compName && (o.GetNamespace() == "" || o.GetNamespace() == target.GetNamespace())
+		})
+		if ambiguous {
+			lineage.Evidence = append(lineage.Evidence, "xr:ambiguous")
+		} else if xrObj == nil {
+			lineage.Evidence = append(lineage.Evidence, "xr:unresolved")
+		}
 		if xrObj != nil {
 			xrRef = resourceRefFromUnstructured(xrObj)
 			xrPresent = true
+			xrObject = xrObj
 		} else {
 			// Best-effort: unknown G/V/K, but preserve the name.
 			xrRef = ResourceRef{Kind: "CompositeResource", Name: compName}
@@ -97,10 +107,27 @@ func ResolveCrossplaneLineageWithIndex(target *unstructured.Unstructured, idx *U
 			if strings.Contains(group, "crossplane.io") || strings.Contains(group, "upbound.io") {
 				lineage.Evidence = append(lineage.Evidence, "ownerRef:"+or.APIVersion+"/"+or.Kind)
 				xrRef = ResourceRef{Kind: or.Kind, Name: or.Name, Group: group}
-				xrObj := idx.findByGVKNameNamespace(or.APIVersion, or.Kind, or.Name, "")
+				if len(gv) == 2 {
+					xrRef.Version = gv[1]
+				}
+				xrObj, ambiguous := crossplaneUniqueObject(idx, target, func(o *unstructured.Unstructured) bool {
+					return o.GetAPIVersion() == or.APIVersion && o.GetKind() == or.Kind && o.GetName() == or.Name &&
+						(o.GetNamespace() == "" || o.GetNamespace() == target.GetNamespace()) &&
+						(or.UID == "" || o.GetUID() == or.UID)
+				})
+				if ambiguous {
+					lineage.Evidence = append(lineage.Evidence, "xr:ambiguous")
+				} else if xrObj == nil {
+					if or.UID != "" {
+						lineage.Evidence = append(lineage.Evidence, "xr:owner_uid_not_observed")
+					} else {
+						lineage.Evidence = append(lineage.Evidence, "xr:unresolved")
+					}
+				}
 				if xrObj != nil {
 					xrRef = resourceRefFromUnstructured(xrObj)
 					xrPresent = true
+					xrObject = xrObj
 				}
 				break
 			}
@@ -120,7 +147,7 @@ func ResolveCrossplaneLineageWithIndex(target *unstructured.Unstructured, idx *U
 	claimNS := target.GetLabels()["crossplane.io/claim-namespace"]
 	if claimName == "" && xrPresent {
 		// Prefer claim metadata from XR if available.
-		xrObj := idx.findByResourceRef(xrRef)
+		xrObj := xrObject
 		if xrObj != nil {
 			claimName = xrObj.GetLabels()["crossplane.io/claim-name"]
 			claimNS = xrObj.GetLabels()["crossplane.io/claim-namespace"]
@@ -129,7 +156,12 @@ func ResolveCrossplaneLineageWithIndex(target *unstructured.Unstructured, idx *U
 	if claimName != "" {
 		lineage.Evidence = append(lineage.Evidence, "label:crossplane.io/claim-*")
 		claimRef := ResourceRef{Kind: "Claim", Name: claimName, Namespace: claimNS}
-		claimObj := idx.findByNameNamespace(claimName, claimNS)
+		claimObj, ambiguous := crossplaneUniqueObject(idx, target, func(o *unstructured.Unstructured) bool {
+			return o.GetName() == claimName && o.GetNamespace() == claimNS
+		})
+		if ambiguous {
+			lineage.Evidence = append(lineage.Evidence, "claim:ambiguous")
+		}
 		claimPresent := false
 		if claimObj != nil {
 			claimRef = resourceRefFromUnstructured(claimObj)
@@ -141,67 +173,46 @@ func ResolveCrossplaneLineageWithIndex(target *unstructured.Unstructured, idx *U
 	return lineage, true
 }
 
+// crossplaneUniqueObject refuses a name-only/type/UID join when more than one
+// supplied object satisfies its evidence. Scope comes only from Kubernetes owner
+// locality: a namespaced child may have a same-namespace or cluster parent. Labels
+// do not identify parent GVK or scope, so conflicting candidates stay unresolved.
+// Keep this separate from the generic index to avoid changing other resolvers.
+func crossplaneUniqueObject(idx *UnstructuredIndex, target *unstructured.Unstructured, matches func(*unstructured.Unstructured) bool) (*unstructured.Unstructured, bool) {
+	if idx == nil {
+		return nil, false
+	}
+	var found *unstructured.Unstructured
+	for _, object := range idx.all {
+		if object == nil || (target != nil && object.GetAPIVersion() == target.GetAPIVersion() && object.GetKind() == target.GetKind() && object.GetNamespace() == target.GetNamespace() && object.GetName() == target.GetName()) || !matches(object) {
+			continue
+		}
+		if found != nil {
+			return nil, true
+		}
+		found = object
+	}
+	return found, false
+}
+
 // UnstructuredIndex provides simple deterministic lookups over a set of objects.
 // It deliberately avoids discovery/pluralization so it can work with arbitrary CRDs.
 //
 // Exported to allow callers to build the index once and reuse it across multiple
-// resolver invocations, avoiding O(n²) index rebuilds on large object sets.
+// resolver invocations without collecting additional objects.
 type UnstructuredIndex struct {
-	byKey map[string]*unstructured.Unstructured
-	all   []*unstructured.Unstructured
+	all []*unstructured.Unstructured
 }
 
 // NewUnstructuredIndex builds an index over the given objects.
 // Build this once and pass to ResolveCrossplaneLineageWithIndex for efficient batch operations.
 func NewUnstructuredIndex(objects []*unstructured.Unstructured) *UnstructuredIndex {
-	idx := &UnstructuredIndex{byKey: make(map[string]*unstructured.Unstructured), all: objects}
-	for _, o := range objects {
-		if o == nil {
-			continue
-		}
-		key := idx.keyFor(o.GetAPIVersion(), o.GetKind(), o.GetName(), o.GetNamespace())
-		idx.byKey[key] = o
-	}
-	return idx
+	return &UnstructuredIndex{all: objects}
 }
 
 // Len returns the number of indexed objects.
 func (i *UnstructuredIndex) Len() int {
 	return len(i.all)
-}
-
-func (i *UnstructuredIndex) keyFor(apiVersion, kind, name, namespace string) string {
-	return apiVersion + "|" + kind + "|" + namespace + "|" + name
-}
-
-func (i *UnstructuredIndex) findByGVKNameNamespace(apiVersion, kind, name, namespace string) *unstructured.Unstructured {
-	return i.byKey[i.keyFor(apiVersion, kind, name, namespace)]
-}
-
-func (i *UnstructuredIndex) findByResourceRef(ref ResourceRef) *unstructured.Unstructured {
-	// ResourceRef may not contain apiVersion/kind in all cases; fall back to name+namespace scan.
-	if ref.Kind != "" && ref.Group != "" && ref.Version != "" {
-		apiVersion := ref.Group + "/" + ref.Version
-		if u := i.findByGVKNameNamespace(apiVersion, ref.Kind, ref.Name, ref.Namespace); u != nil {
-			return u
-		}
-	}
-	return i.findByNameNamespace(ref.Name, ref.Namespace)
-}
-
-func (i *UnstructuredIndex) findByNameNamespace(name, namespace string) *unstructured.Unstructured {
-	if name == "" {
-		return nil
-	}
-	for _, o := range i.all {
-		if o == nil {
-			continue
-		}
-		if o.GetName() == name && o.GetNamespace() == namespace {
-			return o
-		}
-	}
-	return nil
 }
 
 func (i *UnstructuredIndex) findByName(name string) *unstructured.Unstructured {

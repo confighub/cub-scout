@@ -106,3 +106,47 @@ This is *experimental* — the detection heuristics may evolve as Crossplane pat
 
 - [Platform Example](../platform-example/) — Mixed Flux + orphan ownership
 - [Flux Boutique](../flux-boutique/) — Pure Flux ownership detection
+
+
+## Conservative lineage control (2.14 candidate)
+
+`lineage-ambiguity.yaml` is an authored control with a labeled child and
+same-named parent candidates in two namespaces and two API groups. The label
+names the composite but does not identify its GVK, scope or UID. Legal parent
+candidates are same-namespace or cluster-scoped, following Kubernetes
+[owner locality](https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/).
+Crossplane v2 supports
+[namespaced composites](https://docs.crossplane.io/v2.2/guides/upgrade-to-crossplane-v2/);
+this correction does not establish complete v2 support.
+
+The resolver refuses multiple eligible parent or claim candidates instead of
+choosing by input order. Unknown composite type stays `CompositeResource` with
+`present: false` and `xr:ambiguous` evidence; claim ambiguity stays `Claim` with
+`claim:ambiguous`. Foreign-namespace/missing parents remain unresolved with `xr:unresolved`. The
+target itself is never joined as its own XR or Claim. Known-group
+owner references match exact API version/Kind/name, a legal namespace and UID
+when supplied. A nonempty supplied UID without an observed match is not a present
+parent and is marked `xr:owner_uid_not_observed`. When no UID is supplied and no
+eligible parent is found, evidence is `xr:unresolved`. Label-only joins remain name-based evidence,
+without a UID identity guarantee. The same resolved XR object supplies claim
+labels; no second weaker lookup enriches it.
+
+Run the pure fixture controls without a cluster:
+
+```bash
+GOPROXY=off GOTOOLCHAIN=local go test ./pkg/agent -run '^TestCrossplaneLineage(Label|OwnerRef|Claim|Whole)' -count=1
+GOPROXY=off GOTOOLCHAIN=local go test ./cmd/cub-scout -run '^TestCrossplaneAmbiguitySharedTraceRendering$' -count=1
+GOPROXY=off GOTOOLCHAIN=local go test ./test/unit -run '^TestResolveCrossplaneLineage$' -count=1
+```
+
+The five resolver controls reverse input order and cover locality, conflicting
+types/scope, duplicate candidates, UID replacement, ambiguous claims and whole-inventory self-join refusal. A sixth
+control loads this example into the actual CLI reverse-trace renderer, a TUI trace
+pane loaded with that rendered text, and composition index and verifies partial lineage without guessed parent
+type. Existing cluster XR/legacy claim fixtures remain regression controls.
+No new API/discovery calls, readiness verdicts or object/fleet joins are added.
+Missing/partial inventory remains partial evidence rather than an orphan finding.
+The loaded TUI rendering control does not establish automatic lineage collection
+or reverse-trace routing for a TUI action. This is offline source/renderer coverage,
+not genuine live CLI/TUI acceptance,
+Crossplane graduation or completion of #601/#594.
