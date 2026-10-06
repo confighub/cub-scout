@@ -3520,3 +3520,12 @@ This does not cap display/protocol/transport bytes, CLI JSON newline, tokens,
 input work or agent cost; MCP can duplicate report data in text and structured
 content. Defaults are unchanged. See the
 [example](../../examples/recorded-inventory/#report-json-budget-214-candidate).
+
+### Watch/bot polling identity (2.14 candidate)
+
+`watch --cluster-identity` and `bot --cluster-identity` emit verified cluster
+and object-instance evidence or omissions, with one bounded Namespace GET per
+polling cycle. Identity-only cost is repeated on events; count once on
+`cluster.observed`. Owner/severity filters do not hide that cycle event.
+Defaults remain unchanged; `--watch-backed` is refused pending original-age
+proof. See [event contract](watch-events.md#polling-identity-214-candidate).

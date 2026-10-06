@@ -11,7 +11,11 @@ Homebrew source formula repair replaces the stale 2.0.0 formula; unsigned cask
 execution failed under quarantine and is not a passing path. Anonymous GHCR
 pull remains denied (#520).
 
-**Current work: v2.14 task 24, strict watch/bot context (#787).**
+**Current work: v2.14 tasks 24–32, watch/bot identity packet (#789).**
+The maintainer authorized tasks 1–10 from the latest ordered list. Full scope
+remains; no release or parent completion is asserted from a bounded packet.
+Watch/bot polling identity reuses the accepted map model; deterministic tests
+pass, while owned-cluster proof and full-source checks are pending.
 PR #782 merged at `6cfccd77` after exact-head Unit/Integration/GitOps/Proof CI
 passed; optional tiers remained skipped. The prepared P4 source is integrated.
 The next bounded slice exposes verified instance references/merge keys or
@@ -35,7 +39,8 @@ selection/token/missing/blank/denied/unreachable controls, full Go suite in norm
 mode, build/vet/docs/parity/read-only guard and owned-cluster CLI proof pass.
 Product source `22c3f958`; raw captures/cleanup are retained in the example.
 Initial HTTP credential and forced-Offline golden failures are retained; fixtures
-were corrected without production TLS or golden changes. Final-source CI is pending.
+were corrected without production TLS or golden changes. Final-source CI `37470921280` passed Unit/Integration/GitOps/Proof; PR #788
+merged at `b9f7b14e`. Optional tiers were skipped, not passed.
 Broader #599, #596 and v2.14 publication remain open. Existing live proof retains its original source/binary limits.
 
 The [configuration delivery checklist](docs/reference/configuration-investigation-delivery.md)

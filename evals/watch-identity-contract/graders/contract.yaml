@@ -1,0 +1,5 @@
+---
+type: regex
+pattern: '^\s*\{\s*"instances"\s*:\s*"distinct"\s*,\s*"deniedIdentity"\s*:\s*"unknown"\s*,\s*"identityRequests"\s*:\s*1\s*,\s*"costCoverage"\s*:\s*"identity-reader only"\s*,\s*"targetBinding"\s*:\s*"unknown"\s*\}\s*$'
+flags: s
+target: last_message
