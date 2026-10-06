@@ -3552,4 +3552,6 @@ it reads ConfigHub relationships instead. Omitted selection retains the existing
 behavior. Existing partial/denied-list output and each view's namespace and format
 coverage remain unchanged; this selector does not establish complete inventory,
 physical cluster identity or a ConfigHub Target binding. The workloads alias
-now respects the tree namespace and caller cancellation.
+now respects the tree namespace and caller cancellation. `map workloads` and
+`map patterns` accept the same `--kube-context` directly, with the same strict
+refusal of a missing or blank selection.
