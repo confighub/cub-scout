@@ -34,3 +34,25 @@ list --ownership-evidence --format ascii|json|md` and TUI `V` expose inventory
 omissions. These are authored regression controls, not real controller captures,
 whole-scan coverage, connected/fleet acceptance or full six-surface conformance.
 Genuine live acceptance remains deferred. See [the event contract](../../docs/reference/watch-events.md).
+
+## Strict watch/bot context selection (#787)
+
+```sh
+./cub-scout watch --kube-context selected --namespace team-a --once --output-file /tmp/watch.jsonl
+./cub-scout bot --kube-context selected --namespace team-a --once --output-file /tmp/bot.jsonl
+./cub-scout map --kube-context selected
+```
+
+Both streaming commands capture one explicit config before opening the sink.
+Inventory, scan, receipt and optional informer reads share that config. A blank
+or missing context refuses without consulting ambient/in-cluster credentials or
+creating the file. Defaults retain the prior behavior. The TUI already supports
+the same captured selection. This adds no verified cluster ID or whole-command
+cost field, and does not renew informer evidence or establish fleet membership.
+
+`TestWatchAndBot` controls select alpha while beta is ambient, then mutate the
+private config after capture. The observed HTTPS request still reaches alpha
+with its original token; beta receives zero requests. Missing/blank selections
+make zero reads, do not open the sink, and preserve private kubeconfig bytes.
+The initial plain-HTTP credential test refused credentials as client-go intends;
+the repaired TLS fixture trusts only its own local certificate.

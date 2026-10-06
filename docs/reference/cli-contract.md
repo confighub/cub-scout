@@ -2022,3 +2022,15 @@ the current loaded page/cursor with an explicit error and no I/O. Budget may
 change between continuation requests without changing cursor selection.
 The limit excludes rendered display, CLI JSON newline, MCP duplication/envelope,
 transport bytes, tokens and input work. No default wire contract changes.
+
+### Watch/bot explicit context (v2.14 candidate)
+
+`./cub-scout watch --kube-context NAME` and `./cub-scout bot --kube-context NAME`
+resolve one strict credential/config snapshot before opening event sinks. The
+inventory, scanner, optional receipts and informer client reuse that snapshot;
+changing kubeconfig after capture does not retarget the running process. Blank
+or missing explicit contexts refuse before reads/sink creation, with no ambient
+or in-cluster fallback. Omitting the flag preserves the existing default path.
+The event schema is unchanged. Selection does not establish verified cluster
+identity, total request costs, Target binding or fresh informer observations.
+The TUI equivalent is `./cub-scout map --kube-context NAME`.

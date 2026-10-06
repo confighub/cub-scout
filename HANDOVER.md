@@ -11,7 +11,7 @@ Homebrew source formula repair replaces the stale 2.0.0 formula; unsigned cask
 execution failed under quarantine and is not a passing path. Anonymous GHCR
 pull remains denied (#520).
 
-**Current work: v2.14 task 24, external observation example (#785).**
+**Current work: v2.14 task 24, strict watch/bot context (#787).**
 PR #782 merged at `6cfccd77` after exact-head Unit/Integration/GitOps/Proof CI
 passed; optional tiers remained skipped. The prepared P4 source is integrated.
 The next bounded slice exposes verified instance references/merge keys or
@@ -28,7 +28,9 @@ The external example (#785) invokes one Scout per explicit scope and indexes
 only verified instances while retaining denials; it does not define fleet
 membership. Offline executable controls and the examples catalog pass. Genuine
 two-cluster plus restricted-reader acceptance passes at `446e7d7d`, with actual
-external output and cleanup retained. Its candidate PR CI is pending. Broader #599, #596 and v2.14 publication
+external output and cleanup retained. PR #786 merged at `017f9949` after final-head CI `37463353410` passed
+Unit/Integration/GitOps/Proof; optional tiers were skipped. Canonical-key repair
+775ef0f3 passes five controls and exactly replays the retained live output. Broader #599, #596 and v2.14 publication
 remain open. Existing live proof retains its original source/binary limits.
 
 The [configuration delivery checklist](docs/reference/configuration-investigation-delivery.md)
@@ -40,6 +42,14 @@ fixtures, examples, omissions and runtime proof before implementation. Design
 checkpoints are distinct from shipped producer adapters and measured advantage.
 Standalone supplied-manifest diagnosis remains useful without ConfigHub; generators
 render, ConfigHub retains intent/governance, controllers reconcile, Scout observes.
+
+## Maintainer reaffirmed full v2.14 scope — 2026-10-06
+
+The maintainer rejected a smaller v2.14 release: “No keep the scope and add those
+before 2.14.” Controller depth, six-surface conformance, identity/cost, admitted
+benchmark and distribution gates remain in v2.14. Do not move those requirements
+to v2.15 merely to accelerate publication. Continue bounded tested packets and
+preserve credit discipline; no excluded live tests or new ConfigHub API dependency.
 
 ## Approved release scope — 2026-10-06
 
