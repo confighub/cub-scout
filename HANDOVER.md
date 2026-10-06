@@ -1631,3 +1631,26 @@ directory through GITHUB_PATH. Controller observations are retained in the run's
 acceptance artifact. Full Verification failed at the absent private scanner
 release credential; risk/demo and broader release gates remain open. A fresh
 run of the PATH repair is required; #774 and v2.13 are not complete.
+
+
+## v2.14 tree context packet (#794)
+
+`codex/v214-tree-context` adds strict explicit selection throughout runtime,
+ownership, Git, composition, patterns, workloads and suggest tree views. The
+selection is captured once; aliases use private commands instead of changing a
+shared Cobra command. Composition binds typed and kubectl reads to the same
+capture with private kubeconfig/discovery cache cleanup. Workloads alias respects
+namespace and cancellation. ConfigHub-only `tree config` rejects the selector.
+
+Deterministic selected/ambient routing, missing/blank/cancelled selectors,
+configuration preservation, mid-read configuration changes, child binding and
+cleanup pass. Actual owned Kubernetes 1.35 acceptance at `49a98491` passes all
+seven cluster views and refusals, with private HOME/config and owned cluster
+removed/shared kubeconfig unchanged. Retained failed attempts record harness
+assertions against the wrong JSON path and an unsupported workload-name
+expectation in the suggest output; neither is relabeled as a pass. See the
+[tree proof](examples/cluster-identity-cost/live-tree-context-proof.json).
+Legacy collection breadth, format coverage and partial-list semantics remain;
+this is not physical identity, complete inventory, Target alignment, a cost
+ledger or full #599/#596 completion. Required CI and full Go acceptance must be
+recorded before merge.

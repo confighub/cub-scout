@@ -82,6 +82,7 @@ The 'tree' command complements 'cub unit tree' in the ConfigHub CLI:
 func init() {
 	rootCmd.AddCommand(treeCmd)
 
+	treeCmd.Flags().String("kube-context", "", "Explicit Kubernetes context for cluster views (no fallback)")
 	treeCmd.Flags().StringVar(&treeFormat, "format", "ascii", "Output format: ascii, json, md")
 	treeCmd.Flags().BoolVar(&treeJSON, "json", false, "Output as JSON (deprecated: use --format json)")
 	treeCmd.Flags().StringVarP(&treeNamespace, "namespace", "n", "", "Filter by namespace")
@@ -102,6 +103,27 @@ func runTree(cmd *cobra.Command, args []string) error {
 		viewType = args[0]
 	}
 
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	selection, err := clusterContextSelectionFromFlag(cmd)
+	if err != nil {
+		return err
+	}
+	if selection.explicit {
+		if viewType == "config" {
+			return fmt.Errorf("--kube-context is not applicable to tree config")
+		}
+		if viewType == "runtime" && os.Getenv("CUB_SCOUT_TEST_TREE_JSON") != "" {
+			return fmt.Errorf("--kube-context requires live tree collection")
+		}
+		binding := resolveLocalClusterBindingForSelection(selection)
+		if binding.err != nil {
+			return binding.err
+		}
+		ctx = context.WithValue(ctx, treeBindingKey{}, binding)
+	}
+
 	switch viewType {
 	case "runtime":
 		return runTreeRuntime(ctx)
@@ -110,7 +132,7 @@ func runTree(cmd *cobra.Command, args []string) error {
 	case "composition":
 		return runTreeComposition(ctx)
 	case "workloads":
-		return runTreeWorkloads()
+		return runTreeWorkloads(ctx)
 	case "git":
 		return runTreeGit(ctx)
 	case "patterns":
@@ -189,7 +211,7 @@ func runTreeRuntime(ctx context.Context) error {
 		return loadAndRenderTreeFromJSON(treeJSON)
 	}
 
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to build config: %w", err)
 	}
@@ -482,7 +504,7 @@ func runTreeOwnership(ctx context.Context) error {
 		effectiveFormat = "json"
 	}
 
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to build config: %w", err)
 	}
@@ -493,7 +515,12 @@ func runTreeOwnership(ctx context.Context) error {
 	}
 
 	// Get current context name for cluster field
-	clusterName := getCurrentContext()
+	var clusterName string
+	if binding := treeContextBinding(ctx); binding != nil {
+		clusterName = binding.context
+	} else {
+		clusterName = getCurrentContext()
+	}
 	argoLineage := buildArgoLineageIndex(ctx, dynClient)
 
 	// Convert to mapsvc.Entry for shared renderer
@@ -650,19 +677,21 @@ func ownerKindPrefix(owner string) string {
 	}
 }
 
-func runTreeWorkloads() error {
+func runTreeWorkloads(ctx context.Context) error {
 	// This is an alias for 'map workloads'
 	fmt.Println("Tip: 'cub-scout tree workloads' is an alias for 'cub-scout map workloads'")
 	fmt.Println()
 
 	// Run map workloads
-	mapCmd.SetArgs([]string{"workloads"})
-	return mapCmd.Execute()
+	cmd := &cobra.Command{Use: "workloads"}
+	cmd.SetContext(ctx)
+	cmd.Flags().String("namespace", treeNamespace, "")
+	return runMapWorkloads(cmd, nil)
 }
 
 func runTreeGit(ctx context.Context) error {
 	jsonOutput := treeJSON || strings.EqualFold(treeFormat, "json")
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to build config: %w", err)
 	}
@@ -1143,13 +1172,11 @@ func resolveParentApplicationWithConfidence(app *unstructured.Unstructured) (str
 }
 
 func runTreePatterns(ctx context.Context) error {
-	// `cub-scout tree patterns` reaches `runMapPatterns` directly without going
-	// through Cobra's Execute path, so `mapPatternsCmd.Context()` would be nil
-	// and any client-go call would panic in klog.FromContext (#390). Seed the
-	// command's context here so the downstream code path is identical to the
-	// `cub-scout map patterns` invocation.
-	mapPatternsCmd.SetContext(ctx)
-	return runMapPatterns(mapPatternsCmd, []string{})
+	// Use a private invocation, preserving cancellation and any captured binding
+	// without changing the shared map command's context.
+	cmd := &cobra.Command{Use: "patterns"}
+	cmd.SetContext(ctx)
+	return runMapPatterns(cmd, nil)
 }
 
 func runTreeConfig() error {
@@ -1255,7 +1282,7 @@ func getStatusIconNoColor(status string) string {
 
 func runTreeSuggest(ctx context.Context) error {
 
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to build config: %w", err)
 	}

@@ -55,7 +55,7 @@ type SuggestedOrg struct {
 }
 
 type SuggestedHub struct {
-	Name      string           `json:"name"`
+	Name string           `json:"name"`
 	Apps []SuggestedSpace `json:"apps"`
 }
 
@@ -100,7 +100,7 @@ func runMapPatterns(cmd *cobra.Command, args []string) error {
 		ctx = context.Background()
 	}
 
-	cfg, err := buildConfig()
+	cfg, err := commandOrTreeClusterConfig(cmd)
 	if err != nil {
 		return fmt.Errorf("build kubernetes config: %w", err)
 	}
