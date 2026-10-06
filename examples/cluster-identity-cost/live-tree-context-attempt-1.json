@@ -1,0 +1,71 @@
+{
+  "schema": "v214-tree-context-live-proof.v1",
+  "sourceCommit": "f1fc858247a02cee7d0a891e1ff89a23e45093b2",
+  "sourceCommitUnchanged": true,
+  "sourceWorktreeCleanBeforeAndAfter": true,
+  "binarySHA256": "6ca3aac4506ef1c2f279e955109f9cc2590b8cf07f209dc6dc215dfb081e6093",
+  "finished": "2026-10-06T15:42:05.424422+00:00",
+  "passed": false,
+  "failures": [
+    "KeyError('cluster')"
+  ],
+  "ownedClusterRemoved": true,
+  "sharedConfigUnchanged": true,
+  "steps": [
+    {
+      "name": "before-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "a867d3e1d92f6aa02e400a98eecad3851fc8668786fa3cb5091e0e0a616d264d"
+    },
+    {
+      "name": "bootstrap-owned-resources",
+      "exit": 0,
+      "stdoutSHA256": "8e0b7544c1923d80813c99643cb47d8a885c7e190a40b577a908e437f5a6e4ec",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "tree-runtime",
+      "exit": 0,
+      "stdoutSHA256": "8ad7e7352c416c115f726528eef58dad9b9057d6d78e2dbdbeef1477612ed7e9",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "tree-runtime-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "tree-runtime-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "tree-ownership",
+      "exit": 0,
+      "stdoutSHA256": "3cadef8a0bdd6988beb8f9712e0a2b44bee9e989d0cb4f56febb569e1391ecbd",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cleanup-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "4a0856d0b84402a99e8fed4e3eaf691b4dcf508287c87c1957c444b45ea453b3"
+    },
+    {
+      "name": "after-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "scope": "Seven actual standalone tree views with an unusable ambient context; blank/missing selectors and ConfigHub-only view refuse. One owned Kubernetes 1.35 cluster and private HOME/config. No physical identity, whole-command cost, completeness, Target, connected/fleet or six-surface proof. Clean isolated build bound by source checkpoint and binary hash; no compiler VCS-stamp claim."
+}
