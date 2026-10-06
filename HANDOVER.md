@@ -1,12 +1,26 @@
 # cub-scout execution handover
 
-## v2.13 publication repair — 2026-10-06
+## Current checkpoint — 2026-10-06
 
-PR #775 merged at `44153522`. The v2.13.0 tag is retained, but final tests
-caught a README contract requiring the `@latest` Go-install example. The repair
-restores that example alongside a pinned command and targets v2.13.1. No
-production Go code, frozen benchmark input or approved scope changes.
+**v2.13.1 is published**, source `277d7ad8`, with tagged full Go tests and
+packaging passing. See [published verification](docs/releases/v2.13.1.md).
+The immutable v2.13.0 tag remains after its documentation-contract failure;
+use v2.13.1. Archive checksums/platform metadata, macOS and isolated Linux
+execution, isolated cub plugin installation and public Go proxy install passed.
+Homebrew source formula repair replaces the stale 2.0.0 formula; unsigned cask
+execution failed under quarantine and is not a passing path. Anonymous GHCR
+pull remains denied (#520).
 
+**Next: v2.14.** Reconcile the prepared `codex/v214-cluster-evidence` branch
+at `7533968c` with released main. Read-only merge preview identified conflicts
+in CI, handover, explain-session, MCP/tests, command/JSON contracts, comparison
+guides, release readiness/notes and roadmaps. No integration is claimed yet.
+Preserve the continuity review's post-2.13 commitments: effective configuration
+provenance, exact-release health, investigation continuity and measured efficiency;
+reuse generator/source-truth/attribution/binding/receipt/cache foundations.
+Generators render, ConfigHub retains intent/governance, controllers reconcile,
+and Scout observes/explains with standalone supplied-manifest usefulness.
+Complete the tracked deferred work below rather than renewing 2.13 publication.
 
 ## Approved release scope — 2026-10-06
 
@@ -52,9 +66,9 @@ It lists 36 remaining tasks, each with its tests and exit proof, and separates
 pre-publication acceptance from verification of the published artifacts.
 
 
-**Current snapshot:** 2026-10-04. Verified merged baseline:
+**Historical snapshot:** 2026-10-04. Verified merged baseline:
 [`5aeebc48`](https://github.com/confighub/cub-scout/commit/5aeebc48a6f168865b79d5a228013b9e576695f7).
-The published release is v2.12.4; main includes newer, unreleased work.
+At that checkpoint the published release was v2.12.4; this is historical.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
 order, quality gates, budgets and decisions.
@@ -1497,22 +1511,16 @@ The current parser/source and static candidate binary pins are unchanged.
 
 ## Resume here
 
-Check #645 and the checkpoint above. Drive the adopted plan through 3.0,
-releasing 2.13 and 2.14 as their gates pass. Continue current v2.13 work on
-`codex/v213-offline-runtime`, with required live tests now authorized by the 2026-10-05 instruction.
-The eleven recorded host bindings do not admit full-24 model execution: remaining
-case bindings, Python/runtime asset admission, actual grants, trusted official
-evaluator terminal integration, descendant completion and cost attribution
-still need bounded implementation and review. The terminal adapter and overlay
-are prepared candidates; their runtime integration remains unproved. Do not invent Kubernetes
-objects or evaluated server decisions to fill gaps. Context/Trace/GitOps packets
-#750/#751/#753 and three-way #755 have merged; audit remaining parent scope
-#599/#746 against current code before repeating completed work.
-External #591/#597 still need genuine read-side governance recordings, and #600
-needs storage/schema agreement. SDK #758 stays deferred; `/v2` is already in
-source, with public proxy installation awaiting a release tag. Resolve runtime/tool/fixture admission requirements, then run the required
-benchmark. Full PR/main CI and release integration are now authorized. Final acceptance and the
-published paired baseline remain required before release; no gate is waived.
+Start from the current checkpoint at the top and tracker #645. v2.13.1 is
+published; continue task 23 in the release sequence by reconciling the prepared
+v2.14 branch with that baseline. Audit completed context/Trace/GitOps/three-way
+work before repeating it. Preserve the explicitly tracked broader acceptance,
+server evidence, scanner CI and frozen benchmark runtime/grant/grading/accounting
+work. Public Go proxy installation has passed; SDK #758 remains deferred.
+The earlier requirement to complete the full paired benchmark before v2.13
+publication is superseded by the maintainer's approved scoped release decision.
+Unfinished gates remain required for their planned scope and must not be reported
+as passed. No new ConfigHub API is a Scout release prerequisite.
 
 - [Adopted 3.0 execution plan](docs/roadmap-3.0-execution.md)
 - [Tracker #645](https://github.com/confighub/cub-scout/issues/645)
