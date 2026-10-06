@@ -1,0 +1,92 @@
+{
+  "schema": "v214-watch-identity-live-proof.v1",
+  "sourceCommit": "61dbff49dc5fcc2563a6cb0826e7e286980935c1",
+  "sourceWorktreeCleanBeforeAndAfter": true,
+  "binarySHA256": "963fd0fa519ae0f5c1ef07bfdc9c8ca7e73379b2f1ea0c8b829a0ef30807031c",
+  "finished": "2026-10-06T15:16:27.917332+00:00",
+  "passed": true,
+  "failures": [],
+  "ownedClusterRemoved": true,
+  "sharedConfigUnchanged": true,
+  "steps": [
+    {
+      "name": "before-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "18597282d510bdb1c7b1b3e6cb19ef6fc240082c88715d8ebdcdde1ec200287e"
+    },
+    {
+      "name": "bootstrap-owned-resources",
+      "exit": 0,
+      "stdoutSHA256": "b537b5ff5209b6c35fd7c972313ce9f7fd3a3ff62720b13f5df44a72c51296df",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "watch-selected",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "watch-restricted",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "bot-selected",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "bot-restricted",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-selected",
+      "exit": 0,
+      "stdoutSHA256": "af8cd4a9bfb09c365157ddaee1b1cd1f6b6c895428b3631714482e00c42ffdb8",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "delete-owned-instance",
+      "exit": 0,
+      "stdoutSHA256": "66c4b216151521dfcb90f4a6739915a6a611ebb8895ef9209a7fa1cb30351a53",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "recreate-owned-instance",
+      "exit": 0,
+      "stdoutSHA256": "4dbd4e329ecdbbcafa12fe6e62ab4700f38b050011a6c2bae04b78913eae7c4f",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "watch-recreated",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cleanup-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "02eee56ebaee37bbe43a6a644c6cb45ab5eca822e92402c26b112638de94b6f4"
+    },
+    {
+      "name": "after-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "scope": "Actual watch/bot --once and map identity parity; restricted-reader identity denial; object recreation. One owned Kubernetes 1.35 cluster; identity-only cost, not total cost, full scanner coverage, Target binding or informer age. Build from clean source with hash binding; no compiler VCS stamp claim."
+}

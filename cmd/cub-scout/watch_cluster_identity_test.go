@@ -151,6 +151,8 @@ func TestWatchAndBotIdentityUsesSelectedConfigOneRead(t *testing.T) {
 }
 
 func TestWatchIdentityRefusesInformerBeforeSink(t *testing.T) {
+	priorCap := watchReceiptBatchCap
+	defer func() { watchReceiptBatchCap = priorCap }()
 	cmd := watchContextCommand(t, "watch", "missing")
 	cmd.Flags().Bool("cluster-identity", true, "")
 	output := filepath.Join(t.TempDir(), "must-not-exist")

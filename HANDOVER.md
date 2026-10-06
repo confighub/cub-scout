@@ -14,8 +14,13 @@ pull remains denied (#520).
 **Current work: v2.14 tasks 24–32, watch/bot identity packet (#789).**
 The maintainer authorized tasks 1–10 from the latest ordered list. Full scope
 remains; no release or parent completion is asserted from a bounded packet.
-Watch/bot polling identity reuses the accepted map model; deterministic tests
-pass, while owned-cluster proof and full-source checks are pending.
+Watch/bot polling identity (#789) reuses the accepted map model. Focused/race
+tests and genuine map/watch/bot parity, restricted-reader identity denial and
+recreation pass at `61dbff49`. Initial map-shorthand harness failure and cleanup
+are retained. Full Go found test cap leakage, now repaired with a combined
+identity/receipt check passing; final full-source rerun is required. Graph/GSF
+strict context (#790) is implemented with selected/ambient and invalid-selector
+controls; owned-cluster acceptance and final-source checks are pending.
 PR #782 merged at `6cfccd77` after exact-head Unit/Integration/GitOps/Proof CI
 passed; optional tiers remained skipped. The prepared P4 source is integrated.
 The next bounded slice exposes verified instance references/merge keys or

@@ -71,6 +71,17 @@ try:
     report = json.loads(call(['./cub-scout', 'map', 'list', '--kube-context', 'selected', '--cluster-identity', '--namespace', 'team-a', '--kind', 'Deployment', '--format', 'json'], 'map-selected'))
     mapped = next(r for r in report['resources'] if r['name'] == 'api')['resourceIdentity']
     assert mapped == resources[0], 'map/watch/bot identity disagreement'
+    for command, arguments in [('graph', ['graph', 'export']), ('snapshot', ['snapshot'])]:
+        output = root / (command + '-selected.json')
+        call(['./cub-scout', *arguments, '--kube-context', 'selected', '--namespace', 'team-a', '--output', str(output)], command + '-selected')
+        exported = json.loads(output.read_text())
+        assert exported['cluster'] == 'selected'
+        rows = exported['nodes'] if command == 'graph' else exported['entries']
+        assert any(row['kind'] == 'Deployment' and row['name'] == 'api' for row in rows)
+        for selection in ['', 'missing']:
+            bad = root / (command + '-bad-' + (selection or 'blank') + '.json')
+            call(['./cub-scout', *arguments, '--kube-context', selection, '--output', str(bad)], command + '-refuses-' + (selection or 'blank'), expected=1)
+            assert not bad.exists()
     call(['kubectl', '--kubeconfig', str(cfg), '--context', 'selected', '-n', 'team-a', 'delete', 'deployment', 'api'], 'delete-owned-instance')
     call(['kubectl', '--kubeconfig', str(cfg), '--context', 'selected', 'apply', '-f', '-'], 'recreate-owned-instance', input=json.dumps(deployment))
     output = root / 'recreated.jsonl'
@@ -90,7 +101,7 @@ finally:
         except Exception as exc:
             failures.append('cleanup: ' + str(exc))
     clean = not subprocess.check_output(['git', 'status', '--porcelain'], cwd=source, text=True).strip()
-    proof = {'schema': 'v214-watch-identity-live-proof.v1', 'sourceCommit': head, 'sourceWorktreeCleanBeforeAndAfter': clean, 'binarySHA256': locals().get('binarysha'), 'finished': datetime.datetime.now(datetime.timezone.utc).isoformat(), 'passed': not failures and cleanup and before == sha(shared) and clean, 'failures': failures, 'ownedClusterRemoved': cleanup, 'sharedConfigUnchanged': before == sha(shared), 'steps': steps, 'scope': 'Actual watch/bot --once and map identity parity; restricted-reader identity denial; object recreation. One owned Kubernetes 1.35 cluster; identity-only cost, not total cost, full scanner coverage, Target binding or informer age. Build from clean source with hash binding; no compiler VCS stamp claim.'}
+    proof = {'schema': 'v214-watch-identity-live-proof.v1', 'sourceCommit': head, 'sourceWorktreeCleanBeforeAndAfter': clean, 'binarySHA256': locals().get('binarysha'), 'finished': datetime.datetime.now(datetime.timezone.utc).isoformat(), 'passed': not failures and cleanup and before == sha(shared) and clean, 'failures': failures, 'ownedClusterRemoved': cleanup, 'sharedConfigUnchanged': before == sha(shared), 'steps': steps, 'scope': 'Actual watch/bot --once and map identity parity; restricted-reader identity denial; object recreation; graph/snapshot explicit context and invalid-context refusal. One owned Kubernetes 1.35 cluster; identity-only cost, not total cost, full scanner coverage, Target binding or informer age. Build from clean source with hash binding; no compiler VCS stamp claim.'}
     (root / 'proof.json').write_text(json.dumps(proof, indent=2) + '\n')
     print(json.dumps({'proof': str(root / 'proof.json'), 'passed': proof['passed'], 'failures': failures}))
     assert proof['passed']

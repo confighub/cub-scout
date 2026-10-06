@@ -7,9 +7,26 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
+
+// Preserve each command's legacy default while making explicit selection strict.
+// The returned label is provenance from the same capture, never a second read.
+func buildClusterConfigForCommand(cmd *cobra.Command) (*rest.Config, string, error) {
+	selection, err := clusterContextSelectionFromFlag(cmd)
+	if err != nil {
+		return nil, "", err
+	}
+	if selection.explicit {
+		binding := resolveLocalClusterBindingForSelection(selection)
+		return binding.config, binding.context, binding.err
+	}
+	cfg, err := buildConfig()
+	return cfg, "", err
+}
 
 // resolveClusterConfig selects credentials without changing the kubeconfig or
 // any process-wide current-context state. A non-empty explicit context is

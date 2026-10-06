@@ -3529,3 +3529,13 @@ polling cycle. Identity-only cost is repeated on events; count once on
 `cluster.observed`. Owner/severity filters do not hide that cycle event.
 Defaults remain unchanged; `--watch-backed` is refused pending original-age
 proof. See [event contract](watch-events.md#polling-identity-214-candidate).
+
+### Graph/snapshot explicit context (2.14 candidate)
+
+`graph export --kube-context NAME` and `snapshot --kube-context NAME` capture one
+strict Kubernetes config. Empty/missing explicit names refuse without fallback
+or output-file creation; current-context is unchanged. Graph cancellation uses
+the command context. `graph export --empty` and fixture-time mode cannot be
+combined with explicit selection. The graph/GSF `cluster` string records the
+selected context label, not verified cluster identity. Existing GSF list-skipping
+semantics do not establish complete inventory. See the [example](../../examples/graph-export/#explicit-context-214-candidate).

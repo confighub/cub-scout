@@ -119,3 +119,12 @@ restricted-reader controls but failed the subsequent map invocation because the
 harness used unsupported map shorthand `-n`. The preserved
 `live-identity-attempt-1.json` records failure and successful owned-cluster
 cleanup; it is not complete acceptance. The reproducer now uses `--namespace`.
+
+Runtime acceptance passes at clean source `61dbff49`: actual watch/bot/map
+identity parity, one measured identity request per cycle, restricted-reader
+identity denial and Deployment recreation all pass.
+`live-identity-proof.json` and curated JSONL captures retain the exact source
+and binary binding; owned-cluster removal and shared config preservation pass.
+A full-Go run subsequently found test-state leakage from the informer-refusal
+test into an existing receipt test. The refusal test now restores the cap;
+production identity code is unchanged. Full-source rerun remains required.
