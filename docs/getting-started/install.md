@@ -67,6 +67,9 @@ Unix archives include `cub-scout`, `kubectl-cub_scout`, and the plugin entry poi
 With Go 1.24 or newer, use the versioned module path:
 
 ```sh
+# Latest released version
+go install github.com/confighub/cub-scout/v2/cmd/cub-scout@latest
+# Or pin this release
 go install github.com/confighub/cub-scout/v2/cmd/cub-scout@v2.13.1
 ```
 
