@@ -1,5 +1,5 @@
 """Owned-cluster acceptance; private setup/logs never become public fixtures."""
-import datetime, hashlib, json, os, pathlib, subprocess, tempfile, uuid
+import datetime, fcntl, hashlib, json, os, pathlib, pty, select, struct, subprocess, tempfile, time, uuid
 source = pathlib.Path.cwd()
 root = pathlib.Path(tempfile.mkdtemp(prefix='scout-v214-watch-identity-'))
 root.chmod(0o700)
@@ -82,6 +82,38 @@ try:
             bad = root / (command + '-bad-' + (selection or 'blank') + '.json')
             call(['./cub-scout', *arguments, '--kube-context', selection, '--output', str(bad)], command + '-refuses-' + (selection or 'blank'), expected=1)
             assert not bad.exists()
+    master, slave = pty.openpty()
+    fcntl.ioctl(slave, 0x80087467, struct.pack('HHHH', 80, 400, 0, 0))
+    child = subprocess.Popen(['./cub-scout', 'map', '--kube-context', 'selected', '--namespace', 'team-a'], cwd=root, env={**env, 'TERM': 'xterm-256color'}, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
+    os.close(slave)
+    terminal, exported = bytearray(), False
+    started, deadline, last_key, phase = time.monotonic(), time.monotonic() + 30, 0, 0
+    try:
+        while time.monotonic() < deadline and child.poll() is None:
+            now = time.monotonic()
+            if now - started > 2 and now - last_key > 1:
+                os.write(master, b'M' if phase % 2 == 0 else b'E')
+                phase += 1; last_key = now
+            ready, _, _ = select.select([master], [], [], 0.2)
+            if ready:
+                try: terminal.extend(os.read(master, 65536))
+                except OSError: break
+            files = list(root.glob('cub-scout-graph-*.svg'))
+            if files:
+                content = files[0].read_text()
+                assert '<svg' in content and 'api' in content and 'selected' in content
+                exported = True; break
+    finally:
+        if child.poll() is None:
+            os.write(master, b'\x03')
+        try: child.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            child.terminate()
+            try: child.wait(timeout=5)
+            except subprocess.TimeoutExpired: child.kill(); child.wait(timeout=5)
+        os.close(master)
+        (root / 'actual-tui-graph.terminal').write_bytes(terminal)
+    assert exported, 'actual selected-context TUI graph export failed'
     call(['kubectl', '--kubeconfig', str(cfg), '--context', 'selected', '-n', 'team-a', 'delete', 'deployment', 'api'], 'delete-owned-instance')
     call(['kubectl', '--kubeconfig', str(cfg), '--context', 'selected', 'apply', '-f', '-'], 'recreate-owned-instance', input=json.dumps(deployment))
     output = root / 'recreated.jsonl'
@@ -100,8 +132,9 @@ finally:
             cleanup = name not in call(['kind', 'get', 'clusters'], 'after-clusters').splitlines()
         except Exception as exc:
             failures.append('cleanup: ' + str(exc))
+    final_head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=source, text=True).strip()
     clean = not subprocess.check_output(['git', 'status', '--porcelain'], cwd=source, text=True).strip()
-    proof = {'schema': 'v214-watch-identity-live-proof.v1', 'sourceCommit': head, 'sourceWorktreeCleanBeforeAndAfter': clean, 'binarySHA256': locals().get('binarysha'), 'finished': datetime.datetime.now(datetime.timezone.utc).isoformat(), 'passed': not failures and cleanup and before == sha(shared) and clean, 'failures': failures, 'ownedClusterRemoved': cleanup, 'sharedConfigUnchanged': before == sha(shared), 'steps': steps, 'scope': 'Actual watch/bot --once and map identity parity; restricted-reader identity denial; object recreation; graph/snapshot explicit context and invalid-context refusal. One owned Kubernetes 1.35 cluster; identity-only cost, not total cost, full scanner coverage, Target binding or informer age. Build from clean source with hash binding; no compiler VCS stamp claim.'}
+    proof = {'schema': 'v214-watch-identity-live-proof.v1', 'sourceCommit': head, 'sourceWorktreeCleanBeforeAndAfter': clean, 'sourceCommitUnchanged': head == final_head, 'binarySHA256': locals().get('binarysha'), 'finished': datetime.datetime.now(datetime.timezone.utc).isoformat(), 'passed': not failures and cleanup and before == sha(shared) and clean and head == final_head, 'failures': failures, 'ownedClusterRemoved': cleanup, 'sharedConfigUnchanged': before == sha(shared), 'steps': steps, 'scope': 'Actual watch/bot --once and map identity parity; restricted-reader identity denial; object recreation; graph/snapshot explicit context and invalid-context refusal; actual PTY TUI graph export. One owned Kubernetes 1.35 cluster; identity-only cost, not total cost, full scanner coverage, Target binding or informer age. Build from clean source with hash binding; no compiler VCS stamp claim.'}
     (root / 'proof.json').write_text(json.dumps(proof, indent=2) + '\n')
     print(json.dumps({'proof': str(root / 'proof.json'), 'passed': proof['passed'], 'failures': failures}))
     assert proof['passed']

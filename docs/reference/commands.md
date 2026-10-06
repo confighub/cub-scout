@@ -92,7 +92,7 @@ cub-scout map [flags]
 | Flag | Description |
 |------|-------------|
 | `--hub` | Start in the ConfigHub hierarchy view; `--kube-context`, if given, applies when switching to the local TUI and does not select a ConfigHub context |
-| `--kube-context` | Use this exact kubeconfig context for local TUI inventory, bounded explain, scan and trace; missing names fail without fallback. In this mode graph export, command mode, shell, and import are disabled until they honor the binding |
+| `--kube-context` | Use this exact kubeconfig context for local TUI inventory, bounded explain, scan and trace; missing names fail without fallback. Graph export uses the captured config and selected namespace; command mode, shell, and import remain disabled until they honor the binding |
 | `-n, --namespace` | Filter by namespace |
 | `-q, --query` | Resource query filter |
 

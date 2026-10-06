@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 )
@@ -138,5 +139,68 @@ func TestGraphContextOfflineAndCancellationRefuse(t *testing.T) {
 	require.Zero(t, ambient.requests.Load())
 	for _, command := range []*cobra.Command{graphExportCmd, snapshotCmd} {
 		require.NotNil(t, command.Flags().Lookup("kube-context"))
+	}
+}
+
+func TestScopedTUIGraphExportUsesCapturedBindingAndNamespace(t *testing.T) {
+	for _, deny := range []bool{false, true} {
+		t.Run(fmt.Sprintf("denied=%t", deny), func(t *testing.T) {
+			requests := []string{}
+			selected := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				requests = append(requests, r.URL.Path)
+				w.Header().Set("Content-Type", "application/json")
+				if deny {
+					w.WriteHeader(403)
+					fmt.Fprint(w, `{"apiVersion":"v1","kind":"Status","reason":"Forbidden","code":403}`)
+					return
+				}
+				if r.URL.Path == "/apis/apps/v1/namespaces/team-a/deployments" {
+					fmt.Fprint(w, `{"apiVersion":"apps/v1","kind":"DeploymentList","items":[{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"api","namespace":"team-a"}}]}`)
+				} else if r.URL.Path == "/apis/apps/v1/namespaces/team-a/replicasets" {
+					fmt.Fprint(w, `{"apiVersion":"apps/v1","kind":"ReplicaSetList","items":[]}`)
+				} else {
+					fmt.Fprint(w, `{"apiVersion":"v1","kind":"PodList","items":[]}`)
+				}
+			}))
+			defer selected.Close()
+			ambient := newCountedKubeServer(t)
+			path, _ := resolverKubeconfig(t, "ambient", map[string]string{"selected": selected.URL, "ambient": ambient.server.URL})
+			t.Setenv("KUBECONFIG", path)
+			binding := resolveLocalClusterBindingForSelection(clusterContextSelection{name: "selected", explicit: true})
+			require.NoError(t, binding.err)
+			require.NoError(t, os.WriteFile(path, []byte("invalid config after capture"), 0600))
+			t.Chdir(t.TempDir())
+			old := runGraphExportCommand
+			runGraphExportCommand = func(string, string) error { t.Fatal("selected action invoked ambient child"); return nil }
+			t.Cleanup(func() { runGraphExportCommand = old })
+			model := LocalClusterModel{explicitClusterContext: true, clusterBinding: binding, namespaces: []string{"team-a"}, namespaceIdx: 1}
+			message := model.runGraphExport("json")().(graphExportMsg)
+			if deny {
+				require.Error(t, message.err)
+				_, err := os.Stat(message.outputPath)
+				require.True(t, os.IsNotExist(err))
+				require.Len(t, requests, 1)
+			} else {
+				require.NoError(t, message.err)
+				raw, err := os.ReadFile(message.outputPath)
+				require.NoError(t, err)
+				var report map[string]interface{}
+				require.NoError(t, json.Unmarshal(raw, &report))
+				require.Equal(t, "selected", report["cluster"])
+				require.Contains(t, string(raw), "api")
+				require.Len(t, requests, 3)
+			}
+			require.Zero(t, ambient.requests.Load())
+		})
+	}
+}
+
+func TestScopedTUIGraphExportKeySchedulesBoundAction(t *testing.T) {
+	for _, key := range []rune{'e', 'E'} {
+		model := LocalClusterModel{explicitClusterContext: true, panelMode: true, panelView: viewMaps, keymap: defaultLocalKeyMap()}
+		_, command := model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{key}})
+		require.NotNil(t, command)
+		result := command().(graphExportMsg)
+		require.ErrorContains(t, result.err, "selected Kubernetes context is unavailable")
 	}
 }

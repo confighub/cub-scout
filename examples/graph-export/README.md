@@ -48,3 +48,15 @@ Deterministic checks are `TestGraphAndSnapshot*` and
 `python3 examples/watch-collection-omissions/verify-live-identity.py`; graph and
 snapshot controls are additional to its watch/bot identity proof. Genuine
 acceptance of this extension is pending until a matching clean-source receipt.
+
+With explicit context, the map TUI Maps export action reads the captured config
+in-process and preserves its selected namespace. It never invokes a PATH/ambient
+CLI fallback; denied/missing bindings refuse without writing a graph.
+`TestScopedTUIGraphExportUsesCapturedBindingAndNamespace` verifies this against
+selected/ambient endpoints after the private kubeconfig is made invalid.
+
+Actual CLI graph/snapshot context selection and invalid-selector refusal pass
+at `b7331f78`, retained in the shared `live-export-context-proof.json`. That
+receipt predates the TUI implementation and does not prove the TUI action.
+The extended reproducer now opens an owned PTY, uses Maps → SVG export, checks
+the selected label/workload in the artifact and terminates only its own child.

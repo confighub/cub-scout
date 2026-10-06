@@ -1964,18 +1964,10 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 
 			case key.Matches(msg, m.keymap.ExportHTML) && m.panelView == viewMaps:
-				if m.explicitClusterContext {
-					m.statusMsg = explicitContextUnsupportedAction
-					return m, nil
-				}
 				m.statusMsg = "Exporting graph (html)..."
 				return m, m.runGraphExport("html")
 
 			case key.Matches(msg, m.keymap.ExportSVG) && m.panelView == viewMaps:
-				if m.explicitClusterContext {
-					m.statusMsg = explicitContextUnsupportedAction
-					return m, nil
-				}
 				m.statusMsg = "Exporting graph (svg)..."
 				return m, m.runGraphExport("svg")
 
@@ -6460,9 +6452,6 @@ func runGraphExportViaCLI(format, outputPath string) error {
 
 func (m LocalClusterModel) runGraphExport(format string) tea.Cmd {
 	return func() tea.Msg {
-		if m.explicitClusterContext {
-			return graphExportMsg{format: format, err: fmt.Errorf("%s", explicitContextUnsupportedAction)}
-		}
 		normalized := strings.ToLower(strings.TrimSpace(format))
 		if normalized == "" {
 			normalized = "html"
@@ -6477,7 +6466,13 @@ func (m LocalClusterModel) runGraphExport(format string) tea.Cmd {
 		}
 
 		outputPath := graphExportOutputPath(normalized)
-		if err := runGraphExportCommand(normalized, outputPath); err != nil {
+		var err error
+		if m.explicitClusterContext {
+			err = exportGraphFromBinding(m.clusterBinding, m.getNamespaceFilter(), normalized, outputPath)
+		} else {
+			err = runGraphExportCommand(normalized, outputPath)
+		}
+		if err != nil {
 			return graphExportMsg{
 				format:     normalized,
 				outputPath: outputPath,
