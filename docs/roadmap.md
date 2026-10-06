@@ -1555,3 +1555,12 @@ from the v2.13 critical path. Follow-up #597 may adopt a server-evaluated GET
 when an accepted existing interface exposes it. Scout continues to observe
 through existing reads, keeps unavailable evaluations unknown and never writes
 approvals or evaluates server policy. This follow-up does not block v2.13.
+
+### v2.14 acceptance carry-forward — 2026-10-06
+
+The maintainer approved a scoped v2.13 release. Existing issues #774, #591,
+#561/#641/#599/#746 and #645/#709 retain unfinished scanner/full-demo CI,
+effective coverage, broader live acceptance and benchmark work for v2.14.
+These tasks are deferred, not passed. Optional evaluated prerequisite reads
+remain in #597. Frozen benchmark definitions and the continuity commitments
+remain unchanged.

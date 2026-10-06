@@ -1,5 +1,21 @@
 # Delivery plan to cub scout 3.0
 
+## Approved release scope — 2026-10-06
+
+The maintainer approved releasing the verified v2.13 candidate and moving
+unfinished broader acceptance and benchmark work to v2.14. This supersedes
+older text making every campaign item a prerequisite for v2.13 publication.
+The deferred work is not passed, waived silently or removed from tracking:
+scanner credential/full-demo CI (#774), effective/inherited coverage (#591),
+broader controller/health/context acceptance (#561/#641/#599/#746), optional
+server-evaluated prerequisites (#597), and frozen benchmark binding/runtime,
+grants/grading/accounting and paired execution (#645/#709) remain open for 2.14.
+The companion harness merge remains follow-up work. Existing negative controls,
+full Go tests, verified candidate CI, tagged packaging and published installation
+checks remain required for this scoped release. No performance/savings or broader
+health/approval/coverage claim is made. Frozen benchmark inputs remain unchanged.
+
+
 ## Current execution status
 
 The current verified status, open packets, technical admission requirements, and operating
