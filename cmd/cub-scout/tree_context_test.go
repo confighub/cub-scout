@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 )
 
@@ -151,4 +152,43 @@ func TestTreeCaptureSurvivesAmbientConfigChange(t *testing.T) {
 	require.True(t, changed)
 	require.Contains(t, out, `"cluster": "selected"`)
 	require.Zero(t, ambient.requests.Load())
+}
+
+// `tree workloads --kube-context` pinned the context while the commands it
+// aliases, `map workloads` and `map patterns`, had no such flag and always
+// read the ambient context.
+func TestMapWorkloadsAndPatternsAcceptExplicitContext(t *testing.T) {
+	for name, tc := range map[string]struct {
+		command *cobra.Command
+		run     func(*cobra.Command, []string) error
+	}{
+		"workloads": {mapWorkloadsCmd, runMapWorkloads},
+		"patterns":  {mapPatternsCmd, runMapPatterns},
+	} {
+		t.Run(name, func(t *testing.T) {
+			require.NotNil(t, tc.command.Flags().Lookup("kube-context"), "map %s has no --kube-context flag", name)
+			ambient := newCountedKubeServer(t)
+			requests := 0
+			selected := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				requests++
+				w.Header().Set("Content-Type", "application/json")
+				fmt.Fprint(w, `{"apiVersion":"v1","kind":"List","items":[]}`)
+			}))
+			defer selected.Close()
+			path, before := resolverKubeconfig(t, "ambient", map[string]string{"selected": selected.URL, "ambient": ambient.server.URL})
+			t.Setenv("KUBECONFIG", path)
+			var err error
+			captureStdout(t, func() { err = tc.run(exportContextCommand(t, name, "selected"), nil) })
+			require.NoError(t, err)
+			require.NotZero(t, requests)
+			require.Zero(t, ambient.requests.Load())
+			after, err := os.ReadFile(path)
+			require.NoError(t, err)
+			require.Equal(t, before, after)
+
+			err = tc.run(exportContextCommand(t, name, "missing"), nil)
+			require.Error(t, err, "a missing explicit context must refuse, not fall back")
+			require.Zero(t, ambient.requests.Load())
+		})
+	}
 }

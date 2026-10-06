@@ -51,7 +51,7 @@ func runTreeComposition(ctx context.Context) (resultErr error) {
 		}
 		defer func() {
 			if err := child.Cleanup(); err != nil && resultErr == nil {
-				resultErr = fmt.Errorf("private composition binding cleanup failed")
+				resultErr = fmt.Errorf("private composition binding cleanup failed: %w", err)
 			}
 		}()
 		ctx = context.WithValue(ctx, treeChildConfigKey{}, child)

@@ -692,6 +692,8 @@ func init() {
 	// List-specific flags
 	addRecordedMapFlags(mapListCmd)
 	mapListCmd.Flags().String("kube-context", "", "Use this exact Kubernetes context for this inventory read")
+	mapWorkloadsCmd.Flags().String("kube-context", "", "Use this exact Kubernetes context for this workload read (no fallback)")
+	mapPatternsCmd.Flags().String("kube-context", "", "Use this exact Kubernetes context for this pattern read (no fallback)")
 	mapListCmd.Flags().Bool("cluster-identity", false, "Include observed cluster identity and identity-only read cost in a separate envelope (one extra GET)")
 	mapListCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
 	mapListCmd.Flags().StringVar(&mapKind, "kind", "", "Filter by resource kind")
