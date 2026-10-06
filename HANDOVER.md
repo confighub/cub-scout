@@ -15,7 +15,10 @@ pull remains denied (#520).
 through `7533968c` is applied to current main on `codex/v214-release-integration`.
 This selects only P4 product/docs changes rather than replaying superseded P3
 history. One example-document conflict was resolved; production files applied
-cleanly. Full integrated tests and fresh owned-cluster identity proof are running.
+cleanly. Integrated build, full Go tests, vet and CLI documentation checks pass. Fresh
+owned Kubernetes 1.35 administrator/restricted-reader CLI identity proof also
+passes; failed harness attempt, cleanup and pre-commit binary limits are retained
+in the [summary](examples/cluster-identity-cost/live-cli-identity-proof.json).
 No v2.14 publication or broader acceptance is claimed yet.
 
 The [configuration delivery checklist](docs/reference/configuration-investigation-delivery.md)

@@ -136,3 +136,20 @@ those CLI/MCP checks after the implicit-context guard repair, with the exact
 host binary retained in the private package. It remains authored loopback proof;
 the eight model controls exercise the TUI guard rather than a live TUI process.
 The earlier process proof remains the historical first integration checkpoint.
+
+## Fresh integrated live CLI checkpoint — 2026-10-06
+
+The [retained summary](live-cli-identity-proof.json) records one owned Kubernetes
+1.35 cluster with actual administrator and restricted-service-account reads.
+JSON/ASCII/Markdown map identity runs pass: the administrator ID matches the
+actual kube-system Namespace UID; the viewer retains the workload inventory while
+identity stays unverified with a denial omission. Actual write and Secret-read
+authorization checks refuse. The cluster was removed and shared kubeconfig bytes
+were unchanged. Private credentials and raw configuration remain local.
+
+The first attempt used an unsupported `-n` shorthand and failed before Scout
+read the cluster; its cleanup and failure remain in the summary. The corrected
+harness uses `--namespace`. The binary was built from modified integrated source
+before its commit; build metadata and the source-binding limit remain explicit.
+This is CLI acceptance only, not a clean-commit release binary, TUI/MCP process,
+two-cluster isolation, controller health, six-surface or total-command cost proof.
