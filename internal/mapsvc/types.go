@@ -29,11 +29,15 @@ type Entry struct {
 	// Owner. It is excluded from legacy JSON and emitted only in the opt-in
 	// map-list ownership diagnostics envelope.
 	OwnershipDetection *OwnershipDetectionEvidence `json:"-"`
-	Observation        *agent.ObservationEvidence  `json:"observation,omitempty"`
-	Labels             map[string]string           `json:"labels,omitempty"`
-	Status             string                      `json:"status"` // Ready, NotReady, Failed, Pending, Unknown
-	CreatedAt          time.Time                   `json:"createdAt"`
-	UpdatedAt          time.Time                   `json:"updatedAt"`
+	// Instance evidence is retained only by opt-in captured-cluster collectors.
+	// Legacy/recorded JSON and display IDs remain unchanged.
+	ResourceIdentity         *agent.ObservedResourceIdentity `json:"-"`
+	ResourceIdentityOmission string                          `json:"-"`
+	Observation              *agent.ObservationEvidence      `json:"observation,omitempty"`
+	Labels                   map[string]string               `json:"labels,omitempty"`
+	Status                   string                          `json:"status"` // Ready, NotReady, Failed, Pending, Unknown
+	CreatedAt                time.Time                       `json:"createdAt"`
+	UpdatedAt                time.Time                       `json:"updatedAt"`
 }
 
 const (

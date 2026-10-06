@@ -619,7 +619,7 @@ for its already loaded workload entries.
 The unreleased v2.14 candidate adds `map list --cluster-identity --format
 ascii|json|md` and `map --cluster-identity`. Both capture one context/config
 snapshot. JSON selects `map-list-cluster-identity.v1`; the TUI displays identity
-and read costs in `V` using the latest inventory refresh, without another read
+and per-resource instance references/read costs in `V` using the latest inventory refresh, without another read
 when opening that view. Missing configuration or client initialization produces
 an explicit unavailable collection. A denied identity read leaves returned
 inventory intact and identity unverified. Recorded and test-hook inventory

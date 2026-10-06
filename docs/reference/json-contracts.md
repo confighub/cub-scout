@@ -206,6 +206,27 @@ Context and client configuration are captured together. Endpoint output omits
 user information, query and fragment fields. Denied/malformed/unreachable
 identity remains `unverified`, without an ID or successful observation time.
 
+Each opt-in resource row adds `resourceIdentity`. A verified row contains
+`status: "verified"`, `observed` (cluster ID/source, API version/group/kind,
+namespace/name/UID and declared resource scope) and `mergeKey`. The key is
+canonical JSON of `[clusterIdSource, clusterId, group, kind, namespace, name, uid]`;
+API version is retained as evidence but does not split one object instance.
+Legacy row `id` remains a display identifier, not an instance merge key.
+
+Unverified rows have no observed identity or merge key and retain one omission:
+`cluster_identity_unverified`, `resource_scope_unknown`, `resource_type_mismatch`,
+`object_identity_unavailable`, `object_identity_not_collected` or
+`resource_cluster_mismatch`. Missing object UID or required namespace never
+becomes a name-based key. Scope comes from the exact built-in/controller registry;
+custom configuration without scope stays unknown. Wrong response type/version
+refuses the join. These references use the already returned inventory objects
+and add no reads. Failed TUI refresh and wrong current cluster evidence mask old
+verified references while retaining useful inventory/ownership evidence.
+
+These are scoped object-instance observations, not an atomic snapshot, current
+health, authenticated provenance, complete population or ConfigHub Target binding.
+Default and recorded rows do not acquire the new field.
+
 The opt-in admits one extra bounded Namespace GET per inventory refresh.
 `cluster.cost` counts only its transport attempts, consumed response bodies and
 duration; inventory/authentication/other-client costs and wire/header bytes are

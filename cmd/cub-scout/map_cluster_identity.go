@@ -13,6 +13,8 @@ import (
 	"github.com/confighub/cub-scout/v2/internal/mapsvc"
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 )
 
@@ -20,7 +22,7 @@ type mapClusterIdentityOutput struct {
 	Schema           string                        `json:"schema"`
 	Cluster          agent.ClusterIdentityEvidence `json:"cluster"`
 	ClusterCostScope string                        `json:"clusterCostScope"`
-	Resources        []MapEntry                    `json:"resources"`
+	Resources        []mapClusterIdentityResource  `json:"resources"`
 	Collection       mapClusterIdentityCollection  `json:"collection"`
 }
 
@@ -97,4 +99,100 @@ func mapClusterIdentityText(evidence *agent.ClusterIdentityEvidence) string {
 	fmt.Fprintf(&text, "Identity read cost: requests=%d consumed-body-bytes=%d duration-ms=%d reused=%t transport-errors=%d body-read-errors=%d coverage=%q\n", evidence.Cost.RequestsMade, evidence.Cost.ResponseBodyBytes, evidence.Cost.DurationMillis, evidence.Cost.Reused, evidence.Cost.TransportErrors, evidence.Cost.BodyReadErrors, evidence.Cost.Coverage)
 	text.WriteString("Cost scope: identity reader only; inventory/authentication/other clients excluded.\n")
 	return text.String()
+}
+
+var mapIdentityKnownKinds = mapKnownResourceKinds()
+
+// Scope comes from the pinned resource registry, never metadata.namespace.
+func mapResourceIdentityScope(gvr schema.GroupVersionResource) (agent.ObservedResourceScope, bool) {
+	for _, known := range defaultMapWatchResources {
+		if known == gvr {
+			return agent.ObservedResourceNamespaced, true
+		}
+	}
+	for _, spec := range firstClassControllerResources() {
+		if spec.GVR == gvr {
+			if spec.Namespaced {
+				return agent.ObservedResourceNamespaced, true
+			}
+			return agent.ObservedResourceCluster, true
+		}
+	}
+	return "", false
+}
+
+func processResourceWithIdentity(item *unstructured.Unstructured, gvr schema.GroupVersionResource, clusterName string, entries []MapEntry, byOwner map[string]int, lookup mapApplicationSetLookup, cluster *agent.ClusterIdentityEvidence) []MapEntry {
+	before := len(entries)
+	entries = processResourceWithLookup(item, gvr, clusterName, entries, byOwner, lookup)
+	if cluster == nil || len(entries) != before+1 {
+		return entries
+	}
+	entry := &entries[before]
+	entry.ResourceIdentityOmission = "object_identity_unavailable"
+	if cluster.Identity != "verified" || cluster.Omission != "" {
+		entry.ResourceIdentityOmission = "cluster_identity_unverified"
+		return entries
+	}
+	scope, known := mapResourceIdentityScope(gvr)
+	if !known {
+		entry.ResourceIdentityOmission = "resource_scope_unknown"
+		return entries
+	}
+	if item.GetAPIVersion() != gvr.GroupVersion().String() || item.GetKind() != mapIdentityKnownKinds[gvr] {
+		entry.ResourceIdentityOmission = "resource_type_mismatch"
+		return entries
+	}
+	identity, err := agent.NewObservedResourceIdentity(*cluster, item, scope)
+	if err != nil {
+		return entries
+	}
+	entry.ResourceIdentity, entry.ResourceIdentityOmission = &identity, ""
+	return entries
+}
+
+type mapResourceIdentityEvidence struct {
+	Status   string                          `json:"status"`
+	Observed *agent.ObservedResourceIdentity `json:"observed,omitempty"`
+	MergeKey string                          `json:"mergeKey,omitempty"`
+	Omission string                          `json:"omission,omitempty"`
+}
+
+type mapClusterIdentityResource struct {
+	MapEntry
+	ResourceIdentity mapResourceIdentityEvidence `json:"resourceIdentity"`
+}
+
+func mapEntryIdentityEvidence(entry MapEntry, cluster *agent.ClusterIdentityEvidence) mapResourceIdentityEvidence {
+	if cluster == nil || cluster.Identity != "verified" || cluster.ObservedAt == nil || cluster.ObservedAt.IsZero() || cluster.Omission != "" {
+		return mapResourceIdentityEvidence{Status: "unverified", Omission: "cluster_identity_unverified"}
+	}
+	if entry.ResourceIdentity != nil && (entry.ResourceIdentity.ClusterID != cluster.ID || entry.ResourceIdentity.ClusterIDSource != cluster.IDSource) {
+		return mapResourceIdentityEvidence{Status: "unverified", Omission: "resource_cluster_mismatch"}
+	}
+	if entry.ResourceIdentity != nil {
+		if key, err := entry.ResourceIdentity.MergeKey(); err == nil {
+			return mapResourceIdentityEvidence{Status: "verified", Observed: entry.ResourceIdentity, MergeKey: key}
+		}
+	}
+	reason := entry.ResourceIdentityOmission
+	if reason == "" {
+		reason = "object_identity_not_collected"
+	}
+	return mapResourceIdentityEvidence{Status: "unverified", Omission: reason}
+}
+
+func mapIdentityResources(entries []MapEntry, cluster *agent.ClusterIdentityEvidence) []mapClusterIdentityResource {
+	result := make([]mapClusterIdentityResource, 0, len(entries))
+	for _, entry := range entries {
+		result = append(result, mapClusterIdentityResource{MapEntry: entry, ResourceIdentity: mapEntryIdentityEvidence(entry, cluster)})
+	}
+	return result
+}
+
+func mapResourceIdentityText(entry MapEntry, cluster *agent.ClusterIdentityEvidence) string {
+	evidence := mapEntryIdentityEvidence(entry, cluster)
+	if evidence.Observed != nil {
+		return fmt.Sprintf("Object identity: %q %q/%q %q UID=%q merge-key=%q\n", evidence.Status, entry.Namespace, entry.Name, entry.Kind, evidence.Observed.UID, evidence.MergeKey)
+	}
+	return fmt.Sprintf("Object identity: %q %q/%q %q omission=%q\n", evidence.Status, entry.Namespace, entry.Name, entry.Kind, evidence.Omission)
 }

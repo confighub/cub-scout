@@ -1,0 +1,155 @@
+{
+  "schema": "v214-map-instance-live-proof.v1",
+  "sourceCommit": "44322725357be14be6ef153b3518638d9e707c88",
+  "sourceCommitUnchanged": true,
+  "sourceWorktreeCleanBeforeAndAfter": true,
+  "binarySHA256": "e5431033349b629afeb6da4e9c5582e6469d94f49e9f5700a5fd9a60a82d54c0",
+  "buildCommand": [
+    "go",
+    "build",
+    "-buildvcs=true",
+    "-o",
+    "<private>/cub-scout",
+    "./cmd/cub-scout"
+  ],
+  "started": "2026-10-06T08:07:24.617939+00:00",
+  "finished": "2026-10-06T08:09:30.941358+00:00",
+  "passed": false,
+  "failure": "Command '['./cub-scout', 'map', '--cluster-identity', '--kube-context', 'same-label', '--namespace', 'team-a']' timed out after 5 seconds",
+  "ownedClustersRemoved": true,
+  "sharedConfigUnchanged": true,
+  "distinctClusterKeys": true,
+  "actualMCPMatchedCLI": true,
+  "actualTUIVisibleUID": true,
+  "steps": [
+    {
+      "name": "build-clean-source",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "preflight-0",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-0",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "1660b3d5be26368bae7a1924e5476eb19540ca90f51b5a513e4647580eb50ec6"
+    },
+    {
+      "name": "bootstrap-0",
+      "exit": 0,
+      "stdoutSHA256": "8e0b7544c1923d80813c99643cb47d8a885c7e190a40b577a908e437f5a6e4ec",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cluster-uid-0",
+      "exit": 0,
+      "stdoutSHA256": "7542347762de784f92a90d470ce9a450f1e9dcba95482294e417c9e5801f2ac8",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "object-uid-0",
+      "exit": 0,
+      "stdoutSHA256": "23edf71e495bc80cd2f4fa47c7a41ff3d2433b956a28d63b1dcae04311936da9",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-0",
+      "exit": 0,
+      "stdoutSHA256": "e05841a194995ecd6476704f07faa7e526cede77c4ef6f4f23239c3e1dfd9101",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-0-ascii",
+      "exit": 0,
+      "stdoutSHA256": "c1e4efe174383a13246bdfae0fb9316933f3fa3d035bba827367ca70f7707b31",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-0-md",
+      "exit": 0,
+      "stdoutSHA256": "15078bc8a5713249a80e2f7ec3cb5d65b99d3cd30d49820a21f4c1fff4c3e1a7",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "preflight-1",
+      "exit": 0,
+      "stdoutSHA256": "eb661b1c2a8a1a1fc64a5b6f86136e5e2aed3b1f9c7701505dd7f590729c2b28",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-1",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "39d9ce9045e62d08762767a7d8df70cccb28d8fbe939e91079cb2c362adce233"
+    },
+    {
+      "name": "bootstrap-1",
+      "exit": 0,
+      "stdoutSHA256": "8e0b7544c1923d80813c99643cb47d8a885c7e190a40b577a908e437f5a6e4ec",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cluster-uid-1",
+      "exit": 0,
+      "stdoutSHA256": "6c3f5b55243156d1bfcf1f622100fd58188460623eff3e85f7a4c10d8878f57c",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "object-uid-1",
+      "exit": 0,
+      "stdoutSHA256": "0169aba916592e8888b5949682ee02fe0a048857570b81194c7405d854f9a132",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-1",
+      "exit": 0,
+      "stdoutSHA256": "6659aee4555df30a4f5995f2d4f73efba0c71253c1932de2a87f86106604a316",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-1-ascii",
+      "exit": 0,
+      "stdoutSHA256": "8ea923b6ec5f81bc0f221a623532605f2b47ded44728f2d0b8b3750867ad40a9",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-1-md",
+      "exit": 0,
+      "stdoutSHA256": "8058b6148cf5059908bd0d53f8cc0b817d8d35d022aa1375aa6467e9f7c44683",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "actual-mcp",
+      "exit": 0,
+      "stdoutSHA256": "222f57cbd0de1eed0502cc103fb8a34c5a216e36d2cb54679e075dbafd01ed25",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cleanup-scout-v214-inst-1ee5bfde",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "1485fd06cecfb70cd3f07869ec809dd5e3d79ccaee44f9ce7a2f19b755dcc9f8"
+    },
+    {
+      "name": "cleanup-scout-v214-inst-8966f9f7",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "a960b68f4d93088bb675cdfe38fb55644233931b63b5f206a9eedd09e2dff275"
+    },
+    {
+      "name": "after-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "scope": "Two disposable Kubernetes 1.35 clusters with matching context/object names; actual CLI ascii/json/md, MCP stdio, standalone TUI UID and object recreation. Not broader controllers, connected Target, read-cost coverage, freshness, application health or full six-surface conformance.",
+  "compilerVCSMetadata": "Not present in this managed-worktree binary; source binding uses clean commit before/after, build command and binary SHA256.",
+  "failureCleanupNote": "Owned clusters were removed; the orphaned owned PTY process was later identified by executable/cwd and killed. Assertions had shown the expected UID; harness shutdown timed out before recreation/reader checks."
+}

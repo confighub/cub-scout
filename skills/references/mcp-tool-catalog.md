@@ -35,7 +35,7 @@ the catalog from a running server.
 | Wraps | `cub-scout map list --json` |
 | Required args | — |
 | Optional args | `namespace` (string); `context` (nonempty exact kubeconfig context for live inventory); candidate `cluster_identity` (boolean: one extra bounded Namespace GET; excludes compact and ownership-only modes) |
-| Returns | Resource inventory with ownership classification per resource; unreleased v2.14 `cluster_identity: true` uses a separate envelope with observed Namespace-instance identity, identity-reader-only cost and independent collection omissions, including unavailable inventory. Default response remains unchanged. |
+| Returns | Resource inventory with ownership classification per resource; unreleased v2.14 `cluster_identity: true` uses a separate envelope with observed Namespace-instance identity, per-resource instance references/omissions, identity-reader-only cost and independent collection omissions, including unavailable inventory. Default response remains unchanged. |
 | When to load | Broad inventory question. "What's running here?" with ownership awareness. NOT a first stop for "what's broken?" |
 
 ### `scan`

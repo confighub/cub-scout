@@ -1,0 +1,191 @@
+{
+  "schema": "v214-map-instance-live-proof.v1",
+  "sourceCommit": "44322725357be14be6ef153b3518638d9e707c88",
+  "sourceCommitUnchanged": true,
+  "sourceWorktreeCleanBeforeAndAfter": true,
+  "binarySHA256": "e5431033349b629afeb6da4e9c5582e6469d94f49e9f5700a5fd9a60a82d54c0",
+  "buildCommand": [
+    "go",
+    "build",
+    "-buildvcs=true",
+    "-o",
+    "<private>/cub-scout",
+    "./cmd/cub-scout"
+  ],
+  "started": "2026-10-06T08:15:09.638839+00:00",
+  "finished": "2026-10-06T08:17:05.200975+00:00",
+  "passed": true,
+  "failure": null,
+  "ownedClustersRemoved": true,
+  "sharedConfigUnchanged": true,
+  "distinctClusterKeys": true,
+  "actualMCPMatchedCLI": true,
+  "actualTUIVisibleUID": true,
+  "restrictedReaderRetainedInventoryWithoutKey": true,
+  "steps": [
+    {
+      "name": "build-clean-source",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "preflight-0",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-0",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "ac9d012de23d54c0bff9141f3047d6a5c48a001361b6edbf7af3f0688635d17d"
+    },
+    {
+      "name": "bootstrap-0",
+      "exit": 0,
+      "stdoutSHA256": "8e0b7544c1923d80813c99643cb47d8a885c7e190a40b577a908e437f5a6e4ec",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cluster-uid-0",
+      "exit": 0,
+      "stdoutSHA256": "4265be23ef2d8bcb52ddc8b9697b76ff8e63a821d79fcc82f57160c6985f4168",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "object-uid-0",
+      "exit": 0,
+      "stdoutSHA256": "f250eb08657ca5782f39544efa259382e1c637980f79545ad25232042ca8201f",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-0",
+      "exit": 0,
+      "stdoutSHA256": "f62dbf6d8bfb1528f646c12a9487f0720891901b45b11d6aa35105856a561d21",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-0-ascii",
+      "exit": 0,
+      "stdoutSHA256": "ec06251c3389057c55e62d4fb76306a5bd9676ac062ddbc389437862d0f65660",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-0-md",
+      "exit": 0,
+      "stdoutSHA256": "bce5e7b78e632b69b5468a5ef0c37f95aa3847ea1511d6af335f10a9a266be3e",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "preflight-1",
+      "exit": 0,
+      "stdoutSHA256": "1acd33f6e1a00e9a8058954e1a88dee7405c15dfe2ec4afdce6b9be71070ad41",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-1",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "6b73bdd28255a4d19ce38007350971407e7fd17e00ef0fe5e315cf3c7625321f"
+    },
+    {
+      "name": "bootstrap-1",
+      "exit": 0,
+      "stdoutSHA256": "8e0b7544c1923d80813c99643cb47d8a885c7e190a40b577a908e437f5a6e4ec",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cluster-uid-1",
+      "exit": 0,
+      "stdoutSHA256": "0add366a9dcb15451671a18920b5883ff604692cfbff01cdecd894ee5dbc029a",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "object-uid-1",
+      "exit": 0,
+      "stdoutSHA256": "c75a63feac51de644b0279b1fef48cf5790201691425d79d4e1e6692c8e5060a",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-1",
+      "exit": 0,
+      "stdoutSHA256": "486f253a4e015e45eefefbfa182d8c2e7a2b5f7bebadfbe5464663ee7fa668f9",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-1-ascii",
+      "exit": 0,
+      "stdoutSHA256": "094ab639b5534daa83852797b81b54fc76ac582b848ec32ed421fa72b45135e2",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-1-md",
+      "exit": 0,
+      "stdoutSHA256": "5b6bc886d931fce4a8773719b3b71ac8f09a857df47ad3a1e0df8e99728c4ed8",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "actual-mcp",
+      "exit": 0,
+      "stdoutSHA256": "46bc77eb4bd173344030de43229302de64aa9ac59c41287add5db58f328a12de",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "delete-owned-object",
+      "exit": 0,
+      "stdoutSHA256": "66c4b216151521dfcb90f4a6739915a6a611ebb8895ef9209a7fa1cb30351a53",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "recreate-owned-object",
+      "exit": 0,
+      "stdoutSHA256": "4dbd4e329ecdbbcafa12fe6e62ab4700f38b050011a6c2bae04b78913eae7c4f",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-recreated",
+      "exit": 0,
+      "stdoutSHA256": "d963954cfa27b4f2b1181669e9e237e1a81f7f60325478cbe2da916f34b7a5a0",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "bootstrap-reader",
+      "exit": 0,
+      "stdoutSHA256": "1ec12efeb97be1988d875a687c57e34c4b37c86f14f44a7e0852e324d9a8f576",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "restricted-map",
+      "exit": 0,
+      "stdoutSHA256": "96367201a7680a2cb27a78b5a81f5a6240cc9247f073378a83104a6a8da24029",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "restricted-actual-namespace-denied",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "672a21c0b2dcad9cb63076a028d13c34eadeb034b4f4fbe566b4f4d451e1ce0b"
+    },
+    {
+      "name": "cleanup-scout-v214-inst-3a667d8c",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "68b2faaf350861015ad1d2e405b487b9b104d2af27454186283fce9c4f09bf06"
+    },
+    {
+      "name": "cleanup-scout-v214-inst-b4a8d68f",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "921c99badfb1d04f8039bc297a0bdca1ce314afed1eb5bcfb65257839b280396"
+    },
+    {
+      "name": "after-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "scope": "Two disposable Kubernetes 1.35 clusters with matching context/object names; actual CLI ascii/json/md, MCP stdio, standalone TUI UID and object recreation. Not broader controllers, connected Target, read-cost coverage, freshness, application health or full six-surface conformance. Restricted ServiceAccount inventory is retained without a merge key; an actual Namespace GET is forbidden. The owned PTY child was forcibly stopped after terminal assertions; this is not graceful-exit acceptance.",
+  "compilerVCSMetadata": "Not present in this managed-worktree binary; source binding uses clean commit before/after, build command and binary SHA256."
+}
