@@ -3555,8 +3555,6 @@ now respects the tree namespace and caller cancellation. `map workloads` and
 `map patterns` accept the same `--kube-context` directly, with the same strict
 refusal of a missing or blank selection.
 
-now respects the tree namespace and caller cancellation.
-
 ### StatefulSet image coverage (v2.14 candidate, #795)
 
 `release check --check-running-image` also checks `apps/v1` StatefulSets.
