@@ -1654,3 +1654,21 @@ Legacy collection breadth, format coverage and partial-list semantics remain;
 this is not physical identity, complete inventory, Target alignment, a cost
 ledger or full #599/#596 completion. Required CI and full Go acceptance must be
 recorded before merge.
+
+
+## v2.14 private scanner carry-forward repair (#797 / parent #774)
+
+Existing local gh access can download the published scanner release without
+exporting credentials. Checksum-verified native darwin/arm64 v0.7.3 admission
+at `f0aee164` found seven security findings in the fixture called clean; the
+actual provider contract failed 7 versus expected 0. #797 strengthens that
+fixture's explicit security, anti-affinity and token settings while retaining
+provider rules and zero-findings expectations. Native/legacy provider contracts,
+file-only clean CLI goldens and structural fixture guard pass. Actual delegation
+at `27aa0167` now reports zero on clean and ten on unchanged misconfigured input;
+provider archive/binary and source/candidate/report hashes are retained in
+[test/fixtures/scan-provider-v073/NOTICE.md](test/fixtures/scan-provider-v073/NOTICE.md).
+No private downloaded binaries, tokens or credential logs are committed.
+This is local native file-scanner admission; Linux/full CI and genuine live
+scanner/controller gates remain. GitHub Actions still needs the requested scoped
+`CUB_SCAN_RELEASE_TOKEN`. Full Go and exact-head CI must pass before merge.

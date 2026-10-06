@@ -1,4 +1,5 @@
-# Clean deployment with no misconfigurations.
+# Authored file-only fixture with no findings under pinned scanner v0.7.3.
+# This does not demonstrate runtime/application success.
 # Used for testing scan --file with expected exit code 0.
 apiVersion: apps/v1
 kind: Deployment
@@ -17,9 +18,29 @@ spec:
       labels:
         app: nginx
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: nginx
+                topologyKey: kubernetes.io/hostname
       containers:
         - name: nginx
           image: nginx:1.21
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
           ports:
             - containerPort: 80
           resources:
