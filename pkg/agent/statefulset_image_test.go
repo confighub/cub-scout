@@ -110,6 +110,10 @@ func TestStatefulSetImageCoverage(t *testing.T) {
 			_ = unstructured.SetNestedField(r.Object, "old", "data", "spec", "template", "spec", "serviceAccountName")
 			return p
 		}},
+		{"non-replace patch", "statefulset-revision-template-unconfirmed", func(_ *unstructured.Unstructured, p []*unstructured.Unstructured, r *unstructured.Unstructured) []*unstructured.Unstructured {
+			_ = unstructured.SetNestedField(r.Object, "delete", "data", "spec", "template", "$patch")
+			return p
+		}},
 		{"partitioned", "statefulset-partition-unconfirmed", func(l *unstructured.Unstructured, p []*unstructured.Unstructured, _ *unstructured.Unstructured) []*unstructured.Unstructured {
 			_ = unstructured.SetNestedField(l.Object, int64(1), "spec", "updateStrategy", "rollingUpdate", "partition")
 			return p

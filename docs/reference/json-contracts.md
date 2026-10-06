@@ -3003,3 +3003,10 @@ schedule this check. DaemonSet/Job image coverage and independently verified OCI
 index resolution remain separate work. The supplied
 [StatefulSet fixture](../../examples/oci-release-check/image-statefulset.yaml)
 is authored test input, not a deployment or application-success proof.
+
+Each StatefulSet pod also retains `statefulSetName`, `statefulSetUID` and
+`controllerRevision` from its observed controlling owner and revision label.
+ASCII/Markdown and the release TUI display these same observed references;
+foreign or stale references remain visible when coverage is unknown. A revision
+record must carry the native template `"$patch": "replace"` shape; unsupported
+patch semantics do not establish a matching template.

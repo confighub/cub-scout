@@ -241,3 +241,14 @@ schedule this check. DaemonSet/Job image coverage and independently verified OCI
 index resolution remain separate work. The supplied
 [StatefulSet fixture](../../examples/oci-release-check/image-statefulset.yaml)
 is authored test input, not a deployment or application-success proof.
+
+Reproduce source-bound StatefulSet acceptance with
+`CUB_CLI=/path/to/cub python3 examples/oci-release-check/verify-live-statefulset.py`
+from a clean repository. It owns one kind cluster, private HOME/config, a real
+StatefulSet/ControllerRevision/Pod and a local literal bundle. The expected
+platform-manifest digest comes from independently fetched and hashed registry
+bytes. CLI formats, the actual cub plugin, stdio MCP and the actual release TUI
+exercise the same model. The Application is an **authored CR/status fixture**;
+this harness does not prove real Argo reconciliation. The
+[initial proof](live-statefulset-initial-proof.json) passed before the subsequent
+patch-marker/audit-field hardening; final source acceptance must be refreshed.

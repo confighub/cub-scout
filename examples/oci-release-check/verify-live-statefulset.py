@@ -67,6 +67,8 @@ try:
             assert report['verdict'] == 'PASS', (report['verdict'], row.get('reason'))
             assert row['statefulSet']['complete'] and row['statefulSet']['ownedPods'] == 1
             assert row['containers'][0]['runningDigests'] == [digest]
+            assert row['pods'][0]['statefulSetUID'] == row['statefulSet']['uid']
+            assert row['pods'][0]['controllerRevision'] == row['statefulSet']['currentRevision']
         else: assert 'StatefulSet uid=' in out and 'owned pods=1/1' in out
     arguments = {'bundle': bundle, 'oci_layout': str(layout), 'controller': 'Application/fixture', 'api_version': 'argoproj.io/v1alpha1', 'controller_namespace': 'delivery', 'context': 'selected', 'check_running_image': True}
     child = subprocess.Popen(['./cub-scout', 'mcp', 'serve'], cwd=root, env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

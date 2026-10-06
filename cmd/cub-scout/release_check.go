@@ -339,6 +339,9 @@ func renderReleaseCheck(r agent.ReleaseCheckReport, format string) string {
 				fmt.Fprintln(&b, line)
 			}
 			for _, p := range w.Pods {
+				if p.StatefulSetName != "" {
+					fmt.Fprintf(&b, "    pod %s uid=%s StatefulSet/%s owner uid=%s revision=%s\n", p.Name, p.UID, p.StatefulSetName, p.StatefulSetUID, p.ControllerRevision)
+				}
 				for _, c := range p.Containers {
 					if c.Verdict != "match" {
 						fmt.Fprintf(&b, "    pod %s uid=%s container %s: %s (%s)\n", p.Name, p.UID, c.Name, c.Verdict, c.Reason)

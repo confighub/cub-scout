@@ -100,6 +100,11 @@ func TestStatefulSetReleaseImageReadBudgetsAndFailures(t *testing.T) {
 					require.NotNil(t, c)
 					require.True(t, c.Complete)
 					require.Equal(t, 2, c.OwnedPods)
+					for _, pod := range r.RunningImage.Workloads[0].Pods {
+						require.Equal(t, "api", pod.StatefulSetName)
+						require.Equal(t, "fixture-StatefulSet", pod.StatefulSetUID)
+						require.Equal(t, "api-current", pod.ControllerRevision)
+					}
 					require.Equal(t, 1, f.gets["ControllerRevision/api-current"])
 					require.Equal(t, 2, f.gets["StatefulSet/api"])
 					for _, format := range []string{"ascii", "md"} {

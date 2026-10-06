@@ -87,6 +87,9 @@ func BuildStatefulSetImageCoverage(live *unstructured.Unstructured, pods []*unst
 	template, tf, te := unstructured.NestedMap(live.Object, "spec", "template")
 	recorded, rf, re := unstructured.NestedMap(revision.Object, "data", "spec", "template")
 	// StatefulSet ControllerRevision data uses a strategic-merge replace marker.
+	if marker, ok := recorded["$patch"].(string); !ok || marker != "replace" {
+		return fail("statefulset-revision-template-unconfirmed")
+	}
 	delete(recorded, "$patch")
 	if !tf || !rf || te != nil || re != nil || !reflect.DeepEqual(template, recorded) {
 		return fail("statefulset-revision-template-unconfirmed")
