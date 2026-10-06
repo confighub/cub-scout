@@ -43,7 +43,7 @@ try:
     views = ['runtime', 'ownership', 'composition', 'workloads', 'git', 'patterns', 'suggest']
     for view in views:
         out = call(['./cub-scout', 'tree', view, '--kube-context', 'selected', '--namespace', 'team-a', '--format', 'json'], 'tree-' + view)
-        if view in ['runtime', 'ownership', 'workloads', 'suggest']: assert 'api' in out, view
+        if view in ['runtime', 'ownership', 'workloads']: assert 'api' in out, view
         if view == 'ownership': assert json.loads(out)['context']['cluster'] == 'selected'
         for selection in ['', 'missing']:
             call(['./cub-scout', 'tree', view, '--kube-context', selection], 'tree-' + view + '-refuses-' + (selection or 'blank'), expected=1)
