@@ -3,17 +3,27 @@ import argparse, copy, hashlib, http.server, json, os, pathlib, subprocess, temp
 from jsonschema import Draft202012Validator
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--binary', required=True)
+binary_mode = parser.add_mutually_exclusive_group(required=True)
+binary_mode.add_argument('--binary')
+binary_mode.add_argument('--build', action='store_true', help='Build from clean source and retain exact source/hash binding')
 parser.add_argument('--cub', help='Optional actual cub plugin host; installs only in private HOME/CUB_CONFIG')
 args = parser.parse_args()
 source = pathlib.Path(__file__).resolve().parents[2]
-binary = pathlib.Path(args.binary).resolve()
 fixture = source / 'examples/recorded-inventory/pagination.yaml'
 schema = json.loads((source / 'docs/reference/schemas/recorded-inventory.v1.schema.json').read_text())
 Draft202012Validator.check_schema(schema)
 validator = Draft202012Validator(schema)
 root = pathlib.Path(tempfile.mkdtemp(prefix='scout-recorded-contract-'))
 root.chmod(0o700)
+head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=source, text=True).strip()
+if args.build:
+    assert not subprocess.check_output(['git', 'status', '--porcelain'], cwd=source, text=True).strip(), 'clean build source required'
+    binary = root / 'cub-scout'
+    build = subprocess.run(['go', 'build', '-o', str(binary), './cmd/cub-scout'], cwd=source, env={**os.environ, 'GOTOOLCHAIN': 'go1.24.0'}, text=True, capture_output=True, timeout=180)
+    (root / 'build.stderr').write_text(build.stderr)
+    assert build.returncode == 0, 'isolated source build failed'
+else:
+    binary = pathlib.Path(args.binary).resolve()
 requests = []
 
 class Trap(http.server.BaseHTTPRequestHandler):
@@ -100,7 +110,10 @@ except Exception as exc:
     failures.append(repr(exc))
 finally:
     server.shutdown(); server.server_close(); thread.join(timeout=5)
-    proof = {'schema': 'recorded-output-contract-proof.v1', 'sourceCommit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=source, text=True).strip(), 'binarySHA256': hashlib.sha256(binary.read_bytes()).hexdigest(), 'fixtureSHA256': hashlib.sha256(fixture.read_bytes()).hexdigest(), 'passed': not failures, 'failures': failures, 'trapRequests': len(requests), 'actualPluginChecked': bool(args.cub), 'canonicalReportBytes': locals().get('budget'), 'mcpFullResultBytes': len(json.dumps(locals().get('result', {}), separators=(',', ':'), ensure_ascii=False).encode()), 'mcpDuplicatedPageResultBytes': len(json.dumps(locals().get('page_result', {}), separators=(',', ':'), ensure_ascii=False).encode()), 'binaryBuildBinding': 'Externally supplied binary hash; this script records repository HEAD but does not prove its build source.', 'steps': steps, 'limits': 'Authored fixture, not a genuine cluster recording. Data JSON budget excludes duplicated MCP result, transport framing and tokens. No paid/model or six-surface acceptance claim.'}
+    final_head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=source, text=True).strip()
+    source_clean = not subprocess.check_output(['git', 'status', '--porcelain'], cwd=source, text=True).strip()
+    if args.build and (head != final_head or not source_clean): failures.append('source changed during acceptance')
+    proof = {'schema': 'recorded-output-contract-proof.v1', 'sourceCommit': head, 'sourceCommitUnchanged': head == final_head, 'sourceWorktreeClean': source_clean, 'binarySHA256': hashlib.sha256(binary.read_bytes()).hexdigest(), 'fixtureSHA256': hashlib.sha256(fixture.read_bytes()).hexdigest(), 'passed': not failures, 'failures': failures, 'trapRequests': len(requests), 'actualPluginChecked': bool(args.cub), 'canonicalReportBytes': locals().get('budget'), 'mcpFullResultBytes': len(json.dumps(locals().get('result', {}), separators=(',', ':'), ensure_ascii=False).encode()), 'mcpDuplicatedPageResultBytes': len(json.dumps(locals().get('page_result', {}), separators=(',', ':'), ensure_ascii=False).encode()), 'binaryBuildBinding': 'Isolated Go 1.24 build from the clean captured source; executable SHA256 retained, no implicit compiler VCS stamp claim.' if args.build else 'Externally supplied binary hash; source HEAD does not prove build provenance.', 'steps': steps, 'limits': 'Authored fixture, not a genuine cluster recording. Data JSON budget excludes duplicated MCP result, transport framing and tokens. No paid/model or six-surface acceptance claim.'}
     (root / 'proof.json').write_text(json.dumps(proof, indent=2) + '\n')
     print(json.dumps({'proof': str(root / 'proof.json'), 'passed': proof['passed'], 'failures': failures}))
     assert proof['passed']

@@ -117,8 +117,7 @@ checks. No MCP protocol negotiation or legacy output bytes change.
 ```bash
 python3 -m venv /tmp/scout-schema-env
 /tmp/scout-schema-env/bin/pip install -r examples/recorded-inventory/schema-requirements.txt
-go build -o /tmp/scout-schema-binary ./cmd/cub-scout
-/tmp/scout-schema-env/bin/python examples/recorded-inventory/verify-output-contract.py --binary /tmp/scout-schema-binary
+/tmp/scout-schema-env/bin/python examples/recorded-inventory/verify-output-contract.py --build
 # Add --cub /absolute/path/to/cub to exercise the actual plugin host.
 ```
 
@@ -135,6 +134,6 @@ product-test environment and leaves frozen benchmark runtimes/cases unchanged.
 `schema-attempt-1.json` retains the first harness failure: it assumed structured
 content for the legacy full MCP report. The correction parses that report's text
 and separately checks actual page structured content. It does not change product
-response shapes. The executable hash is recorded, but an externally supplied
-binary alone does not prove its build source; retain a clean build/source record
-when using this script for release acceptance.
+response shapes. `--build` requires a clean checkout and binds an isolated Go 1.24 build to its
+unchanged source and executable hash. `--binary` also accepts externally built
+executables, whose source provenance is explicitly unverified by this script.
