@@ -82,6 +82,13 @@ sys.stdout.write(p.read_text())
         with self.assertRaises(ValueError):
             module.observe([self.scope('same', packet('a'))]*2, self.root)
 
+    def test_preserves_canonical_producer_escaping(self):
+        data = packet('a', uid='opaque<&>')
+        evidence = data['resources'][0]['resourceIdentity']
+        evidence['mergeKey'] = evidence['mergeKey'].replace('<', r'\u003c').replace('&', r'\u0026').replace('>', r'\u003e')
+        result = module.observe([self.scope('a', data)], self.root)
+        self.assertEqual(result['instances'][0]['mergeKey'], evidence['mergeKey'])
+
     def test_missing_process_retains_scope_without_error_details(self):
         (self.root/'cub-scout').unlink()
         result = module.observe([self.scope('a', packet('a'))], self.root)

@@ -42,7 +42,8 @@ def verified_key(row, cluster):
         return None
     if decoded != values:
         return None
-    return json.dumps(values, ensure_ascii=False, separators=(',', ':'))
+    # Preserve the producer's canonical key bytes (Go JSON escapes HTML).
+    return evidence['mergeKey']
 
 
 def observe(scopes, scout_directory, timeout=30):
