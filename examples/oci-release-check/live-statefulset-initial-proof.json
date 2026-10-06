@@ -1,0 +1,135 @@
+{
+  "schema": "v214-statefulset-image-live-proof.v1",
+  "sourceCommit": "ac273e976a620f085dcf575a2642b39d551b67da",
+  "sourceCommitUnchanged": true,
+  "sourceWorktreeCleanBeforeAndAfter": true,
+  "binarySHA256": "457a8fda88b19a62f33f942771411377d7567dbe80f4611bcc540085e0f12213",
+  "finished": "2026-10-06T15:49:42.830609+00:00",
+  "passed": true,
+  "failures": [],
+  "ownedClusterRemoved": true,
+  "sharedConfigUnchanged": true,
+  "steps": [
+    {
+      "name": "build",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "6ac4eed9e8344dda2c6121eaa7b9952ed9a7b0eac3b4941be040d038ffae5a56"
+    },
+    {
+      "name": "node-image-platform",
+      "exit": 0,
+      "stdoutSHA256": "c1669e1d8edca98769c37d494b76442a1d6e5ffffd7b4da1fb63aef8ebaf6f01",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "independent-registry-descriptor",
+      "exit": 0,
+      "stdoutSHA256": "134e61d922bcc79ced244de5cb821a282c124422640de89e567ae29c1ec67753",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "independent-registry-manifest",
+      "exit": 0,
+      "stdoutSHA256": "e50b7059b633caf3c1449b8da680d11845cda4506b513ee7a2de00725f0a34a7",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "before-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "93912f740a658f6ddf791d237b86ebd606a7ea2218a918d9eccf19ade2e24e25"
+    },
+    {
+      "name": "bootstrap-owned-resources",
+      "exit": 0,
+      "stdoutSHA256": "1d8701bbba2fb1f1ced13e30be31688e6b7f338666ab9e6ccdb0557cadad104c",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "fixture-crd-established",
+      "exit": 0,
+      "stdoutSHA256": "a509b3b7ea7350212f6f1a4bf5ce2468ebabb7b544918f8183b6520925e9cf4d",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "actual-statefulset-ready",
+      "exit": 0,
+      "stdoutSHA256": "ed5b84bcca146527296068824610b6e880fa6b3496574c64be5774e5f939e141",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-local-authored-layout",
+      "exit": 0,
+      "stdoutSHA256": "7f7c71151793e202e14b994e63ca202960f4fae150ca65cd6795b75422d79586",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-authored-controller-fixture",
+      "exit": 0,
+      "stdoutSHA256": "c87716b3f69cb6f818ed1d182a609caf02b5edba88126893210585751078b1cc",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "set-authored-controller-status",
+      "exit": 0,
+      "stdoutSHA256": "0310bfe6e99f967d44ba8b8c3ebdb16fcebf5af78d9378df38ec17e75ed587ef",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "actual-cli-json",
+      "exit": 0,
+      "stdoutSHA256": "590c310b90a14cfe680a07d84858cc24c5bb1dab0e2c508b582dc7bcfd6d1fa6",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "actual-cli-ascii",
+      "exit": 0,
+      "stdoutSHA256": "d2f1f7f00ac2e5c017fc089a579189b20654097c80e80b4fc10041be362766e8",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "actual-cli-md",
+      "exit": 0,
+      "stdoutSHA256": "c8ea6caa6d8ba995d3113dc3b85e122a1868e53c696ea197fdc7009434c5b671",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "actual-mcp",
+      "passed": true,
+      "reportSHA256": "cd95a39b187474553c671e3a693c6eb1307749a2baf4da4cdd0a8da1bf2626a1"
+    },
+    {
+      "name": "actual-cub-plugin",
+      "exit": 0,
+      "stdoutSHA256": "dbe99e181d58d2f3007eaa2169cb281131ef02262a474277a4c4bf14ef4e19a6",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "actual-release-tui",
+      "passed": true,
+      "terminalSHA256": "16844717a2eea80b200442772c7088232ee5bcd531373c4329ad4d3e056eebaf"
+    },
+    {
+      "name": "cleanup-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "96844e023dfcec33362f3ea1fd91bd1c4263eb6e30fc8967bc545e27623cca67"
+    },
+    {
+      "name": "after-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "image": "registry.k8s.io/pause@sha256:e50b7059b633caf3c1449b8da680d11845cda4506b513ee7a2de00725f0a34a7",
+  "platform": "linux/arm64",
+  "scope": "Actual Kubernetes StatefulSet, ControllerRevision and running Pod image coverage in CLI formats, the actual cub plugin, stdio MCP and actual release TUI. Expected platform-manifest digest fetched independently from the registry and raw bytes verified before cluster observation. The Application is an authored CR/status fixture, not a running Argo reconciliation proof. No functional health, OCI index adapter, other workloads, connected/fleet, paid benchmark or full release acceptance. Private HOME/config and owned Kubernetes 1.35 cluster, clean isolated source/binary hash binding."
+}

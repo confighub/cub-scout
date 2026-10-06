@@ -1672,3 +1672,29 @@ No private downloaded binaries, tokens or credential logs are committed.
 This is local native file-scanner admission; Linux/full CI and genuine live
 scanner/controller gates remain. GitHub Actions still needs the requested scoped
 `CUB_SCAN_RELEASE_TOKEN`. Full Go and exact-head CI must pass before merge.
+
+## v2.14 StatefulSet image packet (#795 / parent #584)
+
+`codex/v214-statefulset-images` adds opt-in complete StatefulSet population/image
+coverage: exact current generation and nonzero counts, equal current/update
+revision, exact revision owner/UID/template with native replace-patch semantics,
+unique in-range Pod ordinals, exact controlling owner UID/namespace/revision label
+and every intended regular container's running/ready digest. A bounded namespace/
+selector pod LIST, one exact ControllerRevision GET and a final StatefulSet GET
+are recorded as additive reads. Caps, stale/foreign/missing/denied/terminating
+or changed evidence remain UNKNOWN. Mutable tags and unresolved digest forms
+also remain UNKNOWN. Per-pod owner/revision references are visible in JSON,
+ASCII/Markdown and release TUI; no watch/bot scheduler is implied.
+
+Authored coverage, order controls, bounded-read failure/count tests and actual
+CLI/cub plugin/stdio MCP process controls pass. Native Kubernetes 1.35 workload,
+ControllerRevision and running Pod acceptance passes at `64823465` across CLI
+formats, actual cub plugin/MCP and actual release TUI, with independent registry
+platform-manifest byte/digest verification, private HOME/config, owned cluster
+removed and shared kubeconfig unchanged. Initial pre-hardening acceptance is
+retained separately. The Application CR/status is an authored binding fixture;
+this does not establish Argo reconciliation acceptance or functional health.
+See [live proof](examples/oci-release-check/live-statefulset-proof.json).
+Affected race/vet/doc/read-only guards pass. Full Go and required source CI must
+be retained before merge. DaemonSet/Job adapters, independently verified OCI index
+resolution, image discovery and all broader #584/#596/#594 gates remain open.

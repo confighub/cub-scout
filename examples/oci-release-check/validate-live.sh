@@ -65,7 +65,7 @@ json_pass_check() {
   local path="$1"
   jq -e '
     def supported:
-      ((.id.apiVersion == "apps/v1" and .id.kind == "Deployment")
+      ((.id.apiVersion == "apps/v1" and (.id.kind == "Deployment" or .id.kind == "StatefulSet"))
        or (.id.apiVersion == "v1" and .id.kind == "Pod"));
     .verdict == "PASS"
     and .runningImage.verdict == "match"
@@ -73,7 +73,7 @@ json_pass_check() {
     and all(.runningImage.workloads[];
       supported
       and .verdict == "match"
-      and (if .id.kind == "Deployment" then (.deployment | type == "object" and .complete == true) else true end)
+      and (if .id.kind == "Deployment" then (.deployment | type == "object" and .complete == true) elif .id.kind == "StatefulSet" then (.statefulSet | type == "object" and .complete == true) else true end)
     )
   ' "$path" >/dev/null
 }

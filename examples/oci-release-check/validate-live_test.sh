@@ -54,6 +54,10 @@ verdict=$(printenv FAKE_VERDICT || true)
 [[ -n "$verdict" ]] || verdict=PASS
 if [[ "$(printenv LEGACY_PASS || true)" == 1 ]]; then
   printf '{"version":"v1","verdict":"PASS"}\n' >"$out"
+elif [[ "$(printenv STATEFUL_PASS || true)" == 1 ]]; then
+  complete=$(printenv STATEFUL_COMPLETE || true)
+  [[ -n "$complete" ]] || complete=true
+  printf '%s\n' "{\"version\":\"v1\",\"verdict\":\"PASS\",\"stages\":[{\"name\":\"running-image\",\"verdict\":\"PASS\"}],\"runningImage\":{\"verdict\":\"match\",\"workloads\":[{\"id\":{\"apiVersion\":\"apps/v1\",\"kind\":\"StatefulSet\"},\"verdict\":\"match\",\"statefulSet\":{\"complete\":$complete}}]}}" >"$out"
 elif [[ "$verdict" == PASS ]]; then
   printf '%s\n' '{"version":"v1","verdict":"PASS","stages":[{"name":"running-image","verdict":"PASS"}],"runningImage":{"verdict":"match","workloads":[{"id":{"apiVersion":"apps/v1","kind":"Deployment"},"verdict":"match","deployment":{"complete":true}}]}}' >"$out"
 else
@@ -172,3 +176,8 @@ LEGACY_PASS=1 PATH="$fake_path:$PATH" CUB_CONFIG='' FAKE_LOG="$fake_log" \
   expect_status 1 "$harness" "${base_args[@]}" --out-dir "$tmp_dir/legacy-pass"
 
 printf 'validate-live_test: pass\n'
+
+STATEFUL_PASS=1 PATH="$fake_path:$PATH" CUB_CONFIG='' FAKE_LOG="$fake_log" \
+ "$harness" "${base_args[@]}" --expect-verdict PASS --out-dir "$tmp_dir/stateful-pass" >/dev/null
+STATEFUL_PASS=1 STATEFUL_COMPLETE=false PATH="$fake_path:$PATH" CUB_CONFIG='' FAKE_LOG="$fake_log" \
+ expect_status 1 "$harness" "${base_args[@]}" --expect-verdict PASS --out-dir "$tmp_dir/stateful-incomplete"

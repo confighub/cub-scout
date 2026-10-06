@@ -47,25 +47,29 @@ type RunningImageContainer struct {
 // RunningImageWorkload aggregates the containers of one workload across the pods
 // that were read for it.
 type RunningImageWorkload struct {
-	ID             BoundedResourceRef       `json:"id"`
-	Verdict        string                   `json:"verdict"` // match | mismatch | unknown
-	Reason         string                   `json:"reason,omitempty"`
-	PodsRead       int                      `json:"podsRead"`
-	CoverageCapped bool                     `json:"coverageCapped,omitempty"`
-	Containers     []RunningImageContainer  `json:"containers,omitempty"`
-	Pods           []RunningImagePod        `json:"pods,omitempty"`
-	Deployment     *DeploymentImageCoverage `json:"deployment,omitempty"`
-	ObservedAt     *time.Time               `json:"observedAt,omitempty"`
+	ID             BoundedResourceRef        `json:"id"`
+	Verdict        string                    `json:"verdict"` // match | mismatch | unknown
+	Reason         string                    `json:"reason,omitempty"`
+	PodsRead       int                       `json:"podsRead"`
+	CoverageCapped bool                      `json:"coverageCapped,omitempty"`
+	Containers     []RunningImageContainer   `json:"containers,omitempty"`
+	Pods           []RunningImagePod         `json:"pods,omitempty"`
+	StatefulSet    *StatefulSetImageCoverage `json:"statefulSet,omitempty"`
+	Deployment     *DeploymentImageCoverage  `json:"deployment,omitempty"`
+	ObservedAt     *time.Time                `json:"observedAt,omitempty"`
 }
 
 // RunningImagePod retains per-pod evidence so missing statuses cannot be hidden
 // by a matching container in another pod. Ownership is checked separately.
 type RunningImagePod struct {
-	Name           string                  `json:"name"`
-	UID            string                  `json:"uid"`
-	ReplicaSetName string                  `json:"replicaSetName,omitempty"`
-	ReplicaSetUID  string                  `json:"replicaSetUID,omitempty"`
-	Containers     []RunningImageContainer `json:"containers"`
+	Name               string                  `json:"name"`
+	UID                string                  `json:"uid"`
+	StatefulSetName    string                  `json:"statefulSetName,omitempty"`
+	StatefulSetUID     string                  `json:"statefulSetUID,omitempty"`
+	ControllerRevision string                  `json:"controllerRevision,omitempty"`
+	ReplicaSetName     string                  `json:"replicaSetName,omitempty"`
+	ReplicaSetUID      string                  `json:"replicaSetUID,omitempty"`
+	Containers         []RunningImageContainer `json:"containers"`
 }
 
 // RunningImageEvidence is the tier-level result folded into the release report.
@@ -363,6 +367,10 @@ func BuildRunningImageWorkload(desired *unstructured.Unstructured, pods []*unstr
 		p := RunningImagePod{}
 		if pod != nil {
 			p.Name, p.UID = pod.GetName(), string(pod.GetUID())
+			if owner := ControllerOwner(pod, "StatefulSet"); owner != nil {
+				p.StatefulSetName, p.StatefulSetUID = owner.Name, string(owner.UID)
+				p.ControllerRevision = pod.GetLabels()["controller-revision-hash"]
+			}
 			if owner := ControllerOwner(pod, "ReplicaSet"); owner != nil {
 				p.ReplicaSetName, p.ReplicaSetUID = owner.Name, string(owner.UID)
 			}

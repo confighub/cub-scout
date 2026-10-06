@@ -3158,8 +3158,7 @@ UID -> Deployment UID, current ReplicaSet template, current generation,
 positive desired replicas, equal total/updated/ready/available counts, exact
 pod count, no duplicate/terminating/old/foreign Pods, `Running` plus
 `PodReady=True`, and every intended regular container running, ready, and at
-the exact digest. Direct Pods retain exact-object evidence. StatefulSet,
-DaemonSet, and Job ownership is `unknown` / `INCONCLUSIVE` with
+the exact digest. Direct Pods retain exact-object evidence. DaemonSet and Job ownership is `unknown` / `INCONCLUSIVE` with
 `workload-ownership-unsupported` for this tier.
 
 Mutable tags and unresolved index/platform forms are `unknown`; the latter uses
@@ -3555,3 +3554,31 @@ physical cluster identity or a ConfigHub Target binding. The workloads alias
 now respects the tree namespace and caller cancellation. `map workloads` and
 `map patterns` accept the same `--kube-context` directly, with the same strict
 refusal of a missing or blank selection.
+
+### StatefulSet image coverage (v2.14 candidate, #795)
+
+`release check --check-running-image` also checks `apps/v1` StatefulSets.
+The opt-in report adds `runningImage.workloads[].statefulSet`: UID, generation,
+observed generation, desired replicas, start ordinal, current/update revision,
+revision UID, owned pod count, complete and reason. Equal current/update revisions
+alone are insufficient: the exact ControllerRevision must belong to this
+StatefulSet UID and retain its current template, and each selected Pod must have
+that controlling owner, revision label and a unique in-range ordinal. Every
+intended regular container must be Running/Ready at its pinned digest.
+
+Reads add one bounded selector-scoped pod LIST, one exact ControllerRevision GET
+and a final StatefulSet GET to the reused live configuration read. The
+reader therefore needs `list` on pods and `get` on `controllerrevisions.apps` in
+the namespace; a role that suffices for Deployments reports `read-denied` for
+StatefulSets without it. No continuation pages are fetched. The template
+comparison is exact and is verified only for a ControllerRevision written by the
+cluster's current Kubernetes version: a revision retained across a control-plane
+upgrade is untested and may stay `statefulset-revision-template-unconfirmed`
+until the next rollout. Caps, denied/missing evidence, stale generations, partitions,
+old/foreign/terminating pods, zero desired population and changes during the
+check stay UNKNOWN. Mutable tags and unresolved index/platform digests also stay
+UNKNOWN. CLI, MCP/plugin and the release TUI use the same report. Watch/bot do not
+schedule this check. DaemonSet/Job image coverage and independently verified OCI
+index resolution remain separate work. The supplied
+[StatefulSet fixture](../../examples/oci-release-check/image-statefulset.yaml)
+is authored test input, not a deployment or application-success proof.
