@@ -1,0 +1,127 @@
+{
+  "schema": "offline-recorded-report-budget-process-proof.v1",
+  "sourceBase": "870be241c5c58a2a1c52e77b681a57b78ee22ee1",
+  "sourceTreeModified": true,
+  "sourceDiffSHA256": "d55b5282606aab9631abae81e8f6153bef74d06a56f6c8a6dd80a3f1de3f00b7",
+  "binarySHA256": "4f8fb7bc60ae4d40edb46cc719228523f3c3ac7d4ff201cbad3f4fa38164e1ff",
+  "fixtureSHA256": "7ff85315207129a21b5ec6027c61d7c8c306c4d89074b9970d5ba255cedd4303",
+  "driverSHA256": "a914334ff0e85dceee2f1f37ff49ead0190022f1ea8c5f9bd2624f3cdd42dfbe",
+  "hostCLIExecuted": true,
+  "hostMCPExecuted": true,
+  "liveAcceptance": false,
+  "modelTargetExecuted": false,
+  "checks": [
+    {
+      "name": "unbudgeted-full-json",
+      "exit": 0,
+      "stdoutBytes": 1543,
+      "stdoutSHA256": "089d4812ad539954dba200c7e7d093ea8b9f987e7d08b32b921b34571dc8ede3",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "unbudgeted-page-json",
+      "exit": 0,
+      "stdoutBytes": 1278,
+      "stdoutSHA256": "e1edf969ba47e8e79621e281d166e4b3095258318a055dc5d86457a948efda28",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "exact-budget-json",
+      "exit": 0,
+      "stdoutBytes": 1278,
+      "stdoutSHA256": "e1edf969ba47e8e79621e281d166e4b3095258318a055dc5d86457a948efda28",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "under-budget-json",
+      "exit": 1,
+      "stdoutBytes": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "265259ccd111a771e8bfc1bee3da2ea782780655b87b21f42f77f79999474aaf"
+    },
+    {
+      "name": "exact-budget-ascii",
+      "exit": 0,
+      "stdoutBytes": 1089,
+      "stdoutSHA256": "e548df0e259f32ded46c0b3c341ea5109331be1e1e9cdbb426ac0d482a87bc9f",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "under-budget-ascii",
+      "exit": 1,
+      "stdoutBytes": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "265259ccd111a771e8bfc1bee3da2ea782780655b87b21f42f77f79999474aaf"
+    },
+    {
+      "name": "exact-budget-md",
+      "exit": 0,
+      "stdoutBytes": 1213,
+      "stdoutSHA256": "82c5d6c4e3746c709b0cd87e278e648095de0f5ad8b0fb8ae97d84b50876a1e0",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "under-budget-md",
+      "exit": 1,
+      "stdoutBytes": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "265259ccd111a771e8bfc1bee3da2ea782780655b87b21f42f77f79999474aaf"
+    },
+    {
+      "name": "full-refused",
+      "exit": 1,
+      "stdoutBytes": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "9e670e20c63df92ca051a279e9bc90bc80f9287b1010da514b9beeb5afb0f3b1"
+    },
+    {
+      "name": "summary-fits",
+      "exit": 0,
+      "stdoutBytes": 621,
+      "stdoutSHA256": "f8acea7ad09d013a7e803c71056c6560b828fe6e13a62953666647d760a5b04d",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "invalid-limit",
+      "exit": 1,
+      "stdoutBytes": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "cee0c9e4671e5f12ccb06cba75345ab58b3ea6bf666b253373ddada2bd481901"
+    },
+    {
+      "name": "refuse-live-budget",
+      "exit": 1,
+      "stdoutBytes": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "f0ff4b2cdfe9e72760649ab0cf78351f04ec9f7d53bb969c7783c2af230fe3a0"
+    },
+    {
+      "name": "continued-page-json",
+      "exit": 0,
+      "stdoutBytes": 1193,
+      "stdoutSHA256": "7f45e3afe782220238c699c45d2783f362c3d0e0dd02edef4d49a4d304f70376",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "mcp-budgets",
+      "exit": 0,
+      "stdoutBytes": 5987,
+      "stdoutSHA256": "41bb021987076bc17ae3638bf81d1802e911b8475070b23e0577bd582b4bb3ee",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "passed": true,
+  "clusterRequests": 0,
+  "reportJSONBytes": 1277,
+  "exactBudgetCLIJSONBytes": 1278,
+  "exactBudgetMCPResultJSONBytes": 2787,
+  "executionScope": "author host processes; authored local fixture",
+  "limitations": [
+    "Canonical report data budget only; display/newline/MCP duplication/envelopes/transport are excluded",
+    "No TUI process or genuine cluster acceptance",
+    "No input-work/token/cost/savings cap",
+    "No model/container execution or runtime/release admission",
+    "No complete six-surface budget conformance"
+  ],
+  "privateProofSHA256": "e2c8ba2ae09360846f2bba564c4a89d2e7a799a6bbcff683cc7a25c6fe6aafba"
+}

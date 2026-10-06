@@ -581,6 +581,7 @@ cub-scout map list [flags]
 | `--names-only` | bool | false | Names only (scripting) |
 | `--summary` | bool | false | Counts by owner and kind after filters, as JSON (`total`, `byOwner`, `byKind`, `byKindOwner`) or text |
 | `--ownership-evidence` | bool | false | Opt into versioned ownership detector diagnostics and normalized list omissions; incompatible with `--summary`, `--count`, and `--names-only` |
+| `--cluster-identity` | bool | false | Unreleased v2.14 candidate: observe the selected cluster Namespace-instance UID with one additional GET; separate identity-only costs and collection status; incompatible with compact and ownership-evidence modes |
 
 ### Owner Values
 
@@ -614,6 +615,16 @@ point-in-time`, and optional cluster/namespace/kind scope. See
 [`json-contracts.md` § Map Ownership Diagnostics](json-contracts.md#map-ownership-diagnostics).
 It does not alter default JSON. The local TUI `V` view presents this evidence
 for its already loaded workload entries.
+
+The unreleased v2.14 candidate adds `map list --cluster-identity --format
+ascii|json|md` and `map --cluster-identity`. Both capture one context/config
+snapshot. JSON selects `map-list-cluster-identity.v1`; the TUI displays identity
+and read costs in `V` using the latest inventory refresh, without another read
+when opening that view. Missing configuration or client initialization produces
+an explicit unavailable collection. A denied identity read leaves returned
+inventory intact and identity unverified. Recorded and test-hook inventory
+cannot be combined with this option. See
+[the candidate JSON contract](json-contracts.md#opt-in-map-cluster-identity-v214-candidate-unreleased).
 
 ### Query Syntax
 
@@ -1939,7 +1950,7 @@ Each entry includes `freshness.status`:
 
 ### cub-scout watch --emit-receipt-on (v2.3)
 
-`watch --emit-receipt-on <event-types>` attaches a receipt to each matching watch event payload inline. As of `v2.3.0` all four known event types build receipts: `drift.detected`, `ownership.changed`, `resource.discovered`, `scan.finding` (plus the sugar `all`). Per-poll backpressure is controlled by `--emit-receipt-batch-cap N` (default 10) — when a single poll exceeds the cap, the first N events get receipts and the rest emit with the `receipt` key omitted plus a single stderr summary line. Receipt-build failures are non-fatal — the event still emits but the JSON `receipt` key is omitted (consumers should check key presence, not null-ness). See [`watch-events.md`](watch-events.md) for the dedicated event-type reference and [JSON Contracts § Receipt Contract](json-contracts.md) for the wire shape.
+`watch --emit-receipt-on <event-types>` attaches a receipt to each matching watch event payload inline. The four receipt-supported event types are: `drift.detected`, `ownership.changed`, `resource.discovered`, `scan.finding` (plus the sugar `all`). Deletion and candidate `collection.partial` do not build receipts; selecting them emits the startup warning. Per-poll backpressure is controlled by `--emit-receipt-batch-cap N` (default 10) — when a single poll exceeds the cap, the first N events get receipts and the rest emit with the `receipt` key omitted plus a single stderr summary line. Receipt-build failures are non-fatal — the event still emits but the JSON `receipt` key is omitted (consumers should check key presence, not null-ness). See [`watch-events.md`](watch-events.md) for the dedicated event-type reference and [JSON Contracts § Receipt Contract](json-contracts.md) for the wire shape.
 
 ---
 
@@ -1984,3 +1995,30 @@ and Native is a no-built-in-marker result, not an orphan finding. No custom
 host detector configuration is read. An empty selection is a successful empty
 answer, whereas an empty input or any duplicate full identity is an error.
 Ordinary live map output is unchanged.
+
+
+### Recorded Map Pagination (2.14 candidate)
+
+`map list --recording ... --page-size 1..500` slices the complete loaded scope
+into deterministic pages with separate `map-list-recorded-page.v1` JSON. Use
+`--cursor` with the same recording, filters and size for the next page. Cursor
+without size, empty cursor, malformed continuation, summary mode and live mode
+are refused. Counts/owner totals cover the full selected scope. This is a record
+limit, not a byte/token cap or a limit on parsing work. ASCII/JSON/Markdown, MCP
+and the recorded TUI share the page model. In `--tui`, `n`/`p` navigate the loaded
+snapshot, including earlier pages when starting with a cursor, without reads.
+Default unpaged contracts remain unchanged. See the
+[example](../../examples/recorded-inventory/#recorded-pages-214-candidate).
+
+
+### Recorded Report JSON Budget (2.14 candidate)
+
+Opt-in `--max-report-json-bytes 1..4194304` is recorded-only and measures the
+canonical UTF-8 JSON report data, before surface rendering. It covers full,
+summary and paged report envelopes, including an empty selection. Invalid limits
+fail before reads. Exact size passes; oversize fails before any report output.
+No resource/field/omission truncation is permitted. A refused TUI page preserves
+the current loaded page/cursor with an explicit error and no I/O. Budget may
+change between continuation requests without changing cursor selection.
+The limit excludes rendered display, CLI JSON newline, MCP duplication/envelope,
+transport bytes, tokens and input work. No default wire contract changes.

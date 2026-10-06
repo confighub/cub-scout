@@ -1,0 +1,33 @@
+# Authored offline control, not a captured cluster inventory.
+apiVersion: v1
+kind: List
+items:
+- apiVersion: platform.example.org/v1
+  kind: XApp
+  metadata: {name: shared, namespace: team-a, uid: parent-crossplane}
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: shared
+    uid: child-crossplane
+    namespace: team-a
+    labels: {crossplane.io/composite: shared}
+- apiVersion: kro.run/v1alpha1
+  kind: ResourceGraphDefinition
+  metadata: {name: stack, namespace: "", uid: definition-kro}
+- apiVersion: apps.kro.run/v1alpha1
+  kind: WebApp
+  metadata:
+    name: checkout
+    uid: parent-kro
+    namespace: app
+    ownerReferences:
+    - {apiVersion: kro.run/v1alpha1, kind: ResourceGraphDefinition, name: stack, uid: definition-kro}
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: checkout
+    uid: child-kro
+    namespace: app
+    ownerReferences:
+    - {apiVersion: apps.kro.run/v1alpha1, kind: WebApp, name: checkout}

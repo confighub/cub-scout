@@ -1,0 +1,95 @@
+{
+  "schema": "offline-recorded-pagination-process-proof.v1",
+  "sourceBase": "186383454b490f00d67db9a8f16416959b7715d3",
+  "sourceTreeModified": true,
+  "sourceDiffSHA256": "5f82aa5e11aec171ff11152ba53b2fd236c9f44dae5caa7fdf9cc8c4ffac7c6d",
+  "binarySHA256": "e5db62ae35dd4d62e5428b45b2a395603e8597b64ca692192f88e32ee80ce345",
+  "fixtureSHA256": "7ff85315207129a21b5ec6027c61d7c8c306c4d89074b9970d5ba255cedd4303",
+  "driverSHA256": "44ff40d6fce0f8d7ac34e8e739a63ab7981c16cc72315f322ee9e33061b7eb06",
+  "hostCLIExecuted": true,
+  "hostMCPExecuted": true,
+  "liveAcceptance": false,
+  "modelTargetExecuted": false,
+  "checks": [
+    {
+      "name": "unpaged-json",
+      "exit": 0,
+      "stdoutBytes": 1543,
+      "stdoutSHA256": "089d4812ad539954dba200c7e7d093ea8b9f987e7d08b32b921b34571dc8ede3",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "page-json-0",
+      "exit": 0,
+      "stdoutBytes": 1278,
+      "stdoutSHA256": "e1edf969ba47e8e79621e281d166e4b3095258318a055dc5d86457a948efda28",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "page-json-1",
+      "exit": 0,
+      "stdoutBytes": 1193,
+      "stdoutSHA256": "7f45e3afe782220238c699c45d2783f362c3d0e0dd02edef4d49a4d304f70376",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "page-json-2",
+      "exit": 0,
+      "stdoutBytes": 708,
+      "stdoutSHA256": "4883d03df16844b885793f88efb43941d05854245ff29796df1b2668211dc898",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "page-ascii",
+      "exit": 0,
+      "stdoutBytes": 1089,
+      "stdoutSHA256": "e548df0e259f32ded46c0b3c341ea5109331be1e1e9cdbb426ac0d482a87bc9f",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "page-md",
+      "exit": 0,
+      "stdoutBytes": 1213,
+      "stdoutSHA256": "82c5d6c4e3746c709b0cd87e278e648095de0f5ad8b0fb8ae97d84b50876a1e0",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "refuse-summary",
+      "exit": 1,
+      "stdoutBytes": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "dc0404c54398249c69846deac06ca0f1cf508eaeaf26bf0e688126b8e4ae2d23"
+    },
+    {
+      "name": "refuse-live",
+      "exit": 1,
+      "stdoutBytes": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "ecf6cebec5197e8b37cd60db5571c96ae65e5c92a6d08c49d3a04a6054550797"
+    },
+    {
+      "name": "refuse-changed-scope",
+      "exit": 1,
+      "stdoutBytes": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "622ba41ac2e417e20641e1351a1552711c62a6a3098a485978edfd36c0872630"
+    },
+    {
+      "name": "mcp-pages",
+      "exit": 0,
+      "stdoutBytes": 5738,
+      "stdoutSHA256": "1818395b626f098a567f88b4e7764ab260ae9ae9ef9c8366e4a83e90066cf250",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "passed": true,
+  "clusterRequests": 0,
+  "executionScope": "author host processes; authored local fixture",
+  "limitations": [
+    "No TUI process or genuine cluster acceptance",
+    "Record count limit, not byte/token cap",
+    "No model/container execution, cost or savings attribution",
+    "No six-surface budget conformance or release admission"
+  ],
+  "privateProofSHA256": "87625bf1ca5a8d6e70f367687c5026da2cb0e56b89b75fd8be9217066a74bda4"
+}

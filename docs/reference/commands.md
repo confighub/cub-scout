@@ -171,6 +171,7 @@ cub-scout map list [flags]
 | `--names-only` | Show names only |
 | `--summary` | Show counts by owner and kind (after filters) instead of the entries |
 | `--ownership-evidence` | Emit the versioned ownership-only diagnostics envelope with detector sources and normalized list omissions; cannot be combined with `--summary`, `--count`, or `--names-only` |
+| `--cluster-identity` | v2.14 candidate, unreleased: admit one extra bounded Namespace GET and emit a separate observed-identity envelope with identity-only cost and inventory omissions; excludes compact and ownership-only modes |
 | `--explain` | Show explanatory content |
 | `--kube-context` | Use this exact kubeconfig context for this inventory read; missing or empty names fail without fallback |
 
@@ -1085,13 +1086,14 @@ At least one destination is required: `--webhook` and/or `--output-file`.
 | `--once` | Run one collection cycle and exit |
 | `--max-queued-events` | Max buffered events while webhook is unreachable |
 | `--watch-backed` | Back inventory **and the state scan's reads** with Kubernetes watch informers so idle cycles read from an in-process cache instead of re-listing each interval (Slice 2 of `#539`). The scan's runtime-failure pod read is watch-backed too (pods are cached for the scan but never enter the inventory / ownership map). Long-running only (no effect with `--once`). Only resource types the API server serves and whose informer syncs are cached; a type that isn't served or hasn't synced falls back to a live read. On any setup failure it falls back to per-cycle polling rather than degrade coverage. With this flag, event `observation.mode` is `watch-informer`. |
-| `--emit-receipt-on` | Comma-separated watch event types to attach a `cub-scout receipt` to. As of `#449` these known types build receipts: `drift.detected`, `ownership.changed`, `resource.discovered`, `scan.finding` (plus the sugar `all`). `resource.deleted` is a known type but is never receipted (the object is gone). Receipt-build failures are non-fatal: the watch event still emits but the JSON `receipt` key is **omitted** (the field uses `omitempty`; consumers should check key presence, not null-ness), with a stderr warning. Per-poll backpressure controlled by `--emit-receipt-batch-cap`. |
+| `--emit-receipt-on` | Comma-separated watch event types to attach a `cub-scout receipt` to. As of `#449` these known types build receipts: `drift.detected`, `ownership.changed`, `resource.discovered`, `scan.finding` (plus the sugar `all`). `resource.deleted` and candidate `collection.partial` are known types but never receipted; selecting either or `all` emits the unsupported-receipt startup warning. Receipt-build failures are non-fatal: the watch event still emits but the JSON `receipt` key is **omitted** (the field uses `omitempty`; consumers should check key presence, not null-ness), with a stderr warning. Per-poll backpressure controlled by `--emit-receipt-batch-cap`. |
 | `--emit-receipt-batch-cap` | Per-poll cap on receipt-build attempts (`#449` backpressure). When a single poll produces more receipt-eligible events than the cap, the first N get receipts attached and the rest emit with the receipt key omitted plus a single stderr summary line. Set to 0 to disable receipt-build entirely while keeping the flag explicit; set to a large value (e.g. 1000) to effectively disable the cap. Default 10. |
 
 ### Event Types
 
 - `resource.discovered`
 - `resource.deleted`
+- `collection.partial` (unreleased v2.14 candidate: normalized inventory omissions; no object freshness or receipt)
 - `ownership.changed`
 - `drift.detected`
 - `scan.finding`
@@ -3491,3 +3493,28 @@ redundant for the full response: recorded results always include detector
 evidence. `--summary` intentionally omits per-object detector evidence.
 `--tui` cannot combine with output-format options. The recording-specific
 API/prefix/TUI flags require `--recording`. See the [offline example](../../examples/recorded-inventory/).
+
+
+### Recorded ownership pages (2.14 candidate)
+
+Add `--page-size 1..500` to recorded `map list` in ASCII, JSON or Markdown.
+Continue with `--cursor` using the response's next cursor, the same input bytes,
+filters and page size. `--summary` and live map cannot combine with pagination.
+The `map-list-recorded-page.v1` report keeps full-scope counts/owner totals and
+adds page offset/count/continuation. Page size limits rows, not bytes or tokens.
+MCP uses `page_size` and `cursor` and also returns `structuredContent.data`;
+`--tui` provides `n`/`p` navigation using only the loaded snapshot. Default output
+is unchanged. See the [authored example](../../examples/recorded-inventory/#recorded-pages-214-candidate).
+
+
+### Recorded report JSON budget (2.14 candidate)
+
+Recorded `map list --max-report-json-bytes 1..4194304` checks canonical report
+JSON data before ASCII/JSON/Markdown rendering or TUI presentation. MCP uses
+`max_report_json_bytes`. Full, summary and paged modes use the same check;
+oversized reports are refused without clipping evidence. A refused TUI page
+keeps the displayed page and cursor. Reduce page size or request summary.
+This does not cap display/protocol/transport bytes, CLI JSON newline, tokens,
+input work or agent cost; MCP can duplicate report data in text and structured
+content. Defaults are unchanged. See the
+[example](../../examples/recorded-inventory/#report-json-budget-214-candidate).

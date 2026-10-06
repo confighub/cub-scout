@@ -1,0 +1,20 @@
+# Authored lineage control. These are not captured cluster objects.
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: child
+    namespace: team-a
+    uid: child-uid
+    labels: {crossplane.io/composite: parent}
+- apiVersion: platform.example.org/v1
+  kind: XApp
+  metadata: {name: parent, namespace: team-a, uid: xr-a}
+- apiVersion: other.example.org/v1
+  kind: XOther
+  metadata: {name: parent, namespace: team-a, uid: xr-other}
+- apiVersion: platform.example.org/v1
+  kind: XApp
+  metadata: {name: parent, namespace: team-b, uid: xr-b}

@@ -3,7 +3,9 @@
 Reviewed 2026-10-05 against published release metadata, the `v2.12.4` source
 tree, current candidate source, contracts, tests, examples and execution plans.
 This is a reuse review, not a new implementation specification or release gate.
-The published baseline is **v2.12.4**; v2.13 and v2.14 remain unreleased.
+At review the published baseline was **v2.12.4**. **v2.13.1 is now published**;
+v2.14 remains unreleased. The [delivery contracts](configuration-investigation-delivery.md)
+and #778/#779/#780/#781 carry the new ideas into tracked P4/P5 work.
 
 ## What the releases already established
 
@@ -116,9 +118,10 @@ an approval, or a healthy current release by default.
 | P6 / 3.0 | Shipped contracts plus P3–P5 proof | Publish only demonstrated workflow, quality and cost results, checked distribution and migration. Version numbers do not establish leadership. |
 
 Before opening new implementation scope, identify its existing issue, released
-component, test/example and specific missing answer. Permission profiles, local
-investigation history, effective Helm input explanation and generic discovery/
-metrics remain design follow-ups in the [roadmap checklist](../roadmap.md#untracked-backlog-checklist).
+component, test/example and specific missing answer. Permission profiles (#780), local investigation history (#781), effective Helm
+inputs (#779) and generation provenance (#778) are tracked design/implementation
+follow-ups. Generic discovery/metrics remains in the
+[roadmap checklist](../roadmap.md#untracked-backlog-checklist).
 Do not duplicate the existing attribution, generator parser, receipt, explorer
 or watch work. Preserve the frozen 24 agent cases and their per-case budgets;
 those experimental controls are separate from the removed agent credit cap.

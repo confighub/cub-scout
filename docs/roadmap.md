@@ -83,6 +83,12 @@ Standalone supplied-manifest comparison and install verification already exist;
 do not make connected evidence a prerequisite for these workflows. Preserve
 current release gates and benchmark controls while adding deeper explanations.
 
+The [configuration investigation delivery checklist](reference/configuration-investigation-delivery.md)
+turns these commitments into ordered work, worked generation/Helm examples,
+standalone and permission contracts, issue ownership and exact proof boundaries.
+New scoped follow-ups are #778 (generation provenance), #779 (Helm inputs),
+#780 (permission profiles) and #781 (local investigation continuity).
+
 ## Post-2.13 commitments from the continuity review
 
 Confirmed by the maintainer on 2026-10-05: **all findings and new ideas from
@@ -148,27 +154,14 @@ complete evidence and cheap reuse. Existing work remains in #519/#599/#596,
 #539/#604 and the current evidence queue. This assessment does not widen v2.13
 or claim measured leadership.
 
-- [ ] Define operation-specific read-permission profiles and sensitive-read
-  boundaries, with denied/partial controls and a reproducible RBAC proof. File
-  an implementation issue after settling the profile contract.
-- [ ] Define scope-bound local investigation history, including cancellation,
-  same-name collisions, retention and privacy. Coordinate with #519/#599; file
-  an implementation issue if their existing scope does not cover the design.
-- [ ] Assess a read-only effective Helm configuration provenance view: source
-  precedence, optional/missing inputs, denied reads and secret redaction. Define
-  the interpretation boundary before implementation; this is not SDK rendering.
-  Reuse existing Helm reference counts, missing/optional-input and precedence
-  findings, plus secret dependency evidence; the gap is effective-input explanation.
+- Promoted: operation-specific permission profiles and sensitive-read proof → #780.
+- Promoted: scope-bound local investigation history/retention → #781.
+- Promoted: bounded effective Helm input explanation → #779.
 - [ ] Assess generic resource discovery and on-demand workload metrics against
   measured operator tasks. Define supported semantics versus generic hints,
   scope/request/memory caps, stale/unknown states and sensitive-read permissions
   before filing any implementation issue.
-- [ ] Design producer-supplied generation records and optional field source maps:
-  exact input/tool-version/output identity, coverage, redaction and supported
-  producer contracts. Reuse source anchors, bindings, rendered-set digests and
-  receipt chains; keep parentage and templated-source unknown states distinct.
-  Complete the P4 contract/example checkpoint, then file scoped implementation
-  issues for accepted producer adapters instead of adding a Scout renderer.
+- Promoted: producer-supplied generation records/optional field maps → #778.
 
 The [October 5 investigation depth assessment](reference/explorer-comparison.md#investigation-depth-assessment--2026-10-05)
 adds concrete operator scenarios under #519 and the existing P4/P5 work. Basic

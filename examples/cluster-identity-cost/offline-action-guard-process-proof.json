@@ -1,0 +1,82 @@
+{
+  "schema": "offline-map-identity-process-proof.v1",
+  "sourceBase": "1c8da761b723ba73e2e76db7f454a6d3d49a39fd",
+  "sourceTreeModified": true,
+  "binarySHA256": "24f211faa7f5e057b2a08b0d17458a1832956d5189c336a4c04c4d6cb8f86172",
+  "liveAcceptance": false,
+  "targetExecuted": false,
+  "checks": [
+    {
+      "name": "default-json",
+      "exit": 0,
+      "identityRequests": 0,
+      "allRequests": 2,
+      "stdoutSHA256": "9cbd44f83137a71cef0febe1df598716ee1fa34f2c2a1f6e5103996b9920fe49"
+    },
+    {
+      "name": "identity-json",
+      "exit": 0,
+      "identityRequests": 1,
+      "allRequests": 3,
+      "stdoutSHA256": "d416c0d666a80f9e034c372fe338fe3d5de9677552aac7e0b7d63ff76141215f"
+    },
+    {
+      "name": "identity-ascii",
+      "exit": 0,
+      "identityRequests": 1,
+      "allRequests": 3,
+      "stdoutSHA256": "949c508f227b87cffab88e8fcd8461be9e04ecdc3ce3d856875267738cf5c5ce"
+    },
+    {
+      "name": "identity-md",
+      "exit": 0,
+      "identityRequests": 1,
+      "allRequests": 3,
+      "stdoutSHA256": "894deb16db8a9bae0c2fd3a2c7e66419dc19d726a6f9c646b5e668613b02590e"
+    },
+    {
+      "name": "denied-json",
+      "exit": 0,
+      "identityRequests": 1,
+      "allRequests": 3,
+      "stdoutSHA256": "4265d40947328f85d05aabca92b0b067b844289882f925e2c06a221f2b4f9b0a"
+    },
+    {
+      "name": "invalid-combination",
+      "exit": 1,
+      "identityRequests": 0,
+      "allRequests": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "unavailable-json",
+      "exit": 0,
+      "identityRequests": 0,
+      "allRequests": 0,
+      "stdoutSHA256": "42544e10346acdaefb6f3fe81194c8e454a006d851b2d6aa91019c64375038dd"
+    },
+    {
+      "name": "mcp-identity",
+      "exit": 0,
+      "identityRequests": 1,
+      "allRequests": 3,
+      "stdoutSHA256": "3bb1a1d8d9bc71e21e5a40e5b20d1fbb5119c668610c95c01372c387eb17b510"
+    }
+  ],
+  "passed": true,
+  "privateProofSHA256": "60524092bb424bee369e12890715b5410a94249ae0114591406e20e2122d87fc",
+  "sourceDiffSHA256": "493872a7c4eba1dfaddea553682fed59ee206c06e348ea39672fbf2d827756fa",
+  "driverSHA256": "2d455f72662f75b63e7514d0ba5af851395bba4165cefc1f76d2d01e6400ac78",
+  "fixtureKind": "authored-loopback-http",
+  "retainedBinarySHA256": "24f211faa7f5e057b2a08b0d17458a1832956d5189c336a4c04c4d6cb8f86172",
+  "hostCLIExecuted": true,
+  "hostMCPExecuted": true,
+  "executionScope": "Authored host CLI/MCP loopback control only; no frozen model benchmark or Linux target execution.",
+  "tuiProcessAcceptance": false,
+  "limits": [
+    "No genuine Kubernetes/ConfigHub server or live acceptance.",
+    "No model/container or frozen benchmark admission/execution.",
+    "TUI guarded actions are deterministic model tests, not a TUI process acceptance.",
+    "Costs cover only the additional Namespace identity read."
+  ]
+}

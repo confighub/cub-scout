@@ -93,11 +93,12 @@ func resolveClusterConfigWithProxy(
 // never rendered or serialized; refreshes reuse the same selection and
 // credentials instead of consulting a possibly changed current context.
 type localClusterBinding struct {
-	config   *rest.Config
-	proxyURL string // Parsed from the same selected kubeconfig snapshot.
-	context  string
-	explicit bool
-	err      error
+	config                 *rest.Config
+	proxyURL               string // Parsed from the same selected kubeconfig snapshot.
+	context                string
+	explicit               bool
+	err                    error
+	observeClusterIdentity bool // Opt-in extra Namespace GET per inventory refresh.
 }
 
 // clusterContextSelection is a per-invocation selection. An omitted selection

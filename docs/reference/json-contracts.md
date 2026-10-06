@@ -154,6 +154,86 @@ and performs no additional API reads. `--ownership-evidence` cannot be mixed
 with `--summary`, `--count`, or `--names-only` because those modes do not return
 per-entry diagnostics.
 
+## Watch inventory omissions (v2.14 candidate, unreleased)
+
+Watch/bot add an optional `collection` field only on `collection.partial`
+events. It uses the shared inventory collection shape: `status: "partial"`
+and normalized, deterministically sorted `omissions`. Such events have a
+synthetic Collection/inventory resource descriptor and event timestamp, with no
+object observation, owner or receipt. A failed LIST does not prove deletion;
+previous entries are private diff history, never renewed current evidence.
+See [event semantics and limits](watch-events.md#event-types) and the
+[offline example](../../examples/watch-collection-omissions/).
+
+## Opt-in map cluster identity (v2.14 candidate, unreleased)
+
+`map list --cluster-identity --format json` and MCP `map` with
+`cluster_identity: true` opt into `map-list-cluster-identity.v1`:
+
+```json
+{
+  "schema": "map-list-cluster-identity.v1",
+  "cluster": {
+    "context": "selected-context",
+    "apiServer": "https://api.example",
+    "identity": "unverified",
+    "idSource": "v1/Namespace/kube-system",
+    "omission": "forbidden",
+    "cost": {
+      "requestsMade": 1,
+      "responseBodyBytes": 87,
+      "transportErrors": 0,
+      "bodyReadErrors": 0,
+      "durationMillis": 12,
+      "reused": false,
+      "coverage": "selected-kubernetes-transport"
+    }
+  },
+  "clusterCostScope": "identity-reader",
+  "resources": [],
+  "collection": {
+    "status": "partial",
+    "omissions": [{"apiVersion": "apps/v1", "resource": "deployments", "namespace": "team-a", "reason": "forbidden"}]
+  }
+}
+```
+
+This is an illustrative shape, not a live capture or cost measurement. Verified
+identity adds `id` and `observedAt` from the exact `kube-system` Namespace read.
+The Namespace UID identifies that observed instance and may change if it is
+recreated; it is not a ConfigHub Target join or infrastructure identifier.
+Context and client configuration are captured together. Endpoint output omits
+user information, query and fragment fields. Denied/malformed/unreachable
+identity remains `unverified`, without an ID or successful observation time.
+
+The opt-in admits one extra bounded Namespace GET per inventory refresh.
+`cluster.cost` counts only its transport attempts, consumed response bodies and
+duration; inventory/authentication/other-client costs and wire/header bytes are
+excluded. Opaque preexisting transport wrappers mark coverage partial. Existing
+default JSON arrays and ownership-only diagnostics retain their formats and
+read budgets. Compact summary/count/names-only and ownership-only combinations
+are refused before reads; recorded/test-hook inventory cannot admit this lookup.
+
+`collection` retains normalized list omissions independently of identity. A
+successfully empty inventory is distinct from `partial` unreadable lists.
+Pre-read configuration/client failures produce `status: "unavailable"` and
+`unavailableReason`, with zero identity requests and no invented list omission.
+Resource absence is not ownership/orphan or workload-health proof.
+
+ASCII/Markdown and the opt-in standalone TUI's `V` view display the same cluster
+facts. Opening `V` uses loaded evidence; failed refresh replaces the old identity
+and visible panel with unavailable evidence. MCP exposes the original envelope
+under `structuredContent.data` without changing legacy map responses. Wider
+object-reference/whole-command-cost integration and genuine acceptance remain
+open. [Loopback example](../../examples/cluster-identity-cost/README.md).
+
+In the opt-in identity TUI, implicit current-context selection uses the same
+captured-provider safeguards as an explicit selector. Bounded explain, scan and
+trace retain their bound providers; graph export, shell, import and command mode
+remain unavailable until they can honor the captured binding. These actions
+cannot silently consult a subsequently changed ambient context. Legacy mode is
+unchanged; genuine acceptance remains pending.
+
 ## Bounded Resource Read (v2.10.0)
 
 `explain --bounded --format json` and MCP `explain` with `bounded: true` use
@@ -2605,7 +2685,7 @@ Implementation: `pkg/agent/receipt_aggregate.go`
 each matching event payload inline. Both commands use the same watch event shape
 with an optional `receipt` field carrying the full in-toto Statement.
 
-Event-type set (current; all four supported as of #449):
+Receipt-supported event types (four resource/finding types):
 
 | Event type | Receipt-build? | Notes |
 |------------|---------------|-------|
@@ -2613,7 +2693,13 @@ Event-type set (current; all four supported as of #449):
 | `ownership.changed` | Yes — `applied-matches-spec` auto-detected | Owner shifts often indicate a delivery-chain change worth attesting |
 | `resource.discovered` | Yes — `applied-matches-spec` auto-detected | The discovery moment captures the live state at first observation; backpressure-gated via `--emit-receipt-batch-cap` |
 | `scan.finding` | Yes — `applied-matches-spec` auto-detected | The receipt records the resource state at finding time; the finding detail lives on the event's `details` field; backpressure-gated |
+| `resource.deleted` | No | Known deletion event; no current object read to receipt |
+| `collection.partial` | No | Unreleased v2.14 candidate: collection omission, not an observed object |
 | `all` | Sugar — accepts every known event type |
+
+Selecting either unsupported type explicitly or through `all` emits the startup
+warning and leaves its receipt field absent. See the
+[event reference](watch-events.md#event-types).
 
 **Backpressure (`--emit-receipt-batch-cap N`, default 10):** when a
 single poll produces more receipt-eligible events than the cap, the
@@ -2719,6 +2805,24 @@ combined API version, Kind, namespace and owner filters. The default full report
 remains `map-list-recorded.v1`; an omitted owner does not add a field to its
 scope.
 
+### Recorded pages (`map-list-recorded-page.v1`)
+
+Opt-in CLI `--page-size 1..500` and recorded MCP `page_size` return a separate
+paged schema. All full-report fields remain, with full-scope counts and owner
+totals; only `resources` is sliced. `pagination.pageSize`, `offset` and
+`returnedCount` describe that slice. `pagination.nextCursor` appears only when
+more rows remain. Empty selection has `resources: []`, offset/count zero and no
+cursor. MCP also returns the report under `structuredContent.data`.
+
+The opaque, canonical base64url cursor binds version, input SHA-256, scope SHA-256,
+page size and aligned offset. Input/filter/size changes, malformed or noncanonical
+fields, oversized cursors and invalid boundaries are errors. This is public
+continuation data, not an authorization token. Summary and pagination are mutually
+exclusive. Default full and summary schemas are unchanged. This bounds record
+count only; bytes/tokens, input parsing and full-scope computation are not bounded
+by page size. Capture time/completeness remain unknown. See the
+[authored pagination example](../../examples/recorded-inventory/#recorded-pages-214-candidate).
+
 ## Exact-space ChangeOrder read
 
 CLI `history changeorder --format json` and connected MCP
@@ -2750,3 +2854,64 @@ effective-default filling, mutation or cross-space fallback occurs.
 
 [Authored example](../../examples/changeorder-read-contract/) documents offline
 success criteria and the pending genuine capture and live CLI/TUI acceptance gates.
+
+
+## Crossplane lineage ambiguity (2.14 candidate)
+
+The existing `CrossplaneLineage` shape is unchanged. Composite/claim nodes may
+remain `present: false` with `evidence` markers `xr:ambiguous` or
+`claim:ambiguous` when multiple eligible supplied objects match. Composite label
+joins restrict parent candidates to the child's namespace or cluster scope;
+they do not establish UID identity. Known-group ownerRef matches preserve exact
+API version/Kind/name and check a nonempty supplied UID. If that UID has no
+observed match, evidence adds `xr:owner_uid_not_observed`; with no supplied UID
+and no eligible object, it adds `xr:unresolved`. No scope/GVK is invented for a label-only unresolved
+parent. See the [authored control](../../examples/crossplane-system/#conservative-lineage-control-214-candidate).
+
+
+## Recorded report JSON budget (2.14 candidate)
+
+CLI `--max-report-json-bytes` and recorded MCP `max_report_json_bytes` (integer
+1..4194304) limit canonical UTF-8 JSON **report data** bytes: the report
+serializer's compact JSON with its normal string escaping and no trailing newline.
+The existing full,
+summary and page schemas remain unchanged; no budget metadata is inserted into
+those reports. An oversized report returns an explicit error with actual and
+requested byte counts and guidance, without a clipped or empty inventory.
+Invalid limits are refused; an empty selection still includes its envelope in
+the check. TUI page failure leaves its loaded report and cursor unchanged.
+This is not a cap on display, newline, duplicated MCP content, protocol envelopes,
+transport, tokens or input work. Actual result bytes must be measured separately.
+See the [example](../../examples/recorded-inventory/#report-json-budget-214-candidate).
+
+## Composition tree reference collisions (2.14 candidate)
+
+`tree composition --json` retains its map of composition trees. Keys are opaque
+presentation keys, not stable object IDs. Roots with a unique display reference
+keep the existing `platform::display-reference` key. When distinct supplied
+references share that display label, **all** members receive a deterministic
+`::ref=` suffix containing unpadded base64url JSON of the platform, full
+`ResourceRef` and present/partial state. Read `xr.ref` and `xr.present` rather
+than reconstructing map keys from names. This preserves the unambiguous contract
+while preventing unrelated API groups/served versions or partial observations
+from sharing a present root.
+
+Tuple equality does not establish physical object UID or cluster identity.
+Unknown name-only parent buckets remain provisional and partial; missing
+metadata is not filled. Same-name children of a different full reference remain
+in `managed`. See the [authored collision control](../../examples/composition-root-collisions/).
+
+## kro owner-reference lineage omissions (2.14 candidate)
+
+kro instance and definition owner-reference joins require a unique exact supplied
+API version/Kind/name, legal namespace locality and matching UID when present.
+Foreign, stale, duplicate, wrong-type or wrong-version evidence stays
+`present: false`. Additional evidence strings are `instance:` or `definition:`
+followed by `unresolved`, `ambiguous` or `owner_uid_not_observed`. A supplied UID
+with no qualifying observed candidate produces the latter; it does not prove
+that the parent was deleted or is orphaned.
+
+Unobserved instance parent namespace is now empty rather than copied from the
+child. With `present: false`, this means unknown scope, not observed cluster
+scope. Metadata-only definition lookup is unchanged and separately bounded.
+See the [authored control](../../examples/kro-composition/#conservative-owner-reference-control-214-candidate).

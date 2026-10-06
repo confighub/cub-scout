@@ -4,7 +4,7 @@
 over webhook + JSONL file sinks. `bot` is the in-cluster-friendly wrapper around
 the watch engine; this reference is the authoritative description of:
 
-- The four event types (`resource.discovered`, `ownership.changed`, `drift.detected`, `scan.finding`) and when each fires
+- The event types (`resource.discovered`, `resource.deleted`, `ownership.changed`, `drift.detected`, `scan.finding`, and candidate `collection.partial`) and when each fires
 - The event JSON shape
 - The inline-receipt attachment via `--emit-receipt-on`
 - The per-poll backpressure cap via `--emit-receipt-batch-cap`
@@ -14,7 +14,7 @@ For the operational walkthrough, see [`docs/howto/receipts-end-to-end.md`](../ho
 
 ## Event types
 
-The four types emitted by `buildWatchEvents` in `cmd/cub-scout/watch.go` are a **closed enumeration**. New types added to that function should also be added to:
+The types emitted by `buildWatchEvents` in `cmd/cub-scout/watch.go` are a **closed enumeration**. New types added to that function should also be added to:
 
 1. `watchKnownEventTypes` in `cmd/cub-scout/watch_receipt.go` (so `--emit-receipt-on` accepts them)
 2. `watchEventTypesWithReceiptSupport` (if receipt-build is wired)
@@ -23,10 +23,31 @@ The four types emitted by `buildWatchEvents` in `cmd/cub-scout/watch.go` are a *
 | Event type | When it fires | Detection logic | `severity` field | `details` keys |
 |---|---|---|---|---|
 | `resource.discovered` | First poll observes a resource cub-scout had not seen before | `entriesByID[id]` exists in current state but not previous | — | `status` |
-| `resource.deleted` | A previously-observed resource is no longer present | `entriesByID[id]` exists in previous state but not current | — | `lastOwner`, `lastStatus` |
+| `resource.deleted` | A previously-observed resource is absent from a successful list of its scope | Previous entry is absent and its actual LIST scope was readable | — | `lastOwner`, `lastStatus` |
 | `ownership.changed` | A previously-observed resource's ownership controller changed | `prevEntry.Owner != currEntry.Owner` | — | `before`, `after` (ownership values) |
 | `drift.detected` | A scan finding categorized as `STATE` or `DRIFT` matches a resource | `strings.EqualFold(finding.Category, "STATE" or "DRIFT")` | propagated from the underlying finding (`critical` / `warning` / `info`) | `category`, `message` |
 | `scan.finding` | Any new risk-pattern finding from `scan` (not just drift) | `currFindings[key]` not in `prevFindings` | propagated from the finding | `category`, `message` |
+
+**Unreleased v2.14 candidate:** `collection.partial` fires once per collection
+cycle with failed inventory LISTs, including absent API types. Its `resource`
+is the synthetic descriptor `{"kind":"Collection","name":"inventory"}` plus
+selected namespace, not an observed Kubernetes object. `collection` contains
+`status: "partial"` and sorted normalized `omissions` (`apiVersion`, `resource`,
+optional `namespace`, `reason`). Raw errors, owner, object observation and receipt
+are absent. Owner/severity filters do not hide this collection-level diagnostic.
+`--emit-receipt-on collection.partial` is accepted as a known event type but
+warns that it has no receipt support; it adds no object read.
+
+A denied LIST cannot authorize deletion for its scope. Previous objects from
+that scope remain private diff history only, retaining their old timestamps;
+they are not emitted as fresh inventory. Recovery with the same object avoids
+a false discovery; a subsequent successfully empty LIST may emit deletion.
+Whole-cycle errors retain the prior baseline and surface the existing warning.
+The state scan has its own coverage limitations; this diagnostic covers the
+inventory sweep and ApplicationSet lookup, not every scan request. The CLI
+`map list --ownership-evidence --format ascii|json|md` and TUI `V` already expose
+inventory list omissions for inspection. These controls do not close six-surface
+conformance or genuine live acceptance. See [the offline control](../../examples/watch-collection-omissions/).
 
 Note: `scan.finding` and `drift.detected` can fire for the **same** underlying finding when the category matches `STATE` / `DRIFT`. They are not deduplicated; consumers may want to filter one or the other.
 
@@ -166,7 +187,7 @@ Unknown event types are rejected upfront (`parseWatchEmitReceiptOn` checks again
 
 ### Forward-compat warning
 
-If a future event type is added to `watchKnownEventTypes` without receipt-build wiring, the watch loop fires a **one-time startup stderr warning** listing the unsupported subset:
+When selected known event types lack receipt-build wiring, the watch loop fires a **one-time startup stderr warning** listing the unsupported subset:
 
 ```
 Warning: --emit-receipt-on includes event types that don't yet build a receipt: hypothetical.future.event.
@@ -175,7 +196,9 @@ but receipt-build is skipped for them. Currently supported: drift.detected, owne
 resource.discovered, scan.finding.
 ```
 
-As of this writing, all four known types build receipts, so the warning never fires for the known set.
+Four resource/finding types support receipts. `resource.deleted` and candidate
+`collection.partial` do not; selecting either explicitly or through `all` emits
+the startup warning. The diagnostic/deletion events remain available.
 
 ## Per-poll backpressure
 

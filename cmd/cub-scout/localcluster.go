@@ -141,24 +141,26 @@ func (m LocalClusterModel) getEffectiveQueries() []SavedQuery {
 
 // LocalClusterModel represents the local cluster TUI state
 type LocalClusterModel struct {
-	entries                []MapEntry
-	ownershipOmissions     []mapsvc.CollectionOmission
-	gitops                 []GitOpsResource
-	gitSources             []GitSourceInfo // Git sources (GitRepository, OCIRepository, HelmRepository)
-	width                  int
-	height                 int
-	ready                  bool
-	loading                bool
-	err                    error
-	cursor                 int
-	view                   localView
-	spinner                spinner.Model
-	keymap                 localKeyMap
-	statusMsg              string
-	clusterName            string
-	contextName            string               // kubectl context name
-	clusterBinding         *localClusterBinding // Session-pinned inventory config; never serialized.
-	explicitClusterContext bool                 // Unsupported unbound actions fail closed in this mode.
+	entries                    []MapEntry
+	ownershipOmissions         []mapsvc.CollectionOmission
+	clusterIdentity            *agent.ClusterIdentityEvidence
+	inventoryUnavailableReason string
+	gitops                     []GitOpsResource
+	gitSources                 []GitSourceInfo // Git sources (GitRepository, OCIRepository, HelmRepository)
+	width                      int
+	height                     int
+	ready                      bool
+	loading                    bool
+	err                        error
+	cursor                     int
+	view                       localView
+	spinner                    spinner.Model
+	keymap                     localKeyMap
+	statusMsg                  string
+	clusterName                string
+	contextName                string               // kubectl context name
+	clusterBinding             *localClusterBinding // Session-pinned inventory config; never serialized.
+	explicitClusterContext     bool                 // Unsupported unbound actions fail closed in this mode.
 
 	// Connection status (checked async on startup)
 	connectionMode string // "offline", "online", "connected"
@@ -292,7 +294,7 @@ type LocalClusterModel struct {
 	noInit bool
 }
 
-const explicitContextUnsupportedAction = "This action is unavailable with --kube-context until it can honor the selected binding. Inventory, bounded explain, scan and trace remain available."
+const explicitContextUnsupportedAction = "This action is unavailable with --kube-context or --cluster-identity until it can honor the selected binding. Inventory, bounded explain, scan and trace remain available."
 
 // GitOpsResource represents a Flux/ArgoCD resource
 type GitOpsResource struct {
@@ -469,6 +471,7 @@ func ownershipEvidencePanelWidth(width int) int {
 
 // Messages
 type localDataLoadedMsg struct {
+	clusterIdentity    *agent.ClusterIdentityEvidence
 	boundedContext     string
 	entries            []MapEntry
 	ownershipOmissions []mapsvc.CollectionOmission
@@ -591,7 +594,7 @@ func initialLocalModelWithBinding(opts ViewOptions, binding *localClusterBinding
 		clusterName:            clusterName,
 		contextName:            contextName,
 		clusterBinding:         binding,
-		explicitClusterContext: binding.explicit,
+		explicitClusterContext: binding.explicit || binding.observeClusterIdentity,
 		panelPane:              vp,
 		viewOpts:               opts,
 		connectionMode:         hub.QuickMode().String(), // Instant display; async check refines later
@@ -667,10 +670,14 @@ func loadLocalClusterDataWithBinding(binding *localClusterBinding) tea.Msg {
 	if binding == nil {
 		return localDataLoadedMsg{err: fmt.Errorf("resolve Kubernetes config: no cluster binding")}
 	}
-	return loadLocalClusterDataWithConfig(binding.config, binding.context, binding.err)
+	return loadLocalClusterDataWithConfigAndIdentity(binding.config, binding.context, binding.err, binding.observeClusterIdentity)
 }
 
 func loadLocalClusterDataWithConfig(cfg *rest.Config, boundContext string, configErr error) tea.Msg {
+	return loadLocalClusterDataWithConfigAndIdentity(cfg, boundContext, configErr, false)
+}
+
+func loadLocalClusterDataWithConfigAndIdentity(cfg *rest.Config, boundContext string, configErr error, includeIdentity bool) tea.Msg {
 	ctx := context.Background()
 	if configErr != nil {
 		return localDataLoadedMsg{err: fmt.Errorf("build kubernetes config: %w", configErr)}
@@ -682,6 +689,10 @@ func loadLocalClusterDataWithConfig(cfg *rest.Config, boundContext string, confi
 	dynClient, err := dynamic.NewForConfig(rest.CopyConfig(cfg))
 	if err != nil {
 		return localDataLoadedMsg{err: fmt.Errorf("create dynamic client: %w", err)}
+	}
+	var clusterIdentity *agent.ClusterIdentityEvidence
+	if includeIdentity {
+		clusterIdentity = observeMapClusterIdentity(ctx, cfg, boundContext)
 	}
 
 	clusterName := os.Getenv("CLUSTER_NAME")
@@ -840,7 +851,7 @@ func loadLocalClusterDataWithConfig(cfg *rest.Config, boundContext string, confi
 	}
 	sort.Strings(detectedApps)
 
-	return localDataLoadedMsg{entries: entries, ownershipOmissions: ownershipOmissions, gitops: gitops, gitSources: gitSources, detectedApps: detectedApps, boundedContext: boundContext}
+	return localDataLoadedMsg{entries: entries, ownershipOmissions: ownershipOmissions, gitops: gitops, gitSources: gitSources, detectedApps: detectedApps, boundedContext: boundContext, clusterIdentity: clusterIdentity}
 }
 
 func parseFluxKustomization(item *unstructured.Unstructured) GitOpsResource {
@@ -1334,9 +1345,21 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case localDataLoadedMsg:
 		m.loading = false
+		// A failed refresh must not retain a previous verified identity as fresh.
+		m.clusterIdentity = msg.clusterIdentity
+		m.inventoryUnavailableReason = ""
 		if msg.err != nil {
 			m.err = msg.err
+			if m.clusterBinding != nil && m.clusterBinding.observeClusterIdentity {
+				m.clusterIdentity = unavailableMapClusterIdentity(m.clusterBinding.context, "inventory_refresh_unavailable")
+				m.inventoryUnavailableReason = "inventory_refresh_unavailable"
+				m.entries = nil
+				m.ownershipOmissions = nil
+			}
 		} else {
+			if m.clusterBinding != nil && m.clusterBinding.observeClusterIdentity {
+				m.err = nil
+			}
 			m.entries = msg.entries
 			m.ownershipOmissions = msg.ownershipOmissions
 			m.boundedContext = msg.boundedContext
@@ -1359,6 +1382,9 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.namespaces = append(m.namespaces, ns)
 			}
 			sort.Strings(m.namespaces)
+		}
+		if m.panelMode && m.panelView == viewOwnershipEvidence {
+			m.updatePanelContent()
 		}
 		return m, nil
 
@@ -2697,6 +2723,9 @@ func (m LocalClusterModel) getPanelTitle() string {
 func (m LocalClusterModel) getPanelOwnershipEvidence() string {
 	entries := m.getFilteredEntries()
 	var b strings.Builder
+	if m.clusterIdentity != nil {
+		b.WriteString(mapClusterIdentityText(m.clusterIdentity) + "\n")
+	}
 	b.WriteString("Ownership detection applies only to workload objects returned during inventory loading. It does not establish that a resource is orphaned or identify a person.\n\n")
 	for _, entry := range entries {
 		b.WriteString(fmt.Sprintf("%s/%s %s — %s\n", entry.Namespace, entry.Name, entry.Kind, mapsvc.OwnershipDetectionSummary(entry.OwnershipDetection)))
@@ -2707,6 +2736,10 @@ func (m LocalClusterModel) getPanelOwnershipEvidence() string {
 	status := "complete"
 	if len(m.ownershipOmissions) > 0 {
 		status = "partial"
+	}
+	if m.inventoryUnavailableReason != "" {
+		status = "unavailable"
+		fmt.Fprintf(&b, "Inventory unavailable: %q\n", m.inventoryUnavailableReason)
 	}
 	b.WriteString(fmt.Sprintf("\nCollection: %s (%d workload list request(s) omitted)\n", status, len(m.ownershipOmissions)))
 	for _, omission := range m.ownershipOmissions {
@@ -2853,7 +2886,11 @@ func (m LocalClusterModel) renderModeHeader() string {
 		worker = lcModeHeaderStyle.Render(" │ Worker: ") + style.Render(indicator+" "+m.workerName)
 	}
 
-	return mode + cluster + context + worker + "\n"
+	identity := ""
+	if m.clusterIdentity != nil {
+		identity = fmt.Sprintf(" │ Identity: %q (V: details)", m.clusterIdentity.Identity)
+	}
+	return mode + cluster + context + worker + identity + "\n"
 }
 
 // boundContextLabel describes the credentials actually used for inventory.

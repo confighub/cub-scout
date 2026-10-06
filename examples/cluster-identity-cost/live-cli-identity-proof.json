@@ -1,0 +1,567 @@
+{
+  "schema": "v214-live-map-identity-summary.v1",
+  "passed": true,
+  "started": "2026-10-06T07:18:43.352271+00:00",
+  "finished": "2026-10-06T07:19:59.127959+00:00",
+  "integratedSource": "8e60706a",
+  "binarySHA256": "30f92b5d56c3c5f3887f5141be9aee27969a2e266fc79d3d069555dd407b8c10",
+  "executedBinaryBuildMetadata": [
+    "build\tGOARCH=arm64",
+    "build\tGOOS=darwin"
+  ],
+  "sourceBindingLimit": "Binary was built from modified integrated source before commit. Runner sampled source metadata at finish, not execution start. This is not a clean-commit binary proof. Production source did not change after that build in this packet.",
+  "ownedClusterRemoved": true,
+  "sharedConfigUnchanged": true,
+  "sharedConfigSHA256": "39f2fb623dd90888727c8235a235afa56a5a84937002d5d49e64a52cd421d7f3",
+  "scope": "One disposable Kubernetes 1.35 cluster; actual admin/restricted-reader CLI JSON/ASCII/Markdown identity and retained inventory; not controller, TUI, MCP, fleet, full command cost or health acceptance",
+  "steps": [
+    {
+      "name": "preflight-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "720b69d447406c48bd739c298ef737e8cdb5830395efbebb64e51c38250f1f6f"
+    },
+    {
+      "name": "bootstrap-owned-resources",
+      "exit": 0,
+      "stdoutSHA256": "a88e5687c646b090706ab8d83aed00cdd74f0078910a9c77edffa4762302cdb1",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "namespace-uid",
+      "exit": 0,
+      "stdoutSHA256": "b65030f6e509b2d959f207df69e3db35290c51086e507b7bb4eb12b03e7ff476",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "admin-identity-json",
+      "exit": 0,
+      "stdoutSHA256": "18ea8be3ac2b4f44c8b2a80cd3c7dc1128d7e001df88bf0164b93404f2f893b5",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "admin-identity-ascii",
+      "exit": 0,
+      "stdoutSHA256": "bf29e2896da9a91a0bda8d0dfca5112e4a670aaf7df3ee62db258b65e853df8e",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "admin-identity-md",
+      "exit": 0,
+      "stdoutSHA256": "9a60d0ee5cdf1f312435496a0ee1cd313eab643a3ab02b3da4e07f4004f192be",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "viewer-identity-json",
+      "exit": 0,
+      "stdoutSHA256": "5b61858121f22fa6f2fa02f144167a12f250e5fb3852ea7e1bfebec7cca6a84e",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "viewer-identity-ascii",
+      "exit": 0,
+      "stdoutSHA256": "6223fc859225bd9702cc83a38d0f42c8ab60594636af54d62eb080ef87fbc035",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "viewer-identity-md",
+      "exit": 0,
+      "stdoutSHA256": "22630a45f3499147ee3ce54608df83b07c9d43faa678ff34be8b1200a47727c6",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "viewer-write-denied",
+      "exit": 1,
+      "stdoutSHA256": "564739ea8fa5926d4fa5c9734fed462061960a22e6b8d5c06e94969d97891bf2",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "viewer-secret-denied",
+      "exit": 1,
+      "stdoutSHA256": "564739ea8fa5926d4fa5c9734fed462061960a22e6b8d5c06e94969d97891bf2",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cleanup-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "d46074a133b7267fcb1c8f61df1c3de20dabb4d2e0496e815f2430afba274b35"
+    },
+    {
+      "name": "after-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "retainedFailure": {
+    "reason": "('admin-identity-json', 1, \"Error: unknown shorthand flag: 'n' in -n\\n\")",
+    "ownedClusterRemoved": true,
+    "sharedConfigUnchanged": true
+  },
+  "admin": {
+    "cluster": {
+      "context": "kind-scout-v214-id-e95f450a",
+      "apiServer": "https://127.0.0.1:60022",
+      "id": "9015bce4-6c75-439c-8c98-d27beabd64e8",
+      "identity": "verified",
+      "idSource": "v1/Namespace/kube-system",
+      "observedAt": "2026-10-06T07:19:18.324505Z",
+      "cost": {
+        "requestsMade": 1,
+        "responseBodyBytes": 526,
+        "transportErrors": 0,
+        "bodyReadErrors": 0,
+        "durationMillis": 84,
+        "reused": false,
+        "coverage": "selected-kubernetes-transport"
+      }
+    },
+    "clusterCostScope": "identity-reader",
+    "collection": {
+      "status": "partial",
+      "omissions": [
+        {
+          "apiVersion": "argoproj.io/v1alpha1",
+          "resource": "applications",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "argoproj.io/v1alpha1",
+          "resource": "applicationsets",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "config.projectsveltos.io/v1beta1",
+          "resource": "clusterconfigurations",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "config.projectsveltos.io/v1beta1",
+          "resource": "clusterprofiles",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "config.projectsveltos.io/v1beta1",
+          "resource": "clusterpromotions",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "config.projectsveltos.io/v1beta1",
+          "resource": "clusterreports",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "config.projectsveltos.io/v1beta1",
+          "resource": "clustersummaries",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "config.projectsveltos.io/v1beta1",
+          "resource": "profiles",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "fluxcd.controlplane.io/v1",
+          "resource": "artifactgenerators",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "fluxcd.controlplane.io/v1",
+          "resource": "externalartifacts",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "fluxcd.controlplane.io/v1",
+          "resource": "fluxinstances",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "fluxcd.controlplane.io/v1",
+          "resource": "fluxreports",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "fluxcd.controlplane.io/v1",
+          "resource": "resourcesetinputproviders",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "fluxcd.controlplane.io/v1",
+          "resource": "resourcesets",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "helm.toolkit.fluxcd.io/v2",
+          "resource": "helmreleases",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "infrastructure.modelplane.ai/v1alpha1",
+          "resource": "eksclusters",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "infrastructure.modelplane.ai/v1alpha1",
+          "resource": "gkeclusters",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "infrastructure.modelplane.ai/v1alpha1",
+          "resource": "servingstacks",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+          "resource": "kustomizations",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "lib.projectsveltos.io/v1beta1",
+          "resource": "clusterhealthchecks",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "lib.projectsveltos.io/v1beta1",
+          "resource": "eventreports",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "lib.projectsveltos.io/v1beta1",
+          "resource": "eventsources",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "lib.projectsveltos.io/v1beta1",
+          "resource": "eventtriggers",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "lib.projectsveltos.io/v1beta1",
+          "resource": "healthcheckreports",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "modelplane.ai/v1alpha1",
+          "resource": "inferenceclasses",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "modelplane.ai/v1alpha1",
+          "resource": "inferenceclusters",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "modelplane.ai/v1alpha1",
+          "resource": "inferencegateways",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "modelplane.ai/v1alpha1",
+          "resource": "modelcaches",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "modelplane.ai/v1alpha1",
+          "resource": "modeldeployments",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "modelplane.ai/v1alpha1",
+          "resource": "modelendpoints",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "modelplane.ai/v1alpha1",
+          "resource": "modelreplicas",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "modelplane.ai/v1alpha1",
+          "resource": "modelservices",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        },
+        {
+          "apiVersion": "source.toolkit.fluxcd.io/v1",
+          "resource": "gitrepositories",
+          "namespace": "scout-proof",
+          "reason": "not_found"
+        }
+      ]
+    },
+    "workloadRetained": true
+  },
+  "viewer": {
+    "cluster": {
+      "context": "proof-viewer",
+      "apiServer": "https://127.0.0.1:60022",
+      "identity": "unverified",
+      "idSource": "v1/Namespace/kube-system",
+      "omission": "forbidden",
+      "cost": {
+        "requestsMade": 1,
+        "responseBodyBytes": 343,
+        "transportErrors": 0,
+        "bodyReadErrors": 0,
+        "durationMillis": 8,
+        "reused": false,
+        "coverage": "selected-kubernetes-transport"
+      }
+    },
+    "clusterCostScope": "identity-reader",
+    "collection": {
+      "status": "partial",
+      "omissions": [
+        {
+          "apiVersion": "argoproj.io/v1alpha1",
+          "resource": "applications",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "argoproj.io/v1alpha1",
+          "resource": "applicationsets",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "config.projectsveltos.io/v1beta1",
+          "resource": "clusterconfigurations",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "config.projectsveltos.io/v1beta1",
+          "resource": "clusterprofiles",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "config.projectsveltos.io/v1beta1",
+          "resource": "clusterpromotions",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "config.projectsveltos.io/v1beta1",
+          "resource": "clusterreports",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "config.projectsveltos.io/v1beta1",
+          "resource": "clustersummaries",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "config.projectsveltos.io/v1beta1",
+          "resource": "profiles",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "fluxcd.controlplane.io/v1",
+          "resource": "artifactgenerators",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "fluxcd.controlplane.io/v1",
+          "resource": "externalartifacts",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "fluxcd.controlplane.io/v1",
+          "resource": "fluxinstances",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "fluxcd.controlplane.io/v1",
+          "resource": "fluxreports",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "fluxcd.controlplane.io/v1",
+          "resource": "resourcesetinputproviders",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "fluxcd.controlplane.io/v1",
+          "resource": "resourcesets",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "helm.toolkit.fluxcd.io/v2",
+          "resource": "helmreleases",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "infrastructure.modelplane.ai/v1alpha1",
+          "resource": "eksclusters",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "infrastructure.modelplane.ai/v1alpha1",
+          "resource": "gkeclusters",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "infrastructure.modelplane.ai/v1alpha1",
+          "resource": "servingstacks",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+          "resource": "kustomizations",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "lib.projectsveltos.io/v1beta1",
+          "resource": "clusterhealthchecks",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "lib.projectsveltos.io/v1beta1",
+          "resource": "eventreports",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "lib.projectsveltos.io/v1beta1",
+          "resource": "eventsources",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "lib.projectsveltos.io/v1beta1",
+          "resource": "eventtriggers",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "lib.projectsveltos.io/v1beta1",
+          "resource": "healthcheckreports",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "modelplane.ai/v1alpha1",
+          "resource": "inferenceclasses",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "modelplane.ai/v1alpha1",
+          "resource": "inferenceclusters",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "modelplane.ai/v1alpha1",
+          "resource": "inferencegateways",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "modelplane.ai/v1alpha1",
+          "resource": "modelcaches",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "modelplane.ai/v1alpha1",
+          "resource": "modeldeployments",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "modelplane.ai/v1alpha1",
+          "resource": "modelendpoints",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "modelplane.ai/v1alpha1",
+          "resource": "modelreplicas",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "modelplane.ai/v1alpha1",
+          "resource": "modelservices",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "networking.k8s.io/v1",
+          "resource": "ingresses",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "source.toolkit.fluxcd.io/v1",
+          "resource": "gitrepositories",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        },
+        {
+          "apiVersion": "v1",
+          "resource": "secrets",
+          "namespace": "scout-proof",
+          "reason": "forbidden"
+        }
+      ]
+    },
+    "workloadRetained": true
+  }
+}

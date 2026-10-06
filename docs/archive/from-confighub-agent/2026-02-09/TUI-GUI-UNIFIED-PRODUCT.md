@@ -44,7 +44,7 @@ Competing TUIs solve **cluster visualization**. We solve **the app hierarchy pro
 | **OSS** | Matches Flux/Argo ecosystem, maximizes adoption |
 | **Read-only** | Enterprise-adoptable (RBC example), safe to point anywhere |
 | **Single cluster** | Simple entry point, no multi-node friction |
-| **Easy to integrate** | We want k9s, flux9s, etc. to add us |
+| **Easy to integrate** | We want other Kubernetes viewers to add us |
 
 These constraints avoid 3-5 major frictions of non-OSS/read-write/multi-cluster/SaaS.
 
