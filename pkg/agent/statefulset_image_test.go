@@ -3,6 +3,7 @@
 package agent
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -150,4 +151,46 @@ func TestStatefulSetStartOrdinalAndRevisionOmission(t *testing.T) {
 	require.Equal(t, "statefulset-revision-identity-unconfirmed", BuildStatefulSetImageCoverage(l, p, nil).Reason)
 	r.SetUID("")
 	require.False(t, BuildStatefulSetImageCoverage(l, p, r).Complete)
+}
+
+// A bundle with a Deployment and a StatefulSet, both with complete coverage,
+// printed neither rollout sentence: each required every workload to be its
+// own kind.
+func TestRunningImageHeadlineConfirmsMixedWorkloadKinds(t *testing.T) {
+	deployment := RunningImageWorkload{Verdict: "match", Deployment: &DeploymentImageCoverage{Complete: true}}
+	statefulSet := RunningImageWorkload{Verdict: "match", StatefulSet: &StatefulSetImageCoverage{Complete: true}}
+	incomplete := RunningImageWorkload{Verdict: "match", StatefulSet: &StatefulSetImageCoverage{Reason: "pod-count-incomplete"}}
+	directPod := RunningImageWorkload{Verdict: "match"}
+	for _, tc := range []struct {
+		name      string
+		workloads []RunningImageWorkload
+		want      string
+	}{
+		{"deployments only", []RunningImageWorkload{deployment, deployment}, " Deployment image rollout confirmed for this observation window."},
+		{"statefulsets only", []RunningImageWorkload{statefulSet}, " StatefulSet image rollout confirmed for this observation window."},
+		{"one of each", []RunningImageWorkload{deployment, statefulSet}, " Deployment and StatefulSet image rollout confirmed for this observation window."},
+		{"one incomplete", []RunningImageWorkload{deployment, incomplete}, ""},
+		{"a direct pod has no rollout to confirm", []RunningImageWorkload{deployment, directPod}, ""},
+		{"no workloads", nil, ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r := ReleaseCheckReport{Verdict: VerdictPASS, Headline: "Base.", RunningImage: &RunningImageEvidence{Verdict: "match", Workloads: tc.workloads}}
+			r.composeRunningImageHeadline()
+			want := "Base. Running pods report the intended image digest." + tc.want
+			if r.Headline != want {
+				t.Errorf("headline = %q, want %q", r.Headline, want)
+			}
+		})
+	}
+}
+
+// The next step must not send a StatefulSet's operator to Deployment-only
+// remedies, and must name the read a StatefulSet check adds.
+func TestRunningImageNextStepCoversStatefulSets(t *testing.T) {
+	if got := runningImageNextStep("coverage-capped"); strings.Contains(got, "Deployment") || !strings.Contains(got, "this workload") {
+		t.Errorf("coverage-capped next step = %q", got)
+	}
+	if got := runningImageNextStep("read-denied"); !strings.Contains(got, "controllerrevisions.apps") || !strings.Contains(got, "replicasets.apps") {
+		t.Errorf("read-denied next step = %q", got)
+	}
 }

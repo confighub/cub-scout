@@ -232,8 +232,14 @@ that controlling owner, revision label and a unique in-range ordinal. Every
 intended regular container must be Running/Ready at its pinned digest.
 
 Reads add one bounded selector-scoped pod LIST, one exact ControllerRevision GET
-and a final StatefulSet GET to the reused live configuration read. No continuation
-pages are fetched. Caps, denied/missing evidence, stale generations, partitions,
+and a final StatefulSet GET to the reused live configuration read. The
+reader therefore needs `list` on pods and `get` on `controllerrevisions.apps` in
+the namespace; a role that suffices for Deployments reports `read-denied` for
+StatefulSets without it. No continuation pages are fetched. The template
+comparison is exact and is verified only for a ControllerRevision written by the
+cluster's current Kubernetes version: a revision retained across a control-plane
+upgrade is untested and may stay `statefulset-revision-template-unconfirmed`
+until the next rollout. Caps, denied/missing evidence, stale generations, partitions,
 old/foreign/terminating pods, zero desired population and changes during the
 check stay UNKNOWN. Mutable tags and unresolved index/platform digests also stay
 UNKNOWN. CLI, MCP/plugin and the release TUI use the same report. Watch/bot do not

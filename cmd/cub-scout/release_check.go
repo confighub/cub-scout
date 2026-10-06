@@ -477,23 +477,29 @@ func observeDeploymentImage(ctx context.Context, r *agent.ReleaseCheckReport, re
 	// count too. This detects races without claiming an atomic cluster snapshot.
 	after, re, err := reader.Read(ctx, w.ID, true)
 	r.AddRead(re)
-	recheckReason := ""
-	switch {
-	case err != nil:
-		recheckReason = "workload-recheck-unavailable"
-		if apierrors.IsForbidden(err) {
-			recheckReason = "workload-recheck-read-denied"
-		}
-	case after == nil || after.GetResourceVersion() == "" || after.GetUID() == "":
-		recheckReason = "workload-recheck-identity-missing"
-	case !reflect.DeepEqual(after.Object, live.Object):
-		recheckReason = "workload-changed-during-check"
-	}
-	if recheckReason != "" {
+	if recheckReason := workloadRecheckReason(live, after, err); recheckReason != "" {
 		w.Verdict, w.Reason = "unknown", recheckReason
 		coverage.Complete, coverage.Reason = false, w.Reason
 	}
 	return w
+}
+
+// workloadRecheckReason compares the workload re-read after its pod and owner
+// reads with the first read. Deployments and StatefulSets share it so the same
+// situation carries the same reason for either kind.
+func workloadRecheckReason(live, after *unstructured.Unstructured, err error) string {
+	switch {
+	case err != nil:
+		if apierrors.IsForbidden(err) {
+			return "workload-recheck-read-denied"
+		}
+		return "workload-recheck-unavailable"
+	case after == nil || after.GetResourceVersion() == "" || after.GetUID() == "":
+		return "workload-recheck-identity-missing"
+	case !reflect.DeepEqual(after.Object, live.Object):
+		return "workload-changed-during-check"
+	}
+	return ""
 }
 
 func runningImageStageReason(ev *agent.RunningImageEvidence) string {

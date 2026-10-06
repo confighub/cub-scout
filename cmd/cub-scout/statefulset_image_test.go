@@ -43,11 +43,23 @@ func addStatefulReleaseEvidence(t *testing.T, f *releaseFixture) {
 	}
 }
 
+var statefulSetUnknownReasons = map[string]string{
+	"denied":           "read-denied",
+	"capped":           "coverage-capped",
+	"revision-denied":  "read-denied",
+	"recreated":        "statefulset-pod-owner-unconfirmed",
+	"old-pod":          "statefulset-old-revision-observed",
+	"missing-status":   "container-not-found",
+	"stale-generation": "statefulset-generation-unconfirmed",
+	"changed":          "workload-changed-during-check",
+	"recheck-denied":   "workload-recheck-read-denied",
+}
+
 func TestStatefulSetReleaseImageReadBudgetsAndFailures(t *testing.T) {
 	data, err := os.ReadFile("../../examples/oci-release-check/image-statefulset.yaml")
 	require.NoError(t, err)
 	for _, backend := range []string{"argo", "flux"} {
-		for _, scenario := range []string{"match", "denied", "capped", "revision-denied", "recreated", "old-pod", "missing-status", "stale-generation", "changed", "default"} {
+		for _, scenario := range []string{"match", "denied", "capped", "revision-denied", "recreated", "old-pod", "missing-status", "stale-generation", "changed", "recheck-denied", "default"} {
 			t.Run(backend+"/"+scenario, func(t *testing.T) {
 				f := newReleaseFixture(t, backend, data)
 				addStatefulReleaseEvidence(t, f)
@@ -80,6 +92,13 @@ func TestStatefulSetReleaseImageReadBudgetsAndFailures(t *testing.T) {
 					f.change = func(obj *unstructured.Unstructured, n int) int {
 						if obj.GetKind() == "StatefulSet" && n == 2 {
 							obj.SetResourceVersion("2")
+						}
+						return 0
+					}
+				case "recheck-denied":
+					f.change = func(obj *unstructured.Unstructured, n int) int {
+						if obj.GetKind() == "StatefulSet" && n == 2 {
+							return 403
 						}
 						return 0
 					}
@@ -127,6 +146,9 @@ func TestStatefulSetReleaseImageReadBudgetsAndFailures(t *testing.T) {
 				} else {
 					require.Equal(t, "unknown", r.RunningImage.Verdict)
 					require.NotEqual(t, agent.VerdictPASS, r.Verdict)
+					// The reason must name what was actually missing, with the same
+					// strings the Deployment path uses for the same situation.
+					require.Equal(t, statefulSetUnknownReasons[scenario], r.RunningImage.Workloads[0].Reason)
 				}
 				if scenario == "denied" || scenario == "capped" {
 					require.Zero(t, f.gets["ControllerRevision/api-current"])

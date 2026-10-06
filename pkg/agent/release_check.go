@@ -116,19 +116,28 @@ func (r *ReleaseCheckReport) composeRunningImageHeadline() {
 	case "match":
 		if r.Verdict == VerdictPASS {
 			r.Headline += " Running pods report the intended image digest."
-			deployments := len(r.RunningImage.Workloads) > 0
+			// Every workload must have complete coverage of its own kind; a bundle
+			// mixing Deployments and StatefulSets is confirmed as a whole.
+			deployments, statefulSets := 0, 0
+			complete := len(r.RunningImage.Workloads) > 0
 			for _, w := range r.RunningImage.Workloads {
-				deployments = deployments && w.Deployment != nil && w.Deployment.Complete
+				switch {
+				case w.Deployment != nil && w.Deployment.Complete:
+					deployments++
+				case w.StatefulSet != nil && w.StatefulSet.Complete:
+					statefulSets++
+				default:
+					complete = false
+				}
 			}
-			if deployments {
+			switch {
+			case !complete:
+			case statefulSets == 0:
 				r.Headline += " Deployment image rollout confirmed for this observation window."
-			}
-			statefulSets := len(r.RunningImage.Workloads) > 0
-			for _, w := range r.RunningImage.Workloads {
-				statefulSets = statefulSets && w.StatefulSet != nil && w.StatefulSet.Complete
-			}
-			if statefulSets {
+			case deployments == 0:
 				r.Headline += " StatefulSet image rollout confirmed for this observation window."
+			default:
+				r.Headline += " Deployment and StatefulSet image rollout confirmed for this observation window."
 			}
 		}
 	case "mismatch":
@@ -168,7 +177,7 @@ func runningImageNextStep(reason string) string {
 	case "mutable-tag":
 		return "The intended image is a mutable tag, so the running artifact cannot be tied to it. Pin the workload image to a digest (name@sha256:...) or supply build provenance, then re-run."
 	case "read-denied", "bounded pod list unavailable":
-		return "Pod or ReplicaSet reads were unavailable; check namespaced read access in this context, then re-run with --check-running-image."
+		return "Pod, ReplicaSet or ControllerRevision reads were unavailable; check namespaced read access in this context (list pods; get replicasets.apps for Deployments, get controllerrevisions.apps for StatefulSets), then re-run with --check-running-image."
 	case "selector-unsupported":
 		return "A valid non-empty workload selector is required; running-image identity stays unconfirmed."
 	case "digest-form-unresolved":
@@ -176,7 +185,7 @@ func runningImageNextStep(reason string) string {
 	case "workload-ownership-unsupported":
 		return "Complete image rollout verification currently supports Deployments and StatefulSets. Other workload controllers need their own ownership and completion checks."
 	case "coverage-capped":
-		return "Increase --max-pods up to 200 to cover this Deployment; larger sets remain unconfirmed. No additional pages are fetched."
+		return "Increase --max-pods up to 200 to cover this workload; larger sets remain unconfirmed. No additional pages are fetched."
 	default:
 		return "Running-image identity could not be confirmed (" + reason + "); resolve the noted gap, then re-run with --check-running-image."
 	}

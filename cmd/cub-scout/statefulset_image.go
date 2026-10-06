@@ -4,7 +4,6 @@ package main
 
 import (
 	"context"
-	"reflect"
 
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -54,11 +53,8 @@ func observeStatefulSetImage(ctx context.Context, r *agent.ReleaseCheckReport, r
 	}
 	after, re, err := reader.Read(ctx, w.ID, true)
 	r.AddRead(re)
-	if err != nil || after == nil || after.GetUID() == "" || after.GetResourceVersion() == "" || !reflect.DeepEqual(live.Object, after.Object) {
-		w.Verdict, w.Reason = "unknown", "workload-changed-during-check"
-		if err != nil {
-			w.Reason = "workload-recheck-unavailable"
-		}
+	if recheckReason := workloadRecheckReason(live, after, err); recheckReason != "" {
+		w.Verdict, w.Reason = "unknown", recheckReason
 		coverage.Complete, coverage.Reason = false, w.Reason
 	}
 	return w
