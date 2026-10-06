@@ -1,0 +1,172 @@
+{
+  "schema": "v214-external-orchestration-live-proof.v1",
+  "sourceCommit": "446e7d7ded31f1df5083799b0d74e98c78a1702c",
+  "sourceCommitUnchanged": true,
+  "sourceWorktreeCleanBeforeAndAfter": true,
+  "binarySHA256": "e5431033349b629afeb6da4e9c5582e6469d94f49e9f5700a5fd9a60a82d54c0",
+  "buildCommand": [
+    "go",
+    "build",
+    "-buildvcs=true",
+    "-o",
+    "<private>/cub-scout",
+    "./cmd/cub-scout"
+  ],
+  "started": "2026-10-06T12:23:31.838904+00:00",
+  "finished": "2026-10-06T12:24:48.453108+00:00",
+  "passed": true,
+  "failure": null,
+  "ownedClustersRemoved": true,
+  "sharedConfigUnchanged": true,
+  "distinctClusterKeys": true,
+  "actualExternalOrchestration": true,
+  "restrictedReaderRetainedInventoryWithoutKey": true,
+  "steps": [
+    {
+      "name": "build-clean-source",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "preflight-0",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-0",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "59552e9acfdff08cb0ca967efa23ccd69732200a60566d06d608f77069e4c4b1"
+    },
+    {
+      "name": "bootstrap-0",
+      "exit": 0,
+      "stdoutSHA256": "8e0b7544c1923d80813c99643cb47d8a885c7e190a40b577a908e437f5a6e4ec",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cluster-uid-0",
+      "exit": 0,
+      "stdoutSHA256": "1f51c421bbd4f395c55060c0ef06209d5ed03aa3ba0f348d375af3b5b294e39c",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "object-uid-0",
+      "exit": 0,
+      "stdoutSHA256": "0539da2a24792a83d7566b16dd5cbf8acd79155836a2d4fcab9f3fced4c8644c",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-0",
+      "exit": 0,
+      "stdoutSHA256": "612e2dccc83c7e170dff1c6b5aaad67f7942d492704c4912dcb9e2d241dbd2a7",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-0-ascii",
+      "exit": 0,
+      "stdoutSHA256": "505e0dc524ec395e6db2293228cad402b35491dc62b9ce50e8da8a7bc48141e0",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-0-md",
+      "exit": 0,
+      "stdoutSHA256": "bd08a382d4f90028866f2cf690f7f5909fbae6475641a1295187e9b5f82578a8",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "preflight-1",
+      "exit": 0,
+      "stdoutSHA256": "27ba33eb31d5041d2d5b31a0618a1b57f1d73a88ec8dda53f0c39d40ef965535",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-1",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "92bc3eddfd75ecfb49ce25a1f092c10993a6920cd799d80e20feb9d13f50412a"
+    },
+    {
+      "name": "bootstrap-1",
+      "exit": 0,
+      "stdoutSHA256": "8e0b7544c1923d80813c99643cb47d8a885c7e190a40b577a908e437f5a6e4ec",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cluster-uid-1",
+      "exit": 0,
+      "stdoutSHA256": "fa6c9ff7d0292ef1b7ef03b77744e01dd041be9a76979e6695a76b92ab57c754",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "object-uid-1",
+      "exit": 0,
+      "stdoutSHA256": "e3710d82948ee1f8d57d892b2399ff88e94eae32d2c3dc149dcf056124f0c202",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-1",
+      "exit": 0,
+      "stdoutSHA256": "ad5330576a2394ae32fc94a0c8f5da2e30595cca51f9a83e71689fa9a2b98102",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-1-ascii",
+      "exit": 0,
+      "stdoutSHA256": "31390fb4e9480675d6b2abdbc41b38783453c6f6b8f03fe197a5230a73700b94",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-1-md",
+      "exit": 0,
+      "stdoutSHA256": "216c54f66f80d87b463b4f9e861123d7068e3ebcec8b7989f5b042d37d18346c",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "bootstrap-reader",
+      "exit": 0,
+      "stdoutSHA256": "1ec12efeb97be1988d875a687c57e34c4b37c86f14f44a7e0852e324d9a8f576",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "restricted-map",
+      "exit": 0,
+      "stdoutSHA256": "b9f5e8fcf723d8f48cdb626cf3d99cb47fc9feb02ed910ae7c0d9a461acd9f46",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "restricted-actual-namespace-denied",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "672a21c0b2dcad9cb63076a028d13c34eadeb034b4f4fbe566b4f4d451e1ce0b"
+    },
+    {
+      "name": "actual-external-orchestrator",
+      "exit": 0,
+      "stdoutSHA256": "3f04830ef5bf6efcfbe56341b0730c7407a4bedef3d88e7882d598d2f1efc8d7",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cleanup-scout-v214-inst-4eec1937",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "dbf108bd312fccc2e6a25c168c355fa827195287c013b64990099c93233577fd"
+    },
+    {
+      "name": "cleanup-scout-v214-inst-107373d9",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "4e61aaf71be6bb95bc3d642db08a8c4311872633377e141775d1211a5fffe630"
+    },
+    {
+      "name": "after-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "scope": "Two disposable Kubernetes 1.35 clusters with matching context/object names plus a restricted reader; actual external orchestrator invokes one local Scout per explicit selection, indexes two distinct verified keys and retains the denied scope/row without a key. No whole-command cost, ConfigHub Target binding, fleet membership, health or six-surface completion claim.",
+  "sourceBinding": "Clean committed source before/after, isolated build command and binary SHA256; no implicit compiler VCS admission claim."
+}

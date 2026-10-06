@@ -11,7 +11,7 @@ Homebrew source formula repair replaces the stale 2.0.0 formula; unsigned cask
 execution failed under quarantine and is not a passing path. Anonymous GHCR
 pull remains denied (#520).
 
-**Current work: v2.14 task 24, observed object-instance evidence (#783).**
+**Current work: v2.14 task 24, external observation example (#785).**
 PR #782 merged at `6cfccd77` after exact-head Unit/Integration/GitOps/Proof CI
 passed; optional tiers remained skipped. The prepared P4 source is integrated.
 The next bounded slice exposes verified instance references/merge keys or
@@ -22,7 +22,13 @@ Focused and full Go tests, build, vet, CLI parity and read-only guard pass.
 Fresh two-cluster CLI/MCP/TUI evidence, UID recreation and actual restricted
 Namespace denial pass at product source `44322725`; both owned clusters were
 removed and shared kubeconfig stayed unchanged. The initial harness shutdown
-failure is retained beside the repaired receipt. Candidate PR CI is pending. Broader #599, #596 and v2.14 publication
+failure is retained beside the repaired receipt. PR #784 merged at `c56299a3` after Unit/Integration/GitOps/Proof CI
+`37435191661` passed. Optional tiers were skipped, not passed.
+The external example (#785) invokes one Scout per explicit scope and indexes
+only verified instances while retaining denials; it does not define fleet
+membership. Offline executable controls and the examples catalog pass. Genuine
+two-cluster plus restricted-reader acceptance passes at `446e7d7d`, with actual
+external output and cleanup retained. Its candidate PR CI is pending. Broader #599, #596 and v2.14 publication
 remain open. Existing live proof retains its original source/binary limits.
 
 The [configuration delivery checklist](docs/reference/configuration-investigation-delivery.md)

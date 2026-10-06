@@ -1,0 +1,253 @@
+{
+  "schema": "external-map-observations.v1",
+  "status": "partial",
+  "observations": [
+    {
+      "label": "0",
+      "context": "same-label",
+      "omissions": [
+        "collection_incomplete"
+      ],
+      "data": {
+        "schema": "map-list-cluster-identity.v1",
+        "cluster": {
+          "context": "same-label",
+          "apiServer": "https://127.0.0.1:59057",
+          "id": "b9188a55-6b59-4c4c-95cc-485f7a156501",
+          "identity": "verified",
+          "idSource": "v1/Namespace/kube-system",
+          "observedAt": "2026-10-06T12:24:45.7701Z",
+          "cost": {
+            "requestsMade": 1,
+            "responseBodyBytes": 526,
+            "transportErrors": 0,
+            "bodyReadErrors": 0,
+            "durationMillis": 5,
+            "reused": false,
+            "coverage": "selected-kubernetes-transport"
+          }
+        },
+        "clusterCostScope": "identity-reader",
+        "resources": [
+          {
+            "id": "default/team-a/apps/Deployment/api",
+            "clusterName": "default",
+            "namespace": "team-a",
+            "kind": "Deployment",
+            "name": "api",
+            "apiVersion": "apps/v1",
+            "owner": "Native",
+            "observation": {
+              "source": "kubernetes-api",
+              "mode": "map-list",
+              "observedAt": "2026-10-06T12:24:45.764562Z",
+              "freshness": "point-in-time",
+              "scope": {
+                "cluster": "default",
+                "namespace": "team-a",
+                "kind": "Deployment"
+              }
+            },
+            "status": "Ready",
+            "createdAt": "2026-10-06T13:24:09+01:00",
+            "updatedAt": "2026-10-06T13:24:09+01:00",
+            "resourceIdentity": {
+              "status": "verified",
+              "observed": {
+                "clusterId": "b9188a55-6b59-4c4c-95cc-485f7a156501",
+                "clusterIdSource": "v1/Namespace/kube-system",
+                "apiVersion": "apps/v1",
+                "group": "apps",
+                "kind": "Deployment",
+                "namespace": "team-a",
+                "name": "api",
+                "uid": "40d406b9-267b-44a0-82c9-b9367cd8a491",
+                "scope": "namespaced"
+              },
+              "mergeKey": "[\"v1/Namespace/kube-system\",\"b9188a55-6b59-4c4c-95cc-485f7a156501\",\"apps\",\"Deployment\",\"team-a\",\"api\",\"40d406b9-267b-44a0-82c9-b9367cd8a491\"]"
+            }
+          }
+        ],
+        "collection": {
+          "status": "partial",
+          "omissions": [
+            {
+              "apiVersion": "argoproj.io/v1alpha1",
+              "resource": "applicationsets",
+              "namespace": "team-a",
+              "reason": "not_found"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "label": "1",
+      "context": "same-label",
+      "omissions": [
+        "collection_incomplete"
+      ],
+      "data": {
+        "schema": "map-list-cluster-identity.v1",
+        "cluster": {
+          "context": "same-label",
+          "apiServer": "https://127.0.0.1:59090",
+          "id": "95cb885e-7d27-4ad7-bc36-38eac4aa9ede",
+          "identity": "verified",
+          "idSource": "v1/Namespace/kube-system",
+          "observedAt": "2026-10-06T12:24:45.791318Z",
+          "cost": {
+            "requestsMade": 1,
+            "responseBodyBytes": 527,
+            "transportErrors": 0,
+            "bodyReadErrors": 0,
+            "durationMillis": 5,
+            "reused": false,
+            "coverage": "selected-kubernetes-transport"
+          }
+        },
+        "clusterCostScope": "identity-reader",
+        "resources": [
+          {
+            "id": "default/team-a/apps/Deployment/api",
+            "clusterName": "default",
+            "namespace": "team-a",
+            "kind": "Deployment",
+            "name": "api",
+            "apiVersion": "apps/v1",
+            "owner": "Native",
+            "observation": {
+              "source": "kubernetes-api",
+              "mode": "map-list",
+              "observedAt": "2026-10-06T12:24:45.78605Z",
+              "freshness": "point-in-time",
+              "scope": {
+                "cluster": "default",
+                "namespace": "team-a",
+                "kind": "Deployment"
+              }
+            },
+            "status": "Ready",
+            "createdAt": "2026-10-06T13:24:45+01:00",
+            "updatedAt": "2026-10-06T13:24:45+01:00",
+            "resourceIdentity": {
+              "status": "verified",
+              "observed": {
+                "clusterId": "95cb885e-7d27-4ad7-bc36-38eac4aa9ede",
+                "clusterIdSource": "v1/Namespace/kube-system",
+                "apiVersion": "apps/v1",
+                "group": "apps",
+                "kind": "Deployment",
+                "namespace": "team-a",
+                "name": "api",
+                "uid": "5908d6ad-101a-4ed6-b03b-fecaa1efa6a8",
+                "scope": "namespaced"
+              },
+              "mergeKey": "[\"v1/Namespace/kube-system\",\"95cb885e-7d27-4ad7-bc36-38eac4aa9ede\",\"apps\",\"Deployment\",\"team-a\",\"api\",\"5908d6ad-101a-4ed6-b03b-fecaa1efa6a8\"]"
+            }
+          }
+        ],
+        "collection": {
+          "status": "partial",
+          "omissions": [
+            {
+              "apiVersion": "argoproj.io/v1alpha1",
+              "resource": "applicationsets",
+              "namespace": "team-a",
+              "reason": "not_found"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "label": "denied",
+      "context": "same-label",
+      "omissions": [
+        "cluster_identity_unverified",
+        "collection_incomplete",
+        "resource_identity_unverified"
+      ],
+      "data": {
+        "schema": "map-list-cluster-identity.v1",
+        "cluster": {
+          "context": "same-label",
+          "apiServer": "https://127.0.0.1:59057",
+          "identity": "unverified",
+          "idSource": "v1/Namespace/kube-system",
+          "omission": "forbidden",
+          "cost": {
+            "requestsMade": 1,
+            "responseBodyBytes": 338,
+            "transportErrors": 0,
+            "bodyReadErrors": 0,
+            "durationMillis": 4,
+            "reused": false,
+            "coverage": "selected-kubernetes-transport"
+          }
+        },
+        "clusterCostScope": "identity-reader",
+        "resources": [
+          {
+            "id": "default/team-a/apps/Deployment/api",
+            "clusterName": "default",
+            "namespace": "team-a",
+            "kind": "Deployment",
+            "name": "api",
+            "apiVersion": "apps/v1",
+            "owner": "Native",
+            "observation": {
+              "source": "kubernetes-api",
+              "mode": "map-list",
+              "observedAt": "2026-10-06T12:24:45.806691Z",
+              "freshness": "point-in-time",
+              "scope": {
+                "cluster": "default",
+                "namespace": "team-a",
+                "kind": "Deployment"
+              }
+            },
+            "status": "Ready",
+            "createdAt": "2026-10-06T13:24:09+01:00",
+            "updatedAt": "2026-10-06T13:24:09+01:00",
+            "resourceIdentity": {
+              "status": "unverified",
+              "omission": "cluster_identity_unverified"
+            }
+          }
+        ],
+        "collection": {
+          "status": "partial",
+          "omissions": [
+            {
+              "apiVersion": "argoproj.io/v1alpha1",
+              "resource": "applicationsets",
+              "namespace": "team-a",
+              "reason": "forbidden"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "instances": [
+    {
+      "mergeKey": "[\"v1/Namespace/kube-system\",\"95cb885e-7d27-4ad7-bc36-38eac4aa9ede\",\"apps\",\"Deployment\",\"team-a\",\"api\",\"5908d6ad-101a-4ed6-b03b-fecaa1efa6a8\"]",
+      "observations": [
+        {
+          "label": "1",
+          "resourceIndex": 0
+        }
+      ]
+    },
+    {
+      "mergeKey": "[\"v1/Namespace/kube-system\",\"b9188a55-6b59-4c4c-95cc-485f7a156501\",\"apps\",\"Deployment\",\"team-a\",\"api\",\"40d406b9-267b-44a0-82c9-b9367cd8a491\"]",
+      "observations": [
+        {
+          "label": "0",
+          "resourceIndex": 0
+        }
+      ]
+    }
+  ]
+}
