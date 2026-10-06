@@ -68,7 +68,7 @@ try:
                 assert row['resourceIdentity']['omission'] == 'cluster_identity_unverified'
                 assert 'mergeKey' not in row['resourceIdentity']
     assert resources[0] == resources[1]
-    report = json.loads(call(['./cub-scout', 'map', 'list', '--kube-context', 'selected', '--cluster-identity', '-n', 'team-a', '--kind', 'Deployment', '--format', 'json'], 'map-selected'))
+    report = json.loads(call(['./cub-scout', 'map', 'list', '--kube-context', 'selected', '--cluster-identity', '--namespace', 'team-a', '--kind', 'Deployment', '--format', 'json'], 'map-selected'))
     mapped = next(r for r in report['resources'] if r['name'] == 'api')['resourceIdentity']
     assert mapped == resources[0], 'map/watch/bot identity disagreement'
     call(['kubectl', '--kubeconfig', str(cfg), '--context', 'selected', '-n', 'team-a', 'delete', 'deployment', 'api'], 'delete-owned-instance')

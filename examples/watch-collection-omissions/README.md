@@ -113,3 +113,9 @@ with `python3 examples/watch-collection-omissions/verify-live-identity.py`;
 its private output directory retains logs and credential-bearing setup separately
 from the public proof and event captures. Runtime acceptance is pending until a
 source-bound passing receipt is retained.
+
+The first runtime attempt at `9c6d1a6d` passed actual watch/bot identity and
+restricted-reader controls but failed the subsequent map invocation because the
+harness used unsupported map shorthand `-n`. The preserved
+`live-identity-attempt-1.json` records failure and successful owned-cluster
+cleanup; it is not complete acceptance. The reproducer now uses `--namespace`.
