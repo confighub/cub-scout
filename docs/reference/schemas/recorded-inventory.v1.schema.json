@@ -1,0 +1,551 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cub-scout.dev/schemas/recorded-inventory.v1.schema.json",
+  "title": "Recorded inventory report data: full, summary and page",
+  "description": "Canonical report data only; excludes MCP wrappers/display bytes. Input age/completeness remain unknown. Counts and cursor semantics also require executable contracts.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/full"
+    },
+    {
+      "$ref": "#/$defs/summary"
+    },
+    {
+      "$ref": "#/$defs/page"
+    }
+  ],
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "kubernetes-object-recording"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "documents": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "objectCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "captureTime": {
+          "type": "string",
+          "const": "unknown"
+        },
+        "captureCompleteness": {
+          "type": "string",
+          "const": "unknown"
+        },
+        "typedListDerivedObjects": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "kind",
+        "sha256",
+        "bytes",
+        "documents",
+        "objectCount",
+        "captureTime",
+        "captureCompleteness"
+      ],
+      "additionalProperties": false
+    },
+    "scope": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "namespacePrefix": {
+          "type": "string",
+          "minLength": 1
+        },
+        "owner": {
+          "type": "string",
+          "enum": [
+            "Flux",
+            "ArgoCD",
+            "Sveltos",
+            "Modelplane",
+            "Crossplane",
+            "kro",
+            "Helm",
+            "Terraform",
+            "ConfigHub",
+            "Kubernetes",
+            "Native"
+          ]
+        }
+      },
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "additionalProperties": false,
+      "not": {
+        "required": [
+          "namespace",
+          "namespacePrefix"
+        ]
+      }
+    },
+    "detection": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "detected",
+            "no_known_marker",
+            "source_missing"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "detected"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "source"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "no_known_marker"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "reason"
+            ],
+            "properties": {
+              "reason": {
+                "const": "no_supported_marker_observed_on_returned_object"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "source_missing"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "reason"
+            ],
+            "properties": {
+              "reason": {
+                "const": "detector_source_not_available"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "resource": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "owner": {
+          "type": "string",
+          "enum": [
+            "Flux",
+            "ArgoCD",
+            "Sveltos",
+            "Modelplane",
+            "Crossplane",
+            "kro",
+            "Helm",
+            "Terraform",
+            "ConfigHub",
+            "Kubernetes",
+            "Native"
+          ]
+        },
+        "ownerDetails": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "ownershipDetection": {
+          "$ref": "#/$defs/detection"
+        }
+      },
+      "required": [
+        "apiVersion",
+        "kind",
+        "namespace",
+        "name",
+        "owner",
+        "ownershipDetection"
+      ],
+      "additionalProperties": false
+    },
+    "pagination": {
+      "type": "object",
+      "properties": {
+        "pageSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 500
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "returnedCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 500
+        },
+        "nextCursor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        }
+      },
+      "required": [
+        "pageSize",
+        "offset",
+        "returnedCount"
+      ],
+      "additionalProperties": false
+    },
+    "full": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "type": "string",
+          "const": "map-list-recorded.v1"
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        },
+        "scope": {
+          "$ref": "#/$defs/scope"
+        },
+        "selectedCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "excludedFromScopeCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "ownerCounts": {
+          "type": "object",
+          "properties": {
+            "Flux": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "ArgoCD": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Sveltos": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Modelplane": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Crossplane": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "kro": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Helm": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Terraform": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "ConfigHub": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Kubernetes": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Native": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/resource"
+          }
+        }
+      },
+      "required": [
+        "schema",
+        "provenance",
+        "scope",
+        "selectedCount",
+        "excludedFromScopeCount",
+        "ownerCounts",
+        "resources"
+      ],
+      "additionalProperties": false
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "type": "string",
+          "const": "map-list-recorded-summary.v1"
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        },
+        "scope": {
+          "$ref": "#/$defs/scope"
+        },
+        "selectedCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "excludedFromScopeCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "ownerCounts": {
+          "type": "object",
+          "properties": {
+            "Flux": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "ArgoCD": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Sveltos": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Modelplane": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Crossplane": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "kro": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Helm": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Terraform": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "ConfigHub": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Kubernetes": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Native": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "view": {
+          "type": "string",
+          "const": "summary"
+        },
+        "perObjectEvidenceGuide": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "schema",
+        "provenance",
+        "scope",
+        "selectedCount",
+        "excludedFromScopeCount",
+        "ownerCounts",
+        "view",
+        "perObjectEvidenceGuide"
+      ],
+      "additionalProperties": false
+    },
+    "page": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "type": "string",
+          "const": "map-list-recorded-page.v1"
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        },
+        "scope": {
+          "$ref": "#/$defs/scope"
+        },
+        "selectedCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "excludedFromScopeCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "ownerCounts": {
+          "type": "object",
+          "properties": {
+            "Flux": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "ArgoCD": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Sveltos": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Modelplane": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Crossplane": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "kro": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Helm": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Terraform": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "ConfigHub": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Kubernetes": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "Native": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/resource"
+          },
+          "maxItems": 500
+        },
+        "pagination": {
+          "$ref": "#/$defs/pagination"
+        }
+      },
+      "required": [
+        "schema",
+        "provenance",
+        "scope",
+        "selectedCount",
+        "excludedFromScopeCount",
+        "ownerCounts",
+        "resources",
+        "pagination"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

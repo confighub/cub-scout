@@ -2965,3 +2965,19 @@ is available. A canceled/failed collection still uses existing command error
 behavior; this is not the complete #599 failure envelope or whole-cycle meter.
 
 See [polling identity example](../../examples/watch-collection-omissions/#polling-identity-214-candidate).
+
+## Recorded inventory output schema (2.14 candidate)
+
+[recorded-inventory.v1.schema.json](schemas/recorded-inventory.v1.schema.json)
+validates the existing full, summary and paged report data using Draft 2020-12.
+Schema variants are mutually exclusive: summary omits resources; full requires
+resources and forbids pagination; pages require pagination. Source hashes and
+unknown capture-time/completeness sentinels are explicit. Unknown fields and
+invented current-state/cluster fields are refused. Structural schema validity
+alone does not prove count equality, cursor binding, ownership, original capture
+age or inventory completeness; executable checks retain those boundaries.
+
+The JSON Schema describes report data, not an advertised MCP `outputSchema`
+under a newer protocol. Default full/summary MCP content remains text-only;
+recorded pages retain their existing `structuredContent.data`. No older-protocol
+negotiation or response bytes are changed. See the [executable example](../../examples/recorded-inventory/#output-schema-and-executable-budget-controls-214-candidate).

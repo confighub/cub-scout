@@ -1,0 +1,77 @@
+{
+  "schema": "recorded-output-contract-proof.v1",
+  "sourceCommit": "37074c36b4e212c2ef9621f1775fe42d5b4c5f93",
+  "binarySHA256": "a082b6ff3b4140ba7c90ec37ff2697b004041132515f3af6e0085a0fad11349a",
+  "fixtureSHA256": "7ff85315207129a21b5ec6027c61d7c8c306c4d89074b9970d5ba255cedd4303",
+  "passed": false,
+  "failures": [
+    "KeyError('structuredContent')"
+  ],
+  "trapRequests": 0,
+  "actualPluginChecked": true,
+  "canonicalReportBytes": 1542,
+  "mcpResultBytes": 1823,
+  "steps": [
+    {
+      "name": "cli-full",
+      "exit": 0,
+      "stdoutBytes": 1543,
+      "stdoutSHA256": "089d4812ad539954dba200c7e7d093ea8b9f987e7d08b32b921b34571dc8ede3"
+    },
+    {
+      "name": "cli-summary",
+      "exit": 0,
+      "stdoutBytes": 621,
+      "stdoutSHA256": "f8acea7ad09d013a7e803c71056c6560b828fe6e13a62953666647d760a5b04d"
+    },
+    {
+      "name": "cli-page-0",
+      "exit": 0,
+      "stdoutBytes": 1278,
+      "stdoutSHA256": "e1edf969ba47e8e79621e281d166e4b3095258318a055dc5d86457a948efda28"
+    },
+    {
+      "name": "cli-page-1",
+      "exit": 0,
+      "stdoutBytes": 1193,
+      "stdoutSHA256": "7f45e3afe782220238c699c45d2783f362c3d0e0dd02edef4d49a4d304f70376"
+    },
+    {
+      "name": "cli-page-2",
+      "exit": 0,
+      "stdoutBytes": 708,
+      "stdoutSHA256": "4883d03df16844b885793f88efb43941d05854245ff29796df1b2668211dc898"
+    },
+    {
+      "name": "cli-budget-equal",
+      "exit": 0,
+      "stdoutBytes": 1543,
+      "stdoutSHA256": "089d4812ad539954dba200c7e7d093ea8b9f987e7d08b32b921b34571dc8ede3"
+    },
+    {
+      "name": "cli-budget-refusal",
+      "exit": 1,
+      "stdoutBytes": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cli-cursor-refusal",
+      "exit": 1,
+      "stdoutBytes": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cli-malformed-refusal",
+      "exit": 1,
+      "stdoutBytes": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "actual-mcp",
+      "exit": 0,
+      "stdoutBytes": 4794,
+      "stdoutSHA256": "1b5fc5ae3b1d68c88a7dc1a04b17f1dff52422f0bea349375a5a5c728a6a83a5"
+    }
+  ],
+  "limits": "Authored fixture, not a genuine cluster recording. Data JSON budget excludes duplicated MCP result, transport framing and tokens. No paid/model or six-surface acceptance claim."
+}
