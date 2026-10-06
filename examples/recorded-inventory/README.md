@@ -137,3 +137,9 @@ and separately checks actual page structured content. It does not change product
 response shapes. `--build` requires a clean checkout and binds an isolated Go 1.24 build to its
 unchanged source and executable hash. `--binary` also accepts externally built
 executables, whose source provenance is explicitly unverified by this script.
+
+Clean-source acceptance at `336769f1` passes the actual CLI, isolated cub plugin
+and stdio MCP controls using the pinned validator environment.
+`output-contract-proof.json` records build/fixture hashes, zero trap requests and
+separate full/duplicated-page result bytes. The authored and pinned scale inputs
+retain their existing capture-time/completeness limitations.
