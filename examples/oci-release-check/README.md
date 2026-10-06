@@ -251,4 +251,5 @@ bytes. CLI formats, the actual cub plugin, stdio MCP and the actual release TUI
 exercise the same model. The Application is an **authored CR/status fixture**;
 this harness does not prove real Argo reconciliation. The
 [initial proof](live-statefulset-initial-proof.json) passed before the subsequent
-patch-marker/audit-field hardening; final source acceptance must be refreshed.
+patch-marker/audit-field hardening; the [refreshed proof](live-statefulset-proof.json) passes at `64823465`, including
+per-pod owner/revision references and strict revision patch semantics.
