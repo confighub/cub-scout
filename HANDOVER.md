@@ -1,5 +1,13 @@
 # cub-scout execution handover
 
+## v2.13 publication repair — 2026-10-06
+
+PR #775 merged at `44153522`. The v2.13.0 tag is retained, but final tests
+caught a README contract requiring the `@latest` Go-install example. The repair
+restores that example alongside a pinned command and targets v2.13.1. No
+production Go code, frozen benchmark input or approved scope changes.
+
+
 ## Approved release scope — 2026-10-06
 
 The maintainer approved releasing the verified v2.13 candidate and moving
