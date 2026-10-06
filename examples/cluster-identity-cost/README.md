@@ -180,3 +180,35 @@ Deterministic controls are `TestMapResourceIdentity*`, alongside existing
 keys, recreation/cluster collisions, missing metadata, response mismatch,
 unknown scope, default JSON stability, unchanged request counts and retained
 TUI evidence refusal. Their loopback inputs are authored, not live captures.
+
+## Genuine instance acceptance (#783)
+
+[Passing receipt](live-instance-proof.json) binds the candidate binary to clean
+product source `44322725`. Two disposable Kubernetes 1.35 clusters used the same
+context label and workload name: actual CLI ASCII/JSON/Markdown keys differed
+across clusters, actual MCP agreed with CLI, and the actual standalone TUI showed
+the observed UID. Deleting/recreating the owned workload changed its UID/key.
+A restricted ServiceAccount retained the workload with an explicit unverified
+identity and no merge key; an actual Namespace GET was forbidden. Both clusters
+were removed and the shared kubeconfig stayed unchanged.
+
+The [first receipt](live-instance-proof-failed.json) records a harness shutdown
+timeout after the TUI had displayed its UID; recreation/reader checks had not
+run. The repaired harness stops only its own child, including forced termination
+after its deadline. This proves visible TUI evidence, not graceful exit. Compiler
+VCS metadata was unavailable in this managed-worktree build; the receipts state
+the clean source/build/hash binding instead. Raw captures and credentials remain
+private; the committed receipts contain no token or kubeconfig.
+
+To reproduce from a **clean committed checkout**, with Docker, kind, kubectl and
+Go 1.24 available:
+
+```sh
+python3 examples/cluster-identity-cost/verify-live-instances.py
+```
+
+This creates and deletes only two uniquely named owned clusters, builds an
+isolated candidate, uses private kubeconfigs, and stores raw evidence in a mode
+0700 temporary directory. It makes no paid model calls. Do not run this against
+a shared cluster. The receipt does not complete whole-command cost accounting,
+Target binding, other commands or the wider six-surface/controller gates.

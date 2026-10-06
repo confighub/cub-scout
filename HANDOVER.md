@@ -18,8 +18,11 @@ The next bounded slice exposes verified instance references/merge keys or
 explicit omissions only in opt-in map cluster evidence, using existing returned
 objects with no extra reads. Defaults and legacy IDs remain unchanged. CLI/MCP
 and loaded TUI facts share the model; failed/wrong-scope identity masks old keys.
-Focused deterministic tests and build pass; full tests and fresh owned two-scope
-CLI/MCP acceptance are in progress. Broader #599, #596 and v2.14 publication
+Focused and full Go tests, build, vet, CLI parity and read-only guard pass.
+Fresh two-cluster CLI/MCP/TUI evidence, UID recreation and actual restricted
+Namespace denial pass at product source `44322725`; both owned clusters were
+removed and shared kubeconfig stayed unchanged. The initial harness shutdown
+failure is retained beside the repaired receipt. Candidate PR CI is pending. Broader #599, #596 and v2.14 publication
 remain open. Existing live proof retains its original source/binary limits.
 
 The [configuration delivery checklist](docs/reference/configuration-investigation-delivery.md)
