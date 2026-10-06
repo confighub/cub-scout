@@ -15,6 +15,7 @@ question you have right now.
 
 | Goal | Start here | Why this is the right first path |
 |---|---|---|
+| Collect independent explicit scopes safely | [`fleet-by-orchestration`](./fleet-by-orchestration/) | external serial calls, verified instance index, retained denied scopes |
 | Learn the core workflow from zero | [`new-user-puzzle-quest`](./new-user-puzzle-quest/) | guided first run through `quickstart`, `doctor`, `map`, `trace`, and import preview |
 | Show an AI assistant what `cub-scout` adds | [`ai-agent-quest`](./ai-agent-quest/) | clean story for giving an AI read-only cluster eyes before connected ConfigHub steps |
 | Show connected value in under a minute | [`connect-and-compare`](./connect-and-compare/) | deterministic fixture path for doctor, connect, compare, and history |

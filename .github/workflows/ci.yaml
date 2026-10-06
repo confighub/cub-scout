@@ -220,6 +220,9 @@ jobs:
             coverage.out
             coverage-summary.txt
 
+      - name: Verify external observation example
+        run: python3 -m unittest discover -s examples/fleet-by-orchestration -v
+
       - name: Verify real examples catalog
         run: go test -tags=integration ./test/integration/... -run '^TestRealExamplesCatalog$' -count=1 -v
 
