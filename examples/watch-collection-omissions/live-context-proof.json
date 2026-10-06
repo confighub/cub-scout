@@ -1,0 +1,96 @@
+{
+  "schema": "v214-watch-context-live-proof.v1",
+  "sourceCommit": "22c3f9580d2da17a79d7e6208d49dbee569cbe3c",
+  "sourceCommitUnchanged": true,
+  "sourceWorktreeCleanBeforeAndAfter": true,
+  "binarySHA256": "825b75db64e6036a39f3c6c3a14d0aa374c7701b29645de11c9148eb11a0fcdd",
+  "buildBinding": "GOTOOLCHAIN=go1.24.0 go build ./cmd/cub-scout completed at this clean HEAD before capture; isolated binary copy used throughout. No implicit compiler VCS stamp claim.",
+  "started": "2026-10-06T13:14:33.463948+00:00",
+  "finished": "2026-10-06T13:15:38.204849+00:00",
+  "passed": true,
+  "failure": null,
+  "ownedClusterRemoved": true,
+  "sharedConfigUnchanged": true,
+  "watchBotResourceParity": true,
+  "steps": [
+    {
+      "name": "before-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "de4dbe0a41f058db44e36dfe384eec54b8f82a6f7ffe6656c0143d7a33ec53e5"
+    },
+    {
+      "name": "bootstrap-owned-resources",
+      "exit": 0,
+      "stdoutSHA256": "8e0b7544c1923d80813c99643cb47d8a885c7e190a40b577a908e437f5a6e4ec",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "watch-selected",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "watch-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "3b46e97645294a856eb90cc6fa0874fa98b7da69c0893f6549cca566876249b0"
+    },
+    {
+      "name": "watch-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "watch-ambient-invalid",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "afde6f163988404d5fdbc0f4ffa86fe9f7a66e74cd1e25aeb544e824bf344f00"
+    },
+    {
+      "name": "bot-selected",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "bot-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "925a6afb9069b88d32f56f0ea5fd1a6e4ed20dbde8209a0bfca70d6f1b96beb0"
+    },
+    {
+      "name": "bot-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "bot-ambient-invalid",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "a317856cda15ace3cf25ed6ee73f1b3d2c88a78b64bc0a8f682210fedd885930"
+    },
+    {
+      "name": "cleanup-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "5111fe1694b3c6606725141ac29e5de253c994968f0c8e96eb2009f98819dc56"
+    },
+    {
+      "name": "after-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "scope": "One owned Kubernetes 1.35 cluster; actual watch and bot --once select a valid private context despite unusable ambient context. Missing/blank contexts and invalid ambient selection refuse before file creation. No verified cluster identity, complete scanner coverage, informer age/reconnect, total cost, Target or health claim."
+}

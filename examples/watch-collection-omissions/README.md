@@ -34,3 +34,52 @@ list --ownership-evidence --format ascii|json|md` and TUI `V` expose inventory
 omissions. These are authored regression controls, not real controller captures,
 whole-scan coverage, connected/fleet acceptance or full six-surface conformance.
 Genuine live acceptance remains deferred. See [the event contract](../../docs/reference/watch-events.md).
+
+## Strict watch/bot context selection (#787)
+
+```sh
+./cub-scout watch --kube-context selected --namespace team-a --once --output-file /tmp/watch.jsonl
+./cub-scout bot --kube-context selected --namespace team-a --once --output-file /tmp/bot.jsonl
+./cub-scout map --kube-context selected
+```
+
+Both streaming commands capture one explicit config before opening the sink.
+Inventory, scan, receipt and optional informer reads share that config. A blank
+or missing context refuses without consulting ambient/in-cluster credentials or
+creating the file. Defaults retain the prior behavior. The TUI already supports
+the same captured selection. This adds no verified cluster ID or whole-command
+cost field, and does not renew informer evidence or establish fleet membership.
+
+`TestWatchAndBot` controls select alpha while beta is ambient, then mutate the
+private config after capture. The observed HTTPS request still reaches alpha
+with its original token; beta receives zero requests. Missing/blank selections
+make zero reads, do not open the sink, and preserve private kubeconfig bytes.
+The initial plain-HTTP credential test refused credentials as client-go intends;
+the repaired TLS fixture trusts only its own local certificate.
+
+## Genuine watch/bot selected-context acceptance
+
+[Live receipt](live-context-proof.json) binds the isolated binary to product
+source `22c3f958`. Actual [watch events](live-watch-events.jsonl) and
+[bot events](live-bot-events.jsonl) come from one owned Kubernetes 1.35 cluster.
+Both commands selected the valid private context while ambient current-context
+was unusable; their discovered workload references agree. Explicit blank/missing
+contexts and unusable ambient selection refused before file creation. Private
+config and shared kubeconfig stayed unchanged, and the owned cluster was removed.
+This is local CLI bot acceptance, not an in-cluster bot-image deployment claim.
+
+The original capture copied a binary built at that clean source immediately
+beforehand. The reproducible harness builds its own isolated candidate:
+
+```sh
+# Clean committed checkout; Docker, kind, kubectl and Go 1.24 available
+python3 examples/watch-collection-omissions/verify-live-context.py
+```
+
+Credentials and raw config stay in a mode 0700 temporary directory; committed
+receipts contain no tokens or kubeconfigs. Failed HTTP token-fixture and globally
+forced-Offline TUI runs remain in the local verification log; neither prompted
+a golden update or a production TLS change. Normal-mode full Go suite passes,
+as do targeted denied/unreachable endpoint controls with zero ambient requests.
+The wider live denial/recovery/informer, scanner-coverage, identity/cost and
+six-surface gates remain required before v2.14.

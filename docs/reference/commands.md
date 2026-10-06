@@ -1077,6 +1077,7 @@ At least one destination is required: `--webhook` and/or `--output-file`.
 
 | Flag | Description |
 |------|-------------|
+| `--kube-context` | Strict explicit Kubernetes context; captured once, no current-context mutation or fallback |
 | `--webhook` | Webhook URL to receive events |
 | `--output-file` | Append JSONL events to a local file |
 | `--interval` | Polling interval (default: `20s`) |
@@ -1159,6 +1160,7 @@ At least one destination is required: `--webhook`, `--output-file`,
 
 | Flag | Environment | Description |
 |------|-------------|-------------|
+| `--kube-context` | — | Strict explicit Kubernetes context; preserves default in-cluster behavior when omitted |
 | `--webhook` | `CUB_SCOUT_BOT_WEBHOOK_URL` | Webhook URL to receive events |
 | `--output-file` | `CUB_SCOUT_BOT_OUTPUT_FILE` | Append JSONL events to a file path |
 | `--interval` | `CUB_SCOUT_BOT_INTERVAL` | Polling interval (default: `30s`) |

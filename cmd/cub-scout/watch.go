@@ -24,6 +24,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 )
 
 var (
@@ -188,6 +189,7 @@ Event types:
 
 func init() {
 	rootCmd.AddCommand(watchCmd)
+	watchCmd.Flags().String("kube-context", "", "Kubernetes context to inspect (strict explicit selection)")
 	watchCmd.Flags().StringVar(&watchWebhookURL, "webhook", "", "Webhook URL to receive events")
 	watchCmd.Flags().StringVar(&watchOutputFile, "output-file", "", "Append JSONL events to a local file path")
 	watchCmd.Flags().DurationVar(&watchInterval, "interval", 20*time.Second, "Polling interval (for example 20s, 1m)")
@@ -267,16 +269,26 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 		}
 	}
 
+	selection, err := clusterContextSelectionFromFlag(cmd)
+	if err != nil {
+		return err
+	}
+	var cfg *rest.Config
+	if selection.explicit {
+		binding := resolveLocalClusterBindingForSelection(selection)
+		cfg, err = binding.config, binding.err
+	} else {
+		cfg, err = watchBuildConfig()
+	}
+	if err != nil {
+		return withKubeRecoveryHint(fmt.Errorf("build kubernetes config: %w", err), firstNonEmpty(opts.CommandName, "cub-scout watch"))
+	}
 	sinks, cleanup, err := buildWatchSinks(webhookURL, outputFile)
 	if err != nil {
 		return err
 	}
 	defer cleanup()
 
-	cfg, err := watchBuildConfig()
-	if err != nil {
-		return withKubeRecoveryHint(fmt.Errorf("build kubernetes config: %w", err), firstNonEmpty(opts.CommandName, "cub-scout watch"))
-	}
 	var dynClient dynamic.Interface
 	dynClient, err = dynamic.NewForConfig(cfg)
 	if err != nil {
