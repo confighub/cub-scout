@@ -71,3 +71,11 @@ no pre-run snapshot copy was retained, so that saved view is not claimed restore
 Kubeconfig remained unchanged. Subsequent PTY runs isolate HOME and leave shared
 session files untouched. Private credential-bearing setup logs are never copied
 into repository examples.
+
+Final real PTY graph export and CLI context controls pass at `37074c36`, with
+the selected cluster/workload in `live-selected-context.svg`. The shared
+`live-identity-export-proof.json` retains clean source/hash binding, cleanup and
+config preservation. This does not prove physical graph UID joins or complete
+GSF inventory. An old implicit-identity test still asserted export was disabled;
+it now validates bound-client failure and no output when its ReplicaSet fixture
+is absent.

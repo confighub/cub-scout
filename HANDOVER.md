@@ -26,8 +26,15 @@ now uses the captured client in-process. Initial real TUI acceptance at
 controls are repaired. Initial eval scaffold registration also failed full Go;
 a dedicated authored-fixture staging guard now passes without changing frozen
 experiment data. The first PTY saved normal user view state; its original bytes
-were not retained. Later runs isolate HOME. Final TUI live/full-source checks
-are pending.
+were not retained. Later runs isolate HOME. Actual PTY TUI SVG export and watch/bot/map, graph/snapshot context controls
+pass at clean product source `37074c36`, with isolated HOME, owned cleanup and
+unchanged kubeconfig. A full-Go run caught the old implicit-identity graph test
+still expecting the previously disabled action; it now checks the captured
+client refusal and no artifact. Final source full Go and required CI remain
+pending. PR #791 is draft; #789/#790 and parent #599 are not closed.
+Recorded-output schema/trap acceptance (#792) is advancing separately. Required
+full CI still needs repository secret CUB_SCAN_RELEASE_TOKEN; the maintainer
+has been asked to configure a read-only scanner-release credential.
 PR #782 merged at `6cfccd77` after exact-head Unit/Integration/GitOps/Proof CI
 passed; optional tiers remained skipped. The prepared P4 source is integrated.
 The next bounded slice exposes verified instance references/merge keys or

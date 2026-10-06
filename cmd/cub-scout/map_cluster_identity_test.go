@@ -338,9 +338,15 @@ func TestMapClusterIdentityImplicitTUIUsesCapturedActionGuards(t *testing.T) {
 	}
 	shell := model.runShellOut()().(shellExitMsg)
 	require.ErrorContains(t, shell.err, "--cluster-identity")
+	require.Zero(t, fixture.allReads.Load(), "unbound import/shell/command actions must not read")
+	t.Chdir(t.TempDir())
 	graph := model.runGraphExport("svg")().(graphExportMsg)
-	require.ErrorContains(t, graph.err, "--cluster-identity")
-	require.Zero(t, fixture.allReads.Load())
+	// The bound graph action is now supported. This fixture serves Deployment
+	// inventory but no ReplicaSet endpoint; report that selected-client error.
+	require.ErrorContains(t, graph.err, "failed to list replicasets")
+	require.EqualValues(t, 2, fixture.allReads.Load())
+	_, err := os.Stat(graph.outputPath)
+	require.True(t, os.IsNotExist(err))
 	binding.observeClusterIdentity = false
 	legacy := initialLocalModelWithBinding(ViewOptions{}, binding)
 	require.False(t, legacy.explicitClusterContext)

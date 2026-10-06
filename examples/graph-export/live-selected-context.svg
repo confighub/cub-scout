@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1640" height="1500" viewBox="0 0 1640 1500" role="img" aria-label="cub-scout resource graph">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+  </marker>
+</defs>
+<style>
+  text { font-family: Arial, sans-serif; fill: #0f172a; }
+  .header { font-size: 20px; font-weight: 700; }
+  .subhead { font-size: 13px; fill: #334155; }
+  .namespace-box { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.2; rx: 12; }
+  .namespace-label { font-size: 13px; font-weight: 600; }
+  .edge { stroke: #64748b; stroke-width: 1.6; marker-end: url(#arrow); }
+  .edge-label { font-size: 11px; fill: #475569; }
+  .node circle { stroke: #1f2937; stroke-width: 1.2; }
+  .node text { font-size: 11px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+  .legend-title { font-size: 14px; font-weight: 700; }
+  .legend-item { font-size: 12px; }
+</style>
+<text x="40" y="44" class="header">Resource graph: selected</text>
+<text x="40" y="68" class="subhead">Generated at 2026-10-06 15:27:02Z</text>
+<rect x="40.0" y="120.0" width="280.0" height="1280.0" class="namespace-box"/>
+<text x="180.0" y="142.0" class="namespace-label">namespace: kube-system</text>
+<rect x="360.0" y="120.0" width="280.0" height="510.0" class="namespace-box"/>
+<text x="500.0" y="142.0" class="namespace-label">namespace: local-path-storage</text>
+<rect x="680.0" y="120.0" width="280.0" height="400.0" class="namespace-box"/>
+<text x="820.0" y="142.0" class="namespace-label">namespace: team-a</text>
+<line x1="180.0" y1="180.0" x2="180.0" y2="1170.0" class="edge"/>
+<text x="180.0" y="669.0" class="edge-label">owns</text>
+<line x1="180.0" y1="1170.0" x2="180.0" y2="290.0" class="edge"/>
+<text x="180.0" y="724.0" class="edge-label">owns</text>
+<line x1="180.0" y1="1170.0" x2="180.0" y2="400.0" class="edge"/>
+<text x="180.0" y="779.0" class="edge-label">owns</text>
+<line x1="500.0" y1="180.0" x2="500.0" y2="400.0" class="edge"/>
+<text x="500.0" y="284.0" class="edge-label">owns</text>
+<line x1="500.0" y1="400.0" x2="500.0" y2="290.0" class="edge"/>
+<text x="500.0" y="339.0" class="edge-label">owns</text>
+<line x1="820.0" y1="180.0" x2="820.0" y2="290.0" class="edge"/>
+<text x="820.0" y="229.0" class="edge-label">owns</text>
+<g class="node" id="node-0" data-node-id="selected/kube-system/Deployment/coredns" data-owner="native">
+  <title>selected/kube-system/Deployment/coredns (Native owner)</title>
+  <circle cx="180.0" cy="180.0" r="28" fill="#9ca3af"/>
+  <text x="180.0" y="174.0">Deployment</text>
+  <text x="180.0" y="188.0">coredns</text>
+</g>
+<g class="node" id="node-1" data-node-id="selected/kube-system/Pod/coredns-7d764666f9-82s5g" data-owner="native">
+  <title>selected/kube-system/Pod/coredns-7d764666f9-82s5g (Native owner)</title>
+  <circle cx="180.0" cy="290.0" r="28" fill="#9ca3af"/>
+  <text x="180.0" y="284.0">Pod</text>
+  <text x="180.0" y="298.0">coredns-7d764666f9-82s5g</text>
+</g>
+<g class="node" id="node-2" data-node-id="selected/kube-system/Pod/coredns-7d764666f9-gjkgc" data-owner="native">
+  <title>selected/kube-system/Pod/coredns-7d764666f9-gjkgc (Native owner)</title>
+  <circle cx="180.0" cy="400.0" r="28" fill="#9ca3af"/>
+  <text x="180.0" y="394.0">Pod</text>
+  <text x="180.0" y="408.0">coredns-7d764666f9-gjkgc</text>
+</g>
+<g class="node" id="node-3" data-node-id="selected/kube-system/Pod/etcd-scout-v214-id-af7bf1aa-control-plane" data-owner="native">
+  <title>selected/kube-system/Pod/etcd-scout-v214-id-af7bf1aa-control-plane (Native owner)</title>
+  <circle cx="180.0" cy="510.0" r="28" fill="#9ca3af"/>
+  <text x="180.0" y="504.0">Pod</text>
+  <text x="180.0" y="518.0">etcd-scout-v214-id-af7bf1aa-control-plane</text>
+</g>
+<g class="node" id="node-4" data-node-id="selected/kube-system/Pod/kindnet-pmrsg" data-owner="native">
+  <title>selected/kube-system/Pod/kindnet-pmrsg (Native owner)</title>
+  <circle cx="180.0" cy="620.0" r="28" fill="#9ca3af"/>
+  <text x="180.0" y="614.0">Pod</text>
+  <text x="180.0" y="628.0">kindnet-pmrsg</text>
+</g>
+<g class="node" id="node-5" data-node-id="selected/kube-system/Pod/kube-apiserver-scout-v214-id-af7bf1aa-control-plane" data-owner="native">
+  <title>selected/kube-system/Pod/kube-apiserver-scout-v214-id-af7bf1aa-control-plane (Native owner)</title>
+  <circle cx="180.0" cy="730.0" r="28" fill="#9ca3af"/>
+  <text x="180.0" y="724.0">Pod</text>
+  <text x="180.0" y="738.0">kube-apiserver-scout-v214-id-af7bf1aa-control-plane</text>
+</g>
+<g class="node" id="node-6" data-node-id="selected/kube-system/Pod/kube-controller-manager-scout-v214-id-af7bf1aa-control-plane" data-owner="native">
+  <title>selected/kube-system/Pod/kube-controller-manager-scout-v214-id-af7bf1aa-control-plane (Native owner)</title>
+  <circle cx="180.0" cy="840.0" r="28" fill="#9ca3af"/>
+  <text x="180.0" y="834.0">Pod</text>
+  <text x="180.0" y="848.0">kube-controller-manager-scout-v214-id-af7bf1aa-control-plane</text>
+</g>
+<g class="node" id="node-7" data-node-id="selected/kube-system/Pod/kube-proxy-5xqjd" data-owner="native">
+  <title>selected/kube-system/Pod/kube-proxy-5xqjd (Native owner)</title>
+  <circle cx="180.0" cy="950.0" r="28" fill="#9ca3af"/>
+  <text x="180.0" y="944.0">Pod</text>
+  <text x="180.0" y="958.0">kube-proxy-5xqjd</text>
+</g>
+<g class="node" id="node-8" data-node-id="selected/kube-system/Pod/kube-scheduler-scout-v214-id-af7bf1aa-control-plane" data-owner="native">
+  <title>selected/kube-system/Pod/kube-scheduler-scout-v214-id-af7bf1aa-control-plane (Native owner)</title>
+  <circle cx="180.0" cy="1060.0" r="28" fill="#9ca3af"/>
+  <text x="180.0" y="1054.0">Pod</text>
+  <text x="180.0" y="1068.0">kube-scheduler-scout-v214-id-af7bf1aa-control-plane</text>
+</g>
+<g class="node" id="node-9" data-node-id="selected/kube-system/ReplicaSet/coredns-7d764666f9" data-owner="native">
+  <title>selected/kube-system/ReplicaSet/coredns-7d764666f9 (Native owner)</title>
+  <circle cx="180.0" cy="1170.0" r="28" fill="#9ca3af"/>
+  <text x="180.0" y="1164.0">ReplicaSet</text>
+  <text x="180.0" y="1178.0">coredns-7d764666f9</text>
+</g>
+<g class="node" id="node-10" data-node-id="selected/local-path-storage/Deployment/local-path-provisioner" data-owner="native">
+  <title>selected/local-path-storage/Deployment/local-path-provisioner (Native owner)</title>
+  <circle cx="500.0" cy="180.0" r="28" fill="#9ca3af"/>
+  <text x="500.0" y="174.0">Deployment</text>
+  <text x="500.0" y="188.0">local-path-provisioner</text>
+</g>
+<g class="node" id="node-11" data-node-id="selected/local-path-storage/Pod/local-path-provisioner-67b8995b4b-v8c4w" data-owner="native">
+  <title>selected/local-path-storage/Pod/local-path-provisioner-67b8995b4b-v8c4w (Native owner)</title>
+  <circle cx="500.0" cy="290.0" r="28" fill="#9ca3af"/>
+  <text x="500.0" y="284.0">Pod</text>
+  <text x="500.0" y="298.0">local-path-provisioner-67b8995b4b-v8c4w</text>
+</g>
+<g class="node" id="node-12" data-node-id="selected/local-path-storage/ReplicaSet/local-path-provisioner-67b8995b4b" data-owner="native">
+  <title>selected/local-path-storage/ReplicaSet/local-path-provisioner-67b8995b4b (Native owner)</title>
+  <circle cx="500.0" cy="400.0" r="28" fill="#9ca3af"/>
+  <text x="500.0" y="394.0">ReplicaSet</text>
+  <text x="500.0" y="408.0">local-path-provisioner-67b8995b4b</text>
+</g>
+<g class="node" id="node-13" data-node-id="selected/team-a/Deployment/api" data-owner="native">
+  <title>selected/team-a/Deployment/api (Native owner)</title>
+  <circle cx="820.0" cy="180.0" r="28" fill="#9ca3af"/>
+  <text x="820.0" y="174.0">Deployment</text>
+  <text x="820.0" y="188.0">api</text>
+</g>
+<g class="node" id="node-14" data-node-id="selected/team-a/ReplicaSet/api-79b569c4b4" data-owner="native">
+  <title>selected/team-a/ReplicaSet/api-79b569c4b4 (Native owner)</title>
+  <circle cx="820.0" cy="290.0" r="28" fill="#9ca3af"/>
+  <text x="820.0" y="284.0">ReplicaSet</text>
+  <text x="820.0" y="298.0">api-79b569c4b4</text>
+</g>
+<text x="1410.0" y="140.0" class="legend-title">Legend</text>
+<circle cx="1418.0" cy="162.0" r="8" fill="#22c55e" stroke="#1f2937"/>
+<text x="1434.0" y="166.0" class="legend-item">Argo: 0</text>
+<circle cx="1418.0" cy="188.0" r="8" fill="#3b82f6" stroke="#1f2937"/>
+<text x="1434.0" y="192.0" class="legend-item">Flux: 0</text>
+<circle cx="1418.0" cy="214.0" r="8" fill="#f59e0b" stroke="#1f2937"/>
+<text x="1434.0" y="218.0" class="legend-item">Helm: 0</text>
+<circle cx="1418.0" cy="240.0" r="8" fill="#06b6d4" stroke="#1f2937"/>
+<text x="1434.0" y="244.0" class="legend-item">ConfigHub: 0</text>
+<circle cx="1418.0" cy="266.0" r="8" fill="#9ca3af" stroke="#1f2937"/>
+<text x="1434.0" y="270.0" class="legend-item">Native: 15</text>
+<circle cx="1418.0" cy="292.0" r="8" fill="#6b7280" stroke="#1f2937"/>
+<text x="1434.0" y="296.0" class="legend-item">Unknown: 0</text>
+</svg>
