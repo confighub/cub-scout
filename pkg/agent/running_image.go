@@ -47,15 +47,16 @@ type RunningImageContainer struct {
 // RunningImageWorkload aggregates the containers of one workload across the pods
 // that were read for it.
 type RunningImageWorkload struct {
-	ID             BoundedResourceRef       `json:"id"`
-	Verdict        string                   `json:"verdict"` // match | mismatch | unknown
-	Reason         string                   `json:"reason,omitempty"`
-	PodsRead       int                      `json:"podsRead"`
-	CoverageCapped bool                     `json:"coverageCapped,omitempty"`
-	Containers     []RunningImageContainer  `json:"containers,omitempty"`
-	Pods           []RunningImagePod        `json:"pods,omitempty"`
-	Deployment     *DeploymentImageCoverage `json:"deployment,omitempty"`
-	ObservedAt     *time.Time               `json:"observedAt,omitempty"`
+	ID             BoundedResourceRef        `json:"id"`
+	Verdict        string                    `json:"verdict"` // match | mismatch | unknown
+	Reason         string                    `json:"reason,omitempty"`
+	PodsRead       int                       `json:"podsRead"`
+	CoverageCapped bool                      `json:"coverageCapped,omitempty"`
+	Containers     []RunningImageContainer   `json:"containers,omitempty"`
+	Pods           []RunningImagePod         `json:"pods,omitempty"`
+	StatefulSet    *StatefulSetImageCoverage `json:"statefulSet,omitempty"`
+	Deployment     *DeploymentImageCoverage  `json:"deployment,omitempty"`
+	ObservedAt     *time.Time                `json:"observedAt,omitempty"`
 }
 
 // RunningImagePod retains per-pod evidence so missing statuses cannot be hidden

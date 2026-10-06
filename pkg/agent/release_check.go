@@ -123,6 +123,13 @@ func (r *ReleaseCheckReport) composeRunningImageHeadline() {
 			if deployments {
 				r.Headline += " Deployment image rollout confirmed for this observation window."
 			}
+			statefulSets := len(r.RunningImage.Workloads) > 0
+			for _, w := range r.RunningImage.Workloads {
+				statefulSets = statefulSets && w.StatefulSet != nil && w.StatefulSet.Complete
+			}
+			if statefulSets {
+				r.Headline += " StatefulSet image rollout confirmed for this observation window."
+			}
 		}
 	case "mismatch":
 		if r.nonRunningImageAtLeast("BLOCK") {
@@ -167,7 +174,7 @@ func runningImageNextStep(reason string) string {
 	case "digest-form-unresolved":
 		return "Compare the intended image index and runtime platform manifest with registry/build provenance; different digest strings alone do not establish a wrong image."
 	case "workload-ownership-unsupported":
-		return "Complete image rollout verification currently supports Deployments. Other workload controllers need their own ownership and completion checks."
+		return "Complete image rollout verification currently supports Deployments and StatefulSets. Other workload controllers need their own ownership and completion checks."
 	case "coverage-capped":
 		return "Increase --max-pods up to 200 to cover this Deployment; larger sets remain unconfirmed. No additional pages are fetched."
 	default:

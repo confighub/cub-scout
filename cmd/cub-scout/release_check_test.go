@@ -446,7 +446,7 @@ func TestRunningImageDoesNotGeneralizeDeploymentCompletion(t *testing.T) {
 		require.Equal(t, "unknown", r.RunningImage.Verdict)
 		require.Equal(t, "INCONCLUSIVE", r.Stages[len(r.Stages)-1].Verdict)
 	})
-	for _, kind := range []string{"StatefulSet", "DaemonSet", "Job"} {
+	for _, kind := range []string{"DaemonSet", "Job"} {
 		desired := &unstructured.Unstructured{Object: map[string]interface{}{"apiVersion": "apps/v1", "kind": kind, "metadata": map[string]interface{}{"name": "api", "namespace": "delivery"}, "spec": map[string]interface{}{"template": map[string]interface{}{"spec": map[string]interface{}{"containers": []interface{}{map[string]interface{}{"name": "api", "image": "example.invalid/api@sha256:" + strings.Repeat("a", 64)}}}}}}}
 		if kind == "Job" {
 			desired.SetAPIVersion("batch/v1")
@@ -709,6 +709,7 @@ func TestReleaseCheckCLIAndMCP(t *testing.T) {
 		_, err := releaseCheckMCPTool().BuildArgs(copy)
 		require.Error(t, err)
 	}
+	testStatefulSetCLIAndMCP(t, ctx, binary)
 }
 
 func TestReleaseCheckTUI(t *testing.T) {

@@ -1921,7 +1921,7 @@ equal replica counts, exact Pod count, no duplicates/terminating/old/foreign
 Pods, `phase=Running`, and `PodReady=True`. Direct Pods retain exact-object
 evidence. Direct Pods independently require no deletion, `phase=Running`,
 `PodReady=True`, and every intended regular container running and ready; they
-receive no Deployment-completion claim. StatefulSet, DaemonSet, and Job
+receive no Deployment-completion claim. DaemonSet and Job
 ownership is unsupported for this complete proof and remains `unknown` /
 `INCONCLUSIVE`. Missing, ambiguous,
 capped, RBAC, stale, race, and zero-replica evidence is unknown. Init and
@@ -2981,3 +2981,25 @@ The JSON Schema describes report data, not an advertised MCP `outputSchema`
 under a newer protocol. Default full/summary MCP content remains text-only;
 recorded pages retain their existing `structuredContent.data`. No older-protocol
 negotiation or response bytes are changed. See the [executable example](../../examples/recorded-inventory/#output-schema-and-executable-budget-controls-214-candidate).
+
+### StatefulSet image coverage (v2.14 candidate, #795)
+
+`release check --check-running-image` also checks `apps/v1` StatefulSets.
+The opt-in report adds `runningImage.workloads[].statefulSet`: UID, generation,
+observed generation, desired replicas, start ordinal, current/update revision,
+revision UID, owned pod count, complete and reason. Equal current/update revisions
+alone are insufficient: the exact ControllerRevision must belong to this
+StatefulSet UID and retain its current template, and each selected Pod must have
+that controlling owner, revision label and a unique in-range ordinal. Every
+intended regular container must be Running/Ready at its pinned digest.
+
+Reads add one bounded selector-scoped pod LIST, one exact ControllerRevision GET
+and a final StatefulSet GET to the reused live configuration read. No continuation
+pages are fetched. Caps, denied/missing evidence, stale generations, partitions,
+old/foreign/terminating pods, zero desired population and changes during the
+check stay UNKNOWN. Mutable tags and unresolved index/platform digests also stay
+UNKNOWN. CLI, MCP/plugin and the release TUI use the same report. Watch/bot do not
+schedule this check. DaemonSet/Job image coverage and independently verified OCI
+index resolution remain separate work. The supplied
+[StatefulSet fixture](../../examples/oci-release-check/image-statefulset.yaml)
+is authored test input, not a deployment or application-success proof.
