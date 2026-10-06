@@ -57,3 +57,26 @@ or conflicting references, duplicate-key retention and order-independent index.
 These are authored controls, not real cluster captures. The underlying product's
 CLI/MCP/TUI proof remains in the linked instance example; broader #599/#596 and
 v2.14 publication remain open.
+
+## Genuine external-process acceptance
+
+The [live receipt](live-proof.json) and [actual output](live-observations.json)
+come from clean source `446e7d7d`, an isolated candidate build and two owned
+Kubernetes 1.35 clusters. Both contexts were named `same-label` and both workloads
+were `team-a/api`. The actual external script called Scout once for each cluster
+and once for a restricted reader, produced two distinct verified instance keys,
+and retained the denied selection/row without indexing it. A direct restricted
+Namespace GET returned Forbidden. Shared kubeconfig stayed unchanged; both
+owned clusters were removed. No paid model calls were made.
+
+Reproduce from a clean committed checkout with Docker, kind, kubectl and Go 1.24:
+
+```sh
+python3 examples/fleet-by-orchestration/verify-live.py
+```
+
+The harness creates only uniquely named owned clusters, builds into a private
+temporary directory, and uses private kubeconfigs. Raw credentials/captures stay
+in that mode 0700 directory; committed output contains no token/kubeconfig.
+This proves this external workflow, not whole-command cost accounting, fleet
+membership, Target binding, current application health or all command surfaces.

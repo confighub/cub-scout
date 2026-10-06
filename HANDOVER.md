@@ -24,8 +24,11 @@ Namespace denial pass at product source `44322725`; both owned clusters were
 removed and shared kubeconfig stayed unchanged. The initial harness shutdown
 failure is retained beside the repaired receipt. PR #784 merged at `c56299a3` after Unit/Integration/GitOps/Proof CI
 `37435191661` passed. Optional tiers were skipped, not passed.
-The next bounded example invokes one Scout per explicit scope and indexes only
-verified instances while retaining denials; it does not define fleet membership. Broader #599, #596 and v2.14 publication
+The external example (#785) invokes one Scout per explicit scope and indexes
+only verified instances while retaining denials; it does not define fleet
+membership. Offline executable controls and the examples catalog pass. Genuine
+two-cluster plus restricted-reader acceptance passes at `446e7d7d`, with actual
+external output and cleanup retained. Its candidate PR CI is pending. Broader #599, #596 and v2.14 publication
 remain open. Existing live proof retains its original source/binary limits.
 
 The [configuration delivery checklist](docs/reference/configuration-investigation-delivery.md)
