@@ -60,3 +60,14 @@ at `b7331f78`, retained in the shared `live-export-context-proof.json`. That
 receipt predates the TUI implementation and does not prove the TUI action.
 The extended reproducer now opens an owned PTY, uses Maps → SVG export, checks
 the selected label/workload in the artifact and terminates only its own child.
+
+The first real TUI attempt at `6c05492b` exposed a scope bug: the presentation
+label `All` was sent as a namespace, yielding an empty graph. The failed receipt
+is retained as `live-tui-export-attempt-1.json`; owned cleanup passed. The action
+now translates the all-namespace selection to the empty API namespace, with
+regression endpoint checks. The PTY child uses a private HOME for session state.
+The first PTY attempt also saved its view state in the normal user session file;
+no pre-run snapshot copy was retained, so that saved view is not claimed restored.
+Kubeconfig remained unchanged. Subsequent PTY runs isolate HOME and leave shared
+session files untouched. Private credential-bearing setup logs are never copied
+into repository examples.

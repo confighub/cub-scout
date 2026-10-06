@@ -6468,7 +6468,11 @@ func (m LocalClusterModel) runGraphExport(format string) tea.Cmd {
 		outputPath := graphExportOutputPath(normalized)
 		var err error
 		if m.explicitClusterContext {
-			err = exportGraphFromBinding(m.clusterBinding, m.getNamespaceFilter(), normalized, outputPath)
+			namespace := m.getNamespaceFilter()
+			if namespace == "All" {
+				namespace = "" // Display label is not a Kubernetes namespace.
+			}
+			err = exportGraphFromBinding(m.clusterBinding, namespace, normalized, outputPath)
 		} else {
 			err = runGraphExportCommand(normalized, outputPath)
 		}

@@ -20,7 +20,14 @@ recreation pass at `61dbff49`. Initial map-shorthand harness failure and cleanup
 are retained. Full Go found test cap leakage, now repaired with a combined
 identity/receipt check passing; final full-source rerun is required. Graph/GSF
 strict context (#790) is implemented with selected/ambient and invalid-selector
-controls; owned-cluster acceptance and final-source checks are pending.
+controls and live CLI acceptance pass at `b7331f78`. Bound TUI graph export
+now uses the captured client in-process. Initial real TUI acceptance at
+`6c05492b` caught the All-display-label namespace bug; source and regression
+controls are repaired. Initial eval scaffold registration also failed full Go;
+a dedicated authored-fixture staging guard now passes without changing frozen
+experiment data. The first PTY saved normal user view state; its original bytes
+were not retained. Later runs isolate HOME. Final TUI live/full-source checks
+are pending.
 PR #782 merged at `6cfccd77` after exact-head Unit/Integration/GitOps/Proof CI
 passed; optional tiers remained skipped. The prepared P4 source is integrated.
 The next bounded slice exposes verified instance references/merge keys or

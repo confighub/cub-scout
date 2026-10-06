@@ -82,9 +82,10 @@ try:
             bad = root / (command + '-bad-' + (selection or 'blank') + '.json')
             call(['./cub-scout', *arguments, '--kube-context', selection, '--output', str(bad)], command + '-refuses-' + (selection or 'blank'), expected=1)
             assert not bad.exists()
+    (root / 'tui-home').mkdir()
     master, slave = pty.openpty()
     fcntl.ioctl(slave, 0x80087467, struct.pack('HHHH', 80, 400, 0, 0))
-    child = subprocess.Popen(['./cub-scout', 'map', '--kube-context', 'selected', '--namespace', 'team-a'], cwd=root, env={**env, 'TERM': 'xterm-256color'}, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
+    child = subprocess.Popen(['./cub-scout', 'map', '--kube-context', 'selected', '--namespace', 'team-a'], cwd=root, env={**env, 'TERM': 'xterm-256color', 'HOME': str(root / 'tui-home')}, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
     os.close(slave)
     terminal, exported = bytearray(), False
     started, deadline, last_key, phase = time.monotonic(), time.monotonic() + 30, 0, 0
@@ -101,7 +102,7 @@ try:
             files = list(root.glob('cub-scout-graph-*.svg'))
             if files:
                 content = files[0].read_text()
-                assert '<svg' in content and 'api' in content and 'selected' in content
+                assert '<svg' in content and 'api' in content and 'selected' in content, 'SVG did not retain the selected cluster and workload'
                 exported = True; break
     finally:
         if child.poll() is None:
@@ -123,7 +124,7 @@ try:
     assert recreated['resourceIdentity']['observed']['clusterId'] == mapped['observed']['clusterId']
     assert sha(cfg) == captured_config
 except Exception as exc:
-    failures.append(str(exc))
+    failures.append(repr(exc))
 finally:
     cleanup = False
     if created:

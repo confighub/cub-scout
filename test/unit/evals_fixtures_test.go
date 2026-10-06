@@ -299,6 +299,10 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 		// copy-based scaffolds rather than embedding the suite-wide export.
 		// Validate each through dedicated assertions; keep remaining cases on the
 		// generic embedded-export path below.
+		if filepath.Base(caseDir) == "watch-identity-contract" {
+			checkWatchIdentityContractScaffold(t, caseDir)
+			continue
+		}
 		if filepath.Base(caseDir) == "compare-three-way-context" {
 			checkCompareThreeWayContextScaffold(t, caseDir)
 			continue
@@ -1022,6 +1026,54 @@ func checkDoctorScanContextScaffold(t *testing.T, root string) {
 			if hex.EncodeToString(sum[:]) != want {
 				t.Errorf("context scaffold hash mismatch: %s", file.Name())
 			}
+		}
+	}
+}
+
+// This authored case must stage its own evidence, never the unrelated frozen
+// suite-wide export. Both arms receive byte-identical, explicitly authored data.
+func checkWatchIdentityContractScaffold(t *testing.T, root string) {
+	t.Helper()
+	raw, err := os.ReadFile(filepath.Join(root, "case.yaml"))
+	if err != nil || !strings.Contains(string(raw), "FIXTURE-OWNED-SCAFFOLD") {
+		t.Fatalf("fixture-owned declaration: %v", err)
+	}
+	want, err := os.ReadFile(filepath.Join(root, "fixtures", "inputs.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var input struct {
+		Provenance string `json:"provenance"`
+		Events     []struct {
+			Type             string
+			Cluster          struct{ Cost struct{ RequestsMade int } }
+			ResourceIdentity struct{ Observed struct{ UID string } }
+		}
+		Denied struct {
+			Cluster struct{ Identity, Omission string }
+		} `json:"separateDeniedCycle"`
+	}
+	if err := json.Unmarshal(want, &input); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(input.Provenance, "authored") || len(input.Events) != 3 || input.Events[0].Type != "cluster.observed" || input.Events[0].Cluster.Cost.RequestsMade != 1 || input.Events[1].ResourceIdentity.Observed.UID == input.Events[2].ResourceIdentity.Observed.UID || input.Denied.Cluster.Identity != "unverified" || input.Denied.Cluster.Omission != "forbidden" {
+		t.Fatal("authored identity/cost/denial control changed")
+	}
+	scaffold, err := filepath.Abs(filepath.Join(root, "scaffold.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for arm := 0; arm < 2; arm++ {
+		dir := t.TempDir()
+		cmd := exec.Command("bash", scaffold)
+		cmd.Dir = dir
+		cmd.Env = offlineKubeconfigEnvironment()
+		if output, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("stage identity contract: %v: %s", err, output)
+		}
+		got, err := os.ReadFile(filepath.Join(dir, "evidence", "watch-identity.json"))
+		if err != nil || !bytes.Equal(want, got) {
+			t.Fatalf("identity contract scaffold changed evidence: %v", err)
 		}
 	}
 }

@@ -154,7 +154,7 @@ func TestScopedTUIGraphExportUsesCapturedBindingAndNamespace(t *testing.T) {
 					fmt.Fprint(w, `{"apiVersion":"v1","kind":"Status","reason":"Forbidden","code":403}`)
 					return
 				}
-				if r.URL.Path == "/apis/apps/v1/namespaces/team-a/deployments" {
+				if r.URL.Path == "/apis/apps/v1/namespaces/team-a/deployments" || r.URL.Path == "/apis/apps/v1/deployments" {
 					fmt.Fprint(w, `{"apiVersion":"apps/v1","kind":"DeploymentList","items":[{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"api","namespace":"team-a"}}]}`)
 				} else if r.URL.Path == "/apis/apps/v1/namespaces/team-a/replicasets" {
 					fmt.Fprint(w, `{"apiVersion":"apps/v1","kind":"ReplicaSetList","items":[]}`)
@@ -188,6 +188,14 @@ func TestScopedTUIGraphExportUsesCapturedBindingAndNamespace(t *testing.T) {
 				require.NoError(t, json.Unmarshal(raw, &report))
 				require.Equal(t, "selected", report["cluster"])
 				require.Contains(t, string(raw), "api")
+				require.Len(t, requests, 3)
+				requests = nil
+				model.namespaceIdx = 0
+				all := model.runGraphExport("json")().(graphExportMsg)
+				require.NoError(t, all.err)
+				require.Contains(t, requests, "/apis/apps/v1/deployments")
+				require.Contains(t, requests, "/apis/apps/v1/replicasets")
+				require.Contains(t, requests, "/api/v1/pods")
 				require.Len(t, requests, 3)
 			}
 			require.Zero(t, ambient.requests.Load())
