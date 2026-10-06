@@ -495,7 +495,7 @@ func TestExplicitContextTUIActionsFailClosed(t *testing.T) {
 	scan := model.runScan()().(scanResultMsg)
 	require.ErrorContains(t, scan.err, "selected Kubernetes context is unavailable")
 	graph := model.runGraphExport("svg")().(graphExportMsg)
-	require.ErrorContains(t, graph.err, "unavailable with --kube-context")
+	require.ErrorContains(t, graph.err, "selected Kubernetes context is unavailable")
 	shell := model.runShellOut()().(shellExitMsg)
 	require.ErrorContains(t, shell.err, "unavailable with --kube-context")
 	require.Zero(t, server.requests.Load(), "blocked TUI actions must not make an API read")

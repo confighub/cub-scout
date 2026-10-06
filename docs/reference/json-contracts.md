@@ -250,7 +250,8 @@ open. [Loopback example](../../examples/cluster-identity-cost/README.md).
 
 In the opt-in identity TUI, implicit current-context selection uses the same
 captured-provider safeguards as an explicit selector. Bounded explain, scan and
-trace retain their bound providers; graph export, shell, import and command mode
+trace retain their bound providers; graph export uses the captured config and
+selected namespace. Shell, import and command mode
 remain unavailable until they can honor the captured binding. These actions
 cannot silently consult a subsequently changed ambient context. Legacy mode is
 unchanged; genuine acceptance remains pending.
@@ -2936,3 +2937,31 @@ Unobserved instance parent namespace is now empty rather than copied from the
 child. With `present: false`, this means unknown scope, not observed cluster
 scope. Metadata-only definition lookup is unchanged and separately bounded.
 See the [authored control](../../examples/kro-composition/#conservative-owner-reference-control-214-candidate).
+
+## Watch/bot polling identity (2.14 candidate)
+
+Opt-in `watch --cluster-identity` and `bot --cluster-identity` reuse the map
+identity model. Each polling collection makes one bounded Namespace-instance
+GET against the captured config and emits `cluster.observed`, including empty
+inventory and denied identity. Every event carries `cluster` and
+`clusterCostScope: "identity-reader"`; object events additionally carry the
+map `resourceIdentity` verified observed reference/merge key or omission.
+Finding joins with multiple eligible objects produce `object_identity_ambiguous`.
+No object GET is added to collect identities. Defaults remain unchanged.
+
+`cluster.observed` bypasses owner/severity filters, has the synthetic Collection
+resource `cluster-identity`, and never receives a receipt. The same cycle's
+identity cost is repeated on its resource events: **count it once per
+`cluster.observed`, not once per event**. It excludes inventory, scanner,
+receipt, credential and webhook work, and does not establish a Target binding.
+The identity GET and inventory are separate dated reads, not an atomic snapshot.
+
+Deletion events retain the previous identity observation and old object UID.
+Only verified same-cluster UID replacement establishes recreation, producing
+separate discovery/deletion events. Denied or changed cluster identity cannot
+establish an old deletion. Missing/invalid UID, GVK or scope remains unverified.
+`--watch-backed` is refused with this option until cache original-age evidence
+is available. A canceled/failed collection still uses existing command error
+behavior; this is not the complete #599 failure envelope or whole-cycle meter.
+
+See [polling identity example](../../examples/watch-collection-omissions/#polling-identity-214-candidate).

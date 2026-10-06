@@ -57,14 +57,17 @@ type watchOptions struct {
 }
 
 type watchEvent struct {
-	Collection  *mapsvc.OwnershipEvidenceCollection `json:"collection,omitempty"`
-	Type        string                              `json:"type"`
-	Timestamp   time.Time                           `json:"timestamp"`
-	Observation *agent.ObservationEvidence          `json:"observation,omitempty"`
-	Resource    watchEventResource                  `json:"resource"`
-	Owner       *watchEventOwner                    `json:"owner,omitempty"`
-	Severity    string                              `json:"severity,omitempty"`
-	Details     map[string]interface{}              `json:"details,omitempty"`
+	Cluster          *agent.ClusterIdentityEvidence      `json:"cluster,omitempty"`
+	ClusterCostScope string                              `json:"clusterCostScope,omitempty"`
+	ResourceIdentity *mapResourceIdentityEvidence        `json:"resourceIdentity,omitempty"`
+	Collection       *mapsvc.OwnershipEvidenceCollection `json:"collection,omitempty"`
+	Type             string                              `json:"type"`
+	Timestamp        time.Time                           `json:"timestamp"`
+	Observation      *agent.ObservationEvidence          `json:"observation,omitempty"`
+	Resource         watchEventResource                  `json:"resource"`
+	Owner            *watchEventOwner                    `json:"owner,omitempty"`
+	Severity         string                              `json:"severity,omitempty"`
+	Details          map[string]interface{}              `json:"details,omitempty"`
 
 	// Receipt is the in-toto Statement v1 envelope (a cub-scout receipt)
 	// built when `--emit-receipt-on` is enabled and this event's type
@@ -114,11 +117,12 @@ type watchFinding struct {
 }
 
 type watchState struct {
-	omissions   []mapsvc.CollectionOmission
-	entryScopes map[string]watchInventoryScope
-	namespace   string
-	entriesByID map[string]MapEntry
-	findings    map[string]watchFinding
+	clusterIdentity *agent.ClusterIdentityEvidence
+	omissions       []mapsvc.CollectionOmission
+	entryScopes     map[string]watchInventoryScope
+	namespace       string
+	entriesByID     map[string]MapEntry
+	findings        map[string]watchFinding
 	// observedMode records how inventory for this cycle was read (per-cycle live
 	// polling vs the watch-backed informer cache). Empty defaults to watch-poll.
 	observedMode string
@@ -180,6 +184,7 @@ Event types:
   - resource.discovered
   - resource.deleted
   - collection.partial (unreadable inventory lists; v2.14 candidate)
+  - cluster.observed (opt-in --cluster-identity polling evidence; v2.14 candidate)
   - ownership.changed
   - drift.detected
   - scan.finding
@@ -189,6 +194,7 @@ Event types:
 
 func init() {
 	rootCmd.AddCommand(watchCmd)
+	watchCmd.Flags().Bool("cluster-identity", false, "Emit verified cluster/object identity with identity-only read cost (one Namespace GET per polling cycle)")
 	watchCmd.Flags().String("kube-context", "", "Kubernetes context to inspect (strict explicit selection)")
 	watchCmd.Flags().StringVar(&watchWebhookURL, "webhook", "", "Webhook URL to receive events")
 	watchCmd.Flags().StringVar(&watchOutputFile, "output-file", "", "Append JSONL events to a local file path")
@@ -269,6 +275,11 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 		}
 	}
 
+	includeIdentity := mapClusterIdentityRequested(cmd)
+	if includeIdentity && opts.WatchBacked {
+		return fmt.Errorf("--cluster-identity cannot be combined with --watch-backed until original object age is available")
+	}
+	contextLabel := ""
 	selection, err := clusterContextSelectionFromFlag(cmd)
 	if err != nil {
 		return err
@@ -277,6 +288,11 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 	if selection.explicit {
 		binding := resolveLocalClusterBindingForSelection(selection)
 		cfg, err = binding.config, binding.err
+		contextLabel = binding.context
+	} else if includeIdentity {
+		binding := resolveLocalClusterBindingForSelection(selection)
+		cfg, err = binding.config, binding.err
+		contextLabel = binding.context
 	} else {
 		cfg, err = watchBuildConfig()
 	}
@@ -338,8 +354,20 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 		fmt.Fprintln(os.Stderr, "Note: --watch-backed has no effect with --once; running a single per-cycle read.")
 	}
 
+	collect := func() (watchState, error) {
+		cycleCtx := ctx
+		var identity *agent.ClusterIdentityEvidence
+		if includeIdentity {
+			identity = observeMapClusterIdentity(ctx, cfg, contextLabel)
+			cycleCtx = context.WithValue(ctx, watchClusterIdentityKey{}, identity)
+		}
+		state, err := watchCollectState(cycleCtx, dynClient, namespace)
+		state.clusterIdentity = identity
+		return state, err
+	}
+
 	if opts.Once {
-		curr, err := watchCollectState(ctx, dynClient, namespace)
+		curr, err := collect()
 		if err != nil {
 			return err
 		}
@@ -351,13 +379,13 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 	}
 
 	// Prime baseline to avoid spamming initial full-state events in long-running mode.
-	initial, err := watchCollectState(ctx, dynClient, namespace)
+	initial, err := collect()
 	if err != nil {
 		return err
 	}
 	prevState = initial
 	// Initial inventory stays quiet, but missing coverage must be visible now.
-	if len(initial.omissions) > 0 {
+	if len(initial.omissions) > 0 || includeIdentity {
 		events := buildWatchEvents(initial, initial, severityFilter, ownerFilter, watchEventNow)
 		queue = appendWatchQueue(queue, events, opts.MaxQueuedEvents)
 		remaining, deliveryErr := flushWatchQueue(ctx, sinks, queue)
@@ -375,7 +403,7 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
-			curr, err := watchCollectState(ctx, dynClient, namespace)
+			curr, err := collect()
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Warning: watch collection failed: %v\n", err)
 				continue
@@ -481,7 +509,7 @@ func collectWatchEntriesWithDiagnostics(ctx context.Context, dynClient dynamic.I
 			}
 			for _, item := range l.Items {
 				before := len(entries)
-				entries = processResourceWithLookup(&item, gvr, clusterName, entries, byOwner, appSetLookup)
+				entries = processResourceWithIdentity(&item, gvr, clusterName, entries, byOwner, appSetLookup, watchClusterIdentityFromContext(ctx))
 				for _, entry := range entries[before:] {
 					scopes[entry.ID] = watchInventoryScope{APIVersion: gvr.GroupVersion().String(), Resource: gvr.Resource, Namespace: namespace}
 				}
@@ -496,7 +524,7 @@ func collectWatchEntriesWithDiagnostics(ctx context.Context, dynClient dynamic.I
 		}
 		for _, item := range l.Items {
 			before := len(entries)
-			entries = processResourceWithLookup(&item, gvr, clusterName, entries, byOwner, appSetLookup)
+			entries = processResourceWithIdentity(&item, gvr, clusterName, entries, byOwner, appSetLookup, watchClusterIdentityFromContext(ctx))
 			for _, entry := range entries[before:] {
 				scopes[entry.ID] = watchInventoryScope{APIVersion: gvr.GroupVersion().String(), Resource: gvr.Resource, Namespace: namespace}
 			}
@@ -570,6 +598,9 @@ func buildWatchEvents(prev, curr watchState, severityFilter map[string]struct{},
 
 	for id, entry := range curr.entriesByID {
 		prevEntry, existed := prev.entriesByID[id]
+		if existed && watchVerifiedRecreation(prevEntry, entry) {
+			existed = false
+		}
 		if !existed {
 			resource := watchEventResource{
 				Kind:      entry.Kind,
@@ -619,7 +650,8 @@ func buildWatchEvents(prev, curr watchState, severityFilter map[string]struct{},
 	// (the loop above only iterates curr); Slice 2 (#539) surfaces it, and it is
 	// how watch-backed mode reports DELETE events. Applies in both modes.
 	for id, prevEntry := range prev.entriesByID {
-		if _, stillPresent := curr.entriesByID[id]; stillPresent || watchInventoryUnreadable(prev, curr, id) {
+		currentEntry, stillPresent := curr.entriesByID[id]
+		if (stillPresent && !watchVerifiedRecreation(prevEntry, currentEntry)) || watchInventoryUnreadable(prev, curr, id) {
 			continue
 		}
 		resource := watchEventResource{Kind: prevEntry.Kind, Name: prevEntry.Name, Namespace: prevEntry.Namespace}
@@ -682,6 +714,7 @@ func buildWatchEvents(prev, curr watchState, severityFilter map[string]struct{},
 		}
 	}
 
+	events = attachWatchIdentity(events, prev, curr, ts)
 	sort.Slice(events, func(i, j int) bool {
 		if events[i].Type != events[j].Type {
 			return events[i].Type < events[j].Type

@@ -110,6 +110,7 @@ Examples:
 
 func init() {
 	rootCmd.AddCommand(snapshotCmd)
+	snapshotCmd.Flags().String("kube-context", "", "Kubernetes context to inspect (strict explicit selection)")
 
 	snapshotCmd.Flags().StringVarP(&snapshotOutput, "output", "o", "", "Output file (default: stdout, use '-' for explicit stdout)")
 	snapshotCmd.Flags().StringVarP(&snapshotNamespace, "namespace", "n", "", "Filter by namespace")
@@ -121,7 +122,7 @@ func runSnapshot(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 
 	// Build Kubernetes config
-	cfg, err := buildConfig()
+	cfg, selectedContext, err := buildClusterConfigForCommand(cmd)
 	if err != nil {
 		return fmt.Errorf("build kubernetes config: %w", err)
 	}
@@ -134,7 +135,9 @@ func runSnapshot(cmd *cobra.Command, args []string) error {
 
 	// Get cluster name
 	clusterName := os.Getenv("CLUSTER_NAME")
-	if clusterName == "" {
+	if selectedContext != "" {
+		clusterName = selectedContext
+	} else if clusterName == "" {
 		clusterName = "default"
 	}
 	observedAt := snapshotNow().UTC()

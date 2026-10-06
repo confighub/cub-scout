@@ -1,0 +1,129 @@
+{
+  "schema": "v214-watch-identity-live-proof.v1",
+  "sourceCommit": "37074c36b4e212c2ef9621f1775fe42d5b4c5f93",
+  "sourceWorktreeCleanBeforeAndAfter": true,
+  "sourceCommitUnchanged": true,
+  "binarySHA256": "ac908785d1f42c62991a5e045247bf532fb36a7051a48f6777a1b473827b2ae3",
+  "finished": "2026-10-06T15:27:15.049317+00:00",
+  "passed": true,
+  "failures": [],
+  "ownedClusterRemoved": true,
+  "sharedConfigUnchanged": true,
+  "steps": [
+    {
+      "name": "before-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "9716aa00636c753f549934876536e3864c792fe811a0dd21f213672f005f9408"
+    },
+    {
+      "name": "bootstrap-owned-resources",
+      "exit": 0,
+      "stdoutSHA256": "b537b5ff5209b6c35fd7c972313ce9f7fd3a3ff62720b13f5df44a72c51296df",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "watch-selected",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "watch-restricted",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "bot-selected",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "bot-restricted",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-selected",
+      "exit": 0,
+      "stdoutSHA256": "d0017f8dc7b90afa293177f476aa08b151f23bc0952671495293919800a6295d",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "graph-selected",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "eb9828ab0a5af68518839f887eaf24dfad06bd1500cb45d65963ad5559f93ae9"
+    },
+    {
+      "name": "graph-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "graph-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "2eca9f89a5bb703679821f502be642bf917204cc33c30ea4f3412e03c38013fe"
+    },
+    {
+      "name": "snapshot-selected",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "snapshot-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "fcd6db9ca5b05bd36c5d7bde4ce7ecd44811d428e3ef7944d40b369aec960815"
+    },
+    {
+      "name": "snapshot-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "2eca9f89a5bb703679821f502be642bf917204cc33c30ea4f3412e03c38013fe"
+    },
+    {
+      "name": "delete-owned-instance",
+      "exit": 0,
+      "stdoutSHA256": "66c4b216151521dfcb90f4a6739915a6a611ebb8895ef9209a7fa1cb30351a53",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "recreate-owned-instance",
+      "exit": 0,
+      "stdoutSHA256": "4dbd4e329ecdbbcafa12fe6e62ab4700f38b050011a6c2bae04b78913eae7c4f",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "watch-recreated",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cleanup-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "40634c71b0d553650d80fc430476b65bfb12faa63cf8c63a7da0432a4bd4b0d4"
+    },
+    {
+      "name": "after-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "scope": "Actual watch/bot --once and map identity parity; restricted-reader identity denial; object recreation; graph/snapshot explicit context and invalid-context refusal; actual PTY TUI graph export. One owned Kubernetes 1.35 cluster; identity-only cost, not total cost, full scanner coverage, Target binding or informer age. Build from clean source with hash binding; no compiler VCS stamp claim."
+}

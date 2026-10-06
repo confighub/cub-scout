@@ -11,7 +11,30 @@ Homebrew source formula repair replaces the stale 2.0.0 formula; unsigned cask
 execution failed under quarantine and is not a passing path. Anonymous GHCR
 pull remains denied (#520).
 
-**Current work: v2.14 task 24, strict watch/bot context (#787).**
+**Current work: v2.14 tasks 24–32, watch/bot identity packet (#789).**
+The maintainer authorized tasks 1–10 from the latest ordered list. Full scope
+remains; no release or parent completion is asserted from a bounded packet.
+Watch/bot polling identity (#789) reuses the accepted map model. Focused/race
+tests and genuine map/watch/bot parity, restricted-reader identity denial and
+recreation pass at `61dbff49`. Initial map-shorthand harness failure and cleanup
+are retained. Full Go found test cap leakage, now repaired with a combined
+identity/receipt check passing; final full-source rerun is required. Graph/GSF
+strict context (#790) is implemented with selected/ambient and invalid-selector
+controls and live CLI acceptance pass at `b7331f78`. Bound TUI graph export
+now uses the captured client in-process. Initial real TUI acceptance at
+`6c05492b` caught the All-display-label namespace bug; source and regression
+controls are repaired. Initial eval scaffold registration also failed full Go;
+a dedicated authored-fixture staging guard now passes without changing frozen
+experiment data. The first PTY saved normal user view state; its original bytes
+were not retained. Later runs isolate HOME. Actual PTY TUI SVG export and watch/bot/map, graph/snapshot context controls
+pass at clean product source `37074c36`, with isolated HOME, owned cleanup and
+unchanged kubeconfig. A full-Go run caught the old implicit-identity graph test
+still expecting the previously disabled action; it now checks the captured
+client refusal and no artifact. Final source full Go and required CI remain
+pending. PR #791 is draft; #789/#790 and parent #599 are not closed.
+Recorded-output schema/trap acceptance (#792) is advancing separately. Required
+full CI still needs repository secret CUB_SCAN_RELEASE_TOKEN; the maintainer
+has been asked to configure a read-only scanner-release credential.
 PR #782 merged at `6cfccd77` after exact-head Unit/Integration/GitOps/Proof CI
 passed; optional tiers remained skipped. The prepared P4 source is integrated.
 The next bounded slice exposes verified instance references/merge keys or
@@ -35,7 +58,8 @@ selection/token/missing/blank/denied/unreachable controls, full Go suite in norm
 mode, build/vet/docs/parity/read-only guard and owned-cluster CLI proof pass.
 Product source `22c3f958`; raw captures/cleanup are retained in the example.
 Initial HTTP credential and forced-Offline golden failures are retained; fixtures
-were corrected without production TLS or golden changes. Final-source CI is pending.
+were corrected without production TLS or golden changes. Final-source CI `37470921280` passed Unit/Integration/GitOps/Proof; PR #788
+merged at `b9f7b14e`. Optional tiers were skipped, not passed.
 Broader #599, #596 and v2.14 publication remain open. Existing live proof retains its original source/binary limits.
 
 The [configuration delivery checklist](docs/reference/configuration-investigation-delivery.md)

@@ -67,6 +67,7 @@ Environment variables mirror the flags for Kubernetes manifests:
 
 func init() {
 	rootCmd.AddCommand(botCmd)
+	botCmd.Flags().Bool("cluster-identity", false, "Emit verified cluster/object identity with identity-only read cost (one Namespace GET per polling cycle)")
 	botCmd.Flags().String("kube-context", "", "Kubernetes context to inspect (strict explicit selection)")
 	botCmd.Flags().StringVar(&botWebhookURL, "webhook", "", "Webhook URL to receive events (or CUB_SCOUT_BOT_WEBHOOK_URL)")
 	botCmd.Flags().StringVar(&botOutputFile, "output-file", "", "Append JSONL events to a file path (or CUB_SCOUT_BOT_OUTPUT_FILE)")

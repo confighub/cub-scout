@@ -83,3 +83,48 @@ a golden update or a production TLS change. Normal-mode full Go suite passes,
 as do targeted denied/unreachable endpoint controls with zero ambient requests.
 The wider live denial/recovery/informer, scanner-coverage, identity/cost and
 six-surface gates remain required before v2.14.
+
+## Polling identity (2.14 candidate)
+
+Watch and local bot now share the map instance-identity model (#789):
+
+```bash
+./cub-scout watch --kube-context selected --cluster-identity -n team-a \
+  --once --output-file /tmp/scout-watch.jsonl
+./cub-scout bot --kube-context selected --cluster-identity -n team-a \
+  --once --output-file /tmp/scout-bot.jsonl
+```
+
+Both emit `cluster.observed` and object events with the same verified merge key,
+or an explicit identity omission. Cost is one identity-reader operation per
+cycle, repeated on events; count only `cluster.observed`. No complete scanner,
+whole-cycle cost, Target-binding or informer-age claim follows. Missing UID and
+ambiguous finding targets remain unverified. Deleted instances keep old UIDs;
+same-cluster verified UID replacement emits separate discovery/deletion.
+`--watch-backed` is refused for this option. Default events remain unchanged.
+
+Deterministic success proof: `TestWatchIdentity*` and
+`TestWatchAndBotIdentityUsesSelectedConfigOneRead` in
+`cmd/cub-scout/watch_cluster_identity_test.go`. They exercise exact input UIDs,
+cluster collisions/denial, recreation, missing/ambiguous objects, one selected
+identity GET, unchanged kubeconfig and default wire shape. Existing map tests
+validate the same observed-reference serializer. Run actual owned-cluster proof
+with `python3 examples/watch-collection-omissions/verify-live-identity.py`;
+its private output directory retains logs and credential-bearing setup separately
+from the public proof and event captures. Runtime acceptance is pending until a
+source-bound passing receipt is retained.
+
+The first runtime attempt at `9c6d1a6d` passed actual watch/bot identity and
+restricted-reader controls but failed the subsequent map invocation because the
+harness used unsupported map shorthand `-n`. The preserved
+`live-identity-attempt-1.json` records failure and successful owned-cluster
+cleanup; it is not complete acceptance. The reproducer now uses `--namespace`.
+
+Runtime acceptance passes at clean source `61dbff49`: actual watch/bot/map
+identity parity, one measured identity request per cycle, restricted-reader
+identity denial and Deployment recreation all pass.
+`live-identity-proof.json` and curated JSONL captures retain the exact source
+and binary binding; owned-cluster removal and shared config preservation pass.
+A full-Go run subsequently found test-state leakage from the informer-refusal
+test into an existing receipt test. The refusal test now restores the cap;
+production identity code is unchanged. Full-source rerun remains required.

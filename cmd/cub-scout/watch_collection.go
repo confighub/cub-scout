@@ -12,6 +12,9 @@ type watchInventoryScope struct {
 }
 
 func watchInventoryUnreadable(prev, curr watchState, id string) bool {
+	if curr.clusterIdentity != nil && (prev.clusterIdentity == nil || curr.clusterIdentity.Identity != "verified" || prev.clusterIdentity.Identity != "verified" || curr.clusterIdentity.ID != prev.clusterIdentity.ID || curr.clusterIdentity.IDSource != prev.clusterIdentity.IDSource) {
+		return true // Cannot infer deletion across denied or changed cluster identity.
+	}
 	if len(curr.omissions) == 0 {
 		return false
 	}

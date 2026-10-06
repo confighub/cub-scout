@@ -605,3 +605,8 @@ product-contract check is intended to run with `--ablation none`; it
 is not a paired quality or savings measurement. `record.py --scaffolds-only`
 prints when it preserves this custom scaffold; the unit test validates its
 export and proof output. No eval run or paid grader has been run for this case.
+
+The authored [watch identity contract](watch-identity-contract/) tests agent
+interpretation of old/new instances, denied identity and repeated identity-only
+cost fields. It is separate from frozen experiment cases; no model execution,
+benchmark admission or benefit claim is made by adding this case.

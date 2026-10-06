@@ -4,7 +4,7 @@
 over webhook + JSONL file sinks. `bot` is the in-cluster-friendly wrapper around
 the watch engine; this reference is the authoritative description of:
 
-- The event types (`resource.discovered`, `resource.deleted`, `ownership.changed`, `drift.detected`, `scan.finding`, and candidate `collection.partial`) and when each fires
+- The event types (`resource.discovered`, `resource.deleted`, `ownership.changed`, `drift.detected`, `scan.finding`, and candidate `collection.partial` / opt-in `cluster.observed`) and when each fires
 - The event JSON shape
 - The inline-receipt attachment via `--emit-receipt-on`
 - The per-poll backpressure cap via `--emit-receipt-batch-cap`
@@ -321,3 +321,17 @@ Runs one collection cycle and exits. Useful for CI gates that want a point-in-ti
 - **Skills**: [`pilot-watch-alert-response`](../../skills/pilot-watch-alert-response/SKILL.md) — consumer-side Pilot integration; [`scout-observe`](../../skills/scout-observe/SKILL.md) — operator-side `watch` usage
 - **Code**: `cmd/cub-scout/watch.go` (`watchEvent` struct + `buildWatchEvents`); `cmd/cub-scout/watch_receipt.go` (`attachReceiptsIfRequested` + `watchReceiptBatchCap` + `parseWatchEmitReceiptOn`)
 - **Issues**: `#449` (closed via `#470`) — full v2 surface
+
+## Polling identity (2.14 candidate)
+
+`--cluster-identity` on watch and bot adds one bounded `kube-system` Namespace
+GET per polling collection and emits `cluster.observed` even for an empty or
+denied inventory. This event bypasses owner/severity filters and never builds a
+receipt. Its `cluster` evidence and identity-only cost use the map contract;
+resource events add verified `resourceIdentity` or an explicit omission.
+Count cost once on `cluster.observed`; repeated event fields are not additional
+requests. Deletion retains the old observation, and verified UID recreation
+produces separate discovery/deletion. Identity denial cannot imply deletion.
+The option refuses `--watch-backed` pending original cache-age proof. Defaults
+are unchanged. See the [JSON contract](json-contracts.md#watchbot-polling-identity-214-candidate)
+and [example](../../examples/watch-collection-omissions/#polling-identity-214-candidate).

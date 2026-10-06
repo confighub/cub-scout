@@ -92,7 +92,7 @@ cub-scout map [flags]
 | Flag | Description |
 |------|-------------|
 | `--hub` | Start in the ConfigHub hierarchy view; `--kube-context`, if given, applies when switching to the local TUI and does not select a ConfigHub context |
-| `--kube-context` | Use this exact kubeconfig context for local TUI inventory, bounded explain, scan and trace; missing names fail without fallback. In this mode graph export, command mode, shell, and import are disabled until they honor the binding |
+| `--kube-context` | Use this exact kubeconfig context for local TUI inventory, bounded explain, scan and trace; missing names fail without fallback. Graph export uses the captured config and selected namespace; command mode, shell, and import remain disabled until they honor the binding |
 | `-n, --namespace` | Filter by namespace |
 | `-q, --query` | Resource query filter |
 
@@ -3520,3 +3520,22 @@ This does not cap display/protocol/transport bytes, CLI JSON newline, tokens,
 input work or agent cost; MCP can duplicate report data in text and structured
 content. Defaults are unchanged. See the
 [example](../../examples/recorded-inventory/#report-json-budget-214-candidate).
+
+### Watch/bot polling identity (2.14 candidate)
+
+`watch --cluster-identity` and `bot --cluster-identity` emit verified cluster
+and object-instance evidence or omissions, with one bounded Namespace GET per
+polling cycle. Identity-only cost is repeated on events; count once on
+`cluster.observed`. Owner/severity filters do not hide that cycle event.
+Defaults remain unchanged; `--watch-backed` is refused pending original-age
+proof. See [event contract](watch-events.md#polling-identity-214-candidate).
+
+### Graph/snapshot explicit context (2.14 candidate)
+
+`graph export --kube-context NAME` and `snapshot --kube-context NAME` capture one
+strict Kubernetes config. Empty/missing explicit names refuse without fallback
+or output-file creation; current-context is unchanged. Graph cancellation uses
+the command context. `graph export --empty` and fixture-time mode cannot be
+combined with explicit selection. The graph/GSF `cluster` string records the
+selected context label, not verified cluster identity. Existing GSF list-skipping
+semantics do not establish complete inventory. See the [example](../../examples/graph-export/#explicit-context-214-candidate).

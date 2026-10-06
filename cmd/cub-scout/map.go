@@ -104,9 +104,9 @@ Local cluster mode reads from your current kubectl context by default. On
 map or map list, --kube-context <name> selects one exact kubeconfig
 context for the inventory read; a missing selected name is an error.
 With --hub, that selection is used only if you later switch to the local TUI;
-it does not select a ConfigHub context. In selected-context TUI mode, trace,
-scan, graph export, command mode, shell and import are disabled until they can
-honor the captured binding.
+it does not select a ConfigHub context. In selected-context TUI mode, inventory, explain, trace, scan and graph export
+use captured providers. Command mode, shell and import remain disabled until
+they can honor the captured binding.
 Hub mode requires ConfigHub authentication (cub auth login).
 
 Pipeline source semantics (TUI p view):

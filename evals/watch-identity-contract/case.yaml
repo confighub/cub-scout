@@ -1,0 +1,13 @@
+# FIXTURE-OWNED-SCAFFOLD: AUTHORED product contract; outside the frozen 24-case comparison experiment.
+schema_version: "1.1"
+name: watch-identity-contract
+context:
+  scaffold_script: scaffold.sh
+---
+name: watch-identity-contract
+description: "Interpret dated watch instance evidence and avoid summing repeated identity-only costs."
+expected_outcome: "Different object UIDs stay separate; denied identity is unknown; identity cost is counted once per cluster.observed; no total cost or Target binding claim."
+tags: [product-contract, identity, watch, authored]
+max_turns: 8
+timeout_seconds: 180
+allowed_tools: [Read, Glob, Grep]

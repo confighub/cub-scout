@@ -51,6 +51,7 @@ var watchKnownEventTypes = []string{
 	"resource.discovered",
 	"resource.deleted",
 	"collection.partial",
+	"cluster.observed",
 	"ownership.changed",
 	"drift.detected",
 	"scan.finding",

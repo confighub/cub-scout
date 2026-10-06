@@ -26,3 +26,56 @@ Use `graph export` to generate shareable topology artifacts from the same
   clusters shareable.
 - `--format json` remains the contract format for automation and schema checks.
 - `--json` is still accepted as a legacy alias for `--format json`.
+
+## Explicit context (2.14 candidate)
+
+```bash
+./cub-scout graph export --kube-context selected --namespace team-a --format json
+./cub-scout snapshot --kube-context selected --namespace team-a
+```
+
+Both pin one selected config and refuse missing/blank explicit contexts before
+output-file creation. They never change current-context. Graph collection honors
+command cancellation; explicit selection cannot silently become an empty graph.
+`--empty` and fixture-time graph mode refuse explicit contexts. Default behavior
+and graph/GSF schemas remain unchanged. In explicit mode the `cluster` string is
+the captured context label, **not verified cluster identity or a Target binding**.
+GSF's existing skipped-LIST behavior does not prove complete inventory; whole
+command cost and structured collection omissions remain tracked in #599.
+
+Deterministic checks are `TestGraphAndSnapshot*` and
+`TestGraphContextOfflineAndCancellationRefuse`. The owned-cluster reproducer is
+`python3 examples/watch-collection-omissions/verify-live-identity.py`; graph and
+snapshot controls are additional to its watch/bot identity proof. Genuine
+acceptance of this extension is pending until a matching clean-source receipt.
+
+With explicit context, the map TUI Maps export action reads the captured config
+in-process and preserves its selected namespace. It never invokes a PATH/ambient
+CLI fallback; denied/missing bindings refuse without writing a graph.
+`TestScopedTUIGraphExportUsesCapturedBindingAndNamespace` verifies this against
+selected/ambient endpoints after the private kubeconfig is made invalid.
+
+Actual CLI graph/snapshot context selection and invalid-selector refusal pass
+at `b7331f78`, retained in the shared `live-export-context-proof.json`. That
+receipt predates the TUI implementation and does not prove the TUI action.
+The extended reproducer now opens an owned PTY, uses Maps → SVG export, checks
+the selected label/workload in the artifact and terminates only its own child.
+
+The first real TUI attempt at `6c05492b` exposed a scope bug: the presentation
+label `All` was sent as a namespace, yielding an empty graph. The failed receipt
+is retained as `live-tui-export-attempt-1.json`; owned cleanup passed. The action
+now translates the all-namespace selection to the empty API namespace, with
+regression endpoint checks. The PTY child uses a private HOME for session state.
+The first PTY attempt also saved its view state in the normal user session file;
+no pre-run snapshot copy was retained, so that saved view is not claimed restored.
+Kubeconfig remained unchanged. Subsequent PTY runs isolate HOME and leave shared
+session files untouched. Private credential-bearing setup logs are never copied
+into repository examples.
+
+Final real PTY graph export and CLI context controls pass at `37074c36`, with
+the selected cluster/workload in `live-selected-context.svg`. The shared
+`live-identity-export-proof.json` retains clean source/hash binding, cleanup and
+config preservation. This does not prove physical graph UID joins or complete
+GSF inventory. An old implicit-identity test still asserted export was disabled;
+it now validates bound-client failure and no output when its ReplicaSet fixture
+is absent.

@@ -10,6 +10,7 @@ import (
 	"github.com/confighub/cub-scout/v2/internal/graph"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 var graphCmd = &cobra.Command{
@@ -53,6 +54,7 @@ var (
 func init() {
 	rootCmd.AddCommand(graphCmd)
 	graphCmd.AddCommand(graphExportCmd)
+	graphExportCmd.Flags().String("kube-context", "", "Kubernetes context to inspect (strict explicit selection)")
 
 	graphExportCmd.Flags().BoolVar(&graphExportJSON, "json", false, "DEPRECATED: use --format json")
 	_ = graphExportCmd.Flags().MarkDeprecated("json", "use --format json")
@@ -64,9 +66,22 @@ func init() {
 }
 
 func runGraphExport(cmd *cobra.Command, args []string) error {
+	selection, err := clusterContextSelectionFromFlag(cmd)
+	if err != nil {
+		return err
+	}
+	if selection.explicit && (graphExportEmpty || os.Getenv("CUB_SCOUT_TEST_TIME") != "") {
+		return fmt.Errorf("--kube-context requires live graph collection; cannot combine with --empty or fixture time")
+	}
+	var cfg *rest.Config
 	// Get cluster name (allow override for testing)
 	cluster := os.Getenv("CUB_SCOUT_TEST_CLUSTER")
-	if cluster == "" {
+	if selection.explicit {
+		cfg, cluster, err = buildClusterConfigForCommand(cmd)
+		if err != nil {
+			return fmt.Errorf("build kubernetes config: %w", err)
+		}
+	} else if cluster == "" {
 		cluster = getCurrentContext()
 	}
 
@@ -75,7 +90,9 @@ func runGraphExport(cmd *cobra.Command, args []string) error {
 
 	// Collect from cluster unless --empty is set or we're in test mode
 	if !graphExportEmpty && os.Getenv("CUB_SCOUT_TEST_TIME") == "" {
-		cfg, err := buildConfig()
+		if !selection.explicit {
+			cfg, err = buildConfig()
+		}
 		if err != nil {
 			// If no cluster access, output empty graph
 			// This allows the command to work without a cluster
@@ -86,7 +103,10 @@ func runGraphExport(cmd *cobra.Command, args []string) error {
 			}
 
 			collector := graph.NewCollector(client, cluster)
-			ctx := context.Background()
+			ctx := cmd.Context()
+			if ctx == nil {
+				ctx = context.Background()
+			}
 
 			if err := collector.CollectOwnershipChain(ctx, g, graphExportNamespace); err != nil {
 				return fmt.Errorf("failed to collect ownership chain: %w", err)
