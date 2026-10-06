@@ -11,15 +11,16 @@ Homebrew source formula repair replaces the stale 2.0.0 formula; unsigned cask
 execution failed under quarantine and is not a passing path. Anonymous GHCR
 pull remains denied (#520).
 
-**Current work: v2.14 integration.** The prepared P4 delta from `9b9f68f3^`
-through `7533968c` is applied to current main on `codex/v214-release-integration`.
-This selects only P4 product/docs changes rather than replaying superseded P3
-history. One example-document conflict was resolved; production files applied
-cleanly. Integrated build, full Go tests, vet and CLI documentation checks pass. Fresh
-owned Kubernetes 1.35 administrator/restricted-reader CLI identity proof also
-passes; failed harness attempt, cleanup and pre-commit binary limits are retained
-in the [summary](examples/cluster-identity-cost/live-cli-identity-proof.json).
-No v2.14 publication or broader acceptance is claimed yet.
+**Current work: v2.14 task 24, observed object-instance evidence (#783).**
+PR #782 merged at `6cfccd77` after exact-head Unit/Integration/GitOps/Proof CI
+passed; optional tiers remained skipped. The prepared P4 source is integrated.
+The next bounded slice exposes verified instance references/merge keys or
+explicit omissions only in opt-in map cluster evidence, using existing returned
+objects with no extra reads. Defaults and legacy IDs remain unchanged. CLI/MCP
+and loaded TUI facts share the model; failed/wrong-scope identity masks old keys.
+Focused deterministic tests and build pass; full tests and fresh owned two-scope
+CLI/MCP acceptance are in progress. Broader #599, #596 and v2.14 publication
+remain open. Existing live proof retains its original source/binary limits.
 
 The [configuration delivery checklist](docs/reference/configuration-investigation-delivery.md)
 turns all seven continuity rows into ordered work with existing foundations and

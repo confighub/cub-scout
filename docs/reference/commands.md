@@ -171,7 +171,7 @@ cub-scout map list [flags]
 | `--names-only` | Show names only |
 | `--summary` | Show counts by owner and kind (after filters) instead of the entries |
 | `--ownership-evidence` | Emit the versioned ownership-only diagnostics envelope with detector sources and normalized list omissions; cannot be combined with `--summary`, `--count`, or `--names-only` |
-| `--cluster-identity` | v2.14 candidate, unreleased: admit one extra bounded Namespace GET and emit a separate observed-identity envelope with identity-only cost and inventory omissions; excludes compact and ownership-only modes |
+| `--cluster-identity` | v2.14 candidate, unreleased: admit one extra bounded Namespace GET and emit a separate cluster/object-instance identity envelope with identity-only cost and inventory omissions; excludes compact and ownership-only modes |
 | `--explain` | Show explanatory content |
 | `--kube-context` | Use this exact kubeconfig context for this inventory read; missing or empty names fail without fallback |
 

@@ -719,7 +719,7 @@ func loadLocalClusterDataWithConfigAndIdentity(cfg *rest.Config, boundContext st
 			continue
 		}
 		for _, item := range l.Items {
-			entries = processResource(&item, gvr, clusterName, entries, byOwner)
+			entries = processResourceWithIdentity(&item, gvr, clusterName, entries, byOwner, mapApplicationSetLookup{byNamespacedName: map[string]int{}, byName: map[string]int{}}, clusterIdentity)
 		}
 	}
 
@@ -2728,6 +2728,9 @@ func (m LocalClusterModel) getPanelOwnershipEvidence() string {
 	}
 	b.WriteString("Ownership detection applies only to workload objects returned during inventory loading. It does not establish that a resource is orphaned or identify a person.\n\n")
 	for _, entry := range entries {
+		if m.clusterIdentity != nil {
+			b.WriteString(mapResourceIdentityText(entry, m.clusterIdentity))
+		}
 		b.WriteString(fmt.Sprintf("%s/%s %s — %s\n", entry.Namespace, entry.Name, entry.Kind, mapsvc.OwnershipDetectionSummary(entry.OwnershipDetection)))
 	}
 	if len(entries) == 0 {

@@ -72,8 +72,9 @@ Opaque UID delimiters retain exact field boundaries. Unknown cluster identity,
 malformed/missing fields, contradictory scope and invalid exported-field
 mutations are refused. The original object remains unchanged.
 
-These references are library values, not new command fields, a fleet membership
-model, ownership proof, ConfigHub Target identity or a current-state assertion.
+These references started as library values. The candidate opt-in map integration
+below exposes supported instance evidence; it is not a fleet membership model,
+ownership proof, ConfigHub Target identity or a current-state assertion.
 They do not complete #599 or its CLI/MCP/TUI and genuine acceptance gates.
 
 ## Opt-in map identity (v2.14 candidate, unreleased)
@@ -153,3 +154,29 @@ harness uses `--namespace`. The binary was built from modified integrated source
 before its commit; build metadata and the source-binding limit remain explicit.
 This is CLI acceptance only, not a clean-commit release binary, TUI/MCP process,
 two-cluster isolation, controller health, six-surface or total-command cost proof.
+
+## Merge-safe map instances (#783, v2.14 candidate)
+
+```sh
+./cub-scout map list --cluster-identity --namespace team-a --kind Deployment --format json
+./cub-scout map --cluster-identity
+```
+
+In the identity envelope, each returned row has `resourceIdentity`: a verified
+observed reference/merge key or a precise omission. The legacy display ID is
+unchanged. The key distinguishes verified cluster UID, API group/kind,
+namespace/name and object UID, including deletion/recreation. API version is
+retained without creating a second key for the same group/kind/UID.
+
+The already returned objects supply these facts, so there is no extra GET or
+discovery request. Registry-backed scope and exact response type/version are
+required; custom resources without declared scope remain unverified. Identity
+denial or missing UID retains ownership/inventory with no guessed key. CLI
+ASCII/Markdown and MCP show the same evidence; TUI `V` shows it from loaded rows.
+An unavailable identity refresh cannot continue displaying old verified keys.
+
+Deterministic controls are `TestMapResourceIdentity*`, alongside existing
+`TestObservedResourceIdentity*` and `TestMapClusterIdentity*`. They cover exact
+keys, recreation/cluster collisions, missing metadata, response mismatch,
+unknown scope, default JSON stability, unchanged request counts and retained
+TUI evidence refusal. Their loopback inputs are authored, not live captures.

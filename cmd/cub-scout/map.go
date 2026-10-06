@@ -932,7 +932,7 @@ func runMapListFromClusterWithConfigAndIdentity(ctx context.Context, cfg *rest.C
 				continue // Skip resources that don't exist
 			}
 			for _, item := range l.Items {
-				entries = processResourceWithLookup(&item, gvr, clusterName, entries, byOwner, appSetLookup)
+				entries = processResourceWithIdentity(&item, gvr, clusterName, entries, byOwner, appSetLookup, clusterIdentity)
 			}
 		} else {
 			l, err := dynClient.Resource(gvr).List(ctx, v1.ListOptions{})
@@ -943,7 +943,7 @@ func runMapListFromClusterWithConfigAndIdentity(ctx context.Context, cfg *rest.C
 				continue
 			}
 			for _, item := range l.Items {
-				entries = processResourceWithLookup(&item, gvr, clusterName, entries, byOwner, appSetLookup)
+				entries = processResourceWithIdentity(&item, gvr, clusterName, entries, byOwner, appSetLookup, clusterIdentity)
 			}
 		}
 	}
@@ -1103,7 +1103,7 @@ func renderMapListFromEntriesWithIdentity(entries []MapEntry, omissions []mapsvc
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
 		if clusterIdentity != nil {
-			return enc.Encode(mapClusterIdentityOutput{Schema: "map-list-cluster-identity.v1", Cluster: *clusterIdentity, ClusterCostScope: "identity-reader", Resources: entries, Collection: mapClusterCollection(omissions, unavailableReason)})
+			return enc.Encode(mapClusterIdentityOutput{Schema: "map-list-cluster-identity.v1", Cluster: *clusterIdentity, ClusterCostScope: "identity-reader", Resources: mapIdentityResources(entries, clusterIdentity), Collection: mapClusterCollection(omissions, unavailableReason)})
 		}
 		if includeOwnershipEvidence {
 			return enc.Encode(mapsvc.BuildOwnershipEvidenceOutput(entries, omissions))
@@ -1113,9 +1113,16 @@ func renderMapListFromEntriesWithIdentity(entries []MapEntry, omissions []mapsvc
 
 	if clusterIdentity != nil {
 		if effectiveFormat == "md" {
-			fmt.Printf("```text\n%s```\n\n", mapClusterIdentityText(clusterIdentity))
+			text := mapClusterIdentityText(clusterIdentity)
+			for _, entry := range entries {
+				text += mapResourceIdentityText(entry, clusterIdentity)
+			}
+			fmt.Printf("```text\n%s```\n\n", text)
 		} else {
 			fmt.Print(mapClusterIdentityText(clusterIdentity) + "\n")
+			for _, entry := range entries {
+				fmt.Print(mapResourceIdentityText(entry, clusterIdentity))
+			}
 		}
 		collection := mapClusterCollection(omissions, unavailableReason)
 		fmt.Printf("Inventory collection: %s (%d list request(s) omitted)\n", collection.Status, len(collection.Omissions))
