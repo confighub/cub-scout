@@ -1,0 +1,177 @@
+{
+  "schema": "v214-tree-context-live-proof.v1",
+  "sourceCommit": "49a98491b5b71aec3ffe6c322ddb7703510f3afa",
+  "sourceCommitUnchanged": true,
+  "sourceWorktreeCleanBeforeAndAfter": true,
+  "binarySHA256": "91bd056316214e2ca6e43729321573b5db4801fb2e3ccd2a66828ea74d772c3e",
+  "finished": "2026-10-06T15:46:29.911071+00:00",
+  "passed": true,
+  "failures": [],
+  "ownedClusterRemoved": true,
+  "sharedConfigUnchanged": true,
+  "steps": [
+    {
+      "name": "before-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "fcae031ba2342378233dc5add63ab5ba768f4ed89cbc1713e2240173d47f4951"
+    },
+    {
+      "name": "bootstrap-owned-resources",
+      "exit": 0,
+      "stdoutSHA256": "8e0b7544c1923d80813c99643cb47d8a885c7e190a40b577a908e437f5a6e4ec",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "tree-runtime",
+      "exit": 0,
+      "stdoutSHA256": "8ad7e7352c416c115f726528eef58dad9b9057d6d78e2dbdbeef1477612ed7e9",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "tree-runtime-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "tree-runtime-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "tree-ownership",
+      "exit": 0,
+      "stdoutSHA256": "3cadef8a0bdd6988beb8f9712e0a2b44bee9e989d0cb4f56febb569e1391ecbd",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "tree-ownership-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "tree-ownership-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "tree-composition",
+      "exit": 0,
+      "stdoutSHA256": "939948d07a020a8da8ff3e88d8c35651de57199a368cab6418ee5159b74fb7f9",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "tree-composition-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "tree-composition-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "tree-workloads",
+      "exit": 0,
+      "stdoutSHA256": "da17d3cbfcdd4acb32a6417b3f3f9c52009bf53279d573e519bfbb90793f8113",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "tree-workloads-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "tree-workloads-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "tree-git",
+      "exit": 0,
+      "stdoutSHA256": "22439d66d0ece98115f610ea2fed8329b75a2885bf02ba5e73a7399dcdbe0fb7",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "tree-git-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "tree-git-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "tree-patterns",
+      "exit": 0,
+      "stdoutSHA256": "40d54187e10c4739c6625f5fb222a3b1252b07435e7c993a2ea180b3226702ce",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "tree-patterns-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "tree-patterns-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "tree-suggest",
+      "exit": 0,
+      "stdoutSHA256": "a01655da9b11e9518a1d1b984635cc3dcad9817004a149a50a5f410670ab5fe5",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "tree-suggest-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "tree-suggest-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "config-refuses-kubernetes-selector",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e55cef6ac7c7bf221ac8a33b73925f75b6d171e83c85e950e94b095ad4ac82cf"
+    },
+    {
+      "name": "cleanup-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "5ec4f268aa6f07ab5dff1403cabad3f970828290857b91e322fcac201a9e9b35"
+    },
+    {
+      "name": "after-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "scope": "Seven actual standalone tree views with an unusable ambient context; blank/missing selectors and ConfigHub-only view refuse. One owned Kubernetes 1.35 cluster and private HOME/config. No physical identity, whole-command cost, completeness, Target, connected/fleet or six-surface proof. Clean isolated build bound by source checkpoint and binary hash; no compiler VCS-stamp claim."
+}

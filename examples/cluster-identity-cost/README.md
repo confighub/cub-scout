@@ -231,3 +231,9 @@ cluster, uses an unusable ambient selection and a private HOME/config, and
 exercises all cluster views and explicit-selection refusals. Its proof measures
 this scoped command acceptance, without identity/cost/Target or full six-surface
 claims.
+
+The [source-bound live proof](live-tree-context-proof.json) passed on one owned
+Kubernetes 1.35 cluster with the ambient selection unusable. Two retained
+attempts failed harness assertions (ownership JSON path and suggest display
+name); their owned clusters were removed and shared kubeconfig unchanged. This
+proof is dated at its recorded source checkpoint; it is not release acceptance.
