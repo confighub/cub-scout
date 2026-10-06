@@ -1,0 +1,6 @@
+--- FAIL: TestProviderContract_Confighub (0.31s)
+    --- FAIL: TestProviderContract_Confighub/confighub/ScanFile_CleanYAML (0.23s)
+        provider_contract_test.go:31: Findings = 7, want 0 for clean YAML
+FAIL
+FAIL	github.com/confighub/cub-scout/v2/internal/scan	0.790s
+FAIL

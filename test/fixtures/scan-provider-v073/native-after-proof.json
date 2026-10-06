@@ -1,0 +1,28 @@
+{
+  "schema": "v214-native-scan-provider-proof.v1",
+  "passed": true,
+  "sourceCommit": "27aa016775cc0a5668164572dad52c433168eab1",
+  "sourceWorktreeCleanBeforeAndAfter": true,
+  "sourceCommitUnchanged": true,
+  "providerVersion": "v0.7.3",
+  "providerAsset": "confighub-scan-darwin-arm64.tar.gz",
+  "providerArchiveSHA256": "a629b90463be0c0cbf7c97087b81d8b0707e9a7138203d1d22b5fb2379ff6c6f",
+  "providerSHA256": "25aeb0199323e8846abccfd3efc28aa0750bac89e17f165dab774a60ba3073f8",
+  "candidateSHA256": "3e026540fa32ad6cfa84955bec8942b0cd2879a2e8e318a4f7d5592d9e8eac05",
+  "actualProviderInvocations": 2,
+  "steps": [
+    {
+      "name": "clean",
+      "exit": 0,
+      "findingCount": 0,
+      "reportSHA256": "0465729f2adf20a7f943187c9f23a569bfceebc4308f0eca744a10afd3219d09"
+    },
+    {
+      "name": "findings",
+      "exit": 0,
+      "findingCount": 10,
+      "reportSHA256": "9e9c0da20a89dd4188333bc78f57334e8df8b2d4055141f7c1006a67da94f371"
+    }
+  ],
+  "scope": "Actual checksum-verified published native darwin/arm64 scanner v0.7.3 delegation on authored file fixtures, private HOME/ConfigHub config and missing kubeconfig. No cluster/controller/connected scan, Linux runner or full CI proof. Existing local gh release access used without retaining or exporting credentials."
+}

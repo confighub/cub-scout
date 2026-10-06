@@ -12,3 +12,10 @@ Private downloaded binaries, credentials and logs are not committed. Actual
 provider access used the existing local gh credential without exporting it.
 Linux full CI still requires its separately scoped release-read secret (#774).
 The file-only fixture does not establish functional runtime/application health.
+
+The native-after-proof passes at source `27aa0167`: the strengthened clean
+fixture has zero findings; the unchanged misconfigured fixture retains ten.
+Both actual provider invocations are required, with provider archive and binary
+hashes retained. The real provider contract (native and legacy) and file CLI
+clean goldens pass. This is local native provider admission; Linux/full CI and
+live scanner/controller acceptance remain separate required gates.
