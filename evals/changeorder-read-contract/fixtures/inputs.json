@@ -1,0 +1,121 @@
+{
+  "provenance": {
+    "kind": "authored",
+    "live_capture": false,
+    "parser_contract": {
+      "repository": "confighub/sdk",
+      "tag": "v0.6.8",
+      "commit": "4c8d2fc3885fed0d7af6835f2aac0a24387b6221",
+      "files": [
+        "cmd/cub/changeorder_get.go",
+        "core/openapi/goclient-new/models.gen.go"
+      ]
+    },
+    "runtime_server_version": "unknown"
+  },
+  "request": {
+    "order": "rollout",
+    "space": "prod"
+  },
+  "responses_by_space": {
+    "prod": {
+      "ChangeOrder": {
+        "ChangeOrderID": "11111111-1111-4111-8111-111111111111",
+        "Slug": "rollout",
+        "SpaceID": "22222222-2222-4222-8222-222222222222",
+        "SpaceSlug": "prod",
+        "Stage": "Completed",
+        "State": "Ready",
+        "ChangeWorkflowID": "33333333-3333-4333-8333-333333333333",
+        "ChangeWorkflow": {
+          "Stages": [
+            {
+              "Name": "Review",
+              "Prerequisites": [
+                "reviewer",
+                "tests"
+              ],
+              "ReleasePrerequisites": [
+                "publish"
+              ]
+            },
+            {
+              "Name": "Release",
+              "Prerequisites": []
+            }
+          ],
+          "Final": {
+            "Prerequisites": [
+              "audit"
+            ]
+          },
+          "CustomPrerequisites": [
+            {
+              "Name": "tests",
+              "Expression": "true"
+            }
+          ],
+          "AttestationPrerequisites": [
+            {
+              "Name": "reviewer",
+              "Type": "review",
+              "Count": 0,
+              "AllowAuthors": false
+            }
+          ]
+        }
+      },
+      "Space": {
+        "SpaceID": "22222222-2222-4222-8222-222222222222",
+        "Slug": "prod"
+      }
+    },
+    "staging": {
+      "ChangeOrder": {
+        "ChangeOrderID": "11111111-1111-4111-8111-111111111111",
+        "Slug": "rollout",
+        "SpaceID": "44444444-4444-4444-8444-444444444444",
+        "SpaceSlug": "staging",
+        "Stage": "Completed",
+        "State": "Ready",
+        "ChangeWorkflowID": "33333333-3333-4333-8333-333333333333",
+        "ChangeWorkflow": {
+          "Stages": [
+            {
+              "Name": "Investigate",
+              "Prerequisites": [
+                "incident"
+              ]
+            }
+          ]
+        }
+      },
+      "Space": {
+        "SpaceID": "44444444-4444-4444-8444-444444444444",
+        "Slug": "staging"
+      }
+    }
+  },
+  "missing_workflow": {
+    "ChangeOrder": {
+      "ChangeOrderID": "11111111-1111-4111-8111-111111111111",
+      "Slug": "rollout",
+      "SpaceID": "22222222-2222-4222-8222-222222222222",
+      "SpaceSlug": "prod"
+    }
+  },
+  "denied": {
+    "Error": {
+      "Message": "permission denied",
+      "Code": 403
+    }
+  },
+  "contract_limits": {
+    "evaluated_outcomes_exposed_by_get": false,
+    "declarations_are_evaluations": false,
+    "completed_is_runtime_health": false,
+    "missing_workflow_proves_ungoverned": false,
+    "missing_identity_can_fall_back": false,
+    "genuine_live_acceptance": false
+  }
+}

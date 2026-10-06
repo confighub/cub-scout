@@ -1,7 +1,7 @@
 # Mental Model: cub-scout in 3 Minutes
 
 > Status: Current (Primary)
-> Last reviewed: 2026-02-12
+> Last reviewed: 2026-10-05
 > Concepts index: [README.md](README.md)
 
 cub-scout helps you understand what's running in your Kubernetes cluster and where it came from.
@@ -18,7 +18,9 @@ Every resource in Kubernetes was created by something:
 - **Helm** (standalone release)
 - **kubectl** (manual / Native)
 
-cub-scout reads labels and annotations to answer this question definitively.
+cub-scout parses explicit labels, annotations and owner references to answer
+this question. Missing, unreadable or ambiguous evidence stays unknown; Native
+classification alone does not prove a resource is an orphan.
 
 ---
 
@@ -55,12 +57,14 @@ cub-scout map list --json | jq '.[] | select(.owner=="Native")'
 
 ### Standalone (Default)
 
-- **No network required** — works offline, air-gapped, restricted
+- **No hosted service required** — live reads need cluster access; recorded inputs work offline
 - **Reads kubectl context** — uses your existing cluster access
 - **Deterministic output** — same input = same output, always
 - **No signup needed** — fully functional immediately
 
-Everything documented in this repo works standalone.
+Standalone investigation remains useful without ConfigHub. Connected commands
+require their documented sources and credentials. Supplied rendered manifests
+already support standalone comparisons and install receipts.
 
 ### Connected (Optional)
 
@@ -133,7 +137,7 @@ This makes cub-scout safe for:
 | Trace to Git | `cub-scout trace deploy/x -n ns` |
 | View trees | `cub-scout tree ownership` |
 | Scan for issues | `cub-scout scan` |
-| Export as JSON | Add `--json` to any command |
+| Export as JSON | Use the command’s documented `--format json` or `--json` option |
 
 ---
 

@@ -1291,6 +1291,7 @@ func outputTraceMarkdown(result *agent.TraceResult, artifacts map[string]mapsvc.
 	if result.Error != "" && len(result.Chain) == 0 {
 		fmt.Printf("  [warning] %s\n", result.Error)
 		fmt.Println("```")
+		renderTraceDeliveryEvidenceMarkdown(result.DeliveryEvidence)
 		os.Exit(1)
 		return nil
 	}

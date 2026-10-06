@@ -22,7 +22,7 @@
 #   SKIP_ARGO_INSTALL=1     Skip ArgoCD installation
 #   VERBOSE=1               Show all command output
 
-set -e
+set -eo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -107,23 +107,23 @@ run_test() {
         echo ""
         if eval "$cmd"; then
             echo -e "  ${GREEN}✓${NC} $name"
-            ((PASSED++))
+            PASSED=$((PASSED + 1))
             return 0
         else
             echo -e "  ${RED}✗${NC} $name"
-            ((FAILED++))
+            FAILED=$((FAILED + 1))
             return 1
         fi
     else
         if eval "$cmd" > /tmp/test-output.txt 2>&1; then
             echo -e "${GREEN}✓${NC}"
-            ((PASSED++))
+            PASSED=$((PASSED + 1))
             return 0
         else
             echo -e "${RED}✗${NC}"
             echo -e "    ${DIM}Output:${NC}"
             tail -5 /tmp/test-output.txt | sed 's/^/    /'
-            ((FAILED++))
+            FAILED=$((FAILED + 1))
             return 1
         fi
     fi
@@ -132,8 +132,20 @@ run_test() {
 skip_test() {
     local name="$1"
     local reason="$2"
-    echo -e "  ${YELLOW}○${NC} $name ${DIM}(skipped: $reason)${NC}"
-    ((SKIPPED++))
+    echo -e "  ${RED}✗${NC} $name ${DIM}(required prerequisite missing: $reason)${NC}"
+    FAILED=$((FAILED + 1))
+    return 1
+}
+
+optional_test_unavailable() {
+    local name="$1"
+    local reason="$2"
+    if [[ "$LEVEL" == "full" ]]; then
+        skip_test "$name" "$reason"
+    else
+        echo -e "  ${YELLOW}○${NC} $name ${DIM}(optional check unavailable: $reason)${NC}"
+        SKIPPED=$((SKIPPED + 1))
+    fi
 }
 
 check_cluster() {
@@ -149,7 +161,7 @@ check_argocd() {
 }
 
 check_confighub() {
-    command -v cub > /dev/null 2>&1 && cub context get > /dev/null 2>&1
+    command -v cub > /dev/null 2>&1 && cub auth status > /dev/null 2>&1
 }
 
 # Start
@@ -164,13 +176,18 @@ echo ""
 
 # Level ordering
 LEVELS=(smoke unit integration gitops demos examples connected full)
-CURRENT_IDX=0
+CURRENT_IDX=-1
 for i in "${!LEVELS[@]}"; do
     if [[ "${LEVELS[$i]}" == "$LEVEL" ]]; then
         CURRENT_IDX=$i
         break
     fi
 done
+
+if [[ $CURRENT_IDX -lt 0 ]]; then
+    echo "Unknown level: $LEVEL" >&2
+    exit 1
+fi
 
 # =============================================================================
 # LEVEL 0: SMOKE
@@ -197,8 +214,6 @@ if [[ $CURRENT_IDX -ge 1 ]]; then
     subsection "Go Tests"
     run_test "go test ./..." "go test ./... -v"
 
-    TEST_COUNT=$(go test ./... -v 2>&1 | grep -c "=== RUN" || echo "0")
-    echo -e "  ${DIM}Total tests: $TEST_COUNT${NC}"
 fi
 
 # =============================================================================
@@ -216,7 +231,7 @@ if [[ $CURRENT_IDX -ge 2 ]]; then
         subsection "Map Commands"
         run_test "map status" "./cub-scout map status"
         run_test "map list" "./cub-scout map list"
-        run_test "map list --json" "./cub-scout map list --json | head -10"
+        run_test "map list --json" "./cub-scout map list --json"
         run_test "map orphans" "./cub-scout map orphans"
         run_test "map deployers" "./cub-scout map deployers"
 
@@ -230,7 +245,7 @@ if [[ $CURRENT_IDX -ge 2 ]]; then
         if command -v confighub-scan > /dev/null 2>&1 || command -v cub-scan > /dev/null 2>&1; then
             run_test "scan --file (cub-scan detected)" "./cub-scout scan --file test/golden/scan-file/testdata/inputs/clean-deployment.yaml --json > /dev/null"
         else
-            skip_test "scan --file (cub-scan)" "confighub-scan/cub-scan not on PATH"
+            optional_test_unavailable "scan --file (cub-scan)" "confighub-scan/cub-scan not on PATH"
         fi
 
         subsection "Integration Test Suite"
@@ -268,10 +283,15 @@ if [[ $CURRENT_IDX -ge 3 ]]; then
 
         subsection "Deploy Example Apps"
         run_test "flux-boutique deploy" "kubectl apply -f examples/flux-boutique/boutique.yaml"
-        run_test "flux-boutique wait" "kubectl wait --for=condition=available deployment --all -n boutique --timeout=120s || true"
+        run_test "flux-boutique wait" "kubectl wait --for=condition=Ready gitrepository/boutique -n boutique --timeout=300s"
+
+        for name in frontend cart checkout payment shipping; do
+            run_test "Flux reconciliation $name" "kubectl wait --for=condition=Ready kustomization/$name -n boutique --timeout=300s"
+            run_test "Flux workload $name" "kubectl rollout status deployment/$name -n boutique --timeout=300s"
+        done
 
         subsection "Ownership Detection"
-        run_test "Flux ownership" "./cub-scout map list | grep -q flux"
+        run_test "Flux ownership" "./cub-scout map list --namespace boutique --json | jq -e '[.[] | select(.kind == \"Deployment\" and .name == \"cart\" and .owner == \"Flux\")] | length == 1'"
 
         # Create ArgoCD app if not exists
         if ! kubectl get application guestbook -n argocd > /dev/null 2>&1; then
@@ -297,26 +317,28 @@ spec:
     syncOptions:
       - CreateNamespace=true
 EOF"
-            sleep 10  # Wait for sync
+
         fi
-        run_test "ArgoCD ownership" "./cub-scout map list | grep -q argo"
+        run_test "ArgoCD synced" "kubectl wait --for=jsonpath='{.status.sync.status}'=Synced application/guestbook -n argocd --timeout=300s"
+        run_test "ArgoCD healthy" "kubectl wait --for=jsonpath='{.status.health.status}'=Healthy application/guestbook -n argocd --timeout=300s"
+        run_test "ArgoCD ownership" "./cub-scout map list --namespace guestbook --json | jq -e '[.[] | select(.kind == \"Deployment\" and .name == \"guestbook-ui\" and .owner == \"ArgoCD\")] | length == 1'"
 
         subsection "Trace Command"
         run_test "trace flux app" "./cub-scout trace deployment/cart -n boutique"
 
         subsection "Trace Lineage (v1.2)"
         # Verify trace --format json includes lineage fields in schema (even if empty)
-        run_test "trace json schema" "./cub-scout trace deployment/cart -n boutique --format json 2>/dev/null | python3 -c 'import sys,json; d=json.load(sys.stdin); assert \"object\" in d, \"missing object field\"' 2>/dev/null || true"
+        run_test "trace json schema" "./cub-scout trace deployment/cart -n boutique --format json 2>/dev/null | python3 -c 'import sys,json; d=json.load(sys.stdin); assert \"object\" in d, \"missing object field\"' 2>/dev/null"
         # If ArgoCD app exists, verify lineage fields
         if kubectl get application guestbook -n argocd > /dev/null 2>&1; then
             run_test "trace argo lineage" "./cub-scout trace application/guestbook -n argocd --format json 2>/dev/null | python3 -c 'import sys,json; d=json.load(sys.stdin); print(\"lineage:\", d.get(\"parentApplication\",\"\"), d.get(\"generatedByApplicationSet\",\"\"), d.get(\"lineageConfidence\",\"\"))'"
         fi
 
         subsection "Deep Dive"
-        run_test "deep-dive" "./cub-scout map deep-dive | head -50"
+        run_test "deep-dive" "./cub-scout map deep-dive"
 
         subsection "App Hierarchy"
-        run_test "app-hierarchy" "./cub-scout map app-hierarchy | head -50"
+        run_test "app-hierarchy" "./cub-scout map app-hierarchy"
     fi
 fi
 
@@ -330,26 +352,33 @@ if [[ $CURRENT_IDX -ge 4 ]]; then
         skip_test "Demos" "no cluster available"
     else
         subsection "Quick Demo"
-        run_test "demo quick" "./cub-scout demo quick"
-        run_test "demo quick cleanup" "./cub-scout demo quick --cleanup"
+        run_test "quick fixtures" "kubectl apply -f test/atk/fixtures/flux-basic.yaml -f test/atk/fixtures/argo-basic.yaml"
+        run_test "demo quick" "./cub-scout quickstart demo quick"
+        run_test "demo quick cleanup" "./cub-scout quickstart demo quick --cleanup"
 
         subsection "CCVE Demo"
-        run_test "demo ccve" "./cub-scout demo ccve"
-        run_test "demo ccve cleanup" "./cub-scout demo ccve --cleanup"
+        run_test "risk fixture" "kubectl apply -f examples/impressive-demo/bad-configs/monitoring-bad.yaml"
+        run_test "risk finding" "./cub-scout scan --file examples/impressive-demo/bad-configs/monitoring-bad.yaml --json | jq -e '[.static.findings[] | select(.ccve_id == \"CCVE-2025-0027\" and .resource_name == \"grafana\")] | length == 1'"
+        run_test "demo ccve" "./cub-scout quickstart demo ccve"
+        run_test "demo ccve cleanup" "./cub-scout quickstart demo ccve --cleanup"
 
         subsection "Query Demo"
-        run_test "demo query" "./cub-scout demo query"
-        run_test "demo query cleanup" "./cub-scout demo query --cleanup"
+        run_test "query fixtures" "kubectl apply -f examples/demos/multi-cluster.yaml"
+        run_test "query map" "./cub-scout map list -q 'kind=Deployment AND owner!=Native' --json | jq -e 'length > 0'"
+        run_test "demo query" "./cub-scout quickstart demo query"
+        run_test "demo query cleanup" "./cub-scout quickstart demo query --cleanup"
 
         subsection "Scenarios"
-        run_test "scenario bigbank-incident" "./cub-scout demo scenario bigbank-incident"
-        run_test "scenario bigbank-incident cleanup" "./cub-scout demo scenario bigbank-incident --cleanup"
-        run_test "scenario break-glass" "./cub-scout demo scenario break-glass"
-        run_test "scenario break-glass cleanup" "./cub-scout demo scenario break-glass --cleanup"
+        run_test "incident fixture" "kubectl apply -f examples/impressive-demo/bad-configs/monitoring-bad.yaml"
+        run_test "scenario bigbank-incident" "./cub-scout quickstart demo scenario bigbank-incident"
+        run_test "scenario bigbank-incident cleanup" "./cub-scout quickstart demo scenario bigbank-incident --cleanup"
+        run_test "break-glass fixture" "kubectl apply -f examples/demos/break-glass.yaml"
+        run_test "scenario break-glass" "./cub-scout quickstart demo scenario break-glass"
+        run_test "scenario break-glass cleanup" "./cub-scout quickstart demo scenario break-glass --cleanup"
 
         subsection "Visual Demos"
-        run_test "fleet-queries-demo" "./examples/demos/fleet-queries-demo.sh | head -30"
-        run_test "tui-queries-demo" "./examples/demos/tui-queries-demo.sh | head -30"
+        run_test "fleet-queries-demo" "./examples/demos/fleet-queries-demo.sh"
+        run_test "tui-queries-demo" "./examples/demos/tui-queries-demo.sh"
     fi
 fi
 
@@ -387,7 +416,7 @@ if [[ $CURRENT_IDX -ge 6 ]]; then
         skip_test "Connected mode" "ConfigHub not authenticated (run: cub auth login)"
     else
         subsection "ConfigHub Connection"
-        run_test "app list" "./cub-scout app list | head -10"
+        run_test "app list" "./cub-scout app list"
 
         subsection "Import Preview"
         run_test "import dry-run" "./cub-scout import -n boutique --dry-run"
@@ -399,21 +428,13 @@ if [[ $CURRENT_IDX -ge 6 ]]; then
         kubectl apply -f test/fixtures/import-e2e/ -n "$E2E_NS" > /dev/null 2>&1
         sleep 3
 
-        run_test "import dry-run JSON (fixtures)" "./cub-scout import -n $E2E_NS --dry-run --json | python3 -c 'import sys,json; d=json.load(sys.stdin); print(f\"workloads={len(d[\"workloads\"])}, appSpace={d[\"suggestion\"][\"appSpace\"]}\")'"
+        run_test "import dry-run JSON (fixtures)" "go test -tags=integration ./test/integration/... -run '^TestImportDryRunJSON$' -count=1 -v -timeout 120s"
 
-        # Full round-trip only if CUB_E2E_FULL=1
-        if [[ "${CUB_E2E_FULL:-0}" == "1" ]]; then
-            subsection "Import Full Round-Trip"
-            SPACE_NAME="e2e-prove-$(date +%s)"
-            run_test "import apply" "./cub-scout import -n $E2E_NS -y --no-log"
-            # Verify space was created
-            run_test "verify space" "cub space list --json | python3 -c 'import sys,json; spaces=[s[\"Slug\"] for s in json.load(sys.stdin)]; print(\"Spaces:\", spaces[:5])'"
-            # Cleanup the space (find it from the dry-run output)
-            CREATED_SPACE=$(./cub-scout import -n "$E2E_NS" --dry-run --json 2>/dev/null | python3 -c 'import sys,json; print(json.load(sys.stdin)["suggestion"]["app"])' 2>/dev/null)
-            if [[ -n "$CREATED_SPACE" ]]; then
-                run_test "cleanup space" "cub space delete $CREATED_SPACE --recursive"
-            fi
-        fi
+        subsection "Import Full Round-Trip"
+        IMPORT_PROOF=$(mktemp)
+        run_test "authenticated import round trips" "go test -tags=integration ./test/integration/... -run '^(TestImportFullRoundTrip|TestImportIdempotent|TestImportCleanup)$' -count=1 -json -timeout 300s > $IMPORT_PROOF"
+        run_test "required import outcomes" "python3 scripts/ci/require_test_passes.py $IMPORT_PROOF TestImportFullRoundTrip TestImportIdempotent TestImportCleanup"
+        rm -f "$IMPORT_PROOF"
 
         # Always clean up the namespace
         kubectl delete namespace "$E2E_NS" --ignore-not-found --wait=false > /dev/null 2>&1
@@ -433,6 +454,11 @@ echo -e "  ${RED}Failed:${NC}  $FAILED"
 echo -e "  ${YELLOW}Skipped:${NC} $SKIPPED"
 echo -e "  ${DIM}Total:${NC}   $TOTAL"
 echo ""
+
+if [[ $FAILED -eq 0 && $SKIPPED -gt 0 ]]; then
+    echo "PARTIAL: selected checks passed; $SKIPPED optional check(s) were not executed. This is not full acceptance."
+    exit 0
+fi
 
 if [[ $FAILED -eq 0 ]]; then
     echo -e "${GREEN}${BOLD}════════════════════════════════════════════════════════════════════${NC}"

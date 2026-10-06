@@ -126,6 +126,9 @@ func renderRecordedMapReport(report RecordedMapReport, format string) string {
 	b.WriteString("RECORDED INVENTORY — static evidence; no live cluster was read\n")
 	fmt.Fprintf(&b, "Input SHA-256: %s\nBytes: %d; documents: %d; objects: %d\n", report.Provenance.SHA256, report.Provenance.Bytes, report.Provenance.Documents, report.Provenance.ObjectCount)
 	fmt.Fprintf(&b, "Capture time: %s; capture completeness: %s\n", report.Provenance.CaptureTime, report.Provenance.CaptureCompleteness)
+	if report.Provenance.TypedListDerivedObjects > 0 {
+		fmt.Fprintf(&b, "Input objects with type supplied by typed list envelope: %d\n", report.Provenance.TypedListDerivedObjects)
+	}
 	scope, _ := json.Marshal(report.Scope)
 	fmt.Fprintf(&b, "Scope: %s\nSelected: %d; excluded by scope: %d\n", scope, report.SelectedCount, report.ExcludedFromScope)
 	b.WriteString("Objects absent from this recording are unknown. Native means no built-in owner marker observed; it does not prove an orphan.\n")
@@ -160,6 +163,9 @@ func renderRecordedMapSummary(summary RecordedMapSummary, format string) string 
 	b.WriteString("RECORDED INVENTORY SUMMARY — static evidence; no live cluster was read\n")
 	fmt.Fprintf(&b, "Input SHA-256: %s\nBytes: %d; documents: %d; objects: %d\n", summary.Provenance.SHA256, summary.Provenance.Bytes, summary.Provenance.Documents, summary.Provenance.ObjectCount)
 	fmt.Fprintf(&b, "Capture time: %s; capture completeness: %s\n", summary.Provenance.CaptureTime, summary.Provenance.CaptureCompleteness)
+	if summary.Provenance.TypedListDerivedObjects > 0 {
+		fmt.Fprintf(&b, "Input objects with type supplied by typed list envelope: %d\n", summary.Provenance.TypedListDerivedObjects)
+	}
 	scope, _ := json.Marshal(summary.Scope)
 	fmt.Fprintf(&b, "View: summary\nScope: %s\nSelected: %d; excluded by scope: %d\n", scope, summary.SelectedCount, summary.ExcludedFromScope)
 	b.WriteString("Objects absent from this recording are unknown. Native means no built-in owner marker observed; it does not prove an orphan.\n")

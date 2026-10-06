@@ -12,7 +12,8 @@ If you only read 3 docs, read these in order:
 
 Then go deeper with:
 
-- [architecture.md](architecture.md) — Internal model and contract framing
+- [architecture.md](architecture.md) — Current collectors, evidence contracts and responsibility boundaries
+- [Configuration investigation continuity](../reference/configuration-investigation-continuity.md) — Released foundations, generator evidence levels and roadmap reuse
 - [state-and-snapshots.md](state-and-snapshots.md) — Session vs shareable state
 - [tui-vs-gui.md](tui-vs-gui.md) — Scope boundaries between cub-scout and ConfigHub
 - [clobbering-problem.md](clobbering-problem.md) — Why GitOps layering causes silent overrides
@@ -28,12 +29,12 @@ Then go deeper with:
 
 | Doc | Status | Last Reviewed |
 |-----|--------|---------------|
-| [mental-model.md](mental-model.md) | Current (Primary) | 2026-02-12 |
+| [mental-model.md](mental-model.md) | Current (Primary) | 2026-10-05 |
 | [gitops-overview.md](gitops-overview.md) | Current (Primary) | 2026-02-12 |
 | [live-cluster-inference.md](live-cluster-inference.md) | Current (Primary) | 2026-02-12 |
-| [architecture.md](architecture.md) | Current (Deep Dive) | 2026-02-12 |
-| [state-and-snapshots.md](state-and-snapshots.md) | Current (Deep Dive) | 2026-02-12 |
-| [tui-vs-gui.md](tui-vs-gui.md) | Current (Deep Dive) | 2026-02-12 |
+| [architecture.md](architecture.md) | Current (Deep Dive) | 2026-10-05 |
+| [state-and-snapshots.md](state-and-snapshots.md) | Current (Deep Dive) | 2026-10-05 |
+| [tui-vs-gui.md](tui-vs-gui.md) | Current (Deep Dive) | 2026-10-05 |
 | [clobbering-problem.md](clobbering-problem.md) | Current (Deep Dive) | 2026-02-12 |
 | [alternatives.md](alternatives.md) | Current (Deep Dive) | 2026-02-12 |
 | [receipts-and-proofs.md](receipts-and-proofs.md) | Current (Deep Dive) | 2026-05-25 |

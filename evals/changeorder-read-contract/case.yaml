@@ -1,0 +1,5 @@
+# FIXTURE-OWNED-SCAFFOLD: authored SDK-shaped inputs, not live evidence.
+schema_version: "1.1"
+name: changeorder-read-contract
+context:
+  scaffold_script: scaffold.sh

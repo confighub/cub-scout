@@ -1,0 +1,31 @@
+{
+  "Attestation": {
+    "AttestationID": "08f76195-a7c5-496f-84c1-c62424434c6b",
+    "CreatedAt": "2026-10-05T05:45:09.53662434Z",
+    "EntityType": "Attestation",
+    "ExpiresAt": "0001-01-01T00:00:00Z",
+    "Note": "Disposable acceptance fixture: positive outcome",
+    "OrganizationID": "f45618f7-3007-49f3-864c-44775a311693",
+    "Permissions": {
+      "Manage": {
+        "UserIDs": {
+          "3a89ef21-38d2-49ed-8ca1-d3580c48bf14": true
+        }
+      }
+    },
+    "Result": "Pass",
+    "SpaceID": "68843338-f9bd-485c-9a66-5d5aee820247",
+    "SpaceSlug": "scout-v213-contract",
+    "Type": "Approval",
+    "UpdatedAt": "2026-10-05T05:45:09.53662434Z",
+    "UserID": "3a89ef21-38d2-49ed-8ca1-d3580c48bf14"
+  },
+  "Subjects": [
+    {
+      "RevisionID": "5af31398-fd3d-4ac0-b267-4549eaabef37",
+      "RevisionNum": 2,
+      "UnitID": "6221926e-8cc4-4847-a25c-a4104042f640",
+      "UnitSlug": "contract-config"
+    }
+  ]
+}

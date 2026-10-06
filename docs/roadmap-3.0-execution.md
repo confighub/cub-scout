@@ -1,8 +1,24 @@
 # Delivery plan to cub scout 3.0
 
+## Approved release scope — 2026-10-06
+
+The maintainer approved releasing the verified v2.13 candidate and moving
+unfinished broader acceptance and benchmark work to v2.14. This supersedes
+older text making every campaign item a prerequisite for v2.13 publication.
+The deferred work is not passed, waived silently or removed from tracking:
+scanner credential/full-demo CI (#774), effective/inherited coverage (#591),
+broader controller/health/context acceptance (#561/#641/#599/#746), optional
+server-evaluated prerequisites (#597), and frozen benchmark binding/runtime,
+grants/grading/accounting and paired execution (#645/#709) remain open for 2.14.
+The companion harness merge remains follow-up work. Existing negative controls,
+full Go tests, verified candidate CI, tagged packaging and published installation
+checks remain required for this scoped release. No performance/savings or broader
+health/approval/coverage claim is made. Frozen benchmark inputs remain unchanged.
+
+
 ## Current execution status
 
-The current verified status, open packets, paid-run stop, and operating
+The current verified status, open packets, technical admission requirements, and operating
 boundaries are maintained in the [execution handover](../HANDOVER.md) and
 [tracker #645](https://github.com/confighub/cub-scout/issues/645). This pointer
 replaces dated execution snapshots; it does not change the adopted plan below.
@@ -52,6 +68,64 @@ no cluster mutation, no new fleet membership model, and no renderer hidden in
 `import --git-path`. ConfigHub fact publication has a distinct, explicit write
 boundary even though observing the cluster remains read-only.
 
+## Operator and agent outcome overlay — 2026-10-04
+
+The maintainer confirmed that the roadmap must produce a winning read-only
+investigation product. The [roadmap outcome scorecard](roadmap.md#winning-means-verified-investigation-outcomes)
+adds explicit operator speed, first-use, scope and reuse targets alongside the
+existing agent quality/cost gates. These are targets awaiting proof, not a claim
+of leadership. #519 owns operator assessment, #596/#599 own shared facts and
+scope, and #539/#604 own observation/output efficiency.
+
+P3 completes the current trust/context/release gates. P4 must also settle a
+supported end-to-end operator investigation and its assessment protocol; this
+adds workflow focus alongside the existing conformance work, not a default TUI
+replacement. P5 prioritizes bottlenecks measured in that assessment. P6 publishes
+only scoped, reproducible outcome claims. The frozen 24 agent cases, adopted
+budgets, paid/live admission rules, SDK deferral and current v2.13 release scope
+remain unchanged. Permission profiles and local investigation history remain
+indexed design follow-ups until their contracts and implementation issues exist.
+
+The [October 5 investigation depth assessment](reference/explorer-comparison.md#investigation-depth-assessment--2026-10-05)
+specifies failure navigation, live scope changes, generated delivery, configuration
+inputs, unfamiliar resources and evidence handoff for the separate #519 operator
+protocol. Evaluate current releases and marked previews independently. The
+roadmap indexes two design follow-ups; neither is implementation scope or a new
+v2.13 gate. Controller breadth and an agent API are foundations; preference
+requires correct deeper answers and measured workflow/cost outcomes.
+
+## Release continuity constraint — 2026-10-05
+
+Use the [release-to-roadmap reuse review](reference/configuration-investigation-continuity.md)
+for current responsibility and provenance boundaries. P3–P6 extend the released
+collectors, attribution/bindings, receipts, explorer and watch models. A new
+packet must name the missing answer and reuse its existing tests/examples;
+controller parentage does not imply a complete generation record or field map.
+The maintainer has authorized all required live tests and removed the agent
+credit cap. Frozen per-case benchmark budgets and technical admission controls
+remain experimental requirements, not a blanket stop on authorized execution.
+
+## Post-2.13 carry-forward
+
+The maintainer explicitly confirmed on 2026-10-05 that all continuity-review
+findings and new ideas belong in post-2.13 work. Apply the
+[seven-row allocation and proof checklist](roadmap.md#post-213-commitments-from-the-continuity-review)
+at P4 integration, not only during final documentation. It covers foundation
+reuse, configuration/generator provenance, exact-release health, investigation
+continuity, efficiency/discovery, standalone utility and accurate doctrine.
+
+P4 must settle the effective Helm-input and producer-supplied generation-record/
+source-map contracts with worked examples, alongside existing #519/#594/#596
+work. Promote accepted runtime slices into scoped issues before implementation;
+this does not imply full templated provenance ships in v2.14. Permission/history
+and generic discovery/metrics designs retain their explicit checkpoints. P5
+extends measured reuse and retained evidence; P6 publishes only proven outcomes.
+Every row must have a supported result, a tracked implementation follow-up or an
+explicit allocated dependency at P4 acceptance. No idea disappears in prose.
+
+Current v2.13 gates and frozen 24 agent cases remain unchanged. Generators render,
+Scout observes; connected evidence enriches a useful standalone investigation.
+
 ## Starting snapshot at adoption — before September 30 execution
 
 The following records the pre-execution state, not the current work queue.
@@ -90,7 +164,10 @@ past behavior on their named versions; they do not certify today's cluster.
 A specific correction to [#641]: its September 28 description of the Healthy
 triple is not sufficient to specify the contract. The September 30 Sveltos
 measurements distinguish prerequisite acceptance from automatic order advancement.
-P3 must verify each against a pinned ConfigHub server and record exact semantics.
+P3 verifies available observations against the existing pinned server and records
+exact semantics. Per the maintainer's 2026-10-05 scope correction, v2.13 does not
+require a new ConfigHub endpoint: unavailable evaluated prerequisites stay unknown.
+A server-evaluated prerequisite read is optional post-v2.13 work.
 A gate accepting an annotation is a reported fact, not authority for scout to
 approve a release or proof of the release running.
 

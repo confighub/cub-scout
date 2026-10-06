@@ -63,6 +63,8 @@ func TestNewMCPGatewayWithMode_ConnectedAddsConfigHubTools(t *testing.T) {
 	want := []string{
 		"compare_source_truth",
 		"compare_three_way",
+		"confighub_attestations",
+		"confighub_changeorder_get",
 		"confighub_changesets",
 		"confighub_k8s_resources",
 		"confighub_k8s_types",
@@ -138,6 +140,7 @@ func TestNewMCPGateway_ToolDescriptionsExpressChainBoundaries(t *testing.T) {
 		{name: "explain", contains: []string{"resource-level mutation evidence", "pass field_path", "that path's observed manager names", "shared ambiguous evidence remains unknown", "does not order writes by time or identify a person", "Trace provides owner/source lineage only", "raw `kubectl describe`", "DO NOT load for broad cluster inventory or health"}},
 		{name: "trace", contains: []string{"owner, deployer, or GitOps/source chain", "not which field writer made a change", "do not call trace just to confirm an explain result about manual-edit attribution", "DO NOT load for broad cluster status"}},
 		{name: "gitops_status", contains: []string{"GitOps/controller delivery status", "controllerCoverage[]", "absence vs RBAC/API omission", "DO NOT use to force sync"}},
+		{name: "confighub_changeorder_get", contains: []string{"Connected-only", "exact-space", "reported Stage/State", "Evaluation remains unknown", "DO NOT use as a prerequisite evaluator"}},
 		{name: "confighub_changesets", contains: []string{"Connected-only", "what governed write changed a known unit or space", "approval trail", "Load after trace or confighub_units"}},
 		{name: "confighub_k8s_resources", contains: []string{"Connected-only", "Resource-backed Kubernetes configuration reader", "stored ConfigHub Resource data, not live cluster state", "either space or target is REQUIRED", "low-API-load"}},
 		{name: "confighub_k8s_types", contains: []string{"Connected-only", "Resource-backed Kubernetes type survey", "cheapest ConfigHub-side survey", "either space or target is REQUIRED", "stored ConfigHub Resource metadata"}},

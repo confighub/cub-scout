@@ -1,0 +1,62 @@
+{
+  "chain": [
+    {
+      "evidence": [
+        {
+          "key": "app.kubernetes.io/managed-by",
+          "path": "metadata.labels",
+          "type": "label",
+          "value": "Helm"
+        }
+      ],
+      "id": {
+        "kind": "HelmChart",
+        "name": "release-probe",
+        "namespace": ""
+      },
+      "relationship": "managed-by",
+      "role": "workload"
+    },
+    {
+      "evidence": [
+        {
+          "key": "app.kubernetes.io/managed-by",
+          "path": "metadata.labels",
+          "type": "label",
+          "value": "Helm"
+        }
+      ],
+      "id": {
+        "kind": "Release",
+        "name": "release-probe",
+        "namespace": "matrix-helm4-lifecycle"
+      },
+      "relationship": "managed-by",
+      "role": "workload"
+    },
+    {
+      "deliveryStage": "workload",
+      "evidence": [
+        {
+          "key": "app.kubernetes.io/managed-by",
+          "path": "metadata.labels",
+          "type": "label",
+          "value": "Helm"
+        }
+      ],
+      "id": {
+        "kind": "Deployment",
+        "name": "release-probe",
+        "namespace": "matrix-helm4-lifecycle"
+      },
+      "relationship": "managed-by",
+      "role": "workload"
+    }
+  ],
+  "owner": "Helm",
+  "target": {
+    "kind": "Deployment",
+    "name": "release-probe",
+    "namespace": "matrix-helm4-lifecycle"
+  }
+}

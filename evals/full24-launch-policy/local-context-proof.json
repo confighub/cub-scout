@@ -1,0 +1,75 @@
+{
+  "checks": {
+    "mapSubstitutionRefused": true,
+    "responses": [
+      {
+        "context": "rul03-denied",
+        "httpStatus": 403,
+        "responseSha256": "fc5cad6498d731f454f2b859a528b00ab69450481804c89a42939512b0dc6978",
+        "sourceRow": 0
+      },
+      {
+        "context": "rul03-readable",
+        "httpStatus": 200,
+        "responseSha256": "e0102f91e1417c8554ed377352b50450f2376e69d40632f109ea012c5c1560a2",
+        "sourceRow": 1
+      }
+    ],
+    "unsupportedContextRefused": true
+  },
+  "claims": {
+    "frozenLaunchToolGranted": false,
+    "hostStdioUsable": true,
+    "networkIsolationProved": false,
+    "paidRunAdmitted": false,
+    "processAccountingComplete": false,
+    "qualityOrSavingsMeasured": false,
+    "runtimeAssetsAdmitted": false,
+    "sourceFilesystemInaccessible": false
+  },
+  "elapsedSeconds": 1.1826420831494033,
+  "exitCode": 0,
+  "hostProbeSourceSha256": "3c45c4c98f01e4a4ab5bb3e997b879ae3261c29ae248a60bd9b007dfa3beb117",
+  "invocationShape": [
+    "reviewed host Python",
+    "-I",
+    "-S",
+    "package/bootstrap.py",
+    "package"
+  ],
+  "plan": {
+    "files": {
+      "bootstrap.py": "cd47b8f86230179581d0cb95f8a7d8b88a2feaf787999e9b2c3a88de8061b4ee",
+      "cluster/capture-scope.json": "9b05333216fd5daa609266c67c5fee6bdd5ba82487563ff39be26fa24131dc35",
+      "cluster/observer-context-map.json": "19a2b434661e8ed3d52934c69340cb8773fbd78a8416ff9e245a72e057fc7c09",
+      "cluster/rul03-denied-deployments.body": "fc5cad6498d731f454f2b859a528b00ab69450481804c89a42939512b0dc6978",
+      "cluster/rul03-readable-deployments.body": "e0102f91e1417c8554ed377352b50450f2376e69d40632f109ea012c5c1560a2",
+      "context_frames.py": "63a259fd0e741dc199f6c17ecf44700923f6c1f4cf8e1973c15b623e9353a46d",
+      "context_mcp.py": "befb30fb7c21afdf7e6d3e6c543dcae6c9e67908bc645d5f0d1668c255741050"
+    },
+    "frozenLaunchToolGranted": false,
+    "paidRunAdmitted": false,
+    "preflightTools": [
+      "recorded_response"
+    ],
+    "productScoutCapability": false,
+    "qualityOrSavingsMeasured": false,
+    "runtimeAssetsAdmitted": false,
+    "schema": "recorded-context-host-preflight.v1",
+    "selection": {
+      "arm": "with",
+      "authoredInputControl": null,
+      "case": "RUL-03"
+    },
+    "sourcePreparationReportSha256": "5a24a21fc8b891630de03ac0eaa149559d9a869250bdd7b90348ed0ca9cad96a",
+    "stageReceiptSha256": "6b4b907579b64b7cf51132552b13b6fd431ed2650bd3ac06d93fe7c8633ffdc6"
+  },
+  "pythonSha256": "5c3ea934d18a7979253ca08ff16151db78a896be29dbc37fd9bf7e7c549593b8",
+  "retention": "Raw requests/stdout/stderr and private package retained in owned host proof directory; summary records exact hashes.",
+  "schema": "recorded-context-host-proof.v1",
+  "status": "host_preflight_passed_not_runtime_admitted",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdinSha256": "1ea01cb53f1b02f5ff6fd17d7f123d2eed2931758af22348e2ed8c7414267597",
+  "stdoutSha256": "5db2980e36dbd99d6e0c3ec91b927412acead85e79f8e25985898865d1d6829b",
+  "timedOut": false
+}

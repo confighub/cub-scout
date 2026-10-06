@@ -3,6 +3,8 @@ import base64
 import copy
 import importlib.util
 import json
+import hashlib
+import shutil
 from pathlib import Path
 import tempfile
 import unittest
@@ -123,8 +125,19 @@ class RunnerTests(unittest.TestCase):
 
     def test_staged_treatment_has_35_skill_sources_and_neutral_mcp_metadata(self):
         with tempfile.TemporaryDirectory() as temp:
-            staged = Path(temp) / "plugin"
-            facts = runner.stage_treatment_plugin(staged, Path(temp))
+            root = Path(temp)
+            source = root / "source"
+            shutil.copytree(runner.REPO / "skills", source / "skills")
+            shutil.copytree(runner.REPO / ".claude-plugin", source / ".claude-plugin")
+            # Preserve the diagnostic's source pin, rather than admitting the
+            # later ChangeOrder skill metadata under historical runtime proof.
+            archived = (HERE / "fixtures/ai-agent-readonly-context-v1.md").read_bytes()
+            self.assertEqual(hashlib.sha256(archived).hexdigest(),
+                             "b62da9c04d211f490aab55c24c1ae437102446602e15769ae4c29e868f26fad9")
+            (source / "skills/ai-agent-readonly-context/SKILL.md").write_bytes(archived)
+            staged = root / "plugin"
+            with mock.patch.object(runner, "REPO", source):
+                facts = runner.stage_treatment_plugin(staged, root)
             self.assertEqual(facts["skillCount"], 35)
             self.assertEqual(facts["skillTreeSha256"], runner.contract.SKILL_TREE_SHA256)
             plugin_json = json.loads((staged / ".claude-plugin/plugin.json").read_text())
@@ -133,6 +146,11 @@ class RunnerTests(unittest.TestCase):
             self.assertIn("env -i", wrapper)
             self.assertIn("KUBECONFIG=/tmp/empty-kubeconfig", wrapper)
             self.assertIn("mcp serve --recording /tools/evidence/deployments.yaml", wrapper)
+
+    def test_current_skill_metadata_drift_refuses_historical_runtime_pin(self):
+        with tempfile.TemporaryDirectory() as temp:
+            with self.assertRaisesRegex(ValueError, "35-skill tree differs from the v1 source pin"):
+                runner.stage_treatment_plugin(Path(temp) / "plugin", Path(temp))
 
     def test_payload_environment_contains_only_synthetic_provider_credentials(self):
         text = (HERE / "payload.py").read_text()

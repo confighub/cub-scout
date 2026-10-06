@@ -1,0 +1,43 @@
+{
+  "schema": "runtime.python-image.host-verifier-proof.v1",
+  "sourceBase": "e3bf430b3fd2e99f6a34e7f1f4b18182ef6093f0",
+  "sourceTreeModified": true,
+  "verifierSha256": "be4d341013aee3a9360cc2a89f85fab94679df0ecf2ddb4e2e9ba5da808c26e5",
+  "hostInterpreterSha256": "5c3ea934d18a7979253ca08ff16151db78a896be29dbc37fd9bf7e7c549593b8",
+  "receiptSha256": "b616cf307c8bcb8103a33ec829e1d7f7bbbee40d7fe770000d2770fbf18cce46",
+  "retainedEvidencePath": "/private/tmp/scout-v213-python-verifier-proof-20261004",
+  "runs": [
+    {
+      "label": "positive",
+      "argv": [
+        "<host-python>",
+        "-I",
+        "-S",
+        "<source>/evals/full24-launch-policy/python_image.py",
+        "/private/tmp/scout-v213-python-image-20261004/image.tar"
+      ],
+      "exit": 0,
+      "stdoutSha256": "18af5f099617c2617956705ce1506e6e82742f5a07e3d73c5dc6ae34f3d513be",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "negative",
+      "argv": [
+        "<host-python>",
+        "-I",
+        "-S",
+        "<source>/evals/full24-launch-policy/python_image.py",
+        "/private/tmp/scout-v213-python-verifier-proof-20261004/corrupt.tar"
+      ],
+      "exit": 2,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "84feb4b02b67f4bb7385733627500df9be10c01abd31c9e9605e8eae12435516"
+    }
+  ],
+  "scope": "host static archive verification only; target Python not executed; runtime/tool/model admission remains blocked",
+  "containerStarted": false,
+  "registryContacted": false,
+  "modelOrProviderRun": false,
+  "privateProofSha256": "f370890b6c9e72d027554529c24e8cce28b611d8ff0f23ac3d22674b908faedc",
+  "publicCommandPaths": "host interpreter and source checkout paths replaced with labels; exact argv retained in private proof"
+}

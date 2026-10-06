@@ -1,11 +1,526 @@
 # cub-scout execution handover
 
-**Current snapshot:** 2026-10-03. Verified merged baseline:
-[`3abfdd7f`](https://github.com/confighub/cub-scout/commit/3abfdd7fd6d970be47df9f12e2a0e1f01c2f716a).
+## Approved release scope — 2026-10-06
+
+The maintainer approved releasing the verified v2.13 candidate and moving
+unfinished broader acceptance and benchmark work to v2.14. This supersedes
+older text making every campaign item a prerequisite for v2.13 publication.
+The deferred work is not passed, waived silently or removed from tracking:
+scanner credential/full-demo CI (#774), effective/inherited coverage (#591),
+broader controller/health/context acceptance (#561/#641/#599/#746), optional
+server-evaluated prerequisites (#597), and frozen benchmark binding/runtime,
+grants/grading/accounting and paired execution (#645/#709) remain open for 2.14.
+The companion harness merge remains follow-up work. Existing negative controls,
+full Go tests, verified candidate CI, tagged packaging and published installation
+checks remain required for this scoped release. No performance/savings or broader
+health/approval/coverage claim is made. Frozen benchmark inputs remain unchanged.
+
+
+## v2.13 scope correction — 2026-10-05
+
+The maintainer confirmed that v2.13 must not depend on a new ConfigHub API.
+Use existing read interfaces; keep unavailable prerequisite evaluations unknown.
+The proposed server-evaluated read is optional post-v2.13 work. Release-sequence
+steps 9–10 now accept the existing ChangeOrder/workflow projections and their
+honest degradation. Historical references to a required upstream enhancement
+below are superseded by this decision. Remaining tests and release gates stay
+in scope; no unavailable result becomes approval, health or release proof.
+
+## Execution authorization — 2026-10-05
+
+The maintainer explicitly removed the previous test exclusions: “NOTHING is
+'excluded'.” Required live cluster/server/controller tests, runtime/container
+acceptance, genuine captures, full CI and admitted model/benchmark execution are
+now authorized for the 2.13 → 2.14 → 3.0 delivery work. The agent credit cap is
+removed. Preserve frozen experiment inputs/grants and quality/provenance gates;
+resolve technical admission requirements and perform the work rather than treat
+historical authorization stops as current blockers. Release when the required
+evidence passes. Use disposable/scoped test resources and preserve shared estates.
+Historical excluded/skipped/unrun records below remain records of those runs.
+
+The task-by-task order from this checkpoint through both releases is in
+[v2.13 → v2.14 release sequence](docs/releases/v2.13-to-v2.14-sequence.md).
+It lists 36 remaining tasks, each with its tests and exit proof, and separates
+pre-publication acceptance from verification of the published artifacts.
+
+
+**Current snapshot:** 2026-10-04. Verified merged baseline:
+[`5aeebc48`](https://github.com/confighub/cub-scout/commit/5aeebc48a6f168865b79d5a228013b9e576695f7).
 The published release is v2.12.4; main includes newer, unreleased work.
 Issue [#645](https://github.com/confighub/cub-scout/issues/645) is the live
 execution queue. The adopted 3.0 plan below remains authoritative for work
 order, quality gates, budgets and decisions.
+
+
+
+## Python dependency runtime checkpoint — 2026-10-05
+
+The [retained execution packet](evals/python-runtime-substrate/README.md) verifies
+the unchanged pinned Python image's interpreter/libpython bytes, eleven standard
+library imports, SQLite, a Python child and the frozen PyYAML 6.0.3 dependency.
+Final startup uses isolated/no-site mode under the existing owned-container
+limits. Four attempts, including the rejected mount path and missing dependency,
+remain visible; every owned container was removed. Five packet guards pass and
+run in Unit CI. No model/provider run occurred. This advances task 15 without
+claiming selected-case mounts, hooks, official grading, grants or full runtime
+admission. Frozen benchmark inputs and skill-tree pins are unchanged.
+
+At clean candidate `e94ce9cf`, [eleven Linux recorded-tool checks](evals/linux-recorded-substrate/README.md)
+now pass actual isolated Python/Scout MCP composition. Each selected recording,
+map/explain projection and unsupported-doctor refusal matches the earlier host
+proof; staged hashes and owned cleanup pass. This is not model/tool-grant,
+baseline-arm parity or complete runtime admission. The latest configured
+[six-archive packaging checkpoint](docs/releases/v2.13-goreleaser-e94ce9cf.md)
+passes sixteen exact source-stamped binaries, 24 Darwin/Linux version/help
+checks and hardened image smoke. Both [native Windows jobs](docs/releases/v2.13-windows-e94ce9cf/NOTICE.md)
+at that same source pass eight actual commands. Old source-bound receipts remain
+intact. Final-tag and public distribution gates remain open.
+
+## Direct ConfigHub claim and receipt adapters — 2026-10-05
+
+Release-sequence task 8 is implemented and exercised against the isolated
+ConfigHub/cub v0.8.3 server. Exact combined origin selects a revision GET and
+space-scoped attestation list, with bounded output/deadline, ambiguity refusal,
+partial-reference omissions and explicit unknown effective/revocation coverage.
+Trace/explain, the connected `confighub_attestations` MCP tool and receipt
+supporting evidence share the model. Live Explain TUI through a PTY retains the
+same direct Pass/Fail, expiry and observed-revocation facts.
+
+Receipts read the exact revision data and verify its SHA-256 against DataHash
+before adding `confighub-data-sha256` beside the separate canonical subject
+digest. Claim expiry uses the exact second-precision receipt verifiedAt.
+Fingerprint checks and actual plain/enriched receipt verdict comparison pass.
+The [captured examples](examples/receipts/attestations/README.md) retain genuine
+outputs and hashes; all private acceptance attempts are preserved, including
+the empty-chain rendering and timestamp-precision failures repaired during the
+run. Setup writes were outside Scout and the owned namespace was deleted.
+The final clean-source run at `31abf38d` also verifies an unauthenticated
+standalone receipt omission and absence of the connected tool from MCP listing.
+
+Go 1.24 build/full tests and final targeted parser/subject/example checks, vet,
+read-only guards and CLI-reference parity pass. These are candidate acceptance
+checks, not final-tag packaging or publication proof. Parent #591 still requires
+effective/inherited coverage; evaluated governance, controller,
+benchmark, complete CI and distribution gates remain open. v2.13 is unreleased.
+The first candidate CI caught a changed pinned skill file in the 35-skill
+benchmark source tree. The skill is restored; definitions live in public
+contracts/examples and the external skill-reference page. All 19 recorded
+runtime contract checks pass with the original source pin unchanged.
+
+The [restricted-viewer packet](test/fixtures/confighub-attestations-v083-viewer/NOTICE.md)
+now exercises an actual organization-role viewer worker with only Space View
+and ViewChildren grants. Cub revision/list, Scout MCP, trace, explain and receipt
+retain the same direct claims, and the receipt fingerprint validates. A metadata
+write receives HTTP 403 and leaves the Unit unchanged. Removing the grants makes
+the reader refuse and explain omit claims explicitly. Active permissions were
+restored; the owned worker, Space and namespace were removed. Three attempts,
+including a repaired harness envelope comparison, are retained. Four packet
+guards pass. This named permission checkpoint does not establish inherited or
+effective coverage, per-entity filtered completeness or every user role.
+
+[CI 37356065283](https://github.com/confighub/cub-scout/actions/runs/37356065283)
+at `7d09072b` passes Unit, Integration, GitOps E2E and Proof Artifact. Full,
+Demo, Connected and Windows are not run by this normal PR invocation and cannot
+be counted as final release acceptance.
+
+## Accepted native Windows build/runtime proof — 2026-10-05
+
+Both Windows native runtime jobs in [CI 37345184606](https://github.com/confighub/cub-scout/actions/runs/37345184606)
+pass at clean source `34d0af49`: Windows amd64 and arm64 build the two configured
+GoReleaser IDs with Go 1.24.0 and execute version plus trace help. Exact embedded
+revision, modified=false, /v2 module, CGO disabled and target architecture pass.
+The [six unedited JSON receipts](docs/releases/v2.13-windows-runtime/NOTICE.md)
+retain metadata, command outcomes and canonical go.mod/go.sum input hashes;
+four packet consistency checks pass. Original artifacts, four executables and
+build logs are retained privately and hashed in the public manifest.
+
+Two preceding attempts per architecture failed the source gate: Windows CRLF
+checkout normalization made go.mod appear changed after tidy with no normalized
+Git dependency diff. Disposable runners now preserve canonical LF bytes and
+check them against Git before building; the post-build source check is retained.
+No source reset or skipped hook hides changes. Diagnostic and binary retention
+were also repaired; failed attempts remain records of failure.
+
+These are independent configured native snapshot builds, distinct from the
+Mac-built archive packet at `78d86d50`. They prove basic native Windows execution,
+not live cluster behavior, public installation or final tagged artifacts. No
+Windows plugin is configured. Full workflow/new-head acceptance remains separate.
+Superseded PR/manual runs were cancelled to avoid duplicate work; their completed
+job evidence is preserved. v2.13 remains unreleased, with all adopted gates intact.
+
+## Clean configured packaging proof — 2026-10-05
+
+GoReleaser 2.18.2 completed the actual snapshot hooks from a normal clean checkout
+of `78d86d50` using Go 1.24. Six configured archives and sixteen binaries pass
+checksum/content/source inspection; every binary embeds the exact revision with
+modified=false and CGO disabled. The managed-worktree attempt omitted VCS metadata
+and remains rejected. A local-clone origin initially produced a workstation-path
+Docker source label; correcting that origin and repeating the complete rehearsal
+produced the GitHub source label. A deeper check found the arm64-labelled image
+contained an amd64 binary despite successful emulated execution. The explicit
+Linux amd64 image platform/build selection repairs this mismatch; the repeated
+full rehearsal verifies binary and image architecture independently. All attempts
+remain retained privately.
+
+The [rehearsal receipt](docs/releases/v2.13-goreleaser-rehearsal.md) records actual
+Darwin/Linux arm64/amd64 version/help execution, standalone and kubectl aliases,
+four plugin targets and the nonroot, network-disabled, read-only local image.
+The independent native Windows follow-up above supplies basic runtime proof;
+final-source/tagged acceptance, public installs/pulls and publication remain open.
+Snapshot `v2.13.0-next` and a local image tagged v2.13.0 are not a release.
+Candidate [PR #775](https://github.com/confighub/cub-scout/pull/775) is draft;
+CI 37341835765 at `5df6516e` passed Unit, including release-input and all three
+capture-packet checks; Integration is running. Subsequent image configuration
+and documentation changes are not covered by that run. Complete exact-head
+release acceptance remains required.
+
+## Helm lifecycle acceptance and release preparation — 2026-10-05
+
+The complete pinned Helm 3/4 lifecycle harness passed from clean source
+`a561d46f`. The [retained packet](examples/helm-expt/evidence/2026-10-05-lifecycle/NOTICE.md)
+contains 89 unedited outputs: fresh installs, retained-default upgrade, successful
+and failed hook Jobs, failed history, rollback, CRD/dependent-resource lifecycle,
+deleted-hook absence, actual server-side conflict and explicit recovery. Nine
+standalone/plugin projections agree. Owned cluster cleanup passed; seven packet
+checks, harness safety controls and the full Go 1.24 build/test suite pass.
+This closes the sequence's lifecycle matrix run, not wider MCP/TUI, SQL storage,
+connected governance or controller-health acceptance.
+
+The first actual GoReleaser snapshot produced six archives, sixteen binaries,
+checksums, a Homebrew cask and a local Docker image without publishing. It exposed
+missing transitive test checksums and unignored build output; both are repaired.
+All three binary builds now explicitly request VCS stamping. A clean Go 1.24
+rehearsal must validate these repairs before distribution acceptance is claimed.
+Snapshot versions and local image tags do not establish a published release.
+
+## Post-2.13 continuity commitments — 2026-10-05
+
+The maintainer confirmed all new ideas and findings from `ded6de14` must be
+factored into post-2.13 delivery. The [roadmap allocation](docs/roadmap.md#post-213-commitments-from-the-continuity-review)
+assigns all seven areas to existing P4/P5/P6 work with required outcomes:
+foundation reuse, effective configuration/generator provenance, exact-release
+health, investigation continuity, measured efficiency/discovery, standalone
+utility and accurate responsibility/doctrine. The adopted execution plan and
+release tasks 23/31/32/33 now require this reconciliation. P4 contract/examples
+and tracked implementation follow-ups are distinct from shipping capabilities.
+
+Producer-supplied generation records/optional source maps are indexed as a
+new design item. Existing permission/history, Helm input and discovery/metrics
+items remain tracked. Reuse the parser, source-truth, attribution/bindings,
+receipt/digest and explorer/watch models; no Scout renderer or inferred approval.
+The current 2.13 gates and frozen benchmark remain unchanged.
+
+## Genuine revision-chain coverage follow-up — 2026-10-05
+
+The isolated cub/server v0.8.3 acceptance lane captured 21 additional unedited
+command outputs in [revision-chain fixtures](test/fixtures/confighub-governance-v083-revision-chain/NOTICE.md).
+Manifest SHA-256: `c3640517a77c5c7ccf9dfb0ca49c358024d6c1440c3f73ba5e91728c09adc285`. Raw stdout/stderr hashes, command-start
+UTC times, statuses and server/client identity are retained. Seven new packet
+checks and the existing seven governance checks pass. The new checks are wired
+into Unit CI; no exact-head CI result is claimed before it runs.
+
+Two direct claim types bind exactly to revision 2. A metadata label update keeps
+revision 2; changed bytes create revision 3; restoring the original bytes creates
+revision 4 with the same DataHash but another RevisionID and no returned
+Attestations field. Same-hash revision equality does not establish inherited
+approval. A filtered SecurityReview list omits an existing Approval reference,
+proving query-limited list coverage cannot establish claim absence. Actual served
+bytes match each sampled DataHash; this is not a general normalization contract.
+
+Setup writes stayed in the owned test unit/space and outside Scout. Authentication
+is the local administrator: viewer RBAC and effective coverage remain open.
+No evaluated governance, production adapter or CLI/TUI/MCP acceptance is claimed.
+The scanner CI secret is still absent; companion PR #2076 remains open.
+Current main remains `5aeebc48`; v2.14 candidate is clean at `7533968c`.
+
+## Release continuity review and latest CI — 2026-10-05
+
+The [deep review](docs/reference/configuration-investigation-continuity.md)
+reconciles 0.x/1.x/2.x foundations with P3–P6, published v2.12.4 source,
+contracts, tests and examples. Current architecture/interface/boundary docs now
+reuse shipped attribution, bindings, generator parsing, receipt and explorer
+work. Obsolete LIVE-only TUI, universal-standalone, import-cluster-mutation and
+SDK-renderer claims are corrected. Old prepublication release-note labels are
+reconciled with actual release records. No runtime contract or gate changes.
+
+The review also distinguishes local TUI cache, snapshot export, debug bundle
+and immutable receipt semantics; removes unsupported redaction/replay promises;
+and restores the bot/freshness sections linked from README. Receipt and OCI
+proposals point to their published successors. Targeted existing source-truth,
+templated-source, raw-YAML, binding, ApplicationSet/import and receipt fingerprint
+tests pass in all three relevant packages. CLI documentation lint, freshness,
+personal-name and modified-document local-link checks pass; `git diff --check`
+is clean. No new runtime behavior or paid evaluation is introduced by this review.
+
+Full candidate CI at `d2105973`, [run 37319218436](https://github.com/confighub/cub-scout/actions/runs/37319218436),
+completed: Unit, Integration, GitOps E2E, Connected E2E and Proof Artifact pass.
+Full Verification and Demo Tests both fail at scanner provisioning because
+`CUB_SCAN_RELEASE_TOKEN` is absent. These are required incomplete checks;
+no exclusion or successful full-CI claim is made. The scoped credential request
+is pending. Documentation revisions after that SHA are not covered by this run.
+Published baseline remains v2.12.4; v2.13 release acceptance remains open.
+
+## Isolated v0.8.3 server and genuine capture candidate — 2026-10-05
+
+An isolated ConfigHub v0.8.3 server is installed and authenticated. Both server
+and cub CLI report v0.8.3; the existing v0.8.0 server and its data are preserved.
+Server commit is `1f92e099f4960a0828d2b51ed54e142e5f051b2a`; client commit is
+`468dd09f1c893ce2e18fd018192dcfa96cb1dd34`.
+
+`test/fixtures/confighub-governance-v083-recorded/` retains 15 genuine command
+output recordings, command statuses, timestamps and exact output hashes. Seven
+packet checks pass: exact unit/revision identity, served revision bytes matching
+Revision.DataHash, Pass/Fail subjects, immutable claim plus separate revocation,
+actual expiry, absent-ID refusal and an explicitly ungoverned ChangeOrder GET.
+These captures have no edited response fields or credentials. Authentication
+uses the isolated local administrator; read-only viewer RBAC is not claimed.
+
+The fixture supplies genuine evidence for #591's direct-revision/data-byte
+questions. It does not complete effective/inherited coverage, denied/partial
+list coverage, production adapters or CLI/TUI/MCP acceptance. The ChangeOrder
+has no ChangeWorkflow and supplies no evaluated-stage-prerequisite proof for
+#597. No gate is waived. The fourth serial parity attempt on the isolated v0.8.3
+server passed with real Helm installation, ConfigHub direct apply, OCI/Argo
+Synced/Healthy status and zero semantic object differences. The raw receipt
+SHA-256 is `78ff9a1acbe03616f519f0da5836507f1d2b3e4859e333ce6f9ed26fcc714620`;
+all four raw attempts are retained in the private acceptance evidence archive.
+The disposable parity rigs are cleaned up; the isolated acceptance server stays
+available. Companion issue #2075 repairs typed target discovery, isolated
+CUB_CONFIG kubeconfig selection and root-bound OCI registry selection. Its 12
+deterministic guards and the complete `npm run verify` chain pass. Companion
+[PR #2076](https://github.com/confighub/helm-expt/pull/2076) contains the reviewed
+repair at `467629c00`. This is one genuine parity check, not complete controller,
+governance or benchmark acceptance.
+Full candidate CI run 37271241956 completed at `df07483d`: unit and integration
+passed; Full Verification failed because the runner lacks cub-scan; Demo Tests
+failed because their separate cluster lacks the Argo Application CRD. Connected
+E2E reported success but skipped authentication and import round trips, so it
+does not prove authenticated acceptance. GitOps job success retains the existing
+masked-assertion limitation. Issue #774 owns these required repairs. No gate is
+waived and neither v2.13 nor v2.14 is released.
+
+## Connected CI provisioning repair candidate — 2026-10-05
+
+The #774 connected lane now provisions an isolated disposable ConfigHub server
+with checksum-verified cub v0.8.3 and server plugin v0.2.2, and the recorded
+v0.8.3 server image digest. It preserves the workload cluster kubeconfig and
+requires current authentication plus exact client/server versions. Round-trip
+tests run unconditionally; their Go JSON stream must contain passing outcomes
+for TestImportFullRoundTrip, TestImportIdempotent and TestImportCleanup and their
+package. Missing, skipped, failed or truncated results cannot claim acceptance.
+Only the owned server cluster is removed; credentials and installer logs remain
+private. Existing `test/fixtures/import-e2e/` examples exercise the imports.
+Six deterministic guards, workflow-selection tests and shell syntax checks pass.
+The three authenticated import round trips also pass against the existing
+isolated v0.8.3 server. Fresh-runner connected acceptance is pending; this repair
+does not close #774 or any other release gate.
+
+The next #774 candidate provisions checksum-verified Flux v2.9.6 and Argo CD
+v3.5.3 in both GitOps and demo clusters. Required controller rollouts, source and
+Kustomization readiness, Argo Synced/Healthy and exact workload ownership replace
+the masked echo/true assertions. Demos use the current quickstart command path.
+Workflow guards reject masked acceptance and conditional connected tests.
+Fresh-runner controller/demo outcomes and scanner-backed risk proof remain open.
+
+The follow-up full-lane repair provisions both controllers, the isolated server
+and the scanner before acceptance. Scanner v0.7.3 uses its exact release archive
+SHA-256 and reports its version through capabilities; private release download
+needs the repository-scoped read-only `CUB_SCAN_RELEASE_TOKEN` secret, currently
+absent. No workstation credential is copied into CI. Missing access fails the
+required job. Full acceptance enables pipeline failure propagation, requires
+source/controller waits and exact ownership, asserts the known Grafana risk,
+uses explicit demo fixture setup and runs authenticated imports unconditionally.
+Live imports use `-count=1`; all three pass again without Go test caching on the
+isolated v0.8.3 server. Eight provisioning/outcome guards (including actual CI map argv against the CLI),
+eight harness guards and six workflow guards pass. These do not close server/controller/benchmark
+release gates. Full CI at `4df4abea` passed its unit job and is executing cluster integration.
+Its Full Verification job failed at the expected missing-scanner prerequisite;
+the follow-up provider repair has not run there. The latest workflow retains
+scoped Flux/Argo controller objects, ownership JSON and Flux versions as an
+acceptance artifact. It uploads no server keys or installer/auth logs.
+
+## Required acceptance harness repair — 2026-10-05
+
+Issue #773 defines success before the harness repair. Full CI run
+37268214642 selected live tiers and its Full Verification job failed after the
+first successful build. Linux Bash 5.2.37 reproduces that early exit before the
+counter repair and reaches both successful checks afterwards. Seven deterministic
+subprocess guards cover quiet/verbose success and failure, required prerequisites,
+expired authentication, optional provider handling and unknown levels. The local
+`go test ./...` suite passes, and independent review has no remaining findings.
+
+`--level=full` now fails if any selected prerequisite is missing. Other levels
+retain explicit optional-provider accounting and label that result PARTIAL rather
+than full acceptance. Current auth status replaces context existence as the
+connected prerequisite. These guards are harness evidence, not live release proof.
+
+The existing local ConfigHub v0.8.0 administrator-key session was refreshed
+successfully; interactive sign-in is no longer needed. A genuine Helm/ConfigHub
+parity attempt created its disposable cluster and installed Argo CD, then returned
+blocked because the harness could not resolve the created OCI target. The rig was
+cleaned up and the receipt retained in the companion helm-expt workspace under
+`runs/live-helm-confighub-compare/scout-v213-nginx-20261005/receipt.yaml`.
+No release gate is waived by either result. A pinned v0.8.3 server image is
+available for AMD64/ARM64; isolated installation and contract acceptance are next.
+
+## Investigation quality direction — 2026-10-04
+
+The maintainer wants Scout to lead on read-only investigation quality for people
+and agents, with no competing-product names in product documentation. The
+updated `docs/reference/explorer-comparison.md` records five priorities and
+success criteria: workflow continuity, scope safety, least privilege, complete
+evidence and cheap reuse/demo. It corrects the older polling-only assessment
+with the existing opt-in watch-backed inventory boundary. Operator assessment
+remains #519; context/parity and efficiency retain their existing issue owners.
+The maintainer subsequently confirmed that the roadmap must deliver a winning
+product. Its outcome scorecard now sets operator diagnosis/onboarding targets,
+scope and reuse proof, and P3–P6 delivery responsibilities alongside the existing
+agent savings gates. Benchmark failures determine the next corrective work.
+Permission profiles and scope-bound investigation history are explicitly indexed
+as design follow-ups in the roadmap checklist. No runtime behavior, frozen
+benchmark, v2.13 scope or release gate changed. Documentation/link/name checks
+and `go test ./scripts/ci` passed; no live or paid tests ran.
+
+## Steps 1–2 offline checkpoint — 2026-10-04
+
+The topic packet adds enriched Explain explicit-context selection using one
+captured Kubernetes binding, shared CLI/MCP/TUI snapshot output, exact namespace
+and denied/partial-evidence handling. Defaults are preserved; API-version,
+refresh and expected-revision remain bounded-only. Six deterministic contracts,
+an example and a separate authored opt-in agent case cover this behavior without
+changing the frozen 24-case experiment. Genuine UI/CLI acceptance remains pending.
+
+The terminal adapter binds a selected source/stage/arm/control to captured trace
+hashes, grades only one final successful terminal result with the exact selected
+regex, and retains reported usage/cost as unreconciled metadata. The overlay
+builder prepares and verifies exact selected-stage skills and sanitized plugin
+metadata in a new read-only directory. Thirteen launch-policy contracts and
+three authored Explain controls pass offline; the overlay/adapter have independent
+review. Neither preparation establishes runtime enforcement, official evaluator
+execution, trusted attempt provenance, descendants or billing attribution.
+
+Cached build, full offline `go test ./...`, vet, read-only/CLI parity/name guards
+and three manual-CI condition contracts pass. The first full Go run exposed the
+new case's missing dedicated scaffold validator; its failed log is retained and
+the exact-byte/inventory repair passes the full suite. Reviewed implementation
+`0a0ef0e5` is pushed. Unit-only CI
+[37192588839](https://github.com/confighub/cub-scout/actions/runs/37192588839)
+passed Unit and Proof Artifact at that exact SHA. Downloaded proof confirms
+50.0% coverage against 25.0% minimum and all five nonunit tiers skipped.
+Later documentation checkpoints do not change that tested implementation.
+
+The remaining scope is explicit in `docs/releases/v2.13-readiness.md`: 13 recorded
+bindings, pinned runtime assets/actual enforcement, governance captures and
+delivery-health contracts are still open. Full controller-desired operands and
+broader context identity remain open; storage/publication belongs to the later
+phase. SDK #758 stays deferred. Steps 1–2 are advanced, not fully closed; final
+live gates, a published paired baseline and release remain pending.
+
+## Dispatch guard and ChangeOrder read checkpoint — 2026-10-04
+
+The source-bound launch candidate now prepares a PreToolUse dispatch guard in
+both arms. It binds the selected case/control, immutable policy and exact tool
+names; malformed or mismatched events produce a generic denial. Seventeen
+launch-policy contracts include authored DEL-03/DEL-04 controls. This is local
+stdlib/harness proof, not actual Claude hook enforcement. Python/runtime asset
+admission, hook loss/timeout behavior and descendant accounting remain open.
+The thirteen remaining recorded bindings have an explicit source-shape inventory
+in `evals/full24-launch-policy/recorded-binding-gaps.md`; none is newly admitted.
+
+`history changeorder <slug-or-id> --space EXACT --format ascii|json|md [--tui]`
+and connected MCP `confighub_changeorder_get` share one conservative read
+projection. One exact-space GET preserves reported Stage/State and raw workflow
+prerequisite declarations; evaluated outcomes remain unknown. Completed does not
+establish approval or runtime health. Parser contracts are pinned to SDK v0.6.8
+source; no SDK dependency or Go-version migration was made. Deterministic tests,
+a separate authored example/eval and dedicated scaffold validator cover identity,
+malformed/duplicate responses, cancellation and failed-command stdout refusal.
+Genuine cub/server recordings and live CLI/TUI acceptance remain pending; #597
+stays open. Independent review found and repaired one stale tool count.
+The first full Go run caught the missing read-only subcommand classification;
+the one-line test-policy repair passes focused ChangeOrder/skill controls.
+The CLI parity guard also caught a subcommand row in the top-level docs table;
+that row was moved and the guard passes. Both failed logs are retained.
+
+The fresh full-24 preparation validates current skill metadata. Its retained
+`evals/full24-launch-policy/source-refresh-proof.json` distinguishes the archived
+preparation from the refreshed source: only two treatment skill metadata files
+changed, while frozen questions, inputs, grants, budgets, graders and authored
+controls remain identical. Historical container/stdio proof is not revalidated
+at the new metadata by this source-only comparison. No model, cluster or new
+container execution occurred. Cached build/vet, the repaired full offline Go
+suite, 17 launch-policy contracts, three authored ChangeOrder controls, three
+CI condition contracts and read-only/CLI parity/name/diff guards pass.
+
+Unit-only CI `37194543835` at `dcbb4789` failed the historical combined-runtime
+source-staging test because the current skill metadata no longer matches its v1
+pin. Its runner/contract/receipt remain unchanged. The repair reconstructs the
+original pinned tree from an exact archived skill fixture and separately tests
+current-source drift refusal; all 19 offline controls pass. This preserves the
+historical proof boundary rather than admitting new metadata under old evidence.
+
+Reviewed implementation `e0611783` is pushed. Manual unit-only CI
+[37194709007](https://github.com/confighub/cub-scout/actions/runs/37194709007)
+passed Unit and Proof Artifact. Downloaded proof matches the exact SHA, coverage
+50.2% against 25.0% minimum, and all five nonunit tiers skipped. Later docs-only
+checkpoints do not change this tested implementation. No PR/main merge or release.
+
+## Offline runtime checkpoint — 2026-10-03
+
+The user now requests all remaining v2.13 work except live tests. Current topic
+branch: `codex/v213-offline-runtime`. No new container, cluster, ConfigHub,
+registry or paid-model execution is included. Ordinary PR/main CI runs live
+jobs. That historical restriction was superseded by the maintainer’s
+2026-10-05 authorization of all required live acceptance. Manual
+`level=unit` CI has been corrected to select only Unit and Proof Artifact;
+three condition/graph tests retain the normal PR/main and live-level behavior.
+Reviewed code head `df68de81` is pushed. Manual unit-only CI
+[37150688436](https://github.com/confighub/cub-scout/actions/runs/37150688436)
+passed Unit and Proof Artifact; Integration, GitOps, Demo, Connected and Full
+Verification skipped. These are pending live gates. Later documentation-only
+checkpoint commits do not change that tested implementation.
+
+`evals/full24-launch-policy/` preserves all 24 frozen prompts, ordinary grants
+and source budgets in both arms, including both authored controls. Six offline
+contracts pass. Eleven treatment cases have exact recorded object/export
+bindings; the remaining 13 explicitly block, with no fabricated tool response.
+Independent review's Python/runtime-asset prerequisite is explicitly held:
+the candidate binds the wrapper source digest but requires independently pinned
+Python/dependencies and inspected immutable assets before execution.
+This is candidate policy, not actual tool enforcement or runtime admission.
+
+The explicit recorded-only host stdio probe passed for all eleven bindings with
+the actual local Scout binary: exact tool inventory, map provenance/count,
+explain identity/hash and unsupported live-tool refusal. Request/reply hashes
+and scope are retained in `evals/full24-launch-policy/local-recorded-proof.json`.
+This does not establish the pinned Linux runtime, model tools/skills or full-24
+MCP usability. Offline build, `go test ./...` and `go vet ./...` pass with cached
+dependencies and an explicit empty kubeconfig. A separate temporary consumer
+imports `/v2/pkg/agent` with a local replacement and classifies a Helm-labelled
+Deployment correctly. Existing self-import/distribution guards pass; public
+proxy installation awaits a `/v2` release tag and is not proved by this check.
+Genuine governance captures, full-runtime/evaluator/process/cost admission and
+the final release gates remain pending. SDK #758 remains deferred.
+
+## Full isolation matrix checkpoint — 2026-10-03
+
+The same reviewed probe/source at `5ff09940` now passes for all 24 ordinary
+cases and both unweighted authored controls in both arms: 26 serial pairs,
+52 unique owned containers, all verified absent. The initial INV-01 and DEL-03
+control pairs were reused, not rerun; 24 remaining pairs passed first attempt
+within the bounded matrix driver. Independent data review verifies every pair,
+stage receipt, staged file and captured command output hash, common-byte parity,
+treatment-only delta, unique ID, and cleanup receipt. Full summary:
+`evals/full24-case-isolation/matrix-proof.json`; raw records:
+`evals/results/full24-case-isolation-20261003/matrix/`. This expanded proof is a
+local follow-up checkpoint, not part of the already inspected #767 CI head.
+It establishes fixed-probe case-mount coverage only. No model/provider/MCP/
+official grader ran; ordinary grants and descendant/accounting/cost remain
+unproved. The next runtime implementation must preserve each case's exact
+source grant (none grants Bash), case budgets and prompt, and replace the inert
+MCP marker with a case-scoped recorded binding. Do not reuse the earlier combined
+diagnostic's broader Read/Bash grants as full-24 grants. Genuine governance
+recordings and final paid-run/release acceptance gates remain explicit.
 
 ## Selected-case isolation runtime — 2026-10-03
 
@@ -25,7 +540,9 @@ Independent review approved the implementation and repaired proof coverage.
 The source/probe commit is `5ff09940`; local fixed-probe proof passed for INV-01 and the DEL-03 authored control
 in both arms: four actual containers, all cleaned up with absence verified.
 See `evals/full24-case-isolation/local-proof.json`; all-24 coverage remains
-offline/fake-Docker only. Separate exact-head CI/merge are pending.
+offline/fake-Docker only. PR #767 merged at `5aeebc48` after inspected exact-head CI `37122926570`
+at `36f672bf`: Unit, Integration, GitOps E2E and Proof Artifact passed;
+optional Connected, Demo and Full Verification skipped.
 Ordinary tool grants remain unenforced, treatment MCP inert, and model/provider/
 official grader/process-cost admission unproved. Paid evaluation stays stopped.
 
@@ -564,26 +1081,430 @@ reviewed releases may proceed within the adopted release gates. It does not
 authorize private ConfigHub publication or public/secret gists. Do not add
 permission gates to already authorized routine work.
 
+## Exact context frame checkpoint — 2026-10-04
+
+The offline RUL-03 reader in `evals/recorded-api/context_frames.py` requires an
+exact context, GET and raw path. It preserves the selected captured body,
+403/200 status, endpoint/CA identity and source timestamps, with pinned metadata
+and bounded regular-file checks. It does not default to the recorded readable
+current context or fall back after a denied read. Five deterministic controls
+cover exact responses, unavailable requests, missing/changed bytes, symlinks,
+FIFO and oversized input; the combined recorded-api suite has 20 controls.
+Independent review found no actionable defects. Full offline `go test ./...`
+passed with the explicit empty kubeconfig. Implementation `bf728b93` is pushed;
+unit-only CI [37199576055](https://github.com/confighub/cub-scout/actions/runs/37199576055)
+passed at that exact SHA. Its downloaded proof confirms 50.2% coverage against
+25.0% minimum, Unit and Proof Artifact success, and all five nonunit tiers
+skipped. Later documentation checkpoints do not change that tested code.
+This is source-selection preparation, not an MCP binding or model admission.
+The full-24 count remains eleven candidates and thirteen blocked cases. No
+frozen evidence, grants, budgets or product CLI behavior changed.
+
+## Recorded-response MCP checkpoint — 2026-10-04
+
+`evals/recorded-api/context_mcp.py` prepares an eval-only stdio evidence adapter
+with one read-only `recorded_response` tool. Exact context/GET/raw path select
+original response text plus capture provenance; a captured 403 remains source
+data and does not become an empty inventory or a substituted readable context.
+All four source files must pass pins before the tool catalog is served. Fixed
+staged evidence paths, strict bounded JSON and message limits exclude dynamic
+paths, live clients and executable dispatch. Five new transport controls bring
+the recorded-api suite to 25. Independent review identified exponent-overflow
+JSON numbers; finite-float parsing and bounded integers repair that gap, with
+negative vectors. The product MCP catalog and map/explain semantics are unchanged.
+The repaired 25-control suite and full offline `go test ./...` passed. Reviewed
+implementation `387cee05` is pushed; unit-only CI
+[37211787841](https://github.com/confighub/cub-scout/actions/runs/37211787841)
+passed at that exact SHA. Its downloaded proof confirms 50.2% coverage against
+25.0% minimum and all five nonunit tiers skipped. Unit Tests and Proof Artifact
+both succeeded; later documentation checkpoints do not alter tested code.
+The new tool is not granted by the frozen launch policy. RUL-03 remains blocked
+pending tool/runtime admission; the count stays eleven candidates/thirteen
+blocked. No live, container, model or provider execution is claimed.
+
+## Source-bound context host preflight — 2026-10-04
+
+`evals/full24-launch-policy/probe_context.py` binds only original RUL-03
+treatment through the public stage/source verifier and reviewed adapter/evidence
+pins. An explicit hash-selected host Python child runs the exact read-only
+package with isolated Python imports and clean environment. Six actual stdio
+requests passed initialization/catalog, exact 403/200 text/status/provenance,
+implicit-context refusal and map-substitution refusal. The private attempt
+retains all input/output bytes; `local-context-proof.json` records their hashes.
+Source, package and interpreter revalidation passed after the child exited.
+Independent audit verified the retained proof and all source/input/output pins.
+Five pure controls pass, including failed/timed-out artifact retention, bringing
+launch-policy coverage to 22 tests; full
+offline Go tests passed (unit package 47.419s).
+Implementation `2a498cfd` is pushed; unit-only CI
+[37213160950](https://github.com/confighub/cub-scout/actions/runs/37213160950)
+passed at that exact SHA. Downloaded proof confirms 50.2% coverage against 25.0%
+minimum, Unit Tests and Proof Artifact success, and all five nonunit tiers
+skipped. Later documentation checkpoints do not alter tested code.
+
+The admission boundary is explicit: `recorded_response` currently transports
+raw source evidence, not a product Scout inventory/diagnosis capability. It stays
+outside the frozen tool grant, with RUL-03 still blocked and counts unchanged at
+eleven candidates/thirteen blocked. Host stdio success does not prove runtime
+dependency admission, OS/network containment, descendants, model execution or
+savings. Those proof claims remain false. No live/container/model/provider run
+occurred.
+
+## Recorded DeploymentList product prerequisite — 2026-10-04
+
+The shared recorded-object loader now accepts exact `apps/v1 DeploymentList`
+responses, whose Kubernetes API declaration establishes Deployment item types.
+Only omitted item type fields are supplied; explicit conflicts/null/blank types
+refuse. Metadata, UID/resourceVersion/managedFields and raw source hashes remain
+unchanged. Generic `v1/List` still requires explicit item types; denied Status
+and empty recordings remain refusals. Optional input-wide
+`typedListDerivedObjects` provenance flows through map/list/summary and explain
+JSON, CLI/MCP and ASCII/Markdown/TUI. Zero-count outputs remain unchanged.
+
+Deterministic Go controls exercise the actual pinned RUL-03 body and type/boundary
+negatives, with independent review finding no actionable defect. The new
+authored opt-in `evals/recorded-typed-list` has exact-byte/scaffold and strict
+answer controls, runs in unit-only CI and leaves frozen cases unchanged. The
+local binary passed recorded map/explain CLI and actual MCP stdio checks, retained
+at `/private/tmp/scout-v213-typed-list-host-proof-20261004`; denial and unsupported
+live-tool requests refused. Build, vet, focused controls and the repaired full
+`go test ./...` pass offline. The first full suite found the new case missing
+its dedicated scaffold registration; the repair pins original bytes and exact
+output inventory, with independent review finding no actionable defect. Failed
+and repaired logs are retained under `/tmp/scout-v213-typed-list-*20261004.log`.
+Manual unit-only CI [37216359170](https://github.com/confighub/cub-scout/actions/runs/37216359170)
+at implementation `aa841535691d6e01303c9f4b90fa1e44aa37f781` passed Unit and Proof
+Artifact. Downloaded proof matches that exact SHA: coverage 50.2% / minimum 25.0%,
+with Integration/GitOps/Demo/Connected/Full Verification skipped.
+This product prerequisite adds no multi-context
+joining or current-state claim. RUL-03 remains blocked and the Linux binary pin
+has not been rebuilt/admitted for this new code; full24 stays eleven candidates
+and thirteen blocked. No live/container/model/provider run occurred.
+
+## Exact recorded-context inventory binding — 2026-10-04
+
+`evals/recorded-api/context_inventory.py` now binds a full product recorded map
+projection to one exact pinned RUL-03 context/GET/path response. It passes only
+selected original bytes and exact namespaced Deployment scope to an injected
+reader, then validates hash/size/count/type-derivation provenance, schema,
+resource identities and owner histogram. Ownership remains reader output;
+reader binary/runtime admission is separate. A recorded 403 returns unreadable
+coverage and null inventory without invoking the reader or reading another
+context's body. There is no current-context default, join, retry or fallback.
+
+Success criteria were defined before implementation. Six deterministic controls
+cover exact source/scope, denial without readable body, foreign report identity,
+counts, malformed/bounded JSON, missing/changed source and reader failure. All
+31 recorded-API controls, three workflow guards and full offline Go suite pass.
+The existing recorded-loader example references these controls. Independent
+source and retained host-proof review found no actionable defect. Actual local `./cub-scout` composition
+with private empty HOME/kubeconfig passed; retained bytes/hashes live at
+`/private/tmp/scout-v213-context-inventory-host-proof-20261004`. There was one
+readable CLI call and zero denied calls.
+
+Manual unit-only CI [37217238140](https://github.com/confighub/cub-scout/actions/runs/37217238140)
+at implementation `c646c207eb504b122f50653e8a5fb8d67bc890dd` passed Unit and Proof
+Artifact. Downloaded proof matches that exact SHA: coverage 50.2% / minimum 25.0%,
+with Integration/GitOps/Demo/Connected/Full Verification skipped.
+
+This is an eval-only binding, not a new product CLI/MCP/TUI surface or admitted
+MCP tool. Existing transport module pins, frozen case inputs/grants/prompts and
+budgets are unchanged. RUL-03 remains blocked on tool/runtime admission and the
+new Linux binary pin; full24 remains eleven candidates and thirteen blocked.
+Current-state/runtime admission flags stay false. No live, container, model or
+provider run occurred; SDK #758 remains deferred and v2.13 is unreleased.
+
+## Offline Linux arm64 build candidate — 2026-10-04
+
+Two cached, download-disabled builds from a clean temporary local checkout of
+`c646c207eb504b122f50653e8a5fb8d67bc890dd` produce byte-identical Linux/arm64
+ELF binaries: 75,903,128 bytes, SHA-256
+`feeb1ebc37d6ffed635588ecc30866b7a1027e79517cd4139a3a1f97c3aa0ba5`.
+Go 1.26.2 build metadata reports CGO disabled, trimpath, exact Git revision and
+`vcs.modified=false`. The embedded module pseudo-version is source metadata,
+not a published version. [Build receipt](docs/releases/v2.13-linux-candidate.json)
+and `/private/tmp/scout-v213-linux-candidate-20261004` retain verification,
+metadata, logs and both binaries. Independent read-only audit found no defect.
+
+The first managed-worktree build compiled but omitted VCS metadata because the
+local Go VCS detector expects a `.git` directory; its unstamped artifacts remain
+retained as rejected. Building the same commit in the temporary local checkout
+provided the required source stamp. An initial verifier assumed `(devel)` module
+metadata; it was corrected to validate the reported exact-commit pseudo-version.
+
+The candidate contains recorded DeploymentList support but has not run on Linux
+or been admitted by a runtime/tool gate. Historical runtime pins and accepted
+proofs are unchanged. No target binary, Docker, live cluster, model, provider or
+registry operation ran. Runtime execution remains deferred to the final gates;
+this is a build candidate, not a release artifact or full24 admission.
+
+## Prepared exact-context inventory MCP — 2026-10-04
+
+The separate eval-only `context_inventory_mcp.py` presents one read-only map tool
+with a mandatory exact recorded context and fixed request/scope. It reuses the
+reviewed protocol envelope/initialization gate without enabling raw-response,
+explain or live tools. Denial remains a successful historical evidence read with
+HTTP 403, unreadable coverage and null inventory; the reader is never called.
+Reader/source/report failure gives a generic refusal, and the whole outgoing
+JSON-RPC envelope is bounded. Six pure protocol controls bring recorded-API tests
+to 37; all pass, as does the full offline Go suite. Independent source and host
+proof reviews found no actionable defect.
+
+The actual host stdio/CLI composition retained at
+`/private/tmp/scout-v213-context-map-mcp-host-20261004` has seven replies, map-only
+catalog, one readable local Scout invocation and zero denied invocations. The
+[public summary](evals/full24-launch-policy/local-context-map-proof.json) records
+exact package/stream/interpreter/binary hashes and discloses modified source
+state separately from its base revision. This is host composition, not runtime
+containment or model-tool admission. Existing transport source pins, frozen
+launch policy/questions/evidence/grants/budgets and product CLI/MCP/TUI surfaces
+are unchanged. RUL-03 remains blocked; Linux Python/dependency/mount admission,
+enforced reader wiring and descendant accounting remain open. Full24 remains
+eleven candidates and thirteen blocked. No live/container/model/provider run.
+
+## Sveltos controller reports — 2026-10-04
+
+The #641 read-side packet preserves bounded ClusterSummary delivery features
+and ClusterHealthCheck continuous-health conditions separately from the same
+existing scoped list reads. Raw reported references/timestamps remain facts;
+no name/time joins, release correlation, gate acceptance or check-execution
+freshness is inferred. Workload health and check freshness stay unknown.
+Missing identities/status, unsupported versions, invalid/truncated fields,
+malformed arrays, source/entry caps and forbidden lists have deterministic
+controls. Markdown/ASCII/TUI safely quote external metadata.
+
+An authored [example](examples/sveltos-controller-facts/) and separate opt-in
+answer case are outside the frozen 24. The local CLI/MCP/owned-PTY
+[rendering proof](examples/sveltos-controller-facts/render-proof.json) uses an
+authored summary with empty HOME/kubeconfig and offline mode; it establishes
+propagation, not genuine controller reconciliation or live acceptance. No live,
+container, model, provider or registry run occurred. Broader #641 server gates,
+underlying check execution timestamps and later publication remain open.
+Independent final source/rendering review found no remaining defects. Build,
+repaired full offline Go tests, vet, 37 recorded-API controls, 22 launch-policy
+controls, two authored-answer controls and three workflow guards pass. The
+initial full-suite failure was the new scaffold using a nonstandard heredoc
+delimiter; changing it to the shared validator delimiter repaired exact-byte
+fixture checks. Initial failure logs remain retained.
+
+## Static Linux Python asset candidate — 2026-10-04
+
+A local cached-image export now binds OCI index, selected Linux arm64/v8
+manifest/configuration, four compressed-layer hashes and diff IDs, effective
+filesystem inventory, and Python 3.11 ELF/library/link hashes. The
+[receipt](evals/full24-launch-policy/runtime-python-candidate.json) identifies
+static evidence only; retained archive/audit/inventory live under
+`/private/tmp/scout-v213-python-image-20261004`. No container or target asset was
+executed and no registry/model/provider run occurred. Existing runtime admission
+and historical pins stay unchanged. Python/dependency/mount wiring and actual
+execution/enforcement remain final gates; the candidate reduces asset discovery
+work, not acceptance scope. An independent read-only audit reconstructed the
+6,215-entry inventory and verified all selected blobs/layers and Python assets
+against the receipt without findings.
+
+## Current implementation Linux candidate — 2026-10-04
+
+Reviewed Sveltos source `5098762b0af1fea7bfea1e915dff90f2581db50b` has a new
+[current Linux arm64 build receipt](docs/releases/v2.13-sveltos-linux-candidate.json).
+Two offline CGO-disabled trimpath builds from a clean local checkout are
+byte-identical: 75,977,288 bytes, SHA-256
+`e59564148524cd0c131c26aeca591256d5a2f4490b692a0470e60a7cc782769a`.
+Embedded Go 1.26.2 metadata names the exact revision and modified=false;
+independent static audit accepted the binaries, clean checkout and receipt.
+Retained files are under `/private/tmp/scout-v213-sveltos-linux-candidate-20261004`.
+No target execution or runtime admission is claimed. Earlier build receipts and
+historical runtime pins remain unchanged; this is not a release artifact.
+
+## Verified implementation checkpoint — 2026-10-04
+
+Implementation `5098762b0af1fea7bfea1e915dff90f2581db50b` includes the exact-context
+map protocol and Sveltos facts. Exact-head manual unit-only CI
+[37221782102](https://github.com/confighub/cub-scout/actions/runs/37221782102)
+passed Unit and Proof Artifact. Downloaded
+`/tmp/scout-v213-sveltos-ci-proof-37221782102/proof-matrix.json` matches the exact
+revision, coverage 50.4% against minimum 25.0%, with Integration/GitOps/Demo/
+Connected/Full Verification skipped. Full local offline Go tests, build, vet,
+authored controls, recorded-API and launch-policy guards passed before push.
+The source/rendering/static-asset/build receipts have independent acceptance.
+No live gate, runtime/model admission, release or merge is claimed.
+
+## Repeatable Python asset verification — 2026-10-04
+
+`evals/full24-launch-policy/python_image.py` turns the retained one-off static
+image audit into a repeatable, receipt-pinned offline verifier. Bounded no-follow
+regular-file reads, exact OCI/platform/config/layer hashes and diff IDs,
+whiteout-applied inventory, Python ELF/library/link comparison and metadata/
+member/expanded-size controls refuse changed or unsupported assets. No archive
+extraction, Docker, network or target execution occurs. Nine synthetic negative
+and positive controls pass; independent source review accepted without findings.
+The [host proof](evals/full24-launch-policy/runtime-python-verifier-proof.json)
+retains actual historical-export success and truncated-copy refusal with exact
+source/stream/interpreter pins. Its explicit runtimeAdmission/targetExecuted
+flags are false. The initial directory-refusal test exposed fdopen preceding
+fstat; fstat/regular-file checks now happen first, with the descriptor closed on
+refusal. Initial exact-head CI `37224032996` caught personal checkout paths in
+the public proof argv. Public paths now use explicit labels, with the exact
+retained private proof digest and a source/path disclosure regression control;
+the repository name guard passes locally. Historical candidate receipt and
+launch-policy admission stay unchanged.
+
+## Expanded maintainer execution authorization — 2026-10-04
+
+The maintainer removed the agent credit-usage cap and instructed execution
+through 2.14 or 3.0, releasing 2.13 on the way. Execute the adopted 3.0 plan with
+incremental 2.13/2.14 releases once their gates pass. The removed cap concerns
+agent execution spending; frozen per-case benchmark grants/budgets and quality/
+publication gates remain unchanged. SDK #758 stays deferred. At this historical checkpoint, live-test authorization was still awaiting
+clarification. The maintainer superseded that restriction on 2026-10-05.
+about final live acceptance. No release, merge or paid-model admission is
+inferred from static verification or spending authorization.
+
+## PRE-03 declared-reference foundation — 2026-10-04
+
+The eval-only `argo_child_reference.py` now projects the pinned parent target
+reference separately from parent/child captured identities and controller
+reports. One exact namespace/name reference and child tracking-id name the
+parent; observed GVKs stay unknown because both captures omit top-level type
+fields. Distinct UIDs do not establish a UID foreign key. Reported child resource
+rows remain separate, bounded and historical, with no Pod/tree join or grader
+answer. Bad/missing/drifted/ambiguous source or malformed identity/report refuses.
+Seven controls bring recorded-API tests to 44; all pass. Independent source and
+[host package/output proof](evals/recorded-api/local-argo-reference-proof.json)
+audits accepted without findings. The read-only retained host package lives at
+`/private/tmp/scout-v213-pre03-reference-host-final-20261004`. Initial temporary
+fixture paths followed macOS `/var` symlinks and hit the shared safe-path refusal;
+resolving owned temporary paths made negative tests exercise their intended
+semantic failures. No frozen source bytes, questions, grants/budgets or launch
+policy changed. PRE-03 product/MCP/runtime admission remains blocked; eleven
+candidates/thirteen blocked remains the accepted count.
+
+The [draft v2.13.0 notes](docs/releases/v2.13.0.md) describe candidate scope and
+publication gates explicitly as unreleased; they do not announce a tag.
+
+Unit-only CI `37224249514` at `362878c8` passed the corrected Python verifier
+packet. CI `37224721435` at `f55dd11e` passed the PRE-03/draft-notes packet.
+Both downloaded proof matrices bind their exact SHA, report 50.4% coverage
+against 25.0% minimum and mark all five nonunit tiers skipped. Earlier failed
+verifier CI remains history; neither passing run establishes live acceptance.
+
+## P4 cluster identity/read-cost foundation — 2026-10-04
+
+The shared `pkg/agent/cluster_identity.go` reader captures one copied REST
+configuration and context label, then reads only the `kube-system` Namespace.
+Verified identity requires its exact reported type/name and observed UID.
+Denial, missing/malformed fields, timeout and unreachable API remain unverified
+with bounded omissions; they do not establish ownership or health. Endpoint
+projection omits user information, query and fragment fields. There is no
+discovery, redirect, REST retry, identity cache or other-context fallback.
+
+The transport meter counts attempts and consumed response-body bytes for this
+reader, including errors. It excludes headers/wire bytes, authentication traffic
+and unrelated clients; an opaque preexisting wrapper marks coverage partial.
+Reads serialize with cancellable waiting for attributable deltas, wall duration
+and reuse=false. The [loopback example](examples/cluster-identity-cost/README.md)
+defines collision-name, copied-config, denied/malformed, cancellation, timeout,
+retry/redirect, byte-count and concurrent controls without a live cluster.
+Independent review identified the shared 2 MiB error-body limit bypassing the
+identity reader's 64 KiB cap; an identity-specific transport cap now bounds all
+statuses, with oversized 403/500 controls passing. Initial logs are retained.
+
+This is a library foundation, not command output or whole-command cost reporting.
+CLI/MCP/TUI integration, merge-safe references, connected Target alignment and
+genuine live acceptance remain open in #599. Existing exact-object read budgets
+are unchanged; adding identity reads to commands requires an explicit budget.
+
+Ten deterministic identity/meter controls, their targeted race run, build, vet
+and repository read-only/parity/name guards pass. The first full offline Go run
+hit the existing 100 ms exec-auth helper-start/cleanup timeout under concurrent
+build/race load; its log is retained. That test passed three isolated repeats,
+then the final full `go test ./...` passed without overlapping build/race jobs.
+Independent review accepted the cap repair and example without remaining
+findings. Exact-head unit-only CI is still required for this new packet.
+
+The follow-on `ObservedResourceIdentity` library constructor/key retains actual
+API version and exact group/kind/namespace/name/object UID alongside observed
+cluster-instance identity. Canonical keys omit served version but distinguish
+clusters, API groups and recreated objects, with no context/server fallback or
+GVK derivation. Unknown identity, missing timestamp, malformed metadata/scope and
+invalid exported-key mutations refuse. The caller must supply served scope and
+collect object/cluster evidence with the same captured client; the pure helper
+cannot establish that association, atomicity or current state. Five authored
+controls and the combined identity/meter/reference race run pass; independent
+review accepted the source. The shared example explains collision, version and
+degradation controls. CLI/MCP/TUI fields and connected identity remain open.
+The follow-on build, vet, full offline Go suite and repository guards pass.
+Initial identity implementation `9b9f68f3` and merge-key implementation
+`0c398086` are pushed. Exact-head unit-only CI `37226008155` and `37226503189`
+both passed; their downloaded proof matrices bind the respective exact SHAs,
+report 50.5% and 50.6% coverage against 25.0% minimum, and mark all five nonunit
+tiers skipped. No live acceptance or release is inferred.
+
+User-visible P4 map integration is isolated on `codex/v214-cluster-evidence`
+in its separate managed worktree, based on `0c398086`. It is not part of the
+v2.13 candidate or a widened release gate. #599 success-before-code defines an
+explicit opt-in extra Namespace read, separate identity-only costs and shared
+CLI/MCP/TUI projection. The v2.13 branch remains available for genuine gates
+once the pending live-test clarification is resolved.
+
+## Refreshed v2.13 static Linux candidate — 2026-10-04
+
+Clean source `83dade91` now has two byte-identical offline Linux/arm64 builds
+with explicit VCS stamping: exact revision and modified=false, CGO disabled and
+trimpath enabled. [Build receipt](docs/releases/v2.13-offline-linux-candidate.json)
+pins the AArch64 ELF, metadata and private retained logs. A managed-worktree
+attempt omitted VCS metadata; it is retained as rejected rather than relabeled
+source-bound. The prior Sveltos/typed-list candidates remain immutable history.
+No target execution, runtime/full24/model admission or publication is inferred.
+Independent static audit verified both binaries, exact clean source, metadata
+and retained receipt hashes without target execution.
+
+## Six-target static distribution preparation — 2026-10-04
+
+Clean v2.13 source `83dade91` compiles for Linux/Darwin/Windows on amd64/arm64,
+using CGO-off, trimpath and explicit clean VCS stamping. The BuildTag explicitly
+says `offline-candidate-83dade91`; fixed BuildDate metadata is the source commit
+time for reproducible samples. [Static distribution receipt](docs/releases/v2.13-static-distribution-candidate.json)
+pins six native binaries and manually constructed deterministic archive samples.
+CLI/kubectl aliases are present on all six targets, plugin `main` only on the
+four Linux/Darwin targets, plus README/LICENSE/CLI-GUIDE. Readback validates exact
+root entries, modes and hashes; 12 authored archive corruption/path/duplicate
+controls refuse. Binary aliases copy the same compiled target; no plugin runtime
+acceptance is inferred. No target execution, actual GoReleaser/release hook,
+signing, public proxy/clean-cluster install, model/container execution or release
+is inferred. Independent static audit verified all six target binaries, exact
+archive entries/modes/content and the receipt/config/driver/private proof hashes.
+
+## Server read-evidence dependency proposal (2026-10-04)
+
+The [draft server governance read-evidence proposal](docs/proposals/server-governance-read-evidence.md)
+makes #591/#597's missing authority contract, exact identity/coverage/hash
+semantics and genuine recording packet reviewable. It distinguishes attestation
+coverage, declared prerequisites and evaluated server outcomes; identifies
+version/permission/time/redaction provenance; and preserves GET-only Scout
+boundaries. It proposes requirements, not an existing endpoint or wire schema.
+Independent review accepted the bounded scope and requested explicit credential
+exclusion from capture bundles; that protocol clarification is applied.
+No server outcome, new live run, SDK migration or gate waiver is supplied.
+The current parser/source and static candidate binary pins are unchanged.
+
 ## Resume here
 
-Check #645, then continue Trace [#746](https://github.com/confighub/cub-scout/issues/746)
-and its explicit rendered-operand diff packet #751, followed by source-truth
-context binding #750 under #599. #743 is merged. Source-truth is committed
-locally with reviewed repairs and focused tests passing; combined validation
-and live proof remain. Continue the bounded GitOps-status packet #753 next.
-The immediate target is v2.13, subject to the adopted gates. The full-24
-source preparation under #742 is integrated, but its blinded equal-evidence
-packet and authored input controls do not admit paid execution: recorded MCP
-binding, actual grants, descendants and accounting remain open. Product work
-need not wait for paid benchmark admission. #735/#738 and #740/#741 are merged.
-Continue actual tool parity and process/cost accounting under #709; six raw
-kubectl reads are only one bounded prerequisite. External dependencies #591 (genuine attestations), #597
-(current gate evidence), #600 (fact storage/schema agreement), and GHCR access
-remain unresolved. Keep the benchmark non-executable and paid work stopped while
-tool, evidence, process or cost gates remain unresolved. The adopted plan's
-ordered packets and external dependencies control next steps. Replace this
-current checkpoint in place at the next handover; retain run chronology in
-issues, PRs, reports and Git history rather than prepending dated snapshots.
+Check #645 and the checkpoint above. Drive the adopted plan through 3.0,
+releasing 2.13 and 2.14 as their gates pass. Continue current v2.13 work on
+`codex/v213-offline-runtime`, with required live tests now authorized by the 2026-10-05 instruction.
+The eleven recorded host bindings do not admit full-24 model execution: remaining
+case bindings, Python/runtime asset admission, actual grants, trusted official
+evaluator terminal integration, descendant completion and cost attribution
+still need bounded implementation and review. The terminal adapter and overlay
+are prepared candidates; their runtime integration remains unproved. Do not invent Kubernetes
+objects or evaluated server decisions to fill gaps. Context/Trace/GitOps packets
+#750/#751/#753 and three-way #755 have merged; audit remaining parent scope
+#599/#746 against current code before repeating completed work.
+External #591/#597 still need genuine read-side governance recordings, and #600
+needs storage/schema agreement. SDK #758 stays deferred; `/v2` is already in
+source, with public proxy installation awaiting a release tag. Resolve runtime/tool/fixture admission requirements, then run the required
+benchmark. Full PR/main CI and release integration are now authorized. Final acceptance and the
+published paired baseline remain required before release; no gate is waived.
 
 - [Adopted 3.0 execution plan](docs/roadmap-3.0-execution.md)
 - [Tracker #645](https://github.com/confighub/cub-scout/issues/645)
@@ -600,3 +1521,39 @@ are immutable history, not current status:
 Retrieve exact prior bytes offline with
 `git show 9e3fa9b765170ad414801ffb5069c9eeb11b2fec:HANDOVER.md` or
 `git show 9e3fa9b765170ad414801ffb5069c9eeb11b2fec:docs/roadmap-3.0-execution.md`.
+
+## Fresh-runner repair findings — 2026-10-05
+
+CI run 37310549210 at `4df4abea` completed: unit and cluster integration passed;
+Full Verification failed at missing scanner; Connected E2E failed during server
+installation; GitOps E2E converged all five Flux workloads and the Argo guestbook
+(Synced/Healthy) before its ownership command rejected the harness's unsupported
+`map list -n` flag. Demo Tests therefore did not run. No acceptance is inferred
+from skipped steps or partial convergence.
+
+Both discovered harness defects are repaired in the next candidate. Installer
+v0.2.2 requires an explicit matching UI image when the server is pinned by digest;
+the CI installer now pins the public v0.8.3 UI index digest too. The released,
+checksum-verified Darwin installer reproduces the missing-UI refusal (exit 1) and
+accepts both explicit image digests in dry-run mode (exit 0), using an isolated
+private config. This probe creates no cluster. CI ownership commands now use
+`--namespace`; an offline test executes their actual workflow argv against the
+built CLI and an exact recorded map fixture. Risk demos require the private
+scanner and assert the expected finding, rather than trust the demo narrative.
+Fresh-runner rerun is required. Neither release nor #774 is complete.
+
+## Fresh-server connected acceptance — 2026-10-05
+
+CI run 37312841846 at `ae4e60e9` completed. Unit, cluster integration and the
+fresh-server Connected E2E jobs passed. The isolated pinned server/UI install,
+authentication, client/server v0.8.3 checks and all three uncached required import
+round trips completed on the runner; the disposable server was removed. Connected
+acceptance no longer depends on a workstation token or skipped authentication.
+
+GitOps E2E converged both controllers and example workloads and passed exact
+Flux/Argo ownership assertions. Its next trace failed because the installed Flux
+binary was not exported to later steps. The helper now exports its installation
+directory through GITHUB_PATH. Controller observations are retained in the run's
+acceptance artifact. Full Verification failed at the absent private scanner
+release credential; risk/demo and broader release gates remain open. A fresh
+run of the PATH repair is required; #774 and v2.13 are not complete.

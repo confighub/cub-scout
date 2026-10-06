@@ -1,0 +1,547 @@
+{
+  "schema": "scout-goreleaser-rehearsal.v1",
+  "sourceRevision": "78d86d50220f5fe44167f4facb6618c2a321ba09",
+  "metadata": {
+    "project_name": "cub-scout",
+    "tag": "v2.13.0",
+    "previous_tag": "",
+    "version": "v2.13.0-next",
+    "commit": "78d86d50220f5fe44167f4facb6618c2a321ba09",
+    "date": "2026-10-05T17:40:59.185262+01:00",
+    "runtime": {
+      "goos": "darwin",
+      "goarch": "arm64"
+    }
+  },
+  "toolchain": "go1.24.0",
+  "binaries": [
+    {
+      "path": "cub-scout-plugin_darwin_amd64_v1/main",
+      "bytes": 58510464,
+      "sha256": "29fa5e6061fcc86e24ffbc8bd5b75377c2ad716b060dc4cd29df8794fa62b4bf",
+      "vcsModified": false
+    },
+    {
+      "path": "cub-scout-plugin_darwin_arm64_v8.0/main",
+      "bytes": 56057138,
+      "sha256": "a23cea50787422c97dff50140c5a9d9a24d6c52a7bf3fecc57421bb15938debe",
+      "vcsModified": false
+    },
+    {
+      "path": "cub-scout-plugin_linux_amd64_v1/main",
+      "bytes": 57327800,
+      "sha256": "ffacac21c7500651688e6effd7c421084ae31249513d81ae848f00eeecd82f31",
+      "vcsModified": false
+    },
+    {
+      "path": "cub-scout-plugin_linux_arm64_v8.0/main",
+      "bytes": 54526136,
+      "sha256": "1de777a4f296d587e8b5875eeadc5d50ed81dabc6e550d705b309d25ec4ce65f",
+      "vcsModified": false
+    },
+    {
+      "path": "cub-scout_darwin_amd64_v1/cub-scout",
+      "bytes": 58510464,
+      "sha256": "29fa5e6061fcc86e24ffbc8bd5b75377c2ad716b060dc4cd29df8794fa62b4bf",
+      "vcsModified": false
+    },
+    {
+      "path": "cub-scout_darwin_arm64_v8.0/cub-scout",
+      "bytes": 56057138,
+      "sha256": "a23cea50787422c97dff50140c5a9d9a24d6c52a7bf3fecc57421bb15938debe",
+      "vcsModified": false
+    },
+    {
+      "path": "cub-scout_linux_amd64_v1/cub-scout",
+      "bytes": 57327800,
+      "sha256": "ffacac21c7500651688e6effd7c421084ae31249513d81ae848f00eeecd82f31",
+      "vcsModified": false
+    },
+    {
+      "path": "cub-scout_linux_arm64_v8.0/cub-scout",
+      "bytes": 54526136,
+      "sha256": "1de777a4f296d587e8b5875eeadc5d50ed81dabc6e550d705b309d25ec4ce65f",
+      "vcsModified": false
+    },
+    {
+      "path": "cub-scout_windows_amd64_v1/cub-scout.exe",
+      "bytes": 58688512,
+      "sha256": "44ed6e90ad6890d2954041930ac02efd9d0b99e6f12b120f68ef564b41ab9d87",
+      "vcsModified": false
+    },
+    {
+      "path": "cub-scout_windows_arm64_v8.0/cub-scout.exe",
+      "bytes": 55044096,
+      "sha256": "d3adef3226cbcfd2b8b14ab6573cec4ec02b6613b75dab263b1cfa65c7619b71",
+      "vcsModified": false
+    },
+    {
+      "path": "kubectl-cub-scout_darwin_amd64_v1/kubectl-cub_scout",
+      "bytes": 58510464,
+      "sha256": "29fa5e6061fcc86e24ffbc8bd5b75377c2ad716b060dc4cd29df8794fa62b4bf",
+      "vcsModified": false
+    },
+    {
+      "path": "kubectl-cub-scout_darwin_arm64_v8.0/kubectl-cub_scout",
+      "bytes": 56057138,
+      "sha256": "a23cea50787422c97dff50140c5a9d9a24d6c52a7bf3fecc57421bb15938debe",
+      "vcsModified": false
+    },
+    {
+      "path": "kubectl-cub-scout_linux_amd64_v1/kubectl-cub_scout",
+      "bytes": 57327800,
+      "sha256": "ffacac21c7500651688e6effd7c421084ae31249513d81ae848f00eeecd82f31",
+      "vcsModified": false
+    },
+    {
+      "path": "kubectl-cub-scout_linux_arm64_v8.0/kubectl-cub_scout",
+      "bytes": 54526136,
+      "sha256": "1de777a4f296d587e8b5875eeadc5d50ed81dabc6e550d705b309d25ec4ce65f",
+      "vcsModified": false
+    },
+    {
+      "path": "kubectl-cub-scout_windows_amd64_v1/kubectl-cub_scout.exe",
+      "bytes": 58688512,
+      "sha256": "44ed6e90ad6890d2954041930ac02efd9d0b99e6f12b120f68ef564b41ab9d87",
+      "vcsModified": false
+    },
+    {
+      "path": "kubectl-cub-scout_windows_arm64_v8.0/kubectl-cub_scout.exe",
+      "bytes": 55044096,
+      "sha256": "d3adef3226cbcfd2b8b14ab6573cec4ec02b6613b75dab263b1cfa65c7619b71",
+      "vcsModified": false
+    }
+  ],
+  "archives": [
+    {
+      "name": "cub-scout_v2.13.0-next_darwin_amd64.tar.gz",
+      "sha256": "af0a352602059072c0779444231b264416e5755b6fc0197da0d80f452f3003ee",
+      "entries": [
+        "CLI-GUIDE.md",
+        "LICENSE",
+        "README.md",
+        "cub-scout",
+        "kubectl-cub_scout",
+        "main"
+      ]
+    },
+    {
+      "name": "cub-scout_v2.13.0-next_darwin_arm64.tar.gz",
+      "sha256": "22199bf382d36a9ec13fdc7b5b649b76b9d96bce950e2e26080bf414cb7df4a1",
+      "entries": [
+        "CLI-GUIDE.md",
+        "LICENSE",
+        "README.md",
+        "cub-scout",
+        "kubectl-cub_scout",
+        "main"
+      ]
+    },
+    {
+      "name": "cub-scout_v2.13.0-next_linux_amd64.tar.gz",
+      "sha256": "eea8760fed05150375b70cf45219b97cc4950ca74c0055e865374113115daf57",
+      "entries": [
+        "CLI-GUIDE.md",
+        "LICENSE",
+        "README.md",
+        "cub-scout",
+        "kubectl-cub_scout",
+        "main"
+      ]
+    },
+    {
+      "name": "cub-scout_v2.13.0-next_linux_arm64.tar.gz",
+      "sha256": "e37e0d52a05b8fc902f526a19537c560165a242fc087d698ace6f5120711b526",
+      "entries": [
+        "CLI-GUIDE.md",
+        "LICENSE",
+        "README.md",
+        "cub-scout",
+        "kubectl-cub_scout",
+        "main"
+      ]
+    },
+    {
+      "name": "cub-scout_v2.13.0-next_windows_amd64.zip",
+      "sha256": "43c491d8dbe460814c23c787ce225456e630c447de98cbae695d59dce5baf9dd",
+      "entries": [
+        "CLI-GUIDE.md",
+        "LICENSE",
+        "README.md",
+        "cub-scout.exe",
+        "kubectl-cub_scout.exe"
+      ]
+    },
+    {
+      "name": "cub-scout_v2.13.0-next_windows_arm64.zip",
+      "sha256": "4fefb0d6b6f7c8c4bd0c35be0df685c302607017bad4622a2150150bb56f80eb",
+      "entries": [
+        "CLI-GUIDE.md",
+        "LICENSE",
+        "README.md",
+        "cub-scout.exe",
+        "kubectl-cub_scout.exe"
+      ]
+    }
+  ],
+  "claims": {
+    "actualSnapshotHooks": true,
+    "sixArchiveContractVerified": true,
+    "embeddedCleanSourceVerified": true,
+    "published": false,
+    "allTargetRuntimeAcceptance": false,
+    "windowsRuntimeAccepted": false,
+    "publicDistributionAccepted": false,
+    "imageBinaryPlatformMatched": true
+  },
+  "tool": {
+    "name": "GoReleaser",
+    "version": "2.18.2",
+    "binarySha256": "af64e25fe2ebf23360189b92f5a09e01ee8ded6d964855ca056f35bc6951167f",
+    "officialDarwinArm64ArchiveSha256": "a811ff154fe136a0cfb55d00126c151fc39ec370a663d805a9ca5547445aa70c"
+  },
+  "runtime": {
+    "snapshotRuntimeChecks": [
+      {
+        "path": "cub-scout_darwin_arm64_v8.0/cub-scout",
+        "sha256": "a23cea50787422c97dff50140c5a9d9a24d6c52a7bf3fecc57421bb15938debe",
+        "args": [
+          "version"
+        ],
+        "pluginEnvironment": false,
+        "execution": "macOS arm64 host",
+        "exit": 0,
+        "stdout": "cub-scout version v2.13.0-next (built 2026-10-05T16:40:59Z)\n",
+        "stderr": ""
+      },
+      {
+        "path": "cub-scout_darwin_arm64_v8.0/cub-scout",
+        "sha256": "a23cea50787422c97dff50140c5a9d9a24d6c52a7bf3fecc57421bb15938debe",
+        "args": [
+          "help",
+          "trace"
+        ],
+        "pluginEnvironment": false,
+        "execution": "macOS arm64 host",
+        "exit": 0,
+        "stdout": "Trace any resource back to its controller/source evidence.\n\nYou don't need to know which tool manages a resource. Just run trace and\ncub-scout auto-detects the owner and shows the full delivery chain.\n\nUnder the hood:\n  - Flux resources: uses 'flux trace'\n  - ArgoCD resources: reads Application CRs from the selected Kubernetes cluster\n  - Helm resources: reads release metadata\n  - Sveltos resources: reads Profile/ClusterProfile owner and reference annotations\n  - Modelplane resources: reads Modelplane API objects, labels, ownerRefs, and status\n\nThe value: In mixed environments with multiple GitOps tools, one command\ntraces any resource without switching between controller-specific CLIs.\n\nExamples:\n  # Trace a deployment\n  cub-scout trace deployment/nginx -n demo\n\n  # Trace with kind and name separately\n  cub-scout trace Deployment nginx -n demo\n\n  # Trace an Argo CD application directly\n  cub-scout trace --app frontend-app\n\n  # Reverse trace - start from any resource (e.g., a Pod) and walk up\n  cub-scout trace pod/nginx-7d9b8c-x4k2p -n prod --reverse\n\n  # Compare one already-rendered object with the selected live object\n  cub-scout trace deployment/nginx -n demo --diff --desired-file ./rendered --api-version apps/v1\n\n  # Output as JSON\n  cub-scout trace deployment/nginx -n demo --json\n\n  # Show deployment history (who deployed what, when)\n  cub-scout trace deployment/nginx -n demo --history\n\nThe output shows:\n  - The full chain from source/controller metadata \u2192 deployer/controller \u2192 resource\n  - Status and revision at each level\n  - Where in the chain something is broken (if applicable)\n\nReverse trace (--reverse) walks ownerReferences to find:\n  - The K8s ownership chain (Pod \u2192 ReplicaSet \u2192 Deployment)\n  - The controller owner (Flux, ArgoCD, Sveltos, Modelplane, Helm, or Native)\n\nDiff mode (--diff) compares one caller-rendered object with one live object:\n  - Requires --desired-file; cub-scout does not render Git or predict reconciliation\n  - Reports the selected context and exact live-read evidence\n  - Controller-desired diffs are not yet supported\n\nRender manifests with your existing tool (for example, helm template or\nkustomize build), then pass that output with --desired-file. The former\nautomatic controller CLI diff delegation is disabled.\n\nTrace context troubleshooting (ArgoCD):\n  - Select the Kubernetes context with --kube-context\n  - Specify the Application namespace with -n\n  - Kubernetes Application read permission is required; Argo server login is not used\n  - Rendered diff reads the selected Kubernetes API directly; controller-rendered desired state is not yet supported\n\nUsage:\n  cub-scout trace <kind/name> or <kind> <name> [flags]\n\nFlags:\n      --api-version string             Exact desired API version when same-name documents are ambiguous (requires --diff --desired-file)\n      --app string                     Trace Argo CD application by name\n      --artifacts                      Include source artifact provenance (url/revision/digest/update time)\n      --confighub-since string         Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w) (default \"24h\")\n      --confighub-space string         ConfigHub space for delivery evidence (default: resource ConfigHub space; use '*' explicitly for all spaces)\n      --confighub-stale-after string   Treat ConfigHub live-status observations older than this as stale (default \"15m\")\n      --desired-file string            Already-rendered local manifest file/directory to compare (requires --diff)\n  -d, --diff                           Compare one already-rendered object with the selected live object\n      --explain                        Show explanatory content to help learn GitOps concepts\n      --format string                  Output format: ascii, json, md (default \"ascii\")\n  -h, --help                           help for trace\n      --history                        Show deployment history (who deployed what, when)\n      --kube-context string            Use this exact Kubernetes context for trace reads\n      --limit int                      Limit number of history entries (default: 10) (default 10)\n  -n, --namespace string               Namespace of the resource (default: flux-system; Application names must be unique if omitted)\n      --presentation string            Presentation mode: human, ai (concise for AI assistants), paired (human+AI workflow); omit the flag to keep the legacy/default render path\n  -r, --reverse                        Reverse trace - walk ownerReferences up to find GitOps source\n      --with-confighub                 Include bounded ConfigHub delivery evidence when the resource exposes exact ConfigHub correlation\n",
+        "stderr": ""
+      },
+      {
+        "path": "kubectl-cub-scout_darwin_arm64_v8.0/kubectl-cub_scout",
+        "sha256": "a23cea50787422c97dff50140c5a9d9a24d6c52a7bf3fecc57421bb15938debe",
+        "args": [
+          "version"
+        ],
+        "pluginEnvironment": false,
+        "execution": "macOS arm64 host",
+        "exit": 0,
+        "stdout": "cub-scout version v2.13.0-next (built 2026-10-05T16:40:59Z)\n",
+        "stderr": ""
+      },
+      {
+        "path": "kubectl-cub-scout_darwin_arm64_v8.0/kubectl-cub_scout",
+        "sha256": "a23cea50787422c97dff50140c5a9d9a24d6c52a7bf3fecc57421bb15938debe",
+        "args": [
+          "help",
+          "trace"
+        ],
+        "pluginEnvironment": false,
+        "execution": "macOS arm64 host",
+        "exit": 0,
+        "stdout": "Trace any resource back to its controller/source evidence.\n\nYou don't need to know which tool manages a resource. Just run trace and\ncub-scout auto-detects the owner and shows the full delivery chain.\n\nUnder the hood:\n  - Flux resources: uses 'flux trace'\n  - ArgoCD resources: reads Application CRs from the selected Kubernetes cluster\n  - Helm resources: reads release metadata\n  - Sveltos resources: reads Profile/ClusterProfile owner and reference annotations\n  - Modelplane resources: reads Modelplane API objects, labels, ownerRefs, and status\n\nThe value: In mixed environments with multiple GitOps tools, one command\ntraces any resource without switching between controller-specific CLIs.\n\nExamples:\n  # Trace a deployment\n  cub-scout trace deployment/nginx -n demo\n\n  # Trace with kind and name separately\n  cub-scout trace Deployment nginx -n demo\n\n  # Trace an Argo CD application directly\n  cub-scout trace --app frontend-app\n\n  # Reverse trace - start from any resource (e.g., a Pod) and walk up\n  cub-scout trace pod/nginx-7d9b8c-x4k2p -n prod --reverse\n\n  # Compare one already-rendered object with the selected live object\n  cub-scout trace deployment/nginx -n demo --diff --desired-file ./rendered --api-version apps/v1\n\n  # Output as JSON\n  cub-scout trace deployment/nginx -n demo --json\n\n  # Show deployment history (who deployed what, when)\n  cub-scout trace deployment/nginx -n demo --history\n\nThe output shows:\n  - The full chain from source/controller metadata \u2192 deployer/controller \u2192 resource\n  - Status and revision at each level\n  - Where in the chain something is broken (if applicable)\n\nReverse trace (--reverse) walks ownerReferences to find:\n  - The K8s ownership chain (Pod \u2192 ReplicaSet \u2192 Deployment)\n  - The controller owner (Flux, ArgoCD, Sveltos, Modelplane, Helm, or Native)\n\nDiff mode (--diff) compares one caller-rendered object with one live object:\n  - Requires --desired-file; cub-scout does not render Git or predict reconciliation\n  - Reports the selected context and exact live-read evidence\n  - Controller-desired diffs are not yet supported\n\nRender manifests with your existing tool (for example, helm template or\nkustomize build), then pass that output with --desired-file. The former\nautomatic controller CLI diff delegation is disabled.\n\nTrace context troubleshooting (ArgoCD):\n  - Select the Kubernetes context with --kube-context\n  - Specify the Application namespace with -n\n  - Kubernetes Application read permission is required; Argo server login is not used\n  - Rendered diff reads the selected Kubernetes API directly; controller-rendered desired state is not yet supported\n\nUsage:\n  cub-scout trace <kind/name> or <kind> <name> [flags]\n\nFlags:\n      --api-version string             Exact desired API version when same-name documents are ambiguous (requires --diff --desired-file)\n      --app string                     Trace Argo CD application by name\n      --artifacts                      Include source artifact provenance (url/revision/digest/update time)\n      --confighub-since string         Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w) (default \"24h\")\n      --confighub-space string         ConfigHub space for delivery evidence (default: resource ConfigHub space; use '*' explicitly for all spaces)\n      --confighub-stale-after string   Treat ConfigHub live-status observations older than this as stale (default \"15m\")\n      --desired-file string            Already-rendered local manifest file/directory to compare (requires --diff)\n  -d, --diff                           Compare one already-rendered object with the selected live object\n      --explain                        Show explanatory content to help learn GitOps concepts\n      --format string                  Output format: ascii, json, md (default \"ascii\")\n  -h, --help                           help for trace\n      --history                        Show deployment history (who deployed what, when)\n      --kube-context string            Use this exact Kubernetes context for trace reads\n      --limit int                      Limit number of history entries (default: 10) (default 10)\n  -n, --namespace string               Namespace of the resource (default: flux-system; Application names must be unique if omitted)\n      --presentation string            Presentation mode: human, ai (concise for AI assistants), paired (human+AI workflow); omit the flag to keep the legacy/default render path\n  -r, --reverse                        Reverse trace - walk ownerReferences up to find GitOps source\n      --with-confighub                 Include bounded ConfigHub delivery evidence when the resource exposes exact ConfigHub correlation\n",
+        "stderr": ""
+      },
+      {
+        "path": "cub-scout-plugin_darwin_arm64_v8.0/main",
+        "sha256": "a23cea50787422c97dff50140c5a9d9a24d6c52a7bf3fecc57421bb15938debe",
+        "args": [
+          "version"
+        ],
+        "pluginEnvironment": true,
+        "execution": "macOS arm64 host",
+        "exit": 0,
+        "stdout": "cub-scout version v2.13.0-next (built 2026-10-05T16:40:59Z)\n",
+        "stderr": ""
+      },
+      {
+        "path": "cub-scout-plugin_darwin_arm64_v8.0/main",
+        "sha256": "a23cea50787422c97dff50140c5a9d9a24d6c52a7bf3fecc57421bb15938debe",
+        "args": [
+          "help",
+          "trace"
+        ],
+        "pluginEnvironment": true,
+        "execution": "macOS arm64 host",
+        "exit": 0,
+        "stdout": "Trace any resource back to its controller/source evidence.\n\nYou don't need to know which tool manages a resource. Just run trace and\ncub-scout auto-detects the owner and shows the full delivery chain.\n\nUnder the hood:\n  - Flux resources: uses 'flux trace'\n  - ArgoCD resources: reads Application CRs from the selected Kubernetes cluster\n  - Helm resources: reads release metadata\n  - Sveltos resources: reads Profile/ClusterProfile owner and reference annotations\n  - Modelplane resources: reads Modelplane API objects, labels, ownerRefs, and status\n\nThe value: In mixed environments with multiple GitOps tools, one command\ntraces any resource without switching between controller-specific CLIs.\n\nExamples:\n  # Trace a deployment\n  cub-scout trace deployment/nginx -n demo\n\n  # Trace with kind and name separately\n  cub-scout trace Deployment nginx -n demo\n\n  # Trace an Argo CD application directly\n  cub-scout trace --app frontend-app\n\n  # Reverse trace - start from any resource (e.g., a Pod) and walk up\n  cub-scout trace pod/nginx-7d9b8c-x4k2p -n prod --reverse\n\n  # Compare one already-rendered object with the selected live object\n  cub-scout trace deployment/nginx -n demo --diff --desired-file ./rendered --api-version apps/v1\n\n  # Output as JSON\n  cub-scout trace deployment/nginx -n demo --json\n\n  # Show deployment history (who deployed what, when)\n  cub-scout trace deployment/nginx -n demo --history\n\nThe output shows:\n  - The full chain from source/controller metadata \u2192 deployer/controller \u2192 resource\n  - Status and revision at each level\n  - Where in the chain something is broken (if applicable)\n\nReverse trace (--reverse) walks ownerReferences to find:\n  - The K8s ownership chain (Pod \u2192 ReplicaSet \u2192 Deployment)\n  - The controller owner (Flux, ArgoCD, Sveltos, Modelplane, Helm, or Native)\n\nDiff mode (--diff) compares one caller-rendered object with one live object:\n  - Requires --desired-file; cub-scout does not render Git or predict reconciliation\n  - Reports the selected context and exact live-read evidence\n  - Controller-desired diffs are not yet supported\n\nRender manifests with your existing tool (for example, helm template or\nkustomize build), then pass that output with --desired-file. The former\nautomatic controller CLI diff delegation is disabled.\n\nTrace context troubleshooting (ArgoCD):\n  - Select the Kubernetes context with --kube-context\n  - Specify the Application namespace with -n\n  - Kubernetes Application read permission is required; Argo server login is not used\n  - Rendered diff reads the selected Kubernetes API directly; controller-rendered desired state is not yet supported\n\nUsage:\n  cub scout trace <kind/name> or <kind> <name> [flags]\n\nFlags:\n      --api-version string             Exact desired API version when same-name documents are ambiguous (requires --diff --desired-file)\n      --app string                     Trace Argo CD application by name\n      --artifacts                      Include source artifact provenance (url/revision/digest/update time)\n      --confighub-since string         Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w) (default \"24h\")\n      --confighub-space string         ConfigHub space for delivery evidence (default: resource ConfigHub space; use '*' explicitly for all spaces)\n      --confighub-stale-after string   Treat ConfigHub live-status observations older than this as stale (default \"15m\")\n      --desired-file string            Already-rendered local manifest file/directory to compare (requires --diff)\n  -d, --diff                           Compare one already-rendered object with the selected live object\n      --explain                        Show explanatory content to help learn GitOps concepts\n      --format string                  Output format: ascii, json, md (default \"ascii\")\n  -h, --help                           help for trace\n      --history                        Show deployment history (who deployed what, when)\n      --kube-context string            Use this exact Kubernetes context for trace reads\n      --limit int                      Limit number of history entries (default: 10) (default 10)\n  -n, --namespace string               Namespace of the resource (default: flux-system; Application names must be unique if omitted)\n      --presentation string            Presentation mode: human, ai (concise for AI assistants), paired (human+AI workflow); omit the flag to keep the legacy/default render path\n  -r, --reverse                        Reverse trace - walk ownerReferences up to find GitOps source\n      --with-confighub                 Include bounded ConfigHub delivery evidence when the resource exposes exact ConfigHub correlation\n",
+        "stderr": ""
+      },
+      {
+        "path": "cub-scout_darwin_amd64_v1/cub-scout",
+        "sha256": "29fa5e6061fcc86e24ffbc8bd5b75377c2ad716b060dc4cd29df8794fa62b4bf",
+        "args": [
+          "version"
+        ],
+        "pluginEnvironment": false,
+        "execution": "macOS arm64 host",
+        "exit": 0,
+        "stdout": "cub-scout version v2.13.0-next (built 2026-10-05T16:40:59Z)\n",
+        "stderr": ""
+      },
+      {
+        "path": "cub-scout_darwin_amd64_v1/cub-scout",
+        "sha256": "29fa5e6061fcc86e24ffbc8bd5b75377c2ad716b060dc4cd29df8794fa62b4bf",
+        "args": [
+          "help",
+          "trace"
+        ],
+        "pluginEnvironment": false,
+        "execution": "macOS arm64 host",
+        "exit": 0,
+        "stdout": "Trace any resource back to its controller/source evidence.\n\nYou don't need to know which tool manages a resource. Just run trace and\ncub-scout auto-detects the owner and shows the full delivery chain.\n\nUnder the hood:\n  - Flux resources: uses 'flux trace'\n  - ArgoCD resources: reads Application CRs from the selected Kubernetes cluster\n  - Helm resources: reads release metadata\n  - Sveltos resources: reads Profile/ClusterProfile owner and reference annotations\n  - Modelplane resources: reads Modelplane API objects, labels, ownerRefs, and status\n\nThe value: In mixed environments with multiple GitOps tools, one command\ntraces any resource without switching between controller-specific CLIs.\n\nExamples:\n  # Trace a deployment\n  cub-scout trace deployment/nginx -n demo\n\n  # Trace with kind and name separately\n  cub-scout trace Deployment nginx -n demo\n\n  # Trace an Argo CD application directly\n  cub-scout trace --app frontend-app\n\n  # Reverse trace - start from any resource (e.g., a Pod) and walk up\n  cub-scout trace pod/nginx-7d9b8c-x4k2p -n prod --reverse\n\n  # Compare one already-rendered object with the selected live object\n  cub-scout trace deployment/nginx -n demo --diff --desired-file ./rendered --api-version apps/v1\n\n  # Output as JSON\n  cub-scout trace deployment/nginx -n demo --json\n\n  # Show deployment history (who deployed what, when)\n  cub-scout trace deployment/nginx -n demo --history\n\nThe output shows:\n  - The full chain from source/controller metadata \u2192 deployer/controller \u2192 resource\n  - Status and revision at each level\n  - Where in the chain something is broken (if applicable)\n\nReverse trace (--reverse) walks ownerReferences to find:\n  - The K8s ownership chain (Pod \u2192 ReplicaSet \u2192 Deployment)\n  - The controller owner (Flux, ArgoCD, Sveltos, Modelplane, Helm, or Native)\n\nDiff mode (--diff) compares one caller-rendered object with one live object:\n  - Requires --desired-file; cub-scout does not render Git or predict reconciliation\n  - Reports the selected context and exact live-read evidence\n  - Controller-desired diffs are not yet supported\n\nRender manifests with your existing tool (for example, helm template or\nkustomize build), then pass that output with --desired-file. The former\nautomatic controller CLI diff delegation is disabled.\n\nTrace context troubleshooting (ArgoCD):\n  - Select the Kubernetes context with --kube-context\n  - Specify the Application namespace with -n\n  - Kubernetes Application read permission is required; Argo server login is not used\n  - Rendered diff reads the selected Kubernetes API directly; controller-rendered desired state is not yet supported\n\nUsage:\n  cub-scout trace <kind/name> or <kind> <name> [flags]\n\nFlags:\n      --api-version string             Exact desired API version when same-name documents are ambiguous (requires --diff --desired-file)\n      --app string                     Trace Argo CD application by name\n      --artifacts                      Include source artifact provenance (url/revision/digest/update time)\n      --confighub-since string         Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w) (default \"24h\")\n      --confighub-space string         ConfigHub space for delivery evidence (default: resource ConfigHub space; use '*' explicitly for all spaces)\n      --confighub-stale-after string   Treat ConfigHub live-status observations older than this as stale (default \"15m\")\n      --desired-file string            Already-rendered local manifest file/directory to compare (requires --diff)\n  -d, --diff                           Compare one already-rendered object with the selected live object\n      --explain                        Show explanatory content to help learn GitOps concepts\n      --format string                  Output format: ascii, json, md (default \"ascii\")\n  -h, --help                           help for trace\n      --history                        Show deployment history (who deployed what, when)\n      --kube-context string            Use this exact Kubernetes context for trace reads\n      --limit int                      Limit number of history entries (default: 10) (default 10)\n  -n, --namespace string               Namespace of the resource (default: flux-system; Application names must be unique if omitted)\n      --presentation string            Presentation mode: human, ai (concise for AI assistants), paired (human+AI workflow); omit the flag to keep the legacy/default render path\n  -r, --reverse                        Reverse trace - walk ownerReferences up to find GitOps source\n      --with-confighub                 Include bounded ConfigHub delivery evidence when the resource exposes exact ConfigHub correlation\n",
+        "stderr": ""
+      },
+      {
+        "path": "kubectl-cub-scout_darwin_amd64_v1/kubectl-cub_scout",
+        "sha256": "29fa5e6061fcc86e24ffbc8bd5b75377c2ad716b060dc4cd29df8794fa62b4bf",
+        "args": [
+          "version"
+        ],
+        "pluginEnvironment": false,
+        "execution": "macOS arm64 host",
+        "exit": 0,
+        "stdout": "cub-scout version v2.13.0-next (built 2026-10-05T16:40:59Z)\n",
+        "stderr": ""
+      },
+      {
+        "path": "kubectl-cub-scout_darwin_amd64_v1/kubectl-cub_scout",
+        "sha256": "29fa5e6061fcc86e24ffbc8bd5b75377c2ad716b060dc4cd29df8794fa62b4bf",
+        "args": [
+          "help",
+          "trace"
+        ],
+        "pluginEnvironment": false,
+        "execution": "macOS arm64 host",
+        "exit": 0,
+        "stdout": "Trace any resource back to its controller/source evidence.\n\nYou don't need to know which tool manages a resource. Just run trace and\ncub-scout auto-detects the owner and shows the full delivery chain.\n\nUnder the hood:\n  - Flux resources: uses 'flux trace'\n  - ArgoCD resources: reads Application CRs from the selected Kubernetes cluster\n  - Helm resources: reads release metadata\n  - Sveltos resources: reads Profile/ClusterProfile owner and reference annotations\n  - Modelplane resources: reads Modelplane API objects, labels, ownerRefs, and status\n\nThe value: In mixed environments with multiple GitOps tools, one command\ntraces any resource without switching between controller-specific CLIs.\n\nExamples:\n  # Trace a deployment\n  cub-scout trace deployment/nginx -n demo\n\n  # Trace with kind and name separately\n  cub-scout trace Deployment nginx -n demo\n\n  # Trace an Argo CD application directly\n  cub-scout trace --app frontend-app\n\n  # Reverse trace - start from any resource (e.g., a Pod) and walk up\n  cub-scout trace pod/nginx-7d9b8c-x4k2p -n prod --reverse\n\n  # Compare one already-rendered object with the selected live object\n  cub-scout trace deployment/nginx -n demo --diff --desired-file ./rendered --api-version apps/v1\n\n  # Output as JSON\n  cub-scout trace deployment/nginx -n demo --json\n\n  # Show deployment history (who deployed what, when)\n  cub-scout trace deployment/nginx -n demo --history\n\nThe output shows:\n  - The full chain from source/controller metadata \u2192 deployer/controller \u2192 resource\n  - Status and revision at each level\n  - Where in the chain something is broken (if applicable)\n\nReverse trace (--reverse) walks ownerReferences to find:\n  - The K8s ownership chain (Pod \u2192 ReplicaSet \u2192 Deployment)\n  - The controller owner (Flux, ArgoCD, Sveltos, Modelplane, Helm, or Native)\n\nDiff mode (--diff) compares one caller-rendered object with one live object:\n  - Requires --desired-file; cub-scout does not render Git or predict reconciliation\n  - Reports the selected context and exact live-read evidence\n  - Controller-desired diffs are not yet supported\n\nRender manifests with your existing tool (for example, helm template or\nkustomize build), then pass that output with --desired-file. The former\nautomatic controller CLI diff delegation is disabled.\n\nTrace context troubleshooting (ArgoCD):\n  - Select the Kubernetes context with --kube-context\n  - Specify the Application namespace with -n\n  - Kubernetes Application read permission is required; Argo server login is not used\n  - Rendered diff reads the selected Kubernetes API directly; controller-rendered desired state is not yet supported\n\nUsage:\n  cub-scout trace <kind/name> or <kind> <name> [flags]\n\nFlags:\n      --api-version string             Exact desired API version when same-name documents are ambiguous (requires --diff --desired-file)\n      --app string                     Trace Argo CD application by name\n      --artifacts                      Include source artifact provenance (url/revision/digest/update time)\n      --confighub-since string         Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w) (default \"24h\")\n      --confighub-space string         ConfigHub space for delivery evidence (default: resource ConfigHub space; use '*' explicitly for all spaces)\n      --confighub-stale-after string   Treat ConfigHub live-status observations older than this as stale (default \"15m\")\n      --desired-file string            Already-rendered local manifest file/directory to compare (requires --diff)\n  -d, --diff                           Compare one already-rendered object with the selected live object\n      --explain                        Show explanatory content to help learn GitOps concepts\n      --format string                  Output format: ascii, json, md (default \"ascii\")\n  -h, --help                           help for trace\n      --history                        Show deployment history (who deployed what, when)\n      --kube-context string            Use this exact Kubernetes context for trace reads\n      --limit int                      Limit number of history entries (default: 10) (default 10)\n  -n, --namespace string               Namespace of the resource (default: flux-system; Application names must be unique if omitted)\n      --presentation string            Presentation mode: human, ai (concise for AI assistants), paired (human+AI workflow); omit the flag to keep the legacy/default render path\n  -r, --reverse                        Reverse trace - walk ownerReferences up to find GitOps source\n      --with-confighub                 Include bounded ConfigHub delivery evidence when the resource exposes exact ConfigHub correlation\n",
+        "stderr": ""
+      },
+      {
+        "path": "cub-scout-plugin_darwin_amd64_v1/main",
+        "sha256": "29fa5e6061fcc86e24ffbc8bd5b75377c2ad716b060dc4cd29df8794fa62b4bf",
+        "args": [
+          "version"
+        ],
+        "pluginEnvironment": true,
+        "execution": "macOS arm64 host",
+        "exit": 0,
+        "stdout": "cub-scout version v2.13.0-next (built 2026-10-05T16:40:59Z)\n",
+        "stderr": ""
+      },
+      {
+        "path": "cub-scout-plugin_darwin_amd64_v1/main",
+        "sha256": "29fa5e6061fcc86e24ffbc8bd5b75377c2ad716b060dc4cd29df8794fa62b4bf",
+        "args": [
+          "help",
+          "trace"
+        ],
+        "pluginEnvironment": true,
+        "execution": "macOS arm64 host",
+        "exit": 0,
+        "stdout": "Trace any resource back to its controller/source evidence.\n\nYou don't need to know which tool manages a resource. Just run trace and\ncub-scout auto-detects the owner and shows the full delivery chain.\n\nUnder the hood:\n  - Flux resources: uses 'flux trace'\n  - ArgoCD resources: reads Application CRs from the selected Kubernetes cluster\n  - Helm resources: reads release metadata\n  - Sveltos resources: reads Profile/ClusterProfile owner and reference annotations\n  - Modelplane resources: reads Modelplane API objects, labels, ownerRefs, and status\n\nThe value: In mixed environments with multiple GitOps tools, one command\ntraces any resource without switching between controller-specific CLIs.\n\nExamples:\n  # Trace a deployment\n  cub-scout trace deployment/nginx -n demo\n\n  # Trace with kind and name separately\n  cub-scout trace Deployment nginx -n demo\n\n  # Trace an Argo CD application directly\n  cub-scout trace --app frontend-app\n\n  # Reverse trace - start from any resource (e.g., a Pod) and walk up\n  cub-scout trace pod/nginx-7d9b8c-x4k2p -n prod --reverse\n\n  # Compare one already-rendered object with the selected live object\n  cub-scout trace deployment/nginx -n demo --diff --desired-file ./rendered --api-version apps/v1\n\n  # Output as JSON\n  cub-scout trace deployment/nginx -n demo --json\n\n  # Show deployment history (who deployed what, when)\n  cub-scout trace deployment/nginx -n demo --history\n\nThe output shows:\n  - The full chain from source/controller metadata \u2192 deployer/controller \u2192 resource\n  - Status and revision at each level\n  - Where in the chain something is broken (if applicable)\n\nReverse trace (--reverse) walks ownerReferences to find:\n  - The K8s ownership chain (Pod \u2192 ReplicaSet \u2192 Deployment)\n  - The controller owner (Flux, ArgoCD, Sveltos, Modelplane, Helm, or Native)\n\nDiff mode (--diff) compares one caller-rendered object with one live object:\n  - Requires --desired-file; cub-scout does not render Git or predict reconciliation\n  - Reports the selected context and exact live-read evidence\n  - Controller-desired diffs are not yet supported\n\nRender manifests with your existing tool (for example, helm template or\nkustomize build), then pass that output with --desired-file. The former\nautomatic controller CLI diff delegation is disabled.\n\nTrace context troubleshooting (ArgoCD):\n  - Select the Kubernetes context with --kube-context\n  - Specify the Application namespace with -n\n  - Kubernetes Application read permission is required; Argo server login is not used\n  - Rendered diff reads the selected Kubernetes API directly; controller-rendered desired state is not yet supported\n\nUsage:\n  cub scout trace <kind/name> or <kind> <name> [flags]\n\nFlags:\n      --api-version string             Exact desired API version when same-name documents are ambiguous (requires --diff --desired-file)\n      --app string                     Trace Argo CD application by name\n      --artifacts                      Include source artifact provenance (url/revision/digest/update time)\n      --confighub-since string         Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w) (default \"24h\")\n      --confighub-space string         ConfigHub space for delivery evidence (default: resource ConfigHub space; use '*' explicitly for all spaces)\n      --confighub-stale-after string   Treat ConfigHub live-status observations older than this as stale (default \"15m\")\n      --desired-file string            Already-rendered local manifest file/directory to compare (requires --diff)\n  -d, --diff                           Compare one already-rendered object with the selected live object\n      --explain                        Show explanatory content to help learn GitOps concepts\n      --format string                  Output format: ascii, json, md (default \"ascii\")\n  -h, --help                           help for trace\n      --history                        Show deployment history (who deployed what, when)\n      --kube-context string            Use this exact Kubernetes context for trace reads\n      --limit int                      Limit number of history entries (default: 10) (default 10)\n  -n, --namespace string               Namespace of the resource (default: flux-system; Application names must be unique if omitted)\n      --presentation string            Presentation mode: human, ai (concise for AI assistants), paired (human+AI workflow); omit the flag to keep the legacy/default render path\n  -r, --reverse                        Reverse trace - walk ownerReferences up to find GitOps source\n      --with-confighub                 Include bounded ConfigHub delivery evidence when the resource exposes exact ConfigHub correlation\n",
+        "stderr": ""
+      },
+      {
+        "path": "cub-scout_linux_arm64_v8.0/cub-scout",
+        "sha256": "1de777a4f296d587e8b5875eeadc5d50ed81dabc6e550d705b309d25ec4ce65f",
+        "args": [
+          "version"
+        ],
+        "pluginEnvironment": false,
+        "execution": "Docker on arm64 macOS",
+        "exit": 0,
+        "stdout": "cub-scout version v2.13.0-next (built 2026-10-05T16:40:59Z)\n",
+        "stderr": "WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested\n"
+      },
+      {
+        "path": "cub-scout_linux_arm64_v8.0/cub-scout",
+        "sha256": "1de777a4f296d587e8b5875eeadc5d50ed81dabc6e550d705b309d25ec4ce65f",
+        "args": [
+          "help",
+          "trace"
+        ],
+        "pluginEnvironment": false,
+        "execution": "Docker on arm64 macOS",
+        "exit": 0,
+        "stdout": "Trace any resource back to its controller/source evidence.\n\nYou don't need to know which tool manages a resource. Just run trace and\ncub-scout auto-detects the owner and shows the full delivery chain.\n\nUnder the hood:\n  - Flux resources: uses 'flux trace'\n  - ArgoCD resources: reads Application CRs from the selected Kubernetes cluster\n  - Helm resources: reads release metadata\n  - Sveltos resources: reads Profile/ClusterProfile owner and reference annotations\n  - Modelplane resources: reads Modelplane API objects, labels, ownerRefs, and status\n\nThe value: In mixed environments with multiple GitOps tools, one command\ntraces any resource without switching between controller-specific CLIs.\n\nExamples:\n  # Trace a deployment\n  cub-scout trace deployment/nginx -n demo\n\n  # Trace with kind and name separately\n  cub-scout trace Deployment nginx -n demo\n\n  # Trace an Argo CD application directly\n  cub-scout trace --app frontend-app\n\n  # Reverse trace - start from any resource (e.g., a Pod) and walk up\n  cub-scout trace pod/nginx-7d9b8c-x4k2p -n prod --reverse\n\n  # Compare one already-rendered object with the selected live object\n  cub-scout trace deployment/nginx -n demo --diff --desired-file ./rendered --api-version apps/v1\n\n  # Output as JSON\n  cub-scout trace deployment/nginx -n demo --json\n\n  # Show deployment history (who deployed what, when)\n  cub-scout trace deployment/nginx -n demo --history\n\nThe output shows:\n  - The full chain from source/controller metadata \u2192 deployer/controller \u2192 resource\n  - Status and revision at each level\n  - Where in the chain something is broken (if applicable)\n\nReverse trace (--reverse) walks ownerReferences to find:\n  - The K8s ownership chain (Pod \u2192 ReplicaSet \u2192 Deployment)\n  - The controller owner (Flux, ArgoCD, Sveltos, Modelplane, Helm, or Native)\n\nDiff mode (--diff) compares one caller-rendered object with one live object:\n  - Requires --desired-file; cub-scout does not render Git or predict reconciliation\n  - Reports the selected context and exact live-read evidence\n  - Controller-desired diffs are not yet supported\n\nRender manifests with your existing tool (for example, helm template or\nkustomize build), then pass that output with --desired-file. The former\nautomatic controller CLI diff delegation is disabled.\n\nTrace context troubleshooting (ArgoCD):\n  - Select the Kubernetes context with --kube-context\n  - Specify the Application namespace with -n\n  - Kubernetes Application read permission is required; Argo server login is not used\n  - Rendered diff reads the selected Kubernetes API directly; controller-rendered desired state is not yet supported\n\nUsage:\n  cub-scout trace <kind/name> or <kind> <name> [flags]\n\nFlags:\n      --api-version string             Exact desired API version when same-name documents are ambiguous (requires --diff --desired-file)\n      --app string                     Trace Argo CD application by name\n      --artifacts                      Include source artifact provenance (url/revision/digest/update time)\n      --confighub-since string         Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w) (default \"24h\")\n      --confighub-space string         ConfigHub space for delivery evidence (default: resource ConfigHub space; use '*' explicitly for all spaces)\n      --confighub-stale-after string   Treat ConfigHub live-status observations older than this as stale (default \"15m\")\n      --desired-file string            Already-rendered local manifest file/directory to compare (requires --diff)\n  -d, --diff                           Compare one already-rendered object with the selected live object\n      --explain                        Show explanatory content to help learn GitOps concepts\n      --format string                  Output format: ascii, json, md (default \"ascii\")\n  -h, --help                           help for trace\n      --history                        Show deployment history (who deployed what, when)\n      --kube-context string            Use this exact Kubernetes context for trace reads\n      --limit int                      Limit number of history entries (default: 10) (default 10)\n  -n, --namespace string               Namespace of the resource (default: flux-system; Application names must be unique if omitted)\n      --presentation string            Presentation mode: human, ai (concise for AI assistants), paired (human+AI workflow); omit the flag to keep the legacy/default render path\n  -r, --reverse                        Reverse trace - walk ownerReferences up to find GitOps source\n      --with-confighub                 Include bounded ConfigHub delivery evidence when the resource exposes exact ConfigHub correlation\n",
+        "stderr": "WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested\n"
+      },
+      {
+        "path": "kubectl-cub-scout_linux_arm64_v8.0/kubectl-cub_scout",
+        "sha256": "1de777a4f296d587e8b5875eeadc5d50ed81dabc6e550d705b309d25ec4ce65f",
+        "args": [
+          "version"
+        ],
+        "pluginEnvironment": false,
+        "execution": "Docker on arm64 macOS",
+        "exit": 0,
+        "stdout": "cub-scout version v2.13.0-next (built 2026-10-05T16:40:59Z)\n",
+        "stderr": "WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested\n"
+      },
+      {
+        "path": "kubectl-cub-scout_linux_arm64_v8.0/kubectl-cub_scout",
+        "sha256": "1de777a4f296d587e8b5875eeadc5d50ed81dabc6e550d705b309d25ec4ce65f",
+        "args": [
+          "help",
+          "trace"
+        ],
+        "pluginEnvironment": false,
+        "execution": "Docker on arm64 macOS",
+        "exit": 0,
+        "stdout": "Trace any resource back to its controller/source evidence.\n\nYou don't need to know which tool manages a resource. Just run trace and\ncub-scout auto-detects the owner and shows the full delivery chain.\n\nUnder the hood:\n  - Flux resources: uses 'flux trace'\n  - ArgoCD resources: reads Application CRs from the selected Kubernetes cluster\n  - Helm resources: reads release metadata\n  - Sveltos resources: reads Profile/ClusterProfile owner and reference annotations\n  - Modelplane resources: reads Modelplane API objects, labels, ownerRefs, and status\n\nThe value: In mixed environments with multiple GitOps tools, one command\ntraces any resource without switching between controller-specific CLIs.\n\nExamples:\n  # Trace a deployment\n  cub-scout trace deployment/nginx -n demo\n\n  # Trace with kind and name separately\n  cub-scout trace Deployment nginx -n demo\n\n  # Trace an Argo CD application directly\n  cub-scout trace --app frontend-app\n\n  # Reverse trace - start from any resource (e.g., a Pod) and walk up\n  cub-scout trace pod/nginx-7d9b8c-x4k2p -n prod --reverse\n\n  # Compare one already-rendered object with the selected live object\n  cub-scout trace deployment/nginx -n demo --diff --desired-file ./rendered --api-version apps/v1\n\n  # Output as JSON\n  cub-scout trace deployment/nginx -n demo --json\n\n  # Show deployment history (who deployed what, when)\n  cub-scout trace deployment/nginx -n demo --history\n\nThe output shows:\n  - The full chain from source/controller metadata \u2192 deployer/controller \u2192 resource\n  - Status and revision at each level\n  - Where in the chain something is broken (if applicable)\n\nReverse trace (--reverse) walks ownerReferences to find:\n  - The K8s ownership chain (Pod \u2192 ReplicaSet \u2192 Deployment)\n  - The controller owner (Flux, ArgoCD, Sveltos, Modelplane, Helm, or Native)\n\nDiff mode (--diff) compares one caller-rendered object with one live object:\n  - Requires --desired-file; cub-scout does not render Git or predict reconciliation\n  - Reports the selected context and exact live-read evidence\n  - Controller-desired diffs are not yet supported\n\nRender manifests with your existing tool (for example, helm template or\nkustomize build), then pass that output with --desired-file. The former\nautomatic controller CLI diff delegation is disabled.\n\nTrace context troubleshooting (ArgoCD):\n  - Select the Kubernetes context with --kube-context\n  - Specify the Application namespace with -n\n  - Kubernetes Application read permission is required; Argo server login is not used\n  - Rendered diff reads the selected Kubernetes API directly; controller-rendered desired state is not yet supported\n\nUsage:\n  cub-scout trace <kind/name> or <kind> <name> [flags]\n\nFlags:\n      --api-version string             Exact desired API version when same-name documents are ambiguous (requires --diff --desired-file)\n      --app string                     Trace Argo CD application by name\n      --artifacts                      Include source artifact provenance (url/revision/digest/update time)\n      --confighub-since string         Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w) (default \"24h\")\n      --confighub-space string         ConfigHub space for delivery evidence (default: resource ConfigHub space; use '*' explicitly for all spaces)\n      --confighub-stale-after string   Treat ConfigHub live-status observations older than this as stale (default \"15m\")\n      --desired-file string            Already-rendered local manifest file/directory to compare (requires --diff)\n  -d, --diff                           Compare one already-rendered object with the selected live object\n      --explain                        Show explanatory content to help learn GitOps concepts\n      --format string                  Output format: ascii, json, md (default \"ascii\")\n  -h, --help                           help for trace\n      --history                        Show deployment history (who deployed what, when)\n      --kube-context string            Use this exact Kubernetes context for trace reads\n      --limit int                      Limit number of history entries (default: 10) (default 10)\n  -n, --namespace string               Namespace of the resource (default: flux-system; Application names must be unique if omitted)\n      --presentation string            Presentation mode: human, ai (concise for AI assistants), paired (human+AI workflow); omit the flag to keep the legacy/default render path\n  -r, --reverse                        Reverse trace - walk ownerReferences up to find GitOps source\n      --with-confighub                 Include bounded ConfigHub delivery evidence when the resource exposes exact ConfigHub correlation\n",
+        "stderr": "WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested\n"
+      },
+      {
+        "path": "cub-scout-plugin_linux_arm64_v8.0/main",
+        "sha256": "1de777a4f296d587e8b5875eeadc5d50ed81dabc6e550d705b309d25ec4ce65f",
+        "args": [
+          "version"
+        ],
+        "pluginEnvironment": true,
+        "execution": "Docker on arm64 macOS",
+        "exit": 0,
+        "stdout": "cub-scout version v2.13.0-next (built 2026-10-05T16:40:59Z)\n",
+        "stderr": "WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested\n"
+      },
+      {
+        "path": "cub-scout-plugin_linux_arm64_v8.0/main",
+        "sha256": "1de777a4f296d587e8b5875eeadc5d50ed81dabc6e550d705b309d25ec4ce65f",
+        "args": [
+          "help",
+          "trace"
+        ],
+        "pluginEnvironment": true,
+        "execution": "Docker on arm64 macOS",
+        "exit": 0,
+        "stdout": "Trace any resource back to its controller/source evidence.\n\nYou don't need to know which tool manages a resource. Just run trace and\ncub-scout auto-detects the owner and shows the full delivery chain.\n\nUnder the hood:\n  - Flux resources: uses 'flux trace'\n  - ArgoCD resources: reads Application CRs from the selected Kubernetes cluster\n  - Helm resources: reads release metadata\n  - Sveltos resources: reads Profile/ClusterProfile owner and reference annotations\n  - Modelplane resources: reads Modelplane API objects, labels, ownerRefs, and status\n\nThe value: In mixed environments with multiple GitOps tools, one command\ntraces any resource without switching between controller-specific CLIs.\n\nExamples:\n  # Trace a deployment\n  cub-scout trace deployment/nginx -n demo\n\n  # Trace with kind and name separately\n  cub-scout trace Deployment nginx -n demo\n\n  # Trace an Argo CD application directly\n  cub-scout trace --app frontend-app\n\n  # Reverse trace - start from any resource (e.g., a Pod) and walk up\n  cub-scout trace pod/nginx-7d9b8c-x4k2p -n prod --reverse\n\n  # Compare one already-rendered object with the selected live object\n  cub-scout trace deployment/nginx -n demo --diff --desired-file ./rendered --api-version apps/v1\n\n  # Output as JSON\n  cub-scout trace deployment/nginx -n demo --json\n\n  # Show deployment history (who deployed what, when)\n  cub-scout trace deployment/nginx -n demo --history\n\nThe output shows:\n  - The full chain from source/controller metadata \u2192 deployer/controller \u2192 resource\n  - Status and revision at each level\n  - Where in the chain something is broken (if applicable)\n\nReverse trace (--reverse) walks ownerReferences to find:\n  - The K8s ownership chain (Pod \u2192 ReplicaSet \u2192 Deployment)\n  - The controller owner (Flux, ArgoCD, Sveltos, Modelplane, Helm, or Native)\n\nDiff mode (--diff) compares one caller-rendered object with one live object:\n  - Requires --desired-file; cub-scout does not render Git or predict reconciliation\n  - Reports the selected context and exact live-read evidence\n  - Controller-desired diffs are not yet supported\n\nRender manifests with your existing tool (for example, helm template or\nkustomize build), then pass that output with --desired-file. The former\nautomatic controller CLI diff delegation is disabled.\n\nTrace context troubleshooting (ArgoCD):\n  - Select the Kubernetes context with --kube-context\n  - Specify the Application namespace with -n\n  - Kubernetes Application read permission is required; Argo server login is not used\n  - Rendered diff reads the selected Kubernetes API directly; controller-rendered desired state is not yet supported\n\nUsage:\n  cub scout trace <kind/name> or <kind> <name> [flags]\n\nFlags:\n      --api-version string             Exact desired API version when same-name documents are ambiguous (requires --diff --desired-file)\n      --app string                     Trace Argo CD application by name\n      --artifacts                      Include source artifact provenance (url/revision/digest/update time)\n      --confighub-since string         Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w) (default \"24h\")\n      --confighub-space string         ConfigHub space for delivery evidence (default: resource ConfigHub space; use '*' explicitly for all spaces)\n      --confighub-stale-after string   Treat ConfigHub live-status observations older than this as stale (default \"15m\")\n      --desired-file string            Already-rendered local manifest file/directory to compare (requires --diff)\n  -d, --diff                           Compare one already-rendered object with the selected live object\n      --explain                        Show explanatory content to help learn GitOps concepts\n      --format string                  Output format: ascii, json, md (default \"ascii\")\n  -h, --help                           help for trace\n      --history                        Show deployment history (who deployed what, when)\n      --kube-context string            Use this exact Kubernetes context for trace reads\n      --limit int                      Limit number of history entries (default: 10) (default 10)\n  -n, --namespace string               Namespace of the resource (default: flux-system; Application names must be unique if omitted)\n      --presentation string            Presentation mode: human, ai (concise for AI assistants), paired (human+AI workflow); omit the flag to keep the legacy/default render path\n  -r, --reverse                        Reverse trace - walk ownerReferences up to find GitOps source\n      --with-confighub                 Include bounded ConfigHub delivery evidence when the resource exposes exact ConfigHub correlation\n",
+        "stderr": "WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested\n"
+      },
+      {
+        "path": "cub-scout_linux_amd64_v1/cub-scout",
+        "sha256": "ffacac21c7500651688e6effd7c421084ae31249513d81ae848f00eeecd82f31",
+        "args": [
+          "version"
+        ],
+        "pluginEnvironment": false,
+        "execution": "Docker on arm64 macOS",
+        "exit": 0,
+        "stdout": "cub-scout version v2.13.0-next (built 2026-10-05T16:40:59Z)\n",
+        "stderr": "WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested\n"
+      },
+      {
+        "path": "cub-scout_linux_amd64_v1/cub-scout",
+        "sha256": "ffacac21c7500651688e6effd7c421084ae31249513d81ae848f00eeecd82f31",
+        "args": [
+          "help",
+          "trace"
+        ],
+        "pluginEnvironment": false,
+        "execution": "Docker on arm64 macOS",
+        "exit": 0,
+        "stdout": "Trace any resource back to its controller/source evidence.\n\nYou don't need to know which tool manages a resource. Just run trace and\ncub-scout auto-detects the owner and shows the full delivery chain.\n\nUnder the hood:\n  - Flux resources: uses 'flux trace'\n  - ArgoCD resources: reads Application CRs from the selected Kubernetes cluster\n  - Helm resources: reads release metadata\n  - Sveltos resources: reads Profile/ClusterProfile owner and reference annotations\n  - Modelplane resources: reads Modelplane API objects, labels, ownerRefs, and status\n\nThe value: In mixed environments with multiple GitOps tools, one command\ntraces any resource without switching between controller-specific CLIs.\n\nExamples:\n  # Trace a deployment\n  cub-scout trace deployment/nginx -n demo\n\n  # Trace with kind and name separately\n  cub-scout trace Deployment nginx -n demo\n\n  # Trace an Argo CD application directly\n  cub-scout trace --app frontend-app\n\n  # Reverse trace - start from any resource (e.g., a Pod) and walk up\n  cub-scout trace pod/nginx-7d9b8c-x4k2p -n prod --reverse\n\n  # Compare one already-rendered object with the selected live object\n  cub-scout trace deployment/nginx -n demo --diff --desired-file ./rendered --api-version apps/v1\n\n  # Output as JSON\n  cub-scout trace deployment/nginx -n demo --json\n\n  # Show deployment history (who deployed what, when)\n  cub-scout trace deployment/nginx -n demo --history\n\nThe output shows:\n  - The full chain from source/controller metadata \u2192 deployer/controller \u2192 resource\n  - Status and revision at each level\n  - Where in the chain something is broken (if applicable)\n\nReverse trace (--reverse) walks ownerReferences to find:\n  - The K8s ownership chain (Pod \u2192 ReplicaSet \u2192 Deployment)\n  - The controller owner (Flux, ArgoCD, Sveltos, Modelplane, Helm, or Native)\n\nDiff mode (--diff) compares one caller-rendered object with one live object:\n  - Requires --desired-file; cub-scout does not render Git or predict reconciliation\n  - Reports the selected context and exact live-read evidence\n  - Controller-desired diffs are not yet supported\n\nRender manifests with your existing tool (for example, helm template or\nkustomize build), then pass that output with --desired-file. The former\nautomatic controller CLI diff delegation is disabled.\n\nTrace context troubleshooting (ArgoCD):\n  - Select the Kubernetes context with --kube-context\n  - Specify the Application namespace with -n\n  - Kubernetes Application read permission is required; Argo server login is not used\n  - Rendered diff reads the selected Kubernetes API directly; controller-rendered desired state is not yet supported\n\nUsage:\n  cub-scout trace <kind/name> or <kind> <name> [flags]\n\nFlags:\n      --api-version string             Exact desired API version when same-name documents are ambiguous (requires --diff --desired-file)\n      --app string                     Trace Argo CD application by name\n      --artifacts                      Include source artifact provenance (url/revision/digest/update time)\n      --confighub-since string         Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w) (default \"24h\")\n      --confighub-space string         ConfigHub space for delivery evidence (default: resource ConfigHub space; use '*' explicitly for all spaces)\n      --confighub-stale-after string   Treat ConfigHub live-status observations older than this as stale (default \"15m\")\n      --desired-file string            Already-rendered local manifest file/directory to compare (requires --diff)\n  -d, --diff                           Compare one already-rendered object with the selected live object\n      --explain                        Show explanatory content to help learn GitOps concepts\n      --format string                  Output format: ascii, json, md (default \"ascii\")\n  -h, --help                           help for trace\n      --history                        Show deployment history (who deployed what, when)\n      --kube-context string            Use this exact Kubernetes context for trace reads\n      --limit int                      Limit number of history entries (default: 10) (default 10)\n  -n, --namespace string               Namespace of the resource (default: flux-system; Application names must be unique if omitted)\n      --presentation string            Presentation mode: human, ai (concise for AI assistants), paired (human+AI workflow); omit the flag to keep the legacy/default render path\n  -r, --reverse                        Reverse trace - walk ownerReferences up to find GitOps source\n      --with-confighub                 Include bounded ConfigHub delivery evidence when the resource exposes exact ConfigHub correlation\n",
+        "stderr": "WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested\n"
+      },
+      {
+        "path": "kubectl-cub-scout_linux_amd64_v1/kubectl-cub_scout",
+        "sha256": "ffacac21c7500651688e6effd7c421084ae31249513d81ae848f00eeecd82f31",
+        "args": [
+          "version"
+        ],
+        "pluginEnvironment": false,
+        "execution": "Docker on arm64 macOS",
+        "exit": 0,
+        "stdout": "cub-scout version v2.13.0-next (built 2026-10-05T16:40:59Z)\n",
+        "stderr": "WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested\n"
+      },
+      {
+        "path": "kubectl-cub-scout_linux_amd64_v1/kubectl-cub_scout",
+        "sha256": "ffacac21c7500651688e6effd7c421084ae31249513d81ae848f00eeecd82f31",
+        "args": [
+          "help",
+          "trace"
+        ],
+        "pluginEnvironment": false,
+        "execution": "Docker on arm64 macOS",
+        "exit": 0,
+        "stdout": "Trace any resource back to its controller/source evidence.\n\nYou don't need to know which tool manages a resource. Just run trace and\ncub-scout auto-detects the owner and shows the full delivery chain.\n\nUnder the hood:\n  - Flux resources: uses 'flux trace'\n  - ArgoCD resources: reads Application CRs from the selected Kubernetes cluster\n  - Helm resources: reads release metadata\n  - Sveltos resources: reads Profile/ClusterProfile owner and reference annotations\n  - Modelplane resources: reads Modelplane API objects, labels, ownerRefs, and status\n\nThe value: In mixed environments with multiple GitOps tools, one command\ntraces any resource without switching between controller-specific CLIs.\n\nExamples:\n  # Trace a deployment\n  cub-scout trace deployment/nginx -n demo\n\n  # Trace with kind and name separately\n  cub-scout trace Deployment nginx -n demo\n\n  # Trace an Argo CD application directly\n  cub-scout trace --app frontend-app\n\n  # Reverse trace - start from any resource (e.g., a Pod) and walk up\n  cub-scout trace pod/nginx-7d9b8c-x4k2p -n prod --reverse\n\n  # Compare one already-rendered object with the selected live object\n  cub-scout trace deployment/nginx -n demo --diff --desired-file ./rendered --api-version apps/v1\n\n  # Output as JSON\n  cub-scout trace deployment/nginx -n demo --json\n\n  # Show deployment history (who deployed what, when)\n  cub-scout trace deployment/nginx -n demo --history\n\nThe output shows:\n  - The full chain from source/controller metadata \u2192 deployer/controller \u2192 resource\n  - Status and revision at each level\n  - Where in the chain something is broken (if applicable)\n\nReverse trace (--reverse) walks ownerReferences to find:\n  - The K8s ownership chain (Pod \u2192 ReplicaSet \u2192 Deployment)\n  - The controller owner (Flux, ArgoCD, Sveltos, Modelplane, Helm, or Native)\n\nDiff mode (--diff) compares one caller-rendered object with one live object:\n  - Requires --desired-file; cub-scout does not render Git or predict reconciliation\n  - Reports the selected context and exact live-read evidence\n  - Controller-desired diffs are not yet supported\n\nRender manifests with your existing tool (for example, helm template or\nkustomize build), then pass that output with --desired-file. The former\nautomatic controller CLI diff delegation is disabled.\n\nTrace context troubleshooting (ArgoCD):\n  - Select the Kubernetes context with --kube-context\n  - Specify the Application namespace with -n\n  - Kubernetes Application read permission is required; Argo server login is not used\n  - Rendered diff reads the selected Kubernetes API directly; controller-rendered desired state is not yet supported\n\nUsage:\n  cub-scout trace <kind/name> or <kind> <name> [flags]\n\nFlags:\n      --api-version string             Exact desired API version when same-name documents are ambiguous (requires --diff --desired-file)\n      --app string                     Trace Argo CD application by name\n      --artifacts                      Include source artifact provenance (url/revision/digest/update time)\n      --confighub-since string         Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w) (default \"24h\")\n      --confighub-space string         ConfigHub space for delivery evidence (default: resource ConfigHub space; use '*' explicitly for all spaces)\n      --confighub-stale-after string   Treat ConfigHub live-status observations older than this as stale (default \"15m\")\n      --desired-file string            Already-rendered local manifest file/directory to compare (requires --diff)\n  -d, --diff                           Compare one already-rendered object with the selected live object\n      --explain                        Show explanatory content to help learn GitOps concepts\n      --format string                  Output format: ascii, json, md (default \"ascii\")\n  -h, --help                           help for trace\n      --history                        Show deployment history (who deployed what, when)\n      --kube-context string            Use this exact Kubernetes context for trace reads\n      --limit int                      Limit number of history entries (default: 10) (default 10)\n  -n, --namespace string               Namespace of the resource (default: flux-system; Application names must be unique if omitted)\n      --presentation string            Presentation mode: human, ai (concise for AI assistants), paired (human+AI workflow); omit the flag to keep the legacy/default render path\n  -r, --reverse                        Reverse trace - walk ownerReferences up to find GitOps source\n      --with-confighub                 Include bounded ConfigHub delivery evidence when the resource exposes exact ConfigHub correlation\n",
+        "stderr": "WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested\n"
+      },
+      {
+        "path": "cub-scout-plugin_linux_amd64_v1/main",
+        "sha256": "ffacac21c7500651688e6effd7c421084ae31249513d81ae848f00eeecd82f31",
+        "args": [
+          "version"
+        ],
+        "pluginEnvironment": true,
+        "execution": "Docker on arm64 macOS",
+        "exit": 0,
+        "stdout": "cub-scout version v2.13.0-next (built 2026-10-05T16:40:59Z)\n",
+        "stderr": "WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested\n"
+      },
+      {
+        "path": "cub-scout-plugin_linux_amd64_v1/main",
+        "sha256": "ffacac21c7500651688e6effd7c421084ae31249513d81ae848f00eeecd82f31",
+        "args": [
+          "help",
+          "trace"
+        ],
+        "pluginEnvironment": true,
+        "execution": "Docker on arm64 macOS",
+        "exit": 0,
+        "stdout": "Trace any resource back to its controller/source evidence.\n\nYou don't need to know which tool manages a resource. Just run trace and\ncub-scout auto-detects the owner and shows the full delivery chain.\n\nUnder the hood:\n  - Flux resources: uses 'flux trace'\n  - ArgoCD resources: reads Application CRs from the selected Kubernetes cluster\n  - Helm resources: reads release metadata\n  - Sveltos resources: reads Profile/ClusterProfile owner and reference annotations\n  - Modelplane resources: reads Modelplane API objects, labels, ownerRefs, and status\n\nThe value: In mixed environments with multiple GitOps tools, one command\ntraces any resource without switching between controller-specific CLIs.\n\nExamples:\n  # Trace a deployment\n  cub-scout trace deployment/nginx -n demo\n\n  # Trace with kind and name separately\n  cub-scout trace Deployment nginx -n demo\n\n  # Trace an Argo CD application directly\n  cub-scout trace --app frontend-app\n\n  # Reverse trace - start from any resource (e.g., a Pod) and walk up\n  cub-scout trace pod/nginx-7d9b8c-x4k2p -n prod --reverse\n\n  # Compare one already-rendered object with the selected live object\n  cub-scout trace deployment/nginx -n demo --diff --desired-file ./rendered --api-version apps/v1\n\n  # Output as JSON\n  cub-scout trace deployment/nginx -n demo --json\n\n  # Show deployment history (who deployed what, when)\n  cub-scout trace deployment/nginx -n demo --history\n\nThe output shows:\n  - The full chain from source/controller metadata \u2192 deployer/controller \u2192 resource\n  - Status and revision at each level\n  - Where in the chain something is broken (if applicable)\n\nReverse trace (--reverse) walks ownerReferences to find:\n  - The K8s ownership chain (Pod \u2192 ReplicaSet \u2192 Deployment)\n  - The controller owner (Flux, ArgoCD, Sveltos, Modelplane, Helm, or Native)\n\nDiff mode (--diff) compares one caller-rendered object with one live object:\n  - Requires --desired-file; cub-scout does not render Git or predict reconciliation\n  - Reports the selected context and exact live-read evidence\n  - Controller-desired diffs are not yet supported\n\nRender manifests with your existing tool (for example, helm template or\nkustomize build), then pass that output with --desired-file. The former\nautomatic controller CLI diff delegation is disabled.\n\nTrace context troubleshooting (ArgoCD):\n  - Select the Kubernetes context with --kube-context\n  - Specify the Application namespace with -n\n  - Kubernetes Application read permission is required; Argo server login is not used\n  - Rendered diff reads the selected Kubernetes API directly; controller-rendered desired state is not yet supported\n\nUsage:\n  cub scout trace <kind/name> or <kind> <name> [flags]\n\nFlags:\n      --api-version string             Exact desired API version when same-name documents are ambiguous (requires --diff --desired-file)\n      --app string                     Trace Argo CD application by name\n      --artifacts                      Include source artifact provenance (url/revision/digest/update time)\n      --confighub-since string         Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w) (default \"24h\")\n      --confighub-space string         ConfigHub space for delivery evidence (default: resource ConfigHub space; use '*' explicitly for all spaces)\n      --confighub-stale-after string   Treat ConfigHub live-status observations older than this as stale (default \"15m\")\n      --desired-file string            Already-rendered local manifest file/directory to compare (requires --diff)\n  -d, --diff                           Compare one already-rendered object with the selected live object\n      --explain                        Show explanatory content to help learn GitOps concepts\n      --format string                  Output format: ascii, json, md (default \"ascii\")\n  -h, --help                           help for trace\n      --history                        Show deployment history (who deployed what, when)\n      --kube-context string            Use this exact Kubernetes context for trace reads\n      --limit int                      Limit number of history entries (default: 10) (default 10)\n  -n, --namespace string               Namespace of the resource (default: flux-system; Application names must be unique if omitted)\n      --presentation string            Presentation mode: human, ai (concise for AI assistants), paired (human+AI workflow); omit the flag to keep the legacy/default render path\n  -r, --reverse                        Reverse trace - walk ownerReferences up to find GitOps source\n      --with-confighub                 Include bounded ConfigHub delivery evidence when the resource exposes exact ConfigHub correlation\n",
+        "stderr": "WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested\n"
+      }
+    ],
+    "image": {
+      "id": "sha256:413381cfeb4a0fc797347755708636fe27390e3bfc4e065663828cb4eba6842e",
+      "binarySha256": "ffacac21c7500651688e6effd7c421084ae31249513d81ae848f00eeecd82f31",
+      "matchingBinaryPaths": [
+        "cub-scout-plugin_linux_amd64_v1/main",
+        "cub-scout_linux_amd64_v1/cub-scout",
+        "kubectl-cub-scout_linux_amd64_v1/kubectl-cub_scout"
+      ],
+      "os": "linux",
+      "architecture": "amd64",
+      "user": "65532:65532",
+      "source": "https://github.com/confighub/cub-scout.git",
+      "version": "v2.13.0-next",
+      "exit": 0,
+      "stdout": "cub-scout version v2.13.0-next (built 2026-10-05T16:40:59Z)\n",
+      "stderr": "WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested\n"
+    },
+    "claims": {
+      "darwinLinuxStandaloneAliasPluginSmokePassed": true,
+      "windowsExecuted": false,
+      "clusterBehaviorAccepted": false,
+      "published": false
+    }
+  },
+  "retainedEvidencePath": "/tmp/scout-v213-goreleaser-20261005",
+  "retainedLogSha256": {
+    "rehearsal.log": "88a45d76a8d967f9fb3c791348eb279cad3a3d506bb3fef709f72eaff60d8de2",
+    "clean-go124-rehearsal.log": "dde124f450a3f7d067184926d125f754f66b75441aaecce9d172ab1f9ab52b26",
+    "normal-checkout-rehearsal.log": "9ab27e5f617235d1641f6da7f3ebbe8f86ed92ed5ac933f4dc538899f588b1d4",
+    "final-rehearsal.log": "d9368dade90919f6a18326b4dd331c3aacfac64d00393a772428cfe8918e4ad1",
+    "platform-fixed-rehearsal.log": "a34923950fb75092046a08d338f4a70653e4457c5794262938a4a0c95c476e68",
+    "platform-fixed-verification.log": "31e2e91a72c21eda923d1908f84a415be79ceb028122afb0738351d9b1cd8214",
+    "verify-artifacts.py": "ce4b5807e3941c946444eeb9539b72212c5c1e305e7a44e887b79e1bcdd79e99",
+    "verify-runtime.py": "c3995d5656b13f98b1e97140d3bc5f736793f9e6ad5aa631f432f9981ab3a1fa"
+  },
+  "rejectedAttempts": [
+    "Managed Git worktree omitted embedded VCS identity, including with buildvcs=true.",
+    "Normal local clone origin produced workstation-path source label.",
+    "Image labelled arm64 contained amd64 binary; emulated execution alone missed this defect.",
+    "Runtime verifier initially expected a source URL without .git; corrected to match the actual public Git origin."
+  ]
+}

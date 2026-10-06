@@ -1,0 +1,441 @@
+{
+  "status": "genuine-revision-chain-candidate",
+  "server": {
+    "version": "v0.8.3",
+    "commit": "1f92e099f4960a0828d2b51ed54e142e5f051b2a"
+  },
+  "client": {
+    "version": "v0.8.3",
+    "commit": "468dd09f1c893ce2e18fd018192dcfa96cb1dd34"
+  },
+  "authScope": "isolated local administrator; not viewer RBAC proof",
+  "redactions": [],
+  "recordings": [
+    {
+      "label": "unit-create",
+      "argv": [
+        "cub",
+        "unit",
+        "create",
+        "revision-coverage-20261005",
+        "/tmp/scout-v213-server-v083-20261005/revision-chain-20261005/input.yaml",
+        "--space",
+        "scout-v213-contract",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "file": "unit-create.json",
+      "stderrFile": "unit-create.stderr.txt",
+      "stdoutSHA256": "cd5ad195041df40008e68cd4146c9158c183056cd7ca3c4cc4c66e06e765be91",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commandStartedAt": "2026-10-05T16:09:37.953208+00:00"
+    },
+    {
+      "label": "unit-initial-get",
+      "argv": [
+        "cub",
+        "unit",
+        "get",
+        "revision-coverage-20261005",
+        "--space",
+        "scout-v213-contract",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "file": "unit-initial-get.json",
+      "stderrFile": "unit-initial-get.stderr.txt",
+      "stdoutSHA256": "d01248716e910870a34e23c233ccf8e199982cf730855e0d2b6d572506e47d92",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commandStartedAt": "2026-10-05T16:09:38.397336+00:00"
+    },
+    {
+      "label": "approval-create",
+      "argv": [
+        "cub",
+        "attestation",
+        "create",
+        "--space",
+        "scout-v213-contract",
+        "--where",
+        "Slug = 'revision-coverage-20261005'",
+        "--type",
+        "Approval",
+        "--revision",
+        "2",
+        "--note",
+        "Disposable revision coverage fixture",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "file": "approval-create.json",
+      "stderrFile": "approval-create.stderr.txt",
+      "stdoutSHA256": "74ed7c92ee870da2681f3f835800c18ba68bd0bda72d8ca2579f7698890989e7",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commandStartedAt": "2026-10-05T16:09:38.465554+00:00"
+    },
+    {
+      "label": "security-create",
+      "argv": [
+        "cub",
+        "attestation",
+        "create",
+        "--space",
+        "scout-v213-contract",
+        "--where",
+        "Slug = 'revision-coverage-20261005'",
+        "--type",
+        "SecurityReview",
+        "--revision",
+        "2",
+        "--note",
+        "Disposable multiple-type coverage fixture",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "file": "security-create.json",
+      "stderrFile": "security-create.stderr.txt",
+      "stdoutSHA256": "06b681803b80f5de1f45a059b914d65ac899c9b36cefe2555e5d6e613ab7600f",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commandStartedAt": "2026-10-05T16:09:38.535835+00:00"
+    },
+    {
+      "label": "revision-initial-get",
+      "argv": [
+        "cub",
+        "revision",
+        "get",
+        "revision-coverage-20261005",
+        "2",
+        "--space",
+        "scout-v213-contract",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "file": "revision-initial-get.json",
+      "stderrFile": "revision-initial-get.stderr.txt",
+      "stdoutSHA256": "446aaf168904e969f2a92591a8bb5e3c98597146fbcb65141ee74bd2c5cfa86b",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commandStartedAt": "2026-10-05T16:09:38.598913+00:00"
+    },
+    {
+      "label": "revision-initial-data",
+      "argv": [
+        "cub",
+        "revision",
+        "data",
+        "revision-coverage-20261005",
+        "2",
+        "--space",
+        "scout-v213-contract"
+      ],
+      "exitCode": 0,
+      "file": "revision-initial-data.txt",
+      "stderrFile": "revision-initial-data.stderr.txt",
+      "stdoutSHA256": "77aa943df7d3602b8ca7e0e03c5d93a71adf1c1400dbca6777c5ebb430b6e496",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commandStartedAt": "2026-10-05T16:09:38.671125+00:00"
+    },
+    {
+      "label": "metadata-update",
+      "argv": [
+        "cub",
+        "unit",
+        "update",
+        "revision-coverage-20261005",
+        "--space",
+        "scout-v213-contract",
+        "--label",
+        "coverage-probe=metadata-only",
+        "--change-desc",
+        "Disposable same-data revision coverage probe",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "file": "metadata-update.json",
+      "stderrFile": "metadata-update.stderr.txt",
+      "stdoutSHA256": "677c96bc2310cbdbfb66fd819abbd196b0205a8faa610b9b39ed971833a80922",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commandStartedAt": "2026-10-05T16:09:38.732900+00:00"
+    },
+    {
+      "label": "unit-after-metadata-get",
+      "argv": [
+        "cub",
+        "unit",
+        "get",
+        "revision-coverage-20261005",
+        "--space",
+        "scout-v213-contract",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "file": "unit-after-metadata-get.json",
+      "stderrFile": "unit-after-metadata-get.stderr.txt",
+      "stdoutSHA256": "9b22dad67972313ca29323336c0f35b891c193221080325f56585981eb0e6bae",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commandStartedAt": "2026-10-05T16:09:38.794530+00:00"
+    },
+    {
+      "label": "revision-after-metadata-get",
+      "argv": [
+        "cub",
+        "revision",
+        "get",
+        "revision-coverage-20261005",
+        "2",
+        "--space",
+        "scout-v213-contract",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "file": "revision-after-metadata-get.json",
+      "stderrFile": "revision-after-metadata-get.stderr.txt",
+      "stdoutSHA256": "18f57136dd01099b51d30482969abad9c48afc0ce41235be97feb2c353cfa0c1",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commandStartedAt": "2026-10-05T16:09:38.851106+00:00"
+    },
+    {
+      "label": "revision-after-metadata-data",
+      "argv": [
+        "cub",
+        "revision",
+        "data",
+        "revision-coverage-20261005",
+        "2",
+        "--space",
+        "scout-v213-contract"
+      ],
+      "exitCode": 0,
+      "file": "revision-after-metadata-data.txt",
+      "stderrFile": "revision-after-metadata-data.stderr.txt",
+      "stdoutSHA256": "77aa943df7d3602b8ca7e0e03c5d93a71adf1c1400dbca6777c5ebb430b6e496",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commandStartedAt": "2026-10-05T16:09:38.912809+00:00"
+    },
+    {
+      "label": "data-update",
+      "argv": [
+        "cub",
+        "unit",
+        "update",
+        "revision-coverage-20261005",
+        "/tmp/scout-v213-server-v083-20261005/revision-chain-20261005/input.yaml",
+        "--space",
+        "scout-v213-contract",
+        "--change-desc",
+        "Disposable changed-data revision coverage probe",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "file": "data-update.json",
+      "stderrFile": "data-update.stderr.txt",
+      "stdoutSHA256": "2503b0b0148baae9c4f8755bbad4f088930c4ae581b059420bac8e55e7be2c11",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commandStartedAt": "2026-10-05T16:09:38.978952+00:00"
+    },
+    {
+      "label": "unit-after-data-get",
+      "argv": [
+        "cub",
+        "unit",
+        "get",
+        "revision-coverage-20261005",
+        "--space",
+        "scout-v213-contract",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "file": "unit-after-data-get.json",
+      "stderrFile": "unit-after-data-get.stderr.txt",
+      "stdoutSHA256": "e5c38bc5c209e946b0d3b21ba54387184a523aea4fe4cbfeed83d6fef0b3d986",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commandStartedAt": "2026-10-05T16:09:39.100923+00:00"
+    },
+    {
+      "label": "revision-after-data-get",
+      "argv": [
+        "cub",
+        "revision",
+        "get",
+        "revision-coverage-20261005",
+        "3",
+        "--space",
+        "scout-v213-contract",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "file": "revision-after-data-get.json",
+      "stderrFile": "revision-after-data-get.stderr.txt",
+      "stdoutSHA256": "f84fa79de9f92ebeba4ed7c070f53aeb2c3f690a4a0ccc5fc6519f29c80c3335",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commandStartedAt": "2026-10-05T16:09:39.162251+00:00"
+    },
+    {
+      "label": "revision-after-data-data",
+      "argv": [
+        "cub",
+        "revision",
+        "data",
+        "revision-coverage-20261005",
+        "3",
+        "--space",
+        "scout-v213-contract"
+      ],
+      "exitCode": 0,
+      "file": "revision-after-data-data.txt",
+      "stderrFile": "revision-after-data-data.stderr.txt",
+      "stdoutSHA256": "4a208acde942da3d5bcfc1a5bc154195ca450b107a6d6ab784f338753bc91e75",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commandStartedAt": "2026-10-05T16:09:39.223291+00:00"
+    },
+    {
+      "label": "revision-list",
+      "argv": [
+        "cub",
+        "revision",
+        "list",
+        "revision-coverage-20261005",
+        "--space",
+        "scout-v213-contract",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "file": "revision-list.json",
+      "stderrFile": "revision-list.stderr.txt",
+      "stdoutSHA256": "42ff89fea9d53c362b0f1ee0d499c9e43af43ba7e105bfb6aed9cebaf52cb053",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commandStartedAt": "2026-10-05T16:09:39.291297+00:00"
+    },
+    {
+      "label": "attestation-filtered-list",
+      "argv": [
+        "cub",
+        "attestation",
+        "list",
+        "--space",
+        "scout-v213-contract",
+        "--where",
+        "Type = 'SecurityReview'",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "file": "attestation-filtered-list.json",
+      "stderrFile": "attestation-filtered-list.stderr.txt",
+      "stdoutSHA256": "495bc1563133c1d8fc377287029a3a3f1a61559e49c47ec2d998c8625dd263a1",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commandStartedAt": "2026-10-05T16:09:39.359588+00:00"
+    },
+    {
+      "label": "restore-original-data",
+      "argv": [
+        "cub",
+        "unit",
+        "update",
+        "revision-coverage-20261005",
+        "--space",
+        "scout-v213-contract",
+        "--restore",
+        "2",
+        "--change-desc",
+        "Disposable same-hash revision coverage probe",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "file": "restore-original-data.json",
+      "stderrFile": "restore-original-data.stderr.txt",
+      "stdoutSHA256": "aa353e77b0685abaadf973c76f4700a75c2253214abf58965b20ae9a63cfa67a",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commandStartedAt": "2026-10-05T16:10:02.873470+00:00"
+    },
+    {
+      "label": "unit-after-restore-get",
+      "argv": [
+        "cub",
+        "unit",
+        "get",
+        "revision-coverage-20261005",
+        "--space",
+        "scout-v213-contract",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "file": "unit-after-restore-get.json",
+      "stderrFile": "unit-after-restore-get.stderr.txt",
+      "stdoutSHA256": "bccd730cafb0977455147da58c145f32c04562ded1d77882b129e3ef71a2b006",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commandStartedAt": "2026-10-05T16:10:03.503487+00:00"
+    },
+    {
+      "label": "revision-after-restore-get",
+      "argv": [
+        "cub",
+        "revision",
+        "get",
+        "revision-coverage-20261005",
+        "4",
+        "--space",
+        "scout-v213-contract",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "file": "revision-after-restore-get.json",
+      "stderrFile": "revision-after-restore-get.stderr.txt",
+      "stdoutSHA256": "dd6a4ea9bdebe9a7e31eacfd301f9c0534c0d9bf7b18d05deca79b598a183a16",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commandStartedAt": "2026-10-05T16:10:03.583046+00:00"
+    },
+    {
+      "label": "revision-after-restore-data",
+      "argv": [
+        "cub",
+        "revision",
+        "data",
+        "revision-coverage-20261005",
+        "4",
+        "--space",
+        "scout-v213-contract"
+      ],
+      "exitCode": 0,
+      "file": "revision-after-restore-data.txt",
+      "stderrFile": "revision-after-restore-data.stderr.txt",
+      "stdoutSHA256": "77aa943df7d3602b8ca7e0e03c5d93a71adf1c1400dbca6777c5ebb430b6e496",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commandStartedAt": "2026-10-05T16:10:03.656201+00:00"
+    },
+    {
+      "label": "revision-list-after-restore",
+      "argv": [
+        "cub",
+        "revision",
+        "list",
+        "revision-coverage-20261005",
+        "--space",
+        "scout-v213-contract",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "file": "revision-list-after-restore.json",
+      "stderrFile": "revision-list-after-restore.stderr.txt",
+      "stdoutSHA256": "7124e4fee0641f6e5a1331763c64cffa7ffd09b16c73e845c59404a8a5d80f89",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "commandStartedAt": "2026-10-05T16:10:03.725778+00:00"
+    }
+  ]
+}

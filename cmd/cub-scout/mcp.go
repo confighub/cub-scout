@@ -48,9 +48,11 @@ Supported tools in standalone mode:
   - gitops_status
 
 Additional tools in connected mode (when authenticated to ConfigHub):
+  - confighub_attestations
   - compare_three_way
   - compare_source_truth
   - confighub_changesets
+  - confighub_changeorder_get
   - confighub_k8s_resources
   - confighub_k8s_types
   - confighub_live_status
@@ -528,7 +530,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 					"properties": map[string]interface{}{
 						"bounded":           map[string]interface{}{"type": "boolean", "description": "Read only the exact API object, with no controller/ConfigHub/event/pod enrichment. Requires api_version and context. This stdio session reuses observations for at most 15 seconds; CLI processes do not share the cache."},
 						"api_version":       map[string]interface{}{"type": "string", "description": "Exact API version for bounded reads, for example apps/v1."},
-						"context":           map[string]interface{}{"type": "string", "description": "Explicit kube context for bounded reads (CLI --kube-context). Never inferred from ConfigHub Target names."},
+						"context":           map[string]interface{}{"type": "string", "description": "Exact kube context for all Kubernetes reads, including enriched Explain (CLI --kube-context). Empty or unknown selectors fail without fallback. Never inferred from ConfigHub Target names."},
 						"refresh":           map[string]interface{}{"type": "boolean", "description": "Force a new bounded observation rather than reuse the session cache."},
 						"expected_revision": map[string]interface{}{"type": "string", "description": "Full lowercase 40-hex Git commit or sha256:64-hex artifact digest to compare with one controller report. Requires bounded=true. Supports single-source Application and Kustomization v1; not workload convergence, controller liveness or application success."},
 						"resource": map[string]interface{}{
@@ -580,8 +582,17 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 					if expected := argString(arguments, "expected_revision"); expected != "" {
 						args = append(args, "--expected-revision", expected)
 					}
-				} else if argString(arguments, "api_version") != "" || argString(arguments, "context") != "" || argBool(arguments, "refresh") || argString(arguments, "expected_revision") != "" {
-					return nil, fmt.Errorf("api_version, context, refresh, and expected_revision require bounded=true")
+				} else {
+					if argString(arguments, "api_version") != "" || argBool(arguments, "refresh") || argString(arguments, "expected_revision") != "" {
+						return nil, fmt.Errorf("api_version, refresh, and expected_revision require bounded=true")
+					}
+					if raw, present := arguments["context"]; present {
+						value, ok := raw.(string)
+						if !ok || strings.TrimSpace(value) == "" {
+							return nil, fmt.Errorf("context must be a non-empty kubeconfig context name")
+						}
+						args = append(args, "--kube-context", value)
+					}
 				}
 				if ns := argString(arguments, "namespace"); ns != "" {
 					args = append(args, "-n", ns)
@@ -596,7 +607,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"gitops_status": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "gitops_status",
-				Description: "Standalone GitOps/controller delivery status (gitops status --format json). Use when the user asks whether delegated delivery is healthy, whether an app or source revision is synced, what controller families cub-scout actually inspected, or whether missing status is absence vs RBAC/API omission. Returns backend, transport, sources, deployers, source/build/apply/sync stages, and controllerCoverage[] for Flux, Argo CD, ConfigHub, Sveltos, and Modelplane. Optional ConfigHub evidence is bounded by space and time; when present, revisionCorrelation compares the reported full digest with bounded same-SpaceID release manifestDigest values. That is string correlation, not proof of fetch, application, execution, or gate acceptance, and does not change freshness verdicts. DO NOT use to force sync, retry delivery, or declare application success by itself; it is read-only evidence.",
+				Description: "Standalone GitOps/controller delivery status (gitops status --format json). Use when the user asks whether delegated delivery is healthy, whether an app or source revision is synced, what controller families cub-scout actually inspected, or whether missing status is absence vs RBAC/API omission. Returns backend, transport, sources, deployers, source/build/apply/sync stages, and controllerCoverage[] for Flux, Argo CD, ConfigHub, Sveltos, and Modelplane. Optional sveltosControllerReports preserves delivery features and continuous-health conditions separately with source identities, reported references and omissions; workloadHealth/checkFreshness remain unknown. Optional ConfigHub evidence is bounded by space and time; when present, revisionCorrelation compares the reported full digest with bounded same-SpaceID release manifestDigest values. That is string correlation, not proof of fetch, application, execution, or gate acceptance, and does not change freshness verdicts. DO NOT use to force sync, retry delivery, or declare application success by itself; it is read-only evidence.",
 				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
@@ -769,6 +780,8 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				return append(args, "--format", "json"), nil
 			},
 		}
+		tools["confighub_changeorder_get"] = changeOrderMCPTool(connectedRunner)
+		tools["confighub_attestations"] = configHubAttestationsMCPTool()
 		tools["confighub_changesets"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
 				Name:        "confighub_changesets",

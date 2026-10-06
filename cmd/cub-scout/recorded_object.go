@@ -37,10 +37,11 @@ type recordedObjectIdentity struct {
 // recordedObjectProvenance describes the exact input bytes, not when they were
 // captured. Capture time must come from separately trusted source metadata.
 type recordedObjectProvenance struct {
-	SHA256      string
-	Bytes       int
-	Documents   int
-	ObjectCount int
+	SHA256                  string
+	Bytes                   int
+	Documents               int
+	ObjectCount             int
+	TypedListDerivedObjects int
 }
 
 type recordedObject struct {
@@ -56,7 +57,7 @@ type recordedObjectSnapshot struct {
 }
 
 // loadRecordedObject parses a bounded YAML/JSON object stream or generic
-// Kubernetes v1/List. It is deliberately byte-reader-only: it has no path,
+// Kubernetes v1/List or exact apps/v1 DeploymentList. It is deliberately byte-reader-only: it has no path,
 // kubeconfig, client, clock, or fallback dependencies.
 func loadRecordedObject(input io.Reader, want recordedObjectIdentity) (recordedObject, error) {
 	snapshot, err := loadRecordedObjectSnapshot(input)
@@ -83,7 +84,7 @@ func loadRecordedObjectSnapshot(input io.Reader) (recordedObjectSnapshot, error)
 
 	decoder := yaml.NewDecoder(bytes.NewReader(raw))
 	objects := make([]*unstructured.Unstructured, 0)
-	var documents, objectCount int
+	var documents, objectCount, typedListDerivedObjects int
 	for {
 		var document yaml.Node
 		err := decoder.Decode(&document)
@@ -112,8 +113,8 @@ func loadRecordedObjectSnapshot(input io.Reader) (recordedObjectSnapshot, error)
 		if err != nil {
 			return recordedObjectSnapshot{}, err
 		}
-		if kind == "List" {
-			if apiVersion != "v1" {
+		if kind == "List" || kind == "DeploymentList" {
+			if (kind == "List" && apiVersion != "v1") || (kind == "DeploymentList" && apiVersion != "apps/v1") {
 				return recordedObjectSnapshot{}, fmt.Errorf("recorded input contains unsupported List type")
 			}
 			itemsNode := mappingValue(root, "items")
@@ -125,7 +126,16 @@ func loadRecordedObjectSnapshot(input io.Reader) (recordedObjectSnapshot, error)
 				if objectCount > maxRecordedObjectCount {
 					return recordedObjectSnapshot{}, fmt.Errorf("recorded input exceeds object limit")
 				}
-				candidate, err := decodeRecordedObject(item)
+				var candidate *unstructured.Unstructured
+				if kind == "DeploymentList" {
+					var derived bool
+					candidate, derived, err = decodeRecordedDeploymentListItem(item)
+					if derived {
+						typedListDerivedObjects++
+					}
+				} else {
+					candidate, err = decodeRecordedObject(item)
+				}
 				if err != nil {
 					return recordedObjectSnapshot{}, err
 				}
@@ -151,8 +161,33 @@ func loadRecordedObjectSnapshot(input io.Reader) (recordedObjectSnapshot, error)
 		Objects: objects,
 		Provenance: recordedObjectProvenance{
 			SHA256: hex.EncodeToString(digest[:]), Bytes: len(raw), Documents: documents, ObjectCount: objectCount,
+			TypedListDerivedObjects: typedListDerivedObjects,
 		},
 	}, nil
+}
+
+// apps/v1.DeploymentList declares Items []Deployment. This exact API envelope
+// supplies omitted TypeMeta; generic List, filenames and managedFields cannot.
+// Work on a copied node so the retained source representation stays unchanged.
+func decodeRecordedDeploymentListItem(node *yaml.Node) (*unstructured.Unstructured, bool, error) {
+	if node.Kind != yaml.MappingNode {
+		return nil, false, fmt.Errorf("recorded DeploymentList item is not an object")
+	}
+	normalized := *node
+	normalized.Content = append([]*yaml.Node(nil), node.Content...)
+	derived := false
+	for _, field := range []struct{ key, value string }{{"apiVersion", "apps/v1"}, {"kind", "Deployment"}} {
+		if mappingValue(node, field.key) == nil {
+			normalized.Content = append(normalized.Content,
+				&yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: field.key},
+				&yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: field.value})
+			derived = true
+		} else if actual, err := requiredRecordedString(node, field.key); err != nil || actual != field.value {
+			return nil, false, fmt.Errorf("recorded DeploymentList item type conflicts with its envelope")
+		}
+	}
+	object, err := decodeRecordedObject(&normalized)
+	return object, derived, err
 }
 
 func (s recordedObjectSnapshot) selectObject(want recordedObjectIdentity) (recordedObject, error) {
@@ -331,7 +366,7 @@ func decodeRecordedObject(node *yaml.Node) (*unstructured.Unstructured, error) {
 func decodeRecordedObjectNode(node *yaml.Node, object map[string]interface{}) (*unstructured.Unstructured, error) {
 	if _, kind, err := recordedTypeIdentity(node); err != nil {
 		return nil, err
-	} else if kind == "List" {
+	} else if kind == "List" || kind == "DeploymentList" {
 		return nil, fmt.Errorf("nested recorded Lists are unsupported")
 	}
 	name, _, err := recordedMetadataIdentity(node)

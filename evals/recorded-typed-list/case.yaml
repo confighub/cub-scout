@@ -1,0 +1,5 @@
+# FIXTURE-OWNED-SCAFFOLD: offline exact-byte controls in test_contract.py.
+schema_version: "1.1"
+name: recorded-typed-list
+context:
+  scaffold_script: scaffold.sh

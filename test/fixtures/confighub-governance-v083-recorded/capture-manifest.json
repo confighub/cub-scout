@@ -1,0 +1,301 @@
+{
+  "status": "genuine-capture-candidate-not-complete-acceptance",
+  "server": {
+    "version": "v0.8.3",
+    "commit": "1f92e099f4960a0828d2b51ed54e142e5f051b2a"
+  },
+  "client": {
+    "version": "v0.8.3",
+    "commit": "468dd09f1c893ce2e18fd018192dcfa96cb1dd34"
+  },
+  "authScope": "local administrator; test harness creates scoped fixtures, captured reads do not establish viewer RBAC",
+  "redactions": [],
+  "recordings": [
+    {
+      "label": "unit-get",
+      "argv": [
+        "cub",
+        "unit",
+        "get",
+        "contract-config",
+        "--space",
+        "scout-v213-contract",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "retrievedAt": "2026-10-05T05:45:09.317257+00:00",
+      "stdoutSHA256": "f745da73b78e0d85372eb1e32814569a74d72ba9e86c952aa089f66cabc20fd6",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "file": "unit-get.json",
+      "scope": "disposable scout-v213-contract space on isolated local v0.8.3 server"
+    },
+    {
+      "label": "unit-data",
+      "argv": [
+        "cub",
+        "unit",
+        "data",
+        "contract-config",
+        "--space",
+        "scout-v213-contract"
+      ],
+      "exitCode": 0,
+      "retrievedAt": "2026-10-05T05:45:09.428467+00:00",
+      "stdoutSHA256": "57ba9d6af1bbb9d87b9632906c74119f8604a3c7e1a7b292a039d928360dbae5",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "file": "unit-data.txt",
+      "scope": "disposable scout-v213-contract space on isolated local v0.8.3 server"
+    },
+    {
+      "label": "revision-get",
+      "argv": [
+        "cub",
+        "revision",
+        "get",
+        "contract-config",
+        "2",
+        "--space",
+        "scout-v213-contract",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "retrievedAt": "2026-10-05T05:46:33.688083+00:00",
+      "stdoutSHA256": "e61fc483ca3ef6b73da6e195967fa63911c00cbc9166abb52c1e55b39b5962a4",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "file": "revision-get.json",
+      "scope": "disposable scout-v213-contract space on isolated local v0.8.3 server"
+    },
+    {
+      "label": "revision-data",
+      "argv": [
+        "cub",
+        "revision",
+        "data",
+        "contract-config",
+        "2",
+        "--space",
+        "scout-v213-contract"
+      ],
+      "exitCode": 0,
+      "retrievedAt": "2026-10-05T05:46:33.821953+00:00",
+      "stdoutSHA256": "57ba9d6af1bbb9d87b9632906c74119f8604a3c7e1a7b292a039d928360dbae5",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "file": "revision-data.txt",
+      "scope": "disposable scout-v213-contract space on isolated local v0.8.3 server"
+    },
+    {
+      "label": "attestation-pass-create",
+      "argv": [
+        "cub",
+        "attestation",
+        "create",
+        "--space",
+        "scout-v213-contract",
+        "--type",
+        "Approval",
+        "--note",
+        "Disposable acceptance fixture: positive outcome",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "retrievedAt": "2026-10-05T05:45:09.577256+00:00",
+      "stdoutSHA256": "efcc9da23b3d294fc8b305c6e5b021133b6ab0bad1c819ae10e4d2eb1a3d0110",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "file": "attestation-pass-create.json",
+      "scope": "disposable scout-v213-contract space on isolated local v0.8.3 server"
+    },
+    {
+      "label": "attestation-fail-create",
+      "argv": [
+        "cub",
+        "attestation",
+        "create",
+        "--space",
+        "scout-v213-contract",
+        "--type",
+        "Approval",
+        "--reject",
+        "--note",
+        "Disposable acceptance fixture: negative outcome",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "retrievedAt": "2026-10-05T05:45:09.697300+00:00",
+      "stdoutSHA256": "8bfbcd371a091a5db854b26a080e1644e11264d5cffd4b09faed6e8bc4abf07b",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "file": "attestation-fail-create.json",
+      "scope": "disposable scout-v213-contract space on isolated local v0.8.3 server"
+    },
+    {
+      "label": "attestation-expiring-create",
+      "argv": [
+        "cub",
+        "attestation",
+        "create",
+        "--space",
+        "scout-v213-contract",
+        "--type",
+        "Approval",
+        "--expires-in",
+        "1ms",
+        "--note",
+        "Disposable acceptance fixture: short expiry",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "retrievedAt": "2026-10-05T05:45:09.801654+00:00",
+      "stdoutSHA256": "6e7af8a968b89dbf11abfabc5c0afa7037af9786b780c6976502c6dcc864028c",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "file": "attestation-expiring-create.json",
+      "scope": "disposable scout-v213-contract space on isolated local v0.8.3 server"
+    },
+    {
+      "label": "attestation-pass-get-before-revoke",
+      "argv": [
+        "cub",
+        "attestation",
+        "get",
+        "08f76195-a7c5-496f-84c1-c62424434c6b",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "retrievedAt": "2026-10-05T05:46:33.261134+00:00",
+      "stdoutSHA256": "648cbead1b828362d2383830d1b7b4aae82e5cfc972a15fd47cd6ce364278211",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "file": "attestation-pass-get-before-revoke.json",
+      "scope": "disposable scout-v213-contract space on isolated local v0.8.3 server"
+    },
+    {
+      "label": "attestation-revoke",
+      "argv": [
+        "cub",
+        "attestation",
+        "revoke",
+        "08f76195-a7c5-496f-84c1-c62424434c6b",
+        "--note",
+        "Disposable acceptance fixture: revocation",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "retrievedAt": "2026-10-05T05:46:33.345108+00:00",
+      "stdoutSHA256": "fc9084a3b37bbc8cd80e2c53e00078e9883fdd64c65f3573fd0f185b44c72f39",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "file": "attestation-revoke.json",
+      "scope": "disposable scout-v213-contract space on isolated local v0.8.3 server"
+    },
+    {
+      "label": "attestation-pass-get-after-revoke",
+      "argv": [
+        "cub",
+        "attestation",
+        "get",
+        "08f76195-a7c5-496f-84c1-c62424434c6b",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "retrievedAt": "2026-10-05T05:46:33.415708+00:00",
+      "stdoutSHA256": "648cbead1b828362d2383830d1b7b4aae82e5cfc972a15fd47cd6ce364278211",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "file": "attestation-pass-get-after-revoke.json",
+      "scope": "disposable scout-v213-contract space on isolated local v0.8.3 server"
+    },
+    {
+      "label": "attestation-list",
+      "argv": [
+        "cub",
+        "attestation",
+        "list",
+        "--space",
+        "scout-v213-contract",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "retrievedAt": "2026-10-05T05:45:09.899999+00:00",
+      "stdoutSHA256": "2e64a616f2f355a39ae98d5d5ca7b902272310e51c6006ec4663fb07c64cc04e",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "file": "attestation-list.json",
+      "scope": "disposable scout-v213-contract space on isolated local v0.8.3 server"
+    },
+    {
+      "label": "attestation-list-after-revoke",
+      "argv": [
+        "cub",
+        "attestation",
+        "list",
+        "--space",
+        "scout-v213-contract",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "retrievedAt": "2026-10-05T05:46:33.492702+00:00",
+      "stdoutSHA256": "fdec5ebd72647de428b9e54535eb70d030fe3aec53154ac0a8f474f46c2894a5",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "file": "attestation-list-after-revoke.json",
+      "scope": "disposable scout-v213-contract space on isolated local v0.8.3 server"
+    },
+    {
+      "label": "attestation-expired-get",
+      "argv": [
+        "cub",
+        "attestation",
+        "get",
+        "df54a53f-72a7-4914-97b0-bf7b1bae124a",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "retrievedAt": "2026-10-05T05:46:33.571608+00:00",
+      "stdoutSHA256": "9017b5ca95096e37a819e55e16fbeb6d0f64d88b0d2882e81cf43be61707283f",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "file": "attestation-expired-get.json",
+      "scope": "disposable scout-v213-contract space on isolated local v0.8.3 server"
+    },
+    {
+      "label": "changeorder-get",
+      "argv": [
+        "cub",
+        "changeorder",
+        "get",
+        "contract-change",
+        "--space",
+        "scout-v213-contract",
+        "-o",
+        "json"
+      ],
+      "exitCode": 0,
+      "retrievedAt": "2026-10-05T05:45:10.187498+00:00",
+      "stdoutSHA256": "3c82a9a47c9c8796fd6a1e06b97bcee40d8f5381b59ba35ae889775148572856",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "file": "changeorder-get.json",
+      "scope": "disposable scout-v213-contract space on isolated local v0.8.3 server"
+    },
+    {
+      "label": "attestation-missing-id-get",
+      "argv": [
+        "cub",
+        "attestation",
+        "get",
+        "db45ed87-5176-4110-a38c-4125a006c6fe",
+        "-o",
+        "json"
+      ],
+      "exitCode": 1,
+      "retrievedAt": "2026-10-05T05:46:33.900364+00:00",
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "479cc949ef22984838a329d2a3f4e53f21bb6581bfb799b56dbcaf7b62b66d09",
+      "file": "attestation-missing-id-get.txt",
+      "scope": "disposable scout-v213-contract space on isolated local v0.8.3 server",
+      "stderrFile": "attestation-missing-id-get.stderr.txt"
+    }
+  ]
+}

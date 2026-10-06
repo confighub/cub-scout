@@ -1,0 +1,114 @@
+{
+  "scope": "actual Python stdlib/asset probe only, not full runtime or model admission",
+  "sourceCommit": "7d09072b04d300bc03d82e90b4a745d3d2561e95",
+  "sourceDirty": false,
+  "modelOrProviderRun": false,
+  "status": "running",
+  "payloadSHA256": "c620c60573420265ea2e6c380ca78fc3c93d48c63b5a1496f2b342a66d685409",
+  "operations": [
+    {
+      "label": "docker-endpoint",
+      "args": [
+        "context",
+        "inspect",
+        "orbstack",
+        "--format",
+        "{{json .Endpoints.docker.Host}}"
+      ],
+      "exitCode": 0,
+      "stdoutSHA256": "76a228368ea2b8ec2ade244d6c143bbc4d7d669887f7595f0db0972142ab3c1c",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "image",
+      "args": [
+        "image",
+        "inspect",
+        "sha256:cdbd05fb6f457ca275ff51ce00d93d865ca0b6a25f5ffb08262d94f6835771e5"
+      ],
+      "exitCode": 0,
+      "stdoutSHA256": "e7c9eaa2f0699d6c70648b433c51b3890233a0dc66e31c579373e8e0ccc1d7c0",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "create",
+      "args": [
+        "container",
+        "create",
+        "--name",
+        "scout-linux-ver-cc421c949ee7424f",
+        "--label",
+        "io.confighub.cub-scout.linux-runtime-versions.owner=e393354866da4a67975536c01e93bb4f",
+        "--pull=never",
+        "--network=none",
+        "--read-only",
+        "--user",
+        "65534:65534",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "--pids-limit=64",
+        "--memory=1g",
+        "--cpus=1",
+        "--tmpfs",
+        "/tmp:rw,nosuid,nodev,size=64m,uid=65534,gid=65534",
+        "--mount",
+        "type=bind,src=/tmp/scout-v213-python-runtime-20261005-attempt1/tools,dst=/tools,readonly",
+        "sha256:cdbd05fb6f457ca275ff51ce00d93d865ca0b6a25f5ffb08262d94f6835771e5",
+        "python3",
+        "/tools/payload.py"
+      ],
+      "exitCode": 0,
+      "stdoutSHA256": "5b3bd98297e07d106774a707542ab7394b1a5cea532484cdd301069b0beec14f",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "before",
+      "args": [
+        "container",
+        "inspect",
+        "--format",
+        "{{json .}}",
+        "deac5c8c14ea90ca0c413cbbca6138dcbf16f5b591d50c944cff70a12b01ab7c"
+      ],
+      "exitCode": 0,
+      "stdoutSHA256": "0d238c2297ef45751f7188cb4ba27a2753087977075a8e2387e78ea973192253",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "cleanup": {
+    "attempted": true,
+    "verifiedAbsent": true,
+    "errors": [],
+    "operations": [
+      {
+        "operation": "inspect-before-cleanup",
+        "startedAt": "2026-10-05T18:32:01.565Z",
+        "endedAt": "2026-10-05T18:32:01.589Z",
+        "elapsedSeconds": 0.023851207923144102,
+        "exitCode": 0,
+        "stdoutSha256": "0d238c2297ef45751f7188cb4ba27a2753087977075a8e2387e78ea973192253",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "operation": "remove-owned-container",
+        "startedAt": "2026-10-05T18:32:01.589Z",
+        "endedAt": "2026-10-05T18:32:01.889Z",
+        "elapsedSeconds": 0.2993924580514431,
+        "exitCode": 0,
+        "stdoutSha256": "5b3bd98297e07d106774a707542ab7394b1a5cea532484cdd301069b0beec14f",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "operation": "verify-absent",
+        "startedAt": "2026-10-05T18:32:01.889Z",
+        "endedAt": "2026-10-05T18:32:01.931Z",
+        "elapsedSeconds": 0.042454041074961424,
+        "exitCode": 1,
+        "stdoutSha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+        "stderrSha256": "553e645a4fcdff30465c63ae4e10b3a7b158ef33a1230184393df41c9532aec0"
+      }
+    ],
+    "containerId": "deac5c8c14ea90ca0c413cbbca6138dcbf16f5b591d50c944cff70a12b01ab7c",
+    "removeExitCode": 0
+  }
+}

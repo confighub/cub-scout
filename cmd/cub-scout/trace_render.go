@@ -109,6 +109,7 @@ func renderTraceHuman(w io.Writer, result *agent.TraceResult, artifacts map[stri
 		// returned as a typed error so CLI callers can preserve exit code 1 while
 		// in-process callers (such as the TUI) remain alive.
 		fmt.Fprintf(w, "  %s[warning] %s%s\n\n", colorYellow, result.Error, colorReset)
+		renderTraceDeliveryEvidenceHumanTo(w, result.DeliveryEvidence)
 		if trackedWriter.err != nil {
 			return trackedWriter.err
 		}

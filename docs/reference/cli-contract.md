@@ -156,15 +156,17 @@ cub-scout explain <kind> <name> [flags]
 | `--confighub-stale-after` | string | 15m | Treat live-status observations older than this as stale |
 | `--bounded` | bool | false | Read one exact live API object without controller or connected enrichment |
 | `--api-version` | string | - | Exact API version; required with `--bounded` or `--recording` |
-| `--kube-context` | string | - | Explicit context for `--bounded` only |
+| `--kube-context` | string | - | Optional exact context for all enriched Kubernetes reads; required with `--bounded`. Explicit empty/missing names fail without fallback |
 | `--refresh` | bool | false | Bypass bounded session reuse; for `--bounded` only |
 | `--expected-revision` | string | - | Compare immutable controller-reported revision; for `--bounded` only |
 | `--recording` | string | - | Use a bounded local YAML/JSON recording; requires exact API version and explicit namespace |
-| `--tui` | bool | false | Open the one-object recorded viewer; requires `--recording` |
+| `--tui` | bool | false | Open a scrollable single-object snapshot of the same Explain summary |
 
 ### Stable Output Rules
 
 - JSON is the canonical contract for `explain`.
+- Explicit-context enriched Explain captures one private endpoint/configuration binding for ownership, lineage, events, field attribution, rollout and connected comparison reads. Static file credentials are snapshotted; configured exec-auth retains its refresh and file-access behavior. Offline tests exercise static bearer tokens. Namespace defaults to `default` when omitted. ConfigHub space/auth is selected separately.
+- `kubernetesContext` is a selection label, not stable cluster identity. Denied evidence remains unknown with structured omissions. Partial comparison operands do not establish agreement.
 - `--presentation` affects text and Markdown framing only.
 - `--hint-mode` affects next-step recommendation ranking only.
 - Omitting `--presentation` preserves the legacy/default text/Markdown render path.
@@ -246,7 +248,7 @@ host custom-detector files; unknown or unmeasured results remain explicit.
 See [recorded object loader](../../examples/recorded-object-loader/) for the
 bounded identity, provenance, omissions, and input limits.
 
-#### Expected Controller Revision (Unreleased v2.11)
+#### Expected Controller Revision (v2.11)
 
 `--expected-revision <immutable-id>` requires `--bounded`. Accepted values are
 full lowercase 40-hex Git commits and `sha256:` followed by 64 lowercase hex
@@ -428,6 +430,8 @@ cub-scout mcp serve --recording objects.yaml
 - `confighub_k8s_types` and `confighub_k8s_resources` read ConfigHub Resource-backed intended configuration through `cub k8s types/get`; they do not read live cluster state, and they require an explicit `space` or `target` scope.
 - `confighub_resources` reads the ConfigHub Resource entity through `cub resource list`; it does not read live cluster state, and it requires an explicit `space`.
 - `confighub_live_status`, `confighub_releases`, and `confighub_unit_events` require explicit space scope. Use `*` only for an intentional all-spaces read.
+- `confighub_changeorder_get` requires an exact `changeorder` and exact `space`, refuses `*` and environment fallback, and returns reported declarations with evaluated outcomes unknown.
+- `confighub_attestations` requires exact `space_id`, unit slug and positive revision. Its two bounded reads expose direct revision claims only. Missing references and missing `Attestations` fields are omissions, never proven absence. Observed revocation is `revoked: true`; an omitted `revoked` means unknown. It does not evaluate workflow approval or change runtime verdicts.
 - `confighub_units` and `confighub_changesets` require `space` (`*` only for a deliberate all-spaces read). `confighub_unit_get` requires `space` unless `unit` is `<space>/<slug>` or a unit ID, and refuses `*`, because one unit lives in one space. The server's `CUB_SPACE` is not consulted: an agent cannot see the environment of the server it calls, and cub (v0.5.2 and later) has no default space.
 - `confighub_k8s_types` and `confighub_k8s_resources` accept a `target` without a `space` only when the target names its own space, as `<space>/<slug>` or a UUID.
 - All MCP tool descriptors advertise `annotations.readOnlyHint=true`.
@@ -1586,6 +1590,35 @@ cub-scout history <resource> [flags]
 ```
 
 ---
+
+### history changeorder
+
+```bash
+./cub-scout history changeorder rollout --space prod --format json
+./cub-scout history changeorder prod/rollout --space prod --format md
+./cub-scout history changeorder rollout --space prod --tui
+```
+
+This connected read requires one exact order slug or ID and an explicit exact
+`--space` slug or ID. It does not use `CUB_SPACE`; wildcard, option-like and
+mismatched qualified selectors are refused before the read. It executes one
+`cub changeorder get <order> -o json --space <space>` and validates the returned
+order and space identity. Malformed, duplicate-key, conflicting or unsupported
+workflow JSON is refused. Unavailable or denied reads return an error, with no
+approval or runtime verdict.
+
+`--format ascii|json|md` (default `ascii`) and `--tui` render the same snapshot.
+Reported Stage/State and stored workflow/prerequisite declarations retain their
+reported order and presence. Evaluated prerequisite, approval, gate, publication
+and advancement outcomes remain **unknown**. `Completed` is a reported Stage,
+not runtime health or convergence. Missing workflow metadata does not establish
+an ungoverned state. The JSON `readContract` identifies the inspected SDK v0.6.8
+parser contract, not the runtime server version. This subcommand does not change
+legacy resource ChangeSet history or evaluate controllers.
+
+[Authored example and success criteria](../../examples/changeorder-read-contract/).
+Genuine connected capture and live CLI/TUI acceptance remain pending.
+
 
 ## cub-scout summary list (v1.7)
 

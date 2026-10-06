@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "cluster": "scout-helm-version-matrix",
+  "context": "kind-scout-helm-version-matrix",
+  "kindImage": "kindest/node:v1.35.0@sha256:4613778f3cfcd10e615029370f5786704559103cf27bef934597ba562b269661",
+  "helm3Version": "v3.22.0+g144ca65",
+  "helm3ArchiveSha256": "4c9982a6cdeb458b60258df66b55398ca5b19293f6877faffe2909ad6f23dfe0",
+  "helm3BinarySha256": "8566ea7d76445d174050eca068bc6d685ba3607de8430524a809a16f505a6138",
+  "helm4Version": "v4.1.4+g05fa379",
+  "helm4BinarySha256": "11e3c9fb6548fa1661a72000a6a483a31f1c2a0bf300f3d2422270feee180d34",
+  "kindVersion": "v0.31.0",
+  "sourceCommit": "a561d46fe5e4dee1a4c575febfd2492843404c78",
+  "sourceDirty": false,
+  "coverage": ["fresh-helm3-install", "fresh-helm4-default-install", "helm3-install-then-helm4-upgrade-server-side-auto"],
+  "lifecycleMatrixCompleted": true,
+  "notCovered": ["application-functionality", "connected-governance", "SQL-release-storage"],
+  "managedFieldsInterpretation": "recorded observations only; manager metadata alone does not establish apply method"
+}

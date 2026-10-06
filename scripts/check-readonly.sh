@@ -54,6 +54,14 @@ PATCH_VIOLATIONS+=$(grep -rn '\.Resource([^)]*)\.\(Namespace([^)]*)\.\)\?Patch('
 
 FOUND_VIOLATIONS=0
 
+# Revision claim inspection never records or revokes server attestations.
+ATTESTATION_VIOLATIONS=$(grep -rnE '"attestation"[[:space:]]*,[[:space:]]*"(create|revoke)"|CreateAttestation\(|RevokeAttestation\(' --include='*.go' --exclude='*_test.go' cmd/ pkg/ 2>/dev/null || true)
+if [ -n "$ATTESTATION_VIOLATIONS" ]; then
+    echo "ERROR: Found ConfigHub attestation write operations:"
+    echo "$ATTESTATION_VIOLATIONS"
+    FOUND_VIOLATIONS=1
+fi
+
 if [ -n "$CREATE_VIOLATIONS" ]; then
     echo "ERROR: Found .Create() calls outside allowed files:"
     echo "$CREATE_VIOLATIONS"

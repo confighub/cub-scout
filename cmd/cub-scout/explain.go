@@ -54,11 +54,11 @@ func init() {
 	explainCmd.Flags().StringVar(&explainHintMode, "hint-mode", "", HintModeHelp())
 	explainCmd.Flags().BoolVar(&explainBounded, "bounded", false, "Read only the exact API object, without controller or connected enrichment")
 	explainCmd.Flags().StringVar(&explainAPIVersion, "api-version", "", "Exact API version for --bounded or --recording (for example apps/v1)")
-	explainCmd.Flags().StringVar(&explainContext, "kube-context", "", "Explicit kube context for --bounded; does not change the current context")
+	explainCmd.Flags().StringVar(&explainContext, "kube-context", "", "Exact kube context for all Kubernetes reads; does not change the current context")
 	explainCmd.Flags().BoolVar(&explainRefresh, "refresh", false, "Bypass bounded session reuse (CLI processes always start with an empty cache)")
 	explainCmd.Flags().StringVar(&explainExpectedRevision, "expected-revision", "", "Compare a full Git commit or sha256 digest with the selected controller report (requires --bounded; not workload delivery proof)")
 	explainCmd.Flags().StringVar(&explainRecording, "recording", "", "Read the exact object from a local recorded YAML/JSON input (offline; requires --api-version and explicit --namespace)")
-	explainCmd.Flags().BoolVar(&explainTUI, "tui", false, "Open an interactive single-object viewer (requires --recording; does not load cluster inventory)")
+	explainCmd.Flags().BoolVar(&explainTUI, "tui", false, "Open an interactive single-object viewer of the same Explain summary")
 	explainCmd.Flags().BoolVar(&explainWithConfigHub, "with-confighub", false, "Include bounded ConfigHub delivery evidence when the resource exposes exact ConfigHub correlation")
 	explainCmd.Flags().StringVar(&explainConfigHubSpace, "confighub-space", "", "ConfigHub space for delivery evidence (default: resource ConfigHub space; use '*' explicitly for all spaces)")
 	explainCmd.Flags().StringVar(&explainConfigHubSince, "confighub-since", "24h", "Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w)")
@@ -67,6 +67,7 @@ func init() {
 
 // ExplainSummary is the canonical model for explain output.
 type ExplainSummary struct {
+	KubernetesContext        string                            `json:"kubernetesContext,omitempty"`
 	ResourceRead             *agent.BoundedReadEvidence        `json:"resourceRead,omitempty"`
 	RecordedInput            *RecordedInputEvidence            `json:"recordedInput,omitempty"`
 	ConfigHubOrigin          *agent.ConfigHubOriginEvidence    `json:"configHubOrigin,omitempty"`
@@ -120,12 +121,13 @@ type ExplainSummary struct {
 // RecordedInputEvidence identifies the immutable raw source used by offline
 // explain. It deliberately has no live observation timestamp or source path.
 type RecordedInputEvidence struct {
-	Kind        string                   `json:"kind"`
-	Identity    agent.BoundedResourceRef `json:"identity"`
-	SHA256      string                   `json:"sha256"`
-	Bytes       int                      `json:"bytes"`
-	Documents   int                      `json:"documents"`
-	ObjectCount int                      `json:"objectCount"`
+	Kind                    string                   `json:"kind"`
+	Identity                agent.BoundedResourceRef `json:"identity"`
+	SHA256                  string                   `json:"sha256"`
+	Bytes                   int                      `json:"bytes"`
+	Documents               int                      `json:"documents"`
+	ObjectCount             int                      `json:"objectCount"`
+	TypedListDerivedObjects int                      `json:"typedListDerivedObjects,omitempty"`
 }
 
 // FieldAttributionSummary reports only manager evidence for one requested
@@ -164,9 +166,6 @@ func runExplain(cmd *cobra.Command, args []string) error {
 	if cmd.Flags().Changed("recording") || explainRecording != "" {
 		return runRecordedExplainCLI(cmd, args, format)
 	}
-	if explainTUI || cmd.Flags().Changed("tui") {
-		return fmt.Errorf("--tui requires --recording")
-	}
 	if explainFieldPath != "" {
 		if err := agent.ValidateCanonicalFieldPath(explainFieldPath); err != nil {
 			return err
@@ -204,13 +203,28 @@ func runExplain(cmd *cobra.Command, args []string) error {
 		}
 		return outputExplainSummary(summary, format, invCtx, hintCtx)
 	}
-	if explainAPIVersion != "" || explainContext != "" || explainRefresh || explainExpectedRevision != "" || cmd.Flags().Changed("expected-revision") {
-		return fmt.Errorf("--api-version, --kube-context, --refresh, and --expected-revision require --bounded")
+	if explainAPIVersion != "" || explainRefresh || explainExpectedRevision != "" || cmd.Flags().Changed("expected-revision") {
+		return fmt.Errorf("--api-version, --refresh, and --expected-revision require --bounded")
 	}
 
 	kind, name, err := parseExplainArgs(args)
 	if err != nil {
 		return err
+	}
+
+	if cmd.Flags().Changed("kube-context") || explainContext != "" || explainTUI {
+		session, err := newExplainSessionForSelection(clusterContextSelection{name: explainContext, explicit: cmd.Flags().Changed("kube-context") || explainContext != ""})
+		if err != nil {
+			return err
+		}
+		summary, err := observeExplainWithSession(cmd.Context(), session, kind, name, explainNamespace, explainObservationOptions{
+			FieldPath: explainFieldPath,
+			Delivery:  traceConfigHubDeliveryFlags{Enabled: explainWithConfigHub, Space: explainConfigHubSpace, Since: explainConfigHubSince, StaleAfter: explainConfigHubStaleAfter},
+		})
+		if err != nil {
+			return err
+		}
+		return outputExplainSummary(summary, format, invCtx, hintCtx)
 	}
 
 	// Call the shared capability seam
@@ -228,6 +242,9 @@ func runExplain(cmd *cobra.Command, args []string) error {
 }
 
 func outputExplainSummary(summary ExplainSummary, format string, invCtx InvocationContext, hintCtx HintContext) error {
+	if explainTUI {
+		return runEnrichedExplainTUI(summary)
+	}
 	switch format {
 	case "json":
 		summary = withExplainJSONHints(summary, hintCtx)
@@ -253,7 +270,7 @@ func withExplainJSONHints(summary ExplainSummary, hintCtx HintContext) ExplainSu
 		summary.NextSteps = nil
 		return summary
 	}
-	hints := explainHintsWithContext(summary, hintCtx)
+	hints := bindExplainHintSelection(explainHintsWithContext(summary, hintCtx), summary.KubernetesContext)
 	if chHint := explainConfigHubHint(summary); chHint != nil {
 		hints = append(hints, *chHint)
 	}
@@ -845,6 +862,9 @@ func renderExplainText(summary ExplainSummary, mode PresentationMode, explicitMo
 		fmt.Fprintf(&b, "%s in namespace %s:\n", Bold(summary.Resource), summary.Namespace)
 	}
 
+	if summary.KubernetesContext != "" {
+		fmt.Fprintf(&b, "  %s %s (selection label; not a stable cluster ID)\n", label("Kubernetes context"), summary.KubernetesContext)
+	}
 	fmt.Fprintf(&b, "  %s %s\n", label("Owner"), colorExplainOwner(summary.Owner))
 	fmt.Fprintf(&b, "  %s %s\n", label("Source"), summary.Source)
 	fmt.Fprintf(&b, "  %s %s\n", label("Deployed via"), summary.DeployedVia)
@@ -921,7 +941,7 @@ func renderExplainText(summary ExplainSummary, mode PresentationMode, explicitMo
 	}
 
 	if summary.RecordedInput == nil {
-		hints := explainTryNextHintsWithContext(summary, hintCtx)
+		hints := explainTryNextHintsForSelection(summary, hintCtx)
 		if len(hints) > 0 {
 			if explicitMode {
 				b.WriteString(renderTryNextSectionWithMode(hints, mode))
@@ -956,9 +976,13 @@ func formatRecordedInput(input *RecordedInputEvidence) string {
 		return ""
 	}
 	identity := input.Identity
-	return fmt.Sprintf("%s; identity=%s %s namespace=%q name=%q; sha256=%s; %d bytes, %d documents, %d objects",
+	text := fmt.Sprintf("%s; identity=%s %s namespace=%q name=%q; sha256=%s; %d bytes, %d documents, %d objects",
 		input.Kind, identity.APIVersion, identity.Kind, identity.Namespace, identity.Name,
 		input.SHA256, input.Bytes, input.Documents, input.ObjectCount)
+	if input.TypedListDerivedObjects > 0 {
+		text += fmt.Sprintf("; input objects with type supplied by typed list envelope: %d", input.TypedListDerivedObjects)
+	}
+	return text
 }
 
 // colorExplainOwner colors the owner field based on its content.
@@ -1079,6 +1103,9 @@ func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explic
 		fmt.Fprintf(&b, "- **Namespace:** `%s`\n", summary.Namespace)
 	}
 
+	if summary.KubernetesContext != "" {
+		fmt.Fprintf(&b, "- **Kubernetes context:** %s (selection label; not a stable cluster ID)\n", gitOpsMarkdownCodeSpan(summary.KubernetesContext))
+	}
 	fmt.Fprintf(&b, "- **Owner:** %s\n", summary.Owner)
 	fmt.Fprintf(&b, "- **Source:** %s\n", summary.Source)
 	fmt.Fprintf(&b, "- **Deployed via:** %s\n", summary.DeployedVia)
@@ -1148,9 +1175,9 @@ func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explic
 
 	if summary.RecordedInput == nil {
 		if explicitMode {
-			b.WriteString(renderTryNextMarkdownWithMode(explainTryNextHintsWithContext(summary, hintCtx), mode))
+			b.WriteString(renderTryNextMarkdownWithMode(explainTryNextHintsForSelection(summary, hintCtx), mode))
 		} else {
-			b.WriteString(renderTryNextMarkdown(explainTryNextHintsWithContext(summary, hintCtx)))
+			b.WriteString(renderTryNextMarkdown(explainTryNextHintsForSelection(summary, hintCtx)))
 		}
 	}
 	// Add ConfigHub link if available

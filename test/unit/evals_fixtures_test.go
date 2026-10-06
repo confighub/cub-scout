@@ -323,8 +323,20 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 			checkSourceTruthContextScaffold(t, caseDir)
 			continue
 		}
+		if filepath.Base(caseDir) == "changeorder-read-contract" {
+			checkChangeOrderReadScaffold(t, caseDir)
+			continue
+		}
+		if filepath.Base(caseDir) == "explain-explicit-context" {
+			checkExplainExplicitContextScaffold(t, caseDir)
+			continue
+		}
 		if filepath.Base(caseDir) == "trace-case-sensitive-slugs" {
 			checkTraceCaseSensitiveSlugsScaffold(t, caseDir)
+			continue
+		}
+		if filepath.Base(caseDir) == "recorded-typed-list" {
+			checkRecordedTypedListScaffold(t, caseDir)
 			continue
 		}
 		if filepath.Base(caseDir) == "recorded-explain-contract" {
@@ -482,6 +494,287 @@ func checkGitOpsStatusContextScaffold(t *testing.T, root string) {
 		got, err := os.ReadFile(filepath.Join(workspace, "recorded", entry.Name()))
 		if err != nil || !bytes.Equal(got, want) {
 			t.Fatalf("GitOps context scaffold changed %s: %v", entry.Name(), err)
+		}
+	}
+}
+
+// The opt-in Explain case stages one authored input, without suite exports,
+// sibling evidence, executable artifacts or oracle files.
+func checkExplainExplicitContextScaffold(t *testing.T, root string) {
+	t.Helper()
+	caseData, err := os.ReadFile(filepath.Join(root, "case.yaml"))
+	if err != nil || !strings.Contains(string(caseData), "FIXTURE-OWNED-SCAFFOLD") || !strings.Contains(string(caseData), "scaffold_script: scaffold.sh") {
+		t.Fatalf("Explain context case must declare its fixture-owned scaffold: %v", err)
+	}
+	source := filepath.Join(root, "fixtures", "inputs.json")
+	want, err := os.ReadFile(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sum := sha256.Sum256(want)
+	if hex.EncodeToString(sum[:]) != "4707c530a58d68667da12ae2102af07b9b64dfd679380a57b8e50093d29ce889" {
+		t.Fatal("Explain authored fixture bytes changed; review the input contract before updating its pin")
+	}
+	var fixture struct {
+		Provenance struct {
+			Kind        string `json:"kind"`
+			LiveCapture bool   `json:"live_capture"`
+		} `json:"provenance"`
+		Contexts map[string]struct {
+			Workload json.RawMessage `json:"workload"`
+		} `json:"contexts"`
+	}
+	if err := json.Unmarshal(want, &fixture); err != nil {
+		t.Fatal(err)
+	}
+	if fixture.Provenance.Kind != "authored" || fixture.Provenance.LiveCapture || len(fixture.Contexts) != 2 ||
+		len(fixture.Contexts["alpha-context"].Workload) == 0 || !bytes.Equal(fixture.Contexts["alpha-context"].Workload, fixture.Contexts["beta-context"].Workload) {
+		t.Fatal("Explain case must retain authored identical workloads in its two contexts")
+	}
+	benchmark := filepath.Join(filepath.Dir(root), "benchmark-v1.json")
+	frozen, err := os.ReadFile(benchmark)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(frozen, []byte("explain-explicit-context")) {
+		t.Fatal("opt-in Explain case must remain outside the frozen benchmark")
+	}
+	scaffold, err := filepath.Abs(filepath.Join(root, "scaffold.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	workspace := t.TempDir()
+	cmd := exec.Command("bash", scaffold)
+	cmd.Dir = workspace
+	cmd.Env = offlineKubeconfigEnvironment()
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("Explain context scaffold: %v: %s", err, output)
+	}
+	var paths []string
+	err = filepath.Walk(workspace, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if path == workspace {
+			return nil
+		}
+		relative, err := filepath.Rel(workspace, path)
+		if err != nil {
+			return err
+		}
+		paths = append(paths, filepath.ToSlash(relative))
+		if relative == "cluster" && !info.IsDir() {
+			t.Fatal("cluster must be a directory")
+		}
+		if relative != "cluster" && !info.Mode().IsRegular() {
+			t.Fatalf("unexpected nonregular scaffold artifact: %s", relative)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(paths) != 2 || paths[0] != "cluster" || paths[1] != "cluster/inputs.json" {
+		t.Fatalf("Explain scaffold must stage only cluster/inputs.json, got %v", paths)
+	}
+	got, err := os.ReadFile(filepath.Join(workspace, "cluster", "inputs.json"))
+	if err != nil || !bytes.Equal(got, want) {
+		t.Fatalf("Explain scaffold changed authored input bytes: %v", err)
+	}
+	for path, before := range map[string][]byte{source: want, benchmark: frozen} {
+		after, err := os.ReadFile(path)
+		if err != nil || !bytes.Equal(before, after) {
+			t.Fatalf("Explain scaffold changed source/frozen suite %s: %v", path, err)
+		}
+	}
+}
+
+func checkChangeOrderReadScaffold(t *testing.T, root string) {
+	t.Helper()
+	caseData, err := os.ReadFile(filepath.Join(root, "case.yaml"))
+	if err != nil || !strings.Contains(string(caseData), "FIXTURE-OWNED-SCAFFOLD") || !strings.Contains(string(caseData), "scaffold_script: scaffold.sh") {
+		t.Fatalf("ChangeOrder read case must declare its fixture-owned scaffold: %v", err)
+	}
+	source := filepath.Join(root, "fixtures", "inputs.json")
+	want, err := os.ReadFile(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sum := sha256.Sum256(want)
+	if hex.EncodeToString(sum[:]) != "b13924e3dd00cdc840936171c2ab57288a553bbd277537b1aa056c5160e6a09f" {
+		t.Fatal("ChangeOrder authored fixture bytes changed; review the input contract before updating its pin")
+	}
+	var fixture struct {
+		Provenance struct {
+			Kind           string `json:"kind"`
+			LiveCapture    bool   `json:"live_capture"`
+			ParserContract struct {
+				Commit string `json:"commit"`
+			} `json:"parser_contract"`
+		} `json:"provenance"`
+		Responses map[string]struct {
+			ChangeOrder struct {
+				Slug           string
+				SpaceID        string
+				Stage          string
+				ChangeWorkflow json.RawMessage
+			}
+		} `json:"responses_by_space"`
+	}
+	if err := json.Unmarshal(want, &fixture); err != nil {
+		t.Fatal(err)
+	}
+	prod, other := fixture.Responses["prod"].ChangeOrder, fixture.Responses["staging"].ChangeOrder
+	if fixture.Provenance.Kind != "authored" || fixture.Provenance.LiveCapture ||
+		fixture.Provenance.ParserContract.Commit != "4c8d2fc3885fed0d7af6835f2aac0a24387b6221" ||
+		len(fixture.Responses) != 2 || prod.Slug != "rollout" || other.Slug != prod.Slug ||
+		prod.SpaceID == "" || prod.SpaceID == other.SpaceID || prod.Stage != "Completed" ||
+		len(prod.ChangeWorkflow) == 0 || bytes.Equal(prod.ChangeWorkflow, other.ChangeWorkflow) {
+		t.Fatal("ChangeOrder fixture must retain authored source-pinned same-slug orders in distinct spaces with distinct declarations")
+	}
+	benchmark := filepath.Join(filepath.Dir(root), "benchmark-v1.json")
+	frozen, err := os.ReadFile(benchmark)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(frozen, []byte("changeorder-read-contract")) {
+		t.Fatal("opt-in ChangeOrder case must remain outside the frozen benchmark")
+	}
+	scaffold, err := filepath.Abs(filepath.Join(root, "scaffold.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	workspace := t.TempDir()
+	cmd := exec.Command("bash", scaffold)
+	cmd.Dir = workspace
+	cmd.Env = offlineKubeconfigEnvironment()
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("ChangeOrder read scaffold: %v: %s", err, output)
+	}
+	var paths []string
+	err = filepath.Walk(workspace, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if path == workspace {
+			return nil
+		}
+		relative, err := filepath.Rel(workspace, path)
+		if err != nil {
+			return err
+		}
+		paths = append(paths, filepath.ToSlash(relative))
+		if relative == "cluster" && !info.IsDir() {
+			t.Fatal("cluster must be a directory")
+		}
+		if relative != "cluster" && !info.Mode().IsRegular() {
+			t.Fatalf("unexpected nonregular scaffold artifact: %s", relative)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(paths) != 2 || paths[0] != "cluster" || paths[1] != "cluster/inputs.json" {
+		t.Fatalf("ChangeOrder scaffold must stage only cluster/inputs.json, got %v", paths)
+	}
+	got, err := os.ReadFile(filepath.Join(workspace, "cluster", "inputs.json"))
+	if err != nil || !bytes.Equal(got, want) {
+		t.Fatalf("ChangeOrder scaffold changed authored input bytes: %v", err)
+	}
+	for path, before := range map[string][]byte{source: want, benchmark: frozen} {
+		after, err := os.ReadFile(path)
+		if err != nil || !bytes.Equal(before, after) {
+			t.Fatalf("ChangeOrder scaffold changed source/frozen suite %s: %v", path, err)
+		}
+	}
+}
+
+func checkRecordedTypedListScaffold(t *testing.T, root string) {
+	t.Helper()
+	caseData, err := os.ReadFile(filepath.Join(root, "case.yaml"))
+	if err != nil || !strings.Contains(string(caseData), "FIXTURE-OWNED-SCAFFOLD") || !strings.Contains(string(caseData), "scaffold_script: scaffold.sh") {
+		t.Fatalf("recorded typed-list case must declare its fixture-owned scaffold: %v", err)
+	}
+	source := filepath.Join(root, "fixtures", "deployments.json")
+	want, err := os.ReadFile(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sum := sha256.Sum256(want)
+	if hex.EncodeToString(sum[:]) != "e0102f91e1417c8554ed377352b50450f2376e69d40632f109ea012c5c1560a2" {
+		t.Fatal("recorded typed-list fixture bytes changed; review the input contract before updating its pin")
+	}
+	original := filepath.Join(filepath.Dir(root), "rul03-context", "fixtures", "rul03-readable-deployments.body")
+	originalBytes, err := os.ReadFile(original)
+	if err != nil || !bytes.Equal(want, originalBytes) {
+		t.Fatalf("typed-list fixture must preserve original recorded response bytes: %v", err)
+	}
+	var fixture struct {
+		APIVersion string                       `json:"apiVersion"`
+		Kind       string                       `json:"kind"`
+		Items      []map[string]json.RawMessage `json:"items"`
+	}
+	if err := json.Unmarshal(want, &fixture); err != nil {
+		t.Fatal(err)
+	}
+	if fixture.APIVersion != "apps/v1" || fixture.Kind != "DeploymentList" || len(fixture.Items) != 1 || fixture.Items[0]["apiVersion"] != nil || fixture.Items[0]["kind"] != nil {
+		t.Fatal("typed-list source must retain its exact envelope and omitted item type")
+	}
+	benchmark := filepath.Join(filepath.Dir(root), "benchmark-v1.json")
+	frozen, err := os.ReadFile(benchmark)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(frozen, []byte("recorded-typed-list")) {
+		t.Fatal("opt-in typed-list case must remain outside the frozen benchmark")
+	}
+	scaffold, err := filepath.Abs(filepath.Join(root, "scaffold.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	workspace := t.TempDir()
+	cmd := exec.Command("bash", scaffold)
+	cmd.Dir = workspace
+	cmd.Env = offlineKubeconfigEnvironment()
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("typed-list read scaffold: %v: %s", err, output)
+	}
+	var paths []string
+	err = filepath.Walk(workspace, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if path == workspace {
+			return nil
+		}
+		relative, err := filepath.Rel(workspace, path)
+		if err != nil {
+			return err
+		}
+		paths = append(paths, filepath.ToSlash(relative))
+		if relative == "cluster" && !info.IsDir() {
+			t.Fatal("cluster must be a directory")
+		}
+		if relative != "cluster" && !info.Mode().IsRegular() {
+			t.Fatalf("unexpected nonregular scaffold artifact: %s", relative)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(paths) != 2 || paths[0] != "cluster" || paths[1] != "cluster/deployments.json" {
+		t.Fatalf("typed-list scaffold must stage only cluster/deployments.json, got %v", paths)
+	}
+	got, err := os.ReadFile(filepath.Join(workspace, "cluster", "deployments.json"))
+	if err != nil || !bytes.Equal(got, want) {
+		t.Fatalf("typed-list scaffold changed authored input bytes: %v", err)
+	}
+	for path, before := range map[string][]byte{source: want, original: originalBytes, benchmark: frozen} {
+		after, err := os.ReadFile(path)
+		if err != nil || !bytes.Equal(before, after) {
+			t.Fatalf("typed-list scaffold changed source/frozen suite %s: %v", path, err)
 		}
 	}
 }

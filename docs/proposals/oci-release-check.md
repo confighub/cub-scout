@@ -1,7 +1,9 @@
 # Exact Configuration Release Check
 
-Status: scoped implementation complete; merged in #536 for the next minor release,
-not published. Prerequisite #535 is merged.
+Status: initial scoped implementation published in v2.11.0 (#535/#536);
+subsequent Deployment/headless hardening published in v2.12.1. Reviewed 2026-10-05.
+See [release scope](../releases/v2.11.0.md) and
+[hardening/acceptance](../releases/v2.12.1.md); later adapter work remains separate.
 Tracking: #532, #502, #505. Builds on controller revision evidence in #535.
 
 ## User Value

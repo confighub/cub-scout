@@ -50,6 +50,7 @@ When fields cross surface boundaries, mapping is explicit (e.g., metadata `creat
 | Trace/explain recent events | This doc (below) | Embedded in `trace` and `explain` JSON (v1.10+) |
 | Compare three-way agreement summary | This doc (below) | Embedded in `compare three-way` JSON |
 | GitOps controller coverage | This doc (below) | Embedded in `gitops status` JSON |
+| Sveltos controller reports | This doc (below) | Optional `sveltosControllerReports` with `sveltos.controllerObservations.v1` |
 | Observation evidence | This doc (below) | Embedded in `snapshot` JSON as `observation`, `summary list` JSON as top-level and per-entry `observation`, `map list` JSON entries as `observation`, and watch/bot events as `observation` |
 | Platform substrate evidence | This doc (below) | Embedded in `map list` JSON as `ownerEvidence`, in watch/bot events as `owner.evidence`, and in receipts as `predicate.evidence.platformSubstrate` |
 | GitOps delivery evidence | This doc (below) | Embedded in `gitops status --with-confighub` and `doctor --with-confighub` JSON |
@@ -203,6 +204,7 @@ uses `recordedInput` for immutable input provenance and deliberately omits
 | `recordedInput.identity` | Exact requested API version, Kind, namespace, and name |
 | `recordedInput.sha256` | SHA-256 of the complete input bytes |
 | `recordedInput.bytes`, `documents`, `objectCount` | Bounded input byte, YAML document, and object counts |
+| `recordedInput.typedListDerivedObjects` | Optional input-wide number of objects whose omitted API version or Kind was supplied by an exact supported typed-list envelope; omitted when zero |
 | `omissions[]` | Includes missing trusted capture time, controller revision, source/controller, related-pod/event, and desired/live evidence |
 
 No file path or capture timestamp is reported. Without separately trusted
@@ -213,6 +215,16 @@ an omission that custom host detector configuration was not read. The recorded
 MCP server loads the file once at startup and exposes recorded `map` and `explain`; requests
 cannot supply paths or select live/connected operations. Raw object payloads,
 including Secret data, are not returned.
+
+The shared loader also accepts exact `apps/v1 DeploymentList` responses. That
+Kubernetes API type declares Deployment items, which may omit their own type
+fields. Missing item types come only from this exact envelope; explicitly
+conflicting, null or blank types refuse. Generic `v1/List` items still require
+their own complete type identity. The original response bytes/hash are retained.
+Recorded map list/summary provenance exposes the same optional
+`typedListDerivedObjects` count, and ASCII/Markdown/TUI explain its source.
+This adds no context identity, trusted capture time or denied/empty inventory
+interpretation. Empty recordings and denied Status responses still refuse.
 
 ### Observed Origin
 
@@ -564,6 +576,14 @@ contract does not interpret those timestamps. If history is incomplete or
 ambiguous, report the writer as unknown.
 
 ### ExplainSummary additions (explain --format json)
+
+Explicit-context enriched Explain adds optional `kubernetesContext`, the captured
+kubeconfig selection label (not a stable cluster ID). Its Kubernetes reads share
+one captured endpoint/configuration binding. Static file credentials are
+snapshotted; configured exec-auth retains its refresh and file-access behavior.
+Offline tests exercise static bearer tokens. Denied or incomplete reads retain
+structured `omissions` and explanatory `notes`; ConfigHub space/auth remains
+separate. The default legacy path and offline recorded input omit this label.
 
 ```json
 {
@@ -1028,6 +1048,38 @@ controller-reported `ready`, `healthStatus`, or `stage`. Missing/denied runtime
 reads are not evidence of zero Pods, and no arbitrary API error payload is
 included.
 
+## Sveltos Controller Report Contract
+
+`gitops status` optionally adds `sveltosControllerReports` with schema
+`sveltos.controllerObservations.v1`. It uses the existing scoped controller list
+reads; no target cluster or workload is fetched. Supported projections are
+`config.projectsveltos.io/v1beta1` ClusterSummary and
+`lib.projectsveltos.io/v1beta1` ClusterHealthCheck.
+
+Each observation carries its source API version/kind/namespace/name/UID,
+`category` (`delivery` or `continuous-health`), `coverage` (`reported`, `partial`
+or `unknown`), raw `reportedCluster` fields and explicit `omissions`.
+ClusterSummary `features[]` preserves feature ID, reported status, failure
+reason/message and optional `lastAppliedTime`. ClusterHealthCheck
+`clusterConditions[]` preserves reported cluster references and condition
+type/status/reason/message/`lastTransitionTime`. References are not joined to
+source objects or workloads. Valid timestamps describe reports, not check
+execution or current freshness; malformed reported timestamps remain visible
+with an omission. `workloadHealth` and `checkFreshness` are always `unknown`.
+
+Reports are deterministically bounded to 32 source observations, 16 features or
+cluster-condition rows per source, 16 total health conditions per source, and
+512 UTF-8 bytes per reported string. Counts describe input entries; corresponding
+`omitted*Count` fields expose excluded entries. Source identity fields are
+cleared with an omission rather than truncated. Missing identity/status, unknown
+API versions, malformed entries and truncated data degrade coverage explicitly.
+Denied list calls remain in `controllerCoverage[]`; no report is fabricated.
+Absent Sveltos objects leave the optional root field absent.
+
+ASCII, Markdown and TUI render these same reports; MCP exposes them under
+`structuredContent.data`. Existing deployer stages and health counts are
+unchanged. See [authored example](../../examples/sveltos-controller-facts/).
+
 ## Observation Evidence Contract
 
 `observation` describes where cub-scout read an observed fact from and when the
@@ -1373,7 +1425,7 @@ ConfigHub event cursors.
 
 ## Connected Read Scope: history, audit list, fleet outliers
 
-`history`, `audit list`, `impact` and `fleet outliers` read the ConfigHub space
+Legacy resource `history`, `audit list`, `impact` and `fleet outliers` read the ConfigHub space
 named by `--space` or `CUB_SPACE` (`*`, every space, where the command accepts
 it) and report it in a `scope` block:
 
@@ -1797,6 +1849,34 @@ new receipts, never mutate old ones. cub-scout never mutates the cluster or
 ConfigHub.
 
 ### Wire Format
+
+A cub-scout receipt is an in-toto Statement about observed live state. A
+ConfigHub Attestation is an unsigned server entity about intended-config
+revisions; it is not an in-toto Statement. With `--with-confighub`, exact
+combined origin identity can attach direct claims under
+`predicate.evidence.attestations` and `deliveryEvidence.attestations`. These
+supporting facts are fingerprint covered and verdict neutral. Their
+`coverage` is `direct-references-only`, or `direct-references-unavailable`
+when revision GET omitted its reference map. Missing claims appear in
+`omissions`; they are not negative approval evidence. `revoked: true` requires
+a returned revocation entity; omitted `revoked` means unknown. `expired` is
+computed relative to the evidence's explicit `observedAt` (the receipt's
+`verifiedAt` for receipt evidence). `DataHash` in the claim block is reported
+server metadata. The optional `confighub-unit://` receipt subject carries
+`confighub-data-sha256` only after the exact revision data read's raw bytes hash
+to that value. Its separate `sha256` hashes RFC 8785 canonical JSON with
+`schema: confighub-unit-canonical.v1`, `spaceId`, `unitId`, `revisionId`, and
+`objects` in served manifest order. Objects use the existing strict recorded
+manifest parser; the input bytes and canonical representation are distinct
+digest inputs. Data reads or parsing/hash failures leave the subject omitted
+and preserve the runtime verdict. Effective
+coverage and workflow evaluation remain unestablished by this read contract.
+
+`confighub-data-sha256` is Scout's additional digest key for SHA-256 of the
+exact served bytes, encoded as 64 lowercase hexadecimal characters. It is not
+a standard algorithm key; generic consumers may ignore this extension under
+the [in-toto DigestSet rules](https://github.com/in-toto/attestation/blob/main/spec/v1/digest_set.md).
+Digest equality alone never joins claims across different revision identities.
 
 The wire format is the **in-toto Statement v1 envelope** (`_type =
 "https://in-toto.io/Statement/v1"`) wrapping the cub-scout predicate URI
@@ -2638,3 +2718,35 @@ no supported built-in marker. Selected and excluded counts apply to the
 combined API version, Kind, namespace and owner filters. The default full report
 remains `map-list-recorded.v1`; an omitted owner does not add a field to its
 scope.
+
+## Exact-space ChangeOrder read
+
+CLI `history changeorder --format json` and connected MCP
+`confighub_changeorder_get` return the same `confighub.changeorderRead.v1`
+projection. MCP returns this projection as JSON text; no new structured-content
+schema is asserted. TUI, ASCII and Markdown show the same captured snapshot.
+
+| Field | Meaning |
+|---|---|
+| `schema` | `confighub.changeorderRead.v1` |
+| `readContract` | Inspected SDK v0.6.8 source commit `4c8d2fc3885fed0d7af6835f2aac0a24387b6221`; a pinned parser contract, not a runtime server version claim |
+| `requested.order`, `requested.space` | Explicit exact selectors; a matching qualified order is normalized to its order component |
+| `changeOrderId`, `slug`, `spaceId`, `spaceSlug` | Validated returned identity. Required IDs and slug must match requested selectors; slug-based space queries require reported exact space slug. Optional related Space identity must agree |
+| `reportedStage`, `reportedState` | Reported strings only; missing/null fields are omitted and described in `omissions`. Empty strings also produce omissions |
+| `workflowId` | Optional reported valid nonzero workflow UUID; not a governing or evaluated-outcome assertion |
+| `workflowDeclaration` | Optional stored SDK-shaped declaration with original field presence, explicit false/zero/empty arrays and array order. PascalCase declaration fields follow pinned source, including Stages, Final, CustomPrerequisites and AttestationPrerequisites |
+| `declarationCoverage` | `reported`, `partial` or `unavailable`: parsing/presence coverage, not governance evaluation or completeness of all server state |
+| `evaluation` | Always `unknown`; this GET exposes no evaluated prerequisite, approval, gate, publication or advancement outcomes |
+| `omissions` | Structured unavailable/partial evidence with reasons; missing workflow never means ungoverned or approved |
+| `limitations` | Separates reported Stage/State, including Completed, from runtime health, live convergence and governance acceptance |
+
+One read uses `cub changeorder get <order> -o json --space <space>`. Exact explicit
+space is required independently of `CUB_SPACE`; wildcards, options and mismatched
+qualified selectors are refused. Invalid UTF-8, duplicate JSON keys, contradictory identities,
+unsupported workflow fields/types, nesting over 64 and responses over 1 MiB are
+refused. Read failure or cancellation returns an error without a success
+projection or inferred outcome. No controller observation, expression execution,
+effective-default filling, mutation or cross-space fallback occurs.
+
+[Authored example](../../examples/changeorder-read-contract/) documents offline
+success criteria and the pending genuine capture and live CLI/TUI acceptance gates.

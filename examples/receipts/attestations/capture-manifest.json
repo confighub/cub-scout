@@ -1,0 +1,61 @@
+{
+  "sourceCommit": "31abf38d131a6faabc13da6b5674f108f18e3903",
+  "sourceDirty": false,
+  "serverVersion": "v0.8.3",
+  "serverCommit": "1f92e099f4960a0828d2b51ed54e142e5f051b2a",
+  "cubVersion": "v0.8.3",
+  "cubCommit": "468dd09f1c893ce2e18fd018192dcfa96cb1dd34",
+  "authScope": "isolated local administrator; not viewer RBAC proof",
+  "scope": "direct claim read adapter, not intended/live equivalence",
+  "acceptedChecks": [
+    "live MCP exact revision read",
+    "trace ascii/json/md",
+    "explain text/json/md",
+    "receipt fingerprint validation",
+    "unchanged receipt verdict",
+    "owned namespace cleanup",
+    "live interactive explain TUI through PTY",
+    "verified served DataHash and separate canonical subject digest",
+    "claim observation timestamp exactly equals encoded verifiedAt",
+    "standalone receipt has omission and no connected claims",
+    "unauthenticated MCP does not advertise connected claim reader"
+  ],
+  "previousAttempt": {
+    "status": "failed",
+    "reason": "empty controller chain discarded human delivery projection",
+    "retained": "/tmp/scout-v213-attestation-reader-live-20261005"
+  },
+  "files": {
+    "explain.json": "d4861faa0bb56d9fa9a0554d9ae99d3a9bb55094ae0c9979ef8c172e83bf4fef",
+    "receipt.json": "3edd6214c9452afd3f1df403a33aff71345762f079b0b32490c104e54515af19",
+    "receipt-without-claims.json": "ad2648869a1872be47f1f01ef4b21916855566c575beda53048e3f2f90135417"
+  },
+  "retainedAttempts": [
+    {
+      "path": "/tmp/scout-v213-attestation-reader-live-20261005",
+      "status": "failed CLI projection"
+    },
+    {
+      "path": "/tmp/scout-v213-attestation-reader-live-20261005-run2",
+      "status": "passed direct reads"
+    },
+    {
+      "path": "/tmp/scout-v213-attestation-reader-live-20261005-run3",
+      "status": "passed subject/TUI reads"
+    },
+    {
+      "path": "/tmp/scout-v213-attestation-reader-live-20261005-run4",
+      "status": "failed timestamp precision"
+    },
+    {
+      "path": "/tmp/scout-v213-attestation-reader-live-20261005-run5",
+      "status": "passed all adapter checks"
+    },
+    {
+      "path": "/tmp/scout-v213-attestation-reader-live-20261005-run6",
+      "status": "passed clean source, connected and standalone controls"
+    }
+  ],
+  "binarySHA256": "c179e82a1449c7d6a6bce3e4e447655f660e0d6ca4591ef4740055cf096bd044",
+  "buildGoVersion": "go1.24.0"
+}

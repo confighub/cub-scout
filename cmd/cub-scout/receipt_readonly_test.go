@@ -65,6 +65,10 @@ func TestReceiptPackageReadOnlyClient(t *testing.T) {
 		".ApplyStatus(",
 		".Delete(",
 		".DeleteCollection(",
+		`"attestation", "create"`,
+		`"attestation", "revoke"`,
+		"CreateAttestation(",
+		"RevokeAttestation(",
 	}
 
 	// Source roots to scan. Resolve relative to the test file; we are in
@@ -116,7 +120,7 @@ func TestReceiptPackageReadOnlyClient(t *testing.T) {
 			// Substring-match (not prefix). Catches `watch_receipt.go`,
 			// `aggregate_receipt.go`, etc. — anything with "receipt" in
 			// the basename.
-			if !strings.Contains(name, "receipt") {
+			if !strings.Contains(name, "receipt") && !strings.Contains(name, "confighub_attestations") {
 				continue
 			}
 			if !strings.HasSuffix(name, ".go") {

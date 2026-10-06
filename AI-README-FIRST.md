@@ -1,5 +1,9 @@
 # AI Read Me First
 
+For new configuration/generator work, start with the
+[release continuity review](docs/reference/configuration-investigation-continuity.md):
+reuse shipped source-truth, attribution/bindings, receipt and explorer contracts.
+
 **2026-09-30:** the maintainer adopted the [3.0 execution plan](docs/roadmap-3.0-execution.md). Start with the latest handover and [execution tracker #645](https://github.com/confighub/cub-scout/issues/645). [v2.12.4 is published](docs/releases/v2.12.4.md); historical eval scores are exploratory, not proof of equal-evidence savings.
 
 This is the repo-specific cold-start guide for Claude, Codex, and other AI coding agents.
@@ -332,8 +336,9 @@ As of 2026-09-11, these areas are fully or materially shipped:
   - `compare three-way --view <uuid-or-url>` scopes to a ConfigHub View (`#414`)
   - `views project --with-reality` composes View columns with source-truth verdicts (`#420`)
 - **MCP gateway** — `mcp serve` exposes a closed, read-only-by-construction tool catalog:
-  - 6 standalone tools: `doctor`, `map`, `scan`, `trace`, `explain`, `gitops_status`
-  - 11 connected tools: `compare_three_way`, `compare_source_truth`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_resources`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`
+  - 7 standalone tools: `doctor`, `map`, `scan`, `trace`, `explain`, `gitops_status`, `release_check`
+  - 12 connected tools: `compare_three_way`, `compare_source_truth`, `confighub_changeorder_get`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_resources`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`
+  - `confighub_changeorder_get` reads one exact-space ChangeOrder's reported Stage/State and declarations. Evaluated prerequisites remain unknown; this is not approval or live convergence proof.
   - Verified by `cmd/cub-scout/mcp_test.go`; full per-tool reference at `skills/references/mcp-tool-catalog.md`
 - `doctor` / `explain` with `--presentation human|ai|paired` and `--hint-mode default|beginner|operator`
 - Argo truth-and-guidance track — truthful `explain` ownership for ApplicationSet-managed resources, connected three-way disagreement surfacing, phase-aware next-step hints

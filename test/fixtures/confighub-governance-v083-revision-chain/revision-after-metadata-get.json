@@ -1,0 +1,104 @@
+{
+  "Revision": {
+    "Attestations": {
+      "37405605-492a-4f7c-87f9-7ad4cc9ee5e6": "",
+      "bc2dd836-a49a-43b3-94fa-475f1fdc23dc": ""
+    },
+    "CreatedAt": "2026-10-05T16:09:38.345866Z",
+    "DataHash": "77aa943df7d3602b8ca7e0e03c5d93a71adf1c1400dbca6777c5ebb430b6e496",
+    "DataSize": 121,
+    "Description": "MergeExternal; from /tmp/scout-v213-server-v083-20261005/revision-chain-20261005/input.yaml",
+    "EntityType": "Revision",
+    "OrganizationID": "f45618f7-3007-49f3-864c-44775a311693",
+    "ProvidedPaths": [
+      {
+        "AttributeName": "resource-name",
+        "DataType": "string",
+        "Details": {
+          "BoundLinkID": "00000000-0000-0000-0000-000000000000",
+          "IsProvided": true,
+          "ProvidedProperties": {
+            "Namespace": "scout-contract",
+            "ResourceType": "v1/ConfigMap",
+            "SubPath-generation": "true"
+          }
+        },
+        "Path": "metadata.name",
+        "ResourceCategory": "Resource",
+        "ResourceName": "scout-contract/revision-coverage",
+        "ResourceNameWithoutScope": "revision-coverage",
+        "ResourceType": "v1/ConfigMap"
+      }
+    ],
+    "RevisionID": "838b9a2a-d938-4c82-9598-c2059a3c347e",
+    "RevisionNum": 2,
+    "Source": "MergeExternal",
+    "SpaceID": "68843338-f9bd-485c-9a66-5d5aee820247",
+    "SpaceSlug": "scout-v213-contract",
+    "UnitID": "1662495a-37f6-484c-950f-26be7c8914d8",
+    "UnitSlug": "revision-coverage-20261005",
+    "UpdatedAt": "2026-10-05T16:09:38.345866Z",
+    "UserAgent": "ConfigHub",
+    "UserID": "3a89ef21-38d2-49ed-8ca1-d3580c48bf14",
+    "Version": 1
+  },
+  "Unit": {
+    "CreatedAt": "2026-10-05T16:09:38.220119Z",
+    "DataHash": "77aa943df7d3602b8ca7e0e03c5d93a71adf1c1400dbca6777c5ebb430b6e496",
+    "DataSize": 121,
+    "DisplayName": "revision-coverage-20261005",
+    "EntityType": "Unit",
+    "HeadMutationNum": 1,
+    "HeadRevisionID": "838b9a2a-d938-4c82-9598-c2059a3c347e",
+    "HeadRevisionNum": 2,
+    "Labels": {
+      "coverage-probe": "metadata-only"
+    },
+    "LastChangeDescription": "MergeExternal; from /tmp/scout-v213-server-v083-20261005/revision-chain-20261005/input.yaml",
+    "OrganizationID": "f45618f7-3007-49f3-864c-44775a311693",
+    "Permissions": {
+      "Manage": {
+        "UserIDs": {
+          "3a89ef21-38d2-49ed-8ca1-d3580c48bf14": true
+        }
+      }
+    },
+    "ProvidedPaths": [
+      {
+        "AttributeName": "resource-name",
+        "DataType": "string",
+        "Details": {
+          "BoundLinkID": "00000000-0000-0000-0000-000000000000",
+          "IsProvided": true,
+          "ProvidedProperties": {
+            "Namespace": "scout-contract",
+            "ResourceType": "v1/ConfigMap",
+            "SubPath-generation": "true"
+          }
+        },
+        "Path": "metadata.name",
+        "ResourceCategory": "Resource",
+        "ResourceName": "scout-contract/revision-coverage",
+        "ResourceNameWithoutScope": "revision-coverage",
+        "ResourceType": "v1/ConfigMap"
+      }
+    ],
+    "Slug": "revision-coverage-20261005",
+    "SpaceID": "68843338-f9bd-485c-9a66-5d5aee820247",
+    "SpaceSlug": "scout-v213-contract",
+    "ToolchainType": "Kubernetes/YAML",
+    "UnitID": "1662495a-37f6-484c-950f-26be7c8914d8",
+    "UpdatedAt": "2026-10-05T16:09:38.789256Z",
+    "Version": 6
+  },
+  "User": {
+    "CreatedAt": "2026-10-05T05:41:40.009543Z",
+    "DisplayName": "Local Administrator",
+    "EntityType": "User",
+    "ExternalID": "confighub:local:admin",
+    "Slug": "admin",
+    "UpdatedAt": "2026-10-05T05:41:40.009543Z",
+    "UserID": "3a89ef21-38d2-49ed-8ca1-d3580c48bf14",
+    "Username": "admin@local.confighub.dev"
+  }
+}

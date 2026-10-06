@@ -1,0 +1,51 @@
+{
+  "catalog": [
+    "map"
+  ],
+  "claims": {
+    "frozenToolGrantAdmission": false,
+    "full24Admission": false,
+    "hostStdioAndRecordedCLIPassed": true,
+    "linuxRuntimeAdmission": false,
+    "liveRun": false,
+    "modelRun": false,
+    "productSurfaceChanged": false,
+    "savingsEstablished": false
+  },
+  "deniedReaderInvocations": 0,
+  "evidenceSHA256": {
+    "calls.json": "025e11b82a452e1b35210856b85b21b9300cd4d9356ce2e1db48ab82334e82ae",
+    "map.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "map.stdout": "dff2cfc398d54223f0c24744aa640f1855e6e66284c2811d59bfd6064a7431b7",
+    "stderr.bin": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdin.jsonl": "3bc311a456a8dc408283d2200bd3e30c2b040f58887046011c2892983ccd7b96",
+    "stdout.jsonl": "22f96370790ca034a987f4963bba76f9493378f29f5fa7a328826053a2c30de9"
+  },
+  "exitCode": 0,
+  "hostBinarySHA256": "01e9d80b379e4a211846c1e9d88c64d449903df422432a251cbe9809d38099e0",
+  "hostPythonSHA256": "5c3ea934d18a7979253ca08ff16151db78a896be29dbc37fd9bf7e7c549593b8",
+  "packageFilesSHA256": {
+    "bootstrap.py": "abaa23131bb5d517401449998a7359350bf591b4d73c11836744f6bf4e6f81de",
+    "cluster/capture-scope.json": "9b05333216fd5daa609266c67c5fee6bdd5ba82487563ff39be26fa24131dc35",
+    "cluster/observer-context-map.json": "19a2b434661e8ed3d52934c69340cb8773fbd78a8416ff9e245a72e057fc7c09",
+    "cluster/rul03-denied-deployments.body": "fc5cad6498d731f454f2b859a528b00ab69450481804c89a42939512b0dc6978",
+    "cluster/rul03-readable-deployments.body": "e0102f91e1417c8554ed377352b50450f2376e69d40632f109ea012c5c1560a2",
+    "context_frames.py": "63a259fd0e741dc199f6c17ecf44700923f6c1f4cf8e1973c15b623e9353a46d",
+    "context_inventory.py": "bdf308feb881c9f911a5cd65e4978d67fdf0f7d117d84f1826ece09e693340ef",
+    "context_inventory_mcp.py": "109f0bec6deae530c2cd1ddcbdea8236174f82c85833b0bf235e2904bc811d85",
+    "context_mcp.py": "befb30fb7c21afdf7e6d3e6c543dcae6c9e67908bc645d5f0d1668c255741050"
+  },
+  "readerInvocations": 1,
+  "replyIDs": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "schema": "recorded-context-map-host-proof.v1",
+  "sourceBaseRevision": "4e8e877351dedc9e87bc614218e0bc61f29f95e6",
+  "sourceTreeModified": true
+}

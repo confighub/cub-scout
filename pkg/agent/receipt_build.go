@@ -4,6 +4,8 @@
 package agent
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"time"
@@ -59,6 +61,10 @@ type BuildReceiptInput struct {
 	ConfigHubUnitSlug      string
 	ConfigHubUnitRev       int
 	ConfigHubUnitCanonical []byte
+	// Raw served revision bytes are required before a reported DataHash can
+	// become a subject digest. They are never copied into the receipt.
+	ConfigHubUnitServedData []byte
+	ConfigHubUnitDataHash   string
 
 	// Verifier identifies the tool building the receipt. The CLI
 	// fills this with "cub-scout" + the current build version.
@@ -135,6 +141,13 @@ func BuildReceipt(in BuildReceiptInput) (Statement, error) {
 		unitSubject, err := BuildConfigHubUnitSubject(in.ConfigHubUnitSlug, in.ConfigHubUnitRev, in.ConfigHubUnitCanonical)
 		if err != nil {
 			return Statement{}, fmt.Errorf("build-receipt: confighub-unit subject: %w", err)
+		}
+		if in.ConfigHubUnitDataHash != "" {
+			sum := sha256.Sum256(in.ConfigHubUnitServedData)
+			if len(in.ConfigHubUnitServedData) == 0 || hex.EncodeToString(sum[:]) != in.ConfigHubUnitDataHash {
+				return Statement{}, fmt.Errorf("build-receipt: ConfigHub DataHash does not match served revision bytes")
+			}
+			unitSubject.Digest["confighub-data-sha256"] = in.ConfigHubUnitDataHash
 		}
 		subjects = append(subjects, unitSubject)
 	} else if !in.Connected {

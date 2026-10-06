@@ -1,0 +1,31 @@
+{
+  "Attestation": {
+    "AttestationID": "bc2dd836-a49a-43b3-94fa-475f1fdc23dc",
+    "CreatedAt": "2026-10-05T16:09:38.593878927Z",
+    "EntityType": "Attestation",
+    "ExpiresAt": "0001-01-01T00:00:00Z",
+    "Note": "Disposable multiple-type coverage fixture",
+    "OrganizationID": "f45618f7-3007-49f3-864c-44775a311693",
+    "Permissions": {
+      "Manage": {
+        "UserIDs": {
+          "3a89ef21-38d2-49ed-8ca1-d3580c48bf14": true
+        }
+      }
+    },
+    "Result": "Pass",
+    "SpaceID": "68843338-f9bd-485c-9a66-5d5aee820247",
+    "SpaceSlug": "scout-v213-contract",
+    "Type": "SecurityReview",
+    "UpdatedAt": "2026-10-05T16:09:38.593879052Z",
+    "UserID": "3a89ef21-38d2-49ed-8ca1-d3580c48bf14"
+  },
+  "Subjects": [
+    {
+      "RevisionID": "838b9a2a-d938-4c82-9598-c2059a3c347e",
+      "RevisionNum": 2,
+      "UnitID": "1662495a-37f6-484c-950f-26be7c8914d8",
+      "UnitSlug": "revision-coverage-20261005"
+    }
+  ]
+}

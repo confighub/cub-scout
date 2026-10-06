@@ -71,6 +71,7 @@ func enrichTraceConfigHubFromObject(result *agent.TraceResult, obj *unstructured
 		return
 	}
 	result.EnrichWithConfigHub(obj.GetLabels(), obj.GetAnnotations())
+	result.ConfigHubOrigin, _ = agent.BuildConfigHubOriginEvidence(obj)
 }
 
 func attachTraceConfigHubDeliveryEvidence(ctx context.Context, result *agent.TraceResult, dynClient dynamic.Interface, flags traceConfigHubDeliveryFlags) {
@@ -116,6 +117,7 @@ func attachTraceConfigHubDeliveryEvidenceForSession(ctx context.Context, result 
 		raw = collectGitOpsDeliveryEvidence(ctx, dynClient, opts)
 	}
 	result.DeliveryEvidence = correlateTraceDeliveryEvidence(result, raw, correlation, preflightOmissions)
+	attachConfigHubAttestations(ctx, result.DeliveryEvidence, result.ConfigHubOrigin, flags.Space)
 }
 
 func traceGitOpsDeliveryOptions(flags traceConfigHubDeliveryFlags, correlation agent.TraceDeliveryCorrelation) (gitOpsDeliveryEvidenceOptions, []agent.TraceDeliveryOmission) {
@@ -805,6 +807,9 @@ func formatTraceDeliveryEvidenceLine(evidence *agent.TraceDeliveryEvidence) stri
 		return ""
 	}
 	parts := []string{"ConfigHub"}
+	if evidence.Attestations != nil {
+		parts = append(parts, formatConfigHubAttestations(evidence.Attestations))
+	}
 	if evidence.LiveStatus != nil {
 		parts = append(parts,
 			fmt.Sprintf("delivery=%s", evidence.LiveStatus.DeliveryVerdict),
@@ -866,6 +871,9 @@ func renderTraceDeliveryEvidenceHumanTo(w io.Writer, evidence *agent.TraceDelive
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "%s%sConfigHub delivery evidence:%s\n", colorBold, colorWhite, colorReset)
 	corr := evidence.Correlation
+	if evidence.Attestations != nil {
+		fmt.Fprintf(w, "  Attestations: %s\n", formatConfigHubAttestations(evidence.Attestations))
+	}
 	identity := []string{}
 	if corr.UnitSlug != "" {
 		identity = append(identity, "unit="+corr.UnitSlug)

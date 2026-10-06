@@ -84,12 +84,12 @@ For demo flow "Can I do X with cub-scout or ConfigHub?":
 
 Use [HANDOVER.md](HANDOVER.md) as the latest execution snapshot.
 
-As of the current handover:
-- the Argo truth-and-guidance track is closed (`#365`, `#366`, `#367`)
-- the Git import parser track is complete through ApplicationSet generator support (`#363`)
-- `#369` is shipped: `doctor` is now the first standalone MCP troubleshooting tool
-- `#364` is investigated, not a mandate to merge `cub-scout` with cub's import path
-- the highest-leverage open queue is now `#370`, then `#368`
+The earlier Argo truth/guidance (#365–#367), ApplicationSet parser (#363)
+and standalone doctor MCP (#369) tracks are shipped foundations. #364 does not
+mandate merging Scout with cub's import path. Use the handover and execution
+tracker #645 for the current queue, and the
+[release continuity review](docs/reference/configuration-investigation-continuity.md)
+before proposing new attribution, generator, receipt or explorer work.
 
 ## Directory Structure
 

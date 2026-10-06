@@ -15,6 +15,101 @@
 
 ---
 
+## Winning means verified investigation outcomes
+
+Direction confirmed by the maintainer on 2026-10-04. Scout must earn preference
+through correct answers, safe scope, usable investigations and measured savings.
+These are product targets for the tested workflows, not claims of current
+leadership or additional v2.13 release gates. Product docs describe outcomes
+without naming competing products.
+
+| Outcome | Target before claiming a win | Tracking |
+|---|---|---|
+| Trust | Every mandatory negative control correct: denied reads, wrong revision, stale/deleted observations and missing metadata never become false success, health, approval or orphan claims. Supported-answer success must not regress. | #561/#641/#591/#597, #596 |
+| Operator speed | At least 20% lower median time to an independently verified diagnosis on the preregistered supported tasks; report p95 and investigate any >10% p95 regression. Require uncertainty to support the scoped speed claim, not just a favorable point estimate. | #519 |
+| Agent efficiency | Pass the existing paired quality, 20% cost-per-verified-answer and time targets in the [execution plan](roadmap-3.0-execution.md#metrics-and-adopted-release-thresholds). Actual credits remain unmeasured unless attributable. | #645/#626/#604 |
+| Scope safety | Zero cross-context/space contamination in mandatory collision, cancellation and late-response controls. Show scope and evidence age throughout the workflow; no ambient fallback or global-context mutation. | #599/#746/#596 |
+| First useful result | Target median five minutes for a new user to reach and export a correct explanation in the guided offline scenario. Measure setup and task time separately, retain failed attempts, and validate standalone use without ConfigHub credentials. | #519/#520 |
+| Reuse | Cold/warm/idle/change/denied/reconnect reads meet operation-specific budgets fixed before implementation. Revisiting evidence must not renew its timestamp; stale evidence requires a visible refresh. | #539/#604 |
+
+The operator task set must include finding the affected workload, tracing its
+source/revision, explaining a stuck rollout, assessing a manual field change,
+resolving a stale or wrong-release report, and exporting scoped evidence. Include
+mixed-controller and same-name/denied-scope scenarios as separate strata. Compare
+with an ordinary read-only command workflow and relevant read-only exploration
+workflows using equivalent permissions/evidence and pinned versions. Never score
+an unsupported workflow as a failed supported diagnosis or let broad coverage
+hide weak controller depth. Preregister scoring, participant experience,
+training, task order, cache conditions, repetitions and analysis before running;
+counterbalance learning effects and retain failures.
+
+### Delivery sequence toward the targets
+
+| Stage | What it contributes to winning | Exit evidence |
+|---|---|---|
+| v2.13 / P3 | Trustworthy source/revision/health/governance reads and captured context; finish the current recorded/runtime prerequisites. | Existing release gates, exact identity and negative controls, genuine acceptance and the paired baseline. No gate is waived. |
+| v2.14 / P4 | A complete supported investigation through CLI/TUI with matching facts, safe selection and a guided offline example. Settle #519 workflow integration alongside #596/#599; design permission/history follow-ups before implementation. | Operator assessment protocol and recorded end-to-end controls; genuine acceptance when allowed. Existing standalone use remains useful. |
+| v2.15 / P5 | Cheap ongoing observation, explicit freshness, bounded reuse and retained evidence. Use measured investigation bottlenecks to prioritize #539/#604/#605. | Cold/warm/idle/change/denial/reconnect budgets, operator timings and refreshed paired-agent results within the adopted budgets. |
+| 3.0 / P6 | Publish the supported workflows where Scout earns preference, with reproducible evidence and reliable installation. | Scoped scorecard, uncertainty, limits, checked distribution and migration. A release does not by itself establish a leadership claim. |
+
+### Work selection and failure response
+
+Every feature packet must name the user question, the scorecard outcome it
+improves, the existing issue or newly tracked scope, exact negative controls,
+and a worked example before code. Keep the shared CLI/TUI model and recorded
+fallback; keep cluster mutation outside Scout. Favor removing investigation
+steps, unsupported joins and repeated reads over expanding the command catalog.
+
+After each settled packet, update the scorecard with evidence or mark the result
+pending. If correctness fails, fix it first. If workflow time fails, address the
+measured navigation/diagnosis bottleneck. If cost/load fails, address routing,
+output or read reuse. Do not add unrelated features, change the held-out tasks,
+or relabel failures to obtain a favorable result. Publish unresolved limits and
+reforecast within the existing live/paid admission and spending boundaries.
+
+## Build on the released configuration evidence
+
+The [release continuity review](reference/configuration-investigation-continuity.md)
+maps the existing ownership/composition/parser, source-truth, attribution,
+binding, receipt, explorer and watch foundations to tests/examples and P3–P6.
+The responsibility split extends those contracts: generators render, ConfigHub
+retains intended-state/workflow records, controllers reconcile, Scout observes
+and explains, and the governing consumer decides. Complete generation records
+and templated field maps require recorded producer evidence; neither is implied
+by a source anchor or ConfigHub connection.
+
+New packets must cite the existing component and the specific missing answer.
+Standalone supplied-manifest comparison and install verification already exist;
+do not make connected evidence a prerequisite for these workflows. Preserve
+current release gates and benchmark controls while adding deeper explanations.
+
+## Post-2.13 commitments from the continuity review
+
+Confirmed by the maintainer on 2026-10-05: **all findings and new ideas from
+the [continuity review](reference/configuration-investigation-continuity.md)
+must shape post-2.13 delivery.** This table assigns them to existing work,
+including explicit design checkpoints for gaps that lack settled contracts.
+It adds no v2.13 scope or benchmark cases. A design checkpoint is required work;
+it does not promise an unimplemented capability in v2.14 release notes.
+
+| Carry-forward | Post-2.13 work and existing tracking | Required outcome |
+|---|---|---|
+| Reuse established foundations | P4/v2.14 integration, #596/#594/#519 | Each packet identifies its released parser, source-truth, attribution/binding, receipt or observation component and tests/example. Extend one factual model across interfaces; do not recreate these capabilities. |
+| Effective configuration and generator provenance | P4/v2.14 contract/examples checkpoint under #519/#594/#596; new implementation scope follows the backlog promotion rule | Distinguish controller parentage, recorded generation inputs/tool/output, field writer, binding and raw-YAML source position. Design safe Helm input precedence on top of existing reference/secret findings. Accept producer-supplied generation records/source maps only with exact identity and coverage; otherwise retain unknown. Scout does not render. |
+| Exact-release health | P4 #594/#596/#599, extending #561/#641 proof and #601/#602/#584 adapters | Keep intended revision, controller report, check freshness and workload convergence separate. Wrong release/target, refreshed old health and incomplete populations cannot become PASS. |
+| Investigation continuity | P4/v2.14 #519/#599/#596; retained history extends in P5 #605/#600 | Preserve selection, context, evidence age and export through a supported CLI/TUI investigation. Settle scope-bound local history and operation-specific permission profiles; test denial, cancellation, late replies, collisions and sensitive-read boundaries. |
+| Measured efficiency and useful discovery | P4 #604 output/request contracts and #519 operator protocol; P5 #539/#604/#600/#605 reuse/history | Measure cold/warm/idle/change/denial/reconnect cost and independently correct operator outcomes. Assess generic discovery/on-demand metrics only against named tasks, with caps and unknown semantics; add them through scoped issues if justified. |
+| Standalone usefulness | P4/v2.14 #519 guided standalone/offline workflow and #596 parity; retained in every later release | Demonstrate supplied-manifest comparison/install verification without ConfigHub credentials. Connected intent, bindings/history/governance enrich the same flow; their absence does not disable standalone diagnosis. Live reads still require cluster access. |
+| Responsibility and accurate doctrine | P4 integration/docs and P6/3.0 #595/#520 compatibility/distribution | Generators render, ConfigHub retains intent/governance, controllers reconcile, Scout observes/explains, consumers decide. Keep published/candidate/design/proof labels accurate, snapshot/cache/bundle/receipt semantics distinct, docs links working and product docs free of competitor names. |
+
+At P4 integration, record the status of every row: supported behavior and proof,
+completed design with its implementation issue, or an explicit unresolved
+dependency and allocated follow-up. Carry unresolved design work into the P5
+queue; do not silently drop it or label it shipped. P6 outcome claims require
+the measured result, not merely these allocations. The
+[ordered sequence](releases/v2.13-to-v2.14-sequence.md#v214-complete-p4-evidence-and-investigation-workflows)
+and [execution plan](roadmap-3.0-execution.md#post-213-carry-forward) apply this review.
+
 ## Untracked Backlog Checklist
 
 This checklist tracks ideas from planning docs. Items marked "scoped" had issues filed and
@@ -24,6 +119,8 @@ remains future work. Items marked "resolved" had issues filed, implemented, and 
 Tracking: issue **#154** is closed. This checklist is now the live tracker.
 
 Execution is tracked in [#645](https://github.com/confighub/cub-scout/issues/645).
+The current [v2.13 → v2.14 task sequence](releases/v2.13-to-v2.14-sequence.md)
+orders the existing repairs, tests, acceptance gates and publication checks.
 The [September 30 execution plan](roadmap-3.0-execution.md) maps its work
 packets to existing issues, including #603/#626 (measured agent savings),
 #641 (reporter/gate semantics) and #642 (the separate ConfigHub/Pilot benchmark).
@@ -42,6 +139,43 @@ fleet search are now tracked in [#584](https://github.com/confighub/cub-scout/is
 scheduled in stage 2 of the [Path to 3.0](#path-to-30) rather than for a named
 version. Until implemented, their existing unknown/unsupported limits remain
 unchanged.
+
+### Investigation quality follow-up — 2026-10-04
+
+The [investigation acceptance criteria](reference/explorer-comparison.md)
+prioritize coherent operator workflows, scope safety, actual least privilege,
+complete evidence and cheap reuse. Existing work remains in #519/#599/#596,
+#539/#604 and the current evidence queue. This assessment does not widen v2.13
+or claim measured leadership.
+
+- [ ] Define operation-specific read-permission profiles and sensitive-read
+  boundaries, with denied/partial controls and a reproducible RBAC proof. File
+  an implementation issue after settling the profile contract.
+- [ ] Define scope-bound local investigation history, including cancellation,
+  same-name collisions, retention and privacy. Coordinate with #519/#599; file
+  an implementation issue if their existing scope does not cover the design.
+- [ ] Assess a read-only effective Helm configuration provenance view: source
+  precedence, optional/missing inputs, denied reads and secret redaction. Define
+  the interpretation boundary before implementation; this is not SDK rendering.
+  Reuse existing Helm reference counts, missing/optional-input and precedence
+  findings, plus secret dependency evidence; the gap is effective-input explanation.
+- [ ] Assess generic resource discovery and on-demand workload metrics against
+  measured operator tasks. Define supported semantics versus generic hints,
+  scope/request/memory caps, stale/unknown states and sensitive-read permissions
+  before filing any implementation issue.
+- [ ] Design producer-supplied generation records and optional field source maps:
+  exact input/tool-version/output identity, coverage, redaction and supported
+  producer contracts. Reuse source anchors, bindings, rendered-set digests and
+  receipt chains; keep parentage and templated-source unknown states distinct.
+  Complete the P4 contract/example checkpoint, then file scoped implementation
+  issues for accepted producer adapters instead of adding a Scout renderer.
+
+The [October 5 investigation depth assessment](reference/explorer-comparison.md#investigation-depth-assessment--2026-10-05)
+adds concrete operator scenarios under #519 and the existing P4/P5 work. Basic
+interface breadth is not a winning claim. Evaluate current released workflows
+and previews separately; prove deeper joins, navigation continuity, restricted
+coverage, useful evidence handoff and measured savings. Preserve the current
+v2.13 scope and the frozen 24 agent cases.
 
 ### v2.12.4 Patch (Published 2026-09-30)
 
@@ -850,7 +984,7 @@ The UX surface is now **stable and locked**.
 
 ---
 
-## v0.20.0 — Flux Operator Interop Slice
+## v0.20.0 — Controller Interoperability Slice
 
 **Status:** Released (2026-02-12)
 **Theme:** *Read-only operator workflows with stronger runtime evidence*
@@ -1413,3 +1547,20 @@ ConfigHub is the MCP server (full read-write loop):
 cub-scout provides the read-only MCP gateway — standalone observation + ConfigHub routing when connected.
 
 There is no other hidden work.
+
+### Optional evaluated prerequisite reads after v2.13
+
+The maintainer's 2026-10-05 scope correction removes any new ConfigHub API
+from the v2.13 critical path. Follow-up #597 may adopt a server-evaluated GET
+when an accepted existing interface exposes it. Scout continues to observe
+through existing reads, keeps unavailable evaluations unknown and never writes
+approvals or evaluates server policy. This follow-up does not block v2.13.
+
+### v2.14 acceptance carry-forward — 2026-10-06
+
+The maintainer approved a scoped v2.13 release. Existing issues #774, #591,
+#561/#641/#599/#746 and #645/#709 retain unfinished scanner/full-demo CI,
+effective coverage, broader live acceptance and benchmark work for v2.14.
+These tasks are deferred, not passed. Optional evaluated prerequisite reads
+remain in #597. Frozen benchmark definitions and the continuity commitments
+remain unchanged.

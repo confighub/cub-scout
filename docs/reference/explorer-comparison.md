@@ -1,140 +1,140 @@
-# Where Scout Fits
+# Scout investigation quality and acceptance
 
-Reviewed 2026-09-11 against Scout **v2.10.0** and companion **v0.3.0**.
-This is a capability assessment, not a performance benchmark or a claim that
-every competing feature was exercised live. Tracking: [#527](https://github.com/confighub/cub-scout/issues/527).
+Updated 2026-10-05. Published baseline: **v2.12.4**. The v2.13 topic branch
+contains additional unreleased context and ChangeOrder read work; its current
+status and release gates are in [HANDOVER.md](../../HANDOVER.md) and the
+[v2.13 readiness checklist](../releases/v2.13-readiness.md).
 
-## Assessment
+## Product aim
 
-Scout has a differentiated combination: cross-controller ownership and delivery
-evidence, CLI/plugin/JSON/MCP access, explicit missing-evidence semantics,
-desired/live comparisons, and portable fingerprinted receipts. Its bounded
-resource path adds a tested request budget and observation reuse.
+Make Scout the fastest safe route to a correct, explainable Kubernetes and
+GitOps diagnosis for both operators and agents. Every answer should expose the
+selected scope, evidence, timestamps, omissions and useful next read.
 
-**Overall competitive leadership is not yet proved.** Read-only modes,
-deterministic diagnosis, GitOps graphs, and MCP are not unique to Scout. Dedicated
-explorers offer native watch-based interfaces and substantial drill-down. Scout's
-watch/bot modes still poll; its 15-second bounded cache is not a shared inventory
-service. No same-workload latency, request-load, or operator-task benchmark was
-run for this review.
+A terminal interface, graphs, logs, read-only defaults and MCP are useful
+capabilities. Leadership requires measured investigation outcomes. Documentation
+research and operator comments inform priorities; they do not establish a
+performance advantage or prove that another tool lacks a capability.
 
-The product aim should be **the most trustworthy reusable answer to a GitOps
-question**, across people and agents. It should not become another sync engine
-merely to match mutation buttons.
+Scout's strongest opportunity is to join supported controller, source, release,
+object and workload evidence into one reusable answer across mixed environments.
+Ownership support is not equal semantic depth for every controller. Missing or
+ambiguous joins must remain explainable unknowns.
 
-## Versions And Evidence
+## Current foundation and limits
 
-**Verified** means Scout source/tests and the scoped live checks in
-[#525](https://github.com/confighub/cub-scout/issues/525). **Documented** means the
-external project's pinned documentation or source, not an independently tested
-runtime result. An unreviewed capability is unknown, not absent.
+| Foundation | Evidence and practical limit |
+|---|---|
+| Cross-controller ownership and provenance | [Ownership contract](../../AGENTS.md) and [command reference](commands.md). Use observed labels, annotations and owner references; do not infer a person from a field-manager name. |
+| Scoped diagnosis | `doctor`, `trace`, `explain`, `gitops status` and comparison surfaces. Explicit context support is advancing per command; scope conformance is tracked in #599/#746, not presumed complete. |
+| Delivery and running-image checks | [Image verification guide](../howto/is-this-image-deployed.md). Controller revision, live object agreement, rollout convergence and application success are separate claims; supported workload/digest limits remain visible. |
+| Reusable evidence | JSON, MCP, bundles and fingerprinted receipts. A fingerprint supports artifact integrity; it does not independently prove source authenticity, approval or freshness. |
+| Bounded reads and observation reuse | [Bounded resource example](../../examples/bounded-resource-read/) and [observation plan](../proposals/observation-efficiency.md). The narrow object path and opt-in watch-backed inventory have scoped request tests; broad commands and the default polling path do not inherit those guarantees. |
+| Standalone operation | Cluster observation does not require ConfigHub. Connected governance is additional evidence with separate authentication and authority boundaries. Stored declarations and reported state are not evaluated approval. |
 
-| Project | Reviewed version and source | Relevant capability |
+The historical September assessment is superseded by this checkpoint. Old
+receipts retain their named source/version scope; they are not acceptance for
+current binaries or an overall performance result.
+
+## Five priorities and success criteria
+
+These criteria define future work before implementation. They do not add gates
+to v2.13 or replace the adopted release plan.
+
+| Priority | Operator benefit | Required proof and tracking |
 |---|---|---|
-| Scout | [v2.10.0, `f9f5512`](https://github.com/confighub/cub-scout/tree/f9f5512606ca4abd393625d33ff453114aaf68af) | Verified: bounded CLI/plugin/MCP/TUI evidence, origin parsing, exact identity, refresh and omissions; broader existing compare/receipt/controller contracts. |
-| Companion explorer | [v0.3.0, `7ffc9c5`](https://github.com/confighub/cub-commander/tree/7ffc9c5fa04027e1df19132d09b14364bbba395e) | Verified: Resource-only evidence panel, explicit Target binding, retained snapshot and manual refresh. Authenticated intended-state mapping remains unverified. |
-| argo9s | [v0.1.0, `f40e45a`](https://github.com/vvrnv/argo9s/blob/f40e45a346a3885fcce691122a65208a1d563653/README.md) | Documented: Kubernetes and Argo API backends, Application/ApplicationSet/AppProject views, live updates, resource graphs, logs and sync filters; read-only default with optional actions. |
-| flux9s | [v1.0.4, `b743f1a`](https://github.com/dgunzy/flux9s/blob/b743f1a5d35e567c536b754f5e217ec1f705fcfa/README.md) | Documented: Kubernetes Watch API, source/workload graph drill-down, events/logs, history, favorites, explicit RBAC restrictions and opt-in Flux-labeled CRD discovery; read-only default. |
-| sofka | [v0.25.5, `b02512f`](https://github.com/nklmilojevic/sofka/blob/b02512f889e03648902197455b146afb17c785ff/README.md) | Documented: generic CRD exploration, deterministic incident explanations, read-only mode, native Argo/Flux operations, Helm inspection, headless checks and snapshots. |
-| Flux Operator UI/MCP | [v0.60.0, `483d170`](https://github.com/controlplaneio-fluxcd/flux-operator/tree/483d170eabe66118fa9959730396b634a9268717/docs) | Documented: controller-specific UI and MCP tools. The [current Web UI overview](https://fluxoperator.dev/web-ui/) also shows workload graphs, logs, history, favorites and SSO; that page is rolling documentation, not a frozen version claim. |
-| argobot | [v0.1.7, `448f2e0`](https://github.com/confighub/argobot/blob/448f2e0c50f45afb38b6c36e1da62203784a7e60/README.md) | Documented/source-reviewed: event-driven Argo refresh/sync and informer-based status writeback. This is delivery automation and feedback, not an interactive cross-controller explorer. |
+| 1. One coherent investigation | Start with a symptom, find the relevant workload, follow its source/controller, inspect failure evidence and export the result without losing the selection. | One identical supported scenario through CLI and TUI; facts, omissions and scope agree. Record completion, time to a supported diagnosis, navigation/actions, dead ends and export correctness. #519/#596. |
+| 2. Scope safety | Always know which context, namespace and connected space produced the evidence; changing selection never shows another scope's late result. | Colliding names across two contexts/spaces, missing explicit context, cancellation and delayed responses. No ambient fallback, global-context mutation or merged history; scope labels are not stable cluster identity. #599/#746. Scope-bound investigation history remains a design proposal. |
+| 3. Enforced least privilege | Use actual restricted credentials and explain unavailable coverage without pretending the cluster is empty or healthy. | Define required read permissions by operation; propose explicit core/controller profiles and separate sensitive reads. Test denied discovery/list/get, absent APIs and no credential escalation. Mocked controls first; reproducible genuine RBAC acceptance later. The broad wildcard read-role example in [SECURITY.md](../../SECURITY.md) is not proof of a least-privilege profile. |
+| 4. Complete, honest answers | Explain source/revision, applied configuration, workload convergence, drift and evidence freshness together where contracts support the join. | Fixed same-name, wrong-revision, stale-report, deleted-object, missing-metadata and denied-read fixtures. No false delivery, health, orphan or approval claims. #561/#641/#591/#597. |
+| 5. Cheap reuse and easy demonstration | Revisit an investigation cheaply, refresh explicitly, and try a useful scenario without a cluster or model provider. | Measure cold/warm/idle/change/denied/reconnect requests and bytes with cache age visible. Revisit must not renew observation time. Use an authored mixed-controller demo plus an unavailable-evidence case; separate it from genuine live proof. #539/#519/#604. |
 
-## Questions That Decide The Comparison
+The [roadmap outcome scorecard](../roadmap.md#winning-means-verified-investigation-outcomes)
+sets measurable operator, agent, scope, onboarding and reuse targets and assigns
+them to delivery stages. Passing is required for the corresponding product
+claim; none is presented here as an achieved result.
 
-| User question | What Scout offers now | Competitive conclusion |
+## Measuring improvement fairly
+
+### Investigation depth assessment — 2026-10-05
+
+Assess current released workflows, including separately marked previews, rather
+than an announcement's older feature set. Live navigation, read-only defaults,
+generic resource browsing, ownership labels and a reusable library are baseline
+capabilities to evaluate; their presence alone cannot establish preference.
+Distinguish ownership identification from controller-specific diagnosis and a
+library API from a shipped agent integration. Do not infer missing features
+from a short announcement or stale documentation.
+
+The separately declared operator assessment under #519 should exercise:
+
+| Investigation | Required Scout answer and negative controls | Existing work |
 |---|---|---|
-| Is this deployed? | Separate controller revision/sync, object-set agreement, workload convergence and application-health evidence; explicit inconclusive/partial results. | Other GitOps tools also report revision, readiness and sync. Scout must prove the complete identity-linked answer, not treat one green status as unique capability. |
-| Why did delivery or the workload fail? | `doctor`, `explain`, `trace`, activity and optional connected evidence; reusable JSON and receipts. | Competing explain/graph/log views are substantial. Measure diagnosis tasks and gaps instead of comparing command counts. |
-| Can I inspect one object cheaply from an agent or explorer? | Bounded reads: one discovery document plus one object GET; MCP/TUI hits make zero such requests, with unchanged timestamps. | A verified narrow-path strength. It is not evidence that all Scout queries use less API traffic than native watchers. [Proof](../../examples/bounded-resource-read/). |
-| Can I browse continuously without repeated full polling? | Bounded MCP/TUI reuse and companion captured snapshots; broad watch/bot still poll. | Native watch/store approaches in other explorers and argobot identify a real architecture gap. |
-| Can I use the same evidence outside a TUI? | CLI/plugin JSON, MCP, saved bundles, comparison and fingerprinted receipt contracts. | A strong combined workflow, but neither headless output nor MCP is exclusive to Scout. |
-| Does any CRD get equally deep explanations? | Configurable inventory plus supported ownership/lineage resolvers; missing status/source/generation evidence is explicit. | Generic browsing is not semantic parity. Compare specific controller fixtures, including unknown and partially readable resources. |
-| Will it deploy or force a sync for me? | No. Observation and suggested next checks remain separate from delivery authority. | This is an intentional boundary, not a feature gap to close in Scout. |
+| Follow a failure | Symptom → controller/source → inventory/workload → events/logs → scoped export; return navigation retains the selected object and scope. Verify the first failed delivery stage, not just a resource count. | #519/#596/#641 |
+| Revisit live evidence | Keep selection through updates; show stale, reconnecting and restricted coverage. Test disconnect, deletion, delayed responses and namespace/context changes; do not renew timestamps on revisit. Measure requests, bytes and retained memory. | #539/#599/#604 |
+| Explain generated delivery | Join supported source, generator, aggregate inventory and ordered-step evidence by exact identities. Separate reported Ready, prerequisite acceptance, applied revision and workload health; an absent status is unknown. | #594/#596/#641 |
+| Inspect configuration inputs | Assess whether the operator can explain a Helm value's contributing sources and precedence, including missing/optional inputs, permission denial and redacted secrets. Rendering and effective-value interpretation need their own contracts; source-reference detection alone is insufficient. | Design backlog; permission-profile follow-up |
+| Handle unfamiliar resources | Separate browseable objects and generic manager hints from supported semantic ownership, health and lineage. Exercise served-version changes, owner chains, same-name collisions, forbidden discovery, row caps and malicious display text. | #594/#599; extension design backlog |
+| Hand off a diagnosis | Export matching CLI/TUI/MCP facts with exact scope, source/revision identities, observed times and omissions. Verify offline reuse and wrong/stale evidence refusal; an integrity fingerprint is not approval or source authenticity. | #519/#596/#591/#597/#604 |
 
-Sofka's [pinned GitOps view](https://github.com/nklmilojevic/sofka/blob/b02512f889e03648902197455b146afb17c785ff/docs/features.md#gitops-and-helm)
-already follows Flux ownership, source revisions and dependency edges, with
-fresh reads and late-result cancellation. Its generic browser uses native
-watch updates. These are concrete explorer capabilities to evaluate, not just
-terminal styling.
+Use equal permissions and evidence. Exercise denied get/list/watch and sensitive
+reads with real restricted credentials; an application mode toggle is not the
+RBAC boundary. Observe task usefulness before proposing pod metrics, broad
+discovery or more views. Do not assume a continuous watch is free or automatically
+more efficient than a bounded read.
 
-The Flux MCP [tool contract](https://github.com/controlplaneio-fluxcd/flux-operator/blob/483d170eabe66118fa9959730396b634a9268717/docs/mcp/tools.md)
-includes ownership tracing, workload logs/events and server-side manifest diff.
-Its [read-only configuration](https://github.com/controlplaneio-fluxcd/flux-operator/blob/483d170eabe66118fa9959730396b634a9268717/docs/mcp/mcp-config.md#read-only-mode)
-disables mutating tools; dry-run diff still requires Kubernetes patch permission.
-Scout's two-GET object read and supplied-object-set comparisons are different
-contracts, not proof of superiority to controller-aware dry-run.
+These are assessment criteria and indexed design questions, not implemented
+features, measured advantages, additions to the frozen 24 agent cases or new
+v2.13 release gates. P4 settles the workflow and protocol; P5 addresses measured
+bottlenecks. The adopted quality, release and benchmark gates remain required.
+
+Use the same supported question, object scale, evidence availability, effective
+permissions and failure conditions for each evaluated workflow. Include an
+ordinary command-line read workflow. Separate controller-specific tasks from
+mixed-controller breadth; report unsupported tasks explicitly. Do not assign
+"absent" to an unreviewed capability or use a wider evidence grant for Scout.
+
+For operators, measure independently checked completion, time to a correct
+explanation, navigation effort, incorrect conclusions, export usefulness and
+API load. Fix the task set, scoring and performance thresholds before any run;
+retain failures and report per-task results and uncertainty. No operator speed
+result is currently claimed by this document.
+
+For agents, retain the [adopted paired benchmark](../roadmap-3.0-execution.md#measuring-whether-cub-scout-saves-users-money):
+verified-answer quality, cost per verified answer, attributable credits/tokens,
+median/p95 time and the mechanism behind any saving. MCP availability or shorter
+output does not prove lower cost. The frozen 24 cases remain unchanged; new
+operator scenarios belong to a separately declared assessment.
+
+## Execution order
+
+Finish the current v2.13 evidence/runtime packets and preserve their release
+gates. Then settle the operator workflow under #519, scope/parity under
+#599/#596, and observation efficiency under #539. Define permission profiles
+and scope-bound investigation history before implementing them. Keep all
+standalone benefits useful without connected governance.
+
+Observation remains read-only. Delivery, reconciliation, promotion and policy
+acceptance stay with their existing authorities. Scout provides evidence and
+safe next reads; adding mutation controls is not a requirement of this plan.
+
+New ideas are indexed in the [roadmap backlog](../roadmap.md#untracked-backlog-checklist).
 
 ## Scout Bot And Delivery Bot
 
-Use them together when both jobs are needed:
-
-1. A release event reaches the delivery bot. In its default Kubernetes mode it
-   refreshes Argo; auto-sync still gates deployment. Its Argo API mode requests
-   sync directly. Argo remains the reconciler.
-2. The delivery bot projects Application status into ConfigHub. Its
-   [reporter](https://github.com/confighub/argobot/blob/448f2e0c50f45afb38b6c36e1da62203784a7e60/reporter.go)
-   uses an informer, a queue, coalescing and deduplication.
-3. Scout reads that external feedback, checks freshness and identity, and adds
-   live object, source, drift or receipt evidence where supported. Scout does
-   not share the production event-consumer cursor or take over status writes.
-
-A freshness caveat matters: the reporter deduplicates unchanged status without
-rewriting `observedAt`, and deletion does not clear the last annotation in this
-reviewed version. Old feedback is therefore not proof of a failed or absent
-application, nor proof it is still healthy. Keep that distinction in Scout's
-connected answers. Integration continues in [#502](https://github.com/confighub/cub-scout/issues/502).
+Scout's bot observes and emits evidence. A delivery bot triggers its supported
+controller and owns its status writeback. The controller remains the reconciler.
+Scout consumes feedback with explicit identity/freshness checks and adds
+independent live observations; it does not share the event-consumer cursor or
+take over delivery. These are existing complementary responsibilities.
 
 ### Current Feedback Verdict Limit
 
-A deterministic review probe against the unchanged v2.10.0
-[consumer](https://github.com/confighub/cub-scout/blob/f9f5512606ca4abd393625d33ff453114aaf68af/cmd/cub-scout/gitops_delivery.go#L400)
-also found a Scout-side gap. With a 15-minute freshness threshold:
-
-| Report input | v2.10.0 result |
-|---|---|
-| Synced/Healthy/Succeeded, missing or invalid `observedAt` | Freshness `unknown`, but both verdicts remain `PASS`. |
-| Same positive report, timestamp one day in the future | Age clamped to zero, freshness `fresh`, both verdicts `PASS`. |
-| Failed/Degraded report, timestamp one day old | Freshness `stale`, both verdicts remain `BLOCK`. |
-
-Do not use a connected live-status verdict alone as proof of current delivery
-or health. Read its timestamp and freshness, and obtain current scoped evidence
-where needed. Tightening this contract is a correctness priority under #502,
-not a fix included in this documentation update. Bounded object-read timestamps
-and cache behavior are a separate contract.
-
-**v2.10.1 correction:** timestamp gating now makes
-missing/invalid/zero/future reports inconclusive and stale reports `WATCH`,
-including old failures. It retains reported fields and emits an explanatory
-omission. [Recorded proof](../../examples/live-delivery-observability/#trusting-feedback-freshness)
-covers the shared reader, MCP, doctor, activity, correlation and fingerprinted
-receipts. The historical v2.10.0 behavior above is unchanged; broader producer
-deletion/history and exact-release checks remain open.
-
-## What Would Prove Leadership
-
-These are follow-up acceptance criteria, not shipped features:
-
-- **Explorer continuity and load (#519):** compare cold/warm task latency,
-  API requests/bytes, memory and idle/churn traffic on the same 100/1,000-object
-  fixtures and permissions. Exercise context switching, RBAC denial, deleted
-  objects and interrupted watches. A watch-backed proposal must define relist,
-  recovery, bounded storage, staleness and cancellation before implementation.
-- **Complete delivery answers (#502/#505):** test revision/digest, controller,
-  live object set and current workload generation together across supported
-  controller families. Include same-name collisions and missing metadata;
-  never turn incomplete coverage into a successful delivery verdict.
-- **Status-feedback honesty (#502), correctness first:** prevent current-success
-  claims from unknown/invalid/future timestamps; distinguish an old failure
-  report from current failure. Test unchanged-but-old reports, deleted
-  Applications, out-of-order updates and unavailable history. Prefer consuming
-  producer-owned evidence to cloning its delivery or writeback duties.
-- **Usable distribution (#520/#527):** correct current-version install paths,
-  readable five-mode onboarding, verified public container access and an
-  explicit architecture matrix. v2.10 archives/plugins work; registry access
-  and Go module major-version distribution remain gaps.
-- **Operator proof (#519):** run the same tasks in each relevant interface:
-  find an app, trace its source, explain a stuck rollout, assess drift, revisit
-  evidence and export it. Publish outcomes, missing capabilities and measured
-  costs. Do not infer usability or speed from screenshots or implementation language.
-
-Roadmap: [post-v2.10 priorities](../roadmap.md#post-v210-priorities).
+The timestamp correction shipped in [v2.10.1](../releases/v2.10.1.md): missing,
+invalid, zero or future timestamps produce INCONCLUSIVE; stale reports produce
+WATCH, including old failures. Fresh reported success/failure remains reported
+evidence, not independent current application-health proof. Re-reading an
+unchanged report does not renew its timestamp. See the
+[recorded freshness proof](../../examples/live-delivery-observability/#trusting-feedback-freshness).
+Broader producer deletion/history and exact-release checks retain their stated
+limits. This restores the linked doctrine alongside the investigation assessment.

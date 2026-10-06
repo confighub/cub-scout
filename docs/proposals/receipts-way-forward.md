@@ -1,6 +1,12 @@
 # cub-scout Receipts — Way Forward
 
-**Status:** Proposal / R&D synthesis (post-review)
+**Status:** Historical design/R&D synthesis. Initial receipt capability and
+several v2 directions shipped in [v2.3.0](../releases/v2.3.0.md); install and
+chain extensions followed in [v2.4](../releases/v2.4.0.md) and
+[v2.5](../releases/v2.5.0.md). Reviewed 2026-10-05. The original proposal below
+is preserved; its missing/deferred wording is not the current execution queue.
+Use [receipt doctrine](../concepts/receipts-and-proofs.md) and the
+[continuity review](../reference/configuration-investigation-continuity.md).
 **Tracks:** #446 (capability), #447 (roadmap entry)
 **Last updated:** 2026-05-21
 

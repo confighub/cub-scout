@@ -218,6 +218,7 @@ func buildRecordedExplainSummary(recorded recordedObject, identity recordedObjec
 		RecordedInput: &RecordedInputEvidence{
 			Kind: "kubernetes-object-recording", Identity: ref, SHA256: recorded.Provenance.SHA256,
 			Bytes: recorded.Provenance.Bytes, Documents: recorded.Provenance.Documents, ObjectCount: recorded.Provenance.ObjectCount,
+			TypedListDerivedObjects: recorded.Provenance.TypedListDerivedObjects,
 		},
 		Omissions: []agent.Omission{
 			{Missing: "trusted-capture-time", Reason: "The recording has no trusted capture-time metadata; time-dependent rollout and freshness conclusions are omitted.", Severity: "info"},

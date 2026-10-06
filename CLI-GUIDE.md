@@ -150,10 +150,16 @@ cub-scout gitops status --with-confighub --confighub-space prod --format json
 cub-scout map activity --with-confighub --confighub-space prod --since 24h
 cub-scout compare three-way --scope namespace/prod
 cub-scout history deploy/api -n prod --space prod
+cub-scout history changeorder rollout --space prod --format json
 cub-scout impact payments-api --space prod
 ```
 
-Connected commands that read ConfigHub name a space with `--space`, or read
+`history changeorder` reads one exact-space reported declaration snapshot. It
+requires explicit `--space`; `Completed` and missing workflow metadata do not
+establish approval, health or an ungoverned state. Its evaluated outcomes remain
+unknown. Add `--tui` to inspect the same snapshot.
+
+Other connected commands that read ConfigHub name a space with `--space`, or read
 `CUB_SPACE`. `cub` has no default space, so with neither they refuse.
 
 Adoption and migration flow, after you have inspected the live cluster:
@@ -173,7 +179,9 @@ cub-scout import parse-repo --path ./repo --json
 
 Important boundary:
 - `cub-scout` is the read-first explorer and import-preview tool.
-- `cub` remains the intended-state authority and renderer/import lifecycle tool.
+- `cub` exposes ConfigHub intended-state workflows. `cub variant upload` ingests
+  already rendered resources; render them with your own tooling. Scout does not
+  perform SDK rendering or use the removed `cub gitops` command group.
 
 If you need more on adoption/import:
 - [docs/howto/import-to-confighub.md](docs/howto/import-to-confighub.md)

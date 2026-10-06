@@ -1,130 +1,35 @@
-# TUI vs GUI: Scope and Capabilities
+# Scout interfaces and ConfigHub responsibilities
 
 > Status: Current (Deep Dive)
-> Last reviewed: 2026-02-12
+> Last reviewed: 2026-10-05
 > Concepts index: [README.md](README.md)
 
-How cub-scout (TUI) relates to ConfigHub (GUI) and what each can do.
+The responsibility boundary follows evidence and authority, not whether the
+user opens a terminal or a browser. Scout's CLI, TUI and MCP are interfaces to
+the same observer model. A TUI is not restricted to LIVE-only facts: supplied
+manifest comparisons and connected intent are supported by their specific
+collectors and prerequisites.
 
-## The Scope Rule
+| Workflow | Evidence source | Responsibility |
+|----------|-----------------|----------------|
+| Standalone investigation | One selected Kubernetes context; optional local manifests/recordings | Scout observes ownership, health, relationships and bounded configuration agreement. |
+| Connected investigation | Explicit ConfigHub space/View/target plus scoped live observations | Scout adds recorded intent, bindings, history and delivery evidence; omissions stay visible. |
+| Local repository preview | Local GitOps manifests and supported generator definitions | Scout parses structure and previews import; it does not execute generators. |
+| Rendering / intended-state changes | Generator tooling and supported ConfigHub workflows through `cub` | The intended-state toolchain produces/retains rendered configuration and owns changes. |
+| Acceptance / repair | User or governing consumer using checks and policy | The consumer decides and authorizes action; Scout supplies evidence. |
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  TUI (cub-scout)         │  GUI (confighub.com)                 │
-├──────────────────────────┼──────────────────────────────────────┤
-│  LIVE only               │  LIVE + GIT + Other sources          │
-│  1 Cluster               │  N Clusters (Fleet)                  │
-└──────────────────────────┴──────────────────────────────────────┘
-```
+Standalone inspects one context at a time. Connected fleet queries require
+explicit identity and available indexed evidence. Neither a UI label nor a
+same-named resource establishes a cross-cluster binding.
 
-**This is a design rule, not a limitation.**
+Use the interface suited to the task while preserving facts, scope, freshness
+and omissions. New features require CLI/TUI parity, with supported MCP exposure
+using the same semantics. Scope safety and read-only Kubernetes permissions
+apply across interfaces. Explicit ConfigHub inventory import/publication is a
+separate write boundary.
 
-- **TUI** = Fast, local, single-cluster. Derives everything from LIVE cluster data.
-- **GUI** = Fleet-wide, multi-source. Aggregates LIVE (via Workers) + GIT (via provider integration).
-
----
-
-## LIVE vs GIT Data
-
-| From LIVE (Certain) | From GIT (Additional) |
-|---------------------|----------------------|
-| What resources exist | Other variants not deployed here |
-| Who owns them | Base definitions (`apps/base/`) |
-| Kustomization `spec.path` | What SHOULD exist (drift) |
-| Applied revision/SHA | History, PRs, pending commits |
-
-**Key insight:** You don't need Git to infer variant — the Kustomization stores `spec.path` in the cluster.
-
----
-
-## Capability Comparison
-
-| Capability | TUI (cub-scout) | GUI (confighub.com) |
-|------------|-----------------|---------------------|
-| **Single cluster** | ✓ Direct kubectl | ✓ Via Worker |
-| **Multiple clusters** | Switch contexts | ✓ All Targets aggregated |
-| **Ownership detection** | ✓ Labels/annotations | ✓ Same, fleet-wide |
-| **Trace** | ✓ Full chain | ✓ Same + visual |
-| **Scan** | ✓ PolicyReports | ✓ Same + history |
-| **Infer variant** | ✓ From path | ✓ From path, all clusters |
-| **Real-time** | ✓ Live query | Worker poll interval |
-| **Git structure** | - | ✓ Provider integration |
-| **Pending commits** | - | ✓ Compare Git vs Live |
-
----
-
-## Architecture: Hub Owns Workers
-
-```
-HUB (owns Worker lifecycle)
-├── Workers
-│   ├── worker-east ──────────────────▶ prod-east (Target)
-│   └── worker-west ──────────────────▶ prod-west (Target)
-│
-└── APP SPACES (select worker for deploy)
-    └── payments-team
-        ├── Unit: payment-api → deploys via worker-east
-        └── Unit: payment-api → deploys via worker-west
-```
-
-- **Hub** owns Workers and their lifecycle
-- **App Spaces** select which Worker to use for deploying Units
-- **Workers** connect Hub to Targets and enable `refresh` / `import` operations
-
----
-
-## Import Approaches
-
-| Approach | Command | What It Sees |
-|----------|---------|--------------|
-| **From LIVE** | `cub-scout import -n myapp` | This cluster only |
-| **From Fleet** | `cub-scout import --from-fleet` | All Targets via ConfigHub |
-| **From Git** | GUI only | Complete structure + bases |
-
-### Best Practice
-
-1. Start with TUI for quick single-cluster checks
-2. Connect to ConfigHub for fleet-wide visibility
-3. Use GUI for import wizard with Git correlation
-
----
-
-## When to Use Which
-
-| Use Case | Recommended |
-|----------|-------------|
-| Quick health check | TUI: `cub-scout map` |
-| Trace a resource | TUI: `cub-scout trace` |
-| Find orphans | TUI: `cub-scout map orphans` |
-| CI/CD integration | TUI: `cub-scout scan --json` |
-| Fleet-wide view | GUI or TUI: `cub-scout map --hub` |
-| Import from multiple clusters | GUI: Visual wizard |
-| Compare Git vs Live | GUI: Drift detection |
-
----
-
-## Summary
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                           TUI (cub-scout)                            │
-├─────────────────────────────────────────────────────────────────────┤
-│  LIVE: ✓ Full access, one cluster at a time                        │
-│  Best for: Quick checks, single cluster, CI/CD pipelines            │
-└─────────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────────┐
-│                        GUI (confighub.com)                           │
-├─────────────────────────────────────────────────────────────────────┤
-│  LIVE: ✓ Fleet-wide, all targets aggregated                        │
-│  GIT:  ✓ Provider integration, full structure                      │
-│  Best for: Fleet view, import wizard, Git+Live correlation          │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## See Also
-
-- [Live Cluster Inference](live-cluster-inference.md) — How detection works without Git
-- [Architecture](architecture.md) — System design overview
+For shipped capabilities and future extensions, use the
+[release continuity review](../reference/configuration-investigation-continuity.md),
+[CLI contract](../reference/cli-contract.md) and
+[connected boundary](why-connected-mode.md). These describe verified Scout
+contracts; they do not promise unverified behavior in another interface.

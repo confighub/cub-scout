@@ -320,6 +320,9 @@ func runReceiptVerify(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("collect ConfigHub delivery evidence: %w", deliveryErr)
 		}
 		evidence.DeliveryEvidence = deliveryEvidence
+		if deliveryEvidence != nil {
+			evidence.Attestations = deliveryEvidence.Attestations
+		}
 	}
 
 	// source-truth evidence is populated only when the caller signaled
@@ -373,7 +376,32 @@ func runReceiptVerify(cmd *cobra.Command, args []string) error {
 		return iaErr
 	}
 
-	// 5. Build the receipt.
+	// 5. Build the receipt. Exact revision data is optional supporting identity;
+	// a failed read is an omission and never changes the runtime predicate.
+	var unitCanonical, unitServed []byte
+	var unitDataHash, unitSlug string
+	var unitRevision int
+	if receiptWithConfigHub && evidence.Attestations != nil {
+		var subjectErr error
+		unitCanonical, unitServed, subjectErr = collectReceiptConfigHubRevisionData(ctx, evidence.Attestations)
+		if subjectErr != nil {
+			evidence.DeliveryEvidence.Omissions = append(evidence.DeliveryEvidence.Omissions, agent.TraceDeliveryOmission{Layer: "confighub.unitSubject", Reason: subjectErr.Error(), Impact: "ConfigHub subject omitted; runtime verdict unchanged"})
+		} else {
+			unitSlug = evidence.Attestations.UnitSlug
+			unitRevision = int(evidence.Attestations.RevisionNum)
+			unitDataHash = evidence.Attestations.DataHash
+		}
+	}
+	// The receipt contract encodes verifiedAt at RFC3339 second precision.
+	// Use that exact instant for claim expiry, including boundary cases.
+	verifiedAt := time.Now().UTC().Truncate(time.Second)
+	if evidence.Attestations != nil {
+		evidence.Attestations.ObservedAt = verifiedAt
+		for i := range evidence.Attestations.Attestations {
+			claim := &evidence.Attestations.Attestations[i]
+			claim.Expired = claim.ExpiresAt != nil && !verifiedAt.Before(*claim.ExpiresAt)
+		}
+	}
 	stmt, err := agent.BuildReceipt(agent.BuildReceiptInput{
 		Live: live,
 		Scope: agent.Scope{
@@ -381,19 +409,24 @@ func runReceiptVerify(cmd *cobra.Command, args []string) error {
 			Name:      name,
 			Namespace: ns,
 		},
-		Owner:             owner,
-		PredicateName:     predicateExplicit,
-		Spec:              spec,
-		Evidence:          evidence,
-		Connected:         connected,
-		Strategy:          strings.TrimSpace(receiptStrategy),
-		Since:             since,
-		InputAttestations: inputAttestations,
+		Owner:                   owner,
+		PredicateName:           predicateExplicit,
+		Spec:                    spec,
+		Evidence:                evidence,
+		Connected:               connected,
+		ConfigHubUnitSlug:       unitSlug,
+		ConfigHubUnitRev:        unitRevision,
+		ConfigHubUnitCanonical:  unitCanonical,
+		ConfigHubUnitServedData: unitServed,
+		ConfigHubUnitDataHash:   unitDataHash,
+		Strategy:                strings.TrimSpace(receiptStrategy),
+		Since:                   since,
+		InputAttestations:       inputAttestations,
 		Verifier: agent.Verifier{
 			Tool:    "cub-scout",
 			Version: BuildTag,
 		},
-		VerifiedAt: time.Now().UTC(),
+		VerifiedAt: verifiedAt,
 	})
 	if err != nil {
 		return fmt.Errorf("build receipt: %w", err)
@@ -554,7 +587,9 @@ func collectReceiptDeliveryEvidence(ctx context.Context, live *unstructured.Unst
 		raw = collectGitOpsDeliveryEvidence(ctx, dynClient, opts)
 	}
 
-	return correlateTraceDeliveryEvidence(result, raw, correlation, preflightOmissions), nil
+	out := correlateTraceDeliveryEvidence(result, raw, correlation, preflightOmissions)
+	attachConfigHubAttestations(ctx, out, result.ConfigHubOrigin, flags.Space)
+	return out, nil
 }
 
 func receiptTraceResultFromLive(live *unstructured.Unstructured, owner agent.Ownership) *agent.TraceResult {

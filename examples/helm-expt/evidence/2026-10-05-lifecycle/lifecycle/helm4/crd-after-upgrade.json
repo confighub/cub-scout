@@ -1,0 +1,76 @@
+{
+    "apiVersion": "apiextensions.k8s.io/v1",
+    "kind": "CustomResourceDefinition",
+    "metadata": {
+        "annotations": {
+            "matrix.scout.test/crd-version": "first"
+        },
+        "creationTimestamp": "2026-10-05T16:21:26Z",
+        "generation": 1,
+        "name": "probes.helm4.scout-matrix.test",
+        "resourceVersion": "762",
+        "uid": "f4a8b71a-b3ed-43b6-8eef-a72ca72c668c"
+    },
+    "spec": {
+        "conversion": {
+            "strategy": "None"
+        },
+        "group": "helm4.scout-matrix.test",
+        "names": {
+            "kind": "Probe",
+            "listKind": "ProbeList",
+            "plural": "probes",
+            "singular": "probe"
+        },
+        "scope": "Namespaced",
+        "versions": [
+            {
+                "name": "v1",
+                "schema": {
+                    "openAPIV3Schema": {
+                        "properties": {
+                            "spec": {
+                                "properties": {
+                                    "marker": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "served": true,
+                "storage": true
+            }
+        ]
+    },
+    "status": {
+        "acceptedNames": {
+            "kind": "Probe",
+            "listKind": "ProbeList",
+            "plural": "probes",
+            "singular": "probe"
+        },
+        "conditions": [
+            {
+                "lastTransitionTime": "2026-10-05T16:21:26Z",
+                "message": "no conflicts found",
+                "reason": "NoConflicts",
+                "status": "True",
+                "type": "NamesAccepted"
+            },
+            {
+                "lastTransitionTime": "2026-10-05T16:21:26Z",
+                "message": "the initial names have been accepted",
+                "reason": "InitialNamesAccepted",
+                "status": "True",
+                "type": "Established"
+            }
+        ],
+        "storedVersions": [
+            "v1"
+        ]
+    }
+}

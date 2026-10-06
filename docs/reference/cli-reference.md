@@ -33,7 +33,7 @@ Source of truth:
 | `gitops` | GitOps pipeline health and diagnostics | [Command Reference](commands.md#gitops-v014) | [Connected summary storage](../../examples/connected-summary-storage/) |
 | `graph` | Resource graph export and explanation | [Command Reference](commands.md#graph-v06) | [Graph export](../../examples/graph-export/) |
 | `help` | Help for any command path | [CLI Guide](../../CLI-GUIDE.md#verify-behavior-locally) | - |
-| `history` | Connected ChangeSet timeline for one resource | [Command Reference](commands.md#history) | [Connect and compare](../../examples/connect-and-compare/) |
+| `history` | Connected ChangeSet timeline and exact-space ChangeOrder reads | [Command Reference](commands.md#history) | [Connect and compare](../../examples/connect-and-compare/) |
 | `impact` | Connected blast-radius preview for one unit | [Command Reference](commands.md#impact) | [Connect and compare](../../examples/connect-and-compare/) |
 | `import` | Import workloads into ConfigHub | [Command Reference](commands.md#import) | [Argo import demo](../../examples/argo-import-confighub-demo/) |
 | `map` | Interactive TUI and list/status/ownership views | [Command Reference](commands.md#map) | [New user puzzle quest](../../examples/new-user-puzzle-quest/) |
@@ -66,6 +66,7 @@ Source of truth:
 | `compare three-way` | Connected DRY/WET/LIVE comparison; `--source-path <local-checkout>` opts into stage-B `gitSource.file:line` back-resolution for raw-YAML sources | [Command Reference](commands.md#compare-three-way) | [Connect and compare](../../examples/connect-and-compare/) |
 | `fleet outliers` | Deprecated 2.x comparison; planned removal in 3.0 absent validated cross-cluster identity; no equivalent replacement yet | [Command Reference](commands.md#fleet-outliers) | [Fleet import](../../examples/fleet-import/) |
 | `gitops status` | GitOps pipeline health plus optional bounded ConfigHub delivery evidence; `--tui` opens the same read-once snapshot in a viewport | [Command Reference](commands.md#gitops-v014) | [Live delivery observability](../../examples/live-delivery-observability/) |
+| `history changeorder` | Exact-space reported ChangeOrder Stage/State and workflow declarations; evaluated outcomes unknown | [Command Reference](commands.md#history-changeorder) | [Authored read contract](../../examples/changeorder-read-contract/) |
 | `import apply` | Apply an import proposal JSON | [Command Reference](commands.md#import-apply) | [Import from live](../../examples/import-from-live/) |
 | `import argocd` | Import one ArgoCD Application | [Command Reference](commands.md#import-argocd) | [Argo import demo](../../examples/argo-import-confighub-demo/) |
 | `import cluster-aggregator` | Aggregate multiple import proposals | [Command Reference](commands.md#import-cluster-aggregator) | [Fleet import](../../examples/fleet-import/) |

@@ -1,0 +1,97 @@
+{
+  "identity": {
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "name": "release-probe",
+    "namespace": "matrix-helm4-lifecycle",
+    "uid": "6a11038a-1a99-41ee-9075-e7646d2faa7c"
+  },
+  "replicas": {
+    "desired": 1,
+    "ready": 1
+  },
+  "managedFields": [
+    {
+      "manager": "helm",
+      "operation": "Apply",
+      "apiVersion": "apps/v1",
+      "time": "2026-10-05T16:21:39Z",
+      "fieldsType": "FieldsV1",
+      "fieldsV1": {
+        "f:metadata": {
+          "f:annotations": {
+            "f:meta.helm.sh/release-name": {},
+            "f:meta.helm.sh/release-namespace": {}
+          },
+          "f:labels": {
+            "f:app.kubernetes.io/managed-by": {},
+            "f:app.kubernetes.io/name": {}
+          }
+        },
+        "f:spec": {
+          "f:replicas": {},
+          "f:selector": {},
+          "f:template": {
+            "f:metadata": {
+              "f:labels": {
+                "f:app.kubernetes.io/name": {}
+              }
+            },
+            "f:spec": {
+              "f:containers": {
+                "k:{\"name\":\"pause\"}": {
+                  ".": {},
+                  "f:image": {},
+                  "f:name": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "manager": "kube-controller-manager",
+      "operation": "Update",
+      "apiVersion": "apps/v1",
+      "time": "2026-10-05T16:21:39Z",
+      "fieldsType": "FieldsV1",
+      "fieldsV1": {
+        "f:metadata": {
+          "f:annotations": {
+            "f:deployment.kubernetes.io/revision": {}
+          }
+        },
+        "f:status": {
+          "f:availableReplicas": {},
+          "f:conditions": {
+            ".": {},
+            "k:{\"type\":\"Available\"}": {
+              ".": {},
+              "f:lastTransitionTime": {},
+              "f:lastUpdateTime": {},
+              "f:message": {},
+              "f:reason": {},
+              "f:status": {},
+              "f:type": {}
+            },
+            "k:{\"type\":\"Progressing\"}": {
+              ".": {},
+              "f:lastTransitionTime": {},
+              "f:lastUpdateTime": {},
+              "f:message": {},
+              "f:reason": {},
+              "f:status": {},
+              "f:type": {}
+            }
+          },
+          "f:observedGeneration": {},
+          "f:readyReplicas": {},
+          "f:replicas": {},
+          "f:terminatingReplicas": {},
+          "f:updatedReplicas": {}
+        }
+      }
+    }
+  ]
+}

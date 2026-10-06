@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: contract-config
+  namespace: scout-contract
+data:
+  proof: v213

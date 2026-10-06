@@ -1,0 +1,72 @@
+{
+  "schema": "confighub.viewer-claim-capture.v1",
+  "workspaceCommit": "f24c0a0b4b95e4386ac5d55a9e825f02013f8068",
+  "workspaceDirty": false,
+  "binarySHA256": "c179e82a1449c7d6a6bce3e4e447655f660e0d6ca4591ef4740055cf096bd044",
+  "binaryBuildSource": "31abf38d131a6faabc13da6b5674f108f18e3903",
+  "buildGoVersion": "go1.24.0",
+  "serverVersion": "v0.8.3",
+  "serverCommit": "1f92e099f4960a0828d2b51ed54e142e5f051b2a",
+  "cubVersion": "v0.8.3",
+  "cubCommit": "468dd09f1c893ce2e18fd018192dcfa96cb1dd34",
+  "tokenClaimSubset": {
+    "role": "viewer",
+    "iss": "confighub",
+    "aud": [
+      "confighub-api"
+    ],
+    "internal_user_id": "5d682e37-6bad-46c1-ae7e-aafcec48aa9e",
+    "is_bot": true
+  },
+  "tokenScope": "decoded identity subset; credential omitted; server accepted authenticated reads and refused write",
+  "status": "passed",
+  "scope": "org-role viewer worker with explicit space View/ViewChildren; no effective/inherited coverage claim",
+  "cleanup": [
+    {
+      "action": "delete-namespace",
+      "exitCode": 0
+    },
+    {
+      "action": "delete-worker",
+      "exitCode": 0
+    },
+    {
+      "action": "delete-space",
+      "exitCode": 0
+    }
+  ],
+  "ownedSpaceAbsent": true,
+  "unitUnchanged": true,
+  "originalSpaceActivePermissionsRestored": true,
+  "publicFiles": {
+    "viewer-revision.stdout": "e61fc483ca3ef6b73da6e195967fa63911c00cbc9166abb52c1e55b39b5962a4",
+    "viewer-attestation-list.stdout": "682ed20dafff230b48bb966e5acc5106982ea685077504963f18ac69bcd15271",
+    "viewer-scout-mcp.stdout": "8bc0df7bde57318a4cb593a9378c89db52076f65112993e8b56abd1cfa50cdac",
+    "viewer-trace.stdout": "6cb2e65b589cd0fa4295572546ea6cb7c370939843041a8de9dbb7846b2e602b",
+    "viewer-explain.stdout": "fc9ba11608f0acaf08cfc8850588338306facbda0179895b5682520b19908a27",
+    "viewer-receipt.stdout": "f8e7e0abf2dcd0a043629dfacadba43ccd1fc4b26c4709a2ab695b92ccc1ef62",
+    "viewer-write-denied.stderr": "13575be9ec9eda96ce40ec3f1d8f7dad72a42dc3b4fc14beca1a899c6f404bc1",
+    "viewer-revision-denied.stderr": "5e74341915230d14fb485bf45e926bdc13047665396f51de9f3b9caa5f4ce624",
+    "viewer-scout-mcp-denied.stdout": "8915c249e6178e0008b2de6827be95303a30c404ad861e0c3193b409f705f2b7",
+    "viewer-explain-denied.stdout": "8e4e94d1d7013b3450bb15fa41d30770d524ea7f4ae6703e27c574d71023ac94",
+    "identity.json": "22aa65fe175efb70efaccc515fb6cd8b9a3e5de44ca906d8ea54523661851929",
+    "receipt-validation.stdout": "f92e5b0f063b2f8ddbdc133a4c2a1b9eb959025e86d0abffe6632e45590366ee"
+  },
+  "retainedAttempts": [
+    {
+      "path": "/tmp/scout-v213-viewer-claims-20261005-attempt1",
+      "status": "failed envelope comparison; Unit unchanged; cleanup passed"
+    },
+    {
+      "path": "/tmp/scout-v213-viewer-claims-20261005-attempt2",
+      "status": "passed scoped viewer read/write denial and permission removal"
+    },
+    {
+      "path": "/tmp/scout-v213-viewer-claims-20261005-attempt3",
+      "status": "passed CLI/MCP/receipt projections, denial, permissions and cleanup"
+    }
+  ],
+  "frozenBenchmarkInputsChanged": false,
+  "effectiveInheritedCoverageEstablished": false,
+  "receiptValidationExitCode": 0
+}

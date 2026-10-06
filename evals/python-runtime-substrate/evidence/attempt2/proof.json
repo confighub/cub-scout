@@ -1,0 +1,168 @@
+{
+  "scope": "actual Python stdlib/asset probe only, not full runtime or model admission",
+  "sourceCommit": "7d09072b04d300bc03d82e90b4a745d3d2561e95",
+  "sourceDirty": false,
+  "modelOrProviderRun": false,
+  "status": "stdlib_passed_required_pyyaml_missing",
+  "payloadSHA256": "c620c60573420265ea2e6c380ca78fc3c93d48c63b5a1496f2b342a66d685409",
+  "operations": [
+    {
+      "label": "docker-endpoint",
+      "args": [
+        "context",
+        "inspect",
+        "orbstack",
+        "--format",
+        "{{json .Endpoints.docker.Host}}"
+      ],
+      "exitCode": 0,
+      "stdoutSHA256": "76a228368ea2b8ec2ade244d6c143bbc4d7d669887f7595f0db0972142ab3c1c",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "image",
+      "args": [
+        "image",
+        "inspect",
+        "sha256:cdbd05fb6f457ca275ff51ce00d93d865ca0b6a25f5ffb08262d94f6835771e5"
+      ],
+      "exitCode": 0,
+      "stdoutSHA256": "e7c9eaa2f0699d6c70648b433c51b3890233a0dc66e31c579373e8e0ccc1d7c0",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "create",
+      "args": [
+        "container",
+        "create",
+        "--name",
+        "scout-linux-ver-ecf0b19388fd446e",
+        "--label",
+        "io.confighub.cub-scout.linux-runtime-versions.owner=45e5b767a459497d8ede23f4566a1f6d",
+        "--pull=never",
+        "--network=none",
+        "--read-only",
+        "--user",
+        "65534:65534",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "--pids-limit=64",
+        "--memory=1g",
+        "--cpus=1",
+        "--tmpfs",
+        "/tmp:rw,nosuid,nodev,size=64m,uid=65534,gid=65534",
+        "--mount",
+        "type=bind,src=/private/tmp/scout-v213-python-runtime-20261005-attempt2/tools,dst=/tools,readonly",
+        "sha256:cdbd05fb6f457ca275ff51ce00d93d865ca0b6a25f5ffb08262d94f6835771e5",
+        "python3",
+        "/tools/payload.py"
+      ],
+      "exitCode": 0,
+      "stdoutSHA256": "e3ba4ea0c87a75dbc6065527215fc89100b8fcba009566269e44e73d98788f91",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "before",
+      "args": [
+        "container",
+        "inspect",
+        "--format",
+        "{{json .}}",
+        "dffbed2e343be6f371199d00155dacb8db015aa8a1eae3d8faa9b74d8ef53599"
+      ],
+      "exitCode": 0,
+      "stdoutSHA256": "a5bfdb6b967a712931df3eed23194cffadc3872d90b353205c73bc26842d6d3e",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "python-execution",
+      "args": [
+        "start",
+        "--attach",
+        "dffbed2e343be6f371199d00155dacb8db015aa8a1eae3d8faa9b74d8ef53599"
+      ],
+      "exitCode": 0,
+      "stdoutSHA256": "8b6d65654e81ea75228e4d5ff320c17c0d34cd0987029287f8eeb7dc4e06327f",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "after",
+      "args": [
+        "container",
+        "inspect",
+        "--format",
+        "{{json .}}",
+        "dffbed2e343be6f371199d00155dacb8db015aa8a1eae3d8faa9b74d8ef53599"
+      ],
+      "exitCode": 0,
+      "stdoutSHA256": "140f5437eaae5c9837289b946333bf81a4ba5158c2a879c90d97fc50c07e979b",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "runtime": {
+    "assetSHA256": {
+      "/usr/local/bin/python3.11": "4e19d11f7a2ee55a0247c6ab3326419413fadecf4b7a52d719739cc1a924711b",
+      "/usr/local/lib/libpython3.11.so.1.0": "3c2a42f66af9182178871c2cd433ffff0592bec6f18184a5547f0d3887fca09b"
+    },
+    "child": {
+      "ok": true,
+      "uid": 65534
+    },
+    "executable": "/usr/local/bin/python3",
+    "machine": "aarch64",
+    "openssl": "OpenSSL 3.5.6 7 Apr 2026",
+    "schema": "python-runtime-probe.v1",
+    "stdlibImports": [
+      "json",
+      "hashlib",
+      "ssl",
+      "sqlite3",
+      "ctypes",
+      "subprocess",
+      "selectors",
+      "urllib.request",
+      "http.server",
+      "tarfile",
+      "gzip"
+    ],
+    "uid": 65534,
+    "version": "3.11.15 (main, Jun 24 2026, 02:14:25) [GCC 14.2.0]",
+    "yamlAvailable": false
+  },
+  "cleanup": {
+    "attempted": true,
+    "verifiedAbsent": true,
+    "errors": [],
+    "operations": [
+      {
+        "operation": "inspect-before-cleanup",
+        "startedAt": "2026-10-05T18:33:00.343Z",
+        "endedAt": "2026-10-05T18:33:00.369Z",
+        "elapsedSeconds": 0.02601404208689928,
+        "exitCode": 0,
+        "stdoutSha256": "140f5437eaae5c9837289b946333bf81a4ba5158c2a879c90d97fc50c07e979b",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "operation": "remove-owned-container",
+        "startedAt": "2026-10-05T18:33:00.369Z",
+        "endedAt": "2026-10-05T18:33:00.432Z",
+        "elapsedSeconds": 0.06232250016182661,
+        "exitCode": 0,
+        "stdoutSha256": "e3ba4ea0c87a75dbc6065527215fc89100b8fcba009566269e44e73d98788f91",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "operation": "verify-absent",
+        "startedAt": "2026-10-05T18:33:00.432Z",
+        "endedAt": "2026-10-05T18:33:00.460Z",
+        "elapsedSeconds": 0.028479167260229588,
+        "exitCode": 1,
+        "stdoutSha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+        "stderrSha256": "cdd7176b52502554550a5366dabcfc03d2a21267c844a0af4d9056f961fa2e54"
+      }
+    ],
+    "containerId": "dffbed2e343be6f371199d00155dacb8db015aa8a1eae3d8faa9b74d8ef53599",
+    "removeExitCode": 0
+  }
+}

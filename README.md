@@ -53,7 +53,7 @@ cub-scout gitops status   # What do delivery controllers report?
 cub-scout map             # Explore interactively
 ```
 
-Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.12.4`, then
+Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.13.0`, then
 `cub scout doctor`. [Installation and verified downloads](docs/getting-started/install.md)
 cover macOS, Linux, Windows, and tagged source builds.
 
@@ -367,9 +367,9 @@ brew install confighub/tap/cub-scout
 For direct downloads and tagged source builds, use the
 [install guide](docs/getting-started/install.md). The source module now uses
 `github.com/confighub/cub-scout/v2`; proxy installation via
-`go install github.com/confighub/cub-scout/v2/cmd/cub-scout@latest` awaits the
-next correctly tagged 2.x minor. Container command
-`docker run ghcr.io/confighub/cub-scout:v2.12.4 version` still needs registry
+`go install github.com/confighub/cub-scout/v2/cmd/cub-scout@v2.13.0` uses
+the tagged 2.x module. Container command
+`docker run ghcr.io/confighub/cub-scout:v2.13.0 version` still needs registry
 access verification (#520); the published image is Linux amd64 only.
 `kubectl krew install cub-scout` is not a verified distribution path; use the
 `kubectl-cub_scout` binary included in the archives or Homebrew instead.

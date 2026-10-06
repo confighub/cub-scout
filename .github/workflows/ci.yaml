@@ -19,7 +19,9 @@ on:
   workflow_dispatch:
     inputs:
       level:
-        description: 'Test level (smoke, unit, integration, gitops, demos, connected, full)'
+        description: 'Test level (smoke, unit, integration, gitops, demos, connected, windows, full)'
+        type: choice
+        options: [smoke, unit, integration, gitops, demos, connected, windows, full]
         required: false
         default: 'integration'
 
@@ -68,6 +70,35 @@ jobs:
 
       - name: Check no personal names in committed files
         run: ./scripts/check-no-personal-names.sh
+
+      - name: Verify release hook inputs and ignored output
+        run: |
+          go mod tidy -diff
+          git check-ignore -q .goreleaser-dist/rehearsal.tmp
+
+      - name: Verify genuine governance capture packet
+        run: python3 scripts/ci/test_governance_capture.py
+
+      - name: Verify genuine revision-chain and claim coverage packet
+        run: python3 scripts/ci/test_governance_revision_chain.py
+
+      - name: Verify genuine restricted-viewer claim capture
+        run: python3 scripts/ci/test_attestation_viewer_capture.py
+
+      - name: Verify genuine Helm lifecycle capture packet
+        run: python3 scripts/ci/test_helm_lifecycle_capture.py
+
+      - name: Verify accepted native Windows runtime receipts
+        run: python3 scripts/ci/test_windows_runtime_capture.py
+
+      - name: Verify retained Python substrate execution checkpoint
+        run: python3 scripts/ci/test_python_substrate_capture.py
+
+      - name: Test required acceptance control flow
+        run: python3 scripts/ci/test_prove_it_works.py
+
+      - name: Test connected CI provisioning and required outcomes
+        run: python3 scripts/ci/test_connected_ci.py
 
       - name: Run offline eval trace admission tests
         run: python3 evals/scripts/test_admission_audit.py
@@ -120,11 +151,29 @@ jobs:
       - name: Run offline full-24 case isolation runtime guards
         run: PYTHONDONTWRITEBYTECODE=1 /tmp/scout-pre01-ci/bin/python -m unittest discover -s evals/full24-case-isolation -v
 
+      - name: Check offline workflow selection
+        run: PYTHONDONTWRITEBYTECODE=1 /tmp/scout-pre01-ci/bin/python -m unittest discover -s scripts/ci -p 'test_offline_workflow.py' -v
+
+      - name: Run offline source-bound launch policy guards
+        run: PYTHONDONTWRITEBYTECODE=1 /tmp/scout-pre01-ci/bin/python -m unittest discover -s evals/full24-launch-policy -v
+
+      - name: Run offline Explain explicit-context answer controls
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/explain-explicit-context -v
+
+      - name: Run offline ChangeOrder read-contract answer controls
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/changeorder-read-contract -v
+
       - name: Run existing strict recorded-scale answer controls
         run: PYTHONDONTWRITEBYTECODE=1 /tmp/scout-pre01-ci/bin/python -m unittest discover -s evals/recorded-scale -p 'test_packet.py' -k test_strict_answer_contract_is_opt_in_and_hashes_generated_files -v
 
       - name: Run offline PRE-01 recorded API replay guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/recorded-api -v
+
+      - name: Run offline recorded typed-list answer controls
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/recorded-typed-list -v
+
+      - name: Run offline Sveltos controller-fact answer controls
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/sveltos-controller-facts -v
 
       - name: Run offline PRE-01 real-kubectl gate guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/pre01-real-kubectl -v
@@ -181,12 +230,84 @@ jobs:
           path: cub-scout
 
   # ==========================================================================
-  # Level 2: Integration (needs cluster)
+  # Manual native Windows release runtime admission
   # ==========================================================================
+  windows-runtime:
+    name: Windows Release Runtime (${{ matrix.arch }})
+    if: github.event_name == 'workflow_dispatch' && (github.event.inputs.level == 'windows' || github.event.inputs.level == 'full')
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: windows-2022
+            asset: goreleaser_Windows_x86_64.zip
+            sha256: de61a8e7a064abb14210b16c942facd299643d83341c5cd293f19155a7c8b95f
+          - arch: arm64
+            runner: windows-11-arm
+            asset: goreleaser_Windows_arm64.zip
+            sha256: d2aebc59bee96078c1f529160f170e02ffc96fd5d31b5e33eef66cdd7256f602
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - name: Preserve canonical source line endings
+        shell: pwsh
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          architecture: ${{ matrix.arch }}
+      - name: Verify canonical native build inputs
+        shell: pwsh
+        run: |
+          python scripts/ci/verify_windows_release_runtime.py --preflight --arch '${{ matrix.arch }}' --source '${{ github.sha }}' --output '${{ runner.temp }}/scout-windows-proof/source-inputs.json'
+          if ($LASTEXITCODE -ne 0) { throw 'Native Windows source input proof failed' }
+      - name: Build configured native Windows release binaries
+        shell: pwsh
+        env:
+          GORELEASER_CURRENT_TAG: v2.13.0
+          GOOS: windows
+          GOARCH: ${{ matrix.arch }}
+          GOTOOLCHAIN: local
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $archive = Join-Path $env:RUNNER_TEMP '${{ matrix.asset }}'
+          $tools = Join-Path $env:RUNNER_TEMP 'scout-goreleaser'
+          $proof = Join-Path $env:RUNNER_TEMP 'scout-windows-proof'
+          New-Item -ItemType Directory -Force $proof | Out-Null
+          Invoke-WebRequest 'https://github.com/goreleaser/goreleaser/releases/download/v2.18.2/${{ matrix.asset }}' -OutFile $archive
+          if ((Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne '${{ matrix.sha256 }}') { throw 'GoReleaser checksum mismatch' }
+          Expand-Archive $archive -DestinationPath $tools
+          & (Join-Path $tools 'goreleaser.exe') build --snapshot --clean --single-target --id cub-scout --id kubectl-cub-scout --parallelism 2 --timeout 15m 2>&1 | Tee-Object -FilePath (Join-Path $proof 'build.log')
+          if ($LASTEXITCODE -ne 0) { throw 'Configured Windows build failed' }
+      - name: Verify native source identity and runtime
+        shell: pwsh
+        run: |
+          python scripts/ci/verify_windows_release_runtime.py --arch '${{ matrix.arch }}' --source '${{ github.sha }}' --output '${{ runner.temp }}/scout-windows-proof/runtime.json'
+          if ($LASTEXITCODE -ne 0) { throw 'Native Windows runtime proof failed' }
+      - name: Retain native release runtime proof
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-windows-${{ matrix.arch }}
+          include-hidden-files: true
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/scout-windows-proof/
+            .goreleaser-dist/metadata.json
+            .goreleaser-dist/cub-scout_windows_*/cub-scout.exe
+            .goreleaser-dist/kubectl-cub-scout_windows_*/kubectl-cub_scout.exe
+
   integration:
     name: Integration Tests
     runs-on: ubuntu-latest
     needs: unit
+    # Manual smoke/unit runs must not create a cluster. Unknown manual levels
+    # also fail closed to offline jobs. Normal PR/main runs retain live CI.
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.level == 'integration' || github.event.inputs.level == 'gitops' || github.event.inputs.level == 'demos' || github.event.inputs.level == 'connected' || github.event.inputs.level == 'full'
     steps:
       - uses: actions/checkout@v6
 
@@ -260,23 +381,17 @@ jobs:
         with:
           cluster_name: gitops-cluster
 
-      - name: Install Flux
-        run: |
-          curl -s https://fluxcd.io/install.sh | sudo bash
-          flux install
-
-      - name: Install ArgoCD
-        run: |
-          kubectl create namespace argocd || true
-          # Use server-side apply to avoid oversized last-applied annotations on Argo CRDs.
-          kubectl apply --server-side --force-conflicts -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-          kubectl wait --for=condition=available deployment/argocd-server -n argocd --timeout=180s
+      - name: Install pinned GitOps controllers
+        run: bash scripts/ci/setup-gitops-controllers.sh
 
       - name: Deploy Flux example
         run: |
           kubectl apply -f examples/flux-boutique/boutique.yaml
-          sleep 30  # Wait for Flux to reconcile
-          kubectl wait --for=condition=available deployment --all -n boutique --timeout=120s || true
+          kubectl wait --for=condition=Ready gitrepository/boutique -n boutique --timeout=300s
+          for name in frontend cart checkout payment shipping; do
+            kubectl wait --for=condition=Ready "kustomization/$name" -n boutique --timeout=300s
+            kubectl rollout status "deployment/$name" -n boutique --timeout=300s
+          done
 
       - name: Deploy ArgoCD example
         run: |
@@ -302,26 +417,42 @@ jobs:
               syncOptions:
                 - CreateNamespace=true
           EOF
-          sleep 30  # Wait for ArgoCD to sync
+          kubectl wait --for=jsonpath='{.status.sync.status}'=Synced application/guestbook -n argocd --timeout=300s
+          kubectl wait --for=jsonpath='{.status.health.status}'=Healthy application/guestbook -n argocd --timeout=300s
+          kubectl rollout status deployment/guestbook-ui -n guestbook --timeout=300s
 
       - name: Verify Flux ownership detection
         run: |
-          echo "=== All resources ==="
-          ./cub-scout map list
-
-          echo "=== Flux resources ==="
-          ./cub-scout map list | grep flux || echo "No flux resources (may still be syncing)"
-
-          echo "=== Deployers ==="
+          ./cub-scout map list --json --namespace boutique > "$RUNNER_TEMP/flux-ownership.json"
+          for name in frontend cart checkout payment shipping; do
+            jq -e --arg name "$name" '[.[] | select(.namespace == "boutique" and .kind == "Deployment" and .name == $name and .owner == "Flux")] | length == 1' "$RUNNER_TEMP/flux-ownership.json"
+          done
           ./cub-scout map deployers
 
       - name: Verify ArgoCD ownership detection
         run: |
-          ./cub-scout map list | grep argo || echo "ArgoCD resources may still be syncing"
+          ./cub-scout map list --json --namespace guestbook > "$RUNNER_TEMP/argo-ownership.json"
+          jq -e '[.[] | select(.namespace == "guestbook" and .kind == "Deployment" and .name == "guestbook-ui" and .owner == "ArgoCD")] | length == 1' "$RUNNER_TEMP/argo-ownership.json"
+
+      - name: Record scoped controller acceptance
+        run: |
+          kubectl get applications.argoproj.io guestbook -n argocd -o json > "$RUNNER_TEMP/argo-application.json"
+          kubectl get gitrepositories.source.toolkit.fluxcd.io,kustomizations.kustomize.toolkit.fluxcd.io -n boutique -o json > "$RUNNER_TEMP/flux-delivery.json"
+
+      - name: Retain controller acceptance observations
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gitops-acceptance
+          path: |
+            ${{ runner.temp }}/flux-ownership.json
+            ${{ runner.temp }}/argo-ownership.json
+            ${{ runner.temp }}/argo-application.json
+            ${{ runner.temp }}/flux-delivery.json
+            ${{ runner.temp }}/scout-controllers/flux-version.txt
 
       - name: Test trace command
-        run: |
-          ./cub-scout trace deployment/cart -n boutique || echo "Trace may fail if resources not ready"
+        run: ./cub-scout trace deployment/cart -n boutique
 
       - name: Test deep-dive
         run: ./cub-scout map deep-dive | head -80
@@ -353,32 +484,43 @@ jobs:
         with:
           cluster_name: demo-cluster
 
-      - name: Install Flux
-        run: |
-          curl -s https://fluxcd.io/install.sh | sudo bash
-          flux install
+      - name: Install pinned GitOps controllers
+        run: bash scripts/ci/setup-gitops-controllers.sh
 
       - name: Run quick demo
         run: |
-          ./cub-scout demo quick
-          ./cub-scout demo quick --cleanup
+          kubectl apply -f test/atk/fixtures/flux-basic.yaml -f test/atk/fixtures/argo-basic.yaml
+          ./cub-scout quickstart demo quick
+          ./cub-scout map list --json | jq -e 'length > 0'
+          ./cub-scout quickstart demo quick --cleanup
+
+      - name: Provision scanner for risk demos
+        run: bash scripts/ci/setup-scan-provider.sh
+        env:
+          CUB_SCAN_RELEASE_TOKEN: ${{ secrets.CUB_SCAN_RELEASE_TOKEN }}
 
       - name: Run ccve demo
         run: |
-          ./cub-scout demo ccve
-          ./cub-scout demo ccve --cleanup
+          kubectl apply -f examples/impressive-demo/bad-configs/monitoring-bad.yaml
+          ./cub-scout quickstart demo ccve
+          ./cub-scout scan --file examples/impressive-demo/bad-configs/monitoring-bad.yaml --json | jq -e '[.static.findings[] | select(.ccve_id == "CCVE-2025-0027" and .resource_name == "grafana")] | length == 1'
+          ./cub-scout quickstart demo ccve --cleanup
 
       - name: Run query demo
         run: |
-          ./cub-scout demo query
-          ./cub-scout demo query --cleanup
+          kubectl apply -f examples/demos/multi-cluster.yaml
+          ./cub-scout quickstart demo query
+          ./cub-scout map list -q 'kind=Deployment AND owner!=Native' --json | jq -e 'length > 0'
+          ./cub-scout quickstart demo query --cleanup
 
       - name: Run scenarios
         run: |
-          ./cub-scout demo scenario bigbank-incident || true
-          ./cub-scout demo scenario bigbank-incident --cleanup || true
-          ./cub-scout demo scenario break-glass || true
-          ./cub-scout demo scenario break-glass --cleanup || true
+          kubectl apply -f examples/impressive-demo/bad-configs/monitoring-bad.yaml
+          ./cub-scout quickstart demo scenario bigbank-incident
+          ./cub-scout quickstart demo scenario bigbank-incident --cleanup
+          kubectl apply -f examples/demos/break-glass.yaml
+          ./cub-scout quickstart demo scenario break-glass
+          ./cub-scout quickstart demo scenario break-glass --cleanup
 
   # ==========================================================================
   # Level 6: Connected E2E (needs ConfigHub auth, manual trigger)
@@ -409,21 +551,32 @@ jobs:
         with:
           cluster_name: connected-cluster
 
-      - name: Authenticate to ConfigHub
-        if: env.CUB_AUTH_TOKEN != ''
-        run: |
-          echo "$CUB_AUTH_TOKEN" | cub auth login --token -
-        env:
-          CUB_AUTH_TOKEN: ${{ secrets.CUB_AUTH_TOKEN }}
+      - name: Provision authenticated disposable ConfigHub
+        run: bash scripts/ci/setup-connected-server.sh "$RUNNER_TEMP/scout-connected"
 
       - name: Run import dry-run tests
         run: go test -tags=integration ./test/integration/... -run 'TestImportDryRun' -v -timeout 120s
 
       - name: Run import round-trip tests
-        if: env.CUB_AUTH_TOKEN != ''
-        run: go test -tags=integration ./test/integration/... -run 'TestImportFull|TestImportIdempotent|TestImportCleanup' -v -timeout 300s
-        env:
-          CUB_AUTH_TOKEN: ${{ secrets.CUB_AUTH_TOKEN }}
+        run: |
+          go test -tags=integration ./test/integration/... -run '^(TestImportFullRoundTrip|TestImportIdempotent|TestImportCleanup)$' -count=1 -json -timeout 300s > "$RUNNER_TEMP/scout-connected/roundtrip.json"
+          python3 scripts/ci/require_test_passes.py "$RUNNER_TEMP/scout-connected/roundtrip.json" TestImportFullRoundTrip TestImportIdempotent TestImportCleanup
+
+      - name: Retain connected test outcomes and versions
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: connected-acceptance
+          path: |
+            ${{ runner.temp }}/scout-connected/roundtrip.json
+            ${{ runner.temp }}/scout-connected/version.txt
+
+      - name: Remove disposable ConfigHub server
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/scout-connected/owns-server-cluster" ]]; then
+            kind delete cluster --name scout-ci-connected-server
+          fi
 
   # ==========================================================================
   # Proof artifact (always publish run matrix)
@@ -483,5 +636,23 @@ jobs:
         with:
           cluster_name: full-test-cluster
 
+      - name: Provision required scanner
+        run: bash scripts/ci/setup-scan-provider.sh
+        env:
+          CUB_SCAN_RELEASE_TOKEN: ${{ secrets.CUB_SCAN_RELEASE_TOKEN }}
+
+      - name: Install pinned GitOps controllers
+        run: bash scripts/ci/setup-gitops-controllers.sh
+
+      - name: Provision authenticated disposable ConfigHub
+        run: bash scripts/ci/setup-connected-server.sh "$RUNNER_TEMP/scout-connected"
+
       - name: Run prove-it-works
         run: ./test/prove-it-works.sh --level=full
+
+      - name: Remove disposable ConfigHub server
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/scout-connected/owns-server-cluster" ]]; then
+            kind delete cluster --name scout-ci-connected-server
+          fi

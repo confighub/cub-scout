@@ -1,0 +1,124 @@
+{
+  "schema": "runtime.python-image.static-inventory.v1",
+  "status": "candidate_static_inventory_only",
+  "imageIndexDigest": "sha256:cdbd05fb6f457ca275ff51ce00d93d865ca0b6a25f5ffb08262d94f6835771e5",
+  "platformManifestDigest": "sha256:4848a887a05504f48391cf3015e2be722685c3fa8100fa408f5b82f87e2bbcb8",
+  "configDigest": "sha256:a85858181d04b128142e2bbfd192fe5c0dcb2ab666c03bc3503813d3d9de43f6",
+  "platform": {
+    "architecture": "arm64",
+    "os": "linux",
+    "variant": "v8"
+  },
+  "archive": {
+    "bytes": 47983616,
+    "sha256": "9e6965b3a7194581603b96df030b40d949092709ffcf41572ebf75dd29657278"
+  },
+  "layers": [
+    {
+      "digest": "sha256:3be819c1c8cfde074541a1d875fbf2da3642b0ec6bb39aaa2ce7d56052b67dc1",
+      "diffId": "sha256:221f7a7e2aa9a3dc4a14beca97f5dada40cf6915886474e7840e3b44c2b24f1a",
+      "packedBytes": 30148551,
+      "plainBytes": 102983680
+    },
+    {
+      "digest": "sha256:536b6065e7b2204966e87a790d19c6c20fd903935e77a7eba016442652940d57",
+      "diffId": "sha256:b3ddf7cb6d190e05d5821b48015ddf2c0a7a2949fa1933e9b37dd7449e376035",
+      "packedBytes": 1274097,
+      "plainBytes": 4171776
+    },
+    {
+      "digest": "sha256:67226f99352934ca6ee1fe47b72a79e55a64f544563df4b09cb1b03b642f2c00",
+      "diffId": "sha256:f13eb0d1569b3f78655028a5af43b0974ea1598c000991ed9bcea5e9153f39c6",
+      "packedBytes": 14314455,
+      "plainBytes": 47124480
+    },
+    {
+      "digest": "sha256:0867ac1590254008700d0fad507ae5a12a3727954a2d1bd48dfa5d648b41350e",
+      "diffId": "sha256:ae3e6af8375dbb51d4f4d86574718ff9b9771b371c99d6a4d8828c0df7d80a1a",
+      "packedBytes": 249,
+      "plainBytes": 5120
+    }
+  ],
+  "effectiveInventory": {
+    "entries": 6215,
+    "sha256": "246af2637a41a6ea5f33b9d1b7f2735cc3f4baf28c9492f828383af2893c825f",
+    "bytes": 1696464
+  },
+  "pythonAssets": {
+    "usr/local/bin/python": {
+      "type": "symlink",
+      "mode": "0o777",
+      "layer": "sha256:0867ac1590254008700d0fad507ae5a12a3727954a2d1bd48dfa5d648b41350e",
+      "target": "python3"
+    },
+    "usr/local/bin/python-config": {
+      "type": "symlink",
+      "mode": "0o777",
+      "layer": "sha256:0867ac1590254008700d0fad507ae5a12a3727954a2d1bd48dfa5d648b41350e",
+      "target": "python3-config"
+    },
+    "usr/local/bin/python3": {
+      "type": "symlink",
+      "mode": "0o777",
+      "layer": "sha256:67226f99352934ca6ee1fe47b72a79e55a64f544563df4b09cb1b03b642f2c00",
+      "target": "python3.11"
+    },
+    "usr/local/bin/python3-config": {
+      "type": "symlink",
+      "mode": "0o777",
+      "layer": "sha256:67226f99352934ca6ee1fe47b72a79e55a64f544563df4b09cb1b03b642f2c00",
+      "target": "python3.11-config"
+    },
+    "usr/local/bin/python3.11": {
+      "type": "file",
+      "mode": "0o755",
+      "layer": "sha256:67226f99352934ca6ee1fe47b72a79e55a64f544563df4b09cb1b03b642f2c00",
+      "bytes": 67680,
+      "sha256": "4e19d11f7a2ee55a0247c6ab3326419413fadecf4b7a52d719739cc1a924711b"
+    },
+    "usr/local/bin/python3.11-config": {
+      "type": "file",
+      "mode": "0o755",
+      "layer": "sha256:67226f99352934ca6ee1fe47b72a79e55a64f544563df4b09cb1b03b642f2c00",
+      "bytes": 3007,
+      "sha256": "944cb42cfcd8d14fac4e1b725fbcd931b8e93432e4945844695db13f88291e19"
+    },
+    "usr/local/lib/libpython3.11.so": {
+      "type": "symlink",
+      "mode": "0o777",
+      "layer": "sha256:67226f99352934ca6ee1fe47b72a79e55a64f544563df4b09cb1b03b642f2c00",
+      "target": "libpython3.11.so.1.0"
+    },
+    "usr/local/lib/libpython3.11.so.1.0": {
+      "type": "file",
+      "mode": "0o755",
+      "layer": "sha256:67226f99352934ca6ee1fe47b72a79e55a64f544563df4b09cb1b03b642f2c00",
+      "bytes": 5261328,
+      "sha256": "3c2a42f66af9182178871c2cd433ffff0592bec6f18184a5547f0d3887fca09b"
+    },
+    "usr/local/lib/libpython3.so": {
+      "type": "file",
+      "mode": "0o755",
+      "layer": "sha256:67226f99352934ca6ee1fe47b72a79e55a64f544563df4b09cb1b03b642f2c00",
+      "bytes": 67424,
+      "sha256": "33b16405c08b39620fc19e099820244242d5e3783d7fee23aadfffed78946ddd"
+    }
+  },
+  "pythonInterpreterELF": {
+    "usr/local/bin/python3.11": {
+      "format": "ELF64 little endian",
+      "machine": "AArch64",
+      "bytes": 67680,
+      "sha256": "4e19d11f7a2ee55a0247c6ab3326419413fadecf4b7a52d719739cc1a924711b"
+    }
+  },
+  "pythonLibraryFileCount": 1822,
+  "pythonLibraryBytes": 35434626,
+  "evidenceScope": "cached immutable-image export and static blob/layer/file validation only; no target execution, dependency compatibility, runtime mounts or admission",
+  "containerStarted": false,
+  "registryContacted": false,
+  "modelOrProviderRun": false,
+  "retainedEvidencePath": "/private/tmp/scout-v213-python-image-20261004",
+  "auditScriptSha256": "b2380ac0c6174ea958b844f76c12bd935a699441f49d19aa1a7eeb2cb76b8680",
+  "collection": "docker --context orbstack image save of already cached immutable index; no container or registry operation"
+}
