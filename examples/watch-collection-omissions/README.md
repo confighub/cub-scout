@@ -56,3 +56,30 @@ with its original token; beta receives zero requests. Missing/blank selections
 make zero reads, do not open the sink, and preserve private kubeconfig bytes.
 The initial plain-HTTP credential test refused credentials as client-go intends;
 the repaired TLS fixture trusts only its own local certificate.
+
+## Genuine watch/bot selected-context acceptance
+
+[Live receipt](live-context-proof.json) binds the isolated binary to product
+source `22c3f958`. Actual [watch events](live-watch-events.jsonl) and
+[bot events](live-bot-events.jsonl) come from one owned Kubernetes 1.35 cluster.
+Both commands selected the valid private context while ambient current-context
+was unusable; their discovered workload references agree. Explicit blank/missing
+contexts and unusable ambient selection refused before file creation. Private
+config and shared kubeconfig stayed unchanged, and the owned cluster was removed.
+This is local CLI bot acceptance, not an in-cluster bot-image deployment claim.
+
+The original capture copied a binary built at that clean source immediately
+beforehand. The reproducible harness builds its own isolated candidate:
+
+```sh
+# Clean committed checkout; Docker, kind, kubectl and Go 1.24 available
+python3 examples/watch-collection-omissions/verify-live-context.py
+```
+
+Credentials and raw config stay in a mode 0700 temporary directory; committed
+receipts contain no tokens or kubeconfigs. Failed HTTP token-fixture and globally
+forced-Offline TUI runs remain in the local verification log; neither prompted
+a golden update or a production TLS change. Normal-mode full Go suite passes,
+as do targeted denied/unreachable endpoint controls with zero ambient requests.
+The wider live denial/recovery/informer, scanner-coverage, identity/cost and
+six-surface gates remain required before v2.14.

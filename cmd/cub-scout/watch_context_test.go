@@ -16,6 +16,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -127,5 +128,47 @@ func TestWatchAndBotInvalidContextRefusesBeforeSinkAndReads(t *testing.T) {
 func TestWatchAndBotExposeContextFlag(t *testing.T) {
 	for _, cmd := range []*cobra.Command{watchCmd, botCmd} {
 		require.NotNil(t, cmd.Flags().Lookup("kube-context"))
+	}
+}
+
+func TestWatchAndBotFailedSelectedAPINeverFallsBack(t *testing.T) {
+	for _, name := range []string{"watch", "bot"} {
+		for _, failure := range []string{"denied", "unreachable"} {
+			t.Run(name+"/"+failure, func(t *testing.T) {
+				defer overrideWatchDeps(t)()
+				priorCap := watchReceiptBatchCap
+				defer func() { watchReceiptBatchCap = priorCap }()
+				beta := newCountedKubeServer(t)
+				alpha := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(http.StatusForbidden)
+					fmt.Fprint(w, `{"apiVersion":"v1","kind":"Status","status":"Failure","reason":"Forbidden","message":"denied","code":403}`)
+				}))
+				t.Cleanup(alpha.Close)
+				if failure == "unreachable" {
+					alpha.Close()
+				}
+				path, before := resolverKubeconfig(t, "beta", map[string]string{"alpha": alpha.URL, "beta": beta.server.URL})
+				t.Setenv("KUBECONFIG", path)
+				watchBuildConfig = func() (*rest.Config, error) { t.Fatal("selected API failure entered ambient builder"); return nil, nil }
+				watchCollectState = func(ctx context.Context, client dynamic.Interface, namespace string) (watchState, error) {
+					_, err := client.Resource(schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}).Namespace(namespace).List(ctx, metav1.ListOptions{})
+					return watchState{}, err
+				}
+				output := filepath.Join(t.TempDir(), "events.jsonl")
+				err := runWatchWithOptions(watchContextCommand(t, name, "alpha"), watchOptions{OutputFile: output, Namespace: "team-a", Once: true, Interval: time.Second, MaxQueuedEvents: 10})
+				require.Error(t, err)
+				if failure == "denied" {
+					require.True(t, apierrors.IsForbidden(err))
+				}
+				require.Zero(t, beta.requests.Load())
+				data, readErr := os.ReadFile(output)
+				require.NoError(t, readErr)
+				require.Empty(t, data, "failure must not become a healthy empty event stream")
+				after, readErr := os.ReadFile(path)
+				require.NoError(t, readErr)
+				require.Equal(t, before, after)
+			})
+		}
 	}
 }
