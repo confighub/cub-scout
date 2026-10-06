@@ -32,6 +32,10 @@ func TestCleanScanFixtureExplicitBaseline(t *testing.T) {
 		require.True(t, found)
 		require.Equal(t, field.expected, value)
 	}
+	seccomp, found, err := unstructured.NestedString(object, "spec", "template", "spec", "securityContext", "seccompProfile", "type")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, "RuntimeDefault", seccomp)
 	anti, found, err := unstructured.NestedSlice(object, "spec", "template", "spec", "affinity", "podAntiAffinity", "preferredDuringSchedulingIgnoredDuringExecution")
 	require.NoError(t, err)
 	require.True(t, found)
