@@ -127,8 +127,9 @@ cluster, a TUI process, benchmark admission or live release acceptance.
 
 In the opt-in identity TUI, implicit current-context selection uses the same
 captured-provider safeguards as an explicit selector. Bounded explain, scan and
-trace retain their bound providers; graph export, shell, import and command mode
-remain unavailable until they can honor the captured binding. These actions
+trace retain their bound providers; shell, import and command mode remain unavailable until they can honor the
+captured binding. Graph export now uses the captured in-process collector
+accepted in the [graph example](../graph-export/). These actions
 cannot silently consult a subsequently changed ambient context. Legacy mode is
 unchanged; genuine acceptance remains pending.
 
@@ -212,3 +213,21 @@ isolated candidate, uses private kubeconfigs, and stores raw evidence in a mode
 0700 temporary directory. It makes no paid model calls. Do not run this against
 a shared cluster. The receipt does not complete whole-command cost accounting,
 Target binding, other commands or the wider six-surface/controller gates.
+
+## Tree context follow-on (#794)
+
+The candidate tree selector reuses the captured configuration foundation.
+Run `./cub-scout tree ownership --kube-context selected --namespace team-a
+--format json` to obtain the selected context label from the same capture.
+Composition binds both typed-client reads and `kubectl` subprocesses to a private
+configuration/cache; blank/missing contexts refuse before reads, including
+aliases. `tree config` has no Kubernetes selection. Existing Git/patterns and
+composition collection breadth and partial-list semantics are retained.
+
+Deterministic coverage: `go test ./cmd/cub-scout -run
+'TestTreeExplicit|TestTreeCompositionChild|TestRunTreePatterns' -count=1`.
+The `verify-live-tree-context.py` harness creates and removes one owned kind
+cluster, uses an unusable ambient selection and a private HOME/config, and
+exercises all cluster views and explicit-selection refusals. Its proof measures
+this scoped command acceptance, without identity/cost/Target or full six-surface
+claims.

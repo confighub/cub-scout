@@ -2493,9 +2493,12 @@ func pluralKind(kind string, count int) string {
 
 // runMapWorkloads lists workloads by owner
 func runMapWorkloads(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
+	ctx := cmd.Context()
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
-	cfg, err := buildConfig()
+	cfg, err := commandOrTreeClusterConfig(cmd)
 	if err != nil {
 		return fmt.Errorf("build kubernetes config: %w", err)
 	}
@@ -2515,7 +2518,12 @@ func runMapWorkloads(cmd *cobra.Command, args []string) error {
 	fmt.Fprintln(w, "STATUS\tKIND\tNAMESPACE\tNAME\tOWNER\tMANAGED-BY\tIMAGE")
 	fmt.Fprintln(w, "──────\t────\t─────────\t────\t─────\t──────────\t─────")
 
-	forEachCanonicalWorkload(ctx, dynClient, "", func(workload *unstructured.Unstructured) {
+	namespace := ""
+	if cmd.Flags().Lookup("namespace") != nil {
+		namespace, _ = cmd.Flags().GetString("namespace")
+	}
+
+	forEachCanonicalWorkload(ctx, dynClient, namespace, func(workload *unstructured.Unstructured) {
 		ns := workload.GetNamespace()
 		if isSystemNamespace(ns) {
 			return

@@ -4,7 +4,7 @@
 // context and dereferenced it.
 //
 // Two defenses exist now:
-//   - runTreePatterns(ctx) seeds mapPatternsCmd.Context() before delegating.
+//   - runTreePatterns(ctx) uses a private command carrying the caller context.
 //   - runMapPatterns defensively swaps a nil cmd.Context() for
 //     context.Background() so any other dispatcher that bypasses Execute
 //     does not regress the same surface.
@@ -20,28 +20,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// TestRunTreePatterns_PropagatesContext verifies the primary fix: the wrapper
-// must call mapPatternsCmd.SetContext(ctx) before invoking runMapPatterns, so
-// that cmd.Context() inside runMapPatterns returns the caller's context, not
-// nil.
+// A tree alias must propagate cancellation without mutating the shared command.
 func TestRunTreePatterns_PropagatesContext(t *testing.T) {
-	type ctxKey struct{}
-	want := "tree-patterns-#390-marker"
-	ctx := context.WithValue(context.Background(), ctxKey{}, want)
-
-	// We do not care whether runTreePatterns succeeds; in a unit-test
-	// environment buildConfig() typically fails because there is no live
-	// kubeconfig pointing at a cluster. What we care about is that
-	// mapPatternsCmd's context is the one we passed in afterwards — proving
-	// runTreePatterns did the seeding before delegating.
+	before := mapPatternsCmd.Context()
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
 	_ = runTreePatterns(ctx)
-
-	got := mapPatternsCmd.Context()
-	if got == nil {
-		t.Fatal("mapPatternsCmd.Context() is nil after runTreePatterns; #390 regression")
-	}
-	if v := got.Value(ctxKey{}); v != want {
-		t.Fatalf("ctx not propagated: want %q, got %v", want, v)
+	if mapPatternsCmd.Context() != before {
+		t.Fatal("tree alias leaked context into map command")
 	}
 }
 

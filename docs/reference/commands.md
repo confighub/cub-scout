@@ -3539,3 +3539,17 @@ the command context. `graph export --empty` and fixture-time mode cannot be
 combined with explicit selection. The graph/GSF `cluster` string records the
 selected context label, not verified cluster identity. Existing GSF list-skipping
 semantics do not establish complete inventory. See the [example](../../examples/graph-export/#explicit-context-214-candidate).
+
+### Explicit context for tree views
+
+`./cub-scout tree runtime --kube-context production --namespace team-a`
+selects one context without changing kubeconfig. Runtime, ownership, composition,
+Git, patterns, workloads and suggest views share the captured credentials.
+Composition's `kubectl` children receive a private copy, including a private
+discovery cache; both are removed after collection. Missing or blank explicit
+selections refuse before reads. `tree config` rejects `--kube-context` because
+it reads ConfigHub relationships instead. Omitted selection retains the existing
+behavior. Existing partial/denied-list output and each view's namespace and format
+coverage remain unchanged; this selector does not establish complete inventory,
+physical cluster identity or a ConfigHub Target binding. The workloads alias
+now respects the tree namespace and caller cancellation.

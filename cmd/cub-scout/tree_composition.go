@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"sort"
 	"strings"
 	"time"
@@ -33,16 +32,29 @@ type CrossplaneCompositionTree struct {
 	Managed  []agent.CrossplaneLineageNode `json:"managed"`
 }
 
-func runTreeComposition(ctx context.Context) error {
+func runTreeComposition(ctx context.Context) (resultErr error) {
 	debug := os.Getenv("CUB_SCOUT_DEBUG") != ""
 	var startTotal time.Time
 	if debug {
 		startTotal = time.Now()
 	}
 
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to build config: %w", err)
+	}
+
+	if binding := treeContextBinding(ctx); binding != nil {
+		child, err := (&traceSession{config: binding.config, context: binding.context, proxyURL: binding.proxyURL}).createChildKubeconfig()
+		if err != nil {
+			return fmt.Errorf("bind composition child reads: %w", err)
+		}
+		defer func() {
+			if err := child.Cleanup(); err != nil && resultErr == nil {
+				resultErr = fmt.Errorf("private composition binding cleanup failed")
+			}
+		}()
+		ctx = context.WithValue(ctx, treeChildConfigKey{}, child)
 	}
 
 	dynClient, err := dynamic.NewForConfig(cfg)
@@ -356,7 +368,7 @@ func printCompositionTreeHuman(byXR map[string]*CrossplaneCompositionTree) {
 }
 
 func kubectlAPIResources(ctx context.Context) ([]string, error) {
-	cmd := exec.CommandContext(ctx, "kubectl", "api-resources", "--verbs=list", "-o", "name")
+	cmd := treeKubectlCommand(ctx, "api-resources", "--verbs=list", "-o", "name")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("kubectl api-resources failed: %v (%s)", err, strings.TrimSpace(string(out)))
@@ -378,7 +390,7 @@ func kubectlGetUnstructuredList(ctx context.Context, resource string) (*unstruct
 	// namespace filtering is done after fetch to avoid needing discovery for namespace-scoped types.
 	args = append(args, "-A")
 
-	cmd := exec.CommandContext(ctx, "kubectl", args...)
+	cmd := treeKubectlCommand(ctx, args...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("kubectl get %s failed: %v (%s)", resource, err, strings.TrimSpace(string(out)))
