@@ -193,6 +193,13 @@ jobs:
       - name: Run offline container isolation guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/container-isolation -v
 
+      - name: Validate recorded report schemas and actual offline budgets
+        run: |
+          python3 -m venv "$RUNNER_TEMP/scout-recorded-schema"
+          "$RUNNER_TEMP/scout-recorded-schema/bin/pip" install --disable-pip-version-check -r examples/recorded-inventory/schema-requirements.txt
+          go build -o "$RUNNER_TEMP/scout-recorded-schema/cub-scout" ./cmd/cub-scout
+          "$RUNNER_TEMP/scout-recorded-schema/bin/python" examples/recorded-inventory/verify-output-contract.py --binary "$RUNNER_TEMP/scout-recorded-schema/cub-scout"
+
       - name: Run unit tests
         run: go test ./... -v -covermode=atomic -coverprofile=coverage.out
 
