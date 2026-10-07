@@ -1,0 +1,97 @@
+{
+  "schema": "flux-source-agreement-live-proof.v1",
+  "sourceCommit": "710c6d1dfde730277a56940c25675f5dc3c77fbf",
+  "sourceCommitUnchanged": true,
+  "sourceWorktreeCleanBeforeAndAfter": true,
+  "binarySHA256": "26489530d38126596d4ca6f6ed9714d14a75897e886f67839821acf55116fdb7",
+  "finished": "2026-10-07T14:54:54+00:00",
+  "kubernetesNodeImage": "kindest/node:v1.35.0",
+  "fluxComponents": [
+    "source-controller",
+    "kustomize-controller",
+    "helm-controller"
+  ],
+  "fleetRepository": "https://github.com/fluxcd/flux2-kustomize-helm-example",
+  "ownedClusterRemoved": true,
+  "sharedKubeconfigUnchanged": true,
+  "observations": [],
+  "passed": false,
+  "failures": [
+    "AssertionError(('wait-podinfo', 1, 'error: deployment \"podinfo\" exceeded its progress deadline\\n'))"
+  ],
+  "steps": [
+    {
+      "name": "before-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "3783505cea5ea6950519b96f8f5187f580ce097dcb2132e59c2e9ff74b901a91"
+    },
+    {
+      "name": "install-flux",
+      "exit": 0,
+      "stdoutSHA256": "aa3b541176fb7ed32d693aaf2e29d8f9e65371bb96155658e949de0d9ed1f688",
+      "stderrSHA256": "3e8fcc4205c99020782ae78c5d01071264b6e0fefad9a8cd27e269aababcf50e"
+    },
+    {
+      "name": "create-namespace-team-a",
+      "exit": 0,
+      "stdoutSHA256": "aa41cec8dac195ede91e37e493d371c289d811f5e51bdfe21f68021f08528b94",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-namespace-team-b",
+      "exit": 0,
+      "stdoutSHA256": "b01a66500c48811466500a3105a9a6a69d42ea93d0c7d4d43f59382143182f06",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "flux-delivers-podinfo",
+      "exit": 0,
+      "stdoutSHA256": "0b8c60c4e676cdbbc854334a429d762707743b70a6482696af5ec2f4bbaa16ff",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-kustomization",
+      "exit": 0,
+      "stdoutSHA256": "be14938829be465841499e5ec8c35fb14e4461b86d5765d7d2ed55d66d3cce03",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-helmrelease",
+      "exit": 0,
+      "stdoutSHA256": "4d25285755982015b488b2969cfd688f81e6926b718f9df58e412313156b1d3b",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-fleet-source",
+      "exit": 0,
+      "stdoutSHA256": "07c6dc66fea1be3e06cbb557970822907da53b9f44be01c01c1cc098e1f42b87",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-podinfo",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "12b3d548409795c7adadfdbb87c6c7d735f3b3fa3d14f3b0815700a0a010d863"
+    },
+    {
+      "name": "cleanup-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "0f0c7f6d932ef568abfa65b65593251cf70fa0317fe0f85b4a89f7b32ca1b654"
+    },
+    {
+      "name": "after-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "limits": "One owned kind cluster with real Flux. The parent layout is made by labelling the owners as managed by a suspended parent Kustomization, not by a real flux bootstrap. Checks which source each surface names and the owner map list reports. It does not check revision, drift, freshness or health agreement, Argo CD, the plugin form, watch, bot or the TUI."
+}
