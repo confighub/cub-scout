@@ -86,11 +86,15 @@ try:
         'apiVersion': 'v1', 'kind': 'List', 'items': [
             {'apiVersion': 'v1', 'kind': 'Namespace', 'metadata': {'name': 'team-a'}},
             {'apiVersion': 'apps/v1', 'kind': 'Deployment', 'metadata': {'name': 'api', 'namespace': 'team-a'},
-             'spec': {'replicas': 0, 'selector': {'matchLabels': {'app': 'proof'}}, 'template': pod}},
+             'spec': {'replicas': 1, 'selector': {'matchLabels': {'app': 'proof'}}, 'template': pod}},
             {'apiVersion': 'batch/v1', 'kind': 'CronJob', 'metadata': {'name': 'nightly', 'namespace': 'team-a'},
              'spec': {'schedule': '0 3 * * *', 'suspend': True, 'jobTemplate': {'spec': {'template': {
                  'spec': {'restartPolicy': 'Never', 'containers': pod['spec']['containers']}}}}}},
         ]}))
+    # A workload scaled to zero is reported as a problem by map status (see the
+    # retained attempt 1), so the proof uses a running one.
+    call(['kubectl', '--kubeconfig', str(cfg), '-n', 'team-a', 'rollout', 'status', 'deployment/api', '--timeout=120s'],
+         'wait-for-workload')
     config = json.loads(call(['kubectl', '--kubeconfig', str(cfg), 'config', 'view', '--raw', '-o', 'json'],
                              'private-config'))
     config['contexts'][0]['name'] = 'selected'

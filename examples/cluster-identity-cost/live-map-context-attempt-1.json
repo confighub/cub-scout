@@ -1,0 +1,101 @@
+{
+  "schema": "v214-map-context-live-proof.v1",
+  "sourceCommit": "535cb1d7987f1ae94609d9e5d6799cafa5c61b17",
+  "sourceCommitUnchanged": true,
+  "sourceWorktreeCleanBeforeAndAfter": true,
+  "binarySHA256": "d044500b2fc49dece1efcd348dcfa80ff5aa2cd25c4353b6b8edbeb2fe57fcb6",
+  "finished": "2026-10-07T06:30:28+00:00",
+  "kubernetesNodeImage": "kindest/node:v1.35.0",
+  "ownedClusterRemoved": true,
+  "sharedKubeconfigUnchanged": true,
+  "subcommands": [
+    "list",
+    "status",
+    "issues",
+    "deployers",
+    "workloads",
+    "drift",
+    "sprawl",
+    "dashboard",
+    "bypass",
+    "crashes",
+    "orphans",
+    "hooks",
+    "cronjobs",
+    "jobs",
+    "actions",
+    "activity",
+    "previews",
+    "deep-dive",
+    "app-hierarchy",
+    "meaning",
+    "patterns"
+  ],
+  "passed": false,
+  "failures": [
+    "AssertionError(('map-status', 1, ''))"
+  ],
+  "steps": [
+    {
+      "name": "before-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "cad6f52df082ed4b535ba74125b8442ff4520475071dbcf50bfe758a09b2c67b"
+    },
+    {
+      "name": "bootstrap-owned-resources",
+      "exit": 0,
+      "stdoutSHA256": "362e3cfcdd8931c9a00999e0f45a341ef09977f5b82089769abe2968ed9b0f15",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "control-ambient-unusable",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "230dfd0f8e2bc2c98212098e40ad9d4b069894e711f087a05c0dd00cbbe923cc"
+    },
+    {
+      "name": "map-list",
+      "exit": 0,
+      "stdoutSHA256": "516f5ab66e7533c5ac4ed02f452e41c7824e639a9cc952376a1a037c5708a9d8",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-list-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "map-list-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "d0af9ea0fffeb0622d67db5c59c0b453055d6108de9962a3026f4d1895f26235"
+    },
+    {
+      "name": "map-status",
+      "exit": 1,
+      "stdoutSHA256": "58a5dcba40451bd9af1337f3e1311ecaa011de0e35dea118fbe13756e58644ef",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cleanup-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "7ca430ed5a0ee1593ae20af66a83494824ccae9d6aa9e61b67376f88c70a481e"
+    },
+    {
+      "name": "after-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "limits": "One owned kind cluster with authored workloads and no GitOps controllers. Shows which context each map subcommand reads and that missing/blank selections refuse. It does not show cluster identity, read cost, complete inventory, Target binding or six-surface agreement."
+}
