@@ -50,6 +50,23 @@ own source, plus 4 owner observations. The
 [first attempt](live-flux-attempt-1.json) is retained: a workload rollout timed out
 before any surface was asked, an environment failure.
 
+### Without the flux CLI
+
+```bash
+python3 examples/source-agreement/verify-live-flux.py --without-flux-cli
+```
+
+The `flux` CLI is optional, and an agent sandbox or a CI job often has none.
+In this mode the harness uses `flux` only to install the controllers; cub-scout
+runs with `kubectl` alone on its PATH and reads the same chain through the
+Kubernetes API: the workload's Flux labels name its Kustomization or
+HelmRelease, and that object's source reference names its source.
+
+Before this, no surface could say where a Flux-delivered workload came from
+without the CLI. The [retained proof](live-flux-without-cli-proof.json) passed
+on Kubernetes 1.35: the same 40 source observations, all naming the workload's
+own source, with no `flux` binary available to cub-scout.
+
 ## Argo CD
 
 `verify-live-argo.py` does the same with real Argo CD (v3.5.3, from the pinned
@@ -85,9 +102,13 @@ guestbook repository, and owner ArgoCD from `map list`.
   sync.
 - They check the source and the owner. They do not check that the surfaces
   agree on revision, drift, freshness or health.
-- The Flux check has the `flux` CLI on PATH; Flux evidence still needs it. The
-  Argo check has no `argocd` CLI; behaviour with the CLI is covered by a
-  deterministic test, not this harness.
+- The Flux check runs with and without the `flux` CLI. The Argo check has no
+  `argocd` CLI; behaviour with that CLI is covered by a deterministic test, not
+  this harness.
+- Without the `flux` CLI, readiness comes from each object's Ready condition.
+  With it, readiness is read from the text `flux trace` prints. The two were
+  equal on the recorded cluster state; they are not proven equal for a failing
+  or stalled object.
 - Multi-source Applications, ApplicationSets, the plugin form, `watch`, `bot`
   and the TUI are not covered.
 - These are conformance checks, not measurements: they say nothing about
