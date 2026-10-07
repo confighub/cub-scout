@@ -73,7 +73,10 @@ func init() {
 }
 
 func runDebug(cmd *cobra.Command, args []string) error {
-	ctx := cmd.Context()
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 
 	// TEST HOOK: Load debug session from JSON file for testing
 	if debugJSON := os.Getenv("CUB_SCOUT_TEST_DEBUG_JSON"); debugJSON != "" {
@@ -97,7 +100,7 @@ func runDebug(cmd *cobra.Command, args []string) error {
 // runDebugTUI launches the interactive debug wizard
 func runDebugTUI(ctx context.Context) error {
 	// Build Kubernetes clients
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to build kubernetes config: %w", err)
 	}
@@ -130,7 +133,7 @@ func runDebugNonInteractive(ctx context.Context, resource, namespace, format str
 	}
 
 	// Build Kubernetes clients
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to build kubernetes config: %w", err)
 	}

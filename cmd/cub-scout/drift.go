@@ -106,7 +106,10 @@ func addDriftFlags(cmd *cobra.Command) {
 }
 
 func runDrift(cmd *cobra.Command, args []string) error {
-	ctx := cmd.Context()
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 
 	// Validate --fail-on if provided
 	if driftFailOn != "" {
@@ -127,7 +130,7 @@ func runDrift(cmd *cobra.Command, args []string) error {
 		}
 	} else {
 		// Build Kubernetes clients
-		kubeClient, dynamicClient, err := buildDriftClients()
+		kubeClient, dynamicClient, err := buildDriftClients(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to create Kubernetes clients: %w", err)
 		}
@@ -171,8 +174,8 @@ func runDrift(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func buildDriftClients() (kubernetes.Interface, dynamic.Interface, error) {
-	config, err := buildConfig()
+func buildDriftClients(ctx context.Context) (kubernetes.Interface, dynamic.Interface, error) {
+	config, err := treeClusterConfig(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -197,7 +200,7 @@ func buildDriftReport(ctx context.Context, findings []agent.DriftFinding, file, 
 	}
 
 	// Get cluster name from context
-	cluster := getCurrentClusterName()
+	cluster := getCurrentClusterName(ctx)
 
 	report := agent.DriftReport{
 		Command: "drift",
@@ -327,9 +330,9 @@ func severityMeetsThreshold(maxSeverity agent.DriftSeverity, threshold string) b
 	return severityRank(maxSeverity) >= thresholdRank
 }
 
-func getCurrentClusterName() string {
-	// Try to get from kubeconfig context
-	config, err := buildConfig()
+func getCurrentClusterName(ctx context.Context) string {
+	// The label comes from the same config the reads use.
+	config, err := treeClusterConfig(ctx)
 	if err != nil {
 		return "unknown"
 	}

@@ -342,7 +342,7 @@ func doctorTryNextHintsBoundToContext(summary DoctorSummary, hintCtx HintContext
 }
 
 func collectDoctorEntries(ctx context.Context, namespace string) ([]MapEntry, string, error) {
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return nil, "", fmt.Errorf("build kubernetes config: %w", err)
 	}
@@ -430,7 +430,7 @@ func optionalAPIUnavailable(gvr schema.GroupVersionResource, err error) bool {
 }
 
 func collectDoctorFindings(ctx context.Context, namespace string) ([]scan.NormalizedFinding, error) {
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("build kubernetes config: %w", err)
 	}
