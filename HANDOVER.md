@@ -1711,10 +1711,24 @@ labels from the same selection. The mechanism is `boundCommandContext` plus
 `mapClusterReadCommands()` and `contextBoundReadCommands()` are the lists, and
 tests fail if a `map` subcommand is added without being classified.
 
-Not bound yet: `receipt verify` (#812 has the full read inventory and plan; its
-controller and Git evidence come from `flux`/`argocd`/`kubectl` subprocesses, so
-a config swap alone would be a partial pin), `compare <resource>`, the
-`hierarchy` TUI, `suggest-remedy`, `quickstart` and trace child clients (#746).
+`receipt verify` followed in #815 (`1a1b3a51`): all five modes, plus the
+tracers behind its controller and Git evidence, through
+`receiptGitSourceAnchor` and `agent.CollectGitSourceAnchorForOwnerWith`. A nil
+tracer there means "do not consult that controller"; never pass an ambient
+tracer on a bound path. Watch-built receipts use the same helper.
+
+Not bound yet: `compare <resource>`, the `hierarchy` TUI, `suggest-remedy`,
+`quickstart` (#812) and trace child clients (#746). `suggest-remedy` and
+`quickstart` shell out to `kubectl`, so they need a private child kubeconfig,
+not a config swap.
+
+#816 (`33d867d7`) fixed #814, the most serious defect of this period: a
+Flux-delivered workload's Git source anchor came from a trace of its owning
+Kustomization, so under a parent Kustomization a receipt passed against the
+fleet repository. `traceFluxForOwner` traces the object itself now and has no
+owner fallback. Recorded `flux trace` output is in
+`pkg/agent/testdata/flux-trace-814/`. HelmRelease-delivered workloads were not
+exercised live.
 
 The #804 live proof found #805: a workload scaled to zero was a "problem" to
 `map status`. Fixed in #807 (`519164bf`) by making `isWorkloadReady` defer to
