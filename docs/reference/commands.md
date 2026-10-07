@@ -3577,6 +3577,13 @@ ambient `flux`, `argocd` or `kubectl`. Receipts that `watch --kube-context`
 builds use the same bound tracers. Without the flag a receipt's content is
 unchanged.
 
+`compare <resource>` and `compare object-set` accept `--kube-context`. With it,
+`compare <resource>` reads through one session bound to the selection,
+including the tracer behind its Git source, as `compare three-way` does. A
+result whose enrichment is incomplete says so in its notes. The Git/namespace
+comparison (`compare` with no resource) and `--apply` read through `kubectl`
+and refuse the flag rather than bind only some of their reads.
+
 ### StatefulSet image coverage (v2.14 candidate, #795)
 
 `release check --check-running-image` also checks `apps/v1` StatefulSets.
