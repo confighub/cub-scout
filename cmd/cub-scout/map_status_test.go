@@ -61,3 +61,42 @@ func merge(a, b map[string]interface{}) map[string]interface{} {
 	}
 	return a
 }
+
+// #805: map status, issues, workloads and dashboard used a second copy of the
+// readiness logic, which read an explicit replicas: 0 as "0 of 1 ready". A
+// Deployment scaled to zero made map status exit 1 while map list printed
+// Ready for the same object.
+func TestWorkloadReadinessAgreesWithListedStatus(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		obj         *unstructured.Unstructured
+		wantDesired int64
+		wantReady   int64
+		wantOK      bool
+	}{
+		{"deployment scaled to zero", statusObj("Deployment", map[string]interface{}{"replicas": int64(0)}, map[string]interface{}{}), 0, 0, true},
+		{"statefulset scaled to zero", statusObj("StatefulSet", map[string]interface{}{"replicas": int64(0)}, map[string]interface{}{}), 0, 0, true},
+		{"scaled to zero, pods still terminating", statusObj("Deployment", map[string]interface{}{"replicas": int64(0)}, map[string]interface{}{"replicas": int64(2)}), 0, 0, false},
+		{"replicas unset, one ready", statusObj("Deployment", map[string]interface{}{}, map[string]interface{}{"readyReplicas": int64(1)}), 1, 1, true},
+		{"replicas unset, no status yet", statusObj("Deployment", map[string]interface{}{}, map[string]interface{}{}), 1, 0, false},
+		{"partially ready", statusObj("Deployment", map[string]interface{}{"replicas": int64(3)}, map[string]interface{}{"readyReplicas": int64(1)}), 3, 1, false},
+		{"fully ready", statusObj("StatefulSet", map[string]interface{}{"replicas": int64(2)}, map[string]interface{}{"readyReplicas": int64(2)}), 2, 2, true},
+		{"daemonset ready", statusObj("DaemonSet", map[string]interface{}{}, map[string]interface{}{"desiredNumberScheduled": int64(3), "numberReady": int64(3)}), 3, 3, true},
+		{"daemonset not ready", statusObj("DaemonSet", map[string]interface{}{}, map[string]interface{}{"desiredNumberScheduled": int64(3), "numberReady": int64(1)}), 3, 1, false},
+		{"daemonset with no eligible nodes", statusObj("DaemonSet", map[string]interface{}{}, map[string]interface{}{"desiredNumberScheduled": int64(0)}), 0, 0, true},
+		{"daemonset with no status yet", statusObj("DaemonSet", map[string]interface{}{}, map[string]interface{}{}), 1, 0, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			desired, ready := getWorkloadReplicas(tc.obj)
+			if desired != tc.wantDesired || ready != tc.wantReady {
+				t.Errorf("getWorkloadReplicas() = (%d, %d), want (%d, %d)", desired, ready, tc.wantDesired, tc.wantReady)
+			}
+			if got := isWorkloadReady(tc.obj); got != tc.wantOK {
+				t.Errorf("isWorkloadReady() = %v, want %v", got, tc.wantOK)
+			}
+			if listed := detectStatus(tc.obj) == "Ready"; listed != isWorkloadReady(tc.obj) {
+				t.Errorf("map list says ready=%v (%s) but map status says ready=%v", listed, detectStatus(tc.obj), isWorkloadReady(tc.obj))
+			}
+		})
+	}
+}
