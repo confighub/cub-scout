@@ -50,12 +50,45 @@ own source, plus 4 owner observations. The
 [first attempt](live-flux-attempt-1.json) is retained: a workload rollout timed out
 before any surface was asked, an environment failure.
 
+## Argo CD
+
+`verify-live-argo.py` does the same with real Argo CD (v3.5.3, from the pinned
+and checksummed manifest the project's CI installs). Argo CD delivers the
+guestbook example through an Application. The two layouts are that Application
+as a root object, and the same Application carrying the tracking id of a parent
+Application whose source is the fleet repository (app-of-apps).
+
+It runs with **no `argocd` CLI on PATH**, only `kubectl`. That is deliberate:
+the CLI is optional, and an agent sandbox or a CI job often has none.
+
+```bash
+python3 examples/source-agreement/verify-live-argo.py
+```
+
+Its [first run](live-argo-attempt-1.json) failed on the product. Without the
+CLI, `trace` and every `--kube-context` path named the source, because they
+read the Application through the Kubernetes API, while the default paths of
+`explain`, `receipt verify` and `compare` could not: they used a tracer that
+needs the `argocd` binary. `explain` said `source: unknown` where `trace`
+named the repository, and passing `--kube-context` for the context that was
+already current changed the answer. Those paths now fall back to the
+Kubernetes API when the CLI is absent.
+
+The [retained proof](live-argo-proof.json) passed on Kubernetes 1.35: 20
+source observations (1 workload, 2 layouts, 10 surfaces), all naming the
+guestbook repository, and owner ArgoCD from `map list`.
+
 ## Limits
 
-- The parent layout is made by labelling the owners as managed by a suspended
-  parent Kustomization, not by a real `flux bootstrap`.
-- It checks the source and the owner. It does not check that the surfaces
+- The parent layouts are made with labels and tracking ids on a parent that is
+  suspended or never synced, not by a real `flux bootstrap` or a real parent
+  sync.
+- They check the source and the owner. They do not check that the surfaces
   agree on revision, drift, freshness or health.
-- Argo CD, the plugin form, `watch`, `bot` and the TUI are not covered.
-- It is a conformance check, not a measurement: it says nothing about whether
-  cub-scout saves an agent time or cost.
+- The Flux check has the `flux` CLI on PATH; Flux evidence still needs it. The
+  Argo check has no `argocd` CLI; behaviour with the CLI is covered by a
+  deterministic test, not this harness.
+- Multi-source Applications, ApplicationSets, the plugin form, `watch`, `bot`
+  and the TUI are not covered.
+- These are conformance checks, not measurements: they say nothing about
+  whether cub-scout saves an agent time or cost.

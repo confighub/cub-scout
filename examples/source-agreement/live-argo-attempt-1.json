@@ -1,0 +1,186 @@
+{
+  "schema": "argo-source-agreement-live-proof.v1",
+  "sourceCommit": "bc296a3bf16d3aa90a59462babd2b03a37f09e80",
+  "sourceCommitUnchanged": true,
+  "sourceWorktreeCleanBeforeAndAfter": true,
+  "binarySHA256": "5b05781bd013c74cb09fc29b3d6b1cfe7d9997be515a047ca1e2a27c31b8592a",
+  "finished": "2026-10-07T16:14:11+00:00",
+  "kubernetesNodeImage": "kindest/node:v1.35.0",
+  "argocdManifest": "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.3/manifests/install.yaml",
+  "argocdManifestSHA256": "7efe2d6bbc03f63623640f1e4198f16c84009d510fb810ef71e56df1b7614ba9",
+  "fleetRepository": "https://github.com/fluxcd/flux2-kustomize-helm-example",
+  "ownedClusterRemoved": true,
+  "sharedKubeconfigUnchanged": true,
+  "observations": [
+    {
+      "layout": "root",
+      "workload": "deployment/guestbook-ui",
+      "via": "Application",
+      "surface": "trace",
+      "sourcesNamed": [
+        "https://github.com/argoproj/argocd-example-apps"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/guestbook-ui",
+      "via": "Application",
+      "surface": "trace --kube-context",
+      "sourcesNamed": [
+        "https://github.com/argoproj/argocd-example-apps"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/guestbook-ui",
+      "via": "Application",
+      "surface": "explain",
+      "sourcesNamed": []
+    }
+  ],
+  "passed": false,
+  "failures": [
+    "AssertionError(('root', 'deployment/guestbook-ui', 'explain', 'expected only https://github.com/argoproj/argocd-example-apps', []))"
+  ],
+  "steps": [
+    {
+      "name": "before-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "bb9b9ed02f8e5c5a194bd749670ebc6381717eb707ffb3d54a9aca84adaad114"
+    },
+    {
+      "name": "fetch-argocd-manifest",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-namespace-argocd",
+      "exit": 0,
+      "stdoutSHA256": "3c2baa88d2679a6212a46e7c812cca6ed85e17d77e4b40bb141f3a09b6152d73",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "install-argocd",
+      "exit": 0,
+      "stdoutSHA256": "d05ac0bb9eab1dd059b1af44ce58d1a2da9d9492bf811721bbff87920c309c58",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-crd",
+      "exit": 0,
+      "stdoutSHA256": "a509b3b7ea7350212f6f1a4bf5ce2468ebabb7b544918f8183b6520925e9cf4d",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-repo-server",
+      "exit": 0,
+      "stdoutSHA256": "08f40c3466fd44626594813f7c9e7e48fd0386cb0a90329275c5f490f028cd99",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-application-controller",
+      "exit": 0,
+      "stdoutSHA256": "36da818e2e5135cf9f3e7dae3dd24592e2df502a120d303298ccf32677ceb031",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "argo-delivers-guestbook",
+      "exit": 0,
+      "stdoutSHA256": "da209007c3f33ca8f56d6bea35ac4fa1044987ec4792abbb8468a11f27cbf061",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-application",
+      "exit": 0,
+      "stdoutSHA256": "d9a0ad0dad712323f61e98012b2d219e2c7b9a2a75f4d2a2e6e1499ed812ac0a",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-guestbook-ui",
+      "exit": 0,
+      "stdoutSHA256": "4b4ad9614518296baaf0094dda01fd6278bd2daa53c4bfcca52fa713b8e8f4ad",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-guestbook-ui-trace",
+      "exit": 0,
+      "stdoutSHA256": "63dede797ca663711ff03dafffd8813f756751b7b7349ed10aac2983f16b373a",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-guestbook-ui-trace_kube-context",
+      "exit": 0,
+      "stdoutSHA256": "63dede797ca663711ff03dafffd8813f756751b7b7349ed10aac2983f16b373a",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-guestbook-ui-explain",
+      "exit": 0,
+      "stdoutSHA256": "f90e66e4785c267e9dfa7e8d420b96d5f795d69e0c85ef080c7b711c81d5325d",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-guestbook-ui-explain_kube-context",
+      "exit": 0,
+      "stdoutSHA256": "a7101866276cc629d7d264f6c61cb7dd837bd581710514394a4a0fdea2ca5e90",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-guestbook-ui-receipt_verify",
+      "exit": 0,
+      "stdoutSHA256": "65ea5d26cfbd78730d36bfde357c2ac0531d4d432ee927f2cfc461b66ca8b085",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-guestbook-ui-receipt_verify_kube-context",
+      "exit": 0,
+      "stdoutSHA256": "30447cc8e7c42907503d17a1e4abeef6725dd98f08f10d1ebd0b87ff4dd66779",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-guestbook-ui-compare",
+      "exit": 0,
+      "stdoutSHA256": "443e92e78bddb3dffbe12008b8a188a5c25a0e4f680054220fbe4412c36807e5",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-guestbook-ui-compare_kube-context",
+      "exit": 0,
+      "stdoutSHA256": "179b3221c586626b21e8cfcff986b833e986415f1793b810b03822f1b944d35b",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-guestbook-ui-mcp-trace",
+      "exit": 0,
+      "stdoutSHA256": "f43ea692e6e06a3229cf5c2ca3de8e24fe6a8629a024e92ed8c25fa46d701304",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-guestbook-ui-mcp-explain",
+      "exit": 0,
+      "stdoutSHA256": "e776a9ed445af145c352933a5812e34d91b926d98aa04603a3f8ad4c5fb753a0",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cleanup-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "049be1b004a16086a4af269fa57c2821546f9a6474b971463de594f2b27d34e5"
+    },
+    {
+      "name": "after-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "limits": "One owned kind cluster with real Argo CD v3.5.3 and one Application. The app-of-apps layout is made by giving the Application the tracking id and instance label of a parent Application that is never synced, not by a real parent sync. No argocd CLI is on PATH, so this covers the Kubernetes-API Argo tracer. Checks which source each surface names and the owner map list reports. It does not check revision, drift, freshness or health agreement, multi-source Applications or ApplicationSets."
+}

@@ -660,7 +660,7 @@ func loadCompareLiveSnapshot(ctx context.Context, kind, name, namespace string) 
 	}
 
 	summary := summarizeCompareLiveObject(obj)
-	if anchor := agent.CollectGitSourceAnchor(ctx, obj); anchor != nil {
+	if anchor := receiptGitSourceAnchor(ctx, obj, agent.DetectOwnership(obj)); anchor != nil {
 		summary.GitSource = anchor
 	}
 	if summary.UnitSlug != "" {

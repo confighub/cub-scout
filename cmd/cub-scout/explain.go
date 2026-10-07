@@ -336,9 +336,11 @@ func traceForExplainWithOwnership(ctx context.Context, kind, name, namespace str
 		namespace,
 		ownership,
 		func(ctx context.Context, appName string) (*agent.TraceResult, error) {
-			tracer := agent.NewArgoTracer()
+			// The argocd CLI is optional: without it the Application is read
+			// through the Kubernetes API.
+			tracer := ambientArgoTracer(ctx)
 			if !tracer.Available() {
-				return nil, fmt.Errorf("argocd CLI not found - install from https://argo-cd.readthedocs.io/en/stable/cli_installation/")
+				return nil, fmt.Errorf("argocd CLI not found and the Application could not be read through the Kubernetes API - install the CLI from https://argo-cd.readthedocs.io/en/stable/cli_installation/ or check cluster access")
 			}
 			return tracer.TraceApplication(ctx, appName)
 		},
@@ -573,7 +575,9 @@ func buildExplainTracerCandidates(ownerType string) []agent.Tracer {
 	var tracers []agent.Tracer
 
 	addFlux := func() { tracers = append(tracers, agent.NewFluxTracer()) }
-	addArgo := func() { tracers = append(tracers, agent.NewArgoTracer()) }
+	// Without the optional argocd CLI, read Argo evidence through the Kubernetes
+	// API, as trace and the --kube-context path do.
+	addArgo := func() { tracers = append(tracers, ambientArgoTracer(context.Background())) }
 	addHelm := func() {
 		cfg, cfgErr := buildConfig()
 		if cfgErr != nil {
