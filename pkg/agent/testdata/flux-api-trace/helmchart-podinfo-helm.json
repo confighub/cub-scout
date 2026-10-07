@@ -1,0 +1,61 @@
+{
+ "apiVersion": "source.toolkit.fluxcd.io/v1",
+ "kind": "HelmChart",
+ "metadata": {
+  "creationTimestamp": "2026-10-07T17:04:31Z",
+  "finalizers": [
+   "finalizers.fluxcd.io"
+  ],
+  "generation": 1,
+  "labels": {
+   "helm.toolkit.fluxcd.io/name": "podinfo-helm",
+   "helm.toolkit.fluxcd.io/namespace": "flux-system"
+  },
+  "name": "flux-system-podinfo-helm",
+  "namespace": "flux-system",
+  "resourceVersion": "682",
+  "uid": "6eaad7d9-8f45-4af9-8193-f3178781937b"
+ },
+ "spec": {
+  "chart": "podinfo",
+  "interval": "10m0s",
+  "reconcileStrategy": "ChartVersion",
+  "sourceRef": {
+   "kind": "HelmRepository",
+   "name": "podinfo"
+  },
+  "version": "6.7.1"
+ },
+ "status": {
+  "artifact": {
+   "digest": "sha256:887ba6bdf74e24c1499b044fa395bad97a142e1d3e7ffc28278dcab112c50632",
+   "lastUpdateTime": "2026-10-07T17:04:32Z",
+   "path": "helmchart/flux-system/flux-system-podinfo-helm/podinfo-6.7.1.tgz",
+   "revision": "6.7.1",
+   "size": 14905,
+   "url": "http://source-controller.flux-system.svc.cluster.local./helmchart/flux-system/flux-system-podinfo-helm/podinfo-6.7.1.tgz"
+  },
+  "conditions": [
+   {
+    "lastTransitionTime": "2026-10-07T17:04:32Z",
+    "message": "pulled 'podinfo' chart with version '6.7.1'",
+    "observedGeneration": 1,
+    "reason": "ChartPullSucceeded",
+    "status": "True",
+    "type": "Ready"
+   },
+   {
+    "lastTransitionTime": "2026-10-07T17:04:32Z",
+    "message": "pulled 'podinfo' chart with version '6.7.1'",
+    "observedGeneration": 1,
+    "reason": "ChartPullSucceeded",
+    "status": "True",
+    "type": "ArtifactInStorage"
+   }
+  ],
+  "observedChartName": "podinfo",
+  "observedGeneration": 1,
+  "observedSourceArtifactRevision": "sha256:e7dc68a4dec90a35c2c6d8cdfedb7eaaee17fde45dced5898289df85069ec089",
+  "url": "http://source-controller.flux-system.svc.cluster.local./helmchart/flux-system/flux-system-podinfo-helm/latest.tar.gz"
+ }
+}

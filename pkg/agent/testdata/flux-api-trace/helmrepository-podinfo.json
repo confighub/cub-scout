@@ -1,0 +1,53 @@
+{
+ "apiVersion": "source.toolkit.fluxcd.io/v1",
+ "kind": "HelmRepository",
+ "metadata": {
+  "annotations": {
+   "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"source.toolkit.fluxcd.io/v1\",\"kind\":\"HelmRepository\",\"metadata\":{\"annotations\":{},\"name\":\"podinfo\",\"namespace\":\"flux-system\"},\"spec\":{\"interval\":\"10m\",\"url\":\"https://stefanprodan.github.io/podinfo\"}}\n"
+  },
+  "creationTimestamp": "2026-10-07T17:04:30Z",
+  "finalizers": [
+   "finalizers.fluxcd.io"
+  ],
+  "generation": 1,
+  "name": "podinfo",
+  "namespace": "flux-system",
+  "resourceVersion": "675",
+  "uid": "c191e466-0f81-47ab-8399-d7ab53311a6d"
+ },
+ "spec": {
+  "interval": "10m",
+  "provider": "generic",
+  "url": "https://stefanprodan.github.io/podinfo"
+ },
+ "status": {
+  "artifact": {
+   "digest": "sha256:11752bf8beeb6dc33feac6184c4910334db1d698dd177f1bd23340ca0ea46203",
+   "lastUpdateTime": "2026-10-07T17:04:32Z",
+   "path": "helmrepository/flux-system/podinfo/index-e7dc68a4dec90a35c2c6d8cdfedb7eaaee17fde45dced5898289df85069ec089.yaml",
+   "revision": "sha256:e7dc68a4dec90a35c2c6d8cdfedb7eaaee17fde45dced5898289df85069ec089",
+   "size": 81804,
+   "url": "http://source-controller.flux-system.svc.cluster.local./helmrepository/flux-system/podinfo/index-e7dc68a4dec90a35c2c6d8cdfedb7eaaee17fde45dced5898289df85069ec089.yaml"
+  },
+  "conditions": [
+   {
+    "lastTransitionTime": "2026-10-07T17:04:32Z",
+    "message": "stored artifact: revision 'sha256:e7dc68a4dec90a35c2c6d8cdfedb7eaaee17fde45dced5898289df85069ec089'",
+    "observedGeneration": 1,
+    "reason": "Succeeded",
+    "status": "True",
+    "type": "Ready"
+   },
+   {
+    "lastTransitionTime": "2026-10-07T17:04:32Z",
+    "message": "stored artifact: revision 'sha256:e7dc68a4dec90a35c2c6d8cdfedb7eaaee17fde45dced5898289df85069ec089'",
+    "observedGeneration": 1,
+    "reason": "Succeeded",
+    "status": "True",
+    "type": "ArtifactInStorage"
+   }
+  ],
+  "observedGeneration": 1,
+  "url": "http://source-controller.flux-system.svc.cluster.local./helmrepository/flux-system/podinfo/index.yaml"
+ }
+}
