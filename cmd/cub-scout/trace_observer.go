@@ -208,5 +208,14 @@ func capturedTraceFluxFactory(session *traceSession) (agent.Tracer, func() error
 	if err != nil {
 		return nil, nil, err
 	}
-	return agent.NewFluxTracerWithKubeconfig(config.Path, config.Context), config.Cleanup, nil
+	cli := agent.NewFluxTracerWithKubeconfig(config.Path, config.Context)
+	// The CLI finds the chain; readiness is read from each object's Ready
+	// condition, because `flux trace` prints the same status line for a
+	// failing object as for a healthy one (#826).
+	dynClient, err := session.dynamicClient()
+	if err != nil {
+		_ = config.Cleanup()
+		return nil, nil, err
+	}
+	return agent.NewFluxTracerWithConditionReadiness(cli, dynClient), config.Cleanup, nil
 }
