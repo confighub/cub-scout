@@ -23,21 +23,31 @@ class ReplayTests(unittest.TestCase):
     def setUp(self):
         self.absent, self.absent_ready = replay.load_routes("absent")
         self.present, self.present_ready = replay.load_routes("present")
+        self.servers = {}
 
     def start(self, routes, max_requests=12, read_timeout=0.5, duration=4):
         server = replay.ReplayServer(routes, max_requests=max_requests, read_timeout=read_timeout)
         result = {}
         thread = threading.Thread(target=lambda: result.setdefault("status", server.serve_bounded(duration)), daemon=True)
         thread.start()
+        self.servers[server.server_address[1]] = server
         return server, thread, result
 
     def request(self, port, method, path, body=None, headers=None, timeout=2):
+        server = self.servers.get(port)
+        recorded = len(server.records) if server else 0
         conn = http.client.HTTPConnection("127.0.0.1", port, timeout=timeout)
         conn.request(method, path, body=body, headers=headers or {})
         response = conn.getresponse()
         data = response.read()
         result = response.status, data, dict(response.getheaders())
         conn.close()
+        # The server appends its record after writing the response, because the
+        # record says whether that write succeeded. Wait for it, so a caller
+        # that asserts on server.records does not read the previous request's.
+        deadline = time.monotonic() + 2
+        while server and len(server.records) <= recorded and time.monotonic() < deadline:
+            time.sleep(0.002)
         return result
 
     def stop(self, server, thread, result):
