@@ -3596,7 +3596,14 @@ Kustomization or HelmRelease, and that object's source reference names its
 GitRepository, OCIRepository, Bucket or HelmRepository (through the HelmChart).
 The reader needs `get` on those kinds. A source it may not read is reported as
 an error naming the object; no partial chain and no guessed source is shown.
-With the CLI present it is used as before.
+With the CLI present it finds the chain as before.
+
+Whichever way the chain is found, the readiness of each Flux object in it comes
+from that object's `Ready` condition, read with an exact `get`. `flux trace`
+prints `Status: Last reconciled at <time>` for a failing object as well as a
+healthy one, so its text is not used for readiness. `trace` shows `Ready`,
+`Not ready` with the condition's message, `Suspended`, or `Unknown` when the
+object could not be read.
 
 ### StatefulSet image coverage (v2.14 candidate, #795)
 

@@ -105,10 +105,9 @@ guestbook repository, and owner ArgoCD from `map list`.
 - The Flux check runs with and without the `flux` CLI. The Argo check has no
   `argocd` CLI; behaviour with that CLI is covered by a deterministic test, not
   this harness.
-- Without the `flux` CLI, readiness comes from each object's Ready condition.
-  With it, readiness is read from the text `flux trace` prints. The two were
-  equal on the recorded cluster state; they are not proven equal for a failing
-  or stalled object.
+- Readiness of a Flux object comes from its Ready condition with or without
+  the `flux` CLI. These harnesses do not check readiness; a deterministic test
+  on output recorded from a failing cluster does.
 - Multi-source Applications, ApplicationSets, the plugin form, `watch`, `bot`
   and the TUI are not covered.
 - These are conformance checks, not measurements: they say nothing about
