@@ -1,0 +1,75 @@
+{
+ "apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+ "kind": "Kustomization",
+ "metadata": {
+  "annotations": {
+   "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"kustomize.toolkit.fluxcd.io/v1\",\"kind\":\"Kustomization\",\"metadata\":{\"annotations\":{},\"name\":\"podinfo-oci\",\"namespace\":\"flux-system\"},\"spec\":{\"interval\":\"10m\",\"path\":\"./\",\"prune\":false,\"sourceRef\":{\"kind\":\"OCIRepository\",\"name\":\"podinfo-oci\"},\"targetNamespace\":\"team-a\"}}\n"
+  },
+  "creationTimestamp": "2026-10-07T18:59:10Z",
+  "finalizers": [
+   "finalizers.fluxcd.io"
+  ],
+  "generation": 1,
+  "name": "podinfo-oci",
+  "namespace": "flux-system",
+  "resourceVersion": "674",
+  "uid": "5c3629e0-2920-4a69-98cc-dd9b54fbd207"
+ },
+ "spec": {
+  "force": false,
+  "interval": "10m",
+  "path": "./",
+  "prune": false,
+  "sourceRef": {
+   "kind": "OCIRepository",
+   "name": "podinfo-oci"
+  },
+  "targetNamespace": "team-a"
+ },
+ "status": {
+  "conditions": [
+   {
+    "lastTransitionTime": "2026-10-07T18:59:13Z",
+    "message": "Applied revision: 6.7.1@sha256:efff1a4f48b85359f2a1440e29e64a6da105b45303c2c00e8f1e3da39354707c",
+    "observedGeneration": 1,
+    "reason": "ReconciliationSucceeded",
+    "status": "True",
+    "type": "Ready"
+   }
+  ],
+  "history": [
+   {
+    "digest": "sha256:27df0739ff162fe606bd2fddb477d97e05a5959e50bc95a9a03f6df543c70675",
+    "firstReconciled": "2026-10-07T18:59:13Z",
+    "lastReconciled": "2026-10-07T18:59:13Z",
+    "lastReconciledDuration": "146.377275ms",
+    "lastReconciledStatus": "ReconciliationSucceeded",
+    "metadata": {
+     "originRevision": "6.7.1/6b7aab8a10d6ee8b895b0a5048f4ab0966ed29ff",
+     "revision": "6.7.1@sha256:efff1a4f48b85359f2a1440e29e64a6da105b45303c2c00e8f1e3da39354707c"
+    },
+    "totalReconciliations": 1
+   }
+  ],
+  "inventory": {
+   "entries": [
+    {
+     "id": "team-a_podinfo__Service",
+     "v": "v1"
+    },
+    {
+     "id": "team-a_podinfo_apps_Deployment",
+     "v": "v1"
+    },
+    {
+     "id": "team-a_podinfo_autoscaling_HorizontalPodAutoscaler",
+     "v": "v2"
+    }
+   ]
+  },
+  "lastAppliedOriginRevision": "6.7.1/6b7aab8a10d6ee8b895b0a5048f4ab0966ed29ff",
+  "lastAppliedRevision": "6.7.1@sha256:efff1a4f48b85359f2a1440e29e64a6da105b45303c2c00e8f1e3da39354707c",
+  "lastAttemptedRevision": "6.7.1@sha256:efff1a4f48b85359f2a1440e29e64a6da105b45303c2c00e8f1e3da39354707c",
+  "observedGeneration": 1
+ }
+}
