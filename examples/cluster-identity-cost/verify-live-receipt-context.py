@@ -36,6 +36,18 @@ def stable(value):
     return value
 
 
+def documents(text):
+    """Every JSON document in the output; aggregate mode prints more than one."""
+    decoder, index, found = json.JSONDecoder(), 0, []
+    while index < len(text):
+        if text[index].isspace():
+            index += 1
+            continue
+        value, index = decoder.raw_decode(text, index)
+        found.append(value)
+    return found
+
+
 shared_before = sha(shared)
 head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
 assert not subprocess.check_output(['git', 'status', '--porcelain'], text=True).strip(), 'clean source required'
@@ -128,7 +140,8 @@ try:
     receipts = {}
     for label, args in MODES:
         out = call([*scout, *args, '--format', 'json', '--kube-context', 'selected'], 'receipt-' + label, env=scout_env)
-        receipts[label] = json.loads(out)
+        receipts[label] = documents(out)
+        assert receipts[label], (label, 'no receipt printed')
         for selection in ['', 'missing']:
             call([*scout, *args, '--format', 'json', '--kube-context', selection],
                  'receipt-' + label + '-refuses-' + (selection or 'blank'), expected=1, env=scout_env)
@@ -144,8 +157,8 @@ try:
     # Equivalence: the same receipt produced the legacy way, from a private
     # kubeconfig whose current-context is the same cluster, has the same content.
     flux_log.unlink()
-    legacy = json.loads(call([*scout, 'deployment/podinfo', '--namespace', 'team-a', '--format', 'json'],
-                             'receipt-single-legacy', env={**scout_env, 'KUBECONFIG': str(ambient_cfg)}))
+    legacy = documents(call([*scout, 'deployment/podinfo', '--namespace', 'team-a', '--format', 'json'],
+                            'receipt-single-legacy', env={**scout_env, 'KUBECONFIG': str(ambient_cfg)}))
     flux_legacy_calls = flux_log.read_text().splitlines() if flux_log.exists() else []
     equivalent = stable(legacy) == stable(receipts['single'])
     assert equivalent, 'the bound receipt differs from the legacy receipt for the same cluster'
