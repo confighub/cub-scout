@@ -872,9 +872,6 @@ func ambientArgoTracer(ctx context.Context) *agent.ArgoTracer {
 // ambient cluster (#824).
 func ambientFluxTracer(ctx context.Context) agent.Tracer {
 	cli := agent.NewFluxTracer()
-	if cli.Available() {
-		return cli
-	}
 	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return cli
@@ -882,6 +879,11 @@ func ambientFluxTracer(ctx context.Context) agent.Tracer {
 	dynClient, err := dynamic.NewForConfig(cfg)
 	if err != nil {
 		return cli
+	}
+	if cli.Available() {
+		// The CLI finds the chain; readiness comes from the Ready
+		// conditions, not from the text it prints (#826).
+		return agent.NewFluxTracerWithConditionReadiness(cli, dynClient)
 	}
 	return agent.NewFluxTracerWithKubernetesClient(dynClient)
 }

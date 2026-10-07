@@ -1,0 +1,20 @@
+
+Object:          Deployment/podinfo
+Namespace:       team-a
+Status:          Managed by Flux
+---
+Kustomization:   podinfo
+Namespace:       flux-system
+Target:          team-a
+Path:            ./does-not-exist
+Revision:        6.7.1@sha1:6b7aab8a10d6ee8b895b0a5048f4ab0966ed29ff
+Status:          Last reconciled at 2026-10-07 18:29:39 +0100 BST
+Message:         kustomization path not found: stat /tmp/kustomization-889571984/does-not-exist: no such file or directory
+---
+GitRepository:   podinfo
+Namespace:       flux-system
+URL:             https://github.com/stefanprodan/podinfo
+Tag:             6.7.1
+Revision:        6.7.1@sha1:6b7aab8a10d6ee8b895b0a5048f4ab0966ed29ff
+Status:          Last reconciled at 2026-10-07 18:23:59 +0100 BST
+Message:         stored artifact for revision '6.7.1@sha1:6b7aab8a10d6ee8b895b0a5048f4ab0966ed29ff'

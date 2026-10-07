@@ -345,3 +345,65 @@ func finalizeFluxSourceLink(link *ChainLink) {
 		}
 	}
 }
+
+// fluxConditionReadinessTracer wraps the flux CLI tracer and replaces the
+// readiness it inferred from text with each object's Ready condition.
+type fluxConditionReadinessTracer struct {
+	cli    Tracer
+	reader *FluxAPITracer
+}
+
+// NewFluxTracerWithConditionReadiness returns cli with the readiness of every
+// Flux link taken from the Kubernetes API.
+//
+// `flux trace` prints "Status: Last reconciled at <time>" for any object that
+// has a Ready condition, whether that condition is True or False; the failure
+// is only in the Message line. Read as text, a Kustomization whose build is
+// failing looks ready (#826). The chain still comes from the CLI; only
+// readiness, status and reason are replaced, by one exact GET per Flux link.
+func NewFluxTracerWithConditionReadiness(cli Tracer, client dynamic.Interface) Tracer {
+	if cli == nil || client == nil {
+		return cli
+	}
+	return &fluxConditionReadinessTracer{cli: cli, reader: NewFluxTracerWithKubernetesClient(client)}
+}
+
+func (t *fluxConditionReadinessTracer) ToolName() string { return t.cli.ToolName() }
+func (t *fluxConditionReadinessTracer) Available() bool  { return t.cli.Available() }
+
+func (t *fluxConditionReadinessTracer) Trace(ctx context.Context, kind, name, namespace string) (*TraceResult, error) {
+	result, err := t.cli.Trace(ctx, kind, name, namespace)
+	if err != nil || result == nil {
+		return result, err
+	}
+	result.FullyManaged = true
+	for i := range result.Chain {
+		link := &result.Chain[i]
+		// A ConfigHub OCI source is an OCIRepository the parser relabelled.
+		fluxKind := link.Kind
+		if link.OCISource != nil && link.OCISource.IsConfigHub {
+			fluxKind = "OCIRepository"
+		}
+		if _, isFlux := fluxAPIVersions[fluxKind]; isFlux {
+			obj, readErr := t.reader.getFlux(ctx, fluxKind, link.Name, link.Namespace)
+			if readErr != nil {
+				// The text could not be checked. Say so; do not let an
+				// unverified "ready" stand as verified.
+				link.Ready = false
+				link.Status = "Unknown"
+				link.StatusReason = "readiness could not be read from the cluster: " + readErr.Error()
+			} else {
+				observed := fluxLinkFromObject(obj)
+				link.Ready, link.Status, link.StatusReason = observed.Ready, observed.Status, observed.StatusReason
+				link.LastTransitionTime = observed.LastTransitionTime
+				if observed.Message != "" {
+					link.Message = observed.Message
+				}
+			}
+		}
+		if !link.Ready {
+			result.FullyManaged = false
+		}
+	}
+	return result, nil
+}
