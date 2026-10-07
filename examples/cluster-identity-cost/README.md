@@ -237,3 +237,36 @@ Kubernetes 1.35 cluster with the ambient selection unusable. Two retained
 attempts failed harness assertions (ownership JSON path and suggest display
 name); their owned clusters were removed and shared kubeconfig unchanged. This
 proof is dated at its recorded source checkpoint; it is not release acceptance.
+
+## Map subcommand context follow-on (#804)
+
+Every `map` subcommand that reads a cluster accepts `--kube-context`, with the
+same capture-once semantics as `map list`:
+
+```bash
+./cub-scout map issues --kube-context selected
+./cub-scout map cronjobs --kube-context selected --namespace team-a
+./cub-scout map actions deployment/api --kube-context selected --namespace team-a
+```
+
+The selection is resolved once and every Kubernetes read in the command uses it.
+A missing or blank selection refuses before any read; nothing falls back to the
+ambient context or in-cluster credentials. Without the flag, behaviour is
+unchanged. `map hub`, `map fleet` and `map queries` read no cluster and reject
+the flag.
+
+Deterministic coverage: `go test ./cmd/cub-scout -run
+'TestMapSubcommandsReadOnlyTheSelectedContext|TestEveryMapSubcommandIsClassified' -count=1`.
+Each subcommand runs against a selected and an ambient HTTP server; the ambient
+server must receive zero requests.
+
+`verify-live-map-context.py` creates and removes one owned kind cluster with a
+private kubeconfig whose current-context is unusable, then runs all 21
+subcommands with `--kube-context selected`, plus the blank and missing
+refusals. The [source-bound live proof](live-map-context-proof.json) passed on
+Kubernetes 1.35. The [first attempt](live-map-context-attempt-1.json) is
+retained: `map status` exited 1 because it counts a Deployment scaled to zero
+as a problem. That is a separate defect; the proof uses a running workload.
+
+This shows which context each subcommand reads. It does not add cluster
+identity, read cost, omission reporting or Target binding to these subcommands.

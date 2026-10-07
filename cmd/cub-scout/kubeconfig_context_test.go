@@ -359,8 +359,12 @@ func TestMapListExplicitContextSelectsOnlyNamedServerWithoutConfigMutation(t *te
 	after, err := os.ReadFile(path)
 	require.NoError(t, err)
 	require.Equal(t, before, after, "map list context selection must not rewrite kubeconfig")
-	for _, unsupported := range []*cobra.Command{mapStatusCmd, mapFleetCmd, mapActivityCmd} {
-		require.Nil(t, unsupported.Flags().Lookup("kube-context"), "%s must not inherit the map list-only flag", unsupported.Name())
+	// A command accepts the flag only if it honours it. Since #804 every
+	// cluster-reading map subcommand does (see
+	// TestMapSubcommandsReadOnlyTheSelectedContext); the ConfigHub-only ones
+	// still must not.
+	for _, unsupported := range []*cobra.Command{mapFleetCmd, mapHubCmd, mapQueriesCmd} {
+		require.Nil(t, unsupported.Flags().Lookup("kube-context"), "%s reads no cluster and must not accept a context flag", unsupported.Name())
 	}
 }
 
