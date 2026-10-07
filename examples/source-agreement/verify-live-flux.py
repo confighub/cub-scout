@@ -120,6 +120,8 @@ def observe(layout):
         for tool in ['trace', 'explain']:
             surfaces['mcp ' + tool] = mcp(tool, workload, '-'.join([layout, workload['name'], 'mcp', tool]))
         for surface, text in surfaces.items():
+            # Everything here is healthy, so no surface may report a broken delivery.
+            assert 'delivery not ready' not in text, (layout, resource, surface, 'reports a healthy delivery as not ready')
             named = sources_named(text)
             observations.append({'layout': layout, 'workload': resource, 'via': workload['via'], 'surface': surface,
                                  'sourcesNamed': named})
