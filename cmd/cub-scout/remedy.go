@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -531,11 +530,17 @@ func outputSuggestionJSON(s *remedy.SuggestedRemedy) error {
 
 // validateFinding performs read-only safety checks before describing a
 // suggestion: confirm the CCVE exists, the namespace exists, and the
-// resource exists. Each check shells out to `kubectl get`, which is
-// read-only.
+// resource exists. Each check runs a read-only `kubectl get` as an argument
+// vector, never through a shell, and the values are validated first.
 func validateFinding(ctx context.Context, f *remedy.Finding) error {
 	if _, err := loadCCVE(f.CCVE); err != nil {
 		return fmt.Errorf("unknown CCVE: %s", f.CCVE)
+	}
+	if err := remedy.ValidateNamespace(f.Namespace); err != nil {
+		return err
+	}
+	if err := remedy.ValidateResourceRef(f.Resource); err != nil {
+		return err
 	}
 
 	if f.Namespace != "" {
@@ -554,8 +559,7 @@ func validateFinding(ctx context.Context, f *remedy.Finding) error {
 }
 
 func checkNamespaceExists(ctx context.Context, namespace string) error {
-	cmd := fmt.Sprintf("kubectl get namespace %s -o name 2>/dev/null", namespace)
-	out, err := execCommand(ctx, cmd)
+	out, err := remedy.KubectlGet(ctx, "kubectl", "name", remedy.ResourceRef{Kind: "Namespace", Name: namespace})
 	if err != nil || strings.TrimSpace(out) == "" {
 		return fmt.Errorf("namespace %q not found", namespace)
 	}
@@ -566,21 +570,9 @@ func checkResourceExists(ctx context.Context, ref remedy.ResourceRef, namespace 
 	if ref.Kind == "" || ref.Name == "" {
 		return nil
 	}
-
-	cmd := fmt.Sprintf("kubectl get %s %s", strings.ToLower(ref.Kind), ref.Name)
-	if namespace != "" {
-		cmd += fmt.Sprintf(" -n %s", namespace)
-	}
-	cmd += " -o name 2>/dev/null"
-
-	out, err := execCommand(ctx, cmd)
+	out, err := remedy.KubectlGet(ctx, "kubectl", "name", remedy.ResourceRef{Kind: ref.Kind, Name: ref.Name, Namespace: namespace})
 	if err != nil || strings.TrimSpace(out) == "" {
 		return fmt.Errorf("%s/%s not found", ref.Kind, ref.Name)
 	}
 	return nil
-}
-
-func execCommand(ctx context.Context, cmd string) (string, error) {
-	out, err := exec.CommandContext(ctx, "sh", "-c", cmd).CombinedOutput()
-	return string(out), err
 }

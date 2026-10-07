@@ -3,7 +3,6 @@ package remedy
 import (
 	"context"
 	"fmt"
-	"os/exec"
 	"strings"
 )
 
@@ -74,17 +73,8 @@ func (s *DeleteResourceSuggester) addNamespace(cmd, namespace string) string {
 	return cmd
 }
 
-// getResourceYAML reads the resource via `kubectl get`. Read-only.
+// getResourceYAML reads the resource via `kubectl get`. Read-only, and not
+// run through a shell; see KubectlGet.
 func (s *DeleteResourceSuggester) getResourceYAML(ctx context.Context, ref ResourceRef) (string, error) {
-	cmd := fmt.Sprintf("%s get %s %s -o yaml",
-		s.kubectl, strings.ToLower(ref.Kind), ref.Name)
-	if ref.Namespace != "" {
-		cmd += " -n " + ref.Namespace
-	}
-
-	out, err := exec.CommandContext(ctx, "sh", "-c", cmd).Output()
-	if err != nil {
-		return "", err
-	}
-	return string(out), nil
+	return KubectlGet(ctx, s.kubectl, "yaml", ref)
 }
