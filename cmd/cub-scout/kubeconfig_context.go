@@ -43,6 +43,11 @@ func resolveClusterConfig(
 	return config, selected, err
 }
 
+// clusterConfigTestHook adjusts a config resolved from kubeconfig. It is nil in
+// production and set only by this package's tests, which lift client-side rate
+// limiting against local fake API servers (#800).
+var clusterConfigTestHook func(*rest.Config)
+
 // resolveClusterConfigWithProxy also returns the parsed static proxy-url from
 // the selected cluster, without another config read. It is private provenance
 // for child client binding, never evidence to display or serialize as output.
@@ -103,7 +108,11 @@ func resolveClusterConfigWithProxy(
 			proxyURL = selectedCluster.ProxyURL
 		}
 	}
-	return rest.CopyConfig(config), selected, proxyURL, nil
+	resolved := rest.CopyConfig(config)
+	if clusterConfigTestHook != nil {
+		clusterConfigTestHook(resolved)
+	}
+	return resolved, selected, proxyURL, nil
 }
 
 // localClusterBinding is the TUI's private, session-pinned client config. It is
