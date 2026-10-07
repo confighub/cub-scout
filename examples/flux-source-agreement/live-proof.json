@@ -1,0 +1,774 @@
+{
+  "schema": "flux-source-agreement-live-proof.v1",
+  "sourceCommit": "69d54e0bfdde5ebead4caa86ef30e2f93ff9127c",
+  "sourceCommitUnchanged": true,
+  "sourceWorktreeCleanBeforeAndAfter": true,
+  "binarySHA256": "57b92f21f3d02b3ee72f9a41b43f3317d87f8b63c493c4c9c949057aa502f99b",
+  "finished": "2026-10-07T15:01:39+00:00",
+  "kubernetesNodeImage": "kindest/node:v1.35.0",
+  "fluxComponents": [
+    "source-controller",
+    "kustomize-controller",
+    "helm-controller"
+  ],
+  "fleetRepository": "https://github.com/fluxcd/flux2-kustomize-helm-example",
+  "ownedClusterRemoved": true,
+  "sharedKubeconfigUnchanged": true,
+  "observations": [
+    {
+      "layout": "root",
+      "workload": "deployment/podinfo",
+      "via": "Kustomization",
+      "surface": "trace",
+      "sourcesNamed": [
+        "https://github.com/stefanprodan/podinfo"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/podinfo",
+      "via": "Kustomization",
+      "surface": "trace --kube-context",
+      "sourcesNamed": [
+        "https://github.com/stefanprodan/podinfo"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/podinfo",
+      "via": "Kustomization",
+      "surface": "explain",
+      "sourcesNamed": [
+        "https://github.com/stefanprodan/podinfo"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/podinfo",
+      "via": "Kustomization",
+      "surface": "explain --kube-context",
+      "sourcesNamed": [
+        "https://github.com/stefanprodan/podinfo"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/podinfo",
+      "via": "Kustomization",
+      "surface": "receipt verify",
+      "sourcesNamed": [
+        "https://github.com/stefanprodan/podinfo"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/podinfo",
+      "via": "Kustomization",
+      "surface": "receipt verify --kube-context",
+      "sourcesNamed": [
+        "https://github.com/stefanprodan/podinfo"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/podinfo",
+      "via": "Kustomization",
+      "surface": "compare",
+      "sourcesNamed": [
+        "https://github.com/stefanprodan/podinfo"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/podinfo",
+      "via": "Kustomization",
+      "surface": "compare --kube-context",
+      "sourcesNamed": [
+        "https://github.com/stefanprodan/podinfo"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/podinfo",
+      "via": "Kustomization",
+      "surface": "mcp trace",
+      "sourcesNamed": [
+        "https://github.com/stefanprodan/podinfo"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/podinfo",
+      "via": "Kustomization",
+      "surface": "mcp explain",
+      "sourcesNamed": [
+        "https://github.com/stefanprodan/podinfo"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/podinfo",
+      "via": "Kustomization",
+      "surface": "map list",
+      "owner": [
+        "Flux"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/podinfo-helm",
+      "via": "HelmRelease",
+      "surface": "trace",
+      "sourcesNamed": [
+        "https://stefanprodan.github.io/podinfo"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/podinfo-helm",
+      "via": "HelmRelease",
+      "surface": "trace --kube-context",
+      "sourcesNamed": [
+        "https://stefanprodan.github.io/podinfo"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/podinfo-helm",
+      "via": "HelmRelease",
+      "surface": "explain",
+      "sourcesNamed": [
+        "https://stefanprodan.github.io/podinfo"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/podinfo-helm",
+      "via": "HelmRelease",
+      "surface": "explain --kube-context",
+      "sourcesNamed": [
+        "https://stefanprodan.github.io/podinfo"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/podinfo-helm",
+      "via": "HelmRelease",
+      "surface": "receipt verify",
+      "sourcesNamed": [
+        "https://stefanprodan.github.io/podinfo"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/podinfo-helm",
+      "via": "HelmRelease",
+      "surface": "receipt verify --kube-context",
+      "sourcesNamed": [
+        "https://stefanprodan.github.io/podinfo"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/podinfo-helm",
+      "via": "HelmRelease",
+      "surface": "compare",
+      "sourcesNamed": [
+        "https://stefanprodan.github.io/podinfo"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/podinfo-helm",
+      "via": "HelmRelease",
+      "surface": "compare --kube-context",
+      "sourcesNamed": [
+        "https://stefanprodan.github.io/podinfo"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/podinfo-helm",
+      "via": "HelmRelease",
+      "surface": "mcp trace",
+      "sourcesNamed": [
+        "https://stefanprodan.github.io/podinfo"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/podinfo-helm",
+      "via": "HelmRelease",
+      "surface": "mcp explain",
+      "sourcesNamed": [
+        "https://stefanprodan.github.io/podinfo"
+      ]
+    },
+    {
+      "layout": "root",
+      "workload": "deployment/podinfo-helm",
+      "via": "HelmRelease",
+      "surface": "map list",
+      "owner": [
+        "Flux"
+      ]
+    },
+    {
+      "layout": "parent",
+      "workload": "deployment/podinfo",
+      "via": "Kustomization",
+      "surface": "trace",
+      "sourcesNamed": [
+        "https://github.com/stefanprodan/podinfo"
+      ]
+    },
+    {
+      "layout": "parent",
+      "workload": "deployment/podinfo",
+      "via": "Kustomization",
+      "surface": "trace --kube-context",
+      "sourcesNamed": [
+        "https://github.com/stefanprodan/podinfo"
+      ]
+    },
+    {
+      "layout": "parent",
+      "workload": "deployment/podinfo",
+      "via": "Kustomization",
+      "surface": "explain",
+      "sourcesNamed": [
+        "https://github.com/stefanprodan/podinfo"
+      ]
+    },
+    {
+      "layout": "parent",
+      "workload": "deployment/podinfo",
+      "via": "Kustomization",
+      "surface": "explain --kube-context",
+      "sourcesNamed": [
+        "https://github.com/stefanprodan/podinfo"
+      ]
+    },
+    {
+      "layout": "parent",
+      "workload": "deployment/podinfo",
+      "via": "Kustomization",
+      "surface": "receipt verify",
+      "sourcesNamed": [
+        "https://github.com/stefanprodan/podinfo"
+      ]
+    },
+    {
+      "layout": "parent",
+      "workload": "deployment/podinfo",
+      "via": "Kustomization",
+      "surface": "receipt verify --kube-context",
+      "sourcesNamed": [
+        "https://github.com/stefanprodan/podinfo"
+      ]
+    },
+    {
+      "layout": "parent",
+      "workload": "deployment/podinfo",
+      "via": "Kustomization",
+      "surface": "compare",
+      "sourcesNamed": [
+        "https://github.com/stefanprodan/podinfo"
+      ]
+    },
+    {
+      "layout": "parent",
+      "workload": "deployment/podinfo",
+      "via": "Kustomization",
+      "surface": "compare --kube-context",
+      "sourcesNamed": [
+        "https://github.com/stefanprodan/podinfo"
+      ]
+    },
+    {
+      "layout": "parent",
+      "workload": "deployment/podinfo",
+      "via": "Kustomization",
+      "surface": "mcp trace",
+      "sourcesNamed": [
+        "https://github.com/stefanprodan/podinfo"
+      ]
+    },
+    {
+      "layout": "parent",
+      "workload": "deployment/podinfo",
+      "via": "Kustomization",
+      "surface": "mcp explain",
+      "sourcesNamed": [
+        "https://github.com/stefanprodan/podinfo"
+      ]
+    },
+    {
+      "layout": "parent",
+      "workload": "deployment/podinfo",
+      "via": "Kustomization",
+      "surface": "map list",
+      "owner": [
+        "Flux"
+      ]
+    },
+    {
+      "layout": "parent",
+      "workload": "deployment/podinfo-helm",
+      "via": "HelmRelease",
+      "surface": "trace",
+      "sourcesNamed": [
+        "https://stefanprodan.github.io/podinfo"
+      ]
+    },
+    {
+      "layout": "parent",
+      "workload": "deployment/podinfo-helm",
+      "via": "HelmRelease",
+      "surface": "trace --kube-context",
+      "sourcesNamed": [
+        "https://stefanprodan.github.io/podinfo"
+      ]
+    },
+    {
+      "layout": "parent",
+      "workload": "deployment/podinfo-helm",
+      "via": "HelmRelease",
+      "surface": "explain",
+      "sourcesNamed": [
+        "https://stefanprodan.github.io/podinfo"
+      ]
+    },
+    {
+      "layout": "parent",
+      "workload": "deployment/podinfo-helm",
+      "via": "HelmRelease",
+      "surface": "explain --kube-context",
+      "sourcesNamed": [
+        "https://stefanprodan.github.io/podinfo"
+      ]
+    },
+    {
+      "layout": "parent",
+      "workload": "deployment/podinfo-helm",
+      "via": "HelmRelease",
+      "surface": "receipt verify",
+      "sourcesNamed": [
+        "https://stefanprodan.github.io/podinfo"
+      ]
+    },
+    {
+      "layout": "parent",
+      "workload": "deployment/podinfo-helm",
+      "via": "HelmRelease",
+      "surface": "receipt verify --kube-context",
+      "sourcesNamed": [
+        "https://stefanprodan.github.io/podinfo"
+      ]
+    },
+    {
+      "layout": "parent",
+      "workload": "deployment/podinfo-helm",
+      "via": "HelmRelease",
+      "surface": "compare",
+      "sourcesNamed": [
+        "https://stefanprodan.github.io/podinfo"
+      ]
+    },
+    {
+      "layout": "parent",
+      "workload": "deployment/podinfo-helm",
+      "via": "HelmRelease",
+      "surface": "compare --kube-context",
+      "sourcesNamed": [
+        "https://stefanprodan.github.io/podinfo"
+      ]
+    },
+    {
+      "layout": "parent",
+      "workload": "deployment/podinfo-helm",
+      "via": "HelmRelease",
+      "surface": "mcp trace",
+      "sourcesNamed": [
+        "https://stefanprodan.github.io/podinfo"
+      ]
+    },
+    {
+      "layout": "parent",
+      "workload": "deployment/podinfo-helm",
+      "via": "HelmRelease",
+      "surface": "mcp explain",
+      "sourcesNamed": [
+        "https://stefanprodan.github.io/podinfo"
+      ]
+    },
+    {
+      "layout": "parent",
+      "workload": "deployment/podinfo-helm",
+      "via": "HelmRelease",
+      "surface": "map list",
+      "owner": [
+        "Flux"
+      ]
+    }
+  ],
+  "passed": true,
+  "failures": [],
+  "steps": [
+    {
+      "name": "before-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "3aba5c9e3576b39a4e3fc1464ef6d95bd1fc3b207ff8f483948f56af6de2505a"
+    },
+    {
+      "name": "install-flux",
+      "exit": 0,
+      "stdoutSHA256": "aa3b541176fb7ed32d693aaf2e29d8f9e65371bb96155658e949de0d9ed1f688",
+      "stderrSHA256": "3e8fcc4205c99020782ae78c5d01071264b6e0fefad9a8cd27e269aababcf50e"
+    },
+    {
+      "name": "create-namespace-team-a",
+      "exit": 0,
+      "stdoutSHA256": "aa41cec8dac195ede91e37e493d371c289d811f5e51bdfe21f68021f08528b94",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-namespace-team-b",
+      "exit": 0,
+      "stdoutSHA256": "b01a66500c48811466500a3105a9a6a69d42ea93d0c7d4d43f59382143182f06",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "flux-delivers-podinfo",
+      "exit": 0,
+      "stdoutSHA256": "0b8c60c4e676cdbbc854334a429d762707743b70a6482696af5ec2f4bbaa16ff",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-kustomization",
+      "exit": 0,
+      "stdoutSHA256": "be14938829be465841499e5ec8c35fb14e4461b86d5765d7d2ed55d66d3cce03",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-helmrelease",
+      "exit": 0,
+      "stdoutSHA256": "4d25285755982015b488b2969cfd688f81e6926b718f9df58e412313156b1d3b",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-fleet-source",
+      "exit": 0,
+      "stdoutSHA256": "07c6dc66fea1be3e06cbb557970822907da53b9f44be01c01c1cc098e1f42b87",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-podinfo",
+      "exit": 0,
+      "stdoutSHA256": "11a525142e4820aa85ae9e10515d08508cec7292d4903c026ef62dba7f7244a3",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-podinfo-helm",
+      "exit": 0,
+      "stdoutSHA256": "217f13fc16659c92cfc52ddca83b4d2cdd1035ff3c85c1dadc6072bbe1fd84f3",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-podinfo-trace",
+      "exit": 0,
+      "stdoutSHA256": "3be58babeaeebb6874fcb5dbbae39748d31e77134311bbac8f1014f53c9b6f4b",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-podinfo-trace_kube-context",
+      "exit": 0,
+      "stdoutSHA256": "3be58babeaeebb6874fcb5dbbae39748d31e77134311bbac8f1014f53c9b6f4b",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-podinfo-explain",
+      "exit": 0,
+      "stdoutSHA256": "52d7261a8ecfcd4d3982328d32df5fe1bf4da81ca4bbe44b3fd4d4fba73a0bce",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-podinfo-explain_kube-context",
+      "exit": 0,
+      "stdoutSHA256": "5c8288c7e0104104eb9a317170ef5529637605a8a2a61a9c264393af65847824",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-podinfo-receipt_verify",
+      "exit": 0,
+      "stdoutSHA256": "c4dec6897638bab7c8d8eb88b61087722d0d402b5f1a4346c21687247e95283e",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-podinfo-receipt_verify_kube-context",
+      "exit": 0,
+      "stdoutSHA256": "c4dec6897638bab7c8d8eb88b61087722d0d402b5f1a4346c21687247e95283e",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-podinfo-compare",
+      "exit": 0,
+      "stdoutSHA256": "75a7ee6e7432e7be1490022c52167a49f23e57248e01051a2026a8468550483d",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-podinfo-compare_kube-context",
+      "exit": 0,
+      "stdoutSHA256": "75a7ee6e7432e7be1490022c52167a49f23e57248e01051a2026a8468550483d",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-podinfo-mcp-trace",
+      "exit": 0,
+      "stdoutSHA256": "2ee9db9846d3d65ebd2b6e2c2fb2deef755cb93e1f98c1394df219383309ddf9",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-podinfo-mcp-explain",
+      "exit": 0,
+      "stdoutSHA256": "9b7db2b2d6eff30e7c9c65e9252504be7c5b792f5b01edebe1c0f16b8096f863",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-podinfo-map-list",
+      "exit": 0,
+      "stdoutSHA256": "43c9fb61de5adc5580e789dd5218d1382e5dd1c3a01abf6cb632c1cb9a3eefab",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-podinfo-helm-trace",
+      "exit": 0,
+      "stdoutSHA256": "351f7f81fb5edc9790af5f3ff1b8189e338a59b09ea2f21978e984e42af31809",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-podinfo-helm-trace_kube-context",
+      "exit": 0,
+      "stdoutSHA256": "351f7f81fb5edc9790af5f3ff1b8189e338a59b09ea2f21978e984e42af31809",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-podinfo-helm-explain",
+      "exit": 0,
+      "stdoutSHA256": "4b9048e44c916c6b4ea4f6afaf3a188496f52fa94d360a24f29ed71369520deb",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-podinfo-helm-explain_kube-context",
+      "exit": 0,
+      "stdoutSHA256": "c9691eaf35c98a81fa85936e3afb25455d192ffe95cb2f507f5c0edc86be8781",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-podinfo-helm-receipt_verify",
+      "exit": 0,
+      "stdoutSHA256": "cdbdd9b9bb5ba2b76a93b4d2186ab184a8b4b8796d3cb277b9df8a312b82a62e",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-podinfo-helm-receipt_verify_kube-context",
+      "exit": 0,
+      "stdoutSHA256": "cdbdd9b9bb5ba2b76a93b4d2186ab184a8b4b8796d3cb277b9df8a312b82a62e",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-podinfo-helm-compare",
+      "exit": 0,
+      "stdoutSHA256": "98d6433587cf56cf0faf5d0038c3ae40713b3dd428a25afba29d2813c96710eb",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-podinfo-helm-compare_kube-context",
+      "exit": 0,
+      "stdoutSHA256": "98d6433587cf56cf0faf5d0038c3ae40713b3dd428a25afba29d2813c96710eb",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-podinfo-helm-mcp-trace",
+      "exit": 0,
+      "stdoutSHA256": "e7b0d3cfc0246cb21626b015b5ec32bb244c554e16c1c1565b35b119849da29c",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-podinfo-helm-mcp-explain",
+      "exit": 0,
+      "stdoutSHA256": "52d867512726204a02993aa17f2a7daec8657e9a80e092c3679598358224dd1a",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "root-podinfo-helm-map-list",
+      "exit": 0,
+      "stdoutSHA256": "03906859fcbcfea7376b90babea32427a7fd57fbab54a1058647e1e68afb65ef",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo",
+      "exit": 0,
+      "stdoutSHA256": "47300d2c7abeae075b1b3e1884dfe82346df0de3e883a4c49aef2e023db01e27",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-helm",
+      "exit": 0,
+      "stdoutSHA256": "0561ca2fd1b3a6a4076734b1098a6ecb566ca6cbe1bc8dc18dd0b5856df128d1",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-trace",
+      "exit": 0,
+      "stdoutSHA256": "cfd9141af79bd5e3b2973a3f2f2b63beca97e16a675c056185745cba02b53ee9",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-trace_kube-context",
+      "exit": 0,
+      "stdoutSHA256": "cfd9141af79bd5e3b2973a3f2f2b63beca97e16a675c056185745cba02b53ee9",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-explain",
+      "exit": 0,
+      "stdoutSHA256": "0fc384f2597488cb5715af8eb5e52fa3d9ebdb0ab1ae28f7037ab88341a6f650",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-explain_kube-context",
+      "exit": 0,
+      "stdoutSHA256": "1533b84b74c1e0f4e59f49b7f7f9b14631549d3d46617719513ab5b2405b6a15",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-receipt_verify",
+      "exit": 0,
+      "stdoutSHA256": "086056240315620d0ba34accfc36e38337f3d60d22f88f410667061a3fd5581a",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-receipt_verify_kube-context",
+      "exit": 0,
+      "stdoutSHA256": "e6f96209711d5c6ea9caebc64256fa4ee32b1c58571103f2503f8d79b1c8d19a",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-compare",
+      "exit": 0,
+      "stdoutSHA256": "75a7ee6e7432e7be1490022c52167a49f23e57248e01051a2026a8468550483d",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-compare_kube-context",
+      "exit": 0,
+      "stdoutSHA256": "75a7ee6e7432e7be1490022c52167a49f23e57248e01051a2026a8468550483d",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-mcp-trace",
+      "exit": 0,
+      "stdoutSHA256": "455420a30649d9e6d052a2389a71a55e5fea04b60f64b91d7b56fa97e1a69c94",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-mcp-explain",
+      "exit": 0,
+      "stdoutSHA256": "03d958e740841c060068d40a86c0ebc434bf7d1ae48699e4b40f81accf9df65b",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-map-list",
+      "exit": 0,
+      "stdoutSHA256": "90f9d12a11e9eabdbc8d6bba1b75e026f9ca5791a02c0d9c724789541d35c82c",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-helm-trace",
+      "exit": 0,
+      "stdoutSHA256": "916c64b34fc4de0b1f7bdebc23e1a14107dc4b024c7c558ced882caa88753f43",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-helm-trace_kube-context",
+      "exit": 0,
+      "stdoutSHA256": "916c64b34fc4de0b1f7bdebc23e1a14107dc4b024c7c558ced882caa88753f43",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-helm-explain",
+      "exit": 0,
+      "stdoutSHA256": "3391abc38916fef1791f44e8b09c2aba6c22a3b96fa2af110aab97faaf540561",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-helm-explain_kube-context",
+      "exit": 0,
+      "stdoutSHA256": "7890d4e2fa73a7b891de72ed0871f34bb1aa445446e4546259e9bcbf7610b180",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-helm-receipt_verify",
+      "exit": 0,
+      "stdoutSHA256": "d2f1e8be47bec2a7a1719d2997d58583f927e9e5d77460caa7f89eab2ad7613f",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-helm-receipt_verify_kube-context",
+      "exit": 0,
+      "stdoutSHA256": "d2f1e8be47bec2a7a1719d2997d58583f927e9e5d77460caa7f89eab2ad7613f",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-helm-compare",
+      "exit": 0,
+      "stdoutSHA256": "98d6433587cf56cf0faf5d0038c3ae40713b3dd428a25afba29d2813c96710eb",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-helm-compare_kube-context",
+      "exit": 0,
+      "stdoutSHA256": "98d6433587cf56cf0faf5d0038c3ae40713b3dd428a25afba29d2813c96710eb",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-helm-mcp-trace",
+      "exit": 0,
+      "stdoutSHA256": "2b1b5392bbb752577d0674136b083b06503feddf1bb04141bba41f792c1ffbda",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-helm-mcp-explain",
+      "exit": 0,
+      "stdoutSHA256": "6aa8e6ea599d1353a67ae6a5ab46cac90c3f22e1d14fab04c8aa7783ba92e50c",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "parent-podinfo-helm-map-list",
+      "exit": 0,
+      "stdoutSHA256": "67e42b4ce862b84755a7a7afd0823c0fd5405ee6acbc1f10a1659895647fe2a8",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cleanup-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "394b559112389114356d702f05deeebd58d397e0b942734826a48a0a24ecef12"
+    },
+    {
+      "name": "after-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "limits": "One owned kind cluster with real Flux. The parent layout is made by labelling the owners as managed by a suspended parent Kustomization, not by a real flux bootstrap. Checks which source each surface names and the owner map list reports. It does not check revision, drift, freshness or health agreement, Argo CD, the plugin form, watch, bot or the TUI."
+}
