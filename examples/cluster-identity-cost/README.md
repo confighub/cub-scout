@@ -304,3 +304,48 @@ matches.
 the flag yet: binding their reads without binding those subprocesses would be a
 partial pin. `receipt`, `compare` (resource) and the `hierarchy` TUI are a
 separate slice.
+
+## Receipt verify follow-on (#812)
+
+`receipt verify` accepts `--kube-context` in every mode:
+
+```bash
+./cub-scout receipt verify deployment/podinfo --namespace team-a --kube-context selected
+./cub-scout receipt verify --scope namespace/team-a --kube-context selected
+./cub-scout receipt verify --file desired.yaml --predicate workloads-converged --kube-context selected
+./cub-scout receipt verify --prerequisites prerequisites.yaml --kube-context selected
+```
+
+A receipt is a fingerprinted artifact, so the selection has to cover every read
+behind it, including the ones cub-scout does not make itself. Its controller
+and Git evidence come from tracers. With an explicit context the Argo tracer
+reads through the selected cluster's Kubernetes client and the Flux tracer is
+given a private kubeconfig for that cluster; neither falls back to ambient
+`flux`, `argocd` or `kubectl`. Receipts built by `watch --kube-context` use the
+same tracers. Before this, `watch --kube-context` bound its own reads while its
+receipts took their Git source anchor from ambient subprocesses.
+
+Deterministic coverage: `go test ./cmd/cub-scout -run
+'TestReceiptVerifyModesReadOnlyTheSelectedContext|TestReceiptGitSourceTracersAreBound|TestWatchHandsItsSelectionToReceiptBuilding' -count=1`.
+The tracer test puts recording stand-ins for `flux`, `argocd` and `kubectl` on
+PATH and checks which API server each was pointed at.
+
+`verify-live-receipt-context.py` uses real Flux: it installs the source and
+kustomize controllers on one owned kind cluster, has Flux deliver podinfo, and
+runs all five modes with an unusable ambient context. The
+[source-bound live proof](live-receipt-context-proof.json) passed on Kubernetes
+1.35 and records:
+
+- every `flux` call made for a bound receipt named a private kubeconfig;
+- the bound receipt has the same content as one produced the legacy way from a
+  kubeconfig whose current-context is the same cluster, so the flag changes
+  which cluster is read and nothing else.
+
+The [first attempt](live-receipt-context-attempt-1.json) is retained: the
+harness assumed one JSON document per run and aggregate mode prints several.
+
+Two limits. Argo CD is not installed in the live run, so the bound Argo tracer
+is covered by the deterministic test only. And the run shows no Git source
+anchor in the receipt: for a Flux-owned workload the tracer asks `flux trace`
+about the Kustomization, which Flux rejects, so receipts for Flux-delivered
+workloads are INCONCLUSIVE with or without the flag. That is a separate defect.
