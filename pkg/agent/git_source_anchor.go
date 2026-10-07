@@ -119,7 +119,9 @@ func CollectGitSourceAnchorForOwner(ctx context.Context, obj *unstructured.Unstr
 // leaves the rest nil, so the anchor can never come from the ambient context.
 type GitSourceTracers struct {
 	Argo *ArgoTracer
-	Flux *FluxTracer
+	// Flux is the CLI tracer or, where the flux CLI is absent, the
+	// Kubernetes-API one.
+	Flux Tracer
 }
 
 // CollectGitSourceAnchorForOwnerWith is CollectGitSourceAnchorForOwner with
@@ -185,7 +187,7 @@ func traceArgoForOwner(ctx context.Context, tr *ArgoTracer, obj *unstructured.Un
 	return tr.Trace(ctx, obj.GetKind(), obj.GetName(), obj.GetNamespace())
 }
 
-func collectFluxGitSource(ctx context.Context, tr *FluxTracer, obj *unstructured.Unstructured, owner Ownership) *GitSourceAnchor {
+func collectFluxGitSource(ctx context.Context, tr Tracer, obj *unstructured.Unstructured, owner Ownership) *GitSourceAnchor {
 	if tr == nil || !tr.Available() {
 		return nil
 	}
@@ -198,7 +200,7 @@ func collectFluxGitSource(ctx context.Context, tr *FluxTracer, obj *unstructured
 
 // traceFluxForOwner traces the object the anchor is for. owner is unused for
 // Flux: the object's own labels carry what `flux trace` needs.
-func traceFluxForOwner(ctx context.Context, tr *FluxTracer, obj *unstructured.Unstructured, _ Ownership) (*TraceResult, error) {
+func traceFluxForOwner(ctx context.Context, tr Tracer, obj *unstructured.Unstructured, _ Ownership) (*TraceResult, error) {
 	// Trace the object itself. `flux trace` follows the object's own Flux
 	// labels to the Kustomization or HelmRelease that applied it and on to that
 	// object's source, which is the source of the workload's manifests.

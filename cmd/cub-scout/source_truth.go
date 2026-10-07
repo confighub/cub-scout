@@ -548,7 +548,7 @@ func controllerSurfaceFromArgo(ctx context.Context, kind, name, namespace string
 }
 
 func controllerSurfaceFromFlux(ctx context.Context, kind, name, namespace string) *agent.ControllerSurface {
-	tr := agent.NewFluxTracer()
+	tr := ambientFluxTracer(ctx)
 	if !tr.Available() {
 		return nil
 	}

@@ -574,7 +574,7 @@ func ownerTypeToToolName(ownerType string) string {
 func buildExplainTracerCandidates(ownerType string) []agent.Tracer {
 	var tracers []agent.Tracer
 
-	addFlux := func() { tracers = append(tracers, agent.NewFluxTracer()) }
+	addFlux := func() { tracers = append(tracers, ambientFluxTracer(context.Background())) }
 	// Without the optional argocd CLI, read Argo evidence through the Kubernetes
 	// API, as trace and the --kube-context path do.
 	addArgo := func() { tracers = append(tracers, ambientArgoTracer(context.Background())) }

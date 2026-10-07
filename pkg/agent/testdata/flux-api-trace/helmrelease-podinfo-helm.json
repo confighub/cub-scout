@@ -1,0 +1,91 @@
+{
+ "apiVersion": "helm.toolkit.fluxcd.io/v2",
+ "kind": "HelmRelease",
+ "metadata": {
+  "annotations": {
+   "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"helm.toolkit.fluxcd.io/v2\",\"kind\":\"HelmRelease\",\"metadata\":{\"annotations\":{},\"name\":\"podinfo-helm\",\"namespace\":\"flux-system\"},\"spec\":{\"chart\":{\"spec\":{\"chart\":\"podinfo\",\"sourceRef\":{\"kind\":\"HelmRepository\",\"name\":\"podinfo\"},\"version\":\"6.7.1\"}},\"interval\":\"10m\",\"releaseName\":\"podinfo-helm\",\"targetNamespace\":\"team-b\"}}\n"
+  },
+  "creationTimestamp": "2026-10-07T17:04:30Z",
+  "finalizers": [
+   "finalizers.fluxcd.io"
+  ],
+  "generation": 1,
+  "name": "podinfo-helm",
+  "namespace": "flux-system",
+  "resourceVersion": "777",
+  "uid": "2bb5345d-be48-4b30-b14a-76092faed4fb"
+ },
+ "spec": {
+  "chart": {
+   "spec": {
+    "chart": "podinfo",
+    "reconcileStrategy": "ChartVersion",
+    "sourceRef": {
+     "kind": "HelmRepository",
+     "name": "podinfo"
+    },
+    "version": "6.7.1"
+   }
+  },
+  "interval": "10m",
+  "releaseName": "podinfo-helm",
+  "targetNamespace": "team-b"
+ },
+ "status": {
+  "conditions": [
+   {
+    "lastTransitionTime": "2026-10-07T17:04:42Z",
+    "message": "Helm install succeeded for release team-b/podinfo-helm.v1 with chart podinfo@6.7.1",
+    "observedGeneration": 1,
+    "reason": "InstallSucceeded",
+    "status": "True",
+    "type": "Ready"
+   },
+   {
+    "lastTransitionTime": "2026-10-07T17:04:42Z",
+    "message": "Helm install succeeded for release team-b/podinfo-helm.v1 with chart podinfo@6.7.1",
+    "observedGeneration": 1,
+    "reason": "InstallSucceeded",
+    "status": "True",
+    "type": "Released"
+   }
+  ],
+  "helmChart": "flux-system/flux-system-podinfo-helm",
+  "history": [
+   {
+    "action": "install",
+    "apiVersion": "v2",
+    "appVersion": "6.7.1",
+    "chartName": "podinfo",
+    "chartVersion": "6.7.1",
+    "configDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "digest": "sha256:82168cb0fb29580da5288cc89878f62291dc544285fcf35b769c007b6c0053df",
+    "firstDeployed": "2026-10-07T17:04:32Z",
+    "lastDeployed": "2026-10-07T17:04:32Z",
+    "name": "podinfo-helm",
+    "namespace": "team-b",
+    "status": "deployed",
+    "version": 1
+   }
+  ],
+  "inventory": {
+   "entries": [
+    {
+     "id": "team-b_podinfo-helm__Service",
+     "v": "v1"
+    },
+    {
+     "id": "team-b_podinfo-helm_apps_Deployment",
+     "v": "v1"
+    }
+   ]
+  },
+  "lastAttemptedConfigDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "lastAttemptedGeneration": 1,
+  "lastAttemptedReleaseAction": "install",
+  "lastAttemptedReleaseActionDuration": "10.248687697s",
+  "lastAttemptedRevision": "6.7.1",
+  "observedGeneration": 1,
+  "storageNamespace": "flux-system"
+ }
+}

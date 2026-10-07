@@ -3589,6 +3589,15 @@ The `argocd` CLI is optional. Without it, `explain`, `receipt verify` and
 and every `--kube-context` path do, so the source they name does not depend on
 whether the CLI is installed. With the CLI present they use it as before.
 
+The `flux` CLI is optional in the same way. Without it, `trace`, `explain`,
+`receipt verify` and `compare` read a Flux-delivered object's chain through the
+Kubernetes API with exact `get` reads: the object's Flux labels name its
+Kustomization or HelmRelease, and that object's source reference names its
+GitRepository, OCIRepository, Bucket or HelmRepository (through the HelmChart).
+The reader needs `get` on those kinds. A source it may not read is reported as
+an error naming the object; no partial chain and no guessed source is shown.
+With the CLI present it is used as before.
+
 ### StatefulSet image coverage (v2.14 candidate, #795)
 
 `release check --check-running-image` also checks `apps/v1` StatefulSets.

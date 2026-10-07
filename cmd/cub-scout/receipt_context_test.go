@@ -49,7 +49,10 @@ func fakeTracerCLIs(t *testing.T) (record string) {
 	for _, tool := range []string{"flux", "argocd", "kubectl"} {
 		// SERVER is the API server named by the kubeconfig the tool was given.
 		script := "#!/bin/sh\nserver=$(grep -Eo 'https?://[^\" ,]+' \"$KUBECONFIG\" 2>/dev/null | head -1)\n" +
-			"echo \"" + tool + " $* KUBECONFIG=$KUBECONFIG SERVER=$server\" >> \"" + record + "\"\nexit 1\n"
+			"echo \"" + tool + " $* KUBECONFIG=$KUBECONFIG SERVER=$server\" >> \"" + record + "\"\n" +
+			// The availability probe succeeds, so the CLI counts as installed; every
+			// real command fails, which is enough to see where it was pointed.
+			"[ \"$1\" = version ] && exit 0\nexit 1\n"
 		require.NoError(t, os.WriteFile(filepath.Join(dir, tool), []byte(script), 0o755))
 	}
 	t.Setenv("PATH", dir+string(os.PathListSeparator)+"/usr/bin:/bin")
@@ -63,7 +66,14 @@ func recordedCalls(t *testing.T, record string) []string {
 		return nil
 	}
 	require.NoError(t, err)
-	return strings.Split(strings.TrimSpace(string(data)), "\n")
+	var calls []string
+	for _, call := range strings.Split(strings.TrimSpace(string(data)), "\n") {
+		// `version --client` is the availability probe; it contacts no cluster.
+		if call != "" && !strings.Contains(call, " version --client") {
+			calls = append(calls, call)
+		}
+	}
+	return calls
 }
 
 // A receipt's Git source anchor came from flux/argocd/kubectl subprocesses on

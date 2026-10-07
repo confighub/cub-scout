@@ -14,9 +14,12 @@ none may name the fleet repository. The shared kubeconfig is never written.
 
 Needs kind, kubectl and the flux CLI on PATH, and network access to pull the
 Flux images, clone the repositories and fetch the chart.
-Run from a clean checkout: python3 examples/source-agreement/verify-live-flux.py
+Run from a clean checkout: python3 examples/source-agreement/verify-live-flux.py [--without-flux-cli]
+
+With --without-flux-cli the flux CLI is used only to install Flux; cub-scout
+itself runs without it and must name the same sources.
 """
-import datetime, hashlib, json, os, pathlib, re, shutil, subprocess, tempfile, uuid
+import datetime, hashlib, json, os, pathlib, re, shutil, subprocess, sys, tempfile, uuid
 
 source = pathlib.Path.cwd()
 root = pathlib.Path(tempfile.mkdtemp(prefix='scout-flux-source-agreement-'))
@@ -52,8 +55,12 @@ real_flux, real_kubectl = shutil.which('flux'), shutil.which('kubectl')
 assert real_flux and real_kubectl, 'flux and kubectl are required on PATH'
 for directory in ['home', 'cub-config', 'bin']:
     (root / directory).mkdir()
-# cub-scout sees only flux and kubectl. No cub, so nothing is connected.
-os.symlink(real_flux, root / 'bin/flux')
+# cub-scout sees kubectl and, unless --without-flux-cli is given, flux. The
+# flux CLI is optional: without it cub-scout reads the same objects through the
+# Kubernetes API. No cub either way, so nothing is connected.
+WITHOUT_FLUX_CLI = '--without-flux-cli' in sys.argv[1:]
+if not WITHOUT_FLUX_CLI:
+    os.symlink(real_flux, root / 'bin/flux')
 os.symlink(real_kubectl, root / 'bin/kubectl')
 host_env = {**os.environ, 'HOME': str(root / 'home'), 'KUBECONFIG': str(cfg), 'CUB_CONFIG': str(root / 'cub-config'),
             'GOTOOLCHAIN': 'go1.24.0'}
@@ -199,6 +206,7 @@ finally:
         'finished': datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds'),
         'kubernetesNodeImage': 'kindest/node:v1.35.0',
         'fluxComponents': ['source-controller', 'kustomize-controller', 'helm-controller'],
+        'fluxCLIOnPath': not WITHOUT_FLUX_CLI,
         'fleetRepository': FLEET,
         'ownedClusterRemoved': removed,
         'sharedKubeconfigUnchanged': sha(shared) == shared_before,

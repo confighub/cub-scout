@@ -1,0 +1,26 @@
+
+Object:         Deployment/podinfo-helm
+Namespace:      team-b
+Status:         Managed by Flux
+---
+HelmRelease:    podinfo-helm
+Namespace:      flux-system
+Target:         team-b
+Revision:       6.7.1
+Status:         Last reconciled at 2026-10-07 18:04:42 +0100 BST
+Message:        Helm install succeeded for release team-b/podinfo-helm.v1 with chart podinfo@6.7.1
+---
+HelmChart:      flux-system-podinfo-helm
+Namespace:      flux-system
+Chart:          podinfo
+Version:        6.7.1
+Revision:       6.7.1
+Status:         Last reconciled at 2026-10-07 18:04:32 +0100 BST
+Message:        pulled 'podinfo' chart with version '6.7.1'
+---
+HelmRepository: podinfo
+Namespace:      flux-system
+URL:            https://stefanprodan.github.io/podinfo
+Revision:       sha256:e7dc68a4dec90a35c2c6d8cdfedb7eaaee17fde45dced5898289df85069ec089
+Status:         Last reconciled at 2026-10-07 18:04:32 +0100 BST
+Message:        stored artifact: revision 'sha256:e7dc68a4dec90a35c2c6d8cdfedb7eaaee17fde45dced5898289df85069ec089'
