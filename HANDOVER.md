@@ -1744,3 +1744,45 @@ recorded and the two remaining slow tests are addressed.
 test are waived to #803. No PR in this period ran Full Verification, Connected
 E2E, Demo Tests or Windows; `CUB_SCAN_RELEASE_TOKEN` is still not configured.
 None of the ten broad v2.14 tasks is closed.
+
+
+## v2.14 surface agreement on real Flux and Argo CD (2026-10-07, later)
+
+The rule that held up all day: run the real thing on a disposable cluster and
+compare the surfaces with each other. `examples/source-agreement/` is that
+rule retained as three harnesses: `verify-live-flux.py`,
+`verify-live-flux.py --without-flux-cli` and `verify-live-argo.py` (which
+always runs without the `argocd` CLI). Run them after any change to tracing,
+receipts, compare or explain. Each needs about ten minutes and network access.
+
+What they and their probes found, all fixed and merged:
+
+- Flux source anchors came from a trace of the owning Kustomization or
+  HelmRelease, so under a parent Kustomization a receipt and the session-bound
+  compare named the fleet repository (#816, #818). Trace the object, never its
+  owner. `FluxTracer.TraceByOwnership` now has no callers.
+- The `argocd` and `flux` CLIs are optional and often absent for an agent.
+  `ambientArgoTracer` and `ambientFluxTracer` (in `cmd/cub-scout/receipt.go`)
+  and `capturedTraceFluxFactory` fall back to Kubernetes-API tracers
+  (`agent.NewArgoTracerWithKubernetesClient`,
+  `agent.NewFluxTracerWithKubernetesClient`) (#822, #825).
+- `flux trace` prints "Last reconciled at" for a failing object too. Never
+  read Flux readiness from its text: `agent.NewFluxTracerWithConditionReadiness`
+  wraps the CLI tracer and reads each link's Ready condition (#829).
+- `explain` reports `; delivery not ready at <Kind>/<name>` when a link above
+  the resource reports not ready. A link with no status (an Argo CD source)
+  is absence of a signal, not a failure; a test guards that (#830).
+- `compare <resource>` has one read path, a session, for both the explicit
+  and the ambient context (#818, #831).
+
+Recorded real output lives in `pkg/agent/testdata/flux-trace-814/`,
+`flux-api-trace/` and `flux-readiness-826/`. Prefer adding to those over
+writing expected output by hand.
+
+Open and worth doing next: the eval case for #827; `suggest-remedy`,
+`quickstart` and the `hierarchy` TUI context binding (#812); trace child
+clients (#746); the flaky grader-control test (#828); whether the Flux API
+tracer's OCIRepository, Bucket and `chartRef` paths work on a real cluster
+(implemented, not exercised). Sequence tasks 26 to 32 beyond their first
+slices are not started. Note for PR text: "does not close" followed by an issue
+number closes that issue on merge.
