@@ -824,7 +824,7 @@ func collectSourceTruthForReceipt(ctx context.Context, kind, name, namespace, st
 func receiptGitSourceAnchor(ctx context.Context, live *unstructured.Unstructured, owner agent.Ownership) *agent.GitSourceAnchor {
 	binding := treeContextBinding(ctx)
 	if binding == nil {
-		return agent.CollectGitSourceAnchorForOwner(ctx, live, owner)
+		return agent.CollectGitSourceAnchorForOwnerWith(ctx, live, owner, agent.GitSourceTracers{Argo: ambientArgoTracer(ctx), Flux: agent.NewFluxTracer()})
 	}
 	session, err := newTraceSessionFromBinding(binding)
 	if err != nil {
@@ -845,4 +845,26 @@ func receiptGitSourceAnchor(ctx context.Context, live *unstructured.Unstructured
 		}
 	}
 	return agent.CollectGitSourceAnchorForOwnerWith(ctx, live, owner, tracers)
+}
+
+// ambientArgoTracer returns the Argo tracer for a command with no explicit
+// context. The argocd CLI is optional. The Application that names a workload's
+// source is readable through the Kubernetes API, which is what trace and every
+// --kube-context path use; without the CLI this reads the ambient cluster
+// through that API instead of reporting no source. With the CLI present the
+// established behaviour is unchanged.
+func ambientArgoTracer(ctx context.Context) *agent.ArgoTracer {
+	cli := agent.NewArgoTracer()
+	if cli.Available() {
+		return cli
+	}
+	cfg, err := treeClusterConfig(ctx)
+	if err != nil {
+		return cli
+	}
+	dynClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return cli
+	}
+	return agent.NewArgoTracerWithKubernetesClient(dynClient)
 }
