@@ -792,17 +792,12 @@ func collectCompareGitSourceWithTraceSession(ctx context.Context, session *trace
 	if tracer == nil || !tracer.Available() {
 		return nil, fmt.Errorf("Git source enrichment unavailable: flux CLI is unavailable")
 	}
-	if owner.Type == agent.OwnerFlux && owner.Name != "" && obj.GetKind() != "Kustomization" && obj.GetKind() != "HelmRelease" {
-		ownerTracer, ok := tracer.(interface {
-			TraceByOwnership(context.Context, agent.Ownership) (*agent.TraceResult, error)
-		})
-		if !ok {
-			return nil, fmt.Errorf("Git source enrichment unavailable: Flux adapter cannot trace ownership")
-		}
-		result, err = ownerTracer.TraceByOwnership(ctx, owner)
-	} else {
-		result, err = tracer.Trace(ctx, obj.GetKind(), obj.GetName(), obj.GetNamespace())
-	}
+	// Trace the object itself, never its owner. `flux trace` on the owning
+	// Kustomization or HelmRelease answers what manages that object: nothing
+	// for a root one, and the parent and fleet repository under a parent
+	// Kustomization, which is not where this object's manifests came from
+	// (#814).
+	result, err = tracer.Trace(ctx, obj.GetKind(), obj.GetName(), obj.GetNamespace())
 	if err != nil {
 		return nil, compareGitSourceObservationError(result, err)
 	}
