@@ -3,7 +3,6 @@ package remedy
 import (
 	"context"
 	"fmt"
-	"os/exec"
 	"strings"
 )
 
@@ -102,17 +101,12 @@ func (s *ConfigFixSuggester) describeCommand(cmd string) string {
 }
 
 // getCurrentState reads the resource via `kubectl get`. This is read-only
-// and is the only shell-out the suggester performs.
+// and is the only subprocess the suggester starts. It is not run through a
+// shell; see KubectlGet.
 func (s *ConfigFixSuggester) getCurrentState(ctx context.Context, ref ResourceRef) (string, error) {
-	cmd := fmt.Sprintf("%s get %s %s -o yaml",
-		s.kubectl, strings.ToLower(ref.Kind), ref.Name)
-	if ref.Namespace != "" {
-		cmd += " -n " + ref.Namespace
-	}
-
-	out, err := exec.CommandContext(ctx, "sh", "-c", cmd).Output()
+	out, err := KubectlGet(ctx, s.kubectl, "yaml", ref)
 	if err != nil {
 		return "", fmt.Errorf("get resource: %w", err)
 	}
-	return string(out), nil
+	return out, nil
 }
