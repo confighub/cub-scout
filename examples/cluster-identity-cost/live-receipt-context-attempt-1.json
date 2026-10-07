@@ -1,0 +1,116 @@
+{
+  "schema": "v214-receipt-context-live-proof.v1",
+  "sourceCommit": "e5fefd88b7796864c3fe8c0d45641cf60024706e",
+  "sourceCommitUnchanged": true,
+  "sourceWorktreeCleanBeforeAndAfter": true,
+  "binarySHA256": "1951dd6243d7cb518cd447742de5a2c100762a2fba2144207a0825532a2d0b32",
+  "finished": "2026-10-07T08:56:50+00:00",
+  "kubernetesNodeImage": "kindest/node:v1.35.0",
+  "fluxComponents": [
+    "source-controller",
+    "kustomize-controller"
+  ],
+  "ownedClusterRemoved": true,
+  "sharedKubeconfigUnchanged": true,
+  "modes": [
+    "single",
+    "aggregate",
+    "object-set",
+    "workloads-converged",
+    "prerequisites"
+  ],
+  "fluxCallsBound": [],
+  "fluxCallsLegacy": [],
+  "boundReceiptEqualsLegacyReceipt": null,
+  "passed": false,
+  "failures": [
+    "JSONDecodeError('Extra data: line 2 column 1 (char 1229)')"
+  ],
+  "steps": [
+    {
+      "name": "before-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e414d9fdd0549b380a3013b2743de4f4e6a39fd23776eab212b7fa87d85fb8d9"
+    },
+    {
+      "name": "install-flux",
+      "exit": 0,
+      "stdoutSHA256": "103056d7472528f156174c2d0348584464bb173cc7a91644642d1e94314493a9",
+      "stderrSHA256": "d8f7aa189ad6a1a036db33be37985083373f40f1e6a11af27ffe5cdf2887eb3d"
+    },
+    {
+      "name": "create-namespace",
+      "exit": 0,
+      "stdoutSHA256": "aa41cec8dac195ede91e37e493d371c289d811f5e51bdfe21f68021f08528b94",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "flux-delivers-podinfo",
+      "exit": 0,
+      "stdoutSHA256": "2e139b4af72cb5d1d1d05e6fdec2ba8ded8746194ae048648841ab3754b9b24e",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-for-flux",
+      "exit": 0,
+      "stdoutSHA256": "be14938829be465841499e5ec8c35fb14e4461b86d5765d7d2ed55d66d3cce03",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-for-workload",
+      "exit": 0,
+      "stdoutSHA256": "0ea14de6d0779ec8784dd96f191fc6002eab58304cc787c6301fe5d0d0be39fa",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "control-ambient-unusable",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "b9db8b4cf253b5b17c6cc2bc617dfd983a60e91781d6b7a396e7a04684b0e847"
+    },
+    {
+      "name": "receipt-single",
+      "exit": 0,
+      "stdoutSHA256": "3ca4b1a6097224a8169caf791887d2d6ea68afae846f6d747ddc2811d0200438",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "receipt-single-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "receipt-single-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "receipt-aggregate",
+      "exit": 0,
+      "stdoutSHA256": "8f200c6cfaa3b0817d6682476adff762b9d0e402421d919ddc0704175c99973a",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cleanup-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "00d580b3dc38f80450b05995bda46cf9ceb1095454e94e52ddae337d714470a8"
+    },
+    {
+      "name": "after-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "limits": "One owned kind cluster with real Flux delivering podinfo from a public Git repository. Shows which cluster each receipt verify mode and the Flux tracer read, and that a bound receipt has the same content as a legacy one for the same cluster. Argo CD is not installed, so the bound Argo tracer is covered only by the deterministic test. It does not show cluster identity, read cost or Target binding, and it does not show a Git source anchor: see the receipt-anchor defect in the README."
+}

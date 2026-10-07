@@ -143,7 +143,7 @@ func runReceiptVerifyWorkloadsConverged(cmd *cobra.Command, args []string) error
 // failure reasons (CreateContainerConfigError, CrashLoopBackOff, …) can be
 // surfaced even when the workload's own status only says "not ready".
 func loadWorkloadsConvergedLiveObjects(ctx context.Context, desired []*unstructured.Unstructured, defaultNamespace string) ([]agent.WorkloadConvergedObservedObject, error) {
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("build kubernetes config: %w", err)
 	}

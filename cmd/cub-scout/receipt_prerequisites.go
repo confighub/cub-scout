@@ -176,7 +176,7 @@ func loadPrerequisitesSpec(path string) (prerequisiteSpec, agent.ObjectSetSource
 
 // loadPrerequisitesLive checks each declared fact against the live cluster.
 func loadPrerequisitesLive(ctx context.Context, spec prerequisiteSpec, defaultNamespace string) ([]agent.PrerequisiteFactResult, error) {
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("build kubernetes config: %w", err)
 	}

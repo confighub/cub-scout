@@ -262,7 +262,7 @@ func TestLiveStatusFreshnessCollectorAndReceipt(t *testing.T) {
 			withFakeReceiptLoader(t, live)
 			oldClient, oldNow := newReceiptDeliveryDynamicClientFn, gitopsNowFn
 			t.Cleanup(func() { newReceiptDeliveryDynamicClientFn, gitopsNowFn = oldClient, oldNow })
-			newReceiptDeliveryDynamicClientFn = func() (dynamic.Interface, error) { return client, nil }
+			newReceiptDeliveryDynamicClientFn = func(context.Context) (dynamic.Interface, error) { return client, nil }
 			gitopsNowFn = func() time.Time { return now }
 			baselineJSON := captureStdout(t, func() {
 				rootCmd.SetArgs([]string{"receipt", "verify", "deploy/api", "-n", "prod", "--format", "json"})

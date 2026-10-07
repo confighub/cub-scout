@@ -59,39 +59,45 @@ func TestReadCommandsReadOnlyTheSelectedContext(t *testing.T) {
 		"patterns explain": {"patterns", "explain", "delivery.bridge.confighub_oci"},
 		"context-pack":     {"context-pack"},
 	} {
-		t.Run(name, func(t *testing.T) {
-			selected, ambient := newCountedKubeServer(t), newCountedKubeServer(t)
-			path, before := resolverKubeconfig(t, "ambient", map[string]string{"selected": selected.server.URL, "ambient": ambient.server.URL})
-			run := func(selection string) (string, error) {
-				ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-				defer cancel()
-				cmd := exec.CommandContext(ctx, binary, append(append([]string{}, args...), "--kube-context", selection)...)
-				// A private HOME and no cub on PATH: standalone, and nothing of the
-				// developer's own configuration can stand in for the kubeconfig.
-				cmd.Env = []string{"KUBECONFIG=" + path, "HOME=" + t.TempDir(), "PATH=/usr/bin:/bin", "CUB_SCOUT_OFFLINE=true"}
-				out, err := cmd.CombinedOutput()
-				return string(out), err
-			}
-
-			// The fake API serves empty lists, so a command may legitimately exit
-			// non-zero (target not found). What matters is which server it asked.
-			out, _ := run("selected")
-			require.NotZero(t, selected.requests.Load(), "the selected context was not read:\n%s", out)
-			require.Zero(t, ambient.requests.Load(), "the ambient context was read: %v\n%s", ambient.paths, out)
-
-			for _, refused := range []string{"missing", ""} {
-				seen := selected.requests.Load()
-				out, err := run(refused)
-				require.Error(t, err, "--kube-context=%q must refuse:\n%s", refused, out)
-				require.Equal(t, seen, selected.requests.Load(), "--kube-context=%q read a cluster before refusing", refused)
-				require.Zero(t, ambient.requests.Load(), "--kube-context=%q fell back to the ambient context", refused)
-			}
-
-			after, err := os.ReadFile(path)
-			require.NoError(t, err)
-			require.Equal(t, before, after, "the kubeconfig was modified")
-		})
+		t.Run(name, func(t *testing.T) { assertProcessReadsOnlySelectedContext(t, binary, args) })
 	}
+}
+
+// assertProcessReadsOnlySelectedContext runs one command as a process against a
+// selected and an ambient fake API server whose kubeconfig current-context is
+// the ambient one.
+func assertProcessReadsOnlySelectedContext(t *testing.T, binary string, args []string) {
+	t.Helper()
+	selected, ambient := newCountedKubeServer(t), newCountedKubeServer(t)
+	path, before := resolverKubeconfig(t, "ambient", map[string]string{"selected": selected.server.URL, "ambient": ambient.server.URL})
+	run := func(selection string) (string, error) {
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		defer cancel()
+		cmd := exec.CommandContext(ctx, binary, append(append([]string{}, args...), "--kube-context", selection)...)
+		// A private HOME and no cub on PATH: standalone, and nothing of the
+		// developer's own configuration can stand in for the kubeconfig.
+		cmd.Env = []string{"KUBECONFIG=" + path, "HOME=" + t.TempDir(), "PATH=/usr/bin:/bin", "CUB_SCOUT_OFFLINE=true"}
+		out, err := cmd.CombinedOutput()
+		return string(out), err
+	}
+
+	// The fake API serves empty lists, so a command may legitimately exit
+	// non-zero (target not found). What matters is which server it asked.
+	out, _ := run("selected")
+	require.NotZero(t, selected.requests.Load(), "the selected context was not read:\n%s", out)
+	require.Zero(t, ambient.requests.Load(), "the ambient context was read: %v\n%s", ambient.paths, out)
+
+	for _, refused := range []string{"missing", ""} {
+		seen := selected.requests.Load()
+		out, err := run(refused)
+		require.Error(t, err, "--kube-context=%q must refuse:\n%s", refused, out)
+		require.Equal(t, seen, selected.requests.Load(), "--kube-context=%q read a cluster before refusing", refused)
+		require.Zero(t, ambient.requests.Load(), "--kube-context=%q fell back to the ambient context", refused)
+	}
+
+	after, err := os.ReadFile(path)
+	require.NoError(t, err)
+	require.Equal(t, before, after, "the kubeconfig was modified")
 }
 
 // The cluster label printed beside the evidence must name the context the

@@ -3567,6 +3567,16 @@ reads. `context-pack` keeps its `cluster` field, which is the `CLUSTER_NAME`
 environment label and not a kubeconfig context. `suggest-remedy` and
 `quickstart` shell out to `kubectl` and do not accept the flag.
 
+`receipt verify` accepts `--kube-context` in every mode (single resource,
+`--scope`, `--file` object sets, workloads-converged and `--prerequisites`). The
+selection covers the tracers too: with it, source-truth evidence runs the
+session-bound derivation `compare source-truth --kube-context` uses, the Argo
+tracer reads through the selected cluster's Kubernetes client, and the Flux
+tracer is given a private kubeconfig for that cluster. It never falls back to
+ambient `flux`, `argocd` or `kubectl`. Receipts that `watch --kube-context`
+builds use the same bound tracers. Without the flag a receipt's content is
+unchanged.
+
 ### StatefulSet image coverage (v2.14 candidate, #795)
 
 `release check --check-running-image` also checks `apps/v1` StatefulSets.

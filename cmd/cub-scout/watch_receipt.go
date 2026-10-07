@@ -358,7 +358,7 @@ func watchBuildReceiptForEvent(
 
 	owner := agent.DetectOwnership(live)
 	attribution := agent.AttributeFieldMutation(live, owner)
-	gitSource := agent.CollectGitSourceAnchorForOwner(ctx, live, owner)
+	gitSource := receiptGitSourceAnchor(ctx, live, owner)
 
 	evidence := agent.Evidence{
 		Attribution: &attribution,

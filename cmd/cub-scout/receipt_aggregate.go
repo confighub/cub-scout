@@ -198,7 +198,7 @@ func parseAggregateScope(scopeFlag, positional, namespace string) (agent.Aggrega
 // workloads of the supported kinds — the caller decides whether to
 // error out or emit an empty aggregate.
 func discoverNamespaceWorkloads(ctx context.Context, ns string) ([]receiptResourceRef, error) {
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("build kubernetes config: %w", err)
 	}
@@ -467,7 +467,7 @@ func buildOnePerResourceReceipt(
 
 	owner := agent.DetectOwnership(live)
 	attribution := agent.AttributeFieldMutation(live, owner)
-	gitSource := agent.CollectGitSourceAnchorForOwner(ctx, live, owner)
+	gitSource := receiptGitSourceAnchor(ctx, live, owner)
 
 	evidence := agent.Evidence{
 		Attribution: &attribution,

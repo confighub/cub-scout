@@ -1,0 +1,192 @@
+{
+  "schema": "v214-receipt-context-live-proof.v1",
+  "sourceCommit": "0d4d63956f87bc86d14f74c659fabd3909edcfc1",
+  "sourceCommitUnchanged": true,
+  "sourceWorktreeCleanBeforeAndAfter": true,
+  "binarySHA256": "68200442d15afc2e5684a2c6c29ed6edc9b367d889c6d8b187567be6426904f7",
+  "finished": "2026-10-07T09:01:47+00:00",
+  "kubernetesNodeImage": "kindest/node:v1.35.0",
+  "fluxComponents": [
+    "source-controller",
+    "kustomize-controller"
+  ],
+  "ownedClusterRemoved": true,
+  "sharedKubeconfigUnchanged": true,
+  "modes": [
+    "single",
+    "aggregate",
+    "object-set",
+    "workloads-converged",
+    "prerequisites"
+  ],
+  "fluxCallsBound": [
+    "trace kustomization podinfo -n flux-system --kubeconfig <private-child-kubeconfig> --context cub-scout-trace",
+    "trace kustomization podinfo -n flux-system --kubeconfig <private-child-kubeconfig> --context cub-scout-trace"
+  ],
+  "fluxCallsLegacy": [
+    "version --client",
+    "trace kustomization podinfo -n flux-system"
+  ],
+  "boundReceiptEqualsLegacyReceipt": true,
+  "passed": true,
+  "failures": [],
+  "steps": [
+    {
+      "name": "before-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "22f1423987b9a94b7a6849c7968b48b6e68f4f813d03d4798c7ad90b06b1b77e"
+    },
+    {
+      "name": "install-flux",
+      "exit": 0,
+      "stdoutSHA256": "103056d7472528f156174c2d0348584464bb173cc7a91644642d1e94314493a9",
+      "stderrSHA256": "d8f7aa189ad6a1a036db33be37985083373f40f1e6a11af27ffe5cdf2887eb3d"
+    },
+    {
+      "name": "create-namespace",
+      "exit": 0,
+      "stdoutSHA256": "aa41cec8dac195ede91e37e493d371c289d811f5e51bdfe21f68021f08528b94",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "flux-delivers-podinfo",
+      "exit": 0,
+      "stdoutSHA256": "2e139b4af72cb5d1d1d05e6fdec2ba8ded8746194ae048648841ab3754b9b24e",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-for-flux",
+      "exit": 0,
+      "stdoutSHA256": "be14938829be465841499e5ec8c35fb14e4461b86d5765d7d2ed55d66d3cce03",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-for-workload",
+      "exit": 0,
+      "stdoutSHA256": "701c69b41ce930dc76e16089f13dd74dcfe977bb26d64e07539989c1c4319c3a",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "control-ambient-unusable",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "b9db8b4cf253b5b17c6cc2bc617dfd983a60e91781d6b7a396e7a04684b0e847"
+    },
+    {
+      "name": "receipt-single",
+      "exit": 0,
+      "stdoutSHA256": "f02cfae0ef833dce2ad7e4c42279e3eae29bd3ed353e7871836b53618688d9fa",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "receipt-single-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "receipt-single-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "receipt-aggregate",
+      "exit": 0,
+      "stdoutSHA256": "a424dff0d8a4c36d8dfd09c3b04aca21e888eb3c9e486b8888eb70533ff16a1e",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "receipt-aggregate-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "receipt-aggregate-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "receipt-object-set",
+      "exit": 0,
+      "stdoutSHA256": "b80acfe11462e63aff1b3ef3435f76f6a5f7b071a0f0458004ebee736f7a9fbc",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "receipt-object-set-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "receipt-object-set-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "receipt-workloads-converged",
+      "exit": 0,
+      "stdoutSHA256": "21f9604ee80653c184bc70c28009fde0e2dbe8f0e88a0cdfce1e9456dafffe88",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "receipt-workloads-converged-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "receipt-workloads-converged-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "receipt-prerequisites",
+      "exit": 0,
+      "stdoutSHA256": "45d9ee3e08c1bbf74a2994bb1758e0b96cbce21acd265c7d74a05f4cbf1f0e81",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "receipt-prerequisites-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "receipt-prerequisites-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "receipt-single-legacy",
+      "exit": 0,
+      "stdoutSHA256": "f02cfae0ef833dce2ad7e4c42279e3eae29bd3ed353e7871836b53618688d9fa",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cleanup-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "6bf74b3b04b15a926b59697206ca4df60cc97f70ca5107dea6a1dfa68b0cd0ac"
+    },
+    {
+      "name": "after-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "limits": "One owned kind cluster with real Flux delivering podinfo from a public Git repository. Shows which cluster each receipt verify mode and the Flux tracer read, and that a bound receipt has the same content as a legacy one for the same cluster. Argo CD is not installed, so the bound Argo tracer is covered only by the deterministic test. It does not show cluster identity, read cost or Target binding, and it does not show a Git source anchor: see the receipt-anchor defect in the README."
+}

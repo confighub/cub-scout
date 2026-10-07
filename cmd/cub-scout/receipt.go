@@ -59,6 +59,14 @@ func runReceiptVerifyDispatch(cmd *cobra.Command, args []string) error {
 	}
 	receiptTTLDur = ttl
 
+	// Resolve an explicit --kube-context once, before any routing. Every mode
+	// reads cmd.Context(), so each inherits the same selection (#812).
+	boundCtx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
+	cmd.SetContext(boundCtx)
+
 	// Detect aggregate mode by inspecting --scope OR the positional.
 	scopeFlag := strings.TrimSpace(receiptScope)
 	positional := ""
@@ -305,7 +313,7 @@ func runReceiptVerify(cmd *cobra.Command, args []string) error {
 	// Argo-owned Deployment receipt.
 	owner := agent.DetectOwnership(live)
 	attribution := agent.AttributeFieldMutation(live, owner)
-	gitSource := agent.CollectGitSourceAnchorForOwner(ctx, live, owner)
+	gitSource := receiptGitSourceAnchor(ctx, live, owner)
 
 	evidence := agent.Evidence{
 		Attribution: &attribution,
@@ -556,7 +564,7 @@ func collectReceiptDeliveryEvidence(ctx context.Context, live *unstructured.Unst
 		opts.Now = gitopsNowFn().UTC()
 	}
 
-	dynClient, dynErr := newReceiptDeliveryDynamicClientFn()
+	dynClient, dynErr := newReceiptDeliveryDynamicClientFn(ctx)
 	if dynErr != nil {
 		preflightOmissions = append(preflightOmissions, agent.TraceDeliveryOmission{
 			Layer:  "kubernetes.client",
@@ -636,8 +644,8 @@ func receiptTraceToolForOwner(owner agent.Ownership) string {
 	}
 }
 
-func newReceiptDeliveryDynamicClient() (dynamic.Interface, error) {
-	cfg, err := buildConfig()
+func newReceiptDeliveryDynamicClient(ctx context.Context) (dynamic.Interface, error) {
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -737,7 +745,7 @@ func collectReceiptInputAttestations() ([]agent.VerifiedAttestationRef, error) {
 // loadReceiptLive fetches the live K8s object via the dynamic client. The
 // function-variable seam (loadReceiptLiveFn) above lets tests inject fakes.
 func loadReceiptLive(ctx context.Context, kind, name, namespace string) (*unstructured.Unstructured, error) {
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("build kubernetes config: %w", err)
 	}
@@ -776,6 +784,19 @@ func collectSourceTruthForReceipt(ctx context.Context, kind, name, namespace, st
 		return nil, fmt.Errorf("unknown source-truth strategy %q (valid: %v)", strategyStr, agent.AllStrategies())
 	}
 
+	// With an explicit context, run the session-bound derivation that
+	// `compare source-truth --kube-context` uses: its controller tracers are
+	// bound to the same cluster as the runtime read. The legacy path below
+	// uses ambient flux/argocd subprocesses and must not be mixed with it.
+	if binding := treeContextBinding(ctx); binding != nil {
+		session, err := newTraceSessionFromBinding(binding)
+		if err != nil {
+			return nil, fmt.Errorf("resolve selected Kubernetes context: %w", err)
+		}
+		ev := collectSourceTruthObservation(ctx, session, kind, name, namespace, strategy).Evidence
+		return &ev, nil
+	}
+
 	runtime, runtimeObj, runtimeErr := collectRuntimeSurface(ctx, kind, name, namespace)
 	if runtimeErr != nil {
 		// Runtime unfetchable → BLOCKED evidence (the same shape
@@ -793,4 +814,35 @@ func collectSourceTruthForReceipt(ctx context.Context, kind, name, namespace, st
 		Runtime:    runtime,
 	})
 	return &ev, nil
+}
+
+// receiptGitSourceAnchor collects the Git source anchor for a receipt. With an
+// explicit context it uses tracers bound to that context: Argo through the
+// selected cluster's Kubernetes client, Flux through a private kubeconfig. It
+// never falls back to the ambient flux/argocd/kubectl subprocesses, so the
+// anchor cannot describe a different cluster from the object it sits beside.
+func receiptGitSourceAnchor(ctx context.Context, live *unstructured.Unstructured, owner agent.Ownership) *agent.GitSourceAnchor {
+	binding := treeContextBinding(ctx)
+	if binding == nil {
+		return agent.CollectGitSourceAnchorForOwner(ctx, live, owner)
+	}
+	session, err := newTraceSessionFromBinding(binding)
+	if err != nil {
+		return nil
+	}
+	tracers := agent.GitSourceTracers{}
+	if owner.Type == agent.OwnerArgo || owner.Type == agent.OwnerConfigHub {
+		if dynClient, err := session.dynamicClient(); err == nil {
+			tracers.Argo = agent.NewArgoTracerWithKubernetesClient(dynClient)
+		}
+	}
+	if owner.Type == agent.OwnerFlux || owner.Type == agent.OwnerConfigHub {
+		if tracer, cleanup, err := capturedTraceFluxFactory(session); err == nil {
+			defer func() { _ = cleanup() }()
+			if flux, ok := tracer.(*agent.FluxTracer); ok {
+				tracers.Flux = flux
+			}
+		}
+	}
+	return agent.CollectGitSourceAnchorForOwnerWith(ctx, live, owner, tracers)
 }

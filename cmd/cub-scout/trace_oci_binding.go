@@ -14,11 +14,11 @@ import (
 )
 
 var traceOCISourceReadFn = func(ctx context.Context, ref agent.BoundedResourceRef) (*unstructured.Unstructured, agent.BoundedReadEvidence, error) {
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return nil, agent.BoundedReadEvidence{}, err
 	}
-	reader, err := agent.NewBoundedResourceReader(cfg, getCurrentContext())
+	reader, err := agent.NewBoundedResourceReader(cfg, boundContextLabel(ctx))
 	if err != nil {
 		return nil, agent.BoundedReadEvidence{}, err
 	}

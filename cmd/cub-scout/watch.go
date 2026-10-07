@@ -285,10 +285,12 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 		return err
 	}
 	var cfg *rest.Config
+	var explicitBinding *localClusterBinding
 	if selection.explicit {
 		binding := resolveLocalClusterBindingForSelection(selection)
 		cfg, err = binding.config, binding.err
 		contextLabel = binding.context
+		explicitBinding = binding
 	} else if includeIdentity {
 		binding := resolveLocalClusterBindingForSelection(selection)
 		cfg, err = binding.config, binding.err
@@ -312,6 +314,11 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 	}
 
 	ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
+	if explicitBinding != nil && explicitBinding.err == nil {
+		// Receipts built for watch events take their Git source evidence from
+		// tracers bound to this selection, never the ambient context (#812).
+		ctx = context.WithValue(ctx, treeBindingKey{}, explicitBinding)
+	}
 	defer stop()
 
 	var (

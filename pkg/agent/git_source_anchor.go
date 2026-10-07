@@ -110,6 +110,21 @@ func CollectGitSourceAnchor(ctx context.Context, obj *unstructured.Unstructured)
 // matches the existing CollectGitSourceAnchor behavior: Argo first for
 // Argo/ConfigHub, Flux fallback for ConfigHub-via-Flux, Flux for Flux.
 func CollectGitSourceAnchorForOwner(ctx context.Context, obj *unstructured.Unstructured, owner Ownership) *GitSourceAnchor {
+	return CollectGitSourceAnchorForOwnerWith(ctx, obj, owner, GitSourceTracers{Argo: NewArgoTracer(), Flux: NewFluxTracer()})
+}
+
+// GitSourceTracers supplies the tracers the Git source anchor may consult. A
+// nil tracer means that controller is not consulted at all. A caller that has
+// bound its reads to one cluster passes tracers bound to the same cluster and
+// leaves the rest nil, so the anchor can never come from the ambient context.
+type GitSourceTracers struct {
+	Argo *ArgoTracer
+	Flux *FluxTracer
+}
+
+// CollectGitSourceAnchorForOwnerWith is CollectGitSourceAnchorForOwner with
+// the tracers supplied by the caller.
+func CollectGitSourceAnchorForOwnerWith(ctx context.Context, obj *unstructured.Unstructured, owner Ownership, tracers GitSourceTracers) *GitSourceAnchor {
 	if obj == nil {
 		return nil
 	}
@@ -119,23 +134,22 @@ func CollectGitSourceAnchorForOwner(ctx context.Context, obj *unstructured.Unstr
 		// Flux. Try Argo first; fall through to Flux if the Argo tracer
 		// finds nothing. Treating ConfigHub-via-Flux as a fallback keeps
 		// the common case (ConfigHub-via-Argo) on the fast path.
-		if anchor := collectArgoGitSource(ctx, obj, owner); anchor != nil {
+		if anchor := collectArgoGitSource(ctx, tracers.Argo, obj, owner); anchor != nil {
 			return anchor
 		}
 		if owner.Type == OwnerConfigHub {
-			return collectFluxGitSource(ctx, obj, owner)
+			return collectFluxGitSource(ctx, tracers.Flux, obj, owner)
 		}
 		return nil
 	case OwnerFlux:
-		return collectFluxGitSource(ctx, obj, owner)
+		return collectFluxGitSource(ctx, tracers.Flux, obj, owner)
 	default:
 		return nil
 	}
 }
 
-func collectArgoGitSource(ctx context.Context, obj *unstructured.Unstructured, owner Ownership) *GitSourceAnchor {
-	tr := NewArgoTracer()
-	if !tr.Available() {
+func collectArgoGitSource(ctx context.Context, tr *ArgoTracer, obj *unstructured.Unstructured, owner Ownership) *GitSourceAnchor {
+	if tr == nil || !tr.Available() {
 		return nil
 	}
 	res, err := traceArgoForOwner(ctx, tr, obj, owner)
@@ -171,9 +185,8 @@ func traceArgoForOwner(ctx context.Context, tr *ArgoTracer, obj *unstructured.Un
 	return tr.Trace(ctx, obj.GetKind(), obj.GetName(), obj.GetNamespace())
 }
 
-func collectFluxGitSource(ctx context.Context, obj *unstructured.Unstructured, owner Ownership) *GitSourceAnchor {
-	tr := NewFluxTracer()
-	if !tr.Available() {
+func collectFluxGitSource(ctx context.Context, tr *FluxTracer, obj *unstructured.Unstructured, owner Ownership) *GitSourceAnchor {
+	if tr == nil || !tr.Available() {
 		return nil
 	}
 	res, err := traceFluxForOwner(ctx, tr, obj, owner)
