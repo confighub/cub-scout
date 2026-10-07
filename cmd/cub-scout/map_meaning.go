@@ -63,7 +63,10 @@ func init() {
 }
 
 func runMapMeaning(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 
 	if mapOwner != "" {
 		if err := ValidateOwner(mapOwner); err != nil {
@@ -116,7 +119,7 @@ func runMapMeaning(cmd *cobra.Command, args []string) error {
 }
 
 func collectMapEntriesForMeaning(ctx context.Context) ([]MapEntry, error) {
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return nil, withKubeRecoveryHint(fmt.Errorf("build kubernetes config: %w", err), "cub-scout map meaning")
 	}

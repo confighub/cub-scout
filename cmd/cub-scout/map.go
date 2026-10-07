@@ -694,6 +694,11 @@ func init() {
 	mapListCmd.Flags().String("kube-context", "", "Use this exact Kubernetes context for this inventory read")
 	mapWorkloadsCmd.Flags().String("kube-context", "", "Use this exact Kubernetes context for this workload read (no fallback)")
 	mapPatternsCmd.Flags().String("kube-context", "", "Use this exact Kubernetes context for this pattern read (no fallback)")
+	for _, cmd := range mapClusterReadCommands() {
+		if cmd.Flags().Lookup("kube-context") == nil {
+			cmd.Flags().String("kube-context", "", "Use this exact Kubernetes context for every read in this command (no fallback)")
+		}
+	}
 	mapListCmd.Flags().Bool("cluster-identity", false, "Include observed cluster identity and identity-only read cost in a separate envelope (one extra GET)")
 	mapListCmd.Flags().StringVar(&mapNamespace, "namespace", "", "Filter by namespace")
 	mapListCmd.Flags().StringVar(&mapKind, "kind", "", "Filter by resource kind")
@@ -1973,9 +1978,12 @@ func runMapStatus(cmd *cobra.Command, args []string) error {
 		return loadAndRenderMapStatusFromJSON(statusJSON)
 	}
 
-	ctx := context.Background()
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("build kubernetes config: %w", err)
 	}
@@ -2051,9 +2059,12 @@ func runMapStatus(cmd *cobra.Command, args []string) error {
 
 // runMapProblems lists resources with issues
 func runMapProblems(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("build kubernetes config: %w", err)
 	}
@@ -2227,9 +2238,12 @@ type DeployerEntry struct {
 }
 
 func runMapDeployers(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("build kubernetes config: %w", err)
 	}
@@ -2585,9 +2599,12 @@ func runMapWorkloads(cmd *cobra.Command, args []string) error {
 }
 
 func runMapDrift(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("build kubernetes config: %w", err)
 	}
@@ -2655,9 +2672,12 @@ func runMapDrift(cmd *cobra.Command, args []string) error {
 }
 
 func runMapSprawl(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("build kubernetes config: %w", err)
 	}
@@ -2731,9 +2751,12 @@ func runMapSprawl(cmd *cobra.Command, args []string) error {
 
 // runMapDashboard shows unified health + ownership dashboard
 func runMapDashboard(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("build kubernetes config: %w", err)
 	}
@@ -2860,9 +2883,12 @@ func runMapDashboard(cmd *cobra.Command, args []string) error {
 }
 
 func runMapBypass(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("build kubernetes config: %w", err)
 	}
@@ -3434,9 +3460,12 @@ func getContainerImage(obj *unstructured.Unstructured) string {
 
 // runMapCrashes shows crashing pods (focused on pod-level health issues)
 func runMapCrashes(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("build kubernetes config: %w", err)
 	}
@@ -3732,7 +3761,11 @@ func runMapHooks(cmd *cobra.Command, args []string) error {
 		}
 	} else {
 		// Live cluster mode
-		cfg, err := buildConfig()
+		ctx, ctxErr := boundCommandContext(cmd)
+		if ctxErr != nil {
+			return ctxErr
+		}
+		cfg, err := treeClusterConfig(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to get cluster config: %w", err)
 		}
@@ -3751,7 +3784,6 @@ func runMapHooks(cmd *cobra.Command, args []string) error {
 			{Group: "", Version: "v1", Resource: "serviceaccounts"},
 		}
 
-		ctx := context.Background()
 		for _, gvr := range gvrs {
 			var list *unstructured.UnstructuredList
 			var listErr error
@@ -3992,6 +4024,10 @@ type mapPreviewRow struct {
 }
 
 func runMapCronJobs(cmd *cobra.Command, args []string) error {
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 	if mapOwner != "" {
 		if err := ValidateOwner(mapOwner); err != nil {
 			return err
@@ -4007,7 +4043,7 @@ func runMapCronJobs(cmd *cobra.Command, args []string) error {
 		}
 		rows = loaded
 	} else {
-		loaded, err := collectCronJobs(context.Background())
+		loaded, err := collectCronJobs(ctx)
 		if err != nil {
 			return err
 		}
@@ -4018,6 +4054,10 @@ func runMapCronJobs(cmd *cobra.Command, args []string) error {
 }
 
 func runMapJobs(cmd *cobra.Command, args []string) error {
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 	if mapOwner != "" {
 		if err := ValidateOwner(mapOwner); err != nil {
 			return err
@@ -4033,7 +4073,7 @@ func runMapJobs(cmd *cobra.Command, args []string) error {
 		}
 		rows = loaded
 	} else {
-		loaded, err := collectJobs(context.Background())
+		loaded, err := collectJobs(ctx)
 		if err != nil {
 			return err
 		}
@@ -4044,6 +4084,10 @@ func runMapJobs(cmd *cobra.Command, args []string) error {
 }
 
 func runMapActions(cmd *cobra.Command, args []string) error {
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 	kind, name, err := parseKindNameArg(args[0])
 	if err != nil {
 		return err
@@ -4062,7 +4106,7 @@ func runMapActions(cmd *cobra.Command, args []string) error {
 		}
 		actions = loaded
 	} else {
-		loaded, err := buildActionPreviews(context.Background(), kind, name, ns)
+		loaded, err := buildActionPreviews(ctx, kind, name, ns)
 		if err != nil {
 			return err
 		}
@@ -4119,6 +4163,10 @@ func runMapActions(cmd *cobra.Command, args []string) error {
 }
 
 func runMapActivity(cmd *cobra.Command, args []string) error {
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 	if mapOwner != "" {
 		if err := ValidateOwner(mapOwner); err != nil {
 			return err
@@ -4134,7 +4182,7 @@ func runMapActivity(cmd *cobra.Command, args []string) error {
 		}
 		rows = loaded
 	} else {
-		loaded, err := collectActivity(context.Background())
+		loaded, err := collectActivity(ctx)
 		if err != nil {
 			return err
 		}
@@ -4145,6 +4193,10 @@ func runMapActivity(cmd *cobra.Command, args []string) error {
 }
 
 func runMapPreviews(cmd *cobra.Command, args []string) error {
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 	staleAfter, err := parseDurationWithDays(mapPreviewStaleAfter)
 	if err != nil {
 		return fmt.Errorf("invalid --stale-after: %w", err)
@@ -4158,7 +4210,7 @@ func runMapPreviews(cmd *cobra.Command, args []string) error {
 		}
 		rows = loaded
 	} else {
-		loaded, err := collectPreviews(context.Background(), staleAfter)
+		loaded, err := collectPreviews(ctx, staleAfter)
 		if err != nil {
 			return err
 		}
@@ -4169,7 +4221,7 @@ func runMapPreviews(cmd *cobra.Command, args []string) error {
 }
 
 func collectCronJobs(ctx context.Context) ([]mapCronJobRow, error) {
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("build kubernetes config: %w", err)
 	}
@@ -4255,7 +4307,7 @@ func collectCronJobs(ctx context.Context) ([]mapCronJobRow, error) {
 }
 
 func collectJobs(ctx context.Context) ([]mapJobRow, error) {
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("build kubernetes config: %w", err)
 	}
@@ -4326,7 +4378,7 @@ func buildActionPreviews(ctx context.Context, kind, name, namespace string) ([]m
 		return nil, fmt.Errorf("unsupported kind for action previews: %s", kind)
 	}
 
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("build kubernetes config: %w", err)
 	}
@@ -4395,7 +4447,7 @@ func collectActivity(ctx context.Context) ([]mapActivityRow, error) {
 		deliveryOpts = opts
 	}
 
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("build kubernetes config: %w", err)
 	}
@@ -4874,7 +4926,7 @@ func mapActivityDeliveryNextStep(delivery, appHealth agent.ReceiptVerdict, fresh
 }
 
 func collectPreviews(ctx context.Context, staleAfter time.Duration) ([]mapPreviewRow, error) {
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("build kubernetes config: %w", err)
 	}
@@ -6150,9 +6202,12 @@ func printConfigHubContext(unit *cubUnitInfo) {
 // runMapClusterData shows all data sources read from cluster with MAXIMUM detail
 // CLI equivalent of TUI's '4' key (Cluster Data view)
 func runMapClusterData(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("build kubernetes config: %w", err)
 	}
@@ -8304,9 +8359,12 @@ func decodeHelmRelease(data string) map[string]interface{} {
 // runMapAppHierarchy shows inferred ConfigHub app hierarchy with MAXIMUM detail
 // CLI equivalent of TUI's '5' or 'A' key (App Hierarchy view)
 func runMapAppHierarchy(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("build kubernetes config: %w", err)
 	}
