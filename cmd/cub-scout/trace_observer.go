@@ -195,6 +195,15 @@ func observeTrace(ctx context.Context, session *traceSession, kind, name, namesp
 // capturedTraceFluxFactory keeps child credentials private and scoped to the
 // same session as in-process readers. observeTrace invokes cleanup on every exit.
 func capturedTraceFluxFactory(session *traceSession) (agent.Tracer, func() error, error) {
+	// The flux CLI is optional. Without it the same objects are read through
+	// this session's Kubernetes client, so no child kubeconfig is written.
+	if !agent.NewFluxTracer().Available() {
+		dynClient, err := session.dynamicClient()
+		if err != nil {
+			return nil, nil, err
+		}
+		return agent.NewFluxTracerWithKubernetesClient(dynClient), func() error { return nil }, nil
+	}
 	config, err := session.createChildKubeconfig()
 	if err != nil {
 		return nil, nil, err

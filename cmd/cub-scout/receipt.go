@@ -824,7 +824,7 @@ func collectSourceTruthForReceipt(ctx context.Context, kind, name, namespace, st
 func receiptGitSourceAnchor(ctx context.Context, live *unstructured.Unstructured, owner agent.Ownership) *agent.GitSourceAnchor {
 	binding := treeContextBinding(ctx)
 	if binding == nil {
-		return agent.CollectGitSourceAnchorForOwnerWith(ctx, live, owner, agent.GitSourceTracers{Argo: ambientArgoTracer(ctx), Flux: agent.NewFluxTracer()})
+		return agent.CollectGitSourceAnchorForOwnerWith(ctx, live, owner, agent.GitSourceTracers{Argo: ambientArgoTracer(ctx), Flux: ambientFluxTracer(ctx)})
 	}
 	session, err := newTraceSessionFromBinding(binding)
 	if err != nil {
@@ -839,9 +839,7 @@ func receiptGitSourceAnchor(ctx context.Context, live *unstructured.Unstructured
 	if owner.Type == agent.OwnerFlux || owner.Type == agent.OwnerConfigHub {
 		if tracer, cleanup, err := capturedTraceFluxFactory(session); err == nil {
 			defer func() { _ = cleanup() }()
-			if flux, ok := tracer.(*agent.FluxTracer); ok {
-				tracers.Flux = flux
-			}
+			tracers.Flux = tracer
 		}
 	}
 	return agent.CollectGitSourceAnchorForOwnerWith(ctx, live, owner, tracers)
@@ -867,4 +865,23 @@ func ambientArgoTracer(ctx context.Context) *agent.ArgoTracer {
 		return cli
 	}
 	return agent.NewArgoTracerWithKubernetesClient(dynClient)
+}
+
+// ambientFluxTracer is ambientArgoTracer for Flux: the flux CLI when it is
+// installed, otherwise the same objects read through the Kubernetes API on the
+// ambient cluster (#824).
+func ambientFluxTracer(ctx context.Context) agent.Tracer {
+	cli := agent.NewFluxTracer()
+	if cli.Available() {
+		return cli
+	}
+	cfg, err := treeClusterConfig(ctx)
+	if err != nil {
+		return cli
+	}
+	dynClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return cli
+	}
+	return agent.NewFluxTracerWithKubernetesClient(dynClient)
 }
