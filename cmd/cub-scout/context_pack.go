@@ -87,6 +87,10 @@ type contextPackInput struct {
 }
 
 func runContextPack(cmd *cobra.Command, args []string) error {
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 	format := strings.ToLower(strings.TrimSpace(contextPackFormat))
 	if format != "json" {
 		return fmt.Errorf("invalid --format %q (valid: json)", contextPackFormat)
@@ -101,7 +105,7 @@ func runContextPack(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("--max-bytes must be > 0")
 	}
 
-	input, source, err := loadContextPackInput(cmd.Context(), strings.TrimSpace(contextPackNamespace))
+	input, source, err := loadContextPackInput(ctx, strings.TrimSpace(contextPackNamespace))
 	if err != nil {
 		return err
 	}

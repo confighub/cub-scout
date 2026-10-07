@@ -145,6 +145,10 @@ func runPatternsList(cmd *cobra.Command, args []string) error {
 }
 
 func runPatternsDetect(cmd *cobra.Command, args []string) error {
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 	// Validate git flags (exit 2 for invalid combinations)
 	if err := validateGitFlags(patternsDetectGitRoot, patternsDetectGitURL, patternsDetectGitRef, patternsDetectGitSubpath); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
@@ -152,7 +156,7 @@ func runPatternsDetect(cmd *cobra.Command, args []string) error {
 	}
 
 	// Build graph
-	g, err := buildPatternsGraph(patternsDetectNamespace, patternsDetectEmpty)
+	g, err := buildPatternsGraph(ctx, patternsDetectNamespace, patternsDetectEmpty)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
@@ -189,6 +193,10 @@ func runPatternsDetect(cmd *cobra.Command, args []string) error {
 }
 
 func runPatternsExplain(cmd *cobra.Command, args []string) error {
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 	patternID := args[0]
 
 	// Validate git flags (exit 2 for invalid combinations)
@@ -209,7 +217,7 @@ func runPatternsExplain(cmd *cobra.Command, args []string) error {
 	}
 
 	// Build graph
-	g, err := buildPatternsGraph(patternsExplainNamespace, patternsExplainEmpty)
+	g, err := buildPatternsGraph(ctx, patternsExplainNamespace, patternsExplainEmpty)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
@@ -305,7 +313,7 @@ func resolveGitContext(gitRoot, gitURL, gitRef, gitSubpath string) (*gitctx.GitC
 
 // buildPatternsGraph builds a graph for pattern detection.
 // Collects K8s ownership chain + GitOps CRDs.
-func buildPatternsGraph(namespace string, empty bool) (*graph.Graph, error) {
+func buildPatternsGraph(ctx context.Context, namespace string, empty bool) (*graph.Graph, error) {
 	// TEST HOOK: Load graph from JSON file to bypass cluster access in integration tests.
 	// In production this env var is never set, so real K8s graph collection is always used.
 	if graphJSONPath := os.Getenv("CUB_SCOUT_TEST_GRAPH_JSON"); graphJSONPath != "" {
@@ -315,7 +323,7 @@ func buildPatternsGraph(namespace string, empty bool) (*graph.Graph, error) {
 	// Get cluster name
 	cluster := os.Getenv("CUB_SCOUT_TEST_CLUSTER")
 	if cluster == "" {
-		cluster = getCurrentContext()
+		cluster = boundContextLabel(ctx)
 	}
 
 	// Create graph
@@ -333,12 +341,10 @@ func buildPatternsGraph(namespace string, empty bool) (*graph.Graph, error) {
 	}
 
 	// Build k8s config
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return g, nil // Return empty graph if no cluster access
 	}
-
-	ctx := context.Background()
 
 	// Collect K8s ownership chain
 	client, err := kubernetes.NewForConfig(cfg)

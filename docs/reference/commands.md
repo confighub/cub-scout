@@ -3559,6 +3559,14 @@ directly, with the same strict refusal of a missing or blank selection:
 `patterns`. `map hub`, `map fleet` and `map queries` read no cluster and do not
 accept it.
 
+`debug`, `drift` (and `compare drift`), `graph explain`, `patterns detect`,
+`patterns explain` and `context-pack` accept `--kube-context` with the same
+semantics. Where they print a cluster or context label (`graph explain`,
+`patterns`, `drift`), the label comes from the same captured selection as the
+reads. `context-pack` keeps its `cluster` field, which is the `CLUSTER_NAME`
+environment label and not a kubeconfig context. `suggest-remedy` and
+`quickstart` shell out to `kubectl` and do not accept the flag.
+
 ### StatefulSet image coverage (v2.14 candidate, #795)
 
 `release check --check-running-image` also checks `apps/v1` StatefulSets.

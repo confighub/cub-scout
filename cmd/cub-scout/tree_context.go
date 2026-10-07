@@ -87,3 +87,30 @@ func mapClusterReadCommands() []*cobra.Command {
 		mapMeaningCmd, mapPatternsCmd,
 	}
 }
+
+// boundContextLabel names the context a command's reads go to: the explicit
+// selection carried by ctx, or the ambient current-context when there is none.
+// A label printed beside evidence must come from the same capture as the reads.
+func boundContextLabel(ctx context.Context) string {
+	if binding := treeContextBinding(ctx); binding != nil {
+		return binding.context
+	}
+	return getCurrentContext()
+}
+
+// contextBoundReadCommands lists the read commands outside map and tree that
+// accept --kube-context through boundCommandContext (#809).
+func contextBoundReadCommands() []*cobra.Command {
+	return []*cobra.Command{
+		debugCmd, driftCmd, compareDriftCmd, graphExplainCmd,
+		patternsDetectCmd, patternsExplainCmd, contextPackCmd,
+	}
+}
+
+func init() {
+	for _, cmd := range contextBoundReadCommands() {
+		if cmd.Flags().Lookup("kube-context") == nil {
+			cmd.Flags().String("kube-context", "", "Use this exact Kubernetes context for every read in this command (no fallback)")
+		}
+	}
+}

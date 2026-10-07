@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -49,6 +48,10 @@ func init() {
 }
 
 func runGraphExplain(cmd *cobra.Command, args []string) error {
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 	// Parse kind/name argument
 	kindName := args[0]
 	parts := strings.SplitN(kindName, "/", 2)
@@ -68,7 +71,7 @@ func runGraphExplain(cmd *cobra.Command, args []string) error {
 	// Get cluster name
 	cluster := os.Getenv("CUB_SCOUT_TEST_CLUSTER")
 	if cluster == "" {
-		cluster = getCurrentContext()
+		cluster = boundContextLabel(ctx)
 	}
 
 	// Build graph
@@ -76,7 +79,7 @@ func runGraphExplain(cmd *cobra.Command, args []string) error {
 
 	// Collect from cluster unless we're in test mode
 	if os.Getenv("CUB_SCOUT_TEST_TIME") == "" {
-		cfg, err := buildConfig()
+		cfg, err := treeClusterConfig(ctx)
 		if err != nil {
 			// If no cluster access, proceed with empty graph
 			// Target won't be found, which is correct
@@ -88,7 +91,6 @@ func runGraphExplain(cmd *cobra.Command, args []string) error {
 			}
 
 			collector := graph.NewCollector(client, cluster)
-			ctx := context.Background()
 
 			// Collect ownership chain (ignore errors for best-effort)
 			_ = collector.CollectOwnershipChain(ctx, g, "")
