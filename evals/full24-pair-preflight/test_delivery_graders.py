@@ -29,7 +29,11 @@ process.stdout.write(JSON.stringify(packet.answers.map(answer => regex.test(answ
 """
 MAX_NODE_INPUT = 256 * 1024
 MAX_NODE_OUTPUT = 4096
-NODE_TIMEOUT_SECONDS = 5
+# A bound on one Node process, there to stop a regex that backtracks without
+# end. It has to cover a cold Node start on a loaded shared CI runner: the
+# regex work itself is about 0.02s and a start about 0.07s locally, but a
+# start exceeded 5s on CI and failed an unrelated PR (#828).
+NODE_TIMEOUT_SECONDS = 30
 
 
 def _find_node() -> str | None:
