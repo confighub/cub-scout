@@ -2,6 +2,10 @@
 
 ## Current checkpoint — 2026-10-06
 
+**Superseded 2026-10-07: v2.13.2 is published** at `f0ac45ca`; see
+[v2.13.2 published](#v2132-published-2026-10-07) at the end of this file for
+the current state. The 2026-10-06 checkpoint below is kept as written.
+
 **v2.13.1 is published**, source `277d7ad8`, with tagged full Go tests and
 packaging passing. See [published verification](docs/releases/v2.13.1.md).
 The immutable v2.13.0 tag remains after its documentation-contract failure;
@@ -1786,3 +1790,25 @@ tracer's OCIRepository, Bucket and `chartRef` paths work on a real cluster
 (implemented, not exercised). Sequence tasks 26 to 32 beyond their first
 slices are not started. Note for PR text: "does not close" followed by an issue
 number closes that issue on merge.
+
+
+## v2.13.2 published (2026-10-07)
+
+v2.13.2 is published at `f0ac45ca`, cut from `main`. It ships the corrections
+found by the live surface-agreement work (Flux source anchors, Flux readiness,
+`explain` on a broken delivery chain, `map status` and scale-to-zero, the
+`suggest-remedy` shell invocation, `compare`'s silence), the Kubernetes-API
+tracers for when the `flux` or `argocd` CLI is absent, and `--kube-context` on
+nearly every read command. Because it was cut from `main` it also contains the
+opt-in v2.14 candidate work merged up to that point. See
+[the release notes](docs/releases/v2.13.2.md) for what was and was not
+verified.
+
+Release mechanics that worked: a notes PR that also moves the README and
+install guide to the new version (#837), merged only when the tag is wanted;
+wait for `main` CI on the merge commit; an annotated tag on that commit; then
+check the published artifacts and record the result here and in the notes.
+
+v2.14 is not released and none of its ten tasks is complete. Not exercised in
+this release: Windows execution, `brew install`, any ConfigHub-connected run,
+the heavy CI lanes, and any agent eval.

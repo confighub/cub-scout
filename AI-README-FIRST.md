@@ -1,6 +1,7 @@
 # AI Read Me First
 
-**2026-10-06:** [v2.13.1 is published](docs/releases/v2.13.1.md). Start from
+**2026-10-07:** [v2.13.2 is published](docs/releases/v2.13.2.md), a correction
+release cut from `main`; [v2.13.1](docs/releases/v2.13.1.md) preceded it. Start from
 the current handover for v2.14 reconciliation and deferred acceptance work.
 
 
