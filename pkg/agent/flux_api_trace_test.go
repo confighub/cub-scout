@@ -26,12 +26,24 @@ import (
 // repository.
 func recordedFluxObjects(t *testing.T) []runtime.Object {
 	t.Helper()
-	var objects []runtime.Object
-	for _, name := range []string{
+	return recordedObjects(t,
 		"deployment-podinfo", "kustomization-podinfo", "gitrepository-podinfo",
-		"deployment-podinfo-helm", "helmrelease-podinfo-helm", "helmchart-podinfo-helm", "helmrepository-podinfo",
-	} {
-		raw, err := os.ReadFile(filepath.Join("testdata", "flux-api-trace", name+".json"))
+		"deployment-podinfo-helm", "helmrelease-podinfo-helm", "helmchart-podinfo-helm", "helmrepository-podinfo")
+}
+
+// recordedOCIObjects is a second recording, from another cluster of the same
+// kind: podinfo delivered by a Kustomization from an OCIRepository. It is kept
+// apart because its Deployment has the same name and namespace as the first.
+func recordedOCIObjects(t *testing.T) []runtime.Object {
+	t.Helper()
+	return recordedObjects(t, "oci/deployment-podinfo-oci", "oci/kustomization-podinfo-oci", "oci/ocirepository-podinfo-oci")
+}
+
+func recordedObjects(t *testing.T, names ...string) []runtime.Object {
+	t.Helper()
+	var objects []runtime.Object
+	for _, name := range names {
+		raw, err := os.ReadFile(filepath.Join("testdata", "flux-api-trace", filepath.FromSlash(name)+".json"))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -74,16 +86,19 @@ func cliTraceOfRecording(t *testing.T, recording, kind, name, namespace string) 
 func TestFluxAPITraceMatchesTheCLITraceOfTheSameCluster(t *testing.T) {
 	for _, tc := range []struct {
 		name, recording, workload, namespace string
+		objects                              func(*testing.T) []runtime.Object
 		wantKinds                            []string
 		wantURL                              string
 	}{
-		{"kustomization", "flux-trace-deployment-podinfo.txt", "podinfo", "team-a",
+		{"kustomization", "flux-trace-deployment-podinfo.txt", "podinfo", "team-a", recordedFluxObjects,
 			[]string{"GitRepository", "Kustomization", "Deployment"}, "https://github.com/stefanprodan/podinfo"},
-		{"helm release", "flux-trace-deployment-podinfo-helm.txt", "podinfo-helm", "team-b",
+		{"helm release", "flux-trace-deployment-podinfo-helm.txt", "podinfo-helm", "team-b", recordedFluxObjects,
 			[]string{"HelmRepository", "HelmChart", "HelmRelease", "Deployment"}, "https://stefanprodan.github.io/podinfo"},
+		{"oci repository", "oci/flux-trace-deployment-podinfo-oci.txt", "podinfo", "team-a", recordedOCIObjects,
+			[]string{"OCIRepository", "Kustomization", "Deployment"}, "oci://ghcr.io/stefanprodan/manifests/podinfo"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			tracer, client := fluxAPITracerOn(t, recordedFluxObjects(t))
+			tracer, client := fluxAPITracerOn(t, tc.objects(t))
 			got, err := tracer.Trace(context.Background(), "Deployment", tc.workload, tc.namespace)
 			if err != nil {
 				t.Fatal(err)
