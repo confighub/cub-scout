@@ -270,3 +270,37 @@ as a problem. That is a separate defect; the proof uses a running workload.
 
 This shows which context each subcommand reads. It does not add cluster
 identity, read cost, omission reporting or Target binding to these subcommands.
+
+## Other read commands follow-on (#809)
+
+`debug`, `drift` (and `compare drift`), `graph explain`, `patterns detect`,
+`patterns explain` and `context-pack` accept `--kube-context` with the same
+capture-once semantics:
+
+```bash
+./cub-scout debug deployment/api --namespace team-a --non-interactive --kube-context selected
+./cub-scout graph explain Deployment/api --namespace team-a --kube-context selected
+./cub-scout compare drift --file desired.yaml --kube-context selected
+```
+
+Where a command prints a cluster or context label, the label comes from the
+same selection as the reads: `graph explain` prints
+`Target: selected/team-a/Deployment/api`. Before this change those labels named
+the ambient context. `context-pack` keeps its `cluster` field, which is the
+`CLUSTER_NAME` environment label and not a kubeconfig context.
+
+Deterministic coverage: `go test ./cmd/cub-scout -run
+'TestReadCommandsReadOnlyTheSelectedContext|TestBoundCommandsLabelTheSelectedContext' -count=1`.
+The first runs each command as a real process against a selected and an ambient
+HTTP server, because several of these commands finish through `os.Exit`.
+
+`verify-live-command-context.py` runs all seven entry points on one owned kind
+cluster with an unusable ambient context. The
+[source-bound live proof](live-command-context-proof.json) passed on Kubernetes
+1.35. `patterns detect` exits 4 there, its documented result when no pattern
+matches.
+
+`suggest-remedy` and `quickstart` shell out to `kubectl`, so they do not accept
+the flag yet: binding their reads without binding those subprocesses would be a
+partial pin. `receipt`, `compare` (resource) and the `hierarchy` TUI are a
+separate slice.

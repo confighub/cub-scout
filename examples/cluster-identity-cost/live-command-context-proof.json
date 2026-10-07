@@ -1,0 +1,193 @@
+{
+  "schema": "v214-command-context-live-proof.v1",
+  "sourceCommit": "670c02c8915f3ec93655edddefd408fd3fc688e4",
+  "sourceCommitUnchanged": true,
+  "sourceWorktreeCleanBeforeAndAfter": true,
+  "binarySHA256": "ae5b6eb01ce4657f4df996f568e02f35a158183113c6498f2aa1ebfcb650a78d",
+  "finished": "2026-10-07T07:08:47+00:00",
+  "kubernetesNodeImage": "kindest/node:v1.35.0",
+  "ownedClusterRemoved": true,
+  "sharedKubeconfigUnchanged": true,
+  "commands": [
+    "debug",
+    "drift",
+    "compare-drift",
+    "graph-explain",
+    "patterns-detect",
+    "patterns-explain",
+    "context-pack"
+  ],
+  "passed": true,
+  "failures": [],
+  "steps": [
+    {
+      "name": "before-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "ed1eebf9e0bfcabcd25897af8b962741de8be72b0e384af9f009179c109103c5"
+    },
+    {
+      "name": "bootstrap-owned-resources",
+      "exit": 0,
+      "stdoutSHA256": "362e3cfcdd8931c9a00999e0f45a341ef09977f5b82089769abe2968ed9b0f15",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-for-workload",
+      "exit": 0,
+      "stdoutSHA256": "efdadad7b26a57b32843072cda10d06549f1bb02a5f9aecc702572d35c3476e5",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "control-ambient-unusable",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "4eb66eefa38a5daa7d6cba4f77777fe86d6a0f812933ebc45288d1a4df0635fa"
+    },
+    {
+      "name": "debug",
+      "exit": 0,
+      "stdoutSHA256": "ad3e71669c801dacafd9d17a1028b140c84d1c44505e9baee830dfa3cd841686",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "debug-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "debug-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "drift",
+      "exit": 0,
+      "stdoutSHA256": "9d4cd2841aaa2119d0155ed408b45c4e01bc032ce393ff0c1026a418d63afb70",
+      "stderrSHA256": "9b87437401f1e6adc26991bb61244d027ee9b83ec2d26a6001dfd359d7a43a1a"
+    },
+    {
+      "name": "drift-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "da767493a0ba6e2c37224b5044cf808c7eb3cd940637c0d06170ddd80fa7aa5d"
+    },
+    {
+      "name": "drift-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "fb0ad88819ccd455673791270c60fdd4759cf5e6f6ef58b47adaef2ec94fbb94"
+    },
+    {
+      "name": "compare-drift",
+      "exit": 0,
+      "stdoutSHA256": "9d4cd2841aaa2119d0155ed408b45c4e01bc032ce393ff0c1026a418d63afb70",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "compare-drift-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "compare-drift-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "graph-explain",
+      "exit": 0,
+      "stdoutSHA256": "0d67edfda81e2cbcea465ccbd70e235bfa29a447a4710a599b34b3cf4d1fd224",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "graph-explain-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "graph-explain-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "patterns-detect",
+      "exit": 4,
+      "stdoutSHA256": "1b6cf084ed339d78067dd7d3ee40cf38e44ac85bd12a6ac1c4350baea33e44cc",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "patterns-detect-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "patterns-detect-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "patterns-explain",
+      "exit": 0,
+      "stdoutSHA256": "aaa284cd830303b18ffc6cb09dd21759e8a6c5de735e76e41e085d6e93678698",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "patterns-explain-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "patterns-explain-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "context-pack",
+      "exit": 0,
+      "stdoutSHA256": "97d6aa0d9bf418f8bc2dcb9a43aa4a5cb82a3400baf0af08fb274415ab8d20fa",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "context-pack-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "context-pack-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "cleanup-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "f7c7a82a2ad6183e32d2d1cc01cb9dba15c1ba849ce1fa13825766ec09fc29ac"
+    },
+    {
+      "name": "after-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "limits": "One owned kind cluster with authored workloads and no GitOps controllers. Shows which context each command reads and labels, and that missing/blank selections refuse. It does not show cluster identity, read cost, complete inventory, Target binding or six-surface agreement."
+}
