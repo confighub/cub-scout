@@ -196,21 +196,20 @@ func collectFluxGitSource(ctx context.Context, tr *FluxTracer, obj *unstructured
 	return anchorWithTemplatedSource(res.Chain)
 }
 
-// traceFluxForOwner dispatches Flux tracing similarly. Flux's Trace
-// accepts Kustomization / HelmRelease kinds directly, but a workload
-// owned by one must trace via the owner's name + kind. Falls back to
-// the tracer's own Trace(kind, name, ns) for tracer-internal types
-// (HelmRelease, Kustomization) when invoked on those directly.
-func traceFluxForOwner(ctx context.Context, tr *FluxTracer, obj *unstructured.Unstructured, owner Ownership) (*TraceResult, error) {
-	if obj.GetKind() == "Kustomization" || obj.GetKind() == "HelmRelease" {
-		return tr.Trace(ctx, obj.GetKind(), obj.GetName(), obj.GetNamespace())
-	}
-	// For workloads owned by a Flux Kustomization / HelmRelease, use the
-	// owner-aware tracer that already knows the right kind from the
-	// ownership subType.
-	if owner.Type == OwnerFlux && owner.Name != "" {
-		return tr.TraceByOwnership(ctx, owner)
-	}
+// traceFluxForOwner traces the object the anchor is for. owner is unused for
+// Flux: the object's own labels carry what `flux trace` needs.
+func traceFluxForOwner(ctx context.Context, tr *FluxTracer, obj *unstructured.Unstructured, _ Ownership) (*TraceResult, error) {
+	// Trace the object itself. `flux trace` follows the object's own Flux
+	// labels to the Kustomization or HelmRelease that applied it and on to that
+	// object's source, which is the source of the workload's manifests.
+	//
+	// Tracing the owner asks a different question: what manages the owner
+	// object. For a root Kustomization the answer is nothing ("object not
+	// managed by Flux"), so there was no anchor. Under a parent Kustomization,
+	// as `flux bootstrap` lays things out, the answer is the parent and the
+	// fleet repository, which was then reported as the workload's Git source
+	// (#814). There is deliberately no fallback to the owner trace: no anchor
+	// is better than another object's.
 	return tr.Trace(ctx, obj.GetKind(), obj.GetName(), obj.GetNamespace())
 }
 

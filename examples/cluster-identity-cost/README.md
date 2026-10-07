@@ -344,8 +344,12 @@ runs all five modes with an unusable ambient context. The
 The [first attempt](live-receipt-context-attempt-1.json) is retained: the
 harness assumed one JSON document per run and aggregate mode prints several.
 
-Two limits. Argo CD is not installed in the live run, so the bound Argo tracer
-is covered by the deterministic test only. And the run shows no Git source
-anchor in the receipt: for a Flux-owned workload the tracer asks `flux trace`
-about the Kustomization, which Flux rejects, so receipts for Flux-delivered
-workloads are INCONCLUSIVE with or without the flag. That is a separate defect.
+One limit: Argo CD is not installed in the live run, so the bound Argo tracer
+is covered by the deterministic test only.
+
+The retained proof predates the fix for #814 and shows its symptom: no Git
+source anchor, because the tracer asked `flux trace` about the owning
+Kustomization rather than the workload. With that fixed, the same receipt
+carries the podinfo repository and revision and passes `applied-matches-spec`.
+The `flux` calls recorded in the proof (`trace kustomization podinfo`) are the
+old behaviour; the tracer now runs `trace deployment podinfo -n team-a`.
