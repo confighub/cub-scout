@@ -1,0 +1,140 @@
+{
+  "schema": "v214-compare-context-live-proof.v1",
+  "sourceCommit": "602c92a4e3854a84555f52ce535e9108deb2da8e",
+  "sourceCommitUnchanged": true,
+  "sourceWorktreeCleanBeforeAndAfter": true,
+  "binarySHA256": "6ebf2d65c31b54534e722bc072853c860aceba723e4d4bdda1c041483f14dd7d",
+  "finished": "2026-10-07T14:21:24+00:00",
+  "kubernetesNodeImage": "kindest/node:v1.35.0",
+  "fluxComponents": [
+    "source-controller",
+    "kustomize-controller"
+  ],
+  "ownedClusterRemoved": true,
+  "sharedKubeconfigUnchanged": true,
+  "modes": [
+    "resource",
+    "object-set"
+  ],
+  "fluxCallsBound": [
+    "trace deployment podinfo -n team-a --kubeconfig <private-child-kubeconfig> --context cub-scout-trace"
+  ],
+  "fluxCallsLegacy": [
+    "version --client",
+    "trace deployment podinfo -n team-a"
+  ],
+  "gitSource": [
+    {
+      "repoUrl": "https://github.com/stefanprodan/podinfo",
+      "revision": "6.7.1@sha1:6b7aab8a10d6ee8b895b0a5048f4ab0966ed29ff"
+    }
+  ],
+  "boundGitSourceEqualsLegacy": true,
+  "passed": true,
+  "failures": [],
+  "steps": [
+    {
+      "name": "before-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "4812c3843dc4686fccafe40cbf413ca328943c3251b0bd0ce8c83b5b5267a5ba"
+    },
+    {
+      "name": "install-flux",
+      "exit": 0,
+      "stdoutSHA256": "103056d7472528f156174c2d0348584464bb173cc7a91644642d1e94314493a9",
+      "stderrSHA256": "d8f7aa189ad6a1a036db33be37985083373f40f1e6a11af27ffe5cdf2887eb3d"
+    },
+    {
+      "name": "create-namespace",
+      "exit": 0,
+      "stdoutSHA256": "aa41cec8dac195ede91e37e493d371c289d811f5e51bdfe21f68021f08528b94",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "flux-delivers-podinfo",
+      "exit": 0,
+      "stdoutSHA256": "2e139b4af72cb5d1d1d05e6fdec2ba8ded8746194ae048648841ab3754b9b24e",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-for-flux",
+      "exit": 0,
+      "stdoutSHA256": "be14938829be465841499e5ec8c35fb14e4461b86d5765d7d2ed55d66d3cce03",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-for-workload",
+      "exit": 0,
+      "stdoutSHA256": "81b90a46e387fc8d871a1281c987aa4d3e61fbef682ea1da064a062e83950db0",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "control-ambient-unusable",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "7ccc68cb599e1df242e6ff36e3947003fa27105906de05077588f296433fa86a"
+    },
+    {
+      "name": "compare-resource",
+      "exit": 0,
+      "stdoutSHA256": "c86218f72951b5428599f3fa16ec96514ed764ad0aa32a642d125cec35ded675",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "compare-resource-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "compare-resource-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "compare-object-set",
+      "exit": 0,
+      "stdoutSHA256": "775560b5cd414120a48349f7c7a628b2a301f64870b1086c5d7a71f2550f8e68",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "compare-object-set-refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "compare-object-set-refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "compare-resource-legacy",
+      "exit": 0,
+      "stdoutSHA256": "c86218f72951b5428599f3fa16ec96514ed764ad0aa32a642d125cec35ded675",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cleanup-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "2bd484530fd28df5333e456714de5fddd0267576c71221a7aa7fb99321ecd881"
+    },
+    {
+      "name": "after-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc6df72baef69efa975ee6e3b03bebfe3d05d283dff0b3389adb6232a47eec83",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "limits": "One owned kind cluster with real Flux delivering podinfo from a public Git repository. Shows which cluster compare <resource>, compare object-set and the Flux tracer read, and that the Git source is the workload's own repository. Argo CD is not installed. No ConfigHub: the DRY and WET sides are absent, so this is not a three-way comparison. It does not show cluster identity or read cost."
+}

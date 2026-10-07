@@ -353,3 +353,34 @@ Kustomization rather than the workload. With that fixed, the same receipt
 carries the podinfo repository and revision and passes `applied-matches-spec`.
 The `flux` calls recorded in the proof (`trace kustomization podinfo`) are the
 old behaviour; the tracer now runs `trace deployment podinfo -n team-a`.
+
+## Compare follow-on (#812)
+
+`compare <resource>` and `compare object-set` accept `--kube-context`:
+
+```bash
+./cub-scout compare deployment/podinfo --namespace team-a --kube-context selected
+./cub-scout compare object-set --dry-from desired.yaml --scope namespace/team-a --kube-context selected
+```
+
+With a selection, `compare <resource>` reads through one session bound to it,
+including the tracer behind its Git source, the path `compare three-way`
+already used. `compare` with no resource (the Git/namespace comparison and
+`--apply`) reads through `kubectl` and refuses the flag rather than bind only
+some of its reads.
+
+Deterministic coverage: `go test ./cmd/cub-scout -run
+'TestCompareReadsOnlyTheSelectedContext|TestCompareWithoutAResourceRefuses|TestCompareResourceTracerIsBound' -count=1`.
+
+`verify-live-compare-context.py` uses real Flux, as the receipt harness does.
+The [source-bound live proof](live-compare-context-proof.json) passed on
+Kubernetes 1.35: the Git source reported is podinfo's own repository and
+revision, every `flux` call was `trace deployment podinfo` on a private
+kubeconfig, and the legacy path reports the same source.
+
+The [first attempt](live-compare-context-attempt-1.json) failed on the product,
+not the harness. The session-bound path had its own copy of the #814 defect: it
+asked `flux trace` about the owning Kustomization, got "not managed by Flux",
+and reported no Git source. Under a parent Kustomization the same path reported
+the fleet repository. Both `compare <resource> --kube-context` and
+`compare three-way` went through it. It traces the object itself now.
