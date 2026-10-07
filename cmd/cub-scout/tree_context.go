@@ -51,6 +51,11 @@ func treeKubectlCommand(ctx context.Context, args ...string) *exec.Cmd {
 // to the ambient context. Without the flag the context is returned unchanged
 // and readers keep the legacy ambient behaviour through treeClusterConfig.
 func boundCommandContext(cmd *cobra.Command) (context.Context, error) {
+	if cmd == nil {
+		// Callers that invoke a run function directly, without a command,
+		// have no flag to carry a selection.
+		return context.Background(), nil
+	}
 	ctx := cmd.Context()
 	if ctx == nil {
 		ctx = context.Background()
@@ -104,6 +109,7 @@ func contextBoundReadCommands() []*cobra.Command {
 	return []*cobra.Command{
 		debugCmd, driftCmd, compareDriftCmd, graphExplainCmd,
 		patternsDetectCmd, patternsExplainCmd, contextPackCmd, receiptVerifyCmd,
+		combinedCmd, compareObjectSetCmd,
 	}
 }
 

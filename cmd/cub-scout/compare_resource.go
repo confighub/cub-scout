@@ -628,6 +628,17 @@ func matchCompareDryFromSummaries(summaries []*compareSideSummary, kind, name, n
 }
 
 func loadCompareLiveSnapshot(ctx context.Context, kind, name, namespace string) (compareSideSummary, error) {
+	// With an explicit context, every read goes through one session bound to
+	// it, including the Git source tracers. A summary returned with an error
+	// means LIVE was read and its enrichment is incomplete; the caller notes it.
+	if binding := treeContextBinding(ctx); binding != nil {
+		session, err := newTraceSessionFromBinding(binding)
+		if err != nil {
+			return compareSideSummary{}, fmt.Errorf("resolve selected Kubernetes context: %w", err)
+		}
+		return loadCompareLiveSnapshotWithTraceSession(ctx, session, kind, name, namespace)
+	}
+
 	cfg, err := buildConfig()
 	if err != nil {
 		return compareSideSummary{}, fmt.Errorf("build kubernetes config: %w", err)
