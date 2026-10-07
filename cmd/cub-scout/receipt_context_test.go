@@ -9,10 +9,13 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/dynamic"
 )
 
 // #812: receipt verify had no way to select a context. Each mode must read only
@@ -117,4 +120,52 @@ func TestReceiptGitSourceTracersAreBoundToTheSelectedContext(t *testing.T) {
 	})
 
 	require.Zero(t, ambient.requests.Load(), "the ambient cluster was read: %v", ambient.paths)
+}
+
+// watch --kube-context bound its own reads, but the receipts it built took
+// their Git source anchor from ambient tracers. The receipt builder must be
+// handed the selection; without the flag it must not be.
+func TestWatchHandsItsSelectionToReceiptBuilding(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		selection string
+		want      string
+	}{
+		{"explicit context", "selected", "selected"},
+		{"no flag", "", ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			defer overrideWatchDeps(t)()
+			priorBuild := watchBuildReceiptForEventFn
+			defer func() { watchBuildReceiptForEventFn = priorBuild }()
+			priorCap := watchReceiptBatchCap
+			defer func() { watchReceiptBatchCap = priorCap }()
+			selected, ambient := newCountedKubeServer(t), newCountedKubeServer(t)
+			path, _ := resolverKubeconfig(t, "ambient", map[string]string{"selected": selected.server.URL, "ambient": ambient.server.URL})
+			t.Setenv("KUBECONFIG", path)
+			t.Setenv("KUBERNETES_SERVICE_HOST", "")
+			watchCollectState = func(context.Context, dynamic.Interface, string) (watchState, error) {
+				return watchState{entriesByID: map[string]MapEntry{"a": {Kind: "Deployment", Name: "api", Namespace: "team-a"}}, findings: map[string]watchFinding{}}, nil
+			}
+			calls, got := 0, "unset"
+			watchBuildReceiptForEventFn = func(ctx context.Context, _ watchEvent, _ dynamic.Interface, _ bool) (*agent.Statement, error) {
+				calls++
+				got = ""
+				if binding := treeContextBinding(ctx); binding != nil {
+					got = binding.context
+				}
+				return nil, nil
+			}
+			cmd := &cobra.Command{Use: "watch"}
+			cmd.SetContext(context.Background())
+			cmd.Flags().String("kube-context", "", "")
+			if tc.selection != "" {
+				require.NoError(t, cmd.Flags().Set("kube-context", tc.selection))
+			}
+			output := filepath.Join(t.TempDir(), "events.jsonl")
+			require.NoError(t, runWatchWithOptions(cmd, watchOptions{CommandName: "watch", OutputFile: output, Namespace: "team-a", Once: true, Interval: time.Second, MaxQueuedEvents: 10, EmitReceiptOn: "resource.discovered", EmitReceiptBatchCap: 10}))
+			require.Equal(t, 1, calls, "one discovered resource should build one receipt")
+			require.Equal(t, tc.want, got)
+		})
+	}
 }
