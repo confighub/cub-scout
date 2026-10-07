@@ -1698,3 +1698,35 @@ See [live proof](examples/oci-release-check/live-statefulset-proof.json).
 Affected race/vet/doc/read-only guards pass. Full Go and required source CI must
 be retained before merge. DaemonSet/Job adapters, independently verified OCI index
 resolution, image discovery and all broader #584/#596/#594 gates remain open.
+
+
+## v2.14 context slices, review repairs and CI budget (2026-10-07)
+
+Work on sequence task 24 (#599) continued in two slices. #806 (`d911b8a5`,
+#804) gives all 21 cluster-reading `map` subcommands `--kube-context`; #810
+(`69d8886c`, #809) does the same for `debug`, `drift`, `graph explain`,
+`patterns detect/explain` and `context-pack`, and takes their printed cluster
+labels from the same selection. The mechanism is `boundCommandContext` plus
+`treeClusterConfig` and `boundContextLabel` in `cmd/cub-scout/tree_context.go`;
+`mapClusterReadCommands()` and `contextBoundReadCommands()` are the lists, and
+tests fail if a `map` subcommand is added without being classified.
+
+Not bound yet: `receipt verify` (#812 has the full read inventory and plan; its
+controller and Git evidence come from `flux`/`argocd`/`kubectl` subprocesses, so
+a config swap alone would be a partial pin), `compare <resource>`, the
+`hierarchy` TUI, `suggest-remedy`, `quickstart` and trace child clients (#746).
+
+The #804 live proof found #805: a workload scaled to zero was a "problem" to
+`map status`. Fixed in #807 (`519164bf`) by making `isWorkloadReady` defer to
+`detectStatus`. `map status` still counts only Deployments and StatefulSets.
+
+CI: the e2e package has a 300s budget and 600s cap (`scripts/ci/e2e-test-budget.sh`,
+#801). A test-only hook lifts client-side rate limiting for in-process tests
+(#811); the package took 95.6s on that PR. `sharedTestBinary(t)` builds one
+binary per run for process tests. #800 stays open until three main runs are
+recorded and the two remaining slow tests are addressed.
+
+#798, #799 and #802 merged after review. #798's eval case and upgraded-cluster
+test are waived to #803. No PR in this period ran Full Verification, Connected
+E2E, Demo Tests or Windows; `CUB_SCAN_RELEASE_TOKEN` is still not configured.
+None of the ten broad v2.14 tasks is closed.
