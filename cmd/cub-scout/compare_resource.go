@@ -628,60 +628,24 @@ func matchCompareDryFromSummaries(summaries []*compareSideSummary, kind, name, n
 }
 
 func loadCompareLiveSnapshot(ctx context.Context, kind, name, namespace string) (compareSideSummary, error) {
-	// With an explicit context, every read goes through one session bound to
-	// it, including the Git source tracers. A summary returned with an error
-	// means LIVE was read and its enrichment is incomplete; the caller notes it.
+	// Every read goes through one session: the explicit selection when there
+	// is one, otherwise the ambient context. A summary returned with an error
+	// means LIVE was read and its enrichment is incomplete; the caller records
+	// it in the result's notes. The ambient path used to read separately and
+	// drop that error, so it alone said nothing when it found no source (#823).
+	var (
+		session *traceSession
+		err     error
+	)
 	if binding := treeContextBinding(ctx); binding != nil {
-		session, err := newTraceSessionFromBinding(binding)
-		if err != nil {
-			return compareSideSummary{}, fmt.Errorf("resolve selected Kubernetes context: %w", err)
-		}
-		return loadCompareLiveSnapshotWithTraceSession(ctx, session, kind, name, namespace)
+		session, err = newTraceSessionFromBinding(binding)
+	} else {
+		session, err = newDefaultTraceSession()
 	}
-
-	cfg, err := buildConfig()
 	if err != nil {
 		return compareSideSummary{}, fmt.Errorf("build kubernetes config: %w", err)
 	}
-
-	gvr := kindToGVR(kind)
-	if gvr.Resource == "" {
-		return compareSideSummary{}, fmt.Errorf("unsupported resource kind %q for compare mode", kind)
-	}
-
-	dynClient, err := dynamic.NewForConfig(cfg)
-	if err != nil {
-		return compareSideSummary{}, fmt.Errorf("build dynamic client: %w", err)
-	}
-
-	obj, err := dynClient.Resource(gvr).Namespace(namespace).Get(ctx, name, v1.GetOptions{})
-	if err != nil {
-		return compareSideSummary{}, err
-	}
-
-	summary := summarizeCompareLiveObject(obj)
-	if anchor := receiptGitSourceAnchor(ctx, obj, agent.DetectOwnership(obj)); anchor != nil {
-		summary.GitSource = anchor
-	}
-	if summary.UnitSlug != "" {
-		return summary, nil
-	}
-
-	link, err := resolveCompareConfigHubLinkFn(ctx, dynClient, obj)
-	if err != nil {
-		return summary, nil
-	}
-	if summary.UnitSlug == "" {
-		summary.UnitSlug = strings.TrimSpace(link.UnitSlug)
-	}
-	if summary.SpaceName == "" {
-		summary.SpaceName = strings.TrimSpace(link.SpaceName)
-	}
-	if summary.SpaceID == "" {
-		summary.SpaceID = strings.TrimSpace(link.SpaceID)
-	}
-
-	return summary, nil
+	return loadCompareLiveSnapshotWithTraceSession(ctx, session, kind, name, namespace)
 }
 
 // loadCompareLiveSnapshotWithTraceSession is an internal shared-reader

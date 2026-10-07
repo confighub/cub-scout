@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -96,4 +97,68 @@ func TestCompareResourceTracerIsBoundToTheSelectedContext(t *testing.T) {
 	}
 	require.NotZero(t, traced, "the Flux tracer did not run:\n%s", out)
 	require.Zero(t, ambient.requests.Load(), "the ambient cluster was read: %v", ambient.paths)
+}
+
+// #823: when the default compare path could not find a workload's source it
+// returned a result with no gitSource and no word about why. The
+// --kube-context path said "LIVE enrichment incomplete"; explain and receipt
+// each had their own way of saying it. Only this path was silent.
+func TestCompareDefaultPathSaysWhyAWorkloadHasNoSource(t *testing.T) {
+	binary := sharedTestBinary(t)
+	deployment := func(labels string) string {
+		return `{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"api","namespace":"team-a","uid":"u1","resourceVersion":"1"` + labels + `},"spec":{"replicas":1}}`
+	}
+	for _, tc := range []struct {
+		name     string
+		labels   string
+		wantNote string
+	}{
+		{
+			// Flux labels naming a Kustomization that is not there.
+			name:     "Flux-owned, owner cannot be read",
+			labels:   `,"labels":{"kustomize.toolkit.fluxcd.io/name":"gone","kustomize.toolkit.fluxcd.io/namespace":"flux-system"}`,
+			wantNote: "LIVE enrichment incomplete",
+		},
+		{
+			// No GitOps owner: there is no source to miss, so nothing to say.
+			name: "no GitOps owner",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				switch {
+				case strings.HasSuffix(r.URL.Path, "/namespaces/team-a/deployments/api"):
+					fmt.Fprint(w, deployment(tc.labels))
+				case strings.Contains(r.URL.Path, "/kustomizations/"):
+					w.WriteHeader(http.StatusNotFound)
+					fmt.Fprint(w, `{"kind":"Status","apiVersion":"v1","status":"Failure","reason":"NotFound","code":404,"details":{"name":"gone","group":"kustomize.toolkit.fluxcd.io","kind":"kustomizations"}}`)
+				default:
+					fmt.Fprint(w, `{"apiVersion":"v1","kind":"List","metadata":{},"items":[]}`)
+				}
+			}))
+			t.Cleanup(server.Close)
+			path, _ := resolverKubeconfig(t, "ambient", map[string]string{"ambient": server.URL})
+			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+			defer cancel()
+			cmd := exec.CommandContext(ctx, binary, "compare", "deployment/api", "--namespace", "team-a", "--format", "json")
+			// No flux, argocd or cub on PATH.
+			cmd.Env = []string{"KUBECONFIG=" + path, "HOME=" + t.TempDir(), "PATH=/usr/bin:/bin", "CUB_SCOUT_OFFLINE=true"}
+			out, _ := cmd.Output()
+			var result struct {
+				Live  map[string]interface{} `json:"live"`
+				Notes []string               `json:"notes"`
+			}
+			require.NoError(t, json.Unmarshal(out, &result), "not JSON:\n%s", out)
+			require.Equal(t, "api", result.Live["name"], "LIVE was not read")
+			require.Nil(t, result.Live["gitSource"])
+			notes := strings.Join(result.Notes, "\n")
+			if tc.wantNote == "" {
+				require.NotContains(t, notes, "enrichment incomplete", "a workload with no GitOps owner got a source note")
+				return
+			}
+			require.Contains(t, notes, tc.wantNote, "no explanation for a Flux-owned workload with no source")
+			require.Contains(t, notes, "gone", "the note does not name what could not be read")
+		})
+	}
 }
