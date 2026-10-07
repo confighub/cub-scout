@@ -13,7 +13,7 @@ while `trace` and `explain` named the right one. Nothing compared them.
 
 ## What the check does
 
-`verify-live.py` creates one owned kind cluster with real Flux and has Flux
+`verify-live-flux.py` creates one owned kind cluster with real Flux and has Flux
 deliver podinfo twice:
 
 | Workload | Delivered by | Its source |
@@ -35,7 +35,7 @@ Each must name the workload's own source and only that. None may name the
 fleet repository. `map list` must report the owner as Flux.
 
 ```bash
-python3 examples/flux-source-agreement/verify-live.py
+python3 examples/source-agreement/verify-live-flux.py
 ```
 
 It needs `kind`, `kubectl` and the `flux` CLI, and network access for the Flux
@@ -44,10 +44,10 @@ the shared one, and removes its cluster.
 
 ## Result
 
-The [retained proof](live-proof.json) passed on Kubernetes 1.35: 40 source
+The [retained proof](live-flux-proof.json) passed on Kubernetes 1.35: 40 source
 observations (2 workloads, 2 layouts, 10 surfaces), all naming the workload's
 own source, plus 4 owner observations. The
-[first attempt](live-attempt-1.json) is retained: a workload rollout timed out
+[first attempt](live-flux-attempt-1.json) is retained: a workload rollout timed out
 before any surface was asked, an environment failure.
 
 ## Limits

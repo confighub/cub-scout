@@ -14,7 +14,7 @@ none may name the fleet repository. The shared kubeconfig is never written.
 
 Needs kind, kubectl and the flux CLI on PATH, and network access to pull the
 Flux images, clone the repositories and fetch the chart.
-Run from a clean checkout: python3 examples/flux-source-agreement/verify-live.py
+Run from a clean checkout: python3 examples/source-agreement/verify-live-flux.py
 """
 import datetime, hashlib, json, os, pathlib, re, shutil, subprocess, tempfile, uuid
 
