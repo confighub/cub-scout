@@ -80,6 +80,11 @@ func init() {
 }
 
 func runCompareObjectSet(cmd *cobra.Command, _ []string) error {
+	boundCtx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
+	cmd.SetContext(boundCtx)
 	format := strings.ToLower(strings.TrimSpace(compareObjectSetFormat))
 	if format != "ascii" && format != "json" {
 		return fmt.Errorf("invalid --format %q (valid: ascii, json)", compareObjectSetFormat)

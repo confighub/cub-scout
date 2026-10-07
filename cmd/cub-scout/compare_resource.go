@@ -628,6 +628,17 @@ func matchCompareDryFromSummaries(summaries []*compareSideSummary, kind, name, n
 }
 
 func loadCompareLiveSnapshot(ctx context.Context, kind, name, namespace string) (compareSideSummary, error) {
+	// With an explicit context, every read goes through one session bound to
+	// it, including the Git source tracers. A summary returned with an error
+	// means LIVE was read and its enrichment is incomplete; the caller notes it.
+	if binding := treeContextBinding(ctx); binding != nil {
+		session, err := newTraceSessionFromBinding(binding)
+		if err != nil {
+			return compareSideSummary{}, fmt.Errorf("resolve selected Kubernetes context: %w", err)
+		}
+		return loadCompareLiveSnapshotWithTraceSession(ctx, session, kind, name, namespace)
+	}
+
 	cfg, err := buildConfig()
 	if err != nil {
 		return compareSideSummary{}, fmt.Errorf("build kubernetes config: %w", err)
@@ -781,17 +792,12 @@ func collectCompareGitSourceWithTraceSession(ctx context.Context, session *trace
 	if tracer == nil || !tracer.Available() {
 		return nil, fmt.Errorf("Git source enrichment unavailable: flux CLI is unavailable")
 	}
-	if owner.Type == agent.OwnerFlux && owner.Name != "" && obj.GetKind() != "Kustomization" && obj.GetKind() != "HelmRelease" {
-		ownerTracer, ok := tracer.(interface {
-			TraceByOwnership(context.Context, agent.Ownership) (*agent.TraceResult, error)
-		})
-		if !ok {
-			return nil, fmt.Errorf("Git source enrichment unavailable: Flux adapter cannot trace ownership")
-		}
-		result, err = ownerTracer.TraceByOwnership(ctx, owner)
-	} else {
-		result, err = tracer.Trace(ctx, obj.GetKind(), obj.GetName(), obj.GetNamespace())
-	}
+	// Trace the object itself, never its owner. `flux trace` on the owning
+	// Kustomization or HelmRelease answers what manages that object: nothing
+	// for a root one, and the parent and fleet repository under a parent
+	// Kustomization, which is not where this object's manifests came from
+	// (#814).
+	result, err = tracer.Trace(ctx, obj.GetKind(), obj.GetName(), obj.GetNamespace())
 	if err != nil {
 		return nil, compareGitSourceObservationError(result, err)
 	}

@@ -123,8 +123,19 @@ func init() {
 }
 
 func runCombined(cmd *cobra.Command, args []string) error {
+	ctx, ctxErr := boundCommandContext(cmd)
+	if ctxErr != nil {
+		return ctxErr
+	}
 	if len(args) > 0 {
+		cmd.SetContext(ctx)
 		return runCombinedResourceCompare(cmd, args)
+	}
+	if treeContextBinding(ctx) != nil {
+		// The namespace scan and --apply read through kubectl and other
+		// ambient paths. Accepting the selection here would bind only some
+		// of those reads.
+		return fmt.Errorf("--kube-context applies to compare <resource>; the Git/namespace comparison and --apply do not accept it")
 	}
 
 	result := &CombinedResult{}

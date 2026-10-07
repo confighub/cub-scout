@@ -330,12 +330,13 @@ func TestCompareLiveSnapshotCapturedFluxFactory(t *testing.T) {
 				require.Equal(t, "https://selected.invalid/repo", summary.GitSource.RepoURL)
 				require.Equal(t, agent.GitSourceTypeHelm, summary.GitSource.SourceType)
 				require.Equal(t, agent.GitSourceTemplatedNotResolved, summary.GitSource.Resolution)
+				// The workload itself is traced in both cases. Tracing the owning
+				// HelmRelease or Kustomization asks what manages that object,
+				// which under a parent Kustomization is the fleet repository (#814).
+				require.True(t, tracer.direct)
+				require.Empty(t, tracer.owner.Name, "the owner was traced instead of the workload")
 				if tc.configHub {
-					require.True(t, tracer.direct)
 					require.Equal(t, "actual-unit", summary.UnitSlug)
-				} else {
-					require.Equal(t, "release", tracer.owner.Name)
-					require.Equal(t, "flux-system", tracer.owner.Namespace)
 				}
 			}
 		})

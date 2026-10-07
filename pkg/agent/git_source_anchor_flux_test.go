@@ -34,6 +34,8 @@ case "$*" in
   "version --client"*) exit 0 ;;
   "trace deployment podinfo -n team-a"*) cat "` + data + `/deployment-podinfo.txt"; exit 0 ;;
   "trace kustomization podinfo -n flux-system"*) cat "` + data + `/kustomization-podinfo-with-parent.txt"; exit 0 ;;
+  "trace deployment podinfo-helm -n team-b"*) cat "` + data + `/deployment-podinfo-helm.txt"; exit 0 ;;
+  "trace helmrelease podinfo-helm -n flux-system"*) cat "` + data + `/helmrelease-podinfo-helm-with-parent.txt"; exit 0 ;;
 esac
 echo "failed to trace: object not managed by Flux" >&2
 exit 1
@@ -102,5 +104,44 @@ func TestFluxGitSourceAnchorIsAbsentWhenTheWorkloadTraceFails(t *testing.T) {
 	owner := Ownership{Type: OwnerFlux, SubType: "kustomization", Name: "podinfo", Namespace: "flux-system"}
 	if anchor := CollectGitSourceAnchorForOwnerWith(context.Background(), other, owner, GitSourceTracers{Flux: NewFluxTracerWithPath(flux)}); anchor != nil {
 		t.Errorf("anchor = %+v, want none: the workload itself could not be traced", anchor)
+	}
+}
+
+// The same rule for a HelmRelease-delivered workload: its source is the chart
+// repository the HelmRelease pulled from, not the fleet repository that holds
+// the HelmRelease manifest. Recorded on the same cluster, with the HelmRelease
+// labelled as managed by the parent Kustomization.
+func TestFluxGitSourceAnchorForAHelmWorkloadIsItsChartSource(t *testing.T) {
+	flux, calls := fakeFluxForAnchor(t)
+	deployment := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": "apps/v1", "kind": "Deployment",
+		"metadata": map[string]interface{}{
+			"name": "podinfo-helm", "namespace": "team-b",
+			"labels": map[string]interface{}{
+				"helm.toolkit.fluxcd.io/name":      "podinfo-helm",
+				"helm.toolkit.fluxcd.io/namespace": "flux-system",
+			},
+		},
+	}}
+	owner := DetectOwnership(deployment)
+	if owner.Type != OwnerFlux || owner.SubType != "helmrelease" {
+		t.Fatalf("fixture ownership = %+v, want Flux helmrelease", owner)
+	}
+	anchor := CollectGitSourceAnchorForOwnerWith(context.Background(), deployment, owner, GitSourceTracers{Flux: NewFluxTracerWithPath(flux)})
+	if anchor == nil {
+		t.Fatal("no source anchor for a HelmRelease-delivered Deployment")
+	}
+	if anchor.RepoURL != "https://stefanprodan.github.io/podinfo" {
+		t.Errorf("RepoURL = %q, want the chart repository", anchor.RepoURL)
+	}
+	if anchor.SourceType != GitSourceTypeHelm {
+		t.Errorf("SourceType = %q, want %q", anchor.SourceType, GitSourceTypeHelm)
+	}
+	logged, err := os.ReadFile(calls)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(logged), "trace helmrelease") {
+		t.Errorf("flux was asked what manages the HelmRelease, not where the workload came from:\n%s", logged)
 	}
 }

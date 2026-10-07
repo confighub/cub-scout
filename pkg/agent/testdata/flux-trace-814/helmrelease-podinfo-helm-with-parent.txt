@@ -1,0 +1,18 @@
+
+Object:          HelmRelease/podinfo-helm
+Namespace:       flux-system
+Status:          Managed by Flux
+---
+Kustomization:   fleet
+Namespace:       flux-system
+Path:            ./does-not-need-to-exist
+Revision:        
+Status:          Unknown
+---
+GitRepository:   fleet
+Namespace:       flux-system
+URL:             https://github.com/fluxcd/flux2-kustomize-helm-example
+Branch:          main
+Revision:        main@sha1:4f1a5b1051b469108d1bdf0ebec6c814427e3834
+Status:          Last reconciled at 2026-10-07 15:16:39 +0100 BST
+Message:         stored artifact for revision 'main@sha1:4f1a5b1051b469108d1bdf0ebec6c814427e3834'
