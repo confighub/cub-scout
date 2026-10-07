@@ -641,6 +641,18 @@ func buildExplainSummary(result *agent.TraceResult) ExplainSummary {
 		} else {
 			summary.Health = "Unhealthy"
 		}
+		// The leaf is the resource itself. It can be running its last good
+		// revision while the chain that delivers to it is broken; that is the
+		// state an operator most needs to hear about (#827).
+		if broken := firstUnreadyDeliveryLink(result.Chain); broken != nil {
+			where := fmt.Sprintf("%s/%s", broken.Kind, broken.Name)
+			summary.Health = fmt.Sprintf("%s; delivery not ready at %s", summary.Health, where)
+			why := strings.TrimSpace(firstNonEmpty(broken.StatusReason, broken.Message, broken.Status))
+			if why == "" {
+				why = "no reason was reported"
+			}
+			summary.Notes = append(summary.Notes, fmt.Sprintf("delivery not ready at %s: %s", where, why))
+		}
 	}
 
 	if result.ConfigHub != nil {
@@ -695,6 +707,22 @@ func buildExplainSummary(result *agent.TraceResult) ExplainSummary {
 	}
 
 	return summary
+}
+
+// firstUnreadyDeliveryLink returns the first link above the resource itself
+// that reports it is not ready, walking from the source down, or nil when
+// none does or the chain is only the resource.
+//
+// A link with no status reports nothing: an Argo source link, for one, never
+// carries readiness. Its zero-value Ready is absence of a signal, and absence
+// is not a failure.
+func firstUnreadyDeliveryLink(chain []agent.ChainLink) *agent.ChainLink {
+	for i := 0; i < len(chain)-1; i++ {
+		if !chain[i].Ready && strings.TrimSpace(chain[i].Status) != "" {
+			return &chain[i]
+		}
+	}
+	return nil
 }
 
 func buildExplainSummaryFromFailure(kind, name, namespace string, err error) ExplainSummary {

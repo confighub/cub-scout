@@ -3605,6 +3605,14 @@ healthy one, so its text is not used for readiness. `trace` shows `Ready`,
 `Not ready` with the condition's message, `Suspended`, or `Unknown` when the
 object could not be read.
 
+`explain` reports the same thing in its summary. Its `health` is the resource's
+own status; when a link above the resource reports that it is not ready,
+`health` adds `; delivery not ready at <Kind>/<name>` and a note gives the
+reason. A workload can be running its last good revision while the
+Kustomization or Application that delivers to it is failing, and that is the
+state this makes visible. A link that reports no status at all, such as an
+Argo CD source, is not treated as failing.
+
 ### StatefulSet image coverage (v2.14 candidate, #795)
 
 `release check --check-running-image` also checks `apps/v1` StatefulSets.

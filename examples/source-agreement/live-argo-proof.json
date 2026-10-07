@@ -1,10 +1,10 @@
 {
   "schema": "argo-source-agreement-live-proof.v1",
-  "sourceCommit": "9c430971f4e138a5461ba93b9912a71113aa407c",
+  "sourceCommit": "4705a5a18423c0c80844895bf54d9ef0bb4264aa",
   "sourceCommitUnchanged": true,
   "sourceWorktreeCleanBeforeAndAfter": true,
-  "binarySHA256": "35b5e879923a5280b7d1a15947b683fb6107727d9b705b4400adfefc1e4e3274",
-  "finished": "2026-10-07T16:26:54+00:00",
+  "binarySHA256": "25a64c63b5ed0ca9ca25a92c7af2dc94e1f96df01ad3266615af5c2eb068fe4f",
+  "finished": "2026-10-07T18:13:54+00:00",
   "kubernetesNodeImage": "kindest/node:v1.35.0",
   "argocdManifest": "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.3/manifests/install.yaml",
   "argocdManifestSHA256": "7efe2d6bbc03f63623640f1e4198f16c84009d510fb810ef71e56df1b7614ba9",
@@ -224,7 +224,7 @@
       "name": "create-owned-cluster",
       "exit": 0,
       "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "stderrSHA256": "26e685daa9751e630c19a0031b9f32dd052770ae8a742206b56a36d25e6766b1"
+      "stderrSHA256": "2e5947a509f1a886f3df752afefe84a6d3952997f493b27c4d47ef73e252d66f"
     },
     {
       "name": "fetch-argocd-manifest",
@@ -283,67 +283,67 @@
     {
       "name": "root-guestbook-ui-trace",
       "exit": 0,
-      "stdoutSHA256": "38b0ea14ae87d0da7989e1455c35b65cc6c36db880eb52de7289ec9bf06137cb",
+      "stdoutSHA256": "7ead6a85fe02b6b306fedd51d8c565c68be9bef9632c5713823bc606f169a062",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "root-guestbook-ui-trace_kube-context",
       "exit": 0,
-      "stdoutSHA256": "83a35e199ad7dce884beaac158bade6b72f098d0a156787905b442c1c313ac35",
+      "stdoutSHA256": "7ead6a85fe02b6b306fedd51d8c565c68be9bef9632c5713823bc606f169a062",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "root-guestbook-ui-explain",
       "exit": 0,
-      "stdoutSHA256": "7b9705a4c634dd4758e4d86727b44a0fda7450e75acd28ff873eaad3036e4651",
+      "stdoutSHA256": "332657f23c7fe39d9bea03999040cda271bca6849365b645ef5fbc23df0ca835",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "root-guestbook-ui-explain_kube-context",
       "exit": 0,
-      "stdoutSHA256": "3736da9db110f1ef7a9b73a07a80508888bff24dc61def4729af322edfed88ba",
+      "stdoutSHA256": "442a272a9dcc969b2e918278333ba78196d936316559783275979613f079602c",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "root-guestbook-ui-receipt_verify",
       "exit": 0,
-      "stdoutSHA256": "9a26f8516afe14118fd6e0c8ddb9781c20fb72c79771537da4338d435dd711a2",
+      "stdoutSHA256": "6fa279cb1cca8da8120934dff28d2a70df4e58cfad3d83f83be373364c0582de",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "root-guestbook-ui-receipt_verify_kube-context",
       "exit": 0,
-      "stdoutSHA256": "9a26f8516afe14118fd6e0c8ddb9781c20fb72c79771537da4338d435dd711a2",
+      "stdoutSHA256": "6fa279cb1cca8da8120934dff28d2a70df4e58cfad3d83f83be373364c0582de",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "root-guestbook-ui-compare",
       "exit": 0,
-      "stdoutSHA256": "2b66e294ca7ee731e6cef3faddde0575791be30e95d7141938b62d154a18c49b",
+      "stdoutSHA256": "daa5a27efa982942ea5ff20939fdf4beec182357da9e93676ebd1fb2cb2a5e31",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "root-guestbook-ui-compare_kube-context",
       "exit": 0,
-      "stdoutSHA256": "2b66e294ca7ee731e6cef3faddde0575791be30e95d7141938b62d154a18c49b",
+      "stdoutSHA256": "daa5a27efa982942ea5ff20939fdf4beec182357da9e93676ebd1fb2cb2a5e31",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "root-guestbook-ui-mcp-trace",
       "exit": 0,
-      "stdoutSHA256": "ececf5b1f50eaa3000fec701bfb3e03d80ebe023b8d02b6e40435037931bead3",
+      "stdoutSHA256": "94551f48ed990da35a75c605b1f49007b4fdbde7447371e80af790c83a326a92",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "root-guestbook-ui-mcp-explain",
       "exit": 0,
-      "stdoutSHA256": "7434ac316c968f7e2680da3fb682736655ff6c34eff43001a99d79ad12de1b2d",
+      "stdoutSHA256": "d9aa7a478b802094ee0a7676c1b1fdee2f9b198e790e616cf7d1c87844ffd140",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "root-guestbook-ui-map-list",
       "exit": 0,
-      "stdoutSHA256": "aea9a2adf5d69d2b21564e2ce2e3faec1d74463519cd204a2d07782364bf9075",
+      "stdoutSHA256": "f983d0597b70cc61aeda53a8ad0734ee070fdbf0024c4c6a00999587b4f4e25a",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
@@ -361,74 +361,74 @@
     {
       "name": "app-of-apps-guestbook-ui-trace",
       "exit": 0,
-      "stdoutSHA256": "11eb4ac607d2359980b2f3bb7e10385be8c5275bfae0c445c812a72db54eaf92",
+      "stdoutSHA256": "7ead6a85fe02b6b306fedd51d8c565c68be9bef9632c5713823bc606f169a062",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "app-of-apps-guestbook-ui-trace_kube-context",
       "exit": 0,
-      "stdoutSHA256": "11eb4ac607d2359980b2f3bb7e10385be8c5275bfae0c445c812a72db54eaf92",
+      "stdoutSHA256": "7ead6a85fe02b6b306fedd51d8c565c68be9bef9632c5713823bc606f169a062",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "app-of-apps-guestbook-ui-explain",
       "exit": 0,
-      "stdoutSHA256": "bfb399f8c2754f4de3b8361d8849a94a2169cd6226a57b01bf301bd84eba237a",
+      "stdoutSHA256": "654291157127e4028e35696b33c31384c0081995c56dd5ae840024e922e18f17",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "app-of-apps-guestbook-ui-explain_kube-context",
       "exit": 0,
-      "stdoutSHA256": "c8db083e3138e0b922fd1d7acd39af61dffa6cf5bae4c53e7190f98f2ff40cfe",
+      "stdoutSHA256": "f1863dd91bc67e491712ab45de8503b515d5288228dcbb49ac5e4fe1ef76d395",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "app-of-apps-guestbook-ui-receipt_verify",
       "exit": 0,
-      "stdoutSHA256": "4e69a1d808e3642a377fb5296d4fc5c142a6df27c23b9789f9423c7f6ed1abf2",
+      "stdoutSHA256": "60423326468ccc3ad54eab8af22183ae9589918c6e94b1dacfbdc4aa4483ca5a",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "app-of-apps-guestbook-ui-receipt_verify_kube-context",
       "exit": 0,
-      "stdoutSHA256": "4e69a1d808e3642a377fb5296d4fc5c142a6df27c23b9789f9423c7f6ed1abf2",
+      "stdoutSHA256": "60423326468ccc3ad54eab8af22183ae9589918c6e94b1dacfbdc4aa4483ca5a",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "app-of-apps-guestbook-ui-compare",
       "exit": 0,
-      "stdoutSHA256": "2b66e294ca7ee731e6cef3faddde0575791be30e95d7141938b62d154a18c49b",
+      "stdoutSHA256": "daa5a27efa982942ea5ff20939fdf4beec182357da9e93676ebd1fb2cb2a5e31",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "app-of-apps-guestbook-ui-compare_kube-context",
       "exit": 0,
-      "stdoutSHA256": "2b66e294ca7ee731e6cef3faddde0575791be30e95d7141938b62d154a18c49b",
+      "stdoutSHA256": "daa5a27efa982942ea5ff20939fdf4beec182357da9e93676ebd1fb2cb2a5e31",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "app-of-apps-guestbook-ui-mcp-trace",
       "exit": 0,
-      "stdoutSHA256": "43f550feac24f2096f472c7b56ac4ce4fb5dc693765788c2e84c53b0f4c49f80",
+      "stdoutSHA256": "94551f48ed990da35a75c605b1f49007b4fdbde7447371e80af790c83a326a92",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "app-of-apps-guestbook-ui-mcp-explain",
       "exit": 0,
-      "stdoutSHA256": "f1e6227dea3b336ae8b16a3fba34a18086a6bb3b3b582824b933b3a42abfe285",
+      "stdoutSHA256": "781934b2b2ba857ffc9db0b0294f72c9f3957ef03cf5b5c6b4224bcb11e995dc",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "app-of-apps-guestbook-ui-map-list",
       "exit": 0,
-      "stdoutSHA256": "639a77b2c2b7316b1d02963d0b5d6a2cbcffae3b9f9550166ef2953127acdb0d",
+      "stdoutSHA256": "ca68cdeb84a4a1696d8729a45825dcd2442f8c82b6d4598e1901e0e5516cd8b4",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "cleanup-owned-cluster",
       "exit": 0,
       "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "stderrSHA256": "da7cc485fd900310663331303cc3c90e3315e5cb966b806ca47c139a01e412be"
+      "stderrSHA256": "8149badc1934d87d7d2e7e04b578afa7922f6a96a8735f5438a9c7017ca1bb05"
     },
     {
       "name": "after-clusters",
