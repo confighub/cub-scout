@@ -3021,7 +3021,14 @@ func getDeploymentReplicas(obj *unstructured.Unstructured) (int64, int64) {
 	return getWorkloadReplicas(obj)
 }
 
+// isWorkloadReady is what map status, issues, workloads and dashboard count as
+// healthy. It defers to detectStatus so those commands cannot disagree with
+// the status map list prints for the same object (#805).
 func isWorkloadReady(obj *unstructured.Unstructured) bool {
+	switch obj.GetKind() {
+	case "Deployment", "StatefulSet", "DaemonSet":
+		return detectStatus(obj) == "Ready"
+	}
 	desired, ready := getWorkloadReplicas(obj)
 	return ready >= desired
 }
@@ -3029,11 +3036,22 @@ func isWorkloadReady(obj *unstructured.Unstructured) bool {
 func getWorkloadReplicas(obj *unstructured.Unstructured) (int64, int64) {
 	switch obj.GetKind() {
 	case "Deployment", "StatefulSet":
-		desired, _, _ := unstructured.NestedInt64(obj.Object, "spec", "replicas")
-		ready, _, _ := unstructured.NestedInt64(obj.Object, "status", "readyReplicas")
-		if desired == 0 {
+		// A missing spec.replicas defaults to 1. An explicit 0 is a workload
+		// scaled to zero and wants no ready replicas (#805).
+		desired, found, _ := unstructured.NestedInt64(obj.Object, "spec", "replicas")
+		if !found {
 			desired = 1
 		}
+		ready, _, _ := unstructured.NestedInt64(obj.Object, "status", "readyReplicas")
+		return desired, ready
+	case "DaemonSet":
+		// DaemonSets report scheduling, not replicas. Until the controller has
+		// reported a desired count, nothing is known to be ready.
+		desired, found, _ := unstructured.NestedInt64(obj.Object, "status", "desiredNumberScheduled")
+		if !found {
+			return 1, 0
+		}
+		ready, _, _ := unstructured.NestedInt64(obj.Object, "status", "numberReady")
 		return desired, ready
 	default:
 		return 1, 0
@@ -3121,8 +3139,13 @@ func detectStatus(obj *unstructured.Unstructured) string {
 		return "Pending"
 
 	case "DaemonSet":
-		// DaemonSets report scheduling, not replicas (#633).
-		desired, _, _ := unstructured.NestedInt64(obj.Object, "status", "desiredNumberScheduled")
+		// DaemonSets report scheduling, not replicas (#633). A DaemonSet whose
+		// controller has not yet reported a desired count is not known to be
+		// ready (#805).
+		desired, found, _ := unstructured.NestedInt64(obj.Object, "status", "desiredNumberScheduled")
+		if !found {
+			return "Pending"
+		}
 		ready, _, _ := unstructured.NestedInt64(obj.Object, "status", "numberReady")
 		if ready >= desired {
 			return "Ready"
