@@ -103,7 +103,7 @@ func boundContextLabel(ctx context.Context) string {
 func contextBoundReadCommands() []*cobra.Command {
 	return []*cobra.Command{
 		debugCmd, driftCmd, compareDriftCmd, graphExplainCmd,
-		patternsDetectCmd, patternsExplainCmd, contextPackCmd,
+		patternsDetectCmd, patternsExplainCmd, contextPackCmd, receiptVerifyCmd,
 	}
 }
 

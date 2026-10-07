@@ -312,7 +312,7 @@ func validateObjectSetDesiredObject(obj *unstructured.Unstructured, file string,
 }
 
 func loadObjectSetLiveObjects(ctx context.Context, desired []*unstructured.Unstructured, defaultNamespace string) ([]agent.ObjectSetObservedObject, error) {
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("build kubernetes config: %w", err)
 	}
@@ -428,7 +428,7 @@ func loadObjectSetExtras(ctx context.Context, desired []*unstructured.Unstructur
 		return nil, nil // closed-world is namespace-scoped in v1
 	}
 
-	cfg, err := buildConfig()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("build kubernetes config: %w", err)
 	}
