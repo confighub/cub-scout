@@ -3584,6 +3584,11 @@ result whose enrichment is incomplete says so in its notes. The Git/namespace
 comparison (`compare` with no resource) and `--apply` read through `kubectl`
 and refuse the flag rather than bind only some of their reads.
 
+The `argocd` CLI is optional. Without it, `explain`, `receipt verify` and
+`compare` read an Argo CD Application through the Kubernetes API, as `trace`
+and every `--kube-context` path do, so the source they name does not depend on
+whether the CLI is installed. With the CLI present they use it as before.
+
 ### StatefulSet image coverage (v2.14 candidate, #795)
 
 `release check --check-running-image` also checks `apps/v1` StatefulSets.
