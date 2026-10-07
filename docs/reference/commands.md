@@ -3551,9 +3551,13 @@ it reads ConfigHub relationships instead. Omitted selection retains the existing
 behavior. Existing partial/denied-list output and each view's namespace and format
 coverage remain unchanged; this selector does not establish complete inventory,
 physical cluster identity or a ConfigHub Target binding. The workloads alias
-now respects the tree namespace and caller cancellation. `map workloads` and
-`map patterns` accept the same `--kube-context` directly, with the same strict
-refusal of a missing or blank selection.
+now respects the tree namespace and caller cancellation. Every `map` subcommand that reads a cluster accepts the same `--kube-context`
+directly, with the same strict refusal of a missing or blank selection:
+`list`, `status`, `issues`, `deployers`, `workloads`, `drift`, `sprawl`,
+`dashboard`, `bypass`, `crashes`, `orphans`, `hooks`, `cronjobs`, `jobs`,
+`actions`, `activity`, `previews`, `deep-dive`, `app-hierarchy`, `meaning` and
+`patterns`. `map hub`, `map fleet` and `map queries` read no cluster and do not
+accept it.
 
 ### StatefulSet image coverage (v2.14 candidate, #795)
 
