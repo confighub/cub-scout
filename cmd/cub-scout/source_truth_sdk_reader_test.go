@@ -148,3 +148,65 @@ func TestSourceTruthRejectsAnUnknownConfigHubReader(t *testing.T) {
 	require.Error(t, err)
 	require.Empty(t, route)
 }
+
+// The route as it runs in production: credentials resolved from the cub plugin
+// environment, not a reader built by the test.
+func TestSourceTruthSDKRouteResolvesItsOwnCredentials(t *testing.T) {
+	var element map[string]json.RawMessage
+	require.NoError(t, json.Unmarshal(recordedUnitGet(t), &element))
+	var agents, auths []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		agents, auths = append(agents, r.Header.Get("User-Agent")), append(auths, r.Header.Get("Authorization"))
+		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Path == "/api/space" {
+			_ = json.NewEncoder(w).Encode([]map[string]json.RawMessage{{"Space": element["Space"]}})
+			return
+		}
+		_ = json.NewEncoder(w).Encode([]map[string]json.RawMessage{element})
+	}))
+	defer server.Close()
+	oldGet := sourceTruthUnitGet
+	t.Cleanup(func() { sourceTruthUnitGet = oldGet })
+	sourceTruthUnitGet = func(context.Context, string, string) ([]byte, error) {
+		t.Fatal("the cub route was used")
+		return nil, nil
+	}
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("CUB_CONFIG", t.TempDir())
+	t.Setenv("CUB_CONTEXT", "")
+	t.Setenv("CUB_SPACE", "")
+	t.Setenv("CUB_SERVER", server.URL)
+	t.Setenv("CUB_TOKEN", "plugin-token")
+	t.Setenv(configHubReaderEnv, "sdk")
+
+	surface, err := collectConfigHubSurface(context.Background(), recordedWorkload())
+	require.NoError(t, err)
+	require.Equal(t, "2", surface.Revision)
+	require.Equal(t, []string{"cub-scout", "cub-scout"}, agents)
+	require.Equal(t, []string{"Bearer plugin-token", "Bearer plugin-token"}, auths)
+
+	// With no credential anywhere, the read is an omission that says so.
+	t.Setenv("CUB_SERVER", "")
+	t.Setenv("CUB_TOKEN", "")
+	_, err = collectConfigHubSurface(context.Background(), recordedWorkload())
+	var collection *agent.CollectionError
+	require.ErrorAs(t, err, &collection)
+	require.Contains(t, collection.Reason, "not_configured")
+	require.Len(t, agents, 2, "nothing is sent without a credential")
+}
+
+// A known difference between the routes: `cub unit get` prints HeadRevisionNum
+// even when it is 0 and the cub route reports "0"; the typed client cannot tell
+// an absent number from zero, so the SDK route reports no revision.
+func TestSourceTruthSDKRouteReportsNoRevisionForZero(t *testing.T) {
+	old := sourceTruthSDKUnitHead
+	t.Cleanup(func() { sourceTruthSDKUnitHead = old })
+	sourceTruthSDKUnitHead = func(context.Context, string, string) (hubread.UnitHead, error) {
+		return hubread.UnitHead{SpaceID: "68843338-f9bd-485c-9a66-5d5aee820247", UnitID: "6221926e-8cc4-4847-a25c-a4104042f640"}, nil
+	}
+	t.Setenv(configHubReaderEnv, "sdk")
+	surface, err := collectConfigHubSurface(context.Background(), recordedWorkload())
+	require.NoError(t, err)
+	require.Empty(t, surface.Revision)
+	require.NotEmpty(t, surface.URL)
+}

@@ -150,6 +150,25 @@ func TestUnitHeadReadsTheRecordedUnitWithTwoGets(t *testing.T) {
 	require.Equal(t, hub.server.URL, reader.Server())
 }
 
+// uuid.Parse accepts 32 bare hex digits, braces and a urn: prefix. A space
+// could be named any of those; only the canonical form is taken as an ID, so
+// the others still go through the lookup that checks the name.
+func TestUnitHeadTreatsOnlyACanonicalUUIDAsASpaceID(t *testing.T) {
+	bare := strings.ReplaceAll(recordedSpaceID, "-", "")
+	for _, name := range []string{bare, "{" + recordedSpaceID + "}", "urn:uuid:" + recordedSpaceID} {
+		hub := newFakeHub(t)
+		_, err := hub.reader(Options{}).UnitHead(context.Background(), name, recordedUnit)
+		require.Equal(t, KindNotFound, KindOf(err), "%q: %v", name, err)
+		require.Len(t, hub.requests(), 1, "%q", name)
+		require.Equal(t, "/api/space", hub.requests()[0].Path, "%q must be looked up as a slug", name)
+		require.Equal(t, "Slug = '"+name+"'", hub.requests()[0].Where)
+	}
+	upper := newFakeHub(t)
+	head, err := upper.reader(Options{}).UnitHead(context.Background(), strings.ToUpper(recordedSpaceID), recordedUnit)
+	require.NoError(t, err, "the canonical form in upper case is still the ID")
+	require.Equal(t, recordedSpaceID, head.SpaceID)
+}
+
 func TestUnitHeadWithASpaceUUIDSkipsTheSpaceLookup(t *testing.T) {
 	hub := newFakeHub(t)
 	head, err := hub.reader(Options{}).UnitHead(context.Background(), recordedSpaceID, recordedUnit)
@@ -236,6 +255,10 @@ func TestUnitHeadClassifiesFailures(t *testing.T) {
 		{"space without an ID", func(h *fakeHub) {
 			h.spaces = []map[string]json.RawMessage{{"Space": json.RawMessage(`{"Slug":"` + recordedSpace + `"}`)}}
 		}, KindMalformed},
+		{"unit without an ID", func(h *fakeHub) {
+			h.units = []map[string]json.RawMessage{{"Unit": json.RawMessage(`{"Slug":"` + recordedUnit + `","SpaceID":"` + recordedSpaceID + `","HeadRevisionNum":2}`)}}
+		}, KindMalformed},
+		{"list holding a null element", func(h *fakeHub) { h.raw["/api/unit"] = `[null]` }, KindNotFound},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			hub := newFakeHub(t)
@@ -255,11 +278,12 @@ func TestUnitHeadTimesOutAndHonoursCancellation(t *testing.T) {
 	_, err := slow.reader(Options{Timeout: 30 * time.Millisecond}).UnitHead(context.Background(), recordedSpace, recordedUnit)
 	require.Equal(t, KindTimeout, KindOf(err), "%v", err)
 
+	// A cancelled read is not a slow server.
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	cancelled := newFakeHub(t)
 	_, err = cancelled.reader(Options{}).UnitHead(ctx, recordedSpace, recordedUnit)
-	require.Equal(t, KindTimeout, KindOf(err), "%v", err)
+	require.Equal(t, KindCanceled, KindOf(err), "%v", err)
 	require.Empty(t, cancelled.requests())
 }
 
@@ -314,8 +338,8 @@ func TestNewAndResolveNeedACredentialAndWriteNothing(t *testing.T) {
 
 	// As a cub plugin: CUB_SERVER and CUB_TOKEN from the environment.
 	hub := newFakeHub(t)
-	config := t.TempDir()
-	t.Setenv("HOME", t.TempDir())
+	config, home := t.TempDir(), t.TempDir()
+	t.Setenv("HOME", home)
 	t.Setenv("CUB_CONFIG", config)
 	t.Setenv("CUB_CONTEXT", "")
 	t.Setenv("CUB_SPACE", "")
@@ -334,9 +358,14 @@ func TestNewAndResolveNeedACredentialAndWriteNothing(t *testing.T) {
 	t.Setenv("CUB_TOKEN", "")
 	_, err = Resolve(context.Background(), Options{})
 	require.Equal(t, KindNotConfigured, KindOf(err), "%v", err)
-	entries, readErr := os.ReadDir(config)
-	require.NoError(t, readErr)
-	require.Empty(t, entries, "resolving credentials wrote into the cub config directory")
+	require.Empty(t, snapshotDir(t, config), "resolving credentials wrote into the cub config directory")
+
+	// The same with no CUB_CONFIG, so the default under HOME is used: still
+	// not configured, and HOME is left as it was.
+	t.Setenv("CUB_CONFIG", "")
+	_, err = Resolve(context.Background(), Options{})
+	require.Equal(t, KindNotConfigured, KindOf(err), "%v", err)
+	require.Empty(t, snapshotDir(t, home), "resolving credentials wrote under HOME")
 }
 
 // From a local cub configuration: the server and token of the selected
@@ -371,7 +400,8 @@ contexts:
 	require.NoError(t, os.WriteFile(filepath.Join(config, "tokens", "other.json"), []byte(`{"accessToken":""}`), 0o600))
 	before := snapshotDir(t, config)
 
-	t.Setenv("HOME", t.TempDir())
+	home := t.TempDir()
+	t.Setenv("HOME", home)
 	t.Setenv("CUB_CONFIG", config)
 	t.Setenv("CUB_CONTEXT", "selected")
 	t.Setenv("CUB_SERVER", "")
@@ -396,7 +426,19 @@ contexts:
 		require.NotContains(t, err.Error(), testToken)
 	}
 	require.Len(t, hub.requests(), seen)
+
+	// A token file that is not the expected JSON: the parser's complaint
+	// quotes what it read, so the cause is not passed on.
+	require.NoError(t, os.WriteFile(filepath.Join(config, "tokens", "other.json"), []byte(testToken), 0o600))
+	t.Setenv("CUB_CONTEXT", "other")
+	_, err = Resolve(context.Background(), Options{})
+	require.Equal(t, KindNotConfigured, KindOf(err))
+	require.Equal(t, "confighub resolve credentials: the token for context \"other\" could not be loaded; run `cub auth login` (not_configured)", err.Error())
+	require.NoError(t, os.WriteFile(filepath.Join(config, "tokens", "other.json"), []byte(`{"accessToken":""}`), 0o600))
+
+	require.Len(t, hub.requests(), seen)
 	require.Equal(t, before, snapshotDir(t, config))
+	require.Empty(t, snapshotDir(t, home), "resolving credentials wrote under HOME")
 }
 
 func snapshotDir(t *testing.T, dir string) map[string]string {

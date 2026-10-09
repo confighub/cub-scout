@@ -22,7 +22,7 @@ CUB_SCOUT_CONFIGHUB_READER=sdk ./cub-scout compare source-truth deploy/api -n pr
 | Value | Route |
 |---|---|
 | unset, or `cub` | `cub unit get <unit> --space <space> -o json`, as every release has |
-| `sdk` | Two GETs through the SDK client: the space by slug, then the Unit by slug in that space. No `cub` process |
+| `sdk` | Two GETs through the SDK client: the space by slug, then the Unit by slug in that space (one GET when the space is given by its ID). No `cub` process |
 | anything else | An error. A misspelt route does not become the default one |
 
 A failed SDK read is reported as a ConfigHub omission with its reason. It does
@@ -38,7 +38,9 @@ not fall back to `cub`.
   client; a test calls two of them and checks that nothing reaches the server.
 - **Exactly one space and one Unit.** An empty or `*` scope is refused before
   any request. Slugs match exactly, including case, and are checked again on
-  the response; two matches are an error, never a choice.
+  the response; two matches are an error, never a choice. A space is taken as
+  an ID only in the canonical 36-character UUID form; anything else is looked
+  up as a slug.
 - **Credentials are read, not managed.** As a `cub` plugin it uses `CUB_SERVER`
   and `CUB_TOKEN`; otherwise the local cub configuration, honouring
   `CUB_CONFIG` and `CUB_CONTEXT`. It writes nothing, does not log in and does
@@ -46,7 +48,9 @@ not fall back to `cub`.
   is sent without a credential.
 - **Each failure keeps its reason**: `invalid_scope`, `not_configured`,
   `unauthorized`, `forbidden`, `not_found`, `ambiguous`, `timeout`,
-  `malformed`, `refused`, `request_failed`. No message contains the token.
+  `canceled`, `malformed`, `refused`, `request_failed`. No message is built
+  from the token or from an error that could quote it: a token file that
+  cannot be parsed is reported without the parser's text.
 
 ## Measured (2026-10-09, SDK core v0.8.10, darwin/arm64, Go 1.27.1)
 
@@ -54,7 +58,7 @@ not fall back to `cub`.
 |---|---|---|
 | `cub` processes per read | 1 | 0 |
 | HTTP requests per read | not measured | 2 |
-| Result on the recorded Unit | Space, Unit, Revision `2`, URL | identical |
+| Result on the recorded Unit, each route fed the same recorded object | Space, Unit, Revision `2`, URL | the same |
 | Time to start `cub` at all (`cub version`, no network, 5 runs) | 0.40 to 0.53 s | not applicable |
 
 | Cost of adopting the SDK | Before | After |
@@ -82,11 +86,25 @@ function, so it is linked and inert.
 - **No agent cost or time claim.** Fewer processes is not a measured saving
   for an agent.
 
+## Known differences and limits
+
+- **Revision 0.** `cub unit get` prints `HeadRevisionNum` even when it is 0,
+  and the cub route reports `0`. The typed client cannot tell an absent number
+  from zero, so the SDK route reports no revision.
+- **Receipts drop the reason.** A receipt built from source-truth discards the
+  ConfigHub read's error on either route and reports only a missing surface,
+  with advice that names `cub` login. That is existing behaviour; with the SDK
+  route the advice is the wrong one.
+- **The "same result" above is a fixture comparison.** The cub route was given
+  the recorded `cub unit get` output and the SDK route the same object over
+  HTTP from a test server. Neither ran against ConfigHub.
+
 ## Found on the way
 
 - `cubapi.ResolveClient` in SDK core v0.8.10 passes `CUB_CONFIG`, which names
   the config **directory**, to `LoadConfig` as if it were the config **file**,
-  and fails with "is a directory" whenever `CUB_CONFIG` is set. The reader
+  and fails with "is a directory" when `CUB_CONFIG` names an existing
+  directory (a path that does not exist yields an empty configuration). The reader
   resolves credentials with `LoadEnvironment`, `LoadConfig("")` and
   `Store.Use` instead. Not reported upstream from here.
 - A token file with no `accessToken` makes `NewClientFromConfig` build a client

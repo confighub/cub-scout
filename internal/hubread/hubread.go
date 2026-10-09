@@ -39,6 +39,7 @@ const (
 	KindNotFound      Kind = "not_found"
 	KindAmbiguous     Kind = "ambiguous"
 	KindTimeout       Kind = "timeout"
+	KindCanceled      Kind = "canceled"
 	KindMalformed     Kind = "malformed"
 	KindRefused       Kind = "refused"
 	KindFailed        Kind = "request_failed"
@@ -184,7 +185,9 @@ func Resolve(ctx context.Context, opts Options) (*Reader, error) {
 		}
 		token, tokenErr := store.TokenData(active)
 		if tokenErr != nil {
-			return notConfigured(fmt.Errorf("load the token for context %q: %w", active.Name, tokenErr))
+			// The cause is deliberately not included: a token file that is
+			// not the expected JSON makes the parser quote what it found.
+			return notConfigured(fmt.Errorf("the token for context %q could not be loaded; run `cub auth login`", active.Name))
 		}
 		// A context whose token file holds no token would send requests
 		// with no credential and report the server's refusal as the cause.
@@ -243,6 +246,8 @@ func classify(ctx context.Context, op string, err error, resp apiResponse) *Erro
 		switch {
 		case errors.Is(err, errNotReadOnly), errors.Is(err, errRedirect):
 			return &Error{Kind: KindRefused, Op: op, Message: errors.Unwrap(unwrapURL(err)).Error()}
+		case errors.Is(ctx.Err(), context.Canceled), errors.Is(err, context.Canceled):
+			return &Error{Kind: KindCanceled, Op: op, Message: "the request was cancelled"}
 		case ctx.Err() != nil, errors.Is(err, context.DeadlineExceeded), errors.As(err, &urlErr) && urlErr.Timeout():
 			return &Error{Kind: KindTimeout, Op: op, Message: "the request did not complete in time"}
 		case errors.As(err, &urlErr):
@@ -313,7 +318,13 @@ func (r *Reader) UnitHead(ctx context.Context, space, unit string) (UnitHead, er
 	}
 
 	head := UnitHead{Unit: unit}
+	// Only the canonical 36-character form is an ID. uuid.Parse also accepts
+	// 32 bare hex digits, braces and a urn: prefix, any of which could be a
+	// slug; read as an ID, it would skip the lookup that checks the name.
 	spaceID, err := uuid.Parse(space)
+	if err == nil && !strings.EqualFold(spaceID.String(), space) {
+		err = errors.New("not a canonical UUID")
+	}
 	if err != nil {
 		id, resolveErr := r.spaceID(ctx, space)
 		if resolveErr != nil {
@@ -345,6 +356,9 @@ func (r *Reader) UnitHead(ctx context.Context, space, unit string) (UnitHead, er
 	case 1:
 	default:
 		return UnitHead{}, &Error{Kind: KindAmbiguous, Op: op, Message: fmt.Sprintf("more than one unit %q in space %q", unit, space)}
+	}
+	if matches[0].UnitID == uuid.Nil {
+		return UnitHead{}, &Error{Kind: KindMalformed, Op: op, Message: fmt.Sprintf("unit %q has no ID", unit)}
 	}
 	head.UnitID, head.HeadRevisionNum = matches[0].UnitID.String(), matches[0].HeadRevisionNum
 	return head, nil
