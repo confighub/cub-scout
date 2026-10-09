@@ -11,8 +11,10 @@ The five run modes are **standalone CLI/TUI, `cub` plugin, MCP server, watch
 stream, and in-cluster bot**. [Choose a mode](../README.md#five-ways-to-run-cub-scout)
 or [start with a user question](../README.md#user-questions).
 
-Current patch: [v2.10.1](releases/v2.10.1.md), correcting feedback freshness.
-The [v2.10.0](releases/v2.10.0.md) bounded reads add exact
+Current release: [v2.13.3](releases/v2.13.3.md), which adds `gitops settings`
+(preview). [v2.13.2](releases/v2.13.2.md) before it corrected provenance and
+health for Flux and Argo CD; upgrade from anything older. Earlier notes are in
+[releases/](releases/). The [v2.10.0](releases/v2.10.0.md) bounded reads add exact
 scope, visible read counts, short-lived MCP/TUI reuse, origin metadata, and
 explicit omissions. [Tool comparison](reference/explorer-comparison.md) explains
 where Scout fits and where parity is still unproved.
