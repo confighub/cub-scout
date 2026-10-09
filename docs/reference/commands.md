@@ -1820,8 +1820,10 @@ Other known v0.2 gaps:
 ---
 
 An experimental, opt-in route reads the Unit through the ConfigHub SDK instead
-of running `cub`: set `CUB_SCOUT_CONFIGHUB_READER=sdk`. It is off by default and
-unreleased; see [ConfigHub SDK reader](confighub-sdk-reader.md) for what it
+of running `cub unit get`: set `CUB_SCOUT_CONFIGHUB_READER=sdk`. The same
+setting applies to every `cub unit get` cub-scout runs for a Unit named by slug.
+It is off by default and unreleased, and `cub` is still required; see
+[ConfigHub SDK reader](confighub-sdk-reader.md) for what it covers, what it
 guarantees and what was measured.
 
 ## compare drift

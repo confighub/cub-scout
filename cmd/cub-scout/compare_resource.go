@@ -383,6 +383,9 @@ func loadCompareDryWetSnapshots(ctx context.Context, unitSlug, space string, tar
 
 	metaRaw, err := runCompareCubCommand(ctx, compareUnitGetArgs(unitSlug, space))
 	if err != nil {
+		if failedOnSDKRoute(err) {
+			return compareDryWetResult{}, fmt.Errorf("ConfigHub unit read: %w", err)
+		}
 		return compareDryWetResult{}, fmt.Errorf("cub unit get: %w", err)
 	}
 	// Best-effort only: trust hints should degrade gracefully if the unit-get
