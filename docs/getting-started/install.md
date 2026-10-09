@@ -69,7 +69,7 @@ Unix archives include `cub-scout`, `kubectl-cub_scout`, and the plugin entry poi
 
 ### Go Source Installation
 
-With Go 1.24 or newer, use the versioned module path:
+With Go 1.25 or newer, use the versioned module path:
 
 ```sh
 # Latest released version

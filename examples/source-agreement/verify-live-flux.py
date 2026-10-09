@@ -63,7 +63,7 @@ if not WITHOUT_FLUX_CLI:
     os.symlink(real_flux, root / 'bin/flux')
 os.symlink(real_kubectl, root / 'bin/kubectl')
 host_env = {**os.environ, 'HOME': str(root / 'home'), 'KUBECONFIG': str(cfg), 'CUB_CONFIG': str(root / 'cub-config'),
-            'GOTOOLCHAIN': 'go1.24.0'}
+            'GOTOOLCHAIN': 'go1.26.9'}
 scout_env = {'HOME': str(root / 'home'), 'KUBECONFIG': str(cfg), 'PATH': str(root / 'bin') + ':/usr/bin:/bin'}
 steps, failures, observations = [], [], []
 created, removed = False, False

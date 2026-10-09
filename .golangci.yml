@@ -1,12 +1,13 @@
-# golangci-lint configuration
+# golangci-lint configuration (v2 schema)
 # Minimal set focusing on high-value checks
+version: "2"
 
 run:
   timeout: 5m
-  go: "1.24"
+  go: "1.25"
 
 linters:
-  disable-all: true
+  default: none
   enable:
     # Core static analysis
     - govet          # Go vet examines Go source code and reports suspicious constructs
@@ -19,74 +20,78 @@ linters:
     - ineffassign    # Detects assignments to existing variables that are not used
     - unused         # Finds unused code
 
-linters-settings:
-  errcheck:
-    # Don't report errors from functions where error return is commonly ignored
-    exclude-functions:
-      - (*os.File).Close
-      - (io.Closer).Close
-      - (*bytes.Buffer).WriteByte
-      - (*bytes.Buffer).WriteString
-      - (*os.File).WriteString
-      - fmt.Fprintf
-      - fmt.Printf
-      - fmt.Println
-      - fmt.Scanln
-      - fmt.Sscanf
-      # Debug/logging functions - errors intentionally ignored
-      - os.MkdirAll
-      - os.WriteFile
-      - path/filepath.Walk
-      - path/filepath.WalkDir
-      - (*os/exec.Cmd).Wait
+  settings:
+    errcheck:
+      # Don't report errors from functions where error return is commonly ignored
+      exclude-functions:
+        - (*os.File).Close
+        - (io.Closer).Close
+        - (*bytes.Buffer).WriteByte
+        - (*bytes.Buffer).WriteString
+        - (*os.File).WriteString
+        - fmt.Fprintf
+        - fmt.Printf
+        - fmt.Println
+        - fmt.Scanln
+        - fmt.Sscanf
+        # Debug/logging functions - errors intentionally ignored
+        - os.MkdirAll
+        - os.WriteFile
+        - path/filepath.Walk
+        - path/filepath.WalkDir
+        - (*os/exec.Cmd).Wait
 
-  govet:
-    enable-all: true
-    disable:
-      - shadow         # Shadowing is common in Go; too many false positives
-      - fieldalignment # Struct field alignment optimizations are too noisy
+    govet:
+      enable-all: true
+      disable:
+        - shadow         # Shadowing is common in Go; too many false positives
+        - fieldalignment # Struct field alignment optimizations are too noisy
 
-  staticcheck:
-    checks:
-      - "all"
-      - "-SA1019"  # Ignore deprecation warnings (too noisy for now)
-      - "-SA9003"  # Ignore empty branch warnings
+    staticcheck:
+      # In the v2 schema staticcheck also carries the former gosimple (S*) and
+      # stylecheck (ST*) checks. Only the SA* checks were enabled under v1, so
+      # only those are enabled here.
+      checks:
+        - "SA*"
+        - "-SA1019"  # Ignore deprecation warnings (too noisy for now)
+        - "-SA9003"  # Ignore empty branch warnings
+
+  exclusions:
+    # Exclude some paths from linting
+    paths:
+      - vendor
+
+    rules:
+      # Exclude test files from some linters
+      - path: _test\.go
+        linters:
+          - errcheck
+          - govet
+          - unused
+
+      # Unused styles are kept for consistency and future use
+      - path: "cmd/cub-scout/(demo|hierarchy_types|import_argocd|import_wizard|localcluster|map)\\.go"
+        linters:
+          - unused
+
+      # Unused code that may be used in future features
+      - path: pkg/agent/state_scanner\.go
+        linters:
+          - unused
+
+      - path: pkg/agent/static_scanner\.go
+        linters:
+          - unused
+          - staticcheck
+        text: "SA6000|findCCVEDBDir"
+
+      # Exclude regexp in loop warning - it's a low-frequency code path
+      - path: pkg/agent/static_scanner\.go
+        linters:
+          - staticcheck
+        text: "SA6000"
 
 issues:
   # Don't limit the number of issues
   max-issues-per-linter: 0
   max-same-issues: 0
-
-  # Exclude some paths from linting
-  exclude-dirs:
-    - vendor
-
-  # Exclude test files from some linters
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - errcheck
-        - govet
-        - unused
-
-    # Unused styles are kept for consistency and future use
-    - path: "cmd/cub-scout/(demo|hierarchy_types|import_argocd|import_wizard|localcluster|map)\\.go"
-      linters:
-        - unused
-
-    # Unused code that may be used in future features
-    - path: pkg/agent/state_scanner\.go
-      linters:
-        - unused
-
-    - path: pkg/agent/static_scanner\.go
-      linters:
-        - unused
-        - staticcheck
-      text: "SA6000|findCCVEDBDir"
-
-    # Exclude regexp in loop warning - it's a low-frequency code path
-    - path: pkg/agent/static_scanner\.go
-      linters:
-        - staticcheck
-      text: "SA6000"

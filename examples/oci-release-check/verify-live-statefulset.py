@@ -12,7 +12,7 @@ before = sha(shared)
 head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
 assert not subprocess.check_output(['git', 'status', '--porcelain'], text=True).strip(), 'clean source required'
 for directory in ['home', 'cub-config']: (root / directory).mkdir()
-env = {**os.environ, 'HOME': str(root / 'home'), 'KUBECONFIG': str(cfg), 'CUB_CONFIG': str(root / 'cub-config'), 'GOTOOLCHAIN': 'go1.24.0'}
+env = {**os.environ, 'HOME': str(root / 'home'), 'KUBECONFIG': str(cfg), 'CUB_CONFIG': str(root / 'cub-config'), 'GOTOOLCHAIN': 'go1.26.9'}
 host = os.environ.get('CUB_CLI') or shutil.which('cub')
 assert host and pathlib.Path(host).is_file(), 'CUB_CLI or cub host required before live setup'
 steps, failures = [], []

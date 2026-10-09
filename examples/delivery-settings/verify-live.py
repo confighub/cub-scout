@@ -40,7 +40,7 @@ assert real_flux and shutil.which('kubectl') and shutil.which('curl'), 'flux, ku
 for directory in ['home', 'cub-config', 'recorded']:
     (root / directory).mkdir()
 host_env = {**os.environ, 'HOME': str(root / 'home'), 'KUBECONFIG': str(cfg), 'CUB_CONFIG': str(root / 'cub-config'),
-            'GOTOOLCHAIN': 'go1.24.0'}
+            'GOTOOLCHAIN': 'go1.26.9'}
 # cub-scout sees no kubectl, flux, argocd or cub: every fact comes from the Kubernetes API.
 scout_env = {'HOME': str(root / 'home'), 'KUBECONFIG': str(cfg), 'PATH': '/usr/bin:/bin'}
 steps, failures, observations = [], [], {}
