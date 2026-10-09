@@ -7511,6 +7511,18 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 	fmt.Println()
 
 	// ═══════════════════════════════════════════════════════════════════════════════
+	// DELIVERY SETTINGS
+	// ═══════════════════════════════════════════════════════════════════════════════
+	// The same model as `gitops settings`: which deployers share each sync,
+	// correction and prune setting. Its Reads section also says when a deployer
+	// kind above could not be listed, which the sections above print nothing for.
+	if settings, settingsErr := buildDeliverySettingsReport(ctx, dynClient, deliverySettingsParams{}); settingsErr == nil {
+		settings.Context = boundContextLabel(ctx)
+		fmt.Print(renderDeliverySettingsASCII(settings, deliverySettingsGroupByProject))
+	}
+	fmt.Println()
+
+	// ═══════════════════════════════════════════════════════════════════════════════
 	// WORKLOADS BY OWNER
 	// ═══════════════════════════════════════════════════════════════════════════════
 	fmt.Println("───────────────────────────────────────────────────────────────────────────────")

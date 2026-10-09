@@ -19,7 +19,12 @@ type gitOpsStatusTUIModel struct {
 }
 
 func newGitOpsStatusTUIModel(summary GitOpsSummary) *gitOpsStatusTUIModel {
-	content := safeGitOpsTUIContent(renderGitOpsStatusMarkdown(summary))
+	return newGitOpsMarkdownTUIModel(renderGitOpsStatusMarkdown(summary))
+}
+
+// newGitOpsMarkdownTUIModel shows one already-collected Markdown snapshot.
+func newGitOpsMarkdownTUIModel(markdown string) *gitOpsStatusTUIModel {
+	content := safeGitOpsTUIContent(markdown)
 	vp := viewport.New(78, 20)
 	vp.SetContent(ansi.Hardwrap(content, vp.Width, true))
 	return &gitOpsStatusTUIModel{viewport: vp, content: content}
@@ -59,5 +64,10 @@ func (m *gitOpsStatusTUIModel) View() string {
 
 func runGitOpsStatusTUI(ctx context.Context, summary GitOpsSummary) error {
 	_, err := tea.NewProgram(newGitOpsStatusTUIModel(summary), tea.WithAltScreen(), tea.WithContext(ctx)).Run()
+	return err
+}
+
+func runGitOpsMarkdownTUI(ctx context.Context, markdown string) error {
+	_, err := tea.NewProgram(newGitOpsMarkdownTUIModel(markdown), tea.WithAltScreen(), tea.WithContext(ctx)).Run()
 	return err
 }
