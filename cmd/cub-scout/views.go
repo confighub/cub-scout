@@ -34,6 +34,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -201,19 +202,54 @@ func listUnitSlugsForFilter(ctx context.Context, whereClause, space string) ([]s
 		}
 		return nil, fmt.Errorf("cub unit list: %w", err)
 	}
-	var units []struct {
-		Slug string `json:"slug"`
-	}
+	var units []map[string]interface{}
 	if err := json.Unmarshal(out, &units); err != nil {
 		return nil, fmt.Errorf("parse unit list: %w", err)
 	}
 	slugs := make([]string, 0, len(units))
 	for _, u := range units {
-		if u.Slug != "" {
-			slugs = append(slugs, u.Slug)
+		if slug := viewUnitString(u, "Slug"); slug != "" {
+			slugs = append(slugs, slug)
 		}
 	}
 	return slugs, nil
+}
+
+// viewUnitField reads one field of a Unit from an entry of `cub unit list -o
+// json`.
+//
+// cub prints each entry as an envelope, `{"Space": {...}, "Unit": {"Slug":
+// ...}}`, with the Unit's own fields one level down and in PascalCase (#852;
+// recorded in test/fixtures/confighub-sdk-parity-v083-recorded/unit-list.json).
+// A View names a field as its author wrote it, so the name is matched exactly
+// first and then without regard to case, in a fixed order. An entry with no
+// "Unit" object is read as the Unit itself.
+func viewUnitField(entry map[string]interface{}, name string) (interface{}, bool) {
+	fields := entry
+	if unit, ok := entry["Unit"].(map[string]interface{}); ok {
+		fields = unit
+	}
+	if value, ok := fields[name]; ok {
+		return value, true
+	}
+	keys := make([]string, 0, len(fields))
+	for key := range fields {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		if strings.EqualFold(key, name) {
+			return fields[key], true
+		}
+	}
+	return nil, false
+}
+
+// viewUnitString is viewUnitField for a field that is a string.
+func viewUnitString(entry map[string]interface{}, name string) string {
+	value, _ := viewUnitField(entry, name)
+	text, _ := value.(string)
+	return strings.TrimSpace(text)
 }
 
 // listUnitsForFilter is the projection-shaped sibling of
@@ -319,24 +355,14 @@ func (c ViewColumnSpec) evalKind() string {
 // the rendered string and a bool indicating whether the evaluator was
 // supported (false → placeholder was emitted).
 //
-// MetadataAttribute lookup is case-tolerant on the leading character
-// because ConfigHub serialises some fields PascalCase ("Slug") and
-// others camelCase ("slug"); `cub unit list -o json` emits the latter
-// style for the keys we care about, but we accept both so authoring-
-// side specs round-trip cleanly.
+// MetadataAttribute names a field of the Unit. It is read from the entry's
+// Unit object, matched exactly and then without regard to case; see
+// viewUnitField.
 func (c ViewColumnSpec) evalCell(unit map[string]interface{}) (string, bool) {
 	switch c.evalKind() {
 	case "metadata_attribute":
-		key := c.MetadataAttribute
-		if v, ok := unit[key]; ok {
+		if v, ok := viewUnitField(unit, c.MetadataAttribute); ok {
 			return formatCellValue(v), true
-		}
-		// Try lowercase first letter (Slug → slug etc.).
-		if len(key) > 0 {
-			lc := strings.ToLower(key[:1]) + key[1:]
-			if v, ok := unit[lc]; ok {
-				return formatCellValue(v), true
-			}
 		}
 		return "", true // attribute not present on this unit; empty cell, still a supported eval
 	case "metadata_expression":
@@ -611,7 +637,7 @@ func buildProjectedView(ctx context.Context, ref *agent.ViewRef, space string, w
 			row[col.Name] = cell
 		}
 		if workloadIndex != nil {
-			slug := readStringField(u, "slug")
+			slug := viewUnitString(u, "Slug")
 			applied, status := computeRealityCells(slug, workloadIndex)
 			row["Applied?"] = applied
 			row["LiveStatus"] = status
