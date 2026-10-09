@@ -412,7 +412,7 @@ cub-scout mcp serve --recording objects.yaml
 - Standalone tool set includes:
   - `doctor`
   - `explain`
-  - `gitops_settings` (unreleased)
+  - `gitops_settings` (preview since v2.13.4)
   - `gitops_status`
   - `map`
   - `scan`
