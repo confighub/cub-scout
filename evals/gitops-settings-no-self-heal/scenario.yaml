@@ -9,11 +9,6 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: team-sandbox
----
-apiVersion: v1
-kind: Namespace
-metadata:
   name: flux-system
 ---
 apiVersion: v1
@@ -426,7 +421,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: playground
-  namespace: team-sandbox
+  namespace: argocd
 spec:
   project: default
   source:

@@ -28,8 +28,10 @@ flags and how to read the output.
 - It is not a new capability over `kubectl get applications -o json` and a
   filter; it is the same facts, read once, across both controllers, with the
   cases that are easy to get wrong handled the same way every time (below).
-- No agent eval has been run on it. No claim is made that it saves an agent
-  time or cost.
+- One agent eval case exists for it,
+  [`gitops-settings-no-self-heal`](../../evals/gitops-settings-no-self-heal/),
+  on one recorded scenario. Read its result and limits there; it is not a
+  general claim about agent time or cost.
 
 ## The cases the check pins
 

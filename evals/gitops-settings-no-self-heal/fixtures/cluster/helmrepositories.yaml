@@ -3,7 +3,7 @@ items:
 - apiVersion: source.toolkit.fluxcd.io/v1
   kind: HelmRepository
   metadata:
-    creationTimestamp: "2026-10-09T10:11:30Z"
+    creationTimestamp: "2026-10-09T10:18:11Z"
     generation: 1
     managedFields:
     - apiVersion: source.toolkit.fluxcd.io/v1
@@ -14,11 +14,11 @@ items:
           f:url: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:11:30Z"
+      time: "2026-10-09T10:18:11Z"
     name: charts
     namespace: team-g
-    resourceVersion: "586"
-    uid: f8c73928-8fef-4709-9e7c-16e360607de0
+    resourceVersion: "537"
+    uid: ac8a7aa2-db20-4ec7-adb5-14c9cd944ae6
   spec:
     interval: 10m
     provider: generic
@@ -28,7 +28,7 @@ items:
 - apiVersion: source.toolkit.fluxcd.io/v1
   kind: HelmRepository
   metadata:
-    creationTimestamp: "2026-10-09T10:11:30Z"
+    creationTimestamp: "2026-10-09T10:18:11Z"
     generation: 1
     managedFields:
     - apiVersion: source.toolkit.fluxcd.io/v1
@@ -39,11 +39,11 @@ items:
           f:url: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:11:30Z"
+      time: "2026-10-09T10:18:11Z"
     name: charts
     namespace: team-h
-    resourceVersion: "585"
-    uid: 3e17555c-ea57-4247-acef-d0f4eb1e7702
+    resourceVersion: "536"
+    uid: 4480a40b-c139-4a47-aae2-e2f771b43f47
   spec:
     interval: 10m
     provider: generic

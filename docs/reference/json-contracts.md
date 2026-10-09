@@ -1232,6 +1232,38 @@ change while the command is a preview.
 Settings are declared configuration. Nothing in this contract says a controller
 acted on a setting, and nothing in it is a verdict.
 
+### Views (unreleased)
+
+`--view groups`, `settings` or `deployers` writes the same document with only
+that one of the three views, plus `"view": "<name>"`. `context`, `namespace`,
+`filters`, `complete`, `counts`, `reads`, `linkSources` and `notes` are kept in
+every view. The MCP `gitops_settings` tool returns `--view summary` unless asked
+for another.
+
+`--view summary` replaces all three with `summary[]`, written without
+indentation:
+
+```json
+{"view":"summary","complete":true,"counts":[],"reads":[],"summary":[
+  {"controller":"ArgoCD","kind":"Application","groupKind":"project","group":"payments","deployers":2,
+   "settings":{"auto-sync":{"on":["argocd/fx-rates","argocd/ledger-api"]},
+               "self-heal":{"on":["argocd/ledger-api"],"off":["argocd/fx-rates"]},
+               "Validate":{"false":["argocd/fx-rates"]},
+               "ignoreDifferences":{"set":["argocd/fx-rates"]}},
+   "unset":{"self-heal":["argocd/fx-rates"]},
+   "details":{"ignoreDifferences":{"argocd/fx-rates":"1 rule, comparison only"}}}]}
+```
+
+| Field | Rule |
+|---|---|
+| `summary[].settings` | Setting name, then value, then the deployers that have it as `namespace/name`. Values are grouped as in `groups[]`: on `effective`, falling back to `value`, so a deployer that leaves a field unset appears under the controller default. |
+| `summary[].unset` | Per setting, the deployers that do not declare it and are counted under a default in `settings`. A deployer listed here did not write the value it appears under. |
+| `summary[].details` | Per setting and deployer, what the value alone does not say, such as the number of ignore rules. The `n/a` reason is not repeated. |
+
+The summary carries no links, spec paths or ignore rules; those are in the
+`deployers` view. It is the `groups` view with each deployer written once per
+setting, and a test holds the two to the same content.
+
 ## Sveltos Controller Report Contract
 
 `gitops status` optionally adds `sveltosControllerReports` with schema

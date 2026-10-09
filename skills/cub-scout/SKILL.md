@@ -102,7 +102,7 @@ The consumer-side complement: same cub-scout verbs framed around **Pilot** (the 
 - **Source-truth contract** (#393 + #418): `compare source-truth` with Phase 1 + Phase 2 strategies (9 total).
 - **Views integration** (#391): `views resolve`, `views open`, `views project --with-reality`, `compare three-way --view`.
 - **`doctor` / `explain`** with `--presentation` and `--hint-mode`.
-- **MCP gateway** (`mcp serve`): standalone + connected tool sets, including `gitops_status` for GitOps delivery and controller-coverage evidence.
+- **MCP gateway** (`mcp serve`): standalone + connected tool sets, including `gitops_status` for GitOps delivery and controller-coverage evidence and `gitops_settings` for which Argo CD and Flux deployers sync automatically, self-heal, prune or are suspended.
 - **ConfigHub delivery evidence**: `gitops status --with-confighub`, `doctor --with-confighub`, `map activity --with-confighub`, `trace --with-confighub`, `explain --with-confighub`, and single-resource `receipt verify --with-confighub` add bounded release history, unit events, live-status freshness, and event-consumer health. `doctor` adds a scope-level `delivery` rollup, `map activity` renders the evidence as timeline rows, and receipts freeze object-correlated snapshots as fingerprint-covered supporting evidence.
 - **Controller-family coverage**: `gitops status` emits `controllerCoverage[]` for Flux, Argo CD, ConfigHub, Sveltos, and Modelplane so absence and RBAC/API omissions stay distinguishable.
 - **Stage B back-resolution** (#440): `compare three-way --source-path <local-checkout>` populates `gitSource.file:line` for raw YAML manifests.

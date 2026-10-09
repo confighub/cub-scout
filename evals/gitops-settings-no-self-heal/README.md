@@ -22,7 +22,7 @@ export:
 Expected answer:
 
 ```
-NO_SELF_HEAL: argocd/etl-nightly, argocd/feature-store, argocd/fx-rates, argocd/ingress-nginx, argocd/settlement-worker, team-sandbox/playground
+NO_SELF_HEAL: argocd/etl-nightly, argocd/feature-store, argocd/fx-rates, argocd/ingress-nginx, argocd/playground, argocd/settlement-worker
 SUSPENDED: HelmRelease/team-h/redis, Kustomization/flux-system/legacy-migration, Kustomization/flux-system/monitoring
 ```
 
@@ -63,6 +63,13 @@ sees the real descriptions and schemas.
   counted in that arm's cost.
 - **One scenario, thirty objects.** It says nothing about a large fleet, a
   cluster with running controllers, or any other question.
+- **Every Application is in the Argo CD namespace.** The first wiring run had
+  one in another namespace. Both arms left it out, reasoning that this Argo CD
+  was not configured to manage Applications there. `gitops_settings` lists such
+  an Application by what its spec declares and cannot tell whether an Argo CD
+  instance manages it; that is a limit of the tool, recorded in #839. The object
+  was moved because a case with a contested answer measures nothing, not to
+  hide the limit.
 - **A result here is not a general claim.** It is one question on one recording.
   Do not pool it with `benchmark-v1`, whose inputs are frozen and unchanged by
   this case.

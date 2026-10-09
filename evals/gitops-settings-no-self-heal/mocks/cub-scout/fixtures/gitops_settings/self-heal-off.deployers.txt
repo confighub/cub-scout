@@ -1,6 +1,6 @@
 {
   "complete": true,
-  "context": "kind-scout-eval-settings-d0a5eba8",
+  "context": "kind-scout-eval-settings-49cc7817",
   "counts": [
     {
       "controller": "ArgoCD",
@@ -101,10 +101,11 @@
     {
       "controller": "ArgoCD",
       "kind": "Application",
-      "namespace": "team-sandbox",
+      "namespace": "argocd",
       "name": "playground",
       "groupKind": "project",
       "group": "default",
+      "url": "https://argocd.example.test/applications/argocd/playground",
       "settings": [
         {
           "name": "auto-sync",
@@ -261,10 +262,6 @@
       "namespace": "argocd",
       "status": "found",
       "url": "https://argocd.example.test"
-    },
-    {
-      "namespace": "team-sandbox",
-      "status": "not_found"
     }
   ],
   "reads": [

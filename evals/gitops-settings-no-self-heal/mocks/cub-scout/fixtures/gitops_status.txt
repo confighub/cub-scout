@@ -1,5 +1,5 @@
 {
-  "context": "kind-scout-eval-settings-d0a5eba8",
+  "context": "kind-scout-eval-settings-49cc7817",
   "backend": "flux",
   "transport": "git",
   "deployers": [
@@ -222,6 +222,14 @@
     },
     {
       "kind": "Application",
+      "name": "playground",
+      "namespace": "argocd",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/argocd/playground"
+    },
+    {
+      "kind": "Application",
       "name": "settlement-worker",
       "namespace": "argocd",
       "ready": false,
@@ -243,14 +251,6 @@
       "ready": false,
       "stage": "unknown",
       "sourceRef": "GitRepository/argocd/warehouse"
-    },
-    {
-      "kind": "Application",
-      "name": "playground",
-      "namespace": "team-sandbox",
-      "ready": false,
-      "stage": "unknown",
-      "sourceRef": "GitRepository/team-sandbox/playground"
     }
   ],
   "sources": [
@@ -373,6 +373,12 @@
     },
     {
       "kind": "GitRepository",
+      "name": "playground",
+      "namespace": "argocd",
+      "ready": true
+    },
+    {
+      "kind": "GitRepository",
       "name": "settlement-worker",
       "namespace": "argocd",
       "ready": true
@@ -387,12 +393,6 @@
       "kind": "GitRepository",
       "name": "warehouse",
       "namespace": "argocd",
-      "ready": true
-    },
-    {
-      "kind": "GitRepository",
-      "name": "playground",
-      "namespace": "team-sandbox",
       "ready": true
     }
   ],
