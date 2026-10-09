@@ -1,0 +1,214 @@
+{
+  "apiVersion": "v1",
+  "items": [
+    {
+      "apiVersion": "helm.toolkit.fluxcd.io/v2",
+      "kind": "HelmRelease",
+      "metadata": {
+        "annotations": {
+          "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"helm.toolkit.fluxcd.io/v2\",\"kind\":\"HelmRelease\",\"metadata\":{\"annotations\":{},\"name\":\"plain\",\"namespace\":\"team-h\"},\"spec\":{\"chart\":{\"spec\":{\"chart\":\"podinfo\",\"sourceRef\":{\"kind\":\"HelmRepository\",\"name\":\"podinfo\"},\"version\":\"6.7.1\"}},\"interval\":\"10m\"}}\n"
+        },
+        "creationTimestamp": "2026-10-09T06:55:25Z",
+        "finalizers": [
+          "finalizers.fluxcd.io"
+        ],
+        "generation": 1,
+        "name": "plain",
+        "namespace": "team-h",
+        "resourceVersion": "1423",
+        "uid": "48755ac3-c4e9-4138-9f8b-5e242463cdac"
+      },
+      "spec": {
+        "chart": {
+          "spec": {
+            "chart": "podinfo",
+            "reconcileStrategy": "ChartVersion",
+            "sourceRef": {
+              "kind": "HelmRepository",
+              "name": "podinfo"
+            },
+            "version": "6.7.1"
+          }
+        },
+        "interval": "10m"
+      },
+      "status": {
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-10-09T06:55:50Z",
+            "message": "Helm install succeeded for release team-h/plain.v1 with chart podinfo@6.7.1",
+            "observedGeneration": 1,
+            "reason": "InstallSucceeded",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2026-10-09T06:55:50Z",
+            "message": "Helm install succeeded for release team-h/plain.v1 with chart podinfo@6.7.1",
+            "observedGeneration": 1,
+            "reason": "InstallSucceeded",
+            "status": "True",
+            "type": "Released"
+          }
+        ],
+        "helmChart": "team-h/team-h-plain",
+        "history": [
+          {
+            "action": "install",
+            "apiVersion": "v2",
+            "appVersion": "6.7.1",
+            "chartName": "podinfo",
+            "chartVersion": "6.7.1",
+            "configDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "digest": "sha256:2212ff28e4e1040a8c18bdb3f5c71ee220eeb068eac68722b0651486fcf8babd",
+            "firstDeployed": "2026-10-09T06:55:30Z",
+            "lastDeployed": "2026-10-09T06:55:30Z",
+            "name": "plain",
+            "namespace": "team-h",
+            "status": "deployed",
+            "version": 1
+          }
+        ],
+        "inventory": {
+          "entries": [
+            {
+              "id": "team-h_plain-podinfo__Service",
+              "v": "v1"
+            },
+            {
+              "id": "team-h_plain-podinfo_apps_Deployment",
+              "v": "v1"
+            }
+          ]
+        },
+        "lastAttemptedConfigDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "lastAttemptedGeneration": 1,
+        "lastAttemptedReleaseAction": "install",
+        "lastAttemptedReleaseActionDuration": "20.656920475s",
+        "lastAttemptedRevision": "6.7.1",
+        "observedGeneration": 1,
+        "storageNamespace": "team-h"
+      }
+    },
+    {
+      "apiVersion": "helm.toolkit.fluxcd.io/v2",
+      "kind": "HelmRelease",
+      "metadata": {
+        "annotations": {
+          "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"helm.toolkit.fluxcd.io/v2\",\"kind\":\"HelmRelease\",\"metadata\":{\"annotations\":{},\"name\":\"tuned\",\"namespace\":\"team-h\"},\"spec\":{\"chart\":{\"spec\":{\"chart\":\"podinfo\",\"sourceRef\":{\"kind\":\"HelmRepository\",\"name\":\"podinfo\"},\"version\":\"6.7.1\"}},\"driftDetection\":{\"ignore\":[{\"paths\":[\"/spec/replicas\"],\"target\":{\"kind\":\"Deployment\"}}],\"mode\":\"enabled\"},\"install\":{\"createNamespace\":true,\"remediation\":{\"retries\":3}},\"interval\":\"10m\",\"upgrade\":{\"cleanupOnFail\":true,\"force\":true,\"remediation\":{\"retries\":2,\"strategy\":\"rollback\"}}}}\n"
+        },
+        "creationTimestamp": "2026-10-09T06:55:25Z",
+        "finalizers": [
+          "finalizers.fluxcd.io"
+        ],
+        "generation": 1,
+        "name": "tuned",
+        "namespace": "team-h",
+        "resourceVersion": "1440",
+        "uid": "4dc7ede4-4a33-4867-b7fa-efaec93e49b5"
+      },
+      "spec": {
+        "chart": {
+          "spec": {
+            "chart": "podinfo",
+            "reconcileStrategy": "ChartVersion",
+            "sourceRef": {
+              "kind": "HelmRepository",
+              "name": "podinfo"
+            },
+            "version": "6.7.1"
+          }
+        },
+        "driftDetection": {
+          "ignore": [
+            {
+              "paths": [
+                "/spec/replicas"
+              ],
+              "target": {
+                "kind": "Deployment"
+              }
+            }
+          ],
+          "mode": "enabled"
+        },
+        "install": {
+          "createNamespace": true,
+          "remediation": {
+            "retries": 3
+          }
+        },
+        "interval": "10m",
+        "upgrade": {
+          "cleanupOnFail": true,
+          "force": true,
+          "remediation": {
+            "retries": 2,
+            "strategy": "rollback"
+          }
+        }
+      },
+      "status": {
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-10-09T06:55:55Z",
+            "message": "Helm install succeeded for release team-h/tuned.v1 with chart podinfo@6.7.1",
+            "observedGeneration": 1,
+            "reason": "InstallSucceeded",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2026-10-09T06:55:55Z",
+            "message": "Helm install succeeded for release team-h/tuned.v1 with chart podinfo@6.7.1",
+            "observedGeneration": 1,
+            "reason": "InstallSucceeded",
+            "status": "True",
+            "type": "Released"
+          }
+        ],
+        "helmChart": "team-h/team-h-tuned",
+        "history": [
+          {
+            "action": "install",
+            "apiVersion": "v2",
+            "appVersion": "6.7.1",
+            "chartName": "podinfo",
+            "chartVersion": "6.7.1",
+            "configDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "digest": "sha256:8b25df05403fe851c8b4f74c906452c67733676210ca56b192f04f8036ce9d65",
+            "firstDeployed": "2026-10-09T06:55:30Z",
+            "lastDeployed": "2026-10-09T06:55:30Z",
+            "name": "tuned",
+            "namespace": "team-h",
+            "status": "deployed",
+            "version": 1
+          }
+        ],
+        "inventory": {
+          "entries": [
+            {
+              "id": "team-h_tuned-podinfo__Service",
+              "v": "v1"
+            },
+            {
+              "id": "team-h_tuned-podinfo_apps_Deployment",
+              "v": "v1"
+            }
+          ]
+        },
+        "lastAttemptedConfigDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "lastAttemptedGeneration": 1,
+        "lastAttemptedReleaseAction": "install",
+        "lastAttemptedReleaseActionDuration": "25.583412012s",
+        "lastAttemptedRevision": "6.7.1",
+        "observedGeneration": 1,
+        "storageNamespace": "team-h"
+      }
+    }
+  ],
+  "kind": "List",
+  "metadata": {
+    "resourceVersion": ""
+  }
+}

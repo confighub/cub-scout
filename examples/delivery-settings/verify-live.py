@@ -44,7 +44,7 @@ host_env = {**os.environ, 'HOME': str(root / 'home'), 'KUBECONFIG': str(cfg), 'C
 # cub-scout sees no kubectl, flux, argocd or cub: every fact comes from the Kubernetes API.
 scout_env = {'HOME': str(root / 'home'), 'KUBECONFIG': str(cfg), 'PATH': '/usr/bin:/bin'}
 steps, failures, observations = [], [], {}
-created, removed = False, False
+created, removed, ambient_unusable = False, False, False
 
 
 def call(args, label, content=None, expected=0, env=None, timeout=420):
@@ -61,7 +61,9 @@ def call(args, label, content=None, expected=0, env=None, timeout=420):
 
 
 def kubectl(*args, label, content=None):
-    return call(['kubectl', '--kubeconfig', str(cfg), *args], label, content)
+    # Once the ambient current-context is made unusable, setup names its context too.
+    selected = ['--context', 'selected'] if ambient_unusable else []
+    return call(['kubectl', '--kubeconfig', str(cfg), *selected, *args], label, content)
 
 
 def scout(*args, label, context='selected', expected=0):
@@ -182,10 +184,10 @@ try:
         {'apiGroups': ['argoproj.io'], 'resources': ['applications'], 'verbs': ['list']}])
     cfg.write_text(json.dumps(config))
     cfg.chmod(0o600)
+    ambient_unusable = True
     captured = sha(cfg)
     for resource in ['applications.argoproj.io', 'kustomizations.kustomize.toolkit.fluxcd.io', 'helmreleases.helm.toolkit.fluxcd.io']:
-        listed = json.loads(call(['kubectl', '--kubeconfig', str(cfg), '--context', 'selected', 'get', resource, '-A', '-o', 'json'],
-                                 'private-record-' + resource))
+        listed = json.loads(kubectl('get', resource, '-A', '-o', 'json', label='private-record-' + resource))
         (root / 'recorded' / (resource.split('.')[0] + '.json')).write_text(json.dumps(listed, indent=2) + '\n')
 
     # Control: with no flag the ambient selection is unusable, so the read must fail.

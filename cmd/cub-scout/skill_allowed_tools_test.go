@@ -50,6 +50,7 @@ var readOnlyScoutPaths = map[string]bool{
 	"explain":                   true,
 	"fleet":                     true,
 	"fleet outliers":            true,
+	"gitops settings":           true,
 	"gitops status":             true,
 	"graph":                     true,
 	"graph explain":             true,

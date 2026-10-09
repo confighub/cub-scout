@@ -1,0 +1,32 @@
+{
+  "Application/argocd/guestbook-auto": {
+    "auto-sync": "on", "self-heal": "on", "prune": "on",
+    "CreateNamespace": "true", "ServerSideApply": "true"
+  },
+  "Application/argocd/guestbook-manual": {
+    "auto-sync": "unset", "self-heal": "n/a", "prune": "n/a"
+  },
+  "Application/argocd/guestbook-partial": {
+    "auto-sync": "on", "self-heal": "unset", "prune": "unset",
+    "CreateNamespace": "true", "Validate": "false", "PrunePropagationPolicy": "foreground",
+    "RespectIgnoreDifferences": "true", "ignoreDifferences": "set"
+  },
+  "Application/team-b/outside": {
+    "auto-sync": "on", "self-heal": "off", "prune": "unset"
+  },
+  "Kustomization/flux-system/podinfo": {
+    "suspend": "unset", "prune": "on", "force": "off", "wait": "unset"
+  },
+  "Kustomization/flux-system/podinfo-held": {
+    "suspend": "on", "prune": "off", "force": "on", "wait": "on"
+  },
+  "HelmRelease/team-h/plain": {
+    "suspend": "unset", "driftDetection.mode": "unset"
+  },
+  "HelmRelease/team-h/tuned": {
+    "suspend": "unset", "driftDetection.mode": "enabled", "driftDetection.ignore": "set",
+    "install.createNamespace": "true", "install.remediation.retries": "3",
+    "upgrade.cleanupOnFail": "true", "upgrade.force": "true",
+    "upgrade.remediation.retries": "2", "upgrade.remediation.strategy": "rollback"
+  }
+}

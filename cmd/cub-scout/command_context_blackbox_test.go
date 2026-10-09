@@ -58,6 +58,7 @@ func TestReadCommandsReadOnlyTheSelectedContext(t *testing.T) {
 		"patterns detect":  {"patterns", "detect"},
 		"patterns explain": {"patterns", "explain", "delivery.bridge.confighub_oci"},
 		"context-pack":     {"context-pack"},
+		"gitops settings":  {"gitops", "settings", "--format", "json"},
 	} {
 		t.Run(name, func(t *testing.T) { assertProcessReadsOnlySelectedContext(t, binary, args) })
 	}

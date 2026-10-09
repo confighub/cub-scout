@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/confighub/cub-scout/v2/pkg/agent"
@@ -67,7 +68,10 @@ Examples:
 
 func init() {
 	gitopsCmd.AddCommand(gitopsSettingsCmd)
-	flags := gitopsSettingsCmd.Flags()
+	addGitOpsSettingsFlags(gitopsSettingsCmd.Flags())
+}
+
+func addGitOpsSettingsFlags(flags *pflag.FlagSet) {
 	flags.StringP("namespace", "n", "", "Only deployers in this namespace (default: all namespaces)")
 	flags.StringSlice("project", nil, "Only Argo CD Applications in this project (repeatable; Flux objects have no project and are left out)")
 	flags.StringArray("setting", nil, "Only deployers with this setting, as name or name=value (repeatable; all must match)")

@@ -1150,6 +1150,88 @@ controller-reported `ready`, `healthStatus`, or `stage`. Missing/denied runtime
 reads are not evidence of zero Pods, and no arbitrary API error payload is
 included.
 
+## Delivery Settings Contract
+
+`gitops settings --format json` (v2.14 candidate, unreleased) reports the
+delivery settings declared in the `spec` of each Argo CD Application and Flux
+Kustomization and HelmRelease. Field names are camelCase. The shape may still
+change before it is released.
+
+### Schema Sketch
+
+```json
+{
+  "context": "prod-east",
+  "complete": true,
+  "counts": [{"controller": "ArgoCD", "kind": "Application", "read": 4, "shown": 4}],
+  "deployers": [
+    {
+      "controller": "ArgoCD",
+      "kind": "Application",
+      "namespace": "argocd",
+      "name": "fx-rates",
+      "groupKind": "project",
+      "group": "payments",
+      "url": "https://argocd.example.test/applications/argocd/fx-rates",
+      "settings": [
+        {"name": "auto-sync", "category": "policy", "value": "on", "effective": "on", "path": "spec.syncPolicy.automated"},
+        {"name": "self-heal", "category": "policy", "value": "unset", "default": "off", "effective": "off", "path": "spec.syncPolicy.automated.selfHeal"},
+        {"name": "Validate", "category": "option", "value": "false", "effective": "false", "path": "spec.syncPolicy.syncOptions"},
+        {"name": "ignoreDifferences", "category": "option", "value": "set", "effective": "set", "path": "spec.ignoreDifferences", "detail": "1 rule, comparison only"}
+      ],
+      "ignoreRules": [{"kind": "Deployment", "jsonPointers": ["/spec/replicas"]}]
+    }
+  ],
+  "groups": [
+    {
+      "controller": "ArgoCD", "kind": "Application", "groupKind": "project", "group": "payments", "deployers": 2,
+      "settings": [
+        {"name": "self-heal", "category": "policy", "values": [
+          {"value": "on", "count": 1, "deployers": [{"namespace": "argocd", "name": "ledger-api"}]},
+          {"value": "off", "count": 1, "unset": 1, "deployers": [{"namespace": "argocd", "name": "fx-rates", "unset": true}]}
+        ]}
+      ]
+    }
+  ],
+  "settings": [...],
+  "reads": [
+    {"controller": "ArgoCD", "kind": "Application", "resource": "applications.argoproj.io/v1alpha1", "status": "read", "count": 4},
+    {"controller": "Flux", "kind": "HelmRelease", "resource": "helmreleases.helm.toolkit.fluxcd.io/v2", "status": "not_read", "count": 0, "reason": "forbidden", "message": "..."}
+  ],
+  "linkSources": [
+    {"namespace": "argocd", "status": "found", "url": "https://argocd.example.test"},
+    {"namespace": "team-b", "status": "not_found"}
+  ]
+}
+```
+
+### Field Rules
+
+| Field | Rule |
+|---|---|
+| `complete` | `false` when any `reads[]` entry is `not_read`. Deployers of that kind are then missing from every list and are not known to be absent. |
+| `counts[]` | Per kind: `read` objects returned by the list, `shown` left after `--project` and `--setting`. |
+| `deployers[]` | One entry per object, after filters. Always present; `[]` when none. |
+| `deployers[].groupKind` / `group` | `project` and `spec.project` for an Application; `namespace` and the object's namespace for a Flux object. An undeclared project is `""`. |
+| `deployers[].generatedBy` | `ApplicationSet/<name>` when the Application has that owner reference. |
+| `deployers[].url` | Present only when `argocd-cm` in the Application's namespace declares an http(s) `url`. Never constructed otherwise. |
+| `settings[].category` | `policy`: a fixed set per kind, always present. `option`: present only when declared, named as the controller names it. |
+| `settings[].value` | The declared value; `unset` when the field is absent or not of the expected type; `n/a` when another setting makes it moot. Policy booleans are `on`/`off`; options keep their declared text. A sync option with no `=` has value `""`. |
+| `settings[].default` | The controller's documented default. Present only when `value` is `unset` and a default is documented. |
+| `settings[].effective` | `value` when declared, otherwise `default`. Absent for `n/a` and for an unset field with no documented default. |
+| `settings[].path` | The spec path the value was read from. |
+| `ignoreRules[]` | `spec.ignoreDifferences` or `spec.driftDetection.ignore`, verbatim. |
+| `groups[]` | Deployers of one kind in one project or namespace, inverted: per setting, per value, which deployers. Grouped on `effective`, falling back to `value`. `unset` counts the members that do not declare the setting. Present whatever `--group-by` rendered. |
+| `settings[]` (top level) | The same inversion with one group per kind and `groupKind: "all"`. |
+| `reads[].status` | `read`; `not_installed` (the API server does not serve the kind in any known version); `not_read` (the list failed). |
+| `reads[].reason` | For `not_read`: `forbidden`, `unauthorized`, `timeout` or `list_failed`. `message` is the client error text; do not parse it. |
+| `reads[].resource` | The version that was read. An older served version (`v2beta2`, `v1beta2`) is read when the preferred one is not installed. |
+| `linkSources[]` | One per namespace holding an Application: `found`, `url_unset`, `invalid`, `not_found`, or `not_read` with a `reason`. |
+| `notes[]` | Human-readable statements about what a filter left out. |
+
+Settings are declared configuration. Nothing in this contract says a controller
+acted on a setting, and nothing in it is a verdict.
+
 ## Sveltos Controller Report Contract
 
 `gitops status` optionally adds `sveltosControllerReports` with schema

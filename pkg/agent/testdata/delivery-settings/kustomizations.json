@@ -1,0 +1,116 @@
+{
+  "apiVersion": "v1",
+  "items": [
+    {
+      "apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+      "kind": "Kustomization",
+      "metadata": {
+        "annotations": {
+          "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"kustomize.toolkit.fluxcd.io/v1\",\"kind\":\"Kustomization\",\"metadata\":{\"annotations\":{},\"name\":\"podinfo\",\"namespace\":\"flux-system\"},\"spec\":{\"interval\":\"10m\",\"path\":\"./kustomize\",\"prune\":true,\"sourceRef\":{\"kind\":\"GitRepository\",\"name\":\"podinfo\"},\"targetNamespace\":\"team-a\"}}\n"
+        },
+        "creationTimestamp": "2026-10-09T06:55:25Z",
+        "finalizers": [
+          "finalizers.fluxcd.io"
+        ],
+        "generation": 1,
+        "name": "podinfo",
+        "namespace": "flux-system",
+        "resourceVersion": "1269",
+        "uid": "c87bcf14-acad-427d-8702-8cfb37150e21"
+      },
+      "spec": {
+        "force": false,
+        "interval": "10m",
+        "path": "./kustomize",
+        "prune": true,
+        "sourceRef": {
+          "kind": "GitRepository",
+          "name": "podinfo"
+        },
+        "targetNamespace": "team-a"
+      },
+      "status": {
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-10-09T06:55:30Z",
+            "message": "Applied revision: 6.7.1@sha1:6b7aab8a10d6ee8b895b0a5048f4ab0966ed29ff",
+            "observedGeneration": 1,
+            "reason": "ReconciliationSucceeded",
+            "status": "True",
+            "type": "Ready"
+          }
+        ],
+        "history": [
+          {
+            "digest": "sha256:27df0739ff162fe606bd2fddb477d97e05a5959e50bc95a9a03f6df543c70675",
+            "firstReconciled": "2026-10-09T06:55:30Z",
+            "lastReconciled": "2026-10-09T06:55:30Z",
+            "lastReconciledDuration": "496.426208ms",
+            "lastReconciledStatus": "ReconciliationSucceeded",
+            "metadata": {
+              "revision": "6.7.1@sha1:6b7aab8a10d6ee8b895b0a5048f4ab0966ed29ff"
+            },
+            "totalReconciliations": 1
+          }
+        ],
+        "inventory": {
+          "entries": [
+            {
+              "id": "team-a_podinfo__Service",
+              "v": "v1"
+            },
+            {
+              "id": "team-a_podinfo_apps_Deployment",
+              "v": "v1"
+            },
+            {
+              "id": "team-a_podinfo_autoscaling_HorizontalPodAutoscaler",
+              "v": "v2"
+            }
+          ]
+        },
+        "lastAppliedRevision": "6.7.1@sha1:6b7aab8a10d6ee8b895b0a5048f4ab0966ed29ff",
+        "lastAttemptedRevision": "6.7.1@sha1:6b7aab8a10d6ee8b895b0a5048f4ab0966ed29ff",
+        "observedGeneration": 1
+      }
+    },
+    {
+      "apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+      "kind": "Kustomization",
+      "metadata": {
+        "annotations": {
+          "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"kustomize.toolkit.fluxcd.io/v1\",\"kind\":\"Kustomization\",\"metadata\":{\"annotations\":{},\"name\":\"podinfo-held\",\"namespace\":\"flux-system\"},\"spec\":{\"force\":true,\"interval\":\"10m\",\"path\":\"./kustomize\",\"prune\":false,\"sourceRef\":{\"kind\":\"GitRepository\",\"name\":\"podinfo\"},\"suspend\":true,\"targetNamespace\":\"team-b\",\"wait\":true}}\n"
+        },
+        "creationTimestamp": "2026-10-09T06:55:25Z",
+        "finalizers": [
+          "finalizers.fluxcd.io"
+        ],
+        "generation": 1,
+        "name": "podinfo-held",
+        "namespace": "flux-system",
+        "resourceVersion": "1153",
+        "uid": "9ba8327a-b95d-42a4-83a0-c9fbcaaab9f2"
+      },
+      "spec": {
+        "force": true,
+        "interval": "10m",
+        "path": "./kustomize",
+        "prune": false,
+        "sourceRef": {
+          "kind": "GitRepository",
+          "name": "podinfo"
+        },
+        "suspend": true,
+        "targetNamespace": "team-b",
+        "wait": true
+      },
+      "status": {
+        "observedGeneration": -1
+      }
+    }
+  ],
+  "kind": "List",
+  "metadata": {
+    "resourceVersion": ""
+  }
+}
