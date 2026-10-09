@@ -98,8 +98,9 @@ check, and every other ConfigHub read still runs `cub`.
   Nothing here reads the expression, so the check that every entry is a Unit
   in that space is what holds whatever it says: an expression the server read
   as reaching beyond the space would fail the read, where `cub` would print
-  what came back. `cub` documents AND only; what the server does with an OR
-  was not established. Entities the server expands inside an entry (an
+  what came back. `cub` documents AND only, and ConfigHub v0.8.3 rejects an
+  OR with HTTP 400 ("expected AND before") by either route, so on that server
+  an expression cannot reach beyond the space this way. Entities the server expands inside an entry (an
   upstream, a link, a target) are as in `cub`'s output and are not checked.
 - **A rejected filter keeps the server's reason.** For an HTTP 400 the
   server's message is passed on, cut to 300 characters, with control and
@@ -173,6 +174,7 @@ through `cub`, then asks for one Unit by each route.
 | `unit list --where`, by slug and by a `LIKE` pattern, and one that matches nothing (CI run 37976845378) | identical; one Unit, the other Unit, and `[]` |
 | A `--where` the server rejects (same run) | both routes fail; the reader's error carries the server's reason, "unrecognized attribute name" |
 | `unit list --contains` (same run) | **not established**: this server answers the search with HTTP 500, to `cub` itself, so both routes fail |
+| A `--where` with an OR (CI run 37978701723) | both routes fail with the server's HTTP 400, "expected AND before" |
 
 | One read, 15 runs, milliseconds | min | median | max |
 |---|---|---|---|
