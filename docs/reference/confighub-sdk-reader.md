@@ -22,7 +22,7 @@ CUB_SCOUT_CONFIGHUB_READER=sdk ./cub-scout compare source-truth deploy/api -n pr
 | Value | Route |
 |---|---|
 | unset, or `cub` | The `cub` command, as every release has |
-| `sdk` | GETs through the SDK client, and no `cub` process for the read. `unit get`: the space by slug, then the Unit by slug in that space. `unit list`: the space by slug, then every Unit in it, in one request as `cub` asks for it. `space list`: one request. Naming the space by its ID saves the first request |
+| `sdk` | GETs through the SDK client, and no `cub` process for the read. `unit get`: the space by slug, then the Unit by slug in that space. `unit list`: the space by slug, then every Unit in it, in one request as `cub` asks for it. `space list`: one request. Naming the space by its ID saves the first request, except for a unit list that comes back empty, where the space is then checked |
 | anything else | An error for these reads. A misspelt route does not become the default one |
 
 The route works on the command cub-scout was about to run. Every read already
@@ -37,10 +37,10 @@ change.
 |---|---|
 | `unit get <unit> -o json --space <space>`, flags in any order | Every other `cub` command |
 | `unit get <space>/<unit> -o json` | A Unit named by its ID, in any spelling `cub` reads as an ID: canonical, 32 bare hex digits, braces, `urn:uuid:` |
-| either, with `--quiet` | A space named by ID in any spelling but the canonical one |
+| either, with `--quiet` | A space named by ID in any spelling but the canonical lower-case one, capitals included |
 | a space named by its canonical ID | `*` as the space or the Unit; a space containing `/`; a `--space` value that starts with `-` |
 | `unit list -o json --space <space>`, with or without `--quiet` | A list with a filter, a text search, a selection, a limit, an ordering, a view or hidden entities: each changes what `cub` asks the server |
-| `space list -o json`, with or without `--quiet` | A list with no `-o json`: it prints `cub`'s table |
+| `space list -o json`, with or without `--quiet` | A space list with any of the same, a component, a `--space` or a positional; and a list with no `-o json`, which prints `cub`'s table |
 | | Any other output format, any other flag, `--`, and `-o=json` or `--space=x` spelt with `=` |
 
 Today that is every `unit get` cub-scout builds, given a slug and a named
@@ -88,21 +88,30 @@ check, and every other ConfigHub read still runs `cub`.
   up as a slug.
 - **A list is whole or it is an error.** A unit list is for exactly one
   space: a Unit the server returns from any other space, an entry with no
-  Unit, or a 200 that is not JSON fails the read. None of them becomes a
-  shorter or an empty list. A list with nothing in it is `[]`, as `cub`
-  prints it.
+  Unit, a 200 that is not JSON, or a response the server marks as cut short
+  (`incomplete`) fails the read. None of them becomes a shorter or an empty
+  list. A list with nothing in it, or a JSON `null`, is `[]`, as `cub` prints
+  it. "Whole" means what the server says is whole: the reader asks for no
+  limit and does not read in pages.
+- **An empty list is of a space that exists.** A space named by slug is looked
+  up first. A space named by ID is not, so when its list comes back empty the
+  space is checked, and an ID that names no space is `not_found`, as `cub`
+  reports it, not "no units".
 - **The refusals of the `cub` route apply.** A call whose space was never
   resolved carries a placeholder in its place and is refused with the same
   message on either route, before credentials are resolved or anything is
   sent.
-- **Credentials are read, not managed.** As a `cub` plugin it uses `CUB_SERVER`
-  and `CUB_TOKEN`; otherwise the local cub configuration, honouring
-  `CUB_CONFIG` and `CUB_CONTEXT`. It writes nothing, does not log in and does
+- **Credentials are read, not managed, and are the ones `cub` would use.**
+  Started by `cub` as a plugin (`CUB_PLUGIN=1`) it uses the `CUB_SERVER` and
+  `CUB_TOKEN` that `cub` passes; otherwise the local cub configuration,
+  honouring `CUB_CONFIG` and `CUB_CONTEXT`. A `CUB_SERVER` and `CUB_TOKEN`
+  exported in a shell are not used: the `cub` CLI does not read them, so
+  they would send this reader to a server `cub` is not talking to. It writes nothing, does not log in and does
   not refresh a token. A context with no token is "not configured"; no request
   is sent without a credential.
 - **Each failure keeps its reason**: `invalid_scope`, `not_configured`,
   `unauthorized`, `forbidden`, `not_found`, `ambiguous`, `timeout`,
-  `canceled`, `malformed`, `refused`, `request_failed`. A Unit that does not
+  `canceled`, `malformed`, `refused`, `incomplete`, `request_failed`. A Unit that does not
   exist is an empty list and `not_found`; an HTTP 404 is a missing endpoint,
   so it is `request_failed` with advice to check the server URL, never "no
   such Unit". No message is built
@@ -146,6 +155,9 @@ through `cub`, then asks for one Unit by each route.
 | Requests the reader made | 2 by slug, 1 by ID |
 | The second Unit in the space, a Unit that does not exist, a space that does not exist | the second Unit and no other; `not_found`; `not_found` |
 | MCP `confighub_unit_get` through the built binary, `cub` route against `sdk` route | the whole answer identical |
+| Reader's JSON against `cub unit list -o json`, space by slug and by ID (CI run 37971287996) | identical, 4717 bytes, two Units |
+| Reader's JSON against `cub space list -o json` (same run) | identical, 1456 bytes, two spaces |
+| MCP `confighub_units` through the built binary, by each route (same run) | the whole answer identical |
 
 | One read, 15 runs, milliseconds | min | median | max |
 |---|---|---|---|
@@ -162,7 +174,8 @@ are kept in `test/fixtures/confighub-sdk-parity-v083-recorded/`.
 ## Not measured, and not claimed
 
 - **One server version, one kind of Unit.** The real-server run is v0.8.3 with
-  a plain Unit: no target, no upstream, no live revision. A hosted server,
+  plain Units: no target, no upstream, no live revision, and spaces with no
+  Component. The lists there had two entries each; a long list was not tried. A hosted server,
   another version and a credential with fewer rights were not tried.
 - **Time for a whole command.** The timings are for one read. A connected
   command also runs `cub auth status` on either route, and how many requests
@@ -175,6 +188,12 @@ are kept in `test/fixtures/confighub-sdk-parity-v083-recorded/`.
 - **Names the filter cannot carry.** The reader refuses a space or Unit name
   that the SDK cannot put into a filter (`invalid_scope`) before any request.
   What `cub` does with the same name was not compared.
+- **Where the reader is stricter than `cub`.** For a 200 that is not JSON
+  `cub` prints `[]`, for a list entry with no Unit it prints the entry, and
+  for a list the server marks as cut short it prints the part it got. The
+  reader fails each of these. With `CONFIGHUB_DEBUG=1`, `cub` writes debug
+  lines to its standard output and the cub route's JSON no longer parses; the
+  SDK route ignores that variable.
 - **What the lists ask depends on the SDK version.** `cub space list` asks for
   each space's summary and its Component, and `cub unit list` for six related
   entities; the reader sends what the `cub` source at SDK core v0.8.10 sends.
