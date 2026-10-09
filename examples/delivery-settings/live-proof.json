@@ -1,10 +1,10 @@
 {
   "schema": "delivery-settings-live-proof.v1",
-  "sourceCommit": "3ae3bbe08e2b83dfa8be73ec9cb54795bdf505e8",
+  "sourceCommit": "daf2beb3d20b87bfd45d2e0cd3ddbcb8917c3446",
   "sourceCommitUnchanged": true,
   "sourceWorktreeCleanBeforeAndAfter": true,
-  "binarySHA256": "3e6a2f0bcb9f57057fa53c9f33e5b8b0b60019f4db771420c51fcfe154f9c81d",
-  "finished": "2026-10-09T07:14:37+00:00",
+  "binarySHA256": "2a5ced063eb0d4c4f3e5c5d4023d5ff60c624ca4660244e448833dec482a95b6",
+  "finished": "2026-10-09T07:54:56+00:00",
   "kubernetesNodeImage": "kindest/node:v1.35.0",
   "argocdManifest": "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.3/manifests/install.yaml",
   "argocdManifestSHA256": "7efe2d6bbc03f63623640f1e4198f16c84009d510fb810ef71e56df1b7614ba9",
@@ -54,18 +54,21 @@
       {
         "controller": "ArgoCD",
         "kind": "Application",
+        "status": "read",
         "read": 4,
         "shown": 4
       },
       {
         "controller": "Flux",
         "kind": "Kustomization",
+        "status": "read",
         "read": 2,
         "shown": 2
       },
       {
         "controller": "Flux",
         "kind": "HelmRelease",
+        "status": "read",
         "read": 2,
         "shown": 2
       }
@@ -215,7 +218,7 @@
       "name": "create-owned-cluster",
       "exit": 0,
       "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "stderrSHA256": "2aa22901fb022844859ebd8dfba92b8012eda046f6bda88af4249e213341fda8"
+      "stderrSHA256": "bbc704392559469d91faa209af29e23a19ba2ebc3215b02247c4da4da4511741"
     },
     {
       "name": "install-flux",
@@ -346,7 +349,7 @@
     {
       "name": "before-url",
       "exit": 0,
-      "stdoutSHA256": "35c1a1201e3beaff23be1fdbf4d8305c911f3fadcccfced025a58c2f65203431",
+      "stdoutSHA256": "3947c271592c40ebaa3239c77bc9621f22694f46b514e74bf46f9268701ca6f1",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
@@ -358,37 +361,37 @@
     {
       "name": "all",
       "exit": 0,
-      "stdoutSHA256": "f822ca039a9d93b3419b76aca01d1b7bfa8286c009c7eeae1053d29693fbce91",
+      "stdoutSHA256": "a4a78a95cbb34c8bd9af88b72cc9636c5670bddb55f20c31a7ff718401e37019",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "filter-self-heal-off",
       "exit": 0,
-      "stdoutSHA256": "09ba908155c1b4a7654de07cddbeea9dccd538ad0fc0b3aade21857ac42c47c9",
+      "stdoutSHA256": "9eead9d43f3de9f63719a3aef71a7242b5b618dd8130f4126cff8955814f70f1",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "filter-prune-off",
       "exit": 0,
-      "stdoutSHA256": "6eeaaf5ac9ffa2686e0295ef7f3ec958422d69323f776871388a0e45a835b1f2",
+      "stdoutSHA256": "b43827c6491f47959edf1a2fa5f8a8a36859ec091993f0824885608ad9bead0a",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "filter-two",
       "exit": 0,
-      "stdoutSHA256": "6618c726d8f41d8a96e80acd60b0ab88fee59e1d61b5ee0bee981730e5d57e53",
+      "stdoutSHA256": "f037407bcdb46a0a04f112a94ab8ded5fe77802a98b631ed68ebe6b4b6e407c9",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "filter-project",
       "exit": 0,
-      "stdoutSHA256": "733faae20f47d2ad81061ba0f8c474e1253445038cc37dbf28e2e63e2333023c",
+      "stdoutSHA256": "d43cf904f9c4761a32e1d608b2d8e7c79d87111905e73678f02f29f7ba1fbd0d",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "namespace-team-h",
       "exit": 0,
-      "stdoutSHA256": "d4179a3731f172aa7bc9083489880800b1da018149ded3a1160760d8d689b95f",
+      "stdoutSHA256": "5f22b16546a0607544626b3bbc51782fd1b3ca283970424d34b6e5abb20ab413",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
@@ -418,32 +421,32 @@
     {
       "name": "map-deep-dive",
       "exit": 0,
-      "stdoutSHA256": "d3d4bcc0df63d1509758e55bbf54ec4d6b96a3704741955e8c11206f9f7c1e42",
+      "stdoutSHA256": "8b0dd61b1365a8d597477254f4240d0f62d67de1849bd4ed5c9d608916945f4e",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "flux-only",
       "exit": 0,
-      "stdoutSHA256": "40a1d2dcfcc3b1f7f679a28bcf5ce9065a99a3b6a7bfd905a616d0d317a0342b",
+      "stdoutSHA256": "bb1e3fbb75a64252115f019c3e94ef502b828c97d76eecfe12999807bfefaec3",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "flux-only-ascii",
       "exit": 0,
-      "stdoutSHA256": "c45f18314d5065ff6f4fe56fd4e8c63aa07a56c648d03e31e83ded0780005bd1",
+      "stdoutSHA256": "c07a3f5a107df4d56016346e0cd5dabf322a71cde84a32e6277b76665ffad3d1",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "apps-only",
       "exit": 0,
-      "stdoutSHA256": "d876dde11e011c9776fb047a10fa02000a4ae6a89ead56da8943a9cbfb230bb9",
+      "stdoutSHA256": "24d9ebe543037287000c33b54362a9d4d7483f07db15ed318447b06dcdd169db",
       "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "name": "cleanup-owned-cluster",
       "exit": 0,
       "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "stderrSHA256": "4216cf4ef431e31c4c20c9144c9e95423150e376d58ec202b8d3b767a767592d"
+      "stderrSHA256": "7e0c6c357858d9bea5d8c33568e362380c933da583f6157de38dc6adec18caa3"
     },
     {
       "name": "after-clusters",
