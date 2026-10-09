@@ -248,6 +248,10 @@ func TestGitOpsSettingsFilters(t *testing.T) {
 	require.Equal(t, []string{"--project selects Argo CD Applications only; 3 Flux object(s) have no project and are left out."}, byProject.Notes)
 	require.Contains(t, renderDeliverySettingsASCII(byProject, deliverySettingsGroupByProject), "\nNote: --project selects Argo CD Applications only;")
 
+	// A namespace that happens to share a project's name is not that project.
+	sameName := settingsReport(t, settingsFixtureClient(), deliverySettingsParams{Projects: []string{"flux-system"}})
+	require.Empty(t, sameName.Deployers, "--project must not select Flux objects by their namespace")
+
 	scoped := settingsReport(t, settingsFixtureClient(), deliverySettingsParams{Namespace: "team-h"})
 	require.Equal(t, []string{"HelmRelease/team-h/chart"}, shownDeployers(scoped))
 	require.Contains(t, renderDeliverySettingsASCII(scoped, deliverySettingsGroupByProject), "Context: prod-east   Namespace: team-h\nRead: 0 Applications, 0 Kustomizations, 1 HelmRelease\n")
