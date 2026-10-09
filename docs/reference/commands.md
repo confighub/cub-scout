@@ -1819,6 +1819,11 @@ Other known v0.2 gaps:
 
 ---
 
+An experimental, opt-in route reads the Unit through the ConfigHub SDK instead
+of running `cub`: set `CUB_SCOUT_CONFIGHUB_READER=sdk`. It is off by default and
+unreleased; see [ConfigHub SDK reader](confighub-sdk-reader.md) for what it
+guarantees and what was measured.
+
 ## compare drift
 
 Detect differences between desired manifests and live cluster state.
