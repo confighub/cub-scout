@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -37,6 +38,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/confighub/cub-scout/v2/internal/hubread"
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
 
@@ -56,6 +58,35 @@ type sourceTruthObservation struct {
 
 var sourceTruthUnitGet = func(ctx context.Context, unit, space string) ([]byte, error) {
 	return cubStdout(ctx, withConfigHubSpace([]string{"unit", "get", unit, "-o", "json"}, space)...)
+}
+
+// configHubReaderEnv selects how connected reads that support both routes
+// reach ConfigHub (#758). Unset or "cub" runs the cub CLI, as every release
+// has. "sdk" uses the SDK's typed client through internal/hubread, with no cub
+// process. Experimental: only source-truth's Unit read honours it.
+const configHubReaderEnv = "CUB_SCOUT_CONFIGHUB_READER"
+
+// configHubReaderRoute returns "cub" or "sdk". Any other value is an error:
+// a misspelt route must not quietly become the default one.
+func configHubReaderRoute() (string, error) {
+	switch value := strings.ToLower(strings.TrimSpace(os.Getenv(configHubReaderEnv))); value {
+	case "", "cub":
+		return "cub", nil
+	case "sdk":
+		return "sdk", nil
+	default:
+		return "", fmt.Errorf("%s=%q is not a reader (valid: cub, sdk)", configHubReaderEnv, value)
+	}
+}
+
+// sourceTruthSDKUnitHead is the SDK route's Unit read. It resolves the same
+// credential cub would use, and reads; it does not log in or write.
+var sourceTruthSDKUnitHead = func(ctx context.Context, unit, space string) (hubread.UnitHead, error) {
+	reader, err := hubread.Resolve(ctx, hubread.Options{UserAgent: "cub-scout"})
+	if err != nil {
+		return hubread.UnitHead{}, err
+	}
+	return reader.UnitHead(ctx, space, unit)
 }
 
 var sourceTruthCmd = &cobra.Command{
@@ -371,6 +402,23 @@ func collectConfigHubSurface(ctx context.Context, rw *runtimeWorkload) (*agent.C
 			Surface: "confighub",
 			Reason:  "runtime object has no confighub.com/SpaceName annotation",
 		}
+	}
+
+	route, err := configHubReaderRoute()
+	if err != nil {
+		return nil, &agent.CollectionError{Surface: "confighub", Reason: err.Error()}
+	}
+	if route == "sdk" {
+		head, err := sourceTruthSDKUnitHead(ctx, unitSlug, space)
+		if err != nil {
+			return nil, &agent.CollectionError{Surface: "confighub", Reason: "ConfigHub unit read failed: " + err.Error()}
+		}
+		surface := &agent.ConfigHubSurface{Space: space, Unit: unitSlug}
+		if head.HeadRevisionNum > 0 {
+			surface.Revision = strconv.FormatInt(head.HeadRevisionNum, 10)
+		}
+		surface.URL = configHubUnitDetailURL(head.SpaceID, head.UnitID)
+		return surface, nil
 	}
 
 	unitJSON, err := sourceTruthUnitGet(ctx, unitSlug, space)
