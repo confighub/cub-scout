@@ -414,3 +414,129 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 		keep("cub-version.txt", version)
 	}
 }
+
+// findString returns the first string value stored under key anywhere in a
+// decoded JSON value.
+func findString(value interface{}, key string) string {
+	switch typed := value.(type) {
+	case map[string]interface{}:
+		if found, ok := typed[key].(string); ok && found != "" {
+			return found
+		}
+		for _, inner := range typed {
+			if found := findString(inner, key); found != "" {
+				return found
+			}
+		}
+	case []interface{}:
+		for _, inner := range typed {
+			if found := findString(inner, key); found != "" {
+				return found
+			}
+		}
+	}
+	return ""
+}
+
+// #852: what a real View looks like, and what `views project` makes of it.
+//
+// The view commands were written and tested against JSON nobody recorded.
+// This creates a Filter and a View on the disposable server and keeps what
+// cub prints for them and what cub-scout prints for the View. It asserts
+// nothing about the shapes: its purpose is the recording. It fails only if
+// the server cannot be set up at all.
+func TestRecordViewShapesOnARealServer(t *testing.T) {
+	if os.Getenv(disposableConfigHubEnv) != "1" {
+		t.Skipf("writes a space, Units, a Filter and a View; set %s=1 only for a disposable ConfigHub server", disposableConfigHubEnv)
+	}
+	skipIfNotConnected(t)
+	contextOut, err := exec.Command("cub", "context", "get").CombinedOutput()
+	if err != nil {
+		t.Fatalf("cub context get: %v: %s", err, contextOut)
+	}
+	if strings.Contains(strings.ToLower(string(contextOut)), "confighub.com") {
+		t.Fatalf("refusing to run: the cub context names a hosted ConfigHub server, not a disposable one")
+	}
+	out := os.Getenv(sdkParityOutEnv)
+	if out == "" {
+		out = t.TempDir()
+	}
+	out = filepath.Join(out, "views")
+	if err := os.MkdirAll(out, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	// record runs a command and keeps its standard output, or what went
+	// wrong, under name. It returns the output and whether the command
+	// succeeded.
+	record := func(name, binary string, args ...string) ([]byte, bool) {
+		t.Helper()
+		cmd := exec.Command(binary, args...)
+		var stderr bytes.Buffer
+		cmd.Stderr = &stderr
+		stdout, err := cmd.Output()
+		kept := stdout
+		if err != nil {
+			kept = []byte(fmt.Sprintf("command: %s %s\nerror: %v\nstderr:\n%s\nstdout:\n%s", filepath.Base(binary), strings.Join(args, " "), err, stderr.String(), stdout))
+			name += ".failed.txt"
+		}
+		if writeErr := os.WriteFile(filepath.Join(out, name), kept, 0o600); writeErr != nil {
+			t.Fatal(writeErr)
+		}
+		t.Logf("%s: %d bytes, ok=%v", name, len(kept), err == nil)
+		return stdout, err == nil
+	}
+
+	space := fmt.Sprintf("scout-view-shapes-%d", time.Now().UnixNano())
+	if _, err := cubStdoutOnly("space", "create", space); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { deleteTestSpace(t, space) })
+	for _, name := range []string{"shape-one", "shape-two"} {
+		path := filepath.Join(t.TempDir(), name+".yaml")
+		body := "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: " + name + "\n  namespace: default\ndata:\n  key: value\n"
+		if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := cubStdoutOnly("unit", "create", "--space", space, "--label", "tier=recorded", name, path); err != nil {
+			t.Logf("a labelled Unit could not be created (%v); creating it without the label", err)
+			if _, err := cubStdoutOnly("unit", "create", "--space", space, name, path); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+
+	record("filter-create.json", "cub", "filter", "create", "--space", space, "-o", "json", "shape-filter", "Unit", "--where-field", "Slug LIKE 'shape-%'")
+	record("filter-get.json", "cub", "filter", "get", "shape-filter", "--space", space, "-o", "json")
+	created, _ := record("view-create.json", "cub", "view", "create", "--space", space, "-o", "json", "shape-view", "shape-filter",
+		"--column", "Unit.Slug", "--column", "Unit.DisplayName", "--column", "Unit.HeadRevisionNum", "--column", "Space.Slug", "--column", "Labels.tier")
+	got, _ := record("view-get.json", "cub", "view", "get", "shape-view", "--space", space, "-o", "json")
+	record("view-list.json", "cub", "view", "list", "--space", space, "-o", "json")
+	record("unit-list-labelled.json", "cub", "unit", "list", "--space", space, "-o", "json")
+	record("unit-list-with-view.json", "cub", "unit", "list", "--space", space, "-o", "json", "--view", "shape-view")
+	record("unit-list-with-filter.json", "cub", "unit", "list", "--space", space, "-o", "json", "--filter", "shape-filter")
+
+	var decoded interface{}
+	viewID := ""
+	for _, candidate := range [][]byte{got, created} {
+		if json.Unmarshal(candidate, &decoded) == nil {
+			if viewID = findString(decoded, "ViewID"); viewID != "" {
+				break
+			}
+		}
+	}
+	if viewID == "" {
+		t.Logf("no ViewID found in what cub printed; cub-scout's view commands are not run")
+		return
+	}
+	binary := getCubAgentPath()
+	for name, args := range map[string][]string{
+		"scout-views-resolve.json":              {"views", "resolve", viewID, "--space", space, "--format", "json"},
+		"scout-views-resolve-every-space.json":  {"views", "resolve", viewID, "--format", "json"},
+		"scout-views-project.json":              {"views", "project", viewID, "--space", space, "--format", "json"},
+		"scout-views-project.txt":               {"views", "project", viewID, "--space", space},
+		"scout-views-project-every-space.json":  {"views", "project", viewID, "--format", "json"},
+		"scout-views-project-with-reality.json": {"views", "project", viewID, "--space", space, "--format", "json", "--with-reality"},
+	} {
+		record(name, binary, args...)
+	}
+}
