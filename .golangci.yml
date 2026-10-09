@@ -57,6 +57,16 @@ linters:
         - "-SA9003"  # Ignore empty branch warnings
 
   exclusions:
+    # golangci-lint v1 applied these exclusions by default; v2 applies them
+    # only when named. std-error-handling is the one that matters here: it is
+    # the old rule that unchecked Close, Flush, Remove and fmt.Fprint* are not
+    # reported.
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+
     # Exclude some paths from linting
     paths:
       - vendor
