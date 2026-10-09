@@ -54,7 +54,7 @@ Examples:
   # One list per setting across the whole cluster
   cub-scout gitops settings --group-by setting
 
-  # Applications whose automated sync does not self-heal
+  # Applications that sync automatically but do not self-heal
   cub-scout gitops settings --setting self-heal=off
 
   # Everything that skips schema validation, as Markdown for a ticket
@@ -98,6 +98,9 @@ type deliverySettingsFilters struct {
 type deliveryKindCount struct {
 	Controller string `json:"controller"`
 	Kind       string `json:"kind"`
+	// Status is the kind's read status. Read and Shown are counts only when
+	// it is "read": a kind that was not read has no known count, not zero.
+	Status string `json:"status"`
 	// Read is how many objects of the kind were read; Shown is how many are
 	// left after --project and --setting.
 	Read  int `json:"read"`
@@ -239,7 +242,7 @@ func buildDeliverySettingsReport(ctx context.Context, client dynamic.Interface, 
 	}
 	for _, read := range inventory.Reads {
 		report.Counts = append(report.Counts, deliveryKindCount{
-			Controller: read.Controller, Kind: read.Kind, Read: read.Count, Shown: shown[read.Kind],
+			Controller: read.Controller, Kind: read.Kind, Status: read.Status, Read: read.Count, Shown: shown[read.Kind],
 		})
 		if read.Status == agent.DeliveryReadNotRead {
 			report.Complete = false
@@ -284,7 +287,7 @@ func deliveryText(text string) string {
 
 // deliveryMarkdownURL keeps a URL inside the parentheses of a Markdown link.
 func deliveryMarkdownURL(raw string) string {
-	return strings.NewReplacer("(", "%28", ")", "%29", " ", "%20", "<", "%3C", ">", "%3E").Replace(deliveryText(raw))
+	return strings.NewReplacer("(", "%28", ")", "%29", " ", "%20", "<", "%3C", ">", "%3E", "|", "%7C").Replace(deliveryText(raw))
 }
 
 func deliveryControllerTitle(controller string) string {
@@ -406,6 +409,16 @@ func deliveryCountsLine(report deliverySettingsReport) string {
 	parts := make([]string, 0, len(report.Counts))
 	filtered := report.Filters != nil
 	for _, count := range report.Counts {
+		// A kind that was not read has no count. "0 Applications" would say
+		// there are none.
+		switch count.Status {
+		case agent.DeliveryReadNotRead:
+			parts = append(parts, count.Kind+"s NOT READ")
+			continue
+		case agent.DeliveryReadNotInstalled:
+			parts = append(parts, count.Kind+"s not installed")
+			continue
+		}
 		if filtered {
 			parts = append(parts, fmt.Sprintf("%d of %s", count.Shown, deliveryKindPlural(count.Kind, count.Read)))
 			continue

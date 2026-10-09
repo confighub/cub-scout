@@ -108,7 +108,7 @@ func TestArgoApplicationAutomatedPolicy(t *testing.T) {
 	}
 	require.Equal(t, "spec.syncPolicy.automated.selfHeal", settingNamed(t, empty, "self-heal").Path)
 
-	// Argo CD 3.0: enabled=false keeps the block and turns automated sync off.
+	// Argo CD 3.1: enabled=false keeps the block and turns automated sync off.
 	disabled := ArgoApplicationDeliverySettings(automated(map[string]interface{}{"enabled": false, "selfHeal": true}))
 	sync := settingNamed(t, disabled, "auto-sync")
 	require.Equal(t, DeliveryValueOff, sync.Value)
@@ -238,6 +238,7 @@ var deliveryListKinds = map[schema.GroupVersionResource]string{
 	{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}:                  "ApplicationList",
 	{Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations"}:      "KustomizationList",
 	{Group: "kustomize.toolkit.fluxcd.io", Version: "v1beta2", Resource: "kustomizations"}: "KustomizationList",
+	{Group: "kustomize.toolkit.fluxcd.io", Version: "v1beta1", Resource: "kustomizations"}: "KustomizationList",
 	{Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases"}:             "HelmReleaseList",
 	{Group: "helm.toolkit.fluxcd.io", Version: "v2beta2", Resource: "helmreleases"}:        "HelmReleaseList",
 	{Group: "helm.toolkit.fluxcd.io", Version: "v2beta1", Resource: "helmreleases"}:        "HelmReleaseList",
@@ -344,6 +345,13 @@ func TestCollectDeliverySettingsReadsAnOlderServedVersion(t *testing.T) {
 	require.Equal(t, "helmreleases.helm.toolkit.fluxcd.io/v2beta2", reads["HelmRelease"].Resource, "the version that was read is the one named")
 	require.Equal(t, "kustomizations.kustomize.toolkit.fluxcd.io/v1beta2", reads["Kustomization"].Resource)
 	require.Len(t, inventory.Deployers, 2)
+
+	// The oldest served Kustomization version is still read, not "not installed".
+	oldest := deliveryClient(deliveryObject("kustomize.toolkit.fluxcd.io/v1beta1", "Kustomization", "flux-system", "oldest", map[string]interface{}{"prune": true}))
+	failList(oldest, "kustomizations", "v1", notFound("kustomizations"))
+	failList(oldest, "kustomizations", "v1beta2", notFound("kustomizations"))
+	require.Equal(t, "kustomizations.kustomize.toolkit.fluxcd.io/v1beta1",
+		readsByKind(CollectDeliverySettings(context.Background(), oldest, DeliverySettingsOptions{}))["Kustomization"].Resource)
 
 	// A forbidden preferred version is not retried on an older one: the
 	// denial is the answer.

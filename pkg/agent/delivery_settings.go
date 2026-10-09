@@ -208,7 +208,7 @@ func ArgoApplicationDeliverySettings(app *unstructured.Unstructured) DeliveryDep
 	autoSync := unsetSetting("auto-sync", automatedPath, DeliveryValueOff)
 	if hasAutomated {
 		autoSync = declaredSetting("auto-sync", DeliverySettingPolicy, DeliveryValueOn, automatedPath)
-		// Argo CD 3.0 added automated.enabled; an explicit false turns
+		// Argo CD 3.1 added automated.enabled; an explicit false turns
 		// automated sync off while the block stays.
 		if enabled, found, err := unstructured.NestedBool(automated, "enabled"); err == nil && found && !enabled {
 			autoSync = declaredSetting("auto-sync", DeliverySettingPolicy, DeliveryValueOff, automatedPath+".enabled")
@@ -381,7 +381,7 @@ type deliverySettingsSource struct {
 
 var deliverySettingsSources = []deliverySettingsSource{
 	{DeliveryControllerArgoCD, "Application", "argoproj.io", "applications", []string{"v1alpha1"}, ArgoApplicationDeliverySettings},
-	{DeliveryControllerFlux, "Kustomization", "kustomize.toolkit.fluxcd.io", "kustomizations", []string{"v1", "v1beta2"}, FluxKustomizationDeliverySettings},
+	{DeliveryControllerFlux, "Kustomization", "kustomize.toolkit.fluxcd.io", "kustomizations", []string{"v1", "v1beta2", "v1beta1"}, FluxKustomizationDeliverySettings},
 	{DeliveryControllerFlux, "HelmRelease", "helm.toolkit.fluxcd.io", "helmreleases", []string{"v2", "v2beta2", "v2beta1"}, FluxHelmReleaseDeliverySettings},
 }
 

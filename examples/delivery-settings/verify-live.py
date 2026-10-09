@@ -285,6 +285,7 @@ try:
     assert len(flux_only['deployers']) == 4
     flux_only_ascii = scout('gitops', 'settings', label='flux-only-ascii', context='flux-only')
     assert 'INCOMPLETE' in flux_only_ascii and 'NOT READ (forbidden); Applications are not known to be absent' in flux_only_ascii
+    assert 'Read: Applications NOT READ, 2 Kustomizations, 2 HelmReleases' in flux_only_ascii, 'the header counts a kind it did not read'
 
     # An identity that may list Applications but not read argocd-cm: no link is invented.
     apps_only, apps_only_deployers = settings(label='apps-only', context='apps-only')

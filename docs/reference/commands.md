@@ -2881,8 +2881,9 @@ judge a setting, and does not report whether a controller acted on it.
   option this release has never heard of is still listed.
 - **Not read is not absent.** `Reads` lists every kind asked for. `not
   installed` means the API server does not serve the kind. `NOT READ` means the
-  list failed, for example `forbidden`; the output is then marked incomplete and
-  the kind's objects are not known to be absent. The exit code is still 0.
+  list failed, for example `forbidden`; the output is then marked incomplete,
+  the header says `NOT READ` where it would give that kind's count, and the
+  kind's objects are not known to be absent. The exit code is still 0.
 - **Links.** An Application links to the Argo CD UI only when `argocd-cm` in the
   Application's own namespace declares a `url`. Otherwise no link is shown and
   the output says why. The link form is `<url>/applications/<namespace>/<name>`.

@@ -1163,7 +1163,7 @@ change before it is released.
 {
   "context": "prod-east",
   "complete": true,
-  "counts": [{"controller": "ArgoCD", "kind": "Application", "read": 4, "shown": 4}],
+  "counts": [{"controller": "ArgoCD", "kind": "Application", "status": "read", "read": 4, "shown": 4}],
   "deployers": [
     {
       "controller": "ArgoCD",
@@ -1210,7 +1210,7 @@ change before it is released.
 | Field | Rule |
 |---|---|
 | `complete` | `false` when any `reads[]` entry is `not_read`. Deployers of that kind are then missing from every list and are not known to be absent. |
-| `counts[]` | Per kind: `read` objects returned by the list, `shown` left after `--project` and `--setting`. |
+| `counts[]` | Per kind: `status` as in `reads[]`; `read` objects returned by the list, `shown` left after `--project` and `--setting`. `read` and `shown` are counts only when `status` is `read`; for a kind that was not read they are 0 and mean nothing. |
 | `deployers[]` | One entry per object, after filters. Always present; `[]` when none. |
 | `deployers[].groupKind` / `group` | `project` and `spec.project` for an Application; `namespace` and the object's namespace for a Flux object. An undeclared project is `""`. |
 | `deployers[].generatedBy` | `ApplicationSet/<name>` when the Application has that owner reference. |
@@ -1225,7 +1225,7 @@ change before it is released.
 | `settings[]` (top level) | The same inversion with one group per kind and `groupKind: "all"`. |
 | `reads[].status` | `read`; `not_installed` (the API server does not serve the kind in any known version); `not_read` (the list failed). |
 | `reads[].reason` | For `not_read`: `forbidden`, `unauthorized`, `timeout` or `list_failed`. `message` is the client error text; do not parse it. |
-| `reads[].resource` | The version that was read. An older served version (`v2beta2`, `v1beta2`) is read when the preferred one is not installed. |
+| `reads[].resource` | The version that was read. An older served version (HelmRelease `v2beta2`, `v2beta1`; Kustomization `v1beta2`, `v1beta1`) is read when the preferred one is not installed. |
 | `linkSources[]` | One per namespace holding an Application: `found`, `url_unset`, `invalid`, `not_found`, or `not_read` with a `reason`. |
 | `notes[]` | Human-readable statements about what a filter left out. |
 

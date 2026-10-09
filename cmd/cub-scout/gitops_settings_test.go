@@ -35,6 +35,7 @@ var settingsListKinds = map[schema.GroupVersionResource]string{
 	{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}:                  "ApplicationList",
 	{Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations"}:      "KustomizationList",
 	{Group: "kustomize.toolkit.fluxcd.io", Version: "v1beta2", Resource: "kustomizations"}: "KustomizationList",
+	{Group: "kustomize.toolkit.fluxcd.io", Version: "v1beta1", Resource: "kustomizations"}: "KustomizationList",
 	{Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases"}:             "HelmReleaseList",
 	{Group: "helm.toolkit.fluxcd.io", Version: "v2beta2", Resource: "helmreleases"}:        "HelmReleaseList",
 	{Group: "helm.toolkit.fluxcd.io", Version: "v2beta1", Resource: "helmreleases"}:        "HelmReleaseList",
@@ -206,9 +207,9 @@ func TestGitOpsSettingsJSONCarriesBothViewsAndEveryRead(t *testing.T) {
 	require.Equal(t, "prod-east", decoded.Context)
 	require.True(t, decoded.Complete)
 	require.Equal(t, []deliveryKindCount{
-		{Controller: "ArgoCD", Kind: "Application", Read: 4, Shown: 4},
-		{Controller: "Flux", Kind: "Kustomization", Read: 2, Shown: 2},
-		{Controller: "Flux", Kind: "HelmRelease", Read: 1, Shown: 1},
+		{Controller: "ArgoCD", Kind: "Application", Status: "read", Read: 4, Shown: 4},
+		{Controller: "Flux", Kind: "Kustomization", Status: "read", Read: 2, Shown: 2},
+		{Controller: "Flux", Kind: "HelmRelease", Status: "read", Read: 1, Shown: 1},
 	}, decoded.Counts)
 	require.Len(t, decoded.Deployers, 7)
 	require.Len(t, decoded.Groups, 4, "the per-project view is present whatever --group-by rendered")
@@ -232,7 +233,7 @@ func TestGitOpsSettingsFilters(t *testing.T) {
 	selfHealOff := settingsReport(t, settingsFixtureClient(), deliverySettingsParams{Settings: []string{"self-heal=off"}})
 	require.Equal(t, []string{"Application/argocd/fx-rates", "Application/team-b/outside"}, shownDeployers(selfHealOff),
 		"declared off and off-by-default both match; an Application that syncs manually does not")
-	require.Equal(t, deliveryKindCount{Controller: "ArgoCD", Kind: "Application", Read: 4, Shown: 2}, selfHealOff.Counts[0])
+	require.Equal(t, deliveryKindCount{Controller: "ArgoCD", Kind: "Application", Status: "read", Read: 4, Shown: 2}, selfHealOff.Counts[0])
 	ascii := renderDeliverySettingsASCII(selfHealOff, deliverySettingsGroupByProject)
 	require.Contains(t, ascii, "Read: 2 of 4 Applications, 0 of 2 Kustomizations, 0 of 1 HelmRelease\nFilter: setting self-heal=off\n")
 
@@ -280,6 +281,10 @@ func TestGitOpsSettingsReportsAKindItCouldNotRead(t *testing.T) {
 	} {
 		require.Contains(t, out, "applications.argoproj.io/v1alpha1: NOT READ (forbidden); Applications are not known to be absent", format)
 		require.Contains(t, strings.ToLower(out), "incomplete", format)
+		// The header must not count a kind it could not read: "0 Applications"
+		// says there are none.
+		require.Contains(t, out, "Read: Applications NOT READ, 2 Kustomizations, 1 HelmRelease\n", format)
+		require.NotContains(t, out, "0 Application", format)
 		require.NotContains(t, out, "Argo CD Application", format)
 	}
 	var out bytes.Buffer
@@ -287,6 +292,9 @@ func TestGitOpsSettingsReportsAKindItCouldNotRead(t *testing.T) {
 	require.Contains(t, out.String(), `"complete": false`)
 	require.Contains(t, out.String(), `"status": "not_read"`)
 	require.Contains(t, out.String(), `"reason": "forbidden"`)
+	require.Equal(t, deliveryKindCount{Controller: "ArgoCD", Kind: "Application", Status: "not_read"}, report.Counts[0])
+	filtered := settingsReport(t, client, deliverySettingsParams{Settings: []string{"prune=on"}})
+	require.Contains(t, renderDeliverySettingsASCII(filtered, deliverySettingsGroupByProject), "Read: Applications NOT READ, 1 of 2 Kustomizations, 0 of 1 HelmRelease\n")
 
 	// Nothing installed at all is complete: every list was answered.
 	empty := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), settingsListKinds)
@@ -298,6 +306,7 @@ func TestGitOpsSettingsReportsAKindItCouldNotRead(t *testing.T) {
 	text := renderDeliverySettingsASCII(absent, deliverySettingsGroupByProject)
 	require.Contains(t, text, "applications.argoproj.io/v1alpha1: not installed")
 	require.Contains(t, text, "No deployers to show.")
+	require.Contains(t, text, "Read: Applications not installed, Kustomizations not installed, HelmReleases not installed\n")
 	require.NotContains(t, text, "INCOMPLETE")
 }
 
@@ -345,7 +354,7 @@ func TestGitOpsSettingsTextOutputNeutralisesClusterSuppliedControlCharacters(t *
 			"Validate=false\n\nReads\n  everything: read, 0", "\x1b[2J\x1b[31mServerSideApply=true|x"}},
 	})
 	configMap := settingsObject("v1", "ConfigMap", "argocd", "argocd-cm", nil)
-	configMap.Object["data"] = map[string]interface{}{"url": "https://argocd.example.test/a)b"}
+	configMap.Object["data"] = map[string]interface{}{"url": "https://argocd.example.test/a)b|c"}
 	client := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), settingsListKinds, hostile, configMap)
 	report := settingsReport(t, client, deliverySettingsParams{})
 
@@ -365,7 +374,7 @@ func TestGitOpsSettingsTextOutputNeutralisesClusterSuppliedControlCharacters(t *
 		}
 	}
 	markdown := renderDeliverySettingsMarkdown(report, deliverySettingsGroupByProject)
-	require.Contains(t, markdown, "[argocd/app](https://argocd.example.test/a%29b/applications/argocd/app)", "a URL cannot close its own link")
+	require.Contains(t, markdown, "[argocd/app](https://argocd.example.test/a%29b%7Cc/applications/argocd/app)", "a URL cannot close its own link or add a column")
 	require.Contains(t, markdown, "ServerSideApply=true\\|x", "a pipe cannot add a table column")
 
 	// JSON keeps what the cluster said, encoded.
