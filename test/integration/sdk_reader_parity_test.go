@@ -178,11 +178,11 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 
 	// End to end through the built binary: the MCP tool, by each route.
 	binary := getCubAgentPath()
-	callTool := func(route string) map[string]json.RawMessage {
+	callTool := func(tool string, arguments map[string]string, route string) map[string]json.RawMessage {
 		t.Helper()
 		request, _ := json.Marshal(map[string]interface{}{
 			"jsonrpc": "2.0", "id": 2, "method": "tools/call",
-			"params": map[string]interface{}{"name": "confighub_unit_get", "arguments": map[string]string{"unit": unit, "space": space}},
+			"params": map[string]interface{}{"name": tool, "arguments": arguments},
 		})
 		cmd := exec.Command(binary, "mcp", "serve")
 		cmd.Env = append(os.Environ(), "CUB_SCOUT_CONFIGHUB_READER="+route)
@@ -199,14 +199,15 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 				Result map[string]json.RawMessage
 			}
 			if json.Unmarshal([]byte(line), &response) == nil && string(response.ID) == "2" {
-				keep("mcp-unit-get."+route+".json", []byte(line+"\n"))
+				keep("mcp-"+tool+"."+route+".json", []byte(line+"\n"))
 				return response.Result
 			}
 		}
 		t.Fatalf("mcp serve by the %s route gave no answer to the call: %s", route, stdout)
 		return nil
 	}
-	mcpCub, mcpSDK := callTool("cub"), callTool("sdk")
+	unitArguments := map[string]string{"unit": unit, "space": space}
+	mcpCub, mcpSDK := callTool("confighub_unit_get", unitArguments, "cub"), callTool("confighub_unit_get", unitArguments, "sdk")
 	if string(mcpCub["isError"]) == "true" || !strings.Contains(string(mcpCub["content"]), envelope.Unit.UnitID) {
 		t.Errorf("the MCP tool by the cub route did not return the Unit: %s", mcpCub["content"])
 	}
@@ -214,6 +215,56 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 	sdkResult, _ := json.Marshal(mcpSDK)
 	if !bytes.Equal(cubResult, sdkResult) {
 		t.Errorf("the MCP tool answers differently by route; both are kept in %s", out)
+	}
+
+	// The lists, the same way: what cub prints against what the reader
+	// returns, and the MCP tool by each route.
+	listsEqual := map[string]bool{}
+	for name, list := range map[string]struct {
+		cub  []string
+		read func() ([]byte, error)
+	}{
+		"unit-list":             {[]string{"unit", "list", "--space", space, "-o", "json"}, func() ([]byte, error) { return reader.UnitListJSON(ctx, space) }},
+		"unit-list-by-space-id": {[]string{"unit", "list", "--space", space, "-o", "json"}, func() ([]byte, error) { return reader.UnitListJSON(ctx, envelope.Unit.SpaceID) }},
+		"space-list":            {[]string{"space", "list", "-o", "json"}, func() ([]byte, error) { return reader.SpaceListJSON(ctx) }},
+	} {
+		listsEqual[name] = false
+		listedByCub, err := cubStdoutOnly(list.cub...)
+		if err != nil {
+			t.Errorf("%s: %v", name, err)
+			continue
+		}
+		keep(name+".cub.json", listedByCub)
+		listedBySDK, err := list.read()
+		if err != nil {
+			t.Errorf("%s through the SDK: %v (kind %s)", name, err, hubread.KindOf(err))
+			continue
+		}
+		keep(name+".sdk.json", listedBySDK)
+		listsEqual[name] = bytes.Equal(listedByCub, listedBySDK)
+		if !listsEqual[name] {
+			t.Errorf("%s: the SDK reader's JSON is not what cub printed: %d bytes against %d; both are kept in %s", name, len(listedBySDK), len(listedByCub), out)
+		}
+	}
+	// A space that does not exist, named by slug and by an ID that names
+	// nothing: not_found through the reader, a failure from cub, and never
+	// an empty list from either.
+	for _, missing := range []string{"no-such-space-" + space, "11111111-2222-4333-8444-555555555555"} {
+		if listed, err := reader.UnitListJSON(ctx, missing); hubread.KindOf(err) != hubread.KindNotFound || listed != nil {
+			t.Errorf("a list in space %q, which does not exist: kind %s, want %s (%v)", missing, hubread.KindOf(err), hubread.KindNotFound, err)
+		}
+		if listed, err := cubStdoutOnly("unit", "list", "--space", missing, "-o", "json"); err == nil {
+			t.Errorf("cub listed space %q, which does not exist: %s", missing, listed)
+		}
+	}
+	unitsArguments := map[string]string{"space": space}
+	unitsCub, _ := json.Marshal(callTool("confighub_units", unitsArguments, "cub"))
+	unitsSDK, _ := json.Marshal(callTool("confighub_units", unitsArguments, "sdk"))
+	if !bytes.Contains(unitsCub, []byte(envelope.Unit.UnitID)) {
+		t.Errorf("the MCP units tool by the cub route did not list the Unit")
+	}
+	if !bytes.Equal(unitsCub, unitsSDK) {
+		t.Errorf("the MCP units tool answers differently by route; both are kept in %s", out)
 	}
 
 	// How long one read takes by each route, here, against this server. The
@@ -257,6 +308,8 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 		"sdk_requests_space_by_id":     1,
 		"bytes_equal_to_cub":           bytes.Equal(viaCub, viaSDK),
 		"mcp_result_equal_by_route":    bytes.Equal(cubResult, sdkResult),
+		"lists_bytes_equal_to_cub":     listsEqual,
+		"mcp_units_equal_by_route":     bytes.Equal(unitsCub, unitsSDK),
 		"unit_get_bytes":               len(viaCub),
 		"sdk_reader_includes_resolve":  true,
 		"cub_process_includes_startup": true,
@@ -265,18 +318,7 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 	keep("timings.json", append(encoded, '\n'))
 	t.Logf("timings: %s", encoded)
 
-	// Recordings for the reads that are not on the SDK route yet (#758): what
-	// cub prints for the lists, from a real server.
-	for name, args := range map[string][]string{
-		"unit-list.cub.json":  {"unit", "list", "--space", space, "-o", "json"},
-		"space-list.cub.json": {"space", "list", "-o", "json"},
-		"cub-version.txt":     {"version"},
-	} {
-		recorded, err := cubStdoutOnly(args...)
-		if err != nil {
-			t.Errorf("recording %s: %v", name, err)
-			continue
-		}
-		keep(name, recorded)
+	if version, err := cubStdoutOnly("version"); err == nil {
+		keep("cub-version.txt", version)
 	}
 }

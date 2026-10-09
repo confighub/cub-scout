@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -116,18 +117,33 @@ func recordedWorkload() *runtimeWorkload {
 	}
 }
 
+// spaceNamedIn is the space a test's argument vector names: the value after
+// --space, or else the part of a qualified reference before the slash.
+func spaceNamedIn(args []string) string {
+	for i, arg := range args {
+		if arg == "--space" && i+1 < len(args) {
+			return strings.TrimSpace(args[i+1])
+		}
+	}
+	for _, arg := range args[2:] {
+		if space, _, qualified := strings.Cut(arg, "/"); qualified {
+			return strings.TrimSpace(space)
+		}
+	}
+	return ""
+}
+
 func TestSDKUnitGetArgsTakesOnlyTheCommandItReproduces(t *testing.T) {
 	taken := map[string][]string{
-		"unit then flags":         {"unit", "get", "u", "-o", "json", "--space", "s"},
-		"flags then unit":         {"unit", "get", "-o", "json", "u", "--space", "s"},
-		"space first":             {"unit", "get", "--space", "s", "-o", "json", "u"},
-		"quiet":                   {"unit", "get", "u", "-o", "json", "--quiet", "--space", "s"},
-		"long output flag":        {"unit", "get", "u", "--output", "json", "--space", "s"},
-		"qualified reference":     {"unit", "get", "-o", "json", "s/u"},
-		"space given by its ID":   {"unit", "get", "u", "-o", "json", "--space", recordedSpaceID},
-		"names are trimmed":       {"unit", "get", " u ", "-o", "json", "--space", " s "},
-		"qualified, space by ID":  {"unit", "get", "-o", "json", recordedSpaceID + "/u"},
-		"space by ID in capitals": {"unit", "get", "u", "-o", "json", "--space", strings.ToUpper(recordedSpaceID)},
+		"unit then flags":        {"unit", "get", "u", "-o", "json", "--space", "s"},
+		"flags then unit":        {"unit", "get", "-o", "json", "u", "--space", "s"},
+		"space first":            {"unit", "get", "--space", "s", "-o", "json", "u"},
+		"quiet":                  {"unit", "get", "u", "-o", "json", "--quiet", "--space", "s"},
+		"long output flag":       {"unit", "get", "u", "--output", "json", "--space", "s"},
+		"qualified reference":    {"unit", "get", "-o", "json", "s/u"},
+		"space given by its ID":  {"unit", "get", "u", "-o", "json", "--space", recordedSpaceID},
+		"names are trimmed":      {"unit", "get", " u ", "-o", "json", "--space", " s "},
+		"qualified, space by ID": {"unit", "get", "-o", "json", recordedSpaceID + "/u"},
 		"placeholder space (cub's own refusal applies later)": {"unit", "get", "u", "-o", "json", "--space", unresolvedConfigHubSpace},
 	}
 	for name, args := range taken {
@@ -135,8 +151,7 @@ func TestSDKUnitGetArgsTakesOnlyTheCommandItReproduces(t *testing.T) {
 			space, unit, ok := sdkUnitGetArgs(args)
 			require.True(t, ok)
 			require.Equal(t, "u", unit)
-			require.NotEmpty(t, space)
-			require.Equal(t, strings.TrimSpace(space), space)
+			require.Equal(t, spaceNamedIn(args), space)
 		})
 	}
 
@@ -171,6 +186,7 @@ func TestSDKUnitGetArgsTakesOnlyTheCommandItReproduces(t *testing.T) {
 		"unit by ID, urn":           {"unit", "get", "urn:uuid:" + recordedUnitID, "-o", "json", "--space", "s"},
 		"unit by ID, upper case":    {"unit", "get", strings.ToUpper(recordedUnitID), "-o", "json", "--space", "s"},
 		"space by ID, bare hex":     {"unit", "get", "u", "-o", "json", "--space", "68843338f9bd485c9a665d5aee820247"},
+		"space by ID in capitals":   {"unit", "get", "u", "-o", "json", "--space", strings.ToUpper(recordedSpaceID)},
 		"space by ID, braces":       {"unit", "get", "u", "-o", "json", "--space", "{" + recordedSpaceID + "}"},
 		"space by ID, urn":          {"unit", "get", "u", "-o", "json", "--space", "urn:uuid:" + recordedSpaceID},
 		"qualified, space bare hex": {"unit", "get", "-o", "json", "68843338f9bd485c9a665d5aee820247/u"},
@@ -192,14 +208,27 @@ func TestSDKUnitGetArgsTakesOnlyTheCommandItReproduces(t *testing.T) {
 	}
 }
 
-// Every place production code builds a `unit get` must build one the adapter
-// takes, or say here why it does not. A call site added later in a shape the
-// adapter does not know fails this test instead of quietly staying on cub.
-func TestEveryUnitGetCallSiteIsOneTheSDKRouteTakes(t *testing.T) {
+// cubCallSite is one place production code builds a cub command from literals.
+type cubCallSite struct {
+	where string   // file:line
+	line  string   // the source line
+	args  []string // the arguments, with "name" for each variable and the space helpers applied
+}
+
+// cubCallSites finds every place this package builds `cub <entity> <verb>`.
+//
+// It reads one line at a time, so it also counts every spelling of the pair
+// across cmd/cub-scout, pkg and internal and fails when the counts differ: a
+// call written across lines, spaced differently, or outside this package
+// would otherwise pass unseen. It models the shape of the arguments, not the
+// values a user supplies.
+func cubCallSites(t *testing.T, entity, verb string) []cubCallSite {
+	t.Helper()
+	pair := `"` + entity + `", "` + verb + `"`
 	files, err := filepath.Glob("*.go")
 	require.NoError(t, err)
-	literalCall := regexp.MustCompile(`"unit", "get"((?:, *(?:"[^"]*"|[A-Za-z_.]+))*) *[})]`)
-	sites := 0
+	literalCall := regexp.MustCompile(regexp.QuoteMeta(pair) + `((?:, *(?:"[^"]*"|[A-Za-z_.]+))*) *[})]`)
+	var sites []cubCallSite
 	for _, file := range files {
 		if strings.HasSuffix(file, "_test.go") {
 			continue
@@ -207,14 +236,14 @@ func TestEveryUnitGetCallSiteIsOneTheSDKRouteTakes(t *testing.T) {
 		source, err := os.ReadFile(file)
 		require.NoError(t, err)
 		for number, line := range strings.Split(string(source), "\n") {
-			if !strings.Contains(line, `"unit", "get"`) {
+			if !strings.Contains(line, pair) {
 				continue
 			}
-			sites++
-			require.Equal(t, 1, strings.Count(line, `"unit", "get"`), "%s:%d builds two on one line", file, number+1)
+			where := fmt.Sprintf("%s:%d", file, number+1)
+			require.Equal(t, 1, strings.Count(line, pair), "%s builds two on one line", where)
 			match := literalCall.FindStringSubmatch(line)
-			require.NotNil(t, match, "%s:%d builds a unit get this test cannot read: %s", file, number+1, strings.TrimSpace(line))
-			args := []string{"unit", "get"}
+			require.NotNil(t, match, "%s builds a cub %s %s this test cannot read: %s", where, entity, verb, strings.TrimSpace(line))
+			args := []string{entity, verb}
 			for _, token := range strings.Split(match[1], ",") {
 				switch token = strings.TrimSpace(token); {
 				case token == "":
@@ -230,18 +259,11 @@ func TestEveryUnitGetCallSiteIsOneTheSDKRouteTakes(t *testing.T) {
 			case strings.Contains(line, "withConfigHubSpace("):
 				args = withConfigHubSpace(args, "space")
 			}
-			space, unit, ok := sdkUnitGetArgs(args)
-			require.True(t, ok, "%s:%d: cub %s", file, number+1, strings.Join(args, " "))
-			require.Equal(t, "name", unit)
-			require.Contains(t, []string{"space", "name"}, space) // hierarchy.go passes its space as a variable
+			sites = append(sites, cubCallSite{where: where, line: line, args: args})
 		}
 	}
-	require.GreaterOrEqual(t, sites, 11, "the scan no longer finds the call sites")
 
-	// The scan above reads one line at a time. A call written across lines,
-	// spaced differently, or outside this package would pass it unseen, so
-	// count every spelling everywhere and hold the two counts together.
-	anySpelling := regexp.MustCompile(`"unit"\s*,\s*"get"`)
+	anySpelling := regexp.MustCompile(`"` + entity + `"\s*,\s*"` + verb + `"`)
 	everywhere := 0
 	for _, root := range []string{".", filepath.Join("..", "..", "pkg"), filepath.Join("..", "..", "internal")} {
 		require.NoError(t, filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
@@ -256,7 +278,22 @@ func TestEveryUnitGetCallSiteIsOneTheSDKRouteTakes(t *testing.T) {
 			return nil
 		}))
 	}
-	require.Equal(t, sites, everywhere, "a unit get is built somewhere the scan above does not read")
+	require.Equal(t, len(sites), everywhere, "a cub %s %s is built somewhere the line scan does not read", entity, verb)
+	return sites
+}
+
+// Every place production code builds a `unit get` must build one the adapter
+// takes. A call site added later in a shape the adapter does not know fails
+// this test instead of quietly staying on cub.
+func TestEveryUnitGetCallSiteIsOneTheSDKRouteTakes(t *testing.T) {
+	sites := cubCallSites(t, "unit", "get")
+	require.GreaterOrEqual(t, len(sites), 11, "the scan no longer finds the call sites")
+	for _, site := range sites {
+		space, unit, ok := sdkUnitGetArgs(site.args)
+		require.True(t, ok, "%s: cub %s", site.where, strings.Join(site.args, " "))
+		require.Equal(t, "name", unit)
+		require.Contains(t, []string{"space", "name"}, space) // hierarchy.go passes its space as a variable
+	}
 
 	// The MCP tool chooses between three spellings.
 	tool, ok := newMCPGatewayWithMode(nil, nil, true).tools["confighub_unit_get"]
@@ -277,6 +314,131 @@ func TestEveryUnitGetCallSiteIsOneTheSDKRouteTakes(t *testing.T) {
 	require.NoError(t, err)
 	_, _, ok = sdkUnitGetArgs(args)
 	require.False(t, ok)
+}
+
+// The same for the lists, except that some call sites are meant to stay with
+// cub. Each of those is named here with its reason, so a list call that is
+// neither taken nor explained fails.
+func TestEveryListCallSiteIsTakenOrExplained(t *testing.T) {
+	leftToCub := map[string]string{
+		`"--where", whereClause`:                        "a filter changes what cub asks the server",
+		`"--select", "Slug,SpaceID,Annotations,Labels"`: "a selection changes what the server returns",
+		`[]string{"unit", "list"}, space)`:              "prints cub's table to the user, through cubCommand",
+		`cubArgs := []string{"space", "list"}`:          "streams cub's own output to the user, through cubCommand",
+		`{"space", "list"}, // the spaces themselves`:   "not a call: the table of commands that name no space",
+	}
+	used := map[string]bool{}
+	taken := map[string]int{}
+	for _, command := range [][2]string{{"unit", "list"}, {"space", "list"}} {
+		for _, site := range cubCallSites(t, command[0], command[1]) {
+			explained := false
+			for fragment := range leftToCub {
+				if strings.Contains(site.line, fragment) {
+					explained, used[fragment] = true, true
+				}
+			}
+			isTaken := sdkRead(site.args) != nil
+			require.NotEqual(t, explained, isTaken, "%s: cub %s (taken %v, explained %v)", site.where, strings.Join(site.args, " "), isTaken, explained)
+			if isTaken {
+				taken[command[0]+" "+command[1]]++
+			}
+		}
+	}
+	for fragment := range leftToCub {
+		require.True(t, used[fragment], "no call site matches %q any more; remove it", fragment)
+	}
+	require.GreaterOrEqual(t, taken["unit list"], 7)
+	require.GreaterOrEqual(t, taken["space list"], 5)
+
+	// The MCP tool appends a filter when it is given one.
+	tool, ok := newMCPGatewayWithMode(nil, nil, true).tools["confighub_units"]
+	require.True(t, ok)
+	args, err := tool.BuildArgs(map[string]interface{}{"space": "space"})
+	require.NoError(t, err)
+	space, ok := sdkUnitListArgs(args)
+	require.True(t, ok, "cub %s", strings.Join(args, " "))
+	require.Equal(t, "space", space)
+	for _, filter := range []string{"where", "contains"} {
+		args, err = tool.BuildArgs(map[string]interface{}{"space": "space", filter: "x"})
+		require.NoError(t, err)
+		require.Nil(t, sdkRead(args), "cub %s", strings.Join(args, " "))
+	}
+}
+
+func TestSDKListArgsTakeOnlyTheCommandsTheyReproduce(t *testing.T) {
+	for name, args := range map[string][]string{
+		"flags then space": {"unit", "list", "-o", "json", "--space", "s"},
+		"space then flags": {"unit", "list", "--space", "s", "-o", "json"},
+		"quiet":            {"unit", "list", "-o", "json", "--quiet", "--space", "s"},
+		"long output flag": {"unit", "list", "--output", "json", "--space", "s"},
+		"space by ID":      {"unit", "list", "-o", "json", "--space", recordedSpaceID},
+		"placeholder space (cub's own refusal applies later)": {"unit", "list", "-o", "json", "--space", unresolvedConfigHubSpace},
+	} {
+		t.Run("unit list taken/"+name, func(t *testing.T) {
+			space, ok := sdkUnitListArgs(args)
+			require.True(t, ok)
+			require.Equal(t, spaceNamedIn(args), space)
+			require.False(t, sdkSpaceListArgs(args))
+			_, _, isGet := sdkUnitGetArgs(args)
+			require.False(t, isGet)
+		})
+	}
+	for name, args := range map[string][]string{
+		"no space":                {"unit", "list", "-o", "json"},
+		"every space":             {"unit", "list", "-o", "json", "--space", allConfigHubSpaces},
+		"a filter":                {"unit", "list", "-o", "json", "--space", "s", "--where", "Slug = 'x'"},
+		"a text search":           {"unit", "list", "-o", "json", "--space", "s", "--contains", "x"},
+		"a selection":             {"unit", "list", "-o", "json", "--space", "s", "--select", "Slug"},
+		"a limit":                 {"unit", "list", "-o", "json", "--space", "s", "--limit", "5"},
+		"an ordering":             {"unit", "list", "-o", "json", "--space", "s", "--order-by", "Slug"},
+		"hidden units too":        {"unit", "list", "-o", "json", "--space", "s", "--include-hidden"},
+		"a view":                  {"unit", "list", "-o", "json", "--space", "s", "--view", "v"},
+		"a positional":            {"unit", "list", "u", "-o", "json", "--space", "s"},
+		"no output format":        {"unit", "list", "--space", "s"},
+		"another output format":   {"unit", "list", "-o", "yaml", "--space", "s"},
+		"names only":              {"unit", "list", "-o", "name", "--space", "s"},
+		"space bare hex":          {"unit", "list", "-o", "json", "--space", "68843338f9bd485c9a665d5aee820247"},
+		"space by ID in capitals": {"unit", "list", "-o", "json", "--space", strings.ToUpper(recordedSpaceID)},
+		"space with a slash":      {"unit", "list", "-o", "json", "--space", "a/b"},
+		"space named twice":       {"unit", "list", "-o", "json", "--space", "s", "--space", "t"},
+		"space that is a flag":    {"unit", "list", "-o", "json", "--space", "--quiet"},
+		"another command":         {"unit", "get", "u", "-o", "json", "--space", "s"},
+		"another entity":          {"target", "list", "-o", "json", "--space", "s"},
+		"too short":               {"unit"},
+	} {
+		t.Run("unit list left to cub/"+name, func(t *testing.T) {
+			_, ok := sdkUnitListArgs(args)
+			require.False(t, ok)
+		})
+	}
+
+	for name, args := range map[string][]string{
+		"plain":            {"space", "list", "-o", "json"},
+		"quiet":            {"space", "list", "-o", "json", "--quiet"},
+		"long output flag": {"space", "list", "--quiet", "--output", "json"},
+	} {
+		t.Run("space list taken/"+name, func(t *testing.T) {
+			require.True(t, sdkSpaceListArgs(args))
+			require.NotNil(t, sdkRead(args))
+		})
+	}
+	for name, args := range map[string][]string{
+		"no output format":      {"space", "list"},
+		"another output format": {"space", "list", "-o", "yaml"},
+		"a selection":           {"space", "list", "-o", "json", "--select", "Slug,SpaceID"},
+		"a filter":              {"space", "list", "-o", "json", "--where", "Slug = 'x'"},
+		"a component":           {"space", "list", "-o", "json", "--component", "c"},
+		"a limit":               {"space", "list", "-o", "json", "--limit", "5"},
+		"a space flag":          {"space", "list", "-o", "json", "--space", "s"},
+		"a positional":          {"space", "list", "s", "-o", "json"},
+		"another command":       {"space", "get", "s", "-o", "json"},
+		"too short":             {"space"},
+	} {
+		t.Run("space list left to cub/"+name, func(t *testing.T) {
+			require.False(t, sdkSpaceListArgs(args))
+			require.Nil(t, sdkRead(args))
+		})
+	}
 }
 
 // #758: under the SDK route a `unit get` returns what cub printed for the same
@@ -324,14 +486,16 @@ func TestCubStdoutLeavesOtherCommandsToCubUnderTheSDKRoute(t *testing.T) {
 	t.Setenv(configHubReaderEnv, "sdk")
 
 	for _, args := range [][]string{
-		{"unit", "list", "-o", "json", "--space", recordedSpace},
+		{"unit", "data", recordedUnit, "--space", recordedSpace},
 		{"unit", "get", recordedUnitID, "-o", "json", "--space", recordedSpace},
 		{"unit", "get", recordedUnit, "-o", "yaml", "--space", recordedSpace},
+		{"unit", "list", "-o", "json", "--space", recordedSpace, "--where", "Slug = 'x'"},
+		{"space", "list", "-o", "json", "--select", "Slug,SpaceID"},
 	} {
 		_, err := cubStdout(context.Background(), args...)
 		require.NoError(t, err)
 	}
-	require.Len(t, fakeCubCalls(t, cubLog), 3)
+	require.Len(t, fakeCubCalls(t, cubLog), 5)
 	require.Empty(t, hub.seen)
 }
 
@@ -412,9 +576,17 @@ func TestAnUnknownConfigHubReaderIsRefused(t *testing.T) {
 
 	// A command the SDK route does not take has one route, so the setting is
 	// not consulted for it.
-	_, err = cubStdout(context.Background(), "unit", "list", "-o", "json", "--space", recordedSpace)
+	_, err = cubStdout(context.Background(), "unit", "data", recordedUnit, "--space", recordedSpace)
 	require.NoError(t, err)
 	require.Len(t, fakeCubCalls(t, cubLog), 1)
+
+	// The lists have two routes as well.
+	for _, args := range [][]string{{"unit", "list", "-o", "json", "--space", recordedSpace}, {"space", "list", "-o", "json"}} {
+		_, err = cubStdout(context.Background(), args...)
+		require.EqualError(t, err, `CUB_SCOUT_CONFIGHUB_READER="sdkk" is not a reader (valid: cub, sdk)`)
+	}
+	require.Len(t, fakeCubCalls(t, cubLog), 1)
+	require.Empty(t, hub.seen)
 }
 
 // The refusals the cub route makes before spawning are made on the SDK route
@@ -507,6 +679,7 @@ func TestSDKRouteResolvesItsOwnCredentials(t *testing.T) {
 	t.Setenv("CUB_CONFIG", t.TempDir())
 	t.Setenv("CUB_CONTEXT", "")
 	t.Setenv("CUB_SPACE", "")
+	t.Setenv("CUB_PLUGIN", "1")
 	t.Setenv("CUB_SERVER", hub.url)
 	t.Setenv("CUB_TOKEN", "plugin-token")
 	t.Setenv(configHubReaderEnv, "sdk")
@@ -527,4 +700,181 @@ func TestSDKRouteResolvesItsOwnCredentials(t *testing.T) {
 	require.Contains(t, collection.Reason, "not_configured")
 	require.Len(t, hub.seen, 2, "nothing is sent without a credential")
 	require.Empty(t, fakeCubCalls(t, cubLog))
+}
+
+// connectedLaneFixture is one file cub v0.8.3 printed on the disposable server
+// of the Connected lane (see the fixture's NOTICE).
+func connectedLaneFixture(t *testing.T, name string) string {
+	t.Helper()
+	path, err := filepath.Abs(filepath.Join("..", "..", "test", "fixtures", "confighub-sdk-parity-v083-recorded", name))
+	require.NoError(t, err)
+	return path
+}
+
+// connectedLaneRoutes sets up both routes on the Connected lane's recordings:
+// a fake cub, the only cub that can run, that prints the recorded file for
+// each command, and a server that answers each list with the same recording.
+// It returns the fake cub's call log, the requests the server saw, and the
+// recorded space's slug.
+func connectedLaneRoutes(t *testing.T) (cubLog string, seen *[]string, space string) {
+	t.Helper()
+	if runtime.GOOS == "windows" {
+		t.Skip("uses a shell script as the fake cub")
+	}
+	files := map[string]string{}
+	for _, name := range []string{"unit-get.json", "unit-list.json", "space-list.json"} {
+		files[name] = connectedLaneFixture(t, name)
+	}
+	dir := t.TempDir()
+	cubLog = filepath.Join(dir, "calls.log")
+	script := "#!/bin/sh\n" +
+		"echo \"$*\" >> \"" + cubLog + "\"\n" +
+		"case \"$1 $2\" in\n" +
+		"  \"unit get\") /bin/cat \"" + files["unit-get.json"] + "\" ;;\n" +
+		"  \"unit list\") /bin/cat \"" + files["unit-list.json"] + "\" ;;\n" +
+		"  \"space list\") /bin/cat \"" + files["space-list.json"] + "\" ;;\n" +
+		"  *) exit 9 ;;\n" +
+		"esac\n"
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "cub"), []byte(script), 0o755))
+	t.Setenv("PATH", dir)
+
+	units, err := os.ReadFile(files["unit-list.json"])
+	require.NoError(t, err)
+	spaces, err := os.ReadFile(files["space-list.json"])
+	require.NoError(t, err)
+	var recorded []struct{ Space struct{ Slug string } }
+	require.NoError(t, json.Unmarshal(units, &recorded))
+	require.NotEmpty(t, recorded)
+
+	seen = &[]string{}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		*seen = append(*seen, r.Method+" "+r.URL.Path+"?"+r.URL.Query().Encode())
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/api/space":
+			_, _ = w.Write(spaces)
+		case "/api/unit":
+			_, _ = w.Write(units)
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	t.Cleanup(server.Close)
+	old := sdkReader
+	t.Cleanup(func() { sdkReader = old })
+	sdkReader = func(context.Context) (*hubread.Reader, error) {
+		return hubread.New(server.URL, "test-token", hubread.Options{})
+	}
+	return cubLog, seen, recorded[0].Space.Slug
+}
+
+// #758: under the SDK route the lists return, byte for byte, what cub printed
+// for them on a real server, and no cub process is started.
+func TestCubStdoutAnswersTheListsThroughTheSDKWhenAsked(t *testing.T) {
+	cubLog, seen, space := connectedLaneRoutes(t)
+	for _, tc := range []struct {
+		name     string
+		args     []string
+		requests int
+	}{
+		{"unit list", []string{"unit", "list", "-o", "json", "--space", space}, 2},
+		{"unit list, quiet", []string{"unit", "list", "-o", "json", "--quiet", "--space", space}, 2},
+		{"space list", []string{"space", "list", "-o", "json"}, 1},
+		{"space list, quiet", []string{"space", "list", "-o", "json", "--quiet"}, 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cubBefore, seenBefore := len(fakeCubCalls(t, cubLog)), len(*seen)
+
+			t.Setenv(configHubReaderEnv, "cub")
+			viaCub, err := cubStdout(context.Background(), tc.args...)
+			require.NoError(t, err)
+			require.Len(t, fakeCubCalls(t, cubLog), cubBefore+1)
+			require.Len(t, *seen, seenBefore, "without the setting nothing is read through the SDK")
+
+			t.Setenv(configHubReaderEnv, "sdk")
+			viaSDK, err := cubStdout(context.Background(), tc.args...)
+			require.NoError(t, err)
+			require.Len(t, fakeCubCalls(t, cubLog), cubBefore+1, "with the setting no cub process is started")
+			require.Len(t, *seen, seenBefore+tc.requests)
+			require.Equal(t, string(viaCub), string(viaSDK))
+			require.True(t, strings.HasPrefix(string(viaSDK), "[\n  {"))
+		})
+	}
+
+	// What the list asked the server: the one space, cub's expansions, no
+	// limit; and for the spaces, their summary.
+	require.Contains(t, (*seen)[1], "GET /api/unit?include=UnitEventID%2CTargetID%2CUpstreamUnitID%2CSpaceID%2CFromLinkID%2CChangeSetID&where=SpaceID+%3D+")
+	require.NotContains(t, (*seen)[1], "limit=")
+	require.Equal(t, "GET /api/space?include=ComponentID&summary=true", (*seen)[len(*seen)-1])
+}
+
+// The callers of the lists get the same result by either route.
+func TestListCallersGetTheSameByEitherRoute(t *testing.T) {
+	_, seen, space := connectedLaneRoutes(t)
+	read := func() (string, []FleetUnit) {
+		text, err := runMCPConnectedToolCommand(context.Background(), withConfigHubSpace([]string{"unit", "list", "-o", "json"}, space))
+		require.NoError(t, err)
+		units, err := fetchFleetUnits(space, "")
+		require.NoError(t, err)
+		return text, units
+	}
+	t.Setenv("CUB_SCOUT_TEST_MAP_FLEET_JSON", "")
+	t.Setenv(configHubReaderEnv, "cub")
+	cubText, cubUnits := read()
+	require.Empty(t, *seen)
+	t.Setenv(configHubReaderEnv, "sdk")
+	sdkText, sdkUnits := read()
+	// Two lists at two requests each, then the fleet reads each of the two
+	// Units again, at two requests each: the space is looked up every time.
+	require.Len(t, *seen, 8)
+
+	require.Equal(t, cubText, sdkText)
+	require.Equal(t, cubUnits, sdkUnits)
+	var listed []map[string]json.RawMessage
+	require.NoError(t, json.Unmarshal([]byte(sdkText), &listed))
+	require.Len(t, listed, 2)
+}
+
+// A failed list is the answer, worded as a ConfigHub read, with no fallback;
+// and a list is never empty because the read failed.
+func TestSDKRouteListFailureIsReportedAndDoesNotFallBack(t *testing.T) {
+	cubLog := onlyFakeCub(t, "0")
+	hub := newRecordedHub(t, http.StatusUnauthorized)
+	sdkReadsFrom(t, hub)
+	t.Setenv(configHubReaderEnv, "sdk")
+
+	for _, args := range [][]string{{"unit", "list", "-o", "json", "--space", recordedSpace}, {"space", "list", "-o", "json"}} {
+		out, err := cubStdout(context.Background(), args...)
+		require.Nil(t, out)
+		require.Equal(t, hubread.KindUnauthorized, hubread.KindOf(err))
+		require.True(t, failedOnSDKRoute(err))
+
+		_, err = cubText(context.Background(), args...)
+		require.True(t, strings.HasPrefix(err.Error(), "ConfigHub read in place of cub "+args[0]+" list "), err.Error())
+	}
+	// The refusal for a list that forgot its space is the cub route's.
+	_, err := cubStdout(context.Background(), withConfigHubSpace([]string{"unit", "list", "-o", "json"}, "")...)
+	require.Error(t, err)
+	require.True(t, failedOnSDKRoute(err))
+	require.Len(t, hub.seen, 4, "one request for each of the four failed reads, none for the refused one")
+	require.Empty(t, fakeCubCalls(t, cubLog), "cub was run after the SDK route failed")
+}
+
+// The fleet view's advice follows the route: checking that cub is installed
+// is no help when no cub ran.
+func TestFleetFailureAdviceFollowsTheRoute(t *testing.T) {
+	onlyFakeCub(t, "3")
+	hub := newRecordedHub(t, http.StatusInternalServerError)
+	sdkReadsFrom(t, hub)
+	t.Setenv("CUB_SCOUT_TEST_MAP_FLEET_JSON", "")
+
+	t.Setenv(configHubReaderEnv, "sdk")
+	_, err := fetchFleetUnits(recordedSpace, "")
+	require.ErrorContains(t, err, "failed to fetch units from ConfigHub: ")
+	require.Equal(t, hubread.KindFailed, hubread.KindOf(err))
+	require.NotContains(t, err.Error(), "'cub' CLI is installed")
+
+	t.Setenv(configHubReaderEnv, "cub")
+	_, err = fetchFleetUnits(recordedSpace, "")
+	require.ErrorContains(t, err, "Check that 'cub' CLI is installed")
 }
