@@ -1246,19 +1246,19 @@ indentation:
 ```json
 {"view":"summary","complete":true,"counts":[],"reads":[],"summary":[
   {"controller":"ArgoCD","kind":"Application","groupKind":"project","group":"payments","deployers":2,
-   "settings":{"auto-sync":{"on":["argocd/fx-rates","argocd/ledger-api"]},
-               "self-heal":{"on":["argocd/ledger-api"],"off":["argocd/fx-rates"]},
-               "Validate":{"false":["argocd/fx-rates"]},
-               "ignoreDifferences":{"set":["argocd/fx-rates"]}},
+   "policies":{"auto-sync":{"on":["argocd/fx-rates","argocd/ledger-api"]},
+               "self-heal":{"on":["argocd/ledger-api"],"off":["argocd/fx-rates"]}},
+   "options":{"Validate":{"false":["argocd/fx-rates"]},
+              "ignoreDifferences":{"set":["argocd/fx-rates"]}},
    "unset":{"self-heal":["argocd/fx-rates"]},
-   "details":{"ignoreDifferences":{"argocd/fx-rates":"1 rule, comparison only"}}}]}
+   "optionDetails":{"ignoreDifferences":{"argocd/fx-rates":"1 rule, comparison only"}}}]}
 ```
 
 | Field | Rule |
 |---|---|
-| `summary[].settings` | Setting name, then value, then the deployers that have it as `namespace/name`. Values are grouped as in `groups[]`: on `effective`, falling back to `value`, so a deployer that leaves a field unset appears under the controller default. |
-| `summary[].unset` | Per setting, the deployers that do not declare it and are counted under a default in `settings`. A deployer listed here did not write the value it appears under. |
-| `summary[].details` | Per setting and deployer, what the value alone does not say, such as the number of ignore rules. The `n/a` reason is not repeated. |
+| `summary[].policies`, `summary[].options` | Setting name, then value, then the deployers that have it as `namespace/name`. Values are grouped as in `groups[]`: on `effective`, falling back to `value`, so a deployer that leaves a policy unset appears under the controller default. The two are separate maps because a sync option can be spelled like a policy. |
+| `summary[].unset` | Per policy, the deployers that do not declare it and are counted under a default in `policies`. A deployer listed here did not write the value it appears under. |
+| `summary[].policyDetails`, `summary[].optionDetails` | Per setting and deployer, what the value alone does not say, such as the number of ignore rules. The `n/a` reason is not repeated. |
 
 The summary carries no links, spec paths or ignore rules; those are in the
 `deployers` view. It is the `groups` view with each deployer written once per

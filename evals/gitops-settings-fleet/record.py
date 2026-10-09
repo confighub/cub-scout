@@ -140,25 +140,9 @@ def generate():
     return expected
 
 
-def grader(label, members):
-    def esc(text):
-        return text.replace("/", "\\/").replace("-", "\\-")
-    need = "".join("(?=[^\\n]*(?<![\\w\\/-])%s(?![\\w-]))" % esc(member) for member in members)
-    # Exactly as many comma-separated entries as there are members: with every
-    # member required, nothing else can be in the list.
-    return "---\ntype: regex\npattern: '^%s:[ \\t]*%s(?:[^,\\n]+,){%d}[^,\\n]+$'\nflags: im\ntarget: last_message\n---\n" % (
-        label, need, len(members) - 1)
-
-
 def write_case(expected):
-    graders = CASE / "graders"
-    shutil.rmtree(graders, ignore_errors=True)
-    graders.mkdir()
-    (graders / "no-self-heal-line.md").write_text(grader("NO_SELF_HEAL", expected["noSelfHeal"]))
-    (graders / "suspended-line.md").write_text(grader("SUSPENDED", expected["suspended"]))
-    (graders / "used-cub-scout-mcp.md").write_text(
-        "---\ntype: tool_used\ntool: mcp__plugin_cub-scout_cub-scout__gitops_settings\narm: with-only\n---\n")
-    (graders / "skill-fired.md").write_text("---\ntype: tool_used\ntool: Skill\n---\n")
+    lib = shared()
+    lib.write_graders(CASE, {"NO_SELF_HEAL": expected["noSelfHeal"], "SUSPENDED": expected["suspended"]})
     mocks = CASE / "mocks" / "cub-scout"
     shutil.rmtree(CASE / "mocks", ignore_errors=True)
     mocks.mkdir(parents=True)

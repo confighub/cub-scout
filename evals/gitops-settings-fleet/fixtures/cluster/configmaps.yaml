@@ -5,7 +5,7 @@ items:
     url: https://argocd.example.test
   kind: ConfigMap
   metadata:
-    creationTimestamp: "2026-10-09T10:25:37Z"
+    creationTimestamp: "2026-10-09T11:01:38Z"
     labels:
       app.kubernetes.io/part-of: argocd
     managedFields:
@@ -19,32 +19,32 @@ items:
             f:app.kubernetes.io/part-of: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:25:37Z"
+      time: "2026-10-09T11:01:38Z"
     name: argocd-cm
     namespace: argocd
-    resourceVersion: "531"
-    uid: a8421c40-bc5f-4ff7-9b98-27e52c1e63a7
+    resourceVersion: "521"
+    uid: 04e8aa93-ec36-4dd3-834d-0eb266014a11
 - apiVersion: v1
   data:
     ca.crt: |
       -----BEGIN CERTIFICATE-----
-      MIIDBTCCAe2gAwIBAgIIEcqwAd4xIRwwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
-      AxMKa3ViZXJuZXRlczAeFw0yNjEwMDkxMDIwMDhaFw0zNjEwMDYxMDI1MDhaMBUx
+      MIIDBTCCAe2gAwIBAgIIZBjTG91A+UAwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjEwMDkxMDU2MTFaFw0zNjEwMDYxMTAxMTFaMBUx
       EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
-      AoIBAQC60sxxKfBhf/67xX9lTn1adleECt6g7OLI2YX73gIF2GZjXd7DSVPNsOBI
-      zNGL8gaIYeO4hVbzZLb7pKB9xR2z0ugZQMyvQjaz+D+4STxe9NiqtW1TWIYhVs01
-      tVGqsyRlElQTlCdt9DLFMYEX4uvhiC9+YEBCObjXoHU2dngwfQtBxLtiMHv2ON9u
-      1eukyOLXJI4bVvyMFzCFw9UZDlJnlyB1kfoJ/XIhYCionGAfQ+BfTDe472Z0aF2F
-      jBlytg+zGJ1to6p/8MNIYPQ9p9sCNLDA751Mn+4/tPiPRY5rcBRyzxe2Il3tDUK4
-      VjvFBPBue3exFlbuhgQLebT11PTVAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
-      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBS9iXfl6nRgPz4xihJ2vd6TNjvq+TAV
-      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQCkDT3h0Wym
-      5/WdiR7bRVcX6M2k7odTJreyxddifvUxnX4gZvg2K6EGvJvlEV9SiRvQGdq8ORgD
-      0w9VAar0lK+CnpL9LjyQL8CRrcGsLGiLfwDfKJwc74Iw8JjHcz9OfaWW8HMiJPmW
-      ICQu459OYAi3sDZIsvRcKxJjcp/DREpAQIZS1O47L3jFxNUoJJcWy+K2dwmJgqAv
-      l9MmO8ZJoaq4kJpWF2zrEXGWCmT90pRiuIpJJ7p863UZEdb6k6VUlkxLwiGE05sg
-      tpq0sgdmB2zECEGYIJVHOweEJ7OxFXT533iyohKDI/Euf15FQBrhQNM2ppAIjvvq
-      NTx0oad57MHg
+      AoIBAQDI3iAK2anqBVLfYHgIDVE6ls0gqFQUC4aaC6tcnFKw/rpKw6jrV9LFe2ry
+      jgOSk4OUL7rBfNQBuyuF5r8BW7aWEH/UkBpH9Zg9lMuK2N+LgU4ZNePaiWLOD+SK
+      1MlTH+BTS5oAlD85K54+HHwwiM3m5w4oXR50syFTFGo4rRJoSPpKlxGd7B2nfqKa
+      Xl/UK7w9s+9FlllOseyBqkOz2mUtPjBPQNNQZTOHruZC2H839o552Iq5Dwa241bH
+      UFcHG/MuYFOJEgVyVFSp8nivDbZXRNF21Vv01JHVkfpFUu2oAiQuNxceaBsKs9BE
+      +gvrHnkmPe5r1CGNisL2fPI0BfyxAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQXG0Kef1pJO5drhplO1JA/SkrtEjAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQDF/4SbC+p9
+      ADupmfjjmYfrAXSoI/ELuXFwWhVcPOf2zw3gxRCM7zyajkXb4lJU9xf1Pp8h6ltG
+      N73LiuBIUTSVHmwUUSJ58doHYmewWtbuhNlu2OQmuSIYgJ+Chwxs420FyvZnq+TK
+      7QFwHXErVeZhTZ9TtnMvF7pNAunTzGncgIdJp7dE9D4A7yHI0qKF4TP5P5433FXx
+      vGr3CY/TjPfTvv8W7lYSB1VXkCV8LzSDujsNkalm5nIG6Vnm00iZ/c46N8+J++0k
+      h8GL8FM6ElLaLleXt2vFef6Fx5MWMTWK1y9c8RYFqbcr5WjgwBI2sTbQ/hOqm4hS
+      5Cy2+d3ouiu+
       -----END CERTIFICATE-----
   kind: ConfigMap
   metadata:
@@ -53,7 +53,7 @@ items:
         kube-apiserver when using internal endpoints such as the internal service
         IP or kubernetes.default.svc. No other usage is guaranteed across distributions
         of Kubernetes clusters.
-    creationTimestamp: "2026-10-09T10:25:37Z"
+    creationTimestamp: "2026-10-09T11:01:38Z"
     managedFields:
     - apiVersion: v1
       fieldsType: FieldsV1
@@ -67,11 +67,11 @@ items:
             f:kubernetes.io/description: {}
       manager: kube-controller-manager
       operation: Update
-      time: "2026-10-09T10:25:37Z"
+      time: "2026-10-09T11:01:38Z"
     name: kube-root-ca.crt
     namespace: argocd
-    resourceVersion: "505"
-    uid: d93f9190-dbe4-4f2c-adfe-4c4f5bf4ad31
+    resourceVersion: "495"
+    uid: 4d6fb48f-9162-405d-af47-418d4ba4b7f2
 kind: List
 metadata:
   resourceVersion: ""

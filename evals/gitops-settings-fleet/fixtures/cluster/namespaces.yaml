@@ -3,12 +3,12 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-10-09T10:25:37Z"
+    creationTimestamp: "2026-10-09T11:01:38Z"
     labels:
       kubernetes.io/metadata.name: argocd
     name: argocd
-    resourceVersion: "504"
-    uid: 3f398b90-b53b-4c2a-96dc-4868cb2afbf8
+    resourceVersion: "494"
+    uid: 2d5d76c1-c0df-461e-b01b-e92a66aca5c6
   spec:
     finalizers:
     - kubernetes
@@ -17,7 +17,7 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-10-09T10:25:14Z"
+    creationTimestamp: "2026-10-09T11:01:15Z"
     labels:
       kubernetes.io/metadata.name: default
     managedFields:
@@ -30,10 +30,10 @@ items:
             f:kubernetes.io/metadata.name: {}
       manager: kube-apiserver
       operation: Update
-      time: "2026-10-09T10:25:14Z"
+      time: "2026-10-09T11:01:15Z"
     name: default
-    resourceVersion: "29"
-    uid: c378d502-9e07-4557-863f-e2f5b7000d1b
+    resourceVersion: "20"
+    uid: b090b308-03ab-4ff2-923e-cd0b3214d413
   spec:
     finalizers:
     - kubernetes
@@ -42,12 +42,12 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-10-09T10:25:37Z"
+    creationTimestamp: "2026-10-09T11:01:38Z"
     labels:
       kubernetes.io/metadata.name: flux-system
     name: flux-system
-    resourceVersion: "507"
-    uid: 6663371a-f55d-4512-a7aa-b83b95facebe
+    resourceVersion: "496"
+    uid: 38f6ccc5-a4d6-443e-b48f-a94e2b06f4d4
   spec:
     finalizers:
     - kubernetes
@@ -56,7 +56,7 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-10-09T10:25:14Z"
+    creationTimestamp: "2026-10-09T11:01:15Z"
     labels:
       kubernetes.io/metadata.name: kube-node-lease
     managedFields:
@@ -69,10 +69,10 @@ items:
             f:kubernetes.io/metadata.name: {}
       manager: kube-apiserver
       operation: Update
-      time: "2026-10-09T10:25:14Z"
+      time: "2026-10-09T11:01:15Z"
     name: kube-node-lease
-    resourceVersion: "37"
-    uid: b9930663-8a20-45fc-b52a-139d3b9cbe5c
+    resourceVersion: "24"
+    uid: 7b84bf01-200c-49a0-a746-ce2cc0e0f404
   spec:
     finalizers:
     - kubernetes
@@ -81,7 +81,7 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-10-09T10:25:14Z"
+    creationTimestamp: "2026-10-09T11:01:15Z"
     labels:
       kubernetes.io/metadata.name: kube-public
     managedFields:
@@ -94,10 +94,10 @@ items:
             f:kubernetes.io/metadata.name: {}
       manager: kube-apiserver
       operation: Update
-      time: "2026-10-09T10:25:14Z"
+      time: "2026-10-09T11:01:15Z"
     name: kube-public
-    resourceVersion: "20"
-    uid: 1f91f61d-7821-43df-81cb-7af7c2697c9a
+    resourceVersion: "12"
+    uid: 55b9ab3b-bd50-407e-971c-de7cf96f6f3e
   spec:
     finalizers:
     - kubernetes
@@ -106,7 +106,7 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-10-09T10:25:13Z"
+    creationTimestamp: "2026-10-09T11:01:15Z"
     labels:
       kubernetes.io/metadata.name: kube-system
     managedFields:
@@ -119,10 +119,10 @@ items:
             f:kubernetes.io/metadata.name: {}
       manager: kube-apiserver
       operation: Update
-      time: "2026-10-09T10:25:13Z"
+      time: "2026-10-09T11:01:15Z"
     name: kube-system
-    resourceVersion: "7"
-    uid: 9fcb6007-1317-4937-b5ef-3cb794019433
+    resourceVersion: "4"
+    uid: 6c3ff84c-513c-4ddd-8c84-3e1b5d5450a9
   spec:
     finalizers:
     - kubernetes
@@ -134,7 +134,7 @@ items:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
         {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"name":"local-path-storage"}}
-    creationTimestamp: "2026-10-09T10:25:18Z"
+    creationTimestamp: "2026-10-09T11:01:19Z"
     labels:
       kubernetes.io/metadata.name: local-path-storage
     managedFields:
@@ -150,10 +150,10 @@ items:
             f:kubernetes.io/metadata.name: {}
       manager: kubectl-client-side-apply
       operation: Update
-      time: "2026-10-09T10:25:18Z"
+      time: "2026-10-09T11:01:19Z"
     name: local-path-storage
-    resourceVersion: "290"
-    uid: 2ec8c3ac-39e8-4404-889a-aeebe0876da3
+    resourceVersion: "280"
+    uid: f1f9947d-a3ae-4344-8b0a-da6815af8a12
   spec:
     finalizers:
     - kubernetes
@@ -162,12 +162,12 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-10-09T10:25:37Z"
+    creationTimestamp: "2026-10-09T11:01:38Z"
     labels:
       kubernetes.io/metadata.name: team-a
     name: team-a
-    resourceVersion: "508"
-    uid: afe621bb-1536-4b0c-b004-c8b12ab01ef4
+    resourceVersion: "500"
+    uid: 1d268b53-46fe-4a70-903c-f9c7462a33d9
   spec:
     finalizers:
     - kubernetes
@@ -176,12 +176,12 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-10-09T10:25:37Z"
+    creationTimestamp: "2026-10-09T11:01:38Z"
     labels:
       kubernetes.io/metadata.name: team-b
     name: team-b
-    resourceVersion: "511"
-    uid: 0e435ea5-3ff6-431a-a937-a68aef6f669c
+    resourceVersion: "502"
+    uid: 0dd5907d-9677-44f0-9627-92117d89c043
   spec:
     finalizers:
     - kubernetes
@@ -190,12 +190,12 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-10-09T10:25:37Z"
+    creationTimestamp: "2026-10-09T11:01:38Z"
     labels:
       kubernetes.io/metadata.name: team-c
     name: team-c
-    resourceVersion: "514"
-    uid: 53e76bb9-3395-4ee3-a0e4-3ff8eca1ab01
+    resourceVersion: "506"
+    uid: 65cf7080-2ab8-4961-8874-8cf19108627b
   spec:
     finalizers:
     - kubernetes
@@ -204,12 +204,12 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-10-09T10:25:37Z"
+    creationTimestamp: "2026-10-09T11:01:38Z"
     labels:
       kubernetes.io/metadata.name: team-d
     name: team-d
-    resourceVersion: "517"
-    uid: 5a7c3612-963d-48cf-bf65-beb0c8ab78bd
+    resourceVersion: "509"
+    uid: 4bfbc25f-dfc8-4c72-b35e-fea395f656ec
   spec:
     finalizers:
     - kubernetes
@@ -218,12 +218,12 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-10-09T10:25:37Z"
+    creationTimestamp: "2026-10-09T11:01:38Z"
     labels:
       kubernetes.io/metadata.name: team-e
     name: team-e
-    resourceVersion: "520"
-    uid: 61c5477b-61e0-46bd-a061-44f7301b8f35
+    resourceVersion: "512"
+    uid: 65442167-c1f1-470f-bc01-1927608cef41
   spec:
     finalizers:
     - kubernetes
@@ -232,12 +232,12 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-10-09T10:25:37Z"
+    creationTimestamp: "2026-10-09T11:01:38Z"
     labels:
       kubernetes.io/metadata.name: team-f
     name: team-f
-    resourceVersion: "524"
-    uid: b08496bf-cd3e-403f-aa6f-3693cfe92e8d
+    resourceVersion: "515"
+    uid: 995d5451-df23-4605-b590-8e386f85ef7c
   spec:
     finalizers:
     - kubernetes
@@ -246,12 +246,12 @@ items:
 - apiVersion: v1
   kind: Namespace
   metadata:
-    creationTimestamp: "2026-10-09T10:25:37Z"
+    creationTimestamp: "2026-10-09T11:01:38Z"
     labels:
       kubernetes.io/metadata.name: team-g
     name: team-g
-    resourceVersion: "528"
-    uid: 95d4e550-9547-49a0-828a-00137924a3ca
+    resourceVersion: "518"
+    uid: cf23edce-f5d0-4097-8afd-305f36392827
   spec:
     finalizers:
     - kubernetes

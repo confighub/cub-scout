@@ -689,7 +689,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"gitops_settings": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "gitops_settings",
-				Description: "Standalone inventory of the delivery settings GitOps deployers declare (gitops settings --format json). Use when the user asks which Argo CD Applications or Flux Kustomizations/HelmReleases sync automatically, self-heal, prune, are suspended, detect drift, or use a given sync or apply option, or which deployers share a setting. One call covers every Application, Kustomization and HelmRelease; pass setting to get only the deployers that match, for example [\"self-heal=off\"]. Argo CD policies are auto-sync, self-heal and prune; sync options keep their own names and values (Validate=false, ServerSideApply=true); Flux fields keep theirs (suspend, prune, force, wait, driftDetection.mode, upgrade.force). A field that is absent is value unset with the controller default in default and effective; for an Application without automated sync, self-heal and prune are n/a, not off. reads[] says whether each kind was read, not_installed or not_read: a kind that is not_read is unknown, not empty, and complete is then false. These are settings declared in each spec. DO NOT use this to decide whether a controller acted on a setting, whether delivery is healthy (use gitops_status), who changed a field (use explain), or whether a setting is acceptable: it gives no verdict.",
+				Description: "Standalone inventory of the delivery settings GitOps deployers declare (gitops settings --format json). Use when the user asks which Argo CD Applications or Flux Kustomizations/HelmReleases sync automatically, self-heal, prune, are suspended, detect drift, or use a given sync or apply option, or which deployers share a setting. With no arguments one call covers every Application, Kustomization and HelmRelease the caller may list; pass setting to get only the deployers that match, for example [\"self-heal=off\"]. Argo CD policies are auto-sync, self-heal and prune; sync options keep their own names and values (Validate=false, ServerSideApply=true); Flux fields keep theirs (suspend, prune, force, wait, driftDetection.mode, upgrade.force). A field that is absent is value unset with the controller default in default and effective; for an Application without automated sync, self-heal and prune are n/a, not off. reads[] says whether each kind was read, not_installed or not_read: a kind that is not_read is unknown, not empty, and complete is then false. These are settings declared in each spec. DO NOT use this to decide whether a controller acted on a setting, whether delivery is healthy (use gitops_status), who changed a field (use explain), or whether a setting is acceptable: it gives no verdict.",
 				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
@@ -710,7 +710,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						"setting": map[string]interface{}{
 							"type":        "array",
 							"items":       map[string]interface{}{"type": "string"},
-							"description": "Optional filters, each name or name=value; all must match. Names are exact: prune is the automated-prune policy, Prune is the sync option. on/true and off/false are interchangeable. A value also matches a deployer that leaves the field unset when the controller default is that value.",
+							"description": "Optional filters, each name or name=value; all must match. Names are exact: prune is the automated-prune policy, Prune is the sync option. on/true and off/false are interchangeable. A value also matches a deployer that leaves the field unset when the controller default is that value. A name alone matches deployers whose spec declares that setting.",
 						},
 						"view": map[string]interface{}{
 							"type":        "string",
@@ -722,6 +722,16 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				},
 			},
 			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
+				// A filter that is misspelt, wrong-typed or empty must be an
+				// error. Dropping it would return the whole cluster as if it
+				// were the answer to the narrower question.
+				for name := range arguments {
+					switch name {
+					case "namespace", "context", "project", "setting", "view":
+					default:
+						return nil, fmt.Errorf("unknown argument %q (valid: namespace, context, project, setting, view)", name)
+					}
+				}
 				args := []string{"gitops", "settings", "--format", "json"}
 				if raw, exists := arguments["context"]; exists {
 					name, ok := raw.(string)
@@ -730,22 +740,29 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 					}
 					args = append(args, "--kube-context", name)
 				}
-				if ns := argString(arguments, "namespace"); ns != "" {
-					args = append(args, "-n", ns)
+				if raw, exists := arguments["namespace"]; exists {
+					name, ok := raw.(string)
+					if !ok || strings.TrimSpace(name) == "" {
+						return nil, fmt.Errorf("namespace must be a non-empty string")
+					}
+					args = append(args, "-n", strings.TrimSpace(name))
 				}
-				projects, err := argStringSlice(arguments, "project")
-				if err != nil {
-					return nil, err
-				}
-				for _, project := range projects {
-					args = append(args, "--project", project)
-				}
-				settings, err := argStringSlice(arguments, "setting")
-				if err != nil {
-					return nil, err
-				}
-				for _, setting := range settings {
-					args = append(args, "--setting", setting)
+				for _, filter := range []struct{ argument, flag string }{{"project", "--project"}, {"setting", "--setting"}} {
+					raw, exists := arguments[filter.argument]
+					if !exists {
+						continue
+					}
+					items, ok := raw.([]interface{})
+					if !ok {
+						return nil, fmt.Errorf("%s must be an array of strings", filter.argument)
+					}
+					for _, item := range items {
+						text, ok := item.(string)
+						if !ok || strings.TrimSpace(text) == "" {
+							return nil, fmt.Errorf("%s must contain only non-empty strings", filter.argument)
+						}
+						args = append(args, filter.flag, strings.TrimSpace(text))
+					}
 				}
 				view := deliverySettingsViewSummary
 				if raw, exists := arguments["view"]; exists {

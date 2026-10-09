@@ -2860,7 +2860,7 @@ judge a setting, and does not report whether a controller acted on it.
 |------|-------------|
 | `-n, --namespace` | Only deployers in this namespace (default: all namespaces) |
 | `--project` | Only Argo CD Applications in this project; repeatable. Flux objects have no project and are left out, and the output says how many |
-| `--setting` | Only deployers with this setting, as `name` or `name=value`; repeatable, and all must match |
+| `--setting` | Only deployers with this setting, as `name` or `name=value`; repeatable, and all must match. `name` alone selects deployers whose spec declares it (changed after v2.13.3, where it also matched a policy left unset) |
 | `--group-by` | `project` (default), `setting` or `deployer` |
 | `--format` | Output format: `ascii`, `json`, `md` |
 | `--json` | Output as JSON (shorthand for `--format json`) |
@@ -2971,15 +2971,15 @@ is complete.
 | View | Contents |
 |---|---|
 | `all` | The whole report. The CLI default, as in v2.13.3 |
-| `summary` | Per Argo CD project or Flux namespace, `settings` maps each setting to its values and each value to the deployers that have it, as `namespace/name`. `unset` lists the deployers counted under a controller default. Written on one line, without indentation. The MCP tool's default |
+| `summary` | Per Argo CD project or Flux namespace, `policies` and `options` each map a setting to its values and each value to the deployers that have it, as `namespace/name`. `unset` lists the deployers counted under a controller default. Written on one line, without indentation. The MCP tool's default |
 | `groups` | The summary's content as objects, each deployer with its link and detail |
 | `settings` | The same inversion per kind across the whole read |
 | `deployers` | One entry per object, with every setting's spec path and default, the link and the ignore rules |
 
 The summary exists because an agent pays for every byte it reads. On the
-thirty-deployer scenario in the eval case it is about 6 KB, where the `groups`
-view is about 33 KB and the raw `kubectl` export of the same objects about
-42 KB. That is a size on one scenario, not a measured saving.
+thirty-deployer scenario in the eval case it is about 6 KB, where the raw
+`kubectl` export of the same objects is about 42 KB. That is a size on one
+scenario, not a measured saving.
 
 What was measured is in the
 [eval report](../../evals/reports/2026-10-09-gitops-settings.md). In short: an

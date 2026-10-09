@@ -3,7 +3,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: Application
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -20,11 +20,11 @@ items:
             f:targetRevision: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: backfill-2025
     namespace: argocd
-    resourceVersion: "538"
-    uid: fa503720-2d74-4e32-b67e-9433ca14e866
+    resourceVersion: "528"
+    uid: 7d110888-a644-497c-b9ef-8a838d6a91ce
   spec:
     destination:
       namespace: backfill-2025
@@ -37,7 +37,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: Application
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -59,11 +59,11 @@ items:
             f:syncOptions: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: cert-manager
     namespace: argocd
-    resourceVersion: "524"
-    uid: 130c831b-8fb0-44c9-9953-b546b10dc420
+    resourceVersion: "517"
+    uid: 840a5d93-08ae-4006-821f-db315c7b438c
   spec:
     destination:
       namespace: cert-manager
@@ -82,7 +82,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: Application
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -103,11 +103,11 @@ items:
             f:syncOptions: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: checkout-web
     namespace: argocd
-    resourceVersion: "520"
-    uid: 1b795551-5cfc-40ae-8f25-e3264f2624ef
+    resourceVersion: "513"
+    uid: f250e01a-ad9c-4da2-8d50-5894e885ea80
   spec:
     destination:
       namespace: checkout-web
@@ -125,7 +125,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: Application
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -144,11 +144,11 @@ items:
             f:syncOptions: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: cluster-bootstrap
     namespace: argocd
-    resourceVersion: "528"
-    uid: 3152a4be-3602-4248-964f-89f68d444ec9
+    resourceVersion: "521"
+    uid: d01b79d1-c1aa-4ee3-bdc0-0a4f974b0c20
   spec:
     destination:
       namespace: cluster-bootstrap
@@ -165,7 +165,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: Application
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -187,11 +187,11 @@ items:
               f:selfHeal: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: dns-migration
     namespace: argocd
-    resourceVersion: "529"
-    uid: 083d73b3-9f7a-4724-93cc-9a5560568dec
+    resourceVersion: "522"
+    uid: ec14a2b6-abb4-4a3e-b74d-894e45d055bc
   spec:
     destination:
       namespace: dns-migration
@@ -209,7 +209,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: Application
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -230,11 +230,11 @@ items:
               f:selfHeal: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: etl-nightly
     namespace: argocd
-    resourceVersion: "535"
-    uid: c1e0c3c6-5404-4c22-aa6e-631a5beb4d71
+    resourceVersion: "525"
+    uid: 76d4c138-b234-434a-9983-879c158016d2
   spec:
     destination:
       namespace: etl-nightly
@@ -251,7 +251,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: Application
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -272,11 +272,11 @@ items:
               f:selfHeal: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: external-dns
     namespace: argocd
-    resourceVersion: "525"
-    uid: 21e008fc-c4d6-427c-97b0-6b7abc7a02c3
+    resourceVersion: "518"
+    uid: aa8c36cc-c410-453a-a272-1164f825f8fb
   spec:
     destination:
       namespace: external-dns
@@ -293,7 +293,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: Application
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -313,11 +313,11 @@ items:
               f:allowEmpty: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: feature-store
     namespace: argocd
-    resourceVersion: "536"
-    uid: 35993235-59e8-456f-8bbd-85a06a451d60
+    resourceVersion: "526"
+    uid: 68f726e2-1b4e-42b4-b14a-2d4505451aa0
   spec:
     destination:
       namespace: feature-store
@@ -333,7 +333,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: Application
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -354,11 +354,11 @@ items:
             f:syncOptions: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: fx-rates
     namespace: argocd
-    resourceVersion: "521"
-    uid: 1a232acf-2e99-431a-b9fe-eeaf08492ecc
+    resourceVersion: "514"
+    uid: f4db7d16-d3bb-4724-be5d-8fd0514ff8a3
   spec:
     destination:
       namespace: fx-rates
@@ -377,7 +377,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: Application
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -398,11 +398,11 @@ items:
               f:selfHeal: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: guestbook
     namespace: argocd
-    resourceVersion: "540"
-    uid: e60d0c08-1d17-4ee2-ac05-a7b43aa2a320
+    resourceVersion: "530"
+    uid: 616cba6e-e8b2-423a-a922-40703fc400fb
   spec:
     destination:
       namespace: guestbook
@@ -419,7 +419,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: Application
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -439,11 +439,11 @@ items:
             f:syncOptions: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: ingress-nginx
     namespace: argocd
-    resourceVersion: "527"
-    uid: 6927d28a-0fc9-428f-9d1e-c7f4c0ac9be9
+    resourceVersion: "520"
+    uid: 4d929511-0f5a-4d47-9b01-1985e91a615e
   spec:
     destination:
       namespace: ingress-nginx
@@ -460,7 +460,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: Application
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -481,11 +481,11 @@ items:
               f:selfHeal: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: invoices
     namespace: argocd
-    resourceVersion: "519"
-    uid: c4d26ed8-7ece-4b16-9973-2bc2c3743b25
+    resourceVersion: "512"
+    uid: f4933b12-ab95-4625-a329-a9b322c8c7c5
   spec:
     destination:
       namespace: invoices
@@ -502,7 +502,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: Application
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -524,11 +524,11 @@ items:
             f:syncOptions: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: ledger-api
     namespace: argocd
-    resourceVersion: "518"
-    uid: 75b394c3-1ade-41a7-b033-10f0d547dcf7
+    resourceVersion: "511"
+    uid: 40cc0865-f539-48f4-aafe-6463a11cc284
   spec:
     destination:
       namespace: ledger-api
@@ -547,7 +547,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: Application
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -564,11 +564,11 @@ items:
             f:targetRevision: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: legacy-billing
     namespace: argocd
-    resourceVersion: "523"
-    uid: a7a0a22f-046e-4c21-b23c-843b79a3f4b9
+    resourceVersion: "516"
+    uid: 6e422474-0f6c-492b-9dca-549a3dca3fc8
   spec:
     destination:
       namespace: legacy-billing
@@ -581,7 +581,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: Application
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -604,11 +604,11 @@ items:
             f:syncOptions: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: monitoring-stack
     namespace: argocd
-    resourceVersion: "526"
-    uid: 33948b40-c705-4642-82d4-9e20c99260eb
+    resourceVersion: "519"
+    uid: e52fd86c-70fc-4e09-8c4e-b37e682e0da7
   spec:
     destination:
       namespace: monitoring-stack
@@ -632,7 +632,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: Application
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -653,11 +653,11 @@ items:
               f:selfHeal: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: notebooks
     namespace: argocd
-    resourceVersion: "537"
-    uid: 112254dd-bd53-4342-845c-fd363ad771f0
+    resourceVersion: "527"
+    uid: b26b6949-1740-4667-8ff6-e7b94ca95e78
   spec:
     destination:
       namespace: notebooks
@@ -674,7 +674,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: Application
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -694,11 +694,11 @@ items:
               f:prune: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: playground
     namespace: argocd
-    resourceVersion: "539"
-    uid: 0bf694f2-7925-410e-9ca9-73fc714bf63d
+    resourceVersion: "529"
+    uid: 63e3c94e-0a66-4b68-81ae-8c9ab71ce703
   spec:
     destination:
       namespace: playground
@@ -714,7 +714,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: Application
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -735,11 +735,11 @@ items:
               f:selfHeal: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: settlement-worker
     namespace: argocd
-    resourceVersion: "522"
-    uid: 80717b45-64a2-4991-8b5a-b5be5b916046
+    resourceVersion: "515"
+    uid: 5288fc50-758e-4034-be50-2ebd6923df8b
   spec:
     destination:
       namespace: settlement-worker
@@ -756,7 +756,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: Application
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -778,11 +778,11 @@ items:
             f:syncOptions: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: stream-processor
     namespace: argocd
-    resourceVersion: "533"
-    uid: 9dd55fe9-3518-49bb-a450-049ec7b45da3
+    resourceVersion: "524"
+    uid: 4ed3ba52-9c0d-4530-ac13-2e16b42d4b7c
   spec:
     destination:
       namespace: stream-processor
@@ -801,7 +801,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: Application
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -822,11 +822,11 @@ items:
               f:selfHeal: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: warehouse
     namespace: argocd
-    resourceVersion: "531"
-    uid: 7f4468a8-ec0a-4825-904b-1fc691652685
+    resourceVersion: "523"
+    uid: c78fdb39-45ad-4521-9e67-da95cc4660b8
   spec:
     destination:
       namespace: warehouse

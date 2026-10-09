@@ -3,7 +3,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: AppProject
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -14,11 +14,11 @@ items:
           f:sourceRepos: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: data
     namespace: argocd
-    resourceVersion: "517"
-    uid: 391f395f-a8b7-4dff-a508-1aab6b1c6571
+    resourceVersion: "510"
+    uid: ebd80b68-cdff-490d-ac72-78ffe138b232
   spec:
     destinations:
     - namespace: '*'
@@ -28,7 +28,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: AppProject
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -39,11 +39,11 @@ items:
           f:sourceRepos: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: payments
     namespace: argocd
-    resourceVersion: "515"
-    uid: c0cfcdd9-f525-4e2c-9be2-6392d6c3c0fa
+    resourceVersion: "508"
+    uid: 78ee6771-c344-4f7f-8934-1c73057a5f34
   spec:
     destinations:
     - namespace: '*'
@@ -53,7 +53,7 @@ items:
 - apiVersion: argoproj.io/v1alpha1
   kind: AppProject
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: argoproj.io/v1alpha1
@@ -64,11 +64,11 @@ items:
           f:sourceRepos: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: platform
     namespace: argocd
-    resourceVersion: "516"
-    uid: 8c469e1f-6e0e-4748-b0e1-b3eb8fee6e93
+    resourceVersion: "509"
+    uid: ddd6db00-5dd0-4133-9ee2-7fb6d6246e3e
   spec:
     destinations:
     - namespace: '*'

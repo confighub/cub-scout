@@ -476,15 +476,25 @@ func TestMCPGitOpsSettingsBuildsTheCLICall(t *testing.T) {
 		require.NoError(t, err, tc.name)
 		require.Equal(t, tc.want, got, tc.name)
 	}
+	// A filter that is wrong-typed, empty or misspelt is refused. Dropping it
+	// would answer a narrower question with the whole cluster.
 	for name, arguments := range map[string]map[string]interface{}{
-		"context": {"context": 17},
-		"setting": {"setting": []interface{}{"self-heal=off", 3}},
-		"project": {"project": map[string]interface{}{"a": "b"}},
-		"view":    {"view": true},
+		"context of the wrong type":   {"context": 17},
+		"namespace of the wrong type": {"namespace": 17},
+		"empty namespace":             {"namespace": " "},
+		"setting with a non-string":   {"setting": []interface{}{"self-heal=off", 3}},
+		"setting with an empty entry": {"setting": []interface{}{"self-heal=off", " "}},
+		"setting as a bare string":    {"setting": "self-heal=off"},
+		"project as an object":        {"project": map[string]interface{}{"a": "b"}},
+		"project with an empty entry": {"project": []interface{}{""}},
+		"view of the wrong type":      {"view": true},
+		"misspelt argument":           {"settng": []interface{}{"self-heal=off"}},
 	} {
-		_, err := tool.BuildArgs(arguments)
-		require.Error(t, err, "a wrong-typed %s must be refused, not dropped", name)
+		got, err := tool.BuildArgs(arguments)
+		require.Error(t, err, "%s must be refused, not dropped (built %v)", name, got)
 	}
+	_, err := tool.BuildArgs(map[string]interface{}{"settng": []interface{}{"x"}})
+	require.ErrorContains(t, err, `unknown argument "settng" (valid: namespace, context, project, setting, view)`)
 }
 
 func TestMCPGitOpsSettingsReturnsTheReportAsStructuredData(t *testing.T) {
@@ -553,25 +563,27 @@ func TestGitOpsSettingsSummaryViewIsTheGroupsViewCompacted(t *testing.T) {
 
 	require.Equal(t, []deliverySummaryGroup{
 		{Controller: "ArgoCD", Kind: "Application", GroupKind: "project", Group: "payments", Deployers: 2,
-			Settings: map[string]map[string][]string{
-				"auto-sync":         {"on": {"argocd/fx-rates", "argocd/ledger-api"}},
-				"self-heal":         {"on": {"argocd/ledger-api"}, "off": {"argocd/fx-rates"}},
-				"prune":             {"on": {"argocd/ledger-api"}, "off": {"argocd/fx-rates"}},
+			Policies: map[string]map[string][]string{
+				"auto-sync": {"on": {"argocd/fx-rates", "argocd/ledger-api"}},
+				"self-heal": {"on": {"argocd/ledger-api"}, "off": {"argocd/fx-rates"}},
+				"prune":     {"on": {"argocd/ledger-api"}, "off": {"argocd/fx-rates"}},
+			},
+			Options: map[string]map[string][]string{
 				"ServerSideApply":   {"true": {"argocd/fx-rates", "argocd/ledger-api"}},
 				"Validate":          {"false": {"argocd/fx-rates"}},
 				"ignoreDifferences": {"set": {"argocd/fx-rates"}},
 			},
-			Unset:   map[string][]string{"self-heal": {"argocd/fx-rates"}, "prune": {"argocd/fx-rates"}},
-			Details: map[string]map[string]string{"ignoreDifferences": {"argocd/fx-rates": "1 rule, comparison only"}}},
+			Unset:         map[string][]string{"self-heal": {"argocd/fx-rates"}, "prune": {"argocd/fx-rates"}},
+			OptionDetails: map[string]map[string]string{"ignoreDifferences": {"argocd/fx-rates": "1 rule, comparison only"}}},
 		{Controller: "ArgoCD", Kind: "Application", GroupKind: "project", Group: "platform", Deployers: 2,
-			Settings: map[string]map[string][]string{
+			Policies: map[string]map[string][]string{
 				"auto-sync": {"on": {"team-b/outside"}, "off": {"argocd/legacy"}},
 				"self-heal": {"off": {"team-b/outside"}, "n/a": {"argocd/legacy"}},
 				"prune":     {"off": {"team-b/outside"}, "n/a": {"argocd/legacy"}},
 			},
 			Unset: map[string][]string{"auto-sync": {"argocd/legacy"}, "prune": {"team-b/outside"}}},
 		{Controller: "Flux", Kind: "Kustomization", GroupKind: "namespace", Group: "flux-system", Deployers: 2,
-			Settings: map[string]map[string][]string{
+			Policies: map[string]map[string][]string{
 				"suspend": {"on": {"flux-system/held"}, "off": {"flux-system/apps"}},
 				"prune":   {"on": {"flux-system/apps"}, "off": {"flux-system/held"}},
 				"force":   {"off": {"flux-system/apps", "flux-system/held"}},
@@ -579,4 +591,21 @@ func TestGitOpsSettingsSummaryViewIsTheGroupsViewCompacted(t *testing.T) {
 			},
 			Unset: map[string][]string{"suspend": {"flux-system/apps"}, "force": {"flux-system/apps", "flux-system/held"}, "wait": {"flux-system/apps", "flux-system/held"}}},
 	}, document.Summary)
+}
+
+// A sync option may be spelled exactly like a policy. Keyed by name alone, the
+// option would overwrite the policy and the summary would lose "prune on".
+func TestGitOpsSettingsSummaryKeepsAPolicyAndAnOptionOfTheSameName(t *testing.T) {
+	app := settingsObject("argoproj.io/v1alpha1", "Application", "argocd", "demo", map[string]interface{}{"project": "default",
+		"syncPolicy": map[string]interface{}{"automated": map[string]interface{}{"prune": true, "selfHeal": "yes"},
+			"syncOptions": []interface{}{"prune=false", "self-heal=later"}}})
+	client := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), settingsListKinds, app)
+	summary := summariseDeliveryGroups(settingsReport(t, client, deliverySettingsParams{}).Groups)
+	require.Len(t, summary, 1)
+	require.Equal(t, map[string][]string{"on": {"argocd/demo"}}, summary[0].Policies["prune"])
+	require.Equal(t, map[string][]string{"false": {"argocd/demo"}}, summary[0].Options["prune"])
+	require.Equal(t, map[string][]string{"off": {"argocd/demo"}}, summary[0].Policies["self-heal"])
+	require.Equal(t, map[string][]string{"later": {"argocd/demo"}}, summary[0].Options["self-heal"])
+	require.Equal(t, map[string]map[string]string{"self-heal": {"argocd/demo": "the field is not a boolean"}}, summary[0].PolicyDetails)
+	require.Nil(t, summary[0].OptionDetails)
 }

@@ -81,6 +81,36 @@ This recorded scenario answers gitops_settings only for these calls: no argument
 """
 
 
+# The expected answer, derived by hand from scenario.yaml (see README.md).
+EXPECTED = {
+    "NO_SELF_HEAL": ["argocd/etl-nightly", "argocd/feature-store", "argocd/fx-rates", "argocd/ingress-nginx", "argocd/playground",
+                     "argocd/settlement-worker"],
+    "SUSPENDED": ["HelmRelease/team-h/redis", "Kustomization/flux-system/legacy-migration", "Kustomization/flux-system/monitoring"],
+}
+
+
+def grader(label, members):
+    """A regex grader that passes only the exact set: every member present, and
+    exactly as many comma-separated entries as there are members. The line may
+    be wrapped in Markdown (backticks, bold, a bullet); order is not checked."""
+    def esc(text):
+        return text.replace("/", "\\/").replace("-", "\\-")
+    need = "".join("(?=[^\\n]*(?<![\\w\\/-])%s(?![\\w-]))" % esc(member) for member in members)
+    return "---\ntype: regex\npattern: '^[ \\t>*`_-]*%s:[ \\t`*_]*%s(?:[^,\\n]+,){%d}[^,\\n]+$'\nflags: im\ntarget: last_message\n---\n" % (
+        label, need, len(members) - 1)
+
+
+def write_graders(case, expected):
+    graders = case / "graders"
+    shutil.rmtree(graders, ignore_errors=True)
+    graders.mkdir()
+    (graders / "no-self-heal-line.md").write_text(grader("NO_SELF_HEAL", expected["NO_SELF_HEAL"]))
+    (graders / "suspended-line.md").write_text(grader("SUSPENDED", expected["SUSPENDED"]))
+    (graders / "used-cub-scout-mcp.md").write_text(
+        "---\ntype: tool_used\ntool: mcp__plugin_cub-scout_cub-scout__gitops_settings\narm: with-only\n---\n")
+    (graders / "skill-fired.md").write_text("---\ntype: tool_used\ntool: Skill\n---\n")
+
+
 def sha(path):
     return hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
 
@@ -263,6 +293,12 @@ def main():
         assert clean(next(recorded)) == by_call[("all", "summary")], "the default call is not the summary view"
         (mocks / "gitops_settings.md").write_text("\n".join(body))
 
+        # The recorded tool answers must be the hand-derived expected answer.
+        for label, key, kinded in [("self-heal-off", "NO_SELF_HEAL", False), ("suspend-on", "SUSPENDED", True)]:
+            got = sorted(("%s/" % d["kind"] if kinded else "") + d["namespace"] + "/" + d["name"]
+                         for d in json.loads(by_call[(label, "deployers")])["deployers"])
+            assert got == EXPECTED[key], (label, got)
+        write_graders(CASE, EXPECTED)
         write_scaffold(CASE)
         write_manifest(CASE, binary, [
             "Deployer objects only. No GitOps controller is installed: nothing reconciles and no object has a status.",

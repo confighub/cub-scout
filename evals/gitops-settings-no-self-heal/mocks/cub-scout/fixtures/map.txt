@@ -10,7 +10,7 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
@@ -20,8 +20,8 @@
       "app.kubernetes.io/part-of": "argocd"
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/argocd/argoproj.io/Application/backfill-2025",
@@ -34,15 +34,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/argocd/argoproj.io/Application/cert-manager",
@@ -55,15 +55,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/argocd/argoproj.io/Application/checkout-web",
@@ -76,15 +76,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/argocd/argoproj.io/Application/cluster-bootstrap",
@@ -97,15 +97,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/argocd/argoproj.io/Application/dns-migration",
@@ -118,15 +118,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/argocd/argoproj.io/Application/etl-nightly",
@@ -139,15 +139,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/argocd/argoproj.io/Application/external-dns",
@@ -160,15 +160,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/argocd/argoproj.io/Application/feature-store",
@@ -181,15 +181,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/argocd/argoproj.io/Application/fx-rates",
@@ -202,15 +202,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/argocd/argoproj.io/Application/guestbook",
@@ -223,15 +223,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/argocd/argoproj.io/Application/ingress-nginx",
@@ -244,15 +244,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/argocd/argoproj.io/Application/invoices",
@@ -265,15 +265,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/argocd//ConfigMap/kube-root-ca.crt",
@@ -286,15 +286,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/argocd/argoproj.io/Application/ledger-api",
@@ -307,15 +307,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/argocd/argoproj.io/Application/legacy-billing",
@@ -328,15 +328,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/argocd/argoproj.io/Application/monitoring-stack",
@@ -349,15 +349,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/argocd/argoproj.io/Application/notebooks",
@@ -370,15 +370,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/argocd/argoproj.io/Application/playground",
@@ -391,15 +391,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/argocd/argoproj.io/Application/settlement-worker",
@@ -412,15 +412,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/argocd/argoproj.io/Application/stream-processor",
@@ -433,15 +433,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/argocd/argoproj.io/Application/warehouse",
@@ -454,15 +454,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/default//ConfigMap/kube-root-ca.crt",
@@ -475,15 +475,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:18+01:00",
-    "updatedAt": "2026-10-09T11:21:18+01:00"
+    "createdAt": "2026-10-09T12:00:16+01:00",
+    "updatedAt": "2026-10-09T12:00:16+01:00"
   },
   {
     "id": "default/default//Service/kubernetes",
@@ -496,7 +496,7 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
@@ -507,8 +507,8 @@
       "provider": "kubernetes"
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:10+01:00",
-    "updatedAt": "2026-10-09T11:21:10+01:00"
+    "createdAt": "2026-10-09T12:00:10+01:00",
+    "updatedAt": "2026-10-09T12:00:10+01:00"
   },
   {
     "id": "default/flux-system/kustomize.toolkit.fluxcd.io/Kustomization/apps",
@@ -521,15 +521,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/flux-system/source.toolkit.fluxcd.io/GitRepository/fleet",
@@ -542,15 +542,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/flux-system/kustomize.toolkit.fluxcd.io/Kustomization/infrastructure",
@@ -563,15 +563,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/flux-system//ConfigMap/kube-root-ca.crt",
@@ -584,15 +584,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/flux-system/kustomize.toolkit.fluxcd.io/Kustomization/legacy-migration",
@@ -605,15 +605,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/flux-system/kustomize.toolkit.fluxcd.io/Kustomization/monitoring",
@@ -626,15 +626,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/flux-system/kustomize.toolkit.fluxcd.io/Kustomization/secrets",
@@ -647,15 +647,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/flux-system/kustomize.toolkit.fluxcd.io/Kustomization/tenants",
@@ -668,15 +668,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/kube-node-lease//ConfigMap/kube-root-ca.crt",
@@ -689,15 +689,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:18+01:00",
-    "updatedAt": "2026-10-09T11:21:18+01:00"
+    "createdAt": "2026-10-09T12:00:16+01:00",
+    "updatedAt": "2026-10-09T12:00:16+01:00"
   },
   {
     "id": "default/kube-public//ConfigMap/cluster-info",
@@ -710,15 +710,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:11+01:00",
-    "updatedAt": "2026-10-09T11:21:11+01:00"
+    "createdAt": "2026-10-09T12:00:10+01:00",
+    "updatedAt": "2026-10-09T12:00:10+01:00"
   },
   {
     "id": "default/kube-public//ConfigMap/kube-root-ca.crt",
@@ -731,15 +731,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:18+01:00",
-    "updatedAt": "2026-10-09T11:21:18+01:00"
+    "createdAt": "2026-10-09T12:00:16+01:00",
+    "updatedAt": "2026-10-09T12:00:16+01:00"
   },
   {
     "id": "default/kube-system//Secret/bootstrap-token-abcdef",
@@ -752,15 +752,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:11+01:00",
-    "updatedAt": "2026-10-09T11:21:11+01:00"
+    "createdAt": "2026-10-09T12:00:10+01:00",
+    "updatedAt": "2026-10-09T12:00:10+01:00"
   },
   {
     "id": "default/kube-system//ConfigMap/coredns",
@@ -773,15 +773,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:11+01:00",
-    "updatedAt": "2026-10-09T11:21:11+01:00"
+    "createdAt": "2026-10-09T12:00:10+01:00",
+    "updatedAt": "2026-10-09T12:00:10+01:00"
   },
   {
     "id": "default/kube-system/apps/Deployment/coredns",
@@ -794,7 +794,7 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
@@ -804,8 +804,8 @@
       "k8s-app": "kube-dns"
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:11+01:00",
-    "updatedAt": "2026-10-09T11:21:11+01:00"
+    "createdAt": "2026-10-09T12:00:11+01:00",
+    "updatedAt": "2026-10-09T12:00:11+01:00"
   },
   {
     "id": "default/kube-system//ConfigMap/extension-apiserver-authentication",
@@ -818,15 +818,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:09+01:00",
-    "updatedAt": "2026-10-09T11:21:09+01:00"
+    "createdAt": "2026-10-09T12:00:08+01:00",
+    "updatedAt": "2026-10-09T12:00:08+01:00"
   },
   {
     "id": "default/kube-system/apps/DaemonSet/kindnet",
@@ -839,7 +839,7 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
@@ -851,8 +851,8 @@
       "tier": "node"
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:13+01:00",
-    "updatedAt": "2026-10-09T11:21:13+01:00"
+    "createdAt": "2026-10-09T12:00:12+01:00",
+    "updatedAt": "2026-10-09T12:00:12+01:00"
   },
   {
     "id": "default/kube-system//ConfigMap/kube-apiserver-legacy-service-account-token-tracking",
@@ -865,15 +865,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:09+01:00",
-    "updatedAt": "2026-10-09T11:21:09+01:00"
+    "createdAt": "2026-10-09T12:00:08+01:00",
+    "updatedAt": "2026-10-09T12:00:08+01:00"
   },
   {
     "id": "default/kube-system//Service/kube-dns",
@@ -886,7 +886,7 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
@@ -898,8 +898,8 @@
       "kubernetes.io/name": "CoreDNS"
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:11+01:00",
-    "updatedAt": "2026-10-09T11:21:11+01:00"
+    "createdAt": "2026-10-09T12:00:11+01:00",
+    "updatedAt": "2026-10-09T12:00:11+01:00"
   },
   {
     "id": "default/kube-system//ConfigMap/kube-proxy",
@@ -912,7 +912,7 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
@@ -922,8 +922,8 @@
       "app": "kube-proxy"
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:11+01:00",
-    "updatedAt": "2026-10-09T11:21:11+01:00"
+    "createdAt": "2026-10-09T12:00:11+01:00",
+    "updatedAt": "2026-10-09T12:00:11+01:00"
   },
   {
     "id": "default/kube-system/apps/DaemonSet/kube-proxy",
@@ -936,7 +936,7 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
@@ -946,8 +946,8 @@
       "k8s-app": "kube-proxy"
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:11+01:00",
-    "updatedAt": "2026-10-09T11:21:11+01:00"
+    "createdAt": "2026-10-09T12:00:11+01:00",
+    "updatedAt": "2026-10-09T12:00:11+01:00"
   },
   {
     "id": "default/kube-system//ConfigMap/kube-root-ca.crt",
@@ -960,15 +960,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:18+01:00",
-    "updatedAt": "2026-10-09T11:21:18+01:00"
+    "createdAt": "2026-10-09T12:00:16+01:00",
+    "updatedAt": "2026-10-09T12:00:16+01:00"
   },
   {
     "id": "default/kube-system//ConfigMap/kubeadm-config",
@@ -981,15 +981,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:11+01:00",
-    "updatedAt": "2026-10-09T11:21:11+01:00"
+    "createdAt": "2026-10-09T12:00:10+01:00",
+    "updatedAt": "2026-10-09T12:00:10+01:00"
   },
   {
     "id": "default/kube-system//ConfigMap/kubelet-config",
@@ -1002,15 +1002,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:11+01:00",
-    "updatedAt": "2026-10-09T11:21:11+01:00"
+    "createdAt": "2026-10-09T12:00:10+01:00",
+    "updatedAt": "2026-10-09T12:00:10+01:00"
   },
   {
     "id": "default/local-path-storage//ConfigMap/kube-root-ca.crt",
@@ -1023,15 +1023,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:18+01:00",
-    "updatedAt": "2026-10-09T11:21:18+01:00"
+    "createdAt": "2026-10-09T12:00:16+01:00",
+    "updatedAt": "2026-10-09T12:00:16+01:00"
   },
   {
     "id": "default/local-path-storage//ConfigMap/local-path-config",
@@ -1044,15 +1044,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:13+01:00",
-    "updatedAt": "2026-10-09T11:21:13+01:00"
+    "createdAt": "2026-10-09T12:00:12+01:00",
+    "updatedAt": "2026-10-09T12:00:12+01:00"
   },
   {
     "id": "default/local-path-storage/apps/Deployment/local-path-provisioner",
@@ -1065,15 +1065,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:13+01:00",
-    "updatedAt": "2026-10-09T11:21:13+01:00"
+    "createdAt": "2026-10-09T12:00:12+01:00",
+    "updatedAt": "2026-10-09T12:00:12+01:00"
   },
   {
     "id": "default/team-g/helm.toolkit.fluxcd.io/HelmRelease/grafana",
@@ -1086,15 +1086,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/team-g//ConfigMap/kube-root-ca.crt",
@@ -1107,15 +1107,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/team-g/helm.toolkit.fluxcd.io/HelmRelease/loki",
@@ -1128,15 +1128,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/team-h//ConfigMap/kube-root-ca.crt",
@@ -1149,15 +1149,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "Ready",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/team-h/helm.toolkit.fluxcd.io/HelmRelease/postgres",
@@ -1170,15 +1170,15 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   },
   {
     "id": "default/team-h/helm.toolkit.fluxcd.io/HelmRelease/redis",
@@ -1191,14 +1191,14 @@
     "observation": {
       "source": "kubernetes-api",
       "mode": "map-list",
-      "observedAt": "2026-10-09T10:21:40.164624Z",
+      "observedAt": "2026-10-09T11:00:39.925864Z",
       "freshness": "point-in-time",
       "scope": {
         "cluster": "default"
       }
     },
     "status": "NotReady",
-    "createdAt": "2026-10-09T11:21:33+01:00",
-    "updatedAt": "2026-10-09T11:21:33+01:00"
+    "createdAt": "2026-10-09T12:00:31+01:00",
+    "updatedAt": "2026-10-09T12:00:31+01:00"
   }
 ]

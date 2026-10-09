@@ -651,7 +651,7 @@ func GroupDeliverySettings(deployers []DeliveryDeployerSettings, byGroup bool) [
 }
 
 // DeliverySettingMatch selects deployers by one setting. With AnyValue it
-// matches every deployer that has the setting at all.
+// matches every deployer whose spec declares the setting, whatever the value.
 type DeliverySettingMatch struct {
 	Name     string
 	Value    string
@@ -679,7 +679,15 @@ func (m DeliverySettingMatch) Matches(deployer DeliveryDeployerSettings) bool {
 		if setting.Name != m.Name {
 			continue
 		}
-		if m.AnyValue || deliveryValuesEqual(setting.Value, m.Value) ||
+		if m.AnyValue {
+			// Every Application has a self-heal row; only some declare it.
+			// A row that is unset or does not apply is not a declaration.
+			if setting.Value != DeliveryValueUnset && setting.Value != DeliveryValueNotApplicable {
+				return true
+			}
+			continue
+		}
+		if deliveryValuesEqual(setting.Value, m.Value) ||
 			(setting.Effective != "" && deliveryValuesEqual(setting.Effective, m.Value)) {
 			return true
 		}

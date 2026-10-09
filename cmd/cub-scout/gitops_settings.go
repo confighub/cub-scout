@@ -264,15 +264,18 @@ type deliverySummaryGroup struct {
 	GroupKind  string `json:"groupKind"`
 	Group      string `json:"group,omitempty"`
 	Deployers  int    `json:"deployers"`
-	// Settings maps a setting name to its values, and each value to the
-	// deployers that have it.
-	Settings map[string]map[string][]string `json:"settings"`
-	// Unset lists, per setting, the deployers that do not declare it and are
-	// counted under the controller default in Settings.
+	// Policies and Options each map a setting name to its values, and each
+	// value to the deployers that have it. They are separate because a sync
+	// option may be spelled like a policy ("prune" and "Prune=false").
+	Policies map[string]map[string][]string `json:"policies"`
+	Options  map[string]map[string][]string `json:"options,omitempty"`
+	// Unset lists, per policy, the deployers that do not declare it and are
+	// counted under the controller default in Policies.
 	Unset map[string][]string `json:"unset,omitempty"`
-	// Details carries what a value alone does not say, such as how many
-	// ignore rules a deployer declares.
-	Details map[string]map[string]string `json:"details,omitempty"`
+	// PolicyDetails and OptionDetails carry what a value alone does not say,
+	// such as how many ignore rules a deployer declares.
+	PolicyDetails map[string]map[string]string `json:"policyDetails,omitempty"`
+	OptionDetails map[string]map[string]string `json:"optionDetails,omitempty"`
 }
 
 func summariseDeliveryGroups(groups []agent.DeliverySettingsGroup) []deliverySummaryGroup {
@@ -280,9 +283,10 @@ func summariseDeliveryGroups(groups []agent.DeliverySettingsGroup) []deliverySum
 	for _, group := range groups {
 		summary := deliverySummaryGroup{
 			Controller: group.Controller, Kind: group.Kind, GroupKind: group.GroupKind, Group: group.Group,
-			Deployers: group.Deployers, Settings: map[string]map[string][]string{},
+			Deployers: group.Deployers, Policies: map[string]map[string][]string{},
 		}
 		for _, setting := range group.Settings {
+			policy := setting.Category == agent.DeliverySettingPolicy
 			values := map[string][]string{}
 			for _, value := range setting.Values {
 				for _, ref := range value.Deployers {
@@ -295,18 +299,30 @@ func summariseDeliveryGroups(groups []agent.DeliverySettingsGroup) []deliverySum
 						summary.Unset[setting.Name] = append(summary.Unset[setting.Name], name)
 					}
 					// "auto-sync is off" only restates the n/a value.
-					if ref.Detail != "" && value.Value != agent.DeliveryValueNotApplicable {
-						if summary.Details == nil {
-							summary.Details = map[string]map[string]string{}
-						}
-						if summary.Details[setting.Name] == nil {
-							summary.Details[setting.Name] = map[string]string{}
-						}
-						summary.Details[setting.Name][name] = ref.Detail
+					if ref.Detail == "" || value.Value == agent.DeliveryValueNotApplicable {
+						continue
 					}
+					details := &summary.OptionDetails
+					if policy {
+						details = &summary.PolicyDetails
+					}
+					if *details == nil {
+						*details = map[string]map[string]string{}
+					}
+					if (*details)[setting.Name] == nil {
+						(*details)[setting.Name] = map[string]string{}
+					}
+					(*details)[setting.Name][name] = ref.Detail
 				}
 			}
-			summary.Settings[setting.Name] = values
+			if policy {
+				summary.Policies[setting.Name] = values
+				continue
+			}
+			if summary.Options == nil {
+				summary.Options = map[string]map[string][]string{}
+			}
+			summary.Options[setting.Name] = values
 		}
 		out = append(out, summary)
 	}

@@ -1,6 +1,6 @@
 {
   "state": {
-    "scannedAt": "2026-10-09T11:21:46.600253+01:00",
+    "scannedAt": "2026-10-09T12:00:46.349279+01:00",
     "findings": [],
     "summary": {
       "helmReleaseStuck": 0,

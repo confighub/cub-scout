@@ -3,7 +3,7 @@ items:
 - apiVersion: source.toolkit.fluxcd.io/v1
   kind: GitRepository
   metadata:
-    creationTimestamp: "2026-10-09T10:21:33Z"
+    creationTimestamp: "2026-10-09T11:00:31Z"
     generation: 1
     managedFields:
     - apiVersion: source.toolkit.fluxcd.io/v1
@@ -16,11 +16,11 @@ items:
           f:url: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:21:33Z"
+      time: "2026-10-09T11:00:31Z"
     name: fleet
     namespace: flux-system
-    resourceVersion: "541"
-    uid: a5fb1dcb-e26c-42d8-b7c3-7fded36d55f0
+    resourceVersion: "531"
+    uid: 668dc9b5-2ce8-4766-925d-47f09fae7e00
   spec:
     interval: 10m
     ref:
