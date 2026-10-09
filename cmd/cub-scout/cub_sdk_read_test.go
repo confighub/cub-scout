@@ -117,18 +117,33 @@ func recordedWorkload() *runtimeWorkload {
 	}
 }
 
+// spaceNamedIn is the space a test's argument vector names: the value after
+// --space, or else the part of a qualified reference before the slash.
+func spaceNamedIn(args []string) string {
+	for i, arg := range args {
+		if arg == "--space" && i+1 < len(args) {
+			return strings.TrimSpace(args[i+1])
+		}
+	}
+	for _, arg := range args[2:] {
+		if space, _, qualified := strings.Cut(arg, "/"); qualified {
+			return strings.TrimSpace(space)
+		}
+	}
+	return ""
+}
+
 func TestSDKUnitGetArgsTakesOnlyTheCommandItReproduces(t *testing.T) {
 	taken := map[string][]string{
-		"unit then flags":         {"unit", "get", "u", "-o", "json", "--space", "s"},
-		"flags then unit":         {"unit", "get", "-o", "json", "u", "--space", "s"},
-		"space first":             {"unit", "get", "--space", "s", "-o", "json", "u"},
-		"quiet":                   {"unit", "get", "u", "-o", "json", "--quiet", "--space", "s"},
-		"long output flag":        {"unit", "get", "u", "--output", "json", "--space", "s"},
-		"qualified reference":     {"unit", "get", "-o", "json", "s/u"},
-		"space given by its ID":   {"unit", "get", "u", "-o", "json", "--space", recordedSpaceID},
-		"names are trimmed":       {"unit", "get", " u ", "-o", "json", "--space", " s "},
-		"qualified, space by ID":  {"unit", "get", "-o", "json", recordedSpaceID + "/u"},
-		"space by ID in capitals": {"unit", "get", "u", "-o", "json", "--space", strings.ToUpper(recordedSpaceID)},
+		"unit then flags":        {"unit", "get", "u", "-o", "json", "--space", "s"},
+		"flags then unit":        {"unit", "get", "-o", "json", "u", "--space", "s"},
+		"space first":            {"unit", "get", "--space", "s", "-o", "json", "u"},
+		"quiet":                  {"unit", "get", "u", "-o", "json", "--quiet", "--space", "s"},
+		"long output flag":       {"unit", "get", "u", "--output", "json", "--space", "s"},
+		"qualified reference":    {"unit", "get", "-o", "json", "s/u"},
+		"space given by its ID":  {"unit", "get", "u", "-o", "json", "--space", recordedSpaceID},
+		"names are trimmed":      {"unit", "get", " u ", "-o", "json", "--space", " s "},
+		"qualified, space by ID": {"unit", "get", "-o", "json", recordedSpaceID + "/u"},
 		"placeholder space (cub's own refusal applies later)": {"unit", "get", "u", "-o", "json", "--space", unresolvedConfigHubSpace},
 	}
 	for name, args := range taken {
@@ -136,8 +151,7 @@ func TestSDKUnitGetArgsTakesOnlyTheCommandItReproduces(t *testing.T) {
 			space, unit, ok := sdkUnitGetArgs(args)
 			require.True(t, ok)
 			require.Equal(t, "u", unit)
-			require.NotEmpty(t, space)
-			require.Equal(t, strings.TrimSpace(space), space)
+			require.Equal(t, spaceNamedIn(args), space)
 		})
 	}
 
@@ -172,6 +186,7 @@ func TestSDKUnitGetArgsTakesOnlyTheCommandItReproduces(t *testing.T) {
 		"unit by ID, urn":           {"unit", "get", "urn:uuid:" + recordedUnitID, "-o", "json", "--space", "s"},
 		"unit by ID, upper case":    {"unit", "get", strings.ToUpper(recordedUnitID), "-o", "json", "--space", "s"},
 		"space by ID, bare hex":     {"unit", "get", "u", "-o", "json", "--space", "68843338f9bd485c9a665d5aee820247"},
+		"space by ID in capitals":   {"unit", "get", "u", "-o", "json", "--space", strings.ToUpper(recordedSpaceID)},
 		"space by ID, braces":       {"unit", "get", "u", "-o", "json", "--space", "{" + recordedSpaceID + "}"},
 		"space by ID, urn":          {"unit", "get", "u", "-o", "json", "--space", "urn:uuid:" + recordedSpaceID},
 		"qualified, space bare hex": {"unit", "get", "-o", "json", "68843338f9bd485c9a665d5aee820247/u"},
@@ -362,33 +377,34 @@ func TestSDKListArgsTakeOnlyTheCommandsTheyReproduce(t *testing.T) {
 		t.Run("unit list taken/"+name, func(t *testing.T) {
 			space, ok := sdkUnitListArgs(args)
 			require.True(t, ok)
-			require.NotEmpty(t, space)
+			require.Equal(t, spaceNamedIn(args), space)
 			require.False(t, sdkSpaceListArgs(args))
 			_, _, isGet := sdkUnitGetArgs(args)
 			require.False(t, isGet)
 		})
 	}
 	for name, args := range map[string][]string{
-		"no space":              {"unit", "list", "-o", "json"},
-		"every space":           {"unit", "list", "-o", "json", "--space", allConfigHubSpaces},
-		"a filter":              {"unit", "list", "-o", "json", "--space", "s", "--where", "Slug = 'x'"},
-		"a text search":         {"unit", "list", "-o", "json", "--space", "s", "--contains", "x"},
-		"a selection":           {"unit", "list", "-o", "json", "--space", "s", "--select", "Slug"},
-		"a limit":               {"unit", "list", "-o", "json", "--space", "s", "--limit", "5"},
-		"an ordering":           {"unit", "list", "-o", "json", "--space", "s", "--order-by", "Slug"},
-		"hidden units too":      {"unit", "list", "-o", "json", "--space", "s", "--include-hidden"},
-		"a view":                {"unit", "list", "-o", "json", "--space", "s", "--view", "v"},
-		"a positional":          {"unit", "list", "u", "-o", "json", "--space", "s"},
-		"no output format":      {"unit", "list", "--space", "s"},
-		"another output format": {"unit", "list", "-o", "yaml", "--space", "s"},
-		"names only":            {"unit", "list", "-o", "name", "--space", "s"},
-		"space bare hex":        {"unit", "list", "-o", "json", "--space", "68843338f9bd485c9a665d5aee820247"},
-		"space with a slash":    {"unit", "list", "-o", "json", "--space", "a/b"},
-		"space named twice":     {"unit", "list", "-o", "json", "--space", "s", "--space", "t"},
-		"space that is a flag":  {"unit", "list", "-o", "json", "--space", "--quiet"},
-		"another command":       {"unit", "get", "u", "-o", "json", "--space", "s"},
-		"another entity":        {"target", "list", "-o", "json", "--space", "s"},
-		"too short":             {"unit"},
+		"no space":                {"unit", "list", "-o", "json"},
+		"every space":             {"unit", "list", "-o", "json", "--space", allConfigHubSpaces},
+		"a filter":                {"unit", "list", "-o", "json", "--space", "s", "--where", "Slug = 'x'"},
+		"a text search":           {"unit", "list", "-o", "json", "--space", "s", "--contains", "x"},
+		"a selection":             {"unit", "list", "-o", "json", "--space", "s", "--select", "Slug"},
+		"a limit":                 {"unit", "list", "-o", "json", "--space", "s", "--limit", "5"},
+		"an ordering":             {"unit", "list", "-o", "json", "--space", "s", "--order-by", "Slug"},
+		"hidden units too":        {"unit", "list", "-o", "json", "--space", "s", "--include-hidden"},
+		"a view":                  {"unit", "list", "-o", "json", "--space", "s", "--view", "v"},
+		"a positional":            {"unit", "list", "u", "-o", "json", "--space", "s"},
+		"no output format":        {"unit", "list", "--space", "s"},
+		"another output format":   {"unit", "list", "-o", "yaml", "--space", "s"},
+		"names only":              {"unit", "list", "-o", "name", "--space", "s"},
+		"space bare hex":          {"unit", "list", "-o", "json", "--space", "68843338f9bd485c9a665d5aee820247"},
+		"space by ID in capitals": {"unit", "list", "-o", "json", "--space", strings.ToUpper(recordedSpaceID)},
+		"space with a slash":      {"unit", "list", "-o", "json", "--space", "a/b"},
+		"space named twice":       {"unit", "list", "-o", "json", "--space", "s", "--space", "t"},
+		"space that is a flag":    {"unit", "list", "-o", "json", "--space", "--quiet"},
+		"another command":         {"unit", "get", "u", "-o", "json", "--space", "s"},
+		"another entity":          {"target", "list", "-o", "json", "--space", "s"},
+		"too short":               {"unit"},
 	} {
 		t.Run("unit list left to cub/"+name, func(t *testing.T) {
 			_, ok := sdkUnitListArgs(args)
@@ -663,6 +679,7 @@ func TestSDKRouteResolvesItsOwnCredentials(t *testing.T) {
 	t.Setenv("CUB_CONFIG", t.TempDir())
 	t.Setenv("CUB_CONTEXT", "")
 	t.Setenv("CUB_SPACE", "")
+	t.Setenv("CUB_PLUGIN", "1")
 	t.Setenv("CUB_SERVER", hub.url)
 	t.Setenv("CUB_TOKEN", "plugin-token")
 	t.Setenv(configHubReaderEnv, "sdk")

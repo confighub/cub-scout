@@ -1837,6 +1837,10 @@ func fetchFleetUnits(space, appFilter string) ([]FleetUnit, error) {
 			strings.Contains(reason, "401") {
 			return nil, fmt.Errorf("ConfigHub authentication required.\n\n  To authenticate: cub auth login\n  To use standalone: cub-scout map (without --hub)")
 		}
+		if failedOnSDKRoute(err) {
+			// No cub ran, so whether cub is installed is not the question.
+			return nil, fmt.Errorf("failed to fetch units from ConfigHub: %w", err)
+		}
 		return nil, fmt.Errorf("failed to fetch units from ConfigHub: %w\n\n  Check that 'cub' CLI is installed and you're authenticated: cub auth login", err)
 	}
 

@@ -228,6 +228,7 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 		"unit-list-by-space-id": {[]string{"unit", "list", "--space", space, "-o", "json"}, func() ([]byte, error) { return reader.UnitListJSON(ctx, envelope.Unit.SpaceID) }},
 		"space-list":            {[]string{"space", "list", "-o", "json"}, func() ([]byte, error) { return reader.SpaceListJSON(ctx) }},
 	} {
+		listsEqual[name] = false
 		listedByCub, err := cubStdoutOnly(list.cub...)
 		if err != nil {
 			t.Errorf("%s: %v", name, err)
@@ -245,8 +246,16 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 			t.Errorf("%s: the SDK reader's JSON is not what cub printed: %d bytes against %d; both are kept in %s", name, len(listedBySDK), len(listedByCub), out)
 		}
 	}
-	if _, err := reader.UnitListJSON(ctx, "no-such-space-"+space); hubread.KindOf(err) != hubread.KindNotFound {
-		t.Errorf("a list in a space that does not exist: kind %s, want %s (%v)", hubread.KindOf(err), hubread.KindNotFound, err)
+	// A space that does not exist, named by slug and by an ID that names
+	// nothing: not_found through the reader, a failure from cub, and never
+	// an empty list from either.
+	for _, missing := range []string{"no-such-space-" + space, "11111111-2222-4333-8444-555555555555"} {
+		if listed, err := reader.UnitListJSON(ctx, missing); hubread.KindOf(err) != hubread.KindNotFound || listed != nil {
+			t.Errorf("a list in space %q, which does not exist: kind %s, want %s (%v)", missing, hubread.KindOf(err), hubread.KindNotFound, err)
+		}
+		if listed, err := cubStdoutOnly("unit", "list", "--space", missing, "-o", "json"); err == nil {
+			t.Errorf("cub listed space %q, which does not exist: %s", missing, listed)
+		}
 	}
 	unitsArguments := map[string]string{"space": space}
 	unitsCub, _ := json.Marshal(callTool("confighub_units", unitsArguments, "cub"))

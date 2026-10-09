@@ -77,6 +77,9 @@ type fakeHub struct {
 	includes []string
 	// queries is every query parameter of each request, sorted by name.
 	queries []string
+	// more is the paths whose answers carry a continue token: the server
+	// saying it returned only part of the list.
+	more map[string]bool
 	// spaces and units are what each list returns, whatever the filter says.
 	spaces, units []map[string]json.RawMessage
 	status        map[string]int    // path -> status to answer with
@@ -87,7 +90,7 @@ type fakeHub struct {
 func newFakeHub(t *testing.T) *fakeHub {
 	t.Helper()
 	fixture := recordedUnitFixture(t)
-	hub := &fakeHub{t: t, status: map[string]int{}, raw: map[string]string{},
+	hub := &fakeHub{t: t, status: map[string]int{}, raw: map[string]string{}, more: map[string]bool{},
 		spaces: []map[string]json.RawMessage{{"Space": fixture["Space"]}},
 		units:  []map[string]json.RawMessage{fixture},
 	}
@@ -98,6 +101,9 @@ func newFakeHub(t *testing.T) *fakeHub {
 		hub.queries = append(hub.queries, r.URL.Query().Encode())
 		hub.includes = append(hub.includes, r.URL.Query().Get("include"))
 		status, raw, delay := hub.status[r.URL.Path], hub.raw[r.URL.Path], hub.delay
+		if hub.more[r.URL.Path] {
+			w.Header().Set("ConfigHub-Continue", "next-page")
+		}
 		hub.mu.Unlock()
 		time.Sleep(delay)
 		if strings.HasPrefix(raw, "<") {
@@ -360,6 +366,16 @@ func TestNewAndResolveNeedACredentialAndWriteNothing(t *testing.T) {
 	t.Setenv("CUB_SPACE", "")
 	t.Setenv("CUB_SERVER", hub.server.URL)
 	t.Setenv("CUB_TOKEN", testToken)
+
+	// The pair alone is not a credential: the cub CLI does not read it, so
+	// using it would send this reader to a server cub is not talking to. It
+	// counts only when cub itself set it, which CUB_PLUGIN=1 says.
+	t.Setenv("CUB_PLUGIN", "")
+	_, err := Resolve(context.Background(), Options{})
+	require.Equal(t, KindNotConfigured, KindOf(err), "%v", err)
+	require.Empty(t, hub.requests())
+
+	t.Setenv("CUB_PLUGIN", "1")
 	reader, err := Resolve(context.Background(), Options{})
 	require.NoError(t, err)
 	head, err := reader.UnitHead(context.Background(), recordedSpace, recordedUnit)
@@ -703,7 +719,60 @@ func TestUnitListJSONKeepsToOneSpace(t *testing.T) {
 	require.Equal(t, KindForbidden, KindOf(err))
 }
 
-func TestSpaceListJSONFailuresAreNotEmptyLists(t *testing.T) {
+// A space named by its ID is not looked up first, so an empty list could mean
+// a space with no Units or no such space. cub says which; so must the reader.
+func TestUnitListJSONOfASpaceIDThatNamesNoSpaceIsNotAnEmptyList(t *testing.T) {
+	hub, _, id := hubOfTheConnectedLane(t)
+	hub.units = []map[string]json.RawMessage{}
+	reader := hub.reader(Options{})
+	ctx := context.Background()
+
+	out, err := reader.UnitListJSON(ctx, "11111111-2222-4333-8444-555555555555")
+	require.Equal(t, KindNotFound, KindOf(err))
+	require.ErrorContains(t, err, "no space with ID")
+	require.Nil(t, out)
+	require.Equal(t, []string{"/api/unit", "/api/space"}, []string{hub.requests()[0].Path, hub.requests()[1].Path})
+	require.Equal(t, "limit=2&where=SpaceID+%3D+%2711111111-2222-4333-8444-555555555555%27", hub.queries[1])
+
+	// The recorded space exists and has no Units here: an empty list.
+	out, err = reader.UnitListJSON(ctx, id)
+	require.NoError(t, err)
+	require.Equal(t, "[]\n", string(out))
+	require.Len(t, hub.requests(), 4)
+
+	// The check itself can fail, and then the list is not "empty".
+	hub.status["/api/space"] = http.StatusForbidden
+	out, err = reader.UnitListJSON(ctx, id)
+	require.Equal(t, KindForbidden, KindOf(err))
+	require.Nil(t, out)
+}
+
+// Asked for no limit, the server returns every entity. If it says it returned
+// only part, the part is not the list.
+func TestAListTheServerCutShortIsAnError(t *testing.T) {
+	hub, slug, _ := hubOfTheConnectedLane(t)
+	reader := hub.reader(Options{})
+	ctx := context.Background()
+
+	hub.more["/api/unit"] = true
+	out, err := reader.UnitListJSON(ctx, slug)
+	require.Equal(t, KindIncomplete, KindOf(err))
+	require.Nil(t, out)
+
+	hub.more["/api/unit"], hub.more["/api/space"] = false, true
+	out, err = reader.SpaceListJSON(ctx)
+	require.Equal(t, KindIncomplete, KindOf(err))
+	require.Nil(t, out)
+
+	// A single-entity lookup is bounded on purpose and is not a list read.
+	hub.more["/api/unit"] = true
+	_, err = reader.UnitJSON(ctx, slug, "parity-unit")
+	require.NoError(t, err)
+}
+
+// An empty list and a JSON null are both a list with nothing in it, as cub
+// reads them; anything broken is an error, never an empty list.
+func TestSpaceListJSONReadsAnEmptyListAndRefusesABrokenOne(t *testing.T) {
 	hub, _, _ := hubOfTheConnectedLane(t)
 	reader := hub.reader(Options{})
 	ctx := context.Background()

@@ -19,10 +19,12 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"sync/atomic"
 	"time"
 
+	"github.com/confighub/sdk/core/constants"
 	"github.com/confighub/sdk/core/cubapi"
 	goclientnew "github.com/confighub/sdk/core/openapi/goclient-new"
 	"github.com/google/uuid"
@@ -43,6 +45,7 @@ const (
 	KindCanceled      Kind = "canceled"
 	KindMalformed     Kind = "malformed"
 	KindRefused       Kind = "refused"
+	KindIncomplete    Kind = "incomplete"
 	KindFailed        Kind = "request_failed"
 )
 
@@ -148,10 +151,15 @@ func (o Options) userAgent() string {
 	return "cub-scout"
 }
 
-// Resolve builds a Reader from the credential source the SDK finds: the
-// CUB_SERVER and CUB_TOKEN a `cub` plugin is given, or else the local cub
-// configuration, honouring CUB_CONFIG and CUB_CONTEXT. It reads those files and
-// writes nothing; it does not log in or refresh a token.
+// Resolve builds a Reader from the credential cub itself would use: the
+// CUB_SERVER and CUB_TOKEN that cub gives a plugin it starts, or else the local
+// cub configuration, honouring CUB_CONFIG and CUB_CONTEXT. It reads those files
+// and writes nothing; it does not log in or refresh a token.
+//
+// The environment pair is used only under CUB_PLUGIN=1, which cub sets with
+// it. The cub CLI does not read CUB_SERVER or CUB_TOKEN, so a pair exported in
+// a shell would otherwise send this reader to one server while `cub`, and
+// every read cub-scout still makes through it, goes to another.
 func Resolve(ctx context.Context, opts Options) (*Reader, error) {
 	const op = "resolve credentials"
 	notConfigured := func(err error) (*Reader, error) {
@@ -165,7 +173,7 @@ func Resolve(ctx context.Context, opts Options) (*Reader, error) {
 		return notConfigured(err)
 	}
 	var client *cubapi.Client
-	if env.HasCredentials() {
+	if env.HasCredentials() && os.Getenv("CUB_PLUGIN") == "1" {
 		client, err = cubapi.NewClientFromEnvironment(ctx, clientOptions)
 	} else {
 		// Not cubapi.ResolveClient: in SDK core v0.8.10 it hands CUB_CONFIG,
@@ -445,7 +453,7 @@ func (r *Reader) UnitListJSON(ctx context.Context, space string) ([]byte, error)
 	if space == "" || space == "*" {
 		return nil, &Error{Kind: KindInvalidScope, Op: op, Message: "exactly one space is required"}
 	}
-	spaceID, _, scopeErr := r.namedSpace(ctx, space)
+	spaceID, spaceSlug, scopeErr := r.namedSpace(ctx, space)
 	if scopeErr != nil {
 		return nil, scopeErr
 	}
@@ -458,6 +466,17 @@ func (r *Reader) UnitListJSON(ctx context.Context, space string) ([]byte, error)
 	// list: saying "no units" for a proxy's HTML page would be a false claim.
 	if resp.JSON200 == nil {
 		return nil, &Error{Kind: KindMalformed, Op: op, Message: "the response had no unit list"}
+	}
+	if failure := wholeList(op, resp.HTTPResponse); failure != nil {
+		return nil, failure
+	}
+	// A space named by ID was not looked up, and a list filtered by an ID
+	// that names no space is empty too. cub says the space was not found;
+	// "no units" would be a claim about a space that does not exist.
+	if len(*resp.JSON200) == 0 && spaceSlug == "" {
+		if failure := r.spaceExists(ctx, spaceID); failure != nil {
+			return nil, failure
+		}
 	}
 	for i := range *resp.JSON200 {
 		switch found := (*resp.JSON200)[i].Unit; {
@@ -483,12 +502,46 @@ func (r *Reader) SpaceListJSON(ctx context.Context) ([]byte, error) {
 	if resp.JSON200 == nil {
 		return nil, &Error{Kind: KindMalformed, Op: op, Message: "the response had no space list"}
 	}
+	if failure := wholeList(op, resp.HTTPResponse); failure != nil {
+		return nil, failure
+	}
 	for i := range *resp.JSON200 {
 		if (*resp.JSON200)[i].Space == nil {
 			return nil, &Error{Kind: KindMalformed, Op: op, Message: "the list has an entry with no space"}
 		}
 	}
 	return listJSON(op, resp.JSON200)
+}
+
+// wholeList fails a list the server says it cut short. Asked for no limit, the
+// server returns every entity; a continue token on the response means it did
+// not, and following it is not implemented here. cub ignores the token on such
+// a request and prints the part it got.
+func wholeList(op string, response *http.Response) *Error {
+	if response != nil && response.Header.Get(constants.ContinueHeader) != "" {
+		return &Error{Kind: KindIncomplete, Op: op, Message: "the server returned part of the list and a token for the rest; this reader does not read in pages"}
+	}
+	return nil
+}
+
+// spaceExists checks that id names a space, the way cub resolves a space
+// given by its ID.
+func (r *Reader) spaceExists(ctx context.Context, id uuid.UUID) *Error {
+	const op = "space lookup"
+	filter, limit := cubapi.Where{}.SpaceID(id).String(), 2
+	resp, err := r.client.API.ListSpacesWithResponse(ctx, &goclientnew.ListSpacesParams{Where: &filter, Limit: &limit})
+	if failure := classify(ctx, op, err, resp); failure != nil {
+		return failure
+	}
+	if resp.JSON200 == nil {
+		return &Error{Kind: KindMalformed, Op: op, Message: "the response had no space list"}
+	}
+	for i := range *resp.JSON200 {
+		if found := (*resp.JSON200)[i].Space; found != nil && found.SpaceID == id {
+			return nil
+		}
+	}
+	return &Error{Kind: KindNotFound, Op: op, Message: fmt.Sprintf("no space with ID %q", id)}
 }
 
 func (r *Reader) spaceID(ctx context.Context, slug string) (uuid.UUID, *Error) {

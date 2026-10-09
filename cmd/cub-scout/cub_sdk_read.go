@@ -93,9 +93,9 @@ func sdkReadFlags(rest []string) (positionals []string, space string, hasSpace, 
 // reads as cub does.
 //
 // "*" asks cub for every space. cub reads a name as an ID in every spelling
-// uuid.Parse accepts: the canonical form, 32 bare hex digits, braces, a urn:
-// prefix. The reader takes a space by ID in the canonical form only and would
-// look the other spellings up as slugs, so those stay with cub.
+// uuid.Parse accepts: the canonical form, capitals, 32 bare hex digits, braces,
+// a urn: prefix. Only the canonical lower-case form is taken; the reader would
+// look most of the others up as slugs, so they stay with cub.
 func sdkTakesSpace(space string) bool {
 	if space == "" || space == allConfigHubSpaces || strings.Contains(space, "/") {
 		return false
@@ -187,9 +187,13 @@ func spelledAsID(name string) bool {
 	return err == nil
 }
 
+// canonicalID reports whether name is an ID exactly as ConfigHub prints one:
+// 36 characters, lower case. cub sends the name it was given to the server and
+// the reader sends this form, so only a name that is already this form is
+// certain to be the same question by either route.
 func canonicalID(name string) bool {
 	id, err := uuid.Parse(name)
-	return err == nil && strings.EqualFold(id.String(), name)
+	return err == nil && id.String() == name
 }
 
 // sdkRouteError marks a failure of a read that the SDK route took: a failed
