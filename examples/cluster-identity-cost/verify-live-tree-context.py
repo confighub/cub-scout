@@ -11,7 +11,7 @@ before = sha(shared)
 head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
 assert not subprocess.check_output(['git', 'status', '--porcelain'], text=True).strip(), 'clean source required'
 for directory in ['home', 'cub-config']: (root / directory).mkdir()
-env = {**os.environ, 'HOME': str(root / 'home'), 'KUBECONFIG': str(cfg), 'CUB_CONFIG': str(root / 'cub-config'), 'GOTOOLCHAIN': 'go1.24.0'}
+env = {**os.environ, 'HOME': str(root / 'home'), 'KUBECONFIG': str(cfg), 'CUB_CONFIG': str(root / 'cub-config'), 'GOTOOLCHAIN': 'go1.26.9'}
 steps, failures = [], []
 created, removed = False, False
 

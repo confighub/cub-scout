@@ -19,7 +19,7 @@ head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=source, text=Tr
 if args.build:
     assert not subprocess.check_output(['git', 'status', '--porcelain'], cwd=source, text=True).strip(), 'clean build source required'
     binary = root / 'cub-scout'
-    build = subprocess.run(['go', 'build', '-o', str(binary), './cmd/cub-scout'], cwd=source, env={**os.environ, 'GOTOOLCHAIN': 'go1.24.0'}, text=True, capture_output=True, timeout=180)
+    build = subprocess.run(['go', 'build', '-o', str(binary), './cmd/cub-scout'], cwd=source, env={**os.environ, 'GOTOOLCHAIN': 'go1.26.9'}, text=True, capture_output=True, timeout=180)
     (root / 'build.stderr').write_text(build.stderr)
     assert build.returncode == 0, 'isolated source build failed'
 else:

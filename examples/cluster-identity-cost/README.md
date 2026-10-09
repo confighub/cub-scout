@@ -202,7 +202,7 @@ the clean source/build/hash binding instead. Raw captures and credentials remain
 private; the committed receipts contain no token or kubeconfig.
 
 To reproduce from a **clean committed checkout**, with Docker, kind, kubectl and
-Go 1.24 available:
+the Go toolchain `go.mod` selects available:
 
 ```sh
 python3 examples/cluster-identity-cost/verify-live-instances.py

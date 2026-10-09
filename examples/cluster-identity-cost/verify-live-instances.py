@@ -3,7 +3,7 @@ root=pathlib.Path(tempfile.mkdtemp(prefix='scout-v214-instance-live-'));os.chmod
 source=pathlib.Path.cwd();shared=pathlib.Path.home()/'.kube/config'
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest() if p.exists() else None
 before=sha(shared);head=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip();assert not subprocess.check_output(['git','status','--porcelain'],text=True).strip();started=datetime.datetime.now(datetime.timezone.utc).isoformat()
-envbase=os.environ.copy();envbase.update({'CUB_SCOUT_OFFLINE':'true','CUB_CONFIG':str(root/'cub-config'),'GOTOOLCHAIN':'go1.24.0'});(root/'cub-config').mkdir()
+envbase=os.environ.copy();envbase.update({'CUB_SCOUT_OFFLINE':'true','CUB_CONFIG':str(root/'cub-config'),'GOTOOLCHAIN':'go1.26.9'});(root/'cub-config').mkdir()
 def call(argv,label,env=None,input=None,expected=0,cwd=None):
  r=subprocess.run(argv,input=input,env=env or envbase,cwd=cwd or source,text=True,capture_output=True,timeout=180);(root/(label+'.stdout')).write_text(r.stdout);(root/(label+'.stderr')).write_text(r.stderr);steps.append({'name':label,'exit':r.returncode,'stdoutSHA256':hashlib.sha256(r.stdout.encode()).hexdigest(),'stderrSHA256':hashlib.sha256(r.stderr.encode()).hexdigest()});assert r.returncode==expected,(label,r.returncode,r.stderr[-600:]);return r.stdout
 configs=[];reports=[];keys=[];uids=[];uiPassed=False;mcpPassed=False;restrictedPassed=False

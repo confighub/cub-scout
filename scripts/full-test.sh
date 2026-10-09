@@ -27,7 +27,7 @@ echo ""
 export GOTOOLCHAIN=local
 
 # Check Go version (requires 1.24+)
-REQUIRED_GO_VERSION="1.24"
+REQUIRED_GO_VERSION="1.25"
 CURRENT_GO_VERSION=$(go version 2>/dev/null | grep -oE 'go[0-9]+\.[0-9]+' | sed 's/go//')
 if [ -z "$CURRENT_GO_VERSION" ]; then
   fail "Go is not installed. Please install Go $REQUIRED_GO_VERSION or later."

@@ -218,7 +218,7 @@ Core operations (`map`, `list`, `trace`, `scan`) are read-only:
 - Exception: `import` wizard can modify when requested
 
 ### Dependencies
-- Go 1.24+
+- Go 1.25+
 - kubectl access to cluster
 - cub CLI (for connected mode)
 - Optional: Flux, ArgoCD, Helm (for ownership detection)

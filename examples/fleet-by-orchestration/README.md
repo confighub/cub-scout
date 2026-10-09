@@ -69,7 +69,7 @@ and retained the denied selection/row without indexing it. A direct restricted
 Namespace GET returned Forbidden. Shared kubeconfig stayed unchanged; both
 owned clusters were removed. No paid model calls were made.
 
-Reproduce from a clean committed checkout with Docker, kind, kubectl and Go 1.24:
+Reproduce from a clean committed checkout with Docker, kind, kubectl and the Go toolchain `go.mod` selects:
 
 ```sh
 python3 examples/fleet-by-orchestration/verify-live.py

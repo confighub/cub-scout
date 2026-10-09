@@ -15,7 +15,7 @@ def sha(path):
 before = sha(shared)
 head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
 assert not subprocess.check_output(['git', 'status', '--porcelain'], text=True).strip(), 'clean source required'
-env = {**os.environ, 'KUBECONFIG': str(cfg), 'CUB_SCOUT_OFFLINE': 'true', 'CUB_CONFIG': str(root / 'cub-config'), 'GOTOOLCHAIN': 'go1.24.0'}
+env = {**os.environ, 'KUBECONFIG': str(cfg), 'CUB_SCOUT_OFFLINE': 'true', 'CUB_CONFIG': str(root / 'cub-config'), 'GOTOOLCHAIN': 'go1.26.9'}
 (root / 'cub-config').mkdir()
 
 def call(argv, label, input=None, expected=0):

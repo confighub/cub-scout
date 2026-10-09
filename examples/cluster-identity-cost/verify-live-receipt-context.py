@@ -62,7 +62,7 @@ flux_log = root / 'flux-calls.log'
 (root / 'bin/flux').chmod(0o755)
 os.symlink(real_kubectl, root / 'bin/kubectl')
 host_env = {**os.environ, 'HOME': str(root / 'home'), 'KUBECONFIG': str(cfg), 'CUB_CONFIG': str(root / 'cub-config'),
-            'GOTOOLCHAIN': 'go1.24.0'}
+            'GOTOOLCHAIN': 'go1.26.9'}
 scout_env = {'HOME': str(root / 'home'), 'KUBECONFIG': str(cfg), 'PATH': str(root / 'bin') + ':/usr/bin:/bin'}
 steps, failures = [], []
 created, removed = False, False

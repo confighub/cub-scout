@@ -25,7 +25,7 @@ assert not subprocess.check_output(['git', 'status', '--porcelain'], text=True).
 for directory in ['home', 'cub-config']:
     (root / directory).mkdir()
 env = {**os.environ, 'HOME': str(root / 'home'), 'KUBECONFIG': str(cfg), 'CUB_CONFIG': str(root / 'cub-config'),
-       'GOTOOLCHAIN': 'go1.24.0'}
+       'GOTOOLCHAIN': 'go1.26.9'}
 # Standalone: hide cub so no command enters connected mode from the host's session.
 env['PATH'] = os.pathsep.join(d for d in env.get('PATH', '').split(os.pathsep)
                               if not os.access(os.path.join(d, 'cub'), os.X_OK))

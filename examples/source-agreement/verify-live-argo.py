@@ -55,7 +55,7 @@ for directory in ['home', 'cub-config', 'bin']:
 # from the Kubernetes API and nothing is connected.
 os.symlink(real_kubectl, root / 'bin/kubectl')
 host_env = {**os.environ, 'HOME': str(root / 'home'), 'KUBECONFIG': str(cfg), 'CUB_CONFIG': str(root / 'cub-config'),
-            'GOTOOLCHAIN': 'go1.24.0'}
+            'GOTOOLCHAIN': 'go1.26.9'}
 scout_env = {'HOME': str(root / 'home'), 'KUBECONFIG': str(cfg), 'PATH': str(root / 'bin') + ':/usr/bin:/bin'}
 steps, failures, observations, disagreements = [], [], [], []
 created, removed = False, False

@@ -47,14 +47,11 @@ jobs:
         run: go build ./cmd/cub-scout
 
       - name: Run golangci-lint
-        # Pinned to action @v6 paired with golangci-lint v1.64.8 because the
-        # repo's .golangci.yml is still v1 schema. golangci-lint-action @v7+
-        # only supports golangci-lint v2.x, which requires a config-schema
-        # migration. When .golangci.yml is migrated, bump both back to the
-        # current major.
-        uses: golangci/golangci-lint-action@v6
+        # Pinned: golangci-lint must be built with a Go at least as new as
+        # go.mod's go directive, and .golangci.yml is the v2 schema.
+        uses: golangci/golangci-lint-action@v9
         with:
-          version: v1.64.8
+          version: v2.14.0
 
       - name: Run govulncheck
         continue-on-error: true  # Informational for now - stdlib vulns need Go upgrade
