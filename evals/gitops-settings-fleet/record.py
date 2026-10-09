@@ -164,6 +164,11 @@ def write_case(expected):
     mocks.mkdir(parents=True)
     for tool in ["doctor", "explain", "gitops_settings", "gitops_status", "map", "release_check", "scan", "trace"]:
         (mocks / (tool + ".md")).write_text(GUARD)
+    # The live-only variant has no export; it shares these graders and guards.
+    live = CASE.parent / "gitops-settings-fleet-live"
+    for name in ["graders", "mocks"]:
+        shutil.rmtree(live / name, ignore_errors=True)
+        shutil.copytree(CASE / name, live / name)
 
 
 def up():
