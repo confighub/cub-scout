@@ -242,6 +242,21 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 	} {
 		listsEqual[name] = false
 		listedByCub, err := cubStdoutOnly(list.cub...)
+		if err != nil && name == "unit-list-contains" {
+			// ConfigHub v0.8.3 answers a text search on Units with HTTP
+			// 500, to cub itself. Where the server cannot answer, the
+			// routes agree by both failing; both failures are kept.
+			keep(name+".cub.txt", []byte("error: "+err.Error()+"\n"))
+			listedBySDK, sdkErr := list.read()
+			if sdkErr == nil {
+				t.Errorf("%s: cub failed (%v) and the SDK reader returned a list: %s", name, err, listedBySDK)
+				continue
+			}
+			keep(name+".sdk.txt", []byte("error: "+sdkErr.Error()+"\n"))
+			delete(listsEqual, name)
+			t.Logf("%s: the server answered neither route; cub: %v; reader: %v", name, err, sdkErr)
+			continue
+		}
 		if err != nil {
 			t.Errorf("%s: %v", name, err)
 			continue

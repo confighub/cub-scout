@@ -170,6 +170,9 @@ through `cub`, then asks for one Unit by each route.
 | Reader's JSON against `cub unit list -o json`, space by slug and by ID (CI run 37971287996) | identical, 4717 bytes, two Units |
 | Reader's JSON against `cub space list -o json` (same run) | identical, 1456 bytes, two spaces |
 | MCP `confighub_units` through the built binary, by each route (same run) | the whole answer identical |
+| `unit list --where`, by slug and by a `LIKE` pattern, and one that matches nothing (CI run 37976845378) | identical; one Unit, the other Unit, and `[]` |
+| A `--where` the server rejects (same run) | both routes fail; the reader's error carries the server's reason, "unrecognized attribute name" |
+| `unit list --contains` (same run) | **not established**: this server answers the search with HTTP 500, to `cub` itself, so both routes fail |
 
 | One read, 15 runs, milliseconds | min | median | max |
 |---|---|---|---|
@@ -189,6 +192,11 @@ are kept in `test/fixtures/confighub-sdk-parity-v083-recorded/`.
   plain Units: no target, no upstream, no live revision, and spaces with no
   Component. The lists there had two entries each; a long list was not tried. A hosted server,
   another version and a credential with fewer rights were not tried.
+- **`--contains` against a real answer.** ConfigHub v0.8.3 fails a text
+  search on Units with HTTP 500 for `cub` and for the reader alike. That the
+  reader sends the search as `cub` does is held by comparing requests; that
+  the two return the same list is not shown. On that server the MCP
+  `confighub_units` tool's `contains` argument fails by either route.
 - **Time for a whole command.** The timings are for one read. A connected
   command also runs `cub auth status` on either route, and how many requests
   `cub` itself makes was not measured.
