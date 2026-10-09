@@ -440,14 +440,26 @@ func listJSON[T any](op string, list *[]T) ([]byte, error) {
 	return append(encoded, '\n'), nil
 }
 
-// UnitListJSON reads every Unit in exactly one space and returns the list as
-// the JSON `cub unit list --space <space> -o json` prints. space is the space's
-// slug or its canonical UUID; an empty or "*" space is refused before any
-// request, because a list without a space spans the organization.
+// UnitFilter narrows a unit list the way cub's flags of the same names do. The
+// zero value lists every Unit in the space.
+type UnitFilter struct {
+	// Where is a filter expression, passed to the server as the caller
+	// wrote it and AND-ed with the space, as cub composes it.
+	Where string
+	// Contains is a free-text search.
+	Contains string
+}
+
+// UnitListJSON reads the Units of exactly one space and returns the list as the
+// JSON `cub unit list --space <space> -o json` prints, with --where and
+// --contains when filter has them. space is the space's slug or its canonical
+// UUID; an empty or "*" space is refused before any request, because a list
+// without a space spans the organization.
 //
 // As cub does without --limit, it asks for the whole list in one request. A
-// Unit the server returns from any other space is an error, never output.
-func (r *Reader) UnitListJSON(ctx context.Context, space string) ([]byte, error) {
+// Unit the server returns from any other space is an error, never output,
+// whatever the filter says.
+func (r *Reader) UnitListJSON(ctx context.Context, space string, filter UnitFilter) ([]byte, error) {
 	const op = "unit list"
 	space = strings.TrimSpace(space)
 	if space == "" || space == "*" {
@@ -457,9 +469,20 @@ func (r *Reader) UnitListJSON(ctx context.Context, space string) ([]byte, error)
 	if scopeErr != nil {
 		return nil, scopeErr
 	}
-	filter, include := cubapi.Where{}.SpaceID(spaceID).String(), unitListInclude
-	resp, err := r.client.API.ListAllUnitsWithResponse(ctx, &goclientnew.ListAllUnitsParams{Where: &filter, Include: &include})
+	where, include := cubapi.NewWhere(filter.Where).SpaceID(spaceID).String(), unitListInclude
+	params := &goclientnew.ListAllUnitsParams{Where: &where, Include: &include}
+	if contains := filter.Contains; contains != "" {
+		params.Contains = &contains
+	}
+	resp, err := r.client.API.ListAllUnitsWithResponse(ctx, params)
 	if failure := classify(ctx, op, err, resp); failure != nil {
+		// The server says what is wrong with a filter it rejects, and the
+		// caller wrote the filter, so that reason is passed on.
+		if resp != nil && resp.StatusCode() == http.StatusBadRequest && resp.JSON400 != nil {
+			if reason := printable(resp.JSON400.Message, 300); reason != "" {
+				failure.Message = "the server rejected the request (HTTP 400): " + reason
+			}
+		}
 		return nil, failure
 	}
 	// A 200 that is not JSON leaves no list at all. That is not an empty
@@ -511,6 +534,21 @@ func (r *Reader) SpaceListJSON(ctx context.Context) ([]byte, error) {
 		}
 	}
 	return listJSON(op, resp.JSON200)
+}
+
+// printable returns text with control characters removed and cut to at most
+// limit characters, for a server's message that will be shown to a user.
+func printable(text string, limit int) string {
+	cleaned := strings.Map(func(r rune) rune {
+		if r < 0x20 || r == 0x7f {
+			return ' '
+		}
+		return r
+	}, strings.TrimSpace(text))
+	if characters := []rune(cleaned); len(characters) > limit {
+		return string(characters[:limit]) + "…"
+	}
+	return cleaned
 }
 
 // wholeList fails a list the server says it cut short. Asked for no limit, the
