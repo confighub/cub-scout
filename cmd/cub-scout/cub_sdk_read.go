@@ -89,11 +89,6 @@ func sdkUnitGetArgs(args []string) (space, unit string, ok bool) {
 		return "", "", false
 	}
 	ref := strings.TrimSpace(positionals[0])
-	// A Unit named by ID is found in any space by cub; the reader is for
-	// exactly one named space, so that spelling stays with cub.
-	if agent.IsUUID(ref) {
-		return "", "", false
-	}
 	refSpace, refUnit, qualified := strings.Cut(ref, "/")
 	switch {
 	case qualified && hasFlagSpace:
@@ -105,11 +100,13 @@ func sdkUnitGetArgs(args []string) (space, unit string, ok bool) {
 	default:
 		space, unit = flagSpace, ref
 	}
-	if space == "" || unit == "" || strings.Contains(unit, "/") || agent.IsUUID(unit) {
+	if space == "" || unit == "" || strings.Contains(unit, "/") {
 		return "", "", false
 	}
-	// "*" asks cub for every space; the reader is for one named space.
-	if space == allConfigHubSpaces {
+	// A Unit named by ID is found by cub whatever the space, and "*" asks
+	// cub for every space. The reader is for one slug in one named space, so
+	// both spellings stay with cub.
+	if agent.IsUUID(unit) || space == allConfigHubSpaces {
 		return "", "", false
 	}
 	return space, unit, true
