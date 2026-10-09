@@ -84,9 +84,9 @@ for all three cases, the transcripts' behaviour and the limits.
 | with cub-scout | 3/3 | $0.32 | 7 | never |
 | without | 3/3 | $0.24 | 6 to 7 | n/a |
 
-**cub-scout added nothing here and cost more.** Both arms read the export; the
-cub-scout arm never called the tool, and paid for the plugin's tool
-descriptions and skill list in context.
+**cub-scout added nothing here and cost more.** Both arms read the export and
+the cub-scout arm never called the tool. Its context was larger on every run;
+what in the plugin accounts for that was not measured.
 
 ## Re-recording
 

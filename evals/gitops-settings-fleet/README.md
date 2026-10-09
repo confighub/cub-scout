@@ -6,9 +6,10 @@ The same question as
 HelmReleases in 8 namespaces. Which Applications sync automatically without
 self-heal, and which Flux objects are suspended?
 
-The export of those objects is about 338 KB. The `gitops_settings` default
-answer on the same cluster is about 37 KB, and the answer to
-`setting ["suspend=on"]` about 5 KB.
+The export of those objects is about 338 KB. At recording time
+(`recording.json`, `bytes`) the `gitops_settings` default answer on the same
+cluster was about 37 KB, and the `deployers` view of `setting ["suspend=on"]`
+about 5 KB.
 
 ## How the answer is known
 
@@ -54,8 +55,9 @@ for all three cases, the transcripts' behaviour and the limits.
 
 **With the export on disk the tool was not used and no advantage was shown.**
 The cub-scout arm's one wrong answer included six Applications whose automated
-sync is disabled, which the tool reports as `n/a`. With no export, the agent
-used the tool and answered in four turns. The arms hold different evidence, so
+sync is disabled. The tool leaves those out when asked for `self-heal=off`, but
+that run never called it. With no export, the agent used the tool and answered
+in four turns. The arms hold different evidence, so
 that last row is a comparison of two ways of working, not a controlled one.
 
 ## Running

@@ -464,7 +464,8 @@ Result, three runs per arm
 ([report](reports/2026-10-09-gitops-settings.md)): with the export on disk the
 agent never called the tool, and on the small case the cub-scout arm cost more
 for the same answer. With no export, it answered correctly in four turns at
-about half the median cost of the export-reading baseline. The arms in that
+$0.21 a run, against a median $0.41 and a mean $0.84 for the export-reading
+baseline. The arms in that
 comparison hold different evidence, and three runs on generated scenarios do
 not establish a general saving.
 
