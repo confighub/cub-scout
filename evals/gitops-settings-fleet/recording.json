@@ -1,0 +1,50 @@
+{
+  "recordedAt": "2026-10-09T10:25:40+00:00",
+  "sourceCommit": "bcb100227f7cc470952fbaf66fdd3fddf6471e70",
+  "sourceDirty": false,
+  "binarySHA256": "3661805703f4ceb57491470af2346a231e5880ab46f65c1f65707d4c909b88af",
+  "kubernetesNodeImage": "kindest/node:v1.35.0",
+  "argoCDCRDs": {
+    "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.3/manifests/crds/application-crd.yaml": "5dde0e229249b6b707beb98674c1deae3949d5c319a6c45b9f5a80c99618e40c",
+    "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.3/manifests/crds/appproject-crd.yaml": "ab225266944322750136f1198d93786e4a79a0e43c8d149abfba44da30a3eac8"
+  },
+  "fluxCLI": "flux version 2.8.6",
+  "managedFields": true,
+  "notes": [
+    "Generated from seed 839; expected.json was written by the generator before the cluster existed.",
+    "Deployer objects only. No GitOps controller is installed: nothing reconciles and no object has a status.",
+    "The with-cub-scout arm runs live against the recording cluster; the mocks are guards that fail without --mocks off.",
+    "The real MCP tool's answers for self-heal=off and suspend=on equal expected.json (asserted at recording time)."
+  ],
+  "files": {
+    "evals/gitops-settings-fleet/expected.json": "fe5f8ed495a016decb5337f66f4aeefc716abc544423238656552ca3590d5c24",
+    "evals/gitops-settings-fleet/fixtures/cluster/applications.yaml": "1cbb4b7234174264ee5e2f4881366a12f13eabf476f4a96931f97aaa76fea541",
+    "evals/gitops-settings-fleet/fixtures/cluster/appprojects.yaml": "1339310bab772ce6d7e7bb3c7ea8c5aa6780e5f77aa5babd6975307a75062e5a",
+    "evals/gitops-settings-fleet/fixtures/cluster/configmaps.yaml": "7418c1b23d932e1a6ddcf9be95343741104ad3db2e6aa3173802049e724219f9",
+    "evals/gitops-settings-fleet/fixtures/cluster/gitrepositories.yaml": "082df4e18e0026ba700cbc2eeefd6cc91d5e2ac9df41caee376f2f5798dd30e8",
+    "evals/gitops-settings-fleet/fixtures/cluster/helmreleases.yaml": "68e9d058a45796530494bde89b81c2ac69a4113e864e53c56713c07c01bb09a6",
+    "evals/gitops-settings-fleet/fixtures/cluster/helmrepositories.yaml": "9a3ee9332f389b744c2e188a497b0b84fb8048333de6a0b6ff587f874f03d5bb",
+    "evals/gitops-settings-fleet/fixtures/cluster/kustomizations.yaml": "a69ea600a3a10a743dbe421f51efe9810253ada13cd950851f9b00f8a2e5595e",
+    "evals/gitops-settings-fleet/fixtures/cluster/namespaces.yaml": "b7713704cec1176fec68a9567773d45ed64306c9f139acab33938538e8cbf5f9",
+    "evals/gitops-settings-fleet/graders/no-self-heal-line.md": "d5849b0ac5236043316caf7c7a1bd40f45accb57dfd3807f12a9ffee6606b9b8",
+    "evals/gitops-settings-fleet/graders/skill-fired.md": "071db4c9e0ef9fe898b6a3848cc2837e9d452f439e03310128375eaf2a91d806",
+    "evals/gitops-settings-fleet/graders/suspended-line.md": "aab6af04049955195befa6e41dbf345ad6f2375b3c3e3fd1d3e4412c4623e6c7",
+    "evals/gitops-settings-fleet/graders/used-cub-scout-mcp.md": "e05aa36fcc841736b364d4d58a51fa0f9e6216a06038a99cb9813de6b519afce",
+    "evals/gitops-settings-fleet/mocks/cub-scout/doctor.md": "cf6d522feec70899183426b871957d27f8e7ea7b14cb3dcf1bb13604a6addcfa",
+    "evals/gitops-settings-fleet/mocks/cub-scout/explain.md": "cf6d522feec70899183426b871957d27f8e7ea7b14cb3dcf1bb13604a6addcfa",
+    "evals/gitops-settings-fleet/mocks/cub-scout/gitops_settings.md": "cf6d522feec70899183426b871957d27f8e7ea7b14cb3dcf1bb13604a6addcfa",
+    "evals/gitops-settings-fleet/mocks/cub-scout/gitops_status.md": "cf6d522feec70899183426b871957d27f8e7ea7b14cb3dcf1bb13604a6addcfa",
+    "evals/gitops-settings-fleet/mocks/cub-scout/map.md": "cf6d522feec70899183426b871957d27f8e7ea7b14cb3dcf1bb13604a6addcfa",
+    "evals/gitops-settings-fleet/mocks/cub-scout/release_check.md": "cf6d522feec70899183426b871957d27f8e7ea7b14cb3dcf1bb13604a6addcfa",
+    "evals/gitops-settings-fleet/mocks/cub-scout/scan.md": "cf6d522feec70899183426b871957d27f8e7ea7b14cb3dcf1bb13604a6addcfa",
+    "evals/gitops-settings-fleet/mocks/cub-scout/trace.md": "cf6d522feec70899183426b871957d27f8e7ea7b14cb3dcf1bb13604a6addcfa",
+    "evals/gitops-settings-fleet/scaffold.sh": "332f4297e4a06a6094d28fb124f88e6b1bf68a650b1f0482efdd14dc9e2d4752",
+    "evals/gitops-settings-fleet/scenario.yaml": "d5b77828560edd3895ea629b503eef97711125db607b8e33ad8c60bb07b16ef0"
+  },
+  "bytes": {
+    "export": 337732,
+    "gitopsSettingsDefault": 37331,
+    "gitopsSettingsSelfHealOffDeployers": 30706,
+    "gitopsSettingsSuspendOnDeployers": 4881
+  }
+}

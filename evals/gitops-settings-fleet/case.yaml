@@ -1,0 +1,5 @@
+# FIXTURE-OWNED-SCAFFOLD: this case owns its generated scenario and export (record.py); the cub-scout arm runs live.
+schema_version: "1.1"
+name: gitops-settings-fleet
+context:
+  scaffold_script: scaffold.sh
