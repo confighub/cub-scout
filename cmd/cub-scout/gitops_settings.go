@@ -23,6 +23,14 @@ const (
 	deliverySettingsGroupByProject  = "project"
 	deliverySettingsGroupBySetting  = "setting"
 	deliverySettingsGroupByDeployer = "deployer"
+
+	// JSON views. "all" is the full report; the others keep the scope, counts
+	// and reads and drop the two views that were not asked for, so a caller
+	// that pays per byte reads one inversion and not three.
+	deliverySettingsViewAll       = "all"
+	deliverySettingsViewGroups    = "groups"
+	deliverySettingsViewSettings  = "settings"
+	deliverySettingsViewDeployers = "deployers"
 )
 
 var gitopsSettingsCmd = &cobra.Command{
@@ -79,6 +87,7 @@ func addGitOpsSettingsFlags(flags *pflag.FlagSet) {
 	flags.String("group-by", deliverySettingsGroupByProject, "Group by: project, setting, deployer")
 	flags.String("format", "ascii", "Output format: ascii, json, md")
 	flags.Bool("json", false, "Output as JSON (shorthand for --format json)")
+	flags.String("view", deliverySettingsViewAll, "JSON only: all, groups (per project or namespace), settings (per kind), or deployers (per object)")
 	flags.Bool("tui", false, "View this snapshot in a scrollable terminal viewport")
 }
 
@@ -88,6 +97,7 @@ type deliverySettingsParams struct {
 	Projects  []string
 	Settings  []string
 	GroupBy   string
+	View      string
 }
 
 type deliverySettingsFilters struct {
@@ -150,6 +160,13 @@ func deliverySettingsParamsFromFlags(cmd *cobra.Command) (deliverySettingsParams
 	default:
 		return params, fmt.Errorf("invalid --group-by %q (valid: project, setting, deployer)", groupBy)
 	}
+	view, _ := flags.GetString("view")
+	params.View = strings.ToLower(strings.TrimSpace(view))
+	switch params.View {
+	case deliverySettingsViewAll, deliverySettingsViewGroups, deliverySettingsViewSettings, deliverySettingsViewDeployers:
+	default:
+		return params, fmt.Errorf("invalid --view %q (valid: all, groups, settings, deployers)", view)
+	}
 	for _, project := range params.Projects {
 		if strings.TrimSpace(project) == "" {
 			return params, fmt.Errorf("--project must not be empty")
@@ -176,6 +193,9 @@ func runGitOpsSettings(cmd *cobra.Command, args []string) error {
 	if err := validateGitOpsTUIFormat(tui, cmd.Flags().Changed("format"), cmd.Flags().Changed("json")); err != nil {
 		return err
 	}
+	if params.View != deliverySettingsViewAll && format != "json" {
+		return fmt.Errorf("--view applies to JSON output; use --group-by for ascii and md")
+	}
 	ctx, err := boundCommandContext(cmd)
 	if err != nil {
 		return err
@@ -192,7 +212,33 @@ func runGitOpsSettings(cmd *cobra.Command, args []string) error {
 	if tui {
 		return runGitOpsMarkdownTUI(ctx, renderDeliverySettingsMarkdown(report, params.GroupBy))
 	}
+	if format == "json" && params.View != deliverySettingsViewAll {
+		return writeDeliverySettingsView(cmd.OutOrStdout(), report, params.View)
+	}
 	return writeDeliverySettings(cmd.OutOrStdout(), report, format, params.GroupBy)
+}
+
+// writeDeliverySettingsView writes the report with only one of its three
+// views. The scope, counts, reads, link sources and notes are always kept:
+// they are what says whether the view is complete.
+func writeDeliverySettingsView(w io.Writer, report deliverySettingsReport, view string) error {
+	encoded, err := json.Marshal(report)
+	if err != nil {
+		return err
+	}
+	var document map[string]json.RawMessage
+	if err := json.Unmarshal(encoded, &document); err != nil {
+		return err
+	}
+	for _, key := range []string{deliverySettingsViewGroups, deliverySettingsViewSettings, deliverySettingsViewDeployers} {
+		if key != view {
+			delete(document, key)
+		}
+	}
+	document["view"], _ = json.Marshal(view)
+	encoder := json.NewEncoder(w)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(document)
 }
 
 func buildDeliverySettingsReport(ctx context.Context, client dynamic.Interface, params deliverySettingsParams) (deliverySettingsReport, error) {

@@ -59,7 +59,7 @@ func buildMCPStructuredContent(toolName, output string) interface{} {
 		// envelope shape as compare_three_way; downstream agents can
 		// read evidence directly without re-parsing the text content.
 		return mcpWrapStructuredData(payload)
-	case "gitops_status":
+	case "gitops_status", "gitops_settings":
 		return mcpWrapStructuredData(payload)
 	case "confighub_units":
 		return buildMCPUnitsStructuredContent(payload)

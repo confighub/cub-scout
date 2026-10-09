@@ -383,3 +383,134 @@ func TestGitOpsSettingsTextOutputNeutralisesClusterSuppliedControlCharacters(t *
 	require.Contains(t, out.String(), `"group": "pay\nReads\n  applications.argoproj.io/v1alpha1: read, 0"`)
 	require.Contains(t, out.String(), `\u001b[2J`)
 }
+
+// --view keeps the scope, counts and reads, which say whether the view is
+// complete, and drops the two views that were not asked for.
+func TestGitOpsSettingsJSONViewKeepsCoverageAndDropsOtherViews(t *testing.T) {
+	client := settingsFixtureClient()
+	client.PrependReactor("list", "helmreleases", func(ktesting.Action) (bool, runtime.Object, error) {
+		return true, nil, apierrors.NewForbidden(schema.GroupResource{Resource: "helmreleases"}, "", nil)
+	})
+	report := settingsReport(t, client, deliverySettingsParams{})
+	var full bytes.Buffer
+	require.NoError(t, writeDeliverySettings(&full, report, "json", deliverySettingsGroupByProject))
+
+	for view, dropped := range map[string][]string{
+		deliverySettingsViewGroups:    {"settings", "deployers"},
+		deliverySettingsViewSettings:  {"groups", "deployers"},
+		deliverySettingsViewDeployers: {"groups", "settings"},
+	} {
+		var out bytes.Buffer
+		require.NoError(t, writeDeliverySettingsView(&out, report, view))
+		var document map[string]json.RawMessage
+		require.NoError(t, json.Unmarshal(out.Bytes(), &document))
+		require.JSONEq(t, `"`+view+`"`, string(document["view"]))
+		require.Contains(t, document, view)
+		for _, key := range dropped {
+			require.NotContains(t, document, key, "view %s", view)
+		}
+		for _, kept := range []string{"context", "complete", "counts", "reads", "linkSources"} {
+			require.Contains(t, document, kept, "view %s must keep %s", view, kept)
+		}
+		require.JSONEq(t, "false", string(document["complete"]), "an incomplete read stays visible in every view")
+		require.Less(t, out.Len(), full.Len(), "view %s is smaller than the full report", view)
+
+		var fullDocument map[string]json.RawMessage
+		require.NoError(t, json.Unmarshal(full.Bytes(), &fullDocument))
+		require.JSONEq(t, string(fullDocument[view]), string(document[view]), "view %s is the same data as in the full report", view)
+	}
+}
+
+func TestGitOpsSettingsViewFlag(t *testing.T) {
+	parse := func(args ...string) (deliverySettingsParams, error) {
+		cmd := &cobra.Command{Use: "settings"}
+		addGitOpsSettingsFlags(cmd.Flags())
+		require.NoError(t, cmd.ParseFlags(args))
+		return deliverySettingsParamsFromFlags(cmd)
+	}
+	params, err := parse()
+	require.NoError(t, err)
+	require.Equal(t, deliverySettingsViewAll, params.View, "the CLI default is the full report, as in v2.13.3")
+	params, err = parse("--view", "Groups")
+	require.NoError(t, err)
+	require.Equal(t, deliverySettingsViewGroups, params.View)
+	_, err = parse("--view", "summary")
+	require.ErrorContains(t, err, `invalid --view "summary" (valid: all, groups, settings, deployers)`)
+}
+
+// The MCP tool is the CLI's JSON, with the per-project view by default so one
+// call returns one inversion and not three.
+func TestMCPGitOpsSettingsBuildsTheCLICall(t *testing.T) {
+	gateway := newMCPGateway(nil)
+	tool, ok := gateway.tools["gitops_settings"]
+	require.True(t, ok)
+	require.Nil(t, tool.Runner, "a Kubernetes-only tool stays on Scout's runner")
+	properties := tool.Descriptor.InputSchema["properties"].(map[string]interface{})
+	for _, name := range []string{"namespace", "context", "project", "setting", "view"} {
+		require.Contains(t, properties, name)
+	}
+	require.Equal(t, false, tool.Descriptor.InputSchema["additionalProperties"])
+
+	for _, tc := range []struct {
+		name      string
+		arguments map[string]interface{}
+		want      []string
+	}{
+		{"no arguments", map[string]interface{}{}, []string{"gitops", "settings", "--format", "json", "--view", "groups"}},
+		{"filters", map[string]interface{}{"setting": []interface{}{"self-heal=off", "Validate"}, "project": []interface{}{"payments"}, "namespace": "argocd"},
+			[]string{"gitops", "settings", "--format", "json", "-n", "argocd", "--project", "payments", "--setting", "self-heal=off", "--setting", "Validate", "--view", "groups"}},
+		{"context and view", map[string]interface{}{"context": "prod-east", "view": "deployers"},
+			[]string{"gitops", "settings", "--format", "json", "--kube-context", "prod-east", "--view", "deployers"}},
+		{"an empty context is passed on so the command refuses it", map[string]interface{}{"context": ""},
+			[]string{"gitops", "settings", "--format", "json", "--kube-context", "", "--view", "groups"}},
+	} {
+		got, err := tool.BuildArgs(tc.arguments)
+		require.NoError(t, err, tc.name)
+		require.Equal(t, tc.want, got, tc.name)
+	}
+	for name, arguments := range map[string]map[string]interface{}{
+		"context": {"context": 17},
+		"setting": {"setting": []interface{}{"self-heal=off", 3}},
+		"project": {"project": map[string]interface{}{"a": "b"}},
+		"view":    {"view": true},
+	} {
+		_, err := tool.BuildArgs(arguments)
+		require.Error(t, err, "a wrong-typed %s must be refused, not dropped", name)
+	}
+}
+
+func TestMCPGitOpsSettingsReturnsTheReportAsStructuredData(t *testing.T) {
+	var out bytes.Buffer
+	require.NoError(t, writeDeliverySettingsView(&out, settingsReport(t, settingsFixtureClient(), deliverySettingsParams{}), deliverySettingsViewGroups))
+	var captured []string
+	gateway := newMCPGateway(func(_ context.Context, args []string) (string, error) {
+		captured = args
+		return out.String(), nil
+	})
+	params, _ := json.Marshal(map[string]interface{}{"name": "gitops_settings", "arguments": map[string]interface{}{"setting": []string{"prune=off"}}})
+	response := gateway.handleRequest(context.Background(), mcpRequest{JSONRPC: "2.0", ID: json.RawMessage(`1`), Method: "tools/call", Params: params})
+	require.Nil(t, response.Error)
+	encoded, err := json.Marshal(response.Result)
+	require.NoError(t, err)
+	var result struct {
+		IsError           bool `json:"isError"`
+		StructuredContent struct {
+			Data map[string]interface{} `json:"data"`
+		} `json:"structuredContent"`
+	}
+	require.NoError(t, json.Unmarshal(encoded, &result))
+	require.False(t, result.IsError)
+	require.Equal(t, []string{"gitops", "settings", "--format", "json", "--setting", "prune=off", "--view", "groups"}, captured)
+	require.Equal(t, "groups", result.StructuredContent.Data["view"])
+	require.Equal(t, true, result.StructuredContent.Data["complete"])
+	require.Contains(t, result.StructuredContent.Data, "reads")
+
+	// An invalid argument is a tool error, and nothing is run.
+	captured = nil
+	params, _ = json.Marshal(map[string]interface{}{"name": "gitops_settings", "arguments": map[string]interface{}{"view": 3}})
+	response = gateway.handleRequest(context.Background(), mcpRequest{JSONRPC: "2.0", ID: json.RawMessage(`2`), Method: "tools/call", Params: params})
+	encoded, _ = json.Marshal(response.Result)
+	require.NoError(t, json.Unmarshal(encoded, &result))
+	require.True(t, result.IsError)
+	require.Nil(t, captured)
+}

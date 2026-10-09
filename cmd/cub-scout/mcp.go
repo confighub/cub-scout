@@ -46,6 +46,7 @@ Supported tools in standalone mode:
   - scan
   - explain
   - gitops_status
+  - gitops_settings
 
 Additional tools in connected mode (when authenticated to ConfigHub):
   - confighub_attestations
@@ -683,6 +684,78 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 					args = append(args, "--confighub-stale-after", staleAfter)
 				}
 				return args, nil
+			},
+		},
+		"gitops_settings": {
+			Descriptor: mcpToolDescriptor{
+				Name:        "gitops_settings",
+				Description: "Standalone inventory of the delivery settings GitOps deployers declare (gitops settings --format json). Use when the user asks which Argo CD Applications or Flux Kustomizations/HelmReleases sync automatically, self-heal, prune, are suspended, detect drift, or use a given sync or apply option, or which deployers share a setting. One call covers every Application, Kustomization and HelmRelease; pass setting to get only the deployers that match, for example [\"self-heal=off\"]. Argo CD policies are auto-sync, self-heal and prune; sync options keep their own names and values (Validate=false, ServerSideApply=true); Flux fields keep theirs (suspend, prune, force, wait, driftDetection.mode, upgrade.force). A field that is absent is value unset with the controller default in default and effective; for an Application without automated sync, self-heal and prune are n/a, not off. reads[] says whether each kind was read, not_installed or not_read: a kind that is not_read is unknown, not empty, and complete is then false. These are settings declared in each spec. DO NOT use this to decide whether a controller acted on a setting, whether delivery is healthy (use gitops_status), who changed a field (use explain), or whether a setting is acceptable: it gives no verdict.",
+				Annotations: readOnly,
+				InputSchema: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"namespace": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional namespace of the deployer objects (not of the workloads they deliver).",
+						},
+						"context": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional exact kubeconfig context label for all Kubernetes reads. This is a label, not a stable cluster identity.",
+						},
+						"project": map[string]interface{}{
+							"type":        "array",
+							"items":       map[string]interface{}{"type": "string"},
+							"description": "Optional Argo CD project names. Flux objects have no project and are left out when this is set; notes[] says how many.",
+						},
+						"setting": map[string]interface{}{
+							"type":        "array",
+							"items":       map[string]interface{}{"type": "string"},
+							"description": "Optional filters, each name or name=value; all must match. Names are exact: prune is the automated-prune policy, Prune is the sync option. on/true and off/false are interchangeable. A value also matches a deployer that leaves the field unset when the controller default is that value.",
+						},
+						"view": map[string]interface{}{
+							"type":        "string",
+							"enum":        []string{deliverySettingsViewGroups, deliverySettingsViewSettings, deliverySettingsViewDeployers, deliverySettingsViewAll},
+							"description": "Which view to return. groups (default): per Argo CD project or Flux namespace, each setting with the deployers that have each value. settings: the same per kind across the whole read. deployers: one entry per object with every setting, its spec path, default and ignore rules. all: the three together, about three times the size.",
+						},
+					},
+					"additionalProperties": false,
+				},
+			},
+			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
+				args := []string{"gitops", "settings", "--format", "json"}
+				if raw, exists := arguments["context"]; exists {
+					name, ok := raw.(string)
+					if !ok {
+						return nil, fmt.Errorf("context must be a string")
+					}
+					args = append(args, "--kube-context", name)
+				}
+				if ns := argString(arguments, "namespace"); ns != "" {
+					args = append(args, "-n", ns)
+				}
+				projects, err := argStringSlice(arguments, "project")
+				if err != nil {
+					return nil, err
+				}
+				for _, project := range projects {
+					args = append(args, "--project", project)
+				}
+				settings, err := argStringSlice(arguments, "setting")
+				if err != nil {
+					return nil, err
+				}
+				for _, setting := range settings {
+					args = append(args, "--setting", setting)
+				}
+				view := deliverySettingsViewGroups
+				if raw, exists := arguments["view"]; exists {
+					name, ok := raw.(string)
+					if !ok {
+						return nil, fmt.Errorf("view must be a string")
+					}
+					view = name
+				}
+				return append(args, "--view", view), nil
 			},
 		},
 	}
