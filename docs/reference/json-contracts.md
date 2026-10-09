@@ -1152,10 +1152,10 @@ included.
 
 ## Delivery Settings Contract
 
-`gitops settings --format json` (v2.14 candidate, unreleased) reports the
+`gitops settings --format json` (preview since v2.13.3) reports the
 delivery settings declared in the `spec` of each Argo CD Application and Flux
 Kustomization and HelmRelease. Field names are camelCase. The shape may still
-change before it is released.
+change while the command is a preview.
 
 ### Schema Sketch
 

@@ -58,7 +58,7 @@ dependency. If an old cask is installed, run
 `brew uninstall --cask confighub/tap/cub-scout` first.
 
 
-Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.13.2`, then
+Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.13.3`, then
 `cub scout doctor`. [Installation and verified downloads](docs/getting-started/install.md)
 cover macOS, Linux, Windows, and tagged source builds.
 
@@ -374,8 +374,8 @@ For direct downloads and tagged source builds, use the
 `github.com/confighub/cub-scout/v2`; proxy installation via
 `go install github.com/confighub/cub-scout/v2/cmd/cub-scout@latest` installs
 the latest tagged 2.x module. For a pinned install use
-`go install github.com/confighub/cub-scout/v2/cmd/cub-scout@v2.13.2`. Container command
-`docker run ghcr.io/confighub/cub-scout:v2.13.2 version` still needs registry
+`go install github.com/confighub/cub-scout/v2/cmd/cub-scout@v2.13.3`. Container command
+`docker run ghcr.io/confighub/cub-scout:v2.13.3 version` still needs registry
 access verification (#520); the published image is Linux amd64 only.
 `kubectl krew install cub-scout` is not a verified distribution path; use the
 `kubectl-cub_scout` binary included in the archives or Homebrew instead.
