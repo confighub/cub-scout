@@ -486,6 +486,29 @@ func TestUnitJSONIsWhatCubPrintedForTheRecordedUnit(t *testing.T) {
 	require.Nil(t, out, "a failed read returns no bytes to parse")
 }
 
+// A second real object: what cub v0.8.3 printed for a Unit on the disposable
+// server of the Connected lane, where the reader's own answer from that server
+// was the same bytes (see the fixture's NOTICE). Served back from a test
+// server it must encode to those bytes again, so an SDK bump that changes the
+// encoding of a real Unit is noticed without a server.
+func TestUnitJSONReproducesTheConnectedLaneRecording(t *testing.T) {
+	recorded, err := os.ReadFile(filepath.Join("..", "..", "test", "fixtures", "confighub-sdk-parity-v083-recorded", "unit-get.json"))
+	require.NoError(t, err)
+	var element map[string]json.RawMessage
+	require.NoError(t, json.Unmarshal(recorded, &element))
+	var names struct{ Unit, Space struct{ Slug string } }
+	require.NoError(t, json.Unmarshal(recorded, &names))
+	require.NotEmpty(t, names.Unit.Slug)
+	require.NotEmpty(t, names.Space.Slug)
+
+	hub := newFakeHub(t)
+	hub.spaces = []map[string]json.RawMessage{{"Space": element["Space"]}}
+	hub.units = []map[string]json.RawMessage{element}
+	got, err := hub.reader(Options{}).UnitJSON(context.Background(), names.Space.Slug, names.Unit.Slug)
+	require.NoError(t, err)
+	require.Equal(t, string(recorded), string(got))
+}
+
 // The reader asks the server for the Unit the way cub does: cub calls the SDK's
 // ResolveUnit, so the filter and the expansions ResolveUnit sends are the
 // reference. If an SDK bump changes either, this fails and the constant here

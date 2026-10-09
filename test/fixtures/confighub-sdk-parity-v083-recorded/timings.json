@@ -1,0 +1,26 @@
+{
+  "bytes_equal_to_cub": true,
+  "cub_process_includes_startup": true,
+  "cub_unit_get_process": {
+    "max": 97.702,
+    "median": 86.367,
+    "min": 79.549
+  },
+  "mcp_result_equal_by_route": true,
+  "runs": 15,
+  "sdk_reader_includes_resolve": true,
+  "sdk_reader_space_by_id": {
+    "max": 4.784,
+    "median": 4.299,
+    "min": 4.04
+  },
+  "sdk_reader_space_by_slug": {
+    "max": 6.867,
+    "median": 5.926,
+    "min": 5.701
+  },
+  "sdk_requests_space_by_id": 1,
+  "sdk_requests_space_by_slug": 2,
+  "unit": "milliseconds per read, wall clock, on this machine against this server",
+  "unit_get_bytes": 2216
+}

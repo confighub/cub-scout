@@ -1,0 +1,10 @@
+Client Version:
+  Version:    v0.8.3
+  Commit:     468dd09f1c893ce2e18fd018192dcfa96cb1dd34
+  Build Date: 2026-10-04T04:36:04Z
+Server Version:
+  URL:        http://localhost:32180
+  Version:    v0.8.3
+  Commit:     1f92e099f4960a0828d2b51ed54e142e5f051b2a
+  Build Date: 2026-10-04T04:35:15Z
+  Client ID:  

@@ -569,6 +569,15 @@ jobs:
           go test -tags=integration ./test/integration/... -run '^(TestImportFullRoundTrip|TestImportIdempotent|TestImportCleanup)$' -count=1 -json -timeout 300s > "$RUNNER_TEMP/scout-connected/roundtrip.json"
           python3 scripts/ci/require_test_passes.py "$RUNNER_TEMP/scout-connected/roundtrip.json" TestImportFullRoundTrip TestImportIdempotent TestImportCleanup
 
+      # #758: the SDK reader asked the same question as cub, of a real server.
+      - name: Compare the SDK reader with cub on the disposable server
+        env:
+          SCOUT_DISPOSABLE_CONFIGHUB: "1"
+          SCOUT_SDK_PARITY_OUT: ${{ runner.temp }}/scout-connected/sdk-parity
+        run: |
+          go test -tags=integration ./test/integration/... -run '^TestSDKReaderMatchesCubOnARealServer$' -count=1 -json -timeout 300s > "$RUNNER_TEMP/scout-connected/sdk-parity.json"
+          python3 scripts/ci/require_test_passes.py "$RUNNER_TEMP/scout-connected/sdk-parity.json" TestSDKReaderMatchesCubOnARealServer
+
       - name: Retain connected test outcomes and versions
         if: always()
         uses: actions/upload-artifact@v7
@@ -576,6 +585,8 @@ jobs:
           name: connected-acceptance
           path: |
             ${{ runner.temp }}/scout-connected/roundtrip.json
+            ${{ runner.temp }}/scout-connected/sdk-parity.json
+            ${{ runner.temp }}/scout-connected/sdk-parity/
             ${{ runner.temp }}/scout-connected/version.txt
 
       - name: Remove disposable ConfigHub server

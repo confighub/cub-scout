@@ -1,0 +1,53 @@
+[
+  {
+    "Space": {
+      "CreatedAt": "2026-10-09T17:49:34.523901Z",
+      "DisplayName": "scout-sdk-parity-1791568174438733407",
+      "EntityType": "Space",
+      "OrganizationID": "2b474e11-5491-48ca-a093-431fba5c2b16",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "229a5aa9-62b8-43ea-b0be-fbe1a9c3b6d6": true
+          }
+        },
+        "ManageChildren": {
+          "UserIDs": {
+            "229a5aa9-62b8-43ea-b0be-fbe1a9c3b6d6": true
+          }
+        }
+      },
+      "Slug": "scout-sdk-parity-1791568174438733407",
+      "SpaceID": "87f0f283-493d-4daf-a005-1fd0a03e44c8",
+      "UpdatedAt": "2026-10-09T17:49:34.523902Z"
+    },
+    "TotalUnitCount": 2,
+    "TriggerCountByEventType": {},
+    "UnlinkedUnitCount": 2,
+    "UnreleasedUnitCount": 2
+  },
+  {
+    "Space": {
+      "CreatedAt": "2026-10-09T17:48:42.760007Z",
+      "DisplayName": "Default",
+      "EntityType": "Space",
+      "OrganizationID": "2b474e11-5491-48ca-a093-431fba5c2b16",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "229a5aa9-62b8-43ea-b0be-fbe1a9c3b6d6": true
+          }
+        },
+        "ManageChildren": {
+          "UserIDs": {
+            "229a5aa9-62b8-43ea-b0be-fbe1a9c3b6d6": true
+          }
+        }
+      },
+      "Slug": "default",
+      "SpaceID": "ccfd268c-9cf5-4b28-afa5-74a7643b0f35",
+      "UpdatedAt": "2026-10-09T17:48:42.760007Z"
+    },
+    "TriggerCountByEventType": {}
+  }
+]
