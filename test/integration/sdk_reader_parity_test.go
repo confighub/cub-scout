@@ -310,8 +310,28 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 	filteredArguments := map[string]string{"space": space, "where": "Slug = '" + unit + "'"}
 	filteredCub, _ := json.Marshal(callTool("confighub_units", filteredArguments, "cub"))
 	filteredSDK, _ := json.Marshal(callTool("confighub_units", filteredArguments, "sdk"))
-	if !bytes.Equal(filteredCub, filteredSDK) || bytes.Contains(filteredSDK, []byte(`\"Slug\": \"`+other+`\"`)) {
-		t.Errorf("the MCP units tool with a filter differs by route, or did not filter")
+	if !bytes.Equal(filteredCub, filteredSDK) {
+		t.Errorf("the MCP units tool with a filter differs by route")
+	}
+	// The filtered answer has the Unit asked for and not the other one.
+	// Equal answers alone would also hold for two empty lists or two errors.
+	if !bytes.Contains(filteredSDK, []byte(envelope.Unit.UnitID)) || bytes.Contains(filteredSDK, []byte(`\"Slug\": \"`+other+`\"`)) {
+		t.Errorf("the MCP units tool with a filter did not return exactly the Unit it names: %s", filteredSDK)
+	}
+
+	// Recorded, not asserted: what each route does with an OR. cub's help
+	// documents AND only; whether the server accepts OR, and how it reads it
+	// beside the space, is not known here (#758).
+	const alternative = "Slug = '" + unit + "' OR Slug = '" + other + "'"
+	if listed, err := cubStdoutOnly("unit", "list", "--space", space, "-o", "json", "--where", alternative); err != nil {
+		keep("unit-list-or-filter.cub.txt", []byte("error: "+err.Error()+"\n"))
+	} else {
+		keep("unit-list-or-filter.cub.txt", listed)
+	}
+	if listed, err := reader.UnitListJSON(ctx, space, hubread.UnitFilter{Where: alternative}); err != nil {
+		keep("unit-list-or-filter.sdk.txt", []byte("error: "+err.Error()+"\n"))
+	} else {
+		keep("unit-list-or-filter.sdk.txt", listed)
 	}
 
 	unitsArguments := map[string]string{"space": space}

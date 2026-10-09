@@ -23,6 +23,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+	"unicode"
 
 	"github.com/confighub/sdk/core/constants"
 	"github.com/confighub/sdk/core/cubapi"
@@ -456,9 +457,11 @@ type UnitFilter struct {
 // UUID; an empty or "*" space is refused before any request, because a list
 // without a space spans the organization.
 //
-// As cub does without --limit, it asks for the whole list in one request. A
-// Unit the server returns from any other space is an error, never output,
-// whatever the filter says.
+// As cub does without --limit, it asks for the whole list in one request. An
+// entry for a Unit in any other space is an error, never output, whatever the
+// filter says. What each entry carries of related entities (its upstream, its
+// links, its target) is what the server expands, as in cub's output, and is
+// not checked.
 func (r *Reader) UnitListJSON(ctx context.Context, space string, filter UnitFilter) ([]byte, error) {
 	const op = "unit list"
 	space = strings.TrimSpace(space)
@@ -506,7 +509,14 @@ func (r *Reader) UnitListJSON(ctx context.Context, space string, filter UnitFilt
 		case found == nil:
 			return nil, &Error{Kind: KindMalformed, Op: op, Message: "the list has an entry with no unit"}
 		case found.SpaceID != spaceID:
-			return nil, &Error{Kind: KindMalformed, Op: op, Message: fmt.Sprintf("the server returned a unit from another space for space %q", space)}
+			message := fmt.Sprintf("the server returned a unit from another space for space %q", space)
+			if filter.Where != "" {
+				// The expression is sent as written. One that the server
+				// reads as an alternative to the space, not a narrowing
+				// of it, would do this.
+				message += "; the filter may reach beyond the space, and its result is not shown"
+			}
+			return nil, &Error{Kind: KindMalformed, Op: op, Message: message}
 		}
 	}
 	return listJSON(op, resp.JSON200)
@@ -536,11 +546,14 @@ func (r *Reader) SpaceListJSON(ctx context.Context) ([]byte, error) {
 	return listJSON(op, resp.JSON200)
 }
 
-// printable returns text with control characters removed and cut to at most
-// limit characters, for a server's message that will be shown to a user.
+// printable returns text cut to at most limit characters, with everything
+// that could act on a terminal rather than be read replaced by a space:
+// control characters (C0 and C1, so an escape sequence loses its introducer),
+// format characters such as the bidirectional overrides, and the line and
+// paragraph separators. It is for a server's message shown to a user.
 func printable(text string, limit int) string {
 	cleaned := strings.Map(func(r rune) rune {
-		if r < 0x20 || r == 0x7f {
+		if unicode.IsControl(r) || unicode.In(r, unicode.Cf, unicode.Zl, unicode.Zp) {
 			return ' '
 		}
 		return r

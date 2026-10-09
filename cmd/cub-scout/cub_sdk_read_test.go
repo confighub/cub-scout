@@ -395,6 +395,7 @@ func TestSDKListArgsTakeOnlyTheCommandsTheyReproduce(t *testing.T) {
 		"a filter with no value":  {"unit", "list", "-o", "json", "--space", "s", "--where"},
 		"two filters":             {"unit", "list", "-o", "json", "--space", "s", "--where", "A = '1'", "--where", "B = '2'"},
 		"a filter spelt with =":   {"unit", "list", "-o", "json", "--space", "s", "--where=Slug = 'x'"},
+		"a search spelt with =":   {"unit", "list", "-o", "json", "--space", "s", "--contains=x"},
 		"an empty search":         {"unit", "list", "-o", "json", "--space", "s", "--contains", ""},
 		"two searches":            {"unit", "list", "-o", "json", "--space", "s", "--contains", "a", "--contains", "b"},
 		"a filter and no space":   {"unit", "list", "-o", "json", "--where", "Slug = 'x'"},
@@ -914,4 +915,25 @@ func TestFleetFailureAdviceFollowsTheRoute(t *testing.T) {
 	t.Setenv(configHubReaderEnv, "cub")
 	_, err = fetchFleetUnits(recordedSpace, "")
 	require.ErrorContains(t, err, "Check that 'cub' CLI is installed")
+}
+
+// The views lookups word a failed list for the route that ran it.
+func TestViewsListFailureWordingFollowsTheRoute(t *testing.T) {
+	onlyFakeCub(t, "3")
+	hub := newRecordedHub(t, http.StatusForbidden)
+	sdkReadsFrom(t, hub)
+
+	t.Setenv(configHubReaderEnv, "sdk")
+	_, err := listUnitsForFilter(context.Background(), "Slug LIKE 'a-%'", recordedSpace)
+	require.True(t, strings.HasPrefix(err.Error(), "ConfigHub unit list: "), err.Error())
+	require.Equal(t, hubread.KindForbidden, hubread.KindOf(err))
+	_, err = listUnitSlugsForFilter(context.Background(), "Slug LIKE 'a-%'", recordedSpace)
+	require.True(t, strings.HasPrefix(err.Error(), "ConfigHub unit list: "), err.Error())
+
+	// Across every space the read stays with cub, and so does the wording.
+	_, err = listUnitsForFilter(context.Background(), "Slug LIKE 'a-%'", allConfigHubSpaces)
+	require.True(t, strings.HasPrefix(err.Error(), "cub unit list: "), err.Error())
+	t.Setenv(configHubReaderEnv, "cub")
+	_, err = listUnitSlugsForFilter(context.Background(), "Slug LIKE 'a-%'", recordedSpace)
+	require.True(t, strings.HasPrefix(err.Error(), "cub unit list: "), err.Error())
 }

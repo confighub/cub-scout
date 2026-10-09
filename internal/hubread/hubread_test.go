@@ -841,6 +841,12 @@ func TestFilteredUnitListSendsWhatTheSDKListHelperSends(t *testing.T) {
 	require.Equal(t, KindMalformed, KindOf(err))
 	require.Nil(t, out)
 
+	// With a filter, the error says the filter may be why, and shows nothing.
+	require.ErrorContains(t, err, "the filter may reach beyond the space")
+	_, err = reader.UnitListJSON(ctx, "11111111-2222-4333-8444-555555555555", UnitFilter{Contains: "parity"})
+	require.Equal(t, KindMalformed, KindOf(err))
+	require.NotContains(t, err.Error(), "the filter may reach")
+
 	// A filter that matches nothing in a space that exists is an empty list.
 	hub.units = []map[string]json.RawMessage{}
 	out, err = reader.UnitListJSON(ctx, slug, UnitFilter{Where: "Slug = 'none'"})
@@ -869,6 +875,16 @@ func TestARejectedFilterKeepsTheServersReason(t *testing.T) {
 	_, err = reader.UnitListJSON(ctx, slug, UnitFilter{Where: "Nope = 1"})
 	require.ErrorContains(t, err, strings.Repeat("é", 300)+"…")
 	require.NotContains(t, err.Error(), strings.Repeat("é", 301))
+
+	// Nothing in the message can act on a terminal: no C1 control (a
+	// one-character escape introducer), no bidirectional override, no line
+	// or paragraph separator.
+	hub.statusBody = `{"Message":"a\u009b31mred\u202eesrever\u2028next\u2029para\u200bzero\ufeff"}`
+	_, err = reader.UnitListJSON(ctx, slug, UnitFilter{Where: "Nope = 1"})
+	require.ErrorContains(t, err, "(HTTP 400): a 31mred esrever next para zero")
+	for _, hidden := range []string{"\u009b", "\u202e", "\u2028", "\u2029", "\u200b", "\ufeff"} {
+		require.NotContains(t, err.Error(), hidden)
+	}
 
 	// With no message to pass on, the status is the reason.
 	hub.statusBody = `{}`
