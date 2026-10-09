@@ -28,17 +28,22 @@ The route works on the command cub-scout was about to run. Every read already
 goes through one function with `cub`'s own arguments, and its callers already
 parse `cub`'s JSON. Under `sdk`, a command of exactly this shape is read through
 the SDK and returned as the JSON `cub` prints for it: the same typed envelope,
-with the same related entities expanded, encoded the same way. The callers do
-not change and cannot tell which route answered.
+with the same related entities expanded, encoded the same way. On the Unit
+recorded from a real server the two are equal byte for byte. The callers do not
+change.
 
 | Taken by the SDK route | Left to `cub`, whatever the setting |
 |---|---|
 | `unit get <unit> -o json --space <space>`, flags in any order | Every other `cub` command |
-| `unit get <space>/<unit> -o json` | A Unit named by its ID (cub finds it in any space) |
-| either, with `--quiet` | `--space "*"`, any other output format, any other flag, `-o=json` or `--space=x` spelt with `=` |
+| `unit get <space>/<unit> -o json` | A Unit named by its ID, in any spelling `cub` reads as an ID: canonical, 32 bare hex digits, braces, `urn:uuid:` |
+| either, with `--quiet` | A space named by ID in any spelling but the canonical one |
+| a space named by its canonical ID | `*` as the space or the Unit; a space containing `/`; a `--space` value that starts with `-` |
+| | Any other output format, any other flag, `--`, and `-o=json` or `--space=x` spelt with `=` |
 
-That is every `unit get` cub-scout builds from a slug; a test reads the source
-and fails when a call site is added in a shape the route does not take.
+Today that is every `unit get` cub-scout builds, given a slug and a named
+space. A test reads the source of each call site and fails when one is added
+in a shape the route does not take; it models the arguments' shape, not the
+values a user supplies.
 
 | Where the read is used | Notes |
 |---|---|
@@ -49,7 +54,12 @@ and fails when a call site is added in a shape the route does not take.
 | Import wizard checks | Reads only; its writes run `cub` |
 
 A failed SDK read is the answer, reported with its reason. It does not fall
-back to `cub`, and no message says that `cub` failed when no `cub` ran.
+back to `cub`, and once the SDK route has taken a read, no failure of it is
+worded as a `cub` failure.
+
+A value that names no route is an error for every read in the left-hand
+column, in every command that makes one, and is not consulted for anything in
+the right-hand column, which has only the `cub` route.
 
 **The `cub` CLI is still required.** The connected commands first ask
 `cub auth status` whether ConfigHub can be read, once per command, on either
@@ -69,9 +79,10 @@ check, and every other ConfigHub read still runs `cub`.
   the response; two matches are an error, never a choice. A space is taken as
   an ID only in the canonical 36-character UUID form; anything else is looked
   up as a slug.
-- **The refusals of the `cub` route apply.** A call that reached this point
-  without its space is refused with the same message on either route, before
-  credentials are resolved or anything is sent.
+- **The refusals of the `cub` route apply.** A call whose space was never
+  resolved carries a placeholder in its place and is refused with the same
+  message on either route, before credentials are resolved or anything is
+  sent.
 - **Credentials are read, not managed.** As a `cub` plugin it uses `CUB_SERVER`
   and `CUB_TOKEN`; otherwise the local cub configuration, honouring
   `CUB_CONFIG` and `CUB_CONTEXT`. It writes nothing, does not log in and does
@@ -79,7 +90,10 @@ check, and every other ConfigHub read still runs `cub`.
   is sent without a credential.
 - **Each failure keeps its reason**: `invalid_scope`, `not_configured`,
   `unauthorized`, `forbidden`, `not_found`, `ambiguous`, `timeout`,
-  `canceled`, `malformed`, `refused`, `request_failed`. No message is built
+  `canceled`, `malformed`, `refused`, `request_failed`. A Unit that does not
+  exist is an empty list and `not_found`; an HTTP 404 is a missing endpoint,
+  so it is `request_failed` with advice to check the server URL, never "no
+  such Unit". No message is built
   from the token or from an error that could quote it: a token file that
   cannot be parsed is reported without the parser's text.
 
@@ -90,7 +104,7 @@ check, and every other ConfigHub read still runs `cub`.
 | `cub` processes per `unit get` | 1 | 0 |
 | HTTP requests per `unit get` | not measured | 2 (the space is looked up each time; nothing is cached) |
 | `cub auth status` processes per command | 1 | 1 |
-| JSON returned for the recorded Unit | as `cub` printed it | equal, value for value |
+| JSON returned for the recorded Unit | as `cub` printed it | equal, byte for byte |
 | source-truth result on the recorded Unit, each route fed the same recorded object | Space, Unit, Revision `2`, URL | the same |
 | Time to start `cub` at all (`cub version`, no network, 5 runs) | 0.40 to 0.53 s | not applicable |
 
