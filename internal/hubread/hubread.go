@@ -267,7 +267,10 @@ func classify(ctx context.Context, op string, err error, resp apiResponse) *Erro
 	case http.StatusForbidden:
 		return &Error{Kind: KindForbidden, Op: op, Message: "the credential may not read this (HTTP 403)"}
 	case http.StatusNotFound:
-		return &Error{Kind: KindNotFound, Op: op, Message: "not found (HTTP 404)"}
+		// Every read here is a list, and a list with no match is an empty
+		// list. A 404 says the endpoint is missing, which is a wrong server
+		// URL or a server this client does not fit, not a missing Unit.
+		return &Error{Kind: KindFailed, Op: op, Message: "the server has no such endpoint (HTTP 404); check the server URL"}
 	default:
 		if status >= 300 && status < 400 {
 			return &Error{Kind: KindRefused, Op: op, Message: fmt.Sprintf("the server answered with a redirect (HTTP %d), which is not followed", status)}

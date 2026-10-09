@@ -250,7 +250,9 @@ func TestUnitHeadClassifiesFailures(t *testing.T) {
 	}{
 		{"unauthorized", func(h *fakeHub) { h.status["/api/space"] = 401 }, KindUnauthorized},
 		{"forbidden on the unit", func(h *fakeHub) { h.status["/api/unit"] = 403 }, KindForbidden},
-		{"not found", func(h *fakeHub) { h.status["/api/unit"] = 404 }, KindNotFound},
+		// A list that matches nothing is an empty list; a 404 is a missing
+		// endpoint, and must not read as "no such Unit".
+		{"endpoint missing", func(h *fakeHub) { h.status["/api/unit"] = 404 }, KindFailed},
 		{"server error", func(h *fakeHub) { h.status["/api/space"] = 500 }, KindFailed},
 		{"truncated body", func(h *fakeHub) { h.raw["/api/unit"] = `[{"Unit":` }, KindMalformed},
 		// A null list is an empty list: nothing matched.
@@ -471,9 +473,9 @@ func TestUnitJSONIsWhatCubPrintedForTheRecordedUnit(t *testing.T) {
 
 	got, err := reader.UnitJSON(context.Background(), recordedSpace, recordedUnit)
 	require.NoError(t, err)
-	require.JSONEq(t, string(recorded), string(got))
-	require.True(t, strings.HasPrefix(string(got), "{\n  \""), "indented two spaces, as cub prints it")
-	require.True(t, strings.HasSuffix(string(got), "}\n"))
+	// Byte for byte: the same fields in the same order, indented two spaces,
+	// with one trailing newline.
+	require.Equal(t, string(recorded), string(got))
 
 	// The same scope rules and failures as every other read.
 	_, err = reader.UnitJSON(context.Background(), "*", recordedUnit)
@@ -511,4 +513,20 @@ func TestUnitLookupSendsWhatTheSDKResolverSends(t *testing.T) {
 	// One deliberate difference: the reader bounds the answer.
 	require.Empty(t, viaSDK.Limit)
 	require.Equal(t, "2", viaReader.Limit)
+
+	// The space named by slug, as most callers name it: both look the space
+	// up first, then ask for the Unit in it with the same filter.
+	_, err = cubapi.ResolveUnit(ctx, reader.client, cubapi.NewRef(recordedSpace, recordedUnit), cubapi.ResolveOpts{})
+	require.NoError(t, err)
+	sdkBySlug := hub.requests()[2:]
+	_, err = reader.UnitJSON(ctx, recordedSpace, recordedUnit)
+	require.NoError(t, err)
+	readerBySlug := hub.requests()[2+len(sdkBySlug):]
+	require.Len(t, sdkBySlug, 2)
+	require.Len(t, readerBySlug, 2)
+	for i := range sdkBySlug {
+		require.Equal(t, sdkBySlug[i].Path, readerBySlug[i].Path)
+		require.Equal(t, sdkBySlug[i].Where, readerBySlug[i].Where)
+	}
+	require.Equal(t, []string{"/api/space", "/api/unit"}, []string{readerBySlug[0].Path, readerBySlug[1].Path})
 }

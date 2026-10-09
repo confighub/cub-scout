@@ -118,15 +118,16 @@ func recordedWorkload() *runtimeWorkload {
 
 func TestSDKUnitGetArgsTakesOnlyTheCommandItReproduces(t *testing.T) {
 	taken := map[string][]string{
-		"unit then flags":        {"unit", "get", "u", "-o", "json", "--space", "s"},
-		"flags then unit":        {"unit", "get", "-o", "json", "u", "--space", "s"},
-		"space first":            {"unit", "get", "--space", "s", "-o", "json", "u"},
-		"quiet":                  {"unit", "get", "u", "-o", "json", "--quiet", "--space", "s"},
-		"long output flag":       {"unit", "get", "u", "--output", "json", "--space", "s"},
-		"qualified reference":    {"unit", "get", "-o", "json", "s/u"},
-		"space given by its ID":  {"unit", "get", "u", "-o", "json", "--space", recordedSpaceID},
-		"names are trimmed":      {"unit", "get", " u ", "-o", "json", "--space", " s "},
-		"qualified, space by ID": {"unit", "get", "-o", "json", recordedSpaceID + "/u"},
+		"unit then flags":         {"unit", "get", "u", "-o", "json", "--space", "s"},
+		"flags then unit":         {"unit", "get", "-o", "json", "u", "--space", "s"},
+		"space first":             {"unit", "get", "--space", "s", "-o", "json", "u"},
+		"quiet":                   {"unit", "get", "u", "-o", "json", "--quiet", "--space", "s"},
+		"long output flag":        {"unit", "get", "u", "--output", "json", "--space", "s"},
+		"qualified reference":     {"unit", "get", "-o", "json", "s/u"},
+		"space given by its ID":   {"unit", "get", "u", "-o", "json", "--space", recordedSpaceID},
+		"names are trimmed":       {"unit", "get", " u ", "-o", "json", "--space", " s "},
+		"qualified, space by ID":  {"unit", "get", "-o", "json", recordedSpaceID + "/u"},
+		"space by ID in capitals": {"unit", "get", "u", "-o", "json", "--space", strings.ToUpper(recordedSpaceID)},
 		"placeholder space (cub's own refusal applies later)": {"unit", "get", "u", "-o", "json", "--space", unresolvedConfigHubSpace},
 	}
 	for name, args := range taken {
@@ -164,6 +165,24 @@ func TestSDKUnitGetArgsTakesOnlyTheCommandItReproduces(t *testing.T) {
 		"reference with no unit":     {"unit", "get", "-o", "json", "s/"},
 		"reference with no space":    {"unit", "get", "-o", "json", "/u"},
 		"too short":                  {"unit", "get"},
+		// cub reads every spelling uuid.Parse accepts as an ID.
+		"unit by ID, bare hex":      {"unit", "get", "6221926e8cc44847a25ca4104042f640", "-o", "json", "--space", "s"},
+		"unit by ID, braces":        {"unit", "get", "{" + recordedUnitID + "}", "-o", "json", "--space", "s"},
+		"unit by ID, urn":           {"unit", "get", "urn:uuid:" + recordedUnitID, "-o", "json", "--space", "s"},
+		"unit by ID, upper case":    {"unit", "get", strings.ToUpper(recordedUnitID), "-o", "json", "--space", "s"},
+		"space by ID, bare hex":     {"unit", "get", "u", "-o", "json", "--space", "68843338f9bd485c9a665d5aee820247"},
+		"space by ID, braces":       {"unit", "get", "u", "-o", "json", "--space", "{" + recordedSpaceID + "}"},
+		"space by ID, urn":          {"unit", "get", "u", "-o", "json", "--space", "urn:uuid:" + recordedSpaceID},
+		"qualified, space bare hex": {"unit", "get", "-o", "json", "68843338f9bd485c9a665d5aee820247/u"},
+		"every unit":                {"unit", "get", "*", "-o", "json", "--space", "s"},
+		"qualified, every unit":     {"unit", "get", "-o", "json", "s/*"},
+		"qualified, every space":    {"unit", "get", "-o", "json", "*/u"},
+		"space with a slash":        {"unit", "get", "u", "-o", "json", "--space", "a/b"},
+		"space that is a flag":      {"unit", "get", "u", "-o", "json", "--space", "--quiet"},
+		"output format in capitals": {"unit", "get", "u", "-o", "JSON", "--space", "s"},
+		"output format then a flag": {"unit", "get", "u", "--space", "s", "-o", "--quiet"},
+		"argument terminator":       {"unit", "get", "-o", "json", "--space", "s", "--", "u"},
+		"short flag bundle":         {"unit", "get", "u", "-ojson", "--space", "s"},
 	}
 	for name, args := range left {
 		t.Run("left to cub/"+name, func(t *testing.T) {
@@ -192,6 +211,7 @@ func TestEveryUnitGetCallSiteIsOneTheSDKRouteTakes(t *testing.T) {
 				continue
 			}
 			sites++
+			require.Equal(t, 1, strings.Count(line, `"unit", "get"`), "%s:%d builds two on one line", file, number+1)
 			match := literalCall.FindStringSubmatch(line)
 			require.NotNil(t, match, "%s:%d builds a unit get this test cannot read: %s", file, number+1, strings.TrimSpace(line))
 			args := []string{"unit", "get"}
@@ -217,6 +237,26 @@ func TestEveryUnitGetCallSiteIsOneTheSDKRouteTakes(t *testing.T) {
 		}
 	}
 	require.GreaterOrEqual(t, sites, 11, "the scan no longer finds the call sites")
+
+	// The scan above reads one line at a time. A call written across lines,
+	// spaced differently, or outside this package would pass it unseen, so
+	// count every spelling everywhere and hold the two counts together.
+	anySpelling := regexp.MustCompile(`"unit"\s*,\s*"get"`)
+	everywhere := 0
+	for _, root := range []string{".", filepath.Join("..", "..", "pkg"), filepath.Join("..", "..", "internal")} {
+		require.NoError(t, filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+			if err != nil || entry.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+				return err
+			}
+			source, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			everywhere += len(anySpelling.FindAll(source, -1))
+			return nil
+		}))
+	}
+	require.Equal(t, sites, everywhere, "a unit get is built somewhere the scan above does not read")
 
 	// The MCP tool chooses between three spellings.
 	tool, ok := newMCPGatewayWithMode(nil, nil, true).tools["confighub_unit_get"]
@@ -258,8 +298,9 @@ func TestCubStdoutAnswersUnitGetThroughTheSDKWhenAsked(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, fakeCubCalls(t, cubLog), 1, "with the setting no cub process is started")
 	require.Equal(t, []string{"GET /api/space", "GET /api/unit"}, hub.seen)
-	require.JSONEq(t, string(viaCub), string(viaSDK))
-	require.True(t, strings.HasSuffix(string(viaSDK), "}\n"))
+	// The fake cub prints the recorded file, so this is byte for byte what
+	// cub printed for this Unit.
+	require.Equal(t, string(viaCub), string(viaSDK))
 
 	// The route name is case-insensitive, and "cub" is the default spelt out.
 	t.Setenv(configHubReaderEnv, " CUB ")
@@ -362,10 +403,18 @@ func TestAnUnknownConfigHubReaderIsRefused(t *testing.T) {
 	_, err = collectConfigHubSurface(context.Background(), recordedWorkload())
 	var collection *agent.CollectionError
 	require.ErrorAs(t, err, &collection)
-	require.Contains(t, collection.Reason, `CUB_SCOUT_CONFIGHUB_READER="sdkk" is not a reader (valid: cub, sdk)`)
+	// No cub ran and no read was tried: the reason is the setting, and it is
+	// not worded as a cub failure.
+	require.Equal(t, `ConfigHub unit read failed: CUB_SCOUT_CONFIGHUB_READER="sdkk" is not a reader (valid: cub, sdk)`, collection.Reason)
 
 	require.Empty(t, fakeCubCalls(t, cubLog))
 	require.Empty(t, hub.seen)
+
+	// A command the SDK route does not take has one route, so the setting is
+	// not consulted for it.
+	_, err = cubStdout(context.Background(), "unit", "list", "-o", "json", "--space", recordedSpace)
+	require.NoError(t, err)
+	require.Len(t, fakeCubCalls(t, cubLog), 1)
 }
 
 // The refusals the cub route makes before spawning are made on the SDK route
@@ -382,6 +431,15 @@ func TestSDKRouteRefusesWhatTheCubRouteRefuses(t *testing.T) {
 	t.Setenv(configHubReaderEnv, "sdk")
 	_, sdkErr := cubStdout(context.Background(), args...)
 	require.EqualError(t, sdkErr, cubErr.Error())
+
+	// The same refusal, but source-truth must not say cub failed on the SDK
+	// route. (On the cub route that wording is older than this route.)
+	workload := recordedWorkload()
+	workload.Annotations["confighub.com/SpaceName"] = unresolvedConfigHubSpace
+	_, err := collectConfigHubSurface(context.Background(), workload)
+	var collection *agent.CollectionError
+	require.ErrorAs(t, err, &collection)
+	require.True(t, strings.HasPrefix(collection.Reason, "ConfigHub unit read failed: "), collection.Reason)
 
 	require.Empty(t, fakeCubCalls(t, cubLog))
 	require.Empty(t, hub.seen)

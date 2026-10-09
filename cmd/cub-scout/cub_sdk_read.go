@@ -10,8 +10,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"github.com/confighub/cub-scout/v2/internal/hubread"
-	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
 
 // This file is where a `cub` read is answered through the ConfigHub SDK
@@ -72,7 +73,9 @@ func sdkUnitGetArgs(args []string) (space, unit string, ok bool) {
 			jsonOutput = true
 			i++
 		case arg == "--space":
-			if i+1 >= len(args) || hasFlagSpace {
+			// cub takes the next argument as the value even when it looks
+			// like a flag. That is more likely a mistake than a space.
+			if i+1 >= len(args) || hasFlagSpace || strings.HasPrefix(args[i+1], "-") {
 				return "", "", false
 			}
 			flagSpace, hasFlagSpace = strings.TrimSpace(args[i+1]), true
@@ -100,21 +103,38 @@ func sdkUnitGetArgs(args []string) (space, unit string, ok bool) {
 	default:
 		space, unit = flagSpace, ref
 	}
-	if space == "" || unit == "" || strings.Contains(unit, "/") {
+	if space == "" || unit == "" || strings.Contains(unit, "/") || strings.Contains(space, "/") {
 		return "", "", false
 	}
-	// A Unit named by ID is found by cub whatever the space, and "*" asks
-	// cub for every space. The reader is for one slug in one named space, so
-	// both spellings stay with cub.
-	if agent.IsUUID(unit) || space == allConfigHubSpaces {
+	// "*" asks cub for every space, and is no Unit's slug.
+	if space == allConfigHubSpaces || unit == allConfigHubSpaces {
+		return "", "", false
+	}
+	// cub reads a name as an ID in every spelling uuid.Parse accepts: the
+	// canonical form, 32 bare hex digits, braces, a urn: prefix. A Unit
+	// named by ID is found whatever the space, so it stays with cub. The
+	// reader takes a space by ID in the canonical form only and would look
+	// the other spellings up as slugs, so those stay with cub too.
+	if spelledAsID(unit) || (spelledAsID(space) && !canonicalID(space)) {
 		return "", "", false
 	}
 	return space, unit, true
 }
 
-// sdkRouteError marks a failure of a read that was answered on the SDK route.
-// No cub process ran, so a caller that words its failure as "cub ... failed"
-// checks for this first.
+func spelledAsID(name string) bool {
+	_, err := uuid.Parse(name)
+	return err == nil
+}
+
+func canonicalID(name string) bool {
+	id, err := uuid.Parse(name)
+	return err == nil && strings.EqualFold(id.String(), name)
+}
+
+// sdkRouteError marks a failure of a read that the SDK route took: a failed
+// read, a credential that could not be resolved, a refusal, or a route setting
+// that names no route. In every case no cub process ran, so a caller that
+// words its failure as "cub ... failed" checks for this first.
 type sdkRouteError struct{ err error }
 
 func (e *sdkRouteError) Error() string { return e.err.Error() }
@@ -146,7 +166,7 @@ func cubReadViaSDK(ctx context.Context, args []string) (out []byte, handled bool
 	// The same refusals as the cub route: a call that forgot its space is
 	// refused here too, before anything is resolved or sent.
 	if err := checkCubArgs(args); err != nil {
-		return nil, true, err
+		return nil, true, &sdkRouteError{err}
 	}
 	if ctx == nil {
 		ctx = context.Background()
