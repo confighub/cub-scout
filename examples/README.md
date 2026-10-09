@@ -79,6 +79,7 @@ understands the core ownership model.
 - [`platform-example`](./platform-example/)
 - [`d2-control-plane`](./d2-control-plane/)
 - [`flux-boutique`](./flux-boutique/)
+- [`delivery-settings`](./delivery-settings/) — which Argo CD and Flux deployers self-heal, prune or apply with non-default options, checked on a real cluster
 - [`live-delivery-observability`](./live-delivery-observability/) — aggregate delivery status, audited action events, drift shape, and rollout evidence
 - [`modelplane-crossplane`](./modelplane-crossplane/) — Modelplane ownership with explicit Crossplane substrate evidence across map, trace, watch/bot, and receipts
 - [`kro-composition`](./kro-composition/)

@@ -109,7 +109,7 @@ func contextBoundReadCommands() []*cobra.Command {
 	return []*cobra.Command{
 		debugCmd, driftCmd, compareDriftCmd, graphExplainCmd,
 		patternsDetectCmd, patternsExplainCmd, contextPackCmd, receiptVerifyCmd,
-		combinedCmd, compareObjectSetCmd,
+		combinedCmd, compareObjectSetCmd, gitopsSettingsCmd,
 	}
 }
 

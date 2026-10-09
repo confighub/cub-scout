@@ -1,0 +1,459 @@
+{
+  "schema": "delivery-settings-live-proof.v1",
+  "sourceCommit": "daf2beb3d20b87bfd45d2e0cd3ddbcb8917c3446",
+  "sourceCommitUnchanged": true,
+  "sourceWorktreeCleanBeforeAndAfter": true,
+  "binarySHA256": "2a5ced063eb0d4c4f3e5c5d4023d5ff60c624ca4660244e448833dec482a95b6",
+  "finished": "2026-10-09T07:54:56+00:00",
+  "kubernetesNodeImage": "kindest/node:v1.35.0",
+  "argocdManifest": "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.3/manifests/install.yaml",
+  "argocdManifestSHA256": "7efe2d6bbc03f63623640f1e4198f16c84009d510fb810ef71e56df1b7614ba9",
+  "fluxCLI": "flux version 2.8.6",
+  "fluxComponents": [
+    "source-controller",
+    "kustomize-controller",
+    "helm-controller"
+  ],
+  "ownedClusterRemoved": true,
+  "sharedKubeconfigUnchanged": true,
+  "observations": {
+    "linkSourcesBeforeURL": [
+      {
+        "namespace": "argocd",
+        "status": "url_unset"
+      },
+      {
+        "namespace": "team-b",
+        "status": "not_found"
+      }
+    ],
+    "reads": [
+      {
+        "controller": "ArgoCD",
+        "kind": "Application",
+        "resource": "applications.argoproj.io/v1alpha1",
+        "status": "read",
+        "count": 4
+      },
+      {
+        "controller": "Flux",
+        "kind": "Kustomization",
+        "resource": "kustomizations.kustomize.toolkit.fluxcd.io/v1",
+        "status": "read",
+        "count": 2
+      },
+      {
+        "controller": "Flux",
+        "kind": "HelmRelease",
+        "resource": "helmreleases.helm.toolkit.fluxcd.io/v2",
+        "status": "read",
+        "count": 2
+      }
+    ],
+    "counts": [
+      {
+        "controller": "ArgoCD",
+        "kind": "Application",
+        "status": "read",
+        "read": 4,
+        "shown": 4
+      },
+      {
+        "controller": "Flux",
+        "kind": "Kustomization",
+        "status": "read",
+        "read": 2,
+        "shown": 2
+      },
+      {
+        "controller": "Flux",
+        "kind": "HelmRelease",
+        "status": "read",
+        "read": 2,
+        "shown": 2
+      }
+    ],
+    "linkSources": [
+      {
+        "namespace": "argocd",
+        "status": "found",
+        "url": "https://argocd.example.test"
+      },
+      {
+        "namespace": "team-b",
+        "status": "not_found"
+      }
+    ],
+    "declared": {
+      "Application/argocd/guestbook-auto": {
+        "auto-sync": "on",
+        "self-heal": "on",
+        "prune": "on",
+        "CreateNamespace": "true",
+        "ServerSideApply": "true"
+      },
+      "Application/team-b/outside": {
+        "auto-sync": "on",
+        "self-heal": "off",
+        "prune": "unset"
+      },
+      "Application/argocd/guestbook-manual": {
+        "auto-sync": "unset",
+        "self-heal": "n/a",
+        "prune": "n/a"
+      },
+      "Application/argocd/guestbook-partial": {
+        "auto-sync": "on",
+        "self-heal": "unset",
+        "prune": "unset",
+        "CreateNamespace": "true",
+        "PrunePropagationPolicy": "foreground",
+        "RespectIgnoreDifferences": "true",
+        "Validate": "false",
+        "ignoreDifferences": "set"
+      },
+      "HelmRelease/team-h/plain": {
+        "suspend": "unset",
+        "driftDetection.mode": "unset"
+      },
+      "HelmRelease/team-h/tuned": {
+        "suspend": "unset",
+        "driftDetection.mode": "enabled",
+        "driftDetection.ignore": "set",
+        "install.createNamespace": "true",
+        "install.remediation.retries": "3",
+        "upgrade.cleanupOnFail": "true",
+        "upgrade.force": "true",
+        "upgrade.remediation.retries": "2",
+        "upgrade.remediation.strategy": "rollback"
+      },
+      "Kustomization/flux-system/podinfo": {
+        "suspend": "unset",
+        "prune": "on",
+        "force": "off",
+        "wait": "unset"
+      },
+      "Kustomization/flux-system/podinfo-held": {
+        "suspend": "on",
+        "prune": "off",
+        "force": "on",
+        "wait": "on"
+      }
+    },
+    "fluxOnlyReads": [
+      {
+        "controller": "ArgoCD",
+        "kind": "Application",
+        "resource": "applications.argoproj.io/v1alpha1",
+        "status": "not_read",
+        "count": 0,
+        "reason": "forbidden",
+        "message": "applications.argoproj.io is forbidden: User \"system:serviceaccount:default:flux-only\" cannot list resource \"applications\" in API group \"argoproj.io\" at the cluster scope"
+      },
+      {
+        "controller": "Flux",
+        "kind": "Kustomization",
+        "resource": "kustomizations.kustomize.toolkit.fluxcd.io/v1",
+        "status": "read",
+        "count": 2
+      },
+      {
+        "controller": "Flux",
+        "kind": "HelmRelease",
+        "resource": "helmreleases.helm.toolkit.fluxcd.io/v2",
+        "status": "read",
+        "count": 2
+      }
+    ],
+    "appsOnlyReads": [
+      {
+        "controller": "ArgoCD",
+        "kind": "Application",
+        "resource": "applications.argoproj.io/v1alpha1",
+        "status": "read",
+        "count": 4
+      },
+      {
+        "controller": "Flux",
+        "kind": "Kustomization",
+        "resource": "kustomizations.kustomize.toolkit.fluxcd.io/v1",
+        "status": "not_read",
+        "count": 0,
+        "reason": "forbidden",
+        "message": "kustomizations.kustomize.toolkit.fluxcd.io is forbidden: User \"system:serviceaccount:default:apps-only\" cannot list resource \"kustomizations\" in API group \"kustomize.toolkit.fluxcd.io\" at the cluster scope"
+      },
+      {
+        "controller": "Flux",
+        "kind": "HelmRelease",
+        "resource": "helmreleases.helm.toolkit.fluxcd.io/v2",
+        "status": "not_read",
+        "count": 0,
+        "reason": "forbidden",
+        "message": "helmreleases.helm.toolkit.fluxcd.io is forbidden: User \"system:serviceaccount:default:apps-only\" cannot list resource \"helmreleases\" in API group \"helm.toolkit.fluxcd.io\" at the cluster scope"
+      }
+    ],
+    "appsOnlyLinkSources": [
+      {
+        "namespace": "argocd",
+        "status": "not_read",
+        "reason": "forbidden"
+      },
+      {
+        "namespace": "team-b",
+        "status": "not_read",
+        "reason": "forbidden"
+      }
+    ]
+  },
+  "passed": true,
+  "failures": [],
+  "steps": [
+    {
+      "name": "before-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc8b64acf1c52ac96aa667faf542de602c4390a653a9c6693969085eb54fa085",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "bbc704392559469d91faa209af29e23a19ba2ebc3215b02247c4da4da4511741"
+    },
+    {
+      "name": "install-flux",
+      "exit": 0,
+      "stdoutSHA256": "aa3b541176fb7ed32d693aaf2e29d8f9e65371bb96155658e949de0d9ed1f688",
+      "stderrSHA256": "3e8fcc4205c99020782ae78c5d01071264b6e0fefad9a8cd27e269aababcf50e"
+    },
+    {
+      "name": "fetch-argocd-manifest",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-namespace-argocd",
+      "exit": 0,
+      "stdoutSHA256": "3c2baa88d2679a6212a46e7c812cca6ed85e17d77e4b40bb141f3a09b6152d73",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-namespace-team-a",
+      "exit": 0,
+      "stdoutSHA256": "aa41cec8dac195ede91e37e493d371c289d811f5e51bdfe21f68021f08528b94",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-namespace-team-b",
+      "exit": 0,
+      "stdoutSHA256": "b01a66500c48811466500a3105a9a6a69d42ea93d0c7d4d43f59382143182f06",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-namespace-team-h",
+      "exit": 0,
+      "stdoutSHA256": "2fd0c8a37c2f1077d2305788c3584edc688655153e9b342292fca00e2e8c5ea7",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "install-argocd",
+      "exit": 0,
+      "stdoutSHA256": "d05ac0bb9eab1dd059b1af44ce58d1a2da9d9492bf811721bbff87920c309c58",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-crd",
+      "exit": 0,
+      "stdoutSHA256": "a509b3b7ea7350212f6f1a4bf5ce2468ebabb7b544918f8183b6520925e9cf4d",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-repo-server",
+      "exit": 0,
+      "stdoutSHA256": "08f40c3466fd44626594813f7c9e7e48fd0386cb0a90329275c5f490f028cd99",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-application-controller",
+      "exit": 0,
+      "stdoutSHA256": "36da818e2e5135cf9f3e7dae3dd24592e2df502a120d303298ccf32677ceb031",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-deployers",
+      "exit": 0,
+      "stdoutSHA256": "53bef3d0d1665fdfda8a322aed66b09ec181ebd82b349d0bc90b9a5540024b4a",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-application",
+      "exit": 0,
+      "stdoutSHA256": "289a08378d1bf23b8879224026ba2fcb60107cb2b8777bb795a982ecfb2ff494",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-kustomization",
+      "exit": 0,
+      "stdoutSHA256": "be14938829be465841499e5ec8c35fb14e4461b86d5765d7d2ed55d66d3cce03",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wait-helmrelease",
+      "exit": 0,
+      "stdoutSHA256": "a93cd68e6bb8a899a04d197a0179eb5df17580c5574b5c060904151b702d57e3",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-sa-flux-only",
+      "exit": 0,
+      "stdoutSHA256": "f7a70152d0ee5b698f5c331feba60d693237d5623fc55a0b450590b8ef5617d3",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "rbac-flux-only",
+      "exit": 0,
+      "stdoutSHA256": "fe34f0a788960dc5ff5e606c577a873b65d7693b850e0d3c7040fa115997a1cf",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "create-sa-apps-only",
+      "exit": 0,
+      "stdoutSHA256": "7d074cbaae3a9e1789b7ced6935d5d78f19f219c61afd15f49f8a0c78cfaea54",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "rbac-apps-only",
+      "exit": 0,
+      "stdoutSHA256": "d27757bfbc88ac5babbad32266cfcac387a8af25e57e0b93c8c6b42415d015a8",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "control-ambient-unusable",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "77137f259ea429cf716eef4b9876a66dbfe4f6641e8a62eda87ce2a30ff35f1a"
+    },
+    {
+      "name": "refuses-blank",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "94e7abbaa184512fe4e09b88af50f43086b3eaeeaccb9a8a82c5d85533319002"
+    },
+    {
+      "name": "refuses-missing",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e7002cebc81f91692118b1c8059b30dd6f716b1c8410e2e971a4093a95636e69"
+    },
+    {
+      "name": "before-url",
+      "exit": 0,
+      "stdoutSHA256": "3947c271592c40ebaa3239c77bc9621f22694f46b514e74bf46f9268701ca6f1",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "configure-argocd-url",
+      "exit": 0,
+      "stdoutSHA256": "11705b9773d1d1411109e374d1235917381f49fb90f8d47dc9a92f778cbf5ebd",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "all",
+      "exit": 0,
+      "stdoutSHA256": "a4a78a95cbb34c8bd9af88b72cc9636c5670bddb55f20c31a7ff718401e37019",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "filter-self-heal-off",
+      "exit": 0,
+      "stdoutSHA256": "9eead9d43f3de9f63719a3aef71a7242b5b618dd8130f4126cff8955814f70f1",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "filter-prune-off",
+      "exit": 0,
+      "stdoutSHA256": "b43827c6491f47959edf1a2fa5f8a8a36859ec091993f0824885608ad9bead0a",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "filter-two",
+      "exit": 0,
+      "stdoutSHA256": "f037407bcdb46a0a04f112a94ab8ded5fe77802a98b631ed68ebe6b4b6e407c9",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "filter-project",
+      "exit": 0,
+      "stdoutSHA256": "d43cf904f9c4761a32e1d608b2d8e7c79d87111905e73678f02f29f7ba1fbd0d",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "namespace-team-h",
+      "exit": 0,
+      "stdoutSHA256": "5f22b16546a0607544626b3bbc51782fd1b3ca283970424d34b6e5abb20ab413",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "ascii",
+      "exit": 0,
+      "stdoutSHA256": "fbcf4af2c67e70d0c951becc61db414f3ab8caebba919a6b058e5a3803579604",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "ascii-by-setting",
+      "exit": 0,
+      "stdoutSHA256": "b7f4aa0d4950af6661ef874a19bb51eade04f61d0a084eaf887b1d31559a80db",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "ascii-by-deployer",
+      "exit": 0,
+      "stdoutSHA256": "df41a325e2266340c50a33591fc26e9e16adcb723641907c2291f1266a5f7c89",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "markdown",
+      "exit": 0,
+      "stdoutSHA256": "6953bdf0547496b2076928061c2ff7a1deba6ffaa750c68ea98d9f71ddaeeaf7",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "map-deep-dive",
+      "exit": 0,
+      "stdoutSHA256": "8b0dd61b1365a8d597477254f4240d0f62d67de1849bd4ed5c9d608916945f4e",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "flux-only",
+      "exit": 0,
+      "stdoutSHA256": "bb1e3fbb75a64252115f019c3e94ef502b828c97d76eecfe12999807bfefaec3",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "flux-only-ascii",
+      "exit": 0,
+      "stdoutSHA256": "c07a3f5a107df4d56016346e0cd5dabf322a71cde84a32e6277b76665ffad3d1",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "apps-only",
+      "exit": 0,
+      "stdoutSHA256": "24d9ebe543037287000c33b54362a9d4d7483f07db15ed318447b06dcdd169db",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cleanup-owned-cluster",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "7e0c6c357858d9bea5d8c33568e362380c933da583f6157de38dc6adec18caa3"
+    },
+    {
+      "name": "after-clusters",
+      "exit": 0,
+      "stdoutSHA256": "cc8b64acf1c52ac96aa667faf542de602c4390a653a9c6693969085eb54fa085",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "limits": "One owned kind cluster with real Argo CD v3.5.3 and Flux. Shows that gitops settings reports what each Application, Kustomization and HelmRelease spec declares, that an absent field is unset and not off, that a kind the caller may not list is not read and not absent, and that a link is shown only when argocd-cm in the Application's namespace declares a url. Only guestbook-auto and the podinfo Kustomization are waited on to sync; the other objects exist to be read. The Application in team-b is not managed by this Argo CD, which is not configured for Applications in any namespace. It does not show that a controller acts on any setting, does not cover ApplicationSet-generated Applications, AppProject sync windows, per-resource sync-option annotations, the --tui viewport, or older Flux API versions, and makes no claim about agent cost."
+}
