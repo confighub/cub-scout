@@ -150,6 +150,7 @@ func TestSDKUnitGetArgsTakesOnlyTheCommandItReproduces(t *testing.T) {
 		"joined space spelling":      {"unit", "get", "u", "-o", "json", "--space=s"},
 		"two positionals":            {"unit", "get", "u", "v", "-o", "json", "--space", "s"},
 		"no positional":              {"unit", "get", "-o", "json", "--space", "s"},
+		"a flag where the unit goes": {"unit", "get", "--verbose", "-o", "json", "--space", "s"},
 		"no space":                   {"unit", "get", "u", "-o", "json"},
 		"empty space":                {"unit", "get", "u", "-o", "json", "--space", " "},
 		"space flag with no value":   {"unit", "get", "u", "-o", "json", "--space"},
