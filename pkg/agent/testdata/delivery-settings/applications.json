@@ -8,12 +8,12 @@
         "annotations": {
           "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"guestbook-auto\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"guestbook-auto\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"guestbook\",\"repoURL\":\"https://github.com/argoproj/argocd-example-apps\",\"targetRevision\":\"HEAD\"},\"syncPolicy\":{\"automated\":{\"prune\":true,\"selfHeal\":true},\"syncOptions\":[\"CreateNamespace=true\",\"ServerSideApply=true\"]}}}\n"
         },
-        "creationTimestamp": "2026-10-09T06:55:25Z",
+        "creationTimestamp": "2026-10-09T07:13:57Z",
         "generation": 9,
         "name": "guestbook-auto",
         "namespace": "argocd",
-        "resourceVersion": "1355",
-        "uid": "0de176e9-ce02-434f-a5d1-6554926a7633"
+        "resourceVersion": "1384",
+        "uid": "dbc60227-9cca-4a22-8831-b5b966f7dc06"
       },
       "spec": {
         "destination": {
@@ -40,13 +40,13 @@
       "status": {
         "controllerNamespace": "argocd",
         "health": {
-          "lastTransitionTime": "2026-10-09T06:55:42Z",
+          "lastTransitionTime": "2026-10-09T07:14:19Z",
           "status": "Progressing"
         },
         "history": [
           {
-            "deployStartedAt": "2026-10-09T06:55:39Z",
-            "deployedAt": "2026-10-09T06:55:42Z",
+            "deployStartedAt": "2026-10-09T07:14:05Z",
+            "deployedAt": "2026-10-09T07:14:16Z",
             "id": 0,
             "initiatedBy": {
               "automated": true
@@ -60,7 +60,7 @@
           }
         ],
         "operationState": {
-          "finishedAt": "2026-10-09T06:55:42Z",
+          "finishedAt": "2026-10-09T07:14:16Z",
           "message": "successfully synced (all tasks run)",
           "operation": {
             "initiatedBy": {
@@ -84,7 +84,7 @@
             }
           },
           "phase": "Succeeded",
-          "startedAt": "2026-10-09T06:55:39Z",
+          "startedAt": "2026-10-09T07:14:05Z",
           "syncResult": {
             "resources": [
               {
@@ -132,7 +132,7 @@
             }
           }
         },
-        "reconciledAt": "2026-10-09T06:55:42Z",
+        "reconciledAt": "2026-10-09T07:14:19Z",
         "resourceHealthSource": "appTree",
         "resources": [
           {
@@ -182,12 +182,12 @@
         "annotations": {
           "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"guestbook-manual\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"guestbook-manual\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"payments\",\"source\":{\"path\":\"guestbook\",\"repoURL\":\"https://github.com/argoproj/argocd-example-apps\",\"targetRevision\":\"HEAD\"}}}\n"
         },
-        "creationTimestamp": "2026-10-09T06:55:25Z",
+        "creationTimestamp": "2026-10-09T07:13:57Z",
         "generation": 2,
         "name": "guestbook-manual",
         "namespace": "argocd",
-        "resourceVersion": "1293",
-        "uid": "c6c1d5fa-8c68-4d1f-8cf4-1ca4473226f7"
+        "resourceVersion": "1274",
+        "uid": "b4ac157a-eab8-46ce-9d69-beafbc50042e"
       },
       "spec": {
         "destination": {
@@ -204,10 +204,10 @@
       "status": {
         "controllerNamespace": "argocd",
         "health": {
-          "lastTransitionTime": "2026-10-09T06:55:30Z",
+          "lastTransitionTime": "2026-10-09T07:14:05Z",
           "status": "Missing"
         },
-        "reconciledAt": "2026-10-09T06:55:25Z",
+        "reconciledAt": "2026-10-09T07:13:57Z",
         "resourceHealthSource": "appTree",
         "resources": [
           {
@@ -251,12 +251,12 @@
         "annotations": {
           "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"guestbook-partial\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"guestbook-partial\",\"server\":\"https://kubernetes.default.svc\"},\"ignoreDifferences\":[{\"group\":\"apps\",\"jsonPointers\":[\"/spec/replicas\"],\"kind\":\"Deployment\"}],\"project\":\"payments\",\"source\":{\"path\":\"guestbook\",\"repoURL\":\"https://github.com/argoproj/argocd-example-apps\",\"targetRevision\":\"HEAD\"},\"syncPolicy\":{\"automated\":{},\"syncOptions\":[\"CreateNamespace=true\",\"Validate=false\",\"PrunePropagationPolicy=foreground\",\"RespectIgnoreDifferences=true\"]}}}\n"
         },
-        "creationTimestamp": "2026-10-09T06:55:25Z",
+        "creationTimestamp": "2026-10-09T07:13:57Z",
         "generation": 8,
         "name": "guestbook-partial",
         "namespace": "argocd",
-        "resourceVersion": "1426",
-        "uid": "579e1c15-feca-4e0a-af77-95e0f2d51eb7"
+        "resourceVersion": "1404",
+        "uid": "4eae0a8b-addf-4481-bcc4-f38ae2d99481"
       },
       "operation": {
         "initiatedBy": {
@@ -313,12 +313,12 @@
       "status": {
         "controllerNamespace": "argocd",
         "health": {
-          "lastTransitionTime": "2026-10-09T06:55:39Z",
+          "lastTransitionTime": "2026-10-09T07:14:05Z",
           "status": "Missing"
         },
         "operationState": {
-          "finishedAt": "2026-10-09T06:55:51Z",
-          "message": "one or more synchronization tasks are not valid: resource :Namespace is not permitted in project payments. Retrying attempt #2 at 6:56AM.",
+          "finishedAt": "2026-10-09T07:14:21Z",
+          "message": "one or more synchronization tasks are not valid: resource :Namespace is not permitted in project payments. Retrying attempt #2 at 7:14AM.",
           "operation": {
             "initiatedBy": {
               "automated": true
@@ -343,7 +343,7 @@
           },
           "phase": "Running",
           "retryCount": 2,
-          "startedAt": "2026-10-09T06:55:40Z",
+          "startedAt": "2026-10-09T07:14:05Z",
           "syncResult": {
             "resources": [
               {
@@ -365,7 +365,7 @@
             }
           }
         },
-        "reconciledAt": "2026-10-09T06:55:51Z",
+        "reconciledAt": "2026-10-09T07:14:16Z",
         "resourceHealthSource": "appTree",
         "resources": [
           {
@@ -420,12 +420,12 @@
         "annotations": {
           "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"outside\",\"namespace\":\"team-b\"},\"spec\":{\"destination\":{\"namespace\":\"outside\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"guestbook\",\"repoURL\":\"https://github.com/argoproj/argocd-example-apps\",\"targetRevision\":\"HEAD\"},\"syncPolicy\":{\"automated\":{\"selfHeal\":false}}}}\n"
         },
-        "creationTimestamp": "2026-10-09T06:55:25Z",
+        "creationTimestamp": "2026-10-09T07:13:57Z",
         "generation": 1,
         "name": "outside",
         "namespace": "team-b",
-        "resourceVersion": "1140",
-        "uid": "f18dc525-030a-4248-9521-1758d46f4e57"
+        "resourceVersion": "1124",
+        "uid": "d714d7d0-62a3-4678-acb6-0c5c9104f3bd"
       },
       "spec": {
         "destination": {
