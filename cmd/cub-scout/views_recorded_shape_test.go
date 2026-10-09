@@ -4,9 +4,13 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -86,4 +90,129 @@ func TestViewUnitFieldMatchesExactlyFirst(t *testing.T) {
 	value, ok := viewUnitField(map[string]interface{}{"slug": "flat"}, "Slug")
 	require.True(t, ok)
 	require.Equal(t, "flat", value)
+}
+
+// recordedView is one file of what cub printed for a real View on ConfigHub
+// v0.8.3 (see the fixture's NOTICE).
+func recordedView(t *testing.T, name string) string {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join("..", "..", "test", "fixtures", "confighub-views-v083-recorded", name))
+	require.NoError(t, err)
+	return string(data)
+}
+
+const recordedViewID = "cbfe0f5b-1398-4dab-8f5f-d8fb57993197"
+
+// viewRunner answers `cub view get` with the recorded View and `cub unit list`
+// with units, and keeps the arguments of each call.
+func viewRunner(t *testing.T, units string) *[][]string {
+	t.Helper()
+	calls := &[][]string{}
+	orig := viewCubRunner
+	t.Cleanup(func() { viewCubRunner = orig })
+	viewCubRunner = func(_ context.Context, args ...string) ([]byte, error) {
+		*calls = append(*calls, args)
+		switch strings.Join(args[:2], " ") {
+		case "view get":
+			return []byte(recordedView(t, "view-get.json")), nil
+		case "unit list":
+			return []byte(units), nil
+		}
+		return nil, fmt.Errorf("unexpected cub %s", strings.Join(args, " "))
+	}
+	return calls
+}
+
+// #852: a real View, projected. Its columns are where cub prints them, and
+// each cell is the value ConfigHub evaluated for that column.
+func TestViewsProjectUsesTheColumnsAndValuesOfARealView(t *testing.T) {
+	var view map[string]interface{}
+	require.NoError(t, json.Unmarshal([]byte(recordedView(t, "view-get.json")), &view))
+	columns, err := extractColumnsSpec(view)
+	require.NoError(t, err)
+	names := []string{}
+	for _, column := range columns {
+		names = append(names, column.Name)
+	}
+	wantColumns := []string{"Unit.Slug", "Unit.DisplayName", "Unit.HeadRevisionNum", "Space.Slug", "Labels.tier"}
+	require.Equal(t, wantColumns, names)
+	where, err := extractWhereClause(view)
+	require.NoError(t, err)
+	require.Equal(t, "Slug LIKE 'shape-%'", where)
+
+	calls := viewRunner(t, recordedView(t, "unit-list-with-view.json"))
+	installFakeWorkloadIndex(t, map[string]WorkloadInfo{})
+	pv, err := buildProjectedView(context.Background(), mockViewRef(recordedViewID), "a-space", true)
+	require.NoError(t, err)
+
+	// The list is asked for with the View, so that ConfigHub evaluates its
+	// columns, and with the View's filter, as before.
+	require.Equal(t, []string{"unit", "list", "--space", "a-space", "--where", "Slug LIKE 'shape-%'", "--view", recordedViewID, "-o", "json"}, (*calls)[1])
+
+	names = names[:0]
+	for _, column := range pv.Columns {
+		names = append(names, column.Name)
+	}
+	require.Equal(t, append(append([]string{}, wantColumns...), "Applied?", "LiveStatus"), names)
+	require.Empty(t, pv.Omissions)
+	require.Len(t, pv.Rows, 2)
+	const space = "scout-view-shapes-1791576327562898382"
+	for i, slug := range []string{"shape-two", "shape-one"} {
+		wantApplied, wantStatus := computeRealityCells(slug, map[string]WorkloadInfo{})
+		require.Equal(t, projectionRow{
+			"Unit.Slug": slug, "Unit.DisplayName": slug, "Unit.HeadRevisionNum": "2", "Space.Slug": space, "Labels.tier": "recorded",
+			"Applied?": wantApplied, "LiveStatus": wantStatus,
+		}, pv.Rows[i])
+	}
+
+	var table bytes.Buffer
+	require.NoError(t, renderProjectionTable(&table, pv))
+	require.Contains(t, table.String(), "Labels.tier")
+	require.Contains(t, table.String(), "recorded")
+	require.NotContains(t, table.String(), "has no value")
+}
+
+// When ConfigHub evaluates nothing, a column cub-scout cannot work out is
+// reported as missing. An empty cell alone would read as an empty value.
+func TestViewsProjectSaysWhichColumnsItHasNoValueFor(t *testing.T) {
+	// The same Units as cub prints them without --view: no ViewColumns.
+	var entries []map[string]interface{}
+	require.NoError(t, json.Unmarshal([]byte(recordedView(t, "unit-list-with-view.json")), &entries))
+	plain := make([]map[string]interface{}, len(entries))
+	for i, entry := range entries {
+		plain[i] = map[string]interface{}{"Unit": entry["Unit"], "Space": entry["Space"]}
+	}
+	encoded, err := json.Marshal(plain)
+	require.NoError(t, err)
+
+	viewRunner(t, string(encoded))
+	pv, err := buildProjectedView(context.Background(), mockViewRef(recordedViewID), "a-space", false)
+	require.NoError(t, err)
+	require.Len(t, pv.Rows, 2)
+	require.Len(t, pv.Omissions, 5)
+	for i, column := range []string{"Unit.Slug", "Unit.DisplayName", "Unit.HeadRevisionNum", "Space.Slug", "Labels.tier"} {
+		require.Equal(t, projectionOmission{Column: column, Reason: "not_evaluated", Units: 2}, pv.Omissions[i])
+		require.Equal(t, "", pv.Rows[0][column])
+	}
+	var table bytes.Buffer
+	require.NoError(t, renderProjectionTable(&table, pv))
+	require.Contains(t, table.String(), `column "Labels.tier" has no value for 2 unit(s): ConfigHub evaluated no columns`)
+
+	// ConfigHub evaluated the columns but left one out for one Unit, and
+	// returned another with an empty value. Only the first is missing.
+	first := entries[0]["ViewColumns"].([]interface{})
+	entries[0]["ViewColumns"] = append(append([]interface{}{}, first[:3]...), map[string]interface{}{"Name": "Labels.tier"})
+	encoded, err = json.Marshal(entries)
+	require.NoError(t, err)
+	viewRunner(t, string(encoded))
+	pv, err = buildProjectedView(context.Background(), mockViewRef(recordedViewID), "a-space", false)
+	require.NoError(t, err)
+	require.Equal(t, []projectionOmission{{Column: "Space.Slug", Reason: "not_returned", Units: 1}}, pv.Omissions)
+	require.Equal(t, "", pv.Rows[0]["Labels.tier"])
+	require.Equal(t, "recorded", pv.Rows[1]["Labels.tier"])
+	require.Equal(t, "scout-view-shapes-1791576327562898382", pv.Rows[1]["Space.Slug"])
+
+	encodedJSON, err := json.Marshal(pv)
+	require.NoError(t, err)
+	require.Contains(t, string(encodedJSON), `"omissions":[{"column":"Space.Slug","reason":"not_returned","units":1}]`)
 }

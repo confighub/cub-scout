@@ -1,0 +1,262 @@
+[
+  {
+    "Space": {
+      "CreatedAt": "2026-10-09T20:05:27.640742Z",
+      "DisplayName": "scout-view-shapes-1791576327562898382",
+      "EntityType": "Space",
+      "OrganizationID": "30e1ebab-96e0-420f-9f95-29a50650d92c",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "1658619c-74cb-4c2d-b03d-959487a3a63a": true
+          }
+        },
+        "ManageChildren": {
+          "UserIDs": {
+            "1658619c-74cb-4c2d-b03d-959487a3a63a": true
+          }
+        }
+      },
+      "Slug": "scout-view-shapes-1791576327562898382",
+      "SpaceID": "d5eccc79-3f08-483b-bb26-4c24241b58a2",
+      "UpdatedAt": "2026-10-09T20:05:27.640742Z"
+    },
+    "Unit": {
+      "CreatedAt": "2026-10-09T20:05:27.910586Z",
+      "DataHash": "ff1e7dc3f4110ebf95e833c680cdbc036d1085d2a66188a2cf2fb93a526f491e",
+      "DataSize": 99,
+      "DisplayName": "shape-two",
+      "EntityType": "Unit",
+      "HeadMutationNum": 1,
+      "HeadRevisionID": "6cc94af6-f30f-46dc-bdc5-25cf2d871e1e",
+      "HeadRevisionNum": 2,
+      "Labels": {
+        "tier": "recorded"
+      },
+      "LastChangeDescription": "MergeExternal; from /tmp/TestRecordViewShapesOnARealServer3197570092/002/shape-two.yaml",
+      "OrganizationID": "30e1ebab-96e0-420f-9f95-29a50650d92c",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "1658619c-74cb-4c2d-b03d-959487a3a63a": true
+          }
+        }
+      },
+      "ProvidedPaths": [
+        {
+          "AttributeName": "resource-name",
+          "DataType": "string",
+          "Details": {
+            "BoundLinkID": "00000000-0000-0000-0000-000000000000",
+            "IsProvided": true,
+            "ProvidedProperties": {
+              "Namespace": "default",
+              "ResourceType": "v1/ConfigMap",
+              "SubPath-key": "true"
+            }
+          },
+          "Path": "metadata.name",
+          "ResourceCategory": "Resource",
+          "ResourceName": "default/shape-two",
+          "ResourceNameWithoutScope": "shape-two",
+          "ResourceType": "v1/ConfigMap"
+        }
+      ],
+      "Slug": "shape-two",
+      "SpaceID": "d5eccc79-3f08-483b-bb26-4c24241b58a2",
+      "SpaceSlug": "scout-view-shapes-1791576327562898382",
+      "ToolchainType": "Kubernetes/YAML",
+      "UnitID": "397f6f43-8061-46c7-8d30-20be97c4bf4b",
+      "UpdatedAt": "2026-10-09T20:05:27.938194Z",
+      "Version": 4
+    },
+    "View": {
+      "Columns": [
+        {
+          "Name": "Unit.Slug"
+        },
+        {
+          "Name": "Unit.DisplayName"
+        },
+        {
+          "Name": "Unit.HeadRevisionNum"
+        },
+        {
+          "Name": "Space.Slug"
+        },
+        {
+          "Name": "Labels.tier"
+        }
+      ],
+      "CreatedAt": "2026-10-09T20:05:28.233033Z",
+      "DisplayName": "shape-view",
+      "EntityType": "View",
+      "FilterID": "288f7434-459f-4351-9ce4-bea00b67798f",
+      "OrganizationID": "30e1ebab-96e0-420f-9f95-29a50650d92c",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "1658619c-74cb-4c2d-b03d-959487a3a63a": true
+          }
+        }
+      },
+      "Slug": "shape-view",
+      "SpaceID": "d5eccc79-3f08-483b-bb26-4c24241b58a2",
+      "SpaceSlug": "scout-view-shapes-1791576327562898382",
+      "UpdatedAt": "2026-10-09T20:05:28.233033Z",
+      "ViewID": "cbfe0f5b-1398-4dab-8f5f-d8fb57993197"
+    },
+    "ViewColumns": [
+      {
+        "Name": "Unit.Slug",
+        "Value": "shape-two"
+      },
+      {
+        "Name": "Unit.DisplayName",
+        "Value": "shape-two"
+      },
+      {
+        "Name": "Unit.HeadRevisionNum",
+        "Value": "2"
+      },
+      {
+        "Name": "Space.Slug",
+        "Value": "scout-view-shapes-1791576327562898382"
+      },
+      {
+        "Name": "Labels.tier",
+        "Value": "recorded"
+      }
+    ]
+  },
+  {
+    "Space": {
+      "CreatedAt": "2026-10-09T20:05:27.640742Z",
+      "DisplayName": "scout-view-shapes-1791576327562898382",
+      "EntityType": "Space",
+      "OrganizationID": "30e1ebab-96e0-420f-9f95-29a50650d92c",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "1658619c-74cb-4c2d-b03d-959487a3a63a": true
+          }
+        },
+        "ManageChildren": {
+          "UserIDs": {
+            "1658619c-74cb-4c2d-b03d-959487a3a63a": true
+          }
+        }
+      },
+      "Slug": "scout-view-shapes-1791576327562898382",
+      "SpaceID": "d5eccc79-3f08-483b-bb26-4c24241b58a2",
+      "UpdatedAt": "2026-10-09T20:05:27.640742Z"
+    },
+    "Unit": {
+      "CreatedAt": "2026-10-09T20:05:27.735784Z",
+      "DataHash": "217feae800fd5838957dd63856c1621736454e90682b777340cc7ca833cc4aca",
+      "DataSize": 99,
+      "DisplayName": "shape-one",
+      "EntityType": "Unit",
+      "HeadMutationNum": 1,
+      "HeadRevisionID": "69249e40-83fc-42e7-aaa0-731128bc2407",
+      "HeadRevisionNum": 2,
+      "Labels": {
+        "tier": "recorded"
+      },
+      "LastChangeDescription": "MergeExternal; from /tmp/TestRecordViewShapesOnARealServer3197570092/001/shape-one.yaml",
+      "OrganizationID": "30e1ebab-96e0-420f-9f95-29a50650d92c",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "1658619c-74cb-4c2d-b03d-959487a3a63a": true
+          }
+        }
+      },
+      "ProvidedPaths": [
+        {
+          "AttributeName": "resource-name",
+          "DataType": "string",
+          "Details": {
+            "BoundLinkID": "00000000-0000-0000-0000-000000000000",
+            "IsProvided": true,
+            "ProvidedProperties": {
+              "Namespace": "default",
+              "ResourceType": "v1/ConfigMap",
+              "SubPath-key": "true"
+            }
+          },
+          "Path": "metadata.name",
+          "ResourceCategory": "Resource",
+          "ResourceName": "default/shape-one",
+          "ResourceNameWithoutScope": "shape-one",
+          "ResourceType": "v1/ConfigMap"
+        }
+      ],
+      "Slug": "shape-one",
+      "SpaceID": "d5eccc79-3f08-483b-bb26-4c24241b58a2",
+      "SpaceSlug": "scout-view-shapes-1791576327562898382",
+      "ToolchainType": "Kubernetes/YAML",
+      "UnitID": "4759a753-c3c3-44e9-bc23-3cc7321d55b3",
+      "UpdatedAt": "2026-10-09T20:05:27.788948Z",
+      "Version": 4
+    },
+    "View": {
+      "Columns": [
+        {
+          "Name": "Unit.Slug"
+        },
+        {
+          "Name": "Unit.DisplayName"
+        },
+        {
+          "Name": "Unit.HeadRevisionNum"
+        },
+        {
+          "Name": "Space.Slug"
+        },
+        {
+          "Name": "Labels.tier"
+        }
+      ],
+      "CreatedAt": "2026-10-09T20:05:28.233033Z",
+      "DisplayName": "shape-view",
+      "EntityType": "View",
+      "FilterID": "288f7434-459f-4351-9ce4-bea00b67798f",
+      "OrganizationID": "30e1ebab-96e0-420f-9f95-29a50650d92c",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "1658619c-74cb-4c2d-b03d-959487a3a63a": true
+          }
+        }
+      },
+      "Slug": "shape-view",
+      "SpaceID": "d5eccc79-3f08-483b-bb26-4c24241b58a2",
+      "SpaceSlug": "scout-view-shapes-1791576327562898382",
+      "UpdatedAt": "2026-10-09T20:05:28.233033Z",
+      "ViewID": "cbfe0f5b-1398-4dab-8f5f-d8fb57993197"
+    },
+    "ViewColumns": [
+      {
+        "Name": "Unit.Slug",
+        "Value": "shape-one"
+      },
+      {
+        "Name": "Unit.DisplayName",
+        "Value": "shape-one"
+      },
+      {
+        "Name": "Unit.HeadRevisionNum",
+        "Value": "2"
+      },
+      {
+        "Name": "Space.Slug",
+        "Value": "scout-view-shapes-1791576327562898382"
+      },
+      {
+        "Name": "Labels.tier",
+        "Value": "recorded"
+      }
+    ]
+  }
+]

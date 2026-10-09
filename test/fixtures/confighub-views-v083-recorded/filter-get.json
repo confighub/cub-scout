@@ -1,0 +1,44 @@
+{
+  "Filter": {
+    "CreatedAt": "2026-10-09T20:05:28.052642Z",
+    "DisplayName": "shape-filter",
+    "EntityType": "Filter",
+    "FilterID": "288f7434-459f-4351-9ce4-bea00b67798f",
+    "From": "Unit",
+    "Hash": "63f7bf50f7cf4b8b24047fc5a9d3d26d7bb611c0039b923a01d0f624bfe7d403\n",
+    "OrganizationID": "30e1ebab-96e0-420f-9f95-29a50650d92c",
+    "Permissions": {
+      "Manage": {
+        "UserIDs": {
+          "1658619c-74cb-4c2d-b03d-959487a3a63a": true
+        }
+      }
+    },
+    "Slug": "shape-filter",
+    "SpaceID": "d5eccc79-3f08-483b-bb26-4c24241b58a2",
+    "SpaceSlug": "scout-view-shapes-1791576327562898382",
+    "UpdatedAt": "2026-10-09T20:05:28.052642Z",
+    "Where": "Slug LIKE 'shape-%'"
+  },
+  "Space": {
+    "CreatedAt": "2026-10-09T20:05:27.640742Z",
+    "DisplayName": "scout-view-shapes-1791576327562898382",
+    "EntityType": "Space",
+    "OrganizationID": "30e1ebab-96e0-420f-9f95-29a50650d92c",
+    "Permissions": {
+      "Manage": {
+        "UserIDs": {
+          "1658619c-74cb-4c2d-b03d-959487a3a63a": true
+        }
+      },
+      "ManageChildren": {
+        "UserIDs": {
+          "1658619c-74cb-4c2d-b03d-959487a3a63a": true
+        }
+      }
+    },
+    "Slug": "scout-view-shapes-1791576327562898382",
+    "SpaceID": "d5eccc79-3f08-483b-bb26-4c24241b58a2",
+    "UpdatedAt": "2026-10-09T20:05:27.640742Z"
+  }
+}
