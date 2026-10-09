@@ -93,11 +93,18 @@ check, and every other ConfigHub read still runs `cub`.
   list. A list with nothing in it, or a JSON `null`, is `[]`, as `cub` prints
   it. "Whole" means what the server says is whole: the reader asks for no
   limit and does not read in pages.
-- **A filter narrows and never widens.** The caller's expression is sent as
-  written, AND-ed with the space, as `cub` composes it; the check that every
-  Unit returned is in that space applies whatever the expression says. A
-  filter the server rejects fails the read with the server's reason, with
-  control characters removed and cut to 300 characters.
+- **A filter narrows and never widens what is returned.** The caller's
+  expression is sent as written, AND-ed with the space, as `cub` composes it.
+  Nothing here reads the expression, so the check that every entry is a Unit
+  in that space is what holds whatever it says: an expression the server read
+  as reaching beyond the space would fail the read, where `cub` would print
+  what came back. `cub` documents AND only; what the server does with an OR
+  was not established. Entities the server expands inside an entry (an
+  upstream, a link, a target) are as in `cub`'s output and are not checked.
+- **A rejected filter keeps the server's reason.** For an HTTP 400 the
+  server's message is passed on, cut to 300 characters, with control and
+  format characters and line separators replaced by spaces so that nothing in
+  it can act on a terminal. Any other failure keeps this reader's own words.
 - **An empty list is of a space that exists.** A space named by slug is looked
   up first. A space named by ID is not, so when its list comes back empty the
   space is checked, and an ID that names no space is `not_found`, as `cub`
