@@ -26,9 +26,12 @@ func recordedUnitList(t *testing.T) string {
 	return string(data)
 }
 
-// #852: the view lookups read the list cub really prints. They were written
-// and tested against a flat `[{"slug": ...}]`, which cub does not print, so
-// every real entry decoded to nothing.
+// #852: a Unit's fields are read from the list cub really prints, an envelope
+// with the fields under "Unit". They were read from a flat `[{"slug": ...}]`,
+// which cub does not print, so every real entry gave nothing. This is the path
+// taken when ConfigHub returns no column values: the columns here carry a
+// MetadataAttribute, and the View is built by the older test helper. The
+// recorded View is exercised by the tests further down.
 func TestViewLookupsReadTheUnitListCubPrints(t *testing.T) {
 	const viewUUID = "806aac53-236c-446d-8ad6-91d6daf6810e"
 	fakeProjectionRunner(t, map[string]string{
@@ -215,4 +218,48 @@ func TestViewsProjectSaysWhichColumnsItHasNoValueFor(t *testing.T) {
 	encodedJSON, err := json.Marshal(pv)
 	require.NoError(t, err)
 	require.Contains(t, string(encodedJSON), `"omissions":[{"column":"Space.Slug","reason":"not_returned","units":1}]`)
+}
+
+// A View may name its columns anything. One that shares a name with a column
+// --with-reality adds is the View's own without that flag, and refused with
+// it; and a name used twice is one cell.
+func TestViewsProjectKeepsTheViewsOwnColumnNames(t *testing.T) {
+	const viewUUID = "806aac53-236c-446d-8ad6-91d6daf6810e"
+	entry := map[string]interface{}{
+		"Unit": map[string]interface{}{"Slug": "a"},
+		"ViewColumns": []interface{}{
+			map[string]interface{}{"Name": "Unit.Slug", "Value": "a"},
+			map[string]interface{}{"Name": "LiveStatus", "Value": "from the View"},
+		},
+	}
+	units, err := json.Marshal([]interface{}{entry, entry})
+	require.NoError(t, err)
+	fakeProjectionRunner(t, map[string]string{
+		"view get " + viewUUID: fakeViewWithColumns(viewUUID, "Slug = 'a'", []map[string]interface{}{
+			{"Name": "Unit.Slug"}, {"Name": "LiveStatus"}, {"Name": "Unit.Slug"}, {"Name": "Missing"}, {"Name": "Missing"},
+		}),
+		"unit list": string(units),
+	})
+
+	pv, err := buildProjectedView(context.Background(), mockViewRef(viewUUID), "*", false)
+	require.NoError(t, err)
+	require.Len(t, pv.Columns, 5, "the columns are the View's, as it lists them")
+	require.Equal(t, projectionRow{"Unit.Slug": "a", "LiveStatus": "from the View", "Missing": ""}, pv.Rows[0])
+	// One omission for the name used twice, counted once for each Unit.
+	require.Equal(t, []projectionOmission{{Column: "Missing", Reason: "not_returned", Units: 2}}, pv.Omissions)
+
+	installFakeWorkloadIndex(t, map[string]WorkloadInfo{})
+	_, err = buildProjectedView(context.Background(), mockViewRef(viewUUID), "*", true)
+	require.ErrorContains(t, err, `has its own column named "LiveStatus", which --with-reality would overwrite`)
+}
+
+// An envelope whose Unit is not an object has no Unit fields; the envelope's
+// own keys are not read in their place.
+func TestViewUnitFieldDoesNotReadTheEnvelopeForAMissingUnit(t *testing.T) {
+	for _, unit := range []interface{}{nil, "text", []interface{}{}} {
+		value, ok := viewUnitField(map[string]interface{}{"Unit": unit, "Space": map[string]interface{}{"Slug": "sp"}, "Slug": "outer"}, "Space")
+		require.False(t, ok, "%v", unit)
+		require.Nil(t, value)
+		require.Equal(t, "", viewUnitString(map[string]interface{}{"Unit": unit, "Slug": "outer"}, "Slug"))
+	}
 }

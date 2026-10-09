@@ -508,9 +508,19 @@ func TestRecordViewShapesOnARealServer(t *testing.T) {
 
 	record("filter-create.json", "cub", "filter", "create", "--space", space, "-o", "json", "shape-filter", "Unit", "--where-field", "Slug LIKE 'shape-%'")
 	record("filter-get.json", "cub", "filter", "get", "shape-filter", "--space", space, "-o", "json")
-	created, _ := record("view-create.json", "cub", "view", "create", "--space", space, "-o", "json", "shape-view", "shape-filter",
+	created, createdOK := record("view-create.json", "cub", "view", "create", "--space", space, "-o", "json", "shape-view", "shape-filter",
 		"--column", "Unit.Slug", "--column", "Unit.DisplayName", "--column", "Unit.HeadRevisionNum", "--column", "Space.Slug", "--column", "Labels.tier")
-	got, _ := record("view-get.json", "cub", "view", "get", "shape-view", "--space", space, "-o", "json")
+	got, gotOK := record("view-get.json", "cub", "view", "get", "shape-view", "--space", space, "-o", "json")
+	if !createdOK || !gotOK {
+		t.Fatalf("the View could not be created and read back (created %v, read %v); nothing after this would be checked", createdOK, gotOK)
+	}
+
+	// Recorded, not asserted: how ConfigHub returns a column that has no
+	// value for a Unit. No Unit here has the label this column names.
+	if _, ok := record("view-absent-create.json", "cub", "view", "create", "--space", space, "-o", "json", "shape-view-absent", "shape-filter",
+		"--column", "Unit.Slug", "--column", "Labels.absent"); ok {
+		record("unit-list-with-view-absent-label.json", "cub", "unit", "list", "--space", space, "-o", "json", "--view", "shape-view-absent")
+	}
 	record("view-list.json", "cub", "view", "list", "--space", space, "-o", "json")
 	record("unit-list-labelled.json", "cub", "unit", "list", "--space", space, "-o", "json")
 	record("unit-list-with-view.json", "cub", "unit", "list", "--space", space, "-o", "json", "--view", "shape-view")
@@ -527,8 +537,7 @@ func TestRecordViewShapesOnARealServer(t *testing.T) {
 		}
 	}
 	if viewID == "" {
-		t.Logf("no ViewID found in what cub printed; cub-scout's view commands are not run")
-		return
+		t.Fatalf("no ViewID in what cub printed for the View; cub-scout's view commands cannot be checked")
 	}
 	record("unit-list-with-view-every-space.json", "cub", "unit", "list", "--space", "*", "-o", "json", "--view", viewID, "--where", "Slug LIKE 'shape-%'")
 

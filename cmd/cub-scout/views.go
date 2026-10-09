@@ -218,9 +218,11 @@ func listUnitSlugsForFilter(ctx context.Context, whereClause, space string) ([]s
 // listUnitsForView lists the Units a View's filter matches, with the View's
 // columns evaluated by ConfigHub: given --view, `cub unit list -o json` adds
 // to each entry a "ViewColumns" list of {Name, Value}, one per column of the
-// View, whatever kind of column it is. The View's Where is sent as well, as
-// every release has sent it, so that the selection does not depend on --view
-// filtering too.
+// View. That is recorded for columns that are bare names; a column with an
+// expression or a data path was not tried on a real server. The View's Where
+// is sent as well, as every release has sent it, so the Units are at most
+// those the Where matches; --view may narrow them further by the rest of the
+// View's filter.
 func listUnitsForView(ctx context.Context, viewUUID, whereClause, space string) ([]map[string]interface{}, error) {
 	out, err := viewCubRunner(ctx, "unit", "list", "--space", space, "--where", whereClause, "--view", viewUUID, "-o", "json")
 	if err != nil {
@@ -272,7 +274,13 @@ func viewColumnValues(entry map[string]interface{}) (values map[string]string, e
 // "Unit" object is read as the Unit itself.
 func viewUnitField(entry map[string]interface{}, name string) (interface{}, bool) {
 	fields := entry
-	if unit, ok := entry["Unit"].(map[string]interface{}); ok {
+	if inner, enveloped := entry["Unit"]; enveloped {
+		unit, ok := inner.(map[string]interface{})
+		if !ok {
+			// An envelope whose Unit is not an object has no Unit fields.
+			// The envelope's own keys are not read in their place.
+			return nil, false
+		}
 		fields = unit
 	}
 	if value, ok := fields[name]; ok {
@@ -298,11 +306,9 @@ func viewUnitString(entry map[string]interface{}, name string) string {
 	return strings.TrimSpace(text)
 }
 
-// listUnitsForFilter is the projection-shaped sibling of
-// listUnitSlugsForFilter: it returns each matching unit's full
-// metadata blob (as `cub unit list -o json` emits it), so View column
-// evaluators can read attribute fields directly. Used by `views
-// project`. Same testability seam.
+// listUnitsForFilter is the sibling of listUnitSlugsForFilter that returns
+// each matching entry whole, as `cub unit list -o json` prints it. Used by
+// the three-way comparison of a View's Units. Same testability seam.
 func listUnitsForFilter(ctx context.Context, whereClause, space string) ([]map[string]interface{}, error) {
 	out, err := viewCubRunner(ctx, "unit", "list", "--space", space, "--where", whereClause, "-o", "json")
 	if err != nil {
@@ -685,14 +691,24 @@ func buildProjectedView(ctx context.Context, ref *agent.ViewRef, space string, w
 	// slug→workload index of the live cluster and append synthetic columns
 	// (Applied?, LiveStatus) the web View Explorer cannot show. The View
 	// supplies the schema; cub-scout joins in cluster truth.
+	// viewColumns are the View's own; the reality columns are cub-scout's.
+	// A View may name a column anything, including "LiveStatus": without
+	// --with-reality that column is the View's and is shown like any other,
+	// and with it the two would collide in one row, so that is refused.
+	viewColumns := columns
 	var workloadIndex map[string]WorkloadInfo
 	if withReality {
+		for _, col := range viewColumns {
+			if isRealityColumn(col.Name) {
+				return ProjectedView{}, fmt.Errorf("view %s has its own column named %q, which --with-reality would overwrite; run without --with-reality", ref.UUID, col.Name)
+			}
+		}
 		idx, err := buildWorkloadIndexFn()
 		if err != nil {
 			return ProjectedView{}, fmt.Errorf("build workload index for reality overlay: %w", err)
 		}
 		workloadIndex = idx
-		columns = append(columns, realityColumns()...)
+		columns = append(append([]ViewColumnSpec{}, viewColumns...), realityColumns()...)
 	}
 
 	rows := make([]projectionRow, 0, len(units))
@@ -705,14 +721,16 @@ func buildProjectedView(ctx context.Context, ref *agent.ViewRef, space string, w
 	}
 	for _, u := range units {
 		row := make(projectionRow, len(columns))
-		// ConfigHub evaluates a View's columns, whatever their kind. Its
-		// value is the cell. Where it gave none, a column that names a
-		// field of the Unit directly is read from the Unit; anything else
-		// is an omission, not an empty cell that reads as a value.
+		// ConfigHub evaluates a View's columns. Its value is the cell.
+		// Where it gave none, a column that names a field of the Unit
+		// directly is read from the Unit; anything else is an omission,
+		// not an empty cell that reads as a value.
 		evaluatedByServer, evaluated := viewColumnValues(u)
-		for _, col := range columns {
-			if isRealityColumn(col.Name) {
-				continue // synthetic — filled below if reality is enabled
+		for _, col := range viewColumns {
+			// A row is keyed by column name, so a name used twice is one
+			// cell, and is counted once.
+			if _, done := row[col.Name]; done {
+				continue
 			}
 			if cell, ok := evaluatedByServer[col.Name]; ok {
 				row[col.Name] = cell
@@ -743,9 +761,10 @@ func buildProjectedView(ctx context.Context, ref *agent.ViewRef, space string, w
 		Columns: columns,
 		Rows:    rows,
 	}
-	for _, col := range columns {
+	for _, col := range viewColumns {
 		if omission := missing[col.Name]; omission != nil {
 			projected.Omissions = append(projected.Omissions, *omission)
+			delete(missing, col.Name)
 		}
 	}
 	return projected, nil
