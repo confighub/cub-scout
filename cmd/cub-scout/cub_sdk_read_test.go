@@ -859,3 +859,22 @@ func TestSDKRouteListFailureIsReportedAndDoesNotFallBack(t *testing.T) {
 	require.Len(t, hub.seen, 4, "one request for each of the four failed reads, none for the refused one")
 	require.Empty(t, fakeCubCalls(t, cubLog), "cub was run after the SDK route failed")
 }
+
+// The fleet view's advice follows the route: checking that cub is installed
+// is no help when no cub ran.
+func TestFleetFailureAdviceFollowsTheRoute(t *testing.T) {
+	onlyFakeCub(t, "3")
+	hub := newRecordedHub(t, http.StatusInternalServerError)
+	sdkReadsFrom(t, hub)
+	t.Setenv("CUB_SCOUT_TEST_MAP_FLEET_JSON", "")
+
+	t.Setenv(configHubReaderEnv, "sdk")
+	_, err := fetchFleetUnits(recordedSpace, "")
+	require.ErrorContains(t, err, "failed to fetch units from ConfigHub: ")
+	require.Equal(t, hubread.KindFailed, hubread.KindOf(err))
+	require.NotContains(t, err.Error(), "'cub' CLI is installed")
+
+	t.Setenv(configHubReaderEnv, "cub")
+	_, err = fetchFleetUnits(recordedSpace, "")
+	require.ErrorContains(t, err, "Check that 'cub' CLI is installed")
+}
