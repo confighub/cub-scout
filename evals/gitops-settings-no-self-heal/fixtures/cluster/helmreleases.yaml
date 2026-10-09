@@ -3,7 +3,7 @@ items:
 - apiVersion: helm.toolkit.fluxcd.io/v2
   kind: HelmRelease
   metadata:
-    creationTimestamp: "2026-10-09T10:18:11Z"
+    creationTimestamp: "2026-10-09T10:21:33Z"
     generation: 1
     managedFields:
     - apiVersion: helm.toolkit.fluxcd.io/v2
@@ -22,11 +22,11 @@ items:
           f:interval: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:18:11Z"
+      time: "2026-10-09T10:21:33Z"
     name: grafana
     namespace: team-g
-    resourceVersion: "540"
-    uid: 240600a4-d056-40b9-baf1-9ff050f52aad
+    resourceVersion: "552"
+    uid: f19c84ea-23a3-4dc1-acf6-92a26a347a0a
   spec:
     chart:
       spec:
@@ -44,7 +44,7 @@ items:
 - apiVersion: helm.toolkit.fluxcd.io/v2
   kind: HelmRelease
   metadata:
-    creationTimestamp: "2026-10-09T10:18:11Z"
+    creationTimestamp: "2026-10-09T10:21:33Z"
     generation: 1
     managedFields:
     - apiVersion: helm.toolkit.fluxcd.io/v2
@@ -64,11 +64,11 @@ items:
             f:force: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:18:11Z"
+      time: "2026-10-09T10:21:33Z"
     name: loki
     namespace: team-g
-    resourceVersion: "541"
-    uid: 450ef00c-3d4a-4993-a6da-5679a3aa92b2
+    resourceVersion: "553"
+    uid: 9d3b4e2e-f264-483d-99c8-07188b502eaa
   spec:
     chart:
       spec:
@@ -87,7 +87,7 @@ items:
 - apiVersion: helm.toolkit.fluxcd.io/v2
   kind: HelmRelease
   metadata:
-    creationTimestamp: "2026-10-09T10:18:11Z"
+    creationTimestamp: "2026-10-09T10:21:33Z"
     generation: 1
     managedFields:
     - apiVersion: helm.toolkit.fluxcd.io/v2
@@ -104,11 +104,11 @@ items:
           f:interval: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:18:11Z"
+      time: "2026-10-09T10:21:33Z"
     name: postgres
     namespace: team-h
-    resourceVersion: "539"
-    uid: af4e7184-5783-423a-abf1-7b2044440f1f
+    resourceVersion: "551"
+    uid: 2f093b88-43c0-4fc8-8369-11f0c5d75edd
   spec:
     chart:
       spec:
@@ -124,7 +124,7 @@ items:
 - apiVersion: helm.toolkit.fluxcd.io/v2
   kind: HelmRelease
   metadata:
-    creationTimestamp: "2026-10-09T10:18:11Z"
+    creationTimestamp: "2026-10-09T10:21:33Z"
     generation: 1
     managedFields:
     - apiVersion: helm.toolkit.fluxcd.io/v2
@@ -142,11 +142,11 @@ items:
           f:suspend: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:18:11Z"
+      time: "2026-10-09T10:21:33Z"
     name: redis
     namespace: team-h
-    resourceVersion: "538"
-    uid: 758357fb-ba20-4feb-b1b8-16be3bfe9891
+    resourceVersion: "550"
+    uid: edd6029e-6c53-47e2-a41a-9e3666484e8a
   spec:
     chart:
       spec:

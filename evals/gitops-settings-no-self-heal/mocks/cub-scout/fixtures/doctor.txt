@@ -1,6 +1,6 @@
 {
   "cluster": "default",
-  "kubernetesContext": "kind-scout-eval-settings-49cc7817",
+  "kubernetesContext": "kind-scout-eval-settings-c9fe91d7",
   "namespace": "all",
   "resources": {
     "total": 56

@@ -3,7 +3,7 @@ items:
 - apiVersion: kustomize.toolkit.fluxcd.io/v1
   kind: Kustomization
   metadata:
-    creationTimestamp: "2026-10-09T10:18:11Z"
+    creationTimestamp: "2026-10-09T10:21:33Z"
     generation: 1
     managedFields:
     - apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -19,11 +19,11 @@ items:
           f:wait: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:18:11Z"
+      time: "2026-10-09T10:21:33Z"
     name: apps
     namespace: flux-system
-    resourceVersion: "531"
-    uid: f3a3d167-32ad-408f-a398-38425581ba86
+    resourceVersion: "543"
+    uid: 529f4517-40b9-4d56-a28b-e2602738c21d
   spec:
     force: false
     interval: 10m
@@ -38,7 +38,7 @@ items:
 - apiVersion: kustomize.toolkit.fluxcd.io/v1
   kind: Kustomization
   metadata:
-    creationTimestamp: "2026-10-09T10:18:11Z"
+    creationTimestamp: "2026-10-09T10:21:33Z"
     generation: 1
     managedFields:
     - apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -53,11 +53,11 @@ items:
             f:name: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:18:11Z"
+      time: "2026-10-09T10:21:33Z"
     name: infrastructure
     namespace: flux-system
-    resourceVersion: "530"
-    uid: 4b2d24be-be17-4489-b237-9d2145e53d0d
+    resourceVersion: "542"
+    uid: 1e9894c9-e664-47af-b6c2-604233bfc598
   spec:
     force: false
     interval: 10m
@@ -71,7 +71,7 @@ items:
 - apiVersion: kustomize.toolkit.fluxcd.io/v1
   kind: Kustomization
   metadata:
-    creationTimestamp: "2026-10-09T10:18:11Z"
+    creationTimestamp: "2026-10-09T10:21:33Z"
     generation: 1
     managedFields:
     - apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -88,11 +88,11 @@ items:
           f:suspend: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:18:11Z"
+      time: "2026-10-09T10:21:33Z"
     name: legacy-migration
     namespace: flux-system
-    resourceVersion: "534"
-    uid: 2507cf4a-9aef-4201-9c02-e11964869dfa
+    resourceVersion: "546"
+    uid: a17c5583-5b7f-473b-8b40-03654034addd
   spec:
     force: true
     interval: 10m
@@ -107,7 +107,7 @@ items:
 - apiVersion: kustomize.toolkit.fluxcd.io/v1
   kind: Kustomization
   metadata:
-    creationTimestamp: "2026-10-09T10:18:11Z"
+    creationTimestamp: "2026-10-09T10:21:33Z"
     generation: 1
     managedFields:
     - apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -123,11 +123,11 @@ items:
           f:suspend: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:18:11Z"
+      time: "2026-10-09T10:21:33Z"
     name: monitoring
     namespace: flux-system
-    resourceVersion: "532"
-    uid: 761445fe-9020-4d52-9800-b3429dee764a
+    resourceVersion: "544"
+    uid: b01f088f-342e-4452-86b2-ce5ff2c23c26
   spec:
     force: false
     interval: 10m
@@ -142,7 +142,7 @@ items:
 - apiVersion: kustomize.toolkit.fluxcd.io/v1
   kind: Kustomization
   metadata:
-    creationTimestamp: "2026-10-09T10:18:11Z"
+    creationTimestamp: "2026-10-09T10:21:33Z"
     generation: 1
     managedFields:
     - apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -158,11 +158,11 @@ items:
           f:suspend: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:18:11Z"
+      time: "2026-10-09T10:21:33Z"
     name: secrets
     namespace: flux-system
-    resourceVersion: "535"
-    uid: e24b0da2-73fd-44c3-80e4-66b3936e83e3
+    resourceVersion: "547"
+    uid: ca9f97c5-0051-4b28-b8d8-be85ddf02c33
   spec:
     force: false
     interval: 10m
@@ -177,7 +177,7 @@ items:
 - apiVersion: kustomize.toolkit.fluxcd.io/v1
   kind: Kustomization
   metadata:
-    creationTimestamp: "2026-10-09T10:18:11Z"
+    creationTimestamp: "2026-10-09T10:21:33Z"
     generation: 1
     managedFields:
     - apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -192,11 +192,11 @@ items:
             f:name: {}
       manager: kubectl
       operation: Apply
-      time: "2026-10-09T10:18:11Z"
+      time: "2026-10-09T10:21:33Z"
     name: tenants
     namespace: flux-system
-    resourceVersion: "533"
-    uid: 34f3cf7b-0d15-4433-aa71-f4bc5b8f140a
+    resourceVersion: "545"
+    uid: 5657c40d-ddcb-4413-927d-f9f624dc0dd5
   spec:
     force: false
     interval: 10m
