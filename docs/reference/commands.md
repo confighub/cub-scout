@@ -3213,12 +3213,13 @@ construction. Auth only matters once the browser reaches View Explorer.
 
 ### views project
 
-Render a View as a projected table. Resolves the View, lists its
-matching units, and evaluates the View's `Columns` spec against each
-unit's metadata. Closes the loop on #391 scope #2 (View-as-projection).
+Render a View as a projected table. Resolves the View, lists the Units its
+filter matches, and shows each of the View's columns with the value ConfigHub
+evaluated for it. Closes the loop on #391 scope #2 (View-as-projection).
 
 ```bash
-cub-scout views project <uuid-or-url> [flags]
+cub scout views project <uuid-or-url> [flags]
+./cub-scout views project <uuid-or-url> [flags]
 ```
 
 Same input shapes as `views resolve` — bare UUID or View Explorer URL.
@@ -3234,7 +3235,8 @@ Same input shapes as `views resolve` — bare UUID or View Explorer URL.
 #### Output
 
 `--format table` produces a fixed-width ASCII table — one row per unit,
-column headers from the View's `Columns` spec.
+column headers from the View's own columns, such as `Unit.Slug`, `Space.Slug`
+or `Labels.tier`.
 
 `--format json` produces:
 
@@ -3243,25 +3245,36 @@ column headers from the View's `Columns` spec.
   "view": "<uuid>",
   "space": "<space>",
   "columns": [<column-spec>],
-  "rows": [{"<column-name>": "<value>", ...}]
+  "rows": [{"<column-name>": "<value>", ...}],
+  "omissions": [{"column": "<column-name>", "reason": "not_returned|not_evaluated", "units": 2}]
 }
 ```
 
-#### Evaluator support (v0.1)
+`omissions` is present only when some cell has no value. An empty cell in a
+column listed there means "not known", not "empty"; the table prints the same
+under its rows.
 
-ConfigHub's `Column.ColumnSource` has four evaluator forms.
-v0.1 of `views project` evaluates the first directly:
+#### Where the values come from
 
-| ColumnSource form | v0.1 behaviour |
-|-------------------|----------------|
-| `MetadataAttribute` | Direct field lookup against unit metadata. Camel/Pascal-case fallback so spec strings like `"Slug"` and `"slug"` both resolve. |
-| `MetadataExpression` (CEL) | Renders `<cel: not yet supported>` placeholder. CEL evaluator is a follow-up dep decision. |
-| `DataPath` (JSONPath) | Renders `<jsonpath: not yet supported>` placeholder. |
-| `DataExpression` (CEL) | Renders `<cel: not yet supported>` placeholder. |
+ConfigHub evaluates a View's columns. cub-scout lists the Units with
+`cub unit list --view <view> --where <the View's filter> -o json`, and each
+Unit comes back with `ViewColumns`: one value per column, whatever the kind
+of column. That value is the cell.
 
-The placeholder approach preserves column headers and ordering so
-operators see the evaluator gap rather than getting silent empty
-cells.
+| Case | Cell |
+|------|------|
+| ConfigHub returned a value for the column | That value |
+| ConfigHub returned no value, and the column's `ColumnSource` is a `MetadataAttribute` | The field of that name, read from the Unit |
+| ConfigHub returned no value for a column of any other kind | A `<... not yet supported>` placeholder for an expression or a data path, empty for a bare name; the column is listed under `omissions` |
+| The View has no columns | One `Slug` column, read from the Unit |
+
+Until this was fixed (#852), `views project` looked for the columns at the top
+of what `cub view get` prints, where a real View does not keep them, and for a
+real View showed one `Slug` column in place of the View's own.
+
+Checked against a real ConfigHub v0.8.3 for a View whose columns are names
+(`cub view create --column Unit.Slug ...`). A column with a `ColumnSource`
+expression or data path was not tried on a real server.
 
 #### Reality overlay (`--with-reality`)
 
@@ -3285,7 +3298,7 @@ Requires connected mode: a logged-in `cub` CLI (`cub auth login`), in either inv
 ### v0.1 scope items still pending
 
 - TUI Hub view integration of View column projection (extends `views project` into the interactive `H` view) — tracked as a follow-up issue.
-- CEL + JSONPath evaluators for `MetadataExpression`, `DataPath`, `DataExpression` columns — dep decision tracked as a follow-up issue.
+- `MetadataExpression`, `DataPath` and `DataExpression` columns take ConfigHub's value like any other; whether a server returns one for them was not checked against a real server (#421, #852).
 - Reality-overlay extensions: `Drift` and `Orphan?` columns alongside the v0.1 `Applied?` / `LiveStatus`.
 
 ---
