@@ -714,8 +714,8 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						},
 						"view": map[string]interface{}{
 							"type":        "string",
-							"enum":        []string{deliverySettingsViewGroups, deliverySettingsViewSettings, deliverySettingsViewDeployers, deliverySettingsViewAll},
-							"description": "Which view to return. groups (default): per Argo CD project or Flux namespace, each setting with the deployers that have each value. settings: the same per kind across the whole read. deployers: one entry per object with every setting, its spec path, default and ignore rules. all: the three together, about three times the size.",
+							"enum":        []string{deliverySettingsViewSummary, deliverySettingsViewDeployers, deliverySettingsViewGroups, deliverySettingsViewSettings, deliverySettingsViewAll},
+							"description": "Which view to return. summary (default, smallest): per Argo CD project or Flux namespace, settings maps each setting to its values and each value to the deployers that have it, as namespace/name; unset lists the deployers counted under a controller default. deployers: one entry per object with every setting, its spec path, default, Argo CD UI link and ignore rules. groups and settings: the summary's content as verbose objects, per project or namespace and per kind. all: groups, settings and deployers together; much larger.",
 						},
 					},
 					"additionalProperties": false,
@@ -747,7 +747,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				for _, setting := range settings {
 					args = append(args, "--setting", setting)
 				}
-				view := deliverySettingsViewGroups
+				view := deliverySettingsViewSummary
 				if raw, exists := arguments["view"]; exists {
 					name, ok := raw.(string)
 					if !ok {

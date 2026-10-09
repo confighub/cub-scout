@@ -1,0 +1,50 @@
+{
+  "recordedAt": "2026-10-09T10:12:05+00:00",
+  "sourceCommit": "f1e1253af8ad6f52f2e0dbf27f121452bbbc6b6e",
+  "sourceDirty": true,
+  "binarySHA256": "45aa29910a862f0a16ed085c097d96efb7a2548198a16f15268fa8efda7d0b00",
+  "kubernetesNodeImage": "kindest/node:v1.35.0",
+  "argoCDCRDs": {
+    "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.3/manifests/crds/application-crd.yaml": "5dde0e229249b6b707beb98674c1deae3949d5c319a6c45b9f5a80c99618e40c",
+    "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.3/manifests/crds/appproject-crd.yaml": "ab225266944322750136f1198d93786e4a79a0e43c8d149abfba44da30a3eac8"
+  },
+  "fluxCLI": "flux version 2.8.6",
+  "managedFields": true,
+  "notes": [
+    "Deployer objects only. No GitOps controller is installed: nothing reconciles and no object has a status.",
+    "The CRDs are the real Argo CD and Flux ones, so values a CRD defaults (Flux Kustomization spec.force) are as a real cluster returns them.",
+    "MCP answers were captured after the raw export, in sequence; this is not an atomic snapshot.",
+    "gitops_settings is recorded for the calls in SETTINGS_FILTERS x SETTINGS_VIEWS only; the mock says so for any other call."
+  ],
+  "files": {
+    "evals/gitops-settings-no-self-heal/fixtures/cluster/applications.yaml": "9b2678a89d476cd34053357a17bbda55b83c2b55aea16f28c29c172342e7c0a4",
+    "evals/gitops-settings-no-self-heal/fixtures/cluster/appprojects.yaml": "ebf1359b6774fdceaeb4652dda42ffa8919fc43b34beed987b1e92a5222ed71d",
+    "evals/gitops-settings-no-self-heal/fixtures/cluster/configmaps.yaml": "766f24f5d042183d8b4af46f90f8cceaf8bc9825781202fc8fd68ed3b3f4da68",
+    "evals/gitops-settings-no-self-heal/fixtures/cluster/gitrepositories.yaml": "8b5d64df64a53cd9d83eecf53f2533e0dbd67c1e7be029be889a0c0bd0f4cb36",
+    "evals/gitops-settings-no-self-heal/fixtures/cluster/helmreleases.yaml": "589c14e5d21212069d7f5306239b189c54e358a844a485e126d60f0d6a34889e",
+    "evals/gitops-settings-no-self-heal/fixtures/cluster/helmrepositories.yaml": "0776086c7c02a0f982058df09ffde29f20b718ae8e9a9e7a592f4ce73c88325c",
+    "evals/gitops-settings-no-self-heal/fixtures/cluster/kustomizations.yaml": "bb356a725b953c564042d3e3fcd2dbeb32a24c7bc71ee76c8590a6f78709645c",
+    "evals/gitops-settings-no-self-heal/fixtures/cluster/namespaces.yaml": "9199dba4424f1381061cca882133b725a03fce98f79ed24d02180be62d5e8218",
+    "evals/gitops-settings-no-self-heal/mocks/cub-scout/_tools.json": "0b5d6d4a705dd2335158823460fe2a8c829419095f755738a3b1eebda7487aca",
+    "evals/gitops-settings-no-self-heal/mocks/cub-scout/doctor.md": "63a5116256525dcff5b9ce7cf98bcbf3aee500956d0a1e346568679b836fbbde",
+    "evals/gitops-settings-no-self-heal/mocks/cub-scout/explain.md": "1a026887657ae1c9386d0acf4838da7c44eff429db59e860bb64c9d284ffc09c",
+    "evals/gitops-settings-no-self-heal/mocks/cub-scout/fixtures/doctor.txt": "5e1d1bc091185627c8f7f17da44754fa8485d0898968aa78611725f6199ecda6",
+    "evals/gitops-settings-no-self-heal/mocks/cub-scout/fixtures/gitops_settings/all.deployers.txt": "b7be33dccd4a60501ab9136d96c887ec196cf7f2f071ce8ff369ecd26b9848da",
+    "evals/gitops-settings-no-self-heal/mocks/cub-scout/fixtures/gitops_settings/all.summary.txt": "44f70095ba6c2a5ca55c6ca61c96a287ff8ab6f3c3c9ab6ca2e81ebffec9a3ff",
+    "evals/gitops-settings-no-self-heal/mocks/cub-scout/fixtures/gitops_settings/self-heal-off.deployers.txt": "7325cf5d965ae63524c25607704fb801360bf2a49b142d78bea60b8bbb431cd5",
+    "evals/gitops-settings-no-self-heal/mocks/cub-scout/fixtures/gitops_settings/self-heal-off.summary.txt": "5c24db22260354d65c29b720b05f94c3b3d5a72d3e8f9011238b7d663f88250e",
+    "evals/gitops-settings-no-self-heal/mocks/cub-scout/fixtures/gitops_settings/suspend-on.deployers.txt": "4e4f5feae065d6bbf6f2f42ceb8c29ecf6932413488932e0f6b8bda53453d14e",
+    "evals/gitops-settings-no-self-heal/mocks/cub-scout/fixtures/gitops_settings/suspend-on.summary.txt": "097c871bb99e55f9866e43e2fdbe18afe6c025a75d161298c4d51fbe3cfa3e6b",
+    "evals/gitops-settings-no-self-heal/mocks/cub-scout/fixtures/gitops_status.txt": "64383e41dbc719683b26dd42680e6ba3ffa152ae88fbc9d899b06c4a8ae3fe35",
+    "evals/gitops-settings-no-self-heal/mocks/cub-scout/fixtures/map.txt": "f74f1d15dfc718b980b394ef5537042fdcf9bdf64db4373ad8056aaaae240aba",
+    "evals/gitops-settings-no-self-heal/mocks/cub-scout/fixtures/scan.txt": "88edffb79ad2cc707c8a7aa9a094cc9e64b8ca0fd370212eb5247f4a9c5e9182",
+    "evals/gitops-settings-no-self-heal/mocks/cub-scout/gitops_settings.md": "ffb5cb24144f8d762a238895d9345574330447f750705084bf1eaa54d7105b78",
+    "evals/gitops-settings-no-self-heal/mocks/cub-scout/gitops_status.md": "188630a6476066ac5049a07b99c151c463230a0d9bc48a766129896bcfa4b095",
+    "evals/gitops-settings-no-self-heal/mocks/cub-scout/map.md": "273f22155ea4d98994b5ce11532edd186562d75d0d35fad29da4d6b08a12830b",
+    "evals/gitops-settings-no-self-heal/mocks/cub-scout/release_check.md": "9c3338838f9e6228916be9b2cca2b1d34311600a01a6c26e6531dcf88a0c65e8",
+    "evals/gitops-settings-no-self-heal/mocks/cub-scout/scan.md": "51a9ee78d6c7f87717d019ebeefaf7b6dce4d15b43f45e0e1dc419ad7cd44afe",
+    "evals/gitops-settings-no-self-heal/mocks/cub-scout/trace.md": "37b054207a28fb0f597dfc4a4d06f34e442744b78ca451f214725d77ddb24a67",
+    "evals/gitops-settings-no-self-heal/scaffold.sh": "0823b6d1ad02cd0b7a828213221e02c09b6b3d189cb9121a56600d8c19df114f",
+    "evals/gitops-settings-no-self-heal/scenario.yaml": "dcb243fde1b4260ad54f0b5dea684b8f00a61ad073fcae7248c84f22e13d2985"
+  }
+}

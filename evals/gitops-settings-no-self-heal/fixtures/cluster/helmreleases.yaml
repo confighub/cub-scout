@@ -1,0 +1,165 @@
+apiVersion: v1
+items:
+- apiVersion: helm.toolkit.fluxcd.io/v2
+  kind: HelmRelease
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:chart:
+            f:spec:
+              f:chart: {}
+              f:sourceRef:
+                f:kind: {}
+                f:name: {}
+              f:version: {}
+          f:driftDetection:
+            f:mode: {}
+          f:interval: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: grafana
+    namespace: team-g
+    resourceVersion: "589"
+    uid: d018ccd9-5d96-4f94-b196-12feecf2d403
+  spec:
+    chart:
+      spec:
+        chart: grafana
+        reconcileStrategy: ChartVersion
+        sourceRef:
+          kind: HelmRepository
+          name: charts
+        version: 1.0.0
+    driftDetection:
+      mode: enabled
+    interval: 10m
+  status:
+    observedGeneration: -1
+- apiVersion: helm.toolkit.fluxcd.io/v2
+  kind: HelmRelease
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:chart:
+            f:spec:
+              f:chart: {}
+              f:sourceRef:
+                f:kind: {}
+                f:name: {}
+              f:version: {}
+          f:interval: {}
+          f:suspend: {}
+          f:upgrade:
+            f:force: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: loki
+    namespace: team-g
+    resourceVersion: "590"
+    uid: b69c6eff-81d9-427c-8d57-a3cff2b23415
+  spec:
+    chart:
+      spec:
+        chart: loki
+        reconcileStrategy: ChartVersion
+        sourceRef:
+          kind: HelmRepository
+          name: charts
+        version: 1.0.0
+    interval: 10m
+    suspend: false
+    upgrade:
+      force: true
+  status:
+    observedGeneration: -1
+- apiVersion: helm.toolkit.fluxcd.io/v2
+  kind: HelmRelease
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:chart:
+            f:spec:
+              f:chart: {}
+              f:sourceRef:
+                f:kind: {}
+                f:name: {}
+              f:version: {}
+          f:interval: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: postgres
+    namespace: team-h
+    resourceVersion: "588"
+    uid: ec4bd702-90e3-427d-a848-7e15868d6b43
+  spec:
+    chart:
+      spec:
+        chart: postgres
+        reconcileStrategy: ChartVersion
+        sourceRef:
+          kind: HelmRepository
+          name: charts
+        version: 1.0.0
+    interval: 10m
+  status:
+    observedGeneration: -1
+- apiVersion: helm.toolkit.fluxcd.io/v2
+  kind: HelmRelease
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:chart:
+            f:spec:
+              f:chart: {}
+              f:sourceRef:
+                f:kind: {}
+                f:name: {}
+              f:version: {}
+          f:interval: {}
+          f:suspend: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: redis
+    namespace: team-h
+    resourceVersion: "587"
+    uid: 327f87c5-d668-4c97-b4d7-cd40e0e06ebd
+  spec:
+    chart:
+      spec:
+        chart: redis
+        reconcileStrategy: ChartVersion
+        sourceRef:
+          kind: HelmRepository
+          name: charts
+        version: 1.0.0
+    interval: 10m
+    suspend: true
+  status:
+    observedGeneration: -1
+kind: List
+metadata:
+  resourceVersion: ""

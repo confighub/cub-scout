@@ -1,0 +1,172 @@
+{
+  "complete": true,
+  "context": "kind-scout-eval-settings-d0a5eba8",
+  "counts": [
+    {
+      "controller": "ArgoCD",
+      "kind": "Application",
+      "status": "read",
+      "read": 20,
+      "shown": 0
+    },
+    {
+      "controller": "Flux",
+      "kind": "Kustomization",
+      "status": "read",
+      "read": 6,
+      "shown": 2
+    },
+    {
+      "controller": "Flux",
+      "kind": "HelmRelease",
+      "status": "read",
+      "read": 4,
+      "shown": 1
+    }
+  ],
+  "deployers": [
+    {
+      "controller": "Flux",
+      "kind": "HelmRelease",
+      "namespace": "team-h",
+      "name": "redis",
+      "groupKind": "namespace",
+      "group": "team-h",
+      "settings": [
+        {
+          "name": "suspend",
+          "category": "policy",
+          "value": "on",
+          "effective": "on",
+          "path": "spec.suspend"
+        },
+        {
+          "name": "driftDetection.mode",
+          "category": "policy",
+          "value": "unset",
+          "default": "disabled",
+          "effective": "disabled",
+          "path": "spec.driftDetection.mode"
+        }
+      ]
+    },
+    {
+      "controller": "Flux",
+      "kind": "Kustomization",
+      "namespace": "flux-system",
+      "name": "legacy-migration",
+      "groupKind": "namespace",
+      "group": "flux-system",
+      "settings": [
+        {
+          "name": "suspend",
+          "category": "policy",
+          "value": "on",
+          "effective": "on",
+          "path": "spec.suspend"
+        },
+        {
+          "name": "prune",
+          "category": "policy",
+          "value": "off",
+          "effective": "off",
+          "path": "spec.prune"
+        },
+        {
+          "name": "force",
+          "category": "policy",
+          "value": "on",
+          "effective": "on",
+          "path": "spec.force"
+        },
+        {
+          "name": "wait",
+          "category": "policy",
+          "value": "unset",
+          "default": "off",
+          "effective": "off",
+          "path": "spec.wait"
+        }
+      ]
+    },
+    {
+      "controller": "Flux",
+      "kind": "Kustomization",
+      "namespace": "flux-system",
+      "name": "monitoring",
+      "groupKind": "namespace",
+      "group": "flux-system",
+      "settings": [
+        {
+          "name": "suspend",
+          "category": "policy",
+          "value": "on",
+          "effective": "on",
+          "path": "spec.suspend"
+        },
+        {
+          "name": "prune",
+          "category": "policy",
+          "value": "on",
+          "effective": "on",
+          "path": "spec.prune"
+        },
+        {
+          "name": "force",
+          "category": "policy",
+          "value": "off",
+          "effective": "off",
+          "path": "spec.force"
+        },
+        {
+          "name": "wait",
+          "category": "policy",
+          "value": "unset",
+          "default": "off",
+          "effective": "off",
+          "path": "spec.wait"
+        }
+      ]
+    }
+  ],
+  "filters": {
+    "settings": [
+      "suspend=on"
+    ]
+  },
+  "linkSources": [
+    {
+      "namespace": "argocd",
+      "status": "found",
+      "url": "https://argocd.example.test"
+    },
+    {
+      "namespace": "team-sandbox",
+      "status": "not_found"
+    }
+  ],
+  "reads": [
+    {
+      "controller": "ArgoCD",
+      "kind": "Application",
+      "resource": "applications.argoproj.io/v1alpha1",
+      "status": "read",
+      "count": 20
+    },
+    {
+      "controller": "Flux",
+      "kind": "Kustomization",
+      "resource": "kustomizations.kustomize.toolkit.fluxcd.io/v1",
+      "status": "read",
+      "count": 6
+    },
+    {
+      "controller": "Flux",
+      "kind": "HelmRelease",
+      "resource": "helmreleases.helm.toolkit.fluxcd.io/v2",
+      "status": "read",
+      "count": 4
+    }
+  ],
+  "view": "deployers"
+}

@@ -1,0 +1,294 @@
+{
+  "complete": true,
+  "context": "kind-scout-eval-settings-d0a5eba8",
+  "counts": [
+    {
+      "controller": "ArgoCD",
+      "kind": "Application",
+      "status": "read",
+      "read": 20,
+      "shown": 6
+    },
+    {
+      "controller": "Flux",
+      "kind": "Kustomization",
+      "status": "read",
+      "read": 6,
+      "shown": 0
+    },
+    {
+      "controller": "Flux",
+      "kind": "HelmRelease",
+      "status": "read",
+      "read": 4,
+      "shown": 0
+    }
+  ],
+  "deployers": [
+    {
+      "controller": "ArgoCD",
+      "kind": "Application",
+      "namespace": "argocd",
+      "name": "etl-nightly",
+      "groupKind": "project",
+      "group": "data",
+      "url": "https://argocd.example.test/applications/argocd/etl-nightly",
+      "settings": [
+        {
+          "name": "auto-sync",
+          "category": "policy",
+          "value": "on",
+          "effective": "on",
+          "path": "spec.syncPolicy.automated"
+        },
+        {
+          "name": "self-heal",
+          "category": "policy",
+          "value": "off",
+          "effective": "off",
+          "path": "spec.syncPolicy.automated.selfHeal"
+        },
+        {
+          "name": "prune",
+          "category": "policy",
+          "value": "off",
+          "effective": "off",
+          "path": "spec.syncPolicy.automated.prune"
+        }
+      ]
+    },
+    {
+      "controller": "ArgoCD",
+      "kind": "Application",
+      "namespace": "argocd",
+      "name": "feature-store",
+      "groupKind": "project",
+      "group": "data",
+      "url": "https://argocd.example.test/applications/argocd/feature-store",
+      "settings": [
+        {
+          "name": "auto-sync",
+          "category": "policy",
+          "value": "on",
+          "effective": "on",
+          "path": "spec.syncPolicy.automated"
+        },
+        {
+          "name": "self-heal",
+          "category": "policy",
+          "value": "unset",
+          "default": "off",
+          "effective": "off",
+          "path": "spec.syncPolicy.automated.selfHeal"
+        },
+        {
+          "name": "prune",
+          "category": "policy",
+          "value": "unset",
+          "default": "off",
+          "effective": "off",
+          "path": "spec.syncPolicy.automated.prune"
+        },
+        {
+          "name": "automated.allowEmpty",
+          "category": "option",
+          "value": "true",
+          "effective": "true",
+          "path": "spec.syncPolicy.automated.allowEmpty"
+        }
+      ]
+    },
+    {
+      "controller": "ArgoCD",
+      "kind": "Application",
+      "namespace": "team-sandbox",
+      "name": "playground",
+      "groupKind": "project",
+      "group": "default",
+      "settings": [
+        {
+          "name": "auto-sync",
+          "category": "policy",
+          "value": "on",
+          "effective": "on",
+          "path": "spec.syncPolicy.automated"
+        },
+        {
+          "name": "self-heal",
+          "category": "policy",
+          "value": "unset",
+          "default": "off",
+          "effective": "off",
+          "path": "spec.syncPolicy.automated.selfHeal"
+        },
+        {
+          "name": "prune",
+          "category": "policy",
+          "value": "on",
+          "effective": "on",
+          "path": "spec.syncPolicy.automated.prune"
+        }
+      ]
+    },
+    {
+      "controller": "ArgoCD",
+      "kind": "Application",
+      "namespace": "argocd",
+      "name": "fx-rates",
+      "groupKind": "project",
+      "group": "payments",
+      "url": "https://argocd.example.test/applications/argocd/fx-rates",
+      "settings": [
+        {
+          "name": "auto-sync",
+          "category": "policy",
+          "value": "on",
+          "effective": "on",
+          "path": "spec.syncPolicy.automated"
+        },
+        {
+          "name": "self-heal",
+          "category": "policy",
+          "value": "unset",
+          "default": "off",
+          "effective": "off",
+          "path": "spec.syncPolicy.automated.selfHeal"
+        },
+        {
+          "name": "prune",
+          "category": "policy",
+          "value": "on",
+          "effective": "on",
+          "path": "spec.syncPolicy.automated.prune"
+        },
+        {
+          "name": "ServerSideApply",
+          "category": "option",
+          "value": "true",
+          "effective": "true",
+          "path": "spec.syncPolicy.syncOptions"
+        },
+        {
+          "name": "Validate",
+          "category": "option",
+          "value": "false",
+          "effective": "false",
+          "path": "spec.syncPolicy.syncOptions"
+        }
+      ]
+    },
+    {
+      "controller": "ArgoCD",
+      "kind": "Application",
+      "namespace": "argocd",
+      "name": "settlement-worker",
+      "groupKind": "project",
+      "group": "payments",
+      "url": "https://argocd.example.test/applications/argocd/settlement-worker",
+      "settings": [
+        {
+          "name": "auto-sync",
+          "category": "policy",
+          "value": "on",
+          "effective": "on",
+          "path": "spec.syncPolicy.automated"
+        },
+        {
+          "name": "self-heal",
+          "category": "policy",
+          "value": "off",
+          "effective": "off",
+          "path": "spec.syncPolicy.automated.selfHeal"
+        },
+        {
+          "name": "prune",
+          "category": "policy",
+          "value": "on",
+          "effective": "on",
+          "path": "spec.syncPolicy.automated.prune"
+        }
+      ]
+    },
+    {
+      "controller": "ArgoCD",
+      "kind": "Application",
+      "namespace": "argocd",
+      "name": "ingress-nginx",
+      "groupKind": "project",
+      "group": "platform",
+      "url": "https://argocd.example.test/applications/argocd/ingress-nginx",
+      "settings": [
+        {
+          "name": "auto-sync",
+          "category": "policy",
+          "value": "on",
+          "effective": "on",
+          "path": "spec.syncPolicy.automated"
+        },
+        {
+          "name": "self-heal",
+          "category": "policy",
+          "value": "unset",
+          "default": "off",
+          "effective": "off",
+          "path": "spec.syncPolicy.automated.selfHeal"
+        },
+        {
+          "name": "prune",
+          "category": "policy",
+          "value": "unset",
+          "default": "off",
+          "effective": "off",
+          "path": "spec.syncPolicy.automated.prune"
+        },
+        {
+          "name": "CreateNamespace",
+          "category": "option",
+          "value": "true",
+          "effective": "true",
+          "path": "spec.syncPolicy.syncOptions"
+        }
+      ]
+    }
+  ],
+  "filters": {
+    "settings": [
+      "self-heal=off"
+    ]
+  },
+  "linkSources": [
+    {
+      "namespace": "argocd",
+      "status": "found",
+      "url": "https://argocd.example.test"
+    },
+    {
+      "namespace": "team-sandbox",
+      "status": "not_found"
+    }
+  ],
+  "reads": [
+    {
+      "controller": "ArgoCD",
+      "kind": "Application",
+      "resource": "applications.argoproj.io/v1alpha1",
+      "status": "read",
+      "count": 20
+    },
+    {
+      "controller": "Flux",
+      "kind": "Kustomization",
+      "resource": "kustomizations.kustomize.toolkit.fluxcd.io/v1",
+      "status": "read",
+      "count": 6
+    },
+    {
+      "controller": "Flux",
+      "kind": "HelmRelease",
+      "resource": "helmreleases.helm.toolkit.fluxcd.io/v2",
+      "status": "read",
+      "count": 4
+    }
+  ],
+  "view": "deployers"
+}

@@ -28,6 +28,7 @@ const (
 	// and reads and drop the two views that were not asked for, so a caller
 	// that pays per byte reads one inversion and not three.
 	deliverySettingsViewAll       = "all"
+	deliverySettingsViewSummary   = "summary"
 	deliverySettingsViewGroups    = "groups"
 	deliverySettingsViewSettings  = "settings"
 	deliverySettingsViewDeployers = "deployers"
@@ -87,7 +88,7 @@ func addGitOpsSettingsFlags(flags *pflag.FlagSet) {
 	flags.String("group-by", deliverySettingsGroupByProject, "Group by: project, setting, deployer")
 	flags.String("format", "ascii", "Output format: ascii, json, md")
 	flags.Bool("json", false, "Output as JSON (shorthand for --format json)")
-	flags.String("view", deliverySettingsViewAll, "JSON only: all, groups (per project or namespace), settings (per kind), or deployers (per object)")
+	flags.String("view", deliverySettingsViewAll, "JSON only: all, summary (compact, per project or namespace), groups, settings (per kind), or deployers (per object)")
 	flags.Bool("tui", false, "View this snapshot in a scrollable terminal viewport")
 }
 
@@ -163,9 +164,9 @@ func deliverySettingsParamsFromFlags(cmd *cobra.Command) (deliverySettingsParams
 	view, _ := flags.GetString("view")
 	params.View = strings.ToLower(strings.TrimSpace(view))
 	switch params.View {
-	case deliverySettingsViewAll, deliverySettingsViewGroups, deliverySettingsViewSettings, deliverySettingsViewDeployers:
+	case deliverySettingsViewAll, deliverySettingsViewSummary, deliverySettingsViewGroups, deliverySettingsViewSettings, deliverySettingsViewDeployers:
 	default:
-		return params, fmt.Errorf("invalid --view %q (valid: all, groups, settings, deployers)", view)
+		return params, fmt.Errorf("invalid --view %q (valid: all, summary, groups, settings, deployers)", view)
 	}
 	for _, project := range params.Projects {
 		if strings.TrimSpace(project) == "" {
@@ -237,8 +238,75 @@ func writeDeliverySettingsView(w io.Writer, report deliverySettingsReport, view 
 	}
 	document["view"], _ = json.Marshal(view)
 	encoder := json.NewEncoder(w)
+	if view == deliverySettingsViewSummary {
+		// The summary exists to be cheap to read, so it is written without
+		// indentation: one line.
+		if document[deliverySettingsViewSummary], err = json.Marshal(summariseDeliveryGroups(report.Groups)); err != nil {
+			return err
+		}
+		return encoder.Encode(document)
+	}
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(document)
+}
+
+// deliverySummaryGroup is one group of the groups view with each deployer
+// written once per setting as "namespace/name". It says the same thing as the
+// groups view in a fraction of the bytes; links and per-setting spec paths are
+// in the deployers view.
+type deliverySummaryGroup struct {
+	Controller string `json:"controller"`
+	Kind       string `json:"kind"`
+	GroupKind  string `json:"groupKind"`
+	Group      string `json:"group,omitempty"`
+	Deployers  int    `json:"deployers"`
+	// Settings maps a setting name to its values, and each value to the
+	// deployers that have it.
+	Settings map[string]map[string][]string `json:"settings"`
+	// Unset lists, per setting, the deployers that do not declare it and are
+	// counted under the controller default in Settings.
+	Unset map[string][]string `json:"unset,omitempty"`
+	// Details carries what a value alone does not say, such as how many
+	// ignore rules a deployer declares.
+	Details map[string]map[string]string `json:"details,omitempty"`
+}
+
+func summariseDeliveryGroups(groups []agent.DeliverySettingsGroup) []deliverySummaryGroup {
+	out := make([]deliverySummaryGroup, 0, len(groups))
+	for _, group := range groups {
+		summary := deliverySummaryGroup{
+			Controller: group.Controller, Kind: group.Kind, GroupKind: group.GroupKind, Group: group.Group,
+			Deployers: group.Deployers, Settings: map[string]map[string][]string{},
+		}
+		for _, setting := range group.Settings {
+			values := map[string][]string{}
+			for _, value := range setting.Values {
+				for _, ref := range value.Deployers {
+					name := ref.Namespace + "/" + ref.Name
+					values[value.Value] = append(values[value.Value], name)
+					if ref.Unset {
+						if summary.Unset == nil {
+							summary.Unset = map[string][]string{}
+						}
+						summary.Unset[setting.Name] = append(summary.Unset[setting.Name], name)
+					}
+					// "auto-sync is off" only restates the n/a value.
+					if ref.Detail != "" && value.Value != agent.DeliveryValueNotApplicable {
+						if summary.Details == nil {
+							summary.Details = map[string]map[string]string{}
+						}
+						if summary.Details[setting.Name] == nil {
+							summary.Details[setting.Name] = map[string]string{}
+						}
+						summary.Details[setting.Name][name] = ref.Detail
+					}
+				}
+			}
+			summary.Settings[setting.Name] = values
+		}
+		out = append(out, summary)
+	}
+	return out
 }
 
 func buildDeliverySettingsReport(ctx context.Context, client dynamic.Interface, params deliverySettingsParams) (deliverySettingsReport, error) {

@@ -1,0 +1,845 @@
+apiVersion: v1
+items:
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destination:
+            f:namespace: {}
+            f:server: {}
+          f:project: {}
+          f:source:
+            f:path: {}
+            f:repoURL: {}
+            f:targetRevision: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: backfill-2025
+    namespace: argocd
+    resourceVersion: "572"
+    uid: c43f93b0-8a20-43e0-bc5b-20baab002362
+  spec:
+    destination:
+      namespace: backfill-2025
+      server: https://kubernetes.default.svc
+    project: data
+    source:
+      path: deploy
+      repoURL: https://git.example.test/data/backfill-2025.git
+      targetRevision: main
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destination:
+            f:namespace: {}
+            f:server: {}
+          f:project: {}
+          f:source:
+            f:path: {}
+            f:repoURL: {}
+            f:targetRevision: {}
+          f:syncPolicy:
+            f:automated:
+              f:prune: {}
+              f:selfHeal: {}
+            f:syncOptions: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: cert-manager
+    namespace: argocd
+    resourceVersion: "561"
+    uid: 1c4c8e77-cf19-4fe0-ac96-125d1ce0c993
+  spec:
+    destination:
+      namespace: cert-manager
+      server: https://kubernetes.default.svc
+    project: platform
+    source:
+      path: deploy
+      repoURL: https://git.example.test/platform/cert-manager.git
+      targetRevision: main
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+      - ServerSideApply=true
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destination:
+            f:namespace: {}
+            f:server: {}
+          f:project: {}
+          f:source:
+            f:path: {}
+            f:repoURL: {}
+            f:targetRevision: {}
+          f:syncPolicy:
+            f:automated:
+              f:selfHeal: {}
+            f:syncOptions: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: checkout-web
+    namespace: argocd
+    resourceVersion: "557"
+    uid: 20ed9c97-a985-4ead-b123-2f9fbfb7b0d8
+  spec:
+    destination:
+      namespace: checkout-web
+      server: https://kubernetes.default.svc
+    project: payments
+    source:
+      path: deploy
+      repoURL: https://git.example.test/payments/checkout-web.git
+      targetRevision: main
+    syncPolicy:
+      automated:
+        selfHeal: true
+      syncOptions:
+      - CreateNamespace=true
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destination:
+            f:namespace: {}
+            f:server: {}
+          f:project: {}
+          f:source:
+            f:path: {}
+            f:repoURL: {}
+            f:targetRevision: {}
+          f:syncPolicy:
+            f:syncOptions: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: cluster-bootstrap
+    namespace: argocd
+    resourceVersion: "565"
+    uid: 0ee9228e-a30c-4113-ad2c-b9004996b15c
+  spec:
+    destination:
+      namespace: cluster-bootstrap
+      server: https://kubernetes.default.svc
+    project: platform
+    source:
+      path: deploy
+      repoURL: https://git.example.test/platform/cluster-bootstrap.git
+      targetRevision: main
+    syncPolicy:
+      syncOptions:
+      - CreateNamespace=true
+      - PruneLast=true
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destination:
+            f:namespace: {}
+            f:server: {}
+          f:project: {}
+          f:source:
+            f:path: {}
+            f:repoURL: {}
+            f:targetRevision: {}
+          f:syncPolicy:
+            f:automated:
+              f:enabled: {}
+              f:prune: {}
+              f:selfHeal: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: dns-migration
+    namespace: argocd
+    resourceVersion: "566"
+    uid: 8d17b918-ff3b-4cf7-96a2-a942b08a3311
+  spec:
+    destination:
+      namespace: dns-migration
+      server: https://kubernetes.default.svc
+    project: platform
+    source:
+      path: deploy
+      repoURL: https://git.example.test/platform/dns-migration.git
+      targetRevision: main
+    syncPolicy:
+      automated:
+        enabled: false
+        prune: true
+        selfHeal: false
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destination:
+            f:namespace: {}
+            f:server: {}
+          f:project: {}
+          f:source:
+            f:path: {}
+            f:repoURL: {}
+            f:targetRevision: {}
+          f:syncPolicy:
+            f:automated:
+              f:prune: {}
+              f:selfHeal: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: etl-nightly
+    namespace: argocd
+    resourceVersion: "569"
+    uid: 1cb5215c-33d3-4c9b-b17c-db7f98548818
+  spec:
+    destination:
+      namespace: etl-nightly
+      server: https://kubernetes.default.svc
+    project: data
+    source:
+      path: deploy
+      repoURL: https://git.example.test/data/etl-nightly.git
+      targetRevision: main
+    syncPolicy:
+      automated:
+        prune: false
+        selfHeal: false
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destination:
+            f:namespace: {}
+            f:server: {}
+          f:project: {}
+          f:source:
+            f:path: {}
+            f:repoURL: {}
+            f:targetRevision: {}
+          f:syncPolicy:
+            f:automated:
+              f:prune: {}
+              f:selfHeal: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: external-dns
+    namespace: argocd
+    resourceVersion: "562"
+    uid: 00c185c3-ea8f-4b5b-aba9-be99f48c2e99
+  spec:
+    destination:
+      namespace: external-dns
+      server: https://kubernetes.default.svc
+    project: platform
+    source:
+      path: deploy
+      repoURL: https://git.example.test/platform/external-dns.git
+      targetRevision: main
+    syncPolicy:
+      automated:
+        prune: false
+        selfHeal: true
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destination:
+            f:namespace: {}
+            f:server: {}
+          f:project: {}
+          f:source:
+            f:path: {}
+            f:repoURL: {}
+            f:targetRevision: {}
+          f:syncPolicy:
+            f:automated:
+              f:allowEmpty: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: feature-store
+    namespace: argocd
+    resourceVersion: "570"
+    uid: 78852477-ab76-4a17-af63-fe9b8b92ec87
+  spec:
+    destination:
+      namespace: feature-store
+      server: https://kubernetes.default.svc
+    project: data
+    source:
+      path: deploy
+      repoURL: https://git.example.test/data/feature-store.git
+      targetRevision: main
+    syncPolicy:
+      automated:
+        allowEmpty: true
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destination:
+            f:namespace: {}
+            f:server: {}
+          f:project: {}
+          f:source:
+            f:path: {}
+            f:repoURL: {}
+            f:targetRevision: {}
+          f:syncPolicy:
+            f:automated:
+              f:prune: {}
+            f:syncOptions: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: fx-rates
+    namespace: argocd
+    resourceVersion: "558"
+    uid: 88fba725-7f1e-4021-9bb3-03e8446faa92
+  spec:
+    destination:
+      namespace: fx-rates
+      server: https://kubernetes.default.svc
+    project: payments
+    source:
+      path: deploy
+      repoURL: https://git.example.test/payments/fx-rates.git
+      targetRevision: main
+    syncPolicy:
+      automated:
+        prune: true
+      syncOptions:
+      - ServerSideApply=true
+      - Validate=false
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destination:
+            f:namespace: {}
+            f:server: {}
+          f:project: {}
+          f:source:
+            f:path: {}
+            f:repoURL: {}
+            f:targetRevision: {}
+          f:syncPolicy:
+            f:automated:
+              f:prune: {}
+              f:selfHeal: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: guestbook
+    namespace: argocd
+    resourceVersion: "574"
+    uid: 0d9a1a9b-3384-40b3-a7c6-f28a68508444
+  spec:
+    destination:
+      namespace: guestbook
+      server: https://kubernetes.default.svc
+    project: default
+    source:
+      path: deploy
+      repoURL: https://git.example.test/default/guestbook.git
+      targetRevision: main
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destination:
+            f:namespace: {}
+            f:server: {}
+          f:project: {}
+          f:source:
+            f:path: {}
+            f:repoURL: {}
+            f:targetRevision: {}
+          f:syncPolicy:
+            f:automated: {}
+            f:syncOptions: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: ingress-nginx
+    namespace: argocd
+    resourceVersion: "564"
+    uid: da7d88b4-c008-403d-b6eb-374cf6987b04
+  spec:
+    destination:
+      namespace: ingress-nginx
+      server: https://kubernetes.default.svc
+    project: platform
+    source:
+      path: deploy
+      repoURL: https://git.example.test/platform/ingress-nginx.git
+      targetRevision: main
+    syncPolicy:
+      automated: {}
+      syncOptions:
+      - CreateNamespace=true
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destination:
+            f:namespace: {}
+            f:server: {}
+          f:project: {}
+          f:source:
+            f:path: {}
+            f:repoURL: {}
+            f:targetRevision: {}
+          f:syncPolicy:
+            f:automated:
+              f:prune: {}
+              f:selfHeal: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: invoices
+    namespace: argocd
+    resourceVersion: "556"
+    uid: 40792302-a5c2-4a7b-8b3c-9183a70b7fa3
+  spec:
+    destination:
+      namespace: invoices
+      server: https://kubernetes.default.svc
+    project: payments
+    source:
+      path: deploy
+      repoURL: https://git.example.test/payments/invoices.git
+      targetRevision: main
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destination:
+            f:namespace: {}
+            f:server: {}
+          f:project: {}
+          f:source:
+            f:path: {}
+            f:repoURL: {}
+            f:targetRevision: {}
+          f:syncPolicy:
+            f:automated:
+              f:prune: {}
+              f:selfHeal: {}
+            f:syncOptions: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: ledger-api
+    namespace: argocd
+    resourceVersion: "555"
+    uid: 2de054c5-0928-4291-aa5b-206d3e99f58c
+  spec:
+    destination:
+      namespace: ledger-api
+      server: https://kubernetes.default.svc
+    project: payments
+    source:
+      path: deploy
+      repoURL: https://git.example.test/payments/ledger-api.git
+      targetRevision: main
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+      - ServerSideApply=true
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destination:
+            f:namespace: {}
+            f:server: {}
+          f:project: {}
+          f:source:
+            f:path: {}
+            f:repoURL: {}
+            f:targetRevision: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: legacy-billing
+    namespace: argocd
+    resourceVersion: "560"
+    uid: 94696629-a4ca-4c68-8153-9304c7d104c4
+  spec:
+    destination:
+      namespace: legacy-billing
+      server: https://kubernetes.default.svc
+    project: payments
+    source:
+      path: deploy
+      repoURL: https://git.example.test/payments/legacy-billing.git
+      targetRevision: main
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destination:
+            f:namespace: {}
+            f:server: {}
+          f:ignoreDifferences: {}
+          f:project: {}
+          f:source:
+            f:path: {}
+            f:repoURL: {}
+            f:targetRevision: {}
+          f:syncPolicy:
+            f:automated:
+              f:prune: {}
+              f:selfHeal: {}
+            f:syncOptions: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: monitoring-stack
+    namespace: argocd
+    resourceVersion: "563"
+    uid: fbfac0be-2aed-4510-94cd-7407f7ba4345
+  spec:
+    destination:
+      namespace: monitoring-stack
+      server: https://kubernetes.default.svc
+    ignoreDifferences:
+    - group: apps
+      jsonPointers:
+      - /spec/replicas
+      kind: Deployment
+    project: platform
+    source:
+      path: deploy
+      repoURL: https://git.example.test/platform/monitoring-stack.git
+      targetRevision: main
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+      - RespectIgnoreDifferences=true
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destination:
+            f:namespace: {}
+            f:server: {}
+          f:project: {}
+          f:source:
+            f:path: {}
+            f:repoURL: {}
+            f:targetRevision: {}
+          f:syncPolicy:
+            f:automated:
+              f:prune: {}
+              f:selfHeal: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: notebooks
+    namespace: argocd
+    resourceVersion: "571"
+    uid: becc22d6-5da2-491f-b8ad-256fea05876b
+  spec:
+    destination:
+      namespace: notebooks
+      server: https://kubernetes.default.svc
+    project: data
+    source:
+      path: deploy
+      repoURL: https://git.example.test/data/notebooks.git
+      targetRevision: main
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destination:
+            f:namespace: {}
+            f:server: {}
+          f:project: {}
+          f:source:
+            f:path: {}
+            f:repoURL: {}
+            f:targetRevision: {}
+          f:syncPolicy:
+            f:automated:
+              f:prune: {}
+              f:selfHeal: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: settlement-worker
+    namespace: argocd
+    resourceVersion: "559"
+    uid: ba6c1ee1-2b2b-4b3e-9058-252e51638145
+  spec:
+    destination:
+      namespace: settlement-worker
+      server: https://kubernetes.default.svc
+    project: payments
+    source:
+      path: deploy
+      repoURL: https://git.example.test/payments/settlement-worker.git
+      targetRevision: main
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: false
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destination:
+            f:namespace: {}
+            f:server: {}
+          f:project: {}
+          f:source:
+            f:path: {}
+            f:repoURL: {}
+            f:targetRevision: {}
+          f:syncPolicy:
+            f:automated:
+              f:prune: {}
+              f:selfHeal: {}
+            f:syncOptions: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: stream-processor
+    namespace: argocd
+    resourceVersion: "568"
+    uid: 61fdaf7d-36ee-4f6b-9f31-5db2a613816d
+  spec:
+    destination:
+      namespace: stream-processor
+      server: https://kubernetes.default.svc
+    project: data
+    source:
+      path: deploy
+      repoURL: https://git.example.test/data/stream-processor.git
+      targetRevision: main
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+      - PrunePropagationPolicy=foreground
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destination:
+            f:namespace: {}
+            f:server: {}
+          f:project: {}
+          f:source:
+            f:path: {}
+            f:repoURL: {}
+            f:targetRevision: {}
+          f:syncPolicy:
+            f:automated:
+              f:prune: {}
+              f:selfHeal: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: warehouse
+    namespace: argocd
+    resourceVersion: "567"
+    uid: 203898b8-4698-4e57-8c12-3f82141b4eb1
+  spec:
+    destination:
+      namespace: warehouse
+      server: https://kubernetes.default.svc
+    project: data
+    source:
+      path: deploy
+      repoURL: https://git.example.test/data/warehouse.git
+      targetRevision: main
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    creationTimestamp: "2026-10-09T10:11:30Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destination:
+            f:namespace: {}
+            f:server: {}
+          f:project: {}
+          f:source:
+            f:path: {}
+            f:repoURL: {}
+            f:targetRevision: {}
+          f:syncPolicy:
+            f:automated:
+              f:prune: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T10:11:30Z"
+    name: playground
+    namespace: team-sandbox
+    resourceVersion: "573"
+    uid: c1d3870c-73ec-459d-a71d-81336b2bc703
+  spec:
+    destination:
+      namespace: playground
+      server: https://kubernetes.default.svc
+    project: default
+    source:
+      path: deploy
+      repoURL: https://git.example.test/default/playground.git
+      targetRevision: main
+    syncPolicy:
+      automated:
+        prune: true
+kind: List
+metadata:
+  resourceVersion: ""

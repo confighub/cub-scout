@@ -1,0 +1,477 @@
+{
+  "context": "kind-scout-eval-settings-d0a5eba8",
+  "backend": "flux",
+  "transport": "git",
+  "deployers": [
+    {
+      "kind": "Kustomization",
+      "name": "apps",
+      "namespace": "flux-system",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/flux-system/fleet"
+    },
+    {
+      "kind": "Kustomization",
+      "name": "infrastructure",
+      "namespace": "flux-system",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/flux-system/fleet"
+    },
+    {
+      "kind": "Kustomization",
+      "name": "legacy-migration",
+      "namespace": "flux-system",
+      "ready": false,
+      "suspended": true,
+      "stage": "healthy",
+      "reason": "Suspended",
+      "message": "Resource is suspended",
+      "sourceRef": "GitRepository/flux-system/fleet"
+    },
+    {
+      "kind": "Kustomization",
+      "name": "monitoring",
+      "namespace": "flux-system",
+      "ready": false,
+      "suspended": true,
+      "stage": "healthy",
+      "reason": "Suspended",
+      "message": "Resource is suspended",
+      "sourceRef": "GitRepository/flux-system/fleet"
+    },
+    {
+      "kind": "Kustomization",
+      "name": "secrets",
+      "namespace": "flux-system",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/flux-system/fleet"
+    },
+    {
+      "kind": "Kustomization",
+      "name": "tenants",
+      "namespace": "flux-system",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/flux-system/fleet"
+    },
+    {
+      "kind": "HelmRelease",
+      "name": "grafana",
+      "namespace": "team-g",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "HelmRepository/team-g/charts"
+    },
+    {
+      "kind": "HelmRelease",
+      "name": "loki",
+      "namespace": "team-g",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "HelmRepository/team-g/charts"
+    },
+    {
+      "kind": "HelmRelease",
+      "name": "postgres",
+      "namespace": "team-h",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "HelmRepository/team-h/charts"
+    },
+    {
+      "kind": "HelmRelease",
+      "name": "redis",
+      "namespace": "team-h",
+      "ready": false,
+      "suspended": true,
+      "stage": "healthy",
+      "reason": "Suspended",
+      "message": "Resource is suspended",
+      "sourceRef": "HelmRepository/team-h/charts"
+    },
+    {
+      "kind": "Application",
+      "name": "backfill-2025",
+      "namespace": "argocd",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/argocd/backfill-2025"
+    },
+    {
+      "kind": "Application",
+      "name": "cert-manager",
+      "namespace": "argocd",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/argocd/cert-manager"
+    },
+    {
+      "kind": "Application",
+      "name": "checkout-web",
+      "namespace": "argocd",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/argocd/checkout-web"
+    },
+    {
+      "kind": "Application",
+      "name": "cluster-bootstrap",
+      "namespace": "argocd",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/argocd/cluster-bootstrap"
+    },
+    {
+      "kind": "Application",
+      "name": "dns-migration",
+      "namespace": "argocd",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/argocd/dns-migration"
+    },
+    {
+      "kind": "Application",
+      "name": "etl-nightly",
+      "namespace": "argocd",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/argocd/etl-nightly"
+    },
+    {
+      "kind": "Application",
+      "name": "external-dns",
+      "namespace": "argocd",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/argocd/external-dns"
+    },
+    {
+      "kind": "Application",
+      "name": "feature-store",
+      "namespace": "argocd",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/argocd/feature-store"
+    },
+    {
+      "kind": "Application",
+      "name": "fx-rates",
+      "namespace": "argocd",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/argocd/fx-rates"
+    },
+    {
+      "kind": "Application",
+      "name": "guestbook",
+      "namespace": "argocd",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/argocd/guestbook"
+    },
+    {
+      "kind": "Application",
+      "name": "ingress-nginx",
+      "namespace": "argocd",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/argocd/ingress-nginx"
+    },
+    {
+      "kind": "Application",
+      "name": "invoices",
+      "namespace": "argocd",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/argocd/invoices"
+    },
+    {
+      "kind": "Application",
+      "name": "ledger-api",
+      "namespace": "argocd",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/argocd/ledger-api"
+    },
+    {
+      "kind": "Application",
+      "name": "legacy-billing",
+      "namespace": "argocd",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/argocd/legacy-billing"
+    },
+    {
+      "kind": "Application",
+      "name": "monitoring-stack",
+      "namespace": "argocd",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/argocd/monitoring-stack"
+    },
+    {
+      "kind": "Application",
+      "name": "notebooks",
+      "namespace": "argocd",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/argocd/notebooks"
+    },
+    {
+      "kind": "Application",
+      "name": "settlement-worker",
+      "namespace": "argocd",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/argocd/settlement-worker"
+    },
+    {
+      "kind": "Application",
+      "name": "stream-processor",
+      "namespace": "argocd",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/argocd/stream-processor"
+    },
+    {
+      "kind": "Application",
+      "name": "warehouse",
+      "namespace": "argocd",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/argocd/warehouse"
+    },
+    {
+      "kind": "Application",
+      "name": "playground",
+      "namespace": "team-sandbox",
+      "ready": false,
+      "stage": "unknown",
+      "sourceRef": "GitRepository/team-sandbox/playground"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "GitRepository",
+      "name": "fleet",
+      "namespace": "flux-system",
+      "ready": false,
+      "url": "https://git.example.test/platform/fleet.git"
+    },
+    {
+      "kind": "HelmRepository",
+      "name": "charts",
+      "namespace": "team-g",
+      "ready": false,
+      "url": "https://charts.example.test"
+    },
+    {
+      "kind": "HelmRepository",
+      "name": "charts",
+      "namespace": "team-h",
+      "ready": false,
+      "url": "https://charts.example.test"
+    },
+    {
+      "kind": "GitRepository",
+      "name": "backfill-2025",
+      "namespace": "argocd",
+      "ready": true
+    },
+    {
+      "kind": "GitRepository",
+      "name": "cert-manager",
+      "namespace": "argocd",
+      "ready": true
+    },
+    {
+      "kind": "GitRepository",
+      "name": "checkout-web",
+      "namespace": "argocd",
+      "ready": true
+    },
+    {
+      "kind": "GitRepository",
+      "name": "cluster-bootstrap",
+      "namespace": "argocd",
+      "ready": true
+    },
+    {
+      "kind": "GitRepository",
+      "name": "dns-migration",
+      "namespace": "argocd",
+      "ready": true
+    },
+    {
+      "kind": "GitRepository",
+      "name": "etl-nightly",
+      "namespace": "argocd",
+      "ready": true
+    },
+    {
+      "kind": "GitRepository",
+      "name": "external-dns",
+      "namespace": "argocd",
+      "ready": true
+    },
+    {
+      "kind": "GitRepository",
+      "name": "feature-store",
+      "namespace": "argocd",
+      "ready": true
+    },
+    {
+      "kind": "GitRepository",
+      "name": "fx-rates",
+      "namespace": "argocd",
+      "ready": true
+    },
+    {
+      "kind": "GitRepository",
+      "name": "guestbook",
+      "namespace": "argocd",
+      "ready": true
+    },
+    {
+      "kind": "GitRepository",
+      "name": "ingress-nginx",
+      "namespace": "argocd",
+      "ready": true
+    },
+    {
+      "kind": "GitRepository",
+      "name": "invoices",
+      "namespace": "argocd",
+      "ready": true
+    },
+    {
+      "kind": "GitRepository",
+      "name": "ledger-api",
+      "namespace": "argocd",
+      "ready": true
+    },
+    {
+      "kind": "GitRepository",
+      "name": "legacy-billing",
+      "namespace": "argocd",
+      "ready": true
+    },
+    {
+      "kind": "GitRepository",
+      "name": "monitoring-stack",
+      "namespace": "argocd",
+      "ready": true
+    },
+    {
+      "kind": "GitRepository",
+      "name": "notebooks",
+      "namespace": "argocd",
+      "ready": true
+    },
+    {
+      "kind": "GitRepository",
+      "name": "settlement-worker",
+      "namespace": "argocd",
+      "ready": true
+    },
+    {
+      "kind": "GitRepository",
+      "name": "stream-processor",
+      "namespace": "argocd",
+      "ready": true
+    },
+    {
+      "kind": "GitRepository",
+      "name": "warehouse",
+      "namespace": "argocd",
+      "ready": true
+    },
+    {
+      "kind": "GitRepository",
+      "name": "playground",
+      "namespace": "team-sandbox",
+      "ready": true
+    }
+  ],
+  "controllerCoverage": [
+    {
+      "family": "Flux",
+      "status": "found",
+      "resourceKinds": [
+        "ArtifactGenerator",
+        "ExternalArtifact",
+        "FluxInstance",
+        "FluxReport",
+        "HelmRelease",
+        "Kustomization",
+        "ResourceSet",
+        "ResourceSetInputProvider"
+      ],
+      "foundKinds": [
+        "HelmRelease",
+        "Kustomization"
+      ],
+      "found": 10
+    },
+    {
+      "family": "ArgoCD",
+      "status": "found",
+      "resourceKinds": [
+        "Application"
+      ],
+      "foundKinds": [
+        "Application"
+      ],
+      "found": 20
+    },
+    {
+      "family": "ConfigHub",
+      "status": "not_found",
+      "resourceKinds": [
+        "ConfigHubTarget"
+      ],
+      "found": 0
+    },
+    {
+      "family": "Sveltos",
+      "status": "not_found",
+      "resourceKinds": [
+        "ClusterConfiguration",
+        "ClusterHealthCheck",
+        "ClusterProfile",
+        "ClusterPromotion",
+        "ClusterReport",
+        "ClusterSummary",
+        "EventReport",
+        "EventSource",
+        "EventTrigger",
+        "HealthCheckReport",
+        "Profile"
+      ],
+      "found": 0
+    },
+    {
+      "family": "Modelplane",
+      "status": "not_found",
+      "resourceKinds": [
+        "EKSCluster",
+        "GKECluster",
+        "InferenceClass",
+        "InferenceCluster",
+        "InferenceGateway",
+        "ModelCache",
+        "ModelDeployment",
+        "ModelEndpoint",
+        "ModelReplica",
+        "ModelService",
+        "ServingStack"
+      ],
+      "found": 0
+    }
+  ],
+  "healthyCount": 0,
+  "failedCount": 30
+}

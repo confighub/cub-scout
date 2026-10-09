@@ -434,12 +434,12 @@ func TestGitOpsSettingsViewFlag(t *testing.T) {
 	params, err = parse("--view", "Groups")
 	require.NoError(t, err)
 	require.Equal(t, deliverySettingsViewGroups, params.View)
-	_, err = parse("--view", "summary")
-	require.ErrorContains(t, err, `invalid --view "summary" (valid: all, groups, settings, deployers)`)
+	_, err = parse("--view", "brief")
+	require.ErrorContains(t, err, `invalid --view "brief" (valid: all, summary, groups, settings, deployers)`)
 }
 
-// The MCP tool is the CLI's JSON, with the per-project view by default so one
-// call returns one inversion and not three.
+// The MCP tool is the CLI's JSON, with the compact summary by default so one
+// call returns one small inversion and not three verbose ones.
 func TestMCPGitOpsSettingsBuildsTheCLICall(t *testing.T) {
 	gateway := newMCPGateway(nil)
 	tool, ok := gateway.tools["gitops_settings"]
@@ -456,13 +456,13 @@ func TestMCPGitOpsSettingsBuildsTheCLICall(t *testing.T) {
 		arguments map[string]interface{}
 		want      []string
 	}{
-		{"no arguments", map[string]interface{}{}, []string{"gitops", "settings", "--format", "json", "--view", "groups"}},
+		{"no arguments", map[string]interface{}{}, []string{"gitops", "settings", "--format", "json", "--view", "summary"}},
 		{"filters", map[string]interface{}{"setting": []interface{}{"self-heal=off", "Validate"}, "project": []interface{}{"payments"}, "namespace": "argocd"},
-			[]string{"gitops", "settings", "--format", "json", "-n", "argocd", "--project", "payments", "--setting", "self-heal=off", "--setting", "Validate", "--view", "groups"}},
+			[]string{"gitops", "settings", "--format", "json", "-n", "argocd", "--project", "payments", "--setting", "self-heal=off", "--setting", "Validate", "--view", "summary"}},
 		{"context and view", map[string]interface{}{"context": "prod-east", "view": "deployers"},
 			[]string{"gitops", "settings", "--format", "json", "--kube-context", "prod-east", "--view", "deployers"}},
 		{"an empty context is passed on so the command refuses it", map[string]interface{}{"context": ""},
-			[]string{"gitops", "settings", "--format", "json", "--kube-context", "", "--view", "groups"}},
+			[]string{"gitops", "settings", "--format", "json", "--kube-context", "", "--view", "summary"}},
 	} {
 		got, err := tool.BuildArgs(tc.arguments)
 		require.NoError(t, err, tc.name)
@@ -481,7 +481,7 @@ func TestMCPGitOpsSettingsBuildsTheCLICall(t *testing.T) {
 
 func TestMCPGitOpsSettingsReturnsTheReportAsStructuredData(t *testing.T) {
 	var out bytes.Buffer
-	require.NoError(t, writeDeliverySettingsView(&out, settingsReport(t, settingsFixtureClient(), deliverySettingsParams{}), deliverySettingsViewGroups))
+	require.NoError(t, writeDeliverySettingsView(&out, settingsReport(t, settingsFixtureClient(), deliverySettingsParams{}), deliverySettingsViewSummary))
 	var captured []string
 	gateway := newMCPGateway(func(_ context.Context, args []string) (string, error) {
 		captured = args
@@ -500,8 +500,8 @@ func TestMCPGitOpsSettingsReturnsTheReportAsStructuredData(t *testing.T) {
 	}
 	require.NoError(t, json.Unmarshal(encoded, &result))
 	require.False(t, result.IsError)
-	require.Equal(t, []string{"gitops", "settings", "--format", "json", "--setting", "prune=off", "--view", "groups"}, captured)
-	require.Equal(t, "groups", result.StructuredContent.Data["view"])
+	require.Equal(t, []string{"gitops", "settings", "--format", "json", "--setting", "prune=off", "--view", "summary"}, captured)
+	require.Equal(t, "summary", result.StructuredContent.Data["view"])
 	require.Equal(t, true, result.StructuredContent.Data["complete"])
 	require.Contains(t, result.StructuredContent.Data, "reads")
 
@@ -513,4 +513,62 @@ func TestMCPGitOpsSettingsReturnsTheReportAsStructuredData(t *testing.T) {
 	require.NoError(t, json.Unmarshal(encoded, &result))
 	require.True(t, result.IsError)
 	require.Nil(t, captured)
+}
+
+// The summary says what the groups view says, with each deployer written once
+// per setting. It must lose nothing the groups view uses to avoid a false
+// claim: unset members stay marked, n/a stays n/a, and coverage stays.
+func TestGitOpsSettingsSummaryViewIsTheGroupsViewCompacted(t *testing.T) {
+	client := settingsFixtureClient()
+	client.PrependReactor("list", "helmreleases", func(ktesting.Action) (bool, runtime.Object, error) {
+		return true, nil, apierrors.NewForbidden(schema.GroupResource{Resource: "helmreleases"}, "", nil)
+	})
+	report := settingsReport(t, client, deliverySettingsParams{})
+	var out, groups bytes.Buffer
+	require.NoError(t, writeDeliverySettingsView(&out, report, deliverySettingsViewSummary))
+	require.NoError(t, writeDeliverySettingsView(&groups, report, deliverySettingsViewGroups))
+	require.Equal(t, 1, strings.Count(out.String(), "\n"), "the summary is one line")
+	require.Less(t, out.Len()*3, groups.Len(), "the summary is well under a third of the groups view")
+
+	var document struct {
+		View     string
+		Complete bool
+		Reads    []struct{ Kind, Status, Reason string }
+		Summary  []deliverySummaryGroup
+		Groups   json.RawMessage
+	}
+	require.NoError(t, json.Unmarshal(out.Bytes(), &document))
+	require.Equal(t, "summary", document.View)
+	require.False(t, document.Complete)
+	require.Equal(t, "not_read", document.Reads[2].Status)
+	require.Nil(t, document.Groups, "the verbose groups view is not also sent")
+
+	require.Equal(t, []deliverySummaryGroup{
+		{Controller: "ArgoCD", Kind: "Application", GroupKind: "project", Group: "payments", Deployers: 2,
+			Settings: map[string]map[string][]string{
+				"auto-sync":         {"on": {"argocd/fx-rates", "argocd/ledger-api"}},
+				"self-heal":         {"on": {"argocd/ledger-api"}, "off": {"argocd/fx-rates"}},
+				"prune":             {"on": {"argocd/ledger-api"}, "off": {"argocd/fx-rates"}},
+				"ServerSideApply":   {"true": {"argocd/fx-rates", "argocd/ledger-api"}},
+				"Validate":          {"false": {"argocd/fx-rates"}},
+				"ignoreDifferences": {"set": {"argocd/fx-rates"}},
+			},
+			Unset:   map[string][]string{"self-heal": {"argocd/fx-rates"}, "prune": {"argocd/fx-rates"}},
+			Details: map[string]map[string]string{"ignoreDifferences": {"argocd/fx-rates": "1 rule, comparison only"}}},
+		{Controller: "ArgoCD", Kind: "Application", GroupKind: "project", Group: "platform", Deployers: 2,
+			Settings: map[string]map[string][]string{
+				"auto-sync": {"on": {"team-b/outside"}, "off": {"argocd/legacy"}},
+				"self-heal": {"off": {"team-b/outside"}, "n/a": {"argocd/legacy"}},
+				"prune":     {"off": {"team-b/outside"}, "n/a": {"argocd/legacy"}},
+			},
+			Unset: map[string][]string{"auto-sync": {"argocd/legacy"}, "prune": {"team-b/outside"}}},
+		{Controller: "Flux", Kind: "Kustomization", GroupKind: "namespace", Group: "flux-system", Deployers: 2,
+			Settings: map[string]map[string][]string{
+				"suspend": {"on": {"flux-system/held"}, "off": {"flux-system/apps"}},
+				"prune":   {"on": {"flux-system/apps"}, "off": {"flux-system/held"}},
+				"force":   {"off": {"flux-system/apps", "flux-system/held"}},
+				"wait":    {"off": {"flux-system/apps", "flux-system/held"}},
+			},
+			Unset: map[string][]string{"suspend": {"flux-system/apps"}, "force": {"flux-system/apps", "flux-system/held"}, "wait": {"flux-system/apps", "flux-system/held"}}},
+	}, document.Summary)
 }
