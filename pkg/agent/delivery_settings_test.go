@@ -480,6 +480,13 @@ func TestGroupDeliverySettingsInvertsDeployersBySettingValue(t *testing.T) {
 	require.Equal(t, DeliveryValueUnset, prune.Values[0].Value)
 	require.Zero(t, prune.Values[0].Unset)
 
+	// An option written twice on one Application counts that Application once.
+	twice := GroupDeliverySettings([]DeliveryDeployerSettings{ArgoApplicationDeliverySettings(settingsApp("argocd", "dup", map[string]interface{}{
+		"syncPolicy": map[string]interface{}{"syncOptions": []interface{}{"Validate=false", "Validate=false", "Validate=true"}}}))}, true)
+	validate := twice[0].Settings[3]
+	require.Equal(t, "Validate", validate.Name)
+	require.Equal(t, []int{1, 1}, []int{validate.Values[0].Count, validate.Values[1].Count})
+
 	all := GroupDeliverySettings(deployers, false)
 	require.Len(t, all, 2)
 	require.Equal(t, DeliveryGroupAll, all[0].GroupKind)

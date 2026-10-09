@@ -10,6 +10,7 @@ import (
 	"io"
 	"sort"
 	"strings"
+	"unicode"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -268,6 +269,24 @@ func writeDeliverySettings(w io.Writer, report deliverySettingsReport, format, g
 	}
 }
 
+// deliveryText makes a string read from the cluster safe to print as one
+// piece of a line. A project name, sync option or ApplicationSet name is
+// free text: without this a newline in one could forge a "Reads" line, and an
+// escape sequence could rewrite the terminal. JSON output is left verbatim.
+func deliveryText(text string) string {
+	return strings.Map(func(r rune) rune {
+		if unicode.IsControl(r) {
+			return ' '
+		}
+		return r
+	}, text)
+}
+
+// deliveryMarkdownURL keeps a URL inside the parentheses of a Markdown link.
+func deliveryMarkdownURL(raw string) string {
+	return strings.NewReplacer("(", "%28", ")", "%29", " ", "%20", "<", "%3C", ">", "%3E").Replace(deliveryText(raw))
+}
+
 func deliveryControllerTitle(controller string) string {
 	if controller == agent.DeliveryControllerArgoCD {
 		return "Argo CD"
@@ -287,17 +306,18 @@ func deliveryGroupTitle(group agent.DeliverySettingsGroup) string {
 	scope := ""
 	switch group.GroupKind {
 	case agent.DeliveryGroupProject:
-		scope = ", project " + group.Group
+		scope = ", project " + deliveryText(group.Group)
 		if group.Group == "" {
 			scope = ", project (unset)"
 		}
 	case agent.DeliveryGroupNamespace:
-		scope = ", namespace " + group.Group
+		scope = ", namespace " + deliveryText(group.Group)
 	}
 	return fmt.Sprintf("%s %s%s (%d)", deliveryControllerTitle(group.Controller), group.Kind, scope, group.Deployers)
 }
 
 func deliverySettingLabel(name, value string) string {
+	name, value = deliveryText(name), deliveryText(value)
 	switch {
 	case value == "" || value == agent.DeliveryValueSet:
 		return name
@@ -312,9 +332,9 @@ func deliveryRefLabel(ref agent.DeliveryDeployerRef) string {
 		notes = append(notes, "unset")
 	}
 	if ref.Detail != "" {
-		notes = append(notes, ref.Detail)
+		notes = append(notes, deliveryText(ref.Detail))
 	}
-	label := ref.Namespace + "/" + ref.Name
+	label := deliveryText(ref.Namespace + "/" + ref.Name)
 	if len(notes) > 0 {
 		label += " (" + strings.Join(notes, "; ") + ")"
 	}
@@ -328,8 +348,8 @@ func deliveryRefLabels(refs []agent.DeliveryDeployerRef, markdown bool) string {
 		if markdown {
 			label = escapeDeliveryMarkdown(label)
 			if ref.URL != "" {
-				name := escapeDeliveryMarkdown(ref.Namespace + "/" + ref.Name)
-				label = "[" + name + "](" + ref.URL + ")" + strings.TrimPrefix(label, name)
+				name := escapeDeliveryMarkdown(deliveryText(ref.Namespace + "/" + ref.Name))
+				label = "[" + name + "](" + deliveryMarkdownURL(ref.URL) + ")" + strings.TrimPrefix(label, name)
 			}
 		}
 		labels = append(labels, label)
@@ -354,6 +374,7 @@ func deliveryValueCount(value agent.DeliverySettingValue) string {
 func deliveryLinkPatterns(report deliverySettingsReport) []string {
 	var lines []string
 	for _, link := range report.LinkSources {
+		link.Namespace, link.URL = deliveryText(link.Namespace), deliveryText(link.URL)
 		switch link.Status {
 		case agent.DeliveryLinkFound:
 			lines = append(lines, fmt.Sprintf("%s: %s/applications/%s/<name>", link.Namespace, link.URL, link.Namespace))
@@ -423,7 +444,7 @@ func deliveryFilterLine(report deliverySettingsReport) string {
 func deliveryDeployerSummary(deployer agent.DeliveryDeployerSettings) (policies, options []string) {
 	for _, setting := range deployer.Settings {
 		if setting.Category == agent.DeliverySettingPolicy {
-			text := setting.Name + " " + setting.Value
+			text := deliveryText(setting.Name + " " + setting.Value)
 			if setting.Value == agent.DeliveryValueUnset && setting.Default != "" {
 				text += " (controller default " + setting.Default + ")"
 			}
@@ -432,7 +453,7 @@ func deliveryDeployerSummary(deployer agent.DeliveryDeployerSettings) (policies,
 		}
 		text := deliverySettingLabel(setting.Name, setting.Value)
 		if setting.Detail != "" {
-			text += " (" + setting.Detail + ")"
+			text += " (" + deliveryText(setting.Detail) + ")"
 		}
 		options = append(options, text)
 	}
@@ -464,20 +485,20 @@ func renderDeliverySettingsASCII(report deliverySettingsReport, groupBy string) 
 
 	if groupBy == deliverySettingsGroupByDeployer {
 		for _, deployer := range report.Deployers {
-			scope := "namespace " + deployer.Group
+			scope := "namespace " + deliveryText(deployer.Group)
 			if deployer.GroupKind == agent.DeliveryGroupProject {
-				scope = "project " + deployer.Group
+				scope = "project " + deliveryText(deployer.Group)
 				if deployer.Group == "" {
 					scope = "project (unset)"
 				}
 			}
-			fmt.Fprintf(&b, "\n%s %s %s/%s, %s\n", deliveryControllerTitle(deployer.Controller), deployer.Kind,
-				deployer.Namespace, deployer.Name, scope)
+			fmt.Fprintf(&b, "\n%s %s %s, %s\n", deliveryControllerTitle(deployer.Controller), deployer.Kind,
+				deliveryText(deployer.Namespace+"/"+deployer.Name), scope)
 			if deployer.URL != "" {
-				fmt.Fprintf(&b, "  %s\n", deployer.URL)
+				fmt.Fprintf(&b, "  %s\n", deliveryText(deployer.URL))
 			}
 			if deployer.GeneratedBy != "" {
-				fmt.Fprintf(&b, "  generated by %s\n", deployer.GeneratedBy)
+				fmt.Fprintf(&b, "  generated by %s\n", deliveryText(deployer.GeneratedBy))
 			}
 			policies, options := deliveryDeployerSummary(deployer)
 			fmt.Fprintf(&b, "  %s\n", strings.Join(policies, "; "))
@@ -491,9 +512,9 @@ func renderDeliverySettingsASCII(report deliverySettingsReport, groupBy string) 
 			optionsHeader := false
 			for _, setting := range group.Settings {
 				if setting.Category == agent.DeliverySettingPolicy {
-					fmt.Fprintf(&b, "  %s\n", setting.Name)
+					fmt.Fprintf(&b, "  %s\n", deliveryText(setting.Name))
 					for _, value := range setting.Values {
-						fmt.Fprintf(&b, "    %-5s %s  %s\n", value.Value, deliveryValueCount(value), deliveryRefLabels(value.Deployers, false))
+						fmt.Fprintf(&b, "    %-5s %s  %s\n", deliveryText(value.Value), deliveryValueCount(value), deliveryRefLabels(value.Deployers, false))
 					}
 					continue
 				}
@@ -545,14 +566,14 @@ func renderDeliverySettingsMarkdown(report deliverySettingsReport, groupBy strin
 			b.WriteString("\n| Deployer | Group | Settings | Options |\n|---|---|---|---|\n")
 		}
 		for _, deployer := range report.Deployers {
-			name := escapeDeliveryMarkdown(deployer.Namespace + "/" + deployer.Name)
+			name := escapeDeliveryMarkdown(deliveryText(deployer.Namespace + "/" + deployer.Name))
 			if deployer.URL != "" {
-				name = "[" + name + "](" + deployer.URL + ")"
+				name = "[" + name + "](" + deliveryMarkdownURL(deployer.URL) + ")"
 			}
 			policies, options := deliveryDeployerSummary(deployer)
-			group := deployer.GroupKind + " " + deployer.Group
+			group := deliveryText(deployer.GroupKind + " " + deployer.Group)
 			if deployer.GeneratedBy != "" {
-				group += "; generated by " + deployer.GeneratedBy
+				group += "; generated by " + deliveryText(deployer.GeneratedBy)
 			}
 			fmt.Fprintf(&b, "| %s %s %s | %s | %s | %s |\n", deliveryControllerTitle(deployer.Controller), deployer.Kind, name,
 				escapeDeliveryMarkdown(group), escapeDeliveryMarkdown(strings.Join(policies, "; ")),
@@ -563,7 +584,7 @@ func renderDeliverySettingsMarkdown(report deliverySettingsReport, groupBy strin
 			fmt.Fprintf(&b, "\n## %s\n\n| Setting | Count | Deployers |\n|---|---|---|\n", escapeDeliveryMarkdown(deliveryGroupTitle(group)))
 			for _, setting := range group.Settings {
 				for _, value := range setting.Values {
-					label := setting.Name + " " + value.Value
+					label := deliveryText(setting.Name + " " + value.Value)
 					if setting.Category == agent.DeliverySettingOption {
 						label = deliverySettingLabel(setting.Name, value.Value)
 					}

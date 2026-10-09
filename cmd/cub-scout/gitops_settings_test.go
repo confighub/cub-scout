@@ -334,3 +334,43 @@ func TestGitOpsSettingsTUIShowsTheMarkdownSnapshot(t *testing.T) {
 	require.Contains(t, model.content, "| self-heal on | 1 |")
 	require.NotContains(t, model.content, "\x1b", "control characters from cluster data never reach the terminal")
 }
+
+// Project names, sync options and ApplicationSet names are free text written
+// by whoever can create an Application. Printed raw, a newline forges output
+// lines and an escape sequence rewrites the terminal.
+func TestGitOpsSettingsTextOutputNeutralisesClusterSuppliedControlCharacters(t *testing.T) {
+	hostile := settingsObject("argoproj.io/v1alpha1", "Application", "argocd", "app", map[string]interface{}{
+		"project": "pay\nReads\n  applications.argoproj.io/v1alpha1: read, 0",
+		"syncPolicy": map[string]interface{}{"syncOptions": []interface{}{
+			"Validate=false\n\nReads\n  everything: read, 0", "\x1b[2J\x1b[31mServerSideApply=true|x"}},
+	})
+	configMap := settingsObject("v1", "ConfigMap", "argocd", "argocd-cm", nil)
+	configMap.Object["data"] = map[string]interface{}{"url": "https://argocd.example.test/a)b"}
+	client := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), settingsListKinds, hostile, configMap)
+	report := settingsReport(t, client, deliverySettingsParams{})
+
+	for _, groupBy := range []string{deliverySettingsGroupByProject, deliverySettingsGroupBySetting, deliverySettingsGroupByDeployer} {
+		for format, out := range map[string]string{
+			"ascii": renderDeliverySettingsASCII(report, groupBy),
+			"md":    renderDeliverySettingsMarkdown(report, groupBy),
+		} {
+			require.NotContains(t, out, "\x1b", "%s %s", format, groupBy)
+			require.Equal(t, 1, strings.Count(out, "\nReads\n")+strings.Count(out, "\n## Reads\n"), "%s %s: a forged Reads section\n%s", format, groupBy, out)
+			for _, forged := range []string{"applications.argoproj.io/v1alpha1: read, 0", "everything: read, 0"} {
+				for _, line := range strings.Split(out, "\n") {
+					require.False(t, strings.HasPrefix(strings.TrimLeft(line, " -"), forged), "%s %s: forged line %q", format, groupBy, line)
+				}
+			}
+			require.Contains(t, out, "applications.argoproj.io/v1alpha1: read, 1", "%s %s", format, groupBy)
+		}
+	}
+	markdown := renderDeliverySettingsMarkdown(report, deliverySettingsGroupByProject)
+	require.Contains(t, markdown, "[argocd/app](https://argocd.example.test/a%29b/applications/argocd/app)", "a URL cannot close its own link")
+	require.Contains(t, markdown, "ServerSideApply=true\\|x", "a pipe cannot add a table column")
+
+	// JSON keeps what the cluster said, encoded.
+	var out bytes.Buffer
+	require.NoError(t, writeDeliverySettings(&out, report, "json", deliverySettingsGroupByProject))
+	require.Contains(t, out.String(), `"group": "pay\nReads\n  applications.argoproj.io/v1alpha1: read, 0"`)
+	require.Contains(t, out.String(), `\u001b[2J`)
+}

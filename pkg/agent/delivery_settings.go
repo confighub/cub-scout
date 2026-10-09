@@ -587,6 +587,10 @@ func GroupDeliverySettings(deployers []DeliveryDeployerSettings, byGroup bool) [
 				entry = &DeliverySettingValue{Value: value}
 				values[key][sKey][value] = entry
 			}
+			// The same option written twice is still one deployer.
+			if n := len(entry.Deployers); n > 0 && entry.Deployers[n-1].Namespace == deployer.Namespace && entry.Deployers[n-1].Name == deployer.Name {
+				continue
+			}
 			ref := DeliveryDeployerRef{Namespace: deployer.Namespace, Name: deployer.Name, URL: deployer.URL, Detail: setting.Detail}
 			if setting.Value == DeliveryValueUnset && value != DeliveryValueUnset {
 				ref.Unset = true
