@@ -326,20 +326,9 @@ func (r *Reader) unit(ctx context.Context, op, space, name string) (*goclientnew
 		return nil, "", scopeErr
 	}
 
-	spaceSlug := ""
-	// Only the canonical 36-character form is an ID. uuid.Parse also accepts
-	// 32 bare hex digits, braces and a urn: prefix, any of which could be a
-	// slug; read as an ID, it would skip the lookup that checks the name.
-	spaceID, err := uuid.Parse(space)
-	if err == nil && !strings.EqualFold(spaceID.String(), space) {
-		err = errors.New("not a canonical UUID")
-	}
-	if err != nil {
-		id, resolveErr := r.spaceID(ctx, space)
-		if resolveErr != nil {
-			return nil, "", resolveErr
-		}
-		spaceID, spaceSlug = id, space
+	spaceID, spaceSlug, scopeErr := r.namedSpace(ctx, space)
+	if scopeErr != nil {
+		return nil, "", scopeErr
 	}
 
 	filter, include, limit := where.SpaceID(spaceID).String(), unitGetInclude, 2
@@ -399,6 +388,107 @@ func (r *Reader) UnitJSON(ctx context.Context, space, unit string) ([]byte, erro
 		return nil, &Error{Kind: KindMalformed, Op: "unit read", Message: "the unit could not be encoded: " + err.Error()}
 	}
 	return append(encoded, '\n'), nil
+}
+
+// namedSpace returns the ID of the one space a read names, and its slug when
+// it was named by slug.
+//
+// Only the canonical 36-character form is an ID. uuid.Parse also accepts 32
+// bare hex digits, braces and a urn: prefix, any of which could be a slug;
+// read as an ID, it would skip the lookup that checks the name.
+func (r *Reader) namedSpace(ctx context.Context, space string) (uuid.UUID, string, *Error) {
+	id, err := uuid.Parse(space)
+	if err == nil && strings.EqualFold(id.String(), space) {
+		return id, "", nil
+	}
+	id, resolveErr := r.spaceID(ctx, space)
+	if resolveErr != nil {
+		return uuid.Nil, "", resolveErr
+	}
+	return id, space, nil
+}
+
+// unitListInclude and spaceListInclude are the expansions `cub unit list` and
+// `cub space list` ask for (cub's unitListInclude, and the Component a space
+// list with its summary includes). Tests compare what is sent here with what
+// the SDK's own list helpers send for the same options.
+const (
+	unitListInclude  = "UnitEventID,TargetID,UpstreamUnitID,SpaceID,FromLinkID,ChangeSetID"
+	spaceListInclude = "ComponentID"
+)
+
+// listJSON encodes a list as cub prints one: the typed envelopes, indented,
+// and "[]" rather than "null" when there are none.
+func listJSON[T any](op string, list *[]T) ([]byte, error) {
+	// A JSON null is a list with nothing in it.
+	elements := []T{}
+	if list != nil && *list != nil {
+		elements = *list
+	}
+	encoded, err := json.MarshalIndent(elements, "", "  ")
+	if err != nil {
+		return nil, &Error{Kind: KindMalformed, Op: op, Message: "the list could not be encoded: " + err.Error()}
+	}
+	return append(encoded, '\n'), nil
+}
+
+// UnitListJSON reads every Unit in exactly one space and returns the list as
+// the JSON `cub unit list --space <space> -o json` prints. space is the space's
+// slug or its canonical UUID; an empty or "*" space is refused before any
+// request, because a list without a space spans the organization.
+//
+// As cub does without --limit, it asks for the whole list in one request. A
+// Unit the server returns from any other space is an error, never output.
+func (r *Reader) UnitListJSON(ctx context.Context, space string) ([]byte, error) {
+	const op = "unit list"
+	space = strings.TrimSpace(space)
+	if space == "" || space == "*" {
+		return nil, &Error{Kind: KindInvalidScope, Op: op, Message: "exactly one space is required"}
+	}
+	spaceID, _, scopeErr := r.namedSpace(ctx, space)
+	if scopeErr != nil {
+		return nil, scopeErr
+	}
+	filter, include := cubapi.Where{}.SpaceID(spaceID).String(), unitListInclude
+	resp, err := r.client.API.ListAllUnitsWithResponse(ctx, &goclientnew.ListAllUnitsParams{Where: &filter, Include: &include})
+	if failure := classify(ctx, op, err, resp); failure != nil {
+		return nil, failure
+	}
+	// A 200 that is not JSON leaves no list at all. That is not an empty
+	// list: saying "no units" for a proxy's HTML page would be a false claim.
+	if resp.JSON200 == nil {
+		return nil, &Error{Kind: KindMalformed, Op: op, Message: "the response had no unit list"}
+	}
+	for i := range *resp.JSON200 {
+		switch found := (*resp.JSON200)[i].Unit; {
+		case found == nil:
+			return nil, &Error{Kind: KindMalformed, Op: op, Message: "the list has an entry with no unit"}
+		case found.SpaceID != spaceID:
+			return nil, &Error{Kind: KindMalformed, Op: op, Message: fmt.Sprintf("the server returned a unit from another space for space %q", space)}
+		}
+	}
+	return listJSON(op, resp.JSON200)
+}
+
+// SpaceListJSON reads the organization's spaces and returns the list as the
+// JSON `cub space list -o json` prints, with each space's summary counts. The
+// spaces themselves are the organization-wide question, so it takes no scope.
+func (r *Reader) SpaceListJSON(ctx context.Context) ([]byte, error) {
+	const op = "space list"
+	include, summary := spaceListInclude, true
+	resp, err := r.client.API.ListSpacesWithResponse(ctx, &goclientnew.ListSpacesParams{Include: &include, Summary: &summary})
+	if failure := classify(ctx, op, err, resp); failure != nil {
+		return nil, failure
+	}
+	if resp.JSON200 == nil {
+		return nil, &Error{Kind: KindMalformed, Op: op, Message: "the response had no space list"}
+	}
+	for i := range *resp.JSON200 {
+		if (*resp.JSON200)[i].Space == nil {
+			return nil, &Error{Kind: KindMalformed, Op: op, Message: "the list has an entry with no space"}
+		}
+	}
+	return listJSON(op, resp.JSON200)
 }
 
 func (r *Reader) spaceID(ctx context.Context, slug string) (uuid.UUID, *Error) {
