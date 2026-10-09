@@ -94,6 +94,13 @@ grader. The object was moved and the limit recorded: `gitops_settings` lists an
 Application by its spec and cannot tell whether an Argo CD instance manages it.
 The wiring check is not counted in the results above.
 
+The runs were made with five skill files edited to name the tool. No skill was
+loaded in any run, and the edits did not touch any skill's name or description,
+which is the part an agent sees without loading one. Those edits were then
+reverted: `benchmark-v1` pins the exact contents of the skills tree, and
+changing it is not part of this work. The skills therefore do not mention
+`gitops_settings`.
+
 Costs are the harness's reported list-price figures, not account credits. Each
 run's `costUsd` already includes mock and judge spend. No mock was called in the
 small case (the tool was never used), and the fleet cases ran with mocks off, so

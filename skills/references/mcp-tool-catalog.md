@@ -11,7 +11,7 @@ The catalog has two tiers:
 - **Standalone tools** — registered always; live reads require kubeconfig; release checks also require a digest-pinned OCI bundle or local layout
 - **Connected tools** — added when `cub auth status` succeeds; require ConfigHub auth
 
-Total: **20 tools** (8 standalone + 12 connected).
+Total: **19 tools** (7 standalone + 12 connected).
 
 ## Standalone tools (7)
 
@@ -77,16 +77,6 @@ the catalog from a running server.
 | Optional args | `namespace` (string); `context` (nonempty exact kubeconfig context); `with_confighub` (boolean); `confighub_space` (string); `confighub_since` (string); `confighub_stale_after` (string) |
 | Returns | GitOps/controller backend, transport, sources, deployers, source/build/apply/sync stages, delivery evidence when requested, and `controllerCoverage[]` |
 | When to load | "Is this deployed?" "Is delegated delivery healthy?" "Which controller families did cub-scout actually inspect?" "Is missing status absence or an RBAC/API omission?" Evidence only; never use it to force sync or declare application success by itself. |
-
-### `gitops_settings`
-
-| Aspect | Detail |
-|---|---|
-| Wraps | `cub-scout gitops settings --format json --view summary` |
-| Required args | — |
-| Optional args | `setting` (string array, each `name` or `name=value`; all must match); `project` (string array, Argo CD projects); `namespace` (string, of the deployer objects); `context` (nonempty exact kubeconfig context); `view` (`summary` default, `deployers`, `groups`, `settings`, `all`) |
-| Returns | The delivery settings each Argo CD Application and Flux Kustomization and HelmRelease declares, inverted: per project or namespace, each setting with the deployers that have each value. `unset` marks deployers counted under a controller default; `reads[]` and `complete` say whether every kind was read |
-| When to load | "Which Applications do not self-heal?" "What is suspended?" "Which deployers prune, skip validation or use server-side apply?" "Which deployers share this setting?" One call covers every deployer, so prefer it to reading each object; pass `setting` to get only the matches. Declared settings only: it does not show that a controller acted on a setting, gives no verdict, and lists an Application by its spec whether or not an Argo CD instance is configured to manage that namespace. For delivery health use `gitops_status`; for who changed a field use `explain`. |
 
 ### `release_check`
 

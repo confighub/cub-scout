@@ -181,7 +181,6 @@ The closed list of MCP tools cub-scout registers. The set is verified by `cmd/cu
 | `trace` | standalone | `cub-scout trace <resource> --format json` |
 | `explain` | standalone | `cub-scout explain <resource> --format json` |
 | `gitops_status` | standalone | `cub-scout gitops status --format json` |
-| `gitops_settings` | standalone | `cub-scout gitops settings --format json --view summary` |
 | `compare_three_way` | connected | `cub-scout compare three-way --format json` |
 | `compare_source_truth` | connected | `cub-scout compare source-truth <target> -n <ns> --strategy <s> --format json` |
 | `confighub_changesets` | connected | `cub changeset list --json` (calls `cub`, not cub-scout) |
@@ -194,7 +193,7 @@ The closed list of MCP tools cub-scout registers. The set is verified by `cmd/cu
 | `confighub_units` | connected | `cub unit list --json` (calls `cub`) |
 | `confighub_unit_get` | connected | `cub unit get --json <unit>` (calls `cub`) |
 
-7 standalone + 11 connected = **18 tools in this table** (the [catalog](../references/mcp-tool-catalog.md) lists all 20). The catalog is intentionally narrow: every tool is read-only, every tool has a stable JSON contract, every tool is exercised by an MCP integration test.
+6 standalone + 11 connected = **17 tools total**. The catalog is intentionally narrow: every tool is read-only, every tool has a stable JSON contract, every tool is exercised by an MCP integration test.
 
 For the full reference (per-tool parameters, return shape, when-to-load semantics, deferred verbs not in the catalog), see [`references/mcp-tool-catalog.md`](../references/mcp-tool-catalog.md).
 

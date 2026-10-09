@@ -2988,6 +2988,10 @@ nothing from it, and on a small cluster the plugin made the run dearer; an agent
 with cub-scout and no export answered a 300-deployer question correctly in four
 turns. Three runs per arm on generated scenarios; not a general claim.
 
+The plugin's skills do not mention `gitops_settings`: the frozen agent benchmark
+pins the skills tree, and re-pinning it is a separate decision (#839). An agent
+finds the tool from the MCP tool list.
+
 See the [live example](../../examples/delivery-settings/) and the
 [JSON contract](json-contracts.md#delivery-settings-contract).
 

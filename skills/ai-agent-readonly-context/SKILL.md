@@ -75,7 +75,6 @@ The agent host calls `tools/list` to discover tools and `tools/call` to invoke t
 - `trace` — ownership + source chain (one resource)
 - `explain` — plain-English per-resource report
 - `gitops_status` — GitOps/controller delivery status and coverage evidence
-- `gitops_settings` — which Argo CD and Flux deployers sync automatically, self-heal, prune or are suspended (declared settings, no verdict)
 
 **Connected-mode tools** (12, added when connected mode is available):
 - `compare_three_way` — DRY/WET/LIVE with rolled-up agreement
