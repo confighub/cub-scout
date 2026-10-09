@@ -1,0 +1,80 @@
+apiVersion: v1
+items:
+- apiVersion: argoproj.io/v1alpha1
+  kind: AppProject
+  metadata:
+    creationTimestamp: "2026-10-09T11:00:31Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destinations: {}
+          f:sourceRepos: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T11:00:31Z"
+    name: data
+    namespace: argocd
+    resourceVersion: "510"
+    uid: ebd80b68-cdff-490d-ac72-78ffe138b232
+  spec:
+    destinations:
+    - namespace: '*'
+      server: '*'
+    sourceRepos:
+    - '*'
+- apiVersion: argoproj.io/v1alpha1
+  kind: AppProject
+  metadata:
+    creationTimestamp: "2026-10-09T11:00:31Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destinations: {}
+          f:sourceRepos: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T11:00:31Z"
+    name: payments
+    namespace: argocd
+    resourceVersion: "508"
+    uid: 78ee6771-c344-4f7f-8934-1c73057a5f34
+  spec:
+    destinations:
+    - namespace: '*'
+      server: '*'
+    sourceRepos:
+    - '*'
+- apiVersion: argoproj.io/v1alpha1
+  kind: AppProject
+  metadata:
+    creationTimestamp: "2026-10-09T11:00:31Z"
+    generation: 1
+    managedFields:
+    - apiVersion: argoproj.io/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:destinations: {}
+          f:sourceRepos: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T11:00:31Z"
+    name: platform
+    namespace: argocd
+    resourceVersion: "509"
+    uid: ddd6db00-5dd0-4133-9ee2-7fb6d6246e3e
+  spec:
+    destinations:
+    - namespace: '*'
+      server: '*'
+    sourceRepos:
+    - '*'
+kind: List
+metadata:
+  resourceVersion: ""

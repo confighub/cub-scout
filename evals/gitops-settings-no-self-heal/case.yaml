@@ -1,0 +1,5 @@
+# FIXTURE-OWNED-SCAFFOLD: this case owns its scenario, export and MCP recordings (record.py).
+schema_version: "1.1"
+name: gitops-settings-no-self-heal
+context:
+  scaffold_script: scaffold.sh

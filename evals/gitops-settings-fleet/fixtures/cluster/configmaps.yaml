@@ -1,0 +1,77 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  data:
+    url: https://argocd.example.test
+  kind: ConfigMap
+  metadata:
+    creationTimestamp: "2026-10-09T11:01:38Z"
+    labels:
+      app.kubernetes.io/part-of: argocd
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          f:url: {}
+        f:metadata:
+          f:labels:
+            f:app.kubernetes.io/part-of: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T11:01:38Z"
+    name: argocd-cm
+    namespace: argocd
+    resourceVersion: "521"
+    uid: 04e8aa93-ec36-4dd3-834d-0eb266014a11
+- apiVersion: v1
+  data:
+    ca.crt: |
+      -----BEGIN CERTIFICATE-----
+      MIIDBTCCAe2gAwIBAgIIZBjTG91A+UAwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjEwMDkxMDU2MTFaFw0zNjEwMDYxMTAxMTFaMBUx
+      EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      AoIBAQDI3iAK2anqBVLfYHgIDVE6ls0gqFQUC4aaC6tcnFKw/rpKw6jrV9LFe2ry
+      jgOSk4OUL7rBfNQBuyuF5r8BW7aWEH/UkBpH9Zg9lMuK2N+LgU4ZNePaiWLOD+SK
+      1MlTH+BTS5oAlD85K54+HHwwiM3m5w4oXR50syFTFGo4rRJoSPpKlxGd7B2nfqKa
+      Xl/UK7w9s+9FlllOseyBqkOz2mUtPjBPQNNQZTOHruZC2H839o552Iq5Dwa241bH
+      UFcHG/MuYFOJEgVyVFSp8nivDbZXRNF21Vv01JHVkfpFUu2oAiQuNxceaBsKs9BE
+      +gvrHnkmPe5r1CGNisL2fPI0BfyxAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQXG0Kef1pJO5drhplO1JA/SkrtEjAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQDF/4SbC+p9
+      ADupmfjjmYfrAXSoI/ELuXFwWhVcPOf2zw3gxRCM7zyajkXb4lJU9xf1Pp8h6ltG
+      N73LiuBIUTSVHmwUUSJ58doHYmewWtbuhNlu2OQmuSIYgJ+Chwxs420FyvZnq+TK
+      7QFwHXErVeZhTZ9TtnMvF7pNAunTzGncgIdJp7dE9D4A7yHI0qKF4TP5P5433FXx
+      vGr3CY/TjPfTvv8W7lYSB1VXkCV8LzSDujsNkalm5nIG6Vnm00iZ/c46N8+J++0k
+      h8GL8FM6ElLaLleXt2vFef6Fx5MWMTWK1y9c8RYFqbcr5WjgwBI2sTbQ/hOqm4hS
+      5Cy2+d3ouiu+
+      -----END CERTIFICATE-----
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubernetes.io/description: Contains a CA bundle that can be used to verify the
+        kube-apiserver when using internal endpoints such as the internal service
+        IP or kubernetes.default.svc. No other usage is guaranteed across distributions
+        of Kubernetes clusters.
+    creationTimestamp: "2026-10-09T11:01:38Z"
+    managedFields:
+    - apiVersion: v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:ca.crt: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubernetes.io/description: {}
+      manager: kube-controller-manager
+      operation: Update
+      time: "2026-10-09T11:01:38Z"
+    name: kube-root-ca.crt
+    namespace: argocd
+    resourceVersion: "495"
+    uid: 4d6fb48f-9162-405d-af47-418d4ba4b7f2
+kind: List
+metadata:
+  resourceVersion: ""

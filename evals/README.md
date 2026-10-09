@@ -443,6 +443,32 @@ charges:
 go test ./test/unit -run 'TestEval' -count=1
 ```
 
+## Delivery-settings cases (2026-10-09)
+
+Three cases ask the question `gitops settings` exists for (#839): which Argo CD
+Applications sync automatically without self-heal, and which Flux objects are
+suspended. They own their scenarios and are outside `benchmark-v1`, whose
+frozen inputs they do not touch.
+
+| Case | Scenario | cub-scout arm |
+|---|---|---|
+| [`gitops-settings-no-self-heal`](gitops-settings-no-self-heal/) | 30 deployers, recorded | export + recorded MCP |
+| [`gitops-settings-fleet`](gitops-settings-fleet/) | 300 generated deployers | export + live MCP |
+| [`gitops-settings-fleet-live`](gitops-settings-fleet-live/) | the same 300 | live MCP, no export |
+
+Each case carries its own `mocks/`, including the real `tools/list` with
+`gitops_settings`; the suite-wide `mocks/cub-scout/_tools.json` is unchanged, so
+the main scenario's cases still see the catalog they were recorded with.
+
+Result, three runs per arm
+([report](reports/2026-10-09-gitops-settings.md)): with the export on disk the
+agent never called the tool, and on the small case the cub-scout arm cost more
+for the same answer. With no export, it answered correctly in four turns at
+$0.21 a run, against a median $0.41 and a mean $0.84 for the export-reading
+baseline. The arms in that
+comparison hold different evidence, and three runs on generated scenarios do
+not establish a general saving.
+
 ## What the recordings show today
 
 Recorded with v2.12.3 plus #625 (hand-edit attribution), #629 (Argo CD

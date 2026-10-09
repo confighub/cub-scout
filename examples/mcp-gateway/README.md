@@ -13,6 +13,7 @@ This exposes these standalone tools:
 - `scan`
 - `explain`
 - `gitops_status`
+- `gitops_settings` (unreleased)
 
 When connected to ConfigHub (`cub auth login`), it additionally exposes:
 - `compare_three_way`
@@ -37,6 +38,7 @@ The gateway reuses existing CLI JSON command outputs:
 - `scan` -> `scan --json`
 - `explain` -> `explain --format json`
 - `gitops_status` -> `gitops status --format json`
+- `gitops_settings` -> `gitops settings --format json --view summary` (unreleased)
 - `compare_three_way` -> `compare three-way --format json`
 - `compare_source_truth` -> `compare source-truth --format json`
 - `confighub_changesets` -> `cub changeset list --json`

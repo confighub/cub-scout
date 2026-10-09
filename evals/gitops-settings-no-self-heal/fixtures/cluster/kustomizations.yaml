@@ -1,0 +1,212 @@
+apiVersion: v1
+items:
+- apiVersion: kustomize.toolkit.fluxcd.io/v1
+  kind: Kustomization
+  metadata:
+    creationTimestamp: "2026-10-09T11:00:31Z"
+    generation: 1
+    managedFields:
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:interval: {}
+          f:path: {}
+          f:prune: {}
+          f:sourceRef:
+            f:kind: {}
+            f:name: {}
+          f:wait: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T11:00:31Z"
+    name: apps
+    namespace: flux-system
+    resourceVersion: "533"
+    uid: 3e031e89-eb2f-495a-bcb2-8ee6e9b6b687
+  spec:
+    force: false
+    interval: 10m
+    path: ./apps
+    prune: true
+    sourceRef:
+      kind: GitRepository
+      name: fleet
+    wait: true
+  status:
+    observedGeneration: -1
+- apiVersion: kustomize.toolkit.fluxcd.io/v1
+  kind: Kustomization
+  metadata:
+    creationTimestamp: "2026-10-09T11:00:31Z"
+    generation: 1
+    managedFields:
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:interval: {}
+          f:path: {}
+          f:prune: {}
+          f:sourceRef:
+            f:kind: {}
+            f:name: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T11:00:31Z"
+    name: infrastructure
+    namespace: flux-system
+    resourceVersion: "532"
+    uid: d95220e0-78cf-4a0d-8bd6-f88e454fe9ea
+  spec:
+    force: false
+    interval: 10m
+    path: ./infrastructure
+    prune: true
+    sourceRef:
+      kind: GitRepository
+      name: fleet
+  status:
+    observedGeneration: -1
+- apiVersion: kustomize.toolkit.fluxcd.io/v1
+  kind: Kustomization
+  metadata:
+    creationTimestamp: "2026-10-09T11:00:31Z"
+    generation: 1
+    managedFields:
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:force: {}
+          f:interval: {}
+          f:path: {}
+          f:prune: {}
+          f:sourceRef:
+            f:kind: {}
+            f:name: {}
+          f:suspend: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T11:00:31Z"
+    name: legacy-migration
+    namespace: flux-system
+    resourceVersion: "536"
+    uid: b07bbe44-1a98-454e-8142-5cd0c857be8a
+  spec:
+    force: true
+    interval: 10m
+    path: ./legacy-migration
+    prune: false
+    sourceRef:
+      kind: GitRepository
+      name: fleet
+    suspend: true
+  status:
+    observedGeneration: -1
+- apiVersion: kustomize.toolkit.fluxcd.io/v1
+  kind: Kustomization
+  metadata:
+    creationTimestamp: "2026-10-09T11:00:31Z"
+    generation: 1
+    managedFields:
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:interval: {}
+          f:path: {}
+          f:prune: {}
+          f:sourceRef:
+            f:kind: {}
+            f:name: {}
+          f:suspend: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T11:00:31Z"
+    name: monitoring
+    namespace: flux-system
+    resourceVersion: "534"
+    uid: 779a2e4b-1f0a-4382-8657-b49d6ee85f61
+  spec:
+    force: false
+    interval: 10m
+    path: ./monitoring
+    prune: true
+    sourceRef:
+      kind: GitRepository
+      name: fleet
+    suspend: true
+  status:
+    observedGeneration: -1
+- apiVersion: kustomize.toolkit.fluxcd.io/v1
+  kind: Kustomization
+  metadata:
+    creationTimestamp: "2026-10-09T11:00:31Z"
+    generation: 1
+    managedFields:
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:interval: {}
+          f:path: {}
+          f:prune: {}
+          f:sourceRef:
+            f:kind: {}
+            f:name: {}
+          f:suspend: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T11:00:31Z"
+    name: secrets
+    namespace: flux-system
+    resourceVersion: "537"
+    uid: 0b515167-abf8-4b0d-a2da-0b38fcafdbae
+  spec:
+    force: false
+    interval: 10m
+    path: ./secrets
+    prune: true
+    sourceRef:
+      kind: GitRepository
+      name: fleet
+    suspend: false
+  status:
+    observedGeneration: -1
+- apiVersion: kustomize.toolkit.fluxcd.io/v1
+  kind: Kustomization
+  metadata:
+    creationTimestamp: "2026-10-09T11:00:31Z"
+    generation: 1
+    managedFields:
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:interval: {}
+          f:path: {}
+          f:prune: {}
+          f:sourceRef:
+            f:kind: {}
+            f:name: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T11:00:31Z"
+    name: tenants
+    namespace: flux-system
+    resourceVersion: "535"
+    uid: 7ca21ac6-4ebb-40ba-8c6c-f1835be6d8e4
+  spec:
+    force: false
+    interval: 10m
+    path: ./tenants
+    prune: false
+    sourceRef:
+      kind: GitRepository
+      name: fleet
+  status:
+    observedGeneration: -1
+kind: List
+metadata:
+  resourceVersion: ""

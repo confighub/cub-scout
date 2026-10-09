@@ -1,0 +1,354 @@
+{
+  "tools": [
+    {
+      "name": "doctor",
+      "description": "FIRST standalone tool to load for 'what's wrong?', 'what's broken?', or a compact cluster or namespace health summary. Also use when the user asks which cub-scout troubleshooting tool to start with, whether cub-scout is the right first read-only step instead of raw kubectl or the Argo UI, or when local access to the cluster may itself be the problem (wrong context, stale kubeconfig, API unreachable). Returns ownership, health, risks, drift, rollout evidence, optional bounded ConfigHub delivery evidence, and next steps (doctor --format json). Use before explain, trace, or scan when the user has not narrowed to one resource yet.",
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "confighub_since": {
+            "description": "Lookback window for connected release/event evidence, for example 24h or 7d.",
+            "type": "string"
+          },
+          "confighub_space": {
+            "description": "ConfigHub space for connected evidence. When omitted, the ConfigHub reads are skipped and reported as a confighub.scope omission: cub has no default space, and the server's CUB_SPACE is not used. Pass '*' only for an explicit all-spaces read.",
+            "type": "string"
+          },
+          "confighub_stale_after": {
+            "description": "Treat live-status writeback older than this as stale, for example 15m.",
+            "type": "string"
+          },
+          "context": {
+            "description": "Optional exact Kubernetes kubeconfig context for every doctor read; never inferred from ConfigHub target names.",
+            "type": "string"
+          },
+          "namespace": {
+            "description": "Optional namespace scope (default: all namespaces).",
+            "type": "string"
+          },
+          "top": {
+            "description": "Number of top issues to include (default: 3).",
+            "type": "integer"
+          },
+          "with_confighub": {
+            "description": "Include bounded ConfigHub release, unit-event, live-status, and event-consumer evidence. Requires cub auth for connected rows.",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "name": "explain",
+      "description": "Plain-English explanation for one resource: who owns it, health or drift, recent events, and what to do next (explain --format json). When the resource is known, use this directly as a first read for resource-level mutation evidence. For a known exact field, pass field_path (canonical concrete managedFields path) on this call; the fieldAttribution block is scoped to that path, returning that path's observed manager names and conservative classification while the normal resource summary remains. Malformed, absent, unrecognized, or shared ambiguous evidence remains unknown, without resource-level fallback. Do not load doctor, map, trace, or compare first just to rediscover manager evidence for a known resource and field. This does not order writes by time or identify a person. Trace provides owner/source lineage only and does not corroborate field-writer attribution; call it only when that chain is also needed. Use doctor, map, trace, or compare when their health, inventory, lineage, or intended/live evidence is independently needed. For broader symptom triage, use AFTER doctor or map once the resource is narrowed, especially when more computed meaning is needed than raw `kubectl describe`. DO NOT load for broad cluster inventory or health; use doctor first.",
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "api_version": {
+            "description": "Exact API version for bounded reads, for example apps/v1.",
+            "type": "string"
+          },
+          "bounded": {
+            "description": "Read only the exact API object, with no controller/ConfigHub/event/pod enrichment. Requires api_version and context. This stdio session reuses observations for at most 15 seconds; CLI processes do not share the cache.",
+            "type": "boolean"
+          },
+          "context": {
+            "description": "Exact kube context for all Kubernetes reads, including enriched Explain (CLI --kube-context). Empty or unknown selectors fail without fallback. Never inferred from ConfigHub Target names.",
+            "type": "string"
+          },
+          "expected_revision": {
+            "description": "Full lowercase 40-hex Git commit or sha256:64-hex artifact digest to compare with one controller report. Requires bounded=true. Supports single-source Application and Kustomization v1; not workload convergence, controller liveness or application success.",
+            "type": "string"
+          },
+          "field_path": {
+            "description": "Optional exact canonical managedFields path (for example .spec.template.spec.containers[name=\"api\"].image); wildcard selectors are rejected and only an exact decoded path is returned. Returns evidence for this path only, without resource-level fallback.",
+            "type": "string"
+          },
+          "namespace": {
+            "description": "Optional namespace override.",
+            "type": "string"
+          },
+          "refresh": {
+            "description": "Force a new bounded observation rather than reuse the session cache.",
+            "type": "boolean"
+          },
+          "resource": {
+            "description": "Resource selector as kind/name; bounded reads require exact Kind casing (for example Deployment/api).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resource"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "name": "gitops_settings",
+      "description": "Standalone inventory of the delivery settings GitOps deployers declare (gitops settings --format json). Use when the user asks which Argo CD Applications or Flux Kustomizations/HelmReleases sync automatically, self-heal, prune, are suspended, detect drift, or use a given sync or apply option, or which deployers share a setting. With no arguments one call covers every Application, Kustomization and HelmRelease the caller may list; pass setting to get only the deployers that match, for example [\"self-heal=off\"]. Argo CD policies are auto-sync, self-heal and prune; sync options keep their own names and values (Validate=false, ServerSideApply=true); Flux fields keep theirs (suspend, prune, force, wait, driftDetection.mode, upgrade.force). A field that is absent is value unset with the controller default in default and effective; for an Application without automated sync, self-heal and prune are n/a, not off. reads[] says whether each kind was read, not_installed or not_read: a kind that is not_read is unknown, not empty, and complete is then false. These are settings declared in each spec. DO NOT use this to decide whether a controller acted on a setting, whether delivery is healthy (use gitops_status), who changed a field (use explain), or whether a setting is acceptable: it gives no verdict.",
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "context": {
+            "description": "Optional exact kubeconfig context label for all Kubernetes reads. This is a label, not a stable cluster identity.",
+            "type": "string"
+          },
+          "namespace": {
+            "description": "Optional namespace of the deployer objects (not of the workloads they deliver).",
+            "type": "string"
+          },
+          "project": {
+            "description": "Optional Argo CD project names. Flux objects have no project and are left out when this is set; notes[] says how many.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "setting": {
+            "description": "Optional filters, each name or name=value; all must match. Names are exact: prune is the automated-prune policy, Prune is the sync option. on/true and off/false are interchangeable. A value also matches a deployer that leaves the field unset when the controller default is that value. A name alone matches deployers whose spec declares that setting.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "view": {
+            "description": "Which view to return. summary (default, smallest): per Argo CD project or Flux namespace, settings maps each setting to its values and each value to the deployers that have it, as namespace/name; unset lists the deployers counted under a controller default. deployers: one entry per object with every setting, its spec path, default, Argo CD UI link and ignore rules. groups and settings: the summary's content as verbose objects, per project or namespace and per kind. all: groups, settings and deployers together; much larger.",
+            "enum": [
+              "summary",
+              "deployers",
+              "groups",
+              "settings",
+              "all"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "name": "gitops_status",
+      "description": "Standalone GitOps/controller delivery status (gitops status --format json). Use when the user asks whether delegated delivery is healthy, whether an app or source revision is synced, what controller families cub-scout actually inspected, or whether missing status is absence vs RBAC/API omission. Returns backend, transport, sources, deployers, source/build/apply/sync stages, and controllerCoverage[] for Flux, Argo CD, ConfigHub, Sveltos, and Modelplane. Optional sveltosControllerReports preserves delivery features and continuous-health conditions separately with source identities, reported references and omissions; workloadHealth/checkFreshness remain unknown. Optional ConfigHub evidence is bounded by space and time; when present, revisionCorrelation compares the reported full digest with bounded same-SpaceID release manifestDigest values. That is string correlation, not proof of fetch, application, execution, or gate acceptance, and does not change freshness verdicts. DO NOT use to force sync, retry delivery, or declare application success by itself; it is read-only evidence.",
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "confighub_since": {
+            "description": "Lookback window for connected release/event evidence, for example 24h or 7d.",
+            "type": "string"
+          },
+          "confighub_space": {
+            "description": "ConfigHub space for connected evidence. When omitted, the ConfigHub reads are skipped and reported as a confighub.scope omission: cub has no default space, and the server's CUB_SPACE is not used. Pass '*' only for an explicit all-spaces read.",
+            "type": "string"
+          },
+          "confighub_stale_after": {
+            "description": "Treat live-status writeback older than this as stale, for example 15m.",
+            "type": "string"
+          },
+          "context": {
+            "description": "Optional exact kubeconfig context label for all Kubernetes reads. This is a label, not a stable cluster identity.",
+            "type": "string"
+          },
+          "namespace": {
+            "description": "Optional Kubernetes namespace scope.",
+            "type": "string"
+          },
+          "with_confighub": {
+            "description": "Include bounded ConfigHub release, unit-event, live-status, and event-consumer evidence. Requires cub auth.",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "name": "map",
+      "description": "Standalone resource inventory with ownership classification (map list --json). Use for 'what's running in this cluster or namespace?', 'how many does Flux manage?' and 'which workloads are unmanaged?', especially when the user wants more meaning than raw `kubectl get` output. On a large cluster the full list can be too big for your context: ask for summary=true (counts by owner and kind) or names_only=true, and filter with kind, owner or query (for example kind=Deployment, owner=Native). The optional context selects one exact kubeconfig context for this inventory read; absent context keeps the current default. Opt in to ownership_evidence=true only when detector sources and list omissions are needed; it returns a versioned compact diagnostics envelope and cannot be combined with compact output modes. A no-known-marker result is limited to the returned object's metadata and does not prove orphaning. DO NOT load for bare 'what's broken?' or one-resource root cause; use doctor first for health, then explain for a specific resource.",
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "cluster_identity": {
+            "description": "Opt in to one extra bounded kube-system Namespace GET on the captured inventory client. Returns a separate cluster-identity envelope retaining identity/list omissions even for empty inventory. cluster.cost covers only the identity reader, not map inventory or authentication. Cannot combine with ownership_evidence, summary, names_only, or count.",
+            "type": "boolean"
+          },
+          "context": {
+            "description": "Optional exact kubeconfig context for this map inventory read. When supplied, a missing or empty name fails; it never falls back to the current or in-cluster context.",
+            "type": "string"
+          },
+          "count": {
+            "description": "Return only the number of entries after filters.",
+            "type": "boolean"
+          },
+          "kind": {
+            "description": "Optional kind filter, for example Deployment.",
+            "type": "string"
+          },
+          "names_only": {
+            "description": "Return namespace/name per entry instead of full entries.",
+            "type": "boolean"
+          },
+          "namespace": {
+            "description": "Optional namespace filter.",
+            "type": "string"
+          },
+          "owner": {
+            "description": "Optional owner filter: Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, Terraform, ConfigHub, or Native (managed by none of them).",
+            "type": "string"
+          },
+          "ownership_evidence": {
+            "description": "Return per-entry canonical ownership detector sources and normalized list omissions. Cannot be combined with summary, names_only, or count.",
+            "type": "boolean"
+          },
+          "query": {
+            "description": "Optional query expression, for example 'kind=Deployment AND owner!=Native'.",
+            "type": "string"
+          },
+          "summary": {
+            "description": "Return counts by owner and kind (after filters) instead of the entries.",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "name": "release_check",
+      "description": "Verify an exact OCI configuration release: bundle digest, controller/source/target binding, live authored fields and workload-controller convergence. One-shot bounded reads, no cluster-wide inventory LIST. Optional check_running_image verifies each intended regular container and complete Deployment or StatefulSet owner/replica coverage using a bounded pod list, exact ReplicaSet or ControllerRevision reads and a final workload re-read. Mutable tags and unresolved digest forms stay UNKNOWN. Returns stage verdicts, omissions, dated request counts and receipts. Not application success, an atomic snapshot, release publication history, or a deployment command.",
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "api_version": {
+            "description": "Exact controller API version.",
+            "type": "string"
+          },
+          "bundle": {
+            "description": "Exact oci://repository@sha256:digest of literal configuration; not a container image.",
+            "type": "string"
+          },
+          "check_running_image": {
+            "description": "Check every intended regular container's digest, running and ready status. Deployments add one bounded pod list, exact ReplicaSet owner reads and a final Deployment re-read. Mutable tags and unresolved image-index/platform digests stay UNKNOWN.",
+            "type": "boolean"
+          },
+          "context": {
+            "description": "Explicit target Kubernetes context; never inferred from an intended-state Target name.",
+            "type": "string"
+          },
+          "controller": {
+            "description": "Exact controller Kind/name (Application or Kustomization supported initially).",
+            "type": "string"
+          },
+          "controller_context": {
+            "description": "Controller Kubernetes context; defaults to context.",
+            "type": "string"
+          },
+          "controller_namespace": {
+            "description": "Controller namespace.",
+            "type": "string"
+          },
+          "max_objects": {
+            "description": "Maximum literal desired objects; oversized input fails before cluster reads.",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "max_pods": {
+            "description": "Maximum pods read per workload for check_running_image; coverage past this is reported as partial.",
+            "maximum": 200,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "oci_layout": {
+            "description": "Optional read-only local OCI layout containing the expected manifest and layer.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bundle",
+          "controller",
+          "api_version",
+          "controller_namespace",
+          "context"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "name": "scan",
+      "description": "Standalone live-cluster configuration and runtime findings (scan --json). Use AFTER doctor when the user wants detailed risk or misconfiguration findings in the cluster or namespace right now, or an awareness scan of live state, not a broad health summary. DO NOT load first for bare 'what's wrong?' if doctor has not run yet. DO NOT use this as a governed promotion or revision-safety gate.",
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "context": {
+            "description": "Optional exact Kubernetes kubeconfig context for this live scan.",
+            "type": "string"
+          },
+          "namespace": {
+            "description": "Optional namespace filter.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "name": "trace",
+      "description": "Exact ownership and source chain for one resource (trace --format json). Use when the user needs the resource's owner, deployer, or GitOps/source chain after the resource is known. Optional diff compares one object from an already-rendered local manifest with the selected live object; it is authored-field-only, not controller desired state, resource-set completeness, or a next-reconciliation prediction. This answers ownership/source lineage, not which field writer made a change; do not call trace just to confirm an explain result about manual-edit attribution. DO NOT load for broad cluster status or first-pass troubleshooting; use doctor when the resource or problem scope is still unclear.",
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "api_version": {
+            "description": "Exact API version to disambiguate same-kind/name documents in the rendered input.",
+            "type": "string"
+          },
+          "context": {
+            "description": "Optional exact kubeconfig context for all trace reads. Empty or missing named contexts fail without fallback.",
+            "type": "string"
+          },
+          "desired_file": {
+            "description": "Local path to already-rendered Kubernetes manifests; required when diff is true.",
+            "type": "string"
+          },
+          "diff": {
+            "description": "Compare one object from an already-rendered local file/directory with the selected live object. This is not controller desired state.",
+            "type": "boolean"
+          },
+          "namespace": {
+            "description": "Optional namespace override.",
+            "type": "string"
+          },
+          "resource": {
+            "description": "Resource selector as kind/name (for example deployment/api).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resource"
+        ],
+        "type": "object"
+      }
+    }
+  ]
+}

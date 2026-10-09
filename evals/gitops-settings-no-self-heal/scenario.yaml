@@ -1,0 +1,633 @@
+# Scenario for the gitops-settings-no-self-heal eval case: deployer objects only.
+# No GitOps controller is installed, so nothing reconciles and no object has a
+# status. The CRDs are the real Argo CD and Flux ones; see record.py.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: flux-system
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-h
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-g
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: argocd
+data:
+  url: https://argocd.example.test
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: payments
+  namespace: argocd
+spec:
+  sourceRepos:
+  - '*'
+  destinations:
+  - namespace: '*'
+    server: '*'
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform
+  namespace: argocd
+spec:
+  sourceRepos:
+  - '*'
+  destinations:
+  - namespace: '*'
+    server: '*'
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: data
+  namespace: argocd
+spec:
+  sourceRepos:
+  - '*'
+  destinations:
+  - namespace: '*'
+    server: '*'
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ledger-api
+  namespace: argocd
+spec:
+  project: payments
+  source:
+    repoURL: https://git.example.test/payments/ledger-api.git
+    path: deploy
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ledger-api
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - ServerSideApply=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: invoices
+  namespace: argocd
+spec:
+  project: payments
+  source:
+    repoURL: https://git.example.test/payments/invoices.git
+    path: deploy
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: invoices
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: checkout-web
+  namespace: argocd
+spec:
+  project: payments
+  source:
+    repoURL: https://git.example.test/payments/checkout-web.git
+    path: deploy
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: checkout-web
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: fx-rates
+  namespace: argocd
+spec:
+  project: payments
+  source:
+    repoURL: https://git.example.test/payments/fx-rates.git
+    path: deploy
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: fx-rates
+  syncPolicy:
+    automated:
+      prune: true
+    syncOptions:
+    - ServerSideApply=true
+    - Validate=false
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: settlement-worker
+  namespace: argocd
+spec:
+  project: payments
+  source:
+    repoURL: https://git.example.test/payments/settlement-worker.git
+    path: deploy
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: settlement-worker
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: false
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: legacy-billing
+  namespace: argocd
+spec:
+  project: payments
+  source:
+    repoURL: https://git.example.test/payments/legacy-billing.git
+    path: deploy
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: legacy-billing
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: argocd
+spec:
+  project: platform
+  source:
+    repoURL: https://git.example.test/platform/cert-manager.git
+    path: deploy
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - ServerSideApply=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-dns
+  namespace: argocd
+spec:
+  project: platform
+  source:
+    repoURL: https://git.example.test/platform/external-dns.git
+    path: deploy
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: external-dns
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring-stack
+  namespace: argocd
+spec:
+  project: platform
+  source:
+    repoURL: https://git.example.test/platform/monitoring-stack.git
+    path: deploy
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring-stack
+  ignoreDifferences:
+  - group: apps
+    kind: Deployment
+    jsonPointers:
+    - /spec/replicas
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - RespectIgnoreDifferences=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ingress-nginx
+  namespace: argocd
+spec:
+  project: platform
+  source:
+    repoURL: https://git.example.test/platform/ingress-nginx.git
+    path: deploy
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ingress-nginx
+  syncPolicy:
+    automated: {}
+    syncOptions:
+    - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cluster-bootstrap
+  namespace: argocd
+spec:
+  project: platform
+  source:
+    repoURL: https://git.example.test/platform/cluster-bootstrap.git
+    path: deploy
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cluster-bootstrap
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
+    - PruneLast=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dns-migration
+  namespace: argocd
+spec:
+  project: platform
+  source:
+    repoURL: https://git.example.test/platform/dns-migration.git
+    path: deploy
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dns-migration
+  syncPolicy:
+    automated:
+      enabled: false
+      prune: true
+      selfHeal: false
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: warehouse
+  namespace: argocd
+spec:
+  project: data
+  source:
+    repoURL: https://git.example.test/data/warehouse.git
+    path: deploy
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: warehouse
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: stream-processor
+  namespace: argocd
+spec:
+  project: data
+  source:
+    repoURL: https://git.example.test/data/stream-processor.git
+    path: deploy
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: stream-processor
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - PrunePropagationPolicy=foreground
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: etl-nightly
+  namespace: argocd
+spec:
+  project: data
+  source:
+    repoURL: https://git.example.test/data/etl-nightly.git
+    path: deploy
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: etl-nightly
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: false
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: feature-store
+  namespace: argocd
+spec:
+  project: data
+  source:
+    repoURL: https://git.example.test/data/feature-store.git
+    path: deploy
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: feature-store
+  syncPolicy:
+    automated:
+      allowEmpty: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: notebooks
+  namespace: argocd
+spec:
+  project: data
+  source:
+    repoURL: https://git.example.test/data/notebooks.git
+    path: deploy
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: notebooks
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: backfill-2025
+  namespace: argocd
+spec:
+  project: data
+  source:
+    repoURL: https://git.example.test/data/backfill-2025.git
+    path: deploy
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: backfill-2025
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: playground
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://git.example.test/default/playground.git
+    path: deploy
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: playground
+  syncPolicy:
+    automated:
+      prune: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: guestbook
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://git.example.test/default/guestbook.git
+    path: deploy
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: guestbook
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: fleet
+  namespace: flux-system
+spec:
+  interval: 10m
+  url: https://git.example.test/platform/fleet.git
+  ref:
+    branch: main
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infrastructure
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./infrastructure
+  sourceRef:
+    kind: GitRepository
+    name: fleet
+  prune: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: apps
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./apps
+  sourceRef:
+    kind: GitRepository
+    name: fleet
+  prune: true
+  wait: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: monitoring
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./monitoring
+  sourceRef:
+    kind: GitRepository
+    name: fleet
+  prune: true
+  suspend: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: tenants
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./tenants
+  sourceRef:
+    kind: GitRepository
+    name: fleet
+  prune: false
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: legacy-migration
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./legacy-migration
+  sourceRef:
+    kind: GitRepository
+    name: fleet
+  prune: false
+  suspend: true
+  force: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: secrets
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./secrets
+  sourceRef:
+    kind: GitRepository
+    name: fleet
+  prune: true
+  suspend: false
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: charts
+  namespace: team-h
+spec:
+  interval: 10m
+  url: https://charts.example.test
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: charts
+  namespace: team-g
+spec:
+  interval: 10m
+  url: https://charts.example.test
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: redis
+  namespace: team-h
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: redis
+      version: 1.0.0
+      sourceRef:
+        kind: HelmRepository
+        name: charts
+  suspend: true
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: postgres
+  namespace: team-h
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: postgres
+      version: 1.0.0
+      sourceRef:
+        kind: HelmRepository
+        name: charts
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: grafana
+  namespace: team-g
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: grafana
+      version: 1.0.0
+      sourceRef:
+        kind: HelmRepository
+        name: charts
+  driftDetection:
+    mode: enabled
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: loki
+  namespace: team-g
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: loki
+      version: 1.0.0
+      sourceRef:
+        kind: HelmRepository
+        name: charts
+  suspend: false
+  upgrade:
+    force: true

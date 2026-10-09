@@ -1,0 +1,52 @@
+{
+  "seed": 839,
+  "applications": 240,
+  "kustomizations": 40,
+  "helmreleases": 20,
+  "applicationPolicyMix": {
+    "auto-empty": 4,
+    "disabled": 6,
+    "full": 155,
+    "heal-no-prune": 20,
+    "manual": 22,
+    "manual-options": 10,
+    "no-heal-absent": 8,
+    "no-heal-false": 15
+  },
+  "noSelfHeal": [
+    "argocd/billing-auth",
+    "argocd/billing-batch",
+    "argocd/data-export",
+    "argocd/data-web",
+    "argocd/growth-metrics",
+    "argocd/identity-admin",
+    "argocd/identity-gateway",
+    "argocd/identity-scheduler",
+    "argocd/internal-scheduler",
+    "argocd/logistics-sync",
+    "argocd/media-auth",
+    "argocd/media-cron",
+    "argocd/media-export",
+    "argocd/mobile-cache",
+    "argocd/mobile-indexer",
+    "argocd/mobile-reports",
+    "argocd/mobile-sync",
+    "argocd/mobile-worker",
+    "argocd/payments-cron",
+    "argocd/payments-proxy",
+    "argocd/payments-router",
+    "argocd/payments-web",
+    "argocd/platform-proxy",
+    "argocd/risk-batch",
+    "argocd/risk-cache",
+    "argocd/risk-notify",
+    "argocd/search-sync"
+  ],
+  "suspended": [
+    "HelmRelease/team-a/postgres",
+    "HelmRelease/team-e/postgres",
+    "HelmRelease/team-e/vault",
+    "Kustomization/team-b/infrastructure",
+    "Kustomization/team-f/tenants"
+  ]
+}

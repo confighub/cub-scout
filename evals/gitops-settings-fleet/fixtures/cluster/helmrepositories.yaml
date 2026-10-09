@@ -1,0 +1,180 @@
+apiVersion: v1
+items:
+- apiVersion: source.toolkit.fluxcd.io/v1
+  kind: HelmRepository
+  metadata:
+    creationTimestamp: "2026-10-09T11:01:39Z"
+    generation: 1
+    managedFields:
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:interval: {}
+          f:url: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T11:01:39Z"
+    name: charts
+    namespace: team-a
+    resourceVersion: "818"
+    uid: 105e41b5-7f47-4e9e-9fad-301acede1ef8
+  spec:
+    interval: 10m
+    provider: generic
+    url: https://charts.example.test
+  status:
+    observedGeneration: -1
+- apiVersion: source.toolkit.fluxcd.io/v1
+  kind: HelmRepository
+  metadata:
+    creationTimestamp: "2026-10-09T11:01:39Z"
+    generation: 1
+    managedFields:
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:interval: {}
+          f:url: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T11:01:39Z"
+    name: charts
+    namespace: team-b
+    resourceVersion: "819"
+    uid: bcc43577-9d24-4152-a624-ffd6eec6aab4
+  spec:
+    interval: 10m
+    provider: generic
+    url: https://charts.example.test
+  status:
+    observedGeneration: -1
+- apiVersion: source.toolkit.fluxcd.io/v1
+  kind: HelmRepository
+  metadata:
+    creationTimestamp: "2026-10-09T11:01:39Z"
+    generation: 1
+    managedFields:
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:interval: {}
+          f:url: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T11:01:39Z"
+    name: charts
+    namespace: team-c
+    resourceVersion: "820"
+    uid: e5128b7b-1f0b-4388-b064-8283d51999fd
+  spec:
+    interval: 10m
+    provider: generic
+    url: https://charts.example.test
+  status:
+    observedGeneration: -1
+- apiVersion: source.toolkit.fluxcd.io/v1
+  kind: HelmRepository
+  metadata:
+    creationTimestamp: "2026-10-09T11:01:39Z"
+    generation: 1
+    managedFields:
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:interval: {}
+          f:url: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T11:01:39Z"
+    name: charts
+    namespace: team-d
+    resourceVersion: "821"
+    uid: 08f41ed9-88a0-4db8-80c0-9183ea53c8b9
+  spec:
+    interval: 10m
+    provider: generic
+    url: https://charts.example.test
+  status:
+    observedGeneration: -1
+- apiVersion: source.toolkit.fluxcd.io/v1
+  kind: HelmRepository
+  metadata:
+    creationTimestamp: "2026-10-09T11:01:39Z"
+    generation: 1
+    managedFields:
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:interval: {}
+          f:url: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T11:01:39Z"
+    name: charts
+    namespace: team-e
+    resourceVersion: "822"
+    uid: 632f88ac-58e2-47ce-a1ff-f85761f4a288
+  spec:
+    interval: 10m
+    provider: generic
+    url: https://charts.example.test
+  status:
+    observedGeneration: -1
+- apiVersion: source.toolkit.fluxcd.io/v1
+  kind: HelmRepository
+  metadata:
+    creationTimestamp: "2026-10-09T11:01:39Z"
+    generation: 1
+    managedFields:
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:interval: {}
+          f:url: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T11:01:39Z"
+    name: charts
+    namespace: team-f
+    resourceVersion: "823"
+    uid: 0c816898-b8c8-4597-8a6f-79aad5588daf
+  spec:
+    interval: 10m
+    provider: generic
+    url: https://charts.example.test
+  status:
+    observedGeneration: -1
+- apiVersion: source.toolkit.fluxcd.io/v1
+  kind: HelmRepository
+  metadata:
+    creationTimestamp: "2026-10-09T11:01:39Z"
+    generation: 1
+    managedFields:
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:interval: {}
+          f:url: {}
+      manager: kubectl
+      operation: Apply
+      time: "2026-10-09T11:01:39Z"
+    name: charts
+    namespace: team-g
+    resourceVersion: "824"
+    uid: 874d8cd4-0af8-4177-b8a7-4a914ed677ef
+  spec:
+    interval: 10m
+    provider: generic
+    url: https://charts.example.test
+  status:
+    observedGeneration: -1
+kind: List
+metadata:
+  resourceVersion: ""

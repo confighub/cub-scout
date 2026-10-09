@@ -346,7 +346,7 @@ As of 2026-09-11, these areas are fully or materially shipped:
   - `compare three-way --view <uuid-or-url>` scopes to a ConfigHub View (`#414`)
   - `views project --with-reality` composes View columns with source-truth verdicts (`#420`)
 - **MCP gateway** — `mcp serve` exposes a closed, read-only-by-construction tool catalog:
-  - 7 standalone tools: `doctor`, `map`, `scan`, `trace`, `explain`, `gitops_status`, `release_check`
+  - 7 standalone tools: `doctor`, `map`, `scan`, `trace`, `explain`, `gitops_status`, `release_check`; an eighth, `gitops_settings`, is merged and unreleased
   - 12 connected tools: `compare_three_way`, `compare_source_truth`, `confighub_changeorder_get`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_resources`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`
   - `confighub_changeorder_get` reads one exact-space ChangeOrder's reported Stage/State and declarations. Evaluated prerequisites remain unknown; this is not approval or live convergence proof.
   - Verified by `cmd/cub-scout/mcp_test.go`; full per-tool reference at `skills/references/mcp-tool-catalog.md`

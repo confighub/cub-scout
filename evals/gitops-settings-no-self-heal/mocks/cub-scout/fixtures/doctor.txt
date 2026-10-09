@@ -1,0 +1,57 @@
+{
+  "cluster": "default",
+  "kubernetesContext": "kind-scout-eval-settings-8cc3ae15",
+  "namespace": "all",
+  "resources": {
+    "total": 56
+  },
+  "ownership": {
+    "flux": 0,
+    "argocd": 0,
+    "sveltos": 0,
+    "modelplane": 0,
+    "crossplane": 0,
+    "kro": 0,
+    "helm": 0,
+    "terraform": 0,
+    "confighub": 0,
+    "native": 56,
+    "other": 0,
+    "unmanaged": 56
+  },
+  "health": {
+    "healthy": 25,
+    "warning": 31,
+    "error": 0
+  },
+  "risks": {
+    "total": 0,
+    "critical": 0,
+    "warning": 0,
+    "info": 0
+  },
+  "drift": {
+    "resources": 20
+  },
+  "rollouts": {
+    "total": 4,
+    "pass": 4,
+    "watch": 0,
+    "block": 0,
+    "inconclusive": 0
+  },
+  "nextSteps": [
+    {
+      "actionType": "read-only",
+      "reason": "56 resources without GitOps ownership - review for governance gaps (no context-safe command is available for this selection)"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "Preview how to bring unmanaged resources under GitOps control (no context-safe command is available for this selection)"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "Run the guided walkthrough to explore your cluster step-by-step (no context-safe command is available for this selection)"
+    }
+  ]
+}

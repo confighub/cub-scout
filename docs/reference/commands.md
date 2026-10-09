@@ -2239,7 +2239,7 @@ standalone and connected tool sets described below remain available.
 
 #### Notes
 
-- Standalone tools: `doctor`, `explain`, `gitops_status`, `map`, `scan`, `trace` (via existing cub-scout JSON surfaces).
+- Standalone tools: `doctor`, `explain`, `gitops_settings`, `gitops_status`, `map`, `scan`, `trace` (via existing cub-scout JSON surfaces).
 - `doctor` is intentionally first: it is the natural first troubleshooting command for AI and MCP clients, including when the problem may be local access uncertainty such as wrong context, stale kubeconfig, or API reachability.
 - Connected tools (when authenticated to ConfigHub): `compare_three_way`, `compare_source_truth`, `confighub_attestations`, `confighub_changeorder_get`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_resources`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`.
 - Standalone and read-only: no cluster mutations and no ConfigHub write path.
@@ -2264,6 +2264,12 @@ standalone and connected tool sets described below remain available.
   - `target` (required)
   - `namespace` (required)
   - `strategy` (required; enum mirrors `compare source-truth --help`)
+- `gitops_settings` (unreleased; see [gitops settings](#gitops-settings))
+  - `namespace` (optional; the namespace of the deployer objects)
+  - `context` (optional)
+  - `project` (optional string array; Argo CD projects)
+  - `setting` (optional string array; each `name` or `name=value`, all must match)
+  - `view` (optional; `summary` by default, or `deployers`, `groups`, `settings`, `all`)
 - `gitops_status`
   - `namespace` (optional)
   - `with_confighub` (optional boolean)
@@ -2854,10 +2860,11 @@ judge a setting, and does not report whether a controller acted on it.
 |------|-------------|
 | `-n, --namespace` | Only deployers in this namespace (default: all namespaces) |
 | `--project` | Only Argo CD Applications in this project; repeatable. Flux objects have no project and are left out, and the output says how many |
-| `--setting` | Only deployers with this setting, as `name` or `name=value`; repeatable, and all must match |
+| `--setting` | Only deployers with this setting, as `name` or `name=value`; repeatable, and all must match. `name` alone selects deployers whose spec declares it (changed after v2.13.3, where it also matched a policy left unset) |
 | `--group-by` | `project` (default), `setting` or `deployer` |
 | `--format` | Output format: `ascii`, `json`, `md` |
 | `--json` | Output as JSON (shorthand for `--format json`) |
+| `--view` | JSON only: `all` (default), `summary`, `groups`, `settings` or `deployers`. Unreleased |
 | `--tui` | View the same read-once snapshot in a scrollable viewport |
 | `--kube-context` | Exact kubeconfig context for every read; a missing or empty name fails before any read |
 
@@ -2944,10 +2951,46 @@ Delivery Settings section.
   included, and neither are per-resource `argocd.argoproj.io/sync-options` or
   Flux `kustomize.toolkit.fluxcd.io/*` annotations on delivered objects.
 - Sveltos is not covered.
-- There is no MCP tool for this yet, and no agent eval has been run on it; no
-  claim is made that it saves an agent time or cost. Tracked in #839.
+- An Application is listed by what its spec declares, whichever namespace it is
+  in. Whether an Argo CD instance is configured to manage Applications in that
+  namespace is not checked, so an Application Argo CD ignores still appears.
+- In v2.13.3 there is no MCP tool for this. The `gitops_settings` MCP tool and
+  `--view` are merged and unreleased; see [Views](#views-unreleased) below and
+  the [eval report](../../evals/reports/2026-10-09-gitops-settings.md) for what
+  was and was not measured.
 - `ignoreDifferences` and `driftDetection.ignore` rules are reported as
   declared. Which live fields they currently hide is not computed.
+
+#### Views (unreleased)
+
+`--format json` prints the whole report: per-object `deployers`, the per-project
+`groups` inversion and the per-kind `settings` inversion. `--view` prints one of
+them, always with the scope, counts, reads and link sources that say whether it
+is complete.
+
+| View | Contents |
+|---|---|
+| `all` | The whole report. The CLI default, as in v2.13.3 |
+| `summary` | Per Argo CD project or Flux namespace, `policies` and `options` each map a setting to its values and each value to the deployers that have it, as `namespace/name`. `unset` lists the deployers counted under a controller default. Written on one line, without indentation. The MCP tool's default |
+| `groups` | The summary's content as objects, each deployer with its link and detail |
+| `settings` | The same inversion per kind across the whole read |
+| `deployers` | One entry per object, with every setting's spec path and default, the link and the ignore rules |
+
+The summary exists because an agent pays for every byte it reads. On the
+thirty-deployer scenario in the eval case it is about 6 KB, where the raw
+`kubectl` export of the same objects is about 42 KB. That is a size on one
+scenario, not a measured saving.
+
+What was measured is in the
+[eval report](../../evals/reports/2026-10-09-gitops-settings.md). In short: an
+agent that already holds the raw export did not call the tool and gained
+nothing from it, and on a small cluster the plugin made the run dearer; an agent
+with cub-scout and no export answered a 300-deployer question correctly in four
+turns. Three runs per arm on generated scenarios; not a general claim.
+
+The plugin's skills do not mention `gitops_settings`: the frozen agent benchmark
+pins the skills tree, and re-pinning it is a separate decision (#839). An agent
+finds the tool from the MCP tool list.
 
 See the [live example](../../examples/delivery-settings/) and the
 [JSON contract](json-contracts.md#delivery-settings-contract).
