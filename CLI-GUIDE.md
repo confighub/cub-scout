@@ -120,6 +120,7 @@ Helpful follow-up paths:
 - `map hooks` for Helm and Argo lifecycle hooks
 - `doctor --with-confighub` for a scope-level delivery rollup in the same first-pass health summary
 - `gitops status` for deployer/source health; add `--with-confighub` for release history, unit events, live-status freshness, and event-consumer health
+- `gitops settings` for which Argo CD and Flux deployers sync on their own, self-heal, prune or use non-default apply options (preview since v2.13.3); `--setting self-heal=off` lists the ones that do not revert manual changes
 - `map activity --with-confighub` for a unified recent timeline across controller events, Kubernetes events, ConfigHub releases, unit events, live-status reports, and event-consumer health
 
 See [docs/reference/commands.md](docs/reference/commands.md) for the detailed examples behind each command.

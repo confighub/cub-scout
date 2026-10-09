@@ -2831,7 +2831,8 @@ without additional target-cluster reads. See the
 ### gitops settings
 
 Show the delivery settings each Argo CD and Flux deployer declares, and which
-deployers share each setting. Unreleased; first candidate release is v2.14.
+deployers share each setting. Preview, first shipped in v2.13.3; the JSON shape
+may still change.
 
 ```bash
 cub scout gitops settings [flags]     # as a cub plugin
