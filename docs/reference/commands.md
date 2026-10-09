@@ -3257,24 +3257,43 @@ under its rows.
 #### Where the values come from
 
 ConfigHub evaluates a View's columns. cub-scout lists the Units with
-`cub unit list --view <view> --where <the View's filter> -o json`, and each
-Unit comes back with `ViewColumns`: one value per column, whatever the kind
-of column. That value is the cell.
+`cub unit list --view <view> --where <the Where of the View's filter> -o json`,
+and each Unit comes back with `ViewColumns`, a list of column name and value.
+That value is the cell.
 
 | Case | Cell |
 |------|------|
-| ConfigHub returned a value for the column | That value |
-| ConfigHub returned no value, and the column's `ColumnSource` is a `MetadataAttribute` | The field of that name, read from the Unit |
-| ConfigHub returned no value for a column of any other kind | A `<... not yet supported>` placeholder for an expression or a data path, empty for a bare name; the column is listed under `omissions` |
+| The column is in the Unit's `ViewColumns` | Its value there; empty when ConfigHub lists the column with no value |
+| The column is not in `ViewColumns`, and its `ColumnSource` is a `MetadataAttribute` | The field of that name, read from the Unit; empty when the Unit does not carry it |
+| The column is not in `ViewColumns`, and is of any other kind | A `<... not yet supported>` placeholder for an expression or a data path, empty for a bare name; the column is listed under `omissions` |
 | The View has no columns | One `Slug` column, read from the Unit |
 
-Until this was fixed (#852), `views project` looked for the columns at the top
-of what `cub view get` prints, where a real View does not keep them, and for a
-real View showed one `Slug` column in place of the View's own.
+A column name used twice in a View is one cell. A View may have a column named
+`Applied?` or `LiveStatus`; it is shown like any other, and `--with-reality`
+is refused for that View, because its two columns have those names.
 
-Checked against a real ConfigHub v0.8.3 for a View whose columns are names
-(`cub view create --column Unit.Slug ...`). A column with a `ColumnSource`
-expression or data path was not tried on a real server.
+A View whose filter has no `Where` is refused ("has no Where filter"), as
+before. ConfigHub applies the whole of a View's filter when given `--view`,
+so the Units are those the `Where` matches, narrowed by anything else the
+filter has.
+
+**Changed by #852.** `views project` used to look for the columns at the top
+of what `cub view get` prints, where a real View does not keep them. For a
+real View it showed one `Slug` column in place of the View's own, and that
+column's cells were empty. The columns and the row keys are now the View's
+(`Unit.Slug`, not `Slug`). Anything that read `rows[].Slug` for a real View
+was reading that fallback.
+
+**What was checked on a real server.** Against ConfigHub v0.8.3 (the
+Connected CI lane, run 37985875365), for a View made with
+`cub view create --column Unit.Slug --column Unit.DisplayName --column
+Unit.HeadRevisionNum --column Space.Slug --column Labels.tier` over three
+Units of which its filter matches two: the five columns, every cell equal to
+the value in ConfigHub's `ViewColumns`, and two rows, in a named space and
+across every space. Not tried on a real server: a column with a
+`ColumnSource` (an expression, a data path or a metadata attribute), a View
+with no columns, and a filter with more than a `Where`. `--with-reality` was
+run there, but its cells were not checked.
 
 #### Reality overlay (`--with-reality`)
 
@@ -3298,7 +3317,7 @@ Requires connected mode: a logged-in `cub` CLI (`cub auth login`), in either inv
 ### v0.1 scope items still pending
 
 - TUI Hub view integration of View column projection (extends `views project` into the interactive `H` view) — tracked as a follow-up issue.
-- `MetadataExpression`, `DataPath` and `DataExpression` columns take ConfigHub's value like any other; whether a server returns one for them was not checked against a real server (#421, #852).
+- `MetadataExpression`, `DataPath` and `DataExpression` columns take ConfigHub's value when it returns one; whether it does for them was not checked against a real server (#421, #852).
 - Reality-overlay extensions: `Drift` and `Orphan?` columns alongside the v0.1 `Applied?` / `LiveStatus`.
 
 ---
