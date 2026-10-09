@@ -1,12 +1,15 @@
 # AI Read Me First
 
-**2026-10-09:** [v2.13.3 is published](docs/releases/v2.13.3.md), a small
-additive release cut from `main`. It adds `gitops settings` (preview): the sync,
-self-heal, prune and apply settings each Argo CD Application and Flux
-Kustomization and HelmRelease declares, grouped by project or namespace. It is
-a CLI command only: there is no MCP tool for it, no skill mentions it, and no
-agent eval has been run on it ([#839](https://github.com/confighub/cub-scout/issues/839)).
-[v2.13.2](docs/releases/v2.13.2.md), a correction release, preceded it. Start from
+**2026-10-09:** [v2.13.4 is published](docs/releases/v2.13.4.md), after
+[v2.13.3](docs/releases/v2.13.3.md) the same day. Together they add
+`gitops settings` (preview): the sync, self-heal, prune and apply settings each
+Argo CD Application and Flux Kustomization and HelmRelease declares, as a CLI
+command (v2.13.3) and as the MCP tool `gitops_settings` with a compact
+`--view summary` (v2.13.4). Its
+[eval report](evals/reports/2026-10-09-gitops-settings.md) says where it helped
+an agent and where it did not. No skill mentions the tool: the frozen benchmark
+pins the skills tree ([#839](https://github.com/confighub/cub-scout/issues/839)).
+[v2.13.2](docs/releases/v2.13.2.md), a correction release, preceded them. Start from
 the current handover for v2.14 reconciliation and deferred acceptance work.
 
 

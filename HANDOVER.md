@@ -2,10 +2,10 @@
 
 ## Current checkpoint — 2026-10-06
 
-**Superseded 2026-10-09: v2.13.3 is published** at `88163206`; see
-[v2.13.3 published](#v2133-published-2026-10-09) at the end of this file for
-the current state, and [v2.13.2 published](#v2132-published-2026-10-07) before
-it. The 2026-10-06 checkpoint below is kept as written.
+**Superseded 2026-10-09: v2.13.4 is published** at `5dd55ed0`; see
+[v2.13.4 published](#v2134-published-2026-10-09) at the end of this file for
+the current state, and [v2.13.3](#v2133-published-2026-10-09) and
+[v2.13.2](#v2132-published-2026-10-07) before it. The 2026-10-06 checkpoint below is kept as written.
 
 **v2.13.1 is published**, source `277d7ad8`, with tagged full Go tests and
 packaging passing. See [published verification](docs/releases/v2.13.1.md).
@@ -1849,3 +1849,42 @@ witness and gains no trigger mode.
 
 v2.14 is not released. Of its ten tasks, one is partly done and seven are
 essentially not started. No agent eval was added or run in this release either.
+
+## v2.13.4 published (2026-10-09)
+
+v2.13.4 is published at `5dd55ed0`, cut from `main`. It adds the MCP tool
+`gitops_settings`, a JSON `--view` for `gitops settings` with a compact
+`summary` that the tool returns by default, and three eval cases (#843). One
+filter changed meaning: a bare `--setting <name>` selects deployers that declare
+the setting. See [the release notes](docs/releases/v2.13.4.md).
+
+What the eval showed, three runs per arm on generated scenarios
+([report](evals/reports/2026-10-09-gitops-settings.md)): an agent that already
+held the raw export never called the tool and gained nothing, and on a
+30-deployer cluster the cub-scout arm cost about a third more; an agent with
+cub-scout and no export answered a 300-deployer question correctly in four turns
+at $0.21 a run, against a median $0.41 and a mean $0.84 for the export-reading
+baseline. No general saving is claimed. This is the first agent-facing change in
+this cycle to ship with an eval case and a known result.
+
+Things learned that the next session should not rediscover:
+
+- **`benchmark-v1` pins the exact contents of `skills/`**
+  (`evals/combined-recorded-runtime`). Editing any skill fails Unit Tests. The
+  skills therefore do not mention `gitops_settings`; re-pinning is the benchmark
+  owner's decision (#839).
+- **CI's Python suites are not run by `go test ./...`.** Run the
+  `python3 -m unittest` steps from `.github/workflows/ci.yaml` before pushing a
+  change that touches `skills/`, `evals/` or the plugin manifest.
+- **A new MCP tool does not need the suite-wide `_tools.json` changed.** A case
+  can carry its own `mocks/<server>/_tools.json`; the harness honours it. That
+  keeps the frozen benchmark's inputs untouched.
+- **Agents ignore the tool when an export is on disk.** The eval cases only show
+  the tool used when it is the only way to see the cluster.
+- **`gitops_settings` cannot tell whether Argo CD manages an Application's
+  namespace.** Both eval arms caught an unmanaged one that the tool listed.
+- Nine other eval case files fail to load with Claude Code 2.1.285 (#844).
+
+Next, at the maintainer's direction: adopt the ConfigHub SDK for connected reads
+(#758). Its first step, moving to Go 1.25 with the 1.26.9 toolchain and
+golangci-lint v2, is #846.
