@@ -11,8 +11,8 @@ you set the variable below.
 ## What it covers
 
 Three commands, wherever cub-scout runs them: `cub unit get` for one Unit
-named by slug in one named space, `cub unit list` for one named space, and
-`cub space list`.
+named by slug in one named space, `cub unit list` for one named space, with
+or without a `--where` or `--contains` filter, and `cub space list`.
 
 ```bash
 CUB_SCOUT_CONFIGHUB_READER=sdk cub scout compare source-truth deploy/api -n prod --strategy git-argo
@@ -39,8 +39,8 @@ change.
 | `unit get <space>/<unit> -o json` | A Unit named by its ID, in any spelling `cub` reads as an ID: canonical, 32 bare hex digits, braces, `urn:uuid:` |
 | either, with `--quiet` | A space named by ID in any spelling but the canonical lower-case one, capitals included |
 | a space named by its canonical ID | `*` as the space or the Unit; a space containing `/`; a `--space` value that starts with `-` |
-| `unit list -o json --space <space>`, with or without `--quiet` | A list with a filter, a text search, a selection, a limit, an ordering, a view or hidden entities: each changes what `cub` asks the server |
-| `space list -o json`, with or without `--quiet` | A space list with any of the same, a component, a `--space` or a positional; and a list with no `-o json`, which prints `cub`'s table |
+| `unit list -o json --space <space>`, with or without `--quiet`, `--where <expression>` and `--contains <text>` | A unit list with a stored filter, a data or trigger filter, a selection, a limit, an ordering, a view or hidden entities; an empty `--where` or `--contains`, or either given twice |
+| `space list -o json`, with or without `--quiet` | A space list with any filter or any of the same, a component, a `--space` or a positional; and a list with no `-o json`, which prints `cub`'s table |
 | | Any other output format, any other flag, `--`, and `-o=json` or `--space=x` spelt with `=` |
 
 Today that is every `unit get` cub-scout builds, given a slug and a named
@@ -57,8 +57,8 @@ user supplies.
 | MCP `confighub_unit_get` | With `space`, or `unit` as `<space>/<slug>`. By ID it stays with `cub` |
 | `map` (connected hierarchy and unit detail) | |
 | Import wizard checks | Reads only; its writes run `cub` |
-| The lists: `map` (connected hierarchy, fleet, and joining cluster resources to their Units), `fleet outliers`, import's check for existing units and its link to the space, MCP `confighub_units` without `where` or `contains` | |
-| Lists that stay with `cub`: MCP `confighub_units` with `where` or `contains`, `views`, GitOps delivery evidence (a selection), `app list` and import's summary (they print `cub`'s own output) | |
+| The lists: `map` (connected hierarchy, fleet, and joining cluster resources to their Units), `fleet outliers`, import's check for existing units and its link to the space, MCP `confighub_units` with or without `where` and `contains`, and the `views` lookups when they name one space | |
+| Lists that stay with `cub`: `views` across every space, GitOps delivery evidence (a selection), `app list` and import's summary (they print `cub`'s own output) | |
 
 A failed SDK read is the answer, reported with its reason. It does not fall
 back to `cub`, and once the SDK route has taken a read, no failure of it is
@@ -93,6 +93,11 @@ check, and every other ConfigHub read still runs `cub`.
   list. A list with nothing in it, or a JSON `null`, is `[]`, as `cub` prints
   it. "Whole" means what the server says is whole: the reader asks for no
   limit and does not read in pages.
+- **A filter narrows and never widens.** The caller's expression is sent as
+  written, AND-ed with the space, as `cub` composes it; the check that every
+  Unit returned is in that space applies whatever the expression says. A
+  filter the server rejects fails the read with the server's reason, with
+  control characters removed and cut to 300 characters.
 - **An empty list is of a space that exists.** A space named by slug is looked
   up first. A space named by ID is not, so when its list comes back empty the
   space is checked, and an ID that names no space is `not_found`, as `cub`
