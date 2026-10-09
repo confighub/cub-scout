@@ -166,7 +166,27 @@ coalescing, opt-in watch-backed idle observation, and a new `resource.deleted`
 event), plus local bot images built from verified release archives. See the
 [release notes](docs/releases/v2.11.0.md).
 
-**v2.12.4 is the latest release.** It improves manual-edit attribution, Argo
+**v2.13.3 is the latest release.** It adds `gitops settings`, a preview
+command that shows which Argo CD and Flux deployers sync on their own, revert
+manual changes, prune, or apply with non-default options, grouped by project or
+namespace. It reports declared settings only, has no MCP tool yet, and no agent
+eval has been run on it. See the [v2.13.3 release notes](docs/releases/v2.13.3.md).
+
+**v2.13.2** is a correction release: upgrade from v2.13.1 or earlier for it. A
+receipt for a Flux-delivered workload could name its parent's Git repository
+instead of its own; a failing Flux delivery could be drawn as healthy; `explain`
+said nothing about a failing delivery chain; and `suggest-remedy` ran `kubectl`
+through a shell. It also made provenance work without the `flux` and `argocd`
+CLIs and brought `--kube-context` to nearly every command that reads a cluster.
+See the [v2.13.2 release notes](docs/releases/v2.13.2.md).
+
+**v2.13.1** added explicit context and namespace binding across investigation
+workflows, exact-space ChangeOrder reads, combined-origin revision claims,
+separate Sveltos delivery and health reports, and recorded map and explain
+input; public Go imports moved to `/v2`. See the
+[v2.13.1 release notes](docs/releases/v2.13.1.md).
+
+**v2.12.4** improved manual-edit attribution, Argo
 tracking identity and workload health, retains useful MCP output on non-zero
 exits, and adds compact inventory requests. Plugin-mode hints preserve
 `cub scout`. These changes enable smaller agent reads; a general cost or credit

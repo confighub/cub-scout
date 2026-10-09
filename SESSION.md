@@ -1,5 +1,9 @@
 # ✅ SESSION NOTES — cub-scout
 
+> **Historical.** This log was last written on 2026-02-09, for v0.19.x. It does
+> not describe the current release. For the current state read
+> [`HANDOVER.md`](HANDOVER.md) and the [release notes](docs/releases/).
+
 > **Roadmap source of truth:** [`docs/roadmap.md`](docs/roadmap.md)
 >
 > This file is a session log and may include historical snapshots that are useful for context but are not authoritative roadmap commitments.

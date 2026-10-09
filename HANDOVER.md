@@ -2,9 +2,10 @@
 
 ## Current checkpoint — 2026-10-06
 
-**Superseded 2026-10-07: v2.13.2 is published** at `f0ac45ca`; see
-[v2.13.2 published](#v2132-published-2026-10-07) at the end of this file for
-the current state. The 2026-10-06 checkpoint below is kept as written.
+**Superseded 2026-10-09: v2.13.3 is published** at `88163206`; see
+[v2.13.3 published](#v2133-published-2026-10-09) at the end of this file for
+the current state, and [v2.13.2 published](#v2132-published-2026-10-07) before
+it. The 2026-10-06 checkpoint below is kept as written.
 
 **v2.13.1 is published**, source `277d7ad8`, with tagged full Go tests and
 packaging passing. See [published verification](docs/releases/v2.13.1.md).
@@ -1812,3 +1813,39 @@ check the published artifacts and record the result here and in the notes.
 v2.14 is not released and none of its ten tasks is complete. Not exercised in
 this release: Windows execution, `brew install`, any ConfigHub-connected run,
 the heavy CI lanes, and any agent eval.
+
+## v2.13.3 published (2026-10-09)
+
+v2.13.3 is published at `88163206`, cut from `main`. It is a small additive
+release: one new read-only command, `gitops settings` (#840, issue #839), and
+one more section in `map deep-dive`. Nothing else changes. See
+[the release notes](docs/releases/v2.13.3.md) for what was and was not
+verified.
+
+`gitops settings` reports the delivery settings each Argo CD Application and
+Flux Kustomization and HelmRelease declares, inverted so each setting lists the
+deployers that have each value. It is labelled a preview and its JSON shape may
+change. It is a CLI command only. Deliberately not done, and tracked in #839:
+
+- an MCP tool, any skill mention, and the agent eval case that must come with
+  them. Adding the tool means re-recording the MCP tool catalog that the eval
+  fixtures and skills pin, so it is its own PR;
+- Sveltos; AppProject-imposed settings; per-resource annotations;
+- joining a setting to its observed consequence, such as self-heal off
+  alongside fields a non-controller manager has set. That is the part no
+  `kubectl` filter gives, and the first candidate for the next increment.
+
+The heavy CI lanes ran for the first time on this code
+([run 37902545764](https://github.com/confighub/cub-scout/actions/runs/37902545764)):
+Windows Release Runtime on amd64 and arm64 and Connected E2E passed. Full
+Verification and Demo Tests both stop at provisioning the private scanner, which
+needs `CUB_SCAN_RELEASE_TOKEN` (#774); what is behind that step has still never
+run. Only the maintainer can set the credential.
+
+Decision recorded on #502 the same day: cub-scout does not become the general
+sync bot. The planned general delivery bot triggers reconciliation and reports
+live status and may reuse cub-scout's observation; cub-scout stays the separate
+witness and gains no trigger mode.
+
+v2.14 is not released. Of its ten tasks, one is partly done and seven are
+essentially not started. No agent eval was added or run in this release either.
