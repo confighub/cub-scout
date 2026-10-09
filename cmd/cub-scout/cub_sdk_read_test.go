@@ -322,6 +322,7 @@ func TestEveryUnitGetCallSiteIsOneTheSDKRouteTakes(t *testing.T) {
 func TestEveryListCallSiteIsTakenOrExplained(t *testing.T) {
 	leftToCub := map[string]string{
 		`"--select", "Slug,SpaceID,Annotations,Labels"`: "a selection changes what the server returns",
+		`"--view", viewUUID`:                            "ConfigHub evaluates the columns of a View; that request is not reproduced here",
 		`[]string{"unit", "list"}, space)`:              "prints cub's table to the user, through cubCommand",
 		`cubArgs := []string{"space", "list"}`:          "streams cub's own output to the user, through cubCommand",
 		`{"space", "list"}, // the spaces themselves`:   "not a call: the table of commands that name no space",

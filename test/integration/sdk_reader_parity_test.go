@@ -414,3 +414,216 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 		keep("cub-version.txt", version)
 	}
 }
+
+// findString returns the first string value stored under key anywhere in a
+// decoded JSON value.
+func findString(value interface{}, key string) string {
+	switch typed := value.(type) {
+	case map[string]interface{}:
+		if found, ok := typed[key].(string); ok && found != "" {
+			return found
+		}
+		for _, inner := range typed {
+			if found := findString(inner, key); found != "" {
+				return found
+			}
+		}
+	case []interface{}:
+		for _, inner := range typed {
+			if found := findString(inner, key); found != "" {
+				return found
+			}
+		}
+	}
+	return ""
+}
+
+// #852: what a real View looks like, and what `views project` makes of it.
+//
+// The view commands were written and tested against JSON nobody recorded.
+// This creates a Filter and a View on the disposable server, keeps what cub
+// prints for them and what cub-scout prints for the View, and holds `views
+// project` to the server: the View's own columns, and in each cell the value
+// ConfigHub evaluated for it.
+func TestRecordViewShapesOnARealServer(t *testing.T) {
+	if os.Getenv(disposableConfigHubEnv) != "1" {
+		t.Skipf("writes a space, Units, a Filter and a View; set %s=1 only for a disposable ConfigHub server", disposableConfigHubEnv)
+	}
+	skipIfNotConnected(t)
+	contextOut, err := exec.Command("cub", "context", "get").CombinedOutput()
+	if err != nil {
+		t.Fatalf("cub context get: %v: %s", err, contextOut)
+	}
+	if strings.Contains(strings.ToLower(string(contextOut)), "confighub.com") {
+		t.Fatalf("refusing to run: the cub context names a hosted ConfigHub server, not a disposable one")
+	}
+	out := os.Getenv(sdkParityOutEnv)
+	if out == "" {
+		out = t.TempDir()
+	}
+	out = filepath.Join(out, "views")
+	if err := os.MkdirAll(out, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	// record runs a command and keeps its standard output, or what went
+	// wrong, under name. It returns the output and whether the command
+	// succeeded.
+	record := func(name, binary string, args ...string) ([]byte, bool) {
+		t.Helper()
+		cmd := exec.Command(binary, args...)
+		var stderr bytes.Buffer
+		cmd.Stderr = &stderr
+		stdout, err := cmd.Output()
+		kept := stdout
+		if err != nil {
+			kept = []byte(fmt.Sprintf("command: %s %s\nerror: %v\nstderr:\n%s\nstdout:\n%s", filepath.Base(binary), strings.Join(args, " "), err, stderr.String(), stdout))
+			name += ".failed.txt"
+		}
+		if writeErr := os.WriteFile(filepath.Join(out, name), kept, 0o600); writeErr != nil {
+			t.Fatal(writeErr)
+		}
+		t.Logf("%s: %d bytes, ok=%v", name, len(kept), err == nil)
+		return stdout, err == nil
+	}
+
+	space := fmt.Sprintf("scout-view-shapes-%d", time.Now().UnixNano())
+	if _, err := cubStdoutOnly("space", "create", space); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { deleteTestSpace(t, space) })
+	// The third Unit does not match the View's filter.
+	for _, name := range []string{"shape-one", "shape-two", "other-three"} {
+		path := filepath.Join(t.TempDir(), name+".yaml")
+		body := "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: " + name + "\n  namespace: default\ndata:\n  key: value\n"
+		if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := cubStdoutOnly("unit", "create", "--space", space, "--label", "tier=recorded", name, path); err != nil {
+			t.Logf("a labelled Unit could not be created (%v); creating it without the label", err)
+			if _, err := cubStdoutOnly("unit", "create", "--space", space, name, path); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+
+	record("filter-create.json", "cub", "filter", "create", "--space", space, "-o", "json", "shape-filter", "Unit", "--where-field", "Slug LIKE 'shape-%'")
+	record("filter-get.json", "cub", "filter", "get", "shape-filter", "--space", space, "-o", "json")
+	created, createdOK := record("view-create.json", "cub", "view", "create", "--space", space, "-o", "json", "shape-view", "shape-filter",
+		"--column", "Unit.Slug", "--column", "Unit.DisplayName", "--column", "Unit.HeadRevisionNum", "--column", "Space.Slug", "--column", "Labels.tier")
+	got, gotOK := record("view-get.json", "cub", "view", "get", "shape-view", "--space", space, "-o", "json")
+	if !createdOK || !gotOK {
+		t.Fatalf("the View could not be created and read back (created %v, read %v); nothing after this would be checked", createdOK, gotOK)
+	}
+
+	// Recorded, not asserted: how ConfigHub returns a column that has no
+	// value for a Unit. No Unit here has the label this column names.
+	if _, ok := record("view-absent-create.json", "cub", "view", "create", "--space", space, "-o", "json", "shape-view-absent", "shape-filter",
+		"--column", "Unit.Slug", "--column", "Labels.absent"); ok {
+		record("unit-list-with-view-absent-label.json", "cub", "unit", "list", "--space", space, "-o", "json", "--view", "shape-view-absent")
+	}
+	record("view-list.json", "cub", "view", "list", "--space", space, "-o", "json")
+	record("unit-list-labelled.json", "cub", "unit", "list", "--space", space, "-o", "json")
+	record("unit-list-with-view.json", "cub", "unit", "list", "--space", space, "-o", "json", "--view", "shape-view")
+	record("unit-list-with-filter.json", "cub", "unit", "list", "--space", space, "-o", "json", "--filter", "shape-filter")
+	record("unit-list-with-view-and-where.json", "cub", "unit", "list", "--space", space, "-o", "json", "--view", "shape-view", "--where", "Slug LIKE 'shape-%'")
+
+	var decoded interface{}
+	viewID := ""
+	for _, candidate := range [][]byte{got, created} {
+		if json.Unmarshal(candidate, &decoded) == nil {
+			if viewID = findString(decoded, "ViewID"); viewID != "" {
+				break
+			}
+		}
+	}
+	if viewID == "" {
+		t.Fatalf("no ViewID in what cub printed for the View; cub-scout's view commands cannot be checked")
+	}
+	record("unit-list-with-view-every-space.json", "cub", "unit", "list", "--space", "*", "-o", "json", "--view", viewID, "--where", "Slug LIKE 'shape-%'")
+
+	// What ConfigHub evaluated for each Unit the filter matches: the answer
+	// `views project` is held to.
+	listed, ok := record("unit-list-with-view-by-id.json", "cub", "unit", "list", "--space", space, "-o", "json", "--view", viewID, "--where", "Slug LIKE 'shape-%'")
+	if !ok {
+		t.Fatalf("cub could not list the Units with the View and its filter together; that is the request views project makes")
+	}
+	var entries []struct {
+		Unit        struct{ Slug string }
+		ViewColumns []struct{ Name, Value string }
+	}
+	if err := json.Unmarshal(listed, &entries); err != nil {
+		t.Fatalf("parse cub's list with the View: %v", err)
+	}
+	wantColumns := []string{"Unit.Slug", "Unit.DisplayName", "Unit.HeadRevisionNum", "Space.Slug", "Labels.tier"}
+	wantRows := map[string]map[string]string{}
+	for _, entry := range entries {
+		cells := map[string]string{}
+		for _, column := range entry.ViewColumns {
+			cells[column.Name] = column.Value
+		}
+		wantRows[entry.Unit.Slug] = cells
+		if len(cells) != len(wantColumns) || cells["Unit.Slug"] != entry.Unit.Slug || cells["Labels.tier"] != "recorded" {
+			t.Errorf("ConfigHub's own column values for %s are not what the View asks for: %v", entry.Unit.Slug, cells)
+		}
+	}
+	if len(wantRows) != 2 || wantRows["shape-one"] == nil || wantRows["shape-two"] == nil {
+		t.Fatalf("cub listed %d Units for the View's filter, want shape-one and shape-two", len(wantRows))
+	}
+
+	binary := getCubAgentPath()
+	for name, args := range map[string][]string{
+		"scout-views-project":                     {"views", "project", viewID, "--space", space, "--format", "json"},
+		"scout-views-project-every-space-checked": {"views", "project", viewID, "--format", "json"},
+	} {
+		printed, ok := record(name+".checked.json", binary, args...)
+		if !ok {
+			t.Errorf("%s: cub-scout %s failed", name, strings.Join(args, " "))
+			continue
+		}
+		var projected struct {
+			Columns   []struct{ Name string }
+			Rows      []map[string]string
+			Omissions []map[string]interface{}
+		}
+		if err := json.Unmarshal(printed, &projected); err != nil {
+			t.Errorf("%s: %v", name, err)
+			continue
+		}
+		gotColumns := []string{}
+		for _, column := range projected.Columns {
+			gotColumns = append(gotColumns, column.Name)
+		}
+		if strings.Join(gotColumns, ",") != strings.Join(wantColumns, ",") {
+			t.Errorf("%s: columns %v, want the View's own %v", name, gotColumns, wantColumns)
+		}
+		if len(projected.Omissions) != 0 {
+			t.Errorf("%s: omissions %v, want none: ConfigHub evaluated every column", name, projected.Omissions)
+		}
+		if len(projected.Rows) != len(wantRows) {
+			t.Errorf("%s: %d rows, want %d (the Unit the filter does not match is not one of them)", name, len(projected.Rows), len(wantRows))
+		}
+		for _, row := range projected.Rows {
+			want := wantRows[row["Unit.Slug"]]
+			if want == nil {
+				t.Errorf("%s: a row for %q, which ConfigHub did not list", name, row["Unit.Slug"])
+				continue
+			}
+			for _, column := range wantColumns {
+				if row[column] != want[column] {
+					t.Errorf("%s: %s of %s is %q, ConfigHub evaluated %q", name, column, row["Unit.Slug"], row[column], want[column])
+				}
+			}
+		}
+	}
+
+	for name, args := range map[string][]string{
+		"scout-views-resolve.json":              {"views", "resolve", viewID, "--space", space, "--format", "json"},
+		"scout-views-resolve-every-space.json":  {"views", "resolve", viewID, "--format", "json"},
+		"scout-views-project.json":              {"views", "project", viewID, "--space", space, "--format", "json"},
+		"scout-views-project.txt":               {"views", "project", viewID, "--space", space},
+		"scout-views-project-every-space.json":  {"views", "project", viewID, "--format", "json"},
+		"scout-views-project-with-reality.json": {"views", "project", viewID, "--space", space, "--format", "json", "--with-reality"},
+	} {
+		record(name, binary, args...)
+	}
+}

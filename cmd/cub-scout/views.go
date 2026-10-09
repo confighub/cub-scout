@@ -34,6 +34,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -201,26 +202,113 @@ func listUnitSlugsForFilter(ctx context.Context, whereClause, space string) ([]s
 		}
 		return nil, fmt.Errorf("cub unit list: %w", err)
 	}
-	var units []struct {
-		Slug string `json:"slug"`
-	}
+	var units []map[string]interface{}
 	if err := json.Unmarshal(out, &units); err != nil {
 		return nil, fmt.Errorf("parse unit list: %w", err)
 	}
 	slugs := make([]string, 0, len(units))
 	for _, u := range units {
-		if u.Slug != "" {
-			slugs = append(slugs, u.Slug)
+		if slug := viewUnitString(u, "Slug"); slug != "" {
+			slugs = append(slugs, slug)
 		}
 	}
 	return slugs, nil
 }
 
-// listUnitsForFilter is the projection-shaped sibling of
-// listUnitSlugsForFilter: it returns each matching unit's full
-// metadata blob (as `cub unit list -o json` emits it), so View column
-// evaluators can read attribute fields directly. Used by `views
-// project`. Same testability seam.
+// listUnitsForView lists the Units a View's filter matches, with the View's
+// columns evaluated by ConfigHub: given --view, `cub unit list -o json` adds
+// to each entry a "ViewColumns" list of {Name, Value}, one per column of the
+// View. That is recorded for columns that are bare names; a column with an
+// expression or a data path was not tried on a real server. The View's Where
+// is sent as well, as every release has sent it, so the Units are at most
+// those the Where matches; --view may narrow them further by the rest of the
+// View's filter.
+func listUnitsForView(ctx context.Context, viewUUID, whereClause, space string) ([]map[string]interface{}, error) {
+	out, err := viewCubRunner(ctx, "unit", "list", "--space", space, "--where", whereClause, "--view", viewUUID, "-o", "json")
+	if err != nil {
+		return nil, fmt.Errorf("cub unit list: %w", err)
+	}
+	var units []map[string]interface{}
+	if err := json.Unmarshal(out, &units); err != nil {
+		return nil, fmt.Errorf("parse unit list: %w", err)
+	}
+	return units, nil
+}
+
+// viewColumnValues reads what ConfigHub evaluated for one entry: the value of
+// each of the View's columns, by column name. evaluated is false when the
+// entry carries no "ViewColumns" at all. A column whose value is empty is
+// present with an empty value: the server omits an empty Value, not the
+// column.
+func viewColumnValues(entry map[string]interface{}) (values map[string]string, evaluated bool) {
+	list, ok := entry["ViewColumns"].([]interface{})
+	if !ok {
+		return nil, false
+	}
+	values = make(map[string]string, len(list))
+	for _, item := range list {
+		column, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		name, _ := column["Name"].(string)
+		if name == "" {
+			continue
+		}
+		values[name] = ""
+		if value, present := column["Value"]; present {
+			values[name] = formatCellValue(value)
+		}
+	}
+	return values, true
+}
+
+// viewUnitField reads one field of a Unit from an entry of `cub unit list -o
+// json`.
+//
+// cub prints each entry as an envelope, `{"Space": {...}, "Unit": {"Slug":
+// ...}}`, with the Unit's own fields one level down and in PascalCase (#852;
+// recorded in test/fixtures/confighub-sdk-parity-v083-recorded/unit-list.json).
+// A View names a field as its author wrote it, so the name is matched exactly
+// first and then without regard to case, in a fixed order. An entry with no
+// "Unit" object is read as the Unit itself.
+func viewUnitField(entry map[string]interface{}, name string) (interface{}, bool) {
+	fields := entry
+	if inner, enveloped := entry["Unit"]; enveloped {
+		unit, ok := inner.(map[string]interface{})
+		if !ok {
+			// An envelope whose Unit is not an object has no Unit fields.
+			// The envelope's own keys are not read in their place.
+			return nil, false
+		}
+		fields = unit
+	}
+	if value, ok := fields[name]; ok {
+		return value, true
+	}
+	keys := make([]string, 0, len(fields))
+	for key := range fields {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		if strings.EqualFold(key, name) {
+			return fields[key], true
+		}
+	}
+	return nil, false
+}
+
+// viewUnitString is viewUnitField for a field that is a string.
+func viewUnitString(entry map[string]interface{}, name string) string {
+	value, _ := viewUnitField(entry, name)
+	text, _ := value.(string)
+	return strings.TrimSpace(text)
+}
+
+// listUnitsForFilter is the sibling of listUnitSlugsForFilter that returns
+// each matching entry whole, as `cub unit list -o json` prints it. Used by
+// the three-way comparison of a View's Units. Same testability seam.
 func listUnitsForFilter(ctx context.Context, whereClause, space string) ([]map[string]interface{}, error) {
 	out, err := viewCubRunner(ctx, "unit", "list", "--space", space, "--where", whereClause, "-o", "json")
 	if err != nil {
@@ -237,13 +325,22 @@ func listUnitsForFilter(ctx context.Context, whereClause, space string) ([]map[s
 }
 
 // extractColumnsSpec reads the View's Columns array out of the raw
-// `cub view get` JSON. Each Column has a Name + a ColumnSource
-// describing how to evaluate (MetadataAttribute / MetadataExpression /
-// DataPath / DataExpression). Returns nil + nil error when the View
-// has no columns — `views project` falls back to a default set in
-// that case.
+// `cub view get` JSON. cub prints an envelope, `{"Filter": ..., "Space": ...,
+// "View": {"Columns": [...]}}`, so the columns are under "View" (#852;
+// recorded in test/fixtures/confighub-views-v083-recorded/view-get.json). A
+// View object given on its own, with "Columns" at the top, is read too.
+//
+// Each Column has a Name and may have a ColumnSource saying where its value
+// comes from (MetadataAttribute / MetadataExpression / DataPath /
+// DataExpression). A column made with `cub view create --column Unit.Slug`
+// has only the Name. Returns nil + nil error when the View has no columns —
+// `views project` falls back to a default set in that case.
 func extractColumnsSpec(view map[string]interface{}) ([]ViewColumnSpec, error) {
-	cols, ok := view["Columns"]
+	source := view
+	if inner, ok := view["View"].(map[string]interface{}); ok {
+		source = inner
+	}
+	cols, ok := source["Columns"]
 	if !ok {
 		return nil, nil
 	}
@@ -319,24 +416,14 @@ func (c ViewColumnSpec) evalKind() string {
 // the rendered string and a bool indicating whether the evaluator was
 // supported (false → placeholder was emitted).
 //
-// MetadataAttribute lookup is case-tolerant on the leading character
-// because ConfigHub serialises some fields PascalCase ("Slug") and
-// others camelCase ("slug"); `cub unit list -o json` emits the latter
-// style for the keys we care about, but we accept both so authoring-
-// side specs round-trip cleanly.
+// MetadataAttribute names a field of the Unit. It is read from the entry's
+// Unit object, matched exactly and then without regard to case; see
+// viewUnitField.
 func (c ViewColumnSpec) evalCell(unit map[string]interface{}) (string, bool) {
 	switch c.evalKind() {
 	case "metadata_attribute":
-		key := c.MetadataAttribute
-		if v, ok := unit[key]; ok {
+		if v, ok := viewUnitField(unit, c.MetadataAttribute); ok {
 			return formatCellValue(v), true
-		}
-		// Try lowercase first letter (Slug → slug etc.).
-		if len(key) > 0 {
-			lc := strings.ToLower(key[:1]) + key[1:]
-			if v, ok := unit[lc]; ok {
-				return formatCellValue(v), true
-			}
 		}
 		return "", true // attribute not present on this unit; empty cell, still a supported eval
 	case "metadata_expression":
@@ -551,6 +638,20 @@ type ProjectedView struct {
 	Space   string           `json:"space"`
 	Columns []ViewColumnSpec `json:"columns"`
 	Rows    []projectionRow  `json:"rows"`
+	// Omissions names each column for which some rows have no value: an
+	// empty cell there means "not known", not "empty".
+	Omissions []projectionOmission `json:"omissions,omitempty"`
+}
+
+// projectionOmission is one column whose value could not be had for some
+// Units. Reason is "not_returned" when ConfigHub evaluated the View's columns
+// for the Unit and this one was not among them, and "not_evaluated" when
+// ConfigHub returned no column values for the Unit and cub-scout cannot work
+// the column out itself (an expression, a data path, or a bare name).
+type projectionOmission struct {
+	Column string `json:"column"`
+	Reason string `json:"reason"`
+	Units  int    `json:"units"`
 }
 
 // buildProjectedView is the pure (no-stdout, no-connected-mode-gate)
@@ -581,7 +682,7 @@ func buildProjectedView(ctx context.Context, ref *agent.ViewRef, space string, w
 		columns = []ViewColumnSpec{{Name: "Slug", MetadataAttribute: "slug"}}
 	}
 
-	units, err := listUnitsForFilter(ctx, whereClause, space)
+	units, err := listUnitsForView(ctx, ref.UUID, whereClause, space)
 	if err != nil {
 		return ProjectedView{}, fmt.Errorf("list units for view filter: %w", err)
 	}
@@ -590,28 +691,63 @@ func buildProjectedView(ctx context.Context, ref *agent.ViewRef, space string, w
 	// slug→workload index of the live cluster and append synthetic columns
 	// (Applied?, LiveStatus) the web View Explorer cannot show. The View
 	// supplies the schema; cub-scout joins in cluster truth.
+	// viewColumns are the View's own; the reality columns are cub-scout's.
+	// A View may name a column anything, including "LiveStatus": without
+	// --with-reality that column is the View's and is shown like any other,
+	// and with it the two would collide in one row, so that is refused.
+	viewColumns := columns
 	var workloadIndex map[string]WorkloadInfo
 	if withReality {
+		for _, col := range viewColumns {
+			if isRealityColumn(col.Name) {
+				return ProjectedView{}, fmt.Errorf("view %s has its own column named %q, which --with-reality would overwrite; run without --with-reality", ref.UUID, col.Name)
+			}
+		}
 		idx, err := buildWorkloadIndexFn()
 		if err != nil {
 			return ProjectedView{}, fmt.Errorf("build workload index for reality overlay: %w", err)
 		}
 		workloadIndex = idx
-		columns = append(columns, realityColumns()...)
+		columns = append(append([]ViewColumnSpec{}, viewColumns...), realityColumns()...)
 	}
 
 	rows := make([]projectionRow, 0, len(units))
+	missing := map[string]*projectionOmission{}
+	omit := func(column, reason string) {
+		if missing[column] == nil {
+			missing[column] = &projectionOmission{Column: column, Reason: reason}
+		}
+		missing[column].Units++
+	}
 	for _, u := range units {
 		row := make(projectionRow, len(columns))
-		for _, col := range columns {
-			if isRealityColumn(col.Name) {
-				continue // synthetic — filled below if reality is enabled
+		// ConfigHub evaluates a View's columns. Its value is the cell.
+		// Where it gave none, a column that names a field of the Unit
+		// directly is read from the Unit; anything else is an omission,
+		// not an empty cell that reads as a value.
+		evaluatedByServer, evaluated := viewColumnValues(u)
+		for _, col := range viewColumns {
+			// A row is keyed by column name, so a name used twice is one
+			// cell, and is counted once.
+			if _, done := row[col.Name]; done {
+				continue
 			}
-			cell, _ := col.evalCell(u)
+			if cell, ok := evaluatedByServer[col.Name]; ok {
+				row[col.Name] = cell
+				continue
+			}
+			cell, supported := col.evalCell(u)
 			row[col.Name] = cell
+			switch {
+			case supported:
+			case evaluated:
+				omit(col.Name, "not_returned")
+			default:
+				omit(col.Name, "not_evaluated")
+			}
 		}
 		if workloadIndex != nil {
-			slug := readStringField(u, "slug")
+			slug := viewUnitString(u, "Slug")
 			applied, status := computeRealityCells(slug, workloadIndex)
 			row["Applied?"] = applied
 			row["LiveStatus"] = status
@@ -619,12 +755,19 @@ func buildProjectedView(ctx context.Context, ref *agent.ViewRef, space string, w
 		rows = append(rows, row)
 	}
 
-	return ProjectedView{
+	projected := ProjectedView{
 		UUID:    ref.UUID,
 		Space:   space,
 		Columns: columns,
 		Rows:    rows,
-	}, nil
+	}
+	for _, col := range viewColumns {
+		if omission := missing[col.Name]; omission != nil {
+			projected.Omissions = append(projected.Omissions, *omission)
+			delete(missing, col.Name)
+		}
+	}
+	return projected, nil
 }
 
 func runViewsProject(cmd *cobra.Command, args []string) error {
@@ -713,6 +856,17 @@ func renderProjectionTable(w io.Writer, pv ProjectedView) error {
 			fmt.Fprintf(w, "%-*s", widths[i], truncateCell(row[c.Name], widths[i]))
 		}
 		fmt.Fprintln(w)
+	}
+	// An empty cell in one of these columns is "not known", not "empty".
+	for i, omission := range pv.Omissions {
+		if i == 0 {
+			fmt.Fprintln(w)
+		}
+		why := "ConfigHub returned no value for it"
+		if omission.Reason == "not_evaluated" {
+			why = "ConfigHub evaluated no columns, and cub-scout cannot evaluate this one"
+		}
+		fmt.Fprintf(w, "column %q has no value for %d unit(s): %s\n", omission.Column, omission.Units, why)
 	}
 	if len(pv.Rows) == 0 {
 		fmt.Fprintln(w, "(no matching units)")

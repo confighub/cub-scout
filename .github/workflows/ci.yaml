@@ -575,8 +575,8 @@ jobs:
           SCOUT_DISPOSABLE_CONFIGHUB: "1"
           SCOUT_SDK_PARITY_OUT: ${{ runner.temp }}/scout-connected/sdk-parity
         run: |
-          go test -tags=integration ./test/integration/... -run '^TestSDKReaderMatchesCubOnARealServer$' -count=1 -json -timeout 300s > "$RUNNER_TEMP/scout-connected/sdk-parity.json"
-          python3 scripts/ci/require_test_passes.py "$RUNNER_TEMP/scout-connected/sdk-parity.json" TestSDKReaderMatchesCubOnARealServer
+          go test -tags=integration ./test/integration/... -run '^(TestSDKReaderMatchesCubOnARealServer|TestRecordViewShapesOnARealServer)$' -count=1 -json -timeout 300s > "$RUNNER_TEMP/scout-connected/sdk-parity.json"
+          python3 scripts/ci/require_test_passes.py "$RUNNER_TEMP/scout-connected/sdk-parity.json" TestSDKReaderMatchesCubOnARealServer TestRecordViewShapesOnARealServer
 
       - name: Retain connected test outcomes and versions
         if: always()
