@@ -56,37 +56,76 @@ var sdkReader = func(ctx context.Context) (*hubread.Reader, error) {
 	return hubread.Resolve(ctx, hubread.Options{UserAgent: "cub-scout"})
 }
 
-// sdkReadFlags reads what follows the two command words of a read: `-o json`,
-// which is required, `--quiet`, at most one `--space <value>`, and
-// positionals. ok is false for anything else, so that a flag this file does
-// not know leaves the command to cub.
-func sdkReadFlags(rest []string) (positionals []string, space string, hasSpace, ok bool) {
+// sdkReadArgs is what follows the two command words of a read this file knows
+// how to take: `-o json`, which is required, `--quiet`, at most one `--space`,
+// positionals, and, for a list, at most one `--where` and one `--contains`.
+type sdkReadArgs struct {
+	positionals []string
+	space       string
+	hasSpace    bool
+	where       string
+	hasWhere    bool
+	contains    string
+	hasContains bool
+}
+
+// filtered reports whether a list filter was given.
+func (a sdkReadArgs) filtered() bool { return a.hasWhere || a.hasContains }
+
+// sdkReadFlags parses rest. ok is false for anything it does not know, so that
+// such a flag leaves the command to cub.
+func sdkReadFlags(rest []string) (parsed sdkReadArgs, ok bool) {
 	jsonOutput := false
+	// value returns the argument after a flag, which cub takes as its value
+	// whatever it looks like.
+	value := func(i int, seen bool) (string, bool) {
+		if i+1 >= len(rest) || seen {
+			return "", false
+		}
+		return rest[i+1], true
+	}
 	for i := 0; i < len(rest); i++ {
 		switch arg := rest[i]; {
 		case arg == "-o" || arg == "--output":
 			if i+1 >= len(rest) || rest[i+1] != "json" {
-				return nil, "", false, false
+				return sdkReadArgs{}, false
 			}
 			jsonOutput = true
 			i++
 		case arg == "--space":
-			// cub takes the next argument as the value even when it looks
-			// like a flag. That is more likely a mistake than a space.
-			if i+1 >= len(rest) || hasSpace || strings.HasPrefix(rest[i+1], "-") {
-				return nil, "", false, false
+			// A value that looks like a flag is more likely a mistake
+			// than a space.
+			space, found := value(i, parsed.hasSpace)
+			if !found || strings.HasPrefix(space, "-") {
+				return sdkReadArgs{}, false
 			}
-			space, hasSpace = strings.TrimSpace(rest[i+1]), true
+			parsed.space, parsed.hasSpace = strings.TrimSpace(space), true
+			i++
+		case arg == "--where":
+			// An empty filter is no filter to cub; that spelling is
+			// left to cub rather than given a meaning here.
+			where, found := value(i, parsed.hasWhere)
+			if !found || strings.TrimSpace(where) == "" {
+				return sdkReadArgs{}, false
+			}
+			parsed.where, parsed.hasWhere = where, true
+			i++
+		case arg == "--contains":
+			contains, found := value(i, parsed.hasContains)
+			if !found || contains == "" {
+				return sdkReadArgs{}, false
+			}
+			parsed.contains, parsed.hasContains = contains, true
 			i++
 		case arg == "--quiet":
 			// With -o json, cub prints the payload alone either way.
 		case strings.HasPrefix(arg, "-"):
-			return nil, "", false, false
+			return sdkReadArgs{}, false
 		default:
-			positionals = append(positionals, arg)
+			parsed.positionals = append(parsed.positionals, arg)
 		}
 	}
-	return positionals, space, hasSpace, jsonOutput
+	return parsed, jsonOutput
 }
 
 // sdkTakesSpace reports whether space names one space in a way the reader
@@ -110,11 +149,12 @@ func sdkUnitGetArgs(args []string) (space, unit string, ok bool) {
 	if len(args) < 3 || args[0] != "unit" || args[1] != "get" {
 		return "", "", false
 	}
-	positionals, flagSpace, hasFlagSpace, ok := sdkReadFlags(args[2:])
-	if !ok || len(positionals) != 1 {
+	parsed, ok := sdkReadFlags(args[2:])
+	if !ok || len(parsed.positionals) != 1 || parsed.filtered() {
 		return "", "", false
 	}
-	ref := strings.TrimSpace(positionals[0])
+	flagSpace, hasFlagSpace := parsed.space, parsed.hasSpace
+	ref := strings.TrimSpace(parsed.positionals[0])
 	refSpace, refUnit, qualified := strings.Cut(ref, "/")
 	switch {
 	case qualified && hasFlagSpace:
@@ -137,18 +177,20 @@ func sdkUnitGetArgs(args []string) (space, unit string, ok bool) {
 	return space, unit, true
 }
 
-// sdkUnitListArgs recognises `cub unit list -o json [--quiet] --space <space>`
-// for one named space, and nothing else: a filter, a selection, a limit or an
-// ordering changes what cub asks the server, and stays with cub.
-func sdkUnitListArgs(args []string) (space string, ok bool) {
+// sdkUnitListArgs recognises `cub unit list -o json [--quiet] --space <space>
+// [--where <expression>] [--contains <text>]` for one named space, and nothing
+// else: a selection, a limit, an ordering, a stored filter or a view changes
+// what cub asks the server in ways this file does not reproduce, and stays
+// with cub.
+func sdkUnitListArgs(args []string) (space string, filter hubread.UnitFilter, ok bool) {
 	if len(args) < 2 || args[0] != "unit" || args[1] != "list" {
-		return "", false
+		return "", hubread.UnitFilter{}, false
 	}
-	positionals, space, hasSpace, ok := sdkReadFlags(args[2:])
-	if !ok || len(positionals) != 0 || !hasSpace || !sdkTakesSpace(space) {
-		return "", false
+	parsed, ok := sdkReadFlags(args[2:])
+	if !ok || len(parsed.positionals) != 0 || !parsed.hasSpace || !sdkTakesSpace(parsed.space) {
+		return "", hubread.UnitFilter{}, false
 	}
-	return space, true
+	return parsed.space, hubread.UnitFilter{Where: parsed.where, Contains: parsed.contains}, true
 }
 
 // sdkSpaceListArgs recognises `cub space list -o json [--quiet]` and nothing
@@ -157,8 +199,8 @@ func sdkSpaceListArgs(args []string) bool {
 	if len(args) < 2 || args[0] != "space" || args[1] != "list" {
 		return false
 	}
-	positionals, _, hasSpace, ok := sdkReadFlags(args[2:])
-	return ok && len(positionals) == 0 && !hasSpace
+	parsed, ok := sdkReadFlags(args[2:])
+	return ok && len(parsed.positionals) == 0 && !parsed.hasSpace && !parsed.filtered()
 }
 
 // sdkRead returns the read the SDK route makes for args, or nil when the
@@ -169,9 +211,9 @@ func sdkRead(args []string) func(context.Context, *hubread.Reader) ([]byte, erro
 			return reader.UnitJSON(ctx, space, unit)
 		}
 	}
-	if space, ok := sdkUnitListArgs(args); ok {
+	if space, filter, ok := sdkUnitListArgs(args); ok {
 		return func(ctx context.Context, reader *hubread.Reader) ([]byte, error) {
-			return reader.UnitListJSON(ctx, space)
+			return reader.UnitListJSON(ctx, space, filter)
 		}
 	}
 	if sdkSpaceListArgs(args) {

@@ -321,7 +321,6 @@ func TestEveryUnitGetCallSiteIsOneTheSDKRouteTakes(t *testing.T) {
 // neither taken nor explained fails.
 func TestEveryListCallSiteIsTakenOrExplained(t *testing.T) {
 	leftToCub := map[string]string{
-		`"--where", whereClause`:                        "a filter changes what cub asks the server",
 		`"--select", "Slug,SpaceID,Annotations,Labels"`: "a selection changes what the server returns",
 		`[]string{"unit", "list"}, space)`:              "prints cub's table to the user, through cubCommand",
 		`cubArgs := []string{"space", "list"}`:          "streams cub's own output to the user, through cubCommand",
@@ -347,7 +346,7 @@ func TestEveryListCallSiteIsTakenOrExplained(t *testing.T) {
 	for fragment := range leftToCub {
 		require.True(t, used[fragment], "no call site matches %q any more; remove it", fragment)
 	}
-	require.GreaterOrEqual(t, taken["unit list"], 7)
+	require.GreaterOrEqual(t, taken["unit list"], 9)
 	require.GreaterOrEqual(t, taken["space list"], 5)
 
 	// The MCP tool appends a filter when it is given one.
@@ -355,14 +354,16 @@ func TestEveryListCallSiteIsTakenOrExplained(t *testing.T) {
 	require.True(t, ok)
 	args, err := tool.BuildArgs(map[string]interface{}{"space": "space"})
 	require.NoError(t, err)
-	space, ok := sdkUnitListArgs(args)
+	space, filter, ok := sdkUnitListArgs(args)
 	require.True(t, ok, "cub %s", strings.Join(args, " "))
 	require.Equal(t, "space", space)
-	for _, filter := range []string{"where", "contains"} {
-		args, err = tool.BuildArgs(map[string]interface{}{"space": "space", filter: "x"})
-		require.NoError(t, err)
-		require.Nil(t, sdkRead(args), "cub %s", strings.Join(args, " "))
-	}
+	require.Equal(t, hubread.UnitFilter{}, filter)
+	args, err = tool.BuildArgs(map[string]interface{}{"space": "space", "where": "Slug LIKE 'a-%'", "contains": "backend"})
+	require.NoError(t, err)
+	space, filter, ok = sdkUnitListArgs(args)
+	require.True(t, ok, "cub %s", strings.Join(args, " "))
+	require.Equal(t, "space", space)
+	require.Equal(t, hubread.UnitFilter{Where: "Slug LIKE 'a-%'", Contains: "backend"}, filter)
 }
 
 func TestSDKListArgsTakeOnlyTheCommandsTheyReproduce(t *testing.T) {
@@ -375,9 +376,10 @@ func TestSDKListArgsTakeOnlyTheCommandsTheyReproduce(t *testing.T) {
 		"placeholder space (cub's own refusal applies later)": {"unit", "list", "-o", "json", "--space", unresolvedConfigHubSpace},
 	} {
 		t.Run("unit list taken/"+name, func(t *testing.T) {
-			space, ok := sdkUnitListArgs(args)
+			space, filter, ok := sdkUnitListArgs(args)
 			require.True(t, ok)
 			require.Equal(t, spaceNamedIn(args), space)
+			require.Equal(t, hubread.UnitFilter{}, filter)
 			require.False(t, sdkSpaceListArgs(args))
 			_, _, isGet := sdkUnitGetArgs(args)
 			require.False(t, isGet)
@@ -386,9 +388,18 @@ func TestSDKListArgsTakeOnlyTheCommandsTheyReproduce(t *testing.T) {
 	for name, args := range map[string][]string{
 		"no space":                {"unit", "list", "-o", "json"},
 		"every space":             {"unit", "list", "-o", "json", "--space", allConfigHubSpaces},
-		"a filter":                {"unit", "list", "-o", "json", "--space", "s", "--where", "Slug = 'x'"},
-		"a text search":           {"unit", "list", "-o", "json", "--space", "s", "--contains", "x"},
 		"a selection":             {"unit", "list", "-o", "json", "--space", "s", "--select", "Slug"},
+		"a stored filter":         {"unit", "list", "-o", "json", "--space", "s", "--filter", "f"},
+		"a filter on data":        {"unit", "list", "-o", "json", "--space", "s", "--where-data", "x = 1"},
+		"an empty filter":         {"unit", "list", "-o", "json", "--space", "s", "--where", " "},
+		"a filter with no value":  {"unit", "list", "-o", "json", "--space", "s", "--where"},
+		"two filters":             {"unit", "list", "-o", "json", "--space", "s", "--where", "A = '1'", "--where", "B = '2'"},
+		"a filter spelt with =":   {"unit", "list", "-o", "json", "--space", "s", "--where=Slug = 'x'"},
+		"a search spelt with =":   {"unit", "list", "-o", "json", "--space", "s", "--contains=x"},
+		"an empty search":         {"unit", "list", "-o", "json", "--space", "s", "--contains", ""},
+		"two searches":            {"unit", "list", "-o", "json", "--space", "s", "--contains", "a", "--contains", "b"},
+		"a filter and no space":   {"unit", "list", "-o", "json", "--where", "Slug = 'x'"},
+		"a filter, every space":   {"unit", "list", "-o", "json", "--space", allConfigHubSpaces, "--where", "Slug = 'x'"},
 		"a limit":                 {"unit", "list", "-o", "json", "--space", "s", "--limit", "5"},
 		"an ordering":             {"unit", "list", "-o", "json", "--space", "s", "--order-by", "Slug"},
 		"hidden units too":        {"unit", "list", "-o", "json", "--space", "s", "--include-hidden"},
@@ -407,10 +418,32 @@ func TestSDKListArgsTakeOnlyTheCommandsTheyReproduce(t *testing.T) {
 		"too short":               {"unit"},
 	} {
 		t.Run("unit list left to cub/"+name, func(t *testing.T) {
-			_, ok := sdkUnitListArgs(args)
+			_, _, ok := sdkUnitListArgs(args)
 			require.False(t, ok)
 		})
 	}
+
+	for name, tc := range map[string]struct {
+		args []string
+		want hubread.UnitFilter
+	}{
+		"a filter":             {[]string{"unit", "list", "-o", "json", "--space", "s", "--where", "Slug = 'x'"}, hubread.UnitFilter{Where: "Slug = 'x'"}},
+		"a filter first":       {[]string{"unit", "list", "--where", "Slug LIKE 'a-%'", "--space", "s", "-o", "json"}, hubread.UnitFilter{Where: "Slug LIKE 'a-%'"}},
+		"a text search":        {[]string{"unit", "list", "-o", "json", "--space", "s", "--contains", "backend"}, hubread.UnitFilter{Contains: "backend"}},
+		"both":                 {[]string{"unit", "list", "-o", "json", "--quiet", "--space", "s", "--where", "Slug != 'x'", "--contains", "b"}, hubread.UnitFilter{Where: "Slug != 'x'", Contains: "b"}},
+		"a search like a flag": {[]string{"unit", "list", "-o", "json", "--space", "s", "--contains", "--quiet"}, hubread.UnitFilter{Contains: "--quiet"}},
+		"a filter like a flag": {[]string{"unit", "list", "-o", "json", "--space", "s", "--where", "-o"}, hubread.UnitFilter{Where: "-o"}},
+	} {
+		t.Run("filtered unit list taken/"+name, func(t *testing.T) {
+			space, filter, ok := sdkUnitListArgs(tc.args)
+			require.True(t, ok)
+			require.Equal(t, "s", space)
+			require.Equal(t, tc.want, filter)
+		})
+	}
+	// A filter belongs to a list: with one, the other two reads stay with cub.
+	require.Nil(t, sdkRead([]string{"unit", "get", "u", "-o", "json", "--space", "s", "--where", "Slug = 'u'"}))
+	require.Nil(t, sdkRead([]string{"space", "list", "-o", "json", "--contains", "x"}))
 
 	for name, args := range map[string][]string{
 		"plain":            {"space", "list", "-o", "json"},
@@ -489,7 +522,7 @@ func TestCubStdoutLeavesOtherCommandsToCubUnderTheSDKRoute(t *testing.T) {
 		{"unit", "data", recordedUnit, "--space", recordedSpace},
 		{"unit", "get", recordedUnitID, "-o", "json", "--space", recordedSpace},
 		{"unit", "get", recordedUnit, "-o", "yaml", "--space", recordedSpace},
-		{"unit", "list", "-o", "json", "--space", recordedSpace, "--where", "Slug = 'x'"},
+		{"unit", "list", "-o", "json", "--space", recordedSpace, "--select", "Slug"},
 		{"space", "list", "-o", "json", "--select", "Slug,SpaceID"},
 	} {
 		_, err := cubStdout(context.Background(), args...)
@@ -779,6 +812,7 @@ func TestCubStdoutAnswersTheListsThroughTheSDKWhenAsked(t *testing.T) {
 	}{
 		{"unit list", []string{"unit", "list", "-o", "json", "--space", space}, 2},
 		{"unit list, quiet", []string{"unit", "list", "-o", "json", "--quiet", "--space", space}, 2},
+		{"unit list, filtered", []string{"unit", "list", "-o", "json", "--space", space, "--where", "Slug LIKE 'parity-%'", "--contains", "parity"}, 2},
 		{"space list", []string{"space", "list", "-o", "json"}, 1},
 		{"space list, quiet", []string{"space", "list", "-o", "json", "--quiet"}, 1},
 	} {
@@ -806,6 +840,10 @@ func TestCubStdoutAnswersTheListsThroughTheSDKWhenAsked(t *testing.T) {
 	require.Contains(t, (*seen)[1], "GET /api/unit?include=UnitEventID%2CTargetID%2CUpstreamUnitID%2CSpaceID%2CFromLinkID%2CChangeSetID&where=SpaceID+%3D+")
 	require.NotContains(t, (*seen)[1], "limit=")
 	require.Equal(t, "GET /api/space?include=ComponentID&summary=true", (*seen)[len(*seen)-1])
+	// The filter is the caller's, AND-ed with the space, with the search
+	// beside it.
+	require.Contains(t, (*seen)[5], "GET /api/unit?contains=parity&include=UnitEventID")
+	require.Contains(t, (*seen)[5], "&where=Slug+LIKE+%27parity-%25%27+AND+SpaceID+%3D+%27")
 }
 
 // The callers of the lists get the same result by either route.
@@ -877,4 +915,25 @@ func TestFleetFailureAdviceFollowsTheRoute(t *testing.T) {
 	t.Setenv(configHubReaderEnv, "cub")
 	_, err = fetchFleetUnits(recordedSpace, "")
 	require.ErrorContains(t, err, "Check that 'cub' CLI is installed")
+}
+
+// The views lookups word a failed list for the route that ran it.
+func TestViewsListFailureWordingFollowsTheRoute(t *testing.T) {
+	onlyFakeCub(t, "3")
+	hub := newRecordedHub(t, http.StatusForbidden)
+	sdkReadsFrom(t, hub)
+
+	t.Setenv(configHubReaderEnv, "sdk")
+	_, err := listUnitsForFilter(context.Background(), "Slug LIKE 'a-%'", recordedSpace)
+	require.True(t, strings.HasPrefix(err.Error(), "ConfigHub unit list: "), err.Error())
+	require.Equal(t, hubread.KindForbidden, hubread.KindOf(err))
+	_, err = listUnitSlugsForFilter(context.Background(), "Slug LIKE 'a-%'", recordedSpace)
+	require.True(t, strings.HasPrefix(err.Error(), "ConfigHub unit list: "), err.Error())
+
+	// Across every space the read stays with cub, and so does the wording.
+	_, err = listUnitsForFilter(context.Background(), "Slug LIKE 'a-%'", allConfigHubSpaces)
+	require.True(t, strings.HasPrefix(err.Error(), "cub unit list: "), err.Error())
+	t.Setenv(configHubReaderEnv, "cub")
+	_, err = listUnitSlugsForFilter(context.Background(), "Slug LIKE 'a-%'", recordedSpace)
+	require.True(t, strings.HasPrefix(err.Error(), "cub unit list: "), err.Error())
 }

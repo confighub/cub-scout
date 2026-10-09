@@ -77,6 +77,8 @@ type fakeHub struct {
 	includes []string
 	// queries is every query parameter of each request, sorted by name.
 	queries []string
+	// statusBody is the body sent with a failing status, when set.
+	statusBody string
 	// more is the paths whose answers carry a continue token: the server
 	// saying it returned only part of the list.
 	more map[string]bool
@@ -100,7 +102,7 @@ func newFakeHub(t *testing.T) *fakeHub {
 			Limit: r.URL.Query().Get("limit"), Authorization: r.Header.Get("Authorization"), UserAgent: r.Header.Get("User-Agent")})
 		hub.queries = append(hub.queries, r.URL.Query().Encode())
 		hub.includes = append(hub.includes, r.URL.Query().Get("include"))
-		status, raw, delay := hub.status[r.URL.Path], hub.raw[r.URL.Path], hub.delay
+		status, raw, delay, statusBody := hub.status[r.URL.Path], hub.raw[r.URL.Path], hub.delay, hub.statusBody
 		if hub.more[r.URL.Path] {
 			w.Header().Set("ConfigHub-Continue", "next-page")
 		}
@@ -115,7 +117,11 @@ func newFakeHub(t *testing.T) *fakeHub {
 		w.Header().Set("Content-Type", "application/json")
 		if status != 0 {
 			w.WriteHeader(status)
-			_, _ = w.Write([]byte(`{"Message":"simulated failure"}`))
+			body := `{"Message":"simulated failure"}`
+			if statusBody != "" {
+				body = statusBody
+			}
+			_, _ = w.Write([]byte(body))
 			return
 		}
 		if raw != "" {
@@ -610,13 +616,13 @@ func TestUnitListJSONIsWhatCubPrintedOnTheRealServer(t *testing.T) {
 	hub, slug, id := hubOfTheConnectedLane(t)
 	reader := hub.reader(Options{})
 
-	got, err := reader.UnitListJSON(context.Background(), slug)
+	got, err := reader.UnitListJSON(context.Background(), slug, UnitFilter{})
 	require.NoError(t, err)
 	require.Equal(t, string(recorded), string(got))
 	require.Equal(t, []string{"/api/space", "/api/unit"}, []string{hub.requests()[0].Path, hub.requests()[1].Path})
 
 	// By the space's ID: one request, the same bytes.
-	got, err = reader.UnitListJSON(context.Background(), id)
+	got, err = reader.UnitListJSON(context.Background(), id, UnitFilter{})
 	require.NoError(t, err)
 	require.Equal(t, string(recorded), string(got))
 	require.Len(t, hub.requests(), 3)
@@ -642,7 +648,7 @@ func TestListsSendWhatTheSDKListHelpersSend(t *testing.T) {
 
 	_, err := cubapi.ListUnits(ctx, reader.client, cubapi.Where{}.SpaceID(spaceID), cubapi.ListOpts{Include: unitListInclude})
 	require.NoError(t, err)
-	_, err = reader.UnitListJSON(ctx, id)
+	_, err = reader.UnitListJSON(ctx, id, UnitFilter{})
 	require.NoError(t, err)
 	seen := hub.requests()
 	require.Len(t, seen, 2)
@@ -671,7 +677,7 @@ func TestUnitListJSONKeepsToOneSpace(t *testing.T) {
 	ctx := context.Background()
 
 	for _, scope := range []string{"", " ", "*"} {
-		_, err := reader.UnitListJSON(ctx, scope)
+		_, err := reader.UnitListJSON(ctx, scope, UnitFilter{})
 		require.Equal(t, KindInvalidScope, KindOf(err), "scope %q", scope)
 	}
 	require.Empty(t, hub.requests(), "a refused scope sends nothing")
@@ -679,12 +685,12 @@ func TestUnitListJSONKeepsToOneSpace(t *testing.T) {
 	// The server ignores the filter and returns the recorded Units for a
 	// different space: an error, not that space's list.
 	other := "11111111-2222-4333-8444-555555555555"
-	out, err := reader.UnitListJSON(ctx, other)
+	out, err := reader.UnitListJSON(ctx, other, UnitFilter{})
 	require.Equal(t, KindMalformed, KindOf(err))
 	require.ErrorContains(t, err, "another space")
 	require.Nil(t, out)
 
-	_, err = reader.UnitListJSON(ctx, "no-such-space")
+	_, err = reader.UnitListJSON(ctx, "no-such-space", UnitFilter{})
 	require.Equal(t, KindNotFound, KindOf(err))
 
 	for name, tc := range map[string]struct {
@@ -702,7 +708,7 @@ func TestUnitListJSONKeepsToOneSpace(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			hub.raw["/api/unit"] = tc.body
-			out, err := reader.UnitListJSON(ctx, id)
+			out, err := reader.UnitListJSON(ctx, id, UnitFilter{})
 			if tc.want == "" {
 				require.NoError(t, err)
 				require.Equal(t, tc.out, string(out))
@@ -715,7 +721,7 @@ func TestUnitListJSONKeepsToOneSpace(t *testing.T) {
 	delete(hub.raw, "/api/unit")
 
 	hub.status["/api/unit"] = http.StatusForbidden
-	_, err = reader.UnitListJSON(ctx, slug)
+	_, err = reader.UnitListJSON(ctx, slug, UnitFilter{})
 	require.Equal(t, KindForbidden, KindOf(err))
 }
 
@@ -727,7 +733,7 @@ func TestUnitListJSONOfASpaceIDThatNamesNoSpaceIsNotAnEmptyList(t *testing.T) {
 	reader := hub.reader(Options{})
 	ctx := context.Background()
 
-	out, err := reader.UnitListJSON(ctx, "11111111-2222-4333-8444-555555555555")
+	out, err := reader.UnitListJSON(ctx, "11111111-2222-4333-8444-555555555555", UnitFilter{})
 	require.Equal(t, KindNotFound, KindOf(err))
 	require.ErrorContains(t, err, "no space with ID")
 	require.Nil(t, out)
@@ -735,14 +741,14 @@ func TestUnitListJSONOfASpaceIDThatNamesNoSpaceIsNotAnEmptyList(t *testing.T) {
 	require.Equal(t, "limit=2&where=SpaceID+%3D+%2711111111-2222-4333-8444-555555555555%27", hub.queries[1])
 
 	// The recorded space exists and has no Units here: an empty list.
-	out, err = reader.UnitListJSON(ctx, id)
+	out, err = reader.UnitListJSON(ctx, id, UnitFilter{})
 	require.NoError(t, err)
 	require.Equal(t, "[]\n", string(out))
 	require.Len(t, hub.requests(), 4)
 
 	// The check itself can fail, and then the list is not "empty".
 	hub.status["/api/space"] = http.StatusForbidden
-	out, err = reader.UnitListJSON(ctx, id)
+	out, err = reader.UnitListJSON(ctx, id, UnitFilter{})
 	require.Equal(t, KindForbidden, KindOf(err))
 	require.Nil(t, out)
 }
@@ -755,7 +761,7 @@ func TestAListTheServerCutShortIsAnError(t *testing.T) {
 	ctx := context.Background()
 
 	hub.more["/api/unit"] = true
-	out, err := reader.UnitListJSON(ctx, slug)
+	out, err := reader.UnitListJSON(ctx, slug, UnitFilter{})
 	require.Equal(t, KindIncomplete, KindOf(err))
 	require.Nil(t, out)
 
@@ -802,4 +808,93 @@ func TestSpaceListJSONReadsAnEmptyListAndRefusesABrokenOne(t *testing.T) {
 	hub.status["/api/space"] = http.StatusUnauthorized
 	_, err := reader.SpaceListJSON(ctx)
 	require.Equal(t, KindUnauthorized, KindOf(err))
+}
+
+// A filtered list asks the server what cub asks: the caller's expression
+// AND-ed with the space, and the search beside it.
+func TestFilteredUnitListSendsWhatTheSDKListHelperSends(t *testing.T) {
+	hub, slug, id := hubOfTheConnectedLane(t)
+	reader := hub.reader(Options{})
+	ctx := context.Background()
+	spaceID := uuid.MustParse(id)
+
+	for _, filter := range []UnitFilter{
+		{Where: "Slug LIKE 'parity-%'"},
+		{Contains: "parity"},
+		{Where: "  Slug != 'x' AND DisplayName ILIKE '%a%'  ", Contains: "a b"},
+	} {
+		before := len(hub.requests())
+		_, err := cubapi.ListUnits(ctx, reader.client, cubapi.NewWhere(filter.Where).SpaceID(spaceID),
+			cubapi.ListOpts{Include: unitListInclude, Contains: filter.Contains})
+		require.NoError(t, err)
+		_, err = reader.UnitListJSON(ctx, id, filter)
+		require.NoError(t, err)
+		require.Len(t, hub.requests(), before+2)
+		require.Equal(t, hub.queries[before], hub.queries[before+1], "%+v", filter)
+		require.Contains(t, hub.requests()[before+1].Where, "SpaceID = '"+id+"'")
+	}
+
+	// The filter never widens the scope. Whatever it says, a Unit from
+	// another space is an error; here the server ignores the filter and
+	// answers a list for another space with the recorded Units.
+	out, err := reader.UnitListJSON(ctx, "11111111-2222-4333-8444-555555555555", UnitFilter{Where: "Slug LIKE '%'"})
+	require.Equal(t, KindMalformed, KindOf(err))
+	require.Nil(t, out)
+
+	// With a filter, the error says the filter may be why, and shows nothing.
+	require.ErrorContains(t, err, "the filter may reach beyond the space")
+	_, err = reader.UnitListJSON(ctx, "11111111-2222-4333-8444-555555555555", UnitFilter{Contains: "parity"})
+	require.Equal(t, KindMalformed, KindOf(err))
+	require.NotContains(t, err.Error(), "the filter may reach")
+
+	// A filter that matches nothing in a space that exists is an empty list.
+	hub.units = []map[string]json.RawMessage{}
+	out, err = reader.UnitListJSON(ctx, slug, UnitFilter{Where: "Slug = 'none'"})
+	require.NoError(t, err)
+	require.Equal(t, "[]\n", string(out))
+}
+
+// The server says what is wrong with a filter it rejects. The caller wrote the
+// filter, so the reason reaches them, cleaned and bounded.
+func TestARejectedFilterKeepsTheServersReason(t *testing.T) {
+	hub, slug, _ := hubOfTheConnectedLane(t)
+	reader := hub.reader(Options{})
+	ctx := context.Background()
+
+	hub.status["/api/unit"] = http.StatusBadRequest
+	hub.statusBody = `{"Code":"400","Message":"unknown field \"Nope\"\n\tin filter\u0007"}`
+	out, err := reader.UnitListJSON(ctx, slug, UnitFilter{Where: "Nope = 1"})
+	require.Equal(t, KindFailed, KindOf(err))
+	require.Nil(t, out)
+	require.ErrorContains(t, err, `the server rejected the request (HTTP 400): unknown field "Nope"  in filter`)
+	require.NotContains(t, err.Error(), "\n")
+	require.NotContains(t, err.Error(), "\a")
+	require.NotContains(t, err.Error(), testToken)
+
+	hub.statusBody = `{"Message":"` + strings.Repeat("é", 500) + `"}`
+	_, err = reader.UnitListJSON(ctx, slug, UnitFilter{Where: "Nope = 1"})
+	require.ErrorContains(t, err, strings.Repeat("é", 300)+"…")
+	require.NotContains(t, err.Error(), strings.Repeat("é", 301))
+
+	// Nothing in the message can act on a terminal: no C1 control (a
+	// one-character escape introducer), no bidirectional override, no line
+	// or paragraph separator.
+	hub.statusBody = `{"Message":"a\u009b31mred\u202eesrever\u2028next\u2029para\u200bzero\ufeff"}`
+	_, err = reader.UnitListJSON(ctx, slug, UnitFilter{Where: "Nope = 1"})
+	require.ErrorContains(t, err, "(HTTP 400): a 31mred esrever next para zero")
+	for _, hidden := range []string{"\u009b", "\u202e", "\u2028", "\u2029", "\u200b", "\ufeff"} {
+		require.NotContains(t, err.Error(), hidden)
+	}
+
+	// With no message to pass on, the status is the reason.
+	hub.statusBody = `{}`
+	_, err = reader.UnitListJSON(ctx, slug, UnitFilter{Where: "Nope = 1"})
+	require.ErrorContains(t, err, "HTTP 400")
+
+	// Only a 400 is the caller's to read: another failure keeps its own words.
+	hub.status["/api/unit"] = http.StatusForbidden
+	hub.statusBody = `{"Message":"details that are not shown"}`
+	_, err = reader.UnitListJSON(ctx, slug, UnitFilter{Where: "Nope = 1"})
+	require.Equal(t, KindForbidden, KindOf(err))
+	require.NotContains(t, err.Error(), "details that are not shown")
 }

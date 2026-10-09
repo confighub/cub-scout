@@ -196,6 +196,9 @@ func extractWhereClause(view map[string]interface{}) (string, error) {
 func listUnitSlugsForFilter(ctx context.Context, whereClause, space string) ([]string, error) {
 	out, err := viewCubRunner(ctx, "unit", "list", "--space", space, "--where", whereClause, "-o", "json")
 	if err != nil {
+		if failedOnSDKRoute(err) {
+			return nil, fmt.Errorf("ConfigHub unit list: %w", err)
+		}
 		return nil, fmt.Errorf("cub unit list: %w", err)
 	}
 	var units []struct {
@@ -221,6 +224,9 @@ func listUnitSlugsForFilter(ctx context.Context, whereClause, space string) ([]s
 func listUnitsForFilter(ctx context.Context, whereClause, space string) ([]map[string]interface{}, error) {
 	out, err := viewCubRunner(ctx, "unit", "list", "--space", space, "--where", whereClause, "-o", "json")
 	if err != nil {
+		if failedOnSDKRoute(err) {
+			return nil, fmt.Errorf("ConfigHub unit list: %w", err)
+		}
 		return nil, fmt.Errorf("cub unit list: %w", err)
 	}
 	var units []map[string]interface{}

@@ -224,12 +224,39 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 		cub  []string
 		read func() ([]byte, error)
 	}{
-		"unit-list":             {[]string{"unit", "list", "--space", space, "-o", "json"}, func() ([]byte, error) { return reader.UnitListJSON(ctx, space) }},
-		"unit-list-by-space-id": {[]string{"unit", "list", "--space", space, "-o", "json"}, func() ([]byte, error) { return reader.UnitListJSON(ctx, envelope.Unit.SpaceID) }},
+		"unit-list":             {[]string{"unit", "list", "--space", space, "-o", "json"}, func() ([]byte, error) { return reader.UnitListJSON(ctx, space, hubread.UnitFilter{}) }},
+		"unit-list-by-space-id": {[]string{"unit", "list", "--space", space, "-o", "json"}, func() ([]byte, error) { return reader.UnitListJSON(ctx, envelope.Unit.SpaceID, hubread.UnitFilter{}) }},
 		"space-list":            {[]string{"space", "list", "-o", "json"}, func() ([]byte, error) { return reader.SpaceListJSON(ctx) }},
+		"unit-list-where": {[]string{"unit", "list", "--space", space, "-o", "json", "--where", "Slug = '" + unit + "'"}, func() ([]byte, error) {
+			return reader.UnitListJSON(ctx, space, hubread.UnitFilter{Where: "Slug = '" + unit + "'"})
+		}},
+		"unit-list-where-like": {[]string{"unit", "list", "--space", space, "-o", "json", "--where", "Slug LIKE 'parity-o%'"}, func() ([]byte, error) {
+			return reader.UnitListJSON(ctx, space, hubread.UnitFilter{Where: "Slug LIKE 'parity-o%'"})
+		}},
+		"unit-list-contains": {[]string{"unit", "list", "--space", space, "-o", "json", "--contains", other}, func() ([]byte, error) {
+			return reader.UnitListJSON(ctx, space, hubread.UnitFilter{Contains: other})
+		}},
+		"unit-list-where-none": {[]string{"unit", "list", "--space", space, "-o", "json", "--where", "Slug = 'no-such-unit'"}, func() ([]byte, error) {
+			return reader.UnitListJSON(ctx, space, hubread.UnitFilter{Where: "Slug = 'no-such-unit'"})
+		}},
 	} {
 		listsEqual[name] = false
 		listedByCub, err := cubStdoutOnly(list.cub...)
+		if err != nil && name == "unit-list-contains" {
+			// ConfigHub v0.8.3 answers a text search on Units with HTTP
+			// 500, to cub itself. Where the server cannot answer, the
+			// routes agree by both failing; both failures are kept.
+			keep(name+".cub.txt", []byte("error: "+err.Error()+"\n"))
+			listedBySDK, sdkErr := list.read()
+			if sdkErr == nil {
+				t.Errorf("%s: cub failed (%v) and the SDK reader returned a list: %s", name, err, listedBySDK)
+				continue
+			}
+			keep(name+".sdk.txt", []byte("error: "+sdkErr.Error()+"\n"))
+			delete(listsEqual, name)
+			t.Logf("%s: the server answered neither route; cub: %v; reader: %v", name, err, sdkErr)
+			continue
+		}
 		if err != nil {
 			t.Errorf("%s: %v", name, err)
 			continue
@@ -250,13 +277,78 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 	// nothing: not_found through the reader, a failure from cub, and never
 	// an empty list from either.
 	for _, missing := range []string{"no-such-space-" + space, "11111111-2222-4333-8444-555555555555"} {
-		if listed, err := reader.UnitListJSON(ctx, missing); hubread.KindOf(err) != hubread.KindNotFound || listed != nil {
+		if listed, err := reader.UnitListJSON(ctx, missing, hubread.UnitFilter{}); hubread.KindOf(err) != hubread.KindNotFound || listed != nil {
 			t.Errorf("a list in space %q, which does not exist: kind %s, want %s (%v)", missing, hubread.KindOf(err), hubread.KindNotFound, err)
 		}
 		if listed, err := cubStdoutOnly("unit", "list", "--space", missing, "-o", "json"); err == nil {
 			t.Errorf("cub listed space %q, which does not exist: %s", missing, listed)
 		}
 	}
+	// The filters narrow as they say: one Unit by its slug, the other by a
+	// pattern, and none for a slug that is not there. Equal bytes alone would
+	// also hold if both routes ignored the filter.
+	for name, want := range map[string][]string{"unit-list-where": {unit}, "unit-list-where-like": {other}, "unit-list-where-none": {}} {
+		recorded, err := os.ReadFile(filepath.Join(out, name+".sdk.json"))
+		if err != nil {
+			t.Errorf("%s: %v", name, err)
+			continue
+		}
+		var listed []struct{ Unit struct{ Slug string } }
+		if err := json.Unmarshal(recorded, &listed); err != nil {
+			t.Errorf("%s: %v", name, err)
+			continue
+		}
+		got := []string{}
+		for _, entry := range listed {
+			got = append(got, entry.Unit.Slug)
+		}
+		if strings.Join(got, ",") != strings.Join(want, ",") {
+			t.Errorf("%s listed %v, want %v", name, got, want)
+		}
+	}
+	// A filter the server rejects fails by both routes, and the reader passes
+	// on the server's reason.
+	const badFilter = "NoSuchField = 'x'"
+	if listed, err := cubStdoutOnly("unit", "list", "--space", space, "-o", "json", "--where", badFilter); err == nil {
+		t.Errorf("cub accepted the filter %q: %s", badFilter, listed)
+	} else {
+		keep("unit-list-bad-filter.cub.txt", []byte(err.Error()+"\n"))
+	}
+	if listed, err := reader.UnitListJSON(ctx, space, hubread.UnitFilter{Where: badFilter}); err == nil {
+		t.Errorf("the reader accepted the filter %q: %s", badFilter, listed)
+	} else {
+		keep("unit-list-bad-filter.sdk.txt", []byte(err.Error()+"\n"))
+		if !strings.Contains(err.Error(), "HTTP 400") {
+			t.Errorf("a rejected filter: %v, want the server's HTTP 400", err)
+		}
+	}
+	filteredArguments := map[string]string{"space": space, "where": "Slug = '" + unit + "'"}
+	filteredCub, _ := json.Marshal(callTool("confighub_units", filteredArguments, "cub"))
+	filteredSDK, _ := json.Marshal(callTool("confighub_units", filteredArguments, "sdk"))
+	if !bytes.Equal(filteredCub, filteredSDK) {
+		t.Errorf("the MCP units tool with a filter differs by route")
+	}
+	// The filtered answer has the Unit asked for and not the other one.
+	// Equal answers alone would also hold for two empty lists or two errors.
+	if !bytes.Contains(filteredSDK, []byte(envelope.Unit.UnitID)) || bytes.Contains(filteredSDK, []byte(`\"Slug\": \"`+other+`\"`)) {
+		t.Errorf("the MCP units tool with a filter did not return exactly the Unit it names: %s", filteredSDK)
+	}
+
+	// Recorded, not asserted: what each route does with an OR. cub's help
+	// documents AND only; whether the server accepts OR, and how it reads it
+	// beside the space, is not known here (#758).
+	const alternative = "Slug = '" + unit + "' OR Slug = '" + other + "'"
+	if listed, err := cubStdoutOnly("unit", "list", "--space", space, "-o", "json", "--where", alternative); err != nil {
+		keep("unit-list-or-filter.cub.txt", []byte("error: "+err.Error()+"\n"))
+	} else {
+		keep("unit-list-or-filter.cub.txt", listed)
+	}
+	if listed, err := reader.UnitListJSON(ctx, space, hubread.UnitFilter{Where: alternative}); err != nil {
+		keep("unit-list-or-filter.sdk.txt", []byte("error: "+err.Error()+"\n"))
+	} else {
+		keep("unit-list-or-filter.sdk.txt", listed)
+	}
+
 	unitsArguments := map[string]string{"space": space}
 	unitsCub, _ := json.Marshal(callTool("confighub_units", unitsArguments, "cub"))
 	unitsSDK, _ := json.Marshal(callTool("confighub_units", unitsArguments, "sdk"))

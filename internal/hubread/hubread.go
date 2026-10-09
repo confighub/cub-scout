@@ -23,6 +23,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+	"unicode"
 
 	"github.com/confighub/sdk/core/constants"
 	"github.com/confighub/sdk/core/cubapi"
@@ -440,14 +441,28 @@ func listJSON[T any](op string, list *[]T) ([]byte, error) {
 	return append(encoded, '\n'), nil
 }
 
-// UnitListJSON reads every Unit in exactly one space and returns the list as
-// the JSON `cub unit list --space <space> -o json` prints. space is the space's
-// slug or its canonical UUID; an empty or "*" space is refused before any
-// request, because a list without a space spans the organization.
+// UnitFilter narrows a unit list the way cub's flags of the same names do. The
+// zero value lists every Unit in the space.
+type UnitFilter struct {
+	// Where is a filter expression, passed to the server as the caller
+	// wrote it and AND-ed with the space, as cub composes it.
+	Where string
+	// Contains is a free-text search.
+	Contains string
+}
+
+// UnitListJSON reads the Units of exactly one space and returns the list as the
+// JSON `cub unit list --space <space> -o json` prints, with --where and
+// --contains when filter has them. space is the space's slug or its canonical
+// UUID; an empty or "*" space is refused before any request, because a list
+// without a space spans the organization.
 //
-// As cub does without --limit, it asks for the whole list in one request. A
-// Unit the server returns from any other space is an error, never output.
-func (r *Reader) UnitListJSON(ctx context.Context, space string) ([]byte, error) {
+// As cub does without --limit, it asks for the whole list in one request. An
+// entry for a Unit in any other space is an error, never output, whatever the
+// filter says. What each entry carries of related entities (its upstream, its
+// links, its target) is what the server expands, as in cub's output, and is
+// not checked.
+func (r *Reader) UnitListJSON(ctx context.Context, space string, filter UnitFilter) ([]byte, error) {
 	const op = "unit list"
 	space = strings.TrimSpace(space)
 	if space == "" || space == "*" {
@@ -457,9 +472,20 @@ func (r *Reader) UnitListJSON(ctx context.Context, space string) ([]byte, error)
 	if scopeErr != nil {
 		return nil, scopeErr
 	}
-	filter, include := cubapi.Where{}.SpaceID(spaceID).String(), unitListInclude
-	resp, err := r.client.API.ListAllUnitsWithResponse(ctx, &goclientnew.ListAllUnitsParams{Where: &filter, Include: &include})
+	where, include := cubapi.NewWhere(filter.Where).SpaceID(spaceID).String(), unitListInclude
+	params := &goclientnew.ListAllUnitsParams{Where: &where, Include: &include}
+	if contains := filter.Contains; contains != "" {
+		params.Contains = &contains
+	}
+	resp, err := r.client.API.ListAllUnitsWithResponse(ctx, params)
 	if failure := classify(ctx, op, err, resp); failure != nil {
+		// The server says what is wrong with a filter it rejects, and the
+		// caller wrote the filter, so that reason is passed on.
+		if resp != nil && resp.StatusCode() == http.StatusBadRequest && resp.JSON400 != nil {
+			if reason := printable(resp.JSON400.Message, 300); reason != "" {
+				failure.Message = "the server rejected the request (HTTP 400): " + reason
+			}
+		}
 		return nil, failure
 	}
 	// A 200 that is not JSON leaves no list at all. That is not an empty
@@ -483,7 +509,14 @@ func (r *Reader) UnitListJSON(ctx context.Context, space string) ([]byte, error)
 		case found == nil:
 			return nil, &Error{Kind: KindMalformed, Op: op, Message: "the list has an entry with no unit"}
 		case found.SpaceID != spaceID:
-			return nil, &Error{Kind: KindMalformed, Op: op, Message: fmt.Sprintf("the server returned a unit from another space for space %q", space)}
+			message := fmt.Sprintf("the server returned a unit from another space for space %q", space)
+			if filter.Where != "" {
+				// The expression is sent as written. One that the server
+				// reads as an alternative to the space, not a narrowing
+				// of it, would do this.
+				message += "; the filter may reach beyond the space, and its result is not shown"
+			}
+			return nil, &Error{Kind: KindMalformed, Op: op, Message: message}
 		}
 	}
 	return listJSON(op, resp.JSON200)
@@ -511,6 +544,24 @@ func (r *Reader) SpaceListJSON(ctx context.Context) ([]byte, error) {
 		}
 	}
 	return listJSON(op, resp.JSON200)
+}
+
+// printable returns text cut to at most limit characters, with everything
+// that could act on a terminal rather than be read replaced by a space:
+// control characters (C0 and C1, so an escape sequence loses its introducer),
+// format characters such as the bidirectional overrides, and the line and
+// paragraph separators. It is for a server's message shown to a user.
+func printable(text string, limit int) string {
+	cleaned := strings.Map(func(r rune) rune {
+		if unicode.IsControl(r) || unicode.In(r, unicode.Cf, unicode.Zl, unicode.Zp) {
+			return ' '
+		}
+		return r
+	}, strings.TrimSpace(text))
+	if characters := []rune(cleaned); len(characters) > limit {
+		return string(characters[:limit]) + "…"
+	}
+	return cleaned
 }
 
 // wholeList fails a list the server says it cut short. Asked for no limit, the

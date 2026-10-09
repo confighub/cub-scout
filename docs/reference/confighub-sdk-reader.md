@@ -11,8 +11,8 @@ you set the variable below.
 ## What it covers
 
 Three commands, wherever cub-scout runs them: `cub unit get` for one Unit
-named by slug in one named space, `cub unit list` for one named space, and
-`cub space list`.
+named by slug in one named space, `cub unit list` for one named space, with
+or without a `--where` or `--contains` filter, and `cub space list`.
 
 ```bash
 CUB_SCOUT_CONFIGHUB_READER=sdk cub scout compare source-truth deploy/api -n prod --strategy git-argo
@@ -39,8 +39,8 @@ change.
 | `unit get <space>/<unit> -o json` | A Unit named by its ID, in any spelling `cub` reads as an ID: canonical, 32 bare hex digits, braces, `urn:uuid:` |
 | either, with `--quiet` | A space named by ID in any spelling but the canonical lower-case one, capitals included |
 | a space named by its canonical ID | `*` as the space or the Unit; a space containing `/`; a `--space` value that starts with `-` |
-| `unit list -o json --space <space>`, with or without `--quiet` | A list with a filter, a text search, a selection, a limit, an ordering, a view or hidden entities: each changes what `cub` asks the server |
-| `space list -o json`, with or without `--quiet` | A space list with any of the same, a component, a `--space` or a positional; and a list with no `-o json`, which prints `cub`'s table |
+| `unit list -o json --space <space>`, with or without `--quiet`, `--where <expression>` and `--contains <text>` | A unit list with a stored filter, a data or trigger filter, a selection, a limit, an ordering, a view or hidden entities; an empty `--where` or `--contains`, or either given twice |
+| `space list -o json`, with or without `--quiet` | A space list with any filter or any of the same, a component, a `--space` or a positional; and a list with no `-o json`, which prints `cub`'s table |
 | | Any other output format, any other flag, `--`, and `-o=json` or `--space=x` spelt with `=` |
 
 Today that is every `unit get` cub-scout builds, given a slug and a named
@@ -57,8 +57,8 @@ user supplies.
 | MCP `confighub_unit_get` | With `space`, or `unit` as `<space>/<slug>`. By ID it stays with `cub` |
 | `map` (connected hierarchy and unit detail) | |
 | Import wizard checks | Reads only; its writes run `cub` |
-| The lists: `map` (connected hierarchy, fleet, and joining cluster resources to their Units), `fleet outliers`, import's check for existing units and its link to the space, MCP `confighub_units` without `where` or `contains` | |
-| Lists that stay with `cub`: MCP `confighub_units` with `where` or `contains`, `views`, GitOps delivery evidence (a selection), `app list` and import's summary (they print `cub`'s own output) | |
+| The lists: `map` (connected hierarchy, fleet, and joining cluster resources to their Units), `fleet outliers`, import's check for existing units and its link to the space, MCP `confighub_units` with or without `where` and `contains`, and the `views` lookups when they name one space | |
+| Lists that stay with `cub`: `views` across every space, GitOps delivery evidence (a selection), `app list` and import's summary (they print `cub`'s own output) | |
 
 A failed SDK read is the answer, reported with its reason. It does not fall
 back to `cub`, and once the SDK route has taken a read, no failure of it is
@@ -93,6 +93,19 @@ check, and every other ConfigHub read still runs `cub`.
   list. A list with nothing in it, or a JSON `null`, is `[]`, as `cub` prints
   it. "Whole" means what the server says is whole: the reader asks for no
   limit and does not read in pages.
+- **A filter narrows and never widens what is returned.** The caller's
+  expression is sent as written, AND-ed with the space, as `cub` composes it.
+  Nothing here reads the expression, so the check that every entry is a Unit
+  in that space is what holds whatever it says: an expression the server read
+  as reaching beyond the space would fail the read, where `cub` would print
+  what came back. `cub` documents AND only, and ConfigHub v0.8.3 rejects an
+  OR with HTTP 400 ("expected AND before") by either route, so on that server
+  an expression cannot reach beyond the space this way. Entities the server expands inside an entry (an
+  upstream, a link, a target) are as in `cub`'s output and are not checked.
+- **A rejected filter keeps the server's reason.** For an HTTP 400 the
+  server's message is passed on, cut to 300 characters, with control and
+  format characters and line separators replaced by spaces so that nothing in
+  it can act on a terminal. Any other failure keeps this reader's own words.
 - **An empty list is of a space that exists.** A space named by slug is looked
   up first. A space named by ID is not, so when its list comes back empty the
   space is checked, and an ID that names no space is `not_found`, as `cub`
@@ -158,6 +171,10 @@ through `cub`, then asks for one Unit by each route.
 | Reader's JSON against `cub unit list -o json`, space by slug and by ID (CI run 37971287996) | identical, 4717 bytes, two Units |
 | Reader's JSON against `cub space list -o json` (same run) | identical, 1456 bytes, two spaces |
 | MCP `confighub_units` through the built binary, by each route (same run) | the whole answer identical |
+| `unit list --where`, by slug and by a `LIKE` pattern, and one that matches nothing (CI run 37976845378) | identical; one Unit, the other Unit, and `[]` |
+| A `--where` the server rejects (same run) | both routes fail; the reader's error carries the server's reason, "unrecognized attribute name" |
+| `unit list --contains` (same run) | **not established**: this server answers the search with HTTP 500, to `cub` itself, so both routes fail |
+| A `--where` with an OR (CI run 37978701723) | both routes fail with the server's HTTP 400, "expected AND before" |
 
 | One read, 15 runs, milliseconds | min | median | max |
 |---|---|---|---|
@@ -177,6 +194,11 @@ are kept in `test/fixtures/confighub-sdk-parity-v083-recorded/`.
   plain Units: no target, no upstream, no live revision, and spaces with no
   Component. The lists there had two entries each; a long list was not tried. A hosted server,
   another version and a credential with fewer rights were not tried.
+- **`--contains` against a real answer.** ConfigHub v0.8.3 fails a text
+  search on Units with HTTP 500 for `cub` and for the reader alike. That the
+  reader sends the search as `cub` does is held by comparing requests; that
+  the two return the same list is not shown. On that server the MCP
+  `confighub_units` tool's `contains` argument fails by either route.
 - **Time for a whole command.** The timings are for one read. A connected
   command also runs `cub auth status` on either route, and how many requests
   `cub` itself makes was not measured.
