@@ -104,6 +104,11 @@ func cubCommand(ctx context.Context, args ...string) (*exec.Cmd, error) {
 // notices on stderr, and output read with CombinedOutput carries them into
 // values that are then parsed, compared, or written back.
 func cubStdout(ctx context.Context, args ...string) ([]byte, error) {
+	// A read the SDK route reproduces exactly is answered there when that
+	// route is selected (#758); see cub_sdk_read.go.
+	if out, handled, err := cubReadViaSDK(ctx, args); handled {
+		return out, err
+	}
 	cmd, err := cubCommand(ctx, args...)
 	if err != nil {
 		return nil, err
@@ -120,6 +125,10 @@ func cubText(ctx context.Context, args ...string) (string, error) {
 	}
 	out, err := cubStdout(ctx, args...)
 	if err != nil {
+		if failedOnSDKRoute(err) {
+			// No cub ran; the arguments still say which read it was.
+			return "", fmt.Errorf("ConfigHub read in place of cub %s failed: %w", strings.Join(args, " "), err)
+		}
 		return "", fmt.Errorf("cub %s failed: %w", strings.Join(args, " "), err)
 	}
 	return strings.TrimSpace(string(out)), nil

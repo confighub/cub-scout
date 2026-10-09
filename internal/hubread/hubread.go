@@ -13,6 +13,7 @@ package hubread
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -293,31 +294,36 @@ func literal(op, field, value string) (cubapi.Where, *Error) {
 	return where, nil
 }
 
-// UnitHead reads the head revision of exactly one Unit in exactly one space.
+// unitGetInclude is the expansion `cub unit get` asks for (cubapi's unexported
+// unitGetInclude in SDK core v0.8.10), so that the envelope read here has the
+// same related entities as the one cub prints. A test compares it with what
+// cubapi.ResolveUnit sends, so an SDK bump that changes it is noticed.
+const unitGetInclude = "UnitEventID,TargetID,UpstreamUnitID,SpaceID,FromLinkID,ChangeSetID,UpstreamSpaceID"
+
+// unit reads exactly one Unit in exactly one space, with cub's expansions.
 //
-// space is the space's slug or its UUID; unit is the Unit's slug. Both are
+// space is the space's slug or its UUID; name is the Unit's slug. Both are
 // required and neither may be a wildcard: an empty or "*" scope is refused
 // before any request, because a list without a space spans the organization.
 // Slugs are matched exactly, including case. More than one match is an error,
 // never a choice.
-func (r *Reader) UnitHead(ctx context.Context, space, unit string) (UnitHead, error) {
-	const op = "unit read"
-	space, unit = strings.TrimSpace(space), strings.TrimSpace(unit)
+func (r *Reader) unit(ctx context.Context, op, space, name string) (*goclientnew.ExtendedUnit, string, *Error) {
+	space, name = strings.TrimSpace(space), strings.TrimSpace(name)
 	switch {
 	case space == "" || space == "*":
-		return UnitHead{}, &Error{Kind: KindInvalidScope, Op: op, Message: "exactly one space is required"}
-	case unit == "" || unit == "*":
-		return UnitHead{}, &Error{Kind: KindInvalidScope, Op: op, Message: "exactly one unit is required"}
+		return nil, "", &Error{Kind: KindInvalidScope, Op: op, Message: "exactly one space is required"}
+	case name == "" || name == "*":
+		return nil, "", &Error{Kind: KindInvalidScope, Op: op, Message: "exactly one unit is required"}
 	}
 
 	// Both names are checked before the first request, so a scope that
 	// cannot be sent costs nothing and reveals nothing.
-	where, scopeErr := literal(op, "Slug", unit)
+	where, scopeErr := literal(op, "Slug", name)
 	if scopeErr != nil {
-		return UnitHead{}, scopeErr
+		return nil, "", scopeErr
 	}
 
-	head := UnitHead{Unit: unit}
+	spaceSlug := ""
 	// Only the canonical 36-character form is an ID. uuid.Parse also accepts
 	// 32 bare hex digits, braces and a urn: prefix, any of which could be a
 	// slug; read as an ID, it would skip the lookup that checks the name.
@@ -328,40 +334,68 @@ func (r *Reader) UnitHead(ctx context.Context, space, unit string) (UnitHead, er
 	if err != nil {
 		id, resolveErr := r.spaceID(ctx, space)
 		if resolveErr != nil {
-			return UnitHead{}, resolveErr
+			return nil, "", resolveErr
 		}
-		spaceID, head.Space = id, space
+		spaceID, spaceSlug = id, space
 	}
-	head.SpaceID = spaceID.String()
 
-	filter, limit := where.SpaceID(spaceID).String(), 2
-	resp, err := r.client.API.ListAllUnitsWithResponse(ctx, &goclientnew.ListAllUnitsParams{Where: &filter, Limit: &limit})
+	filter, include, limit := where.SpaceID(spaceID).String(), unitGetInclude, 2
+	resp, err := r.client.API.ListAllUnitsWithResponse(ctx, &goclientnew.ListAllUnitsParams{Where: &filter, Include: &include, Limit: &limit})
 	if failure := classify(ctx, op, err, resp); failure != nil {
-		return UnitHead{}, failure
+		return nil, "", failure
 	}
 	if resp.JSON200 == nil {
-		return UnitHead{}, &Error{Kind: KindMalformed, Op: op, Message: "the response had no unit list"}
+		return nil, "", &Error{Kind: KindMalformed, Op: op, Message: "the response had no unit list"}
 	}
-	var matches []*goclientnew.Unit
+	var matches []*goclientnew.ExtendedUnit
 	for i := range *resp.JSON200 {
 		// The server's filter is trusted to narrow, not to decide: only a
 		// Unit whose slug and space are exactly the ones asked for counts.
-		if candidate := (*resp.JSON200)[i].Unit; candidate != nil && candidate.Slug == unit && candidate.SpaceID == spaceID {
-			matches = append(matches, candidate)
+		element := &(*resp.JSON200)[i]
+		if candidate := element.Unit; candidate != nil && candidate.Slug == name && candidate.SpaceID == spaceID {
+			matches = append(matches, element)
 		}
 	}
 	switch len(matches) {
 	case 0:
-		return UnitHead{}, &Error{Kind: KindNotFound, Op: op, Message: fmt.Sprintf("no unit %q in space %q", unit, space)}
+		return nil, "", &Error{Kind: KindNotFound, Op: op, Message: fmt.Sprintf("no unit %q in space %q", name, space)}
 	case 1:
 	default:
-		return UnitHead{}, &Error{Kind: KindAmbiguous, Op: op, Message: fmt.Sprintf("more than one unit %q in space %q", unit, space)}
+		return nil, "", &Error{Kind: KindAmbiguous, Op: op, Message: fmt.Sprintf("more than one unit %q in space %q", name, space)}
 	}
-	if matches[0].UnitID == uuid.Nil {
-		return UnitHead{}, &Error{Kind: KindMalformed, Op: op, Message: fmt.Sprintf("unit %q has no ID", unit)}
+	if matches[0].Unit.UnitID == uuid.Nil {
+		return nil, "", &Error{Kind: KindMalformed, Op: op, Message: fmt.Sprintf("unit %q has no ID", name)}
 	}
-	head.UnitID, head.HeadRevisionNum = matches[0].UnitID.String(), matches[0].HeadRevisionNum
-	return head, nil
+	return matches[0], spaceSlug, nil
+}
+
+// UnitHead reads the head revision of exactly one Unit in exactly one space.
+// See unit for how the scope is checked.
+func (r *Reader) UnitHead(ctx context.Context, space, unit string) (UnitHead, error) {
+	found, spaceSlug, failure := r.unit(ctx, "unit read", space, unit)
+	if failure != nil {
+		return UnitHead{}, failure
+	}
+	return UnitHead{
+		Space: spaceSlug, SpaceID: found.Unit.SpaceID.String(),
+		Unit: found.Unit.Slug, UnitID: found.Unit.UnitID.String(), HeadRevisionNum: found.Unit.HeadRevisionNum,
+	}, nil
+}
+
+// UnitJSON reads exactly one Unit in exactly one space and returns it as the
+// JSON `cub unit get <unit> --space <space> -o json` prints: the same typed
+// envelope, with the same expansions, marshalled the same way. It is for
+// callers that already parse cub's output.
+func (r *Reader) UnitJSON(ctx context.Context, space, unit string) ([]byte, error) {
+	found, _, failure := r.unit(ctx, "unit read", space, unit)
+	if failure != nil {
+		return nil, failure
+	}
+	encoded, err := json.MarshalIndent(found, "", "  ")
+	if err != nil {
+		return nil, &Error{Kind: KindMalformed, Op: "unit read", Message: "the unit could not be encoded: " + err.Error()}
+	}
+	return append(encoded, '\n'), nil
 }
 
 func (r *Reader) spaceID(ctx context.Context, slug string) (uuid.UUID, *Error) {

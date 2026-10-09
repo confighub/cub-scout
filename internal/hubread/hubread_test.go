@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/confighub/sdk/core/cubapi"
 	goclientnew "github.com/confighub/sdk/core/openapi/goclient-new"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -72,6 +73,8 @@ type fakeHub struct {
 	server *httptest.Server
 	mu     sync.Mutex
 	seen   []seenRequest
+	// includes is the include parameter of each request, in order.
+	includes []string
 	// spaces and units are what each list returns, whatever the filter says.
 	spaces, units []map[string]json.RawMessage
 	status        map[string]int    // path -> status to answer with
@@ -90,6 +93,7 @@ func newFakeHub(t *testing.T) *fakeHub {
 		hub.mu.Lock()
 		hub.seen = append(hub.seen, seenRequest{Method: r.Method, Path: r.URL.Path, Where: r.URL.Query().Get("where"),
 			Limit: r.URL.Query().Get("limit"), Authorization: r.Header.Get("Authorization"), UserAgent: r.Header.Get("User-Agent")})
+		hub.includes = append(hub.includes, r.URL.Query().Get("include"))
 		status, raw, delay := hub.status[r.URL.Path], hub.raw[r.URL.Path], hub.delay
 		hub.mu.Unlock()
 		time.Sleep(delay)
@@ -453,4 +457,58 @@ func snapshotDir(t *testing.T, dir string) map[string]string {
 		return readErr
 	}))
 	return out
+}
+
+// UnitJSON must be what `cub unit get -o json` prints. The fixture is that
+// output, recorded from a real server; served back as the list element, it has
+// to come out of the SDK's types and the same marshalling unchanged. A field
+// the typed client does not know, or names differently, would show here.
+func TestUnitJSONIsWhatCubPrintedForTheRecordedUnit(t *testing.T) {
+	recorded, err := os.ReadFile(filepath.Join("..", "..", "test", "fixtures", "confighub-governance-v083-recorded", "unit-get.json"))
+	require.NoError(t, err)
+	hub := newFakeHub(t)
+	reader := hub.reader(Options{})
+
+	got, err := reader.UnitJSON(context.Background(), recordedSpace, recordedUnit)
+	require.NoError(t, err)
+	require.JSONEq(t, string(recorded), string(got))
+	require.True(t, strings.HasPrefix(string(got), "{\n  \""), "indented two spaces, as cub prints it")
+	require.True(t, strings.HasSuffix(string(got), "}\n"))
+
+	// The same scope rules and failures as every other read.
+	_, err = reader.UnitJSON(context.Background(), "*", recordedUnit)
+	require.Equal(t, KindInvalidScope, KindOf(err))
+	hub.status["/api/unit"] = http.StatusForbidden
+	out, err := reader.UnitJSON(context.Background(), recordedSpace, recordedUnit)
+	require.Equal(t, KindForbidden, KindOf(err))
+	require.Nil(t, out, "a failed read returns no bytes to parse")
+}
+
+// The reader asks the server for the Unit the way cub does: cub calls the SDK's
+// ResolveUnit, so the filter and the expansions ResolveUnit sends are the
+// reference. If an SDK bump changes either, this fails and the constant here
+// is updated with it.
+func TestUnitLookupSendsWhatTheSDKResolverSends(t *testing.T) {
+	hub := newFakeHub(t)
+	reader := hub.reader(Options{})
+	ctx := context.Background()
+
+	_, err := cubapi.ResolveUnit(ctx, reader.client, cubapi.NewRef(recordedSpaceID, recordedUnit), cubapi.ResolveOpts{})
+	require.NoError(t, err)
+	require.Len(t, hub.requests(), 1)
+	viaSDK, sdkInclude := hub.requests()[0], hub.includes[0]
+
+	_, err = reader.UnitJSON(ctx, recordedSpaceID, recordedUnit)
+	require.NoError(t, err)
+	require.Len(t, hub.requests(), 2)
+	viaReader, readerInclude := hub.requests()[1], hub.includes[1]
+
+	require.Equal(t, viaSDK.Path, viaReader.Path)
+	require.Equal(t, viaSDK.Where, viaReader.Where, "the same exact-space filter")
+	require.NotEmpty(t, sdkInclude)
+	require.Equal(t, sdkInclude, readerInclude, "the same expansions, so the envelope has the same related entities")
+	require.Equal(t, unitGetInclude, readerInclude)
+	// One deliberate difference: the reader bounds the answer.
+	require.Empty(t, viaSDK.Limit)
+	require.Equal(t, "2", viaReader.Limit)
 }
