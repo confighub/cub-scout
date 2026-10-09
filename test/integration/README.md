@@ -108,3 +108,5 @@ func TestConnectedModeMap(t *testing.T) {
 | `SKIP_INTEGRATION` | Skip all integration tests | false |
 | `KUBECONFIG` | Kubernetes config | `~/.kube/config` |
 | `CUB_AGENT` | Path to cub-scout binary | `./cub-scout` |
+| `SCOUT_DISPOSABLE_CONFIGHUB` | `1` lets `TestSDKReaderMatchesCubOnARealServer` run. It creates a space and two Units, so set it only for a ConfigHub server that exists for the test; it refuses a hosted server | unset (the test skips) |
+| `SCOUT_SDK_PARITY_OUT` | Directory that receives what each route returned, the timings and the list recordings | a temporary directory |

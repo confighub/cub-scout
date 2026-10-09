@@ -1,0 +1,140 @@
+[
+  {
+    "Space": {
+      "CreatedAt": "2026-10-09T17:49:34.523901Z",
+      "DisplayName": "scout-sdk-parity-1791568174438733407",
+      "EntityType": "Space",
+      "OrganizationID": "2b474e11-5491-48ca-a093-431fba5c2b16",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "229a5aa9-62b8-43ea-b0be-fbe1a9c3b6d6": true
+          }
+        },
+        "ManageChildren": {
+          "UserIDs": {
+            "229a5aa9-62b8-43ea-b0be-fbe1a9c3b6d6": true
+          }
+        }
+      },
+      "Slug": "scout-sdk-parity-1791568174438733407",
+      "SpaceID": "87f0f283-493d-4daf-a005-1fd0a03e44c8",
+      "UpdatedAt": "2026-10-09T17:49:34.523902Z"
+    },
+    "Unit": {
+      "CreatedAt": "2026-10-09T17:49:34.786571Z",
+      "DataHash": "438939c977b79849261d3b8fa2e67c0ad959c5fc08e41d80c738cc41b9248b56",
+      "DataSize": 102,
+      "DisplayName": "parity-other",
+      "EntityType": "Unit",
+      "HeadMutationNum": 1,
+      "HeadRevisionID": "6cc98ef8-50ed-4cc2-a90c-0e8c216a5e3a",
+      "HeadRevisionNum": 2,
+      "LastChangeDescription": "MergeExternal; from /tmp/TestSDKReaderMatchesCubOnARealServer1039818458/002/parity-other.yaml",
+      "OrganizationID": "2b474e11-5491-48ca-a093-431fba5c2b16",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "229a5aa9-62b8-43ea-b0be-fbe1a9c3b6d6": true
+          }
+        }
+      },
+      "ProvidedPaths": [
+        {
+          "AttributeName": "resource-name",
+          "DataType": "string",
+          "Details": {
+            "BoundLinkID": "00000000-0000-0000-0000-000000000000",
+            "IsProvided": true,
+            "ProvidedProperties": {
+              "Namespace": "default",
+              "ResourceType": "v1/ConfigMap",
+              "SubPath-key": "true"
+            }
+          },
+          "Path": "metadata.name",
+          "ResourceCategory": "Resource",
+          "ResourceName": "default/parity-other",
+          "ResourceNameWithoutScope": "parity-other",
+          "ResourceType": "v1/ConfigMap"
+        }
+      ],
+      "Slug": "parity-other",
+      "SpaceID": "87f0f283-493d-4daf-a005-1fd0a03e44c8",
+      "SpaceSlug": "scout-sdk-parity-1791568174438733407",
+      "ToolchainType": "Kubernetes/YAML",
+      "UnitID": "c5ae3ad1-4fbf-4121-94db-f4dab966344f",
+      "UpdatedAt": "2026-10-09T17:49:34.809345Z",
+      "Version": 4
+    }
+  },
+  {
+    "Space": {
+      "CreatedAt": "2026-10-09T17:49:34.523901Z",
+      "DisplayName": "scout-sdk-parity-1791568174438733407",
+      "EntityType": "Space",
+      "OrganizationID": "2b474e11-5491-48ca-a093-431fba5c2b16",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "229a5aa9-62b8-43ea-b0be-fbe1a9c3b6d6": true
+          }
+        },
+        "ManageChildren": {
+          "UserIDs": {
+            "229a5aa9-62b8-43ea-b0be-fbe1a9c3b6d6": true
+          }
+        }
+      },
+      "Slug": "scout-sdk-parity-1791568174438733407",
+      "SpaceID": "87f0f283-493d-4daf-a005-1fd0a03e44c8",
+      "UpdatedAt": "2026-10-09T17:49:34.523902Z"
+    },
+    "Unit": {
+      "CreatedAt": "2026-10-09T17:49:34.609087Z",
+      "DataHash": "ac01a95f5ea5e3d21d0830cb31ef1c42c86d257a7004981c9ae21ce99b8652fc",
+      "DataSize": 101,
+      "DisplayName": "parity-unit",
+      "EntityType": "Unit",
+      "HeadMutationNum": 1,
+      "HeadRevisionID": "2519db5b-692b-4d66-90be-ba96aed63edc",
+      "HeadRevisionNum": 2,
+      "LastChangeDescription": "MergeExternal; from /tmp/TestSDKReaderMatchesCubOnARealServer1039818458/001/parity-unit.yaml",
+      "OrganizationID": "2b474e11-5491-48ca-a093-431fba5c2b16",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "229a5aa9-62b8-43ea-b0be-fbe1a9c3b6d6": true
+          }
+        }
+      },
+      "ProvidedPaths": [
+        {
+          "AttributeName": "resource-name",
+          "DataType": "string",
+          "Details": {
+            "BoundLinkID": "00000000-0000-0000-0000-000000000000",
+            "IsProvided": true,
+            "ProvidedProperties": {
+              "Namespace": "default",
+              "ResourceType": "v1/ConfigMap",
+              "SubPath-key": "true"
+            }
+          },
+          "Path": "metadata.name",
+          "ResourceCategory": "Resource",
+          "ResourceName": "default/parity-unit",
+          "ResourceNameWithoutScope": "parity-unit",
+          "ResourceType": "v1/ConfigMap"
+        }
+      ],
+      "Slug": "parity-unit",
+      "SpaceID": "87f0f283-493d-4daf-a005-1fd0a03e44c8",
+      "SpaceSlug": "scout-sdk-parity-1791568174438733407",
+      "ToolchainType": "Kubernetes/YAML",
+      "UnitID": "faa8e647-97fa-4c39-8f5c-ccd130ab3f35",
+      "UpdatedAt": "2026-10-09T17:49:34.672993Z",
+      "Version": 4
+    }
+  }
+]

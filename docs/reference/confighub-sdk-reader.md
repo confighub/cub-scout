@@ -106,7 +106,7 @@ check, and every other ConfigHub read still runs `cub`.
 | `cub auth status` processes per command | 1 | 1 |
 | JSON returned for the recorded Unit | as `cub` printed it | equal, byte for byte |
 | source-truth result on the recorded Unit, each route fed the same recorded object | Space, Unit, Revision `2`, URL | the same |
-| Time to start `cub` at all (`cub version`, no network, 5 runs) | 0.40 to 0.53 s | not applicable |
+| Time to start `cub` at all (`cub version`, no network, 5 runs, on this Mac) | 0.40 to 0.53 s | not applicable |
 
 | Cost of adopting the SDK | Before | After |
 |---|---|---|
@@ -120,18 +120,43 @@ of `github.com/cockroachdb/errors`, `github.com/getsentry/sentry-go`. Neither
 SDK core v0.8.10 nor cub-scout initialises Sentry or calls a reporting
 function, so it is linked and inert.
 
+## Against a real server (2026-10-09, CI run 37967084137)
+
+`TestSDKReaderMatchesCubOnARealServer` runs in the Connected E2E lane against
+the disposable ConfigHub that lane installs (server v0.8.3, `cub` v0.8.3;
+cub-scout built with SDK core v0.8.10). It creates a space and two Units
+through `cub`, then asks for one Unit by each route.
+
+| Checked on the real server | Result |
+|---|---|
+| Reader's JSON against `cub unit get -o json`, space named by slug | identical, 2216 bytes |
+| The same, space named by its ID | identical |
+| Requests the reader made | 2 by slug, 1 by ID |
+| The second Unit in the space, a Unit that does not exist, a space that does not exist | the second Unit and no other; `not_found`; `not_found` |
+| MCP `confighub_unit_get` through the built binary, `cub` route against `sdk` route | the whole answer identical |
+
+| One read, 15 runs, milliseconds | min | median | max |
+|---|---|---|---|
+| `cub unit get` (a `cub` process, start to exit) | 79.5 | 86.4 | 97.7 |
+| SDK reader, space by slug (credential resolved each time, 2 GETs) | 5.7 | 5.9 | 6.9 |
+| SDK reader, space by ID (credential resolved each time, 1 GET) | 4.0 | 4.3 | 4.8 |
+
+Those times are from one GitHub-hosted runner with the server in a kind
+cluster on the same machine, so the network costs almost nothing and most of
+the `cub` figure is starting a process. Against a server across a network,
+each request costs both routes more; that was not measured. The recordings
+are kept in `test/fixtures/confighub-sdk-parity-v083-recorded/`.
+
 ## Not measured, and not claimed
 
-- **No run against a real ConfigHub server.** The tests use an object recorded
-  from a real v0.8.3 server
-  (`test/fixtures/confighub-governance-v083-recorded/unit-get.json`); the list
-  envelope and the server's handling of the `where` filter are simulated. That
-  the two GETs return this shape from a live server is not proven here.
-- **End-to-end time for either route**, and how many HTTP requests `cub` itself
-  makes, were not measured. The `cub version` timing is only a lower bound on
-  what starting a process costs.
-- **No agent cost or time claim.** Fewer processes is not a measured saving
-  for an agent.
+- **One server version, one kind of Unit.** The real-server run is v0.8.3 with
+  a plain Unit: no target, no upstream, no live revision. A hosted server,
+  another version and a credential with fewer rights were not tried.
+- **Time for a whole command.** The timings are for one read. A connected
+  command also runs `cub auth status` on either route, and how many requests
+  `cub` itself makes was not measured.
+- **No agent cost or time claim.** A faster read is not a measured saving for
+  an agent; no eval was run on it.
 
 ## Known differences and limits
 
@@ -146,9 +171,10 @@ function, so it is linked and inert.
   ConfigHub read's error on either route and reports only a missing surface,
   with advice that names `cub` login. That is existing behaviour; with the SDK
   route the advice is the wrong one.
-- **The "same result" above is a fixture comparison.** The cub route was given
-  the recorded `cub unit get` output and the SDK route the same object over
-  HTTP from a test server. Neither ran against ConfigHub.
+- **The unit tests compare on a fixture.** They give the cub route the
+  recorded `cub unit get` output and the SDK route the same object over HTTP
+  from a test server. The run against ConfigHub is the Connected lane test
+  above, which CI runs only when that lane is asked for.
 
 ## Found on the way
 
@@ -167,6 +193,6 @@ function, so it is linked and inert.
 More commands behind the same adapter, one at a time (`unit list` and
 `space list` first), each held to the `cub` route's output on a recorded
 response; the connected check, so that the SDK route can run without `cub`
-installed; then a proof against a real server and a timing comparison; then a
-decision on the default. Scout's observation interface stays read-only
+installed; a real-server run on a current server version and with a Unit that
+has a target; then a decision on the default. Scout's observation interface stays read-only
 throughout: the SDK's action calls are not exposed.
