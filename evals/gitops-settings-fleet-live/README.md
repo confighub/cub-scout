@@ -11,6 +11,12 @@ plugin the agent has nothing to read) and compare it with the **without** arm of
 differ in what evidence they hold, so this compares two ways of working, not
 one tool added to a fixed setup.
 
+Result (2026-10-09, three runs): both lists correct 3/3, 4 turns, about $0.21
+and 19 seconds per run, two `gitops_settings` calls each. The export-only
+baseline it is compared with was 3/3 at a median $0.41 and 15 to 19 turns. See
+the [report](../reports/2026-10-09-gitops-settings.md) for why that is not a
+general saving.
+
 Graders and guard mocks are copies of the fleet case's and are rewritten by
 `../gitops-settings-fleet/record.py up`. The expected answer is
 `../gitops-settings-fleet/expected.json`.

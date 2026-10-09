@@ -28,10 +28,11 @@ flags and how to read the output.
 - It is not a new capability over `kubectl get applications -o json` and a
   filter; it is the same facts, read once, across both controllers, with the
   cases that are easy to get wrong handled the same way every time (below).
-- One agent eval case exists for it,
-  [`gitops-settings-no-self-heal`](../../evals/gitops-settings-no-self-heal/),
-  on one recorded scenario. Read its result and limits there; it is not a
-  general claim about agent time or cost.
+- Three agent eval cases ask its question
+  ([report](../../evals/reports/2026-10-09-gitops-settings.md)). An agent that
+  already had the raw export did not use the MCP tool and gained nothing; an
+  agent with cub-scout and no export answered a 300-deployer question in four
+  turns. That is not a general claim about agent time or cost.
 
 ## The cases the check pins
 

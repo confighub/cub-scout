@@ -41,6 +41,23 @@ that fail unless the case is run with `--mocks off`.
 - **One question on one fleet.** A result here is not a general claim about
   agent cost or time.
 
+## Result (2026-10-09)
+
+Three runs per arm; see the [report](../reports/2026-10-09-gitops-settings.md)
+for all three cases, the transcripts' behaviour and the limits.
+
+| Arm | Evidence | Both lists correct | $/run | Turns | Called `gitops_settings` |
+|---|---|---:|---|---:|---|
+| with cub-scout | export + live MCP | 2/3 | $0.57 (0.54, 0.55, 0.63) | 13 to 19 | never |
+| without | export | 3/3 | $0.84 mean, $0.41 median (1.73, 0.41, 0.37) | 15 to 19 | n/a |
+| [live only](../gitops-settings-fleet-live/) | live MCP, no export | 3/3 | $0.21 | 4 | twice per run |
+
+**With the export on disk the tool was not used and no advantage was shown.**
+The cub-scout arm's one wrong answer included six Applications whose automated
+sync is disabled, which the tool reports as `n/a`. With no export, the agent
+used the tool and answered in four turns. The arms hold different evidence, so
+that last row is a comparison of two ways of working, not a controlled one.
+
 ## Running
 
 ```bash

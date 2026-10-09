@@ -168,6 +168,13 @@ func deliverySettingsParamsFromFlags(cmd *cobra.Command) (deliverySettingsParams
 	default:
 		return params, fmt.Errorf("invalid --view %q (valid: all, summary, groups, settings, deployers)", view)
 	}
+	if params.View != deliverySettingsViewAll {
+		format, _ := flags.GetString("format")
+		legacyJSON, _ := flags.GetBool("json")
+		if !legacyJSON && !strings.EqualFold(strings.TrimSpace(format), "json") {
+			return params, fmt.Errorf("--view applies to JSON output; use --group-by for ascii and md")
+		}
+	}
 	for _, project := range params.Projects {
 		if strings.TrimSpace(project) == "" {
 			return params, fmt.Errorf("--project must not be empty")
@@ -193,9 +200,6 @@ func runGitOpsSettings(cmd *cobra.Command, args []string) error {
 	tui, _ := cmd.Flags().GetBool("tui")
 	if err := validateGitOpsTUIFormat(tui, cmd.Flags().Changed("format"), cmd.Flags().Changed("json")); err != nil {
 		return err
-	}
-	if params.View != deliverySettingsViewAll && format != "json" {
-		return fmt.Errorf("--view applies to JSON output; use --group-by for ascii and md")
 	}
 	ctx, err := boundCommandContext(cmd)
 	if err != nil {

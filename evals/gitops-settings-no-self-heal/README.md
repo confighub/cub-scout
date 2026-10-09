@@ -74,6 +74,20 @@ sees the real descriptions and schemas.
   Do not pool it with `benchmark-v1`, whose inputs are frozen and unchanged by
   this case.
 
+## Result (2026-10-09)
+
+Three runs per arm; see the [report](../reports/2026-10-09-gitops-settings.md)
+for all three cases, the transcripts' behaviour and the limits.
+
+| Arm | Both lists correct | $/run | Turns | Called `gitops_settings` |
+|---|---:|---:|---:|---|
+| with cub-scout | 3/3 | $0.32 | 7 | never |
+| without | 3/3 | $0.24 | 6 to 7 | n/a |
+
+**cub-scout added nothing here and cost more.** Both arms read the export; the
+cub-scout arm never called the tool, and paid for the plugin's tool
+descriptions and skill list in context.
+
 ## Re-recording
 
 ```bash

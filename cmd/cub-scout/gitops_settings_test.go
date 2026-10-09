@@ -431,10 +431,18 @@ func TestGitOpsSettingsViewFlag(t *testing.T) {
 	params, err := parse()
 	require.NoError(t, err)
 	require.Equal(t, deliverySettingsViewAll, params.View, "the CLI default is the full report, as in v2.13.3")
-	params, err = parse("--view", "Groups")
+	params, err = parse("--view", "Groups", "--format", "json")
 	require.NoError(t, err)
 	require.Equal(t, deliverySettingsViewGroups, params.View)
-	_, err = parse("--view", "brief")
+	_, err = parse("--view", "summary", "--json")
+	require.NoError(t, err)
+	// A view is a JSON shape. Asking for one with text output is refused, not
+	// silently ignored.
+	for _, args := range [][]string{{"--view", "summary"}, {"--view", "deployers", "--format", "md"}} {
+		_, err = parse(args...)
+		require.ErrorContains(t, err, "--view applies to JSON output")
+	}
+	_, err = parse("--view", "brief", "--json")
 	require.ErrorContains(t, err, `invalid --view "brief" (valid: all, summary, groups, settings, deployers)`)
 }
 

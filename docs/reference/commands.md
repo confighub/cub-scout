@@ -2956,8 +2956,8 @@ Delivery Settings section.
   namespace is not checked, so an Application Argo CD ignores still appears.
 - In v2.13.3 there is no MCP tool for this. The `gitops_settings` MCP tool and
   `--view` are merged and unreleased; see [Views](#views-unreleased) below and
-  the [eval case](../../evals/gitops-settings-no-self-heal/) for what was and
-  was not measured.
+  the [eval report](../../evals/reports/2026-10-09-gitops-settings.md) for what
+  was and was not measured.
 - `ignoreDifferences` and `driftDetection.ignore` rules are reported as
   declared. Which live fields they currently hide is not computed.
 
@@ -2980,6 +2980,13 @@ The summary exists because an agent pays for every byte it reads. On the
 thirty-deployer scenario in the eval case it is about 6 KB, where the `groups`
 view is about 33 KB and the raw `kubectl` export of the same objects about
 42 KB. That is a size on one scenario, not a measured saving.
+
+What was measured is in the
+[eval report](../../evals/reports/2026-10-09-gitops-settings.md). In short: an
+agent that already holds the raw export did not call the tool and gained
+nothing from it, and on a small cluster the plugin made the run dearer; an agent
+with cub-scout and no export answered a 300-deployer question correctly in four
+turns. Three runs per arm on generated scenarios; not a general claim.
 
 See the [live example](../../examples/delivery-settings/) and the
 [JSON contract](json-contracts.md#delivery-settings-contract).
