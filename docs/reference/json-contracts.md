@@ -1232,7 +1232,7 @@ change while the command is a preview.
 Settings are declared configuration. Nothing in this contract says a controller
 acted on a setting, and nothing in it is a verdict.
 
-### Views (unreleased)
+### Views (since v2.13.4)
 
 `--view groups`, `settings` or `deployers` writes the same document with only
 that one of the three views, plus `"view": "<name>"`. `context`, `namespace`,

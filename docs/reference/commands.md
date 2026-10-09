@@ -2264,7 +2264,7 @@ standalone and connected tool sets described below remain available.
   - `target` (required)
   - `namespace` (required)
   - `strategy` (required; enum mirrors `compare source-truth --help`)
-- `gitops_settings` (unreleased; see [gitops settings](#gitops-settings))
+- `gitops_settings` (preview since v2.13.4; see [gitops settings](#gitops-settings))
   - `namespace` (optional; the namespace of the deployer objects)
   - `context` (optional)
   - `project` (optional string array; Argo CD projects)
@@ -2837,7 +2837,7 @@ without additional target-cluster reads. See the
 ### gitops settings
 
 Show the delivery settings each Argo CD and Flux deployer declares, and which
-deployers share each setting. Preview, first shipped in v2.13.3; the JSON shape
+deployers share each setting. Preview, first shipped in v2.13.3; the JSON shapes
 may still change.
 
 ```bash
@@ -2860,11 +2860,11 @@ judge a setting, and does not report whether a controller acted on it.
 |------|-------------|
 | `-n, --namespace` | Only deployers in this namespace (default: all namespaces) |
 | `--project` | Only Argo CD Applications in this project; repeatable. Flux objects have no project and are left out, and the output says how many |
-| `--setting` | Only deployers with this setting, as `name` or `name=value`; repeatable, and all must match. `name` alone selects deployers whose spec declares it (changed after v2.13.3, where it also matched a policy left unset) |
+| `--setting` | Only deployers with this setting, as `name` or `name=value`; repeatable, and all must match. `name` alone selects deployers whose spec declares it (changed in v2.13.4; in v2.13.3 it also matched a policy left unset) |
 | `--group-by` | `project` (default), `setting` or `deployer` |
 | `--format` | Output format: `ascii`, `json`, `md` |
 | `--json` | Output as JSON (shorthand for `--format json`) |
-| `--view` | JSON only: `all` (default), `summary`, `groups`, `settings` or `deployers`. Unreleased |
+| `--view` | JSON only: `all` (default), `summary`, `groups`, `settings` or `deployers`. Since v2.13.4 |
 | `--tui` | View the same read-once snapshot in a scrollable viewport |
 | `--kube-context` | Exact kubeconfig context for every read; a missing or empty name fails before any read |
 
@@ -2955,13 +2955,13 @@ Delivery Settings section.
   in. Whether an Argo CD instance is configured to manage Applications in that
   namespace is not checked, so an Application Argo CD ignores still appears.
 - In v2.13.3 there is no MCP tool for this. The `gitops_settings` MCP tool and
-  `--view` are merged and unreleased; see [Views](#views-unreleased) below and
+  `--view` arrive in v2.13.4; see [Views](#views-since-v2134) below and
   the [eval report](../../evals/reports/2026-10-09-gitops-settings.md) for what
   was and was not measured.
 - `ignoreDifferences` and `driftDetection.ignore` rules are reported as
   declared. Which live fields they currently hide is not computed.
 
-#### Views (unreleased)
+#### Views (since v2.13.4)
 
 `--format json` prints the whole report: per-object `deployers`, the per-project
 `groups` inversion and the per-kind `settings` inversion. `--view` prints one of

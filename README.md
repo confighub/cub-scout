@@ -58,7 +58,7 @@ dependency. If an old cask is installed, run
 `brew uninstall --cask confighub/tap/cub-scout` first.
 
 
-Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.13.3`, then
+Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.13.4`, then
 `cub scout doctor`. [Installation and verified downloads](docs/getting-started/install.md)
 cover macOS, Linux, Windows, and tagged source builds.
 
@@ -101,7 +101,7 @@ Cub-scout helps users answer questions about k8s and GitOps clusters in one plac
 | Can I revisit that companion panel without re-reading the cluster, and see when its evidence is old? | Companion Resource `3 Evidence`, `1` / `2` to switch tabs, `r` to refresh | **Commander v0.3.0 + Scout v2.10.0:** one captured snapshot with observation/expiry times and a `STALE` label. Tab revisits make no provider calls, even after expiry; only explicit refresh reads again and discards old success first. Navigation cancels pending work; changed identities and late responses cannot reuse old evidence. Unlike Scout's MCP/TUI cache, viewing this retained snapshot does not revalidate credentials. [Contract and proof](https://github.com/confighub/cub-commander/blob/main/docs/resource-evidence.md). |
 | Is delegated delivery healthy? | `doctor --with-confighub`, `gitops status`, MCP `gitops_status`, `map deployers`, `map activity --with-confighub`, `trace` | Controller-reported backend, transport, source/build/apply/sync stages, first-class aggregate delivery resources, scope-level delivery rollups, ConfigHub delivery timeline rows, exact live-status joins on matching Argo Application activity rows, reason/message, and explicit evidence gaps when status is incomplete. |
 | Which controller families did cub-scout actually inspect? | `gitops status`, MCP `gitops_status` | `controllerCoverage[]` records Flux, Argo CD, ConfigHub, Sveltos, and Modelplane coverage as `found`, `not_found`, `partial`, or `unreadable`, including checked kinds, observed kinds, counts, and RBAC/list omissions. |
-| Which deployers sync on their own, revert manual changes, prune, or apply with non-default options? | `gitops settings`, `gitops settings --setting self-heal=off`, `map deep-dive` | **v2.13.3 (preview):** the settings each Argo CD Application and Flux Kustomization and HelmRelease declares, inverted so each setting lists the deployers that have each value, grouped by project (Argo CD) or namespace (Flux). An absent field is `unset` with the controller default named, not a declared `off`; a kind that could not be listed is reported as not read, not as empty. Declared settings only: no verdict, and no claim that a controller acted on them. No MCP tool in v2.13.3; `gitops_settings` is merged and unreleased. |
+| Which deployers sync on their own, revert manual changes, prune, or apply with non-default options? | `gitops settings`, `gitops settings --setting self-heal=off`, MCP `gitops_settings`, `map deep-dive` | **v2.13.3 (preview):** the settings each Argo CD Application and Flux Kustomization and HelmRelease declares, inverted so each setting lists the deployers that have each value, grouped by project (Argo CD) or namespace (Flux). An absent field is `unset` with the controller default named, not a declared `off`; a kind that could not be listed is reported as not read, not as empty. Declared settings only: no verdict, and no claim that a controller acted on them. From v2.13.4 also MCP `gitops_settings`, which returns a compact summary by default. |
 | Is this Modelplane resource backed by Crossplane composition? | `map list --format json`, `trace`, `watch`, `bot`, `receipt verify`, attribution JSON | Modelplane remains the higher-level owner when its signals are stronger, while `ownerEvidence`, `owner.evidence`, trace messages, and `predicate.evidence.platformSubstrate` surface Crossplane composite, claim, composition-resource, and verified field-manager evidence as substrate context. |
 | What Kubernetes config does ConfigHub already hold for this space or target? | MCP `confighub_k8s_types`, MCP `confighub_k8s_resources` | Read-only, Resource-backed intended-config reads through `cub k8s types/get`: type surveys, stored resource rows or YAML, custom-resource discovery, explicit space/target scoping, and `where` / `where_resource` filters before touching live cluster APIs. |
 | Which indexed resources match a fleet-wide predicate? | MCP `confighub_resources` | Read-only ConfigHub Resource entity queries through `cub resource list`: server-side `ResourceType`, `ResourceName`, `TargetID`, `Unit.*`, `Space.*`, and `Data.*` predicates, optional views/selects/raw data, and explicit space scoping for broad explorer questions. |
@@ -166,11 +166,19 @@ coalescing, opt-in watch-backed idle observation, and a new `resource.deleted`
 event), plus local bot images built from verified release archives. See the
 [release notes](docs/releases/v2.11.0.md).
 
-**v2.13.3 is the latest release.** It adds `gitops settings`, a preview
-command that shows which Argo CD and Flux deployers sync on their own, revert
-manual changes, prune, or apply with non-default options, grouped by project or
-namespace. It reports declared settings only, has no MCP tool yet, and no agent
-eval has been run on it. See the [v2.13.3 release notes](docs/releases/v2.13.3.md).
+**v2.13.4 is the latest release.** It makes `gitops settings` available to
+agents: an MCP tool, `gitops_settings`, and a compact JSON `--view summary`. In
+the eval cases that came with it, an agent that already held the raw `kubectl`
+export never called the tool and gained nothing, while an agent with cub-scout
+and no export answered a 300-deployer question correctly in four turns; that is
+three runs on generated scenarios, not a general saving. A bare
+`--setting <name>` now selects deployers that declare the setting. See the
+[v2.13.4 release notes](docs/releases/v2.13.4.md).
+
+**v2.13.3** added `gitops settings`, a preview command that shows which Argo CD
+and Flux deployers sync on their own, revert manual changes, prune, or apply
+with non-default options, grouped by project or namespace. It reports declared
+settings only. See the [v2.13.3 release notes](docs/releases/v2.13.3.md).
 
 **v2.13.2** is a correction release: upgrade from v2.13.1 or earlier for it. A
 receipt for a Flux-delivered workload could name its parent's Git repository
@@ -396,8 +404,8 @@ For direct downloads and tagged source builds, use the
 `github.com/confighub/cub-scout/v2`; proxy installation via
 `go install github.com/confighub/cub-scout/v2/cmd/cub-scout@latest` installs
 the latest tagged 2.x module. For a pinned install use
-`go install github.com/confighub/cub-scout/v2/cmd/cub-scout@v2.13.3`. Container command
-`docker run ghcr.io/confighub/cub-scout:v2.13.3 version` still needs registry
+`go install github.com/confighub/cub-scout/v2/cmd/cub-scout@v2.13.4`. Container command
+`docker run ghcr.io/confighub/cub-scout:v2.13.4 version` still needs registry
 access verification (#520); the published image is Linux amd64 only.
 `kubectl krew install cub-scout` is not a verified distribution path; use the
 `kubectl-cub_scout` binary included in the archives or Homebrew instead.

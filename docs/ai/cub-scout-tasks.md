@@ -214,7 +214,7 @@ a stable contract.
 ./cub-scout mcp serve
 ```
 
-Standalone MCP tools: `doctor`, `explain`, `gitops_settings` (unreleased), `gitops_status`, `map`, `scan`, `trace`.
+Standalone MCP tools: `doctor`, `explain`, `gitops_settings` (preview since v2.13.4), `gitops_status`, `map`, `scan`, `trace`.
 Connected mode adds read-only ConfigHub query tools:
 `compare_three_way`, `compare_source_truth`, `confighub_changesets`,
 `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`,
