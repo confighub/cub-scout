@@ -60,8 +60,9 @@ type ArgoAppRef struct {
 	Namespace string
 }
 
-// testDebugDir is the directory for test debug output
-const testDebugDir = "/tmp/confighub-import-test-debug"
+// testDebugDir is the directory for test debug output. A variable so that a
+// test can point it at its own directory.
+var testDebugDir = "/tmp/confighub-import-test-debug"
 
 // writeTestDebug writes debug content to a file in the debug directory
 func writeTestDebug(filename string, content []byte) {
@@ -1952,7 +1953,17 @@ func (m ImportWizardModel) runTestApply() tea.Msg {
 
 	// First, check if the unit has a target. If not, find one and set it.
 	appendTestDebug("Checking if unit has target...")
-	checkOutput, _ := cubStdout(context.Background(), withConfigHubSpace([]string{"unit", "get", "-o", "json", m.testUnitSlug}, m.proposal.App)...)
+	checkOutput, checkErr := cubStdout(context.Background(), withConfigHubSpace([]string{"unit", "get", "-o", "json", m.testUnitSlug}, m.proposal.App)...)
+	if checkErr != nil {
+		// A read that failed says nothing about the Unit's target. Going on
+		// would set a target on a Unit that may already have one.
+		appendTestDebug(fmt.Sprintf("ERROR reading unit: %v", checkErr))
+		return wizardTestPhaseMsg{
+			phase:   testPhaseApply,
+			success: false,
+			err:     fmt.Errorf("could not read unit %s before applying: %w", m.testUnitSlug, checkErr),
+		}
+	}
 	writeTestDebug("06-unit-before-apply.json", checkOutput)
 	appendTestDebug(fmt.Sprintf("Unit JSON: %d bytes", len(checkOutput)))
 

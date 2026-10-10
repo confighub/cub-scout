@@ -77,11 +77,8 @@ func firstLine(text string) string {
 //   - cub-scout's own auth.json is not a credential `cub` uses, so it cannot
 //     show that a `cub` read will succeed.
 func RequireCubConnected() error {
-	if os.Getenv("CUB_SCOUT_OFFLINE") == "true" {
-		return fmt.Errorf("%w: CUB_SCOUT_OFFLINE=true is set; unset it to use connected commands", ErrConfigHubReadsDisabled)
-	}
-	if telemetryDisabled() {
-		return fmt.Errorf("%w: telemetry is disabled (CUB_SCOUT_TELEMETRY=false, or %s exists), and that also turns off ConfigHub reads", ErrConfigHubReadsDisabled, telemetryConfigPath())
+	if err := ConfigHubReadsDisabled(); err != nil {
+		return err
 	}
 	detail, err := cubAuthStatus()
 	if err == nil {
@@ -97,6 +94,23 @@ func RequireCubConnected() error {
 		return fmt.Errorf("%w: %s", ErrCubVersionSkew, detail)
 	}
 	return fmt.Errorf("%w: %s", ErrCubNotAuthenticated, detail)
+}
+
+// ConfigHubReadsDisabled returns an error when the user has turned ConfigHub
+// reads off: CUB_SCOUT_OFFLINE=true, or telemetry disabled. It runs nothing
+// and reads no credential.
+//
+// Every route to ConfigHub checks it, not only the gate above. A read that
+// goes through the ConfigHub SDK needs no `cub` binary, so "cub is not
+// installed" no longer keeps an offline machine offline; this does.
+func ConfigHubReadsDisabled() error {
+	if os.Getenv("CUB_SCOUT_OFFLINE") == "true" {
+		return fmt.Errorf("%w: CUB_SCOUT_OFFLINE=true is set; unset it to use connected commands", ErrConfigHubReadsDisabled)
+	}
+	if telemetryDisabled() {
+		return fmt.Errorf("%w: telemetry is disabled (CUB_SCOUT_TELEMETRY=false, or %s exists), and that also turns off ConfigHub reads", ErrConfigHubReadsDisabled, telemetryConfigPath())
+	}
+	return nil
 }
 
 // CubSessionValid reports whether `cub` has a session it considers usable.

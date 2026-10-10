@@ -59,6 +59,18 @@ type Error struct {
 
 func (e *Error) Error() string { return fmt.Sprintf("confighub %s: %s (%s)", e.Op, e.Message, e.Kind) }
 
+// Is lets a caller that asks errors.Is for the context package's errors find
+// a cancelled or timed-out read, though the cause itself is not kept.
+func (e *Error) Is(target error) bool {
+	switch target {
+	case context.Canceled:
+		return e.Kind == KindCanceled
+	case context.DeadlineExceeded:
+		return e.Kind == KindTimeout
+	}
+	return false
+}
+
 // KindOf returns the Kind of err, or KindFailed when err is not an *Error.
 func KindOf(err error) Kind {
 	var typed *Error
@@ -177,7 +189,7 @@ func Resolve(ctx context.Context, opts Options) (*Reader, error) {
 	if env.HasCredentials() && os.Getenv("CUB_PLUGIN") == "1" {
 		client, err = cubapi.NewClientFromEnvironment(ctx, clientOptions)
 	} else {
-		// Not cubapi.ResolveClient: in SDK core v0.8.10 it hands CUB_CONFIG,
+		// Not cubapi.ResolveClient: in SDK core v0.8.10 and v0.8.12 it hands CUB_CONFIG,
 		// which names the config directory, to LoadConfig as if it were the
 		// config file, and fails to read a directory. LoadConfig("") resolves
 		// the directory the way cub does.

@@ -1819,10 +1819,11 @@ Other known v0.2 gaps:
 
 ---
 
-An experimental, opt-in route reads the Unit through the ConfigHub SDK instead
-of running `cub unit get`: set `CUB_SCOUT_CONFIGHUB_READER=sdk`. The same
-setting applies to every `cub unit get` cub-scout runs for a Unit named by slug.
-It is off by default and unreleased, and `cub` is still required; see
+The Unit is read through the ConfigHub SDK, not by running `cub unit get`. So
+is every `cub unit get` for a Unit named by slug, every plain or filtered
+`cub unit list` for one space, and `cub space list`. Set
+`CUB_SCOUT_CONFIGHUB_READER=cub` to read them through `cub` instead. This
+default is unreleased, and `cub` is still required for the session check; see
 [ConfigHub SDK reader](confighub-sdk-reader.md) for what it covers, what it
 guarantees and what was measured.
 

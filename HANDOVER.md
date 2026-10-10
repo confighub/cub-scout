@@ -7,6 +7,11 @@
 the current state, and [v2.13.3](#v2133-published-2026-10-09) and
 [v2.13.2](#v2132-published-2026-10-07) before it. The 2026-10-06 checkpoint below is kept as written.
 
+**After v2.13.4, unreleased on main: SDK reads are no longer deferred.** Where
+this file says "SDK #758 stays deferred", that was true when written. See
+[ConfigHub SDK reads](#confighub-sdk-reads--2026-10-10) at the end, and
+[the readiness ledger](docs/releases/v2.14-readiness.md) for everything since.
+
 **v2.13.1 is published**, source `277d7ad8`, with tagged full Go tests and
 packaging passing. See [published verification](docs/releases/v2.13.1.md).
 The immutable v2.13.0 tag remains after its documentation-contract failure;
@@ -1888,3 +1893,34 @@ Things learned that the next session should not rediscover:
 Next, at the maintainer's direction: adopt the ConfigHub SDK for connected reads
 (#758). Its first step, moving to Go 1.25 with the 1.26.9 toolchain and
 golangci-lint v2, is #846.
+
+## ConfigHub SDK reads — 2026-10-10
+
+At the maintainer's direction, #758 moved from deferred to adopted for reads.
+Nothing here is released; the published baseline is still v2.13.4.
+
+- `internal/hubread` is the only package that imports the SDK. It is
+  read-only at the transport (GET and HEAD, no redirects), reads exactly one
+  named space, and uses the credential `cub` uses.
+- One adapter under `cubStdout` answers three commands through it and returns
+  the JSON `cub` prints: `unit get` by slug, `unit list` for one space (plain,
+  `--where`, `--contains`), and `space list`. Everything else runs `cub`.
+- **That route is the default.** `CUB_SCOUT_CONFIGHUB_READER=cub` is the way
+  back. A failed SDK read never falls back.
+- Proof is from a real server, not from invented JSON: the Connected E2E lane
+  installs a disposable ConfigHub (v0.8.12 now, v0.8.3 before) and
+  `test/integration/sdk_reader_parity_test.go` compares the two routes byte
+  for byte. Run it on any branch with
+  `gh workflow run CI --ref <branch> -f level=connected`, and read the
+  `connected-acceptance` artifact rather than the lane's colour.
+- The test binary of `cmd/cub-scout` is pinned to the `cub` route and cannot
+  resolve a real credential. Keep it that way: the SDK route reads whatever
+  the machine is logged in to.
+- `cub` is still required: connected commands check the session with
+  `cub auth status`. Three commands read without that check (#863).
+- Not done, and listed on #758: more reads, one space lookup per command, the
+  session check through the SDK, a hosted server, a Unit with a target.
+
+The reference is [docs/reference/confighub-sdk-reader.md](docs/reference/confighub-sdk-reader.md).
+Found on the way and fixed: `views project` read shapes `cub` does not print
+(#852, #854).

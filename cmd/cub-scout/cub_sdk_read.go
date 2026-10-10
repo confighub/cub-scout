@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/confighub/cub-scout/v2/internal/hubread"
+	"github.com/confighub/cub-scout/v2/pkg/hub"
 )
 
 // This file is where a `cub` read is answered through the ConfigHub SDK
@@ -32,19 +33,20 @@ import (
 // different question answered confidently.
 
 // configHubReaderEnv selects how the reads this file reproduces reach
-// ConfigHub. Unset or "cub" runs the cub CLI, as every release has. "sdk" uses
-// the SDK's typed client through internal/hubread, with no cub process.
-// Experimental.
+// ConfigHub. Unset or "sdk" uses the SDK's typed client through
+// internal/hubread, with no cub process for the read. "cub" runs the cub CLI
+// for them, as every release before this default did; it is the way back when
+// the two disagree.
 const configHubReaderEnv = "CUB_SCOUT_CONFIGHUB_READER"
 
-// configHubReaderRoute returns "cub" or "sdk". Any other value is an error:
+// configHubReaderRoute returns "sdk" or "cub". Any other value is an error:
 // a misspelt route must not quietly become the default one.
 func configHubReaderRoute() (string, error) {
 	switch value := strings.ToLower(strings.TrimSpace(os.Getenv(configHubReaderEnv))); value {
-	case "", "cub":
-		return "cub", nil
-	case "sdk":
+	case "", "sdk":
 		return "sdk", nil
+	case "cub":
+		return "cub", nil
 	default:
 		return "", fmt.Errorf("%s=%q is not a reader (valid: cub, sdk)", configHubReaderEnv, value)
 	}
@@ -52,7 +54,13 @@ func configHubReaderRoute() (string, error) {
 
 // sdkReader builds the reader for one read. It resolves the same credential
 // cub would use, and reads; it does not log in or write.
-var sdkReader = func(ctx context.Context) (*hubread.Reader, error) {
+var sdkReader = resolveSDKReader
+
+// configHubReadsDisabledFn is the user's off switch for ConfigHub reads; a
+// seam so that tests need not set the process environment.
+var configHubReadsDisabledFn = hub.ConfigHubReadsDisabled
+
+func resolveSDKReader(ctx context.Context) (*hubread.Reader, error) {
 	return hubread.Resolve(ctx, hubread.Options{UserAgent: "cub-scout"})
 }
 
@@ -244,8 +252,27 @@ func canonicalID(name string) bool {
 // words its failure as "cub ... failed" checks for this first.
 type sdkRouteError struct{ err error }
 
-func (e *sdkRouteError) Error() string { return e.err.Error() }
+func (e *sdkRouteError) Error() string { return e.err.Error() + sdkRouteWayBack(e.err) }
 func (e *sdkRouteError) Unwrap() error { return e.err }
+
+// sdkRouteWayBack is added to the error when a read failed on the SDK route in
+// a way the cub route might not: the answer could not be decoded, was cut
+// short, was refused by this reader's own rules, or ran into this reader's
+// own time limit, which cub does not have. A denial, a missing Unit, a missing
+// credential, a server error or a server that cannot be reached is the same
+// by either route, since both use one server and one credential, so nothing
+// is suggested for those.
+func sdkRouteWayBack(err error) string {
+	var typed *hubread.Error
+	if !errors.As(err, &typed) {
+		return ""
+	}
+	switch typed.Kind {
+	case hubread.KindMalformed, hubread.KindIncomplete, hubread.KindRefused, hubread.KindTimeout:
+		return "; " + configHubReaderEnv + "=cub reads this through the cub CLI instead"
+	}
+	return ""
+}
 
 // failedOnSDKRoute reports whether err came from a read the SDK route answered.
 func failedOnSDKRoute(err error) bool {
@@ -273,6 +300,13 @@ func cubReadViaSDK(ctx context.Context, args []string) (out []byte, handled bool
 	// The same refusals as the cub route: a call that forgot its space is
 	// refused here too, before anything is resolved or sent.
 	if err := checkCubArgs(args); err != nil {
+		return nil, true, &sdkRouteError{err}
+	}
+	// The user's own off switch. Some commands read ConfigHub without first
+	// asking whether they may; through cub, a machine with no cub stayed
+	// offline anyway. Through the SDK it would not, so the switch is honoured
+	// here, before a credential is looked for.
+	if err := configHubReadsDisabledFn(); err != nil {
 		return nil, true, &sdkRouteError{err}
 	}
 	if ctx == nil {

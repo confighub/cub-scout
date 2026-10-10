@@ -1,12 +1,25 @@
-# ConfigHub SDK reader (experimental)
+# ConfigHub SDK reader
 
-cub-scout reaches ConfigHub by running the `cub` CLI and parsing what it prints.
-[#758](https://github.com/confighub/cub-scout/issues/758) evaluates reading
-through the ConfigHub SDK's typed API client instead. This page records what
-that route covers so far, what it guarantees and what was measured.
+cub-scout reaches ConfigHub in two ways. Most commands run the `cub` CLI and
+parse what it prints. Three reads go through the ConfigHub SDK's typed API
+client instead ([#758](https://github.com/confighub/cub-scout/issues/758)),
+with no `cub` process for the read. This page records what that route covers,
+what it guarantees and what was measured.
 
-**Status: experimental and off by default.** Unreleased. Nothing changes unless
-you set the variable below.
+**Status: the default for the reads it covers. Unreleased.** To read through
+`cub` instead, as every release so far has, set
+`CUB_SCOUT_CONFIGHUB_READER=cub`. That is the way back if the two ever
+disagree, and a failed read says so when it could help.
+
+`cub` is still required for almost everything: the connected commands check
+the session with `cub auth status`, and every other ConfigHub read runs `cub`.
+Three commands make one of these reads without that check (#863), and for
+them the SDK route needs no `cub`.
+
+`CUB_SCOUT_OFFLINE=true` and the telemetry switch turn these reads off on
+either route. The SDK route checks them itself, before it looks for a
+credential, so a machine that is offline stays offline whether or not `cub`
+is installed.
 
 ## What it covers
 
@@ -15,14 +28,19 @@ named by slug in one named space, `cub unit list` for one named space, with
 or without a `--where` or `--contains` filter, and `cub space list`.
 
 ```bash
-CUB_SCOUT_CONFIGHUB_READER=sdk cub scout compare source-truth deploy/api -n prod --strategy git-argo
-CUB_SCOUT_CONFIGHUB_READER=sdk ./cub-scout compare source-truth deploy/api -n prod --strategy git-argo
+# The default: these reads go through the SDK
+cub scout compare source-truth deploy/api -n prod --strategy git-argo
+./cub-scout compare source-truth deploy/api -n prod --strategy git-argo
+
+# The way back: every read through cub
+CUB_SCOUT_CONFIGHUB_READER=cub cub scout compare source-truth deploy/api -n prod --strategy git-argo
+CUB_SCOUT_CONFIGHUB_READER=cub ./cub-scout compare source-truth deploy/api -n prod --strategy git-argo
 ```
 
 | Value | Route |
 |---|---|
-| unset, or `cub` | The `cub` command, as every release has |
-| `sdk` | GETs through the SDK client, and no `cub` process for the read. `unit get`: the space by slug, then the Unit by slug in that space. `unit list`: the space by slug, then every Unit in it, in one request as `cub` asks for it. `space list`: one request. Naming the space by its ID saves the first request, except for a unit list that comes back empty, where the space is then checked |
+| `cub` | The `cub` command, as every release before this default |
+| unset, or `sdk` | GETs through the SDK client, and no `cub` process for the read. `unit get`: the space by slug, then the Unit by slug in that space. `unit list`: the space by slug, then every Unit in it, in one request as `cub` asks for it. `space list`: one request. Naming the space by its ID saves the first request, except for a unit list that comes back empty, where the space is then checked |
 | anything else | An error for these reads. A misspelt route does not become the default one |
 
 The route works on the command cub-scout was about to run. Every read already
@@ -62,13 +80,19 @@ user supplies.
 
 A failed SDK read is the answer, reported with its reason. It does not fall
 back to `cub`, and once the SDK route has taken a read, no failure of it is
-worded as a `cub` failure.
+worded as a `cub` failure. Where the failure is one `cub` might not have had
+(the answer could not be decoded, was cut short, was refused by this reader's
+own rules, or ran past this reader's 30-second limit, which `cub` does not
+have), the error ends by naming `CUB_SCOUT_CONFIGHUB_READER=cub`. A denial, a
+missing Unit, a missing credential, a server error or a server that cannot be
+reached is the same by either route, since both use one server and one
+credential, and nothing is suggested for those.
 
 A value that names no route is an error for every read in the left-hand
 column, in every command that makes one, and is not consulted for anything in
 the right-hand column, which has only the `cub` route.
 
-**The `cub` CLI is still required.** The connected commands first ask
+**The `cub` CLI is still required**, with three exceptions (#863). The connected commands first ask
 `cub auth status` whether ConfigHub can be read, once per command, on either
 route. The SDK route removes the `cub` process for the read, not for that
 check, and every other ConfigHub read still runs `cub`.
@@ -188,17 +212,49 @@ the `cub` figure is starting a process. Against a server across a network,
 each request costs both routes more; that was not measured. The recordings
 are kept in `test/fixtures/confighub-sdk-parity-v083-recorded/`.
 
+## On the current server version (2026-10-10, CI run 38034560256)
+
+Before the route became the default, the lane's disposable server was moved
+from v0.8.3 to the current release and the SDK was bumped to match: server
+v0.8.12, `cub` v0.8.12, cub-scout built with SDK core v0.8.12. The same test,
+read from the run's artifact:
+
+| Checked on ConfigHub v0.8.12 | Result |
+|---|---|
+| `unit get`; `unit list` by slug and by ID; `space list` | identical to `cub`, byte for byte |
+| `unit list --where`, by slug, by a `LIKE` pattern, and matching nothing | identical; one Unit, the other Unit, `[]` |
+| `unit list --contains` | identical; this server answers the search, and it returns the one Unit that matches |
+| A `--where` the server rejects, and one with an OR | both routes fail with the server's HTTP 400 |
+| MCP `confighub_unit_get` and `confighub_units`, by each route | identical |
+| The import round-trip tests of the same lane | pass |
+
+| One read, 15 runs, milliseconds | min | median | max |
+|---|---|---|---|
+| `cub unit get` (a `cub` process, start to exit) | 51.4 | 55.8 | 62.7 |
+| SDK reader, space by slug | 4.0 | 4.2 | 4.8 |
+| SDK reader, space by ID | 2.7 | 2.9 | 3.5 |
+
+The reader's unit tests also pass unchanged on SDK core v0.8.12 against the
+v0.8.3 recordings: the same requests as the SDK's own helpers, and the same
+bytes.
+
 ## Not measured, and not claimed
 
-- **One server version, one kind of Unit.** The real-server run is v0.8.3 with
-  plain Units: no target, no upstream, no live revision, and spaces with no
-  Component. The lists there had two entries each; a long list was not tried. A hosted server,
-  another version and a credential with fewer rights were not tried.
-- **`--contains` against a real answer.** ConfigHub v0.8.3 fails a text
-  search on Units with HTTP 500 for `cub` and for the reader alike. That the
-  reader sends the search as `cub` does is held by comparing requests; that
-  the two return the same list is not shown. On that server the MCP
-  `confighub_units` tool's `contains` argument fails by either route.
+- **Two server versions, one kind of Unit.** v0.8.3 and v0.8.12, both
+  disposable servers in CI, with plain Units: no target, no upstream, no live
+  revision, and spaces with no Component. The lists had two entries each; a
+  long list was not tried. A hosted server and a credential with fewer rights
+  were not tried.
+- **An older server with the newer SDK.** v0.8.3 was run with SDK core
+  v0.8.10, not v0.8.12.
+- **A session that `cub` can renew.** The reader uses the stored token and
+  does not renew it. In the `cub` source read for this work, `cub` renews a
+  key-authenticated session at login, not on use; whether the released `cub`
+  does more was not checked. If it renews on use, such a session would work
+  through `cub` and fail here with `unauthorized`.
+- **A very large list.** The reader gives each request 30 seconds and `cub`
+  sets no limit, so a space large enough to take longer fails here with
+  `timeout` and names the way back.
 - **Time for a whole command.** The timings are for one read. A connected
   command also runs `cub auth status` on either route, and how many requests
   `cub` itself makes was not measured.
@@ -252,11 +308,23 @@ are kept in `test/fixtures/confighub-sdk-parity-v083-recorded/`.
   that sends requests with no `Authorization` header. The reader checks for
   that first.
 
-## Next, if this is adopted
+## What the default changes for a user
+
+- These three reads no longer start `cub`. A wrapper around `cub` that
+  records or fakes its calls does not see them; `examples/confighub-space-scope/record-cub-calls.sh`
+  sets `CUB_SCOUT_CONFIGHUB_READER=cub` for that reason.
+- What cub-scout shows of a Unit follows the SDK version cub-scout was built
+  with, not the installed `cub`. A field a newer server adds is missing until
+  cub-scout bumps the SDK.
+- A read that `cub` would have printed in part (a list cut short, a 200 that
+  is not JSON, an entry with no Unit) is an error.
+- `CUB_SERVER` and `CUB_TOKEN` exported in a shell are still not used; the
+  credential is the one `cub` uses.
+
+## Next
 
 More commands behind the same adapter, one at a time, each held to the `cub`
 route's output on a recording from a real server; one space lookup per command
 rather than per read; the connected check, so that the SDK route can run without `cub`
-installed; a real-server run on a current server version and with a Unit that
-has a target; then a decision on the default. Scout's observation interface stays read-only
+installed; a real-server run with a Unit that has a target. Scout's observation interface stays read-only
 throughout: the SDK's action calls are not exposed.
