@@ -1032,10 +1032,9 @@ func TestASDKRouteFailureNamesTheWayBackOnlyWhenItCouldHelp(t *testing.T) {
 		require.Equal(t, hinted, strings.Contains(err.Error(), wayBack), "source-truth, HTTP %d: %v", status, err)
 		require.Equal(t, 1, strings.Count(err.Error(), wayBack)+boolToInt(!hinted), "said once")
 	}
-	// What only this reader does: refuse an answer it cannot decode, a
-	// request it will not send, and one that outlasts its own time limit.
-	// cub might have answered each.
-	for _, kind := range []hubread.Kind{hubread.KindMalformed, hubread.KindRefused, hubread.KindTimeout} {
+	// What only this reader does: refuse an answer it cannot decode, and one
+	// that outlasts its own time limit. cub might have answered each.
+	for _, kind := range []hubread.Kind{hubread.KindMalformed, hubread.KindTimeout} {
 		routed := &sdkRouteError{&hubread.Error{Kind: kind, Op: "unit read", Message: "x"}}
 		require.Equal(t, 1, strings.Count(routed.Error(), wayBack), string(kind))
 	}
@@ -1049,6 +1048,9 @@ func TestASDKRouteFailureNamesTheWayBackOnlyWhenItCouldHelp(t *testing.T) {
 	// had for a good reason.
 	require.NotContains(t, (&sdkRouteError{&hubread.Error{Kind: hubread.KindMalformed, Op: "unit data", Message: "x", Unverified: true}}).Error(), wayBack)
 	require.NotContains(t, (&sdkRouteError{&hubread.Error{Kind: hubread.KindTooLarge, Op: "attestation list", Message: "x"}}).Error(), wayBack)
+	// A redirect this reader would not follow is not something to route
+	// around: cub follows one, and sends the credential where it leads.
+	require.NotContains(t, (&sdkRouteError{&hubread.Error{Kind: hubread.KindRefused, Op: "unit read", Message: "x"}}).Error(), wayBack)
 	for _, kind := range []hubread.Kind{hubread.KindFailed, hubread.KindForbidden, hubread.KindUnauthorized, hubread.KindNotFound,
 		hubread.KindNotConfigured, hubread.KindInvalidScope, hubread.KindAmbiguous, hubread.KindCanceled} {
 		routed := &sdkRouteError{&hubread.Error{Kind: kind, Op: "unit read", Message: "x"}}

@@ -1936,7 +1936,9 @@ Nothing here is released; the published baseline is still v2.13.4.
 - **The session check needs no `cub` on the SDK route.** The gate makes the
   check `cub auth status` makes: a stored token, not expired, one GET the
   server answers, and an SDK not older than the server by a minor version.
-  A command whose reads are all taken runs with no `cub` binary. `cub` is
+  A command whose reads are all taken runs with no `cub` binary (shown for
+  the gate, `views resolve` and MCP `confighub_units`; no per-command list was
+  made). `cub` is
   still needed to log in, for writes, and for the reads left to it; such a
   read on a machine without `cub` says so at that read.
 - **Bump the SDK when ConfigHub's minor version moves.** The gate refuses a
@@ -1946,8 +1948,9 @@ Nothing here is released; the published baseline is still v2.13.4.
 - Lists across every space (`--space '*'`), the organization list and
   `cub context get -o json` take the route too. The releases of every space
   do not.
-- `map fleet`, `map clusterdata --connected`, `fleet outliers` and the lookup
-  in `import --json` ask the gate now (#863).
+- `map fleet`, `map clusterdata --connected`, `fleet outliers`, `impact` and
+  the lookup in `import --json` ask the gate now (#863). `status` asks
+  ConfigHub nothing when the gate refuses.
 - Not done, and listed on #758: the reads still left to `cub` (selections,
   stored filters, a View's evaluated columns, entities named by ID,
   `unit tree`, `release check`, `k8s get`), one space lookup per command, a

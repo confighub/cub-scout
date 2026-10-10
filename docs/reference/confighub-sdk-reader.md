@@ -135,19 +135,37 @@ the same check made without `cub`:
 |---|---|
 | A stored token for the active context | The same, through the credential `cub` would use; none is "no ConfigHub session this machine can use" |
 | The token has not expired, by its own `exp` claim | The same, before any request |
-| The server accepts it: one GET of the caller's own membership | The same GET; a 200 that names no user and no organization is not accepted |
-| This `cub` is not older than the server by a minor version | The SDK cub-scout was built with, which `cub-scout version` prints, is not older than the server by a minor version. A server ahead is refused; the error says to upgrade cub-scout or to read through an up-to-date `cub` with `CUB_SCOUT_CONFIGHUB_READER=cub`. An SDK ahead of the server is allowed, with a warning on stderr, as `cub` does |
+| The server accepts it: one GET of the caller's own membership | The same GET; a 200 that names no user, organization or external identity is not accepted, which is stricter than `cub`, which takes any 200 |
+| This `cub` is not older than the server by a minor version | The SDK version in cub-scout's `go.mod`, which `cub-scout version` prints (a constant, held to `go.mod` by a test), is not older than the server by a minor version. A server ahead is refused; the error says to upgrade cub-scout or to read through an up-to-date `cub` with `CUB_SCOUT_CONFIGHUB_READER=cub`. An SDK ahead of the server is allowed, with a warning on stderr, as `cub` does |
 
-A refusal answers to the same reasons by either route (not authenticated, or
-a version problem), in words that do not mention a `cub` check that was not
-run. A server that cannot be asked is "could not be checked", which says
-nothing about the session. `CUB_SCOUT_OFFLINE=true` and the telemetry switch
-are honoured first, and then nothing is resolved or sent.
+A refusal for no credential, a rejected or expired one, or a 403 is "not
+authenticated" by either route, and a client too old is a version problem by
+either route, in words that do not mention a `cub` check that was not run.
+The routes differ for the rest: a server error, a timeout or an answer that
+is not the server's is "could not be checked" on the SDK route, which says
+nothing about the session, where `cub auth status` reports every failure as
+not authenticated. `status` then leaves the session unset; it does not call
+it expired and does not ask a second time. `CUB_SCOUT_OFFLINE=true` and the
+telemetry switch are honoured first, and then nothing is sent. With reads off,
+`status` says only what this machine's files say, whether a credential is
+stored (and, by the SDK route, that it has not expired), and does not look for
+a worker.
 
-`map fleet`, `map clusterdata --connected`, `fleet outliers` and the
+`map fleet`, `map clusterdata --connected`, `fleet outliers`, `impact` and the
 existing-unit lookup of `import --json` now ask this gate like every other
 connected command (#863). `impact` no longer reports "no dependents" when the
-space's links could not be read; it says they could not be read.
+space's links could not be read; it says they could not be read. `import
+--json` still shows a workload as not connected when the lookup could not be
+made, with nothing to mark it; that is tracked on #863.
+
+A read that does not go through the gate is still not sent with a token that
+says it has expired: it fails with the expiry and `cub auth login`, where the
+server would have answered a bare 401.
+
+The reader takes the credential from cub's configuration and never writes it.
+With no configuration at all, `cub context get` (seen with `cub` v0.8.7)
+creates a default context and writes it; the SDK route reports that there is
+none.
 
 ## What the reader guarantees
 
@@ -431,9 +449,11 @@ the ones above, and the attestation list is the one recorded earlier).
 - **Time for a whole command.** The timings are for one read. How many
   requests a whole command makes by each route was not measured.
 - **Which commands run with no `cub` at all.** Shown through the built
-  binary: the gate, `views resolve`, and the MCP `confighub_units` tool. No
+  binary: the gate and `views resolve` in the unit lane, and the MCP
+  `confighub_units` tool on the real server in the Connected lane. No
   command-by-command list was made; a command runs without `cub` when every
-  read it makes is one this page lists as taken.
+  read it makes is one this page lists as taken. The OCI registry lookup
+  still asks `cub`, on either route.
 - **No agent cost or time claim.** A faster read is not a measured saving for
   an agent; no eval was run on it.
 

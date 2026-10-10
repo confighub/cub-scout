@@ -6058,6 +6058,12 @@ func fetchConfigHubUnits(feature, flag, flagValue string) (*cubUnitCache, error)
 		return nil, err
 	}
 	space := resolved.Slug
+	// The same gate as every connected command, so the off switch and a
+	// missing session are refused here and not found out read by read. It
+	// comes after the space check, which asks nothing.
+	if err := requireConfigHubFor(feature); err != nil {
+		return nil, err
+	}
 
 	listOut, err := runHistoryCubCommandImpl(context.Background(), withConfigHubSpace([]string{"unit", "list", "-o", "json", "--quiet"}, space))
 	if err != nil {
@@ -6261,12 +6267,8 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 	// Connected mode: fetch ConfigHub data
 	var unitCache *cubUnitCache
 	if deepDiveConnected {
-		// The same gate as every connected command, so the off switch and a
-		// missing session are refused here and not found out read by read.
-		connErr := requireConfigHubFor("map clusterdata --connected")
-		if connErr == nil {
-			unitCache, connErr = fetchConfigHubUnits("connected deep-dive", "", "")
-		}
+		var connErr error
+		unitCache, connErr = fetchConfigHubUnits("map clusterdata --connected", "", "")
 		if connErr != nil {
 			fmt.Printf("⚠ Connected mode failed: %v\n", connErr)
 			fmt.Println("  Falling back to standalone mode.")

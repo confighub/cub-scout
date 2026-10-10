@@ -109,6 +109,26 @@ func majorMinor(version string) (major, minor int, ok bool) {
 	return major, minor, true
 }
 
+// expired is the refusal for a credential that says it has expired, or nil.
+func (r *Reader) expired(op string) *Error {
+	if r.tokenExpiry.IsZero() || !now().After(r.tokenExpiry) {
+		return nil
+	}
+	return &Error{Kind: KindUnauthorized, Op: op, Message: fmt.Sprintf(
+		"the access token expired at %s; run `cub auth login`", r.tokenExpiry.UTC().Format(time.RFC3339))}
+}
+
+// Expired reports, without asking the server, that the credential says it
+// has expired. It is nil for one that has not, and for one that does not say.
+// A read made with an expired token is refused by the server with a bare 401;
+// this is the same answer with its cause, before anything is sent.
+func (r *Reader) Expired() error {
+	if failure := r.expired("credential"); failure != nil {
+		return failure
+	}
+	return nil
+}
+
 // CheckSession reports whether ConfigHub can be read with this Reader's
 // credential, by the rules of `cub auth status`:
 //
@@ -125,9 +145,8 @@ func majorMinor(version string) (major, minor int, ok bool) {
 func (r *Reader) CheckSession(ctx context.Context) (Session, error) {
 	const op = "session check"
 	session := Session{Server: r.client.Server, SDKVersion: sdkCoreVersion()}
-	if !r.tokenExpiry.IsZero() && now().After(r.tokenExpiry) {
-		return session, &Error{Kind: KindUnauthorized, Op: op, Message: fmt.Sprintf(
-			"the access token expired at %s; run `cub auth login`", r.tokenExpiry.UTC().Format(time.RFC3339))}
+	if failure := r.expired(op); failure != nil {
+		return session, failure
 	}
 	resp, err := r.client.API.GetMeWithResponse(ctx)
 	if failure := classify(ctx, op, err, resp); failure != nil {

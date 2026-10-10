@@ -502,8 +502,10 @@ func sdkRouteWayBack(err error) string {
 	if typed.BeyondScope || typed.Unverified {
 		return ""
 	}
+	// Nor for a request this reader refused to make, which today is a
+	// redirect it would not follow: cub follows one, credential and all.
 	switch typed.Kind {
-	case hubread.KindMalformed, hubread.KindRefused, hubread.KindTimeout:
+	case hubread.KindMalformed, hubread.KindTimeout:
 		return "; " + configHubReaderEnv + "=cub reads this through the cub CLI instead"
 	}
 	return ""
@@ -558,6 +560,11 @@ func cubReadViaSDK(ctx context.Context, args []string) (out []byte, handled bool
 	}
 	reader, err := sdkReader(ctx)
 	if err != nil {
+		return nil, true, &sdkRouteError{err}
+	}
+	// Some commands read without asking the gate first. An expired token
+	// would get them a bare 401; this says why, and sends nothing.
+	if err := reader.Expired(); err != nil {
 		return nil, true, &sdkRouteError{err}
 	}
 	out, err = read(ctx, reader)

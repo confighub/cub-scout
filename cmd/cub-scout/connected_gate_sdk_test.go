@@ -2,13 +2,16 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
+	"time"
 
 	"github.com/confighub/cub-scout/v2/internal/hubread"
 	"github.com/confighub/cub-scout/v2/pkg/hub"
@@ -130,11 +133,37 @@ func TestTheGatesRefusalsOnTheSDKRouteSayWhatTheyAre(t *testing.T) {
 	err = requireConfigHubSession()
 	require.ErrorIs(t, err, hub.ErrConfigHubReadsDisabled)
 	require.Len(t, member.seen, before)
-	// With reads off, status can still say a credential is stored, and asks
-	// nothing to say it.
-	require.True(t, validateAuthToken())
+	// With reads off, status can still say a usable credential is stored,
+	// and asks nothing to say it. One that says it has expired is not usable.
+	valid, known := statusSession(err)
+	require.True(t, known)
+	require.True(t, valid)
+	sdkReader = func(context.Context) (*hubread.Reader, error) {
+		return hubread.New(member.url, expiredJWT(t), hubread.Options{})
+	}
+	valid, known = statusSession(err)
+	require.True(t, known)
+	require.False(t, valid, "an expired token is not a session, online or off")
+	sdkReader = stored
 	require.Len(t, member.seen, before)
 	configHubReadsDisabledFn = oldDisabled
+
+	// A gate that could not ask leaves the session unknown; status does not
+	// call that expired, and does not ask a second time.
+	member.status = http.StatusInternalServerError
+	err = requireConfigHubSession()
+	before = len(member.seen)
+	valid, known = statusSession(err)
+	require.False(t, known)
+	require.False(t, valid)
+	require.Len(t, member.seen, before, "the session is not asked about twice")
+	member.status = 0
+
+	// A 403 for the caller's own membership is the credential being refused.
+	member.status = http.StatusForbidden
+	err = requireConfigHubSession()
+	require.ErrorIs(t, err, hub.ErrCubNotAuthenticated)
+	member.status = 0
 
 	require.Empty(t, fakeCubCalls(t, cubLog), "no refusal on the SDK route starts cub")
 }
@@ -238,4 +267,44 @@ func TestAReadThatStillNeedsCubSaysSoWhenThereIsNone(t *testing.T) {
 	require.ErrorContains(t, err, "`cub unit tree`")
 	require.NotContains(t, err.Error(), "payments-api")
 	require.NotContains(t, err.Error(), "executable file not found")
+}
+
+// expiredJWT is a token shaped like a JWT whose only claim is that it expired
+// an hour ago. Nothing signs it; the reader reads the claim as cub does.
+func expiredJWT(t *testing.T) string {
+	t.Helper()
+	claims := base64.RawURLEncoding.EncodeToString([]byte(fmt.Sprintf(`{"exp":%d}`, time.Now().Add(-time.Hour).Unix())))
+	return "e30." + claims + ".c2ln"
+}
+
+// A read that does not ask the gate first still does not send an expired
+// token: the refusal names the cause and the remedy, and nothing is sent.
+func TestAnExpiredTokenIsRefusedBeforeARead(t *testing.T) {
+	cubLog := onlyFakeCub(t, "0")
+	hub := newRecordedHub(t, 0)
+	old := sdkReader
+	t.Cleanup(func() { sdkReader = old })
+	sdkReader = func(context.Context) (*hubread.Reader, error) {
+		return hubread.New(hub.url, expiredJWT(t), hubread.Options{})
+	}
+	t.Setenv(configHubReaderEnv, "sdk")
+	_, err := cubStdout(context.Background(), "unit", "get", recordedUnit, "-o", "json", "--space", recordedSpace)
+	require.Equal(t, hubread.KindUnauthorized, hubread.KindOf(err))
+	require.ErrorContains(t, err, "the access token expired at")
+	require.ErrorContains(t, err, "cub auth login")
+	require.Empty(t, hub.seen, "nothing is sent with a token that says it has expired")
+	require.Empty(t, fakeCubCalls(t, cubLog))
+}
+
+// status reads the cub context without a cub binary on the SDK route, so it
+// reports a connected session on a machine that has only cub's configuration.
+func TestStatusNeedsNoCubBinaryOnTheSDKRoute(t *testing.T) {
+	t.Setenv("PATH", t.TempDir())
+	t.Setenv(configHubReaderEnv, "sdk")
+	require.True(t, statusOnSDKRoute())
+	require.False(t, cubInstalled())
+	t.Setenv(configHubReaderEnv, "cub")
+	require.False(t, statusOnSDKRoute())
+	t.Setenv(configHubReaderEnv, "sdkk")
+	require.False(t, statusOnSDKRoute(), "a route that names nothing is not the SDK route")
 }

@@ -66,13 +66,16 @@ func requireConfigHubSession() error {
 		}
 	}
 	switch hubread.KindOf(err) {
-	case hubread.KindNotConfigured, hubread.KindUnauthorized:
+	case hubread.KindNotConfigured, hubread.KindUnauthorized, hubread.KindForbidden:
+		// A 403 for the caller's own membership is the server refusing the
+		// credential, as a 401 is.
 		return &sessionRefusal{kind: hub.ErrCubNotAuthenticated, text: "no ConfigHub session this machine can use: " + err.Error()}
 	case hubread.KindVersionSkew:
 		return &sessionRefusal{kind: hub.ErrCubVersionSkew, text: err.Error() + ", or set " + configHubReaderEnv + "=cub to read through an up-to-date `cub`"}
 	default:
 		// The server could not be asked, or did not answer as itself. That
-		// says nothing about the session either way.
+		// says nothing about the session either way. `cub auth status`
+		// reports all of these as "not authenticated"; this does not.
 		return fmt.Errorf("the ConfigHub session could not be checked: %w", err)
 	}
 }
