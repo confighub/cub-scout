@@ -428,6 +428,25 @@ jobs:
           kubectl wait --for=jsonpath='{.status.health.status}'=Healthy application/guestbook -n argocd --timeout=300s
           kubectl rollout status deployment/guestbook-ui -n guestbook --timeout=300s
 
+      # A three-level app-of-apps read from this commit, so that what Argo CD
+      # reports for each level is recorded from a real controller (#855).
+      - name: Deploy the delivery-tree example
+        env:
+          REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          sed -e "s|REPO_URL|https://github.com/${GITHUB_REPOSITORY}.git|" -e "s|REVISION|${REVISION}|" \
+            examples/delivery-tree/argocd/root-application.yaml | kubectl apply -f -
+          kubectl wait --for=jsonpath='{.status.sync.status}'=Synced application/delivery-tree -n argocd --timeout=300s
+          kubectl wait --for=jsonpath='{.status.sync.status}'=Synced application/delivery-tree-team-a -n argocd --timeout=300s
+          kubectl wait --for=jsonpath='{.status.sync.status}'=Synced application/delivery-tree-web -n argocd --timeout=300s
+          kubectl wait --for=jsonpath='{.status.health.status}'=Healthy application/delivery-tree-web -n argocd --timeout=300s
+          kubectl wait --for=jsonpath='{.status.sync.status}'=Synced application/delivery-tree-jobs -n argocd --timeout=300s
+          kubectl wait --for=jsonpath='{.status.sync.status}'=OutOfSync application/delivery-tree-team-b -n argocd --timeout=300s
+          kubectl wait --for=jsonpath='{.status.conditions[0].type}'=ComparisonError application/delivery-tree-broken -n argocd --timeout=300s
+          kubectl get application delivery-tree-elsewhere -n delivery-tree-elsewhere-apps
+          kubectl get applications.argoproj.io -A -o json > "$RUNNER_TEMP/argo-delivery-tree.json"
+          kubectl get applications.argoproj.io -A
+
       - name: Verify Flux ownership detection
         run: |
           ./cub-scout map list --json --namespace boutique > "$RUNNER_TEMP/flux-ownership.json"
@@ -455,6 +474,7 @@ jobs:
             ${{ runner.temp }}/flux-ownership.json
             ${{ runner.temp }}/argo-ownership.json
             ${{ runner.temp }}/argo-application.json
+            ${{ runner.temp }}/argo-delivery-tree.json
             ${{ runner.temp }}/flux-delivery.json
             ${{ runner.temp }}/scout-controllers/flux-version.txt
 

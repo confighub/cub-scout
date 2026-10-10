@@ -1,0 +1,41 @@
+# The root of an app-of-apps: one Application whose source is a chart of more
+# Applications. Apply it with the repository and commit to read from:
+#
+#   sed -e "s|REPO_URL|https://github.com/confighub/cub-scout.git|" \
+#       -e "s|REVISION|<commit>|" examples/delivery-tree/argocd/root-application.yaml | kubectl apply -f -
+#
+# The revision is passed down as a chart value, so every level reads the same
+# commit.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: delivery-tree
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: REPO_URL
+    targetRevision: REVISION
+    path: examples/delivery-tree/argocd/root
+    helm:
+      parameters:
+        - name: repoURL
+          value: REPO_URL
+        - name: revision
+          value: REVISION
+          forceString: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  # The root does not put back a change to a child Application's sync policy.
+  ignoreDifferences:
+    - group: argoproj.io
+      kind: Application
+      jsonPointers:
+        - /spec/syncPolicy

@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: delivery-tree-broken
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: {{ .Values.repoURL | quote }}
+    targetRevision: {{ .Values.revision | quote }}
+    path: examples/delivery-tree/argocd/no-such-path
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: delivery-tree-broken
+  syncPolicy:
+    automated: {}

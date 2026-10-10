@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: delivery-tree-jobs
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: {{ .Values.repoURL | quote }}
+    targetRevision: {{ .Values.revision | quote }}
+    path: examples/delivery-tree/argocd/workloads/jobs
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: delivery-tree-jobs
+  # Syncs on its own and never deletes.
+  syncPolicy:
+    automated:
+      prune: false
+    syncOptions:
+      - CreateNamespace=true

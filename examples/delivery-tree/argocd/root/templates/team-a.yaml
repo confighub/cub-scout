@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: delivery-tree-team-a
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: {{ .Values.repoURL | quote }}
+    targetRevision: {{ .Values.revision | quote }}
+    path: examples/delivery-tree/argocd/team-a
+    helm:
+      parameters:
+        - name: repoURL
+          value: {{ .Values.repoURL | quote }}
+        - name: revision
+          value: {{ .Values.revision | quote }}
+          forceString: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  # Syncs on its own, and does not put back a change made in the cluster.
+  syncPolicy:
+    automated:
+      prune: true
