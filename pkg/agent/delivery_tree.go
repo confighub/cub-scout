@@ -367,15 +367,15 @@ func CollectDeliveryTree(ctx context.Context, client dynamic.Interface, opts Del
 		index[key] = indexed
 		order = append(order, key)
 	}
-	sort.Slice(order, func(i, j int) bool {
-		a, b := order[i], order[j]
+	keyLess := func(a, b deliveryKey) bool {
 		for _, pair := range [][2]string{{a.group, b.group}, {a.kind, b.kind}, {a.namespace, b.namespace}} {
 			if pair[0] != pair[1] {
 				return pair[0] < pair[1]
 			}
 		}
 		return a.name < b.name
-	})
+	}
+	sort.Slice(order, func(i, j int) bool { return keyLess(order[i], order[j]) })
 	// Who reports whom, among the deployers that were read.
 	for _, key := range order {
 		for _, entry := range index[key].reported {
@@ -554,6 +554,7 @@ func CollectDeliveryTree(ctx context.Context, client dynamic.Interface, opts Del
 				mark(key)
 			}
 		}
+		sort.Slice(roots, func(i, j int) bool { return keyLess(roots[i], roots[j]) })
 	}
 	for _, key := range roots {
 		source, _ := deliverySourceFor(key.group, key.kind)
