@@ -24,8 +24,11 @@ exec "$real_cub" "\$@"
 WRAP
 chmod +x "$work/cub"
 
+# Three reads (unit get, unit list, space list) go through the ConfigHub SDK
+# by default and start no cub. This script is about the cub calls, so it asks
+# for the cub route unless the caller chose one.
 status=0
-PATH="$work:$PATH" "$@" || status=$?
+CUB_SCOUT_CONFIGHUB_READER="${CUB_SCOUT_CONFIGHUB_READER:-cub}" PATH="$work:$PATH" "$@" || status=$?
 
 echo
 echo "--- cub calls (CUB_SPACE=${CUB_SPACE:-<unset>})"

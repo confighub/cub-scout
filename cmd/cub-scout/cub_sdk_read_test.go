@@ -483,11 +483,11 @@ func TestCubStdoutAnswersUnitGetThroughTheSDKWhenAsked(t *testing.T) {
 	sdkReadsFrom(t, hub)
 	args := []string{"unit", "get", recordedUnit, "-o", "json", "--space", recordedSpace}
 
-	t.Setenv(configHubReaderEnv, "")
+	t.Setenv(configHubReaderEnv, "cub")
 	viaCub, err := cubStdout(context.Background(), args...)
 	require.NoError(t, err)
 	require.Len(t, fakeCubCalls(t, cubLog), 1)
-	require.Empty(t, hub.seen, "without the setting nothing is read through the SDK")
+	require.Empty(t, hub.seen, "asked for cub, nothing is read through the SDK")
 
 	t.Setenv(configHubReaderEnv, "sdk")
 	viaSDK, err := cubStdout(context.Background(), args...)
@@ -659,7 +659,7 @@ func TestSourceTruthReportsTheSameByEitherRoute(t *testing.T) {
 	hub := newRecordedHub(t, 0)
 	sdkReadsFrom(t, hub)
 
-	t.Setenv(configHubReaderEnv, "")
+	t.Setenv(configHubReaderEnv, "cub")
 	viaCub, err := collectConfigHubSurface(context.Background(), recordedWorkload())
 	require.NoError(t, err)
 	require.Equal(t, []string{"unit get " + recordedUnit + " -o json --space " + recordedSpace}, fakeCubCalls(t, cubLog))
@@ -713,6 +713,12 @@ func TestSDKRouteResolvesItsOwnCredentials(t *testing.T) {
 	t.Setenv("CUB_CONFIG", t.TempDir())
 	t.Setenv("CUB_CONTEXT", "")
 	t.Setenv("CUB_SPACE", "")
+	// The production resolver, which TestMain replaces for every other test.
+	// HOME and CUB_CONFIG are private to this test, so it can find nothing
+	// but what is set here.
+	old := sdkReader
+	t.Cleanup(func() { sdkReader = old })
+	sdkReader = resolveSDKReader
 	t.Setenv("CUB_PLUGIN", "1")
 	t.Setenv("CUB_SERVER", hub.url)
 	t.Setenv("CUB_TOKEN", "plugin-token")
@@ -937,4 +943,93 @@ func TestViewsListFailureWordingFollowsTheRoute(t *testing.T) {
 	t.Setenv(configHubReaderEnv, "cub")
 	_, err = listUnitSlugsForFilter(context.Background(), "Slug LIKE 'a-%'", recordedSpace)
 	require.True(t, strings.HasPrefix(err.Error(), "cub unit list: "), err.Error())
+}
+
+// The default is the SDK route: with the setting absent, a read this package
+// reproduces starts no cub. "cub" is the way back.
+func TestTheDefaultReaderIsTheSDK(t *testing.T) {
+	cubLog := onlyFakeCub(t, "0")
+	hub := newRecordedHub(t, 0)
+	sdkReadsFrom(t, hub)
+	args := []string{"unit", "get", recordedUnit, "-o", "json", "--space", recordedSpace}
+
+	for _, unset := range []string{"", "  ", "sdk", "SDK"} {
+		t.Setenv(configHubReaderEnv, unset)
+		route, err := configHubReaderRoute()
+		require.NoError(t, err)
+		require.Equal(t, "sdk", route, "%q", unset)
+	}
+	t.Setenv(configHubReaderEnv, "")
+	_, err := cubStdout(context.Background(), args...)
+	require.NoError(t, err)
+	require.Equal(t, []string{"GET /api/space", "GET /api/unit"}, hub.seen)
+	require.Empty(t, fakeCubCalls(t, cubLog), "the default starts no cub for this read")
+
+	t.Setenv(configHubReaderEnv, "cub")
+	route, err := configHubReaderRoute()
+	require.NoError(t, err)
+	require.Equal(t, "cub", route)
+	_, err = cubStdout(context.Background(), args...)
+	require.NoError(t, err)
+	require.Len(t, fakeCubCalls(t, cubLog), 1)
+	require.Len(t, hub.seen, 2)
+}
+
+// The test binary itself is held to the cub route and has no way to resolve
+// a real credential: a test that forgets to say which server to read fails,
+// it does not read whatever this machine is logged in to.
+func TestTheTestBinaryCannotReachRealCredentials(t *testing.T) {
+	require.Equal(t, "cub", os.Getenv(configHubReaderEnv), "TestMain pins the route for the package")
+	_, err := sdkReader(context.Background())
+	require.ErrorIs(t, err, errSDKRouteInATest)
+
+	onlyFakeCub(t, "0")
+	t.Setenv(configHubReaderEnv, "sdk")
+	_, err = cubStdout(context.Background(), "unit", "get", recordedUnit, "-o", "json", "--space", recordedSpace)
+	require.ErrorIs(t, err, errSDKRouteInATest)
+	require.True(t, failedOnSDKRoute(err))
+}
+
+// When a read fails on the SDK route in a way cub might not, the error says
+// how to read through cub. A denial or a missing Unit is the same either way.
+func TestASDKRouteFailureNamesTheWayBackOnlyWhenItCouldHelp(t *testing.T) {
+	onlyFakeCub(t, "0")
+	t.Setenv(configHubReaderEnv, "sdk")
+	args := []string{"unit", "get", recordedUnit, "-o", "json", "--space", recordedSpace}
+	const wayBack = "CUB_SCOUT_CONFIGHUB_READER=cub reads this through the cub CLI instead"
+
+	for status, hinted := range map[int]bool{
+		http.StatusInternalServerError: true,
+		http.StatusNotFound:            true, // a missing endpoint, not a missing Unit
+		http.StatusForbidden:           false,
+		http.StatusUnauthorized:        false,
+	} {
+		sdkReadsFrom(t, newRecordedHub(t, status))
+		_, err := cubText(context.Background(), args...)
+		require.Error(t, err)
+		require.Equal(t, hinted, strings.Contains(err.Error(), wayBack), "HTTP %d: %v", status, err)
+		// Every caller gets it, not only the one that works in text.
+		_, err = collectConfigHubSurface(context.Background(), recordedWorkload())
+		require.Equal(t, hinted, strings.Contains(err.Error(), wayBack), "source-truth, HTTP %d: %v", status, err)
+		require.Equal(t, 1, strings.Count(err.Error(), wayBack)+boolToInt(!hinted), "said once")
+	}
+	// The Unit is not there: the same answer by either route.
+	hub := newRecordedHub(t, 0)
+	sdkReadsFrom(t, hub)
+	_, err := cubText(context.Background(), "unit", "get", "no-such-unit", "-o", "json", "--space", recordedSpace)
+	require.Equal(t, hubread.KindNotFound, hubread.KindOf(err))
+	require.NotContains(t, err.Error(), wayBack)
+	// A cub failure never suggests cub.
+	t.Setenv(configHubReaderEnv, "cub")
+	onlyFakeCub(t, "3")
+	_, err = cubText(context.Background(), args...)
+	require.Error(t, err)
+	require.NotContains(t, err.Error(), wayBack)
+}
+
+func boolToInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
 }
