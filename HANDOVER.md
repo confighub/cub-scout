@@ -1987,9 +1987,9 @@ instruction of 2026-10-06 not to move its gates, the maintainer chose:
   requirements are unchanged. The ledger is
   [docs/releases/v2.15-readiness.md](docs/releases/v2.15-readiness.md); the old
   path is a pointer.
-- **P5's number is not decided.** The plan had P5 as v2.15. It keeps its scope
-  and its place after P4; whether it shares v2.15 or becomes v2.16 is the
-  maintainer's to say. Do not assume either.
+- **P5 is v2.16.** The plan had P5 as v2.15. It keeps its scope and its place
+  after P4. This was left open when the renumbering was written and the
+  maintainer settled it later the same day: "P5 becomes v2.16".
 - The features the docs called "unreleased v2.14 candidates" shipped in
   v2.13.x. They are in v2.14.0 as opt-in previews and are labelled so in the
   reference pages. `skills/` still says "2.14 candidate" in one catalog file:
@@ -2019,7 +2019,7 @@ is in [the notes](docs/releases/v2.14.0.md#publication-checks).
 - Next for the SDK work is on #758: the reads still left to `cub`, unit events
   with an event in them, a hosted server and an ordinary user's session, and
   bumping the SDK when ConfigHub's minor version moves.
-- Open for the maintainer: P5's version number; the artifact of CI run
+- Open for the maintainer: the artifact of CI run
   38071527126, which holds the secret of a worker on a server that no longer
   exists; the paid eval for a `gitops_tree` MCP tool (#855).
 
