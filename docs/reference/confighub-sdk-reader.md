@@ -73,7 +73,11 @@ it is given a selection or a stored filter. A test reads the source
 of each call site: a `unit get` in a shape the route does not take fails it,
 and so does a list that is neither taken nor named in the test with the reason
 it stays with `cub`. The test models the arguments' shape, not the values a
-user supplies.
+user supplies. The release, resource and unit-event lists are built in ways
+that scan cannot read, so their test calls each builder instead and pins how
+many places spell each command: a new call site fails the count until someone
+adds it, which is weaker than the scan, since nothing checks the new site
+itself.
 
 | Where the read is used | Notes |
 |---|---|
@@ -90,9 +94,12 @@ user supplies.
 A failed SDK read is the answer, reported with its reason. It does not fall
 back to `cub`, and once the SDK route has taken a read, no failure of it is
 worded as a `cub` failure. Where the failure is one `cub` might not have had
-(the answer could not be decoded, was cut short, was refused by this reader's
-own rules, or ran past this reader's 30-second limit, which `cub` does not
-have), the error ends by naming `CUB_SCOUT_CONFIGHUB_READER=cub`. A denial, a
+(the answer could not be decoded, was refused by this reader's own rules, or
+ran past this reader's 30-second limit, which `cub` does not have), the error
+ends by naming `CUB_SCOUT_CONFIGHUB_READER=cub`. It does not name it for a
+list the server cut short, or for an answer that held something from another
+space or Unit: `cub` prints both as they came, so that route would trade the
+error for a wrong answer with nothing to mark it. A denial, a
 missing Unit, a missing credential, a server error or a server that cannot be
 reached is the same by either route, since both use one server and one
 credential, and nothing is suggested for those.
@@ -287,7 +294,9 @@ the ChangeSet was in state `New` and the Link was within one space.
 `TestSDKReaderMatchesCubOnReleasesResourcesAndEvents` makes a Target, sets it
 as the space's release Target, assigns two Units to it, publishes a release,
 changes one Unit and publishes again, all through `cub`, on ConfigHub
-v0.8.12. Read from the run's artifact:
+v0.8.12. The rows about a space or Unit that does not exist and about a
+rejected filter are assertions of the test, which passed in that run; the
+artifact keeps no file for them. Every other row is read from the artifact.
 
 | Checked on ConfigHub v0.8.12 | Result |
 |---|---|
@@ -305,7 +314,10 @@ server applies a Unit, so it has none. That the two routes agree on an empty
 list shows the request is accepted and the space is read; it does not show
 that an event is printed as `cub` prints it, or that several come out in
 `cub`'s order. Those rest on the SDK's types, which both use, and on a unit
-test of the ordering, not on a recording. The recordings are in
+test of the ordering, not on a recording. One known difference: for a
+space's events `cub` also reads the Units they belong to, for its table, and
+fails if that second read fails. The reader does not make that read, so it
+can answer where `cub` would not. The recordings are in
 `test/fixtures/confighub-release-lists-v0812-recorded/`.
 
 ## Not measured, and not claimed

@@ -56,6 +56,10 @@ type Error struct {
 	Kind    Kind
 	Op      string
 	Message string
+	// BeyondScope marks an answer refused because it held something from
+	// outside the one space or Unit that was asked about. The answer was
+	// well formed; it was not an answer to the question.
+	BeyondScope bool
 }
 
 func (e *Error) Error() string { return fmt.Sprintf("confighub %s: %s (%s)", e.Op, e.Message, e.Kind) }
@@ -602,7 +606,7 @@ func shapedSpaceList[T any](ctx context.Context, r *Reader, kind, space string, 
 				// of it, would do this.
 				message += "; the filter may reach beyond the space, and its result is not shown"
 			}
-			return nil, &Error{Kind: KindMalformed, Op: op, Message: message}
+			return nil, &Error{Kind: KindMalformed, Op: op, Message: message, BeyondScope: true}
 		}
 	}
 	if shape.order != nil {
@@ -830,7 +834,9 @@ func (r *Reader) UnitEventListJSON(ctx context.Context, space string, filter Fil
 			}
 			return listAnswer[goclientnew.UnitEvent]{resp, resp.JSON200, resp.HTTPResponse, rejection(resp.StatusCode(), resp.JSON400)}, err
 		},
-		func(entry *goclientnew.UnitEvent) (uuid.UUID, bool) { return entry.SpaceID, true })
+		// An event has no envelope. One with no space is an empty object or
+		// a null, not an event of some other space.
+		func(entry *goclientnew.UnitEvent) (uuid.UUID, bool) { return entry.SpaceID, entry.SpaceID != uuid.Nil })
 }
 
 // UnitEventsOfUnitJSON reads the events of exactly one Unit in exactly one
@@ -869,8 +875,12 @@ func (r *Reader) UnitEventsOfUnitJSON(ctx context.Context, space, unit string, f
 		return nil, failure
 	}
 	for i := range *resp.JSON200 {
-		if event := &(*resp.JSON200)[i]; event.SpaceID != spaceID || event.UnitID != unitID {
-			return nil, &Error{Kind: KindMalformed, Op: op, Message: fmt.Sprintf("the server returned an event of another unit for unit %q in space %q", unit, space)}
+		switch event := &(*resp.JSON200)[i]; {
+		case event.SpaceID == uuid.Nil && event.UnitID == uuid.Nil:
+			return nil, &Error{Kind: KindMalformed, Op: op, Message: "the list has an entry with no unit-event"}
+		case event.SpaceID != spaceID || event.UnitID != unitID:
+			return nil, &Error{Kind: KindMalformed, Op: op, BeyondScope: true,
+				Message: fmt.Sprintf("the server returned an event of another unit for unit %q in space %q", unit, space)}
 		}
 	}
 	newestEventFirst(*resp.JSON200)

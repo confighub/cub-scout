@@ -20,7 +20,10 @@ byte for byte, with the space named by slug and by ID.
 
 The space, the Units, the releases and every identifier belong to an instance
 that was deleted when the run ended. The test created them through `cub`, as
-its administrator. No user name, email, address or credential is in any file.
+its administrator, in CI. No user name, email or credential is in any file.
+The IDs of that instance's user and organization are, where a release records
+who published it, and `cub-version.txt` has the address the runner reached
+its own server at, `http://localhost:32180`.
 
 What this does not show: a unit event of any kind, a release that a deployer
 reported a live status for, a release in more than one space, a resource of a

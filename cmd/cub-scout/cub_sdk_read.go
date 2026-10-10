@@ -318,8 +318,15 @@ func sdkRouteWayBack(err error) string {
 	if !errors.As(err, &typed) {
 		return ""
 	}
+	// Not for a list the server cut short, nor for an answer that reached
+	// beyond the space or Unit asked about: cub prints both as they came,
+	// so sending the user there would trade an error for a wrong answer
+	// with nothing to mark it.
+	if typed.BeyondScope {
+		return ""
+	}
 	switch typed.Kind {
-	case hubread.KindMalformed, hubread.KindIncomplete, hubread.KindRefused, hubread.KindTimeout:
+	case hubread.KindMalformed, hubread.KindRefused, hubread.KindTimeout:
 		return "; " + configHubReaderEnv + "=cub reads this through the cub CLI instead"
 	}
 	return ""

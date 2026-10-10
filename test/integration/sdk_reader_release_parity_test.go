@@ -179,7 +179,13 @@ func TestSDKReaderMatchesCubOnReleasesResourcesAndEvents(t *testing.T) {
 			t.Errorf("cub's release list is not newest first: release %d before %d", listed[i-1].Release.ReleaseNum, listed[i].Release.ReleaseNum)
 		}
 	}
-	if sizes["release-list"] > 1 && sizes["release-list-first"] != 1 {
+	// Two releases are what makes the comparison say anything about order
+	// and about the filter. A server that stops allowing a step above fails
+	// here, rather than letting two empty lists agree.
+	if sizes["release-list"] < 2 {
+		t.Errorf("the space has %d releases, want the two published above; steps: %v", sizes["release-list"], steps)
+	}
+	if sizes["release-list-first"] != 1 {
 		t.Errorf("the filter ReleaseNum = 1 listed %d of %d releases, want 1", sizes["release-list-first"], sizes["release-list"])
 	}
 

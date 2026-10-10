@@ -1356,16 +1356,23 @@ func TestUnitEventListsOfASpaceAndOfOneUnit(t *testing.T) {
 		require.Equal(t, []int{3, 2, 1}, numbers(out))
 
 		// An event has no envelope, so one that is empty or null has no
-		// space, and that is not this space.
-		for what, body := range map[string]string{
-			"an event of another space": "[" + event(elsewhere, unit.UnitID, 1, "2026-10-01T00:00:00Z") + "]",
-			"an empty event":            `[{}]`,
-			"a null event":              `[null]`,
+		// space. That is an entry that is not an event, which is not the
+		// same thing as an event of another space.
+		for what, tc := range map[string]struct {
+			body, says string
+			beyond     bool
+		}{
+			"an event of another space": {"[" + event(elsewhere, unit.UnitID, 1, "2026-10-01T00:00:00Z") + "]", "from another space", true},
+			"an empty event":            {`[{}]`, "an entry with no unit-event", false},
+			"a null event":              {`[null]`, "an entry with no unit-event", false},
 		} {
-			hub.raw[path] = body
+			hub.raw[path] = tc.body
 			out, err := reader.UnitEventListJSON(ctx, slug, Filter{})
 			require.Equal(t, KindMalformed, KindOf(err), what)
-			require.ErrorContains(t, err, "from another space", what)
+			require.ErrorContains(t, err, tc.says, what)
+			var typed *Error
+			require.ErrorAs(t, err, &typed)
+			require.Equal(t, tc.beyond, typed.BeyondScope, what)
 			require.Nil(t, out, what)
 		}
 		for _, scope := range []string{"", "*"} {
@@ -1403,15 +1410,22 @@ func TestUnitEventListsOfASpaceAndOfOneUnit(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, []int{3, 2, 1}, numbers(out))
 
-		for what, body := range map[string]string{
-			"an event of another unit":  "[" + event(id, elsewhere, 1, "2026-10-01T00:00:00Z") + "]",
-			"an event of another space": "[" + event(elsewhere, unit.UnitID, 1, "2026-10-01T00:00:00Z") + "]",
-			"an empty event":            `[{}]`,
+		for what, tc := range map[string]struct {
+			body, says string
+			beyond     bool
+		}{
+			"an event of another unit":  {"[" + event(id, elsewhere, 1, "2026-10-01T00:00:00Z") + "]", "an event of another unit", true},
+			"an event of another space": {"[" + event(elsewhere, unit.UnitID, 1, "2026-10-01T00:00:00Z") + "]", "an event of another unit", true},
+			"an empty event":            {`[{}]`, "an entry with no unit-event", false},
+			"a null event":              {`[null]`, "an entry with no unit-event", false},
 		} {
-			hub.raw[path] = body
+			hub.raw[path] = tc.body
 			out, err := reader.UnitEventsOfUnitJSON(ctx, slug, unit.Slug, Filter{})
 			require.Equal(t, KindMalformed, KindOf(err), what)
-			require.ErrorContains(t, err, "an event of another unit", what)
+			require.ErrorContains(t, err, tc.says, what)
+			var typed *Error
+			require.ErrorAs(t, err, &typed)
+			require.Equal(t, tc.beyond, typed.BeyondScope, what)
 			require.Nil(t, out, what)
 		}
 		hub.raw[path] = `<html>sign in</html>`
