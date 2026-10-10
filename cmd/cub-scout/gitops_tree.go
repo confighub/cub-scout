@@ -158,15 +158,17 @@ func parseDeliveryRef(raw, namespace string) (*agent.DeliveryRef, error) {
 	if !known {
 		return nil, fmt.Errorf("unknown deployer kind %q (valid: app, ks, hr)", parts[0])
 	}
+	for _, part := range parts[1:] {
+		if strings.TrimSpace(part) == "" {
+			return nil, fmt.Errorf("invalid deployer %q (examples: app/platform, ks/flux-system/apps)", raw)
+		}
+	}
 	ref := &agent.DeliveryRef{Kind: kind, Namespace: namespace, Name: parts[len(parts)-1]}
 	if len(parts) == 3 {
 		if namespace != "" && namespace != parts[1] {
 			return nil, fmt.Errorf("%q names namespace %q and --namespace names %q", raw, parts[1], namespace)
 		}
 		ref.Namespace = parts[1]
-	}
-	if ref.Name == "" || (len(parts) == 3 && ref.Namespace == "") {
-		return nil, fmt.Errorf("invalid deployer %q (examples: app/platform, ks/flux-system/apps)", raw)
 	}
 	return ref, nil
 }
