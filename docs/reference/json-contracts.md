@@ -1276,7 +1276,7 @@ deployer, to any depth. Field names are camelCase. The shape may still change.
   "complete": true,
   "evidence": "Each deployer's resources are what it reports about itself. They are not checked against the cluster.",
   "summary": {"roots": 1, "deployers": 8, "resources": 8, "maxDepth": 2, "notFound": 1, "notRead": 0,
-              "notReconciled": 1, "noneReported": 2, "notSupported": 0, "shared": 0, "cycles": 0, "depthLimited": 0},
+              "notReconciled": 1, "noneReported": 2, "notSupported": 0, "malformed": 0, "shared": 0, "cycles": 0, "depthLimited": 0},
   "roots": [
     {
       "controller": "ArgoCD", "kind": "Application", "namespace": "argocd", "name": "delivery-tree",
@@ -1292,7 +1292,7 @@ deployer, to any depth. Field names are camelCase. The shape may still change.
             "object": "found",
             "reportedByParent": {"group": "argoproj.io", "version": "v1alpha1", "kind": "Application", "namespace": "argocd",
                                  "name": "delivery-tree-team-b", "sync": "Synced",
-                                 "ignoredByParent": [{"group": "argoproj.io", "kind": "Application", "jsonPointers": ["/spec/syncPolicy"]}]},
+                                 "ignoredByParent": [{"group": "argoproj.io", "jsonPointers": ["/spec/syncPolicy"], "kind": "Application"}]},
             "state": {"reconciled": true, "sync": "OutOfSync", "health": "Missing"},
             "children": {"status": "reported", "deployers": [
               {"controller": "ArgoCD", "kind": "Application", "namespace": "argocd", "name": "delivery-tree-api",
@@ -1317,17 +1317,22 @@ deployer, to any depth. Field names are camelCase. The shape may still change.
 |---|---|
 | `complete` | `false` when a kind could not be listed or a child deployer could not be read. The tree is then missing something it cannot name |
 | `evidence` | Always present. A resource in the tree is one the deployer reports, not one that was found |
-| `summary` | Counts of the whole tree, before any filter. A deployer two parents report is counted where it appears |
+| `summary` | Counts of the whole tree, before any filter. A deployer two parents report is counted where it appears; what is under it is walked and counted once. `malformed` counts reported entries that could not be read as entries |
+| `notes[]` | Sentences a reader must not miss, such as that no resource health is reported |
 | `filters`, `shown` | Present with `--kind`, `--sync` or `--health`: what was asked, and how many deployers and resources are left |
-| `roots[]` | The deployer asked for, or every deployer no other deployer reports. Deployers that only report each other are entered once, at the first of them |
+| `roots[]` | The deployer asked for, or every deployer that no deployer read reports. Deployers that only report each other, and that nothing outside them reports, are entered once, at the first of them. With `--namespace`, "read" is what was listed there |
+| `generatedBy` | The ApplicationSet that owns an Application, as `ApplicationSet/<name>` |
 | `object` | `found`, `not_found` or `not_read` (with `objectReason`). A child a parent reports is kept in the tree whichever it is |
 | `policies[]` | Each policy setting and the value in effect: declared, or the controller default. The same values `gitops settings` reports as `effective` |
 | `options[]` | Declared options, as `name` or `name=value` |
-| `state` | What the deployer says of itself. `reconciled` is `false` when the object has no status. `sync` and `health` are Argo CD's; for Flux, `health` is `Ready=<status>`. `conditions[]` are passed through. Absent when the object was not read |
+| `state` | What the deployer says of itself, as it wrote it. `reconciled` is `false` when the object has no status. `sync` and `health` are Argo CD's; for Flux, `health` is `Ready=<status>`. `conditions[]` are passed through. Absent when the object was not read. Argo CD reports a `health` even beside a `sync` of `Unknown`; that is not a finding of health |
 | `reportedByParent` | The parent's entry for this deployer: whether the child object is as the parent's source has it. Absent on a root |
-| `reportedByParent.ignoredByParent[]`, `resources[].ignoredByParent[]` | The parent's ignore rules that name this entry, verbatim. A rule matches on group and kind, and on name and namespace when it gives them |
-| `reportedBy` | How many deployers report this one, when more than one |
-| `children.status` | `reported` (the list may be empty), `none_reported` (the deployer has no such list; see `reason`), `not_supported` (this kind is not read for its children yet), `depth_limit`, `cycle`, or `no_object` |
+| `reportedByParent.ignoredByParent[]`, `resources[].ignoredByParent[]` | The reporting deployer's ignore rules that name this entry, verbatim. Matched as Argo CD matches them: group and kind are glob patterns, name and namespace are exact when given. Instance-wide rules in `argocd-cm` are not read |
+| `ignoreRespectedOnSync` | Beside `ignoredByParent`: `true` when the reporting deployer also sets `RespectIgnoreDifferences=true`. Absent, the rules are about comparison only and a sync still writes those fields |
+| `reportedBy` | How many of the deployers read report this one, when more than one |
+| `children.status` | `reported` (the list may be empty), `none_reported` (the deployer has no such list; see `reason`), `not_supported` (this kind is not read for its children yet), `depth_limit`, `cycle`, `shown_above` (walked at an earlier appearance), or `no_object` |
+| `children.malformed` | How many reported entries could not be read as entries. They are in neither list |
+| `children.hiddenByFilter` | On a filtered tree, how many entries directly under this deployer the filters left out |
 | `children.deployers[]` | Reported entries that are themselves deployers, each a node like its parent |
 | `children.resources[]` | Every other reported entry: `group`, `version`, `kind`, `namespace`, `name`, and `sync` and `health` only when the deployer reports them. `requiresPruning` and `hook` when set |
 | `reads[]` | As in the delivery settings contract: `read`, `not_installed` or `not_read` for each kind |
@@ -1344,7 +1349,7 @@ that says whether the answer is whole (`complete`, `evidence`, `summary`,
 | Field | Meaning |
 |---|---|
 | `tree[].deployer` | `Kind namespace/name` |
-| `tree[].object` | Present only when not `found` |
+| `tree[].object` | `not_found` or `not_read`; absent when the object was read |
 | `tree[].sync`, `tree[].health`, `tree[].policies` | As above; policies as one string |
 | `tree[].marks[]` | In words, what is unusual: not found, not reconciled, reported by two deployers, a parent's ignore rule, a condition, nothing reported, a depth cut |
 | `tree[].resources` | The resources the deployer reports, counted by kind |

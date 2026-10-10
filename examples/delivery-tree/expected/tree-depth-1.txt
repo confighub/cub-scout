@@ -6,19 +6,19 @@ Each deployer's resources are what it reports about itself. They are not checked
   ! 2 not walked further because of --depth
 
 Application argocd/delivery-tree  ·  Synced / Healthy  ·  auto-sync on, self-heal on, prune on
-├─ Application argocd/delivery-tree-broken  ·  Unknown / Healthy  ·  auto-sync on, self-heal off, prune off
-│     ! parent ignores differences at /spec/syncPolicy
+├─ Application argocd/delivery-tree-broken  ·  Unknown / Healthy (reported without a comparison)  ·  auto-sync on, self-heal off, prune off
+│     ! parent ignores differences at /spec/syncPolicy, when comparing only
 │     ! ComparisonError: Failed to load target state: failed to generate manifest for source 1 of 1: rpc error: code = Unknown desc = examples/delivery-tree/argocd/no-such-path: app path does not exist
 │     ! reports nothing about what it applied: the Application has no status.resources
 ├─ Application argocd/delivery-tree-team-a  ·  Synced / Healthy  ·  auto-sync on, self-heal off, prune on
-│     ! parent ignores differences at /spec/syncPolicy
+│     ! parent ignores differences at /spec/syncPolicy, when comparing only
 │     ! not walked further: --depth
 ├─ Application argocd/delivery-tree-team-b  ·  OutOfSync / Missing  ·  auto-sync off, self-heal n/a, prune n/a
-│     ! parent ignores differences at /spec/syncPolicy
+│     ! parent ignores differences at /spec/syncPolicy, when comparing only
 │     ! not walked further: --depth
 ├─ Application delivery-tree-elsewhere-apps/delivery-tree-elsewhere  ·  auto-sync on, self-heal off, prune off
 │     ! not reconciled: the object has no status
-│     ! parent ignores differences at /spec/syncPolicy
+│     ! parent ignores differences at /spec/syncPolicy, when comparing only
 │     ! reports nothing about what it applied: the Application has no status.resources
 ├─ ConfigMap delivery-tree-platform/platform-settings  ·  Synced
 ├─ Namespace delivery-tree-elsewhere-apps  ·  Synced

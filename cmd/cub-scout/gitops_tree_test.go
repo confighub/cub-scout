@@ -101,9 +101,9 @@ Each deployer's resources are what it reports about itself. They are not checked
 Application argocd/platform  ·  Synced / Healthy  ·  auto-sync on, self-heal on, prune on
 ├─ Application argocd/gone
 │     ! not found in the cluster
-│     ! parent ignores differences at /spec/syncPolicy
+│     ! parent ignores differences at /spec/syncPolicy, when comparing only
 ├─ Application argocd/team-a  ·  OutOfSync / Degraded  ·  auto-sync on, self-heal off, prune off
-│     ! parent ignores differences at /spec/syncPolicy
+│     ! parent ignores differences at /spec/syncPolicy, when comparing only
 │  ├─ ConfigMap web/web-settings  ·  Synced
 │  ├─ Deployment web/web  ·  OutOfSync
 │  └─ Service web/web  ·  Synced
@@ -138,7 +138,7 @@ func TestGitOpsTreeCountsTheResourcesItDoesNotList(t *testing.T) {
 	require.NotContains(t, renderDeliveryTreeASCII(report, 3), "more (")
 
 	markdown := renderDeliveryTreeMarkdown(report, 1)
-	require.Contains(t, markdown, "  - … 2 resources more (1 Deployment, 1 Service); --max-resources 0 lists all\n")
+	require.Contains(t, markdown, "  - … 2 resources more \\(1 Deployment, 1 Service\\); --max-resources 0 lists all\n")
 }
 
 func TestGitOpsTreeMarkdown(t *testing.T) {
@@ -150,7 +150,7 @@ func TestGitOpsTreeMarkdown(t *testing.T) {
 		"> Each deployer's resources are what it reports about itself. They are not checked against the cluster.",
 		"- **1 reported but not found in the cluster**",
 		"- **Application argocd/platform** · Synced · Healthy · auto-sync on, self-heal on, prune on\n",
-		"  - **Application argocd/gone**\n    - _not found in the cluster_\n    - _parent ignores differences at /spec/syncPolicy_\n",
+		"  - **Application argocd/gone**\n    - _not found in the cluster_\n    - _parent ignores differences at /spec/syncPolicy, when comparing only_\n",
 		"  - **Application argocd/team-a** · OutOfSync · Degraded · auto-sync on, self-heal off, prune off\n",
 		"    - Deployment web/web  ·  OutOfSync\n",
 		"  - ConfigMap platform/settings  ·  Synced\n",
@@ -223,9 +223,9 @@ func TestGitOpsTreeSummaryViewCountsLeavesAndNamesTheExceptions(t *testing.T) {
 		Resources: map[string]int{"ConfigMap": 1},
 		Deployers: []deliveryTreeSummaryNode{
 			{Deployer: "Application argocd/gone", Object: agent.DeliveryObjectNotFound,
-				Marks: []string{"not found in the cluster", "parent ignores differences at /spec/syncPolicy"}},
+				Marks: []string{"not found in the cluster", "parent ignores differences at /spec/syncPolicy, when comparing only"}},
 			{Deployer: "Application argocd/team-a", Sync: "OutOfSync", Health: "Degraded",
-				Policies: "auto-sync on, self-heal off, prune off", Marks: []string{"parent ignores differences at /spec/syncPolicy"},
+				Policies: "auto-sync on, self-heal off, prune off", Marks: []string{"parent ignores differences at /spec/syncPolicy, when comparing only"},
 				Resources: map[string]int{"ConfigMap": 1, "Deployment": 1, "Service": 1},
 				NotSynced: []string{"Deployment web/web OutOfSync"}},
 		},
@@ -250,26 +250,28 @@ func TestGitOpsTreeFiltersKeepTheDeployersAbove(t *testing.T) {
 		walk(report.Roots, 0)
 		return out
 	}
+	// The Kustomization is in every result: what it delivers is not read, so
+	// it could hold a match, and no filter may leave it out.
 	for name, tc := range map[string]struct {
 		params deliveryTreeParams
 		want   []string
 		shown  deliveryTreeShown
 	}{
 		// A Deployment two levels down, with both deployers above it.
-		"one kind": {deliveryTreeParams{Kinds: []string{"deployment"}}, []string{"platform", ">team-a", ">>Deployment/web"}, deliveryTreeShown{2, 1}},
+		"one kind": {deliveryTreeParams{Kinds: []string{"deployment"}}, []string{"platform", ">team-a", ">>Deployment/web", "apps"}, deliveryTreeShown{3, 1}},
 		"two kinds": {deliveryTreeParams{Kinds: []string{"Service", "ConfigMap"}},
-			[]string{"platform", ">ConfigMap/settings", ">team-a", ">>ConfigMap/web-settings", ">>Service/web"}, deliveryTreeShown{2, 3}},
+			[]string{"platform", ">ConfigMap/settings", ">team-a", ">>ConfigMap/web-settings", ">>Service/web", "apps"}, deliveryTreeShown{3, 3}},
 		// A deployer is matched on its own sync, so team-a stays for itself
 		// as well as for its Deployment.
-		"out of sync":    {deliveryTreeParams{Syncs: []string{"OutOfSync"}}, []string{"platform", ">team-a", ">>Deployment/web"}, deliveryTreeShown{2, 1}},
-		"kind and sync":  {deliveryTreeParams{Kinds: []string{"Service"}, Syncs: []string{"OutOfSync"}}, nil, deliveryTreeShown{}},
+		"out of sync":    {deliveryTreeParams{Syncs: []string{"OutOfSync"}}, []string{"platform", ">team-a", ">>Deployment/web", "apps"}, deliveryTreeShown{3, 1}},
+		"kind and sync":  {deliveryTreeParams{Kinds: []string{"Service"}, Syncs: []string{"OutOfSync"}}, []string{"apps"}, deliveryTreeShown{1, 0}},
 		"a deployer":     {deliveryTreeParams{Kinds: []string{"Kustomization"}}, []string{"apps"}, deliveryTreeShown{1, 0}},
-		"its own health": {deliveryTreeParams{Healths: []string{"Degraded"}}, []string{"platform", ">team-a"}, deliveryTreeShown{2, 0}},
-		"no such health": {deliveryTreeParams{Healths: []string{"Missing"}}, nil, deliveryTreeShown{}},
+		"its own health": {deliveryTreeParams{Healths: []string{"Degraded"}}, []string{"platform", ">team-a", "apps"}, deliveryTreeShown{3, 0}},
+		"no such health": {deliveryTreeParams{Healths: []string{"Missing"}}, []string{"apps"}, deliveryTreeShown{1, 0}},
 		// A child that is not in the cluster has no state of its own. It is
 		// matched on what its parent reports of it.
 		"a missing child, by its parent's report": {deliveryTreeParams{Syncs: []string{"Synced"}, Kinds: []string{"Application"}},
-			[]string{"platform", ">gone"}, deliveryTreeShown{2, 0}},
+			[]string{"platform", ">gone", "apps"}, deliveryTreeShown{3, 0}},
 	} {
 		t.Run(name, func(t *testing.T) {
 			report := treeReport(t, treeFixtureClient(), tc.params)
@@ -281,12 +283,64 @@ func TestGitOpsTreeFiltersKeepTheDeployersAbove(t *testing.T) {
 			require.NotNil(t, report.Filters)
 			out := renderDeliveryTreeASCII(report, 25)
 			require.Contains(t, out, "2 roots, 4 deployers, 4 resources reported; showing ")
-			if tc.want == nil {
-				require.Contains(t, out, "Nothing matches the filters.")
-				require.NotNil(t, report.Roots, "an empty result is an empty list in JSON, not null")
-			}
 		})
 	}
+
+	// A deployer that is kept says how many entries under it the filters
+	// left out: a short list is not the whole of it.
+	report := treeReport(t, treeFixtureClient(), deliveryTreeParams{Kinds: []string{"Deployment"}})
+	platform := report.Roots[0]
+	require.Equal(t, 2, platform.Children.HiddenByFilter, "its ConfigMap, and the child that is gone")
+	require.Equal(t, 2, platform.Children.Deployers[0].Children.HiddenByFilter, "team-a's Service and ConfigMap")
+	out := renderDeliveryTreeASCII(report, 25)
+	require.Contains(t, out, "   ! 2 entries under it not shown by the filters\n")
+	require.Contains(t, renderDeliveryTreeMarkdown(report, 25), "_2 entries under it not shown by the filters_")
+	// The unfiltered tree is untouched, and says nothing of filters.
+	require.Zero(t, treeReport(t, treeFixtureClient(), deliveryTreeParams{}).Roots[0].Children.HiddenByFilter)
+
+	// With nothing unread anywhere, a filter that matches nothing says so.
+	onlyRead := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), settingsListKinds,
+		treeApplication("solo", "Synced", "Healthy", nil, []interface{}{treeEntry("", "ConfigMap", "p", "c", "Synced")}))
+	none := treeReport(t, onlyRead, deliveryTreeParams{Kinds: []string{"Deployment"}})
+	require.NotNil(t, none.Roots, "an empty result is an empty list in JSON, not null")
+	require.Empty(t, none.Roots)
+	require.Contains(t, renderDeliveryTreeASCII(none, 25), "Nothing matches the filters.")
+}
+
+// What was not seen could hold a match, so a filter never hides it: a child
+// that could not be read, one that reports nothing, one cut by --depth.
+func TestGitOpsTreeFiltersNeverHideWhatWasNotSeen(t *testing.T) {
+	unread := treeFixtureClient(
+		treeApplication("outer", "Synced", "Healthy", nil, []interface{}{
+			treeEntry("argoproj.io", "Application", "team-x", "inner", "Synced"),
+			treeAppEntry("silent"),
+			treeEntry("", "ConfigMap", "p", "c", "Synced"),
+		}),
+		// Exists, with no status: it reports nothing.
+		treeApplication("silent", "", "", nil, nil))
+	unread.PrependReactor("get", "applications", func(ktesting.Action) (bool, runtime.Object, error) {
+		return true, nil, apierrors.NewForbidden(schema.GroupResource{Resource: "applications"}, "inner", nil)
+	})
+	params := deliveryTreeParams{Namespace: "argocd", Root: &agent.DeliveryRef{Kind: "Application", Name: "outer"}, Kinds: []string{"Deployment"}}
+	report := treeReport(t, unread, params)
+
+	outer := report.Roots[0]
+	names := []string{}
+	for _, child := range outer.Children.Deployers {
+		names = append(names, child.Name+":"+child.Object+":"+child.Children.Status)
+	}
+	require.Equal(t, []string{"silent:found:none_reported", "inner:not_read:no_object"}, names)
+	require.Empty(t, outer.Children.Resources)
+	require.Equal(t, 1, outer.Children.HiddenByFilter, "only the ConfigMap")
+	out := renderDeliveryTreeASCII(report, 25)
+	require.NotContains(t, out, "Nothing matches the filters.")
+	require.Contains(t, out, "! could not be read: forbidden")
+	require.Contains(t, out, "! reports nothing about what it applied")
+
+	// A branch cut by --depth is kept the same way.
+	cut := treeReport(t, treeFixtureClient(), deliveryTreeParams{Root: &agent.DeliveryRef{Kind: "Application", Name: "platform"}, Depth: 1, Kinds: []string{"Deployment"}})
+	require.Equal(t, "team-a", cut.Roots[0].Children.Deployers[0].Name)
+	require.Equal(t, agent.DeliveryChildrenDepthLimit, cut.Roots[0].Children.Deployers[0].Children.Status)
 }
 
 func TestGitOpsTreeRootArgument(t *testing.T) {
@@ -364,6 +418,19 @@ func TestGitOpsTreeSaysWhenItIsIncomplete(t *testing.T) {
 	// With no deployers at all, it says so rather than printing nothing.
 	empty := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), settingsListKinds)
 	require.Contains(t, renderDeliveryTreeASCII(treeReport(t, empty, deliveryTreeParams{}), 25), "No deployers were found.")
+
+	// When nothing could be listed, "none found" would be a claim about
+	// deployers nobody saw.
+	blind := treeFixtureClient()
+	for _, resource := range []string{"applications", "kustomizations", "helmreleases"} {
+		blind.PrependReactor("list", resource, func(ktesting.Action) (bool, runtime.Object, error) {
+			return true, nil, apierrors.NewForbidden(schema.GroupResource{Resource: "x"}, "", nil)
+		})
+	}
+	for _, rendered := range []string{renderDeliveryTreeASCII(treeReport(t, blind, deliveryTreeParams{}), 25), renderDeliveryTreeMarkdown(treeReport(t, blind, deliveryTreeParams{}), 25)} {
+		require.Contains(t, rendered, "No deployers could be read; see Reads. That is not the same as none.")
+		require.NotContains(t, rendered, "No deployers were found.")
+	}
 }
 
 func TestGitOpsTreeFlagValidation(t *testing.T) {
@@ -439,7 +506,11 @@ func TestGitOpsTreeTextOutputNeutralisesClusterSuppliedControlCharacters(t *test
 			}
 			require.Equal(t, 1, readsHeadings)
 			require.Zero(t, forgedReads)
-			require.Contains(t, out, "ComparisonError: line one Reads: Argo CD Application: read (999)")
+			if name == "markdown" {
+				require.Contains(t, out, `ComparisonError: line one Reads: Argo CD Application: read \(999\)`)
+			} else {
+				require.Contains(t, out, "ComparisonError: line one Reads: Argo CD Application: read (999)")
+			}
 		})
 	}
 	// JSON is left verbatim; it is data, not a terminal.
@@ -447,4 +518,76 @@ func TestGitOpsTreeTextOutputNeutralisesClusterSuppliedControlCharacters(t *test
 	params := deliveryTreeParams{View: deliveryTreeViewAll}
 	require.NoError(t, writeDeliveryTree(&out, report, "json", params))
 	require.Contains(t, out.String(), `evil\n└─ Application argocd/forged`)
+}
+
+// In Markdown, text from the cluster is inert: it cannot make a link, an
+// image, a heading, emphasis, HTML or a table cell.
+func TestGitOpsTreeMarkdownCannotBeMadeLiveByClusterText(t *testing.T) {
+	app := treeApplication("a", "Synced", "Healthy", nil, []interface{}{treeEntry("", "ConfigMap", "p", "c", "Synced")})
+	app.Object["status"].(map[string]interface{})["conditions"] = []interface{}{map[string]interface{}{"type": "ComparisonError",
+		"message": "[click here](https://evil.example/x) ![pixel](https://evil.example/p.png) <img src=x> # heading | cell ~~struck~~ a_b *c* `d` back\\slash &amp;"}}
+	client := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), settingsListKinds, app)
+	out := renderDeliveryTreeMarkdown(treeReport(t, client, deliveryTreeParams{}), 25)
+
+	require.Contains(t, out, `\[click here\]\(https://evil.example/x\) \!\[pixel\]\(https://evil.example/p.png\)`)
+	require.Contains(t, out, `&lt;img src=x&gt; \# heading \| cell \~\~struck\~\~ a\_b \*c\* 'd' back\\slash &amp;amp;`)
+	// No unescaped opening of a link or an image survives anywhere a
+	// cluster string is printed.
+	for _, line := range strings.Split(out, "\n") {
+		if !strings.Contains(line, "evil.example") {
+			continue
+		}
+		require.NotRegexp(t, `(^|[^\\])\]\(`, line)
+		require.NotRegexp(t, `(^|[^\\])!\[`, line)
+		require.NotContains(t, line, "<img")
+	}
+
+	// ASCII neutralises what cannot be seen: a bidirectional override and a
+	// zero-width character in a name do not reach the terminal.
+	hidden := treeApplication("ab\u202ecd\u200bef", "Synced", "Healthy", nil, []interface{}{})
+	ascii := renderDeliveryTreeASCII(treeReport(t, dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), settingsListKinds, hidden), deliveryTreeParams{}), 25)
+	require.Contains(t, ascii, "Application argocd/ab cd ef")
+	require.NotContains(t, ascii, "\u202e")
+	require.NotContains(t, ascii, "\u200b")
+}
+
+// Argo CD gives an Application a health even when it could not compare it.
+// Beside a sync of Unknown, "Healthy" would read as a finding; the text says
+// what it is. JSON keeps both fields as the controller wrote them.
+func TestGitOpsTreeDoesNotPresentAHealthWithNoComparisonAsAFinding(t *testing.T) {
+	uncompared := treeApplication("uncompared", "Unknown", "Healthy", nil, nil)
+	uncompared.Object["status"] = map[string]interface{}{
+		"sync": map[string]interface{}{"status": "Unknown"}, "health": map[string]interface{}{"status": "Healthy"},
+		"conditions": []interface{}{map[string]interface{}{"type": "ComparisonError", "message": "app path does not exist"}},
+	}
+	compared := treeApplication("compared", "Synced", "Healthy", nil, []interface{}{})
+	client := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), settingsListKinds, uncompared, compared)
+	report := treeReport(t, client, deliveryTreeParams{})
+
+	ascii := renderDeliveryTreeASCII(report, 25)
+	require.Contains(t, ascii, "Application argocd/uncompared  ·  Unknown / Healthy (reported without a comparison)  ·")
+	require.Contains(t, ascii, "Application argocd/compared  ·  Synced / Healthy  ·")
+	markdown := renderDeliveryTreeMarkdown(report, 25)
+	require.Contains(t, markdown, `**Application argocd/uncompared** · Unknown · Healthy \(reported without a comparison\)`)
+
+	var out bytes.Buffer
+	params := deliveryTreeParams{View: deliveryTreeViewAll}
+	require.NoError(t, writeDeliveryTree(&out, report, "json", params))
+	require.Contains(t, out.String(), `"health": "Healthy"`)
+	require.NotContains(t, out.String(), "reported without a comparison", "JSON carries the controller's own words")
+}
+
+// A parent's ignore rule is about comparison. Only with
+// RespectIgnoreDifferences=true does a sync also leave the field alone, and
+// the line says which.
+func TestGitOpsTreeSaysWhetherAnIgnoreRuleHoldsOnSync(t *testing.T) {
+	rule := []interface{}{map[string]interface{}{"group": "apps", "kind": "Deployment", "jsonPointers": []interface{}{"/spec/replicas"}}}
+	entry := []interface{}{treeEntry("apps", "Deployment", "web", "web", "Synced")}
+	comparing := treeApplication("comparing", "Synced", "Healthy", map[string]interface{}{"ignoreDifferences": rule}, entry)
+	respecting := treeApplication("respecting", "Synced", "Healthy", map[string]interface{}{"ignoreDifferences": rule,
+		"syncPolicy": map[string]interface{}{"syncOptions": []interface{}{"RespectIgnoreDifferences=true"}}}, entry)
+	client := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), settingsListKinds, comparing, respecting)
+	ascii := renderDeliveryTreeASCII(treeReport(t, client, deliveryTreeParams{}), 25)
+	require.Contains(t, ascii, "Deployment web/web  ·  Synced  ·  its deployer ignores differences at /spec/replicas, when comparing only\n")
+	require.Contains(t, ascii, "Deployment web/web  ·  Synced  ·  its deployer ignores differences at /spec/replicas, when comparing and when syncing\n")
 }

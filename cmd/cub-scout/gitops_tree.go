@@ -55,7 +55,11 @@ in the tree with their own state and are marked as such.
 
 A deployer that could not be read, was not found, or says nothing about what
 it applied is kept in the tree and marked. It is never dropped, and never
-shown as having nothing under it.
+shown as having nothing under it. A filter does not hide a deployer under
+which something was not seen, since that could hold a match.
+
+A deployer that more than one deployer reports is shown under each. What is
+under it is walked once, at its first appearance.
 
 Examples:
   # Every root deployer and what is under it
@@ -285,6 +289,9 @@ func buildDeliveryTreeReport(ctx context.Context, client dynamic.Interface, para
 	if tree.Summary.NotSupported > 0 {
 		report.Notes = append(report.Notes, "What a Flux Kustomization or HelmRelease delivers is not read yet (#856); those deployers are shown without their children.")
 	}
+	if len(params.Healths) > 0 && tree.Summary.Resources > 0 && !deliveryTreeReportsHealth(report.Roots) {
+		report.Notes = append(report.Notes, "--health can match deployers only here: no resource reports a health.")
+	}
 	if params.filtered() {
 		report.Filters = &deliveryTreeFilters{Kinds: params.Kinds, Syncs: params.Syncs, Healths: params.Healths}
 		report.Roots = filterDeliveryTree(report.Roots, params)
@@ -341,9 +348,26 @@ func deliveryEntryMatches(params deliveryTreeParams, kind, sync, health string) 
 	return true
 }
 
-// filterDeliveryTree keeps the entries that pass the filters and every
-// deployer above one. What marks a deployer (not found, nothing reported) stays on
-// it: a kept ancestor still says what the walk could not see beneath it.
+// deliveryUnknownBeneath reports whether what is under a deployer was not
+// seen: it could not be read, it reports nothing about what it applied, its
+// kind is not read for children yet, or the walk was cut there. Such a
+// deployer could hold a match, so no filter leaves it out.
+func deliveryUnknownBeneath(node agent.DeliveryTreeNode) bool {
+	if node.Object == agent.DeliveryObjectNotRead {
+		return true
+	}
+	switch node.Children.Status {
+	case agent.DeliveryChildrenNoneReported, agent.DeliveryChildrenNotSupported, agent.DeliveryChildrenDepthLimit:
+		return true
+	}
+	return node.Children.Malformed > 0
+}
+
+// filterDeliveryTree keeps the entries that pass the filters, every deployer
+// above one, and every deployer under which something was not seen, since
+// that could hold a match. Each deployer kept says how many of the entries
+// directly under it the filters left out, so a short list is not read as the
+// whole of it.
 func filterDeliveryTree(nodes []agent.DeliveryTreeNode, params deliveryTreeParams) []agent.DeliveryTreeNode {
 	kept := []agent.DeliveryTreeNode{}
 	for _, node := range nodes {
@@ -364,9 +388,10 @@ func filterDeliveryTree(nodes []agent.DeliveryTreeNode, params deliveryTreeParam
 		} else if node.ReportedByParent != nil {
 			sync, health = node.ReportedByParent.Sync, node.ReportedByParent.Health
 		}
-		if len(resources) == 0 && len(deployers) == 0 && !deliveryEntryMatches(params, node.Kind, sync, health) {
+		if len(resources) == 0 && len(deployers) == 0 && !deliveryEntryMatches(params, node.Kind, sync, health) && !deliveryUnknownBeneath(node) {
 			continue
 		}
+		node.Children.HiddenByFilter = len(node.Children.Resources) - len(resources) + len(node.Children.Deployers) - len(deployers)
 		node.Children.Resources = resources
 		node.Children.Deployers = nil
 		if len(deployers) > 0 {
@@ -430,15 +455,16 @@ func deliveryNodeMarks(node agent.DeliveryTreeNode) []string {
 		if sync := node.ReportedByParent.Sync; sync != "" && sync != "Synced" {
 			marks = append(marks, "its parent reports it "+sync)
 		}
-		if rules := deliveryIgnoreRulesLine(node.ReportedByParent.IgnoredByParent); rules != "" {
-			marks = append(marks, "parent ignores differences at "+rules)
+		if ignored := deliveryIgnoredLine(*node.ReportedByParent); ignored != "" {
+			marks = append(marks, "parent "+ignored)
 		}
 	}
 	if node.State != nil {
 		for _, condition := range node.State.Conditions {
-			// Argo CD lists only problems as conditions; Flux lists Ready
-			// and friends, which the health already says.
-			if node.Controller != agent.DeliveryControllerArgoCD {
+			// Argo CD lists only problems as conditions. Flux lists Ready
+			// and its companions whatever their state, so only one that
+			// is False is a problem worth a line.
+			if node.Controller != agent.DeliveryControllerArgoCD && condition.Status != "False" {
 				continue
 			}
 			marks = append(marks, condition.Type+": "+deliveryShorten(condition.Message, 320))
@@ -453,8 +479,32 @@ func deliveryNodeMarks(node agent.DeliveryTreeNode) []string {
 		marks = append(marks, "not walked further: --depth")
 	case agent.DeliveryChildrenCycle:
 		marks = append(marks, "already above in this branch: not walked again")
+	case agent.DeliveryChildrenShownAbove:
+		marks = append(marks, "what is under it is shown at its first appearance above")
+	}
+	if node.Children.Malformed > 0 {
+		marks = append(marks, fmt.Sprintf("%s it reports could not be read and %s not shown",
+			deliveryCount(node.Children.Malformed, "entry"), map[bool]string{true: "is", false: "are"}[node.Children.Malformed == 1]))
+	}
+	if node.Children.HiddenByFilter > 0 {
+		marks = append(marks, fmt.Sprintf("%s under it not shown by the filters", deliveryCount(node.Children.HiddenByFilter, "entry")))
 	}
 	return marks
+}
+
+// deliveryIgnoredLine says what a reporting deployer's ignore rules do for an
+// entry. A rule alone is about comparison: the difference does not make the
+// entry OutOfSync. Only with RespectIgnoreDifferences=true does a sync also
+// leave the field as it is.
+func deliveryIgnoredLine(entry agent.DeliveryReported) string {
+	rules := deliveryIgnoreRulesLine(entry.IgnoredByParent)
+	if rules == "" {
+		return ""
+	}
+	if entry.IgnoreRespectedOnSync {
+		return "ignores differences at " + rules + ", when comparing and when syncing"
+	}
+	return "ignores differences at " + rules + ", when comparing only"
 }
 
 func deliveryShorten(text string, limit int) string {
@@ -569,6 +619,9 @@ func deliveryCount(n int, noun string) string {
 	if n == 1 {
 		return "1 " + noun
 	}
+	if strings.HasSuffix(noun, "y") {
+		return fmt.Sprintf("%d %sies", n, strings.TrimSuffix(noun, "y"))
+	}
 	return fmt.Sprintf("%d %ss", n, noun)
 }
 
@@ -592,18 +645,35 @@ func deliveryTreeCaveats(report deliveryTreeReport) []string {
 	return caveats
 }
 
+// deliveryStateParts are a deployer's own sync and health for a line of text.
+//
+// Argo CD gives an Application a health even when it could not compare it:
+// with nothing compared there is nothing unhealthy, so it says Healthy. Beside
+// a sync of Unknown that word would read as a finding, so it is shown as what
+// it is, a health reported with no comparison behind it. JSON keeps both
+// fields as the controller wrote them.
+func deliveryStateParts(state *agent.DeliveryDeployerState) []string {
+	if state == nil {
+		return nil
+	}
+	var parts []string
+	if state.Sync != "" {
+		parts = append(parts, deliveryText(state.Sync))
+	}
+	if state.Health != "" {
+		health := deliveryText(state.Health)
+		if state.Sync == "Unknown" {
+			health += " (reported without a comparison)"
+		}
+		parts = append(parts, health)
+	}
+	return parts
+}
+
 func deliveryNodeLine(node agent.DeliveryTreeNode) string {
 	parts := []string{deliveryText(deliveryRefLine(node.Kind, node.Namespace, node.Name))}
-	if node.State != nil {
-		var state []string
-		for _, value := range []string{node.State.Sync, node.State.Health} {
-			if value != "" {
-				state = append(state, deliveryText(value))
-			}
-		}
-		if len(state) > 0 {
-			parts = append(parts, strings.Join(state, " / "))
-		}
+	if state := deliveryStateParts(node.State); len(state) > 0 {
+		parts = append(parts, strings.Join(state, " / "))
 	}
 	if policies := deliveryPoliciesLine(node.Policies); policies != "" {
 		parts = append(parts, deliveryText(policies))
@@ -622,8 +692,8 @@ func deliveryResourceLine(resource agent.DeliveryReported) string {
 	if resource.RequiresPruning {
 		line += "  ·  no longer in the source: would be pruned"
 	}
-	if rules := deliveryIgnoreRulesLine(resource.IgnoredByParent); rules != "" {
-		line += "  ·  differences ignored at " + deliveryText(rules)
+	if ignored := deliveryIgnoredLine(resource); ignored != "" {
+		line += "  ·  its deployer " + deliveryText(ignored)
 	}
 	return line
 }
@@ -712,11 +782,7 @@ func renderDeliveryTreeASCII(report deliveryTreeReport, maxResources int) string
 		b.WriteString("\n")
 	}
 	if len(report.Roots) == 0 {
-		if report.Filters != nil {
-			b.WriteString("Nothing matches the filters.\n\n")
-		} else {
-			b.WriteString("No deployers were found.\n\n")
-		}
+		b.WriteString(deliveryEmptyTreeLine(report) + "\n\n")
 	}
 	for _, note := range report.Notes {
 		b.WriteString("Note: " + note + "\n")
@@ -735,8 +801,26 @@ func renderDeliveryTreeASCII(report deliveryTreeReport, maxResources int) string
 	return b.String()
 }
 
+// deliveryEmptyTreeLine says why a tree has nothing in it. When a kind could
+// not be listed, "none found" would be a claim about deployers nobody saw.
+func deliveryEmptyTreeLine(report deliveryTreeReport) string {
+	switch {
+	case !report.Complete && report.Summary.Deployers == 0:
+		return "No deployers could be read; see Reads. That is not the same as none."
+	case report.Filters != nil:
+		return "Nothing matches the filters."
+	}
+	return "No deployers were found."
+}
+
+// deliveryMarkdownText makes text read from the cluster inert in Markdown: no
+// emphasis, link, image, heading, HTML or table cell can be made from it.
 func deliveryMarkdownText(text string) string {
-	return strings.NewReplacer("|", "\\|", "`", "'", "*", "\\*", "_", "\\_", "<", "&lt;", ">", "&gt;").Replace(deliveryText(text))
+	return strings.NewReplacer(
+		"\\", "\\\\", "&", "&amp;", "<", "&lt;", ">", "&gt;", "`", "'",
+		"|", "\\|", "*", "\\*", "_", "\\_", "[", "\\[", "]", "\\]", "(", "\\(", ")", "\\)",
+		"!", "\\!", "#", "\\#", "~", "\\~",
+	).Replace(deliveryText(text))
 }
 
 func renderDeliveryTreeMarkdown(report deliveryTreeReport, maxResources int) string {
@@ -764,12 +848,8 @@ func renderDeliveryTreeMarkdown(report deliveryTreeReport, maxResources int) str
 	walk = func(node agent.DeliveryTreeNode, depth int) {
 		indent := strings.Repeat("  ", depth)
 		b.WriteString(indent + "- **" + deliveryMarkdownText(deliveryRefLine(node.Kind, node.Namespace, node.Name)) + "**")
-		if node.State != nil {
-			for _, value := range []string{node.State.Sync, node.State.Health} {
-				if value != "" {
-					b.WriteString(" · " + deliveryMarkdownText(value))
-				}
-			}
+		for _, value := range deliveryStateParts(node.State) {
+			b.WriteString(" · " + deliveryMarkdownText(value))
 		}
 		if policies := deliveryPoliciesLine(node.Policies); policies != "" {
 			b.WriteString(" · " + deliveryMarkdownText(policies))
@@ -797,11 +877,7 @@ func renderDeliveryTreeMarkdown(report deliveryTreeReport, maxResources int) str
 		walk(root, 0)
 	}
 	if len(report.Roots) == 0 {
-		if report.Filters != nil {
-			b.WriteString("Nothing matches the filters.\n")
-		} else {
-			b.WriteString("No deployers were found.\n")
-		}
+		b.WriteString(deliveryEmptyTreeLine(report) + "\n")
 	}
 	b.WriteString("\n")
 	for _, note := range report.Notes {

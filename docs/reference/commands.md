@@ -3024,7 +3024,7 @@ The usual case is an Argo CD app-of-apps. Part of the
 ```text
 Application argocd/delivery-tree  ·  Synced / Healthy  ·  auto-sync on, self-heal on, prune on
 ├─ Application argocd/delivery-tree-team-a  ·  Synced / Healthy  ·  auto-sync on, self-heal off, prune on
-│     ! parent ignores differences at /spec/syncPolicy
+│     ! parent ignores differences at /spec/syncPolicy, when comparing only
 │  └─ Application argocd/delivery-tree-web  ·  Synced / Healthy  ·  auto-sync on, self-heal on, prune on
 │     ├─ ConfigMap delivery-tree-web/web-settings  ·  Synced
 │     ├─ Deployment delivery-tree-web/web  ·  Synced
@@ -3039,8 +3039,22 @@ Application argocd/delivery-tree  ·  Synced / Healthy  ·  auto-sync on, self-h
 Each deployer is shown with its own sync and health and with the policy
 settings [`gitops settings`](#gitops-settings) reports for it. A parent's
 settings apply to the child deployer object itself: with self-heal on in the
-parent, a change to a child made in the cluster is put back, unless the parent
-has an ignore rule that names it. Such a rule is shown on the child.
+parent, a change to a child made in the cluster makes the child OutOfSync and
+is put back.
+
+A parent's ignore rule that names a child is shown on the child. A rule covers
+the fields it lists, not the whole object, and by itself it is about
+comparison: a difference there does not make the child OutOfSync. A sync that
+happens for another reason still writes those fields, unless the parent also
+sets `RespectIgnoreDifferences=true`. The line says which: "when comparing
+only", or "when comparing and when syncing". Rules are matched as Argo CD
+matches them: group and kind are glob patterns, name and namespace are exact.
+Only the Application's own `spec.ignoreDifferences` is read; rules set for the
+whole Argo CD instance in `argocd-cm` are not.
+
+Argo CD gives an Application a health even when it could not compare it.
+Beside a sync of `Unknown` the text shows that health as "reported without a
+comparison". JSON keeps both fields as the controller wrote them.
 
 #### Where the tree comes from
 
@@ -3064,8 +3078,9 @@ are in the tree with their own state and are marked.
 | A child its parent reports that is not in the cluster | The child, `not_found`, with what the parent says of it |
 | A child that could not be read | The child, `not_read`, with the reason; `complete` is then `false` |
 | A deployer with no status | Not reconciled |
-| A deployer two parents report | Under both, with the count |
+| A deployer two parents report | Under both, with the count. What is under it is walked once, at its first appearance; the other says it is shown above. That keeps the tree the size of what was read |
 | A deployer already above in its own branch | Not walked again |
+| A reported entry that is not an entry | Counted on its deployer and in the summary; it is in neither list |
 | A branch cut by `--depth` | Says so at the cut |
 | A kind that could not be listed | Under Reads as not read, and `complete` is `false` |
 
@@ -3073,7 +3088,7 @@ are in the tree with their own state and are marked.
 
 | Flag | Description |
 |---|---|
-| `-n, --namespace` | Only deployers in this namespace, and the namespace of the deployer named. A child reported in another namespace is read on its own |
+| `-n, --namespace` | Only deployers in this namespace, and the namespace of the deployer named. A child reported in another namespace is read on its own. Roots and "reported by" are then of what was listed: a deployer whose parents are in another namespace is a root, and its parents are not counted |
 | `--depth` | How many levels below a root to walk (default 0: no limit) |
 | `--kind` | Only entries of this kind, with the deployers above them (repeatable) |
 | `--sync` | Only entries with this sync status, such as `OutOfSync` (repeatable) |
@@ -3085,9 +3100,16 @@ are in the tree with their own state and are marked.
 | `--kube-context` | The kubeconfig context to read |
 
 A filter keeps every deployer above a match. A deployer is matched on what it
-says of itself; one that was not read is matched on what its parent reports of
-it. The summary counts are always of the whole tree; `shown` counts what the
-filters left.
+says of itself; one that is not in the cluster is matched on what its parent
+reports of it. The summary counts are always of the whole tree; `shown` counts
+what the filters left, and each deployer kept says how many entries directly
+under it were left out.
+
+A filter never hides a deployer under which something was not seen: one that
+could not be read, that reports nothing about what it applied, whose kind is
+not read for children yet, or that `--depth` cut. It could hold a match, so it
+stays, marked. "Nothing matches the filters" is said only when nothing was
+left unseen.
 
 #### Examples
 

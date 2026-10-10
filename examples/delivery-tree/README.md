@@ -49,12 +49,12 @@ Each deployer's resources are what it reports about itself. They are not checked
   ! 2 report nothing about what they applied
 
 Application argocd/delivery-tree  ·  Synced / Healthy  ·  auto-sync on, self-heal on, prune on
-├─ Application argocd/delivery-tree-broken  ·  Unknown / Healthy  ·  auto-sync on, self-heal off, prune off
-│     ! parent ignores differences at /spec/syncPolicy
+├─ Application argocd/delivery-tree-broken  ·  Unknown / Healthy (reported without a comparison)  ·  auto-sync on, self-heal off, prune off
+│     ! parent ignores differences at /spec/syncPolicy, when comparing only
 │     ! ComparisonError: Failed to load target state: [...] examples/delivery-tree/argocd/no-such-path: app path does not exist
 │     ! reports nothing about what it applied: the Application has no status.resources
 ├─ Application argocd/delivery-tree-team-a  ·  Synced / Healthy  ·  auto-sync on, self-heal off, prune on
-│     ! parent ignores differences at /spec/syncPolicy
+│     ! parent ignores differences at /spec/syncPolicy, when comparing only
 │  ├─ Application argocd/delivery-tree-jobs  ·  Synced / Healthy  ·  auto-sync on, self-heal off, prune off
 │  │  ├─ ConfigMap delivery-tree-jobs/nightly-schedule  ·  Synced
 │  │  └─ ConfigMap delivery-tree-jobs/weekly-schedule  ·  Synced
@@ -63,13 +63,13 @@ Application argocd/delivery-tree  ·  Synced / Healthy  ·  auto-sync on, self-h
 │     ├─ Deployment delivery-tree-web/web  ·  Synced
 │     └─ Service delivery-tree-web/web  ·  Synced
 ├─ Application argocd/delivery-tree-team-b  ·  OutOfSync / Missing  ·  auto-sync off, self-heal n/a, prune n/a
-│     ! parent ignores differences at /spec/syncPolicy
+│     ! parent ignores differences at /spec/syncPolicy, when comparing only
 │  └─ Application argocd/delivery-tree-api
 │        ! not found in the cluster
 │        ! its parent reports it OutOfSync
 ├─ Application delivery-tree-elsewhere-apps/delivery-tree-elsewhere  ·  auto-sync on, self-heal off, prune off
 │     ! not reconciled: the object has no status
-│     ! parent ignores differences at /spec/syncPolicy
+│     ! parent ignores differences at /spec/syncPolicy, when comparing only
 │     ! reports nothing about what it applied: the Application has no status.resources
 ├─ ConfigMap delivery-tree-platform/platform-settings  ·  Synced
 ├─ Namespace delivery-tree-elsewhere-apps  ·  Synced
@@ -84,9 +84,15 @@ Application argocd/delivery-tree  ·  Synced / Healthy  ·  auto-sync on, self-h
   parent `delivery-tree-team-a` does not. The flat `gitops settings` list has
   both rows and cannot show that one is under the other.
 - **A parent's settings apply to the child object.** The root self-heals, so a
-  change to a child Application made in the cluster is put back, except where
-  the root ignores it. It ignores `/spec/syncPolicy`, and that is shown on each
-  child the rule names.
+  change to a child Application made in the cluster makes the child OutOfSync
+  and is put back. The root has an ignore rule for the children's
+  `/spec/syncPolicy`: a difference there alone does not make a child
+  OutOfSync. The rule is shown on each child it names, with "when comparing
+  only", because the root does not set `RespectIgnoreDifferences=true`: a
+  sync that happens for another reason still writes that field.
+- **Unknown is not healthy.** Argo CD could not compare `delivery-tree-broken`
+  and still gives it a health of Healthy. The tree shows that as "reported
+  without a comparison".
 - **A resource is what the deployer reports.** `delivery-tree-api` is listed
   under `delivery-tree-team-b`, which has never synced. It is the Application
   team-b would create. It is not in the cluster, and the tree says so.

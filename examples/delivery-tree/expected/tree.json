@@ -13,6 +13,7 @@
     "notReconciled": 1,
     "noneReported": 2,
     "notSupported": 0,
+    "malformed": 0,
     "shared": 0,
     "cycles": 0,
     "depthLimited": 0
