@@ -72,6 +72,8 @@ Environment Variables:
   CLUSTER_NAME            Name for this cluster (default: default)
   KUBECONFIG              Path to kubeconfig file (default: ~/.kube/config)
   CUB_SCOUT_OFFLINE       Set to 'true' to force offline mode
+  CUB_SCOUT_CONFIGHUB_READER  Set to 'cub' to make every ConfigHub read through the cub CLI
+                          (default: unit get, unit list and space list go through the ConfigHub SDK)
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		firstRun, err := detectAndMarkFirstRun()

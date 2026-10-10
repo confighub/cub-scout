@@ -20,6 +20,7 @@ import (
 
 	"github.com/confighub/cub-scout/v2/internal/hubread"
 	"github.com/confighub/cub-scout/v2/pkg/agent"
+	pkghub "github.com/confighub/cub-scout/v2/pkg/hub"
 )
 
 const (
@@ -979,7 +980,7 @@ func TestTheDefaultReaderIsTheSDK(t *testing.T) {
 // a real credential: a test that forgets to say which server to read fails,
 // it does not read whatever this machine is logged in to.
 func TestTheTestBinaryCannotReachRealCredentials(t *testing.T) {
-	require.Equal(t, "cub", os.Getenv(configHubReaderEnv), "TestMain pins the route for the package")
+	require.Equal(t, "cub", os.Getenv(configHubReaderEnv), "TestMain pins the route for the package and for the processes it starts")
 	_, err := sdkReader(context.Background())
 	require.ErrorIs(t, err, errSDKRouteInATest)
 
@@ -998,9 +999,11 @@ func TestASDKRouteFailureNamesTheWayBackOnlyWhenItCouldHelp(t *testing.T) {
 	args := []string{"unit", "get", recordedUnit, "-o", "json", "--space", recordedSpace}
 	const wayBack = "CUB_SCOUT_CONFIGHUB_READER=cub reads this through the cub CLI instead"
 
+	// Both routes use one server and one credential, so a denial, a server
+	// error or a missing endpoint is the same through cub.
 	for status, hinted := range map[int]bool{
-		http.StatusInternalServerError: true,
-		http.StatusNotFound:            true, // a missing endpoint, not a missing Unit
+		http.StatusInternalServerError: false,
+		http.StatusNotFound:            false,
 		http.StatusForbidden:           false,
 		http.StatusUnauthorized:        false,
 	} {
@@ -1013,6 +1016,33 @@ func TestASDKRouteFailureNamesTheWayBackOnlyWhenItCouldHelp(t *testing.T) {
 		require.Equal(t, hinted, strings.Contains(err.Error(), wayBack), "source-truth, HTTP %d: %v", status, err)
 		require.Equal(t, 1, strings.Count(err.Error(), wayBack)+boolToInt(!hinted), "said once")
 	}
+	// What only this reader does: refuse an answer it cannot decode, one the
+	// server cut short, a request it will not send, and one that outlasts its
+	// own time limit. cub might have answered each.
+	for _, kind := range []hubread.Kind{hubread.KindMalformed, hubread.KindIncomplete, hubread.KindRefused, hubread.KindTimeout} {
+		routed := &sdkRouteError{&hubread.Error{Kind: kind, Op: "unit read", Message: "x"}}
+		require.Equal(t, 1, strings.Count(routed.Error(), wayBack), string(kind))
+	}
+	for _, kind := range []hubread.Kind{hubread.KindFailed, hubread.KindForbidden, hubread.KindUnauthorized, hubread.KindNotFound,
+		hubread.KindNotConfigured, hubread.KindInvalidScope, hubread.KindAmbiguous, hubread.KindCanceled} {
+		routed := &sdkRouteError{&hubread.Error{Kind: kind, Op: "unit read", Message: "x"}}
+		require.NotContains(t, routed.Error(), wayBack, string(kind))
+	}
+	// End to end: a body that is not the list the status promised.
+	truncated := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[{"Space":`))
+	}))
+	defer truncated.Close()
+	old := sdkReader
+	sdkReader = func(context.Context) (*hubread.Reader, error) {
+		return hubread.New(truncated.URL, "test-token", hubread.Options{})
+	}
+	_, malformedErr := cubText(context.Background(), args...)
+	sdkReader = old
+	require.Equal(t, hubread.KindMalformed, hubread.KindOf(malformedErr))
+	require.Equal(t, 1, strings.Count(malformedErr.Error(), wayBack), malformedErr.Error())
+
 	// The Unit is not there: the same answer by either route.
 	hub := newRecordedHub(t, 0)
 	sdkReadsFrom(t, hub)
@@ -1032,4 +1062,92 @@ func boolToInt(b bool) int {
 		return 1
 	}
 	return 0
+}
+
+// CUB_SCOUT_OFFLINE and the telemetry switch turn ConfigHub reads off. Some
+// commands read without first asking whether they may; through cub, a machine
+// with no cub stayed offline regardless. The SDK route needs no cub, so it
+// honours the switch itself, before it looks for a credential.
+func TestTheSDKRouteHonoursTheOfflineSwitch(t *testing.T) {
+	cubLog := onlyFakeCub(t, "0")
+	hub := newRecordedHub(t, 0)
+	resolved := 0
+	oldReader := sdkReader
+	t.Cleanup(func() { sdkReader = oldReader })
+	sdkReader = func(context.Context) (*hubread.Reader, error) {
+		resolved++
+		return hubread.New(hub.url, "test-token", hubread.Options{})
+	}
+	oldSwitch := configHubReadsDisabledFn
+	t.Cleanup(func() { configHubReadsDisabledFn = oldSwitch })
+	configHubReadsDisabledFn = pkghub.ConfigHubReadsDisabled
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("CUB_SCOUT_TELEMETRY", "")
+	t.Setenv(configHubReaderEnv, "sdk")
+
+	for _, args := range [][]string{
+		{"unit", "get", recordedUnit, "-o", "json", "--space", recordedSpace},
+		{"unit", "list", "-o", "json", "--space", recordedSpace},
+		{"space", "list", "-o", "json"},
+	} {
+		t.Setenv("CUB_SCOUT_OFFLINE", "true")
+		out, err := cubStdout(context.Background(), args...)
+		require.Nil(t, out)
+		require.ErrorIs(t, err, pkghub.ErrConfigHubReadsDisabled, "%v", args)
+		require.ErrorContains(t, err, "CUB_SCOUT_OFFLINE=true is set")
+		require.True(t, failedOnSDKRoute(err))
+	}
+	require.Empty(t, hub.seen, "nothing is sent")
+	require.Zero(t, resolved, "no credential is looked for")
+	require.Empty(t, fakeCubCalls(t, cubLog), "and no cub is started in its place")
+
+	// The fleet view is one of the commands with no gate of its own.
+	t.Setenv("CUB_SCOUT_TEST_MAP_FLEET_JSON", "")
+	_, err := fetchFleetUnits(recordedSpace, "")
+	require.ErrorIs(t, err, pkghub.ErrConfigHubReadsDisabled)
+	require.Empty(t, hub.seen)
+
+	t.Setenv("CUB_SCOUT_OFFLINE", "")
+	t.Setenv("CUB_SCOUT_TELEMETRY", "false")
+	_, err = cubStdout(context.Background(), "space", "list", "-o", "json")
+	require.ErrorIs(t, err, pkghub.ErrConfigHubReadsDisabled)
+	require.ErrorContains(t, err, "telemetry is disabled")
+	require.Empty(t, hub.seen)
+
+	t.Setenv("CUB_SCOUT_TELEMETRY", "")
+	_, err = cubStdout(context.Background(), "space", "list", "-o", "json")
+	require.NoError(t, err)
+	require.Equal(t, 1, resolved)
+}
+
+// The import wizard reads a Unit to see whether it has a target, and sets one
+// if it has none. A read that failed says nothing about the target: going on
+// would write to ConfigHub on no evidence.
+func TestImportWizardDoesNotSetATargetWhenItCouldNotReadTheUnit(t *testing.T) {
+	oldDebug := testDebugDir
+	t.Cleanup(func() { testDebugDir = oldDebug })
+	testDebugDir = t.TempDir()
+	model := ImportWizardModel{proposal: &FullProposal{App: recordedSpace}, testUnitSlug: recordedUnit}
+
+	for _, route := range []string{"cub", "sdk"} {
+		t.Run(route, func(t *testing.T) {
+			cubLog := onlyFakeCub(t, "3")
+			hub := newRecordedHub(t, http.StatusInternalServerError)
+			sdkReadsFrom(t, hub)
+			t.Setenv(configHubReaderEnv, route)
+
+			result, ok := model.runTestApply().(wizardTestPhaseMsg)
+			require.True(t, ok)
+			require.False(t, result.success)
+			require.ErrorContains(t, result.err, "could not read unit "+recordedUnit+" before applying")
+			for _, call := range fakeCubCalls(t, cubLog) {
+				require.NotContains(t, call, "set-target", "a target was set after a failed read")
+				require.NotContains(t, call, "target list")
+				require.NotContains(t, call, "apply")
+			}
+			if route == "sdk" {
+				require.Empty(t, fakeCubCalls(t, cubLog))
+			}
+		})
+	}
 }

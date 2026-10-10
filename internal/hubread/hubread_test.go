@@ -898,3 +898,21 @@ func TestARejectedFilterKeepsTheServersReason(t *testing.T) {
 	require.Equal(t, KindForbidden, KindOf(err))
 	require.NotContains(t, err.Error(), "details that are not shown")
 }
+
+// A caller that asks errors.Is for the context package's errors finds a
+// cancelled or timed-out read, and nothing else.
+func TestErrorIsTheContextErrorItStandsFor(t *testing.T) {
+	require.ErrorIs(t, &Error{Kind: KindCanceled}, context.Canceled)
+	require.ErrorIs(t, &Error{Kind: KindTimeout}, context.DeadlineExceeded)
+	require.NotErrorIs(t, &Error{Kind: KindTimeout}, context.Canceled)
+	require.NotErrorIs(t, &Error{Kind: KindCanceled}, context.DeadlineExceeded)
+	require.NotErrorIs(t, &Error{Kind: KindFailed}, context.Canceled)
+	require.NotErrorIs(t, &Error{Kind: KindForbidden}, context.DeadlineExceeded)
+
+	// From a real read: a context cancelled before the request.
+	hub := newFakeHub(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	_, err := hub.reader(Options{}).UnitJSON(ctx, recordedSpace, recordedUnit)
+	require.ErrorIs(t, err, context.Canceled)
+}

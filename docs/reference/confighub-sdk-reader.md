@@ -11,8 +11,15 @@ what it guarantees and what was measured.
 `CUB_SCOUT_CONFIGHUB_READER=cub`. That is the way back if the two ever
 disagree, and a failed read says so when it could help.
 
-`cub` is still required: the connected commands check the session with
-`cub auth status`, and every other ConfigHub read runs `cub`.
+`cub` is still required for almost everything: the connected commands check
+the session with `cub auth status`, and every other ConfigHub read runs `cub`.
+Three commands make one of these reads without that check (#863), and for
+them the SDK route needs no `cub`.
+
+`CUB_SCOUT_OFFLINE=true` and the telemetry switch turn these reads off on
+either route. The SDK route checks them itself, before it looks for a
+credential, so a machine that is offline stays offline whether or not `cub`
+is installed.
 
 ## What it covers
 
@@ -75,15 +82,17 @@ A failed SDK read is the answer, reported with its reason. It does not fall
 back to `cub`, and once the SDK route has taken a read, no failure of it is
 worded as a `cub` failure. Where the failure is one `cub` might not have had
 (the answer could not be decoded, was cut short, was refused by this reader's
-own rules, timed out, or the request failed outright), the error ends by
-naming `CUB_SCOUT_CONFIGHUB_READER=cub`. A denial, a missing Unit or a missing
-credential is the same by either route, and nothing is suggested for those.
+own rules, or ran past this reader's 30-second limit, which `cub` does not
+have), the error ends by naming `CUB_SCOUT_CONFIGHUB_READER=cub`. A denial, a
+missing Unit, a missing credential, a server error or a server that cannot be
+reached is the same by either route, since both use one server and one
+credential, and nothing is suggested for those.
 
 A value that names no route is an error for every read in the left-hand
 column, in every command that makes one, and is not consulted for anything in
 the right-hand column, which has only the `cub` route.
 
-**The `cub` CLI is still required.** The connected commands first ask
+**The `cub` CLI is still required**, with three exceptions (#863). The connected commands first ask
 `cub auth status` whether ConfigHub can be read, once per command, on either
 route. The SDK route removes the `cub` process for the read, not for that
 check, and every other ConfigHub read still runs `cub`.
@@ -238,6 +247,14 @@ bytes.
   were not tried.
 - **An older server with the newer SDK.** v0.8.3 was run with SDK core
   v0.8.10, not v0.8.12.
+- **A session that `cub` can renew.** The reader uses the stored token and
+  does not renew it. In the `cub` source read for this work, `cub` renews a
+  key-authenticated session at login, not on use; whether the released `cub`
+  does more was not checked. If it renews on use, such a session would work
+  through `cub` and fail here with `unauthorized`.
+- **A very large list.** The reader gives each request 30 seconds and `cub`
+  sets no limit, so a space large enough to take longer fails here with
+  `timeout` and names the way back.
 - **Time for a whole command.** The timings are for one read. A connected
   command also runs `cub auth status` on either route, and how many requests
   `cub` itself makes was not measured.

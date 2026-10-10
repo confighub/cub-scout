@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -27,6 +28,16 @@ const disposableConfigHubEnv = "SCOUT_DISPOSABLE_CONFIGHUB"
 // sdkParityOutEnv names a directory that receives what each route returned,
 // the timings and the list recordings, for the CI artifact.
 const sdkParityOutEnv = "SCOUT_SDK_PARITY_OUT"
+
+// serverHost is the host name of a server URL, or the text itself when it is
+// not a URL.
+func serverHost(raw string) string {
+	parsed, err := url.Parse(raw)
+	if err != nil || parsed.Hostname() == "" {
+		return raw
+	}
+	return strings.ToLower(parsed.Hostname())
+}
 
 // cubStdoutOnly runs cub and returns stdout alone; cub prints notices on stderr.
 func cubStdoutOnly(args ...string) ([]byte, error) {
@@ -121,8 +132,10 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("resolve the credential cub uses: %v", err)
 	}
-	if strings.Contains(strings.ToLower(reader.Server()), "confighub.com") {
-		t.Fatalf("refusing to run: the resolved server is a hosted ConfigHub, not a disposable one")
+	// The disposable server is on the runner itself. A server anywhere else
+	// is not one this test may write to, whatever it is called.
+	if host := serverHost(reader.Server()); host != "localhost" && host != "127.0.0.1" && host != "::1" {
+		t.Fatalf("refusing to run: the resolved server %q is not on this machine", host)
 	}
 	viaSDK, err := reader.UnitJSON(ctx, space, unit)
 	if err != nil {
