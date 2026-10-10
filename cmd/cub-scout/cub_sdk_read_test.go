@@ -1208,3 +1208,91 @@ func TestSDKListArgsForTheOtherEntities(t *testing.T) {
 		require.Nil(t, sdkRead([]string{entity, "list", "-o", "json", "--space", "s"}), entity)
 	}
 }
+
+// #758, batch A: the other lists of a space, through cubStdout by each route,
+// on what cub printed for them on a real v0.8.12 server. The fake cub prints
+// the recording; the test server sends the same JSON, with the worker's
+// Secret where a real server sends it.
+func TestCubStdoutAnswersTheOtherSpaceListsThroughTheSDK(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("uses a shell script as the fake cub")
+	}
+	fixture := func(name string) string {
+		path, err := filepath.Abs(filepath.Join("..", "..", "test", "fixtures", "confighub-space-lists-v0812-recorded", name))
+		require.NoError(t, err)
+		return path
+	}
+	read := func(name string) []byte {
+		recorded, err := os.ReadFile(fixture(name))
+		require.NoError(t, err)
+		return recorded
+	}
+	var units []struct {
+		Space struct{ Slug, SpaceID string }
+	}
+	require.NoError(t, json.Unmarshal(read("unit-list.json"), &units))
+	space, spaceID := units[0].Space.Slug, units[0].Space.SpaceID
+
+	dir := t.TempDir()
+	cubLog := filepath.Join(dir, "calls.log")
+	script := "#!/bin/sh\n" + "echo \"$*\" >> \"" + cubLog + "\"\n" + "case \"$1 $2\" in\n"
+	for _, entity := range []string{"worker", "target", "changeset", "link"} {
+		script += "  \"" + entity + " list\") /bin/cat \"" + fixture(entity+"-list.json") + "\" ;;\n"
+	}
+	script += "  *) exit 9 ;;\nesac\n"
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "cub"), []byte(script), 0o755))
+	t.Setenv("PATH", dir)
+
+	const secret = "ch_not-a-real-worker-secret"
+	workers := strings.Replace(string(read("worker-list.json")), `      "Slug": "parity-worker",`, `      "Secret": "`+secret+`",`+"\n"+`      "Slug": "parity-worker",`, 1)
+	require.Contains(t, workers, secret)
+	served := map[string][]byte{
+		"/api/space": read("space-list.json"), "/api/bridge_worker": []byte(workers), "/api/target": read("target-list.json"),
+		"/api/change_set": read("changeset-list.json"), "/api/link": read("link-list.json"),
+	}
+	var seen []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		seen = append(seen, r.URL.Path+"?where="+r.URL.Query().Get("where"))
+		w.Header().Set("Content-Type", "application/json")
+		if body, ok := served[r.URL.Path]; ok {
+			_, _ = w.Write(body)
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	t.Cleanup(server.Close)
+	old := sdkReader
+	t.Cleanup(func() { sdkReader = old })
+	sdkReader = func(context.Context) (*hubread.Reader, error) {
+		return hubread.New(server.URL, "test-token", hubread.Options{})
+	}
+
+	for entity, path := range map[string]string{"worker": "/api/bridge_worker", "target": "/api/target", "changeset": "/api/change_set", "link": "/api/link"} {
+		t.Run(entity, func(t *testing.T) {
+			// As the call sites build it: the space appended by
+			// withConfigHubSpace, by slug.
+			args := withConfigHubSpace([]string{entity, "list", "-o", "json"}, space)
+			cubBefore, seenBefore := len(fakeCubCalls(t, cubLog)), len(seen)
+
+			t.Setenv(configHubReaderEnv, "cub")
+			viaCub, err := cubStdout(context.Background(), args...)
+			require.NoError(t, err)
+			require.Len(t, fakeCubCalls(t, cubLog), cubBefore+1)
+			require.Len(t, seen, seenBefore, "by the cub route nothing is read through the SDK")
+
+			t.Setenv(configHubReaderEnv, "sdk")
+			viaSDK, err := cubStdout(context.Background(), args...)
+			require.NoError(t, err)
+			require.Len(t, fakeCubCalls(t, cubLog), cubBefore+1, "by the SDK route no cub process is started")
+			require.Equal(t, []string{"/api/space?where=Slug = '" + space + "'", path + "?where=SpaceID = '" + spaceID + "'"}, seen[seenBefore:])
+			require.Equal(t, string(viaCub), string(viaSDK))
+			require.NotContains(t, string(viaSDK), secret, "a worker's secret is not passed on")
+			require.Greater(t, len(viaSDK), 100)
+		})
+	}
+
+	// The attestation list is read by the reader but not routed here: its
+	// one caller runs cub itself under a byte limit of its own.
+	t.Setenv(configHubReaderEnv, "sdk")
+	require.Nil(t, sdkRead(withConfigHubSpace([]string{"attestation", "list", "-o", "json"}, space)))
+}

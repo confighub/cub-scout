@@ -600,13 +600,27 @@ func (r *Reader) UnitListJSON(ctx context.Context, space string, filter Filter) 
 }
 
 // WorkerListJSON reads the workers of exactly one space, as
-// `cub worker list --space <space> -o json` prints them.
+// `cub worker list --space <space> -o json` prints them, without one field:
+// each worker's Secret.
+//
+// The server returns the token a worker authenticates with to anyone who may
+// list the workers, and cub prints it. An observer has no use for it, and
+// what this returns is parsed, logged and recorded, so it is dropped here
+// before anything else sees it. This is the one place the reader's JSON is
+// not cub's.
 func (r *Reader) WorkerListJSON(ctx context.Context, space string, filter Filter) ([]byte, error) {
 	return spaceList(ctx, r, "worker", space, filter, workerListInclude,
 		func(q listQuery) (listAnswer[goclientnew.ExtendedBridgeWorker], error) {
 			resp, err := r.client.API.ListAllBridgeWorkersWithResponse(ctx, &goclientnew.ListAllBridgeWorkersParams{Where: q.where, Include: q.include, Contains: q.contains})
 			if resp == nil {
 				return listAnswer[goclientnew.ExtendedBridgeWorker]{}, err
+			}
+			if resp.JSON200 != nil {
+				for i := range *resp.JSON200 {
+					if worker := (*resp.JSON200)[i].BridgeWorker; worker != nil {
+						worker.Secret = ""
+					}
+				}
 			}
 			return listAnswer[goclientnew.ExtendedBridgeWorker]{resp, resp.JSON200, resp.HTTPResponse, rejection(resp.StatusCode(), resp.JSON400)}, err
 		},

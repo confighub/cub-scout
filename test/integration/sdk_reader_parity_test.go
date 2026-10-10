@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"testing"
@@ -38,6 +39,11 @@ func serverHost(raw string) string {
 	}
 	return strings.ToLower(parsed.Hostname())
 }
+
+// workerSecretLine is the line of `cub worker list -o json` that holds a
+// worker's Secret. It is never the last field of its object, so removing the
+// whole line leaves valid JSON.
+var workerSecretLine = regexp.MustCompile(`(?m)^[ \t]*"Secret": "[^"\n]*",\n`)
 
 // cubStdoutOnly runs cub and returns stdout alone; cub prints notices on stderr.
 func cubStdoutOnly(args ...string) ([]byte, error) {
@@ -331,6 +337,20 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 			t.Errorf("cub %s list: %v", kind, err)
 			continue
 		}
+		if kind == "worker" {
+			// cub prints each worker's Secret, the token it authenticates
+			// with. The reader drops it, and it is not kept in an artifact
+			// anyone can download: the comparison is with cub's output
+			// less that one line.
+			withSecret := len(listedByCub)
+			listedByCub = workerSecretLine.ReplaceAll(listedByCub, nil)
+			if created["worker"] == "created" && len(listedByCub) == withSecret {
+				t.Logf("cub's worker list carried no Secret line on this server")
+			}
+			if bytes.Contains(listedByCub, []byte(`"Secret"`)) {
+				t.Fatalf("a worker's Secret is still in cub's list after the line was removed; nothing is kept")
+			}
+		}
 		keep(kind+"-list.cub.json", listedByCub)
 		var entries []json.RawMessage
 		if err := json.Unmarshal(listedByCub, &entries); err != nil {
@@ -343,6 +363,9 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 			if err != nil {
 				t.Errorf("%s list through the SDK, space by %s: %v (kind %s)", kind, how, err, hubread.KindOf(err))
 				continue
+			}
+			if bytes.Contains(listedBySDK, []byte(`"Secret"`)) {
+				t.Fatalf("the reader's %s list carries a Secret; it is not kept", kind)
 			}
 			if how == "slug" {
 				keep(kind+"-list.sdk.json", listedBySDK)

@@ -1902,9 +1902,13 @@ Nothing here is released; the published baseline is still v2.13.4.
 - `internal/hubread` is the only package that imports the SDK. It is
   read-only at the transport (GET and HEAD, no redirects), reads exactly one
   named space, and uses the credential `cub` uses.
-- One adapter under `cubStdout` answers three commands through it and returns
-  the JSON `cub` prints: `unit get` by slug, `unit list` for one space (plain,
-  `--where`, `--contains`), and `space list`. Everything else runs `cub`.
+- One adapter under `cubStdout` answers these commands through it and returns
+  the JSON `cub` prints: `unit get` by slug; `unit list`, `worker list`,
+  `target list`, `changeset list` and `link list` for one space (plain,
+  `--where`, `--contains`); and `space list`. Everything else runs `cub`.
+- The worker list is `cub`'s without each worker's `Secret`. `cub` prints
+  that token; the reader drops it, and the real-server test removes it before
+  keeping anything in the CI artifact.
 - **That route is the default.** `CUB_SCOUT_CONFIGHUB_READER=cub` is the way
   back. A failed SDK read never falls back.
 - Proof is from a real server, not from invented JSON: the Connected E2E lane

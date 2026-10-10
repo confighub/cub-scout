@@ -1095,3 +1095,80 @@ func TestSpaceListsKeepToOneSpaceAndRefuseABrokenAnswer(t *testing.T) {
 		})
 	}
 }
+
+// spaceListsRecording is one file of what cub printed for the other lists of
+// a space on a real v0.8.12 server (NOTICE.md beside the files).
+func spaceListsRecording(t *testing.T, name string) []byte {
+	t.Helper()
+	recorded, err := os.ReadFile(filepath.Join("..", "..", "test", "fixtures", "confighub-space-lists-v0812-recorded", name))
+	require.NoError(t, err)
+	return recorded
+}
+
+// #758, batch A: each list, held to the bytes cub printed for it on a real
+// server. The server's JSON goes through the SDK's types and comes out as
+// cub's, with the space named either way.
+func TestSpaceListsAreWhatCubPrintedOnTheRealServer(t *testing.T) {
+	hub := newFakeHub(t)
+	require.NoError(t, json.Unmarshal(spaceListsRecording(t, "space-list.json"), &hub.spaces))
+	var units []struct {
+		Space struct{ Slug, SpaceID string }
+	}
+	require.NoError(t, json.Unmarshal(spaceListsRecording(t, "unit-list.json"), &units))
+	slug, id := units[0].Space.Slug, units[0].Space.SpaceID
+	reader := hub.reader(Options{})
+	ctx := context.Background()
+
+	for name, kind := range map[string]struct {
+		path string
+		read func(space string) ([]byte, error)
+	}{
+		"worker":      {"/api/bridge_worker", func(s string) ([]byte, error) { return reader.WorkerListJSON(ctx, s, Filter{}) }},
+		"target":      {"/api/target", func(s string) ([]byte, error) { return reader.TargetListJSON(ctx, s, Filter{}) }},
+		"changeset":   {"/api/change_set", func(s string) ([]byte, error) { return reader.ChangeSetListJSON(ctx, s, Filter{}) }},
+		"link":        {"/api/link", func(s string) ([]byte, error) { return reader.LinkListJSON(ctx, s, Filter{}) }},
+		"attestation": {"/api/attestation", func(s string) ([]byte, error) { return reader.AttestationListJSON(ctx, s, Filter{}) }},
+	} {
+		t.Run(name, func(t *testing.T) {
+			recorded := spaceListsRecording(t, name+"-list.json")
+			require.Greater(t, len(recorded), 100, "the recording has an entry in it")
+			hub.raw[kind.path] = string(recorded)
+			for _, space := range []string{slug, id} {
+				before := len(hub.requests())
+				got, err := kind.read(space)
+				require.NoError(t, err)
+				require.Equal(t, string(recorded), string(got))
+				seen := hub.requests()[before:]
+				require.Equal(t, kind.path, seen[len(seen)-1].Path, "the recording was served at the path the reader asks")
+			}
+		})
+	}
+}
+
+// The server returns each worker's Secret, the token the worker authenticates
+// with, and cub prints it. The reader does not pass it on: its worker list is
+// cub's with that one field gone, and nothing else changed.
+func TestWorkerListDropsTheWorkersSecret(t *testing.T) {
+	hub := newFakeHub(t)
+	require.NoError(t, json.Unmarshal(spaceListsRecording(t, "space-list.json"), &hub.spaces))
+	var units []struct{ Space struct{ Slug string } }
+	require.NoError(t, json.Unmarshal(spaceListsRecording(t, "unit-list.json"), &units))
+	recorded := string(spaceListsRecording(t, "worker-list.json"))
+	require.NotContains(t, recorded, "Secret", "the recording was stored without the secret")
+
+	// Put a secret back where the server sends it, as cub printed it.
+	const secret = "ch_not-a-real-worker-secret"
+	const before = `      "Slug": "parity-worker",`
+	require.Equal(t, 1, strings.Count(recorded, before))
+	served := strings.Replace(recorded, before, `      "Secret": "`+secret+`",`+"\n"+before, 1)
+	var check []struct{ BridgeWorker struct{ Secret string } }
+	require.NoError(t, json.Unmarshal([]byte(served), &check))
+	require.Equal(t, secret, check[0].BridgeWorker.Secret, "the test's server sends a secret")
+	hub.raw["/api/bridge_worker"] = served
+
+	got, err := hub.reader(Options{}).WorkerListJSON(context.Background(), units[0].Space.Slug, Filter{})
+	require.NoError(t, err)
+	require.NotContains(t, string(got), secret)
+	require.NotContains(t, string(got), "Secret")
+	require.Equal(t, recorded, string(got), "everything but the secret is what cub printed")
+}
