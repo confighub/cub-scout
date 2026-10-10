@@ -28,7 +28,7 @@ The types emitted by `buildWatchEvents` in `cmd/cub-scout/watch.go` are a **clos
 | `drift.detected` | A scan finding categorized as `STATE` or `DRIFT` matches a resource | `strings.EqualFold(finding.Category, "STATE" or "DRIFT")` | propagated from the underlying finding (`critical` / `warning` / `info`) | `category`, `message` |
 | `scan.finding` | Any new risk-pattern finding from `scan` (not just drift) | `currFindings[key]` not in `prevFindings` | propagated from the finding | `category`, `message` |
 
-**Unreleased v2.14 candidate:** `collection.partial` fires once per collection
+**Opt-in preview:** `collection.partial` fires once per collection
 cycle with failed inventory LISTs, including absent API types. Its `resource`
 is the synthetic descriptor `{"kind":"Collection","name":"inventory"}` plus
 selected namespace, not an observed Kubernetes object. `collection` contains
@@ -322,7 +322,7 @@ Runs one collection cycle and exits. Useful for CI gates that want a point-in-ti
 - **Code**: `cmd/cub-scout/watch.go` (`watchEvent` struct + `buildWatchEvents`); `cmd/cub-scout/watch_receipt.go` (`attachReceiptsIfRequested` + `watchReceiptBatchCap` + `parseWatchEmitReceiptOn`)
 - **Issues**: `#449` (closed via `#470`) — full v2 surface
 
-## Polling identity (2.14 candidate)
+## Polling identity (opt-in preview)
 
 `--cluster-identity` on watch and bot adds one bounded `kube-system` Namespace
 GET per polling collection and emits `cluster.observed` even for an empty or
@@ -333,5 +333,5 @@ Count cost once on `cluster.observed`; repeated event fields are not additional
 requests. Deletion retains the old observation, and verified UID recreation
 produces separate discovery/deletion. Identity denial cannot imply deletion.
 The option refuses `--watch-backed` pending original cache-age proof. Defaults
-are unchanged. See the [JSON contract](json-contracts.md#watchbot-polling-identity-214-candidate)
-and [example](../../examples/watch-collection-omissions/#polling-identity-214-candidate).
+are unchanged. See the [JSON contract](json-contracts.md#watchbot-polling-identity-opt-in-preview)
+and [example](../../examples/watch-collection-omissions/#polling-identity-opt-in-preview).

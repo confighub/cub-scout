@@ -154,7 +154,7 @@ and performs no additional API reads. `--ownership-evidence` cannot be mixed
 with `--summary`, `--count`, or `--names-only` because those modes do not return
 per-entry diagnostics.
 
-## Watch inventory omissions (v2.14 candidate, unreleased)
+## Watch inventory omissions (opt-in preview)
 
 Watch/bot add an optional `collection` field only on `collection.partial`
 events. It uses the shared inventory collection shape: `status: "partial"`
@@ -165,7 +165,7 @@ previous entries are private diff history, never renewed current evidence.
 See [event semantics and limits](watch-events.md#event-types) and the
 [offline example](../../examples/watch-collection-omissions/).
 
-## Opt-in map cluster identity (v2.14 candidate, unreleased)
+## Opt-in map cluster identity (preview)
 
 `map list --cluster-identity --format json` and MCP `map` with
 `cluster_identity: true` opt into `map-list-cluster-identity.v1`:
@@ -1266,7 +1266,7 @@ setting, and a test holds the two to the same content.
 
 ## Delivery Tree Contract
 
-`gitops tree --format json` (unreleased) reports what is under each GitOps
+`gitops tree --format json` (a preview since v2.14.0) reports what is under each GitOps
 deployer, to any depth. Field names are camelCase. The shape may still change.
 
 ```json
@@ -2924,7 +2924,7 @@ Receipt-supported event types (four resource/finding types):
 | `resource.discovered` | Yes — `applied-matches-spec` auto-detected | The discovery moment captures the live state at first observation; backpressure-gated via `--emit-receipt-batch-cap` |
 | `scan.finding` | Yes — `applied-matches-spec` auto-detected | The receipt records the resource state at finding time; the finding detail lives on the event's `details` field; backpressure-gated |
 | `resource.deleted` | No | Known deletion event; no current object read to receipt |
-| `collection.partial` | No | Unreleased v2.14 candidate: collection omission, not an observed object |
+| `collection.partial` | No | Opt-in preview: collection omission, not an observed object |
 | `all` | Sugar — accepts every known event type |
 
 Selecting either unsupported type explicitly or through `all` emits the startup
@@ -3086,7 +3086,7 @@ effective-default filling, mutation or cross-space fallback occurs.
 success criteria and the pending genuine capture and live CLI/TUI acceptance gates.
 
 
-## Crossplane lineage ambiguity (2.14 candidate)
+## Crossplane lineage ambiguity (opt-in preview)
 
 The existing `CrossplaneLineage` shape is unchanged. Composite/claim nodes may
 remain `present: false` with `evidence` markers `xr:ambiguous` or
@@ -3099,7 +3099,7 @@ and no eligible object, it adds `xr:unresolved`. No scope/GVK is invented for a 
 parent. See the [authored control](../../examples/crossplane-system/#conservative-lineage-control-214-candidate).
 
 
-## Recorded report JSON budget (2.14 candidate)
+## Recorded report JSON budget (opt-in preview)
 
 CLI `--max-report-json-bytes` and recorded MCP `max_report_json_bytes` (integer
 1..4194304) limit canonical UTF-8 JSON **report data** bytes: the report
@@ -3114,7 +3114,7 @@ This is not a cap on display, newline, duplicated MCP content, protocol envelope
 transport, tokens or input work. Actual result bytes must be measured separately.
 See the [example](../../examples/recorded-inventory/#report-json-budget-214-candidate).
 
-## Composition tree reference collisions (2.14 candidate)
+## Composition tree reference collisions (opt-in preview)
 
 `tree composition --json` retains its map of composition trees. Keys are opaque
 presentation keys, not stable object IDs. Roots with a unique display reference
@@ -3131,7 +3131,7 @@ Unknown name-only parent buckets remain provisional and partial; missing
 metadata is not filled. Same-name children of a different full reference remain
 in `managed`. See the [authored collision control](../../examples/composition-root-collisions/).
 
-## kro owner-reference lineage omissions (2.14 candidate)
+## kro owner-reference lineage omissions (opt-in preview)
 
 kro instance and definition owner-reference joins require a unique exact supplied
 API version/Kind/name, legal namespace locality and matching UID when present.
@@ -3146,7 +3146,7 @@ child. With `present: false`, this means unknown scope, not observed cluster
 scope. Metadata-only definition lookup is unchanged and separately bounded.
 See the [authored control](../../examples/kro-composition/#conservative-owner-reference-control-214-candidate).
 
-## Watch/bot polling identity (2.14 candidate)
+## Watch/bot polling identity (opt-in preview)
 
 Opt-in `watch --cluster-identity` and `bot --cluster-identity` reuse the map
 identity model. Each polling collection makes one bounded Namespace-instance
@@ -3172,9 +3172,9 @@ establish an old deletion. Missing/invalid UID, GVK or scope remains unverified.
 is available. A canceled/failed collection still uses existing command error
 behavior; this is not the complete #599 failure envelope or whole-cycle meter.
 
-See [polling identity example](../../examples/watch-collection-omissions/#polling-identity-214-candidate).
+See [polling identity example](../../examples/watch-collection-omissions/#polling-identity-opt-in-preview).
 
-## Recorded inventory output schema (2.14 candidate)
+## Recorded inventory output schema (opt-in preview)
 
 [recorded-inventory.v1.schema.json](schemas/recorded-inventory.v1.schema.json)
 validates the existing full, summary and paged report data using Draft 2020-12.
@@ -3190,7 +3190,7 @@ under a newer protocol. Default full/summary MCP content remains text-only;
 recorded pages retain their existing `structuredContent.data`. No older-protocol
 negotiation or response bytes are changed. See the [executable example](../../examples/recorded-inventory/#output-schema-and-executable-budget-controls-214-candidate).
 
-### StatefulSet image coverage (v2.14 candidate, #795)
+### StatefulSet image coverage (opt-in preview, #795)
 
 `release check --check-running-image` also checks `apps/v1` StatefulSets.
 The opt-in report adds `runningImage.workloads[].statefulSet`: UID, generation,

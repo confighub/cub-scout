@@ -582,7 +582,7 @@ cub-scout map list [flags]
 | `--names-only` | bool | false | Names only (scripting) |
 | `--summary` | bool | false | Counts by owner and kind after filters, as JSON (`total`, `byOwner`, `byKind`, `byKindOwner`) or text |
 | `--ownership-evidence` | bool | false | Opt into versioned ownership detector diagnostics and normalized list omissions; incompatible with `--summary`, `--count`, and `--names-only` |
-| `--cluster-identity` | bool | false | Unreleased v2.14 candidate: observe the selected cluster Namespace-instance UID with one additional GET; separate identity-only costs and collection status; incompatible with compact and ownership-evidence modes |
+| `--cluster-identity` | bool | false | Opt-in preview: observe the selected cluster Namespace-instance UID with one additional GET; separate identity-only costs and collection status; incompatible with compact and ownership-evidence modes |
 
 ### Owner Values
 
@@ -617,7 +617,7 @@ point-in-time`, and optional cluster/namespace/kind scope. See
 It does not alter default JSON. The local TUI `V` view presents this evidence
 for its already loaded workload entries.
 
-The unreleased v2.14 candidate adds `map list --cluster-identity --format
+An opt-in preview adds `map list --cluster-identity --format
 ascii|json|md` and `map --cluster-identity`. Both capture one context/config
 snapshot. JSON selects `map-list-cluster-identity.v1`; the TUI displays identity
 and per-resource instance references/read costs in `V` using the latest inventory refresh, without another read
@@ -625,7 +625,7 @@ when opening that view. Missing configuration or client initialization produces
 an explicit unavailable collection. A denied identity read leaves returned
 inventory intact and identity unverified. Recorded and test-hook inventory
 cannot be combined with this option. See
-[the candidate JSON contract](json-contracts.md#opt-in-map-cluster-identity-v214-candidate-unreleased).
+[the candidate JSON contract](json-contracts.md#opt-in-map-cluster-identity-preview).
 
 ### Query Syntax
 
@@ -1998,7 +1998,7 @@ answer, whereas an empty input or any duplicate full identity is an error.
 Ordinary live map output is unchanged.
 
 
-### Recorded Map Pagination (2.14 candidate)
+### Recorded Map Pagination (opt-in preview)
 
 `map list --recording ... --page-size 1..500` slices the complete loaded scope
 into deterministic pages with separate `map-list-recorded-page.v1` JSON. Use
@@ -2012,7 +2012,7 @@ Default unpaged contracts remain unchanged. See the
 [example](../../examples/recorded-inventory/#recorded-pages-214-candidate).
 
 
-### Recorded Report JSON Budget (2.14 candidate)
+### Recorded Report JSON Budget (opt-in preview)
 
 Opt-in `--max-report-json-bytes 1..4194304` is recorded-only and measures the
 canonical UTF-8 JSON report data, before surface rendering. It covers full,
@@ -2024,7 +2024,7 @@ change between continuation requests without changing cursor selection.
 The limit excludes rendered display, CLI JSON newline, MCP duplication/envelope,
 transport bytes, tokens and input work. No default wire contract changes.
 
-### Watch/bot explicit context (v2.14 candidate)
+### Watch/bot explicit context (opt-in preview)
 
 `./cub-scout watch --kube-context NAME` and `./cub-scout bot --kube-context NAME`
 resolve one strict credential/config snapshot before opening event sinks. The
@@ -2036,7 +2036,7 @@ The event schema is unchanged. Selection does not establish verified cluster
 identity, total request costs, Target binding or fresh informer observations.
 The TUI equivalent is `./cub-scout map --kube-context NAME`.
 
-### StatefulSet image coverage (v2.14 candidate, #795)
+### StatefulSet image coverage (opt-in preview, #795)
 
 `release check --check-running-image` also checks `apps/v1` StatefulSets.
 The opt-in report adds `runningImage.workloads[].statefulSet`: UID, generation,
