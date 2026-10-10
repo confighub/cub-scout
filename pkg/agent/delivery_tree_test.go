@@ -217,6 +217,17 @@ func TestDeliveryTreeCyclesAndSharedChildren(t *testing.T) {
 
 	self := tree.Roots[1]
 	require.Equal(t, 0, self.ReportedBy, "reporting itself does not make it shared")
+
+	// One real parent and a report of itself is still one parent.
+	owned := deliveryClient(
+		treeApp("argocd", "parent", nil, []interface{}{reportedApp("argocd", "narcissus")}),
+		treeApp("argocd", "narcissus", nil, []interface{}{reportedApp("argocd", "narcissus")}),
+	)
+	ownedTree, err := CollectDeliveryTree(context.Background(), owned, DeliveryTreeOptions{})
+	require.NoError(t, err)
+	require.Equal(t, []string{"argocd/parent"}, treeNames(ownedTree.Roots))
+	require.Equal(t, 0, ownedTree.Roots[0].Children.Deployers[0].ReportedBy)
+	require.Equal(t, 0, ownedTree.Summary.Shared)
 	require.Equal(t, DeliveryChildrenCycle, self.Children.Deployers[0].Children.Status)
 	require.Equal(t, 2, tree.Summary.Cycles)
 	require.Equal(t, 2, tree.Summary.Shared)
@@ -273,6 +284,31 @@ func TestDeliveryTreeWhenAKindCannotBeListed(t *testing.T) {
 	require.Contains(t, apps.Children.Reason, "#856")
 	require.Contains(t, apps.Policies, DeliveryPolicyValue{Name: "prune", Value: "on"})
 	require.Equal(t, 1, tree.Summary.NotSupported)
+}
+
+// A child of a kind that could not be listed is not known to be missing.
+func TestDeliveryTreeChildOfAKindThatCouldNotBeListed(t *testing.T) {
+	entry := reported("kustomize.toolkit.fluxcd.io", "Kustomization", "flux-system", "apps", "Synced")
+	client := deliveryClient(treeApp("argocd", "bootstrap", nil, []interface{}{entry}),
+		deliveryObject("kustomize.toolkit.fluxcd.io/v1", "Kustomization", "flux-system", "apps", nil))
+	failList(client, "kustomizations", "", apierrors.NewForbidden(schema.GroupResource{Resource: "kustomizations"}, "", nil))
+
+	tree, err := CollectDeliveryTree(context.Background(), client, DeliveryTreeOptions{})
+	require.NoError(t, err)
+	child := tree.Roots[0].Children.Deployers[0]
+	require.Equal(t, DeliveryObjectNotRead, child.Object, "the list was refused, so the child is unknown, not absent")
+	require.Equal(t, "forbidden", child.ObjectReason)
+	require.Equal(t, 1, tree.Summary.NotRead)
+	require.Equal(t, 0, tree.Summary.NotFound)
+
+	// A kind that is not installed at all: a reported child of it is absent.
+	absent := deliveryClient(treeApp("argocd", "bootstrap", nil, []interface{}{entry}))
+	failList(absent, "kustomizations", "", notFound("kustomizations"))
+	tree, err = CollectDeliveryTree(context.Background(), absent, DeliveryTreeOptions{})
+	require.NoError(t, err)
+	child = tree.Roots[0].Children.Deployers[0]
+	require.Equal(t, DeliveryObjectNotFound, child.Object)
+	require.Equal(t, "this kind is not installed", child.ObjectReason)
 }
 
 // An Application that applies a Flux object has it as a child deployer: the

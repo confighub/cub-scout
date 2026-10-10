@@ -346,6 +346,21 @@ func TestGitOpsTreeSaysWhenItIsIncomplete(t *testing.T) {
 	require.Contains(t, renderDeliveryTreeMarkdown(report, 25), "**Incomplete:** something could not be read; see Reads.")
 	require.Contains(t, renderDeliveryTreeMarkdown(report, 25), "| Flux | Kustomization | not read (forbidden) |  |")
 
+	// A child that may not be read makes the tree incomplete too, though
+	// every list succeeded: something under that child is unknown.
+	scoped := treeFixtureClient(
+		treeApplication("outer", "Synced", "Healthy", nil, []interface{}{treeEntry("argoproj.io", "Application", "team-x", "inner", "Synced")}))
+	scoped.PrependReactor("get", "applications", func(ktesting.Action) (bool, runtime.Object, error) {
+		return true, nil, apierrors.NewForbidden(schema.GroupResource{Resource: "applications"}, "inner", nil)
+	})
+	report = treeReport(t, scoped, deliveryTreeParams{Namespace: "argocd", Root: &agent.DeliveryRef{Kind: "Application", Name: "outer"}})
+	require.Equal(t, 1, report.Summary.NotRead)
+	require.False(t, report.Complete)
+	out = renderDeliveryTreeASCII(report, 25)
+	require.Contains(t, out, "INCOMPLETE")
+	require.Contains(t, out, "! could not be read: forbidden")
+	require.Contains(t, out, "  ! 1 could not be read")
+
 	// With no deployers at all, it says so rather than printing nothing.
 	empty := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), settingsListKinds)
 	require.Contains(t, renderDeliveryTreeASCII(treeReport(t, empty, deliveryTreeParams{}), 25), "No deployers were found.")
@@ -394,7 +409,12 @@ func TestGitOpsTreeTextOutputNeutralisesClusterSuppliedControlCharacters(t *test
 	hostile.Object["status"].(map[string]interface{})["conditions"] = []interface{}{
 		map[string]interface{}{"type": "ComparisonError", "message": "line one\nReads:\n  Argo CD Application: read (999)"},
 	}
-	client := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), settingsListKinds, hostile)
+	// A parent's ignore rule is printed on the child it names: its text is
+	// the parent author's too.
+	parent := treeApplication("parent", "Synced", "Healthy", map[string]interface{}{"ignoreDifferences": []interface{}{
+		map[string]interface{}{"group": "argoproj.io", "kind": "Application", "jsonPointers": []interface{}{"/spec\x1b[2J\n└─ Application argocd/forged"}}}},
+		[]interface{}{treeAppEntry("child")})
+	client := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), settingsListKinds, hostile, parent)
 	report := treeReport(t, client, deliveryTreeParams{})
 
 	for name, out := range map[string]string{"ascii": renderDeliveryTreeASCII(report, 25), "markdown": renderDeliveryTreeMarkdown(report, 25)} {
