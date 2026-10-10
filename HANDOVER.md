@@ -1904,8 +1904,12 @@ Nothing here is released; the published baseline is still v2.13.4.
   named space, and uses the credential `cub` uses.
 - One adapter under `cubStdout` answers these commands through it and returns
   the JSON `cub` prints: `unit get` by slug; `unit list`, `worker list`,
-  `target list`, `changeset list` and `link list` for one space (plain,
-  `--where`, `--contains`); and `space list`. Everything else runs `cub`.
+  `target list`, `changeset list`, `link list`, `resource list`,
+  `release list` and `unit-event list` for one space (plain, `--where`,
+  `--contains`); the unit events of one Unit; and `space list`. Everything
+  else runs `cub`.
+- Unit events have only been compared empty on a real server: the lane's
+  ConfigHub applies nothing, so it has none.
 - The worker list is `cub`'s without each worker's `Secret`. `cub` prints
   that token; the reader drops it, and the real-server test removes it before
   keeping anything in the CI artifact.

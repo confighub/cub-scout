@@ -1,0 +1,81 @@
+[
+  {
+    "Resource": {
+      "CreatedAt": "2026-10-10T18:09:22.946644Z",
+      "Data": {
+        "apiVersion": "v1",
+        "data": {
+          "key": "two"
+        },
+        "kind": "ConfigMap",
+        "metadata": {
+          "name": "release-unit",
+          "namespace": "default"
+        }
+      },
+      "EntityType": "Resource",
+      "OrganizationID": "a7b94d6d-d3c8-49fb-b40c-5fb3dac5e9c8",
+      "ResourceID": "932f862f-ccfc-4a4f-9fed-ed9b11620b08",
+      "ResourceName": "default/release-unit",
+      "ResourceType": "v1/ConfigMap",
+      "SpaceID": "12253663-a803-4690-b72b-ba051913b608",
+      "SpaceSlug": "scout-sdk-releases-1791655762739571323",
+      "TargetID": "aa9025d6-b955-45d6-8d91-c040d355dcf2",
+      "ToolchainType": "Kubernetes/YAML",
+      "UnitID": "0a9a923f-bd9a-480e-8334-e657ec2aeae3",
+      "UnitSlug": "release-unit",
+      "UpdatedAt": "2026-10-10T18:09:23.805112Z",
+      "Version": 1
+    },
+    "Target": {
+      "CreatedAt": "2026-10-10T18:09:23.290786Z",
+      "DisplayName": "release-target",
+      "EntityType": "Target",
+      "OrganizationID": "a7b94d6d-d3c8-49fb-b40c-5fb3dac5e9c8",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "ac040938-857b-40d0-83ce-c8c734496e43": true
+          }
+        },
+        "ManageChildren": {
+          "UserIDs": {
+            "ac040938-857b-40d0-83ce-c8c734496e43": true
+          }
+        }
+      },
+      "Slug": "release-target",
+      "SpaceID": "12253663-a803-4690-b72b-ba051913b608",
+      "SpaceSlug": "scout-sdk-releases-1791655762739571323",
+      "TargetID": "aa9025d6-b955-45d6-8d91-c040d355dcf2",
+      "UpdatedAt": "2026-10-10T18:09:23.290786Z"
+    }
+  },
+  {
+    "Resource": {
+      "CreatedAt": "2026-10-10T18:09:23.084229Z",
+      "Data": {
+        "apiVersion": "v1",
+        "data": {
+          "key": "one"
+        },
+        "kind": "ConfigMap",
+        "metadata": {
+          "name": "release-other",
+          "namespace": "default"
+        }
+      },
+      "EntityType": "Resource",
+      "OrganizationID": "a7b94d6d-d3c8-49fb-b40c-5fb3dac5e9c8",
+      "ResourceID": "d74d5e12-7053-449d-9ff8-98a15d930dee",
+      "ResourceName": "default/release-other",
+      "ResourceType": "v1/ConfigMap",
+      "SpaceID": "12253663-a803-4690-b72b-ba051913b608",
+      "SpaceSlug": "scout-sdk-releases-1791655762739571323",
+      "ToolchainType": "Kubernetes/YAML",
+      "UnitID": "2788c2f0-a18b-4165-9e18-dcbcce435c39",
+      "UnitSlug": "release-other",
+      "UpdatedAt": "2026-10-10T18:09:23.084229Z"
+    }
+  }
+]

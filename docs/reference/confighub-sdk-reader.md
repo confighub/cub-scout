@@ -25,8 +25,9 @@ is installed.
 
 These commands, wherever cub-scout runs them: `cub unit get` for one Unit
 named by slug in one named space; `cub unit list`, `cub worker list`,
-`cub target list`, `cub changeset list` and `cub link list` for one named
-space, with or without a `--where` or `--contains` filter; and
+`cub target list`, `cub changeset list`, `cub link list`, `cub resource list`,
+`cub release list` and `cub unit-event list` for one named space, with or
+without a `--where` or `--contains` filter; the unit events of one Unit; and
 `cub space list`.
 
 ```bash
@@ -61,12 +62,14 @@ change.
 | a space named by its canonical ID | `*` as the space or the Unit; a space containing `/`; a `--space` value that starts with `-` |
 | `unit list -o json --space <space>`, with or without `--quiet`, `--where <expression>` and `--contains <text>` | A unit list with a stored filter, a data or trigger filter, a selection, a limit, an ordering, a view or hidden entities; an empty `--where` or `--contains`, or either given twice |
 | `worker list`, `target list`, `changeset list` and `link list`, each `-o json --space <space>` with or without `--quiet`, `--where <expression>` and `--contains <text>` | Any of them across every space, with a positional, or with any of the options a unit list is left to `cub` for. `attestation list`, which cub-scout runs under a byte limit of its own |
+| `resource list`, `release list` and `unit-event list`, in the same shape; and `unit-event list <unit>` for the events of one Unit named by slug | Any of them across every space (`--space '*'`), which the MCP tools allow when asked; a resource list with a selection, a stored filter, a view or raw data; the events of a Unit named by ID |
 | `space list -o json`, with or without `--quiet` | A space list with any filter or any of the same, a component, a `--space` or a positional; and a list with no `-o json`, which prints `cub`'s table |
 | | Any other output format, any other flag, `--`, and `-o=json` or `--space=x` spelt with `=` |
 
 Today that is every `unit get` cub-scout builds, given a slug and a named
 space, every plain `unit list` and `space list`, and every worker, target,
-change set and link list. A test reads the source
+change set, link, release and unit-event list, and the resource list unless
+it is given a selection or a stored filter. A test reads the source
 of each call site: a `unit get` in a shape the route does not take fails it,
 and so does a list that is neither taken nor named in the test with the reason
 it stays with `cub`. The test models the arguments' shape, not the values a
@@ -81,6 +84,7 @@ user supplies.
 | Import wizard checks | Reads only; its writes run `cub` |
 | The lists: `map` (connected hierarchy, fleet, and joining cluster resources to their Units), `fleet outliers`, import's check for existing units and its link to the space, MCP `confighub_units` with or without `where` and `contains`, and the `views` lookups when they name one space | |
 | The worker list: `status`, the connected hierarchy in `map`, and the local cluster view. The target list: import, the import wizard and the hierarchy. The change set list: `history`, `audit` and MCP `confighub_changesets`. The link list: `compare bindings` and `map` | A worker's `Secret` is not in what the SDK route returns; see below |
+| The release and unit-event lists: the ConfigHub part of `gitops status` and of `doctor --with-confighub`, MCP `confighub_releases` and `confighub_unit_events`. The resource list: MCP `confighub_resources` | Releases come from the space's own endpoint and are sorted as `cub` sorts them, highest number first. Unit events are sorted newest first, as `cub` does |
 | Lists that stay with `cub`: `views` across every space, GitOps delivery evidence (a selection), `app list` and import's summary (they print `cub`'s own output) | |
 
 A failed SDK read is the answer, reported with its reason. It does not fall
@@ -277,6 +281,32 @@ anything, and the recordings in
 
 Each list had one entry, the Target had no worker, the worker was not running,
 the ChangeSet was in state `New` and the Link was within one space.
+
+## Releases, resources and unit events (2026-10-10, CI run 38073699271)
+
+`TestSDKReaderMatchesCubOnReleasesResourcesAndEvents` makes a Target, sets it
+as the space's release Target, assigns two Units to it, publishes a release,
+changes one Unit and publishes again, all through `cub`, on ConfigHub
+v0.8.12. Read from the run's artifact:
+
+| Checked on ConfigHub v0.8.12 | Result |
+|---|---|
+| Every step, including both publishes | worked |
+| `release list`, reader against `cub`, space by slug and by ID | identical, 3505 bytes, two releases, release 2 before release 1 |
+| `release list --where "ReleaseNum = 1"`, and with the `CreatedAt >` filter `gitops status` sends | identical; one release, and two |
+| `resource list`, and with `--contains` | identical; two resources (2542 bytes), and one |
+| `unit-event list`, with the same `CreatedAt >` filter, and for one Unit | identical, and **empty**: `[]` by both routes |
+| Each list in a space that does not exist; the events of a Unit that does not exist | `not_found` from the reader, a failure from `cub` |
+| A release filter the server rejects | both routes fail |
+| MCP `confighub_releases`, `confighub_resources`, `confighub_unit_events` through the built binary, by each route | the whole answer identical |
+
+**Unit events were not exercised with an event in them.** Nothing on that
+server applies a Unit, so it has none. That the two routes agree on an empty
+list shows the request is accepted and the space is read; it does not show
+that an event is printed as `cub` prints it, or that several come out in
+`cub`'s order. Those rest on the SDK's types, which both use, and on a unit
+test of the ordering, not on a recording. The recordings are in
+`test/fixtures/confighub-release-lists-v0812-recorded/`.
 
 ## Not measured, and not claimed
 

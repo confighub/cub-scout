@@ -1,0 +1,50 @@
+[
+  {
+    "Release": {
+      "BundleBaseName": "scout-sdk-releases-1791655762739571323",
+      "CreatedAt": "2026-10-10T18:09:23.687663Z",
+      "DataSize": 403,
+      "Digest": "sha256:729ba7a3dcc44f483c14d75e1d6a831b4871e1bce1d255f2bf44edfdd379759a",
+      "EntityType": "Release",
+      "ManifestDigest": "sha256:3faf2405f4b084897343a8033899f7ebf3a9e0019078b6bd0a76345e3dd746c7",
+      "OrganizationID": "a7b94d6d-d3c8-49fb-b40c-5fb3dac5e9c8",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "ac040938-857b-40d0-83ce-c8c734496e43": true
+          }
+        }
+      },
+      "Published": true,
+      "ReleaseID": "961ae866-920d-4e99-90b0-57e4a8cb3671",
+      "ReleaseNum": 1,
+      "SpaceID": "12253663-a803-4690-b72b-ba051913b608",
+      "SpaceSlug": "scout-sdk-releases-1791655762739571323",
+      "TagID": "36a43e61-2f63-437a-9e23-871422715130",
+      "TargetID": "aa9025d6-b955-45d6-8d91-c040d355dcf2",
+      "UnitCount": 2,
+      "UpdatedAt": "2026-10-10T18:09:23.687663Z",
+      "UserID": "ac040938-857b-40d0-83ce-c8c734496e43"
+    },
+    "Tag": {
+      "CreatedAt": "2026-10-10T18:09:23.686961Z",
+      "DisplayName": "release-1",
+      "EntityType": "Tag",
+      "OrganizationID": "a7b94d6d-d3c8-49fb-b40c-5fb3dac5e9c8",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "ac040938-857b-40d0-83ce-c8c734496e43": true
+          }
+        }
+      },
+      "ReleaseID": "961ae866-920d-4e99-90b0-57e4a8cb3671",
+      "Slug": "release-1",
+      "SpaceID": "12253663-a803-4690-b72b-ba051913b608",
+      "SpaceSlug": "scout-sdk-releases-1791655762739571323",
+      "TagID": "36a43e61-2f63-437a-9e23-871422715130",
+      "UpdatedAt": "2026-10-10T18:09:23.686962Z",
+      "Version": 1
+    }
+  }
+]
