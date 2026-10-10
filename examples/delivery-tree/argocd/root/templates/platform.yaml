@@ -1,0 +1,18 @@
+# Plain resources directly under the root, beside its Applications.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: delivery-tree-elsewhere-apps
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: delivery-tree-platform
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-settings
+  namespace: delivery-tree-platform
+data:
+  tier: platform

@@ -398,19 +398,25 @@ func deliveryReadReason(err error) string {
 	}
 }
 
-// CollectDeliverySettings lists Argo CD Applications and Flux Kustomizations
-// and HelmReleases and reads each one's delivery settings. Every list is
-// recorded in Reads: a kind whose list failed is "not_read", and only a kind
-// the API server does not serve is "not_installed".
-func CollectDeliverySettings(ctx context.Context, client dynamic.Interface, opts DeliverySettingsOptions) DeliverySettingsInventory {
-	inventory := DeliverySettingsInventory{Deployers: []DeliveryDeployerSettings{}, Reads: []DeliverySettingsRead{}}
-	argoNamespaces := map[string]bool{}
+// listedDeployer is one deployer object as the API server returned it, with
+// the source that says how to read it.
+type listedDeployer struct {
+	source deliverySettingsSource
+	object *unstructured.Unstructured
+}
+
+// listDeliveryObjects lists every kind of deployer this package reads, in one
+// namespace or, with an empty namespace, in all of them. Every list is
+// recorded: a kind whose list failed is "not_read", and only a kind the API
+// server does not serve is "not_installed".
+func listDeliveryObjects(ctx context.Context, client dynamic.Interface, namespace string) ([]listedDeployer, []DeliverySettingsRead) {
+	objects, reads := []listedDeployer{}, []DeliverySettingsRead{}
 	for _, source := range deliverySettingsSources {
 		read := DeliverySettingsRead{Controller: source.controller, Kind: source.kind, Status: DeliveryReadNotInstalled}
 		for _, version := range source.versions {
 			gvr := schema.GroupVersionResource{Group: source.group, Version: version, Resource: source.resource}
 			read.Resource = fmt.Sprintf("%s.%s/%s", source.resource, source.group, version)
-			list, err := client.Resource(gvr).Namespace(opts.Namespace).List(ctx, metav1.ListOptions{})
+			list, err := client.Resource(gvr).Namespace(namespace).List(ctx, metav1.ListOptions{})
 			if apierrors.IsNotFound(err) {
 				continue
 			}
@@ -420,18 +426,33 @@ func CollectDeliverySettings(ctx context.Context, client dynamic.Interface, opts
 			}
 			read.Status, read.Count = DeliveryReadRead, len(list.Items)
 			for i := range list.Items {
-				deployer := source.parse(&list.Items[i])
-				if source.controller == DeliveryControllerArgoCD {
-					argoNamespaces[deployer.Namespace] = true
-				}
-				inventory.Deployers = append(inventory.Deployers, deployer)
+				objects = append(objects, listedDeployer{source: source, object: &list.Items[i]})
 			}
 			break
 		}
 		if read.Status == DeliveryReadNotInstalled {
 			read.Resource = fmt.Sprintf("%s.%s/%s", source.resource, source.group, source.versions[0])
 		}
-		inventory.Reads = append(inventory.Reads, read)
+		reads = append(reads, read)
+	}
+	return objects, reads
+}
+
+// CollectDeliverySettings lists Argo CD Applications and Flux Kustomizations
+// and HelmReleases and reads each one's delivery settings. Every list is
+// recorded in Reads: a kind whose list failed is "not_read", and only a kind
+// the API server does not serve is "not_installed".
+func CollectDeliverySettings(ctx context.Context, client dynamic.Interface, opts DeliverySettingsOptions) DeliverySettingsInventory {
+	inventory := DeliverySettingsInventory{Deployers: []DeliveryDeployerSettings{}, Reads: []DeliverySettingsRead{}}
+	argoNamespaces := map[string]bool{}
+	objects, reads := listDeliveryObjects(ctx, client, opts.Namespace)
+	inventory.Reads = reads
+	for _, object := range objects {
+		deployer := object.source.parse(object.object)
+		if object.source.controller == DeliveryControllerArgoCD {
+			argoNamespaces[deployer.Namespace] = true
+		}
+		inventory.Deployers = append(inventory.Deployers, deployer)
 	}
 	sort.SliceStable(inventory.Deployers, func(i, j int) bool {
 		a, b := inventory.Deployers[i], inventory.Deployers[j]

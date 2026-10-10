@@ -1,0 +1,39 @@
+DELIVERY TREE  Application/delivery-tree  (context kind-gitops-cluster)
+1 root, 8 deployers, 8 resources reported
+Each deployer's resources are what it reports about itself. They are not checked against the cluster.
+  ! 1 reported but not found in the cluster
+  ! 1 with no status: not reconciled
+  ! 2 report nothing about what they applied
+
+Application argocd/delivery-tree  ·  Synced / Healthy  ·  auto-sync on, self-heal on, prune on
+├─ Application argocd/delivery-tree-broken  ·  Unknown / Healthy (reported without a comparison)  ·  auto-sync on, self-heal off, prune off
+│     ! parent ignores differences at /spec/syncPolicy, when comparing only
+│     ! ComparisonError: Failed to load target state: failed to generate manifest for source 1 of 1: rpc error: code = Unknown desc = examples/delivery-tree/argocd/no-such-path: app path does not exist
+│     ! reports nothing about what it applied: the Application has no status.resources
+├─ Application argocd/delivery-tree-team-a  ·  Synced / Healthy  ·  auto-sync on, self-heal off, prune on
+│     ! parent ignores differences at /spec/syncPolicy, when comparing only
+│  ├─ Application argocd/delivery-tree-jobs  ·  Synced / Healthy  ·  auto-sync on, self-heal off, prune off
+│  │  ├─ ConfigMap delivery-tree-jobs/nightly-schedule  ·  Synced
+│  │  └─ ConfigMap delivery-tree-jobs/weekly-schedule  ·  Synced
+│  └─ Application argocd/delivery-tree-web  ·  Synced / Healthy  ·  auto-sync on, self-heal on, prune on
+│     ├─ ConfigMap delivery-tree-web/web-settings  ·  Synced
+│     ├─ Deployment delivery-tree-web/web  ·  Synced
+│     └─ Service delivery-tree-web/web  ·  Synced
+├─ Application argocd/delivery-tree-team-b  ·  OutOfSync / Missing  ·  auto-sync off, self-heal n/a, prune n/a
+│     ! parent ignores differences at /spec/syncPolicy, when comparing only
+│  └─ Application argocd/delivery-tree-api
+│        ! not found in the cluster
+│        ! its parent reports it OutOfSync
+├─ Application delivery-tree-elsewhere-apps/delivery-tree-elsewhere  ·  auto-sync on, self-heal off, prune off
+│     ! not reconciled: the object has no status
+│     ! parent ignores differences at /spec/syncPolicy, when comparing only
+│     ! reports nothing about what it applied: the Application has no status.resources
+├─ ConfigMap delivery-tree-platform/platform-settings  ·  Synced
+├─ Namespace delivery-tree-elsewhere-apps  ·  Synced
+└─ Namespace delivery-tree-platform  ·  Synced
+
+Note: No resource health is reported: Argo CD keeps it in its own tree, not on the Application. A resource with no health shown is not known to be healthy.
+Reads:
+  Argo CD Application: read (8)
+  Flux Kustomization: read (0)
+  Flux HelmRelease: read (0)

@@ -428,6 +428,62 @@ jobs:
           kubectl wait --for=jsonpath='{.status.health.status}'=Healthy application/guestbook -n argocd --timeout=300s
           kubectl rollout status deployment/guestbook-ui -n guestbook --timeout=300s
 
+      # A three-level app-of-apps read from this commit, so that what Argo CD
+      # reports for each level is recorded from a real controller (#855).
+      - name: Deploy the delivery-tree example
+        env:
+          REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          sed -e "s|REPO_URL|https://github.com/${GITHUB_REPOSITORY}.git|" -e "s|REVISION|${REVISION}|" \
+            examples/delivery-tree/argocd/root-application.yaml | kubectl apply -f -
+          kubectl wait --for=jsonpath='{.status.sync.status}'=Synced application/delivery-tree -n argocd --timeout=300s
+          kubectl wait --for=jsonpath='{.status.sync.status}'=Synced application/delivery-tree-team-a -n argocd --timeout=300s
+          kubectl wait --for=jsonpath='{.status.sync.status}'=Synced application/delivery-tree-web -n argocd --timeout=300s
+          kubectl wait --for=jsonpath='{.status.health.status}'=Healthy application/delivery-tree-web -n argocd --timeout=300s
+          kubectl wait --for=jsonpath='{.status.sync.status}'=Synced application/delivery-tree-jobs -n argocd --timeout=300s
+          kubectl wait --for=jsonpath='{.status.sync.status}'=OutOfSync application/delivery-tree-team-b -n argocd --timeout=300s
+          kubectl wait --for=jsonpath='{.status.conditions[0].type}'=ComparisonError application/delivery-tree-broken -n argocd --timeout=300s
+          kubectl get application delivery-tree-elsewhere -n delivery-tree-elsewhere-apps
+          kubectl get applications.argoproj.io -A -o json > "$RUNNER_TEMP/argo-delivery-tree.json"
+          kubectl get applications.argoproj.io -A
+
+      # gitops tree, held to what this Argo CD has just done with the example.
+      - name: Verify gitops tree on the delivery-tree example
+        run: |
+          ./cub-scout gitops tree app/delivery-tree
+          ./cub-scout gitops tree app/delivery-tree --format json > "$RUNNER_TEMP/scout-delivery-tree.json"
+          tree="$RUNNER_TEMP/scout-delivery-tree.json"
+          jq -e '.complete == true' "$tree"
+          jq -e '.summary | .roots == 1 and .deployers == 8 and .resources == 8 and .maxDepth == 2 and .notFound == 1 and .notReconciled == 1 and .noneReported == 2' "$tree"
+          jq -e '.roots[0] | .name == "delivery-tree" and .state.sync == "Synced" and ([.policies[] | "\(.name)=\(.value)"] == ["auto-sync=on","self-heal=on","prune=on"])' "$tree"
+          jq -e '[.roots[0].children.deployers[].name] == ["delivery-tree-broken","delivery-tree-team-a","delivery-tree-team-b","delivery-tree-elsewhere"]' "$tree"
+          jq -e '[.roots[0].children.resources[] | "\(.kind)/\(.name)"] == ["ConfigMap/platform-settings","Namespace/delivery-tree-elsewhere-apps","Namespace/delivery-tree-platform"]' "$tree"
+          # The root's ignore rule is on each child Application it names.
+          jq -e '[.roots[0].children.deployers[].reportedByParent.ignoredByParent[0].jsonPointers[0]] == ["/spec/syncPolicy","/spec/syncPolicy","/spec/syncPolicy","/spec/syncPolicy"]' "$tree"
+          jq -e '.roots[0].children.deployers[] | select(.name == "delivery-tree-team-a") | [.children.deployers[].name] == ["delivery-tree-jobs","delivery-tree-web"]' "$tree"
+          jq -e '.roots[0].children.deployers[] | select(.name == "delivery-tree-team-a") | .children.deployers[] | select(.name == "delivery-tree-web") | [.children.resources[] | "\(.kind)/\(.namespace)/\(.name)/\(.sync)"] == ["ConfigMap/delivery-tree-web/web-settings/Synced","Deployment/delivery-tree-web/web/Synced","Service/delivery-tree-web/web/Synced"]' "$tree"
+          # Never synced: it reports the Application it would create, which is not there.
+          jq -e '.roots[0].children.deployers[] | select(.name == "delivery-tree-team-b") | .state.sync == "OutOfSync" and (.children.deployers | length == 1) and .children.deployers[0].name == "delivery-tree-api" and .children.deployers[0].object == "not_found" and .children.deployers[0].reportedByParent.sync == "OutOfSync"' "$tree"
+          # Could not be compared, and not reconciled at all: neither is "nothing under it".
+          jq -e '.roots[0].children.deployers[] | select(.name == "delivery-tree-broken") | .children.status == "none_reported" and .state.conditions[0].type == "ComparisonError"' "$tree"
+          jq -e '.roots[0].children.deployers[] | select(.name == "delivery-tree-elsewhere") | .object == "found" and .state.reconciled == false and .children.status == "none_reported"' "$tree"
+          # No resource health: Argo CD 3 does not put it on the Application.
+          jq -e '[.. | objects | select(has("kind") and has("sync") and (has("controller") | not)) | has("health")] | (length >= 8) and (any | not)' "$tree"
+          ./cub-scout gitops tree app/delivery-tree --kind Deployment | tee "$RUNNER_TEMP/scout-delivery-tree-deployments.txt"
+          grep -q 'Deployment delivery-tree-web/web' "$RUNNER_TEMP/scout-delivery-tree-deployments.txt"
+          if grep -q 'ConfigMap' "$RUNNER_TEMP/scout-delivery-tree-deployments.txt"; then echo 'a ConfigMap passed --kind Deployment' >&2; exit 1; fi
+          # Out of sync: team-b and the Application it would create. The two that report nothing are kept
+          # too, since what is under them was not seen; team-a and its Applications, all Synced, are not.
+          ./cub-scout gitops tree app/delivery-tree --sync OutOfSync --format json | jq -e '.shown.deployers == 5 and ([.roots[0].children.deployers[].name] == ["delivery-tree-broken","delivery-tree-team-b","delivery-tree-elsewhere"]) and .roots[0].children.deployers[1].children.deployers[0].name == "delivery-tree-api" and .roots[0].children.hiddenByFilter == 4'
+          # Every root: the example's and the guestbook above; a deployer in the middle is not a root.
+          ./cub-scout gitops tree --format json --view summary > "$RUNNER_TEMP/scout-delivery-tree-summary.json"
+          jq -e '[.tree[].deployer] | index("Application argocd/delivery-tree") != null and index("Application argocd/guestbook") != null and index("Application argocd/delivery-tree-team-a") == null' "$RUNNER_TEMP/scout-delivery-tree-summary.json"
+          ./cub-scout gitops tree app/delivery-tree --format md > "$RUNNER_TEMP/scout-delivery-tree.md"
+          grep -q '^# Delivery tree: Application/delivery-tree' "$RUNNER_TEMP/scout-delivery-tree.md"
+          # A deployer that is not there is an error, not an empty tree.
+          if ./cub-scout gitops tree app/no-such-application 2> "$RUNNER_TEMP/scout-delivery-tree-missing.txt"; then echo 'a missing deployer was not an error' >&2; exit 1; fi
+          grep -q 'no deployer Application/no-such-application was found' "$RUNNER_TEMP/scout-delivery-tree-missing.txt"
+
       - name: Verify Flux ownership detection
         run: |
           ./cub-scout map list --json --namespace boutique > "$RUNNER_TEMP/flux-ownership.json"
@@ -455,6 +511,11 @@ jobs:
             ${{ runner.temp }}/flux-ownership.json
             ${{ runner.temp }}/argo-ownership.json
             ${{ runner.temp }}/argo-application.json
+            ${{ runner.temp }}/argo-delivery-tree.json
+            ${{ runner.temp }}/scout-delivery-tree.json
+            ${{ runner.temp }}/scout-delivery-tree-summary.json
+            ${{ runner.temp }}/scout-delivery-tree.md
+            ${{ runner.temp }}/scout-delivery-tree-deployments.txt
             ${{ runner.temp }}/flux-delivery.json
             ${{ runner.temp }}/scout-controllers/flux-version.txt
 

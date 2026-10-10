@@ -1,0 +1,4 @@
+apiVersion: v2
+name: delivery-tree-team-a
+description: Applications one level down from delivery-treeteam-a
+version: 0.1.0

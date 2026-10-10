@@ -52,6 +52,7 @@ where Scout fits and where parity is still unproved.
 |------|---------|-------|
 | GitOps pipeline health | `cub-scout gitops status` | [reference/commands.md#gitops-v014](reference/commands.md#gitops-v014) |
 | Deployer sync, self-heal and prune settings (Argo CD, Flux) | `cub-scout gitops settings` | [reference/commands.md#gitops-settings](reference/commands.md#gitops-settings) |
+| What is under a deployer, to any depth (Argo CD app-of-apps) | `cub-scout gitops tree` | [reference/commands.md#gitops-tree](reference/commands.md#gitops-tree) |
 | Delivery readiness decision | `cub-scout doctor`, `cub-scout explain`, `cub-scout compare object-set`, `cub-scout receipt verify` | [howto/delivery-readiness-decision.md](howto/delivery-readiness-decision.md) |
 | Scan for risks | `cub-scout scan --state` | [howto/scan-for-risks.md](howto/scan-for-risks.md) |
 | Scan a manifest file | `cub-scout scan --file FILE` | [howto/scan-for-risks.md](howto/scan-for-risks.md) |

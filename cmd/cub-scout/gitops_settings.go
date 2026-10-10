@@ -412,7 +412,11 @@ func writeDeliverySettings(w io.Writer, report deliverySettingsReport, format, g
 // escape sequence could rewrite the terminal. JSON output is left verbatim.
 func deliveryText(text string) string {
 	return strings.Map(func(r rune) rune {
-		if unicode.IsControl(r) {
+		// Control characters, and the characters that change how the rest
+		// of a line is displayed without being seen: bidirectional
+		// overrides and other format characters, and the line and paragraph
+		// separators.
+		if unicode.IsControl(r) || unicode.In(r, unicode.Cf, unicode.Zl, unicode.Zp) {
 			return ' '
 		}
 		return r

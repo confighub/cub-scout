@@ -1,0 +1,3 @@
+# Set by the Application one level up, so every level reads the same commit.
+repoURL: https://github.com/confighub/cub-scout.git
+revision: main

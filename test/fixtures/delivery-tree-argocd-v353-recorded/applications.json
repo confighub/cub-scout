@@ -1,0 +1,1246 @@
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "argoproj.io/v1alpha1",
+            "kind": "Application",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"delivery-tree\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"argocd\",\"server\":\"https://kubernetes.default.svc\"},\"ignoreDifferences\":[{\"group\":\"argoproj.io\",\"jsonPointers\":[\"/spec/syncPolicy\"],\"kind\":\"Application\"}],\"project\":\"default\",\"source\":{\"helm\":{\"parameters\":[{\"name\":\"repoURL\",\"value\":\"https://github.com/confighub/cub-scout.git\"},{\"forceString\":true,\"name\":\"revision\",\"value\":\"b7bda177a33c2010ba635cd3d1a7747d370fd1e5\"}]},\"path\":\"examples/delivery-tree/argocd/root\",\"repoURL\":\"https://github.com/confighub/cub-scout.git\",\"targetRevision\":\"b7bda177a33c2010ba635cd3d1a7747d370fd1e5\"},\"syncPolicy\":{\"automated\":{\"prune\":true,\"selfHeal\":true},\"syncOptions\":[\"CreateNamespace=true\"]}}}\n"
+                },
+                "creationTimestamp": "2026-10-10T07:48:03Z",
+                "generation": 13,
+                "name": "delivery-tree",
+                "namespace": "argocd",
+                "resourceVersion": "1593",
+                "uid": "2e0631b4-473b-431e-990f-344ec5d08444"
+            },
+            "spec": {
+                "destination": {
+                    "namespace": "argocd",
+                    "server": "https://kubernetes.default.svc"
+                },
+                "ignoreDifferences": [
+                    {
+                        "group": "argoproj.io",
+                        "jsonPointers": [
+                            "/spec/syncPolicy"
+                        ],
+                        "kind": "Application"
+                    }
+                ],
+                "project": "default",
+                "source": {
+                    "helm": {
+                        "parameters": [
+                            {
+                                "name": "repoURL",
+                                "value": "https://github.com/confighub/cub-scout.git"
+                            },
+                            {
+                                "forceString": true,
+                                "name": "revision",
+                                "value": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                            }
+                        ]
+                    },
+                    "path": "examples/delivery-tree/argocd/root",
+                    "repoURL": "https://github.com/confighub/cub-scout.git",
+                    "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                },
+                "syncPolicy": {
+                    "automated": {
+                        "prune": true,
+                        "selfHeal": true
+                    },
+                    "syncOptions": [
+                        "CreateNamespace=true"
+                    ]
+                }
+            },
+            "status": {
+                "controllerNamespace": "argocd",
+                "health": {
+                    "lastTransitionTime": "2026-10-10T07:48:06Z",
+                    "status": "Healthy"
+                },
+                "history": [
+                    {
+                        "deployStartedAt": "2026-10-10T07:48:06Z",
+                        "deployedAt": "2026-10-10T07:48:06Z",
+                        "id": 0,
+                        "initiatedBy": {
+                            "automated": true
+                        },
+                        "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5",
+                        "source": {
+                            "helm": {
+                                "parameters": [
+                                    {
+                                        "name": "repoURL",
+                                        "value": "https://github.com/confighub/cub-scout.git"
+                                    },
+                                    {
+                                        "forceString": true,
+                                        "name": "revision",
+                                        "value": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                                    }
+                                ]
+                            },
+                            "path": "examples/delivery-tree/argocd/root",
+                            "repoURL": "https://github.com/confighub/cub-scout.git",
+                            "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                        }
+                    }
+                ],
+                "operationState": {
+                    "finishedAt": "2026-10-10T07:48:07Z",
+                    "message": "successfully synced (all tasks run)",
+                    "operation": {
+                        "initiatedBy": {
+                            "automated": true
+                        },
+                        "retry": {
+                            "limit": 5
+                        },
+                        "sync": {
+                            "autoHealAttemptsCount": 1,
+                            "prune": true,
+                            "resources": [
+                                {
+                                    "group": "argoproj.io",
+                                    "kind": "Application",
+                                    "name": "delivery-tree-broken"
+                                },
+                                {
+                                    "group": "argoproj.io",
+                                    "kind": "Application",
+                                    "name": "delivery-tree-elsewhere"
+                                },
+                                {
+                                    "group": "argoproj.io",
+                                    "kind": "Application",
+                                    "name": "delivery-tree-team-a"
+                                },
+                                {
+                                    "group": "argoproj.io",
+                                    "kind": "Application",
+                                    "name": "delivery-tree-team-b"
+                                }
+                            ],
+                            "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5",
+                            "source": {
+                                "helm": {
+                                    "parameters": [
+                                        {
+                                            "name": "repoURL",
+                                            "value": "https://github.com/confighub/cub-scout.git"
+                                        },
+                                        {
+                                            "forceString": true,
+                                            "name": "revision",
+                                            "value": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                                        }
+                                    ]
+                                },
+                                "path": "examples/delivery-tree/argocd/root",
+                                "repoURL": "https://github.com/confighub/cub-scout.git",
+                                "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                            },
+                            "syncOptions": [
+                                "CreateNamespace=true"
+                            ]
+                        }
+                    },
+                    "phase": "Succeeded",
+                    "startedAt": "2026-10-10T07:48:06Z",
+                    "syncResult": {
+                        "resources": [
+                            {
+                                "group": "argoproj.io",
+                                "hookPhase": "Running",
+                                "kind": "Application",
+                                "message": "application.argoproj.io/delivery-tree-broken unchanged",
+                                "name": "delivery-tree-broken",
+                                "namespace": "argocd",
+                                "status": "Synced",
+                                "syncPhase": "Sync",
+                                "version": "v1alpha1"
+                            },
+                            {
+                                "group": "argoproj.io",
+                                "hookPhase": "Running",
+                                "kind": "Application",
+                                "message": "application.argoproj.io/delivery-tree-team-a unchanged",
+                                "name": "delivery-tree-team-a",
+                                "namespace": "argocd",
+                                "status": "Synced",
+                                "syncPhase": "Sync",
+                                "version": "v1alpha1"
+                            },
+                            {
+                                "group": "argoproj.io",
+                                "hookPhase": "Running",
+                                "kind": "Application",
+                                "message": "application.argoproj.io/delivery-tree-elsewhere unchanged",
+                                "name": "delivery-tree-elsewhere",
+                                "namespace": "delivery-tree-elsewhere-apps",
+                                "status": "Synced",
+                                "syncPhase": "Sync",
+                                "version": "v1alpha1"
+                            },
+                            {
+                                "group": "argoproj.io",
+                                "hookPhase": "Running",
+                                "kind": "Application",
+                                "message": "application.argoproj.io/delivery-tree-team-b unchanged",
+                                "name": "delivery-tree-team-b",
+                                "namespace": "argocd",
+                                "status": "Synced",
+                                "syncPhase": "Sync",
+                                "version": "v1alpha1"
+                            }
+                        ],
+                        "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5",
+                        "source": {
+                            "helm": {
+                                "parameters": [
+                                    {
+                                        "name": "repoURL",
+                                        "value": "https://github.com/confighub/cub-scout.git"
+                                    },
+                                    {
+                                        "forceString": true,
+                                        "name": "revision",
+                                        "value": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                                    }
+                                ]
+                            },
+                            "path": "examples/delivery-tree/argocd/root",
+                            "repoURL": "https://github.com/confighub/cub-scout.git",
+                            "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                        }
+                    }
+                },
+                "reconciledAt": "2026-10-10T07:48:07Z",
+                "resourceHealthSource": "appTree",
+                "resources": [
+                    {
+                        "kind": "ConfigMap",
+                        "name": "platform-settings",
+                        "namespace": "delivery-tree-platform",
+                        "status": "Synced",
+                        "version": "v1"
+                    },
+                    {
+                        "kind": "Namespace",
+                        "name": "delivery-tree-elsewhere-apps",
+                        "status": "Synced",
+                        "version": "v1"
+                    },
+                    {
+                        "kind": "Namespace",
+                        "name": "delivery-tree-platform",
+                        "status": "Synced",
+                        "version": "v1"
+                    },
+                    {
+                        "group": "argoproj.io",
+                        "kind": "Application",
+                        "name": "delivery-tree-broken",
+                        "namespace": "argocd",
+                        "status": "Synced",
+                        "version": "v1alpha1"
+                    },
+                    {
+                        "group": "argoproj.io",
+                        "kind": "Application",
+                        "name": "delivery-tree-team-a",
+                        "namespace": "argocd",
+                        "status": "Synced",
+                        "version": "v1alpha1"
+                    },
+                    {
+                        "group": "argoproj.io",
+                        "kind": "Application",
+                        "name": "delivery-tree-team-b",
+                        "namespace": "argocd",
+                        "status": "Synced",
+                        "version": "v1alpha1"
+                    },
+                    {
+                        "group": "argoproj.io",
+                        "kind": "Application",
+                        "name": "delivery-tree-elsewhere",
+                        "namespace": "delivery-tree-elsewhere-apps",
+                        "status": "Synced",
+                        "version": "v1alpha1"
+                    }
+                ],
+                "sourceHydrator": {},
+                "sourceType": "Helm",
+                "summary": {
+                    "isAppOfApps": true
+                },
+                "sync": {
+                    "comparedTo": {
+                        "destination": {
+                            "namespace": "argocd",
+                            "server": "https://kubernetes.default.svc"
+                        },
+                        "ignoreDifferences": [
+                            {
+                                "group": "argoproj.io",
+                                "jsonPointers": [
+                                    "/spec/syncPolicy"
+                                ],
+                                "kind": "Application"
+                            }
+                        ],
+                        "source": {
+                            "helm": {
+                                "parameters": [
+                                    {
+                                        "name": "repoURL",
+                                        "value": "https://github.com/confighub/cub-scout.git"
+                                    },
+                                    {
+                                        "forceString": true,
+                                        "name": "revision",
+                                        "value": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                                    }
+                                ]
+                            },
+                            "path": "examples/delivery-tree/argocd/root",
+                            "repoURL": "https://github.com/confighub/cub-scout.git",
+                            "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                        }
+                    },
+                    "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5",
+                    "status": "Synced"
+                }
+            }
+        },
+        {
+            "apiVersion": "argoproj.io/v1alpha1",
+            "kind": "Application",
+            "metadata": {
+                "annotations": {
+                    "argocd.argoproj.io/tracking-id": "delivery-tree:argoproj.io/Application:argocd/delivery-tree-broken",
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{\"argocd.argoproj.io/tracking-id\":\"delivery-tree:argoproj.io/Application:argocd/delivery-tree-broken\"},\"name\":\"delivery-tree-broken\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"delivery-tree-broken\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"examples/delivery-tree/argocd/no-such-path\",\"repoURL\":\"https://github.com/confighub/cub-scout.git\",\"targetRevision\":\"b7bda177a33c2010ba635cd3d1a7747d370fd1e5\"},\"syncPolicy\":{\"automated\":{}}}}\n"
+                },
+                "creationTimestamp": "2026-10-10T07:48:06Z",
+                "generation": 2,
+                "name": "delivery-tree-broken",
+                "namespace": "argocd",
+                "resourceVersion": "1570",
+                "uid": "4e87672c-ba7a-4bf7-af7c-614317c49d48"
+            },
+            "spec": {
+                "destination": {
+                    "namespace": "delivery-tree-broken",
+                    "server": "https://kubernetes.default.svc"
+                },
+                "project": "default",
+                "source": {
+                    "path": "examples/delivery-tree/argocd/no-such-path",
+                    "repoURL": "https://github.com/confighub/cub-scout.git",
+                    "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                },
+                "syncPolicy": {
+                    "automated": {}
+                }
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastTransitionTime": "2026-10-10T07:48:06Z",
+                        "message": "Failed to load target state: failed to generate manifest for source 1 of 1: rpc error: code = Unknown desc = examples/delivery-tree/argocd/no-such-path: app path does not exist",
+                        "type": "ComparisonError"
+                    }
+                ],
+                "controllerNamespace": "argocd",
+                "health": {
+                    "lastTransitionTime": "2026-10-10T07:48:06Z",
+                    "status": "Healthy"
+                },
+                "reconciledAt": "2026-10-10T07:48:06Z",
+                "resourceHealthSource": "appTree",
+                "sync": {
+                    "comparedTo": {
+                        "destination": {
+                            "namespace": "delivery-tree-broken",
+                            "server": "https://kubernetes.default.svc"
+                        },
+                        "source": {
+                            "path": "examples/delivery-tree/argocd/no-such-path",
+                            "repoURL": "https://github.com/confighub/cub-scout.git",
+                            "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                        }
+                    },
+                    "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5",
+                    "status": "Unknown"
+                }
+            }
+        },
+        {
+            "apiVersion": "argoproj.io/v1alpha1",
+            "kind": "Application",
+            "metadata": {
+                "annotations": {
+                    "argocd.argoproj.io/tracking-id": "delivery-tree-team-a:argoproj.io/Application:argocd/delivery-tree-jobs",
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{\"argocd.argoproj.io/tracking-id\":\"delivery-tree-team-a:argoproj.io/Application:argocd/delivery-tree-jobs\"},\"name\":\"delivery-tree-jobs\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"delivery-tree-jobs\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"examples/delivery-tree/argocd/workloads/jobs\",\"repoURL\":\"https://github.com/confighub/cub-scout.git\",\"targetRevision\":\"b7bda177a33c2010ba635cd3d1a7747d370fd1e5\"},\"syncPolicy\":{\"automated\":{\"prune\":false},\"syncOptions\":[\"CreateNamespace=true\"]}}}\n"
+                },
+                "creationTimestamp": "2026-10-10T07:48:07Z",
+                "generation": 8,
+                "name": "delivery-tree-jobs",
+                "namespace": "argocd",
+                "resourceVersion": "1623",
+                "uid": "1c7e8ffd-10f4-4ae5-b600-557286f54d05"
+            },
+            "spec": {
+                "destination": {
+                    "namespace": "delivery-tree-jobs",
+                    "server": "https://kubernetes.default.svc"
+                },
+                "project": "default",
+                "source": {
+                    "path": "examples/delivery-tree/argocd/workloads/jobs",
+                    "repoURL": "https://github.com/confighub/cub-scout.git",
+                    "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                },
+                "syncPolicy": {
+                    "automated": {
+                        "prune": false
+                    },
+                    "syncOptions": [
+                        "CreateNamespace=true"
+                    ]
+                }
+            },
+            "status": {
+                "controllerNamespace": "argocd",
+                "health": {
+                    "lastTransitionTime": "2026-10-10T07:48:08Z",
+                    "status": "Healthy"
+                },
+                "history": [
+                    {
+                        "deployStartedAt": "2026-10-10T07:48:07Z",
+                        "deployedAt": "2026-10-10T07:48:07Z",
+                        "id": 0,
+                        "initiatedBy": {
+                            "automated": true
+                        },
+                        "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5",
+                        "source": {
+                            "path": "examples/delivery-tree/argocd/workloads/jobs",
+                            "repoURL": "https://github.com/confighub/cub-scout.git",
+                            "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                        }
+                    }
+                ],
+                "operationState": {
+                    "finishedAt": "2026-10-10T07:48:07Z",
+                    "message": "successfully synced (all tasks run)",
+                    "operation": {
+                        "initiatedBy": {
+                            "automated": true
+                        },
+                        "retry": {
+                            "limit": 5
+                        },
+                        "sync": {
+                            "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5",
+                            "source": {
+                                "path": "examples/delivery-tree/argocd/workloads/jobs",
+                                "repoURL": "https://github.com/confighub/cub-scout.git",
+                                "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                            },
+                            "syncOptions": [
+                                "CreateNamespace=true"
+                            ]
+                        }
+                    },
+                    "phase": "Succeeded",
+                    "startedAt": "2026-10-10T07:48:07Z",
+                    "syncResult": {
+                        "resources": [
+                            {
+                                "group": "",
+                                "hookPhase": "Running",
+                                "kind": "Namespace",
+                                "message": "namespace/delivery-tree-jobs created",
+                                "name": "delivery-tree-jobs",
+                                "namespace": "",
+                                "status": "Synced",
+                                "syncPhase": "PreSync",
+                                "version": "v1"
+                            },
+                            {
+                                "group": "",
+                                "hookPhase": "Running",
+                                "kind": "ConfigMap",
+                                "message": "configmap/weekly-schedule created",
+                                "name": "weekly-schedule",
+                                "namespace": "delivery-tree-jobs",
+                                "status": "Synced",
+                                "syncPhase": "Sync",
+                                "version": "v1"
+                            },
+                            {
+                                "group": "",
+                                "hookPhase": "Running",
+                                "kind": "ConfigMap",
+                                "message": "configmap/nightly-schedule created",
+                                "name": "nightly-schedule",
+                                "namespace": "delivery-tree-jobs",
+                                "status": "Synced",
+                                "syncPhase": "Sync",
+                                "version": "v1"
+                            }
+                        ],
+                        "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5",
+                        "source": {
+                            "path": "examples/delivery-tree/argocd/workloads/jobs",
+                            "repoURL": "https://github.com/confighub/cub-scout.git",
+                            "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                        }
+                    }
+                },
+                "reconciledAt": "2026-10-10T07:48:07Z",
+                "resourceHealthSource": "appTree",
+                "resources": [
+                    {
+                        "kind": "ConfigMap",
+                        "name": "nightly-schedule",
+                        "namespace": "delivery-tree-jobs",
+                        "status": "Synced",
+                        "version": "v1"
+                    },
+                    {
+                        "kind": "ConfigMap",
+                        "name": "weekly-schedule",
+                        "namespace": "delivery-tree-jobs",
+                        "status": "Synced",
+                        "version": "v1"
+                    }
+                ],
+                "sourceHydrator": {},
+                "sourceType": "Directory",
+                "summary": {},
+                "sync": {
+                    "comparedTo": {
+                        "destination": {
+                            "namespace": "delivery-tree-jobs",
+                            "server": "https://kubernetes.default.svc"
+                        },
+                        "source": {
+                            "path": "examples/delivery-tree/argocd/workloads/jobs",
+                            "repoURL": "https://github.com/confighub/cub-scout.git",
+                            "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                        }
+                    },
+                    "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5",
+                    "status": "Synced"
+                }
+            }
+        },
+        {
+            "apiVersion": "argoproj.io/v1alpha1",
+            "kind": "Application",
+            "metadata": {
+                "annotations": {
+                    "argocd.argoproj.io/tracking-id": "delivery-tree:argoproj.io/Application:argocd/delivery-tree-team-a",
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{\"argocd.argoproj.io/tracking-id\":\"delivery-tree:argoproj.io/Application:argocd/delivery-tree-team-a\"},\"name\":\"delivery-tree-team-a\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"argocd\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"helm\":{\"parameters\":[{\"name\":\"repoURL\",\"value\":\"https://github.com/confighub/cub-scout.git\"},{\"forceString\":true,\"name\":\"revision\",\"value\":\"b7bda177a33c2010ba635cd3d1a7747d370fd1e5\"}]},\"path\":\"examples/delivery-tree/argocd/team-a\",\"repoURL\":\"https://github.com/confighub/cub-scout.git\",\"targetRevision\":\"b7bda177a33c2010ba635cd3d1a7747d370fd1e5\"},\"syncPolicy\":{\"automated\":{\"prune\":true}}}}\n"
+                },
+                "creationTimestamp": "2026-10-10T07:48:06Z",
+                "generation": 7,
+                "name": "delivery-tree-team-a",
+                "namespace": "argocd",
+                "resourceVersion": "1592",
+                "uid": "01ea18e4-86f0-4731-bae3-b87e1896dbd4"
+            },
+            "spec": {
+                "destination": {
+                    "namespace": "argocd",
+                    "server": "https://kubernetes.default.svc"
+                },
+                "project": "default",
+                "source": {
+                    "helm": {
+                        "parameters": [
+                            {
+                                "name": "repoURL",
+                                "value": "https://github.com/confighub/cub-scout.git"
+                            },
+                            {
+                                "forceString": true,
+                                "name": "revision",
+                                "value": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                            }
+                        ]
+                    },
+                    "path": "examples/delivery-tree/argocd/team-a",
+                    "repoURL": "https://github.com/confighub/cub-scout.git",
+                    "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                },
+                "syncPolicy": {
+                    "automated": {
+                        "prune": true
+                    }
+                }
+            },
+            "status": {
+                "controllerNamespace": "argocd",
+                "health": {
+                    "lastTransitionTime": "2026-10-10T07:48:07Z",
+                    "status": "Healthy"
+                },
+                "history": [
+                    {
+                        "deployStartedAt": "2026-10-10T07:48:07Z",
+                        "deployedAt": "2026-10-10T07:48:07Z",
+                        "id": 0,
+                        "initiatedBy": {
+                            "automated": true
+                        },
+                        "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5",
+                        "source": {
+                            "helm": {
+                                "parameters": [
+                                    {
+                                        "name": "repoURL",
+                                        "value": "https://github.com/confighub/cub-scout.git"
+                                    },
+                                    {
+                                        "forceString": true,
+                                        "name": "revision",
+                                        "value": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                                    }
+                                ]
+                            },
+                            "path": "examples/delivery-tree/argocd/team-a",
+                            "repoURL": "https://github.com/confighub/cub-scout.git",
+                            "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                        }
+                    }
+                ],
+                "operationState": {
+                    "finishedAt": "2026-10-10T07:48:07Z",
+                    "message": "successfully synced (all tasks run)",
+                    "operation": {
+                        "initiatedBy": {
+                            "automated": true
+                        },
+                        "retry": {
+                            "limit": 5
+                        },
+                        "sync": {
+                            "prune": true,
+                            "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5",
+                            "source": {
+                                "helm": {
+                                    "parameters": [
+                                        {
+                                            "name": "repoURL",
+                                            "value": "https://github.com/confighub/cub-scout.git"
+                                        },
+                                        {
+                                            "forceString": true,
+                                            "name": "revision",
+                                            "value": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                                        }
+                                    ]
+                                },
+                                "path": "examples/delivery-tree/argocd/team-a",
+                                "repoURL": "https://github.com/confighub/cub-scout.git",
+                                "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                            }
+                        }
+                    },
+                    "phase": "Succeeded",
+                    "startedAt": "2026-10-10T07:48:07Z",
+                    "syncResult": {
+                        "resources": [
+                            {
+                                "group": "argoproj.io",
+                                "hookPhase": "Running",
+                                "kind": "Application",
+                                "message": "application.argoproj.io/delivery-tree-web created",
+                                "name": "delivery-tree-web",
+                                "namespace": "argocd",
+                                "status": "Synced",
+                                "syncPhase": "Sync",
+                                "version": "v1alpha1"
+                            },
+                            {
+                                "group": "argoproj.io",
+                                "hookPhase": "Running",
+                                "kind": "Application",
+                                "message": "application.argoproj.io/delivery-tree-jobs created",
+                                "name": "delivery-tree-jobs",
+                                "namespace": "argocd",
+                                "status": "Synced",
+                                "syncPhase": "Sync",
+                                "version": "v1alpha1"
+                            }
+                        ],
+                        "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5",
+                        "source": {
+                            "helm": {
+                                "parameters": [
+                                    {
+                                        "name": "repoURL",
+                                        "value": "https://github.com/confighub/cub-scout.git"
+                                    },
+                                    {
+                                        "forceString": true,
+                                        "name": "revision",
+                                        "value": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                                    }
+                                ]
+                            },
+                            "path": "examples/delivery-tree/argocd/team-a",
+                            "repoURL": "https://github.com/confighub/cub-scout.git",
+                            "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                        }
+                    }
+                },
+                "reconciledAt": "2026-10-10T07:48:07Z",
+                "resourceHealthSource": "appTree",
+                "resources": [
+                    {
+                        "group": "argoproj.io",
+                        "kind": "Application",
+                        "name": "delivery-tree-jobs",
+                        "namespace": "argocd",
+                        "status": "Synced",
+                        "version": "v1alpha1"
+                    },
+                    {
+                        "group": "argoproj.io",
+                        "kind": "Application",
+                        "name": "delivery-tree-web",
+                        "namespace": "argocd",
+                        "status": "Synced",
+                        "version": "v1alpha1"
+                    }
+                ],
+                "sourceHydrator": {},
+                "sourceType": "Helm",
+                "summary": {
+                    "isAppOfApps": true
+                },
+                "sync": {
+                    "comparedTo": {
+                        "destination": {
+                            "namespace": "argocd",
+                            "server": "https://kubernetes.default.svc"
+                        },
+                        "source": {
+                            "helm": {
+                                "parameters": [
+                                    {
+                                        "name": "repoURL",
+                                        "value": "https://github.com/confighub/cub-scout.git"
+                                    },
+                                    {
+                                        "forceString": true,
+                                        "name": "revision",
+                                        "value": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                                    }
+                                ]
+                            },
+                            "path": "examples/delivery-tree/argocd/team-a",
+                            "repoURL": "https://github.com/confighub/cub-scout.git",
+                            "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                        }
+                    },
+                    "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5",
+                    "status": "Synced"
+                }
+            }
+        },
+        {
+            "apiVersion": "argoproj.io/v1alpha1",
+            "kind": "Application",
+            "metadata": {
+                "annotations": {
+                    "argocd.argoproj.io/tracking-id": "delivery-tree:argoproj.io/Application:argocd/delivery-tree-team-b",
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{\"argocd.argoproj.io/tracking-id\":\"delivery-tree:argoproj.io/Application:argocd/delivery-tree-team-b\"},\"name\":\"delivery-tree-team-b\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"argocd\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"helm\":{\"parameters\":[{\"name\":\"repoURL\",\"value\":\"https://github.com/confighub/cub-scout.git\"},{\"forceString\":true,\"name\":\"revision\",\"value\":\"b7bda177a33c2010ba635cd3d1a7747d370fd1e5\"}]},\"path\":\"examples/delivery-tree/argocd/team-b\",\"repoURL\":\"https://github.com/confighub/cub-scout.git\",\"targetRevision\":\"b7bda177a33c2010ba635cd3d1a7747d370fd1e5\"}}}\n"
+                },
+                "creationTimestamp": "2026-10-10T07:48:06Z",
+                "generation": 2,
+                "name": "delivery-tree-team-b",
+                "namespace": "argocd",
+                "resourceVersion": "1578",
+                "uid": "8719065b-f9be-4309-a3d4-45f26bfeed88"
+            },
+            "spec": {
+                "destination": {
+                    "namespace": "argocd",
+                    "server": "https://kubernetes.default.svc"
+                },
+                "project": "default",
+                "source": {
+                    "helm": {
+                        "parameters": [
+                            {
+                                "name": "repoURL",
+                                "value": "https://github.com/confighub/cub-scout.git"
+                            },
+                            {
+                                "forceString": true,
+                                "name": "revision",
+                                "value": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                            }
+                        ]
+                    },
+                    "path": "examples/delivery-tree/argocd/team-b",
+                    "repoURL": "https://github.com/confighub/cub-scout.git",
+                    "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                }
+            },
+            "status": {
+                "controllerNamespace": "argocd",
+                "health": {
+                    "lastTransitionTime": "2026-10-10T07:48:06Z",
+                    "status": "Missing"
+                },
+                "reconciledAt": "2026-10-10T07:48:06Z",
+                "resourceHealthSource": "appTree",
+                "resources": [
+                    {
+                        "group": "argoproj.io",
+                        "kind": "Application",
+                        "name": "delivery-tree-api",
+                        "namespace": "argocd",
+                        "status": "OutOfSync",
+                        "version": "v1alpha1"
+                    }
+                ],
+                "sourceType": "Helm",
+                "summary": {
+                    "isAppOfApps": true
+                },
+                "sync": {
+                    "comparedTo": {
+                        "destination": {
+                            "namespace": "argocd",
+                            "server": "https://kubernetes.default.svc"
+                        },
+                        "source": {
+                            "helm": {
+                                "parameters": [
+                                    {
+                                        "name": "repoURL",
+                                        "value": "https://github.com/confighub/cub-scout.git"
+                                    },
+                                    {
+                                        "forceString": true,
+                                        "name": "revision",
+                                        "value": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                                    }
+                                ]
+                            },
+                            "path": "examples/delivery-tree/argocd/team-b",
+                            "repoURL": "https://github.com/confighub/cub-scout.git",
+                            "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                        }
+                    },
+                    "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5",
+                    "status": "OutOfSync"
+                }
+            }
+        },
+        {
+            "apiVersion": "argoproj.io/v1alpha1",
+            "kind": "Application",
+            "metadata": {
+                "annotations": {
+                    "argocd.argoproj.io/tracking-id": "delivery-tree-team-a:argoproj.io/Application:argocd/delivery-tree-web",
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{\"argocd.argoproj.io/tracking-id\":\"delivery-tree-team-a:argoproj.io/Application:argocd/delivery-tree-web\"},\"name\":\"delivery-tree-web\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"delivery-tree-web\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"examples/delivery-tree/argocd/workloads/web\",\"repoURL\":\"https://github.com/confighub/cub-scout.git\",\"targetRevision\":\"b7bda177a33c2010ba635cd3d1a7747d370fd1e5\"},\"syncPolicy\":{\"automated\":{\"prune\":true,\"selfHeal\":true},\"syncOptions\":[\"CreateNamespace=true\"]}}}\n"
+                },
+                "creationTimestamp": "2026-10-10T07:48:07Z",
+                "generation": 14,
+                "name": "delivery-tree-web",
+                "namespace": "argocd",
+                "resourceVersion": "1667",
+                "uid": "bbf5697b-7cf3-4d4d-9e75-f68234a29856"
+            },
+            "spec": {
+                "destination": {
+                    "namespace": "delivery-tree-web",
+                    "server": "https://kubernetes.default.svc"
+                },
+                "project": "default",
+                "source": {
+                    "path": "examples/delivery-tree/argocd/workloads/web",
+                    "repoURL": "https://github.com/confighub/cub-scout.git",
+                    "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                },
+                "syncPolicy": {
+                    "automated": {
+                        "prune": true,
+                        "selfHeal": true
+                    },
+                    "syncOptions": [
+                        "CreateNamespace=true"
+                    ]
+                }
+            },
+            "status": {
+                "controllerNamespace": "argocd",
+                "health": {
+                    "lastTransitionTime": "2026-10-10T07:48:09Z",
+                    "status": "Healthy"
+                },
+                "history": [
+                    {
+                        "deployStartedAt": "2026-10-10T07:48:07Z",
+                        "deployedAt": "2026-10-10T07:48:08Z",
+                        "id": 0,
+                        "initiatedBy": {
+                            "automated": true
+                        },
+                        "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5",
+                        "source": {
+                            "path": "examples/delivery-tree/argocd/workloads/web",
+                            "repoURL": "https://github.com/confighub/cub-scout.git",
+                            "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                        }
+                    }
+                ],
+                "operationState": {
+                    "finishedAt": "2026-10-10T07:48:08Z",
+                    "message": "successfully synced (all tasks run)",
+                    "operation": {
+                        "initiatedBy": {
+                            "automated": true
+                        },
+                        "retry": {
+                            "limit": 5
+                        },
+                        "sync": {
+                            "autoHealAttemptsCount": 1,
+                            "prune": true,
+                            "resources": [
+                                {
+                                    "group": "apps",
+                                    "kind": "Deployment",
+                                    "name": "web"
+                                },
+                                {
+                                    "kind": "Service",
+                                    "name": "web"
+                                }
+                            ],
+                            "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5",
+                            "source": {
+                                "path": "examples/delivery-tree/argocd/workloads/web",
+                                "repoURL": "https://github.com/confighub/cub-scout.git",
+                                "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                            },
+                            "syncOptions": [
+                                "CreateNamespace=true"
+                            ]
+                        }
+                    },
+                    "phase": "Succeeded",
+                    "startedAt": "2026-10-10T07:48:08Z",
+                    "syncResult": {
+                        "resources": [
+                            {
+                                "group": "",
+                                "hookPhase": "Running",
+                                "kind": "Service",
+                                "message": "service/web unchanged",
+                                "name": "web",
+                                "namespace": "delivery-tree-web",
+                                "status": "Synced",
+                                "syncPhase": "Sync",
+                                "version": "v1"
+                            },
+                            {
+                                "group": "apps",
+                                "hookPhase": "Running",
+                                "images": [
+                                    "registry.k8s.io/pause:3.10"
+                                ],
+                                "kind": "Deployment",
+                                "message": "deployment.apps/web unchanged",
+                                "name": "web",
+                                "namespace": "delivery-tree-web",
+                                "status": "Synced",
+                                "syncPhase": "Sync",
+                                "version": "v1"
+                            }
+                        ],
+                        "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5",
+                        "source": {
+                            "path": "examples/delivery-tree/argocd/workloads/web",
+                            "repoURL": "https://github.com/confighub/cub-scout.git",
+                            "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                        }
+                    }
+                },
+                "reconciledAt": "2026-10-10T07:48:08Z",
+                "resourceHealthSource": "appTree",
+                "resources": [
+                    {
+                        "kind": "ConfigMap",
+                        "name": "web-settings",
+                        "namespace": "delivery-tree-web",
+                        "status": "Synced",
+                        "version": "v1"
+                    },
+                    {
+                        "kind": "Service",
+                        "name": "web",
+                        "namespace": "delivery-tree-web",
+                        "status": "Synced",
+                        "version": "v1"
+                    },
+                    {
+                        "group": "apps",
+                        "kind": "Deployment",
+                        "name": "web",
+                        "namespace": "delivery-tree-web",
+                        "status": "Synced",
+                        "version": "v1"
+                    }
+                ],
+                "sourceHydrator": {},
+                "sourceType": "Directory",
+                "summary": {
+                    "images": [
+                        "registry.k8s.io/pause:3.10"
+                    ]
+                },
+                "sync": {
+                    "comparedTo": {
+                        "destination": {
+                            "namespace": "delivery-tree-web",
+                            "server": "https://kubernetes.default.svc"
+                        },
+                        "source": {
+                            "path": "examples/delivery-tree/argocd/workloads/web",
+                            "repoURL": "https://github.com/confighub/cub-scout.git",
+                            "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                        }
+                    },
+                    "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5",
+                    "status": "Synced"
+                }
+            }
+        },
+        {
+            "apiVersion": "argoproj.io/v1alpha1",
+            "kind": "Application",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"guestbook\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"guestbook\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"guestbook\",\"repoURL\":\"https://github.com/argoproj/argocd-example-apps.git\",\"targetRevision\":\"HEAD\"},\"syncPolicy\":{\"automated\":{\"prune\":true,\"selfHeal\":true},\"syncOptions\":[\"CreateNamespace=true\"]}}}\n"
+                },
+                "creationTimestamp": "2026-10-10T07:47:51Z",
+                "generation": 10,
+                "name": "guestbook",
+                "namespace": "argocd",
+                "resourceVersion": "1530",
+                "uid": "4410dc82-3386-43d4-bd53-f71f7af510c7"
+            },
+            "spec": {
+                "destination": {
+                    "namespace": "guestbook",
+                    "server": "https://kubernetes.default.svc"
+                },
+                "project": "default",
+                "source": {
+                    "path": "guestbook",
+                    "repoURL": "https://github.com/argoproj/argocd-example-apps.git",
+                    "targetRevision": "HEAD"
+                },
+                "syncPolicy": {
+                    "automated": {
+                        "prune": true,
+                        "selfHeal": true
+                    },
+                    "syncOptions": [
+                        "CreateNamespace=true"
+                    ]
+                }
+            },
+            "status": {
+                "controllerNamespace": "argocd",
+                "health": {
+                    "lastTransitionTime": "2026-10-10T07:48:03Z",
+                    "status": "Healthy"
+                },
+                "history": [
+                    {
+                        "deployStartedAt": "2026-10-10T07:47:52Z",
+                        "deployedAt": "2026-10-10T07:47:52Z",
+                        "id": 0,
+                        "initiatedBy": {
+                            "automated": true
+                        },
+                        "revision": "8088f4c0d970abb09e250248cc97e35623447cb5",
+                        "source": {
+                            "path": "guestbook",
+                            "repoURL": "https://github.com/argoproj/argocd-example-apps.git",
+                            "targetRevision": "HEAD"
+                        }
+                    }
+                ],
+                "operationState": {
+                    "finishedAt": "2026-10-10T07:47:52Z",
+                    "message": "successfully synced (all tasks run)",
+                    "operation": {
+                        "initiatedBy": {
+                            "automated": true
+                        },
+                        "retry": {
+                            "limit": 5
+                        },
+                        "sync": {
+                            "prune": true,
+                            "revision": "8088f4c0d970abb09e250248cc97e35623447cb5",
+                            "source": {
+                                "path": "guestbook",
+                                "repoURL": "https://github.com/argoproj/argocd-example-apps.git",
+                                "targetRevision": "HEAD"
+                            },
+                            "syncOptions": [
+                                "CreateNamespace=true"
+                            ]
+                        }
+                    },
+                    "phase": "Succeeded",
+                    "startedAt": "2026-10-10T07:47:52Z",
+                    "syncResult": {
+                        "resources": [
+                            {
+                                "group": "",
+                                "hookPhase": "Running",
+                                "kind": "Namespace",
+                                "message": "namespace/guestbook created",
+                                "name": "guestbook",
+                                "namespace": "",
+                                "status": "Synced",
+                                "syncPhase": "PreSync",
+                                "version": "v1"
+                            },
+                            {
+                                "group": "",
+                                "hookPhase": "Running",
+                                "kind": "Service",
+                                "message": "service/guestbook-ui created",
+                                "name": "guestbook-ui",
+                                "namespace": "guestbook",
+                                "status": "Synced",
+                                "syncPhase": "Sync",
+                                "version": "v1"
+                            },
+                            {
+                                "group": "apps",
+                                "hookPhase": "Running",
+                                "images": [
+                                    "gcr.io/google-samples/gb-frontend:v5"
+                                ],
+                                "kind": "Deployment",
+                                "message": "deployment.apps/guestbook-ui created",
+                                "name": "guestbook-ui",
+                                "namespace": "guestbook",
+                                "status": "Synced",
+                                "syncPhase": "Sync",
+                                "version": "v1"
+                            }
+                        ],
+                        "revision": "8088f4c0d970abb09e250248cc97e35623447cb5",
+                        "source": {
+                            "path": "guestbook",
+                            "repoURL": "https://github.com/argoproj/argocd-example-apps.git",
+                            "targetRevision": "HEAD"
+                        }
+                    }
+                },
+                "reconciledAt": "2026-10-10T07:47:52Z",
+                "resourceHealthSource": "appTree",
+                "resources": [
+                    {
+                        "kind": "Service",
+                        "name": "guestbook-ui",
+                        "namespace": "guestbook",
+                        "status": "Synced",
+                        "version": "v1"
+                    },
+                    {
+                        "group": "apps",
+                        "kind": "Deployment",
+                        "name": "guestbook-ui",
+                        "namespace": "guestbook",
+                        "status": "Synced",
+                        "version": "v1"
+                    }
+                ],
+                "sourceHydrator": {},
+                "sourceType": "Directory",
+                "summary": {
+                    "images": [
+                        "gcr.io/google-samples/gb-frontend:v5"
+                    ]
+                },
+                "sync": {
+                    "comparedTo": {
+                        "destination": {
+                            "namespace": "guestbook",
+                            "server": "https://kubernetes.default.svc"
+                        },
+                        "source": {
+                            "path": "guestbook",
+                            "repoURL": "https://github.com/argoproj/argocd-example-apps.git",
+                            "targetRevision": "HEAD"
+                        }
+                    },
+                    "revision": "8088f4c0d970abb09e250248cc97e35623447cb5",
+                    "status": "Synced"
+                }
+            }
+        },
+        {
+            "apiVersion": "argoproj.io/v1alpha1",
+            "kind": "Application",
+            "metadata": {
+                "annotations": {
+                    "argocd.argoproj.io/tracking-id": "delivery-tree:argoproj.io/Application:delivery-tree-elsewhere-apps/delivery-tree-elsewhere",
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{\"argocd.argoproj.io/tracking-id\":\"delivery-tree:argoproj.io/Application:delivery-tree-elsewhere-apps/delivery-tree-elsewhere\"},\"name\":\"delivery-tree-elsewhere\",\"namespace\":\"delivery-tree-elsewhere-apps\"},\"spec\":{\"destination\":{\"namespace\":\"delivery-tree-elsewhere\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"examples/delivery-tree/argocd/workloads/jobs\",\"repoURL\":\"https://github.com/confighub/cub-scout.git\",\"targetRevision\":\"b7bda177a33c2010ba635cd3d1a7747d370fd1e5\"},\"syncPolicy\":{\"automated\":{}}}}\n"
+                },
+                "creationTimestamp": "2026-10-10T07:48:06Z",
+                "generation": 1,
+                "name": "delivery-tree-elsewhere",
+                "namespace": "delivery-tree-elsewhere-apps",
+                "resourceVersion": "1559",
+                "uid": "1424b0f2-6115-428c-ad9d-a5bb23a8a7eb"
+            },
+            "spec": {
+                "destination": {
+                    "namespace": "delivery-tree-elsewhere",
+                    "server": "https://kubernetes.default.svc"
+                },
+                "project": "default",
+                "source": {
+                    "path": "examples/delivery-tree/argocd/workloads/jobs",
+                    "repoURL": "https://github.com/confighub/cub-scout.git",
+                    "targetRevision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                },
+                "syncPolicy": {
+                    "automated": {}
+                }
+            }
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}

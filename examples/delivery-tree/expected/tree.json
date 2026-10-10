@@ -1,0 +1,443 @@
+{
+  "context": "kind-gitops-cluster",
+  "root": "Application/delivery-tree",
+  "complete": true,
+  "evidence": "Each deployer's resources are what it reports about itself. They are not checked against the cluster.",
+  "summary": {
+    "roots": 1,
+    "deployers": 8,
+    "resources": 8,
+    "maxDepth": 2,
+    "notFound": 1,
+    "notRead": 0,
+    "notReconciled": 1,
+    "noneReported": 2,
+    "notSupported": 0,
+    "malformed": 0,
+    "shared": 0,
+    "cycles": 0,
+    "depthLimited": 0
+  },
+  "roots": [
+    {
+      "controller": "ArgoCD",
+      "kind": "Application",
+      "namespace": "argocd",
+      "name": "delivery-tree",
+      "object": "found",
+      "policies": [
+        {
+          "name": "auto-sync",
+          "value": "on"
+        },
+        {
+          "name": "self-heal",
+          "value": "on"
+        },
+        {
+          "name": "prune",
+          "value": "on"
+        }
+      ],
+      "options": [
+        "CreateNamespace=true",
+        "ignoreDifferences"
+      ],
+      "state": {
+        "reconciled": true,
+        "sync": "Synced",
+        "health": "Healthy",
+        "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+      },
+      "children": {
+        "status": "reported",
+        "deployers": [
+          {
+            "controller": "ArgoCD",
+            "kind": "Application",
+            "namespace": "argocd",
+            "name": "delivery-tree-broken",
+            "object": "found",
+            "reportedByParent": {
+              "group": "argoproj.io",
+              "version": "v1alpha1",
+              "kind": "Application",
+              "namespace": "argocd",
+              "name": "delivery-tree-broken",
+              "sync": "Synced",
+              "ignoredByParent": [
+                {
+                  "group": "argoproj.io",
+                  "jsonPointers": [
+                    "/spec/syncPolicy"
+                  ],
+                  "kind": "Application"
+                }
+              ]
+            },
+            "policies": [
+              {
+                "name": "auto-sync",
+                "value": "on"
+              },
+              {
+                "name": "self-heal",
+                "value": "off"
+              },
+              {
+                "name": "prune",
+                "value": "off"
+              }
+            ],
+            "state": {
+              "reconciled": true,
+              "sync": "Unknown",
+              "health": "Healthy",
+              "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5",
+              "conditions": [
+                {
+                  "type": "ComparisonError",
+                  "message": "Failed to load target state: failed to generate manifest for source 1 of 1: rpc error: code = Unknown desc = examples/delivery-tree/argocd/no-such-path: app path does not exist"
+                }
+              ]
+            },
+            "children": {
+              "status": "none_reported",
+              "reason": "the Application has no status.resources"
+            }
+          },
+          {
+            "controller": "ArgoCD",
+            "kind": "Application",
+            "namespace": "argocd",
+            "name": "delivery-tree-team-a",
+            "object": "found",
+            "reportedByParent": {
+              "group": "argoproj.io",
+              "version": "v1alpha1",
+              "kind": "Application",
+              "namespace": "argocd",
+              "name": "delivery-tree-team-a",
+              "sync": "Synced",
+              "ignoredByParent": [
+                {
+                  "group": "argoproj.io",
+                  "jsonPointers": [
+                    "/spec/syncPolicy"
+                  ],
+                  "kind": "Application"
+                }
+              ]
+            },
+            "policies": [
+              {
+                "name": "auto-sync",
+                "value": "on"
+              },
+              {
+                "name": "self-heal",
+                "value": "off"
+              },
+              {
+                "name": "prune",
+                "value": "on"
+              }
+            ],
+            "state": {
+              "reconciled": true,
+              "sync": "Synced",
+              "health": "Healthy",
+              "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+            },
+            "children": {
+              "status": "reported",
+              "deployers": [
+                {
+                  "controller": "ArgoCD",
+                  "kind": "Application",
+                  "namespace": "argocd",
+                  "name": "delivery-tree-jobs",
+                  "object": "found",
+                  "reportedByParent": {
+                    "group": "argoproj.io",
+                    "version": "v1alpha1",
+                    "kind": "Application",
+                    "namespace": "argocd",
+                    "name": "delivery-tree-jobs",
+                    "sync": "Synced"
+                  },
+                  "policies": [
+                    {
+                      "name": "auto-sync",
+                      "value": "on"
+                    },
+                    {
+                      "name": "self-heal",
+                      "value": "off"
+                    },
+                    {
+                      "name": "prune",
+                      "value": "off"
+                    }
+                  ],
+                  "options": [
+                    "CreateNamespace=true"
+                  ],
+                  "state": {
+                    "reconciled": true,
+                    "sync": "Synced",
+                    "health": "Healthy",
+                    "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                  },
+                  "children": {
+                    "status": "reported",
+                    "resources": [
+                      {
+                        "version": "v1",
+                        "kind": "ConfigMap",
+                        "namespace": "delivery-tree-jobs",
+                        "name": "nightly-schedule",
+                        "sync": "Synced"
+                      },
+                      {
+                        "version": "v1",
+                        "kind": "ConfigMap",
+                        "namespace": "delivery-tree-jobs",
+                        "name": "weekly-schedule",
+                        "sync": "Synced"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "controller": "ArgoCD",
+                  "kind": "Application",
+                  "namespace": "argocd",
+                  "name": "delivery-tree-web",
+                  "object": "found",
+                  "reportedByParent": {
+                    "group": "argoproj.io",
+                    "version": "v1alpha1",
+                    "kind": "Application",
+                    "namespace": "argocd",
+                    "name": "delivery-tree-web",
+                    "sync": "Synced"
+                  },
+                  "policies": [
+                    {
+                      "name": "auto-sync",
+                      "value": "on"
+                    },
+                    {
+                      "name": "self-heal",
+                      "value": "on"
+                    },
+                    {
+                      "name": "prune",
+                      "value": "on"
+                    }
+                  ],
+                  "options": [
+                    "CreateNamespace=true"
+                  ],
+                  "state": {
+                    "reconciled": true,
+                    "sync": "Synced",
+                    "health": "Healthy",
+                    "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+                  },
+                  "children": {
+                    "status": "reported",
+                    "resources": [
+                      {
+                        "version": "v1",
+                        "kind": "ConfigMap",
+                        "namespace": "delivery-tree-web",
+                        "name": "web-settings",
+                        "sync": "Synced"
+                      },
+                      {
+                        "group": "apps",
+                        "version": "v1",
+                        "kind": "Deployment",
+                        "namespace": "delivery-tree-web",
+                        "name": "web",
+                        "sync": "Synced"
+                      },
+                      {
+                        "version": "v1",
+                        "kind": "Service",
+                        "namespace": "delivery-tree-web",
+                        "name": "web",
+                        "sync": "Synced"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "controller": "ArgoCD",
+            "kind": "Application",
+            "namespace": "argocd",
+            "name": "delivery-tree-team-b",
+            "object": "found",
+            "reportedByParent": {
+              "group": "argoproj.io",
+              "version": "v1alpha1",
+              "kind": "Application",
+              "namespace": "argocd",
+              "name": "delivery-tree-team-b",
+              "sync": "Synced",
+              "ignoredByParent": [
+                {
+                  "group": "argoproj.io",
+                  "jsonPointers": [
+                    "/spec/syncPolicy"
+                  ],
+                  "kind": "Application"
+                }
+              ]
+            },
+            "policies": [
+              {
+                "name": "auto-sync",
+                "value": "off"
+              },
+              {
+                "name": "self-heal",
+                "value": "n/a"
+              },
+              {
+                "name": "prune",
+                "value": "n/a"
+              }
+            ],
+            "state": {
+              "reconciled": true,
+              "sync": "OutOfSync",
+              "health": "Missing",
+              "revision": "b7bda177a33c2010ba635cd3d1a7747d370fd1e5"
+            },
+            "children": {
+              "status": "reported",
+              "deployers": [
+                {
+                  "controller": "ArgoCD",
+                  "kind": "Application",
+                  "namespace": "argocd",
+                  "name": "delivery-tree-api",
+                  "object": "not_found",
+                  "reportedByParent": {
+                    "group": "argoproj.io",
+                    "version": "v1alpha1",
+                    "kind": "Application",
+                    "namespace": "argocd",
+                    "name": "delivery-tree-api",
+                    "sync": "OutOfSync"
+                  },
+                  "children": {
+                    "status": "no_object"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "controller": "ArgoCD",
+            "kind": "Application",
+            "namespace": "delivery-tree-elsewhere-apps",
+            "name": "delivery-tree-elsewhere",
+            "object": "found",
+            "reportedByParent": {
+              "group": "argoproj.io",
+              "version": "v1alpha1",
+              "kind": "Application",
+              "namespace": "delivery-tree-elsewhere-apps",
+              "name": "delivery-tree-elsewhere",
+              "sync": "Synced",
+              "ignoredByParent": [
+                {
+                  "group": "argoproj.io",
+                  "jsonPointers": [
+                    "/spec/syncPolicy"
+                  ],
+                  "kind": "Application"
+                }
+              ]
+            },
+            "policies": [
+              {
+                "name": "auto-sync",
+                "value": "on"
+              },
+              {
+                "name": "self-heal",
+                "value": "off"
+              },
+              {
+                "name": "prune",
+                "value": "off"
+              }
+            ],
+            "state": {
+              "reconciled": false
+            },
+            "children": {
+              "status": "none_reported",
+              "reason": "the Application has no status.resources"
+            }
+          }
+        ],
+        "resources": [
+          {
+            "version": "v1",
+            "kind": "ConfigMap",
+            "namespace": "delivery-tree-platform",
+            "name": "platform-settings",
+            "sync": "Synced"
+          },
+          {
+            "version": "v1",
+            "kind": "Namespace",
+            "name": "delivery-tree-elsewhere-apps",
+            "sync": "Synced"
+          },
+          {
+            "version": "v1",
+            "kind": "Namespace",
+            "name": "delivery-tree-platform",
+            "sync": "Synced"
+          }
+        ]
+      }
+    }
+  ],
+  "reads": [
+    {
+      "controller": "ArgoCD",
+      "kind": "Application",
+      "resource": "applications.argoproj.io/v1alpha1",
+      "status": "read",
+      "count": 8
+    },
+    {
+      "controller": "Flux",
+      "kind": "Kustomization",
+      "resource": "kustomizations.kustomize.toolkit.fluxcd.io/v1",
+      "status": "read",
+      "count": 0
+    },
+    {
+      "controller": "Flux",
+      "kind": "HelmRelease",
+      "resource": "helmreleases.helm.toolkit.fluxcd.io/v2",
+      "status": "read",
+      "count": 0
+    }
+  ],
+  "notes": [
+    "No resource health is reported: Argo CD keeps it in its own tree, not on the Application. A resource with no health shown is not known to be healthy."
+  ]
+}
