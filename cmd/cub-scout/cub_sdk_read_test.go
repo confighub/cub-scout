@@ -330,7 +330,7 @@ func TestEveryListCallSiteIsTakenOrExplained(t *testing.T) {
 	}
 	used := map[string]bool{}
 	taken := map[string]int{}
-	for _, command := range [][2]string{{"unit", "list"}, {"space", "list"}} {
+	for _, command := range [][2]string{{"unit", "list"}, {"space", "list"}, {"worker", "list"}, {"target", "list"}, {"changeset", "list"}, {"link", "list"}} {
 		for _, site := range cubCallSites(t, command[0], command[1]) {
 			explained := false
 			for fragment := range leftToCub {
@@ -350,6 +350,12 @@ func TestEveryListCallSiteIsTakenOrExplained(t *testing.T) {
 	}
 	require.GreaterOrEqual(t, taken["unit list"], 9)
 	require.GreaterOrEqual(t, taken["space list"], 5)
+	// Every worker, target, change set and link list is taken: none is
+	// built with a flag the route does not know.
+	require.GreaterOrEqual(t, taken["worker list"], 6)
+	require.GreaterOrEqual(t, taken["target list"], 5)
+	require.GreaterOrEqual(t, taken["changeset list"], 3)
+	require.GreaterOrEqual(t, taken["link list"], 2)
 
 	// The MCP tool appends a filter when it is given one.
 	tool, ok := newMCPGatewayWithMode(nil, nil, true).tools["confighub_units"]
@@ -1155,5 +1161,50 @@ func TestImportWizardDoesNotSetATargetWhenItCouldNotReadTheUnit(t *testing.T) {
 				require.Empty(t, fakeCubCalls(t, cubLog))
 			}
 		})
+	}
+}
+
+// The lists of one space besides Units: the same shape for each entity, and
+// nothing else.
+func TestSDKListArgsForTheOtherEntities(t *testing.T) {
+	for _, entity := range []string{"worker", "target", "changeset", "link"} {
+		t.Run(entity, func(t *testing.T) {
+			for name, tc := range map[string]struct {
+				args []string
+				want hubread.Filter
+			}{
+				"plain":         {[]string{entity, "list", "--space", "s", "-o", "json"}, hubread.Filter{}},
+				"flags first":   {[]string{entity, "list", "-o", "json", "--quiet", "--space", "s"}, hubread.Filter{}},
+				"a filter":      {[]string{entity, "list", "--space", "s", "--where", "Slug = 'x'", "-o", "json", "--quiet"}, hubread.Filter{Where: "Slug = 'x'"}},
+				"a text search": {[]string{entity, "list", "-o", "json", "--contains", "break-glass", "--space", "s"}, hubread.Filter{Contains: "break-glass"}},
+			} {
+				got, space, filter, ok := sdkListArgs(tc.args)
+				require.True(t, ok, name)
+				require.Equal(t, entity, got)
+				require.Equal(t, "s", space)
+				require.Equal(t, tc.want, filter, name)
+				require.NotNil(t, sdkRead(tc.args))
+				// It is this entity's list, not the unit list.
+				_, _, isUnits := sdkUnitListArgs(tc.args)
+				require.False(t, isUnits)
+			}
+			for name, args := range map[string][]string{
+				"no space":         {entity, "list", "-o", "json"},
+				"every space":      {entity, "list", "-o", "json", "--space", allConfigHubSpaces},
+				"no output format": {entity, "list", "--space", "s"},
+				"a selection":      {entity, "list", "-o", "json", "--space", "s", "--select", "Slug"},
+				"a stored filter":  {entity, "list", "-o", "json", "--space", "s", "--filter", "f"},
+				"a positional":     {entity, "list", "x", "-o", "json", "--space", "s"},
+				"another command":  {entity, "get", "x", "-o", "json", "--space", "s"},
+			} {
+				_, _, _, ok := sdkListArgs(args)
+				require.False(t, ok, name)
+				require.Nil(t, sdkRead(args), name)
+			}
+		})
+	}
+	// An entity this file does not list stays with cub.
+	for _, entity := range []string{"release", "unit-event", "attestation", "trigger", "organization"} {
+		require.Nil(t, sdkRead([]string{entity, "list", "-o", "json", "--space", "s"}), entity)
 	}
 }

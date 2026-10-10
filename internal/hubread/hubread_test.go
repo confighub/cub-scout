@@ -79,6 +79,9 @@ type fakeHub struct {
 	queries []string
 	// statusBody is the body sent with a failing status, when set.
 	statusBody string
+	// otherLists makes every path but the unit and space lists answer with
+	// an empty list rather than 404.
+	otherLists bool
 	// more is the paths whose answers carry a continue token: the server
 	// saying it returned only part of the list.
 	more map[string]bool
@@ -134,6 +137,12 @@ func newFakeHub(t *testing.T) *fakeHub {
 		case "/api/unit":
 			_ = json.NewEncoder(w).Encode(hub.units)
 		default:
+			// Any other list of the API is empty here, unless a test gave
+			// the path a body or a status above.
+			if hub.otherLists && strings.HasPrefix(r.URL.Path, "/api/") {
+				_, _ = w.Write([]byte("[]"))
+				return
+			}
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
@@ -915,4 +924,174 @@ func TestErrorIsTheContextErrorItStandsFor(t *testing.T) {
 	cancel()
 	_, err := hub.reader(Options{}).UnitJSON(ctx, recordedSpace, recordedUnit)
 	require.ErrorIs(t, err, context.Canceled)
+}
+
+// spaceListKinds are the lists of one space the reader makes besides Units:
+// how the reader reads each, how the SDK's own helper does with the options
+// cub passes, and the key under which an entry carries its entity.
+func spaceListKinds(reader *Reader, ctx context.Context) map[string]struct {
+	read   func(space string, filter Filter) ([]byte, error)
+	viaSDK func(where cubapi.Where, contains string) error
+	entity string
+} {
+	type kind = struct {
+		read   func(space string, filter Filter) ([]byte, error)
+		viaSDK func(where cubapi.Where, contains string) error
+		entity string
+	}
+	return map[string]kind{
+		"worker": {
+			func(space string, f Filter) ([]byte, error) { return reader.WorkerListJSON(ctx, space, f) },
+			func(w cubapi.Where, contains string) error {
+				_, err := cubapi.ListBridgeWorkers(ctx, reader.client, w, cubapi.ListOpts{Include: workerListInclude, Contains: contains})
+				return err
+			}, "BridgeWorker"},
+		"target": {
+			func(space string, f Filter) ([]byte, error) { return reader.TargetListJSON(ctx, space, f) },
+			func(w cubapi.Where, contains string) error {
+				_, err := cubapi.ListTargets(ctx, reader.client, w, cubapi.ListOpts{Include: targetListInclude, Contains: contains})
+				return err
+			}, "Target"},
+		"changeset": {
+			func(space string, f Filter) ([]byte, error) { return reader.ChangeSetListJSON(ctx, space, f) },
+			func(w cubapi.Where, contains string) error {
+				_, err := cubapi.ListChangeSets(ctx, reader.client, w, cubapi.ListOpts{Include: changeSetListInclude, Contains: contains})
+				return err
+			}, "ChangeSet"},
+		"link": {
+			func(space string, f Filter) ([]byte, error) { return reader.LinkListJSON(ctx, space, f) },
+			func(w cubapi.Where, contains string) error {
+				_, err := cubapi.ListLinks(ctx, reader.client, w, cubapi.ListOpts{Include: linkListInclude, Contains: contains})
+				return err
+			}, "Link"},
+		"attestation": {
+			func(space string, f Filter) ([]byte, error) { return reader.AttestationListJSON(ctx, space, f) },
+			func(w cubapi.Where, contains string) error {
+				_, err := cubapi.ListAttestations(ctx, reader.client, w, cubapi.ListOpts{Contains: contains})
+				return err
+			}, "Attestation"},
+	}
+}
+
+// #758, batch A: each list asks the server what cub asks. cub calls the SDK's
+// list helper for the entity with the space AND-ed onto the caller's filter,
+// the entity's expansions and the search, so the whole query is compared.
+func TestSpaceListsSendWhatTheSDKListHelpersSend(t *testing.T) {
+	hub, slug, id := hubOfTheConnectedLane(t)
+	hub.otherLists = true
+	reader := hub.reader(Options{})
+	ctx := context.Background()
+	spaceID := uuid.MustParse(id)
+
+	for name, kind := range spaceListKinds(reader, ctx) {
+		t.Run(name, func(t *testing.T) {
+			for _, filter := range []Filter{{}, {Where: "Slug != 'x'"}, {Contains: "a b"}, {Where: " Slug LIKE 'p-%' ", Contains: "p"}} {
+				before := len(hub.requests())
+				require.NoError(t, kind.viaSDK(cubapi.NewWhere(filter.Where).SpaceID(spaceID), filter.Contains))
+				out, err := kind.read(id, filter)
+				require.NoError(t, err)
+				require.Equal(t, "[]\n", string(out))
+				seen := hub.requests()[before:]
+				// The helper's request, the reader's, and then the reader's
+				// check that a space named by ID exists, since the list
+				// came back empty.
+				require.Len(t, seen, 3)
+				require.Equal(t, seen[0].Path, seen[1].Path)
+				require.Equal(t, hub.queries[before], hub.queries[before+1], "%+v", filter)
+				require.Contains(t, seen[1].Where, "SpaceID = '"+id+"'")
+				require.Empty(t, seen[1].Limit, "no limit: the whole list in one request, as cub asks for it")
+				require.Equal(t, "/api/space", seen[2].Path)
+			}
+			// Named by slug, the space is looked up first and not checked again.
+			before := len(hub.requests())
+			_, err := kind.read(slug, Filter{})
+			require.NoError(t, err)
+			require.Len(t, hub.requests()[before:], 2)
+			require.Equal(t, "/api/space", hub.requests()[before].Path)
+		})
+	}
+}
+
+// The rules of a list hold for every kind: one named space, nothing from
+// another space, and nothing broken read as empty.
+func TestSpaceListsKeepToOneSpaceAndRefuseABrokenAnswer(t *testing.T) {
+	hub, slug, id := hubOfTheConnectedLane(t)
+	hub.otherLists = true
+	reader := hub.reader(Options{})
+	ctx := context.Background()
+	const elsewhere = "11111111-2222-4333-8444-555555555555"
+
+	for name, kind := range spaceListKinds(reader, ctx) {
+		t.Run(name, func(t *testing.T) {
+			for _, scope := range []string{"", " ", "*"} {
+				before := len(hub.requests())
+				_, err := kind.read(scope, Filter{})
+				require.Equal(t, KindInvalidScope, KindOf(err), "scope %q", scope)
+				require.Len(t, hub.requests(), before, "a refused scope sends nothing")
+			}
+			_, err := kind.read("no-such-space", Filter{})
+			require.Equal(t, KindNotFound, KindOf(err))
+
+			// Find the path this kind is listed at.
+			before := len(hub.requests())
+			_, err = kind.read(slug, Filter{})
+			require.NoError(t, err)
+			path := hub.requests()[before+1].Path
+			require.NotEqual(t, "/api/space", path)
+			defer delete(hub.raw, path)
+			defer delete(hub.status, path)
+			defer delete(hub.more, path)
+
+			inSpace := `[{"` + kind.entity + `":{"SpaceID":"` + id + `"}}]`
+			hub.raw[path] = inSpace
+			out, err := kind.read(slug, Filter{})
+			require.NoError(t, err)
+			require.Contains(t, string(out), `"SpaceID": "`+id+`"`)
+
+			for what, tc := range map[string]struct {
+				body string
+				want Kind
+				says string
+			}{
+				"an entry from another space": {`[{"` + kind.entity + `":{"SpaceID":"` + elsewhere + `"}}]`, KindMalformed, "from another space"},
+				"an entry with no entity":     {`[{"Space":{}}]`, KindMalformed, "an entry with no " + name},
+				"a null entry":                {`[null]`, KindMalformed, "an entry with no " + name},
+				"an object, not a list":       {`{}`, KindMalformed, ""},
+				"a truncated list":            {`[{"` + kind.entity + `":`, KindMalformed, ""},
+				"a page that is not the API":  {`<html>sign in</html>`, KindMalformed, "no " + name + " list"},
+			} {
+				hub.raw[path] = tc.body
+				out, err := kind.read(slug, Filter{})
+				require.Equal(t, tc.want, KindOf(err), what)
+				require.ErrorContains(t, err, tc.says, what)
+				require.Nil(t, out, "%s: a failed read returns no bytes to parse", what)
+			}
+			// With a filter, the error says the filter may be why.
+			hub.raw[path] = `[{"` + kind.entity + `":{"SpaceID":"` + elsewhere + `"}}]`
+			_, err = kind.read(slug, Filter{Where: "Slug LIKE '%'"})
+			require.ErrorContains(t, err, "the filter may reach beyond the space")
+
+			// Cut short by the server: the part is not the list.
+			hub.raw[path], hub.more[path] = inSpace, true
+			_, err = kind.read(slug, Filter{})
+			require.Equal(t, KindIncomplete, KindOf(err))
+			hub.more[path] = false
+
+			// A filter the server rejects keeps the server's reason.
+			delete(hub.raw, path)
+			hub.status[path], hub.statusBody = http.StatusBadRequest, `{"Message":"unrecognized attribute name `+"`Nope`"+`"}`
+			_, err = kind.read(slug, Filter{Where: "Nope = 1"})
+			require.Equal(t, KindFailed, KindOf(err))
+			require.ErrorContains(t, err, "the server rejected the request (HTTP 400): unrecognized attribute name")
+			hub.status[path], hub.statusBody = http.StatusForbidden, ""
+			_, err = kind.read(slug, Filter{})
+			require.Equal(t, KindForbidden, KindOf(err))
+
+			// A space ID that names no space is not an empty list.
+			delete(hub.status, path)
+			_, err = kind.read(elsewhere, Filter{})
+			require.Equal(t, KindNotFound, KindOf(err))
+			require.ErrorContains(t, err, "no space with ID")
+		})
+	}
 }

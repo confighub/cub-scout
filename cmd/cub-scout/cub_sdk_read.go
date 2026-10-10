@@ -189,12 +189,13 @@ func sdkUnitGetArgs(args []string) (space, unit string, ok bool) {
 // word cub calls the entity. Each is the same request with its own expansions,
 // and cub implements each the same way.
 var sdkSpaceLists = map[string]func(*hubread.Reader, context.Context, string, hubread.Filter) ([]byte, error){
-	"unit":        (*hubread.Reader).UnitListJSON,
-	"worker":      (*hubread.Reader).WorkerListJSON,
-	"target":      (*hubread.Reader).TargetListJSON,
-	"changeset":   (*hubread.Reader).ChangeSetListJSON,
-	"link":        (*hubread.Reader).LinkListJSON,
-	"attestation": (*hubread.Reader).AttestationListJSON,
+	"unit":      (*hubread.Reader).UnitListJSON,
+	"worker":    (*hubread.Reader).WorkerListJSON,
+	"target":    (*hubread.Reader).TargetListJSON,
+	"changeset": (*hubread.Reader).ChangeSetListJSON,
+	"link":      (*hubread.Reader).LinkListJSON,
+	// The attestation list is not here yet: its one caller runs cub itself,
+	// under a byte limit of its own, and moves with the revision reads.
 }
 
 // sdkListArgs recognises `cub <entity> list -o json [--quiet] --space <space>
