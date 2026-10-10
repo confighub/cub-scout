@@ -526,6 +526,11 @@ func spaceList[T any](ctx context.Context, r *Reader, kind, space string, filter
 		query.contains = &contains
 	}
 	answer, err := call(query)
+	if err == nil && answer.response == nil {
+		// The generated client returns a response or an error. Neither is
+		// not an answer, and classify needs one of them.
+		return nil, &Error{Kind: KindMalformed, Op: op, Message: "the client returned neither a response nor an error"}
+	}
 	if failure := classify(ctx, op, err, answer.response); failure != nil {
 		// The server says what is wrong with a filter it rejects, and the
 		// caller wrote the filter, so that reason is passed on.
@@ -600,14 +605,15 @@ func (r *Reader) UnitListJSON(ctx context.Context, space string, filter Filter) 
 }
 
 // WorkerListJSON reads the workers of exactly one space, as
-// `cub worker list --space <space> -o json` prints them, without one field:
-// each worker's Secret.
+// `cub worker list --space <space> -o json` prints them, without each
+// worker's credentials: its Secret and its ClaimToken.
 //
 // The server returns the token a worker authenticates with to anyone who may
-// list the workers, and cub prints it. An observer has no use for it, and
-// what this returns is parsed, logged and recorded, so it is dropped here
-// before anything else sees it. This is the one place the reader's JSON is
-// not cub's.
+// list the workers, and cub prints it; the claim token is what a running
+// worker uses to hold and release its claim. An observer has no use for
+// either, and what this returns is parsed, logged and recorded, so both are
+// dropped here before anything else sees them. This is the one place the
+// reader's JSON is not cub's.
 func (r *Reader) WorkerListJSON(ctx context.Context, space string, filter Filter) ([]byte, error) {
 	return spaceList(ctx, r, "worker", space, filter, workerListInclude,
 		func(q listQuery) (listAnswer[goclientnew.ExtendedBridgeWorker], error) {
@@ -618,7 +624,7 @@ func (r *Reader) WorkerListJSON(ctx context.Context, space string, filter Filter
 			if resp.JSON200 != nil {
 				for i := range *resp.JSON200 {
 					if worker := (*resp.JSON200)[i].BridgeWorker; worker != nil {
-						worker.Secret = ""
+						worker.Secret, worker.ClaimToken = "", nil
 					}
 				}
 			}

@@ -344,6 +344,9 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 			// less that one line.
 			withSecret := len(listedByCub)
 			listedByCub = workerSecretLine.ReplaceAll(listedByCub, nil)
+			if bytes.Contains(listedByCub, []byte(`"ClaimToken"`)) {
+				t.Fatalf("cub's worker list carries a ClaimToken, which the reader drops; the comparison does not allow for it yet, and nothing is kept")
+			}
 			if created["worker"] == "created" && len(listedByCub) == withSecret {
 				t.Logf("cub's worker list carried no Secret line on this server")
 			}
@@ -364,8 +367,8 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 				t.Errorf("%s list through the SDK, space by %s: %v (kind %s)", kind, how, err, hubread.KindOf(err))
 				continue
 			}
-			if bytes.Contains(listedBySDK, []byte(`"Secret"`)) {
-				t.Fatalf("the reader's %s list carries a Secret; it is not kept", kind)
+			if bytes.Contains(listedBySDK, []byte(`"Secret"`)) || bytes.Contains(listedBySDK, []byte(`"ClaimToken"`)) {
+				t.Fatalf("the reader's %s list carries a worker's credential; it is not kept", kind)
 			}
 			if how == "slug" {
 				keep(kind+"-list.sdk.json", listedBySDK)
@@ -381,11 +384,18 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 		if kind != "attestation" {
 			filteredByCub, cubErr := cubStdoutOnly(kind, "list", "--space", space, "-o", "json", "--where", nothing)
 			filteredBySDK, sdkErr := read(space, hubread.Filter{Where: nothing})
-			if (cubErr == nil) != (sdkErr == nil) || (cubErr == nil && !bytes.Equal(filteredByCub, filteredBySDK)) {
-				t.Errorf("%s list with a filter: cub %q (%v), the reader %q (%v)", kind, filteredByCub, cubErr, filteredBySDK, sdkErr)
+			// Lengths, not contents: cub's worker list carries a secret, and
+			// a filter that did not narrow would put it in this message.
+			if cubErr != nil || sdkErr != nil || !bytes.Equal(filteredByCub, filteredBySDK) || strings.TrimSpace(string(filteredBySDK)) != "[]" {
+				t.Errorf("%s list with a filter that matches nothing: cub %d bytes (%v), the reader %d bytes (%v); want an empty list from both",
+					kind, len(filteredByCub), cubErr, len(filteredBySDK), sdkErr)
 			}
 		}
-		// In a space that does not exist, neither route lists anything.
+		// In a space that does not exist the reader lists nothing, and neither
+		// does cub.
+		if listed, err := cubStdoutOnly(kind, "list", "--space", "no-such-space-"+space, "-o", "json"); err == nil {
+			t.Errorf("cub listed the %ss of a space that does not exist: %d bytes", kind, len(listed))
+		}
 		if listed, err := read("no-such-space-"+space, hubread.Filter{}); hubread.KindOf(err) != hubread.KindNotFound || listed != nil {
 			t.Errorf("%s list in a space that does not exist: kind %s, want %s (%v)", kind, hubread.KindOf(err), hubread.KindNotFound, err)
 		}

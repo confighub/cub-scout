@@ -134,13 +134,15 @@ check, and every other ConfigHub read still runs `cub`.
 - **The same rules for every list of a space.** Workers, targets, change
   sets, links and attestations are read as Units are: one named space, every
   entry checked to be in it, and nothing broken read as empty.
-- **A worker's secret is not passed on.** The server returns each worker's
-  `Secret`, the token the worker authenticates with, to anyone who may list
-  workers, and `cub worker list -o json` prints it. Nothing in cub-scout uses
-  it, so the reader drops the field before returning the list. This is the one
-  place its JSON is not `cub`'s: the worker list is `cub`'s with that field
-  gone. By the `cub` route the secret is in the output cub-scout parses, as it
-  always was; no command prints it.
+- **A worker's credentials are not passed on.** The server returns each
+  worker's `Secret`, the token the worker authenticates with, to anyone who
+  may list workers, and `cub worker list -o json` prints it. A worker also has
+  a `ClaimToken` while it holds a claim. Nothing in cub-scout uses either, so
+  the reader drops both fields before returning the list. This is the one
+  place its JSON is not `cub`'s: the worker list is `cub`'s with those fields
+  gone. By the `cub` route they are in the output cub-scout parses, as they
+  always were; no command prints them. The `Secret` was seen on a real server;
+  a `ClaimToken` was not, since the recorded worker was not running.
 - **A rejected filter keeps the server's reason.** For an HTTP 400 the
   server's message is passed on, cut to 300 characters, with control and
   format characters and line separators replaced by spaces so that nothing in
@@ -273,8 +275,8 @@ The reader has dropped the field since, the test removes it before keeping
 anything, and the recordings in
 `test/fixtures/confighub-space-lists-v0812-recorded/` are stored without it.
 
-Each list had one entry, the Target had no worker, the ChangeSet was open and
-the Link was within one space.
+Each list had one entry, the Target had no worker, the worker was not running,
+the ChangeSet was in state `New` and the Link was within one space.
 
 ## Not measured, and not claimed
 

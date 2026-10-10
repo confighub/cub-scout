@@ -1066,6 +1066,14 @@ func TestSpaceListsKeepToOneSpaceAndRefuseABrokenAnswer(t *testing.T) {
 				require.ErrorContains(t, err, tc.says, what)
 				require.Nil(t, out, "%s: a failed read returns no bytes to parse", what)
 			}
+			// A JSON null is how a server writes a list with nothing in it,
+			// and cub prints it as an empty list. So does this; it is the
+			// one answer with no entries that is not an error.
+			hub.raw[path] = `null`
+			out, err = kind.read(slug, Filter{})
+			require.NoError(t, err)
+			require.Equal(t, "[]\n", string(out))
+
 			// With a filter, the error says the filter may be why.
 			hub.raw[path] = `[{"` + kind.entity + `":{"SpaceID":"` + elsewhere + `"}}]`
 			_, err = kind.read(slug, Filter{Where: "Slug LIKE '%'"})
@@ -1161,19 +1169,24 @@ func TestWorkerListDropsTheWorkersSecret(t *testing.T) {
 	recorded := string(spaceListsRecording(t, "worker-list.json"))
 	require.NotContains(t, recorded, "Secret", "the recording was stored without the secret")
 
-	// Put a secret back where the server sends it, as cub printed it.
-	const secret = "ch_not-a-real-worker-secret"
+	// Put a secret back where the server sends it, as cub printed it, and a
+	// claim token, which a worker that is running has.
+	const secret, claim = "ch_not-a-real-worker-secret", "99999999-8888-4777-8666-555555555555"
 	const before = `      "Slug": "parity-worker",`
 	require.Equal(t, 1, strings.Count(recorded, before))
-	served := strings.Replace(recorded, before, `      "Secret": "`+secret+`",`+"\n"+before, 1)
-	var check []struct{ BridgeWorker struct{ Secret string } }
+	served := strings.Replace(recorded, before, `      "Secret": "`+secret+`",`+"\n"+`      "ClaimToken": "`+claim+`",`+"\n"+before, 1)
+	var check []struct {
+		BridgeWorker struct{ Secret, ClaimToken string }
+	}
 	require.NoError(t, json.Unmarshal([]byte(served), &check))
-	require.Equal(t, secret, check[0].BridgeWorker.Secret, "the test's server sends a secret")
+	require.Equal(t, []string{secret, claim}, []string{check[0].BridgeWorker.Secret, check[0].BridgeWorker.ClaimToken}, "the test's server sends both")
 	hub.raw["/api/bridge_worker"] = served
 
 	got, err := hub.reader(Options{}).WorkerListJSON(context.Background(), units[0].Space.Slug, Filter{})
 	require.NoError(t, err)
 	require.NotContains(t, string(got), secret)
 	require.NotContains(t, string(got), "Secret")
+	require.NotContains(t, string(got), claim)
+	require.NotContains(t, string(got), "ClaimToken")
 	require.Equal(t, recorded, string(got), "everything but the secret is what cub printed")
 }

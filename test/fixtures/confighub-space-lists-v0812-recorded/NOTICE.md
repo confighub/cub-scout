@@ -10,7 +10,7 @@ run 38071527126, against the disposable ConfigHub that
 |---|---|---|
 | `worker-list.json` | `cub worker list --space <space> -o json` | One worker, created by the test. **Edited:** one line removed, see below |
 | `target-list.json` | `cub target create`, then `cub target list --space <space> -o json` | One Target, with no worker |
-| `changeset-list.json` | `cub changeset list --space <space> -o json` | One open ChangeSet |
+| `changeset-list.json` | `cub changeset list --space <space> -o json` | One ChangeSet, in state `New` |
 | `link-list.json` | `cub link list --space <space> -o json` | One Link between the test's two Units |
 | `attestation-list.json` | `cub attestation list --space <space> -o json` | One attestation of type `SecurityReview` |
 | `unit-list.json`, `space-list.json` | `cub unit list --space <space> -o json`, `cub space list -o json` | The same space, for the tests that look it up |
@@ -29,9 +29,11 @@ when the run ended. The SDK reader has dropped that field since this recording
 was made, so `worker-list.json` is also what it returns.
 
 The space, the entities and every identifier belong to that deleted instance.
-The test created them through `cub`, as its administrator. No user identity or
-address is in any file.
+The test created them through `cub`, as its administrator. No user name, email
+or address is in any file; the IDs of that instance's users are, where an
+entity records who made it.
 
 What this does not show: any other server version, a hosted server, a Target
-attached to a worker, a closed ChangeSet, a Link across spaces, a list longer
+attached to a worker, a worker that is running (and so holds a claim token), a
+ChangeSet in any other state, a Link across spaces, a list longer
 than one page, or what a credential with fewer rights would be shown.
