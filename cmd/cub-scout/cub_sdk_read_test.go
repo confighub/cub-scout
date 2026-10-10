@@ -942,9 +942,11 @@ func TestViewsListFailureWordingFollowsTheRoute(t *testing.T) {
 	_, err = listUnitSlugsForFilter(context.Background(), "Slug LIKE 'a-%'", recordedSpace)
 	require.True(t, strings.HasPrefix(err.Error(), "ConfigHub unit list: "), err.Error())
 
-	// Across every space the read stays with cub, and so does the wording.
+	// Across every space, asked for by name, the read takes the same route
+	// and is worded the same way.
 	_, err = listUnitsForFilter(context.Background(), "Slug LIKE 'a-%'", allConfigHubSpaces)
-	require.True(t, strings.HasPrefix(err.Error(), "cub unit list: "), err.Error())
+	require.True(t, strings.HasPrefix(err.Error(), "ConfigHub unit list: "), err.Error())
+	require.Equal(t, hubread.KindForbidden, hubread.KindOf(err))
 	t.Setenv(configHubReaderEnv, "cub")
 	_, err = listUnitSlugsForFilter(context.Background(), "Slug LIKE 'a-%'", recordedSpace)
 	require.True(t, strings.HasPrefix(err.Error(), "cub unit list: "), err.Error())

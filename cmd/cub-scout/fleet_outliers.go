@@ -103,8 +103,12 @@ func runFleetOutliers(cmd *cobra.Command, args []string) error {
 	units, err := loadFleetOutlierUnitsFn(space.Slug)
 	if err != nil {
 		if errors.Is(err, errFleetOutliersNotConnected) {
-			// The gate's reason says what would fix it.
-			return err
+			// The gate's own reason says what would fix it; without one,
+			// logging in is the usual answer.
+			if errors.Is(err, errConfigHubUnavailable) {
+				return err
+			}
+			return fmt.Errorf("%w. Run: cub auth login", err)
 		}
 		return fmt.Errorf("fleet outliers could not read units in ConfigHub space %s: %w", space.Slug, err)
 	}

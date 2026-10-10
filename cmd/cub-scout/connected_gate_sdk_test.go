@@ -170,3 +170,57 @@ func TestTheGateByTheCubRouteAndByNoRoute(t *testing.T) {
 	require.Len(t, fakeCubCalls(t, cubLog), 1)
 	require.Empty(t, member.seen)
 }
+
+// #863: the three commands that read ConfigHub without asking now ask. With
+// the gate refusing, none of them reads, and each says why or carries on
+// without ConfigHub as it is documented to.
+func TestTheUngatedCommandsAskTheGate(t *testing.T) {
+	cubLog := onlyFakeCub(t, "0")
+	refusal := errors.New("reads are off for this test")
+	stubConnectedGate(t, refusal)
+	old := sdkReader
+	t.Cleanup(func() { sdkReader = old })
+	resolved := 0
+	sdkReader = func(context.Context) (*hubread.Reader, error) {
+		resolved++
+		return nil, errors.New("the gate should have refused first")
+	}
+	t.Setenv(configHubReaderEnv, "sdk")
+
+	err := runMapFleet(nil, nil)
+	require.ErrorIs(t, err, refusal)
+	require.ErrorIs(t, err, errConfigHubUnavailable)
+	require.ErrorContains(t, err, "map fleet needs ConfigHub")
+
+	_, err = loadFleetOutlierUnits("space")
+	require.ErrorIs(t, err, errFleetOutliersNotConnected)
+	require.ErrorIs(t, err, refusal, "the gate's reason is kept")
+
+	// import --json: the proposal stands as it is, with no lookup.
+	looked := 0
+	prevLookup := listUnitSlugsForSpace
+	t.Cleanup(func() { listUnitSlugsForSpace = prevLookup })
+	listUnitSlugsForSpace = func(string) (map[string]bool, error) { looked++; return map[string]bool{"api": true}, nil }
+	proposal := &FullProposal{App: "team", Units: []UnitProposal{{Slug: "api", Workloads: []string{"prod/api"}}}}
+	workloads := []WorkloadInfo{{Namespace: "prod", Name: "api"}}
+	require.Equal(t, workloads, resolveConnectedWorkloadsFromProposal(proposal, workloads))
+	require.Zero(t, looked)
+
+	require.Zero(t, resolved, "no credential is looked for behind a refused gate")
+	require.Empty(t, fakeCubCalls(t, cubLog))
+}
+
+// A link list that could not be read leaves the units with no dependencies.
+// That is not "nothing depends on this", and impact does not say so.
+func TestAnUnreadLinkListIsNotNoDependents(t *testing.T) {
+	cache := &cubUnitCache{space: "team", units: map[string]*cubUnitInfo{"api": {Slug: "api"}}, linksUnread: "HTTP 403"}
+	_, err := buildImpactResult(cache, "api")
+	require.ErrorContains(t, err, "could not be read")
+	require.ErrorContains(t, err, "what depends on a unit is unknown")
+	require.ErrorContains(t, err, "HTTP 403")
+
+	cache.linksUnread = ""
+	result, err := buildImpactResult(cache, "api")
+	require.NoError(t, err)
+	require.Empty(t, result.Dependents)
+}
