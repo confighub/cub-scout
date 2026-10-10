@@ -23,9 +23,20 @@ import (
 // this client's version, as cub's own version is cub's.
 const sdkCoreModule = "github.com/confighub/sdk/core"
 
-// sdkCoreVersion is the version of the SDK linked into this binary, or ""
-// when the build does not record it. It is a variable for tests.
-var sdkCoreVersion = func() string {
+// SDKCoreVersion is the version of sdkCoreModule in go.mod. It is written
+// here because not every build records its modules (a test binary on the Go
+// that CI uses does not), and the version rule of CheckSession must not
+// depend on which it is. A test holds it to go.mod, and to the build's own
+// record when there is one.
+const SDKCoreVersion = "v0.8.12"
+
+// sdkCoreVersion is the SDK version CheckSession compares with the server's.
+// It is a variable for tests.
+var sdkCoreVersion = func() string { return SDKCoreVersion }
+
+// builtSDKCoreVersion is the SDK version this binary's build recorded, or ""
+// when it recorded none.
+func builtSDKCoreVersion() string {
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
 		return ""

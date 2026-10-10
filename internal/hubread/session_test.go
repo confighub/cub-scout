@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"regexp"
 	"testing"
 	"time"
 
@@ -180,13 +183,17 @@ func TestCheckSessionRefusesAnSDKOlderThanTheServer(t *testing.T) {
 	}
 }
 
-// The version this binary reports for the SDK is the one in go.mod.
-func TestTheSDKVersionIsReadFromTheBuild(t *testing.T) {
-	version := sdkCoreVersion()
-	if version == "" {
-		t.Skip("this test binary records no module versions")
+// The SDK version the session check compares with the server's is the one in
+// go.mod, and the one the build recorded when it recorded one. Bumping the
+// SDK without bumping the constant fails here.
+func TestTheSDKVersionIsTheOneInGoMod(t *testing.T) {
+	gomod, err := os.ReadFile(filepath.Join("..", "..", "go.mod"))
+	require.NoError(t, err)
+	require.Regexp(t, `(?m)^\s*`+regexp.QuoteMeta(sdkCoreModule)+` `+regexp.QuoteMeta(SDKCoreVersion)+`\s*$`, string(gomod))
+	require.Equal(t, SDKCoreVersion, sdkCoreVersion())
+	if built := builtSDKCoreVersion(); built != "" {
+		require.Equal(t, SDKCoreVersion, built, "the build links another SDK version than the one the session check reports")
 	}
-	major, minor, ok := majorMinor(version)
-	require.True(t, ok, version)
-	require.GreaterOrEqual(t, major*1000+minor, 8)
+	_, _, ok := majorMinor(SDKCoreVersion)
+	require.True(t, ok)
 }

@@ -75,8 +75,17 @@ func TestSDKReaderMatchesCubOnTheSessionAndAcrossSpaces(t *testing.T) {
 	if session.ServerVersion == "" || !strings.Contains(string(versionOut), session.ServerVersion) {
 		t.Errorf("the reader read server version %q, which `cub version` does not report: %s", session.ServerVersion, versionOut)
 	}
-	if session.SDKVersion == "" {
-		t.Errorf("this test binary records no SDK version, so the version rule was not exercised")
+	// The binary that ships says which SDK it reads ConfigHub with, and it
+	// is the one the session check just compared with this server.
+	versionPrinted, err := exec.Command(getCubAgentPath(), "version").CombinedOutput()
+	if err != nil {
+		t.Fatalf("cub-scout version: %v: %s", err, versionPrinted)
+	}
+	if session.SDKVersion == "" || !strings.Contains(string(versionPrinted), "ConfigHub SDK "+session.SDKVersion) {
+		t.Errorf("the session check compared SDK %q with the server, and `cub-scout version` printed: %s", session.SDKVersion, versionPrinted)
+	}
+	if session.ClientAhead {
+		t.Errorf("the SDK (%s) is reported ahead of the server (%s), which was installed at the same version", session.SDKVersion, session.ServerVersion)
 	}
 
 	// The local context: what cub prints for it, from the same files. It
