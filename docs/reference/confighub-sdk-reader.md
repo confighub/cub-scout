@@ -7,8 +7,8 @@ client instead ([#758](https://github.com/confighub/cub-scout/issues/758)),
 with no `cub` process for the read. This page records what that route covers,
 what it guarantees and what was measured.
 
-**Status: the default for the reads it covers. Unreleased.** To read through
-`cub` instead, as every release so far has, set
+**Status: the default for the reads it covers, since v2.14.0.** To read through
+`cub` instead, as every release before it did, set
 `CUB_SCOUT_CONFIGHUB_READER=cub`. That is the way back if the two ever
 disagree, and a failed read says so when it could help.
 
