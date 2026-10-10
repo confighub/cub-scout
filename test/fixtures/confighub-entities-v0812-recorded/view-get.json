@@ -1,0 +1,68 @@
+{
+  "Filter": {
+    "CreatedAt": "2026-10-10T19:27:45.651319Z",
+    "DisplayName": "entity-filter",
+    "EntityType": "Filter",
+    "FilterID": "12edbf73-90f2-485f-a357-95222720737b",
+    "From": "Unit",
+    "Hash": "c6328c2a2c8104b4af1141b78874a1662e73b7271ee822ad90e202465c96d527\n",
+    "OrganizationID": "6f0a2785-2e49-4292-bd13-fe79c9df0c46",
+    "Permissions": {
+      "Manage": {
+        "UserIDs": {
+          "e20d817b-d9d7-46a6-8e11-939709fe4a1d": true
+        }
+      }
+    },
+    "Slug": "entity-filter",
+    "SpaceID": "5483798c-6922-4c11-91a8-f51c91f1f7a5",
+    "SpaceSlug": "scout-sdk-entities-1791660463742220759",
+    "UpdatedAt": "2026-10-10T19:27:45.65132Z",
+    "Where": "Slug LIKE 'entity-%'"
+  },
+  "Space": {
+    "CreatedAt": "2026-10-10T19:27:43.821408Z",
+    "DisplayName": "scout-sdk-entities-1791660463742220759",
+    "EntityType": "Space",
+    "OrganizationID": "6f0a2785-2e49-4292-bd13-fe79c9df0c46",
+    "Permissions": {
+      "Manage": {
+        "UserIDs": {
+          "e20d817b-d9d7-46a6-8e11-939709fe4a1d": true
+        }
+      },
+      "ManageChildren": {
+        "UserIDs": {
+          "e20d817b-d9d7-46a6-8e11-939709fe4a1d": true
+        }
+      }
+    },
+    "Slug": "scout-sdk-entities-1791660463742220759",
+    "SpaceID": "5483798c-6922-4c11-91a8-f51c91f1f7a5",
+    "UpdatedAt": "2026-10-10T19:27:43.821408Z"
+  },
+  "View": {
+    "Columns": [
+      {
+        "Name": "Unit.Slug"
+      }
+    ],
+    "CreatedAt": "2026-10-10T19:27:45.740835Z",
+    "DisplayName": "entity-view",
+    "EntityType": "View",
+    "FilterID": "12edbf73-90f2-485f-a357-95222720737b",
+    "OrganizationID": "6f0a2785-2e49-4292-bd13-fe79c9df0c46",
+    "Permissions": {
+      "Manage": {
+        "UserIDs": {
+          "e20d817b-d9d7-46a6-8e11-939709fe4a1d": true
+        }
+      }
+    },
+    "Slug": "entity-view",
+    "SpaceID": "5483798c-6922-4c11-91a8-f51c91f1f7a5",
+    "SpaceSlug": "scout-sdk-entities-1791660463742220759",
+    "UpdatedAt": "2026-10-10T19:27:45.740835Z",
+    "ViewID": "5b0b5d52-0622-436b-906e-b7f85f80466c"
+  }
+}

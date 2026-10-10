@@ -343,6 +343,38 @@ fails if that second read fails. The reader does not make that read, so it
 can answer where `cub` would not. The recordings are in
 `test/fixtures/confighub-release-lists-v0812-recorded/`.
 
+## One Unit's data, its revisions, a View, a change order (2026-10-10, CI run 38078870310)
+
+`TestSDKReaderMatchesCubOnEntitiesAndData` creates a Unit, uploads a second
+version of it, and creates a filter, a View and a change order, through `cub`,
+on ConfigHub v0.8.12. Every row is read from the run's artifact except the
+last, which is an assertion of the test, which passed.
+
+| Checked on ConfigHub v0.8.12 | Result |
+|---|---|
+| The server let the test create | the View and the change order |
+| `unit data`, reader against `cub`, space by slug and by ID | identical, 99 bytes: the file uploaded last |
+| The Unit's `DataHash` | the SHA-256 of those bytes, which is what the reader's check rests on |
+| `revision get` for revisions 1, 2 and 3 | identical (2610, 3306 and 3219 bytes) |
+| `revision data` for revisions 2 and 3 | identical; each has the hash its revision reports, and revision 2 is the first upload |
+| `revision data` for revision 1, which the Unit was created with | no data: `cub` fails and the reader returns `not_found` |
+| `changeorder get` by slug | identical, 3194 bytes |
+| `view get` by ID, with no space, with its space by slug and by ID | identical, 2046 bytes |
+| A Unit, a revision, a change order and a View that do not exist; a space that does not exist | `not_found` from the reader, a failure from `cub` |
+
+The older recordings of these reads, made with `cub` v0.8.3, are not equal
+byte for byte to what this SDK prints for the same objects: the newer types
+have a `ReleaseTagID` on a change order, and a UUID field is printed even
+when it is zero. Tests on those compare every value `cub` printed and allow
+only that field to be added. The recordings from this run are compared
+exactly, and are kept in `test/fixtures/confighub-entities-v0812-recorded/`.
+
+Not shown: a revision made by a function, a merge or a change order; a change
+order with a workflow or promotions; a View with expression or data-path
+columns; data that is large or is not Kubernetes YAML; the attestation
+evidence reads end to end on a real server (the revision reads they make are
+the ones above, and the attestation list is the one recorded earlier).
+
 ## Not measured, and not claimed
 
 - **Two server versions, one kind of Unit.** v0.8.3 and v0.8.12, both

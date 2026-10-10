@@ -129,7 +129,8 @@ func (r *Reader) revision(ctx context.Context, op, space, unit string, number in
 		// The endpoint is the Unit's own. A revision of anything else
 		// under it is not an answer to trust in part.
 		if entry.Revision.UnitID != found.Unit.UnitID || entry.Revision.SpaceID != found.Unit.SpaceID {
-			return nil, nil, &Error{Kind: KindMalformed, Op: op, Message: fmt.Sprintf("the server returned a revision of another unit for unit %q in space %q", unit, space)}
+			return nil, nil, &Error{Kind: KindMalformed, Op: op, BeyondScope: true,
+				Message: fmt.Sprintf("the server returned a revision of another unit for unit %q in space %q", unit, space)}
 		}
 		matches = append(matches, entry)
 	}
