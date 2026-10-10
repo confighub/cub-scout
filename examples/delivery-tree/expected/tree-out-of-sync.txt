@@ -1,0 +1,19 @@
+DELIVERY TREE  Application/delivery-tree  (context kind-gitops-cluster)
+1 root, 8 deployers, 8 resources reported; showing 3 deployers and 0 resources
+Each deployer's resources are what it reports about itself. They are not checked against the cluster.
+  ! 1 reported but not found in the cluster
+  ! 1 with no status: not reconciled
+  ! 2 report nothing about what they applied
+
+Application argocd/delivery-tree  ·  Synced / Healthy  ·  auto-sync on, self-heal on, prune on
+└─ Application argocd/delivery-tree-team-b  ·  OutOfSync / Missing  ·  auto-sync off, self-heal n/a, prune n/a
+      ! parent ignores differences at /spec/syncPolicy
+   └─ Application argocd/delivery-tree-api
+         ! not found in the cluster
+         ! its parent reports it OutOfSync
+
+Note: No resource health is reported: Argo CD keeps it in its own tree, not on the Application. A resource with no health shown is not known to be healthy.
+Reads:
+  Argo CD Application: read (8)
+  Flux Kustomization: read (0)
+  Flux HelmRelease: read (0)

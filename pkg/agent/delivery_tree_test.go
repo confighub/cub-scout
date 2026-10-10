@@ -5,6 +5,9 @@ package agent
 
 import (
 	"context"
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -382,4 +385,136 @@ func TestReportedByDeployerReadsOnlyWhatIsThere(t *testing.T) {
 			require.Nil(t, entries)
 		})
 	}
+}
+
+// recordedDeliveryTree is the example app-of-apps as a real Argo CD v3.5.3
+// left it (see the fixture's NOTICE).
+func recordedDeliveryTree(t *testing.T) []*unstructured.Unstructured {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join("..", "..", "test", "fixtures", "delivery-tree-argocd-v353-recorded", "applications.json"))
+	require.NoError(t, err)
+	var list struct {
+		Items []map[string]interface{} `json:"items"`
+	}
+	require.NoError(t, json.Unmarshal(data, &list))
+	require.Len(t, list.Items, 8)
+	objects := make([]*unstructured.Unstructured, len(list.Items))
+	for i := range list.Items {
+		objects[i] = &unstructured.Unstructured{Object: list.Items[i]}
+	}
+	return objects
+}
+
+// #855: the tree of a real app-of-apps, from what a real Argo CD reports.
+func TestDeliveryTreeOfTheRecordedAppOfApps(t *testing.T) {
+	recorded := recordedDeliveryTree(t)
+	objects := make([]runtime.Object, len(recorded))
+	byName := map[string]*unstructured.Unstructured{}
+	for i, object := range recorded {
+		objects[i] = object
+		byName[object.GetNamespace()+"/"+object.GetName()] = object
+	}
+	tree, err := CollectDeliveryTree(context.Background(), deliveryClient(objects...), DeliveryTreeOptions{})
+	require.NoError(t, err)
+
+	// Two roots: the example's, and the lane's own guestbook. Every other
+	// Application is reported by one above it.
+	require.Equal(t, []string{"argocd/delivery-tree", "argocd/guestbook"}, treeNames(tree.Roots))
+	require.Equal(t, DeliveryTreeSummary{
+		Roots: 2, Deployers: 9, Resources: 10, MaxDepth: 2, NotFound: 1, NotReconciled: 1, NoneReported: 2,
+	}, tree.Summary)
+
+	root := tree.Roots[0]
+	require.Equal(t, "Synced", root.State.Sync)
+	require.Equal(t, "Healthy", root.State.Health)
+	require.Equal(t, "b7bda177a33c2010ba635cd3d1a7747d370fd1e5", root.State.Revision)
+	require.Equal(t, []DeliveryPolicyValue{{"auto-sync", "on"}, {"self-heal", "on"}, {"prune", "on"}}, root.Policies)
+	require.Equal(t, []string{"CreateNamespace=true", "ignoreDifferences"}, root.Options)
+	require.Equal(t, []string{
+		"argocd/delivery-tree-broken", "argocd/delivery-tree-team-a", "argocd/delivery-tree-team-b",
+		"delivery-tree-elsewhere-apps/delivery-tree-elsewhere",
+	}, treeNames(root.Children.Deployers))
+	require.Equal(t, []DeliveryReported{
+		{Version: "v1", Kind: "ConfigMap", Namespace: "delivery-tree-platform", Name: "platform-settings", Sync: "Synced"},
+		{Version: "v1", Kind: "Namespace", Name: "delivery-tree-elsewhere-apps", Sync: "Synced"},
+		{Version: "v1", Kind: "Namespace", Name: "delivery-tree-platform", Sync: "Synced"},
+	}, root.Children.Resources)
+	broken, teamA, teamB, elsewhere := root.Children.Deployers[0], root.Children.Deployers[1], root.Children.Deployers[2], root.Children.Deployers[3]
+
+	// The root's ignore rule names Applications, so it is on each of its
+	// child Applications and on none of its other resources.
+	rule := []interface{}{map[string]interface{}{"group": "argoproj.io", "kind": "Application", "jsonPointers": []interface{}{"/spec/syncPolicy"}}}
+	for _, child := range root.Children.Deployers {
+		require.Equal(t, rule, child.ReportedByParent.IgnoredByParent, child.Name)
+		require.Equal(t, "Synced", child.ReportedByParent.Sync, "the root applied the child's manifest, whatever the child then did")
+	}
+
+	// Its path does not exist: it could not be compared, so it says nothing
+	// about what it applied. That is not "nothing under it".
+	require.Equal(t, "Unknown", broken.State.Sync)
+	require.Len(t, broken.State.Conditions, 1)
+	require.Equal(t, "ComparisonError", broken.State.Conditions[0].Type)
+	require.Contains(t, broken.State.Conditions[0].Message, "app path does not exist")
+	require.Equal(t, DeliveryChildrenNoneReported, broken.Children.Status)
+
+	require.Equal(t, []DeliveryPolicyValue{{"auto-sync", "on"}, {"self-heal", "off"}, {"prune", "on"}}, teamA.Policies)
+	require.Equal(t, []string{"argocd/delivery-tree-jobs", "argocd/delivery-tree-web"}, treeNames(teamA.Children.Deployers))
+	require.Empty(t, teamA.Children.Resources)
+	jobs, web := teamA.Children.Deployers[0], teamA.Children.Deployers[1]
+	require.Nil(t, jobs.ReportedByParent.IgnoredByParent, "team-a has no ignore rules; the root's do not reach its grandchildren")
+	require.Equal(t, []DeliveryPolicyValue{{"auto-sync", "on"}, {"self-heal", "off"}, {"prune", "off"}}, jobs.Policies)
+	require.Equal(t, []DeliveryReported{
+		{Version: "v1", Kind: "ConfigMap", Namespace: "delivery-tree-jobs", Name: "nightly-schedule", Sync: "Synced"},
+		{Version: "v1", Kind: "ConfigMap", Namespace: "delivery-tree-jobs", Name: "weekly-schedule", Sync: "Synced"},
+	}, jobs.Children.Resources)
+	require.Equal(t, []DeliveryReported{
+		{Version: "v1", Kind: "ConfigMap", Namespace: "delivery-tree-web", Name: "web-settings", Sync: "Synced"},
+		{Group: "apps", Version: "v1", Kind: "Deployment", Namespace: "delivery-tree-web", Name: "web", Sync: "Synced"},
+		{Version: "v1", Kind: "Service", Namespace: "delivery-tree-web", Name: "web", Sync: "Synced"},
+	}, web.Children.Resources)
+
+	// team-b has no automated sync and was never synced. It still reports
+	// the Application it would create, which is not in the cluster: an entry
+	// is what the deployer wants, not only what exists.
+	require.Equal(t, "OutOfSync", teamB.State.Sync)
+	require.Equal(t, "Missing", teamB.State.Health)
+	require.Equal(t, []DeliveryPolicyValue{{"auto-sync", "off"}, {"self-heal", "n/a"}, {"prune", "n/a"}}, teamB.Policies)
+	require.Equal(t, []string{"argocd/delivery-tree-api"}, treeNames(teamB.Children.Deployers))
+	api := teamB.Children.Deployers[0]
+	require.Equal(t, DeliveryObjectNotFound, api.Object)
+	require.Equal(t, "OutOfSync", api.ReportedByParent.Sync)
+	require.Nil(t, api.State)
+	require.Equal(t, DeliveryChildrenNoObject, api.Children.Status)
+
+	// In a namespace this Argo CD does not read: the object is there with
+	// no status. Not reconciled, and it reports nothing.
+	require.Equal(t, DeliveryObjectFound, elsewhere.Object)
+	require.Equal(t, &DeliveryDeployerState{Reconciled: false}, elsewhere.State)
+	require.Equal(t, DeliveryChildrenNoneReported, elsewhere.Children.Status)
+
+	// No resource carries a health: Argo CD 3 does not put one on the
+	// Application. Absent is "not reported".
+	var walk func(nodes []DeliveryTreeNode)
+	walk = func(nodes []DeliveryTreeNode) {
+		for _, node := range nodes {
+			for _, resource := range node.Children.Resources {
+				require.Empty(t, resource.Health, resource.Name)
+			}
+			// Every deployer in the tree has the settings gitops settings
+			// reports for it: the two commands read one model.
+			if object := byName[node.Namespace+"/"+node.Name]; object != nil {
+				policies, options := deliveryPolicies(ArgoApplicationDeliverySettings(object))
+				require.Equal(t, policies, node.Policies, node.Name)
+				require.Equal(t, options, node.Options, node.Name)
+			}
+			walk(node.Children.Deployers)
+		}
+	}
+	walk(tree.Roots)
+
+	// From the middle, and limited in depth.
+	tree, err = CollectDeliveryTree(context.Background(), deliveryClient(objects...), DeliveryTreeOptions{
+		Root: &DeliveryRef{Kind: "Application", Name: "delivery-tree"}, Depth: 1})
+	require.NoError(t, err)
+	require.Equal(t, DeliveryTreeSummary{Roots: 1, Deployers: 5, Resources: 3, MaxDepth: 1, NotReconciled: 1, NoneReported: 2, DepthLimited: 2}, tree.Summary)
 }

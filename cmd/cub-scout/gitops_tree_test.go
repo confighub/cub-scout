@@ -266,6 +266,10 @@ func TestGitOpsTreeFiltersKeepTheDeployersAbove(t *testing.T) {
 		"a deployer":     {deliveryTreeParams{Kinds: []string{"Kustomization"}}, []string{"apps"}, deliveryTreeShown{1, 0}},
 		"its own health": {deliveryTreeParams{Healths: []string{"Degraded"}}, []string{"platform", ">team-a"}, deliveryTreeShown{2, 0}},
 		"no such health": {deliveryTreeParams{Healths: []string{"Missing"}}, nil, deliveryTreeShown{}},
+		// A child that is not in the cluster has no state of its own. It is
+		// matched on what its parent reports of it.
+		"a missing child, by its parent's report": {deliveryTreeParams{Syncs: []string{"Synced"}, Kinds: []string{"Application"}},
+			[]string{"platform", ">gone"}, deliveryTreeShown{2, 0}},
 	} {
 		t.Run(name, func(t *testing.T) {
 			report := treeReport(t, treeFixtureClient(), tc.params)
