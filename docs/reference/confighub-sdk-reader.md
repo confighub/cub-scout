@@ -27,8 +27,10 @@ These commands, wherever cub-scout runs them: `cub unit get` for one Unit
 named by slug in one named space; `cub unit list`, `cub worker list`,
 `cub target list`, `cub changeset list`, `cub link list`, `cub resource list`,
 `cub release list` and `cub unit-event list` for one named space, with or
-without a `--where` or `--contains` filter; the unit events of one Unit; and
-`cub space list`.
+without a `--where` or `--contains` filter; the unit events of one Unit;
+`cub space list`; and the reads of one thing: `cub unit data`,
+`cub revision get`, `cub revision data`, `cub changeorder get` by slug and
+`cub view get` by ID.
 
 ```bash
 # The default: these reads go through the SDK
@@ -63,6 +65,10 @@ change.
 | `unit list -o json --space <space>`, with or without `--quiet`, `--where <expression>` and `--contains <text>` | A unit list with a stored filter, a data or trigger filter, a selection, a limit, an ordering, a view or hidden entities; an empty `--where` or `--contains`, or either given twice |
 | `worker list`, `target list`, `changeset list` and `link list`, each `-o json --space <space>` with or without `--quiet`, `--where <expression>` and `--contains <text>` | Any of them across every space, with a positional, or with any of the options a unit list is left to `cub` for. `attestation list`, which cub-scout runs under a byte limit of its own |
 | `resource list`, `release list` and `unit-event list`, in the same shape; and `unit-event list <unit>` for the events of one Unit named by slug | Any of them across every space (`--space '*'`), which the MCP tools allow when asked; a resource list with a selection, a stored filter, a view or raw data; the events of a Unit named by ID |
+| `unit data <unit> --space <space>`: the Unit's configuration, as bytes | `unit data` of many Units (`--where`), to a file, or of a Unit named by ID |
+| `revision get <unit> <number> --space <space> -o json` and `revision data <unit> <number> --space <space>`, the number written in plain digits | A revision named relative to the head (`-1`), by a name such as `HeadRevisionNum`, or with a selection |
+| `changeorder get <slug> -o json --space <space>` | A change order named by ID; `--container-images`, which adds a second request |
+| `view get <id> --space <space> -o json`, the View named by its canonical ID, in a named space or in every space (`*`) | A View named by slug |
 | `space list -o json`, with or without `--quiet` | A space list with any filter or any of the same, a component, a `--space` or a positional; and a list with no `-o json`, which prints `cub`'s table |
 | | Any other output format, any other flag, `--`, and `-o=json` or `--space=x` spelt with `=` |
 
@@ -89,6 +95,7 @@ itself.
 | The lists: `map` (connected hierarchy, fleet, and joining cluster resources to their Units), `fleet outliers`, import's check for existing units and its link to the space, MCP `confighub_units` with or without `where` and `contains`, and the `views` lookups when they name one space | |
 | The worker list: `status`, the connected hierarchy in `map`, and the local cluster view. The target list: import, the import wizard and the hierarchy. The change set list: `history`, `audit` and MCP `confighub_changesets`. The link list: `compare bindings` and `map` | A worker's `Secret` is not in what the SDK route returns; see below |
 | The release and unit-event lists: the ConfigHub part of `gitops status` and of `doctor --with-confighub`, MCP `confighub_releases` and `confighub_unit_events`. The resource list: MCP `confighub_resources` | Releases come from the space's own endpoint and are sorted as `cub` sorts them, highest number first. Unit events are sorted newest first, as `cub` does |
+| `unit data`: the intended configuration in `compare` (DRY/WET snapshots and `compare resource`), the import wizard's checks and `import argocd`. `revision get`, `revision data` and the attestation list: attestation evidence in `trace`, `explain` and receipts. `changeorder get`: `history changeorder` and MCP `confighub_changeorder_get`. `view get`: `views resolve`, `views project` and `compare three-way --view` | Attestation evidence reads at most 1 MiB by either route; by the SDK route the limit is applied to what was read, after it was read |
 | Lists that stay with `cub`: `views` across every space, GitOps delivery evidence (a selection), `app list` and import's summary (they print `cub`'s own output) | |
 
 A failed SDK read is the answer, reported with its reason. It does not fall
@@ -154,6 +161,22 @@ check, and every other ConfigHub read still runs `cub`.
   gone. By the `cub` route they are in the output cub-scout parses, as they
   always were; no command prints them. The `Secret` was seen on a real server;
   a `ClaimToken` was not, since the recorded worker was not running.
+- **One thing is found by a list that must hold exactly one match.** A
+  revision, a change order and a View are found the way `cub` finds them: a
+  list filtered to the name, number or ID, from which exactly one entry must
+  be the one asked for. None is `not_found`; two are `ambiguous`; a revision
+  of another Unit under the Unit's own endpoint fails the read.
+- **Configuration data is held to the hash ConfigHub reports for it.** A
+  Unit and a revision each report the SHA-256 of their data. The data is
+  downloaded from the entity's own endpoint and returned only when its hash
+  is the one reported. A page from something in between, a truncated body,
+  and a Unit that changed between the lookup and the download all fail, and
+  the error does not quote what was downloaded. `cub` makes no such check. An
+  entity that reports no hash cannot be checked and is returned as `cub`
+  returns it. A revision with no data at all is an error, as it is for `cub`.
+- **A View named by ID is found by the ID alone.** `cub` checks that the
+  space it was given exists and then finds the View wherever it is; so does
+  the reader, so `--space` does not have to be the View's own space.
 - **A rejected filter keeps the server's reason.** For an HTTP 400 the
   server's message is passed on, cut to 300 characters, with control and
   format characters and line separators replaced by spaces so that nothing in
