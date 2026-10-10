@@ -1,0 +1,54 @@
+[
+  {
+    "BridgeWorker": {
+      "BridgeWorkerID": "0c2e5f9d-04ad-4d95-a2df-e0dd117d275c",
+      "ClaimTTLSeconds": 60,
+      "Condition": "Disconnected",
+      "CreatedAt": "2026-10-10T17:39:09.737628Z",
+      "DisplayName": "parity-worker",
+      "EntityType": "BridgeWorker",
+      "LastSeenAt": "0001-01-01T00:00:00Z",
+      "OrgRole": "none",
+      "OrganizationID": "4895551b-929c-432e-b861-041de9961ddb",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "df7dc9dd-0b0b-4626-a9ad-70c134288ac1": true
+          }
+        },
+        "ManageChildren": {
+          "UserIDs": {
+            "df7dc9dd-0b0b-4626-a9ad-70c134288ac1": true
+          }
+        }
+      },
+      "Slug": "parity-worker",
+      "SpaceID": "5452298e-5fbe-42cc-996f-a23bf101dd1c",
+      "SpaceSlug": "scout-sdk-parity-1791653947611432040",
+      "UpdatedAt": "2026-10-10T17:39:09.738695Z",
+      "UserID": "94c71b17-7996-4d5c-9349-32a2318a0e91",
+      "Version": 2
+    },
+    "Space": {
+      "CreatedAt": "2026-10-10T17:39:07.681801Z",
+      "DisplayName": "scout-sdk-parity-1791653947611432040",
+      "EntityType": "Space",
+      "OrganizationID": "4895551b-929c-432e-b861-041de9961ddb",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "df7dc9dd-0b0b-4626-a9ad-70c134288ac1": true
+          }
+        },
+        "ManageChildren": {
+          "UserIDs": {
+            "df7dc9dd-0b0b-4626-a9ad-70c134288ac1": true
+          }
+        }
+      },
+      "Slug": "scout-sdk-parity-1791653947611432040",
+      "SpaceID": "5452298e-5fbe-42cc-996f-a23bf101dd1c",
+      "UpdatedAt": "2026-10-10T17:39:07.681801Z"
+    }
+  }
+]

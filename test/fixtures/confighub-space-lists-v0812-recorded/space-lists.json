@@ -1,0 +1,16 @@
+{
+  "created": {
+    "attestation": "created",
+    "changeset": "created",
+    "link": "created",
+    "target": "created",
+    "worker": "created"
+  },
+  "entries": {
+    "attestation": 1,
+    "changeset": 1,
+    "link": 1,
+    "target": 1,
+    "worker": 1
+  }
+}

@@ -1,0 +1,25 @@
+[
+  {
+    "Attestation": {
+      "AttestationID": "462537f8-00a7-4443-b266-5c15e5323ab1",
+      "CreatedAt": "2026-10-10T17:39:10.078787Z",
+      "EntityType": "Attestation",
+      "ExpiresAt": "0001-01-01T00:00:00Z",
+      "Note": "recorded for the SDK reader",
+      "OrganizationID": "4895551b-929c-432e-b861-041de9961ddb",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "df7dc9dd-0b0b-4626-a9ad-70c134288ac1": true
+          }
+        }
+      },
+      "Result": "Pass",
+      "SpaceID": "5452298e-5fbe-42cc-996f-a23bf101dd1c",
+      "SpaceSlug": "scout-sdk-parity-1791653947611432040",
+      "Type": "SecurityReview",
+      "UpdatedAt": "2026-10-10T17:39:10.078787Z",
+      "UserID": "df7dc9dd-0b0b-4626-a9ad-70c134288ac1"
+    }
+  }
+]
