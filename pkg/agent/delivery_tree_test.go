@@ -6,6 +6,7 @@ package agent
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -207,13 +208,20 @@ func TestDeliveryTreeCyclesAndSharedChildren(t *testing.T) {
 	require.Equal(t, DeliveryChildren{Status: DeliveryChildrenCycle}, again.Children, "a is already above: it is not walked again")
 	require.NotNil(t, again.State, "it is still shown as what it is")
 
-	// The shared child is under both, and says two deployers report it.
-	for _, parent := range []DeliveryTreeNode{a, b} {
-		shared := parent.Children.Deployers[len(parent.Children.Deployers)-1]
+	// The shared child is under both, and says two deployers report it. What
+	// is under it is walked once, where the walk first meets it, and the
+	// other appearance says it is shown above.
+	first := b.Children.Deployers[len(b.Children.Deployers)-1]
+	second := a.Children.Deployers[len(a.Children.Deployers)-1]
+	for _, shared := range []DeliveryTreeNode{first, second} {
 		require.Equal(t, "shared", shared.Name)
 		require.Equal(t, 2, shared.ReportedBy)
-		require.Len(t, shared.Children.Resources, 1)
+		require.NotNil(t, shared.State)
 	}
+	require.Equal(t, DeliveryChildrenReported, first.Children.Status)
+	require.Len(t, first.Children.Resources, 1)
+	require.Equal(t, DeliveryChildren{Status: DeliveryChildrenShownAbove}, second.Children)
+	require.Equal(t, 1, tree.Summary.Resources, "counted once")
 
 	self := tree.Roots[1]
 	require.Equal(t, 0, self.ReportedBy, "reporting itself does not make it shared")
@@ -360,10 +368,18 @@ func TestIgnoreRulesNamingAnEntry(t *testing.T) {
 		"no group is the core group": {rule("", "ConfigMap", nil), core, true},
 		"no group is not any group":  {rule("", "Application", nil), app, false},
 		"wildcards":                  {rule("*", "*", nil), app, true},
-		"the name given":             {rule("argoproj.io", "Application", map[string]interface{}{"name": "team"}), app, true},
-		"another name":               {rule("argoproj.io", "Application", map[string]interface{}{"name": "other"}), app, false},
-		"the namespace given":        {rule("argoproj.io", "Application", map[string]interface{}{"namespace": "argocd"}), app, true},
-		"another namespace":          {rule("argoproj.io", "Application", map[string]interface{}{"namespace": "x"}), app, false},
+		// Group and kind are glob patterns, as Argo CD matches them.
+		"a group pattern":                 {rule("*.io", "Application", nil), app, true},
+		"a group pattern, no match":       {rule("*.example", "Application", nil), app, false},
+		"a kind pattern":                  {rule("argoproj.io", "App*", nil), app, true},
+		"alternatives":                    {rule("argoproj.io", "{Application,AppProject}", nil), app, true},
+		"a pattern that does not compile": {rule("argoproj.io", "[", nil), app, false},
+		// Name and namespace are exact: a star there is a literal star.
+		"a star in the name":  {rule("argoproj.io", "Application", map[string]interface{}{"name": "te*"}), app, false},
+		"the name given":      {rule("argoproj.io", "Application", map[string]interface{}{"name": "team"}), app, true},
+		"another name":        {rule("argoproj.io", "Application", map[string]interface{}{"name": "other"}), app, false},
+		"the namespace given": {rule("argoproj.io", "Application", map[string]interface{}{"namespace": "argocd"}), app, true},
+		"another namespace":   {rule("argoproj.io", "Application", map[string]interface{}{"namespace": "x"}), app, false},
 	} {
 		t.Run(name, func(t *testing.T) {
 			naming := ignoreRulesNaming([]interface{}{tc.rule, "not a rule"}, tc.entry)
@@ -385,7 +401,23 @@ func TestIgnoreRulesNamingAnEntry(t *testing.T) {
 	require.NoError(t, err)
 	root := tree.Roots[0]
 	require.Len(t, root.Children.Deployers[0].ReportedByParent.IgnoredByParent, 1)
+	require.False(t, root.Children.Deployers[0].ReportedByParent.IgnoreRespectedOnSync, "a rule alone is for comparison")
 	require.Empty(t, root.Children.Resources[0].IgnoredByParent)
+	require.False(t, root.Children.Resources[0].IgnoreRespectedOnSync)
+
+	// With RespectIgnoreDifferences=true a sync leaves the ignored fields
+	// alone as well, and the entry the rule names says so.
+	respecting := deliveryClient(
+		treeApp("argocd", "root", map[string]interface{}{
+			"ignoreDifferences": []interface{}{rule("argoproj.io", "Application", nil)},
+			"syncPolicy":        map[string]interface{}{"syncOptions": []interface{}{"RespectIgnoreDifferences=true"}}},
+			[]interface{}{reportedApp("argocd", "team"), reported("", "ConfigMap", "p", "c", "Synced")}),
+		treeApp("argocd", "team", nil, []interface{}{}),
+	)
+	tree, err = CollectDeliveryTree(context.Background(), respecting, DeliveryTreeOptions{})
+	require.NoError(t, err)
+	require.True(t, tree.Roots[0].Children.Deployers[0].ReportedByParent.IgnoreRespectedOnSync)
+	require.False(t, tree.Roots[0].Children.Resources[0].IgnoreRespectedOnSync, "no rule names it")
 }
 
 func TestReportedByDeployerReadsOnlyWhatIsThere(t *testing.T) {
@@ -397,8 +429,9 @@ func TestReportedByDeployerReadsOnlyWhatIsThere(t *testing.T) {
 		map[string]interface{}{"name": "no-kind"},
 		"not an entry",
 	})
-	entries, status, _ := reportedByDeployer(source, app)
+	entries, malformed, status, _ := reportedByDeployer(source, app)
 	require.Equal(t, DeliveryChildrenReported, status)
+	require.Equal(t, 3, malformed, "an entry with no name, one with no kind, and one that is not an object")
 	// Health is kept when the deployer reports it; an entry that names
 	// nothing is not an entry.
 	require.Equal(t, []DeliveryReported{{Group: "apps", Version: "v1", Kind: "Deployment", Namespace: "n", Name: "d",
@@ -415,7 +448,7 @@ func TestReportedByDeployerReadsOnlyWhatIsThere(t *testing.T) {
 			if status != nil {
 				app.Object["status"] = status
 			}
-			entries, got, reason := reportedByDeployer(source, app)
+			entries, _, got, reason := reportedByDeployer(source, app)
 			require.Equal(t, DeliveryChildrenNoneReported, got)
 			require.NotEmpty(t, reason)
 			require.Nil(t, entries)
@@ -553,4 +586,121 @@ func TestDeliveryTreeOfTheRecordedAppOfApps(t *testing.T) {
 		Root: &DeliveryRef{Kind: "Application", Name: "delivery-tree"}, Depth: 1})
 	require.NoError(t, err)
 	require.Equal(t, DeliveryTreeSummary{Roots: 1, Deployers: 5, Resources: 3, MaxDepth: 1, NotReconciled: 1, NoneReported: 2, DepthLimited: 2}, tree.Summary)
+}
+
+// A deployer that anything outside its own ring reports is never a root: the
+// walk reaches it from there. Only a ring nothing else reports is entered,
+// and at its first member.
+func TestDeliveryTreeRootsOfRings(t *testing.T) {
+	// b and c report each other; c also reports a-leaf, which sorts first.
+	client := deliveryClient(
+		treeApp("argocd", "a-leaf", nil, []interface{}{}),
+		treeApp("argocd", "b-app", nil, []interface{}{reportedApp("argocd", "c-app")}),
+		treeApp("argocd", "c-app", nil, []interface{}{reportedApp("argocd", "b-app"), reportedApp("argocd", "a-leaf")}),
+	)
+	tree, err := CollectDeliveryTree(context.Background(), client, DeliveryTreeOptions{})
+	require.NoError(t, err)
+	require.Equal(t, []string{"argocd/b-app"}, treeNames(tree.Roots), "a-leaf has a parent, so it is not a root")
+	require.Equal(t, 4, tree.Summary.Deployers, "b, c, the leaf, and b again as the cycle")
+	cApp := tree.Roots[0].Children.Deployers[0]
+	require.Equal(t, []string{"argocd/a-leaf", "argocd/b-app"}, treeNames(cApp.Children.Deployers))
+	require.NotNil(t, cApp.Children.Deployers[0].ReportedByParent)
+
+	// A ring below a root is reached from the root, and is not a root itself.
+	// Two rings, one reporting the other: only the upstream ring is entered.
+	rings := deliveryClient(
+		treeApp("argocd", "top", nil, []interface{}{reportedApp("argocd", "p")}),
+		treeApp("argocd", "p", nil, []interface{}{reportedApp("argocd", "q")}),
+		treeApp("argocd", "q", nil, []interface{}{reportedApp("argocd", "p")}),
+		treeApp("argocd", "m", nil, []interface{}{reportedApp("argocd", "n")}),
+		treeApp("argocd", "n", nil, []interface{}{reportedApp("argocd", "m"), reportedApp("argocd", "y")}),
+		treeApp("argocd", "x", nil, []interface{}{reportedApp("argocd", "y")}),
+		treeApp("argocd", "y", nil, []interface{}{reportedApp("argocd", "x")}),
+	)
+	tree, err = CollectDeliveryTree(context.Background(), rings, DeliveryTreeOptions{})
+	require.NoError(t, err)
+	require.Equal(t, []string{"argocd/m", "argocd/top"}, treeNames(tree.Roots))
+
+	// Whatever the shape, every deployer read is somewhere in the tree.
+	seen := map[string]bool{}
+	var walk func(nodes []DeliveryTreeNode)
+	walk = func(nodes []DeliveryTreeNode) {
+		for _, node := range nodes {
+			seen[node.Name] = true
+			walk(node.Children.Deployers)
+		}
+	}
+	walk(tree.Roots)
+	require.Len(t, seen, 7)
+}
+
+// Deployers that share each other in layers would double the tree at every
+// layer if each appearance were walked. What is under a deployer is walked
+// once, so the tree stays the size of what was read.
+func TestDeliveryTreeDoesNotGrowWithSharing(t *testing.T) {
+	const layers = 18
+	var objects []runtime.Object
+	name := func(layer, side int) string { return fmt.Sprintf("l%02d-%d", layer, side) }
+	for layer := 0; layer < layers; layer++ {
+		for side := 0; side < 2; side++ {
+			entries := []interface{}{reported("", "ConfigMap", "p", name(layer, side), "Synced")}
+			if layer+1 < layers {
+				entries = append(entries, reportedApp("argocd", name(layer+1, 0)), reportedApp("argocd", name(layer+1, 1)))
+			}
+			objects = append(objects, treeApp("argocd", name(layer, side), nil, entries))
+		}
+	}
+	tree, err := CollectDeliveryTree(context.Background(), deliveryClient(objects...), DeliveryTreeOptions{})
+	require.NoError(t, err)
+	require.Equal(t, 2, tree.Summary.Roots)
+	// Each of the 36 deployers is walked once; each of the 34 below the top
+	// appears a second time, marked, under its other parent.
+	require.Equal(t, 2*layers, tree.Summary.Resources)
+	require.Equal(t, 2*layers+2*(layers-1), tree.Summary.Deployers)
+	require.Equal(t, 4*(layers-1), tree.Summary.Shared)
+}
+
+// With a namespace, a child elsewhere is read on its own. It still knows how
+// many of the deployers read report it.
+func TestDeliveryTreeCountsParentsOfAChildOutsideTheNamespace(t *testing.T) {
+	client := deliveryClient(
+		treeApp("argocd", "one", nil, []interface{}{reportedApp("team-a", "inside")}),
+		treeApp("argocd", "two", nil, []interface{}{reportedApp("team-a", "inside")}),
+		treeApp("team-a", "inside", nil, []interface{}{reported("", "ConfigMap", "team-a", "c", "Synced")}),
+	)
+	tree, err := CollectDeliveryTree(context.Background(), client, DeliveryTreeOptions{Namespace: "argocd"})
+	require.NoError(t, err)
+	require.Equal(t, []string{"argocd/one", "argocd/two"}, treeNames(tree.Roots))
+	first, second := tree.Roots[0].Children.Deployers[0], tree.Roots[1].Children.Deployers[0]
+	require.Equal(t, 2, first.ReportedBy)
+	require.Equal(t, 2, second.ReportedBy)
+	require.Len(t, first.Children.Resources, 1)
+	require.Equal(t, DeliveryChildrenShownAbove, second.Children.Status)
+
+	// Listed from the child's own namespace, its parents were not read: it
+	// is a root of what was listed, and no parent is claimed or denied.
+	tree, err = CollectDeliveryTree(context.Background(), client, DeliveryTreeOptions{Namespace: "team-a"})
+	require.NoError(t, err)
+	require.Equal(t, []string{"team-a/inside"}, treeNames(tree.Roots))
+	require.Equal(t, 0, tree.Roots[0].ReportedBy)
+}
+
+// Entries that are not entries are counted, not skipped in silence, and a
+// field of the wrong type is not read as empty.
+func TestDeliveryTreeCountsMalformedEntries(t *testing.T) {
+	client := deliveryClient(treeApp("argocd", "odd", nil, []interface{}{
+		reported("", "ConfigMap", "p", "good", "Synced"),
+		"not an entry",
+		map[string]interface{}{"kind": "ConfigMap"},
+		// The group is a number. Read as "", this would be a plain resource
+		// called Application rather than a child deployer.
+		map[string]interface{}{"group": int64(5), "kind": "Application", "namespace": "argocd", "name": "child", "status": "Synced"},
+	}))
+	tree, err := CollectDeliveryTree(context.Background(), client, DeliveryTreeOptions{})
+	require.NoError(t, err)
+	odd := tree.Roots[0]
+	require.Len(t, odd.Children.Resources, 1)
+	require.Empty(t, odd.Children.Deployers)
+	require.Equal(t, 3, odd.Children.Malformed)
+	require.Equal(t, 3, tree.Summary.Malformed)
 }

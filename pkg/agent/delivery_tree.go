@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/gobwas/glob"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -45,6 +46,10 @@ const (
 	// DeliveryChildrenNoObject: the deployer object itself was not read, so
 	// there is no report to read.
 	DeliveryChildrenNoObject = "no_object"
+	// DeliveryChildrenShownAbove: this deployer is reported by more than one
+	// deployer and what is under it is already in the tree, at its first
+	// appearance. It is not walked again.
+	DeliveryChildrenShownAbove = "shown_above"
 
 	DeliveryObjectFound    = "found"
 	DeliveryObjectNotFound = "not_found"
@@ -67,8 +72,13 @@ type DeliveryReported struct {
 	RequiresPruning bool   `json:"requiresPruning,omitempty"`
 	Hook            bool   `json:"hook,omitempty"`
 	// IgnoredByParent are the reporting deployer's ignore rules that name
-	// this entry, verbatim.
+	// this entry, verbatim. An Argo CD rule says which differences do not
+	// make the entry OutOfSync; it does not by itself stop a sync from
+	// overwriting them.
 	IgnoredByParent []interface{} `json:"ignoredByParent,omitempty"`
+	// IgnoreRespectedOnSync is true when the reporting deployer also sets
+	// RespectIgnoreDifferences=true, so that a sync leaves those fields alone.
+	IgnoreRespectedOnSync bool `json:"ignoreRespectedOnSync,omitempty"`
 }
 
 // DeliveryPolicyValue is one policy setting of a deployer and the value in
@@ -104,6 +114,13 @@ type DeliveryChildren struct {
 	Deployers []DeliveryTreeNode `json:"deployers,omitempty"`
 	// Resources are every other reported entry.
 	Resources []DeliveryReported `json:"resources,omitempty"`
+	// Malformed counts reported entries that could not be read as an entry:
+	// not an object, or with no kind or name, or a field of the wrong type.
+	// They are in neither list; the count says the lists are short.
+	Malformed int `json:"malformed,omitempty"`
+	// HiddenByFilter counts the entries directly under this deployer that a
+	// filter left out. It is set only on a filtered tree.
+	HiddenByFilter int `json:"hiddenByFilter,omitempty"`
 }
 
 // DeliveryTreeNode is one deployer in the tree.
@@ -118,10 +135,12 @@ type DeliveryTreeNode struct {
 	ObjectReason string `json:"objectReason,omitempty"`
 	// ReportedByParent is the parent's entry for this deployer; nil for a root.
 	ReportedByParent *DeliveryReported `json:"reportedByParent,omitempty"`
-	// ReportedBy is how many deployers report this one, when more than one.
-	ReportedBy  int                    `json:"reportedBy,omitempty"`
+	// ReportedBy is how many of the deployers that were read report this
+	// one, when more than one. A parent outside the namespace listed is not
+	// counted, because it was not read.
+	ReportedBy int `json:"reportedBy,omitempty"`
+	// GeneratedBy names the ApplicationSet that owns an Application.
 	GeneratedBy string                 `json:"generatedBy,omitempty"`
-	URL         string                 `json:"url,omitempty"`
 	Policies    []DeliveryPolicyValue  `json:"policies,omitempty"`
 	Options     []string               `json:"options,omitempty"`
 	State       *DeliveryDeployerState `json:"state,omitempty"`
@@ -129,7 +148,8 @@ type DeliveryTreeNode struct {
 }
 
 // DeliveryTreeSummary counts what the tree holds. A deployer reported by two
-// parents is counted once for each place it appears.
+// parents is counted once for each place it appears; what is under it is
+// walked, and counted, once.
 type DeliveryTreeSummary struct {
 	Roots         int `json:"roots"`
 	Deployers     int `json:"deployers"`
@@ -140,6 +160,7 @@ type DeliveryTreeSummary struct {
 	NotReconciled int `json:"notReconciled"`
 	NoneReported  int `json:"noneReported"`
 	NotSupported  int `json:"notSupported"`
+	Malformed     int `json:"malformed"`
 	Shared        int `json:"shared"`
 	Cycles        int `json:"cycles"`
 	DepthLimited  int `json:"depthLimited"`
@@ -199,13 +220,22 @@ func (e *DeliveryRootError) Error() string {
 
 type deliveryKey struct{ group, kind, namespace, name string }
 
+func deliveryKeyLess(a, b deliveryKey) bool {
+	for _, pair := range [][2]string{{a.group, b.group}, {a.kind, b.kind}, {a.namespace, b.namespace}} {
+		if pair[0] != pair[1] {
+			return pair[0] < pair[1]
+		}
+	}
+	return a.name < b.name
+}
+
 type deliveryIndexed struct {
-	listed   listedDeployer
-	settings DeliveryDeployerSettings
-	reported []DeliveryReported
-	status   string
-	reason   string
-	parents  map[deliveryKey]bool
+	listed    listedDeployer
+	settings  DeliveryDeployerSettings
+	reported  []DeliveryReported
+	malformed int
+	status    string
+	reason    string
 }
 
 func deliverySourceFor(group, kind string) (deliverySettingsSource, bool) {
@@ -217,30 +247,44 @@ func deliverySourceFor(group, kind string) (deliverySettingsSource, bool) {
 	return deliverySettingsSource{}, false
 }
 
-// reportedByDeployer reads what a deployer object says it applied.
-func reportedByDeployer(source deliverySettingsSource, object *unstructured.Unstructured) ([]DeliveryReported, string, string) {
+// reportedByDeployer reads what a deployer object says it applied. malformed
+// counts the entries of the list that are not entries: they are left out, and
+// the count is how the caller knows.
+func reportedByDeployer(source deliverySettingsSource, object *unstructured.Unstructured) (reported []DeliveryReported, malformed int, status, reason string) {
 	if source.controller != DeliveryControllerArgoCD || source.kind != "Application" {
-		return nil, DeliveryChildrenNotSupported, "what a " + source.kind + " delivers is not read yet (#856)"
+		return nil, 0, DeliveryChildrenNotSupported, "what a " + source.kind + " delivers is not read yet (#856)"
 	}
 	raw, found, err := unstructured.NestedFieldNoCopy(object.Object, "status", "resources")
 	if err != nil || !found || raw == nil {
 		// No list at all. An Application gets one when Argo CD compares it;
-		// one that was never compared, or that nothing reconciles, has none.
-		return nil, DeliveryChildrenNoneReported, "the Application has no status.resources"
+		// one that could not be compared, or that nothing reconciles, has
+		// none.
+		return nil, 0, DeliveryChildrenNoneReported, "the Application has no status.resources"
 	}
 	entries, ok := raw.([]interface{})
 	if !ok {
-		return nil, DeliveryChildrenNoneReported, "status.resources is not a list"
+		return nil, 0, DeliveryChildrenNoneReported, "status.resources is not a list"
 	}
-	reported := make([]DeliveryReported, 0, len(entries))
+	reported = make([]DeliveryReported, 0, len(entries))
 	for _, entry := range entries {
 		fields, ok := entry.(map[string]interface{})
 		if !ok {
+			malformed++
 			continue
 		}
+		// A field that is present and not a string is not coerced: a group
+		// read as "" would turn an Application into a plain resource.
+		wellFormed := true
 		text := func(name string) string {
-			value, _ := fields[name].(string)
-			return strings.TrimSpace(value)
+			value, present := fields[name]
+			if !present || value == nil {
+				return ""
+			}
+			typed, isString := value.(string)
+			if !isString {
+				wellFormed = false
+			}
+			return strings.TrimSpace(typed)
 		}
 		one := DeliveryReported{
 			Group: text("group"), Version: text("version"), Kind: text("kind"),
@@ -251,12 +295,13 @@ func reportedByDeployer(source deliverySettingsSource, object *unstructured.Unst
 		}
 		one.RequiresPruning, _ = fields["requiresPruning"].(bool)
 		one.Hook, _ = fields["hook"].(bool)
-		if one.Kind == "" || one.Name == "" {
+		if !wellFormed || one.Kind == "" || one.Name == "" {
+			malformed++
 			continue
 		}
 		reported = append(reported, one)
 	}
-	return reported, DeliveryChildrenReported, ""
+	return reported, malformed, DeliveryChildrenReported, ""
 }
 
 // deployerState reads what a deployer object says about itself.
@@ -297,9 +342,15 @@ func deployerState(source deliverySettingsSource, object *unstructured.Unstructu
 	return state
 }
 
-// ignoreRulesNaming returns the deployer's ignore rules that name entry: an
-// Argo CD ignoreDifferences rule matches on group and kind, and on name and
-// namespace when it gives them.
+// ignoreRulesNaming returns the deployer's ignore rules that name entry, as
+// Argo CD matches an ignoreDifferences rule to a resource (v3.5.3,
+// util/argo/normalizers): group and kind are glob patterns, and name and
+// namespace are exact, each matching anything when the rule leaves it out. A
+// rule with no group names the core group. A pattern that does not compile
+// matches nothing.
+//
+// Only the Application's own spec.ignoreDifferences is read. Rules set for
+// the whole Argo CD instance in argocd-cm are not.
 func ignoreRulesNaming(rules []interface{}, entry DeliveryReported) []interface{} {
 	var naming []interface{}
 	for _, raw := range rules {
@@ -311,8 +362,10 @@ func ignoreRulesNaming(rules []interface{}, entry DeliveryReported) []interface{
 			value, _ := rule[name].(string)
 			return value
 		}
-		matches := func(pattern, value string) bool { return pattern == "*" || pattern == value }
-		// A rule with no group names the core group.
+		matches := func(pattern, value string) bool {
+			compiled, err := glob.Compile(pattern)
+			return err == nil && compiled.Match(value)
+		}
 		if !matches(text("group"), entry.Group) || !matches(text("kind"), entry.Kind) {
 			continue
 		}
@@ -325,6 +378,25 @@ func ignoreRulesNaming(rules []interface{}, entry DeliveryReported) []interface{
 		naming = append(naming, raw)
 	}
 	return naming
+}
+
+// respectsIgnoreOnSync reports whether a deployer's options say that a sync
+// leaves ignored differences alone.
+func respectsIgnoreOnSync(settings DeliveryDeployerSettings) bool {
+	for _, setting := range settings.Settings {
+		if setting.Name == "RespectIgnoreDifferences" && setting.Value == "true" {
+			return true
+		}
+	}
+	return false
+}
+
+// deliveryGetReason says why one object could not be read.
+func deliveryGetReason(err error) string {
+	if reason := deliveryReadReason(err); reason != "list_failed" {
+		return reason
+	}
+	return "get_failed"
 }
 
 func deliveryPolicies(settings DeliveryDeployerSettings) ([]DeliveryPolicyValue, []string) {
@@ -350,6 +422,16 @@ func deliveryPolicies(settings DeliveryDeployerSettings) ([]DeliveryPolicyValue,
 
 // CollectDeliveryTree lists the deployers and walks from each root through
 // what every deployer reports as its own.
+//
+// A root is a deployer that no deployer read reports. Deployers that only
+// report each other have no such member; each such ring that nothing outside
+// it reports is entered once, at its first member. With a Namespace, "read"
+// means listed in that namespace: a deployer whose only parents are elsewhere
+// is a root of what was listed.
+//
+// A deployer that more than one deployer reports appears under each, and what
+// is under it is walked once, at its first appearance. That keeps the tree
+// the size of what was read, however the deployers share each other.
 func CollectDeliveryTree(ctx context.Context, client dynamic.Interface, opts DeliveryTreeOptions) (DeliveryTree, error) {
 	listed, reads := listDeliveryObjects(ctx, client, opts.Namespace)
 	tree := DeliveryTree{Roots: []DeliveryTreeNode{}, Reads: reads}
@@ -359,35 +441,47 @@ func CollectDeliveryTree(ctx context.Context, client dynamic.Interface, opts Del
 	}
 
 	index := map[deliveryKey]*deliveryIndexed{}
-	var order []deliveryKey
-	for _, one := range listed {
-		key := deliveryKey{one.source.group, one.source.kind, one.object.GetNamespace(), one.object.GetName()}
-		indexed := &deliveryIndexed{listed: one, settings: one.source.parse(one.object), parents: map[deliveryKey]bool{}}
-		indexed.reported, indexed.status, indexed.reason = reportedByDeployer(one.source, one.object)
-		index[key] = indexed
-		order = append(order, key)
-	}
-	keyLess := func(a, b deliveryKey) bool {
-		for _, pair := range [][2]string{{a.group, b.group}, {a.kind, b.kind}, {a.namespace, b.namespace}} {
-			if pair[0] != pair[1] {
-				return pair[0] < pair[1]
+	// parentsOf is who reports whom, among the deployers that were read. A
+	// child is recorded whether or not it was read itself.
+	parentsOf := map[deliveryKey]map[deliveryKey]bool{}
+	childKeys := func(indexed *deliveryIndexed) []deliveryKey {
+		var keys []deliveryKey
+		for _, entry := range indexed.reported {
+			if _, isDeployer := deliverySourceFor(entry.Group, entry.Kind); isDeployer {
+				keys = append(keys, deliveryKey{entry.Group, entry.Kind, entry.Namespace, entry.Name})
 			}
 		}
-		return a.name < b.name
+		return keys
 	}
-	sort.Slice(order, func(i, j int) bool { return keyLess(order[i], order[j]) })
-	// Who reports whom, among the deployers that were read.
-	for _, key := range order {
-		for _, entry := range index[key].reported {
-			child := deliveryKey{entry.Group, entry.Kind, entry.Namespace, entry.Name}
-			if _, isDeployer := deliverySourceFor(entry.Group, entry.Kind); !isDeployer || child == key {
+	add := func(one listedDeployer) deliveryKey {
+		key := deliveryKey{one.source.group, one.source.kind, one.object.GetNamespace(), one.object.GetName()}
+		indexed := &deliveryIndexed{listed: one, settings: one.source.parse(one.object)}
+		indexed.reported, indexed.malformed, indexed.status, indexed.reason = reportedByDeployer(one.source, one.object)
+		// Entries are walked in a fixed order, so that which appearance of a
+		// shared deployer comes first does not depend on the order its
+		// parent happened to list it in.
+		sort.SliceStable(indexed.reported, func(i, j int) bool {
+			a, b := indexed.reported[i], indexed.reported[j]
+			return deliveryKeyLess(deliveryKey{a.Group, a.Kind, a.Namespace, a.Name}, deliveryKey{b.Group, b.Kind, b.Namespace, b.Name})
+		})
+		index[key] = indexed
+		for _, child := range childKeys(indexed) {
+			// Reporting itself does not make a deployer its own parent.
+			if child == key {
 				continue
 			}
-			if target := index[child]; target != nil {
-				target.parents[key] = true
+			if parentsOf[child] == nil {
+				parentsOf[child] = map[deliveryKey]bool{}
 			}
+			parentsOf[child][key] = true
 		}
+		return key
 	}
+	var order []deliveryKey
+	for _, one := range listed {
+		order = append(order, add(one))
+	}
+	sort.Slice(order, func(i, j int) bool { return deliveryKeyLess(order[i], order[j]) })
 
 	// A reported child that the list did not return is read on its own when
 	// the list was limited to a namespace it is not in.
@@ -413,15 +507,13 @@ func CollectDeliveryTree(ctx context.Context, client dynamic.Interface, opts Del
 		case apierrors.IsNotFound(err):
 			return nil, DeliveryObjectNotFound, ""
 		case err != nil:
-			return nil, DeliveryObjectNotRead, deliveryReadReason(err)
+			return nil, DeliveryObjectNotRead, deliveryGetReason(err)
 		}
-		one := listedDeployer{source: source, object: object}
-		indexed := &deliveryIndexed{listed: one, settings: source.parse(object), parents: map[deliveryKey]bool{}}
-		indexed.reported, indexed.status, indexed.reason = reportedByDeployer(source, object)
-		index[key] = indexed
-		return indexed, DeliveryObjectFound, ""
+		add(listedDeployer{source: source, object: object})
+		return index[key], DeliveryObjectFound, ""
 	}
 
+	walked := map[deliveryKey]bool{}
 	var build func(source deliverySettingsSource, key deliveryKey, depth int, path map[deliveryKey]bool) DeliveryTreeNode
 	build = func(source deliverySettingsSource, key deliveryKey, depth int, path map[deliveryKey]bool) DeliveryTreeNode {
 		node := DeliveryTreeNode{Controller: source.controller, Kind: key.kind, Namespace: key.namespace, Name: key.name}
@@ -440,14 +532,14 @@ func CollectDeliveryTree(ctx context.Context, client dynamic.Interface, opts Del
 			}
 			return node
 		}
-		node.GeneratedBy, node.URL = indexed.settings.GeneratedBy, indexed.settings.URL
+		node.GeneratedBy = indexed.settings.GeneratedBy
 		node.Policies, node.Options = deliveryPolicies(indexed.settings)
 		node.State = deployerState(source, indexed.listed.object)
 		if !node.State.Reconciled {
 			tree.Summary.NotReconciled++
 		}
-		if len(indexed.parents) > 1 {
-			node.ReportedBy = len(indexed.parents)
+		if parents := len(parentsOf[key]); parents > 1 {
+			node.ReportedBy = parents
 			tree.Summary.Shared++
 		}
 
@@ -460,20 +552,29 @@ func CollectDeliveryTree(ctx context.Context, client dynamic.Interface, opts Del
 			tree.Summary.NotSupported++
 			return node
 		}
-		if path[key] {
+		switch {
+		case path[key]:
 			node.Children = DeliveryChildren{Status: DeliveryChildrenCycle}
 			tree.Summary.Cycles++
 			return node
-		}
-		if opts.Depth > 0 && depth >= opts.Depth {
+		case walked[key]:
+			node.Children = DeliveryChildren{Status: DeliveryChildrenShownAbove}
+			return node
+		case opts.Depth > 0 && depth >= opts.Depth:
 			node.Children = DeliveryChildren{Status: DeliveryChildrenDepthLimit}
 			tree.Summary.DepthLimited++
 			return node
 		}
+		walked[key] = true
 		path[key] = true
 		defer delete(path, key)
+		node.Children.Malformed = indexed.malformed
+		tree.Summary.Malformed += indexed.malformed
+		respected := respectsIgnoreOnSync(indexed.settings)
 		for _, entry := range indexed.reported {
-			entry.IgnoredByParent = ignoreRulesNaming(indexed.settings.IgnoreRules, entry)
+			if entry.IgnoredByParent = ignoreRulesNaming(indexed.settings.IgnoreRules, entry); len(entry.IgnoredByParent) > 0 {
+				entry.IgnoreRespectedOnSync = respected
+			}
 			childSource, isDeployer := deliverySourceFor(entry.Group, entry.Kind)
 			if !isDeployer {
 				node.Children.Resources = append(node.Children.Resources, entry)
@@ -486,15 +587,6 @@ func CollectDeliveryTree(ctx context.Context, client dynamic.Interface, opts Del
 			child.ReportedByParent = &reportedEntry
 			node.Children.Deployers = append(node.Children.Deployers, child)
 		}
-		sort.SliceStable(node.Children.Deployers, func(i, j int) bool {
-			a, b := node.Children.Deployers[i], node.Children.Deployers[j]
-			for _, pair := range [][2]string{{a.Kind, b.Kind}, {a.Namespace, b.Namespace}} {
-				if pair[0] != pair[1] {
-					return pair[0] < pair[1]
-				}
-			}
-			return a.Name < b.Name
-		})
 		sort.SliceStable(node.Children.Resources, func(i, j int) bool {
 			a, b := node.Children.Resources[i], node.Children.Resources[j]
 			for _, pair := range [][2]string{{a.Kind, b.Kind}, {a.Group, b.Group}, {a.Namespace, b.Namespace}} {
@@ -506,7 +598,6 @@ func CollectDeliveryTree(ctx context.Context, client dynamic.Interface, opts Del
 		})
 		return node
 	}
-
 	var roots []deliveryKey
 	if opts.Root != nil {
 		var candidates []deliveryKey
@@ -524,37 +615,15 @@ func CollectDeliveryTree(ctx context.Context, client dynamic.Interface, opts Del
 		}
 		roots = candidates
 	} else {
-		for _, key := range order {
-			if len(index[key].parents) == 0 {
-				roots = append(roots, key)
-			}
-		}
-		// Deployers that only report each other have no root among them.
-		// Each such ring is entered once, at its first member, so that
-		// nothing read is left out of the tree.
-		reached := map[deliveryKey]bool{}
-		var mark func(key deliveryKey)
-		mark = func(key deliveryKey) {
-			if reached[key] || index[key] == nil {
-				return
-			}
-			reached[key] = true
-			for _, entry := range index[key].reported {
-				if _, isDeployer := deliverySourceFor(entry.Group, entry.Kind); isDeployer {
-					mark(deliveryKey{entry.Group, entry.Kind, entry.Namespace, entry.Name})
+		roots = deliveryRoots(order, func(key deliveryKey) []deliveryKey {
+			var listedChildren []deliveryKey
+			for _, child := range childKeys(index[key]) {
+				if index[child] != nil && child != key {
+					listedChildren = append(listedChildren, child)
 				}
 			}
-		}
-		for _, key := range roots {
-			mark(key)
-		}
-		for _, key := range order {
-			if !reached[key] {
-				roots = append(roots, key)
-				mark(key)
-			}
-		}
-		sort.Slice(roots, func(i, j int) bool { return keyLess(roots[i], roots[j]) })
+			return listedChildren
+		})
 	}
 	for _, key := range roots {
 		source, _ := deliverySourceFor(key.group, key.kind)
@@ -562,4 +631,81 @@ func CollectDeliveryTree(ctx context.Context, client dynamic.Interface, opts Del
 	}
 	tree.Summary.Roots = len(tree.Roots)
 	return tree, nil
+}
+
+// deliveryRoots returns where the walk starts when no root is named: one
+// member of each group of deployers that nothing outside the group reports.
+//
+// Such a group is usually one deployer with no parent. It can also be a ring,
+// deployers that report each other, and then it is entered at its first
+// member in order. A deployer that anything outside its own ring reports is
+// never a root, because the walk reaches it from there. order must be sorted;
+// children gives the deployers a deployer reports, among those in order.
+func deliveryRoots(order []deliveryKey, children func(deliveryKey) []deliveryKey) []deliveryKey {
+	// Tarjan's strongly connected components.
+	position := map[deliveryKey]int{}
+	for i, key := range order {
+		position[key] = i
+	}
+	const unvisited = -1
+	visit, low, component := make([]int, len(order)), make([]int, len(order)), make([]int, len(order))
+	onStack := make([]bool, len(order))
+	for i := range order {
+		visit[i], component[i] = unvisited, unvisited
+	}
+	var stack []int
+	next, components := 0, 0
+	var connect func(v int)
+	connect = func(v int) {
+		visit[v], low[v] = next, next
+		next++
+		stack, onStack[v] = append(stack, v), true
+		for _, child := range children(order[v]) {
+			w := position[child]
+			switch {
+			case visit[w] == unvisited:
+				connect(w)
+				if low[w] < low[v] {
+					low[v] = low[w]
+				}
+			case onStack[w] && visit[w] < low[v]:
+				low[v] = visit[w]
+			}
+		}
+		if low[v] != visit[v] {
+			return
+		}
+		for {
+			w := stack[len(stack)-1]
+			stack, onStack[w] = stack[:len(stack)-1], false
+			component[w] = components
+			if w == v {
+				break
+			}
+		}
+		components++
+	}
+	for v := range order {
+		if visit[v] == unvisited {
+			connect(v)
+		}
+	}
+	// A component that an edge from another component enters is not a source.
+	entered := make([]bool, components)
+	for v, key := range order {
+		for _, child := range children(key) {
+			if w := position[child]; component[w] != component[v] {
+				entered[component[w]] = true
+			}
+		}
+	}
+	var roots []deliveryKey
+	taken := make([]bool, components)
+	for v, key := range order {
+		if c := component[v]; !entered[c] && !taken[c] {
+			taken[c] = true
+			roots = append(roots, key)
+		}
+	}
+	return roots
 }
