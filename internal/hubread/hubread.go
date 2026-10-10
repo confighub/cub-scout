@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -477,12 +478,24 @@ const (
 	linkListInclude      = "SpaceID,FromUnitID,ToUnitID,ToSpaceID"
 )
 
-// listQuery is what one list sends: the filter with the space AND-ed on, the
-// expansions, and the search.
+// listQuery is what one list sends: the filter (with the space AND-ed on,
+// unless the endpoint is the space's own), the expansions, and the search.
+// space is the one space the list is for.
 type listQuery struct {
+	space    uuid.UUID
 	where    *string
 	include  *string
 	contains *string
+}
+
+// listShape is where one kind's list departs from the common one.
+type listShape[T any] struct {
+	// underSpace says the endpoint is the space's own: the space is in the
+	// path and the filter is sent as it was written.
+	underSpace bool
+	// order puts the list in the order cub prints it in, where cub sorts
+	// what the server returned.
+	order func([]T)
 }
 
 // listAnswer is what one list call came back with.
@@ -508,6 +521,13 @@ type listAnswer[T any] struct {
 // cub's output, and is not checked.
 func spaceList[T any](ctx context.Context, r *Reader, kind, space string, filter Filter, include string,
 	call func(listQuery) (listAnswer[T], error), spaceOf func(*T) (uuid.UUID, bool)) ([]byte, error) {
+	return shapedSpaceList(ctx, r, kind, space, filter, include, listShape[T]{}, call, spaceOf)
+}
+
+// shapedSpaceList is spaceList for a kind whose list departs from the common
+// one in the ways shape names. The scope and the failure rules are the same.
+func shapedSpaceList[T any](ctx context.Context, r *Reader, kind, space string, filter Filter, include string, shape listShape[T],
+	call func(listQuery) (listAnswer[T], error), spaceOf func(*T) (uuid.UUID, bool)) ([]byte, error) {
 	op := kind + " list"
 	space = strings.TrimSpace(space)
 	if space == "" || space == "*" {
@@ -517,8 +537,13 @@ func spaceList[T any](ctx context.Context, r *Reader, kind, space string, filter
 	if scopeErr != nil {
 		return nil, scopeErr
 	}
-	where := cubapi.NewWhere(filter.Where).SpaceID(spaceID).String()
-	query := listQuery{where: &where}
+	query := listQuery{space: spaceID}
+	if !shape.underSpace {
+		where := cubapi.NewWhere(filter.Where).SpaceID(spaceID).String()
+		query.where = &where
+	} else if where := filter.Where; where != "" {
+		query.where = &where
+	}
 	if include != "" {
 		query.include = &include
 	}
@@ -532,6 +557,14 @@ func spaceList[T any](ctx context.Context, r *Reader, kind, space string, filter
 		if failure.Kind == KindFailed && answer.rejected != nil {
 			if reason := printable(answer.rejected.Message, 300); reason != "" {
 				failure.Message = "the server rejected the request (HTTP 400): " + reason
+			}
+		}
+		// Under a space, a 404 is also what a space ID that names no space
+		// gets. A space named by slug was just looked up, so for that one
+		// the 404 is the endpoint.
+		if shape.underSpace && spaceSlug == "" && answer.response != nil && answer.response.StatusCode() == http.StatusNotFound {
+			if missing := r.spaceExists(ctx, spaceID); missing != nil {
+				return nil, missing
 			}
 		}
 		return nil, failure
@@ -566,6 +599,9 @@ func spaceList[T any](ctx context.Context, r *Reader, kind, space string, filter
 			}
 			return nil, &Error{Kind: KindMalformed, Op: op, Message: message}
 		}
+	}
+	if shape.order != nil {
+		shape.order(*answer.list)
 	}
 	return listJSON(op, answer.list)
 }
@@ -707,6 +743,132 @@ func (r *Reader) AttestationListJSON(ctx context.Context, space string, filter F
 			}
 			return entry.Attestation.SpaceID, true
 		})
+}
+
+// resourceListInclude and releaseListInclude are the expansions
+// `cub resource list` and `cub release list` ask for.
+const (
+	resourceListInclude = "TargetID"
+	releaseListInclude  = "TagID"
+)
+
+// ResourceListJSON reads the resources ConfigHub extracted from the Units of
+// exactly one space, as `cub resource list --space <space> -o json` prints
+// them.
+func (r *Reader) ResourceListJSON(ctx context.Context, space string, filter Filter) ([]byte, error) {
+	return spaceList(ctx, r, "resource", space, filter, resourceListInclude,
+		func(q listQuery) (listAnswer[goclientnew.ExtendedResource], error) {
+			resp, err := r.client.API.ListAllResourcesWithResponse(ctx, &goclientnew.ListAllResourcesParams{Where: q.where, Include: q.include, Contains: q.contains})
+			if resp == nil {
+				return listAnswer[goclientnew.ExtendedResource]{}, err
+			}
+			return listAnswer[goclientnew.ExtendedResource]{resp, resp.JSON200, resp.HTTPResponse, rejection(resp.StatusCode(), resp.JSON400)}, err
+		},
+		func(entry *goclientnew.ExtendedResource) (uuid.UUID, bool) {
+			if entry.Resource == nil {
+				return uuid.Nil, false
+			}
+			return entry.Resource.SpaceID, true
+		})
+}
+
+// ReleaseListJSON reads the releases of exactly one space, newest first, as
+// `cub release list --space <space> -o json` prints them. The endpoint is the
+// space's own, and the order is cub's: the server's list sorted by release
+// number, highest first.
+func (r *Reader) ReleaseListJSON(ctx context.Context, space string, filter Filter) ([]byte, error) {
+	shape := listShape[goclientnew.ExtendedRelease]{underSpace: true, order: func(releases []goclientnew.ExtendedRelease) {
+		// Every entry has a release by now, and every one is in the same
+		// space, so this is cub's sortReleasesNewestFirst for one space.
+		sort.SliceStable(releases, func(i, j int) bool {
+			a, b := releases[i].Release, releases[j].Release
+			if a.ReleaseNum != b.ReleaseNum {
+				return a.ReleaseNum > b.ReleaseNum
+			}
+			return a.CreatedAt.After(b.CreatedAt)
+		})
+	}}
+	return shapedSpaceList(ctx, r, "release", space, filter, releaseListInclude, shape,
+		func(q listQuery) (listAnswer[goclientnew.ExtendedRelease], error) {
+			resp, err := r.client.API.ListExtendedReleasesWithResponse(ctx, q.space, &goclientnew.ListExtendedReleasesParams{Where: q.where, Include: q.include, Contains: q.contains})
+			if resp == nil {
+				return listAnswer[goclientnew.ExtendedRelease]{}, err
+			}
+			return listAnswer[goclientnew.ExtendedRelease]{resp, resp.JSON200, resp.HTTPResponse, rejection(resp.StatusCode(), resp.JSON400)}, err
+		},
+		func(entry *goclientnew.ExtendedRelease) (uuid.UUID, bool) {
+			if entry.Release == nil {
+				return uuid.Nil, false
+			}
+			return entry.Release.SpaceID, true
+		})
+}
+
+// newestEventFirst is the order cub prints unit events in: by when each was
+// created, latest first. cub sorts with sort.Slice, so this does too: events
+// created at the same instant then come out in the same order as cub's.
+func newestEventFirst(events []goclientnew.UnitEvent) {
+	sort.Slice(events, func(i, j int) bool { return events[i].CreatedAt.After(events[j].CreatedAt) })
+}
+
+// UnitEventListJSON reads the unit events of exactly one space, newest first,
+// as `cub unit-event list --space <space> -o json` prints them. cub also reads
+// the Units the events belong to, for its table; the JSON does not carry them
+// and this does not read them.
+func (r *Reader) UnitEventListJSON(ctx context.Context, space string, filter Filter) ([]byte, error) {
+	return shapedSpaceList(ctx, r, "unit-event", space, filter, "", listShape[goclientnew.UnitEvent]{order: newestEventFirst},
+		func(q listQuery) (listAnswer[goclientnew.UnitEvent], error) {
+			resp, err := r.client.API.ListAllUnitEventsWithResponse(ctx, &goclientnew.ListAllUnitEventsParams{Where: q.where, Contains: q.contains})
+			if resp == nil {
+				return listAnswer[goclientnew.UnitEvent]{}, err
+			}
+			return listAnswer[goclientnew.UnitEvent]{resp, resp.JSON200, resp.HTTPResponse, rejection(resp.StatusCode(), resp.JSON400)}, err
+		},
+		func(entry *goclientnew.UnitEvent) (uuid.UUID, bool) { return entry.SpaceID, true })
+}
+
+// UnitEventsOfUnitJSON reads the events of exactly one Unit in exactly one
+// space, newest first, as `cub unit-event list <unit> --space <space> -o json`
+// prints them. The Unit is found as UnitJSON finds it; every event returned
+// must be that Unit's.
+func (r *Reader) UnitEventsOfUnitJSON(ctx context.Context, space, unit string, filter Filter) ([]byte, error) {
+	const op = "unit-event list"
+	found, _, failure := r.unit(ctx, op, space, unit)
+	if failure != nil {
+		return nil, failure
+	}
+	spaceID, unitID := found.Unit.SpaceID, found.Unit.UnitID
+	params := &goclientnew.ListUnitEventsParams{}
+	if where := filter.Where; where != "" {
+		params.Where = &where
+	}
+	if contains := filter.Contains; contains != "" {
+		params.Contains = &contains
+	}
+	resp, err := r.client.API.ListUnitEventsWithResponse(ctx, spaceID, unitID, params)
+	if failure := classify(ctx, op, err, resp); failure != nil {
+		if failure.Kind == KindFailed && resp != nil {
+			if rejected := rejection(resp.StatusCode(), resp.JSON400); rejected != nil {
+				if reason := printable(rejected.Message, 300); reason != "" {
+					failure.Message = "the server rejected the request (HTTP 400): " + reason
+				}
+			}
+		}
+		return nil, failure
+	}
+	if resp.JSON200 == nil {
+		return nil, &Error{Kind: KindMalformed, Op: op, Message: "the response had no unit-event list"}
+	}
+	if failure := wholeList(op, resp.HTTPResponse); failure != nil {
+		return nil, failure
+	}
+	for i := range *resp.JSON200 {
+		if event := &(*resp.JSON200)[i]; event.SpaceID != spaceID || event.UnitID != unitID {
+			return nil, &Error{Kind: KindMalformed, Op: op, Message: fmt.Sprintf("the server returned an event of another unit for unit %q in space %q", unit, space)}
+		}
+	}
+	newestEventFirst(*resp.JSON200)
+	return listJSON(op, resp.JSON200)
 }
 
 // SpaceListJSON reads the organization's spaces and returns the list as the

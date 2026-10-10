@@ -6,6 +6,7 @@ package hubread
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -964,6 +965,12 @@ func spaceListKinds(reader *Reader, ctx context.Context) map[string]struct {
 				_, err := cubapi.ListLinks(ctx, reader.client, w, cubapi.ListOpts{Include: linkListInclude, Contains: contains})
 				return err
 			}, "Link"},
+		"resource": {
+			func(space string, f Filter) ([]byte, error) { return reader.ResourceListJSON(ctx, space, f) },
+			func(w cubapi.Where, contains string) error {
+				_, err := cubapi.ListResources(ctx, reader.client, w, cubapi.ListOpts{Include: resourceListInclude, Contains: contains})
+				return err
+			}, "Resource"},
 		"attestation": {
 			func(space string, f Filter) ([]byte, error) { return reader.AttestationListJSON(ctx, space, f) },
 			func(w cubapi.Where, contains string) error {
@@ -1176,4 +1183,246 @@ func TestWorkerListDropsTheWorkersSecret(t *testing.T) {
 	require.NotContains(t, string(got), secret)
 	require.NotContains(t, string(got), "Secret")
 	require.Equal(t, recorded, string(got), "everything but the secret is what cub printed")
+}
+
+// #758: cub lists a space's releases at the space's own endpoint, with the
+// filter as written and the Tag expanded, and then sorts them itself. The
+// request is compared with the one the generated client makes for cub's
+// parameters, and the order with cub's.
+func TestReleaseListIsTheSpacesOwnListNewestFirst(t *testing.T) {
+	hub, slug, id := hubOfTheConnectedLane(t)
+	hub.otherLists = true
+	reader := hub.reader(Options{})
+	ctx := context.Background()
+	path := "/api/space/" + id + "/release"
+	const elsewhere = "11111111-2222-4333-8444-555555555555"
+
+	for _, filter := range []Filter{{}, {Where: "CreatedAt > '2026-10-01T00:00:00Z'"}, {Contains: "a b"}} {
+		before := len(hub.requests())
+		include := releaseListInclude
+		params := &goclientnew.ListExtendedReleasesParams{Include: &include}
+		if filter.Where != "" {
+			params.Where = &filter.Where
+		}
+		if filter.Contains != "" {
+			params.Contains = &filter.Contains
+		}
+		_, err := reader.client.API.ListExtendedReleasesWithResponse(ctx, uuid.MustParse(id), params)
+		require.NoError(t, err)
+		out, err := reader.ReleaseListJSON(ctx, slug, filter)
+		require.NoError(t, err)
+		require.Equal(t, "[]\n", string(out))
+		seen := hub.requests()[before:]
+		require.Len(t, seen, 3, "cub's request, the space lookup, the reader's request")
+		require.Equal(t, path, seen[0].Path)
+		require.Equal(t, path, seen[2].Path)
+		require.Equal(t, hub.queries[before], hub.queries[before+2], "%+v", filter)
+		require.Equal(t, filter.Where, seen[2].Where, "the space is in the path, so the filter is sent as written")
+		require.Empty(t, seen[2].Limit)
+	}
+
+	release := func(space string, num int, created string) string {
+		return fmt.Sprintf(`{"Release":{"SpaceID":%q,"ReleaseNum":%d,"CreatedAt":%q}}`, space, num, created)
+	}
+	hub.raw[path] = "[" + strings.Join([]string{
+		release(id, 2, "2026-10-02T00:00:00Z"),
+		release(id, 7, "2026-10-01T00:00:00Z"),
+		release(id, 3, "2026-10-03T00:00:00Z"),
+		// The same number twice is not something the server sends; cub
+		// orders such a pair by when each was created, latest first.
+		release(id, 3, "2026-10-04T00:00:00Z"),
+	}, ",") + "]"
+	out, err := reader.ReleaseListJSON(ctx, slug, Filter{})
+	require.NoError(t, err)
+	var listed []struct {
+		Release struct {
+			ReleaseNum int
+			CreatedAt  string
+		}
+	}
+	require.NoError(t, json.Unmarshal(out, &listed))
+	var order []string
+	for _, entry := range listed {
+		order = append(order, fmt.Sprintf("%d@%s", entry.Release.ReleaseNum, entry.Release.CreatedAt[:10]))
+	}
+	require.Equal(t, []string{"7@2026-10-01", "3@2026-10-04", "3@2026-10-03", "2@2026-10-02"}, order)
+
+	for what, tc := range map[string]struct {
+		body string
+		want Kind
+		says string
+	}{
+		"a release of another space": {"[" + release(elsewhere, 1, "2026-10-01T00:00:00Z") + "]", KindMalformed, "from another space"},
+		"an entry with no release":   {`[{"Space":{}}]`, KindMalformed, "an entry with no release"},
+		"a page that is not the API": {`<html>sign in</html>`, KindMalformed, "no release list"},
+	} {
+		hub.raw[path] = tc.body
+		out, err := reader.ReleaseListJSON(ctx, slug, Filter{})
+		require.Equal(t, tc.want, KindOf(err), what)
+		require.ErrorContains(t, err, tc.says, what)
+		require.Nil(t, out, what)
+	}
+	hub.raw[path], hub.more[path] = "["+release(id, 1, "2026-10-01T00:00:00Z")+"]", true
+	_, err = reader.ReleaseListJSON(ctx, slug, Filter{})
+	require.Equal(t, KindIncomplete, KindOf(err))
+	delete(hub.more, path)
+	delete(hub.raw, path)
+
+	// The endpoint is under the space, so a space ID that names no space gets
+	// a 404. That is the space missing, not the endpoint.
+	hub.status["/api/space/"+elsewhere+"/release"] = http.StatusNotFound
+	_, err = reader.ReleaseListJSON(ctx, elsewhere, Filter{})
+	require.Equal(t, KindNotFound, KindOf(err))
+	require.ErrorContains(t, err, "no space with ID")
+	// A 404 for a space that exists is the endpoint, whichever way the space
+	// was named.
+	hub.status[path] = http.StatusNotFound
+	for _, name := range []string{slug, id} {
+		_, err = reader.ReleaseListJSON(ctx, name, Filter{})
+		require.Equal(t, KindFailed, KindOf(err), name)
+		require.ErrorContains(t, err, "no such endpoint", name)
+	}
+	// And a rejected filter keeps the server's reason.
+	hub.status[path], hub.statusBody = http.StatusBadRequest, `{"Message":"unrecognized attribute name `+"`Nope`"+`"}`
+	_, err = reader.ReleaseListJSON(ctx, slug, Filter{Where: "Nope = 1"})
+	require.ErrorContains(t, err, "the server rejected the request (HTTP 400): unrecognized attribute name")
+}
+
+// #758: unit events are bare objects, listed for a whole space at the
+// organization's endpoint with the space AND-ed on as cub writes it, or for
+// one Unit at that Unit's endpoint. Either way cub prints the newest first.
+func TestUnitEventListsOfASpaceAndOfOneUnit(t *testing.T) {
+	hub, slug, id := hubOfTheConnectedLane(t)
+	hub.otherLists = true
+	reader := hub.reader(Options{})
+	ctx := context.Background()
+	const elsewhere = "11111111-2222-4333-8444-555555555555"
+	var unit struct{ Slug, UnitID string }
+	require.NoError(t, json.Unmarshal(hub.units[0]["Unit"], &unit))
+	hub.units = hub.units[:1]
+
+	event := func(space, unitID string, num int, created string) string {
+		return fmt.Sprintf(`{"SpaceID":%q,"UnitID":%q,"UnitEventNum":%d,"CreatedAt":%q}`, space, unitID, num, created)
+	}
+	numbers := func(out []byte) (order []int) {
+		var listed []struct{ UnitEventNum int }
+		require.NoError(t, json.Unmarshal(out, &listed))
+		for _, entry := range listed {
+			order = append(order, entry.UnitEventNum)
+		}
+		return order
+	}
+	threeEvents := "[" + strings.Join([]string{
+		event(id, unit.UnitID, 1, "2026-10-01T00:00:00Z"),
+		event(id, unit.UnitID, 3, "2026-10-03T00:00:00Z"),
+		event(id, unit.UnitID, 2, "2026-10-02T00:00:00Z"),
+	}, ",") + "]"
+
+	t.Run("of a space", func(t *testing.T) {
+		const path = "/api/unit_event"
+		before := len(hub.requests())
+		out, err := reader.UnitEventListJSON(ctx, slug, Filter{Where: "CreatedAt > '2026-10-01T00:00:00Z'"})
+		require.NoError(t, err)
+		require.Equal(t, "[]\n", string(out))
+		seen := hub.requests()[before:]
+		require.Len(t, seen, 2)
+		require.Equal(t, path, seen[1].Path)
+		// cub's addSpaceIDToWhereClause: the filter, then the space.
+		require.Equal(t, "CreatedAt > '2026-10-01T00:00:00Z' AND SpaceID = '"+id+"'", seen[1].Where)
+		require.Empty(t, seen[1].Limit)
+		require.Empty(t, hub.includes[before+1], "cub asks for no expansion of a unit event")
+		before = len(hub.requests())
+		_, err = reader.UnitEventListJSON(ctx, id, Filter{})
+		require.NoError(t, err)
+		require.Equal(t, "SpaceID = '"+id+"'", hub.requests()[before].Where)
+
+		defer delete(hub.raw, path)
+		hub.raw[path] = threeEvents
+		out, err = reader.UnitEventListJSON(ctx, slug, Filter{})
+		require.NoError(t, err)
+		require.Equal(t, []int{3, 2, 1}, numbers(out))
+
+		// An event has no envelope, so one that is empty or null has no
+		// space, and that is not this space.
+		for what, body := range map[string]string{
+			"an event of another space": "[" + event(elsewhere, unit.UnitID, 1, "2026-10-01T00:00:00Z") + "]",
+			"an empty event":            `[{}]`,
+			"a null event":              `[null]`,
+		} {
+			hub.raw[path] = body
+			out, err := reader.UnitEventListJSON(ctx, slug, Filter{})
+			require.Equal(t, KindMalformed, KindOf(err), what)
+			require.ErrorContains(t, err, "from another space", what)
+			require.Nil(t, out, what)
+		}
+		for _, scope := range []string{"", "*"} {
+			_, err := reader.UnitEventListJSON(ctx, scope, Filter{})
+			require.Equal(t, KindInvalidScope, KindOf(err))
+		}
+	})
+
+	t.Run("of one unit", func(t *testing.T) {
+		before := len(hub.requests())
+		out, err := reader.UnitEventsOfUnitJSON(ctx, slug, unit.Slug, Filter{Where: "CreatedAt > '2026-10-01T00:00:00Z'", Contains: "x"})
+		require.NoError(t, err)
+		require.Equal(t, "[]\n", string(out))
+		seen := hub.requests()[before:]
+		require.Len(t, seen, 3, "the space, the Unit, its events")
+		require.Equal(t, []string{"/api/space", "/api/unit"}, []string{seen[0].Path, seen[1].Path})
+		path := seen[2].Path
+		require.Contains(t, path, "/space/"+id+"/unit/"+unit.UnitID+"/")
+		require.Equal(t, "CreatedAt > '2026-10-01T00:00:00Z'", seen[2].Where, "the Unit is in the path, so the filter is sent as written")
+		require.Equal(t, "contains=x&where=CreatedAt+%3E+%272026-10-01T00%3A00%3A00Z%27", hub.queries[before+2])
+		// What cub sends for the same Unit and options.
+		where, contains := "CreatedAt > '2026-10-01T00:00:00Z'", "x"
+		_, err = reader.client.API.ListUnitEventsWithResponse(ctx, uuid.MustParse(id), uuid.MustParse(unit.UnitID),
+			&goclientnew.ListUnitEventsParams{Where: &where, Contains: &contains})
+		require.NoError(t, err)
+		last := len(hub.requests()) - 1
+		require.Equal(t, path, hub.requests()[last].Path)
+		require.Equal(t, hub.queries[before+2], hub.queries[last])
+
+		defer delete(hub.raw, path)
+		defer delete(hub.status, path)
+		defer delete(hub.more, path)
+		hub.raw[path] = threeEvents
+		out, err = reader.UnitEventsOfUnitJSON(ctx, slug, unit.Slug, Filter{})
+		require.NoError(t, err)
+		require.Equal(t, []int{3, 2, 1}, numbers(out))
+
+		for what, body := range map[string]string{
+			"an event of another unit":  "[" + event(id, elsewhere, 1, "2026-10-01T00:00:00Z") + "]",
+			"an event of another space": "[" + event(elsewhere, unit.UnitID, 1, "2026-10-01T00:00:00Z") + "]",
+			"an empty event":            `[{}]`,
+		} {
+			hub.raw[path] = body
+			out, err := reader.UnitEventsOfUnitJSON(ctx, slug, unit.Slug, Filter{})
+			require.Equal(t, KindMalformed, KindOf(err), what)
+			require.ErrorContains(t, err, "an event of another unit", what)
+			require.Nil(t, out, what)
+		}
+		hub.raw[path] = `<html>sign in</html>`
+		_, err = reader.UnitEventsOfUnitJSON(ctx, slug, unit.Slug, Filter{})
+		require.Equal(t, KindMalformed, KindOf(err))
+		hub.raw[path], hub.more[path] = threeEvents, true
+		_, err = reader.UnitEventsOfUnitJSON(ctx, slug, unit.Slug, Filter{})
+		require.Equal(t, KindIncomplete, KindOf(err))
+		hub.more[path] = false
+		delete(hub.raw, path)
+		hub.status[path], hub.statusBody = http.StatusBadRequest, `{"Message":"unrecognized attribute name `+"`Nope`"+`"}`
+		_, err = reader.UnitEventsOfUnitJSON(ctx, slug, unit.Slug, Filter{Where: "Nope = 1"})
+		require.ErrorContains(t, err, "the server rejected the request (HTTP 400): unrecognized attribute name")
+		hub.statusBody = ""
+
+		// A Unit that is not there is not a Unit with no events.
+		hub.units = nil
+		before = len(hub.requests())
+		_, err = reader.UnitEventsOfUnitJSON(ctx, slug, "no-such-unit", Filter{})
+		require.Equal(t, KindNotFound, KindOf(err))
+		require.Len(t, hub.requests()[before:], 2, "the events of a Unit that was not found are not asked for")
+		for _, name := range []string{"", "*"} {
+			_, err := reader.UnitEventsOfUnitJSON(ctx, slug, name, Filter{})
+			require.Equal(t, KindInvalidScope, KindOf(err))
+		}
+	})
 }
