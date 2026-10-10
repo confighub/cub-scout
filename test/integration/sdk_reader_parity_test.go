@@ -298,6 +298,79 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 			t.Errorf("cub listed space %q, which does not exist: %s", missing, listed)
 		}
 	}
+	// The other lists of a space (#758, batch A). Each entity is created
+	// through cub where this server lets it be, so that the list compared has
+	// something in it; a list that stays empty is still compared, and the
+	// artifact says which were which.
+	created := map[string]string{}
+	for kind, args := range map[string][]string{
+		"worker":      {"worker", "create", "--space", space, "parity-worker"},
+		"target":      {"target", "create", "--space", space, "parity-target"},
+		"changeset":   {"changeset", "create", "--space", space, "parity-changeset", "--description", "recorded for the SDK reader"},
+		"link":        {"link", "create", "--space", space, "parity-link", unit, other},
+		"attestation": {"attestation", "create", "--space", space, "--type", "SecurityReview", "--note", "recorded for the SDK reader"},
+	} {
+		if _, err := cubStdoutOnly(args...); err != nil {
+			created[kind] = "not created: " + err.Error()
+			t.Logf("%s could not be created on this server, so its list is compared empty: %v", kind, err)
+			continue
+		}
+		created[kind] = "created"
+	}
+	spaceLists := map[string]func(string, hubread.Filter) ([]byte, error){
+		"worker":      func(s string, f hubread.Filter) ([]byte, error) { return reader.WorkerListJSON(ctx, s, f) },
+		"target":      func(s string, f hubread.Filter) ([]byte, error) { return reader.TargetListJSON(ctx, s, f) },
+		"changeset":   func(s string, f hubread.Filter) ([]byte, error) { return reader.ChangeSetListJSON(ctx, s, f) },
+		"link":        func(s string, f hubread.Filter) ([]byte, error) { return reader.LinkListJSON(ctx, s, f) },
+		"attestation": func(s string, f hubread.Filter) ([]byte, error) { return reader.AttestationListJSON(ctx, s, f) },
+	}
+	listSizes := map[string]int{}
+	for kind, read := range spaceLists {
+		listedByCub, err := cubStdoutOnly(kind, "list", "--space", space, "-o", "json")
+		if err != nil {
+			t.Errorf("cub %s list: %v", kind, err)
+			continue
+		}
+		keep(kind+"-list.cub.json", listedByCub)
+		var entries []json.RawMessage
+		if err := json.Unmarshal(listedByCub, &entries); err != nil {
+			t.Errorf("cub %s list is not a JSON list: %v", kind, err)
+			continue
+		}
+		listSizes[kind] = len(entries)
+		for how, named := range map[string]string{"slug": space, "id": envelope.Unit.SpaceID} {
+			listedBySDK, err := read(named, hubread.Filter{})
+			if err != nil {
+				t.Errorf("%s list through the SDK, space by %s: %v (kind %s)", kind, how, err, hubread.KindOf(err))
+				continue
+			}
+			if how == "slug" {
+				keep(kind+"-list.sdk.json", listedBySDK)
+			}
+			listsEqual[kind+"-list-by-"+how] = bytes.Equal(listedByCub, listedBySDK)
+			if !bytes.Equal(listedByCub, listedBySDK) {
+				keep(kind+"-list.sdk-by-"+how+".json", listedBySDK)
+				t.Errorf("%s list, space by %s: the SDK reader's JSON is not what cub printed: %d bytes against %d; both are kept in %s", kind, how, len(listedBySDK), len(listedByCub), out)
+			}
+		}
+		// A filter that matches nothing is an empty list by both routes.
+		const nothing = "Slug = 'no-such-entity'"
+		if kind != "attestation" {
+			filteredByCub, cubErr := cubStdoutOnly(kind, "list", "--space", space, "-o", "json", "--where", nothing)
+			filteredBySDK, sdkErr := read(space, hubread.Filter{Where: nothing})
+			if (cubErr == nil) != (sdkErr == nil) || (cubErr == nil && !bytes.Equal(filteredByCub, filteredBySDK)) {
+				t.Errorf("%s list with a filter: cub %q (%v), the reader %q (%v)", kind, filteredByCub, cubErr, filteredBySDK, sdkErr)
+			}
+		}
+		// In a space that does not exist, neither route lists anything.
+		if listed, err := read("no-such-space-"+space, hubread.Filter{}); hubread.KindOf(err) != hubread.KindNotFound || listed != nil {
+			t.Errorf("%s list in a space that does not exist: kind %s, want %s (%v)", kind, hubread.KindOf(err), hubread.KindNotFound, err)
+		}
+	}
+	summary, _ := json.MarshalIndent(map[string]interface{}{"created": created, "entries": listSizes}, "", "  ")
+	keep("space-lists.json", append(summary, '\n'))
+	t.Logf("space lists: %s", summary)
+
 	// The filters narrow as they say: one Unit by its slug, the other by a
 	// pattern, and none for a slug that is not there. Equal bytes alone would
 	// also hold if both routes ignored the filter.

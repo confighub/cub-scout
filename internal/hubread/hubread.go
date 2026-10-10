@@ -453,9 +453,9 @@ func listJSON[T any](op string, list *[]T) ([]byte, error) {
 	return append(encoded, '\n'), nil
 }
 
-// UnitFilter narrows a unit list the way cub's flags of the same names do. The
-// zero value lists every Unit in the space.
-type UnitFilter struct {
+// Filter narrows a list the way cub's flags of the same names do. The zero
+// value lists everything in the space.
+type Filter struct {
 	// Where is a filter expression, passed to the server as the caller
 	// wrote it and AND-ed with the space, as cub composes it.
 	Where string
@@ -463,19 +463,52 @@ type UnitFilter struct {
 	Contains string
 }
 
-// UnitListJSON reads the Units of exactly one space and returns the list as the
-// JSON `cub unit list --space <space> -o json` prints, with --where and
-// --contains when filter has them. space is the space's slug or its canonical
-// UUID; an empty or "*" space is refused before any request, because a list
-// without a space spans the organization.
+// UnitFilter is Filter, under the name the unit list first had.
+type UnitFilter = Filter
+
+// The expansions each of cub's lists asks for, from the cub source at SDK core
+// v0.8.12. Tests compare what is sent here with what the SDK's own list
+// helpers send for the same options, and the Connected lane compares the
+// answers with cub's on a real server.
+const (
+	workerListInclude    = "SpaceID"
+	targetListInclude    = "SpaceID,TriggerFilterID,TriggerIDs"
+	changeSetListInclude = "SpaceID,StartTagID,EndTagID"
+	linkListInclude      = "SpaceID,FromUnitID,ToUnitID,ToSpaceID"
+)
+
+// listQuery is what one list sends: the filter with the space AND-ed on, the
+// expansions, and the search.
+type listQuery struct {
+	where    *string
+	include  *string
+	contains *string
+}
+
+// listAnswer is what one list call came back with.
+type listAnswer[T any] struct {
+	response apiResponse
+	list     *[]T
+	http     *http.Response
+	rejected *goclientnew.StandardErrorResponse
+}
+
+// spaceList reads the entities of one kind in exactly one space and returns
+// the list as the JSON `cub <kind> list --space <space> -o json` prints.
 //
-// As cub does without --limit, it asks for the whole list in one request. An
-// entry for a Unit in any other space is an error, never output, whatever the
-// filter says. What each entry carries of related entities (its upstream, its
-// links, its target) is what the server expands, as in cub's output, and is
-// not checked.
-func (r *Reader) UnitListJSON(ctx context.Context, space string, filter UnitFilter) ([]byte, error) {
-	const op = "unit list"
+// space is the space's slug or its canonical UUID; an empty or "*" space is
+// refused before any request, because a list without a space spans the
+// organization. As cub does without --limit, it asks for the whole list in
+// one request.
+//
+// A list is whole or it is an error. An entry with no entity, an entry from
+// any other space, a 200 that is not JSON and an answer the server marks as
+// cut short all fail the read; none becomes a shorter or an empty list. What
+// each entry carries of related entities is what the server expands, as in
+// cub's output, and is not checked.
+func spaceList[T any](ctx context.Context, r *Reader, kind, space string, filter Filter, include string,
+	call func(listQuery) (listAnswer[T], error), spaceOf func(*T) (uuid.UUID, bool)) ([]byte, error) {
+	op := kind + " list"
 	space = strings.TrimSpace(space)
 	if space == "" || space == "*" {
 		return nil, &Error{Kind: KindInvalidScope, Op: op, Message: "exactly one space is required"}
@@ -484,44 +517,47 @@ func (r *Reader) UnitListJSON(ctx context.Context, space string, filter UnitFilt
 	if scopeErr != nil {
 		return nil, scopeErr
 	}
-	where, include := cubapi.NewWhere(filter.Where).SpaceID(spaceID).String(), unitListInclude
-	params := &goclientnew.ListAllUnitsParams{Where: &where, Include: &include}
-	if contains := filter.Contains; contains != "" {
-		params.Contains = &contains
+	where := cubapi.NewWhere(filter.Where).SpaceID(spaceID).String()
+	query := listQuery{where: &where}
+	if include != "" {
+		query.include = &include
 	}
-	resp, err := r.client.API.ListAllUnitsWithResponse(ctx, params)
-	if failure := classify(ctx, op, err, resp); failure != nil {
+	if contains := filter.Contains; contains != "" {
+		query.contains = &contains
+	}
+	answer, err := call(query)
+	if failure := classify(ctx, op, err, answer.response); failure != nil {
 		// The server says what is wrong with a filter it rejects, and the
 		// caller wrote the filter, so that reason is passed on.
-		if resp != nil && resp.StatusCode() == http.StatusBadRequest && resp.JSON400 != nil {
-			if reason := printable(resp.JSON400.Message, 300); reason != "" {
+		if failure.Kind == KindFailed && answer.rejected != nil {
+			if reason := printable(answer.rejected.Message, 300); reason != "" {
 				failure.Message = "the server rejected the request (HTTP 400): " + reason
 			}
 		}
 		return nil, failure
 	}
 	// A 200 that is not JSON leaves no list at all. That is not an empty
-	// list: saying "no units" for a proxy's HTML page would be a false claim.
-	if resp.JSON200 == nil {
-		return nil, &Error{Kind: KindMalformed, Op: op, Message: "the response had no unit list"}
+	// list: saying "none" for a proxy's HTML page would be a false claim.
+	if answer.list == nil {
+		return nil, &Error{Kind: KindMalformed, Op: op, Message: "the response had no " + kind + " list"}
 	}
-	if failure := wholeList(op, resp.HTTPResponse); failure != nil {
+	if failure := wholeList(op, answer.http); failure != nil {
 		return nil, failure
 	}
 	// A space named by ID was not looked up, and a list filtered by an ID
 	// that names no space is empty too. cub says the space was not found;
-	// "no units" would be a claim about a space that does not exist.
-	if len(*resp.JSON200) == 0 && spaceSlug == "" {
+	// "none" would be a claim about a space that does not exist.
+	if len(*answer.list) == 0 && spaceSlug == "" {
 		if failure := r.spaceExists(ctx, spaceID); failure != nil {
 			return nil, failure
 		}
 	}
-	for i := range *resp.JSON200 {
-		switch found := (*resp.JSON200)[i].Unit; {
-		case found == nil:
-			return nil, &Error{Kind: KindMalformed, Op: op, Message: "the list has an entry with no unit"}
-		case found.SpaceID != spaceID:
-			message := fmt.Sprintf("the server returned a unit from another space for space %q", space)
+	for i := range *answer.list {
+		switch entrySpace, ok := spaceOf(&(*answer.list)[i]); {
+		case !ok:
+			return nil, &Error{Kind: KindMalformed, Op: op, Message: "the list has an entry with no " + kind}
+		case entrySpace != spaceID:
+			message := fmt.Sprintf("the server returned a %s from another space for space %q", kind, space)
 			if filter.Where != "" {
 				// The expression is sent as written. One that the server
 				// reads as an alternative to the space, not a narrowing
@@ -531,7 +567,132 @@ func (r *Reader) UnitListJSON(ctx context.Context, space string, filter UnitFilt
 			return nil, &Error{Kind: KindMalformed, Op: op, Message: message}
 		}
 	}
-	return listJSON(op, resp.JSON200)
+	return listJSON(op, answer.list)
+}
+
+// rejection is the server's own message for an HTTP 400, when it sent one.
+func rejection(status int, rejected *goclientnew.StandardErrorResponse) *goclientnew.StandardErrorResponse {
+	if status == http.StatusBadRequest {
+		return rejected
+	}
+	return nil
+}
+
+// UnitListJSON reads the Units of exactly one space and returns the list as the
+// JSON `cub unit list --space <space> -o json` prints, with --where and
+// --contains when filter has them. See spaceList for the scope and the
+// failure rules.
+func (r *Reader) UnitListJSON(ctx context.Context, space string, filter Filter) ([]byte, error) {
+	return spaceList(ctx, r, "unit", space, filter, unitListInclude,
+		func(q listQuery) (listAnswer[goclientnew.ExtendedUnit], error) {
+			resp, err := r.client.API.ListAllUnitsWithResponse(ctx, &goclientnew.ListAllUnitsParams{Where: q.where, Include: q.include, Contains: q.contains})
+			if resp == nil {
+				return listAnswer[goclientnew.ExtendedUnit]{}, err
+			}
+			return listAnswer[goclientnew.ExtendedUnit]{resp, resp.JSON200, resp.HTTPResponse, rejection(resp.StatusCode(), resp.JSON400)}, err
+		},
+		func(entry *goclientnew.ExtendedUnit) (uuid.UUID, bool) {
+			if entry.Unit == nil {
+				return uuid.Nil, false
+			}
+			return entry.Unit.SpaceID, true
+		})
+}
+
+// WorkerListJSON reads the workers of exactly one space, as
+// `cub worker list --space <space> -o json` prints them.
+func (r *Reader) WorkerListJSON(ctx context.Context, space string, filter Filter) ([]byte, error) {
+	return spaceList(ctx, r, "worker", space, filter, workerListInclude,
+		func(q listQuery) (listAnswer[goclientnew.ExtendedBridgeWorker], error) {
+			resp, err := r.client.API.ListAllBridgeWorkersWithResponse(ctx, &goclientnew.ListAllBridgeWorkersParams{Where: q.where, Include: q.include, Contains: q.contains})
+			if resp == nil {
+				return listAnswer[goclientnew.ExtendedBridgeWorker]{}, err
+			}
+			return listAnswer[goclientnew.ExtendedBridgeWorker]{resp, resp.JSON200, resp.HTTPResponse, rejection(resp.StatusCode(), resp.JSON400)}, err
+		},
+		func(entry *goclientnew.ExtendedBridgeWorker) (uuid.UUID, bool) {
+			if entry.BridgeWorker == nil {
+				return uuid.Nil, false
+			}
+			return entry.BridgeWorker.SpaceID, true
+		})
+}
+
+// TargetListJSON reads the targets of exactly one space, as
+// `cub target list --space <space> -o json` prints them.
+func (r *Reader) TargetListJSON(ctx context.Context, space string, filter Filter) ([]byte, error) {
+	return spaceList(ctx, r, "target", space, filter, targetListInclude,
+		func(q listQuery) (listAnswer[goclientnew.ExtendedTarget], error) {
+			resp, err := r.client.API.ListAllTargetsWithResponse(ctx, &goclientnew.ListAllTargetsParams{Where: q.where, Include: q.include, Contains: q.contains})
+			if resp == nil {
+				return listAnswer[goclientnew.ExtendedTarget]{}, err
+			}
+			return listAnswer[goclientnew.ExtendedTarget]{resp, resp.JSON200, resp.HTTPResponse, rejection(resp.StatusCode(), resp.JSON400)}, err
+		},
+		func(entry *goclientnew.ExtendedTarget) (uuid.UUID, bool) {
+			if entry.Target == nil {
+				return uuid.Nil, false
+			}
+			return entry.Target.SpaceID, true
+		})
+}
+
+// ChangeSetListJSON reads the change sets of exactly one space, as
+// `cub changeset list --space <space> -o json` prints them.
+func (r *Reader) ChangeSetListJSON(ctx context.Context, space string, filter Filter) ([]byte, error) {
+	return spaceList(ctx, r, "changeset", space, filter, changeSetListInclude,
+		func(q listQuery) (listAnswer[goclientnew.ExtendedChangeSet], error) {
+			resp, err := r.client.API.ListAllChangeSetsWithResponse(ctx, &goclientnew.ListAllChangeSetsParams{Where: q.where, Include: q.include, Contains: q.contains})
+			if resp == nil {
+				return listAnswer[goclientnew.ExtendedChangeSet]{}, err
+			}
+			return listAnswer[goclientnew.ExtendedChangeSet]{resp, resp.JSON200, resp.HTTPResponse, rejection(resp.StatusCode(), resp.JSON400)}, err
+		},
+		func(entry *goclientnew.ExtendedChangeSet) (uuid.UUID, bool) {
+			if entry.ChangeSet == nil {
+				return uuid.Nil, false
+			}
+			return entry.ChangeSet.SpaceID, true
+		})
+}
+
+// LinkListJSON reads the links of exactly one space, as
+// `cub link list --space <space> -o json` prints them. cub lists links
+// through the search endpoint, and so does this.
+func (r *Reader) LinkListJSON(ctx context.Context, space string, filter Filter) ([]byte, error) {
+	return spaceList(ctx, r, "link", space, filter, linkListInclude,
+		func(q listQuery) (listAnswer[goclientnew.ExtendedLink], error) {
+			resp, err := r.client.API.SearchListLinksWithResponse(ctx, &goclientnew.SearchListLinksParams{Where: q.where, Include: q.include, Contains: q.contains})
+			if resp == nil {
+				return listAnswer[goclientnew.ExtendedLink]{}, err
+			}
+			return listAnswer[goclientnew.ExtendedLink]{resp, resp.JSON200, resp.HTTPResponse, rejection(resp.StatusCode(), resp.JSON400)}, err
+		},
+		func(entry *goclientnew.ExtendedLink) (uuid.UUID, bool) {
+			if entry.Link == nil {
+				return uuid.Nil, false
+			}
+			return entry.Link.SpaceID, true
+		})
+}
+
+// AttestationListJSON reads the attestations of exactly one space, as
+// `cub attestation list --space <space> -o json` prints them.
+func (r *Reader) AttestationListJSON(ctx context.Context, space string, filter Filter) ([]byte, error) {
+	return spaceList(ctx, r, "attestation", space, filter, "",
+		func(q listQuery) (listAnswer[goclientnew.ExtendedAttestation], error) {
+			resp, err := r.client.API.ListAllAttestationsWithResponse(ctx, &goclientnew.ListAllAttestationsParams{Where: q.where, Include: q.include, Contains: q.contains})
+			if resp == nil {
+				return listAnswer[goclientnew.ExtendedAttestation]{}, err
+			}
+			return listAnswer[goclientnew.ExtendedAttestation]{resp, resp.JSON200, resp.HTTPResponse, rejection(resp.StatusCode(), resp.JSON400)}, err
+		},
+		func(entry *goclientnew.ExtendedAttestation) (uuid.UUID, bool) {
+			if entry.Attestation == nil {
+				return uuid.Nil, false
+			}
+			return entry.Attestation.SpaceID, true
+		})
 }
 
 // SpaceListJSON reads the organization's spaces and returns the list as the
