@@ -136,7 +136,7 @@ the same check made without `cub`:
 | A stored token for the active context | The same, through the credential `cub` would use; none is "no ConfigHub session this machine can use" |
 | The token has not expired, by its own `exp` claim | The same, before any request |
 | The server accepts it: one GET of the caller's own membership | The same GET; a 200 that names no user and no organization is not accepted |
-| This `cub` is not older than the server by a minor version | The SDK cub-scout was built with is not older than the server by a minor version. A server ahead is refused; the error says to upgrade cub-scout or to read through an up-to-date `cub` with `CUB_SCOUT_CONFIGHUB_READER=cub`. An SDK ahead of the server is allowed, with a warning on stderr, as `cub` does |
+| This `cub` is not older than the server by a minor version | The SDK cub-scout was built with, which `cub-scout version` prints, is not older than the server by a minor version. A server ahead is refused; the error says to upgrade cub-scout or to read through an up-to-date `cub` with `CUB_SCOUT_CONFIGHUB_READER=cub`. An SDK ahead of the server is allowed, with a warning on stderr, as `cub` does |
 
 A refusal answers to the same reasons by either route (not authenticated, or
 a version problem), in words that do not mention a `cub` check that was not
@@ -232,7 +232,7 @@ space's links could not be read; it says they could not be read.
   is sent without a credential.
 - **Each failure keeps its reason**: `invalid_scope`, `not_configured`,
   `unauthorized`, `forbidden`, `not_found`, `ambiguous`, `timeout`,
-  `canceled`, `malformed`, `refused`, `incomplete`, `too_large`, `request_failed`. A Unit that does not
+  `canceled`, `malformed`, `refused`, `incomplete`, `too_large`, `version_skew`, `request_failed`. A Unit that does not
   exist is an empty list and `not_found`; an HTTP 404 is a missing endpoint,
   so it is `request_failed` with advice to check the server URL, never "no
   such Unit". No message is built
