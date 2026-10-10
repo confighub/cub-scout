@@ -183,8 +183,8 @@ var watchCmd = &cobra.Command{
 Event types:
   - resource.discovered
   - resource.deleted
-  - collection.partial (unreadable inventory lists; v2.14 candidate)
-  - cluster.observed (opt-in --cluster-identity polling evidence; v2.14 candidate)
+  - collection.partial (unreadable inventory lists; opt-in preview)
+  - cluster.observed (opt-in --cluster-identity polling evidence; opt-in preview)
   - ownership.changed
   - drift.detected
   - scan.finding

@@ -4,7 +4,7 @@ User question: "Can two contexts with the same label still be kept distinct,
 and what did reading their identity cost?"
 
 This foundation for [#599](https://github.com/confighub/cub-scout/issues/599)
-has an **unreleased v2.14 candidate** opt-in map integration. Existing default
+has an **opt-in preview** opt-in map integration. Existing default
 command request budgets remain unchanged. It complements the wider
 [observation request baseline](../observation-budget/).
 
@@ -77,7 +77,7 @@ below exposes supported instance evidence; it is not a fleet membership model,
 ownership proof, ConfigHub Target identity or a current-state assertion.
 They do not complete #599 or its CLI/MCP/TUI and genuine acceptance gates.
 
-## Opt-in map identity (v2.14 candidate, unreleased)
+## Opt-in map identity (preview)
 
 In the candidate source, `./cub-scout map list --cluster-identity --format json`
 returns a separate `map-list-cluster-identity.v1` envelope. The matching MCP

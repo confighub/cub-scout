@@ -58,7 +58,7 @@ dependency. If an old cask is installed, run
 `brew uninstall --cask confighub/tap/cub-scout` first.
 
 
-Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.13.4`, then
+Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.14.0`, then
 `cub scout doctor`. [Installation and verified downloads](docs/getting-started/install.md)
 cover macOS, Linux, Windows, and tagged source builds.
 
@@ -102,13 +102,13 @@ Cub-scout helps users answer questions about k8s and GitOps clusters in one plac
 | Is delegated delivery healthy? | `doctor --with-confighub`, `gitops status`, MCP `gitops_status`, `map deployers`, `map activity --with-confighub`, `trace` | Controller-reported backend, transport, source/build/apply/sync stages, first-class aggregate delivery resources, scope-level delivery rollups, ConfigHub delivery timeline rows, exact live-status joins on matching Argo Application activity rows, reason/message, and explicit evidence gaps when status is incomplete. |
 | Which controller families did cub-scout actually inspect? | `gitops status`, MCP `gitops_status` | `controllerCoverage[]` records Flux, Argo CD, ConfigHub, Sveltos, and Modelplane coverage as `found`, `not_found`, `partial`, or `unreadable`, including checked kinds, observed kinds, counts, and RBAC/list omissions. |
 | Which deployers sync on their own, revert manual changes, prune, or apply with non-default options? | `gitops settings`, `gitops settings --setting self-heal=off`, MCP `gitops_settings`, `map deep-dive` | **v2.13.3 (preview):** the settings each Argo CD Application and Flux Kustomization and HelmRelease declares, inverted so each setting lists the deployers that have each value, grouped by project (Argo CD) or namespace (Flux). An absent field is `unset` with the controller default named, not a declared `off`; a kind that could not be listed is reported as not read, not as empty. Declared settings only: no verdict, and no claim that a controller acted on them. From v2.13.4 also MCP `gitops_settings`, which returns a compact summary by default. |
-| What is under this app-of-apps, at every level, and which child Application has a given resource? | `gitops tree app/<name>`, `gitops tree app/<name> --kind Deployment`, `--sync OutOfSync` | **Unreleased:** each Argo CD Application with its settings and state, the Applications it delivers, walked the same way, and the resources each reports. A child that is missing, unreadable or reports nothing is kept and marked. Resources are what Argo CD reports, not checked against the cluster, and carry no health. Flux and other tools: #856 to #861 |
+| What is under this app-of-apps, at every level, and which child Application has a given resource? | `gitops tree app/<name>`, `gitops tree app/<name> --kind Deployment`, `--sync OutOfSync` | Each Argo CD Application with its settings and state, the Applications it delivers, walked the same way, and the resources each reports. A child that is missing, unreadable or reports nothing is kept and marked. Resources are what Argo CD reports, not checked against the cluster, and carry no health. Flux and other tools: #856 to #861 |
 | Is this Modelplane resource backed by Crossplane composition? | `map list --format json`, `trace`, `watch`, `bot`, `receipt verify`, attribution JSON | Modelplane remains the higher-level owner when its signals are stronger, while `ownerEvidence`, `owner.evidence`, trace messages, and `predicate.evidence.platformSubstrate` surface Crossplane composite, claim, composition-resource, and verified field-manager evidence as substrate context. |
 | What Kubernetes config does ConfigHub already hold for this space or target? | MCP `confighub_k8s_types`, MCP `confighub_k8s_resources` | Read-only, Resource-backed intended-config reads through `cub k8s types/get`: type surveys, stored resource rows or YAML, custom-resource discovery, explicit space/target scoping, and `where` / `where_resource` filters before touching live cluster APIs. |
 | Which indexed resources match a fleet-wide predicate? | MCP `confighub_resources` | Read-only ConfigHub Resource entity queries through `cub resource list`: server-side `ResourceType`, `ResourceName`, `TargetID`, `Unit.*`, `Space.*`, and `Data.*` predicates, optional views/selects/raw data, and explicit space scoping for broad explorer questions. |
 | Could a same-name application inherit another application's delivery status? | `map activity --with-confighub --format json` | Joins require an observed Application Space ID matching the reported Space ID plus a unique, exact Application name in the selected non-wildcard space. Missing/conflicting metadata and ambiguous names/statuses remain correlation omissions; the Argo-owned result is preserved. |
 | What release or event triggered this delivery attempt? | `map activity --with-confighub`, `doctor --with-confighub`, `gitops status --with-confighub`, `trace --with-confighub`, `explain --with-confighub`, `history`, MCP `confighub_releases`, MCP `confighub_unit_events` | Bounded ConfigHub release and unit-event evidence for a known space/time window, including release ids, digests, targets, unit events, timestamps, exact resource-correlation keys when available, activity timeline rows, and structured omissions when history cannot be joined safely. |
-| Which OCI source or release did connected evidence actually observe? | `trace --with-confighub`, `explain --with-confighub`, single-resource `receipt verify --with-confighub` | **UNRELEASED source branch:** OCI sources recognize the configured registry's `/space/<slug>` form and the legacy target form. An exact release join requires a fresh source/status binding, agreement with the active ConfigHub registry advertised through `/api/info`, and the reported source revision in `Release.ManifestDigest`. A desired URL pin is not observed source evidence, `Release.Digest` is bundle content, and a target-only row is scope context rather than release execution. |
+| Which OCI source or release did connected evidence actually observe? | `trace --with-confighub`, `explain --with-confighub`, single-resource `receipt verify --with-confighub` | OCI sources recognize the configured registry's `/space/<slug>` form and the legacy target form. An exact release join requires a fresh source/status binding, agreement with the active ConfigHub registry advertised through `/api/info`, and the reported source revision in `Release.ManifestDigest`. A desired URL pin is not observed source evidence, `Release.Digest` is bundle content, and a target-only row is scope context rather than release execution. |
 | Did evented delivery feedback report back, and is the report fresh? | `map activity --with-confighub`, `doctor --with-confighub`, `gitops status --with-confighub`, `trace --with-confighub`, `explain --with-confighub`, MCP `confighub_live_status` | Read-only parsing of ConfigHub live-status writeback, with `observedAt`, freshness, sync status, operation phase, observed revision, delivery verdict, separate application-health verdict, scope-level rollups, timeline rows, exact joins onto matching Argo Application activity rows, and object-level matches only when exact space plus app/unit identity is present. **v2.10.1:** unknown or future timestamps cannot justify `PASS`. Earlier versions have a [documented freshness gap](docs/reference/explorer-comparison.md#current-feedback-verdict-limit). |
 | Is the in-cluster event consumer present and healthy? | `map activity --with-confighub`, `doctor --with-confighub`, `gitops status --with-confighub`, `trace --with-confighub`, `explain --with-confighub`, `map deployers` | Conservative, label-selected detection of the known event-consumer Deployment shape across namespaces when allowed, with ready/desired replicas, activity timeline rows, and `doctor` top issues when an observed consumer is unhealthy; absence or RBAC narrowing becomes an omission, not a claim that no eventing exists. |
 | Can I trust a reported success or failure when its timestamp is missing, future, or old? | Connected `gitops status`, `doctor`, `map activity`, `trace`, `explain`, MCP `confighub_live_status`, single-resource receipts | **v2.10.1:** missing/invalid/zero/future timestamps yield `INCONCLUSIVE`; stale reports yield `WATCH`, including old failures. The original report, timestamp and a freshness omission stay visible. Re-reading an unchanged report does not renew it; the next step is a current controller/workload read. [Cases and proof](examples/live-delivery-observability/#trusting-feedback-freshness). |
@@ -167,7 +167,17 @@ coalescing, opt-in watch-backed idle observation, and a new `resource.deleted`
 event), plus local bot images built from verified release archives. See the
 [release notes](docs/releases/v2.11.0.md).
 
-**v2.13.4 is the latest release.** It makes `gitops settings` available to
+**v2.14.0 is the latest release.** cub-scout now reads ConfigHub through the
+ConfigHub SDK and checks the session the same way, so a read-only command
+whose reads are covered needs no `cub` binary; `cub` is still needed to log
+in, for every write, and for the reads not yet moved.
+`CUB_SCOUT_CONFIGHUB_READER=cub` reads through `cub` as before. A new preview
+command, `gitops tree`, shows what is under each Argo CD Application to any
+depth. No cost or time saving for an agent is claimed for either. The work
+that "v2.14" used to name, the P4 acceptance gates, moved to v2.15 and is not
+claimed. See the [v2.14.0 release notes](docs/releases/v2.14.0.md).
+
+**v2.13.4** made `gitops settings` available to
 agents: an MCP tool, `gitops_settings`, and a compact JSON `--view summary`. In
 the eval cases that came with it, an agent that already held the raw `kubectl`
 export never called the tool and gained nothing, while an agent with cub-scout
@@ -280,7 +290,7 @@ Each command's **Inputs** column tells you exactly what it needs — cluster onl
 | `patterns` (`detect` / `explain` / `list`) | Pattern-engine catalogue + matched findings | cluster *or* file |
 | `gitops status` | GitOps/controller pipeline health across Flux, Argo, Sveltos, and Modelplane controllers | cluster |
 | `gitops settings` | Declared sync, self-heal, prune and apply settings of Argo CD Applications and Flux Kustomizations and HelmReleases, grouped by project or namespace (preview since v2.13.3) | cluster |
-| `gitops tree` | What is under each deployer, to any depth: child deployers and the resources each reports, with settings and state (Argo CD; unreleased) | cluster |
+| `gitops tree` | What is under each deployer, to any depth: child deployers and the resources each reports, with settings and state (Argo CD; a preview since v2.14.0) | cluster |
 
 ### Compare — intended vs actual
 
@@ -406,8 +416,8 @@ For direct downloads and tagged source builds, use the
 `github.com/confighub/cub-scout/v2`; proxy installation via
 `go install github.com/confighub/cub-scout/v2/cmd/cub-scout@latest` installs
 the latest tagged 2.x module. For a pinned install use
-`go install github.com/confighub/cub-scout/v2/cmd/cub-scout@v2.13.4`. Container command
-`docker run ghcr.io/confighub/cub-scout:v2.13.4 version` still needs registry
+`go install github.com/confighub/cub-scout/v2/cmd/cub-scout@v2.14.0`. Container command
+`docker run ghcr.io/confighub/cub-scout:v2.14.0 version` still needs registry
 access verification (#520); the published image is Linux amd64 only.
 `kubectl krew install cub-scout` is not a verified distribution path; use the
 `kubectl-cub_scout` binary included in the archives or Homebrew instead.

@@ -171,7 +171,7 @@ cub-scout map list [flags]
 | `--names-only` | Show names only |
 | `--summary` | Show counts by owner and kind (after filters) instead of the entries |
 | `--ownership-evidence` | Emit the versioned ownership-only diagnostics envelope with detector sources and normalized list omissions; cannot be combined with `--summary`, `--count`, or `--names-only` |
-| `--cluster-identity` | v2.14 candidate, unreleased: admit one extra bounded Namespace GET and emit a separate cluster/object-instance identity envelope with identity-only cost and inventory omissions; excludes compact and ownership-only modes |
+| `--cluster-identity` | opt-in preview: admit one extra bounded Namespace GET and emit a separate cluster/object-instance identity envelope with identity-only cost and inventory omissions; excludes compact and ownership-only modes |
 | `--explain` | Show explanatory content |
 | `--kube-context` | Use this exact kubeconfig context for this inventory read; missing or empty names fail without fallback |
 
@@ -1094,7 +1094,7 @@ At least one destination is required: `--webhook` and/or `--output-file`.
 
 - `resource.discovered`
 - `resource.deleted`
-- `collection.partial` (unreleased v2.14 candidate: normalized inventory omissions; no object freshness or receipt)
+- `collection.partial` (opt-in preview: normalized inventory omissions; no object freshness or receipt)
 - `ownership.changed`
 - `drift.detected`
 - `scan.finding`
@@ -1819,13 +1819,12 @@ Other known v0.2 gaps:
 
 ---
 
-The Unit is read through the ConfigHub SDK, not by running `cub unit get`. So
-is every `cub unit get` for a Unit named by slug, every plain or filtered
-`cub unit list` for one space, and `cub space list`. Set
-`CUB_SCOUT_CONFIGHUB_READER=cub` to read them through `cub` instead. This
-default is unreleased, and `cub` is still required for the session check; see
-[ConfigHub SDK reader](confighub-sdk-reader.md) for what it covers, what it
-guarantees and what was measured.
+The Unit is read through the ConfigHub SDK, not by running `cub unit get`, and
+so is the session check that comes first. Since v2.14.0 that is the default
+for most ConfigHub reads, and a command whose reads are all covered needs no
+`cub` binary. Set `CUB_SCOUT_CONFIGHUB_READER=cub` to read through `cub`
+instead, as v2.13 did. See [ConfigHub SDK reader](confighub-sdk-reader.md) for
+what it covers, what it guarantees and what was measured.
 
 ## compare drift
 
@@ -3007,7 +3006,7 @@ See the [live example](../../examples/delivery-settings/) and the
 
 Show what is under each GitOps deployer, to any depth: the deployers it
 delivers, the deployers those deliver, and the resources each one reports.
-Unreleased; the JSON shape may still change.
+A preview since v2.14.0: the JSON shape may still change.
 
 ```bash
 cub scout gitops tree [<kind>/<name>] [flags]     # as a cub plugin
@@ -3837,7 +3836,7 @@ evidence. `--summary` intentionally omits per-object detector evidence.
 API/prefix/TUI flags require `--recording`. See the [offline example](../../examples/recorded-inventory/).
 
 
-### Recorded ownership pages (2.14 candidate)
+### Recorded ownership pages (opt-in preview)
 
 Add `--page-size 1..500` to recorded `map list` in ASCII, JSON or Markdown.
 Continue with `--cursor` using the response's next cursor, the same input bytes,
@@ -3849,7 +3848,7 @@ MCP uses `page_size` and `cursor` and also returns `structuredContent.data`;
 is unchanged. See the [authored example](../../examples/recorded-inventory/#recorded-pages-214-candidate).
 
 
-### Recorded report JSON budget (2.14 candidate)
+### Recorded report JSON budget (opt-in preview)
 
 Recorded `map list --max-report-json-bytes 1..4194304` checks canonical report
 JSON data before ASCII/JSON/Markdown rendering or TUI presentation. MCP uses
@@ -3861,16 +3860,16 @@ input work or agent cost; MCP can duplicate report data in text and structured
 content. Defaults are unchanged. See the
 [example](../../examples/recorded-inventory/#report-json-budget-214-candidate).
 
-### Watch/bot polling identity (2.14 candidate)
+### Watch/bot polling identity (opt-in preview)
 
 `watch --cluster-identity` and `bot --cluster-identity` emit verified cluster
 and object-instance evidence or omissions, with one bounded Namespace GET per
 polling cycle. Identity-only cost is repeated on events; count once on
 `cluster.observed`. Owner/severity filters do not hide that cycle event.
 Defaults remain unchanged; `--watch-backed` is refused pending original-age
-proof. See [event contract](watch-events.md#polling-identity-214-candidate).
+proof. See [event contract](watch-events.md#polling-identity-opt-in-preview).
 
-### Graph/snapshot explicit context (2.14 candidate)
+### Graph/snapshot explicit context (opt-in preview)
 
 `graph export --kube-context NAME` and `snapshot --kube-context NAME` capture one
 strict Kubernetes config. Empty/missing explicit names refuse without fallback
@@ -3954,7 +3953,7 @@ Kustomization or Application that delivers to it is failing, and that is the
 state this makes visible. A link that reports no status at all, such as an
 Argo CD source, is not treated as failing.
 
-### StatefulSet image coverage (v2.14 candidate, #795)
+### StatefulSet image coverage (opt-in preview, #795)
 
 `release check --check-running-image` also checks `apps/v1` StatefulSets.
 The opt-in report adds `runningImage.workloads[].statefulSet`: UID, generation,

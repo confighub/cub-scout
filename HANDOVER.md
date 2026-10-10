@@ -7,10 +7,15 @@
 the current state, and [v2.13.3](#v2133-published-2026-10-09) and
 [v2.13.2](#v2132-published-2026-10-07) before it. The 2026-10-06 checkpoint below is kept as written.
 
-**After v2.13.4, unreleased on main: SDK reads are no longer deferred.** Where
-this file says "SDK #758 stays deferred", that was true when written. See
-[ConfigHub SDK reads](#confighub-sdk-reads--2026-10-10) at the end, and
-[the readiness ledger](docs/releases/v2.14-readiness.md) for everything since.
+**2026-10-10: v2.14 was renumbered, and v2.14.0 is prepared.** The maintainer
+decided to cut v2.14.0 for the ConfigHub SDK reads and `gitops tree`, and to
+move the unmet P4 gates to v2.15. See
+[v2.14.0 and the renumbering](#v2140-and-the-renumbering--2026-10-10) at the
+end of this file; it supersedes "Maintainer reaffirmed full v2.14 scope" below.
+Where this file says "SDK #758 stays deferred", that was true when written;
+see [ConfigHub SDK reads](#confighub-sdk-reads--2026-10-10). Everything since
+is in [the readiness ledger](docs/releases/v2.15-readiness.md), which was
+`v2.14-readiness.md`.
 
 **v2.13.1 is published**, source `277d7ad8`, with tagged full Go tests and
 packaging passing. See [published verification](docs/releases/v2.13.1.md).
@@ -83,6 +88,10 @@ Standalone supplied-manifest diagnosis remains useful without ConfigHub; generat
 render, ConfigHub retains intent/governance, controllers reconcile, Scout observes.
 
 ## Maintainer reaffirmed full v2.14 scope — 2026-10-06
+
+**Superseded on 2026-10-10** by
+[v2.14.0 and the renumbering](#v2140-and-the-renumbering--2026-10-10): these
+gates now stand before v2.15.0. Kept as written.
 
 The maintainer rejected a smaller v2.14 release: “No keep the scope and add those
 before 2.14.” Controller depth, six-surface conformance, identity/cost, admitted
@@ -1959,3 +1968,35 @@ Nothing here is released; the published baseline is still v2.13.4.
 The reference is [docs/reference/confighub-sdk-reader.md](docs/reference/confighub-sdk-reader.md).
 Found on the way and fixed: `views project` read shapes `cub` does not print
 (#852, #854).
+
+## v2.14.0 and the renumbering — 2026-10-10
+
+Asked how to number the release that carries the SDK reads and `gitops tree`,
+and shown that the repo defined v2.14 as the full P4 scope with his own
+instruction of 2026-10-06 not to move its gates, the maintainer chose:
+**v2.14.0 now, P4 gates to v2.15.**
+
+- **v2.14.0** is the SDK route as the default for ConfigHub reads, the session
+  check without `cub`, `gitops tree`, and the `views project` fix. Its notes
+  are [docs/releases/v2.14.0.md](docs/releases/v2.14.0.md). It claims no P4
+  gate.
+- **The P4 gates stand before v2.15.0**: six-surface conformance (#596),
+  controller and workload acceptance (#594, #602, #584), cluster identity and
+  request cost (#599), output budgets (#604), the paired benchmark (#519,
+  #603) and the remaining P4 issues under #645. Scope, order and proof
+  requirements are unchanged. The ledger is
+  [docs/releases/v2.15-readiness.md](docs/releases/v2.15-readiness.md); the old
+  path is a pointer.
+- **P5's number is not decided.** The plan had P5 as v2.15. It keeps its scope
+  and its place after P4; whether it shares v2.15 or becomes v2.16 is the
+  maintainer's to say. Do not assume either.
+- The features the docs called "unreleased v2.14 candidates" shipped in
+  v2.13.x. They are in v2.14.0 as opt-in previews and are labelled so in the
+  reference pages. `skills/` still says "2.14 candidate" in one catalog file:
+  the frozen benchmark pins that tree, so it was not edited.
+- Older sections of this file, the sequence doc and the execution plan say
+  "v2.14" for the P4 work. They are records and were left as written, each
+  with a note at the top. Read v2.15 for anything not yet accepted.
+- Publishing is the maintainer's step: the notes pull request is left
+  unmerged until he says to tag, and the tag is pushed only on his word.
+

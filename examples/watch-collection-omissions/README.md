@@ -1,6 +1,6 @@
 # Watch collection omissions
 
-Unreleased v2.14 candidate for [#768](https://github.com/confighub/cub-scout/issues/768).
+Opt-in preview for [#768](https://github.com/confighub/cub-scout/issues/768).
 A denied inventory LIST is missing evidence, so watch/bot must not report the
 previously returned resource as deleted.
 
@@ -84,7 +84,7 @@ as do targeted denied/unreachable endpoint controls with zero ambient requests.
 The wider live denial/recovery/informer, scanner-coverage, identity/cost and
 six-surface gates remain required before v2.14.
 
-## Polling identity (2.14 candidate)
+## Polling identity (opt-in preview)
 
 Watch and local bot now share the map instance-identity model (#789):
 

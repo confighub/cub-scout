@@ -10,7 +10,8 @@ command (v2.13.3) and as the MCP tool `gitops_settings` with a compact
 an agent and where it did not. No skill mentions the tool: the frozen benchmark
 pins the skills tree ([#839](https://github.com/confighub/cub-scout/issues/839)).
 [v2.13.2](docs/releases/v2.13.2.md), a correction release, preceded them. Start from
-the current handover for v2.14 reconciliation and deferred acceptance work.
+the current handover for the deferred acceptance work, which moved from v2.14
+to v2.15 on 2026-10-10 ([v2.14.0 notes](docs/releases/v2.14.0.md)).
 
 
 For new configuration/generator work, start with the

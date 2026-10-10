@@ -1,5 +1,15 @@
 # Delivery plan to cub scout 3.0
 
+> **Renumbered on 2026-10-10.** The maintainer decided to cut v2.14.0 for the
+> ConfigHub SDK reads and `gitops tree` ([notes](releases/v2.14.0.md)) and moved
+> the unmet P4 gates to v2.15. Where this page says a P4 gate is required "for
+> v2.14" or "before v2.14", read v2.15: six-surface conformance (#596),
+> controller and workload acceptance, the paired benchmark and the remaining
+> P4 issues are open and are not claimed by v2.14.0. The scope and its order
+> are unchanged. P5, which this plan had numbered v2.15, keeps its scope and
+> its place after P4; whether it shares v2.15 or becomes v2.16 is not decided.
+> Current gates: [the readiness ledger](releases/v2.15-readiness.md).
+
 ## Approved release scope — 2026-10-06
 
 The maintainer approved releasing the verified v2.13 candidate and moving
