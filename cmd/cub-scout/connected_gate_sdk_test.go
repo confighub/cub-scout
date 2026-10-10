@@ -187,6 +187,7 @@ func TestTheUngatedCommandsAskTheGate(t *testing.T) {
 	}
 	t.Setenv(configHubReaderEnv, "sdk")
 
+	t.Setenv("CUB_SCOUT_TEST_MAP_FLEET_JSON", "")
 	err := runMapFleet(nil, nil)
 	require.ErrorIs(t, err, refusal)
 	require.ErrorIs(t, err, errConfigHubUnavailable)

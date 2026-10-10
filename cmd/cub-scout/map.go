@@ -1640,9 +1640,6 @@ type FleetUnit struct {
 }
 
 func runMapFleet(cmd *cobra.Command, args []string) error {
-	if err := requireConfigHubFor("map fleet"); err != nil {
-		return err
-	}
 	space := mapFleetSpace(fleetSpace)
 	units, err := fetchFleetUnits(space.Slug, fleetApp)
 	if err != nil {
@@ -1825,6 +1822,12 @@ func mapFleetSpace(flagValue string) configHubSpace {
 func fetchFleetUnits(space, appFilter string) ([]FleetUnit, error) {
 	if fixture := os.Getenv("CUB_SCOUT_TEST_MAP_FLEET_JSON"); fixture != "" {
 		return loadFleetUnitsFromJSON(fixture, space, appFilter)
+	}
+	// The same gate as every connected command. It is here and not at the
+	// top of the command because a recorded fleet, above, reads no ConfigHub
+	// and must not need a session.
+	if err := requireConfigHubFor("map fleet"); err != nil {
+		return nil, err
 	}
 
 	args := withConfigHubSpace([]string{"unit", "list", "-o", "json"}, space)

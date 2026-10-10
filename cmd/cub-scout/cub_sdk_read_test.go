@@ -860,6 +860,8 @@ func TestCubStdoutAnswersTheListsThroughTheSDKWhenAsked(t *testing.T) {
 
 // The callers of the lists get the same result by either route.
 func TestListCallersGetTheSameByEitherRoute(t *testing.T) {
+	// The session gate has its own tests; these are about the reads behind it.
+	stubConnectedGate(t, nil)
 	_, seen, space := connectedLaneRoutes(t)
 	read := func() (string, []FleetUnit) {
 		text, err := runMCPConnectedToolCommand(context.Background(), withConfigHubSpace([]string{"unit", "list", "-o", "json"}, space))
@@ -913,6 +915,8 @@ func TestSDKRouteListFailureIsReportedAndDoesNotFallBack(t *testing.T) {
 // The fleet view's advice follows the route: checking that cub is installed
 // is no help when no cub ran.
 func TestFleetFailureAdviceFollowsTheRoute(t *testing.T) {
+	// The session gate has its own tests; these are about the reads behind it.
+	stubConnectedGate(t, nil)
 	onlyFakeCub(t, "3")
 	hub := newRecordedHub(t, http.StatusInternalServerError)
 	sdkReadsFrom(t, hub)
@@ -1091,6 +1095,8 @@ func boolToInt(b bool) int {
 // with no cub stayed offline regardless. The SDK route needs no cub, so it
 // honours the switch itself, before it looks for a credential.
 func TestTheSDKRouteHonoursTheOfflineSwitch(t *testing.T) {
+	// The session gate has its own tests; these are about the reads behind it.
+	stubConnectedGate(t, nil)
 	cubLog := onlyFakeCub(t, "0")
 	hub := newRecordedHub(t, 0)
 	resolved := 0
