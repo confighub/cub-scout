@@ -1,10 +1,20 @@
 # Configuration investigation: release continuity and responsibility
 
+> **Renumbered on 2026-10-10.** The maintainer decided to cut v2.14.0 for the
+> ConfigHub SDK reads and `gitops tree` ([notes](../releases/v2.14.0.md)) and moved
+> the unmet P4 gates to v2.15. Where this page says a P4 gate is required "for
+> v2.14" or "before v2.14", read v2.15: six-surface conformance (#596),
+> controller and workload acceptance, the paired benchmark and the remaining
+> P4 issues are open and are not claimed by v2.14.0. The scope and its order
+> are unchanged. P5, which this plan had numbered v2.15, keeps its scope and
+> its place after P4; whether it shares v2.15 or becomes v2.16 is not decided.
+> Current gates: [the readiness ledger](../releases/v2.15-readiness.md).
+
 Reviewed 2026-10-05 against published release metadata, the `v2.12.4` source
 tree, current candidate source, contracts, tests, examples and execution plans.
 This is a reuse review, not a new implementation specification or release gate.
 At review the published baseline was **v2.12.4**. **v2.13.1 is now published**;
-v2.14 remains unreleased. The [delivery contracts](configuration-investigation-delivery.md)
+v2.14 was unreleased then (see the note above). The [delivery contracts](configuration-investigation-delivery.md)
 and #778/#779/#780/#781 carry the new ideas into tracked P4/P5 work.
 
 ## What the releases already established
@@ -113,8 +123,8 @@ an approval, or a healthy current release by default.
 | Packet | Build on | Remaining proof or design |
 |---|---|---|
 | P3 / v2.13 | Existing trust/identity/freshness, context collection and connected adapters | Finish #591/#597/#641/#588/#599, exact-source CI, genuine acceptance and the admitted paired benchmark. Use the [ordered release sequence](../releases/v2.13-to-v2.14-sequence.md); no live test is excluded. |
-| P4 / v2.14 | Existing comparison, bounded resource explorer, controller and attribution models | #596 six-surface conformance, #599 scope/identity, #594 controller matrix, #519 supported operator loop and the named adapter issues. Candidate session helpers are extensions of the collector, not a second truth model. |
-| P5 / v2.15 | Bounded read reuse, informer-backed watch/bot and receipts | #539/#604/#600/#605 measured reuse, output and retained evidence. Existing caches are bounded foundations, not a finished fleet store. |
+| P4 / v2.15 (was v2.14) | Existing comparison, bounded resource explorer, controller and attribution models | #596 six-surface conformance, #599 scope/identity, #594 controller matrix, #519 supported operator loop and the named adapter issues. Candidate session helpers are extensions of the collector, not a second truth model. |
+| P5 / after P4 (was v2.15) | Bounded read reuse, informer-backed watch/bot and receipts | #539/#604/#600/#605 measured reuse, output and retained evidence. Existing caches are bounded foundations, not a finished fleet store. |
 | P6 / 3.0 | Shipped contracts plus P3–P5 proof | Publish only demonstrated workflow, quality and cost results, checked distribution and migration. Version numbers do not establish leadership. |
 
 Before opening new implementation scope, identify its existing issue, released
