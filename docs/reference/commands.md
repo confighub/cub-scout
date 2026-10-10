@@ -3003,6 +3003,118 @@ finds the tool from the MCP tool list.
 See the [live example](../../examples/delivery-settings/) and the
 [JSON contract](json-contracts.md#delivery-settings-contract).
 
+### gitops tree
+
+Show what is under each GitOps deployer, to any depth: the deployers it
+delivers, the deployers those deliver, and the resources each one reports.
+Unreleased; the JSON shape may still change.
+
+```bash
+cub scout gitops tree [<kind>/<name>] [flags]     # as a cub plugin
+./cub-scout gitops tree [<kind>/<name>] [flags]   # standalone
+```
+
+`<kind>` is `app`, `ks` or `hr` (or the full kind). `<kind>/<namespace>/<name>`
+names the namespace too. With no argument, every deployer that no other
+deployer delivers is a root.
+
+The usual case is an Argo CD app-of-apps. Part of the
+[example](../../examples/delivery-tree/)'s output:
+
+```text
+Application argocd/delivery-tree  ·  Synced / Healthy  ·  auto-sync on, self-heal on, prune on
+├─ Application argocd/delivery-tree-team-a  ·  Synced / Healthy  ·  auto-sync on, self-heal off, prune on
+│     ! parent ignores differences at /spec/syncPolicy
+│  └─ Application argocd/delivery-tree-web  ·  Synced / Healthy  ·  auto-sync on, self-heal on, prune on
+│     ├─ ConfigMap delivery-tree-web/web-settings  ·  Synced
+│     ├─ Deployment delivery-tree-web/web  ·  Synced
+│     └─ Service delivery-tree-web/web  ·  Synced
+├─ Application argocd/delivery-tree-team-b  ·  OutOfSync / Missing  ·  auto-sync off, self-heal n/a, prune n/a
+│  └─ Application argocd/delivery-tree-api
+│        ! not found in the cluster
+│        ! its parent reports it OutOfSync
+└─ ConfigMap delivery-tree-platform/platform-settings  ·  Synced
+```
+
+Each deployer is shown with its own sync and health and with the policy
+settings [`gitops settings`](#gitops-settings) reports for it. A parent's
+settings apply to the child deployer object itself: with self-heal on in the
+parent, a change to a child made in the cluster is put back, unless the parent
+has an ignore rule that names it. Such a rule is shown on the child.
+
+#### Where the tree comes from
+
+| | |
+|---|---|
+| Evidence | What each deployer reports about itself in the cluster: an Argo CD Application's `status.resources` |
+| A child deployer | A reported entry of a kind this command reads (Application, Kustomization, HelmRelease). It is walked the same way |
+| A resource | Every other reported entry |
+| Not asked | Argo CD's own API, and the `argocd` CLI |
+| Not checked | Whether a reported resource is in the cluster. An entry is what the deployer wants, and can name an object that was never created |
+| Not shown | A resource's health. Argo CD 3 keeps it in its own tree, not on the Application; a resource shows sync only |
+
+What a Flux Kustomization or HelmRelease delivers is not read yet (#856). They
+are in the tree with their own state and are marked.
+
+#### What is kept and marked, never dropped
+
+| Case | Shown as |
+|---|---|
+| A deployer that reports nothing about what it applied | `none_reported`, with the reason. It is not "nothing under it" |
+| A child its parent reports that is not in the cluster | The child, `not_found`, with what the parent says of it |
+| A child that could not be read | The child, `not_read`, with the reason; `complete` is then `false` |
+| A deployer with no status | Not reconciled |
+| A deployer two parents report | Under both, with the count |
+| A deployer already above in its own branch | Not walked again |
+| A branch cut by `--depth` | Says so at the cut |
+| A kind that could not be listed | Under Reads as not read, and `complete` is `false` |
+
+#### Flags
+
+| Flag | Description |
+|---|---|
+| `-n, --namespace` | Only deployers in this namespace, and the namespace of the deployer named. A child reported in another namespace is read on its own |
+| `--depth` | How many levels below a root to walk (default 0: no limit) |
+| `--kind` | Only entries of this kind, with the deployers above them (repeatable) |
+| `--sync` | Only entries with this sync status, such as `OutOfSync` (repeatable) |
+| `--health` | Only entries with this health, such as `Degraded` (repeatable). On Argo CD 3 that is deployers only, since resources report none |
+| `--max-resources` | Text output: list at most this many resources under one deployer and count the rest by kind (default 25; 0 lists all) |
+| `--format` | `ascii`, `json`, `md` |
+| `--view` | JSON only: `all`, or `summary`: one line, resources counted by kind and named only when not Synced |
+| `--tui` | The same snapshot in a scrollable viewport |
+| `--kube-context` | The kubeconfig context to read |
+
+A filter keeps every deployer above a match. A deployer is matched on what it
+says of itself; one that was not read is matched on what its parent reports of
+it. The summary counts are always of the whole tree; `shown` counts what the
+filters left.
+
+#### Examples
+
+```bash
+# Every root deployer and what is under it
+cub scout gitops tree
+./cub-scout gitops tree
+
+# One app-of-apps and everything under it
+cub scout gitops tree app/platform -n argocd
+./cub-scout gitops tree app/platform -n argocd
+
+# Where its Deployments are, and which child Application has each
+cub scout gitops tree app/platform --kind Deployment
+./cub-scout gitops tree app/platform --kind Deployment
+
+# What is out of sync under it, for a program
+cub scout gitops tree app/platform --sync OutOfSync --format json
+./cub-scout gitops tree app/platform --sync OutOfSync --format json
+```
+
+Checked on a real Argo CD v3.5.3: the GitOps E2E lane deploys
+[the example](../../examples/delivery-tree/) and holds the command to it. Not
+tried: an Application with very many resources, and an ApplicationSet above
+its Applications. There is no MCP tool yet, and no agent eval (#855).
+See the [JSON contract](json-contracts.md#delivery-tree-contract).
+
 ---
 
 ## debug

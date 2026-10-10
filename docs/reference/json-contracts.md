@@ -1264,6 +1264,95 @@ The summary carries no links, spec paths or ignore rules; those are in the
 `deployers` view. It is the `groups` view with each deployer written once per
 setting, and a test holds the two to the same content.
 
+## Delivery Tree Contract
+
+`gitops tree --format json` (unreleased) reports what is under each GitOps
+deployer, to any depth. Field names are camelCase. The shape may still change.
+
+```json
+{
+  "context": "kind-gitops-cluster",
+  "root": "Application/delivery-tree",
+  "complete": true,
+  "evidence": "Each deployer's resources are what it reports about itself. They are not checked against the cluster.",
+  "summary": {"roots": 1, "deployers": 8, "resources": 8, "maxDepth": 2, "notFound": 1, "notRead": 0,
+              "notReconciled": 1, "noneReported": 2, "notSupported": 0, "shared": 0, "cycles": 0, "depthLimited": 0},
+  "roots": [
+    {
+      "controller": "ArgoCD", "kind": "Application", "namespace": "argocd", "name": "delivery-tree",
+      "object": "found",
+      "policies": [{"name": "auto-sync", "value": "on"}, {"name": "self-heal", "value": "on"}, {"name": "prune", "value": "on"}],
+      "options": ["CreateNamespace=true", "ignoreDifferences"],
+      "state": {"reconciled": true, "sync": "Synced", "health": "Healthy", "revision": "b7bda177..."},
+      "children": {
+        "status": "reported",
+        "deployers": [
+          {
+            "controller": "ArgoCD", "kind": "Application", "namespace": "argocd", "name": "delivery-tree-team-b",
+            "object": "found",
+            "reportedByParent": {"group": "argoproj.io", "version": "v1alpha1", "kind": "Application", "namespace": "argocd",
+                                 "name": "delivery-tree-team-b", "sync": "Synced",
+                                 "ignoredByParent": [{"group": "argoproj.io", "kind": "Application", "jsonPointers": ["/spec/syncPolicy"]}]},
+            "state": {"reconciled": true, "sync": "OutOfSync", "health": "Missing"},
+            "children": {"status": "reported", "deployers": [
+              {"controller": "ArgoCD", "kind": "Application", "namespace": "argocd", "name": "delivery-tree-api",
+               "object": "not_found",
+               "reportedByParent": {"group": "argoproj.io", "version": "v1alpha1", "kind": "Application", "namespace": "argocd",
+                                    "name": "delivery-tree-api", "sync": "OutOfSync"},
+               "children": {"status": "no_object"}}
+            ]}
+          }
+        ],
+        "resources": [
+          {"version": "v1", "kind": "ConfigMap", "namespace": "delivery-tree-platform", "name": "platform-settings", "sync": "Synced"}
+        ]
+      }
+    }
+  ],
+  "reads": [{"controller": "ArgoCD", "kind": "Application", "resource": "applications.argoproj.io/v1alpha1", "status": "read", "count": 8}]
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `complete` | `false` when a kind could not be listed or a child deployer could not be read. The tree is then missing something it cannot name |
+| `evidence` | Always present. A resource in the tree is one the deployer reports, not one that was found |
+| `summary` | Counts of the whole tree, before any filter. A deployer two parents report is counted where it appears |
+| `filters`, `shown` | Present with `--kind`, `--sync` or `--health`: what was asked, and how many deployers and resources are left |
+| `roots[]` | The deployer asked for, or every deployer no other deployer reports. Deployers that only report each other are entered once, at the first of them |
+| `object` | `found`, `not_found` or `not_read` (with `objectReason`). A child a parent reports is kept in the tree whichever it is |
+| `policies[]` | Each policy setting and the value in effect: declared, or the controller default. The same values `gitops settings` reports as `effective` |
+| `options[]` | Declared options, as `name` or `name=value` |
+| `state` | What the deployer says of itself. `reconciled` is `false` when the object has no status. `sync` and `health` are Argo CD's; for Flux, `health` is `Ready=<status>`. `conditions[]` are passed through. Absent when the object was not read |
+| `reportedByParent` | The parent's entry for this deployer: whether the child object is as the parent's source has it. Absent on a root |
+| `reportedByParent.ignoredByParent[]`, `resources[].ignoredByParent[]` | The parent's ignore rules that name this entry, verbatim. A rule matches on group and kind, and on name and namespace when it gives them |
+| `reportedBy` | How many deployers report this one, when more than one |
+| `children.status` | `reported` (the list may be empty), `none_reported` (the deployer has no such list; see `reason`), `not_supported` (this kind is not read for its children yet), `depth_limit`, `cycle`, or `no_object` |
+| `children.deployers[]` | Reported entries that are themselves deployers, each a node like its parent |
+| `children.resources[]` | Every other reported entry: `group`, `version`, `kind`, `namespace`, `name`, and `sync` and `health` only when the deployer reports them. `requiresPruning` and `hook` when set |
+| `reads[]` | As in the delivery settings contract: `read`, `not_installed` or `not_read` for each kind |
+
+A missing `health` on a resource means the deployer did not report one. Argo
+CD 3 reports none on the Application. It never means healthy.
+
+### `--view summary`
+
+One line. `roots` is replaced by `tree`, and `view` is `"summary"`. Everything
+that says whether the answer is whole (`complete`, `evidence`, `summary`,
+`reads`, `notes`) is kept.
+
+| Field | Meaning |
+|---|---|
+| `tree[].deployer` | `Kind namespace/name` |
+| `tree[].object` | Present only when not `found` |
+| `tree[].sync`, `tree[].health`, `tree[].policies` | As above; policies as one string |
+| `tree[].marks[]` | In words, what is unusual: not found, not reconciled, reported by two deployers, a parent's ignore rule, a condition, nothing reported, a depth cut |
+| `tree[].resources` | The resources the deployer reports, counted by kind |
+| `tree[].notSynced[]` | Each reported resource whose sync is not `Synced`, as `Kind namespace/name status` |
+| `tree[].deployers[]` | The child deployers, the same way |
+
+For the example, the summary is about a fifth of the full tree in bytes.
+
 ## Sveltos Controller Report Contract
 
 `gitops status` optionally adds `sveltosControllerReports` with schema
