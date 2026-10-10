@@ -45,7 +45,6 @@ func TestSDKEntityArgsTakeOnlyTheCommandsTheyReproduce(t *testing.T) {
 		"unit data, two units":          {"unit", "data", "u", "v", "--space", "s"},
 		"unit data, two spaces":         {"unit", "data", "u", "--space", "s", "--space", "t"},
 		"unit data, a flag as a space":  {"unit", "data", "u", "--space", "--quiet"},
-		"unit livedata":                 {"unit", "livedata", "u", "--space", "s"},
 		"revision get, no number":       {"revision", "get", "u", "--space", "s", "-o", "json"},
 		"revision get, relative":        {"revision", "get", "u", "-1", "--space", "s", "-o", "json"},
 		"revision get, zero":            {"revision", "get", "u", "0", "--space", "s", "-o", "json"},

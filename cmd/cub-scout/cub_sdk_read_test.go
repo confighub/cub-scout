@@ -617,7 +617,7 @@ func TestAnUnknownConfigHubReaderIsRefused(t *testing.T) {
 
 	// A command the SDK route does not take has one route, so the setting is
 	// not consulted for it.
-	_, err = cubStdout(context.Background(), "unit", "data", recordedUnit, "--space", recordedSpace)
+	_, err = cubStdout(context.Background(), "unit", "data", "--space", recordedSpace, "--where", "Slug LIKE 'a-%'")
 	require.NoError(t, err)
 	require.Len(t, fakeCubCalls(t, cubLog), 1)
 
