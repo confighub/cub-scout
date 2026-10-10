@@ -103,10 +103,13 @@ func safeAttestationText(s string) string {
 	return s
 }
 
+// attestationReadLimit bounds each of the reads behind attestation evidence.
+const attestationReadLimit = 1024 * 1024
+
 type attestationLimitedBuffer struct{ bytes.Buffer }
 
 func (b *attestationLimitedBuffer) Write(p []byte) (int, error) {
-	if b.Len()+len(p) > 1024*1024 {
+	if b.Len()+len(p) > attestationReadLimit {
 		return 0, fmt.Errorf("ConfigHub read exceeds 1 MiB")
 	}
 	return b.Buffer.Write(p)
@@ -115,6 +118,18 @@ func (b *attestationLimitedBuffer) Write(p []byte) (int, error) {
 func boundedAttestationCubRead(ctx context.Context, args ...string) ([]byte, error) {
 	if len(args) < 2 || !((args[0] == "revision" && (args[1] == "get" || args[1] == "data")) || (args[0] == "attestation" && args[1] == "list")) {
 		return nil, fmt.Errorf("attestation evidence permits only revision get/data and attestation list")
+	}
+	// The SDK route answers these three reads without a cub process. The
+	// same limit holds for what it returns, and a failure says no more than
+	// the cub route's does.
+	if out, handled, err := cubReadViaSDK(ctx, args); handled {
+		if err != nil {
+			return nil, fmt.Errorf("bounded ConfigHub read failed")
+		}
+		if len(out) > attestationReadLimit {
+			return nil, fmt.Errorf("ConfigHub read exceeds 1 MiB")
+		}
+		return out, nil
 	}
 	cmd, err := cubCommand(ctx, args...)
 	if err != nil {

@@ -90,13 +90,16 @@ type fakeHub struct {
 	spaces, units []map[string]json.RawMessage
 	status        map[string]int    // path -> status to answer with
 	raw           map[string]string // path -> body to answer with instead
-	delay         time.Duration
+	// contentTypes is the Content-Type of a path's raw body, when it is not
+	// JSON: configuration data is served as the bytes that were stored.
+	contentTypes map[string]string
+	delay        time.Duration
 }
 
 func newFakeHub(t *testing.T) *fakeHub {
 	t.Helper()
 	fixture := recordedUnitFixture(t)
-	hub := &fakeHub{t: t, status: map[string]int{}, raw: map[string]string{}, more: map[string]bool{},
+	hub := &fakeHub{t: t, status: map[string]int{}, raw: map[string]string{}, more: map[string]bool{}, contentTypes: map[string]string{},
 		spaces: []map[string]json.RawMessage{{"Space": fixture["Space"]}},
 		units:  []map[string]json.RawMessage{fixture},
 	}
@@ -107,6 +110,7 @@ func newFakeHub(t *testing.T) *fakeHub {
 		hub.queries = append(hub.queries, r.URL.Query().Encode())
 		hub.includes = append(hub.includes, r.URL.Query().Get("include"))
 		status, raw, delay, statusBody := hub.status[r.URL.Path], hub.raw[r.URL.Path], hub.delay, hub.statusBody
+		contentType := hub.contentTypes[r.URL.Path]
 		if hub.more[r.URL.Path] {
 			w.Header().Set("ConfigHub-Continue", "next-page")
 		}
@@ -115,6 +119,11 @@ func newFakeHub(t *testing.T) *fakeHub {
 		if strings.HasPrefix(raw, "<") {
 			// Not the API: a proxy or a login page answering 200.
 			w.Header().Set("Content-Type", "text/html")
+			_, _ = w.Write([]byte(raw))
+			return
+		}
+		if contentType != "" && status == 0 {
+			w.Header().Set("Content-Type", contentType)
 			_, _ = w.Write([]byte(raw))
 			return
 		}

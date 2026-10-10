@@ -527,7 +527,7 @@ func TestCubStdoutLeavesOtherCommandsToCubUnderTheSDKRoute(t *testing.T) {
 	t.Setenv(configHubReaderEnv, "sdk")
 
 	for _, args := range [][]string{
-		{"unit", "data", recordedUnit, "--space", recordedSpace},
+		{"unit", "data", "--space", recordedSpace, "--where", "Slug LIKE 'a-%'"},
 		{"unit", "get", recordedUnitID, "-o", "json", "--space", recordedSpace},
 		{"unit", "get", recordedUnit, "-o", "yaml", "--space", recordedSpace},
 		{"unit", "list", "-o", "json", "--space", recordedSpace, "--select", "Slug"},
@@ -1212,7 +1212,7 @@ func TestSDKListArgsForTheOtherEntities(t *testing.T) {
 		})
 	}
 	// An entity this file does not list stays with cub.
-	for _, entity := range []string{"attestation", "trigger", "organization", "revision", "view"} {
+	for _, entity := range []string{"trigger", "organization", "revision", "view", "filter", "tag"} {
 		require.Nil(t, sdkRead([]string{entity, "list", "-o", "json", "--space", "s"}), entity)
 	}
 }
@@ -1299,10 +1299,9 @@ func TestCubStdoutAnswersTheOtherSpaceListsThroughTheSDK(t *testing.T) {
 		})
 	}
 
-	// The attestation list is read by the reader but not routed here: its
-	// one caller runs cub itself under a byte limit of its own.
-	t.Setenv(configHubReaderEnv, "sdk")
-	require.Nil(t, sdkRead(withConfigHubSpace([]string{"attestation", "list", "-o", "json"}, space)))
+	// The attestation list is routed too; its one caller, which holds what
+	// it reads to a byte limit, has its own test.
+	require.NotNil(t, sdkRead(withConfigHubSpace([]string{"attestation", "list", "-o", "json"}, space)))
 }
 
 // The events of one Unit: `cub unit-event list <unit>`, with the Unit named as
