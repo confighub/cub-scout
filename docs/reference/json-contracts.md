@@ -37,12 +37,12 @@ When fields cross surface boundaries, mapping is explicit (e.g., metadata `creat
 |---------|----------------------|-----------------------|
 | Graph export/explain | [graph-contract.md](graph-contract.md) | `graph.v1` |
 | Patterns | [patterns-contract.md](patterns-contract.md) | `patterns.v1` |
-| Bundle diff | [../bundle-diff.md](../bundle-diff.md) | `bundle-diff.v1` |
-| Bundle timeline | [../bundle-timeline.md](../bundle-timeline.md) | `bundle-timeline.v1` |
-| Catalog | [../catalog.md](../catalog.md) | `catalog.v1` |
+| Bundle diff | [../howto/bundle-diff.md](../howto/bundle-diff.md) | `bundle-diff.v1` |
+| Bundle timeline | [../howto/bundle-timeline.md](../howto/bundle-timeline.md) | `bundle-timeline.v1` |
+| Catalog | [../howto/catalog.md](../howto/catalog.md) | `catalog.v1` |
 | Evidence export | [evidence-export-v1.md](evidence-export-v1.md) | `evidence-export.v1` |
 | General CLI JSON behavior | [cli-contract.md](cli-contract.md) + [commands.md](commands.md) | Command-specific |
-| GitOps checkpoint proposal schemas | [gitops-checkpoint-schemas.md](gitops-checkpoint-schemas.md) | `change-intent.v1`, `execution-report.v1`, `change-interaction-card.v1`, `decision-receipt.v1`, `execution-receipt.v1`, `outcome-receipt.v1` |
+| GitOps checkpoint proposal schemas | The JSON Schema files only; there is no prose page | [`change-intent.v1`](schemas/change-intent.v1.schema.json), [`execution-report.v1`](schemas/execution-report.v1.schema.json), [`change-interaction-card.v1`](schemas/change-interaction-card.v1.schema.json), [`decision-receipt.v1`](schemas/decision-receipt.v1.schema.json), [`execution-receipt.v1`](schemas/execution-receipt.v1.schema.json), [`outcome-receipt.v1`](schemas/outcome-receipt.v1.schema.json) |
 | Trace secret evidence | This doc (below) | Embedded in `trace` JSON |
 | Current-change rollout evidence | This doc (below) | Embedded in `doctor`, `explain`, and `compare three-way` JSON |
 | Install receipt predicates | This doc (below) | Embedded in `receipt verify` JSON |
