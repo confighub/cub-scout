@@ -6,6 +6,7 @@ package agent
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -243,13 +244,17 @@ func TestDeliveryTreeCyclesAndSharedChildren(t *testing.T) {
 
 func TestDeliveryTreeReadsAChildOutsideTheNamespaceListed(t *testing.T) {
 	client := deliveryClient(
-		treeApp("argocd", "root", nil, []interface{}{reportedApp("team-a", "inside"), reportedApp("team-a", "absent"), reportedApp("team-b", "denied")}),
+		treeApp("argocd", "root", nil, []interface{}{reportedApp("team-a", "inside"), reportedApp("team-a", "absent"),
+			reportedApp("team-b", "denied"), reportedApp("team-c", "broken")}),
 		treeApp("team-a", "inside", nil, []interface{}{reported("", "ConfigMap", "team-a", "c", "Synced")}),
 		treeApp("team-b", "denied", nil, []interface{}{}),
 	)
 	client.PrependReactor("get", "applications", func(action ktesting.Action) (bool, runtime.Object, error) {
-		if action.GetNamespace() == "team-b" {
+		switch action.GetNamespace() {
+		case "team-b":
 			return true, nil, apierrors.NewForbidden(schema.GroupResource{Group: "argoproj.io", Resource: "applications"}, "denied", nil)
+		case "team-c":
+			return true, nil, apierrors.NewInternalError(errors.New("etcd is unavailable"))
 		}
 		return false, nil, nil
 	})
@@ -258,7 +263,10 @@ func TestDeliveryTreeReadsAChildOutsideTheNamespaceListed(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []string{"argocd/root"}, treeNames(tree.Roots))
 	children := tree.Roots[0].Children.Deployers
-	require.Equal(t, []string{"team-a/absent", "team-a/inside", "team-b/denied"}, treeNames(children))
+	require.Equal(t, []string{"team-a/absent", "team-a/inside", "team-b/denied", "team-c/broken"}, treeNames(children))
+	// One object was asked for, not a list: the reason says so.
+	require.Equal(t, DeliveryObjectNotRead, children[3].Object)
+	require.Equal(t, "get_failed", children[3].ObjectReason)
 	require.Equal(t, DeliveryObjectNotFound, children[0].Object)
 	// Outside the namespace listed, so it was read on its own, and walked.
 	require.Equal(t, DeliveryObjectFound, children[1].Object)
@@ -266,7 +274,7 @@ func TestDeliveryTreeReadsAChildOutsideTheNamespaceListed(t *testing.T) {
 	// A child that may not be read is not a child that is not there.
 	require.Equal(t, DeliveryObjectNotRead, children[2].Object)
 	require.Equal(t, "forbidden", children[2].ObjectReason)
-	require.Equal(t, 1, tree.Summary.NotRead)
+	require.Equal(t, 2, tree.Summary.NotRead)
 	require.Equal(t, 1, tree.Summary.NotFound)
 }
 

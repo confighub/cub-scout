@@ -591,3 +591,39 @@ func TestGitOpsTreeSaysWhetherAnIgnoreRuleHoldsOnSync(t *testing.T) {
 	require.Contains(t, ascii, "Deployment web/web  ·  Synced  ·  its deployer ignores differences at /spec/replicas, when comparing only\n")
 	require.Contains(t, ascii, "Deployment web/web  ·  Synced  ·  its deployer ignores differences at /spec/replicas, when comparing and when syncing\n")
 }
+
+// The marks a reader needs to see in text: entries that could not be read, a
+// subtree shown elsewhere, and a Flux deployer that says it is not ready.
+func TestGitOpsTreeTextMarks(t *testing.T) {
+	failing := settingsObject("kustomize.toolkit.fluxcd.io/v1", "Kustomization", "flux-system", "failing", map[string]interface{}{"prune": true})
+	failing.Object["status"] = map[string]interface{}{"conditions": []interface{}{
+		map[string]interface{}{"type": "Ready", "status": "False", "message": "kustomize build failed: no such file"},
+		map[string]interface{}{"type": "Reconciling", "status": "True", "message": "running"},
+	}}
+	ready := settingsObject("kustomize.toolkit.fluxcd.io/v1", "Kustomization", "flux-system", "ready", nil)
+	ready.Object["status"] = map[string]interface{}{"conditions": []interface{}{
+		map[string]interface{}{"type": "Ready", "status": "True", "message": "Applied revision: main@sha1:abc"},
+	}}
+	client := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), settingsListKinds,
+		treeApplication("one", "Synced", "Healthy", nil, []interface{}{treeAppEntry("shared"), "not an entry", map[string]interface{}{"kind": "ConfigMap"}}),
+		treeApplication("two", "Synced", "Healthy", nil, []interface{}{treeAppEntry("shared"), "not an entry"}),
+		treeApplication("shared", "Synced", "Healthy", nil, []interface{}{treeEntry("", "ConfigMap", "p", "c", "Synced")}),
+		failing, ready)
+	report := treeReport(t, client, deliveryTreeParams{})
+	require.Equal(t, 3, report.Summary.Malformed)
+
+	for name, out := range map[string]string{"ascii": renderDeliveryTreeASCII(report, 25), "markdown": renderDeliveryTreeMarkdown(report, 25)} {
+		t.Run(name, func(t *testing.T) {
+			require.Contains(t, out, "2 entries it reports could not be read and are not shown")
+			require.Contains(t, out, "1 entry it reports could not be read and is not shown")
+			require.Equal(t, 1, strings.Count(out, "what is under it is shown at its first appearance above"))
+			require.Equal(t, 1, strings.Count(out, "ConfigMap p/c"), "the shared subtree is printed once")
+			// A Flux condition that is False is a problem worth a line.
+			// One that is True is what the health already says.
+			require.Contains(t, out, "Ready: kustomize build failed: no such file")
+			require.NotContains(t, out, "Reconciling: running")
+			require.NotContains(t, out, "Ready: Applied revision")
+		})
+	}
+	require.Contains(t, renderDeliveryTreeASCII(report, 25), "  ! 2 reported by more than one deployer")
+}
