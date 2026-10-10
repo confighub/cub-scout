@@ -27,13 +27,13 @@ download() {
   printf '%s  %s\n' "$digest" "$output" | sha256sum --check --status
   chmod 700 "$output"
 }
-download https://github.com/confighub/sdk/releases/download/v0.8.3/cub-linux-amd64 \
-  bcfbf11fdf455e36d16071146344684fb99e27acc5cccfe41eaf5ca955687dd7 "$root/bin/cub"
-download https://github.com/confighub/cub-server/releases/download/v0.2.2/cub-server-linux-amd64 \
-  15514255b98d1282bf07dd6cb83771a224e6305bc12ad2bf0c50377aa9c026f2 "$root/cub-config/plugins/server/server"
+download https://github.com/confighub/sdk/releases/download/v0.8.12/cub-linux-amd64 \
+  f5b88256b2a405bb982a588f3c8812aade44358d8da5d3cd80ddd17fcb712540 "$root/bin/cub"
+download https://github.com/confighub/cub-server/releases/download/v0.2.4/cub-server-linux-amd64 \
+  da2faa0287f27a263f0f3ac890412cefeeeb143b7c25cf50020f709b186afd01 "$root/cub-config/plugins/server/server"
 cat > "$root/cub-config/plugins/server/cub-plugin.yaml" <<'YAML'
 name: server
-version: 0.2.2
+version: 0.2.4
 commands:
   - name: server
     summary: Install and manage a self-hosted ConfigHub server
@@ -46,8 +46,8 @@ export PATH="$root/bin:$PATH"
 export KUBECONFIG="$root/server-input.kubeconfig"
 touch "$root/owns-server-cluster"
 if ! cub server install --cluster-name scout-ci-connected-server \
-  --image ghcr.io/confighubai/confighub@sha256:25fd52e45736cba49388370a036c9563ba3b96f486bd55a012d48129ff7ebd22 \
-  --ui-image ghcr.io/confighub/ui@sha256:0c309aabd400b3bc32f5e9c2a6863ca7188fc8d30c5d581a67c5122c4c342027 \
+  --image ghcr.io/confighubai/confighub@sha256:4bd85473ad50a9684dc4f745a25bf61679ae02c1315e5464dfbcbe4f0a70f340 \
+  --ui-image ghcr.io/confighub/ui@sha256:fa9437691b4c50b7ed658c140944e44c8b91dad42bc9955693cf1a7cb336f0c7 \
   --admin-key-name scout-ci-admin \
   --out-dir "$root/server" > "$root/install.log" 2>&1; then
   echo 'Disposable ConfigHub installation failed; private installer log retained on runner' >&2
@@ -55,7 +55,7 @@ if ! cub server install --cluster-name scout-ci-connected-server \
 fi
 cub auth status > "$root/auth-status.txt" 2>&1
 cub version > "$root/version.txt"
-awk '/^[[:space:]]*Version:/ {if ($2 != "v0.8.3") exit 1; n++} END {if (n != 2) exit 1}' "$root/version.txt"
+awk '/^[[:space:]]*Version:/ {if ($2 != "v0.8.12") exit 1; n++} END {if (n != 2) exit 1}' "$root/version.txt"
 printf 'CUB_CONFIG=%s\nKUBECONFIG=%s\n' "$CUB_CONFIG" "$root/workload.kubeconfig" >> "$GITHUB_ENV"
 printf '%s\n' "$root/bin" >> "$GITHUB_PATH"
-echo 'Authenticated disposable ConfigHub v0.8.3; workload kubeconfig preserved'
+echo 'Authenticated disposable ConfigHub v0.8.12; workload kubeconfig preserved'
