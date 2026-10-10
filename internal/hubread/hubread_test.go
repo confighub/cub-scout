@@ -1119,15 +1119,19 @@ func TestSpaceListsAreWhatCubPrintedOnTheRealServer(t *testing.T) {
 	reader := hub.reader(Options{})
 	ctx := context.Background()
 
+	// include is what cub asks the server to expand for each list, written
+	// out from cub's source (v0.8.12: workerListInclude, targetListInclude,
+	// changesetListInclude, linkListInclude; none for attestations). The
+	// recordings are what the server returned for exactly these.
 	for name, kind := range map[string]struct {
-		path string
-		read func(space string) ([]byte, error)
+		path, include string
+		read          func(space string) ([]byte, error)
 	}{
-		"worker":      {"/api/bridge_worker", func(s string) ([]byte, error) { return reader.WorkerListJSON(ctx, s, Filter{}) }},
-		"target":      {"/api/target", func(s string) ([]byte, error) { return reader.TargetListJSON(ctx, s, Filter{}) }},
-		"changeset":   {"/api/change_set", func(s string) ([]byte, error) { return reader.ChangeSetListJSON(ctx, s, Filter{}) }},
-		"link":        {"/api/link", func(s string) ([]byte, error) { return reader.LinkListJSON(ctx, s, Filter{}) }},
-		"attestation": {"/api/attestation", func(s string) ([]byte, error) { return reader.AttestationListJSON(ctx, s, Filter{}) }},
+		"worker":      {"/api/bridge_worker", "SpaceID", func(s string) ([]byte, error) { return reader.WorkerListJSON(ctx, s, Filter{}) }},
+		"target":      {"/api/target", "SpaceID,TriggerFilterID,TriggerIDs", func(s string) ([]byte, error) { return reader.TargetListJSON(ctx, s, Filter{}) }},
+		"changeset":   {"/api/change_set", "SpaceID,StartTagID,EndTagID", func(s string) ([]byte, error) { return reader.ChangeSetListJSON(ctx, s, Filter{}) }},
+		"link":        {"/api/link", "SpaceID,FromUnitID,ToUnitID,ToSpaceID", func(s string) ([]byte, error) { return reader.LinkListJSON(ctx, s, Filter{}) }},
+		"attestation": {"/api/attestation", "", func(s string) ([]byte, error) { return reader.AttestationListJSON(ctx, s, Filter{}) }},
 	} {
 		t.Run(name, func(t *testing.T) {
 			recorded := spaceListsRecording(t, name+"-list.json")
@@ -1140,6 +1144,7 @@ func TestSpaceListsAreWhatCubPrintedOnTheRealServer(t *testing.T) {
 				require.Equal(t, string(recorded), string(got))
 				seen := hub.requests()[before:]
 				require.Equal(t, kind.path, seen[len(seen)-1].Path, "the recording was served at the path the reader asks")
+				require.Equal(t, kind.include, hub.includes[len(hub.includes)-1])
 			}
 		})
 	}
