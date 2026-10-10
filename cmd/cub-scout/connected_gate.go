@@ -4,15 +4,89 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"os"
 	"sync"
+	"time"
 
+	"github.com/confighub/cub-scout/v2/internal/hubread"
 	"github.com/confighub/cub-scout/v2/pkg/hub"
 )
 
 // requireCubConnectedFn is the gate's seam for tests.
-var requireCubConnectedFn = hub.RequireCubConnected
+var requireCubConnectedFn = requireConfigHubSession
+
+// sessionCheckTimeout bounds the gate's one request on the SDK route.
+const sessionCheckTimeout = 30 * time.Second
+
+// sessionRefusal is a refusal of the gate on the SDK route. It answers to the
+// same sentinel a `cub auth status` refusal of that kind does, so callers
+// that ask "is this about the session?" or "is this a version problem?" get
+// the same answer by either route; its text does not mention a `cub` check
+// that was not run.
+type sessionRefusal struct {
+	kind error
+	text string
+}
+
+func (e *sessionRefusal) Error() string        { return e.text }
+func (e *sessionRefusal) Is(target error) bool { return target == e.kind }
+
+// requireConfigHubSession is the gate's check: can ConfigHub be read with the
+// session this machine has?
+//
+// By the `cub` route that is `cub auth status`. By the SDK route (#758) it is
+// the same check made without `cub`: the credential `cub` would use, a token
+// that has not expired, one request the server answers, and a client that is
+// not older than the server. A machine with no `cub` binary passes it; a read
+// that still needs `cub` then says so itself.
+func requireConfigHubSession() error {
+	route, err := configHubReaderRoute()
+	if err != nil {
+		return err
+	}
+	if route != "sdk" {
+		return hub.RequireCubConnected()
+	}
+	if err := configHubReadsDisabledFn(); err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), sessionCheckTimeout)
+	defer cancel()
+	reader, err := sdkReader(ctx)
+	if err == nil {
+		var session hubread.Session
+		if session, err = reader.CheckSession(ctx); err == nil {
+			if session.ClientAhead {
+				warnClientAhead(session)
+			}
+			return nil
+		}
+	}
+	switch hubread.KindOf(err) {
+	case hubread.KindNotConfigured, hubread.KindUnauthorized:
+		return &sessionRefusal{kind: hub.ErrCubNotAuthenticated, text: "no ConfigHub session this machine can use: " + err.Error()}
+	case hubread.KindVersionSkew:
+		return &sessionRefusal{kind: hub.ErrCubVersionSkew, text: err.Error() + ", or set " + configHubReaderEnv + "=cub to read through an up-to-date `cub`"}
+	default:
+		// The server could not be asked, or did not answer as itself. That
+		// says nothing about the session either way.
+		return fmt.Errorf("the ConfigHub session could not be checked: %w", err)
+	}
+}
+
+var clientAheadWarned sync.Once
+
+// warnClientAhead says once, on stderr, that this binary's SDK is newer than
+// the server, as cub warns about a cub newer than its server.
+func warnClientAhead(session hubread.Session) {
+	clientAheadWarned.Do(func() {
+		fmt.Fprintf(os.Stderr, "Warning: this cub-scout reads ConfigHub with SDK %s, which is newer than server %s; below 1.0 a change in the second version number is not backward compatible, so some reads may fail.\n",
+			session.SDKVersion, session.ServerVersion)
+	})
+}
 
 // errConfigHubUnavailable marks every refusal the gate produces, whatever the
 // cause. A caller that only needs to know "this failed because ConfigHub reads

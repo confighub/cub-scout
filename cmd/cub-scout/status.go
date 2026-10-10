@@ -356,6 +356,17 @@ func statusSessionValid(readsErr error) bool {
 // validateAuthToken checks if the current ConfigHub auth token is valid
 // Returns true if token is valid, false if expired or invalid
 func validateAuthToken() bool {
+	// On the SDK route the gate has already asked the server, without cub.
+	// Reaching here means it refused for a reason that is not the session.
+	// With reads turned off nothing may be asked, and what can still be said
+	// is whether a credential is stored; otherwise the question is put again.
+	if route, err := configHubReaderRoute(); err == nil && route == "sdk" {
+		if configHubReadsDisabledFn() != nil {
+			_, err := sdkReader(context.Background())
+			return err == nil
+		}
+		return requireConfigHubSession() == nil
+	}
 	// When running as a `cub` plugin (CUB_PLUGIN=1), the host has already
 	// passed a valid token through CUB_TOKEN. Honor it directly instead of
 	// re-executing `cub` — that would recurse through the plugin host and
