@@ -1,0 +1,44 @@
+{
+  "entries": {
+    "release-list": 2,
+    "release-list-first": 1,
+    "release-list-since": 2,
+    "resource-list": 2,
+    "resource-list-contains": 1,
+    "unit-event-list": 0,
+    "unit-event-list-of-unit": 0,
+    "unit-event-list-since": 0
+  },
+  "equal": {
+    "mcp-releases": true,
+    "mcp-releases-filtered": true,
+    "mcp-resources": true,
+    "mcp-unit-events": true,
+    "mcp-unit-events-of-unit": true,
+    "release-list-by-id": true,
+    "release-list-by-slug": true,
+    "release-list-first-by-id": true,
+    "release-list-first-by-slug": true,
+    "release-list-since-by-id": true,
+    "release-list-since-by-slug": true,
+    "resource-list-by-id": true,
+    "resource-list-by-slug": true,
+    "resource-list-contains-by-id": true,
+    "resource-list-contains-by-slug": true,
+    "unit-event-list-by-id": true,
+    "unit-event-list-by-slug": true,
+    "unit-event-list-of-unit-by-id": true,
+    "unit-event-list-of-unit-by-slug": true,
+    "unit-event-list-since-by-id": true,
+    "unit-event-list-since-by-slug": true
+  },
+  "steps": {
+    "change release-unit": "ok: Successfully updated unit release-unit (0a9a923f-bd9a-480e-8334-e657ec2aeae3)",
+    "first release": "ok: Successfully created release 961ae866-920d-4e99-90b0-57e4a8cb3671 (961ae866-920d-4e99-90b0-57e4a8cb3671)",
+    "second release": "ok: Successfully created release bac2e18e-526d-4efe-9d31-7f6c4a299a56 (bac2e18e-526d-4efe-9d31-7f6c4a299a56)",
+    "set target of release-other": "ok: Successfully updated Unit release-other (2788c2f0-a18b-4165-9e18-dcbcce435c39)",
+    "set target of release-unit": "ok: Successfully updated Unit release-unit (0a9a923f-bd9a-480e-8334-e657ec2aeae3)",
+    "space release target": "ok: Successfully updated space scout-sdk-releases-1791655762739571323 (12253663-a803-4690-b72b-ba051913b608)",
+    "target create": "ok: Successfully created target release-target (aa9025d6-b955-45d6-8d91-c040d355dcf2)"
+  }
+}
