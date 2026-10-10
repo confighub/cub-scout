@@ -981,6 +981,12 @@ func TestTheDefaultReaderIsTheSDK(t *testing.T) {
 // it does not read whatever this machine is logged in to.
 func TestTheTestBinaryCannotReachRealCredentials(t *testing.T) {
 	require.Equal(t, "cub", os.Getenv(configHubReaderEnv), "TestMain pins the route for the package and for the processes it starts")
+	// Whatever the shell exported: the pin does not defer to it.
+	for _, exported := range []string{"sdk", "", "anything"} {
+		t.Setenv(configHubReaderEnv, exported)
+		pinTestsToTheCubRoute()
+		require.Equal(t, "cub", os.Getenv(configHubReaderEnv), "exported as %q", exported)
+	}
 	_, err := sdkReader(context.Background())
 	require.ErrorIs(t, err, errSDKRouteInATest)
 

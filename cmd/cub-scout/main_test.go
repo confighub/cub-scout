@@ -29,14 +29,19 @@ var errSDKRouteInATest = errors.New("a test reached the SDK route without a test
 // own server with sdkReadsFrom, or restores resolveSDKReader after isolating
 // HOME and CUB_CONFIG.
 func TestMain(m *testing.M) {
-	// Unconditional: a value exported in the developer's shell must not
-	// reach the commands these tests start as child processes, which keep
-	// the real HOME and would resolve the real credential.
-	os.Setenv(configHubReaderEnv, "cub")
+	pinTestsToTheCubRoute()
 	sdkReader = func(context.Context) (*hubread.Reader, error) { return nil, errSDKRouteInATest }
 	// The user's off switch is read from the environment and a file under
 	// HOME. A developer who has turned telemetry off must still be able to
 	// run the tests; the tests of the switch set it themselves.
 	configHubReadsDisabledFn = func() error { return nil }
 	os.Exit(m.Run())
+}
+
+// pinTestsToTheCubRoute sets the route for the test binary and for every
+// process it starts. Unconditional: a value exported in the developer's shell
+// must not reach the commands these tests run as child processes, which keep
+// the real HOME and would resolve the real credential.
+func pinTestsToTheCubRoute() {
+	os.Setenv(configHubReaderEnv, "cub")
 }
