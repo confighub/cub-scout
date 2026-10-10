@@ -1,7 +1,8 @@
 # ConfigHub SDK reader
 
-cub-scout reaches ConfigHub in two ways. Most commands run the `cub` CLI and
-parse what it prints. The reads listed here go through the ConfigHub SDK's typed API
+cub-scout reaches ConfigHub in two ways. It can run the `cub` CLI and parse
+what it prints, which is how every read worked until v2.13.4 and how every
+write still does. The reads listed here go through the ConfigHub SDK's typed API
 client instead ([#758](https://github.com/confighub/cub-scout/issues/758)),
 with no `cub` process for the read. This page records what that route covers,
 what it guarantees and what was measured.
@@ -11,10 +12,14 @@ what it guarantees and what was measured.
 `CUB_SCOUT_CONFIGHUB_READER=cub`. That is the way back if the two ever
 disagree, and a failed read says so when it could help.
 
-`cub` is still required for almost everything: the connected commands check
-the session with `cub auth status`, and every other ConfigHub read runs `cub`.
-Three commands make one of these reads without that check (#863), and for
-them the SDK route needs no `cub`.
+**When `cub` is needed.** On the SDK route the connected commands check the
+session without `cub` (see [the session check](#the-session-check)), so a
+command whose reads are all in the left-hand column below runs on a machine
+with no `cub` binary, given a cub configuration to take the credential from.
+`cub` is still needed to log in, for every write (`import` and the commands
+that create or change things in ConfigHub), and for the reads in the
+right-hand column. A read that needs `cub` on a machine without it fails at
+that read and says the `cub` CLI is not on PATH.
 
 `CUB_SCOUT_OFFLINE=true` and the telemetry switch turn these reads off on
 either route. The SDK route checks them itself, before it looks for a
@@ -27,7 +32,10 @@ These commands, wherever cub-scout runs them: `cub unit get` for one Unit
 named by slug in one named space; `cub unit list`, `cub worker list`,
 `cub target list`, `cub changeset list`, `cub link list`, `cub resource list`,
 `cub release list` and `cub unit-event list` for one named space, with or
-without a `--where` or `--contains` filter; the unit events of one Unit;
+without a `--where` or `--contains` filter, and for every space when the
+caller names every space (`--space '*'`, except releases); the unit events of
+one Unit; `cub organization list`; `cub context get`, which is read from this
+machine's cub configuration and asks no server;
 `cub space list`; and the reads of one thing: `cub unit data`,
 `cub revision get`, `cub revision data`, `cub changeorder get` by slug and
 `cub view get` by ID.
@@ -69,6 +77,8 @@ change.
 | `revision get <unit> <number> --space <space> -o json` and `revision data <unit> <number> --space <space>`, the number written in plain digits | A revision named relative to the head (`-1`), by a name such as `HeadRevisionNum`, or with a selection |
 | `changeorder get <slug> -o json --space <space>` | A change order named by ID; `--container-images`, which adds a second request |
 | `view get <id> --space <space> -o json`, the View named by its canonical ID, in a named space or in every space (`*`) | A View named by slug |
+| Any of those lists except releases with `--space '*'`: the whole organization's list, asked for by name | The releases of every space, which `cub` reads from another endpoint and orders by time; any list with no `--space` at all |
+| `organization list -o json`; `context get -o json` | Either with a filter, a selection, a space or a name; `context get` as text; `context list`; `context use` |
 | `space list -o json`, with or without `--quiet` | A space list with any filter or any of the same, a component, a `--space` or a positional; and a list with no `-o json`, which prints `cub`'s table |
 | | Any other output format, any other flag, `--`, and `-o=json` or `--space=x` spelt with `=` |
 
@@ -115,10 +125,29 @@ A value that names no route is an error for every read in the left-hand
 column, in every command that makes one, and is not consulted for anything in
 the right-hand column, which has only the `cub` route.
 
-**The `cub` CLI is still required**, with three exceptions (#863). The connected commands first ask
-`cub auth status` whether ConfigHub can be read, once per command, on either
-route. The SDK route removes the `cub` process for the read, not for that
-check, and every other ConfigHub read still runs `cub`.
+## The session check
+
+Every connected command first asks whether ConfigHub can be read, once per
+command. By the `cub` route that is `cub auth status`. By the SDK route it is
+the same check made without `cub`:
+
+| `cub auth status` checks | The SDK route |
+|---|---|
+| A stored token for the active context | The same, through the credential `cub` would use; none is "no ConfigHub session this machine can use" |
+| The token has not expired, by its own `exp` claim | The same, before any request |
+| The server accepts it: one GET of the caller's own membership | The same GET; a 200 that names no user and no organization is not accepted |
+| This `cub` is not older than the server by a minor version | The SDK cub-scout was built with is not older than the server by a minor version. A server ahead is refused; the error says to upgrade cub-scout or to read through an up-to-date `cub` with `CUB_SCOUT_CONFIGHUB_READER=cub`. An SDK ahead of the server is allowed, with a warning on stderr, as `cub` does |
+
+A refusal answers to the same reasons by either route (not authenticated, or
+a version problem), in words that do not mention a `cub` check that was not
+run. A server that cannot be asked is "could not be checked", which says
+nothing about the session. `CUB_SCOUT_OFFLINE=true` and the telemetry switch
+are honoured first, and then nothing is resolved or sent.
+
+`map fleet`, `map clusterdata --connected`, `fleet outliers` and the
+existing-unit lookup of `import --json` now ask this gate like every other
+connected command (#863). `impact` no longer reports "no dependents" when the
+space's links could not be read; it says they could not be read.
 
 ## What the reader guarantees
 
@@ -399,9 +428,12 @@ the ones above, and the attestation list is the one recorded earlier).
 - **A very large list.** The reader gives each request 30 seconds and `cub`
   sets no limit, so a space large enough to take longer fails here with
   `timeout` and names the way back.
-- **Time for a whole command.** The timings are for one read. A connected
-  command also runs `cub auth status` on either route, and how many requests
-  `cub` itself makes was not measured.
+- **Time for a whole command.** The timings are for one read. How many
+  requests a whole command makes by each route was not measured.
+- **Which commands run with no `cub` at all.** Shown through the built
+  binary: the gate, `views resolve`, and the MCP `confighub_units` tool. No
+  command-by-command list was made; a command runs without `cub` when every
+  read it makes is one this page lists as taken.
 - **No agent cost or time claim.** A faster read is not a measured saving for
   an agent; no eval was run on it.
 
@@ -467,8 +499,10 @@ the ones above, and the attestation list is the one recorded earlier).
 
 ## Next
 
-More commands behind the same adapter, one at a time, each held to the `cub`
-route's output on a recording from a real server; one space lookup per command
-rather than per read; the connected check, so that the SDK route can run without `cub`
-installed; a real-server run with a Unit that has a target. Scout's observation interface stays read-only
+The reads still left to `cub` (a selection, a stored filter, a View's
+evaluated columns, an entity named by ID, the releases of every space,
+`unit tree`, `release check`, `k8s get`), each held to the `cub` route's output
+on a recording from a real server; one space lookup per command rather than
+per read; the OCI registry lookup, which still asks `cub` for the context; a
+real-server run with a Unit that has a target and with unit events. Scout's observation interface stays read-only
 throughout: the SDK's action calls are not exposed.

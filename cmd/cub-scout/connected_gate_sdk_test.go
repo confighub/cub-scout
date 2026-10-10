@@ -224,3 +224,17 @@ func TestAnUnreadLinkListIsNotNoDependents(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, result.Dependents)
 }
+
+// On the SDK route a machine with no cub passes the gate, so a read that still
+// needs cub is where its absence shows. The error says so and names the read,
+// without the values that were passed to it.
+func TestAReadThatStillNeedsCubSaysSoWhenThereIsNone(t *testing.T) {
+	t.Setenv("PATH", t.TempDir())
+	t.Setenv(configHubReaderEnv, "sdk")
+	_, err := cubStdout(context.Background(), "unit", "tree", "payments-api", "--space", "prod-space")
+	require.ErrorIs(t, err, hub.ErrCubNotInstalled)
+	require.ErrorContains(t, err, "not on PATH")
+	require.ErrorContains(t, err, "`cub unit tree`")
+	require.NotContains(t, err.Error(), "payments-api")
+	require.NotContains(t, err.Error(), "executable file not found")
+}

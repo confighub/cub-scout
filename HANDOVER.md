@@ -1933,10 +1933,25 @@ Nothing here is released; the published baseline is still v2.13.4.
 - The test binary of `cmd/cub-scout` is pinned to the `cub` route and cannot
   resolve a real credential. Keep it that way: the SDK route reads whatever
   the machine is logged in to.
-- `cub` is still required: connected commands check the session with
-  `cub auth status`. Three commands read without that check (#863).
-- Not done, and listed on #758: more reads, one space lookup per command, the
-  session check through the SDK, a hosted server, a Unit with a target.
+- **The session check needs no `cub` on the SDK route.** The gate makes the
+  check `cub auth status` makes: a stored token, not expired, one GET the
+  server answers, and an SDK not older than the server by a minor version.
+  A command whose reads are all taken runs with no `cub` binary. `cub` is
+  still needed to log in, for writes, and for the reads left to it; such a
+  read on a machine without `cub` says so at that read.
+- **Bump the SDK when ConfigHub's minor version moves.** The gate refuses a
+  server a minor version ahead of the SDK in `go.mod`, as `cub` refuses a
+  `cub` that old. Until cub-scout is rebuilt on the new SDK, users read
+  through an up-to-date `cub` with `CUB_SCOUT_CONFIGHUB_READER=cub`.
+- Lists across every space (`--space '*'`), the organization list and
+  `cub context get -o json` take the route too. The releases of every space
+  do not.
+- `map fleet`, `map clusterdata --connected`, `fleet outliers` and the lookup
+  in `import --json` ask the gate now (#863).
+- Not done, and listed on #758: the reads still left to `cub` (selections,
+  stored filters, a View's evaluated columns, entities named by ID,
+  `unit tree`, `release check`, `k8s get`), one space lookup per command, a
+  hosted server, a Unit with a target, unit events that exist.
 
 The reference is [docs/reference/confighub-sdk-reader.md](docs/reference/confighub-sdk-reader.md).
 Found on the way and fixed: `views project` read shapes `cub` does not print
