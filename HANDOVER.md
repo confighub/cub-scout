@@ -2000,3 +2000,26 @@ instruction of 2026-10-06 not to move its gates, the maintainer chose:
 - Publishing is the maintainer's step: the notes pull request is left
   unmerged until he says to tag, and the tag is pushed only on his word.
 
+## v2.14.0 published — 2026-10-10
+
+Tagged on the maintainer's instruction ("merge 870 and tag v2.14.0") at
+`c2daa3bc`, the merge commit of the notes pull request, after `main` CI was
+green on it and a clean local build, vet and full test passed. The Release
+workflow (run 38089614311) passed and published six archives, the checksums,
+the image and the Homebrew formula and cask. What was checked on the artifacts
+is in [the notes](docs/releases/v2.14.0.md#publication-checks).
+
+- The published baseline is **v2.14.0**. It claims no P4 gate; see the section
+  above.
+- Not checked on the published artifacts: an SDK read against a real server
+  (the comparisons with `cub` were made in CI on the same source), `brew
+  install`, and running the Windows binaries.
+- The published binary was run only with a private, empty cub configuration,
+  so it made no ConfigHub request.
+- Next for the SDK work is on #758: the reads still left to `cub`, unit events
+  with an event in them, a hosted server and an ordinary user's session, and
+  bumping the SDK when ConfigHub's minor version moves.
+- Open for the maintainer: P5's version number; the artifact of CI run
+  38071527126, which holds the secret of a worker on a server that no longer
+  exists; the paid eval for a `gitops_tree` MCP tool (#855).
+
