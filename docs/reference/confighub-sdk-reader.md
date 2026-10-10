@@ -1,7 +1,7 @@
 # ConfigHub SDK reader
 
 cub-scout reaches ConfigHub in two ways. Most commands run the `cub` CLI and
-parse what it prints. Three reads go through the ConfigHub SDK's typed API
+parse what it prints. The reads listed here go through the ConfigHub SDK's typed API
 client instead ([#758](https://github.com/confighub/cub-scout/issues/758)),
 with no `cub` process for the read. This page records what that route covers,
 what it guarantees and what was measured.
@@ -23,9 +23,11 @@ is installed.
 
 ## What it covers
 
-Three commands, wherever cub-scout runs them: `cub unit get` for one Unit
-named by slug in one named space, `cub unit list` for one named space, with
-or without a `--where` or `--contains` filter, and `cub space list`.
+These commands, wherever cub-scout runs them: `cub unit get` for one Unit
+named by slug in one named space; `cub unit list`, `cub worker list`,
+`cub target list`, `cub changeset list` and `cub link list` for one named
+space, with or without a `--where` or `--contains` filter; and
+`cub space list`.
 
 ```bash
 # The default: these reads go through the SDK
@@ -58,11 +60,13 @@ change.
 | either, with `--quiet` | A space named by ID in any spelling but the canonical lower-case one, capitals included |
 | a space named by its canonical ID | `*` as the space or the Unit; a space containing `/`; a `--space` value that starts with `-` |
 | `unit list -o json --space <space>`, with or without `--quiet`, `--where <expression>` and `--contains <text>` | A unit list with a stored filter, a data or trigger filter, a selection, a limit, an ordering, a view or hidden entities; an empty `--where` or `--contains`, or either given twice |
+| `worker list`, `target list`, `changeset list` and `link list`, each `-o json --space <space>` with or without `--quiet`, `--where <expression>` and `--contains <text>` | Any of them across every space, with a positional, or with any of the options a unit list is left to `cub` for. `attestation list`, which cub-scout runs under a byte limit of its own |
 | `space list -o json`, with or without `--quiet` | A space list with any filter or any of the same, a component, a `--space` or a positional; and a list with no `-o json`, which prints `cub`'s table |
 | | Any other output format, any other flag, `--`, and `-o=json` or `--space=x` spelt with `=` |
 
 Today that is every `unit get` cub-scout builds, given a slug and a named
-space, and every plain `unit list` and `space list`. A test reads the source
+space, every plain `unit list` and `space list`, and every worker, target,
+change set and link list. A test reads the source
 of each call site: a `unit get` in a shape the route does not take fails it,
 and so does a list that is neither taken nor named in the test with the reason
 it stays with `cub`. The test models the arguments' shape, not the values a
@@ -76,6 +80,7 @@ user supplies.
 | `map` (connected hierarchy and unit detail) | |
 | Import wizard checks | Reads only; its writes run `cub` |
 | The lists: `map` (connected hierarchy, fleet, and joining cluster resources to their Units), `fleet outliers`, import's check for existing units and its link to the space, MCP `confighub_units` with or without `where` and `contains`, and the `views` lookups when they name one space | |
+| The worker list: `status`, the connected hierarchy in `map`, and the local cluster view. The target list: import, the import wizard and the hierarchy. The change set list: `history`, `audit` and MCP `confighub_changesets`. The link list: `compare bindings` and `map` | A worker's `Secret` is not in what the SDK route returns; see below |
 | Lists that stay with `cub`: `views` across every space, GitOps delivery evidence (a selection), `app list` and import's summary (they print `cub`'s own output) | |
 
 A failed SDK read is the answer, reported with its reason. It does not fall
@@ -126,6 +131,16 @@ check, and every other ConfigHub read still runs `cub`.
   OR with HTTP 400 ("expected AND before") by either route, so on that server
   an expression cannot reach beyond the space this way. Entities the server expands inside an entry (an
   upstream, a link, a target) are as in `cub`'s output and are not checked.
+- **The same rules for every list of a space.** Workers, targets, change
+  sets, links and attestations are read as Units are: one named space, every
+  entry checked to be in it, and nothing broken read as empty.
+- **A worker's secret is not passed on.** The server returns each worker's
+  `Secret`, the token the worker authenticates with, to anyone who may list
+  workers, and `cub worker list -o json` prints it. Nothing in cub-scout uses
+  it, so the reader drops the field before returning the list. This is the one
+  place its JSON is not `cub`'s: the worker list is `cub`'s with that field
+  gone. By the `cub` route the secret is in the output cub-scout parses, as it
+  always was; no command prints it.
 - **A rejected filter keeps the server's reason.** For an HTTP 400 the
   server's message is passed on, cut to 300 characters, with control and
   format characters and line separators replaced by spaces so that nothing in
@@ -238,6 +253,29 @@ The reader's unit tests also pass unchanged on SDK core v0.8.12 against the
 v0.8.3 recordings: the same requests as the SDK's own helpers, and the same
 bytes.
 
+## The other lists of a space (2026-10-10, CI run 38071527126)
+
+The same test creates a worker, a Target, a ChangeSet, a Link between its two
+Units and an attestation through `cub`, on ConfigHub v0.8.12, and lists each
+by both routes. Read from the run's artifact:
+
+| Checked on ConfigHub v0.8.12 | Result |
+|---|---|
+| The server let the test create | all five |
+| `target list`, `changeset list`, `link list`, `attestation list`: reader against `cub`, space by slug and by ID | identical, byte for byte; one entry each (1426, 2951, 5824 and 770 bytes) |
+| `worker list`, the same way | identical once the `Secret` line is taken out of what `cub` printed; 1747 bytes before |
+| Each list with a filter that matches nothing (not attestations, which have no slug) | `[]` by both routes |
+| Each list in a space that does not exist | `not_found` from the reader |
+
+That run compared the worker list whole, secret included, and kept it in the
+run's artifact; the worker belonged to a server deleted when the run ended.
+The reader has dropped the field since, the test removes it before keeping
+anything, and the recordings in
+`test/fixtures/confighub-space-lists-v0812-recorded/` are stored without it.
+
+Each list had one entry, the Target had no worker, the ChangeSet was open and
+the Link was within one space.
+
 ## Not measured, and not claimed
 
 - **Two server versions, one kind of Unit.** v0.8.3 and v0.8.12, both
@@ -310,7 +348,7 @@ bytes.
 
 ## What the default changes for a user
 
-- These three reads no longer start `cub`. A wrapper around `cub` that
+- These reads no longer start `cub`. A wrapper around `cub` that
   records or fakes its calls does not see them; `examples/confighub-space-scope/record-cub-calls.sh`
   sets `CUB_SCOUT_CONFIGHUB_READER=cub` for that reason.
 - What cub-scout shows of a Unit follows the SDK version cub-scout was built

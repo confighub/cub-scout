@@ -330,7 +330,7 @@ func TestEveryListCallSiteIsTakenOrExplained(t *testing.T) {
 	}
 	used := map[string]bool{}
 	taken := map[string]int{}
-	for _, command := range [][2]string{{"unit", "list"}, {"space", "list"}} {
+	for _, command := range [][2]string{{"unit", "list"}, {"space", "list"}, {"worker", "list"}, {"target", "list"}, {"changeset", "list"}, {"link", "list"}} {
 		for _, site := range cubCallSites(t, command[0], command[1]) {
 			explained := false
 			for fragment := range leftToCub {
@@ -350,6 +350,12 @@ func TestEveryListCallSiteIsTakenOrExplained(t *testing.T) {
 	}
 	require.GreaterOrEqual(t, taken["unit list"], 9)
 	require.GreaterOrEqual(t, taken["space list"], 5)
+	// Every worker, target, change set and link list is taken: none is
+	// built with a flag the route does not know.
+	require.GreaterOrEqual(t, taken["worker list"], 6)
+	require.GreaterOrEqual(t, taken["target list"], 5)
+	require.GreaterOrEqual(t, taken["changeset list"], 3)
+	require.GreaterOrEqual(t, taken["link list"], 2)
 
 	// The MCP tool appends a filter when it is given one.
 	tool, ok := newMCPGatewayWithMode(nil, nil, true).tools["confighub_units"]
@@ -1156,4 +1162,137 @@ func TestImportWizardDoesNotSetATargetWhenItCouldNotReadTheUnit(t *testing.T) {
 			}
 		})
 	}
+}
+
+// The lists of one space besides Units: the same shape for each entity, and
+// nothing else.
+func TestSDKListArgsForTheOtherEntities(t *testing.T) {
+	for _, entity := range []string{"worker", "target", "changeset", "link"} {
+		t.Run(entity, func(t *testing.T) {
+			for name, tc := range map[string]struct {
+				args []string
+				want hubread.Filter
+			}{
+				"plain":         {[]string{entity, "list", "--space", "s", "-o", "json"}, hubread.Filter{}},
+				"flags first":   {[]string{entity, "list", "-o", "json", "--quiet", "--space", "s"}, hubread.Filter{}},
+				"a filter":      {[]string{entity, "list", "--space", "s", "--where", "Slug = 'x'", "-o", "json", "--quiet"}, hubread.Filter{Where: "Slug = 'x'"}},
+				"a text search": {[]string{entity, "list", "-o", "json", "--contains", "break-glass", "--space", "s"}, hubread.Filter{Contains: "break-glass"}},
+			} {
+				got, space, filter, ok := sdkListArgs(tc.args)
+				require.True(t, ok, name)
+				require.Equal(t, entity, got)
+				require.Equal(t, "s", space)
+				require.Equal(t, tc.want, filter, name)
+				require.NotNil(t, sdkRead(tc.args))
+				// It is this entity's list, not the unit list.
+				_, _, isUnits := sdkUnitListArgs(tc.args)
+				require.False(t, isUnits)
+			}
+			for name, args := range map[string][]string{
+				"no space":         {entity, "list", "-o", "json"},
+				"every space":      {entity, "list", "-o", "json", "--space", allConfigHubSpaces},
+				"no output format": {entity, "list", "--space", "s"},
+				"a selection":      {entity, "list", "-o", "json", "--space", "s", "--select", "Slug"},
+				"a stored filter":  {entity, "list", "-o", "json", "--space", "s", "--filter", "f"},
+				"a positional":     {entity, "list", "x", "-o", "json", "--space", "s"},
+				"another command":  {entity, "get", "x", "-o", "json", "--space", "s"},
+			} {
+				_, _, _, ok := sdkListArgs(args)
+				require.False(t, ok, name)
+				require.Nil(t, sdkRead(args), name)
+			}
+		})
+	}
+	// An entity this file does not list stays with cub.
+	for _, entity := range []string{"release", "unit-event", "attestation", "trigger", "organization"} {
+		require.Nil(t, sdkRead([]string{entity, "list", "-o", "json", "--space", "s"}), entity)
+	}
+}
+
+// #758, batch A: the other lists of a space, through cubStdout by each route,
+// on what cub printed for them on a real v0.8.12 server. The fake cub prints
+// the recording; the test server sends the same JSON, with the worker's
+// Secret where a real server sends it.
+func TestCubStdoutAnswersTheOtherSpaceListsThroughTheSDK(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("uses a shell script as the fake cub")
+	}
+	fixture := func(name string) string {
+		path, err := filepath.Abs(filepath.Join("..", "..", "test", "fixtures", "confighub-space-lists-v0812-recorded", name))
+		require.NoError(t, err)
+		return path
+	}
+	read := func(name string) []byte {
+		recorded, err := os.ReadFile(fixture(name))
+		require.NoError(t, err)
+		return recorded
+	}
+	var units []struct {
+		Space struct{ Slug, SpaceID string }
+	}
+	require.NoError(t, json.Unmarshal(read("unit-list.json"), &units))
+	space, spaceID := units[0].Space.Slug, units[0].Space.SpaceID
+
+	dir := t.TempDir()
+	cubLog := filepath.Join(dir, "calls.log")
+	script := "#!/bin/sh\n" + "echo \"$*\" >> \"" + cubLog + "\"\n" + "case \"$1 $2\" in\n"
+	for _, entity := range []string{"worker", "target", "changeset", "link"} {
+		script += "  \"" + entity + " list\") /bin/cat \"" + fixture(entity+"-list.json") + "\" ;;\n"
+	}
+	script += "  *) exit 9 ;;\nesac\n"
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "cub"), []byte(script), 0o755))
+	t.Setenv("PATH", dir)
+
+	const secret = "ch_not-a-real-worker-secret"
+	workers := strings.Replace(string(read("worker-list.json")), `      "Slug": "parity-worker",`, `      "Secret": "`+secret+`",`+"\n"+`      "Slug": "parity-worker",`, 1)
+	require.Contains(t, workers, secret)
+	served := map[string][]byte{
+		"/api/space": read("space-list.json"), "/api/bridge_worker": []byte(workers), "/api/target": read("target-list.json"),
+		"/api/change_set": read("changeset-list.json"), "/api/link": read("link-list.json"),
+	}
+	var seen []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		seen = append(seen, r.URL.Path+"?where="+r.URL.Query().Get("where"))
+		w.Header().Set("Content-Type", "application/json")
+		if body, ok := served[r.URL.Path]; ok {
+			_, _ = w.Write(body)
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	t.Cleanup(server.Close)
+	old := sdkReader
+	t.Cleanup(func() { sdkReader = old })
+	sdkReader = func(context.Context) (*hubread.Reader, error) {
+		return hubread.New(server.URL, "test-token", hubread.Options{})
+	}
+
+	for entity, path := range map[string]string{"worker": "/api/bridge_worker", "target": "/api/target", "changeset": "/api/change_set", "link": "/api/link"} {
+		t.Run(entity, func(t *testing.T) {
+			// As the call sites build it: the space appended by
+			// withConfigHubSpace, by slug.
+			args := withConfigHubSpace([]string{entity, "list", "-o", "json"}, space)
+			cubBefore, seenBefore := len(fakeCubCalls(t, cubLog)), len(seen)
+
+			t.Setenv(configHubReaderEnv, "cub")
+			viaCub, err := cubStdout(context.Background(), args...)
+			require.NoError(t, err)
+			require.Len(t, fakeCubCalls(t, cubLog), cubBefore+1)
+			require.Len(t, seen, seenBefore, "by the cub route nothing is read through the SDK")
+
+			t.Setenv(configHubReaderEnv, "sdk")
+			viaSDK, err := cubStdout(context.Background(), args...)
+			require.NoError(t, err)
+			require.Len(t, fakeCubCalls(t, cubLog), cubBefore+1, "by the SDK route no cub process is started")
+			require.Equal(t, []string{"/api/space?where=Slug = '" + space + "'", path + "?where=SpaceID = '" + spaceID + "'"}, seen[seenBefore:])
+			require.Equal(t, string(viaCub), string(viaSDK))
+			require.NotContains(t, string(viaSDK), secret, "a worker's secret is not passed on")
+			require.Greater(t, len(viaSDK), 100)
+		})
+	}
+
+	// The attestation list is read by the reader but not routed here: its
+	// one caller runs cub itself under a byte limit of its own.
+	t.Setenv(configHubReaderEnv, "sdk")
+	require.Nil(t, sdkRead(withConfigHubSpace([]string{"attestation", "list", "-o", "json"}, space)))
 }

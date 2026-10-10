@@ -20,7 +20,7 @@ import (
 // instead of by starting `cub` (#758).
 //
 // It works at the level of the command cub-scout was about to run: `unit get`,
-// `unit list` and `space list` so far. Every read
+// `space list`, and the list of one space for the entities in sdkSpaceLists. Every read
 // already goes through cubStdout with cub's own arguments, and its callers
 // already parse cub's JSON. So the adapter recognises a command it can
 // reproduce exactly, reads the same thing the way cub does, and returns the
@@ -185,20 +185,42 @@ func sdkUnitGetArgs(args []string) (space, unit string, ok bool) {
 	return space, unit, true
 }
 
-// sdkUnitListArgs recognises `cub unit list -o json [--quiet] --space <space>
-// [--where <expression>] [--contains <text>]` for one named space, and nothing
-// else: a selection, a limit, an ordering, a stored filter or a view changes
-// what cub asks the server in ways this file does not reproduce, and stays
-// with cub.
-func sdkUnitListArgs(args []string) (space string, filter hubread.UnitFilter, ok bool) {
-	if len(args) < 2 || args[0] != "unit" || args[1] != "list" {
-		return "", hubread.UnitFilter{}, false
+// sdkSpaceLists are the lists of one named space this file reproduces, by the
+// word cub calls the entity. Each is the same request with its own expansions,
+// and cub implements each the same way.
+var sdkSpaceLists = map[string]func(*hubread.Reader, context.Context, string, hubread.Filter) ([]byte, error){
+	"unit":      (*hubread.Reader).UnitListJSON,
+	"worker":    (*hubread.Reader).WorkerListJSON,
+	"target":    (*hubread.Reader).TargetListJSON,
+	"changeset": (*hubread.Reader).ChangeSetListJSON,
+	"link":      (*hubread.Reader).LinkListJSON,
+	// The attestation list is not here yet: its one caller runs cub itself,
+	// under a byte limit of its own, and moves with the revision reads.
+}
+
+// sdkListArgs recognises `cub <entity> list -o json [--quiet] --space <space>
+// [--where <expression>] [--contains <text>]` for one named space and one of
+// the entities above, and nothing else: a selection, a limit, an ordering, a
+// stored filter or a view changes what cub asks the server in ways this file
+// does not reproduce, and stays with cub.
+func sdkListArgs(args []string) (entity, space string, filter hubread.Filter, ok bool) {
+	if len(args) < 2 || args[1] != "list" || sdkSpaceLists[args[0]] == nil {
+		return "", "", hubread.Filter{}, false
 	}
 	parsed, ok := sdkReadFlags(args[2:])
 	if !ok || len(parsed.positionals) != 0 || !parsed.hasSpace || !sdkTakesSpace(parsed.space) {
-		return "", hubread.UnitFilter{}, false
+		return "", "", hubread.Filter{}, false
 	}
-	return parsed.space, hubread.UnitFilter{Where: parsed.where, Contains: parsed.contains}, true
+	return args[0], parsed.space, hubread.Filter{Where: parsed.where, Contains: parsed.contains}, true
+}
+
+// sdkUnitListArgs is sdkListArgs for the unit list alone.
+func sdkUnitListArgs(args []string) (space string, filter hubread.Filter, ok bool) {
+	entity, space, filter, ok := sdkListArgs(args)
+	if !ok || entity != "unit" {
+		return "", hubread.Filter{}, false
+	}
+	return space, filter, true
 }
 
 // sdkSpaceListArgs recognises `cub space list -o json [--quiet]` and nothing
@@ -219,9 +241,10 @@ func sdkRead(args []string) func(context.Context, *hubread.Reader) ([]byte, erro
 			return reader.UnitJSON(ctx, space, unit)
 		}
 	}
-	if space, filter, ok := sdkUnitListArgs(args); ok {
+	if entity, space, filter, ok := sdkListArgs(args); ok {
+		list := sdkSpaceLists[entity]
 		return func(ctx context.Context, reader *hubread.Reader) ([]byte, error) {
-			return reader.UnitListJSON(ctx, space, filter)
+			return list(reader, ctx, space, filter)
 		}
 	}
 	if sdkSpaceListArgs(args) {
