@@ -134,6 +134,9 @@ func TestSDKReaderMatchesCubOnEntitiesAndData(t *testing.T) {
 	data := compare("unit-data", []string{"unit", "data", unit, "--space", space},
 		func(s string) ([]byte, error) { return reader.UnitData(ctx, s, unit) })
 	notes["unit data is the file uploaded last"] = fmt.Sprint(bytes.Equal(data, second))
+	if !bytes.Equal(data, second) {
+		t.Errorf("the Unit's data is %d bytes and is not the file uploaded last (%d bytes)", len(data), len(second))
+	}
 	notes["unit DataHash is the SHA-256 of its data"] = fmt.Sprint(envelope.Unit.DataHash == hashOf(data))
 	if envelope.Unit.DataHash != hashOf(data) {
 		t.Errorf("the Unit reports DataHash %q and its data hashes to %q", envelope.Unit.DataHash, hashOf(data))
@@ -162,8 +165,15 @@ func TestSDKReaderMatchesCubOnEntitiesAndData(t *testing.T) {
 		viaSDK, sdkErr := reader.RevisionData(ctx, space, unit, number)
 		switch {
 		case cubErr != nil && sdkErr != nil:
-			// A revision with no data fails by both routes.
+			// A revision with no data fails by both routes. Any other
+			// failure of both is not agreement, it is two failures.
 			notes[label+" data"] = "no data by either route: " + string(hubread.KindOf(sdkErr))
+			if hubread.KindOf(sdkErr) != hubread.KindNotFound || !strings.Contains(cubErr.Error(), "no config data") {
+				t.Errorf("%s data failed by both routes, and not for want of data: cub %v, the reader %v", label, cubErr, sdkErr)
+			}
+			if number == head {
+				t.Errorf("the head revision has no data by either route")
+			}
 		case cubErr != nil || sdkErr != nil:
 			t.Errorf("%s data: cub %v, the reader %v", label, cubErr, sdkErr)
 		default:
@@ -180,6 +190,9 @@ func TestSDKReaderMatchesCubOnEntitiesAndData(t *testing.T) {
 		}
 	}
 	notes["an earlier revision holds the first upload"] = fmt.Sprint(sawFirst)
+	if !sawFirst {
+		t.Errorf("no revision's data is the first upload")
+	}
 
 	// What is not there fails by both routes and is never an empty answer.
 	for name, read := range map[string]func() ([]byte, error){
@@ -212,8 +225,10 @@ func TestSDKReaderMatchesCubOnEntitiesAndData(t *testing.T) {
 	// A View, found by its ID with no space and with its space named.
 	if _, err := cubStdoutOnly("filter", "create", "--space", space, "entity-filter", "Unit", "--where-field", "Slug LIKE 'entity-%'"); err != nil {
 		notes["view"] = "no filter could be created: " + err.Error()
+		t.Errorf("no filter could be created, so no View is compared: %v", err)
 	} else if created, err := cubStdoutOnly("view", "create", "--space", space, "-o", "json", "entity-view", "entity-filter", "--column", "Unit.Slug"); err != nil {
 		notes["view"] = "no view could be created: " + err.Error()
+		t.Errorf("no View could be created, so none is compared: %v", err)
 	} else {
 		var decoded interface{}
 		_ = json.Unmarshal(created, &decoded)
@@ -246,7 +261,7 @@ func TestSDKReaderMatchesCubOnEntitiesAndData(t *testing.T) {
 	// A change order, where this server lets a bare space have one.
 	if _, err := cubStdoutOnly("changeorder", "create", "--space", space, "entity-order", "--description", "recorded for the SDK reader"); err != nil {
 		notes["changeorder"] = "not created: " + err.Error()
-		t.Logf("no change order could be created on this server, so that read is not compared: %v", err)
+		t.Errorf("no change order could be created on this server, so that read is not compared: %v", err)
 	} else {
 		notes["changeorder"] = "created"
 		compare("changeorder-get", []string{"changeorder", "get", "entity-order", "-o", "json", "--space", space},

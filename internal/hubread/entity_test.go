@@ -127,22 +127,46 @@ func TestUnitDataIsHeldToTheHashTheUnitReports(t *testing.T) {
 			got, err := hub.reader(Options{}).UnitData(context.Background(), recordedSpace, recordedUnit)
 			require.Equal(t, KindMalformed, KindOf(err), "%v", err)
 			require.ErrorContains(t, err, "does not have the hash ConfigHub reports")
+			var typed *Error
+			require.ErrorAs(t, err, &typed)
+			require.True(t, typed.Unverified, "marked, so that no caller is sent to a route that does not check")
 			require.Nil(t, got)
 			require.NotContains(t, err.Error(), "sign in", "what was downloaded is not quoted")
 		})
 	}
 
-	// A Unit that reports no hash cannot be checked; its data is returned as
-	// cub returns it.
-	hub := governanceHub(t)
-	var unit map[string]interface{}
-	require.NoError(t, json.Unmarshal(hub.units[0]["Unit"], &unit))
-	delete(unit, "DataHash")
-	stripped, err := json.Marshal(unit)
+	// The servers recorded from report a hash for every Unit. One that
+	// reports only a size is held to the size, and one that reports neither
+	// cannot be checked: its data is returned as cub returns it.
+	without := func(fields ...string) *fakeHub {
+		hub := governanceHub(t)
+		var unit map[string]interface{}
+		require.NoError(t, json.Unmarshal(hub.units[0]["Unit"], &unit))
+		for _, field := range fields {
+			delete(unit, field)
+		}
+		stripped, err := json.Marshal(unit)
+		require.NoError(t, err)
+		hub.units[0]["Unit"] = stripped
+		return hub
+	}
+	sized := without("DataHash")
+	sized.raw[unitDataPath], sized.contentTypes[unitDataPath] = "<html>sign in</html>", "application/octet-stream"
+	got, err := sized.reader(Options{}).UnitData(context.Background(), recordedSpace, recordedUnit)
+	require.Equal(t, KindMalformed, KindOf(err))
+	require.ErrorContains(t, err, "ConfigHub reports 113")
+	require.Nil(t, got)
+	var typed *Error
+	require.ErrorAs(t, err, &typed)
+	require.True(t, typed.Unverified)
+	sized.raw[unitDataPath] = recorded
+	got, err = sized.reader(Options{}).UnitData(context.Background(), recordedSpace, recordedUnit)
 	require.NoError(t, err)
-	hub.units[0]["Unit"] = stripped
-	hub.raw[unitDataPath], hub.contentTypes[unitDataPath] = "anything", "application/octet-stream"
-	got, err := hub.reader(Options{}).UnitData(context.Background(), recordedSpace, recordedUnit)
+	require.Equal(t, recorded, string(got))
+
+	unchecked := without("DataHash", "DataSize")
+	unchecked.raw[unitDataPath], unchecked.contentTypes[unitDataPath] = "anything", "application/octet-stream"
+	got, err = unchecked.reader(Options{}).UnitData(context.Background(), recordedSpace, recordedUnit)
 	require.NoError(t, err)
 	require.Equal(t, "anything", string(got))
 }
@@ -181,7 +205,7 @@ func TestUnitDataFailuresKeepTheirReasons(t *testing.T) {
 }
 
 // #758, batch B: one revision, as cub printed it on a real server.
-func TestRevisionJSONIsWhatCubPrintedOnTheRealServer(t *testing.T) {
+func TestRevisionJSONIsWhatAnOlderCubPrinted(t *testing.T) {
 	hub := governanceHub(t)
 	recorded := governanceRecording(t, "revision-get.json")
 	hub.raw[revisionListPath] = "[" + string(recorded) + "]"
@@ -220,7 +244,8 @@ func TestRevisionReadsFindExactlyOneRevisionOfTheUnit(t *testing.T) {
 		"the number twice":            {"[" + recorded + "," + recorded + "]", KindAmbiguous, "more than one revision 2"},
 		"a revision of another unit":  {"[" + entry(func(r map[string]interface{}) { r["UnitID"] = elsewhereID }) + "]", KindMalformed, "a revision of another unit"},
 		"a revision of another space": {"[" + entry(func(r map[string]interface{}) { r["SpaceID"] = elsewhereID }) + "]", KindMalformed, "a revision of another unit"},
-		"an entry with no revision":   {`[{"Unit":{}}]`, KindNotFound, "no revision 2"},
+		"an entry with no revision":   {`[{"Unit":{}}]`, KindMalformed, "an entry with no revision"},
+		"a null entry":                {`[null]`, KindMalformed, "an entry with no revision"},
 		"a page that is not the API":  {"<html>sign in</html>", KindMalformed, "no revision list"},
 		"an object, not a list":       {"{}", KindMalformed, ""},
 	} {
@@ -306,7 +331,7 @@ func TestRevisionDataIsTheBytesCubWroteOnTheRealServer(t *testing.T) {
 }
 
 // One change order by slug in one space, as cub printed it on a real server.
-func TestChangeOrderJSONIsWhatCubPrintedOnTheRealServer(t *testing.T) {
+func TestChangeOrderJSONIsWhatAnOlderCubPrinted(t *testing.T) {
 	ctx := context.Background()
 	const path, slug = "/api/change_order", "contract-change"
 	hub := governanceHub(t)
@@ -332,6 +357,7 @@ func TestChangeOrderJSONIsWhatCubPrintedOnTheRealServer(t *testing.T) {
 		want Kind
 	}{
 		"none":                       {"[]", KindNotFound},
+		"an entry with no order":     {`[{"Space":{}}]`, KindMalformed},
 		"only another slug":          {"[" + other + "]", KindNotFound},
 		"only one in another space":  {"[" + elsewhere + "]", KindNotFound},
 		"two":                        {"[" + recorded + "," + recorded + "]", KindAmbiguous},
@@ -410,6 +436,7 @@ func TestViewJSONIsWhatCubPrintedOnTheRealServer(t *testing.T) {
 		want Kind
 	}{
 		"none":                        {"[]", KindNotFound},
+		"an entry with no View":       {`[{"Space":{}}]`, KindMalformed},
 		"only a View with another ID": {"[" + another + "]", KindNotFound},
 		"two":                         {"[" + string(recorded) + "," + string(recorded) + "]", KindAmbiguous},
 		"a page that is not the API":  {"<html>sign in</html>", KindMalformed},
@@ -419,4 +446,27 @@ func TestViewJSONIsWhatCubPrintedOnTheRealServer(t *testing.T) {
 		require.Equal(t, tc.want, KindOf(err), name)
 		require.Nil(t, got, name)
 	}
+}
+
+// A caller can bound what one read takes from the network. A response past
+// the bound fails when the bound is passed, not after the rest has arrived.
+func TestAResponseLimitStopsTheReadWhenItIsPassed(t *testing.T) {
+	hub := governanceHub(t)
+	big := strings.Repeat("x", 512*1024)
+	hub.raw[unitDataPath], hub.contentTypes[unitDataPath] = big, "application/octet-stream"
+	reader := hub.reader(Options{})
+
+	_, err := reader.UnitData(WithResponseLimit(context.Background(), 64*1024), recordedSpace, recordedUnit)
+	require.Equal(t, KindTooLarge, KindOf(err), "%v", err)
+	require.Less(t, reader.Stats().ResponseBytes, int64(len(big)/2), "the rest of the body was not read")
+
+	// Under the bound, and with no bound, the read is as before: here it
+	// fails only because these bytes are not the Unit's data.
+	for _, ctx := range []context.Context{WithResponseLimit(context.Background(), 1024*1024), context.Background()} {
+		_, err = reader.UnitData(ctx, recordedSpace, recordedUnit)
+		require.Equal(t, KindMalformed, KindOf(err))
+	}
+	// The bound is on each response, the lookups included.
+	_, err = reader.UnitData(WithResponseLimit(context.Background(), 16), recordedSpace, recordedUnit)
+	require.Equal(t, KindTooLarge, KindOf(err))
 }

@@ -342,7 +342,8 @@ func sdkViewGetArgs(args []string) (space, id string, ok bool) {
 	if parsed.space != allConfigHubSpaces && !sdkTakesSpace(parsed.space) {
 		return "", "", false
 	}
-	if id = parsed.positionals[0]; !canonicalID(id) {
+	// The nil ID is no View's; cub says "not found" for it in its own words.
+	if id = parsed.positionals[0]; !canonicalID(id) || id == uuid.Nil.String() {
 		return "", "", false
 	}
 	return parsed.space, id, true
@@ -463,7 +464,9 @@ func sdkRouteWayBack(err error) string {
 	// beyond the space or Unit asked about: cub prints both as they came,
 	// so sending the user there would trade an error for a wrong answer
 	// with nothing to mark it.
-	if typed.BeyondScope {
+	// Nor for data that did not have the hash ConfigHub reports for it: cub
+	// makes no such check and would print whatever came.
+	if typed.BeyondScope || typed.Unverified {
 		return ""
 	}
 	switch typed.Kind {

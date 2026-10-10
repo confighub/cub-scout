@@ -16,6 +16,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/confighub/cub-scout/v2/internal/hubread"
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
 
@@ -122,7 +123,12 @@ func boundedAttestationCubRead(ctx context.Context, args ...string) ([]byte, err
 	// The SDK route answers these three reads without a cub process. The
 	// same limit holds for what it returns, and a failure says no more than
 	// the cub route's does.
-	if out, handled, err := cubReadViaSDK(ctx, args); handled {
+	// The limit is put on each response as it is read, so that an answer
+	// larger than it is not taken from the network first and refused after.
+	if out, handled, err := cubReadViaSDK(hubread.WithResponseLimit(ctx, attestationReadLimit), args); handled {
+		if hubread.KindOf(err) == hubread.KindTooLarge {
+			return nil, fmt.Errorf("ConfigHub read exceeds 1 MiB")
+		}
 		if err != nil {
 			return nil, fmt.Errorf("bounded ConfigHub read failed")
 		}

@@ -1040,6 +1040,11 @@ func TestASDKRouteFailureNamesTheWayBackOnlyWhenItCouldHelp(t *testing.T) {
 	// a way back; it is the wrong answer with nothing to mark it.
 	require.NotContains(t, (&sdkRouteError{&hubread.Error{Kind: hubread.KindIncomplete, Op: "unit list", Message: "x"}}).Error(), wayBack)
 	require.NotContains(t, (&sdkRouteError{&hubread.Error{Kind: hubread.KindMalformed, Op: "unit list", Message: "x", BeyondScope: true}}).Error(), wayBack)
+	// Nor does cub check data against the hash ConfigHub reports for it, or
+	// have a limit a caller set: neither failure is one cub would not have
+	// had for a good reason.
+	require.NotContains(t, (&sdkRouteError{&hubread.Error{Kind: hubread.KindMalformed, Op: "unit data", Message: "x", Unverified: true}}).Error(), wayBack)
+	require.NotContains(t, (&sdkRouteError{&hubread.Error{Kind: hubread.KindTooLarge, Op: "attestation list", Message: "x"}}).Error(), wayBack)
 	for _, kind := range []hubread.Kind{hubread.KindFailed, hubread.KindForbidden, hubread.KindUnauthorized, hubread.KindNotFound,
 		hubread.KindNotConfigured, hubread.KindInvalidScope, hubread.KindAmbiguous, hubread.KindCanceled} {
 		routed := &sdkRouteError{&hubread.Error{Kind: kind, Op: "unit read", Message: "x"}}

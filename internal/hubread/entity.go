@@ -73,22 +73,28 @@ func (r *Reader) UnitData(ctx context.Context, space, unit string) ([]byte, erro
 		}
 		return nil, failure
 	}
-	if failure := dataMatches(op, resp.Body, found.Unit.DataHash, fmt.Sprintf("unit %q", unit)); failure != nil {
+	if failure := dataMatches(op, resp.Body, found.Unit.DataHash, found.Unit.DataSize, fmt.Sprintf("unit %q", unit)); failure != nil {
 		return nil, failure
 	}
 	return resp.Body, nil
 }
 
-// dataMatches holds downloaded data to the SHA-256 its owner reports. An
-// owner that reports no hash cannot be checked, and is not.
-func dataMatches(op string, data []byte, reported, owner string) *Error {
-	reported = strings.TrimSpace(reported)
-	if reported == "" {
+// dataMatches holds downloaded data to what its owner reports of it: the
+// SHA-256, or, from an owner that reports no hash, the size. An owner that
+// reports neither cannot be checked, and is not. The servers this was
+// recorded from report the hash for every Unit and revision.
+func dataMatches(op string, data []byte, reportedHash string, reportedSize int64, owner string) *Error {
+	reportedHash = strings.TrimSpace(reportedHash)
+	if reportedHash == "" {
+		if reportedSize > 0 && int64(len(data)) != reportedSize {
+			return &Error{Kind: KindMalformed, Op: op, Unverified: true, Message: fmt.Sprintf(
+				"the data downloaded for %s is %d bytes and ConfigHub reports %d; it changed while it was read, or the answer is not its data", owner, len(data), reportedSize)}
+		}
 		return nil
 	}
 	sum := sha256.Sum256(data)
-	if !strings.EqualFold(hex.EncodeToString(sum[:]), reported) {
-		return &Error{Kind: KindMalformed, Op: op, Message: fmt.Sprintf(
+	if !strings.EqualFold(hex.EncodeToString(sum[:]), reportedHash) {
+		return &Error{Kind: KindMalformed, Op: op, Unverified: true, Message: fmt.Sprintf(
 			"the data downloaded for %s (%d bytes) does not have the hash ConfigHub reports for it; it changed while it was read, or the answer is not its data", owner, len(data))}
 	}
 	return nil
@@ -123,7 +129,12 @@ func (r *Reader) revision(ctx context.Context, op, space, unit string, number in
 	var matches []*goclientnew.ExtendedRevision
 	for i := range *resp.JSON200 {
 		entry := &(*resp.JSON200)[i]
-		if entry.Revision == nil || entry.Revision.RevisionNum != number {
+		if entry.Revision == nil {
+			// A list with something in it that is not a revision is not
+			// a list to conclude "no such revision" from.
+			return nil, nil, &Error{Kind: KindMalformed, Op: op, Message: "the list has an entry with no revision"}
+		}
+		if entry.Revision.RevisionNum != number {
 			continue
 		}
 		// The endpoint is the Unit's own. A revision of anything else
@@ -179,7 +190,7 @@ func (r *Reader) RevisionData(ctx context.Context, space, unit string, number in
 	if len(resp.Body) == 0 {
 		return nil, &Error{Kind: KindNotFound, Op: op, Message: fmt.Sprintf("no config data for revision %d of unit %q", number, unit)}
 	}
-	if failure := dataMatches(op, resp.Body, found.Revision.DataHash, fmt.Sprintf("revision %d of unit %q", number, unit)); failure != nil {
+	if failure := dataMatches(op, resp.Body, found.Revision.DataHash, found.Revision.DataSize, fmt.Sprintf("revision %d of unit %q", number, unit)); failure != nil {
 		return nil, failure
 	}
 	return resp.Body, nil
@@ -239,7 +250,11 @@ func (r *Reader) ViewJSON(ctx context.Context, space, id string) ([]byte, error)
 	}
 	var matches []*goclientnew.ExtendedView
 	for i := range *resp.JSON200 {
-		if entry := &(*resp.JSON200)[i]; entry.View != nil && entry.View.ViewID == viewID {
+		entry := &(*resp.JSON200)[i]
+		if entry.View == nil {
+			return nil, &Error{Kind: KindMalformed, Op: op, Message: "the list has an entry with no view"}
+		}
+		if entry.View.ViewID == viewID {
 			matches = append(matches, entry)
 		}
 	}
@@ -290,7 +305,10 @@ func (r *Reader) ChangeOrderJSON(ctx context.Context, space, order string) ([]by
 	var matches []*goclientnew.ExtendedChangeOrder
 	for i := range *resp.JSON200 {
 		entry := &(*resp.JSON200)[i]
-		if found := entry.ChangeOrder; found != nil && found.Slug == order && found.SpaceID == spaceID {
+		if entry.ChangeOrder == nil {
+			return nil, &Error{Kind: KindMalformed, Op: op, Message: "the list has an entry with no change order"}
+		}
+		if found := entry.ChangeOrder; found.Slug == order && found.SpaceID == spaceID {
 			matches = append(matches, entry)
 		}
 	}

@@ -166,6 +166,10 @@ var viewCubRunner cubRunner = func(ctx context.Context, args ...string) ([]byte,
 func fetchView(ctx context.Context, uuid, space string) (map[string]interface{}, error) {
 	out, err := viewCubRunner(ctx, "view", "get", uuid, "--space", space, "-o", "json")
 	if err != nil {
+		if failedOnSDKRoute(err) {
+			// No cub ran, so this is not a cub failure.
+			return nil, fmt.Errorf("ConfigHub view read failed: %w", err)
+		}
 		return nil, fmt.Errorf("cub view get failed: %w", err)
 	}
 	var raw map[string]interface{}

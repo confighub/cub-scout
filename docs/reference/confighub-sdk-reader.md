@@ -63,7 +63,7 @@ change.
 | either, with `--quiet` | A space named by ID in any spelling but the canonical lower-case one, capitals included |
 | a space named by its canonical ID | `*` as the space or the Unit; a space containing `/`; a `--space` value that starts with `-` |
 | `unit list -o json --space <space>`, with or without `--quiet`, `--where <expression>` and `--contains <text>` | A unit list with a stored filter, a data or trigger filter, a selection, a limit, an ordering, a view or hidden entities; an empty `--where` or `--contains`, or either given twice |
-| `worker list`, `target list`, `changeset list` and `link list`, each `-o json --space <space>` with or without `--quiet`, `--where <expression>` and `--contains <text>` | Any of them across every space, with a positional, or with any of the options a unit list is left to `cub` for. `attestation list`, which cub-scout runs under a byte limit of its own |
+| `worker list`, `target list`, `changeset list`, `link list` and `attestation list`, each `-o json --space <space>` with or without `--quiet`, `--where <expression>` and `--contains <text>` | Any of them across every space, with a positional, or with any of the options a unit list is left to `cub` for |
 | `resource list`, `release list` and `unit-event list`, in the same shape; and `unit-event list <unit>` for the events of one Unit named by slug | Any of them across every space (`--space '*'`), which the MCP tools allow when asked; a resource list with a selection, a stored filter, a view or raw data; the events of a Unit named by ID |
 | `unit data <unit> --space <space>`: the Unit's configuration, as bytes | `unit data` of many Units (`--where`), to a file, or of a Unit named by ID |
 | `revision get <unit> <number> --space <space> -o json` and `revision data <unit> <number> --space <space>`, the number written in plain digits | A revision named relative to the head (`-1`), by a name such as `HeadRevisionNum`, or with a selection |
@@ -95,7 +95,7 @@ itself.
 | The lists: `map` (connected hierarchy, fleet, and joining cluster resources to their Units), `fleet outliers`, import's check for existing units and its link to the space, MCP `confighub_units` with or without `where` and `contains`, and the `views` lookups when they name one space | |
 | The worker list: `status`, the connected hierarchy in `map`, and the local cluster view. The target list: import, the import wizard and the hierarchy. The change set list: `history`, `audit` and MCP `confighub_changesets`. The link list: `compare bindings` and `map` | A worker's `Secret` is not in what the SDK route returns; see below |
 | The release and unit-event lists: the ConfigHub part of `gitops status` and of `doctor --with-confighub`, MCP `confighub_releases` and `confighub_unit_events`. The resource list: MCP `confighub_resources` | Releases come from the space's own endpoint and are sorted as `cub` sorts them, highest number first. Unit events are sorted newest first, as `cub` does |
-| `unit data`: the intended configuration in `compare` (DRY/WET snapshots and `compare resource`), the import wizard's checks and `import argocd`. `revision get`, `revision data` and the attestation list: attestation evidence in `trace`, `explain` and receipts. `changeorder get`: `history changeorder` and MCP `confighub_changeorder_get`. `view get`: `views resolve`, `views project` and `compare three-way --view` | Attestation evidence reads at most 1 MiB by either route; by the SDK route the limit is applied to what was read, after it was read |
+| `unit data`: the intended configuration in `compare` (DRY/WET snapshots and `compare resource`), the import wizard's checks and `import argocd`. `revision get`, `revision data` and the attestation list: attestation evidence in `trace` and receipts, and the MCP `confighub_attestations` tool. `changeorder get`: `history changeorder` and MCP `confighub_changeorder_get`. `view get`: `views resolve`, `views project` and `compare three-way --view` | Attestation evidence takes at most 1 MiB per response by either route: by the SDK route each response is cut off when it passes the limit, and the read fails |
 | Lists that stay with `cub`: `views` across every space, GitOps delivery evidence (a selection), `app list` and import's summary (they print `cub`'s own output) | |
 
 A failed SDK read is the answer, reported with its reason. It does not fall
@@ -165,15 +165,19 @@ check, and every other ConfigHub read still runs `cub`.
   revision, a change order and a View are found the way `cub` finds them: a
   list filtered to the name, number or ID, from which exactly one entry must
   be the one asked for. None is `not_found`; two are `ambiguous`; a revision
-  of another Unit under the Unit's own endpoint fails the read.
+  of another Unit under the Unit's own endpoint, or an entry that is not the
+  kind of thing asked for, fails the read.
 - **Configuration data is held to the hash ConfigHub reports for it.** A
-  Unit and a revision each report the SHA-256 of their data. The data is
-  downloaded from the entity's own endpoint and returned only when its hash
-  is the one reported. A page from something in between, a truncated body,
-  and a Unit that changed between the lookup and the download all fail, and
-  the error does not quote what was downloaded. `cub` makes no such check. An
-  entity that reports no hash cannot be checked and is returned as `cub`
-  returns it. A revision with no data at all is an error, as it is for `cub`.
+  Unit and a revision each report the SHA-256 of their data, on both server
+  versions recorded here. The data is downloaded from the entity's own
+  endpoint and, when a hash is reported, returned only if it has that hash. A
+  page from something in between, a truncated body, and a Unit that changed
+  between the lookup and the download all fail, and the error does not quote
+  what was downloaded. `cub` makes no such check, so the error does not
+  suggest the `cub` route. An entity that reports no hash is held to the size
+  it reports; one that reports neither cannot be checked and is returned as
+  `cub` returns it. A revision with no data at all is an error, as it is for
+  `cub`.
 - **A View named by ID is found by the ID alone.** `cub` checks that the
   space it was given exists and then finds the View wherever it is; so does
   the reader, so `--space` does not have to be the View's own space.
@@ -199,7 +203,7 @@ check, and every other ConfigHub read still runs `cub`.
   is sent without a credential.
 - **Each failure keeps its reason**: `invalid_scope`, `not_configured`,
   `unauthorized`, `forbidden`, `not_found`, `ambiguous`, `timeout`,
-  `canceled`, `malformed`, `refused`, `incomplete`, `request_failed`. A Unit that does not
+  `canceled`, `malformed`, `refused`, `incomplete`, `too_large`, `request_failed`. A Unit that does not
   exist is an empty list and `not_found`; an HTTP 404 is a missing endpoint,
   so it is `request_failed` with advice to check the server URL, never "no
   such Unit". No message is built
@@ -348,7 +352,10 @@ can answer where `cub` would not. The recordings are in
 `TestSDKReaderMatchesCubOnEntitiesAndData` creates a Unit, uploads a second
 version of it, and creates a filter, a View and a change order, through `cub`,
 on ConfigHub v0.8.12. Every row is read from the run's artifact except the
-last, which is an assertion of the test, which passed.
+last, which is an assertion of the test, which passed. That the server lets
+the test create a View and a change order, that the Unit's data is the file
+uploaded last and that an earlier revision holds the first upload were notes
+in that run and are assertions since.
 
 | Checked on ConfigHub v0.8.12 | Result |
 |---|---|

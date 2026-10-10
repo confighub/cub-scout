@@ -60,6 +60,7 @@ func TestSDKEntityArgsTakeOnlyTheCommandsTheyReproduce(t *testing.T) {
 		"revision list":                 {"revision", "list", "u", "--space", "s", "-o", "json"},
 		"view get, by slug":             {"view", "get", "my-view", "--space", "s", "-o", "json"},
 		"view get, capitals":            {"view", "get", strings.ToUpper(recordedViewID), "--space", "s", "-o", "json"},
+		"view get, the nil ID":          {"view", "get", "00000000-0000-0000-0000-000000000000", "--space", "s", "-o", "json"},
 		"view get, no space":            {"view", "get", recordedViewID, "-o", "json"},
 		"view get, as a table":          {"view", "get", recordedViewID, "--space", "s"},
 		"view get, a qualified space":   {"view", "get", recordedViewID, "--space", "a/b", "-o", "json"},
@@ -238,16 +239,13 @@ func TestCubStdoutAnswersTheEntityReadsThroughTheSDK(t *testing.T) {
 				require.Equal(t, string(viaCub), string(viaSDK))
 				return
 			}
-			var want, have map[string]interface{}
+			// Everything cub printed, unchanged. The newer SDK adds one
+			// field the older cub did not have, printed as the zero ID;
+			// that field alone is taken out before the two are compared.
+			var want, have interface{}
 			require.NoError(t, json.Unmarshal(viaCub, &want))
 			require.NoError(t, json.Unmarshal(viaSDK, &have))
-			for key, value := range want {
-				if key == "ChangeOrder" || key == "ChangeOrders" {
-					continue // the newer SDK prints a field the older cub did not have
-				}
-				require.Equal(t, value, have[key], key)
-			}
-			require.Len(t, have, len(want))
+			require.Equal(t, want, withoutZeroReleaseTag(have))
 		})
 	}
 
@@ -261,6 +259,25 @@ func TestCubStdoutAnswersTheEntityReadsThroughTheSDK(t *testing.T) {
 	columns, err := extractColumnsSpec(view)
 	require.NoError(t, err)
 	require.NotEmpty(t, columns)
+}
+
+// withoutZeroReleaseTag removes a ReleaseTagID that is the zero ID, at any
+// depth, and nothing else.
+func withoutZeroReleaseTag(value interface{}) interface{} {
+	switch typed := value.(type) {
+	case map[string]interface{}:
+		if typed["ReleaseTagID"] == "00000000-0000-0000-0000-000000000000" {
+			delete(typed, "ReleaseTagID")
+		}
+		for key, inner := range typed {
+			typed[key] = withoutZeroReleaseTag(inner)
+		}
+	case []interface{}:
+		for i, inner := range typed {
+			typed[i] = withoutZeroReleaseTag(inner)
+		}
+	}
+	return value
 }
 
 // mustIndent encodes a decoded JSON object the way cub prints one.
@@ -304,15 +321,27 @@ func TestBoundedAttestationReadsUseTheSDKRouteUnderTheSameLimit(t *testing.T) {
 	require.EqualError(t, err, "bounded ConfigHub read failed")
 	require.Empty(t, fakeCubCalls(t, cubLog), "a failed SDK read does not fall back to cub")
 
-	// More than the limit is refused, as it is from cub.
+	// More than the limit is refused, as it is from cub, and the read stops
+	// when the limit is passed: the rest is not taken from the network.
+	sent := 0
 	big := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if r.URL.Path == "/api/space" {
 			_, _ = w.Write([]byte(`[{"Space":{"Slug":"s","SpaceID":"` + recordedSpaceID + `"}}]`))
 			return
 		}
-		entry := `{"Attestation":{"SpaceID":"` + recordedSpaceID + `","Note":"` + strings.Repeat("n", 2048) + `"}}`
-		_, _ = w.Write([]byte("[" + strings.TrimSuffix(strings.Repeat(entry+",", 600), ",") + "]"))
+		entry := `{"Attestation":{"SpaceID":"` + recordedSpaceID + `","Note":"` + strings.Repeat("n", 2048) + `"}},`
+		_, _ = w.Write([]byte("["))
+		for i := 0; i < 20000; i++ { // about 42 MB if nothing stops it
+			if _, err := w.Write([]byte(entry)); err != nil {
+				return
+			}
+			sent += len(entry)
+			if flusher, ok := w.(http.Flusher); ok {
+				flusher.Flush()
+			}
+		}
+		_, _ = w.Write([]byte(`{"Attestation":{"SpaceID":"` + recordedSpaceID + `"}}]`))
 	}))
 	t.Cleanup(big.Close)
 	sdkReader = func(context.Context) (*hubread.Reader, error) {
@@ -320,4 +349,24 @@ func TestBoundedAttestationReadsUseTheSDKRouteUnderTheSameLimit(t *testing.T) {
 	}
 	_, err = boundedAttestationCubRead(ctx, "attestation", "list", "--space", recordedSpaceID, "-o", "json")
 	require.EqualError(t, err, "ConfigHub read exceeds 1 MiB")
+	big.Close() // wait for the handler, so that sent is final
+	require.Less(t, sent, 8*1024*1024, "the server was cut off well before the 42 MB it had to send")
+}
+
+// A failed read on the SDK route is not worded as a cub command that failed:
+// no cub ran.
+func TestEntityReadFailuresAreNotWordedAsCubFailuresOnTheSDKRoute(t *testing.T) {
+	onlyFakeCub(t, "3")
+	hub := newRecordedHub(t, http.StatusForbidden)
+	sdkReadsFrom(t, hub)
+
+	t.Setenv(configHubReaderEnv, "sdk")
+	_, err := fetchView(context.Background(), recordedViewID, allConfigHubSpaces)
+	require.ErrorContains(t, err, "ConfigHub view read failed")
+	require.NotContains(t, err.Error(), "cub view get failed")
+	require.Equal(t, hubread.KindForbidden, hubread.KindOf(err))
+
+	t.Setenv(configHubReaderEnv, "cub")
+	_, err = fetchView(context.Background(), recordedViewID, allConfigHubSpaces)
+	require.ErrorContains(t, err, "cub view get failed")
 }

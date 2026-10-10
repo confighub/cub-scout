@@ -1912,8 +1912,8 @@ Nothing here is released; the published baseline is still v2.13.4.
   ConfigHub applies nothing, so it has none.
 - The reads of one thing take the same route: `unit data`, `revision get`,
   `revision data`, `changeorder get` by slug, `view get` by ID, and the
-  bounded reads behind attestation evidence. Data is returned only when its
-  SHA-256 is the one the Unit or revision reports.
+  bounded reads behind attestation evidence. Data is held to the SHA-256 the
+  Unit or revision reports for it, where it reports one.
 - A recording made by an older `cub` is not byte-equal to what a newer SDK
   prints for the same object: the SDK's types gain fields, and a UUID field is
   printed even when zero (`ReleaseTagID` on a change order, between v0.8.3 and
