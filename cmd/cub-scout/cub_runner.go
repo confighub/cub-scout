@@ -5,9 +5,12 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os/exec"
 	"strings"
+
+	"github.com/confighub/cub-scout/v2/pkg/hub"
 )
 
 // This file is the one place cub-scout runs `cub`.
@@ -113,7 +116,15 @@ func cubStdout(ctx context.Context, args ...string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return commandStdout(cmd)
+	out, err := commandStdout(cmd)
+	if errors.Is(err, exec.ErrNotFound) {
+		// On the SDK route the session check needs no cub, so a machine
+		// without one gets this far. The shell's own words for a missing
+		// program say nothing about what to do.
+		return out, fmt.Errorf("%w: `cub %s` is a read cub-scout still makes through the cub CLI",
+			hub.ErrCubNotInstalled, strings.Join(cubCommandWords(args), " "))
+	}
+	return out, err
 }
 
 // cubText is cubStdout, trimmed, for the callers that work in strings.

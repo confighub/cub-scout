@@ -213,7 +213,14 @@ func sdkListArgs(args []string) (entity, space string, filter hubread.Filter, ok
 		return "", "", hubread.Filter{}, false
 	}
 	parsed, ok := sdkReadFlags(args[2:])
-	if !ok || len(parsed.positionals) != 0 || !parsed.hasSpace || !sdkTakesSpace(parsed.space) {
+	if !ok || len(parsed.positionals) != 0 || !parsed.hasSpace {
+		return "", "", hubread.Filter{}, false
+	}
+	// Every space, asked for by name, is the organization's list. cub reads
+	// the releases of every space from another endpoint and in another
+	// order, so that one stays with cub.
+	everySpace := parsed.space == allConfigHubSpaces && args[0] != "release"
+	if !everySpace && !sdkTakesSpace(parsed.space) {
 		return "", "", hubread.Filter{}, false
 	}
 	return args[0], parsed.space, hubread.Filter{Where: parsed.where, Contains: parsed.contains}, true
@@ -365,6 +372,27 @@ func sdkChangeOrderGetArgs(args []string) (space, order string, ok bool) {
 	return parsed.space, order, true
 }
 
+// sdkBareListArgs recognises `cub <entity> <verb> -o json [--quiet]` with
+// nothing else: no space, no filter, no positional.
+func sdkBareListArgs(args []string, entity, verb string) bool {
+	if len(args) < 2 || args[0] != entity || args[1] != verb {
+		return false
+	}
+	parsed, ok := sdkReadFlags(args[2:])
+	return ok && len(parsed.positionals) == 0 && !parsed.hasSpace && !parsed.filtered()
+}
+
+// sdkLocalRead returns the read for a command answered from this machine's
+// cub configuration alone: `cub context get -o json`. It needs no credential
+// and asks no server, so the off switch for ConfigHub reads does not apply to
+// it, as it does not stop cub printing its own configuration.
+func sdkLocalRead(args []string) func(context.Context) ([]byte, error) {
+	if sdkBareListArgs(args, "context", "get") {
+		return hubread.LocalContextJSON
+	}
+	return nil
+}
+
 // sdkSpaceListArgs recognises `cub space list -o json [--quiet]` and nothing
 // else.
 func sdkSpaceListArgs(args []string) bool {
@@ -415,6 +443,11 @@ func sdkRead(args []string) func(context.Context, *hubread.Reader) ([]byte, erro
 	if space, order, ok := sdkChangeOrderGetArgs(args); ok {
 		return func(ctx context.Context, reader *hubread.Reader) ([]byte, error) {
 			return reader.ChangeOrderJSON(ctx, space, order)
+		}
+	}
+	if sdkBareListArgs(args, "organization", "list") {
+		return func(ctx context.Context, reader *hubread.Reader) ([]byte, error) {
+			return reader.OrganizationListJSON(ctx)
 		}
 	}
 	if sdkSpaceListArgs(args) {
@@ -469,8 +502,10 @@ func sdkRouteWayBack(err error) string {
 	if typed.BeyondScope || typed.Unverified {
 		return ""
 	}
+	// Nor for a request this reader refused to make, which today is a
+	// redirect it would not follow: cub follows one, credential and all.
 	switch typed.Kind {
-	case hubread.KindMalformed, hubread.KindRefused, hubread.KindTimeout:
+	case hubread.KindMalformed, hubread.KindTimeout:
 		return "; " + configHubReaderEnv + "=cub reads this through the cub CLI instead"
 	}
 	return ""
@@ -488,8 +523,8 @@ func failedOnSDKRoute(err error) bool {
 // is returned as its error and cub is not tried, because a silent retry would
 // hide that the route asked for did not work.
 func cubReadViaSDK(ctx context.Context, args []string) (out []byte, handled bool, err error) {
-	read := sdkRead(args)
-	if read == nil {
+	read, local := sdkRead(args), sdkLocalRead(args)
+	if read == nil && local == nil {
 		return nil, false, nil
 	}
 	route, err := configHubReaderRoute()
@@ -498,6 +533,15 @@ func cubReadViaSDK(ctx context.Context, args []string) (out []byte, handled bool
 	}
 	if route != "sdk" {
 		return nil, false, nil
+	}
+	if local != nil {
+		if ctx == nil {
+			ctx = context.Background()
+		}
+		if out, err = local(ctx); err != nil {
+			return nil, true, &sdkRouteError{err}
+		}
+		return out, true, nil
 	}
 	// The same refusals as the cub route: a call that forgot its space is
 	// refused here too, before anything is resolved or sent.
@@ -516,6 +560,11 @@ func cubReadViaSDK(ctx context.Context, args []string) (out []byte, handled bool
 	}
 	reader, err := sdkReader(ctx)
 	if err != nil {
+		return nil, true, &sdkRouteError{err}
+	}
+	// Some commands read without asking the gate first. An expired token
+	// would get them a bare 401; this says why, and sends nothing.
+	if err := reader.Expired(); err != nil {
 		return nil, true, &sdkRouteError{err}
 	}
 	out, err = read(ctx, reader)

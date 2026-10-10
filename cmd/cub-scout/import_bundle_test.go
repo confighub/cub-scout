@@ -346,6 +346,7 @@ func TestOutputProposalJSON_ConnectedFallbackFromExistingUnits(t *testing.T) {
 	})
 	defer restore()
 
+	stubConnectedGate(t, nil)
 	prevLookup := listUnitSlugsForSpace
 	listUnitSlugsForSpace = func(space string) (map[string]bool, error) {
 		if space != "orders-team" {

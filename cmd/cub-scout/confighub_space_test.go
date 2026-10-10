@@ -893,6 +893,8 @@ func TestImpactJoinsLinksWithinOneSpace(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	// The session gate has its own tests; this one is about the reads.
+	stubConnectedGate(t, nil)
 
 	stubSpaceInputs(t, "*")
 	if _, err := fetchConfigHubUnits("impact", "--space", ""); err == nil || !strings.Contains(err.Error(), "reads one ConfigHub space") {
@@ -932,11 +934,10 @@ func TestImpactJoinsLinksWithinOneSpace(t *testing.T) {
 // must not report that space, and the worker search must say where it looked.
 func TestStatusIgnoresAStaleDefaultSpace(t *testing.T) {
 	logPath := fakeCubRecorder(t)
-	// This test is about the space status reports, not the gate. Stub the gate
-	// to what CUB_SCOUT_OFFLINE below would make it say, so the verdict is not
-	// left behind for the next test in the binary to inherit.
-	stubConnectedGate(t, hub.ErrConfigHubReadsDisabled)
-	t.Setenv("CUB_SCOUT_OFFLINE", "true")
+	// This test is about the space status reports, not the gate. The gate is
+	// stubbed to allow reads: the worker lookup below is a ConfigHub read, and
+	// status makes it only when the gate does (see the test after this one).
+	stubConnectedGate(t, nil)
 	t.Setenv("CUB_PLUGIN", "")
 	t.Setenv("KUBECONFIG", filepath.Join(t.TempDir(), "missing-kubeconfig"))
 	if err := statusCmd.Flags().Set("json", "true"); err != nil {
@@ -978,5 +979,40 @@ func TestStatusIgnoresAStaleDefaultSpace(t *testing.T) {
 		if !found {
 			t.Fatalf("CUB_SPACE=%q: status did not look for a worker", tt.env)
 		}
+	}
+}
+
+// With ConfigHub reads turned off, status asks ConfigHub nothing: not whether
+// the session is valid, and not which worker serves this cluster. It used to
+// do both, through cub, behind a gate that had just refused.
+func TestStatusAsksConfigHubNothingWhenReadsAreOff(t *testing.T) {
+	logPath := fakeCubRecorder(t)
+	stubConnectedGate(t, hub.ErrConfigHubReadsDisabled)
+	t.Setenv("CUB_PLUGIN", "")
+	t.Setenv("KUBECONFIG", filepath.Join(t.TempDir(), "missing-kubeconfig"))
+	stubSpaceInputs(t, "")
+	if err := statusCmd.Flags().Set("json", "true"); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = statusCmd.Flags().Set("json", "false") })
+
+	out := captureStdout(t, func() {
+		if err := runStatus(statusCmd); err != nil {
+			t.Fatal(err)
+		}
+	})
+	var status StatusInfo
+	if err := json.Unmarshal([]byte(out), &status); err != nil {
+		t.Fatalf("parse %q: %v", out, err)
+	}
+	if status.ConfigHubReads || status.Worker != nil {
+		t.Fatalf("status = %s, want reads off and no worker", out)
+	}
+	for _, call := range fakeCubCalls(t, logPath) {
+		// The context and the stored token are this machine's own files.
+		if strings.HasPrefix(call, "context get") || strings.HasPrefix(call, "auth get-token") {
+			continue
+		}
+		t.Fatalf("with reads off, status ran `cub %s`", call)
 	}
 }

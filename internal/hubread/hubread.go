@@ -52,6 +52,8 @@ const (
 	// KindTooLarge is a response larger than the caller allowed; see
 	// WithResponseLimit.
 	KindTooLarge Kind = "too_large"
+	// KindVersionSkew is a client too old for its server; see CheckSession.
+	KindVersionSkew Kind = "version_skew"
 )
 
 // Error is a failed read. Message never contains a credential.
@@ -175,6 +177,9 @@ type Options struct {
 type Reader struct {
 	client    *cubapi.Client
 	transport *readOnlyTransport
+	// tokenExpiry is when the credential says it expires, zero when it does
+	// not say. The token itself is not kept here.
+	tokenExpiry time.Time
 }
 
 func (o Options) httpClient() (*http.Client, *readOnlyTransport) {
@@ -225,8 +230,10 @@ func Resolve(ctx context.Context, opts Options) (*Reader, error) {
 		return notConfigured(err)
 	}
 	var client *cubapi.Client
+	var expiry time.Time
 	if env.HasCredentials() && os.Getenv("CUB_PLUGIN") == "1" {
 		client, err = cubapi.NewClientFromEnvironment(ctx, clientOptions)
+		expiry, _ = tokenExpiry(os.Getenv("CUB_TOKEN"))
 	} else {
 		// Not cubapi.ResolveClient: in SDK core v0.8.10 and v0.8.12 it hands CUB_CONFIG,
 		// which names the config directory, to LoadConfig as if it were the
@@ -257,11 +264,12 @@ func Resolve(ctx context.Context, opts Options) (*Reader, error) {
 		}
 		clientOptions.ServerURL, clientOptions.Token = active.Coordinate.ServerURL, token.AccessToken
 		client, err = cubapi.NewClient(clientOptions)
+		expiry, _ = tokenExpiry(token.AccessToken)
 	}
 	if err != nil {
 		return notConfigured(err)
 	}
-	return &Reader{client: client, transport: transport}, nil
+	return &Reader{client: client, transport: transport, tokenExpiry: expiry}, nil
 }
 
 // New builds a Reader for an explicit server and bearer token.
@@ -274,7 +282,8 @@ func New(serverURL, token string, opts Options) (*Reader, error) {
 	if err != nil {
 		return nil, &Error{Kind: KindNotConfigured, Op: "resolve credentials", Message: err.Error()}
 	}
-	return &Reader{client: client, transport: transport}, nil
+	expiry, _ := tokenExpiry(token)
+	return &Reader{client: client, transport: transport, tokenExpiry: expiry}, nil
 }
 
 // Server is the server URL the Reader was built for.
@@ -536,7 +545,16 @@ type listShape[T any] struct {
 	// order puts the list in the order cub prints it in, where cub sorts
 	// what the server returned.
 	order func([]T)
+	// everySpace allows "*" as the space: the organization's whole list,
+	// which the caller asked for by name. It is for the kinds cub lists at
+	// the organization's endpoint with or without a space.
+	everySpace bool
 }
+
+// EverySpace is the space a caller names to ask for a list across the whole
+// organization, as `--space '*'` asks cub. It is never a default: an empty
+// space is refused.
+const EverySpace = "*"
 
 // listAnswer is what one list call came back with.
 type listAnswer[T any] struct {
@@ -561,7 +579,51 @@ type listAnswer[T any] struct {
 // cub's output, and is not checked.
 func spaceList[T any](ctx context.Context, r *Reader, kind, space string, filter Filter, include string,
 	call func(listQuery) (listAnswer[T], error), spaceOf func(*T) (uuid.UUID, bool)) ([]byte, error) {
-	return shapedSpaceList(ctx, r, kind, space, filter, include, listShape[T]{}, call, spaceOf)
+	return shapedSpaceList(ctx, r, kind, space, filter, include, listShape[T]{everySpace: true}, call, spaceOf)
+}
+
+// organizationList is shapedSpaceList for EverySpace: the same request with no
+// space AND-ed on, and the same refusals of an answer that is not a whole
+// list. There is no space to hold the entries to.
+func organizationList[T any](ctx context.Context, op, kind string, filter Filter, include string, shape listShape[T],
+	call func(listQuery) (listAnswer[T], error), spaceOf func(*T) (uuid.UUID, bool)) ([]byte, error) {
+	var query listQuery
+	if where := filter.Where; where != "" {
+		query.where = &where
+	}
+	if include != "" {
+		query.include = &include
+	}
+	if contains := filter.Contains; contains != "" {
+		query.contains = &contains
+	}
+	answer, err := call(query)
+	if err == nil && answer.response == nil {
+		return nil, &Error{Kind: KindMalformed, Op: op, Message: "the client returned neither a response nor an error"}
+	}
+	if failure := classify(ctx, op, err, answer.response); failure != nil {
+		if failure.Kind == KindFailed && answer.rejected != nil {
+			if reason := printable(answer.rejected.Message, 300); reason != "" {
+				failure.Message = "the server rejected the request (HTTP 400): " + reason
+			}
+		}
+		return nil, failure
+	}
+	if answer.list == nil {
+		return nil, &Error{Kind: KindMalformed, Op: op, Message: "the response had no " + kind + " list"}
+	}
+	if failure := wholeList(op, answer.http); failure != nil {
+		return nil, failure
+	}
+	for i := range *answer.list {
+		if _, ok := spaceOf(&(*answer.list)[i]); !ok {
+			return nil, &Error{Kind: KindMalformed, Op: op, Message: "the list has an entry with no " + kind}
+		}
+	}
+	if shape.order != nil {
+		shape.order(*answer.list)
+	}
+	return listJSON(op, answer.list)
 }
 
 // shapedSpaceList is spaceList for a kind whose list departs from the common
@@ -570,6 +632,9 @@ func shapedSpaceList[T any](ctx context.Context, r *Reader, kind, space string, 
 	call func(listQuery) (listAnswer[T], error), spaceOf func(*T) (uuid.UUID, bool)) ([]byte, error) {
 	op := kind + " list"
 	space = strings.TrimSpace(space)
+	if space == EverySpace && shape.everySpace {
+		return organizationList(ctx, op, kind, filter, include, shape, call, spaceOf)
+	}
 	if space == "" || space == "*" {
 		return nil, &Error{Kind: KindInvalidScope, Op: op, Message: "exactly one space is required"}
 	}
@@ -862,7 +927,7 @@ func newestEventFirst(events []goclientnew.UnitEvent) {
 // the Units the events belong to, for its table; the JSON does not carry them
 // and this does not read them.
 func (r *Reader) UnitEventListJSON(ctx context.Context, space string, filter Filter) ([]byte, error) {
-	return shapedSpaceList(ctx, r, "unit-event", space, filter, "", listShape[goclientnew.UnitEvent]{order: newestEventFirst},
+	return shapedSpaceList(ctx, r, "unit-event", space, filter, "", listShape[goclientnew.UnitEvent]{order: newestEventFirst, everySpace: true},
 		func(q listQuery) (listAnswer[goclientnew.UnitEvent], error) {
 			resp, err := r.client.API.ListAllUnitEventsWithResponse(ctx, &goclientnew.ListAllUnitEventsParams{Where: q.where, Contains: q.contains})
 			if resp == nil {

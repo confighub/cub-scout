@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"sort"
 	"strings"
 
@@ -104,6 +103,11 @@ func runFleetOutliers(cmd *cobra.Command, args []string) error {
 	units, err := loadFleetOutlierUnitsFn(space.Slug)
 	if err != nil {
 		if errors.Is(err, errFleetOutliersNotConnected) {
+			// The gate's own reason says what would fix it; without one,
+			// logging in is the usual answer.
+			if errors.Is(err, errConfigHubUnavailable) {
+				return err
+			}
 			return fmt.Errorf("%w. Run: cub auth login", err)
 		}
 		return fmt.Errorf("fleet outliers could not read units in ConfigHub space %s: %w", space.Slug, err)
@@ -140,8 +144,11 @@ func runFleetOutliers(cmd *cobra.Command, args []string) error {
 }
 
 func loadFleetOutlierUnits(space string) ([]fleetUnitSnapshot, error) {
-	if _, err := exec.LookPath("cub"); err != nil {
-		return nil, errFleetOutliersNotConnected
+	// The gate every connected command asks, not whether a cub binary
+	// exists: by the SDK route none is needed, and a binary with no session
+	// is not a connection.
+	if err := requireConfigHubFor("fleet outliers"); err != nil {
+		return nil, fmt.Errorf("%w: %w", errFleetOutliersNotConnected, err)
 	}
 	out, err := runHistoryCubCommandImpl(context.Background(), withConfigHubSpace([]string{"unit", "list", "-o", "json", "--quiet"}, space))
 	if err != nil {

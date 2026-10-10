@@ -2074,6 +2074,11 @@ func resolveConnectedWorkloadsFromProposal(proposal *FullProposal, workloads []W
 		return workloads
 	}
 
+	// Which units already exist is read from ConfigHub. Without a session,
+	// or with reads turned off, the proposal stands as it is.
+	if !configHubReadsAvailable() {
+		return workloads
+	}
 	existingUnitSlugs, err := listUnitSlugsForSpace(proposal.App)
 	if err != nil || len(existingUnitSlugs) == 0 {
 		return workloads

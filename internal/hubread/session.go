@@ -1,0 +1,230 @@
+package hubread
+
+import (
+	"context"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"runtime/debug"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/confighub/sdk/core/cubapi"
+	goclientnew "github.com/confighub/sdk/core/openapi/goclient-new"
+	"github.com/google/uuid"
+)
+
+// This file is the check `cub auth status` makes, made without cub: is there
+// a credential, has it expired, does the server accept it, and is this client
+// too old for the server.
+
+// sdkCoreModule is the SDK module this package is built with. Its version is
+// this client's version, as cub's own version is cub's.
+const sdkCoreModule = "github.com/confighub/sdk/core"
+
+// SDKCoreVersion is the version of sdkCoreModule in go.mod. It is written
+// here because not every build records its modules (a test binary on the Go
+// that CI uses does not), and the version rule of CheckSession must not
+// depend on which it is. A test holds it to go.mod, and to the build's own
+// record when there is one.
+const SDKCoreVersion = "v0.8.12"
+
+// sdkCoreVersion is the SDK version CheckSession compares with the server's.
+// It is a variable for tests.
+var sdkCoreVersion = func() string { return SDKCoreVersion }
+
+// builtSDKCoreVersion is the SDK version this binary's build recorded, or ""
+// when it recorded none.
+func builtSDKCoreVersion() string {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return ""
+	}
+	for _, dependency := range info.Deps {
+		if dependency.Path == sdkCoreModule {
+			if dependency.Replace != nil {
+				return dependency.Replace.Version
+			}
+			return dependency.Version
+		}
+	}
+	return ""
+}
+
+// now is the clock, for tests.
+var now = time.Now
+
+// Session is what a session check found: the server, its version when it
+// states one, and the version of the SDK this binary reads it with.
+type Session struct {
+	Server        string
+	ServerVersion string
+	SDKVersion    string
+	// ClientAhead is true when this SDK's minor version is above the
+	// server's. cub warns about that and carries on; so does this.
+	ClientAhead bool
+}
+
+// tokenExpiry reads the "exp" claim of a JWT access token, as cub does. It
+// does not verify the token; the server does that. ok is false for a token
+// that is not a JWT or has no expiry.
+func tokenExpiry(token string) (expiry time.Time, ok bool) {
+	parts := strings.Split(token, ".")
+	if len(parts) != 3 {
+		return time.Time{}, false
+	}
+	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return time.Time{}, false
+	}
+	var claims struct {
+		Exp int64 `json:"exp"`
+	}
+	if err := json.Unmarshal(payload, &claims); err != nil || claims.Exp == 0 {
+		return time.Time{}, false
+	}
+	return time.Unix(claims.Exp, 0), true
+}
+
+// majorMinor reads the first two numbers of a version such as "v0.8.12" or
+// "0.9.0-dev", the way cub compares versions.
+func majorMinor(version string) (major, minor int, ok bool) {
+	text := strings.TrimPrefix(strings.TrimSpace(version), "v")
+	if i := strings.IndexAny(text, "-+"); i >= 0 {
+		text = text[:i]
+	}
+	parts := strings.Split(text, ".")
+	if len(parts) < 2 {
+		return 0, 0, false
+	}
+	major, err := strconv.Atoi(parts[0])
+	if err != nil || major < 0 {
+		return 0, 0, false
+	}
+	minor, err = strconv.Atoi(parts[1])
+	if err != nil || minor < 0 {
+		return 0, 0, false
+	}
+	return major, minor, true
+}
+
+// expired is the refusal for a credential that says it has expired, or nil.
+func (r *Reader) expired(op string) *Error {
+	if r.tokenExpiry.IsZero() || !now().After(r.tokenExpiry) {
+		return nil
+	}
+	return &Error{Kind: KindUnauthorized, Op: op, Message: fmt.Sprintf(
+		"the access token expired at %s; run `cub auth login`", r.tokenExpiry.UTC().Format(time.RFC3339))}
+}
+
+// Expired reports, without asking the server, that the credential says it
+// has expired. It is nil for one that has not, and for one that does not say.
+// A read made with an expired token is refused by the server with a bare 401;
+// this is the same answer with its cause, before anything is sent.
+func (r *Reader) Expired() error {
+	if failure := r.expired("credential"); failure != nil {
+		return failure
+	}
+	return nil
+}
+
+// CheckSession reports whether ConfigHub can be read with this Reader's
+// credential, by the rules of `cub auth status`:
+//
+//   - a token that says it has expired is refused before any request;
+//   - the server must accept the credential, which one GET of the caller's
+//     own membership shows;
+//   - a client older than the server is refused. Below 1.0 a change in
+//     ConfigHub's second version number is not backward compatible, and cub
+//     refuses on that ground; here the client is the SDK this binary was built
+//     with. A client newer than the server is allowed and reported.
+//
+// A server that states no version, or a build that does not record the SDK's,
+// cannot be compared and is not refused, as cub does not refuse it.
+func (r *Reader) CheckSession(ctx context.Context) (Session, error) {
+	const op = "session check"
+	session := Session{Server: r.client.Server, SDKVersion: sdkCoreVersion()}
+	if failure := r.expired(op); failure != nil {
+		return session, failure
+	}
+	resp, err := r.client.API.GetMeWithResponse(ctx)
+	if failure := classify(ctx, op, err, resp); failure != nil {
+		if failure.Kind == KindUnauthorized {
+			failure.Message = "the server did not accept the credential (HTTP 401); run `cub auth login`"
+		}
+		return session, failure
+	}
+	// A membership names a user or an organization. A 200 that names
+	// neither, a JSON null or an empty object from something in between, is
+	// not the server saying who this is.
+	if member := resp.JSON200; member == nil || (member.UserID == uuid.Nil && member.OrganizationID == uuid.Nil && member.ExternalID == "") {
+		return session, &Error{Kind: KindMalformed, Op: op, Message: "the server's answer was not the caller's membership"}
+	}
+	session.ServerVersion = r.client.ServerVersion()
+	clientMajor, clientMinor, clientKnown := majorMinor(session.SDKVersion)
+	serverMajor, serverMinor, serverKnown := majorMinor(session.ServerVersion)
+	if !clientKnown || !serverKnown {
+		return session, nil
+	}
+	switch {
+	case clientMajor < serverMajor || (clientMajor == serverMajor && clientMinor < serverMinor):
+		return session, &Error{Kind: KindVersionSkew, Op: op, Message: fmt.Sprintf(
+			"this cub-scout reads ConfigHub with SDK %s, which is too old for server %s: below 1.0 a change in the second version number is not backward compatible. Upgrade cub-scout",
+			session.SDKVersion, session.ServerVersion)}
+	case clientMajor > serverMajor || clientMinor > serverMinor:
+		session.ClientAhead = true
+	}
+	return session, nil
+}
+
+// OrganizationListJSON reads the organizations the credential belongs to, as
+// `cub organization list -o json` prints them. It takes no scope: the list is
+// the caller's own.
+func (r *Reader) OrganizationListJSON(ctx context.Context) ([]byte, error) {
+	const op = "organization list"
+	resp, err := r.client.API.ListOrganizationsWithResponse(ctx, &goclientnew.ListOrganizationsParams{})
+	if failure := classify(ctx, op, err, resp); failure != nil {
+		return nil, failure
+	}
+	if resp.JSON200 == nil {
+		return nil, &Error{Kind: KindMalformed, Op: op, Message: "the response had no organization list"}
+	}
+	if failure := wholeList(op, resp.HTTPResponse); failure != nil {
+		return nil, failure
+	}
+	for i := range *resp.JSON200 {
+		if (*resp.JSON200)[i].Organization == nil {
+			return nil, &Error{Kind: KindMalformed, Op: op, Message: "the list has an entry with no organization"}
+		}
+	}
+	return listJSON(op, resp.JSON200)
+}
+
+// LocalContextJSON returns the cub context this machine would use, as
+// `cub context get -o json` prints it: the context's name, its server,
+// organization and user, and its settings. It reads the local cub
+// configuration, honouring CUB_CONFIG and CUB_CONTEXT, and asks no server.
+// The context holds no token; that is stored apart and is not read here.
+func LocalContextJSON(ctx context.Context) ([]byte, error) {
+	const op = "context get"
+	notConfigured := func(err error) ([]byte, error) {
+		return nil, &Error{Kind: KindNotConfigured, Op: op, Message: err.Error()}
+	}
+	env, err := cubapi.LoadEnvironment(ctx)
+	if err != nil {
+		return notConfigured(err)
+	}
+	store, err := cubapi.LoadConfig("")
+	if err != nil {
+		return notConfigured(err)
+	}
+	if err = store.Use(env.Context); err != nil {
+		return notConfigured(err)
+	}
+	active, err := store.ActiveContext()
+	if err != nil {
+		return notConfigured(err)
+	}
+	return one(op, active)
+}

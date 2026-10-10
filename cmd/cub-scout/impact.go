@@ -107,6 +107,12 @@ func buildImpactResult(cache *cubUnitCache, rawUnit string) (impactResult, error
 		return impactResult{}, fmt.Errorf("impact cache unavailable")
 	}
 
+	// Dependents are read from the space's links. With no links read, "no
+	// dependents" would be a claim nothing supports.
+	if cache.linksUnread != "" {
+		return impactResult{}, fmt.Errorf("the dependency links of ConfigHub space %s could not be read, so what depends on a unit is unknown: %s", cache.space, cache.linksUnread)
+	}
+
 	unitSlug := normalizeImpactUnit(rawUnit)
 	unit := cache.getUnitBySlug(unitSlug)
 	if unit == nil {

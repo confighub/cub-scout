@@ -116,8 +116,9 @@ func runStatus(cmd *cobra.Command) error {
 		status.Email = auth.Email
 	}
 
-	// Try cub CLI for richer status (does not depend on local auth.json)
-	if cubInstalled() {
+	// The cub context, for richer status (does not depend on local auth.json).
+	// By the SDK route it is read from cub's configuration with no cub binary.
+	if cubInstalled() || statusOnSDKRoute() {
 		cubCtx, email, err := getStatusCubContext()
 		if err == nil && cubCtx != nil {
 			// cub CLI context overrides local auth for email
@@ -137,18 +138,22 @@ func runStatus(cmd *cobra.Command) error {
 
 			// Whether cub has a session it accepts. The gate has usually
 			// answered that already; see statusSessionValid.
-			authValid := statusSessionValid(readsErr)
-			status.AuthValid = &authValid
-
-			if !authValid {
-				status.Mode = "auth_expired"
+			// A gate that could not ask (a server error, a timeout) leaves
+			// the session unknown, and it is left unset rather than called
+			// expired.
+			if authValid, known := statusSession(readsErr); known {
+				status.AuthValid = &authValid
+				if !authValid {
+					status.Mode = "auth_expired"
+				}
 			}
 
 			// Which worker serves this cluster is a question about the whole
 			// organization, so every space is searched unless CUB_SPACE names one.
-			// A cub older than its server has refused to work with it, so the
-			// lookup is not attempted; its failure would read as "no worker".
-			if authValid && !errors.Is(readsErr, hub.ErrCubVersionSkew) {
+			// It is a ConfigHub read, so it is made only when the gate allows
+			// reads: not with reads turned off, not with a client older than its
+			// server, and not when the session could not be checked.
+			if readsErr == nil {
 				if worker := getWorkerForCluster(statusWorkerSpace(space), status.ClusterName); worker != nil {
 					status.Worker = worker
 				}
@@ -326,46 +331,65 @@ func getWorkerForCluster(space, clusterName string) *WorkerInfo {
 	return nil
 }
 
-// statusSessionValid reports whether `cub` has a session it accepts.
+// statusSessionValid reports whether there is a session ConfigHub accepts.
 //
-// The gate has usually answered that already, and asking `cub auth status` a
-// second time either repeats it or contradicts it: in plugin mode with no
-// CUB_TOKEN, status printed "Connected (auth expired)", "Run: cub auth login"
-// and "ConfigHub reads available" together, which cannot all be true.
+// The gate has answered that already, and asking a second time either repeats
+// it or contradicts it: in plugin mode with no CUB_TOKEN, status printed
+// "Connected (auth expired)", "Run: cub auth login" and "ConfigHub reads
+// available" together, which cannot all be true.
 //
-// A gate refusal that is not about authentication — reads turned off, `cub` not
-// installed — says nothing about the session, so that case still asks.
+// With reads turned off the gate did not look at the session, and nothing may
+// be asked; see statusSession for what is said then.
 //
 // A cub older than its server is the one refusal that proves the session is
 // fine: `cub auth status` checks the version only after the server accepted
 // the token. Asking again would fail the same way and print "auth expired" and
 // "cub auth login", which cannot fix it; the gate's reason says to upgrade cub.
 func statusSessionValid(readsErr error) bool {
+	valid, _ := statusSession(readsErr)
+	return valid
+}
+
+// statusSession is the session verdict and whether there is one. It follows
+// the gate wherever the gate looked at the session, and asks nothing itself.
+func statusSession(readsErr error) (valid, known bool) {
 	switch {
 	case readsErr == nil:
-		return true
+		return true, true
 	case errors.Is(readsErr, hub.ErrCubVersionSkew):
-		return true
+		return true, true
 	case errors.Is(readsErr, hub.ErrCubNotAuthenticated):
-		return false
+		return false, true
+	case errors.Is(readsErr, hub.ErrConfigHubReadsDisabled):
+		// Reads are turned off, so nothing may be asked. Whether a usable
+		// credential is stored is what can still be said.
+		return storedCredentialUsable(), true
 	default:
-		return validateAuthToken()
+		// The gate could not ask. Asking again would fail the same way, and
+		// "expired" would be a guess.
+		return false, false
 	}
 }
 
-// validateAuthToken checks if the current ConfigHub auth token is valid
-// Returns true if token is valid, false if expired or invalid
-func validateAuthToken() bool {
-	// When running as a `cub` plugin (CUB_PLUGIN=1), the host has already
-	// passed a valid token through CUB_TOKEN. Honor it directly instead of
-	// re-executing `cub` — that would recurse through the plugin host and
-	// slow down every doctor/explain/trace invocation.
+// statusOnSDKRoute reports whether ConfigHub reads go through the SDK.
+func statusOnSDKRoute() bool {
+	route, err := configHubReaderRoute()
+	return err == nil && route == "sdk"
+}
+
+// storedCredentialUsable reports, from this machine alone, whether there is a
+// ConfigHub credential that does not say it has expired. It asks no server.
+func storedCredentialUsable() bool {
+	if statusOnSDKRoute() {
+		reader, err := sdkReader(context.Background())
+		return err == nil && reader.Expired() == nil
+	}
+	// As a `cub` plugin the host passes the token; asking cub again would
+	// recurse through the plugin host.
 	if hub.IsPluginMode() {
 		return hub.PluginToken() != ""
 	}
-
-	// `cub auth status` is the check that notices an expired session.
-	// `cub auth get-token` prints a stored token and exits 0 even after expiry,
-	// which is how status came to report Connected on a dead session.
-	return hub.CubSessionValid()
+	// `cub auth get-token` prints a stored token without asking the server.
+	// It does not notice an expired one.
+	return hub.CubCLIAuthenticated()
 }

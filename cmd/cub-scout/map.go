@@ -1823,6 +1823,12 @@ func fetchFleetUnits(space, appFilter string) ([]FleetUnit, error) {
 	if fixture := os.Getenv("CUB_SCOUT_TEST_MAP_FLEET_JSON"); fixture != "" {
 		return loadFleetUnitsFromJSON(fixture, space, appFilter)
 	}
+	// The same gate as every connected command. It is here and not at the
+	// top of the command because a recorded fleet, above, reads no ConfigHub
+	// and must not need a session.
+	if err := requireConfigHubFor("map fleet"); err != nil {
+		return nil, err
+	}
 
 	args := withConfigHubSpace([]string{"unit", "list", "-o", "json"}, space)
 
@@ -6035,6 +6041,10 @@ type cubUnitCache struct {
 	// unit in another space. They are not joined: units are keyed by slug, and
 	// the same slug in two spaces is two units.
 	crossSpaceLinks int
+	// linksUnread is why the space's links could not be read, when they
+	// could not. The units then carry no dependencies, and that must not be
+	// shown as "depends on nothing".
+	linksUnread string
 }
 
 // fetchConfigHubUnits reads the units and links of one ConfigHub space, named by
@@ -6048,6 +6058,12 @@ func fetchConfigHubUnits(feature, flag, flagValue string) (*cubUnitCache, error)
 		return nil, err
 	}
 	space := resolved.Slug
+	// The same gate as every connected command, so the off switch and a
+	// missing session are refused here and not found out read by read. It
+	// comes after the space check, which asks nothing.
+	if err := requireConfigHubFor(feature); err != nil {
+		return nil, err
+	}
 
 	listOut, err := runHistoryCubCommandImpl(context.Background(), withConfigHubSpace([]string{"unit", "list", "-o", "json", "--quiet"}, space))
 	if err != nil {
@@ -6077,7 +6093,9 @@ func fetchConfigHubUnits(feature, flag, flagValue string) (*cubUnitCache, error)
 
 	// Fetch links for dependency info
 	linksOut, err := cubStdout(context.Background(), withConfigHubSpace([]string{"link", "list", "-o", "json", "--quiet"}, space)...)
-	if err == nil {
+	if err != nil {
+		cache.linksUnread = err.Error()
+	} else {
 		var linkList []struct {
 			FromUnit struct {
 				Slug    string `json:"Slug"`
@@ -6088,7 +6106,9 @@ func fetchConfigHubUnits(feature, flag, flagValue string) (*cubUnitCache, error)
 				SpaceID string `json:"SpaceID"`
 			} `json:"ToUnit"`
 		}
-		if json.Unmarshal(linksOut, &linkList) == nil {
+		if parseErr := json.Unmarshal(linksOut, &linkList); parseErr != nil {
+			cache.linksUnread = "the link list could not be parsed: " + parseErr.Error()
+		} else {
 			for _, l := range linkList {
 				// A link read in this space can point at a unit in another
 				// space, often one with the same slug (a variant linking to its
@@ -6248,7 +6268,7 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 	var unitCache *cubUnitCache
 	if deepDiveConnected {
 		var connErr error
-		unitCache, connErr = fetchConfigHubUnits("connected deep-dive", "", "")
+		unitCache, connErr = fetchConfigHubUnits("map clusterdata --connected", "", "")
 		if connErr != nil {
 			fmt.Printf("⚠ Connected mode failed: %v\n", connErr)
 			fmt.Println("  Falling back to standalone mode.")
@@ -6268,7 +6288,12 @@ func runMapClusterData(cmd *cobra.Command, args []string) error {
 	fmt.Println()
 	if deepDiveConnected && unitCache != nil {
 		fmt.Printf("Connected to ConfigHub space '%s' - showing Unit context for managed resources.\n", unitCache.space)
-		fmt.Printf("Units in space: %d | Links available for dependency tracking\n", len(unitCache.units))
+		if unitCache.linksUnread != "" {
+			fmt.Printf("Units in space: %d\n", len(unitCache.units))
+			fmt.Printf("⚠ Dependency links could not be read (%s); no dependencies are shown, which does not mean there are none.\n", unitCache.linksUnread)
+		} else {
+			fmt.Printf("Units in space: %d | Links available for dependency tracking\n", len(unitCache.units))
+		}
 	} else {
 		fmt.Println("This shows ALL information readable from the cluster without ConfigHub connection.")
 		fmt.Println("Use --connected flag to show ConfigHub Unit context for managed resources.")

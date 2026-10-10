@@ -14,6 +14,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/confighub/cub-scout/v2/internal/hubread"
 	"github.com/confighub/cub-scout/v2/pkg/hub"
 )
 
@@ -177,6 +178,9 @@ func init() {
 		Short: "Print version information",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("cub-scout version %s (built %s)\n", BuildTag, BuildDate)
+			// The SDK version is what the ConfigHub session check compares
+			// with the server's; see docs/reference/confighub-sdk-reader.md.
+			fmt.Printf("ConfigHub SDK %s\n", hubread.SDKCoreVersion)
 		},
 	})
 
