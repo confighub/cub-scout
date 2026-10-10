@@ -189,11 +189,14 @@ func sdkUnitGetArgs(args []string) (space, unit string, ok bool) {
 // word cub calls the entity. Each is the same request with its own expansions,
 // and cub implements each the same way.
 var sdkSpaceLists = map[string]func(*hubread.Reader, context.Context, string, hubread.Filter) ([]byte, error){
-	"unit":      (*hubread.Reader).UnitListJSON,
-	"worker":    (*hubread.Reader).WorkerListJSON,
-	"target":    (*hubread.Reader).TargetListJSON,
-	"changeset": (*hubread.Reader).ChangeSetListJSON,
-	"link":      (*hubread.Reader).LinkListJSON,
+	"unit":       (*hubread.Reader).UnitListJSON,
+	"worker":     (*hubread.Reader).WorkerListJSON,
+	"target":     (*hubread.Reader).TargetListJSON,
+	"changeset":  (*hubread.Reader).ChangeSetListJSON,
+	"link":       (*hubread.Reader).LinkListJSON,
+	"resource":   (*hubread.Reader).ResourceListJSON,
+	"release":    (*hubread.Reader).ReleaseListJSON,
+	"unit-event": (*hubread.Reader).UnitEventListJSON,
 	// The attestation list is not here yet: its one caller runs cub itself,
 	// under a byte limit of its own, and moves with the revision reads.
 }
@@ -223,6 +226,26 @@ func sdkUnitListArgs(args []string) (space string, filter hubread.Filter, ok boo
 	return space, filter, true
 }
 
+// sdkUnitEventsOfUnitArgs recognises `cub unit-event list <unit> -o json
+// [--quiet] --space <space> [--where <expression>] [--contains <text>]`: the
+// events of one Unit, named by its slug as sdkUnitGetArgs requires.
+func sdkUnitEventsOfUnitArgs(args []string) (space, unit string, filter hubread.Filter, ok bool) {
+	if len(args) < 3 || args[0] != "unit-event" || args[1] != "list" {
+		return "", "", hubread.Filter{}, false
+	}
+	parsed, ok := sdkReadFlags(args[2:])
+	if !ok || len(parsed.positionals) != 1 || !parsed.hasSpace || !sdkTakesSpace(parsed.space) {
+		return "", "", hubread.Filter{}, false
+	}
+	unit = strings.TrimSpace(parsed.positionals[0])
+	// A qualified name, "*" and a Unit named by ID stay with cub, as they do
+	// for `unit get`.
+	if unit == "" || strings.Contains(unit, "/") || unit == allConfigHubSpaces || spelledAsID(unit) {
+		return "", "", hubread.Filter{}, false
+	}
+	return parsed.space, unit, hubread.Filter{Where: parsed.where, Contains: parsed.contains}, true
+}
+
 // sdkSpaceListArgs recognises `cub space list -o json [--quiet]` and nothing
 // else.
 func sdkSpaceListArgs(args []string) bool {
@@ -245,6 +268,11 @@ func sdkRead(args []string) func(context.Context, *hubread.Reader) ([]byte, erro
 		list := sdkSpaceLists[entity]
 		return func(ctx context.Context, reader *hubread.Reader) ([]byte, error) {
 			return list(reader, ctx, space, filter)
+		}
+	}
+	if space, unit, filter, ok := sdkUnitEventsOfUnitArgs(args); ok {
+		return func(ctx context.Context, reader *hubread.Reader) ([]byte, error) {
+			return reader.UnitEventsOfUnitJSON(ctx, space, unit, filter)
 		}
 	}
 	if sdkSpaceListArgs(args) {

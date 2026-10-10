@@ -1167,7 +1167,7 @@ func TestImportWizardDoesNotSetATargetWhenItCouldNotReadTheUnit(t *testing.T) {
 // The lists of one space besides Units: the same shape for each entity, and
 // nothing else.
 func TestSDKListArgsForTheOtherEntities(t *testing.T) {
-	for _, entity := range []string{"worker", "target", "changeset", "link"} {
+	for _, entity := range []string{"worker", "target", "changeset", "link", "resource", "release", "unit-event"} {
 		t.Run(entity, func(t *testing.T) {
 			for name, tc := range map[string]struct {
 				args []string
@@ -1199,12 +1199,15 @@ func TestSDKListArgsForTheOtherEntities(t *testing.T) {
 			} {
 				_, _, _, ok := sdkListArgs(args)
 				require.False(t, ok, name)
+				if entity == "unit-event" && name == "a positional" {
+					continue // the events of one Unit, which is its own read
+				}
 				require.Nil(t, sdkRead(args), name)
 			}
 		})
 	}
 	// An entity this file does not list stays with cub.
-	for _, entity := range []string{"release", "unit-event", "attestation", "trigger", "organization"} {
+	for _, entity := range []string{"attestation", "trigger", "organization", "revision", "view"} {
 		require.Nil(t, sdkRead([]string{entity, "list", "-o", "json", "--space", "s"}), entity)
 	}
 }
@@ -1295,4 +1298,109 @@ func TestCubStdoutAnswersTheOtherSpaceListsThroughTheSDK(t *testing.T) {
 	// one caller runs cub itself under a byte limit of its own.
 	t.Setenv(configHubReaderEnv, "sdk")
 	require.Nil(t, sdkRead(withConfigHubSpace([]string{"attestation", "list", "-o", "json"}, space)))
+}
+
+// The events of one Unit: `cub unit-event list <unit>`, with the Unit named as
+// `unit get` requires it.
+func TestSDKUnitEventsOfUnitArgs(t *testing.T) {
+	for name, tc := range map[string]struct {
+		args []string
+		want hubread.Filter
+	}{
+		"as the MCP tool builds it": {[]string{"unit-event", "list", "payments-api", "--space", "s", "-o", "json"}, hubread.Filter{}},
+		"with a filter":             {[]string{"unit-event", "list", "payments-api", "--space", "s", "-o", "json", "--where", "CreatedAt > '2026-09-10T00:00:00Z'"}, hubread.Filter{Where: "CreatedAt > '2026-09-10T00:00:00Z'"}},
+		"the unit last":             {[]string{"unit-event", "list", "--space", "s", "-o", "json", "--quiet", "payments-api"}, hubread.Filter{}},
+	} {
+		space, unit, filter, ok := sdkUnitEventsOfUnitArgs(tc.args)
+		require.True(t, ok, name)
+		require.Equal(t, []string{"s", "payments-api"}, []string{space, unit}, name)
+		require.Equal(t, tc.want, filter, name)
+		require.NotNil(t, sdkRead(tc.args), name)
+		_, _, _, wholeSpace := sdkListArgs(tc.args)
+		require.False(t, wholeSpace, name)
+	}
+	for name, args := range map[string][]string{
+		"no space":            {"unit-event", "list", "payments-api", "-o", "json"},
+		"every space":         {"unit-event", "list", "payments-api", "-o", "json", "--space", allConfigHubSpaces},
+		"a unit named by ID":  {"unit-event", "list", recordedUnitID, "-o", "json", "--space", "s"},
+		"a qualified unit":    {"unit-event", "list", "s/payments-api", "-o", "json", "--space", "s"},
+		"every unit":          {"unit-event", "list", allConfigHubSpaces, "-o", "json", "--space", "s"},
+		"two units":           {"unit-event", "list", "a", "b", "-o", "json", "--space", "s"},
+		"no output format":    {"unit-event", "list", "payments-api", "--space", "s"},
+		"a stored filter":     {"unit-event", "list", "payments-api", "-o", "json", "--space", "s", "--filter", "f"},
+		"another entity":      {"release", "list", "payments-api", "-o", "json", "--space", "s"},
+		"another verb":        {"unit-event", "get", "payments-api", "-o", "json", "--space", "s"},
+		"a non-canonical ID":  {"unit-event", "list", "payments-api", "-o", "json", "--space", strings.ToUpper(recordedSpaceID)},
+		"a blank unit":        {"unit-event", "list", " ", "-o", "json", "--space", "s"},
+		"a limit on the list": {"unit-event", "list", "payments-api", "-o", "json", "--space", "s", "--limit", "5"},
+	} {
+		_, _, _, ok := sdkUnitEventsOfUnitArgs(args)
+		require.False(t, ok, name)
+		require.Nil(t, sdkRead(args), name)
+	}
+}
+
+// The release, unit-event and resource lists are built in ways the line scan
+// of cubCallSites does not read (across lines, or inside two appends), so
+// each builder is called here, and the number of places the pair is spelled
+// is pinned: a new call site fails this test until it is added below.
+func TestTheReleaseEventAndResourceListsAreTaken(t *testing.T) {
+	gateway := newMCPGatewayWithMode(nil, nil, true)
+	build := func(tool string, arguments map[string]interface{}) []string {
+		args, err := gateway.tools[tool].BuildArgs(arguments)
+		require.NoError(t, err, tool)
+		return args
+	}
+	const cutoff = "2026-09-09T12:00:00Z"
+	taken := map[string][][]string{
+		"release list": {
+			gitOpsConfigHubReleaseListArgs("space", cutoff),
+			build("confighub_releases", map[string]interface{}{"space": "space"}),
+			build("confighub_releases", map[string]interface{}{"space": "space", "where": "ReleaseNum > 3"}),
+		},
+		"unit-event list": {
+			gitOpsConfigHubUnitEventListArgs("space", cutoff),
+			build("confighub_unit_events", map[string]interface{}{"space": "space"}),
+			build("confighub_unit_events", map[string]interface{}{"space": "space", "unit": "payments-api", "where": "CreatedAt > '" + cutoff + "'"}),
+		},
+		"resource list": {
+			build("confighub_resources", map[string]interface{}{"space": "space"}),
+			build("confighub_resources", map[string]interface{}{"space": "space", "where": "ResourceType = 'apps/v1/Deployment'", "contains": "nginx"}),
+		},
+	}
+	builders := map[string]int{"release list": 2, "unit-event list": 2, "resource list": 1}
+	for command, calls := range taken {
+		entity, verb, _ := strings.Cut(command, " ")
+		for _, args := range calls {
+			require.Equal(t, []string{entity, verb}, args[:2])
+			require.NotNil(t, sdkRead(args), "cub %s", strings.Join(args, " "))
+		}
+		spelled := 0
+		anySpelling := regexp.MustCompile(`"` + entity + `"\s*,\s*"` + verb + `"`)
+		for _, root := range []string{".", filepath.Join("..", "..", "pkg"), filepath.Join("..", "..", "internal")} {
+			require.NoError(t, filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+				if err != nil || entry.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+					return err
+				}
+				source, err := os.ReadFile(path)
+				if err != nil {
+					return err
+				}
+				spelled += len(anySpelling.FindAll(source, -1))
+				return nil
+			}))
+		}
+		require.Equal(t, builders[command], spelled, "a cub %s is built somewhere this test does not call", command)
+	}
+
+	// What stays with cub: every space at once, and the options of the
+	// resource list that change what the server is asked.
+	for name, args := range map[string][]string{
+		"releases of every space":  build("confighub_releases", map[string]interface{}{"space": allConfigHubSpaces}),
+		"resources of every space": build("confighub_resources", map[string]interface{}{"space": allConfigHubSpaces}),
+		"a selection of resources": build("confighub_resources", map[string]interface{}{"space": "space", "select": "ResourceName"}),
+		"a stored resource filter": build("confighub_resources", map[string]interface{}{"space": "space", "filter": "f"}),
+	} {
+		require.Nil(t, sdkRead(args), "%s: cub %s", name, strings.Join(args, " "))
+	}
 }
