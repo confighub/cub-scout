@@ -7,7 +7,8 @@
 > controller and workload acceptance, the paired benchmark and the remaining
 > P4 issues are open and are not claimed by v2.14.0. The scope and its order
 > are unchanged. P5, which this plan had numbered v2.15, keeps its scope and
-> its place after P4; whether it shares v2.15 or becomes v2.16 is not decided.
+> its place after P4, and is now v2.16 (the maintainer's decision, also of
+> 2026-10-10).
 > Current gates: [the readiness ledger](../releases/v2.15-readiness.md).
 
 Status: v2.14 execution contracts and worked design examples; unimplemented

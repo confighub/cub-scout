@@ -7,8 +7,8 @@ binary; `CUB_SCOUT_CONFIGHUB_READER=cub` reads through `cub` as before
 ([reference](docs/reference/confighub-sdk-reader.md)). It also adds the
 `gitops tree` preview. **"v2.14" no longer names the P4 scope:** the unmet P4
 gates moved to v2.15 that day and are tracked in
-[the readiness ledger](docs/releases/v2.15-readiness.md). P5's version number
-is not decided.
+[the readiness ledger](docs/releases/v2.15-readiness.md). P5, which the plan
+had as v2.15, is now v2.16.
 
 **2026-10-09:** [v2.13.4 is published](docs/releases/v2.13.4.md), after
 [v2.13.3](docs/releases/v2.13.3.md) the same day. Together they add

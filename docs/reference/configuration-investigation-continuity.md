@@ -7,7 +7,8 @@
 > controller and workload acceptance, the paired benchmark and the remaining
 > P4 issues are open and are not claimed by v2.14.0. The scope and its order
 > are unchanged. P5, which this plan had numbered v2.15, keeps its scope and
-> its place after P4; whether it shares v2.15 or becomes v2.16 is not decided.
+> its place after P4, and is now v2.16 (the maintainer's decision, also of
+> 2026-10-10).
 > Current gates: [the readiness ledger](../releases/v2.15-readiness.md).
 
 Reviewed 2026-10-05 against published release metadata, the `v2.12.4` source
@@ -124,7 +125,7 @@ an approval, or a healthy current release by default.
 |---|---|---|
 | P3 / v2.13 | Existing trust/identity/freshness, context collection and connected adapters | Finish #591/#597/#641/#588/#599, exact-source CI, genuine acceptance and the admitted paired benchmark. Use the [ordered release sequence](../releases/v2.13-to-v2.14-sequence.md); no live test is excluded. |
 | P4 / v2.15 (was v2.14) | Existing comparison, bounded resource explorer, controller and attribution models | #596 six-surface conformance, #599 scope/identity, #594 controller matrix, #519 supported operator loop and the named adapter issues. Candidate session helpers are extensions of the collector, not a second truth model. |
-| P5 / after P4 (was v2.15) | Bounded read reuse, informer-backed watch/bot and receipts | #539/#604/#600/#605 measured reuse, output and retained evidence. Existing caches are bounded foundations, not a finished fleet store. |
+| P5 / v2.16 (was v2.15) | Bounded read reuse, informer-backed watch/bot and receipts | #539/#604/#600/#605 measured reuse, output and retained evidence. Existing caches are bounded foundations, not a finished fleet store. |
 | P6 / 3.0 | Shipped contracts plus P3–P5 proof | Publish only demonstrated workflow, quality and cost results, checked distribution and migration. Version numbers do not establish leadership. |
 
 Before opening new implementation scope, identify its existing issue, released
