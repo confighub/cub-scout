@@ -396,6 +396,11 @@ func loadCompareDryWetSnapshots(ctx context.Context, unitSlug, space string, tar
 	// endpoint, which `cub unit data` reads. The payload is plain text.
 	dryYAML, err := runCompareCubCommand(ctx, compareUnitDataArgs(unitSlug, space))
 	if err != nil {
+		if failedOnSDKRoute(err) {
+			// The error already says which read failed and that cub did
+			// not run.
+			return compareDryWetResult{}, err
+		}
 		return compareDryWetResult{}, fmt.Errorf("cub unit data: %w", err)
 	}
 	dryYAML = strings.TrimSpace(dryYAML)

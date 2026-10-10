@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: entity-unit
+  namespace: default
+data:
+  key: one

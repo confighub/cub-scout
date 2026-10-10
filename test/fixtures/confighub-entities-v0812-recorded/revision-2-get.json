@@ -1,0 +1,97 @@
+{
+  "Revision": {
+    "CreatedAt": "2026-10-10T19:27:43.970446Z",
+    "DataHash": "65f15cd4f0f5971694a71ca846e1aa994be03480893e6ef1bd79af289c1a4f39",
+    "DataSize": 99,
+    "Description": "MergeExternal; from /tmp/TestSDKReaderMatchesCubOnEntitiesAndData63004606/001/entity-unit.yaml",
+    "EntityType": "Revision",
+    "OrganizationID": "6f0a2785-2e49-4292-bd13-fe79c9df0c46",
+    "ProvidedPaths": [
+      {
+        "AttributeName": "resource-name",
+        "DataType": "string",
+        "Details": {
+          "BoundLinkID": "00000000-0000-0000-0000-000000000000",
+          "IsProvided": true,
+          "ProvidedProperties": {
+            "Namespace": "default",
+            "ResourceType": "v1/ConfigMap",
+            "SubPath-key": "true"
+          }
+        },
+        "Path": "metadata.name",
+        "ResourceCategory": "Resource",
+        "ResourceName": "default/entity-unit",
+        "ResourceNameWithoutScope": "entity-unit",
+        "ResourceType": "v1/ConfigMap"
+      }
+    ],
+    "RevisionID": "d01e2a15-2a40-4ef1-ae71-eb619a50238a",
+    "RevisionNum": 2,
+    "Source": "MergeExternal",
+    "SpaceID": "5483798c-6922-4c11-91a8-f51c91f1f7a5",
+    "SpaceSlug": "scout-sdk-entities-1791660463742220759",
+    "UnitID": "41cb417d-3734-4232-8ce0-ab6a2d307ba0",
+    "UnitSlug": "entity-unit",
+    "UpdatedAt": "2026-10-10T19:27:43.970446Z",
+    "UserAgent": "ConfigHub",
+    "UserID": "e20d817b-d9d7-46a6-8e11-939709fe4a1d",
+    "Version": 1
+  },
+  "Unit": {
+    "CreatedAt": "2026-10-10T19:27:43.919513Z",
+    "DataHash": "8b1be4dd1a983d2b8586c8cb26dc7ff3b7bd7ebef6f6af32499a54aec05b90ef",
+    "DataSize": 99,
+    "DisplayName": "entity-unit",
+    "EntityType": "Unit",
+    "HeadMutationNum": 2,
+    "HeadRevisionID": "0e153243-832b-431b-a158-c2b460011c23",
+    "HeadRevisionNum": 3,
+    "LastChangeDescription": "UpdateUnit",
+    "OrganizationID": "6f0a2785-2e49-4292-bd13-fe79c9df0c46",
+    "Permissions": {
+      "Manage": {
+        "UserIDs": {
+          "e20d817b-d9d7-46a6-8e11-939709fe4a1d": true
+        }
+      }
+    },
+    "ProvidedPaths": [
+      {
+        "AttributeName": "resource-name",
+        "DataType": "string",
+        "Details": {
+          "BoundLinkID": "00000000-0000-0000-0000-000000000000",
+          "IsProvided": true,
+          "ProvidedProperties": {
+            "Namespace": "default",
+            "ResourceType": "v1/ConfigMap",
+            "SubPath-key": "true"
+          }
+        },
+        "Path": "metadata.name",
+        "ResourceCategory": "Resource",
+        "ResourceName": "default/entity-unit",
+        "ResourceNameWithoutScope": "entity-unit",
+        "ResourceType": "v1/ConfigMap"
+      }
+    ],
+    "Slug": "entity-unit",
+    "SpaceID": "5483798c-6922-4c11-91a8-f51c91f1f7a5",
+    "SpaceSlug": "scout-sdk-entities-1791660463742220759",
+    "ToolchainType": "Kubernetes/YAML",
+    "UnitID": "41cb417d-3734-4232-8ce0-ab6a2d307ba0",
+    "UpdatedAt": "2026-10-10T19:27:44.142681Z",
+    "Version": 10
+  },
+  "User": {
+    "CreatedAt": "2026-10-10T19:26:51.724673Z",
+    "DisplayName": "Local Administrator",
+    "EntityType": "User",
+    "ExternalID": "confighub:local:admin",
+    "Slug": "admin",
+    "UpdatedAt": "2026-10-10T19:26:51.724673Z",
+    "UserID": "e20d817b-d9d7-46a6-8e11-939709fe4a1d",
+    "Username": "admin@local.confighub.dev"
+  }
+}

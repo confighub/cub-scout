@@ -527,7 +527,7 @@ func TestCubStdoutLeavesOtherCommandsToCubUnderTheSDKRoute(t *testing.T) {
 	t.Setenv(configHubReaderEnv, "sdk")
 
 	for _, args := range [][]string{
-		{"unit", "data", recordedUnit, "--space", recordedSpace},
+		{"unit", "data", "--space", recordedSpace, "--where", "Slug LIKE 'a-%'"},
 		{"unit", "get", recordedUnitID, "-o", "json", "--space", recordedSpace},
 		{"unit", "get", recordedUnit, "-o", "yaml", "--space", recordedSpace},
 		{"unit", "list", "-o", "json", "--space", recordedSpace, "--select", "Slug"},
@@ -617,7 +617,7 @@ func TestAnUnknownConfigHubReaderIsRefused(t *testing.T) {
 
 	// A command the SDK route does not take has one route, so the setting is
 	// not consulted for it.
-	_, err = cubStdout(context.Background(), "unit", "data", recordedUnit, "--space", recordedSpace)
+	_, err = cubStdout(context.Background(), "unit", "data", "--space", recordedSpace, "--where", "Slug LIKE 'a-%'")
 	require.NoError(t, err)
 	require.Len(t, fakeCubCalls(t, cubLog), 1)
 
@@ -1040,6 +1040,11 @@ func TestASDKRouteFailureNamesTheWayBackOnlyWhenItCouldHelp(t *testing.T) {
 	// a way back; it is the wrong answer with nothing to mark it.
 	require.NotContains(t, (&sdkRouteError{&hubread.Error{Kind: hubread.KindIncomplete, Op: "unit list", Message: "x"}}).Error(), wayBack)
 	require.NotContains(t, (&sdkRouteError{&hubread.Error{Kind: hubread.KindMalformed, Op: "unit list", Message: "x", BeyondScope: true}}).Error(), wayBack)
+	// Nor does cub check data against the hash ConfigHub reports for it, or
+	// have a limit a caller set: neither failure is one cub would not have
+	// had for a good reason.
+	require.NotContains(t, (&sdkRouteError{&hubread.Error{Kind: hubread.KindMalformed, Op: "unit data", Message: "x", Unverified: true}}).Error(), wayBack)
+	require.NotContains(t, (&sdkRouteError{&hubread.Error{Kind: hubread.KindTooLarge, Op: "attestation list", Message: "x"}}).Error(), wayBack)
 	for _, kind := range []hubread.Kind{hubread.KindFailed, hubread.KindForbidden, hubread.KindUnauthorized, hubread.KindNotFound,
 		hubread.KindNotConfigured, hubread.KindInvalidScope, hubread.KindAmbiguous, hubread.KindCanceled} {
 		routed := &sdkRouteError{&hubread.Error{Kind: kind, Op: "unit read", Message: "x"}}
@@ -1212,7 +1217,7 @@ func TestSDKListArgsForTheOtherEntities(t *testing.T) {
 		})
 	}
 	// An entity this file does not list stays with cub.
-	for _, entity := range []string{"attestation", "trigger", "organization", "revision", "view"} {
+	for _, entity := range []string{"trigger", "organization", "revision", "view", "filter", "tag"} {
 		require.Nil(t, sdkRead([]string{entity, "list", "-o", "json", "--space", "s"}), entity)
 	}
 }
@@ -1299,10 +1304,9 @@ func TestCubStdoutAnswersTheOtherSpaceListsThroughTheSDK(t *testing.T) {
 		})
 	}
 
-	// The attestation list is read by the reader but not routed here: its
-	// one caller runs cub itself under a byte limit of its own.
-	t.Setenv(configHubReaderEnv, "sdk")
-	require.Nil(t, sdkRead(withConfigHubSpace([]string{"attestation", "list", "-o", "json"}, space)))
+	// The attestation list is routed too; its one caller, which holds what
+	// it reads to a byte limit, has its own test.
+	require.NotNil(t, sdkRead(withConfigHubSpace([]string{"attestation", "list", "-o", "json"}, space)))
 }
 
 // The events of one Unit: `cub unit-event list <unit>`, with the Unit named as

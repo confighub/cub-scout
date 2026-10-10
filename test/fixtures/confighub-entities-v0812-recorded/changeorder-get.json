@@ -1,0 +1,97 @@
+{
+  "ChangeOrder": {
+    "AdoptedEndTagID": "00000000-0000-0000-0000-000000000000",
+    "ChangeOrderID": "be90988f-331d-4cb9-bc49-88629872a23f",
+    "CreatedAt": "2026-10-10T19:27:46.142816Z",
+    "Description": "recorded for the SDK reader",
+    "DisplayName": "entity-order",
+    "EndTagID": "984c1b73-ac60-41a4-a125-be943767041b",
+    "EntityType": "ChangeOrder",
+    "InScopeSpaceIDs": [
+      "5483798c-6922-4c11-91a8-f51c91f1f7a5"
+    ],
+    "OrganizationID": "6f0a2785-2e49-4292-bd13-fe79c9df0c46",
+    "Permissions": {
+      "Manage": {
+        "UserIDs": {
+          "e20d817b-d9d7-46a6-8e11-939709fe4a1d": true
+        }
+      }
+    },
+    "ReleaseTagID": "5b8eef6c-721d-4bfe-9326-27ff38732d74",
+    "ResolvedSpaceIDs": [
+      "5483798c-6922-4c11-91a8-f51c91f1f7a5"
+    ],
+    "RestoreTagID": "00000000-0000-0000-0000-000000000000",
+    "Slug": "entity-order",
+    "SpaceID": "5483798c-6922-4c11-91a8-f51c91f1f7a5",
+    "SpaceSlug": "scout-sdk-entities-1791660463742220759",
+    "StartTagID": "9e584bdd-1925-4238-b55f-c696d880820d",
+    "State": "Released",
+    "UpdateType": "UpgradeUnit",
+    "UpdatedAt": "2026-10-10T19:27:46.162104Z",
+    "UserID": "e20d817b-d9d7-46a6-8e11-939709fe4a1d",
+    "Version": 2
+  },
+  "EndTag": {
+    "ChangeOrderID": "be90988f-331d-4cb9-bc49-88629872a23f",
+    "CreatedAt": "2026-10-10T19:27:46.140406Z",
+    "DisplayName": "entity-order-co-end",
+    "EntityType": "Tag",
+    "OrganizationID": "6f0a2785-2e49-4292-bd13-fe79c9df0c46",
+    "Permissions": {
+      "Manage": {
+        "UserIDs": {
+          "e20d817b-d9d7-46a6-8e11-939709fe4a1d": true
+        }
+      }
+    },
+    "Slug": "entity-order-co-end",
+    "SpaceID": "5483798c-6922-4c11-91a8-f51c91f1f7a5",
+    "SpaceSlug": "scout-sdk-entities-1791660463742220759",
+    "TagID": "984c1b73-ac60-41a4-a125-be943767041b",
+    "UpdatedAt": "2026-10-10T19:27:46.145219Z",
+    "Version": 2
+  },
+  "Space": {
+    "CreatedAt": "2026-10-10T19:27:43.821408Z",
+    "DisplayName": "scout-sdk-entities-1791660463742220759",
+    "EntityType": "Space",
+    "OrganizationID": "6f0a2785-2e49-4292-bd13-fe79c9df0c46",
+    "Permissions": {
+      "Manage": {
+        "UserIDs": {
+          "e20d817b-d9d7-46a6-8e11-939709fe4a1d": true
+        }
+      },
+      "ManageChildren": {
+        "UserIDs": {
+          "e20d817b-d9d7-46a6-8e11-939709fe4a1d": true
+        }
+      }
+    },
+    "Slug": "scout-sdk-entities-1791660463742220759",
+    "SpaceID": "5483798c-6922-4c11-91a8-f51c91f1f7a5",
+    "UpdatedAt": "2026-10-10T19:27:43.821408Z"
+  },
+  "StartTag": {
+    "ChangeOrderID": "be90988f-331d-4cb9-bc49-88629872a23f",
+    "CreatedAt": "2026-10-10T19:27:46.141395Z",
+    "DisplayName": "entity-order-co-start",
+    "EntityType": "Tag",
+    "OrganizationID": "6f0a2785-2e49-4292-bd13-fe79c9df0c46",
+    "Permissions": {
+      "Manage": {
+        "UserIDs": {
+          "e20d817b-d9d7-46a6-8e11-939709fe4a1d": true
+        }
+      }
+    },
+    "Slug": "entity-order-co-start",
+    "SpaceID": "5483798c-6922-4c11-91a8-f51c91f1f7a5",
+    "SpaceSlug": "scout-sdk-entities-1791660463742220759",
+    "TagID": "9e584bdd-1925-4238-b55f-c696d880820d",
+    "UpdatedAt": "2026-10-10T19:27:46.144495Z",
+    "Version": 2
+  }
+}

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -197,8 +198,9 @@ var sdkSpaceLists = map[string]func(*hubread.Reader, context.Context, string, hu
 	"resource":   (*hubread.Reader).ResourceListJSON,
 	"release":    (*hubread.Reader).ReleaseListJSON,
 	"unit-event": (*hubread.Reader).UnitEventListJSON,
-	// The attestation list is not here yet: its one caller runs cub itself,
-	// under a byte limit of its own, and moves with the revision reads.
+	// The one caller of the attestation list holds what it reads to a byte
+	// limit of its own, on either route (boundedAttestationCubRead).
+	"attestation": (*hubread.Reader).AttestationListJSON,
 }
 
 // sdkListArgs recognises `cub <entity> list -o json [--quiet] --space <space>
@@ -246,6 +248,123 @@ func sdkUnitEventsOfUnitArgs(args []string) (space, unit string, filter hubread.
 	return parsed.space, unit, hubread.Filter{Where: parsed.where, Contains: parsed.contains}, true
 }
 
+// sdkOneUnit reports whether name is a Unit named the way the route takes
+// one: by slug. A qualified name, "*" and a Unit named by ID, in any spelling
+// cub reads as one, stay with cub.
+func sdkOneUnit(name string) bool {
+	return name != "" && !strings.Contains(name, "/") && name != allConfigHubSpaces && !spelledAsID(name)
+}
+
+// sdkDataArgs parses what follows the two command words of a read that
+// prints configuration data: positionals and exactly one `--space`, and
+// nothing else. These commands print the data itself, so there is no output
+// format to ask for.
+func sdkDataArgs(rest []string) (positionals []string, space string, ok bool) {
+	hasSpace := false
+	for i := 0; i < len(rest); i++ {
+		switch arg := rest[i]; {
+		case arg == "--space":
+			if hasSpace || i+1 >= len(rest) || strings.HasPrefix(rest[i+1], "-") {
+				return nil, "", false
+			}
+			space, hasSpace = strings.TrimSpace(rest[i+1]), true
+			i++
+		case strings.HasPrefix(arg, "-"):
+			return nil, "", false
+		default:
+			positionals = append(positionals, arg)
+		}
+	}
+	return positionals, space, hasSpace && sdkTakesSpace(space)
+}
+
+// sdkUnitDataArgs recognises `cub unit data <unit> --space <space>`.
+func sdkUnitDataArgs(args []string) (space, unit string, ok bool) {
+	if len(args) < 3 || args[0] != "unit" || args[1] != "data" {
+		return "", "", false
+	}
+	positionals, space, ok := sdkDataArgs(args[2:])
+	if !ok || len(positionals) != 1 || !sdkOneUnit(strings.TrimSpace(positionals[0])) {
+		return "", "", false
+	}
+	return space, strings.TrimSpace(positionals[0]), true
+}
+
+// sdkRevisionNumber reads a revision number written the way cub-scout writes
+// one: decimal digits, above zero. cub also takes a sign and other spellings;
+// those stay with cub.
+func sdkRevisionNumber(text string) (int64, bool) {
+	number, err := strconv.ParseInt(text, 10, 64)
+	return number, err == nil && number > 0 && strconv.FormatInt(number, 10) == text
+}
+
+// sdkRevisionArgs recognises `cub revision get <unit> <number> --space <space>
+// -o json [--quiet]` and `cub revision data <unit> <number> --space <space>`.
+func sdkRevisionArgs(args []string) (verb, space, unit string, number int64, ok bool) {
+	if len(args) < 4 || args[0] != "revision" {
+		return "", "", "", 0, false
+	}
+	var positionals []string
+	switch verb = args[1]; verb {
+	case "get":
+		parsed, known := sdkReadFlags(args[2:])
+		if !known || parsed.filtered() || !parsed.hasSpace || !sdkTakesSpace(parsed.space) {
+			return "", "", "", 0, false
+		}
+		positionals, space = parsed.positionals, parsed.space
+	case "data":
+		if positionals, space, ok = sdkDataArgs(args[2:]); !ok {
+			return "", "", "", 0, false
+		}
+	default:
+		return "", "", "", 0, false
+	}
+	if len(positionals) != 2 || !sdkOneUnit(strings.TrimSpace(positionals[0])) {
+		return "", "", "", 0, false
+	}
+	if number, ok = sdkRevisionNumber(positionals[1]); !ok {
+		return "", "", "", 0, false
+	}
+	return verb, space, strings.TrimSpace(positionals[0]), number, true
+}
+
+// sdkViewGetArgs recognises `cub view get <id> --space <space> -o json
+// [--quiet]` for a View named by its canonical ID, in a named space or in
+// every space ("*"). A View named by slug stays with cub.
+func sdkViewGetArgs(args []string) (space, id string, ok bool) {
+	if len(args) < 3 || args[0] != "view" || args[1] != "get" {
+		return "", "", false
+	}
+	parsed, ok := sdkReadFlags(args[2:])
+	if !ok || parsed.filtered() || len(parsed.positionals) != 1 || !parsed.hasSpace {
+		return "", "", false
+	}
+	if parsed.space != allConfigHubSpaces && !sdkTakesSpace(parsed.space) {
+		return "", "", false
+	}
+	// The nil ID is no View's; cub says "not found" for it in its own words.
+	if id = parsed.positionals[0]; !canonicalID(id) || id == uuid.Nil.String() {
+		return "", "", false
+	}
+	return parsed.space, id, true
+}
+
+// sdkChangeOrderGetArgs recognises `cub changeorder get <slug> -o json
+// [--quiet] --space <space>`. A change order named by ID stays with cub.
+func sdkChangeOrderGetArgs(args []string) (space, order string, ok bool) {
+	if len(args) < 3 || args[0] != "changeorder" || args[1] != "get" {
+		return "", "", false
+	}
+	parsed, ok := sdkReadFlags(args[2:])
+	if !ok || parsed.filtered() || len(parsed.positionals) != 1 || !parsed.hasSpace || !sdkTakesSpace(parsed.space) {
+		return "", "", false
+	}
+	if order = strings.TrimSpace(parsed.positionals[0]); !sdkOneUnit(order) {
+		return "", "", false
+	}
+	return parsed.space, order, true
+}
+
 // sdkSpaceListArgs recognises `cub space list -o json [--quiet]` and nothing
 // else.
 func sdkSpaceListArgs(args []string) bool {
@@ -273,6 +392,29 @@ func sdkRead(args []string) func(context.Context, *hubread.Reader) ([]byte, erro
 	if space, unit, filter, ok := sdkUnitEventsOfUnitArgs(args); ok {
 		return func(ctx context.Context, reader *hubread.Reader) ([]byte, error) {
 			return reader.UnitEventsOfUnitJSON(ctx, space, unit, filter)
+		}
+	}
+	if space, unit, ok := sdkUnitDataArgs(args); ok {
+		return func(ctx context.Context, reader *hubread.Reader) ([]byte, error) {
+			return reader.UnitData(ctx, space, unit)
+		}
+	}
+	if verb, space, unit, number, ok := sdkRevisionArgs(args); ok {
+		return func(ctx context.Context, reader *hubread.Reader) ([]byte, error) {
+			if verb == "data" {
+				return reader.RevisionData(ctx, space, unit, number)
+			}
+			return reader.RevisionJSON(ctx, space, unit, number)
+		}
+	}
+	if space, id, ok := sdkViewGetArgs(args); ok {
+		return func(ctx context.Context, reader *hubread.Reader) ([]byte, error) {
+			return reader.ViewJSON(ctx, space, id)
+		}
+	}
+	if space, order, ok := sdkChangeOrderGetArgs(args); ok {
+		return func(ctx context.Context, reader *hubread.Reader) ([]byte, error) {
+			return reader.ChangeOrderJSON(ctx, space, order)
 		}
 	}
 	if sdkSpaceListArgs(args) {
@@ -322,7 +464,9 @@ func sdkRouteWayBack(err error) string {
 	// beyond the space or Unit asked about: cub prints both as they came,
 	// so sending the user there would trade an error for a wrong answer
 	// with nothing to mark it.
-	if typed.BeyondScope {
+	// Nor for data that did not have the hash ConfigHub reports for it: cub
+	// makes no such check and would print whatever came.
+	if typed.BeyondScope || typed.Unverified {
 		return ""
 	}
 	switch typed.Kind {

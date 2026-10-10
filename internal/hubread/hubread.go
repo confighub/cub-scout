@@ -49,6 +49,9 @@ const (
 	KindRefused       Kind = "refused"
 	KindIncomplete    Kind = "incomplete"
 	KindFailed        Kind = "request_failed"
+	// KindTooLarge is a response larger than the caller allowed; see
+	// WithResponseLimit.
+	KindTooLarge Kind = "too_large"
 )
 
 // Error is a failed read. Message never contains a credential.
@@ -60,6 +63,9 @@ type Error struct {
 	// outside the one space or Unit that was asked about. The answer was
 	// well formed; it was not an answer to the question.
 	BeyondScope bool
+	// Unverified marks data refused because it did not have the hash or the
+	// size ConfigHub reports for it.
+	Unverified bool
 }
 
 func (e *Error) Error() string { return fmt.Sprintf("confighub %s: %s (%s)", e.Op, e.Message, e.Kind) }
@@ -112,7 +118,35 @@ func (t *readOnlyTransport) RoundTrip(req *http.Request) (*http.Response, error)
 		return nil, err
 	}
 	resp.Body = &countingBody{ReadCloser: resp.Body, count: &t.bytes}
+	if limit, limited := req.Context().Value(responseLimitKey{}).(int64); limited {
+		resp.Body = &limitedBody{ReadCloser: resp.Body, left: limit}
+	}
 	return resp, nil
+}
+
+type responseLimitKey struct{}
+
+// WithResponseLimit bounds each response read under ctx to limit bytes. A
+// larger response fails the read with KindTooLarge when the limit is passed,
+// before the rest is read: the bound is on what is taken from the network,
+// not only on what is returned.
+func WithResponseLimit(ctx context.Context, limit int64) context.Context {
+	return context.WithValue(ctx, responseLimitKey{}, limit)
+}
+
+var errTooLarge = errors.New("the response is larger than this read allows")
+
+type limitedBody struct {
+	io.ReadCloser
+	left int64
+}
+
+func (b *limitedBody) Read(p []byte) (int, error) {
+	n, err := b.ReadCloser.Read(p)
+	if b.left -= int64(n); b.left < 0 {
+		return 0, errTooLarge
+	}
+	return n, err
 }
 
 type countingBody struct {
@@ -271,6 +305,8 @@ func classify(ctx context.Context, op string, err error, resp apiResponse) *Erro
 	if err != nil {
 		var urlErr *url.Error
 		switch {
+		case errors.Is(err, errTooLarge):
+			return &Error{Kind: KindTooLarge, Op: op, Message: errTooLarge.Error()}
 		case errors.Is(err, errNotReadOnly), errors.Is(err, errRedirect):
 			return &Error{Kind: KindRefused, Op: op, Message: errors.Unwrap(unwrapURL(err)).Error()}
 		case errors.Is(ctx.Err(), context.Canceled), errors.Is(err, context.Canceled):

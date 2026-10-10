@@ -1,0 +1,28 @@
+{
+  "equal": {
+    "changeorder-get-by-id": true,
+    "changeorder-get-by-slug": true,
+    "revision-1-get-by-id": true,
+    "revision-1-get-by-slug": true,
+    "revision-2-data": true,
+    "revision-2-get-by-id": true,
+    "revision-2-get-by-slug": true,
+    "revision-3-data": true,
+    "revision-3-get-by-id": true,
+    "revision-3-get-by-slug": true,
+    "unit-data-by-id": true,
+    "unit-data-by-slug": true,
+    "view-get, every space": true,
+    "view-get, its space by ID": true,
+    "view-get, its space by slug": true
+  },
+  "notes": {
+    "an earlier revision holds the first upload": "true",
+    "changeorder": "created",
+    "head revision": "3",
+    "revision-1 data": "no data by either route: not_found",
+    "unit DataHash is the SHA-256 of its data": "true",
+    "unit data is the file uploaded last": "true",
+    "view": "created"
+  }
+}
