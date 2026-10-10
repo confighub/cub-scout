@@ -11,7 +11,9 @@ The five run modes are **standalone CLI/TUI, `cub` plugin, MCP server, watch
 stream, and in-cluster bot**. [Choose a mode](../README.md#five-ways-to-run-cub-scout)
 or [start with a user question](../README.md#user-questions).
 
-Current release: [v2.13.4](releases/v2.13.4.md), which adds the
+Current release: [v2.14.0](releases/v2.14.0.md), which reads ConfigHub through
+the ConfigHub SDK (no `cub` binary for the reads it covers) and adds the
+`gitops tree` preview. [v2.13.4](releases/v2.13.4.md) added the
 `gitops_settings` MCP tool and a compact view to `gitops settings` (preview,
 from [v2.13.3](releases/v2.13.3.md)). [v2.13.2](releases/v2.13.2.md) corrected
 provenance and health for Flux and Argo CD; upgrade from anything older. Earlier notes are in

@@ -58,7 +58,7 @@ dependency. If an old cask is installed, run
 `brew uninstall --cask confighub/tap/cub-scout` first.
 
 
-Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.13.4`, then
+Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.14.0`, then
 `cub scout doctor`. [Installation and verified downloads](docs/getting-started/install.md)
 cover macOS, Linux, Windows, and tagged source builds.
 
@@ -167,7 +167,17 @@ coalescing, opt-in watch-backed idle observation, and a new `resource.deleted`
 event), plus local bot images built from verified release archives. See the
 [release notes](docs/releases/v2.11.0.md).
 
-**v2.13.4 is the latest release.** It makes `gitops settings` available to
+**v2.14.0 is the latest release.** cub-scout now reads ConfigHub through the
+ConfigHub SDK and checks the session the same way, so a read-only command
+whose reads are covered needs no `cub` binary; `cub` is still needed to log
+in, for every write, and for the reads not yet moved.
+`CUB_SCOUT_CONFIGHUB_READER=cub` reads through `cub` as before. A new preview
+command, `gitops tree`, shows what is under each Argo CD Application to any
+depth. No cost or time saving for an agent is claimed for either. The work
+that "v2.14" used to name, the P4 acceptance gates, moved to v2.15 and is not
+claimed. See the [v2.14.0 release notes](docs/releases/v2.14.0.md).
+
+**v2.13.4** made `gitops settings` available to
 agents: an MCP tool, `gitops_settings`, and a compact JSON `--view summary`. In
 the eval cases that came with it, an agent that already held the raw `kubectl`
 export never called the tool and gained nothing, while an agent with cub-scout
@@ -406,8 +416,8 @@ For direct downloads and tagged source builds, use the
 `github.com/confighub/cub-scout/v2`; proxy installation via
 `go install github.com/confighub/cub-scout/v2/cmd/cub-scout@latest` installs
 the latest tagged 2.x module. For a pinned install use
-`go install github.com/confighub/cub-scout/v2/cmd/cub-scout@v2.13.4`. Container command
-`docker run ghcr.io/confighub/cub-scout:v2.13.4 version` still needs registry
+`go install github.com/confighub/cub-scout/v2/cmd/cub-scout@v2.14.0`. Container command
+`docker run ghcr.io/confighub/cub-scout:v2.14.0 version` still needs registry
 access verification (#520); the published image is Linux amd64 only.
 `kubectl krew install cub-scout` is not a verified distribution path; use the
 `kubectl-cub_scout` binary included in the archives or Homebrew instead.
