@@ -121,8 +121,9 @@ See the [migration guide](../releases/v2.0.0-migration-guide.md) for switching b
 
 - `cub` holds credentials and context (`cub auth login`, `cub context ...`).
 - `cub scout` in plugin form inherits `CUB_TOKEN`, `CUB_SERVER`, `CUB_CONTEXT` from the parent `cub` process. It reads `CUB_SPACE` only if you set it: cub (v0.5.2 and later) has no default space and no longer passes one.
-- `cub scout` in standalone form talks to `cub auth get-token` or reads its own token store when connected features are used.
-- Neither form of `cub scout` ever performs ConfigHub writes. Writes go through `cub`.
+- `cub scout` in standalone form reads the session `cub auth login` stored: cub's own configuration and token, honouring `CUB_CONFIG` and `CUB_CONTEXT`. It reads them and never writes them, does not log in, and does not renew a token.
+- Since v2.14.0 both forms read ConfigHub through the ConfigHub SDK by default, with no `cub` process for the reads it covers, so a read-only command whose reads are covered needs a cub login but no `cub` binary. `CUB_SCOUT_CONFIGHUB_READER=cub` reads through the `cub` CLI instead. See the [SDK reader reference](../reference/confighub-sdk-reader.md).
+- Neither form of `cub scout` ever performs ConfigHub writes through the SDK; its reader refuses every request that is not a read (GET or HEAD). The commands that write (`import` and the ones that create or change things) run `cub`.
 
 ## The Read-First Contract
 

@@ -1535,9 +1535,25 @@ Worker:     ● bridge-prod (connected)
 ```
 
 `confighub_reads` is the verdict of the gate every connected command uses:
-`cub auth status`, plus the checks that turn ConfigHub reads off
+the session check, plus the checks that turn ConfigHub reads off
 (`CUB_SCOUT_OFFLINE=true`, telemetry disabled). When it is `false`,
 `confighub_reads_reason` carries the reason.
+
+Since v2.14.0 the session check is made through the ConfigHub SDK by default,
+with no `cub` process: the credential `cub` would use, a token that has not
+expired, one request the server answers, and an SDK that is not a minor
+version older than the server. With `CUB_SCOUT_CONFIGHUB_READER=cub` it is
+`cub auth status`, as before. See the
+[SDK reader reference](confighub-sdk-reader.md#the-session-check).
+
+`auth_valid` follows that gate and `status` asks nothing itself. It is `true`
+when the gate passed, or refused only for a client too old for the server;
+`false` when the gate refused the credential (none, rejected, expired); and
+**absent** when the gate could not ask at all, for instance a server error or
+a timeout, which says nothing about the session. With reads turned off it
+reports only what this machine's files say: whether a credential is stored
+and, on the SDK route, that it has not expired. `worker` is looked up only
+when `confighub_reads` is `true`.
 
 `mode` describes connectivity and credentials to `hub.confighub.com`, so the
 two can disagree in either direction, and the text output adds a line whenever
@@ -1546,8 +1562,9 @@ they do:
 | `mode` | `confighub_reads` | Text line | What it means |
 |---|---|---|---|
 | `connected` / `auth_expired` | `false` | `⚠ ConfigHub reads unavailable: <reason>` | Credentials exist, but every connected command refuses. `cub auth login` only helps if the reason says so |
-| `connected` | `false` | ``⚠ ConfigHub reads unavailable: `cub` is older than the ConfigHub server; run `cub upgrade`: <cub's message>`` | The session is valid, but `cub auth status` refuses a client older than its server (a change in cub's second version number, below 1.0). Upgrading cub fixes it; logging in again does not. `auth_valid` is `true`, and no worker lookup is attempted |
-| `offline` / `online` | `true` | `✔ ConfigHub reads available: cub has a session` | `cub auth status` passes but `cub context get` failed, so the mode line describes only what `hub.confighub.com` answered |
+| `connected` | `false` | `⚠ ConfigHub reads unavailable: this cub-scout reads ConfigHub with SDK <version>, which is too old for server <version>: ...` | The session is valid, but the server is a minor version ahead of the SDK cub-scout was built with (`cub-scout version` prints it). Upgrading cub-scout fixes it, or `CUB_SCOUT_CONFIGHUB_READER=cub` with an up-to-date `cub`; logging in again does not |
+| `connected` | `false` | ``⚠ ConfigHub reads unavailable: `cub` is older than the ConfigHub server; run `cub upgrade`: <cub's message>`` | The same refusal on the `cub` route: the session is valid, but `cub auth status` refuses a client older than its server (a change in cub's second version number, below 1.0). Upgrading cub fixes it; logging in again does not. `auth_valid` is `true`, and no worker lookup is attempted |
+| `offline` / `online` | `true` | `✔ ConfigHub reads available: cub has a session` | The session check passes but the cub context could not be read, so the mode line describes only what `hub.confighub.com` answered |
 | otherwise | — | none | The two agree; nothing to correct |
 
 `auth_expired` cannot occur with `confighub_reads: true`: `auth_valid` is the gate's
