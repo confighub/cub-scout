@@ -52,6 +52,8 @@ const (
 	// KindTooLarge is a response larger than the caller allowed; see
 	// WithResponseLimit.
 	KindTooLarge Kind = "too_large"
+	// KindVersionSkew is a client too old for its server; see CheckSession.
+	KindVersionSkew Kind = "version_skew"
 )
 
 // Error is a failed read. Message never contains a credential.
@@ -175,6 +177,9 @@ type Options struct {
 type Reader struct {
 	client    *cubapi.Client
 	transport *readOnlyTransport
+	// tokenExpiry is when the credential says it expires, zero when it does
+	// not say. The token itself is not kept here.
+	tokenExpiry time.Time
 }
 
 func (o Options) httpClient() (*http.Client, *readOnlyTransport) {
@@ -225,8 +230,10 @@ func Resolve(ctx context.Context, opts Options) (*Reader, error) {
 		return notConfigured(err)
 	}
 	var client *cubapi.Client
+	var expiry time.Time
 	if env.HasCredentials() && os.Getenv("CUB_PLUGIN") == "1" {
 		client, err = cubapi.NewClientFromEnvironment(ctx, clientOptions)
+		expiry, _ = tokenExpiry(os.Getenv("CUB_TOKEN"))
 	} else {
 		// Not cubapi.ResolveClient: in SDK core v0.8.10 and v0.8.12 it hands CUB_CONFIG,
 		// which names the config directory, to LoadConfig as if it were the
@@ -257,11 +264,12 @@ func Resolve(ctx context.Context, opts Options) (*Reader, error) {
 		}
 		clientOptions.ServerURL, clientOptions.Token = active.Coordinate.ServerURL, token.AccessToken
 		client, err = cubapi.NewClient(clientOptions)
+		expiry, _ = tokenExpiry(token.AccessToken)
 	}
 	if err != nil {
 		return notConfigured(err)
 	}
-	return &Reader{client: client, transport: transport}, nil
+	return &Reader{client: client, transport: transport, tokenExpiry: expiry}, nil
 }
 
 // New builds a Reader for an explicit server and bearer token.
@@ -274,7 +282,8 @@ func New(serverURL, token string, opts Options) (*Reader, error) {
 	if err != nil {
 		return nil, &Error{Kind: KindNotConfigured, Op: "resolve credentials", Message: err.Error()}
 	}
-	return &Reader{client: client, transport: transport}, nil
+	expiry, _ := tokenExpiry(token)
+	return &Reader{client: client, transport: transport, tokenExpiry: expiry}, nil
 }
 
 // Server is the server URL the Reader was built for.
