@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/confighub/sdk/core/cubapi"
+	goclientnew "github.com/confighub/sdk/core/openapi/goclient-new"
 	"github.com/google/uuid"
 )
 
@@ -144,4 +146,55 @@ func (r *Reader) CheckSession(ctx context.Context) (Session, error) {
 		session.ClientAhead = true
 	}
 	return session, nil
+}
+
+// OrganizationListJSON reads the organizations the credential belongs to, as
+// `cub organization list -o json` prints them. It takes no scope: the list is
+// the caller's own.
+func (r *Reader) OrganizationListJSON(ctx context.Context) ([]byte, error) {
+	const op = "organization list"
+	resp, err := r.client.API.ListOrganizationsWithResponse(ctx, &goclientnew.ListOrganizationsParams{})
+	if failure := classify(ctx, op, err, resp); failure != nil {
+		return nil, failure
+	}
+	if resp.JSON200 == nil {
+		return nil, &Error{Kind: KindMalformed, Op: op, Message: "the response had no organization list"}
+	}
+	if failure := wholeList(op, resp.HTTPResponse); failure != nil {
+		return nil, failure
+	}
+	for i := range *resp.JSON200 {
+		if (*resp.JSON200)[i].Organization == nil {
+			return nil, &Error{Kind: KindMalformed, Op: op, Message: "the list has an entry with no organization"}
+		}
+	}
+	return listJSON(op, resp.JSON200)
+}
+
+// LocalContextJSON returns the cub context this machine would use, as
+// `cub context get -o json` prints it: the context's name, its server,
+// organization and user, and its settings. It reads the local cub
+// configuration, honouring CUB_CONFIG and CUB_CONTEXT, and asks no server.
+// The context holds no token; that is stored apart and is not read here.
+func LocalContextJSON(ctx context.Context) ([]byte, error) {
+	const op = "context get"
+	notConfigured := func(err error) ([]byte, error) {
+		return nil, &Error{Kind: KindNotConfigured, Op: op, Message: err.Error()}
+	}
+	env, err := cubapi.LoadEnvironment(ctx)
+	if err != nil {
+		return notConfigured(err)
+	}
+	store, err := cubapi.LoadConfig("")
+	if err != nil {
+		return notConfigured(err)
+	}
+	if err = store.Use(env.Context); err != nil {
+		return notConfigured(err)
+	}
+	active, err := store.ActiveContext()
+	if err != nil {
+		return notConfigured(err)
+	}
+	return one(op, active)
 }

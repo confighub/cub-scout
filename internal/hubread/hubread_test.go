@@ -695,7 +695,9 @@ func TestUnitListJSONKeepsToOneSpace(t *testing.T) {
 	reader := hub.reader(Options{})
 	ctx := context.Background()
 
-	for _, scope := range []string{"", " ", "*"} {
+	// No space is refused. Every space is a different question, asked by
+	// name; see TestListsAcrossEverySpaceAreAskedForByName.
+	for _, scope := range []string{"", " "} {
 		_, err := reader.UnitListJSON(ctx, scope, UnitFilter{})
 		require.Equal(t, KindInvalidScope, KindOf(err), "scope %q", scope)
 	}
@@ -1039,7 +1041,7 @@ func TestSpaceListsKeepToOneSpaceAndRefuseABrokenAnswer(t *testing.T) {
 
 	for name, kind := range spaceListKinds(reader, ctx) {
 		t.Run(name, func(t *testing.T) {
-			for _, scope := range []string{"", " ", "*"} {
+			for _, scope := range []string{"", " "} {
 				before := len(hub.requests())
 				_, err := kind.read(scope, Filter{})
 				require.Equal(t, KindInvalidScope, KindOf(err), "scope %q", scope)
@@ -1384,10 +1386,8 @@ func TestUnitEventListsOfASpaceAndOfOneUnit(t *testing.T) {
 			require.Equal(t, tc.beyond, typed.BeyondScope, what)
 			require.Nil(t, out, what)
 		}
-		for _, scope := range []string{"", "*"} {
-			_, err := reader.UnitEventListJSON(ctx, scope, Filter{})
-			require.Equal(t, KindInvalidScope, KindOf(err))
-		}
+		_, err = reader.UnitEventListJSON(ctx, "", Filter{})
+		require.Equal(t, KindInvalidScope, KindOf(err))
 	})
 
 	t.Run("of one unit", func(t *testing.T) {

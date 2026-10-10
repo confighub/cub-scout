@@ -395,7 +395,6 @@ func TestSDKListArgsTakeOnlyTheCommandsTheyReproduce(t *testing.T) {
 	}
 	for name, args := range map[string][]string{
 		"no space":                {"unit", "list", "-o", "json"},
-		"every space":             {"unit", "list", "-o", "json", "--space", allConfigHubSpaces},
 		"a selection":             {"unit", "list", "-o", "json", "--space", "s", "--select", "Slug"},
 		"a stored filter":         {"unit", "list", "-o", "json", "--space", "s", "--filter", "f"},
 		"a filter on data":        {"unit", "list", "-o", "json", "--space", "s", "--where-data", "x = 1"},
@@ -407,7 +406,6 @@ func TestSDKListArgsTakeOnlyTheCommandsTheyReproduce(t *testing.T) {
 		"an empty search":         {"unit", "list", "-o", "json", "--space", "s", "--contains", ""},
 		"two searches":            {"unit", "list", "-o", "json", "--space", "s", "--contains", "a", "--contains", "b"},
 		"a filter and no space":   {"unit", "list", "-o", "json", "--where", "Slug = 'x'"},
-		"a filter, every space":   {"unit", "list", "-o", "json", "--space", allConfigHubSpaces, "--where", "Slug = 'x'"},
 		"a limit":                 {"unit", "list", "-o", "json", "--space", "s", "--limit", "5"},
 		"an ordering":             {"unit", "list", "-o", "json", "--space", "s", "--order-by", "Slug"},
 		"hidden units too":        {"unit", "list", "-o", "json", "--space", "s", "--include-hidden"},
@@ -1200,7 +1198,6 @@ func TestSDKListArgsForTheOtherEntities(t *testing.T) {
 			}
 			for name, args := range map[string][]string{
 				"no space":         {entity, "list", "-o", "json"},
-				"every space":      {entity, "list", "-o", "json", "--space", allConfigHubSpaces},
 				"no output format": {entity, "list", "--space", "s"},
 				"a selection":      {entity, "list", "-o", "json", "--space", "s", "--select", "Slug"},
 				"a stored filter":  {entity, "list", "-o", "json", "--space", "s", "--filter", "f"},
@@ -1406,10 +1403,59 @@ func TestTheReleaseEventAndResourceListsAreTaken(t *testing.T) {
 	// resource list that change what the server is asked.
 	for name, args := range map[string][]string{
 		"releases of every space":  build("confighub_releases", map[string]interface{}{"space": allConfigHubSpaces}),
-		"resources of every space": build("confighub_resources", map[string]interface{}{"space": allConfigHubSpaces}),
 		"a selection of resources": build("confighub_resources", map[string]interface{}{"space": "space", "select": "ResourceName"}),
 		"a stored resource filter": build("confighub_resources", map[string]interface{}{"space": "space", "filter": "f"}),
 	} {
 		require.Nil(t, sdkRead(args), "%s: cub %s", name, strings.Join(args, " "))
+	}
+}
+
+// #758, batch D: every space, asked for by name, is the organization's list
+// for the kinds cub lists that way. No space at all is still left to cub, and
+// so are the releases of every space.
+func TestSDKListArgsTakeEverySpaceWhenItIsNamed(t *testing.T) {
+	for _, entity := range []string{"unit", "worker", "target", "changeset", "link", "resource", "unit-event", "attestation"} {
+		args := []string{entity, "list", "-o", "json", "--space", allConfigHubSpaces}
+		got, space, filter, ok := sdkListArgs(args)
+		require.True(t, ok, entity)
+		require.Equal(t, []string{entity, allConfigHubSpaces}, []string{got, space})
+		require.Equal(t, hubread.Filter{}, filter)
+		require.NotNil(t, sdkRead(args), entity)
+		filtered := append(args, "--where", "Slug LIKE 'a-%'")
+		_, _, filter, ok = sdkListArgs(filtered)
+		require.True(t, ok, entity)
+		require.Equal(t, hubread.Filter{Where: "Slug LIKE 'a-%'"}, filter)
+		require.Nil(t, sdkRead([]string{entity, "list", "-o", "json"}), "%s with no space", entity)
+	}
+	require.Nil(t, sdkRead([]string{"release", "list", "-o", "json", "--space", allConfigHubSpaces}))
+	require.Nil(t, sdkRead([]string{"unit-event", "list", "u", "-o", "json", "--space", allConfigHubSpaces}), "one Unit is in one space")
+
+	// As the callers build them.
+	gateway := newMCPGatewayWithMode(nil, nil, true)
+	for _, tool := range []string{"confighub_resources", "confighub_unit_events"} {
+		args, err := gateway.tools[tool].BuildArgs(map[string]interface{}{"space": allConfigHubSpaces})
+		require.NoError(t, err)
+		require.NotNil(t, sdkRead(args), "cub %s", strings.Join(args, " "))
+	}
+}
+
+// The organizations and the local cub context: bare commands, and nothing else.
+func TestSDKOrganizationListAndContextGetArgs(t *testing.T) {
+	require.NotNil(t, sdkRead([]string{"organization", "list", "-o", "json"}))
+	require.NotNil(t, sdkRead([]string{"organization", "list", "-o", "json", "--quiet"}))
+	require.NotNil(t, sdkLocalRead([]string{"context", "get", "-o", "json"}))
+	require.Nil(t, sdkRead([]string{"context", "get", "-o", "json"}), "the context needs no reader")
+	for name, args := range map[string][]string{
+		"organizations as a table":   {"organization", "list"},
+		"organizations, filtered":    {"organization", "list", "-o", "json", "--where", "Slug = 'x'"},
+		"organizations, a selection": {"organization", "list", "-o", "json", "--select", "Slug"},
+		"organizations in a space":   {"organization", "list", "-o", "json", "--space", "s"},
+		"a named context":            {"context", "get", "other", "-o", "json"},
+		"the context as a table":     {"context", "get"},
+		"the contexts":               {"context", "list", "-o", "json"},
+		"switching context":          {"context", "use", "other"},
+	} {
+		require.Nil(t, sdkRead(args), name)
+		require.Nil(t, sdkLocalRead(args), name)
 	}
 }
