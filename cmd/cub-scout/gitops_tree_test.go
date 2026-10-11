@@ -447,6 +447,13 @@ func TestGitOpsTreeFlagValidation(t *testing.T) {
 	require.ErrorContains(t, run("--max-resources", "-2"), "invalid --max-resources -2")
 	require.ErrorContains(t, run("--view", "groups"), `invalid --view "groups" (valid: all, summary)`)
 	require.ErrorContains(t, run("pod/web"), `unknown deployer kind "pod"`)
+	// A filter given only an empty value must not become the whole tree.
+	for _, flag := range []string{"kind", "sync", "health"} {
+		for _, value := range []string{"", " ", ","} {
+			require.ErrorContains(t, run("--"+flag, value), "--"+flag+" must not be empty", "--%s %q", flag, value)
+		}
+		require.ErrorContains(t, run("--"+flag+"="), "--"+flag+" must not be empty")
+	}
 
 	cmd := &cobra.Command{Use: "tree"}
 	addGitOpsTreeFlags(cmd.Flags())
