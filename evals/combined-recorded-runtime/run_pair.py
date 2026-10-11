@@ -165,8 +165,8 @@ def stage_treatment_plugin(path: Path, base: Path):
         for item in sorted(x for x in dst_dir.rglob("*") if x.is_file()):
             rows.append({"path": item.relative_to(skill_root).as_posix(), "bytes": item.stat().st_size, "sha256": file_sha(item)})
     skill_digest = sha(json.dumps(rows, sort_keys=True, separators=(",", ":")).encode())
-    if skill_digest != "9f31fd677a3490f60a6d1c97b315f8f3d7ee7db6dd5285b47051e049d3cc8b8b":
-        raise ValueError("35-skill tree differs from the v1 source pin")
+    if skill_digest != contract.SKILL_TREE_SHA256:
+        raise ValueError("35-skill tree differs from the source pin")
     for d in sorted((p for p in path.rglob("*") if p.is_dir()), reverse=True): os.chmod(d, 0o555)
     os.chmod(path, 0o555)
     return {"skillCount": len(skill_paths), "skillFiles": rows, "skillTreeSha256": skill_digest,

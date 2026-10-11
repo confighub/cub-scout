@@ -6,10 +6,10 @@ The **mode axis**. cub-scout works without ConfigHub (`standalone`) and with Con
 
 | Aspect | Standalone | Connected |
 |---|---|---|
-| Trigger | The `cub` CLI is absent, or `cub auth status` does not report an authenticated session | `cub auth status` reports an authenticated session. This holds in either invocation form (`cub scout ...` or `cub-scout ...`); running as the plugin is not enough on its own |
+| Trigger | No cub login this machine can use, or the ConfigHub server does not accept its session | A cub login (`cub auth login`) whose session the ConfigHub server accepts: `confighub_reads: true` in `cub-scout status --json`. This holds in either invocation form (`cub scout ...` or `cub-scout ...`); running as the plugin is not enough on its own. Since v2.14.0 the check needs no `cub` binary |
 | Required inputs | Just a kubeconfig context | kubeconfig + ConfigHub auth |
 | Cluster reads | All read verbs work | All read verbs work |
-| ConfigHub reads | Refused with a clear error | Available via `cub <entity> get / list`, such as `cub unit get`, `cub link list` |
+| ConfigHub reads | Refused with a clear error | Available. cub-scout makes most of them through the ConfigHub SDK (v2.14.0 and later) and the rest by running `cub`; an agent can also run `cub <entity> get / list` itself, such as `cub unit get`, `cub link list` |
 | Source-of-truth evidence | Cluster + git anchor (from controller tracer) | Cluster + git anchor + ConfigHub Unit + ConfigHub Link bindings |
 | Receipts | Single subject (`k8s-live://`), `OmissionConfigHubUnitSubject` recorded | Dual subjects (`k8s-live://` + `confighub-unit://`) when linked |
 
@@ -37,9 +37,11 @@ Context:    prod-use2
 
 `status` prints one of `● Connected`, `● Connected (auth expired)`, `○ Online (not authenticated)` or `○ Offline`. `Cluster` is `$CLUSTER_NAME` or the literal `default`, not the kube context.
 
-**The mode line is not the pre-flight.** It describes `hub.confighub.com`; whether connected commands will actually run is `confighub_reads` in `cub-scout status --json` (with `confighub_reads_reason`), and the text output adds a line whenever the two disagree. Both disagreements are real: `● Connected` with `confighub_reads: false` (credentials exist, every connected command refuses), and `○ Offline` with `confighub_reads: true` (`cub auth status` passes while `cub context get` fails, so the mode line reflects only `hub.confighub.com`). Read `confighub_reads`; fall back to the mode line only against a binary that predates the field (v2.12.0 and earlier).
+**The mode line is not the pre-flight.** It describes `hub.confighub.com`; whether connected commands will actually run is `confighub_reads` in `cub-scout status --json` (with `confighub_reads_reason`), and the text output adds a line whenever the two disagree. Both disagreements are real: `● Connected` with `confighub_reads: false` (credentials exist, every connected command refuses), and `○ Offline` with `confighub_reads: true` (the session check passes while the mode line reflects only `hub.confighub.com`). Read `confighub_reads`; fall back to the mode line only against a binary that predates the field (v2.12.0 and earlier).
 
-**One check, two uses.** Everything that reads ConfigHub by running `cub` asks `pkg/hub.RequireCubConnected()`, which runs `cub auth status`. That is the check that notices an expired session; `cub auth get-token` prints a stored token and exits 0 even after expiry. The standalone and plugin forms run the same check, so they agree, and each refusal names its cause: reads turned off, `cub` not installed, or `cub`'s own reason.
+**One check, two uses.** Connected commands ask one gate before they read ConfigHub. (A few older reads do not ask it: `tree config` runs `cub unit tree` directly.) Since v2.14.0 the gate makes the checks `cub auth status` makes, through the ConfigHub SDK and with no `cub` process: a stored token for the active cub context (started by `cub` as a plugin, the server and token `cub` passes), not expired by its own claim, accepted by the server, and an SDK no older than the server by a minor version (`cub-scout version` prints the SDK's version). That is the check that notices an expired session; `cub auth get-token` prints a stored token and exits 0 even after expiry. The standalone and plugin forms run the same check, so they agree, and each refusal names its cause: reads turned off, no session, a rejected or expired one, a version too old, a server that could not be asked, or a `CUB_SCOUT_CONFIGHUB_READER` value that is neither `sdk` nor `cub`. With `CUB_SCOUT_CONFIGHUB_READER=cub` the gate is `cub auth status` itself and every read runs `cub`, as before v2.14.0; nothing falls back to that on its own.
+
+**`cub` is still needed** to log in, for every write, and for the reads not moved to the SDK (a list with a selection or a stored filter, an entity named by ID, the releases of every space, `unit tree`, the Kubernetes-shaped reads). One of those on a machine without `cub` fails at that read and says so.
 
 - **As a gate — the command refuses:** `compare source-truth`, `views resolve`, `views project`, `compare three-way --view`, `import argocd`, `history`, `audit list`, and the MCP gateway's connected tools (which are not offered at all while the session is gone).
 - **As a fact — the command runs and records what it found:** `receipt verify` (the recorded `connected` fact, the `confighub-unit://` subject and its omission), `watch`/`bot` receipts, stored summaries, `compare`'s per-resource `connected`, `doctor`'s three-way hint (an offer, not a refusal), `gitops status --with-confighub` (a structured omission, exit 0), `scan --verbose`'s note, and `status`'s `confighub_reads`.
@@ -73,9 +75,9 @@ Everything that needs ConfigHub-side authority or cross-cluster snapshots:
 | Attribute | Per-field `bindingSource` (which ConfigHub Link supplies this value) |
 | Govern | `history`, `impact`, `fleet outliers`, `summary list/slack`, `views resolve`, `audit list` |
 | Verify | `receipt verify --strategy <s>` (source-truth-pass predicate requires connected source-truth) |
-| Integrate | MCP gateway registers the connected tool set (`compare_three_way`, `compare_source_truth`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_resources`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`) in addition to the standalone catalog |
+| Integrate | MCP gateway registers the connected tool set (`compare_three_way`, `compare_source_truth`, `confighub_attestations`, `confighub_changeorder_get`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_resources`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`) in addition to the standalone catalog |
 
-The MCP catalog is **mode-aware**: `mcp serve` registers the standalone catalog always and adds the connected catalog when `cub auth status` reports OK.
+The MCP catalog is **mode-aware**: `mcp serve` registers the standalone catalog always and adds the connected catalog when the session check above passes.
 
 ## Trust-boundary differences
 
@@ -131,7 +133,8 @@ For CI pipelines that need ConfigHub-side evidence (source-truth verdicts, audit
 # cub-scout has no API-key mode of its own: it uses the cub CLI's login.
 # Authenticate cub non-interactively by whatever means your ConfigHub
 # deployment supports (see `cub auth --help`), then run in the same environment.
-cub auth status
+# `confighub_reads` is the pre-flight; `cub auth status` is what the cub route checks.
+cub-scout status --json
 cub-scout compare source-truth deploy/api -n prod --strategy git-argo --format json
 ```
 
@@ -159,7 +162,7 @@ Every skill mentions the standalone-vs-connected boundary in its "Standalone vs 
 
 ## References
 
-- Code: `pkg/hub/connected.go` `RequireCubConnected()`, `pkg/hub/client.go` `RequireConnected()`, `pkg/hub/mode.go` `QuickMode()` (display only), `cmd/cub-scout/status.go`
+- Code: `cmd/cub-scout/connected_gate.go` `requireConfigHubSession()`, `internal/hubread/session.go` `CheckSession()`, `pkg/hub/connected.go` `RequireCubConnected()` (the cub route), `pkg/hub/client.go` `RequireConnected()`, `pkg/hub/mode.go` `QuickMode()` (display only), `cmd/cub-scout/status.go`
 - Mode flag on receipts: `BuildReceiptInput.Connected` in `pkg/agent/receipt_build.go`
 - Connected-mode gate examples: `cmd/cub-scout/source_truth.go` and `cmd/cub-scout/views.go` (`requireConfigHubFor`), `cmd/cub-scout/history.go` (`RequireConnected`)
 - Receipts contract on standalone: `docs/reference/json-contracts.md` § Receipt Contract — `OmissionConfigHubUnitSubject` handling

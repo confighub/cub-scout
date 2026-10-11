@@ -98,8 +98,9 @@ The agent now sees cub-scout's read-only tools (`doctor`, `explain`, `trace`, `c
 ### B: list the tool catalog
 
 Use the standard MCP `tools/list` request from the agent host. The standalone
-catalog contains `doctor`, `explain`, `map`, `scan`, and `trace`; connected mode
-adds the ConfigHub tools listed below.
+catalog contains `doctor`, `explain`, `gitops_settings`, `gitops_status`, `map`,
+`release_check`, `scan`, and `trace`; connected mode adds the ConfigHub tools
+listed below.
 
 Every tool is a thin wrapper over the underlying CLI verb with `--format json` — see `docs/reference/json-contracts.md` for the response shape.
 
@@ -121,10 +122,12 @@ The pack is **deterministic** — same cluster state + same cub-scout version �
 
 ### D: connected MCP for promotion workflows
 
-When the agent is connected (`cub auth status` returns OK), `mcp serve` additionally registers:
+When the ConfigHub session check passes (`confighub_reads: true` in `cub-scout status --json`), `mcp serve` additionally registers the tools below. Since v2.14.0 the check is made through the ConfigHub SDK and needs no `cub` binary; `cub auth status` checks the same session.
 
 - `compare_three_way` — DRY/WET/LIVE comparison
 - `compare_source_truth` — strategy-typed verdict (requires `target` + `namespace` + `strategy`)
+- `confighub_attestations` — attestations recorded directly against one exact revision
+- `confighub_changeorder_get` — one ChangeOrder's reported Stage/State and declarations
 - `confighub_changesets` — governed ChangeSet history from ConfigHub
 - `confighub_k8s_types` — Resource-backed intended Kubernetes type survey
 - `confighub_k8s_resources` — Resource-backed intended Kubernetes resource reader
@@ -181,19 +184,25 @@ The closed list of MCP tools cub-scout registers. The set is verified by `cmd/cu
 | `trace` | standalone | `cub-scout trace <resource> --format json` |
 | `explain` | standalone | `cub-scout explain <resource> --format json` |
 | `gitops_status` | standalone | `cub-scout gitops status --format json` |
+| `gitops_settings` | standalone | `cub-scout gitops settings --format json` (preview: shapes may still change) |
+| `release_check` | standalone | `cub-scout release check --format json` |
 | `compare_three_way` | connected | `cub-scout compare three-way --format json` |
 | `compare_source_truth` | connected | `cub-scout compare source-truth <target> -n <ns> --strategy <s> --format json` |
-| `confighub_changesets` | connected | `cub changeset list --json` (calls `cub`, not cub-scout) |
-| `confighub_k8s_resources` | connected | `cub k8s get <type> [<name> ...] -o json` (calls `cub`) |
-| `confighub_k8s_types` | connected | `cub k8s types [<type>] -o json` (calls `cub`) |
-| `confighub_live_status` | connected | `cub space list -o json --select Slug,SpaceID,Annotations,Labels` (calls `cub`) |
-| `confighub_releases` | connected | `cub release list --space <space> -o json` (calls `cub`) |
-| `confighub_resources` | connected | `cub resource list --space <space> -o json` (calls `cub`) |
-| `confighub_unit_events` | connected | `cub unit-event list [unit] --space <space> -o json` (calls `cub`) |
-| `confighub_units` | connected | `cub unit list --json` (calls `cub`) |
-| `confighub_unit_get` | connected | `cub unit get --json <unit>` (calls `cub`) |
+| `confighub_attestations` | connected | One revision and its space's attestation list, as `cub revision get` and `cub attestation list` print them (SDK) |
+| `confighub_changeorder_get` | connected | `cub changeorder get <order> -o json --space <space>` (SDK; an order named by ID runs `cub`) |
+| `confighub_changesets` | connected | `cub changeset list -o json --space <space>` (SDK) |
+| `confighub_k8s_resources` | connected | `cub k8s get <type> [<name> ...] -o json` (runs `cub`) |
+| `confighub_k8s_types` | connected | `cub k8s types [<type>] -o json` (runs `cub`) |
+| `confighub_live_status` | connected | `cub space list -o json --select Slug,SpaceID,Annotations,Labels [--where "Slug = '<space>'"]` (runs `cub`) |
+| `confighub_releases` | connected | `cub release list --space <space> -o json` (SDK; `space: "*"` runs `cub`) |
+| `confighub_resources` | connected | `cub resource list --space <space> -o json` (SDK; with `select`, `filter`, `view` or `raw_data` it runs `cub`) |
+| `confighub_unit_events` | connected | `cub unit-event list [unit] --space <space> -o json` (SDK; a Unit named by ID or as `<space>/<slug>` runs `cub`) |
+| `confighub_units` | connected | `cub unit list -o json --space <space>` (SDK) |
+| `confighub_unit_get` | connected | `cub unit get -o json <unit> --space <space>` (SDK; a Unit named by ID, or as `<space>/<slug>` together with `space`, runs `cub`) |
 
-6 standalone + 11 connected = **17 tools total**. The catalog is intentionally narrow: every tool is read-only, every tool has a stable JSON contract, every tool is exercised by an MCP integration test.
+8 standalone + 13 connected = **21 tools total**. The catalog is intentionally narrow and every tool is read-only.
+
+**(SDK)** marks a read cub-scout makes through the ConfigHub SDK by default since v2.14.0: no `cub` process runs, and the JSON is what the named `cub` command prints. **(runs `cub`)** marks a read that still starts the `cub` CLI and fails, saying so, on a machine without it. `CUB_SCOUT_CONFIGHUB_READER=cub` sends every read through `cub`.
 
 For the full reference (per-tool parameters, return shape, when-to-load semantics, deferred verbs not in the catalog), see [`references/mcp-tool-catalog.md`](../references/mcp-tool-catalog.md).
 

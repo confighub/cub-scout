@@ -9,11 +9,11 @@ Source of truth: `cmd/cub-scout/mcp.go` (`newMCPGatewayWithMode`) and `cmd/cub-s
 The catalog has two tiers:
 
 - **Standalone tools** — registered always; live reads require kubeconfig; release checks also require a digest-pinned OCI bundle or local layout
-- **Connected tools** — added when `cub auth status` succeeds; require ConfigHub auth
+- **Connected tools** — added when the ConfigHub session check passes; require a cub login (`cub auth login`). Since v2.14.0 that check is made through the ConfigHub SDK and needs no `cub` binary; `cub-scout status --json` reports it as `confighub_reads`. With `CUB_SCOUT_CONFIGHUB_READER=cub` it is `cub auth status`.
 
-Total: **19 tools** (7 standalone + 12 connected).
+Total: **21 tools** (8 standalone + 13 connected).
 
-## Standalone tools (7)
+## Standalone tools (8)
 
 These are always available. Use the standard MCP `tools/list` request to dump
 the catalog from a running server.
@@ -34,8 +34,8 @@ the catalog from a running server.
 |---|---|
 | Wraps | `cub-scout map list --json` |
 | Required args | — |
-| Optional args | `namespace` (string); `context` (nonempty exact kubeconfig context for live inventory); candidate `cluster_identity` (boolean: one extra bounded Namespace GET; excludes compact and ownership-only modes) |
-| Returns | Resource inventory with ownership classification per resource; unreleased v2.14 `cluster_identity: true` uses a separate envelope with observed Namespace-instance identity, per-resource instance references/omissions, identity-reader-only cost and independent collection omissions, including unavailable inventory. Default response remains unchanged. |
+| Optional args | `namespace` (string); `context` (nonempty exact kubeconfig context for live inventory); opt-in preview `cluster_identity` (boolean: one extra bounded Namespace GET; excludes compact and ownership-only modes) |
+| Returns | Resource inventory with ownership classification per resource; opt-in preview `cluster_identity: true` uses a separate envelope with observed Namespace-instance identity, per-resource instance references/omissions, identity-reader-only cost and independent collection omissions, including unavailable inventory. Default response remains unchanged. |
 | When to load | Broad inventory question. "What's running here?" with ownership awareness. NOT a first stop for "what's broken?" |
 
 ### `scan`
@@ -78,6 +78,16 @@ the catalog from a running server.
 | Returns | GitOps/controller backend, transport, sources, deployers, source/build/apply/sync stages, delivery evidence when requested, and `controllerCoverage[]` |
 | When to load | "Is this deployed?" "Is delegated delivery healthy?" "Which controller families did cub-scout actually inspect?" "Is missing status absence or an RBAC/API omission?" Evidence only; never use it to force sync or declare application success by itself. |
 
+### `gitops_settings`
+
+| Aspect | Detail |
+|---|---|
+| Wraps | `cub-scout gitops settings --format json --view summary` (the `view` argument selects another view) |
+| Required args | — |
+| Optional args | `setting` (array of `name` or `name=value`; all must match); `project` (array of Argo CD project names; Flux objects are left out when set); `namespace` (string, the deployer objects' namespace); `context` (nonempty exact kubeconfig context); `view` (`summary` default, `deployers`, `groups`, `settings`, `all`) |
+| Returns | The delivery settings each Argo CD Application and Flux Kustomization/HelmRelease declares: auto-sync, self-heal, prune, sync and apply options, suspension. `summary` maps each setting to its values and each value to the deployers that have it; `unset` marks deployers counted under a controller default. Every view keeps the scope, counts, reads and notes that say whether it is complete |
+| When to load | "Which Applications sync automatically without self-heal?" "Which Flux objects are suspended?" "Which deployers share this option?" Declared settings only: no verdict, and nothing about whether a controller acted. An unknown argument, a wrong type or an empty string is refused, not ignored; an empty `setting` or `project` array is read as no filter (#876). Preview since v2.13.4: shapes may still change |
+
 ### `release_check`
 
 | Aspect | Detail |
@@ -92,10 +102,12 @@ Each invocation is a fresh bounded check, not a shared cache. Unsupported or
 ambiguous controller/source/target shapes remain inconclusive. See the
 [example and read budgets](../../examples/oci-release-check/).
 
-## Connected tools (12)
+## Connected tools (13)
 
-Registered only when `cub-scout mcp serve` detects connected mode and the `cub`
-CLI is available.
+Registered only when `cub-scout mcp serve` finds a ConfigHub session the server
+accepts. No `cub` binary is needed for that, or for the tools marked as read
+through the SDK below. A tool whose read still runs `cub` fails at the call on
+a machine without it, and says so.
 
 ### `compare_three_way`
 
@@ -128,8 +140,9 @@ Read one known ChangeOrder's reported Stage/State and stored workflow/prerequisi
 declarations. Requires exact `changeorder` and exact `space` strings; matching
 qualified slugs are accepted, wildcard/options/mismatched paths and environment
 fallback are refused. The connected runner performs one
-`cub changeorder get <order> -o json --space <space>`, verifies returned identity
-and space, and uses the same projection as `history changeorder` (ASCII/JSON/MD
+`cub changeorder get <order> -o json --space <space>` (since v2.14.0 read through
+the ConfigHub SDK by default for an order named by slug; an order named by ID
+runs `cub`), verifies returned identity and space, and uses the same projection as `history changeorder` (ASCII/JSON/MD
 and `--tui`). Unknown evaluated outcomes stay unknown, including Completed,
 missing workflow and denied reads. No controller health, prerequisite execution,
 approval, publish eligibility or advancement decision is inferred. `readContract`
@@ -140,7 +153,7 @@ and live CLI/TUI acceptance remain pending.
 
 | Aspect | Detail |
 |---|---|
-| Wraps | `cub changeset list --json` (calls `cub`, not cub-scout) |
+| Wraps | The ChangeSet list of the space, as `cub changeset list -o json --space <space>` prints it (read through the ConfigHub SDK by default since v2.14.0, with no `cub` process; the same JSON `cub` prints) |
 | Required args | `space` (string — slug/ID, or `*` for an explicit all-spaces read; cub has no default space) |
 | Optional args | `where` (string — filter expression) |
 | Returns | Governed ChangeSet history and receipts from ConfigHub |
@@ -150,7 +163,7 @@ and live CLI/TUI acceptance remain pending.
 
 | Aspect | Detail |
 |---|---|
-| Wraps | `cub k8s types [<type>] -o json` (calls `cub`, not cub-scout) |
+| Wraps | `cub k8s types [<type>] -o json` (runs `cub`; needs the `cub` binary) |
 | Required args | Either `space` or `target` |
 | Optional args | `type` (string — `all`, kubectl-style type, Kind, or full ConfigHub resource type); `space` (string — slug/ID, or `*` for an explicit all-spaces read); `target` (string array — `space-slug/target-slug`); `namespace` (string); `where` (string — ConfigHub entity filter); `where_resource` (string — stored-resource configuration filter) |
 | Returns | ConfigHub Resource type summaries: resource type, API version, kind, resource count, unit count, and space count |
@@ -160,7 +173,7 @@ and live CLI/TUI acceptance remain pending.
 
 | Aspect | Detail |
 |---|---|
-| Wraps | `cub k8s get <type> [<name> ...] -o json` (calls `cub`, not cub-scout) |
+| Wraps | `cub k8s get <type> [<name> ...] -o json` (runs `cub`; needs the `cub` binary) |
 | Required args | `type`, plus either `space` or `target` |
 | Optional args | `names` (string array); `space` (string — slug/ID, or `*` for an explicit all-spaces read); `target` (string array — `space-slug/target-slug`); `namespace` (string); `where` (string — ConfigHub entity filter); `where_resource` (string — stored-resource configuration filter); `show` (`list`, `detail`, or `data`) |
 | Returns | ConfigHub-stored intended Kubernetes resources, joined to Space, Unit, Target, namespace, name, kind, API version, and resource type. With `show=data` or serialized output, bodies are included when `cub` provides them. |
@@ -170,7 +183,7 @@ and live CLI/TUI acceptance remain pending.
 
 | Aspect | Detail |
 |---|---|
-| Wraps | `cub space list -o json --select Slug,SpaceID,Annotations,Labels` |
+| Wraps | `cub space list -o json --select Slug,SpaceID,Annotations,Labels`, with `--where "Slug = '<space>'"` unless `space` is `*` (runs `cub`: a list with a selection is not read through the SDK) |
 | Required args | `space` (string — slug, or `*` for an explicit all-spaces read) |
 | Optional args | — |
 | Returns | Space rows plus additive `structuredContent.liveStatuses[]` parsed from `confighub.com/live-status` and `structuredContent.omissions[]` for missing/malformed writeback |
@@ -180,7 +193,7 @@ and live CLI/TUI acceptance remain pending.
 
 | Aspect | Detail |
 |---|---|
-| Wraps | `cub release list --space <space> -o json` |
+| Wraps | The Release list of the space, as `cub release list --space <space> -o json` prints it (read through the ConfigHub SDK by default since v2.14.0, with no `cub` process; the same JSON `cub` prints; `space: "*"` runs `cub`) |
 | Required args | `space` (string — slug/ID, or `*` for an explicit all-spaces read) |
 | Optional args | `where` (string — filter expression, usually time- or target-bounded) |
 | Returns | ConfigHub Release rows for release/OCI bundle history |
@@ -190,7 +203,7 @@ and live CLI/TUI acceptance remain pending.
 
 | Aspect | Detail |
 |---|---|
-| Wraps | `cub resource list --space <space> -o json` (calls `cub`, not cub-scout) |
+| Wraps | The Resource list, as `cub resource list --space <space> -o json` prints it (read through the ConfigHub SDK by default since v2.14.0, with no `cub` process; the same JSON `cub` prints; with `select`, `filter`, `view` or `raw_data` it runs `cub`) |
 | Required args | `space` (string — slug/ID, or `*` for an explicit all-spaces read) |
 | Optional args | `where` (string — Resource/entity/Data filter); `contains` (string); `select` (string); `filter` (string — ConfigHub filter slug/ID); `view` (string — ConfigHub view slug/ID); `raw_data` (boolean) |
 | Returns | ConfigHub Resource entity rows for indexed resources extracted from Unit data, including resource metadata and selected fields/data when requested |
@@ -200,7 +213,7 @@ and live CLI/TUI acceptance remain pending.
 
 | Aspect | Detail |
 |---|---|
-| Wraps | `cub unit-event list [unit] --space <space> -o json` |
+| Wraps | The UnitEvent list of the space or of one Unit, as `cub unit-event list [unit] --space <space> -o json` prints it (read through the ConfigHub SDK by default since v2.14.0, with no `cub` process; the same JSON `cub` prints; one Unit named by ID or as `<space>/<slug>`, or one Unit with `space: "*"`, runs `cub`) |
 | Required args | `space` (string — slug/ID, or `*` for an explicit all-spaces read) |
 | Optional args | `unit` (string); `where` (string — filter expression, usually time-bounded) |
 | Returns | ConfigHub UnitEvent rows for source/action evidence |
@@ -210,7 +223,7 @@ and live CLI/TUI acceptance remain pending.
 
 | Aspect | Detail |
 |---|---|
-| Wraps | `cub unit list --json` (calls `cub`) |
+| Wraps | The Unit list, as `cub unit list -o json --space <space>` prints it (read through the ConfigHub SDK by default since v2.14.0, with no `cub` process; the same JSON `cub` prints) |
 | Required args | `space` (string — slug/ID, or `*` for an explicit all-spaces read; cub has no default space) |
 | Optional args | `where` (string); `contains` (string — full-text query) |
 | Returns | ConfigHub unit inventory + cluster-to-ConfigHub linkage |
@@ -220,11 +233,21 @@ and live CLI/TUI acceptance remain pending.
 
 | Aspect | Detail |
 |---|---|
-| Wraps | `cub unit get --json <unit>` (calls `cub`) |
+| Wraps | One Unit, as `cub unit get -o json <unit> --space <space>` prints it (read through the ConfigHub SDK by default since v2.14.0, with no `cub` process; the same JSON `cub` prints; a Unit named by ID, or as `<space>/<slug>` together with `space`, runs `cub`) |
 | Required args | `unit` (string — slug with `space`, `<space>/<slug>`, or unit ID) |
 | Optional args | `space` (string — required when `unit` is a bare slug; `*` is refused unless `unit` is an ID) |
 | Returns | Exact ConfigHub unit details: intended state, last-applied revision, live revision, ConfigHub URL |
 | When to load | ONLY after the unit slug/ID is known. "Show me the intended/applied/live revision for unit X." If unit is unknown, use `confighub_units` first. |
+
+### `confighub_attestations`
+
+| Aspect | Detail |
+|---|---|
+| Wraps | One revision and the attestation list of its space, as `cub revision get <unit> <n> --space <space> -o json` and `cub attestation list --space <space> -o json` print them (read through the ConfigHub SDK by default since v2.14.0; each response is limited to 1 MiB) |
+| Required args | `space_id` (string), `unit` (string — unit slug), `revision` (integer ≥ 1): the exact origin already observed for a resource |
+| Optional args | `unit_id` (string) |
+| Returns | The attestations ConfigHub records directly against that revision, with observed expiry and revocations |
+| When to load | ONLY once `trace` or `explain --with-confighub` has given the exact space, unit and revision. It reports claims as recorded. It cannot evaluate approval or inherited coverage, and it says nothing about runtime health |
 
 ## What's NOT in the catalog
 
@@ -312,14 +335,14 @@ instead of `runner`. Same execution model; different binary on PATH.
 - Examples: [`examples/mcp-gateway/`](../../examples/mcp-gateway/), [`examples/ai-integration/`](../../examples/ai-integration/), [`examples/ai-agent-quest/`](../../examples/ai-agent-quest/)
 
 
-Recorded `map` pagination (2.14 candidate): optional integer `page_size` (1..500)
+Recorded `map` pagination (opt-in preview): optional integer `page_size` (1..500)
 and nonempty `cursor` bound to the same recording, scope and size. Incompatible
 with `summary`. Paged responses use `map-list-recorded-page.v1` in text and
 `structuredContent.data`, with full-scope totals and per-page returned count.
 This limits records, not bytes/tokens; default recorded responses are unchanged.
 
 
-Recorded `map` report-data budget (2.14 candidate): optional integer
+Recorded `map` report-data budget (opt-in preview): optional integer
 `max_report_json_bytes` (1..4194304), for full/summary/page canonical JSON data.
 Oversize is an explicit error without clipping fields or resources. This excludes
 MCP text/structured duplication, protocol/transport bytes, tokens and input work;

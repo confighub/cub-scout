@@ -91,9 +91,47 @@ explicit 404 decline per arm after fake-key authentication and bounded JSON
 capture. It counts toward the eight-request limit; no token count is fabricated.
 This local unavailable-service behavior is not a paid-provider billing claim.
 
-The historical runner still refuses later skill metadata drift. Offline tests
-reconstruct its pinned tree using the exact archived AI-agent skill fixture from
-`1b80b8c47fa6c08b97c595ca3a9a0ba53832b0a6`, verify the original whole-tree hash,
-and separately assert that current ChangeOrder metadata is refused. The runner,
-original source pin and historical runtime receipt are unchanged; these tests
-do not rerun containers or admit refreshed metadata under old proof.
+## The skill pin, and the 2026-10-11 re-pin
+
+The runner stages the 35 skill directories only when the hash of their files
+equals `SKILL_TREE_SHA256` in `contract.py`, and an offline test stages the
+committed tree, so **an edit to any file in a skill directory fails CI until
+the pin is moved on purpose**. `skills/references/` and `skills/README.md` are
+not in a skill directory and are not pinned.
+
+Everything above this section describes the five attempts of 2026-10-01. They
+ran on the tree `9f31fd67…` (`SKILL_TREE_V1_SHA256`). Its file list is kept in
+`fixtures/skill-tree-v1.json`, rebuilt from git at
+`1b80b8c47fa6c08b97c595ca3a9a0ba53832b0a6`, and a test holds that list to that
+hash without reading any current skill file.
+
+On 2026-10-11 the pin moved to `c8656ed8…` for four corrected skills
+(`ai-agent-readonly-context`, `operator-incident-evidence`, `scout-mcp`,
+`scout-observe`): the connected-mode check, the MCP tool counts and lists, and
+which connected reads go through the ConfigHub SDK since v2.14.0. The
+diagnostic was then run on that tree, with every other pin unchanged, and
+**passed** in 7.706 seconds. (It had passed once before, in 15.014 seconds, on
+an earlier revision of the corrections, `4b2dd96e…`; a review then changed
+`scout-mcp`, the pin followed, and the run was repeated. The report keeps both
+attempts. Neither failed.) In the run on the pinned tree both arms completed the
+same Read, recorded kubectl and Task/Agent refusal controls; treatment
+advertised 35 skills and made one recorded map call whose persisted result is
+the same 90,892 bytes (`db4956a5…`) as on 2026-10-01; both containers were
+verified absent and the treatment plugin's hashes were unchanged. The
+[re-pin report](../reports/2026-10-11-combined-runtime-repin.json) holds the
+facts and the hashes of the raw files.
+
+What that run does not show:
+
+- that the corrected skill text changes what an agent does. The diagnostic
+  records the skill names in the provider request, not skill use, and no real
+  model was called;
+- anything about v2.14.0 behaviour. The staged cub-scout binary is still the
+  2026-10-01 pin, which predates the SDK reads and the tools the corrected
+  skills now list; the diagnostic exercises one recorded `map` call;
+- repeatability at the new pin: it was one attempt on the pinned tree.
+
+To move the pin again: edit the skills, run the offline tests, read the staged
+hash from the failing assertion (or from `stage_treatment_plugin`), set
+`SKILL_TREE_SHA256`, and say in the pull request whether the diagnostic was
+re-run on the new tree. An earlier pin's proof is never carried to a new tree.

@@ -1,0 +1,182 @@
+[
+  {
+    "path": "ai-agent-readonly-context/SKILL.md",
+    "bytes": 14207,
+    "sha256": "b62da9c04d211f490aab55c24c1ae437102446602e15769ae4c29e868f26fad9"
+  },
+  {
+    "path": "audit-fleet-conformance/SKILL.md",
+    "bytes": 12709,
+    "sha256": "2045a1eda7c96d996bf2b8c132de59ca51eccc5bad6df1cf23c3f28cedca7578"
+  },
+  {
+    "path": "confighub-source-truth/SKILL.md",
+    "bytes": 16932,
+    "sha256": "1a0ac41f58fac2c0d39bc7cd5462143b4b6cf880d81bc65faad2759064771ed5"
+  },
+  {
+    "path": "cub-scout/SKILL.md",
+    "bytes": 12742,
+    "sha256": "ac20b42aa4fed6ae7877993ee26feb855fa411aea54734ba40043d98d54ce2bd"
+  },
+  {
+    "path": "cub-scout/references/capability-assistant.md",
+    "bytes": 2365,
+    "sha256": "d0c2f57c793f68dd1737c379dbbfa2a1594353513fc9b74da2d31a49819a2f05"
+  },
+  {
+    "path": "investigate-drift/SKILL.md",
+    "bytes": 14552,
+    "sha256": "69bc64c07d57ae346c91bdbcab7c3241fedc86917f10146adfa3e916d0725f64"
+  },
+  {
+    "path": "migrate-from-kubectl/SKILL.md",
+    "bytes": 14110,
+    "sha256": "ed55fc19e0dd5905cd7318171aa25306ae68cfa4308445f2141df453d9ee6a8f"
+  },
+  {
+    "path": "observe-argocd/SKILL.md",
+    "bytes": 9712,
+    "sha256": "582fda63d2feb296a6ed7148ae107b86e916bd7bf62aceaeadbb6c848cfe3466"
+  },
+  {
+    "path": "observe-confighub-managed/SKILL.md",
+    "bytes": 12743,
+    "sha256": "886959f55cbab20d6de14ef2c3450b2c81bd58816689f6fb5f75a9dfe59698f6"
+  },
+  {
+    "path": "observe-crossplane/SKILL.md",
+    "bytes": 11129,
+    "sha256": "ca324d31924fa2ecf18581d1f1ab386c074e6e76631b7d1b8cfe2a27b6f84f7f"
+  },
+  {
+    "path": "observe-flux/SKILL.md",
+    "bytes": 10261,
+    "sha256": "ced1893352463ad6a287052e2e6bb2be98c13e6c2e995a0e0f0349df7df1f99f"
+  },
+  {
+    "path": "observe-helm/SKILL.md",
+    "bytes": 9856,
+    "sha256": "e3f2347cb6836bb760601f48cf44c7bda1cdfa888079f12566031f75a608b13b"
+  },
+  {
+    "path": "observe-kro/SKILL.md",
+    "bytes": 8986,
+    "sha256": "d8e6f4dff27e1f2549c5d082b95b3e23e1191089de148a38429aa6af2924c8a9"
+  },
+  {
+    "path": "observe-modelplane/SKILL.md",
+    "bytes": 5740,
+    "sha256": "229e50cd9ac7257d1956c782b1979ba0994733719e0708062f311b37fc628038"
+  },
+  {
+    "path": "observe-native/SKILL.md",
+    "bytes": 11222,
+    "sha256": "9b2cb27afd33863a9947cfb1ab8c051f9c0679ac035692384f585c5b9dcf9bed"
+  },
+  {
+    "path": "observe-sveltos/SKILL.md",
+    "bytes": 4593,
+    "sha256": "23b9e85813f42e3bdee05be26e4088e949cbde1b9fa579662e020674be8db764"
+  },
+  {
+    "path": "operator-incident-evidence/SKILL.md",
+    "bytes": 13202,
+    "sha256": "aaa38d78c4ad3f1214e91cc6013864751607dc5a31da29830cadb595afe1faf7"
+  },
+  {
+    "path": "pilot-cd-gate/SKILL.md",
+    "bytes": 18923,
+    "sha256": "449f1dfa07c3430283940baf8436021bce4fd1c8296abe121c60daed3cc4bb67"
+  },
+  {
+    "path": "pilot-compliance-audit/SKILL.md",
+    "bytes": 18520,
+    "sha256": "5a82adb9b30b7794b07e97ee5bfcc05c88d1b58fd807bd9dcd5fb5f49bb3b0f6"
+  },
+  {
+    "path": "pilot-fleet-conformance/SKILL.md",
+    "bytes": 17387,
+    "sha256": "ef7b5eb132671963b194ae671b78392af0579dc6c67caf7993a674549df6503a"
+  },
+  {
+    "path": "pilot-incident-evidence/SKILL.md",
+    "bytes": 23546,
+    "sha256": "18603ff85d36f8445ea96ec00d06f895ce2c9bf8a6ec07cf426b3878e249cb32"
+  },
+  {
+    "path": "pilot-patch-and-drift/SKILL.md",
+    "bytes": 20775,
+    "sha256": "85f64ad09675d8a0a0140b39b06203e082d20e418e4470a906d8bb9dfa5daf75"
+  },
+  {
+    "path": "pilot-promotion-gate/SKILL.md",
+    "bytes": 17155,
+    "sha256": "63d771e5acd5f1f4a5f952aa916c07e6449da61f103b01aba9feb1796fd70088"
+  },
+  {
+    "path": "pilot-release-verification/SKILL.md",
+    "bytes": 18087,
+    "sha256": "5027373265a72e633578fd284c081e00c903d64612a50d35db591eb3eb4bac30"
+  },
+  {
+    "path": "pilot-rollback-decision/SKILL.md",
+    "bytes": 17205,
+    "sha256": "6c190fc295fead3ac565bcf9aa4aab9ee44e6ca0ebf82f88ed6b2324af1c301c"
+  },
+  {
+    "path": "pilot-watch-alert-response/SKILL.md",
+    "bytes": 22677,
+    "sha256": "87dc505495db40870493271a34b8477145e587cc66603f6fa7631232a2a054bd"
+  },
+  {
+    "path": "prepare-for-confighub/SKILL.md",
+    "bytes": 13847,
+    "sha256": "a398ad3baaf6963bf531c33fa981de6b277f9e48476852b9c4b89a2d77c49f48"
+  },
+  {
+    "path": "scout-attribute/SKILL.md",
+    "bytes": 16292,
+    "sha256": "631e1bed42b140de6343a6564dff29ca3b4a8fa3dc9a0941e6d7da9f29b62419"
+  },
+  {
+    "path": "scout-compare/SKILL.md",
+    "bytes": 11917,
+    "sha256": "2b6d0205d563f60f100561a00647a1b4113528ca00e85081f0e8b05be58b0499"
+  },
+  {
+    "path": "scout-diagnose/SKILL.md",
+    "bytes": 10551,
+    "sha256": "1d06ffe2a92b1e062f9a16556e3d73e3f75236a5cee6338bafa34bf4de37afb7"
+  },
+  {
+    "path": "scout-govern/SKILL.md",
+    "bytes": 11787,
+    "sha256": "1d602874d0b6570c6a39b8d83929c989bf78f55244f4168c929664f4597297b2"
+  },
+  {
+    "path": "scout-ingest/SKILL.md",
+    "bytes": 13705,
+    "sha256": "88ad88214b950963dcc20fbc0c4191274f185ef3c22b960ce53f2a9c6eba7089"
+  },
+  {
+    "path": "scout-mcp/SKILL.md",
+    "bytes": 15020,
+    "sha256": "9e0232cea4a91c07965c7fc123b2fbf7edb36516055fa5a33808d286677dc953"
+  },
+  {
+    "path": "scout-observe/SKILL.md",
+    "bytes": 13279,
+    "sha256": "9ac600504fdd4db7cb8830c892542f95d6cc0e470038ec8ca1cb77a51e163d55"
+  },
+  {
+    "path": "scout-verify/SKILL.md",
+    "bytes": 20070,
+    "sha256": "2df9bcbd6e37887601f8cbb16d1e5e2bdff91263a01b82a693261e22196646af"
+  },
+  {
+    "path": "triage-unhealthy-workload/SKILL.md",
+    "bytes": 10410,
+    "sha256": "a6f24665c95c0e0053411602e1af9317309c85dc05b0071bb31cdf53f7191b06"
+  }
+]

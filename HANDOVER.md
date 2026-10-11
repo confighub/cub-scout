@@ -2023,3 +2023,37 @@ is in [the notes](docs/releases/v2.14.0.md#publication-checks).
   38071527126, which holds the secret of a worker on a server that no longer
   exists; the paid eval for a `gitops_tree` MCP tool (#855).
 
+
+## Skills corrected and the diagnostic's skill pin moved — 2026-10-11
+
+On the maintainer's instruction ("update the skills and re-pin the benchmark").
+
+- **Skills.** Four skills and three reference pages said `cub auth status` is
+  the connected-mode check, counted 17 or 19 MCP tools and said every
+  connected tool calls `cub`. They now say what v2.14.0 does: the session
+  check through the SDK (`confighub_reads` in `status --json`), 8 standalone
+  and 13 connected tools including `gitops_settings` and
+  `confighub_attestations`, and which connected reads still run `cub`.
+- **The pin.** `evals/combined-recorded-runtime` pins the 35 skill
+  directories, not all of `skills/`: `skills/references/` was never pinned.
+  The pin moved to the corrected tree; the tree the 2026-10-01 attempts ran on
+  is kept as `SKILL_TREE_V1_SHA256` with its file list from git. This
+  supersedes the note under "v2.13.4 published" that the skills cannot mention
+  `gitops_settings`.
+- **Re-run.** The diagnostic was run on the new tree and passed (two attempts,
+  one before and one after a review changed a pinned skill; both passed)
+  ([report](evals/reports/2026-10-11-combined-runtime-repin.json)). It is
+  local: fake provider, no model, no network, no charge. It shows the skills
+  still load and the wiring still works. It does not show that the corrected
+  text changes what an agent does.
+- **No agent eval was run for the skill changes.** Paid runs are not
+  approved. That is a visible waiver of the eval-case rule, recorded on #839.
+- **Not changed:** `allowed-tools` in any skill. Several skills tell an agent
+  to run `cub-scout status --json` while auto-approving only the bare
+  `status`, so a host asks first. That was already so.
+- **A correction to v2.14.0's notes and the SDK reference:** they listed
+  `release check` among the reads that still need `cub`. It never did.
+- **Found in review:** an empty `setting` or `project` array to
+  `gitops_settings` is read as no filter (#876).
+- **How to move the pin again** is in
+  [the diagnostic's README](evals/combined-recorded-runtime/README.md#the-skill-pin-and-the-2026-10-11-re-pin).

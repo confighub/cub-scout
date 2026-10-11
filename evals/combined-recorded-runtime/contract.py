@@ -43,7 +43,11 @@ SOURCE_PINS = {
     "pre01": ("2026-10-01-recorded-api", "5585ecd0298e2b6f4201a638cdc0aeab9cdeb0dfab38d3b52e090cc3cb8f5c0a"),
 }
 SKILL_COUNT = 35
-SKILL_TREE_SHA256 = "9f31fd677a3490f60a6d1c97b315f8f3d7ee7db6dd5285b47051e049d3cc8b8b"
+# The 35-skill tree the runner stages, re-pinned on 2026-10-11 for the v2.14.0
+# skill corrections. The five 2026-10-01 attempts ran on SKILL_TREE_V1_SHA256,
+# whose file list is fixtures/skill-tree-v1.json.
+SKILL_TREE_SHA256 = "c8656ed8ce5c835bdafbbe2f5a39e25731150b1bbad10291af255dd0e9b08d5e"
+SKILL_TREE_V1_SHA256 = "9f31fd677a3490f60a6d1c97b315f8f3d7ee7db6dd5285b47051e049d3cc8b8b"
 
 
 class ContractError(ValueError):

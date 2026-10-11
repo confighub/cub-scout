@@ -17,8 +17,10 @@ Argo CD Application and Flux Kustomization and HelmRelease declares, as a CLI
 command (v2.13.3) and as the MCP tool `gitops_settings` with a compact
 `--view summary` (v2.13.4). Its
 [eval report](evals/reports/2026-10-09-gitops-settings.md) says where it helped
-an agent and where it did not. No skill mentions the tool: the frozen benchmark
-pins the skills tree ([#839](https://github.com/confighub/cub-scout/issues/839)).
+an agent and where it did not. The skills list the tool since 2026-10-11, when
+the recorded runtime diagnostic's skill pin was moved
+([#839](https://github.com/confighub/cub-scout/issues/839)); whether that
+changes what an agent does is unmeasured.
 [v2.13.2](docs/releases/v2.13.2.md), a correction release, preceded them. Start from
 the current handover for the deferred acceptance work, which moved from v2.14
 to v2.15 on 2026-10-10 ([v2.14.0 notes](docs/releases/v2.14.0.md)).
