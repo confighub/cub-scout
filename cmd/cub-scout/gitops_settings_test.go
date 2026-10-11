@@ -446,6 +446,40 @@ func TestGitOpsSettingsViewFlag(t *testing.T) {
 	require.ErrorContains(t, err, `invalid --view "brief" (valid: all, summary, groups, settings, deployers)`)
 }
 
+// A filter flag with an empty value, as `--project "$P"` gives when P is
+// unset, must not become the unfiltered report.
+func TestGitOpsSettingsRefusesAnEmptyFilterFlag(t *testing.T) {
+	parse := func(args ...string) (deliverySettingsParams, error) {
+		cmd := &cobra.Command{Use: "settings"}
+		addGitOpsSettingsFlags(cmd.Flags())
+		require.NoError(t, cmd.ParseFlags(args))
+		return deliverySettingsParamsFromFlags(cmd)
+	}
+	for _, tc := range []struct {
+		args []string
+		want string
+	}{
+		{[]string{"--project", ""}, "--project must not be empty"},
+		{[]string{"--project="}, "--project must not be empty"},
+		{[]string{"--project", " "}, "--project must not be empty"},
+		{[]string{"--project", "payments,,billing"}, "--project must not be empty"},
+		{[]string{"--setting", ""}, `invalid --setting "" (want name or name=value)`},
+		{[]string{"--setting", " "}, `invalid --setting " " (want name or name=value)`},
+		{[]string{"--setting", "", "--setting", "prune=off"}, `invalid --setting "" (want name or name=value)`},
+	} {
+		params, err := parse(tc.args...)
+		require.ErrorContains(t, err, tc.want, "%q must be refused (parsed projects %q, settings %q)", tc.args, params.Projects, params.Settings)
+	}
+	params, err := parse("--project", "payments", "--setting", "prune=off")
+	require.NoError(t, err)
+	require.Equal(t, []string{"payments"}, params.Projects)
+	require.Equal(t, []string{"prune=off"}, params.Settings)
+	params, err = parse()
+	require.NoError(t, err)
+	require.Empty(t, params.Projects)
+	require.Empty(t, params.Settings)
+}
+
 // The MCP tool is the CLI's JSON, with the compact summary by default so one
 // call returns one small inversion and not three verbose ones.
 func TestMCPGitOpsSettingsBuildsTheCLICall(t *testing.T) {

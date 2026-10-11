@@ -175,6 +175,15 @@ func deliverySettingsParamsFromFlags(cmd *cobra.Command) (deliverySettingsParams
 			return params, fmt.Errorf("--view applies to JSON output; use --group-by for ascii and md")
 		}
 	}
+	// A filter flag given an empty value parses to an empty list, which would
+	// be the unfiltered answer under a filter's name: `--project "$P"` with P
+	// unset, for one.
+	if flags.Changed("project") && len(params.Projects) == 0 {
+		return params, fmt.Errorf("--project must not be empty")
+	}
+	if flags.Changed("setting") && len(params.Settings) == 0 {
+		return params, fmt.Errorf(`invalid --setting "" (want name or name=value)`)
+	}
 	for _, project := range params.Projects {
 		if strings.TrimSpace(project) == "" {
 			return params, fmt.Errorf("--project must not be empty")
