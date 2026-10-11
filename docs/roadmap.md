@@ -157,6 +157,14 @@ scheduled in stage 2 of the [Path to 3.0](#path-to-30) rather than for a named
 version. Until implemented, their existing unknown/unsupported limits remain
 unchanged.
 
+### Status output follow-up — 2026-10-11
+
+- [ ] Decide whether `status --json` should report `auth_valid` when no cub
+  context can be read. Today the field is omitted then, whatever the session
+  gate said ([contract](reference/cli-contract.md)). Setting it from the gate
+  alone changes the JSON, and must not turn `mode` into `auth_expired` on a
+  machine that never logged in. Raised in review of #874; no issue is filed.
+
 ### Investigation quality follow-up — 2026-10-04
 
 The [investigation acceptance criteria](reference/explorer-comparison.md)
