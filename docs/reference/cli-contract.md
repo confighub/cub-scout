@@ -1546,14 +1546,26 @@ version older than the server. With `CUB_SCOUT_CONFIGHUB_READER=cub` it is
 `cub auth status`, as before. See the
 [SDK reader reference](confighub-sdk-reader.md#the-session-check).
 
-`auth_valid` follows that gate and `status` asks nothing itself. It is `true`
-when the gate passed, or refused only for a client too old for the server;
-`false` when the gate refused the credential (none, rejected, expired); and
-**absent** when the gate could not ask at all, for instance a server error or
-a timeout, which says nothing about the session. With reads turned off it
-reports only what this machine's files say: whether a credential is stored
-and, on the SDK route, that it has not expired. `worker` is looked up only
-when `confighub_reads` is `true`.
+`auth_valid` follows that gate and `status` asks nothing itself. It is
+reported only when `status` can read a cub context: from cub's configuration
+on the SDK route, or with `cub context get` on the `cub` route, which needs
+`cub` on `PATH`. With a context it is `true` when the gate passed, or refused
+only for a client too old for the server; `false` when the gate refused the
+credential (none, rejected, expired); and **absent** when the gate could not
+ask at all, for instance a server error or a timeout, which says nothing
+about the session. With reads turned off it reports only what this machine's
+files say: whether a credential is stored and, on the SDK route, that it has
+not expired. `worker` is looked up only when `confighub_reads` is `true`.
+
+Without a readable context `auth_valid` is **absent** whatever the gate said,
+and no worker is looked up. On the SDK route, on a machine with no cub
+configuration, the gate refuses for a missing credential, and `status`
+reports `confighub_reads: false` with the reason and no `auth_valid`, not
+`auth_valid: false`. The gate can also pass while the context cannot be read
+(the `offline` / `online` row below); `auth_valid` is absent then too. An
+absent `auth_valid` is therefore no verdict on the session, neither valid nor
+expired. `confighub_reads` is always present, and `confighub_reads_reason`
+whenever it is `false`.
 
 `mode` describes connectivity and credentials to `hub.confighub.com`, so the
 two can disagree in either direction, and the text output adds a line whenever
