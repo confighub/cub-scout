@@ -12,7 +12,7 @@
 > Current gates: [the readiness ledger](../releases/v2.15-readiness.md).
 
 Status: v2.14 execution contracts and worked design examples; unimplemented
-capabilities below are not release claims. Published baseline: v2.14.0.
+capabilities below are not release claims. Published baseline: v2.14.1.
 This makes the [continuity review](configuration-investigation-continuity.md)
 a delivery checklist under [#645](https://github.com/confighub/cub-scout/issues/645),
 not a parallel product architecture. The [ordered release sequence](../releases/v2.13-to-v2.14-sequence.md)

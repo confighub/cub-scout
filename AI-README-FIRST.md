@@ -1,5 +1,9 @@
 # AI Read Me First
 
+**2026-10-11:** [v2.14.1 is published](docs/releases/v2.14.1.md), a correction
+to v2.14.0: an empty filter is refused, and the plugin's skills match v2.14.
+v2.15 work is paused on the maintainer's instruction.
+
 **2026-10-10:** [v2.14.0 is published](docs/releases/v2.14.0.md). cub-scout
 reads ConfigHub through the ConfigHub SDK by default and checks the session
 the same way, so a read-only command whose reads are covered needs no `cub`
