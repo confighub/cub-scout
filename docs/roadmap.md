@@ -13,6 +13,17 @@
 >
 > It reconciles *historical releases*, *current shipped reality*, and the *forward execution plan*.
 
+> **Renumbered on 2026-10-10.** The maintainer decided to cut v2.14.0 for the
+> ConfigHub SDK reads and `gitops tree` ([notes](releases/v2.14.0.md)) and moved
+> the unmet P4 gates to v2.15. Where this page says "v2.14" for P4 work, for
+> example "P4/v2.14", read v2.15: six-surface conformance (#596), controller
+> and workload acceptance, the paired benchmark and the remaining P4 issues
+> are open and are not claimed by v2.14.0. The scope and its order are
+> unchanged. P5, which this plan had numbered v2.15, keeps its scope and its
+> place after P4, and is now v2.16 (the maintainer's decision, also of
+> 2026-10-10).
+> Current gates: [the readiness ledger](releases/v2.15-readiness.md).
+
 ---
 
 ## Winning means verified investigation outcomes
@@ -48,8 +59,8 @@ counterbalance learning effects and retain failures.
 | Stage | What it contributes to winning | Exit evidence |
 |---|---|---|
 | v2.13 / P3 | Trustworthy source/revision/health/governance reads and captured context; finish the current recorded/runtime prerequisites. | Existing release gates, exact identity and negative controls, genuine acceptance and the paired baseline. No gate is waived. |
-| v2.14 / P4 | A complete supported investigation through CLI/TUI with matching facts, safe selection and a guided offline example. Settle #519 workflow integration alongside #596/#599; design permission/history follow-ups before implementation. | Operator assessment protocol and recorded end-to-end controls; genuine acceptance when allowed. Existing standalone use remains useful. |
-| v2.15 / P5 | Cheap ongoing observation, explicit freshness, bounded reuse and retained evidence. Use measured investigation bottlenecks to prioritize #539/#604/#605. | Cold/warm/idle/change/denial/reconnect budgets, operator timings and refreshed paired-agent results within the adopted budgets. |
+| v2.15 (was v2.14) / P4 | A complete supported investigation through CLI/TUI with matching facts, safe selection and a guided offline example. Settle #519 workflow integration alongside #596/#599; design permission/history follow-ups before implementation. | Operator assessment protocol and recorded end-to-end controls; genuine acceptance when allowed. Existing standalone use remains useful. |
+| v2.16 (was v2.15) / P5 | Cheap ongoing observation, explicit freshness, bounded reuse and retained evidence. Use measured investigation bottlenecks to prioritize #539/#604/#605. | Cold/warm/idle/change/denial/reconnect budgets, operator timings and refreshed paired-agent results within the adopted budgets. |
 | 3.0 / P6 | Publish the supported workflows where Scout earns preference, with reproducible evidence and reliable installation. | Scoped scorecard, uncertainty, limits, checked distribution and migration. A release does not by itself establish a leadership claim. |
 
 ### Work selection and failure response
@@ -539,7 +550,7 @@ report the agent-eval result against the previous release.
 Done when: the eval baseline is published; every new evidence kind has
 fixtures recorded from a cub 0.6 server; CI and the docs-contract tests pass.
 
-**v2.14.0: the agent contract, and Argo CD + Crossplane depth (stage 2).**
+**v2.15.0 (was v2.14.0): the agent contract, and Argo CD + Crossplane depth (stage 2).**
 
 - The evidence-conformance suite across CLI, plugin, MCP, watch, bot and TUI
   ([#596](https://github.com/confighub/cub-scout/issues/596)).
@@ -557,7 +568,7 @@ fixtures recorded from a cub 0.6 server; CI and the docs-contract tests pass.
 Done when: the conformance harness runs in CI for all six surfaces; the matrix
 is published and fixture-backed; the eval result is reported.
 
-**v2.15.0: recorded evidence (stage 3).**
+**v2.16.0 (was v2.15.0): recorded evidence (stage 3).**
 
 - Observations recorded in ConfigHub as facts, once where they live is designed
   with ConfigHub ([#600](https://github.com/confighub/cub-scout/issues/600)).
