@@ -2057,3 +2057,32 @@ On the maintainer's instruction ("update the skills and re-pin the benchmark").
   `gitops_settings` is read as no filter (#876).
 - **How to move the pin again** is in
   [the diagnostic's README](evals/combined-recorded-runtime/README.md#the-skill-pin-and-the-2026-10-11-re-pin).
+
+
+## Docs follow-ups after v2.14.0, and one open question — 2026-10-11
+
+A side session of small docs repairs, now closed. Nothing here changes
+behaviour.
+
+- **Dead links (#871).** Four links in `docs/reference/json-contracts.md` had
+  no target. Three pages had moved to `docs/howto/`; the fourth,
+  `gitops-checkpoint-schemas.md`, was removed in March with no replacement, so
+  that row now links the six JSON Schema files and promises no page. The fix
+  merged after the v2.14.0 tag, so the tagged source still has the dead links.
+- **Two review comments on merged docs (#878).** `docs/roadmap.md` now carries
+  the renumbering (P4 is v2.15, P5 is v2.16) in its note, its delivery table
+  and the two planned-release headings. `docs/reference/cli-contract.md` now
+  says `status` reports `auth_valid` only when it can read a cub context.
+- **Review state of #878.** It merged on green required lanes. The automated
+  review of its commit had not finished and had posted nothing; the merge
+  record on the pull request says so. If a finding appears there later it is
+  unanswered.
+- **v2.14.0 artifacts were checked a second time, independently,** and agree
+  with [the publication checks](docs/releases/v2.14.0.md#publication-checks)
+  row for row.
+- **Open, on the backlog checklist:** whether `status --json` should report
+  `auth_valid` without a readable cub context. See
+  [the roadmap](docs/roadmap.md#status-output-follow-up--2026-10-11).
+- **Next:** v2.15.0 and its gates, in
+  [the readiness ledger](docs/releases/v2.15-readiness.md) and #645. That
+  ledger is dated prose; it has no at-a-glance list of which gates are open.
