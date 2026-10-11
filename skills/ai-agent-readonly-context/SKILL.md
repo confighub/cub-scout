@@ -68,17 +68,20 @@ Implicit intents:
 
 The agent host calls `tools/list` to discover tools and `tools/call` to invoke them. cub-scout's `mcp_test.go` covers the exact catalog:
 
-**Standalone-mode tools** (6, always available):
+**Standalone-mode tools** (8, always available):
 - `doctor` — cluster-level diagnostic with structured nextSteps
 - `map` — resource inventory with ownership classification
 - `scan` — risk + misconfiguration findings
 - `trace` — ownership + source chain (one resource)
 - `explain` — plain-English per-resource report
 - `gitops_status` — GitOps/controller delivery status and coverage evidence
+- `gitops_settings` — the delivery settings each Argo CD and Flux deployer declares (auto-sync, self-heal, prune, suspension); declared settings only, no verdict (preview)
+- `release_check` — whether one exact, digest-pinned configuration release reached a target, stage by stage; no application-success claim
 
-**Connected-mode tools** (12, added when connected mode is available):
+**Connected-mode tools** (13, added when the ConfigHub session check passes; since v2.14.0 that check and most of these reads go through the ConfigHub SDK, with no `cub` binary):
 - `compare_three_way` — DRY/WET/LIVE with rolled-up agreement
 - `compare_source_truth` — strategy-typed verdict (target + namespace + strategy required)
+- `confighub_attestations` — attestations ConfigHub records directly against one exact revision (space, unit and revision required); recorded claims, not an approval verdict
 - `confighub_changeorder_get` — exact-space reported ChangeOrder Stage/State and declarations; evaluated outcomes unknown, including Completed
 - `confighub_changesets` — governed ChangeSet history from ConfigHub
 - `confighub_k8s_resources` — ConfigHub Resource-backed intended Kubernetes resources
@@ -232,7 +235,7 @@ The agent NEVER calls a mutating MCP tool because **there are none registered**.
 - **Set `KUBECONFIG` explicitly** in the MCP env block so the server picks up the right cluster context. Don't rely on the agent host inheriting it.
 - **For multi-cluster contexts**, run one `mcp serve` instance per cluster on different ports / paths, OR use the `--context <name>` flag to switch contexts in-process. cub-scout doesn't support multi-context-in-one-server today (a single `mcp serve` is one context).
 - **Cache `context-pack` aggressively.** It's deterministic; an LLM with prompt caching benefits enormously from caching the snapshot across multiple queries.
-- **Use connected mode** if the agent is doing source-truth / governance work. Run `cub auth status` first; the agent should refuse to claim source-truth verdicts in standalone mode.
+- **Use connected mode** if the agent is doing source-truth / governance work. Check `confighub_reads` in `cub-scout status --json` first (`cub auth status` checks the same session when `cub` is installed); the agent should refuse to claim source-truth verdicts in standalone mode.
 
 ## Tool boundary
 

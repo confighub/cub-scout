@@ -90,7 +90,7 @@ $ cub-scout snapshot -n $NAMESPACE --format gsf > "$OUT_DIR/cluster-snapshot.gsf
 
 ### Step 4 — connected timeline
 
-If `cub auth status` reports connected:
+If `cub-scout status --json` reports `confighub_reads: true` (the ConfigHub session check passes; `cub auth status` checks the same session):
 
 ```bash
 # ChangeSet timeline for each unit

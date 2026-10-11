@@ -126,18 +126,10 @@ class RunnerTests(unittest.TestCase):
     def test_staged_treatment_has_35_skill_sources_and_neutral_mcp_metadata(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            source = root / "source"
-            shutil.copytree(runner.REPO / "skills", source / "skills")
-            shutil.copytree(runner.REPO / ".claude-plugin", source / ".claude-plugin")
-            # Preserve the diagnostic's source pin, rather than admitting the
-            # later ChangeOrder skill metadata under historical runtime proof.
-            archived = (HERE / "fixtures/ai-agent-readonly-context-v1.md").read_bytes()
-            self.assertEqual(hashlib.sha256(archived).hexdigest(),
-                             "b62da9c04d211f490aab55c24c1ae437102446602e15769ae4c29e868f26fad9")
-            (source / "skills/ai-agent-readonly-context/SKILL.md").write_bytes(archived)
             staged = root / "plugin"
-            with mock.patch.object(runner, "REPO", source):
-                facts = runner.stage_treatment_plugin(staged, root)
+            # The committed skills are the pinned tree: a skill edit fails
+            # here until contract.SKILL_TREE_SHA256 is moved on purpose.
+            facts = runner.stage_treatment_plugin(staged, root)
             self.assertEqual(facts["skillCount"], 35)
             self.assertEqual(facts["skillTreeSha256"], runner.contract.SKILL_TREE_SHA256)
             plugin_json = json.loads((staged / ".claude-plugin/plugin.json").read_text())
@@ -147,10 +139,32 @@ class RunnerTests(unittest.TestCase):
             self.assertIn("KUBECONFIG=/tmp/empty-kubeconfig", wrapper)
             self.assertIn("mcp serve --recording /tools/evidence/deployments.yaml", wrapper)
 
-    def test_current_skill_metadata_drift_refuses_historical_runtime_pin(self):
+    def test_skill_drift_from_the_pin_is_refused(self):
         with tempfile.TemporaryDirectory() as temp:
-            with self.assertRaisesRegex(ValueError, "35-skill tree differs from the v1 source pin"):
-                runner.stage_treatment_plugin(Path(temp) / "plugin", Path(temp))
+            root = Path(temp)
+            source = root / "source"
+            shutil.copytree(runner.REPO / "skills", source / "skills")
+            shutil.copytree(runner.REPO / ".claude-plugin", source / ".claude-plugin")
+            with (source / "skills/scout-mcp/SKILL.md").open("ab") as stream:
+                stream.write(b"\n")
+            with mock.patch.object(runner, "REPO", source):
+                with self.assertRaisesRegex(ValueError, "35-skill tree differs from the source pin"):
+                    runner.stage_treatment_plugin(root / "plugin", root)
+
+    def test_v1_skill_manifest_is_the_pin_the_2026_10_01_attempts_ran_on(self):
+        # The file list of skills/ at 1b80b8c, hashed as the runner hashes a
+        # staged tree. It needs no file of the current tree, so later skill
+        # edits cannot disturb the record of what the historical proof ran on.
+        rows = json.loads((HERE / "fixtures/skill-tree-v1.json").read_text())
+        digest = hashlib.sha256(json.dumps(rows, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        self.assertEqual(digest, runner.contract.SKILL_TREE_V1_SHA256)
+        self.assertNotEqual(runner.contract.SKILL_TREE_V1_SHA256, runner.contract.SKILL_TREE_SHA256)
+        self.assertEqual(sum(row["path"].endswith("/SKILL.md") for row in rows), 35)
+        archived = (HERE / "fixtures/ai-agent-readonly-context-v1.md").read_bytes()
+        self.assertEqual(hashlib.sha256(archived).hexdigest(),
+                         "b62da9c04d211f490aab55c24c1ae437102446602e15769ae4c29e868f26fad9")
+        self.assertIn({"path": "ai-agent-readonly-context/SKILL.md", "bytes": len(archived),
+                       "sha256": hashlib.sha256(archived).hexdigest()}, rows)
 
     def test_payload_environment_contains_only_synthetic_provider_credentials(self):
         text = (HERE / "payload.py").read_text()
