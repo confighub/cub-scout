@@ -58,7 +58,7 @@ dependency. If an old cask is installed, run
 `brew uninstall --cask confighub/tap/cub-scout` first.
 
 
-Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.14.0`, then
+Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.14.1`, then
 `cub scout doctor`. [Installation and verified downloads](docs/getting-started/install.md)
 cover macOS, Linux, Windows, and tagged source builds.
 
@@ -167,7 +167,12 @@ coalescing, opt-in watch-backed idle observation, and a new `resource.deleted`
 event), plus local bot images built from verified release archives. See the
 [release notes](docs/releases/v2.11.0.md).
 
-**v2.14.0 is the latest release.** cub-scout now reads ConfigHub through the
+**v2.14.1 is the latest release.** It is a correction to v2.14.0: a filter
+given an empty value is refused where it used to run unfiltered, and the
+plugin's skills match v2.14. See the
+[v2.14.1 release notes](docs/releases/v2.14.1.md).
+
+**v2.14.0:** cub-scout now reads ConfigHub through the
 ConfigHub SDK and checks the session the same way, so a read-only command
 whose reads are covered needs no `cub` binary; `cub` is still needed to log
 in, for every write, and for the reads not yet moved.
@@ -416,8 +421,8 @@ For direct downloads and tagged source builds, use the
 `github.com/confighub/cub-scout/v2`; proxy installation via
 `go install github.com/confighub/cub-scout/v2/cmd/cub-scout@latest` installs
 the latest tagged 2.x module. For a pinned install use
-`go install github.com/confighub/cub-scout/v2/cmd/cub-scout@v2.14.0`. Container command
-`docker run ghcr.io/confighub/cub-scout:v2.14.0 version` still needs registry
+`go install github.com/confighub/cub-scout/v2/cmd/cub-scout@v2.14.1`. Container command
+`docker run ghcr.io/confighub/cub-scout:v2.14.1 version` still needs registry
 access verification (#520); the published image is Linux amd64 only.
 `kubectl krew install cub-scout` is not a verified distribution path; use the
 `kubectl-cub_scout` binary included in the archives or Homebrew instead.
