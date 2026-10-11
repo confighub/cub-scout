@@ -756,6 +756,11 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 					if !ok {
 						return nil, fmt.Errorf("%s must be an array of strings", filter.argument)
 					}
+					// An empty list adds no flag, so it would be the unfiltered
+					// answer under a filter's name.
+					if len(items) == 0 {
+						return nil, fmt.Errorf("%s must not be an empty array: leave it out for no filter", filter.argument)
+					}
 					for _, item := range items {
 						text, ok := item.(string)
 						if !ok || strings.TrimSpace(text) == "" {

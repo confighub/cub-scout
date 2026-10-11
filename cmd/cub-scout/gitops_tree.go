@@ -198,6 +198,16 @@ func deliveryTreeParamsFromFlags(cmd *cobra.Command, args []string) (deliveryTre
 	syncs, _ := flags.GetStringSlice("sync")
 	healths, _ := flags.GetStringSlice("health")
 	params.Kinds, params.Syncs, params.Healths = cleanDeliveryList(kinds), cleanDeliveryList(syncs), cleanDeliveryList(healths)
+	// A filter flag given only an empty value, as `--health "$H"` gives when
+	// H is unset, would be the whole tree under a filter's name.
+	for _, filter := range []struct {
+		name   string
+		values []string
+	}{{"kind", params.Kinds}, {"sync", params.Syncs}, {"health", params.Healths}} {
+		if flags.Changed(filter.name) && len(filter.values) == 0 {
+			return params, fmt.Errorf("--%s must not be empty", filter.name)
+		}
+	}
 	params.View, _ = flags.GetString("view")
 	params.View = strings.ToLower(strings.TrimSpace(params.View))
 	switch {
