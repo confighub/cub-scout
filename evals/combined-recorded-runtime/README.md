@@ -105,12 +105,15 @@ ran on the tree `9f31fd67…` (`SKILL_TREE_V1_SHA256`). Its file list is kept in
 `1b80b8c47fa6c08b97c595ca3a9a0ba53832b0a6`, and a test holds that list to that
 hash without reading any current skill file.
 
-On 2026-10-11 the pin moved to `4b2dd96e…` for four corrected skills
+On 2026-10-11 the pin moved to `c8656ed8…` for four corrected skills
 (`ai-agent-readonly-context`, `operator-incident-evidence`, `scout-mcp`,
 `scout-observe`): the connected-mode check, the MCP tool counts and lists, and
 which connected reads go through the ConfigHub SDK since v2.14.0. The
-diagnostic was then run once on that tree, with every other pin unchanged, and
-**passed on the first attempt** in 15.014 seconds. Both arms completed the
+diagnostic was then run on that tree, with every other pin unchanged, and
+**passed** in 7.706 seconds. (It had passed once before, in 15.014 seconds, on
+an earlier revision of the corrections, `4b2dd96e…`; a review then changed
+`scout-mcp`, the pin followed, and the run was repeated. The report keeps both
+attempts. Neither failed.) In the run on the pinned tree both arms completed the
 same Read, recorded kubectl and Task/Agent refusal controls; treatment
 advertised 35 skills and made one recorded map call whose persisted result is
 the same 90,892 bytes (`db4956a5…`) as on 2026-10-01; both containers were
@@ -126,7 +129,7 @@ What that run does not show:
 - anything about v2.14.0 behaviour. The staged cub-scout binary is still the
   2026-10-01 pin, which predates the SDK reads and the tools the corrected
   skills now list; the diagnostic exercises one recorded `map` call;
-- repeatability at the new pin: it was one attempt.
+- repeatability at the new pin: it was one attempt on the pinned tree.
 
 To move the pin again: edit the skills, run the offline tests, read the staged
 hash from the failing assertion (or from `stage_treatment_plugin`), set

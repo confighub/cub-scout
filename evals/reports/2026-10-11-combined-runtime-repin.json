@@ -4,12 +4,12 @@
   "issue": 839,
   "status": "passed-diagnostic-only",
   "paidAdmission": false,
-  "claim": "Synthetic provider wiring diagnostic only, repeated once on the re-pinned 35-skill tree; no model quality, billing or savings evidence, and no evidence that any skill text was used",
+  "claim": "Synthetic provider wiring diagnostic only, run on the re-pinned 35-skill tree; no model quality, billing or savings evidence, and no evidence that any skill text was used",
   "priorReport": "evals/reports/2026-10-01-combined-runtime.json",
   "skillTree": {
     "count": 35,
     "files": 36,
-    "sha256": "4b2dd96e0a8361ee42c1462730b2826ddc7b7e4cacfc2cb84d0e07fa857e6abc",
+    "sha256": "c8656ed8ce5c835bdafbbe2f5a39e25731150b1bbad10291af255dd0e9b08d5e",
     "priorSha256": "9f31fd677a3490f60a6d1c97b315f8f3d7ee7db6dd5285b47051e049d3cc8b8b",
     "changedFiles": [
       "ai-agent-readonly-context/SKILL.md",
@@ -225,6 +225,217 @@
           "sha256": "a3b8decff16cc2309a4dd5a4c8cd4ed404d7041719fd7b0b005efd575dba02b5"
         }
       },
+      "sourceRevisionNote": "A commit of the pull request's branch; the 35-skill tree hash is the binding fact.",
+      "skillTreeSha256": "4b2dd96e0a8361ee42c1462730b2826ddc7b7e4cacfc2cb84d0e07fa857e6abc",
+      "note": "Ran on the tree before the review's corrections to scout-mcp; that tree is not the pin."
+    },
+    {
+      "attempt": 2,
+      "status": "passed",
+      "sourceRevision": "d588f76fec42a2f10d78b9f35459e8f1b63640db",
+      "startedAt": "2026-10-11T07:42:59.287Z",
+      "elapsedSeconds": 7.7063,
+      "outerTimeout": false,
+      "exitCode": 0,
+      "skillTreeSha256": "c8656ed8ce5c835bdafbbe2f5a39e25731150b1bbad10291af255dd0e9b08d5e",
+      "dockerContext": "orbstack",
+      "imageId": "sha256:cdbd05fb6f457ca275ff51ce00d93d865ca0b6a25f5ffb08262d94f6835771e5",
+      "sourceHelperSha256": "2f4c90e1629bdf9086d0d60e9b2b321661845218226566e639667a238f4f22cc",
+      "pairChecks": {
+        "baselineScoutAbsent": true,
+        "order": [
+          "baseline",
+          "treatment"
+        ],
+        "sharedSourcesEqual": true,
+        "treatmentScoutPresent": true
+      },
+      "arms": {
+        "baseline": {
+          "status": "passed",
+          "error": null,
+          "securityVerified": true,
+          "payloadExitCode": 0,
+          "containerAbsenceVerified": true,
+          "pluginUnchanged": true,
+          "elapsedSeconds": 3.3422,
+          "providerRequests": 5,
+          "payload": {
+            "returnCode": 0,
+            "runStatus": "completed",
+            "fileReadPassed": true,
+            "kubectlReadPassed": true,
+            "refusalPassed": true,
+            "mcpMapPassed": true,
+            "mcpMapResultValidated": true,
+            "skillsAdvertised": false,
+            "skillsPassed": true,
+            "inventoryPassed": true,
+            "apiRequests": 1,
+            "apiCaptured": true
+          },
+          "advertisedScoutSkills": 0,
+          "mapResultCaptures": []
+        },
+        "treatment": {
+          "status": "passed",
+          "error": null,
+          "securityVerified": true,
+          "payloadExitCode": 0,
+          "containerAbsenceVerified": true,
+          "pluginUnchanged": true,
+          "elapsedSeconds": 2.5091,
+          "providerRequests": 6,
+          "payload": {
+            "returnCode": 0,
+            "runStatus": "completed",
+            "fileReadPassed": true,
+            "kubectlReadPassed": true,
+            "refusalPassed": true,
+            "mcpMapPassed": true,
+            "mcpMapResultValidated": true,
+            "skillsAdvertised": true,
+            "skillsPassed": true,
+            "inventoryPassed": true,
+            "apiRequests": 1,
+            "apiCaptured": true
+          },
+          "advertisedScoutSkills": 35,
+          "mapResultCaptures": [
+            {
+              "source": "persisted",
+              "bytes": 90892,
+              "sha256": "db4956a58fe8e69057b2b6640de01beb017aeb22e6901a4769e1cb24b36f3d1b"
+            }
+          ]
+        }
+      },
+      "rawFiles": {
+        "run2/baseline-docker-op-01-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/baseline-docker-op-01-stdout.bin": {
+          "bytes": 65,
+          "sha256": "4a4e9a270db82e15b224d1a7f90d132a3764f26dd51b92a6f4e0691c190c24b2"
+        },
+        "run2/baseline-docker-op-02-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/baseline-docker-op-02-stdout.bin": {
+          "bytes": 5056,
+          "sha256": "7402aa854179e3268470cf4aabd4b386a0b10c7d7d420219535e09c26d43f5e4"
+        },
+        "run2/baseline-docker-op-03-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/baseline-docker-op-03-stdout.bin": {
+          "bytes": 65,
+          "sha256": "4a4e9a270db82e15b224d1a7f90d132a3764f26dd51b92a6f4e0691c190c24b2"
+        },
+        "run2/baseline-docker-op-04-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/baseline-docker-op-04-stdout.bin": {
+          "bytes": 2,
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "run2/baseline-docker-op-05-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/baseline-docker-op-05-stdout.bin": {
+          "bytes": 5602,
+          "sha256": "9980324103721efbb8b186cd950bcad4d55ef6871008b9d30bc5d5f16caf6146"
+        },
+        "run2/baseline-docker-op-06-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/baseline-docker-op-06-stdout.bin": {
+          "bytes": 1906736,
+          "sha256": "873358ba1cfbad496ff0c0c334d3aa2d1fcf01c6b401829c8b16bdd18348a7f9"
+        },
+        "run2/baseline.identity.json": {
+          "bytes": 158,
+          "sha256": "f4988f251319d42364c12ccb896a5b3167d4732ce9dc6bca33a4ff445d2abec5"
+        },
+        "run2/baseline.payload.json": {
+          "bytes": 1914299,
+          "sha256": "90672ca113abff86a8e7d01ac6a8c201f9a1a9e2fdbe14d91cb4a9207871b091"
+        },
+        "run2/run.json": {
+          "bytes": 52360,
+          "sha256": "5093d9d8f453f140458798f125007ffca6b3faade21bf543187f738cba8d04ff"
+        },
+        "run2/treatment-docker-op-01-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/treatment-docker-op-01-stdout.bin": {
+          "bytes": 65,
+          "sha256": "0aeb74cd806b59e29a4aa623d9290c8d64203abe3e9316136fa2191a37b098c8"
+        },
+        "run2/treatment-docker-op-02-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/treatment-docker-op-02-stdout.bin": {
+          "bytes": 5517,
+          "sha256": "ab182a7262563fef88a1b622fb022bf81ab2d813a79327b2b235024e18b2f212"
+        },
+        "run2/treatment-docker-op-03-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/treatment-docker-op-03-stdout.bin": {
+          "bytes": 65,
+          "sha256": "0aeb74cd806b59e29a4aa623d9290c8d64203abe3e9316136fa2191a37b098c8"
+        },
+        "run2/treatment-docker-op-04-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/treatment-docker-op-04-stdout.bin": {
+          "bytes": 2,
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "run2/treatment-docker-op-05-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/treatment-docker-op-05-stdout.bin": {
+          "bytes": 6064,
+          "sha256": "0bbe316c13d211464f280a93d88c53a1bc1cc1660827c5a46ccade1a3f1ae7fc"
+        },
+        "run2/treatment-docker-op-06-stderr.bin": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2/treatment-docker-op-06-stdout.bin": {
+          "bytes": 3353865,
+          "sha256": "a9c6d1112e47905c87ca6efb5b5ab897dc34e4140b03bc0b5ddebf750bb903d2"
+        },
+        "run2/treatment.identity.json": {
+          "bytes": 158,
+          "sha256": "d1b62f6440a5bb00507b11dfaf50be122ebe3b2b49af632094b16f4eb9316853"
+        },
+        "run2/treatment.payload.json": {
+          "bytes": 3364682,
+          "sha256": "a814c2e8fb3f50d698b464f6678929333d437ed8f2424eca5eb196164b0363b4"
+        },
+        "run2.stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run2.stdout": {
+          "bytes": 195,
+          "sha256": "b06cfb30d68e2e12af10a77d835382f0c9ddc628d36c44b2596a5443b8363576"
+        }
+      },
       "sourceRevisionNote": "A commit of the pull request's branch; the 35-skill tree hash is the binding fact."
     }
   ],
@@ -239,7 +450,8 @@
     "No evidence that the corrected skill text changes what an agent does: the diagnostic records skill names advertised in the provider request, not skill use.",
     "The staged cub-scout binary is the 2026-10-01 pin, older than v2.14.0; the corrected skills describe tools and a session check that binary does not have. The diagnostic exercises only the recorded map call.",
     "No full24-case execution/admission or general tool-parity proof.",
-    "One attempt; not repeated.",
-    "No lossless OS process inventory; owned-container absence proves lifetime termination."
-  ]
+    "No lossless OS process inventory; owned-container absence proves lifetime termination.",
+    "One attempt on the pinned tree (attempt 2); attempt 1 ran on an earlier revision of the corrected skills. Both passed; neither was repeated."
+  ],
+  "pinnedAttempt": 2
 }
