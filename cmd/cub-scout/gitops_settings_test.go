@@ -487,6 +487,9 @@ func TestMCPGitOpsSettingsBuildsTheCLICall(t *testing.T) {
 		"setting as a bare string":    {"setting": "self-heal=off"},
 		"project as an object":        {"project": map[string]interface{}{"a": "b"}},
 		"project with an empty entry": {"project": []interface{}{""}},
+		"setting as an empty array":   {"setting": []interface{}{}},
+		"project as an empty array":   {"project": []interface{}{}},
+		"setting as null":             {"setting": nil},
 		"view of the wrong type":      {"view": true},
 		"misspelt argument":           {"settng": []interface{}{"self-heal=off"}},
 	} {
@@ -495,6 +498,8 @@ func TestMCPGitOpsSettingsBuildsTheCLICall(t *testing.T) {
 	}
 	_, err := tool.BuildArgs(map[string]interface{}{"settng": []interface{}{"x"}})
 	require.ErrorContains(t, err, `unknown argument "settng" (valid: namespace, context, project, setting, view)`)
+	_, err = tool.BuildArgs(map[string]interface{}{"project": []interface{}{}, "setting": []interface{}{"prune=off"}})
+	require.ErrorContains(t, err, "project must not be an empty array: leave it out for no filter")
 }
 
 func TestMCPGitOpsSettingsReturnsTheReportAsStructuredData(t *testing.T) {

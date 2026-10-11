@@ -86,7 +86,7 @@ the catalog from a running server.
 | Required args | — |
 | Optional args | `setting` (array of `name` or `name=value`; all must match); `project` (array of Argo CD project names; Flux objects are left out when set); `namespace` (string, the deployer objects' namespace); `context` (nonempty exact kubeconfig context); `view` (`summary` default, `deployers`, `groups`, `settings`, `all`) |
 | Returns | The delivery settings each Argo CD Application and Flux Kustomization/HelmRelease declares: auto-sync, self-heal, prune, sync and apply options, suspension. `summary` maps each setting to its values and each value to the deployers that have it; `unset` marks deployers counted under a controller default. Every view keeps the scope, counts, reads and notes that say whether it is complete |
-| When to load | "Which Applications sync automatically without self-heal?" "Which Flux objects are suspended?" "Which deployers share this option?" Declared settings only: no verdict, and nothing about whether a controller acted. An unknown argument, a wrong type or an empty string is refused, not ignored; an empty `setting` or `project` array is read as no filter (#876). Preview since v2.13.4: shapes may still change |
+| When to load | "Which Applications sync automatically without self-heal?" "Which Flux objects are suspended?" "Which deployers share this option?" Declared settings only: no verdict, and nothing about whether a controller acted. An unknown argument, a wrong type, an empty string or an empty array is refused, not ignored: leave a filter out to ask for everything. Preview since v2.13.4: shapes may still change |
 
 ### `release_check`
 
