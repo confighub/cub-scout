@@ -2086,3 +2086,21 @@ behaviour.
 - **Next:** v2.15.0 and its gates, in
   [the readiness ledger](docs/releases/v2.15-readiness.md) and #645. That
   ledger is dated prose; it has no at-a-glance list of which gates are open.
+
+## v2.14.1 published — 2026-10-11
+
+Tagged on the maintainer's instruction at `8fbbf6f3`, the merge commit of the
+notes pull request (#880), after `main` CI was green on it and a clean local
+build, vet, full test and six cross-compiles passed. The Release workflow (run
+38136906629) passed. What was checked on the artifacts is in
+[the notes](docs/releases/v2.14.1.md#publication-checks).
+
+- The published baseline is **v2.14.1**: v2.14.0 plus the empty-filter fix
+  (#877), the corrected skills and re-pinned diagnostic (#875), and docs
+  corrections. It claims no P4 gate.
+- **v2.15 is paused.** The maintainer said not to start it. Do not begin P4
+  work without a new instruction.
+- Left open by this release: single-value flags such as `--namespace` were not
+  examined for the empty-value hole #877 closed; no agent eval for the skill
+  corrections (waiver on #839); the `gitops_settings` input schema has no
+  `minItems` (note on #876).
