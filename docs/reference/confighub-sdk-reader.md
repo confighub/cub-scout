@@ -521,7 +521,7 @@ the ones above, and the attestation list is the one recorded earlier).
 
 The reads still left to `cub` (a selection, a stored filter, a View's
 evaluated columns, an entity named by ID, the releases of every space,
-`unit tree`, `release check`, `k8s get`), each held to the `cub` route's output
+`unit tree`, `k8s get`), each held to the `cub` route's output
 on a recording from a real server; one space lookup per command rather than
 per read; the OCI registry lookup, which still asks `cub` for the context; a
 real-server run with a Unit that has a target and with unit events. Scout's observation interface stays read-only

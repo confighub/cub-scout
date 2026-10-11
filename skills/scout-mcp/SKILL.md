@@ -189,16 +189,16 @@ The closed list of MCP tools cub-scout registers. The set is verified by `cmd/cu
 | `compare_three_way` | connected | `cub-scout compare three-way --format json` |
 | `compare_source_truth` | connected | `cub-scout compare source-truth <target> -n <ns> --strategy <s> --format json` |
 | `confighub_attestations` | connected | One revision and its space's attestation list, as `cub revision get` and `cub attestation list` print them (SDK) |
-| `confighub_changeorder_get` | connected | `cub changeorder get <order> -o json --space <space>` (SDK) |
+| `confighub_changeorder_get` | connected | `cub changeorder get <order> -o json --space <space>` (SDK; an order named by ID runs `cub`) |
 | `confighub_changesets` | connected | `cub changeset list -o json --space <space>` (SDK) |
 | `confighub_k8s_resources` | connected | `cub k8s get <type> [<name> ...] -o json` (runs `cub`) |
 | `confighub_k8s_types` | connected | `cub k8s types [<type>] -o json` (runs `cub`) |
-| `confighub_live_status` | connected | `cub space list -o json --select Slug,SpaceID,Annotations,Labels` (runs `cub`) |
+| `confighub_live_status` | connected | `cub space list -o json --select Slug,SpaceID,Annotations,Labels [--where "Slug = '<space>'"]` (runs `cub`) |
 | `confighub_releases` | connected | `cub release list --space <space> -o json` (SDK; `space: "*"` runs `cub`) |
 | `confighub_resources` | connected | `cub resource list --space <space> -o json` (SDK; with `select`, `filter`, `view` or `raw_data` it runs `cub`) |
-| `confighub_unit_events` | connected | `cub unit-event list [unit] --space <space> -o json` (SDK; a Unit named by ID runs `cub`) |
+| `confighub_unit_events` | connected | `cub unit-event list [unit] --space <space> -o json` (SDK; a Unit named by ID or as `<space>/<slug>` runs `cub`) |
 | `confighub_units` | connected | `cub unit list -o json --space <space>` (SDK) |
-| `confighub_unit_get` | connected | `cub unit get -o json <unit> --space <space>` (SDK; a Unit named by ID runs `cub`) |
+| `confighub_unit_get` | connected | `cub unit get -o json <unit> --space <space>` (SDK; a Unit named by ID, or as `<space>/<slug>` together with `space`, runs `cub`) |
 
 8 standalone + 13 connected = **21 tools total**. The catalog is intentionally narrow and every tool is read-only.
 

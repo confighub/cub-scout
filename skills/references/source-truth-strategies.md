@@ -146,4 +146,4 @@ The receipt-side complement, `cub-scout receipt verify --strategy <s>`, inherits
 - Phase 2 (expansion to 9): `#418`
 - Phase 3 (multi-source Argo): tracked separately
 - Help-text drift fix: `#450`, PR `#453`
-- Connected-mode gate: `requireConfigHubFor` in `cmd/cub-scout/source_truth.go`, backed by the session check in `cmd/cub-scout/connected_gate.go` (through the ConfigHub SDK since v2.14.0; `cub auth status` with `CUB_SCOUT_CONFIGHUB_READER=cub`)
+- Connected-mode gate: `requireConfigHubFor` in `cmd/cub-scout/connected_gate.go`, called from `cmd/cub-scout/source_truth.go` and backed by the session check in the same file (through the ConfigHub SDK since v2.14.0; `cub auth status` with `CUB_SCOUT_CONFIGHUB_READER=cub`)
