@@ -179,3 +179,24 @@ func TestMCPLiveStatusRefusesABadWindow(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []string{"prod", "24h"}, args)
 }
+
+// The release list a real ConfigHub printed after a LiveStatus was written on
+// its Release, as argobot writes it (test/fixtures/confighub-release-live-status-v0812-recorded).
+func TestReleaseLiveStatusOnARecordedServerResponse(t *testing.T) {
+	raw, err := os.ReadFile("../../test/fixtures/confighub-release-live-status-v0812-recorded/release-list.json")
+	require.NoError(t, err)
+	now := time.Date(2026, 10, 26, 20, 52, 0, 0, time.UTC)
+	statuses, omissions := configHubLiveStatusFromReleases(string(raw), now, 15*time.Minute)
+	require.Empty(t, omissions)
+	require.Len(t, statuses, 1)
+	status := statuses[0]
+	require.Equal(t, "release", status.RecordedOn)
+	require.Equal(t, "live#1", status.Release)
+	require.Equal(t, "cdad8289-e2df-4a85-a9fb-061a5c34231d", status.ReleaseID)
+	require.Equal(t, "Synced", status.SyncStatus)
+	require.Equal(t, "Degraded", status.HealthStatus)
+	require.Equal(t, "2026-10-26T20:51:04Z", status.ObservedAt)
+	require.Equal(t, "fresh", status.Freshness)
+	require.Equal(t, agent.VerdictPASS, status.DeliveryVerdict)
+	require.Equal(t, agent.VerdictBLOCK, status.ApplicationHealthVerdict)
+}
