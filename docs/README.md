@@ -11,8 +11,10 @@ The five run modes are **standalone CLI/TUI, `cub` plugin, MCP server, watch
 stream, and in-cluster bot**. [Choose a mode](../README.md#five-ways-to-run-cub-scout)
 or [start with a user question](../README.md#user-questions).
 
-Current release: [v2.14.1](releases/v2.14.1.md), a correction: an empty filter
-is refused and the plugin's skills match v2.14.
+Current release: [v2.14.2](releases/v2.14.2.md), which reads live status from
+each Release, where ConfigHub now records it.
+[v2.14.1](releases/v2.14.1.md) refuses an empty filter and brings the plugin's
+skills up to date.
 [v2.14.0](releases/v2.14.0.md) reads ConfigHub through
 the ConfigHub SDK (no `cub` binary for the reads it covers) and adds the
 `gitops tree` preview. [v2.13.4](releases/v2.13.4.md) added the

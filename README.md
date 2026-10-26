@@ -58,7 +58,7 @@ dependency. If an old cask is installed, run
 `brew uninstall --cask confighub/tap/cub-scout` first.
 
 
-Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.14.1`, then
+Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.14.2`, then
 `cub scout doctor`. [Installation and verified downloads](docs/getting-started/install.md)
 cover macOS, Linux, Windows, and tagged source builds.
 
@@ -167,9 +167,13 @@ coalescing, opt-in watch-backed idle observation, and a new `resource.deleted`
 event), plus local bot images built from verified release archives. See the
 [release notes](docs/releases/v2.11.0.md).
 
-**v2.14.1 is the latest release.** It is a correction to v2.14.0: a filter
-given an empty value is refused where it used to run unfiltered, and the
-plugin's skills match v2.14. See the
+**v2.14.2 is the latest release.** Live status is read from each Release,
+where ConfigHub records it since a server change of 2026-10-03; cub-scout used
+to look only at a Space annotation nothing writes any more. See the
+[v2.14.2 release notes](docs/releases/v2.14.2.md).
+
+**v2.14.1:** a filter given an empty value is refused where it used to run
+unfiltered, and the plugin's skills match v2.14. See the
 [v2.14.1 release notes](docs/releases/v2.14.1.md).
 
 **v2.14.0:** cub-scout now reads ConfigHub through the
@@ -421,8 +425,8 @@ For direct downloads and tagged source builds, use the
 `github.com/confighub/cub-scout/v2`; proxy installation via
 `go install github.com/confighub/cub-scout/v2/cmd/cub-scout@latest` installs
 the latest tagged 2.x module. For a pinned install use
-`go install github.com/confighub/cub-scout/v2/cmd/cub-scout@v2.14.1`. Container command
-`docker run ghcr.io/confighub/cub-scout:v2.14.1 version` still needs registry
+`go install github.com/confighub/cub-scout/v2/cmd/cub-scout@v2.14.2`. Container command
+`docker run ghcr.io/confighub/cub-scout:v2.14.2 version` still needs registry
 access verification (#520); the published image is Linux amd64 only.
 `kubectl krew install cub-scout` is not a verified distribution path; use the
 `kubectl-cub_scout` binary included in the archives or Homebrew instead.
