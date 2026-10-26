@@ -1,5 +1,9 @@
 # AI Read Me First
 
+**2026-10-26:** [v2.14.2 is published](docs/releases/v2.14.2.md): live status
+is read from each Release, where ConfigHub now records it (#883, item 1 of
+#882). v2.15 work is still paused.
+
 **2026-10-11:** [v2.14.1 is published](docs/releases/v2.14.1.md), a correction
 to v2.14.0: an empty filter is refused, and the plugin's skills match v2.14.
 v2.15 work is paused on the maintainer's instruction.

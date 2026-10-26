@@ -2104,3 +2104,28 @@ build, vet, full test and six cross-compiles passed. The Release workflow (run
   examined for the empty-value hole #877 closed; no agent eval for the skill
   corrections (waiver on #839); the `gitops_settings` input schema has no
   `minItems` (note on #876).
+
+## v2.14.2 published — 2026-10-26
+
+Tagged on the maintainer's instruction ("fix 882 item 1 and cut v2.14.2") at
+`f5ca8e51`, the merge commit of the notes pull request (#884), after `main`
+CI was green on it and a clean local build, vet, full test and six
+cross-compiles passed. Release run 40410010499 passed. Checks on the artifacts
+are in [the notes](docs/releases/v2.14.2.md#publication-checks).
+
+- **What changed in ConfigHub:** since 2026-10-03 the tool deploying a Release
+  records its status on the Release (`Release.LiveStatus`), and nothing writes
+  the `confighub.com/live-status` Space annotation. `cub cluster attach/up`
+  (mid-October) installs argobot for Argo CD, Flux or Sveltos and it writes
+  that status. #883 reads it; the annotation stays as a fallback.
+- **Real-server proof:** `TestRecordReleaseLiveStatusOnARealServer` in the
+  Connected lane writes a status with `cub release update --patch` (argobot's
+  merge patch) and checks the built binary's MCP answer. The recording is in
+  `test/fixtures/confighub-release-live-status-v0812-recorded/`.
+- **Upstream breakage:** the Flux example followed podinfo `master`, which
+  named an unpublished image on 2026-10-26; it is pinned to `6.16.0`.
+- **Still open on #882:** items 2 to 6 (bot detection labels, ownership for
+  `cub cluster` clusters, Flux 2.10, the Flux web UI as an actor, docs). The
+  pinned `scout-mcp` skill still describes `confighub_live_status` as a space
+  list read.
+- **v2.15 is still paused.**
