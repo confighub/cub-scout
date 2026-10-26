@@ -184,11 +184,42 @@ func buildMCPChangesetsStructuredContent(payload interface{}) interface{} {
 
 func buildMCPLiveStatusStructuredContent(payload interface{}) interface{} {
 	wrapped := mcpWrapStructuredData(payload)
-	raw, err := json.Marshal(payload)
-	if err != nil {
+	now, staleAfter := gitopsNowFn().UTC(), 15*time.Minute
+	answer, ok := payload.(map[string]interface{})
+	if !ok || answer["spaces"] == nil {
+		// A bare space list, as the tool answered before it read Releases.
+		raw, err := json.Marshal(payload)
+		if err != nil {
+			return wrapped
+		}
+		statuses, omissions := buildConfigHubLiveStatusEvidence(string(raw), now, staleAfter)
+		if len(statuses) > 0 {
+			wrapped["liveStatuses"] = statuses
+		}
+		if len(omissions) > 0 {
+			wrapped["omissions"] = omissions
+		}
 		return wrapped
 	}
-	statuses, omissions := buildConfigHubLiveStatusEvidence(string(raw), gitopsNowFn().UTC(), 15*time.Minute)
+	var releaseStatuses []ConfigHubLiveStatusEvidence
+	var omissions []GitOpsDeliveryEvidenceOmission
+	releaseWindow := ""
+	if releases, read := answer["releases"]; read {
+		raw, _ := json.Marshal(releases)
+		releaseStatuses, omissions = configHubLiveStatusFromReleases(string(raw), now, staleAfter)
+		releaseWindow, _ = answer["releasesSince"].(string)
+	} else {
+		reason, _ := answer["releasesError"].(string)
+		omissions = append(omissions, GitOpsDeliveryEvidenceOmission{
+			Layer:  "confighub.liveStatus",
+			Reason: "the release list could not be read: " + firstNonEmpty(reason, "no answer"),
+			Impact: "the live status ConfigHub records on Releases is unavailable; only the Space annotation older servers kept was read",
+		})
+	}
+	rawSpaces, _ := json.Marshal(answer["spaces"])
+	statuses, spaceOmissions := buildConfigHubSpaceLiveStatusEvidence(string(rawSpaces), now, staleAfter, configHubLiveStatusSpaces(releaseStatuses), releaseWindow)
+	statuses = append(statuses, releaseStatuses...)
+	omissions = append(omissions, spaceOmissions...)
 	if len(statuses) > 0 {
 		wrapped["liveStatuses"] = statuses
 	}

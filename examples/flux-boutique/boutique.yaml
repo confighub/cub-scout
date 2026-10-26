@@ -19,8 +19,10 @@ metadata:
   namespace: boutique
 spec:
   interval: 5m
+  # Pinned to a release tag: master can name an image before it is published,
+  # which made this example fail to start (2026-10-26, podinfo 6.17.0).
   ref:
-    branch: master
+    tag: 6.16.0
   url: https://github.com/stefanprodan/podinfo
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1

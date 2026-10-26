@@ -1,0 +1,63 @@
+[
+  {
+    "Release": {
+      "BundleBaseName": "live",
+      "CreatedAt": "2026-10-26T20:51:04.824971Z",
+      "DataSize": 334,
+      "Digest": "sha256:b7922c79685b397a6ccc9dbac79a2f4135813976ebb2835df2bfeb073f0c28fb",
+      "EntityType": "Release",
+      "LiveStatus": {
+        "DataSource": "test",
+        "Health": "Degraded",
+        "Message": "written by the integration test",
+        "ObservedAt": "2026-10-26T20:51:04Z",
+        "Operation": "Succeeded",
+        "Reporter": "cub-scout-integration",
+        "ReporterHealth": "Degraded",
+        "ReporterOperation": "Succeeded",
+        "ReporterSync": "Synced",
+        "Sync": "Synced"
+      },
+      "ManifestDigest": "sha256:88aa8b3ae5e45bc0241da4be528525c2eadd6b0722f9836ec158319caeed1ec1",
+      "OrganizationID": "16f0feb4-8d0f-4dc6-94b7-1aae1589e5c5",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "c99a070a-371d-4c6f-a9ee-6d6218cd53e4": true
+          }
+        }
+      },
+      "Published": true,
+      "ReleaseID": "cdad8289-e2df-4a85-a9fb-061a5c34231d",
+      "ReleaseNum": 1,
+      "SpaceID": "bdc5bdd1-0000-42d9-87fe-358b544a7983",
+      "SpaceSlug": "scout-live-status-1793047864128418809",
+      "TagID": "26ceb264-3685-4a61-bc2d-eca393ffa94b",
+      "TargetID": "cc9d796f-6bae-4b9b-b43f-8275c1fe8d01",
+      "UnitCount": 1,
+      "UpdatedAt": "2026-10-26T20:51:05.107586Z",
+      "UserID": "c99a070a-371d-4c6f-a9ee-6d6218cd53e4",
+      "Version": 1
+    },
+    "Tag": {
+      "CreatedAt": "2026-10-26T20:51:04.824052Z",
+      "DisplayName": "release-1",
+      "EntityType": "Tag",
+      "OrganizationID": "16f0feb4-8d0f-4dc6-94b7-1aae1589e5c5",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "c99a070a-371d-4c6f-a9ee-6d6218cd53e4": true
+          }
+        }
+      },
+      "ReleaseID": "cdad8289-e2df-4a85-a9fb-061a5c34231d",
+      "Slug": "release-1",
+      "SpaceID": "bdc5bdd1-0000-42d9-87fe-358b544a7983",
+      "SpaceSlug": "scout-live-status-1793047864128418809",
+      "TagID": "26ceb264-3685-4a61-bc2d-eca393ffa94b",
+      "UpdatedAt": "2026-10-26T20:51:04.824052Z",
+      "Version": 1
+    }
+  }
+]

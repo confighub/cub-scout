@@ -16,6 +16,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 	"github.com/spf13/cobra"
@@ -1099,7 +1100,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		tools["confighub_live_status"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
 				Name:        "confighub_live_status",
-				Description: "Connected-only ConfigHub live-status writeback reader (cub space list -o json). Use when the user asks whether the evented delivery/status feedback loop has reported sync status, application health, operation phase, observed revision, or freshness for a known space. Space is REQUIRED to keep the read bounded; pass '*' only when the user explicitly asks for all spaces. DO NOT use as proof that delivery succeeded by itself; it is best-effort reported evidence owned by the underlying controller.",
+				Description: "Connected-only ConfigHub live status: what the tool deploying a Release (such as argobot for Argo CD, Flux or Sveltos) reports about it running, as ConfigHub records it on each Release, plus the confighub.com/live-status Space annotation older ConfigHub servers kept. Reads the space list and the Releases created in the window (since, default 24h); for each Space and Target the newest Release with a status is shown. Use when the user asks whether the delivery feedback loop has reported sync status, application health, operation phase, or freshness for a known space. Space is REQUIRED to keep the read bounded; pass '*' only when the user explicitly asks for all spaces. DO NOT use as proof that delivery succeeded by itself; it is best-effort reported evidence owned by the underlying controller.",
 				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
@@ -1107,6 +1108,10 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						"space": map[string]interface{}{
 							"type":        "string",
 							"description": "Required ConfigHub space slug, or '*' for an explicit all-spaces read.",
+						},
+						"since": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional window for the Release read, such as 24h (default) or 7d. A Release created before it is not read, so its status is not shown.",
 						},
 					},
 					"required":             []string{"space"},
@@ -1118,9 +1123,15 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				if space == "" {
 					return nil, fmt.Errorf("missing required argument: space")
 				}
-				return mcpConfigHubLiveStatusArgs(space), nil
+				since := firstNonEmpty(strings.TrimSpace(argString(arguments, "since")), "24h")
+				if _, err := parseHistorySince(since); err != nil {
+					return nil, fmt.Errorf("invalid since %q: %w", since, err)
+				}
+				return []string{space, since}, nil
 			},
-			Runner: connectedRunner,
+			Runner: func(ctx context.Context, args []string) (string, error) {
+				return runMCPConfigHubLiveStatus(ctx, connectedRunner, args)
+			},
 		}
 		tools["confighub_releases"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
@@ -1669,6 +1680,40 @@ func sourceTruthStrategySchemaDescription() string {
 // makes, so the MCP tool and `--with-confighub` cannot drift apart.
 func mcpConfigHubLiveStatusArgs(space string) []string {
 	return gitOpsConfigHubSpaceListArgs(space)
+}
+
+// runMCPConfigHubLiveStatus makes the two reads `gitops status
+// --with-confighub` makes for live status: the space list, for the annotation
+// older servers kept, and the Releases in the window, which carry it since
+// ConfigHub's 2026-10-03 server change. The answer holds both as read.
+func runMCPConfigHubLiveStatus(ctx context.Context, run func(context.Context, []string) (string, error), args []string) (string, error) {
+	if len(args) != 2 {
+		return "", fmt.Errorf("invalid live status read arguments")
+	}
+	space, since := args[0], args[1]
+	window, err := parseHistorySince(since)
+	if err != nil {
+		return "", fmt.Errorf("invalid since %q: %w", since, err)
+	}
+	cutoff := gitopsNowFn().Add(-window).UTC().Format(time.RFC3339)
+	answer := map[string]interface{}{"releasesSince": cutoff}
+	spaces, err := run(ctx, mcpConfigHubLiveStatusArgs(space))
+	if err != nil {
+		return "", err
+	}
+	if !json.Valid([]byte(spaces)) {
+		return "", fmt.Errorf("the space list is not JSON")
+	}
+	answer["spaces"] = json.RawMessage(spaces)
+	if releases, err := run(ctx, gitOpsConfigHubReleaseListArgs(space, cutoff)); err != nil {
+		answer["releasesError"] = err.Error()
+	} else if !json.Valid([]byte(releases)) {
+		answer["releasesError"] = "the release list is not JSON"
+	} else {
+		answer["releases"] = json.RawMessage(releases)
+	}
+	raw, err := json.Marshal(answer)
+	return string(raw), err
 }
 
 func runMCPToolCommand(ctx context.Context, args []string) (string, error) {

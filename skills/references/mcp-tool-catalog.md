@@ -183,10 +183,10 @@ and live CLI/TUI acceptance remain pending.
 
 | Aspect | Detail |
 |---|---|
-| Wraps | `cub space list -o json --select Slug,SpaceID,Annotations,Labels`, with `--where "Slug = '<space>'"` unless `space` is `*` (runs `cub`: a list with a selection is not read through the SDK) |
+| Wraps | Two reads, as `gitops status --with-confighub` makes them: `cub space list -o json --select Slug,SpaceID,Annotations,Labels` (with `--where "Slug = '<space>'"` unless `space` is `*`; runs `cub`), and the Releases created in the window, as `cub release list --space <space> -o json --where "CreatedAt > '<cutoff>'"` prints them (SDK for one space) |
 | Required args | `space` (string — slug, or `*` for an explicit all-spaces read) |
-| Optional args | — |
-| Returns | Space rows plus additive `structuredContent.liveStatuses[]` parsed from `confighub.com/live-status` and `structuredContent.omissions[]` for missing/malformed writeback |
+| Optional args | `since` (string, default `24h`): the Release window. An older Release's status is not read |
+| Returns | `{spaces, releases, releasesSince}` as read (or `releasesError`), plus `structuredContent.liveStatuses[]`: since v2.14.2, each Space and Target's newest Release `LiveStatus` (`recordedOn: release`), as ConfigHub records it from 2026-10-03, and the `confighub.com/live-status` annotation older servers kept (`recordedOn: space-annotation`); `structuredContent.omissions[]` names a space with neither, or a release list that could not be read |
 | When to load | "Did the evented status feedback report sync, health, operation, revision, and freshness for this space?" Evidence only; controller/runtime truth still belongs to the underlying systems. |
 
 ### `confighub_releases`

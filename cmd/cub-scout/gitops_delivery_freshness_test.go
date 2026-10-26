@@ -185,6 +185,10 @@ func TestLiveStatusFreshnessSurfaces(t *testing.T) {
 				t.Fatal("unexpected Kubernetes/standalone read")
 				return "", nil
 			}, func(_ context.Context, args []string) (string, error) {
+				if len(args) > 1 && args[0] == "release" && args[1] == "list" {
+					// No Release carries a status: the annotation decides.
+					return "[]", nil
+				}
 				calls++
 				if !reflect.DeepEqual(args, mcpConfigHubLiveStatusArgs("team-a")) {
 					t.Fatalf("unexpected read: %v", args)

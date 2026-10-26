@@ -90,9 +90,21 @@ func (e *ConfigHubDeliveryEvidence) unitEventsInWindow() []ConfigHubUnitEventEvi
 }
 
 type ConfigHubLiveStatusEvidence struct {
+	// RecordedOn is where ConfigHub kept this status: "release" for a
+	// Release's LiveStatus, written by the tool deploying it (ConfigHub
+	// servers from 2026-10-03), or "space-annotation" for the
+	// confighub.com/live-status Space annotation older servers kept.
+	RecordedOn               string                        `json:"recordedOn"`
 	Space                    string                        `json:"space,omitempty"`
 	SpaceID                  string                        `json:"spaceId,omitempty"`
+	Target                   string                        `json:"target,omitempty"`
+	Release                  string                        `json:"release,omitempty"`
+	ReleaseID                string                        `json:"releaseId,omitempty"`
 	Source                   string                        `json:"source,omitempty"`
+	DataSource               string                        `json:"dataSource,omitempty"`
+	ReporterSync             string                        `json:"reporterSync,omitempty"`
+	ReporterHealth           string                        `json:"reporterHealth,omitempty"`
+	ReporterOperation        string                        `json:"reporterOperation,omitempty"`
 	App                      string                        `json:"app,omitempty"`
 	SyncStatus               string                        `json:"syncStatus,omitempty"`
 	HealthStatus             string                        `json:"healthStatus,omitempty"`
@@ -345,23 +357,35 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 		return evidence
 	}
 
-	rawSpaces, err := runGitOpsCubCommand(ctx, gitOpsConfigHubSpaceListArgs(opts.Space))
-	if err != nil {
+	rawSpaces, spaceErr := runGitOpsCubCommand(ctx, gitOpsConfigHubSpaceListArgs(opts.Space))
+	cutoff := opts.Now.Add(-opts.Window).UTC().Format(time.RFC3339)
+	releaseArgs := gitOpsConfigHubReleaseListArgs(opts.Space, cutoff)
+	rawReleases, err := runGitOpsCubCommand(ctx, releaseArgs)
+
+	// Live status is on each Release since ConfigHub's 2026-10-03 server
+	// change; the Space annotation is what older servers kept. Both are read,
+	// so a space is reported as having no live status only when neither has it.
+	var releaseStatuses []ConfigHubLiveStatusEvidence
+	releaseWindow := ""
+	if err == nil {
+		var omissions []GitOpsDeliveryEvidenceOmission
+		releaseStatuses, omissions = configHubLiveStatusFromReleases(rawReleases, opts.Now, opts.StaleAfter)
+		evidence.Omissions = append(evidence.Omissions, omissions...)
+		releaseWindow = cutoff
+	}
+	if spaceErr != nil {
 		evidence.Omissions = append(evidence.Omissions, GitOpsDeliveryEvidenceOmission{
 			Layer:   "confighub.liveStatus",
-			Reason:  err.Error(),
-			Impact:  "live-status writeback evidence is unavailable",
+			Reason:  spaceErr.Error(),
+			Impact:  "the live status older ConfigHub servers kept on the Space is unavailable",
 			Command: "cub " + strings.Join(gitOpsConfigHubSpaceListArgs(opts.Space), " "),
 		})
 	} else {
-		statuses, omissions := buildConfigHubLiveStatusEvidence(rawSpaces, opts.Now, opts.StaleAfter)
+		statuses, omissions := buildConfigHubSpaceLiveStatusEvidence(rawSpaces, opts.Now, opts.StaleAfter, configHubLiveStatusSpaces(releaseStatuses), releaseWindow)
 		evidence.ConfigHub.LiveStatuses = statuses
 		evidence.Omissions = append(evidence.Omissions, omissions...)
 	}
 
-	cutoff := opts.Now.Add(-opts.Window).UTC().Format(time.RFC3339)
-	releaseArgs := gitOpsConfigHubReleaseListArgs(opts.Space, cutoff)
-	rawReleases, err := runGitOpsCubCommand(ctx, releaseArgs)
 	if err != nil {
 		evidence.Omissions = append(evidence.Omissions, GitOpsDeliveryEvidenceOmission{
 			Layer:   "confighub.releases",
@@ -382,6 +406,9 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 		evidence.ConfigHub.Releases = releases
 		evidence.Omissions = append(evidence.Omissions, omissions...)
 	}
+	// A Release's own status names its Release, so it needs no correlation by
+	// reported revision; it is added after the correlation above.
+	evidence.ConfigHub.LiveStatuses = append(evidence.ConfigHub.LiveStatuses, releaseStatuses...)
 
 	eventArgs := gitOpsConfigHubUnitEventListArgs(opts.Space, cutoff)
 	rawEvents, err := runGitOpsCubCommand(ctx, eventArgs)
@@ -448,6 +475,15 @@ func configHubFilterQuote(value string) string {
 }
 
 func buildConfigHubLiveStatusEvidence(raw string, now time.Time, staleAfter time.Duration) ([]ConfigHubLiveStatusEvidence, []GitOpsDeliveryEvidenceOmission) {
+	return buildConfigHubSpaceLiveStatusEvidence(raw, now, staleAfter, nil, "")
+}
+
+// buildConfigHubSpaceLiveStatusEvidence reads the Space annotation. covered
+// holds the spaces (by ID and slug) whose live status was found on a Release,
+// for which a missing annotation is expected and not an omission.
+// releaseWindow is the CreatedAt cutoff of the Release read, or "" when
+// Releases were not read.
+func buildConfigHubSpaceLiveStatusEvidence(raw string, now time.Time, staleAfter time.Duration, covered map[string]bool, releaseWindow string) ([]ConfigHubLiveStatusEvidence, []GitOpsDeliveryEvidenceOmission) {
 	raw = strings.TrimSpace(raw)
 	if raw == "" || raw == "null" {
 		return nil, []GitOpsDeliveryEvidenceOmission{{
@@ -471,6 +507,13 @@ func buildConfigHubLiveStatusEvidence(raw string, now time.Time, staleAfter time
 	omissions := []GitOpsDeliveryEvidenceOmission{}
 	for _, item := range items {
 		status, ok, omission := configHubLiveStatusFromSpaceItem(item, now, staleAfter)
+		if !ok && omission.Layer != "" && (covered[status.SpaceID] || covered[status.Space]) {
+			// Not annotated, and its live status is on a Release: as expected.
+			omission = GitOpsDeliveryEvidenceOmission{}
+		} else if !ok && releaseWindow != "" && strings.Contains(omission.Reason, "has no "+configHubLiveStatusAnnotation) {
+			omission.Reason = fmt.Sprintf("space %q has no live status: no Release created since %s carries LiveStatus, and the space has no %s annotation (where ConfigHub servers before 2026-10-03 kept it)", firstNonEmpty(status.Space, status.SpaceID, "unknown"), releaseWindow, configHubLiveStatusAnnotation)
+			omission.Impact = "no status reported by a deploying tool was found; an older Release's status is not read (widen the window to include it)"
+		}
 		if omission.Layer != "" {
 			omissions = append(omissions, omission)
 		}
@@ -482,7 +525,7 @@ func buildConfigHubLiveStatusEvidence(raw string, now time.Time, staleAfter time
 	sort.Slice(statuses, func(i, j int) bool {
 		return statuses[i].Space < statuses[j].Space
 	})
-	if len(statuses) == 0 && len(omissions) == 0 {
+	if len(statuses) == 0 && len(omissions) == 0 && len(covered) == 0 {
 		omissions = append(omissions, GitOpsDeliveryEvidenceOmission{
 			Layer:  "confighub.liveStatus",
 			Reason: fmt.Sprintf("no %s annotation found", configHubLiveStatusAnnotation),
@@ -507,7 +550,7 @@ func configHubLiveStatusFromSpaceItem(item map[string]interface{}, now time.Time
 	spaceID := mcpFirstString(spaceObj, "SpaceID", "spaceId", "ID", "id")
 	spaceIDRaw := firstRawString(spaceObj, "SpaceID", "spaceId", "ID", "id")
 	if annotation == "" {
-		return ConfigHubLiveStatusEvidence{}, false, GitOpsDeliveryEvidenceOmission{
+		return ConfigHubLiveStatusEvidence{Space: space, SpaceID: spaceID}, false, GitOpsDeliveryEvidenceOmission{
 			Layer:  "confighub.liveStatus",
 			Reason: fmt.Sprintf("space %q has no %s annotation", firstNonEmpty(space, spaceID, "unknown"), configHubLiveStatusAnnotation),
 			Impact: "no event-consumer status writeback is available for this space",
@@ -524,6 +567,7 @@ func configHubLiveStatusFromSpaceItem(item map[string]interface{}, now time.Time
 	}
 
 	status := ConfigHubLiveStatusEvidence{
+		RecordedOn:     "space-annotation",
 		Space:          space,
 		SpaceID:        spaceID,
 		Source:         mcpFirstString(statusMap, "source", "Source"),
@@ -539,6 +583,21 @@ func configHubLiveStatusFromSpaceItem(item map[string]interface{}, now time.Time
 		revisionRaw:    firstRawString(statusMap, "revision", "Revision"),
 	}
 
+	freshnessProblem := configHubLiveStatusFreshness(&status, now, staleAfter)
+	if freshnessProblem != "" {
+		return status, true, GitOpsDeliveryEvidenceOmission{
+			Layer:  "confighub.liveStatus.freshness",
+			Reason: fmt.Sprintf("space %q app %q: %s", firstNonEmpty(space, spaceID, "unknown"), firstNonEmpty(status.App, "unknown"), freshnessProblem),
+			Impact: "reported state is retained but does not establish current delivery or application health; read current controller/workload status",
+		}
+	}
+	return status, true, GitOpsDeliveryEvidenceOmission{}
+}
+
+// configHubLiveStatusFreshness sets the freshness and the two verdicts of a
+// reported status, and returns why it is not fresh, or "".
+func configHubLiveStatusFreshness(status *ConfigHubLiveStatusEvidence, now time.Time, staleAfter time.Duration) string {
+	status.Freshness = "unknown"
 	observedAt, validTime := parseConfigHubObservedAt(status.ObservedAt)
 	freshnessProblem := ""
 	switch {
@@ -561,16 +620,113 @@ func configHubLiveStatusFromSpaceItem(item map[string]interface{}, now time.Time
 			freshnessProblem = fmt.Sprintf("observedAt is older than the %s freshness threshold", staleAfter)
 		}
 	}
-	status.DeliveryVerdict = configHubDeliveryVerdict(status)
-	status.ApplicationHealthVerdict = configHubApplicationHealthVerdict(status)
-	if freshnessProblem != "" {
-		return status, true, GitOpsDeliveryEvidenceOmission{
-			Layer:  "confighub.liveStatus.freshness",
-			Reason: fmt.Sprintf("space %q app %q: %s", firstNonEmpty(space, spaceID, "unknown"), firstNonEmpty(status.App, "unknown"), freshnessProblem),
-			Impact: "reported state is retained but does not establish current delivery or application health; read current controller/workload status",
+	status.DeliveryVerdict = configHubDeliveryVerdict(*status)
+	status.ApplicationHealthVerdict = configHubApplicationHealthVerdict(*status)
+	return freshnessProblem
+}
+
+// configHubLiveStatusFromReleases reads the live status ConfigHub records on
+// each Release, written by the tool deploying it. For each Space and Target it
+// keeps the newest Release that has one: an older Release's status describes
+// what that Release was, not what is running now.
+func configHubLiveStatusFromReleases(raw string, now time.Time, staleAfter time.Duration) ([]ConfigHubLiveStatusEvidence, []GitOpsDeliveryEvidenceOmission) {
+	_, items, omission := parseGitOpsEvidenceItems(raw, "confighub.liveStatus", "release list")
+	if omission.Layer != "" {
+		omission.Impact = "the live status recorded on Releases could not be read"
+		return nil, []GitOpsDeliveryEvidenceOmission{omission}
+	}
+	type found struct {
+		status     ConfigHubLiveStatusEvidence
+		problem    string
+		createdAt  string
+		releaseNum int
+	}
+	newest := map[string]found{}
+	for _, item := range items {
+		releaseObj := mcpNestedMap(item, "Release", "release")
+		if releaseObj == nil {
+			releaseObj = item
+		}
+		live := mcpNestedMap(releaseObj, "LiveStatus", "liveStatus")
+		if len(live) == 0 {
+			continue
+		}
+		space, spaceID := configHubRelatedRef(item, releaseObj, "Space")
+		target, targetID := configHubRelatedRef(item, releaseObj, "Target")
+		release := ConfigHubReleaseEvidence{
+			Slug:           mcpFirstString(releaseObj, "Slug", "slug", "Name", "name"),
+			ReleaseID:      mcpFirstString(releaseObj, "ReleaseID", "releaseId", "ID", "id"),
+			BundleBaseName: mcpFirstString(releaseObj, "BundleBaseName", "bundleBaseName"),
+		}
+		release.ReleaseNum, _ = mcpFirstInt(releaseObj, "ReleaseNum", "releaseNum")
+		observedAt := mcpFirstString(live, "ObservedAt", "observedAt")
+		if t, ok := parseConfigHubObservedAt(observedAt); ok && t.IsZero() {
+			// The SDK prints an unset time as the zero time.
+			observedAt = ""
+		}
+		status := ConfigHubLiveStatusEvidence{
+			RecordedOn:        "release",
+			Space:             space,
+			SpaceID:           spaceID,
+			Target:            firstNonEmpty(target, targetID),
+			Release:           configHubReleaseLabel(release),
+			ReleaseID:         release.ReleaseID,
+			Source:            mcpFirstString(live, "Reporter", "reporter"),
+			DataSource:        mcpFirstString(live, "DataSource", "dataSource"),
+			SyncStatus:        mcpFirstString(live, "Sync", "sync"),
+			HealthStatus:      mcpFirstString(live, "Health", "health"),
+			OperationPhase:    mcpFirstString(live, "Operation", "operation"),
+			ReporterSync:      mcpFirstString(live, "ReporterSync", "reporterSync"),
+			ReporterHealth:    mcpFirstString(live, "ReporterHealth", "reporterHealth"),
+			ReporterOperation: mcpFirstString(live, "ReporterOperation", "reporterOperation"),
+			Message:           mcpFirstString(live, "Message", "message"),
+			ObservedAt:        observedAt,
+		}
+		problem := configHubLiveStatusFreshness(&status, now, staleAfter)
+		createdAt := mcpFirstString(releaseObj, "CreatedAt", "createdAt")
+		key := firstNonEmpty(spaceID, space) + "/" + firstNonEmpty(targetID, target)
+		if previous, seen := newest[key]; seen {
+			if evidenceTimeAfter(previous.createdAt, createdAt) || (previous.createdAt == createdAt && previous.releaseNum > release.ReleaseNum) {
+				continue
+			}
+		}
+		newest[key] = found{status: status, problem: problem, createdAt: createdAt, releaseNum: release.ReleaseNum}
+	}
+
+	keys := make([]string, 0, len(newest))
+	for key := range newest {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	statuses := make([]ConfigHubLiveStatusEvidence, 0, len(keys))
+	omissions := []GitOpsDeliveryEvidenceOmission{}
+	for _, key := range keys {
+		entry := newest[key]
+		statuses = append(statuses, entry.status)
+		if entry.problem != "" {
+			omissions = append(omissions, GitOpsDeliveryEvidenceOmission{
+				Layer:  "confighub.liveStatus.freshness",
+				Reason: fmt.Sprintf("space %q release %q: %s", firstNonEmpty(entry.status.Space, entry.status.SpaceID, "unknown"), entry.status.Release, entry.problem),
+				Impact: "reported state is retained but does not establish current delivery or application health; read current controller/workload status",
+			})
 		}
 	}
-	return status, true, GitOpsDeliveryEvidenceOmission{}
+	return statuses, omissions
+}
+
+// configHubLiveStatusSpaces is the set of spaces, by ID and by slug, that the
+// statuses describe.
+func configHubLiveStatusSpaces(statuses []ConfigHubLiveStatusEvidence) map[string]bool {
+	spaces := map[string]bool{}
+	for _, status := range statuses {
+		if status.SpaceID != "" {
+			spaces[status.SpaceID] = true
+		}
+		if status.Space != "" {
+			spaces[status.Space] = true
+		}
+	}
+	return spaces
 }
 
 func parseConfigHubObservedAt(raw string) (time.Time, bool) {
@@ -1203,6 +1359,9 @@ func outputGitOpsDeliveryEvidenceHuman(evidence *GitOpsDeliveryEvidence) {
 				status.ApplicationHealthVerdict,
 				status.Freshness,
 			)
+			if status.Release != "" {
+				fmt.Printf("      recorded on release %s (reporter %s)\n", status.Release, firstNonEmpty(status.Source, "-"))
+			}
 			if status.RevisionCorrelation != nil {
 				fmt.Printf("      reported revision correlation: %s\n", configHubRevisionCorrelationText(status.RevisionCorrelation))
 			}
@@ -1393,9 +1552,13 @@ func renderGitOpsDeliveryEvidenceMarkdown(b *strings.Builder, evidence *GitOpsDe
 			if status.RevisionCorrelation != nil {
 				correlation = configHubRevisionCorrelationText(status.RevisionCorrelation)
 			}
+			app := firstNonEmpty(status.App, "-")
+			if status.Release != "" {
+				app = "release " + gitOpsMarkdownCodeSpan(status.Release)
+			}
 			b.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s | %s | %s | %s | %s |\n",
 				firstNonEmpty(status.Space, "-"),
-				firstNonEmpty(status.App, "-"),
+				app,
 				firstNonEmpty(status.SyncStatus, "-"),
 				firstNonEmpty(status.HealthStatus, "-"),
 				firstNonEmpty(status.OperationPhase, "-"),

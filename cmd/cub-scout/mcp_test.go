@@ -146,7 +146,7 @@ func TestNewMCPGateway_ToolDescriptionsExpressChainBoundaries(t *testing.T) {
 		{name: "confighub_changesets", contains: []string{"Connected-only", "what governed write changed a known unit or space", "approval trail", "Load after trace or confighub_units"}},
 		{name: "confighub_k8s_resources", contains: []string{"Connected-only", "Resource-backed Kubernetes configuration reader", "stored ConfigHub Resource data, not live cluster state", "either space or target is REQUIRED", "low-API-load"}},
 		{name: "confighub_k8s_types", contains: []string{"Connected-only", "Resource-backed Kubernetes type survey", "cheapest ConfigHub-side survey", "either space or target is REQUIRED", "stored ConfigHub Resource metadata"}},
-		{name: "confighub_live_status", contains: []string{"Connected-only", "live-status writeback", "Space is REQUIRED", "best-effort reported evidence"}},
+		{name: "confighub_live_status", contains: []string{"Connected-only", "records it on each Release", "Space annotation older", "Space is REQUIRED", "best-effort reported evidence"}},
 		{name: "confighub_releases", contains: []string{"Connected-only", "Release history", "Space is REQUIRED", "pair with gitops status"}},
 		{name: "confighub_resources", contains: []string{"Connected-only", "Resource entity query", "fleet-wide Data predicates", "Space is REQUIRED", "extracted Resource rows, not live cluster state"}},
 		{name: "confighub_unit_events", contains: []string{"Connected-only", "UnitEvent reader", "Space is REQUIRED", "DO NOT use as a cursor-consuming event consumer"}},
@@ -774,13 +774,17 @@ func TestMCPCompareSourceTruthStrategyEnumTracksAgentStrategies(t *testing.T) {
 }
 
 func TestMCPGatewayHandleRequest_ToolsCallConfigHubLiveStatus(t *testing.T) {
-	var gotConnectedArgs []string
+	var gotConnectedArgs, gotReleaseArgs []string
 	gateway := newMCPGatewayWithMode(
 		func(ctx context.Context, args []string) (string, error) {
 			t.Fatal("standalone runner should not be used")
 			return "", nil
 		},
 		func(ctx context.Context, args []string) (string, error) {
+			if args[0] == "release" {
+				gotReleaseArgs = append([]string(nil), args...)
+				return "[]", nil
+			}
 			gotConnectedArgs = append([]string(nil), args...)
 			return `[{"Slug":"prod","SpaceID":"sp-123","Annotations":{"confighub.com/live-status":"{\"source\":\"argobot\",\"app\":\"prod\",\"syncStatus\":\"Synced\",\"healthStatus\":\"Healthy\",\"operationPhase\":\"Succeeded\",\"observedAt\":\"2026-09-10T12:00:00Z\"}"}}]`, nil
 		},
@@ -801,6 +805,9 @@ func TestMCPGatewayHandleRequest_ToolsCallConfigHubLiveStatus(t *testing.T) {
 	wantArgs := []string{"space", "list", "-o", "json", "--select", "Slug,SpaceID,Annotations,Labels", "--where", "Slug = 'prod'"}
 	if !reflect.DeepEqual(gotConnectedArgs, wantArgs) {
 		t.Fatalf("connected args = %v, want %v", gotConnectedArgs, wantArgs)
+	}
+	if len(gotReleaseArgs) != 8 || strings.Join(gotReleaseArgs[:7], " ") != "release list --space prod -o json --where" || !strings.HasPrefix(gotReleaseArgs[7], "CreatedAt > '") {
+		t.Fatalf("release args = %v, want the Releases of prod in the default window", gotReleaseArgs)
 	}
 
 	var result struct {
