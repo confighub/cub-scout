@@ -11,6 +11,52 @@
 > 2026-10-10).
 > Current gates: [the readiness ledger](releases/v2.15-readiness.md).
 
+## 3.x direction after ConfigHub's October changes — 2026-11-08
+
+Recorded on the maintainer's instruction ("yes ok", 2026-11-08) after a review
+of what ConfigHub shipped in October and a comparison with Radar (#886). It
+adds to the plan below; the P4–P6 gates and their order are unchanged, and
+v2.15 work stays paused until the maintainer resumes it.
+
+**What changed.** ConfigHub shipped what this plan treated as future or
+external: `cub cluster attach` / `up` wire a cluster through Argo CD, Flux or
+Sveltos; argobot is the general sync bot for all three; each Release carries
+the `LiveStatus` its deploying tool reports, and gates can read it (v2.14.2
+reads it; #882). The witness / bot boundary of 2026-10-09 (#502) holds:
+cub-scout does not trigger reconciliation.
+
+**3.0 (P6), in addition to the compatibility work of #595:**
+
+1. An independent check of the `LiveStatus` a deploying tool records on a
+   Release: per field, whether the cluster agrees, disagrees or cannot be
+   observed. A fact, never a verdict (#887).
+2. A read-only pre-attach report for a brownfield cluster before
+   `cub cluster attach`: what runs, who owns it, what an attach would meet
+   (#888).
+3. Signed receipts (DSSE / cosign over the existing in-toto statement), so a
+   ConfigHub gate or Pilot can check a receipt off the cluster (#889).
+4. The remaining items of #882: the bot's labels, ownership for clusters wired
+   by `cub cluster`, Flux 2.10, the Flux web UI as an actor, docs.
+
+The P4 conformance matrix and adapters may narrow to what these need; that is
+decided when v2.15 resumes, not here.
+
+**3.1, defined for the first time:**
+
+5. Facts in ConfigHub (#600) through the opt-in channel adopted on 2026-09-26.
+   ConfigHub is then cub-scout's shared view: facts and receipts appear beside
+   Units and Releases, so cub-scout gains a team screen without building a UI,
+   which the Radar comparison names as Radar's main advantage. Waits on a
+   schema and storage agreement with ConfigHub (D6).
+6. `fleet outliers` (#562): check whether `cub cluster`'s cluster Spaces and
+   annotations give the stable cluster identity D7 requires before the 3.0
+   removal is final; rebuild it in 3.1 if they do.
+
+**Unchanged:** no writes to clusters, no remediation, no metrics, logs or
+traffic, no UI of cub-scout's own. Git-as-intended-state comparison already
+exists without ConfigHub (`compare three-way --dry-from`, #479) and is not a
+gap. The value claim stays scoped to what the paid benchmark shows.
+
 ## Approved release scope — 2026-10-06
 
 The maintainer approved releasing the verified v2.13 candidate and moving
