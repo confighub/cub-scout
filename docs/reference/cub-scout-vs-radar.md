@@ -41,7 +41,7 @@ still match the source of truth — and can I prove it, without touching anythin
 | Per-field change cause | Not modeled | `manual-edit` vs `controller-drift` vs `unknown`, from `managedFields` |
 | Provenance (where a value came from) | App grouping via Helm / Argo / Flux / label / name evidence | per-field `gitSource` (repo + `file:line`) and ConfigHub `bindingSource` |
 | Source-of-truth verdict | GitOps sync state + field drift vs the GitOps source | `compare source-truth` → PASS / WATCH / BLOCK / ASK across 9 strategies |
-| Intended vs rendered vs running | Resource compare + GitOps source-vs-live diff | `compare three-way` (DRY/WET/LIVE, connected) + `compare drift --file` (standalone) |
+| Intended vs rendered vs running | Resource compare + GitOps source-vs-live diff | `compare three-way` — DRY/WET/LIVE (connected) or standalone DRY-vs-LIVE from rendered YAML (`--dry-from`, #479) — plus `compare drift --file` |
 | Tamper-evident evidence | None — live dashboard (Radar Cloud retains ~30 days of history) | `receipt verify` → fingerprinted in-toto Statement v1; CI-gateable + chainable |
 | Cluster audit / checks | 44 best-practice checks | `scan` — 46 patterns (+ confighub-scan 3,513 catalog) + `doctor` summary |
 | Topology | Live resource graph with real-time traffic (Hubble / Istio / Caretta / Beyla) | `graph export` / `trace` ownership lineage (no live traffic) |
@@ -70,6 +70,8 @@ dashboard**, not just things cub-scout also happens to do:
    It has no concept of a governed *intended* state that exists before rendering.
    `compare three-way` compares DRY (intended) / WET (rendered) / LIVE (running), so it
    catches render-time faults and drift that a source-vs-live diff cannot separate.
+   DRY-vs-LIVE also runs standalone — no ConfigHub — when you pass rendered YAML via
+   `compare three-way --dry-from` (#479); connected mode adds the governed WET stage.
 
 3. **A verdict stricter than "in sync."** "Synced" means "the target revision was
    applied" — it says nothing about a human editing on top afterward.
@@ -128,7 +130,7 @@ the right tool:
 
 | Gap | Why it matters | Status |
 |-----|----------------|--------|
-| Standalone three-way (git as DRY) | `compare three-way` still needs ConfigHub; Radar delivers source-vs-live drift with no account | Stage B back-resolution (#440) lays the groundwork |
+| Standalone three-way from a *raw* git repo | `compare three-way --dry-from` already does standalone DRY-vs-LIVE from **rendered** YAML (#479, v2.4.0); rendering a raw repo for you is the remaining piece | `--git-path` / `--source-path` back-resolution (#440) lays the groundwork |
 | No shared / web view | Teams want one screen to look at together — a real draw of Radar's UI | Out of scope today (CLI / TUI / JSON) |
 | Live metrics / traffic / cost | Breadth Radar has and cub-scout intentionally lacks | Out of scope — cub-scout is not an observability console |
 | Receipt signing | Receipts are tamper-evident (SHA-256 / JCS) but not yet cryptographically signed | in-toto base makes DSSE / cosign a natural next step |
