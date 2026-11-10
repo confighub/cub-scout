@@ -2129,3 +2129,24 @@ are in [the notes](docs/releases/v2.14.2.md#publication-checks).
   pinned `scout-mcp` skill still describes `confighub_live_status` as a space
   list read.
 - **v2.15 is still paused.**
+
+## Roadmap trimmed — 2026-11-10
+
+On the maintainer's instruction ("throw anything we don't really need in the
+roadmap", then "go ahead"), after an independent review of the v2.14 to 3.1
+plans. The authority is the
+[trimmed plan](docs/roadmap-3.0-execution.md#trimmed-plan--2026-11-10).
+
+- **Planned:** v2.15 = #827 (false health in `explain`), #887, the rest of
+  #882, the rest of #599. v2.16 = #888, #596 for CLI/MCP/TUI, deprecation
+  notices. 3.0 = the transition only (#595, #386). 3.1 = #600 with #520, and
+  #889.
+- **Not planned** (issues open, labelled `not-planned`): #641's fallback
+  reporter, #605, #604, #602, #601, #584, #539, #519, #642, #594 as a separate
+  deliverable, and rebuilding `fleet outliers` (#562 is removal only).
+- **Not scheduled:** the paid benchmark. 3.0 makes no cost-saving claim
+  without it. Earlier text saying paid runs are authorized is superseded.
+- **v2.15 is still paused.** Nothing here starts it.
+- The review's other findings (waivers not recorded where the rule asks, the
+  CI artifact holding a dead worker secret, the closed #603 still cited as
+  open) are filed as housekeeping issues the same day.

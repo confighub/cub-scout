@@ -11,7 +11,55 @@
 > 2026-10-10).
 > Current gates: [the readiness ledger](releases/v2.15-readiness.md).
 
+## Trimmed plan — 2026-11-10
+
+Adopted by the maintainer on 2026-11-10 ("go ahead") after an independent
+review of every plan from v2.14 to 3.1. **Where this section and anything
+below it disagree, this section wins**: it supersedes the release assignments
+in the 2026-11-08 section, the P4–P6 rows of the phase table, and decisions D5
+and D7. v2.15 work stays paused until the maintainer resumes it.
+
+| Release | Scope |
+|---|---|
+| v2.15 | [#827] `explain` reports a workload healthy while its Flux Kustomization is failing (the one open correctness defect); [#887] independent check of a Release's reported live status; the remaining items of [#882]; the rest of [#599] (explicit cluster, identity, reported cost). Bump the ConfigHub SDK when ConfigHub's minor version moves ([#758]). |
+| v2.16 | [#888] pre-attach report; [#596] conformance narrowed to CLI, MCP and TUI; deprecation notices for everything 3.0 removes, including `fleet outliers`. |
+| 3.0 | The transition only ([#595], [#386]): removals, `/v3`, a cub floor named at release time against the then-current cub (the "0.6" below predates the SDK reads), a migration guide. No new features, as [the roadmap](roadmap.md#path-to-30) has always said. |
+| 3.1 | [#600] facts in ConfigHub, with the pullable bot image ([#520]); [#889] signed receipts, key-based and verifiable offline first. Waits on a storage agreement with ConfigHub (D6), which has no date; 3.1 has none either. |
+
+**Not scheduled: the paid benchmark** ([#645]'s value gate). Paid runs are not
+approved. Until one is run, 3.0 ships with the "we measure" wording above and
+no cost- or time-saving claim. This replaces every statement below that a paid
+run is "authorized".
+
+**Not planned.** No further work is scheduled on these; each issue stays open,
+labelled `not-planned`, so the idea is kept. Opt-in previews already merged
+from them stay as they are, labelled previews.
+
+| Item | Why |
+|---|---|
+| [#641] fallback live-status publication (D5) | argobot records `Release.LiveStatus` for Argo CD, Flux and Sveltos; a second writer of that field would conflict. The read-side findings of #641 stand. |
+| [#605] evidence history and verdicts over a window | A verdict is the judge's, not the witness's, and its local store contradicts D6. Facts in ConfigHub ([#600]) cover the need. |
+| [#604] MCP over HTTP and remote use | No current user or plan needs it. |
+| [#602] Argo Rollouts and source hydrator; [#601] further Crossplane v2 work; [#584] multi-architecture image search | Adapters with no ConfigHub need behind them. Crossplane stays labelled experimental. |
+| [#539] cheaper always-on watch and bot polling | Matters only for a long-running cub-scout bot, which argobot makes unnecessary. |
+| [#519] Commander integration and TUI convergence | Not pursued since v2.9. |
+| [#642] ConfigHub-level cost benchmark | Belongs to ConfigHub and Pilot. |
+| [#594] capability matrix as its own deliverable | Becomes a table in the docs, filled as cells are proven. |
+| Rebuilding `fleet outliers` ([#562], D7) | Removed in 3.0 as planned; the 2026-11-08 idea of rebuilding it in 3.1 is dropped. |
+
+[#645]: https://github.com/confighub/cub-scout/issues/645
+[#758]: https://github.com/confighub/cub-scout/issues/758
+[#827]: https://github.com/confighub/cub-scout/issues/827
+[#882]: https://github.com/confighub/cub-scout/issues/882
+[#887]: https://github.com/confighub/cub-scout/issues/887
+[#888]: https://github.com/confighub/cub-scout/issues/888
+[#889]: https://github.com/confighub/cub-scout/issues/889
+
 ## 3.x direction after ConfigHub's October changes — 2026-11-08
+
+> **Superseded in part on 2026-11-10.** The release assignments here (new
+> features in 3.0, the `fleet outliers` rebuild in 3.1) are replaced by the
+> trimmed plan above. The account of what changed in ConfigHub stands.
 
 Recorded on the maintainer's instruction ("yes ok", 2026-11-08) after a review
 of what ConfigHub shipped in October and a comparison with Radar (#886). It
