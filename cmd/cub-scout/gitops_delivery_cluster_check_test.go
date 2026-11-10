@@ -77,7 +77,8 @@ func checkFlux(digest string) (*unstructured.Unstructured, *unstructured.Unstruc
 }
 
 func checkStatus(sync string) []ConfigHubLiveStatusEvidence {
-	return []ConfigHubLiveStatusEvidence{{RecordedOn: "release", Space: "payments-prod", Release: "payments-prod#2", SyncStatus: sync, manifestDigest: checkDigest}}
+	return []ConfigHubLiveStatusEvidence{{RecordedOn: "release", Space: "payments-prod", Release: "payments-prod#2", SyncStatus: sync, manifestDigest: checkDigest,
+		ObservedAt: checkNow.Add(-30 * time.Second).Format(time.RFC3339), Freshness: "fresh"}}
 }
 
 func TestClusterCheckComparesTheRecordedSyncStateWithTheControllers(t *testing.T) {
@@ -162,4 +163,64 @@ func TestClusterCheckLeavesAnnotationStatusesAloneAndReadsNothingForThem(t *test
 	checkLiveStatusesAgainstCluster(context.Background(), client, statuses, checkNow)
 	require.True(t, strings.Contains(statuses[0].ClusterCheck.Reason, "no complete manifest digest"))
 	require.Empty(t, client.Actions())
+}
+
+// The findings of the independent review of #896, each as a case that must
+// not produce agreement or disagreement.
+func TestClusterCheckDoesNotCompareWhatCannotBeCompared(t *testing.T) {
+	noRegistryLookup(t)
+	repository, applied := checkFlux(checkDigest)
+	multi := checkApplication("multi", "", checkDigest)
+	unstructured.RemoveNestedField(multi.Object, "spec", "source")
+	require.NoError(t, unstructured.SetNestedSlice(multi.Object, []interface{}{map[string]interface{}{"repoURL": checkRepo}}, "spec", "sources"))
+	forbidden := func(client *dynamicfake.FakeDynamicClient) {
+		client.PrependReactor("list", "applications", func(ktesting.Action) (bool, runtime.Object, error) {
+			return true, nil, apierrors.NewForbidden(schema.GroupResource{Group: "argoproj.io", Resource: "applications"}, "", nil)
+		})
+	}
+	for _, tc := range []struct {
+		name    string
+		change  func(*ConfigHubLiveStatusEvidence)
+		objects []runtime.Object
+		react   func(*dynamicfake.FakeDynamicClient)
+		reason  string
+	}{
+		{"a stale status", func(s *ConfigHubLiveStatusEvidence) { s.Freshness = "stale" }, []runtime.Object{checkApplication("a", checkRepo, otherDigest)}, nil, "the recorded status is stale"},
+		{"an undated status", func(s *ConfigHubLiveStatusEvidence) { s.Freshness, s.ObservedAt = "unknown", "" }, []runtime.Object{checkApplication("a", checkRepo, checkDigest)}, nil, "the recorded status is unknown"},
+		{"a sync state that is neither Synced nor OutOfSync", func(s *ConfigHubLiveStatusEvidence) { s.SyncStatus = "Progressing" }, []runtime.Object{checkApplication("a", checkRepo, checkDigest)}, nil, `"Progressing" is neither Synced nor OutOfSync`},
+		{"a newer Release with no status", func(s *ConfigHubLiveStatusEvidence) { s.SupersededByRelease = "payments-prod#3" }, []runtime.Object{checkApplication("a", checkRepo, otherDigest)}, nil, "a newer Release, payments-prod#3, has no recorded status"},
+		{"a controller that reconciled after the status was recorded", func(s *ConfigHubLiveStatusEvidence) {
+			s.ObservedAt = checkNow.Add(-5 * time.Minute).Format(time.RFC3339)
+		}, []runtime.Object{checkApplication("a", checkRepo, otherDigest)}, nil, "reconciled after the status was recorded"},
+		{"a kind that could not be read beside one that agrees", nil, []runtime.Object{repository, applied}, forbidden, "not every controller kind could be read; Argo CD Applications could not be listed"},
+		{"a multi-source Application", nil, []runtime.Object{multi}, nil, "1 of 1 controllers pulling this space gave no settled revision"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			statuses := checkStatus("Synced")
+			if tc.change != nil {
+				tc.change(&statuses[0])
+			}
+			client := checkClient(tc.objects...)
+			if tc.react != nil {
+				tc.react(client)
+			}
+			checkLiveStatusesAgainstCluster(context.Background(), client, statuses, checkNow)
+			check := statuses[0].ClusterCheck
+			require.Equal(t, liveStatusClusterNotObservable, check.State, check.Reason)
+			require.Contains(t, check.Reason, tc.reason)
+		})
+	}
+}
+
+// A kind that is not installed is not a kind that could not be read.
+func TestClusterCheckTreatsAMissingKindAsAbsent(t *testing.T) {
+	noRegistryLookup(t)
+	client := checkClient(checkApplication("a", checkRepo, checkDigest))
+	client.PrependReactor("list", "ocirepositories", func(ktesting.Action) (bool, runtime.Object, error) {
+		return true, nil, apierrors.NewNotFound(schema.GroupResource{Group: "source.toolkit.fluxcd.io", Resource: "ocirepositories"}, "")
+	})
+	statuses := checkStatus("Synced")
+	checkLiveStatusesAgainstCluster(context.Background(), client, statuses, checkNow)
+	require.Equal(t, liveStatusClusterAgrees, statuses[0].ClusterCheck.State, statuses[0].ClusterCheck.Reason)
+	require.NotContains(t, statuses[0].ClusterCheck.Reason, "could not be listed")
 }

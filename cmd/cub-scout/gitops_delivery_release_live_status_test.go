@@ -212,3 +212,17 @@ func TestReleaseLiveStatusOnARecordedServerResponse(t *testing.T) {
 	require.Equal(t, agent.VerdictPASS, status.DeliveryVerdict)
 	require.Equal(t, agent.VerdictBLOCK, status.ApplicationHealthVerdict)
 }
+
+// A newer Release with no status: the older Release's status is shown, marked
+// as superseded, and an omission says so.
+func TestAStatusOnAnOlderReleaseSaysItIsSuperseded(t *testing.T) {
+	now := time.Date(2026, 10, 26, 12, 0, 0, 0, time.UTC)
+	// Entry 0 is ReleaseNum 2 (no status); entry 1 is ReleaseNum 1 (status).
+	raw, _, space := recordedReleasesWithLiveStatus(t, nil, liveStatus("Synced", "Healthy", "Succeeded", "2026-10-26T11:59:00Z"))
+	statuses, omissions := configHubLiveStatusFromReleases(raw, now, 15*time.Minute)
+	require.Len(t, statuses, 1)
+	require.Equal(t, space+"#1", statuses[0].Release)
+	require.Equal(t, space+"#2", statuses[0].SupersededByRelease)
+	require.Len(t, omissions, 1)
+	require.Contains(t, omissions[0].Reason, "the newest Release, "+space+"#2, has no recorded status")
+}

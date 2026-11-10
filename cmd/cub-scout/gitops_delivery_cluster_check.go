@@ -12,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -22,7 +24,7 @@ const (
 	liveStatusClusterDisagrees     = "disagrees"
 	liveStatusClusterNotObservable = "not-observable"
 
-	liveStatusClusterLimitation = "Compares one thing: whether a controller in this cluster reports this Release's manifest digest as applied, against the sync state the deploying tool recorded. Health is not compared. A controller's report is not proof that workloads converged. This cluster may not be the Release's Target; a controller here that pulls the same space from elsewhere would be compared all the same."
+	liveStatusClusterLimitation = "Compares one thing: whether a controller in this cluster reports this Release's manifest digest as applied, against the sync state the deploying tool recorded. The two reports were made at different moments and can both have been true in turn. Health is not compared. A controller's report is not proof that workloads converged. Controllers are matched by ConfigHub registry and space slug only: not by organization, Target or path, and this cluster may not be the Release's Target."
 )
 
 // ConfigHubLiveStatusClusterCheck is cub-scout's own reading of the cluster
@@ -67,6 +69,10 @@ func readLiveStatusClusterControllers(ctx context.Context, client dynamic.Interf
 	found := liveStatusClusterControllers{bySpace: map[string][]*unstructured.Unstructured{}}
 	list := func(gvr schema.GroupVersionResource, kind string) []unstructured.Unstructured {
 		items, err := client.Resource(gvr).Namespace(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
+		if apierrors.IsNotFound(err) || meta.IsNoMatchError(err) {
+			// The kind is not installed here: nothing of it to read.
+			return nil
+		}
 		if err != nil {
 			found.unread = append(found.unread, fmt.Sprintf("%s could not be listed: %v", kind, err))
 			return nil
@@ -82,9 +88,26 @@ func readLiveStatusClusterControllers(ctx context.Context, client dynamic.Interf
 	}
 	applications := list(liveStatusApplicationGVR, "Argo CD Applications")
 	for i := range applications {
-		repo, _, _ := unstructured.NestedString(applications[i].Object, "spec", "source", "repoURL")
-		if slug := space(repo); slug != "" {
-			found.bySpace[slug] = append(found.bySpace[slug], &applications[i])
+		repos := []string{}
+		if repo, _, _ := unstructured.NestedString(applications[i].Object, "spec", "source", "repoURL"); repo != "" {
+			repos = append(repos, repo)
+		}
+		// A multi-source Application is counted, so that it is reported as
+		// not comparable and not silently left out of "all controllers".
+		sources, _, _ := unstructured.NestedSlice(applications[i].Object, "spec", "sources")
+		for _, source := range sources {
+			if entry, ok := source.(map[string]interface{}); ok {
+				if repo, _ := entry["repoURL"].(string); repo != "" {
+					repos = append(repos, repo)
+				}
+			}
+		}
+		matched := map[string]bool{}
+		for _, repo := range repos {
+			if slug := space(repo); slug != "" && !matched[slug] {
+				matched[slug] = true
+				found.bySpace[slug] = append(found.bySpace[slug], &applications[i])
+			}
 		}
 	}
 	sources := map[string]string{}
@@ -132,6 +155,15 @@ func checkLiveStatusesAgainstCluster(ctx context.Context, client dynamic.Interfa
 		case sync == "" || sync == "unknown":
 			check.Reason = "the recorded status reports no sync state to compare"
 			continue
+		case sync != "synced" && sync != "outofsync":
+			check.Reason = fmt.Sprintf("the recorded sync state %q is neither Synced nor OutOfSync, so it says nothing a digest can be compared with", status.SyncStatus)
+			continue
+		case status.Freshness != "fresh":
+			check.Reason = fmt.Sprintf("the recorded status is %s (observed %s); comparing it with the cluster now would compare different moments", firstNonEmpty(status.Freshness, "undated"), firstNonEmpty(status.ObservedAt, "at no stated time"))
+			continue
+		case status.SupersededByRelease != "":
+			check.Reason = fmt.Sprintf("a newer Release, %s, has no recorded status; a controller may already be on it, so this Release's status is not compared", status.SupersededByRelease)
+			continue
 		case !completeSHA256Digest.MatchString(status.manifestDigest):
 			check.Reason = "the Release has no complete manifest digest to compare"
 			continue
@@ -152,7 +184,8 @@ func checkLiveStatusesAgainstCluster(ctx context.Context, client dynamic.Interfa
 			}
 			continue
 		}
-		agree, disagree, unknown := 0, 0, 0
+		recordedAt, _ := parseConfigHubObservedAt(status.ObservedAt)
+		agree, disagree, unknown, later := 0, 0, 0, 0
 		for _, object := range controllers {
 			revision := agent.BuildControllerRevisionEvidence(object, status.manifestDigest, now)
 			state := liveStatusClusterNotObservable
@@ -167,6 +200,12 @@ func checkLiveStatusesAgainstCluster(ctx context.Context, client dynamic.Interfa
 				if reportedSynced {
 					state = liveStatusClusterDisagrees
 				}
+			}
+			// A controller that reconciled after the status was recorded can
+			// differ from it without either being wrong.
+			if reported, err := time.Parse(time.RFC3339Nano, revision.ReportedAt); state == liveStatusClusterDisagrees && err == nil && reported.After(recordedAt) {
+				state = liveStatusClusterNotObservable
+				later++
 			}
 			switch state {
 			case liveStatusClusterAgrees:
@@ -183,14 +222,22 @@ func checkLiveStatusesAgainstCluster(ctx context.Context, client dynamic.Interfa
 			return left.Kind+"/"+left.Namespace+"/"+left.Name < right.Kind+"/"+right.Namespace+"/"+right.Name
 		})
 		switch {
+		case len(found.unread) > 0 && disagree == 0:
+			// Agreement must not be claimed over controllers that were not read.
+			check.Reason = "not every controller kind could be read"
 		case disagree > 0:
 			check.State = liveStatusClusterDisagrees
-			check.Reason = fmt.Sprintf("the recorded sync state is %q, and %d of %d controllers pulling this space report otherwise about the Release's digest", status.SyncStatus, disagree, len(controllers))
+			check.Reason = fmt.Sprintf("the recorded sync state is %q (observed %s), and %d of %d controllers pulling this space report otherwise about the Release's digest; where a controller gives no time for its report, the two may describe different moments", status.SyncStatus, status.ObservedAt, disagree, len(controllers))
+		case later > 0:
+			check.Reason = fmt.Sprintf("%d of %d controllers pulling this space reconciled after the status was recorded (%s) and now report otherwise; both can have been true in turn", later, len(controllers), status.ObservedAt)
 		case unknown > 0:
 			check.Reason = fmt.Sprintf("%d of %d controllers pulling this space gave no settled revision to compare", unknown, len(controllers))
 		default:
 			check.State = liveStatusClusterAgrees
 			check.Reason = fmt.Sprintf("the recorded sync state is %q, and all %d controllers pulling this space report the same about the Release's digest", status.SyncStatus, agree)
+		}
+		if len(found.unread) > 0 {
+			check.Reason += "; " + strings.Join(found.unread, "; ")
 		}
 	}
 }

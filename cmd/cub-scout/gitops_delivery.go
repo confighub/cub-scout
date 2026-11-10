@@ -119,10 +119,13 @@ type ConfigHubLiveStatusEvidence struct {
 	ApplicationHealthVerdict agent.ReceiptVerdict          `json:"applicationHealthVerdict"`
 	// ClusterCheck is set on a status recorded on a Release: whether the
 	// cluster in the current context agrees with it (#887).
-	ClusterCheck   *ConfigHubLiveStatusClusterCheck `json:"clusterCheck,omitempty"`
-	spaceIDRaw     string
-	revisionRaw    string
-	manifestDigest string
+	ClusterCheck *ConfigHubLiveStatusClusterCheck `json:"clusterCheck,omitempty"`
+	// SupersededByRelease names a newer Release of the same Space and Target
+	// that has no recorded status: this status then describes an older Release.
+	SupersededByRelease string `json:"supersededByRelease,omitempty"`
+	spaceIDRaw          string
+	revisionRaw         string
+	manifestDigest      string
 }
 
 const configHubRevisionCorrelationSchema = "confighub.reportedRevisionReleaseCorrelation.v1"
@@ -647,17 +650,26 @@ func configHubLiveStatusFromReleases(raw string, now time.Time, staleAfter time.
 		releaseNum int
 	}
 	newest := map[string]found{}
+	newestBare := map[string]ConfigHubReleaseEvidence{}
 	for _, item := range items {
 		releaseObj := mcpNestedMap(item, "Release", "release")
 		if releaseObj == nil {
 			releaseObj = item
 		}
 		live := mcpNestedMap(releaseObj, "LiveStatus", "liveStatus")
-		if len(live) == 0 {
-			continue
-		}
 		space, spaceID := configHubRelatedRef(item, releaseObj, "Space")
 		target, targetID := configHubRelatedRef(item, releaseObj, "Target")
+		if len(live) == 0 {
+			// Remember the newest Release without a status: a status on an
+			// older Release must say it has been superseded.
+			bare := ConfigHubReleaseEvidence{Slug: mcpFirstString(releaseObj, "Slug", "slug", "Name", "name"), ReleaseID: mcpFirstString(releaseObj, "ReleaseID", "releaseId", "ID", "id"), BundleBaseName: mcpFirstString(releaseObj, "BundleBaseName", "bundleBaseName"), CreatedAt: mcpFirstString(releaseObj, "CreatedAt", "createdAt")}
+			bare.ReleaseNum, _ = mcpFirstInt(releaseObj, "ReleaseNum", "releaseNum")
+			key := firstNonEmpty(spaceID, space) + "/" + firstNonEmpty(targetID, target)
+			if previous, seen := newestBare[key]; !seen || evidenceTimeAfter(bare.CreatedAt, previous.CreatedAt) || (bare.CreatedAt == previous.CreatedAt && bare.ReleaseNum > previous.ReleaseNum) {
+				newestBare[key] = bare
+			}
+			continue
+		}
 		release := ConfigHubReleaseEvidence{
 			Slug:           mcpFirstString(releaseObj, "Slug", "slug", "Name", "name"),
 			ReleaseID:      mcpFirstString(releaseObj, "ReleaseID", "releaseId", "ID", "id"),
@@ -708,6 +720,14 @@ func configHubLiveStatusFromReleases(raw string, now time.Time, staleAfter time.
 	omissions := []GitOpsDeliveryEvidenceOmission{}
 	for _, key := range keys {
 		entry := newest[key]
+		if bare, seen := newestBare[key]; seen && (evidenceTimeAfter(bare.CreatedAt, entry.createdAt) || (bare.CreatedAt == entry.createdAt && bare.ReleaseNum > entry.releaseNum)) {
+			entry.status.SupersededByRelease = configHubReleaseLabel(bare)
+			omissions = append(omissions, GitOpsDeliveryEvidenceOmission{
+				Layer:  "confighub.liveStatus",
+				Reason: fmt.Sprintf("space %q: the newest Release, %s, has no recorded status; the status shown is that of the older %s", firstNonEmpty(entry.status.Space, entry.status.SpaceID, "unknown"), entry.status.SupersededByRelease, entry.status.Release),
+				Impact: "the shown status does not describe the newest Release",
+			})
+		}
 		statuses = append(statuses, entry.status)
 		if entry.problem != "" {
 			omissions = append(omissions, GitOpsDeliveryEvidenceOmission{
