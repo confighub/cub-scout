@@ -450,6 +450,15 @@ before implementation.
 
 ### Path to 3.0
 
+> **Trimmed on 2026-11-10.** The maintainer cut this plan back; the current
+> release assignments and the list of items no longer planned are in the
+> [trimmed plan](roadmap-3.0-execution.md#trimmed-plan--2026-11-10), which wins
+> wherever the stages below disagree. In short: v2.15 finishes [#827](https://github.com/confighub/cub-scout/issues/827) and
+> adds the independent live-status check ([#887](https://github.com/confighub/cub-scout/issues/887)); v2.16 adds the pre-attach
+> report ([#888](https://github.com/confighub/cub-scout/issues/888)) and the deprecation notices; 3.0.0 stays the transition
+> only; 3.1 is facts in ConfigHub ([#600](https://github.com/confighub/cub-scout/issues/600)) and signed receipts ([#889](https://github.com/confighub/cub-scout/issues/889)).
+> The paid benchmark is not scheduled, so 3.0.0 makes no cost-saving claim.
+
 **Execution plan, 2026-09-30:** [Delivery plan to cub scout 3.0](roadmap-3.0-execution.md)
 adds ordered work packets, dependencies, adopted cost/quality gates, a 24-case
 benchmark, cheap-subagent assignments, spending envelopes and the first ten
@@ -528,6 +537,12 @@ provenance ([#481](https://github.com/confighub/cub-scout/issues/481)); the Graf
 ([#422](https://github.com/confighub/cub-scout/issues/422), [#421](https://github.com/confighub/cub-scout/issues/421)); the Helm 4 compatibility matrix part of [#588](https://github.com/confighub/cub-scout/issues/588).
 
 ### Remaining 2.x Releases
+
+> **Trimmed on 2026-11-10:** the v2.15.0 and v2.16.0 scopes below are replaced
+> by the [trimmed plan](roadmap-3.0-execution.md#trimmed-plan--2026-11-10).
+> Items it lists as not planned ([#604](https://github.com/confighub/cub-scout/issues/604), [#601](https://github.com/confighub/cub-scout/issues/601), [#602](https://github.com/confighub/cub-scout/issues/602), [#584](https://github.com/confighub/cub-scout/issues/584), [#539](https://github.com/confighub/cub-scout/issues/539), [#605](https://github.com/confighub/cub-scout/issues/605), the
+> fallback reporter of [#641](https://github.com/confighub/cub-scout/issues/641), and [#594](https://github.com/confighub/cub-scout/issues/594) as its own deliverable) are
+> kept below as history, not as intent.
 
 Planned versions for the stages of the Path to 3.0 above. Versions are targets,
 not dates. An item moves to a later minor when its dependencies move, and a
