@@ -2176,3 +2176,27 @@ built with SDK core v0.8.12, refuses it by default.
   lane proving the #887 cluster check live.
 - **Filed:** #898 (channels as the successor to worker status; not planned),
   #899 (connected demos and helper scripts that still depend on workers).
+
+## Live-status cluster check proved live — 2026-11-10
+
+- **Lane:** `gh workflow run CI --ref <branch> -f level=live-status`. It
+  attaches a kind cluster to the disposable ConfigHub with
+  `cub cluster up --controller flux|argo`, waits for argobot to record a
+  LiveStatus on a Release, and requires `gitops status --with-confighub` to
+  find one whose cluster check is `agrees`
+  (`scripts/ci/live-status-proof.sh`).
+- **Proof:** CI run 42879836132, ConfigHub and `cub` v0.10.11: both Releases
+  agree under Flux and under Argo CD.
+- **What the first runs found (#887):** a cluster made by `cub cluster up`
+  pulls from `172.18.0.1:32181` while a local server advertises
+  `localhost:32181`, so no controller was recognised. The check now compares
+  with the controller the recorded status names as its data source, when that
+  object pulls a repository named for the space (`clusterCheck.matchedBy`:
+  `reporter-data-source`). argobot writes `Kind/namespace/name` for Flux and
+  the Application's name alone for Argo CD.
+- **Recordings:** `test/fixtures/confighub-live-status-flux-v01011-recorded`
+  and `...-argo-v01011-recorded`.
+- **Not proved:** Sveltos; a hosted server; a deployment space made with
+  `cub variant create --target`; a Release out of sync, or a disagreement,
+  on a real cluster; health comparison. No agent eval case (waived; paid runs
+  are not approved).
