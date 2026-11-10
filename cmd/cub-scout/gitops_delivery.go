@@ -117,8 +117,12 @@ type ConfigHubLiveStatusEvidence struct {
 	FreshnessSeconds         int64                         `json:"freshnessSeconds,omitempty"`
 	DeliveryVerdict          agent.ReceiptVerdict          `json:"deliveryVerdict"`
 	ApplicationHealthVerdict agent.ReceiptVerdict          `json:"applicationHealthVerdict"`
-	spaceIDRaw               string
-	revisionRaw              string
+	// ClusterCheck is set on a status recorded on a Release: whether the
+	// cluster in the current context agrees with it (#887).
+	ClusterCheck   *ConfigHubLiveStatusClusterCheck `json:"clusterCheck,omitempty"`
+	spaceIDRaw     string
+	revisionRaw    string
+	manifestDigest string
 }
 
 const configHubRevisionCorrelationSchema = "confighub.reportedRevisionReleaseCorrelation.v1"
@@ -408,6 +412,7 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 	}
 	// A Release's own status names its Release, so it needs no correlation by
 	// reported revision; it is added after the correlation above.
+	checkLiveStatusesAgainstCluster(ctx, client, releaseStatuses, opts.Now)
 	evidence.ConfigHub.LiveStatuses = append(evidence.ConfigHub.LiveStatuses, releaseStatuses...)
 
 	eventArgs := gitOpsConfigHubUnitEventListArgs(opts.Space, cutoff)
@@ -681,6 +686,7 @@ func configHubLiveStatusFromReleases(raw string, now time.Time, staleAfter time.
 			ReporterOperation: mcpFirstString(live, "ReporterOperation", "reporterOperation"),
 			Message:           mcpFirstString(live, "Message", "message"),
 			ObservedAt:        observedAt,
+			manifestDigest:    firstRawString(releaseObj, "ManifestDigest", "manifestDigest"),
 		}
 		problem := configHubLiveStatusFreshness(&status, now, staleAfter)
 		createdAt := mcpFirstString(releaseObj, "CreatedAt", "createdAt")
@@ -1362,6 +1368,9 @@ func outputGitOpsDeliveryEvidenceHuman(evidence *GitOpsDeliveryEvidence) {
 			if status.Release != "" {
 				fmt.Printf("      recorded on release %s (reporter %s)\n", status.Release, firstNonEmpty(status.Source, "-"))
 			}
+			if status.ClusterCheck != nil {
+				fmt.Printf("      this cluster %s (a comparison of reports, not a verdict)\n", liveStatusClusterCheckText(status.ClusterCheck))
+			}
 			if status.RevisionCorrelation != nil {
 				fmt.Printf("      reported revision correlation: %s\n", configHubRevisionCorrelationText(status.RevisionCorrelation))
 			}
@@ -1567,6 +1576,11 @@ func renderGitOpsDeliveryEvidenceMarkdown(b *strings.Builder, evidence *GitOpsDe
 				status.Freshness,
 				correlation,
 			))
+		}
+		for _, status := range evidence.ConfigHub.LiveStatuses {
+			if status.ClusterCheck != nil {
+				b.WriteString(fmt.Sprintf("\n- Release %s, this cluster (a comparison of reports, not a verdict): %s\n", gitOpsMarkdownCodeSpan(status.Release), liveStatusClusterCheckText(status.ClusterCheck)))
+			}
 		}
 	}
 

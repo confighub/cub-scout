@@ -566,6 +566,9 @@ func newGitOpsDeliveryFakeClient(objects ...runtime.Object) *dynamicfake.FakeDyn
 	scheme := runtime.NewScheme()
 	listKinds := map[schema.GroupVersionResource]string{
 		{Group: "apps", Version: "v1", Resource: "deployments"}: "DeploymentList",
+		liveStatusApplicationGVR:                                "ApplicationList",
+		liveStatusOCIRepositoryGVR:                              "OCIRepositoryList",
+		liveStatusKustomizationGVR:                              "KustomizationList",
 	}
 	return dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, objects...)
 }
