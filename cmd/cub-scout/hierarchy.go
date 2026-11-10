@@ -923,16 +923,6 @@ func runCommandCmd(command string) tea.Cmd {
 	}
 }
 
-// getCurrentKubeContext returns the current kubectl context name
-func getCurrentKubeContext() string {
-	cmd := exec.Command("kubectl", "config", "current-context")
-	out, err := cmd.Output()
-	if err != nil {
-		return ""
-	}
-	return strings.TrimSpace(string(out))
-}
-
 // Create wizard commands
 
 // loadCreateUnitsCmd loads units in a space for cloning (includes toolchain type)
