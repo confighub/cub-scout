@@ -3,11 +3,11 @@
 │   └── ▶ 📦 web-prod(1) prod          ││ │                           │        │
 │                                      ││ └─────────────┬─────────────┘        │
 │ Total: 2 units, 2 workloads          ││               │                      │
-│                                      ││               │ sync                 │
+│                                      ││               │ release              │
 │                                      ││               ▼                      │
 │                                      ││       ┌─────────────────┐            │
-│                                      ││       │     Worker      │            │
-│                                      ││       │ my-team-worker  │            │
+│                                      ││       │GitOps controller│            │
+│                                      ││       │ (cluster attach)│            │
 │                                      ││       └────────┬────────┘            │
 │                                      ││                │                     │
 ╰──────────────────────────────────────╯│                │ deploy              │
