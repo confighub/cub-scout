@@ -80,8 +80,6 @@ func TestE2EConnectedHierarchyRendering(t *testing.T) {
 	t.Run("ConnectedAppHierarchy", func(t *testing.T) {
 		m.connectionMode = "connected"
 		m.connectedEmail = "e2e@test.com"
-		m.workerName = "e2e-worker"
-		m.workerStatus = "connected"
 		content := m.getPanelAppHierarchy()
 		if content == "" {
 			t.Fatal("getPanelAppHierarchy returned empty in connected mode")
@@ -98,8 +96,8 @@ func TestE2EConnectedHierarchyRendering(t *testing.T) {
 		if !strings.Contains(content, "e2e@test.com") {
 			t.Error("connected mode should show email")
 		}
-		if !strings.Contains(content, "e2e-worker") {
-			t.Error("connected mode should show worker name")
+		if strings.Contains(content, "Worker:") {
+			t.Error("connected mode should not show a worker: ConfigHub has none since API 0.10")
 		}
 		t.Logf("Connected view: %d chars", len(content))
 	})
@@ -167,10 +165,8 @@ func TestE2EConnectedHierarchyRendering(t *testing.T) {
 		m.panelMode = false
 		m.userHasNavigated = false
 		updated, _ := m.Update(connectionStatusMsg{
-			mode:         "connected",
-			email:        "e2e@test.com",
-			workerName:   "e2e-worker",
-			workerStatus: "connected",
+			mode:  "connected",
+			email: "e2e@test.com",
 		})
 		fm := updated.(LocalClusterModel)
 		if !fm.panelMode {
