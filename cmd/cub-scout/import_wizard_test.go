@@ -134,17 +134,6 @@ func testProposal() *FullProposal {
 	}
 }
 
-// testTestResults returns mock test results for each phase
-func testTestResults(success bool) []TestResult {
-	results := []TestResult{
-		{Phase: testPhaseAddAnnotation, Label: "Add test annotation", Success: success, Details: "Added confighub.com/import-test", Elapsed: 500 * time.Millisecond},
-		{Phase: testPhaseApply, Label: "Apply unit", Success: success, Details: "Applied via ConfigHub", Elapsed: 2 * time.Second},
-		{Phase: testPhaseWaitSync, Label: "Wait for sync", Success: success, Details: "Worker synced", Elapsed: 3 * time.Second},
-		{Phase: testPhaseVerify, Label: "Verify annotation", Success: success, Details: "Annotation found in cluster", Elapsed: 800 * time.Millisecond},
-	}
-	return results
-}
-
 // --- Step 1: Namespace Selection Tests ---
 
 // testModelStep1 creates a model at Step 1 (namespace selection)
@@ -335,131 +324,6 @@ func TestImportWizardStep4CompleteView(t *testing.T) {
 
 // --- Step 6: Test Step Tests ---
 
-// testModelStep6Idle creates a model at Step 6 before test starts
-func testModelStep6Idle() ImportWizardModel {
-	m := testImportWizardModel()
-	m.step = StepTest
-	m.proposal = testProposal()
-	m.testPhase = testPhaseIdle
-	m.testUnitSlug = "api-prod"
-	m.testAnnotation = "import-test-1234567890"
-	return m
-}
-
-// testModelStep6Running creates a model at Step 6 with test running
-func testModelStep6Running(phase int) ImportWizardModel {
-	m := testImportWizardModel()
-	m.step = StepTest
-	m.proposal = testProposal()
-	m.testPhase = phase
-	m.testUnitSlug = "api-prod"
-	m.testAnnotation = "import-test-1234567890"
-	m.testStartTime = time.Now().Add(-2 * time.Second)
-
-	// Add results for completed phases
-	if phase > testPhaseAddAnnotation {
-		m.testResults = append(m.testResults, TestResult{
-			Phase: testPhaseAddAnnotation, Label: "Add test annotation",
-			Success: true, Details: "Added annotation", Elapsed: 500 * time.Millisecond,
-		})
-	}
-	if phase > testPhaseApply {
-		m.testResults = append(m.testResults, TestResult{
-			Phase: testPhaseApply, Label: "Apply unit",
-			Success: true, Details: "Applied via ConfigHub", Elapsed: 2 * time.Second,
-		})
-	}
-	if phase > testPhaseWaitSync {
-		m.testResults = append(m.testResults, TestResult{
-			Phase: testPhaseWaitSync, Label: "Wait for sync",
-			Success: true, Details: "Worker synced", Elapsed: 1 * time.Second,
-		})
-	}
-
-	return m
-}
-
-// testModelStep6Complete creates a model at Step 6 with test complete
-func testModelStep6Complete(success bool) ImportWizardModel {
-	m := testImportWizardModel()
-	m.step = StepTest
-	m.proposal = testProposal()
-	m.testPhase = testPhaseComplete
-	m.testUnitSlug = "api-prod"
-	m.testAnnotation = "import-test-1234567890"
-	m.testStartTime = time.Now().Add(-7 * time.Second)
-	m.testEndTime = time.Now()
-	m.testElapsed = 7 * time.Second
-	m.testResults = testTestResults(success)
-	if !success {
-		m.testError = nil // Error shown in results
-	}
-	return m
-}
-
-// TestImportWizardStep6AddAnnotationView tests the view during add annotation phase.
-func TestImportWizardStep6AddAnnotationView(t *testing.T) {
-	m := testModelStep6Running(testPhaseAddAnnotation)
-	view := m.View()
-
-	if !containsString(view, "End-to-End") || !containsString(view, "Test") {
-		t.Error("expected view to contain 'End-to-End' and 'Test' header")
-	}
-	if !containsString(view, "Add test annotation") {
-		t.Error("expected view to contain 'Add test annotation' phase")
-	}
-}
-
-// TestImportWizardStep6ApplyView tests the view during apply phase.
-func TestImportWizardStep6ApplyView(t *testing.T) {
-	m := testModelStep6Running(testPhaseApply)
-	view := m.View()
-
-	if !containsString(view, "Apply") {
-		t.Error("expected view to contain 'Apply' phase")
-	}
-}
-
-// TestImportWizardStep6WaitSyncView tests the view during wait sync phase.
-func TestImportWizardStep6WaitSyncView(t *testing.T) {
-	m := testModelStep6Running(testPhaseWaitSync)
-	view := m.View()
-
-	if !containsString(view, "Wait") || !containsString(view, "sync") {
-		t.Error("expected view to contain 'Wait' and 'sync' phase")
-	}
-}
-
-// TestImportWizardStep6VerifyView tests the view during verify phase.
-func TestImportWizardStep6VerifyView(t *testing.T) {
-	m := testModelStep6Running(testPhaseVerify)
-	view := m.View()
-
-	if !containsString(view, "Verify") {
-		t.Error("expected view to contain 'Verify' phase")
-	}
-}
-
-// TestImportWizardStep6CompleteSuccessView tests the view when test passes.
-func TestImportWizardStep6CompleteSuccessView(t *testing.T) {
-	m := testModelStep6Complete(true)
-	view := m.View()
-
-	if !containsString(view, "PASSED") && !containsString(view, "passed") && !containsString(view, "SUCCESS") {
-		t.Error("expected view to contain success indicator")
-	}
-}
-
-// TestImportWizardStep6CompleteFailureView tests the view when test fails.
-func TestImportWizardStep6CompleteFailureView(t *testing.T) {
-	m := testModelStep6Complete(false)
-	view := m.View()
-
-	if !containsString(view, "FAILED") && !containsString(view, "failed") && !containsString(view, "FAIL") {
-		t.Error("expected view to contain failure indicator")
-	}
-}
-
 // --- Golden File Tests ---
 
 // TestImportWizardStep1Golden tests Step 1 view against golden file.
@@ -487,42 +351,6 @@ func TestImportWizardStep1Golden(t *testing.T) {
 func TestImportWizardStep3Golden(t *testing.T) {
 	skipIfNoKubeconfig(t)
 	m := testModelStep3()
-
-	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 24))
-	time.Sleep(100 * time.Millisecond)
-
-	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
-
-	out, err := io.ReadAll(tm.FinalOutput(t, teatest.WithFinalTimeout(2*time.Second)))
-	if err != nil {
-		t.Fatalf("failed to read final output: %v", err)
-	}
-
-	teatest.RequireEqualOutput(t, out)
-}
-
-// TestImportWizardStep6SuccessGolden tests Step 6 success view against golden file.
-func TestImportWizardStep6SuccessGolden(t *testing.T) {
-	skipIfNoKubeconfig(t)
-	m := testModelStep6Complete(true)
-
-	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 24))
-	time.Sleep(100 * time.Millisecond)
-
-	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
-
-	out, err := io.ReadAll(tm.FinalOutput(t, teatest.WithFinalTimeout(2*time.Second)))
-	if err != nil {
-		t.Fatalf("failed to read final output: %v", err)
-	}
-
-	teatest.RequireEqualOutput(t, out)
-}
-
-// TestImportWizardStep6FailureGolden tests Step 6 failure view against golden file.
-func TestImportWizardStep6FailureGolden(t *testing.T) {
-	skipIfNoKubeconfig(t)
-	m := testModelStep6Complete(false)
 
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 24))
 	time.Sleep(100 * time.Millisecond)

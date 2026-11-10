@@ -6,9 +6,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -29,17 +26,6 @@ const (
 	StepConfigureStructure
 	StepApply
 	StepArgoCleanup // Offer to disable/delete ArgoCD Applications
-	StepTest        // End-to-end verification test
-)
-
-// Test phases for StepTest
-const (
-	testPhaseIdle          = iota
-	testPhaseAddAnnotation // Adding test annotation to unit
-	testPhaseApply         // Applying unit to cluster
-	testPhaseWaitSync      // Waiting for worker to sync
-	testPhaseVerify        // Verifying annotation in cluster
-	testPhaseComplete      // Test finished
 )
 
 // Edit mode types for Step 3
@@ -58,30 +44,6 @@ const (
 type ArgoAppRef struct {
 	Name      string
 	Namespace string
-}
-
-// testDebugDir is the directory for test debug output. A variable so that a
-// test can point it at its own directory.
-var testDebugDir = "/tmp/confighub-import-test-debug"
-
-// writeTestDebug writes debug content to a file in the debug directory
-func writeTestDebug(filename string, content []byte) {
-	os.MkdirAll(testDebugDir, 0755)
-	path := filepath.Join(testDebugDir, filename)
-	os.WriteFile(path, content, 0644)
-}
-
-// appendTestDebug appends debug content to a log file
-func appendTestDebug(content string) {
-	os.MkdirAll(testDebugDir, 0755)
-	path := filepath.Join(testDebugDir, "test.log")
-	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		return
-	}
-	defer f.Close()
-	timestamp := time.Now().Format("15:04:05.000")
-	f.WriteString(fmt.Sprintf("[%s] %s\n", timestamp, content))
 }
 
 // NamespaceItem represents a namespace with workload count
@@ -141,16 +103,6 @@ type ImportWizardModel struct {
 	argoCleanupIdx  int          // Current selection in cleanup options
 	argoCleanupDone bool         // Whether cleanup is complete
 
-	// Step 6: End-to-end test
-	testPhase      int           // Current test phase
-	testUnitSlug   string        // Unit being tested
-	testAnnotation string        // The test annotation value
-	testStartTime  time.Time     // When test started
-	testEndTime    time.Time     // When test finished
-	testElapsed    time.Duration // Final elapsed time (set when complete)
-	testResults    []TestResult  // Results for each phase
-	testError      error         // Any error during test
-
 	// UI components
 	viewport viewport.Model
 	spinner  spinner.Model
@@ -183,15 +135,6 @@ type ApplyResult struct {
 	UnitSlug string
 	Success  bool
 	Error    string
-}
-
-// TestResult tracks the result of a test phase
-type TestResult struct {
-	Phase   int
-	Label   string
-	Success bool
-	Details string
-	Elapsed time.Duration
 }
 
 // Import wizard styles
@@ -348,16 +291,6 @@ type wizardArgoCleanupMsg struct {
 	err     error
 }
 
-type wizardTestPhaseMsg struct {
-	phase     int
-	success   bool
-	details   string
-	err       error
-	startTime time.Time // When this phase started
-}
-
-type wizardTestTickMsg struct{} // For polling sync status
-
 // Update handles messages
 func (m ImportWizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
@@ -486,19 +419,6 @@ func (m ImportWizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.loading = true
 				m.loadingMessage = "Regenerating proposal..."
 				return m, m.generateProposal
-
-			case StepTest:
-				// Retry test (only available when complete)
-				if m.testPhase == testPhaseComplete && m.proposal != nil && len(m.proposal.Units) > 0 {
-					m.testPhase = testPhaseAddAnnotation
-					m.testAnnotation = fmt.Sprintf("import-test-%d", time.Now().Unix())
-					m.testStartTime = time.Time{} // Will be set when first phase starts
-					m.testResults = nil
-					m.testError = nil
-					m.loading = true
-					m.loadingMessage = "Retrying end-to-end test..."
-					return m, m.runTestPhaseCmd(testPhaseAddAnnotation)
-				}
 			}
 		}
 
@@ -574,72 +494,6 @@ func (m ImportWizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.argoCleanupDone = true
 		}
-
-	case wizardTestPhaseMsg:
-		m.loading = false
-		// Set test start time from first phase if not already set
-		if m.testStartTime.IsZero() && !msg.startTime.IsZero() {
-			m.testStartTime = msg.startTime
-		}
-		elapsed := time.Since(m.testStartTime)
-
-		// Record result
-		phaseLabel := ""
-		switch msg.phase {
-		case testPhaseAddAnnotation:
-			phaseLabel = "Add test annotation"
-		case testPhaseApply:
-			phaseLabel = "Apply to cluster"
-		case testPhaseWaitSync:
-			phaseLabel = "Wait for sync"
-		case testPhaseVerify:
-			phaseLabel = "Verify in cluster"
-		}
-
-		m.testResults = append(m.testResults, TestResult{
-			Phase:   msg.phase,
-			Label:   phaseLabel,
-			Success: msg.success,
-			Details: msg.details,
-			Elapsed: elapsed,
-		})
-
-		if msg.err != nil {
-			m.testError = msg.err
-			m.testPhase = testPhaseComplete
-			m.testEndTime = time.Now()
-			m.testElapsed = m.testEndTime.Sub(m.testStartTime)
-			return m, nil
-		}
-
-		// Move to next phase
-		switch msg.phase {
-		case testPhaseAddAnnotation:
-			m.testPhase = testPhaseApply
-			m.loading = true
-			m.loadingMessage = "Applying unit to cluster..."
-			return m, m.runTestPhaseCmd(testPhaseApply)
-		case testPhaseApply:
-			m.testPhase = testPhaseWaitSync
-			m.loading = true
-			m.loadingMessage = "Waiting for worker to sync..."
-			return m, m.runTestPhaseCmd(testPhaseWaitSync)
-		case testPhaseWaitSync:
-			m.testPhase = testPhaseVerify
-			m.loading = true
-			m.loadingMessage = "Verifying annotation in cluster..."
-			return m, m.runTestPhaseCmd(testPhaseVerify)
-		case testPhaseVerify:
-			m.testPhase = testPhaseComplete
-			m.testEndTime = time.Now()
-			m.testElapsed = m.testEndTime.Sub(m.testStartTime)
-		}
-
-	case wizardTestTickMsg:
-		// Polling tick for sync status
-		if m.step == StepTest && m.testPhase == testPhaseWaitSync {
-			return m, m.checkSyncStatusCmd()
-		}
 	}
 
 	return m, tea.Batch(cmds...)
@@ -670,8 +524,8 @@ func (m ImportWizardModel) View() string {
 		return b.String()
 	}
 
-	// Loading state (but not for test step - it has its own progress display)
-	if m.loading && m.step != StepTest {
+	// Loading state
+	if m.loading {
 		b.WriteString(m.spinner.View())
 		b.WriteString(" ")
 		b.WriteString(m.loadingMessage)
@@ -690,14 +544,11 @@ func (m ImportWizardModel) View() string {
 
 // renderHeader renders the title and progress bar
 func (m ImportWizardModel) renderHeader() string {
-	stepNames := []string{"Select Namespaces", "Review Workloads", "Configure Structure", "Apply", "ArgoCD Cleanup", "End-to-End Test"}
+	stepNames := []string{"Select Namespaces", "Review Workloads", "Configure Structure", "Apply", "ArgoCD Cleanup"}
 	// Adjust total steps based on context
 	totalSteps := 4
 	if len(m.argoApps) > 0 {
 		totalSteps = 5
-	}
-	if m.step == StepTest {
-		totalSteps++ // Show test as an additional step
 	}
 	stepNum := m.step + 1
 	if stepNum > totalSteps {
@@ -828,8 +679,6 @@ func (m ImportWizardModel) renderLeftPane() string {
 		return m.renderApplyProgress()
 	case StepArgoCleanup:
 		return m.renderArgoCleanupList()
-	case StepTest:
-		return m.renderTestProgress()
 	}
 	return ""
 }
@@ -847,8 +696,6 @@ func (m ImportWizardModel) renderRightPane() string {
 		return m.renderFinalArchitecture()
 	case StepArgoCleanup:
 		return m.renderArgoCleanupDetails()
-	case StepTest:
-		return m.renderTestDetails()
 	}
 	return ""
 }
@@ -886,12 +733,6 @@ func (m ImportWizardModel) renderHelp() string {
 			help = "? help  q quit"
 		} else {
 			help = "↑↓ navigate  enter select action  s skip  ? help  q quit"
-		}
-	case StepTest:
-		if m.testPhase == testPhaseComplete {
-			help = "r retry test  ? help  q quit"
-		} else {
-			help = "testing...  ? help  q quit"
 		}
 	}
 	return wizardHelpStyle.Render(help)
@@ -1709,440 +1550,6 @@ func (m ImportWizardModel) performArgoCleanup() tea.Cmd {
 	}
 }
 
-// runTestPhaseCmd executes a test phase
-func (m ImportWizardModel) runTestPhaseCmd(phase int) tea.Cmd {
-	return func() tea.Msg {
-		switch phase {
-		case testPhaseAddAnnotation:
-			return m.runTestAddAnnotation()
-		case testPhaseApply:
-			return m.runTestApply()
-		case testPhaseWaitSync:
-			return m.runTestWaitSync()
-		case testPhaseVerify:
-			return m.runTestVerify()
-		}
-		return wizardTestPhaseMsg{phase: phase, success: false, err: fmt.Errorf("unknown test phase")}
-	}
-}
-
-// runTestAddAnnotation adds a test annotation to the unit's Kubernetes manifest
-func (m ImportWizardModel) runTestAddAnnotation() tea.Msg {
-	startTime := time.Now() // Record when test actually starts
-
-	// Clear debug directory at start of test
-	os.RemoveAll(testDebugDir)
-	os.MkdirAll(testDebugDir, 0755)
-	appendTestDebug("=== TEST STARTED ===")
-	appendTestDebug(fmt.Sprintf("Space: %s, Unit: %s, Annotation: %s", m.proposal.App, m.testUnitSlug, m.testAnnotation))
-
-	if m.proposal == nil || m.testUnitSlug == "" {
-		appendTestDebug("ERROR: no unit to test")
-		return wizardTestPhaseMsg{
-			phase:     testPhaseAddAnnotation,
-			success:   false,
-			err:       fmt.Errorf("no unit to test"),
-			startTime: startTime,
-		}
-	}
-
-	annotationKey := "confighub.com/import-test"
-
-	// Step 1: Get unit JSON
-	appendTestDebug("Step 1: Getting unit JSON...")
-	unitJSON, err := cubStdout(context.Background(), withConfigHubSpace([]string{"unit", "get", m.testUnitSlug, "-o", "json"}, m.proposal.App)...)
-	writeTestDebug("01-unit-get.json", unitJSON)
-	appendTestDebug(fmt.Sprintf("Unit get result: %d bytes, err=%v", len(unitJSON), err))
-	if err != nil {
-		appendTestDebug(fmt.Sprintf("ERROR getting unit: %v", err))
-		return wizardTestPhaseMsg{
-			phase:     testPhaseAddAnnotation,
-			success:   false,
-			details:   err.Error(),
-			err:       fmt.Errorf("failed to get unit: %w", err),
-			startTime: startTime,
-		}
-	}
-
-	// Step 2: Read the unit's configuration. It lives on its own endpoint, not
-	// in the unit envelope, and is plain text -- `cub unit data` prints it.
-	appendTestDebug("Step 2: Reading unit data...")
-	// The data is modified and written back, so it must be stdout alone: a notice
-	// cub prints on stderr would otherwise be written into the unit.
-	yamlData, err := cubStdout(context.Background(), withConfigHubSpace([]string{"unit", "data", m.testUnitSlug}, m.proposal.App)...)
-	writeTestDebug("02-original-yaml.yaml", yamlData)
-	appendTestDebug(fmt.Sprintf("Original YAML: %d bytes, err=%v", len(yamlData), err))
-	if err != nil {
-		appendTestDebug(fmt.Sprintf("ERROR reading unit data: %v", err))
-		return wizardTestPhaseMsg{
-			phase:     testPhaseAddAnnotation,
-			success:   false,
-			details:   err.Error(),
-			err:       fmt.Errorf("failed to read unit data: %w", err),
-			startTime: startTime,
-		}
-	}
-	if strings.TrimSpace(string(yamlData)) == "" {
-		appendTestDebug("ERROR: No data in unit")
-		return wizardTestPhaseMsg{
-			phase:     testPhaseAddAnnotation,
-			success:   false,
-			details:   fmt.Sprintf("No data in unit. Unit JSON saved to %s/01-unit-get.json", testDebugDir),
-			err:       fmt.Errorf("unit has no data"),
-			startTime: startTime,
-		}
-	}
-
-	// Step 3: Add annotation using awk
-	appendTestDebug("Step 3: Adding annotation with awk...")
-	awkScript := fmt.Sprintf(`/^  annotations:/{print; print "    %s: \"%s\""; next}1`, annotationKey, m.testAnnotation)
-	awkCmd := exec.Command("awk", awkScript)
-	awkCmd.Stdin = strings.NewReader(string(yamlData))
-	modifiedYAML, err := commandStdout(awkCmd)
-	writeTestDebug("03-modified-yaml.yaml", modifiedYAML)
-	appendTestDebug(fmt.Sprintf("Modified YAML: %d bytes, err=%v", len(modifiedYAML), err))
-	if err != nil || len(modifiedYAML) == 0 {
-		appendTestDebug(fmt.Sprintf("ERROR modifying YAML: %s", string(modifiedYAML)))
-		return wizardTestPhaseMsg{
-			phase:     testPhaseAddAnnotation,
-			success:   false,
-			details:   fmt.Sprintf("Failed to modify YAML. See %s/02-original-yaml.yaml", testDebugDir),
-			err:       fmt.Errorf("failed to add annotation with awk"),
-			startTime: startTime,
-		}
-	}
-
-	// Check if annotation was actually added
-	if !strings.Contains(string(modifiedYAML), annotationKey) {
-		appendTestDebug("ERROR: Annotation not added - possibly no annotations: section in YAML")
-		// YAML might not have annotations section, need to add it
-		writeTestDebug("03-modified-yaml-FAILED.yaml", modifiedYAML)
-		return wizardTestPhaseMsg{
-			phase:     testPhaseAddAnnotation,
-			success:   false,
-			details:   fmt.Sprintf("Annotation not added. YAML may lack annotations section. See %s/", testDebugDir),
-			err:       fmt.Errorf("annotation not inserted - check YAML structure"),
-			startTime: startTime,
-		}
-	}
-
-	// Step 4: Update unit
-	appendTestDebug("Step 4: Updating unit with modified YAML...")
-	updateArgs := withConfigHubSpace([]string{"unit", "update", m.testUnitSlug, "-"}, m.proposal.App)
-	updateArgs = append(updateArgs, "--change-desc", "Import wizard test")
-	updateCmd, updateCmdErr := cubCommand(context.Background(), updateArgs...)
-	if updateCmdErr != nil {
-		return wizardTestPhaseMsg{phase: testPhaseAddAnnotation, success: false, err: updateCmdErr}
-	}
-	updateCmd.Stdin = strings.NewReader(string(modifiedYAML))
-	updateOutput, err := updateCmd.CombinedOutput()
-	writeTestDebug("04-update-result.txt", updateOutput)
-	appendTestDebug(fmt.Sprintf("Update result: %s, err=%v", strings.TrimSpace(string(updateOutput)), err))
-	if err != nil {
-		appendTestDebug(fmt.Sprintf("ERROR updating unit: %s", string(updateOutput)))
-		return wizardTestPhaseMsg{
-			phase:     testPhaseAddAnnotation,
-			success:   false,
-			details:   string(updateOutput),
-			err:       fmt.Errorf("failed to update unit: %w", err),
-			startTime: startTime,
-		}
-	}
-
-	appendTestDebug("Phase 1 (AddAnnotation) SUCCESS")
-	return wizardTestPhaseMsg{
-		phase:     testPhaseAddAnnotation,
-		success:   true,
-		details:   fmt.Sprintf("Added annotation %s=%s to %s (debug: %s)", annotationKey, m.testAnnotation, m.testUnitSlug, testDebugDir),
-		startTime: startTime,
-	}
-}
-
-// runTestApply applies the unit to the cluster
-func (m ImportWizardModel) runTestApply() tea.Msg {
-	appendTestDebug("=== Phase 2: Apply ===")
-
-	if m.proposal == nil || m.testUnitSlug == "" {
-		appendTestDebug("ERROR: no unit to test")
-		return wizardTestPhaseMsg{
-			phase:   testPhaseApply,
-			success: false,
-			err:     fmt.Errorf("no unit to test"),
-		}
-	}
-
-	// This step used to give the unit a target with `cub unit set-target` first.
-	// ConfigHub API 0.10 removed per-unit targets along with bridge workers.
-	//
-	// The apply was `cub unit apply --wait`, which cub removed: with --wait it
-	// dies on "unknown flag" and the message blamed the worker. See
-	// cub_unit_apply.go.
-	applyErr := unitApplyUnavailable(m.proposal.App, m.testUnitSlug)
-	appendTestDebug("Not applying unit: " + applyErr.Error())
-	return wizardTestPhaseMsg{
-		phase:   testPhaseApply,
-		success: false,
-		details: applyErr.Error(),
-		err:     applyErr,
-	}
-}
-
-// runTestWaitSync waits for the worker to sync and then returns
-func (m ImportWizardModel) runTestWaitSync() tea.Msg {
-	appendTestDebug("=== Phase 3: Wait Sync ===")
-
-	if m.proposal == nil || m.testUnitSlug == "" {
-		appendTestDebug("ERROR: no unit to test")
-		return wizardTestPhaseMsg{
-			phase:   testPhaseWaitSync,
-			success: false,
-			err:     fmt.Errorf("no unit to test"),
-		}
-	}
-
-	// Check if LiveRevisionNum matches HeadRevisionNum
-	// This indicates the worker has synced
-	appendTestDebug("Getting unit status...")
-	output, err := cubStdout(context.Background(), withConfigHubSpace([]string{"unit", "get", "-o", "json", m.testUnitSlug}, m.proposal.App)...)
-	writeTestDebug("10-unit-sync-status.json", output)
-	appendTestDebug(fmt.Sprintf("Unit status: %d bytes, err=%v", len(output), err))
-	if err != nil {
-		appendTestDebug(fmt.Sprintf("ERROR getting unit status: %v", err))
-		return wizardTestPhaseMsg{
-			phase:   testPhaseWaitSync,
-			success: false,
-			details: err.Error(),
-			err:     fmt.Errorf("failed to get unit status: %w", err),
-		}
-	}
-
-	// Parse the JSON to check revision status
-	// We're looking for LiveRevisionNum to match or be close to HeadRevisionNum
-	// For simplicity, we'll just wait a short time and move on
-	appendTestDebug("Waiting 2 seconds for sync...")
-	time.Sleep(2 * time.Second)
-
-	appendTestDebug("Phase 3 (WaitSync) SUCCESS")
-	return wizardTestPhaseMsg{
-		phase:   testPhaseWaitSync,
-		success: true,
-		details: "Worker synced successfully",
-	}
-}
-
-// runTestVerify verifies the annotation appears in the cluster
-func (m ImportWizardModel) runTestVerify() tea.Msg {
-	appendTestDebug("=== Phase 4: Verify ===")
-
-	if m.proposal == nil || m.testUnitSlug == "" || len(m.proposal.Units) == 0 {
-		appendTestDebug("ERROR: no unit to test")
-		return wizardTestPhaseMsg{
-			phase:   testPhaseVerify,
-			success: false,
-			err:     fmt.Errorf("no unit to test"),
-		}
-	}
-
-	// Find the unit and its workload identifiers
-	var workloadIDs []string
-	for i := range m.proposal.Units {
-		if m.proposal.Units[i].Slug == m.testUnitSlug {
-			workloadIDs = m.proposal.Units[i].Workloads
-			break
-		}
-	}
-	appendTestDebug(fmt.Sprintf("Workload IDs for unit %s: %v", m.testUnitSlug, workloadIDs))
-
-	if len(workloadIDs) == 0 {
-		appendTestDebug("ERROR: could not find unit or workloads")
-		return wizardTestPhaseMsg{
-			phase:   testPhaseVerify,
-			success: false,
-			err:     fmt.Errorf("could not find unit or workloads"),
-		}
-	}
-
-	// Find the first selected workload that matches the unit's workloads
-	var workload *WorkloadInfo
-	for _, wid := range workloadIDs {
-		for i := range m.workloads {
-			// workload ID can be various formats:
-			// - "Kind/Namespace/Name" (e.g., "Deployment/argocd/app")
-			// - "Namespace/Name" (e.g., "argocd/app")
-			// - Just "Name" (e.g., "app")
-			w := &m.workloads[i].Info
-			wKey1 := fmt.Sprintf("%s/%s/%s", w.Kind, w.Namespace, w.Name) // Kind/Namespace/Name
-			wKey2 := fmt.Sprintf("%s/%s", w.Namespace, w.Name)            // Namespace/Name
-			if wKey1 == wid || wKey2 == wid || w.Name == wid {
-				workload = w
-				appendTestDebug(fmt.Sprintf("Found workload: %s/%s/%s (matched via wid=%s)", w.Kind, w.Namespace, w.Name, wid))
-				break
-			}
-		}
-		if workload != nil {
-			break
-		}
-	}
-
-	if workload == nil {
-		// Fallback: use the first selected workload
-		appendTestDebug("Workload not found by ID, falling back to first selected workload")
-		for i := range m.workloads {
-			if m.workloads[i].Selected {
-				workload = &m.workloads[i].Info
-				appendTestDebug(fmt.Sprintf("Using fallback workload: %s/%s/%s", workload.Kind, workload.Namespace, workload.Name))
-				break
-			}
-		}
-	}
-
-	if workload == nil {
-		appendTestDebug("ERROR: could not find workload to verify")
-		return wizardTestPhaseMsg{
-			phase:   testPhaseVerify,
-			success: false,
-			err:     fmt.Errorf("could not find workload to verify"),
-		}
-	}
-
-	annotationKey := "confighub.com/import-test"
-
-	// First, get ALL annotations for debug
-	appendTestDebug(fmt.Sprintf("Getting all annotations from %s/%s/%s...", workload.Kind, workload.Namespace, workload.Name))
-	allAnnotationsCmd := exec.Command("kubectl", "get", strings.ToLower(workload.Kind),
-		workload.Name,
-		"-n", workload.Namespace,
-		"-o", "jsonpath={.metadata.annotations}")
-	allAnnotations, _ := allAnnotationsCmd.CombinedOutput()
-	writeTestDebug("11-cluster-annotations.json", allAnnotations)
-	appendTestDebug(fmt.Sprintf("All annotations: %s", string(allAnnotations)))
-
-	// Use kubectl to check the annotation on the resource
-	appendTestDebug(fmt.Sprintf("Checking for annotation %s=%s", annotationKey, m.testAnnotation))
-	cmd := exec.Command("kubectl", "get", strings.ToLower(workload.Kind),
-		workload.Name,
-		"-n", workload.Namespace,
-		"-o", fmt.Sprintf("jsonpath={.metadata.annotations.%s}", strings.ReplaceAll(annotationKey, "/", "\\/")))
-
-	// The value is compared, so a kubectl warning on stderr must not join it.
-	output, err := commandStdout(cmd)
-	writeTestDebug("12-annotation-check.txt", output)
-	appendTestDebug(fmt.Sprintf("Annotation check result: '%s', err=%v", string(output), err))
-
-	if err != nil {
-		// Try alternate jsonpath format
-		appendTestDebug("First jsonpath failed, trying alternate format...")
-		cmd = exec.Command("kubectl", "get", strings.ToLower(workload.Kind),
-			workload.Name,
-			"-n", workload.Namespace,
-			"-o", "jsonpath={.metadata.annotations['confighub\\.com/import-test']}")
-		output, err = commandStdout(cmd)
-		appendTestDebug(fmt.Sprintf("Alternate jsonpath result: '%s', err=%v", string(output), err))
-		if err != nil {
-			appendTestDebug(fmt.Sprintf("ERROR: failed to get annotation from cluster: %s", string(output)))
-			return wizardTestPhaseMsg{
-				phase:   testPhaseVerify,
-				success: false,
-				details: fmt.Sprintf("Failed to get annotation. See %s/", testDebugDir),
-				err:     fmt.Errorf("failed to get annotation from cluster: %w", err),
-			}
-		}
-	}
-
-	foundValue := strings.TrimSpace(string(output))
-	appendTestDebug(fmt.Sprintf("Found value: '%s', expected: '%s'", foundValue, m.testAnnotation))
-
-	if foundValue == m.testAnnotation {
-		appendTestDebug("Phase 4 (Verify) SUCCESS - annotation found in cluster!")
-		return wizardTestPhaseMsg{
-			phase:   testPhaseVerify,
-			success: true,
-			details: fmt.Sprintf("✓ Verified: annotation %s=%s found on %s/%s", annotationKey, m.testAnnotation, workload.Kind, workload.Name),
-		}
-	}
-
-	// Annotation not found - check if this is a GitOps-managed resource
-	// If so, the annotation may have been reconciled away, which is expected behavior
-	if foundValue == "" {
-		appendTestDebug("Annotation not found in cluster, checking if GitOps-managed...")
-		annotations := string(allAnnotations)
-
-		isGitOpsManaged := strings.Contains(annotations, "argocd.argoproj.io") ||
-			strings.Contains(annotations, "kustomize.toolkit.fluxcd.io") ||
-			strings.Contains(annotations, "helm.toolkit.fluxcd.io")
-		appendTestDebug(fmt.Sprintf("Is GitOps managed: %v", isGitOpsManaged))
-
-		if isGitOpsManaged {
-			// GitOps reconciliation removed our annotation - this is expected
-			// Verify the annotation is still in the Unit (ConfigHub side worked)
-			appendTestDebug("Checking if annotation is in Unit data...")
-			unitOutput, err := cubStdout(context.Background(), withConfigHubSpace([]string{"unit", "get", "-o", "json", m.testUnitSlug}, m.proposal.App)...)
-			writeTestDebug("13-unit-final-state.json", unitOutput)
-			appendTestDebug(fmt.Sprintf("Unit final state: %d bytes, err=%v", len(unitOutput), err))
-
-			// The annotation is in the unit's configuration, which is read from
-			// its own endpoint by `cub unit data`.
-			unitYAML, dataErr := cubStdout(context.Background(), withConfigHubSpace([]string{"unit", "data", m.testUnitSlug}, m.proposal.App)...)
-			if len(unitYAML) > 0 {
-				writeTestDebug("14-unit-final-yaml.yaml", unitYAML)
-				appendTestDebug(fmt.Sprintf("Unit YAML: %d bytes, contains annotation: %v", len(unitYAML), strings.Contains(string(unitYAML), m.testAnnotation)))
-
-				if dataErr == nil && strings.Contains(string(unitYAML), m.testAnnotation) {
-					appendTestDebug("Phase 4 (Verify) SUCCESS - annotation in Unit data, GitOps reconciled it away")
-					return wizardTestPhaseMsg{
-						phase:   testPhaseVerify,
-						success: true,
-						details: fmt.Sprintf("✓ ConfigHub pipeline verified! Annotation was applied but GitOps (ArgoCD/Flux) reconciled it back.\n  This is expected behavior for GitOps-managed resources.\n  The annotation is still stored in ConfigHub Unit data."),
-					}
-				}
-			}
-			appendTestDebug("ERROR: GitOps reconciled annotation and it's not in Unit data")
-			return wizardTestPhaseMsg{
-				phase:   testPhaseVerify,
-				success: false,
-				details: fmt.Sprintf("GitOps reconciled the annotation away and it's not in Unit data. See %s/", testDebugDir),
-				err:     fmt.Errorf("annotation not found anywhere"),
-			}
-		}
-
-		appendTestDebug(fmt.Sprintf("ERROR: Annotation not propagated to cluster. Debug files at %s/", testDebugDir))
-		return wizardTestPhaseMsg{
-			phase:   testPhaseVerify,
-			success: false,
-			details: fmt.Sprintf("Annotation not found on %s/%s. Debug files at %s/", workload.Kind, workload.Name, testDebugDir),
-			err:     fmt.Errorf("annotation not propagated to cluster"),
-		}
-	}
-
-	appendTestDebug(fmt.Sprintf("ERROR: Annotation value mismatch. Expected '%s', got '%s'", m.testAnnotation, foundValue))
-	return wizardTestPhaseMsg{
-		phase:   testPhaseVerify,
-		success: false,
-		details: fmt.Sprintf("Expected %s, got %s. Debug files at %s/", m.testAnnotation, foundValue, testDebugDir),
-		err:     fmt.Errorf("annotation value mismatch"),
-	}
-}
-
-// checkSyncStatusCmd checks if the unit is synced (used for polling)
-func (m ImportWizardModel) checkSyncStatusCmd() tea.Cmd {
-	return func() tea.Msg {
-		// Check unit status
-		_, err := cubStdout(context.Background(), withConfigHubSpace([]string{"unit", "get", "-o", "json", m.testUnitSlug}, m.proposal.App)...)
-		if err != nil {
-			// Keep polling
-			time.Sleep(500 * time.Millisecond)
-			return wizardTestTickMsg{}
-		}
-
-		// Synced, move to verify
-		return wizardTestPhaseMsg{
-			phase:   testPhaseWaitSync,
-			success: true,
-			details: "Worker synced",
-		}
-	}
-}
-
 // Render helpers for each step
 
 func (m ImportWizardModel) renderNamespaceList() string {
@@ -2940,177 +2347,6 @@ func (m ImportWizardModel) collectArgoApps() []ArgoAppRef {
 	}
 
 	return apps
-}
-
-// renderTestProgress renders the left pane for the test step
-func (m ImportWizardModel) renderTestProgress() string {
-	var b strings.Builder
-
-	// Title and description
-	b.WriteString(headerStyle.Render("End-to-End Verification Test"))
-	b.WriteString("\n\n")
-
-	if m.testPhase != testPhaseComplete {
-		b.WriteString(dimStyle.Render("Testing the full ConfigHub → Cluster pipeline."))
-		b.WriteString("\n")
-		b.WriteString(dimStyle.Render("This verifies your import is working correctly."))
-		b.WriteString("\n\n")
-	}
-
-	// Show the test phases
-	phases := []struct {
-		phase int
-		icon  string
-		label string
-	}{
-		{testPhaseAddAnnotation, "1", "Add test annotation to unit"},
-		{testPhaseApply, "2", "Apply unit via ConfigHub"},
-		{testPhaseWaitSync, "3", "Wait for worker to sync"},
-		{testPhaseVerify, "4", "Verify annotation in cluster"},
-	}
-
-	for _, p := range phases {
-		// Determine status
-		var icon, label string
-		completed := false
-		for _, r := range m.testResults {
-			if r.Phase == p.phase {
-				completed = true
-				if r.Success {
-					icon = wizardSuccessStyle.Render(SymOK)
-					label = wizardSuccessStyle.Render(p.label)
-				} else {
-					icon = wizardErrorStyle.Render(SymError)
-					label = wizardErrorStyle.Render(p.label)
-				}
-				break
-			}
-		}
-
-		if !completed {
-			if m.testPhase == p.phase {
-				// Currently running
-				icon = m.spinner.View()
-				label = wizardSelectedStyle.Render(p.label)
-			} else {
-				// Pending
-				icon = dimStyle.Render("○")
-				label = dimStyle.Render(p.label)
-			}
-		}
-
-		b.WriteString(fmt.Sprintf("  %s %s\n", icon, label))
-	}
-
-	b.WriteString("\n")
-
-	// Show elapsed time
-	if !m.testStartTime.IsZero() {
-		var elapsed time.Duration
-		if m.testPhase == testPhaseComplete {
-			// Use stored elapsed time when complete
-			elapsed = m.testElapsed
-		} else {
-			// Still running - show live elapsed time
-			elapsed = time.Since(m.testStartTime).Round(time.Millisecond)
-		}
-		b.WriteString(dimStyle.Render(fmt.Sprintf("Elapsed: %s", formatDuration(elapsed))))
-		b.WriteString("\n")
-	}
-
-	// Show final result
-	if m.testPhase == testPhaseComplete {
-		b.WriteString("\n")
-		allSuccess := true
-		for _, r := range m.testResults {
-			if !r.Success {
-				allSuccess = false
-				break
-			}
-		}
-
-		if allSuccess {
-			b.WriteString(wizardSuccessStyle.Render("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━") + "\n\n")
-			b.WriteString(wizardSuccessStyle.Render("  ✓ TEST PASSED") + "\n\n")
-			b.WriteString(wizardSuccessStyle.Render("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━") + "\n\n")
-			b.WriteString("Your ConfigHub import is fully operational!\n\n")
-			b.WriteString("The complete pipeline is working:\n")
-			b.WriteString("  ConfigHub → Worker → Cluster\n\n")
-			b.WriteString(dimStyle.Render("You can now manage your workloads via ConfigHub."))
-		} else {
-			b.WriteString(wizardErrorStyle.Render("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━") + "\n\n")
-			b.WriteString(wizardErrorStyle.Render("  ✗ TEST FAILED") + "\n\n")
-			b.WriteString(wizardErrorStyle.Render("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━") + "\n\n")
-			if m.testError != nil {
-				b.WriteString(wizardErrorStyle.Render("Error: "+m.testError.Error()) + "\n\n")
-			}
-			b.WriteString(dimStyle.Render("Press 'r' to retry or 'q' to quit."))
-		}
-	}
-
-	return b.String()
-}
-
-// renderTestDetails renders the right pane for the test step
-func (m ImportWizardModel) renderTestDetails() string {
-	var b strings.Builder
-
-	// Test configuration
-	b.WriteString(headerStyle.Render("Test Configuration"))
-	b.WriteString("\n\n")
-
-	b.WriteString(fmt.Sprintf("Unit:       %s\n", wizardSelectedStyle.Render(m.testUnitSlug)))
-	b.WriteString(fmt.Sprintf("Annotation: %s\n", dimStyle.Render("confighub.com/import-test")))
-	b.WriteString(fmt.Sprintf("Value:      %s\n", dimStyle.Render(m.testAnnotation)))
-	b.WriteString(fmt.Sprintf("Space:      %s\n", dimStyle.Render(m.proposal.App)))
-	b.WriteString("\n")
-
-	// Phase details
-	b.WriteString(dimStyle.Render("─────────────────────────────────"))
-	b.WriteString("\n\n")
-
-	b.WriteString(headerStyle.Render("Phase Details"))
-	b.WriteString("\n\n")
-
-	if len(m.testResults) == 0 {
-		b.WriteString(dimStyle.Render("Test in progress..."))
-		b.WriteString("\n")
-	} else {
-		for _, r := range m.testResults {
-			statusIcon := wizardSuccessStyle.Render(SymOK)
-			if !r.Success {
-				statusIcon = wizardErrorStyle.Render(SymError)
-			}
-
-			b.WriteString(fmt.Sprintf("%s %s\n", statusIcon, r.Label))
-			if r.Details != "" {
-				// Truncate long details
-				details := r.Details
-				if len(details) > 60 {
-					details = details[:57] + "..."
-				}
-				b.WriteString(fmt.Sprintf("   %s\n", dimStyle.Render(details)))
-			}
-			b.WriteString(fmt.Sprintf("   %s\n", dimStyle.Render(formatDuration(r.Elapsed))))
-			b.WriteString("\n")
-		}
-	}
-
-	// Show what we're verifying
-	if m.testPhase != testPhaseComplete {
-		b.WriteString(dimStyle.Render("─────────────────────────────────"))
-		b.WriteString("\n\n")
-
-		b.WriteString(headerStyle.Render("What This Tests"))
-		b.WriteString("\n\n")
-
-		b.WriteString("1. ConfigHub stores the config change\n")
-		b.WriteString("2. Worker receives the apply command\n")
-		b.WriteString("3. Worker updates the cluster\n")
-		b.WriteString("4. Annotation appears on the resource\n")
-	}
-
-	return b.String()
 }
 
 // detectImportPattern analyzes the proposal to detect a known reference architecture pattern

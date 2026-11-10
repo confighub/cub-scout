@@ -1,24 +1,0 @@
-[?25l[?2004h│                                      ││ ─────────────────────────────────    │
-│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━    ││                                      │
-│                                      ││  Phase Details                       │
-│   ✗ TEST FAILED                      ││                                      │
-│                                      ││ ✗ Add test annotation                │
-│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━    ││    Added confighub.com/import-test   │
-│                                      ││    0s                                │
-│ Press 'r' to retry or 'q' to quit.   ││                                      │
-╰──────────────────────────────────────╯│ ✗ Apply unit                         │
-                                        │    Applied via ConfigHub             │
-                                        │    2s                                │
-                                        │                                      │
-                                        │ ✗ Wait for sync                      │
-                                        │    Worker synced                     │
-                                        │    3s                                │
-                                        │                                      │
-                                        │ ✗ Verify annotation                  │
-                                        │    Annotation found in cluster       │
-                                        │    0s                                │
-                                        │                                      │
-                                        │                                      │
-                                        ╰──────────────────────────────────────╯
-                            [K
-r retry test  ? help  q quit[K[23A [K[J[2K[?2004l[?25h[?1002l[?1003l[?1006l

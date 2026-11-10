@@ -545,16 +545,13 @@ GitOps E2E tests verify BOTH Flux and ArgoCD work correctly:
 
 ## Connected Mode Testing
 
-Connected mode requires a ConfigHub worker running:
+Connected mode requires a ConfigHub session. (It used to require a running
+bridge worker; ConfigHub removed workers in API 0.10.)
 
 ### Prerequisites
 
 ```bash
-# 1. Start worker
-cub worker run dev --space tutorial
-
-# 2. Verify worker is Ready
-cub worker list
+cub auth status
 ```
 
 ### Connected Tests
@@ -562,7 +559,6 @@ cub worker list
 | Test | What It Verifies |
 |------|------------------|
 | `cub auth` | User is logged in |
-| `cub worker run` | Worker starts and shows "Ready" |
 | `app list` | Can list spaces (should show 150+) |
 | `import --dry-run boutique` | Discovers workloads |
 | `import --dry-run online-boutique` | Discovers 12 microservices |

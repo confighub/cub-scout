@@ -1,24 +1,0 @@
-[?25l[?2004h│                                      ││ ─────────────────────────────────    │
-│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━    ││                                      │
-│                                      ││  Phase Details                       │
-│   ✓ TEST PASSED                      ││                                      │
-│                                      ││ ✓ Add test annotation                │
-│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━    ││    Added confighub.com/import-test   │
-│                                      ││    0s                                │
-│ Your ConfigHub import is fully       ││                                      │
-│ operational!                         ││ ✓ Apply unit                         │
-│                                      ││    Applied via ConfigHub             │
-│ The complete pipeline is working:    ││    2s                                │
-│   ConfigHub → Worker → Cluster       ││                                      │
-│                                      ││ ✓ Wait for sync                      │
-│ You can now manage your workloads    ││    Worker synced                     │
-│ via ConfigHub.                       ││    3s                                │
-╰──────────────────────────────────────╯│                                      │
-                                        │ ✓ Verify annotation                  │
-                                        │    Annotation found in cluster       │
-                                        │    0s                                │
-                                        │                                      │
-                                        │                                      │
-                                        ╰──────────────────────────────────────╯
-                            [K
-r retry test  ? help  q quit[K[23A [K[J[2K[?2004l[?25h[?1002l[?1003l[?1006l

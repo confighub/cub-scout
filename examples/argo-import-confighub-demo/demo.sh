@@ -46,6 +46,15 @@ for arg in "$@"; do
     esac
 done
 
+if $LIVE; then
+    # The live path creates and installs bridge workers and points units at
+    # their targets. ConfigHub API 0.10 removed bridge workers, `cub worker`
+    # and `cub unit set-target`, so it cannot run against a current cub.
+    echo "--live no longer runs: ConfigHub removed bridge workers in API 0.10 (2026-10-31)." >&2
+    echo "Run ./demo.sh without --live to observe, and connect a cluster with: cub cluster attach --help" >&2
+    exit 2
+fi
+
 # Colors
 CYAN='\033[0;36m'
 GREEN='\033[0;32m'

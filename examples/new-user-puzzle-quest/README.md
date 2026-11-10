@@ -423,14 +423,15 @@ a ConfigHub account. The demo cluster persists (you used `--keep`).
 ### Import (only if authenticated)
 
 ```bash
-# Import with auto-confirm + immediate worker/target connection
-./cub-scout import -y --connect
+# Import with auto-confirm
+./cub-scout import -y
 ```
 
 This is equivalent to running `./cub-scout import` and typing `y` at the
 `Import N deployments into App 'X'? [y/N]` prompt. The `-y` flag makes it
-scriptable for both human and AI execution, and `--connect` starts worker/target
-wiring so units do not stay detached.
+scriptable for both human and AI execution. Import does not connect the
+cluster: `--connect` was removed in v2.15.0 with ConfigHub's bridge workers, and
+a cluster is now connected with `cub cluster attach`.
 
 ### What to capture
 

@@ -351,8 +351,6 @@ func init() {
 	// only to refuse by name; --no-connect is what import now always does.
 	importCmd.Flags().BoolVar(&importConnect, "connect", false, "No longer available: ConfigHub removed bridge workers; use `cub cluster attach`")
 	importCmd.Flags().BoolVar(&importNoConnect, "no-connect", false, "Accepted and ignored: import never connects a cluster")
-	_ = importCmd.Flags().MarkHidden("connect")
-	_ = importCmd.Flags().MarkHidden("no-connect")
 	importCmd.Flags().StringVar(&importFromBundle, "from-bundle", "", "Import from a debug bundle directory instead of live cluster discovery")
 	importCmd.Flags().StringVar(&importAuditReason, "audit-reason", "", "Record break-glass decision reason in connected audit history (max 512 chars)")
 	importCmd.Flags().StringArrayVar(&importResources, "resource", nil, "Select specific resources to import (repeatable, e.g., --resource deploy/api --resource statefulset/db)")

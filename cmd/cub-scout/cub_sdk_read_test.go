@@ -288,7 +288,7 @@ func cubCallSites(t *testing.T, entity, verb string) []cubCallSite {
 // this test instead of quietly staying on cub.
 func TestEveryUnitGetCallSiteIsOneTheSDKRouteTakes(t *testing.T) {
 	sites := cubCallSites(t, "unit", "get")
-	require.GreaterOrEqual(t, len(sites), 11, "the scan no longer finds the call sites")
+	require.GreaterOrEqual(t, len(sites), 7, "the scan no longer finds the call sites")
 	for _, site := range sites {
 		space, unit, ok := sdkUnitGetArgs(site.args)
 		require.True(t, ok, "%s: cub %s", site.where, strings.Join(site.args, " "))

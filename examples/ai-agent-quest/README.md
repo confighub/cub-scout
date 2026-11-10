@@ -421,7 +421,7 @@ still works.
 ./cub-scout import --dry-run
 
 # Import + connect workers/targets
-./cub-scout import -y --connect
+./cub-scout import -y
 ```
 
 ### Step 3 — Ask the same questions again

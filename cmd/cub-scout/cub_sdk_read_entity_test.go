@@ -82,7 +82,7 @@ func TestSDKEntityArgsTakeOnlyTheCommandsTheyReproduce(t *testing.T) {
 // route takes, or is named here with the reason it stays with cub.
 func TestEveryEntityReadCallSiteIsTakenOrExplained(t *testing.T) {
 	sites := cubCallSites(t, "unit", "data")
-	require.GreaterOrEqual(t, len(sites), 4)
+	require.GreaterOrEqual(t, len(sites), 2)
 	for _, site := range sites {
 		require.NotNil(t, sdkRead(site.args), "%s: cub %s", site.where, strings.Join(site.args, " "))
 	}

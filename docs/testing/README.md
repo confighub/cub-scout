@@ -336,19 +336,15 @@ test/
 # 1. Check authentication
 cub auth status
 
-# 2. Start a worker
-cub worker run dev --space tutorial
-
-# 3. Verify worker is Ready
-cub worker list
 ```
+
+No worker is needed: ConfigHub removed bridge workers in API 0.10.
 
 ### Connected Tests
 
 | Test | What It Verifies |
 |------|------------------|
 | `cub auth` | User is logged in |
-| `cub worker run` | Worker starts and shows "Ready" |
 | `app list` | Can list spaces |
 | `import --dry-run` | Discovers workloads |
 | `import` | Creates unit in ConfigHub |
