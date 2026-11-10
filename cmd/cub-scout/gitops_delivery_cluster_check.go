@@ -301,20 +301,30 @@ func liveStatusClusterCheckText(check *ConfigHubLiveStatusClusterCheck) string {
 }
 
 // liveStatusNamedController is the candidate the recorded status names as its
-// data source, written Kind/namespace/name as argobot writes it, or nil.
+// data source, or nil. argobot writes Kind/namespace/name for Flux and
+// Sveltos, and for Argo CD the Application's name alone; a bare name is taken
+// as an Application's, and only when one candidate has it.
 func liveStatusNamedController(candidates []*unstructured.Unstructured, dataSource string) *unstructured.Unstructured {
 	parts := strings.Split(strings.TrimSpace(dataSource), "/")
-	if len(parts) != 3 || parts[0] == "" || parts[1] == "" || parts[2] == "" {
+	kind, namespace, name := "", "", ""
+	switch {
+	case len(parts) == 3 && parts[0] != "" && parts[1] != "" && parts[2] != "":
+		kind, namespace, name = parts[0], parts[1], parts[2]
+	case len(parts) == 1 && parts[0] != "":
+		kind, name = "Application", parts[0]
+	default:
 		return nil
 	}
 	var named *unstructured.Unstructured
 	for _, candidate := range candidates {
-		if candidate.GetKind() == parts[0] && candidate.GetNamespace() == parts[1] && candidate.GetName() == parts[2] {
-			if named != nil {
-				return nil
-			}
-			named = candidate
+		if candidate.GetKind() != kind || candidate.GetName() != name || (namespace != "" && candidate.GetNamespace() != namespace) {
+			continue
 		}
+		if named != nil {
+			// Two objects answer to the name: the status does not say which.
+			return nil
+		}
+		named = candidate
 	}
 	return named
 }

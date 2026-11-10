@@ -1,0 +1,356 @@
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "argoproj.io/v1alpha1",
+            "kind": "Application",
+            "metadata": {
+                "annotations": {
+                    "argocd.argoproj.io/tracking-id": "scout-live-argo-apps:argoproj.io/Application:argocd/argobot-scout-live",
+                    "confighub.com/origin": "{\"spaceId\":\"6811aba9-71a4-4e01-a829-5c2b92b46eaa\",\"spaceSlug\":\"scout-live-argo-apps\",\"unitId\":\"41a294ef-1296-402b-ab88-53df4a0c2d87\",\"unitSlug\":\"argobot-scout-live\",\"revisionNum\":2}"
+                },
+                "creationTimestamp": "2026-11-10T18:49:32Z",
+                "generation": 15,
+                "name": "argobot-scout-live",
+                "namespace": "argocd",
+                "resourceVersion": "948",
+                "uid": "4bf8db7d-f273-4c9b-b432-364ca4a80d2e"
+            },
+            "spec": {
+                "destination": {
+                    "server": "https://kubernetes.default.svc"
+                },
+                "project": "default",
+                "source": {
+                    "path": ".",
+                    "repoURL": "oci://172.18.0.1:32181/space/argobot-scout-live",
+                    "targetRevision": "latest"
+                },
+                "syncPolicy": {
+                    "automated": {
+                        "allowEmpty": true,
+                        "selfHeal": true
+                    }
+                }
+            },
+            "status": {
+                "controllerNamespace": "argocd",
+                "health": {
+                    "lastTransitionTime": "2026-11-10T18:49:35Z",
+                    "status": "Healthy"
+                },
+                "history": [
+                    {
+                        "deployStartedAt": "2026-11-10T18:49:32Z",
+                        "deployedAt": "2026-11-10T18:49:33Z",
+                        "id": 0,
+                        "initiatedBy": {
+                            "automated": true
+                        },
+                        "revision": "sha256:c28d487cec47f8d49cf7a5727b44d08f38ddc4a241668c4135985433d8f691a6",
+                        "source": {
+                            "path": ".",
+                            "repoURL": "oci://172.18.0.1:32181/space/argobot-scout-live",
+                            "targetRevision": "latest"
+                        }
+                    }
+                ],
+                "operationState": {
+                    "finishedAt": "2026-11-10T18:49:33Z",
+                    "message": "successfully synced (all tasks run)",
+                    "operation": {
+                        "initiatedBy": {
+                            "automated": true
+                        },
+                        "retry": {
+                            "limit": 5
+                        },
+                        "sync": {
+                            "autoHealAttemptsCount": 1,
+                            "resources": [
+                                {
+                                    "group": "apps",
+                                    "kind": "Deployment",
+                                    "name": "argobot"
+                                }
+                            ],
+                            "revision": "sha256:c28d487cec47f8d49cf7a5727b44d08f38ddc4a241668c4135985433d8f691a6",
+                            "source": {
+                                "path": ".",
+                                "repoURL": "oci://172.18.0.1:32181/space/argobot-scout-live",
+                                "targetRevision": "latest"
+                            }
+                        }
+                    },
+                    "phase": "Succeeded",
+                    "startedAt": "2026-11-10T18:49:33Z",
+                    "syncResult": {
+                        "resources": [
+                            {
+                                "group": "apps",
+                                "hookPhase": "Running",
+                                "images": [
+                                    "ghcr.io/confighub/argobot:v0.2.9"
+                                ],
+                                "kind": "Deployment",
+                                "message": "deployment.apps/argobot unchanged",
+                                "name": "argobot",
+                                "namespace": "argobot",
+                                "status": "Synced",
+                                "syncPhase": "Sync",
+                                "version": "v1"
+                            }
+                        ],
+                        "revision": "sha256:c28d487cec47f8d49cf7a5727b44d08f38ddc4a241668c4135985433d8f691a6",
+                        "source": {
+                            "path": ".",
+                            "repoURL": "oci://172.18.0.1:32181/space/argobot-scout-live",
+                            "targetRevision": "latest"
+                        }
+                    }
+                },
+                "reconciledAt": "2026-11-10T18:49:35Z",
+                "resourceHealthSource": "appTree",
+                "resources": [
+                    {
+                        "kind": "Namespace",
+                        "name": "argobot",
+                        "status": "Synced",
+                        "version": "v1"
+                    },
+                    {
+                        "kind": "ServiceAccount",
+                        "name": "argobot",
+                        "namespace": "argobot",
+                        "status": "Synced",
+                        "version": "v1"
+                    },
+                    {
+                        "group": "apps",
+                        "kind": "Deployment",
+                        "name": "argobot",
+                        "namespace": "argobot",
+                        "status": "Synced",
+                        "version": "v1"
+                    },
+                    {
+                        "group": "rbac.authorization.k8s.io",
+                        "kind": "ClusterRole",
+                        "name": "argobot-read",
+                        "status": "Synced",
+                        "version": "v1"
+                    },
+                    {
+                        "group": "rbac.authorization.k8s.io",
+                        "kind": "ClusterRoleBinding",
+                        "name": "argobot-read",
+                        "status": "Synced",
+                        "version": "v1"
+                    },
+                    {
+                        "group": "rbac.authorization.k8s.io",
+                        "kind": "Role",
+                        "name": "argobot-argocd",
+                        "namespace": "argocd",
+                        "status": "Synced",
+                        "version": "v1"
+                    },
+                    {
+                        "group": "rbac.authorization.k8s.io",
+                        "kind": "RoleBinding",
+                        "name": "argobot-argocd",
+                        "namespace": "argocd",
+                        "status": "Synced",
+                        "version": "v1"
+                    }
+                ],
+                "sourceHydrator": {},
+                "sourceType": "Directory",
+                "summary": {
+                    "images": [
+                        "ghcr.io/confighub/argobot:v0.2.9"
+                    ]
+                },
+                "sync": {
+                    "comparedTo": {
+                        "destination": {
+                            "server": "https://kubernetes.default.svc"
+                        },
+                        "source": {
+                            "path": ".",
+                            "repoURL": "oci://172.18.0.1:32181/space/argobot-scout-live",
+                            "targetRevision": "latest"
+                        }
+                    },
+                    "revision": "sha256:c28d487cec47f8d49cf7a5727b44d08f38ddc4a241668c4135985433d8f691a6",
+                    "status": "Synced"
+                }
+            }
+        },
+        {
+            "apiVersion": "argoproj.io/v1alpha1",
+            "kind": "Application",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"finalizers\":[\"resources-finalizer.argocd.argoproj.io\"],\"name\":\"scout-live-argo-apps\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"argocd\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\".\",\"repoURL\":\"oci://172.18.0.1:32181/space/scout-live-argo-apps\",\"targetRevision\":\"latest\"},\"syncPolicy\":{\"automated\":{\"selfHeal\":true},\"syncOptions\":[\"ServerSideApply=true\",\"ServerSideApply.ForceConflicts=true\",\"RespectIgnoreDifferences=true\",\"CreateNamespace=false\"]}}}\n"
+                },
+                "creationTimestamp": "2026-11-10T18:49:31Z",
+                "finalizers": [
+                    "resources-finalizer.argocd.argoproj.io"
+                ],
+                "generation": 11,
+                "name": "scout-live-argo-apps",
+                "namespace": "argocd",
+                "resourceVersion": "896",
+                "uid": "7d57d447-a2e9-49bb-9925-bc577f948318"
+            },
+            "spec": {
+                "destination": {
+                    "namespace": "argocd",
+                    "server": "https://kubernetes.default.svc"
+                },
+                "project": "default",
+                "source": {
+                    "path": ".",
+                    "repoURL": "oci://172.18.0.1:32181/space/scout-live-argo-apps",
+                    "targetRevision": "latest"
+                },
+                "syncPolicy": {
+                    "automated": {
+                        "selfHeal": true
+                    },
+                    "syncOptions": [
+                        "ServerSideApply=true",
+                        "ServerSideApply.ForceConflicts=true",
+                        "RespectIgnoreDifferences=true",
+                        "CreateNamespace=false"
+                    ]
+                }
+            },
+            "status": {
+                "controllerNamespace": "argocd",
+                "health": {
+                    "lastTransitionTime": "2026-11-10T18:49:32Z",
+                    "status": "Healthy"
+                },
+                "history": [
+                    {
+                        "deployStartedAt": "2026-11-10T18:49:32Z",
+                        "deployedAt": "2026-11-10T18:49:32Z",
+                        "id": 0,
+                        "initiatedBy": {
+                            "automated": true
+                        },
+                        "revision": "sha256:384f38db33e2f0b581415a7015802ca240648d4c87261c444ada9d7535770ea7",
+                        "source": {
+                            "path": ".",
+                            "repoURL": "oci://172.18.0.1:32181/space/scout-live-argo-apps",
+                            "targetRevision": "latest"
+                        }
+                    }
+                ],
+                "operationState": {
+                    "finishedAt": "2026-11-10T18:49:32Z",
+                    "message": "successfully synced (all tasks run)",
+                    "operation": {
+                        "initiatedBy": {
+                            "automated": true
+                        },
+                        "retry": {
+                            "limit": 5
+                        },
+                        "sync": {
+                            "autoHealAttemptsCount": 1,
+                            "resources": [
+                                {
+                                    "group": "argoproj.io",
+                                    "kind": "Application",
+                                    "name": "argobot-scout-live"
+                                }
+                            ],
+                            "revision": "sha256:384f38db33e2f0b581415a7015802ca240648d4c87261c444ada9d7535770ea7",
+                            "source": {
+                                "path": ".",
+                                "repoURL": "oci://172.18.0.1:32181/space/scout-live-argo-apps",
+                                "targetRevision": "latest"
+                            },
+                            "syncOptions": [
+                                "ServerSideApply=true",
+                                "ServerSideApply.ForceConflicts=true",
+                                "RespectIgnoreDifferences=true",
+                                "CreateNamespace=false"
+                            ]
+                        }
+                    },
+                    "phase": "Succeeded",
+                    "startedAt": "2026-11-10T18:49:32Z",
+                    "syncResult": {
+                        "resources": [
+                            {
+                                "group": "argoproj.io",
+                                "hookPhase": "Running",
+                                "kind": "Application",
+                                "message": "application.argoproj.io/argobot-scout-live serverside-applied",
+                                "name": "argobot-scout-live",
+                                "namespace": "argocd",
+                                "status": "Synced",
+                                "syncPhase": "Sync",
+                                "version": "v1alpha1"
+                            }
+                        ],
+                        "revision": "sha256:384f38db33e2f0b581415a7015802ca240648d4c87261c444ada9d7535770ea7",
+                        "source": {
+                            "path": ".",
+                            "repoURL": "oci://172.18.0.1:32181/space/scout-live-argo-apps",
+                            "targetRevision": "latest"
+                        }
+                    }
+                },
+                "reconciledAt": "2026-11-10T18:49:32Z",
+                "resourceHealthSource": "appTree",
+                "resources": [
+                    {
+                        "group": "argoproj.io",
+                        "kind": "Application",
+                        "name": "argobot-scout-live",
+                        "namespace": "argocd",
+                        "status": "Synced",
+                        "version": "v1alpha1"
+                    },
+                    {
+                        "group": "argoproj.io",
+                        "kind": "Application",
+                        "name": "scout-live-argo-apps",
+                        "namespace": "argocd",
+                        "status": "Synced",
+                        "version": "v1alpha1"
+                    }
+                ],
+                "sourceHydrator": {},
+                "sourceType": "Directory",
+                "summary": {
+                    "isAppOfApps": true
+                },
+                "sync": {
+                    "comparedTo": {
+                        "destination": {
+                            "namespace": "argocd",
+                            "server": "https://kubernetes.default.svc"
+                        },
+                        "source": {
+                            "path": ".",
+                            "repoURL": "oci://172.18.0.1:32181/space/scout-live-argo-apps",
+                            "targetRevision": "latest"
+                        }
+                    },
+                    "revision": "sha256:384f38db33e2f0b581415a7015802ca240648d4c87261c444ada9d7535770ea7",
+                    "status": "Synced"
+                }
+            }
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}
