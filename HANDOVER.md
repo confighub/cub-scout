@@ -2200,3 +2200,13 @@ built with SDK core v0.8.12, refuses it by default.
   `cub variant create --target`; a Release out of sync, or a disagreement,
   on a real cluster; health comparison. No agent eval case (waived; paid runs
   are not approved).
+
+## v2.15.0 published — 2026-11-10
+
+On the maintainer's instruction ("merge 902 and cut v2.15.0"). Tag `v2.15.0`
+at `f723eced`, after main CI passed on that commit; Release run 42891637683.
+The checks made on the artifacts are in
+[the notes](docs/releases/v2.15.0.md#publication-checks). Released cub-scout
+now works with hosted ConfigHub (0.10). #897 can close; #887 stays open for
+Sveltos, health and a disagreement seen live. Open decisions: #899 (connected
+demos), #898 (channels, not planned).
