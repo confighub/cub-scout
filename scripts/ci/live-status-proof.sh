@@ -94,7 +94,7 @@ def walk(value):
 statuses = [s for s in walk(report) if s.get("recordedOn") == "release"]
 for s in statuses:
     check = s.get("clusterCheck") or {}
-    print(s.get("space"), s.get("release"), "sync=%s" % s.get("sync"), "check=%s" % check.get("state"), check.get("reason", ""))
+    print(s.get("space"), s.get("release"), "sync=%s" % s.get("syncStatus"), "matchedBy=%s" % (s.get("clusterCheck") or {}).get("matchedBy"), "check=%s" % check.get("state"), check.get("reason", ""))
 if not statuses:
     sys.exit("cub-scout reported no live status recorded on a Release")
 if not any((s.get("clusterCheck") or {}).get("state") == "agrees" for s in statuses):

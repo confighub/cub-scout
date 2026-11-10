@@ -24,7 +24,11 @@ const (
 	liveStatusClusterDisagrees     = "disagrees"
 	liveStatusClusterNotObservable = "not-observable"
 
-	liveStatusClusterLimitation = "Compares one thing: whether a controller in this cluster reports this Release's manifest digest as applied, against the sync state the deploying tool recorded. The two reports were made at different moments and can both have been true in turn. Health is not compared. A controller's report is not proof that workloads converged. Controllers are matched by ConfigHub registry and space slug only: not by organization, Target or path, and this cluster may not be the Release's Target."
+	liveStatusClusterLimitation = "Compares one thing: whether a controller in this cluster reports this Release's manifest digest as applied, against the sync state the deploying tool recorded. The two reports were made at different moments and can both have been true in turn. Health is not compared. A controller's report is not proof that workloads converged. Controllers are matched by ConfigHub registry and space slug, or, where this cluster reaches the registry at an address the server does not advertise, by being the object the recorded status names as its data source and pulling a repository named for the space: not by organization, Target or path, and this cluster may not be the Release's Target."
+
+	// How the compared controllers were found.
+	liveStatusMatchedByRegistry   = "registry"
+	liveStatusMatchedByDataSource = "reporter-data-source"
 )
 
 // ConfigHubLiveStatusClusterCheck is cub-scout's own reading of the cluster
@@ -32,8 +36,14 @@ const (
 // gates on that status; this says whether the cluster in the current context
 // agrees with it.
 type ConfigHubLiveStatusClusterCheck struct {
-	State       string                          `json:"state"`
-	Reason      string                          `json:"reason"`
+	State  string `json:"state"`
+	Reason string `json:"reason"`
+	// MatchedBy says how the compared controllers were found: "registry" when
+	// their source is on a registry known to be ConfigHub's, and
+	// "reporter-data-source" when the registry is not recognised and the
+	// controller is the one object the recorded status names as its data
+	// source, pulling a repository named space/<this space>.
+	MatchedBy   string                          `json:"matchedBy,omitempty"`
 	Controllers []ConfigHubLiveStatusController `json:"controllers,omitempty"`
 	ObservedAt  string                          `json:"observedAt,omitempty"`
 	Limitation  string                          `json:"limitation"`
@@ -60,13 +70,21 @@ var (
 // kind could not be read.
 type liveStatusClusterControllers struct {
 	bySpace map[string][]*unstructured.Unstructured
-	unread  []string
+	// shapedLike holds controller objects whose source is a repository named
+	// space/<slug> on a registry that is not known to be ConfigHub's. A kind
+	// cluster reaches a local server's registry through the Docker bridge
+	// (172.18.0.1:32181) while the server advertises localhost:32181, so the
+	// address alone cannot settle it. They are compared only when the recorded
+	// status names the object itself.
+	shapedLike map[string][]*unstructured.Unstructured
+	registries map[string]struct{}
+	unread     []string
 }
 
 // readLiveStatusClusterControllers lists Argo CD Applications and Flux
 // Kustomizations once and keeps those whose source is a ConfigHub space.
 func readLiveStatusClusterControllers(ctx context.Context, client dynamic.Interface) liveStatusClusterControllers {
-	found := liveStatusClusterControllers{bySpace: map[string][]*unstructured.Unstructured{}}
+	found := liveStatusClusterControllers{bySpace: map[string][]*unstructured.Unstructured{}, shapedLike: map[string][]*unstructured.Unstructured{}, registries: map[string]struct{}{}}
 	list := func(gvr schema.GroupVersionResource, kind string) []unstructured.Unstructured {
 		items, err := client.Resource(gvr).Namespace(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
 		if apierrors.IsNotFound(err) || meta.IsNoMatchError(err) {
@@ -79,12 +97,18 @@ func readLiveStatusClusterControllers(ctx context.Context, client dynamic.Interf
 		}
 		return items.Items
 	}
-	space := func(url string) string {
+	// space is the space slug a source names, and whether its registry is
+	// known to be ConfigHub's.
+	space := func(url string) (string, bool) {
 		info := agent.ParseOCISource(url)
-		if !info.IsConfigHub || info.Layout != agent.OCILayoutSpace {
-			return ""
+		if info.Layout != agent.OCILayoutSpace {
+			return "", false
 		}
-		return info.Space
+		if !info.IsConfigHub {
+			found.registries[info.Registry] = struct{}{}
+			return info.SpaceCandidate, false
+		}
+		return info.Space, true
 	}
 	applications := list(liveStatusApplicationGVR, "Argo CD Applications")
 	for i := range applications {
@@ -104,21 +128,28 @@ func readLiveStatusClusterControllers(ctx context.Context, client dynamic.Interf
 		}
 		matched := map[string]bool{}
 		for _, repo := range repos {
-			if slug := space(repo); slug != "" && !matched[slug] {
+			if slug, known := space(repo); slug != "" && !matched[slug] {
 				matched[slug] = true
-				found.bySpace[slug] = append(found.bySpace[slug], &applications[i])
+				if known {
+					found.bySpace[slug] = append(found.bySpace[slug], &applications[i])
+				} else {
+					found.shapedLike[slug] = append(found.shapedLike[slug], &applications[i])
+				}
 			}
 		}
 	}
-	sources := map[string]string{}
+	sources, shaped := map[string]string{}, map[string]string{}
 	repositories := list(liveStatusOCIRepositoryGVR, "Flux OCIRepositories")
 	for i := range repositories {
 		url, _, _ := unstructured.NestedString(repositories[i].Object, "spec", "url")
-		if slug := space(url); slug != "" {
-			sources[repositories[i].GetNamespace()+"/"+repositories[i].GetName()] = slug
+		key := repositories[i].GetNamespace() + "/" + repositories[i].GetName()
+		if slug, known := space(url); slug != "" && known {
+			sources[key] = slug
+		} else if slug != "" {
+			shaped[key] = slug
 		}
 	}
-	if len(sources) > 0 {
+	if len(sources)+len(shaped) > 0 {
 		kustomizations := list(liveStatusKustomizationGVR, "Flux Kustomizations")
 		for i := range kustomizations {
 			kind, _, _ := unstructured.NestedString(kustomizations[i].Object, "spec", "sourceRef", "kind")
@@ -127,8 +158,13 @@ func readLiveStatusClusterControllers(ctx context.Context, client dynamic.Interf
 			if namespace == "" {
 				namespace = kustomizations[i].GetNamespace()
 			}
-			if slug := sources[namespace+"/"+name]; kind == "OCIRepository" && slug != "" {
+			if kind != "OCIRepository" {
+				continue
+			}
+			if slug := sources[namespace+"/"+name]; slug != "" {
 				found.bySpace[slug] = append(found.bySpace[slug], &kustomizations[i])
+			} else if slug := shaped[namespace+"/"+name]; slug != "" {
+				found.shapedLike[slug] = append(found.shapedLike[slug], &kustomizations[i])
 			}
 		}
 	}
@@ -177,8 +213,19 @@ func checkLiveStatusesAgainstCluster(ctx context.Context, client dynamic.Interfa
 		}
 		check.ObservedAt = now.UTC().Format(time.RFC3339)
 		controllers := found.bySpace[status.Space]
+		check.MatchedBy = liveStatusMatchedByRegistry
+		if len(controllers) == 0 {
+			check.MatchedBy = ""
+			if named := liveStatusNamedController(found.shapedLike[status.Space], status.DataSource); named != nil {
+				controllers = []*unstructured.Unstructured{named}
+				check.MatchedBy = liveStatusMatchedByDataSource
+			}
+		}
 		if len(controllers) == 0 {
 			check.Reason = fmt.Sprintf("no Argo CD Application or Flux Kustomization in this cluster was recognised as pulling ConfigHub space %q", status.Space)
+			if shaped := found.shapedLike[status.Space]; len(shaped) > 0 {
+				check.Reason += fmt.Sprintf("; %d pull a repository named space/%s from a registry not known to be ConfigHub's (%s), and the recorded status names none of them as its data source (%q)", len(shaped), status.Space, strings.Join(sortedKeys(found.registries), ", "), status.DataSource)
+			}
 			if len(found.unread) > 0 {
 				check.Reason += "; " + strings.Join(found.unread, "; ")
 			}
@@ -236,6 +283,9 @@ func checkLiveStatusesAgainstCluster(ctx context.Context, client dynamic.Interfa
 			check.State = liveStatusClusterAgrees
 			check.Reason = fmt.Sprintf("the recorded sync state is %q, and all %d controllers pulling this space report the same about the Release's digest", status.SyncStatus, agree)
 		}
+		if check.MatchedBy == liveStatusMatchedByDataSource {
+			check.Reason += fmt.Sprintf("; the controller compared is the one the recorded status names as its data source (%s), whose registry is not the one the ConfigHub server advertises", status.DataSource)
+		}
 		if len(found.unread) > 0 {
 			check.Reason += "; " + strings.Join(found.unread, "; ")
 		}
@@ -248,4 +298,23 @@ func liveStatusClusterCheckText(check *ConfigHubLiveStatusClusterCheck) string {
 		return "-"
 	}
 	return check.State + ": " + check.Reason
+}
+
+// liveStatusNamedController is the candidate the recorded status names as its
+// data source, written Kind/namespace/name as argobot writes it, or nil.
+func liveStatusNamedController(candidates []*unstructured.Unstructured, dataSource string) *unstructured.Unstructured {
+	parts := strings.Split(strings.TrimSpace(dataSource), "/")
+	if len(parts) != 3 || parts[0] == "" || parts[1] == "" || parts[2] == "" {
+		return nil
+	}
+	var named *unstructured.Unstructured
+	for _, candidate := range candidates {
+		if candidate.GetKind() == parts[0] && candidate.GetNamespace() == parts[1] && candidate.GetName() == parts[2] {
+			if named != nil {
+				return nil
+			}
+			named = candidate
+		}
+	}
+	return named
 }
