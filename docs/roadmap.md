@@ -453,7 +453,7 @@ before implementation.
 > **Trimmed on 2026-11-10.** The maintainer cut this plan back; the current
 > release assignments and the list of items no longer planned are in the
 > [trimmed plan](roadmap-3.0-execution.md#trimmed-plan--2026-11-10), which wins
-> wherever the stages below disagree. In short: v2.15 fixes [#827](https://github.com/confighub/cub-scout/issues/827) and
+> wherever the stages below disagree. In short: v2.15 finishes [#827](https://github.com/confighub/cub-scout/issues/827) and
 > adds the independent live-status check ([#887](https://github.com/confighub/cub-scout/issues/887)); v2.16 adds the pre-attach
 > report ([#888](https://github.com/confighub/cub-scout/issues/888)) and the deprecation notices; 3.0.0 stays the transition
 > only; 3.1 is facts in ConfigHub ([#600](https://github.com/confighub/cub-scout/issues/600)) and signed receipts ([#889](https://github.com/confighub/cub-scout/issues/889)).

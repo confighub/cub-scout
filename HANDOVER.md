@@ -2137,7 +2137,8 @@ roadmap", then "go ahead"), after an independent review of the v2.14 to 3.1
 plans. The authority is the
 [trimmed plan](docs/roadmap-3.0-execution.md#trimmed-plan--2026-11-10).
 
-- **Planned:** v2.15 = #827 (false health in `explain`), #887, the rest of
+- **Planned:** v2.15 = what remains of #827 (its false-health behaviour was
+  fixed in #830; a structured field and the eval case are owed), #887, the rest of
   #882, the rest of #599. v2.16 = #888, #596 for CLI/MCP/TUI, deprecation
   notices. 3.0 = the transition only (#595, #386). 3.1 = #600 with #520, and
   #889.

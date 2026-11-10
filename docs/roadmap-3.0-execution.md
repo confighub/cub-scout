@@ -21,7 +21,7 @@ and D7. v2.15 work stays paused until the maintainer resumes it.
 
 | Release | Scope |
 |---|---|
-| v2.15 | [#827] `explain` reports a workload healthy while its Flux Kustomization is failing (the one open correctness defect); [#887] independent check of a Release's reported live status; the remaining items of [#882]; the rest of [#599] (explicit cluster, identity, reported cost). Bump the ConfigHub SDK when ConfigHub's minor version moves ([#758]). |
+| v2.15 | what remains of [#827]: the false-health behaviour was fixed in #830 (v2.13); still owed are a machine-readable field for a broken delivery chain in `explain` and the eval case; [#887] independent check of a Release's reported live status; the remaining items of [#882]; the rest of [#599] (explicit cluster, identity, reported cost). Bump the ConfigHub SDK when ConfigHub's minor version moves ([#758]). |
 | v2.16 | [#888] pre-attach report; [#596] conformance narrowed to CLI, MCP and TUI; deprecation notices for everything 3.0 removes, including `fleet outliers`. |
 | 3.0 | The transition only ([#595], [#386]): removals, `/v3`, a cub floor named at release time against the then-current cub (the "0.6" below predates the SDK reads), a migration guide. No new features, as [the roadmap](roadmap.md#path-to-30) has always said. |
 | 3.1 | [#600] facts in ConfigHub, with the pullable bot image ([#520]); [#889] signed receipts, key-based and verifiable offline first. Waits on a storage agreement with ConfigHub (D6), which has no date; 3.1 has none either. |
