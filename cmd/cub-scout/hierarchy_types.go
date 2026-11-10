@@ -274,7 +274,6 @@ const (
 	importStepImporting
 	importStepComplete
 	importStepArgoCleanup // Offer to disable/delete ArgoCD Application (ArgoCD imports only)
-	importStepTest        // Offer to test ConfigHub pipeline
 )
 
 // ArgoCD cleanup options
@@ -282,12 +281,6 @@ const (
 	argoCleanupDisableSync = iota // Disable auto-sync, keep Application
 	argoCleanupDeleteApp          // Delete Application entirely
 	argoCleanupKeepAsIs           // Keep Application as-is
-)
-
-// Test pipeline options
-const (
-	testOptionTest = iota // Test with annotation update + rollout
-	testOptionSkip        // Skip testing
 )
 
 // Unit structure options (ArgoCD imports)
@@ -385,9 +378,6 @@ type Model struct {
 	importUnitStructure int               // unit structure: unitStructureCombined, unitStructureIndividual
 
 	// Test pipeline state
-	importTestChoice int               // test choice: testOptionTest, testOptionSkip
-	importTestResult *TestUpdateResult // result of test
-	importTestRan    bool              // whether the test was actually executed
 
 	// Create wizard state
 	createMode      bool             // Create wizard active
@@ -763,11 +753,6 @@ type argoAppDeletedMsg struct {
 type unitAppliedMsg struct {
 	unitSlug string
 	err      error
-}
-
-type testUpdateCompleteMsg struct {
-	result *TestUpdateResult
-	err    error
 }
 
 type workloadsDiscoveredMsg struct {
