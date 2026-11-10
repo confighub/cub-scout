@@ -645,15 +645,6 @@ func applyUnitCmd(space, unitSlug string, workloads []WorkloadInfo) tea.Cmd {
 	}
 }
 
-func testPipelineCmd(space, unitSlug string) tea.Cmd {
-	return func() tea.Msg {
-		// Use rollout restart which adds annotation to pod template,
-		// triggering a rolling update - this is the most comprehensive test
-		result, err := testRolloutRestart(space, unitSlug)
-		return testUpdateCompleteMsg{result: result, err: err}
-	}
-}
-
 // countWorkloadsWithOwners parses kubectl JSON output and counts workloads by owner
 func countWorkloadsWithOwners(jsonData []byte, info *namespaceInfo, kindCount *int) {
 	var result struct {
@@ -2216,18 +2207,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.importStep = importStepArgoCleanup
 			m.importCursor = argoCleanupKeepAsIs // Default to keep as-is
 		} else {
-			// For non-ArgoCD imports, offer test step
-			m.importStep = importStepTest
-			m.importCursor = testOptionSkip // Default to skip
+			// For non-ArgoCD imports the wizard is done
+			m.importStep = importStepComplete
 		}
 
 	case argoSyncDisabledMsg:
 		m.importLoading = false
 		if msg.err != nil {
 			m.importError = msg.err
-			// Cleanup failed - go to test step but warn that ArgoCD still controls resources
-			m.importStep = importStepTest
-			m.importCursor = testOptionSkip // Default to skip
+			// Cleanup failed - finish, with the error shown: ArgoCD still controls the resources
+			m.importStep = importStepComplete
 			return m, nil
 		}
 		// Cleanup succeeded - now apply the unit (ArgoCD won't revert it anymore)
@@ -2236,17 +2225,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.importLoading = true
 			return m, applyUnitCmd(m.importSpace, unitSlug, m.getSelectedWorkloads())
 		}
-		// Fallback: go to test step
-		m.importStep = importStepTest
-		m.importCursor = testOptionSkip
+		// Fallback: finish
+		m.importStep = importStepComplete
 
 	case argoAppDeletedMsg:
 		m.importLoading = false
 		if msg.err != nil {
 			m.importError = msg.err
-			// Cleanup failed - go to test step but warn
-			m.importStep = importStepTest
-			m.importCursor = testOptionSkip
+			// Cleanup failed - finish, with the error shown
+			m.importStep = importStepComplete
 			return m, nil
 		}
 		// Cleanup succeeded - now apply the unit
@@ -2255,26 +2242,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.importLoading = true
 			return m, applyUnitCmd(m.importSpace, unitSlug, m.getSelectedWorkloads())
 		}
-		// Fallback: go to test step
-		m.importStep = importStepTest
-		m.importCursor = testOptionSkip
+		// Fallback: finish
+		m.importStep = importStepComplete
 
 	case unitAppliedMsg:
 		m.importLoading = false
 		if msg.err != nil {
 			m.importApplyError = msg.err
 		}
-		// Proceed to test step — its UI already handles apply errors gracefully
-		// by showing a warning and letting the user skip the pipeline test.
-		m.importStep = importStepTest
-		m.importCursor = 0
-
-	case testUpdateCompleteMsg:
-		m.importLoading = false
-		m.importTestResult = msg.result
-		if msg.err != nil {
-			m.importError = msg.err
-		}
+		// The wizard used to offer a pipeline test here: it wrote a restart
+		// annotation to the unit and waited for it in the cluster. Nothing
+		// delivers a unit from this wizard since ConfigHub API 0.10, so the
+		// wait could only time out after a write. The step is gone.
 		m.importStep = importStepComplete
 
 	case configExtractedMsg:
@@ -2550,8 +2529,6 @@ func (m *Model) getImportMaxCursor() int {
 		return 0
 	case importStepArgoCleanup:
 		return 2 // 0 = disable sync, 1 = delete app, 2 = keep as-is
-	case importStepTest:
-		return 2 // 0 = annotation, 1 = rollout, 2 = skip
 	default:
 		return 0
 	}
@@ -2781,37 +2758,7 @@ func (m *Model) advanceImportStep() (tea.Model, tea.Cmd) {
 				return m, applyUnitCmd(m.importSpace, unitSlug, m.getSelectedWorkloads())
 			}
 		}
-		m.importStep = importStepTest
-		m.importCursor = testOptionSkip
-		return m, nil
-
-	case importStepTest:
-		// Handle test pipeline choice
-		m.importTestChoice = m.importCursor
-		// Get the workload unit slug for testing
-		var unitSlug string
-		if m.importSource == importSourceArgoCD && m.importSelectedArgo != nil {
-			unitSlug = fmt.Sprintf("%s-workload", m.importSelectedArgo.Name)
-		} else if len(m.importWorkloads) > 0 {
-			// Use the first selected workload
-			for i, selected := range m.importSelected {
-				if selected {
-					unitSlug = m.importWorkloads[i].Name
-					break
-				}
-			}
-		}
-		switch m.importCursor {
-		case testOptionTest:
-			if unitSlug != "" {
-				m.importLoading = true
-				m.importTestRan = true
-				return m, testPipelineCmd(m.importSpace, unitSlug)
-			}
-			m.importStep = importStepComplete
-		case testOptionSkip:
-			m.importStep = importStepComplete
-		}
+		m.importStep = importStepComplete
 		return m, nil
 
 	case importStepComplete:
@@ -2927,9 +2874,6 @@ func (m *Model) resetImportState() {
 	m.importArgoCleanup = argoCleanupKeepAsIs
 	m.importUnitStructure = unitStructureCombined
 	// Reset test state
-	m.importTestChoice = testOptionSkip
-	m.importTestResult = nil
-	m.importTestRan = false
 }
 
 func (m *Model) getSelectedWorkloads() []WorkloadInfo {
@@ -4120,9 +4064,9 @@ func (m Model) renderImportWizard() string {
 	// Show progress indicator based on import source
 	var steps []string
 	if m.importSource == importSourceArgoCD {
-		steps = []string{"Source", "ArgoApp", "Space", "Units", "Cleanup", "Test", "Done"}
+		steps = []string{"Source", "ArgoApp", "Space", "Units", "Cleanup", "Done"}
 	} else {
-		steps = []string{"Source", "Namespace", "Space", "Units", "Test", "Done"}
+		steps = []string{"Source", "Namespace", "Space", "Units", "Done"}
 	}
 	currentStepIdx := 0
 	switch m.importStep {
@@ -4134,10 +4078,10 @@ func (m Model) renderImportWizard() string {
 		currentStepIdx = 2
 	case importStepDiscovering, importStepSelection, importStepUnitStructure, importStepExtractConfig:
 		currentStepIdx = 3
-	case importStepImporting, importStepArgoCleanup:
+	case importStepImporting:
+		currentStepIdx = 3
+	case importStepArgoCleanup:
 		currentStepIdx = 4
-	case importStepTest:
-		currentStepIdx = len(steps) - 2
 	case importStepComplete:
 		currentStepIdx = len(steps) - 1
 	}
@@ -4696,58 +4640,6 @@ func (m Model) renderImportWizard() string {
 			b.WriteString(dimStyle.Render("↑↓ navigate  Enter select"))
 		}
 
-	case importStepTest:
-		b.WriteString(statusOK.Render("Import Complete!") + "\n\n")
-
-		// Show what was imported
-		if m.importSource == importSourceArgoCD && m.importSelectedArgo != nil {
-			b.WriteString(fmt.Sprintf("Imported %d units from ArgoCD Application '%s'\n\n",
-				m.importProgress, m.importSelectedArgo.Name))
-		} else {
-			b.WriteString(fmt.Sprintf("Imported %d units into space '%s'\n\n",
-				m.importProgress, m.importSpace))
-		}
-
-		// Show apply error warning if apply failed
-		if m.importApplyError != nil {
-			b.WriteString(statusWarn.Render("⚠ Apply failed") + "\n")
-			b.WriteString(dimStyle.Render(m.importApplyError.Error()) + "\n\n")
-			b.WriteString(dimStyle.Render("Pipeline test may not work without successful apply.") + "\n\n")
-		}
-
-		if m.importLoading {
-			b.WriteString(groupStyle.Render("Testing ConfigHub Pipeline") + "\n\n")
-
-			// Show what the test is doing
-			b.WriteString("  " + activeStyle.Render("◐") + " " + dimStyle.Render("Add restart annotation to pod template") + "\n")
-			b.WriteString("  " + dimStyle.Render("○ Update unit via ConfigHub") + "\n")
-			b.WriteString("  " + dimStyle.Render("○ Apply change to cluster") + "\n")
-			b.WriteString("\n")
-			b.WriteString(dimStyle.Render("Typical: 10-30 seconds. Max wait: 2 minutes."))
-		} else {
-			b.WriteString("Test ConfigHub Pipeline?\n\n")
-			b.WriteString(dimStyle.Render("Verify ConfigHub can update your resources via the cub CLI.\n\n"))
-
-			options := []struct {
-				name string
-				desc string
-			}{
-				{"Test pipeline", "Add annotation + trigger rollout to verify ConfigHub can manage resources"},
-				{"Skip", "Continue without testing"},
-			}
-			for i, opt := range options {
-				cursor := "  "
-				if i == m.importCursor {
-					cursor = activeStyle.Render("▸ ")
-				}
-				// Use padRight for cursor to maintain alignment
-				b.WriteString(fmt.Sprintf("%s%s\n", padRight(cursor, 2), groupStyle.Render(opt.name)))
-				b.WriteString(fmt.Sprintf("   %s\n", dimStyle.Render(opt.desc)))
-			}
-			b.WriteString("\n")
-			b.WriteString(dimStyle.Render("↑↓ navigate  Enter select"))
-		}
-
 	case importStepComplete:
 		b.WriteString(statusOK.Render("Import Complete!") + "\n\n")
 
@@ -4762,17 +4654,9 @@ func (m Model) renderImportWizard() string {
 			b.WriteString(fmt.Sprintf("%s Imported %d/%d workloads as units\n", statusWarn.Render(SymWarning), m.importProgress, m.importTotal))
 		}
 
-		// Show test result
-		if m.importTestRan {
-			if m.importTestResult != nil && m.importTestResult.Success {
-				b.WriteString(fmt.Sprintf("%s Pipeline test passed: %s\n", statusOK.Render(SymOK), m.importTestResult.Message))
-			} else if m.importError != nil {
-				b.WriteString(fmt.Sprintf("%s Pipeline test failed: %v\n", statusErr.Render(SymError), m.importError))
-			} else {
-				b.WriteString(fmt.Sprintf("%s Pipeline test failed\n", statusErr.Render(SymError)))
-			}
-		} else {
-			b.WriteString(fmt.Sprintf("%s Pipeline test: skipped\n", dimStyle.Render("○")))
+		// What the wizard could not do, said where the result is read.
+		if m.importApplyError != nil {
+			b.WriteString(fmt.Sprintf("%s Not delivered: %v\n", statusWarn.Render(SymWarning), m.importApplyError))
 		}
 
 		b.WriteString("\n")
