@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Prove the live-status cluster check (#887) against a real attached cluster.
 #
-# `cub cluster up` creates a kind cluster, installs Flux and argobot in it and
+# `cub cluster up` creates a kind cluster, installs Flux or Argo CD and argobot in it and
 # attaches it to the disposable ConfigHub that setup-connected-server.sh made.
 # argobot records a LiveStatus on each Release; cub-scout then compares that
-# record with the Flux objects in the same cluster.
+# record with the controller's objects in the same cluster.
 #
 # Everything read is kept under OUT for the run's artifact. Command output can
 # carry tokens of the disposable instance, so what reaches the job log is passed
@@ -12,9 +12,11 @@
 set -euo pipefail
 umask 077
 
-root=${1:?Usage: live-status-proof.sh CONNECTED_ROOT OUT_DIR SCOUT_BINARY}
+root=${1:?Usage: live-status-proof.sh CONNECTED_ROOT OUT_DIR SCOUT_BINARY [flux|argo]}
 out=${2:?Expected an output directory}
 scout=${3:?Expected the cub-scout binary}
+controller=${4:-flux}
+[[ "$controller" = flux || "$controller" = argo ]] || { echo 'Expected flux or argo' >&2; exit 1; }
 [[ -f "$root/owns-server-cluster" && -x "$scout" ]] || {
   echo 'Expected the disposable server root and an executable cub-scout' >&2; exit 1;
 }
@@ -32,7 +34,7 @@ redact() {
 }
 
 touch "$private/owns-live-cluster"
-if ! cub cluster up "$name" --controller flux > "$private/cluster-up.log" 2>&1; then
+if ! cub cluster up "$name" --controller "$controller" > "$private/cluster-up.log" 2>&1; then
   echo 'cub cluster up failed; the end of its output, redacted:' >&2
   tail -n 40 "$private/cluster-up.log" | redact >&2
   exit 1
@@ -68,7 +70,11 @@ PY
   sleep 10
 done
 
-KUBECONFIG="$kubeconfig" kubectl get ocirepositories.source.toolkit.fluxcd.io,kustomizations.kustomize.toolkit.fluxcd.io -A -o json > "$out/flux-objects.json" 2>"$private/flux.err" || true
+if [[ "$controller" = flux ]]; then
+  KUBECONFIG="$kubeconfig" kubectl get ocirepositories.source.toolkit.fluxcd.io,kustomizations.kustomize.toolkit.fluxcd.io -A -o json > "$out/flux-objects.json" 2>"$private/flux.err" || true
+else
+  KUBECONFIG="$kubeconfig" kubectl get applications.argoproj.io -A -o json > "$out/argo-objects.json" 2>"$private/argo.err" || true
+fi
 KUBECONFIG="$kubeconfig" kubectl get deployments -A -o wide > "$out/deployments.txt" 2>&1 || true
 curl --fail --silent --show-error --max-time 10 "$(cub context get -o json | python3 -c 'import json,sys; print(json.load(sys.stdin)["coordinate"]["serverURL"])')/api/info" > "$out/api-info.json" 2>/dev/null || true
 
