@@ -1120,7 +1120,13 @@ func TestSpaceListsKeepToOneSpaceAndRefuseABrokenAnswer(t *testing.T) {
 // a space on a real v0.8.12 server (NOTICE.md beside the files).
 func spaceListsRecording(t *testing.T, name string) []byte {
 	t.Helper()
-	recorded, err := os.ReadFile(filepath.Join("..", "..", "test", "fixtures", "confighub-space-lists-v0812-recorded", name))
+	return spaceListsRecordingOf(t, "confighub-space-lists-v0812-recorded", name)
+}
+
+// spaceListsRecordingOf is the same for a named recording.
+func spaceListsRecordingOf(t *testing.T, dir, name string) []byte {
+	t.Helper()
+	recorded, err := os.ReadFile(filepath.Join("..", "..", "test", "fixtures", dir, name))
 	require.NoError(t, err)
 	return recorded
 }
@@ -1128,7 +1134,28 @@ func spaceListsRecording(t *testing.T, name string) []byte {
 // #758, batch A: each list, held to the bytes cub printed for it on a real
 // server. The server's JSON goes through the SDK's types and comes out as
 // cub's, with the space named either way.
+//
+// Two recordings. The one made by cub v0.10.11, the version this is built
+// with, is held to the byte. The one made by cub v0.8.12 is held to the value,
+// less the zero fields the newer SDK leaves out.
 func TestSpaceListsAreWhatCubPrintedOnTheRealServer(t *testing.T) {
+	for _, recording := range []struct {
+		dir   string
+		exact bool
+	}{
+		{"confighub-space-lists-v0812-recorded", false},
+		{"confighub-space-lists-v01011-recorded", true},
+	} {
+		t.Run(recording.dir, func(t *testing.T) {
+			spaceListsAreWhatCubPrinted(t, recording.dir, recording.exact)
+		})
+	}
+}
+
+func spaceListsAreWhatCubPrinted(t *testing.T, dir string, exact bool) {
+	spaceListsRecording := func(t *testing.T, name string) []byte {
+		return spaceListsRecordingOf(t, dir, name)
+	}
 	hub := newFakeHub(t)
 	require.NoError(t, json.Unmarshal(spaceListsRecording(t, "space-list.json"), &hub.spaces))
 	var units []struct {
@@ -1160,7 +1187,11 @@ func TestSpaceListsAreWhatCubPrintedOnTheRealServer(t *testing.T) {
 				before := len(hub.requests())
 				got, err := kind.read(space)
 				require.NoError(t, err)
-				sameAsCubPrinted(t, recorded, got)
+				if exact {
+					require.Equal(t, string(recorded), string(got))
+				} else {
+					sameAsCubPrinted(t, recorded, got)
+				}
 				seen := hub.requests()[before:]
 				require.Equal(t, kind.path, seen[len(seen)-1].Path, "the recording was served at the path the reader asks")
 				require.Equal(t, kind.include, hub.includes[len(hub.includes)-1])

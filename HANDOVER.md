@@ -2151,3 +2151,28 @@ plans. The authority is the
 - The review's other findings (waivers not recorded where the rule asks, the
   CI artifact holding a dead worker secret, the closed #603 still cited as
   open) are filed as housekeeping issues the same day.
+
+## ConfigHub 0.10 compatibility — 2026-11-10
+
+v2.15 was resumed the same day, and building the live proof for #887 turned
+up something more urgent (#897): hosted ConfigHub is on v0.10.11, and v2.14.2,
+built with SDK core v0.8.12, refuses it by default.
+
+- **On branch `chore/sdk-v0.10.11`:** SDK core v0.10.11 (go 1.26.0, toolchain
+  unchanged). ConfigHub API 0.10 removed bridge workers, `cub worker`,
+  `cub unit set-target` and a target's provider; cub-scout's worker status
+  (`status`, both TUIs), the reader's worker list, `import --connect` and the
+  import wizard's end-to-end test step are removed with them. The maintainer
+  chose removal over keeping them for older servers, and v2.15.0 as the
+  release.
+- **Proof:** Connected lane, CI run 42865011040, on a disposable ConfigHub
+  v0.10.11 with `cub` v0.10.11: six parity tests passed and 22 reads recorded
+  by both routes were identical byte for byte. Its lists are the fixture
+  `test/fixtures/confighub-space-lists-v01011-recorded`.
+- **Older recordings** (v0.8.x) are compared value for value where the newer
+  SDK leaves a zero field out; the five fields are named in the tests.
+- **Not done:** a server older than 0.10 with this build; the tables in
+  `docs/reference/confighub-sdk-reader.md` re-measured; a `cub cluster up`
+  lane proving the #887 cluster check live.
+- **Filed:** #898 (channels as the successor to worker status; not planned),
+  #899 (connected demos and helper scripts that still depend on workers).

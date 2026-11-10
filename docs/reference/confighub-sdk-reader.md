@@ -426,6 +426,18 @@ the ones above, and the attestation list is the one recorded earlier).
 
 ## Not measured, and not claimed
 
+- **ConfigHub v0.10.11, from v2.15.0.** cub-scout v2.15.0 is built with SDK
+  core v0.10.11 (#897). In the Connected lane of CI run 42865011040, against a
+  disposable server v0.10.11 with `cub` v0.10.11, all six parity tests passed
+  and the 22 reads recorded by both routes were identical byte for byte. The
+  lists of that run are kept in
+  `test/fixtures/confighub-space-lists-v01011-recorded`. The tables above are
+  from v0.8.12 and were not re-measured. SDK core v0.10.11 leaves five fields
+  out when they are zero (`BoundLinkID`, `AdoptedEndTagID`, `RestoreTagID`,
+  `ExpiresAt`, an empty `TriggerCountByEventType`), as `cub` v0.10.11 does, so
+  the older recordings are now compared value for value with those five
+  allowed to be absent. A server older than 0.10 was not tried with this
+  build.
 - **Two server versions, one kind of Unit.** v0.8.3 and v0.8.12, both
   disposable servers in CI, with plain Units: no target, no upstream, no live
   revision, and spaces with no Component. The lists had two entries each; a
