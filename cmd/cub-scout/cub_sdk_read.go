@@ -191,7 +191,6 @@ func sdkUnitGetArgs(args []string) (space, unit string, ok bool) {
 // and cub implements each the same way.
 var sdkSpaceLists = map[string]func(*hubread.Reader, context.Context, string, hubread.Filter) ([]byte, error){
 	"unit":       (*hubread.Reader).UnitListJSON,
-	"worker":     (*hubread.Reader).WorkerListJSON,
 	"target":     (*hubread.Reader).TargetListJSON,
 	"changeset":  (*hubread.Reader).ChangeSetListJSON,
 	"link":       (*hubread.Reader).LinkListJSON,
