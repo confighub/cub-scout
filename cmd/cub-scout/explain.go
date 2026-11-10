@@ -66,28 +66,43 @@ func init() {
 }
 
 // ExplainSummary is the canonical model for explain output.
+// ExplainDeliveryLink is one link of the delivery chain as explain reports it
+// when that link is not ready.
+type ExplainDeliveryLink struct {
+	Kind      string `json:"kind"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace,omitempty"`
+	Status    string `json:"status"`
+	// Reason is the link's own reported reason; empty when it reported none.
+	Reason string `json:"reason,omitempty"`
+}
+
 type ExplainSummary struct {
-	KubernetesContext        string                            `json:"kubernetesContext,omitempty"`
-	ResourceRead             *agent.BoundedReadEvidence        `json:"resourceRead,omitempty"`
-	RecordedInput            *RecordedInputEvidence            `json:"recordedInput,omitempty"`
-	ConfigHubOrigin          *agent.ConfigHubOriginEvidence    `json:"configHubOrigin,omitempty"`
-	ControllerRevision       *agent.ControllerRevisionEvidence `json:"controllerRevision,omitempty"`
-	Omissions                []agent.Omission                  `json:"omissions,omitempty"`
-	Resource                 string                            `json:"resource"`
-	Namespace                string                            `json:"namespace"`
-	Owner                    string                            `json:"owner"`
-	Source                   string                            `json:"source"`
-	DeployedVia              string                            `json:"deployedVia"`
-	Health                   string                            `json:"health"`
-	HealthMeasurement        *HealthMeasurement                `json:"healthMeasurement,omitempty"`
-	Risks                    string                            `json:"risks"`
-	Drift                    string                            `json:"drift"`
-	Notes                    []string                          `json:"notes,omitempty"`
-	ConfigHubURL             string                            `json:"confighubUrl,omitempty"`             // Canonical unit detail URL in ConfigHub GUI (only when connected)
-	ConfigHubRevisionsURL    string                            `json:"confighubRevisionsUrl,omitempty"`    // Canonical unit revisions URL in ConfigHub GUI (only when connected)
-	ConfigHubRevisionNum     string                            `json:"configHubRevisionNum,omitempty"`     // Deployed ConfigHub revision when known
-	ConfigHubLiveRevisionNum string                            `json:"configHubLiveRevisionNum,omitempty"` // Latest/live ConfigHub revision when known
-	DeliveryEvidence         *agent.TraceDeliveryEvidence      `json:"deliveryEvidence,omitempty"`
+	KubernetesContext  string                            `json:"kubernetesContext,omitempty"`
+	ResourceRead       *agent.BoundedReadEvidence        `json:"resourceRead,omitempty"`
+	RecordedInput      *RecordedInputEvidence            `json:"recordedInput,omitempty"`
+	ConfigHubOrigin    *agent.ConfigHubOriginEvidence    `json:"configHubOrigin,omitempty"`
+	ControllerRevision *agent.ControllerRevisionEvidence `json:"controllerRevision,omitempty"`
+	Omissions          []agent.Omission                  `json:"omissions,omitempty"`
+	Resource           string                            `json:"resource"`
+	Namespace          string                            `json:"namespace"`
+	Owner              string                            `json:"owner"`
+	Source             string                            `json:"source"`
+	DeployedVia        string                            `json:"deployedVia"`
+	Health             string                            `json:"health"`
+	HealthMeasurement  *HealthMeasurement                `json:"healthMeasurement,omitempty"`
+	Risks              string                            `json:"risks"`
+	Drift              string                            `json:"drift"`
+	Notes              []string                          `json:"notes,omitempty"`
+	// DeliveryBlockedAt is the first link above the resource that was observed
+	// not ready. Absent means no such link was observed; it does not assert
+	// that delivery is healthy (see HealthMeasurement).
+	DeliveryBlockedAt        *ExplainDeliveryLink         `json:"deliveryBlockedAt,omitempty"`
+	ConfigHubURL             string                       `json:"confighubUrl,omitempty"`             // Canonical unit detail URL in ConfigHub GUI (only when connected)
+	ConfigHubRevisionsURL    string                       `json:"confighubRevisionsUrl,omitempty"`    // Canonical unit revisions URL in ConfigHub GUI (only when connected)
+	ConfigHubRevisionNum     string                       `json:"configHubRevisionNum,omitempty"`     // Deployed ConfigHub revision when known
+	ConfigHubLiveRevisionNum string                       `json:"configHubLiveRevisionNum,omitempty"` // Latest/live ConfigHub revision when known
+	DeliveryEvidence         *agent.TraceDeliveryEvidence `json:"deliveryEvidence,omitempty"`
 
 	// CurrentChange contains generation-scoped rollout progress and verdict
 	// evidence for workload resources. It is omitted when the resource kind is
@@ -648,6 +663,7 @@ func buildExplainSummary(result *agent.TraceResult) ExplainSummary {
 			where := fmt.Sprintf("%s/%s", broken.Kind, broken.Name)
 			summary.Health = fmt.Sprintf("%s; delivery not ready at %s", summary.Health, where)
 			why := strings.TrimSpace(firstNonEmpty(broken.StatusReason, broken.Message, broken.Status))
+			summary.DeliveryBlockedAt = &ExplainDeliveryLink{Kind: broken.Kind, Name: broken.Name, Namespace: broken.Namespace, Status: strings.TrimSpace(broken.Status), Reason: why}
 			if why == "" {
 				why = "no reason was reported"
 			}
