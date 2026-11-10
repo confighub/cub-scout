@@ -1,0 +1,126 @@
+[
+  {
+    "Release": {
+      "BundleBaseName": "argobot-scout-live",
+      "CreatedAt": "2026-11-10T18:49:31.055742Z",
+      "DataSize": 3676,
+      "Digest": "sha256:553cfd8e2c66bca1f125627a6f8960d895432e52e06297b2ba2d0b1decdb71e2",
+      "EntityType": "Release",
+      "LiveStatus": {
+        "DataSource": "argobot-scout-live",
+        "Health": "Healthy",
+        "Message": "successfully synced (all tasks run)",
+        "ObservedAt": "2026-11-10T18:49:37.515860711Z",
+        "Operation": "Succeeded",
+        "Reporter": "argobot",
+        "ReporterHealth": "Healthy",
+        "ReporterOperation": "Succeeded",
+        "ReporterSync": "Synced",
+        "Sync": "Synced"
+      },
+      "ManifestDigest": "sha256:c28d487cec47f8d49cf7a5727b44d08f38ddc4a241668c4135985433d8f691a6",
+      "OCIRepositoryURL": "oci://localhost:32181/space/argobot-scout-live",
+      "OrganizationID": "c9b919f8-9c33-4a31-a41c-05170c05312f",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "13fe46f4-9e05-45c7-8994-d32a05e22418": true
+          }
+        }
+      },
+      "Published": true,
+      "ReleaseID": "4e22c89d-7a0f-44e7-b9ef-03171edae1e6",
+      "ReleaseNum": 1,
+      "SpaceID": "e86ff7b5-df64-44f8-ba9f-74957ff29876",
+      "SpaceSlug": "argobot-scout-live",
+      "TagID": "6628b335-9682-4aa9-9af6-78035ac73ce8",
+      "TargetID": "dd1a26fe-dd0d-4086-955a-889a90b55c11",
+      "UnitCount": 7,
+      "UpdatedAt": "2026-11-10T18:49:37.518379Z",
+      "UserID": "13fe46f4-9e05-45c7-8994-d32a05e22418",
+      "Version": 1
+    },
+    "Tag": {
+      "CreatedAt": "2026-11-10T18:49:31.053669Z",
+      "DisplayName": "release-1",
+      "EntityType": "Tag",
+      "OrganizationID": "c9b919f8-9c33-4a31-a41c-05170c05312f",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "13fe46f4-9e05-45c7-8994-d32a05e22418": true
+          }
+        }
+      },
+      "ReleaseID": "4e22c89d-7a0f-44e7-b9ef-03171edae1e6",
+      "Slug": "release-1",
+      "SpaceID": "e86ff7b5-df64-44f8-ba9f-74957ff29876",
+      "SpaceSlug": "argobot-scout-live",
+      "TagID": "6628b335-9682-4aa9-9af6-78035ac73ce8",
+      "UpdatedAt": "2026-11-10T18:49:31.053669Z",
+      "Version": 1
+    }
+  },
+  {
+    "Release": {
+      "BundleBaseName": "scout-live-argo-apps",
+      "CreatedAt": "2026-11-10T18:49:30.872559Z",
+      "DataSize": 665,
+      "Digest": "sha256:82d817dfe8db775626a9a0844951dc60b4f5a0113ba45393acff0c95db4be26d",
+      "EntityType": "Release",
+      "LiveStatus": {
+        "DataSource": "scout-live-argo-apps",
+        "Health": "Healthy",
+        "Message": "successfully synced (all tasks run)",
+        "ObservedAt": "2026-11-10T18:49:37.52624136Z",
+        "Operation": "Succeeded",
+        "Reporter": "argobot",
+        "ReporterHealth": "Healthy",
+        "ReporterOperation": "Succeeded",
+        "ReporterSync": "Synced",
+        "Sync": "Synced"
+      },
+      "ManifestDigest": "sha256:384f38db33e2f0b581415a7015802ca240648d4c87261c444ada9d7535770ea7",
+      "OCIRepositoryURL": "oci://localhost:32181/space/scout-live-argo-apps",
+      "OrganizationID": "c9b919f8-9c33-4a31-a41c-05170c05312f",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "13fe46f4-9e05-45c7-8994-d32a05e22418": true
+          }
+        }
+      },
+      "Published": true,
+      "ReleaseID": "17f7ac8e-1801-4d2e-b0f4-09edf191a8ac",
+      "ReleaseNum": 1,
+      "SpaceID": "6811aba9-71a4-4e01-a829-5c2b92b46eaa",
+      "SpaceSlug": "scout-live-argo-apps",
+      "TagID": "204f131c-1aa8-4bb5-bf46-150da5446bf2",
+      "TargetID": "dd1a26fe-dd0d-4086-955a-889a90b55c11",
+      "UnitCount": 2,
+      "UpdatedAt": "2026-11-10T18:49:37.528347Z",
+      "UserID": "13fe46f4-9e05-45c7-8994-d32a05e22418",
+      "Version": 1
+    },
+    "Tag": {
+      "CreatedAt": "2026-11-10T18:49:30.871359Z",
+      "DisplayName": "release-1",
+      "EntityType": "Tag",
+      "OrganizationID": "c9b919f8-9c33-4a31-a41c-05170c05312f",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "13fe46f4-9e05-45c7-8994-d32a05e22418": true
+          }
+        }
+      },
+      "ReleaseID": "17f7ac8e-1801-4d2e-b0f4-09edf191a8ac",
+      "Slug": "release-1",
+      "SpaceID": "6811aba9-71a4-4e01-a829-5c2b92b46eaa",
+      "SpaceSlug": "scout-live-argo-apps",
+      "TagID": "204f131c-1aa8-4bb5-bf46-150da5446bf2",
+      "UpdatedAt": "2026-11-10T18:49:30.87136Z",
+      "Version": 1
+    }
+  }
+]

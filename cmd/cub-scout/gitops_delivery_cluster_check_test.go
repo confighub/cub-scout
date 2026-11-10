@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -223,4 +225,163 @@ func TestClusterCheckTreatsAMissingKindAsAbsent(t *testing.T) {
 	checkLiveStatusesAgainstCluster(context.Background(), client, statuses, checkNow)
 	require.Equal(t, liveStatusClusterAgrees, statuses[0].ClusterCheck.State, statuses[0].ClusterCheck.Reason)
 	require.NotContains(t, statuses[0].ClusterCheck.Reason, "could not be listed")
+}
+
+// The recorded cluster of the Live Status Proof lane
+// (test/fixtures/confighub-live-status-flux-v01011-recorded): `cub cluster up
+// --controller flux` against a local ConfigHub. The cluster pulls from the
+// Docker bridge address while the server advertises localhost, so the registry
+// does not identify the source. The status names the Kustomization it read,
+// and that object pulls a repository named for the space: that is enough to
+// compare the two reports, and they agree.
+func TestClusterCheckOnTheRecordedFluxClusterUsesTheNamedDataSource(t *testing.T) {
+	dir := filepath.Join("..", "..", "test", "fixtures", "confighub-live-status-flux-v01011-recorded")
+	releases, err := os.ReadFile(filepath.Join(dir, "release-list.json"))
+	require.NoError(t, err)
+	raw, err := os.ReadFile(filepath.Join(dir, "flux-objects.json"))
+	require.NoError(t, err)
+	var list unstructured.UnstructuredList
+	require.NoError(t, list.UnmarshalJSON(raw))
+	objects := make([]runtime.Object, 0, len(list.Items))
+	for i := range list.Items {
+		objects = append(objects, &list.Items[i])
+	}
+	require.Len(t, objects, 4)
+	// The moment cub-scout read the cluster in that run.
+	now := time.Date(2026, 11, 10, 18, 8, 51, 0, time.UTC)
+
+	for _, tc := range []struct {
+		name       string
+		advertised string
+		matchedBy  string
+	}{
+		// As recorded: the server advertises localhost:32181, the cluster
+		// pulls from 172.18.0.1:32181.
+		{"the advertised registry is not the one the cluster pulls from", "localhost:32181", liveStatusMatchedByDataSource},
+		{"no registry is advertised at all", "", liveStatusMatchedByDataSource},
+		// Where the address is the advertised one, the registry settles it.
+		{"the cluster pulls from the advertised registry", "172.18.0.1:32181", liveStatusMatchedByRegistry},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			old := agent.ConfigHubOCIRegistryFn
+			agent.ConfigHubOCIRegistryFn = func() string { return tc.advertised }
+			t.Cleanup(func() { agent.ConfigHubOCIRegistryFn = old })
+
+			statuses, omissions := configHubLiveStatusFromReleases(string(releases), now, 15*time.Minute)
+			require.Empty(t, omissions)
+			require.Len(t, statuses, 2)
+			checkLiveStatusesAgainstCluster(context.Background(), checkClient(objects...), statuses, now)
+			for _, status := range statuses {
+				check := status.ClusterCheck
+				require.NotNil(t, check, status.Release)
+				require.Equal(t, liveStatusClusterAgrees, check.State, check.Reason)
+				require.Equal(t, tc.matchedBy, check.MatchedBy)
+				require.Len(t, check.Controllers, 1)
+				require.Equal(t, "Kustomization/flux-system/"+check.Controllers[0].Name, status.DataSource)
+				require.Equal(t, "match", check.Controllers[0].Revision.Comparison)
+				if tc.matchedBy == liveStatusMatchedByDataSource {
+					require.Contains(t, check.Reason, "names as its data source")
+				}
+			}
+		})
+	}
+}
+
+// A repository named for the space on an unrecognised registry is compared only
+// when the recorded status names that very object. A lookalike, or a status
+// that names something else, stays not observable, and says what was seen.
+func TestClusterCheckDoesNotFollowADataSourceItCannotCorroborate(t *testing.T) {
+	noRegistryLookup(t)
+	lookalike := func() (*unstructured.Unstructured, *unstructured.Unstructured) {
+		repository, kustomization := checkFlux(checkDigest)
+		require.NoError(t, unstructured.SetNestedField(repository.Object, "oci://172.18.0.1:32181/space/payments-prod", "spec", "url"))
+		return repository, kustomization
+	}
+	for _, tc := range []struct {
+		name       string
+		dataSource string
+		space      string
+		want       string
+		reason     string
+	}{
+		{"the status names the object", "Kustomization/flux-system/confighub-root", "payments-prod", liveStatusClusterAgrees, "names as its data source"},
+		{"the status names no data source", "", "payments-prod", liveStatusClusterNotObservable, "names none of them as its data source"},
+		{"the status names another object", "Kustomization/flux-system/other", "payments-prod", liveStatusClusterNotObservable, "172.18.0.1:32181"},
+		{"the status names another kind", "Application/flux-system/confighub-root", "payments-prod", liveStatusClusterNotObservable, "names none of them"},
+		// A bare name is an Argo CD Application's, and this is a Kustomization.
+		{"the status gives a bare name and the object is not an Application", "confighub-root", "payments-prod", liveStatusClusterNotObservable, "names none of them"},
+		{"the status is malformed", "Kustomization//confighub-root", "payments-prod", liveStatusClusterNotObservable, "names none of them"},
+		{"the named object pulls another space's repository", "Kustomization/flux-system/confighub-root", "another-space", liveStatusClusterNotObservable, `pulling ConfigHub space "another-space"`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			repository, kustomization := lookalike()
+			statuses := checkStatus("Synced")
+			statuses[0].DataSource, statuses[0].Space = tc.dataSource, tc.space
+			checkLiveStatusesAgainstCluster(context.Background(), checkClient(repository, kustomization), statuses, checkNow)
+			check := statuses[0].ClusterCheck
+			require.Equal(t, tc.want, check.State, check.Reason)
+			require.Contains(t, check.Reason, tc.reason)
+			if tc.want != liveStatusClusterAgrees {
+				require.Empty(t, check.MatchedBy)
+				require.Empty(t, check.Controllers)
+			}
+		})
+	}
+}
+
+// The same lane with `cub cluster up --controller argo`
+// (test/fixtures/confighub-live-status-argo-v01011-recorded). In Argo CD mode
+// argobot names its data source by the Application's name alone.
+func TestClusterCheckOnTheRecordedArgoClusterUsesTheNamedApplication(t *testing.T) {
+	old := agent.ConfigHubOCIRegistryFn
+	agent.ConfigHubOCIRegistryFn = func() string { return "localhost:32181" }
+	t.Cleanup(func() { agent.ConfigHubOCIRegistryFn = old })
+	dir := filepath.Join("..", "..", "test", "fixtures", "confighub-live-status-argo-v01011-recorded")
+	releases, err := os.ReadFile(filepath.Join(dir, "release-list.json"))
+	require.NoError(t, err)
+	raw, err := os.ReadFile(filepath.Join(dir, "argo-objects.json"))
+	require.NoError(t, err)
+	var list unstructured.UnstructuredList
+	require.NoError(t, list.UnmarshalJSON(raw))
+	objects := make([]runtime.Object, 0, len(list.Items))
+	for i := range list.Items {
+		objects = append(objects, &list.Items[i])
+	}
+	require.Len(t, objects, 2)
+	// Seconds after argobot recorded the statuses in that run.
+	now := time.Date(2026, 11, 10, 18, 49, 40, 0, time.UTC)
+
+	statuses, omissions := configHubLiveStatusFromReleases(string(releases), now, 15*time.Minute)
+	require.Empty(t, omissions)
+	require.Len(t, statuses, 2)
+	checkLiveStatusesAgainstCluster(context.Background(), checkClient(objects...), statuses, now)
+	for _, status := range statuses {
+		check := status.ClusterCheck
+		require.NotNil(t, check, status.Release)
+		require.Equal(t, liveStatusClusterAgrees, check.State, check.Reason)
+		require.Equal(t, liveStatusMatchedByDataSource, check.MatchedBy)
+		require.Len(t, check.Controllers, 1)
+		require.Equal(t, "Application", check.Controllers[0].Kind)
+		require.Equal(t, status.DataSource, check.Controllers[0].Name)
+		require.Equal(t, "match", check.Controllers[0].Revision.Comparison, check.Controllers[0].Revision.Reason)
+	}
+}
+
+// A bare name that two Applications share does not say which was read.
+func TestClusterCheckDoesNotGuessBetweenTwoApplicationsOfOneName(t *testing.T) {
+	noRegistryLookup(t)
+	const repo = "oci://172.18.0.1:32181/space/payments-prod"
+	first, second := checkApplication("payments", repo, checkDigest), checkApplication("payments", repo, checkDigest)
+	second.SetNamespace("argocd-two")
+	statuses := checkStatus("Synced")
+	statuses[0].DataSource = "payments"
+	checkLiveStatusesAgainstCluster(context.Background(), checkClient(first, second), statuses, checkNow)
+	require.Equal(t, liveStatusClusterNotObservable, statuses[0].ClusterCheck.State)
+	require.Contains(t, statuses[0].ClusterCheck.Reason, "2 pull a repository named space/payments-prod")
+
+	one := checkStatus("Synced")
+	one[0].DataSource = "payments"
+	checkLiveStatusesAgainstCluster(context.Background(), checkClient(first), one, checkNow)
+	require.Equal(t, liveStatusClusterAgrees, one[0].ClusterCheck.State, one[0].ClusterCheck.Reason)
+	require.Equal(t, liveStatusMatchedByDataSource, one[0].ClusterCheck.MatchedBy)
 }

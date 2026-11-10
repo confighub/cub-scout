@@ -19,9 +19,9 @@ on:
   workflow_dispatch:
     inputs:
       level:
-        description: 'Test level (smoke, unit, integration, gitops, demos, connected, windows, full)'
+        description: 'Test level (smoke, unit, integration, gitops, demos, connected, live-status, windows, full)'
         type: choice
-        options: [smoke, unit, integration, gitops, demos, connected, windows, full]
+        options: [smoke, unit, integration, gitops, demos, connected, live-status, windows, full]
         required: false
         default: 'integration'
 
@@ -314,7 +314,7 @@ jobs:
     needs: unit
     # Manual smoke/unit runs must not create a cluster. Unknown manual levels
     # also fail closed to offline jobs. Normal PR/main runs retain live CI.
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.level == 'integration' || github.event.inputs.level == 'gitops' || github.event.inputs.level == 'demos' || github.event.inputs.level == 'connected' || github.event.inputs.level == 'full'
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.level == 'integration' || github.event.inputs.level == 'gitops' || github.event.inputs.level == 'demos' || github.event.inputs.level == 'connected' || github.event.inputs.level == 'live-status' || github.event.inputs.level == 'full'
     steps:
       - uses: actions/checkout@v6
 
@@ -653,6 +653,59 @@ jobs:
       - name: Remove disposable ConfigHub server
         if: always()
         run: |
+          if [[ -f "$RUNNER_TEMP/scout-connected/owns-server-cluster" ]]; then
+            kind delete cluster --name scout-ci-connected-server
+          fi
+
+  # ==========================================================================
+  # Live status (#887): a cluster attached with `cub cluster up`, manual trigger
+  # ==========================================================================
+  live-status:
+    name: Live Status Proof (${{ matrix.controller }})
+    runs-on: ubuntu-latest
+    needs: integration
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.level == 'live-status'
+    strategy:
+      fail-fast: false
+      matrix:
+        controller: [flux, argo]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download binary
+        uses: actions/download-artifact@v8
+        with:
+          name: cub-scout-linux
+
+      - name: Make binary executable
+        run: chmod +x cub-scout
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: connected-cluster
+
+      - name: Provision authenticated disposable ConfigHub
+        run: bash scripts/ci/setup-connected-server.sh "$RUNNER_TEMP/scout-connected"
+
+      - name: Attach a cluster and compare the recorded live status with it
+        run: bash scripts/ci/live-status-proof.sh "$RUNNER_TEMP/scout-connected" "$RUNNER_TEMP/scout-live-status" "$PWD/cub-scout" '${{ matrix.controller }}'
+
+      - name: Retain what was read
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: live-status-proof-${{ matrix.controller }}
+          path: |
+            ${{ runner.temp }}/scout-live-status/
+            ${{ runner.temp }}/scout-connected/version.txt
+
+      - name: Remove the attached cluster and the disposable server
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/scout-connected/live-status/owns-live-cluster" ]]; then
+            kind delete cluster --name scout-live || true
+          fi
           if [[ -f "$RUNNER_TEMP/scout-connected/owns-server-cluster" ]]; then
             kind delete cluster --name scout-ci-connected-server
           fi

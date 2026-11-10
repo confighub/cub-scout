@@ -1,0 +1,123 @@
+[
+  {
+    "Release": {
+      "BundleBaseName": "argobot-scout-live",
+      "CreatedAt": "2026-11-10T18:08:40.286988Z",
+      "DataSize": 3678,
+      "Digest": "sha256:086876aa013cc4f2f296932ca9da098864fd4459241bd2f227b3bf21ef12c81d",
+      "EntityType": "Release",
+      "LiveStatus": {
+        "DataSource": "Kustomization/flux-system/argobot-scout-live",
+        "Health": "Healthy",
+        "ObservedAt": "2026-11-10T18:08:49.824521141Z",
+        "Operation": "Succeeded",
+        "Reporter": "argobot",
+        "ReporterHealth": "Succeeded",
+        "ReporterOperation": "ReconciliationSucceeded",
+        "ReporterSync": "ReconciliationSucceeded",
+        "Sync": "Synced"
+      },
+      "ManifestDigest": "sha256:b1c3b200a7cabd77eb01ffa89828c379b9a9558dc0822fa418f870fd3fb4dec8",
+      "OCIRepositoryURL": "oci://localhost:32181/space/argobot-scout-live",
+      "OrganizationID": "c1a1ef86-fa0a-4f16-a9a9-fb73546b8479",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "8b076feb-5e59-4b42-9a03-85933c9d8d2a": true
+          }
+        }
+      },
+      "Published": true,
+      "ReleaseID": "8f95e39e-0736-48c9-b0cd-04c32fb8cd16",
+      "ReleaseNum": 1,
+      "SpaceID": "23835b22-96e1-49c6-a2bd-ad35467d68ae",
+      "SpaceSlug": "argobot-scout-live",
+      "TagID": "92c57fea-8dcd-49dc-a495-bc347fd5cffb",
+      "TargetID": "67e2b465-e60c-40de-92de-9c8c3b89b1b6",
+      "UnitCount": 7,
+      "UpdatedAt": "2026-11-10T18:08:49.826898Z",
+      "UserID": "8b076feb-5e59-4b42-9a03-85933c9d8d2a",
+      "Version": 2
+    },
+    "Tag": {
+      "CreatedAt": "2026-11-10T18:08:40.286281Z",
+      "DisplayName": "release-1",
+      "EntityType": "Tag",
+      "OrganizationID": "c1a1ef86-fa0a-4f16-a9a9-fb73546b8479",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "8b076feb-5e59-4b42-9a03-85933c9d8d2a": true
+          }
+        }
+      },
+      "ReleaseID": "8f95e39e-0736-48c9-b0cd-04c32fb8cd16",
+      "Slug": "release-1",
+      "SpaceID": "23835b22-96e1-49c6-a2bd-ad35467d68ae",
+      "SpaceSlug": "argobot-scout-live",
+      "TagID": "92c57fea-8dcd-49dc-a495-bc347fd5cffb",
+      "UpdatedAt": "2026-11-10T18:08:40.286281Z",
+      "Version": 1
+    }
+  },
+  {
+    "Release": {
+      "BundleBaseName": "scout-live-flux-apps",
+      "CreatedAt": "2026-11-10T18:08:40.095388Z",
+      "DataSize": 621,
+      "Digest": "sha256:8b278db920aec65be095593de1368664e987a7d3e0a9654286c4ba8a657cfd6b",
+      "EntityType": "Release",
+      "LiveStatus": {
+        "DataSource": "Kustomization/flux-system/confighub-root",
+        "Health": "Unknown",
+        "ObservedAt": "2026-11-10T18:08:46.801202111Z",
+        "Operation": "Succeeded",
+        "Reporter": "argobot",
+        "ReporterOperation": "ReconciliationSucceeded",
+        "ReporterSync": "ReconciliationSucceeded",
+        "Sync": "Synced"
+      },
+      "ManifestDigest": "sha256:f56d16862ce626b53303d0b6f1af9be10b5c3944d8b6908d53b63bc54449f0b5",
+      "OCIRepositoryURL": "oci://localhost:32181/space/scout-live-flux-apps",
+      "OrganizationID": "c1a1ef86-fa0a-4f16-a9a9-fb73546b8479",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "8b076feb-5e59-4b42-9a03-85933c9d8d2a": true
+          }
+        }
+      },
+      "Published": true,
+      "ReleaseID": "c8c19e51-d75e-41ac-8c17-ed029f53f7f3",
+      "ReleaseNum": 1,
+      "SpaceID": "cfa29dc3-076c-4fb8-98b2-519cca253194",
+      "SpaceSlug": "scout-live-flux-apps",
+      "TagID": "4ba0c317-72d8-46a0-9944-c84e6d91e7be",
+      "TargetID": "67e2b465-e60c-40de-92de-9c8c3b89b1b6",
+      "UnitCount": 2,
+      "UpdatedAt": "2026-11-10T18:08:46.803358Z",
+      "UserID": "8b076feb-5e59-4b42-9a03-85933c9d8d2a",
+      "Version": 1
+    },
+    "Tag": {
+      "CreatedAt": "2026-11-10T18:08:40.092843Z",
+      "DisplayName": "release-1",
+      "EntityType": "Tag",
+      "OrganizationID": "c1a1ef86-fa0a-4f16-a9a9-fb73546b8479",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "8b076feb-5e59-4b42-9a03-85933c9d8d2a": true
+          }
+        }
+      },
+      "ReleaseID": "c8c19e51-d75e-41ac-8c17-ed029f53f7f3",
+      "Slug": "release-1",
+      "SpaceID": "cfa29dc3-076c-4fb8-98b2-519cca253194",
+      "SpaceSlug": "scout-live-flux-apps",
+      "TagID": "4ba0c317-72d8-46a0-9944-c84e6d91e7be",
+      "UpdatedAt": "2026-11-10T18:08:40.092843Z",
+      "Version": 1
+    }
+  }
+]

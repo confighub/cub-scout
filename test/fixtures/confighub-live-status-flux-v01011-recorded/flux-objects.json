@@ -1,0 +1,343 @@
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "source.toolkit.fluxcd.io/v1",
+            "kind": "OCIRepository",
+            "metadata": {
+                "annotations": {
+                    "confighub.com/origin": "{\"spaceId\":\"cfa29dc3-076c-4fb8-98b2-519cca253194\",\"spaceSlug\":\"scout-live-flux-apps\",\"unitId\":\"d188c241-5edf-4fb9-80e5-498a6d0bd144\",\"unitSlug\":\"argobot-scout-live\",\"revisionNum\":2}",
+                    "reconcile.fluxcd.io/requestedAt": "2026-11-10T18:08:44.825735785Z"
+                },
+                "creationTimestamp": "2026-11-10T18:08:41Z",
+                "finalizers": [
+                    "finalizers.fluxcd.io"
+                ],
+                "generation": 1,
+                "labels": {
+                    "kustomize.toolkit.fluxcd.io/name": "confighub-root",
+                    "kustomize.toolkit.fluxcd.io/namespace": "flux-system"
+                },
+                "name": "argobot-scout-live",
+                "namespace": "flux-system",
+                "resourceVersion": "877",
+                "uid": "feda63eb-747e-481f-9d6b-8f52ac0724a2"
+            },
+            "spec": {
+                "insecure": true,
+                "interval": "10m0s",
+                "provider": "generic",
+                "ref": {
+                    "tag": "latest"
+                },
+                "secretRef": {
+                    "name": "confighub-oci"
+                },
+                "timeout": "60s",
+                "url": "oci://172.18.0.1:32181/space/argobot-scout-live"
+            },
+            "status": {
+                "artifact": {
+                    "digest": "sha256:9bd35bdb6accbf76abe7c934189c3bf20fc278595853aa31fffad9b176dbc079",
+                    "lastUpdateTime": "2026-11-10T18:08:42Z",
+                    "metadata": {
+                        "com.confighub.organization.id": "c1a1ef86-fa0a-4f16-a9a9-fb73546b8479",
+                        "com.confighub.space.id": "23835b22-96e1-49c6-a2bd-ad35467d68ae",
+                        "com.confighub.tag.id": "92c57fea-8dcd-49dc-a495-bc347fd5cffb",
+                        "com.confighub.target.id": "67e2b465-e60c-40de-92de-9c8c3b89b1b6",
+                        "com.confighub.unit.count": "7"
+                    },
+                    "path": "ocirepository/flux-system/argobot-scout-live/sha256:b1c3b200a7cabd77eb01ffa89828c379b9a9558dc0822fa418f870fd3fb4dec8.tar.gz",
+                    "revision": "latest@sha256:b1c3b200a7cabd77eb01ffa89828c379b9a9558dc0822fa418f870fd3fb4dec8",
+                    "size": 3643,
+                    "url": "http://source-controller.flux-system.svc.cluster.local./ocirepository/flux-system/argobot-scout-live/sha256:b1c3b200a7cabd77eb01ffa89828c379b9a9558dc0822fa418f870fd3fb4dec8.tar.gz"
+                },
+                "conditions": [
+                    {
+                        "lastTransitionTime": "2026-11-10T18:08:42Z",
+                        "message": "stored artifact for digest 'latest@sha256:b1c3b200a7cabd77eb01ffa89828c379b9a9558dc0822fa418f870fd3fb4dec8'",
+                        "observedGeneration": 1,
+                        "reason": "Succeeded",
+                        "status": "True",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastTransitionTime": "2026-11-10T18:08:42Z",
+                        "message": "stored artifact for digest 'latest@sha256:b1c3b200a7cabd77eb01ffa89828c379b9a9558dc0822fa418f870fd3fb4dec8'",
+                        "observedGeneration": 1,
+                        "reason": "Succeeded",
+                        "status": "True",
+                        "type": "ArtifactInStorage"
+                    }
+                ],
+                "lastHandledReconcileAt": "2026-11-10T18:08:44.825735785Z",
+                "observedGeneration": 1,
+                "url": "http://source-controller.flux-system.svc.cluster.local./ocirepository/flux-system/argobot-scout-live/latest.tar.gz"
+            }
+        },
+        {
+            "apiVersion": "source.toolkit.fluxcd.io/v1",
+            "kind": "OCIRepository",
+            "metadata": {
+                "annotations": {
+                    "confighub.com/origin": "{\"spaceId\":\"cfa29dc3-076c-4fb8-98b2-519cca253194\",\"spaceSlug\":\"scout-live-flux-apps\",\"unitId\":\"4e78a07d-0fca-48f8-8c76-34f24e3a0541\",\"unitSlug\":\"root\",\"revisionNum\":2}",
+                    "kustomize.toolkit.fluxcd.io/prune": "disabled"
+                },
+                "creationTimestamp": "2026-11-10T18:08:40Z",
+                "finalizers": [
+                    "finalizers.fluxcd.io"
+                ],
+                "generation": 1,
+                "labels": {
+                    "kustomize.toolkit.fluxcd.io/name": "confighub-root",
+                    "kustomize.toolkit.fluxcd.io/namespace": "flux-system"
+                },
+                "name": "confighub-root",
+                "namespace": "flux-system",
+                "resourceVersion": "819",
+                "uid": "2506d1cb-f7fd-4ed6-89e6-7e7c058e65ba"
+            },
+            "spec": {
+                "insecure": true,
+                "interval": "10m0s",
+                "provider": "generic",
+                "ref": {
+                    "tag": "latest"
+                },
+                "secretRef": {
+                    "name": "confighub-oci"
+                },
+                "timeout": "60s",
+                "url": "oci://172.18.0.1:32181/space/scout-live-flux-apps"
+            },
+            "status": {
+                "artifact": {
+                    "digest": "sha256:a051dc022637b55cb9ca42744436262eb5e697a12f1c92cbba5cc4166fe6e3fc",
+                    "lastUpdateTime": "2026-11-10T18:08:41Z",
+                    "metadata": {
+                        "com.confighub.organization.id": "c1a1ef86-fa0a-4f16-a9a9-fb73546b8479",
+                        "com.confighub.space.id": "cfa29dc3-076c-4fb8-98b2-519cca253194",
+                        "com.confighub.tag.id": "4ba0c317-72d8-46a0-9944-c84e6d91e7be",
+                        "com.confighub.target.id": "67e2b465-e60c-40de-92de-9c8c3b89b1b6",
+                        "com.confighub.unit.count": "2"
+                    },
+                    "path": "ocirepository/flux-system/confighub-root/sha256:f56d16862ce626b53303d0b6f1af9be10b5c3944d8b6908d53b63bc54449f0b5.tar.gz",
+                    "revision": "latest@sha256:f56d16862ce626b53303d0b6f1af9be10b5c3944d8b6908d53b63bc54449f0b5",
+                    "size": 629,
+                    "url": "http://source-controller.flux-system.svc.cluster.local./ocirepository/flux-system/confighub-root/sha256:f56d16862ce626b53303d0b6f1af9be10b5c3944d8b6908d53b63bc54449f0b5.tar.gz"
+                },
+                "conditions": [
+                    {
+                        "lastTransitionTime": "2026-11-10T18:08:41Z",
+                        "message": "stored artifact for digest 'latest@sha256:f56d16862ce626b53303d0b6f1af9be10b5c3944d8b6908d53b63bc54449f0b5'",
+                        "observedGeneration": 1,
+                        "reason": "Succeeded",
+                        "status": "True",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastTransitionTime": "2026-11-10T18:08:41Z",
+                        "message": "stored artifact for digest 'latest@sha256:f56d16862ce626b53303d0b6f1af9be10b5c3944d8b6908d53b63bc54449f0b5'",
+                        "observedGeneration": 1,
+                        "reason": "Succeeded",
+                        "status": "True",
+                        "type": "ArtifactInStorage"
+                    }
+                ],
+                "observedGeneration": 1,
+                "url": "http://source-controller.flux-system.svc.cluster.local./ocirepository/flux-system/confighub-root/latest.tar.gz"
+            }
+        },
+        {
+            "apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+            "kind": "Kustomization",
+            "metadata": {
+                "annotations": {
+                    "confighub.com/origin": "{\"spaceId\":\"cfa29dc3-076c-4fb8-98b2-519cca253194\",\"spaceSlug\":\"scout-live-flux-apps\",\"unitId\":\"d188c241-5edf-4fb9-80e5-498a6d0bd144\",\"unitSlug\":\"argobot-scout-live\",\"revisionNum\":2}"
+                },
+                "creationTimestamp": "2026-11-10T18:08:41Z",
+                "finalizers": [
+                    "finalizers.fluxcd.io"
+                ],
+                "generation": 1,
+                "labels": {
+                    "kustomize.toolkit.fluxcd.io/name": "confighub-root",
+                    "kustomize.toolkit.fluxcd.io/namespace": "flux-system"
+                },
+                "name": "argobot-scout-live",
+                "namespace": "flux-system",
+                "resourceVersion": "891",
+                "uid": "239280e2-411c-4dd9-bc8b-1ca7aa73730b"
+            },
+            "spec": {
+                "force": false,
+                "interval": "10m0s",
+                "path": ".",
+                "prune": false,
+                "retryInterval": "1m0s",
+                "sourceRef": {
+                    "kind": "OCIRepository",
+                    "name": "argobot-scout-live"
+                },
+                "timeout": "2m0s",
+                "wait": true
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastTransitionTime": "2026-11-10T18:08:47Z",
+                        "message": "Applied revision: latest@sha256:b1c3b200a7cabd77eb01ffa89828c379b9a9558dc0822fa418f870fd3fb4dec8",
+                        "observedGeneration": 1,
+                        "reason": "ReconciliationSucceeded",
+                        "status": "True",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastTransitionTime": "2026-11-10T18:08:47Z",
+                        "message": "Health check passed in 5.029601706s",
+                        "observedGeneration": 1,
+                        "reason": "Succeeded",
+                        "status": "True",
+                        "type": "Healthy"
+                    }
+                ],
+                "history": [
+                    {
+                        "digest": "sha256:182abbe1b5dcb7f64b643852617b1124f47d9f8109228be5ac4a6f5ea0f898cd",
+                        "firstReconciled": "2026-11-10T18:08:47Z",
+                        "lastReconciled": "2026-11-10T18:08:47Z",
+                        "lastReconciledDuration": "5.612783237s",
+                        "lastReconciledStatus": "ReconciliationSucceeded",
+                        "metadata": {
+                            "revision": "latest@sha256:b1c3b200a7cabd77eb01ffa89828c379b9a9558dc0822fa418f870fd3fb4dec8"
+                        },
+                        "totalReconciliations": 1
+                    }
+                ],
+                "inventory": {
+                    "entries": [
+                        {
+                            "id": "_argobot__Namespace",
+                            "v": "v1"
+                        },
+                        {
+                            "id": "_argobot-flux_rbac.authorization.k8s.io_ClusterRole",
+                            "v": "v1"
+                        },
+                        {
+                            "id": "_argobot-read_rbac.authorization.k8s.io_ClusterRole",
+                            "v": "v1"
+                        },
+                        {
+                            "id": "_argobot-flux_rbac.authorization.k8s.io_ClusterRoleBinding",
+                            "v": "v1"
+                        },
+                        {
+                            "id": "_argobot-read_rbac.authorization.k8s.io_ClusterRoleBinding",
+                            "v": "v1"
+                        },
+                        {
+                            "id": "argobot_argobot__ServiceAccount",
+                            "v": "v1"
+                        },
+                        {
+                            "id": "argobot_argobot_apps_Deployment",
+                            "v": "v1"
+                        }
+                    ]
+                },
+                "lastAppliedRevision": "latest@sha256:b1c3b200a7cabd77eb01ffa89828c379b9a9558dc0822fa418f870fd3fb4dec8",
+                "lastAttemptedRevision": "latest@sha256:b1c3b200a7cabd77eb01ffa89828c379b9a9558dc0822fa418f870fd3fb4dec8",
+                "observedGeneration": 1
+            }
+        },
+        {
+            "apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+            "kind": "Kustomization",
+            "metadata": {
+                "annotations": {
+                    "confighub.com/origin": "{\"spaceId\":\"cfa29dc3-076c-4fb8-98b2-519cca253194\",\"spaceSlug\":\"scout-live-flux-apps\",\"unitId\":\"4e78a07d-0fca-48f8-8c76-34f24e3a0541\",\"unitSlug\":\"root\",\"revisionNum\":2}",
+                    "kustomize.toolkit.fluxcd.io/prune": "disabled"
+                },
+                "creationTimestamp": "2026-11-10T18:08:40Z",
+                "finalizers": [
+                    "finalizers.fluxcd.io"
+                ],
+                "generation": 1,
+                "labels": {
+                    "kustomize.toolkit.fluxcd.io/name": "confighub-root",
+                    "kustomize.toolkit.fluxcd.io/namespace": "flux-system"
+                },
+                "name": "confighub-root",
+                "namespace": "flux-system",
+                "resourceVersion": "822",
+                "uid": "7ec896b4-d289-4940-84b3-88fe45ee3ec6"
+            },
+            "spec": {
+                "force": false,
+                "interval": "10m0s",
+                "path": ".",
+                "prune": false,
+                "retryInterval": "1m0s",
+                "sourceRef": {
+                    "kind": "OCIRepository",
+                    "name": "confighub-root"
+                },
+                "timeout": "2m0s",
+                "wait": false
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastTransitionTime": "2026-11-10T18:08:41Z",
+                        "message": "Applied revision: latest@sha256:f56d16862ce626b53303d0b6f1af9be10b5c3944d8b6908d53b63bc54449f0b5",
+                        "observedGeneration": 1,
+                        "reason": "ReconciliationSucceeded",
+                        "status": "True",
+                        "type": "Ready"
+                    }
+                ],
+                "history": [
+                    {
+                        "digest": "sha256:d00c41cf80c72444c4f47ac80294874ebdca40b974668b85836b4b49f49a50eb",
+                        "firstReconciled": "2026-11-10T18:08:41Z",
+                        "lastReconciled": "2026-11-10T18:08:41Z",
+                        "lastReconciledDuration": "146.331803ms",
+                        "lastReconciledStatus": "ReconciliationSucceeded",
+                        "metadata": {
+                            "revision": "latest@sha256:f56d16862ce626b53303d0b6f1af9be10b5c3944d8b6908d53b63bc54449f0b5"
+                        },
+                        "totalReconciliations": 1
+                    }
+                ],
+                "inventory": {
+                    "entries": [
+                        {
+                            "id": "flux-system_argobot-scout-live_kustomize.toolkit.fluxcd.io_Kustomization",
+                            "v": "v1"
+                        },
+                        {
+                            "id": "flux-system_confighub-root_kustomize.toolkit.fluxcd.io_Kustomization",
+                            "v": "v1"
+                        },
+                        {
+                            "id": "flux-system_argobot-scout-live_source.toolkit.fluxcd.io_OCIRepository",
+                            "v": "v1"
+                        },
+                        {
+                            "id": "flux-system_confighub-root_source.toolkit.fluxcd.io_OCIRepository",
+                            "v": "v1"
+                        }
+                    ]
+                },
+                "lastAppliedRevision": "latest@sha256:f56d16862ce626b53303d0b6f1af9be10b5c3944d8b6908d53b63bc54449f0b5",
+                "lastAttemptedRevision": "latest@sha256:f56d16862ce626b53303d0b6f1af9be10b5c3944d8b6908d53b63bc54449f0b5",
+                "observedGeneration": 1
+            }
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}
