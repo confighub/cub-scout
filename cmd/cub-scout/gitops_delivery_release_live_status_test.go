@@ -10,6 +10,7 @@ import (
 
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // recordedReleasesWithLiveStatus is the release list recorded from ConfigHub
@@ -106,12 +107,21 @@ func TestCollectorReadsLiveStatusFromReleasesAndTheAnnotation(t *testing.T) {
 			return "[]", nil
 		}
 	}
-	evidence := collectGitOpsDeliveryEvidence(context.Background(), newGitOpsDeliveryFakeClient(), gitOpsDeliveryEvidenceOptions{
+	noRegistryLookup(t)
+	application := checkApplication("live", "oci://oci.api.confighub.com/space/"+space, checkDigest)
+	require.NoError(t, unstructured.SetNestedField(application.Object, now.Add(-time.Minute).Format(time.RFC3339), "status", "reconciledAt"))
+	evidence := collectGitOpsDeliveryEvidence(context.Background(), newGitOpsDeliveryFakeClient(application), gitOpsDeliveryEvidenceOptions{
 		Space: "*", Now: now, Window: 24 * time.Hour, StaleAfter: 15 * time.Minute, MaxItems: 10,
 	})
 	require.Len(t, evidence.ConfigHub.LiveStatuses, 1)
 	require.Equal(t, "release", evidence.ConfigHub.LiveStatuses[0].RecordedOn)
 	require.Equal(t, agent.VerdictPASS, evidence.ConfigHub.LiveStatuses[0].DeliveryVerdict)
+	// The collector also reads this cluster: an Argo CD Application pulling
+	// the space reports the Release's digest applied, as the status says.
+	check := evidence.ConfigHub.LiveStatuses[0].ClusterCheck
+	require.NotNil(t, check)
+	require.Equal(t, liveStatusClusterAgrees, check.State, check.Reason)
+	require.Len(t, check.Controllers, 1)
 	var liveOmissions []string
 	for _, omission := range evidence.Omissions {
 		if omission.Layer == "confighub.liveStatus" {
@@ -127,6 +137,8 @@ func TestCollectorReadsLiveStatusFromReleasesAndTheAnnotation(t *testing.T) {
 	require.Contains(t, markdown.String(), space+"#2")
 	ascii := captureStdout(t, func() { outputGitOpsDeliveryEvidenceHuman(evidence) })
 	require.Contains(t, ascii, "recorded on release "+space+"#2 (reporter argobot)")
+	require.Contains(t, ascii, "this cluster agrees: ")
+	require.Contains(t, markdown.String(), "this cluster (a comparison of reports, not a verdict): agrees: ")
 }
 
 // The MCP tool reads both, as the CLI does, and says so when the Releases
@@ -199,4 +211,18 @@ func TestReleaseLiveStatusOnARecordedServerResponse(t *testing.T) {
 	require.Equal(t, "fresh", status.Freshness)
 	require.Equal(t, agent.VerdictPASS, status.DeliveryVerdict)
 	require.Equal(t, agent.VerdictBLOCK, status.ApplicationHealthVerdict)
+}
+
+// A newer Release with no status: the older Release's status is shown, marked
+// as superseded, and an omission says so.
+func TestAStatusOnAnOlderReleaseSaysItIsSuperseded(t *testing.T) {
+	now := time.Date(2026, 10, 26, 12, 0, 0, 0, time.UTC)
+	// Entry 0 is ReleaseNum 2 (no status); entry 1 is ReleaseNum 1 (status).
+	raw, _, space := recordedReleasesWithLiveStatus(t, nil, liveStatus("Synced", "Healthy", "Succeeded", "2026-10-26T11:59:00Z"))
+	statuses, omissions := configHubLiveStatusFromReleases(raw, now, 15*time.Minute)
+	require.Len(t, statuses, 1)
+	require.Equal(t, space+"#1", statuses[0].Release)
+	require.Equal(t, space+"#2", statuses[0].SupersededByRelease)
+	require.Len(t, omissions, 1)
+	require.Contains(t, omissions[0].Reason, "the newest Release, "+space+"#2, has no recorded status")
 }
