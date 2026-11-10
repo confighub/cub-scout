@@ -53,6 +53,14 @@ func TestExplainReportsABrokenDeliveryChain(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			result := &agent.TraceResult{Object: object, Tool: "flux", DetectedOwner: agent.OwnerFlux, Chain: []agent.ChainLink{source, tc.owner, workload}}
 			summary := buildExplainSummary(result)
+			blocked := summary.DeliveryBlockedAt
+			if tc.wantNote == "" {
+				if blocked != nil {
+					t.Errorf("deliveryBlockedAt = %+v on a ready chain, want none", blocked)
+				}
+			} else if blocked == nil || blocked.Kind != "Kustomization" || blocked.Name != "podinfo" || blocked.Namespace != "flux-system" || blocked.Status != tc.owner.Status || !strings.HasSuffix(tc.wantNote, ": "+blocked.Reason) {
+				t.Errorf("deliveryBlockedAt = %+v, want the Kustomization with its status and reason", blocked)
+			}
 			if summary.Health != tc.wantHealth {
 				t.Errorf("health = %q, want %q", summary.Health, tc.wantHealth)
 			}
