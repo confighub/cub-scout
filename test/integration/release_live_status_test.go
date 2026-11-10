@@ -73,7 +73,6 @@ func TestRecordReleaseLiveStatusOnARealServer(t *testing.T) {
 		{"unit", "create", "--space", space, "live", manifest},
 		{"target", "create", "--space", space, "live-target"},
 		{"space", "update", "--patch", space, "--release-target", "live-target"},
-		{"unit", "set-target", "live", "live-target", "--space", space},
 		{"release", "publish", space},
 	} {
 		if printed, err := cubStdoutOnly(args...); err != nil {

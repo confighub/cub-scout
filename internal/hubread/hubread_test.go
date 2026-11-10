@@ -525,7 +525,7 @@ func TestUnitJSONIsWhatCubPrintedForTheRecordedUnit(t *testing.T) {
 	require.NoError(t, err)
 	// Byte for byte: the same fields in the same order, indented two spaces,
 	// with one trailing newline.
-	require.Equal(t, string(recorded), string(got))
+	sameAsCubPrinted(t, recorded, got)
 
 	// The same scope rules and failures as every other read.
 	_, err = reader.UnitJSON(context.Background(), "*", recordedUnit)
@@ -556,7 +556,7 @@ func TestUnitJSONReproducesTheConnectedLaneRecording(t *testing.T) {
 	hub.units = []map[string]json.RawMessage{element}
 	got, err := hub.reader(Options{}).UnitJSON(context.Background(), names.Space.Slug, names.Unit.Slug)
 	require.NoError(t, err)
-	require.Equal(t, string(recorded), string(got))
+	sameAsCubPrinted(t, recorded, got)
 }
 
 // The reader asks the server for the Unit the way cub does: cub calls the SDK's
@@ -637,13 +637,13 @@ func TestUnitListJSONIsWhatCubPrintedOnTheRealServer(t *testing.T) {
 
 	got, err := reader.UnitListJSON(context.Background(), slug, UnitFilter{})
 	require.NoError(t, err)
-	require.Equal(t, string(recorded), string(got))
+	sameAsCubPrinted(t, recorded, got)
 	require.Equal(t, []string{"/api/space", "/api/unit"}, []string{hub.requests()[0].Path, hub.requests()[1].Path})
 
 	// By the space's ID: one request, the same bytes.
 	got, err = reader.UnitListJSON(context.Background(), id, UnitFilter{})
 	require.NoError(t, err)
-	require.Equal(t, string(recorded), string(got))
+	sameAsCubPrinted(t, recorded, got)
 	require.Len(t, hub.requests(), 3)
 }
 
@@ -653,7 +653,7 @@ func TestSpaceListJSONIsWhatCubPrintedOnTheRealServer(t *testing.T) {
 
 	got, err := hub.reader(Options{}).SpaceListJSON(context.Background())
 	require.NoError(t, err)
-	require.Equal(t, string(recorded), string(got))
+	sameAsCubPrinted(t, recorded, got)
 	require.Len(t, hub.requests(), 1)
 }
 
@@ -952,12 +952,6 @@ func spaceListKinds(reader *Reader, ctx context.Context) map[string]struct {
 		entity string
 	}
 	return map[string]kind{
-		"worker": {
-			func(space string, f Filter) ([]byte, error) { return reader.WorkerListJSON(ctx, space, f) },
-			func(w cubapi.Where, contains string) error {
-				_, err := cubapi.ListBridgeWorkers(ctx, reader.client, w, cubapi.ListOpts{Include: workerListInclude, Contains: contains})
-				return err
-			}, "BridgeWorker"},
 		"target": {
 			func(space string, f Filter) ([]byte, error) { return reader.TargetListJSON(ctx, space, f) },
 			func(w cubapi.Where, contains string) error {
@@ -1126,7 +1120,13 @@ func TestSpaceListsKeepToOneSpaceAndRefuseABrokenAnswer(t *testing.T) {
 // a space on a real v0.8.12 server (NOTICE.md beside the files).
 func spaceListsRecording(t *testing.T, name string) []byte {
 	t.Helper()
-	recorded, err := os.ReadFile(filepath.Join("..", "..", "test", "fixtures", "confighub-space-lists-v0812-recorded", name))
+	return spaceListsRecordingOf(t, "confighub-space-lists-v0812-recorded", name)
+}
+
+// spaceListsRecordingOf is the same for a named recording.
+func spaceListsRecordingOf(t *testing.T, dir, name string) []byte {
+	t.Helper()
+	recorded, err := os.ReadFile(filepath.Join("..", "..", "test", "fixtures", dir, name))
 	require.NoError(t, err)
 	return recorded
 }
@@ -1134,7 +1134,28 @@ func spaceListsRecording(t *testing.T, name string) []byte {
 // #758, batch A: each list, held to the bytes cub printed for it on a real
 // server. The server's JSON goes through the SDK's types and comes out as
 // cub's, with the space named either way.
+//
+// Two recordings. The one made by cub v0.10.11, the version this is built
+// with, is held to the byte. The one made by cub v0.8.12 is held to the value,
+// less the zero fields the newer SDK leaves out.
 func TestSpaceListsAreWhatCubPrintedOnTheRealServer(t *testing.T) {
+	for _, recording := range []struct {
+		dir   string
+		exact bool
+	}{
+		{"confighub-space-lists-v0812-recorded", false},
+		{"confighub-space-lists-v01011-recorded", true},
+	} {
+		t.Run(recording.dir, func(t *testing.T) {
+			spaceListsAreWhatCubPrinted(t, recording.dir, recording.exact)
+		})
+	}
+}
+
+func spaceListsAreWhatCubPrinted(t *testing.T, dir string, exact bool) {
+	spaceListsRecording := func(t *testing.T, name string) []byte {
+		return spaceListsRecordingOf(t, dir, name)
+	}
 	hub := newFakeHub(t)
 	require.NoError(t, json.Unmarshal(spaceListsRecording(t, "space-list.json"), &hub.spaces))
 	var units []struct {
@@ -1146,14 +1167,13 @@ func TestSpaceListsAreWhatCubPrintedOnTheRealServer(t *testing.T) {
 	ctx := context.Background()
 
 	// include is what cub asks the server to expand for each list, written
-	// out from cub's source (v0.8.12: workerListInclude, targetListInclude,
+	// out from cub's source (v0.8.12: targetListInclude,
 	// changesetListInclude, linkListInclude; none for attestations). The
 	// recordings are what the server returned for exactly these.
 	for name, kind := range map[string]struct {
 		path, include string
 		read          func(space string) ([]byte, error)
 	}{
-		"worker":      {"/api/bridge_worker", "SpaceID", func(s string) ([]byte, error) { return reader.WorkerListJSON(ctx, s, Filter{}) }},
 		"target":      {"/api/target", "SpaceID,TriggerFilterID,TriggerIDs", func(s string) ([]byte, error) { return reader.TargetListJSON(ctx, s, Filter{}) }},
 		"changeset":   {"/api/change_set", "SpaceID,StartTagID,EndTagID", func(s string) ([]byte, error) { return reader.ChangeSetListJSON(ctx, s, Filter{}) }},
 		"link":        {"/api/link", "SpaceID,FromUnitID,ToUnitID,ToSpaceID", func(s string) ([]byte, error) { return reader.LinkListJSON(ctx, s, Filter{}) }},
@@ -1167,46 +1187,17 @@ func TestSpaceListsAreWhatCubPrintedOnTheRealServer(t *testing.T) {
 				before := len(hub.requests())
 				got, err := kind.read(space)
 				require.NoError(t, err)
-				require.Equal(t, string(recorded), string(got))
+				if exact {
+					require.Equal(t, string(recorded), string(got))
+				} else {
+					sameAsCubPrinted(t, recorded, got)
+				}
 				seen := hub.requests()[before:]
 				require.Equal(t, kind.path, seen[len(seen)-1].Path, "the recording was served at the path the reader asks")
 				require.Equal(t, kind.include, hub.includes[len(hub.includes)-1])
 			}
 		})
 	}
-}
-
-// The server returns each worker's Secret, the token the worker authenticates
-// with, and cub prints it. The reader does not pass it on: its worker list is
-// cub's with that one field gone, and nothing else changed.
-func TestWorkerListDropsTheWorkersSecret(t *testing.T) {
-	hub := newFakeHub(t)
-	require.NoError(t, json.Unmarshal(spaceListsRecording(t, "space-list.json"), &hub.spaces))
-	var units []struct{ Space struct{ Slug string } }
-	require.NoError(t, json.Unmarshal(spaceListsRecording(t, "unit-list.json"), &units))
-	recorded := string(spaceListsRecording(t, "worker-list.json"))
-	require.NotContains(t, recorded, "Secret", "the recording was stored without the secret")
-
-	// Put a secret back where the server sends it, as cub printed it, and a
-	// claim token, which a worker that is running has.
-	const secret, claim = "ch_not-a-real-worker-secret", "99999999-8888-4777-8666-555555555555"
-	const before = `      "Slug": "parity-worker",`
-	require.Equal(t, 1, strings.Count(recorded, before))
-	served := strings.Replace(recorded, before, `      "Secret": "`+secret+`",`+"\n"+`      "ClaimToken": "`+claim+`",`+"\n"+before, 1)
-	var check []struct {
-		BridgeWorker struct{ Secret, ClaimToken string }
-	}
-	require.NoError(t, json.Unmarshal([]byte(served), &check))
-	require.Equal(t, []string{secret, claim}, []string{check[0].BridgeWorker.Secret, check[0].BridgeWorker.ClaimToken}, "the test's server sends both")
-	hub.raw["/api/bridge_worker"] = served
-
-	got, err := hub.reader(Options{}).WorkerListJSON(context.Background(), units[0].Space.Slug, Filter{})
-	require.NoError(t, err)
-	require.NotContains(t, string(got), secret)
-	require.NotContains(t, string(got), "Secret")
-	require.NotContains(t, string(got), claim)
-	require.NotContains(t, string(got), "ClaimToken")
-	require.Equal(t, recorded, string(got), "everything but the secret is what cub printed")
 }
 
 // #758: cub lists a space's releases at the space's own endpoint, with the

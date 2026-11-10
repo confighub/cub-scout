@@ -546,12 +546,6 @@ func TestFormatConfigHubContextError(t *testing.T) {
 			wantReason: "space or unit context is invalid",
 		},
 		{
-			name:       "no worker",
-			output:     "no worker running for space",
-			wantMatch:  true,
-			wantReason: "space or unit context is invalid",
-		},
-		{
 			name:      "normal output not matched",
 			output:    "enrichment complete: unit=payment-api space=production",
 			wantMatch: false,
@@ -578,7 +572,6 @@ func TestFormatConfigHubContextError(t *testing.T) {
 				"cub auth status",
 				"cub auth login",
 				"cub context get",
-				"cub worker list",
 				"cub-scout trace",
 			}
 			for _, r := range required {

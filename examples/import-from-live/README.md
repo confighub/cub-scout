@@ -77,7 +77,7 @@ waits for target registration, sets targets, and prints the ConfigHub space URL.
 Non-interactive equivalent:
 
 ```bash
-./cub-scout import --yes --connect
+./cub-scout import --yes
 ```
 
 ### What the ASCII Output Looks Like
@@ -274,7 +274,7 @@ to an App.
 Typical flow:
 
 1. **Discover and review** with `cub-scout import --dry-run`
-2. **Import** with `cub-scout import` (or `--yes --connect`)
+2. **Import** with `cub-scout import` (or `--yes`)
 3. **Connect** (automatic in the default interactive flow): worker starts, target is set
 4. **Operate**: use ConfigHub for visibility and control while Flux/Argo continue reconciling
 

@@ -179,9 +179,6 @@ See [Query Library Reference](../reference/query-library.md) for all query optio
 # Authenticate
 cub auth login
 
-# Start worker (in separate terminal)
-cub worker run
-
 # Run hierarchy TUI
 cub-scout map --hub
 ```
@@ -249,9 +246,6 @@ kubectl delete namespace demo-flux demo-argo demo-native 2>/dev/null || true
 ```bash
 # Check authentication
 cub context get
-
-# Check worker
-cub worker list
 ```
 
 ---

@@ -1495,7 +1495,8 @@ The status command uses `pkg/hub` for connectivity and authentication state:
 - **Connected**: Authenticated with ConfigHub
 
 **Optional dependency:** If the `cub` CLI is installed, status provides richer
-information including auth token validation and worker status.
+information including auth token validation. (The `worker` field left the
+JSON in v2.15.0: ConfigHub API 0.10 removed bridge workers.)
 Without `cub`, basic mode detection still works via `pkg/hub`.
 
 The worker for this cluster is looked up in the space `CUB_SPACE` names, else

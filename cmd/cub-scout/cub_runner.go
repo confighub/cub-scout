@@ -64,13 +64,14 @@ var cubSpaceFreeCommands = [][]string{
 // cubRemovedCommands are subcommand pairs cub no longer has. A removed
 // subcommand exits 0 printing help, so the caller cannot notice on its own.
 var cubRemovedCommands = map[string]string{
-	"unit livedata":  "removed April 2026; a unit's config data is `cub unit data`, and ConfigHub has no live-data endpoint (#564, #571)",
-	"unit livestate": "removed April 2026 with unit livedata (#564)",
-	"unit apply":     "removed July 2026; nothing applies a unit on demand — see cub_unit_apply.go (#571)",
-	"unit destroy":   "removed July 2026 with unit apply",
-	"unit import":    "removed July 2026 with unit apply",
-	"unit refresh":   "removed July 2026; the current verb is `cub k8s refresh`",
-	"unit approve":   "removed in cub 0.6 (2026-09-25); approval is a space-level Attestation: `cub variant approve <space> --where \"Slug = '...'\"` (#591)",
+	"unit livedata":   "removed April 2026; a unit's config data is `cub unit data`, and ConfigHub has no live-data endpoint (#564, #571)",
+	"unit livestate":  "removed April 2026 with unit livedata (#564)",
+	"unit apply":      "removed July 2026; nothing applies a unit on demand — see cub_unit_apply.go (#571)",
+	"unit destroy":    "removed July 2026 with unit apply",
+	"unit import":     "removed July 2026 with unit apply",
+	"unit refresh":    "removed July 2026; the current verb is `cub k8s refresh`",
+	"unit approve":    "removed in cub 0.6 (2026-09-25); approval is a space-level Attestation: `cub variant approve <space> --where \"Slug = '...'\"` (#591)",
+	"unit set-target": "removed with bridge workers in ConfigHub API 0.10 (2026-10-31); a Space releases to a Target, set with `cub space update --release-target` or by `cub cluster attach` (#897)",
 }
 
 // The `gitops` group was removed from cub in July 2026 as well (#573), and it is
@@ -79,6 +80,10 @@ var cubRemovedCommands = map[string]string{
 // group's help, so the caller cannot tell. An unknown *top-level* command exits
 // 1 saying so, which is honest, and a plugin can supply one — refusing it here
 // would break a user who has that plugin installed.
+//
+// The `worker` group went the same way in API 0.10 (2026-10-31, #897), with
+// bridge workers themselves, and is unlisted for the same reason. cub-scout
+// calls none of it.
 
 // cubRemovedFlags are flags cub rejects, or is about to.
 var cubRemovedFlags = map[string]string{
@@ -207,7 +212,7 @@ func cubCommandNeedsNoSpace(args []string) bool {
 }
 
 // cubCommandWords are the leading non-flag words, which is how cub itself names
-// a subcommand ("unit list", "worker run"). Always at least one element.
+// a subcommand ("unit list", "release publish"). Always at least one element.
 func cubCommandWords(args []string) []string {
 	words := []string{}
 	for _, arg := range args {

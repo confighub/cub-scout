@@ -4,7 +4,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -52,17 +51,15 @@ func loadDataCmd() tea.Msg {
 	return dataLoadedMsg{nodes: nodes, currentOrg: currentOrg, currentOrgInt: currentOrgInt, currentSpace: currentSpace, spacesToLoad: spacesToLoad}
 }
 
-// loadSpaceDataCmd loads units, targets, and workers for a space in the background
+// loadSpaceDataCmd loads units and targets for a space in the background
 func loadSpaceDataCmd(spaceSlug string) tea.Cmd {
 	return func() tea.Msg {
 		units, _ := loadUnitsForSpace(spaceSlug)
 		targets, _ := loadTargetsForSpace(spaceSlug)
-		workers, _ := loadWorkersForSpace(spaceSlug)
 		return spaceDataLoadedMsg{
 			spaceSlug: spaceSlug,
 			units:     units,
 			targets:   targets,
-			workers:   workers,
 		}
 	}
 }
@@ -318,12 +315,9 @@ func loadConfigHubData() ([]*TreeNode, string, string, string, []string, error) 
 					continue
 				}
 
+				// A space has no health of its own to show: ConfigHub removed
+				// bridge workers in API 0.10, and a unit count is not a status.
 				status := ""
-				if space.TotalBridgeWorkerCount > 0 {
-					status = "ok"
-				} else if space.TotalUnitCount > 0 {
-					status = "warn"
-				}
 
 				// Count targets
 				targetCount := 0
@@ -336,14 +330,14 @@ func loadConfigHubData() ([]*TreeNode, string, string, string, []string, error) 
 					Name:     space.Space.Slug,
 					Type:     "space",
 					Status:   status,
-					Info:     fmt.Sprintf("units:%d targets:%d workers:%d", space.TotalUnitCount, targetCount, space.TotalBridgeWorkerCount),
+					Info:     fmt.Sprintf("units:%d targets:%d", space.TotalUnitCount, targetCount),
 					Parent:   orgNode,
 					Expanded: currentSpace != "" && space.Space.Slug == currentSpace,
 					Data:     space,
 					OrgID:    org.ExternalID,
 				}
 
-				// Add group nodes for Units, Targets, Workers
+				// Add group nodes for Units and Targets
 				unitsGroup := &TreeNode{
 					ID:       space.Space.Slug + "/units",
 					Name:     "Units",
@@ -364,20 +358,10 @@ func loadConfigHubData() ([]*TreeNode, string, string, string, []string, error) 
 					OrgID:    org.ExternalID,
 				}
 
-				workersGroup := &TreeNode{
-					ID:       space.Space.Slug + "/workers",
-					Name:     "Workers",
-					Type:     "group",
-					Info:     fmt.Sprintf("(%d)", space.TotalBridgeWorkerCount),
-					Parent:   spaceNode,
-					Expanded: false,
-					OrgID:    org.ExternalID,
-				}
-
 				// Queue this space for background loading (don't block initial render)
 				spacesToLoad = append(spacesToLoad, space.Space.Slug)
 
-				spaceNode.Children = []*TreeNode{unitsGroup, targetsGroup, workersGroup}
+				spaceNode.Children = []*TreeNode{unitsGroup, targetsGroup}
 				orgNode.Children = append(orgNode.Children, spaceNode)
 			}
 		}
@@ -412,16 +396,23 @@ func loadTargetsForSpace(spaceSlug string) ([]CubTargetData, error) {
 	return targets, nil
 }
 
-func loadWorkersForSpace(spaceSlug string) ([]CubWorkerData, error) {
-	workersJSON, err := runCubCommand("worker", "list", "--space", spaceSlug, "-o", "json")
-	if err != nil {
-		return nil, err
+// startImportDiscovery moves the import wizard on once it has a space.
+//
+// The wizard used to create and run a bridge worker here and wait for the
+// target the worker registered. ConfigHub removed bridge workers in API 0.10,
+// so there is nothing to start: a cluster is connected with `cub cluster
+// attach`, outside this wizard.
+func (m Model) startImportDiscovery() (tea.Model, tea.Cmd) {
+	// An ArgoCD import already has its workloads.
+	if m.importSource == importSourceArgoCD && len(m.importWorkloads) > 0 {
+		m.importStep = importStepSelection
+		m.importCursor = 0
+		m.importLoading = false
+		return m, nil
 	}
-	var workers []CubWorkerData
-	if err := json.Unmarshal(workersJSON, &workers); err != nil {
-		return nil, err
-	}
-	return workers, nil
+	m.importStep = importStepDiscovering
+	m.importLoading = true
+	return m, discoverWorkloadsCmd(m.importNamespace)
 }
 
 // runCubCommand is the TUI's read path. It goes through cubStdout, so a call
@@ -654,15 +645,6 @@ func applyUnitCmd(space, unitSlug string, workloads []WorkloadInfo) tea.Cmd {
 	}
 }
 
-func testPipelineCmd(space, unitSlug string) tea.Cmd {
-	return func() tea.Msg {
-		// Use rollout restart which adds annotation to pod template,
-		// triggering a rolling update - this is the most comprehensive test
-		result, err := testRolloutRestart(space, unitSlug)
-		return testUpdateCompleteMsg{result: result, err: err}
-	}
-}
-
 // countWorkloadsWithOwners parses kubectl JSON output and counts workloads by owner
 func countWorkloadsWithOwners(jsonData []byte, info *namespaceInfo, kindCount *int) {
 	var result struct {
@@ -748,7 +730,7 @@ func importWorkloadsCmd(space string, workloads []WorkloadInfo) tea.Cmd {
 // importArgoWorkloadsCmd imports ArgoCD workloads as a combined unit.
 // Creates a single {appName}-workload unit with all resources, matching the CLI behavior.
 // Also links to target and applies so livedata becomes available.
-func importArgoWorkloadsCmd(space, appName, target string, workloads []WorkloadInfo) tea.Cmd {
+func importArgoWorkloadsCmd(space, appName string, workloads []WorkloadInfo) tea.Cmd {
 	return func() tea.Msg {
 		if len(workloads) == 0 {
 			return importCompleteMsg{success: 0, failed: 0}
@@ -772,27 +754,12 @@ func importArgoWorkloadsCmd(space, appName, target string, workloads []WorkloadI
 			return importCompleteMsg{success: 0, failed: len(workloads)}
 		}
 
-		// Link unit to target (required for apply and livedata)
-		// NOTE: We do NOT apply here - apply happens after ArgoCD cleanup step
-		// because ArgoCD selfHeal would revert our changes if sync is still enabled
-		var applyErr error
-		if target != "" {
-			setTargetCmd, setTargetErr := cubCommand(context.Background(), withConfigHubSpace([]string{"unit", "set-target", unitSlug, target}, space)...)
-			switch {
-			case setTargetErr != nil:
-				applyErr = setTargetErr
-			default:
-				var setTargetOut bytes.Buffer
-				setTargetCmd.Stdout = &setTargetOut
-				setTargetCmd.Stderr = &setTargetOut
-				if err := setTargetCmd.Run(); err != nil {
-					applyErr = fmt.Errorf("set-target failed: %s", setTargetOut.String())
-				}
-			}
-			// Apply will be done after ArgoCD cleanup step
-		} else {
-			applyErr = fmt.Errorf("no target specified - unit created but not applied")
-		}
+		// The unit is created and nothing delivers it from here. A unit used to
+		// be pointed at a target with `cub unit set-target`; since ConfigHub API
+		// 0.10 a Space releases to a Target and a GitOps controller pulls the
+		// Release, so that step belongs to `cub cluster attach` and
+		// `cub release publish`, not to this import.
+		applyErr := fmt.Errorf("unit created but not delivered: ConfigHub delivers a space's releases through an attached cluster (`cub cluster attach`, then `cub release publish`)")
 
 		// Label all workloads with the combined unit slug
 		for _, w := range workloads {
@@ -918,146 +885,6 @@ func createSpaceCmd(spaceName string) tea.Cmd {
 	}
 }
 
-// loadWorkersForSpaceCmd fetches existing workers in a space
-func loadWorkersForSpaceCmd(space string) tea.Cmd {
-	return func() tea.Msg {
-		workersJSON, err := runCubCommand("worker", "list", "--space", space, "-o", "json")
-		if err != nil {
-			return workersLoadedMsg{err: err}
-		}
-		var rawWorkers []struct {
-			BridgeWorker struct {
-				Slug      string `json:"Slug"`
-				Condition string `json:"Condition"`
-			} `json:"BridgeWorker"`
-		}
-		if err := json.Unmarshal(workersJSON, &rawWorkers); err != nil {
-			return workersLoadedMsg{err: err}
-		}
-		var workers []workerInfo
-		for _, w := range rawWorkers {
-			workers = append(workers, workerInfo{
-				Slug:      w.BridgeWorker.Slug,
-				Condition: w.BridgeWorker.Condition,
-			})
-		}
-		return workersLoadedMsg{workers: workers}
-	}
-}
-
-// createWorkerCmd creates a new ConfigHub worker
-func createWorkerCmd(space, workerName string) tea.Cmd {
-	return func() tea.Msg {
-		_, err := runCubCommand("worker", "create", workerName, "--space", space)
-		if err != nil {
-			return workerCreatedMsg{err: fmt.Errorf("failed to create worker: %w", err)}
-		}
-		return workerCreatedMsg{worker: workerName}
-	}
-}
-
-// waitForTargetCmd polls until an auto-created target is found
-// Target slug pattern: {worker}-kubernetes-yaml-{kube-context}
-func waitForTargetCmd(space, workerName, kubeContext string) tea.Cmd {
-	return func() tea.Msg {
-		// Build expected target slug: worker-kubernetes-yaml-context
-		// Convert context name to slug format (replace / with -)
-		contextSlug := strings.ReplaceAll(kubeContext, "/", "-")
-		expectedSlug := fmt.Sprintf("%s-kubernetes-yaml-%s", workerName, contextSlug)
-
-		// Poll for up to 60 seconds (30 attempts, 2 seconds apart)
-		for i := 0; i < 30; i++ {
-			// Check if target exists
-			targetsJSON, err := runCubCommand("target", "list", "--space", space, "-o", "json")
-			if err == nil {
-				var targets []struct {
-					Target struct {
-						Slug         string `json:"Slug"`
-						ProviderType string `json:"ProviderType"`
-					} `json:"Target"`
-					Parameters map[string]interface{} `json:"Parameters"`
-				}
-				if err := json.Unmarshal(targetsJSON, &targets); err == nil {
-					// First, look for exact match
-					for _, t := range targets {
-						if t.Target.Slug == expectedSlug {
-							return targetFoundMsg{target: expectedSlug}
-						}
-					}
-					// Fallback: look for any Kubernetes target matching our context
-					for _, t := range targets {
-						if t.Target.ProviderType == "Kubernetes" {
-							// Check if this target's KubeContext matches
-							if params := t.Parameters; params != nil {
-								if kc, ok := params["KubeContext"].(string); ok && kc == kubeContext {
-									return targetFoundMsg{target: t.Target.Slug}
-								}
-							}
-						}
-					}
-				}
-			}
-			// Wait 2 seconds before next poll
-			time.Sleep(2 * time.Second)
-		}
-		return targetFoundMsg{err: fmt.Errorf("no Kubernetes target found for context %s within 60 seconds", kubeContext)}
-	}
-}
-
-// startWorkerCmd starts the worker process in the background
-func startWorkerCmd(space, workerName string) tea.Cmd {
-	return func() tea.Msg {
-		// Start worker in background (detached process)
-		cmd, err := cubCommand(context.Background(), withConfigHubSpace([]string{"worker", "run", workerName}, space)...)
-		if err != nil {
-			return workerStartedMsg{err: err}
-		}
-		cmd.Stdout = nil
-		cmd.Stderr = nil
-		cmd.Stdin = nil
-
-		if err := cmd.Start(); err != nil {
-			return workerStartedMsg{err: fmt.Errorf("failed to start worker: %w", err)}
-		}
-
-		// Don't wait for the process - let it run in background
-		// We must call Wait() to release process resources, but we don't need the result
-		go func() {
-			_ = cmd.Wait() //nolint:errcheck // background process, exit status irrelevant
-		}()
-
-		return workerStartedMsg{worker: workerName}
-	}
-}
-
-// waitForWorkerReadyCmd polls until the worker is Ready (or timeout)
-func waitForWorkerReadyCmd(space, workerName string) tea.Cmd {
-	return func() tea.Msg {
-		// Poll for up to 30 seconds (15 attempts, 2 seconds apart)
-		for i := 0; i < 15; i++ {
-			workersJSON, err := runCubCommand("worker", "list", "--space", space, "-o", "json")
-			if err == nil {
-				var rawWorkers []struct {
-					BridgeWorker struct {
-						Slug      string `json:"Slug"`
-						Condition string `json:"Condition"`
-					} `json:"BridgeWorker"`
-				}
-				if err := json.Unmarshal(workersJSON, &rawWorkers); err == nil {
-					for _, w := range rawWorkers {
-						if w.BridgeWorker.Slug == workerName && w.BridgeWorker.Condition == "Ready" {
-							return workerReadyMsg{worker: workerName}
-						}
-					}
-				}
-			}
-			// Wait 2 seconds before next poll
-			time.Sleep(2 * time.Second)
-		}
-		return workerReadyMsg{err: fmt.Errorf("worker did not become ready within 30 seconds")}
-	}
-}
-
 // runCommandCmd executes a shell command and returns the output
 func runCommandCmd(command string) tea.Cmd {
 	return func() tea.Msg {
@@ -1085,16 +912,6 @@ func runCommandCmd(command string) tea.Cmd {
 		}
 		return cmdCompleteMsg{output: string(output)}
 	}
-}
-
-// getCurrentKubeContext returns the current kubectl context name
-func getCurrentKubeContext() string {
-	cmd := exec.Command("kubectl", "config", "current-context")
-	out, err := cmd.Output()
-	if err != nil {
-		return ""
-	}
-	return strings.TrimSpace(string(out))
 }
 
 // Create wizard commands
@@ -1132,64 +949,6 @@ func loadCreateUnitsCmd(space string) tea.Cmd {
 	}
 }
 
-// loadCreateTargetsCmd loads targets in a space filtered by toolchain type
-func loadCreateTargetsCmd(space, toolchain string) tea.Cmd {
-	return func() tea.Msg {
-		targetsJSON, err := runCubCommand("target", "list", "--space", space, "-o", "json")
-		if err != nil {
-			return createTargetsLoadedMsg{err: err}
-		}
-		var rawTargets []struct {
-			Target struct {
-				Slug          string `json:"Slug"`
-				ToolchainType string `json:"ToolchainType"`
-			} `json:"Target"`
-		}
-		if err := json.Unmarshal(targetsJSON, &rawTargets); err != nil {
-			return createTargetsLoadedMsg{err: err}
-		}
-		var targets []string
-		for _, t := range rawTargets {
-			if t.Target.Slug != "" {
-				// Filter targets by matching toolchain type
-				targetToolchain := t.Target.ToolchainType
-				if targetToolchain == "" {
-					targetToolchain = "Kubernetes/YAML" // Default
-				}
-				if targetToolchain == toolchain {
-					targets = append(targets, t.Target.Slug)
-				}
-			}
-		}
-		return createTargetsLoadedMsg{targets: targets}
-	}
-}
-
-// loadCreateWorkersCmd loads workers in a space for target creation
-func loadCreateWorkersCmd(space string) tea.Cmd {
-	return func() tea.Msg {
-		workersJSON, err := runCubCommand("worker", "list", "--space", space, "-o", "json")
-		if err != nil {
-			return createWorkersLoadedMsg{err: err}
-		}
-		var rawWorkers []struct {
-			BridgeWorker struct {
-				Slug string `json:"Slug"`
-			} `json:"BridgeWorker"`
-		}
-		if err := json.Unmarshal(workersJSON, &rawWorkers); err != nil {
-			return createWorkersLoadedMsg{err: err}
-		}
-		var workers []string
-		for _, w := range rawWorkers {
-			if w.BridgeWorker.Slug != "" {
-				workers = append(workers, w.BridgeWorker.Slug)
-			}
-		}
-		return createWorkersLoadedMsg{workers: workers}
-	}
-}
-
 // doCreateSpaceCmd creates a new space
 func doCreateSpaceCmd(name string) tea.Cmd {
 	return func() tea.Msg {
@@ -1202,7 +961,7 @@ func doCreateSpaceCmd(name string) tea.Cmd {
 }
 
 // doCreateUnitCmd creates a new unit
-func doCreateUnitCmd(space, name, cloneFrom, target string) tea.Cmd {
+func doCreateUnitCmd(space, name, cloneFrom string) tea.Cmd {
 	return func() tea.Msg {
 		args := []string{"unit", "create", name, "--space", space}
 
@@ -1212,10 +971,6 @@ func doCreateUnitCmd(space, name, cloneFrom, target string) tea.Cmd {
 		} else {
 			// Create with minimal placeholder config from stdin
 			args = append(args, "-")
-		}
-
-		if target != "" {
-			args = append(args, "--target", target)
 		}
 
 		if cloneFrom != "" {
@@ -1249,13 +1004,12 @@ data:
 }
 
 // doCreateTargetCmd creates a new target
-func doCreateTargetCmd(space, name, worker, provider string) tea.Cmd {
+//
+// A Target is a name a Space releases to; since ConfigHub API 0.10 it has no
+// bridge worker, provider or parameters, so the slug is all there is to give.
+func doCreateTargetCmd(space, name string) tea.Cmd {
 	return func() tea.Msg {
-		args := []string{"target", "create", name, "{}", "--space", space, "--provider", provider}
-		if worker != "" {
-			args = append(args, worker)
-		}
-		_, err := runCubCommand(args...)
+		_, err := runCubCommand("target", "create", name, "--space", space)
 		if err != nil {
 			return createResourceMsg{resourceType: "target", name: name, space: space, err: fmt.Errorf("failed to create target: %w", err)}
 		}
@@ -1329,11 +1083,6 @@ func buildUnitInfo(unit CubUnitData) string {
 		parts = append(parts, "drifted")
 	}
 
-	// Worker (if assigned)
-	if unit.BridgeWorker.Slug != "" {
-		parts = append(parts, fmt.Sprintf("worker:%s", unit.BridgeWorker.Slug))
-	}
-
 	return strings.Join(parts, "  ")
 }
 
@@ -1405,30 +1154,6 @@ func buildUnitDetailChildren(unit CubUnitData, parent *TreeNode) []*TreeNode {
 			Info:   actionInfo,
 			Parent: parent,
 		})
-	}
-
-	// Worker info
-	if unit.BridgeWorker.Slug != "" {
-		workerInfo := unit.BridgeWorker.Slug
-		if unit.BridgeWorker.Condition != "" {
-			workerInfo += fmt.Sprintf(" (%s)", unit.BridgeWorker.Condition)
-		}
-		if unit.BridgeWorker.IPAddress != "" {
-			workerInfo += fmt.Sprintf(" @ %s", unit.BridgeWorker.IPAddress)
-		}
-		workerNode := &TreeNode{
-			ID:     parent.ID + "/worker",
-			Name:   "Worker",
-			Type:   "detail",
-			Info:   workerInfo,
-			Parent: parent,
-		}
-		if unit.BridgeWorker.Condition == "Ready" {
-			workerNode.Status = "ok"
-		} else {
-			workerNode.Status = "warn"
-		}
-		children = append(children, workerNode)
 	}
 
 	// Space info
@@ -2184,9 +1909,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.createName = ""
 			m.createSpace = m.getSpaceFromSelection()
 			m.createCloneFrom = ""
-			m.createTarget = ""
-			m.createWorker = ""
-			m.createProvider = "Kubernetes"
 			m.createCursor = 0
 			m.createLoading = false
 			m.createError = nil
@@ -2228,7 +1950,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.deleteError = nil
 					return m, nil
 				default:
-					// Can't delete orgs, groups, workers, or details
+					// Can't delete orgs, groups or details
 					m.statusMsg = "Cannot delete this type of resource"
 				}
 			}
@@ -2343,7 +2065,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case spaceDataLoadedMsg:
 		// Update the tree in place without resetting cursor or expanded state
 		if msg.err == nil {
-			m.updateSpaceData(msg.spaceSlug, msg.units, msg.targets, msg.workers)
+			m.updateSpaceData(msg.spaceSlug, msg.units, msg.targets)
 			m.rebuildFlatList()
 		}
 
@@ -2485,18 +2207,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.importStep = importStepArgoCleanup
 			m.importCursor = argoCleanupKeepAsIs // Default to keep as-is
 		} else {
-			// For non-ArgoCD imports, offer test step
-			m.importStep = importStepTest
-			m.importCursor = testOptionSkip // Default to skip
+			// For non-ArgoCD imports the wizard is done
+			m.importStep = importStepComplete
 		}
 
 	case argoSyncDisabledMsg:
 		m.importLoading = false
 		if msg.err != nil {
 			m.importError = msg.err
-			// Cleanup failed - go to test step but warn that ArgoCD still controls resources
-			m.importStep = importStepTest
-			m.importCursor = testOptionSkip // Default to skip
+			// Cleanup failed - finish, with the error shown: ArgoCD still controls the resources
+			m.importStep = importStepComplete
 			return m, nil
 		}
 		// Cleanup succeeded - now apply the unit (ArgoCD won't revert it anymore)
@@ -2505,17 +2225,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.importLoading = true
 			return m, applyUnitCmd(m.importSpace, unitSlug, m.getSelectedWorkloads())
 		}
-		// Fallback: go to test step
-		m.importStep = importStepTest
-		m.importCursor = testOptionSkip
+		// Fallback: finish
+		m.importStep = importStepComplete
 
 	case argoAppDeletedMsg:
 		m.importLoading = false
 		if msg.err != nil {
 			m.importError = msg.err
-			// Cleanup failed - go to test step but warn
-			m.importStep = importStepTest
-			m.importCursor = testOptionSkip
+			// Cleanup failed - finish, with the error shown
+			m.importStep = importStepComplete
 			return m, nil
 		}
 		// Cleanup succeeded - now apply the unit
@@ -2524,26 +2242,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.importLoading = true
 			return m, applyUnitCmd(m.importSpace, unitSlug, m.getSelectedWorkloads())
 		}
-		// Fallback: go to test step
-		m.importStep = importStepTest
-		m.importCursor = testOptionSkip
+		// Fallback: finish
+		m.importStep = importStepComplete
 
 	case unitAppliedMsg:
 		m.importLoading = false
 		if msg.err != nil {
 			m.importApplyError = msg.err
 		}
-		// Proceed to test step — its UI already handles apply errors gracefully
-		// by showing a warning and letting the user skip the pipeline test.
-		m.importStep = importStepTest
-		m.importCursor = 0
-
-	case testUpdateCompleteMsg:
-		m.importLoading = false
-		m.importTestResult = msg.result
-		if msg.err != nil {
-			m.importError = msg.err
-		}
+		// The wizard used to offer a pipeline test here: it wrote a restart
+		// annotation to the unit and waited for it in the cluster. Nothing
+		// delivers a unit from this wizard since ConfigHub API 0.10, so the
+		// wait could only time out after a write. The step is gone.
 		m.importStep = importStepComplete
 
 	case configExtractedMsg:
@@ -2579,102 +2289,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		m.importSpace = msg.space
-		// After creating space, move to worker creation (worker needed before target)
-		m.importStep = importStepCreateWorker
-		m.importCursor = 0
-
-	case workersLoadedMsg:
-		m.importLoading = false
-		if msg.err != nil {
-			m.importError = msg.err
-			return m, nil
-		}
-		m.importExistingWorkers = msg.workers
-		// Find a running worker (Condition == "Ready")
-		for _, w := range msg.workers {
-			if w.Condition == "Ready" {
-				m.importSelectedWorker = w.Slug
-				m.importNewWorkerName = w.Slug // Use existing worker
-				// We have a running worker - wait for target to be auto-created
-				m.importStep = importStepWaitTarget
-				m.statusMsg = "Waiting for target to be created..."
-				kubeContext := getCurrentKubeContext()
-				return m, waitForTargetCmd(m.importSpace, w.Slug, kubeContext)
-			}
-		}
-		// No running worker found - need to create one
-		m.importStep = importStepCreateWorker
-
-	case workerCreatedMsg:
-		m.importLoading = false
-		if msg.err != nil {
-			m.importError = msg.err
-			return m, nil
-		}
-		// Worker created - now start it in background
-		m.importLoading = true
-		m.statusMsg = "Starting worker..."
-		return m, startWorkerCmd(m.importSpace, m.importNewWorkerName)
-
-	case workerStartedMsg:
-		if msg.err != nil {
-			m.importLoading = false
-			m.importError = msg.err
-			return m, nil
-		}
-		// Worker process started - wait for it to become ready
-		m.statusMsg = "Waiting for worker to be ready..."
-		return m, waitForWorkerReadyCmd(m.importSpace, m.importNewWorkerName)
-
-	case workerReadyMsg:
-		m.statusMsg = ""
-		if msg.err != nil {
-			// Worker didn't become ready in time - still proceed but skip target
-			m.importError = nil // Clear this - we'll show manual instructions
-			// For ArgoCD imports, we already have workloads loaded - skip discovery
-			if m.importSource == importSourceArgoCD && len(m.importWorkloads) > 0 {
-				m.importStep = importStepSelection
-				m.importCursor = 0
-				m.importLoading = false
-				return m, nil
-			}
-			m.importStep = importStepDiscovering
-			m.importLoading = true
-			return m, discoverWorkloadsCmd(m.importNamespace)
-		}
-		// Worker is ready! Now wait for target to be auto-created
-		m.importSelectedWorker = msg.worker // Mark that we have a running worker
-		m.importStep = importStepWaitTarget
-		m.statusMsg = "Waiting for target to be created..."
-		kubeContext := getCurrentKubeContext()
-		return m, waitForTargetCmd(m.importSpace, m.importNewWorkerName, kubeContext)
-
-	case targetFoundMsg:
-		m.importLoading = false
-		m.statusMsg = ""
-		if msg.err != nil {
-			// Target wasn't found - show error
-			m.importError = fmt.Errorf("target not found: %w", msg.err)
-			return m, nil
-		}
-		// Target found! Store the auto-created target name
-		if msg.target != "" {
-			m.importNewTargetName = msg.target
-		} else {
-			// This shouldn't happen, but guard against it
-			m.importError = fmt.Errorf("target lookup returned empty result")
-			return m, nil
-		}
-		// For ArgoCD imports, we already have workloads loaded - skip discovery
-		if m.importSource == importSourceArgoCD && len(m.importWorkloads) > 0 {
-			m.importStep = importStepSelection
-			m.importCursor = 0
-			return m, nil
-		}
-		// For Kubernetes imports, discover workloads in the namespace
-		m.importStep = importStepDiscovering
-		m.importLoading = true
-		return m, discoverWorkloadsCmd(m.importNamespace)
+		return m.startImportDiscovery()
 
 	// Command palette messages
 	case cmdCompleteMsg:
@@ -2687,13 +2302,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.statusMsg = ""
 		return m, nil
 
-	case workersStatusMsg:
-		m.workersLoaded = true
-		if msg.err == nil {
-			m.workers = msg.workers
-		}
-		return m, nil
-
 	// Create wizard messages
 	case createUnitsLoadedMsg:
 		m.createLoading = false
@@ -2702,22 +2310,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		m.createUnits = msg.units
-
-	case createTargetsLoadedMsg:
-		m.createLoading = false
-		if msg.err != nil {
-			m.createError = msg.err
-			return m, nil
-		}
-		m.createTargets = msg.targets
-
-	case createWorkersLoadedMsg:
-		m.createLoading = false
-		if msg.err != nil {
-			m.createError = msg.err
-			return m, nil
-		}
-		m.createWorkers = msg.workers
 
 	case createResourceMsg:
 		m.createLoading = false
@@ -2793,23 +2385,6 @@ func (m *Model) loadGroupData(groupNode *TreeNode, spaceSlug string) {
 			}
 		}
 
-	case strings.HasSuffix(groupNode.ID, "/workers"):
-		workers, err := loadWorkersForSpace(spaceSlug)
-		if err == nil {
-			for _, worker := range workers {
-				workerNode := &TreeNode{
-					ID:     worker.BridgeWorker.Slug,
-					Name:   worker.BridgeWorker.Slug,
-					Type:   "worker",
-					Status: worker.DeriveStatus(),
-					Info:   worker.BridgeWorker.Condition,
-					Parent: groupNode,
-					Data:   worker,
-					OrgID:  groupNode.OrgID,
-				}
-				groupNode.Children = append(groupNode.Children, workerNode)
-			}
-		}
 	}
 }
 
@@ -2903,24 +2478,18 @@ func (m *Model) updateImportWizard(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			}
 		}
 	case "backspace":
-		// Handle text input for space/worker names
+		// Handle text input for the space name
 		if m.importStep == importStepCreateSpace && len(m.importNewSpaceName) > 0 {
 			m.importNewSpaceName = m.importNewSpaceName[:len(m.importNewSpaceName)-1]
-		} else if m.importStep == importStepCreateWorker && len(m.importNewWorkerName) > 0 {
-			m.importNewWorkerName = m.importNewWorkerName[:len(m.importNewWorkerName)-1]
 		}
-		// Note: Targets are auto-named, no user input needed
 	case "enter":
 		return m.advanceImportStep()
 	default:
-		// Handle text input for space/worker names
+		// Handle text input for the space name
 		if len(msg.String()) == 1 && msg.String() != " " {
 			if m.importStep == importStepCreateSpace {
 				m.importNewSpaceName += msg.String()
-			} else if m.importStep == importStepCreateWorker {
-				m.importNewWorkerName += msg.String()
 			}
-			// Note: Targets are auto-named, no user input needed
 		}
 	}
 	return m, nil
@@ -2960,8 +2529,6 @@ func (m *Model) getImportMaxCursor() int {
 		return 0
 	case importStepArgoCleanup:
 		return 2 // 0 = disable sync, 1 = delete app, 2 = keep as-is
-	case importStepTest:
-		return 2 // 0 = annotation, 1 = rollout, 2 = skip
 	default:
 		return 0
 	}
@@ -3088,8 +2655,6 @@ func (m *Model) advanceImportStep() (tea.Model, tea.Cmd) {
 			m.importLoading = true
 			// Default the names to the ArgoCD app name
 			m.importNewSpaceName = selectedApp.Name
-			m.importNewTargetName = selectedApp.DestNS
-			m.importNewWorkerName = selectedApp.Name + "-worker"
 			m.importNamespace = selectedApp.DestNS // For display
 			return m, loadArgoResourcesCmd(selectedApp)
 		}
@@ -3102,10 +2667,8 @@ func (m *Model) advanceImportStep() (tea.Model, tea.Cmd) {
 			m.importStep = importStepSetup
 			m.importCursor = 0
 			m.importLoading = true
-			// Default the new space/target/worker names to the namespace
+			// Default the new space name to the namespace
 			m.importNewSpaceName = m.importNamespace
-			m.importNewTargetName = m.importNamespace
-			m.importNewWorkerName = m.importNamespace + "-worker"
 			return m, loadExistingSpacesCmd()
 		}
 
@@ -3117,15 +2680,13 @@ func (m *Model) advanceImportStep() (tea.Model, tea.Cmd) {
 			m.importStep = importStepCreateSpace
 			m.importCursor = 0
 		} else {
-			// Use existing space - check if it has a running worker
+			// Use existing space
 			m.importCreateNewSpace = false
 			selectedIdx := m.importCursor - 1
 			if selectedIdx < len(m.importExistingSpaces) {
 				m.importSpace = m.importExistingSpaces[selectedIdx]
 			}
-			// Load workers for this space to see if any are running
-			m.importLoading = true
-			return m, loadWorkersForSpaceCmd(m.importSpace)
+			return m.startImportDiscovery()
 		}
 
 	case importStepCreateSpace:
@@ -3134,17 +2695,6 @@ func (m *Model) advanceImportStep() (tea.Model, tea.Cmd) {
 			m.importLoading = true
 			return m, createSpaceCmd(m.importNewSpaceName)
 		}
-
-	case importStepCreateWorker:
-		// Create the worker
-		if m.importNewWorkerName != "" {
-			m.importLoading = true
-			return m, createWorkerCmd(m.importSpace, m.importNewWorkerName)
-		}
-
-	// Note: importStepWaitTarget is handled automatically via message flow
-	// (workerReadyMsg → waitForTargetCmd → targetFoundMsg)
-	// No user interaction needed
 
 	case importStepSelection:
 		selected := m.getSelectedWorkloads()
@@ -3177,7 +2727,7 @@ func (m *Model) advanceImportStep() (tea.Model, tea.Cmd) {
 			// ArgoCD imports: use chosen unit structure
 			if m.importSource == importSourceArgoCD && m.importSelectedArgo != nil {
 				if m.importUnitStructure == unitStructureCombined {
-					return m, importArgoWorkloadsCmd(m.importSpace, m.importSelectedArgo.Name, m.importNewTargetName, selected)
+					return m, importArgoWorkloadsCmd(m.importSpace, m.importSelectedArgo.Name, selected)
 				}
 				// Individual units - use standard import
 				return m, importWorkloadsCmd(m.importSpace, selected)
@@ -3208,37 +2758,7 @@ func (m *Model) advanceImportStep() (tea.Model, tea.Cmd) {
 				return m, applyUnitCmd(m.importSpace, unitSlug, m.getSelectedWorkloads())
 			}
 		}
-		m.importStep = importStepTest
-		m.importCursor = testOptionSkip
-		return m, nil
-
-	case importStepTest:
-		// Handle test pipeline choice
-		m.importTestChoice = m.importCursor
-		// Get the workload unit slug for testing
-		var unitSlug string
-		if m.importSource == importSourceArgoCD && m.importSelectedArgo != nil {
-			unitSlug = fmt.Sprintf("%s-workload", m.importSelectedArgo.Name)
-		} else if len(m.importWorkloads) > 0 {
-			// Use the first selected workload
-			for i, selected := range m.importSelected {
-				if selected {
-					unitSlug = m.importWorkloads[i].Name
-					break
-				}
-			}
-		}
-		switch m.importCursor {
-		case testOptionTest:
-			if unitSlug != "" {
-				m.importLoading = true
-				m.importTestRan = true
-				return m, testPipelineCmd(m.importSpace, unitSlug)
-			}
-			m.importStep = importStepComplete
-		case testOptionSkip:
-			m.importStep = importStepComplete
-		}
+		m.importStep = importStepComplete
 		return m, nil
 
 	case importStepComplete:
@@ -3344,14 +2864,8 @@ func (m *Model) resetImportState() {
 	// Reset setup wizard state
 	m.importCreateNewSpace = false
 	m.importNewSpaceName = ""
-	m.importCreateTarget = false
-	m.importNewWorkerName = ""
-	m.importNewTargetName = ""
-	m.importTargetParams = ""
 	m.importSetupChoice = 0
 	m.importExistingSpaces = nil
-	m.importExistingWorkers = nil
-	m.importSelectedWorker = ""
 	// Reset ArgoCD import state
 	m.importSource = importSourceKubernetes
 	m.importArgoApps = nil
@@ -3360,9 +2874,6 @@ func (m *Model) resetImportState() {
 	m.importArgoCleanup = argoCleanupKeepAsIs
 	m.importUnitStructure = unitStructureCombined
 	// Reset test state
-	m.importTestChoice = testOptionSkip
-	m.importTestResult = nil
-	m.importTestRan = false
 }
 
 func (m *Model) getSelectedWorkloads() []WorkloadInfo {
@@ -3419,12 +2930,6 @@ func (m *Model) getCreateMaxCursor() int {
 			return 0
 		}
 		return len(m.createUnits) - 1
-	case createStepSelectTarget:
-		return len(m.createTargets) // Includes "(none)" option
-	case createStepSelectWorker:
-		return len(m.createWorkers) // Includes "(no worker)" option
-	case createStepSelectProvider:
-		return 2 // Kubernetes, Terraform, FluxOCIWriter
 	case createStepConfirm:
 		return 1 // Yes, No
 	default:
@@ -3468,10 +2973,9 @@ func (m *Model) advanceCreateStep() (tea.Model, tea.Cmd) {
 		case "unit":
 			m.createStep = createStepUnitMethod
 		case "target":
-			// Load workers for target creation
-			m.createLoading = true
-			m.createStep = createStepSelectWorker
-			return m, loadCreateWorkersCmd(m.createSpace)
+			// A target is only a name: it has had no worker or provider since
+			// ConfigHub API 0.10.
+			m.createStep = createStepConfirm
 		}
 		m.createCursor = 0
 
@@ -3482,54 +2986,15 @@ func (m *Model) advanceCreateStep() (tea.Model, tea.Cmd) {
 			m.createStep = createStepSelectSource
 			return m, loadCreateUnitsCmd(m.createSpace)
 		} else {
-			// Empty config - use default toolchain and skip to target selection
+			// Empty config. A unit takes no target: a space releases to one.
 			m.createCloneFrom = ""
-			m.createToolchain = "Kubernetes/YAML" // Default toolchain for empty units
-			m.createLoading = true
-			m.createStep = createStepSelectTarget
-			return m, loadCreateTargetsCmd(m.createSpace, m.createToolchain)
+			m.createStep = createStepConfirm
+			m.createCursor = 0
 		}
 
 	case createStepSelectSource:
 		if len(m.createUnits) > 0 && m.createCursor < len(m.createUnits) {
 			m.createCloneFrom = m.createUnits[m.createCursor].Slug
-			m.createToolchain = m.createUnits[m.createCursor].Toolchain
-		} else {
-			// No units available, use default toolchain
-			m.createToolchain = "Kubernetes/YAML"
-		}
-		// Move to target selection (filtered by toolchain)
-		m.createLoading = true
-		m.createStep = createStepSelectTarget
-		m.createCursor = 0
-		return m, loadCreateTargetsCmd(m.createSpace, m.createToolchain)
-
-	case createStepSelectTarget:
-		if m.createCursor == 0 {
-			m.createTarget = "" // (none)
-		} else if m.createCursor-1 < len(m.createTargets) {
-			m.createTarget = m.createTargets[m.createCursor-1]
-		}
-		m.createStep = createStepConfirm
-		m.createCursor = 0
-
-	case createStepSelectWorker:
-		if m.createCursor == 0 {
-			m.createWorker = "" // (no worker)
-		} else if m.createCursor-1 < len(m.createWorkers) {
-			m.createWorker = m.createWorkers[m.createCursor-1]
-		}
-		m.createStep = createStepSelectProvider
-		m.createCursor = 0
-
-	case createStepSelectProvider:
-		switch m.createCursor {
-		case 0:
-			m.createProvider = "Kubernetes"
-		case 1:
-			m.createProvider = "Terraform"
-		case 2:
-			m.createProvider = "FluxOCIWriter"
 		}
 		m.createStep = createStepConfirm
 		m.createCursor = 0
@@ -3554,9 +3019,6 @@ func (m *Model) advanceCreateStep() (tea.Model, tea.Cmd) {
 			createName := m.createName
 			createSpace := m.createSpace
 			createCloneFrom := m.createCloneFrom
-			createTarget := m.createTarget
-			createWorker := m.createWorker
-			createProvider := m.createProvider
 
 			m.resetCreateState()
 
@@ -3564,9 +3026,9 @@ func (m *Model) advanceCreateStep() (tea.Model, tea.Cmd) {
 			case "space":
 				return m, doCreateSpaceCmd(createName)
 			case "unit":
-				return m, doCreateUnitCmd(createSpace, createName, createCloneFrom, createTarget)
+				return m, doCreateUnitCmd(createSpace, createName, createCloneFrom)
 			case "target":
-				return m, doCreateTargetCmd(createSpace, createName, createWorker, createProvider)
+				return m, doCreateTargetCmd(createSpace, createName)
 			}
 		} else {
 			// No - cancel
@@ -3587,16 +3049,10 @@ func (m *Model) resetCreateState() {
 	m.createType = ""
 	m.createName = ""
 	m.createCloneFrom = ""
-	m.createTarget = ""
-	m.createWorker = ""
-	m.createProvider = "Kubernetes"
-	m.createToolchain = ""
 	m.createCursor = 0
 	m.createLoading = false
 	m.createError = nil
 	m.createUnits = nil
-	m.createTargets = nil
-	m.createWorkers = nil
 }
 
 // Delete wizard methods
@@ -3940,7 +3396,6 @@ func (m Model) renderActivityView() string {
 	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("246"))
 	syncedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("82"))
 	notSyncedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("208"))
-	errorStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
 
 	b.WriteString(titleStyle.Render("╭────────────────────────────────────────────────────────────────╮"))
 	b.WriteString("\n")
@@ -4009,37 +3464,6 @@ func (m Model) renderActivityView() string {
 				act.revision))
 			b.WriteString("\n")
 		}
-	}
-	b.WriteString("\n")
-
-	// Workers status
-	b.WriteString(sectionStyle.Render("WORKER STATUS"))
-	b.WriteString("\n")
-
-	workersFound := false
-	for _, node := range m.flatList {
-		if node.Type == "worker" {
-			workersFound = true
-			workerName := node.ID
-			status := dimStyle.Render("Unknown")
-			if workerData, ok := node.Data.(CubWorkerData); ok {
-				workerName = workerData.BridgeWorker.Slug
-				switch workerData.BridgeWorker.Condition {
-				case "Ready":
-					status = syncedStyle.Render("● Ready")
-				case "Disconnected":
-					status = errorStyle.Render("○ Disconnected")
-				default:
-					status = notSyncedStyle.Render("◐ " + workerData.BridgeWorker.Condition)
-				}
-			}
-			b.WriteString(fmt.Sprintf("  %s  %s", status, nameStyle.Render(workerName)))
-			b.WriteString("\n")
-		}
-	}
-	if !workersFound {
-		b.WriteString("  " + dimStyle.Render("No workers found. Expand a space to see workers."))
-		b.WriteString("\n")
 	}
 	b.WriteString("\n")
 
@@ -4113,11 +3537,10 @@ func (m Model) renderMapsView() string {
 	b.WriteString(sectionStyle.Render("MAP 2a: CONFIGHUB BASIC HIERARCHY"))
 	b.WriteString("\n")
 
-	// Walk through tree to show org → space → units/workers/targets
+	// Walk through tree to show org → space → units/targets
 	orgCount := 0
 	spaceCount := 0
 	unitCount := 0
-	workerCount := 0
 	targetCount := 0
 
 	for _, node := range m.nodes {
@@ -4129,7 +3552,6 @@ func (m Model) renderMapsView() string {
 				if spaceNode.Type == "space" {
 					spaceCount++
 					units := 0
-					workers := 0
 					targets := 0
 
 					for _, child := range spaceNode.Children {
@@ -4137,9 +3559,6 @@ func (m Model) renderMapsView() string {
 						case "units":
 							units = len(child.Children)
 							unitCount += units
-						case "workers":
-							workers = len(child.Children)
-							workerCount += workers
 						case "targets":
 							targets = len(child.Children)
 							targetCount += targets
@@ -4148,7 +3567,6 @@ func (m Model) renderMapsView() string {
 
 					b.WriteString(fmt.Sprintf("  └── Space: %s\n", nameStyle.Render(spaceNode.Name)))
 					b.WriteString(fmt.Sprintf("      ├── Units: %d\n", units))
-					b.WriteString(fmt.Sprintf("      ├── Workers: %d\n", workers))
 					b.WriteString(fmt.Sprintf("      └── Targets: %d\n", targets))
 				}
 			}
@@ -4229,8 +3647,8 @@ func (m Model) renderMapsView() string {
 	// Summary
 	b.WriteString(dimStyle.Render("────────────────────────────────────────────────────────────────"))
 	b.WriteString("\n")
-	b.WriteString(fmt.Sprintf("Total: %d orgs · %d spaces · %d units · %d workers · %d targets",
-		orgCount, spaceCount, unitCount, workerCount, targetCount))
+	b.WriteString(fmt.Sprintf("Total: %d orgs · %d spaces · %d units · %d targets",
+		orgCount, spaceCount, unitCount, targetCount))
 	b.WriteString("\n\n")
 
 	b.WriteString(dimStyle.Render("Press any key to close"))
@@ -4603,71 +4021,6 @@ func (m Model) renderCreateWizard() string {
 			}
 		}
 
-	case createStepSelectTarget:
-		b.WriteString(dimStyle.Render("Creating deployment: " + m.createName))
-		b.WriteString("\n")
-		if m.createCloneFrom != "" {
-			b.WriteString(dimStyle.Render("Clone from: " + m.createCloneFrom))
-			b.WriteString("\n")
-		}
-		b.WriteString(dimStyle.Render("Toolchain: " + m.createToolchain))
-		b.WriteString("\n\n")
-		b.WriteString(fmt.Sprintf("Assign to target (optional, %s only):\n\n", m.createToolchain))
-		// First option is always "(none)"
-		cursor := "  "
-		if m.createCursor == 0 {
-			cursor = activeStyle.Render("> ")
-		}
-		b.WriteString(cursor + "(none)\n")
-		if len(m.createTargets) == 0 {
-			b.WriteString(dimStyle.Render("  (no compatible targets found)"))
-			b.WriteString("\n")
-		} else {
-			for i, target := range m.createTargets {
-				cursor := "  "
-				if i+1 == m.createCursor {
-					cursor = activeStyle.Render("> ")
-				}
-				b.WriteString(cursor + target + "\n")
-			}
-		}
-
-	case createStepSelectWorker:
-		b.WriteString(dimStyle.Render("Creating target: " + m.createName))
-		b.WriteString("\n\n")
-		b.WriteString("Select worker:\n\n")
-		// First option is always "(no worker)"
-		cursor := "  "
-		if m.createCursor == 0 {
-			cursor = activeStyle.Render("> ")
-		}
-		b.WriteString(cursor + "(no worker)\n")
-		for i, worker := range m.createWorkers {
-			cursor := "  "
-			if i+1 == m.createCursor {
-				cursor = activeStyle.Render("> ")
-			}
-			b.WriteString(cursor + worker + "\n")
-		}
-
-	case createStepSelectProvider:
-		b.WriteString(dimStyle.Render("Creating target: " + m.createName))
-		b.WriteString("\n")
-		if m.createWorker != "" {
-			b.WriteString(dimStyle.Render("Worker: " + m.createWorker))
-			b.WriteString("\n")
-		}
-		b.WriteString("\n")
-		b.WriteString("Select provider type:\n\n")
-		options := []string{"Kubernetes", "Terraform", "FluxOCIWriter"}
-		for i, opt := range options {
-			cursor := "  "
-			if i == m.createCursor {
-				cursor = activeStyle.Render("> ")
-			}
-			b.WriteString(cursor + opt + "\n")
-		}
-
 	case createStepConfirm:
 		b.WriteString("Confirm creation:\n\n")
 		b.WriteString(fmt.Sprintf("  Type:     %s\n", m.createType))
@@ -4677,15 +4030,6 @@ func (m Model) renderCreateWizard() string {
 		}
 		if m.createCloneFrom != "" {
 			b.WriteString(fmt.Sprintf("  Clone:    %s\n", m.createCloneFrom))
-		}
-		if m.createTarget != "" {
-			b.WriteString(fmt.Sprintf("  Target:   %s\n", m.createTarget))
-		}
-		if m.createWorker != "" {
-			b.WriteString(fmt.Sprintf("  Worker:   %s\n", m.createWorker))
-		}
-		if m.createType == "target" {
-			b.WriteString(fmt.Sprintf("  Provider: %s\n", m.createProvider))
 		}
 		b.WriteString("\n")
 		options := []string{"Yes, create", "No, cancel"}
@@ -4718,23 +4062,11 @@ func (m Model) renderImportWizard() string {
 	b.WriteString("\n\n")
 
 	// Show progress indicator based on import source
-	hasRunningWorker := m.importSelectedWorker != ""
-	showTargetStep := hasRunningWorker || m.importStep == importStepWaitTarget
 	var steps []string
 	if m.importSource == importSourceArgoCD {
-		// ArgoCD flow: Source → ArgoApp → Space → Worker → (Target) → Units → Cleanup → Test → Done
-		if showTargetStep {
-			steps = []string{"Source", "ArgoApp", "Space", "Worker", "Target", "Units", "Cleanup", "Test", "Done"}
-		} else {
-			steps = []string{"Source", "ArgoApp", "Space", "Worker", "Units", "Cleanup", "Test", "Done"}
-		}
+		steps = []string{"Source", "ArgoApp", "Space", "Units", "Cleanup", "Done"}
 	} else {
-		// Kubernetes flow: Source → Namespace → Space → Worker → (Target) → Units → Test → Done
-		if showTargetStep {
-			steps = []string{"Source", "Namespace", "Space", "Worker", "Target", "Units", "Test", "Done"}
-		} else {
-			steps = []string{"Source", "Namespace", "Space", "Worker", "Units", "Test", "Done"}
-		}
+		steps = []string{"Source", "Namespace", "Space", "Units", "Done"}
 	}
 	currentStepIdx := 0
 	switch m.importStep {
@@ -4744,56 +4076,14 @@ func (m Model) renderImportWizard() string {
 		currentStepIdx = 1
 	case importStepSetup, importStepCreateSpace:
 		currentStepIdx = 2
-	case importStepCreateWorker:
+	case importStepDiscovering, importStepSelection, importStepUnitStructure, importStepExtractConfig:
 		currentStepIdx = 3
-	case importStepWaitTarget:
+	case importStepImporting:
+		currentStepIdx = 3
+	case importStepArgoCleanup:
 		currentStepIdx = 4
-	case importStepDiscovering, importStepSelection, importStepUnitStructure:
-		if showTargetStep {
-			currentStepIdx = 5
-		} else {
-			currentStepIdx = 4
-		}
-	case importStepExtractConfig:
-		if showTargetStep {
-			currentStepIdx = 5 // Same as selection - part of "Units" step
-		} else {
-			currentStepIdx = 4
-		}
-	case importStepImporting, importStepArgoCleanup:
-		if showTargetStep {
-			currentStepIdx = 6
-		} else {
-			currentStepIdx = 5
-		}
-	case importStepTest:
-		if m.importSource == importSourceArgoCD {
-			if showTargetStep {
-				currentStepIdx = 7
-			} else {
-				currentStepIdx = 6
-			}
-		} else {
-			if showTargetStep {
-				currentStepIdx = 6
-			} else {
-				currentStepIdx = 5
-			}
-		}
 	case importStepComplete:
-		if m.importSource == importSourceArgoCD {
-			if showTargetStep {
-				currentStepIdx = 8
-			} else {
-				currentStepIdx = 7
-			}
-		} else {
-			if showTargetStep {
-				currentStepIdx = 7
-			} else {
-				currentStepIdx = 6
-			}
-		}
+		currentStepIdx = len(steps) - 1
 	}
 	var stepIndicator strings.Builder
 	for i, step := range steps {
@@ -5017,56 +4307,19 @@ func (m Model) renderImportWizard() string {
 		b.WriteString(dimStyle.Render("This will create:"))
 		b.WriteString("\n")
 		b.WriteString(dimStyle.Render("  1. Space: ") + m.importNewSpaceName + "\n")
-		b.WriteString(dimStyle.Render("  2. Worker: ") + m.importNewWorkerName + "\n")
-		b.WriteString(dimStyle.Render("  3. Units for each workload\n"))
+		b.WriteString(dimStyle.Render("  2. Units for each workload\n"))
 		b.WriteString("\n")
 		b.WriteString(dimStyle.Render("Type to edit name  Enter create  Esc cancel"))
 
-	case importStepCreateWorker:
-		b.WriteString(fmt.Sprintf("Namespace: %s\n", activeStyle.Render(m.importNamespace)))
-		b.WriteString(fmt.Sprintf("Space: %s\n\n", activeStyle.Render(m.importSpace)))
-
-		if m.importLoading && m.statusMsg != "" {
-			// Show loading status when starting/waiting for worker
-			b.WriteString(m.statusMsg + "\n\n")
-			if strings.Contains(m.statusMsg, "Starting") {
-				b.WriteString(dimStyle.Render("The worker will run in background to connect to your cluster.\n"))
-			} else if strings.Contains(m.statusMsg, "Waiting") {
-				b.WriteString(dimStyle.Render("Waiting for the worker to register its capabilities...\n"))
-				b.WriteString(dimStyle.Render("(This usually takes a few seconds)\n"))
-			}
-		} else {
-			b.WriteString("Create a worker for this space:\n\n")
-			b.WriteString("Worker name: ")
-			b.WriteString(activeStyle.Render(m.importNewWorkerName))
-			b.WriteString("█\n\n")
-			b.WriteString(dimStyle.Render("The worker connects ConfigHub to your Kubernetes cluster.\n"))
-			b.WriteString(dimStyle.Render("It will be started automatically after creation.\n\n"))
-			b.WriteString(dimStyle.Render("Type to edit name  Enter create  Esc cancel"))
-		}
-
-	case importStepWaitTarget:
-		b.WriteString(fmt.Sprintf("Namespace: %s\n", activeStyle.Render(m.importNamespace)))
-		b.WriteString(fmt.Sprintf("Space: %s  Worker: %s\n\n", activeStyle.Render(m.importSpace), activeStyle.Render(m.importNewWorkerName)))
-		b.WriteString("Waiting for target to be auto-created...\n\n")
-		kubeCtx := getCurrentKubeContext()
-		expectedSlug := fmt.Sprintf("%s-kubernetes-yaml-%s", m.importNewWorkerName, strings.ReplaceAll(kubeCtx, "/", "-"))
-		b.WriteString(dimStyle.Render("Expected target: ") + expectedSlug + "\n")
-		b.WriteString(dimStyle.Render("Kubernetes context: ") + kubeCtx + "\n\n")
-		b.WriteString(dimStyle.Render("Targets are automatically created when the worker discovers your cluster.\n"))
-		b.WriteString(dimStyle.Render("This usually takes a few seconds...\n"))
-
 	case importStepDiscovering:
 		b.WriteString(fmt.Sprintf("Namespace: %s\n", activeStyle.Render(m.importNamespace)))
-		b.WriteString(fmt.Sprintf("Space: %s\n", activeStyle.Render(m.importSpace)))
-		b.WriteString(fmt.Sprintf("Target: %s\n\n", activeStyle.Render(m.importNewTargetName)))
+		b.WriteString(fmt.Sprintf("Space: %s\n\n", activeStyle.Render(m.importSpace)))
 		b.WriteString("Discovering workloads...\n")
 
 	case importStepSelection:
-		b.WriteString(fmt.Sprintf("Namespace: %s  Space: %s  Target: %s\n\n",
+		b.WriteString(fmt.Sprintf("Namespace: %s  Space: %s\n\n",
 			activeStyle.Render(m.importNamespace),
-			activeStyle.Render(m.importSpace),
-			activeStyle.Render(m.importNewTargetName)))
+			activeStyle.Render(m.importSpace)))
 
 		// Filter to show only new (unconnected) workloads
 		var newWorkloads []int
@@ -5387,80 +4640,12 @@ func (m Model) renderImportWizard() string {
 			b.WriteString(dimStyle.Render("↑↓ navigate  Enter select"))
 		}
 
-	case importStepTest:
-		b.WriteString(statusOK.Render("Import Complete!") + "\n\n")
-
-		// Show what was imported
-		if m.importSource == importSourceArgoCD && m.importSelectedArgo != nil {
-			b.WriteString(fmt.Sprintf("Imported %d units from ArgoCD Application '%s'\n\n",
-				m.importProgress, m.importSelectedArgo.Name))
-		} else {
-			b.WriteString(fmt.Sprintf("Imported %d units into space '%s'\n\n",
-				m.importProgress, m.importSpace))
-		}
-
-		// Show apply error warning if apply failed
-		if m.importApplyError != nil {
-			b.WriteString(statusWarn.Render("⚠ Apply failed") + "\n")
-			b.WriteString(dimStyle.Render(m.importApplyError.Error()) + "\n\n")
-			b.WriteString(dimStyle.Render("Pipeline test may not work without successful apply.") + "\n\n")
-		}
-
-		if m.importLoading {
-			b.WriteString(groupStyle.Render("Testing ConfigHub Pipeline") + "\n\n")
-
-			// Show what the test is doing
-			b.WriteString("  " + activeStyle.Render("◐") + " " + dimStyle.Render("Waiting for livedata") + "\n")
-			b.WriteString("    " + dimStyle.Render("Worker is applying unit to target...") + "\n")
-			b.WriteString("  " + dimStyle.Render("○ Add restart annotation to pod template") + "\n")
-			b.WriteString("  " + dimStyle.Render("○ Update unit via ConfigHub") + "\n")
-			b.WriteString("  " + dimStyle.Render("○ Apply change to cluster") + "\n")
-			b.WriteString("\n")
-			b.WriteString(dimStyle.Render("Typical: 10-30 seconds. Max wait: 2 minutes.") + "\n")
-			b.WriteString(dimStyle.Render("If slow, ensure worker is running and connected."))
-		} else {
-			b.WriteString("Test ConfigHub Pipeline?\n\n")
-			b.WriteString(dimStyle.Render("Verify ConfigHub can update your resources via the cub CLI.\n\n"))
-
-			options := []struct {
-				name string
-				desc string
-			}{
-				{"Test pipeline", "Add annotation + trigger rollout to verify ConfigHub can manage resources"},
-				{"Skip", "Continue without testing"},
-			}
-			for i, opt := range options {
-				cursor := "  "
-				if i == m.importCursor {
-					cursor = activeStyle.Render("▸ ")
-				}
-				// Use padRight for cursor to maintain alignment
-				b.WriteString(fmt.Sprintf("%s%s\n", padRight(cursor, 2), groupStyle.Render(opt.name)))
-				b.WriteString(fmt.Sprintf("   %s\n", dimStyle.Render(opt.desc)))
-			}
-			b.WriteString("\n")
-			b.WriteString(dimStyle.Render("↑↓ navigate  Enter select"))
-		}
-
 	case importStepComplete:
 		b.WriteString(statusOK.Render("Import Complete!") + "\n\n")
 
 		// Summary - use consistent formatting with checkmarks aligned
 		if m.importCreateNewSpace {
 			b.WriteString(fmt.Sprintf("%s Created space: %s\n", statusOK.Render(SymOK), activeStyle.Render(m.importSpace)))
-			b.WriteString(fmt.Sprintf("%s Created worker: %s\n", statusOK.Render(SymOK), activeStyle.Render(m.importNewWorkerName)))
-			if m.importSelectedWorker != "" {
-				// Worker was started automatically and is running
-				b.WriteString(fmt.Sprintf("%s Worker started and running\n", statusOK.Render(SymOK)))
-				if m.importNewTargetName != "" {
-					b.WriteString(fmt.Sprintf("%s Target auto-created: %s\n", statusOK.Render(SymOK), activeStyle.Render(m.importNewTargetName)))
-				}
-			}
-		} else if m.importSelectedWorker != "" {
-			b.WriteString(fmt.Sprintf("%s Using existing worker: %s\n", statusOK.Render(SymOK), activeStyle.Render(m.importSelectedWorker)))
-			if m.importNewTargetName != "" {
-				b.WriteString(fmt.Sprintf("%s Target auto-created: %s\n", statusOK.Render(SymOK), activeStyle.Render(m.importNewTargetName)))
-			}
 		}
 
 		if m.importProgress == m.importTotal {
@@ -5469,35 +4654,18 @@ func (m Model) renderImportWizard() string {
 			b.WriteString(fmt.Sprintf("%s Imported %d/%d workloads as units\n", statusWarn.Render(SymWarning), m.importProgress, m.importTotal))
 		}
 
-		// Show test result
-		if m.importTestRan {
-			if m.importTestResult != nil && m.importTestResult.Success {
-				b.WriteString(fmt.Sprintf("%s Pipeline test passed: %s\n", statusOK.Render(SymOK), m.importTestResult.Message))
-			} else if m.importError != nil {
-				b.WriteString(fmt.Sprintf("%s Pipeline test failed: %v\n", statusErr.Render(SymError), m.importError))
-			} else {
-				b.WriteString(fmt.Sprintf("%s Pipeline test failed\n", statusErr.Render(SymError)))
-			}
-		} else {
-			b.WriteString(fmt.Sprintf("%s Pipeline test: skipped\n", dimStyle.Render("○")))
+		// What the wizard could not do, said where the result is read.
+		if m.importApplyError != nil {
+			b.WriteString(fmt.Sprintf("%s Not delivered: %v\n", statusWarn.Render(SymWarning), m.importApplyError))
 		}
 
 		b.WriteString("\n")
 
-		// Next steps depend on whether everything is set up
-		if m.importSelectedWorker != "" && m.importNewTargetName != "" {
-			// Everything is ready - worker is running and target was auto-created
-			b.WriteString(statusOK.Render("Your namespace is ready!") + "\n\n")
-			b.WriteString(dimStyle.Render("The worker is running in this terminal session.") + "\n")
-			b.WriteString(dimStyle.Render("To restart it later - or somewhere else, run:") + "\n\n")
-			b.WriteString(fmt.Sprintf("  %s\n\n", activeStyle.Render(fmt.Sprintf("cub worker run %s --space %s", m.importNewWorkerName, m.importSpace))))
-		} else {
-			// Worker was created but didn't become ready or target wasn't found
-			b.WriteString(dimStyle.Render("Next steps:") + "\n\n")
-			b.WriteString(dimStyle.Render("Start the worker (in a separate terminal):") + "\n\n")
-			b.WriteString(fmt.Sprintf("  %s\n\n", activeStyle.Render(fmt.Sprintf("cub worker run %s --space %s", m.importNewWorkerName, m.importSpace))))
-			b.WriteString(dimStyle.Render("The target will be auto-created when the worker discovers your cluster.") + "\n\n")
-		}
+		// The units exist in ConfigHub and nothing delivers them yet. That is
+		// outside this wizard since ConfigHub API 0.10 removed bridge workers.
+		b.WriteString(dimStyle.Render("Next steps:") + "\n\n")
+		b.WriteString(dimStyle.Render("Connect this cluster so a GitOps controller pulls the space's releases:") + "\n\n")
+		b.WriteString(fmt.Sprintf("  %s\n\n", activeStyle.Render("cub cluster attach --help")))
 
 		// Show URL to open in browser
 		b.WriteString(dimStyle.Render("View in browser:") + "\n")
@@ -5883,9 +5051,9 @@ func (m *Model) insertNodeRecursive(node *TreeNode, newNode *TreeNode, nodeType,
 	return false
 }
 
-// updateSpaceData updates a space's children with loaded data (units, targets, workers)
+// updateSpaceData updates a space's children with loaded data (units, targets)
 // This preserves the tree structure and expanded state
-func (m *Model) updateSpaceData(spaceSlug string, units []CubUnitData, targets []CubTargetData, workers []CubWorkerData) {
+func (m *Model) updateSpaceData(spaceSlug string, units []CubUnitData, targets []CubTargetData) {
 	// Find the space node in the tree
 	for _, orgNode := range m.nodes {
 		for _, spaceNode := range orgNode.Children {
@@ -5926,21 +5094,6 @@ func (m *Model) updateSpaceData(spaceSlug string, units []CubUnitData, targets [
 							groupNode.Children = append(groupNode.Children, targetNode)
 						}
 
-					case strings.HasSuffix(groupNode.ID, "/workers"):
-						groupNode.Children = nil
-						for _, worker := range workers {
-							workerNode := &TreeNode{
-								ID:     worker.BridgeWorker.Slug,
-								Name:   worker.BridgeWorker.Slug,
-								Type:   "worker",
-								Status: worker.DeriveStatus(),
-								Info:   worker.BridgeWorker.Condition,
-								Parent: groupNode,
-								Data:   worker,
-								OrgID:  spaceNode.OrgID,
-							}
-							groupNode.Children = append(groupNode.Children, workerNode)
-						}
 					}
 				}
 				return
@@ -6071,18 +5224,6 @@ func formatUnitDetails(jsonData []byte, basicData CubUnitData) string {
 		b.WriteString("\n")
 	}
 
-	// Worker info
-	if basicData.BridgeWorker.Slug != "" {
-		b.WriteString("WORKER\n")
-		b.WriteString("─────────────────────────────────────\n")
-		b.WriteString("Worker:      " + basicData.BridgeWorker.Slug + "\n")
-		b.WriteString("Condition:   " + basicData.BridgeWorker.Condition + "\n")
-		if basicData.BridgeWorker.IPAddress != "" {
-			b.WriteString("IP Address:  " + basicData.BridgeWorker.IPAddress + "\n")
-		}
-		b.WriteString("\n")
-	}
-
 	// Check for labels in the full data
 	if unit, ok := fullData["Unit"].(map[string]interface{}); ok {
 		if labels, ok := unit["Labels"].(map[string]interface{}); ok && len(labels) > 0 {
@@ -6122,7 +5263,7 @@ func formatGroupPatternContext(node *TreeNode) string {
 		b.WriteString("Platform team's shared configuration:\n")
 		b.WriteString("• Base templates (upstream for clones)\n")
 		b.WriteString("• Shared infrastructure (cert-manager, etc)\n")
-		b.WriteString("• Workers and Targets\n")
+		b.WriteString("• Targets\n")
 		b.WriteString("• Org-wide policies and constraints\n\n")
 
 		b.WriteString("DETECTED PATTERN\n")
@@ -6320,10 +5461,9 @@ func (m *Model) buildOrgSummary() string {
 	b.WriteString(fmt.Sprintf("ID:     %s\n", orgData.OrganizationID))
 	b.WriteString("\n")
 
-	// Count spaces, units, workers, targets
+	// Count spaces, units, targets
 	spaceCount := 0
 	unitCount := 0
-	workerCount := 0
 	targetCount := 0
 
 	for _, spaceNode := range currentOrgNode.Children {
@@ -6332,7 +5472,6 @@ func (m *Model) buildOrgSummary() string {
 			spaceData, ok := spaceNode.Data.(CubSpaceData)
 			if ok {
 				unitCount += spaceData.TotalUnitCount
-				workerCount += spaceData.TotalBridgeWorkerCount
 				for _, count := range spaceData.TargetCountByType {
 					targetCount += count
 				}
@@ -6343,7 +5482,6 @@ func (m *Model) buildOrgSummary() string {
 	b.WriteString(fmt.Sprintf("Spaces:  %d\n", spaceCount))
 	b.WriteString(fmt.Sprintf("Units:   %d\n", unitCount))
 	b.WriteString(fmt.Sprintf("Targets: %d\n", targetCount))
-	b.WriteString(fmt.Sprintf("Workers: %d\n", workerCount))
 	b.WriteString("\n")
 	b.WriteString(dimStyle.Render("Press Enter on any node to view its details"))
 
@@ -6369,7 +5507,6 @@ func (m *Model) buildSpaceSummary(node *TreeNode) string {
 	// Space stats
 	b.WriteString(fmt.Sprintf("Slug:    %s\n", node.ID))
 	b.WriteString(fmt.Sprintf("Units:   %d\n", spaceData.TotalUnitCount))
-	b.WriteString(fmt.Sprintf("Workers: %d\n", spaceData.TotalBridgeWorkerCount))
 
 	// Target counts by type
 	totalTargets := 0
@@ -6383,42 +5520,11 @@ func (m *Model) buildSpaceSummary(node *TreeNode) string {
 	b.WriteString(dimStyle.Render("This is your current space. Expand to see:"))
 	b.WriteString("\n")
 	b.WriteString("  • Units - your configuration units\n")
-	b.WriteString("  • Workers - deployment agents\n")
 	b.WriteString("  • Targets - deployment destinations\n")
 	b.WriteString("\n")
 	b.WriteString(dimStyle.Render("Press Enter to expand, Tab to view details"))
 
 	return b.String()
-}
-
-// getDisconnectedWorkers returns a list of disconnected worker names
-func (m *Model) getDisconnectedWorkers() []string {
-	var disconnected []string
-
-	// Walk through all nodes looking for workers
-	for _, node := range m.nodes {
-		if node.Type == "org" {
-			for _, spaceNode := range node.Children {
-				if spaceNode.Type == "space" {
-					for _, groupNode := range spaceNode.Children {
-						if groupNode.Name == "Workers" {
-							for _, workerNode := range groupNode.Children {
-								if workerNode.Type == "worker" {
-									// Check condition from Info field or Data
-									condition := workerNode.Info
-									if condition == "Disconnected" || condition == "NotReady" || condition == "unknown" {
-										disconnected = append(disconnected, workerNode.Name)
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return disconnected
 }
 
 // getCurrentOrgDisplayName returns the display name of the currently selected org
@@ -6446,87 +5552,6 @@ func (m *Model) getOrgList() []CubOrganization {
 		}
 	}
 	return orgs
-}
-
-// renderWorkerStatus returns a compact worker status line for the header
-func (m *Model) renderWorkerStatus() string {
-	// Get all workers from tree
-	var workers []struct {
-		name      string
-		condition string
-	}
-
-	for _, node := range m.nodes {
-		if node.Type == "org" {
-			for _, spaceNode := range node.Children {
-				if spaceNode.Type == "space" {
-					for _, groupNode := range spaceNode.Children {
-						if groupNode.Name == "Workers" {
-							for _, workerNode := range groupNode.Children {
-								if workerNode.Type == "worker" {
-									workers = append(workers, struct {
-										name      string
-										condition string
-									}{workerNode.Name, workerNode.Info})
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	if len(workers) == 0 {
-		return ""
-	}
-
-	var b strings.Builder
-	b.WriteString(dimStyle.Render("workers: "))
-
-	for i, w := range workers {
-		if i > 0 {
-			b.WriteString(" ")
-		}
-		if w.condition == "Ready" {
-			b.WriteString(statusOK.Render("●"))
-			b.WriteString(w.name)
-		} else {
-			b.WriteString(statusErr.Render("○"))
-			b.WriteString(dimStyle.Render(w.name))
-		}
-	}
-
-	return b.String()
-}
-
-// renderWorkerWarning returns a warning banner if any workers are disconnected
-func (m *Model) renderWorkerWarning() string {
-	disconnected := m.getDisconnectedWorkers()
-	if len(disconnected) == 0 {
-		return ""
-	}
-
-	var b strings.Builder
-	warningStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("196")).
-		Bold(true).
-		Border(lipgloss.DoubleBorder()).
-		BorderForeground(lipgloss.Color("196")).
-		Padding(0, 1).
-		Width(m.width - 4)
-
-	if len(disconnected) == 1 {
-		b.WriteString(fmt.Sprintf("⚠ WARNING: Worker '%s' is disconnected!\n", disconnected[0]))
-	} else {
-		b.WriteString(fmt.Sprintf("⚠ WARNING: %d workers disconnected!\n", len(disconnected)))
-		for _, w := range disconnected {
-			b.WriteString(fmt.Sprintf("  • %s\n", w))
-		}
-	}
-	b.WriteString("\nRun: cub worker run <worker-name>  |  : cub worker run <name>")
-
-	return warningStyle.Render(b.String()) + "\n\n"
 }
 
 // renderModeHeader returns a mode header showing connection and filter state
@@ -6586,8 +5611,6 @@ func (m *Model) getDetailsHeader(node *TreeNode) string {
 		return fmt.Sprintf("Unit: %s", node.Name)
 	case "target":
 		return fmt.Sprintf("Target: %s", node.Name)
-	case "worker":
-		return fmt.Sprintf("Worker: %s", node.Name)
 	default:
 		return node.Name
 	}
@@ -6728,7 +5751,7 @@ func (m Model) View() string {
 
 	var b strings.Builder
 
-	// Header with org name and worker status
+	// Header with org name
 	header := headerStyle.Render(" ⚡ CONFIGHUB HIERARCHY ")
 
 	// Add current org indicator
@@ -6741,35 +5764,17 @@ func (m Model) View() string {
 		orgIndicator = dimStyle.Render("org: ") + orgStyle.Render(orgName)
 	}
 
-	workerStatus := m.renderWorkerStatus()
-
-	// Build header line: title | org | workers
+	// Build header line: title | org
 	b.WriteString(header)
-	if orgIndicator != "" || workerStatus != "" {
-		// Calculate remaining space
-		usedWidth := lipgloss.Width(header)
-		rightContent := ""
-		if orgIndicator != "" && workerStatus != "" {
-			rightContent = orgIndicator + dimStyle.Render(" │ ") + workerStatus
-		} else if orgIndicator != "" {
-			rightContent = orgIndicator
-		} else {
-			rightContent = workerStatus
-		}
-
-		padding := m.width - usedWidth - lipgloss.Width(rightContent) - 4
+	if orgIndicator != "" {
+		padding := m.width - lipgloss.Width(header) - lipgloss.Width(orgIndicator) - 4
 		if padding < 2 {
 			padding = 2
 		}
 		b.WriteString(strings.Repeat(" ", padding))
-		b.WriteString(rightContent)
+		b.WriteString(orgIndicator)
 	}
 	b.WriteString("\n\n")
-
-	// Worker disconnect warning (if any workers are disconnected)
-	if warning := m.renderWorkerWarning(); warning != "" {
-		b.WriteString(warning)
-	}
 
 	// Mode header showing cluster filter state
 	modeHeader := m.renderModeHeader()
@@ -7022,14 +6027,6 @@ func (m Model) renderTree() string {
 			b.WriteString(statusOK.Render(iconCheckOK) + " ")
 			b.WriteString(node.Name)
 
-		case "worker":
-			if icon := renderStatusIcon(node.Status); icon != "" {
-				b.WriteString(icon)
-			} else {
-				b.WriteString(statusWarn.Render(iconCheckWarn) + " ")
-			}
-			b.WriteString(node.Name)
-
 		case "detail":
 			// Detail rows show label: value format
 			switch node.Status {
@@ -7069,7 +6066,7 @@ var hierarchyCmd = &cobra.Command{
 
 DEPRECATED: This command is deprecated. Use 'cub-scout map --hub' or 'cub-scout map hub' instead.
 
-Navigate through Organizations, Spaces, Units, Targets, and Workers in a tree view.
+Navigate through Organizations, Spaces, Units and Targets in a tree view.
 
 Navigation:
   ↑/k, ↓/j     Move up/down

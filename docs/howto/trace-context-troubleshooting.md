@@ -182,13 +182,7 @@ cub auth login
 cub context get
 ```
 
-4. Check worker status:
-
-```bash
-cub worker list
-```
-
-5. Retry trace:
+4. Retry trace:
 
 ```bash
 cub-scout trace <kind>/<name> -n <namespace>

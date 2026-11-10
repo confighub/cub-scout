@@ -199,3 +199,11 @@ cub-scout snapshot -o - | jq -r '
   | "DRIFT: \(.namespace)/\(.kind)/\(.name) - \(.drift.summary)"
 '
 ```
+
+## These helpers need a cub older than 0.10
+
+`demo-worker-lifecycle.sh` and `verify-connected-demo.sh` drive `cub worker`.
+ConfigHub API 0.10 (2026-10-31) removed bridge workers and that command group,
+so against a current `cub` both fail at their first `cub worker` call. They are
+kept for the recorded demos that reference them, whose `--live` paths now
+refuse for the same reason.

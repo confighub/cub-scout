@@ -562,7 +562,6 @@ func FormatConfigHubContextError(output string) (string, bool) {
 		"space not found",
 		"unit not found",
 		"no active space",
-		"no worker",
 	):
 		reason = "ConfigHub space or unit context is invalid"
 	default:
@@ -575,8 +574,7 @@ func FormatConfigHubContextError(output string) (string, bool) {
 			"Trace context troubleshooting:\n"+
 			"  1) cub auth status\n"+
 			"  2) cub auth login\n"+
-			"  3) cub context get\n"+
-			"  4) cub worker list\n\n"+
+			"  3) cub context get\n\n"+
 			"Then retry:\n"+
 			"  cub-scout trace <kind>/<name> -n <namespace>",
 		reason,

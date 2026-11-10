@@ -61,30 +61,6 @@ func parseCubUnitListJSON(raw []byte) ([]cubUnitListEntry, error) {
 	return out, nil
 }
 
-func parseCubWorkerListJSON(raw []byte) ([]WorkerListItem, error) {
-	payload, err := parseCubJSONPayload(raw)
-	if err != nil {
-		return nil, err
-	}
-
-	items := cubExtractItems(payload)
-	out := make([]WorkerListItem, 0, len(items))
-	for _, item := range items {
-		// cub prints each worker as {"BridgeWorker": {...}, "Space": {...}}.
-		workerObj := mcpNestedMap(item, "BridgeWorker", "bridgeWorker", "Worker", "worker")
-		if workerObj == nil {
-			workerObj = item
-		}
-
-		out = append(out, WorkerListItem{
-			Name:      mcpFirstString(workerObj, "Slug", "slug", "Name", "name"),
-			Cluster:   mcpFirstString(workerObj, "Cluster", "cluster", "BridgeHandle", "bridgeHandle"),
-			Condition: mcpFirstString(workerObj, "Condition", "condition", "Status", "status"),
-		})
-	}
-	return out, nil
-}
-
 func parseCubContextJSON(raw []byte) (*statusCubContext, error) {
 	payload, err := parseCubJSONPayload(raw)
 	if err != nil {

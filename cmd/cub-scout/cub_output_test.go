@@ -4,6 +4,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -31,46 +32,13 @@ func TestCommandStdoutKeepsStderrOutOfTheData(t *testing.T) {
 	if strings.Contains(string(out), "deprecated") {
 		t.Fatalf("stdout = %q, want the notice kept out of the data", out)
 	}
-	if got := firstKubernetesTargetSlug(out); got != "prod" {
-		t.Fatalf("target slug = %q, want prod", got)
+	if !json.Valid(out) {
+		t.Fatalf("stdout = %q, want the data alone", out)
 	}
 
 	_, err = commandStdout(exec.Command("sh", "-c", `echo 'space "x" not found' >&2; exit 1`))
 	if err == nil || !strings.Contains(err.Error(), `space "x" not found`) {
 		t.Fatalf("err = %v, want the stderr reason in the error", err)
-	}
-}
-
-// The import wizard used to pipe `cub target list --json` through jq with
-// stderr merged. With no Kubernetes target, the output was the notice alone,
-// which is not empty, so the notice became the target slug.
-func TestFirstKubernetesTargetSlug(t *testing.T) {
-	for _, tt := range []struct {
-		name, raw, want string
-	}{
-		{name: "first Kubernetes target", raw: `[{"Target":{"Slug":"oci","ProviderType":"OCI"}},{"Target":{"Slug":"prod","ProviderType":"Kubernetes"}}]`, want: "prod"},
-		{name: "no Kubernetes target", raw: `[{"Target":{"Slug":"oci","ProviderType":"OCI"}}]`},
-		{name: "empty list", raw: `[]`},
-		{name: "a stderr notice is not a slug", raw: cubJSONFlagNotice},
-		{name: "a notice in front of the JSON is not a list", raw: cubJSONFlagNotice + "\n" + `[{"Target":{"Slug":"prod","ProviderType":"Kubernetes"}}]`},
-	} {
-		if got := firstKubernetesTargetSlug([]byte(tt.raw)); got != tt.want {
-			t.Errorf("%s: slug = %q, want %q", tt.name, got, tt.want)
-		}
-	}
-}
-
-func TestCubUnitHasTarget(t *testing.T) {
-	for raw, want := range map[string]bool{
-		`{"Unit":{"Slug":"api"},"Target":{"TargetID":"t-1","Slug":"prod"}}`: true,
-		`{"Unit":{"Slug":"api","TargetID":"t-1"}}`:                          false,
-		`{"Unit":{"Slug":"api"},"Target":null}`:                             false,
-		`{"Unit":{"Slug":"api"},"Target":{}}`:                               false,
-		cubJSONFlagNotice:                                                   false,
-	} {
-		if got := cubUnitHasTarget([]byte(raw)); got != want {
-			t.Errorf("cubUnitHasTarget(%s) = %v, want %v", raw, got, want)
-		}
 	}
 }
 
@@ -116,12 +84,18 @@ func TestNoCubCallPassesTheDeprecatedJSONFlag(t *testing.T) {
 // required argv.
 func TestNoCubCallUsesARemovedSubcommand(t *testing.T) {
 	removed := map[[2]string]string{
-		{"unit", "livedata"}:  "a unit's config data is `cub unit data`; ConfigHub has no live-data endpoint (#564, #571)",
-		{"unit", "livestate"}: "removed with livedata in April 2026 (#564)",
-		{"unit", "apply"}:     "removed in July 2026; nothing applies a unit — see cub_unit_apply.go (#571)",
-		{"unit", "destroy"}:   "removed in July 2026 with unit apply",
-		{"unit", "refresh"}:   "removed in July 2026; the current verb is `cub k8s refresh`",
-		{"unit", "approve"}:   "removed in cub 0.6 (2026-09-25); approval is a space-level Attestation, `cub variant approve <space> --where \"Slug = '...'\"` (#591)",
+		{"unit", "livedata"}:   "a unit's config data is `cub unit data`; ConfigHub has no live-data endpoint (#564, #571)",
+		{"unit", "livestate"}:  "removed with livedata in April 2026 (#564)",
+		{"unit", "apply"}:      "removed in July 2026; nothing applies a unit — see cub_unit_apply.go (#571)",
+		{"unit", "destroy"}:    "removed in July 2026 with unit apply",
+		{"unit", "refresh"}:    "removed in July 2026; the current verb is `cub k8s refresh`",
+		{"unit", "approve"}:    "removed in cub 0.6 (2026-09-25); approval is a space-level Attestation, `cub variant approve <space> --where \"Slug = '...'\"` (#591)",
+		{"unit", "set-target"}: "removed with bridge workers in ConfigHub API 0.10 (2026-10-31); a Space releases to a Target (#897)",
+		// The `worker` group went with bridge workers in API 0.10. Like `gitops`
+		// below it is not refused at run time, and is guarded here.
+		{"worker", "list"}:   "ConfigHub removed bridge workers in API 0.10 (2026-10-31); a cluster is connected with `cub cluster attach` (#897)",
+		{"worker", "create"}: "ConfigHub removed bridge workers in API 0.10 (2026-10-31); a cluster is connected with `cub cluster attach` (#897)",
+		{"worker", "run"}:    "ConfigHub removed bridge workers in API 0.10 (2026-10-31); a cluster is connected with `cub cluster attach` (#897)",
 		// The whole `gitops` group went in the same commit (#573). The runner
 		// does not refuse it at run time, because an unknown top-level command
 		// exits 1 honestly and a plugin could supply one — but cub-scout's own

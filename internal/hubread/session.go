@@ -28,7 +28,7 @@ const sdkCoreModule = "github.com/confighub/sdk/core"
 // that CI uses does not), and the version rule of CheckSession must not
 // depend on which it is. A test holds it to go.mod, and to the build's own
 // record when there is one.
-const SDKCoreVersion = "v0.8.12"
+const SDKCoreVersion = "v0.10.11"
 
 // sdkCoreVersion is the SDK version CheckSession compares with the server's.
 // It is a variable for tests.

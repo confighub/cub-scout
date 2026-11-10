@@ -2,6 +2,8 @@
 
 > **`cub gitops import` no longer exists.** cub deleted the whole `gitops` group on 2026-07-25 with no replacement, so the pipeline act of this demo is skipped against a current cub — it runs only against a cub from before that date. Rendered configuration now goes into ConfigHub with `cub variant upload --component <name> <dir | file | - | oci://ref>`, which ingests already-rendered resources and renders nothing itself. The `cub-scout` acts of this demo are unaffected. See [#573](https://github.com/confighub/cub-scout/issues/573).
 
+> **`--live` no longer runs.** ConfigHub API 0.10 (2026-10-31) removed bridge workers, and with them `cub worker` and `cub unit set-target`, which this demo's live path is built on. `./demo.sh --live` refuses and says so. The observe-only run (`./demo.sh`) is unaffected. A cluster is now connected with `cub cluster attach`.
+
 
 Three import paths into ConfigHub. Same cluster. Different depths. This demo
 runs `cub gitops import`, `cub-scout import argocd`, and `cub-scout import`
@@ -515,7 +517,7 @@ The key takeaways:
 | "Import a specific ArgoCD Application (quick)" | `cub-scout import argocd <name>` |
 | "What's running on my cluster?" | `cub-scout map list` |
 | "Import everything, including Helm and Native" | `cub-scout import` (review + confirm once) |
-| "Non-interactive broad import + immediate connect" | `cub-scout import --yes --connect` |
+| "Non-interactive broad import" | `cub-scout import --yes` (`--connect` was removed in v2.15.0) |
 | "Find resources ArgoCD doesn't manage" | `cub-scout import` |
 | "What changed since last sync?" | `cub-scout gitops status` |
 

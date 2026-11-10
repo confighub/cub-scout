@@ -26,7 +26,7 @@ func TestCubRunnerRefusesACallThatNamesNoSpace(t *testing.T) {
 		// Space-scoped, and the space is named one of the ways cub accepts.
 		{name: "flag", args: []string{"unit", "list", "--space", "prod", "-o", "json"}},
 		{name: "flag with equals", args: []string{"unit", "list", "--space=prod"}},
-		{name: "every space, deliberately", args: []string{"worker", "list", "--space", "*", "-o", "json"}},
+		{name: "every space, deliberately", args: []string{"target", "list", "--space", "*", "-o", "json"}},
 		{name: "space in the reference", args: []string{"unit", "get", "prod/api", "-o", "json"}},
 		{name: "an ID carries its own space", args: []string{"unit", "get", "806aac53-236c-446d-8ad6-91d6daf6810e"}},
 

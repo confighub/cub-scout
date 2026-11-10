@@ -60,7 +60,7 @@ func TestEntityReadsAreWhatCubPrintedOnTheRealServer(t *testing.T) {
 		hub.raw[underUnit+"/revision"] = "[" + string(head) + "]"
 		revision, err := reader.RevisionJSON(ctx, space, unit.Slug, 3)
 		require.NoError(t, err)
-		require.Equal(t, string(head), string(revision))
+		sameAsCubPrinted(t, head, revision)
 		data, err = reader.RevisionData(ctx, space, unit.Slug, 3)
 		require.NoError(t, err)
 		require.Equal(t, string(entitiesRecording(t, "revision-3-data.txt")), string(data))
@@ -70,14 +70,14 @@ func TestEntityReadsAreWhatCubPrintedOnTheRealServer(t *testing.T) {
 		hub.raw[underUnit+"/revision"] = "[" + string(first) + "]"
 		revision, err = reader.RevisionJSON(ctx, space, unit.Slug, 1)
 		require.NoError(t, err)
-		require.Equal(t, string(first), string(revision))
+		sameAsCubPrinted(t, first, revision)
 		data, err = reader.RevisionData(ctx, space, unit.Slug, 1)
 		require.Equal(t, KindNotFound, KindOf(err))
 		require.Nil(t, data)
 
 		order, err := reader.ChangeOrderJSON(ctx, space, "entity-order")
 		require.NoError(t, err)
-		require.Equal(t, string(entitiesRecording(t, "changeorder-get.json")), string(order))
+		sameAsCubPrinted(t, entitiesRecording(t, "changeorder-get.json"), order)
 	}
 
 	var view struct{ View struct{ ViewID string } }

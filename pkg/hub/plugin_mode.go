@@ -23,7 +23,7 @@ const (
 //
 // cub-scout invokes the `cub` CLI ~73 times across cmd/ and pkg/ to delegate
 // ConfigHub read queries (unit list/get, space list, context get, target
-// list, worker list, gitops discover/import, link list, auth status,
+// list, gitops discover/import, link list, auth status,
 // auth get-token). Every call shells out to whatever `cub` is on PATH and
 // expects JSON back.
 //

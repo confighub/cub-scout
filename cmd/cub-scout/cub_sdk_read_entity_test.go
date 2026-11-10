@@ -82,7 +82,7 @@ func TestSDKEntityArgsTakeOnlyTheCommandsTheyReproduce(t *testing.T) {
 // route takes, or is named here with the reason it stays with cub.
 func TestEveryEntityReadCallSiteIsTakenOrExplained(t *testing.T) {
 	sites := cubCallSites(t, "unit", "data")
-	require.GreaterOrEqual(t, len(sites), 4)
+	require.GreaterOrEqual(t, len(sites), 2)
 	for _, site := range sites {
 		require.NotNil(t, sdkRead(site.args), "%s: cub %s", site.where, strings.Join(site.args, " "))
 	}
@@ -239,13 +239,7 @@ func TestCubStdoutAnswersTheEntityReadsThroughTheSDK(t *testing.T) {
 				require.Equal(t, string(viaCub), string(viaSDK))
 				return
 			}
-			// Everything cub printed, unchanged. The newer SDK adds one
-			// field the older cub did not have, printed as the zero ID;
-			// that field alone is taken out before the two are compared.
-			var want, have interface{}
-			require.NoError(t, json.Unmarshal(viaCub, &want))
-			require.NoError(t, json.Unmarshal(viaSDK, &have))
-			require.Equal(t, want, withoutZeroReleaseTag(have))
+			sameByEitherRoute(t, viaCub, viaSDK)
 		})
 	}
 
@@ -259,25 +253,6 @@ func TestCubStdoutAnswersTheEntityReadsThroughTheSDK(t *testing.T) {
 	columns, err := extractColumnsSpec(view)
 	require.NoError(t, err)
 	require.NotEmpty(t, columns)
-}
-
-// withoutZeroReleaseTag removes a ReleaseTagID that is the zero ID, at any
-// depth, and nothing else.
-func withoutZeroReleaseTag(value interface{}) interface{} {
-	switch typed := value.(type) {
-	case map[string]interface{}:
-		if typed["ReleaseTagID"] == "00000000-0000-0000-0000-000000000000" {
-			delete(typed, "ReleaseTagID")
-		}
-		for key, inner := range typed {
-			typed[key] = withoutZeroReleaseTag(inner)
-		}
-	case []interface{}:
-		for i, inner := range typed {
-			typed[i] = withoutZeroReleaseTag(inner)
-		}
-	}
-	return value
 }
 
 // mustIndent encodes a decoded JSON object the way cub prints one.

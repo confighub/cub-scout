@@ -116,20 +116,13 @@ check_prereqs() {
                 echo "skip_connected"
                 return
             fi
-            # Need cub auth + workers
+            # Need cub auth
             if ! command -v cub &>/dev/null; then
                 echo "no_cub"
                 return
             fi
             if ! cub context get &>/dev/null 2>&1; then
                 echo "no_auth"
-                return
-            fi
-            # Check workers
-            local worker_count
-            worker_count=$(cub worker list --json 2>/dev/null | jq 'length' 2>/dev/null || echo "0")
-            if [[ "$worker_count" -eq 0 ]]; then
-                echo "no_workers"
                 return
             fi
             echo "ok"

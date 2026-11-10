@@ -221,8 +221,8 @@ Complete reference of all commands, options, TUI keys, and availability.
 | `--json` | Output as JSON |
 | `-y, --yes` | Skip confirmation |
 | `--no-log` | Disable logging to file |
-| `--connect` | After import, start worker and set targets |
-| `--no-connect` | Do not start worker/targets after import |
+| `--connect` | Removed in v2.15.0; refuses and points to `cub cluster attach` |
+| `--no-connect` | Accepted and ignored |
 | `--from-bundle` | Import from a debug bundle directory |
 | `--audit-reason` | Break-glass decision reason (connected audit trail) |
 

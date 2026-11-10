@@ -1,0 +1,89 @@
+[
+  {
+    "ChangeSet": {
+      "ChangeSetID": "d43795ad-2a9d-4205-a168-0327a451f244",
+      "CreatedAt": "2026-11-10T17:41:58.761633Z",
+      "Description": "recorded for the SDK reader",
+      "DisplayName": "parity-changeset",
+      "EndTagID": "32de3591-45a5-4c2c-b291-f9dfa8a11648",
+      "EntityType": "ChangeSet",
+      "OrganizationID": "1f40c0dc-7acb-4c8c-a296-6746171d1fbb",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "979a4ad3-8ba4-4552-ab9e-1d7035a877d4": true
+          }
+        }
+      },
+      "Slug": "parity-changeset",
+      "SpaceID": "1ad8bebe-0a93-4e82-a409-d09facd68e27",
+      "SpaceSlug": "scout-sdk-parity-1794332516599801828",
+      "StartTagID": "7e43580e-8ef9-4cb8-a5d3-9664ba9b9a87",
+      "StartTagIsPriorRevision": true,
+      "State": "New",
+      "UpdatedAt": "2026-11-10T17:41:58.761633Z",
+      "UserID": "979a4ad3-8ba4-4552-ab9e-1d7035a877d4"
+    },
+    "EndTag": {
+      "ChangeSetID": "d43795ad-2a9d-4205-a168-0327a451f244",
+      "CreatedAt": "2026-11-10T17:41:58.76117Z",
+      "DisplayName": "parity-changeset-end",
+      "EntityType": "Tag",
+      "OrganizationID": "1f40c0dc-7acb-4c8c-a296-6746171d1fbb",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "979a4ad3-8ba4-4552-ab9e-1d7035a877d4": true
+          }
+        }
+      },
+      "Slug": "parity-changeset-end",
+      "SpaceID": "1ad8bebe-0a93-4e82-a409-d09facd68e27",
+      "SpaceSlug": "scout-sdk-parity-1794332516599801828",
+      "TagID": "32de3591-45a5-4c2c-b291-f9dfa8a11648",
+      "UpdatedAt": "2026-11-10T17:41:58.763492Z",
+      "Version": 2
+    },
+    "Space": {
+      "CreatedAt": "2026-11-10T17:41:56.730877Z",
+      "DisplayName": "scout-sdk-parity-1794332516599801828",
+      "EntityType": "Space",
+      "OrganizationID": "1f40c0dc-7acb-4c8c-a296-6746171d1fbb",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "979a4ad3-8ba4-4552-ab9e-1d7035a877d4": true
+          }
+        },
+        "ManageChildren": {
+          "UserIDs": {
+            "979a4ad3-8ba4-4552-ab9e-1d7035a877d4": true
+          }
+        }
+      },
+      "Slug": "scout-sdk-parity-1794332516599801828",
+      "SpaceID": "1ad8bebe-0a93-4e82-a409-d09facd68e27",
+      "UpdatedAt": "2026-11-10T17:41:56.730877Z"
+    },
+    "StartTag": {
+      "ChangeSetID": "d43795ad-2a9d-4205-a168-0327a451f244",
+      "CreatedAt": "2026-11-10T17:41:58.760612Z",
+      "DisplayName": "parity-changeset-start",
+      "EntityType": "Tag",
+      "OrganizationID": "1f40c0dc-7acb-4c8c-a296-6746171d1fbb",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "979a4ad3-8ba4-4552-ab9e-1d7035a877d4": true
+          }
+        }
+      },
+      "Slug": "parity-changeset-start",
+      "SpaceID": "1ad8bebe-0a93-4e82-a409-d09facd68e27",
+      "SpaceSlug": "scout-sdk-parity-1794332516599801828",
+      "TagID": "7e43580e-8ef9-4cb8-a5d3-9664ba9b9a87",
+      "UpdatedAt": "2026-11-10T17:41:58.763015Z",
+      "Version": 2
+    }
+  }
+]

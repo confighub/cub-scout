@@ -21,7 +21,7 @@
 | Run config/risk scans | `cub scout scan` |
 | Expose read-only evidence to AI | `cub scout mcp serve` |
 | Create, update, apply, or approve governed units | `cub unit ...` |
-| Manage spaces, targets, workers | `cub space ...` / `cub target ...` / `cub worker ...` |
+| Manage spaces, targets, attached clusters | `cub space ...` / `cub target ...` / `cub cluster ...` |
 | Run a governed ChangeSet | `cub changeset ...` |
 | Load already-rendered resources into a space as units | `cub variant upload` |
 | Trace one live resource back to its unit | `cub k8s source` |

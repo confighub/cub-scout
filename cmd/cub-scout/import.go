@@ -321,11 +321,8 @@ Examples:
   # Curated import with JSON output
   cub-scout import -n payments --resource deploy/api --json
 
-  # Skip confirmation (legacy: no auto-connect)
+  # Skip confirmation
   cub-scout import -y
-
-  # Skip confirmation + connect worker/targets now
-  cub-scout import -y --connect
 
   # JSON output (for GUI integration)
   cub-scout import --json
@@ -338,9 +335,6 @@ Examples:
 
   # Interactive TUI wizard (recommended)
   cub-scout import --wizard
-
-  # Non-interactive import + immediate cluster connection
-  cub-scout import --yes --connect
 `,
 	RunE: runImport,
 }
@@ -352,8 +346,11 @@ func init() {
 	importCmd.Flags().BoolVar(&importJSON, "json", false, "Output as JSON (for GUI/scripting)")
 	importCmd.Flags().BoolVar(&importNoLog, "no-log", false, "Disable logging to file")
 	importCmd.Flags().BoolVarP(&importWizard, "wizard", "w", false, "Launch interactive TUI wizard")
-	importCmd.Flags().BoolVar(&importConnect, "connect", false, "After import, start worker and set targets")
-	importCmd.Flags().BoolVar(&importNoConnect, "no-connect", false, "Do not start worker/targets after import")
+	// --connect started a bridge worker and pointed the new units at its
+	// target. ConfigHub removed bridge workers in API 0.10, so the flag is kept
+	// only to refuse by name; --no-connect is what import now always does.
+	importCmd.Flags().BoolVar(&importConnect, "connect", false, "No longer available: ConfigHub removed bridge workers; use `cub cluster attach`")
+	importCmd.Flags().BoolVar(&importNoConnect, "no-connect", false, "Accepted and ignored: import never connects a cluster")
 	importCmd.Flags().StringVar(&importFromBundle, "from-bundle", "", "Import from a debug bundle directory instead of live cluster discovery")
 	importCmd.Flags().StringVar(&importAuditReason, "audit-reason", "", "Record break-glass decision reason in connected audit history (max 512 chars)")
 	importCmd.Flags().StringArrayVar(&importResources, "resource", nil, "Select specific resources to import (repeatable, e.g., --resource deploy/api --resource statefulset/db)")
@@ -363,8 +360,8 @@ func init() {
 }
 
 func runImport(cmd *cobra.Command, args []string) error {
-	if importConnect && importNoConnect {
-		return fmt.Errorf("--connect and --no-connect cannot be used together")
+	if importConnect {
+		return errImportConnectRemoved
 	}
 
 	// Wizard mode - launch interactive TUI
@@ -383,9 +380,6 @@ func runImport(cmd *cobra.Command, args []string) error {
 
 	// Git path validation
 	if importGitPath != "" {
-		if importConnect {
-			return fmt.Errorf("--connect cannot be used with --git-path (Git preview is read-only)")
-		}
 		// Git path forces dry-run behavior
 		importDryRun = true
 	}
@@ -591,11 +585,6 @@ func runImport(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	shouldConnect, showConnectHint := resolveImportConnectionMode(importYes, importConnect, importNoConnect)
-	if showConnectHint {
-		fmt.Println("\nTip: add --connect to start worker/targets now and avoid detached units.")
-	}
-
 	// Step 5: Apply
 	if logger != nil {
 		logger.Section("APPLYING")
@@ -611,7 +600,7 @@ func runImport(cmd *cobra.Command, args []string) error {
 
 	// Every workload is imported as a cub-scout snapshot: there is nothing to
 	// delegate GitOps-managed ones to since cub removed `gitops import`.
-	return applyImportWithLogger(proposal, allWorkloads, logger, shouldConnect, importAuditReason)
+	return applyImportWithLogger(proposal, allWorkloads, logger, importAuditReason)
 }
 
 func runImportFromBundle(bundlePath string, resourceSelections []importResourceSelection) error {
@@ -697,12 +686,7 @@ func runImportFromBundle(bundlePath string, resourceSelections []importResourceS
 		}
 	}
 
-	shouldConnect, showConnectHint := resolveImportConnectionMode(importYes, importConnect, importNoConnect)
-	if showConnectHint {
-		fmt.Println("\nTip: add --connect to start worker/targets now and avoid detached units.")
-	}
-
-	return applyImportWithLogger(proposal, workloads, nil, shouldConnect, importAuditReason)
+	return applyImportWithLogger(proposal, workloads, nil, importAuditReason)
 }
 
 // runImportFromGit handles import preview from a local Git repository.
@@ -759,20 +743,12 @@ func runImportFromGit(gitPath string) error {
 	return nil
 }
 
-// resolveImportConnectionMode determines whether import should auto-connect workers/targets
-// and whether a non-interactive hint should be shown.
-func resolveImportConnectionMode(importYes, importConnect, importNoConnect bool) (bool, bool) {
-	shouldConnect := importConnect
-	if !importYes && !importNoConnect && !importConnect {
-		shouldConnect = true
-	}
-	if importNoConnect {
-		shouldConnect = false
-	}
-
-	showConnectHint := importYes && !importConnect && !importNoConnect
-	return shouldConnect, showConnectHint
-}
+// errImportConnectRemoved is what --connect answers. The flag started a bridge
+// worker with `cub worker run` and pointed each new unit at the worker's target
+// with `cub unit set-target`. ConfigHub API 0.10 removed bridge workers and
+// per-unit targets: a Space releases to a Target, and a GitOps controller on an
+// attached cluster pulls the Release.
+var errImportConnectRemoved = fmt.Errorf("--connect is no longer available: ConfigHub removed bridge workers and per-unit targets in API 0.10. Import the units without it, then connect the cluster with `cub cluster attach` and deliver with `cub release publish`")
 
 func normalizeImportAuditReason(raw string) (string, error) {
 	reason := strings.Join(strings.Fields(strings.TrimSpace(raw)), " ")
@@ -1547,7 +1523,7 @@ func gitOpsWorkloadsInProposal(workloads []WorkloadInfo, logger *ImportLogger) g
 	return result
 }
 
-func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, logger *ImportLogger, shouldConnect bool, auditReason string) error {
+func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, logger *ImportLogger, auditReason string) error {
 	normalizedReason, err := normalizeImportAuditReason(auditReason)
 	if err != nil {
 		return err
@@ -1678,16 +1654,13 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 		return finalErr
 	}
 
-	if shouldConnect {
-		fmt.Println()
-		fmt.Println("Connecting this App to your cluster (worker + targets)...")
-		if err := startWorkerAndSetTargets(proposal, logger); err != nil {
-			return err
-		}
-		return nil
+	if err := printSpaceSummary(proposal.App); err != nil {
+		return err
 	}
-
-	return printSpaceSummary(proposal.App)
+	fmt.Println()
+	fmt.Println("The units are in ConfigHub and nothing delivers them yet.")
+	fmt.Println("Connect a cluster with `cub cluster attach`, then deliver with `cub release publish`.")
+	return nil
 }
 
 func fetchManifest(kind, namespace, name string) ([]byte, error) {
@@ -1822,114 +1795,6 @@ func confirm() bool {
 	}
 	response = strings.ToLower(strings.TrimSpace(response))
 	return response == "y" || response == "yes"
-}
-
-// startWorkerAndSetTargets starts worker, waits for targets, sets them on units
-func startWorkerAndSetTargets(proposal *FullProposal, logger *ImportLogger) error {
-	if logger != nil {
-		logger.Section("STARTING WORKER")
-		logger.Log("Space: %s", proposal.App)
-	}
-
-	// Get current kubectl context for target matching
-	ctxCmd := exec.Command("kubectl", "config", "current-context")
-	ctxOut, err := ctxCmd.Output()
-	if err != nil {
-		return fmt.Errorf("get kubectl context: %w", err)
-	}
-	kubeContext := strings.TrimSpace(string(ctxOut))
-
-	fmt.Printf("Starting worker for App '%s'...\n", proposal.App)
-
-	// Start worker in background with output to devnull.
-	// Command exits while worker keeps running.
-	workerCmd, workerErr := cubCommand(context.Background(), withConfigHubSpace([]string{"worker", "run", "dev"}, proposal.App)...)
-	if workerErr != nil {
-		return workerErr
-	}
-	devNull, _ := os.Open(os.DevNull)
-	workerCmd.Stdout = devNull
-	workerCmd.Stderr = devNull
-	if err := workerCmd.Start(); err != nil {
-		devNull.Close()
-		return fmt.Errorf("start worker: %w", err)
-	}
-	devNull.Close()
-	go func() { _ = workerCmd.Wait() }()
-
-	if logger != nil {
-		logger.Log("Worker started (PID %d)", workerCmd.Process.Pid)
-	}
-
-	// Wait for targets to be created (poll for up to 30 seconds)
-	fmt.Print("Waiting for targets to register")
-	var targetSlug string
-	expectedTarget := fmt.Sprintf("dev-kubernetes-yaml-%s", kubeContext)
-
-	for i := 0; i < 30; i++ {
-		time.Sleep(1 * time.Second)
-		fmt.Print(".")
-
-		// Check if target exists
-		out, err := cubStdout(context.Background(), withConfigHubSpace([]string{"target", "list", "-o", "json"}, proposal.App)...)
-		if err != nil {
-			continue
-		}
-
-		// Look for our expected target
-		if strings.Contains(string(out), expectedTarget) {
-			targetSlug = expectedTarget
-			break
-		}
-	}
-	fmt.Println()
-
-	if targetSlug == "" {
-		fmt.Println("⚠ Targets not ready yet. Set target manually:")
-		fmt.Printf("  cub unit set-target <unit> <target> --space %s\n", proposal.App)
-	} else {
-		// Set target on all units
-		fmt.Printf("Setting target '%s' on deployments...\n", targetSlug)
-		if logger != nil {
-			logger.Log("Target found: %s", targetSlug)
-		}
-
-		for _, unit := range proposal.Units {
-			setCmd, setErr := cubCommand(context.Background(), withConfigHubSpace([]string{"unit", "set-target", unit.Slug, targetSlug}, proposal.App)...)
-			if setErr != nil {
-				fmt.Printf("  ⚠ %s: %v\n", unit.Slug, setErr)
-				continue
-			}
-			if err := setCmd.Run(); err != nil {
-				fmt.Printf("  ⚠ %s: failed to set target\n", unit.Slug)
-				if logger != nil {
-					logger.Log("  FAILED: set-target %s: %v", unit.Slug, err)
-				}
-			} else {
-				fmt.Printf("  ✓ %s → %s\n", unit.Slug, targetSlug)
-				if logger != nil {
-					logger.Log("  OK: %s → %s", unit.Slug, targetSlug)
-				}
-			}
-		}
-	}
-
-	if err := printSpaceSummary(proposal.App); err != nil {
-		return err
-	}
-
-	fmt.Println()
-	fmt.Println("Next: Sync via your deployer to apply changes:")
-	fmt.Println("  ArgoCD:  argocd app sync <app-name>")
-	fmt.Println("  Flux:    flux reconcile kustomization <name>")
-	fmt.Println()
-	fmt.Printf("Worker running in background (PID %d)\n", workerCmd.Process.Pid)
-
-	if logger != nil {
-		logger.Log("Worker running in background")
-	}
-
-	return nil
 }
 
 func printSpaceSummary(space string) error {

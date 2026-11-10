@@ -521,7 +521,6 @@ type UnitFilter = Filter
 // helpers send for the same options, and the Connected lane compares the
 // answers with cub's on a real server.
 const (
-	workerListInclude    = "SpaceID"
 	targetListInclude    = "SpaceID,TriggerFilterID,TriggerIDs"
 	changeSetListInclude = "SpaceID,StartTagID,EndTagID"
 	linkListInclude      = "SpaceID,FromUnitID,ToUnitID,ToSpaceID"
@@ -742,40 +741,6 @@ func (r *Reader) UnitListJSON(ctx context.Context, space string, filter Filter) 
 				return uuid.Nil, false
 			}
 			return entry.Unit.SpaceID, true
-		})
-}
-
-// WorkerListJSON reads the workers of exactly one space, as
-// `cub worker list --space <space> -o json` prints them, without each
-// worker's credentials: its Secret and its ClaimToken.
-//
-// The server returns the token a worker authenticates with to anyone who may
-// list the workers, and cub prints it; the claim token is what a running
-// worker uses to hold and release its claim. An observer has no use for
-// either, and what this returns is parsed, logged and recorded, so both are
-// dropped here before anything else sees them. This is the one place the
-// reader's JSON is not cub's.
-func (r *Reader) WorkerListJSON(ctx context.Context, space string, filter Filter) ([]byte, error) {
-	return spaceList(ctx, r, "worker", space, filter, workerListInclude,
-		func(q listQuery) (listAnswer[goclientnew.ExtendedBridgeWorker], error) {
-			resp, err := r.client.API.ListAllBridgeWorkersWithResponse(ctx, &goclientnew.ListAllBridgeWorkersParams{Where: q.where, Include: q.include, Contains: q.contains})
-			if resp == nil {
-				return listAnswer[goclientnew.ExtendedBridgeWorker]{}, err
-			}
-			if resp.JSON200 != nil {
-				for i := range *resp.JSON200 {
-					if worker := (*resp.JSON200)[i].BridgeWorker; worker != nil {
-						worker.Secret, worker.ClaimToken = "", nil
-					}
-				}
-			}
-			return listAnswer[goclientnew.ExtendedBridgeWorker]{resp, resp.JSON200, resp.HTTPResponse, rejection(resp.StatusCode(), resp.JSON400)}, err
-		},
-		func(entry *goclientnew.ExtendedBridgeWorker) (uuid.UUID, bool) {
-			if entry.BridgeWorker == nil {
-				return uuid.Nil, false
-			}
-			return entry.BridgeWorker.SpaceID, true
 		})
 }
 
