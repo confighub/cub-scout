@@ -93,7 +93,7 @@ cub-scout import -n <namespace>
 Or non-interactive:
 
 ```bash
-cub-scout import -n <namespace> --yes --connect
+cub-scout import -n <namespace> --yes
 ```
 
 ### 4. Verify Import

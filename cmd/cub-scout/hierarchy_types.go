@@ -164,7 +164,6 @@ const (
 	iconFolder = "📁"
 	iconUnit   = "📦"
 	iconTarget = "🎯"
-	iconWorker = "⚙"
 )
 
 // Data structures from cub CLI
@@ -192,9 +191,8 @@ type CubSpaceData struct {
 		SpaceID        string `json:"SpaceID"`
 		OrganizationID string `json:"OrganizationID"`
 	} `json:"Space"`
-	TotalUnitCount         int            `json:"TotalUnitCount"`
-	TotalBridgeWorkerCount int            `json:"TotalBridgeWorkerCount"`
-	TargetCountByType      map[string]int `json:"TargetCountByToolchainType"`
+	TotalUnitCount    int            `json:"TotalUnitCount"`
+	TargetCountByType map[string]int `json:"TargetCountByToolchainType"`
 }
 
 type CubUnitData struct {
@@ -216,12 +214,6 @@ type CubUnitData struct {
 		Action       string `json:"Action"`
 		ActionResult string `json:"ActionResult"`
 	} `json:"UnitStatus"`
-	BridgeWorker struct {
-		Slug       string `json:"Slug"`
-		Condition  string `json:"Condition"`
-		IPAddress  string `json:"IPAddress"`
-		LastSeenAt string `json:"LastSeenAt"`
-	} `json:"BridgeWorker"`
 	Space struct {
 		Slug string `json:"Slug"`
 	} `json:"Space"`
@@ -232,13 +224,6 @@ type CubTargetData struct {
 		Slug         string `json:"Slug"`
 		ProviderType string `json:"ProviderType"`
 	} `json:"Target"`
-}
-
-type CubWorkerData struct {
-	BridgeWorker struct {
-		Slug      string `json:"Slug"`
-		Condition string `json:"Condition"`
-	} `json:"BridgeWorker"`
 }
 
 // DeriveStatus returns the status string for a unit based on its state
@@ -252,19 +237,11 @@ func (u CubUnitData) DeriveStatus() string {
 	return "ok"
 }
 
-// DeriveStatus returns the status string for a worker based on its condition
-func (w CubWorkerData) DeriveStatus() string {
-	if w.BridgeWorker.Condition != "Ready" {
-		return "warn"
-	}
-	return "ok"
-}
-
 // TreeNode represents a node in the hierarchy
 type TreeNode struct {
 	ID       string
 	Name     string
-	Type     string // "org", "space", "group", "unit", "target", "worker", "detail"
+	Type     string // "org", "space", "group", "unit", "target", "detail"
 	Status   string // "ok", "warn", "error", "pending", ""
 	Info     string // Description text
 	Children []*TreeNode
@@ -290,8 +267,6 @@ const (
 	importStepArgoApps         // Select ArgoCD Application
 	importStepSetup            // Choose to create space/target or use existing
 	importStepCreateSpace
-	importStepCreateWorker // Create worker (target auto-created when worker runs)
-	importStepWaitTarget   // Wait for target to be auto-created by running worker
 	importStepDiscovering
 	importStepSelection
 	importStepUnitStructure // Choose combined vs individual units (ArgoCD only)
@@ -329,16 +304,13 @@ const (
 
 // Create wizard steps
 const (
-	createStepSelectType     = iota // Select space/unit/target
-	createStepEnterName             // Enter name
-	createStepUnitMethod            // Clone or empty (for units)
-	createStepSelectSource          // Select unit to clone (for units)
-	createStepSelectTarget          // Select target (for units)
-	createStepSelectWorker          // Select worker (for targets)
-	createStepSelectProvider        // Select provider (for targets)
-	createStepConfirm               // Confirm creation
-	createStepCreating              // Creating in progress
-	createStepComplete              // Done
+	createStepSelectType   = iota // Select space/unit/target
+	createStepEnterName           // Enter name
+	createStepUnitMethod          // Clone or empty (for units)
+	createStepSelectSource        // Select unit to clone (for units)
+	createStepConfirm             // Confirm creation
+	createStepCreating            // Creating in progress
+	createStepComplete            // Done
 )
 
 // Delete wizard steps
@@ -398,17 +370,11 @@ type Model struct {
 	importSuggestion  *ImportSuggestion // Smart structure suggestion from labels/namespace
 	importGroupedView bool              // Toggle between grouped/flat view in selection
 
-	// Setup wizard state (for creating space/target)
-	importCreateNewSpace  bool         // true = create new space, false = use selected space
-	importNewSpaceName    string       // name for new space
-	importCreateTarget    bool         // whether to create a target
-	importNewWorkerName   string       // name for new worker
-	importNewTargetName   string       // name for new target (defaults to namespace name)
-	importTargetParams    string       // JSON parameters for target
-	importSetupChoice     int          // 0 = use existing, 1 = create new space
-	importExistingSpaces  []string     // list of existing spaces
-	importExistingWorkers []workerInfo // list of existing workers in selected space
-	importSelectedWorker  string       // selected existing worker (for target creation)
+	// Setup wizard state (for creating a space)
+	importCreateNewSpace bool     // true = create new space, false = use selected space
+	importNewSpaceName   string   // name for new space
+	importSetupChoice    int      // 0 = use existing, 1 = create new space
+	importExistingSpaces []string // list of existing spaces
 
 	// ArgoCD import state
 	importSource        int               // importSourceKubernetes or importSourceArgoCD
@@ -430,16 +396,10 @@ type Model struct {
 	createName      string           // Name being entered
 	createSpace     string           // Space for unit/target creation
 	createCloneFrom string           // Unit to clone from (for unit creation)
-	createTarget    string           // Target to assign (for unit creation)
-	createWorker    string           // Worker for target creation
-	createProvider  string           // Provider type for target (default Kubernetes)
-	createToolchain string           // Toolchain type for unit (for filtering targets)
 	createCursor    int              // Cursor for selection lists
 	createLoading   bool             // Loading state
 	createError     error            // Error state
 	createUnits     []createUnitInfo // Available units for cloning (with toolchain)
-	createTargets   []string         // Available targets for assignment
-	createWorkers   []string         // Available workers for target
 
 	// Delete wizard state
 	deleteMode    bool   // Delete wizard active
@@ -459,10 +419,6 @@ type Model struct {
 	cmdOutput     string   // Output from last command
 	cmdRunning    bool     // Command is running in background
 	cmdShowOutput bool     // Show output panel
-
-	// Worker status (shown in header)
-	workers       []workerStatus // Current worker status
-	workersLoaded bool           // Whether workers have been fetched
 
 	// Org selector mode (O to open)
 	orgSelectMode   bool // Org selection popup active
@@ -486,11 +442,11 @@ type Model struct {
 	panelOrphans     []MapEntry            // Workloads not in ConfigHub
 
 	// Suggest view mode (g to open) - recommend Units from live resources
-	suggestMode     bool                   // Suggest view active
-	suggestLoading  bool                   // Loading cluster data
-	suggestError    error                  // Error fetching data
+	suggestMode     bool                // Suggest view active
+	suggestLoading  bool                // Loading cluster data
+	suggestError    error               // Error fetching data
 	suggestProposal *AppModelSuggestion // Generated suggestion
-	suggestCursor   int                    // Cursor for navigation
+	suggestCursor   int                 // Cursor for navigation
 
 	// Launch local cluster TUI flag (L to switch)
 	launchLocalCluster bool // Switch to local cluster TUI on exit
@@ -686,7 +642,6 @@ type spaceDataLoadedMsg struct {
 	spaceSlug string
 	units     []CubUnitData
 	targets   []CubTargetData
-	workers   []CubWorkerData
 	err       error
 }
 
@@ -772,24 +727,10 @@ type argoAppInfo struct {
 	ChildApps    []string
 }
 
-// workerStatus represents a ConfigHub worker's connection status
-type workerStatus struct {
-	Name      string
-	Slug      string
-	Condition string // "Ready", "Disconnected", etc
-	Space     string
-}
-
 // cmdCompleteMsg is sent when a command palette command finishes
 type cmdCompleteMsg struct {
 	output string
 	err    error
-}
-
-// workersStatusMsg is sent when worker status is fetched
-type workersStatusMsg struct {
-	workers []workerStatus
-	err     error
 }
 
 type namespacesLoadedMsg struct {
@@ -855,44 +796,9 @@ type spaceCreatedMsg struct {
 	err   error
 }
 
-type workerCreatedMsg struct {
-	worker string
-	err    error
-}
-
-type workerStartedMsg struct {
-	worker string
-	err    error
-}
-
-type workerReadyMsg struct {
-	worker string
-	err    error
-}
-
-type targetFoundMsg struct {
-	target string
-	err    error
-}
-
-type workersLoadedMsg struct {
-	workers []workerInfo
-	err     error
-}
-
 type createUnitsLoadedMsg struct {
 	units []createUnitInfo
 	err   error
-}
-
-type createTargetsLoadedMsg struct {
-	targets []string
-	err     error
-}
-
-type createWorkersLoadedMsg struct {
-	workers []string
-	err     error
 }
 
 type createResourceMsg struct {
@@ -912,11 +818,6 @@ type deleteResourceMsg struct {
 type createUnitInfo struct {
 	Slug      string
 	Toolchain string
-}
-
-type workerInfo struct {
-	Slug      string
-	Condition string
 }
 
 // FilterValue implements list.Item for TreeNode

@@ -34,8 +34,12 @@ cub-scout reads the cluster (Deployments, StatefulSets, DaemonSets), detects who
 # Import now (single confirmation)
 ./cub-scout import
 
-# Non-interactive import + immediate connect
-./cub-scout import --yes --connect
+# Non-interactive import
+./cub-scout import --yes
+
+# Import does not connect the cluster. ConfigHub delivers a space's releases to
+# a GitOps controller on an attached cluster:
+cub cluster attach --help
 ```
 
 ## What cub-scout Detects
@@ -80,7 +84,7 @@ cub-scout infers the environment variant in this order:
 Typical path:
 
 1. Discover and review with `./cub-scout import --dry-run`
-2. Import with `./cub-scout import` (or `--yes --connect`)
+2. Import with `./cub-scout import` (or `--yes`)
 3. Argo/Flux workloads are imported as a snapshot like any other — cub removed `cub gitops discover` / `cub gitops import` on 2026-07-25 with no replacement (#573); rendered configuration goes into ConfigHub with `cub variant upload`
 4. Helm/Native leftovers are imported via snapshot path
 

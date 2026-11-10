@@ -577,15 +577,6 @@ func TestMapFleetSpace(t *testing.T) {
 	}
 }
 
-func TestStatusWorkerSpace(t *testing.T) {
-	if got := statusWorkerSpace(configHubSpace{}); got != allConfigHubSpaces {
-		t.Fatalf("statusWorkerSpace(unset) = %q, want every space", got)
-	}
-	if got := statusWorkerSpace(configHubSpace{Slug: "prod", Source: spaceSourceEnv}); got != "prod" {
-		t.Fatalf("statusWorkerSpace = %q, want prod", got)
-	}
-}
-
 // Recorded contract: run the connected commands against a fake cub whose
 // config still carries a defaultSpace, as an older cub left it. With nothing
 // named, the commands that need a space refuse before calling cub; with a flag
@@ -708,20 +699,6 @@ func TestConnectedCommandsNameTheirSpaceAgainstARecordingCub(t *testing.T) {
 				}
 			})
 		}
-	}
-}
-
-// cub prints a worker as {"BridgeWorker": {...}, "Space": {...}}. The parser
-// looked only for a "Worker" key, so every worker came back nameless and
-// status could never find one.
-func TestParseCubWorkerListJSON_ReadsBridgeWorker(t *testing.T) {
-	raw := []byte(`[{"BridgeWorker":{"Slug":"prod-east","Condition":"Ready","SpaceID":"s-1"},"Space":{"Slug":"platform"}}]`)
-	got, err := parseCubWorkerListJSON(raw)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(got) != 1 || got[0].Name != "prod-east" || got[0].Condition != "Ready" {
-		t.Fatalf("workers = %+v, want prod-east Ready", got)
 	}
 }
 
@@ -931,12 +908,11 @@ func TestImpactJoinsLinksWithinOneSpace(t *testing.T) {
 }
 
 // status against a cub whose old config still names a default space: the JSON
-// must not report that space, and the worker search must say where it looked.
+// must not report that space, and status must not go looking for a bridge
+// worker, which ConfigHub removed in API 0.10.
 func TestStatusIgnoresAStaleDefaultSpace(t *testing.T) {
 	logPath := fakeCubRecorder(t)
-	// This test is about the space status reports, not the gate. The gate is
-	// stubbed to allow reads: the worker lookup below is a ConfigHub read, and
-	// status makes it only when the gate does (see the test after this one).
+	// This test is about the space status reports, not the gate.
 	stubConnectedGate(t, nil)
 	t.Setenv("CUB_PLUGIN", "")
 	t.Setenv("KUBECONFIG", filepath.Join(t.TempDir(), "missing-kubeconfig"))
@@ -946,10 +922,10 @@ func TestStatusIgnoresAStaleDefaultSpace(t *testing.T) {
 	t.Cleanup(func() { _ = statusCmd.Flags().Set("json", "false") })
 
 	for _, tt := range []struct {
-		env, wantSpace, wantWorkerScope string
+		env, wantSpace string
 	}{
-		{env: "", wantSpace: "", wantWorkerScope: "--space *"},
-		{env: "platform", wantSpace: "platform", wantWorkerScope: "--space platform"},
+		{env: "", wantSpace: ""},
+		{env: "platform", wantSpace: "platform"},
 	} {
 		if err := os.Remove(logPath); err != nil && !errors.Is(err, os.ErrNotExist) {
 			t.Fatal(err)
@@ -967,24 +943,20 @@ func TestStatusIgnoresAStaleDefaultSpace(t *testing.T) {
 		if status.Space != tt.wantSpace || strings.Contains(out, "stale-default") {
 			t.Fatalf("CUB_SPACE=%q: status = %s, want space %q and no stale default", tt.env, out, tt.wantSpace)
 		}
-		found := false
-		for _, call := range fakeCubCalls(t, logPath) {
-			if strings.HasPrefix(call, "worker list") {
-				found = true
-				if !strings.Contains(call, tt.wantWorkerScope) {
-					t.Fatalf("CUB_SPACE=%q: cub %q, want %s", tt.env, call, tt.wantWorkerScope)
-				}
-			}
+		if strings.Contains(out, `"worker"`) {
+			t.Fatalf("CUB_SPACE=%q: status = %s, want no worker field", tt.env, out)
 		}
-		if !found {
-			t.Fatalf("CUB_SPACE=%q: status did not look for a worker", tt.env)
+		for _, call := range fakeCubCalls(t, logPath) {
+			if strings.HasPrefix(call, "worker ") {
+				t.Fatalf("CUB_SPACE=%q: status ran `cub %s`; cub has no worker commands", tt.env, call)
+			}
 		}
 	}
 }
 
 // With ConfigHub reads turned off, status asks ConfigHub nothing: not whether
-// the session is valid, and not which worker serves this cluster. It used to
-// do both, through cub, behind a gate that had just refused.
+// the session is valid, and nothing else. It used to ask, through cub, behind a
+// gate that had just refused.
 func TestStatusAsksConfigHubNothingWhenReadsAreOff(t *testing.T) {
 	logPath := fakeCubRecorder(t)
 	stubConnectedGate(t, hub.ErrConfigHubReadsDisabled)
@@ -1005,8 +977,8 @@ func TestStatusAsksConfigHubNothingWhenReadsAreOff(t *testing.T) {
 	if err := json.Unmarshal([]byte(out), &status); err != nil {
 		t.Fatalf("parse %q: %v", out, err)
 	}
-	if status.ConfigHubReads || status.Worker != nil {
-		t.Fatalf("status = %s, want reads off and no worker", out)
+	if status.ConfigHubReads {
+		t.Fatalf("status = %s, want reads off", out)
 	}
 	for _, call := range fakeCubCalls(t, logPath) {
 		// The context and the stored token are this machine's own files.

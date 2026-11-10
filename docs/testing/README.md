@@ -99,7 +99,7 @@ What this proves:
 - Target selection for Kubernetes + Argo/Flux renderer targets is deterministic.
 - Workload filtering after delegation keeps Helm/Native leftovers only.
 - Namespace extraction for delegated GitOps import scopes is stable.
-- CLI help exposes delegation behavior and `--connect` / `--no-connect` flags.
+- CLI help exposes delegation behavior.
 
 ### Tier 1.9: Agent Evals (No Cluster; Model Calls)
 

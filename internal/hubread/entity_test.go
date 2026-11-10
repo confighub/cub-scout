@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -32,44 +33,6 @@ func governanceHub(t *testing.T) *fakeHub {
 	hub.units = []map[string]json.RawMessage{unit}
 	hub.spaces = []map[string]json.RawMessage{{"Space": unit["Space"]}}
 	return hub
-}
-
-// sameButForNewerFields compares what the reader returned with a recording
-// made by an older cub. The recordings here are from cub v0.8.3; this is built
-// with a newer SDK, whose types have fields that cub did not have, and a UUID
-// field is printed even when it is zero. So every value cub printed must be
-// there unchanged, and anything added must be one of the named fields, zero.
-// Bytes are compared on a server of the SDK's own version, in the Connected
-// lane.
-func sameButForNewerFields(t *testing.T, recorded, got []byte, added ...string) {
-	t.Helper()
-	var want, have interface{}
-	require.NoError(t, json.Unmarshal(recorded, &want))
-	require.NoError(t, json.Unmarshal(got, &have))
-	extra := 0
-	var strip func(value interface{}) interface{}
-	strip = func(value interface{}) interface{} {
-		switch typed := value.(type) {
-		case map[string]interface{}:
-			for _, field := range added {
-				if typed[field] == "00000000-0000-0000-0000-000000000000" {
-					delete(typed, field)
-					extra++
-				}
-			}
-			for key, inner := range typed {
-				typed[key] = strip(inner)
-			}
-		case []interface{}:
-			for i, inner := range typed {
-				typed[i] = strip(inner)
-			}
-		}
-		return value
-	}
-	require.Equal(t, want, strip(have))
-	require.Positive(t, extra, "nothing was added; compare the bytes instead")
-	require.True(t, strings.HasPrefix(string(got), "{\n  \"") && strings.HasSuffix(string(got), "\n}\n"), "encoded as cub encodes it")
 }
 
 const (
@@ -213,7 +176,7 @@ func TestRevisionJSONIsWhatAnOlderCubPrinted(t *testing.T) {
 
 	got, err := reader.RevisionJSON(context.Background(), recordedSpace, recordedUnit, 2)
 	require.NoError(t, err)
-	sameButForNewerFields(t, recorded, got, "ReleaseTagID")
+	sameAsCubPrinted(t, recorded, got)
 	seen := hub.requests()
 	require.Len(t, seen, 3, "the space, the Unit, its revisions")
 	require.Equal(t, revisionListPath, seen[2].Path)
@@ -341,7 +304,7 @@ func TestChangeOrderJSONIsWhatAnOlderCubPrinted(t *testing.T) {
 
 	got, err := reader.ChangeOrderJSON(ctx, recordedSpace, slug)
 	require.NoError(t, err)
-	sameButForNewerFields(t, []byte(recorded), got, "ReleaseTagID")
+	sameAsCubPrinted(t, []byte(recorded), got)
 	seen := hub.requests()
 	require.Len(t, seen, 2)
 	require.Equal(t, path, seen[1].Path)
@@ -469,4 +432,63 @@ func TestAResponseLimitStopsTheReadWhenItIsPassed(t *testing.T) {
 	// The bound is on each response, the lookups included.
 	_, err = reader.UnitData(WithResponseLimit(context.Background(), 16), recordedSpace, recordedUnit)
 	require.Equal(t, KindTooLarge, KindOf(err))
+}
+
+// zeroFieldsNoLongerPrinted are fields the cub that made these recordings
+// (v0.8.x) printed when they were zero, and SDK core v0.10.11 leaves out.
+var zeroFieldsNoLongerPrinted = map[string]interface{}{
+	"BoundLinkID":             "00000000-0000-0000-0000-000000000000",
+	"AdoptedEndTagID":         "00000000-0000-0000-0000-000000000000",
+	"RestoreTagID":            "00000000-0000-0000-0000-000000000000",
+	"ExpiresAt":               "0001-01-01T00:00:00Z",
+	"TriggerCountByEventType": map[string]interface{}{},
+}
+
+// withoutZeroFields takes the fields above out of a decoded recording wherever
+// they are zero, and says how many it took.
+func withoutZeroFields(value interface{}) (interface{}, int) {
+	dropped := 0
+	var strip func(value interface{}) interface{}
+	strip = func(value interface{}) interface{} {
+		switch typed := value.(type) {
+		case map[string]interface{}:
+			for field, zero := range zeroFieldsNoLongerPrinted {
+				if found, ok := typed[field]; ok && reflect.DeepEqual(found, zero) {
+					delete(typed, field)
+					dropped++
+				}
+			}
+			for key, inner := range typed {
+				typed[key] = strip(inner)
+			}
+		case []interface{}:
+			for i, inner := range typed {
+				typed[i] = strip(inner)
+			}
+		}
+		return value
+	}
+	return strip(value), dropped
+}
+
+// sameAsCubPrinted compares what the reader returned with a recording made by
+// cub v0.8.x: byte for byte where that still holds, and otherwise value for
+// value. This is built with SDK core v0.10.11, whose types leave a few fields
+// out when they are zero, where the older cub printed the zero. So every other
+// value cub printed must be there unchanged, nothing may be added, and what is
+// missing must be one of the named fields, zero in the recording. Bytes are
+// compared on a server of the SDK's own version, in the Connected lane.
+func sameAsCubPrinted(t *testing.T, recorded, got []byte) {
+	t.Helper()
+	if string(recorded) == string(got) {
+		return
+	}
+	var want, have interface{}
+	require.NoError(t, json.Unmarshal(recorded, &want))
+	require.NoError(t, json.Unmarshal(got, &have))
+	want, dropped := withoutZeroFields(want)
+	require.Positive(t, dropped, "the bytes differ and no zero field accounts for it:\nrecorded: %s\ngot: %s", recorded, got)
+	require.Equal(t, want, have)
+	trimmed := strings.TrimSpace(string(got))
+	require.True(t, (strings.HasPrefix(trimmed, "{\n  \"") && strings.HasSuffix(trimmed, "\n}")) || (strings.HasPrefix(trimmed, "[\n  {") && strings.HasSuffix(trimmed, "\n]")), "encoded as cub encodes it")
 }

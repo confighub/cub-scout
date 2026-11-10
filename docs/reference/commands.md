@@ -1327,8 +1327,8 @@ cub-scout import [flags]
 | `--json` | Output proposal JSON (implies dry-run) |
 | `--no-log` | Disable local import log file |
 | `-w, --wizard` | Launch interactive import wizard |
-| `--connect` | After import, start worker and set targets |
-| `--no-connect` | Do not auto-start worker/targets after import |
+| `--connect` | **Removed in v2.15.0.** Refuses with an explanation: ConfigHub API 0.10 removed bridge workers and per-unit targets. Connect a cluster with `cub cluster attach` and deliver with `cub release publish` |
+| `--no-connect` | Accepted and ignored: import never connects a cluster |
 | `--from-bundle` | Import proposal/apply from a debug bundle directory (offline path, no cluster discovery) |
 | `--git-path` | Advanced: preview from a local GitOps repository path (dry-run only; not a renderer) |
 | `--audit-reason` | Record break-glass decision reason in connected audit history (max 512 chars) |
@@ -1913,7 +1913,7 @@ cub-scout connect --from-kubeconfig ./artem.yaml --from-context ske-vcl-pro --ma
 
 ## status
 
-Show connection status, cluster info, and worker status.
+Show connection status and cluster info.
 
 ```bash
 cub-scout status [flags]

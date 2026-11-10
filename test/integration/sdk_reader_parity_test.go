@@ -12,7 +12,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
 	"testing"
@@ -39,11 +38,6 @@ func serverHost(raw string) string {
 	}
 	return strings.ToLower(parsed.Hostname())
 }
-
-// workerSecretLine is the line of `cub worker list -o json` that holds a
-// worker's Secret. It is never the last field of its object, so removing the
-// whole line leaves valid JSON.
-var workerSecretLine = regexp.MustCompile(`(?m)^[ \t]*"Secret": "[^"\n]*",\n`)
 
 // cubStdoutOnly runs cub and returns stdout alone; cub prints notices on stderr.
 func cubStdoutOnly(args ...string) ([]byte, error) {
@@ -310,7 +304,6 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 	// artifact says which were which.
 	created := map[string]string{}
 	for kind, args := range map[string][]string{
-		"worker":      {"worker", "create", "--space", space, "parity-worker"},
 		"target":      {"target", "create", "--space", space, "parity-target"},
 		"changeset":   {"changeset", "create", "--space", space, "parity-changeset", "--description", "recorded for the SDK reader"},
 		"link":        {"link", "create", "--space", space, "parity-link", unit, other},
@@ -324,7 +317,6 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 		created[kind] = "created"
 	}
 	spaceLists := map[string]func(string, hubread.Filter) ([]byte, error){
-		"worker":      func(s string, f hubread.Filter) ([]byte, error) { return reader.WorkerListJSON(ctx, s, f) },
 		"target":      func(s string, f hubread.Filter) ([]byte, error) { return reader.TargetListJSON(ctx, s, f) },
 		"changeset":   func(s string, f hubread.Filter) ([]byte, error) { return reader.ChangeSetListJSON(ctx, s, f) },
 		"link":        func(s string, f hubread.Filter) ([]byte, error) { return reader.LinkListJSON(ctx, s, f) },
@@ -336,23 +328,6 @@ func TestSDKReaderMatchesCubOnARealServer(t *testing.T) {
 		if err != nil {
 			t.Errorf("cub %s list: %v", kind, err)
 			continue
-		}
-		if kind == "worker" {
-			// cub prints each worker's Secret, the token it authenticates
-			// with. The reader drops it, and it is not kept in an artifact
-			// anyone can download: the comparison is with cub's output
-			// less that one line.
-			withSecret := len(listedByCub)
-			listedByCub = workerSecretLine.ReplaceAll(listedByCub, nil)
-			if bytes.Contains(listedByCub, []byte(`"ClaimToken"`)) {
-				t.Fatalf("cub's worker list carries a ClaimToken, which the reader drops; the comparison does not allow for it yet, and nothing is kept")
-			}
-			if created["worker"] == "created" && len(listedByCub) == withSecret {
-				t.Logf("cub's worker list carried no Secret line on this server")
-			}
-			if bytes.Contains(listedByCub, []byte(`"Secret"`)) {
-				t.Fatalf("a worker's Secret is still in cub's list after the line was removed; nothing is kept")
-			}
 		}
 		keep(kind+"-list.cub.json", listedByCub)
 		var entries []json.RawMessage

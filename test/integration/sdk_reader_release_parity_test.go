@@ -111,8 +111,6 @@ func TestSDKReaderMatchesCubOnReleasesResourcesAndEvents(t *testing.T) {
 	}
 	step("target create", "target", "create", "--space", space, target)
 	step("space release target", "space", "update", "--patch", space, "--release-target", target)
-	step("set target of "+unit, "unit", "set-target", unit, target, "--space", space)
-	step("set target of "+other, "unit", "set-target", other, target, "--space", space)
 	step("first release", "release", "publish", space)
 	step("change "+unit, "unit", "update", "--space", space, unit, manifest(unit, "two"))
 	step("second release", "release", "publish", space)

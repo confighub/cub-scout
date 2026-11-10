@@ -165,8 +165,6 @@ type LocalClusterModel struct {
 	// Connection status (checked async on startup)
 	connectionMode string // "offline", "online", "connected"
 	connectedEmail string // Email if connected
-	workerName     string // Worker name for this cluster
-	workerStatus   string // "connected", "disconnected", ""
 
 	// Search
 	searchMode  bool
@@ -487,10 +485,8 @@ type localAuthCheckMsg struct {
 
 // connectionStatusMsg carries connection status from async check
 type connectionStatusMsg struct {
-	mode         string // "offline", "online", "connected"
-	email        string // Email if connected
-	workerName   string // Worker name for this cluster (if any)
-	workerStatus string // "connected", "disconnected", ""
+	mode  string // "offline", "online", "connected"
+	email string // Email if connected
 }
 
 type traceResultMsg struct {
@@ -1240,7 +1236,7 @@ func checkCubAuthForSwitch() tea.Msg {
 	return localAuthCheckMsg{authenticated: err == nil}
 }
 
-// checkConnectionStatus checks ConfigHub connection and worker status
+// checkConnectionStatus checks the ConfigHub connection
 func checkConnectionStatus(clusterName string) tea.Cmd {
 	return func() tea.Msg {
 		msg := connectionStatusMsg{mode: "offline"}
@@ -1283,31 +1279,6 @@ func checkConnectionStatus(clusterName string) tea.Cmd {
 		if err := json.Unmarshal(out, &ctx); err == nil && ctx.Email != "" {
 			msg.mode = "connected"
 			msg.email = ctx.Email
-
-			// Try to get worker status for this cluster
-			if ctx.Space != "" {
-				if wout, werr := cubStdout(context.Background(), withConfigHubSpace([]string{"worker", "list", "-o", "json"}, ctx.Space)...); werr == nil {
-					var workers []struct {
-						Name      string `json:"name"`
-						Cluster   string `json:"cluster"`
-						Condition string `json:"condition"`
-					}
-					if json.Unmarshal(wout, &workers) == nil {
-						for _, w := range workers {
-							if w.Cluster == clusterName || w.Name == clusterName {
-								msg.workerName = w.Name
-								switch strings.ToLower(w.Condition) {
-								case "ready", "connected":
-									msg.workerStatus = "connected"
-								default:
-									msg.workerStatus = "disconnected"
-								}
-								break
-							}
-						}
-					}
-				}
-			}
 		} else {
 			msg.mode = "online"
 		}
@@ -1419,8 +1390,6 @@ func (m LocalClusterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case connectionStatusMsg:
 		m.connectionMode = msg.mode
 		m.connectedEmail = msg.email
-		m.workerName = msg.workerName
-		m.workerStatus = msg.workerStatus
 		// Connected mode default: auto-navigate to App Hierarchy if user hasn't
 		// explicitly navigated yet. This surfaces the ConfigHub-aware view first.
 		if msg.mode == "connected" && !m.userHasNavigated && !m.panelMode {
@@ -2870,22 +2839,11 @@ func (m LocalClusterModel) renderModeHeader() string {
 	cluster := lcModeHeaderStyle.Render(fmt.Sprintf(" │ Cluster: %s", m.clusterName))
 	context := lcModeHeaderStyle.Render(fmt.Sprintf(" │ Context: %s", m.boundContextLabel()))
 
-	var worker string
-	if m.workerName != "" {
-		indicator := "○" // disconnected indicator
-		style := lcModeStandaloneStyle
-		if m.workerStatus == "connected" {
-			indicator = "●"
-			style = lcModeConnectedStyle
-		}
-		worker = lcModeHeaderStyle.Render(" │ Worker: ") + style.Render(indicator+" "+m.workerName)
-	}
-
 	identity := ""
 	if m.clusterIdentity != nil {
 		identity = fmt.Sprintf(" │ Identity: %q (V: details)", m.clusterIdentity.Identity)
 	}
-	return mode + cluster + context + worker + identity + "\n"
+	return mode + cluster + context + identity + "\n"
 }
 
 // boundContextLabel describes the credentials actually used for inventory.
@@ -5450,13 +5408,6 @@ func (m LocalClusterModel) getPanelAppHierarchy() string {
 		b.WriteString(lcSectionStyle.Render("APP HIERARCHY") + lcOkStyle.Render(" (ConfigHub Connected)") + "\n")
 		if m.connectedEmail != "" {
 			b.WriteString(lcDimStyle.Render(fmt.Sprintf("  %s", m.connectedEmail)))
-		}
-		if m.workerName != "" {
-			indicator := "○"
-			if m.workerStatus == "connected" {
-				indicator = "●"
-			}
-			b.WriteString(lcDimStyle.Render(fmt.Sprintf(" │ Worker: %s %s", indicator, m.workerName)))
 		}
 		b.WriteString("\n")
 		b.WriteString(lcDimStyle.Render("Legend: ✓ Ready  ✗ Not Ready  ⚡ Flux  🅰 Argo  ⎈ Helm  📦 ConfigHub  ☸ Native") + "\n\n")

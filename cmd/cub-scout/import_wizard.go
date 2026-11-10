@@ -135,8 +135,6 @@ type ImportWizardModel struct {
 	applyResults   []ApplyResult
 	applyComplete  bool
 	applyStartTime time.Time
-	workerStarted  bool
-	workerName     string
 
 	// Step 5: ArgoCD cleanup
 	argoApps        []ArgoAppRef // Unique ArgoCD Applications from selected workloads
@@ -339,11 +337,6 @@ type wizardApplyProgressMsg struct {
 
 type wizardApplyCompleteMsg struct{}
 
-type wizardWorkerStartedMsg struct {
-	worker string
-	err    error
-}
-
 type wizardErrMsg struct {
 	err error
 }
@@ -462,32 +455,10 @@ func (m ImportWizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 
-		case "w":
-			// Start worker on Apply step when complete (no ArgoCD apps), or after cleanup done
-			if m.step == StepApply && m.applyComplete && len(m.argoApps) == 0 && m.proposal != nil {
-				return m, m.startWorkerCmd()
-			}
-			if m.step == StepArgoCleanup && m.argoCleanupDone && m.proposal != nil {
-				return m, m.startWorkerCmd()
-			}
-
-		case "t":
-			// Start end-to-end test (only available after worker started AND ArgoCD cleanup done)
-			// If there are ArgoCD apps, we need to wait until cleanup is done so ArgoCD
-			// doesn't immediately reconcile away our test changes
-			argoCleanupRequired := len(m.argoApps) > 0 && !m.argoCleanupDone
-			if m.workerStarted && m.proposal != nil && len(m.proposal.Units) > 0 && !argoCleanupRequired {
-				m.step = StepTest
-				m.testPhase = testPhaseAddAnnotation
-				m.testUnitSlug = m.proposal.Units[0].Slug
-				m.testAnnotation = fmt.Sprintf("import-test-%d", time.Now().Unix())
-				m.testStartTime = time.Time{} // Will be set when first phase starts
-				m.testResults = nil
-				m.testError = nil
-				m.loading = true
-				m.loadingMessage = "Starting end-to-end test..."
-				return m, m.runTestPhaseCmd(testPhaseAddAnnotation)
-			}
+		// The wizard used to start a bridge worker here (w) and then run an
+		// end-to-end test through it (t). ConfigHub removed bridge workers in
+		// API 0.10, so neither key does anything: connecting the cluster is
+		// `cub cluster attach`, outside this wizard.
 
 		case "s":
 			// Skip ArgoCD cleanup (mark as done without any action)
@@ -590,14 +561,6 @@ func (m ImportWizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if len(m.argoApps) > 0 {
 			m.step = StepArgoCleanup
 			m.argoCleanupIdx = 0
-		}
-
-	case wizardWorkerStartedMsg:
-		if msg.err != nil {
-			m.err = msg.err
-		} else {
-			m.workerStarted = true
-			m.workerName = msg.worker
 		}
 
 	case wizardErrMsg:
@@ -912,11 +875,7 @@ func (m ImportWizardModel) renderHelp() string {
 		}
 	case StepApply:
 		if m.applyComplete && len(m.argoApps) == 0 {
-			if m.workerStarted {
-				help = "t run test  ? help  q quit"
-			} else {
-				help = "w start worker  ? help  q quit"
-			}
+			help = "? help  q quit"
 		} else if m.applyComplete {
 			help = "continuing to ArgoCD cleanup..."
 		} else {
@@ -924,11 +883,7 @@ func (m ImportWizardModel) renderHelp() string {
 		}
 	case StepArgoCleanup:
 		if m.argoCleanupDone {
-			if m.workerStarted {
-				help = "t run test  ? help  q quit"
-			} else {
-				help = "w start worker  ? help  q quit"
-			}
+			help = "? help  q quit"
 		} else {
 			help = "↑↓ navigate  enter select action  s skip  ? help  q quit"
 		}
@@ -1014,7 +969,6 @@ func (m ImportWizardModel) renderHelpOverlay() string {
 	b.WriteString("\n")
 	b.WriteString(sectionStyle.Render("APPLY & CLEANUP (Steps 4-5)"))
 	b.WriteString("\n")
-	b.WriteString(fmt.Sprintf("  %s  %s\n", keyStyle.Render("w    "), descStyle.Render("Start worker (after apply completes)")))
 	b.WriteString(fmt.Sprintf("  %s  %s\n", keyStyle.Render("s    "), descStyle.Render("Skip ArgoCD cleanup")))
 
 	// Footer
@@ -1715,40 +1669,6 @@ func (m ImportWizardModel) applyNextUnitCmd(unitIndex int) tea.Cmd {
 	}
 }
 
-// startWorkerCmd starts a worker for the app space
-func (m ImportWizardModel) startWorkerCmd() tea.Cmd {
-	return func() tea.Msg {
-		if m.proposal == nil {
-			return wizardWorkerStartedMsg{err: fmt.Errorf("no proposal")}
-		}
-
-		// Use app space name as worker name
-		workerName := m.proposal.App + "-worker"
-		space := m.proposal.App
-
-		// Start worker in background
-		cmd, cmdErr := cubCommand(context.Background(), withConfigHubSpace([]string{"worker", "run", workerName}, space)...)
-		if cmdErr != nil {
-			return wizardWorkerStartedMsg{err: cmdErr}
-		}
-		cmd.Stdout = nil
-		cmd.Stderr = nil
-		cmd.Stdin = nil
-
-		if err := cmd.Start(); err != nil {
-			return wizardWorkerStartedMsg{err: fmt.Errorf("failed to start worker: %w", err)}
-		}
-
-		// Don't wait for the process - let it run in background
-		// We must call Wait() to release process resources, but we don't need the result
-		go func() {
-			_ = cmd.Wait() //nolint:errcheck // background process, exit status irrelevant
-		}()
-
-		return wizardWorkerStartedMsg{worker: workerName}
-	}
-}
-
 // performArgoCleanup executes the selected cleanup action on all ArgoCD Applications
 func (m ImportWizardModel) performArgoCleanup() tea.Cmd {
 	return func() tea.Msg {
@@ -1951,77 +1871,9 @@ func (m ImportWizardModel) runTestApply() tea.Msg {
 		}
 	}
 
-	// First, check if the unit has a target. If not, find one and set it.
-	appendTestDebug("Checking if unit has target...")
-	checkOutput, checkErr := cubStdout(context.Background(), withConfigHubSpace([]string{"unit", "get", "-o", "json", m.testUnitSlug}, m.proposal.App)...)
-	if checkErr != nil {
-		// A read that failed says nothing about the Unit's target. Going on
-		// would set a target on a Unit that may already have one.
-		appendTestDebug(fmt.Sprintf("ERROR reading unit: %v", checkErr))
-		return wizardTestPhaseMsg{
-			phase:   testPhaseApply,
-			success: false,
-			err:     fmt.Errorf("could not read unit %s before applying: %w", m.testUnitSlug, checkErr),
-		}
-	}
-	writeTestDebug("06-unit-before-apply.json", checkOutput)
-	appendTestDebug(fmt.Sprintf("Unit JSON: %d bytes", len(checkOutput)))
-
-	hasTarget := cubUnitHasTarget(checkOutput)
-	appendTestDebug(fmt.Sprintf("Unit has target: %v", hasTarget))
-
-	if !hasTarget {
-		appendTestDebug("Unit has no target, finding one...")
-		// Find a Kubernetes target
-		targetOutput, err := cubStdout(context.Background(), withConfigHubSpace([]string{"target", "list", "-o", "json"}, m.proposal.App)...)
-		writeTestDebug("07-target-list.json", targetOutput)
-		appendTestDebug(fmt.Sprintf("Target list: %d bytes, err=%v", len(targetOutput), err))
-		if err != nil {
-			appendTestDebug(fmt.Sprintf("ERROR listing targets: %v", err))
-			return wizardTestPhaseMsg{
-				phase:   testPhaseApply,
-				success: false,
-				details: fmt.Sprintf("Could not list targets. See %s/07-target-list.json", testDebugDir),
-				err:     fmt.Errorf("failed to list targets: %w", err),
-			}
-		}
-
-		// Parsed from the list already read. It used to re-run the list through
-		// `sh -c ... | jq` with stderr merged, so cub's --json deprecation notice
-		// became the target slug when the space had no Kubernetes target.
-		targetSlug := firstKubernetesTargetSlug(targetOutput)
-		appendTestDebug(fmt.Sprintf("Found Kubernetes target slug: '%s'", targetSlug))
-
-		if targetSlug == "" {
-			appendTestDebug("ERROR: No Kubernetes target found")
-			return wizardTestPhaseMsg{
-				phase:   testPhaseApply,
-				success: false,
-				details: fmt.Sprintf("No Kubernetes target found in space. See %s/07-target-list.json", testDebugDir),
-				err:     fmt.Errorf("unit has no target and no Kubernetes target found"),
-			}
-		}
-
-		// Set the target on the unit
-		appendTestDebug(fmt.Sprintf("Setting target to: %s", targetSlug))
-		setTargetCmd, setTargetErr := cubCommand(context.Background(), withConfigHubSpace([]string{"unit", "set-target", m.testUnitSlug, targetSlug}, m.proposal.App)...)
-		if setTargetErr != nil {
-			return wizardTestPhaseMsg{phase: testPhaseApply, success: false, err: setTargetErr}
-		}
-		setOutput, err := setTargetCmd.CombinedOutput()
-		writeTestDebug("08-set-target-result.txt", setOutput)
-		appendTestDebug(fmt.Sprintf("Set target result: %s, err=%v", strings.TrimSpace(string(setOutput)), err))
-		if err != nil {
-			appendTestDebug(fmt.Sprintf("ERROR setting target: %s", string(setOutput)))
-			return wizardTestPhaseMsg{
-				phase:   testPhaseApply,
-				success: false,
-				details: string(setOutput),
-				err:     fmt.Errorf("failed to set target: %w", err),
-			}
-		}
-	}
-
+	// This step used to give the unit a target with `cub unit set-target` first.
+	// ConfigHub API 0.10 removed per-unit targets along with bridge workers.
+	//
 	// The apply was `cub unit apply --wait`, which cub removed: with --wait it
 	// dies on "unknown flag" and the message blamed the worker. See
 	// cub_unit_apply.go.
@@ -2819,20 +2671,14 @@ func (m ImportWizardModel) renderArchitectureDiagram() string {
 
 	// Arrow down with label
 	b.WriteString(boxColor.Render("              │") + "\n")
-	b.WriteString(boxColor.Render("              │") + dimStyle.Render(" sync") + "\n")
+	b.WriteString(boxColor.Render("              │") + dimStyle.Render(" release") + "\n")
 	b.WriteString(boxColor.Render("              ▼") + "\n")
 
-	// Worker box
-	workerName := m.proposal.App + "-worker"
-	if len(workerName) > 17 {
-		workerName = workerName[:14] + "..."
-	}
+	// What pulls a space's releases is a GitOps controller on a cluster
+	// attached with `cub cluster attach`, not a bridge worker.
 	b.WriteString(boxColor.Render("      ┌─────────────────┐") + "\n")
-	b.WriteString(boxColor.Render("      │") + "     Worker      " + boxColor.Render("│") + "\n")
-	wPad := 17 - len(workerName)
-	wLeft := wPad / 2
-	wRight := wPad - wLeft
-	b.WriteString(boxColor.Render("      │") + strings.Repeat(" ", wLeft) + dimStyle.Render(workerName) + strings.Repeat(" ", wRight) + boxColor.Render("│") + "\n")
+	b.WriteString(boxColor.Render("      │") + "GitOps controller" + boxColor.Render("│") + "\n")
+	b.WriteString(boxColor.Render("      │") + dimStyle.Render(" (cluster attach)") + boxColor.Render("│") + "\n")
 	b.WriteString(boxColor.Render("      └────────┬────────┘") + "\n")
 
 	// Arrow down
@@ -2916,28 +2762,11 @@ func (m ImportWizardModel) renderApplyProgress() string {
 		// Next steps
 		b.WriteString(headerStyle.Render("Next Steps") + "\n\n")
 
-		if m.workerStarted {
-			b.WriteString(wizardSuccessStyle.Render("✓ Worker started") + "\n")
-			b.WriteString(fmt.Sprintf("  Name: %s\n", m.workerName))
-			b.WriteString(fmt.Sprintf("  Space: %s\n", m.proposal.App))
-			b.WriteString("\n")
-
-			// Offer test option
-			b.WriteString(dimStyle.Render("─────────────────────────────────") + "\n\n")
-			b.WriteString(headerStyle.Render("Verify Setup") + "\n\n")
-			b.WriteString(dimStyle.Render("Press ") + wizardSelectedStyle.Render("t") + dimStyle.Render(" to run end-to-end test") + "\n")
-			b.WriteString(dimStyle.Render("This adds a test annotation and verifies") + "\n")
-			b.WriteString(dimStyle.Render("it propagates to your cluster.") + "\n")
-		} else {
-			b.WriteString("Start a worker to connect this cluster:\n\n")
-			b.WriteString(dimStyle.Render("  Press ") + wizardSelectedStyle.Render("w") + dimStyle.Render(" to start now, or run:") + "\n\n")
-			b.WriteString(fmt.Sprintf("  cub worker run %s-worker --space %s\n", m.proposal.App, m.proposal.App))
-			b.WriteString("\n")
-			b.WriteString(dimStyle.Render("The worker will:") + "\n")
-			b.WriteString("  • Connect to ConfigHub\n")
-			b.WriteString("  • Create a Target for this cluster\n")
-			b.WriteString("  • Sync your Units to the cluster\n")
-		}
+		b.WriteString("The units are in ConfigHub; nothing delivers them yet.\n\n")
+		b.WriteString("Connect this cluster so a GitOps controller\n")
+		b.WriteString("pulls the space's releases:\n\n")
+		b.WriteString("  cub cluster attach --help\n")
+		b.WriteString(fmt.Sprintf("  cub release publish --space %s\n", m.proposal.App))
 	}
 
 	return b.String()
@@ -2968,28 +2797,11 @@ func (m ImportWizardModel) renderArgoCleanupList() string {
 		// Next steps
 		b.WriteString(headerStyle.Render("Next Steps") + "\n\n")
 
-		if m.workerStarted {
-			b.WriteString(wizardSuccessStyle.Render("✓ Worker started") + "\n")
-			b.WriteString(fmt.Sprintf("  Name: %s\n", m.workerName))
-			b.WriteString(fmt.Sprintf("  Space: %s\n", m.proposal.App))
-			b.WriteString("\n")
-
-			// Offer test option
-			b.WriteString(dimStyle.Render("─────────────────────────────────") + "\n\n")
-			b.WriteString(headerStyle.Render("Verify Setup") + "\n\n")
-			b.WriteString(dimStyle.Render("Press ") + wizardSelectedStyle.Render("t") + dimStyle.Render(" to run end-to-end test") + "\n")
-			b.WriteString(dimStyle.Render("This adds a test annotation and verifies") + "\n")
-			b.WriteString(dimStyle.Render("it propagates to your cluster.") + "\n")
-		} else {
-			b.WriteString("Start a worker to connect this cluster:\n\n")
-			b.WriteString(dimStyle.Render("  Press ") + wizardSelectedStyle.Render("w") + dimStyle.Render(" to start now, or run:") + "\n\n")
-			b.WriteString(fmt.Sprintf("  cub worker run %s-worker --space %s\n", m.proposal.App, m.proposal.App))
-			b.WriteString("\n")
-			b.WriteString(dimStyle.Render("The worker will:") + "\n")
-			b.WriteString("  • Connect to ConfigHub\n")
-			b.WriteString("  • Create a Target for this cluster\n")
-			b.WriteString("  • Sync your Units to the cluster\n")
-		}
+		b.WriteString("The units are in ConfigHub; nothing delivers them yet.\n\n")
+		b.WriteString("Connect this cluster so a GitOps controller\n")
+		b.WriteString("pulls the space's releases:\n\n")
+		b.WriteString("  cub cluster attach --help\n")
+		b.WriteString(fmt.Sprintf("  cub release publish --space %s\n", m.proposal.App))
 		return b.String()
 	}
 

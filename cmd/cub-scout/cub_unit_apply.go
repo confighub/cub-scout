@@ -7,9 +7,10 @@ import "fmt"
 
 // cub removed `unit apply` in July 2026, together with `unit destroy`,
 // `unit import`, `unit refresh` and the whole `gitops` command group. There is
-// no replacement verb in cub v0.5.2: `cub unit update` carries
-// `--wait` ("wait for completion", default true), and a unit's target is served
-// by its worker.
+// no replacement verb: since ConfigHub API 0.10 a Space publishes Releases
+// (`cub release publish`) to its release Target, and a GitOps controller on an
+// attached cluster pulls them. Bridge workers, which used to serve a unit's
+// target, were removed in the same API version.
 //
 // The dead call did not fail loudly. `cub unit apply <slug> --space <s>` exits
 // **0** and prints the `cub unit` help, so the three sites that ran it either
@@ -25,5 +26,5 @@ import "fmt"
 // unitApplyUnavailable explains why cub-scout does not apply a unit, and what
 // to run to find out whether the target has the change.
 func unitApplyUnavailable(space, unitSlug string) error {
-	return fmt.Errorf("cub-scout did not apply unit %s in space %s: cub has no `unit apply` command (removed in July 2026), so ConfigHub delivers a unit's revision through its target's worker. To see whether the target has it, run `cub-scout compare <kind>/<name> -n <namespace>`", unitSlug, space)
+	return fmt.Errorf("cub-scout did not apply unit %s in space %s: cub has no `unit apply` command (removed in July 2026), and ConfigHub delivers a space's units as a Release (`cub release publish`) that a GitOps controller on an attached cluster pulls. To see whether the cluster has it, run `cub-scout compare <kind>/<name> -n <namespace>`", unitSlug, space)
 }

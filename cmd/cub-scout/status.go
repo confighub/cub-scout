@@ -23,13 +23,12 @@ func init() {
 var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Show connection status and cluster info",
-	Long: `Show cub-scout connection status, cluster info, and worker status.
+	Long: `Show cub-scout connection status and cluster info.
 
 Displays:
   - ConfigHub connection status (Offline/Online/Connected)
   - Current cluster name (from CLUSTER_NAME env or default)
   - Current kubectl context
-  - Worker status (if connected to ConfigHub)
 
 Examples:
   cub-scout status
@@ -54,17 +53,9 @@ type StatusInfo struct {
 	SpaceSource string `json:"space_source,omitempty"`
 	// ConfigHubReads is the verdict of the gate the connected commands use, so
 	// that status read as a pre-flight agrees with the command it precedes.
-	ConfigHubReads       bool        `json:"confighub_reads"`
-	ConfigHubReadsReason string      `json:"confighub_reads_reason,omitempty"`
-	Worker               *WorkerInfo `json:"worker,omitempty"`
-	AuthValid            *bool       `json:"auth_valid,omitempty"` // nil if offline/online, true/false if has context
-}
-
-// WorkerInfo holds worker status
-type WorkerInfo struct {
-	Name    string `json:"name"`
-	Status  string `json:"status"` // "connected", "disconnected", "unknown"
-	Cluster string `json:"cluster,omitempty"`
+	ConfigHubReads       bool   `json:"confighub_reads"`
+	ConfigHubReadsReason string `json:"confighub_reads_reason,omitempty"`
+	AuthValid            *bool  `json:"auth_valid,omitempty"` // nil if offline/online, true/false if has context
 }
 
 // statusCubContext represents the output of cub context get --json for status command
@@ -147,17 +138,6 @@ func runStatus(cmd *cobra.Command) error {
 					status.Mode = "auth_expired"
 				}
 			}
-
-			// Which worker serves this cluster is a question about the whole
-			// organization, so every space is searched unless CUB_SPACE names one.
-			// It is a ConfigHub read, so it is made only when the gate allows
-			// reads: not with reads turned off, not with a client older than its
-			// server, and not when the session could not be checked.
-			if readsErr == nil {
-				if worker := getWorkerForCluster(statusWorkerSpace(space), status.ClusterName); worker != nil {
-					status.Worker = worker
-				}
-			}
 		}
 	}
 
@@ -213,28 +193,6 @@ func printStatus(s StatusInfo) {
 	// Cluster info
 	fmt.Printf("Cluster:    %s\n", s.ClusterName)
 	fmt.Printf("Context:    %s\n", s.Context)
-
-	// Worker info
-	if s.Worker != nil {
-		switch s.Worker.Status {
-		case "connected":
-			fmt.Printf("Worker:     \033[32m●\033[0m %s (connected)\n", s.Worker.Name)
-		case "disconnected":
-			fmt.Printf("Worker:     \033[31m○\033[0m %s (disconnected)\n", s.Worker.Name)
-			fmt.Println("            Run: cub worker run " + s.Worker.Name)
-		default:
-			fmt.Printf("Worker:     \033[33m○\033[0m %s (%s)\n", s.Worker.Name, s.Worker.Status)
-		}
-	} else if s.Mode == "connected" {
-		// A worker records no cluster identity, so the lookup matches a worker
-		// named after the cluster; say exactly that rather than "none for this
-		// cluster". A failed lookup reads the same, and is not an absence.
-		if s.Space != "" {
-			fmt.Printf("Worker:     (no worker named %s found in space %s, from %s)\n", s.ClusterName, s.Space, s.SpaceSource)
-		} else {
-			fmt.Printf("Worker:     (no worker named %s found in any space)\n", s.ClusterName)
-		}
-	}
 }
 
 // getStatusCubContext gets the current cub context and email
@@ -277,58 +235,6 @@ func getClusterName() string {
 func cubInstalled() bool {
 	_, err := exec.LookPath("cub")
 	return err == nil
-}
-
-// WorkerListItem represents a worker from cub worker list
-type WorkerListItem struct {
-	Name      string `json:"name"`
-	Cluster   string `json:"cluster"`
-	Condition string `json:"condition"`
-}
-
-// statusWorkerSpace is where status looks for this cluster's worker: the space
-// CUB_SPACE names, else every space.
-func statusWorkerSpace(space configHubSpace) string {
-	if space.IsSet() {
-		return space.Slug
-	}
-	return allConfigHubSpaces
-}
-
-func getWorkerForCluster(space, clusterName string) *WorkerInfo {
-	if space == "" {
-		return nil
-	}
-
-	out, err := cubStdout(context.Background(), withConfigHubSpace([]string{"worker", "list", "-o", "json"}, space)...)
-	if err != nil {
-		return nil
-	}
-
-	workers, err := parseCubWorkerListJSON(out)
-	if err != nil {
-		return nil
-	}
-
-	// Find worker for this cluster
-	for _, w := range workers {
-		if w.Cluster == clusterName || w.Name == clusterName {
-			status := "unknown"
-			switch strings.ToLower(w.Condition) {
-			case "ready", "connected":
-				status = "connected"
-			case "disconnected", "notready":
-				status = "disconnected"
-			}
-			return &WorkerInfo{
-				Name:    w.Name,
-				Status:  status,
-				Cluster: w.Cluster,
-			}
-		}
-	}
-
-	return nil
 }
 
 // statusSessionValid reports whether there is a session ConfigHub accepts.

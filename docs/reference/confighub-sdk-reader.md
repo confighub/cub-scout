@@ -29,7 +29,7 @@ is installed.
 ## What it covers
 
 These commands, wherever cub-scout runs them: `cub unit get` for one Unit
-named by slug in one named space; `cub unit list`, `cub worker list`,
+named by slug in one named space; `cub unit list`,
 `cub target list`, `cub changeset list`, `cub link list`, `cub resource list`,
 `cub release list` and `cub unit-event list` for one named space, with or
 without a `--where` or `--contains` filter, and for every space when the
@@ -196,18 +196,13 @@ none.
   OR with HTTP 400 ("expected AND before") by either route, so on that server
   an expression cannot reach beyond the space this way. Entities the server expands inside an entry (an
   upstream, a link, a target) are as in `cub`'s output and are not checked.
-- **The same rules for every list of a space.** Workers, targets, change
+- **The same rules for every list of a space.** Targets, change
   sets, links and attestations are read as Units are: one named space, every
   entry checked to be in it, and nothing broken read as empty.
-- **A worker's credentials are not passed on.** The server returns each
-  worker's `Secret`, the token the worker authenticates with, to anyone who
-  may list workers, and `cub worker list -o json` prints it. A worker also has
-  a `ClaimToken` while it holds a claim. Nothing in cub-scout uses either, so
-  the reader drops both fields before returning the list. This is the one
-  place its JSON is not `cub`'s: the worker list is `cub`'s with those fields
-  gone. By the `cub` route they are in the output cub-scout parses, as they
-  always were; no command prints them. The `Secret` was seen on a real server;
-  a `ClaimToken` was not, since the recorded worker was not running.
+- **No worker list.** ConfigHub API 0.10 removed bridge workers, and the SDK
+  and `cub` dropped them with it, so from v2.15.0 the reader has no worker
+  list. (Up to v2.14.2 it read one and dropped each worker's `Secret` and
+  `ClaimToken` before returning it.)
 - **One thing is found by a list that must hold exactly one match.** A
   revision, a change order and a View are found the way `cub` finds them: a
   list filtered to the name, number or ID, from which exactly one entry must
@@ -273,7 +268,7 @@ none.
 | `cub-scout` binary (local build) | 79.7 MB | 87.2 MB (+7.4 MB, +9.3%) |
 | Modules linked into the binary | 66 | 87 |
 | `go.mod` requirements | 73 | 94 |
-| Minimum Go | 1.25 (raised for this in #846) | 1.25 |
+| Minimum Go | 1.25 (raised for this in #846) | 1.25; 1.26 from v2.15.0, which SDK core v0.10.11 requires (#897) |
 
 Among the 21 modules newly linked are `sigs.k8s.io/kustomize/kyaml` and, by way
 of `github.com/cockroachdb/errors`, `github.com/getsentry/sentry-go`. Neither

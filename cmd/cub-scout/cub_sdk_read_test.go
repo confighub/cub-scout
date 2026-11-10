@@ -330,7 +330,7 @@ func TestEveryListCallSiteIsTakenOrExplained(t *testing.T) {
 	}
 	used := map[string]bool{}
 	taken := map[string]int{}
-	for _, command := range [][2]string{{"unit", "list"}, {"space", "list"}, {"worker", "list"}, {"target", "list"}, {"changeset", "list"}, {"link", "list"}} {
+	for _, command := range [][2]string{{"unit", "list"}, {"space", "list"}, {"target", "list"}, {"changeset", "list"}, {"link", "list"}} {
 		for _, site := range cubCallSites(t, command[0], command[1]) {
 			explained := false
 			for fragment := range leftToCub {
@@ -350,10 +350,9 @@ func TestEveryListCallSiteIsTakenOrExplained(t *testing.T) {
 	}
 	require.GreaterOrEqual(t, taken["unit list"], 9)
 	require.GreaterOrEqual(t, taken["space list"], 5)
-	// Every worker, target, change set and link list is taken: none is
-	// built with a flag the route does not know.
-	require.GreaterOrEqual(t, taken["worker list"], 6)
-	require.GreaterOrEqual(t, taken["target list"], 5)
+	// Every target, change set and link list is taken: none is built with a
+	// flag the route does not know.
+	require.GreaterOrEqual(t, taken["target list"], 1)
 	require.GreaterOrEqual(t, taken["changeset list"], 3)
 	require.GreaterOrEqual(t, taken["link list"], 2)
 
@@ -501,7 +500,7 @@ func TestCubStdoutAnswersUnitGetThroughTheSDKWhenAsked(t *testing.T) {
 	require.Equal(t, []string{"GET /api/space", "GET /api/unit"}, hub.seen)
 	// The fake cub prints the recorded file, so this is byte for byte what
 	// cub printed for this Unit.
-	require.Equal(t, string(viaCub), string(viaSDK))
+	sameByEitherRoute(t, viaCub, viaSDK)
 
 	// The route name is case-insensitive, and "cub" is the default spelt out.
 	t.Setenv(configHubReaderEnv, " CUB ")
@@ -704,7 +703,7 @@ func TestConnectedCallersGetTheSameUnitByEitherRoute(t *testing.T) {
 	sdkText, sdkMeta := read()
 	require.Len(t, hub.seen, 4)
 
-	require.JSONEq(t, cubText, sdkText)
+	sameByEitherRoute(t, []byte(cubText), []byte(sdkText))
 	require.Equal(t, cubMeta, sdkMeta)
 	require.NotEqual(t, compareUnitMetadata{}, sdkMeta)
 }
@@ -842,7 +841,7 @@ func TestCubStdoutAnswersTheListsThroughTheSDKWhenAsked(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, fakeCubCalls(t, cubLog), cubBefore+1, "with the setting no cub process is started")
 			require.Len(t, *seen, seenBefore+tc.requests)
-			require.Equal(t, string(viaCub), string(viaSDK))
+			sameByEitherRoute(t, viaCub, viaSDK)
 			require.True(t, strings.HasPrefix(string(viaSDK), "[\n  {"))
 		})
 	}
@@ -880,7 +879,7 @@ func TestListCallersGetTheSameByEitherRoute(t *testing.T) {
 	// Units again, at two requests each: the space is looked up every time.
 	require.Len(t, *seen, 8)
 
-	require.Equal(t, cubText, sdkText)
+	sameByEitherRoute(t, []byte(cubText), []byte(sdkText))
 	require.Equal(t, cubUnits, sdkUnits)
 	var listed []map[string]json.RawMessage
 	require.NoError(t, json.Unmarshal([]byte(sdkText), &listed))
@@ -1150,42 +1149,10 @@ func TestTheSDKRouteHonoursTheOfflineSwitch(t *testing.T) {
 	require.Equal(t, 1, resolved)
 }
 
-// The import wizard reads a Unit to see whether it has a target, and sets one
-// if it has none. A read that failed says nothing about the target: going on
-// would write to ConfigHub on no evidence.
-func TestImportWizardDoesNotSetATargetWhenItCouldNotReadTheUnit(t *testing.T) {
-	oldDebug := testDebugDir
-	t.Cleanup(func() { testDebugDir = oldDebug })
-	testDebugDir = t.TempDir()
-	model := ImportWizardModel{proposal: &FullProposal{App: recordedSpace}, testUnitSlug: recordedUnit}
-
-	for _, route := range []string{"cub", "sdk"} {
-		t.Run(route, func(t *testing.T) {
-			cubLog := onlyFakeCub(t, "3")
-			hub := newRecordedHub(t, http.StatusInternalServerError)
-			sdkReadsFrom(t, hub)
-			t.Setenv(configHubReaderEnv, route)
-
-			result, ok := model.runTestApply().(wizardTestPhaseMsg)
-			require.True(t, ok)
-			require.False(t, result.success)
-			require.ErrorContains(t, result.err, "could not read unit "+recordedUnit+" before applying")
-			for _, call := range fakeCubCalls(t, cubLog) {
-				require.NotContains(t, call, "set-target", "a target was set after a failed read")
-				require.NotContains(t, call, "target list")
-				require.NotContains(t, call, "apply")
-			}
-			if route == "sdk" {
-				require.Empty(t, fakeCubCalls(t, cubLog))
-			}
-		})
-	}
-}
-
 // The lists of one space besides Units: the same shape for each entity, and
 // nothing else.
 func TestSDKListArgsForTheOtherEntities(t *testing.T) {
-	for _, entity := range []string{"worker", "target", "changeset", "link", "resource", "release", "unit-event"} {
+	for _, entity := range []string{"target", "changeset", "link", "resource", "release", "unit-event"} {
 		t.Run(entity, func(t *testing.T) {
 			for name, tc := range map[string]struct {
 				args []string
@@ -1256,7 +1223,7 @@ func TestCubStdoutAnswersTheOtherSpaceListsThroughTheSDK(t *testing.T) {
 	dir := t.TempDir()
 	cubLog := filepath.Join(dir, "calls.log")
 	script := "#!/bin/sh\n" + "echo \"$*\" >> \"" + cubLog + "\"\n" + "case \"$1 $2\" in\n"
-	for _, entity := range []string{"worker", "target", "changeset", "link"} {
+	for _, entity := range []string{"target", "changeset", "link"} {
 		script += "  \"" + entity + " list\") /bin/cat \"" + fixture(entity+"-list.json") + "\" ;;\n"
 	}
 	script += "  *) exit 9 ;;\nesac\n"
@@ -1287,7 +1254,7 @@ func TestCubStdoutAnswersTheOtherSpaceListsThroughTheSDK(t *testing.T) {
 		return hubread.New(server.URL, "test-token", hubread.Options{})
 	}
 
-	for entity, path := range map[string]string{"worker": "/api/bridge_worker", "target": "/api/target", "changeset": "/api/change_set", "link": "/api/link"} {
+	for entity, path := range map[string]string{"target": "/api/target", "changeset": "/api/change_set", "link": "/api/link"} {
 		t.Run(entity, func(t *testing.T) {
 			// As the call sites build it: the space appended by
 			// withConfigHubSpace, by slug.
@@ -1305,7 +1272,7 @@ func TestCubStdoutAnswersTheOtherSpaceListsThroughTheSDK(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, fakeCubCalls(t, cubLog), cubBefore+1, "by the SDK route no cub process is started")
 			require.Equal(t, []string{"/api/space?where=Slug = '" + space + "'", path + "?where=SpaceID = '" + spaceID + "'"}, seen[seenBefore:])
-			require.Equal(t, string(viaCub), string(viaSDK))
+			sameByEitherRoute(t, viaCub, viaSDK)
 			require.NotContains(t, string(viaSDK), secret, "a worker's secret is not passed on")
 			require.Greater(t, len(viaSDK), 100)
 		})
@@ -1424,7 +1391,7 @@ func TestTheReleaseEventAndResourceListsAreTaken(t *testing.T) {
 // for the kinds cub lists that way. No space at all is still left to cub, and
 // so are the releases of every space.
 func TestSDKListArgsTakeEverySpaceWhenItIsNamed(t *testing.T) {
-	for _, entity := range []string{"unit", "worker", "target", "changeset", "link", "resource", "unit-event", "attestation"} {
+	for _, entity := range []string{"unit", "target", "changeset", "link", "resource", "unit-event", "attestation"} {
 		args := []string{entity, "list", "-o", "json", "--space", allConfigHubSpaces}
 		got, space, filter, ok := sdkListArgs(args)
 		require.True(t, ok, entity)

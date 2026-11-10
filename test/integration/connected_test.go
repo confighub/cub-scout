@@ -16,14 +16,7 @@ import (
 )
 
 // cubOutput represents the JSON output from cub CLI commands
-// Note: cub CLI returns nested objects (e.g., .BridgeWorker.Slug)
-type cubWorkerItem struct {
-	BridgeWorker struct {
-		Slug      string `json:"Slug"`
-		Condition string `json:"Condition"`
-	} `json:"BridgeWorker"`
-}
-
+// Note: cub CLI returns nested objects (e.g., .Target.Slug)
 type cubTargetItem struct {
 	Target struct {
 		Slug string `json:"Slug"`
@@ -68,33 +61,6 @@ func getCurrentSpace(t *testing.T) string {
 		t.Skip("connected test needs a ConfigHub space: set CUB_SCOUT_TEST_SPACE=<slug>")
 	}
 	return space
-}
-
-// requireWorker ensures a worker exists and returns its slug
-func requireWorker(t *testing.T, space string) string {
-	t.Helper()
-
-	cmd := exec.Command("cub", "worker", "list", "--space", space, "-o", "json")
-	output, err := cmd.Output()
-	if err != nil {
-		t.Fatalf("Failed to list workers: %v", err)
-	}
-
-	var workers []cubWorkerItem
-	if err := json.Unmarshal(output, &workers); err != nil {
-		t.Fatalf("Failed to parse workers: %v", err)
-	}
-
-	if len(workers) == 0 {
-		t.Skip("No workers in space")
-	}
-
-	slug := workers[0].BridgeWorker.Slug
-	if slug == "" || slug == "null" {
-		t.Fatalf("Worker slug is null (issue #1 pattern)")
-	}
-
-	return slug
 }
 
 // requireTarget ensures a target exists and returns its slug
@@ -177,16 +143,8 @@ func TestConnectedModePrerequisites(t *testing.T) {
 	space := getCurrentSpace(t)
 	t.Logf("Testing with space: %s", space)
 
-	workerSlug := requireWorker(t, space)
-	t.Logf("Worker: %s", workerSlug)
-
 	targetSlug := requireTarget(t, space)
 	t.Logf("Target: %s", targetSlug)
-
-	// Verify worker slug is not null
-	if workerSlug == "null" || workerSlug == "" {
-		t.Errorf("Worker slug is null or empty (issue #1)")
-	}
 
 	// Verify target slug is not null
 	if targetSlug == "null" || targetSlug == "" {

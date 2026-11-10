@@ -303,8 +303,6 @@ func testModelStep4Complete() ImportWizardModel {
 	m.applyProgress = 2
 	m.applyTotal = 2
 	m.applyComplete = true
-	m.workerStarted = true
-	m.workerName = "dev-worker"
 	m.applyResults = []ApplyResult{
 		{UnitSlug: "api-prod", Success: true},
 		{UnitSlug: "web-prod", Success: true},
@@ -345,7 +343,6 @@ func testModelStep6Idle() ImportWizardModel {
 	m.testPhase = testPhaseIdle
 	m.testUnitSlug = "api-prod"
 	m.testAnnotation = "import-test-1234567890"
-	m.workerStarted = true
 	return m
 }
 
@@ -358,7 +355,6 @@ func testModelStep6Running(phase int) ImportWizardModel {
 	m.testUnitSlug = "api-prod"
 	m.testAnnotation = "import-test-1234567890"
 	m.testStartTime = time.Now().Add(-2 * time.Second)
-	m.workerStarted = true
 
 	// Add results for completed phases
 	if phase > testPhaseAddAnnotation {
@@ -395,7 +391,6 @@ func testModelStep6Complete(success bool) ImportWizardModel {
 	m.testEndTime = time.Now()
 	m.testElapsed = 7 * time.Second
 	m.testResults = testTestResults(success)
-	m.workerStarted = true
 	if !success {
 		m.testError = nil // Error shown in results
 	}

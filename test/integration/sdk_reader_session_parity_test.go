@@ -142,7 +142,6 @@ func TestSDKReaderMatchesCubOnTheSessionAndAcrossSpaces(t *testing.T) {
 	const filter = "Slug = 'wide-unit'"
 	lists := map[string]func(hubread.Filter) ([]byte, error){
 		"unit":        func(f hubread.Filter) ([]byte, error) { return reader.UnitListJSON(ctx, hubread.EverySpace, f) },
-		"worker":      func(f hubread.Filter) ([]byte, error) { return reader.WorkerListJSON(ctx, hubread.EverySpace, f) },
 		"target":      func(f hubread.Filter) ([]byte, error) { return reader.TargetListJSON(ctx, hubread.EverySpace, f) },
 		"changeset":   func(f hubread.Filter) ([]byte, error) { return reader.ChangeSetListJSON(ctx, hubread.EverySpace, f) },
 		"link":        func(f hubread.Filter) ([]byte, error) { return reader.LinkListJSON(ctx, hubread.EverySpace, f) },
@@ -156,12 +155,6 @@ func TestSDKReaderMatchesCubOnTheSessionAndAcrossSpaces(t *testing.T) {
 		if err != nil {
 			t.Errorf("cub %s list across every space: %v", kind, err)
 			continue
-		}
-		if kind == "worker" {
-			byCub = workerSecretLine.ReplaceAll(byCub, nil)
-			if bytes.Contains(byCub, []byte(`"Secret"`)) || bytes.Contains(byCub, []byte(`"ClaimToken"`)) {
-				t.Fatalf("a worker's credential is still in cub's list; nothing is compared")
-			}
 		}
 		bySDK, err := read(hubread.Filter{})
 		if err != nil {

@@ -80,22 +80,3 @@ func TestDecodeCompareUnitMetadataFromGetJSON_AcceptsCamelCase(t *testing.T) {
 		t.Fatalf("got = %+v, want tolerant metadata parse", got)
 	}
 }
-
-func TestParseCubWorkerListJSON_AcceptsNestedWorkerShape(t *testing.T) {
-	raw := []byte(`{
-		"workers": [
-			{"worker": {"slug": "cluster-worker", "cluster": "prod-cluster", "condition": "Connected"}}
-		]
-	}`)
-
-	got, err := parseCubWorkerListJSON(raw)
-	if err != nil {
-		t.Fatalf("parseCubWorkerListJSON() error = %v", err)
-	}
-	if len(got) != 1 {
-		t.Fatalf("len(got) = %d, want 1", len(got))
-	}
-	if got[0].Name != "cluster-worker" || got[0].Cluster != "prod-cluster" || got[0].Condition != "Connected" {
-		t.Fatalf("got[0] = %+v, want parsed worker fields", got[0])
-	}
-}
