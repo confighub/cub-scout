@@ -2221,7 +2221,6 @@ lessons", "shrink the catalog").
   evidence or verdicts.
 - **Next, in order.** The `trace` JSON `error` for a resource with no
   recognised owner needs a typed reason before its words can change. A
-  "not applicable" line for `trace --artifacts` on an Argo CD OCI source. A
   smaller default MCP tool set is proposed, not designed; it should be judged
   by an eval run, which is not approved. The rest of #599 (cluster identity
   and reported cost on every answer) is the same work as packages B and C.

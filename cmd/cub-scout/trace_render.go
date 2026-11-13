@@ -52,6 +52,8 @@ func (w *traceHumanWriter) Write(data []byte) (int, error) {
 // renderTraceHuman writes the full human trace projection to w. It is a pure
 // projection: it reads no flags, process streams, or cluster state and never
 // exits the process.
+const traceArtifactNotApplicable = "not applicable (this source has no artifact object in the cluster; its revision is reported by the deployer below)"
+
 func renderTraceHuman(w io.Writer, result *agent.TraceResult, artifacts map[string]mapsvc.TraceArtifactRef, invCtx InvocationContext, options traceHumanOptions) error {
 	if w == nil {
 		return fmt.Errorf("trace output writer is nil")
@@ -207,6 +209,11 @@ func renderTraceHuman(w io.Writer, result *agent.TraceResult, artifacts map[stri
 			fmt.Fprintf(w, "%s%sArtifact Revision:%s %s\n", detailPrefix, colorDim, colorReset, artifact.Revision)
 			fmt.Fprintf(w, "%s%sArtifact Digest:%s %s\n", detailPrefix, colorDim, colorReset, artifact.Digest)
 			fmt.Fprintf(w, "%s%sArtifact Updated:%s %s\n", detailPrefix, colorDim, colorReset, artifact.LastUpdateTime)
+		} else if options.Artifacts && mapsvc.InferRole(link.Kind) == mapsvc.RoleSource {
+			// A source with no object of its own, such as an Argo CD
+			// Application's Git or OCI source. Say so; printing nothing
+			// reads as "no artifact was found".
+			fmt.Fprintf(w, "%s%sArtifact:%s %s\n", detailPrefix, colorDim, colorReset, traceArtifactNotApplicable)
 		}
 		if link.Status != "" {
 			statusColor := colorGreen
