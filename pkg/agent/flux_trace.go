@@ -110,7 +110,8 @@ func (f *FluxTracer) Trace(ctx context.Context, kind, name, namespace string) (*
 			FullyManaged: false,
 			Tool:         "flux",
 			TracedAt:     time.Now(),
-			Error:        "resource not managed by Flux",
+			Error:        NoFluxOwnerTraceMessage,
+			Reason:       TraceReasonNoOwnerMarker,
 		}, nil
 	}
 

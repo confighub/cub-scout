@@ -100,3 +100,56 @@ func TestObserveTraceCleanupFailureIsVisibleWithoutPrivatePath(t *testing.T) {
 	require.ErrorContains(t, err, "unable to remove temporary Trace credentials")
 	require.NotContains(t, err.Error(), "private-file-path")
 }
+
+type fixedTracer struct {
+	result *agent.TraceResult
+	err    error
+}
+
+func (f fixedTracer) Trace(context.Context, string, string, string) (*agent.TraceResult, error) {
+	return f.result, f.err
+}
+func (fixedTracer) Available() bool  { return true }
+func (fixedTracer) ToolName() string { return "flux" }
+
+// A resource with no owner marker is an answer, not a failure. On real
+// clusters the command printed "trace failed: ..." and no JSON at all
+// (CI run 43484756241), because the Flux reader reports "no Flux marker" as an
+// error. Whichever way the tracer says it, the observation carries the typed
+// reason and words that name no tracer; a real read failure stays an error.
+func TestObserveTraceOfAResourceWithNoOwnerMarkerIsAnAnswer(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"coredns","namespace":"kube-system"}}`))
+	}))
+	defer server.Close()
+	observe := func(tracer fixedTracer) (*traceObservation, error) {
+		session, err := newTraceSession(&rest.Config{Host: server.URL}, "selected")
+		require.NoError(t, err)
+		return observeTrace(context.Background(), session, "Deployment", "coredns", "kube-system", traceObservationOptions{
+			Flux: func(*traceSession) (agent.Tracer, func() error, error) {
+				return tracer, func() error { return nil }, nil
+			},
+		})
+	}
+	for name, tracer := range map[string]fixedTracer{
+		"the tracer returns an error":         {err: fmt.Errorf("%s", agent.NoFluxOwnerTraceMessage)},
+		"the tracer returns a result":         {result: &agent.TraceResult{Tool: "flux", Error: agent.NoFluxOwnerTraceMessage, Reason: agent.TraceReasonNoOwnerMarker}},
+		"the flux CLI's own words, no reason": {result: &agent.TraceResult{Tool: "flux", Error: "resource not managed by Flux"}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			observation, err := observe(tracer)
+			require.NoError(t, err)
+			require.Empty(t, observation.Result.Chain)
+			require.Equal(t, agent.TraceReasonNoOwnerMarker, observation.Result.Reason)
+			require.Contains(t, observation.Result.Error, agent.NoOwnerTraceMessage)
+			require.NotContains(t, observation.Result.Error, "not managed")
+			require.NotContains(t, observation.Result.Error, "Flux")
+		})
+	}
+	t.Run("a read failure stays an error", func(t *testing.T) {
+		observation, err := observe(fixedTracer{err: fmt.Errorf("kustomizations.kustomize.toolkit.fluxcd.io is forbidden")})
+		require.ErrorContains(t, err, "forbidden")
+		require.Nil(t, observation)
+	})
+}

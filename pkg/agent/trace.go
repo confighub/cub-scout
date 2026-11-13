@@ -39,6 +39,10 @@ type TraceResult struct {
 	// Error contains any error encountered during tracing
 	Error string `json:"error,omitempty"`
 
+	// Reason is a stable key for why there is no chain, when that is known.
+	// Callers decide on it; the words in Error are for reading and may change.
+	Reason string `json:"reason,omitempty"`
+
 	// TracedAt is when the trace was performed
 	TracedAt time.Time `json:"tracedAt"`
 
@@ -429,8 +433,49 @@ func (m *MultiTracer) Trace(ctx context.Context, kind, name, namespace string) (
 		},
 		FullyManaged: false,
 		TracedAt:     time.Now(),
-		Error:        "resource not managed by any detected GitOps tool",
+		Error:        NoOwnerTraceMessage,
+		Reason:       TraceReasonNoOwnerMarker,
 	}, nil
+}
+
+// TraceReasonNoOwnerMarker says a trace has no chain because no owner marker
+// was recognised on the resource. That is an observation about its labels
+// and annotations. It is not a finding that nothing manages the resource:
+// an operator, a controller cub-scout has no detector for, or a person may.
+const TraceReasonNoOwnerMarker = "no-owner-marker-recognised"
+
+// The words that go with it. Until 2026-11-13 these read "resource not
+// managed by ...", which states the conclusion the evidence does not reach.
+const (
+	NoOwnerTraceMessage     = "no GitOps owner marker was recognised on this resource"
+	NoFluxOwnerTraceMessage = "no Flux owner marker was recognised on this resource"
+)
+
+// IsNoOwnerTrace reports whether a tracer's result or error text means "no
+// owner marker was recognised". The typed reason decides when it is set; the
+// text is matched for tracers that return only an error, and for the wording
+// the flux CLI and older results use.
+func IsNoOwnerTrace(reason, text string) bool {
+	if reason == TraceReasonNoOwnerMarker {
+		return true
+	}
+	lower := strings.ToLower(strings.TrimSpace(text))
+	if lower == "" {
+		return false
+	}
+	for _, pattern := range []string{
+		"owner marker was recognised",
+		"not managed",
+		"no flux object found",
+		"object not managed",
+		"no helm release found",
+		"not found managing",
+	} {
+		if strings.Contains(lower, pattern) {
+			return true
+		}
+	}
+	return false
 }
 
 // AvailableTracers returns list of available tracer tool names

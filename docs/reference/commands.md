@@ -483,7 +483,7 @@ cub-scout map orphans [flags]
 ```
 
 Shows:
-- Resources where `owner=Native` (not managed by Flux, ArgoCD, Sveltos, Modelplane, Helm, ConfigHub, Crossplane, or kro)
+- Resources where `owner=Native` (no owner marker recognised for Flux, ArgoCD, Sveltos, Modelplane, Helm, ConfigHub, Crossplane, or kro)
 - ArgoCD `Application` resources with explicit `ApplicationSet` lineage that points to a missing generator
 
 ### Examples

@@ -157,6 +157,18 @@ if [[ "$controller" != sveltos ]]; then
   capture explain-bounded.json explain Deployment/argobot -n argobot --bounded --api-version apps/v1 --kube-context "$(KUBECONFIG="$kubeconfig" kubectl config current-context)" --format json
   capture source-truth.json compare source-truth deploy/argobot -n argobot --strategy "confighub-oci-$controller" --format json
   capture map-list.txt map list
+  # A resource with no owner marker: the answer must say that, with its typed
+  # reason, and must not say the resource is not managed.
+  capture trace-no-owner.json trace deploy/coredns -n kube-system --format json
+  python3 - "$out/delivered-workload/trace-no-owner.json" <<'PY'
+import json, sys
+report = json.load(open(sys.argv[1]))
+print("trace of an unmarked resource: reason=%s warnings=%s" % (report.get("reason"), report.get("warnings")))
+if report.get("reason") != "no-owner-marker-recognised":
+    sys.exit("trace gave no typed reason for a resource with no owner marker")
+if any("not managed" in w.lower() for w in report.get("warnings") or []):
+    sys.exit("trace said a resource with no recognised owner marker is not managed")
+PY
   # The identity is read from the workload's origin annotation, and the unit
   # lives on this disposable server, so the ConfigHub surface must be filled.
   python3 - "$out/delivered-workload/source-truth.json" <<'PY'

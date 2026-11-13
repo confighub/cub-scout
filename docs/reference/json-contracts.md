@@ -90,7 +90,12 @@ For MCP, the current rule is:
 
 ## Trace Observation Scope and Partial Results
 
-Normal `trace --format json` adds optional top-level `context` and `warnings`.
+Normal `trace --format json` adds optional top-level `context`, `warnings` and
+`reason`. `reason` is a stable key for why there is no chain, when that is
+known; the one value today is `no-owner-marker-recognised` (added after
+v2.15.1). Decide on `reason`, not on the warning's words: the words say that no
+owner marker was recognised, which does not show that nothing manages the
+resource.
 `context` is the selected Kubernetes context label, not a stable cluster ID or
 proof of a ConfigHub Target binding. `warnings` preserves incomplete-evidence
 messages while retaining the known chain. An unavailable Events read is not an

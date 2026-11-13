@@ -360,6 +360,9 @@ func normalizeKind(kind string) string {
 type TraceOutput struct {
 	Context  string   `json:"context,omitempty"`  // Selection label, not a stable cluster identity.
 	Warnings []string `json:"warnings,omitempty"` // Missing/partial evidence must survive JSON projection.
+	// Reason is a stable key for why there is no chain, when known:
+	// "no-owner-marker-recognised". Decide on this, not on the warning text.
+	Reason string `json:"reason,omitempty"`
 
 	Command          string                       `json:"command"`
 	Target           ResourceID                   `json:"target"`

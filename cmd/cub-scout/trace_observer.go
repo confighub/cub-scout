@@ -7,7 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
+	"time"
 
 	"github.com/confighub/cub-scout/v2/internal/mapsvc"
 	"github.com/confighub/cub-scout/v2/pkg/agent"
@@ -135,8 +135,21 @@ func observeTrace(ctx context.Context, session *traceSession, kind, name, namesp
 			if err == nil {
 				result, err = tracer.Trace(ctx, kind, name, namespace)
 			}
-			if err == nil && (result == nil || (result.Error != "" && !strings.Contains(result.Error, "not managed"))) {
-				err = fmt.Errorf("resource not managed by a detected GitOps tool")
+			switch {
+			case err != nil && agent.IsNoOwnerTrace("", err.Error()):
+				// The Flux reader found no Flux marker, on a resource
+				// detection gave no owner for. That is an answer, not a
+				// failure: report it as one, with its reason, so JSON and
+				// MCP callers get a document and not only an error line.
+				// Seen on real clusters (CI run 43484756241): the command
+				// printed "trace failed: ..." and no JSON at all.
+				result, err = noOwnerMarkerTraceResult(kind, name, namespace), nil
+			case err == nil && result != nil && len(result.Chain) == 0 && agent.IsNoOwnerTrace(result.Reason, result.Error):
+				result = noOwnerMarkerTraceResult(kind, name, namespace)
+			case err == nil && result == nil:
+				err = fmt.Errorf("the tracer returned no result")
+			case err == nil && result.Error != "" && len(result.Chain) == 0:
+				err = fmt.Errorf("%s", result.Error)
 			}
 		}
 	}
@@ -218,4 +231,17 @@ func capturedTraceFluxFactory(session *traceSession) (agent.Tracer, func() error
 		return nil, nil, err
 	}
 	return agent.NewFluxTracerWithConditionReadiness(cli, dynClient), config.Cleanup, nil
+}
+
+// noOwnerMarkerTraceResult is the answer for a resource on which no owner
+// marker was recognised: no chain, the reason typed, and words that say only
+// what was observed. Which tracer looked is left out; "no Flux marker" on an
+// Argo CD cluster reads as if Flux were expected.
+func noOwnerMarkerTraceResult(kind, name, namespace string) *agent.TraceResult {
+	return &agent.TraceResult{
+		Object:   agent.ResourceRef{Kind: kind, Name: name, Namespace: namespace},
+		TracedAt: time.Now(),
+		Error:    agent.NoOwnerTraceMessage,
+		Reason:   agent.TraceReasonNoOwnerMarker,
+	}
 }
