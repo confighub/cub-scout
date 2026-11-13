@@ -2201,6 +2201,34 @@ built with SDK core v0.8.12, refuses it by default.
   on a real cluster; health comparison. No agent eval case (waived; paid runs
   are not approved).
 
+## #882 item 3, the agent plan and principle 10 — 2026-11-13
+
+On the maintainer's instruction ("adopt the plan for now, and keep going with
+882", then "add the five to the public roadmap" and "make this a principle").
+
+- **Plan and principle (#905, merged).** The agent plan (packages A–F,
+  additions G1–G5) is in `docs/roadmap-3.0-execution.md`; the definition and
+  the six questions are in
+  `docs/reference/agentic-gitops-observability.md`; principle 10 is in
+  `CLAUDE.md`. Nothing in the plan is built. Paid runs are still not approved.
+- **#882 item 3.** The `live-status` lane records `trace`, bounded `explain`
+  and `compare source-truth` for the workload `cub cluster up` delivers.
+  Found: source-truth blocked with "not ConfigHub-managed" though the object
+  carries `confighub.com/origin`. Fixed: the identity is read from that
+  annotation; see the readiness ledger for what PASS still does not mean.
+- **Found and not changed.** On Argo CD, `trace` gives an OCI source the kind
+  `OCIRepository`, a Flux kind with no such object in the cluster
+  (`pkg/agent/argo_trace.go`); renaming it changes a pinned JSON value.
+  `trace` does not show the origin annotation. `blockedSafeNextAction` says
+  "verify cub auth" whatever the ConfigHub collection error was.
+- **#882 items left.** 4: `HelmRelease` with an `OCIRepository` chart is
+  handled in code, not seen live; whether `ExternalArtifact` and
+  `ArtifactGenerator` are listed under the right API group is unchecked (the
+  lane now records `api-resources.txt` to settle it). 5: the Flux Web UI's
+  field manager, not looked at. 6: the argobot proposal carries a dated note.
+- **Repository settings.** Topics and a homepage were set on the maintainer's
+  yes. The description is unchanged.
+
 ## #887 after v2.15.0: health, Sveltos, a freshness race — 2026-11-13
 
 On the maintainer's instruction ("start with 887, keep going"). The cluster

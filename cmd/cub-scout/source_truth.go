@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -348,6 +349,61 @@ func sourceTruthObjectFromTyped(kind, name, namespace string, labels, annotation
 	}}
 }
 
+// configHubIdentityOfWorkload reads which ConfigHub unit and space a runtime
+// object says it came from. The combined confighub.com/origin annotation is
+// what ConfigHub writes today (seen on workloads delivered by `cub cluster up`
+// through Flux and Argo CD, CI run 43447867725); the separate UnitSlug and
+// SpaceName metadata is the older form. An origin annotation that is present
+// but unusable, or that conflicts with the older metadata, is an error: the
+// older form never fills in for it. The identity is the object's own claim;
+// reading the unit is what tests it.
+func configHubIdentityOfWorkload(rw *runtimeWorkload) (unit, space, objectRevision string, err *agent.CollectionError) {
+	obj := rw.Object
+	if obj == nil {
+		obj = sourceTruthObjectFromTyped(rw.Kind, rw.Name, rw.Namespace, rw.Labels, rw.Annotations)
+	}
+	// One reading of the object's metadata serves both forms.
+	labels, annotations := obj.GetLabels(), obj.GetAnnotations()
+	legacySpace := firstNonEmpty(annotations["confighub.com/SpaceName"], labels["confighub.com/SpaceName"])
+	if _, present := annotations[agent.ConfigHubOriginAnnotation]; present {
+		origin, omission := agent.BuildConfigHubOriginEvidence(obj)
+		if origin == nil {
+			reason := "it could not be read"
+			if omission != nil {
+				reason = omission.Reason
+			}
+			return "", "", "", &agent.CollectionError{Surface: "confighub", Reason: "runtime object's " + agent.ConfigHubOriginAnnotation + " annotation is not usable: " + reason}
+		}
+		if origin.SpaceSlug != "" && legacySpace != "" && origin.SpaceSlug != legacySpace {
+			return "", "", "", &agent.CollectionError{Surface: "confighub", Reason: "runtime object's " + agent.ConfigHubOriginAnnotation + " annotation and its confighub.com/SpaceName metadata name different spaces"}
+		}
+		// A space ID cannot be checked against a space name, so the older
+		// name does not complete an annotation that gives no slug.
+		space = origin.SpaceSlug
+		if space == "" {
+			return "", "", "", &agent.CollectionError{Surface: "confighub", Reason: "runtime object's " + agent.ConfigHubOriginAnnotation + " annotation names a space ID but no space slug, and the unit is read by slug"}
+		}
+		if origin.RevisionNum != nil {
+			objectRevision = strconv.FormatInt(*origin.RevisionNum, 10)
+		}
+		return origin.UnitSlug, space, objectRevision, nil
+	}
+	unit = firstNonEmpty(labels["confighub.com/UnitSlug"], annotations["confighub.com/UnitSlug"])
+	if unit == "" {
+		return "", "", "", &agent.CollectionError{
+			Surface: "confighub",
+			Reason:  "runtime object has neither a " + agent.ConfigHubOriginAnnotation + " annotation nor confighub.com/UnitSlug metadata; which ConfigHub unit it came from cannot be read from the object",
+		}
+	}
+	if legacySpace == "" {
+		return "", "", "", &agent.CollectionError{
+			Surface: "confighub",
+			Reason:  "runtime object has no confighub.com/SpaceName annotation",
+		}
+	}
+	return unit, legacySpace, "", nil
+}
+
 // collectConfigHubSurface looks up the ConfigHub unit identified by
 // labels/annotations on the runtime object and shells out to `cub unit
 // get` to read the latest revision. v0.1 reads only the head revision —
@@ -358,19 +414,9 @@ func collectConfigHubSurface(ctx context.Context, rw *runtimeWorkload) (*agent.C
 		return nil, &agent.CollectionError{Surface: "confighub", Reason: "no runtime object available"}
 	}
 
-	unitSlug := firstNonEmpty(rw.Labels["confighub.com/UnitSlug"], rw.Annotations["confighub.com/UnitSlug"])
-	if unitSlug == "" {
-		return nil, &agent.CollectionError{
-			Surface: "confighub",
-			Reason:  "runtime object has no confighub.com/UnitSlug label or annotation; not ConfigHub-managed",
-		}
-	}
-	space := firstNonEmpty(rw.Annotations["confighub.com/SpaceName"], rw.Labels["confighub.com/SpaceName"])
-	if space == "" {
-		return nil, &agent.CollectionError{
-			Surface: "confighub",
-			Reason:  "runtime object has no confighub.com/SpaceName annotation",
-		}
+	unitSlug, space, objectRevision, identityErr := configHubIdentityOfWorkload(rw)
+	if identityErr != nil {
+		return nil, identityErr
 	}
 
 	unitJSON, err := sourceTruthUnitGet(ctx, unitSlug, space)
@@ -389,8 +435,9 @@ func collectConfigHubSurface(ctx context.Context, rw *runtimeWorkload) (*agent.C
 	}
 
 	surface := &agent.ConfigHubSurface{
-		Space: space,
-		Unit:  unitSlug,
+		Space:          space,
+		Unit:           unitSlug,
+		ObjectRevision: objectRevision,
 	}
 
 	// `cub unit get` JSON is mixed-case; pull the head revision number

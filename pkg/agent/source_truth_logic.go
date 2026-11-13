@@ -293,10 +293,54 @@ func compareRevisions(strategy SourceTruthStrategy, surfaces SourceTruthSurfaces
 		// File header explains the cross-repo dependency. v0.2 returns
 		// Agreed=true here so existing OCI fixtures retain their v0.1
 		// behaviour; the follow-up PR will tighten this.
+		//
+		// One thing can be told without that digest: the runtime object
+		// names the unit revision it came from, and it is not the head
+		// revision that was read. Then nothing has been shown to agree.
+		// It is a gap and not a mismatch: a head revision that has not
+		// been released yet is ordinary.
+		//
+		// A second: ConfigHub publishes a space's release at
+		// .../space/<slug>. When the controller's source names a space
+		// that is not the one the unit was read from, the two surfaces
+		// are about different things.
+		var gaps []string
+		if c := surfaces.ConfigHub; c != nil && c.ObjectRevision != "" && c.Revision != "" && c.ObjectRevision != c.Revision {
+			gaps = append(gaps, "confighub.object_revision_differs_from_head")
+		}
+		if c, ctrl := surfaces.ConfigHub, surfaces.Controller; c != nil && ctrl != nil && c.Space != "" {
+			if named := configHubSpaceInOCISource(ctrl.Source); named != "" && named != c.Space {
+				gaps = append(gaps, "controller.source_names_another_space")
+			}
+		}
+		if len(gaps) > 0 {
+			return revisionAgreement{Incomplete: true, ProofGaps: gaps}
+		}
 		return revisionAgreement{Agreed: true}
 	}
 	// Unknown / future strategies: don't block.
 	return revisionAgreement{Agreed: true}
+}
+
+// configHubSpaceInOCISource returns the space slug of a source shaped like
+// oci://host/space/<slug>[:tag][@digest], and "" for any other shape, about
+// which nothing is concluded.
+func configHubSpaceInOCISource(source string) string {
+	rest, ok := strings.CutPrefix(strings.TrimSpace(source), "oci://")
+	if !ok {
+		return ""
+	}
+	_, path, ok := strings.Cut(rest, "/")
+	if !ok {
+		return ""
+	}
+	slug, ok := strings.CutPrefix(path, "space/")
+	if !ok || strings.Contains(slug, "/") {
+		return ""
+	}
+	slug, _, _ = strings.Cut(slug, "@")
+	slug, _, _ = strings.Cut(slug, ":")
+	return slug
 }
 
 // compareOCIRevisions performs controller↔runtime OCI digest equality

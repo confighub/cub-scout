@@ -1732,6 +1732,27 @@ cluster identity. JSON remains the canonical evidence contract; `ascii` and
 | `oci-argo` | OCI (non-ConfigHub) → Argo CD → Kubernetes | OCI digest |
 | `oci-flux` | OCI (non-ConfigHub) → Flux → Kubernetes | OCI digest |
 
+Under the `confighub-oci-*` strategies, the ConfigHub unit is the one the
+runtime object itself names: the `confighub.com/origin` annotation (space slug
+and unit slug), which ConfigHub writes on what it delivers, including the
+workloads of a cluster attached with `cub cluster up`; or, on older objects,
+`confighub.com/UnitSlug` with `confighub.com/SpaceName`. An origin annotation
+that cannot be parsed, that gives no space slug, or that disagrees with the
+older metadata, is reported as a collection error; the older metadata never
+stands in for it or completes it. With neither
+present, cub-scout says the unit cannot be read from the object. It does not
+say ConfigHub does not manage it. Added after v2.15.0.
+
+Under these two strategies PASS means the three surfaces were read and the
+controller's source has the declared shape. It does not mean the digest the
+controller pulled was shown to be the one ConfigHub rendered: that equality is
+still deferred. Two cases are caught, each as WATCH with a proof gap: the
+origin annotation names a unit revision (`surfaces.confighub.object_revision`)
+that is not the head revision read (`revision`), which gives
+`confighub.object_revision_differs_from_head`; and the controller's source is
+`oci://<host>/space/<slug>` for a space other than the one the unit was read
+from, which gives `controller.source_names_another_space`.
+
 ### Output contract
 
 Output is JSON only in v0.1. Field shape mirrors the council verdict on #393:
