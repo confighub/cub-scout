@@ -3,6 +3,19 @@
 Status: initial integration shipped for the next release. Remaining correlation
 work is tracked in [#502](https://github.com/confighub/cub-scout/issues/502).
 
+> **Out of date in three places, as of 2026-11-13.** The facts below were true
+> when written. Since then: (1) argobot serves Argo CD, Flux and Sveltos, not
+> Argo CD alone; `cub cluster attach` and `cub cluster up` install it for any
+> of the three. (2) It records live status on each Release (`LiveStatus`), not
+> on the Space annotation `confighub.com/live-status`, which nothing writes
+> any more; cub-scout has read the Release field since v2.14.2 and keeps the
+> annotation only as a fallback for older servers. (3) cub-scout checks that
+> recorded status against the cluster itself
+> ([contract](../reference/json-contracts.md), `clusterCheck`). The decision
+> that cub-scout is the witness and not the sync bot stands. Seen on real
+> clusters in CI for all three controllers; tracked in
+> [#882](https://github.com/confighub/cub-scout/issues/882).
+
 This note captures the current integration facts for ConfigHub's event-consumer
 path and the open-source `argobot` consumer so cub-scout can integrate with the
 right boundary.
