@@ -11,7 +11,10 @@ The five run modes are **standalone CLI/TUI, `cub` plugin, MCP server, watch
 stream, and in-cluster bot**. [Choose a mode](../README.md#five-ways-to-run-cub-scout)
 or [start with a user question](../README.md#user-questions).
 
-Current release: [v2.15.0](releases/v2.15.0.md), which works with ConfigHub
+Current release: [v2.15.1](releases/v2.15.1.md), which corrects
+`compare source-truth`, Flux kind discovery and wording an agent would take at
+face value, and shortens the MCP catalog.
+[v2.15.0](releases/v2.15.0.md) works with ConfigHub
 0.10 and drops what depended on bridge workers.
 [v2.14.2](releases/v2.14.2.md) reads live status from each Release, where
 ConfigHub now records it.

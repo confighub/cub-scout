@@ -1741,7 +1741,7 @@ that cannot be parsed, that gives no space slug, or that disagrees with the
 older metadata, is reported as a collection error; the older metadata never
 stands in for it or completes it. With neither
 present, cub-scout says the unit cannot be read from the object. It does not
-say ConfigHub does not manage it. Added after v2.15.0.
+say ConfigHub does not manage it. Since v2.15.1.
 
 Under these two strategies PASS means: the three surfaces were read, the
 controller's source has the declared shape, and the unit revision the object
