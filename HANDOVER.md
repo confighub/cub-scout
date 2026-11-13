@@ -2201,6 +2201,19 @@ built with SDK core v0.8.12, refuses it by default.
   on a real cluster; health comparison. No agent eval case (waived; paid runs
   are not approved).
 
+## v2.15.1 published — 2026-11-13
+
+Cut on the maintainer's "keep going, cut v2.15.1". Tag on `9fa4f306`, the
+merge commit of the notes PR (#912), after `main` CI passed on it. The
+Release run failed once on a test race before publishing and passed on
+re-run; the race is fixed in #913. Checks on the artifacts are in
+[the notes](docs/releases/v2.15.1.md#publication-checks). Nothing in the
+release was measured with a paid eval run.
+
+Open for the maintainer: the small eval run; telling the consumer of the
+source-truth fixtures that the "agreed" case needs `object_revision`; a
+smaller default MCP tool set.
+
 ## Lessons applied, Flux kinds, catalog size — 2026-11-13 (later)
 
 On the maintainer's instruction ("tell me what the lessons are", "apply those
