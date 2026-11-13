@@ -17,7 +17,9 @@ import (
 //
 //	all    every tool the session can run (the default; unchanged behaviour)
 //	core   a small set, plus cub_scout_more, which reaches the rest
-//	a,b,c  exactly these tools, and nothing else is callable
+//	a,b,c  exactly these tools, and nothing else is callable. This is an
+//	       allow-list, so cub_scout_more, which reaches every tool, cannot be
+//	       named in it.
 
 const (
 	mcpToolProfileAll  = "all"
@@ -55,7 +57,7 @@ func (p mcpToolProfile) offersMore() bool { return !p.all() && p.listed[mcpMoreT
 // or connected, so a profile can be checked at start-up whatever the session
 // is at that moment.
 func knownMCPToolNames() map[string]bool {
-	known := map[string]bool{mcpMoreToolName: true}
+	known := map[string]bool{}
 	for name := range newMCPGatewayWithMode(nil, nil, true).tools {
 		known[name] = true
 	}
@@ -77,16 +79,24 @@ func parseMCPToolProfile(spec string) (mcpToolProfile, error) {
 		}
 		return mcpToolProfile{label: mcpToolProfileCore, listed: listed}, nil
 	}
+	var parts []string
+	for _, part := range strings.Split(spec, ",") {
+		if name := strings.TrimSpace(part); name != "" {
+			parts = append(parts, name)
+		}
+	}
+	if len(parts) == 1 && (strings.EqualFold(parts[0], mcpToolProfileAll) || strings.EqualFold(parts[0], mcpToolProfileCore)) {
+		return parseMCPToolProfile(parts[0])
+	}
 	known := knownMCPToolNames()
 	listed := map[string]bool{}
 	var unknown []string
-	for _, part := range strings.Split(spec, ",") {
-		name := strings.TrimSpace(part)
-		if name == "" {
-			continue
-		}
+	for _, name := range parts {
 		if name == mcpToolProfileAll || name == mcpToolProfileCore {
 			return mcpToolProfile{}, fmt.Errorf("--tools: %q is a profile and cannot be mixed with tool names; use it alone", name)
+		}
+		if name == mcpMoreToolName {
+			return mcpToolProfile{}, fmt.Errorf("--tools: %s reaches every tool, so it cannot be named in an exact list, which allows only the tools it names; use %q to get it", mcpMoreToolName, mcpToolProfileCore)
 		}
 		if !known[name] {
 			unknown = append(unknown, name)
@@ -201,7 +211,15 @@ func (g *mcpGateway) callMore(ctx context.Context, arguments map[string]interfac
 		}
 	}
 	unlisted := g.unlistedTools()
-	name := argString(arguments, "tool")
+	// The name is taken exactly as given: no trimming, as in a direct call.
+	name := ""
+	if rawTool, given := arguments["tool"]; given {
+		text, isString := rawTool.(string)
+		if !isString || text == "" {
+			return mcpToolError(fmt.Sprintf("%s: \"tool\" must be the exact name of a tool, as a string", mcpMoreToolName))
+		}
+		name = text
+	}
 	rawArguments, run := arguments["arguments"]
 
 	if name == "" {
@@ -247,16 +265,19 @@ func (g *mcpGateway) callMore(ctx context.Context, arguments map[string]interfac
 	if !run {
 		return mcpJSONResult(tool.Descriptor)
 	}
-	toolArguments := map[string]interface{}{}
-	if rawArguments != nil {
-		object, isObject := rawArguments.(map[string]interface{})
-		if !isObject {
-			return g.withSchema(name, tool, fmt.Sprintf("%s: \"arguments\" must be an object", mcpMoreToolName))
-		}
-		toolArguments = object
+	// null is not "run with no arguments": leave "arguments" out to describe
+	// the tool, or pass {} to run it with none.
+	toolArguments, isObject := rawArguments.(map[string]interface{})
+	if !isObject {
+		return g.withSchema(name, tool, fmt.Sprintf("%s: \"arguments\" must be an object", mcpMoreToolName))
 	}
 	if problem := mcpArgumentsAgainstSchema(tool.Descriptor.InputSchema, toolArguments); problem != "" {
 		return g.withSchema(name, tool, problem)
+	}
+	// The tool's own argument builder knows rules the schema check above
+	// does not (one-of, value shapes). Its refusal carries the schema too.
+	if _, err := tool.BuildArgs(toolArguments); err != nil {
+		return g.withSchema(name, tool, err.Error())
 	}
 	return g.runNamedTool(ctx, name, tool, toolArguments)
 }
@@ -323,4 +344,24 @@ func mcpJSONResult(value interface{}) map[string]interface{} {
 		"isError": false,
 		"content": []map[string]string{{"type": "text", "text": string(text)}},
 	}
+}
+
+// resolveMCPToolsSpec decides which --tools value applies. The flag, when it
+// was typed, wins over the environment. With --recording the server offers a
+// fixed pair of tools: a typed --tools is a contradiction and is refused, but
+// a value that only came from the environment is ignored, since the person
+// did not ask for it on this command.
+func resolveMCPToolsSpec(flagTyped bool, flagValue, envValue string, recording bool) (string, error) {
+	if flagTyped {
+		if recording {
+			if profile, err := parseMCPToolProfile(flagValue); err != nil || !profile.all() {
+				return "", fmt.Errorf("--tools has no effect with --recording, which serves a fixed pair of tools; drop one of them")
+			}
+		}
+		return flagValue, nil
+	}
+	if recording {
+		return "", nil
+	}
+	return envValue, nil
 }

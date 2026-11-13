@@ -62,13 +62,19 @@ func TestMCPToolProfileParsing(t *testing.T) {
 		t.Errorf("exact list: %+v err=%v", exact, err)
 	}
 	// A connected tool is a known name even when no session exists.
-	if _, err := parseMCPToolProfile("confighub_units,cub_scout_more"); err != nil {
-		t.Errorf("connected tool and cub_scout_more by name: %v", err)
+	if _, err := parseMCPToolProfile("confighub_units,doctor,"); err != nil {
+		t.Errorf("connected tool by name, trailing comma: %v", err)
+	}
+	if trailing, err := parseMCPToolProfile("core,"); err != nil || trailing.label != "core" {
+		t.Errorf("\"core,\": %+v err=%v, want the core profile", trailing, err)
 	}
 	for spec, want := range map[string]string{
-		"doctor,tarce": "unknown tool(s) tarce",
-		"core,trace":   "cannot be mixed",
-		" , ":          "no tool named",
+		"doctor,tarce":          "unknown tool(s) tarce",
+		"core,trace":            "cannot be mixed",
+		"doctor,cub_scout_more": "cannot be named in an exact list",
+		"cub_scout_more":        "cannot be named in an exact list",
+		"Trace":                 "unknown tool(s) Trace",
+		" , ":                   "no tool named",
 	} {
 		if _, err := parseMCPToolProfile(spec); err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("%q: err=%v, want it to say %q", spec, err, want)
@@ -89,6 +95,14 @@ func TestMCPToolProfileAllListsEverythingAsBefore(t *testing.T) {
 		unset, _ := json.Marshal(plain.toolsForList())
 		if string(before) != string(unset) {
 			t.Errorf("connected=%v: a gateway with no profile changed the tool list", connected)
+		}
+		// And the list itself is the one that existed before profiles did.
+		want := []string{"doctor", "explain", "gitops_settings", "gitops_status", "map", "release_check", "scan", "trace"}
+		if connected {
+			want = []string{"compare_source_truth", "compare_three_way", "confighub_attestations", "confighub_changeorder_get", "confighub_changesets", "confighub_k8s_resources", "confighub_k8s_types", "confighub_live_status", "confighub_releases", "confighub_resources", "confighub_unit_events", "confighub_unit_get", "confighub_units", "doctor", "explain", "gitops_settings", "gitops_status", "map", "release_check", "scan", "trace"}
+		}
+		if got := listedNames(plain); !reflect.DeepEqual(got, want) {
+			t.Errorf("connected=%v: default tools = %v, want %v", connected, got, want)
 		}
 	}
 }
@@ -193,14 +207,19 @@ func TestCubScoutMoreRefusesWithTheSchema(t *testing.T) {
 		arguments map[string]interface{}
 		want      []string
 	}{
-		"a missing required argument":      {map[string]interface{}{"tool": "trace", "arguments": map[string]interface{}{}}, []string{"missing required argument(s) resource", "Input schema of trace", `"resource"`}},
-		"an unknown argument":              {map[string]interface{}{"tool": "trace", "arguments": map[string]interface{}{"resource": "deployment/api", "namespce": "prod"}}, []string{"unknown argument(s) namespce", "Input schema of trace"}},
-		"arguments that are not an object": {map[string]interface{}{"tool": "trace", "arguments": "deployment/api"}, []string{"must be an object", "Input schema of trace"}},
-		"a listed tool":                    {map[string]interface{}{"tool": "map"}, []string{"is listed in this session; call it directly"}},
-		"an unknown tool":                  {map[string]interface{}{"tool": "tarce"}, []string{`unknown tool "tarce"`, "trace"}},
-		"itself":                           {map[string]interface{}{"tool": mcpMoreToolName}, []string{"does not run itself"}},
-		"arguments without a tool":         {map[string]interface{}{"arguments": map[string]interface{}{}}, []string{`needs "tool"`}},
-		"a stray argument":                 {map[string]interface{}{"tol": "trace"}, []string{`takes only "tool" and "arguments"`}},
+		"a missing required argument":       {map[string]interface{}{"tool": "trace", "arguments": map[string]interface{}{}}, []string{"missing required argument(s) resource", "Input schema of trace", `"resource"`}},
+		"an unknown argument":               {map[string]interface{}{"tool": "trace", "arguments": map[string]interface{}{"resource": "deployment/api", "namespce": "prod"}}, []string{"unknown argument(s) namespce", "Input schema of trace"}},
+		"arguments that are not an object":  {map[string]interface{}{"tool": "trace", "arguments": "deployment/api"}, []string{"must be an object", "Input schema of trace"}},
+		"a listed tool":                     {map[string]interface{}{"tool": "map"}, []string{"is listed in this session; call it directly"}},
+		"an unknown tool":                   {map[string]interface{}{"tool": "tarce"}, []string{`unknown tool "tarce"`, "trace"}},
+		"itself":                            {map[string]interface{}{"tool": mcpMoreToolName}, []string{"does not run itself"}},
+		"arguments without a tool":          {map[string]interface{}{"arguments": map[string]interface{}{}}, []string{`needs "tool"`}},
+		"a stray argument":                  {map[string]interface{}{"tol": "trace"}, []string{`takes only "tool" and "arguments"`}},
+		"a tool that is not a string":       {map[string]interface{}{"tool": 5}, []string{`"tool" must be the exact name`}},
+		"a null tool":                       {map[string]interface{}{"tool": nil}, []string{`"tool" must be the exact name`}},
+		"a padded name":                     {map[string]interface{}{"tool": " trace "}, []string{`unknown tool " trace "`}},
+		"null arguments":                    {map[string]interface{}{"tool": "scan", "arguments": nil}, []string{"must be an object", "Input schema of scan"}},
+		"a required argument given as null": {map[string]interface{}{"tool": "trace", "arguments": map[string]interface{}{"resource": nil}}, []string{"missing required argument(s) resource"}},
 	} {
 		text, isError := callText(t, gateway, mcpMoreToolName, tc.arguments)
 		if !isError {
@@ -234,7 +253,7 @@ func TestMCPToolProfileDirectCallsToUnlistedTools(t *testing.T) {
 	}
 	text, isError = callText(t, exact, mcpMoreToolName, map[string]interface{}{"tool": "trace", "arguments": arguments})
 	if !isError || !strings.Contains(text, "unknown tool") {
-		t.Errorf("exact list without cub_scout_more must not serve it: %s", text)
+		t.Errorf("an exact list must not serve cub_scout_more: %s", text)
 	}
 	// With no profile cub_scout_more does not exist.
 	text, isError = callText(t, profileGateway(t, "all", false, runner), mcpMoreToolName, nil)
@@ -273,5 +292,90 @@ func TestMCPToolProfileFollowsTheSession(t *testing.T) {
 	}
 	if n := len(gateway.unlistedTools()); n != 15 {
 		t.Errorf("after login cub_scout_more reaches %d tools, want 15 (21 less the 6 listed)", n)
+	}
+}
+
+// A rule only the tool's own argument builder knows (compare_three_way needs
+// scope or view) is refused through the dispatcher with the schema attached,
+// like a rule the schema check knows.
+func TestCubScoutMoreAttachesTheSchemaToTheToolsOwnRefusal(t *testing.T) {
+	runner := func(context.Context, []string) (string, error) {
+		t.Fatal("a refused call must not run anything")
+		return "", nil
+	}
+	gateway := profileGateway(t, "core", true, runner)
+	text, isError := callText(t, gateway, mcpMoreToolName, map[string]interface{}{"tool": "compare_three_way", "arguments": map[string]interface{}{}})
+	if !isError || !strings.Contains(text, "Input schema of compare_three_way") {
+		t.Errorf("refusal without the schema: %s", text)
+	}
+}
+
+// A ConfigHub tool the profile does not list, in a session that cannot run it
+// either: it exists, and the answer says so. It is not "unknown tool".
+func TestMCPToolProfileUnlistedConnectedToolWithoutASession(t *testing.T) {
+	gateway := profileGateway(t, "core", false, func(context.Context, []string) (string, error) {
+		t.Fatal("nothing may run")
+		return "", nil
+	})
+	text, isError := callText(t, gateway, "confighub_releases", map[string]interface{}{"space": "prod"})
+	if !isError || !strings.Contains(text, "exists but is not listed") || strings.Contains(text, "unknown tool") {
+		t.Errorf("direct call to an unlisted connected tool: %s", text)
+	}
+}
+
+// An exact list is an allow-list in every way a caller can try.
+func TestMCPToolProfileExactListIsAnAllowList(t *testing.T) {
+	gateway := profileGateway(t, "doctor,map", true, func(context.Context, []string) (string, error) {
+		t.Fatal("a tool outside the list ran")
+		return "", nil
+	})
+	if got, want := listedNames(gateway), []string{"doctor", "map"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("listed %v, want %v", got, want)
+	}
+	for _, call := range []struct {
+		name      string
+		arguments map[string]interface{}
+	}{
+		{"trace", map[string]interface{}{"resource": "deployment/api"}},
+		{"Trace", map[string]interface{}{"resource": "deployment/api"}},
+		{" trace", map[string]interface{}{"resource": "deployment/api"}},
+		{"confighub_units", map[string]interface{}{"space": "prod"}},
+		{mcpMoreToolName, nil},
+		{mcpMoreToolName, map[string]interface{}{"tool": "trace", "arguments": map[string]interface{}{"resource": "deployment/api"}}},
+	} {
+		if text, isError := callText(t, gateway, call.name, call.arguments); !isError {
+			t.Errorf("%q %v was not refused: %s", call.name, call.arguments, text)
+		}
+	}
+}
+
+func TestResolveMCPToolsSpec(t *testing.T) {
+	cases := []struct {
+		name               string
+		typed              bool
+		flag, env          string
+		recording          bool
+		want, wantErrorHas string
+	}{
+		{name: "nothing set", want: ""},
+		{name: "environment alone", env: "core", want: "core"},
+		{name: "the flag wins", typed: true, flag: "all", env: "core", want: "all"},
+		{name: "an empty flag still wins", typed: true, flag: "", env: "core", want: ""},
+		{name: "recording ignores the environment", env: "core", recording: true, want: ""},
+		{name: "recording with a typed profile is refused", typed: true, flag: "core", recording: true, wantErrorHas: "no effect with --recording"},
+		{name: "recording with a typed list is refused", typed: true, flag: "doctor", recording: true, wantErrorHas: "no effect with --recording"},
+		{name: "recording with --tools all is allowed", typed: true, flag: "all", recording: true, want: "all"},
+	}
+	for _, tc := range cases {
+		got, err := resolveMCPToolsSpec(tc.typed, tc.flag, tc.env, tc.recording)
+		if tc.wantErrorHas != "" {
+			if err == nil || !strings.Contains(err.Error(), tc.wantErrorHas) {
+				t.Errorf("%s: err=%v, want it to say %q", tc.name, err, tc.wantErrorHas)
+			}
+			continue
+		}
+		if err != nil || got != tc.want {
+			t.Errorf("%s: got %q err=%v, want %q", tc.name, got, err, tc.want)
+		}
 	}
 }

@@ -90,7 +90,7 @@ func init() {
 	rootCmd.AddCommand(mcpCmd)
 	mcpCmd.AddCommand(mcpServeCmd)
 	mcpServeCmd.Flags().StringVar(&mcpRecording, "recording", "", "Serve ownership inventory and exact-object explain from this immutable local YAML/JSON recording")
-	mcpServeCmd.Flags().StringVar(&mcpToolsFlag, "tools", "", "Which tools to list: all (default), core (doctor, explain, map, gitops_status and cub_scout_more, which reaches the rest), or a comma-separated list of exact tool names. Also "+mcpToolProfileEnv)
+	mcpServeCmd.Flags().StringVar(&mcpToolsFlag, "tools", "", "Which tools to list: all (default), core (doctor, explain, map, gitops_status and cub_scout_more, which reaches the rest), or a comma-separated list of exact tool names, which is then an allow-list: nothing else can be called. Also "+mcpToolProfileEnv)
 }
 
 type mcpToolRunner func(ctx context.Context, args []string) (string, error)
@@ -186,18 +186,16 @@ type mcpError struct {
 }
 
 func runMCPServe(cmd *cobra.Command, args []string) error {
-	toolsSpec := mcpToolsFlag
-	if !cmd.Flags().Changed("tools") {
-		toolsSpec = os.Getenv(mcpToolProfileEnv)
+	recording := cmd.Flags().Changed("recording") || mcpRecording != ""
+	toolsSpec, err := resolveMCPToolsSpec(cmd.Flags().Changed("tools"), mcpToolsFlag, os.Getenv(mcpToolProfileEnv), recording)
+	if err != nil {
+		return err
 	}
 	profile, err := parseMCPToolProfile(toolsSpec)
 	if err != nil {
 		return err
 	}
-	if cmd.Flags().Changed("recording") || mcpRecording != "" {
-		if !profile.all() {
-			return fmt.Errorf("--tools has no effect with --recording, which serves a fixed pair of tools; drop one of them")
-		}
+	if recording {
 		snapshot, err := readRecordedObjectSnapshot(mcpRecording)
 		if err != nil {
 			return err
