@@ -95,6 +95,31 @@ reason: people use cub-scout too, and the CLI and TUI stay equal renderings of
 one model. The answer is written down, and where it adds nothing for an agent,
 we say so.
 
+## Lessons from real clusters — 2026-11-13
+
+One afternoon of recording cub-scout's answers on real Flux, Argo CD and
+Sveltos clusters in CI, and reading them as an agent would, found the faults
+below. Each became a rule. They are rules for new work and a checklist for
+old; most of cub-scout has not been checked against them.
+
+| What was found | Why a person would not have noticed | The rule |
+|---|---|---|
+| `compare source-truth` said a workload was "not ConfigHub-managed" because one label was missing, though another annotation named its unit. | A person knows where the workload came from and reads past the message. | **Absence is not a negative.** Say what could not be read and from where. Never say what a thing is not. |
+| The same command answered PASS / AGREED under two strategies without comparing a digest. | The word looks like a result. | **A state names what was compared.** If nothing was compared, the state does not say "agrees". |
+| Two Flux kinds were registered under an API group that does not serve them, so they were never found, for nine months. | "Not installed" and "looked for in the wrong place" print the same nothing. | **Record from a real cluster before claiming a read works.** Fixtures we wrote ourselves agree with our mistakes. |
+| On Argo CD, `trace` named a source `OCIRepository/space/...`, a kind with no such object in that cluster. | A person reads it as a description. | **Every object reference resolves.** An agent will try to fetch it. |
+| A blocked answer said "verify cub auth" when the cause was a missing annotation. | A person reads the error above it. | **The next step follows from the cause.** An agent does what `next` says. |
+| A healthy chain printed "timing unavailable ... not found". | A person skims warnings. | **No warnings on the healthy path.** Each one is a detour an agent pays for. |
+| `explain --bounded` failed with "requires --kube-context". | A person adds the flag. | **An error gives the command that would have worked.** One wasted call is one wasted turn. |
+| The standalone MCP catalog is 17,465 bytes, about 4,400 tokens, before any question. `gitops status` JSON for a three-object cluster is 13.5 KB. | A person does not pay by the byte. | **Sizes are declared and checked.** |
+| `compare source-truth` answered in 806 bytes what takes at least 4.9 KB of raw controller objects to work out (one sample, not a benchmark). | | **One question, one small answer** is the shape to copy. |
+| An independent reviewer found a fault in the fix for the first row. | | **The witness rule applies to us.** A second reader that did not write the change. |
+
+What makes an agent want a tool, as far as this shows: calling it ends the
+task in fewer turns, every time; what it says can be acted on without a
+second check; and when it cannot answer, it says so in a way that costs
+nothing to understand.
+
 ## First pass over today's capabilities
 
 Not verified command by command. "Missing" means what an agent would need
