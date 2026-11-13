@@ -34,7 +34,7 @@ func TestDerive_Rules_StrategyRequired(t *testing.T) {
 // all three surfaces populated, controller observes an OCI source.
 func TestDerive_PASS_AGREED(t *testing.T) {
 	ev := Derive(StrategyConfigHubOCIFlux, SourceTruthSurfaces{
-		ConfigHub: &ConfigHubSurface{Space: "demo", Unit: "rag-server", Revision: "47", URL: "https://hub/units/x/y"},
+		ConfigHub: &ConfigHubSurface{Space: "demo", Unit: "rag-server", Revision: "47", ObjectRevision: "47", URL: "https://hub/units/x/y"},
 		Controller: &ControllerSurface{
 			Kind:             "Flux",
 			Source:           "oci://oci.confighub.com/demo/rag-server",

@@ -123,3 +123,26 @@ func TestSourceTruthConfigHubIdentityOfWorkload(t *testing.T) {
 		})
 	}
 }
+
+// The older metadata names a unit and a space but no revision. Before, that
+// was PASS with nothing compared; now the collector reports no object
+// revision and the answer is WATCH.
+func TestSourceTruthOlderMetadataAloneIsNotAnAgreement(t *testing.T) {
+	old := sourceTruthUnitGet
+	sourceTruthUnitGet = func(context.Context, string, string) ([]byte, error) { return []byte(`{"HeadRevisionNum": 3}`), nil }
+	t.Cleanup(func() { sourceTruthUnitGet = old })
+	surface, err := collectConfigHubSurface(context.Background(), &runtimeWorkload{
+		Kind: "Deployment", Namespace: "demo", Name: "api",
+		Labels:      map[string]string{"confighub.com/UnitSlug": "api"},
+		Annotations: map[string]string{"confighub.com/SpaceName": "demo"},
+	})
+	require.NoError(t, err)
+	require.Empty(t, surface.ObjectRevision)
+	ev := agent.Derive(agent.StrategyConfigHubOCIFlux, agent.SourceTruthSurfaces{
+		ConfigHub:  surface,
+		Controller: &agent.ControllerSurface{Kind: "Flux", Source: "oci://registry.example/space/demo", RevisionOrDigest: "latest@sha256:08289f07c2da7e29d1e155507137b1f924e71d95a202db1b7eafefcc7e58bae8", Health: "Ready"},
+		Runtime:    &agent.RuntimeSurface{Resource: "Deployment/api in demo", Field: "spec.template.spec.containers[0].image", Value: "example/api:1", Health: "Current"},
+	})
+	require.Equal(t, agent.StatusWATCH, ev.Status)
+	require.Contains(t, ev.ProofGaps, "confighub.object_revision")
+}

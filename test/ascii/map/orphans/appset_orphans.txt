@@ -1,7 +1,7 @@
 
 ORPHAN RESOURCES
 ════════════════════════════════════════════════════════════════════
-Resources not managed by known owners (Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, ConfigHub).
+Resources with no owner marker cub-scout recognises (Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, ConfigHub).
 These may be: legacy systems, manual hotfixes, debug pods, or shadow IT.
 Also includes Argo Applications with explicit links to missing ApplicationSets.
 
@@ -14,7 +14,7 @@ Total: 1 resources
 By Owner: Native(1)
 
 TRY NEXT:
-  - Found 1 unmanaged resource - these lack GitOps ownership and may drift: cub-scout map orphans
+  - Found 1 resource with no owner marker cub-scout recognises (Native) - that does not show nobody manages them: cub-scout map orphans
   - Trace one resource end-to-end to see its full ownership chain: cub-scout explain configmap/debug-config -n default
   - Get a one-command health summary across ownership, drift, and risks: cub-scout doctor
 

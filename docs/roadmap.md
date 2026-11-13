@@ -189,6 +189,21 @@ issue is filed for these yet; file one when a package starts.
 - [ ] Go through each capability with the six questions in
   [the principle](reference/agentic-gitops-observability.md#the-principle)
   and correct the first-pass table there.
+- [ ] Lessons, absence is not a negative: `trace` JSON still carries
+  `"error": "resource not managed by ..."` for a resource with no recognised
+  owner marker. The string is also matched by substring in `explain` and the
+  tracers, so it needs a typed reason before the words can change.
+- [ ] Lessons, same rule: the `orphans` / "unmanaged" vocabulary in command
+  names, help, the TUI, skills and docs. `Native` means no owner marker was
+  recognised; it does not prove nobody manages the object.
+- [ ] Lessons, no warnings on the healthy path: a test that a healthy recorded
+  chain produces no warning in `trace`, `explain` or `gitops status`.
+- [ ] Lessons, an error gives the command that works: go through the flag
+  and argument errors of every command an MCP tool wraps.
+- [ ] Lessons, sizes: `gitops status --format json` was 13.5 KB for a cluster
+  with three delivery objects.
+- [ ] `compare source-truth` under the ConfigHub OCI strategies: compare the
+  controller's digest with the Release's, as the live-status check does.
 - [ ] A read-only Channel as the route for an agent with no cluster access
   (#898 stays not planned; noted so the idea is kept).
 

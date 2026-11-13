@@ -507,7 +507,7 @@ func projectArgoApplicationTraceToResource(result *agent.TraceResult, kind, name
 
 func isExplainSourceLink(kind string) bool {
 	switch strings.TrimSpace(kind) {
-	case "Source", "HelmChart", "ConfigHub OCI", "OCIRepository", "GitRepository":
+	case "Source", "HelmChart", "ConfigHub OCI", "OCIRepository", "OCI", "GitRepository":
 		return true
 	default:
 		return false

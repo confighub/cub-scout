@@ -17,5 +17,5 @@
       "health": "Current"
     }
   },
-  "safe_next_action": "Read-only diagnostic: cannot fetch ConfigHub (verify `cub` auth and connectivity). Resolve the auth/CLI gap and re-run."
+  "safe_next_action": "Read-only diagnostic: cannot fetch ConfigHub (collection_errors gives the reason). Resolve what is named and re-run."
 }

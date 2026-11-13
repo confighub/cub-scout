@@ -111,8 +111,8 @@ func TestArgoTracerConfigHubOCIDetection(t *testing.T) {
 							t.Errorf("Kind = %q, want %q", sourceLink.Kind, "ConfigHub OCI")
 						}
 					} else {
-						if sourceLink.Kind != "OCIRepository" {
-							t.Errorf("Kind = %q, want %q for generic OCI", sourceLink.Kind, "OCIRepository")
+						if sourceLink.Kind != "OCI" {
+							t.Errorf("Kind = %q, want %q for generic OCI", sourceLink.Kind, "OCI")
 						}
 					}
 				}

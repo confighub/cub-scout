@@ -58,7 +58,7 @@ func boundedExplainRef(args []string, apiVersion, namespace, kubeContext string)
 		return ref, fmt.Errorf("bounded explain requires exact Kind/name")
 	}
 	if strings.TrimSpace(kubeContext) == "" {
-		return ref, fmt.Errorf("bounded explain requires --kube-context")
+		return ref, fmt.Errorf("bounded explain requires --kube-context; for the current context add: --kube-context \"$(kubectl config current-context)\"")
 	}
 	return ref, ref.Validate()
 }
@@ -109,7 +109,7 @@ func (s *boundedExplainSession) forContext(kubeContext string) (*agent.BoundedRe
 		return nil, err
 	}
 	if strings.TrimSpace(kubeContext) == "" {
-		return fail(fmt.Errorf("bounded explain requires --kube-context"))
+		return fail(fmt.Errorf("bounded explain requires --kube-context; for the current context add: --kube-context \"$(kubectl config current-context)\""))
 	}
 	if s.pinnedConfig != nil {
 		if kubeContext != s.pinnedContext {

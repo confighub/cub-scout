@@ -1743,8 +1743,8 @@ func runTraceDiff(ctx context.Context, kind, name, namespace string) error {
 			"cub-scout map activity --owner Modelplane",
 		})
 	default:
-		fmt.Printf("%s⚠ Resource is not managed by GitOps (owner: %s)%s\n", colorYellow, ownershipLabel(ownership), colorReset)
-		fmt.Printf("%s  Cannot show diff for unmanaged resources.%s\n", colorDim, colorReset)
+		fmt.Printf("%s⚠ No GitOps owner marker was recognised on this resource (owner: %s)%s\n", colorYellow, ownershipLabel(ownership), colorReset)
+		fmt.Printf("%s  There is no diff to show without a recognised GitOps owner.%s\n", colorDim, colorReset)
 		fmt.Printf("%s  Consider importing to GitOps: cub-scout import%s\n", colorDim, colorReset)
 		fmt.Printf("\n")
 		return nil

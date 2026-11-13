@@ -7,7 +7,8 @@
     "confighub": {
       "space": "demo",
       "unit": "rag-server",
-      "revision": "47"
+      "revision": "47",
+      "object_revision": "47"
     },
     "controller": {
       "kind": "Flux",

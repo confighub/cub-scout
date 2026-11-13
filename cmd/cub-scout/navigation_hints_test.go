@@ -197,13 +197,13 @@ func TestHintRationale_ContainsWhyText(t *testing.T) {
 	// The orphan hint should explain WHY it matters
 	found := false
 	for _, h := range hints {
-		if strings.Contains(h, "unmanaged") && strings.Contains(h, "GitOps ownership") {
+		if strings.Contains(h, "no owner marker cub-scout recognises") && strings.Contains(h, "does not show nobody manages them") {
 			found = true
 			break
 		}
 	}
 	if !found {
-		t.Fatalf("expected rationale about GitOps ownership in hints:\n%v", hints)
+		t.Fatalf("expected a rationale that says what was and was not observed:\n%v", hints)
 	}
 }
 
@@ -548,10 +548,10 @@ func TestHintRationale_SingularVsPlural(t *testing.T) {
 		}
 	}
 
-	if !strings.Contains(rationale1, "1 unmanaged resource") {
+	if !strings.Contains(rationale1, "Found 1 resource with") {
 		t.Fatalf("expected singular 'resource' for count=1, got: %q", rationale1)
 	}
-	if !strings.Contains(rationale5, "5 unmanaged resources") {
+	if !strings.Contains(rationale5, "Found 5 resources with") {
 		t.Fatalf("expected plural 'resources' for count=5, got: %q", rationale5)
 	}
 }
