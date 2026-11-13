@@ -245,30 +245,30 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
-						"context": map[string]interface{}{"type": "string", "description": "Optional exact Kubernetes kubeconfig context for every doctor read; never inferred from ConfigHub target names."},
+						"context": map[string]interface{}{"type": "string", "description": "Exact kubeconfig context for every read; never inferred from ConfigHub Target names."},
 						"namespace": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional namespace scope (default: all namespaces).",
+							"description": "Namespace scope (default: all).",
 						},
 						"top": map[string]interface{}{
 							"type":        "integer",
-							"description": "Number of top issues to include (default: 3).",
+							"description": "Top issues to include (default 3).",
 						},
 						"with_confighub": map[string]interface{}{
 							"type":        "boolean",
-							"description": "Include bounded ConfigHub release, unit-event, live-status, and event-consumer evidence. Requires cub auth for connected rows.",
+							"description": "Add bounded ConfigHub release, unit-event, live-status and event-consumer evidence. Needs cub auth.",
 						},
 						"confighub_space": map[string]interface{}{
 							"type":        "string",
-							"description": "ConfigHub space for connected evidence. When omitted, the ConfigHub reads are skipped and reported as a confighub.scope omission: cub has no default space, and the server's CUB_SPACE is not used. Pass '*' only for an explicit all-spaces read.",
+							"description": "ConfigHub space. Omitted: ConfigHub reads are skipped and reported as a confighub.scope omission (there is no default space). '*' reads all spaces.",
 						},
 						"confighub_since": map[string]interface{}{
 							"type":        "string",
-							"description": "Lookback window for connected release/event evidence, for example 24h or 7d.",
+							"description": "Lookback for release/event evidence, e.g. 24h, 7d.",
 						},
 						"confighub_stale_after": map[string]interface{}{
 							"type":        "string",
-							"description": "Treat live-status writeback older than this as stale, for example 15m.",
+							"description": "Live status older than this is stale, e.g. 15m.",
 						},
 					},
 					"additionalProperties": false,
@@ -309,14 +309,14 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"map": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "map",
-				Description: "Standalone resource inventory with ownership classification (map list --json). Use for 'what's running in this cluster or namespace?', 'how many does Flux manage?' and 'which workloads are unmanaged?', especially when the user wants more meaning than raw `kubectl get` output. On a large cluster the full list can be too big for your context: ask for summary=true (counts by owner and kind) or names_only=true, and filter with kind, owner or query (for example kind=Deployment, owner=Native). The optional context selects one exact kubeconfig context for this inventory read; absent context keeps the current default. Opt in to ownership_evidence=true only when detector sources and list omissions are needed; it returns a versioned compact diagnostics envelope and cannot be combined with compact output modes. A no-known-marker result is limited to the returned object's metadata and does not prove orphaning. DO NOT load for bare 'what's broken?' or one-resource root cause; use doctor first for health, then explain for a specific resource.",
+				Description: "Standalone resource inventory with ownership classification (map list --json). Use for 'what's running in this cluster or namespace?', 'how many does Flux manage?' and 'which workloads are unmanaged?', with more meaning than raw `kubectl get` output. The full list can be too big for your context on a large cluster: use summary=true or names_only=true, and filter with kind, owner or query. The optional context selects one exact kubeconfig context; absent context keeps the current default. Use ownership_evidence=true only when detector sources and list omissions are needed; it returns a versioned compact diagnostics envelope. A no-known-marker result is limited to the returned object's metadata and does not prove orphaning. DO NOT load for bare 'what's broken?' or one-resource root cause; use doctor first for health, then explain for a specific resource.",
 				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
 						"context": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional exact kubeconfig context for this map inventory read. When supplied, a missing or empty name fails; it never falls back to the current or in-cluster context.",
+							"description": "Exact kubeconfig context for this read. An empty or unknown name fails; no fallback.",
 						},
 						"namespace": map[string]interface{}{
 							"type":        "string",
@@ -324,35 +324,35 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						},
 						"kind": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional kind filter, for example Deployment.",
+							"description": "Kind filter, e.g. Deployment.",
 						},
 						"owner": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional owner filter: Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, Terraform, ConfigHub, or Native (managed by none of them).",
+							"description": "Owner filter: Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, Terraform, ConfigHub, or Native (no owner marker recognised).",
 						},
 						"query": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional query expression, for example 'kind=Deployment AND owner!=Native'.",
+							"description": "Query, e.g. 'kind=Deployment AND owner!=Native'.",
 						},
 						"ownership_evidence": map[string]interface{}{
 							"type":        "boolean",
-							"description": "Return per-entry canonical ownership detector sources and normalized list omissions. Cannot be combined with summary, names_only, or count.",
+							"description": "Return each entry's ownership detector sources and the list omissions. Not with summary, names_only or count.",
 						},
 						"cluster_identity": map[string]interface{}{
 							"type":        "boolean",
-							"description": "Opt in to one extra bounded kube-system Namespace GET on the captured inventory client. Returns a separate cluster-identity envelope retaining identity/list omissions even for empty inventory. cluster.cost covers only the identity reader, not map inventory or authentication. Cannot combine with ownership_evidence, summary, names_only, or count.",
+							"description": "Add one kube-system Namespace GET and return a cluster-identity envelope, with identity/list omissions kept even for an empty inventory. cluster.cost covers that read only. Not with ownership_evidence, summary, names_only or count.",
 						},
 						"summary": map[string]interface{}{
 							"type":        "boolean",
-							"description": "Return counts by owner and kind (after filters) instead of the entries.",
+							"description": "Return counts by owner and kind, after filters.",
 						},
 						"names_only": map[string]interface{}{
 							"type":        "boolean",
-							"description": "Return namespace/name per entry instead of full entries.",
+							"description": "Return namespace/name only.",
 						},
 						"count": map[string]interface{}{
 							"type":        "boolean",
-							"description": "Return only the number of entries after filters.",
+							"description": "Return only the count, after filters.",
 						},
 					},
 					"additionalProperties": false,
@@ -430,7 +430,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
-						"context": map[string]interface{}{"type": "string", "description": "Optional exact Kubernetes kubeconfig context for this live scan."},
+						"context": map[string]interface{}{"type": "string", "description": "Exact kubeconfig context for this scan."},
 						"namespace": map[string]interface{}{
 							"type":        "string",
 							"description": "Optional namespace filter.",
@@ -457,12 +457,12 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"trace": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "trace",
-				Description: "Exact ownership and source chain for one resource (trace --format json). Use when the user needs the resource's owner, deployer, or GitOps/source chain after the resource is known. Optional diff compares one object from an already-rendered local manifest with the selected live object; it is authored-field-only, not controller desired state, resource-set completeness, or a next-reconciliation prediction. This answers ownership/source lineage, not which field writer made a change; do not call trace just to confirm an explain result about manual-edit attribution. DO NOT load for broad cluster status or first-pass troubleshooting; use doctor when the resource or problem scope is still unclear.",
+				Description: "Exact ownership and source chain for one resource (trace --format json). Use when the user needs the resource's owner, deployer, or GitOps/source chain after the resource is known. Optional diff compares one object from an already-rendered local manifest with the live object: authored fields only, not controller desired state or a prediction of the next reconciliation. This answers ownership/source lineage, not which field writer made a change; do not call trace just to confirm an explain result about manual-edit attribution. DO NOT load for broad cluster status or first-pass troubleshooting; use doctor when the resource or problem scope is still unclear.",
 				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
-						"context": map[string]interface{}{"type": "string", "description": "Optional exact kubeconfig context for all trace reads. Empty or missing named contexts fail without fallback."},
+						"context": map[string]interface{}{"type": "string", "description": "Exact kubeconfig context for all reads. An empty or unknown name fails; no fallback."},
 						"resource": map[string]interface{}{
 							"type":        "string",
 							"description": "Resource selector as kind/name (for example deployment/api).",
@@ -473,15 +473,15 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						},
 						"diff": map[string]interface{}{
 							"type":        "boolean",
-							"description": "Compare one object from an already-rendered local file/directory with the selected live object. This is not controller desired state.",
+							"description": "Compare one object from desired_file with the live object. Not controller desired state.",
 						},
 						"desired_file": map[string]interface{}{
 							"type":        "string",
-							"description": "Local path to already-rendered Kubernetes manifests; required when diff is true.",
+							"description": "Path to already-rendered manifests; required when diff is true.",
 						},
 						"api_version": map[string]interface{}{
 							"type":        "string",
-							"description": "Exact API version to disambiguate same-kind/name documents in the rendered input.",
+							"description": "API version, to tell apart same-kind/name documents in desired_file.",
 						},
 					},
 					"required":             []string{"resource"},
@@ -548,11 +548,11 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
-						"bounded":           map[string]interface{}{"type": "boolean", "description": "Read only the exact API object, with no controller/ConfigHub/event/pod enrichment. Requires api_version and context. This stdio session reuses observations for at most 15 seconds; CLI processes do not share the cache."},
-						"api_version":       map[string]interface{}{"type": "string", "description": "Exact API version for bounded reads, for example apps/v1."},
-						"context":           map[string]interface{}{"type": "string", "description": "Exact kube context for all Kubernetes reads, including enriched Explain (CLI --kube-context). Empty or unknown selectors fail without fallback. Never inferred from ConfigHub Target names."},
-						"refresh":           map[string]interface{}{"type": "boolean", "description": "Force a new bounded observation rather than reuse the session cache."},
-						"expected_revision": map[string]interface{}{"type": "string", "description": "Full lowercase 40-hex Git commit or sha256:64-hex artifact digest to compare with one controller report. Requires bounded=true. Supports single-source Application and Kustomization v1; not workload convergence, controller liveness or application success."},
+						"bounded":           map[string]interface{}{"type": "boolean", "description": "Read only the exact API object, with no controller, ConfigHub, event or pod enrichment. Requires api_version and context. Observations are reused for at most 15 seconds in this session."},
+						"api_version":       map[string]interface{}{"type": "string", "description": "Exact API version for bounded reads, e.g. apps/v1."},
+						"context":           map[string]interface{}{"type": "string", "description": "Exact kubeconfig context for all reads. An empty or unknown name fails; no fallback. Never inferred from ConfigHub Target names."},
+						"refresh":           map[string]interface{}{"type": "boolean", "description": "Force a new bounded observation."},
+						"expected_revision": map[string]interface{}{"type": "string", "description": "40-hex Git commit or sha256:64-hex digest to compare with one controller report. Requires bounded=true. Single-source Application and Kustomization v1 only; says nothing of workload convergence or application success."},
 						"resource": map[string]interface{}{
 							"type":        "string",
 							"description": "Resource selector as kind/name; bounded reads require exact Kind casing (for example Deployment/api).",
@@ -563,7 +563,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						},
 						"field_path": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional exact canonical managedFields path (for example .spec.template.spec.containers[name=\"api\"].image); wildcard selectors are rejected and only an exact decoded path is returned. Returns evidence for this path only, without resource-level fallback.",
+							"description": "Exact canonical managedFields path, e.g. .spec.template.spec.containers[name=\"api\"].image. Wildcards are rejected. Returns evidence for this path only, without resource-level fallback.",
 						},
 					},
 					"required":             []string{"resource"},
@@ -627,34 +627,34 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"gitops_status": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "gitops_status",
-				Description: "Standalone GitOps/controller delivery status (gitops status --format json). Use when the user asks whether delegated delivery is healthy, whether an app or source revision is synced, what controller families cub-scout actually inspected, or whether missing status is absence vs RBAC/API omission. Returns backend, transport, sources, deployers, source/build/apply/sync stages, and controllerCoverage[] for Flux, Argo CD, ConfigHub, Sveltos, and Modelplane. Optional sveltosControllerReports preserves delivery features and continuous-health conditions separately with source identities, reported references and omissions; workloadHealth/checkFreshness remain unknown. Optional ConfigHub evidence is bounded by space and time; when present, revisionCorrelation compares the reported full digest with bounded same-SpaceID release manifestDigest values. That is string correlation, not proof of fetch, application, execution, or gate acceptance, and does not change freshness verdicts. DO NOT use to force sync, retry delivery, or declare application success by itself; it is read-only evidence.",
+				Description: "Standalone GitOps/controller delivery status (gitops status --format json). Use when the user asks whether delegated delivery is healthy, whether an app or source revision is synced, what controller families cub-scout actually inspected, or whether missing status is absence vs RBAC/API omission. Returns backend, transport, sources, deployers, source/build/apply/sync stages, and controllerCoverage[] for Flux, Argo CD, ConfigHub, Sveltos, and Modelplane. sveltosControllerReports keeps Sveltos delivery and health conditions separate; workloadHealth and checkFreshness stay unknown. Optional ConfigHub evidence is bounded by space and time; revisionCorrelation compares the reported full digest with release manifestDigest values of the same space. That is string correlation, not proof of fetch, application or gate acceptance. DO NOT use to force sync, retry delivery, or declare application success by itself; it is read-only evidence.",
 				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
 						"namespace": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional Kubernetes namespace scope.",
+							"description": "Namespace scope.",
 						},
 						"context": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional exact kubeconfig context label for all Kubernetes reads. This is a label, not a stable cluster identity.",
+							"description": "Exact kubeconfig context for all reads; a label, not a cluster identity.",
 						},
 						"with_confighub": map[string]interface{}{
 							"type":        "boolean",
-							"description": "Include bounded ConfigHub release, unit-event, live-status, and event-consumer evidence. Requires cub auth.",
+							"description": "Add bounded ConfigHub release, unit-event, live-status and event-consumer evidence. Needs cub auth.",
 						},
 						"confighub_space": map[string]interface{}{
 							"type":        "string",
-							"description": "ConfigHub space for connected evidence. When omitted, the ConfigHub reads are skipped and reported as a confighub.scope omission: cub has no default space, and the server's CUB_SPACE is not used. Pass '*' only for an explicit all-spaces read.",
+							"description": "ConfigHub space. Omitted: ConfigHub reads are skipped and reported as a confighub.scope omission (there is no default space). '*' reads all spaces.",
 						},
 						"confighub_since": map[string]interface{}{
 							"type":        "string",
-							"description": "Lookback window for connected release/event evidence, for example 24h or 7d.",
+							"description": "Lookback for release/event evidence, e.g. 24h, 7d.",
 						},
 						"confighub_stale_after": map[string]interface{}{
 							"type":        "string",
-							"description": "Treat live-status writeback older than this as stale, for example 15m.",
+							"description": "Live status older than this is stale, e.g. 15m.",
 						},
 					},
 					"additionalProperties": false,
@@ -690,33 +690,33 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		"gitops_settings": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "gitops_settings",
-				Description: "Standalone inventory of the delivery settings GitOps deployers declare (gitops settings --format json). Use when the user asks which Argo CD Applications or Flux Kustomizations/HelmReleases sync automatically, self-heal, prune, are suspended, detect drift, or use a given sync or apply option, or which deployers share a setting. With no arguments one call covers every Application, Kustomization and HelmRelease the caller may list; pass setting to get only the deployers that match, for example [\"self-heal=off\"]. Argo CD policies are auto-sync, self-heal and prune; sync options keep their own names and values (Validate=false, ServerSideApply=true); Flux fields keep theirs (suspend, prune, force, wait, driftDetection.mode, upgrade.force). A field that is absent is value unset with the controller default in default and effective; for an Application without automated sync, self-heal and prune are n/a, not off. reads[] says whether each kind was read, not_installed or not_read: a kind that is not_read is unknown, not empty, and complete is then false. These are settings declared in each spec. DO NOT use this to decide whether a controller acted on a setting, whether delivery is healthy (use gitops_status), who changed a field (use explain), or whether a setting is acceptable: it gives no verdict.",
+				Description: "Standalone inventory of the delivery settings GitOps deployers declare (gitops settings --format json). Use when the user asks which Argo CD Applications or Flux Kustomizations/HelmReleases sync automatically, self-heal, prune, are suspended, detect drift, or use a given sync or apply option, or which deployers share a setting. With no arguments one call covers every Application, Kustomization and HelmRelease the caller may list; pass setting to get only the matching deployers, for example [\"self-heal=off\"]. Settings keep the controllers' own names (Validate=false, driftDetection.mode). An absent field is unset, with the controller default shown; for an Application without automated sync, self-heal and prune are n/a, not off. In reads[], a kind that is not_read is unknown, not empty. These are settings declared in each spec. DO NOT use this to decide whether a controller acted on a setting, whether delivery is healthy (use gitops_status), who changed a field (use explain), or whether a setting is acceptable: it gives no verdict.",
 				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
 						"namespace": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional namespace of the deployer objects (not of the workloads they deliver).",
+							"description": "Namespace of the deployer objects, not of their workloads.",
 						},
 						"context": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional exact kubeconfig context label for all Kubernetes reads. This is a label, not a stable cluster identity.",
+							"description": "Exact kubeconfig context for all reads; a label, not a cluster identity.",
 						},
 						"project": map[string]interface{}{
 							"type":        "array",
 							"items":       map[string]interface{}{"type": "string"},
-							"description": "Optional Argo CD project names. Flux objects have no project and are left out when this is set; notes[] says how many.",
+							"description": "Argo CD project names. Flux objects have no project and are left out; notes[] says how many.",
 						},
 						"setting": map[string]interface{}{
 							"type":        "array",
 							"items":       map[string]interface{}{"type": "string"},
-							"description": "Optional filters, each name or name=value; all must match. Names are exact: prune is the automated-prune policy, Prune is the sync option. on/true and off/false are interchangeable. A value also matches a deployer that leaves the field unset when the controller default is that value. A name alone matches deployers whose spec declares that setting.",
+							"description": "Filters, each name or name=value; all must match. Names are exact: prune is the automated-prune policy, Prune the sync option. on/true and off/false are the same. A value also matches a deployer that leaves the field unset when that is the controller default. A name alone matches deployers that declare it.",
 						},
 						"view": map[string]interface{}{
 							"type":        "string",
 							"enum":        []string{deliverySettingsViewSummary, deliverySettingsViewDeployers, deliverySettingsViewGroups, deliverySettingsViewSettings, deliverySettingsViewAll},
-							"description": "Which view to return. summary (default, smallest): per Argo CD project or Flux namespace, settings maps each setting to its values and each value to the deployers that have it, as namespace/name; unset lists the deployers counted under a controller default. deployers: one entry per object with every setting, its spec path, default, Argo CD UI link and ignore rules. groups and settings: the summary's content as verbose objects, per project or namespace and per kind. all: groups, settings and deployers together; much larger.",
+							"description": "summary (default, smallest): per Argo CD project or Flux namespace, each setting's values and the deployers that have each. deployers: one entry per object with every setting, its spec path and default. groups, settings: the summary as verbose objects. all: everything; much larger.",
 						},
 					},
 					"additionalProperties": false,
@@ -792,7 +792,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 					"type": "object",
 					"properties": map[string]interface{}{
 						"view":    map[string]interface{}{"type": "string", "description": "View UUID or View Explorer URL; mutually exclusive with scope. Unit membership uses exact UnitID or space ID plus slug."},
-						"context": map[string]interface{}{"type": "string", "description": "Optional exact kubeconfig context for every comparison read. Never inferred from ConfigHub targets; explicit empty or unknown selectors fail without fallback."},
+						"context": map[string]interface{}{"type": "string", "description": "Exact kubeconfig context for every read. An empty or unknown name fails; no fallback. Never inferred from ConfigHub targets."},
 						"scope": map[string]interface{}{
 							"type":        "string",
 							"description": "Scope when view is omitted: <kind/name>, resource:<kind/name>, namespace/<ns>, or cluster.",
@@ -906,7 +906,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 					"properties": map[string]interface{}{
 						"space": map[string]interface{}{
 							"type":        "string",
-							"description": "Required ConfigHub space slug or ID, or '*' for a deliberate all-spaces read. cub has no default space.",
+							"description": "Required space slug or ID ('*' for a deliberate all-spaces read). There is no default space.",
 						},
 						"where": map[string]interface{}{
 							"type":        "string",
@@ -940,7 +940,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 					"properties": map[string]interface{}{
 						"type": map[string]interface{}{
 							"type":        "string",
-							"description": "Required Kubernetes resource type selector accepted by cub k8s get, such as deploy, svc, all, Kind, or apps/v1/Deployment. Comma-separated types are allowed.",
+							"description": "Required resource type as cub k8s get takes it: deploy, svc, all, Kind or apps/v1/Deployment; comma-separated allowed.",
 						},
 						"names": map[string]interface{}{
 							"type":        "array",
@@ -951,11 +951,11 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						},
 						"space": map[string]interface{}{
 							"type":        "string",
-							"description": "ConfigHub space slug or ID; use '*' only for an explicit all-spaces read. Required unless target is provided.",
+							"description": "Space slug or ID ('*' for a deliberate all-spaces read). Required unless target is given.",
 						},
 						"target": map[string]interface{}{
 							"type":        "array",
-							"description": "Optional ConfigHub target scopes in space-slug/target-slug form. Required unless space is provided.",
+							"description": "Targets as space-slug/target-slug. Required unless space is given.",
 							"items": map[string]interface{}{
 								"type": "string",
 							},
@@ -966,11 +966,11 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						},
 						"where": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional ConfigHub entity filter passed to --where, such as Unit.Slug or Space.Labels predicates.",
+							"description": "Entity filter for --where, e.g. Unit.Slug or Space.Labels predicates.",
 						},
 						"where_resource": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional resource-configuration filter passed to --where-resource, such as spec.replicas > 1.",
+							"description": "Resource filter for --where-resource, e.g. spec.replicas > 1.",
 						},
 						"show": map[string]interface{}{
 							"type":        "string",
@@ -1036,15 +1036,15 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 					"properties": map[string]interface{}{
 						"type": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional Kubernetes resource type selector accepted by cub k8s types, such as all, deploy, Kind, or apps/v1/Deployment. Comma-separated types are allowed.",
+							"description": "Resource type as cub k8s types takes it: all, deploy, Kind or apps/v1/Deployment; comma-separated allowed.",
 						},
 						"space": map[string]interface{}{
 							"type":        "string",
-							"description": "ConfigHub space slug or ID; use '*' only for an explicit all-spaces read. Required unless target is provided.",
+							"description": "Space slug or ID ('*' for a deliberate all-spaces read). Required unless target is given.",
 						},
 						"target": map[string]interface{}{
 							"type":        "array",
-							"description": "Optional ConfigHub target scopes in space-slug/target-slug form. Required unless space is provided.",
+							"description": "Targets as space-slug/target-slug. Required unless space is given.",
 							"items": map[string]interface{}{
 								"type": "string",
 							},
@@ -1055,11 +1055,11 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						},
 						"where": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional ConfigHub entity filter passed to --where, such as Unit.Slug or Space.Labels predicates.",
+							"description": "Entity filter for --where, e.g. Unit.Slug or Space.Labels predicates.",
 						},
 						"where_resource": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional resource-configuration filter passed to --where-resource, such as spec.replicas > 1.",
+							"description": "Resource filter for --where-resource, e.g. spec.replicas > 1.",
 						},
 					},
 					"additionalProperties": false,
@@ -1111,7 +1111,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						},
 						"since": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional window for the Release read, such as 24h (default) or 7d. A Release created before it is not read, so its status is not shown.",
+							"description": "Window for the Release read, e.g. 24h (default) or 7d. A Release created earlier is not read, so its status is not shown.",
 						},
 					},
 					"required":             []string{"space"},
@@ -1143,7 +1143,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 					"properties": map[string]interface{}{
 						"space": map[string]interface{}{
 							"type":        "string",
-							"description": "Required ConfigHub space slug or ID; '*' is allowed only for an explicit all-spaces read.",
+							"description": "Required space slug or ID ('*' for a deliberate all-spaces read).",
 						},
 						"where": map[string]interface{}{
 							"type":        "string",
@@ -1181,7 +1181,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						},
 						"where": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional Resource/entity/Data filter passed to --where, such as ResourceType, ResourceName, TargetID, Unit.Labels.*, Space.Labels.*, or Data.* predicates.",
+							"description": "Filter for --where: ResourceType, ResourceName, TargetID, Unit.Labels.*, Space.Labels.* or Data.* predicates.",
 						},
 						"contains": map[string]interface{}{
 							"type":        "string",
@@ -1247,7 +1247,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 					"properties": map[string]interface{}{
 						"space": map[string]interface{}{
 							"type":        "string",
-							"description": "Required ConfigHub space slug or ID; '*' is allowed only for an explicit all-spaces read.",
+							"description": "Required space slug or ID ('*' for a deliberate all-spaces read).",
 						},
 						"unit": map[string]interface{}{
 							"type":        "string",
@@ -1289,7 +1289,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 					"properties": map[string]interface{}{
 						"space": map[string]interface{}{
 							"type":        "string",
-							"description": "Required ConfigHub space slug or ID, or '*' for a deliberate all-spaces read. cub has no default space.",
+							"description": "Required space slug or ID ('*' for a deliberate all-spaces read). There is no default space.",
 						},
 						"where": map[string]interface{}{
 							"type":        "string",

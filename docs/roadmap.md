@@ -171,7 +171,12 @@ issue is filed for these yet; file one when a package starts.
   skills and fields; it belongs to the judge.
 - [ ] C: per-tool size ceilings checked in CI, and a summary view per tool.
 - [ ] C: deterministic bytes-and-tokens benchmark over the 24 prepared cases.
-- [ ] C: count the MCP tool catalog; smaller default set, rest discoverable.
+- [ ] C: smaller default MCP tool set, rest discoverable. The catalog is
+  counted and held, each tool under a declared ceiling
+  (`cmd/cub-scout/mcp_catalog_size_test.go`). A first shortening on
+  2026-11-13 took the 8 standalone tools from 17,465 to 15,120 bytes and all
+  21 from 33,947 to 31,126, keeping every phrase the description tests
+  require. Its effect on which tool an agent picks is not measured.
 - [ ] D: first fact kept in ConfigHub; needs fact told apart from intent.
 - [ ] F: repository topics and homepage; MCP directory and krew listings.
 - [ ] F: track installs and downloads instead of stars.
