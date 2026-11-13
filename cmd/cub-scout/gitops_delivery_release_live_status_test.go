@@ -226,3 +226,42 @@ func TestAStatusOnAnOlderReleaseSaysItIsSuperseded(t *testing.T) {
 	require.Len(t, omissions, 1)
 	require.Contains(t, omissions[0].Reason, "the newest Release, "+space+"#2, has no recorded status")
 }
+
+// A status the deploying tool recorded after the command started, and before
+// ConfigHub was read, is not from the future. Seen on the first Sveltos run of
+// the live-status lane (run 43403750799): the command's clock read
+// 10:01:57.0 and the status it then read was observed at 10:01:58.4, so it was
+// called "unknown" and never compared.
+func TestCollectorJudgesFreshnessAgainstTheClockAfterTheRead(t *testing.T) {
+	started := time.Date(2026, 11, 13, 10, 1, 57, 0, time.UTC)
+	raw, spaceID, space := recordedReleasesWithLiveStatus(t, liveStatus("Synced", "Healthy", "Succeeded", "2026-11-13T10:01:58.365832713Z"))
+	oldRequire, oldRun := requireGitOpsConfigHubFn, runGitOpsCubCommand
+	t.Cleanup(func() { requireGitOpsConfigHubFn, runGitOpsCubCommand = oldRequire, oldRun })
+	requireGitOpsConfigHubFn = func() error { return nil }
+	runGitOpsCubCommand = func(_ context.Context, args []string) (string, error) {
+		switch args[0] {
+		case "space":
+			return `[{"Space":{"Slug":"` + space + `","SpaceID":"` + spaceID + `","Annotations":{}}}]`, nil
+		case "release":
+			return raw, nil
+		}
+		return "[]", nil
+	}
+	noRegistryLookup(t)
+	collect := func(readClock func() time.Time) ConfigHubLiveStatusEvidence {
+		evidence := collectGitOpsDeliveryEvidence(context.Background(), newGitOpsDeliveryFakeClient(), gitOpsDeliveryEvidenceOptions{
+			Space: "*", Now: started, ReadClock: readClock, Window: 24 * time.Hour, StaleAfter: 15 * time.Minute, MaxItems: 10,
+		})
+		require.Len(t, evidence.ConfigHub.LiveStatuses, 1)
+		return evidence.ConfigHub.LiveStatuses[0]
+	}
+	afterRead := collect(func() time.Time { return started.Add(2 * time.Second) })
+	require.Equal(t, "fresh", afterRead.Freshness)
+	require.NotContains(t, afterRead.ClusterCheck.Reason, "the recorded status is unknown")
+	// With no later reading, or one that is still earlier than the status,
+	// the status stays unknown: the future is never clamped to fresh.
+	require.Equal(t, "unknown", collect(nil).Freshness)
+	require.Equal(t, "unknown", collect(func() time.Time { return started.Add(time.Second) }).Freshness)
+	// A clock that went backwards does not move the reading earlier.
+	require.Equal(t, "unknown", collect(func() time.Time { return started.Add(-time.Hour) }).Freshness)
+}

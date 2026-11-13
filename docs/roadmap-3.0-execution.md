@@ -17,7 +17,9 @@ Adopted by the maintainer on 2026-11-10 ("go ahead") after an independent
 review of every plan from v2.14 to 3.1. **Where this section and anything
 below it disagree, this section wins**: it supersedes the release assignments
 in the 2026-11-08 section, the P4–P6 rows of the phase table, and decisions D5
-and D7. v2.15 work stays paused until the maintainer resumes it.
+and D7. v2.15 work was resumed by the maintainer on 2026-11-10; v2.15.0 was
+published that day for ConfigHub 0.10 compatibility, and the rest of the v2.15
+row below is still owed.
 
 | Release | Scope |
 |---|---|

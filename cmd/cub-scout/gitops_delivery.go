@@ -33,6 +33,11 @@ type gitOpsDeliveryEvidenceOptions struct {
 	Window     time.Duration
 	StaleAfter time.Duration
 	Now        time.Time
+	// ReadClock, when set, is asked for the time once the ConfigHub reads
+	// have returned. Now is taken when the command starts; a status recorded
+	// between then and the read is not from the future, and is judged against
+	// the later reading. Unset, Now is used throughout.
+	ReadClock func() time.Time
 	MaxItems   int
 	// SpaceSource records how Space was chosen; see GitOpsDeliveryEvidenceScope.
 	SpaceSource string
@@ -257,6 +262,7 @@ func gitOpsDeliveryEvidenceOptionsFromFlags(ctx context.Context) (gitOpsDelivery
 		Space:     strings.TrimSpace(gitopsConfigHubSpace),
 		Since:     strings.TrimSpace(gitopsConfigHubSince),
 		Now:       now,
+		ReadClock: gitopsNowFn,
 		MaxItems:  defaultGitOpsDeliveryMaxItems,
 	}
 	if opts.Since == "" {
@@ -301,6 +307,7 @@ func gitOpsDeliverySpace(flagValue string) (slug, source string) {
 func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface, opts gitOpsDeliveryEvidenceOptions) *GitOpsDeliveryEvidence {
 	if opts.Now.IsZero() {
 		opts.Now = gitopsNowFn().UTC()
+		opts.ReadClock = gitopsNowFn
 	}
 	if opts.SpaceSource == "" {
 		opts.Space, opts.SpaceSource = gitOpsDeliverySpace(opts.Space)
@@ -368,6 +375,12 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 	cutoff := opts.Now.Add(-opts.Window).UTC().Format(time.RFC3339)
 	releaseArgs := gitOpsConfigHubReleaseListArgs(opts.Space, cutoff)
 	rawReleases, err := runGitOpsCubCommand(ctx, releaseArgs)
+	readAt := opts.Now
+	if opts.ReadClock != nil {
+		if later := opts.ReadClock().UTC(); later.After(readAt) {
+			readAt = later
+		}
+	}
 
 	// Live status is on each Release since ConfigHub's 2026-10-03 server
 	// change; the Space annotation is what older servers kept. Both are read,
@@ -376,7 +389,7 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 	releaseWindow := ""
 	if err == nil {
 		var omissions []GitOpsDeliveryEvidenceOmission
-		releaseStatuses, omissions = configHubLiveStatusFromReleases(rawReleases, opts.Now, opts.StaleAfter)
+		releaseStatuses, omissions = configHubLiveStatusFromReleases(rawReleases, readAt, opts.StaleAfter)
 		evidence.Omissions = append(evidence.Omissions, omissions...)
 		releaseWindow = cutoff
 	}
@@ -388,7 +401,7 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 			Command: "cub " + strings.Join(gitOpsConfigHubSpaceListArgs(opts.Space), " "),
 		})
 	} else {
-		statuses, omissions := buildConfigHubSpaceLiveStatusEvidence(rawSpaces, opts.Now, opts.StaleAfter, configHubLiveStatusSpaces(releaseStatuses), releaseWindow)
+		statuses, omissions := buildConfigHubSpaceLiveStatusEvidence(rawSpaces, readAt, opts.StaleAfter, configHubLiveStatusSpaces(releaseStatuses), releaseWindow)
 		evidence.ConfigHub.LiveStatuses = statuses
 		evidence.Omissions = append(evidence.Omissions, omissions...)
 	}
@@ -415,7 +428,7 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 	}
 	// A Release's own status names its Release, so it needs no correlation by
 	// reported revision; it is added after the correlation above.
-	checkLiveStatusesAgainstCluster(ctx, client, releaseStatuses, opts.Now)
+	checkLiveStatusesAgainstCluster(ctx, client, releaseStatuses, readAt)
 	evidence.ConfigHub.LiveStatuses = append(evidence.ConfigHub.LiveStatuses, releaseStatuses...)
 
 	eventArgs := gitOpsConfigHubUnitEventListArgs(opts.Space, cutoff)

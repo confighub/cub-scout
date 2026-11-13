@@ -2201,6 +2201,21 @@ built with SDK core v0.8.12, refuses it by default.
   on a real cluster; health comparison. No agent eval case (waived; paid runs
   are not approved).
 
+## #887 after v2.15.0: health, Sveltos, a freshness race — 2026-11-13
+
+On the maintainer's instruction ("start with 887, keep going"). The cluster
+check now compares the recorded health with the workloads the compared
+controllers list (`clusterCheck.health`), names a Sveltos ClusterProfile
+without comparing it (Sveltos writes no digest for what it applied; recorded
+fixture `test/fixtures/confighub-live-status-sveltos-v01011-recorded`), and
+judges freshness against a clock read after the ConfigHub read. Live proof: CI
+run 43414463943, Flux, Argo CD and Sveltos. Not proved: any disagreement on a
+real cluster; see [the readiness notes](docs/releases/v2.15-readiness.md).
+Agent eval waived. Not released: whether this ships as v2.15.1 or in v2.16 is
+the maintainer's call. The same change aligns `docs/roadmap.md` and the
+readiness file with the trimmed plan (3.0 makes no eval claim; paid runs are
+not approved).
+
 ## v2.15.0 published — 2026-11-10
 
 On the maintainer's instruction ("merge 902 and cut v2.15.0"). Tag `v2.15.0`

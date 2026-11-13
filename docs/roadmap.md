@@ -522,8 +522,10 @@ content ([#595](https://github.com/confighub/cub-scout/issues/595)).
    guide, a golden CLI-surface diff against the last 2.x, and delivery in
    standalone and plugin forms in the same release, as the
    [support policy](reference/host-plugin-compatibility.md#support-policy)
-   requires. Standalone `cub-scout` stays; no sunset decision has been made. Ship
-   it with published eval results. The publication series ([#475](https://github.com/confighub/cub-scout/issues/475)) follows.
+   requires. Standalone `cub-scout` stays; no sunset decision has been made. It
+   ships with no cost- or time-saving claim: the paid benchmark is not
+   scheduled (trimmed plan, 2026-11-10), which replaces the earlier "ship it
+   with published eval results". The publication series ([#475](https://github.com/confighub/cub-scout/issues/475)) follows.
 
 Still open: whether the CLI/TUI parity principle applies to agent and bot
 plumbing such as cluster parameters and the facts channel; where recorded facts
@@ -608,12 +610,15 @@ is published and fixture-backed; the eval result is reported.
   before the removal, as the
   [support policy](reference/host-plugin-compatibility.md#support-policy) requires.
 
-Done when: the facts design is agreed with ConfigHub; the deprecation notices
-have shipped; the eval result is reported.
+Done when: the deprecation notices have shipped. The facts design and the eval
+result were also conditions here until the trimmed plan of 2026-11-10 moved
+facts to 3.1 and left the paid benchmark unscheduled.
 
 **3.0.0: the transition (stage 4,
 [#595](https://github.com/confighub/cub-scout/issues/595)),** as described in the
-Path to 3.0, released with published eval results.
+Path to 3.0. It makes no cost- or time-saving claim: the paid benchmark is not
+scheduled (trimmed plan, 2026-11-10), so it is no longer "released with
+published eval results".
 
 Not scheduled in 2.x: Helm/Kustomize provenance
 ([#481](https://github.com/confighub/cub-scout/issues/481)), the Grafana design

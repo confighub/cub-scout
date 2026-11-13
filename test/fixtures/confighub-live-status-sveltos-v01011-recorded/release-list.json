@@ -1,0 +1,112 @@
+[
+  {
+    "Release": {
+      "BundleBaseName": "scout-live-sveltos-apps",
+      "CreatedAt": "2026-11-13T11:22:33.64836Z",
+      "DataSize": 620,
+      "Digest": "sha256:b94ca68fdb463467d6a71400827095ad5346047235f0565be396d14ef4526f53",
+      "EntityType": "Release",
+      "ManifestDigest": "sha256:60ef8f45d0da12985a3906989061a2a9386e53b647a7b6e6adc10cda47c74bd8",
+      "OCIRepositoryURL": "oci://localhost:32181/space/scout-live-sveltos-apps",
+      "OrganizationID": "cb3b8f2a-011a-419e-91aa-0688995f820c",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "25655ecf-3f4d-423f-b725-ff4aad02e662": true
+          }
+        }
+      },
+      "Published": true,
+      "ReleaseID": "c676b873-cacb-4ad8-818e-42cf58cf885d",
+      "ReleaseNum": 1,
+      "SpaceID": "f8bf2d0f-3418-4c8b-97b8-bdebcca13009",
+      "SpaceSlug": "scout-live-sveltos-apps",
+      "TagID": "4415c2f9-5d36-4b74-a324-22810f5efc91",
+      "TargetID": "0f007211-2871-4048-b674-679bf605204b",
+      "UnitCount": 2,
+      "UpdatedAt": "2026-11-13T11:22:33.648361Z",
+      "UserID": "25655ecf-3f4d-423f-b725-ff4aad02e662"
+    },
+    "Tag": {
+      "CreatedAt": "2026-11-13T11:22:33.648002Z",
+      "DisplayName": "release-1",
+      "EntityType": "Tag",
+      "OrganizationID": "cb3b8f2a-011a-419e-91aa-0688995f820c",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "25655ecf-3f4d-423f-b725-ff4aad02e662": true
+          }
+        }
+      },
+      "ReleaseID": "c676b873-cacb-4ad8-818e-42cf58cf885d",
+      "Slug": "release-1",
+      "SpaceID": "f8bf2d0f-3418-4c8b-97b8-bdebcca13009",
+      "SpaceSlug": "scout-live-sveltos-apps",
+      "TagID": "4415c2f9-5d36-4b74-a324-22810f5efc91",
+      "UpdatedAt": "2026-11-13T11:22:33.648003Z",
+      "Version": 1
+    }
+  },
+  {
+    "Release": {
+      "BundleBaseName": "argobot-scout-live",
+      "CreatedAt": "2026-11-13T11:22:33.613913Z",
+      "DataSize": 4454,
+      "Digest": "sha256:99d2dd17a44746681de05a48919a3ced70638ba4e86f91d81324413757b06720",
+      "EntityType": "Release",
+      "LiveStatus": {
+        "DataSource": "argobot-scout-live",
+        "Health": "Healthy",
+        "ObservedAt": "2026-11-13T11:22:55.902149906Z",
+        "Operation": "Succeeded",
+        "Reporter": "argobot",
+        "ReporterHealth": "Healthy",
+        "ReporterOperation": "Provisioned",
+        "ReporterSync": "Provisioned",
+        "Sync": "Synced"
+      },
+      "ManifestDigest": "sha256:47b52b0aa8be0c55dca5952979832091e7ead210ec940fb9e4365ecb60df39d9",
+      "OCIRepositoryURL": "oci://localhost:32181/space/argobot-scout-live",
+      "OrganizationID": "cb3b8f2a-011a-419e-91aa-0688995f820c",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "25655ecf-3f4d-423f-b725-ff4aad02e662": true
+          }
+        }
+      },
+      "Published": true,
+      "ReleaseID": "19b5f5e8-853e-46e7-a03a-7365acb2b253",
+      "ReleaseNum": 1,
+      "SpaceID": "dadfc043-43d4-433e-9522-ba681fb422a4",
+      "SpaceSlug": "argobot-scout-live",
+      "TagID": "99783a45-6419-49dc-ad54-7cd62579fcde",
+      "TargetID": "0f007211-2871-4048-b674-679bf605204b",
+      "UnitCount": 9,
+      "UpdatedAt": "2026-11-13T11:22:55.904178Z",
+      "UserID": "25655ecf-3f4d-423f-b725-ff4aad02e662",
+      "Version": 2
+    },
+    "Tag": {
+      "CreatedAt": "2026-11-13T11:22:33.613064Z",
+      "DisplayName": "release-1",
+      "EntityType": "Tag",
+      "OrganizationID": "cb3b8f2a-011a-419e-91aa-0688995f820c",
+      "Permissions": {
+        "Manage": {
+          "UserIDs": {
+            "25655ecf-3f4d-423f-b725-ff4aad02e662": true
+          }
+        }
+      },
+      "ReleaseID": "19b5f5e8-853e-46e7-a03a-7365acb2b253",
+      "Slug": "release-1",
+      "SpaceID": "dadfc043-43d4-433e-9522-ba681fb422a4",
+      "SpaceSlug": "argobot-scout-live",
+      "TagID": "99783a45-6419-49dc-ad54-7cd62579fcde",
+      "UpdatedAt": "2026-11-13T11:22:33.613064Z",
+      "Version": 1
+    }
+  }
+]

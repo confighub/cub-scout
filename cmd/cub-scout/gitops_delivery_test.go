@@ -569,6 +569,9 @@ func newGitOpsDeliveryFakeClient(objects ...runtime.Object) *dynamicfake.FakeDyn
 		liveStatusApplicationGVR:                                "ApplicationList",
 		liveStatusOCIRepositoryGVR:                              "OCIRepositoryList",
 		liveStatusKustomizationGVR:                              "KustomizationList",
+		liveStatusClusterProfileGVR:                             "ClusterProfileList",
+		liveStatusWorkloadGVRs["StatefulSet"]:                   "StatefulSetList",
+		liveStatusWorkloadGVRs["DaemonSet"]:                     "DaemonSetList",
 	}
 	return dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, objects...)
 }
