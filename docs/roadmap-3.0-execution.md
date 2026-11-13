@@ -19,6 +19,11 @@ its rows: v2.16 grows, and 3.0 is no longer the transition only. The
 not-planned list and the unscheduled paid benchmark stand. Nothing here is
 built yet, and none of it is claimed by any release.
 
+The plan follows from a definition of
+[agentic GitOps observability](reference/agentic-gitops-observability.md),
+adopted the same day as a working principle: for every capability, ask what it
+means for an agent.
+
 **The claim 3.0 should be able to make:** when an agent changes configuration,
 cub-scout is how it finds out what happened in the cluster, in one call, at a
 known cost, with the evidence attached and nothing guessed.
@@ -32,12 +37,28 @@ known cost, with the evidence attached and nothing guessed.
 | E. The measurement | Three rungs: C's free numbers; a small paired run of the four questions in A (not approved); the full 24-case benchmark (not scheduled). | 3.0 claims only the rungs that were run. |
 | F. Be found and be tried | The README's first screen shows one command and one answer; install paths and listings where MCP users look; one announcement at 3.0 carrying C's numbers. | A newcomer reaches a first answer from the README's first screen. |
 
+Five additions from the definition, adopted on 2026-11-13:
+
+| Addition | What it is | Belongs to |
+|---|---|---|
+| G1. Convergence as a state | The landing check answers `landed`, `converging` (with a recheck time and what it is waiting on), `not-landed` or `not-observable`. Today an agent cannot tell "not yet" from "no". | A(1) |
+| G2. A bounded wait | One read-only call that returns when the state settles or the time is up. Not a watch service ([#539] stays not planned). It replaces a polling loop, and the turns saved can be counted without a paid run. | A(1), C |
+| G3. The witness rule | Generalised from [#887]: a controller's Ready, a sync status, a recorded live status are each someone's own report. Every answer says whose word a fact rests on. | B |
+| G4. A delivery attestation | The receipt in a form a ConfigHub ChangeWorkflow can require; signing ([#889]) is the hardening. Needs ConfigHub's agreement; a preview until then. | D, 3.1 |
+| G5. Agent identity in attribution | An agent that writes directly sets a field manager naming itself; cub-scout reports it as read and never guesses one. A convention to propose to plugin authors. | A(2) |
+
+One measure to hold the plan to: a false-landed rate of zero on every recorded
+case, with the turns from "applied" to "verified" published beside raw
+`kubectl`.
+
+[#539]: https://github.com/confighub/cub-scout/issues/539
+
 | Release | Added by this plan |
 |---|---|
 | v2.15.x | F's README first screen. |
-| v2.16 | B's envelope and conformance test; C's ceilings and free benchmark; A(2) as a preview; deprecation notices for the verdict wording. |
-| 3.0 | A complete; B enforced; C published; E's first rung, and the second if it is approved. |
-| 3.1 | D, on ConfigHub's decision. |
+| v2.16 | B's envelope and conformance test, with G3; C's ceilings and free benchmark; A(2) as a preview; deprecation notices for the verdict wording. |
+| 3.0 | A complete, with G1, G2 and G5; B enforced; C published; E's first rung, and the second if it is approved. |
+| 3.1 | D and G4, on ConfigHub's decision. |
 
 Open, and not covered by the adoption: the paired run in E; where to raise the
 fact question in D; effort estimates; whether the 24 cases cover the four

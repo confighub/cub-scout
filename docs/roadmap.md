@@ -175,6 +175,15 @@ issue is filed for these yet; file one when a package starts.
 - [ ] D: first fact kept in ConfigHub; needs fact told apart from intent.
 - [ ] F: repository topics and homepage; MCP directory and krew listings.
 - [ ] F: track installs and downloads instead of stars.
+- [ ] G1: `converging` with a recheck time on the landing check.
+- [ ] G2: a bounded, read-only wait on the landing check.
+- [ ] G3: every answer says whose word a fact rests on.
+- [ ] G4: a delivery attestation a ChangeWorkflow can require; needs
+  ConfigHub's agreement.
+- [ ] G5: propose that agents set a field manager naming themselves.
+- [ ] Go through each capability with the six questions in
+  [the principle](reference/agentic-gitops-observability.md#the-principle)
+  and correct the first-pass table there.
 - [ ] A read-only Channel as the route for an agent with no cluster access
   (#898 stays not planned; noted so the idea is kept).
 
