@@ -2142,7 +2142,7 @@ func runMapProblems(cmd *cobra.Command, args []string) error {
 	}{
 		{schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "gitrepositories"}, "GitRepository"},
 		{schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "helmrepositories"}, "HelmRepository"},
-		{schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1beta2", Resource: "buckets"}, "Bucket"},
+		{schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "buckets"}, "Bucket"},
 	}
 	for _, sg := range sourceGVRs {
 		rc := dynClient.Resource(sg.gvr)

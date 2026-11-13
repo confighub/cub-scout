@@ -72,6 +72,17 @@ func (e *TimingEnricher) readResourceTiming(ctx context.Context, kind, name, nam
 	} else {
 		resource, err = e.client.Resource(gvr).Get(ctx, name, metav1.GetOptions{})
 	}
+	if err != nil && apierrors.IsNotFound(err) {
+		// Flux older than 2.6 serves OCIRepository, and older than 2.3
+		// Bucket, as v1beta2 only.
+		if older, ok := olderFluxSourceGVR(gvr); ok {
+			if namespace != "" {
+				resource, err = e.client.Resource(older).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
+			} else {
+				resource, err = e.client.Resource(older).Get(ctx, name, metav1.GetOptions{})
+			}
+		}
+	}
 	if err != nil {
 		reason := "read failed"
 		if apierrors.IsForbidden(err) {
@@ -83,6 +94,14 @@ func (e *TimingEnricher) readResourceTiming(ctx context.Context, kind, name, nam
 	}
 
 	return extractTimingFromResource(resource, kind), nil
+}
+
+func olderFluxSourceGVR(gvr schema.GroupVersionResource) (schema.GroupVersionResource, bool) {
+	if gvr.Group == "source.toolkit.fluxcd.io" && gvr.Version == "v1" && (gvr.Resource == "ocirepositories" || gvr.Resource == "buckets") {
+		gvr.Version = "v1beta2"
+		return gvr, true
+	}
+	return gvr, false
 }
 
 func validateTimingIdentity(kind, name, namespace string) error {
@@ -226,11 +245,11 @@ func kindToTimingGVR(kind string) schema.GroupVersionResource {
 	case "GitRepository":
 		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "gitrepositories"}
 	case "OCIRepository":
-		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1beta2", Resource: "ocirepositories"}
+		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "ocirepositories"}
 	case "HelmRepository":
 		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "helmrepositories"}
 	case "Bucket":
-		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1beta2", Resource: "buckets"}
+		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "buckets"}
 	case "Application":
 		return schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}
 	case "Deployment":

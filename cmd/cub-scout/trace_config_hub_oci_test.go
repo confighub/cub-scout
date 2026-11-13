@@ -15,8 +15,8 @@ func TestIsTraceSourceKind_ConfigHubOCI(t *testing.T) {
 
 func TestKindToGVR_ConfigHubOCI(t *testing.T) {
 	gvr := kindToGVR("ConfigHub OCI")
-	if gvr.Group != "source.toolkit.fluxcd.io" || gvr.Version != "v1beta2" || gvr.Resource != "ocirepositories" {
-		t.Fatalf("kindToGVR(ConfigHub OCI) = %#v, want source.toolkit.fluxcd.io/v1beta2 ocirepositories", gvr)
+	if gvr.Group != "source.toolkit.fluxcd.io" || gvr.Version != "v1" || gvr.Resource != "ocirepositories" {
+		t.Fatalf("kindToGVR(ConfigHub OCI) = %#v, want source.toolkit.fluxcd.io/v1 ocirepositories", gvr)
 	}
 }
 

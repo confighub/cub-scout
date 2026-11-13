@@ -329,11 +329,11 @@ func KindToGVR(kind string) (schema.GroupVersionResource, error) {
 	case "GitRepository", "gitrepository", "gitrepositories":
 		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "gitrepositories"}, nil
 	case "OCIRepository", "ocirepository", "ocirepositories":
-		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1beta2", Resource: "ocirepositories"}, nil
+		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "ocirepositories"}, nil
 	case "HelmRepository", "helmrepository", "helmrepositories":
 		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "helmrepositories"}, nil
 	case "Bucket", "bucket", "buckets":
-		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1beta2", Resource: "buckets"}, nil
+		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "buckets"}, nil
 	// Argo CD resources
 	case "Application", "application", "applications", "app":
 		return schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}, nil
