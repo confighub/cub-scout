@@ -15,8 +15,8 @@ func TestFluxOperatorControllerResourcesAreFirstClass(t *testing.T) {
 		"FluxReport":               {Group: "fluxcd.controlplane.io", Version: "v1", Resource: "fluxreports"},
 		"ResourceSet":              {Group: "fluxcd.controlplane.io", Version: "v1", Resource: "resourcesets"},
 		"ResourceSetInputProvider": {Group: "fluxcd.controlplane.io", Version: "v1", Resource: "resourcesetinputproviders"},
-		"ExternalArtifact":         {Group: "fluxcd.controlplane.io", Version: "v1", Resource: "externalartifacts"},
-		"ArtifactGenerator":        {Group: "fluxcd.controlplane.io", Version: "v1", Resource: "artifactgenerators"},
+		"ExternalArtifact":         {Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "externalartifacts"},
+		"ArtifactGenerator":        {Group: "source.extensions.fluxcd.io", Version: "v1beta1", Resource: "artifactgenerators"},
 	}
 	got := map[string]controllerResourceSpec{}
 	for _, spec := range firstClassControllerResources() {

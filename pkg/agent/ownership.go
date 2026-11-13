@@ -135,23 +135,33 @@ func detectFluxOwnership(labels, annotations map[string]string, resource *unstru
 		}
 	}
 
-	if resource != nil && fluxOperatorAPIGroup(resource.GetAPIVersion()) {
-		return Ownership{
-			Type:       OwnerFlux,
-			SubType:    strings.ToLower(resource.GetKind()),
-			Name:       resource.GetName(),
-			Namespace:  resource.GetNamespace(),
-			Source:     "apiGroup:fluxcd.controlplane.io",
-			Confidence: "high",
+	if resource != nil {
+		if group, ok := fluxAggregateAPIGroup(resource.GetAPIVersion()); ok {
+			return Ownership{
+				Type:       OwnerFlux,
+				SubType:    strings.ToLower(resource.GetKind()),
+				Name:       resource.GetName(),
+				Namespace:  resource.GetNamespace(),
+				Source:     "apiGroup:" + group,
+				Confidence: "high",
+			}
 		}
 	}
 
 	return Ownership{}
 }
 
-func fluxOperatorAPIGroup(apiVersion string) bool {
+// fluxAggregateAPIGroup reports the API group when it is one whose every kind
+// is a Flux object: the Flux Operator's, and source-watcher's
+// (ArtifactGenerator). source.toolkit.fluxcd.io is not here: its kinds
+// (GitRepository, ExternalArtifact and the rest) are sources, classified like
+// any other object.
+func fluxAggregateAPIGroup(apiVersion string) (string, bool) {
 	group, _, ok := strings.Cut(apiVersion, "/")
-	return ok && group == "fluxcd.controlplane.io"
+	if ok && (group == "fluxcd.controlplane.io" || group == "source.extensions.fluxcd.io") {
+		return group, true
+	}
+	return "", false
 }
 
 func detectArgoOwnership(labels, annotations map[string]string) Ownership {

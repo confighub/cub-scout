@@ -98,6 +98,16 @@ func TestDetectOwnership_Flux(t *testing.T) {
 			wantNS:      "test-ns",
 			wantSource:  "apiGroup:fluxcd.controlplane.io",
 		},
+		{
+			name:        "source-watcher ArtifactGenerator by API group",
+			apiVersion:  "source.extensions.fluxcd.io/v1beta1",
+			kind:        "ArtifactGenerator",
+			wantType:    OwnerFlux,
+			wantSubType: "artifactgenerator",
+			wantName:    "test-resource",
+			wantNS:      "test-ns",
+			wantSource:  "apiGroup:source.extensions.fluxcd.io",
+		},
 	}
 
 	for _, tt := range tests {

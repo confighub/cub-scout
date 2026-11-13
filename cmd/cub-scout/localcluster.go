@@ -784,14 +784,19 @@ func loadLocalClusterDataWithConfigAndIdentity(cfg *rest.Config, boundContext st
 	}
 
 	// Flux OCIRepositories
-	ociRepoGVR := schema.GroupVersionResource{
-		Group: "source.toolkit.fluxcd.io", Version: "v1beta2", Resource: "ocirepositories",
-	}
-	if l, err := dynClient.Resource(ociRepoGVR).List(ctx, v1.ListOptions{}); err == nil {
+	// v1 is what current Flux serves; v1beta2 is tried for Flux older than
+	// 2.6. Listing v1beta2 alone found nothing on Flux 2.10, silently.
+	for _, version := range []string{"v1", "v1beta2"} {
+		ociRepoGVR := schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: version, Resource: "ocirepositories"}
+		l, err := dynClient.Resource(ociRepoGVR).List(ctx, v1.ListOptions{})
+		if err != nil {
+			continue
+		}
 		for _, item := range l.Items {
 			src := parseFluxOCIRepository(&item)
 			gitSources = append(gitSources, src)
 		}
+		break
 	}
 
 	// Flux HelmRepositories
@@ -6294,7 +6299,7 @@ func getTraceResourceGVR(kind string) schema.GroupVersionResource {
 	case "HelmRepository":
 		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "helmrepositories"}
 	case "Bucket":
-		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1beta2", Resource: "buckets"}
+		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "buckets"}
 	default:
 		return schema.GroupVersionResource{}
 	}

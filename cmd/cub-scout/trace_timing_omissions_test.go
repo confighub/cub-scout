@@ -19,7 +19,7 @@ func TestCapturedTraceTimingOmissionsReachJSONWarnings(t *testing.T) {
 	var mu sync.Mutex
 	counts := map[string]int{}
 	readyPath := "/apis/source.toolkit.fluxcd.io/v1/namespaces/ns/gitrepositories/ready"
-	deniedPath := "/apis/source.toolkit.fluxcd.io/v1beta2/namespaces/ns/buckets/denied"
+	deniedPath := "/apis/source.toolkit.fluxcd.io/v1/namespaces/ns/buckets/denied"
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		mu.Lock()
 		counts[r.URL.Path]++
