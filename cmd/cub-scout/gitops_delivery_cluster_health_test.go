@@ -180,3 +180,44 @@ func TestClusterCheckHealthReadsAFluxInventoryAndListsEachKindOnce(t *testing.T)
 	require.Equal(t, 1, lists)
 	require.Contains(t, liveStatusClusterCheckText(statuses[0].ClusterCheck), "; health agrees: ")
 }
+
+// A controller that delivers to another cluster lists workloads that are not
+// in the cluster read here: they are not looked up, whatever is found under
+// the same names.
+func TestClusterCheckHealthDoesNotLookForWorkloadsDeliveredElsewhere(t *testing.T) {
+	noRegistryLookup(t)
+	ready := healthDeployment("api", 2, time.Time{})
+	remote := healthApplication(checkDigest, ready)
+	destination := map[string]interface{}{"server": "https://prod.example.com:6443", "namespace": "payments"}
+	_ = unstructured.SetNestedMap(remote.Object, destination, "spec", "destination")
+	_ = unstructured.SetNestedMap(remote.Object, destination, "status", "sync", "comparedTo", "destination")
+	named := healthApplication(checkDigest, ready)
+	byName := map[string]interface{}{"name": "prod", "namespace": "payments"}
+	_ = unstructured.SetNestedMap(named.Object, byName, "spec", "destination")
+	_ = unstructured.SetNestedMap(named.Object, byName, "status", "sync", "comparedTo", "destination")
+	repository, kustomization := checkFlux(checkDigest)
+	_ = unstructured.SetNestedSlice(kustomization.Object, []interface{}{map[string]interface{}{"id": "payments_api_apps_Deployment", "v": "v1"}}, "status", "inventory", "entries")
+	_ = unstructured.SetNestedMap(kustomization.Object, map[string]interface{}{"secretRef": map[string]interface{}{"name": "prod"}}, "spec", "kubeConfig")
+	for _, tc := range []struct {
+		name    string
+		objects []runtime.Object
+		reason  string
+	}{
+		{"an Application with another server", []runtime.Object{remote, ready}, "does not name the in-cluster destination"},
+		{"an Application with a named cluster", []runtime.Object{named, ready}, "does not name the in-cluster destination"},
+		{"a Kustomization with a kubeConfig", []runtime.Object{repository, kustomization, ready}, "applies through a kubeConfig"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			statuses := healthStatuses("Synced", "Healthy")
+			client := checkClient(tc.objects...)
+			checkLiveStatusesAgainstCluster(context.Background(), client, statuses, checkNow)
+			check := statuses[0].ClusterCheck
+			require.Equal(t, liveStatusClusterAgrees, check.State, check.Reason)
+			require.Equal(t, liveStatusClusterNotObservable, check.Health.State)
+			require.Contains(t, check.Health.Reason, tc.reason)
+			for _, action := range client.Actions() {
+				require.NotEqual(t, "deployments", action.GetResource().Resource)
+			}
+		})
+	}
+}

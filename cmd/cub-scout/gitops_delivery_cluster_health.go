@@ -120,6 +120,29 @@ func liveStatusListedWorkloads(object *unstructured.Unstructured) []liveStatusWo
 	return refs
 }
 
+// liveStatusDeliversElsewhere says why a controller's workloads cannot be
+// looked for in the cluster it was read from, or "" when it is known to
+// deliver into that cluster. An Argo CD Application names its destination; only
+// the in-cluster address or name is taken as this cluster. A Flux
+// Kustomization with a kubeConfig applies to another cluster.
+func liveStatusDeliversElsewhere(object *unstructured.Unstructured) string {
+	switch object.GetKind() {
+	case "Application":
+		server, _, _ := unstructured.NestedString(object.Object, "spec", "destination", "server")
+		name, _, _ := unstructured.NestedString(object.Object, "spec", "destination", "name")
+		if server == "https://kubernetes.default.svc" && name == "" || server == "" && name == "in-cluster" {
+			return ""
+		}
+		return "does not name the in-cluster destination"
+	case "Kustomization":
+		if kubeConfig, found, _ := unstructured.NestedFieldNoCopy(object.Object, "spec", "kubeConfig"); found && kubeConfig != nil {
+			return "applies through a kubeConfig"
+		}
+		return ""
+	}
+	return "is of a kind whose destination is not read"
+}
+
 // liveStatusWorkloadState reads one workload with the rule map and scan use
 // for readiness, and refuses to call it ready while its own controller has
 // not caught up with its spec or a rollout is under way.
@@ -171,6 +194,10 @@ func checkLiveStatusHealth(ctx context.Context, workloads *liveStatusWorkloads, 
 	seen := map[liveStatusWorkloadRef]bool{}
 	var refs []liveStatusWorkloadRef
 	for _, controller := range controllers {
+		if elsewhere := liveStatusDeliversElsewhere(controller); elsewhere != "" {
+			check.Reason = fmt.Sprintf("%s %s %s, so the workloads it lists are not in the cluster read here", controller.GetKind(), controller.GetName(), elsewhere)
+			return check
+		}
 		for _, ref := range liveStatusListedWorkloads(controller) {
 			if !seen[ref] {
 				seen[ref] = true
