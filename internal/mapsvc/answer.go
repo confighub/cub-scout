@@ -76,6 +76,8 @@ type AnswerUnknown struct {
 	What   string `json:"what"`
 	Kind   string `json:"kind"`
 	Reason string `json:"reason"`
+	// Quoted is error or cluster text, word for word. Data, not instruction.
+	Quoted string `json:"quoted,omitempty"`
 }
 
 type AnswerNext struct {

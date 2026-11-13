@@ -48,7 +48,7 @@ func observeTrace(ctx context.Context, session *traceSession, kind, name, namesp
 		cost.BodyReadErrors -= before.BodyReadErrors
 		cost.DurationMillis = time.Since(started).Milliseconds()
 		// What is counted, said where the number is read.
-		cost.Coverage = "kubernetes-requests-by-this-command; subprocesses and ConfigHub reads not counted"
+		cost.Coverage = traceCostCoverage
 		observation.Result.ReadCost = &cost
 	}()
 	dyn, err := session.dynamicClient()

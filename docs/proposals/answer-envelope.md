@@ -4,10 +4,22 @@ Status: the maintainer named the block `answer` and chose `trace` to go first
 (2026-11-13). `trace` carries it, after v2.15.1; its fields are in the
 [JSON contract](../reference/json-contracts.md). The other commands, the
 state words for them, cluster identity, and the 3.0 removals are still
-undecided. Built so far, two things differ from the design below: the block
-measured about 1,180 bytes on a three-link chain, above the estimate, because
-`basis` repeats the chain; and a `basis` claim says only "reported ready" or
-"not ready", with the controller's status, revision and message in `quoted`.
+undecided. Building it, and an independent review of the first version, changed four
+things from the design below:
+
+- **A link's `ready` flag is not evidence.** Several chain builders set it to
+  true for a link nothing read. So `basis` says "reported ready" only of a
+  delivery controller's own object whose status was read; every other link is
+  "in the chain by ownership metadata; readiness not read", and is listed
+  under `unknowns`. `trace` gained a state for a chain in which nothing was
+  read, `readiness-not-read`.
+- **Cluster text is fenced more widely than planned.** Not only messages:
+  statuses, revisions, error text and any name not shaped like an object name
+  appear only in `quoted`, on `basis` and on `unknowns`.
+- **Cost coverage is partial** and says so: a transport wrapper cannot be put
+  on the config that is also written out as the `flux` CLI's kubeconfig.
+- **It is larger than estimated**: about 1,650 bytes on a three-link chain,
+  roughly doubling that answer until 3.0 removes the fields it repeats.
 
 What follows is the design as written on 2026-11-13. It is package B of the
 [agent plan](../roadmap-3.0-execution.md#agent-plan--2026-11-13), with

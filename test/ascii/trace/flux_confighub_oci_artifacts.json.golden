@@ -1,8 +1,8 @@
 {
   "answer": {
     "state": "traced",
-    "reason": "chain-ready",
-    "summary": "Deployment/payments-api in payments is delivered through a chain of 3 links, each reported ready.",
+    "reason": "controllers-report-ready",
+    "summary": "Deployment/payments-api in payments has a delivery chain of 3 links; the 1 delivery controllers in it report ready. Trace did not read the readiness of the other 2.",
     "observedAt": "<TIMESTAMP>",
     "cluster": {
       "context": "",
@@ -11,12 +11,12 @@
     },
     "basis": [
       {
-        "claim": "ConfigHub OCI/confighub-prod is reported ready",
-        "restsOn": "controller-report",
-        "quoted": "status: stored artifact for revision 'latest@sha1:abc123def456'; revision: latest@sha1:abc123def456"
+        "claim": "link 1 of the chain is in the chain by ownership metadata; trace did not read its readiness",
+        "restsOn": "object-metadata",
+        "quoted": "link: ConfigHub OCI/confighub-prod; status: stored artifact for revision 'latest@sha1:abc123def456'; revision: latest@sha1:abc123def456"
       },
       {
-        "claim": "Kustomization/payments-app is reported ready",
+        "claim": "Kustomization/payments-app is reported ready by its controller",
         "restsOn": "controller-report",
         "ref": {
           "kind": "Kustomization",
@@ -26,7 +26,7 @@
         "quoted": "status: Applied revision: latest@sha1:abc123def456; revision: latest@sha1:abc123def456"
       },
       {
-        "claim": "Deployment/payments-api is reported ready",
+        "claim": "Deployment/payments-api is in the chain by ownership metadata; trace did not read its readiness",
         "restsOn": "object-metadata",
         "ref": {
           "kind": "Deployment",
@@ -36,8 +36,19 @@
         "quoted": "status: 2/2 ready"
       }
     ],
-    "unknowns": [],
-    "next": [],
+    "unknowns": [
+      {
+        "what": "the readiness of link 1 of the chain, Deployment/payments-api",
+        "kind": "not-requested",
+        "reason": "trace reads delivery controllers' conditions, not workload health"
+      }
+    ],
+    "next": [
+      {
+        "command": "cub-scout explain Deployment/payments-api -n payments --format json",
+        "why": "its health and recent events, which trace does not read"
+      }
+    ],
     "cost": {
       "requestsMade": 0,
       "responseBodyBytes": 0,
