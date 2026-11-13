@@ -103,6 +103,37 @@ KUBECONFIG="$kubeconfig" CUB_SCOUT_TELEMETRY='' "$scout" gitops status --with-co
 }
 KUBECONFIG="$kubeconfig" "$scout" gitops status --with-confighub --confighub-space '*' > "$out/gitops-status.txt" 2>/dev/null || true
 
+# What cub-scout says about a workload this cluster got from ConfigHub's OCI
+# registry (#882 item 3): recorded, not asserted, until the answers have been
+# read. Digests are kept; anything else that looks like a credential is not.
+keep_digests() {
+  python3 -c '
+import re, sys
+text = sys.stdin.read()
+text = re.sub(r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_.-]+", "[redacted-jwt]", text)
+text = re.sub(r"ch_[A-Za-z0-9_-]{8,}", "[redacted-key]", text)
+text = re.sub(r"(?<!sha256:)(?<![0-9a-f])(?![0-9a-f]{64}(?![0-9a-f]))[A-Za-z0-9+/=_-]{40,}", "[redacted]", text)
+sys.stdout.write(text)'
+}
+if [[ "$controller" != sveltos ]]; then
+  mkdir -p "$out/delivered-workload"
+  capture() {
+    local file=$1; shift
+    KUBECONFIG="$kubeconfig" CUB_SCOUT_TELEMETRY='' "$scout" "$@" 2>"$private/capture.err" | keep_digests > "$out/delivered-workload/$file" || true
+    keep_digests < "$private/capture.err" > "$out/delivered-workload/$file.err" || true
+  }
+  capture trace.json trace deploy/argobot -n argobot --format json
+  capture trace.txt trace deploy/argobot -n argobot
+  capture explain-bounded.json explain Deployment/argobot -n argobot --bounded --api-version apps/v1 --format json
+  capture source-truth.json compare source-truth deploy/argobot -n argobot --strategy "confighub-oci-$controller" --format json
+  capture map-list.txt map list
+  KUBECONFIG="$kubeconfig" kubectl get deployment argobot -n argobot -o json 2>/dev/null | python3 -c '
+import json, sys
+o = json.load(sys.stdin)
+m = o["metadata"]
+json.dump({"labels": m.get("labels"), "annotations": {k: v for k, v in (m.get("annotations") or {}).items() if k != "kubectl.kubernetes.io/last-applied-configuration"}, "ownerReferences": m.get("ownerReferences"), "managers": [{"manager": f.get("manager"), "operation": f.get("operation")} for f in m.get("managedFields") or []]}, sys.stdout, indent=1)' | keep_digests > "$out/delivered-workload/argobot-metadata.json" || true
+fi
+
 [[ -n "$found" ]] || { echo 'No Release carried a Synced LiveStatus within ten minutes; see the artifact' >&2; exit 1; }
 
 python3 - "$out/gitops-status.json" "$controller" <<'PY'
