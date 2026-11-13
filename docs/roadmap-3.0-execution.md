@@ -64,8 +64,11 @@ Started: the MCP catalog has a declared size per tool and in total, checked
 by a test, and a first shortening took it from 17,465 to 15,120 bytes
 standalone and from 33,947 to 31,126 connected (2026-11-13; four bytes is
 roughly a token). Whether shorter text changes which tool an agent picks is
-not measured: that needs an eval run. Answer sizes, summary views and the benchmark
-are not started.
+not measured: that needs an eval run. A first size comparison against raw `kubectl`, on
+real clusters and in bytes only, is in
+[answer sizes](reference/answer-sizes.md): cub-scout's answers were 6% to 30%
+of the raw output for four questions, with the caveats listed there. Size
+ceilings on answers, summary views and the 24-case benchmark are not started.
 
 Open, and not covered by the adoption: the paired run in E; where to raise the
 fact question in D; effort estimates; whether the 24 cases cover the four
