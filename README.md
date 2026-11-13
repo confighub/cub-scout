@@ -39,7 +39,7 @@ timing, secret and event lines are left out. For an
 agent, the same answer is JSON (`--format json`) or an MCP tool: point your
 MCP client at `cub-scout mcp serve`, a local read-only stdio server.
 
-[v2.15.0 release](https://github.com/confighub/cub-scout/releases/tag/v2.15.0)
+[v2.15.1 release](https://github.com/confighub/cub-scout/releases/tag/v2.15.1)
 | [Start here](docs/getting-started/start-here.md)
 | [Is this image deployed?](docs/howto/is-this-image-deployed.md)
 | [Command guide](CLI-GUIDE.md)
@@ -94,7 +94,7 @@ dependency. If an old cask is installed, run
 `brew uninstall --cask confighub/tap/cub-scout` first.
 
 
-Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.15.0`, then
+Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.15.1`, then
 `cub scout doctor`. [Installation and verified downloads](docs/getting-started/install.md)
 cover macOS, Linux, Windows, and tagged source builds.
 
@@ -203,7 +203,15 @@ coalescing, opt-in watch-backed idle observation, and a new `resource.deleted`
 event), plus local bot images built from verified release archives. See the
 [release notes](docs/releases/v2.11.0.md).
 
-**v2.15.0 is the latest release.** It works with ConfigHub 0.10, which v2.14.2
+**v2.15.1 is the latest release.** It corrects answers that an agent would
+have taken at face value: `compare source-truth` now works on clusters
+attached with `cub cluster up` and gives PASS only when something was
+compared; two Flux kinds that were never found are found; the live-status
+check compares health; and the MCP catalog is smaller. Some answers that
+were PASS are now WATCH: see the
+[v2.15.1 release notes](docs/releases/v2.15.1.md).
+
+**v2.15.0** works with ConfigHub 0.10, which v2.14.2
 refuses by default, and drops what depended on bridge workers, which ConfigHub
 removed: `import --connect` and worker status. `gitops status --with-confighub`
 now says whether the cluster agrees with the live status the deploying tool
@@ -466,8 +474,8 @@ For direct downloads and tagged source builds, use the
 `github.com/confighub/cub-scout/v2`; proxy installation via
 `go install github.com/confighub/cub-scout/v2/cmd/cub-scout@latest` installs
 the latest tagged 2.x module. For a pinned install use
-`go install github.com/confighub/cub-scout/v2/cmd/cub-scout@v2.15.0`. Container command
-`docker run ghcr.io/confighub/cub-scout:v2.15.0 version` still needs registry
+`go install github.com/confighub/cub-scout/v2/cmd/cub-scout@v2.15.1`. Container command
+`docker run ghcr.io/confighub/cub-scout:v2.15.1 version` still needs registry
 access verification (#520); the published image is Linux amd64 only.
 `kubectl krew install cub-scout` is not a verified distribution path; use the
 `kubectl-cub_scout` binary included in the archives or Homebrew instead.
