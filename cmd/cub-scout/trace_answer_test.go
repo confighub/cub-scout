@@ -100,7 +100,7 @@ func TestTraceAnswerStates(t *testing.T) {
 			require.Len(t, answer.Basis, 3)
 			require.Equal(t, "Kustomization/apps is reported ready by its controller", answer.Basis[1].Claim)
 			require.Equal(t, mapsvc.RestsOnControllerReport, answer.Basis[1].RestsOn)
-			require.Equal(t, "status: Ready; revision: latest@sha256:0828", answer.Basis[1].Quoted)
+			require.Empty(t, answer.Basis[1].Quoted, "a ready link's status and revision are in chain, not repeated")
 			require.Equal(t, &mapsvc.AnswerRef{Kind: "Kustomization", Namespace: "flux-system", Name: "apps"}, answer.Basis[1].Ref)
 			// The workload carries Ready: true and nothing read it. The answer
 			// does not repeat that as a finding.
@@ -134,16 +134,18 @@ func TestTraceAnswerStates(t *testing.T) {
 			require.Equal(t, "not-measured", answer.Cost.Coverage)
 		}},
 		{"an Argo CD chain: the Application reports, its source is not an object", &agent.TraceResult{TracedAt: at, Chain: argo, ReadCost: cost}, "Deployment", traceStateTraced, traceReasonControllersReady, func(t *testing.T, answer *mapsvc.Answer) {
-			// "example/app" is a fragment of a URL, not an object name: no
-			// reference, and it is named only inside quoted.
-			require.Nil(t, answer.Basis[0].Ref)
-			require.Equal(t, "link 1 of the chain is in the chain by ownership metadata; trace did not read its readiness", answer.Basis[0].Claim)
-			require.Contains(t, answer.Basis[0].Quoted, "link: OCI/example/app")
-			require.Equal(t, "Application/api is reported ready by its controller", answer.Basis[1].Claim)
-			require.NotNil(t, answer.Basis[1].Ref)
+			// The source link, "example/app", is a fragment of a URL and was
+			// not read: it is not in basis, and is counted in unknowns by
+			// position, never by its text.
+			require.Len(t, answer.Basis, 2, "the Application's report, and the traced resource")
+			require.Equal(t, "Application/api is reported ready by its controller", answer.Basis[0].Claim)
+			require.NotNil(t, answer.Basis[0].Ref)
+			require.Contains(t, answer.Basis[1].Claim, "Deployment/api is in the chain by ownership metadata")
+			require.Contains(t, answer.Unknowns[0].What, "link 1 of the chain")
+			require.NotContains(t, answer.Unknowns[0].What, "example/app")
 			require.Contains(t, answer.Summary, "the 1 delivery controllers in it report ready")
 		}},
-		{"a Crossplane object: a chain, and nothing read", &agent.TraceResult{TracedAt: at, Chain: []agent.ChainLink{{Kind: "Claim", Name: "db", Namespace: "prod", Ready: true, Status: "Observed"}}, Error: "Crossplane resource detected: GitOps trace chain unavailable", ReadCost: cost}, "Claim", traceStateReadinessNotRead, traceReasonNoControllerRead, func(t *testing.T, answer *mapsvc.Answer) {
+		{"a Crossplane object: a chain, and nothing read", &agent.TraceResult{TracedAt: at, Chain: []agent.ChainLink{{Kind: "Claim", Name: "api", Namespace: "prod", Ready: true, Status: "Observed"}}, Error: "Crossplane resource detected: GitOps trace chain unavailable", ReadCost: cost}, "Claim", traceStateReadinessNotRead, traceReasonNoControllerRead, func(t *testing.T, answer *mapsvc.Answer) {
 			require.NotContains(t, answer.Summary, "report ready")
 			require.NotContains(t, answer.Basis[0].Claim, "reported ready")
 			require.Len(t, answer.Unknowns, 2)
@@ -152,15 +154,19 @@ func TestTraceAnswerStates(t *testing.T) {
 			{Kind: "Profile", Name: injected, Namespace: "prod", Ready: true, Status: "Observed"},
 			{Kind: "Deployment", Name: "api", Namespace: "prod", Ready: true, Status: "Observed"},
 		}, ReadCost: cost}, "Deployment", traceStateReadinessNotRead, traceReasonNoControllerRead, func(t *testing.T, answer *mapsvc.Answer) {
-			require.Nil(t, answer.Basis[0].Ref)
-			require.Contains(t, answer.Basis[0].Quoted, injected)
+			// The annotation-named owner was not read: not in basis at all.
+			require.Len(t, answer.Basis, 1)
+			require.Contains(t, answer.Basis[0].Claim, "Deployment/api")
+			require.Contains(t, answer.Unknowns[0].What, "link 1 of the chain")
 		}},
 		{"a Flux object whose read failed is not a controller's report", &agent.TraceResult{TracedAt: at, Chain: []agent.ChainLink{
 			{Kind: "Kustomization", Name: "apps", Namespace: "flux-system", Ready: false, Status: "Unknown"},
 			{Kind: "Deployment", Name: "api", Namespace: "prod", Ready: true, Status: "Managed by Flux"},
 		}, ReadCost: cost}, "Deployment", traceStateReadinessNotRead, traceReasonNoControllerRead, func(t *testing.T, answer *mapsvc.Answer) {
-			require.NotContains(t, answer.Basis[0].Claim, "reported not ready")
+			require.Len(t, answer.Basis, 1, "only the traced resource: the Kustomization's read failed")
+			require.NotContains(t, answer.Basis[0].Claim, "reported")
 			require.Equal(t, mapsvc.RestsOnObjectMetadata, answer.Basis[0].RestsOn)
+			require.Contains(t, answer.Unknowns[0].What, "Kustomization/apps")
 		}},
 		{"raw tool output in the error is quoted", &agent.TraceResult{TracedAt: at, Chain: fluxReady, Error: "failed to reconcile: Message: " + injected, ReadCost: cost}, "Deployment", traceStateTraced, traceReasonControllersReady, func(t *testing.T, answer *mapsvc.Answer) {
 			last := answer.Unknowns[len(answer.Unknowns)-1]
@@ -220,6 +226,14 @@ func TestTraceReadinessIsOnlyWhatAControllerReported(t *testing.T) {
 		}
 	}
 	// ConfigHub OCI has a kindToGVR mapping but is not an object by that name.
+	// A long chain of unread links is counted, not recited.
+	long := &agent.TraceResult{TracedAt: time.Now(), Chain: []agent.ChainLink{{Kind: "Application", Name: "api", Namespace: "argocd", Ready: true, Status: "Synced / Healthy"}}}
+	for _, k := range []string{"Namespace", "ServiceAccount", "Deployment", "ClusterRole", "ClusterRoleBinding", "Role", "RoleBinding"} {
+		long.Chain = append(long.Chain, agent.ChainLink{Kind: k, Name: "api", Namespace: "prod", Ready: true, Status: "Synced"})
+	}
+	answer := buildTraceAnswer(long, "Deployment", "api", "prod")
+	require.Len(t, answer.Basis, 2)
+	require.Contains(t, answer.Unknowns[0].What, "and 3 more links")
 	basis := traceLinkBasis(agent.ChainLink{Kind: "ConfigHub OCI", Name: "apps", Namespace: "flux-system", Ready: true, Status: "Ready"}, "link 1 of the chain", false, traceLinkNotRead)
 	require.Nil(t, basis.Ref)
 }

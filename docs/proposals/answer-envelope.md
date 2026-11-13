@@ -18,8 +18,11 @@ things from the design below:
   appear only in `quoted`, on `basis` and on `unknowns`.
 - **Cost coverage is partial** and says so: a transport wrapper cannot be put
   on the config that is also written out as the `flux` CLI's kubeconfig.
-- **It is larger than estimated**: about 1,650 bytes on a three-link chain,
-  roughly doubling that answer until 3.0 removes the fields it repeats.
+- **It is larger than estimated**: about 1,400 bytes on a three-link chain,
+  nearly doubling that answer until 3.0 removes the fields it supersedes.
+  The first build was larger still: on a real nine-link Argo CD chain it
+  repeated one sentence for eight unread links. `basis` now holds only the
+  links that are somebody's word, and counts the rest.
 
 What follows is the design as written on 2026-11-13. It is package B of the
 [agent plan](../roadmap-3.0-execution.md#agent-plan--2026-11-13), with

@@ -34,7 +34,11 @@ const (
 	traceReasonNoControllerRead = "no-controller-readiness-read"
 	traceReasonNoChainObserved  = "no-chain-observed"
 
-	traceCostCoverage = "kubernetes-requests-by-the-trace-session-clients; not counted: the OCI source confirmation of --with-confighub, subprocesses, ConfigHub reads"
+	// traceCostCoverage is a key, spelled out in json-contracts.md: the
+	// Kubernetes requests of the trace session's own clients. Not counted:
+	// the OCI source confirmation of --with-confighub, subprocesses (the
+	// flux CLI), ConfigHub reads.
+	traceCostCoverage = "trace-session-clients"
 )
 
 // traceStates and traceReasons are what the conformance test checks answers
@@ -132,7 +136,15 @@ func buildTraceAnswer(result *agent.TraceResult, kind, name, namespace string) *
 	for i, link := range result.Chain {
 		label, named := traceLinkLabel(link, i)
 		readiness := traceReadinessOf(link)
-		answer.Basis = append(answer.Basis, traceLinkBasis(link, label, named, readiness))
+		// Basis holds the links that are somebody's word for something: a
+		// controller's report, and the traced resource's own tie to the
+		// chain. The other links are in `chain` already; repeating each one
+		// to say it was not read doubled the answer on a real Argo CD chain
+		// of nine links (CI run 43517230657). They are counted in unknowns.
+		isTarget := strings.EqualFold(link.Kind, kind) && link.Name == name && link.Namespace == namespace
+		if readiness != traceLinkNotRead || isTarget {
+			answer.Basis = append(answer.Basis, traceLinkBasis(link, label, named, readiness))
+		}
 		switch readiness {
 		case traceLinkReportedReady:
 			reportedReady++
@@ -195,8 +207,14 @@ func buildTraceAnswer(result *agent.TraceResult, kind, name, namespace string) *
 	// What trace did not read is said, not left to be inferred from a state
 	// that sounds complete.
 	if len(result.Chain) > 0 && len(notRead) > 0 {
+		listed := notRead
+		more := ""
+		if len(listed) > 4 {
+			more = fmt.Sprintf(" and %d more links", len(listed)-4)
+			listed = listed[:4]
+		}
 		answer.Unknowns = append(answer.Unknowns, mapsvc.AnswerUnknown{
-			What:   "the readiness of " + strings.Join(notRead, ", "),
+			What:   "the readiness of " + strings.Join(listed, ", ") + more,
 			Kind:   mapsvc.UnknownNotRequested,
 			Reason: "trace reads delivery controllers' conditions, not workload health",
 		})
@@ -243,21 +261,22 @@ func traceLinkBasis(link agent.ChainLink, label string, named bool, readiness tr
 	default:
 		basis.RestsOn, basis.Claim = mapsvc.RestsOnObjectMetadata, label+" is in the chain by ownership metadata; trace did not read its readiness"
 	}
-	// The status, revision and message are the cluster's text: quoted word
-	// for word, and nowhere else in the answer. So is a link's own name when
-	// it does not have the shape of an object name.
+	// A link's status and revision are in `chain` already and are not
+	// repeated here. Two things are quoted, word for word, because the claim
+	// needs them and they are the cluster's text: why a controller says it is
+	// not ready, and a link's own name when it does not have the shape of an
+	// object name.
 	var quoted []string
 	if !named {
 		quoted = append(quoted, "link: "+strings.TrimSpace(link.Kind+"/"+link.Name))
 	}
-	if status := strings.TrimSpace(link.Status); status != "" {
-		quoted = append(quoted, "status: "+status)
-	}
-	if revision := strings.TrimSpace(link.Revision); revision != "" {
-		quoted = append(quoted, "revision: "+revision)
-	}
-	if message := strings.TrimSpace(link.Message); message != "" {
-		quoted = append(quoted, "message: "+message)
+	if readiness == traceLinkReportedNotReady {
+		if status := strings.TrimSpace(link.Status); status != "" {
+			quoted = append(quoted, "status: "+status)
+		}
+		if message := strings.TrimSpace(link.Message); message != "" {
+			quoted = append(quoted, "message: "+message)
+		}
 	}
 	basis.Quoted = strings.Join(quoted, "; ")
 	// A reference only where an object by that kind and name exists to be

@@ -17,8 +17,7 @@
           "kind": "GitRepository",
           "namespace": "flux-system",
           "name": "ecommerce-apps"
-        },
-        "quoted": "status: Fetched revision: main@sha1:abc1234; revision: main@sha1:abc1234567890abcdef1234567890abcdef12"
+        }
       },
       {
         "claim": "Kustomization/ecommerce-payment is reported ready by its controller",
@@ -27,8 +26,7 @@
           "kind": "Kustomization",
           "namespace": "flux-system",
           "name": "ecommerce-payment"
-        },
-        "quoted": "status: Applied revision: main@sha1:abc1234; revision: main@sha1:abc1234567890abcdef1234567890abcdef12"
+        }
       },
       {
         "claim": "Deployment/payment-api is in the chain by ownership metadata; trace did not read its readiness",
@@ -37,8 +35,7 @@
           "kind": "Deployment",
           "namespace": "ecommerce",
           "name": "payment-api"
-        },
-        "quoted": "status: 3/3 ready"
+        }
       }
     ],
     "unknowns": [

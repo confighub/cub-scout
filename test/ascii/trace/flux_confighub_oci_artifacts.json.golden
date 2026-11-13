@@ -11,19 +11,13 @@
     },
     "basis": [
       {
-        "claim": "link 1 of the chain is in the chain by ownership metadata; trace did not read its readiness",
-        "restsOn": "object-metadata",
-        "quoted": "link: ConfigHub OCI/confighub-prod; status: stored artifact for revision 'latest@sha1:abc123def456'; revision: latest@sha1:abc123def456"
-      },
-      {
         "claim": "Kustomization/payments-app is reported ready by its controller",
         "restsOn": "controller-report",
         "ref": {
           "kind": "Kustomization",
           "namespace": "flux-system",
           "name": "payments-app"
-        },
-        "quoted": "status: Applied revision: latest@sha1:abc123def456; revision: latest@sha1:abc123def456"
+        }
       },
       {
         "claim": "Deployment/payments-api is in the chain by ownership metadata; trace did not read its readiness",
@@ -32,8 +26,7 @@
           "kind": "Deployment",
           "namespace": "payments",
           "name": "payments-api"
-        },
-        "quoted": "status: 2/2 ready"
+        }
       }
     ],
     "unknowns": [
