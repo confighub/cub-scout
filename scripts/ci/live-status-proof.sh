@@ -186,6 +186,55 @@ import json, sys
 o = json.load(sys.stdin)
 m = o["metadata"]
 json.dump({"labels": m.get("labels"), "annotations": {k: v for k, v in (m.get("annotations") or {}).items() if k != "kubectl.kubernetes.io/last-applied-configuration"}, "ownerReferences": m.get("ownerReferences"), "managers": [{"manager": f.get("manager"), "operation": f.get("operation")} for f in m.get("managedFields") or []]}, sys.stdout, indent=1)' | keep_digests > "$out/delivered-workload/argobot-metadata.json" || true
+
+  # How much an agent must read to answer four questions: cub-scout's JSON
+  # answer against the kubectl output (default -o json) that holds the same
+  # facts. Bytes only: no model, nothing judged. The raw side is the least an
+  # agent would have to fetch if it already knew which objects to ask for,
+  # which it usually does not. Recorded, never asserted: where cub-scout is
+  # the larger, that is the finding.
+  # `|| true`: a trace of an unmarked resource exits 1 by contract, and its
+  # JSON is still the answer being measured.
+  bytes_of() { { KUBECONFIG="$kubeconfig" CUB_SCOUT_TELEMETRY='' "$@" 2>/dev/null || true; } | wc -c | tr -d ' '; }
+  if [[ "$controller" = flux ]]; then
+    chain_kinds=(kustomizations.kustomize.toolkit.fluxcd.io/argobot-"$name" ocirepositories.source.toolkit.fluxcd.io/argobot-"$name")
+    chain_ns=flux-system
+    all_delivery='kustomizations.kustomize.toolkit.fluxcd.io,ocirepositories.source.toolkit.fluxcd.io,helmreleases.helm.toolkit.fluxcd.io,gitrepositories.source.toolkit.fluxcd.io'
+  else
+    chain_kinds=(applications.argoproj.io/argobot-"$name")
+    chain_ns=argocd
+    all_delivery='applications.argoproj.io'
+  fi
+  raw_workload=$(bytes_of kubectl get deployment argobot -n argobot -o json)
+  raw_chain=0
+  for object in "${chain_kinds[@]}"; do
+    raw_chain=$((raw_chain + $(bytes_of kubectl get "$object" -n "$chain_ns" -o json)))
+  done
+  raw_all_delivery=$(bytes_of kubectl get "$all_delivery" -A -o json)
+  raw_unmarked=$(bytes_of kubectl get deployment coredns -n kube-system -o json)
+  scout_trace=$(bytes_of "$scout" trace deploy/argobot -n argobot --format json)
+  scout_source_truth=$(bytes_of "$scout" compare source-truth deploy/argobot -n argobot --strategy "confighub-oci-$controller" --format json)
+  scout_status=$(bytes_of "$scout" gitops status --format json)
+  scout_unmarked=$(bytes_of "$scout" trace deploy/coredns -n kube-system --format json)
+  python3 - "$controller" "$raw_workload" "$raw_chain" "$raw_all_delivery" "$raw_unmarked" "$scout_trace" "$scout_source_truth" "$scout_status" "$scout_unmarked" > "$out/size-comparison.json" <<'PY'
+import json, sys
+controller = sys.argv[1]
+raw_workload, raw_chain, raw_all, raw_unmarked, trace, source_truth, status, unmarked = (int(v) for v in sys.argv[2:])
+rows = [
+    ("Which source and revision delivered this workload, and is the chain ready?", "trace deploy/argobot --format json", trace, "the Deployment and its delivery objects", raw_workload + raw_chain),
+    ("Do ConfigHub, the controller and the workload agree?", "compare source-truth deploy/argobot --format json", source_truth, "the Deployment and its delivery objects (the ConfigHub unit read is not counted)", raw_workload + raw_chain),
+    ("What do the delivery controllers report, cluster-wide?", "gitops status --format json", status, "every delivery object of this controller", raw_all),
+    ("Who owns this resource? (one with no owner marker)", "trace deploy/coredns --format json", unmarked, "the Deployment", raw_unmarked),
+]
+out = {"controller": controller, "unit": "bytes of JSON on stdout", "method": "kubectl default -o json; the raw side assumes the agent already knows which objects to fetch", "questions": []}
+for question, command, scout_bytes, raw_what, raw_bytes in rows:
+    out["questions"].append({"question": question, "cubScout": {"command": command, "bytes": scout_bytes}, "raw": {"what": raw_what, "bytes": raw_bytes}, "cubScoutOverRaw": round(scout_bytes / raw_bytes, 2) if raw_bytes else None})
+json.dump(out, sys.stdout, indent=1)
+PY
+  python3 -c '
+import json, sys
+for q in json.load(open(sys.argv[1]))["questions"]:
+    print("size: cub-scout %6d  raw %6d  ratio %s  %s" % (q["cubScout"]["bytes"], q["raw"]["bytes"], q["cubScoutOverRaw"], q["question"]))' "$out/size-comparison.json" || true
 fi
 
 [[ -n "$found" ]] || { echo 'No Release carried a Synced LiveStatus within ten minutes; see the artifact' >&2; exit 1; }

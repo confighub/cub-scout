@@ -171,6 +171,9 @@ issue is filed for these yet; file one when a package starts.
   skills and fields; it belongs to the judge.
 - [ ] C: per-tool size ceilings checked in CI, and a summary view per tool.
 - [ ] C: deterministic bytes-and-tokens benchmark over the 24 prepared cases.
+  A first comparison on four questions is recorded by the live lane
+  ([answer sizes](reference/answer-sizes.md), 2026-11-13); the 24 cases are
+  not done.
 - [ ] C: smaller default MCP tool set, rest discoverable. The catalog is
   counted and held, each tool under a declared ceiling
   (`cmd/cub-scout/mcp_catalog_size_test.go`). A first shortening on
