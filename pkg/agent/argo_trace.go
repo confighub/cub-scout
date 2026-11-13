@@ -451,7 +451,9 @@ func (a *ArgoTracer) parseAppOutput(data []byte, appName, namespace string) (*Tr
 			sourceLink.Kind = "ConfigHub OCI"
 			sourceLink.Name = FormatConfigHubOCISource(ociInfo)
 		} else {
-			sourceLink.Kind = "OCIRepository"
+			// Not "OCIRepository": that is a Flux kind, and under Argo CD no
+			// such object exists to fetch.
+			sourceLink.Kind = "OCI"
 		}
 	}
 

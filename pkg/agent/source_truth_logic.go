@@ -304,9 +304,18 @@ func compareRevisions(strategy SourceTruthStrategy, surfaces SourceTruthSurfaces
 		// .../space/<slug>. When the controller's source names a space
 		// that is not the one the unit was read from, the two surfaces
 		// are about different things.
+		//
+		// And when the object names no revision at all, nothing ties what
+		// runs to the unit that was read: the surfaces are present and
+		// nothing between them has been compared. That is not an agreement.
 		var gaps []string
-		if c := surfaces.ConfigHub; c != nil && c.ObjectRevision != "" && c.Revision != "" && c.ObjectRevision != c.Revision {
-			gaps = append(gaps, "confighub.object_revision_differs_from_head")
+		if c := surfaces.ConfigHub; c != nil && c.Revision != "" {
+			switch {
+			case c.ObjectRevision == "":
+				gaps = append(gaps, "confighub.object_revision")
+			case c.ObjectRevision != c.Revision:
+				gaps = append(gaps, "confighub.object_revision_differs_from_head")
+			}
 		}
 		if c, ctrl := surfaces.ConfigHub, surfaces.Controller; c != nil && ctrl != nil && c.Space != "" {
 			if named := configHubSpaceInOCISource(ctrl.Source); named != "" && named != c.Space {
@@ -581,12 +590,13 @@ func shaMatches(a, b string) bool {
 }
 
 // blockedSafeNextAction renders a stable, read-only diagnostic when one
-// of the surfaces could not be fetched. Names the missing surface so the
-// operator knows which auth/CLI/connectivity to fix.
+// of the surfaces could not be fetched. It names the missing surface. For
+// ConfigHub it points at collection_errors and does not guess a cause: the
+// cause has been a missing annotation as often as a login.
 func blockedSafeNextAction(s SourceTruthSurfaces) string {
 	missing := []string{}
 	if s.ConfigHub == nil {
-		missing = append(missing, "ConfigHub (verify `cub` auth and connectivity)")
+		missing = append(missing, "ConfigHub (collection_errors gives the reason)")
 	}
 	if s.Controller == nil {
 		missing = append(missing, "controller (verify Argo CD / Flux CLI is installed and authenticated)")
@@ -597,5 +607,5 @@ func blockedSafeNextAction(s SourceTruthSurfaces) string {
 	if len(missing) == 0 {
 		return ""
 	}
-	return "Read-only diagnostic: cannot fetch " + strings.Join(missing, "; ") + ". Resolve the auth/CLI gap and re-run."
+	return "Read-only diagnostic: cannot fetch " + strings.Join(missing, "; ") + ". Resolve what is named and re-run."
 }

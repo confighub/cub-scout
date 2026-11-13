@@ -1743,15 +1743,24 @@ stands in for it or completes it. With neither
 present, cub-scout says the unit cannot be read from the object. It does not
 say ConfigHub does not manage it. Added after v2.15.0.
 
-Under these two strategies PASS means the three surfaces were read and the
-controller's source has the declared shape. It does not mean the digest the
-controller pulled was shown to be the one ConfigHub rendered: that equality is
-still deferred. Two cases are caught, each as WATCH with a proof gap: the
-origin annotation names a unit revision (`surfaces.confighub.object_revision`)
-that is not the head revision read (`revision`), which gives
-`confighub.object_revision_differs_from_head`; and the controller's source is
-`oci://<host>/space/<slug>` for a space other than the one the unit was read
-from, which gives `controller.source_names_another_space`.
+Under these two strategies PASS means: the three surfaces were read, the
+controller's source has the declared shape, and the unit revision the object
+names in its origin annotation (`surfaces.confighub.object_revision`) is the
+head revision read (`revision`). It does not mean the digest the controller
+pulled was shown to be the one ConfigHub rendered: that equality is still
+deferred. Three cases are WATCH with a proof gap:
+
+- `confighub.object_revision`: the object names no revision, as with the
+  older metadata, so nothing ties what runs to the unit that was read. Before
+  this, that case was PASS with nothing compared.
+- `confighub.object_revision_differs_from_head`: it names another revision
+  than the head.
+- `controller.source_names_another_space`: the controller's source is
+  `oci://<host>/space/<slug>` for a space other than the unit's.
+
+A blocked answer's `safe_next_action` points at `collection_errors` for the
+reason the ConfigHub surface is missing; it no longer says to check the login,
+which was not always the cause.
 
 ### Output contract
 

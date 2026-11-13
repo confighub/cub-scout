@@ -19,7 +19,7 @@ test/fixtures/source-truth/
 │   └── expected.json   exact byte-equal SourceTruthEvidence output
 ```
 
-## What this covers (13 fixtures)
+## What this covers (14 fixtures)
 
 | # | Strategy | Verdict | Council case |
 |---|---|---|---|
@@ -36,6 +36,7 @@ test/fixtures/source-truth/
 | 11 | `oci-flux` | `PASS` / `AGREED` | **Phase 2** non-ConfigHub OCI digest equality — controller `sha256:` matches runtime `@sha256:` |
 | 12 | `oci-argo` | `BLOCK` / `MISMATCH` outlier=controller | **Phase 2** non-ConfigHub OCI digest mismatch |
 | 13 | `helm-flux` | `WATCH` / `INCOMPLETE` proof_gap=`runtime.helm_chart_anchor` | **Phase 2** helm runtime extractor not yet wired (`helm.sh/chart` label visible to ownership.go but not yet in RuntimeSurface) |
+| 14 | `confighub-oci-flux` | `WATCH` / `INCOMPLETE` proof_gap=`confighub.object_revision` | surfaces present, but the object names no unit revision, so nothing between them was compared. Fixtures 01 and 04 carry `object_revision` since 2026-11-13; before that 01 was PASS with nothing compared |
 
 ## Adding a fixture
 

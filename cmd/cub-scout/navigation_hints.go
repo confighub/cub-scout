@@ -321,11 +321,11 @@ func mapListHints(entries []MapEntry, byOwner map[string]int, namespace string) 
 		if nativeCount >= 10 {
 			priority = hintPriorityUrgent
 		}
-		rationale := fmt.Sprintf("Found %d unmanaged resource", nativeCount)
+		rationale := fmt.Sprintf("Found %d resource", nativeCount)
 		if nativeCount != 1 {
 			rationale += "s"
 		}
-		rationale += " - these lack GitOps ownership and may drift"
+		rationale += " with no owner marker cub-scout recognises (Native) - that does not show nobody manages them"
 		hints = append(hints, Hint{
 			Command:   fmt.Sprintf("cub-scout map orphans%s", nsFlag),
 			Rationale: rationale,
@@ -530,7 +530,7 @@ func explainHintsWithContext(summary ExplainSummary, ctx HintContext) []Hint {
 		// Unknown ownership is a governance concern - help find related issues
 		hints = append(hints, Hint{
 			Command:   fmt.Sprintf("cub-scout map orphans%s", nsFlag),
-			Rationale: "This resource has no recognized owner - find other unmanaged resources",
+			Rationale: "No owner marker was recognised on this resource - list others like it",
 			Priority:  hintPriorityHigh,
 		})
 		hints = append(hints, Hint{

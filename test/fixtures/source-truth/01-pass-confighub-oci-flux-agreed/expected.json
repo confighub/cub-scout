@@ -8,6 +8,7 @@
       "space": "demo",
       "unit": "rag-server",
       "revision": "47",
+      "object_revision": "47",
       "url": "https://hub.confighub.com/units/sp-demo/u-rag-server"
     },
     "controller": {

@@ -3674,7 +3674,7 @@ func runMapOrphans(cmd *cobra.Command, args []string) error {
 		fmt.Println()
 		fmt.Println("ORPHAN RESOURCES")
 		fmt.Println("════════════════════════════════════════════════════════════════════")
-		fmt.Println("Resources not managed by known owners (Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, ConfigHub).")
+		fmt.Println("Resources with no owner marker cub-scout recognises (Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, ConfigHub).")
 		fmt.Println("These may be: legacy systems, manual hotfixes, debug pods, or shadow IT.")
 		fmt.Println("Also includes Argo Applications with explicit links to missing ApplicationSets.")
 		if !orphanIncludeSystem && mapNamespace == "" {
