@@ -1,9 +1,23 @@
 # Proposal: a smaller default MCP tool set
 
-Status: design, 2026-11-13. Nothing here is built. It belongs to package C of
-the [agent plan](../roadmap-3.0-execution.md#agent-plan--2026-11-13) and was
-asked for by the maintainer. It changes what an agent sees, so its last step
-is judged by an eval run, which is not approved today.
+Status: parts 1 and 2 are built (2026-11-13, after v2.15.1), with the default
+unchanged; how to use them is in the
+[command reference](../reference/commands.md#mcp-serve). Part 3, changing the
+default, waits on an eval run, which is not approved today. This belongs to
+package C of the
+[agent plan](../roadmap-3.0-execution.md#agent-plan--2026-11-13) and was asked
+for by the maintainer, who confirmed `map` in the core.
+
+Measured after building: the core catalog is 9,292 bytes standalone and
+12,239 with ConfigHub, close to the estimates below; the index
+`cub_scout_more` returns is 832 and 2,695 bytes. Three things differ from the
+design as first written, each for a reason found while building or in review:
+
+- `cub_scout_more` cannot be named in an exact list. It reaches every tool,
+  so naming it would make the list no allow-list at all.
+- The plugin manifest does not name a profile. A newer manifest passing
+  `--tools` to an older installed binary would stop it starting.
+- A profile set only in the environment is ignored with `--recording`.
 
 ## The problem
 
