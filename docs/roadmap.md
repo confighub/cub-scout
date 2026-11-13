@@ -166,8 +166,9 @@ issue is filed for these yet; file one when a package starts.
 - [ ] A: field value, last manager, and whether a controller will revert it.
 - [ ] A: changes no one recorded, from three-way compare.
 - [ ] A: `next[]` reads on every answer, exact commands, never writes.
-- [ ] B: one envelope for every answer. Designed, not built:
-  [proposal](proposals/answer-envelope.md) (2026-11-13). It covers the
+- [ ] B: one envelope for every answer. `trace` carries `answer`
+  (2026-11-13); `explain`, `gitops status`, `compare source-truth` and
+  `doctor` do not yet. [Proposal](proposals/answer-envelope.md). It covers the
   witness rule (G3), cluster identity and cost (#599) and conformance (#596).
 - [ ] B: mark text read from the cluster as quoted data in JSON and MCP.
 - [ ] B: remove verdict wording (PASS / WATCH / ASK / BLOCK) from cub-scout's

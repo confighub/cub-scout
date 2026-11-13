@@ -1,6 +1,15 @@
 # Proposal: one envelope for every answer
 
-Status: design, 2026-11-13. Nothing here is built. It is package B of the
+Status: the maintainer named the block `answer` and chose `trace` to go first
+(2026-11-13). `trace` carries it, after v2.15.1; its fields are in the
+[JSON contract](../reference/json-contracts.md). The other commands, the
+state words for them, cluster identity, and the 3.0 removals are still
+undecided. Built so far, two things differ from the design below: the block
+measured about 1,180 bytes on a three-link chain, above the estimate, because
+`basis` repeats the chain; and a `basis` claim says only "reported ready" or
+"not ready", with the controller's status, revision and message in `quoted`.
+
+What follows is the design as written on 2026-11-13. It is package B of the
 [agent plan](../roadmap-3.0-execution.md#agent-plan--2026-11-13), with
 addition G3 (the witness rule), and the remaining scope of
 [#599](https://github.com/confighub/cub-scout/issues/599) (cluster identity

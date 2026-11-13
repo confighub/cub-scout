@@ -980,6 +980,7 @@ func convertTraceToV014(result *agent.TraceResult, kind, name, namespace string,
 		output.Warnings = []string{result.Error}
 	}
 	output.Reason = result.Reason
+	output.Answer = buildTraceAnswer(result, kind, name, namespace)
 
 	// Add events if present
 	if result.Events != nil && len(result.Events.Events) > 0 {

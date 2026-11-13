@@ -1,4 +1,53 @@
 {
+  "answer": {
+    "state": "traced",
+    "reason": "chain-ready",
+    "summary": "Deployment/payments-api in payments is delivered through a chain of 3 links, each reported ready.",
+    "observedAt": "<TIMESTAMP>",
+    "cluster": {
+      "context": "",
+      "id": "",
+      "idSource": "not-read"
+    },
+    "basis": [
+      {
+        "claim": "ConfigHub OCI/confighub-prod is reported ready",
+        "restsOn": "controller-report",
+        "quoted": "status: stored artifact for revision 'latest@sha1:abc123def456'; revision: latest@sha1:abc123def456"
+      },
+      {
+        "claim": "Kustomization/payments-app is reported ready",
+        "restsOn": "controller-report",
+        "ref": {
+          "kind": "Kustomization",
+          "namespace": "flux-system",
+          "name": "payments-app"
+        },
+        "quoted": "status: Applied revision: latest@sha1:abc123def456; revision: latest@sha1:abc123def456"
+      },
+      {
+        "claim": "Deployment/payments-api is reported ready",
+        "restsOn": "object-metadata",
+        "ref": {
+          "kind": "Deployment",
+          "namespace": "payments",
+          "name": "payments-api"
+        },
+        "quoted": "status: 2/2 ready"
+      }
+    ],
+    "unknowns": [],
+    "next": [],
+    "cost": {
+      "requestsMade": 0,
+      "responseBodyBytes": 0,
+      "transportErrors": 0,
+      "bodyReadErrors": 0,
+      "durationMillis": 0,
+      "reused": false,
+      "coverage": "not-measured"
+    }
+  },
   "command": "trace",
   "target": {
     "kind": "Deployment",

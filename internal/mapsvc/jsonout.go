@@ -364,6 +364,10 @@ type TraceOutput struct {
 	// "no-owner-marker-recognised". Decide on this, not on the warning text.
 	Reason string `json:"reason,omitempty"`
 
+	// Answer is the common envelope (docs/proposals/answer-envelope.md).
+	// Added after v2.15.1; the fields above and below stay until 3.0.
+	Answer *Answer `json:"answer,omitempty"`
+
 	Command          string                       `json:"command"`
 	Target           ResourceID                   `json:"target"`
 	Chain            []ChainNode                  `json:"chain"`

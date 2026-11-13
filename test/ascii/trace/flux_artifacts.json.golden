@@ -1,4 +1,58 @@
 {
+  "answer": {
+    "state": "traced",
+    "reason": "chain-ready",
+    "summary": "Deployment/payment-api in ecommerce is delivered through a chain of 3 links, each reported ready.",
+    "observedAt": "<TIMESTAMP>",
+    "cluster": {
+      "context": "",
+      "id": "",
+      "idSource": "not-read"
+    },
+    "basis": [
+      {
+        "claim": "GitRepository/ecommerce-apps is reported ready",
+        "restsOn": "controller-report",
+        "ref": {
+          "kind": "GitRepository",
+          "namespace": "flux-system",
+          "name": "ecommerce-apps"
+        },
+        "quoted": "status: Fetched revision: main@sha1:abc1234; revision: main@sha1:abc1234567890abcdef1234567890abcdef12"
+      },
+      {
+        "claim": "Kustomization/ecommerce-payment is reported ready",
+        "restsOn": "controller-report",
+        "ref": {
+          "kind": "Kustomization",
+          "namespace": "flux-system",
+          "name": "ecommerce-payment"
+        },
+        "quoted": "status: Applied revision: main@sha1:abc1234; revision: main@sha1:abc1234567890abcdef1234567890abcdef12"
+      },
+      {
+        "claim": "Deployment/payment-api is reported ready",
+        "restsOn": "object-metadata",
+        "ref": {
+          "kind": "Deployment",
+          "namespace": "ecommerce",
+          "name": "payment-api"
+        },
+        "quoted": "status: 3/3 ready"
+      }
+    ],
+    "unknowns": [],
+    "next": [],
+    "cost": {
+      "requestsMade": 0,
+      "responseBodyBytes": 0,
+      "transportErrors": 0,
+      "bodyReadErrors": 0,
+      "durationMillis": 0,
+      "reused": false,
+      "coverage": "not-measured"
+    }
+  },
   "command": "trace",
   "target": {
     "kind": "Deployment",

@@ -90,6 +90,27 @@ For MCP, the current rule is:
 
 ## Trace Observation Scope and Partial Results
 
+`trace --format json` carries a top-level `answer` block (added after
+v2.15.1), the first command to do so; the design and the fields other
+commands will share are in
+[the proposal](../proposals/answer-envelope.md). The fields beside it are
+unchanged and stay until 3.0.
+
+| `answer` field | Meaning |
+|---|---|
+| `state` | `traced` (a chain, every link reported ready), `chain-not-ready`, `no-owner-marker`, or `not-observable`. Decide on this. |
+| `reason` | A stable key: `chain-ready`, `link-not-ready`, `no-owner-marker-recognised`, `no-chain-observed`. |
+| `summary` | One sentence in cub-scout's words. The words may change. |
+| `observedAt` | When the cluster was read, RFC 3339. |
+| `cluster` | `context` is the kubeconfig context label. `id` is empty and `idSource` is `not-read`: the cluster's identity is not read by `trace`. |
+| `basis[]` | One entry per chain link. `claim` says only whether the link is reported ready. `restsOn` is `controller-report` for a source or deployer, whose readiness and revision are the controller's own statement, and `object-metadata` for the traced resource. `ref` is set only where an object of that kind and name exists to fetch. `quoted` holds the controller's status, revision and message word for word; it is cluster text, and appears nowhere else in `answer`. |
+| `unknowns[]` | What the trace could not read, each with `kind` (`not-observable` today) and `reason`. `[]` when nothing failed. For `no-owner-marker` the finding is the state, not an unknown. |
+| `next[]` | Exact read-only commands that follow from `reason`, each with `why`. May be empty. |
+| `cost` | Requests made and response bytes read by this trace's own Kubernetes clients, and its duration. `coverage` says what is counted: requests made by a `flux` subprocess and ConfigHub reads are not. `coverage: "not-measured"` when a result was not produced by a live read. |
+
+The block repeats what `chain` already holds, so it makes the answer larger:
+about 1,180 bytes on a three-link chain. That duplication goes in 3.0.
+
 Normal `trace --format json` adds optional top-level `context`, `warnings` and
 `reason`. `reason` is a stable key for why there is no chain, when that is
 known; the one value today is `no-owner-marker-recognised` (added after

@@ -34,6 +34,23 @@ func observeTrace(ctx context.Context, session *traceSession, kind, name, namesp
 	if session == nil {
 		return nil, fmt.Errorf("trace session is unavailable")
 	}
+	started := time.Now()
+	// A session can serve more than one trace: report this one's reads only.
+	before := session.meter.Snapshot()
+	defer func() {
+		if observation == nil || observation.Result == nil || session.meter == nil {
+			return
+		}
+		cost := session.meter.Snapshot()
+		cost.RequestsMade -= before.RequestsMade
+		cost.ResponseBodyBytes -= before.ResponseBodyBytes
+		cost.TransportErrors -= before.TransportErrors
+		cost.BodyReadErrors -= before.BodyReadErrors
+		cost.DurationMillis = time.Since(started).Milliseconds()
+		// What is counted, said where the number is read.
+		cost.Coverage = "kubernetes-requests-by-this-command; subprocesses and ConfigHub reads not counted"
+		observation.Result.ReadCost = &cost
+	}()
 	dyn, err := session.dynamicClient()
 	if err != nil {
 		return nil, err
