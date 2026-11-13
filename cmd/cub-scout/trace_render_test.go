@@ -183,3 +183,33 @@ func TestRenderTraceHumanReturnsWriterError(t *testing.T) {
 		t.Fatalf("renderTraceHuman() error = %v, want writer error", err)
 	}
 }
+
+// An Argo CD Application's OCI source has no object of its own. With
+// --artifacts the chain says so; an empty space there read as "none found".
+func TestTraceArtifactsSaysWhenASourceHasNoArtifactObject(t *testing.T) {
+	result := &agent.TraceResult{
+		Object: agent.ResourceRef{Kind: "Deployment", Name: "api", Namespace: "team-a"},
+		Chain: []agent.ChainLink{
+			{Kind: "OCI", Name: "example/app", URL: "oci://ghcr.io/example/app", Revision: "1.2.3", Ready: true},
+			{Kind: "Application", Name: "api", Namespace: "argocd", Status: "Synced / Healthy", Ready: true},
+			{Kind: "Deployment", Name: "api", Namespace: "team-a", Status: "Synced", Ready: true},
+		},
+	}
+	invCtx, err := NewInvocationContext("", TransportCLI)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, withArtifacts := range []bool{true, false} {
+		var out bytes.Buffer
+		if err := renderTraceHuman(&out, result, nil, invCtx, traceHumanOptions{Artifacts: withArtifacts}); err != nil {
+			t.Fatalf("renderTraceHuman() error = %v", err)
+		}
+		text := traceRenderANSI.ReplaceAllString(out.String(), "")
+		if got := strings.Contains(text, "Artifact: not applicable"); got != withArtifacts {
+			t.Fatalf("artifacts=%v: 'Artifact: not applicable' present=%v\n%s", withArtifacts, got, text)
+		}
+		if strings.Contains(text, "Artifact URL:") {
+			t.Fatalf("an artifact was printed for a source that has no artifact object:\n%s", text)
+		}
+	}
+}

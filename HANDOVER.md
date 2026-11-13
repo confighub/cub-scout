@@ -2201,6 +2201,33 @@ built with SDK core v0.8.12, refuses it by default.
   on a real cluster; health comparison. No agent eval case (waived; paid runs
   are not approved).
 
+## Lessons applied, Flux kinds, catalog size — 2026-11-13 (later)
+
+On the maintainer's instruction ("tell me what the lessons are", "apply those
+lessons", "shrink the catalog").
+
+- **#908.** `ExternalArtifact` and `ArtifactGenerator` under the groups a
+  cluster serves; `OCIRepository` and `Bucket` read as `v1`. The lane writes
+  `crd-served-versions.txt` and fails on Flux if cub-scout reads a version
+  that is not served. Seen and not acted on: that cluster serves notification
+  `alerts` and `providers` as `v1beta3` only.
+- **#909.** The lessons in
+  `docs/reference/agentic-gitops-observability.md` applied to source-truth,
+  trace, explain, map and the hints. See the readiness ledger for what
+  changed for a consumer of the source-truth fixtures.
+- **#910.** Catalog ceilings and a first shortening.
+- **Reviews.** Independent readers found real faults in #906 and #909 after
+  CI and the live lane were green. Keep asking for one on any change to
+  evidence or verdicts.
+- **Next, in order.** The `trace` JSON `error` for a resource with no
+  recognised owner needs a typed reason before its words can change. A
+  smaller default MCP tool set is proposed, not designed; it should be judged
+  by an eval run, which is not approved. The rest of #599 (cluster identity
+  and reported cost on every answer) is the same work as packages B and C.
+- **#882** stays open: item 5 (the Flux Web UI's field manager,
+  `flux-operator-web` from source, not seen on a cluster) and the live
+  sighting of the two artifact kinds.
+
 ## #882 item 3, the agent plan and principle 10 — 2026-11-13
 
 On the maintainer's instruction ("adopt the plan for now, and keep going with

@@ -1338,6 +1338,11 @@ func outputTraceMarkdown(result *agent.TraceResult, artifacts map[string]mapsvc.
 			fmt.Printf("%sArtifact Revision: %s\n", detailPrefix, artifact.Revision)
 			fmt.Printf("%sArtifact Digest: %s\n", detailPrefix, artifact.Digest)
 			fmt.Printf("%sArtifact Updated: %s\n", detailPrefix, artifact.LastUpdateTime)
+		} else if traceArtifacts && mapsvc.InferRole(link.Kind) == mapsvc.RoleSource {
+			// A source with no object of its own, such as an Argo CD
+			// Application's Git or OCI source. Say so; printing nothing
+			// reads as "no artifact was found".
+			fmt.Printf("%sArtifact: %s\n", detailPrefix, traceArtifactNotApplicable)
 		}
 		if link.Status != "" {
 			fmt.Printf("%sStatus: %s\n", detailPrefix, link.Status)
