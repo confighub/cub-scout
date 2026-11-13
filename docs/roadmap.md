@@ -174,8 +174,10 @@ issue is filed for these yet; file one when a package starts.
   A first comparison on four questions is recorded by the live lane
   ([answer sizes](reference/answer-sizes.md), 2026-11-13); the 24 cases are
   not done.
-- [ ] C: smaller default MCP tool set, rest discoverable. Designed, not
-  built: [proposal](proposals/mcp-default-tool-set.md) (2026-11-13). The catalog is
+- [ ] C: smaller default MCP tool set, rest discoverable. `mcp serve --tools
+  core` and `cub_scout_more` are built (2026-11-13), default unchanged
+  ([proposal](proposals/mcp-default-tool-set.md)); what is left is the eval
+  that decides whether the default changes. The catalog is
   counted and held, each tool under a declared ceiling
   (`cmd/cub-scout/mcp_catalog_size_test.go`). A first shortening on
   2026-11-13 took the 8 standalone tools from 17,465 to 15,120 bytes and all

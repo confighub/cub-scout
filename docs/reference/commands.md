@@ -2266,8 +2266,41 @@ Serve MCP over stdio and expose read-only tools.
 
 ```bash
 cub-scout mcp serve
+cub-scout mcp serve --tools core
+cub-scout mcp serve --tools doctor,explain,trace
 cub-scout mcp serve --recording objects.yaml
 ```
+
+`--tools` chooses which tools are listed. An agent pays for every listed tool
+at the start of a session, so a shorter list is a cheaper session. It never
+changes what a tool does. Added after v2.15.1.
+
+| `--tools` | Lists | Catalog, standalone / with ConfigHub |
+|---|---|---|
+| `all` (default) | Every tool the session can run. Unchanged behaviour. | 15,120 / 31,126 bytes |
+| `core` | `doctor`, `explain`, `map`, `gitops_status`; with a ConfigHub session also `compare_source_truth` and `confighub_units`; and `cub_scout_more`. | 9,292 / 12,239 bytes |
+| `a,b,c` | Exactly these tools. Nothing else can be called, so this is an allow-list. `cub_scout_more` reaches every tool and cannot be named in one. | as listed |
+
+`cub_scout_more` reaches the tools a profile does not list. With no arguments
+it returns an index of them, one line each (832 bytes standalone, 2,695 with
+ConfigHub). With `tool` it returns that tool's full description and input
+schema, as `--tools all` lists it. With `tool` and `arguments` it runs the
+tool and returns the tool's own answer. A refused call carries the tool's
+input schema, because the host could not check the arguments itself. It runs
+only cub-scout's own read-only tools, by exact name.
+
+The same choice can be made with `CUB_SCOUT_MCP_TOOLS`; the flag wins. An
+unknown tool name stops the server at start-up. `initialize` reports the
+profile as `serverInfo.toolProfile`, which is `all` by default; that field is
+the one addition a default session sees. A direct call to a tool that exists but
+is not listed is refused with a message that says so; it is not reported as
+an unknown tool. `--tools` on the command line cannot be combined with
+`--recording`; a value set only in the environment is ignored there.
+
+Whether `core` costs an agent less overall, and whether it answers as well,
+is not measured: a session that needs an unlisted tool spends an extra call
+to find it. The default stays `all` until an eval compares the two
+([proposal](../proposals/mcp-default-tool-set.md)).
 
 With `--recording FILE`, the server parses and fixes the bounded input at
 startup and exposes recorded ownership `map` and exact-object `explain`. Tool calls cannot provide a

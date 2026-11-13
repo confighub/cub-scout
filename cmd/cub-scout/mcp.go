@@ -71,17 +71,26 @@ Doctor is the first troubleshooting and tool-choice entrypoint.
 Connected tools add governed lookup, intended configuration, receipts, and
 convergence facts once scope is known.
 
+With --tools core, only doctor, explain, map and gitops_status are listed (and,
+with a ConfigHub session, compare_source_truth and confighub_units), plus
+cub_scout_more, which lists, describes and runs the others. An agent pays for
+every listed tool at the start of a session; the default, all, is unchanged.
+
 With --recording FILE, only recorded ownership inventory and exact-object explain are exposed;
 the input is fixed at startup and calls cannot request live or connected tools.`,
 	RunE: runMCPServe,
 }
 
-var mcpRecording string
+var (
+	mcpRecording string
+	mcpToolsFlag string
+)
 
 func init() {
 	rootCmd.AddCommand(mcpCmd)
 	mcpCmd.AddCommand(mcpServeCmd)
 	mcpServeCmd.Flags().StringVar(&mcpRecording, "recording", "", "Serve ownership inventory and exact-object explain from this immutable local YAML/JSON recording")
+	mcpServeCmd.Flags().StringVar(&mcpToolsFlag, "tools", "", "Which tools to list: all (default), core (doctor, explain, map, gitops_status and cub_scout_more, which reaches the rest), or a comma-separated list of exact tool names, which is then an allow-list: nothing else can be called. Also "+mcpToolProfileEnv)
 }
 
 type mcpToolRunner func(ctx context.Context, args []string) (string, error)
@@ -121,6 +130,9 @@ type mcpGateway struct {
 	// sessionFn answers whether ConfigHub reads can run right now. Production
 	// re-asks `cub`; tests replace it.
 	sessionFn func() bool
+
+	// profile chooses which tools are listed. The zero value lists them all.
+	profile mcpToolProfile
 }
 
 // followSession re-asks whether ConfigHub reads can run and rebuilds the tool
@@ -174,7 +186,16 @@ type mcpError struct {
 }
 
 func runMCPServe(cmd *cobra.Command, args []string) error {
-	if cmd.Flags().Changed("recording") || mcpRecording != "" {
+	recording := cmd.Flags().Changed("recording") || mcpRecording != ""
+	toolsSpec, err := resolveMCPToolsSpec(cmd.Flags().Changed("tools"), mcpToolsFlag, os.Getenv(mcpToolProfileEnv), recording)
+	if err != nil {
+		return err
+	}
+	profile, err := parseMCPToolProfile(toolsSpec)
+	if err != nil {
+		return err
+	}
+	if recording {
 		snapshot, err := readRecordedObjectSnapshot(mcpRecording)
 		if err != nil {
 			return err
@@ -182,6 +203,7 @@ func runMCPServe(cmd *cobra.Command, args []string) error {
 		return serveMCP(cmd.Context(), os.Stdin, os.Stdout, newRecordedMCPGateway(snapshot))
 	}
 	gateway := newMCPServeGateway(boundedMCPRunner(runMCPToolCommand), runMCPConnectedToolCommand)
+	gateway.profile = profile
 	return serveMCP(cmd.Context(), os.Stdin, os.Stdout, gateway)
 }
 
@@ -1389,6 +1411,13 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 
 // newMCPServeGateway builds the gateway `mcp serve` uses: the tool set for the
 // session as it is now, and the means to follow it as it changes.
+func (g *mcpGateway) toolProfileLabel() string {
+	if g.profile.label == "" {
+		return mcpToolProfileAll
+	}
+	return g.profile.label
+}
+
 func newMCPServeGateway(runner, connectedRunner mcpToolRunner) *mcpGateway {
 	gateway := newMCPGatewayWithMode(runner, connectedRunner, detectMCPConnectedMode())
 	gateway.connectedOnly = connectedOnlyToolNames(gateway.runTool, gateway.connectedRunner)
@@ -1397,9 +1426,7 @@ func newMCPServeGateway(runner, connectedRunner mcpToolRunner) *mcpGateway {
 }
 
 func (g *mcpGateway) toolsForList() []mcpToolDescriptor {
-	out := make([]mcpToolDescriptor, len(g.toolList))
-	copy(out, g.toolList)
-	return out
+	return g.listedTools()
 }
 
 func (g *mcpGateway) handleRequest(ctx context.Context, req mcpRequest) *mcpResponse {
@@ -1422,6 +1449,9 @@ func (g *mcpGateway) handleRequest(ctx context.Context, req mcpRequest) *mcpResp
 				"serverInfo": map[string]interface{}{
 					"name":    "cub-scout-mcp",
 					"version": BuildTag,
+					// Which catalog the agent was given, for whoever reads
+					// the transcript later.
+					"toolProfile": g.toolProfileLabel(),
 				},
 			},
 		}
@@ -1462,20 +1492,40 @@ func (g *mcpGateway) callTool(ctx context.Context, paramsRaw json.RawMessage) ma
 		return mcpToolError(fmt.Sprintf("invalid tools/call params: %v", err))
 	}
 
+	if params.Arguments == nil {
+		params.Arguments = map[string]interface{}{}
+	}
+	if params.Name == mcpMoreToolName && g.profile.offersMore() {
+		return g.callMore(ctx, params.Arguments)
+	}
+
 	tool, ok := g.tools[params.Name]
 	if !ok {
 		// A connected tool that is not offered right now is not an unknown
 		// tool: it is a tool this session cannot run, and the gate says why.
-		if g.connectedOnly[params.Name] {
+		if g.connectedOnly[params.Name] && g.profile.lists(params.Name) {
 			if err := requireConfigHubFor(params.Name); err != nil {
 				return mcpToolError(err.Error())
 			}
 		}
+		if g.connectedOnly[params.Name] && !g.profile.lists(params.Name) {
+			return g.notListedError(params.Name)
+		}
 		return mcpToolError(fmt.Sprintf("unknown tool %q", params.Name))
 	}
-	if params.Arguments == nil {
-		params.Arguments = map[string]interface{}{}
+	if !g.profile.lists(params.Name) {
+		return g.notListedError(params.Name)
 	}
+	return g.runNamedTool(ctx, params.Name, tool, params.Arguments)
+}
+
+// runNamedTool runs one tool with its arguments. Both a direct call and a
+// call dispatched through cub_scout_more end here, so the answer is the same.
+func (g *mcpGateway) runNamedTool(ctx context.Context, name string, tool mcpTool, arguments map[string]interface{}) map[string]interface{} {
+	params := struct {
+		Name      string
+		Arguments map[string]interface{}
+	}{Name: name, Arguments: arguments}
 
 	args, err := tool.BuildArgs(params.Arguments)
 	if err != nil {
