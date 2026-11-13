@@ -124,10 +124,20 @@ if [[ "$controller" != sveltos ]]; then
   }
   capture trace.json trace deploy/argobot -n argobot --format json
   capture trace.txt trace deploy/argobot -n argobot
-  capture explain-bounded.json explain Deployment/argobot -n argobot --bounded --api-version apps/v1 --format json
+  capture explain-bounded.json explain Deployment/argobot -n argobot --bounded --api-version apps/v1 --kube-context "$(KUBECONFIG="$kubeconfig" kubectl config current-context)" --format json
   capture source-truth.json compare source-truth deploy/argobot -n argobot --strategy "confighub-oci-$controller" --format json
   capture map-list.txt map list
-  KUBECONFIG="$kubeconfig" kubectl get deployment argobot -n argobot -o json 2>/dev/null | python3 -c '
+  # The identity is read from the workload's origin annotation, and the unit
+  # lives on this disposable server, so the ConfigHub surface must be filled.
+  python3 - "$out/delivered-workload/source-truth.json" <<'PY'
+import json, sys
+report = json.load(open(sys.argv[1]))
+surface = (report.get("surfaces") or {}).get("confighub") or {}
+print("source-truth: status=%s confighub=%s errors=%s" % (report.get("status"), surface, report.get("collection_errors")))
+if surface.get("unit") != "argobot" or not surface.get("space") or not surface.get("revision"):
+    sys.exit("source-truth did not read the ConfigHub unit named by the workload's origin annotation")
+PY
+  KUBECONFIG="$kubeconfig" kubectl get deployment argobot -n argobot --show-managed-fields -o json 2>/dev/null | python3 -c '
 import json, sys
 o = json.load(sys.stdin)
 m = o["metadata"]

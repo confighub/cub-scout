@@ -1732,6 +1732,16 @@ cluster identity. JSON remains the canonical evidence contract; `ascii` and
 | `oci-argo` | OCI (non-ConfigHub) → Argo CD → Kubernetes | OCI digest |
 | `oci-flux` | OCI (non-ConfigHub) → Flux → Kubernetes | OCI digest |
 
+Under the `confighub-oci-*` strategies, the ConfigHub unit is the one the
+runtime object itself names: the `confighub.com/origin` annotation (space slug
+and unit slug), which ConfigHub writes on what it delivers, including the
+workloads of a cluster attached with `cub cluster up`; or, on older objects,
+`confighub.com/UnitSlug` with `confighub.com/SpaceName`. An origin annotation
+that cannot be parsed, or that disagrees with the older metadata, is reported
+as a collection error; the older metadata never stands in for it. With neither
+present, cub-scout says the unit cannot be read from the object. It does not
+say ConfigHub does not manage it. Added after v2.15.0.
+
 ### Output contract
 
 Output is JSON only in v0.1. Field shape mirrors the council verdict on #393:
