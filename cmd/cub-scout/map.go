@@ -484,12 +484,13 @@ Examples:
 var mapOrphansCmd = &cobra.Command{
 	Use:     "orphans",
 	Aliases: []string{"native", "unmanaged"},
-	Short:   "List orphaned resources (not managed by GitOps)",
-	Long: `Find resources deployed outside GitOps - shadow IT detection.
+	Short:   "List resources with no recognised owner marker (Native)",
+	Long: `List resources on which no GitOps or platform owner marker was recognised.
 
-Orphaned resources are those without detected GitOps or platform ownership:
+That is what "Native" means here. It does not prove nobody manages them.
+They are often:
 - kubectl apply'd directly
-- Created by operators/controllers not tracked by GitOps
+- Created by operators or controllers cub-scout has no detector for
 - Legacy resources from before GitOps adoption
 
 Note: Resources managed by Sveltos, Modelplane, Crossplane, kro, or Terraform controllers are not considered orphans.
@@ -9186,7 +9187,7 @@ func runMapAppHierarchy(cmd *cobra.Command, args []string) error {
 	// Show native workloads (not managed by GitOps) with LiveTree
 	if len(nativeWorkloads) > 0 {
 		fmt.Println()
-		fmt.Printf("☸ Native/Unmanaged Workloads (%d) - not tracked by GitOps\n", len(nativeWorkloads))
+		fmt.Printf("☸ Native Workloads (%d) - no GitOps owner marker recognised\n", len(nativeWorkloads))
 		fmt.Printf("│\n")
 		for i, wl := range nativeWorkloads {
 			isLastWl := i == len(nativeWorkloads)-1

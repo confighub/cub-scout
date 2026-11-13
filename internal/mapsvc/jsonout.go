@@ -516,7 +516,9 @@ const (
 // InferRole determines the role of a chain node based on its Kind.
 func InferRole(kind string) string {
 	switch kind {
-	case "Source", "GitRepository", "OCIRepository", "ConfigHub OCI", "HelmRepository", "Bucket", "SveltosReference", "EventSource", "ModelCache", "InferenceClass", "InferenceCluster":
+	// "OCI" is an Argo CD Application's OCI source: a source with no
+	// Kubernetes object of its own.
+	case "Source", "GitRepository", "OCIRepository", "OCI", "ConfigHub OCI", "HelmRepository", "Bucket", "SveltosReference", "EventSource", "ModelCache", "InferenceClass", "InferenceCluster":
 		return RoleSource
 	case "Kustomization", "HelmRelease", "Application", "ClusterProfile", "Profile", "EventTrigger", "ClusterHealthCheck", "ClusterPromotion", "ModelDeployment", "ModelService", "InferenceGateway":
 		return RoleDeployer
@@ -584,7 +586,7 @@ func InferDeliveryStage(kind string) string {
 	switch kind {
 	case "Source", "GitRepository", "HelmRepository", "Bucket", "SveltosReference", "EventSource", "ModelCache", "InferenceClass", "InferenceCluster":
 		return StageSource
-	case "OCIRepository", "ConfigHub OCI":
+	case "OCIRepository", "OCI", "ConfigHub OCI":
 		return StageArtifact
 	case "Kustomization", "HelmRelease", "Application", "ClusterProfile", "Profile", "EventTrigger", "ClusterHealthCheck", "ClusterPromotion", "ModelDeployment", "ModelService", "InferenceGateway":
 		return StageDeployer

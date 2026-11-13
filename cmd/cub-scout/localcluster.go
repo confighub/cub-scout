@@ -4152,7 +4152,7 @@ func (m LocalClusterModel) getPanelDrift() string {
 func (m LocalClusterModel) getPanelOrphans() string {
 	var b strings.Builder
 
-	b.WriteString(lcDimStyle.Render("Resources not managed by GitOps") + "\n\n")
+	b.WriteString(lcDimStyle.Render("Resources with no recognised GitOps owner marker") + "\n\n")
 
 	orphans := []MapEntry{}
 	for _, e := range m.entries {
@@ -5313,7 +5313,7 @@ func (m LocalClusterModel) getPanelClusterData() string {
 	if nativeResources == 0 {
 		b.WriteString(lcOkStyle.Render("  ✓ No orphan resources - all managed by GitOps") + "\n")
 	} else {
-		b.WriteString(lcWarnStyle.Render("  ⚠ These resources are not tracked by GitOps") + "\n")
+		b.WriteString(lcWarnStyle.Render("  ⚠ No GitOps owner marker was recognised on these resources") + "\n")
 		// Group by namespace
 		byNs := map[string][]MapEntry{}
 		for _, e := range m.entries {
@@ -5557,7 +5557,7 @@ func (m LocalClusterModel) getPanelAppHierarchy() string {
 	// ═══════════════════════════════════════════════════════════════════════════
 	if len(nativeWorkloads) > 0 {
 		b.WriteString("\n")
-		b.WriteString(fmt.Sprintf("☸ %s (%d) - not tracked by GitOps\n",
+		b.WriteString(fmt.Sprintf("☸ %s (%d) - no GitOps owner marker recognised\n",
 			lcWarnStyle.Render("Native/Unmanaged Workloads"), len(nativeWorkloads)))
 		b.WriteString("│\n")
 

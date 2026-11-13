@@ -21,7 +21,8 @@ import (
 // clusters"). They may not come back in a string the binary can print.
 var phrasesAnAgentWouldBelieve = map[string]string{
 	"not confighub-managed":              "absence of one label is not evidence that ConfigHub does not manage the object; say what could not be read",
-	"is not managed by gitops":           "no recognised owner marker is not evidence that nothing manages the resource",
+	"not managed by gitops":              "no recognised owner marker is not evidence that nothing manages the resource",
+	"not tracked by gitops":              "say that no owner marker was recognised",
 	"these lack gitops ownership":        "no recognised owner marker is not evidence that the resources lack an owner",
 	"not managed by known owners":        "say that no owner marker was recognised",
 	"verify `cub` auth and connectivity": "name the cause that was observed, or point at where it is reported; do not guess a login problem",
@@ -29,11 +30,13 @@ var phrasesAnAgentWouldBelieve = map[string]string{
 
 func TestNoPrintedStringClaimsWhatWasOnlyNotFound(t *testing.T) {
 	root := filepath.Join("..", "..")
+	visited := 0
 	for _, dir := range []string{"cmd", "pkg", "internal"} {
 		_ = filepath.WalkDir(filepath.Join(root, dir), func(path string, d os.DirEntry, err error) error {
 			if err != nil || d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
 				return nil
 			}
+			visited++
 			fset := token.NewFileSet()
 			file, perr := parser.ParseFile(fset, path, nil, 0)
 			if perr != nil {
@@ -59,5 +62,9 @@ func TestNoPrintedStringClaimsWhatWasOnlyNotFound(t *testing.T) {
 			})
 			return nil
 		})
+	}
+	// Exact phrases only: a sentence split across literals is not caught.
+	if visited < 100 {
+		t.Fatalf("only %d source files were read; the walk is not looking at the code", visited)
 	}
 }
