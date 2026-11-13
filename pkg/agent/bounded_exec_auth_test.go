@@ -368,8 +368,15 @@ func TestBoundedExecAuthParentExitCleansInheritedStdoutChild(t *testing.T) {
 	require.Eventually(t, func() bool { return helperFileExists(childFile) && !processExists(readHelperPID(t, childFile)) }, 3*time.Second, 20*time.Millisecond)
 }
 
+// helperFileExists reports whether the helper has finished writing its PID.
+// The file appears before its contents do: a reader that only checks that it
+// exists can read it empty (seen in the v2.15.1 Release run, 43479249018).
 func helperFileExists(path string) bool {
-	_, err := os.Stat(path)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return false
+	}
+	_, err = strconv.Atoi(strings.TrimSpace(string(data)))
 	return err == nil
 }
 
