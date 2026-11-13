@@ -82,6 +82,20 @@ else
   [[ -s "$private/sveltos.err" ]] && redact < "$private/sveltos.err" >&2
 fi
 KUBECONFIG="$kubeconfig" kubectl get deployments -A -o wide > "$out/deployments.txt" 2>&1 || true
+# Workloads, for the health comparison. Only what readiness is read from is
+# kept: a pod template can carry a token in its environment, and the artifact
+# is public.
+KUBECONFIG="$kubeconfig" kubectl get deployments.apps,statefulsets.apps,daemonsets.apps -A -o json 2>"$private/workloads.err" | python3 -c '
+import json, sys
+items = []
+for o in json.load(sys.stdin).get("items", []):
+    meta = o.get("metadata", {})
+    items.append({"apiVersion": o.get("apiVersion"), "kind": o.get("kind"),
+                  "metadata": {k: meta[k] for k in ("name", "namespace", "generation", "uid", "creationTimestamp") if k in meta},
+                  "spec": {k: v for k, v in o.get("spec", {}).items() if k == "replicas"},
+                  "status": o.get("status", {})})
+json.dump({"apiVersion": "v1", "kind": "List", "items": items}, sys.stdout, indent=1)
+' > "$out/workloads.json" || true
 curl --fail --silent --show-error --max-time 10 "$(cub context get -o json | python3 -c 'import json,sys; print(json.load(sys.stdin)["coordinate"]["serverURL"])')/api/info" > "$out/api-info.json" 2>/dev/null || true
 
 KUBECONFIG="$kubeconfig" CUB_SCOUT_TELEMETRY='' "$scout" gitops status --with-confighub --confighub-space '*' --format json > "$out/gitops-status.json" 2>"$out/gitops-status.err" || {
