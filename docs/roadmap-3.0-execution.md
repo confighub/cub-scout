@@ -60,6 +60,11 @@ case, with the turns from "applied" to "verified" published beside raw
 | 3.0 | A complete, with G1, G2 and G5; B enforced; C published; E's first rung, and the second if it is approved. |
 | 3.1 | D and G4, on ConfigHub's decision. |
 
+Started: the MCP catalog has a declared size per tool and in total, checked
+by a test (17,465 bytes standalone, 33,947 connected, measured 2026-11-13;
+four bytes is roughly a token). Answer sizes, summary views and the benchmark
+are not started.
+
 Open, and not covered by the adoption: the paired run in E; where to raise the
 fact question in D; effort estimates; whether the 24 cases cover the four
 questions.
