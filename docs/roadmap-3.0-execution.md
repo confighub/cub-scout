@@ -61,8 +61,10 @@ case, with the turns from "applied" to "verified" published beside raw
 | 3.1 | D and G4, on ConfigHub's decision. |
 
 Started: the MCP catalog has a declared size per tool and in total, checked
-by a test (17,465 bytes standalone, 33,947 connected, measured 2026-11-13;
-four bytes is roughly a token). Answer sizes, summary views and the benchmark
+by a test, and a first shortening took it from 17,465 to 15,120 bytes
+standalone and from 33,947 to 31,126 connected (2026-11-13; four bytes is
+roughly a token). Whether shorter text changes which tool an agent picks is
+not measured: that needs an eval run. Answer sizes, summary views and the benchmark
 are not started.
 
 Open, and not covered by the adoption: the paired run in E; where to raise the
