@@ -12,11 +12,11 @@
 set -euo pipefail
 umask 077
 
-root=${1:?Usage: live-status-proof.sh CONNECTED_ROOT OUT_DIR SCOUT_BINARY [flux|argo]}
+root=${1:?Usage: live-status-proof.sh CONNECTED_ROOT OUT_DIR SCOUT_BINARY [flux|argo|sveltos]}
 out=${2:?Expected an output directory}
 scout=${3:?Expected the cub-scout binary}
 controller=${4:-flux}
-[[ "$controller" = flux || "$controller" = argo ]] || { echo 'Expected flux or argo' >&2; exit 1; }
+[[ "$controller" = flux || "$controller" = argo || "$controller" = sveltos ]] || { echo 'Expected flux, argo or sveltos' >&2; exit 1; }
 [[ -f "$root/owns-server-cluster" && -x "$scout" ]] || {
   echo 'Expected the disposable server root and an executable cub-scout' >&2; exit 1;
 }
@@ -72,8 +72,12 @@ done
 
 if [[ "$controller" = flux ]]; then
   KUBECONFIG="$kubeconfig" kubectl get ocirepositories.source.toolkit.fluxcd.io,kustomizations.kustomize.toolkit.fluxcd.io -A -o json > "$out/flux-objects.json" 2>"$private/flux.err" || true
-else
+elif [[ "$controller" = argo ]]; then
   KUBECONFIG="$kubeconfig" kubectl get applications.argoproj.io -A -o json > "$out/argo-objects.json" 2>"$private/argo.err" || true
+else
+  KUBECONFIG="$kubeconfig" kubectl api-resources -o name > "$out/api-resources.txt" 2>"$private/api-resources.err" || true
+  KUBECONFIG="$kubeconfig" kubectl get clusterprofiles.config.projectsveltos.io,profiles.config.projectsveltos.io,clustersummaries.config.projectsveltos.io,clusterconfigurations.config.projectsveltos.io,clusterreports.config.projectsveltos.io -A -o json > "$out/sveltos-objects.json" 2>"$private/sveltos.err" || true
+  [[ -s "$private/sveltos.err" ]] && redact < "$private/sveltos.err" >&2
 fi
 KUBECONFIG="$kubeconfig" kubectl get deployments -A -o wide > "$out/deployments.txt" 2>&1 || true
 curl --fail --silent --show-error --max-time 10 "$(cub context get -o json | python3 -c 'import json,sys; print(json.load(sys.stdin)["coordinate"]["serverURL"])')/api/info" > "$out/api-info.json" 2>/dev/null || true
