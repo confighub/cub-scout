@@ -72,12 +72,12 @@ PY
   sleep 10
 done
 
+KUBECONFIG="$kubeconfig" kubectl api-resources -o name > "$out/api-resources.txt" 2>"$private/api-resources.err" || true
 if [[ "$controller" = flux ]]; then
   KUBECONFIG="$kubeconfig" kubectl get ocirepositories.source.toolkit.fluxcd.io,kustomizations.kustomize.toolkit.fluxcd.io -A -o json > "$out/flux-objects.json" 2>"$private/flux.err" || true
 elif [[ "$controller" = argo ]]; then
   KUBECONFIG="$kubeconfig" kubectl get applications.argoproj.io -A -o json > "$out/argo-objects.json" 2>"$private/argo.err" || true
 else
-  KUBECONFIG="$kubeconfig" kubectl api-resources -o name > "$out/api-resources.txt" 2>"$private/api-resources.err" || true
   KUBECONFIG="$kubeconfig" kubectl get clusterprofiles.config.projectsveltos.io,profiles.config.projectsveltos.io,clustersummaries.config.projectsveltos.io,clusterconfigurations.config.projectsveltos.io,clusterreports.config.projectsveltos.io -A -o json > "$out/sveltos-objects.json" 2>"$private/sveltos.err" || true
   [[ -s "$private/sveltos.err" ]] && redact < "$private/sveltos.err" >&2
 fi
