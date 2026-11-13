@@ -136,6 +136,8 @@ surface = (report.get("surfaces") or {}).get("confighub") or {}
 print("source-truth: status=%s confighub=%s errors=%s" % (report.get("status"), surface, report.get("collection_errors")))
 if surface.get("unit") != "argobot" or not surface.get("space") or not surface.get("revision"):
     sys.exit("source-truth did not read the ConfigHub unit named by the workload's origin annotation")
+if report.get("proof_gaps") or report.get("status") != "PASS":
+    sys.exit("source-truth reported a gap on a freshly delivered workload: %s" % report.get("proof_gaps"))
 PY
   KUBECONFIG="$kubeconfig" kubectl get deployment argobot -n argobot --show-managed-fields -o json 2>/dev/null | python3 -c '
 import json, sys

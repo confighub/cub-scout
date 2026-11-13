@@ -55,6 +55,27 @@ func TestSourceTruthDoesNotAgreeWhenTheObjectNamesAnOlderRevision(t *testing.T) 
 	same := agent.Derive(agent.StrategyConfigHubOCIFlux, surfaces("3"))
 	require.Equal(t, agent.StatusPASS, same.Status)
 
+	// The object's revision reaches the verdict through the collector too.
+	old := sourceTruthUnitGet
+	sourceTruthUnitGet = func(context.Context, string, string) ([]byte, error) { return []byte(`{"HeadRevisionNum": 5}`), nil }
+	t.Cleanup(func() { sourceTruthUnitGet = old })
+	collected, err := collectConfigHubSurface(context.Background(), recordedClusterUpWorkload())
+	require.NoError(t, err)
+	viaCollector := surfaces("3")
+	viaCollector.ConfigHub = collected
+	require.Equal(t, agent.StatusWATCH, agent.Derive(agent.StrategyConfigHubOCIFlux, viaCollector).Status)
+
+	// The controller pulls another space's release than the one the unit is in.
+	elsewhere := surfaces("3")
+	elsewhere.Controller.Source = "oci://172.18.0.1:32181/space/other-space"
+	other := agent.Derive(agent.StrategyConfigHubOCIFlux, elsewhere)
+	require.Equal(t, agent.StatusWATCH, other.Status)
+	require.Contains(t, other.ProofGaps, "controller.source_names_another_space")
+	// A source of another shape is not judged by this rule.
+	unshaped := surfaces("3")
+	unshaped.Controller.Source = "oci://ghcr.io/example/app:1.2.3"
+	require.Equal(t, agent.StatusPASS, agent.Derive(agent.StrategyConfigHubOCIFlux, unshaped).Status)
+
 	behind := agent.Derive(agent.StrategyConfigHubOCIFlux, surfaces("5"))
 	require.Equal(t, agent.StatusWATCH, behind.Status)
 	require.Equal(t, agent.VerdictINCOMPLETE, behind.SourceTruth)
@@ -73,7 +94,7 @@ func TestSourceTruthConfigHubIdentityOfWorkload(t *testing.T) {
 		{name: "older metadata alone", labels: map[string]string{"confighub.com/UnitSlug": "api"}, annotations: map[string]string{"confighub.com/SpaceName": "prod"}, unit: "api", space: "prod"},
 		{name: "nothing: not a claim that ConfigHub does not manage it", reason: "cannot be read from the object"},
 		{name: "older unit without a space", labels: map[string]string{"confighub.com/UnitSlug": "api"}, reason: "no confighub.com/SpaceName"},
-		{name: "origin without a space slug uses the older space name", annotations: map[string]string{origin: `{"spaceId":"s1","unitSlug":"api"}`, "confighub.com/SpaceName": "prod"}, unit: "api", space: "prod"},
+		{name: "origin without a space slug is not completed by the older space name", annotations: map[string]string{origin: `{"spaceId":"s1","unitSlug":"api"}`, "confighub.com/SpaceName": "prod"}, reason: "no space slug"},
 		{name: "origin without any space slug", annotations: map[string]string{origin: `{"spaceId":"s1","unitSlug":"api"}`}, reason: "no space slug"},
 		{name: "malformed origin is not replaced by older metadata", labels: map[string]string{"confighub.com/UnitSlug": "api"}, annotations: map[string]string{origin: `{"spaceId":`, "confighub.com/SpaceName": "prod"}, reason: "is not usable"},
 		{name: "origin that conflicts with the older unit", labels: map[string]string{"confighub.com/UnitSlug": "other"}, annotations: map[string]string{origin: `{"spaceId":"s1","spaceSlug":"prod","unitSlug":"api"}`}, reason: "conflicts with legacy"},

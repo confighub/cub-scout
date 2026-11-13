@@ -362,8 +362,10 @@ func configHubIdentityOfWorkload(rw *runtimeWorkload) (unit, space, objectRevisi
 	if obj == nil {
 		obj = sourceTruthObjectFromTyped(rw.Kind, rw.Name, rw.Namespace, rw.Labels, rw.Annotations)
 	}
-	legacySpace := firstNonEmpty(rw.Annotations["confighub.com/SpaceName"], rw.Labels["confighub.com/SpaceName"])
-	if _, present := obj.GetAnnotations()[agent.ConfigHubOriginAnnotation]; present {
+	// One reading of the object's metadata serves both forms.
+	labels, annotations := obj.GetLabels(), obj.GetAnnotations()
+	legacySpace := firstNonEmpty(annotations["confighub.com/SpaceName"], labels["confighub.com/SpaceName"])
+	if _, present := annotations[agent.ConfigHubOriginAnnotation]; present {
 		origin, omission := agent.BuildConfigHubOriginEvidence(obj)
 		if origin == nil {
 			reason := "it could not be read"
@@ -375,7 +377,9 @@ func configHubIdentityOfWorkload(rw *runtimeWorkload) (unit, space, objectRevisi
 		if origin.SpaceSlug != "" && legacySpace != "" && origin.SpaceSlug != legacySpace {
 			return "", "", "", &agent.CollectionError{Surface: "confighub", Reason: "runtime object's " + agent.ConfigHubOriginAnnotation + " annotation and its confighub.com/SpaceName metadata name different spaces"}
 		}
-		space = firstNonEmpty(origin.SpaceSlug, legacySpace)
+		// A space ID cannot be checked against a space name, so the older
+		// name does not complete an annotation that gives no slug.
+		space = origin.SpaceSlug
 		if space == "" {
 			return "", "", "", &agent.CollectionError{Surface: "confighub", Reason: "runtime object's " + agent.ConfigHubOriginAnnotation + " annotation names a space ID but no space slug, and the unit is read by slug"}
 		}
@@ -384,7 +388,7 @@ func configHubIdentityOfWorkload(rw *runtimeWorkload) (unit, space, objectRevisi
 		}
 		return origin.UnitSlug, space, objectRevision, nil
 	}
-	unit = firstNonEmpty(rw.Labels["confighub.com/UnitSlug"], rw.Annotations["confighub.com/UnitSlug"])
+	unit = firstNonEmpty(labels["confighub.com/UnitSlug"], annotations["confighub.com/UnitSlug"])
 	if unit == "" {
 		return "", "", "", &agent.CollectionError{
 			Surface: "confighub",
