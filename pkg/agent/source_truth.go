@@ -238,7 +238,11 @@ type ConfigHubSurface struct {
 	Space    string `json:"space,omitempty"`
 	Unit     string `json:"unit,omitempty"`
 	Revision string `json:"revision,omitempty"`
-	URL      string `json:"url,omitempty"`
+	// ObjectRevision is the unit revision the runtime object itself names
+	// in its confighub.com/origin annotation, when it names one. It is the
+	// object's claim; Revision is the unit's head as ConfigHub reports it.
+	ObjectRevision string `json:"object_revision,omitempty"`
+	URL            string `json:"url,omitempty"`
 }
 
 // ControllerSurface is what cub-scout reads from the GitOps controller

@@ -38,7 +38,27 @@ func TestSourceTruthReadsTheUnitNamedByTheOriginAnnotation(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "argobot", gotUnit)
 	require.Equal(t, "argobot-scout-live", gotSpace)
-	require.Equal(t, &agent.ConfigHubSurface{Space: "argobot-scout-live", Unit: "argobot", Revision: "3"}, surface)
+	require.Equal(t, &agent.ConfigHubSurface{Space: "argobot-scout-live", Unit: "argobot", Revision: "3", ObjectRevision: "3"}, surface)
+}
+
+// The object says it came from revision 3; the unit's head is 5. Every surface
+// is present, but nothing shows the cluster runs what was read, so the answer
+// is not an agreement.
+func TestSourceTruthDoesNotAgreeWhenTheObjectNamesAnOlderRevision(t *testing.T) {
+	surfaces := func(head string) agent.SourceTruthSurfaces {
+		return agent.SourceTruthSurfaces{
+			ConfigHub:  &agent.ConfigHubSurface{Space: "argobot-scout-live", Unit: "argobot", Revision: head, ObjectRevision: "3"},
+			Controller: &agent.ControllerSurface{Kind: "Flux", Source: "oci://172.18.0.1:32181/space/argobot-scout-live", RevisionOrDigest: "latest@sha256:08289f07c2da7e29d1e155507137b1f924e71d95a202db1b7eafefcc7e58bae8", Health: "Ready"},
+			Runtime:    &agent.RuntimeSurface{Resource: "Deployment/argobot in argobot", Field: "spec.template.spec.containers[0].image", Value: "ghcr.io/confighub/argobot:v0.2.9", Health: "Current"},
+		}
+	}
+	same := agent.Derive(agent.StrategyConfigHubOCIFlux, surfaces("3"))
+	require.Equal(t, agent.StatusPASS, same.Status)
+
+	behind := agent.Derive(agent.StrategyConfigHubOCIFlux, surfaces("5"))
+	require.Equal(t, agent.StatusWATCH, behind.Status)
+	require.Equal(t, agent.VerdictINCOMPLETE, behind.SourceTruth)
+	require.Contains(t, behind.ProofGaps, "confighub.object_revision_differs_from_head")
 }
 
 func TestSourceTruthConfigHubIdentityOfWorkload(t *testing.T) {
@@ -68,7 +88,7 @@ func TestSourceTruthConfigHubIdentityOfWorkload(t *testing.T) {
 			if annotations == nil {
 				annotations = map[string]string{}
 			}
-			unit, space, err := configHubIdentityOfWorkload(&runtimeWorkload{Kind: "Deployment", Namespace: "n", Name: "w", Labels: labels, Annotations: annotations})
+			unit, space, _, err := configHubIdentityOfWorkload(&runtimeWorkload{Kind: "Deployment", Namespace: "n", Name: "w", Labels: labels, Annotations: annotations})
 			if tc.reason != "" {
 				require.NotNil(t, err)
 				require.Equal(t, "confighub", err.Surface)

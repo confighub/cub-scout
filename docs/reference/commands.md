@@ -1742,6 +1742,14 @@ as a collection error; the older metadata never stands in for it. With neither
 present, cub-scout says the unit cannot be read from the object. It does not
 say ConfigHub does not manage it. Added after v2.15.0.
 
+Under these two strategies PASS means the three surfaces were read and the
+controller's source has the declared shape. It does not mean the digest the
+controller pulled was shown to be the one ConfigHub rendered: that equality is
+still deferred. One case is caught: when the origin annotation names a unit
+revision (`surfaces.confighub.object_revision`) that is not the head revision
+read (`revision`), the answer is WATCH with
+`proof_gaps: ["confighub.object_revision_differs_from_head"]`.
+
 ### Output contract
 
 Output is JSON only in v0.1. Field shape mirrors the council verdict on #393:

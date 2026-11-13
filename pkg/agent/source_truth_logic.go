@@ -293,6 +293,15 @@ func compareRevisions(strategy SourceTruthStrategy, surfaces SourceTruthSurfaces
 		// File header explains the cross-repo dependency. v0.2 returns
 		// Agreed=true here so existing OCI fixtures retain their v0.1
 		// behaviour; the follow-up PR will tighten this.
+		//
+		// One thing can be told without that digest: the runtime object
+		// names the unit revision it came from, and it is not the head
+		// revision that was read. Then nothing has been shown to agree.
+		// It is a gap and not a mismatch: a head revision that has not
+		// been released yet is ordinary.
+		if c := surfaces.ConfigHub; c != nil && c.ObjectRevision != "" && c.Revision != "" && c.ObjectRevision != c.Revision {
+			return revisionAgreement{Incomplete: true, ProofGaps: []string{"confighub.object_revision_differs_from_head"}}
+		}
 		return revisionAgreement{Agreed: true}
 	}
 	// Unknown / future strategies: don't block.
