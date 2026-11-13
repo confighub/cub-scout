@@ -436,3 +436,52 @@ func TestClusterCheckNamesASveltosProfileAndDoesNotCompareIt(t *testing.T) {
 		})
 	}
 }
+
+// The cluster `cub cluster up --controller sveltos` made, as recorded in CI
+// run 43414463943: argobot says Synced, and nothing Sveltos wrote carries the
+// digest it pulled. The answer names the ClusterProfile and compares nothing,
+// whether or not the registry address is one the server advertises.
+func TestClusterCheckOnTheRecordedSveltosClusterComparesNothing(t *testing.T) {
+	dir := filepath.Join("..", "..", "test", "fixtures", "confighub-live-status-sveltos-v01011-recorded")
+	releases, err := os.ReadFile(filepath.Join(dir, "release-list.json"))
+	require.NoError(t, err)
+	raw, err := os.ReadFile(filepath.Join(dir, "sveltos-objects.json"))
+	require.NoError(t, err)
+	var list unstructured.UnstructuredList
+	require.NoError(t, list.UnmarshalJSON(raw))
+	var objects []runtime.Object
+	for i := range list.Items {
+		if list.Items[i].GetKind() == "ClusterProfile" {
+			objects = append(objects, &list.Items[i])
+		}
+		// No object of any kind Sveltos wrote holds the Release's digest.
+		text, err := list.Items[i].MarshalJSON()
+		require.NoError(t, err)
+		require.NotContains(t, string(text), "47b52b0aa8be0c55dca5952979832091e7ead210ec940fb9e4365ecb60df39d9")
+	}
+	require.Len(t, objects, 2)
+	// Seconds after argobot recorded the status in that run.
+	now := time.Date(2026, 11, 13, 11, 23, 5, 0, time.UTC)
+	for _, tc := range []struct{ name, registry, reason, matchedBy string }{
+		{"the address the cluster uses is not the one advertised", "localhost:32181", "1 Sveltos ClusterProfiles (argobot-scout-live) pull a repository named space/argobot-scout-live from a registry not known to be ConfigHub's", ""},
+		{"the address is the one advertised", "172.18.0.1:32181", "1 of 1 controllers pulling this space are Sveltos ClusterProfiles (argobot-scout-live)", liveStatusMatchedByRegistry},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			old := agent.ConfigHubOCIRegistryFn
+			agent.ConfigHubOCIRegistryFn = func() string { return tc.registry }
+			t.Cleanup(func() { agent.ConfigHubOCIRegistryFn = old })
+			statuses, omissions := configHubLiveStatusFromReleases(string(releases), now, 15*time.Minute)
+			require.Empty(t, omissions)
+			// Only the argobot Release carries a status; the apps space's has none.
+			require.Len(t, statuses, 1)
+			require.Equal(t, "Synced", statuses[0].SyncStatus)
+			checkLiveStatusesAgainstCluster(context.Background(), checkClient(objects...), statuses, now)
+			check := statuses[0].ClusterCheck
+			require.Equal(t, liveStatusClusterNotObservable, check.State, check.Reason)
+			require.Contains(t, check.Reason, tc.reason)
+			require.Contains(t, check.Reason, "Sveltos reports a hash of its own")
+			require.Equal(t, tc.matchedBy, check.MatchedBy)
+			require.Equal(t, liveStatusClusterNotObservable, check.Health.State)
+		})
+	}
+}

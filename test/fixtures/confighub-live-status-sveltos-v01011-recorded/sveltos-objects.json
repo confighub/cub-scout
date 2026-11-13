@@ -1,0 +1,522 @@
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "config.projectsveltos.io/v1beta1",
+            "kind": "ClusterProfile",
+            "metadata": {
+                "annotations": {
+                    "confighub.com/origin": "{\"spaceId\":\"f8bf2d0f-3418-4c8b-97b8-bdebcca13009\",\"spaceSlug\":\"scout-live-sveltos-apps\",\"unitId\":\"e0349a12-618d-41c6-b2ad-007e6ce23370\",\"unitSlug\":\"argobot-scout-live\",\"revisionNum\":2}",
+                    "profile.projectsveltos.io/redeploy": "2026-11-13T11:22:37.948576827Z",
+                    "projectsveltos.io/clustersummary": "sveltos-mgmt-mgmt",
+                    "projectsveltos.io/deploymenttype": "Local",
+                    "projectsveltos.io/hash": "sha256:137049bb98e15f54296b60e2c596c37c320c80d21c52a595e42ce196d745cb85",
+                    "projectsveltos.io/owner-kind": "ClusterProfile",
+                    "projectsveltos.io/owner-name": "confighub-root",
+                    "projectsveltos.io/owner-tier": "100",
+                    "projectsveltos.io/reference-kind": "",
+                    "projectsveltos.io/reference-name": "oci://172.18.0.1:32181/space/scout-live-sveltos-apps:latest",
+                    "projectsveltos.io/reference-namespace": "",
+                    "projectsveltos.io/reference-tier": "100"
+                },
+                "creationTimestamp": "2026-11-13T11:22:34Z",
+                "finalizers": [
+                    "clusterprofilefinalizer.projectsveltos.io"
+                ],
+                "generation": 1,
+                "labels": {
+                    "projectsveltos.io/cluster-name": "mgmt",
+                    "projectsveltos.io/cluster-profile-name": "argobot-scout-live",
+                    "projectsveltos.io/cluster-type": "Sveltos",
+                    "projectsveltos.io/reason": "Resources"
+                },
+                "name": "argobot-scout-live",
+                "resourceVersion": "1156",
+                "uid": "09f6f8e1-2c4d-4a4a-b73f-27df3b6bb22c"
+            },
+            "spec": {
+                "clusterRefs": [
+                    {
+                        "apiVersion": "lib.projectsveltos.io/v1beta1",
+                        "kind": "SveltosCluster",
+                        "name": "mgmt",
+                        "namespace": "mgmt"
+                    }
+                ],
+                "continueOnConflict": false,
+                "continueOnError": true,
+                "policyRefs": [
+                    {
+                        "deploymentType": "Remote",
+                        "force": false,
+                        "optional": false,
+                        "remoteURL": {
+                            "insecureSkipTLSVerify": false,
+                            "interval": "10m0s",
+                            "plainHTTP": true,
+                            "secretRef": {
+                                "name": "confighub-gateway",
+                                "namespace": "projectsveltos"
+                            },
+                            "url": "oci://172.18.0.1:32181/space/argobot-scout-live:latest"
+                        },
+                        "skipNamespaceCreation": false,
+                        "tier": 100
+                    }
+                ],
+                "reloader": false,
+                "stopMatchingBehavior": "LeavePolicies",
+                "syncMode": "Continuous",
+                "tier": 100
+            },
+            "status": {
+                "matchingClusters": [
+                    {
+                        "apiVersion": "lib.projectsveltos.io/v1beta1",
+                        "kind": "SveltosCluster",
+                        "name": "mgmt",
+                        "namespace": "mgmt"
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "config.projectsveltos.io/v1beta1",
+            "kind": "ClusterProfile",
+            "metadata": {
+                "annotations": {
+                    "confighub.com/origin": "{\"spaceId\":\"f8bf2d0f-3418-4c8b-97b8-bdebcca13009\",\"spaceSlug\":\"scout-live-sveltos-apps\",\"unitId\":\"612a86a1-fcd5-4b8d-9cd4-51a4f7b5bf59\",\"unitSlug\":\"root\",\"revisionNum\":2}",
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"config.projectsveltos.io/v1beta1\",\"kind\":\"ClusterProfile\",\"metadata\":{\"annotations\":{},\"name\":\"confighub-root\"},\"spec\":{\"clusterRefs\":[{\"apiVersion\":\"lib.projectsveltos.io/v1beta1\",\"kind\":\"SveltosCluster\",\"name\":\"mgmt\",\"namespace\":\"mgmt\"}],\"continueOnError\":true,\"policyRefs\":[{\"deploymentType\":\"Local\",\"remoteURL\":{\"interval\":\"10m0s\",\"plainHTTP\":true,\"secretRef\":{\"name\":\"confighub-gateway\",\"namespace\":\"projectsveltos\"},\"url\":\"oci://172.18.0.1:32181/space/scout-live-sveltos-apps:latest\"}}],\"stopMatchingBehavior\":\"LeavePolicies\"}}\n",
+                    "profile.projectsveltos.io/redeploy": "2026-11-13T11:22:38.049482611Z",
+                    "projectsveltos.io/clustersummary": "sveltos-mgmt-mgmt",
+                    "projectsveltos.io/deploymenttype": "Local",
+                    "projectsveltos.io/hash": "sha256:e9876b01e32c15d41dcfd0a6c9e434f9346611b59a83193c64750f14e2c71cb0",
+                    "projectsveltos.io/owner-kind": "ClusterProfile",
+                    "projectsveltos.io/owner-name": "confighub-root",
+                    "projectsveltos.io/owner-tier": "100",
+                    "projectsveltos.io/reference-kind": "",
+                    "projectsveltos.io/reference-name": "oci://172.18.0.1:32181/space/scout-live-sveltos-apps:latest",
+                    "projectsveltos.io/reference-namespace": "",
+                    "projectsveltos.io/reference-tier": "100"
+                },
+                "creationTimestamp": "2026-11-13T11:22:33Z",
+                "finalizers": [
+                    "clusterprofilefinalizer.projectsveltos.io"
+                ],
+                "generation": 1,
+                "labels": {
+                    "projectsveltos.io/reason": "Resources"
+                },
+                "name": "confighub-root",
+                "resourceVersion": "1159",
+                "uid": "13a3dc30-1cbe-4984-9daf-57e6ef79627f"
+            },
+            "spec": {
+                "clusterRefs": [
+                    {
+                        "apiVersion": "lib.projectsveltos.io/v1beta1",
+                        "kind": "SveltosCluster",
+                        "name": "mgmt",
+                        "namespace": "mgmt"
+                    }
+                ],
+                "continueOnConflict": false,
+                "continueOnError": true,
+                "policyRefs": [
+                    {
+                        "deploymentType": "Local",
+                        "force": false,
+                        "optional": false,
+                        "remoteURL": {
+                            "insecureSkipTLSVerify": false,
+                            "interval": "10m0s",
+                            "plainHTTP": true,
+                            "secretRef": {
+                                "name": "confighub-gateway",
+                                "namespace": "projectsveltos"
+                            },
+                            "url": "oci://172.18.0.1:32181/space/scout-live-sveltos-apps:latest"
+                        },
+                        "skipNamespaceCreation": false,
+                        "tier": 100
+                    }
+                ],
+                "reloader": false,
+                "stopMatchingBehavior": "LeavePolicies",
+                "syncMode": "Continuous",
+                "tier": 100
+            },
+            "status": {
+                "matchingClusters": [
+                    {
+                        "apiVersion": "lib.projectsveltos.io/v1beta1",
+                        "kind": "SveltosCluster",
+                        "name": "mgmt",
+                        "namespace": "mgmt"
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "config.projectsveltos.io/v1beta1",
+            "kind": "ClusterSummary",
+            "metadata": {
+                "annotations": {
+                    "confighub.com/origin": "{\"spaceId\":\"f8bf2d0f-3418-4c8b-97b8-bdebcca13009\",\"spaceSlug\":\"scout-live-sveltos-apps\",\"unitId\":\"e0349a12-618d-41c6-b2ad-007e6ce23370\",\"unitSlug\":\"argobot-scout-live\",\"revisionNum\":2}",
+                    "profile.projectsveltos.io/redeploy": "2026-11-13T11:22:37.948576827Z",
+                    "projectsveltos.io/clustersummary": "sveltos-mgmt-mgmt",
+                    "projectsveltos.io/deploymenttype": "Local",
+                    "projectsveltos.io/hash": "sha256:137049bb98e15f54296b60e2c596c37c320c80d21c52a595e42ce196d745cb85",
+                    "projectsveltos.io/owner-kind": "ClusterProfile",
+                    "projectsveltos.io/owner-name": "confighub-root",
+                    "projectsveltos.io/owner-tier": "100",
+                    "projectsveltos.io/reference-kind": "",
+                    "projectsveltos.io/reference-name": "oci://172.18.0.1:32181/space/scout-live-sveltos-apps:latest",
+                    "projectsveltos.io/reference-namespace": "",
+                    "projectsveltos.io/reference-tier": "100"
+                },
+                "creationTimestamp": "2026-11-13T11:22:34Z",
+                "finalizers": [
+                    "clustersummaryfinalizer.projectsveltos.io"
+                ],
+                "generation": 1,
+                "labels": {
+                    "projectsveltos.io/cluster-name": "mgmt",
+                    "projectsveltos.io/cluster-profile-name": "argobot-scout-live",
+                    "projectsveltos.io/cluster-type": "Sveltos",
+                    "projectsveltos.io/reason": "Resources"
+                },
+                "name": "argobot-scout-live-sveltos-mgmt",
+                "namespace": "mgmt",
+                "ownerReferences": [
+                    {
+                        "apiVersion": "config.projectsveltos.io/v1beta1",
+                        "kind": "ClusterProfile",
+                        "name": "argobot-scout-live",
+                        "uid": "09f6f8e1-2c4d-4a4a-b73f-27df3b6bb22c"
+                    }
+                ],
+                "resourceVersion": "1205",
+                "uid": "35b40171-0f33-4384-b75c-c3b12a4af07e"
+            },
+            "spec": {
+                "clusterName": "mgmt",
+                "clusterNamespace": "mgmt",
+                "clusterProfileSpec": {
+                    "clusterRefs": [
+                        {
+                            "apiVersion": "lib.projectsveltos.io/v1beta1",
+                            "kind": "SveltosCluster",
+                            "name": "mgmt",
+                            "namespace": "mgmt"
+                        }
+                    ],
+                    "clusterSelector": {},
+                    "continueOnConflict": false,
+                    "continueOnError": true,
+                    "policyRefs": [
+                        {
+                            "deploymentType": "Remote",
+                            "force": false,
+                            "optional": false,
+                            "remoteURL": {
+                                "insecureSkipTLSVerify": false,
+                                "interval": "10m0s",
+                                "plainHTTP": true,
+                                "secretRef": {
+                                    "name": "confighub-gateway",
+                                    "namespace": "projectsveltos"
+                                },
+                                "url": "oci://172.18.0.1:32181/space/argobot-scout-live:latest"
+                            },
+                            "skipNamespaceCreation": false,
+                            "tier": 100
+                        }
+                    ],
+                    "reloader": false,
+                    "stopMatchingBehavior": "LeavePolicies",
+                    "syncMode": "Continuous",
+                    "tier": 100
+                },
+                "clusterType": "Sveltos"
+            },
+            "status": {
+                "dependencies": "no dependencies",
+                "deployedGVKs": [
+                    {
+                        "deployedGroupVersionKind": [
+                            "Namespace.v1.",
+                            "ClusterRole.v1.rbac.authorization.k8s.io",
+                            "HealthCheck.v1beta1.lib.projectsveltos.io",
+                            "ClusterHealthCheck.v1beta1.lib.projectsveltos.io",
+                            "ClusterRoleBinding.v1.rbac.authorization.k8s.io",
+                            "ServiceAccount.v1.",
+                            "Deployment.v1.apps"
+                        ],
+                        "featureID": "Resources"
+                    }
+                ],
+                "featureSummaries": [
+                    {
+                        "featureID": "Resources",
+                        "hash": "3PL/13V5Ewra7m8Ucl8e0/27gnmrjXWnRVMyVyjcJ+c=",
+                        "lastAppliedTime": "2026-11-13T11:22:54Z",
+                        "resourceSummaryDeployed": false,
+                        "status": "Provisioned"
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "config.projectsveltos.io/v1beta1",
+            "kind": "ClusterSummary",
+            "metadata": {
+                "annotations": {
+                    "confighub.com/origin": "{\"spaceId\":\"f8bf2d0f-3418-4c8b-97b8-bdebcca13009\",\"spaceSlug\":\"scout-live-sveltos-apps\",\"unitId\":\"612a86a1-fcd5-4b8d-9cd4-51a4f7b5bf59\",\"unitSlug\":\"root\",\"revisionNum\":2}",
+                    "profile.projectsveltos.io/redeploy": "2026-11-13T11:22:38.049482611Z",
+                    "projectsveltos.io/clustersummary": "sveltos-mgmt-mgmt",
+                    "projectsveltos.io/deploymenttype": "Local",
+                    "projectsveltos.io/hash": "sha256:e9876b01e32c15d41dcfd0a6c9e434f9346611b59a83193c64750f14e2c71cb0",
+                    "projectsveltos.io/owner-kind": "ClusterProfile",
+                    "projectsveltos.io/owner-name": "confighub-root",
+                    "projectsveltos.io/owner-tier": "100",
+                    "projectsveltos.io/reference-kind": "",
+                    "projectsveltos.io/reference-name": "oci://172.18.0.1:32181/space/scout-live-sveltos-apps:latest",
+                    "projectsveltos.io/reference-namespace": "",
+                    "projectsveltos.io/reference-tier": "100"
+                },
+                "creationTimestamp": "2026-11-13T11:22:33Z",
+                "finalizers": [
+                    "clustersummaryfinalizer.projectsveltos.io"
+                ],
+                "generation": 1,
+                "labels": {
+                    "projectsveltos.io/cluster-name": "mgmt",
+                    "projectsveltos.io/cluster-profile-name": "confighub-root",
+                    "projectsveltos.io/cluster-type": "Sveltos"
+                },
+                "name": "confighub-root-sveltos-mgmt",
+                "namespace": "mgmt",
+                "ownerReferences": [
+                    {
+                        "apiVersion": "config.projectsveltos.io/v1beta1",
+                        "kind": "ClusterProfile",
+                        "name": "confighub-root",
+                        "uid": "13a3dc30-1cbe-4984-9daf-57e6ef79627f"
+                    }
+                ],
+                "resourceVersion": "1202",
+                "uid": "b3fdd44b-4ec7-4c4c-9849-0c32dff82bc7"
+            },
+            "spec": {
+                "clusterName": "mgmt",
+                "clusterNamespace": "mgmt",
+                "clusterProfileSpec": {
+                    "clusterRefs": [
+                        {
+                            "apiVersion": "lib.projectsveltos.io/v1beta1",
+                            "kind": "SveltosCluster",
+                            "name": "mgmt",
+                            "namespace": "mgmt"
+                        }
+                    ],
+                    "clusterSelector": {},
+                    "continueOnConflict": false,
+                    "continueOnError": true,
+                    "policyRefs": [
+                        {
+                            "deploymentType": "Local",
+                            "force": false,
+                            "optional": false,
+                            "remoteURL": {
+                                "insecureSkipTLSVerify": false,
+                                "interval": "10m0s",
+                                "plainHTTP": true,
+                                "secretRef": {
+                                    "name": "confighub-gateway",
+                                    "namespace": "projectsveltos"
+                                },
+                                "url": "oci://172.18.0.1:32181/space/scout-live-sveltos-apps:latest"
+                            },
+                            "skipNamespaceCreation": false,
+                            "tier": 100
+                        }
+                    ],
+                    "reloader": false,
+                    "stopMatchingBehavior": "LeavePolicies",
+                    "syncMode": "Continuous",
+                    "tier": 100
+                },
+                "clusterType": "Sveltos"
+            },
+            "status": {
+                "dependencies": "no dependencies",
+                "deployedGVKs": [
+                    {
+                        "deployedGroupVersionKind": [
+                            "ClusterProfile.v1beta1.config.projectsveltos.io"
+                        ],
+                        "featureID": "Resources"
+                    }
+                ],
+                "featureSummaries": [
+                    {
+                        "featureID": "Resources",
+                        "hash": "DplL1p1npxUEPBX5JunsjMFIU4b5Wq231l0SGhJ91+s=",
+                        "lastAppliedTime": "2026-11-13T11:22:53Z",
+                        "resourceSummaryDeployed": false,
+                        "status": "Provisioned"
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "config.projectsveltos.io/v1beta1",
+            "kind": "ClusterConfiguration",
+            "metadata": {
+                "creationTimestamp": "2026-11-13T11:22:33Z",
+                "generation": 1,
+                "labels": {
+                    "projectsveltos.io/cluster-name": "mgmt",
+                    "projectsveltos.io/cluster-type": "Sveltos"
+                },
+                "name": "sveltos--mgmt",
+                "namespace": "mgmt",
+                "ownerReferences": [
+                    {
+                        "apiVersion": "config.projectsveltos.io/v1beta1",
+                        "kind": "ClusterProfile",
+                        "name": "confighub-root",
+                        "uid": "13a3dc30-1cbe-4984-9daf-57e6ef79627f"
+                    },
+                    {
+                        "apiVersion": "config.projectsveltos.io/v1beta1",
+                        "kind": "ClusterProfile",
+                        "name": "argobot-scout-live",
+                        "uid": "09f6f8e1-2c4d-4a4a-b73f-27df3b6bb22c"
+                    }
+                ],
+                "resourceVersion": "1180",
+                "uid": "3bfe1e85-5c3c-41ec-b0e5-2a2bab7c9094"
+            },
+            "status": {
+                "clusterProfileResources": [
+                    {
+                        "Features": [
+                            {
+                                "featureID": "Resources",
+                                "resources": [
+                                    {
+                                        "deploymentType": "Local",
+                                        "group": "config.projectsveltos.io",
+                                        "kind": "ClusterProfile",
+                                        "lastAppliedTime": "2026-11-13T11:22:44Z",
+                                        "name": "confighub-root",
+                                        "version": "v1beta1"
+                                    },
+                                    {
+                                        "deploymentType": "Local",
+                                        "group": "config.projectsveltos.io",
+                                        "kind": "ClusterProfile",
+                                        "lastAppliedTime": "2026-11-13T11:22:44Z",
+                                        "name": "argobot-scout-live",
+                                        "version": "v1beta1"
+                                    }
+                                ]
+                            }
+                        ],
+                        "clusterProfileName": "confighub-root"
+                    },
+                    {
+                        "Features": [
+                            {
+                                "featureID": "Resources",
+                                "resources": [
+                                    {
+                                        "deploymentType": "Remote",
+                                        "group": "",
+                                        "kind": "Namespace",
+                                        "lastAppliedTime": "2026-11-13T11:22:44Z",
+                                        "name": "argobot",
+                                        "version": "v1"
+                                    },
+                                    {
+                                        "deploymentType": "Remote",
+                                        "group": "rbac.authorization.k8s.io",
+                                        "kind": "ClusterRole",
+                                        "lastAppliedTime": "2026-11-13T11:22:44Z",
+                                        "name": "argobot-sveltos",
+                                        "version": "v1"
+                                    },
+                                    {
+                                        "deploymentType": "Remote",
+                                        "group": "rbac.authorization.k8s.io",
+                                        "kind": "ClusterRole",
+                                        "lastAppliedTime": "2026-11-13T11:22:44Z",
+                                        "name": "argobot-read",
+                                        "version": "v1"
+                                    },
+                                    {
+                                        "deploymentType": "Remote",
+                                        "group": "lib.projectsveltos.io",
+                                        "kind": "HealthCheck",
+                                        "lastAppliedTime": "2026-11-13T11:22:44Z",
+                                        "name": "argobot-live-status",
+                                        "version": "v1beta1"
+                                    },
+                                    {
+                                        "deploymentType": "Remote",
+                                        "group": "lib.projectsveltos.io",
+                                        "kind": "ClusterHealthCheck",
+                                        "lastAppliedTime": "2026-11-13T11:22:44Z",
+                                        "name": "argobot-live-status",
+                                        "version": "v1beta1"
+                                    },
+                                    {
+                                        "deploymentType": "Remote",
+                                        "group": "rbac.authorization.k8s.io",
+                                        "kind": "ClusterRoleBinding",
+                                        "lastAppliedTime": "2026-11-13T11:22:44Z",
+                                        "name": "argobot-sveltos",
+                                        "version": "v1"
+                                    },
+                                    {
+                                        "deploymentType": "Remote",
+                                        "group": "",
+                                        "kind": "ServiceAccount",
+                                        "lastAppliedTime": "2026-11-13T11:22:44Z",
+                                        "name": "argobot",
+                                        "namespace": "argobot",
+                                        "version": "v1"
+                                    },
+                                    {
+                                        "deploymentType": "Remote",
+                                        "group": "rbac.authorization.k8s.io",
+                                        "kind": "ClusterRoleBinding",
+                                        "lastAppliedTime": "2026-11-13T11:22:44Z",
+                                        "name": "argobot-read",
+                                        "version": "v1"
+                                    },
+                                    {
+                                        "deploymentType": "Remote",
+                                        "group": "apps",
+                                        "kind": "Deployment",
+                                        "lastAppliedTime": "2026-11-13T11:22:44Z",
+                                        "name": "argobot",
+                                        "namespace": "argobot",
+                                        "version": "v1"
+                                    }
+                                ]
+                            }
+                        ],
+                        "clusterProfileName": "argobot-scout-live"
+                    }
+                ]
+            }
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}
