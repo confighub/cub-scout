@@ -37,9 +37,12 @@ func noRegistryLookup(t *testing.T) {
 
 func checkClient(objects ...runtime.Object) *dynamicfake.FakeDynamicClient {
 	return dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), map[schema.GroupVersionResource]string{
-		liveStatusApplicationGVR:   "ApplicationList",
-		liveStatusOCIRepositoryGVR: "OCIRepositoryList",
-		liveStatusKustomizationGVR: "KustomizationList",
+		liveStatusApplicationGVR:              "ApplicationList",
+		liveStatusOCIRepositoryGVR:            "OCIRepositoryList",
+		liveStatusKustomizationGVR:            "KustomizationList",
+		liveStatusWorkloadGVRs["Deployment"]:  "DeploymentList",
+		liveStatusWorkloadGVRs["StatefulSet"]: "StatefulSetList",
+		liveStatusWorkloadGVRs["DaemonSet"]:   "DaemonSetList",
 	}, objects...)
 }
 
@@ -112,7 +115,7 @@ func TestClusterCheckComparesTheRecordedSyncStateWithTheControllers(t *testing.T
 			require.NotNil(t, check)
 			require.Equal(t, tc.want, check.State, check.Reason)
 			require.Contains(t, check.Reason, tc.reason)
-			require.Contains(t, check.Limitation, "Health is not compared")
+			require.Contains(t, check.Limitation, "no other kind, no pod and nothing a controller does not list is read")
 		})
 	}
 }

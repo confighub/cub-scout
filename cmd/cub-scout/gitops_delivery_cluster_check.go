@@ -24,7 +24,7 @@ const (
 	liveStatusClusterDisagrees     = "disagrees"
 	liveStatusClusterNotObservable = "not-observable"
 
-	liveStatusClusterLimitation = "Compares one thing: whether a controller in this cluster reports this Release's manifest digest as applied, against the sync state the deploying tool recorded. The two reports were made at different moments and can both have been true in turn. Health is not compared. A controller's report is not proof that workloads converged. Controllers are matched by ConfigHub registry and space slug, or, where this cluster reaches the registry at an address the server does not advertise, by being the object the recorded status names as its data source and pulling a repository named for the space: not by organization, Target or path, and this cluster may not be the Release's Target."
+	liveStatusClusterLimitation = "Compares one thing: whether a controller in this cluster reports this Release's manifest digest as applied, against the sync state the deploying tool recorded. The two reports were made at different moments and can both have been true in turn. Health is compared only once those controllers are on the Release's digest, and only against the Deployments, StatefulSets and DaemonSets they list as theirs: no other kind, no pod and nothing a controller does not list is read. A controller's report is not proof that workloads converged. Controllers are matched by ConfigHub registry and space slug, or, where this cluster reaches the registry at an address the server does not advertise, by being the object the recorded status names as its data source and pulling a repository named for the space: not by organization, Target or path, and this cluster may not be the Release's Target."
 
 	// How the compared controllers were found.
 	liveStatusMatchedByRegistry   = "registry"
@@ -45,8 +45,12 @@ type ConfigHubLiveStatusClusterCheck struct {
 	// source, pulling a repository named space/<this space>.
 	MatchedBy   string                          `json:"matchedBy,omitempty"`
 	Controllers []ConfigHubLiveStatusController `json:"controllers,omitempty"`
-	ObservedAt  string                          `json:"observedAt,omitempty"`
-	Limitation  string                          `json:"limitation"`
+	// Health compares the recorded health with the workloads the compared
+	// controllers list. It is not-observable unless State is "agrees" on a
+	// status recorded as Synced: only then are those workloads this Release's.
+	Health     *ConfigHubLiveStatusHealthCheck `json:"health"`
+	ObservedAt string                          `json:"observedAt,omitempty"`
+	Limitation string                          `json:"limitation"`
 }
 
 // ConfigHubLiveStatusController is one controller object that pulls the
@@ -172,16 +176,19 @@ func readLiveStatusClusterControllers(ctx context.Context, client dynamic.Interf
 }
 
 // checkLiveStatusesAgainstCluster adds a cluster check to every status that is
-// recorded on a Release. It makes at most three list calls, whatever the
-// number of statuses, and none when no status is on a Release.
+// recorded on a Release. It makes at most three list calls for controllers
+// and one for each workload kind they list, whatever the number of statuses,
+// and none when no status is on a Release.
 func checkLiveStatusesAgainstCluster(ctx context.Context, client dynamic.Interface, statuses []ConfigHubLiveStatusEvidence, now time.Time) {
 	var found *liveStatusClusterControllers
+	workloads := &liveStatusWorkloads{client: client}
 	for i := range statuses {
 		status := &statuses[i]
 		if status.RecordedOn != "release" {
 			continue
 		}
 		check := &ConfigHubLiveStatusClusterCheck{State: liveStatusClusterNotObservable, Limitation: liveStatusClusterLimitation}
+		check.Health = &ConfigHubLiveStatusHealthCheck{State: liveStatusClusterNotObservable, Reason: "health is compared only when the recorded sync state is Synced and every controller compared is on the Release's digest; otherwise the workloads they list may belong to another Release"}
 		status.ClusterCheck = check
 		reportedSynced := strings.EqualFold(strings.TrimSpace(status.SyncStatus), "Synced")
 		switch sync := strings.ToLower(strings.TrimSpace(status.SyncStatus)); {
@@ -282,6 +289,9 @@ func checkLiveStatusesAgainstCluster(ctx context.Context, client dynamic.Interfa
 		default:
 			check.State = liveStatusClusterAgrees
 			check.Reason = fmt.Sprintf("the recorded sync state is %q, and all %d controllers pulling this space report the same about the Release's digest", status.SyncStatus, agree)
+			if reportedSynced {
+				check.Health = checkLiveStatusHealth(ctx, workloads, controllers, status.HealthStatus, recordedAt)
+			}
 		}
 		if check.MatchedBy == liveStatusMatchedByDataSource {
 			check.Reason += fmt.Sprintf("; the controller compared is the one the recorded status names as its data source (%s), whose registry is not the one the ConfigHub server advertises", status.DataSource)
@@ -297,7 +307,11 @@ func liveStatusClusterCheckText(check *ConfigHubLiveStatusClusterCheck) string {
 	if check == nil {
 		return "-"
 	}
-	return check.State + ": " + check.Reason
+	text := check.State + ": " + check.Reason
+	if check.Health != nil && (check.State == liveStatusClusterAgrees || check.Health.State != liveStatusClusterNotObservable) {
+		text += "; health " + check.Health.State + ": " + check.Health.Reason
+	}
+	return text
 }
 
 // liveStatusNamedController is the candidate the recorded status names as its
