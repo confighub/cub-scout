@@ -422,8 +422,9 @@ func optionalAPIUnavailable(gvr schema.GroupVersionResource, err error) bool {
 	optionalGroups := map[string]bool{
 		"source.toolkit.fluxcd.io": true, "kustomize.toolkit.fluxcd.io": true,
 		"helm.toolkit.fluxcd.io": true, "argoproj.io": true,
-		"fluxcd.controlplane.io": true, "config.projectsveltos.io": true,
-		"lib.projectsveltos.io": true, "modelplane.ai": true,
+		"fluxcd.controlplane.io": true, "source.extensions.fluxcd.io": true,
+		"config.projectsveltos.io": true,
+		"lib.projectsveltos.io":    true, "modelplane.ai": true,
 		"infrastructure.modelplane.ai": true,
 	}
 	return optionalGroups[gvr.Group] && apierrors.IsNotFound(err) && strings.Contains(strings.ToLower(err.Error()), "requested resource")

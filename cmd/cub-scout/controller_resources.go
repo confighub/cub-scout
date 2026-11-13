@@ -38,14 +38,20 @@ func firstClassControllerGVRs() []schema.GroupVersionResource {
 	return out
 }
 
+// ExternalArtifact and ArtifactGenerator are not Flux Operator kinds: a real
+// Flux 2.10 cluster serves them as externalartifacts.source.toolkit.fluxcd.io
+// (source-controller) and artifactgenerators.source.extensions.fluxcd.io
+// (source-watcher), CI run 43451238398. Until 2026-11-13 they were listed here
+// under fluxcd.controlplane.io, a group that does not serve them, so they were
+// never found.
 func fluxOperatorControllerResources() []controllerResourceSpec {
 	return []controllerResourceSpec{
 		{GVR: schema.GroupVersionResource{Group: "fluxcd.controlplane.io", Version: "v1", Resource: "fluxinstances"}, Kind: "FluxInstance", Namespaced: true, Owner: "Flux"},
 		{GVR: schema.GroupVersionResource{Group: "fluxcd.controlplane.io", Version: "v1", Resource: "fluxreports"}, Kind: "FluxReport", Namespaced: true, Owner: "Flux"},
 		{GVR: schema.GroupVersionResource{Group: "fluxcd.controlplane.io", Version: "v1", Resource: "resourcesets"}, Kind: "ResourceSet", Namespaced: true, Owner: "Flux"},
 		{GVR: schema.GroupVersionResource{Group: "fluxcd.controlplane.io", Version: "v1", Resource: "resourcesetinputproviders"}, Kind: "ResourceSetInputProvider", Namespaced: true, Owner: "Flux"},
-		{GVR: schema.GroupVersionResource{Group: "fluxcd.controlplane.io", Version: "v1", Resource: "externalartifacts"}, Kind: "ExternalArtifact", Namespaced: true, Owner: "Flux"},
-		{GVR: schema.GroupVersionResource{Group: "fluxcd.controlplane.io", Version: "v1", Resource: "artifactgenerators"}, Kind: "ArtifactGenerator", Namespaced: true, Owner: "Flux"},
+		{GVR: schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "externalartifacts"}, Kind: "ExternalArtifact", Namespaced: true, Owner: "Flux"},
+		{GVR: schema.GroupVersionResource{Group: "source.extensions.fluxcd.io", Version: "v1beta1", Resource: "artifactgenerators"}, Kind: "ArtifactGenerator", Namespaced: true, Owner: "Flux"},
 	}
 }
 
