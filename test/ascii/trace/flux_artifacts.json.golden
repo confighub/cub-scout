@@ -1,4 +1,66 @@
 {
+  "answer": {
+    "state": "traced",
+    "reason": "controllers-report-ready",
+    "summary": "Deployment/payment-api in ecommerce has a delivery chain of 3 links; the 2 delivery controllers in it report ready. Trace did not read the readiness of the other 1.",
+    "observedAt": "<TIMESTAMP>",
+    "cluster": {
+      "context": "",
+      "id": "",
+      "idSource": "not-read"
+    },
+    "basis": [
+      {
+        "claim": "GitRepository/ecommerce-apps is reported ready by its controller",
+        "restsOn": "controller-report",
+        "ref": {
+          "kind": "GitRepository",
+          "namespace": "flux-system",
+          "name": "ecommerce-apps"
+        }
+      },
+      {
+        "claim": "Kustomization/ecommerce-payment is reported ready by its controller",
+        "restsOn": "controller-report",
+        "ref": {
+          "kind": "Kustomization",
+          "namespace": "flux-system",
+          "name": "ecommerce-payment"
+        }
+      },
+      {
+        "claim": "Deployment/payment-api is in the chain by ownership metadata; trace did not read its readiness",
+        "restsOn": "object-metadata",
+        "ref": {
+          "kind": "Deployment",
+          "namespace": "ecommerce",
+          "name": "payment-api"
+        }
+      }
+    ],
+    "unknowns": [
+      {
+        "what": "the readiness of Deployment/payment-api",
+        "kind": "not-requested",
+        "reason": "trace reads delivery controllers' conditions, not workload health"
+      }
+    ],
+    "next": [
+      {
+        "command": "cub-scout explain Deployment/payment-api -n ecommerce --format json",
+        "why": "its health and recent events, which trace does not read"
+      }
+    ],
+    "cost": {
+      "requestsMade": 0,
+      "responseBodyBytes": 0,
+      "transportErrors": 0,
+      "bodyReadErrors": 0,
+      "durationMillis": 0,
+      "reused": false,
+      "coverage": "not-measured"
+    }
+  },
   "command": "trace",
   "target": {
     "kind": "Deployment",

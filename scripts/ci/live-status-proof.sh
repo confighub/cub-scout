@@ -169,6 +169,30 @@ if report.get("reason") != "no-owner-marker-recognised":
 if any("not managed" in w.lower() for w in report.get("warnings") or []):
     sys.exit("trace said a resource with no recognised owner marker is not managed")
 PY
+  # The answer envelope on a real cluster: both traces carry it, with the
+  # state an agent should decide on, a time, whose word each link rests on,
+  # and a cost that was measured, not assumed.
+  python3 - "$out/delivered-workload/trace.json" "$out/delivered-workload/trace-no-owner.json" <<'PY'
+import json, sys
+for path, want in ((sys.argv[1], "traced"), (sys.argv[2], "no-owner-marker")):
+    answer = json.load(open(path)).get("answer") or {}
+    cost = answer.get("cost") or {}
+    print("answer: state=%s reason=%s basis=%d unknowns=%d next=%d requests=%s bytes=%s ms=%s" % (answer.get("state"), answer.get("reason"), len(answer.get("basis") or []), len(answer.get("unknowns") or []), len(answer.get("next") or []), cost.get("requestsMade"), cost.get("responseBodyBytes"), cost.get("durationMillis")))
+    if answer.get("state") != want:
+        sys.exit("%s: answer.state is %r, want %r" % (path, answer.get("state"), want))
+    for key in ("reason", "summary", "observedAt"):
+        if not answer.get(key):
+            sys.exit("%s: answer.%s is missing" % (path, key))
+    for key in ("basis", "unknowns", "next"):
+        if not isinstance(answer.get(key), list):
+            sys.exit("%s: answer.%s is not a list" % (path, key))
+    if not cost.get("requestsMade") or not cost.get("responseBodyBytes"):
+        sys.exit("%s: the answer reports no measured reads: %s" % (path, cost))
+    if want == "traced":
+        rests = [b.get("restsOn") for b in answer["basis"]]
+        if "controller-report" not in rests or rests[-1] != "object-metadata":
+            sys.exit("%s: the chain does not say whose word each link rests on: %s" % (path, rests))
+PY
   # The identity is read from the workload's origin annotation, and the unit
   # lives on this disposable server, so the ConfigHub surface must be filled.
   python3 - "$out/delivered-workload/source-truth.json" <<'PY'

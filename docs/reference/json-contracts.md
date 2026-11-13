@@ -90,6 +90,38 @@ For MCP, the current rule is:
 
 ## Trace Observation Scope and Partial Results
 
+`trace --format json` carries a top-level `answer` block (added after
+v2.15.1), the first command to do so; the design and the fields other
+commands will share are in
+[the proposal](../proposals/answer-envelope.md). The fields beside it are
+unchanged and stay until 3.0.
+
+| `answer` field | Meaning |
+|---|---|
+| `state` | `traced`: a chain was found and every delivery controller in it reports ready. `chain-not-ready`: one reports not ready. `readiness-not-read`: a chain was found and trace read the readiness of nothing in it. `no-owner-marker`. `not-observable`. Decide on this. |
+| `reason` | A stable key: `controllers-report-ready`, `link-not-ready`, `no-controller-readiness-read`, `no-owner-marker-recognised`, `no-chain-observed`. |
+| `summary` | One sentence in cub-scout's words. The words may change. |
+| `observedAt` | When the cluster was read, RFC 3339. |
+| `cluster` | `context` is the kubeconfig context label. `id` is empty and `idSource` is `not-read`: the cluster's identity is not read by `trace`. |
+| `basis[]` | One entry per chain link, saying what the link contributes and whose word that is. For a delivery controller's own object (Flux `Kustomization`, `HelmRelease` and sources; Argo CD `Application`) whose status was read: "reported ready" or "reported not ready by its controller", `restsOn: "controller-report"`. For every other link, including the traced workload: that it is in the chain by ownership metadata and that trace did not read its readiness, `restsOn: "object-metadata"`. Other links are not repeated here; they are in `chain` and are counted in `unknowns`. `ref` is set only where an object of that kind and name exists to fetch. `quoted` holds, word for word, the status and message of a controller that reports not ready. |
+| `unknowns[]` | What the answer does not establish, each with `kind`, `reason` and, for error text, `quoted`. The readiness of links trace does not read is listed here (`kind: "not-requested"`). Reads that failed are listed with their messages quoted (`kind: "not-observable"`). `[]` only when there is nothing of either sort. |
+| `next[]` | Exact read-only commands that follow from `reason`, each with `why`. May be empty; none is built from a kind or name that does not have the shape of one. |
+| `cost` | Requests made and response bytes read by this trace's own Kubernetes clients, and its duration. `coverage: "trace-session-clients"` means the Kubernetes requests of the trace's own clients; the OCI source confirmation of `--with-confighub`, a `flux` subprocess and ConfigHub reads are not counted. `coverage: "not-measured"` when a result was not produced by a live read. |
+
+**`traced` does not mean the workload is healthy.** `trace` reads delivery
+controllers. In `chain`, a link's `ready` is `true` for several kinds of link
+that nothing read: the traced workload, a Helm chart rendered in template
+mode, an owner known only from an annotation. `answer` does not repeat those
+as findings; it lists them under `unknowns` and points at `explain`.
+
+Text that came from the cluster (a status, a revision, a message, an error,
+a name that is not shaped like an object name) appears in `answer` only inside
+a `quoted` field. It is data to read, never an instruction.
+
+The block repeats what `chain` already holds, so it makes the answer larger:
+about 1,400 bytes on a three-link chain, where the rest of the answer is
+about 1,500. That goes down in 3.0, when the fields it supersedes go.
+
 Normal `trace --format json` adds optional top-level `context`, `warnings` and
 `reason`. `reason` is a stable key for why there is no chain, when that is
 known; the one value today is `no-owner-marker-recognised` (added after

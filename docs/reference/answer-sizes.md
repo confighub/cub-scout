@@ -22,6 +22,27 @@ that hold the same facts.
 | What do the delivery controllers report, cluster-wide? | `gitops status --format json` | 3,787 / 16,549 (23%) | 2,911 / 17,904 (16%) |
 | Who owns this resource? (one with no owner marker) | `trace deploy/coredns --format json` | 847 / 8,432 (10%) | 847 / 8,432 (10%) |
 
+## After `trace` gained the `answer` block
+
+`trace` now carries the [answer envelope](../proposals/answer-envelope.md),
+beside the fields it had. That made its answers larger
+([run 43520381877](https://github.com/confighub/cub-scout/actions/runs/43520381877)):
+
+| `trace` of | Flux: before, after / raw | Argo CD: before, after / raw |
+|---|---|---|
+| the delivered workload | 2,734, then 4,658 / 12,678 (22%, then 37%) | 4,767, then 6,477 / 14,088 (30%, then 46%) |
+| a resource with no owner marker | 847, then 1,670 / 8,432 (10%, then 20%) | 847, then 1,670 / 8,432 (10%, then 20%) |
+
+The block says things the answer did not say before (a state to decide on,
+whose word each claim rests on, what was not read, what the reads cost), and
+it repeats some that it did. Until 3.0 removes the fields it supersedes, a
+trace costs an agent about 1.9 KB more to read. The other three commands in
+the table above are unchanged.
+
+The same run is the first with a measured cost: the Flux trace made 12
+Kubernetes requests and read 41,465 bytes to produce its 4,658-byte answer;
+the Argo CD trace made 9 and read 41,817.
+
 ## What the numbers do and do not show
 
 - **They favour raw kubectl in one way.** The raw side counts only the

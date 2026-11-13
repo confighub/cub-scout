@@ -46,6 +46,10 @@ type TraceResult struct {
 	// TracedAt is when the trace was performed
 	TracedAt time.Time `json:"tracedAt"`
 
+	// ReadCost is what the Kubernetes reads behind this result cost, when the
+	// caller measured them. It is reported in the answer envelope.
+	ReadCost *KubernetesReadCost `json:"-"`
+
 	// ConfigHub contains ConfigHub-specific metadata if the resource is managed by ConfigHub
 	ConfigHub *TraceConfigHub `json:"confighub,omitempty"`
 

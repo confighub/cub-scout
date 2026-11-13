@@ -1,4 +1,57 @@
 {
+  "answer": {
+    "state": "traced",
+    "reason": "controllers-report-ready",
+    "summary": "Deployment/payments-api in payments has a delivery chain of 3 links; the 1 delivery controllers in it report ready. Trace did not read the readiness of the other 2.",
+    "observedAt": "<TIMESTAMP>",
+    "cluster": {
+      "context": "",
+      "id": "",
+      "idSource": "not-read"
+    },
+    "basis": [
+      {
+        "claim": "Kustomization/payments-app is reported ready by its controller",
+        "restsOn": "controller-report",
+        "ref": {
+          "kind": "Kustomization",
+          "namespace": "flux-system",
+          "name": "payments-app"
+        }
+      },
+      {
+        "claim": "Deployment/payments-api is in the chain by ownership metadata; trace did not read its readiness",
+        "restsOn": "object-metadata",
+        "ref": {
+          "kind": "Deployment",
+          "namespace": "payments",
+          "name": "payments-api"
+        }
+      }
+    ],
+    "unknowns": [
+      {
+        "what": "the readiness of link 1 of the chain, Deployment/payments-api",
+        "kind": "not-requested",
+        "reason": "trace reads delivery controllers' conditions, not workload health"
+      }
+    ],
+    "next": [
+      {
+        "command": "cub-scout explain Deployment/payments-api -n payments --format json",
+        "why": "its health and recent events, which trace does not read"
+      }
+    ],
+    "cost": {
+      "requestsMade": 0,
+      "responseBodyBytes": 0,
+      "transportErrors": 0,
+      "bodyReadErrors": 0,
+      "durationMillis": 0,
+      "reused": false,
+      "coverage": "not-measured"
+    }
+  },
   "command": "trace",
   "target": {
     "kind": "Deployment",

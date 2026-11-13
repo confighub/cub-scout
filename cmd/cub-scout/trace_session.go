@@ -27,6 +27,8 @@ import (
 // Credential files are captured with the session; configured exec plugins
 // retain their own refresh behavior. Subprocess binding is a separate stage.
 type traceSession struct {
+	// meter counts every request the session's own clients make.
+	meter    *agent.KubernetesReadMeter
 	config   *rest.Config
 	context  string
 	proxyURL string // Static proxy parsed with this config; empty means no provenance.
@@ -53,7 +55,7 @@ func newTraceSession(config *rest.Config, contextLabel string) (*traceSession, e
 	if err := captureTraceCredentialFiles(captured); err != nil {
 		return nil, err
 	}
-	return &traceSession{config: captured, context: contextLabel}, nil
+	return &traceSession{config: captured, context: contextLabel, meter: agent.NewKubernetesReadMeter()}, nil
 }
 
 // newTraceSessionForSelection preserves the legacy default loader when omitted,
@@ -131,11 +133,24 @@ func (s *traceSession) restConfig() (*rest.Config, error) {
 	return copyTraceRESTConfig(s.config), nil
 }
 
+// meteredConfig is the session's config for its own in-process clients, with
+// the read meter on the transport. The session's stored config stays
+// unwrapped: it is also written out as a child kubeconfig for the flux CLI,
+// and a transport wrapper cannot be serialised into one. Requests made by
+// that subprocess are therefore not counted, and the reported cost says so.
+func (s *traceSession) meteredConfig() *rest.Config {
+	config := copyTraceRESTConfig(s.config)
+	if s.meter != nil {
+		config.Wrap(s.meter.WrapTransport)
+	}
+	return config
+}
+
 func (s *traceSession) dynamicClient() (dynamic.Interface, error) {
 	if s == nil || s.config == nil {
 		return nil, fmt.Errorf("trace session is unavailable")
 	}
-	s.dynamicOnce.Do(func() { s.dynamic, s.dynamicErr = dynamic.NewForConfig(s.config) })
+	s.dynamicOnce.Do(func() { s.dynamic, s.dynamicErr = dynamic.NewForConfig(s.meteredConfig()) })
 	return s.dynamic, s.dynamicErr
 }
 
@@ -143,7 +158,7 @@ func (s *traceSession) kubernetesClient() (kubernetes.Interface, error) {
 	if s == nil || s.config == nil {
 		return nil, fmt.Errorf("trace session is unavailable")
 	}
-	s.kubeOnce.Do(func() { s.kube, s.kubeErr = kubernetes.NewForConfig(s.config) })
+	s.kubeOnce.Do(func() { s.kube, s.kubeErr = kubernetes.NewForConfig(s.meteredConfig()) })
 	return s.kube, s.kubeErr
 }
 
@@ -151,7 +166,7 @@ func (s *traceSession) discoveryClient() (discovery.DiscoveryInterface, error) {
 	if s == nil || s.config == nil {
 		return nil, fmt.Errorf("trace session is unavailable")
 	}
-	s.discoveryOnce.Do(func() { s.discovery, s.discoveryErr = discovery.NewDiscoveryClientForConfig(s.config) })
+	s.discoveryOnce.Do(func() { s.discovery, s.discoveryErr = discovery.NewDiscoveryClientForConfig(s.meteredConfig()) })
 	return s.discovery, s.discoveryErr
 }
 
