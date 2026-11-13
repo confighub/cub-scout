@@ -406,7 +406,7 @@ func traceForExplainWithOwnership(ctx context.Context, kind, name, namespace str
 		// The same holds when detection found no GitOps owner: a tracer
 		// saying "not mine" about a Native resource says nothing about who
 		// owns it, and must not become the reported owner.
-		if detected && isNativeOwnership(ownership) && isNotManagedTraceError(result.Error) {
+		if detected && isNativeOwnership(ownership) && agent.IsNoOwnerTrace(result.Reason, result.Error) {
 			continue
 		}
 
@@ -542,7 +542,7 @@ func isNegativeMismatchCandidate(result *agent.TraceResult, ownership *agent.Own
 		return false
 	}
 
-	return isNotManagedTraceError(errMsg)
+	return agent.IsNoOwnerTrace(result.Reason, errMsg)
 }
 
 // isNativeOwnership reports whether detection found no GitOps owner.
@@ -550,26 +550,11 @@ func isNativeOwnership(ownership *agent.Ownership) bool {
 	return ownership != nil && (ownership.Type == agent.OwnerUnknown || ownership.Type == agent.OwnerKubernetes)
 }
 
-// isNotManagedTraceError reports whether a tracer error means "this tool does
-// not manage the resource".
+// isNotManagedTraceError reports whether a tracer's words mean "no owner
+// marker was recognised here". Prefer the typed reason where a result
+// carries one; see agent.IsNoOwnerTrace.
 func isNotManagedTraceError(errMsg string) bool {
-	// Check for "not managed" patterns that indicate a negative result
-	errLower := strings.ToLower(strings.TrimSpace(errMsg))
-	negativePatterns := []string{
-		"not managed",
-		"no flux object found",
-		"object not managed",
-		"no helm release found",
-		"not found managing",
-	}
-
-	for _, pattern := range negativePatterns {
-		if strings.Contains(errLower, pattern) {
-			return true
-		}
-	}
-
-	return false
+	return agent.IsNoOwnerTrace("", errMsg)
 }
 
 // ownerTypeToToolName converts an ownership type constant to its tool name.

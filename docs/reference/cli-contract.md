@@ -920,7 +920,7 @@ cub-scout trace <kind> <name> -n <namespace> [flags]
 | Flux | `flux trace` | Shows GitRepo -> Kustomization/HelmRelease -> Resource |
 | ArgoCD | Kubernetes Application CR read | Shows Application -> Resource; exact namespace or unique name required |
 | Helm | Release metadata | Shows chart, version, values |
-| Native | N/A | Shows "not managed by GitOps" |
+| Native | N/A | Says no GitOps owner marker was recognised; JSON `reason` is `no-owner-marker-recognised` |
 
 Normal Trace captures its Kubernetes configuration once and uses it for the
 owner-specific resolver and enrichments. Argo observation reads Application CRs
@@ -974,8 +974,12 @@ TRACE: Deployment/nginx in demo
 ```
 TRACE: Deployment/coredns in kube-system
 
-  [warning] resource not managed by Flux
+  [warning] no Flux owner marker was recognised on this resource
 ```
+
+That is what was observed, not a finding that nothing manages the resource:
+an operator, a controller cub-scout has no detector for, or a person may.
+Up to v2.15.1 the warning read "resource not managed by ...".
 
 ### Output (JSON, `--json`)
 
@@ -1024,7 +1028,7 @@ If artifact metadata is missing/unreadable, the artifact fields are present with
 | Code | Meaning |
 |------|---------|
 | 0 | Trace successful |
-| 1 | Resource not found, trace failed, or not managed |
+| 1 | Resource not found, trace failed, or no owner marker recognised |
 
 ---
 

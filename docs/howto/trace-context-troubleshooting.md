@@ -199,7 +199,7 @@ The TUI detects context issues for both Flux and ArgoCD and displays numbered st
 ### What the TUI shows
 
 - **Context issue detected**: A structured box with the reason and numbered remediation steps
-- **Normal errors**: Standard error message (e.g., "resource not managed by Flux")
+- **Normal errors**: Standard error message (e.g., "no Flux owner marker was recognised on this resource")
 - **ConfigHub warnings**: Appear on stderr in CLI mode; in TUI mode, connected metadata fields will be absent but trace succeeds
 
 ---

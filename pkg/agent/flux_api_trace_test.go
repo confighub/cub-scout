@@ -147,15 +147,15 @@ func TestFluxAPITraceMatchesTheCLITraceOfTheSameCluster(t *testing.T) {
 func TestFluxAPITraceRefusesToGuess(t *testing.T) {
 	podinfoKustomization := schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "gitrepositories"}
 
-	t.Run("an object with no Flux labels is not managed by Flux", func(t *testing.T) {
+	t.Run("an object with no Flux labels has no Flux owner marker", func(t *testing.T) {
 		unmanaged := &unstructured.Unstructured{Object: map[string]interface{}{
 			"apiVersion": "apps/v1", "kind": "Deployment",
 			"metadata": map[string]interface{}{"name": "manual", "namespace": "team-a"},
 		}}
 		tracer, _ := fluxAPITracerOn(t, []runtime.Object{unmanaged})
 		result, err := tracer.Trace(context.Background(), "Deployment", "manual", "team-a")
-		if result != nil || err == nil || err.Error() != "resource not managed by Flux" {
-			t.Fatalf("result=%+v err=%v, want the not-managed error", result, err)
+		if result != nil || err == nil || err.Error() != NoFluxOwnerTraceMessage || !IsNoOwnerTrace("", err.Error()) {
+			t.Fatalf("result=%+v err=%v, want the no-owner-marker error", result, err)
 		}
 	})
 

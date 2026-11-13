@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/confighub/cub-scout/v2/internal/mapsvc"
 	"github.com/confighub/cub-scout/v2/pkg/agent"
@@ -135,8 +134,8 @@ func observeTrace(ctx context.Context, session *traceSession, kind, name, namesp
 			if err == nil {
 				result, err = tracer.Trace(ctx, kind, name, namespace)
 			}
-			if err == nil && (result == nil || (result.Error != "" && !strings.Contains(result.Error, "not managed"))) {
-				err = fmt.Errorf("resource not managed by a detected GitOps tool")
+			if err == nil && (result == nil || (result.Error != "" && !agent.IsNoOwnerTrace(result.Reason, result.Error))) {
+				err = fmt.Errorf("%s", agent.NoOwnerTraceMessage)
 			}
 		}
 	}

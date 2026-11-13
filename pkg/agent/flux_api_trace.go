@@ -96,8 +96,8 @@ func (t *FluxAPITracer) Trace(ctx context.Context, kind, name, namespace string)
 	case labels[fluxHelmNameLabel] != "":
 		chain, err = t.helmReleaseChain(ctx, labels[fluxHelmNameLabel], labels[fluxHelmNamespaceLabel])
 	default:
-		// The wording the CLI tracer's callers already recognise.
-		return nil, fmt.Errorf("resource not managed by Flux")
+		// Wording IsNoOwnerTrace recognises.
+		return nil, fmt.Errorf("%s", NoFluxOwnerTraceMessage)
 	}
 	if err != nil {
 		return nil, err

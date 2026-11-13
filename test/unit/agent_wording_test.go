@@ -23,6 +23,7 @@ var phrasesAnAgentWouldBelieve = map[string]string{
 	"not confighub-managed":              "absence of one label is not evidence that ConfigHub does not manage the object; say what could not be read",
 	"not managed by gitops":              "no recognised owner marker is not evidence that nothing manages the resource",
 	"not tracked by gitops":              "say that no owner marker was recognised",
+	"resource not managed by":            "use agent.NoOwnerTraceMessage and the typed reason; the old words state a conclusion the evidence does not reach",
 	"these lack gitops ownership":        "no recognised owner marker is not evidence that the resources lack an owner",
 	"not managed by known owners":        "say that no owner marker was recognised",
 	"verify `cub` auth and connectivity": "name the cause that was observed, or point at where it is reported; do not guess a login problem",

@@ -1,4 +1,4 @@
 
 TRACE: Deployment/debug-nginx in temp-test
 
-  [warning] Resource is not managed by GitOps
+  [warning] no GitOps owner marker was recognised on this resource
