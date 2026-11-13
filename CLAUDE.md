@@ -80,6 +80,8 @@ For demo flow "Can I do X with cub-scout or ConfigHub?":
 8. **CLI/TUI parity** — CLI and TUI are two renderings of one model. Every feature must have both a CLI command (with `--format ascii|json|md`) and a TUI equivalent. CLI is not a second-class citizen.
 9. **Measured for agents** — agents are the primary users of cub-scout's evidence. Claims that cub-scout helps an agent cite the agent evals ([evals/README.md](evals/README.md)), with and without cub-scout on the same evidence; where it adds nothing, say so. An *agentic* GitOps explorer is one that gives agents a cost and time advantage (cost per correct answer, turns, seconds), not only better answers; claim it only where the evals show it.
 
+10. **Ask what "for an agent" means** — for every capability, old or new, answer the six questions in [agentic GitOps observability](docs/reference/agentic-gitops-observability.md#the-principle): which question of an agent's it answers, whose word each fact rests on, how unknowns show, whether "not yet" differs from "no", what it costs, and whether cluster text is quoted. cub-scout looks before a write, witnesses after it and records evidence; it never writes, delivers or judges.
+
 ## Current Milestone Reality
 
 Use [HANDOVER.md](HANDOVER.md) as the latest execution snapshot.
@@ -169,6 +171,8 @@ A change to MCP tool output, a skill, or a new kind of evidence an agent should 
 - Adds or updates an eval case under `evals/` that asks the question it answers
 - Re-records the fixtures in the same PR when tool output changes
 - An agent-facing bug fix adds a case that fails without the fix
+
+- States what the change means for an agent, by the six questions of principle 10
 
 See [evals/README.md](evals/README.md#growing-the-suite). Eval scoring runs on recordings, never a live cluster.
 

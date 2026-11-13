@@ -157,6 +157,36 @@ scheduled in stage 2 of the [Path to 3.0](#path-to-30) rather than for a named
 version. Until implemented, their existing unknown/unsupported limits remain
 unchanged.
 
+### Agent plan follow-up — 2026-11-13
+
+From the [agent plan](roadmap-3.0-execution.md#agent-plan--2026-11-13). No
+issue is filed for these yet; file one when a package starts.
+
+- [ ] A: "did my change land" as one tool and command.
+- [ ] A: field value, last manager, and whether a controller will revert it.
+- [ ] A: changes no one recorded, from three-way compare.
+- [ ] A: `next[]` reads on every answer, exact commands, never writes.
+- [ ] B: mark text read from the cluster as quoted data in JSON and MCP.
+- [ ] B: remove verdict wording (PASS / WATCH / ASK / BLOCK) from cub-scout's
+  skills and fields; it belongs to the judge.
+- [ ] C: per-tool size ceilings checked in CI, and a summary view per tool.
+- [ ] C: deterministic bytes-and-tokens benchmark over the 24 prepared cases.
+- [ ] C: count the MCP tool catalog; smaller default set, rest discoverable.
+- [ ] D: first fact kept in ConfigHub; needs fact told apart from intent.
+- [ ] F: repository topics and homepage; MCP directory and krew listings.
+- [ ] F: track installs and downloads instead of stars.
+- [ ] G1: `converging` with a recheck time on the landing check.
+- [ ] G2: a bounded, read-only wait on the landing check.
+- [ ] G3: every answer says whose word a fact rests on.
+- [ ] G4: a delivery attestation a ChangeWorkflow can require; needs
+  ConfigHub's agreement.
+- [ ] G5: propose that agents set a field manager naming themselves.
+- [ ] Go through each capability with the six questions in
+  [the principle](reference/agentic-gitops-observability.md#the-principle)
+  and correct the first-pass table there.
+- [ ] A read-only Channel as the route for an agent with no cluster access
+  (#898 stays not planned; noted so the idea is kept).
+
 ### Status output follow-up — 2026-10-11
 
 - [ ] Decide whether `status --json` should report `auth_valid` when no cub
@@ -458,6 +488,12 @@ before implementation.
 > report ([#888](https://github.com/confighub/cub-scout/issues/888)) and the deprecation notices; 3.0.0 stays the transition
 > only; 3.1 is facts in ConfigHub ([#600](https://github.com/confighub/cub-scout/issues/600)) and signed receipts ([#889](https://github.com/confighub/cub-scout/issues/889)).
 > The paid benchmark is not scheduled, so 3.0.0 makes no cost-saving claim.
+>
+> **Added to on 2026-11-13.** The maintainer adopted, for now, an
+> [agent plan](roadmap-3.0-execution.md#agent-plan--2026-11-13): four
+> agent-question tools, one evidence envelope, declared answer sizes with a
+> free deterministic benchmark, and a README a newcomer can start from. With
+> it, 3.0.0 is no longer the transition only.
 
 **Execution plan, 2026-09-30:** [Delivery plan to cub scout 3.0](roadmap-3.0-execution.md)
 adds ordered work packets, dependencies, adopted cost/quality gates, a 24-case

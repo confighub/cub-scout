@@ -12,7 +12,7 @@ and minutes than standalone Claude needs with ordinary read-only tools. We
 [3.0 delivery plan](docs/roadmap-3.0-execution.md) sets release criteria for
 fair cost comparisons and preserved correctness; general savings are not yet proven.
 
-[v2.12.4 release](https://github.com/confighub/cub-scout/releases/tag/v2.12.4)
+[v2.15.0 release](https://github.com/confighub/cub-scout/releases/tag/v2.15.0)
 | [Start here](docs/getting-started/start-here.md)
 | [Is this image deployed?](docs/howto/is-this-image-deployed.md)
 | [Command guide](CLI-GUIDE.md)

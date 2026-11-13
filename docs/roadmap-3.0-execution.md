@@ -11,6 +11,62 @@
 > 2026-10-10).
 > Current gates: [the readiness ledger](releases/v2.15-readiness.md).
 
+## Agent plan — 2026-11-13
+
+Adopted by the maintainer on 2026-11-13 "for now": it can be withdrawn. It
+adds to the [trimmed plan](#trimmed-plan--2026-11-10) below and changes two of
+its rows: v2.16 grows, and 3.0 is no longer the transition only. The
+not-planned list and the unscheduled paid benchmark stand. Nothing here is
+built yet, and none of it is claimed by any release.
+
+The plan follows from a definition of
+[agentic GitOps observability](reference/agentic-gitops-observability.md),
+adopted the same day as a working principle: for every capability, ask what it
+means for an agent.
+
+**The claim 3.0 should be able to make:** when an agent changes configuration,
+cub-scout is how it finds out what happened in the cluster, in one call, at a
+known cost, with the evidence attached and nothing guessed.
+
+| Package | What it is | Done when |
+|---|---|---|
+| A. Answers shaped like an agent's questions | One MCP tool and one CLI command each, built from evidence cub-scout already collects: (1) did my change land: `landed`, `not-landed` or `not-observable`, with the broken link named (builds on [#827], [#887] and receipts); (2) what is this field now, who set it, and will a controller put it back; (3) what changed that no one recorded (builds on three-way compare); (4) the next safe read, as an exact command, never a write. | Each has a unit-tested contract, a recorded example and an eval case. |
+| B. One evidence contract ([#596], widened) | Every answer, in CLI JSON and MCP, carries the same envelope: `state`, `reason`, `evidence[]` with object references, `observedAt`, `limitation`, `next[]`. One vocabulary: `not-observable`, never a bare empty list. Text read from the cluster (messages, annotations) is marked as quoted data, since it can carry text aimed at the agent. Verdict wording that belongs to the judge leaves cub-scout's own skills and fields, deprecated in v2.16 and removed in 3.0. | A conformance test runs every command against the envelope. |
+| C. A cost an agent can count on | Each MCP tool declares a size ceiling and has a summary view; CI fails when a recorded answer exceeds it. A deterministic CI benchmark compares, for each of the 24 prepared cases, the bytes and tokens an agent must read with cub-scout against the raw `kubectl` and `cub` output holding the same facts: no model, no credits. The tool catalog is counted too, with a smaller default set as the target. | The numbers are published with their method. They show smaller evidence, not that an agent answers correctly for less, and the release notes say so. |
+| D. Facts where the next agent will find them ([#600], in part) | cub-scout as the only author of a fact, a deterministic body, a new revision only when the observation changes, labelled as observed and not intended. First fact: what the controllers report applied, per attached cluster and Release. Opt-in, off by default; the cluster is still only read. | Waits on ConfigHub telling a fact apart from intent. Until then a preview, and 3.0 does not depend on it. |
+| E. The measurement | Three rungs: C's free numbers; a small paired run of the four questions in A (not approved); the full 24-case benchmark (not scheduled). | 3.0 claims only the rungs that were run. |
+| F. Be found and be tried | The README's first screen shows one command and one answer; install paths and listings where MCP users look; one announcement at 3.0 carrying C's numbers. | A newcomer reaches a first answer from the README's first screen. |
+
+Five additions from the definition, adopted on 2026-11-13:
+
+| Addition | What it is | Belongs to |
+|---|---|---|
+| G1. Convergence as a state | The landing check answers `landed`, `converging` (with a recheck time and what it is waiting on), `not-landed` or `not-observable`. Today an agent cannot tell "not yet" from "no". | A(1) |
+| G2. A bounded wait | One read-only call that returns when the state settles or the time is up. Not a watch service ([#539] stays not planned). It replaces a polling loop, and the turns saved can be counted without a paid run. | A(1), C |
+| G3. The witness rule | Generalised from [#887]: a controller's Ready, a sync status, a recorded live status are each someone's own report. Every answer says whose word a fact rests on. | B |
+| G4. A delivery attestation | The receipt in a form a ConfigHub ChangeWorkflow can require; signing ([#889]) is the hardening. Needs ConfigHub's agreement; a preview until then. | D, 3.1 |
+| G5. Agent identity in attribution | An agent that writes directly sets a field manager naming itself; cub-scout reports it as read and never guesses one. A convention to propose to plugin authors. | A(2) |
+
+One measure to hold the plan to: a false-landed rate of zero on every recorded
+case, with the turns from "applied" to "verified" published beside raw
+`kubectl`.
+
+[#539]: https://github.com/confighub/cub-scout/issues/539
+
+| Release | Added by this plan |
+|---|---|
+| v2.15.x | F's README first screen. |
+| v2.16 | B's envelope and conformance test, with G3; C's ceilings and free benchmark; A(2) as a preview; deprecation notices for the verdict wording. |
+| 3.0 | A complete, with G1, G2 and G5; B enforced; C published; E's first rung, and the second if it is approved. |
+| 3.1 | D and G4, on ConfigHub's decision. |
+
+Open, and not covered by the adoption: the paired run in E; where to raise the
+fact question in D; effort estimates; whether the 24 cases cover the four
+questions.
+
+[#596]: https://github.com/confighub/cub-scout/issues/596
+[#600]: https://github.com/confighub/cub-scout/issues/600
+
 ## Trimmed plan — 2026-11-10
 
 Adopted by the maintainer on 2026-11-10 ("go ahead") after an independent
