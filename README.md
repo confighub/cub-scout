@@ -1,21 +1,57 @@
 # cub-scout
 
-**GitOps explorer for agents.**
+**GitOps explorer for agents.** cub-scout tells an agent what its change
+actually did, and it is not the thing that made the change.
 
-Read-only, deterministic evidence about who owns what in your cluster, how it got
-there and what changed, for AI agents first and for the people and scripts they
-work with. Unknowns are stated, never guessed.
+It is a read-only witness for GitOps clusters: who owns each object, which
+revision it came from, and whether what the deploy tool reports matches the
+cluster. It is built for AI agents first (MCP tools and JSON), and for the
+people and scripts they work with. Unknowns are stated, never guessed.
+
+```sh
+brew install confighub/tap/cub-scout
+cub-scout trace deploy/argobot -n argobot
+```
+
+```text
+TRACE: Deployment/argobot in argobot
+
+  ✓ OCIRepository/argobot-scout-live
+    │ Namespace: flux-system
+    │ URL: oci://172.18.0.1:32181/space/argobot-scout-live
+    │ Revision: latest@sha256:904b018f52f5cf9ee44b3d135ab355b3a6601366fb9b8c1f8ceaaffbc4008138
+    │ Status: Ready
+    │
+    └─▶ ✓ Kustomization/argobot-scout-live
+        │ Namespace: flux-system
+        │ Revision: latest@sha256:904b018f52f5cf9ee44b3d135ab355b3a6601366fb9b8c1f8ceaaffbc4008138
+        │ Status: Ready
+        │
+        └─▶ ✓ Deployment/argobot
+              Status: Managed by Flux
+
+✓ All levels in sync. Managed by flux.
+```
+
+That output is from a real cluster in this repository's CI (Flux delivering
+from an OCI registry), cut down to the delivery chain: the context, path,
+timing, secret and event lines are left out. For an
+agent, the same answer is JSON (`--format json`) or an MCP tool: point your
+MCP client at `cub-scout mcp serve`, a local read-only stdio server.
+
+[v2.15.0 release](https://github.com/confighub/cub-scout/releases/tag/v2.15.0)
+| [Start here](docs/getting-started/start-here.md)
+| [Is this image deployed?](docs/howto/is-this-image-deployed.md)
+| [Command guide](CLI-GUIDE.md)
+| [What "for an agent" means](docs/reference/agentic-gitops-observability.md)
+
+## What is measured, and what is not
 
 The goal is **verified answers with less agent spend**: fewer dollars, credits
 and minutes than standalone Claude needs with ordinary read-only tools. We
 [measure that claim](evals/README.md), including where scout adds cost. The
 [3.0 delivery plan](docs/roadmap-3.0-execution.md) sets release criteria for
 fair cost comparisons and preserved correctness; general savings are not yet proven.
-
-[v2.15.0 release](https://github.com/confighub/cub-scout/releases/tag/v2.15.0)
-| [Start here](docs/getting-started/start-here.md)
-| [Is this image deployed?](docs/howto/is-this-image-deployed.md)
-| [Command guide](CLI-GUIDE.md)
 
 ## Why this exists
 
