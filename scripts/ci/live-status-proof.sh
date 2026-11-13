@@ -73,6 +73,36 @@ PY
 done
 
 KUBECONFIG="$kubeconfig" kubectl api-resources -o name > "$out/api-resources.txt" 2>"$private/api-resources.err" || true
+# Which versions of each CRD the cluster serves: cub-scout names versions in
+# code, and a version that is no longer served reads as "not found".
+KUBECONFIG="$kubeconfig" kubectl get crd -o json 2>"$private/crds.err" | python3 -c '
+import json, sys
+for crd in sorted(json.load(sys.stdin)["items"], key=lambda c: c["metadata"]["name"]):
+    served = [v["name"] for v in crd["spec"]["versions"] if v.get("served")]
+    print(crd["metadata"]["name"], " ".join(served))' > "$out/crd-served-versions.txt" || true
+if [[ "$controller" = flux ]]; then
+  python3 - "$out/crd-served-versions.txt" <<'PY'
+import sys
+served = dict((line.split()[0], line.split()[1:]) for line in open(sys.argv[1]) if line.strip())
+# The versions cub-scout reads these kinds as. A miss here is a read that
+# finds nothing, silently.
+want = {
+    "ocirepositories.source.toolkit.fluxcd.io": "v1",
+    "buckets.source.toolkit.fluxcd.io": "v1",
+    "externalartifacts.source.toolkit.fluxcd.io": "v1",
+    "artifactgenerators.source.extensions.fluxcd.io": "v1beta1",
+    "gitrepositories.source.toolkit.fluxcd.io": "v1",
+    "helmrepositories.source.toolkit.fluxcd.io": "v1",
+    "kustomizations.kustomize.toolkit.fluxcd.io": "v1",
+    "helmreleases.helm.toolkit.fluxcd.io": "v2",
+}
+bad = ["%s: cub-scout reads %s, the cluster serves %s" % (name, version, served.get(name)) for name, version in want.items() if version not in served.get(name, [])]
+for name in want:
+    print(name, "served:", " ".join(served.get(name, [])))
+if bad:
+    sys.exit("Flux kinds read in a version this cluster does not serve:\n" + "\n".join(bad))
+PY
+fi
 if [[ "$controller" = flux ]]; then
   KUBECONFIG="$kubeconfig" kubectl get ocirepositories.source.toolkit.fluxcd.io,kustomizations.kustomize.toolkit.fluxcd.io -A -o json > "$out/flux-objects.json" 2>"$private/flux.err" || true
 elif [[ "$controller" = argo ]]; then
