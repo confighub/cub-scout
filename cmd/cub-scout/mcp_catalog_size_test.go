@@ -79,3 +79,28 @@ func TestMCPCatalogStaysWithinItsDeclaredSize(t *testing.T) {
 		}
 	}
 }
+
+// The core profile's whole point is its size: 9,292 bytes for the standalone
+// session and 12,239 with ConfigHub, measured on 2026-11-13, against 15,120
+// and 31,126 for every tool. The dispatcher's own entry and its index are
+// held too, since they are the price of reaching the rest.
+func TestMCPCoreProfileStaysWithinItsDeclaredSize(t *testing.T) {
+	ceilings := map[bool]int{false: 9300, true: 12300}
+	for _, connected := range []bool{false, true} {
+		gateway := profileGateway(t, "core", connected, nil)
+		raw, _ := json.Marshal(gateway.toolsForList())
+		t.Logf("core, connected=%v: %d tools, %d bytes", connected, len(gateway.toolsForList()), len(raw))
+		if len(raw) > ceilings[connected] {
+			t.Errorf("core profile, connected=%v: %d bytes, over its ceiling of %d", connected, len(raw), ceilings[connected])
+		}
+	}
+	more, _ := json.Marshal(mcpMoreToolDescriptor())
+	if len(more) > 900 {
+		t.Errorf("cub_scout_more is %d bytes in the catalog, over its ceiling of 900", len(more))
+	}
+	index, _ := callText(t, profileGateway(t, "core", true, nil), mcpMoreToolName, nil)
+	t.Logf("cub_scout_more: %d bytes in the catalog; connected index %d bytes", len(more), len(index))
+	if len(index) > 2800 {
+		t.Errorf("the connected index is %d bytes, over its ceiling of 2800", len(index))
+	}
+}
