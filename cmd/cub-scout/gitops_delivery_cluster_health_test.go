@@ -44,7 +44,7 @@ func healthStatefulSet(ready int64) *unstructured.Unstructured {
 		"apiVersion": "apps/v1", "kind": "StatefulSet",
 		"metadata": map[string]interface{}{"name": "db", "namespace": "payments", "generation": int64(1)},
 		"spec":     map[string]interface{}{"replicas": int64(1)},
-		"status":   map[string]interface{}{"observedGeneration": int64(1), "replicas": int64(1), "readyReplicas": ready, "unavailableReplicas": 1 - ready},
+		"status":   map[string]interface{}{"observedGeneration": int64(1), "replicas": int64(1), "readyReplicas": ready, "updatedReplicas": int64(1), "currentRevision": "db-1", "updateRevision": "db-1", "unavailableReplicas": 1 - ready},
 	}}
 }
 
@@ -63,6 +63,17 @@ func TestClusterCheckComparesTheRecordedHealthWithTheListedWorkloads(t *testing.
 	partial := healthDeployment("api", 1, time.Time{})
 	rolling := healthDeployment("api", 2, time.Time{})
 	_ = unstructured.SetNestedField(rolling.Object, int64(1), "status", "updatedReplicas")
+	sameSecond := healthDeployment("api", 0, recorded)
+	notYetAvailable := healthDeployment("api", 2, time.Time{})
+	_ = unstructured.SetNestedSlice(notYetAvailable.Object, []interface{}{map[string]interface{}{"type": "Available", "status": "False", "lastTransitionTime": recorded.Add(-time.Hour).Format(time.RFC3339)}}, "status", "conditions")
+	rollingSet := healthStatefulSet(1)
+	_ = unstructured.SetNestedField(rollingSet.Object, "db-1", "status", "currentRevision")
+	_ = unstructured.SetNestedField(rollingSet.Object, "db-2", "status", "updateRevision")
+	rollingDaemon := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": "apps/v1", "kind": "DaemonSet",
+		"metadata": map[string]interface{}{"name": "agent", "namespace": "payments", "generation": int64(1)},
+		"status":   map[string]interface{}{"observedGeneration": int64(1), "desiredNumberScheduled": int64(3), "numberReady": int64(3), "updatedNumberScheduled": int64(1)},
+	}}
 	surging := healthDeployment("api", 2, time.Time{})
 	_ = unstructured.SetNestedField(surging.Object, int64(3), "status", "replicas")
 	behind := healthDeployment("api", 2, time.Time{})
@@ -86,7 +97,13 @@ func TestClusterCheckComparesTheRecordedHealthWithTheListedWorkloads(t *testing.
 		{"Healthy, and the Deployment's own controller is behind its spec", "Healthy", []*unstructured.Unstructured{behind}, []runtime.Object{behind}, liveStatusClusterNotObservable, "mid-rollout", 1},
 		{"Healthy, and a listed workload is not in the cluster", "Healthy", []*unstructured.Unstructured{ready}, nil, liveStatusClusterNotObservable, "missing", 1},
 		{"Healthy, and the controller lists no workload", "Healthy", nil, nil, liveStatusClusterNotObservable, "list no Deployment, StatefulSet or DaemonSet", 0},
-		{"Degraded and a workload is not ready", "Degraded", []*unstructured.Unstructured{downAfter}, []runtime.Object{downAfter}, liveStatusClusterAgrees, "1 of 1 workloads", 1},
+		{"Healthy, and a Deployment turned unavailable in the second it was recorded", "Healthy", []*unstructured.Unstructured{sameSecond}, []runtime.Object{sameSecond}, liveStatusClusterNotObservable, "give no time that places it before", 1},
+		{"Healthy, and every pod is ready but the Deployment is not yet Available", "Healthy", []*unstructured.Unstructured{notYetAvailable}, []runtime.Object{notYetAvailable}, liveStatusClusterNotObservable, "mid-rollout", 1},
+		{"Healthy, and a StatefulSet is between revisions with its old pods ready", "Healthy", []*unstructured.Unstructured{rollingSet}, []runtime.Object{rollingSet}, liveStatusClusterNotObservable, "mid-rollout", 1},
+		{"Healthy, and a DaemonSet is ready on pods of an older spec", "Healthy", []*unstructured.Unstructured{rollingDaemon}, []runtime.Object{rollingDaemon}, liveStatusClusterNotObservable, "mid-rollout", 1},
+		{"Degraded and a workload was unavailable before that was recorded", "Degraded", []*unstructured.Unstructured{downBefore}, []runtime.Object{downBefore}, liveStatusClusterAgrees, "since before it was recorded", 1},
+		{"Degraded and a workload became unavailable only afterwards", "Degraded", []*unstructured.Unstructured{downAfter}, []runtime.Object{downAfter}, liveStatusClusterNotObservable, "none is known to have been so when it was recorded", 1},
+		{"Degraded and a workload is short of replicas with no time given", "Degraded", []*unstructured.Unstructured{partial}, []runtime.Object{partial}, liveStatusClusterNotObservable, "none is known to have been so", 1},
 		{"Degraded while every workload read is ready is not a disagreement", "Degraded", []*unstructured.Unstructured{ready}, []runtime.Object{ready}, liveStatusClusterNotObservable, "a kind that is not read here", 0},
 		{"Progressing is not compared", "Progressing", []*unstructured.Unstructured{ready}, []runtime.Object{ready}, liveStatusClusterNotObservable, "neither Healthy nor Degraded", 0},
 		{"no health was recorded", "", []*unstructured.Unstructured{ready}, []runtime.Object{ready}, liveStatusClusterNotObservable, "neither Healthy nor Degraded", 0},

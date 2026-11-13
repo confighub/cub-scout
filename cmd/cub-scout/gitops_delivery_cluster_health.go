@@ -151,31 +151,52 @@ func liveStatusWorkloadState(object *unstructured.Unstructured) (state, since st
 	if !found || observed < object.GetGeneration() {
 		return liveStatusWorkloadUnsettled, ""
 	}
+	available, since := "", ""
+	conditions, _, _ := unstructured.NestedSlice(object.Object, "status", "conditions")
+	for _, condition := range conditions {
+		fields, _ := condition.(map[string]interface{})
+		if fields["type"] == "Available" {
+			available, _ = fields["status"].(string)
+			if available == "False" {
+				since, _ = fields["lastTransitionTime"].(string)
+			}
+		}
+	}
+	count := func(field string) int64 {
+		value, _, _ := unstructured.NestedInt64(object.Object, "status", field)
+		return value
+	}
 	switch detectStatus(object) {
 	case "Ready":
-		if object.GetKind() == "Deployment" {
+		// Old pods can keep a workload "ready" while new ones never start: it
+		// is settled only when every replica is of the current spec and none
+		// of an older one is left.
+		switch object.GetKind() {
+		case "Deployment":
 			desired, set, _ := unstructured.NestedInt64(object.Object, "spec", "replicas")
 			if !set {
 				desired = 1
 			}
-			// Old pods can keep a Deployment "ready" while the new ones never
-			// start: it is settled only when every replica is of the current
-			// spec and none of an older one is left.
-			updated, _, _ := unstructured.NestedInt64(object.Object, "status", "updatedReplicas")
-			current, _, _ := unstructured.NestedInt64(object.Object, "status", "replicas")
-			if updated < desired || current > desired {
+			if count("updatedReplicas") < desired || count("replicas") > desired || available == "False" {
+				return liveStatusWorkloadUnsettled, ""
+			}
+		case "StatefulSet":
+			desired, set, _ := unstructured.NestedInt64(object.Object, "spec", "replicas")
+			if !set {
+				desired = 1
+			}
+			current, _, _ := unstructured.NestedString(object.Object, "status", "currentRevision")
+			update, _, _ := unstructured.NestedString(object.Object, "status", "updateRevision")
+			if count("updatedReplicas") < desired || current != update {
+				return liveStatusWorkloadUnsettled, ""
+			}
+		case "DaemonSet":
+			if count("updatedNumberScheduled") < count("desiredNumberScheduled") {
 				return liveStatusWorkloadUnsettled, ""
 			}
 		}
 		return liveStatusWorkloadReady, ""
 	case "NotReady":
-		conditions, _, _ := unstructured.NestedSlice(object.Object, "status", "conditions")
-		for _, condition := range conditions {
-			fields, _ := condition.(map[string]interface{})
-			if fields["type"] == "Available" && fields["status"] == "False" {
-				since, _ = fields["lastTransitionTime"].(string)
-			}
-		}
 		return liveStatusWorkloadNotReady, since
 	}
 	return liveStatusWorkloadUnsettled, ""
@@ -230,12 +251,16 @@ func checkLiveStatusHealth(ctx context.Context, workloads *liveStatusWorkloads, 
 			check.WorkloadsReady++
 			continue
 		case liveStatusWorkloadNotReady:
+			// Kubernetes gives whole seconds: a transition in the same second
+			// as the record cannot be placed before or after it.
 			began, err := time.Parse(time.RFC3339, since)
 			switch {
 			case err != nil:
 				notReadyUndated++
 			case began.After(recordedAt):
 				notReadyLater++
+			case began.Add(time.Second).After(recordedAt):
+				notReadyUndated++
 			default:
 				notReadyBefore++
 			}
@@ -246,9 +271,11 @@ func checkLiveStatusHealth(ctx context.Context, workloads *liveStatusWorkloads, 
 	}
 	notReady := notReadyBefore + notReadyLater + notReadyUndated
 	switch {
-	case health == "degraded" && notReady > 0:
+	case health == "degraded" && notReadyBefore > 0:
 		check.State = liveStatusClusterAgrees
-		check.Reason = fmt.Sprintf("the recorded health is %q, and %d of %d workloads the controllers list are not ready", recorded, notReady, len(refs))
+		check.Reason = fmt.Sprintf("the recorded health is %q, and %d of %d workloads the controllers list have been unavailable since before it was recorded", recorded, notReadyBefore, len(refs))
+	case health == "degraded" && notReady > 0:
+		check.Reason = fmt.Sprintf("the recorded health is %q, and %d of %d workloads the controllers list are not ready now, but none is known to have been so when it was recorded", recorded, notReady, len(refs))
 	case health == "degraded" && unknown > 0:
 		check.Reason = fmt.Sprintf("%d of %d workloads the controllers list could not be read as ready or not", unknown, len(refs))
 	case health == "degraded":
@@ -259,7 +286,7 @@ func checkLiveStatusHealth(ctx context.Context, workloads *liveStatusWorkloads, 
 	case notReadyLater > 0:
 		check.Reason = fmt.Sprintf("%d of %d workloads the controllers list became unavailable after the health was recorded; both can have been true in turn", notReadyLater, len(refs))
 	case notReadyUndated > 0:
-		check.Reason = fmt.Sprintf("%d of %d workloads the controllers list are not ready now and give no time for when that began, so it may have followed the recorded health", notReadyUndated, len(refs))
+		check.Reason = fmt.Sprintf("%d of %d workloads the controllers list are not ready now and give no time that places it before the health was recorded, so it may have followed it", notReadyUndated, len(refs))
 	case unknown > 0:
 		check.Reason = fmt.Sprintf("%d of %d workloads the controllers list are missing, mid-rollout or could not be read", unknown, len(refs))
 	default:
