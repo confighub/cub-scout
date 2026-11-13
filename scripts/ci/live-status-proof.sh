@@ -52,8 +52,10 @@ for item in json.load(open(sys.argv[1])):
 PY
 echo 'Spaces after cluster up:'; cat "$out/spaces.txt"
 
-# Wait for a Release that carries a LiveStatus: argobot writes it once Flux
-# has reconciled. Ten minutes, since images are pulled cold.
+# Wait for a Release whose LiveStatus says Synced: argobot writes one as soon
+# as the controller starts on it ("Provisioning" under Sveltos, seen in run
+# 43403750799) and again once it has reconciled. Ten minutes, since images are
+# pulled cold.
 found=''
 for _ in $(seq 1 60); do
   : > "$out/release-list.json"
@@ -64,7 +66,7 @@ try:
     items = json.load(open(sys.argv[1]))
 except Exception:
     sys.exit(1)
-sys.exit(0 if any((i.get("Release") or {}).get("LiveStatus") for i in items) else 1)
+sys.exit(0 if any(((i.get("Release") or {}).get("LiveStatus") or {}).get("Sync") == "Synced" for i in items) else 1)
 PY
   then found=yes; break; fi
   sleep 10
@@ -87,9 +89,9 @@ KUBECONFIG="$kubeconfig" CUB_SCOUT_TELEMETRY='' "$scout" gitops status --with-co
 }
 KUBECONFIG="$kubeconfig" "$scout" gitops status --with-confighub --confighub-space '*' > "$out/gitops-status.txt" 2>/dev/null || true
 
-[[ -n "$found" ]] || { echo 'No Release carried a LiveStatus within ten minutes; see the artifact' >&2; exit 1; }
+[[ -n "$found" ]] || { echo 'No Release carried a Synced LiveStatus within ten minutes; see the artifact' >&2; exit 1; }
 
-python3 - "$out/gitops-status.json" <<'PY'
+python3 - "$out/gitops-status.json" "$controller" <<'PY'
 import json, sys
 report = json.load(open(sys.argv[1]))
 def walk(value):
@@ -104,10 +106,24 @@ def walk(value):
 statuses = [s for s in walk(report) if s.get("recordedOn") == "release"]
 for s in statuses:
     check = s.get("clusterCheck") or {}
-    print(s.get("space"), s.get("release"), "sync=%s" % s.get("syncStatus"), "matchedBy=%s" % (s.get("clusterCheck") or {}).get("matchedBy"), "check=%s" % check.get("state"), check.get("reason", ""))
+    health = check.get("health") or {}
+    print(s.get("space"), s.get("release"), "sync=%s" % s.get("syncStatus"), "health=%s" % s.get("healthStatus"), "matchedBy=%s" % check.get("matchedBy"), "check=%s" % check.get("state"), check.get("reason", ""))
+    print("   health check=%s" % health.get("state"), "listed=%s ready=%s" % (health.get("workloadsListed"), health.get("workloadsReady")), health.get("reason", ""))
 if not statuses:
     sys.exit("cub-scout reported no live status recorded on a Release")
-if not any((s.get("clusterCheck") or {}).get("state") == "agrees" for s in statuses):
+checks = [s.get("clusterCheck") or {} for s in statuses]
+if sys.argv[2] == "sveltos":
+    # Sveltos reports no digest for what it applied: the honest answer is
+    # that the cluster cannot say, never that it agrees.
+    if any(c.get("state") != "not-observable" for c in checks):
+        sys.exit("a status delivered by Sveltos was compared, though Sveltos reports no digest")
+    if not any("Sveltos" in c.get("reason", "") for c in checks):
+        sys.exit("no answer named the Sveltos ClusterProfile as the reason nothing was compared")
+    print("Sveltos: the ClusterProfile is named, and nothing is compared")
+    sys.exit(0)
+if not any(c.get("state") == "agrees" for c in checks):
     sys.exit("no recorded live status was found to agree with the cluster")
+if not any(c.get("state") == "agrees" and (c.get("health") or {}).get("state") == "agrees" for c in checks):
+    sys.exit("no recorded health was found to agree with the workloads the controller lists")
+print("A recorded live status agrees with the controllers in the cluster, and its health with the workloads they list")
 PY
-echo 'A live status recorded by the deploying tool agrees with the controllers in the cluster'

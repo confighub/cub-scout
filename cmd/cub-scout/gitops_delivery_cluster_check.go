@@ -24,7 +24,7 @@ const (
 	liveStatusClusterDisagrees     = "disagrees"
 	liveStatusClusterNotObservable = "not-observable"
 
-	liveStatusClusterLimitation = "Compares one thing: whether a controller in this cluster reports this Release's manifest digest as applied, against the sync state the deploying tool recorded. The two reports were made at different moments and can both have been true in turn. Health is compared only once those controllers are on the Release's digest, and only against the Deployments, StatefulSets and DaemonSets they list as theirs: no other kind, no pod and nothing a controller does not list is read. A controller's report is not proof that workloads converged. Controllers are matched by ConfigHub registry and space slug, or, where this cluster reaches the registry at an address the server does not advertise, by being the object the recorded status names as its data source and pulling a repository named for the space: not by organization, Target or path, and this cluster may not be the Release's Target."
+	liveStatusClusterLimitation = "Compares one thing: whether a controller in this cluster reports this Release's manifest digest as applied, against the sync state the deploying tool recorded. The two reports were made at different moments and can both have been true in turn. Health is compared only once those controllers are on the Release's digest, and only against the Deployments, StatefulSets and DaemonSets they list as theirs: no other kind, no pod and nothing a controller does not list is read. A controller's report is not proof that workloads converged. A Sveltos ClusterProfile pulling the space is named and never compared: Sveltos reports no digest for what it applied. Controllers are matched by ConfigHub registry and space slug, or, where this cluster reaches the registry at an address the server does not advertise, by being the object the recorded status names as its data source and pulling a repository named for the space: not by organization, Target or path, and this cluster may not be the Release's Target."
 
 	// How the compared controllers were found.
 	liveStatusMatchedByRegistry   = "registry"
@@ -64,9 +64,10 @@ type ConfigHubLiveStatusController struct {
 }
 
 var (
-	liveStatusApplicationGVR   = schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}
-	liveStatusOCIRepositoryGVR = schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "ocirepositories"}
-	liveStatusKustomizationGVR = schema.GroupVersionResource{Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations"}
+	liveStatusApplicationGVR    = schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}
+	liveStatusOCIRepositoryGVR  = schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "ocirepositories"}
+	liveStatusKustomizationGVR  = schema.GroupVersionResource{Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations"}
+	liveStatusClusterProfileGVR = schema.GroupVersionResource{Group: "config.projectsveltos.io", Version: "v1beta1", Resource: "clusterprofiles"}
 )
 
 // liveStatusClusterControllers is what one read of the cluster found: the
@@ -82,13 +83,25 @@ type liveStatusClusterControllers struct {
 	// status names the object itself.
 	shapedLike map[string][]*unstructured.Unstructured
 	registries map[string]struct{}
-	unread     []string
+	// sveltos holds Sveltos ClusterProfiles whose policyRefs pull a ConfigHub
+	// space, and sveltosShaped those pulling a repository named space/<slug>
+	// from a registry not known to be ConfigHub's. Neither is compared: a
+	// ClusterSummary reports a hash of Sveltos's own for what it applied
+	// (status.featureSummaries[].hash), never the digest it pulled. They are
+	// kept so the answer says so, and so agreement is not claimed over them.
+	sveltos       map[string][]*unstructured.Unstructured
+	sveltosShaped map[string][]*unstructured.Unstructured
+	unread        []string
 }
 
-// readLiveStatusClusterControllers lists Argo CD Applications and Flux
-// Kustomizations once and keeps those whose source is a ConfigHub space.
+const liveStatusSveltosNoDigest = "Sveltos reports a hash of its own for what it applied, not the digest it pulled, so whether it is on this Release cannot be read from the cluster"
+
+// readLiveStatusClusterControllers lists Argo CD Applications, Flux
+// Kustomizations and Sveltos ClusterProfiles once and keeps those whose source
+// is a ConfigHub space.
 func readLiveStatusClusterControllers(ctx context.Context, client dynamic.Interface) liveStatusClusterControllers {
-	found := liveStatusClusterControllers{bySpace: map[string][]*unstructured.Unstructured{}, shapedLike: map[string][]*unstructured.Unstructured{}, registries: map[string]struct{}{}}
+	found := liveStatusClusterControllers{bySpace: map[string][]*unstructured.Unstructured{}, shapedLike: map[string][]*unstructured.Unstructured{}, registries: map[string]struct{}{},
+		sveltos: map[string][]*unstructured.Unstructured{}, sveltosShaped: map[string][]*unstructured.Unstructured{}}
 	list := func(gvr schema.GroupVersionResource, kind string) []unstructured.Unstructured {
 		items, err := client.Resource(gvr).Namespace(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
 		if apierrors.IsNotFound(err) || meta.IsNoMatchError(err) {
@@ -172,11 +185,29 @@ func readLiveStatusClusterControllers(ctx context.Context, client dynamic.Interf
 			}
 		}
 	}
+	profiles := list(liveStatusClusterProfileGVR, "Sveltos ClusterProfiles")
+	for i := range profiles {
+		refs, _, _ := unstructured.NestedSlice(profiles[i].Object, "spec", "policyRefs")
+		matched := map[string]bool{}
+		for _, ref := range refs {
+			entry, _ := ref.(map[string]interface{})
+			remote, _ := entry["remoteURL"].(map[string]interface{})
+			url, _ := remote["url"].(string)
+			if slug, known := space(url); slug != "" && !matched[slug] {
+				matched[slug] = true
+				if known {
+					found.sveltos[slug] = append(found.sveltos[slug], &profiles[i])
+				} else {
+					found.sveltosShaped[slug] = append(found.sveltosShaped[slug], &profiles[i])
+				}
+			}
+		}
+	}
 	return found
 }
 
 // checkLiveStatusesAgainstCluster adds a cluster check to every status that is
-// recorded on a Release. It makes at most three list calls for controllers
+// recorded on a Release. It makes at most four list calls for controllers
 // and one for each workload kind they list, whatever the number of statuses,
 // and none when no status is on a Release.
 func checkLiveStatusesAgainstCluster(ctx context.Context, client dynamic.Interface, statuses []ConfigHubLiveStatusEvidence, now time.Time) {
@@ -228,8 +259,15 @@ func checkLiveStatusesAgainstCluster(ctx context.Context, client dynamic.Interfa
 				check.MatchedBy = liveStatusMatchedByDataSource
 			}
 		}
-		if len(controllers) == 0 {
+		profiles := found.sveltos[status.Space]
+		if len(controllers) == 0 && len(profiles) > 0 {
+			check.MatchedBy = liveStatusMatchedByRegistry
+		}
+		if len(controllers) == 0 && len(profiles) == 0 {
 			check.Reason = fmt.Sprintf("no Argo CD Application or Flux Kustomization in this cluster was recognised as pulling ConfigHub space %q", status.Space)
+			if shaped := found.sveltosShaped[status.Space]; len(shaped) > 0 {
+				check.Reason += fmt.Sprintf("; %d Sveltos ClusterProfiles (%s) pull a repository named space/%s from a registry not known to be ConfigHub's, and %s", len(shaped), liveStatusObjectNames(shaped), status.Space, liveStatusSveltosNoDigest)
+			}
 			if shaped := found.shapedLike[status.Space]; len(shaped) > 0 {
 				check.Reason += fmt.Sprintf("; %d pull a repository named space/%s from a registry not known to be ConfigHub's (%s), and the recorded status names none of them as its data source (%q)", len(shaped), status.Space, strings.Join(sortedKeys(found.registries), ", "), status.DataSource)
 			}
@@ -271,6 +309,11 @@ func checkLiveStatusesAgainstCluster(ctx context.Context, client dynamic.Interfa
 			}
 			check.Controllers = append(check.Controllers, ConfigHubLiveStatusController{Kind: object.GetKind(), Namespace: object.GetNamespace(), Name: object.GetName(), State: state, Revision: revision})
 		}
+		for _, profile := range profiles {
+			check.Controllers = append(check.Controllers, ConfigHubLiveStatusController{Kind: profile.GetKind(), Name: profile.GetName(), State: liveStatusClusterNotObservable,
+				Revision: agent.ControllerRevisionEvidence{ExpectedRevision: status.manifestDigest, Comparison: "unknown", Reason: liveStatusSveltosNoDigest + "."}})
+		}
+		total := len(controllers) + len(profiles)
 		sort.Slice(check.Controllers, func(a, b int) bool {
 			left, right := check.Controllers[a], check.Controllers[b]
 			return left.Kind+"/"+left.Namespace+"/"+left.Name < right.Kind+"/"+right.Namespace+"/"+right.Name
@@ -281,11 +324,13 @@ func checkLiveStatusesAgainstCluster(ctx context.Context, client dynamic.Interfa
 			check.Reason = "not every controller kind could be read"
 		case disagree > 0:
 			check.State = liveStatusClusterDisagrees
-			check.Reason = fmt.Sprintf("the recorded sync state is %q (observed %s), and %d of %d controllers pulling this space report otherwise about the Release's digest; where a controller gives no time for its report, the two may describe different moments", status.SyncStatus, status.ObservedAt, disagree, len(controllers))
+			check.Reason = fmt.Sprintf("the recorded sync state is %q (observed %s), and %d of %d controllers pulling this space report otherwise about the Release's digest; where a controller gives no time for its report, the two may describe different moments", status.SyncStatus, status.ObservedAt, disagree, total)
 		case later > 0:
-			check.Reason = fmt.Sprintf("%d of %d controllers pulling this space reconciled after the status was recorded (%s) and now report otherwise; both can have been true in turn", later, len(controllers), status.ObservedAt)
+			check.Reason = fmt.Sprintf("%d of %d controllers pulling this space reconciled after the status was recorded (%s) and now report otherwise; both can have been true in turn", later, total, status.ObservedAt)
 		case unknown > 0:
-			check.Reason = fmt.Sprintf("%d of %d controllers pulling this space gave no settled revision to compare", unknown, len(controllers))
+			check.Reason = fmt.Sprintf("%d of %d controllers pulling this space gave no settled revision to compare", unknown, total)
+		case len(profiles) > 0:
+			check.Reason = fmt.Sprintf("%d of %d controllers pulling this space are Sveltos ClusterProfiles (%s): %s", len(profiles), total, liveStatusObjectNames(profiles), liveStatusSveltosNoDigest)
 		default:
 			check.State = liveStatusClusterAgrees
 			check.Reason = fmt.Sprintf("the recorded sync state is %q, and all %d controllers pulling this space report the same about the Release's digest", status.SyncStatus, agree)
@@ -300,6 +345,15 @@ func checkLiveStatusesAgainstCluster(ctx context.Context, client dynamic.Interfa
 			check.Reason += "; " + strings.Join(found.unread, "; ")
 		}
 	}
+}
+
+func liveStatusObjectNames(objects []*unstructured.Unstructured) string {
+	names := make([]string, 0, len(objects))
+	for _, object := range objects {
+		names = append(names, object.GetName())
+	}
+	sort.Strings(names)
+	return strings.Join(names, ", ")
 }
 
 // liveStatusClusterCheckText is the one-line form for text and Markdown.

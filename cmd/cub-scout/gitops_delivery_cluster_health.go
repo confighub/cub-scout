@@ -135,7 +135,12 @@ func liveStatusWorkloadState(object *unstructured.Unstructured) (state, since st
 			if !set {
 				desired = 1
 			}
-			if updated, _, _ := unstructured.NestedInt64(object.Object, "status", "updatedReplicas"); updated < desired {
+			// Old pods can keep a Deployment "ready" while the new ones never
+			// start: it is settled only when every replica is of the current
+			// spec and none of an older one is left.
+			updated, _, _ := unstructured.NestedInt64(object.Object, "status", "updatedReplicas")
+			current, _, _ := unstructured.NestedInt64(object.Object, "status", "replicas")
+			if updated < desired || current > desired {
 				return liveStatusWorkloadUnsettled, ""
 			}
 		}

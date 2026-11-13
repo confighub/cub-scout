@@ -63,6 +63,8 @@ func TestClusterCheckComparesTheRecordedHealthWithTheListedWorkloads(t *testing.
 	partial := healthDeployment("api", 1, time.Time{})
 	rolling := healthDeployment("api", 2, time.Time{})
 	_ = unstructured.SetNestedField(rolling.Object, int64(1), "status", "updatedReplicas")
+	surging := healthDeployment("api", 2, time.Time{})
+	_ = unstructured.SetNestedField(surging.Object, int64(3), "status", "replicas")
 	behind := healthDeployment("api", 2, time.Time{})
 	_ = unstructured.SetNestedField(behind.Object, int64(2), "status", "observedGeneration")
 	for _, tc := range []struct {
@@ -80,6 +82,7 @@ func TestClusterCheckComparesTheRecordedHealthWithTheListedWorkloads(t *testing.
 		{"Healthy, and a Deployment is short of replicas with no time given", "Healthy", []*unstructured.Unstructured{partial}, []runtime.Object{partial}, liveStatusClusterNotObservable, "give no time", 1},
 		{"Healthy, and a StatefulSet is not ready, which carries no time", "Healthy", []*unstructured.Unstructured{healthStatefulSet(0)}, []runtime.Object{healthStatefulSet(0)}, liveStatusClusterNotObservable, "give no time", 1},
 		{"Healthy, and a rollout is under way", "Healthy", []*unstructured.Unstructured{rolling}, []runtime.Object{rolling}, liveStatusClusterNotObservable, "mid-rollout", 1},
+		{"Healthy, and old pods hold a Deployment ready while a new one has not replaced them", "Healthy", []*unstructured.Unstructured{surging}, []runtime.Object{surging}, liveStatusClusterNotObservable, "mid-rollout", 1},
 		{"Healthy, and the Deployment's own controller is behind its spec", "Healthy", []*unstructured.Unstructured{behind}, []runtime.Object{behind}, liveStatusClusterNotObservable, "mid-rollout", 1},
 		{"Healthy, and a listed workload is not in the cluster", "Healthy", []*unstructured.Unstructured{ready}, nil, liveStatusClusterNotObservable, "missing", 1},
 		{"Healthy, and the controller lists no workload", "Healthy", nil, nil, liveStatusClusterNotObservable, "list no Deployment, StatefulSet or DaemonSet", 0},
@@ -156,6 +159,8 @@ func TestClusterCheckHealthReadsAFluxInventoryAndListsEachKindOnce(t *testing.T)
 	_ = unstructured.SetNestedSlice(kustomization.Object, []interface{}{
 		map[string]interface{}{"id": "payments_api_apps_Deployment", "v": "v1"},
 		map[string]interface{}{"id": "payments_api__Service", "v": "v1"},
+		// A kind of the same name in another API group is not a workload.
+		map[string]interface{}{"id": "payments_other_example.io_Deployment", "v": "v1"},
 		map[string]interface{}{"id": "_payments__Namespace", "v": "v1"},
 	}, "status", "inventory", "entries")
 	ready := healthDeployment("api", 2, time.Time{})

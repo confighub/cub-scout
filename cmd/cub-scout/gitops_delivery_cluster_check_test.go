@@ -40,6 +40,7 @@ func checkClient(objects ...runtime.Object) *dynamicfake.FakeDynamicClient {
 		liveStatusApplicationGVR:              "ApplicationList",
 		liveStatusOCIRepositoryGVR:            "OCIRepositoryList",
 		liveStatusKustomizationGVR:            "KustomizationList",
+		liveStatusClusterProfileGVR:           "ClusterProfileList",
 		liveStatusWorkloadGVRs["Deployment"]:  "DeploymentList",
 		liveStatusWorkloadGVRs["StatefulSet"]: "StatefulSetList",
 		liveStatusWorkloadGVRs["DaemonSet"]:   "DaemonSetList",
@@ -387,4 +388,51 @@ func TestClusterCheckDoesNotGuessBetweenTwoApplicationsOfOneName(t *testing.T) {
 	checkLiveStatusesAgainstCluster(context.Background(), checkClient(first), one, checkNow)
 	require.Equal(t, liveStatusClusterAgrees, one[0].ClusterCheck.State, one[0].ClusterCheck.Reason)
 	require.Equal(t, liveStatusMatchedByDataSource, one[0].ClusterCheck.MatchedBy)
+}
+
+func checkClusterProfile(name, url string) *unstructured.Unstructured {
+	return &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": "config.projectsveltos.io/v1beta1", "kind": "ClusterProfile",
+		"metadata": map[string]interface{}{"name": name, "uid": "uid-" + name, "generation": int64(1)},
+		"spec": map[string]interface{}{"policyRefs": []interface{}{
+			map[string]interface{}{"kind": "ConfigMap", "name": "unrelated", "namespace": "default"},
+			map[string]interface{}{"deploymentType": "Remote", "remoteURL": map[string]interface{}{"url": url, "interval": "10m0s"}},
+		}},
+	}}
+}
+
+// Sveltos gives no digest for what it applied, so a ClusterProfile pulling the
+// space is named and never compared, and agreement is not claimed over it.
+func TestClusterCheckNamesASveltosProfileAndDoesNotCompareIt(t *testing.T) {
+	noRegistryLookup(t)
+	profile := checkClusterProfile("payments-prod", checkRepo+":latest")
+	for _, tc := range []struct {
+		name    string
+		sync    string
+		objects []runtime.Object
+		want    string
+		reason  string
+		rows    int
+	}{
+		{"Sveltos alone", "Synced", []runtime.Object{profile}, liveStatusClusterNotObservable, "1 of 1 controllers pulling this space are Sveltos ClusterProfiles (payments-prod): Sveltos reports a hash of its own", 1},
+		{"Sveltos alone, recorded OutOfSync", "OutOfSync", []runtime.Object{profile}, liveStatusClusterNotObservable, "Sveltos reports a hash of its own", 1},
+		{"Argo CD agrees, and Sveltos pulls the space too", "Synced", []runtime.Object{profile, checkApplication("payments", checkRepo, checkDigest)}, liveStatusClusterNotObservable, "1 of 2 controllers pulling this space are Sveltos ClusterProfiles", 2},
+		{"Argo CD disagrees, and Sveltos pulls the space too", "Synced", []runtime.Object{profile, checkApplication("payments", checkRepo, otherDigest)}, liveStatusClusterDisagrees, "1 of 2 controllers", 2},
+		{"a profile for another space is left out", "Synced", []runtime.Object{checkClusterProfile("other", "oci://oci.api.confighub.com/space/another:latest"), checkApplication("payments", checkRepo, checkDigest)}, liveStatusClusterAgrees, "all 1 controllers", 1},
+		{"a profile on a registry not known to be ConfigHub's", "Synced", []runtime.Object{checkClusterProfile("payments-prod", "oci://172.18.0.1:32181/space/payments-prod:latest")}, liveStatusClusterNotObservable, "1 Sveltos ClusterProfiles (payments-prod) pull a repository named space/payments-prod from a registry not known to be ConfigHub's", 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			statuses := checkStatus(tc.sync)
+			statuses[0].HealthStatus = "Healthy"
+			checkLiveStatusesAgainstCluster(context.Background(), checkClient(tc.objects...), statuses, checkNow)
+			check := statuses[0].ClusterCheck
+			require.Equal(t, tc.want, check.State, check.Reason)
+			require.Contains(t, check.Reason, tc.reason)
+			require.Len(t, check.Controllers, tc.rows)
+			require.Contains(t, check.Limitation, "Sveltos reports no digest")
+			if tc.want != liveStatusClusterAgrees {
+				require.Equal(t, liveStatusClusterNotObservable, check.Health.State)
+			}
+		})
+	}
 }
