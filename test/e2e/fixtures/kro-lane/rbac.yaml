@@ -1,0 +1,15 @@
+# kro's controller role aggregates every ClusterRole carrying this label;
+# as installed it may not manage Deployments or the instance kind.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kro-lane
+  labels:
+    rbac.kro.run/aggregate-to-controller: "true"
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["kro.run"]
+    resources: ["laneapps", "laneapps/status", "laneapps/finalizers"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]

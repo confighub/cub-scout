@@ -22,6 +22,7 @@ kubectl apply --server-side -f "$root/kro.yaml"
 kubectl rollout status deployment/kro -n kro-system --timeout=300s
 
 kubectl create namespace kro-lane
+kubectl apply -f "$fixtures/rbac.yaml"
 kubectl apply -f "$fixtures/rgd.yaml"
 for _ in $(seq 1 60); do
   kubectl get crd laneapps.kro.run > /dev/null 2>&1 && break
