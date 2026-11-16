@@ -29,12 +29,29 @@ for _ in $(seq 1 60); do
 done
 kubectl wait --for=condition=Established crd/laneapps.kro.run --timeout=120s
 kubectl apply -f "$fixtures/instance.yaml"
+created=''
 for _ in $(seq 1 60); do
-  kubectl get deployment lane-web -n kro-lane > /dev/null 2>&1 && break
+  kubectl get deployment lane-web -n kro-lane > /dev/null 2>&1 && { created=yes; break; }
   sleep 2
 done
+# What kro says about the definition and the instance, kept either way.
+kubectl get resourcegraphdefinitions.kro.run laneapp.kro.run -o json > "$out/rgd.json" 2>&1 || true
+kubectl get laneapps.kro.run lane -n kro-lane -o json > "$out/instance.json" 2>&1 || true
+if [[ -z "$created" ]]; then
+  echo 'kro created no Deployment lane-web in two minutes. Definition and instance status, and the end of kro'"'"'s log:' >&2
+  python3 -c '
+import json, sys
+for path in sys.argv[1:]:
+    try:
+        d = json.load(open(path))
+    except ValueError:
+        print(path, open(path).read()[:400]); continue
+    print(d.get("kind"), d["metadata"]["name"], json.dumps(d.get("status"), indent=1)[:2000])' "$out/rgd.json" "$out/instance.json" >&2 || true
+  kubectl logs deployment/kro -n kro-system --tail=60 > "$out/kro.log" 2>&1 || true
+  tail -n 40 "$out/kro.log" >&2
+  exit 1
+fi
 kubectl get deployment lane-web -n kro-lane -o json > "$out/deployment.json"
-kubectl get laneapps.kro.run lane -n kro-lane -o json > "$out/instance.json"
 
 "$scout" map list --json --namespace kro-lane --ownership-evidence > "$out/map-list.json"
 "$scout" trace deployment/lane-web -n kro-lane --format json > "$out/trace.json" 2> "$out/trace.stderr" || true
