@@ -2242,9 +2242,12 @@ before anything below, some of which it supersedes.
   logs found the runner had moved: `ubuntu-latest` now resolves to 26.04, and
   the last passing run was on 24.04. Pinned to `ubuntu-24.04` it passes. Why
   26.04 fails is not known; the lane now writes `host.txt`.
-- **v2.16.0 notes** are in `docs/releases/v2.16.0.md`. The Connected and
-  live-status lanes passed against a real ConfigHub v0.11.4 (runs
-  43835428929 and 43836652534).
+- **v2.16.0 was published on 2026-11-16** from `cd320c26` (Release run
+  43847315080). The notes and
+  [the publication checks](docs/releases/v2.16.0.md#publication-checks) are in
+  `docs/releases/v2.16.0.md`. The Connected and live-status lanes passed
+  against a real ConfigHub v0.11.4 on `main` at `c41ae6da` (runs 43842377481
+  and 43842382090). No connected command was run with the published binary.
 - **Decisions and what is open:** in the state of the plan.
 
 ## Lessons applied, Flux kinds, catalog size — 2026-11-13 (later)

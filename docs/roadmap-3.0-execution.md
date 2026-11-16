@@ -23,7 +23,9 @@ this section and anything below it disagree, this section wins.
 | [v2.15.0](releases/v2.15.0.md) | 2026-11-10 | Works with ConfigHub 0.10; bridge workers gone; the live-status cluster check. |
 | [v2.15.1](releases/v2.15.1.md) | 2026-11-13 | `compare source-truth` on clusters attached with `cub cluster up`, and PASS only when something was compared; Flux kinds found; health in the live-status check; wording; a smaller MCP catalog. |
 
-### v2.16.0, in preparation
+### v2.16.0, published 2026-11-16
+
+[Notes and publication checks](releases/v2.16.0.md#publication-checks).
 
 Renumbered on 2026-11-16, as v2.14 was on 2026-10-10: the next minor ships
 what is ready, and the work the trimmed plan gave to v2.16 moves to v2.17.
