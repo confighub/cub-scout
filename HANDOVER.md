@@ -2238,8 +2238,13 @@ before anything below, some of which it supersedes.
   every independent review of a green change in this stretch found a real
   fault; ask the reviewer to break one named thing.
 - **The live-status lane failed three times on 2026-11-16** with every
-  controller timing out after `cub cluster up`, on code that had passed.
-  Not understood at the time of writing.
+  controller timing out after `cub cluster up`. A subagent comparing the
+  logs found the runner had moved: `ubuntu-latest` now resolves to 26.04, and
+  the last passing run was on 24.04. Pinned to `ubuntu-24.04` it passes. Why
+  26.04 fails is not known; the lane now writes `host.txt`.
+- **v2.16.0 notes** are in `docs/releases/v2.16.0.md`. The Connected and
+  live-status lanes passed against a real ConfigHub v0.11.4 (runs
+  43835428929 and 43836652534).
 - **Decisions and what is open:** in the state of the plan.
 
 ## Lessons applied, Flux kinds, catalog size — 2026-11-13 (later)

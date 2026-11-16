@@ -90,8 +90,7 @@ For MCP, the current rule is:
 
 ## Trace Observation Scope and Partial Results
 
-`trace --format json` carries a top-level `answer` block (added after
-v2.15.1), the first command to do so; the design and the fields other
+`trace --format json` carries a top-level `answer` block (since v2.16.0), the first command to do so; the design and the fields other
 commands will share are in
 [the proposal](../proposals/answer-envelope.md). The fields beside it are
 unchanged and stay until 3.0.
@@ -124,8 +123,7 @@ about 1,500. That goes down in 3.0, when the fields it supersedes go.
 
 Normal `trace --format json` adds optional top-level `context`, `warnings` and
 `reason`. `reason` is a stable key for why there is no chain, when that is
-known; the one value today is `no-owner-marker-recognised` (added after
-v2.15.1). Decide on `reason`, not on the warning's words: the words say that no
+known; the one value today is `no-owner-marker-recognised` (since v2.16.0). Decide on `reason`, not on the warning's words: the words say that no
 owner marker was recognised, which does not show that nothing manages the
 resource.
 `context` is the selected Kubernetes context label, not a stable cluster ID or

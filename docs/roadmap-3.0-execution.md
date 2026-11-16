@@ -85,7 +85,8 @@ repository names today. Latest releases were read from GitHub on 2026-11-16.
 | Flux Operator and its Web UI | not tested | v0.62.1 | [#882] item 5 needs a lane with an identity provider. |
 | Argo CD | v3.5.3 in the GitOps lane | v3.6.1 | Move the lane; re-read `trace` output on it. |
 | Sveltos | whatever `cub cluster up` installs | v1.17.0 | Record the version in the lane artifact. |
-| Kubernetes, kind | client libraries v0.33.1; kind is not pinned in the live-status lane | Kubernetes v1.37.2; kind v0.33.0 | Pin kind and the node image in every lane, and record them. |
+| CI runner image | `ubuntu-latest` everywhere but the live-status lane, which is pinned to `ubuntu-24.04` | `ubuntu-latest` moved to 26.04 on 2026-11-16 and broke that lane | Pin the image in every lane; find why 26.04 breaks three kind clusters on one runner. |
+| Kubernetes, kind | client libraries v0.33.1; kind v0.31.0 and node v1.35.0 through the kind action | Kubernetes v1.37.2; kind v0.33.0 | Pin kind and the node image in every lane, and record them. |
 | Helm | not installed in any lane; recorded 4.1.4 and 3.22.0 | v4.3.2 | A lane step that installs one chart with Helm 4 and one with Helm 3. |
 | kro, Crossplane, Terraform, Modelplane | detectors and tracers exist; no lane | kro v0.10.0; Crossplane v2.4.3 | Each is untested against a real install. Either add a lane or say so beside every claim about it. |
 | Kyverno, Argo Rollouts | named in docs; no lane | Kyverno v1.20.0; Rollouts v1.10.2 | [#602] is not planned; keep the docs to what is tested. |

@@ -254,9 +254,11 @@ below is a to-do; none has an issue yet.
 - [ ] Once a release: read what the delivery controllers' own MCP servers and
   the cluster consoles give an agent, and whether cub-scout's place beside
   them still holds.
-- [ ] The live-status lane failed three times on 2026-11-16 with every
-  controller timing out after `cub cluster up`, on code that passed on
-  2026-11-13. Find the cause before relying on the lane for a release.
+- [ ] The live-status lane fails on `ubuntu-26.04`, which `ubuntu-latest`
+  resolved to from 2026-11-16: after `cub cluster up` no controller becomes
+  available. It is pinned to `ubuntu-24.04`, where it passes, and records
+  the host in `host.txt`. Find why 26.04 fails before 24.04 runners go away,
+  and pin the runner image in every other lane too.
 
 ### Status output follow-up — 2026-10-11
 
