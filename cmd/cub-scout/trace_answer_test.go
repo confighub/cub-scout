@@ -267,3 +267,31 @@ func TestTraceAnswerCostIsMeasuredPerTrace(t *testing.T) {
 	second := observe()
 	require.Equal(t, first.Cost.RequestsMade, second.Cost.RequestsMade, "a second trace reports its own reads, not the session's total")
 }
+
+func TestTraceAnswerNeverSaysNoOwnerMarkerWhenDetectionRecognisedOne(t *testing.T) {
+	// A copied Helm object keeps Helm's marker; the release it names does not
+	// list it (CI run 43875477988). The tracer's message matches the no-owner
+	// patterns, but the marker was recognised.
+	recognised := &agent.TraceResult{
+		Object:        agent.ResourceRef{Kind: "Deployment", Name: "copied", Namespace: "helm-lane"},
+		DetectedOwner: agent.OwnerHelm,
+		Error:         "no Helm release found managing this resource: release 'v4-bare' in namespace 'helm-lane', named by the object's meta.helm.sh annotations, does not list it",
+	}
+	answer := buildTraceAnswer(recognised, "Deployment", "copied", "helm-lane")
+	requireConformingAnswer(t, answer, traceStates, traceReasons)
+	require.Equal(t, traceStateNotObservable, answer.State)
+	require.Equal(t, traceReasonNoChainObserved, answer.Reason)
+	require.Contains(t, answer.Summary, "carries a helm owner marker")
+	require.NotContains(t, answer.Summary, "No GitOps owner marker")
+	require.Len(t, answer.Unknowns, 1)
+	require.Contains(t, answer.Unknowns[0].Quoted, "does not list it")
+
+	for _, owner := range []string{"", agent.OwnerUnknown, agent.OwnerKubernetes} {
+		unmarked := *recognised
+		unmarked.DetectedOwner = owner
+		unmarked.Reason = agent.TraceReasonNoOwnerMarker
+		unmarked.Error = agent.NoOwnerTraceMessage
+		answer := buildTraceAnswer(&unmarked, "Deployment", "copied", "helm-lane")
+		require.Equal(t, traceStateNoOwnerMarker, answer.State, "detected owner %q", owner)
+	}
+}

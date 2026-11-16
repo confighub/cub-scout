@@ -157,7 +157,14 @@ func buildTraceAnswer(result *agent.TraceResult, kind, name, namespace string) *
 		}
 	}
 
-	noOwner := len(result.Chain) == 0 && agent.IsNoOwnerTrace(result.Reason, result.Error)
+	// "No owner marker" is said only when detection recognised none. A
+	// tracer that finds no release or delivery object for a recognised
+	// marker has not shown the marker is absent: on a real cluster (CI run
+	// 43875477988) a copied Helm object, whose annotations name a release
+	// that does not list it, was answered "no owner marker" while map said
+	// Helm.
+	ownerRecognised := result.DetectedOwner != "" && result.DetectedOwner != agent.OwnerUnknown && result.DetectedOwner != agent.OwnerKubernetes
+	noOwner := len(result.Chain) == 0 && !ownerRecognised && agent.IsNoOwnerTrace(result.Reason, result.Error)
 	scope := ""
 	if namespace != "" {
 		scope = " -n " + namespace
@@ -178,6 +185,9 @@ func buildTraceAnswer(result *agent.TraceResult, kind, name, namespace string) *
 	case len(result.Chain) == 0:
 		answer.State, answer.Reason = traceStateNotObservable, traceReasonNoChainObserved
 		answer.Summary = fmt.Sprintf("No delivery chain was observed for %s.", target)
+		if ownerRecognised && traceSafeName.MatchString(result.DetectedOwner) {
+			answer.Summary = fmt.Sprintf("%s carries a %s owner marker, and no delivery chain was observed for it.", target, result.DetectedOwner)
+		}
 	case broken != nil:
 		answer.State, answer.Reason = traceStateChainNotReady, traceReasonLinkNotReady
 		answer.Summary = fmt.Sprintf("A delivery controller in the chain of %s reports not ready: %s.", target, brokenLabel)

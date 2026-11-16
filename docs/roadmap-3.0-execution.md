@@ -86,10 +86,10 @@ repository names today. Latest releases were read from GitHub on 2026-11-16.
 | Flux | v2.10.0 in the GitOps and demo lanes; whatever `cub cluster up` installs in the live-status lane (2.10 seen) | v2.10.0 | Current. The live lane fails if a Flux kind is read in a version the cluster does not serve. |
 | Flux Operator and its Web UI | not tested | v0.62.1 | [#882] item 5 needs a lane with an identity provider. |
 | Argo CD | v3.6.1 in the GitOps and demo lanes | v3.6.1 | Current. Recordings made on v3.5.3 (an eval case, a recorded tree test) stay as recorded. |
-| Sveltos | whatever `cub cluster up` installs | v1.17.0 | Record the version in the lane artifact. |
+| Sveltos | v1.16.0, as `cub cluster up` installed it (live lane run 43869342351) | v1.17.0 | Recorded on every live-lane run in `installed-versions.txt`. |
 | CI runner image | every Linux job pinned to `ubuntu-26.04`, the image it passed on, except the live-status lane on `ubuntu-24.04` | `ubuntu-latest` moved to 26.04 on 2026-11-16 and broke that lane | Pinned. Still to do: find why 26.04 breaks three kind clusters on one runner. |
 | Kubernetes, kind | client libraries v0.33.1; kind v0.31.0 and `kindest/node:v1.35.0` by digest, pinned in every kind step | Kubernetes v1.37.2; kind v0.33.0 | Pinned. Move to a newer kind and node on purpose, one lane run first. |
-| Helm | not installed in any lane; recorded 4.1.4 and 3.22.0 | v4.3.2 | A lane step that installs one chart with Helm 4 and one with Helm 3. |
+| Helm | v4.3.2 and v3.22.1 in the GitOps lane: one small chart each, with and without the chart's own labels | v4.3.2 | Current. Helm 3 and 4 label and annotate every object they install themselves. The lane asserts that `map` reads each as Helm and that `trace` answers in JSON with the release that installed it; it records `explain`. |
 | kro, Crossplane, Terraform, Modelplane | detectors and tracers exist; no lane | kro v0.10.0; Crossplane v2.4.3 | Each is untested against a real install. Either add a lane or say so beside every claim about it. |
 | Kyverno, Argo Rollouts | named in docs; no lane | Kyverno v1.20.0; Rollouts v1.10.2 | [#602] is not planned; keep the docs to what is tested. |
 | Build tools | golangci-lint v2.14.0; goreleaser v2.18.2 in the Windows job and v2.20.2 in the release job, pinned to what published v2.16.0 | v2.15.0; v2.20.2 | Pinned. The Windows job's goreleaser is two minors behind the release job's. |
