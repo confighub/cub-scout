@@ -238,16 +238,12 @@ below is a to-do; none has an issue yet.
   refused by default.
 - [ ] On every ConfigHub minor: bump the SDK, move the Connected and
   live-status lanes, sweep for `cub` subcommands that were removed.
-- [ ] Record in the live-status artifact the versions `cub cluster up`
-  installs (Flux, Argo CD, Sveltos, argobot); they are not pinned here.
-- [ ] Pin kind and the node image in the live-status lane, and record them.
 - [ ] Move the GitOps lane from Flux 2.9.6 to 2.10 and from Argo CD v3.5.3 to
   the current release; re-read the recorded answers after each move.
 - [ ] A lane step that installs one chart with Helm 4 and one with Helm 3.
 - [ ] kro, Crossplane, Terraform and Modelplane have detectors and no lane on
   a real install. Add one each, or say "not tested on a real install" beside
   every claim about them.
-- [ ] Pin goreleaser in the release job.
 - [ ] Once a release: check what the ConfigHub plugins and skills (the mini
   plugin, confighub-skills, Pilot's provider pin) say about cub-scout's
   commands and JSON, and tell a consumer before a field it reads goes.
@@ -257,8 +253,10 @@ below is a to-do; none has an issue yet.
 - [ ] The live-status lane fails on `ubuntu-26.04`, which `ubuntu-latest`
   resolved to from 2026-11-16: after `cub cluster up` no controller becomes
   available. It is pinned to `ubuntu-24.04`, where it passes, and records
-  the host in `host.txt`. Find why 26.04 fails before 24.04 runners go away,
-  and pin the runner image in every other lane too.
+  the host in `host.txt`. Find why 26.04 fails before 24.04 runners go away.
+  Every other Linux job is pinned to `ubuntu-26.04`, kind to v0.31.0 with
+  its node image by digest, and goreleaser to v2.20.2; the live lane records
+  what `cub cluster up` installed in `installed-versions.txt`.
 
 ### Status output follow-up — 2026-10-11
 

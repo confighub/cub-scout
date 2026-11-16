@@ -96,6 +96,12 @@ import json, sys
 for crd in sorted(json.load(sys.stdin)["items"], key=lambda c: c["metadata"]["name"]):
     served = [v["name"] for v in crd["spec"]["versions"] if v.get("served")]
     print(crd["metadata"]["name"], " ".join(served))' > "$out/crd-served-versions.txt" || true
+# What `cub cluster up` installed: it pins nothing this repository can see,
+# so the Kubernetes version and every container image are recorded per run.
+{
+  KUBECONFIG="$kubeconfig" kubectl version -o json 2>/dev/null | python3 -c 'import json, sys; print("kubernetes", json.load(sys.stdin)["serverVersion"]["gitVersion"])' || true
+  KUBECONFIG="$kubeconfig" kubectl get pods -A -o jsonpath='{range .items[*]}{.metadata.namespace}{" "}{range .spec.containers[*]}{.image}{" "}{end}{"\n"}{end}' 2>/dev/null | awk '{for (i = 2; i <= NF; i++) print $1, $i}' | sort -u || true
+} > "$out/installed-versions.txt"
 if [[ "$controller" = flux ]]; then
   python3 - "$out/crd-served-versions.txt" <<'PY'
 import sys
