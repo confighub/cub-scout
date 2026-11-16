@@ -123,7 +123,14 @@ func observeTrace(ctx context.Context, session *traceSession, kind, name, namesp
 			}
 			tracer := agent.NewHelmTracer(client)
 			if ownership.Name != "" {
-				result, err = tracer.TraceRelease(ctx, ownership.Name, namespace)
+				// A release named by Helm's own annotation carries the
+				// namespace Helm recorded; a label-named one lives beside
+				// the object.
+				releaseNamespace := namespace
+				if ownership.Namespace != "" {
+					releaseNamespace = ownership.Namespace
+				}
+				result, err = tracer.TraceRelease(ctx, ownership.Name, releaseNamespace)
 			} else {
 				result, err = tracer.Trace(ctx, kind, name, namespace)
 			}

@@ -844,11 +844,35 @@ func detectResourceOwnershipWithTraceSession(ctx context.Context, session *trace
 	if err != nil {
 		return nil, err
 	}
-	ownership := agent.DetectOwnership(resource)
+	ownership := withHelmReleaseAnnotations(agent.DetectOwnership(resource), resource.GetAnnotations())
 	if ownership.Type == agent.OwnerUnknown && isCrossplaneProviderConfig(resource) {
 		ownership = agent.Ownership{Type: agent.OwnerCrossplane, SubType: "providerconfig", Name: resource.GetName(), Namespace: resource.GetNamespace(), Source: "apiGroup:" + resource.GroupVersionKind().Group, Confidence: "high"}
 	}
 	return &ownership, nil
+}
+
+// withHelmReleaseAnnotations names the Helm release from the annotations Helm
+// 3 and 4 write on every object they install, when the chart gave the object
+// no app.kubernetes.io/instance label. Without a name, trace fell back to
+// matching the object in each release's stored manifest, which refuses a
+// document with no metadata.namespace (#663); most charts write none. On a
+// real install (CI run 43869810212) `trace --format json` then printed no JSON
+// for an object that map listed as owned by Helm. Both annotations must be
+// present: the release is read where Helm says it lives, never inferred.
+// Ownership detection itself is unchanged; this only tells trace which
+// release to read.
+func withHelmReleaseAnnotations(ownership agent.Ownership, annotations map[string]string) agent.Ownership {
+	if ownership.Type != agent.OwnerHelm || ownership.Name != "" {
+		return ownership
+	}
+	name := strings.TrimSpace(annotations["meta.helm.sh/release-name"])
+	namespace := strings.TrimSpace(annotations["meta.helm.sh/release-namespace"])
+	if name == "" || namespace == "" {
+		return ownership
+	}
+	ownership.Name = name
+	ownership.Namespace = namespace
+	return ownership
 }
 
 // kindToGVR maps a kind to its GroupVersionResource
