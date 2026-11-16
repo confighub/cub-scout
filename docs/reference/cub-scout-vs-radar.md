@@ -1,6 +1,6 @@
 # cub-scout vs Radar (Skyhook) for Kubernetes + GitOps Visibility
 
-> Status: Living document. Last updated: 2026-11-08 (cub-scout v2.5.0; Radar / `skyhook-io/radar` facts as of 2026-11).
+> Status: Living document. Last updated: 2026-11-16 (cub-scout v2.15.1 and `main` after it; Radar / `skyhook-io/radar` facts read from its README and MCP docs on 2026-11-08 and 2026-11-13, not tested).
 
 ## Overview
 
@@ -40,13 +40,14 @@ still match the source of truth — and can I prove it, without touching anythin
 | MCP | On by default; `/mcp` (full, incl. write tools) + `/mcp-readonly` | `mcp serve` — read-only-by-construction tool catalog |
 | Per-field change cause | Not modeled | `manual-edit` vs `controller-drift` vs `unknown`, from `managedFields` |
 | Provenance (where a value came from) | App grouping via Helm / Argo / Flux / label / name evidence | per-field `gitSource` (repo + `file:line`) and ConfigHub `bindingSource` |
-| Source-of-truth verdict | GitOps sync state + field drift vs the GitOps source | `compare source-truth` → PASS / WATCH / BLOCK / ASK across 9 strategies |
+| Source-of-truth comparison | GitOps sync state + field drift vs the GitOps source | `compare source-truth` across 9 declared delivery strategies: what ConfigHub records, what the controller reports and what runs, with what was and was not compared stated |
 | Intended vs rendered vs running | Resource compare + GitOps source-vs-live diff | `compare three-way` — DRY/WET/LIVE (connected) or standalone DRY-vs-LIVE from rendered YAML (`--dry-from`, #479) — plus `compare drift --file` |
 | Tamper-evident evidence | None — live dashboard (Radar Cloud retains ~30 days of history) | `receipt verify` → fingerprinted in-toto Statement v1; CI-gateable + chainable |
 | Cluster audit / checks | 44 best-practice checks | `scan` — 46 patterns (+ confighub-scan 3,513 catalog) + `doctor` summary |
 | Topology | Live resource graph with real-time traffic (Hubble / Istio / Caretta / Beyla) | `graph export` / `trace` ownership lineage (no live traffic) |
 | Metrics / cost | Prometheus metrics, OpenCost / Kubecost, Karpenter capacity | Out of scope |
-| Controllers covered | Argo CD, Flux, Helm (+ Argo Rollouts, Flagger, Argo Workflows) | Argo, Flux, Helm, Terraform, Crossplane, kro, ConfigHub, native |
+| Controllers covered | Argo CD, Flux, Helm (+ Argo Rollouts, Flagger, Argo Workflows) | Argo CD, Flux, Sveltos, Modelplane, Helm, Terraform, Crossplane (experimental), kro, ConfigHub, native |
+| For AI agents | MCP designed for token cost (minified resources, deduplicated events, error-filtered logs); read and write tools; its own study reports diagnosis about 3x faster than raw kubectl | Read-only MCP; every tool has a declared catalog size; `trace` and `compare source-truth` carry an `answer` block (state, reason, what is not known, next read); answer sizes are measured against raw kubectl in CI. No published agent benchmark |
 | Pod logs / exec / terminals | Yes (`exec_pod`, pod terminals) | Out of scope (read-only metadata) |
 | Multi-cluster / fleet | Radar Cloud (free ≤ 3 clusters; alerts, fleet views, 30-day history) | Connected mode via ConfigHub (`fleet outliers`, `history`) |
 | Works with no account | Yes — OSS binary, kubeconfig only | Yes — fully offline, kubectl context only; ConfigHub optional |
@@ -73,11 +74,15 @@ dashboard**, not just things cub-scout also happens to do:
    DRY-vs-LIVE also runs standalone — no ConfigHub — when you pass rendered YAML via
    `compare three-way --dry-from` (#479); connected mode adds the governed WET stage.
 
-3. **A verdict stricter than "in sync."** "Synced" means "the target revision was
-   applied" — it says nothing about a human editing on top afterward.
-   `compare source-truth` returns PASS / WATCH / BLOCK / ASK across 9 delivery
-   strategies (`git-argo`, `helm-flux`, `oci-flux`, …), accounting for manual edits,
-   missing evidence, and strategy mismatch. (`pkg/agent/source_truth.go`)
+3. **A comparison that says what it compared.** "Synced" means "the target revision
+   was applied". `compare source-truth` takes a declared delivery strategy
+   (`git-argo`, `helm-flux`, `oci-flux`, … nine in all) and sets three things side by
+   side: what ConfigHub records, what the controller reports, and what runs. Its
+   `answer` gives a state (`agreed`, `not-agreed`, `incomplete`, `not-observable`),
+   a reason that names what was compared, and a list of what was not: under a
+   ConfigHub OCI strategy, for example, revisions are compared and the digest is
+   not, and the answer says so every time. It does not look for manual edits;
+   that is `explain` and the receipt predicates. (`pkg/agent/source_truth.go`)
 
 4. **"Has anyone touched this since the freeze?"** The `no-manual-edits-since` receipt
    predicate reads `managedFields` timestamps to assert that no interactive writer
@@ -103,9 +108,11 @@ dashboard**, not just things cub-scout also happens to do:
    CRD under it?" is answered immediately in mixed-controller shops.
    (`pkg/agent/manager_strings.go`)
 
-8. **Deterministic, citable automation.** `--format json` on every command plus a
+8. **Deterministic, citable automation.** `--format json` on most commands plus a
    read-only MCP catalog whose answers carry attribution — so an agent gets
    provenance-attributed, receipt-backed reads it can *cite*, not just correlated reads.
+   `trace` says whose word each claim rests on (a controller's report, or the
+   object's own metadata) and lists what it did not read.
 
 ## Where Radar still wins
 
@@ -125,6 +132,12 @@ the right tool:
 5. **Pod logs, exec, and terminals** — cub-scout reads metadata only.
 6. **Maturity and adoption** — a polished, widely adopted project (~4.1k★), a desktop
    app, and a hosted Cloud with alerts, fleet views, and shared history.
+7. **An agent that has to find and fix a fault.** Radar's MCP server was designed
+   around token cost, covers health, topology, events, logs and traffic, and can act.
+   It publishes a number from its own study (about 3x faster than raw kubectl).
+   cub-scout answers a narrower set of questions (ownership, delivery, provenance),
+   cannot act, and has published no agent benchmark. Its measured answer sizes are in
+   [answer-sizes.md](answer-sizes.md); nobody has run the two on the same questions.
 
 ## Gaps still open
 
