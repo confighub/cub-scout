@@ -667,13 +667,12 @@ jobs:
   # ==========================================================================
   live-status:
     name: Live Status Proof (${{ matrix.controller }})
-    # Pinned. On 2026-11-16 ubuntu-latest moved from 24.04 to 26.04 and this
-    # lane, the only one with three kind clusters on a runner, failed every
-    # time: after `cub cluster up` no controller became available in five
-    # minutes, where a passing run takes under one. The other lanes pass on
-    # 26.04. Why 26.04 fails here is not yet known; the proof script prints
-    # the host limits so the next failure says more.
-    runs-on: ubuntu-24.04
+    # On 26.04, as every other job. This lane is the only one with three
+    # kind clusters on a runner, and 26.04 allows 128 inotify instances where
+    # 24.04 allowed 1280: the controllers' pods never became available
+    # (runs 43832297994, 43932282400). The step below raises the limits;
+    # with it the lane passes on 26.04 (run 43936175444).
+    runs-on: ubuntu-26.04
     needs: integration
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.level == 'live-status'
     strategy:
@@ -690,6 +689,10 @@ jobs:
 
       - name: Make binary executable
         run: chmod +x cub-scout
+
+      # 24.04's values. host.txt in the artifact records the limits each run had.
+      - name: Raise inotify limits for three kind clusters
+        run: sudo sysctl -w fs.inotify.max_user_instances=1280 fs.inotify.max_user_watches=655360
 
       - name: Create kind cluster
         uses: helm/kind-action@v1
