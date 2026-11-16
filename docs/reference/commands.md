@@ -1765,19 +1765,23 @@ which was not always the cause.
 ### The `answer` block
 
 `compare source-truth --format json` carries a top-level `answer` (added after
-v2.15.1), the [common envelope](../proposals/answer-envelope.md) that `trace`
-also carries. The fields beside it are unchanged.
+v2.15.1), in the lean form of the
+[common envelope](../proposals/answer-envelope.md): four fields, with the
+vocabularies `trace` uses. The fields beside it are unchanged.
 
 | `answer` field | For `compare source-truth` |
 |---|---|
 | `state` | `agreed`, `not-agreed`, `incomplete`, `not-observable`. An observation, not a verdict. |
-| `reason` | `object-revision-is-head`, `git-revision-matches`, `oci-digest-matches` (what was compared, when agreed); `surfaces-disagree`; `proof-gaps`; `surface-not-read`; `strategy-not-declared`. |
-| `summary` | One sentence, including what was compared. |
-| `observedAt`, `cluster` | When the command read, and the kubeconfig context label. |
-| `basis[]` | Whose word each surface in `surfaces` is: `surfaces.confighub` rests on `confighub-record`, `surfaces.controller` on `controller-report`, `surfaces.runtime` on `object-metadata`, and an agreement on `cub-scout-comparison`. The values stay in `surfaces` and are not repeated. |
-| `unknowns[]` | Every `proof_gaps` key, as not compared or not observable with a reason; every collection error, quoted; and, whenever the state is `agreed` under a ConfigHub OCI strategy, that the controller's digest was not compared with ConfigHub's. |
+| `reason` | When agreed, what was compared: `object-revision-is-head`, `git-revision-matches`, `oci-digest-matches`. Otherwise `surfaces-disagree`, `proof-gaps`, `surface-not-read`, `strategy-not-declared`. |
+| `unknowns[]` | Every `proof_gaps` key, as `not-compared` or `not-observable` with a reason. A count of failed surface reads, pointing at `collection_errors` for their text. And, whenever the state is `agreed` under a ConfigHub OCI strategy, that the controller's digest was not compared with ConfigHub's. `[]` only when there is none of these. |
 | `next[]` | `trace` of the workload, unless the state is `agreed` or no strategy was declared. |
-| `cost` | Kubernetes requests, bytes and duration of this command's own clients (`coverage: "kubernetes-session-clients"`). The ConfigHub unit read is not counted. |
+
+Left out here, because on this three-surface answer the full block more than
+doubled it (773 to 1,876 bytes; the lean form is 1,061): a summary, a time,
+the cluster, the cost, and `basis`. Whose word each surface is does not vary:
+`surfaces.confighub` is ConfigHub's record, `surfaces.controller` is the
+delivery controller's own report, `surfaces.runtime` was read from the
+workload object, and an agreement is cub-scout's comparison of them.
 
 **The verdict words.** `status` (`PASS`, `WATCH`, `ASK`, `BLOCK`) and
 `source_truth` (`AGREED` and the rest) are verdict words. They stay in JSON
@@ -1785,8 +1789,6 @@ until 3.0. In 3.0 they leave the JSON and MCP output, where an agent reads them
 as a decision already made, and stay in the ASCII and Markdown output, where
 they help a person at a glance (maintainer's decision, 2026-11-16). Decide on
 `answer.state`.
-
-The block makes this answer larger: 773 to 1,876 bytes for an agreed answer.
 
 ### Output contract
 

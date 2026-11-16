@@ -10,13 +10,36 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/confighub/cub-scout/v2/internal/mapsvc"
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
+
+// requireConformingLeanAnswer is the lean envelope's contract: a state and a
+// reason from the command's lists, unknowns with the shared vocabulary, next
+// steps that only read, and both lists present on the wire.
+func requireConformingLeanAnswer(t *testing.T, answer *mapsvc.LeanAnswer, states, reasons []string) {
+	t.Helper()
+	require.NotNil(t, answer)
+	full := &mapsvc.Answer{
+		State: answer.State, Reason: answer.Reason, Unknowns: answer.Unknowns, Next: answer.Next,
+		// The fields the lean form leaves out, filled so the shared check
+		// judges only what a lean answer carries.
+		Summary: "-", ObservedAt: "2026-01-01T00:00:00Z", Cluster: mapsvc.AnswerCluster{IDSource: "not-read"},
+		Basis: []mapsvc.AnswerBasis{}, Cost: mapsvc.AnswerCost{Coverage: "not-measured"},
+	}
+	requireConformingAnswer(t, full, states, reasons)
+	raw, err := json.Marshal(answer)
+	require.NoError(t, err)
+	var keys map[string]json.RawMessage
+	require.NoError(t, json.Unmarshal(raw, &keys))
+	require.Len(t, keys, 4, "the lean form is state, reason, unknowns and next: %s", raw)
+	for _, key := range []string{`"unknowns":[`, `"next":[`} {
+		require.Contains(t, string(raw), key)
+	}
+}
 
 // Every source-truth contract fixture, through the answer: the state follows
 // from the verdict the evidence already carries, and the answer conforms.
@@ -31,8 +54,12 @@ func TestSourceTruthAnswerOverTheContractFixtures(t *testing.T) {
 		agent.VerdictBLOCKED:    sourceTruthStateNotObservable,
 		agent.VerdictUNKNOWN:    sourceTruthStateNotObservable,
 	}
-	at := time.Date(2026, 11, 16, 9, 0, 0, 0, time.UTC)
-	cost := &agent.KubernetesReadCost{RequestsMade: 3, ResponseBodyBytes: 7000, Coverage: sourceTruthCostCoverage}
+	wantReason := map[agent.SourceTruthStrategy]string{
+		agent.StrategyConfigHubOCIFlux: sourceTruthReasonObjectRevisionIsHead, agent.StrategyConfigHubOCIArgo: sourceTruthReasonObjectRevisionIsHead,
+		agent.StrategyOCIFlux: sourceTruthReasonOCIDigestMatches, agent.StrategyOCIArgo: sourceTruthReasonOCIDigestMatches,
+		agent.StrategyGitFlux: sourceTruthReasonGitRevisionMatches, agent.StrategyGitArgo: sourceTruthReasonGitRevisionMatches,
+		agent.StrategyKustomizeFlux: sourceTruthReasonGitRevisionMatches,
+	}
 	seen := map[string]bool{}
 	for _, entry := range entries {
 		if !entry.IsDir() {
@@ -48,8 +75,8 @@ func TestSourceTruthAnswerOverTheContractFixtures(t *testing.T) {
 			require.NoError(t, json.Unmarshal(raw, &surfaces))
 			evidence := agent.Derive(strategy, surfaces)
 
-			answer := buildSourceTruthAnswer(evidence, strategy, "Deployment", "rag-server", "demo", at, cost)
-			requireConformingAnswer(t, answer, sourceTruthStates, sourceTruthReasons)
+			answer := buildSourceTruthAnswer(evidence, strategy, "Deployment", "rag-server", "demo")
+			requireConformingLeanAnswer(t, answer, sourceTruthStates, sourceTruthReasons)
 			require.Equal(t, want[evidence.SourceTruth], answer.State, "verdict %s", evidence.SourceTruth)
 			seen[answer.State] = true
 			// Every proof gap the evidence names is an unknown in the answer.
@@ -60,21 +87,24 @@ func TestSourceTruthAnswerOverTheContractFixtures(t *testing.T) {
 				}
 				require.True(t, found, "proof gap %q is missing from unknowns", gap)
 			}
-			// No value read from ConfigHub or the cluster is restated: they
-			// stay in surfaces.
+			// No value read from ConfigHub or the cluster is restated.
 			text, _ := json.Marshal(answer)
 			for _, value := range []string{"sha256:", "oci://", "https://", "@"} {
 				require.NotContains(t, string(text), value, "the answer restates a surface value")
 			}
-			// "agreed" never leaves an agent without what was not compared
-			// under the ConfigHub strategies, and has nothing to read next.
 			if answer.State == sourceTruthStateAgreed {
+				// The reason names what was compared, and there is nothing
+				// to read next.
+				require.Equal(t, wantReason[strategy], answer.Reason)
 				require.Empty(t, answer.Next)
-				require.Equal(t, mapsvc.RestsOnCubScoutComparison, answer.Basis[len(answer.Basis)-1].RestsOn)
+				// Under the ConfigHub strategies "agreed" always says what
+				// it did not compare; under the others it has no unknowns.
 				if strategy == agent.StrategyConfigHubOCIFlux || strategy == agent.StrategyConfigHubOCIArgo {
-					last := answer.Unknowns[len(answer.Unknowns)-1]
-					require.Equal(t, mapsvc.UnknownNotCompared, last.Kind)
-					require.Contains(t, last.What, "digest")
+					require.Len(t, answer.Unknowns, 1)
+					require.Equal(t, mapsvc.UnknownNotCompared, answer.Unknowns[0].Kind)
+					require.Contains(t, answer.Unknowns[0].What, "digest")
+				} else {
+					require.Empty(t, answer.Unknowns)
 				}
 			} else if answer.Reason != sourceTruthReasonStrategyNotDeclared {
 				require.Equal(t, "cub-scout trace Deployment/rag-server -n demo --format json", answer.Next[0].Command)
@@ -95,18 +125,18 @@ func TestSourceTruthJSONCarriesTheAnswerBesideTheOldFields(t *testing.T) {
 		Runtime:    &agent.RuntimeSurface{Resource: "Deployment/api in demo", Field: "spec.template.spec.containers[0].image", Value: "example/api:1", Health: "Current"},
 	})
 	evidence.Context = "prod-east"
-	evidence.CollectionErrors = []string{"ConfigHub: unit read failed: " + injected}
-	answer := buildSourceTruthAnswer(evidence, agent.StrategyConfigHubOCIFlux, "Deployment", "api", "demo", time.Now(), nil)
-	requireConformingAnswer(t, answer, sourceTruthStates, sourceTruthReasons)
+	evidence.CollectionErrors = []string{"ConfigHub: unit read failed: " + injected, "controller: " + injected}
+	answer := buildSourceTruthAnswer(evidence, agent.StrategyConfigHubOCIFlux, "Deployment", "api", "demo")
+	requireConformingLeanAnswer(t, answer, sourceTruthStates, sourceTruthReasons)
 	require.Equal(t, sourceTruthStateNotObservable, answer.State)
 	require.Equal(t, sourceTruthReasonSurfaceNotRead, answer.Reason)
-	require.Equal(t, "not-measured", answer.Cost.Coverage)
-	// The error text is quoted and nowhere else.
-	require.Contains(t, answer.Unknowns[len(answer.Unknowns)-1].Quoted, injected)
-	require.NotContains(t, answer.Summary, injected)
-	for _, unknown := range answer.Unknowns {
-		require.NotContains(t, unknown.What+unknown.Reason, injected)
-	}
+	// The failed reads are counted and pointed at; their text is not copied
+	// into the answer at all.
+	last := answer.Unknowns[len(answer.Unknowns)-1]
+	require.Equal(t, "2 surface read(s)", last.What)
+	require.Contains(t, last.Reason, "collection_errors")
+	raw, _ := json.Marshal(answer)
+	require.NotContains(t, string(raw), injected)
 
 	var out bytes.Buffer
 	require.NoError(t, outputSourceTruthAnswered(&out, evidence, "json", answer))
@@ -116,15 +146,15 @@ func TestSourceTruthJSONCarriesTheAnswerBesideTheOldFields(t *testing.T) {
 		require.Contains(t, document, key)
 	}
 	require.JSONEq(t, `"BLOCK"`, string(document["status"]), "the verdict word stays in JSON until 3.0")
-	var decoded mapsvc.Answer
-	require.NoError(t, json.Unmarshal(document["answer"], &decoded))
-	require.Equal(t, "prod-east", decoded.Cluster.Context)
 
 	// Without the answer the document is byte for byte the old one.
 	var old, plain bytes.Buffer
 	require.NoError(t, agent.EncodeEvidence(&old, evidence))
 	require.NoError(t, outputSourceTruthAnswered(&plain, evidence, "json", nil))
 	require.Equal(t, old.String(), plain.String())
+	// And with it, the growth is bounded: this is the form chosen because
+	// the full block more than doubled the answer.
+	require.Less(t, out.Len()-old.Len(), 700, "the lean answer added %d bytes", out.Len()-old.Len())
 
 	for _, format := range []string{"ascii", "md"} {
 		var rendered, before bytes.Buffer
@@ -135,18 +165,18 @@ func TestSourceTruthJSONCarriesTheAnswerBesideTheOldFields(t *testing.T) {
 	}
 }
 
-// A kind or name that is not shaped like one is not put into a sentence or a
-// command, and an undeclared strategy has nothing to read next.
+// A kind or name that is not shaped like one is not put into a command, and
+// an undeclared strategy has nothing to read next.
 func TestSourceTruthAnswerDoesNotBuildFromUnshapedInput(t *testing.T) {
 	evidence := agent.Derive("", agent.SourceTruthSurfaces{})
-	answer := buildSourceTruthAnswer(evidence, "", "Deployment; rm -rf /", "api", "demo", time.Now(), nil)
-	requireConformingAnswer(t, answer, sourceTruthStates, sourceTruthReasons)
+	answer := buildSourceTruthAnswer(evidence, "", "Deployment", "api", "demo")
+	requireConformingLeanAnswer(t, answer, sourceTruthStates, sourceTruthReasons)
 	require.Equal(t, sourceTruthReasonStrategyNotDeclared, answer.Reason)
 	require.Empty(t, answer.Next)
-	require.NotContains(t, answer.Summary, "rm -rf")
 
 	blocked := agent.Derive(agent.StrategyGitFlux, agent.SourceTruthSurfaces{})
-	answer = buildSourceTruthAnswer(blocked, agent.StrategyGitFlux, "Deployment; rm -rf /", "api", "demo", time.Now(), nil)
+	answer = buildSourceTruthAnswer(blocked, agent.StrategyGitFlux, "Deployment; rm -rf /", "api", "demo")
 	require.Empty(t, answer.Next, "no command is built from a kind that is not a kind")
-	require.Contains(t, answer.Summary, "the workload")
+	named := buildSourceTruthAnswer(blocked, agent.StrategyGitFlux, "Deployment", "api", "demo")
+	require.Len(t, named.Next, 1)
 }

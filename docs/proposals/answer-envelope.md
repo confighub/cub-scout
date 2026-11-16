@@ -1,7 +1,12 @@
 # Proposal: one envelope for every answer
 
 Status: the maintainer named the block `answer` and chose `trace` to go first
-(2026-11-13). `trace` carries it, after v2.15.1; its fields are in the
+(2026-11-13). `compare source-truth` carries a lean form of it (`state`,
+`reason`, `unknowns`, `next`), chosen by the maintainer on 2026-11-16 because
+the full block took that answer from 773 to 1,876 bytes and the lean form
+takes it to 1,061. So "the same fields in every command" below now reads: the
+same four everywhere, and the rest where the answer is large enough to carry
+them. `trace` carries the full block, after v2.15.1; its fields are in the
 [JSON contract](../reference/json-contracts.md). The other commands, the
 state words for them, cluster identity, and the 3.0 removals are still
 undecided. Building it, and an independent review of the first version, changed four

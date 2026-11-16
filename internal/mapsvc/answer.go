@@ -107,3 +107,16 @@ type AnswerNext struct {
 	Command string `json:"command"`
 	Why     string `json:"why"`
 }
+
+// LeanAnswer is the envelope for an answer that is already small. It keeps
+// the four fields that change what an agent does next (the state, why, what
+// is not known, what to read) and leaves out the summary, basis, time,
+// cluster and cost, which on a three-surface answer more than doubled it.
+// `compare source-truth` carries this form (maintainer's decision,
+// 2026-11-16). The field names and vocabularies are those of Answer.
+type LeanAnswer struct {
+	State    string          `json:"state"`
+	Reason   string          `json:"reason"`
+	Unknowns []AnswerUnknown `json:"unknowns"`
+	Next     []AnswerNext    `json:"next"`
+}

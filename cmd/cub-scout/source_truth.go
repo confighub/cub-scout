@@ -27,7 +27,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 	appsv1 "k8s.io/api/apps/v1"
@@ -147,7 +146,7 @@ func runSourceTruth(cmd *cobra.Command, args []string) error {
 			}
 			evidence.Context = session.contextLabel()
 		}
-		return outputSourceTruthAnswered(os.Stdout, evidence, format, buildSourceTruthAnswer(evidence, "", kind, name, sourceTruthNamespace, time.Now(), nil))
+		return outputSourceTruthAnswered(os.Stdout, evidence, format, buildSourceTruthAnswer(evidence, "", kind, name, sourceTruthNamespace))
 	}
 
 	var session *traceSession
@@ -174,24 +173,15 @@ func runSourceTruth(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("resolve selected Kubernetes context: %w", err)
 		}
 	}
-	started := time.Now()
-	before := session.meter.Snapshot()
 	observation := collectSourceTruthObservation(cmd.Context(), session, kind, name, sourceTruthNamespace, strategy)
-	cost := session.meter.Snapshot()
-	cost.RequestsMade -= before.RequestsMade
-	cost.ResponseBodyBytes -= before.ResponseBodyBytes
-	cost.TransportErrors -= before.TransportErrors
-	cost.BodyReadErrors -= before.BodyReadErrors
-	cost.DurationMillis = time.Since(started).Milliseconds()
-	cost.Coverage = sourceTruthCostCoverage
-	answer := buildSourceTruthAnswer(observation.Evidence, strategy, kind, name, sourceTruthNamespace, time.Now(), &cost)
+	answer := buildSourceTruthAnswer(observation.Evidence, strategy, kind, name, sourceTruthNamespace)
 	return outputSourceTruthAnswered(os.Stdout, observation.Evidence, format, answer)
 }
 
 // outputSourceTruthAnswered writes the evidence and, in JSON, the answer
 // beside it. The ASCII and Markdown renderings are for people and keep the
 // verdict words; they do not carry the block.
-func outputSourceTruthAnswered(w io.Writer, ev agent.SourceTruthEvidence, format string, answer *mapsvc.Answer) error {
+func outputSourceTruthAnswered(w io.Writer, ev agent.SourceTruthEvidence, format string, answer *mapsvc.LeanAnswer) error {
 	if strings.ToLower(strings.TrimSpace(format)) != "json" || answer == nil {
 		return outputSourceTruth(w, ev, format)
 	}
