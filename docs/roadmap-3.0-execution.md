@@ -83,9 +83,9 @@ repository names today. Latest releases were read from GitHub on 2026-11-16.
 | `cub` CLI | v0.10.11 in the Connected and live-status lanes | v0.11.4 | Moves with the SDK. Sweep for removed subcommands, which exit 0 and print help. |
 | `cub cluster up`, argobot | whatever the pinned `cub` installs; argobot v0.2.9 seen | argobot tag v0.2.9 | Not pinned here. The live lane records the Kubernetes version and every container image in `installed-versions.txt` on each run. |
 | ConfigHub plugins and skills (the mini plugin, confighub-skills, Pilot's provider pin) | not tested | mini plugin v0.93.0; confighub-skills tag v0.3.0; Pilot pins cub-scout v2.7.0 | Check that what each says about cub-scout's commands and JSON is still true; tell the consumer before a field it reads goes. |
-| Flux | v2.9.6 in the GitOps lane; whatever `cub cluster up` installs in the live-status lane (2.10 seen) | v2.10.0 | Move the GitOps lane to 2.10. The live lane fails if a Flux kind is read in a version the cluster does not serve. |
+| Flux | v2.10.0 in the GitOps and demo lanes; whatever `cub cluster up` installs in the live-status lane (2.10 seen) | v2.10.0 | Current. The live lane fails if a Flux kind is read in a version the cluster does not serve. |
 | Flux Operator and its Web UI | not tested | v0.62.1 | [#882] item 5 needs a lane with an identity provider. |
-| Argo CD | v3.5.3 in the GitOps lane | v3.6.1 | Move the lane; re-read `trace` output on it. |
+| Argo CD | v3.6.1 in the GitOps and demo lanes | v3.6.1 | Current. Recordings made on v3.5.3 (an eval case, a recorded tree test) stay as recorded. |
 | Sveltos | whatever `cub cluster up` installs | v1.17.0 | Record the version in the lane artifact. |
 | CI runner image | every Linux job pinned to `ubuntu-26.04`, the image it passed on, except the live-status lane on `ubuntu-24.04` | `ubuntu-latest` moved to 26.04 on 2026-11-16 and broke that lane | Pinned. Still to do: find why 26.04 breaks three kind clusters on one runner. |
 | Kubernetes, kind | client libraries v0.33.1; kind v0.31.0 and `kindest/node:v1.35.0` by digest, pinned in every kind step | Kubernetes v1.37.2; kind v0.33.0 | Pinned. Move to a newer kind and node on purpose, one lane run first. |

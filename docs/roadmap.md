@@ -238,8 +238,6 @@ below is a to-do; none has an issue yet.
   refused by default.
 - [ ] On every ConfigHub minor: bump the SDK, move the Connected and
   live-status lanes, sweep for `cub` subcommands that were removed.
-- [ ] Move the GitOps lane from Flux 2.9.6 to 2.10 and from Argo CD v3.5.3 to
-  the current release; re-read the recorded answers after each move.
 - [ ] A lane step that installs one chart with Helm 4 and one with Helm 3.
 - [ ] kro, Crossplane, Terraform and Modelplane have detectors and no lane on
   a real install. Add one each, or say "not tested on a real install" beside
