@@ -691,6 +691,12 @@ jobs:
       - name: Make binary executable
         run: chmod +x cub-scout
 
+      # Three kind clusters on one runner need more inotify instances than a
+      # 26.04 image allows (128, where 24.04 allows 1280): without them the
+      # controllers' pods never became available (run 43932282400).
+      - name: Raise inotify limits for three kind clusters
+        run: sudo sysctl -w fs.inotify.max_user_instances=1280 fs.inotify.max_user_watches=655360
+
       - name: Create kind cluster
         uses: helm/kind-action@v1
         with:
