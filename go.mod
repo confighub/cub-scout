@@ -10,7 +10,7 @@ require (
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/x/ansi v0.10.1
 	github.com/charmbracelet/x/exp/teatest v0.0.0-20260109001716-2fbdffcb221f
-	github.com/confighub/sdk/core v0.10.11
+	github.com/confighub/sdk/core v0.11.4
 	github.com/gobwas/glob v0.2.3
 	github.com/google/uuid v1.6.0
 	github.com/gowebpki/jcs v1.0.1
