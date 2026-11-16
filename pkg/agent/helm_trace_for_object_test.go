@@ -85,3 +85,29 @@ func TestTraceReleaseForObjectMissingReleaseAndAmbiguity(t *testing.T) {
 		}
 	}
 }
+
+func TestTraceReleaseForObjectFindsAnObjectInAHookManifest(t *testing.T) {
+	// Helm keeps hooks out of the release manifest, each with its own.
+	release := &helmRelease{
+		Name:      "web-release",
+		Namespace: "apps",
+		Version:   1,
+		Info:      helmReleaseInfo{Status: "deployed"},
+		Manifest:  deploymentWithoutNamespace,
+		Hooks: []helmReleaseHook{
+			{Manifest: "apiVersion: batch/v1\nkind: Job\nmetadata:\n  name: web-migrate\n  annotations:\n    helm.sh/hook: pre-install\n"},
+		},
+	}
+	secret := helmSecret(encodeRelease(t, release), release.Name, release.Version)
+	secret.Namespace = release.Namespace
+	tracer := helmManifestIdentityTracer(secret)
+
+	result, err := tracer.TraceReleaseForObject(context.Background(), "web-release", "apps", "Job", "web-migrate", "apps")
+	if err != nil || !result.FullyManaged {
+		t.Fatalf("hook Job: result = %#v, err = %v; want it claimed by the release that lists it as a hook", result, err)
+	}
+	result, err = tracer.TraceReleaseForObject(context.Background(), "web-release", "apps", "Job", "other", "apps")
+	if err != nil || result.FullyManaged {
+		t.Fatalf("unlisted Job: result = %#v, err = %v; want no claim", result, err)
+	}
+}

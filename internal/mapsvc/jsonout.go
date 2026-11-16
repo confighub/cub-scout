@@ -527,9 +527,15 @@ func InferRole(kind string) string {
 	// Kubernetes object of its own.
 	case "Source", "GitRepository", "OCIRepository", "OCI", "ConfigHub OCI", "HelmRepository", "Bucket", "SveltosReference", "EventSource", "ModelCache", "InferenceClass", "InferenceCluster":
 		return RoleSource
-	case "Kustomization", "HelmRelease", "Application", "ClusterProfile", "Profile", "EventTrigger", "ClusterHealthCheck", "ClusterPromotion", "ModelDeployment", "ModelService", "InferenceGateway":
+	// "Release" is a Helm release, read from its record by the Helm tracer.
+	case "Kustomization", "HelmRelease", "Release", "Application", "ClusterProfile", "Profile", "EventTrigger", "ClusterHealthCheck", "ClusterPromotion", "ModelDeployment", "ModelService", "InferenceGateway":
 		return RoleDeployer
-	case "ReplicaSet", "Pod", "ModelReplica", "ModelEndpoint", "ServingStack", "EKSCluster", "GKECluster", "ClusterSummary", "ClusterConfiguration", "ClusterReport", "HealthCheckReport", "EventReport":
+	// "HelmChart" is a chart between a source and a deployer: Flux's chart
+	// artifact (the HelmRepository before it is the source), an Argo CD
+	// Application's chart, or the chart a Helm release records (#930). Not
+	// a source: that would make it the trace summary's source, and its URL
+	// is not a source object's spec.url.
+	case "HelmChart", "ReplicaSet", "Pod", "ModelReplica", "ModelEndpoint", "ServingStack", "EKSCluster", "GKECluster", "ClusterSummary", "ClusterConfiguration", "ClusterReport", "HealthCheckReport", "EventReport":
 		return RoleIntermediate
 	default:
 		return RoleWorkload
@@ -595,7 +601,7 @@ func InferDeliveryStage(kind string) string {
 		return StageSource
 	case "OCIRepository", "OCI", "ConfigHub OCI":
 		return StageArtifact
-	case "Kustomization", "HelmRelease", "Application", "ClusterProfile", "Profile", "EventTrigger", "ClusterHealthCheck", "ClusterPromotion", "ModelDeployment", "ModelService", "InferenceGateway":
+	case "Kustomization", "HelmRelease", "Release", "Application", "ClusterProfile", "Profile", "EventTrigger", "ClusterHealthCheck", "ClusterPromotion", "ModelDeployment", "ModelService", "InferenceGateway":
 		return StageDeployer
 	case "Deployment", "StatefulSet", "DaemonSet", "Service", "ConfigMap", "Secret", "Ingress",
 		"ReplicaSet", "Pod", "Job", "CronJob", "ModelReplica", "ModelEndpoint", "ServingStack", "EKSCluster", "GKECluster", "ClusterSummary", "ClusterConfiguration", "ClusterReport", "HealthCheckReport", "EventReport":

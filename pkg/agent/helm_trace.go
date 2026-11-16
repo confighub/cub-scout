@@ -145,18 +145,25 @@ func (h *HelmTracer) TraceReleaseForObject(ctx context.Context, releaseName, rel
 		return nil, fmt.Errorf("cannot establish Helm manifest identity: %w", err)
 	}
 	if !listed {
-		return unresolved(fmt.Sprintf("no Helm release found managing this resource: release '%s' in namespace '%s', named by the object's meta.helm.sh annotations, does not list it", releaseName, releaseNamespace)), nil
+		return unresolved(fmt.Sprintf("no Helm release found managing this resource: release '%s' in namespace '%s', named on the object, does not list it", releaseName, releaseNamespace)), nil
 	}
 	return h.buildTraceResult(release, kind, name, namespace)
 }
 
 // releaseManifestListsObject reports whether exactly one document in the
-// release manifest is the object, taking a document with no namespace to be
-// in the release's namespace.
+// release manifest or its hooks' manifests is the object, taking a document
+// with no namespace to be in the release's namespace.
 func releaseManifestListsObject(release *helmRelease, kind, name, namespace string) (bool, error) {
 	identities, err := parseHelmManifestIdentities(release.Manifest)
 	if err != nil {
 		return false, err
+	}
+	for _, hook := range release.Hooks {
+		hookIdentities, err := parseHelmManifestIdentities(hook.Manifest)
+		if err != nil {
+			return false, err
+		}
+		identities = append(identities, hookIdentities...)
 	}
 	matches := 0
 	for _, identity := range identities {
@@ -213,7 +220,14 @@ type helmRelease struct {
 	Chart     helmChart         `json:"chart"`
 	Config    map[string]any    `json:"config"`
 	Manifest  string            `json:"manifest"`
+	Hooks     []helmReleaseHook `json:"hooks"`
 	Labels    map[string]string `json:"labels"`
+}
+
+// helmReleaseHook is a hook as Helm records it: hooks are kept out of the
+// release manifest, each with its own.
+type helmReleaseHook struct {
+	Manifest string `json:"manifest"`
 }
 
 type helmReleaseInfo struct {

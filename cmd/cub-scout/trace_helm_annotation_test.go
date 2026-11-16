@@ -156,56 +156,83 @@ func TestWithHelmReleaseAnnotationsNeverInfers(t *testing.T) {
 	cases := []struct {
 		name        string
 		ownership   agent.Ownership
-		labels      map[string]string
 		annotations map[string]string
 		want        agent.Ownership
 	}{
 		{"a chart name from helm.sh/chart is replaced by the release Helm recorded",
 			agent.Ownership{Type: agent.OwnerHelm, Name: "nginx-1.2.3"},
-			map[string]string{"helm.sh/chart": "nginx-1.2.3"},
 			both,
 			agent.Ownership{Type: agent.OwnerHelm, Name: "web", Namespace: "apps"}},
 		{"both annotations name the release",
 			agent.Ownership{Type: agent.OwnerHelm},
-			nil,
 			both,
 			agent.Ownership{Type: agent.OwnerHelm, Name: "web", Namespace: "apps"}},
-		{"a release named by the instance label is left as it is",
+		{"Helm's annotations replace a name from the instance label",
 			agent.Ownership{Type: agent.OwnerHelm, Name: "from-label"},
-			map[string]string{"app.kubernetes.io/instance": "from-label"},
 			both,
+			agent.Ownership{Type: agent.OwnerHelm, Name: "web", Namespace: "apps"}},
+		{"without annotations a label name is left for trace to check",
+			agent.Ownership{Type: agent.OwnerHelm, Name: "from-label"},
+			nil,
 			agent.Ownership{Type: agent.OwnerHelm, Name: "from-label"}},
 		{"name without namespace is not enough",
 			agent.Ownership{Type: agent.OwnerHelm},
-			nil,
 			map[string]string{"meta.helm.sh/release-name": "web"},
 			agent.Ownership{Type: agent.OwnerHelm}},
 		{"namespace without name is not enough",
 			agent.Ownership{Type: agent.OwnerHelm},
-			nil,
 			map[string]string{"meta.helm.sh/release-namespace": "apps"},
 			agent.Ownership{Type: agent.OwnerHelm}},
 		{"blank values are absent",
 			agent.Ownership{Type: agent.OwnerHelm},
-			nil,
 			map[string]string{"meta.helm.sh/release-name": " ", "meta.helm.sh/release-namespace": "apps"},
 			agent.Ownership{Type: agent.OwnerHelm}},
 		{"another owner is never turned into Helm",
 			agent.Ownership{Type: agent.OwnerFlux, Name: "apps"},
-			nil,
 			both,
 			agent.Ownership{Type: agent.OwnerFlux, Name: "apps"}},
 		{"no owner stays no owner",
 			agent.Ownership{Type: agent.OwnerUnknown},
-			nil,
 			both,
 			agent.Ownership{Type: agent.OwnerUnknown}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := withHelmReleaseAnnotations(tc.ownership, tc.labels, tc.annotations); got != tc.want {
+			if got := withHelmReleaseAnnotations(tc.ownership, tc.annotations); got != tc.want {
 				t.Fatalf("withHelmReleaseAnnotations() = %#v, want %#v", got, tc.want)
 			}
 		})
+	}
+}
+
+func helmLabelledDeployment(name, namespace, instance string) *unstructured.Unstructured {
+	object := helmBareDeployment(name, namespace, "", "")
+	labels := object.Object["metadata"].(map[string]any)["labels"].(map[string]any)
+	labels["app.kubernetes.io/instance"] = instance
+	return object
+}
+
+func TestTraceChecksAReleaseNamedByTheInstanceLabel(t *testing.T) {
+	// The label is the chart's, and Argo CD writes the same label to track
+	// its own objects (#931): a release of that name is a candidate.
+	listed := helmLabelledDeployment("web", "apps", "web")
+	session := helmAnnotationTraceSession(t, listed, helmReleaseSecretForTrace(t, "web", "apps", "web"))
+	observation, err := observeTrace(context.Background(), session, "Deployment", "web", "apps", traceObservationOptions{})
+	if err != nil {
+		t.Fatalf("observeTrace() error = %v", err)
+	}
+	if result := observation.Result; !result.FullyManaged || len(result.Chain) < 2 || result.Chain[1].Name != "web" {
+		t.Fatalf("result = %#v; want the release that lists the object", result)
+	}
+
+	unlisted := helmLabelledDeployment("other", "apps", "web")
+	session = helmAnnotationTraceSession(t, unlisted, helmReleaseSecretForTrace(t, "web", "apps", "web"))
+	observation, err = observeTrace(context.Background(), session, "Deployment", "other", "apps", traceObservationOptions{})
+	if err != nil {
+		t.Fatalf("observeTrace() error = %v; want an unresolved answer", err)
+	}
+	result := observation.Result
+	if result.FullyManaged || len(result.Chain) != 0 || !strings.Contains(result.Error, "does not list it") {
+		t.Fatalf("result = %#v; a release that does not list the object must not be claimed", result)
 	}
 }

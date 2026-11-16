@@ -122,12 +122,16 @@ func observeTrace(ctx context.Context, session *traceSession, kind, name, namesp
 				return nil, clientErr
 			}
 			tracer := agent.NewHelmTracer(client)
-			if ownership.Name != "" && ownership.Namespace != "" {
-				// Named by Helm's own annotations (withHelmReleaseAnnotations):
-				// a candidate, claimed only if its manifest lists the object.
-				result, err = tracer.TraceReleaseForObject(ctx, ownership.Name, ownership.Namespace, kind, name, namespace)
-			} else if ownership.Name != "" {
-				result, err = tracer.TraceRelease(ctx, ownership.Name, namespace)
+			if ownership.Name != "" {
+				// A release named by Helm's annotations (withHelmReleaseAnnotations)
+				// or by the app.kubernetes.io/instance label is a candidate: it
+				// is claimed only if its manifest lists the object. The label
+				// is the chart's, and other tools write it too (#931).
+				releaseNamespace := namespace
+				if ownership.Namespace != "" {
+					releaseNamespace = ownership.Namespace
+				}
+				result, err = tracer.TraceReleaseForObject(ctx, ownership.Name, releaseNamespace, kind, name, namespace)
 			} else {
 				result, err = tracer.Trace(ctx, kind, name, namespace)
 			}
