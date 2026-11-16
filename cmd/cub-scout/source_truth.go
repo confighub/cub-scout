@@ -27,6 +27,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	appsv1 "k8s.io/api/apps/v1"
@@ -38,6 +39,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/confighub/cub-scout/v2/internal/mapsvc"
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
 
@@ -145,7 +147,7 @@ func runSourceTruth(cmd *cobra.Command, args []string) error {
 			}
 			evidence.Context = session.contextLabel()
 		}
-		return outputSourceTruth(os.Stdout, evidence, format)
+		return outputSourceTruthAnswered(os.Stdout, evidence, format, buildSourceTruthAnswer(evidence, "", kind, name, sourceTruthNamespace, time.Now()))
 	}
 
 	var session *traceSession
@@ -173,7 +175,23 @@ func runSourceTruth(cmd *cobra.Command, args []string) error {
 		}
 	}
 	observation := collectSourceTruthObservation(cmd.Context(), session, kind, name, sourceTruthNamespace, strategy)
-	return outputSourceTruth(os.Stdout, observation.Evidence, format)
+	// The time is taken after the reads: it is when the three surfaces had
+	// been observed, not when the command began.
+	answer := buildSourceTruthAnswer(observation.Evidence, strategy, kind, name, sourceTruthNamespace, time.Now())
+	return outputSourceTruthAnswered(os.Stdout, observation.Evidence, format, answer)
+}
+
+// outputSourceTruthAnswered writes the evidence and, in JSON, the answer
+// beside it. The ASCII and Markdown renderings are for people and keep the
+// verdict words; they do not carry the block.
+func outputSourceTruthAnswered(w io.Writer, ev agent.SourceTruthEvidence, format string, answer *mapsvc.LeanAnswer) error {
+	if strings.ToLower(strings.TrimSpace(format)) != "json" || answer == nil {
+		return outputSourceTruth(w, ev, format)
+	}
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	enc.SetEscapeHTML(false)
+	return enc.Encode(sourceTruthEnvelope{SourceTruthEvidence: ev, Answer: answer})
 }
 
 func outputSourceTruth(w io.Writer, ev agent.SourceTruthEvidence, format string) error {

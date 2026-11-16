@@ -28,12 +28,35 @@ type Answer struct {
 	// Next is exact read-only commands that follow from Reason.
 	Next []AnswerNext `json:"next"`
 	// Cost is what the reads behind this answer cost.
-	Cost agent.KubernetesReadCost `json:"cost"`
+	Cost AnswerCost `json:"cost"`
+}
+
+// AnswerCost is the cost of the reads behind an answer. The counters an
+// agent budgets with are always present; the error counters and the reuse
+// flag appear only when they are not zero, since every answer pays for every
+// byte of this block.
+type AnswerCost struct {
+	RequestsMade      int64  `json:"requestsMade"`
+	ResponseBodyBytes int64  `json:"responseBodyBytes"`
+	DurationMillis    int64  `json:"durationMillis"`
+	TransportErrors   int64  `json:"transportErrors,omitempty"`
+	BodyReadErrors    int64  `json:"bodyReadErrors,omitempty"`
+	Reused            bool   `json:"reused,omitempty"`
+	Coverage          string `json:"coverage"`
+}
+
+// AnswerCostFrom converts a measured Kubernetes read cost.
+func AnswerCostFrom(cost agent.KubernetesReadCost) AnswerCost {
+	return AnswerCost{
+		RequestsMade: cost.RequestsMade, ResponseBodyBytes: cost.ResponseBodyBytes, DurationMillis: cost.DurationMillis,
+		TransportErrors: cost.TransportErrors, BodyReadErrors: cost.BodyReadErrors, Reused: cost.Reused, Coverage: cost.Coverage,
+	}
 }
 
 type AnswerCluster struct {
-	Context  string `json:"context"`
-	ID       string `json:"id"`
+	Context string `json:"context"`
+	// ID is the cluster's own identity, present only when it was read.
+	ID       string `json:"id,omitempty"`
 	IDSource string `json:"idSource"`
 }
 
@@ -83,4 +106,21 @@ type AnswerUnknown struct {
 type AnswerNext struct {
 	Command string `json:"command"`
 	Why     string `json:"why"`
+}
+
+// LeanAnswer is the envelope for an answer that is already small. It keeps
+// the fields that change what an agent does next (the state, why, when it
+// was observed, what is not known, what to read) and leaves out the summary,
+// basis, cluster and cost, which on a three-surface answer more than doubled
+// it. The time is kept: without it an agent cannot tell a fresh observation
+// from one it is replaying.
+// `compare source-truth` carries this form (maintainer's decision,
+// 2026-11-16). The field names and vocabularies are those of Answer.
+type LeanAnswer struct {
+	State  string `json:"state"`
+	Reason string `json:"reason"`
+	// ObservedAt is when the command finished reading, RFC 3339.
+	ObservedAt string          `json:"observedAt"`
+	Unknowns   []AnswerUnknown `json:"unknowns"`
+	Next       []AnswerNext    `json:"next"`
 }

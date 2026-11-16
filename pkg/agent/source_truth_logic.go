@@ -589,6 +589,15 @@ func shaMatches(a, b string) bool {
 	return strings.HasPrefix(b, a)
 }
 
+// StrategySourceViolated reports whether the controller's source has a shape
+// the declared strategy rules out (a Git URL under a ConfigHub OCI strategy).
+// That is a different finding from two surfaces carrying different revisions,
+// and an answer says which it is.
+func StrategySourceViolated(strategy SourceTruthStrategy, controller *ControllerSurface) bool {
+	violated, _ := checkStrategySource(strategy, controller)
+	return violated
+}
+
 // blockedSafeNextAction renders a stable, read-only diagnostic when one
 // of the surfaces could not be fetched. It names the missing surface. For
 // ConfigHub it points at collection_errors and does not guess a cause: the

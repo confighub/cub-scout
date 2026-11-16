@@ -33,6 +33,22 @@ redact() {
     -e 's/[A-Za-z0-9+\/=_-]{40,}/[redacted]/g'
 }
 
+# The host this runs on, for the day the lane fails with no other clue: which
+# OS image, and the limits three kind clusters lean on.
+{
+  grep -E '^(PRETTY_NAME|VERSION_ID)=' /etc/os-release || true
+  echo "kernel $(uname -r)"
+  echo "inotify max_user_instances=$(cat /proc/sys/fs/inotify/max_user_instances 2>/dev/null) max_user_watches=$(cat /proc/sys/fs/inotify/max_user_watches 2>/dev/null)"
+  echo "open files $(ulimit -n)"
+  free -m | sed -n 2p || true
+  df -h / | sed -n 2p || true
+  docker version --format 'docker {{.Server.Version}}' 2>/dev/null || true
+  kind version 2>/dev/null || true
+  kind get clusters 2>/dev/null | tr '\n' ' ' || true
+  echo
+} > "$out/host.txt" 2>&1
+cat "$out/host.txt"
+
 touch "$private/owns-live-cluster"
 if ! cub cluster up "$name" --controller "$controller" > "$private/cluster-up.log" 2>&1; then
   echo 'cub cluster up failed; the end of its output, redacted:' >&2
@@ -204,6 +220,23 @@ if surface.get("unit") != "argobot" or not surface.get("space") or not surface.g
     sys.exit("source-truth did not read the ConfigHub unit named by the workload's origin annotation")
 if report.get("proof_gaps") or report.get("status") != "PASS":
     sys.exit("source-truth reported a gap on a freshly delivered workload: %s" % report.get("proof_gaps"))
+# The answer beside it, in its lean form: agreed, by what was compared, and
+# with what was not compared said.
+answer = report.get("answer") or {}
+print("source-truth answer: %s" % answer)
+if sorted(answer) != ["next", "observedAt", "reason", "state", "unknowns"]:
+    sys.exit("source-truth answer is not the lean form: %s" % sorted(answer))
+import datetime
+observed = datetime.datetime.fromisoformat(answer["observedAt"].replace("Z", "+00:00"))
+age = (datetime.datetime.now(datetime.timezone.utc) - observed).total_seconds()
+if not 0 <= age < 600:
+    sys.exit("source-truth answer's observedAt is not the time of this run: %s" % answer["observedAt"])
+if answer.get("state") != "agreed" or answer.get("reason") != "object-revision-is-head":
+    sys.exit("source-truth answer is not agreed by the object's revision: %s" % answer)
+if [u.get("kind") for u in answer.get("unknowns") or []] != ["not-compared"]:
+    sys.exit("an agreed answer under a ConfigHub OCI strategy does not say the digest was not compared")
+if answer.get("next") != []:
+    sys.exit("an agreed answer points at a next read: %s" % answer.get("next"))
 PY
   KUBECONFIG="$kubeconfig" kubectl get deployment argobot -n argobot --show-managed-fields -o json 2>/dev/null | python3 -c '
 import json, sys

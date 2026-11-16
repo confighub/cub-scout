@@ -1,7 +1,12 @@
 # Proposal: one envelope for every answer
 
 Status: the maintainer named the block `answer` and chose `trace` to go first
-(2026-11-13). `trace` carries it, after v2.15.1; its fields are in the
+(2026-11-13). `compare source-truth` carries a lean form of it (`state`,
+`reason`, `unknowns`, `next`), chosen by the maintainer on 2026-11-16 because
+the full block took that answer from 773 to 1,876 bytes and the lean form
+takes it to 1,061. So "the same fields in every command" below now reads: the
+same four everywhere, and the rest where the answer is large enough to carry
+them. `trace` carries the full block, after v2.15.1; its fields are in the
 [JSON contract](../reference/json-contracts.md). The other commands, the
 state words for them, cluster identity, and the 3.0 removals are still
 undecided. Building it, and an independent review of the first version, changed four
@@ -158,9 +163,10 @@ the same on a real cluster.
    `gitops status`: `settled`, `converging`, `failing`, `not-observable`.
    `explain`: `explained`, `partly-explained`, `not-observable`.
 3. May 3.0 remove `status: PASS|WATCH|ASK|BLOCK` from `compare source-truth`
-   in favour of `state`? Still the maintainer's to decide. What it would take
-   on the consumer's side was checked on 2026-11-16 and is small: see "A
-   contract for consumers" above.
+   in favour of `state`? **Decided 2026-11-16:** in 3.0 the verdict words
+   leave the JSON and MCP output and stay in the ASCII and Markdown output.
+   An agent reads `PASS` as a decision already made; a person at a terminal
+   is helped by it. Until 3.0 both are in JSON.
 4. `cluster.id`: opt-in as proposed, or always read (one extra GET a
    command).
 5. Start with which command. `compare source-truth` is the smallest and has

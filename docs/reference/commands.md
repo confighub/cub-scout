@@ -1762,6 +1762,35 @@ A blocked answer's `safe_next_action` points at `collection_errors` for the
 reason the ConfigHub surface is missing; it no longer says to check the login,
 which was not always the cause.
 
+### The `answer` block
+
+`compare source-truth --format json` carries a top-level `answer` (added after
+v2.15.1), in the lean form of the
+[common envelope](../proposals/answer-envelope.md): five fields, with the
+vocabularies `trace` uses. The fields beside it are unchanged.
+
+| `answer` field | For `compare source-truth` |
+|---|---|
+| `state` | `agreed`, `not-agreed`, `incomplete`, `not-observable`. An observation, not a verdict. |
+| `reason` | When agreed, what was compared: `object-revision-is-head`, `git-revision-matches`, `oci-digest-matches`. When not agreed: `surfaces-disagree` (two surfaces carry different revisions) or `source-not-as-declared` (the controller reads from a kind of source the strategy rules out). Otherwise `proof-gaps`, `surface-not-read`, `strategy-not-declared`, or `nothing-compared-for-strategy`. |
+| `observedAt` | When the command finished reading the three surfaces, RFC 3339. Without it a replayed answer looks like a fresh one. |
+| `unknowns[]` | Every `proof_gaps` key, as `not-compared` or `not-observable` with a reason. Every surface that is absent, by name. A count of failed reads, pointing at `collection_errors` for their text. And every `agreed` answer says what it did not compare: under a ConfigHub OCI strategy, the controller's digest against ConfigHub's; under the Git and plain OCI strategies, ConfigHub's record, which those strategies never consult. So `unknowns` is never empty for `agreed`. |
+| `next[]` | `trace` of the workload, unless the state is `agreed`. With no strategy declared, the command's own help, which lists the strategies. |
+
+Left out here, because on this three-surface answer the full block more than
+doubled it (773 to 1,876 bytes; the lean form is about 1,100): a summary,
+the cluster, the cost, and `basis`. Whose word each surface is does not vary:
+`surfaces.confighub` is ConfigHub's record, `surfaces.controller` is the
+delivery controller's own report, `surfaces.runtime` was read from the
+workload object, and an agreement is cub-scout's comparison of them.
+
+**The verdict words.** `status` (`PASS`, `WATCH`, `ASK`, `BLOCK`) and
+`source_truth` (`AGREED` and the rest) are verdict words. They stay in JSON
+until 3.0. In 3.0 they leave the JSON and MCP output, where an agent reads them
+as a decision already made, and stay in the ASCII and Markdown output, where
+they help a person at a glance (maintainer's decision, 2026-11-16). Decide on
+`answer.state`.
+
 ### Output contract
 
 Output is JSON only in v0.1. Field shape mirrors the council verdict on #393:
