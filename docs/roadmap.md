@@ -241,11 +241,11 @@ below is a to-do; none has an issue yet.
 - [ ] kro, Crossplane, Terraform and Modelplane have detectors and no lane on
   a real install. Add one each, or say "not tested on a real install" beside
   every claim about them.
-- [ ] The demo lane (`-f level=demos`) and the full lane stop at "Provision
-  scanner": the repository has no `CUB_SCAN_RELEASE_TOKEN` secret, so the
-  risk demos cannot run in CI (seen in run 43869520475, 2026-11-16, after
-  the controllers and the quick demo passed). Add the secret or take the
-  scanner demos out of the lane; adding a secret is the maintainer's call.
+- [ ] The full lane (`-f level=full`) stops at "Provision required scanner":
+  the scanner is a private release and the repository has no
+  `CUB_SCAN_RELEASE_TOKEN` secret, and `prove-it-works --level=full` asserts
+  a scanner finding. The demo lane no longer runs the scanner demos (`ccve`,
+  `bigbank-incident`), taken out on 2026-11-16; the full lane is unchanged.
 - [ ] Once a release: check what the ConfigHub plugins and skills (the mini
   plugin, confighub-skills, Pilot's provider pin) say about cub-scout's
   commands and JSON, and tell a consumer before a field it reads goes.
