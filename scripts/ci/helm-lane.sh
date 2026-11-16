@@ -2,10 +2,11 @@
 # Install one small chart with Helm 4 and with Helm 3, each with and without
 # the conventional labels, and record what cub-scout says owns each object.
 #
-# Asserted: an object carrying app.kubernetes.io/managed-by=Helm reads as
-# owned by Helm; no object reads as owned by anything other than Helm or
-# Native (a false claim). Recorded, not asserted: what cub-scout says of an
-# object with only the metadata Helm itself adds.
+# Helm 3 and 4 label every object they install app.kubernetes.io/managed-by=
+# Helm and annotate it with the release's name and namespace, whatever the
+# chart sets. Asserted: every object reads as owned by Helm in map list, and
+# trace returns a JSON answer whose chain ends in the release that installed
+# it. Recorded, not asserted: explain's answer.
 set -euo pipefail
 scout=${1:?usage: helm-lane.sh <cub-scout binary> <output dir>}
 out=${2:?usage: helm-lane.sh <cub-scout binary> <output dir>}
@@ -38,7 +39,8 @@ cat "$out/helm-versions.txt"
 kubectl get deployments -n "$ns" -o json > "$out/deployments.json"
 "$scout" map list --json --namespace "$ns" > "$out/map-list.json"
 for name in v4-labelled v4-bare v3-labelled v3-bare; do
-  "$scout" trace "deployment/$name" -n "$ns" --format json > "$out/trace-$name.json" || true
+  "$scout" trace "deployment/$name" -n "$ns" --format json > "$out/trace-$name.json" 2> "$out/trace-$name.stderr" || true
+  "$scout" explain "Deployment/$name" -n "$ns" --format json > "$out/explain-$name.json" 2> "$out/explain-$name.stderr" || true
 done
 
 python3 - "$out" <<'PY'
@@ -50,14 +52,23 @@ lines, bad = [], []
 for name in ["v4-labelled", "v4-bare", "v3-labelled", "v3-bare"]:
     meta = deployments.get(name, {})
     labels, annotations = meta.get("labels") or {}, meta.get("annotations") or {}
-    helm_marks = sorted(k for k in list(labels) + list(annotations) if "helm" in k)
-    lines.append("%s: cub-scout owner %s; helm keys on the object: %s" % (name, owners.get(name), ", ".join(helm_marks) or "none"))
-    if name not in owners:
-        bad.append("%s: not listed by map list" % name)
-    elif owners[name] not in ("Helm", "Native"):
-        bad.append("%s: claimed by %s" % (name, owners[name]))
-    elif labels.get("app.kubernetes.io/managed-by") == "Helm" and owners[name] != "Helm":
-        bad.append("%s: carries managed-by=Helm but reads as %s" % (name, owners[name]))
+    helm_marks = sorted("%s=%s" % (k, v) for k, v in list(labels.items()) + list(annotations.items()) if "helm" in (k + v).lower())
+    try:
+        trace = json.load(open("%s/trace-%s.json" % (out, name)))
+    except ValueError:
+        trace = None
+    releases = [l.get("id") or {} for l in (trace or {}).get("chain") or [] if (l.get("id") or {}).get("kind") == "Release"]
+    state = ((trace or {}).get("answer") or {}).get("state")
+    lines.append("%s: map owner %s; trace state %s, release %s; on the object: %s" % (
+        name, owners.get(name), state, "/".join([releases[-1].get("namespace", ""), releases[-1].get("name", "")]) if releases else None, ", ".join(helm_marks)))
+    if owners.get(name) != "Helm":
+        bad.append("%s: map list owner %s, want Helm" % (name, owners.get(name)))
+    if trace is None:
+        bad.append("%s: trace printed no JSON (stderr in trace-%s.stderr)" % (name, name))
+    elif not state:
+        bad.append("%s: trace JSON has no answer.state" % name)
+    elif not releases or releases[-1].get("name") != name:
+        bad.append("%s: trace chain does not end in Release %s" % (name, name))
 open(out + "/summary.txt", "w").write("\n".join(lines) + "\n")
 print("\n".join(lines))
 if bad:
