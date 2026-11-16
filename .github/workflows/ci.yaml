@@ -509,6 +509,9 @@ jobs:
       - name: Helm 4 and Helm 3 ownership on a real install
         run: bash scripts/ci/helm-lane.sh ./cub-scout "$RUNNER_TEMP/helm-lane"
 
+      - name: kro ownership on a real install
+        run: bash scripts/ci/kro-lane.sh ./cub-scout "$RUNNER_TEMP/kro-lane"
+
       - name: Record scoped controller acceptance
         run: |
           kubectl get applications.argoproj.io guestbook -n argocd -o json > "$RUNNER_TEMP/argo-application.json"
@@ -531,6 +534,7 @@ jobs:
             ${{ runner.temp }}/flux-delivery.json
             ${{ runner.temp }}/scout-controllers/flux-version.txt
             ${{ runner.temp }}/helm-lane/
+            ${{ runner.temp }}/kro-lane/
 
       - name: Test trace command
         run: ./cub-scout trace deployment/cart -n boutique
