@@ -2,6 +2,11 @@
 
 > **Positioning:** GitOps explorer for agents: verified answers with less agent spend. *Agentic* means a demonstrated dollar, credit and time advantage over standalone Claude using ordinary read-only tools, while preserving correctness and explainable unknowns. This is the product goal, not a universal savings claim. The [pilot evals](../evals/README.md) show scoped gains and regressions; the [3.0 execution plan](roadmap-3.0-execution.md) defines the fair baseline, release targets and economical development strategy.
 
+> **Current state:** what is shipped, what the next release carries, what was
+> decided and what is open are in one place:
+> [the state of the plan](roadmap-3.0-execution.md#state-of-the-plan--2026-11-16).
+> Where this page and that section disagree, that section wins.
+
 > **Status:** Authoritative
 >
 > This document **replaces and subsumes**:
@@ -173,7 +178,8 @@ issue is filed for these yet; file one when a package starts.
   Markdown (decided 2026-11-16). Needs a deprecation notice in v2.16. [Proposal](proposals/answer-envelope.md). It covers the
   witness rule (G3), cluster identity and cost (#599) and conformance (#596).
 - [ ] B: mark text read from the cluster as quoted data in JSON and MCP.
-- [ ] B: remove verdict wording (PASS / WATCH / ASK / BLOCK) from cub-scout's
+- [ ] B (decided 2026-11-16: the words leave JSON and MCP output in 3.0 and
+  stay in ASCII and Markdown): remove verdict wording (PASS / WATCH / ASK / BLOCK) from cub-scout's
   skills and fields; it belongs to the judge.
 - [ ] C: per-tool size ceilings checked in CI, and a summary view per tool.
 - [ ] C: deterministic bytes-and-tokens benchmark over the 24 prepared cases.
@@ -190,7 +196,8 @@ issue is filed for these yet; file one when a package starts.
   21 from 33,947 to 31,126, keeping every phrase the description tests
   require. Its effect on which tool an agent picks is not measured.
 - [ ] D: first fact kept in ConfigHub; needs fact told apart from intent.
-- [ ] F: repository topics and homepage; MCP directory and krew listings.
+- [x] F: repository topics and homepage (set 2026-11-13).
+- [ ] F: MCP directory and krew listings.
 - [ ] F: track installs and downloads instead of stars.
 - [ ] G1: `converging` with a recheck time on the landing check.
 - [ ] G2: a bounded, read-only wait on the landing check.
@@ -219,6 +226,37 @@ issue is filed for these yet; file one when a package starts.
   controller's digest with the Release's, as the live-status check does.
 - [ ] A read-only Channel as the route for an agent with no cluster access
   (#898 stays not planned; noted so the idea is kept).
+
+### Standing checks — 2026-11-16
+
+The table is in
+[the state of the plan](roadmap-3.0-execution.md#standing-checks). Each line
+below is a to-do; none has an issue yet.
+
+- [ ] Before every release: read hosted ConfigHub's `/api/info` and compare
+  with the SDK version cub-scout is built with. A server a minor ahead is
+  refused by default.
+- [ ] On every ConfigHub minor: bump the SDK, move the Connected and
+  live-status lanes, sweep for `cub` subcommands that were removed.
+- [ ] Record in the live-status artifact the versions `cub cluster up`
+  installs (Flux, Argo CD, Sveltos, argobot); they are not pinned here.
+- [ ] Pin kind and the node image in the live-status lane, and record them.
+- [ ] Move the GitOps lane from Flux 2.9.6 to 2.10 and from Argo CD v3.5.3 to
+  the current release; re-read the recorded answers after each move.
+- [ ] A lane step that installs one chart with Helm 4 and one with Helm 3.
+- [ ] kro, Crossplane, Terraform and Modelplane have detectors and no lane on
+  a real install. Add one each, or say "not tested on a real install" beside
+  every claim about them.
+- [ ] Pin goreleaser in the release job.
+- [ ] Once a release: check what the ConfigHub plugins and skills (the mini
+  plugin, confighub-skills, Pilot's provider pin) say about cub-scout's
+  commands and JSON, and tell a consumer before a field it reads goes.
+- [ ] Once a release: read what the delivery controllers' own MCP servers and
+  the cluster consoles give an agent, and whether cub-scout's place beside
+  them still holds.
+- [ ] The live-status lane failed three times on 2026-11-16 with every
+  controller timing out after `cub cluster up`, on code that passed on
+  2026-11-13. Find the cause before relying on the lane for a release.
 
 ### Status output follow-up — 2026-10-11
 
@@ -258,7 +296,7 @@ v2.13 scope and the frozen 24 agent cases.
 agent-facing correctness fixes (#625, #629, #630, #631, #634, #637), invocation
 hints (#640) and eval-harness completeness work (#643). Archive checksums,
 macOS/Linux entry points, explicit-context inventory and Homebrew hashes passed.
-Current install/version references point to v2.12.4. Anonymous container pulls
+Install and version references pointed to v2.12.4 at the time. Anonymous container pulls
 still fail (#520). Harness changes and smaller outputs do not establish a
 controlled cost or credit savings result; execution continues in #645.
 
@@ -521,6 +559,12 @@ before implementation.
 > report ([#888](https://github.com/confighub/cub-scout/issues/888)) and the deprecation notices; 3.0.0 stays the transition
 > only; 3.1 is facts in ConfigHub ([#600](https://github.com/confighub/cub-scout/issues/600)) and signed receipts ([#889](https://github.com/confighub/cub-scout/issues/889)).
 > The paid benchmark is not scheduled, so 3.0.0 makes no cost-saving claim.
+>
+> **Renumbered on 2026-11-16.** v2.16.0 ships what is ready (ConfigHub 0.11,
+> the `answer` envelope on two commands, the MCP tool profile); the pre-attach
+> report, conformance and the remaining deprecation notices move to v2.17.
+> The stage and version lists below predate this; read
+> [the state of the plan](roadmap-3.0-execution.md#state-of-the-plan--2026-11-16).
 >
 > **Added to on 2026-11-13.** The maintainer adopted, for now, an
 > [agent plan](roadmap-3.0-execution.md#agent-plan--2026-11-13): four

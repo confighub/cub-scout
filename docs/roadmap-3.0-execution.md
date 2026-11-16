@@ -11,13 +11,95 @@
 > 2026-10-10).
 > Current gates: [the readiness ledger](releases/v2.15-readiness.md).
 
+## State of the plan — 2026-11-16
+
+The one place to read what is shipped, what is next and what is open. Where
+this section and anything below it disagree, this section wins.
+
+### Shipped
+
+| Release | Date | What |
+|---|---|---|
+| [v2.15.0](releases/v2.15.0.md) | 2026-11-10 | Works with ConfigHub 0.10; bridge workers gone; the live-status cluster check. |
+| [v2.15.1](releases/v2.15.1.md) | 2026-11-13 | `compare source-truth` on clusters attached with `cub cluster up`, and PASS only when something was compared; Flux kinds found; health in the live-status check; wording; a smaller MCP catalog. |
+
+### v2.16.0, in preparation
+
+Renumbered on 2026-11-16, as v2.14 was on 2026-10-10: the next minor ships
+what is ready, and the work the trimmed plan gave to v2.16 moves to v2.17.
+
+| In v2.16.0 | From |
+|---|---|
+| Works with ConfigHub 0.11 (SDK core v0.11.4). Hosted ConfigHub moved to 0.11 on 2026-11-13 and v2.15.1 refuses it by default. | [#758] |
+| `trace`: a JSON answer, with the typed reason `no-owner-marker-recognised`, for a resource with no owner marker; before, an error line and no JSON. | #915 |
+| The `answer` envelope: full on `trace` (state, reason, whose word each claim rests on, what was not read, next read, measured cost), lean on `compare source-truth` (state, reason, time, unknowns, next). | #920, #922; packages A, B |
+| `mcp serve --tools all\|core\|<names>` and `cub_scout_more`; the default is unchanged. | #918; package C |
+| Answer sizes against raw `kubectl`, recorded by the live lane on every run. | #916; packages C, E rung 1 |
+| `trace --artifacts` says "not applicable" for a source with no object; docs say "no owner marker recognised". | #911, #923 |
+| Deprecation notice: the verdict words leave JSON and MCP output in 3.0. | decision, 2026-11-16 |
+
+| Moved to v2.17 | Why |
+|---|---|
+| [#888] pre-attach report | not started |
+| [#596] conformance across CLI, MCP and TUI | the envelope's conformance check exists for two commands; the rest is not started |
+| Deprecation notices for the other 3.0 removals, including `fleet outliers` | not written |
+| The envelope on `gitops status`, `explain`, `doctor` | needs the state words decided, and a size check first |
+
+Still owed from v2.15, unchanged: [#882] item 5 and a live sighting of two
+Flux kinds; the remaining [#887] items; the rest of [#599]; the eval cases.
+
+### Decisions made
+
+| Date | Decision |
+|---|---|
+| 2026-11-13 | The agent plan (packages A to F, additions G1 to G5) adopted "for now"; principle 10; repository topics and homepage set. |
+| 2026-11-13 | The envelope is named `answer`; `trace` carries it first. `map` is in the core MCP tool set; the default profile stays `all`. |
+| 2026-11-16 | `compare source-truth` carries the lean form, with `observedAt`. |
+| 2026-11-16 | In 3.0 the verdict words (`PASS`, `WATCH`, `ASK`, `BLOCK`, `AGREED` and the rest) leave JSON and MCP output and stay in ASCII and Markdown. |
+| 2026-11-16 | The consumer-side source-truth fixtures are not in use; nothing downstream changes in step with `test/fixtures/source-truth`. |
+
+### Open, and whose it is
+
+| Open | Whose |
+|---|---|
+| Any paid eval run. Three things wait on one: whether the shorter catalog helps, whether `core` becomes the default profile in 3.0, whether the `answer` block earns its bytes. | maintainer |
+| State words for `gitops status`, `explain`, `doctor`. | maintainer |
+| Cluster ID in `answer`: read on request, or always. | maintainer |
+| Where to raise the fact-storage and delivery-attestation questions with ConfigHub (packages D, G4). | maintainer |
+
+### Standing checks
+
+cub-scout reads other projects' objects and APIs, and each of them moves. On
+2026-11-13 three faults were found only because a real cluster had moved on
+from what the code assumed. These checks are to-dos for every release, not
+one-off work. "Tests" means a CI lane on a real install; "pin" is what the
+repository names today. Latest releases were read from GitHub on 2026-11-16.
+
+| What | cub-scout builds or tests against | Latest | To do |
+|---|---|---|---|
+| ConfigHub server and SDK | SDK core v0.10.11 on `main` before v2.16.0 | v0.11.4 (2026-11-16); hosted is v0.11.3 | In v2.16.0. Then on every ConfigHub minor: a server ahead is refused by default ([#758]). Check hosted `/api/info` before each release. |
+| `cub` CLI | v0.10.11 in the Connected and live-status lanes | v0.11.4 | Moves with the SDK. Sweep for removed subcommands, which exit 0 and print help. |
+| `cub cluster up`, argobot | whatever the pinned `cub` installs; argobot v0.2.9 seen | argobot tag v0.2.9 | Record the versions `cub cluster up` installs in the lane artifact; they are not pinned here. |
+| ConfigHub plugins and skills (the mini plugin, confighub-skills, Pilot's provider pin) | not tested | mini plugin v0.93.0; confighub-skills tag v0.3.0; Pilot pins cub-scout v2.7.0 | Check that what each says about cub-scout's commands and JSON is still true; tell the consumer before a field it reads goes. |
+| Flux | v2.9.6 in the GitOps lane; whatever `cub cluster up` installs in the live-status lane (2.10 seen) | v2.10.0 | Move the GitOps lane to 2.10. The live lane fails if a Flux kind is read in a version the cluster does not serve. |
+| Flux Operator and its Web UI | not tested | v0.62.1 | [#882] item 5 needs a lane with an identity provider. |
+| Argo CD | v3.5.3 in the GitOps lane | v3.6.1 | Move the lane; re-read `trace` output on it. |
+| Sveltos | whatever `cub cluster up` installs | v1.17.0 | Record the version in the lane artifact. |
+| Kubernetes, kind | client libraries v0.33.1; kind is not pinned in the live-status lane | Kubernetes v1.37.2; kind v0.33.0 | Pin kind and the node image in every lane, and record them. |
+| Helm | not installed in any lane; recorded 4.1.4 and 3.22.0 | v4.3.2 | A lane step that installs one chart with Helm 4 and one with Helm 3. |
+| kro, Crossplane, Terraform, Modelplane | detectors and tracers exist; no lane | kro v0.10.0; Crossplane v2.4.3 | Each is untested against a real install. Either add a lane or say so beside every claim about it. |
+| Kyverno, Argo Rollouts | named in docs; no lane | Kyverno v1.20.0; Rollouts v1.10.2 | [#602] is not planned; keep the docs to what is tested. |
+| Build tools | golangci-lint v2.14.0; goreleaser v2.18.2 in one job and unpinned in the release job | v2.15.0; v2.20.2 | Pin goreleaser in the release job. |
+| Other GitOps tools for agents (MCP servers of the delivery controllers, cluster consoles) | not tested | | Once a release, read what they give an agent and whether cub-scout's place beside them still holds. |
+
 ## Agent plan — 2026-11-13
 
 Adopted by the maintainer on 2026-11-13 "for now": it can be withdrawn. It
 adds to the [trimmed plan](#trimmed-plan--2026-11-10) below and changes two of
 its rows: v2.16 grows, and 3.0 is no longer the transition only. The
-not-planned list and the unscheduled paid benchmark stand. Nothing here is
-built yet, and none of it is claimed by any release.
+not-planned list and the unscheduled paid benchmark stand. What is built so
+far is in [the state of the plan](#state-of-the-plan--2026-11-16) above; the
+rest is not.
 
 The plan follows from a definition of
 [agentic GitOps observability](reference/agentic-gitops-observability.md),
@@ -91,7 +173,7 @@ row below is still owed.
 |---|---|
 | v2.15 | what remains of [#827]: the false-health behaviour was fixed in #830 (v2.13); still owed are a machine-readable field for a broken delivery chain in `explain` and the eval case; [#887] independent check of a Release's reported live status; the remaining items of [#882]; the rest of [#599] (explicit cluster, identity, reported cost). Bump the ConfigHub SDK when ConfigHub's minor version moves ([#758]). |
 | v2.16 | [#888] pre-attach report; [#596] conformance narrowed to CLI, MCP and TUI; deprecation notices for everything 3.0 removes, including `fleet outliers`. |
-| 3.0 | The transition only ([#595], [#386]): removals, `/v3`, a cub floor named at release time against the then-current cub (the "0.6" below predates the SDK reads), a migration guide. No new features, as [the roadmap](roadmap.md#path-to-30) has always said. |
+| 3.0 | The transition only ([#595], [#386]): removals, `/v3`, a cub floor named at release time against the then-current cub (the "0.6" below predates the SDK reads), a migration guide. No new features, as [the roadmap](roadmap.md#path-to-30) has always said. | **Changed on 2026-11-13:** the agent plan adds features to 3.0; see above.
 | 3.1 | [#600] facts in ConfigHub, with the pullable bot image ([#520]); [#889] signed receipts, key-based and verifiable offline first. Waits on a storage agreement with ConfigHub (D6), which has no date; 3.1 has none either. |
 
 **Not scheduled: the paid benchmark** ([#645]'s value gate). Paid runs are not
@@ -348,6 +430,11 @@ A gate accepting an annotation is a reported fact, not authority for scout to
 approve a release or proof of the release running.
 
 ## Sequence, work packets and exit gates
+
+> **Superseded.** The P4 to P6 rows below list items the
+> [trimmed plan](#trimmed-plan--2026-11-10) marks not planned (#539, #584,
+> #601, #602, #604, #605, #641). Read
+> [the state of the plan](#state-of-the-plan--2026-11-16) for what is next.
 
 Planning capacity: one lead/integrator, up to two cheap implementation workers,
 and one serial live-validation lane. The windows are **engineering-week ranges

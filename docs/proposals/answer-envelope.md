@@ -156,7 +156,7 @@ the same on a real cluster.
 
 ## Decisions for the maintainer
 
-1. The name: `answer`, `evidence`, or something else.
+1. The name. **Decided 2026-11-13:** `answer`.
 2. `state` words per command. A first list: `trace`: `traced`,
    `no-owner-marker`, `chain-not-ready`, `not-observable`. `compare
    source-truth`: `agreed`, `not-agreed`, `incomplete`, `not-observable`.
@@ -169,5 +169,5 @@ the same on a real cluster.
    is helped by it. Until 3.0 both are in JSON.
 4. `cluster.id`: opt-in as proposed, or always read (one extra GET a
    command).
-5. Start with which command. `compare source-truth` is the smallest and has
-   the consumer with the most at stake; `trace` is the most read.
+5. Start with which command. **Decided 2026-11-13:** `trace`; then
+   `compare source-truth`, in a lean form (2026-11-16).
