@@ -81,18 +81,18 @@ repository names today. Latest releases were read from GitHub on 2026-11-16.
 |---|---|---|---|
 | ConfigHub server and SDK | SDK core v0.10.11 on `main` before v2.16.0 | v0.11.4 (2026-11-16); hosted is v0.11.3 | In v2.16.0. Then on every ConfigHub minor: a server ahead is refused by default ([#758]). Check hosted `/api/info` before each release. |
 | `cub` CLI | v0.10.11 in the Connected and live-status lanes | v0.11.4 | Moves with the SDK. Sweep for removed subcommands, which exit 0 and print help. |
-| `cub cluster up`, argobot | whatever the pinned `cub` installs; argobot v0.2.9 seen | argobot tag v0.2.9 | Record the versions `cub cluster up` installs in the lane artifact; they are not pinned here. |
+| `cub cluster up`, argobot | whatever the pinned `cub` installs; argobot v0.2.9 seen | argobot tag v0.2.9 | Not pinned here. The live lane records the Kubernetes version and every container image in `installed-versions.txt` on each run. |
 | ConfigHub plugins and skills (the mini plugin, confighub-skills, Pilot's provider pin) | not tested | mini plugin v0.93.0; confighub-skills tag v0.3.0; Pilot pins cub-scout v2.7.0 | Check that what each says about cub-scout's commands and JSON is still true; tell the consumer before a field it reads goes. |
 | Flux | v2.9.6 in the GitOps lane; whatever `cub cluster up` installs in the live-status lane (2.10 seen) | v2.10.0 | Move the GitOps lane to 2.10. The live lane fails if a Flux kind is read in a version the cluster does not serve. |
 | Flux Operator and its Web UI | not tested | v0.62.1 | [#882] item 5 needs a lane with an identity provider. |
 | Argo CD | v3.5.3 in the GitOps lane | v3.6.1 | Move the lane; re-read `trace` output on it. |
 | Sveltos | whatever `cub cluster up` installs | v1.17.0 | Record the version in the lane artifact. |
-| CI runner image | `ubuntu-latest` everywhere but the live-status lane, which is pinned to `ubuntu-24.04` | `ubuntu-latest` moved to 26.04 on 2026-11-16 and broke that lane | Pin the image in every lane; find why 26.04 breaks three kind clusters on one runner. |
-| Kubernetes, kind | client libraries v0.33.1; kind v0.31.0 and node v1.35.0 through the kind action | Kubernetes v1.37.2; kind v0.33.0 | Pin kind and the node image in every lane, and record them. |
+| CI runner image | every Linux job pinned to `ubuntu-26.04`, the image it passed on, except the live-status lane on `ubuntu-24.04` | `ubuntu-latest` moved to 26.04 on 2026-11-16 and broke that lane | Pinned. Still to do: find why 26.04 breaks three kind clusters on one runner. |
+| Kubernetes, kind | client libraries v0.33.1; kind v0.31.0 and `kindest/node:v1.35.0` by digest, pinned in every kind step | Kubernetes v1.37.2; kind v0.33.0 | Pinned. Move to a newer kind and node on purpose, one lane run first. |
 | Helm | not installed in any lane; recorded 4.1.4 and 3.22.0 | v4.3.2 | A lane step that installs one chart with Helm 4 and one with Helm 3. |
 | kro, Crossplane, Terraform, Modelplane | detectors and tracers exist; no lane | kro v0.10.0; Crossplane v2.4.3 | Each is untested against a real install. Either add a lane or say so beside every claim about it. |
 | Kyverno, Argo Rollouts | named in docs; no lane | Kyverno v1.20.0; Rollouts v1.10.2 | [#602] is not planned; keep the docs to what is tested. |
-| Build tools | golangci-lint v2.14.0; goreleaser v2.18.2 in one job and unpinned in the release job | v2.15.0; v2.20.2 | Pin goreleaser in the release job. |
+| Build tools | golangci-lint v2.14.0; goreleaser v2.18.2 in the Windows job and v2.20.2 in the release job, pinned to what published v2.16.0 | v2.15.0; v2.20.2 | Pinned. The Windows job's goreleaser is two minors behind the release job's. |
 | Other GitOps tools for agents (MCP servers of the delivery controllers, cluster consoles) | not tested | | Once a release, read what they give an agent and whether cub-scout's place beside them still holds. |
 
 ## Agent plan — 2026-11-13

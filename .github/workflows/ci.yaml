@@ -25,13 +25,18 @@ on:
         required: false
         default: 'integration'
 
+# Every job names its runner image, kind and node image. On 2026-11-16
+# ubuntu-latest moved to 26.04 unannounced to this repository and broke the
+# live-status lane; nothing here should move without a commit that says so.
+# kind v0.31.0 and kindest/node v1.35.0 are what helm/kind-action@v1 installed
+# by default when they were pinned.
 jobs:
   # ==========================================================================
   # Level 0 + 1: Smoke + Unit (no cluster needed)
   # ==========================================================================
   unit:
     name: Unit Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     outputs:
       coverage_total: ${{ steps.coverage_metric.outputs.coverage_total }}
       coverage_min: ${{ steps.coverage_metric.outputs.coverage_min }}
@@ -310,7 +315,7 @@ jobs:
 
   integration:
     name: Integration Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: unit
     # Manual smoke/unit runs must not create a cluster. Unknown manual levels
     # also fail closed to offline jobs. Normal PR/main runs retain live CI.
@@ -334,6 +339,8 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1
         with:
+          version: v0.31.0
+          node_image: kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f
           cluster_name: test-cluster
 
       - name: Build binary for golden tests
@@ -365,7 +372,7 @@ jobs:
   # ==========================================================================
   gitops:
     name: GitOps E2E
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: integration
     steps:
       - uses: actions/checkout@v6
@@ -386,6 +393,8 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1
         with:
+          version: v0.31.0
+          node_image: kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f
           cluster_name: gitops-cluster
 
       - name: Install pinned GitOps controllers
@@ -533,7 +542,7 @@ jobs:
   # ==========================================================================
   demos:
     name: Demo Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: gitops
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.level == 'demos' || github.event.inputs.level == 'full'
     steps:
@@ -550,6 +559,8 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1
         with:
+          version: v0.31.0
+          node_image: kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f
           cluster_name: demo-cluster
 
       - name: Install pinned GitOps controllers
@@ -595,7 +606,7 @@ jobs:
   # ==========================================================================
   connected:
     name: Connected E2E
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: integration
     if: github.event_name == 'workflow_dispatch' && (github.event.inputs.level == 'connected' || github.event.inputs.level == 'full')
     steps:
@@ -617,6 +628,8 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1
         with:
+          version: v0.31.0
+          node_image: kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f
           cluster_name: connected-cluster
 
       - name: Provision authenticated disposable ConfigHub
@@ -689,6 +702,8 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1
         with:
+          version: v0.31.0
+          node_image: kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f
           cluster_name: connected-cluster
 
       - name: Provision authenticated disposable ConfigHub
@@ -721,7 +736,7 @@ jobs:
   # ==========================================================================
   proof-artifact:
     name: Proof Artifact
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs:
       - unit
       - integration
@@ -756,7 +771,7 @@ jobs:
   # ==========================================================================
   full:
     name: Full Verification
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.level == 'full'
     steps:
       - uses: actions/checkout@v6
@@ -772,6 +787,8 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1
         with:
+          version: v0.31.0
+          node_image: kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f
           cluster_name: full-test-cluster
 
       - name: Provision required scanner

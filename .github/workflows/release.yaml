@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -41,7 +41,8 @@ jobs:
         uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
-          version: latest
+          # Pinned: the version that published v2.16.0. Move it on purpose.
+          version: v2.20.2
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
