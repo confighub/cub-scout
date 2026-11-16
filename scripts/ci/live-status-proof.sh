@@ -53,33 +53,6 @@ touch "$private/owns-live-cluster"
 if ! cub cluster up "$name" --controller "$controller" > "$private/cluster-up.log" 2>&1; then
   echo 'cub cluster up failed; the end of its output, redacted:' >&2
   tail -n 40 "$private/cluster-up.log" | redact >&2
-  # Why the controllers did not become available: pod states, the reasons
-  # in their events, and the node's conditions. Written to the artifact and
-  # printed, so a failure says more than "timed out".
-  failed_kubeconfig="$CUB_CONFIG/clusters/$name.kubeconfig"
-  if [[ -s "$failed_kubeconfig" ]]; then
-    {
-      echo '== pods'
-      KUBECONFIG="$failed_kubeconfig" kubectl get pods -A -o wide 2>&1 || true
-      echo '== up to five pods with a container not ready, described (events at the end of each)'
-      KUBECONFIG="$failed_kubeconfig" kubectl get pods -A -o json 2>/dev/null | python3 -c '
-import json, sys
-for pod in json.load(sys.stdin)["items"]:
-    statuses = (pod.get("status") or {}).get("containerStatuses") or []
-    if pod["status"].get("phase") != "Succeeded" and (not statuses or not all(c.get("ready") for c in statuses)):
-        print(pod["metadata"]["namespace"], pod["metadata"]["name"])' 2>/dev/null | head -5 | while read -r ns pod; do
-        echo "-- $ns/$pod"
-        KUBECONFIG="$failed_kubeconfig" kubectl describe pod "$pod" -n "$ns" 2>&1 | sed -n '/^Containers:/,/^Conditions:/p;/^Events:/,$p' | tail -n 40 || true
-      done
-      echo '== warning events'
-      KUBECONFIG="$failed_kubeconfig" kubectl get events -A --field-selector=type=Warning --sort-by=.lastTimestamp 2>&1 | tail -n 40 || true
-      echo '== nodes'
-      KUBECONFIG="$failed_kubeconfig" kubectl describe nodes 2>&1 | sed -n '/^Conditions:/,/^Addresses:/p;/^Allocated resources:/,/^Events:/p' || true
-    } | redact > "$out/cluster-up-failure.txt" 2>&1
-    cat "$out/cluster-up-failure.txt" >&2
-  else
-    echo "no kubeconfig at clusters/$name.kubeconfig to read the cluster's state from" >&2
-  fi
   exit 1
 fi
 tail -n 15 "$private/cluster-up.log" | redact
