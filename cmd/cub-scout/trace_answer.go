@@ -74,8 +74,26 @@ const (
 	traceLinkReportedNotReady
 )
 
-func traceReadinessOf(link agent.ChainLink) traceLinkReadiness {
-	if !traceControllerKinds[link.Kind] || traceUnreadStatuses[strings.ToLower(strings.TrimSpace(link.Status))] {
+// traceHelmRelease reports whether a link is a Helm release that the Helm
+// tracer read from its release record. Its status is Helm's own report as
+// deployer, written when it installed or upgraded the release (#930).
+func traceHelmRelease(link agent.ChainLink, tool string) bool {
+	return tool == "helm" && link.Kind == "Release"
+}
+
+func traceReadinessOf(link agent.ChainLink, tool string) traceLinkReadiness {
+	status := strings.ToLower(strings.TrimSpace(link.Status))
+	if traceHelmRelease(link, tool) {
+		switch {
+		case traceUnreadStatuses[status]:
+			return traceLinkNotRead
+		case status == "deployed":
+			return traceLinkReportedReady
+		default:
+			return traceLinkReportedNotReady
+		}
+	}
+	if !traceControllerKinds[link.Kind] || traceUnreadStatuses[status] {
 		return traceLinkNotRead
 	}
 	if link.Ready {
@@ -129,13 +147,17 @@ func buildTraceAnswer(result *agent.TraceResult, kind, name, namespace string) *
 		answer.Cost.Coverage = "not-measured"
 	}
 
-	var reportedReady int
+	var reportedReady, helmReported int
 	var notRead []string
 	var broken *agent.ChainLink
 	brokenLabel := ""
 	for i, link := range result.Chain {
 		label, named := traceLinkLabel(link, i)
-		readiness := traceReadinessOf(link)
+		readiness := traceReadinessOf(link, result.Tool)
+		helmRelease := traceHelmRelease(link, result.Tool)
+		if helmRelease && readiness != traceLinkNotRead {
+			helmReported++
+		}
 		// Basis holds the links that are somebody's word for something: a
 		// controller's report, and the traced resource's own tie to the
 		// chain. The other links are in `chain` already; repeating each one
@@ -143,7 +165,7 @@ func buildTraceAnswer(result *agent.TraceResult, kind, name, namespace string) *
 		// of nine links (CI run 43517230657). They are counted in unknowns.
 		isTarget := strings.EqualFold(link.Kind, kind) && link.Name == name && link.Namespace == namespace
 		if readiness != traceLinkNotRead || isTarget {
-			answer.Basis = append(answer.Basis, traceLinkBasis(link, label, named, readiness))
+			answer.Basis = append(answer.Basis, traceLinkBasis(link, label, named, readiness, helmRelease))
 		}
 		switch readiness {
 		case traceLinkReportedReady:
@@ -188,6 +210,10 @@ func buildTraceAnswer(result *agent.TraceResult, kind, name, namespace string) *
 		if ownerRecognised && traceSafeName.MatchString(result.DetectedOwner) {
 			answer.Summary = fmt.Sprintf("%s carries a %s owner marker, and no delivery chain was observed for it.", target, result.DetectedOwner)
 		}
+	case broken != nil && traceHelmRelease(*broken, result.Tool):
+		answer.State, answer.Reason = traceStateChainNotReady, traceReasonLinkNotReady
+		answer.Summary = fmt.Sprintf("Helm records the release in the chain of %s as not deployed: %s.", target, brokenLabel)
+		explainTarget("its health and recent events")
 	case broken != nil:
 		answer.State, answer.Reason = traceStateChainNotReady, traceReasonLinkNotReady
 		answer.Summary = fmt.Sprintf("A delivery controller in the chain of %s reports not ready: %s.", target, brokenLabel)
@@ -209,6 +235,9 @@ func buildTraceAnswer(result *agent.TraceResult, kind, name, namespace string) *
 	default:
 		answer.State, answer.Reason = traceStateTraced, traceReasonControllersReady
 		answer.Summary = fmt.Sprintf("%s has a delivery chain of %d links; the %d delivery controllers in it report ready.", target, len(result.Chain), reportedReady)
+		if helmReported == reportedReady {
+			answer.Summary = fmt.Sprintf("%s has a delivery chain of %d links; Helm records the release in it as deployed.", target, len(result.Chain))
+		}
 		if len(notRead) > 0 {
 			answer.Summary += fmt.Sprintf(" Trace did not read the readiness of the other %d.", len(notRead))
 		}
@@ -231,6 +260,17 @@ func buildTraceAnswer(result *agent.TraceResult, kind, name, namespace string) *
 		if answer.State == traceStateTraced {
 			explainTarget("its health and recent events, which trace does not read")
 		}
+	}
+
+	// Helm writes a release's status when it installs or upgrades it, and
+	// does not watch the release's objects afterwards: the record is not a
+	// live view, and the answer says so wherever it rests on one.
+	if helmReported > 0 {
+		answer.Unknowns = append(answer.Unknowns, mapsvc.AnswerUnknown{
+			What:   "whether the release's objects are still as Helm recorded them",
+			Kind:   mapsvc.UnknownNotRequested,
+			Reason: "Helm records a release's status when it installs or upgrades it, and does not watch its objects afterwards",
+		})
 	}
 
 	// Everything else the trace could not read. The text was assembled from
@@ -261,12 +301,16 @@ func buildTraceAnswer(result *agent.TraceResult, kind, name, namespace string) *
 // readiness, and it rests on the controller's report. For every other link
 // the claim is only that it is in the chain, which trace established from
 // ownership metadata; its readiness is not claimed either way.
-func traceLinkBasis(link agent.ChainLink, label string, named bool, readiness traceLinkReadiness) mapsvc.AnswerBasis {
+func traceLinkBasis(link agent.ChainLink, label string, named bool, readiness traceLinkReadiness, helmRelease bool) mapsvc.AnswerBasis {
 	basis := mapsvc.AnswerBasis{}
-	switch readiness {
-	case traceLinkReportedReady:
+	switch {
+	case helmRelease && readiness == traceLinkReportedReady:
+		basis.RestsOn, basis.Claim = mapsvc.RestsOnDeployerReport, label+" is recorded as deployed by Helm"
+	case helmRelease && readiness == traceLinkReportedNotReady:
+		basis.RestsOn, basis.Claim = mapsvc.RestsOnDeployerReport, label+" is recorded by Helm as not deployed"
+	case readiness == traceLinkReportedReady:
 		basis.RestsOn, basis.Claim = mapsvc.RestsOnControllerReport, label+" is reported ready by its controller"
-	case traceLinkReportedNotReady:
+	case readiness == traceLinkReportedNotReady:
 		basis.RestsOn, basis.Claim = mapsvc.RestsOnControllerReport, label+" is reported not ready by its controller"
 	default:
 		basis.RestsOn, basis.Claim = mapsvc.RestsOnObjectMetadata, label+" is in the chain by ownership metadata; trace did not read its readiness"

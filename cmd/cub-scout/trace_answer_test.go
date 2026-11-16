@@ -221,7 +221,7 @@ func TestTraceReadinessIsOnlyWhatAControllerReported(t *testing.T) {
 		{agent.ChainLink{Kind: "kustomization", Ready: true, Status: "Ready"}, traceLinkNotRead},
 		{agent.ChainLink{Kind: "ConfigHub OCI", Ready: true, Status: "Ready"}, traceLinkNotRead},
 	} {
-		if got := traceReadinessOf(tc.link); got != tc.want {
+		if got := traceReadinessOf(tc.link, "flux"); got != tc.want {
 			t.Errorf("%+v: readiness %d, want %d", tc.link, got, tc.want)
 		}
 	}
@@ -234,7 +234,7 @@ func TestTraceReadinessIsOnlyWhatAControllerReported(t *testing.T) {
 	answer := buildTraceAnswer(long, "Deployment", "api", "prod")
 	require.Len(t, answer.Basis, 2)
 	require.Contains(t, answer.Unknowns[0].What, "and 3 more links")
-	basis := traceLinkBasis(agent.ChainLink{Kind: "ConfigHub OCI", Name: "apps", Namespace: "flux-system", Ready: true, Status: "Ready"}, "link 1 of the chain", false, traceLinkNotRead)
+	basis := traceLinkBasis(agent.ChainLink{Kind: "ConfigHub OCI", Name: "apps", Namespace: "flux-system", Ready: true, Status: "Ready"}, "link 1 of the chain", false, traceLinkNotRead, false)
 	require.Nil(t, basis.Ref)
 }
 
@@ -294,4 +294,58 @@ func TestTraceAnswerNeverSaysNoOwnerMarkerWhenDetectionRecognisedOne(t *testing.
 		answer := buildTraceAnswer(&unmarked, "Deployment", "copied", "helm-lane")
 		require.Equal(t, traceStateNoOwnerMarker, answer.State, "detected owner %q", owner)
 	}
+}
+
+func TestTraceAnswerReadsAHelmReleaseRecordAsTheDeployersReport(t *testing.T) {
+	chain := func(status string) *agent.TraceResult {
+		return &agent.TraceResult{
+			Object: agent.ResourceRef{Kind: "Deployment", Name: "web", Namespace: "apps"},
+			Tool:   "helm",
+			Chain: []agent.ChainLink{
+				{Kind: "HelmChart", Name: "web", Ready: true, Status: "v0.1.0"},
+				{Kind: "Release", Name: "web", Namespace: "apps", Ready: status == "deployed", Status: status},
+				{Kind: "Deployment", Name: "web", Namespace: "apps", Ready: true, Status: "Managed by Helm"},
+			},
+			FullyManaged: status == "deployed",
+		}
+	}
+
+	answer := buildTraceAnswer(chain("deployed"), "Deployment", "web", "apps")
+	requireConformingAnswer(t, answer, traceStates, traceReasons)
+	require.Equal(t, traceStateTraced, answer.State)
+	require.Equal(t, traceReasonControllersReady, answer.Reason)
+	require.Contains(t, answer.Summary, "Helm records the release in it as deployed")
+	var release *mapsvc.AnswerBasis
+	for i := range answer.Basis {
+		if strings.HasPrefix(answer.Basis[i].Claim, "Release/web") {
+			release = &answer.Basis[i]
+		}
+	}
+	require.NotNil(t, release, "basis = %#v", answer.Basis)
+	require.Equal(t, mapsvc.RestsOnDeployerReport, release.RestsOn)
+	require.Contains(t, release.Claim, "recorded as deployed by Helm")
+	found := false
+	for _, unknown := range answer.Unknowns {
+		if strings.Contains(unknown.What, "still as Helm recorded them") {
+			found = true
+		}
+	}
+	require.True(t, found, "a traced Helm answer must say Helm's record is not a live view: %#v", answer.Unknowns)
+
+	answer = buildTraceAnswer(chain("failed"), "Deployment", "web", "apps")
+	requireConformingAnswer(t, answer, traceStates, traceReasons)
+	require.Equal(t, traceStateChainNotReady, answer.State)
+	require.Contains(t, answer.Summary, "Helm records the release in the chain of")
+	for _, basis := range answer.Basis {
+		if strings.HasPrefix(basis.Claim, "Release/web") {
+			require.Equal(t, mapsvc.RestsOnDeployerReport, basis.RestsOn)
+			require.Contains(t, basis.Quoted, "status: failed")
+		}
+	}
+
+	// A Release link from any other tool is not read as Helm's record.
+	other := chain("deployed")
+	other.Tool = "flux"
+	answer = buildTraceAnswer(other, "Deployment", "web", "apps")
+	require.Equal(t, traceStateReadinessNotRead, answer.State)
 }
