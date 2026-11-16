@@ -106,6 +106,77 @@ func (h *HelmTracer) Trace(ctx context.Context, kind, name, namespace string) (*
 	return h.buildTraceResult(matchedRelease, kind, name, namespace)
 }
 
+// TraceReleaseForObject reads the release Helm's own annotations name for an
+// object, and claims it only when that release's stored manifest lists the
+// object. Annotations travel with copied manifests, so they name a candidate,
+// never an owner. A manifest document with no metadata.namespace is matched in
+// the release's own namespace, where Helm installs it; this is the only path
+// that does so, and only because three facts agree: the annotations name this
+// release and namespace, the manifest lists this kind and name, and the object
+// lives there. Trace's manifest scan keeps refusing such documents (#663).
+func (h *HelmTracer) TraceReleaseForObject(ctx context.Context, releaseName, releaseNamespace, kind, name, namespace string) (*TraceResult, error) {
+	if strings.TrimSpace(releaseName) == "" || strings.TrimSpace(kind) == "" || strings.TrimSpace(name) == "" {
+		return nil, fmt.Errorf("Helm resource identity is incomplete")
+	}
+	if err := requireHelmNamespace(releaseNamespace); err != nil {
+		return nil, err
+	}
+	if err := requireHelmNamespace(namespace); err != nil {
+		return nil, err
+	}
+	release, err := h.getRelease(ctx, releaseName, releaseNamespace)
+	if err != nil {
+		return nil, err
+	}
+	unresolved := func(message string) *TraceResult {
+		return &TraceResult{
+			Object:       ResourceRef{Kind: kind, Name: name, Namespace: namespace},
+			FullyManaged: false,
+			Tool:         "helm",
+			TracedAt:     time.Now(),
+			Error:        message,
+		}
+	}
+	if release == nil {
+		return unresolved(fmt.Sprintf("Helm release '%s' not found among Secrets returned by owner=helm in namespace '%s'", releaseName, releaseNamespace)), nil
+	}
+	listed, err := releaseManifestListsObject(release, kind, name, namespace)
+	if err != nil {
+		return nil, fmt.Errorf("cannot establish Helm manifest identity: %w", err)
+	}
+	if !listed {
+		return unresolved(fmt.Sprintf("no Helm release found managing this resource: release '%s' in namespace '%s', named by the object's meta.helm.sh annotations, does not list it", releaseName, releaseNamespace)), nil
+	}
+	return h.buildTraceResult(release, kind, name, namespace)
+}
+
+// releaseManifestListsObject reports whether exactly one document in the
+// release manifest is the object, taking a document with no namespace to be
+// in the release's namespace.
+func releaseManifestListsObject(release *helmRelease, kind, name, namespace string) (bool, error) {
+	identities, err := parseHelmManifestIdentities(release.Manifest)
+	if err != nil {
+		return false, err
+	}
+	matches := 0
+	for _, identity := range identities {
+		if identity.kind != kind || identity.name != name {
+			continue
+		}
+		documentNamespace := release.Namespace
+		if identity.namespacePresent && strings.TrimSpace(identity.namespace) != "" {
+			documentNamespace = identity.namespace
+		}
+		if documentNamespace == namespace {
+			matches++
+		}
+	}
+	if matches > 1 {
+		return false, fmt.Errorf("multiple manifest documents match the requested identity")
+	}
+	return matches == 1, nil
+}
+
 // TraceRelease traces a Helm release by name
 func (h *HelmTracer) TraceRelease(ctx context.Context, releaseName, namespace string) (*TraceResult, error) {
 	if err := requireHelmNamespace(namespace); err != nil {
