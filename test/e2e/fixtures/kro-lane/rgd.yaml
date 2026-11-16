@@ -1,0 +1,33 @@
+# The smallest ResourceGraphDefinition the CI kro step applies: one
+# Deployment at zero replicas, so nothing is pulled.
+apiVersion: kro.run/v1alpha1
+kind: ResourceGraphDefinition
+metadata:
+  name: laneapp.kro.run
+spec:
+  schema:
+    apiVersion: v1alpha1
+    kind: LaneApp
+    spec:
+      name: string
+  resources:
+    - id: deployment
+      template:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: ${schema.spec.name}
+          namespace: kro-lane
+        spec:
+          replicas: 0
+          selector:
+            matchLabels:
+              app: ${schema.spec.name}
+          template:
+            metadata:
+              labels:
+                app: ${schema.spec.name}
+            spec:
+              containers:
+                - name: pause
+                  image: registry.k8s.io/pause:3.10

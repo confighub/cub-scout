@@ -4,6 +4,7 @@
 package agent
 
 import (
+	"sort"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -513,42 +514,37 @@ func detectCrossplaneOwnership(labels, annotations map[string]string, resource *
 	return Ownership{}
 }
 
+// Labels kro writes on every object it creates (kro v0.10.0,
+// pkg/metadata/labels.go). Most of them name nothing: kro.run/owned is
+// "true", kro.run/kro-version a version, kro.run/instance-id a UID. Only
+// these name an owner.
+const (
+	kroInstanceNameLabel      = "kro.run/instance-name"
+	kroInstanceNamespaceLabel = "kro.run/instance-namespace"
+	kroInstanceKindLabel      = "kro.run/instance-kind"
+	kroInstanceGroupLabel     = "kro.run/instance-group"
+	kroInstanceVersionLabel   = "kro.run/instance-version"
+	kroDefinitionNameLabel    = "kro.run/resource-graph-definition-name"
+)
+
 func detectKroOwnership(labels, annotations map[string]string, resource *unstructured.Unstructured) Ownership {
-	// Prefer explicit kro metadata when present.
-	for key, value := range labels {
-		if !strings.HasPrefix(key, "kro.run/") {
-			continue
-		}
-		if value == "" {
-			continue
+	// The instance that created the object, by kro's own label.
+	if name := strings.TrimSpace(labels[kroInstanceNameLabel]); name != "" {
+		namespace := strings.TrimSpace(labels[kroInstanceNamespaceLabel])
+		if namespace == "" {
+			namespace = resource.GetNamespace()
 		}
 		return Ownership{
 			Type:       OwnerKro,
 			SubType:    "instance",
-			Name:       value,
-			Namespace:  resource.GetNamespace(),
-			Source:     "label:" + key,
-			Confidence: "high",
-		}
-	}
-	for key, value := range annotations {
-		if !strings.HasPrefix(key, "kro.run/") {
-			continue
-		}
-		if value == "" {
-			continue
-		}
-		return Ownership{
-			Type:       OwnerKro,
-			SubType:    "instance",
-			Name:       value,
-			Namespace:  resource.GetNamespace(),
-			Source:     "annotation:" + key,
+			Name:       name,
+			Namespace:  namespace,
+			Source:     "label:" + kroInstanceNameLabel,
 			Confidence: "high",
 		}
 	}
 
-	// Owner references are the primary generated-resource linkage in kro.
+	// Owner references to a kro instance or definition.
 	for _, owner := range resource.GetOwnerReferences() {
 		if !isKroAPIVersion(owner.APIVersion) {
 			continue
@@ -567,7 +563,7 @@ func detectKroOwnership(labels, annotations map[string]string, resource *unstruc
 		}
 	}
 
-	// kro definitions/instances can also be identified by API group.
+	// kro definitions and instances themselves, by API group.
 	apiVersion := resource.GetAPIVersion()
 	if isKroAPIVersion(apiVersion) {
 		subType := "instance"
@@ -580,6 +576,44 @@ func detectKroOwnership(labels, annotations map[string]string, resource *unstruc
 			Name:       resource.GetName(),
 			Namespace:  resource.GetNamespace(),
 			Source:     "apiGroup:" + strings.SplitN(apiVersion, "/", 2)[0],
+			Confidence: "medium",
+		}
+	}
+
+	// A definition named by kro's label, with no instance named.
+	if name := strings.TrimSpace(labels[kroDefinitionNameLabel]); name != "" {
+		return Ownership{
+			Type:       OwnerKro,
+			SubType:    "definition",
+			Name:       name,
+			Namespace:  resource.GetNamespace(),
+			Source:     "label:" + kroDefinitionNameLabel,
+			Confidence: "high",
+		}
+	}
+
+	// Any other kro.run/ key is kro's marker, and names no owner: its value
+	// may be "true", a version or a UID. The key is chosen in sorted order,
+	// so the same object gives the same answer every time.
+	for _, set := range []struct {
+		prefix string
+		values map[string]string
+	}{{"label:", labels}, {"annotation:", annotations}} {
+		keys := make([]string, 0, len(set.values))
+		for key, value := range set.values {
+			if strings.HasPrefix(key, "kro.run/") && strings.TrimSpace(value) != "" {
+				keys = append(keys, key)
+			}
+		}
+		if len(keys) == 0 {
+			continue
+		}
+		sort.Strings(keys)
+		return Ownership{
+			Type:       OwnerKro,
+			SubType:    "instance",
+			Namespace:  resource.GetNamespace(),
+			Source:     set.prefix + keys[0],
 			Confidence: "medium",
 		}
 	}

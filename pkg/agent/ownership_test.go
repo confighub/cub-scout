@@ -17,6 +17,7 @@
 package agent
 
 import (
+	"os"
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -824,22 +825,52 @@ func TestDetectOwnership_Kro(t *testing.T) {
 			wantName:    "test-resource",
 		},
 		{
-			name: "kro metadata via label",
+			// The labels kro v0.10.0 writes on an object it creates
+			// (pkg/metadata/labels.go). Only instance-name names the owner.
+			name: "kro instance by kro's own labels",
 			labels: map[string]string{
-				"kro.run/resource-graph-definition": "webapp-stack",
+				"kro.run/owned":                          "true",
+				"kro.run/kro-version":                    "v0.10.0",
+				"kro.run/instance-id":                    "6d3c0f0e-0000-4000-8000-000000000001",
+				"kro.run/instance-name":                  "checkout-prod",
+				"kro.run/instance-namespace":             "test-ns",
+				"kro.run/instance-kind":                  "WebApp",
+				"kro.run/node-id":                        "deployment",
+				"kro.run/resource-graph-definition-name": "webapp.kro.run",
+				"app.kubernetes.io/managed-by":           "kro",
 			},
 			wantType:    OwnerKro,
 			wantSubType: "instance",
-			wantName:    "webapp-stack",
+			wantName:    "checkout-prod",
 		},
 		{
-			name: "kro metadata via annotation",
+			name: "kro definition by kro's own label, no instance named",
+			labels: map[string]string{
+				"kro.run/owned":                          "true",
+				"kro.run/resource-graph-definition-name": "webapp.kro.run",
+			},
+			wantType:    OwnerKro,
+			wantSubType: "definition",
+			wantName:    "webapp.kro.run",
+		},
+		{
+			name: "a kro marker that names nothing: owner kro, name unknown",
+			labels: map[string]string{
+				"kro.run/owned":       "true",
+				"kro.run/kro-version": "v0.10.0",
+			},
+			wantType:    OwnerKro,
+			wantSubType: "instance",
+			wantName:    "",
+		},
+		{
+			name: "a kro annotation that names nothing",
 			annotations: map[string]string{
 				"kro.run/rgd": "payment-stack",
 			},
 			wantType:    OwnerKro,
 			wantSubType: "instance",
-			wantName:    "payment-stack",
+			wantName:    "",
 		},
 		{
 			name: "kro owner reference to instance",
@@ -1336,5 +1367,48 @@ func BenchmarkDetectOwnership_Unknown(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		DetectOwnership(resource)
+	}
+}
+
+func TestKroDetectionIsTheSameEveryTime(t *testing.T) {
+	// Before, the name came from whichever kro.run/ label map order gave
+	// first: "true", a version or a UID as often as the instance's name.
+	labels := map[string]string{
+		"kro.run/owned":         "true",
+		"kro.run/kro-version":   "v0.10.0",
+		"kro.run/instance-id":   "6d3c0f0e-0000-4000-8000-000000000001",
+		"kro.run/node-id":       "deployment",
+		"kro.run/instance-name": "checkout-prod",
+	}
+	unnamed := map[string]string{"kro.run/owned": "true", "kro.run/kro-version": "v0.10.0", "kro.run/node-id": "deployment"}
+	for i := 0; i < 50; i++ {
+		got := DetectOwnership(newTestResource("test-ns", "web", labels, nil))
+		if got.Name != "checkout-prod" || got.Source != "label:kro.run/instance-name" {
+			t.Fatalf("run %d: %#v; want checkout-prod from kro.run/instance-name", i, got)
+		}
+		got = DetectOwnership(newTestResource("test-ns", "web", unnamed, nil))
+		if got.Type != OwnerKro || got.Name != "" || got.Source != "label:kro.run/kro-version" {
+			t.Fatalf("run %d: %#v; want kro, no name, the first key in sorted order", i, got)
+		}
+	}
+}
+
+func TestKroDetectionOnAnObjectRecordedFromKro(t *testing.T) {
+	// Recorded in the GitOps lane (run 43957188126): the Deployment kro
+	// v0.10.0 created for instance LaneApp/lane. Ten kro.run/ labels, no
+	// owner references.
+	raw, err := os.ReadFile("testdata/kro-v0.10.0-created-deployment.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var object unstructured.Unstructured
+	if err := object.UnmarshalJSON(raw); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 20; i++ {
+		got := DetectOwnership(&object)
+		if got.Type != OwnerKro || got.SubType != "instance" || got.Name != "lane" || got.Namespace != "kro-lane" || got.Source != "label:kro.run/instance-name" {
+			t.Fatalf("run %d: %#v; want instance kro-lane/lane from kro.run/instance-name", i, got)
+		}
 	}
 }

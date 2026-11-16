@@ -1,0 +1,26 @@
+{
+ "apiVersion": "apps/v1",
+ "kind": "Deployment",
+ "metadata": {
+  "annotations": {
+   "deployment.kubernetes.io/revision": "1",
+   "internal.kro.run/apply-order": "1",
+   "internal.kro.run/node-path": "deployment"
+  },
+  "labels": {
+   "app.kubernetes.io/managed-by": "kro",
+   "applyset.kubernetes.io/part-of": "applyset-wYMGyMscfFYOYU3kc6Vpt0Nd0OACalLk4Ig7JKP6G6E-v1",
+   "kro.run/instance-group": "kro.run",
+   "kro.run/instance-id": "c7c6d2b4-3846-4e59-9ab6-e0082a1c7a5b",
+   "kro.run/instance-kind": "LaneApp",
+   "kro.run/instance-name": "lane",
+   "kro.run/instance-namespace": "kro-lane",
+   "kro.run/instance-version": "v1alpha1",
+   "kro.run/kro-version": "v0.10.0",
+   "kro.run/node-id": "deployment",
+   "kro.run/owned": "true"
+  },
+  "name": "lane-web",
+  "namespace": "kro-lane"
+ }
+}
