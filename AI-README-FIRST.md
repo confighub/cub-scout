@@ -1,5 +1,17 @@
 # AI Read Me First
 
+**2026-11-16:** read
+[the state of the plan](docs/roadmap-3.0-execution.md#state-of-the-plan--2026-11-16)
+first: it says what is shipped, what v2.16.0 carries, what was decided and
+what is open. [v2.15.1](docs/releases/v2.15.1.md) is the latest release
+(2026-11-13); [v2.15.0](docs/releases/v2.15.0.md) made cub-scout work with
+ConfigHub 0.10. Hosted ConfigHub has since moved to 0.11, which v2.15.1
+refuses by default; v2.16.0 is being prepared for it. Principle 10 in
+[CLAUDE.md](CLAUDE.md) and
+[agentic GitOps observability](docs/reference/agentic-gitops-observability.md)
+say what "for an agent" means and the rules found on real clusters. The
+entries below are older.
+
 **2026-10-26:** [v2.14.2 is published](docs/releases/v2.14.2.md): live status
 is read from each Release, where ConfigHub now records it (#883, item 1 of
 #882). v2.15 work is still paused.

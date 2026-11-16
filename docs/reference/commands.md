@@ -1764,8 +1764,7 @@ which was not always the cause.
 
 ### The `answer` block
 
-`compare source-truth --format json` carries a top-level `answer` (added after
-v2.15.1), in the lean form of the
+`compare source-truth --format json` carries a top-level `answer` (since v2.16.0), in the lean form of the
 [common envelope](../proposals/answer-envelope.md): five fields, with the
 vocabularies `trace` uses. The fields beside it are unchanged.
 
@@ -2302,7 +2301,7 @@ cub-scout mcp serve --recording objects.yaml
 
 `--tools` chooses which tools are listed. An agent pays for every listed tool
 at the start of a session, so a shorter list is a cheaper session. It never
-changes what a tool does. Added after v2.15.1.
+changes what a tool does. Since v2.16.0.
 
 | `--tools` | Lists | Catalog, standalone / with ConfigHub |
 |---|---|---|

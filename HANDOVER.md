@@ -2214,6 +2214,39 @@ Open for the maintainer: the small eval run; telling the consumer of the
 source-truth fixtures that the "agreed" case needs `object_revision`; a
 smaller default MCP tool set.
 
+## After v2.15.1: the envelope, the tool profile, ConfigHub 0.11 — 2026-11-16
+
+The current state is kept in one place now:
+`docs/roadmap-3.0-execution.md`, "State of the plan — 2026-11-16". Read that
+before anything below, some of which it supersedes.
+
+- **Merged after v2.15.1, to ship in v2.16.0:** #913 (a test race), #915
+  (`trace` answers in JSON with the typed reason `no-owner-marker-recognised`),
+  #916 (answer sizes recorded by the live lane), #917 and #918
+  (`mcp serve --tools` and `cub_scout_more`), #919 and #920 (the `answer`
+  envelope on `trace`), #921, #922 and its follow-up (the lean `answer` on
+  `compare source-truth`), #923 (docs wording).
+- **ConfigHub 0.11.** Hosted ConfigHub reports v0.11.3; SDK core v0.11.4 was
+  released on 2026-11-16. v2.15.1 is built with v0.10.11 and refuses a server
+  a minor ahead. The bump built with no source change. Found only because a
+  subagent was asked to compare every pin with the latest release; nothing
+  in the repository checks this. It is now a standing check.
+- **Three things that were learned the hard way.** A chain link's `ready`
+  flag is not evidence: several builders set it for links nothing read. The
+  read meter must wrap the in-process clients only, never the session's
+  stored config, which is written out as the `flux` CLI's kubeconfig. And
+  every independent review of a green change in this stretch found a real
+  fault; ask the reviewer to break one named thing.
+- **The live-status lane failed three times on 2026-11-16** with every
+  controller timing out after `cub cluster up`. A subagent comparing the
+  logs found the runner had moved: `ubuntu-latest` now resolves to 26.04, and
+  the last passing run was on 24.04. Pinned to `ubuntu-24.04` it passes. Why
+  26.04 fails is not known; the lane now writes `host.txt`.
+- **v2.16.0 notes** are in `docs/releases/v2.16.0.md`. The Connected and
+  live-status lanes passed against a real ConfigHub v0.11.4 (runs
+  43835428929 and 43836652534).
+- **Decisions and what is open:** in the state of the plan.
+
 ## Lessons applied, Flux kinds, catalog size — 2026-11-13 (later)
 
 On the maintainer's instruction ("tell me what the lessons are", "apply those

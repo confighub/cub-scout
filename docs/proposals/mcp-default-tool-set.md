@@ -192,8 +192,9 @@ behaves as today in either profile.
 
 ## Decisions for the maintainer
 
-1. Is the core right: `doctor`, `explain`, `map`, `gitops_status`, and with
-   ConfigHub `compare_source_truth` and `confighub_units`? The usage count
-   argues for `map` over `trace`; the change loop argues for `trace`.
-2. Ship parts 1 and 2 in v2.16 with the default unchanged?
-3. Approve the eval run that part 3 waits on.
+1. Is the core right? **Decided 2026-11-13:** yes, with `map`: `doctor`,
+   `explain`, `map`, `gitops_status`, and with ConfigHub
+   `compare_source_truth` and `confighub_units`.
+2. Ship parts 1 and 2 with the default unchanged? **Decided 2026-11-13:**
+   yes; they are in v2.16.0.
+3. Approve the eval run that part 3 waits on. **Open.**

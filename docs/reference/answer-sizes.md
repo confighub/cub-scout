@@ -43,6 +43,18 @@ The same run is the first with a measured cost: the Flux trace made 12
 Kubernetes requests and read 41,465 bytes to produce its 4,658-byte answer;
 the Argo CD trace made 9 and read 41,817.
 
+## As released in v2.16.0
+
+With the full `answer` on `trace` and the lean one on `compare source-truth`
+([run 43836709515](https://github.com/confighub/cub-scout/actions/runs/43836709515)):
+
+| Question | Flux: cub-scout / raw | Argo CD: cub-scout / raw |
+|---|---|---|
+| Which source and revision delivered this workload? | 4,564 / 12,679 (36%) | 6,383 / 15,690 (41%) |
+| Do ConfigHub, the controller and the workload agree? | 1,239 / 12,679 (10%) | 1,232 / 15,690 (8%) |
+| What do the delivery controllers report, cluster-wide? | 3,787 / 16,549 (23%) | 2,911 / 17,671 (16%) |
+| Who owns this resource? (one with no owner marker) | 1,576 / 8,432 (19%) | 1,576 / 8,432 (19%) |
+
 ## What the numbers do and do not show
 
 - **They favour raw kubectl in one way.** The raw side counts only the
