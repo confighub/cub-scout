@@ -4,9 +4,10 @@
 #
 # Helm 3 and 4 label every object they install app.kubernetes.io/managed-by=
 # Helm and annotate it with the release's name and namespace, whatever the
-# chart sets. Asserted: every object reads as owned by Helm in map list, and
-# trace returns a JSON answer whose chain ends in the release that installed
-# it. Recorded, not asserted: explain's answer.
+# chart sets. Asserted: every object reads as owned by Helm in map list;
+# trace returns a JSON answer naming the release that installed it; and a
+# copy of one object, which keeps the annotations, is credited to no release.
+# Recorded, not asserted: explain's answer.
 set -euo pipefail
 scout=${1:?usage: helm-lane.sh <cub-scout binary> <output dir>}
 out=${2:?usage: helm-lane.sh <cub-scout binary> <output dir>}
@@ -36,9 +37,23 @@ for v in v4.3.2 v3.22.1; do
 done
 cat "$out/helm-versions.txt"
 
+# A copy made the way people make them: the live object, renamed, applied.
+# It keeps Helm's label and annotations, and no release lists it.
+kubectl get deployment v4-bare -n "$ns" -o json | python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+m = d["metadata"]
+for k in ("uid", "resourceVersion", "creationTimestamp", "generation", "managedFields"):
+    m.pop(k, None)
+m["name"] = "copied"
+d.pop("status", None)
+d["spec"]["selector"]["matchLabels"]["app"] = "copied"
+d["spec"]["template"]["metadata"]["labels"]["app"] = "copied"
+json.dump(d, sys.stdout)' | kubectl apply -f -
+
 kubectl get deployments -n "$ns" -o json > "$out/deployments.json"
 "$scout" map list --json --namespace "$ns" > "$out/map-list.json"
-for name in v4-labelled v4-bare v3-labelled v3-bare; do
+for name in v4-labelled v4-bare v3-labelled v3-bare copied; do
   "$scout" trace "deployment/$name" -n "$ns" --format json > "$out/trace-$name.json" 2> "$out/trace-$name.stderr" || true
   "$scout" explain "Deployment/$name" -n "$ns" --format json > "$out/explain-$name.json" 2> "$out/explain-$name.stderr" || true
 done
@@ -49,7 +64,7 @@ out = sys.argv[1]
 deployments = {d["metadata"]["name"]: d["metadata"] for d in json.load(open(out + "/deployments.json"))["items"]}
 owners = {r["name"]: r.get("owner") for r in json.load(open(out + "/map-list.json")) if r.get("kind") == "Deployment"}
 lines, bad = [], []
-for name in ["v4-labelled", "v4-bare", "v3-labelled", "v3-bare"]:
+for name in ["v4-labelled", "v4-bare", "v3-labelled", "v3-bare", "copied"]:
     meta = deployments.get(name, {})
     labels, annotations = meta.get("labels") or {}, meta.get("annotations") or {}
     helm_marks = sorted("%s=%s" % (k, v) for k, v in list(labels.items()) + list(annotations.items()) if "helm" in (k + v).lower())
@@ -67,8 +82,11 @@ for name in ["v4-labelled", "v4-bare", "v3-labelled", "v3-bare"]:
         bad.append("%s: trace printed no JSON (stderr in trace-%s.stderr)" % (name, name))
     elif not state:
         bad.append("%s: trace JSON has no answer.state" % name)
+    elif name == "copied":
+        if releases:
+            bad.append("copied: trace credits the copy to Release %s, which does not list it" % releases[-1].get("name"))
     elif not releases or releases[-1].get("name") != name:
-        bad.append("%s: trace chain does not end in Release %s" % (name, name))
+        bad.append("%s: trace chain does not name Release %s" % (name, name))
 open(out + "/summary.txt", "w").write("\n".join(lines) + "\n")
 print("\n".join(lines))
 if bad:
