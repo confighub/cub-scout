@@ -16,6 +16,8 @@ mkdir -p "$root" "$out"
 curl --fail --silent --show-error --location --retry 3 --proto '=https' --proto-redir '=https' \
   https://github.com/kubernetes-sigs/kro/releases/download/v0.10.0/kro-core-install-manifests.yaml -o "$root/kro.yaml"
 printf '%s  %s\n' 6ec555646be855c9858781107b77ab462494ee0396c61e3c56dd3a02c5102ec9 "$root/kro.yaml" | sha256sum --check --status
+# The release manifest does not create its own namespace.
+kubectl create namespace kro-system
 kubectl apply --server-side -f "$root/kro.yaml"
 kubectl rollout status deployment/kro -n kro-system --timeout=300s
 
