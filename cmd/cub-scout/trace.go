@@ -844,7 +844,7 @@ func detectResourceOwnershipWithTraceSession(ctx context.Context, session *trace
 	if err != nil {
 		return nil, err
 	}
-	ownership := withHelmReleaseAnnotations(agent.DetectOwnership(resource), resource.GetLabels(), resource.GetAnnotations())
+	ownership := withHelmReleaseAnnotations(agent.DetectOwnership(resource), resource.GetAnnotations())
 	if ownership.Type == agent.OwnerUnknown && isCrossplaneProviderConfig(resource) {
 		ownership = agent.Ownership{Type: agent.OwnerCrossplane, SubType: "providerconfig", Name: resource.GetName(), Namespace: resource.GetNamespace(), Source: "apiGroup:" + resource.GroupVersionKind().Group, Confidence: "high"}
 	}
@@ -852,19 +852,19 @@ func detectResourceOwnershipWithTraceSession(ctx context.Context, session *trace
 }
 
 // withHelmReleaseAnnotations names a candidate Helm release from the
-// annotations Helm 3 and 4 write on every object they install, when the chart
-// gave the object no app.kubernetes.io/instance label. Without it, trace
-// matched the object in each release's stored manifest, which refuses a
+// annotations Helm 3 and 4 write on every object they install. Without a
+// release name, trace matched the object in each release's stored manifest, which refuses a
 // document with no metadata.namespace (#663); most charts write none. On a
 // real install (CI run 43869810212) `trace --format json` then printed no JSON
-// for an object that map listed as owned by Helm. A name taken from the older
-// helm.sh/chart label is a chart's name, not a release's, so the annotations
-// replace it. Both annotations must be present. The release they name is a
-// candidate: trace claims it only if its manifest lists the object
+// for an object that map listed as owned by Helm. The annotations are Helm's
+// own record and replace a name from a label: app.kubernetes.io/instance is
+// the chart's, and other tools write it (#931); helm.sh/chart names a chart,
+// not a release. Both annotations must be present. The release they name is
+// still a candidate: trace claims it only if its manifest lists the object
 // (HelmTracer.TraceReleaseForObject). Ownership detection, and so map, is
 // unchanged.
-func withHelmReleaseAnnotations(ownership agent.Ownership, labels, annotations map[string]string) agent.Ownership {
-	if ownership.Type != agent.OwnerHelm || strings.TrimSpace(labels["app.kubernetes.io/instance"]) != "" {
+func withHelmReleaseAnnotations(ownership agent.Ownership, annotations map[string]string) agent.Ownership {
+	if ownership.Type != agent.OwnerHelm {
 		return ownership
 	}
 	name := strings.TrimSpace(annotations["meta.helm.sh/release-name"])

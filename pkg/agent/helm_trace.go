@@ -145,7 +145,7 @@ func (h *HelmTracer) TraceReleaseForObject(ctx context.Context, releaseName, rel
 		return nil, fmt.Errorf("cannot establish Helm manifest identity: %w", err)
 	}
 	if !listed {
-		return unresolved(fmt.Sprintf("no Helm release found managing this resource: release '%s' in namespace '%s', named by the object's meta.helm.sh annotations, does not list it", releaseName, releaseNamespace)), nil
+		return unresolved(fmt.Sprintf("no Helm release found managing this resource: release '%s' in namespace '%s', named on the object, does not list it", releaseName, releaseNamespace)), nil
 	}
 	return h.buildTraceResult(release, kind, name, namespace)
 }

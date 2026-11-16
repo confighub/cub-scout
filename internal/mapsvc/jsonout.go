@@ -525,9 +525,12 @@ func InferRole(kind string) string {
 	switch kind {
 	// "OCI" is an Argo CD Application's OCI source: a source with no
 	// Kubernetes object of its own.
-	case "Source", "GitRepository", "OCIRepository", "OCI", "ConfigHub OCI", "HelmRepository", "Bucket", "SveltosReference", "EventSource", "ModelCache", "InferenceClass", "InferenceCluster":
+	// "HelmChart" is a chart a tracer read: Flux's source object, an Argo CD
+	// Application's chart, or the chart a Helm release records (#930).
+	case "Source", "GitRepository", "OCIRepository", "OCI", "ConfigHub OCI", "HelmRepository", "HelmChart", "Bucket", "SveltosReference", "EventSource", "ModelCache", "InferenceClass", "InferenceCluster":
 		return RoleSource
-	case "Kustomization", "HelmRelease", "Application", "ClusterProfile", "Profile", "EventTrigger", "ClusterHealthCheck", "ClusterPromotion", "ModelDeployment", "ModelService", "InferenceGateway":
+	// "Release" is a Helm release, read from its record by the Helm tracer.
+	case "Kustomization", "HelmRelease", "Release", "Application", "ClusterProfile", "Profile", "EventTrigger", "ClusterHealthCheck", "ClusterPromotion", "ModelDeployment", "ModelService", "InferenceGateway":
 		return RoleDeployer
 	case "ReplicaSet", "Pod", "ModelReplica", "ModelEndpoint", "ServingStack", "EKSCluster", "GKECluster", "ClusterSummary", "ClusterConfiguration", "ClusterReport", "HealthCheckReport", "EventReport":
 		return RoleIntermediate
@@ -595,7 +598,7 @@ func InferDeliveryStage(kind string) string {
 		return StageSource
 	case "OCIRepository", "OCI", "ConfigHub OCI":
 		return StageArtifact
-	case "Kustomization", "HelmRelease", "Application", "ClusterProfile", "Profile", "EventTrigger", "ClusterHealthCheck", "ClusterPromotion", "ModelDeployment", "ModelService", "InferenceGateway":
+	case "Kustomization", "HelmRelease", "Release", "Application", "ClusterProfile", "Profile", "EventTrigger", "ClusterHealthCheck", "ClusterPromotion", "ModelDeployment", "ModelService", "InferenceGateway":
 		return StageDeployer
 	case "Deployment", "StatefulSet", "DaemonSet", "Service", "ConfigMap", "Secret", "Ingress",
 		"ReplicaSet", "Pod", "Job", "CronJob", "ModelReplica", "ModelEndpoint", "ServingStack", "EKSCluster", "GKECluster", "ClusterSummary", "ClusterConfiguration", "ClusterReport", "HealthCheckReport", "EventReport":
