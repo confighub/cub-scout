@@ -577,18 +577,9 @@ jobs:
           ./cub-scout map list --json | jq -e 'length > 0'
           ./cub-scout quickstart demo quick --cleanup
 
-      - name: Provision scanner for risk demos
-        run: bash scripts/ci/setup-scan-provider.sh
-        env:
-          CUB_SCAN_RELEASE_TOKEN: ${{ secrets.CUB_SCAN_RELEASE_TOKEN }}
-
-      - name: Run ccve demo
-        run: |
-          kubectl apply -f examples/impressive-demo/bad-configs/monitoring-bad.yaml
-          ./cub-scout quickstart demo ccve
-          ./cub-scout scan --file examples/impressive-demo/bad-configs/monitoring-bad.yaml --json | jq -e '[.static.findings[] | select(.ccve_id == "CCVE-2025-0027" and .resource_name == "grafana")] | length == 1'
-          ./cub-scout quickstart demo ccve --cleanup
-
+      # The scanner demos (`ccve` and the `bigbank-incident` scenario) are not
+      # run here: the scanner is a private release, and this repository holds
+      # no credential to fetch it (run 43869520475). Taken out on 2026-11-16.
       - name: Run query demo
         run: |
           kubectl apply -f examples/demos/multi-cluster.yaml
@@ -598,9 +589,6 @@ jobs:
 
       - name: Run scenarios
         run: |
-          kubectl apply -f examples/impressive-demo/bad-configs/monitoring-bad.yaml
-          ./cub-scout quickstart demo scenario bigbank-incident
-          ./cub-scout quickstart demo scenario bigbank-incident --cleanup
           kubectl apply -f examples/demos/break-glass.yaml
           ./cub-scout quickstart demo scenario break-glass
           ./cub-scout quickstart demo scenario break-glass --cleanup
