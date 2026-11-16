@@ -1772,9 +1772,9 @@ vocabularies `trace` uses. The fields beside it are unchanged.
 | `answer` field | For `compare source-truth` |
 |---|---|
 | `state` | `agreed`, `not-agreed`, `incomplete`, `not-observable`. An observation, not a verdict. |
-| `reason` | When agreed, what was compared: `object-revision-is-head`, `git-revision-matches`, `oci-digest-matches`. Otherwise `surfaces-disagree`, `proof-gaps`, `surface-not-read`, `strategy-not-declared`. |
-| `unknowns[]` | Every `proof_gaps` key, as `not-compared` or `not-observable` with a reason. A count of failed surface reads, pointing at `collection_errors` for their text. And, whenever the state is `agreed` under a ConfigHub OCI strategy, that the controller's digest was not compared with ConfigHub's. `[]` only when there is none of these. |
-| `next[]` | `trace` of the workload, unless the state is `agreed` or no strategy was declared. |
+| `reason` | When agreed, what was compared: `object-revision-is-head`, `git-revision-matches`, `oci-digest-matches`. When not agreed: `surfaces-disagree` (two surfaces carry different revisions) or `source-not-as-declared` (the controller reads from a kind of source the strategy rules out). Otherwise `proof-gaps`, `surface-not-read`, `strategy-not-declared`, or `nothing-compared-for-strategy`. |
+| `unknowns[]` | Every `proof_gaps` key, as `not-compared` or `not-observable` with a reason. Every surface that is absent, by name. A count of failed reads, pointing at `collection_errors` for their text. And every `agreed` answer says what it did not compare: under a ConfigHub OCI strategy, the controller's digest against ConfigHub's; under the Git and plain OCI strategies, ConfigHub's record, which those strategies never consult. So `unknowns` is never empty for `agreed`. |
+| `next[]` | `trace` of the workload, unless the state is `agreed`. With no strategy declared, the command's own help, which lists the strategies. |
 
 Left out here, because on this three-surface answer the full block more than
 doubled it (773 to 1,876 bytes; the lean form is 1,061): a summary, a time,

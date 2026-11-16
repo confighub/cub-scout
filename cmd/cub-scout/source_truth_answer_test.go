@@ -79,13 +79,43 @@ func TestSourceTruthAnswerOverTheContractFixtures(t *testing.T) {
 			requireConformingLeanAnswer(t, answer, sourceTruthStates, sourceTruthReasons)
 			require.Equal(t, want[evidence.SourceTruth], answer.State, "verdict %s", evidence.SourceTruth)
 			seen[answer.State] = true
-			// Every proof gap the evidence names is an unknown in the answer.
+			// Every proof gap the evidence names is an unknown in the answer,
+			// with the kind the gap table gives it.
 			for _, gap := range evidence.ProofGaps {
 				found := false
 				for _, unknown := range answer.Unknowns {
-					found = found || unknown.What == gap
+					if unknown.What != gap {
+						continue
+					}
+					found = true
+					switch meaning, known := sourceTruthGapMeaning[gap]; {
+					case gap == "declared_strategy":
+						require.Equal(t, mapsvc.UnknownNotRequested, unknown.Kind)
+					case known:
+						require.Equal(t, meaning.kind, unknown.Kind, "gap %q", gap)
+					default:
+						require.Equal(t, mapsvc.UnknownNotObservable, unknown.Kind, "gap %q", gap)
+					}
 				}
 				require.True(t, found, "proof gap %q is missing from unknowns", gap)
+			}
+			// Every absent surface is named.
+			if strategy != "" {
+				for name, absent := range map[string]bool{"surfaces.confighub": surfaces.ConfigHub == nil, "surfaces.controller": surfaces.Controller == nil, "surfaces.runtime": surfaces.Runtime == nil} {
+					named := false
+					for _, unknown := range answer.Unknowns {
+						named = named || unknown.What == name
+					}
+					require.Equal(t, absent, named, "%s absent=%v but named=%v", name, absent, named)
+				}
+			}
+			// A source of a kind the strategy rules out is said to be that,
+			// not two surfaces that differ.
+			if strings.HasPrefix(entry.Name(), "02-") {
+				require.Equal(t, sourceTruthReasonSourceNotAsDeclared, answer.Reason)
+			}
+			if strings.HasPrefix(entry.Name(), "07-") || strings.HasPrefix(entry.Name(), "12-") {
+				require.Equal(t, sourceTruthReasonSurfacesDisagree, answer.Reason)
 			}
 			// No value read from ConfigHub or the cluster is restated.
 			text, _ := json.Marshal(answer)
@@ -97,16 +127,20 @@ func TestSourceTruthAnswerOverTheContractFixtures(t *testing.T) {
 				// to read next.
 				require.Equal(t, wantReason[strategy], answer.Reason)
 				require.Empty(t, answer.Next)
-				// Under the ConfigHub strategies "agreed" always says what
-				// it did not compare; under the others it has no unknowns.
+				// "agreed" always says what it did not compare: the artifact
+				// under the ConfigHub strategies, ConfigHub's record under
+				// the others, which never consult it.
+				require.Len(t, answer.Unknowns, 1)
+				require.Equal(t, mapsvc.UnknownNotCompared, answer.Unknowns[0].Kind)
 				if strategy == agent.StrategyConfigHubOCIFlux || strategy == agent.StrategyConfigHubOCIArgo {
-					require.Len(t, answer.Unknowns, 1)
-					require.Equal(t, mapsvc.UnknownNotCompared, answer.Unknowns[0].Kind)
 					require.Contains(t, answer.Unknowns[0].What, "digest")
 				} else {
-					require.Empty(t, answer.Unknowns)
+					require.Contains(t, answer.Unknowns[0].What, "ConfigHub's record")
 				}
-			} else if answer.Reason != sourceTruthReasonStrategyNotDeclared {
+			} else if answer.Reason == sourceTruthReasonStrategyNotDeclared {
+				require.Equal(t, "cub-scout compare source-truth --help", answer.Next[0].Command)
+				require.Len(t, answer.Next, 1)
+			} else {
 				require.Equal(t, "cub-scout trace Deployment/rag-server -n demo --format json", answer.Next[0].Command)
 			}
 		})
@@ -133,8 +167,9 @@ func TestSourceTruthJSONCarriesTheAnswerBesideTheOldFields(t *testing.T) {
 	// The failed reads are counted and pointed at; their text is not copied
 	// into the answer at all.
 	last := answer.Unknowns[len(answer.Unknowns)-1]
-	require.Equal(t, "2 surface read(s)", last.What)
+	require.Equal(t, "why 2 read(s) failed", last.What)
 	require.Contains(t, last.Reason, "collection_errors")
+	require.Equal(t, "surfaces.confighub", answer.Unknowns[0].What, "the surface that is absent is named")
 	raw, _ := json.Marshal(answer)
 	require.NotContains(t, string(raw), injected)
 
@@ -172,11 +207,49 @@ func TestSourceTruthAnswerDoesNotBuildFromUnshapedInput(t *testing.T) {
 	answer := buildSourceTruthAnswer(evidence, "", "Deployment", "api", "demo")
 	requireConformingLeanAnswer(t, answer, sourceTruthStates, sourceTruthReasons)
 	require.Equal(t, sourceTruthReasonStrategyNotDeclared, answer.Reason)
-	require.Empty(t, answer.Next)
+	require.Len(t, answer.Unknowns, 1)
+	require.Equal(t, mapsvc.UnknownNotRequested, answer.Unknowns[0].Kind)
+	require.Contains(t, answer.Unknowns[0].Reason, "no --strategy was given")
+	require.Equal(t, "cub-scout compare source-truth --help", answer.Next[0].Command)
 
 	blocked := agent.Derive(agent.StrategyGitFlux, agent.SourceTruthSurfaces{})
 	answer = buildSourceTruthAnswer(blocked, agent.StrategyGitFlux, "Deployment; rm -rf /", "api", "demo")
 	require.Empty(t, answer.Next, "no command is built from a kind that is not a kind")
 	named := buildSourceTruthAnswer(blocked, agent.StrategyGitFlux, "Deployment", "api", "demo")
 	require.Len(t, named.Next, 1)
+}
+
+// A strategy this code has no comparison for is not "agreed", whatever the
+// evidence says, and an absent surface is named even when no error came
+// with it.
+func TestSourceTruthAnswerClaimsOnlyComparisonsItKnows(t *testing.T) {
+	surfaces := agent.SourceTruthSurfaces{
+		ConfigHub:  &agent.ConfigHubSurface{Space: "demo", Unit: "api", Revision: "3"},
+		Controller: &agent.ControllerSurface{Kind: "Flux", Source: "https://example.invalid/repo.git", RevisionOrDigest: "main@sha1:abc1234", Health: "Ready"},
+		Runtime:    &agent.RuntimeSurface{Resource: "Deployment/api in demo", Field: "image", Value: "example/api:abc1234", Health: "Current"},
+	}
+	future := agent.SourceTruthEvidence{DeclaredStrategy: "Some -> Future -> Path", Status: agent.StatusPASS, SourceTruth: agent.VerdictAGREED, Surfaces: surfaces}
+	answer := buildSourceTruthAnswer(future, agent.SourceTruthStrategy("future-path"), "Deployment", "api", "demo")
+	requireConformingLeanAnswer(t, answer, sourceTruthStates, sourceTruthReasons)
+	require.Equal(t, sourceTruthStateIncomplete, answer.State)
+	require.Equal(t, sourceTruthReasonNothingCompared, answer.Reason)
+	require.Equal(t, mapsvc.UnknownNotCompared, answer.Unknowns[0].Kind)
+
+	// No surface and no error: the answer still says which were not read.
+	silent := agent.Derive(agent.StrategyGitFlux, agent.SourceTruthSurfaces{Runtime: surfaces.Runtime})
+	require.Empty(t, silent.CollectionErrors)
+	answer = buildSourceTruthAnswer(silent, agent.StrategyGitFlux, "Deployment", "api", "demo")
+	var named []string
+	for _, unknown := range answer.Unknowns {
+		named = append(named, unknown.What)
+	}
+	require.Equal(t, []string{"surfaces.confighub", "surfaces.controller"}, named)
+}
+
+func TestAnswerCostCarriesEveryMeasuredField(t *testing.T) {
+	full := mapsvc.AnswerCostFrom(agent.KubernetesReadCost{RequestsMade: 4, ResponseBodyBytes: 9000, TransportErrors: 1, BodyReadErrors: 2, DurationMillis: 120, Reused: true, Coverage: "trace-session-clients"})
+	require.Equal(t, mapsvc.AnswerCost{RequestsMade: 4, ResponseBodyBytes: 9000, TransportErrors: 1, BodyReadErrors: 2, DurationMillis: 120, Reused: true, Coverage: "trace-session-clients"}, full)
+	raw, err := json.Marshal(mapsvc.AnswerCostFrom(agent.KubernetesReadCost{RequestsMade: 4, Coverage: "trace-session-clients"}))
+	require.NoError(t, err)
+	require.JSONEq(t, `{"requestsMade":4,"responseBodyBytes":0,"durationMillis":0,"coverage":"trace-session-clients"}`, string(raw), "zero error counters and the reuse flag are left out; the budget fields never are")
 }
