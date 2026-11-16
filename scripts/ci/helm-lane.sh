@@ -5,8 +5,9 @@
 # Helm 3 and 4 label every object they install app.kubernetes.io/managed-by=
 # Helm and annotate it with the release's name and namespace, whatever the
 # chart sets. Asserted: every object reads as owned by Helm in map list;
-# trace returns a JSON answer naming the release that installed it, with the
-# chart as intermediate and the release as deployer; and two copies, one keeping
+# trace answers traced, from Helm's record of the release, naming the release
+# that installed it, with the chart as intermediate and the release as
+# deployer; and two copies, one keeping
 # Helm's annotations and one only the chart's instance label, are credited
 # to no release.
 # Recorded, not asserted: explain's answer.
@@ -107,6 +108,8 @@ for name in ["v4-labelled", "v4-bare", "v3-labelled", "v3-bare", "copied", "rela
     elif not releases or releases[-1].get("name") != name:
         bad.append("%s: trace chain does not name Release %s" % (name, name))
     else:
+        if state != "traced":
+            bad.append("%s: trace state %s, want traced (Helm records the release as deployed)" % (name, state))
         roles = {(l.get("id") or {}).get("kind"): l.get("role") for l in trace.get("chain") or []}
         if roles.get("HelmChart") != "intermediate" or roles.get("Release") != "deployer":
             bad.append("%s: chain roles %s, want HelmChart intermediate and Release deployer" % (name, roles))
