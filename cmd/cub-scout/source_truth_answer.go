@@ -6,6 +6,7 @@ package main
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/confighub/cub-scout/v2/internal/mapsvc"
 	"github.com/confighub/cub-scout/v2/pkg/agent"
@@ -64,8 +65,8 @@ type sourceTruthEnvelope struct {
 // each surface is does not vary and is in the contract, not in every answer:
 // confighub is ConfigHub's record, controller is the controller's report,
 // runtime is the workload object.
-func buildSourceTruthAnswer(ev agent.SourceTruthEvidence, strategy agent.SourceTruthStrategy, kind, name, namespace string) *mapsvc.LeanAnswer {
-	answer := &mapsvc.LeanAnswer{Unknowns: []mapsvc.AnswerUnknown{}, Next: []mapsvc.AnswerNext{}}
+func buildSourceTruthAnswer(ev agent.SourceTruthEvidence, strategy agent.SourceTruthStrategy, kind, name, namespace string, observedAt time.Time) *mapsvc.LeanAnswer {
+	answer := &mapsvc.LeanAnswer{ObservedAt: observedAt.UTC().Format(time.RFC3339), Unknowns: []mapsvc.AnswerUnknown{}, Next: []mapsvc.AnswerNext{}}
 	targetNamed := traceSafeKind.MatchString(kind) && traceSafeName.MatchString(name) && traceSafeName.MatchString(namespace)
 
 	confighubOCI := strategy == agent.StrategyConfigHubOCIArgo || strategy == agent.StrategyConfigHubOCIFlux

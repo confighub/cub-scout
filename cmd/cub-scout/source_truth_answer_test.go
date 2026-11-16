@@ -10,12 +10,15 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/confighub/cub-scout/v2/internal/mapsvc"
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
+
+var observedAtForTests = time.Date(2026, 11, 16, 9, 30, 0, 0, time.UTC)
 
 // requireConformingLeanAnswer is the lean envelope's contract: a state and a
 // reason from the command's lists, unknowns with the shared vocabulary, next
@@ -27,7 +30,8 @@ func requireConformingLeanAnswer(t *testing.T, answer *mapsvc.LeanAnswer, states
 		State: answer.State, Reason: answer.Reason, Unknowns: answer.Unknowns, Next: answer.Next,
 		// The fields the lean form leaves out, filled so the shared check
 		// judges only what a lean answer carries.
-		Summary: "-", ObservedAt: "2026-01-01T00:00:00Z", Cluster: mapsvc.AnswerCluster{IDSource: "not-read"},
+		ObservedAt: answer.ObservedAt,
+		Summary:    "-", Cluster: mapsvc.AnswerCluster{IDSource: "not-read"},
 		Basis: []mapsvc.AnswerBasis{}, Cost: mapsvc.AnswerCost{Coverage: "not-measured"},
 	}
 	requireConformingAnswer(t, full, states, reasons)
@@ -35,7 +39,8 @@ func requireConformingLeanAnswer(t *testing.T, answer *mapsvc.LeanAnswer, states
 	require.NoError(t, err)
 	var keys map[string]json.RawMessage
 	require.NoError(t, json.Unmarshal(raw, &keys))
-	require.Len(t, keys, 4, "the lean form is state, reason, unknowns and next: %s", raw)
+	require.Len(t, keys, 5, "the lean form is state, reason, observedAt, unknowns and next: %s", raw)
+	require.Equal(t, "2026-11-16T09:30:00Z", answer.ObservedAt)
 	for _, key := range []string{`"unknowns":[`, `"next":[`} {
 		require.Contains(t, string(raw), key)
 	}
@@ -75,7 +80,7 @@ func TestSourceTruthAnswerOverTheContractFixtures(t *testing.T) {
 			require.NoError(t, json.Unmarshal(raw, &surfaces))
 			evidence := agent.Derive(strategy, surfaces)
 
-			answer := buildSourceTruthAnswer(evidence, strategy, "Deployment", "rag-server", "demo")
+			answer := buildSourceTruthAnswer(evidence, strategy, "Deployment", "rag-server", "demo", observedAtForTests)
 			requireConformingLeanAnswer(t, answer, sourceTruthStates, sourceTruthReasons)
 			require.Equal(t, want[evidence.SourceTruth], answer.State, "verdict %s", evidence.SourceTruth)
 			seen[answer.State] = true
@@ -160,7 +165,7 @@ func TestSourceTruthJSONCarriesTheAnswerBesideTheOldFields(t *testing.T) {
 	})
 	evidence.Context = "prod-east"
 	evidence.CollectionErrors = []string{"ConfigHub: unit read failed: " + injected, "controller: " + injected}
-	answer := buildSourceTruthAnswer(evidence, agent.StrategyConfigHubOCIFlux, "Deployment", "api", "demo")
+	answer := buildSourceTruthAnswer(evidence, agent.StrategyConfigHubOCIFlux, "Deployment", "api", "demo", observedAtForTests)
 	requireConformingLeanAnswer(t, answer, sourceTruthStates, sourceTruthReasons)
 	require.Equal(t, sourceTruthStateNotObservable, answer.State)
 	require.Equal(t, sourceTruthReasonSurfaceNotRead, answer.Reason)
@@ -204,7 +209,7 @@ func TestSourceTruthJSONCarriesTheAnswerBesideTheOldFields(t *testing.T) {
 // an undeclared strategy has nothing to read next.
 func TestSourceTruthAnswerDoesNotBuildFromUnshapedInput(t *testing.T) {
 	evidence := agent.Derive("", agent.SourceTruthSurfaces{})
-	answer := buildSourceTruthAnswer(evidence, "", "Deployment", "api", "demo")
+	answer := buildSourceTruthAnswer(evidence, "", "Deployment", "api", "demo", observedAtForTests)
 	requireConformingLeanAnswer(t, answer, sourceTruthStates, sourceTruthReasons)
 	require.Equal(t, sourceTruthReasonStrategyNotDeclared, answer.Reason)
 	require.Len(t, answer.Unknowns, 1)
@@ -213,9 +218,9 @@ func TestSourceTruthAnswerDoesNotBuildFromUnshapedInput(t *testing.T) {
 	require.Equal(t, "cub-scout compare source-truth --help", answer.Next[0].Command)
 
 	blocked := agent.Derive(agent.StrategyGitFlux, agent.SourceTruthSurfaces{})
-	answer = buildSourceTruthAnswer(blocked, agent.StrategyGitFlux, "Deployment; rm -rf /", "api", "demo")
+	answer = buildSourceTruthAnswer(blocked, agent.StrategyGitFlux, "Deployment; rm -rf /", "api", "demo", observedAtForTests)
 	require.Empty(t, answer.Next, "no command is built from a kind that is not a kind")
-	named := buildSourceTruthAnswer(blocked, agent.StrategyGitFlux, "Deployment", "api", "demo")
+	named := buildSourceTruthAnswer(blocked, agent.StrategyGitFlux, "Deployment", "api", "demo", observedAtForTests)
 	require.Len(t, named.Next, 1)
 }
 
@@ -229,7 +234,7 @@ func TestSourceTruthAnswerClaimsOnlyComparisonsItKnows(t *testing.T) {
 		Runtime:    &agent.RuntimeSurface{Resource: "Deployment/api in demo", Field: "image", Value: "example/api:abc1234", Health: "Current"},
 	}
 	future := agent.SourceTruthEvidence{DeclaredStrategy: "Some -> Future -> Path", Status: agent.StatusPASS, SourceTruth: agent.VerdictAGREED, Surfaces: surfaces}
-	answer := buildSourceTruthAnswer(future, agent.SourceTruthStrategy("future-path"), "Deployment", "api", "demo")
+	answer := buildSourceTruthAnswer(future, agent.SourceTruthStrategy("future-path"), "Deployment", "api", "demo", observedAtForTests)
 	requireConformingLeanAnswer(t, answer, sourceTruthStates, sourceTruthReasons)
 	require.Equal(t, sourceTruthStateIncomplete, answer.State)
 	require.Equal(t, sourceTruthReasonNothingCompared, answer.Reason)
@@ -238,7 +243,7 @@ func TestSourceTruthAnswerClaimsOnlyComparisonsItKnows(t *testing.T) {
 	// No surface and no error: the answer still says which were not read.
 	silent := agent.Derive(agent.StrategyGitFlux, agent.SourceTruthSurfaces{Runtime: surfaces.Runtime})
 	require.Empty(t, silent.CollectionErrors)
-	answer = buildSourceTruthAnswer(silent, agent.StrategyGitFlux, "Deployment", "api", "demo")
+	answer = buildSourceTruthAnswer(silent, agent.StrategyGitFlux, "Deployment", "api", "demo", observedAtForTests)
 	var named []string
 	for _, unknown := range answer.Unknowns {
 		named = append(named, unknown.What)

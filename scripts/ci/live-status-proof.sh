@@ -208,8 +208,13 @@ if report.get("proof_gaps") or report.get("status") != "PASS":
 # with what was not compared said.
 answer = report.get("answer") or {}
 print("source-truth answer: %s" % answer)
-if sorted(answer) != ["next", "reason", "state", "unknowns"]:
+if sorted(answer) != ["next", "observedAt", "reason", "state", "unknowns"]:
     sys.exit("source-truth answer is not the lean form: %s" % sorted(answer))
+import datetime
+observed = datetime.datetime.fromisoformat(answer["observedAt"].replace("Z", "+00:00"))
+age = (datetime.datetime.now(datetime.timezone.utc) - observed).total_seconds()
+if not 0 <= age < 600:
+    sys.exit("source-truth answer's observedAt is not the time of this run: %s" % answer["observedAt"])
 if answer.get("state") != "agreed" or answer.get("reason") != "object-revision-is-head":
     sys.exit("source-truth answer is not agreed by the object's revision: %s" % answer)
 if [u.get("kind") for u in answer.get("unknowns") or []] != ["not-compared"]:

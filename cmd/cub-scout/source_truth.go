@@ -27,6 +27,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	appsv1 "k8s.io/api/apps/v1"
@@ -146,7 +147,7 @@ func runSourceTruth(cmd *cobra.Command, args []string) error {
 			}
 			evidence.Context = session.contextLabel()
 		}
-		return outputSourceTruthAnswered(os.Stdout, evidence, format, buildSourceTruthAnswer(evidence, "", kind, name, sourceTruthNamespace))
+		return outputSourceTruthAnswered(os.Stdout, evidence, format, buildSourceTruthAnswer(evidence, "", kind, name, sourceTruthNamespace, time.Now()))
 	}
 
 	var session *traceSession
@@ -174,7 +175,9 @@ func runSourceTruth(cmd *cobra.Command, args []string) error {
 		}
 	}
 	observation := collectSourceTruthObservation(cmd.Context(), session, kind, name, sourceTruthNamespace, strategy)
-	answer := buildSourceTruthAnswer(observation.Evidence, strategy, kind, name, sourceTruthNamespace)
+	// The time is taken after the reads: it is when the three surfaces had
+	// been observed, not when the command began.
+	answer := buildSourceTruthAnswer(observation.Evidence, strategy, kind, name, sourceTruthNamespace, time.Now())
 	return outputSourceTruthAnswered(os.Stdout, observation.Evidence, format, answer)
 }
 
