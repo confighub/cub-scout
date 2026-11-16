@@ -158,9 +158,10 @@ the same on a real cluster.
    `gitops status`: `settled`, `converging`, `failing`, `not-observable`.
    `explain`: `explained`, `partly-explained`, `not-observable`.
 3. May 3.0 remove `status: PASS|WATCH|ASK|BLOCK` from `compare source-truth`
-   in favour of `state`? Still the maintainer's to decide. What it would take
-   on the consumer's side was checked on 2026-11-16 and is small: see "A
-   contract for consumers" above.
+   in favour of `state`? **Decided 2026-11-16:** in 3.0 the verdict words
+   leave the JSON and MCP output and stay in the ASCII and Markdown output.
+   An agent reads `PASS` as a decision already made; a person at a terminal
+   is helped by it. Until 3.0 both are in JSON.
 4. `cluster.id`: opt-in as proposed, or always read (one extra GET a
    command).
 5. Start with which command. `compare source-truth` is the smallest and has
