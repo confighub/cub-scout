@@ -525,14 +525,17 @@ func InferRole(kind string) string {
 	switch kind {
 	// "OCI" is an Argo CD Application's OCI source: a source with no
 	// Kubernetes object of its own.
-	// "HelmChart" is a chart a tracer read: Flux's source object, an Argo CD
-	// Application's chart, or the chart a Helm release records (#930).
-	case "Source", "GitRepository", "OCIRepository", "OCI", "ConfigHub OCI", "HelmRepository", "HelmChart", "Bucket", "SveltosReference", "EventSource", "ModelCache", "InferenceClass", "InferenceCluster":
+	case "Source", "GitRepository", "OCIRepository", "OCI", "ConfigHub OCI", "HelmRepository", "Bucket", "SveltosReference", "EventSource", "ModelCache", "InferenceClass", "InferenceCluster":
 		return RoleSource
 	// "Release" is a Helm release, read from its record by the Helm tracer.
 	case "Kustomization", "HelmRelease", "Release", "Application", "ClusterProfile", "Profile", "EventTrigger", "ClusterHealthCheck", "ClusterPromotion", "ModelDeployment", "ModelService", "InferenceGateway":
 		return RoleDeployer
-	case "ReplicaSet", "Pod", "ModelReplica", "ModelEndpoint", "ServingStack", "EKSCluster", "GKECluster", "ClusterSummary", "ClusterConfiguration", "ClusterReport", "HealthCheckReport", "EventReport":
+	// "HelmChart" is a chart between a source and a deployer: Flux's chart
+	// artifact (the HelmRepository before it is the source), an Argo CD
+	// Application's chart, or the chart a Helm release records (#930). Not
+	// a source: that would make it the trace summary's source, and its URL
+	// is not a source object's spec.url.
+	case "HelmChart", "ReplicaSet", "Pod", "ModelReplica", "ModelEndpoint", "ServingStack", "EKSCluster", "GKECluster", "ClusterSummary", "ClusterConfiguration", "ClusterReport", "HealthCheckReport", "EventReport":
 		return RoleIntermediate
 	default:
 		return RoleWorkload
