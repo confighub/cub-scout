@@ -169,7 +169,7 @@ cub-scout map list -q "owner=Flux"
 # Only ArgoCD resources
 cub-scout map list -q "owner=ArgoCD"
 
-# Only Native (unmanaged) resources
+# Only Native resources (no owner marker recognised)
 cub-scout map list -q "owner=Native"
 
 # All GitOps-managed resources

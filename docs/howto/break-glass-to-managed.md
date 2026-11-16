@@ -33,7 +33,7 @@ For the import step (optional): ConfigHub connected mode (`cub auth login`).
 
 ## Step 1: Detect Orphan Resources
 
-Orphan resources have no GitOps owner — cub-scout classifies them as **Native**.
+Orphan resources are those on which cub-scout recognised no GitOps owner marker; it classifies them as **Native**. Check before adopting one that nothing else manages it.
 
 ```bash
 # Quick orphan check

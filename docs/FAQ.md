@@ -142,7 +142,7 @@ This shows the full chain: Git repo -> Flux/Argo deployer -> Deployment -> Pods.
 
 ### Why does "map orphans" show system resources?
 
-The orphans view shows ALL resources not managed by GitOps, including system components. This is technically correct but can be noisy.
+The orphans view shows every resource on which no GitOps owner marker was recognised, and system components are among them. That is what was observed, and it can be noisy.
 
 **Workaround:** Filter to specific namespaces:
 

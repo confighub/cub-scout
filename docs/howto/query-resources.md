@@ -33,7 +33,7 @@ cub-scout map list -q "owner=ArgoCD"
 # Find all Helm resources
 cub-scout map list -q "owner=Helm"
 
-# Find orphans (not managed by GitOps)
+# Find orphans (no GitOps owner marker recognised)
 cub-scout map list -q "owner=Native"
 
 # Find all GitOps-managed resources
