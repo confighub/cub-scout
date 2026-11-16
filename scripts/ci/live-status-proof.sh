@@ -33,6 +33,22 @@ redact() {
     -e 's/[A-Za-z0-9+\/=_-]{40,}/[redacted]/g'
 }
 
+# The host this runs on, for the day the lane fails with no other clue: which
+# OS image, and the limits three kind clusters lean on.
+{
+  grep -E '^(PRETTY_NAME|VERSION_ID)=' /etc/os-release || true
+  echo "kernel $(uname -r)"
+  echo "inotify max_user_instances=$(cat /proc/sys/fs/inotify/max_user_instances 2>/dev/null) max_user_watches=$(cat /proc/sys/fs/inotify/max_user_watches 2>/dev/null)"
+  echo "open files $(ulimit -n)"
+  free -m | sed -n 2p || true
+  df -h / | sed -n 2p || true
+  docker version --format 'docker {{.Server.Version}}' 2>/dev/null || true
+  kind version 2>/dev/null || true
+  kind get clusters 2>/dev/null | tr '\n' ' ' || true
+  echo
+} > "$out/host.txt" 2>&1
+cat "$out/host.txt"
+
 touch "$private/owns-live-cluster"
 if ! cub cluster up "$name" --controller "$controller" > "$private/cluster-up.log" 2>&1; then
   echo 'cub cluster up failed; the end of its output, redacted:' >&2

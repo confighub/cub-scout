@@ -662,7 +662,13 @@ jobs:
   # ==========================================================================
   live-status:
     name: Live Status Proof (${{ matrix.controller }})
-    runs-on: ubuntu-latest
+    # Pinned. On 2026-11-16 ubuntu-latest moved from 24.04 to 26.04 and this
+    # lane, the only one with three kind clusters on a runner, failed every
+    # time: after `cub cluster up` no controller became available in five
+    # minutes, where a passing run takes under one. The other lanes pass on
+    # 26.04. Why 26.04 fails here is not yet known; the proof script prints
+    # the host limits so the next failure says more.
+    runs-on: ubuntu-24.04
     needs: integration
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.level == 'live-status'
     strategy:
