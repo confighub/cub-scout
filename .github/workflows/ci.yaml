@@ -673,7 +673,7 @@ jobs:
     # minutes, where a passing run takes under one. The other lanes pass on
     # 26.04. Why 26.04 fails here is not yet known; the proof script prints
     # the host limits so the next failure says more.
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: integration
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.level == 'live-status'
     strategy:
