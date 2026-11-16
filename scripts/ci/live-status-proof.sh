@@ -204,6 +204,19 @@ if surface.get("unit") != "argobot" or not surface.get("space") or not surface.g
     sys.exit("source-truth did not read the ConfigHub unit named by the workload's origin annotation")
 if report.get("proof_gaps") or report.get("status") != "PASS":
     sys.exit("source-truth reported a gap on a freshly delivered workload: %s" % report.get("proof_gaps"))
+# The answer beside it: agreed, with what was not compared said, whose word
+# each surface is, and a measured cost.
+answer = report.get("answer") or {}
+cost = answer.get("cost") or {}
+print("source-truth answer: state=%s reason=%s unknowns=%s rests=%s requests=%s bytes=%s" % (answer.get("state"), answer.get("reason"), [u.get("kind") for u in answer.get("unknowns") or []], [b.get("restsOn") for b in answer.get("basis") or []], cost.get("requestsMade"), cost.get("responseBodyBytes")))
+if answer.get("state") != "agreed" or answer.get("reason") != "object-revision-is-head":
+    sys.exit("source-truth answer is not agreed by the object's revision: %s" % answer)
+if "not-compared" not in [u.get("kind") for u in answer.get("unknowns") or []]:
+    sys.exit("an agreed answer under a ConfigHub OCI strategy does not say the digest was not compared")
+if sorted(b.get("restsOn") for b in answer.get("basis") or []) != ["confighub-record", "controller-report", "cub-scout-comparison", "object-metadata"]:
+    sys.exit("source-truth answer does not say whose word each surface is: %s" % answer.get("basis"))
+if not cost.get("requestsMade") or not cost.get("responseBodyBytes"):
+    sys.exit("source-truth answer reports no measured reads: %s" % cost)
 PY
   KUBECONFIG="$kubeconfig" kubectl get deployment argobot -n argobot --show-managed-fields -o json 2>/dev/null | python3 -c '
 import json, sys

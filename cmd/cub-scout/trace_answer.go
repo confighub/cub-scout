@@ -124,7 +124,7 @@ func buildTraceAnswer(result *agent.TraceResult, kind, name, namespace string) *
 	}
 	answer.ObservedAt = observed.UTC().Format(time.RFC3339)
 	if result.ReadCost != nil {
-		answer.Cost = *result.ReadCost
+		answer.Cost = mapsvc.AnswerCostFrom(*result.ReadCost)
 	} else {
 		answer.Cost.Coverage = "not-measured"
 	}

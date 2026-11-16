@@ -6,7 +6,6 @@
     "observedAt": "<TIMESTAMP>",
     "cluster": {
       "context": "",
-      "id": "",
       "idSource": "not-read"
     },
     "basis": [
@@ -54,10 +53,7 @@
     "cost": {
       "requestsMade": 0,
       "responseBodyBytes": 0,
-      "transportErrors": 0,
-      "bodyReadErrors": 0,
       "durationMillis": 0,
-      "reused": false,
       "coverage": "not-measured"
     }
   },
