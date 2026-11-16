@@ -4,9 +4,12 @@ Producer-side fixture suite for the source-truth evidence contract
 (#393). Each subdirectory is a single black-box test of `agent.Derive`
 against a hand-authored set of surfaces and a declared strategy.
 
-Pairs with the consumer-side fixtures at
-`confighubai/confighub-ai-demo#264` — every fixture here will get a
-matching acceptance verdict + human-readable receipt on that side.
+These were written to pair with consumer-side fixtures in another
+repository (`confighubai/confighub-ai-demo#264`), each fixture here getting a
+matching acceptance verdict there. Those consumer fixtures are not in use
+(maintainer, 2026-11-16), so nothing downstream has to change in step with
+this directory. The evidence contract these fixtures pin is still cub-scout's
+to keep honest.
 
 ## Layout
 

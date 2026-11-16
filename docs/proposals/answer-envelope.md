@@ -115,9 +115,13 @@ cub-scout's words from the cluster's.
 - **Reads.** `cost` needs a metered transport around each command's reads.
   `map` and `watch` have one; the other commands do not. `cluster.id` is one
   more GET, which is why it stays opt-in.
-- **A contract for consumers.** `compare source-truth` is consumed by Pilot.
-  Its `status` values are in Pilot's fixtures. The 3.0 removal needs that
-  side's agreement and a date.
+- **A contract for consumers.** `compare source-truth` was designed for
+  Pilot. Checked on 2026-11-16: Pilot's permitted cub-scout commands do not
+  include it, its pinned cub-scout predates this work, and the consumer-side
+  fixtures once paired with `test/fixtures/source-truth` are not in use. So
+  nothing breaks today. What the consumer needs is a deliberate mapping from
+  `state` words to its own verdicts before it admits a command that carries
+  `answer`; that is recorded on the consumer's side.
 
 ## Conformance
 
@@ -154,8 +158,9 @@ the same on a real cluster.
    `gitops status`: `settled`, `converging`, `failing`, `not-observable`.
    `explain`: `explained`, `partly-explained`, `not-observable`.
 3. May 3.0 remove `status: PASS|WATCH|ASK|BLOCK` from `compare source-truth`
-   in favour of `state`? That is the question asked on 2026-11-13 and not
-   yet answered, and Pilot's side must agree.
+   in favour of `state`? Still the maintainer's to decide. What it would take
+   on the consumer's side was checked on 2026-11-16 and is small: see "A
+   contract for consumers" above.
 4. `cluster.id`: opt-in as proposed, or always read (one extra GET a
    command).
 5. Start with which command. `compare source-truth` is the smallest and has
