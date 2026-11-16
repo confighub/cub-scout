@@ -97,7 +97,11 @@ Who manages a Kubernetes resource:
 
 ### Orphan
 
-Resource with no GitOps owner. Created via `kubectl apply` or direct API call. Not tracked by Git.
+A resource on which cub-scout recognised no owner marker; it is classified
+**Native**. Often it was created with `kubectl apply` or a direct API call.
+That no marker was recognised does not show that nothing manages it: an
+operator, or a controller cub-scout has no detector for, may. (`map orphans`
+keeps its name; this is what it lists.)
 
 ---
 

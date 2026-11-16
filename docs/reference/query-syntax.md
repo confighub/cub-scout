@@ -81,7 +81,7 @@ cub-scout map list -q "owner=Flux" --count
 
 ## Real-World Examples
 
-**"What's not managed by GitOps?"** (Security audit)
+**"What carries no GitOps owner marker?"** (Security audit)
 ```bash
 cub-scout map list -q "owner=Native"
 ```

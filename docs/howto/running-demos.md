@@ -91,7 +91,7 @@ cub-scout map
 **Goal:** Find unmanaged resources (shadow IT).
 
 ```bash
-# List all Native (unmanaged) resources
+# List all Native resources (no owner marker recognised)
 cub-scout map list -q "owner=Native"
 
 # In TUI, press '3' to see Problems view

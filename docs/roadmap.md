@@ -199,9 +199,14 @@ issue is filed for these yet; file one when a package starts.
 - [ ] Go through each capability with the six questions in
   [the principle](reference/agentic-gitops-observability.md#the-principle)
   and correct the first-pass table there.
-- [ ] Lessons, same rule: the `orphans` / "unmanaged" vocabulary in command
-  names, help, the TUI, skills and docs. `Native` means no owner marker was
+- [ ] Lessons, same rule: the `orphans` command name, and "unmanaged" in the
+  skills (pinned by the benchmark) and in older how-tos and examples. The
+  help, hints, TUI headers, glossary, FAQ and main how-tos say "no owner
+  marker recognised" since 2026-11-16. `Native` means no owner marker was
   recognised; it does not prove nobody manages the object.
+- [ ] `docs/howto/tree-hierarchies.md` shows sample output ("Native (2
+  resources) ⚠ ORPHANS — not managed by GitOps", "No GitOps labels detected")
+  that no code prints. Re-record the samples from a real run.
 - [ ] Lessons, no warnings on the healthy path: a test that a healthy recorded
   chain produces no warning in `trace`, `explain` or `gitops status`.
 - [ ] Lessons, an error gives the command that works: go through the flag
