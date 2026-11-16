@@ -85,6 +85,8 @@ for name in ["v4-labelled", "v4-bare", "v3-labelled", "v3-bare", "copied"]:
     elif name == "copied":
         if releases:
             bad.append("copied: trace credits the copy to Release %s, which does not list it" % releases[-1].get("name"))
+        if state == "no-owner-marker":
+            bad.append("copied: trace says no owner marker, but the object carries Helm's")
     elif not releases or releases[-1].get("name") != name:
         bad.append("%s: trace chain does not name Release %s" % (name, name))
 open(out + "/summary.txt", "w").write("\n".join(lines) + "\n")
