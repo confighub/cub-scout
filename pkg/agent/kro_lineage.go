@@ -94,6 +94,31 @@ func resolveKroInstanceRef(target *unstructured.Unstructured, idx *UnstructuredI
 		return ref, false, nil
 	}
 
+	// kro's own labels name the instance that created the object.
+	labels := target.GetLabels()
+	if name := strings.TrimSpace(labels[kroInstanceNameLabel]); name != "" {
+		*evidence = append(*evidence, "label:"+kroInstanceNameLabel)
+		ref := ResourceRef{
+			Kind:      strings.TrimSpace(labels[kroInstanceKindLabel]),
+			Name:      name,
+			Namespace: strings.TrimSpace(labels[kroInstanceNamespaceLabel]),
+			Group:     strings.TrimSpace(labels[kroInstanceGroupLabel]),
+			Version:   strings.TrimSpace(labels[kroInstanceVersionLabel]),
+		}
+		if ref.Kind == "" {
+			ref.Kind = "KroInstance"
+		}
+		if ref.Namespace == "" {
+			ref.Namespace = target.GetNamespace()
+		}
+		for _, obj := range idx.all {
+			if obj != nil && obj.GetName() == ref.Name && obj.GetNamespace() == ref.Namespace && obj.GetKind() == ref.Kind && isKroAPIVersion(obj.GetAPIVersion()) {
+				return resourceRefFromUnstructured(obj), true, obj
+			}
+		}
+		return ref, false, nil
+	}
+
 	// Fallback: if the target itself is a kro instance CR, treat it as the root.
 	if isKroAPIVersion(target.GetAPIVersion()) && !strings.EqualFold(target.GetKind(), "ResourceGraphDefinition") {
 		*evidence = append(*evidence, "self:apiGroup:"+strings.SplitN(target.GetAPIVersion(), "/", 2)[0])
@@ -106,6 +131,7 @@ func resolveKroInstanceRef(target *unstructured.Unstructured, idx *UnstructuredI
 func resolveKroDefinitionRef(target, instanceObj *unstructured.Unstructured, idx *UnstructuredIndex, evidence *[]string) (ResourceRef, bool) {
 	// Metadata keys used by kro ecosystems to reference an RGD-like definition.
 	metaKeys := []string{
+		kroDefinitionNameLabel,
 		"kro.run/resource-graph-definition",
 		"kro.run/resourcegraphdefinition",
 		"kro.run/rgd",
@@ -158,7 +184,7 @@ func findKroDefinitionByMetadata(
 		if value := strings.TrimSpace(labels[key]); value != "" {
 			*evidence = append(*evidence, "label:"+key)
 			ref := ResourceRef{Kind: "ResourceGraphDefinition", Name: value}
-			if found := idx.findByName(value); found != nil {
+			if found := idx.findByName(value); found != nil && strings.EqualFold(found.GetKind(), "ResourceGraphDefinition") {
 				return resourceRefFromUnstructured(found), true, true
 			}
 			return ref, false, true
@@ -170,7 +196,7 @@ func findKroDefinitionByMetadata(
 		if value := strings.TrimSpace(annotations[key]); value != "" {
 			*evidence = append(*evidence, "annotation:"+key)
 			ref := ResourceRef{Kind: "ResourceGraphDefinition", Name: value}
-			if found := idx.findByName(value); found != nil {
+			if found := idx.findByName(value); found != nil && strings.EqualFold(found.GetKind(), "ResourceGraphDefinition") {
 				return resourceRefFromUnstructured(found), true, true
 			}
 			return ref, false, true
