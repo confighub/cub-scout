@@ -17,6 +17,7 @@
 package agent
 
 import (
+	"os"
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1388,6 +1389,26 @@ func TestKroDetectionIsTheSameEveryTime(t *testing.T) {
 		got = DetectOwnership(newTestResource("test-ns", "web", unnamed, nil))
 		if got.Type != OwnerKro || got.Name != "" || got.Source != "label:kro.run/kro-version" {
 			t.Fatalf("run %d: %#v; want kro, no name, the first key in sorted order", i, got)
+		}
+	}
+}
+
+func TestKroDetectionOnAnObjectRecordedFromKro(t *testing.T) {
+	// Recorded in the GitOps lane (run 43957188126): the Deployment kro
+	// v0.10.0 created for instance LaneApp/lane. Ten kro.run/ labels, no
+	// owner references.
+	raw, err := os.ReadFile("testdata/kro-v0.10.0-created-deployment.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var object unstructured.Unstructured
+	if err := object.UnmarshalJSON(raw); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 20; i++ {
+		got := DetectOwnership(&object)
+		if got.Type != OwnerKro || got.SubType != "instance" || got.Name != "lane" || got.Namespace != "kro-lane" || got.Source != "label:kro.run/instance-name" {
+			t.Fatalf("run %d: %#v; want instance kro-lane/lane from kro.run/instance-name", i, got)
 		}
 	}
 }
