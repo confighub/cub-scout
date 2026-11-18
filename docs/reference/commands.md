@@ -3335,6 +3335,7 @@ cub-scout suggest-remedy --list
 | Flag | Description |
 |------|-------------|
 | `--all` | Describe suggestions for all auto-suggestable findings |
+| `--kube-context` | Exact Kubernetes context for the `--all` scan; an empty or missing name fails before any read, with no fallback to the current context |
 | `--file` | Scan a YAML file for findings |
 | `--list` | List auto-suggestable risk-issue categories |
 | `-n, --namespace` | Namespace scope |
