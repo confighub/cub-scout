@@ -278,7 +278,14 @@ cub-scout quickstart [flags]
 cub-scout quickstart
 cub-scout quickstart --yes
 cub-scout quickstart -n production --yes
+cub-scout quickstart --kube-context staging-admin --yes
 ```
+
+With `--kube-context`, every read of the tour (the `kubectl cluster-info`
+probe, the inventory, the scan and the explain of one object) goes to that
+context. An empty name, or one your kubeconfig does not have, fails before any
+read. Without it, the current context is used
+([#599](https://github.com/confighub/cub-scout/issues/599)).
 
 ---
 
