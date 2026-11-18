@@ -12,6 +12,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -30,7 +31,13 @@ import (
 const (
 	attachBasisRecorded  = "recorded"   // seen in the attach lane
 	attachBasisCubSource = "cub-source" // read from cub's source, not run
+	attachBasisRead      = "read"       // about cub-scout's own read, not about attach
 )
+
+// errAttachKindNotServed is list's answer for a kind the cluster does not
+// serve at the version read. It is neither "none" nor a failure: a cluster
+// serving another version may hold objects of that kind.
+var errAttachKindNotServed = errors.New("kind not served at this version")
 
 // What attach would do with this controller, given what was read. These are
 // conditional on the controller being the one attach is given (--controller).
@@ -88,12 +95,13 @@ type DoctorAttachReport struct {
 	// Basis names what the rules rest on.
 	Basis       string                   `json:"basis"`
 	Controllers []DoctorAttachController `json:"controllers"`
-	// WiredThrough lists the controllers whose earlier-attachment credentials
-	// are in the cluster: it is attached to a ConfigHub already.
-	WiredThrough []string              `json:"wiredThrough"`
-	Argobot      DoctorAttachArgobot   `json:"argobot"`
-	Deployers    DoctorAttachDeployers `json:"deployers"`
-	Unknowns     []string              `json:"unknowns"`
+	// CredentialsFor lists the controllers whose earlier-attachment
+	// credentials Secret is in the cluster. That is not proof the attachment
+	// is in use: a Secret can outlive it.
+	CredentialsFor []string              `json:"credentialsFor"`
+	Argobot        DoctorAttachArgobot   `json:"argobot"`
+	Deployers      DoctorAttachDeployers `json:"deployers"`
+	Unknowns       []string              `json:"unknowns"`
 }
 
 // DoctorAttachController is what `cub cluster attach --controller <c>` would
@@ -144,7 +152,10 @@ type DoctorAttachDeployers struct {
 	Counts map[string]int `json:"counts"`
 	// Unread lists the kinds whose list failed.
 	Unread []string `json:"unread,omitempty"`
-	Note   string   `json:"note"`
+	// NotServed lists the kinds not served at the version read; they are
+	// not counted, since another version may hold some.
+	NotServed []string `json:"notServed,omitempty"`
+	Note      string   `json:"note"`
 }
 
 // attachReader is the reads the report needs. exists reads metadata only, so
@@ -208,8 +219,7 @@ func (r *clusterAttachReader) list(ctx context.Context, gvr schema.GroupVersionR
 		l, err = r.dyn.Resource(gvr).Namespace(namespace).List(ctx, metav1.ListOptions{})
 	}
 	if apierrors.IsNotFound(err) {
-		// The kind is not served: there are none.
-		return nil, nil
+		return nil, errAttachKindNotServed
 	}
 	if err != nil {
 		return nil, err
@@ -241,7 +251,7 @@ func buildDoctorAttachReport(ctx context.Context, r attachReader) *DoctorAttachR
 		Basis: "Read from this cluster, by name; Secrets by metadata only. What attach does with each finding was recorded " +
 			"on a real cluster with cub v0.11.4, Argo CD v3.6.1 and Flux v2.10.0 (basis \"recorded\"), or read from cub's " +
 			"source and not run (basis \"cub-source\").",
-		WiredThrough: []string{},
+		CredentialsFor: []string{},
 	}
 
 	argoApps, argoAppsErr := r.list(ctx, attachApplicationGVR, "argocd")
@@ -257,13 +267,13 @@ func buildDoctorAttachReport(ctx context.Context, r attachReader) *DoctorAttachR
 		c.Installed = attachReadOutcome(r.exists(ctx, attachDeploymentGVR, spec.Namespace, spec.Deployment))
 		c.Credentials = attachReadOutcome(r.exists(ctx, attachSecretGVR, spec.Namespace, spec.CredsSecret))
 		if c.Credentials == attachPresent {
-			report.WiredThrough = append(report.WiredThrough, spec.Controller)
+			report.CredentialsFor = append(report.CredentialsFor, spec.Controller)
 		}
 
 		switch {
 		case c.Credentials == attachPresent:
 			c.AttachWould = attachWouldRefuse
-			c.Why = fmt.Sprintf("Secret %s holds an earlier attachment's registry credentials; attach refuses before it creates anything in ConfigHub, unless given --existing-secrets", c.CredentialsSecret)
+			c.Why = fmt.Sprintf("Secret %s holds an earlier attachment's registry credentials; attach refuses before it creates any Space in ConfigHub (its help says --existing-secrets skips this check)", c.CredentialsSecret)
 		case c.Credentials == attachUnread:
 			c.AttachWould = attachWouldUnknown
 			c.Why = fmt.Sprintf("Secret %s could not be read, so whether an earlier attachment is here is unknown", c.CredentialsSecret)
@@ -281,17 +291,13 @@ func buildDoctorAttachReport(ctx context.Context, r attachReader) *DoctorAttachR
 		switch spec.Controller {
 		case "argo":
 			c.EarlierObjects = spaceLayoutSourcesOf(argoApps, "Application", "spec", "source", "repoURL")
-			if argoAppsErr != nil {
-				c.Notes = append(c.Notes, DoctorAttachNote{Text: "Applications in argocd could not be listed, so earlier objects are unknown", Basis: attachBasisRecorded})
-			}
+			c.Notes = appendListNote(c.Notes, argoAppsErr, c.Installed, "Applications (argoproj.io/v1alpha1) in argocd")
 			if c.Installed == attachPresent {
 				c.Notes = append(c.Notes, argoConfigMapNote(ctx, r))
 			}
 		case "flux":
 			c.EarlierObjects = spaceLayoutSourcesOf(ociRepos, "OCIRepository", "spec", "url")
-			if ociReposErr != nil {
-				c.Notes = append(c.Notes, DoctorAttachNote{Text: "OCIRepositories could not be listed, so earlier objects are unknown", Basis: attachBasisRecorded})
-			}
+			c.Notes = appendListNote(c.Notes, ociReposErr, c.Installed, "OCIRepositories (source.toolkit.fluxcd.io/v1)")
 			c.EarlierObjects, c.Notes = fixedRootOf(ctx, r, spec, c.EarlierObjects, c.Notes)
 		default:
 			c.EarlierObjects, c.Notes = fixedRootOf(ctx, r, spec, c.EarlierObjects, c.Notes)
@@ -326,6 +332,10 @@ func buildDoctorAttachReport(ctx context.Context, r attachReader) *DoctorAttachR
 		{"ClusterProfile", attachClusterProfileGVR},
 	} {
 		items, err := r.list(ctx, d.gvr, "")
+		if errors.Is(err, errAttachKindNotServed) {
+			report.Deployers.NotServed = append(report.Deployers.NotServed, d.label)
+			continue
+		}
 		if err != nil {
 			report.Deployers.Unread = append(report.Deployers.Unread, d.label)
 			continue
@@ -333,11 +343,12 @@ func buildDoctorAttachReport(ctx context.Context, r attachReader) *DoctorAttachR
 		report.Deployers.Counts[d.label] = len(items)
 	}
 	sort.Strings(report.Deployers.Unread)
+	sort.Strings(report.Deployers.NotServed)
 
 	report.Unknowns = []string{
 		"whether ConfigHub already has Spaces of the names attach would create; that is in ConfigHub, not the cluster",
 		"whether the cluster can reach ConfigHub's registry; attach checks this itself",
-		"whether these credentials have cluster-admin; attach checks with `kubectl auth can-i create clusterroles`, which cub-scout does not run",
+		"whether these credentials have cluster-admin; attach checks this itself (its source runs `kubectl auth can-i create clusterroles`), and cub-scout does not",
 		"whether what you later deploy through ConfigHub overlaps these deployers' objects",
 	}
 	return report
@@ -386,7 +397,7 @@ func fixedRootOf(ctx context.Context, r attachReader, spec attachControllerSpec,
 	}
 	obj, err := r.get(ctx, spec.FluxOrSveltosRoot, namespace, attachRootName)
 	if err != nil {
-		notes = append(notes, DoctorAttachNote{Text: fmt.Sprintf("%s %s could not be read, so an earlier root is unknown", kind, attachRootName), Basis: spec.Basis})
+		notes = append(notes, DoctorAttachNote{Text: fmt.Sprintf("%s %s could not be read, so an earlier root is unknown", kind, attachRootName), Basis: attachBasisRead})
 		return objects, notes
 	}
 	if obj != nil {
@@ -396,15 +407,32 @@ func fixedRootOf(ctx context.Context, r attachReader, spec attachControllerSpec,
 	return objects, notes
 }
 
+// appendListNote notes a list the earlier-object check depends on that was
+// not read. A kind not served is expected when its controller is absent, and
+// is then not noted.
+func appendListNote(notes []DoctorAttachNote, err error, installed, what string) []DoctorAttachNote {
+	switch {
+	case err == nil:
+		return notes
+	case errors.Is(err, errAttachKindNotServed):
+		if installed == attachAbsent {
+			return notes
+		}
+		return append(notes, DoctorAttachNote{Text: what + " are not served at that version here, so earlier objects were not read", Basis: attachBasisRead})
+	default:
+		return append(notes, DoctorAttachNote{Text: what + " could not be listed, so earlier objects are unknown", Basis: attachBasisRead})
+	}
+}
+
 func argoConfigMapNote(ctx context.Context, r attachReader) DoctorAttachNote {
 	cm, err := r.get(ctx, attachConfigMapGVR, "argocd", "argocd-cm")
 	if err != nil {
-		return DoctorAttachNote{Text: "argocd-cm could not be read; attach patches it unless it already sets " + attachArgoIgnoreDifferencesKey, Basis: attachBasisRecorded}
+		return DoctorAttachNote{Text: "argocd-cm could not be read, so whether attach patches it is unknown", Basis: attachBasisRead}
 	}
-	value := ""
-	if cm != nil {
-		value, _, _ = unstructured.NestedString(cm.Object, "data", attachArgoIgnoreDifferencesKey)
+	if cm == nil {
+		return DoctorAttachNote{Text: "argocd-cm is not here; attach patches it, and what it does when the ConfigMap is missing was not recorded", Basis: attachBasisCubSource}
 	}
+	value, _, _ := unstructured.NestedString(cm.Object, "data", attachArgoIgnoreDifferencesKey)
 	if value == "" {
 		return DoctorAttachNote{Text: "argocd-cm does not set " + attachArgoIgnoreDifferencesKey + "; attach patches argocd-cm to set it", Basis: attachBasisRecorded}
 	}
@@ -421,8 +449,8 @@ func renderDoctorAttachASCII(b *strings.Builder, report *DoctorAttachReport) {
 	}
 	b.WriteString("\nBEFORE CUB CLUSTER ATTACH\n")
 	b.WriteString("  Read only; cub-scout does not say whether attaching is safe.\n")
-	if len(report.WiredThrough) > 0 {
-		fmt.Fprintf(b, "  Already attached to a ConfigHub through: %s\n", strings.Join(report.WiredThrough, ", "))
+	if len(report.CredentialsFor) > 0 {
+		fmt.Fprintf(b, "  An earlier attachment's credentials Secret is here for: %s\n", strings.Join(report.CredentialsFor, ", "))
 	}
 	for _, c := range report.Controllers {
 		fmt.Fprintf(b, "  --controller %-8s %s: %s [%s]\n", c.Controller, c.AttachWould, c.Why, c.Basis)
@@ -452,6 +480,9 @@ func renderDoctorAttachASCII(b *strings.Builder, report *DoctorAttachReport) {
 		parts = append(parts, fmt.Sprintf("%s %d", label, report.Deployers.Counts[label]))
 	}
 	fmt.Fprintf(b, "  Deployers here: %s\n", strings.Join(parts, ", "))
+	if len(report.Deployers.NotServed) > 0 {
+		fmt.Fprintf(b, "  Not served at the version read, so not counted: %s\n", strings.Join(report.Deployers.NotServed, ", "))
+	}
 	if len(report.Deployers.Unread) > 0 {
 		fmt.Fprintf(b, "  Not read: %s\n", strings.Join(report.Deployers.Unread, ", "))
 	}

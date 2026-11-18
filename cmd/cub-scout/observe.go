@@ -83,7 +83,13 @@ func ObserveScopeSummary(ctx context.Context, req ObserveScopeSummaryRequest) (O
 	// Use fixture if explicitly provided
 	if req.FixturePath != "" {
 		summary, err := observeScopeSummaryFromFixture(req.FixturePath, namespaceLabel, topN)
-		return ObserveScopeSummaryResult{Summary: summary}, err
+		result := ObserveScopeSummaryResult{Summary: summary}
+		if req.BeforeAttach {
+			// A fixture holds no cluster to read: say so rather than leave
+			// the section out silently.
+			result.Warnings = append(result.Warnings, "before-attach report unavailable: fixture input has no cluster to read")
+		}
+		return result, err
 	}
 
 	if req.ClusterBinding == nil {
@@ -135,7 +141,9 @@ func observeScopeSummaryFromCluster(ctx context.Context, namespace, namespaceLab
 			result.Summary.ThreeWay = nil
 		}
 	}
-	if req.BeforeAttach && req.ClusterBinding != nil && req.ClusterBinding.config != nil {
+	if req.BeforeAttach && (req.ClusterBinding == nil || req.ClusterBinding.config == nil) {
+		result.Warnings = append(result.Warnings, "before-attach report unavailable: no Kubernetes config was bound")
+	} else if req.BeforeAttach {
 		attach, attachErr := collectDoctorAttachReport(ctx, req.ClusterBinding.config)
 		if attachErr != nil {
 			result.Warnings = append(result.Warnings, fmt.Sprintf("before-attach report unavailable: %v", attachErr))

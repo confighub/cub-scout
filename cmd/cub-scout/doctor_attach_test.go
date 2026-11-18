@@ -10,9 +10,16 @@ import (
 	"strings"
 	"testing"
 
+	"errors"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	dynamicfake "k8s.io/client-go/dynamic/fake"
+	metadatafake "k8s.io/client-go/metadata/fake"
+	k8stesting "k8s.io/client-go/testing"
 )
 
 // recordedAttachReader answers the report's reads from one snapshot the
@@ -22,6 +29,8 @@ type recordedAttachReader struct {
 	objects   map[string]*unstructured.Unstructured
 	lists     map[schema.GroupVersionResource][]unstructured.Unstructured
 	forbidden map[schema.GroupVersionResource]bool
+	notServed map[schema.GroupVersionResource]bool
+	missing   map[string]bool // attachKey of an object get must not find
 }
 
 func attachKey(gvr schema.GroupVersionResource, namespace, name string) string {
@@ -39,6 +48,9 @@ func (r *recordedAttachReader) get(_ context.Context, gvr schema.GroupVersionRes
 	if r.forbidden[gvr] {
 		return nil, apierrors.NewForbidden(gvr.GroupResource(), name, fmt.Errorf("recorded as forbidden"))
 	}
+	if r.missing[attachKey(gvr, namespace, name)] {
+		return nil, nil
+	}
 	if obj, ok := r.objects[attachKey(gvr, namespace, name)]; ok {
 		return obj, nil
 	}
@@ -54,6 +66,9 @@ func (r *recordedAttachReader) get(_ context.Context, gvr schema.GroupVersionRes
 func (r *recordedAttachReader) list(_ context.Context, gvr schema.GroupVersionResource, namespace string) ([]unstructured.Unstructured, error) {
 	if r.forbidden[gvr] {
 		return nil, apierrors.NewForbidden(gvr.GroupResource(), "", fmt.Errorf("recorded as forbidden"))
+	}
+	if r.notServed[gvr] {
+		return nil, errAttachKindNotServed
 	}
 	var out []unstructured.Unstructured
 	for _, item := range r.lists[gvr] {
@@ -72,6 +87,8 @@ func loadRecordedAttachSnapshot(t *testing.T, controller, when string) *recorded
 		objects:   map[string]*unstructured.Unstructured{},
 		lists:     map[schema.GroupVersionResource][]unstructured.Unstructured{},
 		forbidden: map[schema.GroupVersionResource]bool{},
+		notServed: map[schema.GroupVersionResource]bool{},
+		missing:   map[string]bool{},
 	}
 	columns := func(name string, fn func(fields []string)) {
 		f, err := os.Open(filepath.Join(dir, name))
@@ -169,8 +186,8 @@ func TestBeforeAttachOnTheRecordedBrownfieldCluster(t *testing.T) {
 	for _, controller := range []string{"argo", "flux"} {
 		t.Run(controller, func(t *testing.T) {
 			report := buildDoctorAttachReport(context.Background(), loadRecordedAttachSnapshot(t, controller, "before"))
-			if len(report.WiredThrough) != 0 {
-				t.Fatalf("wiredThrough = %v before any attach", report.WiredThrough)
+			if len(report.CredentialsFor) != 0 {
+				t.Fatalf("credentialsFor = %v before any attach", report.CredentialsFor)
 			}
 			for want, c := range map[string]string{"argo": attachWouldUseExisting, "flux": attachWouldUseExisting, "sveltos": attachWouldInstall} {
 				got := attachControllerOf(t, report, want)
@@ -221,8 +238,8 @@ func TestBeforeAttachAfterARecordedAttach(t *testing.T) {
 	for controller, want := range cases {
 		t.Run(controller, func(t *testing.T) {
 			report := buildDoctorAttachReport(context.Background(), loadRecordedAttachSnapshot(t, controller, "after"))
-			if strings.Join(report.WiredThrough, ",") != strings.Join(want.refused, ",") {
-				t.Fatalf("wiredThrough = %v, want %v", report.WiredThrough, want.refused)
+			if strings.Join(report.CredentialsFor, ",") != strings.Join(want.refused, ",") {
+				t.Fatalf("credentialsFor = %v, want %v", report.CredentialsFor, want.refused)
 			}
 			c := attachControllerOf(t, report, controller)
 			if c.AttachWould != attachWouldRefuse || !strings.Contains(c.Why, c.CredentialsSecret) {
@@ -263,8 +280,8 @@ func TestBeforeAttachUnreadableSecretsAreUnknown(t *testing.T) {
 			t.Errorf("%s: attachWould = %q, credentials = %q with Secrets unreadable", c.Controller, c.AttachWould, c.Credentials)
 		}
 	}
-	if len(report.WiredThrough) != 0 {
-		t.Errorf("wiredThrough = %v from unreadable Secrets", report.WiredThrough)
+	if len(report.CredentialsFor) != 0 {
+		t.Errorf("credentialsFor = %v from unreadable Secrets", report.CredentialsFor)
 	}
 	if report.Argobot.Secret != attachUnread {
 		t.Errorf("argobot secret = %q with Secrets unreadable", report.Argobot.Secret)
@@ -289,7 +306,7 @@ func TestBeforeAttachASCIISaysWhatItCannotKnow(t *testing.T) {
 	for _, want := range []string{
 		"BEFORE CUB CLUSTER ATTACH",
 		"does not say whether attaching is safe",
-		"Already attached to a ConfigHub through: argo",
+		"An earlier attachment's credentials Secret is here for: argo",
 		"--controller argo     refuse",
 		"already here: Application argocd/scout-attach-argo-apps (oci://172.18.0.1:32181/space/scout-attach-argo-apps)",
 		"Unknown:",
@@ -314,5 +331,128 @@ func TestDoctorMCPPassesBeforeAttach(t *testing.T) {
 	}
 	if strings.Join(args, " ") != "doctor --format json --before-attach" {
 		t.Errorf("args = %v", args)
+	}
+}
+
+func attachNotesOf(c DoctorAttachController) string {
+	var parts []string
+	for _, n := range c.Notes {
+		parts = append(parts, n.Text+" ["+n.Basis+"]")
+	}
+	return strings.Join(parts, " | ")
+}
+
+// The reads the earlier-object check and the argocd-cm note depend on: a
+// failure is noted as cub-scout's own read, never passed off as attach's.
+func TestBeforeAttachFailedReadsAreNotedAsReads(t *testing.T) {
+	cases := []struct {
+		name       string
+		controller string
+		mutate     func(r *recordedAttachReader)
+		want       string
+	}{
+		{"applications forbidden", "argo", func(r *recordedAttachReader) { r.forbidden[attachApplicationGVR] = true },
+			"Applications (argoproj.io/v1alpha1) in argocd could not be listed, so earlier objects are unknown [read]"},
+		{"ocirepositories forbidden", "flux", func(r *recordedAttachReader) { r.forbidden[attachOCIRepositoryGVR] = true },
+			"OCIRepositories (source.toolkit.fluxcd.io/v1) could not be listed, so earlier objects are unknown [read]"},
+		{"ocirepositories not served", "flux", func(r *recordedAttachReader) { r.notServed[attachOCIRepositoryGVR] = true },
+			"OCIRepositories (source.toolkit.fluxcd.io/v1) are not served at that version here, so earlier objects were not read [read]"},
+		{"flux root forbidden", "flux", func(r *recordedAttachReader) { r.forbidden[attachKustomizationGVR] = true },
+			"Kustomization confighub-root could not be read, so an earlier root is unknown [read]"},
+		{"argocd-cm forbidden", "argo", func(r *recordedAttachReader) { r.forbidden[attachConfigMapGVR] = true },
+			"argocd-cm could not be read, so whether attach patches it is unknown [read]"},
+		{"argocd-cm missing", "argo", func(r *recordedAttachReader) { r.missing[attachKey(attachConfigMapGVR, "argocd", "argocd-cm")] = true },
+			"argocd-cm is not here; attach patches it, and what it does when the ConfigMap is missing was not recorded [cub-source]"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			r := loadRecordedAttachSnapshot(t, tc.controller, "after")
+			tc.mutate(r)
+			c := attachControllerOf(t, buildDoctorAttachReport(context.Background(), r), tc.controller)
+			if notes := attachNotesOf(c); !strings.Contains(notes, tc.want) {
+				t.Errorf("notes = %s\nwant %s", notes, tc.want)
+			}
+		})
+	}
+}
+
+// A kind not served at the version read is not counted as zero: a cluster
+// serving only another version may hold objects of it.
+func TestBeforeAttachNotServedKindIsNotCounted(t *testing.T) {
+	r := loadRecordedAttachSnapshot(t, "flux", "after")
+	r.notServed[attachHelmReleaseGVR] = true
+	report := buildDoctorAttachReport(context.Background(), r)
+	if _, counted := report.Deployers.Counts["HelmRelease"]; counted {
+		t.Error("a kind not served must not be counted")
+	}
+	if len(report.Deployers.NotServed) != 1 || report.Deployers.NotServed[0] != "HelmRelease" {
+		t.Errorf("notServed = %v", report.Deployers.NotServed)
+	}
+	// Sveltos is not installed here, so its ClusterProfile is not served
+	// either, and that needs no note.
+	if notes := attachNotesOf(attachControllerOf(t, report, "sveltos")); strings.Contains(notes, "not served") {
+		t.Errorf("sveltos notes = %s", notes)
+	}
+}
+
+// The real reader reads Secrets through the metadata client, so their data
+// is never fetched, and maps NotFound to absent and an unserved kind to
+// errAttachKindNotServed.
+func TestClusterAttachReaderReadsSecretsAsMetadataOnly(t *testing.T) {
+	scheme := runtime.NewScheme()
+	if err := metav1.AddMetaToScheme(scheme); err != nil {
+		t.Fatal(err)
+	}
+	secretMeta := &metav1.PartialObjectMetadata{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
+		ObjectMeta: metav1.ObjectMeta{Namespace: "argocd", Name: "confighub-oci-creds"},
+	}
+	meta := metadatafake.NewSimpleMetadataClient(scheme, secretMeta)
+	// The dynamic client holds no Secret at all: a reader that fetched
+	// Secrets through it would find none.
+	dyn := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), map[schema.GroupVersionResource]string{
+		attachApplicationGVR: "ApplicationList",
+		attachHelmReleaseGVR: "HelmReleaseList",
+	})
+	r := &clusterAttachReader{meta: meta, dyn: dyn}
+	ctx := context.Background()
+
+	found, err := r.exists(ctx, attachSecretGVR, "argocd", "confighub-oci-creds")
+	if err != nil || !found {
+		t.Fatalf("exists = %v, %v; want the Secret found through metadata", found, err)
+	}
+	found, err = r.exists(ctx, attachSecretGVR, "flux-system", "confighub-oci")
+	if err != nil || found {
+		t.Fatalf("exists = %v, %v; want absent with no error", found, err)
+	}
+	if obj, err := r.get(ctx, attachConfigMapGVR, "argocd", "argocd-cm"); obj != nil || err != nil {
+		t.Fatalf("get of a missing object = %v, %v; want nil, nil", obj, err)
+	}
+	if items, err := r.list(ctx, attachApplicationGVR, "argocd"); err != nil || len(items) != 0 {
+		t.Fatalf("list of a served, empty kind = %v, %v", items, err)
+	}
+
+	notServed := &clusterAttachReader{meta: meta, dyn: dyn}
+	notServed.dyn.(*dynamicfake.FakeDynamicClient).PrependReactor("list", "helmreleases", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		return true, nil, apierrors.NewNotFound(attachHelmReleaseGVR.GroupResource(), "")
+	})
+	if _, err := notServed.list(ctx, attachHelmReleaseGVR, ""); !errors.Is(err, errAttachKindNotServed) {
+		t.Fatalf("list of an unserved kind = %v; want errAttachKindNotServed", err)
+	}
+}
+
+// With fixture input there is no cluster to read: the section is missing
+// and a warning says why, never silently.
+func TestBeforeAttachWithFixtureInputWarns(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "doctor.json")
+	if err := os.WriteFile(path, []byte(`{"cluster":"fixture","entries":[],"findings":[]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	result, err := ObserveScopeSummary(context.Background(), ObserveScopeSummaryRequest{FixturePath: path, BeforeAttach: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Summary.Attach != nil || !strings.Contains(strings.Join(result.Warnings, "|"), "before-attach report unavailable") {
+		t.Errorf("attach = %v, warnings = %v", result.Summary.Attach, result.Warnings)
 	}
 }
