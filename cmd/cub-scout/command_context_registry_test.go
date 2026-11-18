@@ -65,12 +65,9 @@ var contextExempt = map[string]string{
 
 // contextOwed read the cluster through the ambient context today (#599).
 var contextOwed = map[string]string{
-	"cub-scout import":                   "reads workloads to import",
-	"cub-scout import argocd":            "reads Argo CD Applications",
-	"cub-scout quickstart":               "runs `kubectl cluster-info` and the tour's reads",
-	"cub-scout demo scenario":            "applies demo fixtures with `kubectl apply`: a write",
-	"cub-scout quickstart demo":          "applies demo fixtures with `kubectl apply`: a write",
-	"cub-scout quickstart demo scenario": "applies demo fixtures with `kubectl apply`: a write",
+	"cub-scout import":        "reads workloads to import",
+	"cub-scout import argocd": "reads Argo CD Applications",
+	"cub-scout quickstart":    "runs `kubectl cluster-info` and the tour's reads",
 }
 
 func hasKubeContextFlag(cmd *cobra.Command) bool {
