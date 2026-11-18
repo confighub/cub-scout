@@ -3522,6 +3522,7 @@ Same input shapes as `views resolve` — bare UUID or View Explorer URL.
 | `--format table\|json` | Output format (default: `table`). |
 | `--space` | Space to search. Defaults to org-wide (`*`) so a UUID alone is sufficient. |
 | `--with-reality` | Append synthetic columns (`Applied?`, `LiveStatus`) computed from the live cluster. Closes the loop on #391 scope #3 — same View, with cluster reality joined in. |
+| `--kube-context` | With `--with-reality`, read live workloads from this exact Kubernetes context; an empty or missing name fails before any read. Refused without `--with-reality`, which is the only part that reads a cluster |
 
 #### Output
 

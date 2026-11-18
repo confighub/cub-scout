@@ -31,6 +31,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"k8s.io/client-go/rest"
 	"os"
 	"os/exec"
 	"runtime"
@@ -99,6 +100,7 @@ func init() {
 	viewsOpenCmd.Flags().BoolVar(&viewsOpenPrintOnly, "print", false, "Print the View Explorer URL to stdout instead of opening the browser (useful for scripts and headless environments)")
 	viewsProjectCmd.Flags().StringVar(&viewsProjectFormat, "format", "table", "Output format: table, json")
 	viewsProjectCmd.Flags().StringVar(&viewsProjectSpace, "space", "*", "Space to search. Defaults to org-wide ('*')")
+	viewsProjectCmd.Flags().String("kube-context", "", "With --with-reality, read live workloads from this exact Kubernetes context")
 	viewsProjectCmd.Flags().BoolVar(&viewsProjectWithReality, "with-reality", false, "Append synthetic columns (Applied?, LiveStatus) computed from the live cluster (#391 scope #3)")
 }
 
@@ -662,7 +664,9 @@ type projectionOmission struct {
 // projection builder. runViewsProject wraps this for CLI use; tests
 // call this directly so they can assert on the structured output
 // without a stdout dance.
-func buildProjectedView(ctx context.Context, ref *agent.ViewRef, space string, withReality bool) (ProjectedView, error) {
+// realityConfig is the cluster --with-reality reads; nil is the current
+// context.
+func buildProjectedView(ctx context.Context, ref *agent.ViewRef, space string, withReality bool, realityConfig *rest.Config) (ProjectedView, error) {
 	view, err := fetchView(ctx, ref.UUID, space)
 	if err != nil {
 		return ProjectedView{}, fmt.Errorf("fetch view: %w", err)
@@ -707,7 +711,7 @@ func buildProjectedView(ctx context.Context, ref *agent.ViewRef, space string, w
 				return ProjectedView{}, fmt.Errorf("view %s has its own column named %q, which --with-reality would overwrite; run without --with-reality", ref.UUID, col.Name)
 			}
 		}
-		idx, err := buildWorkloadIndexFn()
+		idx, err := buildWorkloadIndexFn(realityConfig)
 		if err != nil {
 			return ProjectedView{}, fmt.Errorf("build workload index for reality overlay: %w", err)
 		}
@@ -788,11 +792,31 @@ func runViewsProject(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("parse view reference: %w", err)
 	}
 
+	// --with-reality reads the cluster: with --kube-context only that
+	// context, and an empty or missing name fails before any read (#599).
+	// Without --with-reality nothing reads a cluster, so the flag is refused
+	// rather than ignored.
+	selection, err := clusterContextSelectionFromFlag(cmd)
+	if err != nil {
+		return err
+	}
+	var realityConfig *rest.Config
+	if selection.explicit {
+		if !viewsProjectWithReality {
+			return fmt.Errorf("--kube-context applies to --with-reality, which reads the cluster; without it views project reads no cluster")
+		}
+		binding := resolveLocalClusterBindingForSelection(selection)
+		if binding.err != nil {
+			return binding.err
+		}
+		realityConfig = binding.config
+	}
+
 	if err := requireConfigHubFor("views project"); err != nil {
 		return err
 	}
 
-	pv, err := buildProjectedView(cmd.Context(), ref, viewsProjectSpace, viewsProjectWithReality)
+	pv, err := buildProjectedView(cmd.Context(), ref, viewsProjectSpace, viewsProjectWithReality, realityConfig)
 	if err != nil {
 		return err
 	}
@@ -923,14 +947,20 @@ var buildWorkloadIndexFn = buildWorkloadIndexFromCluster
 // Single-cluster scope is the assumed mode (cub-scout's default).
 // Multi-cluster overlays are not in scope; the index reflects only
 // the current kubeconfig context.
-func buildWorkloadIndexFromCluster() (map[string]WorkloadInfo, error) {
-	namespaces, err := discoverNamespacesWithWorkloads()
+func buildWorkloadIndexFromCluster(config *rest.Config) (map[string]WorkloadInfo, error) {
+	if config == nil {
+		var err error
+		if config, err = ambientImportConfig(); err != nil {
+			return nil, fmt.Errorf("build kubeconfig: %w", err)
+		}
+	}
+	namespaces, err := discoverNamespacesWithWorkloadsIn(config)
 	if err != nil {
 		return nil, fmt.Errorf("discover namespaces: %w", err)
 	}
 	index := make(map[string]WorkloadInfo)
 	for _, ns := range namespaces {
-		workloads, err := discoverWorkloads(ns)
+		workloads, err := discoverWorkloadsIn(config, ns)
 		if err != nil {
 			return nil, fmt.Errorf("discover workloads in %s: %w", ns, err)
 		}

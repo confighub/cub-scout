@@ -63,9 +63,8 @@ var contextExempt = map[string]string{
 
 // contextOwed read the cluster through the ambient context today (#599).
 var contextOwed = map[string]string{
-	"cub-scout views project": "--with-reality reads workloads through the current context",
-	"cub-scout map hub":       "its import hand-off disables Argo CD sync, deletes Applications and removes labels through the current context (#955)",
-	"cub-scout import":        "reads workloads to import",
+	"cub-scout map hub": "its import hand-off disables Argo CD sync, deletes Applications and removes labels through the current context (#955)",
+	"cub-scout import":  "reads workloads to import",
 }
 
 func hasKubeContextFlag(cmd *cobra.Command) bool {

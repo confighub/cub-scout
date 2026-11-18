@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"k8s.io/client-go/rest"
 	"strings"
 	"testing"
 
@@ -245,7 +246,7 @@ func TestListUnitsForFilter_ParsesUnitMetadata(t *testing.T) {
 func installFakeWorkloadIndex(t *testing.T, index map[string]WorkloadInfo) {
 	t.Helper()
 	orig := buildWorkloadIndexFn
-	buildWorkloadIndexFn = func() (map[string]WorkloadInfo, error) {
+	buildWorkloadIndexFn = func(*rest.Config) (map[string]WorkloadInfo, error) {
 		return index, nil
 	}
 	t.Cleanup(func() { buildWorkloadIndexFn = orig })
@@ -338,7 +339,7 @@ func TestBuildProjectedView_WithReality(t *testing.T) {
 		// future-unit intentionally absent — overlay marks unapplied
 	})
 
-	pv, err := buildProjectedView(context.Background(), mockViewRef(viewUUID), "*", true)
+	pv, err := buildProjectedView(context.Background(), mockViewRef(viewUUID), "*", true, nil)
 	if err != nil {
 		t.Fatalf("buildProjectedView failed: %v", err)
 	}
@@ -390,13 +391,13 @@ func TestBuildProjectedView_WithoutReality(t *testing.T) {
 
 	called := false
 	orig := buildWorkloadIndexFn
-	buildWorkloadIndexFn = func() (map[string]WorkloadInfo, error) {
+	buildWorkloadIndexFn = func(*rest.Config) (map[string]WorkloadInfo, error) {
 		called = true
 		return nil, nil
 	}
 	t.Cleanup(func() { buildWorkloadIndexFn = orig })
 
-	pv, err := buildProjectedView(context.Background(), mockViewRef(viewUUID), "*", false)
+	pv, err := buildProjectedView(context.Background(), mockViewRef(viewUUID), "*", false, nil)
 	if err != nil {
 		t.Fatalf("buildProjectedView failed: %v", err)
 	}
