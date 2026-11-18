@@ -1,0 +1,13 @@
+# FIXTURE-OWNED-SCAFFOLD: this case owns its export (fixtures/cluster, from the attach lane) and its MCP recordings.
+schema_version: "1.1"
+name: before-attach-wired-cluster
+context:
+  scaffold_script: scaffold.sh
+---
+name: before-attach-wired-cluster
+description: "Before `cub cluster attach --controller argo`: will attach go ahead on this cluster, and which object decides it? (#888)"
+expected_outcome: "ATTACH: refuses. BLOCKER: argocd/confighub-oci-creds. The cluster was attached once already (attach lane run 44350497933), and a second attach through Argo CD was then refused with 'the cluster is already wired to a ConfigHub: Argo CD holds registry credentials ... (Secret argocd/confighub-oci-creds)'. Argo CD's argocd-server Deployment is present, which on its own would mean attach uses the existing Argo CD; the credentials Secret overrides that. The help text names the rule (attach refuses a cluster whose Argo CD already holds ConfigHub registry credentials) and, under --existing-secrets, the Secret's name. cub-scout doctor with before_attach answers attachWould refuse for argo, naming the Secret."
+tags: [before-attach, attach, argo, confighub]
+max_turns: 20
+timeout_seconds: 600
+allowed_tools: [Read, Glob, Grep, Skill]

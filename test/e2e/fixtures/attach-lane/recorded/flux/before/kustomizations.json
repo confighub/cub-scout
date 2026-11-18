@@ -6,15 +6,15 @@
       "annotations": {
         "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"kustomize.toolkit.fluxcd.io/v1\",\"kind\":\"Kustomization\",\"metadata\":{\"annotations\":{},\"name\":\"podinfo\",\"namespace\":\"podinfo\"},\"spec\":{\"interval\":\"10m\",\"path\":\"./kustomize\",\"prune\":true,\"sourceRef\":{\"kind\":\"GitRepository\",\"name\":\"podinfo\"},\"targetNamespace\":\"podinfo\"}}\n"
       },
-      "creationTimestamp": "2026-11-18T16:09:15Z",
+      "creationTimestamp": "2026-11-18T16:59:16Z",
       "finalizers": [
         "finalizers.fluxcd.io"
       ],
       "generation": 1,
       "name": "podinfo",
       "namespace": "podinfo",
-      "resourceVersion": "1311",
-      "uid": "090d865e-bf37-4fe1-ab5e-f84f18e3a563"
+      "resourceVersion": "1374",
+      "uid": "6ff528b6-2e07-493b-b685-136c1411f336"
     },
     "spec": {
       "force": false,
@@ -30,7 +30,7 @@
     "status": {
       "conditions": [
         {
-          "lastTransitionTime": "2026-11-18T16:09:17Z",
+          "lastTransitionTime": "2026-11-18T16:59:19Z",
           "message": "Applied revision: sha1:fd3a834ed8d14b80ea334cf8a2fddd4597924da6",
           "observedGeneration": 1,
           "reason": "ReconciliationSucceeded",
@@ -41,9 +41,9 @@
       "history": [
         {
           "digest": "sha256:5ba4c6a6b4c3ab8ca7182f199a986b1094049f716e4f4b9733545128ffba477d",
-          "firstReconciled": "2026-11-18T16:09:17Z",
-          "lastReconciled": "2026-11-18T16:09:17Z",
-          "lastReconciledDuration": "119.118551ms",
+          "firstReconciled": "2026-11-18T16:59:19Z",
+          "lastReconciled": "2026-11-18T16:59:19Z",
+          "lastReconciledDuration": "227.129818ms",
           "lastReconciledStatus": "ReconciliationSucceeded",
           "metadata": {
             "revision": "sha1:fd3a834ed8d14b80ea334cf8a2fddd4597924da6"

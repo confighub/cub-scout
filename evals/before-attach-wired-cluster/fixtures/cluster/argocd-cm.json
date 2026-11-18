@@ -1,0 +1,15 @@
+{
+  "keys": [
+    "resource.customizations.ignoreDifferences.argoproj.io_Application",
+    "resource.customizations.ignoreResourceUpdates.ConfigMap",
+    "resource.customizations.ignoreResourceUpdates.Endpoints",
+    "resource.customizations.ignoreResourceUpdates.all",
+    "resource.customizations.ignoreResourceUpdates.apps_ReplicaSet",
+    "resource.customizations.ignoreResourceUpdates.argoproj.io_Application",
+    "resource.customizations.ignoreResourceUpdates.argoproj.io_Rollout",
+    "resource.customizations.ignoreResourceUpdates.autoscaling_HorizontalPodAutoscaler",
+    "resource.customizations.ignoreResourceUpdates.discovery.k8s.io_EndpointSlice",
+    "resource.exclusions"
+  ],
+  "resource.customizations.ignoreDifferences.argoproj.io_Application": "jqPathExpressions:\n- '.metadata.annotations.\"kubectl.kubernetes.io/last-applied-configuration\"'\n- '.metadata.annotations.\"confighub.com/origin\"'\n- '.metadata.annotations.\"confighub.com/RevisionNum\"'\n- '.metadata.annotations.\"confighub.com/SpaceID\"'\n- '.metadata.annotations.\"confighub.com/UnitSlug\"'\n- '.metadata.annotations.\"confighub.com/ResourceMergeID\"'\n- '.metadata.annotations.\"argocd.argoproj.io/tracking-id\"'\n- '.metadata.finalizers'\n"
+}

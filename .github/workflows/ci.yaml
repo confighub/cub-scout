@@ -120,6 +120,9 @@ jobs:
       - name: Run offline doctor scan context proof guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/doctor-scan-context -p 'test_*.py' -v
 
+      - name: Run offline before-attach eval case checks
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/before-attach-wired-cluster -p 'test_*.py' -v
+
       - name: Run Trace MCP recorded evidence guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/trace-context-binding -p 'test_*.py' -v
 

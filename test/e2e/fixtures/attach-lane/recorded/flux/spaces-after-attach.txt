@@ -1,5 +1,5 @@
-default {}
-argobot-scout-attach {"ClusterUnitID": "d7f97834-9b06-49bb-888a-3039c3568d01", "ExternalSourceRef": "ghcr.io/confighub/argobot:v0.2.12", "UpstreamSpaceID": "a2abba24-f632-4cbf-977c-e4e01414dbea"}
+scout-attach {"confighub.com/cluster-bot-channel": "argobot", "confighub.com/cluster-bot-space": "argobot-scout-attach", "confighub.com/cluster-controller": "flux", "confighub.com/cluster-host": "runnervmccnms", "confighub.com/cluster-name": "scout-attach", "confighub.com/cluster-origin": "attach", "confighub.com/cluster-provider": "kind", "confighub.com/cluster-provider-cluster": "brownfield"}
 argobot-flux-base {"ExternalSourceRef": "ghcr.io/confighub/argobot:v0.2.12"}
-scout-attach-flux-apps {"ClusterUnitID": "ad9573c0-9f20-4fce-b8ac-2b3f76dea6e4"}
-scout-attach {"confighub.com/cluster-bot-channel": "argobot", "confighub.com/cluster-bot-space": "argobot-scout-attach", "confighub.com/cluster-controller": "flux", "confighub.com/cluster-host": "ip-10-0-132-145", "confighub.com/cluster-name": "scout-attach", "confighub.com/cluster-origin": "attach", "confighub.com/cluster-provider": "kind", "confighub.com/cluster-provider-cluster": "brownfield"}
+default {}
+scout-attach-flux-apps {"ClusterUnitID": "e710fae1-6e8c-493d-aaca-4a54ce93f8b7"}
+argobot-scout-attach {"ClusterUnitID": "0ae0942e-faba-445c-b223-5ff679ecbe65", "ExternalSourceRef": "ghcr.io/confighub/argobot:v0.2.12", "UpstreamSpaceID": "761aa923-f8c0-4306-aa46-889c1ab2a2ba"}

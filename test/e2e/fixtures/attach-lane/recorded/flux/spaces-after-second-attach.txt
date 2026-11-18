@@ -1,5 +1,5 @@
-default
-argobot-scout-attach
-argobot-flux-base
-scout-attach-flux-apps
 scout-attach
+argobot-flux-base
+default
+scout-attach-flux-apps
+argobot-scout-attach

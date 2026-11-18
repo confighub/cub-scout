@@ -327,6 +327,7 @@ cub-scout doctor --presentation ai
 cub-scout doctor --hint-mode operator
 cub-scout doctor --format json
 cub-scout doctor --with-confighub --confighub-space prod --format json
+cub-scout doctor --before-attach
 ```
 
 A live invocation captures its Kubernetes config once. The context name is a
@@ -354,6 +355,7 @@ with an explicit context. Omitting the flag preserves the normal context choice.
 | `--confighub-space` | ConfigHub space for connected delivery evidence (default: `CUB_SPACE`; `*` must be explicit) |
 | `--confighub-since` | Lookback window for ConfigHub release/event evidence (default: `24h`) |
 | `--confighub-stale-after` | Treat live-status writeback older than this as stale (default: `15m`) |
+| `--before-attach` | Add what `cub cluster attach` would meet in this cluster; always cluster-wide |
 
 `--with-confighub` is opt-in and read-only. For `doctor`, connected release,
 unit-event, and live-status reads are scoped to `--confighub-space`, else
@@ -366,6 +368,47 @@ a compact Delivery section. Concrete failed/stale delivery feedback, failed
 unit events, and unhealthy observed event consumers can be promoted into
 `topIssues`. Missing connection, missing writeback, RBAC/list failures, and
 other incomplete evidence are represented as structured omissions.
+
+### Before `cub cluster attach`
+
+`--before-attach` adds a section saying what `cub cluster attach` would meet
+in this cluster, for each of `--controller argo`, `flux` and `sveltos`
+([#888](https://github.com/confighub/cub-scout/issues/888)). It reads by name
+only, and Secrets by metadata only, so no Secret data is fetched. It never
+attaches and never says a cluster is safe to attach.
+
+For each controller, `attachWould` is one of:
+
+| Value | When |
+|-------|------|
+| `refuse` | The Secret holding an earlier attachment's registry credentials is here (`argocd/confighub-oci-creds`, `flux-system/confighub-oci`, `projectsveltos/confighub-gateway`). Attach refuses before it creates anything in ConfigHub, unless given `--existing-secrets`. |
+| `use-existing` | The controller's Deployment is here (`argocd/argocd-server`, `flux-system/kustomize-controller`, `projectsveltos/addon-controller`); attach leaves the controller as found. |
+| `install` | The Deployment is not here; attach installs the controller, or fails with `--no-install`. |
+| `unknown` | A read it depends on failed, for instance a forbidden Secret read. Never reported as absent. |
+
+It also lists the objects of the kinds an attachment applies that are here
+already (an Application or OCIRepository pulling a source in ConfigHub's
+`space/<slug>` layout, and a Flux or Sveltos `confighub-root`); whether
+`argocd-cm` already sets the ignoreDifferences key attach otherwise patches;
+the `argobot` namespace and Secret; and how many Applications,
+ApplicationSets, Kustomizations, HelmReleases and ClusterProfiles are here.
+It names what it cannot know: Spaces of the same names in ConfigHub, whether
+the cluster reaches ConfigHub's registry, whether the credentials have
+cluster-admin (attach runs `kubectl auth can-i`; cub-scout does not), and any
+overlap with what is deployed later.
+
+Each finding carries its basis. `recorded`: attach was seen to do this on a
+real cluster in the attach lane (`-f level=attach`: cub v0.11.4, Argo CD v3.6.1,
+Flux v2.10.0), where an Application and a Kustomization present before an
+attach with `--prune` were unchanged after it. `cub-source`: read from cub's
+source and not run, which is everything about Sveltos.
+
+```bash
+./cub-scout doctor --before-attach --format json | jq '.attach.controllers[] | {controller, attachWould, why}'
+cub scout doctor --before-attach
+```
+
+The `doctor` MCP tool takes `before_attach: true` for the same section. See [the example](../../examples/before-attach/) for recorded output.
 
 ---
 

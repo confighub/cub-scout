@@ -1,0 +1,19 @@
+BEFORE CUB CLUSTER ATTACH
+  Read only; cub-scout does not say whether attaching is safe.
+  Already attached to a ConfigHub through: flux
+  --controller argo     use-existing: Deployment argocd/argocd-server exists; attach leaves the installed controller as found [recorded]
+      argocd-cm does not set resource.customizations.ignoreDifferences.argoproj.io_Application; attach patches argocd-cm to set it [recorded]
+  --controller flux     refuse: Secret flux-system/confighub-oci holds an earlier attachment's registry credentials; attach refuses before it creates anything in ConfigHub, unless given --existing-secrets [recorded]
+      already here: Kustomization flux-system/confighub-root
+      already here: OCIRepository flux-system/argobot-scout-attach (oci://172.18.0.1:32181/space/argobot-scout-attach)
+      already here: OCIRepository flux-system/confighub-root (oci://172.18.0.1:32181/space/scout-attach-flux-apps)
+  --controller sveltos  install: Deployment projectsveltos/addon-controller does not exist; attach installs the controller, or fails with --no-install [cub-source]
+  argobot: namespace present, Secret argobot/argobot-secrets present
+  Deployers here: Application 1, ApplicationSet 0, ClusterProfile 0, HelmRelease 0, Kustomization 3
+  Attach leaves these as it finds them: in the recordings, with --prune, an Application and a Kustomization that were here before were unchanged after attach. --prune governs what ConfigHub deploys later, not these.
+  Unknown:
+    - whether ConfigHub already has Spaces of the names attach would create; that is in ConfigHub, not the cluster
+    - whether the cluster can reach ConfigHub's registry; attach checks this itself
+    - whether these credentials have cluster-admin; attach checks with `kubectl auth can-i create clusterroles`, which cub-scout does not run
+    - whether what you later deploy through ConfigHub overlaps these deployers' objects
+
