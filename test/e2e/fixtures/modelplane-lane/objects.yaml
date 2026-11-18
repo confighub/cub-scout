@@ -1,0 +1,58 @@
+# Modelplane objects on a control plane with no workload cluster: a hardware
+# profile, and a model deployment and service that nothing can schedule. Taken
+# from Modelplane's local demo (v0.7.0), without the InferenceCluster and
+# InferenceGateway, which would provision infrastructure.
+apiVersion: modelplane.ai/v1alpha1
+kind: InferenceClass
+metadata:
+  name: synthetic-gpu
+spec:
+  description: Fake GPU, declared only
+  devices:
+    - name: gpu
+      claim: DRA
+      driver: gpu.example.com
+      deviceClassName: gpu.example.com
+      count: 1
+      capacity:
+        memory: { value: "80Gi" }
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ml-team
+---
+apiVersion: modelplane.ai/v1alpha1
+kind: ModelDeployment
+metadata:
+  name: smollm
+  namespace: ml-team
+spec:
+  replicas: 1
+  template:
+    spec:
+      engines:
+        - name: smollm
+          members:
+            - role: Standalone
+              nodeSelector:
+                devices:
+                  - name: gpu
+                    count: 1
+              template:
+                spec:
+                  containers:
+                    - name: engine
+                      image: registry.k8s.io/pause:3.10
+---
+apiVersion: modelplane.ai/v1alpha1
+kind: ModelService
+metadata:
+  name: assistant
+  namespace: ml-team
+spec:
+  endpoints:
+    - name: smollm
+      selector:
+        matchLabels:
+          modelplane.ai/deployment: smollm

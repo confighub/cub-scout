@@ -21,7 +21,7 @@ on:
       level:
         description: 'Test level (smoke, unit, integration, gitops, demos, connected, live-status, windows, full)'
         type: choice
-        options: [smoke, unit, integration, gitops, demos, connected, live-status, windows, full]
+        options: [smoke, unit, integration, gitops, demos, connected, live-status, modelplane, windows, full]
         required: false
         default: 'integration'
 
@@ -319,7 +319,7 @@ jobs:
     needs: unit
     # Manual smoke/unit runs must not create a cluster. Unknown manual levels
     # also fail closed to offline jobs. Normal PR/main runs retain live CI.
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.level == 'integration' || github.event.inputs.level == 'gitops' || github.event.inputs.level == 'demos' || github.event.inputs.level == 'connected' || github.event.inputs.level == 'live-status' || github.event.inputs.level == 'full'
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.level == 'integration' || github.event.inputs.level == 'gitops' || github.event.inputs.level == 'demos' || github.event.inputs.level == 'connected' || github.event.inputs.level == 'live-status' || github.event.inputs.level == 'modelplane' || github.event.inputs.level == 'full'
     steps:
       - uses: actions/checkout@v6
 
@@ -772,6 +772,45 @@ jobs:
         with:
           name: ci-proof-artifact
           path: ./proof-artifact
+
+  # ==========================================================================
+  # Modelplane on a control plane only, manual trigger (maintainer's choice,
+  # 2026-11-18): Crossplane and the Modelplane Configuration on one kind
+  # cluster, no workload cluster, no model.
+  # ==========================================================================
+  modelplane:
+    name: Modelplane Control Plane
+    runs-on: ubuntu-26.04
+    needs: integration
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.level == 'modelplane'
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download binary
+        uses: actions/download-artifact@v8
+        with:
+          name: cub-scout-linux
+
+      - name: Make binary executable
+        run: chmod +x cub-scout
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+        with:
+          version: v0.31.0
+          node_image: kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f
+          cluster_name: modelplane
+
+      - name: Install Modelplane and record what it writes
+        run: bash scripts/ci/modelplane-lane.sh "$PWD/cub-scout" "$RUNNER_TEMP/modelplane-lane"
+
+      - name: Retain what was read
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: modelplane-lane
+          path: ${{ runner.temp }}/modelplane-lane/
 
   # ==========================================================================
   # Full test (manual trigger only)
