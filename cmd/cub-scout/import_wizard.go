@@ -16,7 +16,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 // Import wizard steps
@@ -228,14 +227,15 @@ func (m ImportWizardModel) Init() tea.Cmd {
 }
 
 // initK8sClients initializes Kubernetes clients
+// Its clients read, and with the Argo CD hand-off write, through the context
+// bound by --kube-context when one was given (#599), else the current one.
 func (m ImportWizardModel) initK8sClients() tea.Msg {
-	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-	configOverrides := &clientcmd.ConfigOverrides{}
-	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
-
-	config, err := kubeConfig.ClientConfig()
-	if err != nil {
-		return wizardErrMsg{err: fmt.Errorf("build kubeconfig: %w", err)}
+	config := importClusterConfig
+	if config == nil {
+		var err error
+		if config, err = ambientImportConfig(); err != nil {
+			return wizardErrMsg{err: fmt.Errorf("build kubeconfig: %w", err)}
+		}
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
@@ -1257,7 +1257,7 @@ func (m ImportWizardModel) prevStep() (tea.Model, tea.Cmd) {
 // Data loading commands
 
 func (m ImportWizardModel) discoverNamespaces() tea.Msg {
-	namespaces, err := discoverNamespacesWithWorkloads()
+	namespaces, err := importDiscoverNamespaces()
 	if err != nil {
 		return wizardErrMsg{err: err}
 	}
@@ -1265,7 +1265,7 @@ func (m ImportWizardModel) discoverNamespaces() tea.Msg {
 	items := make([]NamespaceItem, 0, len(namespaces))
 	for _, ns := range namespaces {
 		// Count workloads in namespace
-		workloads, _ := discoverWorkloads(ns)
+		workloads, _ := importDiscoverWorkloads(ns)
 		items = append(items, NamespaceItem{
 			Name:          ns,
 			WorkloadCount: len(workloads),
@@ -1284,7 +1284,7 @@ func (m ImportWizardModel) loadWorkloads() tea.Msg {
 		if !ns.Selected {
 			continue
 		}
-		workloads, err := discoverWorkloads(ns.Name)
+		workloads, err := importDiscoverWorkloads(ns.Name)
 		if err != nil {
 			continue
 		}
@@ -2425,6 +2425,23 @@ func (m ImportWizardModel) detectImportPattern() string {
 		return ""
 	}
 }
+
+// RunImportWizardWithBinding runs the wizard through an explicitly selected
+// context: its clients, discovery and manifest fetch all use that context
+// (#599). A binding that was not explicitly selected runs it as before.
+func RunImportWizardWithBinding(binding *localClusterBinding) error {
+	if binding == nil || !binding.explicit {
+		return RunImportWizard()
+	}
+	oldConfig, oldContext := importClusterConfig, importClusterContext
+	importClusterConfig, importClusterContext = binding.config, binding.context
+	defer func() { importClusterConfig, importClusterContext = oldConfig, oldContext }()
+	return runImportWizardFn()
+}
+
+// runImportWizardFn is a variable so tests can run the binding logic without
+// a terminal.
+var runImportWizardFn = RunImportWizard
 
 // RunImportWizard starts the import wizard as a standalone TUI
 func RunImportWizard() error {

@@ -161,12 +161,12 @@ func runLocalClusterWithSwitch(binding *localClusterBinding) error {
 	if binding == nil {
 		binding = resolveLegacyLocalClusterBinding(getCurrentContext())
 	}
-	return runLocalClusterWithSwitchUsing(binding, runLocalClusterTUI, runHierarchyLoopWithContext, RunImportWizard)
+	return runLocalClusterWithSwitchUsing(binding, runLocalClusterTUI, runHierarchyLoopWithContext, RunImportWizardWithBinding)
 }
 
 type localClusterTUIRunner func(*localClusterBinding) (bool, string, bool, *localClusterBinding, error)
 
-func runLocalClusterWithSwitchUsing(binding *localClusterBinding, runTUI localClusterTUIRunner, runHub func(string) (bool, error), runImport func() error) error {
+func runLocalClusterWithSwitchUsing(binding *localClusterBinding, runTUI localClusterTUIRunner, runHub func(string) (bool, error), runImport func(*localClusterBinding) error) error {
 	for {
 		switchToHub, hubContext, switchToImport, nextBinding, err := runTUI(binding)
 		if err != nil {
@@ -178,10 +178,8 @@ func runLocalClusterWithSwitchUsing(binding *localClusterBinding, runTUI localCl
 
 		// Handle import wizard switch
 		if switchToImport {
-			if binding.explicit {
-				return fmt.Errorf("import is unavailable with --kube-context until the import flow honors the selected binding")
-			}
-			if err := runImport(); err != nil {
+			// The wizard runs through the same binding as the map (#599).
+			if err := runImport(binding); err != nil {
 				return err
 			}
 			// After import wizard, return to local cluster TUI
@@ -237,10 +235,8 @@ func runHierarchyWithSwitch(cmd *cobra.Command, args []string, binding *localClu
 
 		// Handle import wizard switch
 		if switchToImport {
-			if binding.explicit {
-				return fmt.Errorf("import is unavailable with --kube-context until the import flow honors the selected binding")
-			}
-			if err := RunImportWizard(); err != nil {
+			// The wizard runs through the same binding as the map (#599).
+			if err := RunImportWizardWithBinding(binding); err != nil {
 				return err
 			}
 			// After import wizard, stay in local cluster mode

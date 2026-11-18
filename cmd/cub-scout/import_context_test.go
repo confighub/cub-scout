@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func setImportContextFlag(t *testing.T, value string) {
@@ -26,7 +27,7 @@ func setImportContextFlag(t *testing.T, value string) {
 }
 
 // #599: with --kube-context the import's discovery reads only that context,
-// and an empty or missing name, or --wizard, is refused before any read.
+// and an empty or missing name is refused before any read.
 func TestImportDiscoveryReadsOnlyTheSelectedContext(t *testing.T) {
 	selected, ambient := newCountedKubeServer(t), newCountedKubeServer(t)
 	path, before := resolverKubeconfig(t, "ambient", map[string]string{"selected": selected.server.URL, "ambient": ambient.server.URL})
@@ -43,7 +44,7 @@ func TestImportDiscoveryReadsOnlyTheSelectedContext(t *testing.T) {
 	for _, tc := range []struct {
 		context string
 		wizard  bool
-	}{{"missing", false}, {"", false}, {"selected", true}} {
+	}{{"missing", false}, {"", false}} {
 		seen := selected.requests.Load()
 		require.NoError(t, importCmd.Flags().Set("kube-context", tc.context))
 		importWizard = tc.wizard
@@ -81,4 +82,53 @@ func TestImportFetchManifestNamesTheSelectedContext(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, tc.want, strings.TrimSpace(string(raw)))
 	}
+}
+
+// The wizard's clients come from the bound config: its reads, and the Argo
+// CD hand-off's writes, go to the selected context.
+func TestImportWizardClientsUseTheBoundContext(t *testing.T) {
+	selected, ambient := newCountedKubeServer(t), newCountedKubeServer(t)
+	path, _ := resolverKubeconfig(t, "ambient", map[string]string{"selected": selected.server.URL, "ambient": ambient.server.URL})
+	t.Setenv("KUBECONFIG", path)
+	binding := resolveLocalClusterBindingForSelection(clusterContextSelection{name: "selected", explicit: true})
+	require.NoError(t, binding.err)
+
+	var msg interface{}
+	old := runImportWizardFn
+	runImportWizardFn = func() error {
+		require.Same(t, binding.config, importClusterConfig, "the wizard ran without the binding")
+		require.Equal(t, "selected", importClusterContext)
+		msg = ImportWizardModel{}.initK8sClients()
+		return nil
+	}
+	t.Cleanup(func() { runImportWizardFn = old })
+
+	require.NoError(t, RunImportWizardWithBinding(binding))
+	require.Nil(t, importClusterConfig, "the binding outlived the wizard")
+	require.Empty(t, importClusterContext)
+
+	ready, ok := msg.(wizardK8sReadyMsg)
+	require.True(t, ok, "initK8sClients: %v", msg)
+	_, err := ready.clientset.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
+	require.NoError(t, err)
+	require.NotZero(t, selected.requests.Load(), "the wizard's client did not read the selected context")
+	require.Zero(t, ambient.requests.Load(), "the wizard's client read the ambient context: %v", ambient.requestPaths())
+}
+
+// map --kube-context hands the import wizard the binding it holds, rather
+// than refusing or reading the current context.
+func TestMapImportSwitchPassesItsBinding(t *testing.T) {
+	binding := &localClusterBinding{context: "selected", explicit: true}
+	var got *localClusterBinding
+	calls := 0
+	err := runLocalClusterWithSwitchUsing(binding,
+		func(b *localClusterBinding) (bool, string, bool, *localClusterBinding, error) {
+			calls++
+			return false, "", calls == 1, b, nil
+		},
+		func(string) (bool, error) { return false, nil },
+		func(b *localClusterBinding) error { got = b; return nil },
+	)
+	require.NoError(t, err)
+	require.Same(t, binding, got)
 }

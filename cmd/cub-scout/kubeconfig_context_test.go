@@ -441,7 +441,7 @@ func TestMapTUISelectionBindsInventoryAndBoundedExplainAndSurvivesHandoff(t *tes
 			return false, "", false, got, nil
 		},
 		func(string) (bool, error) { return true, nil },
-		func() error { t.Fatal("explicit context must never enter import wizard"); return nil },
+		func(*localClusterBinding) error { t.Fatal("this loop never switches to import"); return nil },
 	)
 	require.NoError(t, err)
 	require.Equal(t, 2, calls)
