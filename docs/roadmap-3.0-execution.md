@@ -40,7 +40,7 @@ what is ready, and the work the trimmed plan gave to v2.16 moves to v2.17.
 | `trace --artifacts` says "not applicable" for a source with no object; docs say "no owner marker recognised". | #911, #923 |
 | Deprecation notice: the verdict words leave JSON and MCP output in 3.0. | decision, 2026-11-16 |
 
-| Moved to v2.17 | Why |
+| Moved to v2.17, then to v2.18 | Why |
 |---|---|
 | [#888] pre-attach report | not started |
 | [#596] conformance across CLI, MCP and TUI | the envelope's conformance check exists for two commands; the rest is not started |
@@ -49,6 +49,22 @@ what is ready, and the work the trimmed plan gave to v2.16 moves to v2.17.
 
 Still owed from v2.15, unchanged: [#882] item 5 and a live sighting of two
 Flux kinds; the remaining [#887] items; the rest of [#599]; the eval cases.
+
+### v2.17.0, in preparation — 2026-11-18
+
+Renumbered again, on the maintainer's word ("Cut v2.17.0"): v2.17.0 ships
+what the standing checks found. The items the table above moved to v2.17
+are now v2.18's. [Notes](releases/v2.17.0.md).
+
+| In v2.17.0 | From |
+|---|---|
+| kro owner names from kro's own `kro.run/instance-name` label; before, an arbitrary `kro.run/` label value. | #936 |
+| Helm: `trace` answers for objects named only by Helm's annotations; a named release is claimed only if its manifest lists the object; its recorded status is read as the deployer's report. | #929, #933, #935 |
+| `trace` says "no owner marker" only when detection recognised none. | #929 |
+| Crossplane: a composite labelled with its own name is its own root in `tree composition`. | #940 |
+| kubectl warnings on stderr are no longer parsed as data (`tree composition`, `import`). | #938 |
+| Terraform: the two invented keys removed; `explain` cites Terraform's field manager. | #942 |
+| Real installs in the GitOps lane: Flux 2.10, Argo CD 3.6, Helm 4 and 3, kro, Crossplane, Terraform; pinned runners, kind and goreleaser; the live lane on Ubuntu 26.04. | #927–#929, #934, #936, #937, #941 |
 
 ### Decisions made
 
@@ -59,6 +75,11 @@ Flux kinds; the remaining [#887] items; the rest of [#599]; the eval cases.
 | 2026-11-16 | `compare source-truth` carries the lean form, with `observedAt`. |
 | 2026-11-16 | In 3.0 the verdict words (`PASS`, `WATCH`, `ASK`, `BLOCK`, `AGREED` and the rest) leave JSON and MCP output and stay in ASCII and Markdown. |
 | 2026-11-16 | The consumer-side source-truth fixtures are not in use; nothing downstream changes in step with `test/fixtures/source-truth`. |
+| 2026-11-16 | The demo lane's scanner demos are taken out; the full lane keeps its scanner. |
+| 2026-11-16 | A Helm release's recorded status counts as read, resting on `deployer-report`. |
+| 2026-11-18 | Terraform: remove the keys no Terraform tool writes; cite the field manager as evidence, not ownership. |
+| 2026-11-18 | Modelplane: a control-plane-only lane, manually dispatched, not the two-cluster demo. |
+| 2026-11-18 | Cut v2.17.0 from what the standing checks found; the planned v2.17 work moves to v2.18. |
 
 ### Open, and whose it is
 

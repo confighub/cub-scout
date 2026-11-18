@@ -2214,6 +2214,22 @@ Open for the maintainer: the small eval run; telling the consumer of the
 source-truth fixtures that the "agreed" case needs `object_revision`; a
 smaller default MCP tool set.
 
+## Standing checks on real installs, and v2.17.0 — 2026-11-16 to 2026-11-18
+
+On "keep going", the standing checks in the roadmap were worked through: each
+owner type was installed for real in the GitOps lane and what it writes was
+recorded before any claim changed. Found and fixed: kro owner names (#936),
+Helm traces with no instance label and unchecked release names (#929, #933),
+"no owner marker" for a recognised marker (#929), the Crossplane composite
+under a made-up parent (#940), kubectl warnings parsed as data (#938), and a
+Terraform detector reading keys no Terraform tool writes (#942, the
+maintainer's decision). Helm release status now counts as read (#935, the
+maintainer's decision). CI is pinned (#927), on Flux 2.10 / Argo CD 3.6
+(#928) and on Ubuntu 26.04 with raised inotify limits for the live lane
+(#934); the demo lane passes without its scanner demos (#932). v2.17.0 is cut
+from this on the maintainer's word; the planned v2.17 work moves to v2.18.
+Next: the Modelplane control-plane lane (the maintainer's choice).
+
 ## After v2.15.1: the envelope, the tool profile, ConfigHub 0.11 — 2026-11-16
 
 The current state is kept in one place now:
