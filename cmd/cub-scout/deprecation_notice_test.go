@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
@@ -44,10 +45,22 @@ func TestEverythingThreeZeroRemovesSaysSo(t *testing.T) {
 		t.Errorf("connect --go must say it is removed in 3.0: %+v", goFlag)
 	}
 
-	for _, cmd := range []*cobra.Command{hierarchyCmd, fleetOutliersCmd} {
-		if !strings.Contains(cmd.Deprecated, "removed in 3.0") {
-			t.Errorf("%s: deprecation notice %q does not say it is removed in 3.0", cmd.CommandPath(), cmd.Deprecated)
-		}
+	if !strings.Contains(hierarchyCmd.Deprecated, "removed in 3.0") {
+		t.Errorf("hierarchy: deprecation notice %q does not say it is removed in 3.0", hierarchyCmd.Deprecated)
+	}
+
+	// fleet outliers stays in help, saying so, and prints its notice on
+	// stderr before anything else, even when it then fails.
+	if !strings.Contains(fleetOutliersCmd.Short, "removed in 3.0") || fleetOutliersCmd.Hidden || fleetOutliersCmd.Deprecated != "" {
+		t.Errorf("fleet outliers must stay in help and say it is removed in 3.0: %q", fleetOutliersCmd.Short)
+	}
+	t.Setenv("CUB_SPACE", "")
+	var stderr bytes.Buffer
+	fleetOutliersCmd.SetErr(&stderr)
+	defer fleetOutliersCmd.SetErr(nil)
+	_ = runFleetOutliers(fleetOutliersCmd, nil)
+	if !strings.HasPrefix(stderr.String(), fleetOutliersDeprecation) {
+		t.Errorf("fleet outliers stderr = %q, want the notice first", stderr.String())
 	}
 }
 

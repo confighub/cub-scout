@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"sort"
 	"strings"
@@ -70,9 +71,7 @@ var fleetTopCmd = &cobra.Command{
 
 var fleetOutliersCmd = &cobra.Command{
 	Use:   "outliers",
-	Short: "Identify clusters that diverge from fleet norms",
-	// Removed in 3.0 (#562): see docs/migration-3.0.md#fleet-outliers.
-	Deprecated: "it is removed in 3.0: its slug-based, single-space comparison does not establish cross-cluster lineage, and has no replacement (docs/migration-3.0.md)",
+	Short: "Identify clusters that diverge from fleet norms (deprecated; removed in 3.0)",
 	Long: `Detect outlier clusters by comparing unit revision and unit presence across clusters.
 
 Examples:
@@ -91,7 +90,18 @@ func init() {
 	fleetOutliersCmd.Flags().StringVar(&fleetOutliersSpace, "space", "", "ConfigHub space to compare within; one space, not '*' (default: CUB_SPACE)")
 }
 
+// fleetOutliersDeprecation is printed on stderr on every run. Cobra's
+// Deprecated field is not used: it hides the command from help, and with it
+// `fleet`, whose only subcommand this is; a deprecated command should stay
+// visible, saying so (#595, #562).
+const fleetOutliersDeprecation = `Command "outliers" is deprecated: it is removed in 3.0. Its slug-based, single-space comparison does not establish cross-cluster lineage, and it has no replacement (docs/migration-3.0.md).`
+
 func runFleetOutliers(cmd *cobra.Command, args []string) error {
+	var notice io.Writer = os.Stderr
+	if cmd != nil {
+		notice = cmd.ErrOrStderr()
+	}
+	fmt.Fprintln(notice, fleetOutliersDeprecation)
 	// The comparison keys units by slug and clusters by target slug, and both
 	// are unique only within one space. Across spaces, unrelated units that share
 	// a slug would be compared as one, and every space's target named "target"
