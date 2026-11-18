@@ -1387,8 +1387,10 @@ func outputTraceMarkdown(result *agent.TraceResult, artifacts map[string]mapsvc.
 
 	// Summary
 	fmt.Println()
-	if result.FullyManaged {
+	if result.FullyManaged && traceHumanInSync(result) {
 		fmt.Printf("✓ All levels in sync. Managed by %s.\n", result.Tool)
+	} else if result.FullyManaged {
+		fmt.Printf("○ %s\n", traceHumanAnswerSummary(result))
 	} else {
 		for _, link := range result.Chain {
 			if !link.Ready {

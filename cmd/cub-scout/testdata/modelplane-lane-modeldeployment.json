@@ -1,0 +1,103 @@
+{
+  "apiVersion": "modelplane.ai/v1alpha1",
+  "kind": "ModelDeployment",
+  "metadata": {
+    "annotations": {
+      "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"modelplane.ai/v1alpha1\",\"kind\":\"ModelDeployment\",\"metadata\":{\"annotations\":{},\"name\":\"smollm\",\"namespace\":\"ml-team\"},\"spec\":{\"replicas\":1,\"template\":{\"spec\":{\"engines\":[{\"members\":[{\"nodeSelector\":{\"devices\":[{\"count\":1,\"name\":\"gpu\",\"selectors\":[{\"cel\":\"device.capacity[\\\"gpu.example.com\\\"].memory.compareTo(quantity(\\\"20Gi\\\")) \\u003e= 0\"}]}]},\"role\":\"Standalone\",\"template\":{\"spec\":{\"containers\":[{\"image\":\"registry.k8s.io/pause:3.10\",\"name\":\"engine\"}]}}}],\"name\":\"smollm\"}]}}}}\n"
+    },
+    "creationTimestamp": "2026-11-18T11:00:44Z",
+    "finalizers": [
+      "composite.apiextensions.crossplane.io"
+    ],
+    "generation": 4,
+    "labels": {
+      "crossplane.io/composite": "smollm"
+    },
+    "name": "smollm",
+    "namespace": "ml-team",
+    "resourceVersion": "6995",
+    "uid": "8a394137-bf5a-4421-993c-05331187c70f"
+  },
+  "spec": {
+    "crossplane": {
+      "compositionRef": {
+        "name": "modeldeployments.modelplane.ai"
+      },
+      "compositionRevisionRef": {
+        "name": "modeldeployments.modelplane.ai-9c346c1"
+      },
+      "compositionUpdatePolicy": "Automatic",
+      "resourceRefs": []
+    },
+    "replicas": 1,
+    "template": {
+      "spec": {
+        "engines": [
+          {
+            "copies": 1,
+            "members": [
+              {
+                "nodeSelector": {
+                  "devices": [
+                    {
+                      "count": 1,
+                      "name": "gpu",
+                      "selectors": [
+                        {
+                          "cel": "device.capacity[\"gpu.example.com\"].memory.compareTo(quantity(\"20Gi\")) >= 0"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "role": "Standalone",
+                "template": {
+                  "spec": {
+                    "containers": [
+                      {
+                        "image": "registry.k8s.io/pause:3.10",
+                        "name": "engine"
+                      }
+                    ]
+                  }
+                }
+              }
+            ],
+            "name": "smollm"
+          }
+        ]
+      }
+    }
+  },
+  "status": {
+    "conditions": [
+      {
+        "lastTransitionTime": "2026-11-18T11:00:52Z",
+        "reason": "NoClusters",
+        "status": "False",
+        "type": "ReplicasScheduled"
+      },
+      {
+        "lastTransitionTime": "2026-11-18T11:00:52Z",
+        "observedGeneration": 4,
+        "reason": "ReconcileSuccess",
+        "status": "True",
+        "type": "Synced"
+      },
+      {
+        "lastTransitionTime": "2026-11-18T11:00:52Z",
+        "observedGeneration": 4,
+        "reason": "Creating",
+        "status": "False",
+        "type": "Ready"
+      },
+      {
+        "lastTransitionTime": "2026-11-18T11:00:53Z",
+        "observedGeneration": 4,
+        "reason": "WatchCircuitClosed",
+        "status": "True",
+        "type": "Responsive"
+      }
+    ]
+  }
+}

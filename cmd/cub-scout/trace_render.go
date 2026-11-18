@@ -446,8 +446,12 @@ func renderTraceHuman(w io.Writer, result *agent.TraceResult, artifacts map[stri
 
 	// Summary
 	fmt.Fprintf(w, "\n")
-	if result.FullyManaged {
+	if result.FullyManaged && traceHumanInSync(result) {
 		fmt.Fprintf(w, "%s%s✓ All levels in sync.%s Managed by %s%s%s.\n", colorBold, colorGreen, colorReset, colorCyan, result.Tool, colorReset)
+	} else if result.FullyManaged {
+		// An owner was found, and the answer does not say its chain is
+		// ready: say what the answer says, not "in sync".
+		fmt.Fprintf(w, "%s○ %s%s\n", colorYellow, traceHumanAnswerSummary(result), colorReset)
 	} else {
 		// Find the broken link
 		for _, link := range result.Chain {
@@ -485,4 +489,23 @@ func renderTraceHuman(w io.Writer, result *agent.TraceResult, artifacts map[stri
 
 	return trackedWriter.err
 
+}
+
+// traceHumanInSync reports whether the human surfaces may say "All levels in
+// sync": only when the JSON answer for the same result is traced (#596). A
+// tracer marks an owned object fully managed whether or not anything in its
+// chain reported ready; on the Modelplane lane's recorded ModelDeployment,
+// which reported Ready=False, the human surfaces said "in sync" while the
+// answer said readiness-not-read.
+func traceHumanInSync(result *agent.TraceResult) bool {
+	answer := buildTraceAnswer(result, result.Object.Kind, result.Object.Name, result.Object.Namespace)
+	return answer != nil && answer.State == traceStateTraced
+}
+
+// traceHumanAnswerSummary is the answer's own sentence, for a person.
+func traceHumanAnswerSummary(result *agent.TraceResult) string {
+	if answer := buildTraceAnswer(result, result.Object.Kind, result.Object.Name, result.Object.Namespace); answer != nil {
+		return answer.Summary
+	}
+	return "Trace did not establish whether this chain is ready."
 }
