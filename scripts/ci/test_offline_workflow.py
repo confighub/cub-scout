@@ -90,12 +90,18 @@ class OfflineWorkflowTests(unittest.TestCase):
             with self.subTest(level=level):
                 self.assertNotIn('modelplane', scheduled(self.jobs, 'workflow_dispatch', level))
 
+    def test_attach_level_schedules_its_job_beside_the_automatic_ones(self):
+        self.assertEqual(scheduled(self.jobs, 'workflow_dispatch', 'attach'), {'unit', 'integration', 'gitops', 'attach', 'proof-artifact'})
+        for level in ('integration', 'gitops', 'live-status', 'modelplane', 'full'):
+            with self.subTest(level=level):
+                self.assertNotIn('attach', scheduled(self.jobs, 'workflow_dispatch', level))
+
     def test_dispatch_choices_are_explicit_and_unit_remains_available(self):
         # PyYAML's YAML 1.1 resolver treats the Actions key 'on' as boolean True.
         trigger = self.workflow.get('on', self.workflow.get(True))
         option = trigger['workflow_dispatch']['inputs']['level']
         self.assertEqual(option['type'], 'choice')
-        self.assertEqual(set(option['options']), {'smoke', 'unit', 'integration', 'gitops', 'demos', 'connected', 'live-status', 'modelplane', 'windows', 'full'})
+        self.assertEqual(set(option['options']), {'smoke', 'unit', 'integration', 'gitops', 'demos', 'connected', 'live-status', 'modelplane', 'attach', 'windows', 'full'})
         self.assertEqual(option['default'], 'integration')
 
     def test_native_windows_lane_is_scoped_and_failure_is_required(self):
