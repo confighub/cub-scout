@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/yaml"
 )
@@ -157,6 +158,7 @@ func addImportArgoFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&argoImportShowYAML, "show-yaml", false, "Show YAML content that would be imported (implies --dry-run)")
 	cmd.Flags().BoolVar(&argoImportRaw, "raw", false, "Keep raw YAML with all runtime fields (default: clean)")
 	cmd.Flags().BoolVar(&argoImportList, "list", false, "List available ArgoCD Applications")
+	cmd.Flags().String("kube-context", "", "Use this exact Kubernetes context for every read and write of the import")
 	cmd.Flags().BoolVarP(&argoImportYes, "yes", "y", false, "Skip confirmation prompts")
 	cmd.Flags().BoolVar(&argoImportDisableSync, "disable-sync", false, "Disable auto-sync on the ArgoCD Application after import")
 	cmd.Flags().BoolVar(&argoImportDeleteApp, "delete-app", false, "Delete the ArgoCD Application after import (keeps resources)")
@@ -166,14 +168,30 @@ func addImportArgoFlags(cmd *cobra.Command) {
 }
 
 func runImportArgoCD(cmd *cobra.Command, args []string) error {
-	// Build Kubernetes clients first (needed for both list and import)
-	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-	configOverrides := &clientcmd.ConfigOverrides{}
-	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
-
-	config, err := kubeConfig.ClientConfig()
+	// Build Kubernetes clients first (needed for both list and import). With
+	// --kube-context every read, and every write (--disable-sync,
+	// --delete-app, --test-update), goes to that context; an empty or missing
+	// name fails before any read, with no fallback (#599). Without it, the
+	// current context is used, as before.
+	selection, err := clusterContextSelectionFromFlag(cmd)
 	if err != nil {
-		return fmt.Errorf("failed to build kubeconfig: %w", err)
+		return err
+	}
+	var config *rest.Config
+	if selection.explicit {
+		binding := resolveLocalClusterBindingForSelection(selection)
+		if binding.err != nil {
+			return binding.err
+		}
+		config = binding.config
+	} else {
+		loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+		configOverrides := &clientcmd.ConfigOverrides{}
+		kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
+		config, err = kubeConfig.ClientConfig()
+		if err != nil {
+			return fmt.Errorf("failed to build kubeconfig: %w", err)
+		}
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
