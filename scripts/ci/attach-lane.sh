@@ -16,12 +16,22 @@
 set -euo pipefail
 umask 077
 
-root=${1:?Usage: attach-lane.sh CONNECTED_ROOT OUT_DIR SCOUT_BINARY KIND_CLUSTER [argo|flux]}
+root=${1:?Usage: attach-lane.sh CONNECTED_ROOT OUT_DIR SCOUT_BINARY KIND_CLUSTER [argo|flux|sveltos]}
 out=${2:?Expected an output directory}
 scout=${3:?Expected the cub-scout binary}
 kind_cluster=${4:?Expected the kind cluster to attach}
 controller=${5:-argo}
-[[ "$controller" = argo || "$controller" = flux ]] || { echo 'Expected argo or flux' >&2; exit 1; }
+[[ "$controller" = argo || "$controller" = flux || "$controller" = sveltos ]] || { echo 'Expected argo, flux or sveltos' >&2; exit 1; }
+# The brownfield runs Argo CD and Flux and no Sveltos: through Argo CD or Flux
+# attach uses the controller it finds (--no-install); through Sveltos it
+# installs it. Each says so beforehand.
+if [[ "$controller" = sveltos ]]; then
+  install_flag=()
+  expect_before=install
+else
+  install_flag=(--no-install)
+  expect_before=use-existing
+fi
 [[ -f "$root/owns-server-cluster" && -x "$scout" ]] || {
   echo 'Expected the disposable server root and an executable cub-scout' >&2; exit 1;
 }
@@ -115,6 +125,18 @@ for item in items:
     item["metadata"].pop("managedFields", None)
 print(json.dumps(items, indent=2, sort_keys=True))' > "$dir/${kind%%.*}.json"
   done
+  # ClusterProfiles are served only once Sveltos is installed. Before that
+  # the kind is recorded as not served, never as an empty list.
+  if kubectl api-resources --api-group=config.projectsveltos.io -o name | grep -qx 'clusterprofiles.config.projectsveltos.io'; then
+    kubectl get clusterprofiles.config.projectsveltos.io -o json | python3 -c '
+import json, sys
+items = json.load(sys.stdin)["items"]
+for item in items:
+    item["metadata"].pop("managedFields", None)
+print(json.dumps(items, indent=2, sort_keys=True))' > "$dir/clusterprofiles.json"
+  else
+    echo 'clusterprofiles.config.projectsveltos.io is not served' > "$dir/clusterprofiles.not-served"
+  fi
   kubectl auth can-i create clusterroles > "$dir/can-i-create-clusterroles.txt" 2>&1 || true
 }
 
@@ -141,7 +163,7 @@ snapshot "$out/before"
 # The attach under test.
 set +e
 cub cluster attach "$name" --provider kind --cluster "$kind_cluster" \
-  --controller "$controller" --no-install --prune > "$private/attach.log" 2>&1
+  --controller "$controller" "${install_flag[@]}" --prune > "$private/attach.log" 2>&1
 attach_exit=$?
 set -e
 redact < "$private/attach.log" > "$out/attach.log"
@@ -154,8 +176,10 @@ tail -n 25 "$out/attach.log"
 if [[ "$controller" = argo ]]; then
   wait_for 'the root Application to sync' bash -c \
     "[[ \$(kubectl get application '$name-argo-apps' -n argocd -o jsonpath='{.status.sync.status}') = Synced ]]" || true
-else
+elif [[ "$controller" = flux ]]; then
   kubectl wait --for=condition=Ready kustomization/confighub-root -n flux-system --timeout=300s || true
+else
+  wait_for 'the root ClusterProfile to be read' kubectl get clusterprofile confighub-root -o name || true
 fi
 
 snapshot "$out/after"
@@ -229,6 +253,6 @@ PY
 [[ "$again_exit" != 0 ]] || { echo 'A second attach of a wired cluster succeeded' >&2; failed=1; }
 cmp -s <(awk '{print $1}' "$out/spaces-after-attach.txt" | sort) <(sort "$out/spaces-after-second-attach.txt") \
   || { echo 'The refused second attach changed the Space list' >&2; failed=1; }
-[[ "$said_before" = use-existing ]] || { echo "doctor --before-attach said $said_before for an installed $controller before attach" >&2; failed=1; }
+[[ "$said_before" = "$expect_before" ]] || { echo "doctor --before-attach said $said_before for $controller before attach, not $expect_before" >&2; failed=1; }
 [[ "$said_after" = refuse ]] || { echo "doctor --before-attach said $said_after for a cluster attach then refused" >&2; failed=1; }
 exit "$failed"
