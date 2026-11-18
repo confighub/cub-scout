@@ -381,7 +381,7 @@ For each controller, `attachWould` is one of:
 
 | Value | When |
 |-------|------|
-| `refuse` | The Secret holding an earlier attachment's registry credentials is here (`argocd/confighub-oci-creds`, `flux-system/confighub-oci`, `projectsveltos/confighub-gateway`). Attach refuses before it creates anything in ConfigHub, unless given `--existing-secrets`. |
+| `refuse` | The Secret holding an earlier attachment's registry credentials is here (`argocd/confighub-oci-creds`, `flux-system/confighub-oci`, `projectsveltos/confighub-gateway`). Attach was seen to refuse before it creates any Space in ConfigHub. Its help says `--existing-secrets` skips this check. A Secret can outlive the attachment that made it, so its presence is not proof the attachment is in use. |
 | `use-existing` | The controller's Deployment is here (`argocd/argocd-server`, `flux-system/kustomize-controller`, `projectsveltos/addon-controller`); attach leaves the controller as found. |
 | `install` | The Deployment is not here; attach installs the controller, or fails with `--no-install`. |
 | `unknown` | A read it depends on failed, for instance a forbidden Secret read. Never reported as absent. |
@@ -394,14 +394,18 @@ the `argobot` namespace and Secret; and how many Applications,
 ApplicationSets, Kustomizations, HelmReleases and ClusterProfiles are here.
 It names what it cannot know: Spaces of the same names in ConfigHub, whether
 the cluster reaches ConfigHub's registry, whether the credentials have
-cluster-admin (attach runs `kubectl auth can-i`; cub-scout does not), and any
+cluster-admin (attach checks that itself; its source runs `kubectl auth can-i
+create clusterroles`, and cub-scout does not), and any
 overlap with what is deployed later.
 
 Each finding carries its basis. `recorded`: attach was seen to do this on a
 real cluster in the attach lane (`-f level=attach`: cub v0.11.4, Argo CD v3.6.1,
 Flux v2.10.0), where an Application and a Kustomization present before an
 attach with `--prune` were unchanged after it. `cub-source`: read from cub's
-source and not run, which is everything about Sveltos.
+source and not run, which is everything about Sveltos. `read`: a note about
+cub-scout's own read, for instance a list that failed. A kind the cluster does
+not serve at the version read is listed in `notServed` and not counted, since
+another version may hold some.
 
 ```bash
 ./cub-scout doctor --before-attach --format json | jq '.attach.controllers[] | {controller, attachWould, why}'

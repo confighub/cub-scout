@@ -52,13 +52,16 @@ After it, `--controller argo` reads `refuse`, naming
 Failed: the cluster is already wired to a ConfigHub: Argo CD holds registry credentials for oci://172.18.0.1:32181 (Secret argocd/confighub-oci-creds). ...
 ```
 
-and it created nothing in ConfigHub. `--controller flux` still reads
-`use-existing`: attach checks only the chosen controller's credentials, so
-the report says per controller what it would do, and lists the cluster as
-already attached through Argo CD.
+and the Space list in ConfigHub was the same after it as before; the lane
+checks that. `--controller flux` still reads `use-existing`: in cub's source,
+attach checks only the chosen controller's credentials Secret. That was not
+recorded, since each lane run attaches through one controller. The report
+lists the Secret under `credentialsFor`; a Secret can outlive the attachment
+that made it, so that is not proof the attachment is in use.
 
 In both runs the `guestbook` Application, the `podinfo` Kustomization and
-`legacy-web` were unchanged after an attach with `--prune`.
+`legacy-web` had the same generation, spec and state after an attach with
+`--prune`; the lane fails otherwise.
 
 ## What it cannot tell
 

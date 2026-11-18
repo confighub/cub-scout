@@ -876,10 +876,10 @@ cluster-wide whatever `--namespace` says.
 | `.why` | One sentence naming the object it rests on |
 | `.basis` | `recorded` (seen in the attach lane) or `cub-source` (read, not run) |
 | `.earlierObjects[]` | `kind`, `namespace`, `name`, `source`: objects of the kinds an attachment applies, already here. The registry is not confirmed as ConfigHub's |
-| `.notes[]` | `text` and `basis`: argocd-cm, unreadable lists, objects without credentials |
-| `attach.wiredThrough` | Controllers whose credentials Secret is present; empty when none |
+| `.notes[]` | `text` and `basis` (`recorded`, `cub-source`, or `read` for a note about cub-scout's own read): argocd-cm, unread lists, objects without credentials |
+| `attach.credentialsFor` | Controllers whose earlier-attachment credentials Secret is present; empty when none. Not proof the attachment is in use: a Secret can outlive it |
 | `attach.argobot` | `namespace` and `secret` (`argobot/argobot-secrets`): `present`, `absent` or `unknown` |
-| `attach.deployers.counts` | Applications, ApplicationSets, Kustomizations, HelmReleases and ClusterProfiles here; a kind whose list failed is in `unread`, not counted as zero |
+| `attach.deployers.counts` | Applications, ApplicationSets, Kustomizations, HelmReleases and ClusterProfiles here; a kind whose list failed is in `unread`, and one not served at the version read in `notServed`; neither is counted as zero |
 | `attach.unknowns` | What the cluster alone cannot tell |
 
 ### DoctorSummary delivery additions (doctor --with-confighub --format json)
