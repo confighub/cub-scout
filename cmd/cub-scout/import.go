@@ -372,9 +372,12 @@ func runImport(cmd *cobra.Command, args []string) error {
 	// not take it yet, so the two together are refused, as map refuses its
 	// import switch under an explicit context.
 	importClusterConfig, importClusterContext = nil, ""
-	selection, err := clusterContextSelectionFromFlag(cmd)
-	if err != nil {
-		return err
+	var selection clusterContextSelection
+	if cmd != nil {
+		var err error
+		if selection, err = clusterContextSelectionFromFlag(cmd); err != nil {
+			return err
+		}
 	}
 	if selection.explicit {
 		if importWizard {
