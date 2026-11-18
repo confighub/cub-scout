@@ -53,7 +53,7 @@ func TestViewLookupsReadTheUnitListCubPrints(t *testing.T) {
 	require.Equal(t, []string{"parity-other", "parity-unit"}, slugs)
 
 	installFakeWorkloadIndex(t, map[string]WorkloadInfo{})
-	pv, err := buildProjectedView(context.Background(), mockViewRef(viewUUID), "*", true)
+	pv, err := buildProjectedView(context.Background(), mockViewRef(viewUUID), "*", true, nil)
 	require.NoError(t, err)
 	require.Len(t, pv.Rows, 2)
 	for i, slug := range []string{"parity-other", "parity-unit"} {
@@ -145,7 +145,7 @@ func TestViewsProjectUsesTheColumnsAndValuesOfARealView(t *testing.T) {
 
 	calls := viewRunner(t, recordedView(t, "unit-list-with-view.json"))
 	installFakeWorkloadIndex(t, map[string]WorkloadInfo{})
-	pv, err := buildProjectedView(context.Background(), mockViewRef(recordedViewID), "a-space", true)
+	pv, err := buildProjectedView(context.Background(), mockViewRef(recordedViewID), "a-space", true, nil)
 	require.NoError(t, err)
 
 	// The list is asked for with the View, so that ConfigHub evaluates its
@@ -189,7 +189,7 @@ func TestViewsProjectSaysWhichColumnsItHasNoValueFor(t *testing.T) {
 	require.NoError(t, err)
 
 	viewRunner(t, string(encoded))
-	pv, err := buildProjectedView(context.Background(), mockViewRef(recordedViewID), "a-space", false)
+	pv, err := buildProjectedView(context.Background(), mockViewRef(recordedViewID), "a-space", false, nil)
 	require.NoError(t, err)
 	require.Len(t, pv.Rows, 2)
 	require.Len(t, pv.Omissions, 5)
@@ -208,7 +208,7 @@ func TestViewsProjectSaysWhichColumnsItHasNoValueFor(t *testing.T) {
 	encoded, err = json.Marshal(entries)
 	require.NoError(t, err)
 	viewRunner(t, string(encoded))
-	pv, err = buildProjectedView(context.Background(), mockViewRef(recordedViewID), "a-space", false)
+	pv, err = buildProjectedView(context.Background(), mockViewRef(recordedViewID), "a-space", false, nil)
 	require.NoError(t, err)
 	require.Equal(t, []projectionOmission{{Column: "Space.Slug", Reason: "not_returned", Units: 1}}, pv.Omissions)
 	require.Equal(t, "", pv.Rows[0]["Labels.tier"])
@@ -241,7 +241,7 @@ func TestViewsProjectKeepsTheViewsOwnColumnNames(t *testing.T) {
 		"unit list": string(units),
 	})
 
-	pv, err := buildProjectedView(context.Background(), mockViewRef(viewUUID), "*", false)
+	pv, err := buildProjectedView(context.Background(), mockViewRef(viewUUID), "*", false, nil)
 	require.NoError(t, err)
 	require.Len(t, pv.Columns, 5, "the columns are the View's, as it lists them")
 	require.Equal(t, projectionRow{"Unit.Slug": "a", "LiveStatus": "from the View", "Missing": ""}, pv.Rows[0])
@@ -249,7 +249,7 @@ func TestViewsProjectKeepsTheViewsOwnColumnNames(t *testing.T) {
 	require.Equal(t, []projectionOmission{{Column: "Missing", Reason: "not_returned", Units: 2}}, pv.Omissions)
 
 	installFakeWorkloadIndex(t, map[string]WorkloadInfo{})
-	_, err = buildProjectedView(context.Background(), mockViewRef(viewUUID), "*", true)
+	_, err = buildProjectedView(context.Background(), mockViewRef(viewUUID), "*", true, nil)
 	require.ErrorContains(t, err, `has its own column named "LiveStatus", which --with-reality would overwrite`)
 }
 

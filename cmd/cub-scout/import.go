@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -1052,17 +1053,27 @@ func collectNamespacesFromWorkloads(workloads []WorkloadInfo, fallback string) [
 	return namespaces
 }
 
-// discoverNamespacesWithWorkloads finds all namespaces that have Deployments, StatefulSets, or DaemonSets
-func discoverNamespacesWithWorkloads() ([]string, error) {
+// ambientImportConfig is the current context's config, which the discovery
+// helpers use when no explicit context was chosen.
+func ambientImportConfig() (*rest.Config, error) {
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 	configOverrides := &clientcmd.ConfigOverrides{}
-	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
+	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides).ClientConfig()
+}
 
-	config, err := kubeConfig.ClientConfig()
+// discoverNamespacesWithWorkloads finds all namespaces that have Deployments,
+// StatefulSets, or DaemonSets, through the current context.
+func discoverNamespacesWithWorkloads() ([]string, error) {
+	config, err := ambientImportConfig()
 	if err != nil {
 		return nil, err
 	}
+	return discoverNamespacesWithWorkloadsIn(config)
+}
 
+// discoverNamespacesWithWorkloadsIn is discoverNamespacesWithWorkloads
+// through one given config (#599).
+func discoverNamespacesWithWorkloadsIn(config *rest.Config) ([]string, error) {
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err
@@ -1125,16 +1136,17 @@ func isSystemNamespace(ns string) bool {
 	return systemNamespaces[ns]
 }
 
+// discoverWorkloads lists a namespace's workloads through the current context.
 func discoverWorkloads(namespace string) ([]WorkloadInfo, error) {
-	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-	configOverrides := &clientcmd.ConfigOverrides{}
-	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
-
-	config, err := kubeConfig.ClientConfig()
+	config, err := ambientImportConfig()
 	if err != nil {
 		return nil, fmt.Errorf("build kubeconfig: %w", err)
 	}
+	return discoverWorkloadsIn(config, namespace)
+}
 
+// discoverWorkloadsIn is discoverWorkloads through one given config (#599).
+func discoverWorkloadsIn(config *rest.Config, namespace string) ([]WorkloadInfo, error) {
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("create client: %w", err)
