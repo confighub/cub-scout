@@ -42,8 +42,8 @@ what is ready, and the work the trimmed plan gave to v2.16 moves to v2.17.
 
 | Moved to v2.17, then to v2.18 | Why |
 |---|---|
-| [#888] pre-attach report | `doctor --before-attach`, checked against two real attaches in the attach lane; in review |
-| [#596] conformance across CLI, MCP and TUI | the envelope's conformance check exists for two commands; the rest is not started |
+| [#888] pre-attach report | `doctor --before-attach` landed (#947); the apps-Space overlap, `cub variant upload` needs and a Sveltos recording are left |
+| [#596] conformance across CLI, MCP and TUI | per-command envelope checks for `trace` and `compare source-truth`; a cross-surface test for both (answer unchanged through MCP; trace's human surfaces never say more than the answer) is in review; the other commands are not started |
 | Deprecation notices for the other 3.0 removals, including `fleet outliers` | not written |
 | The envelope on `gitops status`, `explain`, `doctor` | needs the state words decided, and a size check first |
 

@@ -95,6 +95,14 @@ commands will share are in
 [the proposal](../proposals/answer-envelope.md). The fields beside it are
 unchanged and stay until 3.0.
 
+The human renderings (ASCII, Markdown, and the TUI's trace view, which uses
+the ASCII renderer) say "All levels in sync" only when `answer.state` is
+`traced`. Where an owner was found and the state is another, they print the
+answer's `summary` instead
+([#596](https://github.com/confighub/cub-scout/issues/596)): before v2.18 they
+said "in sync" for any owned object, including the Modelplane lane's recorded
+ModelDeployment, which reported `Ready=False`.
+
 | `answer` field | Meaning |
 |---|---|
 | `state` | `traced`: a chain was found and every delivery controller in it reports ready, or, for a Helm release, Helm records it as `deployed`. `chain-not-ready`: one reports not ready, or Helm records the release with another status. `readiness-not-read`: a chain was found and trace read the readiness of nothing in it. `no-owner-marker`. `not-observable`. Decide on this. |
