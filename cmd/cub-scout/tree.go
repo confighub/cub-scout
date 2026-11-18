@@ -93,7 +93,7 @@ func init() {
 	treeCmd.Flags().IntVar(&treeDepth, "depth", 0, "Limit tree depth (0 = unlimited)")
 
 	// Mark --json as deprecated
-	_ = treeCmd.Flags().MarkDeprecated("json", "use --format json instead")
+	_ = treeCmd.Flags().MarkDeprecated("json", "use --format json instead; --json is removed in 3.0")
 }
 
 func runTree(cmd *cobra.Command, args []string) error {

@@ -263,7 +263,7 @@ Standalone live-cluster checks:
 | What should an operator look at first? | `./cub-scout doctor --namespace "$NS" --format json` |
 | Which objects exist, and who owns them? | `./cub-scout map list --namespace "$NS" --format json` |
 | Which GitOps deployers are present? | `./cub-scout map deployers --json` |
-| Did GitOps deployers converge? | `./cub-scout gitops status --json` |
+| Did GitOps deployers converge? | `./cub-scout gitops status --format json` |
 | What changed recently? | `./cub-scout map activity --namespace "$NS" --since 1h --format json` |
 | Are there obvious broken workloads or deployers? | `./cub-scout map issues --namespace "$NS" --json` |
 | How is ownership grouped? | `./cub-scout tree ownership --namespace "$NS" --format md` |

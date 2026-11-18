@@ -43,7 +43,7 @@ func TestGitOpsStatus_JSON(t *testing.T) {
 	inputPath := filepath.Join(projectRoot(t), "test", "golden", "gitops-status", "input.json")
 	t.Setenv("CUB_SCOUT_TEST_GITOPS_JSON", inputPath)
 
-	result := golden.RunCubScout(t, "gitops", "status", "--json")
+	result := golden.RunCubScout(t, "gitops", "status", "--format", "json")
 
 	golden.AssertExitCode(t, 0, result)
 

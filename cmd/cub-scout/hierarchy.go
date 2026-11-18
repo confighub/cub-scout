@@ -6061,7 +6061,7 @@ func (m Model) renderTree() string {
 var hierarchyCmd = &cobra.Command{
 	Use:        "hierarchy",
 	Short:      "Interactive ConfigHub hierarchy explorer (deprecated: use 'map --hub')",
-	Deprecated: "use 'cub-scout map --hub' or 'cub-scout map hub' instead",
+	Deprecated: "use 'cub-scout map --hub' or 'cub-scout map hub' instead; hierarchy is removed in 3.0",
 	Long: `Launch an interactive TUI to explore your ConfigHub hierarchy.
 
 DEPRECATED: This command is deprecated. Use 'cub-scout map --hub' or 'cub-scout map hub' instead.

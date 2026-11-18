@@ -102,7 +102,7 @@ func addConnectFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&connectLaunchMap, "map", false, "Launch cub-scout map immediately after connect")
 	cmd.Flags().BoolVar(&connectLaunchMap, "go", false, "Deprecated alias for --map")
 	_ = cmd.Flags().MarkHidden("go")
-	_ = cmd.Flags().MarkDeprecated("go", "use --map")
+	_ = cmd.Flags().MarkDeprecated("go", "use --map; --go is removed in 3.0")
 }
 
 func runConnect(cmd *cobra.Command, args []string) error {

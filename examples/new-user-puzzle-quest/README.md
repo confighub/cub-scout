@@ -251,7 +251,7 @@ Read the weather.
 ./cub-scout gitops status
 
 # Machine-readable (for scripting and evidence)
-./cub-scout gitops status --json | jq '{backend, transport, healthyCount, failedCount}'
+./cub-scout gitops status --format json | jq '{backend, transport, healthyCount, failedCount}'
 
 # Risk scan (bonus depth)
 ./cub-scout scan
@@ -546,10 +546,10 @@ Traced Workload:      [which workload was traced in Stage 2]
   Source Resolved:    [yes/no, and what was found]
   Trail Notes:        [complete trail / fictional source / broken at stage X]
 
-GitOps Backend:       [./cub-scout gitops status --json | jq -r '.backend']
-GitOps Transport:     [./cub-scout gitops status --json | jq -r '.transport']
-Healthy Deployers:    [./cub-scout gitops status --json | jq '.healthyCount']
-Failed Deployers:     [./cub-scout gitops status --json | jq '.failedCount']
+GitOps Backend:       [./cub-scout gitops status --format json | jq -r '.backend']
+GitOps Transport:     [./cub-scout gitops status --format json | jq -r '.transport']
+Healthy Deployers:    [./cub-scout gitops status --format json | jq '.healthyCount']
+Failed Deployers:     [./cub-scout gitops status --format json | jq '.failedCount']
 
 --- IMPORT (Stages 4-5) ---
 
