@@ -1496,6 +1496,7 @@ cub-scout import argocd guestbook --disable-sync
 | `--show-yaml` | Show YAML that would be imported (implies dry-run) |
 | `--disable-sync` | Disable ArgoCD auto-sync after import |
 | `--delete-app` | Delete the ArgoCD Application after import |
+| `--kube-context` | Exact Kubernetes context for every read and write of the import (`--list`, the Application and its resources, `--disable-sync`, `--delete-app`, `--test-update`); an empty or missing name fails before any read, with no fallback to the current context |
 | `--space` | ConfigHub space to import into (default: a space named after the Application). The space is created if it does not exist. cub has no default space, and cub-scout never sets one |
 
 ---
