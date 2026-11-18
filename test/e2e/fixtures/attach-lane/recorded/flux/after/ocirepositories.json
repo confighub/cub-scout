@@ -4,10 +4,10 @@
     "kind": "OCIRepository",
     "metadata": {
       "annotations": {
-        "confighub.com/origin": "{\"spaceId\":\"4a1710a8-6763-436a-b98b-45d72788dc28\",\"spaceSlug\":\"scout-attach-flux-apps\",\"unitId\":\"b418f026-1bfc-4b0e-aad5-390c78d90853\",\"unitSlug\":\"argobot-scout-attach\",\"revisionNum\":2}",
-        "reconcile.fluxcd.io/requestedAt": "2026-11-18T17:33:27.244340719Z"
+        "confighub.com/origin": "{\"spaceId\":\"ba438ca0-b607-46dc-844c-c7865880fd99\",\"spaceSlug\":\"scout-attach-flux-apps\",\"unitId\":\"1754cfad-3d37-4355-bfd2-05e2ba596247\",\"unitSlug\":\"argobot-scout-attach\",\"revisionNum\":2}",
+        "reconcile.fluxcd.io/requestedAt": "2026-11-18T19:07:27.131284461Z"
       },
-      "creationTimestamp": "2026-11-18T17:33:23Z",
+      "creationTimestamp": "2026-11-18T19:07:24Z",
       "finalizers": [
         "finalizers.fluxcd.io"
       ],
@@ -18,8 +18,8 @@
       },
       "name": "argobot-scout-attach",
       "namespace": "flux-system",
-      "resourceVersion": "1566",
-      "uid": "01526c40-0ec8-4e29-b27c-67de7650fa8e"
+      "resourceVersion": "1663",
+      "uid": "c6b8a35b-b5da-42ba-81ad-b6c7ae09027f"
     },
     "spec": {
       "insecure": true,
@@ -34,39 +34,39 @@
     },
     "status": {
       "artifact": {
-        "digest": "sha256:c700e6849cf156c6b55d0a077580f58de878339457301f42601f9098230422f7",
-        "lastUpdateTime": "2026-11-18T17:33:24Z",
+        "digest": "sha256:cd5f026ef633d46e4ae3e4b772fab15efb7470d690be852fd212b506d8a0cc18",
+        "lastUpdateTime": "2026-11-18T19:07:24Z",
         "metadata": {
-          "com.confighub.organization.id": "7743ab45-b98b-4ab4-9855-4822a96399e2",
-          "com.confighub.space.id": "69f69324-c234-40f9-9c40-40ccaf9027ec",
-          "com.confighub.tag.id": "6b3ad23b-94f5-4c9b-92f6-68f4bcd2f48e",
-          "com.confighub.target.id": "bb862bf1-3118-4e34-ba3b-7c0fdaf1f415",
+          "com.confighub.organization.id": "3341d548-7fda-4588-83a1-cf9097c45992",
+          "com.confighub.space.id": "a0395114-f351-4971-a654-ff670727fe5c",
+          "com.confighub.tag.id": "d56142c4-2252-435d-832b-4aacad876153",
+          "com.confighub.target.id": "32c3a5e0-76d5-4a09-a4ac-cfd2fe38c3f6",
           "com.confighub.unit.count": "9"
         },
-        "path": "ocirepository/flux-system/argobot-scout-attach/sha256:1d8022b263b952f0f5f022f1c4ce29842bd1dbc864dc3fa210dbd790074ba0e3.tar.gz",
-        "revision": "latest@sha256:1d8022b263b952f0f5f022f1c4ce29842bd1dbc864dc3fa210dbd790074ba0e3",
-        "size": 4068,
-        "url": "http://source-controller.flux-system.svc.cluster.local./ocirepository/flux-system/argobot-scout-attach/sha256:1d8022b263b952f0f5f022f1c4ce29842bd1dbc864dc3fa210dbd790074ba0e3.tar.gz"
+        "path": "ocirepository/flux-system/argobot-scout-attach/sha256:3e0ad89c7850ce927cc5c609839993d15779c4ddc72f9bfd702f5ca7eb7fa8e7.tar.gz",
+        "revision": "latest@sha256:3e0ad89c7850ce927cc5c609839993d15779c4ddc72f9bfd702f5ca7eb7fa8e7",
+        "size": 4062,
+        "url": "http://source-controller.flux-system.svc.cluster.local./ocirepository/flux-system/argobot-scout-attach/sha256:3e0ad89c7850ce927cc5c609839993d15779c4ddc72f9bfd702f5ca7eb7fa8e7.tar.gz"
       },
       "conditions": [
         {
-          "lastTransitionTime": "2026-11-18T17:33:24Z",
-          "message": "stored artifact for digest 'latest@sha256:1d8022b263b952f0f5f022f1c4ce29842bd1dbc864dc3fa210dbd790074ba0e3'",
+          "lastTransitionTime": "2026-11-18T19:07:24Z",
+          "message": "stored artifact for digest 'latest@sha256:3e0ad89c7850ce927cc5c609839993d15779c4ddc72f9bfd702f5ca7eb7fa8e7'",
           "observedGeneration": 1,
           "reason": "Succeeded",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-11-18T17:33:24Z",
-          "message": "stored artifact for digest 'latest@sha256:1d8022b263b952f0f5f022f1c4ce29842bd1dbc864dc3fa210dbd790074ba0e3'",
+          "lastTransitionTime": "2026-11-18T19:07:24Z",
+          "message": "stored artifact for digest 'latest@sha256:3e0ad89c7850ce927cc5c609839993d15779c4ddc72f9bfd702f5ca7eb7fa8e7'",
           "observedGeneration": 1,
           "reason": "Succeeded",
           "status": "True",
           "type": "ArtifactInStorage"
         }
       ],
-      "lastHandledReconcileAt": "2026-11-18T17:33:27.244340719Z",
+      "lastHandledReconcileAt": "2026-11-18T19:07:27.131284461Z",
       "observedGeneration": 1,
       "url": "http://source-controller.flux-system.svc.cluster.local./ocirepository/flux-system/argobot-scout-attach/latest.tar.gz"
     }
@@ -76,10 +76,10 @@
     "kind": "OCIRepository",
     "metadata": {
       "annotations": {
-        "confighub.com/origin": "{\"spaceId\":\"4a1710a8-6763-436a-b98b-45d72788dc28\",\"spaceSlug\":\"scout-attach-flux-apps\",\"unitId\":\"5a2c0803-b02a-4207-8049-1919336ddc00\",\"unitSlug\":\"root\",\"revisionNum\":2}",
+        "confighub.com/origin": "{\"spaceId\":\"ba438ca0-b607-46dc-844c-c7865880fd99\",\"spaceSlug\":\"scout-attach-flux-apps\",\"unitId\":\"156d1b3d-a729-4860-9121-fa449de67d35\",\"unitSlug\":\"root\",\"revisionNum\":2}",
         "kustomize.toolkit.fluxcd.io/prune": "disabled"
       },
-      "creationTimestamp": "2026-11-18T17:33:22Z",
+      "creationTimestamp": "2026-11-18T19:07:23Z",
       "finalizers": [
         "finalizers.fluxcd.io"
       ],
@@ -90,8 +90,8 @@
       },
       "name": "confighub-root",
       "namespace": "flux-system",
-      "resourceVersion": "1509",
-      "uid": "76471aac-e3ff-4289-9960-2527a313ccea"
+      "resourceVersion": "1607",
+      "uid": "74fbfda7-1245-4083-b6d8-c708861a8ffb"
     },
     "spec": {
       "insecure": true,
@@ -106,32 +106,32 @@
     },
     "status": {
       "artifact": {
-        "digest": "sha256:1caaf7f4604d764d4740047968237d51fbb685df36f40a66de119322b659fa43",
-        "lastUpdateTime": "2026-11-18T17:33:23Z",
+        "digest": "sha256:79e1eca4e8201c32ade903b2f4d6a5770400558e6bbdd6b38f603a1c0ce2be58",
+        "lastUpdateTime": "2026-11-18T19:07:23Z",
         "metadata": {
-          "com.confighub.organization.id": "7743ab45-b98b-4ab4-9855-4822a96399e2",
-          "com.confighub.space.id": "4a1710a8-6763-436a-b98b-45d72788dc28",
-          "com.confighub.tag.id": "77271494-32ac-417f-a0eb-395fa1f1bad7",
-          "com.confighub.target.id": "bb862bf1-3118-4e34-ba3b-7c0fdaf1f415",
+          "com.confighub.organization.id": "3341d548-7fda-4588-83a1-cf9097c45992",
+          "com.confighub.space.id": "ba438ca0-b607-46dc-844c-c7865880fd99",
+          "com.confighub.tag.id": "e30ca2cd-0678-49a4-ad59-20385f875a7a",
+          "com.confighub.target.id": "32c3a5e0-76d5-4a09-a4ac-cfd2fe38c3f6",
           "com.confighub.unit.count": "2"
         },
-        "path": "ocirepository/flux-system/confighub-root/sha256:168ede471a24b3d55086b8eedecff91118eb7d96f48f775fe93ac30f5a4559fe.tar.gz",
-        "revision": "latest@sha256:168ede471a24b3d55086b8eedecff91118eb7d96f48f775fe93ac30f5a4559fe",
-        "size": 636,
-        "url": "http://source-controller.flux-system.svc.cluster.local./ocirepository/flux-system/confighub-root/sha256:168ede471a24b3d55086b8eedecff91118eb7d96f48f775fe93ac30f5a4559fe.tar.gz"
+        "path": "ocirepository/flux-system/confighub-root/sha256:9996e7a0c3e68b38f30d93915499d2459aec1d00bd8c62992ad4c63b8122fdeb.tar.gz",
+        "revision": "latest@sha256:9996e7a0c3e68b38f30d93915499d2459aec1d00bd8c62992ad4c63b8122fdeb",
+        "size": 638,
+        "url": "http://source-controller.flux-system.svc.cluster.local./ocirepository/flux-system/confighub-root/sha256:9996e7a0c3e68b38f30d93915499d2459aec1d00bd8c62992ad4c63b8122fdeb.tar.gz"
       },
       "conditions": [
         {
-          "lastTransitionTime": "2026-11-18T17:33:23Z",
-          "message": "stored artifact for digest 'latest@sha256:168ede471a24b3d55086b8eedecff91118eb7d96f48f775fe93ac30f5a4559fe'",
+          "lastTransitionTime": "2026-11-18T19:07:23Z",
+          "message": "stored artifact for digest 'latest@sha256:9996e7a0c3e68b38f30d93915499d2459aec1d00bd8c62992ad4c63b8122fdeb'",
           "observedGeneration": 1,
           "reason": "Succeeded",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-11-18T17:33:23Z",
-          "message": "stored artifact for digest 'latest@sha256:168ede471a24b3d55086b8eedecff91118eb7d96f48f775fe93ac30f5a4559fe'",
+          "lastTransitionTime": "2026-11-18T19:07:23Z",
+          "message": "stored artifact for digest 'latest@sha256:9996e7a0c3e68b38f30d93915499d2459aec1d00bd8c62992ad4c63b8122fdeb'",
           "observedGeneration": 1,
           "reason": "Succeeded",
           "status": "True",

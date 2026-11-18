@@ -22,12 +22,14 @@ Kustomization, and a `legacy-web` Deployment applied by hand, on kind.
 
 Every output here comes from the attach lane
 ([`scripts/ci/attach-lane.sh`](../../scripts/ci/attach-lane.sh), dispatched
-with `-f level=attach`, run 44356735131). For each of Argo CD and Flux it
-records the cluster, runs `doctor --before-attach`, attaches the cluster for
-real with cub v0.11.4 (`--no-install --prune`) to a disposable ConfigHub,
-runs it again, and attaches a second time. The lane fails unless cub-scout
-said `use-existing` before the attach that went ahead and `refuse` before the
-one attach refused.
+with `-f level=attach`, run 44374223283). For each of Argo CD, Flux and
+Sveltos it records the cluster, runs `doctor --before-attach`, attaches the
+cluster for real with cub v0.11.4 (`--prune`, and `--no-install` for Argo CD
+and Flux, which the cluster runs already) to a disposable ConfigHub, runs it
+again, and attaches a second time. The lane fails unless cub-scout said
+`use-existing` (Argo CD, Flux) or `install` (Sveltos, which attach then
+installed) before the attach that went ahead, and `refuse` before the one
+attach refused.
 
 | File | When |
 |------|------|
@@ -35,6 +37,8 @@ one attach refused.
 | [`expected-output/argo-after.txt`](expected-output/argo-after.txt) | After it, before a second attach, which attach refused |
 | [`expected-output/flux-before.txt`](expected-output/flux-before.txt) | Before attaching through Flux |
 | [`expected-output/flux-after.txt`](expected-output/flux-after.txt) | After it, before a second attach, which attach refused |
+| [`expected-output/sveltos-before.txt`](expected-output/sveltos-before.txt) | Before attaching through Sveltos, which is not installed |
+| [`expected-output/sveltos-after.txt`](expected-output/sveltos-after.txt) | After attach installed Sveltos, before a second attach, which attach refused |
 
 The raw recordings, including attach's own output and its refusal, are under
 [`test/e2e/fixtures/attach-lane/recorded/`](../../test/e2e/fixtures/attach-lane/recorded/).
@@ -67,5 +71,6 @@ In both runs the `guestbook` Application, the `podinfo` Kustomization and
 
 Spaces of the same names in ConfigHub, whether the cluster reaches ConfigHub's
 registry, whether your credentials have cluster-admin, and overlap with what
-you deploy later. Everything about Sveltos is read from cub's source and not
-run; those findings say `cub-source`.
+you deploy later. A finding attach was not seen to act on, such as an
+`argocd-cm` setting that omits ConfigHub's annotations, is read from cub's
+source and says `cub-source`.

@@ -399,9 +399,11 @@ overlap with what is deployed later.
 
 Each finding carries its basis. `recorded`: attach was seen to do this on a
 real cluster in the attach lane (`-f level=attach`: cub v0.11.4, Argo CD v3.6.1,
-Flux v2.10.0), where an Application and a Kustomization present before an
-attach with `--prune` were unchanged after it. `cub-source`: read from cub's
-source and not run, which is everything about Sveltos. `read`: a note about
+Flux v2.10.0, and Sveltos v1.16.0 as attach installed it), where an
+Application and a Kustomization present before an attach with `--prune` were
+unchanged after it. `cub-source`: read from cub's source and not run, such as
+what attach does with an `argocd-cm` setting that omits ConfigHub's
+annotations. `read`: a note about
 cub-scout's own read, for instance a list that failed. A kind the cluster does
 not serve at the version read is listed in `notServed` and not counted, since
 another version may hold some.

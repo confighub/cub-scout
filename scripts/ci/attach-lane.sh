@@ -89,9 +89,12 @@ for row in table["rows"]:
     labels = meta.get("labels") or {}
     shown = "map[" + " ".join("%s:%s" % kv for kv in sorted(labels.items())) + "]" if labels else "<none>"
     rows.append((meta["namespace"], meta["name"], row["cells"][type_at], shown))
-print("%-14s%-30s%-33s%s" % ("NAMESPACE", "NAME", "TYPE", "LABELS"))
-for r in sorted(rows):
-    print("%-14s%-30s%-33s%s" % r)'
+# Columns as wide as their widest value, and at least two spaces apart: a
+# fixed width ran a 14-character namespace into the name (run 44374223283).
+rows = [("NAMESPACE", "NAME", "TYPE", "LABELS")] + sorted(rows)
+widths = [max(len(r[i]) for r in rows) + 2 for i in range(3)]
+for r in rows:
+    print("".join(r[i].ljust(widths[i]) for i in range(3)) + r[3])'
 }
 
 # What an attach meets, and what it leaves. Secrets by name and type only.

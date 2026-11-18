@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# FIXTURE-OWNED: the cluster export recorded by the attach lane (run 44356735131, argo, after attach)
+# FIXTURE-OWNED: the cluster export recorded by the attach lane (run 44374223283, argo, after attach)
 # and the long help of cub v0.11.4 `cub cluster attach`. Regenerate from fixtures/cluster; do not edit.
 set -euo pipefail
 mkdir -p cluster
@@ -11,17 +11,17 @@ cat > cluster/applications.json <<'CUB_SCOUT_EVAL_EOF'
     "metadata": {
       "annotations": {
         "argocd.argoproj.io/tracking-id": "scout-attach-argo-apps:argoproj.io/Application:argocd/argobot-scout-attach",
-        "confighub.com/origin": "{\"spaceId\":\"25afc20e-a395-4023-af83-00eee64cec16\",\"spaceSlug\":\"scout-attach-argo-apps\",\"unitId\":\"69572bc3-2fe7-4319-831e-2ca9c36dc82b\",\"unitSlug\":\"argobot-scout-attach\",\"revisionNum\":2}"
+        "confighub.com/origin": "{\"spaceId\":\"694c8d36-8e7a-45cc-acb6-b45fcc9273c8\",\"spaceSlug\":\"scout-attach-argo-apps\",\"unitId\":\"26947961-e9eb-4da2-9b1b-a1d7c39b96c2\",\"unitSlug\":\"argobot-scout-attach\",\"revisionNum\":2}"
       },
-      "creationTimestamp": "2026-11-18T17:33:50Z",
+      "creationTimestamp": "2026-11-18T19:06:59Z",
       "finalizers": [
         "resources-finalizer.argocd.argoproj.io"
       ],
-      "generation": 11,
+      "generation": 12,
       "name": "argobot-scout-attach",
       "namespace": "argocd",
-      "resourceVersion": "1618",
-      "uid": "6a86bb16-52b8-4b19-aa2a-fc157d50122b"
+      "resourceVersion": "1601",
+      "uid": "5f540538-0bc4-41fc-80fc-774d055ebe46"
     },
     "spec": {
       "destination": {
@@ -44,18 +44,18 @@ cat > cluster/applications.json <<'CUB_SCOUT_EVAL_EOF'
     "status": {
       "controllerNamespace": "argocd",
       "health": {
-        "lastTransitionTime": "2026-11-18T17:33:54Z",
+        "lastTransitionTime": "2026-11-18T19:07:02Z",
         "status": "Healthy"
       },
       "history": [
         {
-          "deployStartedAt": "2026-11-18T17:33:50Z",
-          "deployedAt": "2026-11-18T17:33:50Z",
+          "deployStartedAt": "2026-11-18T19:06:59Z",
+          "deployedAt": "2026-11-18T19:07:00Z",
           "id": 0,
           "initiatedBy": {
             "automated": true
           },
-          "revision": "sha256:315622d16105e9b0164541a7c6f84b98494a6c8e987e78090695d511a1b2739f",
+          "revision": "sha256:43d03e2e169b6e47bb6ea397b4b55ff27f0ea987697e661b7df4281e7d27a1c5",
           "source": {
             "path": ".",
             "repoURL": "oci://172.18.0.1:32181/space/argobot-scout-attach",
@@ -64,7 +64,7 @@ cat > cluster/applications.json <<'CUB_SCOUT_EVAL_EOF'
         }
       ],
       "operationState": {
-        "finishedAt": "2026-11-18T17:33:50Z",
+        "finishedAt": "2026-11-18T19:07:00Z",
         "message": "successfully synced (all tasks run)",
         "operation": {
           "initiatedBy": {
@@ -75,7 +75,7 @@ cat > cluster/applications.json <<'CUB_SCOUT_EVAL_EOF'
           },
           "sync": {
             "prune": true,
-            "revision": "sha256:315622d16105e9b0164541a7c6f84b98494a6c8e987e78090695d511a1b2739f",
+            "revision": "sha256:43d03e2e169b6e47bb6ea397b4b55ff27f0ea987697e661b7df4281e7d27a1c5",
             "source": {
               "path": ".",
               "repoURL": "oci://172.18.0.1:32181/space/argobot-scout-attach",
@@ -84,7 +84,7 @@ cat > cluster/applications.json <<'CUB_SCOUT_EVAL_EOF'
           }
         },
         "phase": "Succeeded",
-        "startedAt": "2026-11-18T17:33:50Z",
+        "startedAt": "2026-11-18T19:06:59Z",
         "syncResult": {
           "resources": [
             {
@@ -190,7 +190,7 @@ cat > cluster/applications.json <<'CUB_SCOUT_EVAL_EOF'
               "version": "v1"
             }
           ],
-          "revision": "sha256:315622d16105e9b0164541a7c6f84b98494a6c8e987e78090695d511a1b2739f",
+          "revision": "sha256:43d03e2e169b6e47bb6ea397b4b55ff27f0ea987697e661b7df4281e7d27a1c5",
           "source": {
             "path": ".",
             "repoURL": "oci://172.18.0.1:32181/space/argobot-scout-attach",
@@ -198,7 +198,7 @@ cat > cluster/applications.json <<'CUB_SCOUT_EVAL_EOF'
           }
         }
       },
-      "reconciledAt": "2026-11-18T17:33:53Z",
+      "reconciledAt": "2026-11-18T19:07:01Z",
       "resourceHealthSource": "appTree",
       "resources": [
         {
@@ -287,7 +287,7 @@ cat > cluster/applications.json <<'CUB_SCOUT_EVAL_EOF'
             "targetRevision": "latest"
           }
         },
-        "revision": "sha256:315622d16105e9b0164541a7c6f84b98494a6c8e987e78090695d511a1b2739f",
+        "revision": "sha256:43d03e2e169b6e47bb6ea397b4b55ff27f0ea987697e661b7df4281e7d27a1c5",
         "status": "Synced"
       }
     }
@@ -299,12 +299,12 @@ cat > cluster/applications.json <<'CUB_SCOUT_EVAL_EOF'
       "annotations": {
         "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"guestbook\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"guestbook\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"guestbook\",\"repoURL\":\"https://github.com/argoproj/argocd-example-apps\",\"targetRevision\":\"8088f4c0d970abb09e250248cc97e35623447cb5\"},\"syncPolicy\":{\"automated\":{\"prune\":true,\"selfHeal\":true},\"syncOptions\":[\"CreateNamespace=true\"]}}}\n"
       },
-      "creationTimestamp": "2026-11-18T17:32:45Z",
-      "generation": 14,
+      "creationTimestamp": "2026-11-18T19:05:54Z",
+      "generation": 15,
       "name": "guestbook",
       "namespace": "argocd",
-      "resourceVersion": "1378",
-      "uid": "24ff34ee-9d49-42c3-b0f4-5ab5a93c8288"
+      "resourceVersion": "1362",
+      "uid": "8fcf3c4d-a95b-42a7-817f-0526d44117f6"
     },
     "spec": {
       "destination": {
@@ -330,13 +330,13 @@ cat > cluster/applications.json <<'CUB_SCOUT_EVAL_EOF'
     "status": {
       "controllerNamespace": "argocd",
       "health": {
-        "lastTransitionTime": "2026-11-18T17:32:59Z",
+        "lastTransitionTime": "2026-11-18T19:06:07Z",
         "status": "Healthy"
       },
       "history": [
         {
-          "deployStartedAt": "2026-11-18T17:32:47Z",
-          "deployedAt": "2026-11-18T17:32:47Z",
+          "deployStartedAt": "2026-11-18T19:05:56Z",
+          "deployedAt": "2026-11-18T19:05:56Z",
           "id": 0,
           "initiatedBy": {
             "automated": true
@@ -350,7 +350,7 @@ cat > cluster/applications.json <<'CUB_SCOUT_EVAL_EOF'
         }
       ],
       "operationState": {
-        "finishedAt": "2026-11-18T17:32:47Z",
+        "finishedAt": "2026-11-18T19:05:57Z",
         "message": "successfully synced (all tasks run)",
         "operation": {
           "initiatedBy": {
@@ -381,7 +381,7 @@ cat > cluster/applications.json <<'CUB_SCOUT_EVAL_EOF'
           }
         },
         "phase": "Succeeded",
-        "startedAt": "2026-11-18T17:32:47Z",
+        "startedAt": "2026-11-18T19:05:56Z",
         "syncResult": {
           "resources": [
             {
@@ -407,7 +407,7 @@ cat > cluster/applications.json <<'CUB_SCOUT_EVAL_EOF'
           }
         }
       },
-      "reconciledAt": "2026-11-18T17:32:47Z",
+      "reconciledAt": "2026-11-18T19:05:57Z",
       "resourceHealthSource": "appTree",
       "resources": [
         {
@@ -457,15 +457,15 @@ cat > cluster/applications.json <<'CUB_SCOUT_EVAL_EOF'
       "annotations": {
         "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"finalizers\":[\"resources-finalizer.argocd.argoproj.io\"],\"name\":\"scout-attach-argo-apps\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"argocd\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\".\",\"repoURL\":\"oci://172.18.0.1:32181/space/scout-attach-argo-apps\",\"targetRevision\":\"latest\"},\"syncPolicy\":{\"automated\":{\"prune\":true,\"selfHeal\":true},\"syncOptions\":[\"ServerSideApply=true\",\"ServerSideApply.ForceConflicts=true\",\"RespectIgnoreDifferences=true\",\"CreateNamespace=false\"]}}}\n"
       },
-      "creationTimestamp": "2026-11-18T17:33:49Z",
+      "creationTimestamp": "2026-11-18T19:06:58Z",
       "finalizers": [
         "resources-finalizer.argocd.argoproj.io"
       ],
       "generation": 7,
       "name": "scout-attach-argo-apps",
       "namespace": "argocd",
-      "resourceVersion": "1563",
-      "uid": "42330968-d6e0-47bf-834a-5ebaee92460e"
+      "resourceVersion": "1547",
+      "uid": "c564081b-cdee-4187-92ac-515e12a32d8c"
     },
     "spec": {
       "destination": {
@@ -494,18 +494,18 @@ cat > cluster/applications.json <<'CUB_SCOUT_EVAL_EOF'
     "status": {
       "controllerNamespace": "argocd",
       "health": {
-        "lastTransitionTime": "2026-11-18T17:33:49Z",
+        "lastTransitionTime": "2026-11-18T19:06:59Z",
         "status": "Healthy"
       },
       "history": [
         {
-          "deployStartedAt": "2026-11-18T17:33:49Z",
-          "deployedAt": "2026-11-18T17:33:50Z",
+          "deployStartedAt": "2026-11-18T19:06:59Z",
+          "deployedAt": "2026-11-18T19:06:59Z",
           "id": 0,
           "initiatedBy": {
             "automated": true
           },
-          "revision": "sha256:38c032281ee8d7ae6624c956033d6d602ffc79b3e19c25e6a04ad846272743ff",
+          "revision": "sha256:e7ff53b7cf8da0b629ac12e72efa2b0a16f629793120996341ac5c933c568409",
           "source": {
             "path": ".",
             "repoURL": "oci://172.18.0.1:32181/space/scout-attach-argo-apps",
@@ -514,7 +514,7 @@ cat > cluster/applications.json <<'CUB_SCOUT_EVAL_EOF'
         }
       ],
       "operationState": {
-        "finishedAt": "2026-11-18T17:33:50Z",
+        "finishedAt": "2026-11-18T19:06:59Z",
         "message": "successfully synced (all tasks run)",
         "operation": {
           "initiatedBy": {
@@ -525,7 +525,7 @@ cat > cluster/applications.json <<'CUB_SCOUT_EVAL_EOF'
           },
           "sync": {
             "prune": true,
-            "revision": "sha256:38c032281ee8d7ae6624c956033d6d602ffc79b3e19c25e6a04ad846272743ff",
+            "revision": "sha256:e7ff53b7cf8da0b629ac12e72efa2b0a16f629793120996341ac5c933c568409",
             "source": {
               "path": ".",
               "repoURL": "oci://172.18.0.1:32181/space/scout-attach-argo-apps",
@@ -540,7 +540,7 @@ cat > cluster/applications.json <<'CUB_SCOUT_EVAL_EOF'
           }
         },
         "phase": "Succeeded",
-        "startedAt": "2026-11-18T17:33:49Z",
+        "startedAt": "2026-11-18T19:06:59Z",
         "syncResult": {
           "resources": [
             {
@@ -566,7 +566,7 @@ cat > cluster/applications.json <<'CUB_SCOUT_EVAL_EOF'
               "version": "v1alpha1"
             }
           ],
-          "revision": "sha256:38c032281ee8d7ae6624c956033d6d602ffc79b3e19c25e6a04ad846272743ff",
+          "revision": "sha256:e7ff53b7cf8da0b629ac12e72efa2b0a16f629793120996341ac5c933c568409",
           "source": {
             "path": ".",
             "repoURL": "oci://172.18.0.1:32181/space/scout-attach-argo-apps",
@@ -574,7 +574,7 @@ cat > cluster/applications.json <<'CUB_SCOUT_EVAL_EOF'
           }
         }
       },
-      "reconciledAt": "2026-11-18T17:33:50Z",
+      "reconciledAt": "2026-11-18T19:06:59Z",
       "resourceHealthSource": "appTree",
       "resources": [
         {
@@ -611,7 +611,7 @@ cat > cluster/applications.json <<'CUB_SCOUT_EVAL_EOF'
             "targetRevision": "latest"
           }
         },
-        "revision": "sha256:38c032281ee8d7ae6624c956033d6d602ffc79b3e19c25e6a04ad846272743ff",
+        "revision": "sha256:e7ff53b7cf8da0b629ac12e72efa2b0a16f629793120996341ac5c933c568409",
         "status": "Synced"
       }
     }
@@ -852,15 +852,15 @@ cat > cluster/kustomizations.json <<'CUB_SCOUT_EVAL_EOF'
       "annotations": {
         "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"kustomize.toolkit.fluxcd.io/v1\",\"kind\":\"Kustomization\",\"metadata\":{\"annotations\":{},\"name\":\"podinfo\",\"namespace\":\"podinfo\"},\"spec\":{\"interval\":\"10m\",\"path\":\"./kustomize\",\"prune\":true,\"sourceRef\":{\"kind\":\"GitRepository\",\"name\":\"podinfo\"},\"targetNamespace\":\"podinfo\"}}\n"
       },
-      "creationTimestamp": "2026-11-18T17:32:45Z",
+      "creationTimestamp": "2026-11-18T19:05:54Z",
       "finalizers": [
         "finalizers.fluxcd.io"
       ],
       "generation": 1,
       "name": "podinfo",
       "namespace": "podinfo",
-      "resourceVersion": "1343",
-      "uid": "3ef574a7-318f-4359-8581-f4d24b66c795"
+      "resourceVersion": "1330",
+      "uid": "8cd4c994-1111-4d34-b7a3-5f4411b91a8b"
     },
     "spec": {
       "force": false,
@@ -876,7 +876,7 @@ cat > cluster/kustomizations.json <<'CUB_SCOUT_EVAL_EOF'
     "status": {
       "conditions": [
         {
-          "lastTransitionTime": "2026-11-18T17:32:48Z",
+          "lastTransitionTime": "2026-11-18T19:05:58Z",
           "message": "Applied revision: sha1:fd3a834ed8d14b80ea334cf8a2fddd4597924da6",
           "observedGeneration": 1,
           "reason": "ReconciliationSucceeded",
@@ -887,9 +887,9 @@ cat > cluster/kustomizations.json <<'CUB_SCOUT_EVAL_EOF'
       "history": [
         {
           "digest": "sha256:5ba4c6a6b4c3ab8ca7182f199a986b1094049f716e4f4b9733545128ffba477d",
-          "firstReconciled": "2026-11-18T17:32:48Z",
-          "lastReconciled": "2026-11-18T17:32:48Z",
-          "lastReconciledDuration": "184.809606ms",
+          "firstReconciled": "2026-11-18T19:05:58Z",
+          "lastReconciled": "2026-11-18T19:05:58Z",
+          "lastReconciledDuration": "223.222151ms",
           "lastReconciledStatus": "ReconciliationSucceeded",
           "metadata": {
             "revision": "sha1:fd3a834ed8d14b80ea334cf8a2fddd4597924da6"

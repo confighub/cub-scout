@@ -56,7 +56,7 @@ target lives in the cluster, e.g. a Secret created out-of-band):
   - read-rolebinding -> v1/Namespace "kube-system"
 
 Revert this upload of argobot-flux-base with:
-  cub unit update --patch --space argobot-flux-base --restore Before:ChangeSet:upload-20261118-173319 --where "Labels.UploadSource = 'argobot'"
+  cub unit update --patch --space argobot-flux-base --restore Before:ChangeSet:upload-20261118-190720 --where "Labels.UploadSource = 'argobot'"
 Creating per-cluster argobot variant "argobot-scout-attach"...
 Creating Flux OCIRepository and Kustomization Unit "argobot-scout-attach" in apps space "scout-attach-flux-apps" (prune)...
 Publishing apps space "scout-attach-flux-apps" Release...
@@ -73,7 +73,7 @@ kustomization.kustomize.toolkit.fluxcd.io/confighub-root created
 
 Attached.
   cluster:    scout-attach
-  context:    pine-cub
+  context:    cub-cub
   kubeconfig: [redacted].kubeconfig
   env file:   [redacted].env
   space:      scout-attach

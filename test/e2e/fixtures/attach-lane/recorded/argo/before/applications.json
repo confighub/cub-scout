@@ -6,12 +6,12 @@
       "annotations": {
         "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"guestbook\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"guestbook\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"guestbook\",\"repoURL\":\"https://github.com/argoproj/argocd-example-apps\",\"targetRevision\":\"8088f4c0d970abb09e250248cc97e35623447cb5\"},\"syncPolicy\":{\"automated\":{\"prune\":true,\"selfHeal\":true},\"syncOptions\":[\"CreateNamespace=true\"]}}}\n"
       },
-      "creationTimestamp": "2026-11-18T17:32:45Z",
-      "generation": 14,
+      "creationTimestamp": "2026-11-18T19:05:54Z",
+      "generation": 15,
       "name": "guestbook",
       "namespace": "argocd",
-      "resourceVersion": "1378",
-      "uid": "24ff34ee-9d49-42c3-b0f4-5ab5a93c8288"
+      "resourceVersion": "1362",
+      "uid": "8fcf3c4d-a95b-42a7-817f-0526d44117f6"
     },
     "spec": {
       "destination": {
@@ -37,13 +37,13 @@
     "status": {
       "controllerNamespace": "argocd",
       "health": {
-        "lastTransitionTime": "2026-11-18T17:32:59Z",
+        "lastTransitionTime": "2026-11-18T19:06:07Z",
         "status": "Healthy"
       },
       "history": [
         {
-          "deployStartedAt": "2026-11-18T17:32:47Z",
-          "deployedAt": "2026-11-18T17:32:47Z",
+          "deployStartedAt": "2026-11-18T19:05:56Z",
+          "deployedAt": "2026-11-18T19:05:56Z",
           "id": 0,
           "initiatedBy": {
             "automated": true
@@ -57,7 +57,7 @@
         }
       ],
       "operationState": {
-        "finishedAt": "2026-11-18T17:32:47Z",
+        "finishedAt": "2026-11-18T19:05:57Z",
         "message": "successfully synced (all tasks run)",
         "operation": {
           "initiatedBy": {
@@ -88,7 +88,7 @@
           }
         },
         "phase": "Succeeded",
-        "startedAt": "2026-11-18T17:32:47Z",
+        "startedAt": "2026-11-18T19:05:56Z",
         "syncResult": {
           "resources": [
             {
@@ -114,7 +114,7 @@
           }
         }
       },
-      "reconciledAt": "2026-11-18T17:32:47Z",
+      "reconciledAt": "2026-11-18T19:05:57Z",
       "resourceHealthSource": "appTree",
       "resources": [
         {
