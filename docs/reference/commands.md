@@ -1395,7 +1395,7 @@ cub-scout import [flags]
 | `--no-connect` | Accepted and ignored: import never connects a cluster |
 | `--from-bundle` | Import proposal/apply from a debug bundle directory (offline path, no cluster discovery) |
 | `--git-path` | Advanced: preview from a local GitOps repository path (dry-run only; not a renderer) |
-| `--kube-context` | Exact Kubernetes context for every cluster read of the import: discovery, the `--git-path` comparison, and the manifests fetched to upload. An empty or missing name fails before any read. Not with `--wizard`, which still reads the current context |
+| `--kube-context` | Exact Kubernetes context for every cluster read of the import: discovery, the `--git-path` comparison, and the manifests fetched to upload. An empty or missing name fails before any read. The wizard (`--wizard`, or the import switch in `map --kube-context`) uses the same context for its reads and for the Argo CD hand-off's writes |
 | `--audit-reason` | Record break-glass decision reason in connected audit history (max 512 chars) |
 
 ### Canonical Adoption Path
