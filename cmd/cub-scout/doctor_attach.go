@@ -408,7 +408,11 @@ func argoConfigMapNote(ctx context.Context, r attachReader) DoctorAttachNote {
 	if value == "" {
 		return DoctorAttachNote{Text: "argocd-cm does not set " + attachArgoIgnoreDifferencesKey + "; attach patches argocd-cm to set it", Basis: attachBasisRecorded}
 	}
-	return DoctorAttachNote{Text: "argocd-cm already sets " + attachArgoIgnoreDifferencesKey + "; attach leaves it as is, and the root Application may show OutOfSync if it does not cover ConfigHub's annotations", Basis: attachBasisCubSource}
+	if strings.Contains(value, "confighub.com/") {
+		// As an earlier attach leaves it (recorded).
+		return DoctorAttachNote{Text: "argocd-cm already sets " + attachArgoIgnoreDifferencesKey + ", naming ConfigHub's annotations; attach leaves it as is", Basis: attachBasisRecorded}
+	}
+	return DoctorAttachNote{Text: "argocd-cm already sets " + attachArgoIgnoreDifferencesKey + " without ConfigHub's annotations; attach leaves it as is, and the root Application may show OutOfSync", Basis: attachBasisCubSource}
 }
 
 func renderDoctorAttachASCII(b *strings.Builder, report *DoctorAttachReport) {

@@ -234,6 +234,12 @@ func TestBeforeAttachAfterARecordedAttach(t *testing.T) {
 			if report.Argobot.Namespace != attachPresent || report.Argobot.Secret != attachPresent {
 				t.Errorf("argobot = %+v after attach", report.Argobot)
 			}
+			if controller == "argo" {
+				notes := fmt.Sprint(c.Notes)
+				if !strings.Contains(notes, "naming ConfigHub's annotations") || strings.Contains(notes, "OutOfSync") {
+					t.Errorf("argocd-cm as attach left it must not warn of OutOfSync: %s", notes)
+				}
+			}
 			// The recorded refusal is attach's own word for this.
 			log, err := os.ReadFile(filepath.Join("..", "..", "test", "e2e", "fixtures", "attach-lane", "recorded", controller, "attach-again.log"))
 			if err != nil {
