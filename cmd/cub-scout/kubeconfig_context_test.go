@@ -187,7 +187,7 @@ func TestDoctorNestedReadsStayOnCapturedContextAfterKubeconfigRetarget(t *testin
 	require.NoError(t, err)
 	require.NotNil(t, delivery)
 	require.Empty(t, delivery.EventConsumers, "fixture deployment has no consumer identity")
-	require.Contains(t, delivery.Omissions, GitOpsDeliveryEvidenceOmission{Layer: "confighub", Reason: "recorded ConfigHub unavailable", Impact: "release, unit-event, and live-status evidence are omitted"})
+	require.Contains(t, delivery.Omissions, GitOpsDeliveryEvidenceOmission{Layer: "confighub", Reason: "recorded ConfigHub unavailable", Impact: "release and live-status evidence are omitted"})
 	require.Greater(t, beta.requests.Load(), before, "delivery evidence reader must use selected endpoint")
 	require.Zero(t, alpha.requests.Load(), "delivery reader must not use ambient endpoint")
 	require.Zero(t, alpha.requests.Load(), "later kubeconfig current-context changes must not redirect reads")

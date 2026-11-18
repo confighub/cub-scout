@@ -2,7 +2,6 @@ package hubread
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strings"
 	"testing"
@@ -87,34 +86,14 @@ func TestListsAcrossEverySpaceAreAskedForByName(t *testing.T) {
 		})
 	}
 
-	// Unit events across the organization: the filter as written, and the
-	// events of every space newest first, as cub sorts them.
-	before := len(hub.requests())
-	_, err := reader.UnitEventListJSON(ctx, EverySpace, Filter{Where: "CreatedAt > '2026-10-01T00:00:00Z'"})
-	require.NoError(t, err)
-	require.Equal(t, "CreatedAt > '2026-10-01T00:00:00Z'", hub.requests()[before].Where)
-	hub.raw["/api/unit_event"] = `[{"SpaceID":"` + id + `","UnitEventNum":1,"CreatedAt":"2026-10-01T00:00:00Z"},` +
-		`{"SpaceID":"` + elsewhere + `","UnitEventNum":3,"CreatedAt":"2026-10-03T00:00:00Z"},` +
-		`{"SpaceID":"` + id + `","UnitEventNum":2,"CreatedAt":"2026-10-02T00:00:00Z"}]`
-	out, err := reader.UnitEventListJSON(ctx, EverySpace, Filter{})
-	require.NoError(t, err)
-	var events []struct{ UnitEventNum int }
-	require.NoError(t, json.Unmarshal(out, &events))
-	require.Equal(t, []struct{ UnitEventNum int }{{3}, {2}, {1}}, events)
-	delete(hub.raw, "/api/unit_event")
-
 	// A space's releases are at the space's own endpoint; across spaces cub
 	// asks a different one and orders differently, which this does not do.
-	_, err = reader.ReleaseListJSON(ctx, EverySpace, Filter{})
+	_, err := reader.ReleaseListJSON(ctx, EverySpace, Filter{})
 	require.Equal(t, KindInvalidScope, KindOf(err))
-	// One Unit, its data, its events and its revisions are never "every space".
+	// One Unit, its data and its revisions are never "every space".
 	for name, read := range map[string]func() error{
-		"unit get":  func() error { _, err := reader.UnitJSON(ctx, EverySpace, recordedUnit); return err },
-		"unit data": func() error { _, err := reader.UnitData(ctx, EverySpace, recordedUnit); return err },
-		"unit events": func() error {
-			_, err := reader.UnitEventsOfUnitJSON(ctx, EverySpace, recordedUnit, Filter{})
-			return err
-		},
+		"unit get":       func() error { _, err := reader.UnitJSON(ctx, EverySpace, recordedUnit); return err },
+		"unit data":      func() error { _, err := reader.UnitData(ctx, EverySpace, recordedUnit); return err },
 		"revision":       func() error { _, err := reader.RevisionJSON(ctx, EverySpace, recordedUnit, 1); return err },
 		"a change order": func() error { _, err := reader.ChangeOrderJSON(ctx, EverySpace, "order"); return err },
 	} {

@@ -213,11 +213,11 @@ and live CLI/TUI acceptance remain pending.
 
 | Aspect | Detail |
 |---|---|
-| Wraps | The UnitEvent list of the space or of one Unit, as `cub unit-event list [unit] --space <space> -o json` prints it (read through the ConfigHub SDK by default since v2.14.0, with no `cub` process; the same JSON `cub` prints; one Unit named by ID or as `<space>/<slug>`, or one Unit with `space: "*"`, runs `cub`) |
-| Required args | `space` (string — slug/ID, or `*` for an explicit all-spaces read) |
-| Optional args | `unit` (string); `where` (string — filter expression, usually time-bounded) |
-| Returns | ConfigHub UnitEvent rows for source/action evidence |
-| When to load | "What event or source action happened for this unit or space?" Read-only history; not an event-consumer subscription and does not advance cursors. |
+| Wraps | Nothing. Retired: ConfigHub no longer records unit events, so the tool reads nothing and runs no `cub` process. It stays so existing callers do not break. |
+| Required args | `space` (string — slug/ID, or `*`); still required |
+| Optional args | `unit` (string); `where` (string); both accepted and ignored |
+| Returns | An empty list, `[]` |
+| When to load | Do not. For what was delivered and when, use `confighub_releases`; for current delivery state, `confighub_live_status`. |
 
 ### `confighub_units`
 
@@ -305,9 +305,10 @@ through the generic retained Scout JSON error path.
 
 For connected tools that wrap `cub` (not cub-scout) — `confighub_changeorder_get`, `confighub_changesets`,
 `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`,
-`confighub_releases`, `confighub_resources`, `confighub_unit_events`,
-`confighub_units`, and `confighub_unit_get` — the runner is `connectedRunner`
-instead of `runner`. Same execution model; different binary on PATH.
+`confighub_releases`, `confighub_resources`, `confighub_units`, and
+`confighub_unit_get` — the runner is `connectedRunner` instead of `runner`.
+Same execution model; different binary on PATH. The retired
+`confighub_unit_events` runs nothing and answers `[]`.
 
 ## Errors
 

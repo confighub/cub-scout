@@ -914,7 +914,6 @@ func checkTraceCaseSensitiveSlugsScaffold(t *testing.T, root string) {
 			DeliveryEvidence struct {
 				LiveStatus json.RawMessage   `json:"liveStatus"`
 				Releases   []json.RawMessage `json:"releases"`
-				UnitEvents []json.RawMessage `json:"unitEvents"`
 				Omissions  []struct {
 					Layer  string `json:"layer"`
 					Reason string `json:"reason"`
@@ -932,9 +931,6 @@ func checkTraceCaseSensitiveSlugsScaffold(t *testing.T, root string) {
 			LiveStatuses []struct {
 				App string `json:"app"`
 			} `json:"liveStatuses"`
-			UnitEvents []struct {
-				Unit string `json:"unit"`
-			} `json:"unitEvents"`
 			Releases []struct {
 				Target string `json:"target"`
 			} `json:"releases"`
@@ -946,11 +942,10 @@ func checkTraceCaseSensitiveSlugsScaffold(t *testing.T, root string) {
 	}
 	if trace.FixtureKind != "synthetic-shared-trace-model" || rows.FixtureKind != "mocked-bounded-connected-input" ||
 		trace.Trace.Correlation.UnitSlug != "PaymentsAPI" || trace.Trace.Correlation.Target != "West" ||
-		len(rows.Rows.UnitEvents) != 1 || rows.Rows.UnitEvents[0].Unit != "paymentsapi" ||
 		len(rows.Rows.Releases) != 1 || rows.Rows.Releases[0].Target != "west" ||
 		len(rows.Rows.LiveStatuses) != 1 || rows.Rows.LiveStatuses[0].App != "paymentsapi" ||
 		len(trace.Trace.DeliveryEvidence.LiveStatus) != 0 ||
-		len(trace.Trace.DeliveryEvidence.UnitEvents) != 0 || len(trace.Trace.DeliveryEvidence.Releases) != 0 {
+		len(trace.Trace.DeliveryEvidence.Releases) != 0 {
 		t.Fatalf("synthetic opposite-case candidates should be omitted: trace=%+v rows=%+v", trace, rows)
 	}
 	seen := map[string]bool{}
@@ -960,7 +955,7 @@ func checkTraceCaseSensitiveSlugsScaffold(t *testing.T, root string) {
 		}
 		seen[omission.Layer] = true
 	}
-	if !seen["confighub.releases"] || !seen["confighub.unitEvents"] || !seen["confighub.liveStatus"] {
+	if !seen["confighub.releases"] || !seen["confighub.liveStatus"] {
 		t.Errorf("case mismatch needs both no-match omissions, got %v", seen)
 	}
 }

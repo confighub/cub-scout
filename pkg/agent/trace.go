@@ -274,6 +274,9 @@ type TraceDeliveryRelease struct {
 	MatchedBy []string `json:"matchedBy,omitempty"`
 }
 
+// TraceDeliveryUnitEvent is the shape of TraceDeliveryEvidence.UnitEvents,
+// which is always empty: ConfigHub no longer records unit events. Both stay
+// for the JSON contract, which never removes a field.
 type TraceDeliveryUnitEvent struct {
 	EventID      string   `json:"eventId,omitempty"`
 	Action       string   `json:"action,omitempty"`

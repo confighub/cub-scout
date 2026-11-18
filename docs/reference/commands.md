@@ -355,16 +355,15 @@ with an explicit context. Omitting the flag preserves the normal context choice.
 | `--confighub-since` | Lookback window for ConfigHub release/event evidence (default: `24h`) |
 | `--confighub-stale-after` | Treat live-status writeback older than this as stale (default: `15m`) |
 
-`--with-confighub` is opt-in and read-only. For `doctor`, connected release,
-unit-event, and live-status reads are scoped to `--confighub-space`, else
+`--with-confighub` is opt-in and read-only. For `doctor`, connected release
+and live-status reads are scoped to `--confighub-space`, else
 `CUB_SPACE`. cub (v0.5.2 and later) has no default space, and a `defaultSpace`
 left in an older cub config is not used. With no space from either, the reads
 are skipped and reported as a `confighub.scope` omission; they are never
 widened to every space. The JSON output includes a
 scan-friendly `delivery` rollup plus raw `deliveryEvidence`; ASCII output adds
-a compact Delivery section. Concrete failed/stale delivery feedback, failed
-unit events, and unhealthy observed event consumers can be promoted into
-`topIssues`. Missing connection, missing writeback, RBAC/list failures, and
+a compact Delivery section. Concrete failed/stale delivery feedback and
+unhealthy observed event consumers can be promoted into `topIssues`. Missing connection, missing writeback, RBAC/list failures, and
 other incomplete evidence are represented as structured omissions.
 
 ---
@@ -433,8 +432,8 @@ detector configuration is not read. `mcp serve --recording FILE` similarly
 fixes the input at server startup and exposes recorded `map` and exact-object
 `explain`; MCP calls cannot choose file paths.
 
-`--with-confighub` is opt-in and read-only. For `explain`, connected release,
-unit-event, and live-status reads run only when the resource itself exposes a
+`--with-confighub` is opt-in and read-only. For `explain`, connected release
+and live-status reads run only when the resource itself exposes a
 ConfigHub space, the trace chain exposes a ConfigHub OCI space, or
 `--confighub-space` is supplied. Matched evidence appears under
 `deliveryEvidence`; missing identity, missing writeback, or non-matching rows
@@ -836,8 +835,8 @@ cub-scout map activity --namespace prod --format json
 ```
 
 With `--with-confighub`, ConfigHub rows use owner `ConfigHub` and sources
-`confighub.liveStatus`, `confighub.release`, `confighub.unitEvent`,
-`confighub.eventConsumer`, or `confighub.omission`. JSON rows include an
+`confighub.liveStatus`, `confighub.release`, `confighub.eventConsumer`, or
+`confighub.omission`. JSON rows include an
 additive `deliveryEvidence` object with row-specific details. Matching
 `argocd.application` rows may also receive additive live-status
 `deliveryEvidence` when a non-wildcard ConfigHub space, observed Application
@@ -2339,7 +2338,7 @@ standalone and connected tool sets described below remain available.
 
 - Standalone tools: `doctor`, `explain`, `gitops_settings`, `gitops_status`, `map`, `scan`, `trace` (via existing cub-scout JSON surfaces).
 - `doctor` is intentionally first: it is the natural first troubleshooting command for AI and MCP clients, including when the problem may be local access uncertainty such as wrong context, stale kubeconfig, or API reachability.
-- Connected tools (when authenticated to ConfigHub): `compare_three_way`, `compare_source_truth`, `confighub_attestations`, `confighub_changeorder_get`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_resources`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`.
+- Connected tools (when authenticated to ConfigHub): `compare_three_way`, `compare_source_truth`, `confighub_attestations`, `confighub_changeorder_get`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_resources`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`. `confighub_unit_events` is retired: ConfigHub no longer records unit events, so it always returns `[]`.
 - Standalone and read-only: no cluster mutations and no ConfigHub write path.
 - MCP tool descriptors mark every tool with `annotations.readOnlyHint=true`.
 - A command that exits non-zero but prints a JSON answer (for example `trace` on a resource no GitOps tool manages, which exits 1 by the CLI contract) returns that JSON as the tool result, with `isError: true` and a second content item naming the command, its exit status and stderr. Other failures return the error text only.
@@ -2416,10 +2415,10 @@ standalone and connected tool sets described below remain available.
   - `filter` (optional)
   - `view` (optional)
   - `raw_data` (optional boolean)
-- `confighub_unit_events`
+- `confighub_unit_events` (retired; always returns `[]`)
   - `space` (required)
-  - `unit` (optional)
-  - `where` (optional)
+  - `unit` (optional, ignored)
+  - `where` (optional, ignored)
 - `confighub_units`
   - `space` (optional)
   - `where` (optional)
@@ -2763,7 +2762,7 @@ cub-scout gitops status [flags]
 | `--kube-context` | Exact kubeconfig context for all Kubernetes reads (context label, not stable cluster ID) |
 | `--format` | Output format: `ascii`, `json`, `md` |
 | `--json` | Output as JSON (shorthand for `--format json`) |
-| `--with-confighub` | Include bounded ConfigHub release, unit-event, and live-status evidence |
+| `--with-confighub` | Include bounded ConfigHub release and live-status evidence |
 | `--confighub-space` | ConfigHub space for connected evidence (default: `CUB_SPACE`; use `*` explicitly for all spaces) |
 | `--confighub-since` | Lookback window for release/event evidence (default: `24h`) |
 | `--confighub-stale-after` | Treat live-status writeback older than this as stale (default: `15m`) |
@@ -2874,8 +2873,7 @@ NEXT STEPS
           "applicationHealthVerdict": "PASS"
         }
       ],
-      "releases": [...],
-      "unitEvents": [...]
+      "releases": [...]
     },
     "eventConsumers": [...]
   }
@@ -3681,8 +3679,7 @@ aggregate receipts reject it explicitly rather than silently omitting delivery
 evidence. The attached delivery evidence uses the same exact-correlation rules
 as `trace --with-confighub`: live-status writeback requires exact space plus
 Argo Application name or ConfigHub unit slug; release evidence requires exact
-space plus target; unit events require exact unit ID, or unit slug plus space.
-If those joins cannot be proven, the receipt records structured omissions under
+space plus target. If those joins cannot be proven, the receipt records structured omissions under
 `predicate.evidence.deliveryEvidence.omissions`.
 
 Modelplane-owned resources backed by explicit Crossplane composition metadata

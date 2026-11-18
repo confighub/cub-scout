@@ -11,6 +11,12 @@ Crossplane and Terraform. It works with ConfigHub 0.11. Principle 10 in
 say what "for an agent" means and the rules found on real clusters. The
 entries below are older.
 
+**2026-11-18 (unreleased):** ConfigHub no longer records unit events, so
+cub-scout no longer reads them. `--with-confighub` evidence is releases,
+live status and event consumers; the `unitEvents` fields stay in the JSON
+contract and are always empty, and the MCP tool `confighub_unit_events` is
+retired and always answers `[]`.
+
 **2026-10-26:** [v2.14.2 is published](docs/releases/v2.14.2.md): live status
 is read from each Release, where ConfigHub now records it (#883, item 1 of
 #882). v2.15 work is still paused.
@@ -301,16 +307,16 @@ As of 2026-09-11, these areas are fully or materially shipped:
 - **v2.8.0 ConfigHub delivery evidence release**
   - README now frames the five run modes near the top: standalone client, `cub` plugin, MCP server, watch stream, and in-cluster bot
   - `gitops status --format ascii|json|md` now matches the documented format contract; `--json` remains a shorthand for `--format json`
-  - `gitops status --with-confighub` adds opt-in, bounded ConfigHub release history, unit events, live-status writeback, and event-consumer Deployment health under `deliveryEvidence`
-  - `doctor --with-confighub` reuses the same bounded evidence envelope, adds a scope-level `delivery` rollup, and promotes concrete failed/stale delivery feedback, failed unit events, and unhealthy observed event consumers into top issues
-  - `map activity --with-confighub` projects the same bounded ConfigHub evidence into separate timeline rows for live-status writeback, release publication, unit events, event-consumer health, and omissions. Application-row joins are post-v2.8.0 work.
+  - `gitops status --with-confighub` adds opt-in, bounded ConfigHub release history, live-status writeback, and event-consumer Deployment health under `deliveryEvidence`
+  - `doctor --with-confighub` reuses the same bounded evidence envelope, adds a scope-level `delivery` rollup, and promotes concrete failed/stale delivery feedback and unhealthy observed event consumers into top issues
+  - `map activity --with-confighub` projects the same bounded ConfigHub evidence into separate timeline rows for live-status writeback, release publication, event-consumer health, and omissions. Application-row joins are post-v2.8.0 work.
   - Live-status writeback separates delivery verdict from application-health verdict and downgrades stale successful observations to `WATCH`
-  - ConfigHub release and unit-event reads are scoped by `--confighub-space`, else `CUB_SPACE` (reported as `scope.spaceSource`); cub (v0.5.2 and later) has no default space, and the reads are skipped, never widened, when no space is given. They support explicit `--confighub-space '*'`, and are bounded by `--confighub-since`
+  - ConfigHub release reads are scoped by `--confighub-space`, else `CUB_SPACE` (reported as `scope.spaceSource`); cub (v0.5.2 and later) has no default space, and the reads are skipped, never widened, when no space is given. They support explicit `--confighub-space '*'`, and are bounded by `--confighub-since`
   - `gitops status` emits controller-family coverage for Flux, Argo CD, ConfigHub, Sveltos, and Modelplane, including found/not-found/partial/unreadable status and RBAC/list omissions
   - `map list --format json`, `snapshot`, `summary list --format json`, and `watch`/`bot` events now emit point-in-time `observation` metadata with source, mode, observedAt, freshness, and scope
   - `receipt list --format json` now indexes saved receipt TTL stamps as `freshness.status` (`fresh`, `stale`, `not-declared`, `invalid`) without re-reading Kubernetes or mutating the receipt
   - Modelplane evidence keeps Modelplane as the higher-level owner while surfacing Crossplane substrate evidence from composite/claim/composition-resource labels and verified Crossplane field managers in trace, map JSON, watch/bot events, and receipts
-  - MCP standalone mode adds `gitops_status`; connected mode adds `confighub_live_status`, `confighub_releases`, and `confighub_unit_events`. Resource-index and Kubernetes Resource MCP reads are post-v2.8.0 work.
+  - MCP standalone mode adds `gitops_status`; connected mode adds `confighub_live_status`, `confighub_releases`, and `confighub_unit_events` (now retired: ConfigHub no longer records unit events, so it always answers `[]`). Resource-index and Kubernetes Resource MCP reads are post-v2.8.0 work.
   - MCP `compare_source_truth` strategy enum is generated from the same strategy registry as the CLI
   - `trace --with-confighub` and `explain --with-confighub` attach object-correlated `deliveryEvidence` only when exact ConfigHub unit, space, target, OCI-source, or Argo Application identifiers prove the join; otherwise they report structured omissions
   - `receipt verify <kind>/<name> --with-confighub` attaches the same object-correlated `deliveryEvidence` under `predicate.evidence.deliveryEvidence`; the field is fingerprint-covered supporting evidence and does not change predicate verdict semantics
@@ -382,7 +388,7 @@ As of 2026-09-11, these areas are fully or materially shipped:
   - `views project --with-reality` composes View columns with source-truth verdicts (`#420`)
 - **MCP gateway** — `mcp serve` exposes a closed, read-only-by-construction tool catalog:
   - 8 standalone tools: `doctor`, `map`, `scan`, `trace`, `explain`, `gitops_status`, `release_check`, and from v2.13.4 `gitops_settings`
-  - 12 connected tools: `compare_three_way`, `compare_source_truth`, `confighub_changeorder_get`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_resources`, `confighub_unit_events`, `confighub_units`, `confighub_unit_get`
+  - 12 connected tools: `compare_three_way`, `compare_source_truth`, `confighub_changeorder_get`, `confighub_changesets`, `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`, `confighub_releases`, `confighub_resources`, `confighub_unit_events` (retired: always `[]`), `confighub_units`, `confighub_unit_get`
   - `confighub_changeorder_get` reads one exact-space ChangeOrder's reported Stage/State and declarations. Evaluated prerequisites remain unknown; this is not approval or live convergence proof.
   - Verified by `cmd/cub-scout/mcp_test.go`; full per-tool reference at `skills/references/mcp-tool-catalog.md`
 - `doctor` / `explain` with `--presentation human|ai|paired` and `--hint-mode default|beginner|operator`

@@ -203,8 +203,6 @@ func TestCollectGitOpsDeliveryEvidence_BoundsConfigHubReadsAndKeepsOmissionsStru
 		case len(args) > 1 && args[0] == "release" && args[1] == "list":
 			// The recorded server shape, not an invented one: see recordedV05ReleaseList.
 			return recordedV05ReleaseList, nil
-		case len(args) > 1 && args[0] == "unit-event" && args[1] == "list":
-			return `[{"UnitEvent":{"UnitEventID":"ue-1","Action":"ReleasePublished","Result":"Succeeded","CreatedAt":"2026-09-10T11:51:00Z"},"Unit":{"Slug":"payments-api","UnitID":"u-123"},"Space":{"Slug":"payments-prod","SpaceID":"sp-123"},"Target":{"Slug":"prod","TargetID":"t-123"}}]`, nil
 		default:
 			t.Fatalf("unexpected cub args: %v", args)
 			return "", nil
@@ -223,8 +221,8 @@ func TestCollectGitOpsDeliveryEvidence_BoundsConfigHubReadsAndKeepsOmissionsStru
 	if evidence.Scope.Space != "payments-prod" {
 		t.Fatalf("scope space = %q, want default payments-prod", evidence.Scope.Space)
 	}
-	if len(calls) != 3 {
-		t.Fatalf("cub calls = %d, want 3: %+v", len(calls), calls)
+	if len(calls) != 2 {
+		t.Fatalf("cub calls = %d, want 2, the space and its releases: %+v", len(calls), calls)
 	}
 	for _, args := range calls {
 		joined := strings.Join(args, " ")
@@ -251,8 +249,10 @@ func TestCollectGitOpsDeliveryEvidence_BoundsConfigHubReadsAndKeepsOmissionsStru
 	if len(evidence.ConfigHub.Releases) != 1 || evidence.ConfigHub.Releases[0].TargetID != "55555555-5555-4555-8555-555555555555" {
 		t.Fatalf("releases = %+v, want one parsed release", evidence.ConfigHub.Releases)
 	}
-	if len(evidence.ConfigHub.UnitEvents) != 1 || evidence.ConfigHub.UnitEvents[0].Action != "ReleasePublished" {
-		t.Fatalf("unit events = %+v, want one parsed event", evidence.ConfigHub.UnitEvents)
+	// ConfigHub no longer records unit events, so none are read: the stub
+	// above fails on any command it does not expect.
+	if len(evidence.ConfigHub.UnitEvents) != 0 || evidence.ConfigHub.UnitEventsTotal != 0 {
+		t.Fatalf("unit events = %+v, want none", evidence.ConfigHub.UnitEvents)
 	}
 }
 
@@ -348,98 +348,6 @@ func TestBuildConfigHubReleaseEvidence_PublishedIsThreeValued(t *testing.T) {
 	}
 	if p := releases[2].Published; p != nil {
 		t.Fatalf("unreported Published = %v, want nil: absent is not false", *p)
-	}
-}
-
-// `cub unit-event list -o json` prints bare UnitEvent objects. This shape is
-// derived from the UnitEvent schema in ConfigHub's public OpenAPI document and
-// from cub's list command at v0.5.1. It is not a recording: the server it was
-// tested against held no unit events. A UnitEvent names its unit and space as
-// flat fields and has no target at all. Action, Result and Status use values
-// from the published enums.
-const derivedV05UnitEventList = `[{
-	"Action":"Apply",
-	"BridgeWorkerID":"66666666-6666-4666-8666-666666666666",
-	"CreatedAt":"2026-09-03T15:03:00Z",
-	"EntityType":"UnitEvent",
-	"Message":"applied",
-	"OrganizationID":"11111111-1111-4111-8111-111111111111",
-	"Result":"None",
-	"RevisionNum":4,
-	"SpaceID":"33333333-3333-4333-8333-333333333333",
-	"SpaceSlug":"payments-prod",
-	"Status":"Completed",
-	"TerminatedAt":"2026-09-03T15:03:05Z",
-	"UnitEventID":"77777777-7777-4777-8777-777777777777",
-	"UnitEventNum":9,
-	"UnitID":"88888888-8888-4888-8888-888888888888",
-	"UnitSlug":"payments-api"
-}]`
-
-func TestBuildConfigHubUnitEventEvidence_ReadsFlatUnitAndSpaceIdentity(t *testing.T) {
-	events, omissions := buildConfigHubUnitEventEvidence(derivedV05UnitEventList, 10)
-	if len(omissions) != 0 || len(events) != 1 {
-		t.Fatalf("events = %+v omissions = %+v, want one event", events, omissions)
-	}
-	want := ConfigHubUnitEventEvidence{
-		EventID:      "77777777-7777-4777-8777-777777777777",
-		Action:       "Apply",
-		Result:       "None",
-		Status:       "Completed",
-		Message:      "applied",
-		Unit:         "payments-api",
-		UnitID:       "88888888-8888-4888-8888-888888888888",
-		Space:        "payments-prod",
-		SpaceID:      "33333333-3333-4333-8333-333333333333",
-		CreatedAt:    "2026-09-03T15:03:00Z",
-		TerminatedAt: "2026-09-03T15:03:05Z",
-	}
-	if events[0] != want {
-		t.Fatalf("unit event evidence =\n  %+v\nwant\n  %+v", events[0], want)
-	}
-}
-
-// ConfigHub marshals TerminatedAt without omitempty, so an event that has not
-// finished carries Go's zero time. Read as a real time it dates the activity
-// row to the year 1, which no --since window includes. The premise comes from
-// the generated UnitEvent model; the row below is constructed, not recorded.
-func TestUnitEventStillInProgressKeepsItsCreatedTime(t *testing.T) {
-	inProgress := strings.Replace(derivedV05UnitEventList, `"TerminatedAt":"2026-09-03T15:03:05Z"`, `"TerminatedAt":"0001-01-01T00:00:00Z"`, 1)
-	inProgress = strings.Replace(inProgress, `"Status":"Completed"`, `"Status":"Progressing"`, 1)
-	events, _ := buildConfigHubUnitEventEvidence(inProgress, 10)
-	if len(events) != 1 {
-		t.Fatalf("events = %+v, want one", events)
-	}
-	if events[0].TerminatedAt != "" {
-		t.Fatalf("terminatedAt = %q, want empty for an event that has not terminated", events[0].TerminatedAt)
-	}
-
-	evidence := &GitOpsDeliveryEvidence{ObservedAt: time.Date(2026, 9, 3, 16, 0, 0, 0, time.UTC)}
-	row := configHubUnitEventActivityRow(evidence, events[0])
-	if row.Time != "2026-09-03T15:03:00Z" {
-		t.Fatalf("activity row time = %q, want the event's CreatedAt", row.Time)
-	}
-	if row.Result != "pending" {
-		t.Fatalf("activity row result = %q, want pending for Status=Progressing", row.Result)
-	}
-	// A UnitEvent names no target. "target=-" would read as a missing value.
-	if strings.Contains(row.Message, "target=") {
-		t.Fatalf("message = %q, want no target field", row.Message)
-	}
-	if !strings.Contains(row.Message, "result=None status=Progressing") {
-		t.Fatalf("message = %q, want both result and status", row.Message)
-	}
-}
-
-func TestGitOpsConfigHubUnitEventListArgs_SendsNoSelect(t *testing.T) {
-	joined := strings.Join(gitOpsConfigHubUnitEventListArgs("payments-prod", "2026-09-09T12:00:00Z"), " ")
-	if strings.Contains(joined, "--select") {
-		t.Fatalf("unit-event list args pin a field selection: %s", joined)
-	}
-	for _, want := range []string{"unit-event list", "--space payments-prod", "CreatedAt > '2026-09-09T12:00:00Z'"} {
-		if !strings.Contains(joined, want) {
-			t.Fatalf("unit-event list args = %q, want them to contain %q", joined, want)
-		}
 	}
 }
 
@@ -607,9 +515,7 @@ func TestDeliveryEvidenceExampleMatchesTheTypes(t *testing.T) {
 	if !reflect.DeepEqual(actions, want) {
 		t.Fatalf("example release actions = %v, want %v", actions, want)
 	}
-	for _, event := range evidence.ConfigHub.UnitEvents {
-		if event.Target != "" || event.TargetID != "" {
-			t.Fatalf("example unit event names a target, which a ConfigHub UnitEvent does not have: %+v", event)
-		}
+	if len(evidence.ConfigHub.UnitEvents) != 0 || evidence.ConfigHub.UnitEventsTotal != 0 {
+		t.Fatalf("example shows unit events, which ConfigHub no longer records: %+v", evidence.ConfigHub.UnitEvents)
 	}
 }

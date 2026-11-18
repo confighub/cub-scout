@@ -4553,9 +4553,6 @@ func gitOpsDeliveryEvidenceToActivityRows(evidence *GitOpsDeliveryEvidence) []ma
 		for _, release := range evidence.ConfigHub.Releases {
 			rows = append(rows, configHubReleaseActivityRow(evidence, release))
 		}
-		for _, event := range evidence.ConfigHub.UnitEvents {
-			rows = append(rows, configHubUnitEventActivityRow(evidence, event))
-		}
 	}
 	for _, consumer := range evidence.EventConsumers {
 		rows = append(rows, configHubEventConsumerActivityRow(evidence, consumer))
@@ -4770,44 +4767,6 @@ func configHubReleaseAction(release ConfigHubReleaseEvidence) string {
 	}
 }
 
-func configHubUnitEventActivityRow(evidence *GitOpsDeliveryEvidence, event ConfigHubUnitEventEvidence) mapActivityRow {
-	when := firstNonEmpty(event.TerminatedAt, event.CreatedAt)
-	// ConfigHub unit events do not name a target, so the text does not print a
-	// "target=-" that reads as a missing value. It is shown if a server sends one.
-	target := ""
-	if name := firstNonEmpty(event.Target, event.TargetID); name != "" {
-		target = " target=" + name
-	}
-	message := strings.TrimSpace(fmt.Sprintf("unit=%s%s result=%s status=%s %s",
-		firstNonEmpty(event.Unit, event.UnitID, "-"),
-		target,
-		firstNonEmpty(event.Result, "-"),
-		firstNonEmpty(event.Status, "-"),
-		strings.TrimSpace(event.Message),
-	))
-	return mapActivityRow{
-		Time:              normalizeTimeString(when, evidence.ObservedAt),
-		Source:            "confighub.unitEvent",
-		Resource:          fmt.Sprintf("UnitEvent/%s/%s", firstNonEmpty(event.Space, event.SpaceID, "unknown"), firstNonEmpty(event.Unit, event.UnitID, event.EventID, "unknown")),
-		Action:            strings.ToLower(firstNonEmpty(event.Action, event.Status, "unit-event")),
-		Result:            mapActivityResultFromUnitEvent(event),
-		Message:           message,
-		SuggestedNextStep: "Use ConfigHub unit history and live controller status to compare intended change, delivery feedback, and runtime state.",
-		Owner:             "ConfigHub",
-		DeliveryEvidence: &mapActivityDeliveryEvidence{
-			Kind:      "unitEvent",
-			Namespace: evidence.Scope.Namespace,
-			Space:     event.Space,
-			SpaceID:   event.SpaceID,
-			Target:    event.Target,
-			TargetID:  event.TargetID,
-			Unit:      event.Unit,
-			UnitID:    event.UnitID,
-			EventID:   event.EventID,
-		},
-	}
-}
-
 func configHubEventConsumerActivityRow(evidence *GitOpsDeliveryEvidence, consumer GitOpsEventConsumerEvidence) mapActivityRow {
 	result := "success"
 	if !consumer.Ready {
@@ -4895,52 +4854,6 @@ func formatActivityNum(num int) string {
 		return "-"
 	}
 	return strconv.Itoa(num)
-}
-
-// mapActivityResultFromUnitEvent buckets a unit event by ConfigHub's own
-// values. Status is how the action ended (ActionStatusType: Aborted, Canceled,
-// Completed, Failed, None, Pending, Progressing, Submitted); Result is what it
-// produced (ActionResultType: FunctionInvocationCompleted,
-// FunctionInvocationFailed, None; older servers also sent Apply- and
-// Destroy-prefixed values ending in Completed or Failed). An ordinary Apply
-// reports Result "None" and records its end in Status.
-//
-// The values are matched exactly rather than by substring, which made
-// "Incomplete" a success and left Aborted, Canceled and Submitted as normal.
-// An action that stopped without an outcome, or a value this reader does not
-// know, is inconclusive: never success, and never normal.
-func mapActivityResultFromUnitEvent(event ConfigHubUnitEventEvidence) string {
-	result := strings.TrimSpace(event.Result)
-	resultFailed := strings.HasSuffix(strings.ToLower(result), "failed")
-	resultCompleted := strings.HasSuffix(strings.ToLower(result), "completed")
-
-	switch status := strings.TrimSpace(event.Status); {
-	case strings.EqualFold(status, "Failed"):
-		return "failed"
-	case strings.EqualFold(status, "Completed"):
-		if resultFailed {
-			return "failed"
-		}
-		return "success"
-	case strings.EqualFold(status, "Pending"), strings.EqualFold(status, "Submitted"), strings.EqualFold(status, "Progressing"):
-		return "pending"
-	case strings.EqualFold(status, "Aborted"), strings.EqualFold(status, "Canceled"):
-		return "inconclusive"
-	case status == "", strings.EqualFold(status, "None"):
-		switch {
-		case resultFailed:
-			return "failed"
-		case resultCompleted:
-			return "success"
-		case result == "", strings.EqualFold(result, "None"):
-			return "normal"
-		}
-		return "inconclusive"
-	}
-	if resultFailed {
-		return "failed"
-	}
-	return "inconclusive"
 }
 
 func mapActivityDeliveryNextStep(delivery, appHealth agent.ReceiptVerdict, freshness string) string {

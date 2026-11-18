@@ -238,7 +238,7 @@ func TestLiveStatusFreshnessCollectorAndReceipt(t *testing.T) {
 				if reflect.DeepEqual(args, gitOpsConfigHubSpaceListArgs("team-a")) {
 					return raw, nil
 				}
-				if len(args) > 1 && args[1] == "list" && (args[0] == "release" || args[0] == "unit-event") {
+				if len(args) > 1 && args[1] == "list" && args[0] == "release" {
 					return "[]", nil
 				}
 				t.Fatalf("unexpected command: %v", args)
@@ -248,7 +248,7 @@ func TestLiveStatusFreshnessCollectorAndReceipt(t *testing.T) {
 			evidence := collectGitOpsDeliveryEvidence(context.Background(), client, gitOpsDeliveryEvidenceOptions{
 				Space: "team-a", Since: "24h", StaleAfter: threshold, Now: now,
 			})
-			if calls != 3 || len(client.Actions()) != 2 {
+			if calls != 2 || len(client.Actions()) != 2 {
 				t.Fatalf("unexpected read budget: cub=%d k8s=%v", calls, client.Actions())
 			}
 			for _, action := range client.Actions() {
@@ -286,7 +286,7 @@ func TestLiveStatusFreshnessCollectorAndReceipt(t *testing.T) {
 					t.Fatal(err)
 				}
 			})
-			if calls != 3 || len(client.Actions()) != 2 {
+			if calls != 2 || len(client.Actions()) != 2 {
 				t.Fatalf("receipt read budget changed: cub=%d k8s=%v", calls, client.Actions())
 			}
 			var stmt agent.Statement

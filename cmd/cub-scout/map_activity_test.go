@@ -113,21 +113,6 @@ func TestGitOpsDeliveryEvidenceToActivityRows(t *testing.T) {
 				Published:      boolPtr(true),
 				CreatedAt:      "2026-09-10T11:57:00Z",
 			}},
-			UnitEvents: []ConfigHubUnitEventEvidence{{
-				EventID:      "evt-1",
-				Action:       "ReleasePublished",
-				Result:       "Failed",
-				Status:       "Failed",
-				Message:      "delivery failed",
-				Unit:         "payments-api",
-				UnitID:       "unit-123",
-				Space:        "payments-prod",
-				SpaceID:      "sp-123",
-				Target:       "prod",
-				TargetID:     "target-123",
-				CreatedAt:    "2026-09-10T11:56:00Z",
-				TerminatedAt: "2026-09-10T11:56:30Z",
-			}},
 		},
 		EventConsumers: []GitOpsEventConsumerEvidence{{
 			Kind:              "Deployment",
@@ -140,15 +125,15 @@ func TestGitOpsDeliveryEvidenceToActivityRows(t *testing.T) {
 			EvidenceLabel:     "app=argobot",
 		}},
 		Omissions: []GitOpsDeliveryEvidenceOmission{{
-			Layer:  "confighub.unitEvents",
-			Reason: "unit-event list returned no rows",
-			Impact: "recent unit-level event evidence is unavailable",
+			Layer:  "confighub.releases",
+			Reason: "trimmed 12 release rows to maxItems=10",
+			Impact: "older rows are omitted from output but the query remains time-window bounded",
 		}},
 	}
 
 	rows := gitOpsDeliveryEvidenceToActivityRows(evidence)
-	if len(rows) != 5 {
-		t.Fatalf("len(rows) = %d, want 5: %+v", len(rows), rows)
+	if len(rows) != 4 {
+		t.Fatalf("len(rows) = %d, want 4: %+v", len(rows), rows)
 	}
 
 	bySource := map[string]mapActivityRow{}
@@ -181,11 +166,6 @@ func TestGitOpsDeliveryEvidenceToActivityRows(t *testing.T) {
 		t.Fatalf("release message = %q, want the target ID and publication state", release.Message)
 	}
 
-	unitEvent := bySource["confighub.unitEvent"]
-	if unitEvent.Result != "failed" || !strings.Contains(unitEvent.Message, "delivery failed") {
-		t.Fatalf("unit event row = %+v, want failed message", unitEvent)
-	}
-
 	consumer := bySource["confighub.eventConsumer"]
 	if consumer.Result != "failed" || consumer.DeliveryEvidence.Ready == nil || *consumer.DeliveryEvidence.Ready {
 		t.Fatalf("consumer row = %+v, want explicit ready=false", consumer)
@@ -195,8 +175,8 @@ func TestGitOpsDeliveryEvidenceToActivityRows(t *testing.T) {
 	}
 
 	omission := bySource["confighub.omission"]
-	if omission.Result != "inconclusive" || omission.DeliveryEvidence.Layer != "confighub.unitEvents" {
-		t.Fatalf("omission row = %+v, want unitEvents omission", omission)
+	if omission.Result != "inconclusive" || omission.DeliveryEvidence.Layer != "confighub.releases" {
+		t.Fatalf("omission row = %+v, want releases omission", omission)
 	}
 }
 
@@ -455,54 +435,5 @@ func TestConfigHubReleaseActivityRow_NamesTheRowByItsPublicationState(t *testing
 				t.Fatalf("message = %q, want it to contain %q", row.Message, tt.wantInMessage)
 			}
 		})
-	}
-}
-
-// Unit events are bucketed by ConfigHub's own values (ActionStatusType and
-// ActionResultType in the public client models), matched exactly. Substring
-// matching made "Incomplete" and "Unsuccessful" successes and left Aborted,
-// Canceled and Submitted as normal.
-func TestMapActivityResultFromUnitEvent(t *testing.T) {
-	for _, tc := range []struct {
-		result, status, want string
-	}{
-		// An ordinary Apply: Result None, the end recorded in Status.
-		{"None", "Failed", "failed"},
-		{"None", "Completed", "success"},
-		{"None", "Pending", "pending"},
-		{"None", "Submitted", "pending"},
-		{"None", "Progressing", "pending"},
-		{"None", "Aborted", "inconclusive"},
-		{"None", "Canceled", "inconclusive"},
-		{"None", "None", "normal"},
-		{"", "", "normal"},
-
-		// A function invocation reports its outcome in Result.
-		{"FunctionInvocationCompleted", "Completed", "success"},
-		{"FunctionInvocationFailed", "Completed", "failed"},
-		{"FunctionInvocationFailed", "None", "failed"},
-		{"FunctionInvocationCompleted", "", "success"},
-		// Status decides first: an aborted action is not a success because an
-		// earlier step completed.
-		{"FunctionInvocationCompleted", "Aborted", "inconclusive"},
-		{"FunctionInvocationCompleted", "Failed", "failed"},
-
-		// Older servers named the action in Result.
-		{"ApplyCompleted", "", "success"},
-		{"ApplyWaitFailed", "", "failed"},
-
-		// Values ConfigHub does not define are never success or normal.
-		{"None", "Incomplete", "inconclusive"},
-		{"None", "Unsuccessful", "inconclusive"},
-		{"Something", "", "inconclusive"},
-		{"ApplyFailed", "Mystery", "failed"},
-
-		// Case does not change the meaning.
-		{"none", "failed", "failed"},
-	} {
-		got := mapActivityResultFromUnitEvent(ConfigHubUnitEventEvidence{Result: tc.result, Status: tc.status})
-		if got != tc.want {
-			t.Errorf("result=%q status=%q: bucket=%q, want %q", tc.result, tc.status, got, tc.want)
-		}
 	}
 }

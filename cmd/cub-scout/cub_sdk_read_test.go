@@ -848,12 +848,12 @@ func TestCubStdoutAnswersTheListsThroughTheSDKWhenAsked(t *testing.T) {
 
 	// What the list asked the server: the one space, cub's expansions, no
 	// limit; and for the spaces, their summary.
-	require.Contains(t, (*seen)[1], "GET /api/unit?include=UnitEventID%2CTargetID%2CUpstreamUnitID%2CSpaceID%2CFromLinkID%2CChangeSetID&where=SpaceID+%3D+")
+	require.Contains(t, (*seen)[1], "GET /api/unit?include=TargetID%2CUpstreamUnitID%2CSpaceID%2CFromLinkID%2CChangeSetID&where=SpaceID+%3D+")
 	require.NotContains(t, (*seen)[1], "limit=")
 	require.Equal(t, "GET /api/space?include=ComponentID&summary=true", (*seen)[len(*seen)-1])
 	// The filter is the caller's, AND-ed with the space, with the search
 	// beside it.
-	require.Contains(t, (*seen)[5], "GET /api/unit?contains=parity&include=UnitEventID")
+	require.Contains(t, (*seen)[5], "GET /api/unit?contains=parity&include=TargetID")
 	require.Contains(t, (*seen)[5], "&where=Slug+LIKE+%27parity-%25%27+AND+SpaceID+%3D+%27")
 }
 
@@ -1152,7 +1152,7 @@ func TestTheSDKRouteHonoursTheOfflineSwitch(t *testing.T) {
 // The lists of one space besides Units: the same shape for each entity, and
 // nothing else.
 func TestSDKListArgsForTheOtherEntities(t *testing.T) {
-	for _, entity := range []string{"target", "changeset", "link", "resource", "release", "unit-event"} {
+	for _, entity := range []string{"target", "changeset", "link", "resource", "release"} {
 		t.Run(entity, func(t *testing.T) {
 			for name, tc := range map[string]struct {
 				args []string
@@ -1183,9 +1183,6 @@ func TestSDKListArgsForTheOtherEntities(t *testing.T) {
 			} {
 				_, _, _, ok := sdkListArgs(args)
 				require.False(t, ok, name)
-				if entity == "unit-event" && name == "a positional" {
-					continue // the events of one Unit, which is its own read
-				}
 				require.Nil(t, sdkRead(args), name)
 			}
 		})
@@ -1283,51 +1280,12 @@ func TestCubStdoutAnswersTheOtherSpaceListsThroughTheSDK(t *testing.T) {
 	require.NotNil(t, sdkRead(withConfigHubSpace([]string{"attestation", "list", "-o", "json"}, space)))
 }
 
-// The events of one Unit: `cub unit-event list <unit>`, with the Unit named as
-// `unit get` requires it.
-func TestSDKUnitEventsOfUnitArgs(t *testing.T) {
-	for name, tc := range map[string]struct {
-		args []string
-		want hubread.Filter
-	}{
-		"as the MCP tool builds it": {[]string{"unit-event", "list", "payments-api", "--space", "s", "-o", "json"}, hubread.Filter{}},
-		"with a filter":             {[]string{"unit-event", "list", "payments-api", "--space", "s", "-o", "json", "--where", "CreatedAt > '2026-09-10T00:00:00Z'"}, hubread.Filter{Where: "CreatedAt > '2026-09-10T00:00:00Z'"}},
-		"the unit last":             {[]string{"unit-event", "list", "--space", "s", "-o", "json", "--quiet", "payments-api"}, hubread.Filter{}},
-	} {
-		space, unit, filter, ok := sdkUnitEventsOfUnitArgs(tc.args)
-		require.True(t, ok, name)
-		require.Equal(t, []string{"s", "payments-api"}, []string{space, unit}, name)
-		require.Equal(t, tc.want, filter, name)
-		require.NotNil(t, sdkRead(tc.args), name)
-		_, _, _, wholeSpace := sdkListArgs(tc.args)
-		require.False(t, wholeSpace, name)
-	}
-	for name, args := range map[string][]string{
-		"no space":            {"unit-event", "list", "payments-api", "-o", "json"},
-		"every space":         {"unit-event", "list", "payments-api", "-o", "json", "--space", allConfigHubSpaces},
-		"a unit named by ID":  {"unit-event", "list", recordedUnitID, "-o", "json", "--space", "s"},
-		"a qualified unit":    {"unit-event", "list", "s/payments-api", "-o", "json", "--space", "s"},
-		"every unit":          {"unit-event", "list", allConfigHubSpaces, "-o", "json", "--space", "s"},
-		"two units":           {"unit-event", "list", "a", "b", "-o", "json", "--space", "s"},
-		"no output format":    {"unit-event", "list", "payments-api", "--space", "s"},
-		"a stored filter":     {"unit-event", "list", "payments-api", "-o", "json", "--space", "s", "--filter", "f"},
-		"another entity":      {"release", "list", "payments-api", "-o", "json", "--space", "s"},
-		"another verb":        {"unit-event", "get", "payments-api", "-o", "json", "--space", "s"},
-		"a non-canonical ID":  {"unit-event", "list", "payments-api", "-o", "json", "--space", strings.ToUpper(recordedSpaceID)},
-		"a blank unit":        {"unit-event", "list", " ", "-o", "json", "--space", "s"},
-		"a limit on the list": {"unit-event", "list", "payments-api", "-o", "json", "--space", "s", "--limit", "5"},
-	} {
-		_, _, _, ok := sdkUnitEventsOfUnitArgs(args)
-		require.False(t, ok, name)
-		require.Nil(t, sdkRead(args), name)
-	}
-}
-
-// The release, unit-event and resource lists are built in ways the line scan
-// of cubCallSites does not read (across lines, or inside two appends), so
-// each builder is called here, and the number of places the pair is spelled
-// is pinned: a new call site fails this test until it is added below.
-func TestTheReleaseEventAndResourceListsAreTaken(t *testing.T) {
+// The release and resource lists are built in ways the line scan of
+// cubCallSites does not read (across lines, or inside two appends), so each
+// builder is called here, and the number of places the pair is spelled is
+// pinned: a new call site fails this test until it is added below. Nothing
+// builds a unit-event list: ConfigHub no longer records unit events.
+func TestTheReleaseAndResourceListsAreTaken(t *testing.T) {
 	gateway := newMCPGatewayWithMode(nil, nil, true)
 	build := func(tool string, arguments map[string]interface{}) []string {
 		args, err := gateway.tools[tool].BuildArgs(arguments)
@@ -1341,17 +1299,13 @@ func TestTheReleaseEventAndResourceListsAreTaken(t *testing.T) {
 			build("confighub_releases", map[string]interface{}{"space": "space"}),
 			build("confighub_releases", map[string]interface{}{"space": "space", "where": "ReleaseNum > 3"}),
 		},
-		"unit-event list": {
-			gitOpsConfigHubUnitEventListArgs("space", cutoff),
-			build("confighub_unit_events", map[string]interface{}{"space": "space"}),
-			build("confighub_unit_events", map[string]interface{}{"space": "space", "unit": "payments-api", "where": "CreatedAt > '" + cutoff + "'"}),
-		},
+		"unit-event list": nil,
 		"resource list": {
 			build("confighub_resources", map[string]interface{}{"space": "space"}),
 			build("confighub_resources", map[string]interface{}{"space": "space", "where": "ResourceType = 'apps/v1/Deployment'", "contains": "nginx"}),
 		},
 	}
-	builders := map[string]int{"release list": 2, "unit-event list": 2, "resource list": 1}
+	builders := map[string]int{"release list": 2, "unit-event list": 0, "resource list": 1}
 	for command, calls := range taken {
 		entity, verb, _ := strings.Cut(command, " ")
 		for _, args := range calls {
@@ -1391,7 +1345,7 @@ func TestTheReleaseEventAndResourceListsAreTaken(t *testing.T) {
 // for the kinds cub lists that way. No space at all is still left to cub, and
 // so are the releases of every space.
 func TestSDKListArgsTakeEverySpaceWhenItIsNamed(t *testing.T) {
-	for _, entity := range []string{"unit", "target", "changeset", "link", "resource", "unit-event", "attestation"} {
+	for _, entity := range []string{"unit", "target", "changeset", "link", "resource", "attestation"} {
 		args := []string{entity, "list", "-o", "json", "--space", allConfigHubSpaces}
 		got, space, filter, ok := sdkListArgs(args)
 		require.True(t, ok, entity)
@@ -1405,11 +1359,10 @@ func TestSDKListArgsTakeEverySpaceWhenItIsNamed(t *testing.T) {
 		require.Nil(t, sdkRead([]string{entity, "list", "-o", "json"}), "%s with no space", entity)
 	}
 	require.Nil(t, sdkRead([]string{"release", "list", "-o", "json", "--space", allConfigHubSpaces}))
-	require.Nil(t, sdkRead([]string{"unit-event", "list", "u", "-o", "json", "--space", allConfigHubSpaces}), "one Unit is in one space")
 
 	// As the callers build them.
 	gateway := newMCPGatewayWithMode(nil, nil, true)
-	for _, tool := range []string{"confighub_resources", "confighub_unit_events"} {
+	for _, tool := range []string{"confighub_resources"} {
 		args, err := gateway.tools[tool].BuildArgs(map[string]interface{}{"space": allConfigHubSpaces})
 		require.NoError(t, err)
 		require.NotNil(t, sdkRead(args), "cub %s", strings.Join(args, " "))

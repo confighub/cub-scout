@@ -81,22 +81,7 @@
           "createdAt": "2026-09-10T09:20:00Z"
         }
       ],
-      "unitEvents": [
-        {
-          "eventId": "77777777-7777-4777-8777-777777777777",
-          "action": "Apply",
-          "result": "None",
-          "status": "Completed",
-          "unit": "api",
-          "unitId": "88888888-8888-4888-8888-888888888888",
-          "space": "prod",
-          "spaceId": "sp-123",
-          "createdAt": "2026-09-10T11:51:00Z",
-          "terminatedAt": "2026-09-10T11:51:05Z"
-        }
-      ],
-      "releasesTotal": 2,
-      "unitEventsTotal": 1
+      "releasesTotal": 2
     },
     "eventConsumers": [
       {

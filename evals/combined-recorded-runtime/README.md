@@ -131,6 +131,11 @@ What that run does not show:
   skills now list; the diagnostic exercises one recorded `map` call;
 - repeatability at the new pin: it was one attempt on the pinned tree.
 
+On 2026-11-18 the pin moved to `580033af…`: ConfigHub no longer records unit
+events, so the skills no longer allow `cub unit-event list` and describe
+`confighub_unit_events` as retired. The diagnostic has not been run on that
+tree.
+
 To move the pin again: edit the skills, run the offline tests, read the staged
 hash from the failing assertion (or from `stage_treatment_plugin`), set
 `SKILL_TREE_SHA256`, and say in the pull request whether the diagnostic was

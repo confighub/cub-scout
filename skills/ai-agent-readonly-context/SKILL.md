@@ -89,7 +89,7 @@ The agent host calls `tools/list` to discover tools and `tools/call` to invoke t
 - `confighub_live_status` — ConfigHub Space live-status writeback with freshness
 - `confighub_releases` — bounded ConfigHub Release history
 - `confighub_resources` — generic ConfigHub Resource entity queries
-- `confighub_unit_events` — bounded ConfigHub UnitEvent history
+- `confighub_unit_events` — retired: always an empty list, since ConfigHub no longer records unit events; use `confighub_releases`
 - `confighub_units` — ConfigHub unit + fleet inventory
 - `confighub_unit_get` — exact ConfigHub unit details + applied/live revision
 

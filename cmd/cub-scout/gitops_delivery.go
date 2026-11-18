@@ -75,23 +75,14 @@ type GitOpsDeliveryEvidenceScope struct {
 type ConfigHubDeliveryEvidence struct {
 	LiveStatuses []ConfigHubLiveStatusEvidence `json:"liveStatuses,omitempty"`
 	Releases     []ConfigHubReleaseEvidence    `json:"releases,omitempty"`
-	UnitEvents   []ConfigHubUnitEventEvidence  `json:"unitEvents,omitempty"`
-	// ReleasesTotal and UnitEventsTotal count the rows in the time window
-	// before Releases and UnitEvents were trimmed to maxItems.
+	// UnitEvents is always empty: ConfigHub no longer records unit events,
+	// and Releases are the record of delivery. It stays in the JSON contract,
+	// which never removes a field.
+	UnitEvents []ConfigHubUnitEventEvidence `json:"unitEvents,omitempty"`
+	// ReleasesTotal counts the rows in the time window before Releases was
+	// trimmed to maxItems. UnitEventsTotal is always zero, like UnitEvents.
 	ReleasesTotal   int `json:"releasesTotal,omitempty"`
 	UnitEventsTotal int `json:"unitEventsTotal,omitempty"`
-
-	// allUnitEvents is every unit event in the window, kept so that a failure
-	// among rows trimmed from UnitEvents is still found. It is not output.
-	allUnitEvents []ConfigHubUnitEventEvidence
-}
-
-// unitEventsInWindow returns every unit event read, before trimming.
-func (e *ConfigHubDeliveryEvidence) unitEventsInWindow() []ConfigHubUnitEventEvidence {
-	if e.allUnitEvents != nil {
-		return e.allUnitEvents
-	}
-	return e.UnitEvents
 }
 
 type ConfigHubLiveStatusEvidence struct {
@@ -199,6 +190,8 @@ type ConfigHubReleaseEvidence struct {
 	manifestDigestRaw string
 }
 
+// ConfigHubUnitEventEvidence is the shape of the always-empty unitEvents
+// field, kept for the JSON contract.
 type ConfigHubUnitEventEvidence struct {
 	EventID      string `json:"eventId,omitempty"`
 	Action       string `json:"action,omitempty"`
@@ -358,7 +351,7 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 		evidence.Omissions = append(evidence.Omissions, GitOpsDeliveryEvidenceOmission{
 			Layer:  "confighub",
 			Reason: err.Error(),
-			Impact: "release, unit-event, and live-status evidence are omitted",
+			Impact: "release and live-status evidence are omitted",
 		})
 		return evidence
 	}
@@ -366,7 +359,7 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 		evidence.Omissions = append(evidence.Omissions, GitOpsDeliveryEvidenceOmission{
 			Layer:  "confighub.scope",
 			Reason: "no ConfigHub space was given: pass --confighub-space <slug> (or '*' for every space) or set CUB_SPACE; cub has no default space",
-			Impact: "release and unit-event queries are skipped to avoid unbounded ConfigHub reads",
+			Impact: "release queries are skipped to avoid unbounded ConfigHub reads",
 		})
 		return evidence
 	}
@@ -431,24 +424,6 @@ func collectGitOpsDeliveryEvidence(ctx context.Context, client dynamic.Interface
 	checkLiveStatusesAgainstCluster(ctx, client, releaseStatuses, readAt)
 	evidence.ConfigHub.LiveStatuses = append(evidence.ConfigHub.LiveStatuses, releaseStatuses...)
 
-	eventArgs := gitOpsConfigHubUnitEventListArgs(opts.Space, cutoff)
-	rawEvents, err := runGitOpsCubCommand(ctx, eventArgs)
-	if err != nil {
-		evidence.Omissions = append(evidence.Omissions, GitOpsDeliveryEvidenceOmission{
-			Layer:   "confighub.unitEvents",
-			Reason:  err.Error(),
-			Impact:  "recent unit event evidence is unavailable",
-			Command: "cub " + strings.Join(eventArgs, " "),
-		})
-	} else {
-		events, omissions := buildConfigHubUnitEventEvidence(rawEvents, 0)
-		evidence.ConfigHub.UnitEventsTotal = len(events)
-		evidence.ConfigHub.allUnitEvents = append([]ConfigHubUnitEventEvidence(nil), events...)
-		omissions = append(omissions, trimUnitEventEvidence(&events, rowLimit)...)
-		evidence.ConfigHub.UnitEvents = events
-		evidence.Omissions = append(evidence.Omissions, omissions...)
-	}
-
 	return evidence
 }
 
@@ -470,20 +445,6 @@ func gitOpsConfigHubSpaceListArgs(space string) []string {
 func gitOpsConfigHubReleaseListArgs(space, cutoff string) []string {
 	args := []string{
 		"release", "list",
-		"--space", space,
-		"-o", "json",
-		"--where", fmt.Sprintf("CreatedAt > '%s'", configHubFilterQuote(cutoff)),
-	}
-	return args
-}
-
-// gitOpsConfigHubUnitEventListArgs sends no --select, for the same reason as the
-// release read. cub does not forward a selection for unit events today, so the
-// old one was a no-op; it also named Unit, Space and Target, which are not
-// UnitEvent fields and would be rejected the day cub starts forwarding it.
-func gitOpsConfigHubUnitEventListArgs(space, cutoff string) []string {
-	args := []string{
-		"unit-event", "list",
 		"--space", space,
 		"-o", "json",
 		"--where", fmt.Sprintf("CreatedAt > '%s'", configHubFilterQuote(cutoff)),
@@ -1033,8 +994,8 @@ func correlateConfigHubReportedRevisions(statuses []ConfigHubLiveStatusEvidence,
 //
 // ConfigHub names a related entity in one of two ways. An extended response
 // carries it as a sibling object, {"Space":{"Slug":...,"SpaceID":...}}. A bare
-// entity, which is what `cub release list` and `cub unit-event list` print,
-// carries it as flat fields on the row itself, "SpaceSlug" and "SpaceID". The
+// entity, which is what `cub release list` prints, carries it as flat fields
+// on the row itself, "SpaceSlug" and "SpaceID". The
 // generic "Slug", "Name" and "ID" keys are read only from the sibling object:
 // on the row they are the row's own identity, not the related entity's.
 func configHubRelatedRef(item, row map[string]interface{}, kind string) (slug, id string) {
@@ -1085,24 +1046,6 @@ func configHubPublishedText(published *bool) string {
 	}
 }
 
-// configHubUnitEventOutcome is the text for a unit event's outcome. ConfigHub
-// sets Result to "None" for an ordinary Apply and records how it ended in
-// Status, so printing Result alone shows "None" for a failed Apply.
-func configHubUnitEventOutcome(result, status string) string {
-	return fmt.Sprintf("result=%s status=%s", firstNonEmpty(result, "-"), firstNonEmpty(status, "-"))
-}
-
-// configHubNonZeroTime drops Go's zero time. ConfigHub marshals TerminatedAt
-// without omitempty, so an event still in progress carries
-// "0001-01-01T00:00:00Z". Taken at face value that becomes the row's time, in
-// the year 1, and the row falls outside every --since window.
-func configHubNonZeroTime(value string) string {
-	if strings.HasPrefix(strings.TrimSpace(value), "0001-01-01T00:00:00") {
-		return ""
-	}
-	return value
-}
-
 // configHubBoolField reads a boolean field, reporting whether it was present.
 // Absent is distinct from false.
 func configHubBoolField(item map[string]interface{}, keys ...string) (bool, bool) {
@@ -1112,46 +1055,6 @@ func configHubBoolField(item map[string]interface{}, keys ...string) (bool, bool
 		}
 	}
 	return false, false
-}
-
-func buildConfigHubUnitEventEvidence(raw string, maxItems int) ([]ConfigHubUnitEventEvidence, []GitOpsDeliveryEvidenceOmission) {
-	_, items, omission := parseGitOpsEvidenceItems(raw, "confighub.unitEvents", "unit-event list")
-	if omission.Layer != "" {
-		return nil, []GitOpsDeliveryEvidenceOmission{omission}
-	}
-
-	events := make([]ConfigHubUnitEventEvidence, 0, len(items))
-	for _, item := range items {
-		eventObj := mcpNestedMap(item, "UnitEvent", "unitEvent", "event")
-		if eventObj == nil {
-			eventObj = item
-		}
-		unit, unitID := configHubRelatedRef(item, eventObj, "Unit")
-		space, spaceID := configHubRelatedRef(item, eventObj, "Space")
-		target, targetID := configHubRelatedRef(item, eventObj, "Target")
-
-		events = append(events, ConfigHubUnitEventEvidence{
-			EventID:      mcpFirstString(eventObj, "UnitEventID", "unitEventId", "EventID", "eventId", "ID", "id"),
-			Action:       mcpFirstString(eventObj, "Action", "action", "Type", "type"),
-			Result:       mcpFirstString(eventObj, "Result", "result"),
-			Status:       mcpFirstString(eventObj, "Status", "status", "Condition", "condition"),
-			Message:      mcpFirstString(eventObj, "Message", "message", "Summary", "summary"),
-			Unit:         unit,
-			UnitID:       unitID,
-			Space:        space,
-			SpaceID:      spaceID,
-			Target:       target,
-			TargetID:     targetID,
-			CreatedAt:    mcpFirstString(eventObj, "CreatedAt", "createdAt", "Timestamp", "timestamp"),
-			TerminatedAt: configHubNonZeroTime(mcpFirstString(eventObj, "TerminatedAt", "terminatedAt", "CompletedAt", "completedAt")),
-		})
-	}
-
-	sort.Slice(events, func(i, j int) bool {
-		return evidenceTimeAfter(events[i].CreatedAt, events[j].CreatedAt)
-	})
-	omissions := trimUnitEventEvidence(&events, maxItems)
-	return events, omissions
 }
 
 func parseGitOpsEvidenceItems(raw, layer, noun string) (interface{}, []map[string]interface{}, GitOpsDeliveryEvidenceOmission) {
@@ -1182,19 +1085,6 @@ func trimReleaseEvidence(releases *[]ConfigHubReleaseEvidence, maxItems int) []G
 	return []GitOpsDeliveryEvidenceOmission{{
 		Layer:  "confighub.releases",
 		Reason: fmt.Sprintf("trimmed %d release rows to maxItems=%d", total, maxItems),
-		Impact: "older rows are omitted from output but the query remains time-window bounded",
-	}}
-}
-
-func trimUnitEventEvidence(events *[]ConfigHubUnitEventEvidence, maxItems int) []GitOpsDeliveryEvidenceOmission {
-	if maxItems <= 0 || len(*events) <= maxItems {
-		return nil
-	}
-	total := len(*events)
-	*events = (*events)[:maxItems]
-	return []GitOpsDeliveryEvidenceOmission{{
-		Layer:  "confighub.unitEvents",
-		Reason: fmt.Sprintf("trimmed %d unit-event rows to maxItems=%d", total, maxItems),
 		Impact: "older rows are omitted from output but the query remains time-window bounded",
 	}}
 }
@@ -1418,17 +1308,6 @@ func outputGitOpsDeliveryEvidenceHuman(evidence *GitOpsDeliveryEvidence) {
 				configHubPublishedText(release.Published),
 				truncate(firstNonEmpty(release.Digest, "-"), 18),
 				firstNonEmpty(release.CreatedAt, "-"),
-			)
-		}
-	}
-	if evidence.ConfigHub != nil && len(evidence.ConfigHub.UnitEvents) > 0 {
-		fmt.Printf("  Recent unit events:\n")
-		for _, event := range evidence.ConfigHub.UnitEvents {
-			fmt.Printf("    - %s unit=%s %s at=%s\n",
-				firstNonEmpty(event.Action, "-"),
-				firstNonEmpty(event.Unit, event.UnitID, "-"),
-				configHubUnitEventOutcome(event.Result, event.Status),
-				firstNonEmpty(event.CreatedAt, "-"),
 			)
 		}
 	}

@@ -87,20 +87,6 @@ func TestCorrelateTraceDeliveryEvidence_ExactConfigHubMatches(t *testing.T) {
 					CreatedAt:      "2026-09-10T11:50:00Z",
 				},
 			},
-			UnitEvents: []ConfigHubUnitEventEvidence{
-				{
-					EventID:   "ue-1",
-					Action:    "ReleasePublished",
-					Result:    "Succeeded",
-					Unit:      "payments-api",
-					UnitID:    "u-123",
-					Space:     "payments-prod",
-					SpaceID:   "sp-123",
-					Target:    "prod",
-					TargetID:  "t-123",
-					CreatedAt: "2026-09-10T11:51:00Z",
-				},
-			},
 		},
 		EventConsumers: []GitOpsEventConsumerEvidence{
 			{Kind: "Deployment", Name: "argobot", Namespace: "confighub-ops", Ready: true, Replicas: 1, ReadyReplicas: 1, EvidenceLabel: "app=argobot"},
@@ -124,17 +110,11 @@ func TestCorrelateTraceDeliveryEvidence_ExactConfigHubMatches(t *testing.T) {
 	if !containsTraceMatch(got.Releases[0].MatchedBy, "targetId") {
 		t.Fatalf("release matchedBy = %+v, want targetId match", got.Releases[0].MatchedBy)
 	}
-	if len(got.UnitEvents) != 1 || got.UnitEvents[0].EventID != "ue-1" {
-		t.Fatalf("unitEvents = %+v, want exact unit-event match", got.UnitEvents)
-	}
-	if !containsTraceMatch(got.UnitEvents[0].MatchedBy, "unitEvent.unitId==confighub.unitId") {
-		t.Fatalf("unitEvent matchedBy = %+v, want unit ID match", got.UnitEvents[0].MatchedBy)
-	}
 	if len(got.EventConsumers) != 1 || !got.EventConsumers[0].Ready {
 		t.Fatalf("eventConsumers = %+v, want ready argobot evidence", got.EventConsumers)
 	}
 	line := formatTraceDeliveryEvidenceLine(got)
-	for _, want := range []string{"delivery=PASS", "sync=Synced", "appHealth=PASS", "releases=1", "unitEvents=1"} {
+	for _, want := range []string{"delivery=PASS", "sync=Synced", "appHealth=PASS", "releases=1"} {
 		if !strings.Contains(line, want) {
 			t.Fatalf("line %q missing %q", line, want)
 		}
@@ -395,32 +375,28 @@ func containsTraceOmission(omissions []agent.TraceDeliveryOmission, layer string
 	return false
 }
 
-// doctor reports how many releases and unit events the window held, not how
-// many survived trimming to maxItems.
+// doctor reports how many releases the window held, not how many survived
+// trimming to maxItems.
 func TestCollectGitOpsDeliveryEvidence_CountsRowsBeforeTrimming(t *testing.T) {
 	oldRequire, oldRun := requireGitOpsConfigHubFn, runGitOpsCubCommand
 	t.Cleanup(func() { requireGitOpsConfigHubFn, runGitOpsCubCommand = oldRequire, oldRun })
 	requireGitOpsConfigHubFn = func() error { return nil }
 
-	var releases, events strings.Builder
+	var releases strings.Builder
 	releases.WriteString("[")
-	events.WriteString("[")
 	for i := 0; i < 12; i++ {
 		if i > 0 {
 			releases.WriteString(",")
-			events.WriteString(",")
 		}
 		fmt.Fprintf(&releases, `{"Release":{"ReleaseID":"r-%02d","SpaceSlug":"payments-prod","CreatedAt":"2026-09-10T11:%02d:00Z"}}`, i, 10+i)
-		fmt.Fprintf(&events, `{"UnitEventID":"e-%02d","SpaceSlug":"payments-prod","CreatedAt":"2026-09-10T11:%02d:00Z"}`, i, 10+i)
 	}
 	releases.WriteString("]")
-	events.WriteString("]")
 	runGitOpsCubCommand = func(ctx context.Context, args []string) (string, error) {
 		switch args[0] {
 		case "release":
 			return releases.String(), nil
 		case "unit-event":
-			return events.String(), nil
+			t.Errorf("unit events were read: cub %s", strings.Join(args, " "))
 		}
 		return "[]", nil
 	}
@@ -433,12 +409,9 @@ func TestCollectGitOpsDeliveryEvidence_CountsRowsBeforeTrimming(t *testing.T) {
 	if len(evidence.ConfigHub.Releases) != 10 || evidence.ConfigHub.ReleasesTotal != 12 {
 		t.Fatalf("releases kept = %d total = %d, want 10 kept of 12", len(evidence.ConfigHub.Releases), evidence.ConfigHub.ReleasesTotal)
 	}
-	if len(evidence.ConfigHub.UnitEvents) != 10 || evidence.ConfigHub.UnitEventsTotal != 12 {
-		t.Fatalf("unit events kept = %d total = %d, want 10 kept of 12", len(evidence.ConfigHub.UnitEvents), evidence.ConfigHub.UnitEventsTotal)
-	}
 	summary := buildDoctorDeliverySummary(evidence)
-	if summary.RecentReleases != 12 || summary.RecentUnitEvents != 12 {
-		t.Fatalf("doctor counts = %d releases / %d unit events, want 12 / 12, not the trimmed 10", summary.RecentReleases, summary.RecentUnitEvents)
+	if summary.RecentReleases != 12 || summary.RecentUnitEvents != 0 {
+		t.Fatalf("doctor counts = %d releases / %d unit events, want 12, not the trimmed 10, and no unit events", summary.RecentReleases, summary.RecentUnitEvents)
 	}
 }
 
@@ -463,53 +436,11 @@ func TestTraceJoins_ConflictingIDsBeatMatchingSlugs(t *testing.T) {
 	if ok, _ := traceTargetMatches(correlation, "cluster", "target-b"); ok {
 		t.Error("target joined on a matching slug although the target IDs differ")
 	}
-
-	events := []ConfigHubUnitEventEvidence{
-		{EventID: "other-unit", Unit: "backend", UnitID: "unit-b", Space: "prod", SpaceID: "space-a"},
-		{EventID: "same-unit", Unit: "backend", UnitID: "unit-a", Space: "prod", SpaceID: "space-a"},
-		{EventID: "slug-only", Unit: "backend", Space: "prod", SpaceID: "space-a"},
-	}
-	got, _ := matchTraceUnitEvents(correlation, events)
-	ids := []string{}
-	for _, event := range got {
-		ids = append(ids, event.EventID)
-	}
-	if strings.Join(ids, ",") != "same-unit,slug-only" {
-		t.Fatalf("joined events = %v, want same-unit and slug-only; other-unit shares the slug but not the unit ID", ids)
-	}
 }
 
 func TestTraceConfigHubSlugJoinsAreCaseSensitive(t *testing.T) {
-	unitID := "123e4567-e89b-12d3-a456-426614174000"
-	upperUnitID := "123E4567-E89B-12D3-A456-426614174000"
 	targetID := "223e4567-e89b-12d3-a456-426614174000"
 	upperTargetID := "223E4567-E89B-12D3-A456-426614174000"
-
-	for _, reverse := range []bool{false, true} {
-		events := []ConfigHubUnitEventEvidence{
-			{EventID: "same-case", Unit: "PaymentsAPI", Space: "prod"},
-			{EventID: "wrong-case", Unit: "paymentsapi", Space: "prod"},
-		}
-		if reverse {
-			events[0], events[1] = events[1], events[0]
-		}
-		got, omission := matchTraceUnitEvents(agent.TraceDeliveryCorrelation{
-			UnitSlug: "PaymentsAPI", Space: "prod",
-		}, events)
-		if len(got) != 1 || got[0].EventID != "same-case" {
-			t.Errorf("reverse=%v: joined events = %+v, want only same-case slug; opposite case must not cross-join", reverse, got)
-		}
-		if omission.Layer != "" {
-			t.Errorf("reverse=%v: omission = %+v, want none when an exact event matched", reverse, omission)
-		}
-
-		got, omission = matchTraceUnitEvents(agent.TraceDeliveryCorrelation{
-			UnitSlug: "PaymentsAPI", Space: "prod",
-		}, []ConfigHubUnitEventEvidence{{EventID: "wrong-case", Unit: "paymentsapi", Space: "prod"}})
-		if len(got) != 0 || omission.Reason != "no unit-event row matched the traced resource by exact unit ID or unit slug plus space" {
-			t.Errorf("reverse=%v: case-mismatched event = %+v, omission=%+v; want no event and explainable no-match", reverse, got, omission)
-		}
-	}
 
 	correlation := agent.TraceDeliveryCorrelation{Target: "West", TargetID: targetID}
 	if ok, _ := traceTargetMatches(correlation, "West", ""); !ok {
@@ -523,16 +454,6 @@ func TestTraceConfigHubSlugJoinsAreCaseSensitive(t *testing.T) {
 	}
 	if ok, _ := traceTargetMatches(correlation, "West", "different-id"); ok {
 		t.Fatal("matching slug overrode conflicting target IDs")
-	}
-
-	got, _ := matchTraceUnitEvents(agent.TraceDeliveryCorrelation{
-		UnitSlug: "PaymentsAPI", UnitID: unitID, Space: "prod",
-	}, []ConfigHubUnitEventEvidence{
-		{EventID: "same-unit-id", Unit: "unrelated", UnitID: upperUnitID, Space: "prod"},
-		{EventID: "wrong-unit-id", Unit: "PaymentsAPI", UnitID: "different-id", Space: "prod"},
-	})
-	if len(got) != 1 || got[0].EventID != "same-unit-id" {
-		t.Fatalf("UUID unit-ID precedence/case normalization produced %+v; want only same-unit-id", got)
 	}
 }
 
@@ -591,39 +512,36 @@ func TestTraceSlugMismatchStaysOmittedInSharedCLIAndTUIEvidence(t *testing.T) {
 		ConfigHub: &ConfigHubDeliveryEvidence{
 			LiveStatuses: []ConfigHubLiveStatusEvidence{{App: "paymentsapi", Space: "prod", Message: "WRONG-CASE-LIVE-STATUS"}},
 			Releases:     []ConfigHubReleaseEvidence{{ReleaseID: "wrong-target", Space: "prod", Target: "west"}},
-			UnitEvents:   []ConfigHubUnitEventEvidence{{EventID: "wrong-unit", Space: "prod", Unit: "paymentsapi"}},
 		},
 	}
 	result.DeliveryEvidence = correlateTraceDeliveryEvidence(result, raw, correlation, nil)
-	if result.DeliveryEvidence == nil || result.DeliveryEvidence.LiveStatus != nil || len(result.DeliveryEvidence.Releases) != 0 || len(result.DeliveryEvidence.UnitEvents) != 0 {
+	if result.DeliveryEvidence == nil || result.DeliveryEvidence.LiveStatus != nil || len(result.DeliveryEvidence.Releases) != 0 {
 		t.Fatalf("shared observation attached opposite-case candidates: %+v", result.DeliveryEvidence)
 	}
 	if !hasTraceDeliveryOmission(result.DeliveryEvidence.Omissions, "confighub.liveStatus", "no live-status writeback matched") ||
-		!hasTraceDeliveryOmission(result.DeliveryEvidence.Omissions, "confighub.releases", "no release row matched") ||
-		!hasTraceDeliveryOmission(result.DeliveryEvidence.Omissions, "confighub.unitEvents", "no unit-event row matched") {
+		!hasTraceDeliveryOmission(result.DeliveryEvidence.Omissions, "confighub.releases", "no release row matched") {
 		t.Fatalf("case mismatch should remain explicit as incomplete correlation: %+v", result.DeliveryEvidence.Omissions)
 	}
 
 	// CLI JSON and TUI human rendering project the same correlated model.
 	cli := convertTraceToV014(result, "Deployment", "api", "prod", nil)
-	if cli.DeliveryEvidence == nil || cli.DeliveryEvidence.LiveStatus != nil || len(cli.DeliveryEvidence.Releases) != 0 || len(cli.DeliveryEvidence.UnitEvents) != 0 ||
+	if cli.DeliveryEvidence == nil || cli.DeliveryEvidence.LiveStatus != nil || len(cli.DeliveryEvidence.Releases) != 0 ||
 		!hasTraceDeliveryOmission(cli.DeliveryEvidence.Omissions, "confighub.liveStatus", "no live-status writeback matched") ||
-		!hasTraceDeliveryOmission(cli.DeliveryEvidence.Omissions, "confighub.releases", "no release row matched") ||
-		!hasTraceDeliveryOmission(cli.DeliveryEvidence.Omissions, "confighub.unitEvents", "no unit-event row matched") {
+		!hasTraceDeliveryOmission(cli.DeliveryEvidence.Omissions, "confighub.releases", "no release row matched") {
 		t.Fatalf("CLI JSON model did not preserve the safe omission: %+v", cli.DeliveryEvidence)
 	}
 	encoded, err := json.Marshal(cli)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if bytes.Contains(encoded, []byte("WRONG-CASE-LIVE-STATUS")) || bytes.Contains(encoded, []byte("wrong-target")) || bytes.Contains(encoded, []byte("wrong-unit")) {
+	if bytes.Contains(encoded, []byte("WRONG-CASE-LIVE-STATUS")) || bytes.Contains(encoded, []byte("wrong-target")) {
 		t.Fatalf("CLI projection leaked a case-mismatched row: %s", encoded)
 	}
 	var tui bytes.Buffer
 	renderTraceDeliveryEvidenceHumanTo(&tui, result.DeliveryEvidence)
-	if strings.Contains(tui.String(), "WRONG-CASE-LIVE-STATUS") || strings.Contains(tui.String(), "wrong-target") || strings.Contains(tui.String(), "wrong-unit") ||
+	if strings.Contains(tui.String(), "WRONG-CASE-LIVE-STATUS") || strings.Contains(tui.String(), "wrong-target") ||
 		!strings.Contains(tui.String(), "no live-status writeback matched") ||
-		!strings.Contains(tui.String(), "no unit-event row matched") || !strings.Contains(tui.String(), "no release row matched") {
+		!strings.Contains(tui.String(), "no release row matched") {
 		t.Fatalf("TUI projection did not retain safe omission evidence: %s", tui.String())
 	}
 }
@@ -635,32 +553,6 @@ func hasTraceDeliveryOmission(omissions []agent.TraceDeliveryOmission, layer, re
 		}
 	}
 	return false
-}
-
-// A resource that carries a unit label but names no space joins only through
-// --confighub-space. That join is allowed, and every row it produces says the
-// space came from the operator's scope, not from the resource.
-func TestUnitEventJoinedThroughScopeSpaceSaysSo(t *testing.T) {
-	result := &agent.TraceResult{
-		Object:    agent.ResourceRef{Kind: "Deployment", Name: "backend", Namespace: "prod"},
-		ConfigHub: &agent.TraceConfigHub{UnitSlug: "backend"},
-	}
-	raw := &GitOpsDeliveryEvidence{
-		ObservedAt: time.Date(2026, 9, 17, 12, 0, 0, 0, time.UTC),
-		Scope:      GitOpsDeliveryEvidenceScope{Namespace: "prod", Space: "other", MaxItems: 10},
-		ConfigHub: &ConfigHubDeliveryEvidence{
-			UnitEvents: []ConfigHubUnitEventEvidence{{EventID: "ue-1", Unit: "backend", UnitID: "unit-x", Space: "other"}},
-		},
-	}
-
-	got := correlateTraceDeliveryEvidence(result, raw, buildTraceDeliveryCorrelation(result), nil)
-	if len(got.UnitEvents) != 1 {
-		t.Fatalf("unit events = %+v, want the one event in the scoped space", got.UnitEvents)
-	}
-	matchedBy := got.UnitEvents[0].MatchedBy
-	if !containsTraceMatch(matchedBy, "scope.space") || containsTraceMatch(matchedBy, "space") {
-		t.Fatalf("matchedBy = %v, want scope.space and not space", matchedBy)
-	}
 }
 
 // The release join is by space and target. The note that says so has to reach
@@ -755,33 +647,6 @@ func TestTraceDeliveryRenderersExposeExactManifestJoin(t *testing.T) {
 		if name == "markdown" && !strings.Contains(out, digest) {
 			t.Errorf("Markdown must retain the complete matched manifest digest: %s", out)
 		}
-	}
-}
-
-func TestTraceDeliveryMarkdownRendersUnitEvents(t *testing.T) {
-	evidence := &agent.TraceDeliveryEvidence{
-		UnitEvents: []agent.TraceDeliveryUnitEvent{
-			{Action: "Apply", Unit: "payments-api", Result: "None", Status: "Applied", CreatedAt: "2026-09-30T12:00:00Z"},
-			{UnitID: "unit-456"},
-		},
-	}
-
-	out := captureStdout(t, func() { renderTraceDeliveryEvidenceMarkdown(evidence) })
-	for _, want := range []string{
-		"Recent unit events:",
-		"Apply unit=payments-api result=None status=Applied at=2026-09-30T12:00:00Z",
-		"- unit=unit-456 result=- status=- at=-",
-	} {
-		if !strings.Contains(out, want) {
-			t.Errorf("Markdown output missing %q:\n%s", want, out)
-		}
-	}
-
-	empty := captureStdout(t, func() {
-		renderTraceDeliveryEvidenceMarkdown(&agent.TraceDeliveryEvidence{})
-	})
-	if strings.Contains(empty, "Recent unit events:") {
-		t.Errorf("empty unit events should not emit a section:\n%s", empty)
 	}
 }
 

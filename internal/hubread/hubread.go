@@ -369,10 +369,10 @@ func literal(op, field, value string) (cubapi.Where, *Error) {
 }
 
 // unitGetInclude is the expansion `cub unit get` asks for (cubapi's unexported
-// unitGetInclude in SDK core v0.8.10), so that the envelope read here has the
+// unitGetInclude in SDK core v0.11.9), so that the envelope read here has the
 // same related entities as the one cub prints. A test compares it with what
 // cubapi.ResolveUnit sends, so an SDK bump that changes it is noticed.
-const unitGetInclude = "UnitEventID,TargetID,UpstreamUnitID,SpaceID,FromLinkID,ChangeSetID,UpstreamSpaceID"
+const unitGetInclude = "TargetID,UpstreamUnitID,SpaceID,FromLinkID,ChangeSetID,UpstreamSpaceID"
 
 // unit reads exactly one Unit in exactly one space, with cub's expansions.
 //
@@ -484,7 +484,7 @@ func (r *Reader) namedSpace(ctx context.Context, space string) (uuid.UUID, strin
 // list with its summary includes). Tests compare what is sent here with what
 // the SDK's own list helpers send for the same options.
 const (
-	unitListInclude  = "UnitEventID,TargetID,UpstreamUnitID,SpaceID,FromLinkID,ChangeSetID"
+	unitListInclude  = "TargetID,UpstreamUnitID,SpaceID,FromLinkID,ChangeSetID"
 	spaceListInclude = "ComponentID"
 )
 
@@ -878,79 +878,6 @@ func (r *Reader) ReleaseListJSON(ctx context.Context, space string, filter Filte
 			}
 			return entry.Release.SpaceID, true
 		})
-}
-
-// newestEventFirst is the order cub prints unit events in: by when each was
-// created, latest first. cub sorts with sort.Slice, so this does too: events
-// created at the same instant then come out in the same order as cub's.
-func newestEventFirst(events []goclientnew.UnitEvent) {
-	sort.Slice(events, func(i, j int) bool { return events[i].CreatedAt.After(events[j].CreatedAt) })
-}
-
-// UnitEventListJSON reads the unit events of exactly one space, newest first,
-// as `cub unit-event list --space <space> -o json` prints them. cub also reads
-// the Units the events belong to, for its table; the JSON does not carry them
-// and this does not read them.
-func (r *Reader) UnitEventListJSON(ctx context.Context, space string, filter Filter) ([]byte, error) {
-	return shapedSpaceList(ctx, r, "unit-event", space, filter, "", listShape[goclientnew.UnitEvent]{order: newestEventFirst, everySpace: true},
-		func(q listQuery) (listAnswer[goclientnew.UnitEvent], error) {
-			resp, err := r.client.API.ListAllUnitEventsWithResponse(ctx, &goclientnew.ListAllUnitEventsParams{Where: q.where, Contains: q.contains})
-			if resp == nil {
-				return listAnswer[goclientnew.UnitEvent]{}, err
-			}
-			return listAnswer[goclientnew.UnitEvent]{resp, resp.JSON200, resp.HTTPResponse, rejection(resp.StatusCode(), resp.JSON400)}, err
-		},
-		// An event has no envelope. One with no space is an empty object or
-		// a null, not an event of some other space.
-		func(entry *goclientnew.UnitEvent) (uuid.UUID, bool) { return entry.SpaceID, entry.SpaceID != uuid.Nil })
-}
-
-// UnitEventsOfUnitJSON reads the events of exactly one Unit in exactly one
-// space, newest first, as `cub unit-event list <unit> --space <space> -o json`
-// prints them. The Unit is found as UnitJSON finds it; every event returned
-// must be that Unit's.
-func (r *Reader) UnitEventsOfUnitJSON(ctx context.Context, space, unit string, filter Filter) ([]byte, error) {
-	const op = "unit-event list"
-	found, _, failure := r.unit(ctx, op, space, unit)
-	if failure != nil {
-		return nil, failure
-	}
-	spaceID, unitID := found.Unit.SpaceID, found.Unit.UnitID
-	params := &goclientnew.ListUnitEventsParams{}
-	if where := filter.Where; where != "" {
-		params.Where = &where
-	}
-	if contains := filter.Contains; contains != "" {
-		params.Contains = &contains
-	}
-	resp, err := r.client.API.ListUnitEventsWithResponse(ctx, spaceID, unitID, params)
-	if failure := classify(ctx, op, err, resp); failure != nil {
-		if failure.Kind == KindFailed && resp != nil {
-			if rejected := rejection(resp.StatusCode(), resp.JSON400); rejected != nil {
-				if reason := printable(rejected.Message, 300); reason != "" {
-					failure.Message = "the server rejected the request (HTTP 400): " + reason
-				}
-			}
-		}
-		return nil, failure
-	}
-	if resp.JSON200 == nil {
-		return nil, &Error{Kind: KindMalformed, Op: op, Message: "the response had no unit-event list"}
-	}
-	if failure := wholeList(op, resp.HTTPResponse); failure != nil {
-		return nil, failure
-	}
-	for i := range *resp.JSON200 {
-		switch event := &(*resp.JSON200)[i]; {
-		case event.SpaceID == uuid.Nil && event.UnitID == uuid.Nil:
-			return nil, &Error{Kind: KindMalformed, Op: op, Message: "the list has an entry with no unit-event"}
-		case event.SpaceID != spaceID || event.UnitID != unitID:
-			return nil, &Error{Kind: KindMalformed, Op: op, BeyondScope: true,
-				Message: fmt.Sprintf("the server returned an event of another unit for unit %q in space %q", unit, space)}
-		}
-	}
-	newestEventFirst(*resp.JSON200)
-	return listJSON(op, resp.JSON200)
 }
 
 // SpaceListJSON reads the organization's spaces and returns the list as the

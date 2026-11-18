@@ -24,7 +24,7 @@ What the receipt can freeze:
 - live-status writeback freshness
 - sync status and operation phase
 - separate delivery and application-health verdicts
-- recent matching releases and unit events
+- recent matching releases
 - observed event-consumer Deployment health
 - omissions when exact object-level joins cannot be proven
 

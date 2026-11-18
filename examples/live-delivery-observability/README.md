@@ -8,7 +8,7 @@ recorded object set:
 - desired-vs-observed drift shape
 - current-generation rollout evidence, including stale generation and runtime
   pod symptoms
-- bounded ConfigHub delivery evidence shape for release history, unit events,
+- bounded ConfigHub delivery evidence shape for release history,
   event-consumer health, and live-status writeback
 
 The files are review fixtures, not a guaranteed `kubectl apply` recipe. Some
@@ -56,7 +56,7 @@ go test ./cmd/cub-scout ./pkg/agent -run 'TestCompareLiveSnapshot|TestCompareGit
 | `observed.yaml` | Recorded live objects: aggregate resource, workload, pod symptom, and audited action event. |
 | `confighub-delivery-evidence.json` | Example `gitops status --with-confighub --format json` evidence envelope. |
 | `revision-correlation-cases.json` | Deterministic strict revision-to-manifest-digest correlation cases, including unknown and ambiguous evidence. |
-| `trace-unit-events.md` | Reproducible trace Markdown rendering for correlated unit events. |
+| `trace-slug-joins.md` | How trace joins ConfigHub slugs and IDs, and the no-match omissions it keeps. |
 
 ## Review Commands
 
@@ -93,7 +93,7 @@ grep -n "kind:\\|event.toolkit.fluxcd.io\\|observedGeneration\\|CrashLoopBackOff
   stable cluster identity; ConfigHub service/auth selection is separate.
 - Argo `runtimeOmission` records a denied or unscoped destination-Pod read
   separately from Argo's reported health; it never means zero Pods.
-- `gitops status --with-confighub` should keep release history, unit events,
+- `gitops status --with-confighub` should keep release history,
   live-status writeback, and event-consumer workload evidence separate under
   `deliveryEvidence`. Its versioned `revisionCorrelation` compares the complete
   reported SHA-256 revision string only with `manifestDigest` values from the

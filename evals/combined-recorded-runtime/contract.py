@@ -44,9 +44,10 @@ SOURCE_PINS = {
 }
 SKILL_COUNT = 35
 # The 35-skill tree the runner stages, re-pinned on 2026-10-11 for the v2.14.0
-# skill corrections. The five 2026-10-01 attempts ran on SKILL_TREE_V1_SHA256,
-# whose file list is fixtures/skill-tree-v1.json.
-SKILL_TREE_SHA256 = "c8656ed8ce5c835bdafbbe2f5a39e25731150b1bbad10291af255dd0e9b08d5e"
+# skill corrections and on 2026-11-18 when the skills stopped listing unit-event
+# reads. The five 2026-10-01 attempts ran on SKILL_TREE_V1_SHA256, whose file
+# list is fixtures/skill-tree-v1.json.
+SKILL_TREE_SHA256 = "580033af1a415bcb9eb01059349a796767dcbbd381d06b6e80e84da31677d82f"
 SKILL_TREE_V1_SHA256 = "9f31fd677a3490f60a6d1c97b315f8f3d7ee7db6dd5285b47051e049d3cc8b8b"
 
 

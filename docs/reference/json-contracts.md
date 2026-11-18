@@ -902,7 +902,7 @@ includes two additive fields:
       "notReady": 1
     },
     "recentReleases": 139,
-    "recentUnitEvents": 1,
+    "recentUnitEvents": 0,
     "omissions": [
       {
         "layer": "confighub.releases",
@@ -915,25 +915,21 @@ includes two additive fields:
     "scope": {"space": "prod", "since": "24h"},
     "configHub": {
       "liveStatuses": [],
-      "releases": [],
-      "unitEvents": []
+      "releases": []
     }
   }
 }
 ```
 
 `delivery` and `deliveryEvidence` appear only with `--with-confighub`.
-Concrete failed/stale delivery feedback, failed unit events, and unhealthy
-observed event consumers may be promoted into `topIssues` using the same
-severity ordering as other doctor issues. A unit event counts as failed when
-either `result` or `status` says so; ConfigHub reports an ordinary Apply with
-`result: "None"` and records the failure in `status`. Only the latest event for
-a unit and action is judged, across every row in the time window rather than
-the rows kept for display, so a failed Apply followed by a completed Apply of
-the same unit is not raised as a current issue. Missing connection, missing writeback,
-RBAC/list failures, and incomplete ConfigHub evidence remain structured
-omissions. `delivery.recentReleases` and `delivery.recentUnitEvents` count the
-rows in the time window, not the rows kept after trimming to `maxItems`.
+Concrete failed/stale delivery feedback and unhealthy observed event consumers
+may be promoted into `topIssues` using the same severity ordering as other
+doctor issues. Missing connection, missing writeback, RBAC/list failures, and
+incomplete ConfigHub evidence remain structured omissions.
+`delivery.recentReleases` counts the rows in the time window, not the rows kept
+after trimming to `maxItems`. `delivery.recentUnitEvents` is always `0`:
+ConfigHub no longer records unit events, and the field stays because the
+contract never removes one.
 
 ### Three-way resource rollout additions (compare three-way --format json)
 
@@ -1603,22 +1599,7 @@ Sveltos, Modelplane, ConfigHub, or Kubernetes as the status authority.
           "createdAt": "2026-09-10T11:50:00Z"
         }
       ],
-      "unitEvents": [
-        {
-          "eventId": "77777777-7777-4777-8777-777777777777",
-          "action": "Apply",
-          "result": "None",
-          "status": "Completed",
-          "unit": "api",
-          "unitId": "88888888-8888-4888-8888-888888888888",
-          "space": "prod",
-          "spaceId": "sp-123",
-          "createdAt": "2026-09-10T11:51:00Z",
-          "terminatedAt": "2026-09-10T11:51:05Z"
-        }
-      ],
-      "releasesTotal": 1,
-      "unitEventsTotal": 1
+      "releasesTotal": 1
     },
     "eventConsumers": [
       {
@@ -1670,12 +1651,12 @@ field when its `with_confighub` option is used.
 |---|---|
 | `scope.space` | `--confighub-space`, else `CUB_SPACE`. cub (v0.5.2 and later) has no default space, and a `defaultSpace` left in an older cub config is not used. `*` is accepted only when explicitly supplied. With no space from either, the reads are skipped and a `confighub.scope` omission is reported. |
 | `scope.spaceSource` | How `scope.space` was chosen: `flag`, `resource` (a traced object's own ConfigHub space), or `CUB_SPACE`. `CUB_SPACE` is environment state, so output says when a result depended on it. Under cub older than v0.5.2 running cub-scout as a plugin, the host set `CUB_SPACE` to the context's default space. |
-| `scope.since` | Bounds release and unit-event reads by `CreatedAt > <cutoff>`. |
+| `scope.since` | Bounds release reads by `CreatedAt > <cutoff>`. |
 | `scope.maxItems` | Caps rows kept in output after the time-window query. |
-| `configHub.releasesTotal`, `configHub.unitEventsTotal` | Rows the time-window query returned, counted before `releases[]` and `unitEvents[]` were trimmed to `maxItems`. Each is omitted when zero, so a consumer reads an absent total as `0`, not as unknown; a failed read is reported in `omissions[]`. `doctor` reports these as `delivery.recentReleases` and `delivery.recentUnitEvents`, so 139 releases do not read as 10. |
+| `configHub.releasesTotal` | Rows the time-window query returned, counted before `releases[]` was trimmed to `maxItems`. It is omitted when zero, so a consumer reads an absent total as `0`, not as unknown; a failed read is reported in `omissions[]`. `doctor` reports it as `delivery.recentReleases`, so 139 releases do not read as 10. |
 | `configHub.releases[]` | Parsed from `cub release list`, which returns a bare Release: `releaseId`, `space`, `spaceId`, `targetId` (ConfigHub v0.5 and later), `digest`, `bundleBaseName`, `releaseNum`, `published`, `createdAt`. The read pins no `--select`, because ConfigHub rejects a selection naming any field the entity lacks and the field set changes between server versions. |
 | `releases[].published` | `true` while ConfigHub serves the Release to its Target, `false` once it is withdrawn (the row is kept), omitted when the server does not report it. Omitted is not `false`. |
-| `configHub.unitEvents[]` | Parsed from `cub unit-event list`, which returns bare UnitEvents: `eventId`, `action`, `result`, `status`, `message`, `unit`, `unitId`, `space`, `spaceId`, `createdAt`, `terminatedAt`. A UnitEvent has no target. `terminatedAt` is omitted for an event that has not terminated; ConfigHub sends Go's zero time (`0001-01-01T00:00:00Z`) there, which is not reported as a time. This shape is taken from ConfigHub's published API schema; it has not been exercised against a server that holds unit events. |
+| `configHub.unitEvents[]`, `configHub.unitEventsTotal` | Always empty, so never present (both are omitted when empty): ConfigHub no longer records unit events, so none are read. They stay in the contract, which never removes a field. The element shape, should a consumer still decode it, is `eventId`, `action`, `result`, `status`, `message`, `unit`, `unitId`, `space`, `spaceId`, `createdAt`, `terminatedAt`. |
 | `configHub.liveStatuses[]` | What the tool deploying a Release reports about it running. Since v2.14.2 read from each Release's `LiveStatus`, which ConfigHub servers record from 2026-10-03 (written by argobot for Argo CD, Flux and Sveltos): for each Space and Target, the newest Release in the `--confighub-since` window that has one. Also parsed from the `confighub.com/live-status` Space annotation that older servers kept. A space with neither is an omission naming both; a malformed annotation is an omission. An older Release's status is not read: widen the window to include it. |
 | `liveStatuses[].recordedOn` | `release` (a Release's `LiveStatus`) or `space-annotation` (the annotation). |
 | `liveStatuses[].release`, `releaseId`, `target` | The Release the status is recorded on, and its Target. Only on `release` rows; such a row carries no `revisionCorrelation`, because it names its Release. |
@@ -1754,7 +1735,7 @@ ConfigHub activity row `source` values:
 |---|---|---|
 | `confighub.liveStatus` | `liveStatus` | Latest delivery/application-health writeback observed on a ConfigHub Space annotation. |
 | `confighub.release` | `release` | Recent ConfigHub Release row within the bounded lookback window. `resource` is `Release/<space>/<bundleBaseName>#<releaseNum>` (the release ID when the server sends neither; it was a bare `Release/<space>/<uuid>` before). `action` is `release-published` only when ConfigHub reports `Published: true`. A Release that is no longer served to its Target (withdrawn) is `release-not-published`, and a server that does not report the field yields `release-recorded`. |
-| `confighub.unitEvent` | `unitEvent` | Recent ConfigHub unit event row within the bounded lookback window. `result` is derived from the event's `result` and `status` together. `message` carries both and names no target, because a UnitEvent has none. `time` is the event's `terminatedAt`, or `createdAt` while it is still in progress. |
+| `confighub.unitEvent` | `unitEvent` | No longer produced: ConfigHub no longer records unit events. The source and kind stay reserved. |
 | `confighub.eventConsumer` | `eventConsumer` | Label-selected in-cluster event-consumer Deployment health. |
 | `confighub.omission` | `omission` | Missing, inaccessible, malformed, stale, disconnected, or trimmed evidence surfaced as a timeline fact. |
 
@@ -1762,11 +1743,11 @@ Field rules:
 
 | Field | Rule |
 |---|---|
-| `deliveryEvidence.kind` | One of `liveStatus`, `release`, `unitEvent`, `eventConsumer`, or `omission`. |
+| `deliveryEvidence.kind` | One of `liveStatus`, `release`, `eventConsumer`, or `omission`. (`unitEvent` is reserved and no longer produced.) |
 | `deliveryEvidence.namespace` | The explicit Kubernetes namespace scope used for the collection, when supplied. It is not inferred from ConfigHub space names. |
 | `deliveryEvidence.matchedBy[]` | Optional exact join keys. Argo Application joins include `scope.space`, `argocdApplication.spaceId`, and `argocdApplication.name`. Absent on standalone ConfigHub status rows. |
 | `deliveryEvidence.observedAt` | Original live-status report timestamp, also on joined Application rows. Omitted when absent; invalid strings are retained for inspection. A timeline row's `time` may fall back to collection time and must not be mistaken for the report timestamp. |
-| `result` | Timeline rendering bucket: `success`, `pending`, `failed`, `inconclusive`, or `normal`, derived from the row's observed status/verdict only. For ConfigHub unit events it follows ConfigHub's values exactly: Status `Failed` is `failed`; `Completed` is `success` unless Result ends in `Failed`; `Pending`, `Submitted` and `Progressing` are `pending`; `Aborted` and `Canceled` are `inconclusive`; with no Status, a Result ending in `Failed` or `Completed` decides; no Status and no Result is `normal`; any other value is `inconclusive`, never `success`. `doctor` promotes only `failed` unit events to issues. |
+| `result` | Timeline rendering bucket: `success`, `pending`, `failed`, `inconclusive`, or `normal`, derived from the row's observed status/verdict only. |
 | `owner` | `ConfigHub` for these rows so `--owner ConfigHub` can select them. |
 | `source` | Stable row source; consumers should dispatch on `source` or `deliveryEvidence.kind`, not parse `message`. |
 
@@ -1809,8 +1790,8 @@ When `trace --with-confighub --format json`,
 `explain --with-confighub --format json`, or single-resource
 `receipt verify --with-confighub --format json` is used, output may include an
 additive `deliveryEvidence` object. Unlike `gitops status --with-confighub`,
-this object is correlated to one resource and only includes release,
-unit-event, or live-status rows when exact identifiers prove the join. A
+this object is correlated to one resource and only includes release or
+live-status rows when exact identifiers prove the join. A
 non-wildcard `--confighub-space` may supply the exact space for live-status
 application matching; wildcard `*` is never treated as exact object-level
 space correlation.
@@ -1870,18 +1851,6 @@ space correlation.
         "matchedBy": ["spaceId", "targetId"]
       }
     ],
-    "unitEvents": [
-      {
-        "eventId": "ue-1",
-        "action": "Apply",
-        "result": "None",
-        "status": "Completed",
-        "unit": "payments-api",
-        "unitId": "u-123",
-        "createdAt": "2026-09-10T11:51:00Z",
-        "matchedBy": ["unitEvent.unitId==confighub.unitId"]
-      }
-    ],
     "eventConsumers": [
       {
         "kind": "Deployment",
@@ -1925,7 +1894,7 @@ space correlation.
 | `releases[].published` | `true` while ConfigHub serves the Release to its Target, `false` once it is withdrawn (the row is kept), omitted when the server does not report it. Omitted is not `false`. |
 | `releases[].releaseNum` | The Release's sequence number within its space. ConfigHub Releases have no slug and no revision number, so `slug` and `revisionNum` are not reported by current servers; text output labels a row `bundleBaseName#releaseNum`. |
 | Target known only by slug | A Release names its target by ID only. Without a verified OCI manifest join, a resource naming only a target slug has no shared target key and reports an omission, not a claim that no release exists. cub-scout does not look the ID up from a slug. A verified source-space/manifest join does not need a target key, but proves source correlation only. |
-| `unitEvents[]` | Included only for rows matching exact unit ID, or exact unit slug plus space. A ConfigHub UnitEvent names its unit and space (`unitId`, `unit`, `spaceId`, `space`) and has no target, so `target` and `targetId` are not reported. Rows are matched before trimming to `maxItems`. |
+| `unitEvents[]` | Always empty, so never present: ConfigHub no longer records unit events. It stays in the contract, which never removes a field. |
 | `eventConsumers[]` | Cluster-observed event-consumer Deployment health. This is contextual evidence, not proof that the traced object was synced. |
 | `omissions[]` | Structured explanation for missing identity, missing scope, missing/malformed writeback, disconnected ConfigHub, non-matching rows, or RBAC/list failures. |
 
@@ -1962,7 +1931,8 @@ For the highest-value connected/read-only surfaces, it may also add `structuredC
   - `structuredContent.liveStatuses[]`
   - `structuredContent.omissions[]`
 - `confighub_k8s_resources`, `confighub_k8s_types`, and `confighub_resources` return parsed ConfigHub Resource-backed JSON under `structuredContent.data`; these are ConfigHub-stored intended-configuration reads, not live-cluster reads.
-- `confighub_releases` and `confighub_unit_events` return parsed ConfigHub JSON under `structuredContent.data`
+- `confighub_releases` returns parsed ConfigHub JSON under `structuredContent.data`
+- `confighub_unit_events` is retired: ConfigHub no longer records unit events, so it runs nothing and `structuredContent.data` is always `[]`
 
 Connected ConfigHub history/status MCP tools require an explicit `space`
 argument. Passing `*` is supported only as an explicit all-spaces request.
@@ -2351,7 +2321,6 @@ object-correlated delivery evidence under
     "matchedBy": ["scope.space", "liveStatus.app==chain.application"]
   },
   "releases": [],
-  "unitEvents": [],
   "eventConsumers": [],
   "omissions": []
 }
