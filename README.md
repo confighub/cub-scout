@@ -203,7 +203,7 @@ coalescing, opt-in watch-backed idle observation, and a new `resource.deleted`
 event), plus local bot images built from verified release archives. See the
 [release notes](docs/releases/v2.11.0.md).
 
-**v2.17.0 is the latest release.** Every owner type cub-scout detects was
+**v2.17.0 is the latest release.** Helm, kro, Crossplane and Terraform were
 installed for real in CI, and what each tool writes was recorded. That
 corrected kro owner names, made `trace` answer for every Helm-installed
 object and check the release against its manifest, fixed the Crossplane
