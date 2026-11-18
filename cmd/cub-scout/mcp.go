@@ -294,7 +294,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						},
 						"before_attach": map[string]interface{}{
 							"type":        "boolean",
-							"description": "Add what `cub cluster attach` would meet here, cluster-wide: per controller, refuse, use-existing, install or unknown.",
+							"description": "Add what `cub cluster attach` would meet here.",
 						},
 					},
 					"additionalProperties": false,

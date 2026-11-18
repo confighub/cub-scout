@@ -30,7 +30,7 @@ var mcpCatalogToolCeilings = map[string]int{
 	"confighub_unit_events":     900,
 	"confighub_unit_get":        1100,
 	"confighub_units":           1100,
-	"doctor":                    1700,
+	"doctor":                    1800, // 1,722 with before_attach (#888), 2026-11-18
 	"explain":                   2800,
 	"gitops_settings":           2400,
 	"gitops_status":             1900,
@@ -41,8 +41,10 @@ var mcpCatalogToolCeilings = map[string]int{
 }
 
 // Measured 15,120 bytes for the 8 standalone tools and 31,126 for all 21,
-// after the first shortening (17,465 and 33,947 before it).
-var mcpCatalogTotalCeilings = map[bool]int{false: 15200, true: 31200}
+// after the first shortening (17,465 and 33,947 before it). Doctor's
+// before_attach parameter (#888) added 72 bytes on 2026-11-18: 15,218 and
+// 31,224.
+var mcpCatalogTotalCeilings = map[bool]int{false: 15300, true: 31300}
 
 func mcpCatalogSizes(connected bool) (map[string]int, int) {
 	gateway := newMCPGatewayWithMode(nil, nil, connected)
@@ -83,9 +85,10 @@ func TestMCPCatalogStaysWithinItsDeclaredSize(t *testing.T) {
 // The core profile's whole point is its size: 9,292 bytes for the standalone
 // session and 12,239 with ConfigHub, measured on 2026-11-13, against 15,120
 // and 31,126 for every tool. The dispatcher's own entry and its index are
-// held too, since they are the price of reaching the rest.
+// held too, since they are the price of reaching the rest. On 2026-11-18
+// doctor's before_attach parameter (#888) made them 9,390 and 12,337.
 func TestMCPCoreProfileStaysWithinItsDeclaredSize(t *testing.T) {
-	ceilings := map[bool]int{false: 9300, true: 12300}
+	ceilings := map[bool]int{false: 9400, true: 12400}
 	for _, connected := range []bool{false, true} {
 		gateway := profileGateway(t, "core", connected, nil)
 		raw, _ := json.Marshal(gateway.toolsForList())

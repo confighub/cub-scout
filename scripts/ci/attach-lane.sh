@@ -46,6 +46,8 @@ snapshot() {
   mkdir -p "$dir"
   "$scout" map list --json > "$dir/map-list.json" 2> "$dir/map-list.err" || true
   "$scout" doctor --format json > "$dir/doctor.json" 2> "$dir/doctor.err" || true
+  "$scout" doctor --before-attach --format json > "$dir/doctor-before-attach.json" 2> "$dir/doctor-before-attach.err" || true
+  "$scout" doctor --before-attach > "$dir/doctor-before-attach.txt" 2>&1 || true
   kubectl get namespaces -o name > "$dir/namespaces.txt"
   kubectl get deployments.apps,statefulsets.apps,daemonsets.apps -A \
     -o custom-columns='KIND:.kind,NAMESPACE:.metadata.namespace,NAME:.metadata.name,IMAGES:.spec.template.spec.containers[*].image' \
@@ -141,6 +143,18 @@ for item in json.load(open(sys.argv[1])):
     print(item["Space"]["Slug"])
 PY
 
+# What cub-scout said before each attach (#888), against what attach did.
+attach_would() {
+  python3 - "$1" "$2" <<'PY'
+import json, sys
+report = json.load(open(sys.argv[1]))["attach"]
+print(next(c["attachWould"] for c in report["controllers"] if c["controller"] == sys.argv[2]))
+PY
+}
+said_before=$(attach_would "$out/before/doctor-before-attach.json" "$controller")
+said_after=$(attach_would "$out/after/doctor-before-attach.json" "$controller")
+echo "doctor --before-attach said $said_before before the attach (it succeeded) and $said_after before the second (it exited $again_exit)"
+
 # What the brownfield still runs. The attach is recorded either way; these
 # are the facts a pre-attach report would rest on.
 failed=0
@@ -148,4 +162,6 @@ kubectl get application guestbook -n argocd -o name || { echo 'guestbook Applica
 kubectl get kustomization podinfo -n podinfo -o name || { echo 'podinfo Kustomization is gone after attach' >&2; failed=1; }
 kubectl get deployment legacy-web -n legacy -o name || { echo 'legacy-web is gone after attach' >&2; failed=1; }
 [[ "$again_exit" != 0 ]] || { echo 'A second attach of a wired cluster succeeded' >&2; failed=1; }
+[[ "$said_before" = use-existing ]] || { echo "doctor --before-attach said $said_before for an installed $controller before attach" >&2; failed=1; }
+[[ "$said_after" = refuse ]] || { echo "doctor --before-attach said $said_after for a cluster attach then refused" >&2; failed=1; }
 exit "$failed"
