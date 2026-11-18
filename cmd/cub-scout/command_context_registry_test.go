@@ -57,16 +57,15 @@ var contextExempt = map[string]string{
 	"cub-scout summary list":              "reads ConfigHub summary storage",
 	"cub-scout summary slack":             "reads ConfigHub summary storage",
 	"cub-scout version":                   "prints the version",
-	"cub-scout views open":                "reads local views",
-	"cub-scout views project":             "reads local views",
-	"cub-scout views resolve":             "reads local views",
+	"cub-scout views open":                "opens a ConfigHub View in the browser",
+	"cub-scout views resolve":             "reads a ConfigHub View",
 }
 
 // contextOwed read the cluster through the ambient context today (#599).
 var contextOwed = map[string]string{
+	"cub-scout views project": "--with-reality reads workloads through the current context",
 	"cub-scout map hub":       "its import hand-off disables Argo CD sync, deletes Applications and removes labels through the current context (#955)",
 	"cub-scout import":        "reads workloads to import",
-	"cub-scout import argocd": "reads Argo CD Applications",
 }
 
 func hasKubeContextFlag(cmd *cobra.Command) bool {
