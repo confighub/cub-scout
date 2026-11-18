@@ -1,0 +1,11 @@
+namespace/argobot
+namespace/argocd
+namespace/default
+namespace/flux-system
+namespace/guestbook
+namespace/kube-node-lease
+namespace/kube-public
+namespace/kube-system
+namespace/legacy
+namespace/local-path-storage
+namespace/podinfo

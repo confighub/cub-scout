@@ -1,0 +1,14 @@
+{
+  "keys": [
+    "resource.customizations.ignoreResourceUpdates.ConfigMap",
+    "resource.customizations.ignoreResourceUpdates.Endpoints",
+    "resource.customizations.ignoreResourceUpdates.all",
+    "resource.customizations.ignoreResourceUpdates.apps_ReplicaSet",
+    "resource.customizations.ignoreResourceUpdates.argoproj.io_Application",
+    "resource.customizations.ignoreResourceUpdates.argoproj.io_Rollout",
+    "resource.customizations.ignoreResourceUpdates.autoscaling_HorizontalPodAutoscaler",
+    "resource.customizations.ignoreResourceUpdates.discovery.k8s.io_EndpointSlice",
+    "resource.exclusions"
+  ],
+  "resource.customizations.ignoreDifferences.argoproj.io_Application": null
+}

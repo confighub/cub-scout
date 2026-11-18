@@ -1,0 +1,145 @@
+[
+  {
+    "apiVersion": "source.toolkit.fluxcd.io/v1",
+    "kind": "OCIRepository",
+    "metadata": {
+      "annotations": {
+        "confighub.com/origin": "{\"spaceId\":\"c9edc249-6686-4314-900a-ae7fb273fd1c\",\"spaceSlug\":\"scout-attach-flux-apps\",\"unitId\":\"d7f97834-9b06-49bb-888a-3039c3568d01\",\"unitSlug\":\"argobot-scout-attach\",\"revisionNum\":2}",
+        "reconcile.fluxcd.io/requestedAt": "2026-11-18T16:10:08.895590831Z"
+      },
+      "creationTimestamp": "2026-11-18T16:10:05Z",
+      "finalizers": [
+        "finalizers.fluxcd.io"
+      ],
+      "generation": 1,
+      "labels": {
+        "kustomize.toolkit.fluxcd.io/name": "confighub-root",
+        "kustomize.toolkit.fluxcd.io/namespace": "flux-system"
+      },
+      "name": "argobot-scout-attach",
+      "namespace": "flux-system",
+      "resourceVersion": "1556",
+      "uid": "33be04f2-e76b-4b8b-b121-b17cec939ca8"
+    },
+    "spec": {
+      "insecure": true,
+      "interval": "10m0s",
+      "ref": {
+        "tag": "latest"
+      },
+      "secretRef": {
+        "name": "confighub-oci"
+      },
+      "url": "oci://172.18.0.1:32181/space/argobot-scout-attach"
+    },
+    "status": {
+      "artifact": {
+        "digest": "sha256:fb64f91e3581d89239b21ec0ff19b874476416586d343fae78330e14cda9f8e8",
+        "lastUpdateTime": "2026-11-18T16:10:06Z",
+        "metadata": {
+          "com.confighub.organization.id": "ffc98e0d-9cfa-41ef-8749-dca58a37adc6",
+          "com.confighub.space.id": "9cabb16f-7f5a-43e2-9849-3d25ac21028e",
+          "com.confighub.tag.id": "4d5b4f3b-b3d9-4f87-9228-9a5192991fb5",
+          "com.confighub.target.id": "47c5801a-1ce1-4aa5-9792-6b03e9210275",
+          "com.confighub.unit.count": "9"
+        },
+        "path": "ocirepository/flux-system/argobot-scout-attach/sha256:ead7d102c5b1aca4f42eb4fc3adc1958f0ebbebffb551b0dcf99d2548cb93911.tar.gz",
+        "revision": "latest@sha256:ead7d102c5b1aca4f42eb4fc3adc1958f0ebbebffb551b0dcf99d2548cb93911",
+        "size": 4063,
+        "url": "http://source-controller.flux-system.svc.cluster.local./ocirepository/flux-system/argobot-scout-attach/sha256:ead7d102c5b1aca4f42eb4fc3adc1958f0ebbebffb551b0dcf99d2548cb93911.tar.gz"
+      },
+      "conditions": [
+        {
+          "lastTransitionTime": "2026-11-18T16:10:06Z",
+          "message": "stored artifact for digest 'latest@sha256:ead7d102c5b1aca4f42eb4fc3adc1958f0ebbebffb551b0dcf99d2548cb93911'",
+          "observedGeneration": 1,
+          "reason": "Succeeded",
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastTransitionTime": "2026-11-18T16:10:06Z",
+          "message": "stored artifact for digest 'latest@sha256:ead7d102c5b1aca4f42eb4fc3adc1958f0ebbebffb551b0dcf99d2548cb93911'",
+          "observedGeneration": 1,
+          "reason": "Succeeded",
+          "status": "True",
+          "type": "ArtifactInStorage"
+        }
+      ],
+      "lastHandledReconcileAt": "2026-11-18T16:10:08.895590831Z",
+      "observedGeneration": 1,
+      "url": "http://source-controller.flux-system.svc.cluster.local./ocirepository/flux-system/argobot-scout-attach/latest.tar.gz"
+    }
+  },
+  {
+    "apiVersion": "source.toolkit.fluxcd.io/v1",
+    "kind": "OCIRepository",
+    "metadata": {
+      "annotations": {
+        "confighub.com/origin": "{\"spaceId\":\"c9edc249-6686-4314-900a-ae7fb273fd1c\",\"spaceSlug\":\"scout-attach-flux-apps\",\"unitId\":\"ad9573c0-9f20-4fce-b8ac-2b3f76dea6e4\",\"unitSlug\":\"root\",\"revisionNum\":2}",
+        "kustomize.toolkit.fluxcd.io/prune": "disabled"
+      },
+      "creationTimestamp": "2026-11-18T16:10:04Z",
+      "finalizers": [
+        "finalizers.fluxcd.io"
+      ],
+      "generation": 1,
+      "labels": {
+        "kustomize.toolkit.fluxcd.io/name": "confighub-root",
+        "kustomize.toolkit.fluxcd.io/namespace": "flux-system"
+      },
+      "name": "confighub-root",
+      "namespace": "flux-system",
+      "resourceVersion": "1499",
+      "uid": "9be12c43-3ec7-4c70-bdeb-26975cf0aef8"
+    },
+    "spec": {
+      "insecure": true,
+      "interval": "10m0s",
+      "ref": {
+        "tag": "latest"
+      },
+      "secretRef": {
+        "name": "confighub-oci"
+      },
+      "url": "oci://172.18.0.1:32181/space/scout-attach-flux-apps"
+    },
+    "status": {
+      "artifact": {
+        "digest": "sha256:3233b9be0108d99d94de3e09ceb35cec24c010258865f5360fc6cf07bb7bc58b",
+        "lastUpdateTime": "2026-11-18T16:10:05Z",
+        "metadata": {
+          "com.confighub.organization.id": "ffc98e0d-9cfa-41ef-8749-dca58a37adc6",
+          "com.confighub.space.id": "c9edc249-6686-4314-900a-ae7fb273fd1c",
+          "com.confighub.tag.id": "e0f4c7bd-d0ea-4368-9cca-b096966b6931",
+          "com.confighub.target.id": "47c5801a-1ce1-4aa5-9792-6b03e9210275",
+          "com.confighub.unit.count": "2"
+        },
+        "path": "ocirepository/flux-system/confighub-root/sha256:817eeec135aad5dffcec65343d68320fe4c78df4a5aeb191efeb7b39f3b09553.tar.gz",
+        "revision": "latest@sha256:817eeec135aad5dffcec65343d68320fe4c78df4a5aeb191efeb7b39f3b09553",
+        "size": 636,
+        "url": "http://source-controller.flux-system.svc.cluster.local./ocirepository/flux-system/confighub-root/sha256:817eeec135aad5dffcec65343d68320fe4c78df4a5aeb191efeb7b39f3b09553.tar.gz"
+      },
+      "conditions": [
+        {
+          "lastTransitionTime": "2026-11-18T16:10:05Z",
+          "message": "stored artifact for digest 'latest@sha256:817eeec135aad5dffcec65343d68320fe4c78df4a5aeb191efeb7b39f3b09553'",
+          "observedGeneration": 1,
+          "reason": "Succeeded",
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastTransitionTime": "2026-11-18T16:10:05Z",
+          "message": "stored artifact for digest 'latest@sha256:817eeec135aad5dffcec65343d68320fe4c78df4a5aeb191efeb7b39f3b09553'",
+          "observedGeneration": 1,
+          "reason": "Succeeded",
+          "status": "True",
+          "type": "ArtifactInStorage"
+        }
+      ],
+      "observedGeneration": 1,
+      "url": "http://source-controller.flux-system.svc.cluster.local./ocirepository/flux-system/confighub-root/latest.tar.gz"
+    }
+  }
+]

@@ -1,0 +1,100 @@
+Registry the controller will pull Releases from: oci://172.18.0.1:32181 (plain HTTP)
+  advertised by http://localhost:32180 at /api/info as http://localhost:32181
+  its host rewritten to the docker network's address for this machine, which a container in a cluster on this machine reaches the server by
+Reading kind cluster "brownfield"'s credentials...
+Checking cluster access (needs cluster-admin)...
+Ensuring Flux...
+Flux already present in namespace "flux-system"; leaving it in place.
+Creating ConfigHub space "scout-attach" (target + argobot channel)...
+Creating placeholder gate trigger "no-placeholders" (vet-placeholders on every Mutation)...
+Creating OCI target "target"...
+Creating service account "argo-scout-attach" (OrgRole=none; the controller pulls and argobot runs as it)...
+Granting "argo-scout-attach" its deployment path on OCI target "target"...
+Issuing a key for argobot on "argo-scout-attach"...
+Applying Secret argobot/argobot-secrets...
+namespace/argobot created
+secret/argobot-secrets created
+Issuing a pull token on "argo-scout-attach"...
+Applying Secret flux-system/confighub-oci...
+secret/confighub-oci created
+Creating ConfigHub space "scout-attach-flux-apps" (Flux OCIRepository and Kustomization Units)...
+Setting the apps space's release target to "scout-attach/target"...
+Creating root OCIRepository and Kustomization Unit "root" in apps space "scout-attach-flux-apps"...
+Using argobot's key from the Secret argobot/argobot-secrets already in the cluster
+
+Installing argobot (event-driven Flux reconciliation)...
+Reading argobot's deployment from ghcr.io/confighub/argobot:v0.2.12...
+Installing argobot base component...
+Space argobot-flux-base (Create)
+  Create    namespace
+  Create    argobot-serviceaccount
+  Create    flux-clusterrole
+  Create    flux-clusterrolebinding
+  Create    read-clusterrole
+  Create    read-clusterrolebinding
+  Create    read-role
+  Create    read-rolebinding
+  Create    argobot
+  linked    argobot -> argobot-serviceaccount (reference:v1/ServiceAccount)
+  linked    argobot -> namespace (reference:v1/Namespace)
+  linked    argobot-serviceaccount -> namespace (reference:v1/Namespace)
+  linked    flux-clusterrolebinding -> argobot-serviceaccount (reference:v1/ServiceAccount)
+  linked    flux-clusterrolebinding -> flux-clusterrole (reference:rbac.authorization.k8s.io/v1/ClusterRole)
+  linked    flux-clusterrolebinding -> namespace (reference:v1/Namespace)
+  linked    read-clusterrolebinding -> argobot-serviceaccount (reference:v1/ServiceAccount)
+  linked    read-clusterrolebinding -> namespace (reference:v1/Namespace)
+  linked    read-clusterrolebinding -> read-clusterrole (reference:rbac.authorization.k8s.io/v1/ClusterRole)
+  linked    read-rolebinding -> argobot-serviceaccount (reference:v1/ServiceAccount)
+  linked    read-rolebinding -> namespace (reference:v1/Namespace)
+  linked    read-rolebinding -> read-role (reference:rbac.authorization.k8s.io/v1/Role)
+
+Note: the following references didn't resolve to any uploaded Unit (expected when the
+target lives in the cluster, e.g. a Secret created out-of-band):
+  - argobot -> v1/Secret "argobot-secrets"
+  - read-role -> v1/Namespace "kube-system"
+  - read-role -> v1/ConfigMap,v1/Secret "amazon-vpc-cni"
+  - read-rolebinding -> v1/Namespace "kube-system"
+
+Revert this upload of argobot-flux-base with:
+  cub unit update --patch --space argobot-flux-base --restore Before:ChangeSet:upload-20261118-161002 --where "Labels.UploadSource = 'argobot'"
+Creating per-cluster argobot variant "argobot-scout-attach"...
+Creating Flux OCIRepository and Kustomization Unit "argobot-scout-attach" in apps space "scout-attach-flux-apps" (prune)...
+Publishing apps space "scout-attach-flux-apps" Release...
+Flux Kustomization "argobot-scout-attach" created; argobot deploys the variant's first Release when it is published.
+Creating argobot channel "scout-attach/argobot" (subscribed to the target's deploys)...
+Configuring argobot (CONFIGHUB_URL, CONFIGHUB_CHANNEL, CONFIGHUB_TARGET)...
+Publishing argobot variant Release (argobot-scout-attach)...
+argobot installed: variant "argobot-scout-attach", Flux Kustomization "argobot-scout-attach", channel "scout-attach/argobot"
+
+Publishing the apps space's release (populates the OCI bundle the root pulls)...
+Bootstrapping the root via kubectl (the only kubectl-apply moment)...
+ocirepository.source.toolkit.fluxcd.io/confighub-root created
+kustomization.kustomize.toolkit.fluxcd.io/confighub-root created
+
+Attached.
+  cluster:    scout-attach
+  context:    fuzzy-cub
+  kubeconfig: [redacted].kubeconfig
+  env file:   [redacted].env
+  space:      scout-attach
+  apps space: scout-attach-flux-apps
+  target:     scout-attach/target
+  identity:   service account argo-scout-attach (the controller pulls with a token of it; argobot runs as it with a key)
+  root:       scout-attach-flux-apps/root
+  argobot:    argobot-scout-attach (Flux Kustomization; reconciles on publish), channel scout-attach/argobot
+  gates:      scout-attach/no-placeholders (vet-placeholders) — blocks publishing a Release with
+              unfilled confighubplaceholder values to this cluster
+
+Flux: already installed, left as found
+
+Load the cluster and its cub context into your shell:
+  source [redacted].env
+
+Deploy an app to this cluster:
+  1. cub variant create <name> <base-space> --target scout-attach/target [--namespace <ns>]
+  2. cub release publish <name>
+Step 1 clones <base-space> into a deployment space bound to the cluster's
+target and adds its Flux OCIRepository and Kustomization to the apps space
+"scout-attach-flux-apps"; step 2 makes the deployment's config go live. Step 1 republishes
+the apps space, and argobot deploys step 2's Release at once.
+See "cub variant create --help".

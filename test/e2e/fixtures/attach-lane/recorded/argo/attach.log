@@ -1,0 +1,103 @@
+Registry the controller will pull Releases from: oci://172.18.0.1:32181 (plain HTTP)
+  advertised by http://localhost:32180 at /api/info as http://localhost:32181
+  its host rewritten to the docker network's address for this machine, which a container in a cluster on this machine reaches the server by
+Reading kind cluster "brownfield"'s credentials...
+Checking cluster access (needs cluster-admin)...
+Ensuring Argo CD...
+Argo CD already present in namespace "argocd"; leaving it in place.
+Patching argocd-cm (ignoreDifferences for self-referencing root Application)...
+configmap/argocd-cm patched
+Creating ConfigHub space "scout-attach" (target + argobot channel)...
+Creating placeholder gate trigger "no-placeholders" (vet-placeholders on every Mutation)...
+Creating OCI target "target"...
+Creating service account "argo-scout-attach" (OrgRole=none; the controller pulls and argobot runs as it)...
+Granting "argo-scout-attach" its deployment path on OCI target "target"...
+Issuing a key for argobot on "argo-scout-attach"...
+Applying Secret argobot/argobot-secrets...
+namespace/argobot created
+secret/argobot-secrets created
+Issuing a pull token on "argo-scout-attach"...
+Applying Secret argocd/confighub-oci-creds...
+secret/confighub-oci-creds created
+Creating ConfigHub space "scout-attach-argo-apps" (Argo Application Units)...
+Setting the apps space's release target to "scout-attach/target"...
+Creating root Application Unit "root" in apps space "scout-attach-argo-apps"...
+Using argobot's key from the Secret argobot/argobot-secrets already in the cluster
+
+Installing argobot (event-driven Argo CD sync)...
+Reading argobot's deployment from ghcr.io/confighub/argobot:v0.2.12...
+Installing argobot base component...
+Space argobot-base (Create)
+  Create    namespace
+  Create    argobot-serviceaccount
+  Create    argocd-role
+  Create    argocd-rolebinding
+  Create    read-clusterrole
+  Create    read-clusterrolebinding
+  Create    read-role
+  Create    read-rolebinding
+  Create    argobot
+  linked    argobot -> argobot-serviceaccount (reference:v1/ServiceAccount)
+  linked    argobot -> namespace (reference:v1/Namespace)
+  linked    argobot-serviceaccount -> namespace (reference:v1/Namespace)
+  linked    argocd-rolebinding -> argobot-serviceaccount (reference:v1/ServiceAccount)
+  linked    argocd-rolebinding -> argocd-role (reference:rbac.authorization.k8s.io/v1/Role)
+  linked    argocd-rolebinding -> namespace (reference:v1/Namespace)
+  linked    read-clusterrolebinding -> argobot-serviceaccount (reference:v1/ServiceAccount)
+  linked    read-clusterrolebinding -> namespace (reference:v1/Namespace)
+  linked    read-clusterrolebinding -> read-clusterrole (reference:rbac.authorization.k8s.io/v1/ClusterRole)
+  linked    read-rolebinding -> argobot-serviceaccount (reference:v1/ServiceAccount)
+  linked    read-rolebinding -> namespace (reference:v1/Namespace)
+  linked    read-rolebinding -> read-role (reference:rbac.authorization.k8s.io/v1/Role)
+
+Note: the following references didn't resolve to any uploaded Unit (expected when the
+target lives in the cluster, e.g. a Secret created out-of-band):
+  - argobot -> v1/Secret "argobot-secrets"
+  - argocd-role -> v1/Namespace "argocd"
+  - read-role -> v1/Namespace "kube-system"
+  - read-role -> v1/ConfigMap,v1/Secret "amazon-vpc-cni"
+  - argocd-rolebinding -> v1/Namespace "argocd"
+  - read-rolebinding -> v1/Namespace "kube-system"
+
+Revert this upload of argobot-base with:
+  cub unit update --patch --space argobot-base --restore Before:ChangeSet:upload-20261118-161001 --where "Labels.UploadSource = 'argobot'"
+Creating per-cluster argobot variant "argobot-scout-attach"...
+Creating Argo CD Application Unit "argobot-scout-attach" in apps space "scout-attach-argo-apps" (prune, resources finalizer)...
+Publishing apps space "scout-attach-argo-apps" Release...
+Argo CD Application "argobot-scout-attach" created; Argo syncs it on its next reconcile.
+Creating argobot channel "scout-attach/argobot" (subscribed to the target's deploys)...
+Configuring argobot (CONFIGHUB_URL, CONFIGHUB_CHANNEL, CONFIGHUB_TARGET)...
+Publishing argobot variant Release (argobot-scout-attach)...
+argobot installed: variant "argobot-scout-attach", Argo app "argobot-scout-attach", channel "scout-attach/argobot"
+
+Publishing the apps space's release (populates the OCI bundle the root pulls)...
+Bootstrapping the root via kubectl (the only kubectl-apply moment)...
+Warning: metadata.finalizers: "resources-finalizer.argocd.argoproj.io": prefer a domain-qualified finalizer name including a path (/) to avoid accidental conflicts with other finalizer writers
+application.argoproj.io/scout-attach-argo-apps created
+
+Attached.
+  cluster:    scout-attach
+  context:    paws-paws
+  kubeconfig: [redacted].kubeconfig
+  env file:   [redacted].env
+  space:      scout-attach
+  apps space: scout-attach-argo-apps
+  target:     scout-attach/target
+  identity:   service account argo-scout-attach (the controller pulls with a token of it; argobot runs as it with a key)
+  root:       scout-attach-argo-apps/root
+  argobot:    argobot-scout-attach (Argo app; refreshes on publish), channel scout-attach/argobot
+  gates:      scout-attach/no-placeholders (vet-placeholders) — blocks publishing a Release with
+              unfilled confighubplaceholder values to this cluster
+
+Argo CD: already installed, left as found (initial admin password: [redacted])
+
+Load the cluster and its cub context into your shell:
+  source [redacted].env
+
+Deploy an app to this cluster:
+  1. cub variant create <name> <base-space> --target scout-attach/target [--namespace <ns>]
+  2. cub release publish <name>
+Step 1 clones <base-space> into a deployment space bound to the cluster's
+target and auto-creates its Argo CD Application in the apps space "scout-attach-argo-apps"
+(republishing it so Argo picks it up); step 2 makes the deployment's config
+go live. See "cub variant create --help".

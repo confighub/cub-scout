@@ -1,0 +1,75 @@
+[
+  {
+    "apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+    "kind": "Kustomization",
+    "metadata": {
+      "annotations": {
+        "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"kustomize.toolkit.fluxcd.io/v1\",\"kind\":\"Kustomization\",\"metadata\":{\"annotations\":{},\"name\":\"podinfo\",\"namespace\":\"podinfo\"},\"spec\":{\"interval\":\"10m\",\"path\":\"./kustomize\",\"prune\":true,\"sourceRef\":{\"kind\":\"GitRepository\",\"name\":\"podinfo\"},\"targetNamespace\":\"podinfo\"}}\n"
+      },
+      "creationTimestamp": "2026-11-18T16:09:12Z",
+      "finalizers": [
+        "finalizers.fluxcd.io"
+      ],
+      "generation": 1,
+      "name": "podinfo",
+      "namespace": "podinfo",
+      "resourceVersion": "1354",
+      "uid": "8b09e21c-2d94-44f1-9bb1-76fbe9d2022e"
+    },
+    "spec": {
+      "force": false,
+      "interval": "10m",
+      "path": "./kustomize",
+      "prune": true,
+      "sourceRef": {
+        "kind": "GitRepository",
+        "name": "podinfo"
+      },
+      "targetNamespace": "podinfo"
+    },
+    "status": {
+      "conditions": [
+        {
+          "lastTransitionTime": "2026-11-18T16:09:15Z",
+          "message": "Applied revision: sha1:fd3a834ed8d14b80ea334cf8a2fddd4597924da6",
+          "observedGeneration": 1,
+          "reason": "ReconciliationSucceeded",
+          "status": "True",
+          "type": "Ready"
+        }
+      ],
+      "history": [
+        {
+          "digest": "sha256:5ba4c6a6b4c3ab8ca7182f199a986b1094049f716e4f4b9733545128ffba477d",
+          "firstReconciled": "2026-11-18T16:09:15Z",
+          "lastReconciled": "2026-11-18T16:09:15Z",
+          "lastReconciledDuration": "184.21125ms",
+          "lastReconciledStatus": "ReconciliationSucceeded",
+          "metadata": {
+            "revision": "sha1:fd3a834ed8d14b80ea334cf8a2fddd4597924da6"
+          },
+          "totalReconciliations": 1
+        }
+      ],
+      "inventory": {
+        "entries": [
+          {
+            "id": "podinfo_podinfo__Service",
+            "v": "v1"
+          },
+          {
+            "id": "podinfo_podinfo_apps_Deployment",
+            "v": "v1"
+          },
+          {
+            "id": "podinfo_podinfo_autoscaling_HorizontalPodAutoscaler",
+            "v": "v2"
+          }
+        ]
+      },
+      "lastAppliedRevision": "sha1:fd3a834ed8d14b80ea334cf8a2fddd4597924da6",
+      "lastAttemptedRevision": "sha1:fd3a834ed8d14b80ea334cf8a2fddd4597924da6",
+      "observedGeneration": 1
+    }
+  }
+]

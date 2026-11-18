@@ -1,0 +1,11 @@
+Registry the controller will pull Releases from: oci://172.18.0.1:32181 (plain HTTP)
+  advertised by http://localhost:32180 at /api/info as http://localhost:32181
+  its host rewritten to the docker network's address for this machine, which a container in a cluster on this machine reaches the server by
+Reading kind cluster "brownfield"'s credentials...
+Checking cluster access (needs cluster-admin)...
+Rolling back: removing [redacted].kubeconfig
+Failed: the cluster is already wired to a ConfigHub: Argo CD holds registry credentials for oci://172.18.0.1:32181 (Secret argocd/confighub-oci-creds). It was attached from this machine as cluster "scout-attach": detach it with 'cub cluster detach scout-attach' (with --force if its Space is gone). Or, if that attachment is not in use any more, delete the Secret:
+  CUB_TMP=$(mktemp -d)
+  kind get kubeconfig --name brownfield > "$CUB_TMP/kubeconfig"
+  kubectl --kubeconfig "$CUB_TMP/kubeconfig" -n argocd delete secret confighub-oci-creds
+  rm -r "$CUB_TMP"

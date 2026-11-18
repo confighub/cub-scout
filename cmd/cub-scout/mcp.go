@@ -292,6 +292,10 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 							"type":        "string",
 							"description": "Live status older than this is stale, e.g. 15m.",
 						},
+						"before_attach": map[string]interface{}{
+							"type":        "boolean",
+							"description": "Add what `cub cluster attach` would meet here, cluster-wide: per controller, refuse, use-existing, install or unknown.",
+						},
 					},
 					"additionalProperties": false,
 				},
@@ -324,6 +328,9 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				}
 				if staleAfter := argString(arguments, "confighub_stale_after"); staleAfter != "" {
 					args = append(args, "--confighub-stale-after", staleAfter)
+				}
+				if argBool(arguments, "before_attach") {
+					args = append(args, "--before-attach")
 				}
 				return args, nil
 			},

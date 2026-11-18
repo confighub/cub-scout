@@ -30,6 +30,10 @@ type ObserveScopeSummaryRequest struct {
 	// WithConfigHub includes bounded connected delivery evidence.
 	WithConfigHub bool
 
+	// BeforeAttach adds what `cub cluster attach` would meet (#888). It is
+	// cluster-wide whatever Namespace says, since attach is.
+	BeforeAttach bool
+
 	// ConfigHubSpace scopes connected delivery evidence. Empty means CUB_SPACE;
 	// with neither, the reads are skipped and reported as an omission.
 	ConfigHubSpace string
@@ -130,6 +134,13 @@ func observeScopeSummaryFromCluster(ctx context.Context, namespace, namespaceLab
 			// The existing three-way command has no explicit Kubernetes selector.
 			result.Summary.ThreeWay = nil
 		}
+	}
+	if req.BeforeAttach && req.ClusterBinding != nil && req.ClusterBinding.config != nil {
+		attach, attachErr := collectDoctorAttachReport(ctx, req.ClusterBinding.config)
+		if attachErr != nil {
+			result.Warnings = append(result.Warnings, fmt.Sprintf("before-attach report unavailable: %v", attachErr))
+		}
+		result.Summary.Attach = attach
 	}
 	rollouts, rolloutsErr := collectDoctorRolloutsWithBinding(ctx, namespace, topN, req.ClusterBinding)
 	if rolloutsErr != nil {

@@ -35,6 +35,7 @@ var (
 	doctorConfigHubSince      string
 	doctorConfigHubStaleAfter string
 	doctorKubeContext         string
+	doctorBeforeAttach        bool
 
 	collectDoctorDeliveryEvidenceFn = func(ctx context.Context, namespace string, req ObserveScopeSummaryRequest, binding *localClusterBinding) (*GitOpsDeliveryEvidence, error) {
 		return collectDoctorDeliveryEvidenceWithBinding(ctx, namespace, req, binding)
@@ -68,6 +69,7 @@ func init() {
 	doctorCmd.Flags().StringVar(&doctorConfigHubSpace, "confighub-space", "", "ConfigHub space for connected delivery evidence (default: CUB_SPACE; use '*' explicitly for all spaces)")
 	doctorCmd.Flags().StringVar(&doctorConfigHubSince, "confighub-since", "24h", "Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w)")
 	doctorCmd.Flags().StringVar(&doctorConfigHubStaleAfter, "confighub-stale-after", "15m", "Treat ConfigHub live-status observations older than this as stale")
+	doctorCmd.Flags().BoolVar(&doctorBeforeAttach, "before-attach", false, "Add what `cub cluster attach` would meet in this cluster (always cluster-wide; read only)")
 	doctorCmd.Flags().StringVar(&doctorKubeContext, "kube-context", "", "Use this exact Kubernetes context for all doctor reads")
 }
 
@@ -87,6 +89,9 @@ type DoctorSummary struct {
 	TopIssues         []DoctorIssue          `json:"topIssues,omitempty"`
 	NextSteps         []StructuredHint       `json:"nextSteps,omitempty"` // Structured action-typed hints for AI/MCP
 	Warnings          []string               `json:"warnings,omitempty"`
+
+	// Attach is present only with --before-attach (#888).
+	Attach *DoctorAttachReport `json:"attach,omitempty"`
 
 	// DeliveryEvidence is the raw bounded evidence envelope behind Delivery.
 	// It is present only when --with-confighub is requested.
@@ -253,6 +258,7 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		ConfigHubSpace:      doctorConfigHubSpace,
 		ConfigHubSince:      doctorConfigHubSince,
 		ConfigHubStaleAfter: doctorConfigHubStaleAfter,
+		BeforeAttach:        doctorBeforeAttach,
 		ClusterBinding:      binding,
 	})
 	if err != nil {
@@ -1189,6 +1195,8 @@ func renderDoctorASCII(summary DoctorSummary, mode PresentationMode, explicitMod
 			fmt.Fprintf(&b, "  %d. %s (ns: %s) - %s [%s]\n", i+1, issue.Resource, ns, msg, severityColored)
 		}
 	}
+
+	renderDoctorAttachASCII(&b, summary.Attach)
 
 	// Outro - only for explicit AI mode
 	if explicitMode {
