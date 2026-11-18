@@ -76,6 +76,20 @@ func ResolveCrossplaneLineageWithIndex(target *unstructured.Unstructured, idx *U
 	var xrPresent bool
 	var xrObject *unstructured.Unstructured
 
+	// A composite labels itself crossplane.io/composite with its own name
+	// (Crossplane 2.4.3, CI run 44254135155). It is a root, not managed by a
+	// composite of that name; looking one up found nothing, since the object
+	// itself is excluded, and invented a partial CompositeResource parent.
+	// Only an object with a composite's own spec is taken as one: a
+	// composition reference, where Crossplane v2 (spec.crossplane) or v1
+	// (spec) writes it. Any other object naming itself stays unresolved,
+	// and a composed object of the same name has an owner reference to it.
+	if compName := target.GetLabels()["crossplane.io/composite"]; compName != "" && compName == target.GetName() && isCrossplaneComposite(target) && !ownerReferencesName(target, compName) {
+		lineage.Evidence = append(lineage.Evidence, "self:label:crossplane.io/composite")
+		lineage.Composite = CrossplaneLineageNode{Ref: resourceRefFromUnstructured(target), Present: true}
+		return lineage, true
+	}
+
 	// Prefer the Crossplane default composite label.
 	if compName := target.GetLabels()["crossplane.io/composite"]; compName != "" {
 		lineage.Evidence = append(lineage.Evidence, "label:crossplane.io/composite")
@@ -178,6 +192,24 @@ func ResolveCrossplaneLineageWithIndex(target *unstructured.Unstructured, idx *U
 // locality: a namespaced child may have a same-namespace or cluster parent. Labels
 // do not identify parent GVK or scope, so conflicting candidates stay unresolved.
 // Keep this separate from the generic index to avoid changing other resolvers.
+func isCrossplaneComposite(object *unstructured.Unstructured) bool {
+	for _, path := range [][]string{{"spec", "crossplane", "compositionRef", "name"}, {"spec", "compositionRef", "name"}} {
+		if name, found, _ := unstructured.NestedString(object.Object, path...); found && name != "" {
+			return true
+		}
+	}
+	return false
+}
+
+func ownerReferencesName(object *unstructured.Unstructured, name string) bool {
+	for _, owner := range object.GetOwnerReferences() {
+		if owner.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
 func crossplaneUniqueObject(idx *UnstructuredIndex, target *unstructured.Unstructured, matches func(*unstructured.Unstructured) bool) (*unstructured.Unstructured, bool) {
 	if idx == nil {
 		return nil, false

@@ -3,7 +3,8 @@
 # record what Crossplane writes on it and what cub-scout says.
 #
 # Asserted: the composed Deployment reads as owned by Crossplane in map list,
-# and trace answers in JSON without saying "no owner marker". Recorded: the
+# trace answers in JSON without saying "no owner marker", and the composition
+# tree has the composite as its root with the Deployment under it. Recorded: the
 # object's labels, annotations and owner references, the detector's source,
 # trace, and the composition tree. Needs the Helm step's helm binary.
 set -euo pipefail
@@ -76,6 +77,12 @@ print("\n".join(lines))
 bad = []
 if row.get("owner") != "Crossplane":
     bad.append("map list owner %s, want Crossplane" % row.get("owner"))
+import re
+tree = re.sub(r"\x1b\[[0-9;]*m", "", open(out + "/tree-composition.txt").read())
+if "CompositeResource/lane" in tree:
+    bad.append("tree composition puts the composite under a made-up CompositeResource/lane (#939)")
+if "Deployment/%s in xp-lane" % name not in tree:
+    bad.append("tree composition does not show the composed Deployment %s" % name)
 if trace is None:
     bad.append("trace printed no JSON (stderr in trace.stderr)")
 elif state == "no-owner-marker":
