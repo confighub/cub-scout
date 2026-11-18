@@ -153,6 +153,9 @@ Available scenarios:
   break-glass         Emergency kubectl -> Accept/Reject workflow`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := bindDemoKubeContext(cmd); err != nil {
+			return err
+		}
 		name := canonicalScenarioName(args[0])
 		scenario, ok := scenarios[name]
 		if !ok {
@@ -183,6 +186,9 @@ func init() {
 	quickstartDemoCmd.AddCommand(quickstartDemoListCmd)
 	quickstartDemoCmd.AddCommand(quickstartDemoScenarioCmd)
 
+	for _, cmd := range []*cobra.Command{demoCmd, quickstartDemoCmd, demoScenarioCmd, quickstartDemoScenarioCmd} {
+		cmd.Flags().StringVar(&demoKubeContextFlag, "kube-context", "", "Apply the demo's fixtures to, and read, only this exact Kubernetes context")
+	}
 	demoCmd.Flags().BoolVar(&demoNoPods, "no-pods", false, "Apply without running pods (faster)")
 	demoCmd.Flags().BoolVar(&demoCleanup, "cleanup", false, "Remove demo resources")
 	demoScenarioCmd.Flags().BoolVar(&demoCleanup, "cleanup", false, "Remove scenario resources")
@@ -206,6 +212,9 @@ func canonicalScenarioName(name string) string {
 }
 
 func runDemo(cmd *cobra.Command, args []string) error {
+	if err := bindDemoKubeContext(cmd); err != nil {
+		return err
+	}
 	if len(args) == 0 {
 		listDemos()
 		return nil
@@ -298,7 +307,7 @@ func getRepoRoot() string {
 
 // Apply a YAML file with kubectl
 func kubectlApply(yamlPath string) error {
-	cmd := exec.Command("kubectl", "apply", "-f", yamlPath)
+	cmd := demoKubectl("apply", "-f", yamlPath)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -306,14 +315,60 @@ func kubectlApply(yamlPath string) error {
 
 // Delete a YAML file with kubectl
 func kubectlDelete(yamlPath string) error {
-	cmd := exec.Command("kubectl", "delete", "-f", yamlPath, "--ignore-not-found")
+	cmd := demoKubectl("delete", "-f", yamlPath, "--ignore-not-found")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
-// Run a cub-scout subcommand
+// demoKubeContext is --kube-context: when set, every kubectl call a demo
+// makes carries --context, and every cub-scout command it runs carries
+// --kube-context, so a demo applies and reads only that context (#599).
+// Without it, kubectl and cub-scout use the current context, as before.
+var demoKubeContext string
+
+// demoKubeContextFlag holds the flag as given; bindDemoKubeContext checks it
+// and only then sets demoKubeContext.
+var demoKubeContextFlag string
+
+// demoKubectlBinary and execCubScoutFn are variables so tests can record what
+// a demo would run without a cluster.
+var demoKubectlBinary = "kubectl"
+
+func demoKubectl(args ...string) *exec.Cmd {
+	if demoKubeContext != "" {
+		args = append([]string{"--context", demoKubeContext}, args...)
+	}
+	return exec.Command(demoKubectlBinary, args...)
+}
+
+// bindDemoKubeContext checks --kube-context before a demo touches anything:
+// an empty name, or one the kubeconfig does not have, is refused before any
+// kubectl apply.
+func bindDemoKubeContext(cmd *cobra.Command) error {
+	demoKubeContext = ""
+	selection, err := clusterContextSelectionFromFlag(cmd)
+	if err != nil || !selection.explicit {
+		return err
+	}
+	if binding := resolveLocalClusterBindingForSelection(selection); binding.err != nil {
+		return binding.err
+	}
+	demoKubeContext = selection.name
+	return nil
+}
+
 func runCubAgent(args ...string) error {
+	if demoKubeContext != "" {
+		args = append(args, "--kube-context", demoKubeContext)
+	}
+	return execCubScoutFn(args...)
+}
+
+var execCubScoutFn = execCubScout
+
+// execCubScout runs a cub-scout subcommand.
+func execCubScout(args ...string) error {
 	// Find the cub-scout binary
 	binary, err := os.Executable()
 	if err != nil {
@@ -383,7 +438,7 @@ func checkDemoPrerequisites(demo Demo) error {
 // hasFluxCRDs checks if Flux CRDs are installed
 func hasFluxCRDs() bool {
 	// Check for GitRepository CRD
-	cmd := exec.Command("kubectl", "api-resources", "--api-group=source.toolkit.fluxcd.io", "-o", "name")
+	cmd := demoKubectl("api-resources", "--api-group=source.toolkit.fluxcd.io", "-o", "name")
 	out, err := cmd.Output()
 	if err != nil {
 		return false
@@ -394,7 +449,7 @@ func hasFluxCRDs() bool {
 // hasArgoCRDs checks if ArgoCD CRDs are installed
 func hasArgoCRDs() bool {
 	// Check for Application CRD
-	cmd := exec.Command("kubectl", "api-resources", "--api-group=argoproj.io", "-o", "name")
+	cmd := demoKubectl("api-resources", "--api-group=argoproj.io", "-o", "name")
 	out, err := cmd.Output()
 	if err != nil {
 		return false
@@ -684,7 +739,7 @@ func cleanupScenarioBreakGlass() error {
 	_ = kubectlDelete(fixturePath)
 
 	// Also delete namespace
-	cmd := exec.Command("kubectl", "delete", "namespace", "break-glass-demo", "--ignore-not-found")
+	cmd := demoKubectl("delete", "namespace", "break-glass-demo", "--ignore-not-found")
 	_ = cmd.Run()
 
 	fmt.Println(demoPassStyle.Render("Cleanup complete."))

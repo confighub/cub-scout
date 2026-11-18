@@ -38,7 +38,6 @@ var contextExempt = map[string]string{
 	"cub-scout import cluster-aggregator": "reads files or stdin",
 	"cub-scout import parse-repo":         "reads a local Git checkout",
 	"cub-scout map fleet":                 "reads ConfigHub",
-	"cub-scout map hub":                   "reads ConfigHub",
 	"cub-scout map queries":               "reads local saved queries",
 	"cub-scout map queries connect":       "writes local saved queries",
 	"cub-scout map queries delete":        "writes local saved queries",
@@ -65,12 +64,10 @@ var contextExempt = map[string]string{
 
 // contextOwed read the cluster through the ambient context today (#599).
 var contextOwed = map[string]string{
-	"cub-scout import":                   "reads workloads to import",
-	"cub-scout import argocd":            "reads Argo CD Applications",
-	"cub-scout quickstart":               "runs `kubectl cluster-info` and the tour's reads",
-	"cub-scout demo scenario":            "applies demo fixtures with `kubectl apply`: a write",
-	"cub-scout quickstart demo":          "applies demo fixtures with `kubectl apply`: a write",
-	"cub-scout quickstart demo scenario": "applies demo fixtures with `kubectl apply`: a write",
+	"cub-scout map hub":       "its import hand-off disables Argo CD sync, deletes Applications and removes labels through the current context (#955)",
+	"cub-scout import":        "reads workloads to import",
+	"cub-scout import argocd": "reads Argo CD Applications",
+	"cub-scout quickstart":    "runs `kubectl cluster-info` and the tour's reads",
 }
 
 func hasKubeContextFlag(cmd *cobra.Command) bool {
