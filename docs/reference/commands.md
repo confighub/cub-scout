@@ -298,7 +298,15 @@ cub-scout quickstart demo quick
 cub-scout quickstart demo ccve
 cub-scout quickstart demo scenario bigbank-incident
 cub-scout quickstart demo quick --cleanup
+cub-scout quickstart demo quick --kube-context kind-demo
 ```
+
+A demo writes: it applies its fixtures with `kubectl apply`, and `--cleanup`
+deletes them. Without `--kube-context` it uses the current context. With it,
+every `kubectl` call carries `--context <name>` and every cub-scout command
+the demo runs carries `--kube-context <name>`. An empty name, or one your
+kubeconfig does not have, is refused before anything is applied
+([#599](https://github.com/confighub/cub-scout/issues/599)).
 
 ### Flags
 
@@ -306,6 +314,7 @@ cub-scout quickstart demo quick --cleanup
 |------|-------------|
 | `--cleanup` | Remove demo resources |
 | `--no-pods` | Apply without running pods for a faster demo cycle |
+| `--kube-context` | Apply the fixtures to, and read, only this exact Kubernetes context; also on `quickstart demo scenario` |
 
 ---
 
