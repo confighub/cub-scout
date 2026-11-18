@@ -39,6 +39,8 @@ spec:
                 devices:
                   - name: gpu
                     count: 1
+                    selectors:
+                      - cel: device.capacity["gpu.example.com"].memory.compareTo(quantity("20Gi")) >= 0
               template:
                 spec:
                   containers:
