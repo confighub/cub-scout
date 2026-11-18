@@ -1,0 +1,270 @@
+[
+  {
+    "apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+    "kind": "Kustomization",
+    "metadata": {
+      "annotations": {
+        "confighub.com/origin": "{\"spaceId\":\"4a1710a8-6763-436a-b98b-45d72788dc28\",\"spaceSlug\":\"scout-attach-flux-apps\",\"unitId\":\"b418f026-1bfc-4b0e-aad5-390c78d90853\",\"unitSlug\":\"argobot-scout-attach\",\"revisionNum\":2}"
+      },
+      "creationTimestamp": "2026-11-18T17:33:23Z",
+      "finalizers": [
+        "finalizers.fluxcd.io"
+      ],
+      "generation": 1,
+      "labels": {
+        "kustomize.toolkit.fluxcd.io/name": "confighub-root",
+        "kustomize.toolkit.fluxcd.io/namespace": "flux-system"
+      },
+      "name": "argobot-scout-attach",
+      "namespace": "flux-system",
+      "resourceVersion": "1578",
+      "uid": "4ddfc29c-5134-4292-9674-b9277b00f4e7"
+    },
+    "spec": {
+      "force": false,
+      "interval": "10m0s",
+      "path": ".",
+      "prune": true,
+      "retryInterval": "1m0s",
+      "sourceRef": {
+        "kind": "OCIRepository",
+        "name": "argobot-scout-attach"
+      },
+      "timeout": "2m0s",
+      "wait": true
+    },
+    "status": {
+      "conditions": [
+        {
+          "lastTransitionTime": "2026-11-18T17:33:29Z",
+          "message": "Applied revision: latest@sha256:1d8022b263b952f0f5f022f1c4ce29842bd1dbc864dc3fa210dbd790074ba0e3",
+          "observedGeneration": 1,
+          "reason": "ReconciliationSucceeded",
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastTransitionTime": "2026-11-18T17:33:29Z",
+          "message": "Health check passed in 5.04916118s",
+          "observedGeneration": 1,
+          "reason": "Succeeded",
+          "status": "True",
+          "type": "Healthy"
+        }
+      ],
+      "history": [
+        {
+          "digest": "sha256:41a56299cd74c7aaa066aeac718ebb94a7a8856595958212cf5cf92e4bac9fce",
+          "firstReconciled": "2026-11-18T17:33:29Z",
+          "lastReconciled": "2026-11-18T17:33:29Z",
+          "lastReconciledDuration": "5.223126247s",
+          "lastReconciledStatus": "ReconciliationSucceeded",
+          "metadata": {
+            "revision": "latest@sha256:1d8022b263b952f0f5f022f1c4ce29842bd1dbc864dc3fa210dbd790074ba0e3"
+          },
+          "totalReconciliations": 1
+        }
+      ],
+      "inventory": {
+        "entries": [
+          {
+            "id": "_argobot__Namespace",
+            "v": "v1"
+          },
+          {
+            "id": "_argobot-flux_rbac.authorization.k8s.io_ClusterRole",
+            "v": "v1"
+          },
+          {
+            "id": "_argobot-read_rbac.authorization.k8s.io_ClusterRole",
+            "v": "v1"
+          },
+          {
+            "id": "_argobot-flux_rbac.authorization.k8s.io_ClusterRoleBinding",
+            "v": "v1"
+          },
+          {
+            "id": "_argobot-read_rbac.authorization.k8s.io_ClusterRoleBinding",
+            "v": "v1"
+          },
+          {
+            "id": "argobot_argobot__ServiceAccount",
+            "v": "v1"
+          },
+          {
+            "id": "kube-system_argobot-read_rbac.authorization.k8s.io_Role",
+            "v": "v1"
+          },
+          {
+            "id": "kube-system_argobot-read_rbac.authorization.k8s.io_RoleBinding",
+            "v": "v1"
+          },
+          {
+            "id": "argobot_argobot_apps_Deployment",
+            "v": "v1"
+          }
+        ]
+      },
+      "lastAppliedRevision": "latest@sha256:1d8022b263b952f0f5f022f1c4ce29842bd1dbc864dc3fa210dbd790074ba0e3",
+      "lastAttemptedRevision": "latest@sha256:1d8022b263b952f0f5f022f1c4ce29842bd1dbc864dc3fa210dbd790074ba0e3",
+      "observedGeneration": 1
+    }
+  },
+  {
+    "apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+    "kind": "Kustomization",
+    "metadata": {
+      "annotations": {
+        "confighub.com/origin": "{\"spaceId\":\"4a1710a8-6763-436a-b98b-45d72788dc28\",\"spaceSlug\":\"scout-attach-flux-apps\",\"unitId\":\"5a2c0803-b02a-4207-8049-1919336ddc00\",\"unitSlug\":\"root\",\"revisionNum\":2}",
+        "kustomize.toolkit.fluxcd.io/prune": "disabled"
+      },
+      "creationTimestamp": "2026-11-18T17:33:22Z",
+      "finalizers": [
+        "finalizers.fluxcd.io"
+      ],
+      "generation": 1,
+      "labels": {
+        "kustomize.toolkit.fluxcd.io/name": "confighub-root",
+        "kustomize.toolkit.fluxcd.io/namespace": "flux-system"
+      },
+      "name": "confighub-root",
+      "namespace": "flux-system",
+      "resourceVersion": "1513",
+      "uid": "09d92c23-d7e9-44ef-a725-6e2785f0807a"
+    },
+    "spec": {
+      "force": false,
+      "interval": "10m0s",
+      "path": ".",
+      "prune": true,
+      "retryInterval": "1m0s",
+      "sourceRef": {
+        "kind": "OCIRepository",
+        "name": "confighub-root"
+      },
+      "timeout": "2m0s",
+      "wait": false
+    },
+    "status": {
+      "conditions": [
+        {
+          "lastTransitionTime": "2026-11-18T17:33:23Z",
+          "message": "Applied revision: latest@sha256:168ede471a24b3d55086b8eedecff91118eb7d96f48f775fe93ac30f5a4559fe",
+          "observedGeneration": 1,
+          "reason": "ReconciliationSucceeded",
+          "status": "True",
+          "type": "Ready"
+        }
+      ],
+      "history": [
+        {
+          "digest": "sha256:68fe943b48959a179809a481e0d4db51d534dafb516cea0e96e64951ada9d0aa",
+          "firstReconciled": "2026-11-18T17:33:23Z",
+          "lastReconciled": "2026-11-18T17:33:23Z",
+          "lastReconciledDuration": "170.67194ms",
+          "lastReconciledStatus": "ReconciliationSucceeded",
+          "metadata": {
+            "revision": "latest@sha256:168ede471a24b3d55086b8eedecff91118eb7d96f48f775fe93ac30f5a4559fe"
+          },
+          "totalReconciliations": 1
+        }
+      ],
+      "inventory": {
+        "entries": [
+          {
+            "id": "flux-system_argobot-scout-atta[redacted-key].toolkit.fluxcd.io_Kustomization",
+            "v": "v1"
+          },
+          {
+            "id": "flux-system_confighub-root_kustomize.toolkit.fluxcd.io_Kustomization",
+            "v": "v1"
+          },
+          {
+            "id": "flux-system_argobot-scout-attach_source.toolkit.fluxcd.io_OCIRepository",
+            "v": "v1"
+          },
+          {
+            "id": "flux-system_confighub-root_source.toolkit.fluxcd.io_OCIRepository",
+            "v": "v1"
+          }
+        ]
+      },
+      "lastAppliedRevision": "latest@sha256:168ede471a24b3d55086b8eedecff91118eb7d96f48f775fe93ac30f5a4559fe",
+      "lastAttemptedRevision": "latest@sha256:168ede471a24b3d55086b8eedecff91118eb7d96f48f775fe93ac30f5a4559fe",
+      "observedGeneration": 1
+    }
+  },
+  {
+    "apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+    "kind": "Kustomization",
+    "metadata": {
+      "annotations": {
+        "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"kustomize.toolkit.fluxcd.io/v1\",\"kind\":\"Kustomization\",\"metadata\":{\"annotations\":{},\"name\":\"podinfo\",\"namespace\":\"podinfo\"},\"spec\":{\"interval\":\"10m\",\"path\":\"./kustomize\",\"prune\":true,\"sourceRef\":{\"kind\":\"GitRepository\",\"name\":\"podinfo\"},\"targetNamespace\":\"podinfo\"}}\n"
+      },
+      "creationTimestamp": "2026-11-18T17:32:18Z",
+      "finalizers": [
+        "finalizers.fluxcd.io"
+      ],
+      "generation": 1,
+      "name": "podinfo",
+      "namespace": "podinfo",
+      "resourceVersion": "1292",
+      "uid": "33966b45-5b0d-445d-a89e-65f661d1122a"
+    },
+    "spec": {
+      "force": false,
+      "interval": "10m",
+      "path": "./kustomize",
+      "prune": true,
+      "sourceRef": {
+        "kind": "GitRepository",
+        "name": "podinfo"
+      },
+      "targetNamespace": "podinfo"
+    },
+    "status": {
+      "conditions": [
+        {
+          "lastTransitionTime": "2026-11-18T17:32:22Z",
+          "message": "Applied revision: sha1:fd3a834ed8d14b80ea334cf8a2fddd4597924da6",
+          "observedGeneration": 1,
+          "reason": "ReconciliationSucceeded",
+          "status": "True",
+          "type": "Ready"
+        }
+      ],
+      "history": [
+        {
+          "digest": "sha256:5ba4c6a6b4c3ab8ca7182f199a986b1094049f716e4f4b9733545128ffba477d",
+          "firstReconciled": "2026-11-18T17:32:22Z",
+          "lastReconciled": "2026-11-18T17:32:22Z",
+          "lastReconciledDuration": "250.352578ms",
+          "lastReconciledStatus": "ReconciliationSucceeded",
+          "metadata": {
+            "revision": "sha1:fd3a834ed8d14b80ea334cf8a2fddd4597924da6"
+          },
+          "totalReconciliations": 1
+        }
+      ],
+      "inventory": {
+        "entries": [
+          {
+            "id": "podinfo_podinfo__Service",
+            "v": "v1"
+          },
+          {
+            "id": "podinfo_podinfo_apps_Deployment",
+            "v": "v1"
+          },
+          {
+            "id": "podinfo_podinfo_autoscaling_HorizontalPodAutoscaler",
+            "v": "v2"
+          }
+        ]
+      },
+      "lastAppliedRevision": "sha1:fd3a834ed8d14b80ea334cf8a2fddd4597924da6",
+      "lastAttemptedRevision": "sha1:fd3a834ed8d14b80ea334cf8a2fddd4597924da6",
+      "observedGeneration": 1
+    }
+  }
+]

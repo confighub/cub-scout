@@ -30,6 +30,10 @@ type ObserveScopeSummaryRequest struct {
 	// WithConfigHub includes bounded connected delivery evidence.
 	WithConfigHub bool
 
+	// BeforeAttach adds what `cub cluster attach` would meet (#888). It is
+	// cluster-wide whatever Namespace says, since attach is.
+	BeforeAttach bool
+
 	// ConfigHubSpace scopes connected delivery evidence. Empty means CUB_SPACE;
 	// with neither, the reads are skipped and reported as an omission.
 	ConfigHubSpace string
@@ -79,7 +83,13 @@ func ObserveScopeSummary(ctx context.Context, req ObserveScopeSummaryRequest) (O
 	// Use fixture if explicitly provided
 	if req.FixturePath != "" {
 		summary, err := observeScopeSummaryFromFixture(req.FixturePath, namespaceLabel, topN)
-		return ObserveScopeSummaryResult{Summary: summary}, err
+		result := ObserveScopeSummaryResult{Summary: summary}
+		if req.BeforeAttach {
+			// A fixture holds no cluster to read: say so rather than leave
+			// the section out silently.
+			result.Warnings = append(result.Warnings, "before-attach report unavailable: fixture input has no cluster to read")
+		}
+		return result, err
 	}
 
 	if req.ClusterBinding == nil {
@@ -130,6 +140,15 @@ func observeScopeSummaryFromCluster(ctx context.Context, namespace, namespaceLab
 			// The existing three-way command has no explicit Kubernetes selector.
 			result.Summary.ThreeWay = nil
 		}
+	}
+	if req.BeforeAttach && (req.ClusterBinding == nil || req.ClusterBinding.config == nil) {
+		result.Warnings = append(result.Warnings, "before-attach report unavailable: no Kubernetes config was bound")
+	} else if req.BeforeAttach {
+		attach, attachErr := collectDoctorAttachReport(ctx, req.ClusterBinding.config)
+		if attachErr != nil {
+			result.Warnings = append(result.Warnings, fmt.Sprintf("before-attach report unavailable: %v", attachErr))
+		}
+		result.Summary.Attach = attach
 	}
 	rollouts, rolloutsErr := collectDoctorRolloutsWithBinding(ctx, namespace, topN, req.ClusterBinding)
 	if rolloutsErr != nil {

@@ -42,7 +42,7 @@ what is ready, and the work the trimmed plan gave to v2.16 moves to v2.17.
 
 | Moved to v2.17, then to v2.18 | Why |
 |---|---|
-| [#888] pre-attach report | not started |
+| [#888] pre-attach report | `doctor --before-attach`, checked against two real attaches in the attach lane; in review |
 | [#596] conformance across CLI, MCP and TUI | the envelope's conformance check exists for two commands; the rest is not started |
 | Deprecation notices for the other 3.0 removals, including `fleet outliers` | not written |
 | The envelope on `gitops status`, `explain`, `doctor` | needs the state words decided, and a size check first |

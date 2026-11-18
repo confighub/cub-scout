@@ -299,6 +299,10 @@ func checkScaffolds(t *testing.T, export, casesGlob string) {
 		// copy-based scaffolds rather than embedding the suite-wide export.
 		// Validate each through dedicated assertions; keep remaining cases on the
 		// generic embedded-export path below.
+		if filepath.Base(caseDir) == "before-attach-wired-cluster" {
+			checkFixtureOwnedExportScaffold(t, caseDir)
+			continue
+		}
 		if filepath.Base(caseDir) == "watch-identity-contract" {
 			checkWatchIdentityContractScaffold(t, caseDir)
 			continue
@@ -1069,6 +1073,47 @@ func checkWatchIdentityContractScaffold(t *testing.T, root string) {
 		got, err := os.ReadFile(filepath.Join(dir, "evidence", "watch-identity.json"))
 		if err != nil || !bytes.Equal(want, got) {
 			t.Fatalf("identity contract scaffold changed evidence: %v", err)
+		}
+	}
+}
+
+// checkFixtureOwnedExportScaffold checks a case that owns its export in
+// fixtures/cluster, in any format (the before-attach case's are the attach
+// lane's JSON and text recordings, #888): its scaffold must write every file
+// there exactly, and nothing else.
+func checkFixtureOwnedExportScaffold(t *testing.T, root string) {
+	t.Helper()
+	raw, err := os.ReadFile(filepath.Join(root, "case.yaml"))
+	if err != nil || !strings.Contains(string(raw), "FIXTURE-OWNED-SCAFFOLD") {
+		t.Fatalf("%s: fixture-owned declaration: %v", root, err)
+	}
+	export := filepath.Join(root, "fixtures", "cluster")
+	want, err := os.ReadDir(export)
+	if err != nil || len(want) == 0 {
+		t.Fatalf("%s: no export: %v", root, err)
+	}
+	scaffold, err := filepath.Abs(filepath.Join(root, "scaffold.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	work := t.TempDir()
+	cmd := exec.Command("bash", scaffold)
+	cmd.Dir = work
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("%s: scaffold: %v\n%s", root, err, out)
+	}
+	got, err := os.ReadDir(filepath.Join(work, "cluster"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != len(want) {
+		t.Fatalf("%s: scaffold wrote %d files, the export has %d", root, len(got), len(want))
+	}
+	for _, entry := range want {
+		expected, _ := os.ReadFile(filepath.Join(export, entry.Name()))
+		actual, err := os.ReadFile(filepath.Join(work, "cluster", entry.Name()))
+		if err != nil || string(actual) != string(expected) {
+			t.Errorf("%s: scaffold does not write %s exactly: %v", root, entry.Name(), err)
 		}
 	}
 }

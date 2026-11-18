@@ -1,0 +1,5 @@
+argobot-flux-base
+scout-attach
+scout-attach-flux-apps
+argobot-scout-attach
+default

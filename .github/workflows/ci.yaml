@@ -19,9 +19,9 @@ on:
   workflow_dispatch:
     inputs:
       level:
-        description: 'Test level (smoke, unit, integration, gitops, demos, connected, live-status, windows, full)'
+        description: 'Test level (smoke, unit, integration, gitops, demos, connected, live-status, modelplane, attach, windows, full)'
         type: choice
-        options: [smoke, unit, integration, gitops, demos, connected, live-status, modelplane, windows, full]
+        options: [smoke, unit, integration, gitops, demos, connected, live-status, modelplane, attach, windows, full]
         required: false
         default: 'integration'
 
@@ -119,6 +119,9 @@ jobs:
 
       - name: Run offline doctor scan context proof guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/doctor-scan-context -p 'test_*.py' -v
+
+      - name: Run offline before-attach eval case checks
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/before-attach-wired-cluster -p 'test_*.py' -v
 
       - name: Run Trace MCP recorded evidence guards
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evals/trace-context-binding -p 'test_*.py' -v
@@ -319,7 +322,7 @@ jobs:
     needs: unit
     # Manual smoke/unit runs must not create a cluster. Unknown manual levels
     # also fail closed to offline jobs. Normal PR/main runs retain live CI.
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.level == 'integration' || github.event.inputs.level == 'gitops' || github.event.inputs.level == 'demos' || github.event.inputs.level == 'connected' || github.event.inputs.level == 'live-status' || github.event.inputs.level == 'modelplane' || github.event.inputs.level == 'full'
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.level == 'integration' || github.event.inputs.level == 'gitops' || github.event.inputs.level == 'demos' || github.event.inputs.level == 'connected' || github.event.inputs.level == 'live-status' || github.event.inputs.level == 'modelplane' || github.event.inputs.level == 'attach' || github.event.inputs.level == 'full'
     steps:
       - uses: actions/checkout@v6
 
@@ -811,6 +814,67 @@ jobs:
         with:
           name: modelplane-lane
           path: ${{ runner.temp }}/modelplane-lane/
+
+  # ==========================================================================
+  # Attach (#888): a brownfield cluster recorded before and after a real
+  # `cub cluster attach`, manual trigger
+  # ==========================================================================
+  attach:
+    name: Attach Recording (${{ matrix.controller }})
+    runs-on: ubuntu-26.04
+    needs: integration
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.level == 'attach'
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        controller: [argo, flux]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download binary
+        uses: actions/download-artifact@v8
+        with:
+          name: cub-scout-linux
+
+      - name: Make binary executable
+        run: chmod +x cub-scout
+
+      # Two kind clusters, as in the live lane.
+      - name: Raise inotify limits for two kind clusters
+        run: sudo sysctl -w fs.inotify.max_user_instances=1280 fs.inotify.max_user_watches=655360
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+        with:
+          version: v0.31.0
+          node_image: kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f
+          cluster_name: brownfield
+
+      - name: Install pinned GitOps controllers
+        run: bash scripts/ci/setup-gitops-controllers.sh
+
+      - name: Provision authenticated disposable ConfigHub
+        run: bash scripts/ci/setup-connected-server.sh "$RUNNER_TEMP/scout-connected"
+
+      - name: Record the cluster before and after attach
+        run: bash scripts/ci/attach-lane.sh "$RUNNER_TEMP/scout-connected" "$RUNNER_TEMP/attach-lane" "$PWD/cub-scout" brownfield '${{ matrix.controller }}'
+
+      - name: Retain what was read
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: attach-lane-${{ matrix.controller }}
+          path: |
+            ${{ runner.temp }}/attach-lane/
+            ${{ runner.temp }}/scout-connected/version.txt
+
+      - name: Remove the disposable server
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/scout-connected/owns-server-cluster" ]]; then
+            kind delete cluster --name scout-ci-connected-server
+          fi
 
   # ==========================================================================
   # Full test (manual trigger only)

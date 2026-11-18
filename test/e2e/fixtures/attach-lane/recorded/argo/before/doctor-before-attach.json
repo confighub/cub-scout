@@ -1,0 +1,125 @@
+{
+  "cluster": "default",
+  "kubernetesContext": "kind-brownfield",
+  "namespace": "all",
+  "resources": {
+    "total": 67
+  },
+  "ownership": {
+    "flux": 2,
+    "argocd": 2,
+    "sveltos": 0,
+    "modelplane": 0,
+    "crossplane": 0,
+    "kro": 0,
+    "helm": 0,
+    "terraform": 0,
+    "confighub": 0,
+    "native": 63,
+    "other": 0,
+    "unmanaged": 63
+  },
+  "health": {
+    "healthy": 67,
+    "warning": 0,
+    "error": 0
+  },
+  "risks": {
+    "total": 0,
+    "critical": 0,
+    "warning": 0,
+    "info": 0
+  },
+  "drift": {
+    "resources": 0
+  },
+  "rollouts": {
+    "total": 18,
+    "pass": 18,
+    "watch": 0,
+    "block": 0,
+    "inconclusive": 0
+  },
+  "threeWay": {
+    "available": true,
+    "hint": "cub-scout compare three-way --scope cluster"
+  },
+  "nextSteps": [
+    {
+      "actionType": "read-only",
+      "reason": "63 resources without GitOps ownership - review for governance gaps (no context-safe command is available for this selection)"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "Preview how to bring unmanaged resources under GitOps control (no context-safe command is available for this selection)"
+    },
+    {
+      "actionType": "read-only",
+      "reason": "Run the guided walkthrough to explore your cluster step-by-step (no context-safe command is available for this selection)"
+    }
+  ],
+  "attach": {
+    "basis": "Read from this cluster, by name; Secrets by metadata only. What attach does with each finding was recorded on a real cluster with cub v0.11.4, Argo CD v3.6.1 and Flux v2.10.0 (basis \"recorded\"), or read from cub's source and not run (basis \"cub-source\").",
+    "controllers": [
+      {
+        "controller": "argo",
+        "installed": "present",
+        "installedEvidence": "Deployment argocd/argocd-server",
+        "credentials": "absent",
+        "credentialsSecret": "argocd/confighub-oci-creds",
+        "attachWould": "use-existing",
+        "why": "Deployment argocd/argocd-server exists; attach leaves the installed controller as found",
+        "basis": "recorded",
+        "notes": [
+          {
+            "text": "argocd-cm does not set resource.customizations.ignoreDifferences.argoproj.io_Application; attach patches argocd-cm to set it",
+            "basis": "recorded"
+          }
+        ]
+      },
+      {
+        "controller": "flux",
+        "installed": "present",
+        "installedEvidence": "Deployment flux-system/kustomize-controller",
+        "credentials": "absent",
+        "credentialsSecret": "flux-system/confighub-oci",
+        "attachWould": "use-existing",
+        "why": "Deployment flux-system/kustomize-controller exists; attach leaves the installed controller as found",
+        "basis": "recorded"
+      },
+      {
+        "controller": "sveltos",
+        "installed": "absent",
+        "installedEvidence": "Deployment projectsveltos/addon-controller",
+        "credentials": "absent",
+        "credentialsSecret": "projectsveltos/confighub-gateway",
+        "attachWould": "install",
+        "why": "Deployment projectsveltos/addon-controller does not exist; attach installs the controller, or fails with --no-install",
+        "basis": "cub-source"
+      }
+    ],
+    "credentialsFor": [],
+    "argobot": {
+      "namespace": "absent",
+      "secret": "absent"
+    },
+    "deployers": {
+      "counts": {
+        "Application": 1,
+        "ApplicationSet": 0,
+        "HelmRelease": 0,
+        "Kustomization": 1
+      },
+      "notServed": [
+        "ClusterProfile"
+      ],
+      "note": "Attach leaves these as it finds them: in the recordings, with --prune, an Application and a Kustomization that were here before were unchanged after attach. --prune governs what ConfigHub deploys later, not these."
+    },
+    "unknowns": [
+      "whether ConfigHub already has Spaces of the names attach would create; that is in ConfigHub, not the cluster",
+      "whether the cluster can reach ConfigHub's registry; attach checks this itself",
+      "whether these credentials have cluster-admin; attach checks this itself (its source runs `kubectl auth can-i create clusterroles`), and cub-scout does not",
+      "whether what you later deploy through ConfigHub overlaps these deployers' objects"
+    ]
+  }
+}

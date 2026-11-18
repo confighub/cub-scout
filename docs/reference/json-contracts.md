@@ -859,6 +859,29 @@ evidence could be collected.
 `currentChanges[]` contains non-`PASS` rollout decisions, sorted by severity
 (`BLOCK`, then `INCONCLUSIVE`, then `WATCH`) and bounded by `doctor --top`.
 
+### DoctorSummary attach additions (doctor --before-attach --format json)
+
+With `--before-attach`, `doctor --format json` adds `attach`
+([#888](https://github.com/confighub/cub-scout/issues/888)). It is
+cluster-wide whatever `--namespace` says.
+
+| Field | Meaning |
+|-------|---------|
+| `attach.basis` | What the rules rest on |
+| `attach.controllers[]` | One entry each for `argo`, `flux` and `sveltos` |
+| `.controller` | The `--controller` value it describes |
+| `.installed` | `present`, `absent` or `unknown`, from `.installedEvidence` (a Deployment) |
+| `.credentials` | `present`, `absent` or `unknown`, for `.credentialsSecret`, read by metadata only |
+| `.attachWould` | `refuse`, `use-existing`, `install` or `unknown` (see [commands](commands.md#before-cub-cluster-attach)) |
+| `.why` | One sentence naming the object it rests on |
+| `.basis` | `recorded` (seen in the attach lane) or `cub-source` (read, not run) |
+| `.earlierObjects[]` | `kind`, `namespace`, `name`, `source`: objects of the kinds an attachment applies, already here. The registry is not confirmed as ConfigHub's |
+| `.notes[]` | `text` and `basis` (`recorded`, `cub-source`, or `read` for a note about cub-scout's own read): argocd-cm, unread lists, objects without credentials |
+| `attach.credentialsFor` | Controllers whose earlier-attachment credentials Secret is present; empty when none. Not proof the attachment is in use: a Secret can outlive it |
+| `attach.argobot` | `namespace` and `secret` (`argobot/argobot-secrets`): `present`, `absent` or `unknown` |
+| `attach.deployers.counts` | Applications, ApplicationSets, Kustomizations, HelmReleases and ClusterProfiles here; a kind whose list failed is in `unread`, and one not served at the version read in `notServed`; neither is counted as zero |
+| `attach.unknowns` | What the cluster alone cannot tell |
+
 ### DoctorSummary delivery additions (doctor --with-confighub --format json)
 
 When bounded ConfigHub delivery evidence is requested, `doctor --format json`
