@@ -585,7 +585,7 @@ func collectReceiptDeliveryEvidence(ctx context.Context, live *unstructured.Unst
 				MaxItems:   opts.MaxItems,
 			},
 			Notes: []string{
-				"ConfigHub delivery evidence was requested, but release/unit-event/live-status reads require an explicit object or flag space.",
+				"ConfigHub delivery evidence was requested, but release and live-status reads require an explicit object or flag space.",
 			},
 		}
 		consumers, omissions := collectGitOpsEventConsumerEvidence(ctx, dynClient, opts.Namespace)

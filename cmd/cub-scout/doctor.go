@@ -153,7 +153,9 @@ type DoctorRolloutSummary struct {
 }
 
 // DoctorDeliverySummary is a scan-friendly rollup of the optional ConfigHub
-// delivery evidence attached to doctor.
+// delivery evidence attached to doctor. RecentUnitEvents is always zero:
+// ConfigHub no longer records unit events, and the field stays in the JSON
+// contract, which never removes one.
 type DoctorDeliverySummary struct {
 	Scope            GitOpsDeliveryEvidenceScope      `json:"scope"`
 	LiveStatus       DoctorLiveStatusSummary          `json:"liveStatus"`
@@ -691,7 +693,6 @@ func buildDoctorDeliverySummary(evidence *GitOpsDeliveryEvidence) *DoctorDeliver
 		summary.LiveStatus.Total = len(evidence.ConfigHub.LiveStatuses)
 		// Count the rows in the time window, not the rows kept after trimming.
 		summary.RecentReleases = max(evidence.ConfigHub.ReleasesTotal, len(evidence.ConfigHub.Releases))
-		summary.RecentUnitEvents = max(evidence.ConfigHub.UnitEventsTotal, len(evidence.ConfigHub.UnitEvents))
 		for _, status := range evidence.ConfigHub.LiveStatuses {
 			countDoctorVerdict(&summary.LiveStatus.Delivery, status.DeliveryVerdict)
 			countDoctorVerdict(&summary.LiveStatus.ApplicationHealth, status.ApplicationHealthVerdict)
@@ -782,34 +783,6 @@ func buildDoctorDeliveryIssues(evidence *GitOpsDeliveryEvidence) []DoctorIssue {
 				}
 			}
 		}
-		// Scan every event in the window, not only the rows kept for display: the
-		// count above covers the window, and a failure among the older rows
-		// would otherwise be counted but never reported.
-		//
-		// Rows are newest first. Only the latest event for a unit and action is
-		// judged: a failed Apply followed by a completed Apply of the same unit
-		// is history, not a current issue, and stays visible in map activity.
-		judged := map[string]bool{}
-		for _, event := range evidence.ConfigHub.unitEventsInWindow() {
-			if key := doctorUnitEventKey(event); key != "" {
-				if judged[key] {
-					continue
-				}
-				judged[key] = true
-			}
-			if doctorUnitEventFailed(event) {
-				issues = append(issues, DoctorIssue{
-					Severity: "CRITICAL",
-					Resource: "ConfigHubUnitEvent/" + firstNonEmpty(event.EventID, event.Action, "unknown"),
-					Message: fmt.Sprintf("unit event %s reports failure for unit=%s result=%s status=%s",
-						firstNonEmpty(event.Action, "-"),
-						firstNonEmpty(event.Unit, event.UnitID, "-"),
-						firstNonEmpty(event.Result, "-"),
-						firstNonEmpty(event.Status, "-"),
-					),
-				})
-			}
-		}
 	}
 	for _, consumer := range evidence.EventConsumers {
 		if consumer.Ready {
@@ -836,28 +809,6 @@ func doctorSeverityForVerdict(verdict agent.ReceiptVerdict) string {
 	default:
 		return ""
 	}
-}
-
-// doctorUnitEventKey identifies the unit and action an event belongs to, or ""
-// when the event names no unit and so cannot be compared with a later one.
-func doctorUnitEventKey(event ConfigHubUnitEventEvidence) string {
-	unit := strings.TrimSpace(event.UnitID)
-	if unit == "" {
-		slug := strings.TrimSpace(event.Unit)
-		if slug == "" {
-			return ""
-		}
-		unit = firstNonEmpty(strings.TrimSpace(event.SpaceID), strings.TrimSpace(event.Space)) + "/" + slug
-	}
-	return strings.ToLower(unit + "|" + strings.TrimSpace(event.Action))
-}
-
-// doctorUnitEventFailed uses the same classifier as the activity timeline, which
-// reads Result and Status together. It used to read Result alone unless Result
-// was empty. ConfigHub sets Result to "None" on an ordinary Apply and records
-// the failure in Status, so a failed Apply was never promoted to an issue.
-func doctorUnitEventFailed(event ConfigHubUnitEventEvidence) bool {
-	return mapActivityResultFromUnitEvent(event) == "failed"
 }
 
 func rolloutVerdictRank(verdict agent.ReceiptVerdict) int {
@@ -1129,11 +1080,8 @@ func renderDoctorASCII(summary DoctorSummary, mode PresentationMode, explicitMod
 				delivery.EventConsumers.Total,
 			)
 		}
-		if delivery.RecentReleases > 0 || delivery.RecentUnitEvents > 0 {
-			fmt.Fprintf(&b, "  Recent evidence: %d releases, %d unit events\n",
-				delivery.RecentReleases,
-				delivery.RecentUnitEvents,
-			)
+		if delivery.RecentReleases > 0 {
+			fmt.Fprintf(&b, "  Recent evidence: %d releases\n", delivery.RecentReleases)
 		}
 		if len(delivery.Omissions) > 0 {
 			fmt.Fprintf(&b, "  Omissions: %d\n", len(delivery.Omissions))

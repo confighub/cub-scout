@@ -107,7 +107,7 @@ func attachTraceConfigHubDeliveryEvidenceForSession(ctx context.Context, result 
 				MaxItems:   opts.MaxItems,
 			},
 			Notes: []string{
-				"ConfigHub delivery evidence was requested, but release/unit-event/live-status reads require an explicit object or flag space.",
+				"ConfigHub delivery evidence was requested, but release and live-status reads require an explicit object or flag space.",
 			},
 		}
 		consumers, omissions := collectGitOpsEventConsumerEvidence(ctx, dynClient, opts.Namespace)
@@ -165,7 +165,7 @@ func traceGitOpsDeliveryOptions(flags traceConfigHubDeliveryFlags, correlation a
 		omissions = append(omissions, agent.TraceDeliveryOmission{
 			Layer:  "confighub.scope",
 			Reason: "resource has no explicit ConfigHub space label, ConfigHub OCI space, or --confighub-space flag",
-			Impact: "release, unit-event, and live-status reads are skipped to avoid broad connected queries",
+			Impact: "release and live-status reads are skipped to avoid broad connected queries",
 		})
 	}
 	return opts, omissions
@@ -226,20 +226,6 @@ func correlateTraceDeliveryEvidence(
 				out.Notes = append(out.Notes, "Release rows are joined to this resource by exact space and target. A row listed here is scope evidence only; it does not show that the release contains this resource's unit or that this resource executed it.")
 			}
 		}
-
-		events, omission := matchTraceUnitEvents(correlation, raw.ConfigHub.UnitEvents)
-		if omission.Layer != "" {
-			out.Omissions = append(out.Omissions, omission)
-		}
-		if total := len(events); raw.Scope.MaxItems > 0 && total > raw.Scope.MaxItems {
-			events = events[:raw.Scope.MaxItems]
-			out.Omissions = append(out.Omissions, agent.TraceDeliveryOmission{
-				Layer:  "confighub.unitEvents",
-				Reason: fmt.Sprintf("trimmed %d matching unit-event rows to maxItems=%d", total, raw.Scope.MaxItems),
-				Impact: "older matching rows are omitted from output",
-			})
-		}
-		out.UnitEvents = events
 	}
 
 	if result != nil && result.ConfigHub == nil && !traceDeliveryHasObjectJoinIdentity(correlation) {
@@ -667,55 +653,6 @@ func traceReleaseEvidence(release ConfigHubReleaseEvidence, matchedBy []string) 
 	}
 }
 
-func matchTraceUnitEvents(correlation agent.TraceDeliveryCorrelation, events []ConfigHubUnitEventEvidence) ([]agent.TraceDeliveryUnitEvent, agent.TraceDeliveryOmission) {
-	out := []agent.TraceDeliveryUnitEvent{}
-	for _, event := range events {
-		var matchedBy []string
-		switch {
-		case correlation.UnitID != "" && strings.TrimSpace(event.UnitID) != "":
-			// Both sides carry a unit ID, so the ID decides. Unit events carried
-			// no identity until their flat fields were read; now that they do, a
-			// slug match must not attach an event whose unit ID says otherwise.
-			if !strings.EqualFold(event.UnitID, correlation.UnitID) {
-				continue
-			}
-			matchedBy = append(matchedBy, "unitEvent.unitId==confighub.unitId")
-		case correlation.UnitSlug != "" && event.Unit == correlation.UnitSlug:
-			spaceMatch, spaceBy := traceSpaceMatches(correlation, event.Space, event.SpaceID)
-			if !spaceMatch {
-				continue
-			}
-			matchedBy = append(matchedBy, "unitEvent.unit==confighub.unitSlug", spaceBy)
-		default:
-			continue
-		}
-		out = append(out, agent.TraceDeliveryUnitEvent{
-			EventID:      event.EventID,
-			Action:       event.Action,
-			Result:       event.Result,
-			Status:       event.Status,
-			Message:      event.Message,
-			Unit:         event.Unit,
-			UnitID:       event.UnitID,
-			Space:        event.Space,
-			SpaceID:      event.SpaceID,
-			Target:       event.Target,
-			TargetID:     event.TargetID,
-			CreatedAt:    event.CreatedAt,
-			TerminatedAt: event.TerminatedAt,
-			MatchedBy:    matchedBy,
-		})
-	}
-	if len(out) > 0 {
-		return out, agent.TraceDeliveryOmission{}
-	}
-	return nil, agent.TraceDeliveryOmission{
-		Layer:  "confighub.unitEvents",
-		Reason: "no unit-event row matched the traced resource by exact unit ID or unit slug plus space",
-		Impact: "recent unit-level event evidence is omitted for this object",
-	}
-}
-
 func traceSpaceMatches(correlation agent.TraceDeliveryCorrelation, space, spaceID string) (bool, string) {
 	space = strings.TrimSpace(space)
 	spaceID = strings.TrimSpace(spaceID)
@@ -829,9 +766,6 @@ func formatTraceDeliveryEvidenceLine(evidence *agent.TraceDeliveryEvidence) stri
 			parts = append(parts, fmt.Sprintf("releases=%d %s", len(evidence.Releases), tracePublishedSummary(evidence.Releases)))
 		}
 	}
-	if len(evidence.UnitEvents) > 0 {
-		parts = append(parts, fmt.Sprintf("unitEvents=%d", len(evidence.UnitEvents)))
-	}
 	if len(parts) == 1 {
 		parts = append(parts, "no exact object-level match")
 	}
@@ -927,17 +861,6 @@ func renderTraceDeliveryEvidenceHumanTo(w io.Writer, evidence *agent.TraceDelive
 			)
 		}
 	}
-	if len(evidence.UnitEvents) > 0 {
-		fmt.Fprintf(w, "  %sRecent unit events:%s\n", colorDim, colorReset)
-		for _, event := range evidence.UnitEvents {
-			fmt.Fprintf(w, "    - %s unit=%s %s at=%s\n",
-				firstNonEmpty(event.Action, "-"),
-				firstNonEmpty(event.Unit, event.UnitID, "-"),
-				configHubUnitEventOutcome(event.Result, event.Status),
-				firstNonEmpty(event.CreatedAt, "-"),
-			)
-		}
-	}
 	if len(evidence.EventConsumers) > 0 {
 		fmt.Fprintf(w, "  %sEvent consumers:%s\n", colorDim, colorReset)
 		for _, consumer := range evidence.EventConsumers {
@@ -989,17 +912,6 @@ func renderTraceDeliveryEvidenceMarkdown(evidence *agent.TraceDeliveryEvidence) 
 				firstNonEmpty(release.Target, release.TargetID, "-"),
 				configHubPublishedText(release.Published), field, firstNonEmpty(digest, "-"),
 				firstNonEmpty(release.CreatedAt, "-"))
-		}
-	}
-	if len(evidence.UnitEvents) > 0 {
-		fmt.Printf("  Recent unit events:\n")
-		for _, event := range evidence.UnitEvents {
-			fmt.Printf("    - %s unit=%s %s at=%s\n",
-				firstNonEmpty(event.Action, "-"),
-				firstNonEmpty(event.Unit, event.UnitID, "-"),
-				configHubUnitEventOutcome(event.Result, event.Status),
-				firstNonEmpty(event.CreatedAt, "-"),
-			)
 		}
 	}
 	if len(evidence.Omissions) > 0 {

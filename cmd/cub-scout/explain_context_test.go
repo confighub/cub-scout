@@ -295,7 +295,7 @@ func TestEnrichedExplainConnectedSpaceAndPartialComparison(t *testing.T) {
 	summary, err := observeExplainWithSession(context.Background(), s, "Deployment", "api", "team-b", explainObservationOptions{Delivery: traceConfigHubDeliveryFlags{Enabled: true, Space: "separate-space", Since: "24h", StaleAfter: "15m"}})
 	require.NoError(t, err)
 	require.True(t, compared)
-	require.Equal(t, 3, cubReads)
+	require.Equal(t, 2, cubReads, "the space and its releases")
 	require.NotNil(t, summary.DeliveryEvidence)
 	require.Equal(t, "separate-space", summary.DeliveryEvidence.Scope.Space)
 	require.Nil(t, summary.ThreeWay, "partial operands cannot establish agreement or a disagreement classification")

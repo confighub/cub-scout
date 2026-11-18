@@ -278,7 +278,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						},
 						"with_confighub": map[string]interface{}{
 							"type":        "boolean",
-							"description": "Add bounded ConfigHub release, unit-event, live-status and event-consumer evidence. Needs cub auth.",
+							"description": "Add bounded ConfigHub release, live-status and event-consumer evidence. Needs cub auth.",
 						},
 						"confighub_space": map[string]interface{}{
 							"type":        "string",
@@ -664,7 +664,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						},
 						"with_confighub": map[string]interface{}{
 							"type":        "boolean",
-							"description": "Add bounded ConfigHub release, unit-event, live-status and event-consumer evidence. Needs cub auth.",
+							"description": "Add bounded ConfigHub release, live-status and event-consumer evidence. Needs cub auth.",
 						},
 						"confighub_space": map[string]interface{}{
 							"type":        "string",
@@ -1262,7 +1262,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 		tools["confighub_unit_events"] = mcpTool{
 			Descriptor: mcpToolDescriptor{
 				Name:        "confighub_unit_events",
-				Description: "Connected-only bounded ConfigHub UnitEvent reader (cub unit-event list -o json). Use when the user asks what event or source action happened for a known unit/space, whether an event was successful, or what event evidence supports a delivery receipt. Space is REQUIRED and unit is optional; add a where filter for a time window. DO NOT use as a cursor-consuming event consumer or a live watcher.",
+				Description: "Connected-only and retired: ConfigHub no longer records unit events, so this always returns an empty list. Kept so existing callers do not break. For what was delivered and when, use confighub_releases; for current delivery state, confighub_live_status.",
 				Annotations: readOnly,
 				InputSchema: map[string]interface{}{
 					"type": "object",
@@ -1289,17 +1289,12 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				if space == "" {
 					return nil, fmt.Errorf("missing required argument: space")
 				}
-				var unitArg []string
-				if unit := argString(arguments, "unit"); unit != "" {
-					unitArg = []string{unit}
-				}
-				args := append(withConfigHubSpace(append([]string{"unit-event", "list"}, unitArg...), space), "-o", "json")
-				if where := argString(arguments, "where"); where != "" {
-					args = append(args, "--where", where)
-				}
-				return args, nil
+				return nil, nil
 			},
-			Runner: connectedRunner,
+			// ConfigHub has no unit events to read, so cub is not run. The
+			// answer is what `cub unit-event list -o json` printed for a space
+			// with none.
+			Runner: func(context.Context, []string) (string, error) { return "[]", nil },
 		}
 		tools["confighub_units"] = mcpTool{
 			Descriptor: mcpToolDescriptor{

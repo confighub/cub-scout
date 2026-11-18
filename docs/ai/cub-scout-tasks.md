@@ -219,7 +219,9 @@ Connected mode adds read-only ConfigHub query tools:
 `compare_three_way`, `compare_source_truth`, `confighub_changesets`,
 `confighub_k8s_resources`, `confighub_k8s_types`, `confighub_live_status`,
 `confighub_releases`, `confighub_resources`, `confighub_unit_events`,
-`confighub_units`, and `confighub_unit_get`.
+`confighub_units`, and `confighub_unit_get`. `confighub_unit_events` is
+retired: ConfigHub no longer records unit events, so it always returns `[]`;
+use `confighub_releases` for what was delivered and when.
 
 When operating via MCP, prefer the structured tool calls over shell
 invocations — the MCP layer handles JSON parsing and schema validation.

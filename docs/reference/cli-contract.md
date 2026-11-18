@@ -122,12 +122,13 @@ cub-scout doctor [flags]
 - `--presentation` affects ASCII framing only.
 - `--hint-mode` affects recommendation ranking only.
 - Omitting `--presentation` preserves the legacy/default text render path.
-- ConfigHub release and unit-event reads are bounded by `--confighub-since` and
-  scoped to `--confighub-space`, else `CUB_SPACE`. cub (v0.5.2 and later) has no
-  default space. The release and unit-event reads pass that space as `--space`;
-  the live-status read selects it with `space list --where`.
-- `doctor` may promote concrete failed/stale delivery feedback, failed unit
-  events, and unhealthy observed event consumers into `topIssues`. Missing or
+- ConfigHub release reads are bounded by `--confighub-since` and scoped to
+  `--confighub-space`, else `CUB_SPACE`. cub (v0.5.2 and later) has no default
+  space. The release read passes that space as `--space`; the live-status read
+  selects it with `space list --where`. Unit events are not read: ConfigHub no
+  longer records them, and `delivery.recentUnitEvents` is always `0`.
+- `doctor` may promote concrete failed/stale delivery feedback and unhealthy
+  observed event consumers into `topIssues`. Missing or
   inaccessible evidence remains an omission, not a failure assertion.
 
 ---
@@ -171,7 +172,7 @@ cub-scout explain <kind> <name> [flags]
 - `--hint-mode` affects next-step recommendation ranking only.
 - Omitting `--presentation` preserves the legacy/default text/Markdown render path.
 - `deliveryEvidence` appears only with `--with-confighub`.
-- Connected release, unit-event, and live-status reads are skipped unless the
+- Connected release and live-status reads are skipped unless the
   resource exposes a ConfigHub space, the trace chain exposes a ConfigHub OCI
   space, or `--confighub-space` is supplied.
 - `deliveryEvidence` is supporting evidence only. It does not replace Argo,
@@ -431,6 +432,7 @@ cub-scout mcp serve --recording objects.yaml
 - `confighub_k8s_types` and `confighub_k8s_resources` read ConfigHub Resource-backed intended configuration through `cub k8s types/get`; they do not read live cluster state, and they require an explicit `space` or `target` scope.
 - `confighub_resources` reads the ConfigHub Resource entity through `cub resource list`; it does not read live cluster state, and it requires an explicit `space`.
 - `confighub_live_status`, `confighub_releases`, and `confighub_unit_events` require explicit space scope. Use `*` only for an intentional all-spaces read.
+- `confighub_unit_events` is retired: ConfigHub no longer records unit events, so it reads nothing and always returns `[]`. It stays so existing callers do not break.
 - `confighub_changeorder_get` requires an exact `changeorder` and exact `space`, refuses `*` and environment fallback, and returns reported declarations with evaluated outcomes unknown.
 - `confighub_attestations` requires exact `space_id`, unit slug and positive revision. Its two bounded reads expose direct revision claims only. Missing references and missing `Attestations` fields are omissions, never proven absence. Observed revocation is `revoked: true`; an omitted `revoked` means unknown. It does not evaluate workflow approval or change runtime verdicts.
 - `confighub_units` and `confighub_changesets` require `space` (`*` only for a deliberate all-spaces read). `confighub_unit_get` requires `space` unless `unit` is `<space>/<slug>` or a unit ID, and refuses `*`, because one unit lives in one space. The server's `CUB_SPACE` is not consulted: an agent cannot see the environment of the server it calls, and cub (v0.5.2 and later) has no default space.
@@ -531,7 +533,9 @@ cub-scout mcp serve --recording objects.yaml
   - `space` (required string)
   - `unit` (optional string)
   - `where` (optional string)
-- Backed by `cub unit-event list [unit] --space <space> -o json`
+- Retired: runs no `cub` command and always returns `[]`, because ConfigHub no
+  longer records unit events. The parameters are still accepted, and `space`
+  is still required.
 
 ---
 
@@ -844,13 +848,15 @@ Stable JSON fields per event:
 ConfigHub activity rows use these `source` values:
 - `confighub.liveStatus`
 - `confighub.release`
-- `confighub.unitEvent`
 - `confighub.eventConsumer`
 - `confighub.omission`
 
+`confighub.unitEvent` rows are no longer produced: ConfigHub no longer records
+unit events.
+
 `deliveryEvidence` contains row-specific ConfigHub details and follows the
 same bounded read rules as `gitops status --with-confighub`: `CUB_SPACE` when
-`--confighub-space` is not given, explicit `--confighub-space '*'` for all spaces, release/unit-event
+`--confighub-space` is not given, explicit `--confighub-space '*'` for all spaces, release
 queries bounded by `--confighub-since`, stale live-status handling controlled
 by `--confighub-stale-after`, and omissions instead of inferred status.
 `argocd.application` rows may receive live-status `deliveryEvidence` only when
@@ -954,7 +960,6 @@ Object-level matches require explicit identifiers:
 - live-status writeback: exact space plus Argo Application name, or exact space
   plus ConfigHub unit slug
 - release rows: exact space plus target ID or target slug
-- unit-event rows: exact unit ID, or exact unit slug plus space
 
 When these joins cannot be proven, the command records structured omissions
 instead of claiming deployed/synced/healthy state.
@@ -1183,7 +1188,7 @@ cub-scout gitops status [flags]
 | `-n, --namespace` | string | all | Namespace to scan |
 | `--format` | string | ascii | Output format: `ascii`, `json`, `md` |
 | `--json` | bool | false | JSON output (shorthand for `--format json`) |
-| `--with-confighub` | bool | false | Include bounded ConfigHub release, unit-event, and live-status evidence |
+| `--with-confighub` | bool | false | Include bounded ConfigHub release and live-status evidence |
 | `--confighub-space` | string | `CUB_SPACE` | ConfigHub space for connected evidence; `*` is allowed only as an explicit all-spaces read. With no space from any source the reads are skipped and reported as a `confighub.scope` omission |
 | `--confighub-since` | string | 24h | Lookback window for release/event evidence |
 | `--confighub-stale-after` | string | 15m | Treat live-status observations older than this as stale |
@@ -1261,8 +1266,7 @@ NEXT STEPS
     },
     "configHub": {
       "liveStatuses": [...],
-      "releases": [...],
-      "unitEvents": [...]
+      "releases": [...]
     },
     "eventConsumers": [...],
     "omissions": [...]

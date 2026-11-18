@@ -129,7 +129,6 @@ var readOnlyOtherGrants = map[string]bool{
 	"cub space list *":                    true,
 	"cub unit get *":                      true,
 	"cub unit list *":                     true,
-	"cub unit-event list *":               true,
 	"cub view get *":                      true,
 	"cub view list":                       true,
 	"cub view list *":                     true,

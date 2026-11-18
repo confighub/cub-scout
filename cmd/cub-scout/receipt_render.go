@@ -126,9 +126,6 @@ func renderReceiptASCII(stmt agent.Statement) string {
 		if len(delivery.Releases) > 0 {
 			fmt.Fprintf(&b, "  releases:    %d\n", len(delivery.Releases))
 		}
-		if len(delivery.UnitEvents) > 0 {
-			fmt.Fprintf(&b, "  unitEvents:  %d\n", len(delivery.UnitEvents))
-		}
 		if len(delivery.EventConsumers) > 0 {
 			ready := 0
 			for _, consumer := range delivery.EventConsumers {

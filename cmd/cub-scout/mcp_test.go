@@ -149,7 +149,7 @@ func TestNewMCPGateway_ToolDescriptionsExpressChainBoundaries(t *testing.T) {
 		{name: "confighub_live_status", contains: []string{"Connected-only", "records it on each Release", "Space annotation older", "Space is REQUIRED", "best-effort reported evidence"}},
 		{name: "confighub_releases", contains: []string{"Connected-only", "Release history", "Space is REQUIRED", "pair with gitops status"}},
 		{name: "confighub_resources", contains: []string{"Connected-only", "Resource entity query", "fleet-wide Data predicates", "Space is REQUIRED", "extracted Resource rows, not live cluster state"}},
-		{name: "confighub_unit_events", contains: []string{"Connected-only", "UnitEvent reader", "Space is REQUIRED", "DO NOT use as a cursor-consuming event consumer"}},
+		{name: "confighub_unit_events", contains: []string{"Connected-only", "retired", "always returns an empty list", "confighub_releases"}},
 		{name: "confighub_units", contains: []string{"Connected-only", "cluster-to-ConfigHub lookup", "first useful ConfigHub object", "Load after doctor, map, explain, or trace", "then confighub_unit_get once the unit is known"}},
 		{name: "confighub_unit_get", contains: []string{"Load ONLY after", "last applied revision, or live revision", "before opening the GUI", "use confighub_units first", "compare_three_way first"}},
 	}
@@ -278,7 +278,7 @@ func TestNewMCPGateway_ToolDescriptionsCoverRepresentativeIntentEdges(t *testing
 		{
 			tool:     "confighub_unit_events",
 			intent:   "Which source event supports this delivery receipt?",
-			contains: []string{"what event", "source action", "time window"},
+			contains: []string{"no longer records unit events", "what was delivered and when", "confighub_releases"},
 		},
 	}
 
@@ -847,11 +847,13 @@ func TestMCPGatewayHandleRequest_ToolsCallConfigHubReleases(t *testing.T) {
 	}
 }
 
+// ConfigHub no longer records unit events. The tool stays for existing
+// callers, answers with the empty list cub printed for a space with none, and
+// never runs cub.
 func TestMCPGatewayHandleRequest_ToolsCallConfigHubUnitEvents(t *testing.T) {
-	var gotConnectedArgs []string
 	gateway := newMCPGatewayWithMode(nil, func(ctx context.Context, args []string) (string, error) {
-		gotConnectedArgs = append([]string(nil), args...)
-		return `[{"UnitEvent":{"Action":"ReleasePublished"}}]`, nil
+		t.Errorf("cub was run: %v", args)
+		return "", nil
 	}, true)
 
 	req := mcpRequest{
@@ -862,12 +864,27 @@ func TestMCPGatewayHandleRequest_ToolsCallConfigHubUnitEvents(t *testing.T) {
 	}
 
 	resp := gateway.handleRequest(context.Background(), req)
-	if resp == nil {
-		t.Fatal("response is nil")
+	if resp == nil || resp.Error != nil {
+		t.Fatalf("response = %+v, want a result", resp)
 	}
-	wantArgs := []string{"unit-event", "list", "payments-api", "--space", "prod", "-o", "json", "--where", "CreatedAt > '2026-09-10T00:00:00Z'"}
-	if !reflect.DeepEqual(gotConnectedArgs, wantArgs) {
-		t.Fatalf("connected args = %v, want %v", gotConnectedArgs, wantArgs)
+	var result struct {
+		IsError           bool `json:"isError"`
+		StructuredContent struct {
+			Data []interface{} `json:"data"`
+		} `json:"structuredContent"`
+	}
+	if err := marshalInto(resp.Result, &result); err != nil {
+		t.Fatalf("decode result: %v", err)
+	}
+	if result.IsError || result.StructuredContent.Data == nil || len(result.StructuredContent.Data) != 0 {
+		t.Fatalf("result = %+v, want an empty list", result)
+	}
+
+	// The space is still required, as before.
+	req.Params = json.RawMessage(`{"name":"confighub_unit_events","arguments":{}}`)
+	resp = gateway.handleRequest(context.Background(), req)
+	if err := marshalInto(resp.Result, &result); resp.Error == nil && (err != nil || !result.IsError) {
+		t.Fatalf("response without a space = %+v, want an error", resp)
 	}
 }
 

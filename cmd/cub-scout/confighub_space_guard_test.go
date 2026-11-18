@@ -20,7 +20,7 @@ import (
 // every space in the organization, which is a scope nobody chose.
 var spaceScopedCubEntities = map[string]bool{
 	"unit": true, "link": true, "target": true, "release": true,
-	"unit-event": true, "resource": true, "view": true, "filter": true,
+	"resource": true, "view": true, "filter": true,
 	"changeset": true, "revision": true, "trigger": true, "tag": true, "k8s": true,
 	"gitops": true, "function": true, "invocation": true, "mutation": true,
 }

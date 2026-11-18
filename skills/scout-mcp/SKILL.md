@@ -2,7 +2,7 @@
 name: scout-mcp
 description: 'Use when the user wants to expose cub-scout to an AI agent over MCP, wants a deterministic AI-ready snapshot of cluster context, or wants cub-scout running as a read-only event bot — the Integrate verb group. Natural phrasing: "start the MCP server", "expose cub-scout to Claude / Codex / my agent", "give me an AI-ready context pack of this cluster", "set up the MCP gateway", "what MCP tools does cub-scout expose?", "run cub-scout as a bot", "produce JSON context for an LLM to reason about this cluster". Load whenever intent is mcp / mcp-gateway / mcp-serve / context-pack / bot / agent-context / ai-snapshot / llm-context / model-context-protocol. Do NOT load for: actually running a non-integrate verb (those are scout-observe / scout-diagnose / scout-compare / scout-attribute / scout-ingest / scout-govern / scout-verify), or `cub` MCP integration (that''s a separate tool surface).'
 phase: cross-cutting
-allowed-tools: Bash(./cub-scout mcp *) Bash(cub-scout mcp *) Bash(cub scout mcp *) Bash(./cub-scout context-pack *) Bash(cub-scout context-pack *) Bash(cub scout context-pack *) Bash(./cub-scout version) Bash(cub-scout version) Bash(cub scout version) Bash(./cub-scout status) Bash(cub-scout status) Bash(cub scout status) Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl config current-context) Bash(cub auth status) Bash(cub space list *) Bash(cub unit get *) Bash(cub unit list *) Bash(cub link get *) Bash(cub link list *) Bash(cub view get *) Bash(cub view list *) Bash(cub unit-event list *) Bash(cub resource list *) Bash(cub release list *) Bash(cub changeset list *)
+allowed-tools: Bash(./cub-scout mcp *) Bash(cub-scout mcp *) Bash(cub scout mcp *) Bash(./cub-scout context-pack *) Bash(cub-scout context-pack *) Bash(cub scout context-pack *) Bash(./cub-scout version) Bash(cub-scout version) Bash(cub scout version) Bash(./cub-scout status) Bash(cub-scout status) Bash(cub scout status) Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl config current-context) Bash(cub auth status) Bash(cub space list *) Bash(cub unit get *) Bash(cub unit list *) Bash(cub link get *) Bash(cub link list *) Bash(cub view get *) Bash(cub view list *) Bash(cub resource list *) Bash(cub release list *) Bash(cub changeset list *)
 ---
 
 # scout-mcp
@@ -134,7 +134,7 @@ When the ConfigHub session check passes (`confighub_reads: true` in `cub-scout s
 - `confighub_live_status` — Space live-status writeback with freshness
 - `confighub_releases` — bounded ConfigHub Release history
 - `confighub_resources` — generic ConfigHub Resource entity query
-- `confighub_unit_events` — bounded ConfigHub UnitEvent history
+- `confighub_unit_events` — retired: always an empty list, since ConfigHub no longer records unit events; use `confighub_releases`
 - `confighub_units` — ConfigHub unit + fleet inventory
 - `confighub_unit_get` — exact ConfigHub unit details + applied/live revision
 
@@ -196,7 +196,7 @@ The closed list of MCP tools cub-scout registers. The set is verified by `cmd/cu
 | `confighub_live_status` | connected | `cub space list -o json --select Slug,SpaceID,Annotations,Labels [--where "Slug = '<space>'"]` (runs `cub`) |
 | `confighub_releases` | connected | `cub release list --space <space> -o json` (SDK; `space: "*"` runs `cub`) |
 | `confighub_resources` | connected | `cub resource list --space <space> -o json` (SDK; with `select`, `filter`, `view` or `raw_data` it runs `cub`) |
-| `confighub_unit_events` | connected | `cub unit-event list [unit] --space <space> -o json` (SDK; a Unit named by ID or as `<space>/<slug>` runs `cub`) |
+| `confighub_unit_events` | connected | nothing: always `[]`, since ConfigHub no longer records unit events (retired; kept for existing callers) |
 | `confighub_units` | connected | `cub unit list -o json --space <space>` (SDK) |
 | `confighub_unit_get` | connected | `cub unit get -o json <unit> --space <space>` (SDK; a Unit named by ID, or as `<space>/<slug>` together with `space`, runs `cub`) |
 

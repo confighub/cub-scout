@@ -146,7 +146,6 @@ func TestSDKReaderMatchesCubOnTheSessionAndAcrossSpaces(t *testing.T) {
 		"changeset":   func(f hubread.Filter) ([]byte, error) { return reader.ChangeSetListJSON(ctx, hubread.EverySpace, f) },
 		"link":        func(f hubread.Filter) ([]byte, error) { return reader.LinkListJSON(ctx, hubread.EverySpace, f) },
 		"resource":    func(f hubread.Filter) ([]byte, error) { return reader.ResourceListJSON(ctx, hubread.EverySpace, f) },
-		"unit-event":  func(f hubread.Filter) ([]byte, error) { return reader.UnitEventListJSON(ctx, hubread.EverySpace, f) },
 		"attestation": func(f hubread.Filter) ([]byte, error) { return reader.AttestationListJSON(ctx, hubread.EverySpace, f) },
 	}
 	sizes := map[string]int{}

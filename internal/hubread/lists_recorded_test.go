@@ -76,12 +76,4 @@ func TestReleaseAndResourceListsAreWhatCubPrintedOnTheRealServer(t *testing.T) {
 	require.Equal(t, "/api/resource", hub.requests()[last].Path)
 	require.Equal(t, "SpaceID = '"+id+"'", hub.requests()[last].Where)
 	require.Equal(t, "TargetID", hub.includes[last], "cub's resourceListInclude")
-
-	// The server had no unit events; what cub printed for none is what the
-	// reader returns for none.
-	events := releaseListsRecording(t, "unit-event-list.json")
-	hub.otherLists = true
-	got, err = reader.UnitEventListJSON(ctx, slug, Filter{})
-	require.NoError(t, err)
-	require.Equal(t, string(events), string(got))
 }

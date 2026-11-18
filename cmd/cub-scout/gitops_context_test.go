@@ -367,7 +367,7 @@ func TestGitOpsStatusConfigHubEnrichmentKeepsAuthSeparateFromKubeContext(t *test
 	require.Equal(t, "alpha", summary.Context)
 	require.Equal(t, "alpha-space", summary.ConfigHubTarget.Space)
 	require.NotNil(t, summary.DeliveryEvidence)
-	require.Len(t, commands, 3, "connected ConfigHub queries use their separate mocked service path")
+	require.Len(t, commands, 2, "connected ConfigHub queries use their separate mocked service path")
 	require.NotEmpty(t, alpha.requests, "Kubernetes-backed evidence stays on the captured API")
 	require.Empty(t, beta.requests)
 }

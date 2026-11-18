@@ -18,7 +18,7 @@ import (
 	"github.com/confighub/cub-scout/v2/internal/hubread"
 )
 
-// #758: the release, resource and unit-event lists of a space, by cub and by
+// #758: the release and resource lists of a space, by cub and by
 // the SDK reader, on a real ConfigHub server.
 //
 // Releases are published here through cub: a Target, the space's release
@@ -187,20 +187,12 @@ func TestSDKReaderMatchesCubOnReleasesResourcesAndEvents(t *testing.T) {
 		t.Errorf("the filter ReleaseNum = 1 listed %d of %d releases, want 1", sizes["release-list-first"], sizes["release-list"])
 	}
 
-	compare("unit-event-list", []string{"unit-event", "list", "--space", space, "-o", "json"},
-		func(s string) ([]byte, error) { return reader.UnitEventListJSON(ctx, s, hubread.Filter{}) })
-	compare("unit-event-list-since", []string{"unit-event", "list", "--space", space, "-o", "json", "--where", since},
-		func(s string) ([]byte, error) { return reader.UnitEventListJSON(ctx, s, hubread.Filter{Where: since}) })
-	compare("unit-event-list-of-unit", []string{"unit-event", "list", unit, "--space", space, "-o", "json"},
-		func(s string) ([]byte, error) { return reader.UnitEventsOfUnitJSON(ctx, s, unit, hubread.Filter{}) })
-
 	// A space that does not exist, by slug and by an ID that names nothing:
 	// not_found from the reader, a failure from cub, and no list from either.
 	for _, missing := range []string{"no-such-space-" + space, "11111111-2222-4333-8444-555555555555"} {
 		for kind, read := range map[string]func() ([]byte, error){
-			"resource":   func() ([]byte, error) { return reader.ResourceListJSON(ctx, missing, hubread.Filter{}) },
-			"release":    func() ([]byte, error) { return reader.ReleaseListJSON(ctx, missing, hubread.Filter{}) },
-			"unit-event": func() ([]byte, error) { return reader.UnitEventListJSON(ctx, missing, hubread.Filter{}) },
+			"resource": func() ([]byte, error) { return reader.ResourceListJSON(ctx, missing, hubread.Filter{}) },
+			"release":  func() ([]byte, error) { return reader.ReleaseListJSON(ctx, missing, hubread.Filter{}) },
 		} {
 			if listed, err := read(); hubread.KindOf(err) != hubread.KindNotFound || listed != nil {
 				t.Errorf("%s list in space %q, which does not exist: kind %s, want %s (%v)", kind, missing, hubread.KindOf(err), hubread.KindNotFound, err)
@@ -209,13 +201,6 @@ func TestSDKReaderMatchesCubOnReleasesResourcesAndEvents(t *testing.T) {
 				t.Errorf("cub listed the %ss of space %q, which does not exist: %s", kind, missing, listed)
 			}
 		}
-	}
-	// The events of a Unit that is not there are not an empty list.
-	if listed, err := reader.UnitEventsOfUnitJSON(ctx, space, "no-such-unit", hubread.Filter{}); hubread.KindOf(err) != hubread.KindNotFound || listed != nil {
-		t.Errorf("the events of a Unit that does not exist: kind %s, want %s (%v)", hubread.KindOf(err), hubread.KindNotFound, err)
-	}
-	if listed, err := cubStdoutOnly("unit-event", "list", "no-such-unit", "--space", space, "-o", "json"); err == nil {
-		t.Errorf("cub listed the events of a Unit that does not exist: %s", listed)
 	}
 	// A filter the server rejects fails by both routes.
 	const badFilter = "NoSuchField = 'x'"
@@ -261,11 +246,9 @@ func TestSDKReaderMatchesCubOnReleasesResourcesAndEvents(t *testing.T) {
 		tool      string
 		arguments map[string]string
 	}{
-		"releases":            {"confighub_releases", map[string]string{"space": space}},
-		"releases-filtered":   {"confighub_releases", map[string]string{"space": space, "where": since}},
-		"resources":           {"confighub_resources", map[string]string{"space": space}},
-		"unit-events":         {"confighub_unit_events", map[string]string{"space": space}},
-		"unit-events-of-unit": {"confighub_unit_events", map[string]string{"space": space, "unit": unit, "where": since}},
+		"releases":          {"confighub_releases", map[string]string{"space": space}},
+		"releases-filtered": {"confighub_releases", map[string]string{"space": space, "where": since}},
+		"resources":         {"confighub_resources", map[string]string{"space": space}},
 	} {
 		viaCub, viaSDK := callTool(call.tool, call.arguments, "cub"), callTool(call.tool, call.arguments, "sdk")
 		equal["mcp-"+name] = bytes.Equal(viaCub, viaSDK)
@@ -281,5 +264,5 @@ func TestSDKReaderMatchesCubOnReleasesResourcesAndEvents(t *testing.T) {
 
 	summary, _ := json.MarshalIndent(map[string]interface{}{"steps": steps, "entries": sizes, "equal": equal}, "", "  ")
 	keep("release-event-lists.json", append(summary, '\n'))
-	t.Logf("release, resource and unit-event lists: %s", summary)
+	t.Logf("release and resource lists: %s", summary)
 }

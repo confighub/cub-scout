@@ -31,10 +31,9 @@ is installed.
 These commands, wherever cub-scout runs them: `cub unit get` for one Unit
 named by slug in one named space; `cub unit list`,
 `cub target list`, `cub changeset list`, `cub link list`, `cub resource list`,
-`cub release list` and `cub unit-event list` for one named space, with or
-without a `--where` or `--contains` filter, and for every space when the
-caller names every space (`--space '*'`, except releases); the unit events of
-one Unit; `cub organization list`; `cub context get`, which is read from this
+and `cub release list` for one named space, with or without a `--where` or
+`--contains` filter, and for every space when the caller names every space
+(`--space '*'`, except releases); `cub organization list`; `cub context get`, which is read from this
 machine's cub configuration and asks no server;
 `cub space list`; and the reads of one thing: `cub unit data`,
 `cub revision get`, `cub revision data`, `cub changeorder get` by slug and
@@ -72,7 +71,7 @@ change.
 | a space named by its canonical ID | `*` as the space or the Unit; a space containing `/`; a `--space` value that starts with `-` |
 | `unit list -o json --space <space>`, with or without `--quiet`, `--where <expression>` and `--contains <text>` | A unit list with a stored filter, a data or trigger filter, a selection, a limit, an ordering, a view or hidden entities; an empty `--where` or `--contains`, or either given twice |
 | `worker list`, `target list`, `changeset list`, `link list` and `attestation list`, each `-o json --space <space>` with or without `--quiet`, `--where <expression>` and `--contains <text>` | Any of them across every space, with a positional, or with any of the options a unit list is left to `cub` for |
-| `resource list`, `release list` and `unit-event list`, in the same shape; and `unit-event list <unit>` for the events of one Unit named by slug | Any of them across every space (`--space '*'`), which the MCP tools allow when asked; a resource list with a selection, a stored filter, a view or raw data; the events of a Unit named by ID |
+| `resource list` and `release list`, in the same shape | Either across every space (`--space '*'`), which the MCP tools allow when asked; a resource list with a selection, a stored filter, a view or raw data |
 | `unit data <unit> --space <space>`: the Unit's configuration, as bytes | `unit data` of many Units (`--where`), to a file, or of a Unit named by ID |
 | `revision get <unit> <number> --space <space> -o json` and `revision data <unit> <number> --space <space>`, the number written in plain digits | A revision named relative to the head (`-1`), by a name such as `HeadRevisionNum`, or with a selection |
 | `changeorder get <slug> -o json --space <space>` | A change order named by ID; `--container-images`, which adds a second request |
@@ -84,12 +83,12 @@ change.
 
 Today that is every `unit get` cub-scout builds, given a slug and a named
 space, every plain `unit list` and `space list`, and every worker, target,
-change set, link, release and unit-event list, and the resource list unless
+change set, link and release list, and the resource list unless
 it is given a selection or a stored filter. A test reads the source
 of each call site: a `unit get` in a shape the route does not take fails it,
 and so does a list that is neither taken nor named in the test with the reason
 it stays with `cub`. The test models the arguments' shape, not the values a
-user supplies. The release, resource and unit-event lists are built in ways
+user supplies. The release and resource lists are built in ways
 that scan cannot read, so their test calls each builder instead and pins how
 many places spell each command: a new call site fails the count until someone
 adds it, which is weaker than the scan, since nothing checks the new site
@@ -104,7 +103,7 @@ itself.
 | Import wizard checks | Reads only; its writes run `cub` |
 | The lists: `map` (connected hierarchy, fleet, and joining cluster resources to their Units), `fleet outliers`, import's check for existing units and its link to the space, MCP `confighub_units` with or without `where` and `contains`, and the `views` lookups when they name one space | |
 | The worker list: `status`, the connected hierarchy in `map`, and the local cluster view. The target list: import, the import wizard and the hierarchy. The change set list: `history`, `audit` and MCP `confighub_changesets`. The link list: `compare bindings` and `map` | A worker's `Secret` is not in what the SDK route returns; see below |
-| The release and unit-event lists: the ConfigHub part of `gitops status` and of `doctor --with-confighub`, MCP `confighub_releases` and `confighub_unit_events`. The resource list: MCP `confighub_resources` | Releases come from the space's own endpoint and are sorted as `cub` sorts them, highest number first. Unit events are sorted newest first, as `cub` does |
+| The release list: the ConfigHub part of `gitops status` and of `doctor --with-confighub`, and MCP `confighub_releases`. The resource list: MCP `confighub_resources` | Releases come from the space's own endpoint and are sorted as `cub` sorts them, highest number first. Unit events are not read by either route: ConfigHub no longer records them, and MCP `confighub_unit_events` answers `[]` without a read |
 | `unit data`: the intended configuration in `compare` (DRY/WET snapshots and `compare resource`), the import wizard's checks and `import argocd`. `revision get`, `revision data` and the attestation list: attestation evidence in `trace` and receipts, and the MCP `confighub_attestations` tool. `changeorder get`: `history changeorder` and MCP `confighub_changeorder_get`. `view get`: `views resolve`, `views project` and `compare three-way --view` | Attestation evidence takes at most 1 MiB per response by either route: by the SDK route each response is cut off when it passes the limit, and the read fails |
 | Lists that stay with `cub`: `views` across every space, GitOps delivery evidence (a selection), `app list` and import's summary (they print `cub`'s own output) | |
 
@@ -531,5 +530,5 @@ evaluated columns, an entity named by ID, the releases of every space,
 `unit tree`, `k8s get`), each held to the `cub` route's output
 on a recording from a real server; one space lookup per command rather than
 per read; the OCI registry lookup, which still asks `cub` for the context; a
-real-server run with a Unit that has a target and with unit events. Scout's observation interface stays read-only
+real-server run with a Unit that has a target. Scout's observation interface stays read-only
 throughout: the SDK's action calls are not exposed.

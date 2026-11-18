@@ -24,7 +24,7 @@ When connected to ConfigHub (`cub auth login`), it additionally exposes:
 - `confighub_live_status`
 - `confighub_releases`
 - `confighub_resources`
-- `confighub_unit_events`
+- `confighub_unit_events` (retired: always returns `[]`)
 - `confighub_units`
 - `confighub_unit_get`
 
@@ -47,7 +47,7 @@ The gateway reuses existing CLI JSON command outputs:
 - `confighub_live_status` -> `cub space list -o json --select Slug,SpaceID,Annotations,Labels`
 - `confighub_releases` -> `cub release list --space <space> -o json`
 - `confighub_resources` -> `cub resource list --space <space> -o json`
-- `confighub_unit_events` -> `cub unit-event list [unit] --space <space> -o json`
+- `confighub_unit_events` -> no command; always `[]`, because ConfigHub no longer records unit events
 - `confighub_units` -> `cub unit list --json`
 - `confighub_unit_get` -> `cub unit get --json`
 
@@ -108,8 +108,8 @@ Each accepted Resource/type MCP call starts one scoped `cub` command and no
 Scout live-cluster subprocess. Repeating a call makes a fresh read; this is not
 a shared cache. The host CLI may make multiple HTTP requests or paginate.
 Space/type predicates reduce scope but are not byte or response-count limits.
-Similarly, delivery collection makes three ConfigHub commands (space, release,
-unit-event); its ten-item display cap is applied after fetching rows.
+Similarly, delivery collection makes two ConfigHub commands (space and
+release); its ten-item display cap is applied after fetching rows.
 
 Reuse captured snapshots, summaries, or receipts when a new live read is not
 needed. Watch and bot still poll; their event/receipt caps are not global API
