@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"k8s.io/client-go/rest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -85,6 +86,7 @@ func init() {
 	suggestRemedyCmd.Flags().BoolVar(&suggestAll, "all", false, "Describe suggestions for all auto-fixable findings")
 	suggestRemedyCmd.Flags().BoolVar(&suggestJSON, "json", false, "Output as JSON")
 	suggestRemedyCmd.Flags().StringVar(&suggestFile, "file", "", "YAML file to scan for findings")
+	suggestRemedyCmd.Flags().String("kube-context", "", "Use this exact Kubernetes context for the --all scan")
 	suggestRemedyCmd.Flags().BoolVar(&suggestList, "list", false, "List auto-fixable risk-issue categories")
 }
 
@@ -137,7 +139,13 @@ func runSuggestRemedy(cmd *cobra.Command, args []string) error {
 	}
 
 	if suggestAll {
-		return runSuggestAll(ctx, reg)
+		// The scan reads only the selected context; an empty or missing name
+		// fails before any read, and none falls back to the current one (#599).
+		selection, err := clusterContextSelectionFromFlag(cmd)
+		if err != nil {
+			return err
+		}
+		return runSuggestAll(ctx, reg, selection)
 	}
 
 	if len(args) < 1 {
@@ -192,10 +200,20 @@ func runSuggestSingle(ctx context.Context, reg *remedy.Registry, ccveID string) 
 	return nil
 }
 
-func runSuggestAll(ctx context.Context, reg *remedy.Registry) error {
-	cfg, err := buildConfig()
-	if err != nil {
-		return fmt.Errorf("failed to build kubernetes config: %w", err)
+func runSuggestAll(ctx context.Context, reg *remedy.Registry, selection clusterContextSelection) error {
+	var cfg *rest.Config
+	if selection.explicit {
+		binding := resolveLocalClusterBindingForSelection(selection)
+		if binding.err != nil {
+			return binding.err
+		}
+		cfg = binding.config
+	} else {
+		var err error
+		cfg, err = buildConfig()
+		if err != nil {
+			return fmt.Errorf("failed to build kubernetes config: %w", err)
+		}
 	}
 
 	stateScanner, err := agent.NewStateScanner(cfg)
