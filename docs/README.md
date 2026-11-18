@@ -11,8 +11,10 @@ The five run modes are **standalone CLI/TUI, `cub` plugin, MCP server, watch
 stream, and in-cluster bot**. [Choose a mode](../README.md#five-ways-to-run-cub-scout)
 or [start with a user question](../README.md#user-questions).
 
-Current release: [v2.16.0](releases/v2.16.0.md), which works with ConfigHub
-0.11 and gives `trace` and `compare source-truth` an `answer` block.
+Current release: [v2.17.0](releases/v2.17.0.md), which checks ownership
+against real installs of Helm, kro, Crossplane and Terraform.
+[v2.16.0](releases/v2.16.0.md) works with ConfigHub 0.11 and gives `trace`
+and `compare source-truth` an `answer` block.
 [v2.15.1](releases/v2.15.1.md) corrects
 `compare source-truth`, Flux kind discovery and wording an agent would take at
 face value, and shortens the MCP catalog.

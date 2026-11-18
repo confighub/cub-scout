@@ -2,10 +2,10 @@
 
 **2026-11-16:** read
 [the state of the plan](docs/roadmap-3.0-execution.md#state-of-the-plan--2026-11-16)
-first: it says what is shipped, what v2.16.0 carries, what was decided and
-what is open. [v2.16.0](docs/releases/v2.16.0.md) is the latest release
-(2026-11-16). It works with ConfigHub 0.11, which hosted ConfigHub is on and
-which v2.15.1 refuses by default. Principle 10 in
+first: it says what is shipped, what v2.17.0 carries, what was decided and
+what is open. [v2.16.0](docs/releases/v2.16.0.md) is the latest published
+release (2026-11-16) and works with ConfigHub 0.11; v2.17.0, which checks
+ownership against real installs, is being prepared. Principle 10 in
 [CLAUDE.md](CLAUDE.md) and
 [agentic GitOps observability](docs/reference/agentic-gitops-observability.md)
 say what "for an agent" means and the rules found on real clusters. The
