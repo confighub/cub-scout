@@ -27,8 +27,8 @@ download() {
   printf '%s  %s\n' "$digest" "$output" | sha256sum --check --status
   chmod 700 "$output"
 }
-download https://github.com/confighub/sdk/releases/download/v0.11.4/cub-linux-amd64 \
-  fec12103902194099f40c9d73369ed43c5e82df691904ae4aeaa809c09d90fed "$root/bin/cub"
+download https://github.com/confighub/sdk/releases/download/v0.11.9/cub-linux-amd64 \
+  320673da57b21ccec6fcd7b3967ca55284659e193536543c333c2683d683a188 "$root/bin/cub"
 download https://github.com/confighub/cub-server/releases/download/v0.3.0/cub-server-linux-amd64 \
   17555178b39655efe99d060a45e63cba8741f3bd38260a2b239ba833942f33a6 "$root/cub-config/plugins/server/server"
 cat > "$root/cub-config/plugins/server/cub-plugin.yaml" <<'YAML'
@@ -46,8 +46,8 @@ export PATH="$root/bin:$PATH"
 export KUBECONFIG="$root/server-input.kubeconfig"
 touch "$root/owns-server-cluster"
 if ! cub server install --cluster-name scout-ci-connected-server \
-  --image ghcr.io/confighubai/confighub@sha256:d3964b911b0686878ebefc35b4bc961e73b3ad007f62a903a9e90c9ded3b9a36 \
-  --ui-image ghcr.io/confighub/ui@sha256:46dc2317b078c854b7e34350d2590cff2ef219de4c7b6a140ce2167ff935c122 \
+  --image ghcr.io/confighubai/confighub@sha256:6c25cd220887852f669a351ad7734b7adc179568fceb7c1d645e010070456695 \
+  --ui-image ghcr.io/confighub/ui@sha256:99a9a54029813741144d85da8b82e7c001c01f3ade9d2e886ecb720b7b773741 \
   --admin-key-name scout-ci-admin \
   --out-dir "$root/server" > "$root/install.log" 2>&1; then
   echo 'Disposable ConfigHub installation failed; private installer log retained on runner' >&2
@@ -55,7 +55,7 @@ if ! cub server install --cluster-name scout-ci-connected-server \
 fi
 cub auth status > "$root/auth-status.txt" 2>&1
 cub version > "$root/version.txt"
-awk '/^[[:space:]]*Version:/ {if ($2 != "v0.11.4") exit 1; n++} END {if (n != 2) exit 1}' "$root/version.txt"
+awk '/^[[:space:]]*Version:/ {if ($2 != "v0.11.9") exit 1; n++} END {if (n != 2) exit 1}' "$root/version.txt"
 printf 'CUB_CONFIG=%s\nKUBECONFIG=%s\n' "$CUB_CONFIG" "$root/workload.kubeconfig" >> "$GITHUB_ENV"
 printf '%s\n' "$root/bin" >> "$GITHUB_PATH"
-echo 'Authenticated disposable ConfigHub v0.11.4; workload kubeconfig preserved'
+echo 'Authenticated disposable ConfigHub v0.11.9; workload kubeconfig preserved'

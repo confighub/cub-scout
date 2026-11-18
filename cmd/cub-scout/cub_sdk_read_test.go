@@ -848,12 +848,12 @@ func TestCubStdoutAnswersTheListsThroughTheSDKWhenAsked(t *testing.T) {
 
 	// What the list asked the server: the one space, cub's expansions, no
 	// limit; and for the spaces, their summary.
-	require.Contains(t, (*seen)[1], "GET /api/unit?include=UnitEventID%2CTargetID%2CUpstreamUnitID%2CSpaceID%2CFromLinkID%2CChangeSetID&where=SpaceID+%3D+")
+	require.Contains(t, (*seen)[1], "GET /api/unit?include=TargetID%2CUpstreamUnitID%2CSpaceID%2CFromLinkID%2CChangeSetID&where=SpaceID+%3D+")
 	require.NotContains(t, (*seen)[1], "limit=")
 	require.Equal(t, "GET /api/space?include=ComponentID&summary=true", (*seen)[len(*seen)-1])
 	// The filter is the caller's, AND-ed with the space, with the search
 	// beside it.
-	require.Contains(t, (*seen)[5], "GET /api/unit?contains=parity&include=UnitEventID")
+	require.Contains(t, (*seen)[5], "GET /api/unit?contains=parity&include=TargetID")
 	require.Contains(t, (*seen)[5], "&where=Slug+LIKE+%27parity-%25%27+AND+SpaceID+%3D+%27")
 }
 

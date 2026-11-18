@@ -369,10 +369,10 @@ func literal(op, field, value string) (cubapi.Where, *Error) {
 }
 
 // unitGetInclude is the expansion `cub unit get` asks for (cubapi's unexported
-// unitGetInclude in SDK core v0.8.10), so that the envelope read here has the
+// unitGetInclude in SDK core v0.11.9), so that the envelope read here has the
 // same related entities as the one cub prints. A test compares it with what
 // cubapi.ResolveUnit sends, so an SDK bump that changes it is noticed.
-const unitGetInclude = "UnitEventID,TargetID,UpstreamUnitID,SpaceID,FromLinkID,ChangeSetID,UpstreamSpaceID"
+const unitGetInclude = "TargetID,UpstreamUnitID,SpaceID,FromLinkID,ChangeSetID,UpstreamSpaceID"
 
 // unit reads exactly one Unit in exactly one space, with cub's expansions.
 //
@@ -484,7 +484,7 @@ func (r *Reader) namedSpace(ctx context.Context, space string) (uuid.UUID, strin
 // list with its summary includes). Tests compare what is sent here with what
 // the SDK's own list helpers send for the same options.
 const (
-	unitListInclude  = "UnitEventID,TargetID,UpstreamUnitID,SpaceID,FromLinkID,ChangeSetID"
+	unitListInclude  = "TargetID,UpstreamUnitID,SpaceID,FromLinkID,ChangeSetID"
 	spaceListInclude = "ComponentID"
 )
 

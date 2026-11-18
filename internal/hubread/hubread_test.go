@@ -673,7 +673,7 @@ func TestListsSendWhatTheSDKListHelpersSend(t *testing.T) {
 	require.Len(t, seen, 2)
 	require.Equal(t, seen[0].Path, seen[1].Path)
 	require.Equal(t, hub.queries[0], hub.queries[1])
-	require.Contains(t, hub.queries[1], "include=UnitEventID")
+	require.Contains(t, hub.queries[1], "include=TargetID")
 	require.Empty(t, seen[1].Limit, "no limit: the whole list in one request, as cub asks for it")
 
 	_, err = cubapi.ListSpaces(ctx, reader.client, cubapi.Where{}, cubapi.ListOpts{Include: spaceListInclude},
