@@ -356,6 +356,7 @@ func init() {
 	importCmd.Flags().StringVar(&importAuditReason, "audit-reason", "", "Record break-glass decision reason in connected audit history (max 512 chars)")
 	importCmd.Flags().StringArrayVar(&importResources, "resource", nil, "Select specific resources to import (repeatable, e.g., --resource deploy/api --resource statefulset/db)")
 	importCmd.Flags().StringVar(&importGitPath, "git-path", "", "Local Git repository path for import preview (dry-run only)")
+	importCmd.Flags().String("kube-context", "", "Use this exact Kubernetes context for every cluster read of the import (not with --wizard)")
 
 	rootCmd.AddCommand(importCmd)
 }
@@ -363,6 +364,30 @@ func init() {
 func runImport(cmd *cobra.Command, args []string) error {
 	if importConnect {
 		return errImportConnectRemoved
+	}
+
+	// With --kube-context every cluster read of the import (discovery and
+	// the manifests it uploads) goes to that context; an empty or missing
+	// name fails before any read, with no fallback (#599). The wizard does
+	// not take it yet, so the two together are refused, as map refuses its
+	// import switch under an explicit context.
+	importClusterConfig, importClusterContext = nil, ""
+	var selection clusterContextSelection
+	if cmd != nil {
+		var err error
+		if selection, err = clusterContextSelectionFromFlag(cmd); err != nil {
+			return err
+		}
+	}
+	if selection.explicit {
+		if importWizard {
+			return fmt.Errorf("--kube-context cannot be used with --wizard yet: the wizard reads the current context")
+		}
+		binding := resolveLocalClusterBindingForSelection(selection)
+		if binding.err != nil {
+			return binding.err
+		}
+		importClusterConfig, importClusterContext = binding.config, binding.context
 	}
 
 	// Wizard mode - launch interactive TUI
@@ -455,7 +480,7 @@ func runImport(cmd *cobra.Command, args []string) error {
 	} else {
 		// Discover all namespaces with workloads
 		var err error
-		namespaces, err = discoverNamespacesWithWorkloads()
+		namespaces, err = importDiscoverNamespaces()
 		if err != nil {
 			return fmt.Errorf("discover namespaces: %w", err)
 		}
@@ -478,7 +503,7 @@ func runImport(cmd *cobra.Command, args []string) error {
 
 	// Collect workloads from all namespaces
 	for _, ns := range namespaces {
-		workloads, err := discoverWorkloads(ns)
+		workloads, err := importDiscoverWorkloads(ns)
 		if err != nil {
 			if !importJSON {
 				fmt.Fprintf(os.Stderr, "Warning: failed to scan namespace %s: %v\n", ns, err)
@@ -699,7 +724,7 @@ func runImportFromGit(gitPath string) error {
 
 	if importNamespace != "" {
 		// Git + cluster comparison
-		workloads, err := discoverWorkloads(importNamespace)
+		workloads, err := importDiscoverWorkloads(importNamespace)
 		if err != nil {
 			return fmt.Errorf("discover cluster workloads in %q: %w", importNamespace, err)
 		}
@@ -1675,8 +1700,36 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 	return nil
 }
 
+// importClusterConfig and importClusterContext are --kube-context, bound by
+// runImport; nil and "" mean the current context.
+var (
+	importClusterConfig  *rest.Config
+	importClusterContext string
+)
+
+// importKubectlBinary is a variable so tests can stand in for kubectl.
+var importKubectlBinary = "kubectl"
+
+func importDiscoverNamespaces() ([]string, error) {
+	if importClusterConfig != nil {
+		return discoverNamespacesWithWorkloadsIn(importClusterConfig)
+	}
+	return discoverNamespacesWithWorkloads()
+}
+
+func importDiscoverWorkloads(namespace string) ([]WorkloadInfo, error) {
+	if importClusterConfig != nil {
+		return discoverWorkloadsIn(importClusterConfig, namespace)
+	}
+	return discoverWorkloads(namespace)
+}
+
 func fetchManifest(kind, namespace, name string) ([]byte, error) {
-	cmd := exec.Command("kubectl", "get", strings.ToLower(kind), name, "-n", namespace, "-o", "yaml")
+	args := []string{"get", strings.ToLower(kind), name, "-n", namespace, "-o", "yaml"}
+	if importClusterContext != "" {
+		args = append([]string{"--context", importClusterContext}, args...)
+	}
+	cmd := exec.Command(importKubectlBinary, args...)
 	// stdout alone: a kubectl warning (a deprecated API version, for one)
 	// is printed on stderr and must not become part of the manifest. The
 	// error carries stderr, so #112's message is kept.
