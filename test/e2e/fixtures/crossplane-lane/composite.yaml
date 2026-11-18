@@ -1,0 +1,6 @@
+apiVersion: lane.example.org/v1
+kind: XLaneApp
+metadata:
+  name: lane
+  namespace: xp-lane
+spec: {}

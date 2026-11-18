@@ -1,0 +1,22 @@
+# The smallest namespaced composite the CI Crossplane step defines: it
+# composes one Deployment at zero replicas, so nothing is pulled.
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: xlaneapps.lane.example.org
+spec:
+  scope: Namespaced
+  group: lane.example.org
+  names:
+    kind: XLaneApp
+    plural: xlaneapps
+  versions:
+    - name: v1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
