@@ -368,10 +368,11 @@ func printCompositionTreeHuman(byXR map[string]*CrossplaneCompositionTree) {
 }
 
 func kubectlAPIResources(ctx context.Context) ([]string, error) {
-	cmd := treeKubectlCommand(ctx, "api-resources", "--verbs=list", "-o", "name")
-	out, err := cmd.CombinedOutput()
+	// stdout alone: kubectl prints warnings on stderr (seen on a real
+	// cluster in CI run 44254135155), and they are not resource names.
+	out, err := commandStdout(treeKubectlCommand(ctx, "api-resources", "--verbs=list", "-o", "name"))
 	if err != nil {
-		return nil, fmt.Errorf("kubectl api-resources failed: %v (%s)", err, strings.TrimSpace(string(out)))
+		return nil, fmt.Errorf("kubectl api-resources failed: %w", err)
 	}
 	lines := strings.Split(string(out), "\n")
 	var resources []string
@@ -390,10 +391,12 @@ func kubectlGetUnstructuredList(ctx context.Context, resource string) (*unstruct
 	// namespace filtering is done after fetch to avoid needing discovery for namespace-scoped types.
 	args = append(args, "-A")
 
-	cmd := treeKubectlCommand(ctx, args...)
-	out, err := cmd.CombinedOutput()
+	// stdout alone: on a real cluster (CI run 44254135155) kubectl's
+	// deprecation warnings for v1 Endpoints and Crossplane Usages came first
+	// in the combined output, and both lists were skipped as undecodable.
+	out, err := commandStdout(treeKubectlCommand(ctx, args...))
 	if err != nil {
-		return nil, fmt.Errorf("kubectl get %s failed: %v (%s)", resource, err, strings.TrimSpace(string(out)))
+		return nil, fmt.Errorf("kubectl get %s failed: %w", resource, err)
 	}
 
 	var ul unstructured.UnstructuredList

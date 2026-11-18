@@ -1665,14 +1665,12 @@ func applyImportWithLogger(proposal *FullProposal, workloads []WorkloadInfo, log
 
 func fetchManifest(kind, namespace, name string) ([]byte, error) {
 	cmd := exec.Command("kubectl", "get", strings.ToLower(kind), name, "-n", namespace, "-o", "yaml")
-	output, err := cmd.CombinedOutput()
+	// stdout alone: a kubectl warning (a deprecated API version, for one)
+	// is printed on stderr and must not become part of the manifest. The
+	// error carries stderr, so #112's message is kept.
+	output, err := commandStdout(cmd)
 	if err != nil {
-		// #112: Propagate actual error message instead of generic "exit status 1"
-		errMsg := strings.TrimSpace(string(output))
-		if errMsg == "" {
-			errMsg = err.Error()
-		}
-		return nil, fmt.Errorf("kubectl get %s %s -n %s: %s", kind, name, namespace, errMsg)
+		return nil, fmt.Errorf("kubectl get %s %s -n %s: %w", kind, name, namespace, err)
 	}
 
 	// Strip server-side fields that interfere with kubectl apply's three-way merge
