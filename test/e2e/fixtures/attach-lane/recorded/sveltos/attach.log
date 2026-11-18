@@ -1,0 +1,231 @@
+Registry the controller will pull Releases from: oci://172.18.0.1:32181 (plain HTTP)
+  advertised by http://localhost:32180 at /api/info as http://localhost:32181
+  its host rewritten to the docker network's address for this machine, which a container in a cluster on this machine reaches the server by
+Reading kind cluster "brownfield"'s credentials...
+Checking cluster access (needs cluster-admin)...
+Ensuring Sveltos...
+Applying the ServiceMonitor CRD the Sveltos manifest needs...
+customresourcedefinition.apiextensions.k8s.io/servicemonitors.monitoring.coreos.com serverside-applied
+Applying Sveltos install manifest from https://raw.githubusercontent.com/projectsveltos/sveltos/v1.16.0/manifest/manifest.yaml...
+customresourcedefinition.apiextensions.k8s.io/accessrequests.lib.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/classifierreports.lib.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/classifiers.lib.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/clusterhealthchecks.lib.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/clustersets.lib.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/configurationbundles.lib.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/configurationgroups.lib.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/debuggingconfigurations.lib.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/eventreports.lib.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/eventsources.lib.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/healthcheckreports.lib.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/healthchecks.lib.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/managementclusterclassifierreports.lib.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/managementclusterclassifiers.lib.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/reloaderreports.lib.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/reloaders.lib.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/resourcesummaries.lib.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/rolerequests.lib.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/sets.lib.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/sveltosclusters.lib.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/sveltoslicenses.lib.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/techsupports.lib.projectsveltos.io created
+namespace/projectsveltos created
+customresourcedefinition.apiextensions.k8s.io/clusterconfigurations.config.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/clusterprofiles.config.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/clusterpromotions.config.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/clusterreports.config.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/clustersummaries.config.projectsveltos.io created
+customresourcedefinition.apiextensions.k8s.io/profiles.config.projectsveltos.io created
+serviceaccount/addon-controller created
+role.rbac.authorization.k8s.io/addon-controller-role-extra created
+clusterrole.rbac.authorization.k8s.io/addon-controller-role created
+clusterrole.rbac.authorization.k8s.io/addon-controller-role-extra created
+clusterrole.rbac.authorization.k8s.io/addon-metrics-reader created
+clusterrole.rbac.authorization.k8s.io/addon-proxy-role created
+rolebinding.rbac.authorization.k8s.io/addon-controller-rolebinding-extra created
+clusterrolebinding.rbac.authorization.k8s.io/addon-controller-rolebinding created
+clusterrolebinding.rbac.authorization.k8s.io/addon-controller-rolebinding-extra created
+clusterrolebinding.rbac.authorization.k8s.io/addon-proxy-rolebinding created
+service/addon-controller created
+[redacted] created
+deployment.apps/addon-controller created
+servicemonitor.monitoring.coreos.com/addon-controller created
+serviceaccount/access-manager created
+clusterrole.rbac.authorization.k8s.io/access-manager-role created
+clusterrolebinding.rbac.authorization.k8s.io/access-manager-rolebinding created
+deployment.apps/access-manager created
+serviceaccount/sc-manager created
+clusterrole.rbac.authorization.k8s.io/sc-manager-role created
+clusterrole.rbac.authorization.k8s.io/sc-metrics-reader created
+clusterrole.rbac.authorization.k8s.io/sc-proxy-role created
+clusterrolebinding.rbac.authorization.k8s.io/sc-manager-rolebinding created
+clusterrolebinding.rbac.authorization.k8s.io/sc-proxy-rolebinding created
+service/sc-manager created
+service/sc-manager-metrics-service created
+deployment.apps/sc-manager created
+servicemonitor.monitoring.coreos.com/sc-manager created
+serviceaccount/hc-manager created
+clusterrole.rbac.authorization.k8s.io/hc-manager-role created
+clusterrolebinding.rbac.authorization.k8s.io/hc-manager-rolebinding created
+deployment.apps/hc-manager created
+customresourcedefinition.apiextensions.k8s.io/eventtriggers.lib.projectsveltos.io created
+serviceaccount/event-manager created
+clusterrole.rbac.authorization.k8s.io/event-eventtrigger-editor-role created
+clusterrole.rbac.authorization.k8s.io/event-eventtrigger-viewer-role created
+clusterrole.rbac.authorization.k8s.io/event-manager-role created
+clusterrole.rbac.authorization.k8s.io/event-metrics-reader created
+clusterrole.rbac.authorization.k8s.io/event-proxy-role created
+clusterrolebinding.rbac.authorization.k8s.io/event-manager-rolebinding created
+clusterrolebinding.rbac.authorization.k8s.io/event-proxy-rolebinding created
+service/event-manager-metrics-service created
+deployment.apps/event-manager created
+servicemonitor.monitoring.coreos.com/event-manager created
+serviceaccount/classifier-manager created
+clusterrole.rbac.authorization.k8s.io/classifier-controller-role-extra created
+clusterrole.rbac.authorization.k8s.io/classifier-manager-role created
+clusterrole.rbac.authorization.k8s.io/classifier-metrics-reader created
+clusterrole.rbac.authorization.k8s.io/classifier-proxy-role created
+clusterrolebinding.rbac.authorization.k8s.io/classifier-manager-rolebinding created
+clusterrolebinding.rbac.authorization.k8s.io/classifier-manager-rolebinding-extra created
+clusterrolebinding.rbac.authorization.k8s.io/classifier-proxy-rolebinding created
+[redacted] created
+deployment.apps/classifier-manager created
+servicemonitor.monitoring.coreos.com/classifier created
+serviceaccount/shard-controller created
+role.rbac.authorization.k8s.io/shard-controller-role-extra created
+clusterrole.rbac.authorization.k8s.io/shard-manager-role created
+rolebinding.rbac.authorization.k8s.io/shard-controller-rolebinding-extra created
+clusterrolebinding.rbac.authorization.k8s.io/shard-manager-rolebinding created
+deployment.apps/shard-controller created
+serviceaccount/register-mgmt-cluster created
+clusterrolebinding.rbac.authorization.k8s.io/register-mgmt-cluster-rolebinding created
+job.batch/register-mgmt-cluster-job created
+serviceaccount/techsupport-controller created
+clusterrole.rbac.authorization.k8s.io/techsupport-role created
+clusterrolebinding.rbac.authorization.k8s.io/techsupport-rolebinding created
+deployment.apps/techsupport-controller created
+serviceaccount/mcp-server created
+clusterrole.rbac.authorization.k8s.io/sveltos-mcp-server created
+service/mcp-server created
+clusterrolebinding.rbac.authorization.k8s.io/sveltos-mcp-server created
+deployment.apps/mcp-server created
+Applying Sveltos dashboard manifest from https://raw.githubusercontent.com/projectsveltos/sveltos/v1.16.0/manifest/dashboard-manifest.yaml...
+namespace/projectsveltos unchanged
+serviceaccount/ui-backend-manager created
+clusterrole.rbac.authorization.k8s.io/ui-backend-controller-role created
+clusterrolebinding.rbac.authorization.k8s.io/ui-backend-manager-rolebinding created
+service/ui-backend-manager created
+deployment.apps/ui-backend-manager created
+deployment.apps/dashboard created
+service/dashboard created
+Creating ServiceAccount "platform-admin" for the dashboard login...
+serviceaccount/platform-admin created
+clusterrolebinding.rbac.authorization.k8s.io/platform-admin-access created
+Waiting for the Sveltos Deployments to be Available (timeout 5m)...
+deployment.apps/access-manager condition met
+deployment.apps/addon-controller condition met
+deployment.apps/classifier-manager condition met
+deployment.apps/dashboard condition met
+deployment.apps/event-manager condition met
+deployment.apps/hc-manager condition met
+deployment.apps/mcp-server condition met
+deployment.apps/sc-manager condition met
+deployment.apps/shard-controller condition met
+deployment.apps/techsupport-controller condition met
+deployment.apps/ui-backend-manager condition met
+Creating ConfigHub space "scout-attach" (target + argobot channel)...
+Creating placeholder gate trigger "no-placeholders" (vet-placeholders on every Mutation)...
+Creating OCI target "target"...
+Creating service account "argo-scout-attach" (OrgRole=none; the controller pulls and argobot runs as it)...
+Granting "argo-scout-attach" its deployment path on OCI target "target"...
+Issuing a key for argobot on "argo-scout-attach"...
+Applying Secret argobot/argobot-secrets...
+namespace/argobot created
+secret/argobot-secrets created
+Issuing a pull token on "argo-scout-attach"...
+Applying Secret projectsveltos/confighub-gateway...
+secret/confighub-gateway created
+Creating ConfigHub space "scout-attach-sveltos-apps" (Sveltos ClusterProfile Units)...
+Setting the apps space's release target to "scout-attach/target"...
+Creating root ClusterProfile Unit "root" in apps space "scout-attach-sveltos-apps"...
+Using argobot's key from the Secret argobot/argobot-secrets already in the cluster
+
+Installing argobot (event-driven Sveltos redeploy)...
+Reading argobot's deployment from ghcr.io/confighub/argobot:v0.2.12...
+Installing argobot base component...
+Space argobot-sveltos-base (Create)
+  Create    namespace
+  Create    argobot-serviceaccount
+  Create    sveltos-clusterrole
+  Create    sveltos-clusterrolebinding
+  Create    read-clusterrole
+  Create    read-clusterrolebinding
+  Create    read-role
+  Create    read-rolebinding
+  Create    live-status-healthcheck
+  Create    live-status-clusterhealthcheck
+  Create    argobot
+  linked    argobot -> argobot-serviceaccount (reference:v1/ServiceAccount)
+  linked    argobot -> namespace (reference:v1/Namespace)
+  linked    argobot-serviceaccount -> namespace (reference:v1/Namespace)
+  linked    read-clusterrolebinding -> argobot-serviceaccount (reference:v1/ServiceAccount)
+  linked    read-clusterrolebinding -> namespace (reference:v1/Namespace)
+  linked    read-clusterrolebinding -> read-clusterrole (reference:rbac.authorization.k8s.io/v1/ClusterRole)
+  linked    read-rolebinding -> argobot-serviceaccount (reference:v1/ServiceAccount)
+  linked    read-rolebinding -> namespace (reference:v1/Namespace)
+  linked    read-rolebinding -> read-role (reference:rbac.authorization.k8s.io/v1/Role)
+  linked    sveltos-clusterrolebinding -> argobot-serviceaccount (reference:v1/ServiceAccount)
+  linked    sveltos-clusterrolebinding -> namespace (reference:v1/Namespace)
+  linked    sveltos-clusterrolebinding -> sveltos-clusterrole (reference:rbac.authorization.k8s.io/v1/ClusterRole)
+
+Note: the following references didn't resolve to any uploaded Unit (expected when the
+target lives in the cluster, e.g. a Secret created out-of-band):
+  - argobot -> v1/Secret "argobot-secrets"
+  - read-role -> v1/Namespace "kube-system"
+  - read-role -> v1/ConfigMap,v1/Secret "amazon-vpc-cni"
+  - read-rolebinding -> v1/Namespace "kube-system"
+
+Revert this upload of argobot-sveltos-base with:
+  cub unit update --patch --space argobot-sveltos-base --restore Before:ChangeSet:upload-20261118-193030 --where "Labels.UploadSource = 'argobot'"
+Creating per-cluster argobot variant "argobot-scout-attach"...
+Creating Sveltos ClusterProfile Unit "argobot-scout-attach" in apps space "scout-attach-sveltos-apps" (prune)...
+Sveltos ClusterProfile Unit "argobot-scout-attach" added; "cub release publish argobot-scout-attach" releases it with the variant's first Release.
+Creating argobot channel "scout-attach/argobot" (subscribed to the target's deploys)...
+Configuring argobot (CONFIGHUB_URL, CONFIGHUB_CHANNEL, CONFIGHUB_TARGET)...
+Publishing argobot variant Release (argobot-scout-attach)...
+argobot installed: variant "argobot-scout-attach", Sveltos ClusterProfile "argobot-scout-attach", channel "scout-attach/argobot"
+
+Publishing the apps space's release (populates the OCI bundle the root pulls)...
+Bootstrapping the root via kubectl (the only kubectl-apply moment)...
+clusterprofile.config.projectsveltos.io/confighub-root created
+
+Attached.
+  cluster:    scout-attach
+  context:    curl-cub
+  kubeconfig: [redacted].kubeconfig
+  env file:   [redacted].env
+  space:      scout-attach
+  apps space: scout-attach-sveltos-apps
+  target:     scout-attach/target
+  identity:   service account argo-scout-attach (the controller pulls with a token of it; argobot runs as it with a key)
+  root:       scout-attach-sveltos-apps/root
+  argobot:    argobot-scout-attach (Sveltos ClusterProfile; redeploys on publish), channel scout-attach/argobot
+  gates:      scout-attach/no-placeholders (vet-placeholders) — blocks publishing a Release with
+              unfilled confighubplaceholder values to this cluster
+
+Sveltos: installed. Its dashboard is not exposed outside the cluster; reach it with
+  kubectl --kubeconfig [redacted].kubeconfig port-forward svc/dashboard -n projectsveltos 8080:80
+and log in with a token from
+  kubectl --kubeconfig [redacted].kubeconfig create token platform-admin --duration=24h
+
+Load the cluster and its cub context into your shell:
+  source [redacted].env
+
+Deploy an app to this cluster:
+  1. cub variant create <name> <base-space> --target scout-attach/target [--namespace <ns>]
+  2. cub release publish <name>
+Step 1 clones <base-space> into a deployment space bound to the cluster's
+target and adds its Sveltos ClusterProfile to the apps space "scout-attach-sveltos-apps"; step 2
+makes the deployment's config go live and, the first time, republishes the
+apps space so the root profile applies the ClusterProfile. See
+"cub variant create --help".

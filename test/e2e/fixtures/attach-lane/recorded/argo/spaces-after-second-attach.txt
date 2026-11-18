@@ -1,5 +1,5 @@
-argobot-base
-scout-attach-argo-apps
 argobot-scout-attach
+argobot-base
 scout-attach
 default
+scout-attach-argo-apps

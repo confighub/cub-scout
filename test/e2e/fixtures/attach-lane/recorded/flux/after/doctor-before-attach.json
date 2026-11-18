@@ -59,7 +59,7 @@
     }
   ],
   "attach": {
-    "basis": "Read from this cluster, by name; Secrets by metadata only. What attach does with each finding was recorded on a real cluster with cub v0.11.4, Argo CD v3.6.1 and Flux v2.10.0 (basis \"recorded\"), or read from cub's source and not run (basis \"cub-source\").",
+    "basis": "Read from this cluster, by name; Secrets by metadata only. What attach does with each finding was recorded on a real cluster with cub v0.11.4, Argo CD v3.6.1, Flux v2.10.0 and Sveltos v1.16.0 as attach installed it (basis \"recorded\"), or read from cub's source and not run (basis \"cub-source\").",
     "controllers": [
       {
         "controller": "argo",
@@ -114,7 +114,7 @@
         "credentialsSecret": "projectsveltos/confighub-gateway",
         "attachWould": "install",
         "why": "Deployment projectsveltos/addon-controller does not exist; attach installs the controller, or fails with --no-install",
-        "basis": "cub-source"
+        "basis": "recorded"
       }
     ],
     "credentialsFor": [

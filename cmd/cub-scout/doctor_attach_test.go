@@ -133,6 +133,20 @@ func loadRecordedAttachSnapshot(t *testing.T, controller, when string) *recorded
 		"metadata": map[string]interface{}{"namespace": "argocd", "name": "argocd-cm"},
 		"data":     data,
 	}}
+	// ClusterProfiles are recorded only where Sveltos was installed; before
+	// that the lane recorded the kind as not served.
+	if _, err := os.Stat(filepath.Join(dir, "clusterprofiles.not-served")); err == nil {
+		r.notServed[attachClusterProfileGVR] = true
+	}
+	if raw, err := os.ReadFile(filepath.Join(dir, "clusterprofiles.json")); err == nil {
+		var items []map[string]interface{}
+		if err := json.Unmarshal(raw, &items); err != nil {
+			t.Fatal(err)
+		}
+		for _, item := range items {
+			r.lists[attachClusterProfileGVR] = append(r.lists[attachClusterProfileGVR], unstructured.Unstructured{Object: item})
+		}
+	}
 	for file, gvr := range map[string]schema.GroupVersionResource{
 		"applications.json":    attachApplicationGVR,
 		"applicationsets.json": attachAppSetGVR,
@@ -180,10 +194,11 @@ func attachObjectNames(objects []DoctorAttachObject) []string {
 }
 
 // Before attach the recorded cluster runs Argo CD and Flux with an app each,
-// and nothing from ConfigHub. Attach was then seen to leave either controller
-// as found and to patch argocd-cm, which did not set the key.
+// no Sveltos, and nothing from ConfigHub. Attach was then seen to leave Argo
+// CD or Flux as found, to patch argocd-cm, which did not set the key, and to
+// install Sveltos.
 func TestBeforeAttachOnTheRecordedBrownfieldCluster(t *testing.T) {
-	for _, controller := range []string{"argo", "flux"} {
+	for _, controller := range []string{"argo", "flux", "sveltos"} {
 		t.Run(controller, func(t *testing.T) {
 			report := buildDoctorAttachReport(context.Background(), loadRecordedAttachSnapshot(t, controller, "before"))
 			if len(report.CredentialsFor) != 0 {
@@ -202,8 +217,13 @@ func TestBeforeAttachOnTheRecordedBrownfieldCluster(t *testing.T) {
 			if len(argo.Notes) != 1 || !strings.Contains(argo.Notes[0].Text, "attach patches argocd-cm") || argo.Notes[0].Basis != attachBasisRecorded {
 				t.Errorf("argo notes = %+v, want the recorded argocd-cm patch", argo.Notes)
 			}
-			if attachControllerOf(t, report, "sveltos").Basis != attachBasisCubSource {
-				t.Error("Sveltos was not recorded; its basis must say cub-source")
+			for _, c := range report.Controllers {
+				if c.Basis != attachBasisRecorded {
+					t.Errorf("%s: basis %q; all three were recorded", c.Controller, c.Basis)
+				}
+			}
+			if len(report.Deployers.NotServed) != 1 || report.Deployers.NotServed[0] != "ClusterProfile" {
+				t.Errorf("notServed = %v; before Sveltos is installed, ClusterProfile is not served", report.Deployers.NotServed)
 			}
 			if report.Argobot.Namespace != attachAbsent || report.Argobot.Secret != attachAbsent {
 				t.Errorf("argobot = %+v before attach", report.Argobot)
@@ -233,6 +253,10 @@ func TestBeforeAttachAfterARecordedAttach(t *testing.T) {
 		"flux": {
 			refused: []string{"flux"},
 			objects: []string{"Kustomization flux-system/confighub-root", "OCIRepository flux-system/argobot-scout-attach", "OCIRepository flux-system/confighub-root"},
+		},
+		"sveltos": {
+			refused: []string{"sveltos"},
+			objects: []string{"ClusterProfile /confighub-root"},
 		},
 	}
 	for controller, want := range cases {
@@ -385,7 +409,7 @@ func TestBeforeAttachNotServedKindIsNotCounted(t *testing.T) {
 	if _, counted := report.Deployers.Counts["HelmRelease"]; counted {
 		t.Error("a kind not served must not be counted")
 	}
-	if len(report.Deployers.NotServed) != 1 || report.Deployers.NotServed[0] != "HelmRelease" {
+	if strings.Join(report.Deployers.NotServed, ",") != "ClusterProfile,HelmRelease" {
 		t.Errorf("notServed = %v", report.Deployers.NotServed)
 	}
 	// Sveltos is not installed here, so its ClusterProfile is not served

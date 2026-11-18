@@ -84,7 +84,7 @@ type attachControllerSpec struct {
 var attachControllerSpecs = []attachControllerSpec{
 	{Controller: "argo", Namespace: "argocd", Deployment: "argocd-server", CredsSecret: "confighub-oci-creds", Basis: attachBasisRecorded},
 	{Controller: "flux", Namespace: "flux-system", Deployment: "kustomize-controller", CredsSecret: "confighub-oci", Basis: attachBasisRecorded, FluxOrSveltosRoot: attachKustomizationGVR},
-	{Controller: "sveltos", Namespace: "projectsveltos", Deployment: "addon-controller", CredsSecret: "confighub-gateway", Basis: attachBasisCubSource, FluxOrSveltosRoot: attachClusterProfileGVR},
+	{Controller: "sveltos", Namespace: "projectsveltos", Deployment: "addon-controller", CredsSecret: "confighub-gateway", Basis: attachBasisRecorded, FluxOrSveltosRoot: attachClusterProfileGVR},
 }
 
 // The fixed name of the Flux and Sveltos roots attach applies.
@@ -249,7 +249,7 @@ func attachReadOutcome(found bool, err error) string {
 func buildDoctorAttachReport(ctx context.Context, r attachReader) *DoctorAttachReport {
 	report := &DoctorAttachReport{
 		Basis: "Read from this cluster, by name; Secrets by metadata only. What attach does with each finding was recorded " +
-			"on a real cluster with cub v0.11.4, Argo CD v3.6.1 and Flux v2.10.0 (basis \"recorded\"), or read from cub's " +
+			"on a real cluster with cub v0.11.4, Argo CD v3.6.1, Flux v2.10.0 and Sveltos v1.16.0 as attach installed it (basis \"recorded\"), or read from cub's " +
 			"source and not run (basis \"cub-source\").",
 		CredentialsFor: []string{},
 	}

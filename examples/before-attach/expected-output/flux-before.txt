@@ -3,7 +3,7 @@ BEFORE CUB CLUSTER ATTACH
   --controller argo     use-existing: Deployment argocd/argocd-server exists; attach leaves the installed controller as found [recorded]
       argocd-cm does not set resource.customizations.ignoreDifferences.argoproj.io_Application; attach patches argocd-cm to set it [recorded]
   --controller flux     use-existing: Deployment flux-system/kustomize-controller exists; attach leaves the installed controller as found [recorded]
-  --controller sveltos  install: Deployment projectsveltos/addon-controller does not exist; attach installs the controller, or fails with --no-install [cub-source]
+  --controller sveltos  install: Deployment projectsveltos/addon-controller does not exist; attach installs the controller, or fails with --no-install [recorded]
   argobot: namespace absent, Secret argobot/argobot-secrets absent
   Deployers here: Application 1, ApplicationSet 0, HelmRelease 0, Kustomization 1
   Not served at the version read, so not counted: ClusterProfile

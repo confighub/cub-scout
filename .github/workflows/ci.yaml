@@ -828,7 +828,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        controller: [argo, flux]
+        controller: [argo, flux, sveltos]
     steps:
       - uses: actions/checkout@v6
 

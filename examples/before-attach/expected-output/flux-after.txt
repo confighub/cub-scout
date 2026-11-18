@@ -7,7 +7,7 @@ BEFORE CUB CLUSTER ATTACH
       already here: Kustomization flux-system/confighub-root
       already here: OCIRepository flux-system/argobot-scout-attach (oci://172.18.0.1:32181/space/argobot-scout-attach)
       already here: OCIRepository flux-system/confighub-root (oci://172.18.0.1:32181/space/scout-attach-flux-apps)
-  --controller sveltos  install: Deployment projectsveltos/addon-controller does not exist; attach installs the controller, or fails with --no-install [cub-source]
+  --controller sveltos  install: Deployment projectsveltos/addon-controller does not exist; attach installs the controller, or fails with --no-install [recorded]
   argobot: namespace present, Secret argobot/argobot-secrets present
   Deployers here: Application 1, ApplicationSet 0, HelmRelease 0, Kustomization 3
   Not served at the version read, so not counted: ClusterProfile

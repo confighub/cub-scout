@@ -6,7 +6,7 @@ BEFORE CUB CLUSTER ATTACH
       already here: Application argocd/scout-attach-argo-apps (oci://172.18.0.1:32181/space/scout-attach-argo-apps)
       argocd-cm already sets resource.customizations.ignoreDifferences.argoproj.io_Application, naming ConfigHub's annotations; attach leaves it as is [recorded]
   --controller flux     use-existing: Deployment flux-system/kustomize-controller exists; attach leaves the installed controller as found [recorded]
-  --controller sveltos  install: Deployment projectsveltos/addon-controller does not exist; attach installs the controller, or fails with --no-install [cub-source]
+  --controller sveltos  install: Deployment projectsveltos/addon-controller does not exist; attach installs the controller, or fails with --no-install [recorded]
   argobot: namespace present, Secret argobot/argobot-secrets present
   Deployers here: Application 3, ApplicationSet 0, HelmRelease 0, Kustomization 1
   Not served at the version read, so not counted: ClusterProfile
