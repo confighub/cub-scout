@@ -356,7 +356,7 @@ func init() {
 	importCmd.Flags().StringVar(&importAuditReason, "audit-reason", "", "Record break-glass decision reason in connected audit history (max 512 chars)")
 	importCmd.Flags().StringArrayVar(&importResources, "resource", nil, "Select specific resources to import (repeatable, e.g., --resource deploy/api --resource statefulset/db)")
 	importCmd.Flags().StringVar(&importGitPath, "git-path", "", "Local Git repository path for import preview (dry-run only)")
-	importCmd.Flags().String("kube-context", "", "Use this exact Kubernetes context for every cluster read of the import (not with --wizard)")
+	importCmd.Flags().String("kube-context", "", "Use this exact Kubernetes context for every cluster read and write of the import, the wizard's included")
 
 	rootCmd.AddCommand(importCmd)
 }
@@ -367,10 +367,8 @@ func runImport(cmd *cobra.Command, args []string) error {
 	}
 
 	// With --kube-context every cluster read of the import (discovery and
-	// the manifests it uploads) goes to that context; an empty or missing
-	// name fails before any read, with no fallback (#599). The wizard does
-	// not take it yet, so the two together are refused, as map refuses its
-	// import switch under an explicit context.
+	// the manifests it uploads), and the wizard's, goes to that context; an
+	// empty or missing name fails before any read, with no fallback (#599).
 	importClusterConfig, importClusterContext = nil, ""
 	var selection clusterContextSelection
 	if cmd != nil {
@@ -380,9 +378,6 @@ func runImport(cmd *cobra.Command, args []string) error {
 		}
 	}
 	if selection.explicit {
-		if importWizard {
-			return fmt.Errorf("--kube-context cannot be used with --wizard yet: the wizard reads the current context")
-		}
 		binding := resolveLocalClusterBindingForSelection(selection)
 		if binding.err != nil {
 			return binding.err
@@ -401,7 +396,7 @@ func runImport(cmd *cobra.Command, args []string) error {
 		if len(importResources) > 0 {
 			return fmt.Errorf("--wizard cannot be used with --resource")
 		}
-		return RunImportWizard()
+		return runImportWizardFn()
 	}
 
 	// Git path validation
