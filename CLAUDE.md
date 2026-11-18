@@ -110,7 +110,7 @@ before proposing new attribution, generator, receipt or explorer work.
 | Sveltos | `projectsveltos.io/owner-kind` + `projectsveltos.io/owner-name` annotations, Sveltos ownerRef, or Sveltos API group |
 | Modelplane | `modelplane.ai` / `infrastructure.modelplane.ai` API groups, Modelplane identity labels, or Modelplane ownerRef |
 | Helm | `app.kubernetes.io/managed-by: Helm` |
-| Terraform | `app.terraform.io/run-id` annotation or managed label |
+| Terraform | Not detected: Terraform writes no owner marker. `explain` names its field manager (`HashiCorp`, `Terraform`) as evidence |
 | Crossplane | `crossplane.io/claim-name` label *(experimental)* |
 | kro | `kro.run/*` labels/annotations, kro ownerRef, or kro API group |
 | ConfigHub | `confighub.com/UnitSlug` label |

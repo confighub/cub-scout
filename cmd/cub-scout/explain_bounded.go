@@ -283,6 +283,7 @@ func populateObjectExplainFacts(summary *ExplainSummary, obj *unstructured.Unstr
 	}
 	attr := agent.AttributeFieldMutation(obj, owner)
 	summary.MutationCause, summary.MutationManager = attr.Cause, attr.ManagerHint
+	summary.MutationManagerTool = agent.KnownManagerTool(attr.ManagerHint)
 	if fieldPath != "" {
 		summary.FieldAttribution = fieldAttributionSummary(obj, owner, fieldPath)
 	}

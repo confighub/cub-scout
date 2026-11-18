@@ -2,10 +2,9 @@
 # Apply two Deployments with Terraform's Kubernetes provider and record what
 # Terraform writes on them and what cub-scout says.
 #
-# cub-scout's Terraform detector reads app.terraform.io/run-id and
-# app.terraform.io/managed. This step records whether a real Terraform writes
-# either. Asserted only that no other owner is claimed and that trace answers
-# in JSON; what Terraform writes is recorded, not assumed.
+# Terraform writes no owner marker, only a field manager. Asserted: both
+# objects read as Native in map list, trace answers in JSON, and explain names
+# the Terraform resource type whose field manager wrote each one.
 set -euo pipefail
 scout=${1:?usage: terraform-lane.sh <cub-scout binary> <output dir>}
 out=${2:?usage: terraform-lane.sh <cub-scout binary> <output dir>}
@@ -49,8 +48,15 @@ for name in ("tf-typed", "tf-manifest"):
     lines.append("%s: labels %s; annotations %s; field managers %s; map owner %s (%s); trace state %s" % (
         name, sorted(labels), sorted(k for k in annotations if k != "deployment.kubernetes.io/revision"), managers,
         row.get("owner"), detection.get("status"), state))
-    if row.get("owner") not in ("Native", "Terraform"):
-        bad.append("%s: map owner %s" % (name, row.get("owner")))
+    if row.get("owner") != "Native":
+        bad.append("%s: map owner %s, want Native: Terraform writes no owner marker" % (name, row.get("owner")))
+    try:
+        tool = json.load(open("%s/explain-%s.json" % (out, name))).get("mutationManagerTool", "")
+    except (OSError, ValueError):
+        tool = ""
+    want_tool = "typed resources" if name == "tf-typed" else "kubernetes_manifest"
+    if want_tool not in tool:
+        bad.append("%s: explain mutationManagerTool %r, want Terraform's provider (%s)" % (name, tool, want_tool))
     if state is None:
         bad.append("%s: trace printed no JSON" % name)
 open(out + "/summary.txt", "w").write("\n".join(lines) + "\n")

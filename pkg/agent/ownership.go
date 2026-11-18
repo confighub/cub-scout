@@ -68,10 +68,13 @@ func detectOwnership(resource *unstructured.Unstructured, includeCustom bool) Ow
 		return ownership
 	}
 
-	// Check for Terraform ownership
-	if ownership := detectTerraformOwnership(labels, annotations); ownership.Type != "" {
-		return ownership
-	}
+	// No Terraform detector. Terraform writes no owner marker: on a real
+	// install (CI run 44265228493) its Kubernetes provider left no label or
+	// annotation, only a field manager ("HashiCorp" for typed resources,
+	// "Terraform" for kubernetes_manifest), which explain reports as
+	// evidence, never as an owner. The keys read here before
+	// (app.terraform.io/run-id, app.terraform.io/managed) are written by no
+	// Terraform tool.
 
 	// Check for ConfigHub ownership
 	if ownership := detectConfigHubOwnership(labels, annotations); ownership.Type != "" {
@@ -235,32 +238,6 @@ func detectHelmOwnership(labels, annotations map[string]string) Ownership {
 			Name:       name,
 			Source:     "label:helm.sh/chart",
 			Confidence: "high",
-		}
-	}
-
-	return Ownership{}
-}
-
-func detectTerraformOwnership(labels, annotations map[string]string) Ownership {
-	// Terraform Kubernetes provider
-	if _, ok := annotations["app.terraform.io/run-id"]; ok {
-		workspace := annotations["app.terraform.io/workspace-name"]
-		return Ownership{
-			Type:       OwnerTerraform,
-			SubType:    "workspace",
-			Name:       workspace,
-			Source:     "annotation:app.terraform.io/run-id",
-			Confidence: "high",
-		}
-	}
-
-	// Alternative terraform markers
-	if _, ok := labels["app.terraform.io/managed"]; ok {
-		return Ownership{
-			Type:       OwnerTerraform,
-			SubType:    "managed",
-			Source:     "label:app.terraform.io/managed",
-			Confidence: "medium",
 		}
 	}
 

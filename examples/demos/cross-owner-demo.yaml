@@ -3,7 +3,8 @@
 #
 # This demo simulates a realistic scenario where:
 # - Platform team manages cloud infrastructure with Crossplane
-# - Platform team manages secrets with Terraform
+# - Platform team manages secrets with Terraform, which writes no owner
+#   marker: cub-scout reads these secrets as "no owner marker recognised"
 # - App team deploys workloads with Flux
 # - App workloads reference platform-managed secrets (cross-owner)
 #
@@ -91,7 +92,9 @@ spec:
 
 ---
 # =============================================================================
-# TERRAFORM-MANAGED SECRETS (Platform Team - Credentials)
+# SECRETS APPLIED BY TERRAFORM (Platform Team - Credentials)
+# Terraform writes no label or annotation that marks its objects; the
+# managed-by label below is set by hand and is not an owner marker.
 # =============================================================================
 
 # Database credentials managed by Terraform (not GitOps)
@@ -103,9 +106,6 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: terraform
   annotations:
-    # Terraform state tracking
-    app.terraform.io/workspace-name: ecommerce-prod
-    app.terraform.io/run-id: run-abc123xyz
 type: Opaque
 stringData:
   DB_HOST: "ecommerce-db.cluster-xyz.us-east-1.rds.amazonaws.com"
@@ -124,8 +124,6 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: terraform
   annotations:
-    app.terraform.io/workspace-name: ecommerce-prod
-    app.terraform.io/run-id: run-abc123xyz
 type: Opaque
 stringData:
   REDIS_HOST: "ecommerce-cache.xyz.cache.amazonaws.com"
@@ -142,8 +140,6 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: terraform
   annotations:
-    app.terraform.io/workspace-name: ecommerce-secrets
-    app.terraform.io/run-id: run-def456xyz
 type: Opaque
 stringData:
   STRIPE_API_KEY: "sk_live_xxxxxxxxxxxxx"

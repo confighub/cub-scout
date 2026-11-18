@@ -319,22 +319,24 @@ func TestDetectOwnership_Terraform(t *testing.T) {
 		wantName    string
 	}{
 		{
-			name: "Terraform via run-id annotation",
+			// No Terraform tool writes these keys (CI run 44265228493 and a
+			// code search): they are not an owner marker.
+			name: "app.terraform.io/run-id is not an owner marker",
 			annotations: map[string]string{
 				"app.terraform.io/run-id":         "run-abc123",
 				"app.terraform.io/workspace-name": "production",
 			},
-			wantType:    OwnerTerraform,
-			wantSubType: "workspace",
-			wantName:    "production",
+			wantType:    OwnerUnknown,
+			wantSubType: "",
+			wantName:    "",
 		},
 		{
-			name: "Terraform via managed label",
+			name: "app.terraform.io/managed is not an owner marker",
 			labels: map[string]string{
 				"app.terraform.io/managed": "true",
 			},
-			wantType:    OwnerTerraform,
-			wantSubType: "managed",
+			wantType:    OwnerUnknown,
+			wantSubType: "",
 			wantName:    "",
 		},
 	}

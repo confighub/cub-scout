@@ -21,7 +21,7 @@ cub-scout checks for ownership signals in the following order. The **first match
 | 3 | **Sveltos** | Annotations: `projectsveltos.io/owner-kind` + `projectsveltos.io/owner-name`, `projectsveltos.io/deployed-by-sveltos`, Sveltos ownerRef, or Sveltos API group |
 | 4 | **Modelplane** | API group `modelplane.ai` / `infrastructure.modelplane.ai`, selected `modelplane.ai/*` identity labels, or Modelplane ownerRef |
 | 5 | **Helm** | Label: `app.kubernetes.io/managed-by: Helm` or `helm.sh/chart` |
-| 6 | **Terraform** | Annotation: `app.terraform.io/run-id` or label: `app.terraform.io/managed` |
+| 6 | *(none)* | Terraform is not detected: it writes no owner marker. See [Terraform](#terraform). |
 | 7 | **ConfigHub** | Label or annotation: `confighub.com/UnitSlug` |
 | 8 | **Crossplane (system)** | API group: `pkg.crossplane.io` or `apiextensions.crossplane.io` |
 | 9 | **Crossplane (managed)** | Labels: `crossplane.io/claim-name`, `crossplane.io/composite`, or ownerRef to Crossplane resource |
@@ -154,13 +154,20 @@ themselves.
 
 ### Terraform
 
-**Confidence: High/Medium**
+**Not detected as an owner.** Terraform writes no owner marker. Applied with
+Terraform 1.17.2 and the `hashicorp/kubernetes` provider 3.5.0 (CI run
+44265228493), a Deployment carried no Terraform label or annotation. The only
+trace was its field manager: `HashiCorp` for typed resources such as
+`kubernetes_deployment_v1`, `Terraform` for `kubernetes_manifest`.
 
-| Signal Type | Key | Confidence |
-|-------------|-----|------------|
-| Annotation | `app.terraform.io/run-id` | High |
-| Annotation | `app.terraform.io/workspace-name` | (extracted) |
-| Label | `app.terraform.io/managed` | Medium |
+Such an object reads as "no owner marker recognised". `explain` names the
+field manager, and says which Terraform resource type uses it. A field
+manager's name is free text that any client can set, so it is evidence of who
+wrote the fields, not a claim of ownership.
+
+Until 2026-11, cub-scout read `app.terraform.io/run-id` and
+`app.terraform.io/managed` as Terraform markers. No Terraform tool writes
+either key, and they are no longer read.
 
 ---
 

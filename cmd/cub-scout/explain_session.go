@@ -138,6 +138,7 @@ func observeExplainWithSession(ctx context.Context, session *traceSession, kind,
 	}
 	attr := agent.AttributeFieldMutation(obj, owner)
 	summary.MutationCause, summary.MutationManager = attr.Cause, attr.ManagerHint
+	summary.MutationManagerTool = agent.KnownManagerTool(attr.ManagerHint)
 	if opts.FieldPath != "" {
 		summary.FieldAttribution = fieldAttributionSummary(obj, owner, opts.FieldPath)
 	}

@@ -129,6 +129,10 @@ type ExplainSummary struct {
 	// MutationManager is a representative manager string for transparency
 	// (see pkg/agent.FieldMutationAttribution.ManagerHint).
 	MutationManager string `json:"mutationManager,omitempty"`
+	// MutationManagerTool names the tool known to write with MutationManager,
+	// for tools that leave no owner marker (Terraform). Evidence of who wrote
+	// the fields, not an ownership claim.
+	MutationManagerTool string `json:"mutationManagerTool,omitempty"`
 	// FieldAttribution is emitted only when an exact field path was requested.
 	FieldAttribution *FieldAttributionSummary `json:"fieldAttribution,omitempty"`
 }
@@ -930,6 +934,9 @@ func renderExplainText(summary ExplainSummary, mode PresentationMode, explicitMo
 		if summary.MutationManager != "" {
 			mutationLine += fmt.Sprintf(" (manager: %s)", summary.MutationManager)
 		}
+		if summary.MutationManagerTool != "" {
+			mutationLine += fmt.Sprintf("; %s writes with that field manager, which is not an owner marker", summary.MutationManagerTool)
+		}
 		fmt.Fprintf(&b, "  %s %s\n", label("Mutation cause"), colorExplainMutationCause(summary.MutationCause, mutationLine))
 	}
 	if summary.FieldAttribution != nil {
@@ -1170,6 +1177,9 @@ func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explic
 		mutationLine := fmt.Sprintf("`%s`", summary.MutationCause)
 		if summary.MutationManager != "" {
 			mutationLine += fmt.Sprintf(" (manager: `%s`)", summary.MutationManager)
+		}
+		if summary.MutationManagerTool != "" {
+			mutationLine += fmt.Sprintf("; %s writes with that field manager, which is not an owner marker", summary.MutationManagerTool)
 		}
 		fmt.Fprintf(&b, "- **Mutation cause:** %s\n", mutationLine)
 	}

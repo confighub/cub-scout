@@ -238,8 +238,8 @@ below is a to-do; none has an issue yet.
   refused by default.
 - [ ] On every ConfigHub minor: bump the SDK, move the Connected and
   live-status lanes, sweep for `cub` subcommands that were removed.
-- [ ] Terraform and Modelplane have detectors and no lane on a real
-  install (kro and Crossplane have one since 2026-11-16 and 2026-11-18). Add one each, or say "not tested on a real install" beside
+- [ ] Modelplane has a detector and no lane on a real install (kro,
+  Crossplane and Terraform have one since 2026-11-16 and 2026-11-18). Add one each, or say "not tested on a real install" beside
   every claim about them.
 - [ ] The full lane (`-f level=full`) stops at "Provision required scanner":
   the scanner is a private release and the repository has no

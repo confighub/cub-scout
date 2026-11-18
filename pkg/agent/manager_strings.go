@@ -18,6 +18,33 @@ import "strings"
 // verified enumeration is a single source of truth in the code, not free
 // strings spread across call sites.
 
+// --- Tools that write no owner marker ---
+
+// ManagerTerraformKubernetesProvider is the field-manager Terraform's
+// Kubernetes provider writes with for typed resources such as
+// kubernetes_deployment_v1 (an Update). Recorded with hashicorp/kubernetes
+// 3.5.0 in CI run 44265228493.
+const ManagerTerraformKubernetesProvider = "HashiCorp"
+
+// ManagerTerraformManifest is the field-manager Terraform's Kubernetes
+// provider applies kubernetes_manifest with (server-side apply), its default
+// field_manager name. Recorded in the same run.
+const ManagerTerraformManifest = "Terraform"
+
+// KnownManagerTool names the tool that writes with a field-manager string,
+// for tools that leave no owner marker on what they apply. It is evidence of
+// who wrote fields, never an ownership claim: a manager name is free text any
+// client can set. Empty when the string is not one of these.
+func KnownManagerTool(manager string) string {
+	switch manager {
+	case ManagerTerraformKubernetesProvider:
+		return "Terraform's Kubernetes provider (typed resources)"
+	case ManagerTerraformManifest:
+		return "Terraform's Kubernetes provider (kubernetes_manifest)"
+	}
+	return ""
+}
+
 // --- GitOps / orchestration controller manager strings ---
 
 // ManagerArgoCD is the field-manager used by Argo CD's application-controller
