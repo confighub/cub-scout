@@ -5,17 +5,17 @@
     "metadata": {
       "annotations": {
         "argocd.argoproj.io/tracking-id": "scout-attach-argo-apps:argoproj.io/Application:argocd/argobot-scout-attach",
-        "confighub.com/origin": "{\"spaceId\":\"694c8d36-8e7a-45cc-acb6-b45fcc9273c8\",\"spaceSlug\":\"scout-attach-argo-apps\",\"unitId\":\"26947961-e9eb-4da2-9b1b-a1d7c39b96c2\",\"unitSlug\":\"argobot-scout-attach\",\"revisionNum\":2}"
+        "confighub.com/origin": "{\"spaceId\":\"f6dfbf20-a621-4148-a733-489375e95321\",\"spaceSlug\":\"scout-attach-argo-apps\",\"unitId\":\"a1adfd21-c735-4640-ba95-a08acdbc1cc1\",\"unitSlug\":\"argobot-scout-attach\",\"revisionNum\":2}"
       },
-      "creationTimestamp": "2026-11-18T19:06:59Z",
+      "creationTimestamp": "2026-11-18T19:29:37Z",
       "finalizers": [
         "resources-finalizer.argocd.argoproj.io"
       ],
-      "generation": 12,
+      "generation": 14,
       "name": "argobot-scout-attach",
       "namespace": "argocd",
-      "resourceVersion": "1601",
-      "uid": "5f540538-0bc4-41fc-80fc-774d055ebe46"
+      "resourceVersion": "1573",
+      "uid": "a5e56f79-e6f2-4bfa-a138-e35047a903fe"
     },
     "spec": {
       "destination": {
@@ -38,18 +38,18 @@
     "status": {
       "controllerNamespace": "argocd",
       "health": {
-        "lastTransitionTime": "2026-11-18T19:07:02Z",
+        "lastTransitionTime": "2026-11-18T19:29:40Z",
         "status": "Healthy"
       },
       "history": [
         {
-          "deployStartedAt": "2026-11-18T19:06:59Z",
-          "deployedAt": "2026-11-18T19:07:00Z",
+          "deployStartedAt": "2026-11-18T19:29:37Z",
+          "deployedAt": "2026-11-18T19:29:38Z",
           "id": 0,
           "initiatedBy": {
             "automated": true
           },
-          "revision": "sha256:43d03e2e169b6e47bb6ea397b4b55ff27f0ea987697e661b7df4281e7d27a1c5",
+          "revision": "sha256:fcebdd838e2f6c8f1456aecb6bcf3d224b3b7135d886c48831cbe1dc4c44fdbe",
           "source": {
             "path": ".",
             "repoURL": "oci://172.18.0.1:32181/space/argobot-scout-attach",
@@ -58,7 +58,7 @@
         }
       ],
       "operationState": {
-        "finishedAt": "2026-11-18T19:07:00Z",
+        "finishedAt": "2026-11-18T19:29:38Z",
         "message": "successfully synced (all tasks run)",
         "operation": {
           "initiatedBy": {
@@ -68,8 +68,26 @@
             "limit": 5
           },
           "sync": {
+            "autoHealAttemptsCount": 1,
             "prune": true,
-            "revision": "sha256:43d03e2e169b6e47bb6ea397b4b55ff27f0ea987697e661b7df4281e7d27a1c5",
+            "resources": [
+              {
+                "group": "rbac.authorization.k8s.io",
+                "kind": "RoleBinding",
+                "name": "argobot-read"
+              },
+              {
+                "group": "apps",
+                "kind": "Deployment",
+                "name": "argobot"
+              },
+              {
+                "group": "rbac.authorization.k8s.io",
+                "kind": "RoleBinding",
+                "name": "argobot-argocd"
+              }
+            ],
+            "revision": "sha256:fcebdd838e2f6c8f1456aecb6bcf3d224b3b7135d886c48831cbe1dc4c44fdbe",
             "source": {
               "path": ".",
               "repoURL": "oci://172.18.0.1:32181/space/argobot-scout-attach",
@@ -78,69 +96,14 @@
           }
         },
         "phase": "Succeeded",
-        "startedAt": "2026-11-18T19:06:59Z",
+        "startedAt": "2026-11-18T19:29:38Z",
         "syncResult": {
           "resources": [
             {
-              "group": "",
-              "hookPhase": "Running",
-              "kind": "Namespace",
-              "message": "namespace/argobot configured",
-              "name": "argobot",
-              "namespace": "",
-              "status": "Synced",
-              "syncPhase": "Sync",
-              "version": "v1"
-            },
-            {
-              "group": "",
-              "hookPhase": "Running",
-              "kind": "ServiceAccount",
-              "message": "serviceaccount/argobot created",
-              "name": "argobot",
-              "namespace": "argobot",
-              "status": "Synced",
-              "syncPhase": "Sync",
-              "version": "v1"
-            },
-            {
               "group": "rbac.authorization.k8s.io",
               "hookPhase": "Running",
-              "kind": "ClusterRole",
-              "message": "clusterrole.rbac.authorization.k8s.io/argobot-read reconciled. reconciliation required create\n\tmissing rules added:\n\t\t{Verbs:[list] APIGroups:[apiextensions.k8s.io] Resources:[customresourcedefinitions] ResourceNames:[] NonResourceURLs:[]}\n\t\t{Verbs:[list] APIGroups:[storage.k8s.io] Resources:[storageclasses] ResourceNames:[] NonResourceURLs:[]}\n\t\t{Verbs:[list] APIGroups:[networking.k8s.io] Resources:[ingressclasses] ResourceNames:[] NonResourceURLs:[]}clusterrole.rbac.authorization.k8s.io/argobot-read configured. Warning: resource clusterroles/argobot-read is missing the kubectl.kubernetes.io/last-applied-configuration annotation which is required by  apply.  apply should only be used on resources created declaratively by either  create --save-config or  apply. The missing annotation will be patched automatically.",
-              "name": "argobot-read",
-              "namespace": "",
-              "status": "Synced",
-              "syncPhase": "Sync",
-              "version": "v1"
-            },
-            {
-              "group": "rbac.authorization.k8s.io",
-              "hookPhase": "Running",
-              "kind": "ClusterRoleBinding",
-              "message": "clusterrolebinding.rbac.authorization.k8s.io/argobot-read reconciled. reconciliation required create\n\tmissing subjects added:\n\t\t{Kind:ServiceAccount APIGroup: Name:argobot Namespace:argobot}clusterrolebinding.rbac.authorization.k8s.io/argobot-read configured. Warning: resource clusterrolebindings/argobot-read is missing the kubectl.kubernetes.io/last-applied-configuration annotation which is required by  apply.  apply should only be used on resources created declaratively by either  create --save-config or  apply. The missing annotation will be patched automatically.",
-              "name": "argobot-read",
-              "namespace": "",
-              "status": "Synced",
-              "syncPhase": "Sync",
-              "version": "v1"
-            },
-            {
-              "group": "rbac.authorization.k8s.io",
-              "hookPhase": "Running",
-              "kind": "Role",
-              "message": "role.rbac.authorization.k8s.io/argobot-argocd reconciled. reconciliation required create\n\tmissing rules added:\n\t\t{Verbs:[get list watch patch] APIGroups:[argoproj.io] Resources:[applications] ResourceNames:[] NonResourceURLs:[]}role.rbac.authorization.k8s.io/argobot-argocd configured. Warning: resource roles/argobot-argocd is missing the kubectl.kubernetes.io/last-applied-configuration annotation which is required by  apply.  apply should only be used on resources created declaratively by either  create --save-config or  apply. The missing annotation will be patched automatically.",
-              "name": "argobot-argocd",
-              "namespace": "argocd",
-              "status": "Synced",
-              "syncPhase": "Sync",
-              "version": "v1"
-            },
-            {
-              "group": "rbac.authorization.k8s.io",
-              "hookPhase": "Running",
-              "kind": "Role",
-              "message": "role.rbac.authorization.k8s.io/argobot-read reconciled. reconciliation required create\n\tmissing rules added:\n\t\t{Verbs:[get] APIGroups:[] Resources:[configmaps] ResourceNames:[amazon-vpc-cni] NonResourceURLs:[]}role.rbac.authorization.k8s.io/argobot-read configured. Warning: resource roles/argobot-read is missing the kubectl.kubernetes.io/last-applied-configuration annotation which is required by  apply.  apply should only be used on resources created declaratively by either  create --save-config or  apply. The missing annotation will be patched automatically.",
+              "kind": "RoleBinding",
+              "message": "rolebinding.rbac.authorization.k8s.io/argobot-read reconciledrolebinding.rbac.authorization.k8s.io/argobot-read unchanged",
               "name": "argobot-read",
               "namespace": "kube-system",
               "status": "Synced",
@@ -151,18 +114,7 @@
               "group": "rbac.authorization.k8s.io",
               "hookPhase": "Running",
               "kind": "RoleBinding",
-              "message": "rolebinding.rbac.authorization.k8s.io/argobot-read reconciled. reconciliation required create\n\tmissing subjects added:\n\t\t{Kind:ServiceAccount APIGroup: Name:argobot Namespace:argobot}rolebinding.rbac.authorization.k8s.io/argobot-read configured. Warning: resource rolebindings/argobot-read is missing the kubectl.kubernetes.io/last-applied-configuration annotation which is required by  apply.  apply should only be used on resources created declaratively by either  create --save-config or  apply. The missing annotation will be patched automatically.",
-              "name": "argobot-read",
-              "namespace": "kube-system",
-              "status": "Synced",
-              "syncPhase": "Sync",
-              "version": "v1"
-            },
-            {
-              "group": "rbac.authorization.k8s.io",
-              "hookPhase": "Running",
-              "kind": "RoleBinding",
-              "message": "rolebinding.rbac.authorization.k8s.io/argobot-argocd reconciled. reconciliation required create\n\tmissing subjects added:\n\t\t{Kind:ServiceAccount APIGroup: Name:argobot Namespace:argobot}rolebinding.rbac.authorization.k8s.io/argobot-argocd configured. Warning: resource rolebindings/argobot-argocd is missing the kubectl.kubernetes.io/last-applied-configuration annotation which is required by  apply.  apply should only be used on resources created declaratively by either  create --save-config or  apply. The missing annotation will be patched automatically.",
+              "message": "rolebinding.rbac.authorization.k8s.io/argobot-argocd reconciledrolebinding.rbac.authorization.k8s.io/argobot-argocd unchanged",
               "name": "argobot-argocd",
               "namespace": "argocd",
               "status": "Synced",
@@ -176,7 +128,7 @@
                 "ghcr.io/confighub/argobot:v0.2.12"
               ],
               "kind": "Deployment",
-              "message": "deployment.apps/argobot created",
+              "message": "deployment.apps/argobot unchanged",
               "name": "argobot",
               "namespace": "argobot",
               "status": "Synced",
@@ -184,7 +136,7 @@
               "version": "v1"
             }
           ],
-          "revision": "sha256:43d03e2e169b6e47bb6ea397b4b55ff27f0ea987697e661b7df4281e7d27a1c5",
+          "revision": "sha256:fcebdd838e2f6c8f1456aecb6bcf3d224b3b7135d886c48831cbe1dc4c44fdbe",
           "source": {
             "path": ".",
             "repoURL": "oci://172.18.0.1:32181/space/argobot-scout-attach",
@@ -192,7 +144,7 @@
           }
         }
       },
-      "reconciledAt": "2026-11-18T19:07:01Z",
+      "reconciledAt": "2026-11-18T19:29:40Z",
       "resourceHealthSource": "appTree",
       "resources": [
         {
@@ -281,7 +233,7 @@
             "targetRevision": "latest"
           }
         },
-        "revision": "sha256:43d03e2e169b6e47bb6ea397b4b55ff27f0ea987697e661b7df4281e7d27a1c5",
+        "revision": "sha256:fcebdd838e2f6c8f1456aecb6bcf3d224b3b7135d886c48831cbe1dc4c44fdbe",
         "status": "Synced"
       }
     }
@@ -293,12 +245,12 @@
       "annotations": {
         "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"guestbook\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"guestbook\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"guestbook\",\"repoURL\":\"https://github.com/argoproj/argocd-example-apps\",\"targetRevision\":\"8088f4c0d970abb09e250248cc97e35623447cb5\"},\"syncPolicy\":{\"automated\":{\"prune\":true,\"selfHeal\":true},\"syncOptions\":[\"CreateNamespace=true\"]}}}\n"
       },
-      "creationTimestamp": "2026-11-18T19:05:54Z",
-      "generation": 15,
+      "creationTimestamp": "2026-11-18T19:28:34Z",
+      "generation": 11,
       "name": "guestbook",
       "namespace": "argocd",
-      "resourceVersion": "1362",
-      "uid": "8fcf3c4d-a95b-42a7-817f-0526d44117f6"
+      "resourceVersion": "1328",
+      "uid": "722322af-7360-42d5-815f-ee29c374b7d3"
     },
     "spec": {
       "destination": {
@@ -324,13 +276,13 @@
     "status": {
       "controllerNamespace": "argocd",
       "health": {
-        "lastTransitionTime": "2026-11-18T19:06:07Z",
+        "lastTransitionTime": "2026-11-18T19:28:45Z",
         "status": "Healthy"
       },
       "history": [
         {
-          "deployStartedAt": "2026-11-18T19:05:56Z",
-          "deployedAt": "2026-11-18T19:05:56Z",
+          "deployStartedAt": "2026-11-18T19:28:35Z",
+          "deployedAt": "2026-11-18T19:28:35Z",
           "id": 0,
           "initiatedBy": {
             "automated": true
@@ -344,7 +296,7 @@
         }
       ],
       "operationState": {
-        "finishedAt": "2026-11-18T19:05:57Z",
+        "finishedAt": "2026-11-18T19:28:35Z",
         "message": "successfully synced (all tasks run)",
         "operation": {
           "initiatedBy": {
@@ -354,15 +306,7 @@
             "limit": 5
           },
           "sync": {
-            "autoHealAttemptsCount": 1,
             "prune": true,
-            "resources": [
-              {
-                "group": "apps",
-                "kind": "Deployment",
-                "name": "guestbook-ui"
-              }
-            ],
             "revision": "8088f4c0d970abb09e250248cc97e35623447cb5",
             "source": {
               "path": "guestbook",
@@ -375,9 +319,31 @@
           }
         },
         "phase": "Succeeded",
-        "startedAt": "2026-11-18T19:05:56Z",
+        "startedAt": "2026-11-18T19:28:35Z",
         "syncResult": {
           "resources": [
+            {
+              "group": "",
+              "hookPhase": "Running",
+              "kind": "Namespace",
+              "message": "namespace/guestbook created",
+              "name": "guestbook",
+              "namespace": "",
+              "status": "Synced",
+              "syncPhase": "PreSync",
+              "version": "v1"
+            },
+            {
+              "group": "",
+              "hookPhase": "Running",
+              "kind": "Service",
+              "message": "service/guestbook-ui created",
+              "name": "guestbook-ui",
+              "namespace": "guestbook",
+              "status": "Synced",
+              "syncPhase": "Sync",
+              "version": "v1"
+            },
             {
               "group": "apps",
               "hookPhase": "Running",
@@ -385,7 +351,7 @@
                 "gcr.io/google-samples/gb-frontend:v5"
               ],
               "kind": "Deployment",
-              "message": "deployment.apps/guestbook-ui unchanged",
+              "message": "deployment.apps/guestbook-ui created",
               "name": "guestbook-ui",
               "namespace": "guestbook",
               "status": "Synced",
@@ -401,7 +367,7 @@
           }
         }
       },
-      "reconciledAt": "2026-11-18T19:05:57Z",
+      "reconciledAt": "2026-11-18T19:28:35Z",
       "resourceHealthSource": "appTree",
       "resources": [
         {
@@ -451,15 +417,15 @@
       "annotations": {
         "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"finalizers\":[\"resources-finalizer.argocd.argoproj.io\"],\"name\":\"scout-attach-argo-apps\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"argocd\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\".\",\"repoURL\":\"oci://172.18.0.1:32181/space/scout-attach-argo-apps\",\"targetRevision\":\"latest\"},\"syncPolicy\":{\"automated\":{\"prune\":true,\"selfHeal\":true},\"syncOptions\":[\"ServerSideApply=true\",\"ServerSideApply.ForceConflicts=true\",\"RespectIgnoreDifferences=true\",\"CreateNamespace=false\"]}}}\n"
       },
-      "creationTimestamp": "2026-11-18T19:06:58Z",
+      "creationTimestamp": "2026-11-18T19:29:37Z",
       "finalizers": [
         "resources-finalizer.argocd.argoproj.io"
       ],
       "generation": 7,
       "name": "scout-attach-argo-apps",
       "namespace": "argocd",
-      "resourceVersion": "1547",
-      "uid": "c564081b-cdee-4187-92ac-515e12a32d8c"
+      "resourceVersion": "1508",
+      "uid": "f4350616-7b88-49ee-b03f-56e89ae0f1e3"
     },
     "spec": {
       "destination": {
@@ -488,18 +454,18 @@
     "status": {
       "controllerNamespace": "argocd",
       "health": {
-        "lastTransitionTime": "2026-11-18T19:06:59Z",
+        "lastTransitionTime": "2026-11-18T19:29:37Z",
         "status": "Healthy"
       },
       "history": [
         {
-          "deployStartedAt": "2026-11-18T19:06:59Z",
-          "deployedAt": "2026-11-18T19:06:59Z",
+          "deployStartedAt": "2026-11-18T19:29:37Z",
+          "deployedAt": "2026-11-18T19:29:37Z",
           "id": 0,
           "initiatedBy": {
             "automated": true
           },
-          "revision": "sha256:e7ff53b7cf8da0b629ac12e72efa2b0a16f629793120996341ac5c933c568409",
+          "revision": "sha256:0eacafb9b82cda153a31a2a064c12ce2de292102337abae3799614a720feba88",
           "source": {
             "path": ".",
             "repoURL": "oci://172.18.0.1:32181/space/scout-attach-argo-apps",
@@ -508,7 +474,7 @@
         }
       ],
       "operationState": {
-        "finishedAt": "2026-11-18T19:06:59Z",
+        "finishedAt": "2026-11-18T19:29:37Z",
         "message": "successfully synced (all tasks run)",
         "operation": {
           "initiatedBy": {
@@ -519,7 +485,7 @@
           },
           "sync": {
             "prune": true,
-            "revision": "sha256:e7ff53b7cf8da0b629ac12e72efa2b0a16f629793120996341ac5c933c568409",
+            "revision": "sha256:0eacafb9b82cda153a31a2a064c12ce2de292102337abae3799614a720feba88",
             "source": {
               "path": ".",
               "repoURL": "oci://172.18.0.1:32181/space/scout-attach-argo-apps",
@@ -534,7 +500,7 @@
           }
         },
         "phase": "Succeeded",
-        "startedAt": "2026-11-18T19:06:59Z",
+        "startedAt": "2026-11-18T19:29:37Z",
         "syncResult": {
           "resources": [
             {
@@ -560,7 +526,7 @@
               "version": "v1alpha1"
             }
           ],
-          "revision": "sha256:e7ff53b7cf8da0b629ac12e72efa2b0a16f629793120996341ac5c933c568409",
+          "revision": "sha256:0eacafb9b82cda153a31a2a064c12ce2de292102337abae3799614a720feba88",
           "source": {
             "path": ".",
             "repoURL": "oci://172.18.0.1:32181/space/scout-attach-argo-apps",
@@ -568,7 +534,7 @@
           }
         }
       },
-      "reconciledAt": "2026-11-18T19:06:59Z",
+      "reconciledAt": "2026-11-18T19:29:37Z",
       "resourceHealthSource": "appTree",
       "resources": [
         {
@@ -605,7 +571,7 @@
             "targetRevision": "latest"
           }
         },
-        "revision": "sha256:e7ff53b7cf8da0b629ac12e72efa2b0a16f629793120996341ac5c933c568409",
+        "revision": "sha256:0eacafb9b82cda153a31a2a064c12ce2de292102337abae3799614a720feba88",
         "status": "Synced"
       }
     }

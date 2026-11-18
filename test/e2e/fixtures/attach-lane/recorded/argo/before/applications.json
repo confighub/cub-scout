@@ -6,12 +6,12 @@
       "annotations": {
         "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"guestbook\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"guestbook\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"guestbook\",\"repoURL\":\"https://github.com/argoproj/argocd-example-apps\",\"targetRevision\":\"8088f4c0d970abb09e250248cc97e35623447cb5\"},\"syncPolicy\":{\"automated\":{\"prune\":true,\"selfHeal\":true},\"syncOptions\":[\"CreateNamespace=true\"]}}}\n"
       },
-      "creationTimestamp": "2026-11-18T19:05:54Z",
-      "generation": 15,
+      "creationTimestamp": "2026-11-18T19:28:34Z",
+      "generation": 11,
       "name": "guestbook",
       "namespace": "argocd",
-      "resourceVersion": "1362",
-      "uid": "8fcf3c4d-a95b-42a7-817f-0526d44117f6"
+      "resourceVersion": "1328",
+      "uid": "722322af-7360-42d5-815f-ee29c374b7d3"
     },
     "spec": {
       "destination": {
@@ -37,13 +37,13 @@
     "status": {
       "controllerNamespace": "argocd",
       "health": {
-        "lastTransitionTime": "2026-11-18T19:06:07Z",
+        "lastTransitionTime": "2026-11-18T19:28:45Z",
         "status": "Healthy"
       },
       "history": [
         {
-          "deployStartedAt": "2026-11-18T19:05:56Z",
-          "deployedAt": "2026-11-18T19:05:56Z",
+          "deployStartedAt": "2026-11-18T19:28:35Z",
+          "deployedAt": "2026-11-18T19:28:35Z",
           "id": 0,
           "initiatedBy": {
             "automated": true
@@ -57,7 +57,7 @@
         }
       ],
       "operationState": {
-        "finishedAt": "2026-11-18T19:05:57Z",
+        "finishedAt": "2026-11-18T19:28:35Z",
         "message": "successfully synced (all tasks run)",
         "operation": {
           "initiatedBy": {
@@ -67,15 +67,7 @@
             "limit": 5
           },
           "sync": {
-            "autoHealAttemptsCount": 1,
             "prune": true,
-            "resources": [
-              {
-                "group": "apps",
-                "kind": "Deployment",
-                "name": "guestbook-ui"
-              }
-            ],
             "revision": "8088f4c0d970abb09e250248cc97e35623447cb5",
             "source": {
               "path": "guestbook",
@@ -88,9 +80,31 @@
           }
         },
         "phase": "Succeeded",
-        "startedAt": "2026-11-18T19:05:56Z",
+        "startedAt": "2026-11-18T19:28:35Z",
         "syncResult": {
           "resources": [
+            {
+              "group": "",
+              "hookPhase": "Running",
+              "kind": "Namespace",
+              "message": "namespace/guestbook created",
+              "name": "guestbook",
+              "namespace": "",
+              "status": "Synced",
+              "syncPhase": "PreSync",
+              "version": "v1"
+            },
+            {
+              "group": "",
+              "hookPhase": "Running",
+              "kind": "Service",
+              "message": "service/guestbook-ui created",
+              "name": "guestbook-ui",
+              "namespace": "guestbook",
+              "status": "Synced",
+              "syncPhase": "Sync",
+              "version": "v1"
+            },
             {
               "group": "apps",
               "hookPhase": "Running",
@@ -98,7 +112,7 @@
                 "gcr.io/google-samples/gb-frontend:v5"
               ],
               "kind": "Deployment",
-              "message": "deployment.apps/guestbook-ui unchanged",
+              "message": "deployment.apps/guestbook-ui created",
               "name": "guestbook-ui",
               "namespace": "guestbook",
               "status": "Synced",
@@ -114,7 +128,7 @@
           }
         }
       },
-      "reconciledAt": "2026-11-18T19:05:57Z",
+      "reconciledAt": "2026-11-18T19:28:35Z",
       "resourceHealthSource": "appTree",
       "resources": [
         {

@@ -12,7 +12,7 @@ Everything is recorded from a real cluster in the attach lane
 (`scripts/ci/attach-lane.sh`, `-f level=attach`), never written by hand:
 
 - `fixtures/cluster/` is the Argo CD run's cluster after one real attach (run
-  44374223283, cub v0.11.4, Argo CD v3.6.1, Flux v2.10.0), the same files as
+  44378253850, cub v0.11.4, Argo CD v3.6.1, Flux v2.10.0), the same files as
   `test/e2e/fixtures/attach-lane/recorded/argo/after/`. Secrets are by
   namespace, name, type and labels only.
 - `fixtures/cluster/cub-cluster-attach-help.txt` is the long help of

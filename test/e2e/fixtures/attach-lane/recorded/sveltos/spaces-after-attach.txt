@@ -1,0 +1,5 @@
+scout-attach-sveltos-apps {"ClusterUnitID": "05792b9d-1729-4205-9e64-9a447f9be9db"}
+scout-attach {"confighub.com/cluster-bot-channel": "argobot", "confighub.com/cluster-bot-space": "argobot-scout-attach", "confighub.com/cluster-controller": "sveltos", "confighub.com/cluster-host": "ip-10-0-143-45", "confighub.com/cluster-name": "scout-attach", "confighub.com/cluster-origin": "attach", "confighub.com/cluster-provider": "kind", "confighub.com/cluster-provider-cluster": "brownfield"}
+argobot-sveltos-base {"ExternalSourceRef": "ghcr.io/confighub/argobot:v0.2.12"}
+argobot-scout-attach {"ClusterUnitID": "a25615c4-6f9b-4f48-8939-68576ae47b73", "ExternalSourceRef": "ghcr.io/confighub/argobot:v0.2.12", "UpstreamSpaceID": "8c19f421-7aff-4419-8380-0d43252bb47c"}
+default {}

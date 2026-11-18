@@ -1,0 +1,5 @@
+scout-attach-sveltos-apps
+scout-attach
+argobot-sveltos-base
+argobot-scout-attach
+default

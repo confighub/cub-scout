@@ -82,9 +82,6 @@ func (r *recordedAttachReader) list(_ context.Context, gvr schema.GroupVersionRe
 func loadRecordedAttachSnapshot(t *testing.T, controller, when string) *recordedAttachReader {
 	t.Helper()
 	dir := filepath.Join("..", "..", "test", "e2e", "fixtures", "attach-lane", "recorded", controller, when)
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		t.Skipf("TEMPORARY: no recording at %s yet", dir)
-	}
 	r := &recordedAttachReader{
 		exist:     map[string]bool{},
 		objects:   map[string]*unstructured.Unstructured{},

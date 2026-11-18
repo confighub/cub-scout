@@ -1,0 +1,11 @@
+Registry the controller will pull Releases from: oci://172.18.0.1:32181 (plain HTTP)
+  advertised by http://localhost:32180 at /api/info as http://localhost:32181
+  its host rewritten to the docker network's address for this machine, which a container in a cluster on this machine reaches the server by
+Reading kind cluster "brownfield"'s credentials...
+Checking cluster access (needs cluster-admin)...
+Rolling back: removing [redacted].kubeconfig
+Failed: the cluster is already wired to a ConfigHub: Sveltos holds registry credentials (Secret projectsveltos/confighub-gateway). If the attachment that wrote it is not in use any more, delete the Secret:
+  CUB_TMP=$(mktemp -d)
+  kind get kubeconfig --name brownfield > "$CUB_TMP/kubeconfig"
+  kubectl --kubeconfig "$CUB_TMP/kubeconfig" -n projectsveltos delete secret confighub-gateway
+  rm -r "$CUB_TMP"

@@ -22,7 +22,7 @@ Kustomization, and a `legacy-web` Deployment applied by hand, on kind.
 
 Every output here comes from the attach lane
 ([`scripts/ci/attach-lane.sh`](../../scripts/ci/attach-lane.sh), dispatched
-with `-f level=attach`, run 44374223283). For each of Argo CD, Flux and
+with `-f level=attach`, run 44378253850). For each of Argo CD, Flux and
 Sveltos it records the cluster, runs `doctor --before-attach`, attaches the
 cluster for real with cub v0.11.4 (`--prune`, and `--no-install` for Argo CD
 and Flux, which the cluster runs already) to a disposable ConfigHub, runs it
