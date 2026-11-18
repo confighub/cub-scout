@@ -50,7 +50,7 @@ what is ready, and the work the trimmed plan gave to v2.16 moves to v2.17.
 Still owed from v2.15, unchanged: [#882] item 5 and a live sighting of two
 Flux kinds; the remaining [#887] items; the rest of [#599]; the eval cases.
 
-### v2.17.0, in preparation — 2026-11-18
+### v2.17.0, published 2026-11-18
 
 Renumbered again, on the maintainer's word ("Cut v2.17.0"): v2.17.0 ships
 what the standing checks found. The items the table above moved to v2.17
