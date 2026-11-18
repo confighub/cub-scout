@@ -2226,8 +2226,9 @@ Terraform detector reading keys no Terraform tool writes (#942, the
 maintainer's decision). Helm release status now counts as read (#935, the
 maintainer's decision). CI is pinned (#927), on Flux 2.10 / Argo CD 3.6
 (#928) and on Ubuntu 26.04 with raised inotify limits for the live lane
-(#934); the demo lane passes without its scanner demos (#932). v2.17.0 is cut
-from this on the maintainer's word; the planned v2.17 work moves to v2.18.
+(#934); the demo lane passes without its scanner demos (#932). v2.17.0 was cut
+from this on the maintainer's word and published on 2026-11-18 from
+`f2f3fb69` (Release run 44281400405); the planned v2.17 work moves to v2.18.
 Next: the Modelplane control-plane lane (the maintainer's choice).
 
 ## After v2.15.1: the envelope, the tool profile, ConfigHub 0.11 — 2026-11-16
