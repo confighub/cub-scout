@@ -99,25 +99,26 @@ func TestOwnershipDetection(t *testing.T) {
 			wantName:    "nginx",
 		},
 
-		// Terraform
+		// Terraform writes no owner marker. These keys, once read as one,
+		// are written by no Terraform tool (CI run 44265228493).
 		{
-			name:   "Terraform workspace via annotation",
+			name:   "app.terraform.io/run-id is not an owner marker",
 			labels: map[string]string{},
 			annotations: map[string]string{
 				"app.terraform.io/run-id":         "run-12345",
 				"app.terraform.io/workspace-name": "prod-infra",
 			},
-			wantType:    agent.OwnerTerraform,
-			wantSubType: "workspace",
-			wantName:    "prod-infra",
+			wantType:    agent.OwnerUnknown,
+			wantSubType: "",
+			wantName:    "",
 		},
 		{
-			name: "Terraform managed via label",
+			name: "app.terraform.io/managed is not an owner marker",
 			labels: map[string]string{
 				"app.terraform.io/managed": "true",
 			},
-			wantType:    agent.OwnerTerraform,
-			wantSubType: "managed",
+			wantType:    agent.OwnerUnknown,
+			wantSubType: "",
 			wantName:    "",
 		},
 

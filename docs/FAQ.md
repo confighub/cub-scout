@@ -77,7 +77,7 @@ This is expected. Flux CRDs themselves are not "owned by Flux" - they ARE the co
 
 ### Does cub-scout detect Terraform-managed resources?
 
-Yes. cub-scout looks for `app.terraform.io/workspace-name` annotation or `app.terraform.io/managed` label.
+Not as an owner, because Terraform writes no owner marker on what it applies. Such an object reads as "no owner marker recognised", which does not mean nothing manages it. `explain` names the field manager that wrote it. Terraform's Kubernetes provider uses `HashiCorp` for typed resources and `Terraform` for `kubernetes_manifest`, and `explain` says so. See [ownership precedence](reference/ownership-precedence.md#terraform).
 
 ### Does cub-scout support Crossplane?
 

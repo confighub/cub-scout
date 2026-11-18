@@ -265,7 +265,7 @@ Every ownership type has a detection rule and a standard assertion:
 | **Flux** | `kustomize.toolkit.fluxcd.io/*` or `helm.toolkit.fluxcd.io/*` | `owner == "Flux"` |
 | **ArgoCD** | `argocd.argoproj.io/instance` or tracking-id annotation | `owner == "ArgoCD"` |
 | **Helm** | `app.kubernetes.io/managed-by: Helm` | `owner == "Helm"` |
-| **Terraform** | `app.terraform.io/run-id` annotation or managed label | `owner == "Terraform"` |
+| **Terraform** | none: Terraform writes no owner marker | `owner == "Native"`; `explain` names the field manager |
 | **Crossplane** | `crossplane.io/claim-name` label | `owner == "Crossplane"` |
 | **ConfigHub** | `confighub.com/UnitSlug` label | `owner == "ConfigHub"` |
 | **Native** | None of the above | `owner == "Native"` |

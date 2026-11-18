@@ -24,7 +24,8 @@ import (
 //   - 35% Flux (Kustomization labels)
 //   - 25% ArgoCD (instance label)
 //   - 15% Helm (managed-by label)
-//   - 5%  Terraform (run-id annotation)
+//   - 5%  an app.terraform.io/run-id annotation, which no Terraform tool
+//     writes and which reads as no owner marker
 //   - 5%  Crossplane (claim-name label)
 //   - 5%  ConfigHub (UnitSlug label)
 //   - 10% Native (no ownership labels)
@@ -88,7 +89,7 @@ func generateScaleFixture(t *testing.T, n int) string {
     helm.sh/chart: %s-1.0.0`, name, name)
 			annotations = fmt.Sprintf(`    meta.helm.sh/release-name: %s
     meta.helm.sh/release-namespace: %s`, name, ns)
-		case i%20 < 16: // 5% Terraform
+		case i%20 < 16: // 5% carry an annotation that is not an owner marker
 			labels = fmt.Sprintf(`    app.kubernetes.io/name: %s`, name)
 			annotations = fmt.Sprintf(`    app.terraform.io/run-id: run-%04d`, i)
 		case i%20 < 17: // 5% Crossplane

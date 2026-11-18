@@ -331,7 +331,7 @@ func TestMixedTool_AllOwnersDetected(t *testing.T) {
 		"apps/Deployment/flux-web":           agent.OwnerFlux,
 		"infra/Deployment/argo-api":          agent.OwnerArgo,
 		"data/Deployment/helm-redis":         agent.OwnerHelm,
-		"infra/Deployment/tf-vpc-controller": agent.OwnerTerraform,
+		"infra/Deployment/tf-vpc-controller": agent.OwnerUnknown, // Terraform writes no owner marker
 		"data/Deployment/xp-database":        agent.OwnerCrossplane,
 		"apps/Deployment/ch-config-sync":     agent.OwnerConfigHub,
 		"apps/Deployment/legacy-cron":        agent.OwnerUnknown,
@@ -432,7 +432,6 @@ func TestMixedTool_OwnershipDistribution(t *testing.T) {
 		agent.OwnerFlux,
 		agent.OwnerArgo,
 		agent.OwnerHelm,
-		agent.OwnerTerraform,
 		agent.OwnerCrossplane,
 		agent.OwnerConfigHub,
 		agent.OwnerUnknown,

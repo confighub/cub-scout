@@ -107,11 +107,11 @@ echo -e "     ${DIM}Status:${NC} Fetched revision main@sha1:abc123"
 echo -e "     ${DIM}Elapsed:${NC} 4m 12s"
 echo ""
 echo -e "  ${BOLD}${YELLOW}Cross-Owner References${NC}"
-echo -e "  ${WARN} Secret/db-credentials ${ARROW} Owner: ${CYAN}Terraform${NC}"
+echo -e "  ${WARN} Secret/db-credentials ${ARROW} ${CYAN}No owner marker${NC} ${DIM}(applied by Terraform, which writes none)${NC}"
 echo -e "     ${DIM}Referenced via: envFrom.secretRef${NC}"
 echo -e "     ${DIM}Risk: Secret updates won't trigger Flux reconciliation${NC}"
 echo ""
-echo -e "  ${WARN} Secret/redis-credentials ${ARROW} Owner: ${CYAN}Terraform${NC}"
+echo -e "  ${WARN} Secret/redis-credentials ${ARROW} ${CYAN}No owner marker${NC}"
 echo -e "     ${DIM}Referenced via: env.valueFrom.secretKeyRef${NC}"
 echo ""
 sleep 3
@@ -177,7 +177,7 @@ WORKLOADS (ecommerce)
 
 CROSS-OWNER SUMMARY
 ──────────────────────────────────────────────────────────────────
-  ⚠ 4 workloads reference 3 Terraform-managed secrets
+  ⚠ 4 workloads reference 3 secrets with no owner marker
 
   Secret/db-credentials        → Used by: api-server, analytics, debug-pod
   Secret/redis-credentials     → Used by: api-server

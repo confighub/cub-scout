@@ -132,14 +132,14 @@ kubectl apply -f examples/demos/cross-owner-demo.yaml
 
 Creates:
 - **Crossplane resources** - RDS and ElastiCache proxies with claim labels
-- **Terraform secrets** - DB credentials, Redis auth, payment API keys
+- **Secrets applied by Terraform** - DB credentials, Redis auth, payment API keys. Terraform writes no owner marker, so these read as "no owner marker recognised".
 - **Flux workloads** - API server, payment service, frontend
 - **ArgoCD workload** - Analytics collector
 - **Native workload** - Debug pod
 
 Shows:
 - Crossplane ownership detection (claim-name, composite, composition)
-- Cross-owner reference warnings (Flux deployment → Terraform secret)
+- Cross-owner reference warnings (Flux deployment → a secret with no owner marker)
 - Elapsed time since last reconciliation
 - Warning highlights for stuck resources
 

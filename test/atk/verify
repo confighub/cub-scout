@@ -104,15 +104,8 @@ detect_owner() {
         return
     fi
 
-    # Terraform
-    if echo "$annotations" | grep -q "app.terraform.io"; then
-        local workspace
-        workspace=$(echo "$annotations" | jq -r '.["app.terraform.io/workspace-name"] // empty')
-        local details
-        details=$(jq -cn --arg ws "$workspace" '{workspace: $ws}')
-        echo "Terraform|$details"
-        return
-    fi
+    # No Terraform branch: Terraform writes no owner marker, and the
+    # app.terraform.io keys once read here are written by no Terraform tool.
 
     echo "Native|{}"
 }

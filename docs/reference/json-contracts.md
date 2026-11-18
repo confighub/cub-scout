@@ -772,6 +772,7 @@ separate. The default legacy path and offline recorded input omit this label.
 | `currentChange.evidence` | object | Reviewable kstatus, generation, observed generation, pod reason, and observation timestamp evidence used to build the verdict. |
 | `mutationCause` | string enum | Resource-level rollup using the same enum as `cause` above. It does not identify a particular field or the latest writer. The unbounded live-resource path emits `unknown` when the resource is fetched but manager evidence is missing or unrecognized; this field is omitted when attribution fetch fails. The bounded object-local path emits `unknown` when no manager evidence is classifiable. |
 | `mutationManager` | string | Representative manager string across the resource's managedFields for transparency. It is not necessarily the manager for a particular field or the latest writer, and does not identify a person. |
+| `mutationManagerTool` | string | Present only when `mutationManager` is a field manager that a tool with no owner marker is known to write with: `HashiCorp` (Terraform's Kubernetes provider, typed resources) or `Terraform` (its `kubernetes_manifest`). It is evidence of who wrote the fields, not an ownership claim. A field manager's name is free text any client can set. |
 When `explain --field-path <canonical-path>` (or MCP `field_path`) is supplied,
 JSON additionally includes only that requested path:
 

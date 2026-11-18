@@ -42,7 +42,7 @@ Map checks labels on each resource to determine ownership:
 | **Sveltos** | Sveltos owner/reference annotations or API groups | `projectsveltos.io/owner-*`, `projectsveltos.io/reference-*`, Sveltos API groups |
 | **Modelplane** | Modelplane API groups/labels/ownerRefs | `modelplane.ai/deployment`, `modelplane.ai/modelcache`, Modelplane API groups |
 | **Helm** | Managed-by label | `app.kubernetes.io/managed-by: Helm` |
-| **Terraform** | Terraform metadata | `app.terraform.io/run-id` annotation OR `app.terraform.io/managed` label |
+| **Terraform** | Not detected | Terraform writes no owner marker; `explain` names its field manager (`HashiCorp` or `Terraform`) as evidence. See [ownership precedence](../reference/ownership-precedence.md#terraform). |
 | **Crossplane** | Crossplane labels/ownerRefs | `crossplane.io/*` labels or Crossplane owner references |
 | **kro** | kro metadata/ownerRefs | `kro.run/*` labels/annotations, kro owner references, or API group containing `kro.run` |
 | **ConfigHub** | Unit slug | `confighub.com/UnitSlug` |
