@@ -23,7 +23,7 @@ kubeconfig=${KUBECONFIG:-$HOME/.kube/config}
 "$root/terraform" -chdir="$root" apply -input=false -auto-approve -var "kubeconfig=$kubeconfig" > "$out/apply.txt"
 cp "$root/.terraform.lock.hcl" "$out/terraform.lock.hcl"
 
-kubectl get deployments -n tf-lane -o json > "$out/deployments.json"
+kubectl get deployments -n tf-lane -o json --show-managed-fields > "$out/deployments.json"
 "$scout" map list --json --namespace tf-lane --ownership-evidence > "$out/map-list.json"
 for name in tf-typed tf-manifest; do
   "$scout" trace "deployment/$name" -n tf-lane --format json > "$out/trace-$name.json" 2> "$out/trace-$name.stderr" || true
