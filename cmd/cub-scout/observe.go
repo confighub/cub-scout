@@ -191,6 +191,7 @@ func ObserveResourceContext(ctx context.Context, req ObserveResourceContextReque
 			if attr, fieldAttr, ok := fetchResourceAttribution(ctx, ns, kind, name, req.FieldPath); ok && attr.Cause != "" {
 				summary.MutationCause = attr.Cause
 				summary.MutationManager = attr.ManagerHint
+				summary.MutationManagerTool = agent.KnownManagerTool(attr.ManagerHint)
 				summary.FieldAttribution = fieldAttr
 			} else {
 				summary.FieldAttribution = unavailableFieldAttribution(req.FieldPath, "Exact field evidence unavailable because the live resource could not be read.")
@@ -239,6 +240,7 @@ func ObserveResourceContext(ctx context.Context, req ObserveResourceContextReque
 	if attr, fieldAttr, ok := fetchResourceAttribution(ctx, ns, kind, name, req.FieldPath); ok && attr.Cause != "" {
 		summary.MutationCause = attr.Cause
 		summary.MutationManager = attr.ManagerHint
+		summary.MutationManagerTool = agent.KnownManagerTool(attr.ManagerHint)
 		summary.FieldAttribution = fieldAttr
 	} else if req.FieldPath != "" {
 		summary.FieldAttribution = unavailableFieldAttribution(req.FieldPath, "Exact field evidence unavailable because the live resource could not be read.")
