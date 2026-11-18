@@ -42,13 +42,18 @@ what is ready, and the work the trimmed plan gave to v2.16 moves to v2.17.
 
 | Moved to v2.17, then to v2.18 | Why |
 |---|---|
-| [#888] pre-attach report | `doctor --before-attach` landed (#947); the apps-Space overlap, `cub variant upload` needs and a Sveltos recording are left |
+| [#888] pre-attach report | `doctor --before-attach` landed (#947), with Argo CD, Flux and Sveltos recorded (#952); the apps-Space overlap and `cub variant upload` needs are left |
 | [#596] conformance across CLI, MCP and TUI | per-command envelope checks for `trace` and `compare source-truth`; a cross-surface test for both (answer unchanged through MCP; trace's human surfaces never say more than the answer) landed in #949; the other commands wait on the envelope |
 | Deprecation notices for the other 3.0 removals, including `fleet outliers` | in the code (#950); the window starts with the first release that contains them |
 | The envelope on `gitops status`, `explain`, `doctor` | needs the state words decided, and a size check first |
 
-Still owed from v2.15, unchanged: [#882] item 5 and a live sighting of two
-Flux kinds; the remaining [#887] items; the rest of [#599]; the eval cases.
+Still owed from v2.15: [#882] item 5 and a live sighting of two Flux kinds;
+the remaining [#887] items; the eval cases; and of [#599], cluster identity,
+merge-safe IDs, cost and failure isolation on every answer. Its explicit
+context is done but for `map hub`, whose writes are [#955]: since #953 a test
+holds every command to `--kube-context` or a stated reason, and #954 and
+#956–#960 gave it to the demos, `quickstart`, `import argocd`,
+`views project --with-reality`, `import` and the import wizard.
 
 ### v2.17.0, published 2026-11-18
 
@@ -231,6 +236,7 @@ from them stay as they are, labelled previews.
 [#882]: https://github.com/confighub/cub-scout/issues/882
 [#887]: https://github.com/confighub/cub-scout/issues/887
 [#888]: https://github.com/confighub/cub-scout/issues/888
+[#955]: https://github.com/confighub/cub-scout/issues/955
 [#889]: https://github.com/confighub/cub-scout/issues/889
 
 ## 3.x direction after ConfigHub's October changes — 2026-11-08
