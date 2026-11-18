@@ -60,7 +60,7 @@ target lives in the cluster, e.g. a Secret created out-of-band):
   - read-rolebinding -> v1/Namespace "kube-system"
 
 Revert this upload of argobot-base with:
-  cub unit update --patch --space argobot-base --restore Before:ChangeSet:upload-20261118-170053 --where "Labels.UploadSource = 'argobot'"
+  cub unit update --patch --space argobot-base --restore Before:ChangeSet:upload-20261118-173346 --where "Labels.UploadSource = 'argobot'"
 Creating per-cluster argobot variant "argobot-scout-attach"...
 Creating Argo CD Application Unit "argobot-scout-attach" in apps space "scout-attach-argo-apps" (prune, resources finalizer)...
 Publishing apps space "scout-attach-argo-apps" Release...
@@ -77,7 +77,7 @@ application.argoproj.io/scout-attach-argo-apps created
 
 Attached.
   cluster:    scout-attach
-  context:    berry-sun
+  context:    pine-cub
   kubeconfig: [redacted].kubeconfig
   env file:   [redacted].env
   space:      scout-attach
@@ -89,7 +89,7 @@ Attached.
   gates:      scout-attach/no-placeholders (vet-placeholders) — blocks publishing a Release with
               unfilled confighubplaceholder values to this cluster
 
-Argo CD: already installed, left as found (initial admin password: [redacted])
+Argo CD: already installed, left as found (initial admin password: [[redacted])
 
 Load the cluster and its cub context into your shell:
   source [redacted].env

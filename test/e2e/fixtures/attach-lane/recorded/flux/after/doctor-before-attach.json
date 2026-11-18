@@ -84,7 +84,7 @@
         "credentials": "present",
         "credentialsSecret": "flux-system/confighub-oci",
         "attachWould": "refuse",
-        "why": "Secret flux-system/confighub-oci holds an earlier attachment's registry credentials; attach refuses before it creates anything in ConfigHub, unless given --existing-secrets",
+        "why": "Secret flux-system/confighub-oci holds an earlier attachment's registry credentials; attach refuses before it creates any Space in ConfigHub (its help says --existing-secrets skips this check)",
         "basis": "recorded",
         "earlierObjects": [
           {
@@ -117,7 +117,7 @@
         "basis": "cub-source"
       }
     ],
-    "wiredThrough": [
+    "credentialsFor": [
       "flux"
     ],
     "argobot": {
@@ -128,16 +128,18 @@
       "counts": {
         "Application": 1,
         "ApplicationSet": 0,
-        "ClusterProfile": 0,
         "HelmRelease": 0,
         "Kustomization": 3
       },
+      "notServed": [
+        "ClusterProfile"
+      ],
       "note": "Attach leaves these as it finds them: in the recordings, with --prune, an Application and a Kustomization that were here before were unchanged after attach. --prune governs what ConfigHub deploys later, not these."
     },
     "unknowns": [
       "whether ConfigHub already has Spaces of the names attach would create; that is in ConfigHub, not the cluster",
       "whether the cluster can reach ConfigHub's registry; attach checks this itself",
-      "whether these credentials have cluster-admin; attach checks with `kubectl auth can-i create clusterroles`, which cub-scout does not run",
+      "whether these credentials have cluster-admin; attach checks this itself (its source runs `kubectl auth can-i create clusterroles`), and cub-scout does not",
       "whether what you later deploy through ConfigHub overlaps these deployers' objects"
     ]
   }

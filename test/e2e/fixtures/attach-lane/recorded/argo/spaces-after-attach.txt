@@ -1,5 +1,5 @@
-default {}
-argobot-scout-attach {"ClusterUnitID": "51c0b547-2e56-4014-bb0d-676f77ecf626", "ExternalSourceRef": "ghcr.io/confighub/argobot:v0.2.12", "UpstreamSpaceID": "97118f56-f59b-4c00-ada0-852b0c24fcc7"}
 argobot-base {"ExternalSourceRef": "ghcr.io/confighub/argobot:v0.2.12"}
+scout-attach-argo-apps {"ClusterUnitID": "10cf45d6-7eef-4294-8da9-f890338294be"}
+argobot-scout-attach {"ClusterUnitID": "69572bc3-2fe7-4319-831e-2ca9c36dc82b", "ExternalSourceRef": "ghcr.io/confighub/argobot:v0.2.12", "UpstreamSpaceID": "0cf72fc4-4e9e-4371-8618-ec6ab180cd63"}
 scout-attach {"confighub.com/cluster-bot-channel": "argobot", "confighub.com/cluster-bot-space": "argobot-scout-attach", "confighub.com/cluster-controller": "argo", "confighub.com/cluster-host": "runnervmccnms", "confighub.com/cluster-name": "scout-attach", "confighub.com/cluster-origin": "attach", "confighub.com/cluster-provider": "kind", "confighub.com/cluster-provider-cluster": "brownfield"}
-scout-attach-argo-apps {"ClusterUnitID": "bc6b2082-fa3b-48b6-bc2b-2b036007b082"}
+default {}

@@ -4,9 +4,9 @@
     "kind": "Kustomization",
     "metadata": {
       "annotations": {
-        "confighub.com/origin": "{\"spaceId\":\"c74b71a0-8445-489c-9627-f4ab21bbea36\",\"spaceSlug\":\"scout-attach-flux-apps\",\"unitId\":\"0ae0942e-faba-445c-b223-5ff679ecbe65\",\"unitSlug\":\"argobot-scout-attach\",\"revisionNum\":2}"
+        "confighub.com/origin": "{\"spaceId\":\"4a1710a8-6763-436a-b98b-45d72788dc28\",\"spaceSlug\":\"scout-attach-flux-apps\",\"unitId\":\"b418f026-1bfc-4b0e-aad5-390c78d90853\",\"unitSlug\":\"argobot-scout-attach\",\"revisionNum\":2}"
       },
-      "creationTimestamp": "2026-11-18T17:00:25Z",
+      "creationTimestamp": "2026-11-18T17:33:23Z",
       "finalizers": [
         "finalizers.fluxcd.io"
       ],
@@ -17,8 +17,8 @@
       },
       "name": "argobot-scout-attach",
       "namespace": "flux-system",
-      "resourceVersion": "1669",
-      "uid": "a9b69ec3-92d0-4643-aca3-4af3d7ca3e05"
+      "resourceVersion": "1578",
+      "uid": "4ddfc29c-5134-4292-9674-b9277b00f4e7"
     },
     "spec": {
       "force": false,
@@ -36,16 +36,16 @@
     "status": {
       "conditions": [
         {
-          "lastTransitionTime": "2026-11-18T17:00:31Z",
-          "message": "Applied revision: latest@sha256:06efe9f3ffa7dca00df516b89de1959191aad2ba32974d8bb3de21c682f1e6db",
+          "lastTransitionTime": "2026-11-18T17:33:29Z",
+          "message": "Applied revision: latest@sha256:1d8022b263b952f0f5f022f1c4ce29842bd1dbc864dc3fa210dbd790074ba0e3",
           "observedGeneration": 1,
           "reason": "ReconciliationSucceeded",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-11-18T17:00:31Z",
-          "message": "Health check passed in 5.045728144s",
+          "lastTransitionTime": "2026-11-18T17:33:29Z",
+          "message": "Health check passed in 5.04916118s",
           "observedGeneration": 1,
           "reason": "Succeeded",
           "status": "True",
@@ -54,13 +54,13 @@
       ],
       "history": [
         {
-          "digest": "sha256:91d7e9edb37ffb930bbf643b9c57ba4d02b2527d84ddda71a762eb47d651bcca",
-          "firstReconciled": "2026-11-18T17:00:31Z",
-          "lastReconciled": "2026-11-18T17:00:31Z",
-          "lastReconciledDuration": "5.250854951s",
+          "digest": "sha256:41a56299cd74c7aaa066aeac718ebb94a7a8856595958212cf5cf92e4bac9fce",
+          "firstReconciled": "2026-11-18T17:33:29Z",
+          "lastReconciled": "2026-11-18T17:33:29Z",
+          "lastReconciledDuration": "5.223126247s",
           "lastReconciledStatus": "ReconciliationSucceeded",
           "metadata": {
-            "revision": "latest@sha256:06efe9f3ffa7dca00df516b89de1959191aad2ba32974d8bb3de21c682f1e6db"
+            "revision": "latest@sha256:1d8022b263b952f0f5f022f1c4ce29842bd1dbc864dc3fa210dbd790074ba0e3"
           },
           "totalReconciliations": 1
         }
@@ -105,8 +105,8 @@
           }
         ]
       },
-      "lastAppliedRevision": "latest@sha256:06efe9f3ffa7dca00df516b89de1959191aad2ba32974d8bb3de21c682f1e6db",
-      "lastAttemptedRevision": "latest@sha256:06efe9f3ffa7dca00df516b89de1959191aad2ba32974d8bb3de21c682f1e6db",
+      "lastAppliedRevision": "latest@sha256:1d8022b263b952f0f5f022f1c4ce29842bd1dbc864dc3fa210dbd790074ba0e3",
+      "lastAttemptedRevision": "latest@sha256:1d8022b263b952f0f5f022f1c4ce29842bd1dbc864dc3fa210dbd790074ba0e3",
       "observedGeneration": 1
     }
   },
@@ -115,10 +115,10 @@
     "kind": "Kustomization",
     "metadata": {
       "annotations": {
-        "confighub.com/origin": "{\"spaceId\":\"c74b71a0-8445-489c-9627-f4ab21bbea36\",\"spaceSlug\":\"scout-attach-flux-apps\",\"unitId\":\"e710fae1-6e8c-493d-aaca-4a54ce93f8b7\",\"unitSlug\":\"root\",\"revisionNum\":2}",
+        "confighub.com/origin": "{\"spaceId\":\"4a1710a8-6763-436a-b98b-45d72788dc28\",\"spaceSlug\":\"scout-attach-flux-apps\",\"unitId\":\"5a2c0803-b02a-4207-8049-1919336ddc00\",\"unitSlug\":\"root\",\"revisionNum\":2}",
         "kustomize.toolkit.fluxcd.io/prune": "disabled"
       },
-      "creationTimestamp": "2026-11-18T17:00:24Z",
+      "creationTimestamp": "2026-11-18T17:33:22Z",
       "finalizers": [
         "finalizers.fluxcd.io"
       ],
@@ -129,8 +129,8 @@
       },
       "name": "confighub-root",
       "namespace": "flux-system",
-      "resourceVersion": "1604",
-      "uid": "490e0ff4-f22b-4e18-8b5a-1135ee32edff"
+      "resourceVersion": "1513",
+      "uid": "09d92c23-d7e9-44ef-a725-6e2785f0807a"
     },
     "spec": {
       "force": false,
@@ -148,8 +148,8 @@
     "status": {
       "conditions": [
         {
-          "lastTransitionTime": "2026-11-18T17:00:25Z",
-          "message": "Applied revision: latest@sha256:f05dd9424422bf9e0abc7aa792f8598464b09cfe20660af048d8068f1524396e",
+          "lastTransitionTime": "2026-11-18T17:33:23Z",
+          "message": "Applied revision: latest@sha256:168ede471a24b3d55086b8eedecff91118eb7d96f48f775fe93ac30f5a4559fe",
           "observedGeneration": 1,
           "reason": "ReconciliationSucceeded",
           "status": "True",
@@ -158,13 +158,13 @@
       ],
       "history": [
         {
-          "digest": "sha256:e51fc55e6de1a3652c5750b7274795a23a95e1772ae13501d5a3a3f5ff7d4714",
-          "firstReconciled": "2026-11-18T17:00:25Z",
-          "lastReconciled": "2026-11-18T17:00:25Z",
-          "lastReconciledDuration": "165.752006ms",
+          "digest": "sha256:68fe943b48959a179809a481e0d4db51d534dafb516cea0e96e64951ada9d0aa",
+          "firstReconciled": "2026-11-18T17:33:23Z",
+          "lastReconciled": "2026-11-18T17:33:23Z",
+          "lastReconciledDuration": "170.67194ms",
           "lastReconciledStatus": "ReconciliationSucceeded",
           "metadata": {
-            "revision": "latest@sha256:f05dd9424422bf9e0abc7aa792f8598464b09cfe20660af048d8068f1524396e"
+            "revision": "latest@sha256:168ede471a24b3d55086b8eedecff91118eb7d96f48f775fe93ac30f5a4559fe"
           },
           "totalReconciliations": 1
         }
@@ -172,7 +172,7 @@
       "inventory": {
         "entries": [
           {
-            "id": "flux-system_argobot-scout-attach_kustomize.toolkit.fluxcd.io_Kustomization",
+            "id": "flux-system_argobot-scout-atta[redacted-key].toolkit.fluxcd.io_Kustomization",
             "v": "v1"
           },
           {
@@ -189,8 +189,8 @@
           }
         ]
       },
-      "lastAppliedRevision": "latest@sha256:f05dd9424422bf9e0abc7aa792f8598464b09cfe20660af048d8068f1524396e",
-      "lastAttemptedRevision": "latest@sha256:f05dd9424422bf9e0abc7aa792f8598464b09cfe20660af048d8068f1524396e",
+      "lastAppliedRevision": "latest@sha256:168ede471a24b3d55086b8eedecff91118eb7d96f48f775fe93ac30f5a4559fe",
+      "lastAttemptedRevision": "latest@sha256:168ede471a24b3d55086b8eedecff91118eb7d96f48f775fe93ac30f5a4559fe",
       "observedGeneration": 1
     }
   },
@@ -201,15 +201,15 @@
       "annotations": {
         "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"kustomize.toolkit.fluxcd.io/v1\",\"kind\":\"Kustomization\",\"metadata\":{\"annotations\":{},\"name\":\"podinfo\",\"namespace\":\"podinfo\"},\"spec\":{\"interval\":\"10m\",\"path\":\"./kustomize\",\"prune\":true,\"sourceRef\":{\"kind\":\"GitRepository\",\"name\":\"podinfo\"},\"targetNamespace\":\"podinfo\"}}\n"
       },
-      "creationTimestamp": "2026-11-18T16:59:16Z",
+      "creationTimestamp": "2026-11-18T17:32:18Z",
       "finalizers": [
         "finalizers.fluxcd.io"
       ],
       "generation": 1,
       "name": "podinfo",
       "namespace": "podinfo",
-      "resourceVersion": "1374",
-      "uid": "6ff528b6-2e07-493b-b685-136c1411f336"
+      "resourceVersion": "1292",
+      "uid": "33966b45-5b0d-445d-a89e-65f661d1122a"
     },
     "spec": {
       "force": false,
@@ -225,7 +225,7 @@
     "status": {
       "conditions": [
         {
-          "lastTransitionTime": "2026-11-18T16:59:19Z",
+          "lastTransitionTime": "2026-11-18T17:32:22Z",
           "message": "Applied revision: sha1:fd3a834ed8d14b80ea334cf8a2fddd4597924da6",
           "observedGeneration": 1,
           "reason": "ReconciliationSucceeded",
@@ -236,9 +236,9 @@
       "history": [
         {
           "digest": "sha256:5ba4c6a6b4c3ab8ca7182f199a986b1094049f716e4f4b9733545128ffba477d",
-          "firstReconciled": "2026-11-18T16:59:19Z",
-          "lastReconciled": "2026-11-18T16:59:19Z",
-          "lastReconciledDuration": "227.129818ms",
+          "firstReconciled": "2026-11-18T17:32:22Z",
+          "lastReconciled": "2026-11-18T17:32:22Z",
+          "lastReconciledDuration": "250.352578ms",
           "lastReconciledStatus": "ReconciliationSucceeded",
           "metadata": {
             "revision": "sha1:fd3a834ed8d14b80ea334cf8a2fddd4597924da6"
