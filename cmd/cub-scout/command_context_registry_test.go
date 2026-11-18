@@ -67,7 +67,6 @@ var contextOwed = map[string]string{
 	"cub-scout map hub":       "its import hand-off disables Argo CD sync, deletes Applications and removes labels through the current context (#955)",
 	"cub-scout import":        "reads workloads to import",
 	"cub-scout import argocd": "reads Argo CD Applications",
-	"cub-scout quickstart":    "runs `kubectl cluster-info` and the tour's reads",
 }
 
 func hasKubeContextFlag(cmd *cobra.Command) bool {

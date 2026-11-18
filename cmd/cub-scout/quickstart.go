@@ -46,6 +46,7 @@ func init() {
 	quickstartCmd.Flags().BoolVarP(&quickstartYes, "yes", "y", false, "Run non-interactively (skip prompts)")
 	quickstartCmd.Flags().StringVarP(&quickstartNamespace, "namespace", "n", "", "Namespace scope (default: all namespaces)")
 	quickstartCmd.Flags().IntVar(&quickstartTopFinding, "top-finding", 1, "Numbered top finding to highlight (1-based)")
+	quickstartCmd.Flags().String("kube-context", "", "Use this exact Kubernetes context for every read of the tour")
 }
 
 type quickstartFixtureInput struct {
@@ -72,7 +73,21 @@ func runQuickstart(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("--top-finding must be >= 1")
 	}
 
-	state, err := loadQuickstartState(cmd.Context())
+	// With --kube-context every read of the tour goes to that context; an
+	// empty or missing name fails before any read, with no fallback (#599).
+	// Without it, the current context is used, as before.
+	selection, err := clusterContextSelectionFromFlag(cmd)
+	if err != nil {
+		return err
+	}
+	var binding *localClusterBinding
+	if selection.explicit {
+		binding = resolveLocalClusterBindingForSelection(selection)
+		if binding.err != nil {
+			return binding.err
+		}
+	}
+	state, err := loadQuickstartState(cmd.Context(), binding)
 	if err != nil {
 		return err
 	}
@@ -81,12 +96,12 @@ func runQuickstart(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func loadQuickstartState(ctx context.Context) (quickstartState, error) {
+func loadQuickstartState(ctx context.Context, binding *localClusterBinding) (quickstartState, error) {
 	if fixturePath := os.Getenv("CUB_SCOUT_TEST_QUICKSTART_JSON"); strings.TrimSpace(fixturePath) != "" {
 		return loadQuickstartFromFixture(fixturePath)
 	}
 
-	connected, contextName := detectQuickstartCluster()
+	connected, contextName := detectQuickstartCluster(binding)
 	if !connected {
 		return quickstartState{ClusterConnected: false, Context: contextName}, nil
 	}
@@ -96,11 +111,23 @@ func loadQuickstartState(ctx context.Context) (quickstartState, error) {
 		namespaceLabel = "all"
 	}
 
-	entries, clusterName, err := collectDoctorEntries(ctx, quickstartNamespace)
+	var entries []MapEntry
+	var clusterName string
+	var findings []scan.NormalizedFinding
+	var err error
+	if binding != nil {
+		entries, clusterName, err = collectDoctorEntriesWithBinding(ctx, quickstartNamespace, binding)
+	} else {
+		entries, clusterName, err = collectDoctorEntries(ctx, quickstartNamespace)
+	}
 	if err != nil {
 		return quickstartState{}, err
 	}
-	findings, err := collectDoctorFindings(ctx, quickstartNamespace)
+	if binding != nil {
+		findings, err = collectDoctorFindingsWithBinding(ctx, quickstartNamespace, binding)
+	} else {
+		findings, err = collectDoctorFindings(ctx, quickstartNamespace)
+	}
 	if err != nil {
 		findings = nil
 	}
@@ -117,7 +144,7 @@ func loadQuickstartState(ctx context.Context) (quickstartState, error) {
 
 	if rep, ok := pickQuickstartRepresentative(entries); ok {
 		state.Representative = &rep
-		explain := quickstartExplainForEntry(ctx, rep)
+		explain := quickstartExplainForEntry(ctx, rep, binding)
 		state.Explain = &explain
 	}
 
@@ -166,12 +193,17 @@ func loadQuickstartFromFixture(path string) (quickstartState, error) {
 	return state, nil
 }
 
-func detectQuickstartCluster() (bool, string) {
+func detectQuickstartCluster(binding *localClusterBinding) (bool, string) {
 	contextName := getCurrentContext()
-	if _, err := exec.LookPath("kubectl"); err != nil {
+	args := []string{"cluster-info"}
+	if binding != nil {
+		contextName = binding.context
+		args = []string{"--context", binding.context, "cluster-info"}
+	}
+	if _, err := exec.LookPath(quickstartKubectlBinary); err != nil {
 		return false, contextName
 	}
-	if err := exec.Command("kubectl", "cluster-info").Run(); err != nil {
+	if err := exec.Command(quickstartKubectlBinary, args...).Run(); err != nil {
 		return false, contextName
 	}
 	return true, contextName
@@ -219,7 +251,26 @@ func pickQuickstartRepresentative(entries []MapEntry) (MapEntry, bool) {
 	return entries[bestIdx], true
 }
 
-func quickstartExplainForEntry(ctx context.Context, entry MapEntry) ExplainSummary {
+// quickstartKubectlBinary is a variable so tests can stand in for kubectl.
+var quickstartKubectlBinary = "kubectl"
+
+func quickstartExplainForEntry(ctx context.Context, entry MapEntry, binding *localClusterBinding) ExplainSummary {
+	if binding != nil {
+		// The same trace the TUI runs, through the selected context only.
+		if session, err := newTraceSessionFromBinding(binding); err == nil {
+			if observation, err := observeTrace(ctx, session, entry.Kind, entry.Name, entry.Namespace, traceObservationOptions{Flux: capturedTraceFluxFactory}); err == nil && observation != nil && observation.Result != nil {
+				summary := buildExplainSummary(observation.Result)
+				if summary.Resource == "" {
+					summary.Resource = fmt.Sprintf("%s/%s", entry.Kind, entry.Name)
+				}
+				if summary.Namespace == "" {
+					summary.Namespace = entry.Namespace
+				}
+				return summary
+			}
+		}
+		return buildQuickstartExplainFromEntry(entry)
+	}
 	if result, err := traceForExplain(ctx, entry.Kind, entry.Name, entry.Namespace); err == nil && result != nil {
 		summary := buildExplainSummary(result)
 		if summary.Resource == "" {
