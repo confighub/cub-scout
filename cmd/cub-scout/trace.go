@@ -153,7 +153,7 @@ func init() {
 	traceCmd.Flags().StringVar(&traceConfigHubStaleAfter, "confighub-stale-after", "15m", "Treat ConfigHub live-status observations older than this as stale")
 
 	// Mark --json as deprecated
-	_ = traceCmd.Flags().MarkDeprecated("json", "use --format json instead")
+	_ = traceCmd.Flags().MarkDeprecated("json", "use --format json instead; --json is removed in 3.0")
 }
 
 func runTrace(cmd *cobra.Command, args []string) error {

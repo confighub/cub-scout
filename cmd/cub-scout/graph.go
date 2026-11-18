@@ -57,7 +57,7 @@ func init() {
 	graphExportCmd.Flags().String("kube-context", "", "Kubernetes context to inspect (strict explicit selection)")
 
 	graphExportCmd.Flags().BoolVar(&graphExportJSON, "json", false, "DEPRECATED: use --format json")
-	_ = graphExportCmd.Flags().MarkDeprecated("json", "use --format json")
+	_ = graphExportCmd.Flags().MarkDeprecated("json", "use --format json; --json is removed in 3.0")
 	graphExportCmd.Flags().StringVar(&graphExportFormat, "format", "json", "Output format: json|dot|svg|html")
 	graphExportCmd.Flags().StringVarP(&graphExportOutput, "output", "o", "", "Write output to file (default: stdout)")
 	graphExportCmd.Flags().IntVar(&graphExportMaxNodes, "max-nodes", 300, "Maximum nodes in visual formats (0 = unlimited)")

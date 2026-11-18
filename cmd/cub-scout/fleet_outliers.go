@@ -71,6 +71,8 @@ var fleetTopCmd = &cobra.Command{
 var fleetOutliersCmd = &cobra.Command{
 	Use:   "outliers",
 	Short: "Identify clusters that diverge from fleet norms",
+	// Removed in 3.0 (#562): see docs/migration-3.0.md#fleet-outliers.
+	Deprecated: "it is removed in 3.0: its slug-based, single-space comparison does not establish cross-cluster lineage, and has no replacement (docs/migration-3.0.md)",
 	Long: `Detect outlier clusters by comparing unit revision and unit presence across clusters.
 
 Examples:

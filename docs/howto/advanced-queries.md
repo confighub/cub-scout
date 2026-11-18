@@ -16,7 +16,7 @@ cub-scout trace pod/nginx-7d9b8c-x4k2p -n prod
 cub-scout trace deployment/api -n prod
 
 # JSON output for scripting
-cub-scout trace deployment/api -n prod --json
+cub-scout trace deployment/api -n prod --format json
 ```
 
 ### Example Output

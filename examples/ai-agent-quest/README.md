@@ -242,7 +242,7 @@ Your AI should run:
 
 ```bash
 ./cub-scout gitops status
-./cub-scout gitops status --json
+./cub-scout gitops status --format json
 ./cub-scout scan
 ```
 
@@ -278,7 +278,7 @@ The AI provides the judgment.
 ./cub-scout bundle summarize
 
 # Or export the full diagnostic data as JSON for automation
-./cub-scout gitops status --json > /tmp/gitops-status.json
+./cub-scout gitops status --format json > /tmp/gitops-status.json
 ./cub-scout scan --json > /tmp/scan-results.json
 ./cub-scout map list --json > /tmp/ownership-map.json
 ```

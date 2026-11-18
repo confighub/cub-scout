@@ -29,7 +29,7 @@ Flux and Argo state?
 The answer is yes, but the first useful integration should build on the
 machine-readable outputs cub-scout already has:
 
-- `gitops status --json`
+- `gitops status --format json`
 - `summary list --json`
 - `watch` webhook or JSONL output
 - `snapshot`
@@ -62,7 +62,7 @@ shelling out to `cub-scout` on every panel refresh.
 
 | Input | First use in Grafana | Notes |
 |------|-----------------------|-------|
-| `cub-scout gitops status --json` | Current Flux/Argo health | Best primary feed for backend, transport, source/deployer state, failing stage, reason, and message |
+| `cub-scout gitops status --format json` | Current Flux/Argo health | Best primary feed for backend, transport, source/deployer state, failing stage, reason, and message |
 | `cub-scout summary list --json --type gitops-status` | Trend/history panels | Best source for "how long has this been failing?" |
 | `cub-scout watch --webhook` or `--output-file` | Event timelines | Good for drift, ownership, and scan findings over time |
 | `cub-scout snapshot` | Inventory and relation panels | Good for cluster-scope state snapshots |
@@ -119,7 +119,7 @@ The first implementation should be mostly new glue around the existing
 
 If the goal is:
 
-- current GitOps health: start with `gitops status --json`
+- current GitOps health: start with `gitops status --format json`
 - health over time: add `summary list --json --type gitops-status`
 - event correlation: add `watch`
 - connected desired-vs-live drift: add `compare three-way --format json`

@@ -104,6 +104,7 @@ func init() {
 	gitopsStatusCmd.Flags().StringVar(&gitopsFormat, "format", "ascii", "Output format: ascii, json, md")
 	gitopsStatusCmd.Flags().BoolVar(&gitopsTUI, "tui", false, "View this GitOps status snapshot in a scrollable terminal viewport")
 	gitopsStatusCmd.Flags().BoolVar(&gitopsJSON, "json", false, "Output as JSON (shorthand for --format json)")
+	_ = gitopsStatusCmd.Flags().MarkDeprecated("json", "use --format json instead; --json is removed in 3.0")
 	gitopsStatusCmd.Flags().BoolVar(&gitopsWithConfigHub, "with-confighub", false, "Include bounded ConfigHub release and live-status evidence")
 	gitopsStatusCmd.Flags().StringVar(&gitopsConfigHubSpace, "confighub-space", "", "ConfigHub space for connected evidence (default: CUB_SPACE; use '*' explicitly for all spaces)")
 	gitopsStatusCmd.Flags().StringVar(&gitopsConfigHubSince, "confighub-since", "24h", "Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w)")

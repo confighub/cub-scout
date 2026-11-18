@@ -115,7 +115,7 @@ A platform team lead should understand the state in 30 seconds.]
 | Artifact | Command |
 |----------|---------|
 | Ownership map | `./cub-scout map list --json` |
-| Pipeline health | `./cub-scout gitops status --json` |
+| Pipeline health | `./cub-scout gitops status --format json` |
 | Scan results | `./cub-scout scan --json` |
 | Change history | `cub changeset list --space [space]` |
 | Fleet status | `cub unit list --space [space]` |
