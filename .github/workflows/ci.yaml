@@ -513,6 +513,15 @@ jobs:
           if ./cub-scout gitops tree app/no-such-application 2> "$RUNNER_TEMP/scout-delivery-tree-missing.txt"; then echo 'a missing deployer was not an error' >&2; exit 1; fi
           grep -q 'no deployer Application/no-such-application was found' "$RUNNER_TEMP/scout-delivery-tree-missing.txt"
 
+      # The answer block on doctor, on a real cluster: one of the decided
+      # state words, the context it read, and a time.
+      - name: doctor answers on a real cluster
+        run: |
+          ./cub-scout doctor -n boutique --format json > doctor-boutique.json
+          jq -e '(.answer.state | IN("issues-flagged","nothing-flagged","incomplete","not-observable")) and .answer.cluster.context == "kind-gitops-cluster" and (.answer.observedAt | length > 0) and (.answer.unknowns | type == "array")' doctor-boutique.json \
+            || { jq '.answer' doctor-boutique.json; exit 1; }
+          jq -c '.answer | {state, reason, summary}' doctor-boutique.json
+
       - name: Verify Flux ownership detection
         run: |
           ./cub-scout map list --json --namespace boutique > "$RUNNER_TEMP/flux-ownership.json"

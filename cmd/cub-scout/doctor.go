@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/confighub/cub-scout/v2/internal/mapsvc"
 	"os"
 	"sort"
 	"strings"
@@ -92,6 +93,10 @@ type DoctorSummary struct {
 
 	// Attach is present only with --before-attach (#888).
 	Attach *DoctorAttachReport `json:"attach,omitempty"`
+
+	// Answer is the common envelope (docs/proposals/answer-envelope.md):
+	// state issues-flagged, nothing-flagged, incomplete or not-observable.
+	Answer *mapsvc.Answer `json:"answer,omitempty"`
 
 	// DeliveryEvidence is the raw bounded evidence envelope behind Delivery.
 	// It is present only when --with-confighub is requested.
@@ -294,6 +299,7 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		}
 		hints = bindDoctorHintContext(hints, summary.KubernetesContext)
 		summary.NextSteps = HintsToStructured(hints)
+		summary.Answer = buildDoctorAnswer(summary, time.Now())
 
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")

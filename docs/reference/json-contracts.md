@@ -836,6 +836,25 @@ selector preserves the legacy output shape. The normalized schema retains
 fields; `warnings[]` preserves Kyverno errors and state-scan coverage warnings
 alongside findings, instead of treating failed reads as zero known issues.
 
+### Doctor answer (doctor --format json)
+
+`doctor --format json` carries a top-level `answer` block (since v2.18), the
+envelope `trace` carries, answering whether anything is wrong in the scope.
+State words decided by the maintainer on 2026-11-19. Precedence runs from the
+first row down.
+
+| `state` | `reason` | When |
+|---|---|---|
+| `not-observable` | `inventory-not-read` | No resource could be inventoried, and the inventory read failed |
+| `issues-flagged` | `issues-found` | One or more of: a critical or warning risk-scan finding; a resource reporting `Failed`; a blocked current rollout; with `--with-confighub`, a recorded live status blocking delivery or application health, or a not-ready event consumer |
+| `incomplete` | `coverage-incomplete` | Nothing flagged, but a read failed, so that nothing is wrong is not established |
+| `nothing-flagged` | `nothing-found` | Nothing flagged, with full coverage. Not a health claim: `unknowns` says it covers what doctor checks |
+
+Informational scan findings are counted in `basis` and flag nothing. Each
+failed read in `warnings` is an entry in `unknowns`, with its message quoted,
+and `denied` when forbidden. `next[]` is `explain` of the top issue's resource.
+`cost` is `not-measured` for now.
+
 ### DoctorSummary context and coverage additions
 
 Live `doctor --format json` results may include `kubernetesContext`, the label of
