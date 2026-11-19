@@ -87,7 +87,7 @@ func newReleaseCheckCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			data, err := json.MarshalIndent(report, "", "  ")
+			data, err := json.MarshalIndent(releaseCheckOutput{ReleaseCheckReport: report, Answer: buildReleaseCheckAnswer(report)}, "", "  ")
 			if err != nil {
 				return err
 			}
