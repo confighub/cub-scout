@@ -1072,6 +1072,7 @@ func renderMapListFromEntriesWithIdentity(entries []MapEntry, omissions []mapsvc
 		}
 		summary := buildMapListSummary(entries)
 		if mapListFormat == "json" || mapJSON {
+			summary.Answer = buildMapListAnswer(entries, omissions, unavailableReason, clusterIdentity, time.Now())
 			enc := json.NewEncoder(os.Stdout)
 			enc.SetIndent("", "  ")
 			return enc.Encode(summary)
@@ -1115,10 +1116,13 @@ func renderMapListFromEntriesWithIdentity(entries []MapEntry, omissions []mapsvc
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
 		if clusterIdentity != nil {
-			return enc.Encode(mapClusterIdentityOutput{Schema: "map-list-cluster-identity.v1", Cluster: *clusterIdentity, ClusterCostScope: "identity-reader", Resources: mapIdentityResources(entries, clusterIdentity), Collection: mapClusterCollection(omissions, unavailableReason)})
+			return enc.Encode(mapClusterIdentityOutput{Schema: "map-list-cluster-identity.v1", Cluster: *clusterIdentity, ClusterCostScope: "identity-reader", Resources: mapIdentityResources(entries, clusterIdentity), Collection: mapClusterCollection(omissions, unavailableReason),
+				Answer: buildMapListAnswer(entries, omissions, unavailableReason, clusterIdentity, time.Now())})
 		}
 		if includeOwnershipEvidence {
-			return enc.Encode(mapsvc.BuildOwnershipEvidenceOutput(entries, omissions))
+			out := mapsvc.BuildOwnershipEvidenceOutput(entries, omissions)
+			out.Answer = buildMapListAnswer(entries, omissions, unavailableReason, nil, time.Now())
+			return enc.Encode(out)
 		}
 		return enc.Encode(entries)
 	}
@@ -9594,6 +9598,8 @@ type MapListSummary struct {
 	ByOwner     map[string]int            `json:"byOwner"`
 	ByKind      map[string]int            `json:"byKind"`
 	ByKindOwner map[string]map[string]int `json:"byKindOwner"`
+	// Answer is the common envelope; set on the JSON form.
+	Answer *mapsvc.Answer `json:"answer,omitempty"`
 }
 
 func buildMapListSummary(entries []MapEntry) MapListSummary {
