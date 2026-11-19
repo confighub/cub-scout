@@ -102,6 +102,7 @@ func observeExplainWithSession(ctx context.Context, session *traceSession, kind,
 	}
 	if err != nil {
 		omit("ownership", err)
+		summary.facts.readError = err.Error()
 		if opts.FieldPath != "" {
 			summary.FieldAttribution = unavailableFieldAttribution(opts.FieldPath, "Selected live object could not be read.")
 		}

@@ -155,7 +155,13 @@ func TestAnswerIsTheSameThroughMCP(t *testing.T) {
 	gitopsJSON, err := json.Marshal(gitopsSummary)
 	require.NoError(t, err)
 
-	for tool, cli := range map[string]string{"trace": string(traceJSON), "compare_source_truth": sourceTruth.String(), "gitops_status": string(gitopsJSON)} {
+	explainInvocation, err := NewInvocationContext("human", TransportCLI)
+	require.NoError(t, err)
+	explainJSON := captureStdout(t, func() {
+		require.NoError(t, outputExplainSummary(buildExplainSummary(result), "json", explainInvocation, HintContext{}))
+	})
+
+	for tool, cli := range map[string]string{"trace": string(traceJSON), "compare_source_truth": sourceTruth.String(), "gitops_status": string(gitopsJSON), "explain": explainJSON} {
 		t.Run(tool, func(t *testing.T) {
 			var cliDoc struct {
 				Answer json.RawMessage `json:"answer"`

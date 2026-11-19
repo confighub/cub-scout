@@ -720,6 +720,27 @@ inspect the exact `FieldsV1` path and timestamp evidence where available; this
 contract does not interpret those timestamps. If history is incomplete or
 ambiguous, report the writer as unknown.
 
+### Explain answer (explain --format json)
+
+`explain --format json` carries a top-level `answer` block (since v2.18), the
+envelope `trace` carries, answering who owns the resource and how cub-scout
+knows. State words decided by the maintainer on 2026-11-19. Readiness is
+`trace`'s and `gitops status`'s question, not this one.
+
+| `state` | `reason` | When |
+|---|---|---|
+| `explained` | `owner-and-chain-read` | An owner marker was recognised and its delivery chain was read |
+| `owner-only` | `chain-not-requested` | An owner marker was recognised; the read covered the object only (`--bounded`) |
+| `owner-only` | `chain-not-observed` | An owner marker was recognised, and no complete chain was observed; the trace's error is quoted |
+| `no-owner-marker` | `no-owner-marker-recognised` | The object was read and carries no marker cub-scout recognises; that does not show nothing manages it. The last field manager is quoted when known |
+| `not-observable` | `object-not-read` | The object could not be read; the error is quoted, as `denied` when forbidden |
+
+`basis[]` names the owner marker (`restsOn: "object-metadata"`, the marker
+quoted) and the chain read. `next[]` is `trace` of the resource, for whether
+its controllers report ready. `cost` is `not-measured` for now. Recorded input
+(`--recording`) carries no answer: it observes no cluster and has no trusted
+time.
+
 ### ExplainSummary additions (explain --format json)
 
 Explicit-context enriched Explain adds optional `kubernetesContext`, the captured

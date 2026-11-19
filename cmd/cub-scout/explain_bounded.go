@@ -182,6 +182,7 @@ func buildBoundedExplainSummary(obj *unstructured.Unstructured, evidence agent.B
 			"Object-local readiness is not proof of delivery completion or application success.",
 		},
 	}
+	summary.facts = explainAnswerFacts{readError: readErrString(readErr), chainNotRequested: true, observedAt: evidence.ObservedAt}
 	if readErr != nil {
 		summary.Notes = append(summary.Notes, "Evidence unavailable: "+readErr.Error())
 		summary.Omissions = append(summary.Omissions, agent.Omission{Missing: "live-resource", Reason: readErr.Error(), Severity: "warning"})
@@ -195,6 +196,7 @@ func buildBoundedExplainSummary(obj *unstructured.Unstructured, evidence agent.B
 	}
 	observedAt := evidence.ObservedAt
 	populateObjectExplainFacts(&summary, obj, fieldPathArg(fieldPaths), &observedAt, false)
+	summary.facts.objectRead = true
 	return summary
 }
 
@@ -250,6 +252,7 @@ func populateObjectExplainFacts(summary *ExplainSummary, obj *unstructured.Unstr
 		summary.Notes = append(summary.Notes, "Origin metadata identifies an observed source claim only; no release, target, component, variant, or cluster binding was verified.")
 	}
 	var owner agent.Ownership
+	defer func() { summary.facts.ownerType, summary.facts.ownerSource = owner.Type, owner.Source }()
 	if builtinOwnershipOnly {
 		owner = agent.DetectOwnershipBuiltin(obj)
 		summary.Omissions = append(summary.Omissions, agent.Omission{Missing: "custom-ownership-detectors", Reason: "Recorded explain uses deterministic built-in ownership rules and does not read mutable host custom-detector configuration.", Severity: "info"})

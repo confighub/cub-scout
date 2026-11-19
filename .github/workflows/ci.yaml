@@ -412,6 +412,14 @@ jobs:
             kubectl rollout status "deployment/$name" -n boutique --timeout=300s
           done
 
+      # The answer block on explain, on a real Flux-managed Deployment.
+      - name: explain answers on a real Flux install
+        run: |
+          ./cub-scout explain deployment/frontend -n boutique --format json > explain-frontend.json
+          jq -e '.answer.state == "explained" and .answer.reason == "owner-and-chain-read"' explain-frontend.json \
+            || { jq '.answer' explain-frontend.json; exit 1; }
+          jq -c '.answer | {state, reason, summary}' explain-frontend.json
+
       - name: Deploy ArgoCD example
         run: |
           cat <<EOF | kubectl apply -f -
