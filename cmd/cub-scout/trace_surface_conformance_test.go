@@ -150,7 +150,12 @@ func TestAnswerIsTheSameThroughMCP(t *testing.T) {
 	require.NoError(t, outputSourceTruthAnswered(&sourceTruth, evidence, "json",
 		buildSourceTruthAnswer(evidence, agent.StrategyConfigHubOCIFlux, "Deployment", "api", "demo", observedAtForTests)))
 
-	for tool, cli := range map[string]string{"trace": string(traceJSON), "compare_source_truth": sourceTruth.String()} {
+	gitopsSummary := GitOpsSummary{Context: "prod-east", Deployers: []DeployerStatus{{Kind: "Kustomization", Name: "apps", Namespace: "flux-system", Ready: false, Reason: "BuildFailed", Stage: "build"}}}
+	gitopsSummary.Answer = buildGitOpsStatusAnswer(gitopsSummary, observedAtForTests, nil)
+	gitopsJSON, err := json.Marshal(gitopsSummary)
+	require.NoError(t, err)
+
+	for tool, cli := range map[string]string{"trace": string(traceJSON), "compare_source_truth": sourceTruth.String(), "gitops_status": string(gitopsJSON)} {
 		t.Run(tool, func(t *testing.T) {
 			var cliDoc struct {
 				Answer json.RawMessage `json:"answer"`

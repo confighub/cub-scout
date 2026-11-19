@@ -157,7 +157,11 @@ the same on a real cluster.
 ## Decisions for the maintainer
 
 1. The name. **Decided 2026-11-13:** `answer`.
-2. `state` words per command. A first list: `trace`: `traced`,
+2. `state` words per command. **Decided 2026-11-19** for `gitops status`:
+   `settled`, `converging`, `failing`, `no-deployers`, `not-observable`;
+   `explain`: `explained`, `owner-only`, `no-owner-marker`, `not-observable`;
+   `doctor`: `issues-flagged`, `nothing-flagged`, `incomplete`,
+   `not-observable`. The first list, before that decision: `trace`: `traced`,
    `no-owner-marker`, `chain-not-ready`, `not-observable`. `compare
    source-truth`: `agreed`, `not-agreed`, `incomplete`, `not-observable`.
    `gitops status`: `settled`, `converging`, `failing`, `not-observable`.

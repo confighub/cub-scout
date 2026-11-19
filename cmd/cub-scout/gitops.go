@@ -7,9 +7,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/confighub/cub-scout/v2/internal/mapsvc"
 	"os"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -147,6 +149,10 @@ type GitOpsSummary struct {
 
 	// DeliveryEvidence is optional connected evidence from ConfigHub and event consumers.
 	DeliveryEvidence *GitOpsDeliveryEvidence `json:"deliveryEvidence,omitempty"`
+
+	// Answer is the common envelope (docs/proposals/answer-envelope.md):
+	// state settled, converging, failing, no-deployers or not-observable.
+	Answer *mapsvc.Answer `json:"answer,omitempty"`
 }
 
 // ControllerCoverageStatus reports whether a GitOps/controller family was
@@ -207,6 +213,11 @@ type DeployerStatus struct {
 	// Revision information
 	LastAppliedRevision   string `json:"lastAppliedRevision,omitempty"`
 	LastAttemptedRevision string `json:"lastAttemptedRevision,omitempty"`
+
+	// notRead is set when the deployer's object could not be fetched: its
+	// Ready is then the default, not a controller's report, and the answer
+	// says it was not read.
+	notRead bool
 }
 
 // RuntimeIssue summarizes pod runtime failures for an Argo Application.
@@ -245,6 +256,9 @@ type SourceStatus struct {
 
 	// ArtifactDigest is the current artifact digest
 	ArtifactDigest string `json:"artifactDigest,omitempty"`
+
+	// notRead is set when the source's object could not be fetched.
+	notRead bool
 }
 
 // IsHealthy returns true if the source is healthy
@@ -333,6 +347,13 @@ func runGitOpsStatus(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create dynamic client: %w", err)
 	}
 
+	// The answer reports what the Kubernetes reads below cost.
+	started := time.Now()
+	var costBefore agent.KubernetesReadCost
+	if session.meter != nil {
+		costBefore = session.meter.Snapshot()
+	}
+
 	// Detect backend
 	detector := agent.NewApplyBackendDetector(dynClient)
 	backendInfo, err := detector.DetectBackend(ctx, gitopsNamespace)
@@ -343,6 +364,18 @@ func runGitOpsStatus(cmd *cobra.Command, args []string) error {
 	// Build summary
 	summary := buildGitOpsSummary(ctx, dynClient, backendInfo)
 	summary.Context = session.contextLabel()
+	var cost *agent.KubernetesReadCost
+	if session.meter != nil {
+		measured := session.meter.Snapshot()
+		measured.RequestsMade -= costBefore.RequestsMade
+		measured.ResponseBodyBytes -= costBefore.ResponseBodyBytes
+		measured.TransportErrors -= costBefore.TransportErrors
+		measured.BodyReadErrors -= costBefore.BodyReadErrors
+		measured.DurationMillis = time.Since(started).Milliseconds()
+		measured.Coverage = gitopsCostCoverage
+		cost = &measured
+	}
+	summary.Answer = buildGitOpsStatusAnswer(summary, time.Now(), cost)
 	if gitopsWithConfigHub {
 		summary.DeliveryEvidence = collectGitOpsDeliveryEvidence(ctx, dynClient, evidenceOptions)
 	}
@@ -401,6 +434,7 @@ func buildGitOpsSummary(ctx context.Context, client dynamic.Interface, info *age
 
 		// Try to fetch and extract failure details
 		resource := fetchSourceResource(ctx, client, src)
+		status.notRead = resource == nil
 		if resource != nil {
 			details := agent.ExtractFluxSourceFailure(resource)
 			status.Ready = details.Ready
@@ -430,6 +464,7 @@ func buildGitOpsSummary(ctx context.Context, client dynamic.Interface, info *age
 
 		// Fetch and extract failure details based on deployer type
 		resource := fetchDeployerResource(ctx, client, dep)
+		status.notRead = resource == nil
 		if resource != nil {
 			switch dep.Kind {
 			case "Kustomization", "HelmRelease":
@@ -1383,6 +1418,9 @@ func loadAndRenderGitOpsStatusFromJSON(path, format string) error {
 	if err != nil {
 		return err
 	}
+	// Recorded input: the reads were not made here, so their cost is not
+	// measured.
+	summary.Answer = buildGitOpsStatusAnswer(summary, time.Now(), nil)
 	switch format {
 	case "json":
 		return outputGitOpsStatusJSON(summary)
