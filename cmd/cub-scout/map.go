@@ -132,6 +132,10 @@ func runMapTUI(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("resolve selected Kubernetes context: %w", binding.err)
 		}
 	}
+	// The hub's writes go to an explicitly selected cluster only (#955).
+	if binding != nil && binding.explicit && binding.err == nil {
+		hubBinding = binding
+	}
 	// If --hub flag is set, start with ConfigHub hierarchy TUI
 	if mapHub {
 		return runHierarchyWithSwitch(cmd, args, binding)
@@ -610,6 +614,10 @@ This is equivalent to 'cub-scout map --hub' or the deprecated 'cub-scout hierarc
 Requires ConfigHub authentication. Run 'cub auth login' first.
 `,
 	RunE: runHierarchy,
+}
+
+func init() {
+	mapHubCmd.Flags().String("kube-context", "", "The cluster the hub's import hand-off writes to (Argo CD, workload labels) and reads; its writes are refused without it")
 }
 
 var mapClusterDataCmd = &cobra.Command{

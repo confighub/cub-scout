@@ -4058,16 +4058,23 @@ directly, with the same strict refusal of a missing or blank selection:
 `list`, `status`, `issues`, `deployers`, `workloads`, `drift`, `sprawl`,
 `dashboard`, `bypass`, `crashes`, `orphans`, `hooks`, `cronjobs`, `jobs`,
 `actions`, `activity`, `previews`, `deep-dive`, `app-hierarchy`, `meaning` and
-`patterns`. `map hub`, `map fleet` and `map queries` read no cluster and do not
-accept it.
+`patterns`. `map fleet` and `map queries` read no cluster and do not accept
+it. `map hub` reads ConfigHub, and its import hand-off reads the cluster and
+writes to it (disabling Argo CD sync, deleting Applications, labelling and
+annotating workloads). It takes `--kube-context`, as does `map --kube-context
+--hub`, and those writes are refused without it, changing nothing
+([#955](https://github.com/confighub/cub-scout/issues/955)).
 
 `debug`, `drift` (and `compare drift`), `graph explain`, `patterns detect`,
 `patterns explain` and `context-pack` accept `--kube-context` with the same
 semantics. Where they print a cluster or context label (`graph explain`,
 `patterns`, `drift`), the label comes from the same captured selection as the
 reads. `context-pack` keeps its `cluster` field, which is the `CLUSTER_NAME`
-environment label and not a kubeconfig context. `suggest-remedy` and
-`quickstart` shell out to `kubectl` and do not accept the flag.
+environment label and not a kubeconfig context. `suggest-remedy --all`,
+`quickstart`, `import`, `import argocd`, `views project --with-reality` and the
+demos accept it too; `cmd/cub-scout/command_context_registry_test.go` holds
+every command to `--kube-context` or a stated reason
+([#599](https://github.com/confighub/cub-scout/issues/599)).
 
 `receipt verify` accepts `--kube-context` in every mode (single resource,
 `--scope`, `--file` object sets, workloads-converged and `--prerequisites`). The

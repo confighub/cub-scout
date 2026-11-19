@@ -62,9 +62,7 @@ var contextExempt = map[string]string{
 }
 
 // contextOwed read the cluster through the ambient context today (#599).
-var contextOwed = map[string]string{
-	"cub-scout map hub": "its import hand-off disables Argo CD sync, deletes Applications and removes labels through the current context (#955)",
-}
+var contextOwed = map[string]string{}
 
 func hasKubeContextFlag(cmd *cobra.Command) bool {
 	return cmd.Flags().Lookup("kube-context") != nil || cmd.InheritedFlags().Lookup("kube-context") != nil
