@@ -853,7 +853,10 @@ first row down.
 Informational scan findings are counted in `basis` and flag nothing. Each
 failed read in `warnings` is an entry in `unknowns`, with its message quoted,
 and `denied` when forbidden. `next[]` is `explain` of the top issue's resource.
-`cost` is `not-measured` for now.
+`cost` counts doctor's own in-process Kubernetes requests (`coverage:
+"doctor-session-clients"`), including `--before-attach` and the cluster reads of
+`--with-confighub`; subprocesses and ConfigHub reads are not counted. It is
+`not-measured` for recorded input.
 
 ### DoctorSummary context and coverage additions
 
