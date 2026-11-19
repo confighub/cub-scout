@@ -338,3 +338,86 @@ if not any(c.get("state") == "agrees" and (c.get("health") or {}).get("state") =
     sys.exit("no recorded health was found to agree with the workloads the controller lists")
 print("A recorded live status agrees with the controllers in the cluster, and its health with the workloads they list")
 PY
+
+# A recorded status that is untrue (#887). The lane writes one on the Release
+# that agreed above, as argobot writes its own (a merge patch of LiveStatus),
+# with a message that marks it, and reads it back with cub-scout. Only a read
+# that quotes that message counts: argobot may write over it at any time.
+#   - Sync recorded as OutOfSync while the controller reports the Release's
+#     digest: the cluster check must say `disagrees`.
+#   - Synced with Health recorded as Degraded while every workload is ready:
+#     the cluster check must not call that a disagreement, since the report
+#     may concern a kind cub-scout does not read; health is `not-observable`.
+[[ "$controller" = sveltos ]] && exit 0
+release_id=$(python3 - "$out/release-list.json" <<'PY'
+import json, sys
+for item in json.load(open(sys.argv[1])):
+    release = item.get("Release") or {}
+    if (release.get("LiveStatus") or {}).get("Sync") == "Synced":
+        print(release["ReleaseID"])
+        break
+PY
+)
+[[ -n "$release_id" ]] || { echo 'no Synced Release to write an untrue status on' >&2; exit 1; }
+
+untrue() {
+  local case=$1 sync=$2 health=$3 marker="written by the cub-scout live-status lane, deliberately untrue: $1"
+  for attempt in 1 2 3; do
+    printf '{"LiveStatus":{"Sync":"%s","ReporterSync":"%s","Health":"%s","ReporterHealth":"%s","Message":"%s","ObservedAt":"%s"}}' \
+      "$sync" "$sync" "$health" "$health" "$marker" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+      | cub release update --patch "$release_id" --from-stdin > "$private/untrue-$case.write" 2>&1 \
+      || { echo "cub release update failed ($case):" >&2; cat "$private/untrue-$case.write" >&2; return 1; }
+    KUBECONFIG="$kubeconfig" CUB_SCOUT_TELEMETRY='' "$scout" gitops status --with-confighub --confighub-space '*' --format json \
+      > "$out/untrue-$case.json" 2>"$out/untrue-$case.err" || true
+    if python3 - "$out/untrue-$case.json" "$marker" <<'PY'
+import json, sys
+def walk(value):
+    if isinstance(value, dict):
+        if isinstance(value.get("liveStatuses"), list):
+            yield from value["liveStatuses"]
+        for inner in value.values():
+            yield from walk(inner)
+    elif isinstance(value, list):
+        for inner in value:
+            yield from walk(inner)
+sys.exit(0 if any(s.get("message") == sys.argv[2] for s in walk(json.load(open(sys.argv[1])))) else 1)
+PY
+    then return 0; fi
+    echo "attempt $attempt: the status read back is not the one written (argobot wrote over it?)"
+  done
+  echo "the untrue status ($case) was never read back" >&2
+  return 1
+}
+
+check_untrue() {
+  python3 - "$out/untrue-$1.json" "written by the cub-scout live-status lane, deliberately untrue: $1" "$1" <<'PY'
+import json, sys
+def walk(value):
+    if isinstance(value, dict):
+        if isinstance(value.get("liveStatuses"), list):
+            yield from value["liveStatuses"]
+        for inner in value.values():
+            yield from walk(inner)
+    elif isinstance(value, list):
+        for inner in value:
+            yield from walk(inner)
+status = next(s for s in walk(json.load(open(sys.argv[1]))) if s.get("message") == sys.argv[2])
+check = status.get("clusterCheck") or {}
+health = check.get("health") or {}
+print(sys.argv[3] + ":", "check=%s" % check.get("state"), check.get("reason", ""))
+print("   health check=%s" % health.get("state"), health.get("reason", ""))
+if sys.argv[3] == "out-of-sync" and check.get("state") != "disagrees":
+    sys.exit("a status recorded as OutOfSync, while the controller reports the Release's digest, was not found to disagree")
+if sys.argv[3] == "degraded":
+    if check.get("state") != "agrees":
+        sys.exit("the sync state recorded with the untrue health no longer agrees; the health case proves nothing")
+    if health.get("state") != "not-observable":
+        sys.exit("a Degraded health over workloads that are all ready was called %s, not not-observable" % health.get("state"))
+PY
+}
+
+untrue out-of-sync OutOfSync Healthy
+check_untrue out-of-sync
+untrue degraded Synced Degraded
+check_untrue degraded
+echo "An untrue recorded sync state is found to disagree; an untrue health over ready workloads is not called a disagreement"
