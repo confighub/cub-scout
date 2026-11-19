@@ -10,12 +10,15 @@ import (
 	"io"
 	"sort"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 
+	"github.com/confighub/cub-scout/v2/internal/mapsvc"
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
 
@@ -133,6 +136,8 @@ type deliverySettingsReport struct {
 	Reads       []agent.DeliverySettingsRead     `json:"reads"`
 	LinkSources []agent.DeliveryLinkSource       `json:"linkSources,omitempty"`
 	Notes       []string                         `json:"notes,omitempty"`
+	// Answer is set on live JSON output only, and kept in every view.
+	Answer *mapsvc.Answer `json:"answer,omitempty"`
 }
 
 func parseDeliverySettingMatches(raw []string) ([]agent.DeliverySettingMatch, error) {
@@ -214,15 +219,30 @@ func runGitOpsSettings(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	client, err := newReceiptDeliveryDynamicClient(ctx)
+	// The settings read's own requests are metered for the answer's cost.
+	meter := agent.NewKubernetesReadMeter()
+	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to build kubernetes client: %w", err)
 	}
+	cfg = rest.CopyConfig(cfg)
+	cfg.Wrap(meter.WrapTransport)
+	client, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return fmt.Errorf("failed to build kubernetes client: %w", err)
+	}
+	started := time.Now()
 	report, err := buildDeliverySettingsReport(ctx, client, params)
 	if err != nil {
 		return err
 	}
 	report.Context = boundContextLabel(ctx)
+	if format == "json" {
+		cost := meter.Snapshot()
+		cost.DurationMillis = time.Since(started).Milliseconds()
+		cost.Coverage = settingsCostCoverage
+		report.Answer = buildDeliverySettingsAnswer(report, &cost, time.Now())
+	}
 	if tui {
 		return runGitOpsMarkdownTUI(ctx, renderDeliverySettingsMarkdown(report, params.GroupBy))
 	}
