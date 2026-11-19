@@ -2214,7 +2214,7 @@ Open for the maintainer: the small eval run; telling the consumer of the
 source-truth fixtures that the "agreed" case needs `object_revision`; a
 smaller default MCP tool set.
 
-## After v2.18.0: every answer on a real cluster, Flux WATCH, #887 seen to disagree — 2026-11-19
+## After v2.18.0: release check on a real cluster, Flux WATCH, #887 seen to disagree — 2026-11-19
 
 On "keep going" and the maintainer's "yes to 1". Merged, not released:
 `release check` runs on a real Flux OCI delivery in the GitOps lane (#979);
@@ -2224,7 +2224,8 @@ it, so the next release's notes must say so); the live-status lane writes
 untrue statuses and sees sync (#980) and health (#984) disagree on a real
 cluster under Flux and Argo CD; Argo CD v3.6.2 (#978) and kind v0.33.0 /
 node v1.35.8 (#983) in every lane. #887 is commented and left open: a
-StatefulSet or DaemonSet read live, a hosted server and the eval case remain.
+StatefulSet or DaemonSet read live, a hosted server and the eval case remain. v2.19.0
+is cut from this on the maintainer's word ("cut v2.19.0").
 
 ## Answers on seven more commands, writes name their cluster, v2.18.0 — 2026-11-18 to 2026-11-19
 

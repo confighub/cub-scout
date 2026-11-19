@@ -4,7 +4,7 @@
 
 > **Current state:** what is shipped, what the next release carries, what was
 > decided and what is open are in one place:
-> [the state of the plan](roadmap-3.0-execution.md#state-of-the-plan--2026-11-16).
+> [the state of the plan](roadmap-3.0-execution.md#state-of-the-plan--2026-11-19).
 > Where this page and that section disagree, that section wins.
 
 > **Status:** Authoritative
@@ -561,7 +561,7 @@ before implementation.
 > the `answer` envelope on two commands, the MCP tool profile); the pre-attach
 > report, conformance and the remaining deprecation notices move to v2.17.
 > The stage and version lists below predate this; read
-> [the state of the plan](roadmap-3.0-execution.md#state-of-the-plan--2026-11-16).
+> [the state of the plan](roadmap-3.0-execution.md#state-of-the-plan--2026-11-19).
 >
 > **Added to on 2026-11-13.** The maintainer adopted, for now, an
 > [agent plan](roadmap-3.0-execution.md#agent-plan--2026-11-13): four

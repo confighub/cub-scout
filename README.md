@@ -39,7 +39,7 @@ timing, secret and event lines are left out. For an
 agent, the same answer is JSON (`--format json`) or an MCP tool: point your
 MCP client at `cub-scout mcp serve`, a local read-only stdio server.
 
-[v2.18.0 release](https://github.com/confighub/cub-scout/releases/tag/v2.18.0)
+[v2.19.0 release](https://github.com/confighub/cub-scout/releases/tag/v2.19.0)
 | [Start here](docs/getting-started/start-here.md)
 | [Is this image deployed?](docs/howto/is-this-image-deployed.md)
 | [Command guide](CLI-GUIDE.md)
@@ -94,7 +94,7 @@ dependency. If an old cask is installed, run
 `brew uninstall --cask confighub/tap/cub-scout` first.
 
 
-Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.18.0`, then
+Already using `cub`? Run `cub plugin install confighub/cub-scout@v2.19.0`, then
 `cub scout doctor`. [Installation and verified downloads](docs/getting-started/install.md)
 cover macOS, Linux, Windows, and tagged source builds.
 
@@ -203,7 +203,12 @@ coalescing, opt-in watch-backed idle observation, and a new `resource.deleted`
 event), plus local bot images built from verified release archives. See the
 [release notes](docs/releases/v2.11.0.md).
 
-**v2.18.0 is the latest release.** Seven more commands carry the `answer`
+**v2.19.0 is the latest release.** `release check` under Flux now says
+"not yet" (`WATCH`) when the source is on another revision, as it does for
+Argo CD, and `release check` now runs on a real cluster in CI. See the
+[v2.19.0 release notes](docs/releases/v2.19.0.md).
+
+**v2.18.0**: seven more commands carry the `answer`
 block: `gitops status`, `explain`, `doctor`, `map list`, `scan`,
 `gitops settings` and `release check`. Each says what it found, whose word
 each fact rests on, what it could not establish and what its reads cost.
@@ -492,8 +497,8 @@ For direct downloads and tagged source builds, use the
 `github.com/confighub/cub-scout/v2`; proxy installation via
 `go install github.com/confighub/cub-scout/v2/cmd/cub-scout@latest` installs
 the latest tagged 2.x module. For a pinned install use
-`go install github.com/confighub/cub-scout/v2/cmd/cub-scout@v2.18.0`. Container command
-`docker run ghcr.io/confighub/cub-scout:v2.18.0 version` still needs registry
+`go install github.com/confighub/cub-scout/v2/cmd/cub-scout@v2.19.0`. Container command
+`docker run ghcr.io/confighub/cub-scout:v2.19.0 version` still needs registry
 access verification (#520); the published image is Linux amd64 only.
 `kubectl krew install cub-scout` is not a verified distribution path; use the
 `kubectl-cub_scout` binary included in the archives or Homebrew instead.

@@ -25,6 +25,7 @@ this section and anything below it disagree, this section wins.
 | [v2.16.0](releases/v2.16.0.md) | 2026-11-16 | ConfigHub 0.11; the `answer` block on `trace` and `compare source-truth`; `mcp serve --tools`. |
 | [v2.17.0](releases/v2.17.0.md) | 2026-11-18 | Ownership checked against real installs of Helm, kro, Crossplane and Terraform. |
 | [v2.18.0](releases/v2.18.0.md) | 2026-11-19 | The `answer` block on seven more commands; every cluster write names its cluster; `doctor --before-attach`; 3.0 deprecation notices. |
+| [v2.19.0](releases/v2.19.0.md) | 2026-11-19 | Under Flux, `release check` gives `WATCH` for another revision, and runs on a real cluster in CI; #887's comparisons seen to disagree under Flux and Argo CD. |
 
 ### v2.16.0, published 2026-11-16
 
@@ -58,16 +59,16 @@ a stated reason, and #954, #956–#960 and #964 gave it to the demos,
 `quickstart`, `import argocd`, `views project --with-reality`, `import`, the
 import wizard and `map hub`. Every write now needs it ([#955], #962, #964).
 
-After v2.18.0, on `main`, not released: the GitOps lane runs `release check`
-on a real Flux OCI delivery (#979), so every answer is checked on a real
-cluster; under Flux, a source and Kustomization on another revision give
+After v2.18.0, released in v2.19.0: the GitOps lane runs `release check`
+on a real Flux OCI delivery (#979), so each command's answer is checked on
+a real cluster, though not in every state; under Flux, a source and Kustomization on another revision give
 `WATCH` / `not-compared`, as under Argo CD (#982, the maintainer's decision;
 a behaviour change for `--fail-on`); the live-status lane records untrue
 statuses and sees each comparison of [#887] disagree, sync (#980) and health
 (#984); Argo CD v3.6.2 (#978) and kind v0.33.0 with node v1.35.8 (#983) in the
 lanes. Ready without a decision: a StatefulSet or DaemonSet read live ([#887]);
 a newer Kubernetes minor in the lanes, with the client libraries. Waiting on
-the maintainer: the open table below, and when to release #982.
+the maintainer: the open table below.
 
 ### v2.18.0, published 2026-11-19
 
@@ -156,7 +157,7 @@ Adopted by the maintainer on 2026-11-13 "for now": it can be withdrawn. It
 adds to the [trimmed plan](#trimmed-plan--2026-11-10) below and changes two of
 its rows: v2.16 grows, and 3.0 is no longer the transition only. The
 not-planned list and the unscheduled paid benchmark stand. What is built so
-far is in [the state of the plan](#state-of-the-plan--2026-11-16) above; the
+far is in [the state of the plan](#state-of-the-plan--2026-11-19) above; the
 rest is not.
 
 The plan follows from a definition of
@@ -494,7 +495,7 @@ approve a release or proof of the release running.
 > **Superseded.** The P4 to P6 rows below list items the
 > [trimmed plan](#trimmed-plan--2026-11-10) marks not planned (#539, #584,
 > #601, #602, #604, #605, #641). Read
-> [the state of the plan](#state-of-the-plan--2026-11-16) for what is next.
+> [the state of the plan](#state-of-the-plan--2026-11-19) for what is next.
 
 Planning capacity: one lead/integrator, up to two cheap implementation workers,
 and one serial live-validation lane. The windows are **engineering-week ranges
