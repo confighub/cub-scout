@@ -450,8 +450,12 @@ echo "An untrue Healthy over a workload that is down is found to disagree"
 # A StatefulSet and a DaemonSet read live (#887). The apps space that
 # `cub cluster up` makes delivers no workload, so its first Release lists
 # none. The lane adds one unit with a StatefulSet and a DaemonSet, publishes a
-# second Release, waits until argobot records it Synced and Healthy, and
-# requires the health comparison to have listed and read exactly those two.
+# second Release, waits until argobot records it Synced, and requires the
+# health comparison to have listed and read exactly those two. Under Argo CD
+# argobot records the health itself (Healthy). Under Flux it records Unknown
+# for this space (run 44596212949), which compares nothing, so once both
+# workloads are ready the lane records Healthy on the Release, marked as its
+# own, as the untrue statuses above are; here the report is true.
 apps=$(grep -E -- '-apps$' "$out/spaces.txt" | head -1)
 [[ -n "$apps" ]] || { echo 'no apps space to deliver workloads to' >&2; exit 1; }
 cat > "$private/workloads.yaml" <<'YAML'
@@ -526,15 +530,27 @@ releases = [i.get("Release") or {} for i in items]
 releases = [r for r in releases if r.get("ReleaseNum", 0) >= 2 or str(r.get("Slug", "")).endswith("#2")]
 for r in releases:
     live = r.get("LiveStatus") or {}
-    if live.get("Sync") == "Synced" and live.get("Health") == "Healthy":
-        print(r.get("ReleaseID", ""))
+    if live.get("Sync") == "Synced":
+        print(r.get("ReleaseID", ""), live.get("Health") or "")
         break
 PY
 )
   [[ -n "$release" ]] && break
   sleep 10
 done
-[[ -n "$release" ]] || { echo 'the Release with the StatefulSet and DaemonSet was never recorded Synced and Healthy; see workloads-release-list.json' >&2; exit 1; }
+[[ -n "$release" ]] || { echo 'the Release with the StatefulSet and DaemonSet was never recorded Synced; see workloads-release-list.json' >&2; exit 1; }
+release_health=${release#* }
+release=${release%% *}
+if [[ "$release_health" != Healthy ]]; then
+  KUBECONFIG="$kubeconfig" kubectl rollout status statefulset/scout-sts -n scout-workloads --timeout=300s > /dev/null
+  KUBECONFIG="$kubeconfig" kubectl rollout status daemonset/scout-ds -n scout-workloads --timeout=300s > /dev/null
+  sleep 2
+  echo "argobot recorded health \"$release_health\" for this Release; the lane records Healthy, marked as its own"
+  printf '{"LiveStatus":{"Health":"Healthy","ReporterHealth":"Healthy","Message":"%s","ObservedAt":"%s"}}' \
+    "health recorded by the cub-scout live-status lane: the StatefulSet and DaemonSet are ready" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    | cub release update --patch "$release" --from-stdin > "$private/workloads-health.write" 2>&1 \
+    || { echo 'cub release update failed:' >&2; redact < "$private/workloads-health.write" >&2; exit 1; }
+fi
 
 KUBECONFIG="$kubeconfig" CUB_SCOUT_TELEMETRY='' "$scout" gitops status --with-confighub --confighub-space '*' --format json \
   > "$out/workloads-status.json" 2>"$out/workloads-status.err" || true
