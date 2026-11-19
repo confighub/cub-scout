@@ -22,6 +22,11 @@ const (
 	doctorReasonNothingFound       = "nothing-found"
 	doctorReasonCoverageIncomplete = "coverage-incomplete"
 	doctorReasonInventoryNotRead   = "inventory-not-read"
+
+	// doctorCostCoverage is a key, spelled out in json-contracts.md: the
+	// Kubernetes requests of doctor's own in-process clients. Not counted:
+	// subprocesses and ConfigHub reads.
+	doctorCostCoverage = "doctor-session-clients"
 )
 
 // doctorStates and doctorReasons are what the conformance test checks
@@ -41,6 +46,9 @@ func buildDoctorAnswer(summary DoctorSummary, observedAt time.Time) *mapsvc.Answ
 		Unknowns:   []mapsvc.AnswerUnknown{},
 		Next:       []mapsvc.AnswerNext{},
 		Cost:       mapsvc.AnswerCost{Coverage: "not-measured"},
+	}
+	if summary.readCost != nil {
+		answer.Cost = mapsvc.AnswerCostFrom(*summary.readCost)
 	}
 
 	// What doctor flags, by whose word.

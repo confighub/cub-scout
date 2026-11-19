@@ -98,6 +98,9 @@ type DoctorSummary struct {
 	// state issues-flagged, nothing-flagged, incomplete or not-observable.
 	Answer *mapsvc.Answer `json:"answer,omitempty"`
 
+	// readCost is what doctor's own Kubernetes reads cost, for the answer.
+	readCost *agent.KubernetesReadCost
+
 	// DeliveryEvidence is the raw bounded evidence envelope behind Delivery.
 	// It is present only when --with-confighub is requested.
 	DeliveryEvidence *GitOpsDeliveryEvidence `json:"deliveryEvidence,omitempty"`
