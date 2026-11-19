@@ -440,6 +440,15 @@ jobs:
           kubectl wait --for=jsonpath='{.status.health.status}'=Healthy application/guestbook -n argocd --timeout=300s
           kubectl rollout status deployment/guestbook-ui -n guestbook --timeout=300s
 
+      # The answer block on gitops status, on real Flux objects that were just
+      # waited Ready: it must say settled, and count the reads it made.
+      - name: gitops status answers on a real Flux install
+        run: |
+          ./cub-scout gitops status -n boutique --format json > gitops-status-boutique.json
+          jq -e '.answer.state == "settled" and .answer.reason == "deployers-report-ready" and .answer.cost.requestsMade > 0 and .answer.cost.coverage == "gitops-status-session-clients"' gitops-status-boutique.json \
+            || { jq '.answer' gitops-status-boutique.json; exit 1; }
+          jq -c '.answer | {state, reason, summary, requestsMade: .cost.requestsMade}' gitops-status-boutique.json
+
       # A three-level app-of-apps read from this commit, so that what Argo CD
       # reports for each level is recorded from a real controller (#855).
       - name: Deploy the delivery-tree example
