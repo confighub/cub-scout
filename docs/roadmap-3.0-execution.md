@@ -55,6 +55,14 @@ a stated reason, and #954, #956–#960 and #964 gave it to the demos,
 `quickstart`, `import argocd`, `views project --with-reality`, `import`, the
 import wizard and `map hub`. Every write now needs it ([#955], #962, #964).
 
+### v2.18.0, published 2026-11-19
+
+The work the table above moved to v2.18 shipped, on the maintainer's word
+("cut v2.18.0 after"): the answer envelope on seven more commands, explicit
+context everywhere with writes refused without it, `doctor --before-attach`,
+Crossplane `Ready` in `trace`, and the 3.0 deprecation notices, whose window
+starts here. [Notes](releases/v2.18.0.md).
+
 ### v2.17.0, published 2026-11-18
 
 Renumbered again, on the maintainer's word ("Cut v2.17.0"): v2.17.0 ships

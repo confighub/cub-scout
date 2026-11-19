@@ -2226,8 +2226,8 @@ state words the maintainer chose, is on `gitops status` (#965), `explain`
 (#966, #968), `doctor` (#967, #969), `map list` (#972), `scan` (#973),
 `gitops settings` (#974) and `release check` (#975); human surfaces follow the
 answer (#949, #971). Deprecation notices for everything 3.0 removes ship here
-(#950), which starts the window. v2.18.0 is cut from this on the maintainer's
-word. Not done: a real-cluster check of `release check`'s answer (no lane runs
+(#950), which starts the window. v2.18.0 was cut from this on the maintainer's
+word and published on 2026-11-19 from `fa38012b` (Release run 44532225303). Not done: a real-cluster check of `release check`'s answer (no lane runs
 it), and any paid eval of the answers.
 
 ## Standing checks on real installs, and v2.17.0 — 2026-11-16 to 2026-11-18
