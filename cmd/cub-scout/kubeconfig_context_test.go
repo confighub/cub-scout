@@ -362,8 +362,8 @@ func TestMapListExplicitContextSelectsOnlyNamedServerWithoutConfigMutation(t *te
 	// A command accepts the flag only if it honours it. Since #804 every
 	// cluster-reading map subcommand does (see
 	// TestMapSubcommandsReadOnlyTheSelectedContext); the ConfigHub-only ones
-	// still must not.
-	for _, unsupported := range []*cobra.Command{mapFleetCmd, mapHubCmd, mapQueriesCmd} {
+	// still must not. map hub honours it for its import hand-off (#955).
+	for _, unsupported := range []*cobra.Command{mapFleetCmd, mapQueriesCmd} {
 		require.Nil(t, unsupported.Flags().Lookup("kube-context"), "%s reads no cluster and must not accept a context flag", unsupported.Name())
 	}
 }

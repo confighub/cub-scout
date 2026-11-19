@@ -68,16 +68,20 @@ func TestMapSubcommandsReadOnlyTheSelectedContext(t *testing.T) {
 }
 
 // A new map subcommand that reads a cluster must join mapClusterReadCommands
-// and so gain --kube-context. The three exemptions read ConfigHub or nothing.
+// and so gain --kube-context. The two exemptions read ConfigHub or nothing;
+// map hub is checked on its own.
 func TestEveryMapSubcommandIsClassifiedForContextSelection(t *testing.T) {
 	bound := map[*cobra.Command]bool{}
 	for _, cmd := range mapClusterReadCommands() {
 		bound[cmd] = true
 		require.NotNil(t, cmd.Flags().Lookup("kube-context"), "map %s has no --kube-context flag", cmd.Name())
 	}
-	exempt := map[*cobra.Command]bool{mapHubCmd: true, mapFleetCmd: true, mapQueriesCmd: true}
+	exempt := map[*cobra.Command]bool{mapFleetCmd: true, mapQueriesCmd: true}
+	// map hub reads ConfigHub, and its import hand-off reads and writes the
+	// cluster: it takes --kube-context, and its writes need it (#955).
+	require.NotNil(t, mapHubCmd.Flags().Lookup("kube-context"), "map hub writes to the cluster and must accept --kube-context")
 	for _, cmd := range mapCmd.Commands() {
-		if cmd.Name() == "help" || cmd.Name() == "completion" {
+		if cmd.Name() == "help" || cmd.Name() == "completion" || cmd == mapHubCmd {
 			continue
 		}
 		require.True(t, bound[cmd] || exempt[cmd], "map %s is neither in mapClusterReadCommands nor exempt as a non-cluster command", cmd.Name())
