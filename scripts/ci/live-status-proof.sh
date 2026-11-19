@@ -446,3 +446,136 @@ untrue healthy-over-down Synced Healthy
 check_untrue healthy-over-down
 for node in $nodes; do KUBECONFIG="$kubeconfig" kubectl uncordon "$node" > /dev/null; done
 echo "An untrue Healthy over a workload that is down is found to disagree"
+
+# A StatefulSet and a DaemonSet read live (#887). The apps space that
+# `cub cluster up` makes delivers no workload, so its first Release lists
+# none. The lane adds one unit with a StatefulSet and a DaemonSet, publishes a
+# second Release, waits until argobot records it Synced, and requires the
+# health comparison to have listed and read exactly those two. Under Argo CD
+# argobot records the health itself (Healthy). Under Flux it records Unknown
+# for this space (run 44596212949), which compares nothing, so once both
+# workloads are ready the lane records Healthy on the Release, marked as its
+# own, as the untrue statuses above are; here the report is true.
+apps=$(grep -E -- '-apps$' "$out/spaces.txt" | head -1)
+[[ -n "$apps" ]] || { echo 'no apps space to deliver workloads to' >&2; exit 1; }
+cat > "$private/workloads.yaml" <<'YAML'
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: scout-workloads
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scout-sts
+  namespace: scout-workloads
+spec:
+  clusterIP: None
+  selector:
+    app: scout-sts
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: scout-sts
+  namespace: scout-workloads
+spec:
+  serviceName: scout-sts
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scout-sts
+  template:
+    metadata:
+      labels:
+        app: scout-sts
+    spec:
+      containers:
+        - name: pause
+          image: registry.k8s.io/pause:3.10
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: scout-ds
+  namespace: scout-workloads
+spec:
+  selector:
+    matchLabels:
+      app: scout-ds
+  template:
+    metadata:
+      labels:
+        app: scout-ds
+    spec:
+      containers:
+        - name: pause
+          image: registry.k8s.io/pause:3.10
+YAML
+cub unit create --space "$apps" scout-workloads "$private/workloads.yaml" > "$private/workloads-unit.log" 2>&1 \
+  || { echo 'cub unit create failed:' >&2; redact < "$private/workloads-unit.log" >&2; exit 1; }
+cub release publish "$apps" > "$private/workloads-publish.log" 2>&1 \
+  || { echo 'cub release publish failed:' >&2; redact < "$private/workloads-publish.log" >&2; exit 1; }
+
+release=''
+for _ in $(seq 1 60); do
+  cub release list --space "$apps" -o json > "$out/workloads-release-list.json" 2>"$private/workloads-release-list.err" || true
+  release=$(python3 - "$out/workloads-release-list.json" <<'PY'
+import json, sys
+try:
+    items = json.load(open(sys.argv[1]))
+except Exception:
+    sys.exit(0)
+releases = [i.get("Release") or {} for i in items]
+releases = [r for r in releases if r.get("ReleaseNum", 0) >= 2 or str(r.get("Slug", "")).endswith("#2")]
+for r in releases:
+    live = r.get("LiveStatus") or {}
+    if live.get("Sync") == "Synced":
+        print(r.get("ReleaseID", ""), live.get("Health") or "")
+        break
+PY
+)
+  [[ -n "$release" ]] && break
+  sleep 10
+done
+[[ -n "$release" ]] || { echo 'the Release with the StatefulSet and DaemonSet was never recorded Synced; see workloads-release-list.json' >&2; exit 1; }
+release_health=${release#* }
+release=${release%% *}
+if [[ "$release_health" != Healthy ]]; then
+  KUBECONFIG="$kubeconfig" kubectl rollout status statefulset/scout-sts -n scout-workloads --timeout=300s > /dev/null
+  KUBECONFIG="$kubeconfig" kubectl rollout status daemonset/scout-ds -n scout-workloads --timeout=300s > /dev/null
+  sleep 2
+  echo "argobot recorded health \"$release_health\" for this Release; the lane records Healthy, marked as its own"
+  printf '{"LiveStatus":{"Health":"Healthy","ReporterHealth":"Healthy","Message":"%s","ObservedAt":"%s"}}' \
+    "health recorded by the cub-scout live-status lane: the StatefulSet and DaemonSet are ready" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    | cub release update --patch "$release" --from-stdin > "$private/workloads-health.write" 2>&1 \
+    || { echo 'cub release update failed:' >&2; redact < "$private/workloads-health.write" >&2; exit 1; }
+fi
+
+KUBECONFIG="$kubeconfig" CUB_SCOUT_TELEMETRY='' "$scout" gitops status --with-confighub --confighub-space '*' --format json \
+  > "$out/workloads-status.json" 2>"$out/workloads-status.err" || true
+python3 - "$out/workloads-status.json" "$apps" <<'PY'
+import json, sys
+def walk(value):
+    if isinstance(value, dict):
+        if isinstance(value.get("liveStatuses"), list):
+            yield from value["liveStatuses"]
+        for inner in value.values():
+            yield from walk(inner)
+    elif isinstance(value, list):
+        for inner in value:
+            yield from walk(inner)
+statuses = [s for s in walk(json.load(open(sys.argv[1]))) if s.get("recordedOn") == "release" and s.get("space") == sys.argv[2] and s.get("healthStatus") == "Healthy"]
+if not statuses:
+    sys.exit("no Healthy recorded status was read for space %s" % sys.argv[2])
+for s in statuses:
+    check = s.get("clusterCheck") or {}
+    health = check.get("health") or {}
+    print(s.get("release"), "check=%s" % check.get("state"), "health=%s" % health.get("state"), "listed=%s ready=%s" % (health.get("workloadsListed"), health.get("workloadsReady")), health.get("reason", ""))
+if not any((s.get("clusterCheck") or {}).get("state") == "agrees"
+           and ((s.get("clusterCheck") or {}).get("health") or {}).get("state") == "agrees"
+           and ((s.get("clusterCheck") or {}).get("health") or {}).get("workloadsListed") == 2
+           and ((s.get("clusterCheck") or {}).get("health") or {}).get("workloadsReady") == 2 for s in statuses):
+    sys.exit("the recorded health was not compared with exactly the StatefulSet and DaemonSet the Release delivers")
+print("A StatefulSet and a DaemonSet are read live, and the recorded health agrees with them")
+PY
