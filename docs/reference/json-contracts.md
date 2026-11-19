@@ -2343,7 +2343,7 @@ observation.
 | `BLOCK` | `differs` | `configuration-differs` | The configuration stage is `BLOCK` |
 | `BLOCK` | `differs` | `workload-reports-failure` | Otherwise, the workloads stage is `BLOCK` |
 | `BLOCK` | `differs` | `running-image-differs` | Otherwise, the running-image stage is `BLOCK` |
-| `WATCH` | `not-compared` | `controller-reports-other-revision` | Not yet: the controller reports a different bundle revision |
+| `WATCH` | `not-compared` | `controller-reports-other-revision` | Not yet: the controller reports a different bundle revision. Under Flux, both the OCIRepository and the Kustomization must report another revision; a source that moved while the Kustomization still reports the expected bundle is `INCONCLUSIVE` (after v2.18.0, the maintainer's decision of 2026-11-19; before, any other source revision was `INCONCLUSIVE`) |
 | `WATCH` | `not-compared` | `workloads-converging` | Not yet: workloads are not reported converged |
 | `WATCH` | `not-compared` | `stage-not-settled` | Not yet: another stage is `WATCH` |
 | `INCONCLUSIVE` | `not-observable` | `evidence-incomplete` | Required evidence is missing or changed during the check |

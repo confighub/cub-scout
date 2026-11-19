@@ -8,11 +8,10 @@
 #   - with the bundle Flux delivered: verdict PASS, answer `matches`;
 #   - with a second bundle Flux was never pointed at, holding the same
 #     objects under another revision (so its manifest digest differs and the
-#     live configuration still matches). The Flux adapter treats a source
-#     reporting another revision as an unproven binding, so the controller
-#     stage is INCONCLUSIVE and the answer `not-observable`, with the stage's
-#     reason quoted. (The Argo CD adapter's WATCH path for a different
-#     revision is not reached by Flux; whether it should be is open.)
+#     live configuration still matches): the OCIRepository and Kustomization
+#     both report another revision, so the controller stage is WATCH and the
+#     answer `not-compared` / `controller-reports-other-revision` (the
+#     maintainer's decision of 2026-11-19, as for Argo CD).
 # The second case changes nothing in the cluster.
 set -euo pipefail
 scout=${1:?usage: release-check-lane.sh <cub-scout binary> <output dir>}
@@ -122,7 +121,7 @@ jq -e '.verdict == "PASS" and .answer.state == "matches" and .answer.reason == "
   || { jq '{verdict, stages, answer}' "$out/delivered.json"; exit 1; }
 
 check "$d2" other-bundle.json
-jq -e '.verdict == "INCONCLUSIVE" and .answer.state == "not-observable" and .answer.reason == "evidence-incomplete"
-       and ([.answer.unknowns[] | select(.what == "the controller stage" and (.quoted | test("expected bundle artifact revision")))] | length == 1)
+jq -e '.verdict == "WATCH" and .answer.state == "not-compared" and .answer.reason == "controller-reports-other-revision"
+       and ([.answer.basis[] | select(.claim == "the controller stage is WATCH")] | length == 1)
        and ([.answer.basis[] | select(.claim == "the configuration stage is PASS")] | length == 1)' "$out/other-bundle.json" \
   || { jq '{verdict, stages, answer}' "$out/other-bundle.json"; exit 1; }
