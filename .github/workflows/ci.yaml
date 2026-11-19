@@ -399,6 +399,8 @@ jobs:
           version: v0.31.0
           node_image: kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f
           cluster_name: gitops-cluster
+          # A local registry on the kind network, for the release-check lane.
+          registry: true
 
       - name: Install pinned GitOps controllers
         run: bash scripts/ci/setup-gitops-controllers.sh
@@ -569,6 +571,9 @@ jobs:
       - name: Terraform's Kubernetes provider on a real install
         run: bash scripts/ci/terraform-lane.sh ./cub-scout "$RUNNER_TEMP/terraform-lane"
 
+      - name: release check answers on a real Flux OCI delivery
+        run: bash scripts/ci/release-check-lane.sh ./cub-scout "$RUNNER_TEMP/release-check-lane"
+
       - name: Record scoped controller acceptance
         run: |
           kubectl get applications.argoproj.io guestbook -n argocd -o json > "$RUNNER_TEMP/argo-application.json"
@@ -594,6 +599,7 @@ jobs:
             ${{ runner.temp }}/kro-lane/
             ${{ runner.temp }}/crossplane-lane/
             ${{ runner.temp }}/terraform-lane/
+            ${{ runner.temp }}/release-check-lane/
 
       - name: Test trace command
         run: ./cub-scout trace deployment/cart -n boutique
