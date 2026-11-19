@@ -167,6 +167,12 @@ func TestGitOpsStatusExplicitContextUsesCapturedEndpointAfterRetarget(t *testing
 	require.Equal(t, "alpha-space", summary.ConfigHubTarget.Space)
 	require.Len(t, summary.Deployers, 1)
 	require.Equal(t, []RuntimeIssue{{Reason: "ImagePullBackOff", Count: 1}}, summary.Deployers[0].RuntimeIssues)
+	// The answer names the same context and reports the reads it made.
+	require.NotNil(t, summary.Answer)
+	requireConformingAnswer(t, summary.Answer, gitopsStates, gitopsReasons)
+	require.Equal(t, "alpha", summary.Answer.Cluster.Context)
+	require.Equal(t, gitopsCostCoverage, summary.Answer.Cost.Coverage)
+	require.EqualValues(t, len(alpha.requests), summary.Answer.Cost.RequestsMade, "the answer's cost counts this command's reads")
 	require.NotEmpty(t, alpha.requests)
 	require.Empty(t, beta.requests)
 	for i, request := range alpha.requests {

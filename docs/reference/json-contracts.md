@@ -1149,6 +1149,37 @@ Best-effort: omitted when the field name has no canonical-path mapping (e.g., `i
 
 Source: `cmd/cub-scout/compare_bindings.go`
 
+## GitOps Status Answer
+
+`gitops status --format json` carries a top-level `answer` block (since v2.18),
+the envelope `trace` carries: `state`, `reason`, `summary`, `observedAt`,
+`cluster`, `basis[]`, `unknowns[]`, `next[]` and `cost`
+([the proposal](../proposals/answer-envelope.md); state words decided by the
+maintainer on 2026-11-19). It is drawn from the summary beside it and adds no
+observation. The fields beside it are unchanged.
+
+| `state` | `reason` | When |
+|---|---|---|
+| `failing` | `deployer-reports-failure` | A deployer's controller reports it not ready, and not in progress |
+| `failing` | `source-reports-failure` | No deployer fails, and a source's controller reports it not ready |
+| `converging` | `deployers-reconciling` | None fails, and one or more is in progress by its controller's word: a Flux Ready reason of `Progressing` or `DependencyNotReady`, or an Argo CD health of `Progressing` |
+| `not-observable` | `deployers-not-read` | None fails or converges, and a deployer or source was found but its object could not be read. Its readiness is unknown, never counted ready |
+| `not-observable` | `controllers-not-readable` | No deployer was found, and a controller family's kinds could not be listed, so whether there are any is unknown |
+| `no-deployers` | `no-deployers-found` | No deployer was found, and every controller family was readable |
+| `settled` | `deployers-report-ready` | Every deployer read reports ready. Suspended deployers are named in `basis` and do not decide the state |
+
+`basis[]` lists the deployers and sources that decide the state, each
+`restsOn: "controller-report"`, with the controller's reason and message
+quoted. Up to ten are listed, and the rest are counted; ready deployers are
+counted in one claim. `unknowns[]` names deployers and sources that were not
+read, and controller families that could not be listed (`denied` when the list
+was forbidden). It always says that the workloads the deployers deliver were
+not compared. `next[]` is `explain` of the first failing deployer. `cost`
+counts the command's own Kubernetes requests (`coverage:
+"gitops-status-session-clients"`). It is `not-measured` for recorded input.
+
+The block is bounded: about 1 KB for a few deployers, under 4 KB for 200.
+
 ## GitOps Controller Coverage Contract
 
 `gitops status --format json` includes additive `controllerCoverage[]` records
