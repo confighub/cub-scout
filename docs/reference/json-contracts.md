@@ -2304,6 +2304,36 @@ an image-stage match as stronger evidence. No
 application health policy, extra-object closure, fleet aggregation or
 release-history authority lookup is implied.
 
+### Release check answer (since v2.18)
+
+`release check --format json`, the `--out` file and MCP `release_check` carry a
+top-level `answer` block, the envelope `trace` carries. The report's own
+fields beside it are unchanged. State words decided by the maintainer on
+2026-11-19. They restate the report's weakest-link `verdict` and add no
+observation.
+
+| `verdict` | `state` | `reason` | When |
+|---|---|---|---|
+| `PASS` | `matches` | `bundle-reported-and-matches` | The controller reports the expected bundle and the authored configuration matches |
+| `BLOCK` | `differs` | `configuration-differs` | The configuration stage is `BLOCK` |
+| `BLOCK` | `differs` | `workload-reports-failure` | Otherwise, the workloads stage is `BLOCK` |
+| `BLOCK` | `differs` | `running-image-differs` | Otherwise, the running-image stage is `BLOCK` |
+| `WATCH` | `not-compared` | `controller-reports-other-revision` | Not yet: the controller reports a different bundle revision |
+| `WATCH` | `not-compared` | `workloads-converging` | Not yet: workloads are not reported converged |
+| `WATCH` | `not-compared` | `stage-not-settled` | Not yet: another stage is `WATCH` |
+| `INCONCLUSIVE` | `not-observable` | `evidence-incomplete` | Required evidence is missing or changed during the check |
+
+`basis[]` has one claim per `PASS`, `BLOCK` or `WATCH` stage, its `reason`
+quoted (it can carry a revision the controller reported). The controller and
+workloads stages rest on `controller-report`; bundle, configuration and
+running-image on `cub-scout-comparison`. `unknowns[]` has each `INCONCLUSIVE`
+stage (`not-observable`), each `NOT_ASSESSED` stage (`not-requested`) and each
+of the report's `omissions[]` (`not-compared`), so `matches` never claims
+application success. `next[]` is empty. `cost` is the report's own
+`requestCounts` (`coverage: "release-check-bounded-reads"`), timed from
+`startedAt` to `finishedAt`; registry requests are in `bundle`, and response
+bytes are not counted.
+
 ## Receipt Contract (`cub-scout receipt verify`)
 
 > A **receipt** is a stamped, hand-offable record of one verification: an in-toto Statement v1 envelope around a verdict, evidence, omissions, and optional upstream receipt references. Its **proof** is the verifiable integrity property created by the fingerprint: SHA-256 over RFC 8785 canonical JSON of the full Statement, with only `predicate.fingerprint` removed before hashing. Any third party can recompute that fingerprint to confirm the receipt has not been edited since it was stamped. That is tamper-evidence, not producer authentication or formal proof of truth. A receipt without proof is a claim; a receipt with proof is evidence.
