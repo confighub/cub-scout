@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -8,6 +9,9 @@ import (
 	"github.com/confighub/cub-scout/v2/internal/mapsvc"
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	dynamicfake "k8s.io/client-go/dynamic/fake"
 )
 
 func gitopsDeployer(kind, name string, ready bool, reason string) DeployerStatus {
@@ -120,4 +124,23 @@ func TestGitOpsStatusAnswerBasisIsBounded(t *testing.T) {
 	answer := buildGitOpsStatusAnswer(GitOpsSummary{Deployers: deployers}, time.Now(), nil)
 	require.Len(t, answer.Basis, gitopsAnswerBasisLimit+1)
 	require.Equal(t, "15 more not-ready or suspended deployer(s) and source(s) are listed in deployers and sources", answer.Basis[gitopsAnswerBasisLimit].Claim)
+}
+
+// A deployer whose object cannot be fetched keeps Ready's default, true. The
+// summary marks it not read, so the answer never counts it ready.
+func TestGitOpsStatusAnswerNeverCountsAnUnreadDeployerReady(t *testing.T) {
+	listKinds := map[schema.GroupVersionResource]string{}
+	for _, gvr := range firstClassControllerGVRs() {
+		listKinds[gvr] = "List"
+	}
+	client := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), listKinds)
+	info := &agent.ApplyBackendInfo{Backend: agent.BackendFlux, Deployers: []agent.DeployerRef{{Kind: "Kustomization", Name: "apps", Namespace: "flux-system"}}}
+
+	summary := buildGitOpsSummary(context.Background(), client, info)
+	require.Len(t, summary.Deployers, 1)
+	require.True(t, summary.Deployers[0].Ready, "the summary's default for an unread deployer")
+	answer := buildGitOpsStatusAnswer(summary, time.Now(), nil)
+	require.Equal(t, gitopsStateNotObservable, answer.State)
+	require.Equal(t, gitopsReasonDeployersNotRead, answer.Reason)
+	require.Contains(t, answer.Unknowns[0].What, "Kustomization/apps")
 }
