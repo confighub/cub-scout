@@ -11,7 +11,7 @@
 > 2026-10-10).
 > Current gates: [the readiness ledger](releases/v2.15-readiness.md).
 
-## State of the plan — 2026-11-16
+## State of the plan — 2026-11-19
 
 The one place to read what is shipped, what is next and what is open. Where
 this section and anything below it disagree, this section wins.
@@ -22,6 +22,9 @@ this section and anything below it disagree, this section wins.
 |---|---|---|
 | [v2.15.0](releases/v2.15.0.md) | 2026-11-10 | Works with ConfigHub 0.10; bridge workers gone; the live-status cluster check. |
 | [v2.15.1](releases/v2.15.1.md) | 2026-11-13 | `compare source-truth` on clusters attached with `cub cluster up`, and PASS only when something was compared; Flux kinds found; health in the live-status check; wording; a smaller MCP catalog. |
+| [v2.16.0](releases/v2.16.0.md) | 2026-11-16 | ConfigHub 0.11; the `answer` block on `trace` and `compare source-truth`; `mcp serve --tools`. |
+| [v2.17.0](releases/v2.17.0.md) | 2026-11-18 | Ownership checked against real installs of Helm, kro, Crossplane and Terraform. |
+| [v2.18.0](releases/v2.18.0.md) | 2026-11-19 | The `answer` block on seven more commands; every cluster write names its cluster; `doctor --before-attach`; 3.0 deprecation notices. |
 
 ### v2.16.0, published 2026-11-16
 
@@ -40,7 +43,7 @@ what is ready, and the work the trimmed plan gave to v2.16 moves to v2.17.
 | `trace --artifacts` says "not applicable" for a source with no object; docs say "no owner marker recognised". | #911, #923 |
 | Deprecation notice: the verdict words leave JSON and MCP output in 3.0. | decision, 2026-11-16 |
 
-| Moved to v2.17, then to v2.18 | Why |
+| Moved to v2.17, then to v2.18; shipped in v2.18.0 | Where it stands |
 |---|---|
 | [#888] pre-attach report | `doctor --before-attach` landed (#947), with Argo CD, Flux and Sveltos recorded (#952); the apps-Space overlap and `cub variant upload` needs are left |
 | [#596] conformance across CLI, MCP and TUI | the envelope's checks and the MCP cross-surface test now cover `trace`, `compare source-truth`, `gitops status`, `explain` and `doctor` (#949, #965–#967); trace's human surfaces never say more than the answer; the other commands and their human surfaces are left |
@@ -54,6 +57,12 @@ context is done: since #953 a test holds every command to `--kube-context` or
 a stated reason, and #954, #956–#960 and #964 gave it to the demos,
 `quickstart`, `import argocd`, `views project --with-reality`, `import`, the
 import wizard and `map hub`. Every write now needs it ([#955], #962, #964).
+
+Next after v2.18.0 is not chosen yet. Ready without a decision: a lane that
+runs `release check` on a real cluster, the only answer not checked on one;
+the remaining [#887] items; moving kind and the node image on purpose. Waiting
+on the maintainer: any paid eval run, which the answer blocks now need to show
+they earn their bytes; and whether `cluster.id` is read on request or always.
 
 ### v2.18.0, published 2026-11-19
 
@@ -103,7 +112,6 @@ are now v2.18's. [Notes](releases/v2.17.0.md).
 | Open | Whose |
 |---|---|
 | Any paid eval run. Three things wait on one: whether the shorter catalog helps, whether `core` becomes the default profile in 3.0, whether the `answer` block earns its bytes. | maintainer |
-| State words for `gitops status`, `explain`, `doctor`. | maintainer |
 | Cluster ID in `answer`: read on request, or always. | maintainer |
 | Where to raise the fact-storage and delivery-attestation questions with ConfigHub (packages D, G4). | maintainer |
 
@@ -123,7 +131,7 @@ repository names today. Latest releases were read from GitHub on 2026-11-16.
 | ConfigHub plugins and skills (the mini plugin, confighub-skills, Pilot's provider pin) | not tested | mini plugin v0.93.0; confighub-skills tag v0.3.0; Pilot pins cub-scout v2.7.0 | Check that what each says about cub-scout's commands and JSON is still true; tell the consumer before a field it reads goes. |
 | Flux | v2.10.0 in the GitOps and demo lanes; whatever `cub cluster up` installs in the live-status lane (2.10 seen) | v2.10.0 | Current. The live lane fails if a Flux kind is read in a version the cluster does not serve. |
 | Flux Operator and its Web UI | not tested | v0.62.1 | [#882] item 5 needs a lane with an identity provider. |
-| Argo CD | v3.6.1 in the GitOps and demo lanes | v3.6.1 | Current. Recordings made on v3.5.3 (an eval case, a recorded tree test) stay as recorded. |
+| Argo CD | v3.6.2 in the GitOps, demo and attach lanes (read 2026-11-19) | v3.6.2 | Current. Recordings made on v3.5.3 (an eval case, a recorded tree test) and the attach lane's v3.6.1 recordings stay as recorded. |
 | Sveltos | v1.16.0, as `cub cluster up` installed it (live lane run 43869342351) | v1.17.0 | Recorded on every live-lane run in `installed-versions.txt`. |
 | CI runner image | every Linux job pinned to `ubuntu-26.04`; the live-status lane raises the inotify limits first | `ubuntu-latest` moved to 26.04 on 2026-11-16 | Pinned. 26.04 allows 128 inotify instances where 24.04 allowed 1280, too few for the live lane's three kind clusters; the lane raises them (run 43936175444). |
 | Kubernetes, kind | client libraries v0.33.1; kind v0.31.0 and `kindest/node:v1.35.0` by digest, pinned in every kind step | Kubernetes v1.37.2; kind v0.33.0 | Pinned. Move to a newer kind and node on purpose, one lane run first. |

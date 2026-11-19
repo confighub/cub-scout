@@ -14,8 +14,8 @@ kubectl rollout status deployment/source-controller -n flux-system --timeout=300
 kubectl rollout status deployment/kustomize-controller -n flux-system --timeout=300s
 kubectl rollout status deployment/helm-controller -n flux-system --timeout=300s
 curl --fail --silent --show-error --location --retry 3 --proto '=https' --proto-redir '=https' \
-  https://raw.githubusercontent.com/argoproj/argo-cd/v3.6.1/manifests/install.yaml -o "$root/argocd.yaml"
-printf '%s  %s\n' 7be23ca7d9ca3d3074dee8332f1ca92a933b990cee7c9cf22cf3843ee8c2913e "$root/argocd.yaml" | sha256sum --check --status
+  https://raw.githubusercontent.com/argoproj/argo-cd/v3.6.2/manifests/install.yaml -o "$root/argocd.yaml"
+printf '%s  %s\n' c948064d38294d857712ef78444768749a14293613098932f8533e37d067a2a2 "$root/argocd.yaml" | sha256sum --check --status
 kubectl create namespace argocd
 kubectl apply --server-side --force-conflicts -n argocd -f "$root/argocd.yaml"
 kubectl wait --for=condition=Established crd/applications.argoproj.io --timeout=120s
