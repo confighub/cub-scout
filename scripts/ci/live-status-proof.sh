@@ -408,6 +408,11 @@ print(sys.argv[3] + ":", "check=%s" % check.get("state"), check.get("reason", ""
 print("   health check=%s" % health.get("state"), health.get("reason", ""))
 if sys.argv[3] == "out-of-sync" and check.get("state") != "disagrees":
     sys.exit("a status recorded as OutOfSync, while the controller reports the Release's digest, was not found to disagree")
+if sys.argv[3] == "healthy-over-down":
+    if check.get("state") != "agrees":
+        sys.exit("the sync state recorded with the untrue health no longer agrees; the health case proves nothing")
+    if health.get("state") != "disagrees":
+        sys.exit("a Healthy health over a workload unavailable since before it was recorded was called %s, not disagrees" % health.get("state"))
 if sys.argv[3] == "degraded":
     if check.get("state") != "agrees":
         sys.exit("the sync state recorded with the untrue health no longer agrees; the health case proves nothing")
@@ -421,3 +426,23 @@ check_untrue out-of-sync
 untrue degraded Synced Degraded
 check_untrue degraded
 echo "An untrue recorded sync state is found to disagree; an untrue health over ready workloads is not called a disagreement"
+
+# A recorded Healthy over a workload that is really down. The workload the
+# controllers list is argobot's own Deployment. Patching it would be reverted
+# by the controller, so the lane makes it unavailable another way: it cordons
+# the one node and deletes argobot's pods, so the replacement cannot be
+# scheduled. Only then is Healthy recorded, so the workload has been
+# unavailable since before the record.
+nodes=$(KUBECONFIG="$kubeconfig" kubectl get nodes -o name)
+for node in $nodes; do KUBECONFIG="$kubeconfig" kubectl cordon "$node" > /dev/null; done
+KUBECONFIG="$kubeconfig" kubectl delete pods -n argobot --all --wait=false > /dev/null
+if ! KUBECONFIG="$kubeconfig" kubectl wait --for=condition=Available=False deployment/argobot -n argobot --timeout=180s > /dev/null; then
+  KUBECONFIG="$kubeconfig" kubectl get deployment argobot -n argobot -o yaml > "$out/argobot-not-down.yaml" || true
+  echo 'argobot did not become unavailable after its node was cordoned' >&2
+  exit 1
+fi
+sleep 2
+untrue healthy-over-down Synced Healthy
+check_untrue healthy-over-down
+for node in $nodes; do KUBECONFIG="$kubeconfig" kubectl uncordon "$node" > /dev/null; done
+echo "An untrue Healthy over a workload that is down is found to disagree"
