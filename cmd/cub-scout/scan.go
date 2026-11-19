@@ -14,6 +14,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/confighub/cub-scout/v2/internal/mapsvc"
 	"github.com/confighub/cub-scout/v2/internal/scan"
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 	"k8s.io/client-go/rest"
@@ -198,6 +199,12 @@ func runScan(cmd *cobra.Command, args []string) error {
 		runState = true
 	}
 
+	// The scan's in-process reads are metered for the answer's cost.
+	cfg = rest.CopyConfig(cfg)
+	meter := agent.NewKubernetesReadMeter()
+	cfg.Wrap(meter.WrapTransport)
+	scanStarted := time.Now()
+
 	// Execute scan through provider
 	result, err := provider.ScanCluster(ctx, scan.ClusterScanOpts{
 		Config:              cfg,
@@ -240,11 +247,15 @@ func runScan(cmd *cobra.Command, args []string) error {
 	persistConnectedScanSummaryForCluster(result, scanNamespace, clusterLabel)
 
 	// Output results
-	if scanNormalizedJSON {
-		return outputNormalizedJSON(result)
-	}
-	if scanJSON {
-		return outputCombinedJSON(result)
+	if scanNormalizedJSON || scanJSON {
+		cost := meter.Snapshot()
+		cost.DurationMillis = time.Since(scanStarted).Milliseconds()
+		cost.Coverage = scanCostCoverage
+		answer := buildScanAnswer(result, scanNamespace, &cost, time.Now())
+		if scanNormalizedJSON {
+			return outputNormalizedJSONWithAnswer(result, answer)
+		}
+		return outputCombinedJSONWithAnswer(result, answer)
 	}
 	if err := outputCombinedHuman(result.Kyverno, result.State, result.TimingBombs, result.Unresolved, result.Dangling, result.KubernetesContext); err != nil {
 		return err
@@ -321,9 +332,18 @@ func listKPOLPolicies(provider scan.Provider) error {
 
 // outputCombinedJSON outputs the combined scan result as JSON
 func outputCombinedJSON(result *CombinedScanResult) error {
+	return outputCombinedJSONWithAnswer(result, nil)
+}
+
+// outputCombinedJSONWithAnswer adds the answer block; only a live cluster
+// scan has one.
+func outputCombinedJSONWithAnswer(result *CombinedScanResult, answer *mapsvc.Answer) error {
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
-	return enc.Encode(result)
+	if answer == nil {
+		return enc.Encode(result)
+	}
+	return enc.Encode(scanCombinedOutput{CombinedResult: result, Answer: answer})
 }
 
 // outputFinding outputs a single finding
@@ -1195,10 +1215,19 @@ func outputStaticFinding(f agent.StaticFinding) {
 
 // outputNormalizedJSON outputs the combined result in the scan.normalized.v1 schema.
 func outputNormalizedJSON(result *CombinedScanResult) error {
+	return outputNormalizedJSONWithAnswer(result, nil)
+}
+
+// outputNormalizedJSONWithAnswer adds the answer block; only a live cluster
+// scan has one.
+func outputNormalizedJSONWithAnswer(result *CombinedScanResult, answer *mapsvc.Answer) error {
 	normalized := scan.Normalize(result)
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
-	return enc.Encode(normalized)
+	if answer == nil {
+		return enc.Encode(normalized)
+	}
+	return enc.Encode(scanNormalizedOutput{NormalizedResult: normalized, Answer: answer})
 }
 
 // loadAndRenderScanFromJSON loads scan results from a JSON file and renders them.

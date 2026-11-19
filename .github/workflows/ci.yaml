@@ -537,6 +537,13 @@ jobs:
             || { jq '.answer' map-boutique.json; exit 1; }
           jq -c '.answer | {state, reason, summary}' map-boutique.json
 
+      - name: scan answers on a real cluster
+        run: |
+          ./cub-scout scan --kube-context kind-gitops-cluster -n boutique --json > scan-boutique.json
+          jq -e '(.answer.state | IN("findings","no-findings","incomplete","not-observable")) and .answer.cluster.context == "kind-gitops-cluster" and .kubernetesContext == "kind-gitops-cluster" and .answer.cost.coverage == "scan-session-clients" and .answer.cost.requestsMade > 0' scan-boutique.json \
+            || { jq '.answer' scan-boutique.json; exit 1; }
+          jq -c '.answer | {state, reason, summary, requests: .cost.requestsMade}' scan-boutique.json
+
       - name: Verify Flux ownership detection
         run: |
           ./cub-scout map list --json --namespace boutique > "$RUNNER_TEMP/flux-ownership.json"
