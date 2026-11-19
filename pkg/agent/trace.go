@@ -343,6 +343,12 @@ type ChainLink struct {
 	// Ready indicates if this link is healthy
 	Ready bool `json:"ready"`
 
+	// ReadyReporter names whose word Ready is, when a builder read it from
+	// the object's own status as written by its controller: "crossplane"
+	// for a Crossplane composite's Ready condition (#948). Empty when Ready
+	// is not a controller's report, for instance true by construction.
+	ReadyReporter string `json:"readyReporter,omitempty"`
+
 	// Status is the human-readable status
 	Status string `json:"status"`
 

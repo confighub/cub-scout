@@ -1982,7 +1982,31 @@ func chainLinkFromObject(obj *unstructured.Unstructured) agent.ChainLink {
 	if transition := observedLastTransitionTime(obj); transition != nil {
 		link.LastTransitionTime = transition
 	}
+	if crossplaneReportsReady(obj) {
+		link.ReadyReporter = traceReadyReporterCrossplane
+	}
 	return link
+}
+
+// traceReadyReporterCrossplane marks a link whose Ready is Crossplane's word.
+const traceReadyReporterCrossplane = "crossplane"
+
+// crossplaneReportsReady reports whether obj's readiness is Crossplane's own
+// report: a composite (crossplane.io/composite, which Crossplane writes on
+// every composite and what it composes, Modelplane's objects included, as
+// the Modelplane lane recorded) carrying a Ready condition. Ready is the
+// condition statusFromConditions reads first, so the link's Ready is it.
+func crossplaneReportsReady(obj *unstructured.Unstructured) bool {
+	if obj == nil || obj.GetLabels()["crossplane.io/composite"] == "" {
+		return false
+	}
+	conditions, _, _ := unstructured.NestedSlice(obj.Object, "status", "conditions")
+	for _, raw := range conditions {
+		if cond, ok := raw.(map[string]interface{}); ok && stringValue(cond["type"]) == "Ready" {
+			return true
+		}
+	}
+	return false
 }
 
 func observedObjectStatus(obj *unstructured.Unstructured) (bool, string, string, string) {
