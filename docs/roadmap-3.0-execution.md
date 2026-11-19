@@ -43,17 +43,17 @@ what is ready, and the work the trimmed plan gave to v2.16 moves to v2.17.
 | Moved to v2.17, then to v2.18 | Why |
 |---|---|
 | [#888] pre-attach report | `doctor --before-attach` landed (#947), with Argo CD, Flux and Sveltos recorded (#952); the apps-Space overlap and `cub variant upload` needs are left |
-| [#596] conformance across CLI, MCP and TUI | per-command envelope checks for `trace` and `compare source-truth`; a cross-surface test for both (answer unchanged through MCP; trace's human surfaces never say more than the answer) landed in #949; the other commands wait on the envelope |
+| [#596] conformance across CLI, MCP and TUI | the envelope's checks and the MCP cross-surface test now cover `trace`, `compare source-truth`, `gitops status`, `explain` and `doctor` (#949, #965–#967); trace's human surfaces never say more than the answer; the other commands and their human surfaces are left |
 | Deprecation notices for the other 3.0 removals, including `fleet outliers` | in the code (#950); the window starts with the first release that contains them |
-| The envelope on `gitops status`, `explain`, `doctor` | needs the state words decided, and a size check first |
+| The envelope on `gitops status`, `explain`, `doctor` | landed (#965–#967) with the words decided on 2026-11-19, each checked on the GitOps lane's real cluster; `gitops status` and `doctor` report a measured cost, `explain` with `--kube-context` (#968, #969) |
 
 Still owed from v2.15: [#882] item 5 and a live sighting of two Flux kinds;
 the remaining [#887] items; the eval cases; and of [#599], cluster identity,
 merge-safe IDs, cost and failure isolation on every answer. Its explicit
-context is done but for `map hub`, whose writes are [#955]: since #953 a test
-holds every command to `--kube-context` or a stated reason, and #954 and
-#956–#960 gave it to the demos, `quickstart`, `import argocd`,
-`views project --with-reality`, `import` and the import wizard.
+context is done: since #953 a test holds every command to `--kube-context` or
+a stated reason, and #954, #956–#960 and #964 gave it to the demos,
+`quickstart`, `import argocd`, `views project --with-reality`, `import`, the
+import wizard and `map hub`. Every write now needs it ([#955], #962, #964).
 
 ### v2.17.0, published 2026-11-18
 
@@ -85,6 +85,9 @@ are now v2.18's. [Notes](releases/v2.17.0.md).
 | 2026-11-18 | Terraform: remove the keys no Terraform tool writes; cite the field manager as evidence, not ownership. |
 | 2026-11-18 | Modelplane: a control-plane-only lane, manually dispatched, not the two-cluster demo. |
 | 2026-11-18 | Cut v2.17.0 from what the standing checks found; the planned v2.17 work moves to v2.18. |
+| 2026-11-19 | A cub-scout command that writes to a cluster must name it with `--kube-context`, and the read-only guard catches `kubectl` writes (#955; #962, #964). Demos are no exception: their fixtures use real-looking namespaces and `--cleanup` deletes by name. |
+| 2026-11-19 | A Crossplane composite's own `Ready` condition is Crossplane's report in trace's answer (#948; #963). |
+| 2026-11-19 | Answer state words: `gitops status` settled, converging, failing, no-deployers, not-observable; `explain` explained, owner-only, no-owner-marker, not-observable; `doctor` issues-flagged, nothing-flagged, incomplete, not-observable (#965–#967). |
 
 ### Open, and whose it is
 
