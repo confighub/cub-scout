@@ -58,14 +58,16 @@ a stated reason, and #954, #956–#960 and #964 gave it to the demos,
 `quickstart`, `import argocd`, `views project --with-reality`, `import`, the
 import wizard and `map hub`. Every write now needs it ([#955], #962, #964).
 
-After v2.18.0, on `main`: the GitOps lane runs `release check` on a real Flux
-OCI delivery (#979), so every answer is now checked on a real cluster; the
-live-status lane writes an untrue recorded status and sees it found to
-disagree ([#887], #980); Argo CD v3.6.2 in the lanes (#978). Ready without a
-decision: the rest of [#887] (a recorded `Healthy` over a workload that is
-down, a StatefulSet or DaemonSet read live); a newer Kubernetes minor in the
-lanes, with the client libraries. Waiting on the maintainer: the open table
-below.
+After v2.18.0, on `main`, not released: the GitOps lane runs `release check`
+on a real Flux OCI delivery (#979), so every answer is checked on a real
+cluster; under Flux, a source and Kustomization on another revision give
+`WATCH` / `not-compared`, as under Argo CD (#982, the maintainer's decision;
+a behaviour change for `--fail-on`); the live-status lane records untrue
+statuses and sees each comparison of [#887] disagree, sync (#980) and health
+(#984); Argo CD v3.6.2 (#978) and kind v0.33.0 with node v1.35.8 (#983) in the
+lanes. Ready without a decision: a StatefulSet or DaemonSet read live ([#887]);
+a newer Kubernetes minor in the lanes, with the client libraries. Waiting on
+the maintainer: the open table below, and when to release #982.
 
 ### v2.18.0, published 2026-11-19
 
