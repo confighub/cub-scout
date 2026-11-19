@@ -588,9 +588,9 @@ jobs:
       - name: Run quick demo
         run: |
           kubectl apply -f test/atk/fixtures/flux-basic.yaml -f test/atk/fixtures/argo-basic.yaml
-          ./cub-scout quickstart demo quick
+          ./cub-scout quickstart demo quick --kube-context kind-demo-cluster
           ./cub-scout map list --json | jq -e 'length > 0'
-          ./cub-scout quickstart demo quick --cleanup
+          ./cub-scout quickstart demo quick --kube-context kind-demo-cluster --cleanup
 
       # The scanner demos (`ccve` and the `bigbank-incident` scenario) are not
       # run here: the scanner is a private release, and this repository holds
@@ -598,15 +598,15 @@ jobs:
       - name: Run query demo
         run: |
           kubectl apply -f examples/demos/multi-cluster.yaml
-          ./cub-scout quickstart demo query
+          ./cub-scout quickstart demo query --kube-context kind-demo-cluster
           ./cub-scout map list -q 'kind=Deployment AND owner!=Native' --json | jq -e 'length > 0'
-          ./cub-scout quickstart demo query --cleanup
+          ./cub-scout quickstart demo query --kube-context kind-demo-cluster --cleanup
 
       - name: Run scenarios
         run: |
           kubectl apply -f examples/demos/break-glass.yaml
-          ./cub-scout quickstart demo scenario break-glass
-          ./cub-scout quickstart demo scenario break-glass --cleanup
+          ./cub-scout quickstart demo scenario break-glass --kube-context kind-demo-cluster
+          ./cub-scout quickstart demo scenario break-glass --kube-context kind-demo-cluster --cleanup
 
   # ==========================================================================
   # Level 6: Connected E2E (needs ConfigHub auth, manual trigger)

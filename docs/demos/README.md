@@ -2,6 +2,12 @@
 
 Interactive demos to showcase cub-scout features.
 
+> **Demos write to the cluster.** They apply fixtures into namespaces such as
+> `production`, `staging`, `argocd` and `flux-system`, and `--cleanup` deletes
+> them by name. Use a disposable cluster, such as `kind create cluster --name
+> demo`, and name it: every demo command needs `--kube-context kind-demo`
+> (or your cluster's context), and is refused without it.
+
 ## Quick Reference
 
 ```bash
@@ -12,16 +18,16 @@ go build ./cmd/cub-scout
 ./cub-scout demo list
 
 # Run demos
-./cub-scout demo quick                     # Quick ownership detection (~30 sec)
-./cub-scout demo ccve                      # RISK-2025-0027 demo (~2 min)
-./cub-scout demo query                     # Query language demo (~1 min)
+./cub-scout demo quick --kube-context kind-demo                     # Quick ownership detection (~30 sec)
+./cub-scout demo ccve --kube-context kind-demo                      # RISK-2025-0027 demo (~2 min)
+./cub-scout demo query --kube-context kind-demo                     # Query language demo (~1 min)
 
 # Narrative scenarios
-./cub-scout demo scenario bigbank-incident # BIGBANK incident walkthrough
-./cub-scout demo scenario break-glass      # Emergency kubectl workflow
+./cub-scout demo scenario bigbank-incident --kube-context kind-demo # BIGBANK incident walkthrough
+./cub-scout demo scenario break-glass --kube-context kind-demo      # Emergency kubectl workflow
 
 # Cleanup (for demos that create resources)
-./cub-scout demo quick --cleanup
+./cub-scout demo quick --kube-context kind-demo --cleanup
 ```
 
 ---
@@ -53,7 +59,7 @@ go build ./cmd/cub-scout
 **Requirements:** Kubernetes cluster
 
 ```bash
-./cub-scout demo quick
+./cub-scout demo quick --kube-context kind-demo
 ```
 
 ### ccve — BIGBANK Incident
@@ -62,7 +68,7 @@ go build ./cmd/cub-scout
 **Requirements:** Kubernetes cluster
 
 ```bash
-./cub-scout demo ccve
+./cub-scout demo ccve --kube-context kind-demo
 ```
 
 ### query — Query Language
@@ -71,7 +77,7 @@ go build ./cmd/cub-scout
 **Requirements:** Kubernetes cluster
 
 ```bash
-./cub-scout demo query
+./cub-scout demo query --kube-context kind-demo
 ```
 
 ### scenario bigbank-incident
@@ -80,7 +86,7 @@ go build ./cmd/cub-scout
 **Requirements:** Kubernetes cluster
 
 ```bash
-./cub-scout demo scenario bigbank-incident
+./cub-scout demo scenario bigbank-incident --kube-context kind-demo
 ```
 
 ### scenario break-glass
@@ -89,7 +95,7 @@ go build ./cmd/cub-scout
 **Requirements:** Kubernetes cluster
 
 ```bash
-./cub-scout demo scenario break-glass
+./cub-scout demo scenario break-glass --kube-context kind-demo
 ```
 
 ---
@@ -109,8 +115,8 @@ kubectl cluster-info
 ### Running with Cleanup
 
 ```bash
-./cub-scout demo quick
-./cub-scout demo quick --cleanup
+./cub-scout demo quick --kube-context kind-demo
+./cub-scout demo quick --kube-context kind-demo --cleanup
 ```
 
 ---

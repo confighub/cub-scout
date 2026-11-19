@@ -132,3 +132,19 @@ func TestMapImportSwitchPassesItsBinding(t *testing.T) {
 	require.NoError(t, err)
 	require.Same(t, binding, got)
 }
+
+// #955: the wizard's Argo CD hand-off writes only to a named cluster.
+// Without a bound context it is refused and nothing is called; keeping the
+// Applications as they are writes nothing and is not refused.
+func TestImportWizardArgoHandOffNeedsANamedContext(t *testing.T) {
+	importClusterContext = ""
+	m := ImportWizardModel{argoApps: []ArgoAppRef{{Name: "guestbook", Namespace: "argocd"}}}
+	for _, action := range []int{argoCleanupDisableSync, argoCleanupDeleteApp} {
+		m.argoCleanupIdx = action
+		msg := m.performArgoCleanup()().(wizardArgoCleanupMsg)
+		require.False(t, msg.success)
+		require.ErrorIs(t, msg.err, errWizardArgoNeedsContext)
+	}
+	m.argoCleanupIdx = argoCleanupKeepAsIs
+	require.True(t, m.performArgoCleanup()().(wizardArgoCleanupMsg).success)
+}

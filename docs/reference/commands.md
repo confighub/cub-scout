@@ -301,19 +301,23 @@ cub-scout quickstart demo [name] [flags]
 
 ```bash
 cub-scout quickstart demo list
-cub-scout quickstart demo quick
-cub-scout quickstart demo ccve
-cub-scout quickstart demo scenario bigbank-incident
-cub-scout quickstart demo quick --cleanup
 cub-scout quickstart demo quick --kube-context kind-demo
+cub-scout quickstart demo ccve --kube-context kind-demo
+cub-scout quickstart demo scenario bigbank-incident --kube-context kind-demo
+cub-scout quickstart demo quick --kube-context kind-demo --cleanup
 ```
 
 A demo writes: it applies its fixtures with `kubectl apply`, and `--cleanup`
-deletes them. Without `--kube-context` it uses the current context. With it,
-every `kubectl` call carries `--context <name>` and every cub-scout command
-the demo runs carries `--kube-context <name>`. An empty name, or one your
-kubeconfig does not have, is refused before anything is applied
-([#599](https://github.com/confighub/cub-scout/issues/599)).
+deletes them by name. The fixtures use namespaces such as `production`,
+`staging`, `argocd` and `flux-system`, so run demos only on a disposable
+cluster, for instance `kind create cluster --name demo` (context `kind-demo`).
+A demo therefore needs `--kube-context`: without it, it is refused before
+anything is applied, rather than writing to whatever the kubeconfig points at
+([#955](https://github.com/confighub/cub-scout/issues/955)). With it, every
+`kubectl` call carries `--context <name>` and every cub-scout command the demo
+runs carries `--kube-context <name>`. An empty name, or one your kubeconfig
+does not have, is refused before anything is applied. `list` writes nothing
+and needs no context.
 
 ### Flags
 
@@ -321,7 +325,7 @@ kubeconfig does not have, is refused before anything is applied
 |------|-------------|
 | `--cleanup` | Remove demo resources |
 | `--no-pods` | Apply without running pods for a faster demo cycle |
-| `--kube-context` | Apply the fixtures to, and read, only this exact Kubernetes context; also on `quickstart demo scenario` |
+| `--kube-context` | Required to run or clean up a demo: apply the fixtures to, and read, only this exact Kubernetes context; also on `quickstart demo scenario` |
 
 ---
 
@@ -1395,7 +1399,7 @@ cub-scout import [flags]
 | `--no-connect` | Accepted and ignored: import never connects a cluster |
 | `--from-bundle` | Import proposal/apply from a debug bundle directory (offline path, no cluster discovery) |
 | `--git-path` | Advanced: preview from a local GitOps repository path (dry-run only; not a renderer) |
-| `--kube-context` | Exact Kubernetes context for every cluster read of the import: discovery, the `--git-path` comparison, and the manifests fetched to upload. An empty or missing name fails before any read. The wizard (`--wizard`, or the import switch in `map --kube-context`) uses the same context for its reads and for the Argo CD hand-off's writes |
+| `--kube-context` | Exact Kubernetes context for every cluster read of the import: discovery, the `--git-path` comparison, and the manifests fetched to upload. An empty or missing name fails before any read. The wizard (`--wizard`, or the import switch in `map --kube-context`) uses the same context for its reads and for the Argo CD hand-off's writes; without a context its hand-off (disable sync, delete the Application) is refused and changes nothing |
 | `--audit-reason` | Record break-glass decision reason in connected audit history (max 512 chars) |
 
 ### Canonical Adoption Path
@@ -1485,7 +1489,7 @@ cub-scout import argocd [application-name] [flags]
 cub-scout import argocd --list
 cub-scout import argocd guestbook --dry-run
 cub-scout import argocd guestbook --show-yaml
-cub-scout import argocd guestbook --disable-sync
+cub-scout import argocd guestbook --disable-sync --kube-context prod-east
 ```
 
 ### Flags
@@ -1495,8 +1499,8 @@ cub-scout import argocd guestbook --disable-sync
 | `--list` | List available ArgoCD Applications |
 | `--dry-run` | Preview without importing |
 | `--show-yaml` | Show YAML that would be imported (implies dry-run) |
-| `--disable-sync` | Disable ArgoCD auto-sync after import |
-| `--delete-app` | Delete the ArgoCD Application after import |
+| `--disable-sync` | Disable ArgoCD auto-sync after import. Writes to the cluster, so it needs `--kube-context` |
+| `--delete-app` | Delete the ArgoCD Application after import. Writes to the cluster, so it needs `--kube-context` |
 | `--kube-context` | Exact Kubernetes context for every read and write of the import (`--list`, the Application and its resources, `--disable-sync`, `--delete-app`, `--test-update`); an empty or missing name fails before any read, with no fallback to the current context |
 | `--space` | ConfigHub space to import into (default: a space named after the Application). The space is created if it does not exist. cub has no default space, and cub-scout never sets one |
 

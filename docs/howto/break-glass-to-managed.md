@@ -186,7 +186,7 @@ cub-scout includes a break-glass demo scenario with pre-built fixtures.
 
 ```bash
 # Apply break-glass fixtures
-./cub-scout demo scenario break-glass
+./cub-scout demo scenario break-glass --kube-context kind-demo
 
 # What it creates:
 #   break-glass-demo namespace with:
@@ -219,7 +219,7 @@ cub-scout includes a break-glass demo scenario with pre-built fixtures.
 ### Clean Up
 
 ```bash
-./cub-scout demo scenario break-glass --cleanup
+./cub-scout demo scenario break-glass --kube-context kind-demo --cleanup
 ```
 
 ---

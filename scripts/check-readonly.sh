@@ -21,6 +21,8 @@ ALLOWED_PATTERNS=(
     "import.go"           # Import command can write (ConfigHub sync)
     "import_wizard.go"    # Import wizard can write
     "import_argocd.go"    # ArgoCD import can write
+    "demo.go"             # Demos apply and delete their fixtures (kubectl), only with --kube-context
+    "hierarchy.go"        # map hub's import hand-off (Argo CD, labels), only with --kube-context
     "_test.go"            # Tests can use any operations
     "mock"                # Mock implementations
     "fake"                # Fake implementations
@@ -52,7 +54,21 @@ DELETE_VIOLATIONS+=$(grep -rn '\.Resource([^)]*)\.\(Namespace([^)]*)\.\)\?Delete
 PATCH_VIOLATIONS=$(grep -rn '\(client\|clientset\|Resource\|Namespace\)\.[^.]*\.Patch(' --include='*.go' $EXCLUDE cmd/ pkg/ 2>/dev/null || true)
 PATCH_VIOLATIONS+=$(grep -rn '\.Resource([^)]*)\.\(Namespace([^)]*)\.\)\?Patch(' --include='*.go' $EXCLUDE cmd/ pkg/ 2>/dev/null || true)
 
+# kubectl run as a subprocess with a write verb (#955). The client-go checks
+# above cannot see these. The verb is the first argument after "kubectl" (or
+# after "--context", <name>), or the first argument to a helper that runs
+# kubectl, such as demoKubectl.
+KUBECTL_WRITE_VERBS='apply|delete|annotate|label|patch|create|replace|scale|rollout|edit|set|cordon|drain|taint'
+KUBECTL_VIOLATIONS=$(grep -rnE "\"kubectl\",[[:space:]]*(\"--context\",[[:space:]]*[^,]+,[[:space:]]*)?\"($KUBECTL_WRITE_VERBS)\"|[kK]ubectl[A-Za-z]*\([[:space:]]*\"($KUBECTL_WRITE_VERBS)\"" --include='*.go' $EXCLUDE cmd/ pkg/ 2>/dev/null || true)
+
 FOUND_VIOLATIONS=0
+
+if [ -n "$KUBECTL_VIOLATIONS" ]; then
+    echo "ERROR: Found kubectl write commands outside allowed files:"
+    echo "$KUBECTL_VIOLATIONS"
+    echo ""
+    FOUND_VIOLATIONS=1
+fi
 
 # Revision claim inspection never records or revokes server attestations.
 ATTESTATION_VIOLATIONS=$(grep -rnE '"attestation"[[:space:]]*,[[:space:]]*"(create|revoke)"|CreateAttestation\(|RevokeAttestation\(' --include='*.go' --exclude='*_test.go' cmd/ pkg/ 2>/dev/null || true)

@@ -352,13 +352,13 @@ Use the built-in demo runner:
 
 ```bash
 cub-scout demo list                      # List available demos
-cub-scout demo quick                     # Ownership + map overview
-cub-scout demo ccve                      # BIGBANK risk issue story
-cub-scout demo query                     # Query language walkthrough
-cub-scout demo scenario bigbank-incident # Narrative outage scenario
-cub-scout demo scenario break-glass      # Emergency kubectl scenario
-cub-scout demo quick --no-pods           # Fast structural run
-cub-scout demo quick --cleanup           # Remove demo resources
+cub-scout demo quick --kube-context kind-demo                     # Ownership + map overview
+cub-scout demo ccve --kube-context kind-demo                      # BIGBANK risk issue story
+cub-scout demo query --kube-context kind-demo                     # Query language walkthrough
+cub-scout demo scenario bigbank-incident --kube-context kind-demo # Narrative outage scenario
+cub-scout demo scenario break-glass --kube-context kind-demo      # Emergency kubectl scenario
+cub-scout demo quick --kube-context kind-demo --no-pods           # Fast structural run
+cub-scout demo quick --kube-context kind-demo --cleanup           # Remove demo resources
 ```
 
 ### Demo Focus Areas

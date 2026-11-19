@@ -193,7 +193,7 @@ LIVE (cluster)     CONFIGUB (store)     OCI (transport)     FLUX/ARGO
 
 ```bash
 # Simulate break-glass scenario
-./cub-scout demo scenario orphan
+./cub-scout demo scenario orphan --kube-context kind-demo
 
 # Shows:
 # 1. Orphan resources created

@@ -169,7 +169,7 @@ Consider admission controllers that require GitOps labels in production namespac
 Try the orphan scenario:
 
 ```bash
-./cub-scout demo scenario orphan
+./cub-scout demo scenario orphan --kube-context kind-demo
 ```
 
 This creates orphan resources and walks through finding and handling them.

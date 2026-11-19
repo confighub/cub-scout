@@ -105,17 +105,25 @@ func TestDemoAppliesAndReadsOnlyTheSelectedContext(t *testing.T) {
 		})
 	}
 
-	t.Run("without the flag, as before", func(t *testing.T) {
+	t.Run("without the flag, refused before any call (#955)", func(t *testing.T) {
 		logPath := fakeDemoKubectl(t)
 		cubCalls := recordDemoCubScout(t)
 		setDemoContextFlag(t, "", false)
-		captureStdout(t, func() { require.NoError(t, runDemo(quickstartDemoCmd, []string{"quick"})) })
-		for _, call := range demoKubectlCalls(t, logPath) {
-			require.False(t, strings.Contains(call, "--context"), "kubectl gained a context nobody asked for: %q", call)
-		}
-		for _, call := range *cubCalls {
-			require.NotContains(t, call, "--kube-context")
-		}
+		var err error
+		captureStdout(t, func() { err = runDemo(quickstartDemoCmd, []string{"quick"}) })
+		require.ErrorIs(t, err, errDemoNeedsContext)
+		require.Empty(t, demoKubectlCalls(t, logPath), "kubectl ran without a named context")
+		require.Empty(t, *cubCalls)
+	})
+
+	t.Run("listing writes nothing and needs no context", func(t *testing.T) {
+		logPath := fakeDemoKubectl(t)
+		setDemoContextFlag(t, "", false)
+		var err error
+		out := captureStdout(t, func() { err = runDemo(quickstartDemoCmd, nil) })
+		require.NoError(t, err)
+		require.Contains(t, out, "Available Demos")
+		require.Empty(t, demoKubectlCalls(t, logPath))
 	})
 }
 
