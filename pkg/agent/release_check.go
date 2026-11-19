@@ -310,13 +310,22 @@ func ReleaseControllerBinding(controller, source *unstructured.Unstructured, bun
 			artifact = suffix
 		}
 		if artifact != bundle.Evidence.Digest {
-			return "OCIRepository does not report the expected bundle artifact revision."
+			return ReleaseBindingSourceOtherRevision
 		}
 	default:
 		return "Controller API/Kind is not supported by the literal-bundle adapter."
 	}
 	return ""
 }
+
+// ReleaseBindingSourceOtherRevision is ReleaseControllerBinding's result when
+// every other binding check passed and the Flux OCIRepository reports an
+// artifact other than the expected bundle. The caller decides the stage: when
+// the Kustomization also reports another revision, the release is not yet
+// applied (WATCH, as for an Argo CD Application on another revision); when the
+// Kustomization still reports the expected one, source and Kustomization are
+// mid-transition and nothing is established.
+const ReleaseBindingSourceOtherRevision = "OCIRepository does not report the expected bundle artifact revision."
 
 func ReleaseInventoryCoverage(controller *unstructured.Unstructured, objects []*unstructured.Unstructured) string {
 	if controller == nil {

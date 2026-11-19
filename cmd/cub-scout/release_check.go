@@ -185,6 +185,12 @@ func observeReleaseCheck(ctx context.Context, o releaseCheckOptions) (agent.Rele
 		}
 	}
 	binding := agent.ReleaseControllerBinding(controller, source, bundle, target.Server(), o.Context == o.ControllerContext)
+	// A Flux source on another revision is decided below, with what the
+	// Kustomization reports; every other binding check has passed.
+	sourceOtherRevision := binding == agent.ReleaseBindingSourceOtherRevision
+	if sourceOtherRevision {
+		binding = ""
+	}
 	if binding == "" {
 		binding = agent.ReleaseInventoryCoverage(controller, bundle.Objects)
 	}
@@ -193,6 +199,10 @@ func observeReleaseCheck(ctx context.Context, o releaseCheckOptions) (agent.Rele
 		r.Stages[1].Reason = controllerErr.Error()
 	case binding != "":
 		r.Stages[1].Reason = binding
+	case sourceOtherRevision && revision.Comparison == "mismatch":
+		r.Stages[1] = agent.ReleaseCheckStage{Name: "controller", Verdict: "WATCH", Reason: "Controller reports a different bundle revision: " + revision.Revision + "; its OCIRepository reports another artifact too."}
+	case sourceOtherRevision:
+		r.Stages[1].Reason = agent.ReleaseBindingSourceOtherRevision + " The Kustomization's own report does not show another revision applied, so source and Kustomization may be mid-transition."
 	case revision.Comparison == "match":
 		r.Stages[1] = agent.ReleaseCheckStage{Name: "controller", Verdict: "PASS", Reason: "Exact OCI repository and bundle revision reported; target and desired inventory are bound. This is reported comparison/apply evidence, not execution history."}
 	case revision.Comparison == "mismatch":

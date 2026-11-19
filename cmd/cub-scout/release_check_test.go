@@ -590,6 +590,19 @@ func TestReleaseCheckNegativeEvidence(t *testing.T) {
 			}
 			return 0
 		}},
+		// The maintainer's decision of 2026-11-19: a Flux source and
+		// Kustomization both on another revision is "not yet", as for Argo CD.
+		{"source and Kustomization on another revision", "flux", "WATCH", func(o *unstructured.Unstructured, _ int) int {
+			other := "v2@sha256:" + strings.Repeat("b", 64)
+			switch o.GetKind() {
+			case "OCIRepository":
+				_ = unstructured.SetNestedField(o.Object, other, "status", "artifact", "revision")
+			case "Kustomization":
+				_ = unstructured.SetNestedField(o.Object, other, "status", "lastAppliedRevision")
+				_ = unstructured.SetNestedField(o.Object, other, "status", "lastAttemptedRevision")
+			}
+			return 0
+		}},
 		{"source changes", "flux", "INCONCLUSIVE", func(o *unstructured.Unstructured, n int) int {
 			if o.GetKind() == "OCIRepository" && n > 1 {
 				o.SetResourceVersion("2")

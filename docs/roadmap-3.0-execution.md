@@ -108,6 +108,7 @@ are now v2.18's. [Notes](releases/v2.17.0.md).
 | 2026-11-19 | A Crossplane composite's own `Ready` condition is Crossplane's report in trace's answer (#948; #963). |
 | 2026-11-19 | Answer state words: `gitops status` settled, converging, failing, no-deployers, not-observable; `explain` explained, owner-only, no-owner-marker, not-observable; `doctor` issues-flagged, nothing-flagged, incomplete, not-observable (#965–#967). |
 | 2026-11-19 | Answer state words for `map list` (listed, partial, not-observable), `scan` (findings, no-findings, incomplete, not-observable), `gitops settings` (listed, no-deployers, partial, not-observable) and `release check` (matches, differs, not-compared, not-observable) (#972–#975); then cut v2.18.0. |
+| 2026-11-19 | `release check` under Flux: an OCIRepository and Kustomization both on another revision give `WATCH`, as an Argo CD Application on another revision does; before, `INCONCLUSIVE` (seen in #979). |
 
 ### Open, and whose it is
 
@@ -115,7 +116,6 @@ are now v2.18's. [Notes](releases/v2.17.0.md).
 |---|---|
 | Any paid eval run. Three things wait on one: whether the shorter catalog helps, whether `core` becomes the default profile in 3.0, whether the `answer` block earns its bytes. | maintainer |
 | Cluster ID in `answer`: read on request, or always. | maintainer |
-| `release check` under Flux, when the OCIRepository reports another revision: `INCONCLUSIVE` today (the binding check fails first); Argo CD gives `WATCH` ("a different bundle revision") for the same case. Make Flux `WATCH`? It changes what `--fail-on` gates on. Seen in #979. | maintainer |
 | Where to raise the fact-storage and delivery-attestation questions with ConfigHub (packages D, G4). | maintainer |
 
 ### Standing checks
