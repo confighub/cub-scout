@@ -93,6 +93,12 @@ func traceReadinessOf(link agent.ChainLink, tool string) traceLinkReadiness {
 			return traceLinkReportedNotReady
 		}
 	}
+	if link.ReadyReporter == traceReadyReporterCrossplane && !traceUnreadStatuses[status] {
+		if link.Ready {
+			return traceLinkReportedReady
+		}
+		return traceLinkReportedNotReady
+	}
 	if !traceControllerKinds[link.Kind] || traceUnreadStatuses[status] {
 		return traceLinkNotRead
 	}
@@ -214,6 +220,12 @@ func buildTraceAnswer(result *agent.TraceResult, kind, name, namespace string) *
 		answer.State, answer.Reason = traceStateChainNotReady, traceReasonLinkNotReady
 		answer.Summary = fmt.Sprintf("Helm records the release in the chain of %s as not deployed: %s.", target, brokenLabel)
 		explainTarget("its health and recent events")
+	case broken != nil && broken.ReadyReporter == traceReadyReporterCrossplane:
+		// Crossplane's word, from the composite's own Ready condition
+		// (#948). gitops status does not read composites; explain does.
+		answer.State, answer.Reason = traceStateChainNotReady, traceReasonLinkNotReady
+		answer.Summary = fmt.Sprintf("Crossplane reports %s, in the chain of %s, not ready.", brokenLabel, target)
+		explainTarget("its conditions and recent events")
 	case broken != nil:
 		answer.State, answer.Reason = traceStateChainNotReady, traceReasonLinkNotReady
 		answer.Summary = fmt.Sprintf("A delivery controller in the chain of %s reports not ready: %s.", target, brokenLabel)
@@ -308,6 +320,10 @@ func traceLinkBasis(link agent.ChainLink, label string, named bool, readiness tr
 		basis.RestsOn, basis.Claim = mapsvc.RestsOnDeployerReport, label+" is recorded as deployed by Helm"
 	case helmRelease && readiness == traceLinkReportedNotReady:
 		basis.RestsOn, basis.Claim = mapsvc.RestsOnDeployerReport, label+" is recorded by Helm as not deployed"
+	case readiness == traceLinkReportedReady && link.ReadyReporter == traceReadyReporterCrossplane:
+		basis.RestsOn, basis.Claim = mapsvc.RestsOnControllerReport, label+" is reported ready by Crossplane"
+	case readiness == traceLinkReportedNotReady && link.ReadyReporter == traceReadyReporterCrossplane:
+		basis.RestsOn, basis.Claim = mapsvc.RestsOnControllerReport, label+" is reported not ready by Crossplane"
 	case readiness == traceLinkReportedReady:
 		basis.RestsOn, basis.Claim = mapsvc.RestsOnControllerReport, label+" is reported ready by its controller"
 	case readiness == traceLinkReportedNotReady:
@@ -327,6 +343,9 @@ func traceLinkBasis(link agent.ChainLink, label string, named bool, readiness tr
 	if readiness == traceLinkReportedNotReady {
 		if status := strings.TrimSpace(link.Status); status != "" {
 			quoted = append(quoted, "status: "+status)
+		}
+		if reason := strings.TrimSpace(link.StatusReason); reason != "" && link.ReadyReporter == traceReadyReporterCrossplane {
+			quoted = append(quoted, "reason: "+reason)
 		}
 		if message := strings.TrimSpace(link.Message); message != "" {
 			quoted = append(quoted, "message: "+message)

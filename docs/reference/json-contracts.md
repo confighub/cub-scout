@@ -105,7 +105,7 @@ ModelDeployment, which reported `Ready=False`.
 
 | `answer` field | Meaning |
 |---|---|
-| `state` | `traced`: a chain was found and every delivery controller in it reports ready, or, for a Helm release, Helm records it as `deployed`. `chain-not-ready`: one reports not ready, or Helm records the release with another status. `readiness-not-read`: a chain was found and trace read the readiness of nothing in it. `no-owner-marker`. `not-observable`. Decide on this. |
+| `state` | `traced`: a chain was found and every delivery controller in it reports ready, or, for a Helm release, Helm records it as `deployed`. A Crossplane composite's own `Ready` condition (on an object carrying `crossplane.io/composite`, Modelplane's included) counts as Crossplane's report, `restsOn: "controller-report"`, with its reason quoted when not ready (since v2.18, [#948](https://github.com/confighub/cub-scout/issues/948)); before, such a chain read `readiness-not-read`. `chain-not-ready`: one reports not ready, or Helm records the release with another status. `readiness-not-read`: a chain was found and trace read the readiness of nothing in it. `no-owner-marker`. `not-observable`. Decide on this. |
 | `reason` | A stable key: `controllers-report-ready`, `link-not-ready`, `no-controller-readiness-read`, `no-owner-marker-recognised`, `no-chain-observed`. |
 | `summary` | One sentence in cub-scout's words. The words may change. |
 | `observedAt` | When the cluster was read, RFC 3339. |

@@ -100,10 +100,38 @@ func TestTraceHumanSurfacesSayInSyncOnlyWhenTheAnswerSaysTraced(t *testing.T) {
 func TestRecordedModelplaneTraceAnswer(t *testing.T) {
 	result := recordedModelplaneTrace(t)
 	require.True(t, result.FullyManaged, "the builder still marks an owned object fully managed; the renderers must not take that as readiness")
-	answer := buildTraceAnswer(result, "ModelDeployment", "smollm", "ml-team")
-	require.Equal(t, traceStateReadinessNotRead, answer.State, "as the Modelplane lane recorded")
 	require.Len(t, result.Chain, 1)
 	require.False(t, result.Chain[0].Ready, "the recorded object reports Ready=False")
+	require.Equal(t, traceReadyReporterCrossplane, result.Chain[0].ReadyReporter, "its Ready condition is Crossplane's")
+
+	// #948: Crossplane's Ready condition is a controller's report. The lane
+	// recorded readiness-not-read before this; the answer now says what
+	// Crossplane says, and quotes its reason.
+	answer := buildTraceAnswer(result, "ModelDeployment", "smollm", "ml-team")
+	requireConformingAnswer(t, answer, traceStates, traceReasons)
+	require.Equal(t, traceStateChainNotReady, answer.State)
+	require.Equal(t, traceReasonLinkNotReady, answer.Reason)
+	require.Equal(t, "Crossplane reports ModelDeployment/smollm, in the chain of ModelDeployment/smollm in ml-team, not ready.", answer.Summary)
+	require.Len(t, answer.Basis, 1)
+	require.Equal(t, mapsvc.RestsOnControllerReport, answer.Basis[0].RestsOn)
+	require.Equal(t, "ModelDeployment/smollm is reported not ready by Crossplane", answer.Basis[0].Claim)
+	require.Contains(t, answer.Basis[0].Quoted, "reason: Creating")
+	require.Len(t, answer.Next, 1)
+	require.Contains(t, answer.Next[0].Command, "explain ModelDeployment/smollm -n ml-team", "gitops status does not read composites")
+}
+
+// A composite without the crossplane.io/composite label, or without a Ready
+// condition, is not Crossplane's word: the answer still says it was not read.
+func TestTraceAnswerReadsReadyOnlyFromACrossplaneComposite(t *testing.T) {
+	for name, obj := range map[string]map[string]interface{}{
+		"no composite label": {"metadata": map[string]interface{}{"name": "x", "namespace": "ns"}, "status": map[string]interface{}{"conditions": []interface{}{map[string]interface{}{"type": "Ready", "status": "False"}}}},
+		"no Ready condition": {"metadata": map[string]interface{}{"name": "x", "namespace": "ns", "labels": map[string]interface{}{"crossplane.io/composite": "x"}}, "status": map[string]interface{}{"conditions": []interface{}{map[string]interface{}{"type": "Synced", "status": "False"}}}},
+	} {
+		obj["apiVersion"], obj["kind"] = "example.org/v1", "XThing"
+		link := chainLinkFromObject(&unstructured.Unstructured{Object: obj})
+		require.Empty(t, link.ReadyReporter, name)
+		require.Equal(t, traceLinkNotRead, traceReadinessOf(link, "crossplane"), name)
+	}
 }
 
 // MCP carries the CLI's JSON: the answer an agent reads through a tool is
