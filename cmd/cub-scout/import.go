@@ -2362,7 +2362,11 @@ func labelWorkload(kind, namespace, name, unitSlug string) error {
 	resource := strings.ToLower(kind)
 	label := fmt.Sprintf("confighub.com/UnitSlug=%s", unitSlug)
 
-	cmd := exec.Command("kubectl", "label", resource, name,
+	// Only map hub labels workloads, and only with a named cluster (#955).
+	if hubBinding == nil {
+		return errHubWriteNeedsContext
+	}
+	cmd := hubKubectl("label", resource, name,
 		"-n", namespace, label, "--overwrite")
 	output, err := cmd.CombinedOutput()
 	if err != nil {

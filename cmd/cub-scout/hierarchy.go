@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"k8s.io/client-go/rest"
 	"os"
 	"os/exec"
 	"strconv"
@@ -426,7 +427,7 @@ func runCubCommand(args ...string) ([]byte, error) {
 func loadNamespacesCmd() tea.Cmd {
 	return func() tea.Msg {
 		// Get namespace names
-		out, err := exec.Command("kubectl", "get", "namespaces", "-o", "jsonpath={.items[*].metadata.name}").Output()
+		out, err := hubKubectl("get", "namespaces", "-o", "jsonpath={.items[*].metadata.name}").Output()
 		if err != nil {
 			return namespacesLoadedMsg{err: err}
 		}
@@ -439,17 +440,17 @@ func loadNamespacesCmd() tea.Cmd {
 
 			// Get all workloads with their labels in one call per type
 			// Deployments
-			if out, err := exec.Command("kubectl", "get", "deployments", "-n", ns, "-o", "json").Output(); err == nil {
+			if out, err := hubKubectl("get", "deployments", "-n", ns, "-o", "json").Output(); err == nil {
 				countWorkloadsWithOwners(out, &info, &info.Deployments)
 			}
 
 			// StatefulSets
-			if out, err := exec.Command("kubectl", "get", "statefulsets", "-n", ns, "-o", "json").Output(); err == nil {
+			if out, err := hubKubectl("get", "statefulsets", "-n", ns, "-o", "json").Output(); err == nil {
 				countWorkloadsWithOwners(out, &info, &info.StatefulSet)
 			}
 
 			// DaemonSets
-			if out, err := exec.Command("kubectl", "get", "daemonsets", "-n", ns, "-o", "json").Output(); err == nil {
+			if out, err := hubKubectl("get", "daemonsets", "-n", ns, "-o", "json").Output(); err == nil {
 				countWorkloadsWithOwners(out, &info, &info.DaemonSets)
 			}
 
@@ -562,14 +563,10 @@ func loadArgoResourcesCmd(app argoAppInfo) tea.Cmd {
 
 func disableArgoSyncCmd(namespace, name string) tea.Cmd {
 	return func() tea.Msg {
-		// Get kubernetes config using clientcmd
-		loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-		configOverrides := &clientcmd.ConfigOverrides{}
-		kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
-
-		config, err := kubeConfig.ClientConfig()
+		// A write: only to the cluster named with --kube-context (#955).
+		config, err := hubWriteConfig()
 		if err != nil {
-			return argoSyncDisabledMsg{appName: name, err: fmt.Errorf("failed to get kubeconfig: %w", err)}
+			return argoSyncDisabledMsg{appName: name, err: err}
 		}
 
 		dynamicClient, err := dynamic.NewForConfig(config)
@@ -588,14 +585,10 @@ func disableArgoSyncCmd(namespace, name string) tea.Cmd {
 
 func deleteArgoAppCmd(namespace, name string) tea.Cmd {
 	return func() tea.Msg {
-		// Get kubernetes config using clientcmd
-		loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-		configOverrides := &clientcmd.ConfigOverrides{}
-		kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
-
-		config, err := kubeConfig.ClientConfig()
+		// A write: only to the cluster named with --kube-context (#955).
+		config, err := hubWriteConfig()
 		if err != nil {
-			return argoAppDeletedMsg{appName: name, err: fmt.Errorf("failed to get kubeconfig: %w", err)}
+			return argoAppDeletedMsg{appName: name, err: err}
 		}
 
 		dynamicClient, err := dynamic.NewForConfig(config)
@@ -624,15 +617,20 @@ func applyUnitCmd(space, unitSlug string, workloads []WorkloadInfo) tea.Cmd {
 		// Clean stale ConfigHub inventory annotations from live resources
 		// This prevents conflicts when re-importing resources that were previously managed
 		// Errors are intentionally ignored: cleanup is best-effort, missing annotations are fine
+		// These are writes: only to the cluster named with --kube-context
+		// (#955). Without one, nothing is changed and the step says why.
+		if hubBinding == nil {
+			return unitAppliedMsg{unitSlug: unitSlug, err: errHubWriteNeedsContext}
+		}
 		for _, w := range workloads {
 			// Remove stale ownership annotation (best-effort)
-			_ = exec.Command("kubectl", "annotate", strings.ToLower(w.Kind), w.Name,
+			_ = hubKubectl("annotate", strings.ToLower(w.Kind), w.Name,
 				"-n", w.Namespace, "config.k8s.io/owning-inventory-", "--overwrite").Run() //nolint:errcheck // best-effort cleanup
 			// Remove stale ConfigHub label (best-effort)
-			_ = exec.Command("kubectl", "label", strings.ToLower(w.Kind), w.Name,
+			_ = hubKubectl("label", strings.ToLower(w.Kind), w.Name,
 				"-n", w.Namespace, "confighub.com/UnitSlug-", "--overwrite").Run() //nolint:errcheck // best-effort cleanup
 			// Remove stale inventory ID label (best-effort)
-			_ = exec.Command("kubectl", "label", strings.ToLower(w.Kind), w.Name,
+			_ = hubKubectl("label", strings.ToLower(w.Kind), w.Name,
 				"-n", w.Namespace, "cli-utils.sigs.k8s.io/inventory-id-", "--overwrite").Run() //nolint:errcheck // best-effort cleanup
 		}
 
@@ -700,7 +698,13 @@ func countWorkloadsWithOwners(jsonData []byte, info *namespaceInfo, kindCount *i
 
 func discoverWorkloadsCmd(namespace string) tea.Cmd {
 	return func() tea.Msg {
-		workloads, err := discoverWorkloads(namespace)
+		var workloads []WorkloadInfo
+		var err error
+		if hubBinding != nil {
+			workloads, err = discoverWorkloadsIn(hubBinding.config, namespace)
+		} else {
+			workloads, err = discoverWorkloads(namespace)
+		}
 		if err != nil {
 			return workloadsDiscoveredMsg{err: err}
 		}
@@ -710,6 +714,12 @@ func discoverWorkloadsCmd(namespace string) tea.Cmd {
 
 func importWorkloadsCmd(space string, workloads []WorkloadInfo) tea.Cmd {
 	return func() tea.Msg {
+		// The import labels each workload in the cluster, a write: refused
+		// before any ConfigHub unit is created when no cluster was named
+		// with --kube-context (#955).
+		if hubBinding == nil {
+			return importCompleteMsg{applyError: errHubWriteNeedsContext}
+		}
 		success, failed := 0, 0
 		for _, w := range workloads {
 			// Use createUnitWithConfig if we have extracted config
@@ -732,6 +742,12 @@ func importWorkloadsCmd(space string, workloads []WorkloadInfo) tea.Cmd {
 // Also links to target and applies so livedata becomes available.
 func importArgoWorkloadsCmd(space, appName string, workloads []WorkloadInfo) tea.Cmd {
 	return func() tea.Msg {
+		// The import labels each workload in the cluster, a write: refused
+		// before any ConfigHub unit is created when no cluster was named
+		// with --kube-context (#955).
+		if hubBinding == nil {
+			return importCompleteMsg{applyError: errHubWriteNeedsContext}
+		}
 		if len(workloads) == 0 {
 			return importCompleteMsg{success: 0, failed: 0}
 		}
@@ -775,6 +791,12 @@ func importArgoWorkloadsCmd(space, appName string, workloads []WorkloadInfo) tea
 // Groups workloads by app/variant and creates one unit per variant with the suggested slug
 func importWorkloadsWithSuggestionCmd(space string, suggestion *ImportSuggestion, selected []WorkloadInfo) tea.Cmd {
 	return func() tea.Msg {
+		// The import labels each workload in the cluster, a write: refused
+		// before any ConfigHub unit is created when no cluster was named
+		// with --kube-context (#955).
+		if hubBinding == nil {
+			return importCompleteMsg{applyError: errHubWriteNeedsContext}
+		}
 		if suggestion == nil {
 			// Fall back to basic import if no suggestion
 			return importWorkloadsCmd(space, selected)()
@@ -6091,7 +6113,52 @@ func init() {
 	rootCmd.AddCommand(hierarchyCmd)
 }
 
+// hubBinding is the cluster map hub reads and writes when one was named with
+// --kube-context (map hub --kube-context, or map --kube-context --hub). Its
+// writes (the Argo CD hand-off, labels and annotations on workloads) need it
+// (#955); its reads use it when set and the current context otherwise.
+var hubBinding *localClusterBinding
+
+var errHubWriteNeedsContext = fmt.Errorf("this step writes to the cluster (Argo CD, or labels and annotations on workloads), so it needs the cluster named: start with 'cub-scout map hub --kube-context <name>' or 'cub-scout map --kube-context <name> --hub'; nothing was changed")
+
+func hubWriteConfig() (*rest.Config, error) {
+	if hubBinding == nil {
+		return nil, errHubWriteNeedsContext
+	}
+	return hubBinding.config, nil
+}
+
+// hubKubectlBinary is a variable so tests can stand in for kubectl.
+var hubKubectlBinary = "kubectl"
+
+func hubKubectl(args ...string) *exec.Cmd {
+	if hubBinding != nil {
+		args = append([]string{"--context", hubBinding.context}, args...)
+	}
+	return exec.Command(hubKubectlBinary, args...)
+}
+
+// bindHub sets hubBinding from --kube-context on map hub, if given.
+func bindHub(cmd *cobra.Command) error {
+	if cmd == nil || cmd.Flags().Lookup("kube-context") == nil {
+		return nil
+	}
+	selection, err := clusterContextSelectionFromFlag(cmd)
+	if err != nil || !selection.explicit {
+		return err
+	}
+	binding := resolveLocalClusterBindingForSelection(selection)
+	if binding.err != nil {
+		return binding.err
+	}
+	hubBinding = binding
+	return nil
+}
+
 func runHierarchy(cmd *cobra.Command, args []string) error {
+	if err := bindHub(cmd); err != nil {
+		return err
+	}
 	if _, err := exec.LookPath("cub"); err != nil {
 		return fmt.Errorf("cub CLI not found. Install from: https://docs.confighub.com/cli")
 	}
