@@ -11,8 +11,10 @@ The five run modes are **standalone CLI/TUI, `cub` plugin, MCP server, watch
 stream, and in-cluster bot**. [Choose a mode](../README.md#five-ways-to-run-cub-scout)
 or [start with a user question](../README.md#user-questions).
 
-Current release: [v2.17.0](releases/v2.17.0.md), which checks ownership
-against real installs of Helm, kro, Crossplane and Terraform.
+Current release: [v2.18.0](releases/v2.18.0.md), which gives seven more
+commands an `answer` block and makes every cluster write name its cluster.
+[v2.17.0](releases/v2.17.0.md) checks ownership against real installs of Helm,
+kro, Crossplane and Terraform.
 [v2.16.0](releases/v2.16.0.md) works with ConfigHub 0.11 and gives `trace`
 and `compare source-truth` an `answer` block.
 [v2.15.1](releases/v2.15.1.md) corrects

@@ -45,7 +45,7 @@ what is ready, and the work the trimmed plan gave to v2.16 moves to v2.17.
 | [#888] pre-attach report | `doctor --before-attach` landed (#947), with Argo CD, Flux and Sveltos recorded (#952); the apps-Space overlap and `cub variant upload` needs are left |
 | [#596] conformance across CLI, MCP and TUI | the envelope's checks and the MCP cross-surface test now cover `trace`, `compare source-truth`, `gitops status`, `explain` and `doctor` (#949, #965–#967); trace's human surfaces never say more than the answer; the other commands and their human surfaces are left |
 | Deprecation notices for the other 3.0 removals, including `fleet outliers` | in the code (#950); the window starts with the first release that contains them |
-| The envelope on `gitops status`, `explain`, `doctor` | landed (#965–#967) with the words decided on 2026-11-19, each checked on the GitOps lane's real cluster; `gitops status` and `doctor` report a measured cost, `explain` with `--kube-context` (#968, #969) |
+| The envelope on `gitops status`, `explain`, `doctor`, `map list`, `scan`, `gitops settings`, `release check` | landed (#965–#967, #972–#975) with the words decided on 2026-11-19; all but `release check` checked on the GitOps lane's real cluster; each reports a measured cost (`explain` with `--kube-context`, #968, #969) |
 
 Still owed from v2.15: [#882] item 5 and a live sighting of two Flux kinds;
 the remaining [#887] items; the eval cases; and of [#599], cluster identity,
@@ -88,6 +88,7 @@ are now v2.18's. [Notes](releases/v2.17.0.md).
 | 2026-11-19 | A cub-scout command that writes to a cluster must name it with `--kube-context`, and the read-only guard catches `kubectl` writes (#955; #962, #964). Demos are no exception: their fixtures use real-looking namespaces and `--cleanup` deletes by name. |
 | 2026-11-19 | A Crossplane composite's own `Ready` condition is Crossplane's report in trace's answer (#948; #963). |
 | 2026-11-19 | Answer state words: `gitops status` settled, converging, failing, no-deployers, not-observable; `explain` explained, owner-only, no-owner-marker, not-observable; `doctor` issues-flagged, nothing-flagged, incomplete, not-observable (#965–#967). |
+| 2026-11-19 | Answer state words for `map list` (listed, partial, not-observable), `scan` (findings, no-findings, incomplete, not-observable), `gitops settings` (listed, no-deployers, partial, not-observable) and `release check` (matches, differs, not-compared, not-observable) (#972–#975); then cut v2.18.0. |
 
 ### Open, and whose it is
 
