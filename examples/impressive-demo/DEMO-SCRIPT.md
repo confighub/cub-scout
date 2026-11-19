@@ -149,13 +149,13 @@ The demo runner provides the fastest path to a demo:
 
 ```bash
 # Quick demo (~30 sec) - fastest path to WOW
-cub-scout demo quick
+cub-scout demo quick --kube-context kind-demo
 
 # RISK-2025-0027 demo (~2 min) - the BIGBANK 4-hour outage story
-cub-scout demo ccve
+cub-scout demo ccve --kube-context kind-demo
 
 # Narrative scenario (~3 min) - walk through the incident
-cub-scout demo scenario bigbank-incident
+cub-scout demo scenario bigbank-incident --kube-context kind-demo
 
 # List all available demos with timing
 cub-scout demo list

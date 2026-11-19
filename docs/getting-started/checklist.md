@@ -71,7 +71,7 @@ A friendly guide to getting comfortable with cub-scout. These are suggestions, n
 - [ ] **Check out demos** — See cub-scout in action
   ```bash
   cub-scout demo list
-  cub-scout demo quick
+  cub-scout demo quick --kube-context kind-demo
   ```
 
 - [ ] **Explore the CLI reference** — [Command Reference](../reference/commands.md) has everything

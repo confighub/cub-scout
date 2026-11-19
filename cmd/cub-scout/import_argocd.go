@@ -167,6 +167,19 @@ func addImportArgoFlags(cmd *cobra.Command) {
 	cmd.Flags().DurationVar(&testUpdateTimeoutFlag, "test-timeout", 2*time.Minute, "How long --test-update and --test-rollout watch the live resource for the annotation they wrote before reporting that it did not arrive")
 }
 
+// importArgoWritesToCluster reports whether this invocation would write to
+// the cluster: patch the Application's sync policy, or delete it.
+// --test-update and --test-rollout write to the ConfigHub unit and only watch
+// the cluster. A dry run writes nothing.
+func importArgoWritesToCluster() bool {
+	if argoImportDryRun || argoImportShowYAML || argoImportList {
+		return false
+	}
+	return argoImportDisableSync || argoImportDeleteApp
+}
+
+var errImportArgoWriteNeedsContext = fmt.Errorf("--disable-sync and --delete-app change the Argo CD Application in the cluster, so they need --kube-context <name> to say which cluster; list kube contexts with 'kubectl config get-contexts'")
+
 func runImportArgoCD(cmd *cobra.Command, args []string) error {
 	// Build Kubernetes clients first (needed for both list and import). With
 	// --kube-context every read, and every write (--disable-sync,
@@ -176,6 +189,11 @@ func runImportArgoCD(cmd *cobra.Command, args []string) error {
 	selection, err := clusterContextSelectionFromFlag(cmd)
 	if err != nil {
 		return err
+	}
+	// The flags that write to the cluster need it named (#955); a dry run
+	// writes nothing.
+	if !selection.explicit && importArgoWritesToCluster() {
+		return errImportArgoWriteNeedsContext
 	}
 	var config *rest.Config
 	if selection.explicit {

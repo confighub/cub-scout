@@ -1510,6 +1510,8 @@ func (m ImportWizardModel) applyNextUnitCmd(unitIndex int) tea.Cmd {
 	}
 }
 
+var errWizardArgoNeedsContext = fmt.Errorf("changing Argo CD Applications writes to the cluster, so it needs the cluster named: run the wizard with 'cub-scout import --wizard --kube-context <name>' (or 'map --kube-context <name>'); nothing was changed")
+
 // performArgoCleanup executes the selected cleanup action on all ArgoCD Applications
 func (m ImportWizardModel) performArgoCleanup() tea.Cmd {
 	return func() tea.Msg {
@@ -1520,6 +1522,13 @@ func (m ImportWizardModel) performArgoCleanup() tea.Cmd {
 		// If "keep as-is" selected, just mark as done
 		if m.argoCleanupIdx == argoCleanupKeepAsIs {
 			return wizardArgoCleanupMsg{success: true}
+		}
+
+		// Disabling sync or deleting the Application writes to the cluster:
+		// only to one named with --kube-context (#955), never to whatever
+		// the kubeconfig points at.
+		if importClusterContext == "" {
+			return wizardArgoCleanupMsg{action: m.argoCleanupIdx, success: false, err: errWizardArgoNeedsContext}
 		}
 
 		// Process all ArgoCD apps with the selected action

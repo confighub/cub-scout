@@ -212,6 +212,11 @@ func canonicalScenarioName(name string) string {
 }
 
 func runDemo(cmd *cobra.Command, args []string) error {
+	if len(args) == 0 {
+		// Listing writes nothing.
+		listDemos()
+		return nil
+	}
 	if err := bindDemoKubeContext(cmd); err != nil {
 		return err
 	}
@@ -345,11 +350,20 @@ func demoKubectl(args ...string) *exec.Cmd {
 // bindDemoKubeContext checks --kube-context before a demo touches anything:
 // an empty name, or one the kubeconfig does not have, is refused before any
 // kubectl apply.
+//
+// A demo writes, so it must name the cluster it writes to (#955): without
+// --kube-context it is refused, rather than applying into whatever the
+// kubeconfig points at. Its fixtures use namespaces such as production,
+// staging, argocd and flux-system, and --cleanup deletes by name, so on a
+// real cluster a demo could change or delete objects it did not create.
 func bindDemoKubeContext(cmd *cobra.Command) error {
 	demoKubeContext = ""
 	selection, err := clusterContextSelectionFromFlag(cmd)
-	if err != nil || !selection.explicit {
+	if err != nil {
 		return err
+	}
+	if !selection.explicit {
+		return errDemoNeedsContext
 	}
 	if binding := resolveLocalClusterBindingForSelection(selection); binding.err != nil {
 		return binding.err
@@ -357,6 +371,8 @@ func bindDemoKubeContext(cmd *cobra.Command) error {
 	demoKubeContext = selection.name
 	return nil
 }
+
+var errDemoNeedsContext = fmt.Errorf("a demo writes to the cluster (kubectl apply, and delete with --cleanup), so it needs --kube-context <name> to say which one; list kube contexts with 'kubectl config get-contexts'")
 
 func runCubAgent(args ...string) error {
 	if demoKubeContext != "" {

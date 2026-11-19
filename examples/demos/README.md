@@ -4,12 +4,18 @@
 
 Demos that create resources, show problems, and let you explore.
 
+> **Demos write to the cluster.** They apply fixtures into namespaces such as
+> `production`, `staging`, `argocd` and `flux-system`, and `--cleanup` deletes
+> them by name. Use a disposable cluster, such as `kind create cluster --name
+> demo`, and name it: every demo command needs `--kube-context kind-demo`
+> (or your cluster's context), and is refused without it.
+
 ## Running Demos
 
 ```bash
 cub-scout demo list           # List all demos
-cub-scout demo quick            # Run quick demo
-cub-scout demo <name> --cleanup # Remove demo resources
+cub-scout demo quick --kube-context kind-demo            # Run quick demo
+cub-scout demo <name> --kube-context kind-demo --cleanup # Remove demo resources
 ```
 
 ## Available Demos
@@ -36,7 +42,7 @@ Run with: `cub-scout demo scenario <name>`
 Fastest path to see the Map in action.
 
 ```bash
-cub-scout demo quick
+cub-scout demo quick --kube-context kind-demo
 ```
 
 Creates:
@@ -56,7 +62,7 @@ Shows:
 The BIGBANK Grafana bug that caused a 4-hour outage.
 
 ```bash
-cub-scout demo ccve
+cub-scout demo ccve --kube-context kind-demo
 ```
 
 Creates:
@@ -77,7 +83,7 @@ Story: [BIGBANK - GitOps Lessons Learned](https://www.youtube.com/watch?v=VJiuu-
 Query language walkthrough with realistic mixed ownership fixtures.
 
 ```bash
-cub-scout demo query
+cub-scout demo query --kube-context kind-demo
 ```
 
 Shows:
@@ -96,8 +102,8 @@ Shows:
 
 Example:
 ```bash
-cub-scout demo quick --no-pods   # Fast structural demo
-cub-scout demo quick --cleanup   # Clean up after
+cub-scout demo quick --kube-context kind-demo --no-pods   # Fast structural demo
+cub-scout demo quick --kube-context kind-demo --cleanup   # Clean up after
 ```
 
 ---

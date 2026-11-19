@@ -102,7 +102,7 @@ flux install
 Then run the demo again:
 
 ```bash
-./cub-scout demo quick
+./cub-scout demo quick --kube-context kind-demo
 ```
 
 ### Demo shows all "Native" resources, no Flux/ArgoCD
@@ -112,8 +112,8 @@ Same issue - GitOps CRDs are not installed. The demo creates resources with GitO
 ### How do I clean up demo resources?
 
 ```bash
-./cub-scout demo quick --cleanup
-./cub-scout demo ccve --cleanup
+./cub-scout demo quick --kube-context kind-demo --cleanup
+./cub-scout demo ccve --kube-context kind-demo --cleanup
 ```
 
 ---
