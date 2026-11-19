@@ -144,3 +144,48 @@ func TestGitOpsStatusAnswerNeverCountsAnUnreadDeployerReady(t *testing.T) {
 	require.Equal(t, gitopsReasonDeployersNotRead, answer.Reason)
 	require.Contains(t, answer.Unknowns[0].What, "Kustomization/apps")
 }
+
+// #596: the human renderings of gitops status say what the answer says. A
+// deployer that was not read, is reconciling, or is suspended was reported
+// "healthy" or "failing" in ASCII; now the headline follows the answer, and
+// Markdown carries the answer's state.
+func TestGitOpsStatusHumanSurfacesFollowTheAnswer(t *testing.T) {
+	unread := gitopsDeployer("Kustomization", "unread", true, "")
+	unread.notRead = true
+	suspended := gitopsDeployer("Kustomization", "paused", false, "Suspended")
+	suspended.Suspended = true
+	ready := gitopsDeployer("Kustomization", "ok", true, "")
+	cases := map[string]GitOpsSummary{
+		"settled":        {Deployers: []DeployerStatus{ready}},
+		"failing":        {Deployers: []DeployerStatus{ready, gitopsDeployer("Kustomization", "bad", false, "BuildFailed")}},
+		"converging":     {Deployers: []DeployerStatus{ready, gitopsDeployer("Kustomization", "busy", false, "Progressing")}},
+		"suspended":      {Deployers: []DeployerStatus{ready, suspended}},
+		"not-observable": {Deployers: []DeployerStatus{ready, unread}},
+	}
+	for name, summary := range cases {
+		t.Run(name, func(t *testing.T) {
+			for i := range summary.Deployers {
+				if !summary.Deployers[i].IsHealthy() {
+					summary.FailedCount++
+				} else {
+					summary.HealthyCount++
+				}
+			}
+			answer := buildGitOpsStatusAnswer(summary, time.Now(), nil)
+			ascii := ansiEscape.ReplaceAllString(captureStdout(t, func() { require.NoError(t, outputGitOpsStatusHuman(summary)) }), "")
+			saysHealthy := strings.Contains(ascii, "deployers healthy")
+			saysFailing := strings.Contains(ascii, "deployers failing")
+			require.Equal(t, answer.State == gitopsStateSettled && !strings.Contains(answer.Summary, "suspended"), saysHealthy, "ASCII healthy line vs answer %s:\n%s", answer.State, ascii)
+			if answer.State != gitopsStateFailing {
+				require.False(t, saysFailing, "ASCII says failing; the answer is %s:\n%s", answer.State, ascii)
+			} else {
+				require.True(t, saysFailing || strings.Contains(ascii, answer.Summary), "ASCII does not report the failure:\n%s", ascii)
+			}
+			if !saysHealthy && !saysFailing {
+				require.Contains(t, ascii, answer.Summary)
+			}
+			md := renderGitOpsStatusMarkdown(summary)
+			require.Contains(t, md, "- Answer: `"+answer.State+"`")
+		})
+	}
+}

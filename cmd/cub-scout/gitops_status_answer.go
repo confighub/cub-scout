@@ -273,3 +273,15 @@ func buildGitOpsStatusAnswer(summary GitOpsSummary, observedAt time.Time, cost *
 	}
 	return answer
 }
+
+// gitopsFailingCount is how many deployers the answer counts as failing:
+// read, not suspended, not ready and not reconciling.
+func gitopsFailingCount(summary GitOpsSummary) int {
+	n := 0
+	for _, d := range summary.Deployers {
+		if !d.notRead && !d.Suspended && !d.IsHealthy() && !gitopsDeployerConverging(d) {
+			n++
+		}
+	}
+	return n
+}

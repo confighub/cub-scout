@@ -38,7 +38,7 @@ type gitOpsDeliveryEvidenceOptions struct {
 	// between then and the read is not from the future, and is judged against
 	// the later reading. Unset, Now is used throughout.
 	ReadClock func() time.Time
-	MaxItems   int
+	MaxItems  int
 	// SpaceSource records how Space was chosen; see GitOpsDeliveryEvidenceScope.
 	SpaceSource string
 	// MatchBeforeTrim keeps every row in the time window so a caller that
@@ -1333,6 +1333,11 @@ func renderGitOpsStatusMarkdown(summary GitOpsSummary) string {
 	if summary.Context != "" {
 		b.WriteString(fmt.Sprintf("- Kubernetes context label: %s (not a stable cluster ID)\n", gitOpsMarkdownCodeSpan(summary.Context)))
 	}
+	answer := summary.Answer
+	if answer == nil {
+		answer = buildGitOpsStatusAnswer(summary, time.Now(), nil)
+	}
+	b.WriteString(fmt.Sprintf("- Answer: `%s` (`%s`): %s\n", answer.State, answer.Reason, answer.Summary))
 	b.WriteString(fmt.Sprintf("- Healthy deployers: `%d`\n", summary.HealthyCount))
 	b.WriteString(fmt.Sprintf("- Failed deployers: `%d`\n", summary.FailedCount))
 	if summary.ConfigHubTarget != nil {
