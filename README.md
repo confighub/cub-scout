@@ -205,7 +205,7 @@ event), plus local bot images built from verified release archives. See the
 
 **v2.19.0 is the latest release.** `release check` under Flux now says
 "not yet" (`WATCH`) when the source is on another revision, as it does for
-Argo CD, and every `answer` block is now checked on a real cluster. See the
+Argo CD, and `release check` now runs on a real cluster in CI. See the
 [v2.19.0 release notes](docs/releases/v2.19.0.md).
 
 **v2.18.0**: seven more commands carry the `answer`

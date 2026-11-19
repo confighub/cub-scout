@@ -12,8 +12,7 @@ stream, and in-cluster bot**. [Choose a mode](../README.md#five-ways-to-run-cub-
 or [start with a user question](../README.md#user-questions).
 
 Current release: [v2.19.0](releases/v2.19.0.md): under Flux, `release check`
-says "not yet" for another revision, and every `answer` block is checked on a
-real cluster. [v2.18.0](releases/v2.18.0.md) gives seven more
+says "not yet" for another revision, and runs on a real cluster in CI. [v2.18.0](releases/v2.18.0.md) gives seven more
 commands an `answer` block and makes every cluster write name its cluster.
 [v2.17.0](releases/v2.17.0.md) checks ownership against real installs of Helm,
 kro, Crossplane and Terraform.

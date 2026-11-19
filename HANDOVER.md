@@ -2214,7 +2214,7 @@ Open for the maintainer: the small eval run; telling the consumer of the
 source-truth fixtures that the "agreed" case needs `object_revision`; a
 smaller default MCP tool set.
 
-## After v2.18.0: every answer on a real cluster, Flux WATCH, #887 seen to disagree — 2026-11-19
+## After v2.18.0: release check on a real cluster, Flux WATCH, #887 seen to disagree — 2026-11-19
 
 On "keep going" and the maintainer's "yes to 1". Merged, not released:
 `release check` runs on a real Flux OCI delivery in the GitOps lane (#979);

@@ -25,7 +25,7 @@ this section and anything below it disagree, this section wins.
 | [v2.16.0](releases/v2.16.0.md) | 2026-11-16 | ConfigHub 0.11; the `answer` block on `trace` and `compare source-truth`; `mcp serve --tools`. |
 | [v2.17.0](releases/v2.17.0.md) | 2026-11-18 | Ownership checked against real installs of Helm, kro, Crossplane and Terraform. |
 | [v2.18.0](releases/v2.18.0.md) | 2026-11-19 | The `answer` block on seven more commands; every cluster write names its cluster; `doctor --before-attach`; 3.0 deprecation notices. |
-| [v2.19.0](releases/v2.19.0.md) | 2026-11-19 | Under Flux, `release check` gives `WATCH` for another revision; every answer checked on a real cluster; #887's comparisons seen to disagree. |
+| [v2.19.0](releases/v2.19.0.md) | 2026-11-19 | Under Flux, `release check` gives `WATCH` for another revision, and runs on a real cluster in CI; #887's comparisons seen to disagree under Flux and Argo CD. |
 
 ### v2.16.0, published 2026-11-16
 
@@ -60,8 +60,8 @@ a stated reason, and #954, #956–#960 and #964 gave it to the demos,
 import wizard and `map hub`. Every write now needs it ([#955], #962, #964).
 
 After v2.18.0, released in v2.19.0: the GitOps lane runs `release check`
-on a real Flux OCI delivery (#979), so every answer is checked on a real
-cluster; under Flux, a source and Kustomization on another revision give
+on a real Flux OCI delivery (#979), so each command's answer is checked on
+a real cluster, though not in every state; under Flux, a source and Kustomization on another revision give
 `WATCH` / `not-compared`, as under Argo CD (#982, the maintainer's decision;
 a behaviour change for `--fail-on`); the live-status lane records untrue
 statuses and sees each comparison of [#887] disagree, sync (#980) and health
