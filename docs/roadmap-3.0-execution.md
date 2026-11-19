@@ -58,11 +58,13 @@ a stated reason, and #954, #956–#960 and #964 gave it to the demos,
 `quickstart`, `import argocd`, `views project --with-reality`, `import`, the
 import wizard and `map hub`. Every write now needs it ([#955], #962, #964).
 
-Next after v2.18.0 is not chosen yet. Ready without a decision: a lane that
-runs `release check` on a real cluster, the only answer not checked on one;
-the remaining [#887] items; moving kind and the node image on purpose. Waiting
-on the maintainer: any paid eval run, which the answer blocks now need to show
-they earn their bytes; and whether `cluster.id` is read on request or always.
+After v2.18.0, on `main`: the GitOps lane runs `release check` on a real Flux
+OCI delivery (#979), so every answer is now checked on a real cluster; the
+live-status lane writes an untrue recorded status and sees it found to
+disagree ([#887], #980); Argo CD v3.6.2 in the lanes (#978). Ready without a
+decision: the rest of [#887] (a recorded `Healthy` over a workload that is
+down, a StatefulSet or DaemonSet read live); moving kind and the node image on
+purpose. Waiting on the maintainer: the open table below.
 
 ### v2.18.0, published 2026-11-19
 
@@ -113,6 +115,7 @@ are now v2.18's. [Notes](releases/v2.17.0.md).
 |---|---|
 | Any paid eval run. Three things wait on one: whether the shorter catalog helps, whether `core` becomes the default profile in 3.0, whether the `answer` block earns its bytes. | maintainer |
 | Cluster ID in `answer`: read on request, or always. | maintainer |
+| `release check` under Flux, when the OCIRepository reports another revision: `INCONCLUSIVE` today (the binding check fails first); Argo CD gives `WATCH` ("a different bundle revision") for the same case. Make Flux `WATCH`? It changes what `--fail-on` gates on. Seen in #979. | maintainer |
 | Where to raise the fact-storage and delivery-attestation questions with ConfigHub (packages D, G4). | maintainer |
 
 ### Standing checks
