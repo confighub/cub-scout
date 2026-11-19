@@ -161,6 +161,10 @@ the same on a real cluster.
    `settled`, `converging`, `failing`, `no-deployers`, `not-observable`;
    `explain`: `explained`, `owner-only`, `no-owner-marker`, `not-observable`;
    `doctor`: `issues-flagged`, `nothing-flagged`, `incomplete`,
+   `not-observable`. Later the same day, for `map list`: `listed`, `partial`,
+   `not-observable`; `scan`: `findings`, `no-findings`, `incomplete`,
+   `not-observable`; `gitops settings`: `listed`, `no-deployers`, `partial`,
+   `not-observable`; `release check`: `matches`, `differs`, `not-compared`,
    `not-observable`. The first list, before that decision: `trace`: `traced`,
    `no-owner-marker`, `chain-not-ready`, `not-observable`. `compare
    source-truth`: `agreed`, `not-agreed`, `incomplete`, `not-observable`.
