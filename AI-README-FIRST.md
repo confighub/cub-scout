@@ -1,11 +1,11 @@
 # AI Read Me First
 
 **2026-11-16:** read
-[the state of the plan](docs/roadmap-3.0-execution.md#state-of-the-plan--2026-11-16)
+[the state of the plan](docs/roadmap-3.0-execution.md#state-of-the-plan--2026-11-19)
 first: it says what is shipped, what was decided and what is open.
-[v2.18.0](docs/releases/v2.18.0.md) is the latest release (2026-11-19): seven
-more commands carry an `answer` block, and every cluster write names its
-cluster. It works with ConfigHub 0.11. Principle 10 in
+[v2.18.0](docs/releases/v2.18.0.md) is the latest published release
+(2026-11-19) and works with ConfigHub 0.11; [v2.19.0](docs/releases/v2.19.0.md),
+in which Flux's "not yet" is `WATCH` in `release check`, is being prepared. Principle 10 in
 [CLAUDE.md](CLAUDE.md) and
 [agentic GitOps observability](docs/reference/agentic-gitops-observability.md)
 say what "for an agent" means and the rules found on real clusters. The

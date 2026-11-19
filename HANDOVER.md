@@ -2224,7 +2224,8 @@ it, so the next release's notes must say so); the live-status lane writes
 untrue statuses and sees sync (#980) and health (#984) disagree on a real
 cluster under Flux and Argo CD; Argo CD v3.6.2 (#978) and kind v0.33.0 /
 node v1.35.8 (#983) in every lane. #887 is commented and left open: a
-StatefulSet or DaemonSet read live, a hosted server and the eval case remain.
+StatefulSet or DaemonSet read live, a hosted server and the eval case remain. v2.19.0
+is cut from this on the maintainer's word ("cut v2.19.0").
 
 ## Answers on seven more commands, writes name their cluster, v2.18.0 — 2026-11-18 to 2026-11-19
 
