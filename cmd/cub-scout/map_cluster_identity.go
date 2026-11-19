@@ -24,6 +24,7 @@ type mapClusterIdentityOutput struct {
 	ClusterCostScope string                        `json:"clusterCostScope"`
 	Resources        []mapClusterIdentityResource  `json:"resources"`
 	Collection       mapClusterIdentityCollection  `json:"collection"`
+	Answer           *mapsvc.Answer                `json:"answer,omitempty"`
 }
 
 type mapClusterIdentityCollection struct {

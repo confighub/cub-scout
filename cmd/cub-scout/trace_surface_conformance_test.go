@@ -166,7 +166,12 @@ func TestAnswerIsTheSameThroughMCP(t *testing.T) {
 	doctorJSON, err := json.Marshal(doctorSummary)
 	require.NoError(t, err)
 
-	for tool, cli := range map[string]string{"trace": string(traceJSON), "compare_source_truth": sourceTruth.String(), "gitops_status": string(gitopsJSON), "explain": explainJSON, "doctor": string(doctorJSON)} {
+	mapSummaryDoc := buildMapListSummary([]MapEntry{{Kind: "Deployment", Name: "api", Namespace: "prod", Owner: "Flux"}})
+	mapSummaryDoc.Answer = buildMapListAnswer([]MapEntry{{Kind: "Deployment", Name: "api", Namespace: "prod", Owner: "Flux"}}, nil, "", nil, observedAtForTests)
+	mapJSONDoc, err := json.Marshal(mapSummaryDoc)
+	require.NoError(t, err)
+
+	for tool, cli := range map[string]string{"trace": string(traceJSON), "compare_source_truth": sourceTruth.String(), "gitops_status": string(gitopsJSON), "explain": explainJSON, "doctor": string(doctorJSON), "map": string(mapJSONDoc)} {
 		t.Run(tool, func(t *testing.T) {
 			var cliDoc struct {
 				Answer json.RawMessage `json:"answer"`

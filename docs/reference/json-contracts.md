@@ -170,6 +170,28 @@ object-set completeness, or predict a future reconciliation. Status separates
 is inconclusive and never emits its payload. Controller-rendered Flux/Argo,
 installed-Helm, and other provider operands remain open under #746.
 
+## Map List Answer
+
+`map list --summary` and `map list --cluster-identity` JSON carry a top-level
+`answer` block (since v2.18), the envelope `trace` carries: what runs here, and
+who owns it. State words decided by the maintainer on 2026-11-19. The default
+`map list --format json` is a bare JSON array and carries no answer, since
+adding one would change its type for every consumer; that change is kept for
+3.0. `--ownership-evidence` is a compact diagnostic projection, kept smaller
+than the full list, and carries none.
+
+| `state` | `reason` | When |
+|---|---|---|
+| `listed` | `inventory-listed` | Every kind was listed |
+| `partial` | `kinds-not-listed` | Some kinds could not be listed; each is in `unknowns`, `denied` when forbidden |
+| `not-observable` | `inventory-not-read` | The inventory was unavailable, or nothing was listed and a kind failed |
+
+`basis[]` counts the resources by the owner their own markers name
+(`restsOn: "object-metadata"`). When resources carry no recognised marker,
+`unknowns` says that does not show nothing manages them. With
+`--cluster-identity`, `cluster.id` and `cluster.idSource` are the identity that
+was read. `cost` is `not-measured`.
+
 ## Map Ownership Diagnostics
 
 `map list --ownership-evidence --format json` and MCP `map` with
