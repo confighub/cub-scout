@@ -121,6 +121,18 @@ func observeScopeSummaryFromFixture(path, namespaceLabel string, topN int) (Doct
 func observeScopeSummaryFromCluster(ctx context.Context, namespace, namespaceLabel string, topN int, req ObserveScopeSummaryRequest) (ObserveScopeSummaryResult, error) {
 	var result ObserveScopeSummaryResult
 
+	// Count every request doctor's own clients make, for the answer's cost:
+	// the binding is copied with a read meter on its transport.
+	started := time.Now()
+	var meter *agent.KubernetesReadMeter
+	if req.ClusterBinding != nil && req.ClusterBinding.config != nil {
+		meter = agent.NewKubernetesReadMeter()
+		metered := *req.ClusterBinding
+		metered.config = copyTraceRESTConfig(req.ClusterBinding.config)
+		metered.config.Wrap(meter.WrapTransport)
+		req.ClusterBinding = &metered
+	}
+
 	entries, cluster, err := collectDoctorEntriesWithBinding(ctx, namespace, req.ClusterBinding)
 	if err != nil {
 		result.Warnings = append(result.Warnings, fmt.Sprintf("inventory coverage incomplete: %v", err))
@@ -166,6 +178,12 @@ func observeScopeSummaryFromCluster(ctx context.Context, namespace, namespaceLab
 		}
 	}
 	result.Summary.Warnings = append([]string(nil), result.Warnings...)
+	if meter != nil {
+		cost := meter.Snapshot()
+		cost.DurationMillis = time.Since(started).Milliseconds()
+		cost.Coverage = doctorCostCoverage
+		result.Summary.readCost = &cost
+	}
 	return result, nil
 }
 

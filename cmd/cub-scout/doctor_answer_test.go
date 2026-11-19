@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -63,4 +64,23 @@ func TestDoctorAnswerStates(t *testing.T) {
 			}
 		})
 	}
+}
+
+// The answer's cost is what doctor's own reads cost: exactly the requests
+// the cluster received.
+func TestDoctorAnswerCostCountsDoctorsReads(t *testing.T) {
+	server := newCountedKubeServer(t)
+	path, _ := resolverKubeconfig(t, "selected", map[string]string{"selected": server.server.URL})
+	t.Setenv("KUBECONFIG", path)
+	t.Setenv("CUB_SCOUT_TEST_DOCTOR_INPUT_JSON", "")
+	binding := resolveLocalClusterBindingForSelection(clusterContextSelection{name: "selected", explicit: true})
+	require.NoError(t, binding.err)
+
+	result, err := ObserveScopeSummary(context.Background(), ObserveScopeSummaryRequest{ClusterBinding: binding})
+	require.NoError(t, err)
+	answer := buildDoctorAnswer(result.Summary, time.Now())
+	requireConformingAnswer(t, answer, doctorStates, doctorReasons)
+	require.Equal(t, doctorCostCoverage, answer.Cost.Coverage)
+	require.NotZero(t, answer.Cost.RequestsMade)
+	require.EqualValues(t, server.requests.Load(), answer.Cost.RequestsMade, "the answer's cost counts every request the cluster received")
 }
