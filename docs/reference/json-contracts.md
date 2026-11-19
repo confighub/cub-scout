@@ -860,6 +860,31 @@ selector preserves the legacy output shape. The normalized schema retains
 fields; `warnings[]` preserves Kyverno errors and state-scan coverage warnings
 alongside findings, instead of treating failed reads as zero known issues.
 
+### Scan answer (scan --json and --normalized-json)
+
+A live cluster `scan --json` or `scan --normalized-json` carries a top-level
+`answer` block (since v2.18), the envelope `trace` carries, answering what the
+scanners flag in the scope. The scan's own fields beside it are unchanged.
+State words decided by the maintainer on 2026-11-19; they mirror doctor's.
+Precedence runs from the first row down.
+
+| `state` | `reason` | When |
+|---|---|---|
+| `not-observable` | `scanners-not-read` | Nothing is flagged, and no scanner returned a result: Kyverno's errored or is absent, and no other scanner ran |
+| `findings` | `findings-found` | One or more critical or warning findings |
+| `incomplete` | `coverage-incomplete` | Nothing flagged, but a scanner failed or read part of its scope, so that nothing is flagged is not established |
+| `no-findings` | `nothing-found` | Nothing flagged, with full coverage. Not a health claim: `unknowns` says it covers the scanners that ran |
+
+Findings from Kyverno's PolicyReports rest on `controller-report`; every other
+track (state, timing bombs, dangling, lifecycle hazards) is cub-scout's own
+check and rests on `cub-scout-comparison`. Informational findings are counted
+in `basis` and flag nothing. Each entry in `warnings` is an entry in
+`unknowns`, quoted, and `denied` when forbidden. Finding text is never in the
+summary. `next[]` is `explain` of the first critical finding's resource, else
+the first warning's. `cost` counts the scan's in-process Kubernetes requests
+(`coverage: "scan-session-clients"`); an external scanner binary the provider
+runs is not counted. `scan --file` and recorded input carry no answer.
+
 ### Doctor answer (doctor --format json)
 
 `doctor --format json` carries a top-level `answer` block (since v2.18), the
