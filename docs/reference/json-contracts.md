@@ -172,12 +172,13 @@ installed-Helm, and other provider operands remain open under #746.
 
 ## Map List Answer
 
-`map list`'s JSON object forms (`--summary`, `--ownership-evidence`,
-`--cluster-identity`) carry a top-level `answer` block (since v2.18), the
-envelope `trace` carries: what runs here, and who owns it. State words decided
-by the maintainer on 2026-11-19. The default `map list --format json` is a bare
-JSON array and carries no answer, since adding one would change its type for
-every consumer; that change is kept for 3.0.
+`map list --summary` and `map list --cluster-identity` JSON carry a top-level
+`answer` block (since v2.18), the envelope `trace` carries: what runs here, and
+who owns it. State words decided by the maintainer on 2026-11-19. The default
+`map list --format json` is a bare JSON array and carries no answer, since
+adding one would change its type for every consumer; that change is kept for
+3.0. `--ownership-evidence` is a compact diagnostic projection, kept smaller
+than the full list, and carries none.
 
 | `state` | `reason` | When |
 |---|---|---|

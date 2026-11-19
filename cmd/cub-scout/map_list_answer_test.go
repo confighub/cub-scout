@@ -70,8 +70,10 @@ func TestMapListJSONFormsAndTheAnswer(t *testing.T) {
 	require.NoError(t, json.Unmarshal([]byte(out), &array), "the default output stays a JSON array")
 
 	for name, run := range map[string]func() error{
-		"summary":            func() error { mapSummary = true; return renderMapListFromEntriesWithIdentity(entries, nil, false, nil, "") },
-		"ownership evidence": func() error { mapSummary = false; return renderMapListFromEntriesWithIdentity(entries, nil, true, nil, "") },
+		"summary": func() error {
+			mapSummary = true
+			return renderMapListFromEntriesWithIdentity(entries, nil, false, nil, "")
+		},
 	} {
 		out := captureStdout(t, func() { require.NoError(t, run()) })
 		var doc struct {

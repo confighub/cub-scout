@@ -116,8 +116,6 @@ type OwnershipEvidenceOutput struct {
 	Schema     string                      `json:"schema"`
 	Resources  []OwnershipEvidenceResource `json:"resources"`
 	Collection OwnershipEvidenceCollection `json:"collection"`
-	// Answer is the common envelope, set by the command that renders it.
-	Answer *Answer `json:"answer,omitempty"`
 }
 
 // BuildOwnershipEvidenceOutput builds a deterministic opt-in envelope. The

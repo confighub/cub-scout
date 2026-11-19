@@ -1,8 +1,9 @@
 package main
 
-// The answer block on map list's JSON object forms (--summary,
-// --ownership-evidence, --cluster-identity): what runs here, and who owns
-// it? State words decided by the maintainer on 2026-11-19. The default
+// The answer block on map list's JSON object forms (--summary and
+// --cluster-identity): what runs here, and who owns it? --ownership-evidence
+// is a compact diagnostic projection, kept smaller than the full list, and
+// carries none. State words decided by the maintainer on 2026-11-19. The default
 // output is a bare JSON array and carries no answer: adding one would change
 // its type for every consumer, a change kept for 3.0.
 

@@ -1120,9 +1120,7 @@ func renderMapListFromEntriesWithIdentity(entries []MapEntry, omissions []mapsvc
 				Answer: buildMapListAnswer(entries, omissions, unavailableReason, clusterIdentity, time.Now())})
 		}
 		if includeOwnershipEvidence {
-			out := mapsvc.BuildOwnershipEvidenceOutput(entries, omissions)
-			out.Answer = buildMapListAnswer(entries, omissions, unavailableReason, nil, time.Now())
-			return enc.Encode(out)
+			return enc.Encode(mapsvc.BuildOwnershipEvidenceOutput(entries, omissions))
 		}
 		return enc.Encode(entries)
 	}
