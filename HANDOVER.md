@@ -2214,6 +2214,22 @@ Open for the maintainer: the small eval run; telling the consumer of the
 source-truth fixtures that the "agreed" case needs `object_revision`; a
 smaller default MCP tool set.
 
+## Answers on seven more commands, writes name their cluster, v2.18.0 — 2026-11-18 to 2026-11-19
+
+On "keep going" and the maintainer's decisions of 2026-11-19. `doctor
+--before-attach` was designed from recorded real attaches (#947, #952). Every
+command takes `--kube-context` or a stated reason, checked by a registry test
+(#953–#960, #964), and every cluster write refuses without it, the read-only
+guard now seeing `kubectl` writes (#962, #964). `trace` reads a Crossplane
+composite's `Ready` as Crossplane's report (#963). The answer envelope, with
+state words the maintainer chose, is on `gitops status` (#965), `explain`
+(#966, #968), `doctor` (#967, #969), `map list` (#972), `scan` (#973),
+`gitops settings` (#974) and `release check` (#975); human surfaces follow the
+answer (#949, #971). Deprecation notices for everything 3.0 removes ship here
+(#950), which starts the window. v2.18.0 is cut from this on the maintainer's
+word. Not done: a real-cluster check of `release check`'s answer (no lane runs
+it), and any paid eval of the answers.
+
 ## Standing checks on real installs, and v2.17.0 — 2026-11-16 to 2026-11-18
 
 On "keep going", the standing checks in the roadmap were worked through: each
