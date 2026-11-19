@@ -28,8 +28,10 @@ on:
 # Every job names its runner image, kind and node image. On 2026-11-16
 # ubuntu-latest moved to 26.04 unannounced to this repository and broke the
 # live-status lane; nothing here should move without a commit that says so.
-# kind v0.31.0 and kindest/node v1.35.0 are what helm/kind-action@v1 installed
-# by default when they were pinned.
+# kind v0.31.0 and kindest/node v1.35.0 were what helm/kind-action@v1
+# installed by default when they were pinned. On 2026-11-19 they moved, on
+# purpose, to kind v0.33.0 and node v1.35.8 (kind v0.33.0's image for that
+# minor): the same Kubernetes minor, so the client libraries' skew is unchanged.
 jobs:
   # ==========================================================================
   # Level 0 + 1: Smoke + Unit (no cluster needed)
@@ -342,8 +344,8 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1
         with:
-          version: v0.31.0
-          node_image: kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f
+          version: v0.33.0
+          node_image: kindest/node:v1.35.8@sha256:07b2536e30b803ed61d1677a79df6115f798ce64c80f9e22f6ed45afd09323c0
           cluster_name: test-cluster
 
       - name: Build binary for golden tests
@@ -396,8 +398,8 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1
         with:
-          version: v0.31.0
-          node_image: kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f
+          version: v0.33.0
+          node_image: kindest/node:v1.35.8@sha256:07b2536e30b803ed61d1677a79df6115f798ce64c80f9e22f6ed45afd09323c0
           cluster_name: gitops-cluster
           # A local registry on the kind network, for the release-check lane.
           registry: true
@@ -632,8 +634,8 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1
         with:
-          version: v0.31.0
-          node_image: kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f
+          version: v0.33.0
+          node_image: kindest/node:v1.35.8@sha256:07b2536e30b803ed61d1677a79df6115f798ce64c80f9e22f6ed45afd09323c0
           cluster_name: demo-cluster
 
       - name: Install pinned GitOps controllers
@@ -689,8 +691,8 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1
         with:
-          version: v0.31.0
-          node_image: kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f
+          version: v0.33.0
+          node_image: kindest/node:v1.35.8@sha256:07b2536e30b803ed61d1677a79df6115f798ce64c80f9e22f6ed45afd09323c0
           cluster_name: connected-cluster
 
       - name: Provision authenticated disposable ConfigHub
@@ -766,8 +768,8 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1
         with:
-          version: v0.31.0
-          node_image: kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f
+          version: v0.33.0
+          node_image: kindest/node:v1.35.8@sha256:07b2536e30b803ed61d1677a79df6115f798ce64c80f9e22f6ed45afd09323c0
           cluster_name: connected-cluster
 
       - name: Provision authenticated disposable ConfigHub
@@ -855,8 +857,8 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1
         with:
-          version: v0.31.0
-          node_image: kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f
+          version: v0.33.0
+          node_image: kindest/node:v1.35.8@sha256:07b2536e30b803ed61d1677a79df6115f798ce64c80f9e22f6ed45afd09323c0
           cluster_name: modelplane
 
       - name: Install Modelplane and record what it writes
@@ -901,8 +903,8 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1
         with:
-          version: v0.31.0
-          node_image: kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f
+          version: v0.33.0
+          node_image: kindest/node:v1.35.8@sha256:07b2536e30b803ed61d1677a79df6115f798ce64c80f9e22f6ed45afd09323c0
           cluster_name: brownfield
 
       - name: Install pinned GitOps controllers
@@ -951,8 +953,8 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1
         with:
-          version: v0.31.0
-          node_image: kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f
+          version: v0.33.0
+          node_image: kindest/node:v1.35.8@sha256:07b2536e30b803ed61d1677a79df6115f798ce64c80f9e22f6ed45afd09323c0
           cluster_name: full-test-cluster
 
       - name: Provision required scanner

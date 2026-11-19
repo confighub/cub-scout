@@ -63,8 +63,9 @@ OCI delivery (#979), so every answer is now checked on a real cluster; the
 live-status lane writes an untrue recorded status and sees it found to
 disagree ([#887], #980); Argo CD v3.6.2 in the lanes (#978). Ready without a
 decision: the rest of [#887] (a recorded `Healthy` over a workload that is
-down, a StatefulSet or DaemonSet read live); moving kind and the node image on
-purpose. Waiting on the maintainer: the open table below.
+down, a StatefulSet or DaemonSet read live); a newer Kubernetes minor in the
+lanes, with the client libraries. Waiting on the maintainer: the open table
+below.
 
 ### v2.18.0, published 2026-11-19
 
@@ -137,7 +138,7 @@ repository names today. Latest releases were read from GitHub on 2026-11-16.
 | Argo CD | v3.6.2 in the GitOps, demo and attach lanes (read 2026-11-19) | v3.6.2 | Current. Recordings made on v3.5.3 (an eval case, a recorded tree test) and the attach lane's v3.6.1 recordings stay as recorded. |
 | Sveltos | v1.16.0, as `cub cluster up` installed it (live lane run 43869342351) | v1.17.0 | Recorded on every live-lane run in `installed-versions.txt`. |
 | CI runner image | every Linux job pinned to `ubuntu-26.04`; the live-status lane raises the inotify limits first | `ubuntu-latest` moved to 26.04 on 2026-11-16 | Pinned. 26.04 allows 128 inotify instances where 24.04 allowed 1280, too few for the live lane's three kind clusters; the lane raises them (run 43936175444). |
-| Kubernetes, kind | client libraries v0.33.1; kind v0.31.0 and `kindest/node:v1.35.0` by digest, pinned in every kind step | Kubernetes v1.37.2; kind v0.33.0 | Pinned. Move to a newer kind and node on purpose, one lane run first. |
+| Kubernetes, kind | client libraries v0.33.1; kind v0.33.0 and `kindest/node:v1.35.8` by digest, pinned in every kind step (moved 2026-11-19 from kind v0.31.0, node v1.35.0) | Kubernetes v1.37.2; kind v0.33.0 | Pinned. A newer Kubernetes minor widens the skew from the client libraries; move it, and them, on purpose. |
 | Helm | v4.3.2 and v3.22.1 in the GitOps lane: one small chart each, with and without the chart's own labels | v4.3.2 | Current. Helm 3 and 4 label and annotate every object they install themselves. The lane asserts that `map` reads each as Helm and that `trace` answers in JSON with the release that installed it; it records `explain`. |
 | kro | v0.10.0 in the GitOps lane: one ResourceGraphDefinition and one instance | v0.10.0 | Current. The lane asserts that the created object reads as kro's by `kro.run/instance-name`, naming the instance. Detection read whichever `kro.run/` label came first, which on kro v0.10.0 can be `true`, a version or a UID. |
 | Crossplane | v2.4.3 in the GitOps lane: one namespaced composite composing a Deployment | v2.4.3 | Current. The lane asserts the composed object reads as Crossplane's (by `crossplane.io/composite`) and that trace answers. The composition tree is wrong on it ([#939]). |
