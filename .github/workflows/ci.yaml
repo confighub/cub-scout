@@ -525,7 +525,7 @@ jobs:
       # The answer block on map list's object forms, on a real cluster.
       - name: map list answers on a real cluster
         run: |
-          ./cub-scout map list -n boutique --summary --format json > map-boutique.json
+          ./cub-scout map list --namespace boutique --summary --format json > map-boutique.json
           jq -e '.answer.state == "listed" and .answer.reason == "inventory-listed" and .total > 0' map-boutique.json \
             || { jq '.answer' map-boutique.json; exit 1; }
           jq -c '.answer | {state, reason, summary}' map-boutique.json
