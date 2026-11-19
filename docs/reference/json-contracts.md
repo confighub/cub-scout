@@ -737,7 +737,9 @@ knows. State words decided by the maintainer on 2026-11-19. Readiness is
 
 `basis[]` names the owner marker (`restsOn: "object-metadata"`, the marker
 quoted) and the chain read. `next[]` is `trace` of the resource, for whether
-its controllers report ready. `cost` is `not-measured` for now. Recorded input
+its controllers report ready. `cost` counts the Kubernetes requests of the
+explicit-context path (`--kube-context`, `coverage: "explain-session-clients"`);
+the default path's reads are not metered yet and say `not-measured`. Recorded input
 (`--recording`) carries no answer: it observes no cluster and has no trusted
 time.
 

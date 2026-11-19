@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 )
@@ -60,7 +61,28 @@ func explainTryNextHintsForSelection(summary ExplainSummary, ctx HintContext) []
 
 // observeExplainWithSession shares one immutable Kubernetes binding across all
 // enriched reads. ConfigHub reads retain their independently selected space.
+// The session's meter counts every read, and the answer reports the total.
 func observeExplainWithSession(ctx context.Context, session *traceSession, kind, name, namespace string, opts explainObservationOptions) (ExplainSummary, error) {
+	started := time.Now()
+	var before agent.KubernetesReadCost
+	if session != nil && session.meter != nil {
+		before = session.meter.Snapshot()
+	}
+	summary, err := observeExplainWithSessionReads(ctx, session, kind, name, namespace, opts)
+	if session != nil && session.meter != nil {
+		cost := session.meter.Snapshot()
+		cost.RequestsMade -= before.RequestsMade
+		cost.ResponseBodyBytes -= before.ResponseBodyBytes
+		cost.TransportErrors -= before.TransportErrors
+		cost.BodyReadErrors -= before.BodyReadErrors
+		cost.DurationMillis = time.Since(started).Milliseconds()
+		cost.Coverage = explainCostCoverage
+		summary.facts.cost = &cost
+	}
+	return summary, err
+}
+
+func observeExplainWithSessionReads(ctx context.Context, session *traceSession, kind, name, namespace string, opts explainObservationOptions) (ExplainSummary, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}

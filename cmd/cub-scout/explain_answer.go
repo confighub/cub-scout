@@ -43,7 +43,14 @@ type explainAnswerFacts struct {
 	chainError        string
 	chainNotRequested bool
 	observedAt        time.Time
+	// cost is set where the reads ran on a metered session.
+	cost *agent.KubernetesReadCost
 }
+
+// explainCostCoverage is a key, spelled out in json-contracts.md: the
+// Kubernetes requests of explain's session clients, on the explicit-context
+// path. The default path's reads are not metered yet.
+const explainCostCoverage = "explain-session-clients"
 
 func readErrString(err error) string {
 	if err == nil {
@@ -91,6 +98,9 @@ func buildExplainAnswer(summary ExplainSummary, observedAt time.Time) *mapsvc.An
 		Unknowns:   []mapsvc.AnswerUnknown{},
 		Next:       []mapsvc.AnswerNext{},
 		Cost:       mapsvc.AnswerCost{Coverage: "not-measured"},
+	}
+	if f.cost != nil {
+		answer.Cost = mapsvc.AnswerCostFrom(*f.cost)
 	}
 	kind, name, _ := strings.Cut(summary.Resource, "/")
 	label, named := kind+"/"+name, traceSafeKind.MatchString(kind) && traceSafeName.MatchString(name)
