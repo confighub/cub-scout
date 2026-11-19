@@ -420,6 +420,13 @@ jobs:
             || { jq '.answer' explain-frontend.json; exit 1; }
           jq -c '.answer | {state, reason, summary}' explain-frontend.json
 
+      - name: gitops settings answers on a real Flux install
+        run: |
+          ./cub-scout gitops settings --kube-context kind-gitops-cluster --format json --view summary > settings.json
+          jq -e '.answer.state == "listed" and .answer.reason == "settings-read" and .answer.cluster.context == "kind-gitops-cluster" and .answer.cost.requestsMade > 0' settings.json \
+            || { jq '.answer' settings.json; exit 1; }
+          jq -c '.answer | {state, reason, summary, requests: .cost.requestsMade}' settings.json
+
       - name: Deploy ArgoCD example
         run: |
           cat <<EOF | kubectl apply -f -

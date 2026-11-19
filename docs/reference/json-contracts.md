@@ -1394,6 +1394,29 @@ change while the command is a preview.
 Settings are declared configuration. Nothing in this contract says a controller
 acted on a setting, and nothing in it is a verdict.
 
+### Answer (since v2.18)
+
+Live `gitops settings --format json` carries a top-level `answer` block, the
+envelope `trace` carries, in every view including `summary`. Text and Markdown
+output carry none. State words decided by the maintainer on 2026-11-19.
+Precedence runs from the first row down.
+
+| `state` | `reason` | When |
+|---|---|---|
+| `not-observable` | `kinds-not-read` | No deployer is shown, and a kind's list failed, so whether there are any is unknown |
+| `no-deployers` | `no-deployers-match-filters` | No deployer matches `--project` or `--setting`, and every kind was read or is not installed |
+| `no-deployers` | `no-deployers-found` | No deployer was found, and every kind was read or is not installed |
+| `partial` | `kinds-not-read` | Deployers are shown, and a kind's list failed, so some may be missing |
+| `listed` | `settings-read` | Deployers are shown, and every kind was read or is not installed |
+
+`basis[]` counts the objects read per kind, and names kinds the API server does
+not serve, each `restsOn: "object-metadata"`: a setting is what the object's
+spec declares. `unknowns[]` names each kind that was not read, its message
+quoted, `denied` when forbidden or unauthorized. When deployers are shown it
+always says that whether each controller acted on its settings was not
+compared, and `next[]` is `gitops status`. `cost` counts the settings read's
+own Kubernetes requests (`coverage: "gitops-settings-session-clients"`).
+
 ### Views (since v2.13.4)
 
 `--view groups`, `settings` or `deployers` writes the same document with only
