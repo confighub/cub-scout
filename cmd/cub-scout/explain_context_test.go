@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/confighub/cub-scout/v2/pkg/agent"
@@ -115,6 +116,10 @@ func TestEnrichedExplainCapturedEndpointNamespaceAndCredentials(t *testing.T) {
 			require.Equal(t, selected+" "+ns, summary.Events.Events[0].Message)
 			require.NotNil(t, summary.CurrentChange)
 			require.Equal(t, agent.CauseManualEdit, summary.FieldAttribution.Cause)
+			// The answer's cost is this explain's reads, every one of them.
+			answer := buildExplainAnswer(summary, time.Now())
+			require.Equal(t, explainCostCoverage, answer.Cost.Coverage)
+			require.EqualValues(t, len(f.requests), answer.Cost.RequestsMade)
 			for _, request := range f.requests {
 				require.True(t, strings.HasPrefix(request, selected+".invalid"), request)
 				require.NotContains(t, request, "/namespaces/default/")
