@@ -65,6 +65,10 @@ func TestScanAnswerStates(t *testing.T) {
 				require.Equal(t, "Kyverno's policy reports", a.Unknowns[0].What)
 				require.Equal(t, "Kyverno scan: PolicyReport CRD not readable", a.Unknowns[0].Quoted)
 			}},
+		{"findings beat not-observable", &scan.CombinedResult{Kyverno: &agent.ScanResult{Error: "partial PolicyReport list", Findings: kyvernoCritical.Findings}}, "",
+			scanStateFindings, scanReasonFindingsFound, func(t *testing.T, a *mapsvc.Answer) {
+				require.Equal(t, "Kyverno's policy reports", a.Unknowns[0].What)
+			}},
 		{"every scanner failed", &scan.CombinedResult{Kyverno: &agent.ScanResult{Error: "Kyverno PolicyReport evidence unavailable"}}, "",
 			scanStateNotObservable, scanReasonScannersNotRead, nil},
 		{"no result at all", nil, "", scanStateNotObservable, scanReasonScannersNotRead, func(t *testing.T, a *mapsvc.Answer) {
