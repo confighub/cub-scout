@@ -1092,13 +1092,24 @@ func outputGitOpsStatusHuman(summary GitOpsSummary) error {
 		return nil
 	}
 
-	// Health summary
-	if summary.HasFailures() {
-		fmt.Printf("  %s%s⚠ %d/%d deployers failing%s\n\n",
-			colorBold, colorYellow, summary.FailedCount, totalDeployers, colorReset)
-	} else {
+	// Health summary. It follows the answer, so a person is told what an
+	// agent is (#596): a deployer that was not read, is reconciling, or is
+	// suspended is never reported healthy or failing.
+	answer := summary.Answer
+	if answer == nil {
+		answer = buildGitOpsStatusAnswer(summary, time.Now(), nil)
+	}
+	switch {
+	case answer.State == gitopsStateSettled && answer.Summary == fmt.Sprintf("All %d deployer(s) report ready.", totalDeployers):
 		fmt.Printf("  %s%s✓ All %d deployers healthy%s\n\n",
 			colorBold, colorGreen, totalDeployers, colorReset)
+	case answer.State == gitopsStateFailing && gitopsFailingCount(summary) == summary.FailedCount:
+		fmt.Printf("  %s%s⚠ %d/%d deployers failing%s\n\n",
+			colorBold, colorYellow, summary.FailedCount, totalDeployers, colorReset)
+	case answer.State == gitopsStateFailing:
+		fmt.Printf("  %s%s⚠ %s%s\n\n", colorBold, colorYellow, answer.Summary, colorReset)
+	default:
+		fmt.Printf("  %s%s%s\n\n", colorBold, answer.Summary, colorReset)
 	}
 
 	// Sources section
