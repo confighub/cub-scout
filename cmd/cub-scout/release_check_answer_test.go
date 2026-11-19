@@ -2,13 +2,16 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/confighub/cub-scout/v2/internal/mapsvc"
 	"github.com/confighub/cub-scout/v2/pkg/agent"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // The state words decided on 2026-11-19 restate the report's own verdict:
@@ -111,4 +114,43 @@ func TestReleaseCheckJSONCarriesTheAnswer(t *testing.T) {
 	require.Equal(t, releaseStateMatches, doc.Answer.State)
 	require.EqualValues(t, doc.RequestCounts.Discovery+doc.RequestCounts.Object, doc.Answer.Cost.RequestsMade)
 	require.NotZero(t, doc.Answer.Cost.RequestsMade)
+}
+
+// A Flux source and Kustomization both on another revision answer "not yet",
+// as an Argo CD Application on another revision does; a source that moved
+// while the Kustomization still reports the expected bundle stays unknown.
+func TestReleaseCheckFluxOtherRevisionIsNotYet(t *testing.T) {
+	other := "v2@sha256:" + strings.Repeat("b", 64)
+	for _, tc := range []struct {
+		name          string
+		kustomization bool
+		verdict       agent.ReceiptVerdict
+		state, reason string
+	}{
+		{"both on another revision", true, agent.VerdictWATCH, releaseStateNotCompared, releaseReasonOtherRevision},
+		{"source moved, Kustomization on the expected bundle", false, agent.VerdictINCONCLUSIVE, releaseStateNotObservable, releaseReasonEvidenceIncomplete},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newReleaseFixture(t, "flux")
+			f.change = func(o *unstructured.Unstructured, _ int) int {
+				switch o.GetKind() {
+				case "OCIRepository":
+					_ = unstructured.SetNestedField(o.Object, other, "status", "artifact", "revision")
+				case "Kustomization":
+					if tc.kustomization {
+						_ = unstructured.SetNestedField(o.Object, other, "status", "lastAppliedRevision")
+						_ = unstructured.SetNestedField(o.Object, other, "status", "lastAttemptedRevision")
+					}
+				}
+				return 0
+			}
+			r, err := observeReleaseCheck(context.Background(), f.options)
+			require.NoError(t, err)
+			require.Equal(t, tc.verdict, r.Verdict, "%+v", r.Stages)
+			answer := buildReleaseCheckAnswer(r)
+			requireConformingAnswer(t, answer, releaseStates, releaseReasons)
+			require.Equal(t, tc.state, answer.State)
+			require.Equal(t, tc.reason, answer.Reason)
+		})
+	}
 }
