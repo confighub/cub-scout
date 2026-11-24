@@ -29,7 +29,6 @@ Source of truth:
 | `debug` | Guided GitOps debugging wizard | [Command Reference](commands.md#debug) | [Platform example](../../examples/platform-example/) |
 | `doctor` | One-command cluster health summary; `--before-attach` adds what `cub cluster attach` would meet | [Command Reference](commands.md#doctor) | [Connect and compare](../../examples/connect-and-compare/) |
 | `explain` | Plain-English ownership and lineage for one resource | [Command Reference](commands.md#explain) | [New user puzzle quest](../../examples/new-user-puzzle-quest/) |
-| `fleet` | Connected fleet command group; `fleet outliers` is deprecated in 2.x for planned 3.0 removal | [Command Reference](commands.md#fleet-outliers) | [Fleet import](../../examples/fleet-import/) |
 | `gitops` | GitOps pipeline health and diagnostics | [Command Reference](commands.md#gitops-v014) | [Connected summary storage](../../examples/connected-summary-storage/) |
 | `graph` | Resource graph export and explanation | [Command Reference](commands.md#graph-v06) | [Graph export](../../examples/graph-export/) |
 | `help` | Help for any command path | [CLI Guide](../../CLI-GUIDE.md#verify-behavior-locally) | - |
