@@ -35,10 +35,10 @@ Need a specific command or flag?
 
 | Mode | Command | Use when |
 |------|---------|----------|
-| Standalone client | `cub-scout doctor`, `cub-scout map`, `cub-scout trace ...` | A human or script wants direct CLI/TUI/JSON output. |
-| ConfigHub plugin | `cub scout doctor`, `cub scout compare ...` | You are already working inside the `cub` workflow and want plugin-aware context. |
-| MCP server | `cub-scout mcp serve` | An AI host should launch scout as typed read-only tools. |
-| Watch stream | `cub-scout watch --output-file ./events.jsonl` | A local polling process should stream observations to a file or webhook. |
+| ConfigHub plugin (primary) | `cub scout doctor`, `cub scout compare ...` | Primary invocation form; shares `cub` auth when connected and works standalone without login. |
+| Standalone client | `cub-scout doctor`, `cub-scout map`, `cub-scout trace ...` | Identical CLI/TUI/JSON surface when running without the `cub` CLI. |
+| MCP server | `cub scout mcp serve` (or `cub-scout mcp serve`) | An AI host should launch scout as typed read-only tools. |
+| Watch stream | `cub scout watch --output-file ./events.jsonl` | A local polling process should stream observations to a file or webhook. |
 | In-cluster bot | `cub-scout bot --webhook <url>` | A Pod should run the same polling engine with read-only RBAC and an approved sink. |
 
 MCP hosts launch their own stdio process; agents can also invoke the CLI directly.
@@ -52,11 +52,12 @@ Neither MCP nor bot mode adds a shared fleet cache. See
 Start with the smallest loop that proves value on a real cluster:
 
 ```bash
-cub-scout quickstart
-cub-scout doctor
-cub-scout explain deploy/my-app -n prod
-cub-scout trace deploy/my-app -n prod
-cub-scout map
+# Plugin form (primary) — replace `cub scout` with `cub-scout` for the standalone binary
+cub scout quickstart
+cub scout doctor
+cub scout explain deploy/my-app -n prod
+cub scout trace deploy/my-app -n prod
+cub scout map
 ```
 
 What each step gives you:
@@ -87,11 +88,12 @@ binding. See [the example and limits](examples/cluster-identity-cost/).
 If you prefer JSON first:
 
 ```bash
-cub-scout doctor --format json
-cub-scout doctor --with-confighub --confighub-space prod --format json
-cub-scout explain deploy/my-app -n prod --format json
-cub-scout trace deploy/my-app -n prod --format json
-cub-scout map activity --with-confighub --confighub-space prod --format json
+# Plugin form (primary) — or standalone `cub-scout ...`
+cub scout doctor --format json
+cub scout doctor --with-confighub --confighub-space prod --format json
+cub scout explain deploy/my-app -n prod --format json
+cub scout trace deploy/my-app -n prod --format json
+cub scout map activity --with-confighub --confighub-space prod --format json
 ```
 
 ---

@@ -9,6 +9,11 @@ cluster. It is built for AI agents first (MCP tools and JSON), and for the
 people and scripts they work with. Unknowns are stated, never guessed.
 
 ```sh
+# ConfigHub plugin (primary)
+cub plugin install confighub/cub-scout
+cub scout trace deploy/argobot -n argobot
+
+# Or standalone binary
 brew install confighub/tap/cub-scout
 cub-scout trace deploy/argobot -n argobot
 ```
@@ -469,15 +474,18 @@ deterministic for the same inputs. New live observations have new timestamps.
 offline analysis uses saved files or bundles.
 
 ```bash
-brew install confighub/tap/cub-scout
+# Plugin form (primary — after `cub plugin install confighub/cub-scout`)
+cub scout doctor                                  # cluster health summary
+cub scout explain deploy/api -n prod              # who owns this resource?
+cub scout trace   deploy/api -n prod              # where did it come from?
+cub scout map                                     # interactive TUI
 
-cub-scout doctor                                  # cluster health summary
-cub-scout explain deploy/api -n prod              # who owns this resource?
-cub-scout trace   deploy/api -n prod              # where did it come from?
-cub-scout map                                     # interactive TUI
+# Standalone binary (identical commands and output)
+brew install confighub/tap/cub-scout
+cub-scout doctor
 ```
 
-If `cub-scout: command not found` but you have `cub` installed, try `cub scout doctor` instead — see [How to invoke](#how-to-invoke).
+Every `cub scout <command>` also works as standalone `cub-scout <command>` — see [How to invoke](#how-to-invoke).
 
 ---
 
@@ -513,12 +521,12 @@ The same Scout commands, JSON contracts, exit codes, and MCP tool names are
 available through three invocation forms:
 
 ```bash
-cub-scout doctor          # 1. Standalone — installed directly
-cub scout    doctor       # 2. cub plugin — after `cub plugin install confighub/cub-scout`
+cub scout    doctor       # 1. cub plugin (primary) — after `cub plugin install confighub/cub-scout`
+cub-scout    doctor       # 2. Standalone — installed directly
 kubectl cub-scout doctor  # 3. kubectl plugin — from `make build-kubectl-plugin`
 ```
 
-Plugin form (`cub scout ...`) inherits `cub`'s auth automatically — useful when you also use ConfigHub. Standalone form is the path of least resistance and the default for AI/MCP scenarios. Parity is enforced by a release-gate test (`TestPluginParity_StandaloneMatchesPlugin`).
+Plugin form (`cub scout ...`) is the documented primary form and inherits `cub`'s auth automatically. The standalone `cub-scout` binary remains fully supported with identical commands, JSON contracts, exit codes, and MCP tool names (and is convenient when `cub` is not installed or for direct MCP stdio wiring). Parity is enforced by a release-gate test (`TestPluginParity_StandaloneMatchesPlugin`).
 
 Host-global flags can differ: `cub --context` selects a ConfigHub context, while
 Scout's bounded `--kube-context` selects the Kubernetes context to inspect.
