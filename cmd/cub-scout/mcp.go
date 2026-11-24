@@ -734,7 +734,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						},
 						"confighub_space": map[string]interface{}{
 							"type":        "string",
-							"description": "ConfigHub space. Omitted: ConfigHub reads are skipped and reported as a confighub.scope omission (there is no default space). '*' reads all spaces.",
+							"description": "ConfigHub space. Omitted: skipped (confighub.scope omission). '*' reads all spaces.",
 						},
 						"confighub_since": map[string]interface{}{
 							"type":        "string",
@@ -743,6 +743,11 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						"confighub_stale_after": map[string]interface{}{
 							"type":        "string",
 							"description": "Live status older than this is stale, e.g. 15m.",
+						},
+						"view": map[string]interface{}{
+							"type":        "string",
+							"enum":        []string{"all", "summary"},
+							"description": "all or summary.",
 						},
 					},
 					"additionalProperties": false,
@@ -771,6 +776,9 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				}
 				if staleAfter := argString(arguments, "confighub_stale_after"); staleAfter != "" {
 					args = append(args, "--confighub-stale-after", staleAfter)
+				}
+				if view := argString(arguments, "view"); view != "" {
+					args = append(args, "--view", view)
 				}
 				return args, nil
 			},

@@ -26,12 +26,18 @@ var (
 	gitopsNamespace   string
 	gitopsKubeContext string
 	gitopsFormat      string
+	gitopsView        string
 	gitopsTUI         bool
 
 	gitopsWithConfigHub       bool
 	gitopsConfigHubSpace      string
 	gitopsConfigHubSince      string
 	gitopsConfigHubStaleAfter string
+)
+
+const (
+	gitopsStatusViewAll     = "all"
+	gitopsStatusViewSummary = "summary"
 )
 
 var gitopsCmd = &cobra.Command{
@@ -103,6 +109,7 @@ func init() {
 	gitopsStatusCmd.Flags().StringVarP(&gitopsNamespace, "namespace", "n", "", "Namespace to scan (default: all namespaces)")
 	gitopsStatusCmd.Flags().StringVar(&gitopsKubeContext, "kube-context", "", "Kubernetes context to inspect (default: current context)")
 	gitopsStatusCmd.Flags().StringVar(&gitopsFormat, "format", "ascii", "Output format: ascii, json, md")
+	gitopsStatusCmd.Flags().StringVar(&gitopsView, "view", gitopsStatusViewAll, "JSON only: all (default) or summary (compact, omits per-deployer and per-source lists)")
 	gitopsStatusCmd.Flags().BoolVar(&gitopsTUI, "tui", false, "View this GitOps status snapshot in a scrollable terminal viewport")
 	rejectRemovedFlags(gitopsStatusCmd, map[string]string{
 		"json": "use --format json instead",
@@ -319,6 +326,10 @@ func runGitOpsStatus(cmd *cobra.Command, args []string) error {
 	if err := validateGitOpsTUIFormat(gitopsTUI, cmd.Flags().Changed("format"), false); err != nil {
 		return err
 	}
+	view, err := normalizeGitOpsStatusView(gitopsView, cmd.Flags().Changed("view"), format)
+	if err != nil {
+		return err
+	}
 	evidenceOptions, err := gitOpsDeliveryEvidenceOptionsFromFlags(ctx)
 	if err != nil {
 		return err
@@ -333,7 +344,7 @@ func runGitOpsStatus(cmd *cobra.Command, args []string) error {
 			}
 			return runGitOpsStatusTUI(ctx, summary)
 		}
-		return loadAndRenderGitOpsStatusFromJSON(statusJSONFile, format)
+		return loadAndRenderGitOpsStatusFromJSON(statusJSONFile, format, view)
 	}
 
 	// Capture the selected kubeconfig once. Every Kubernetes reader below shares
@@ -389,12 +400,42 @@ func runGitOpsStatus(cmd *cobra.Command, args []string) error {
 	// Output
 	switch format {
 	case "json":
-		return outputGitOpsStatusJSON(summary)
+		return outputGitOpsStatusJSON(projectGitOpsStatusView(summary, view))
 	case "md":
 		return outputGitOpsStatusMarkdown(summary)
 	default:
 		return outputGitOpsStatusHuman(summary)
 	}
+}
+
+func normalizeGitOpsStatusView(view string, viewChanged bool, format string) (string, error) {
+	v := strings.ToLower(strings.TrimSpace(view))
+	if v == "" {
+		v = gitopsStatusViewAll
+	}
+	switch v {
+	case gitopsStatusViewAll, gitopsStatusViewSummary:
+	default:
+		return "", fmt.Errorf("invalid --view %q (valid: all, summary)", view)
+	}
+	if viewChanged && format != "json" {
+		return "", fmt.Errorf("--view applies to JSON output; pass --format json")
+	}
+	return v, nil
+}
+
+// projectGitOpsStatusView returns a compact copy of summary when view is
+// "summary", preserving the answer block, counts, and controller coverage
+// while omitting the per-deployer and per-source arrays.
+func projectGitOpsStatusView(summary GitOpsSummary, view string) GitOpsSummary {
+	if view != gitopsStatusViewSummary {
+		return summary
+	}
+	summary.Deployers = nil
+	summary.Sources = nil
+	summary.SveltosControllerReports = nil
+	summary.DeliveryEvidence = nil
+	return summary
 }
 
 func validateGitOpsTUIFormat(tui, formatChanged, legacyJSONChanged bool) error {
@@ -1424,7 +1465,7 @@ func outputDeployerStatus(dep DeployerStatus) {
 }
 
 // loadAndRenderGitOpsStatusFromJSON loads status from JSON file for testing
-func loadAndRenderGitOpsStatusFromJSON(path, format string) error {
+func loadAndRenderGitOpsStatusFromJSON(path, format, view string) error {
 	summary, err := readGitOpsStatusJSON(path)
 	if err != nil {
 		return err
@@ -1434,7 +1475,7 @@ func loadAndRenderGitOpsStatusFromJSON(path, format string) error {
 	summary.Answer = buildGitOpsStatusAnswer(summary, time.Now(), nil)
 	switch format {
 	case "json":
-		return outputGitOpsStatusJSON(summary)
+		return outputGitOpsStatusJSON(projectGitOpsStatusView(summary, view))
 	case "md":
 		return outputGitOpsStatusMarkdown(summary)
 	default:
