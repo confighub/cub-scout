@@ -2,7 +2,7 @@
 
 You are taking over the next stages of **cub-scout**, an open-source,
 read-only GitOps observer for agents. Until now it was built by the
-maintainer (Alexis) with Claude Code and, earlier, Codex. This briefing is all
+maintainer with Claude Code and, earlier, Codex. This briefing is all
 the context you get, so read it to the end before acting, then read the files
 it names. State on 2026-11-24.
 
@@ -12,7 +12,7 @@ it names. State on 2026-11-24.
 
 | What | Where |
 |---|---|
-| Repository (local) | `/Users/alexis/code/cub-scout` — work here, on a branch per change |
+| Repository (local) | `~/code/cub-scout` — work here, on a branch per change |
 | Repository (GitHub) | https://github.com/confighub/cub-scout (public), default branch `main`, squash merges |
 | Go module | `github.com/confighub/cub-scout/v2`; Go 1.26.0, toolchain go1.26.9 |
 | Releases | https://github.com/confighub/cub-scout/releases — latest **v2.19.0** (2026-11-19, commit `bcf38522`) |
@@ -225,9 +225,9 @@ like everything else it needs an eval before any benefit is claimed.
   Any closing keyword closes the issue.
 - Never name colleagues or other people in public artifacts: issues, PRs,
   comments, commits, docs.
-- **Do not merge, tag or release.** Open the PR, get CI green, report. The
-  maintainer merges and says when to tag. (Claude was delegated self-merge.
-  You have not been.)
+- **Self-merge when CI is green** (delegated by the maintainer on 2026-11-24).
+  **Do not tag or release.** Get CI green, squash-merge, report. The
+  maintainer still decides when to tag and release.
 
 **Tests**
 - `go build ./cmd/cub-scout && go vet ./... && go test ./...` for code.
@@ -316,5 +316,5 @@ Each stage is one or more PRs, opened for the maintainer to review.
    - Build only after approval.
 5. **A 3.x vision draft** (3.2+), as a proposal doc only.
 
-Ask before anything that writes outside this repository, merges, tags, closes
+Ask before anything that writes outside this repository, tags, releases, closes
 issues, deletes branches, or decides a state word or product question.
