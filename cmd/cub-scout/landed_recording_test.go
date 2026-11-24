@@ -230,3 +230,152 @@ func TestLandedOfflineRecording_Helm(t *testing.T) {
 	require.Equal(t, agent.LandingStateNotLanded, failedEval.State)
 	require.Equal(t, agent.LandingReasonControllerReconcileFailed, failedEval.Reason)
 }
+
+const recordedFluxLandingWithPodsYAML = `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: prod
+  generation: 2
+  labels:
+    kustomize.toolkit.fluxcd.io/name: apps
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/org/api:v1.2.3
+status:
+  observedGeneration: 2
+  replicas: 2
+  updatedReplicas: 2
+  readyReplicas: 2
+  availableReplicas: 2
+  conditions:
+    - type: Available
+      status: "True"
+    - type: Progressing
+      status: "True"
+      reason: NewReplicaSetAvailable
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: apps
+  namespace: flux-system
+spec:
+  sourceRef:
+    kind: OCIRepository
+    name: apps-oci
+    namespace: flux-system
+status:
+  lastAppliedRevision: latest@sha256:0828abcdef
+  conditions:
+    - type: Ready
+      status: "True"
+      reason: ReconciliationSucceeded
+      message: Applied revision latest@sha256:0828abcdef
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: apps-oci
+  namespace: flux-system
+status:
+  artifact:
+    revision: latest@sha256:0828abcdef
+  conditions:
+    - type: Ready
+      status: "True"
+      reason: Succeeded
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: api-pod-1
+  namespace: prod
+  labels:
+    app: api
+status:
+  phase: Running
+  containerStatuses:
+    - name: api
+      image: ghcr.io/org/api:v1.2.3
+      imageID: docker-pullable://ghcr.io/org/api@sha256:1111222233334444
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: unrelated-pod
+  namespace: prod
+  labels:
+    app: other
+status:
+  phase: Running
+  containerStatuses:
+    - name: other
+      image: ghcr.io/org/other:v9.9.9
+      imageID: docker-pullable://ghcr.io/org/other@sha256:9999999999999999
+`
+
+func TestLandedOfflineRecording_VerifyPodImages(t *testing.T) {
+	recorded, err := loadRecordedObjectSnapshot(strings.NewReader(recordedFluxLandingWithPodsYAML))
+	require.NoError(t, err)
+	store := recordedLandingStore{objects: recorded.Objects}
+	target := agent.LandingObjectRef{APIVersion: "apps/v1", Kind: "Deployment", Namespace: "prod", Name: "api"}
+	anchor := agent.LandingAnchor{Kind: agent.AnchorKindOCIDigest, Value: "sha256:0828abcdef"}
+
+	// Positive control: explicit expected pod digest matches running pod imageID.
+	okSnap := fetchLandingSnapshotFromStoreWithOptions(context.Background(), store, "", target, landingPodVerifyOptions{
+		Verify:        true,
+		ExpectedImage: "sha256:1111222233334444",
+	})
+	okEval := agent.EvaluateLanding(anchor, okSnap)
+	require.Equal(t, agent.LandingStateLanded, okEval.State)
+	require.Equal(t, agent.LandingReasonDigestAndWorkloadConverged, okEval.Reason)
+	require.NotNil(t, okSnap.PodImages)
+	require.Equal(t, "ready", okSnap.PodImages.Status)
+
+	// Positive control: no --image supplied falls back to workload spec.template container image.
+	specSnap := fetchLandingSnapshotFromStoreWithOptions(context.Background(), store, "", target, landingPodVerifyOptions{
+		Verify: true,
+	})
+	specEval := agent.EvaluateLanding(anchor, specSnap)
+	require.Equal(t, agent.LandingStateLanded, specEval.State)
+
+	// Negative control: bogus expected digest disagrees despite Ready controller and Ready Deployment.
+	badSnap := fetchLandingSnapshotFromStoreWithOptions(context.Background(), store, "", target, landingPodVerifyOptions{
+		Verify:        true,
+		ExpectedImage: "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+	})
+	badEval := agent.EvaluateLanding(anchor, badSnap)
+	require.Equal(t, agent.LandingStateNotLanded, badEval.State)
+	require.Equal(t, agent.LandingReasonWorkloadFailed, badEval.Reason)
+	require.NotNil(t, badEval.BrokenLink)
+	require.Equal(t, agent.LandingStageWorkload, badEval.BrokenLink.Stage)
+	require.NotNil(t, badEval.BrokenLink.Ref)
+	require.Equal(t, "Pod", badEval.BrokenLink.Ref.Kind)
+	require.Equal(t, "api-pod-1", badEval.BrokenLink.Ref.Name)
+
+	// Negative control: no running pods matching selector must never claim landed.
+	noPodYAML := strings.ReplaceAll(recordedFluxLandingWithPodsYAML, "phase: Running", "phase: Pending")
+	noPodRecorded, err := loadRecordedObjectSnapshot(strings.NewReader(noPodYAML))
+	require.NoError(t, err)
+	noPodSnap := fetchLandingSnapshotFromStoreWithOptions(context.Background(), recordedLandingStore{objects: noPodRecorded.Objects}, "", target, landingPodVerifyOptions{
+		Verify:        true,
+		ExpectedImage: "sha256:1111222233334444",
+	})
+	noPodEval := agent.EvaluateLanding(anchor, noPodSnap)
+	require.Equal(t, agent.LandingStateNotLanded, noPodEval.State)
+	require.Equal(t, agent.LandingReasonWorkloadFailed, noPodEval.Reason)
+	require.NotNil(t, noPodEval.BrokenLink)
+	require.Equal(t, agent.LandingStageWorkload, noPodEval.BrokenLink.Stage)
+}

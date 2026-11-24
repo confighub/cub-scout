@@ -1295,7 +1295,7 @@ its structured landing evidence (`target`, `owner`, `anchor`, `brokenLink`,
 | `not-landed` | `source-error` | Source object reports a failure (`brokenLink.stage: "source"`) |
 | `not-landed` | `controller-reconcile-failed` | Deployer reports a reconcile failure (`brokenLink.stage: "deployer"`) |
 | `not-landed` | `controller-settled-other-revision` | Settled deployer reports a different revision or digest than requested |
-| `not-landed` | `workload-failed` | Workload is unhealthy / failed (`brokenLink.stage: "workload"`) |
+| `not-landed` | `workload-failed` | Workload is unhealthy / failed, or `--verify-pod-images` observed running Pod images disagreeing with the expected image/digest (`brokenLink.stage: "workload"`) |
 | `not-observable` | `no-anchor-supplied` | Neither `--revision`, `--digest`, nor `--unit-revision` was supplied |
 | `not-observable` | `target-not-found` | Target workload was not found in the namespace |
 | `not-observable` | `no-owner-marker-recognised` | Target carries no recognized GitOps owner marker |
@@ -1306,7 +1306,13 @@ its structured landing evidence (`target`, `owner`, `anchor`, `brokenLink`,
 Bounded read-only wait (`--wait`, default `0s`, CLI max `5m`, MCP max `60s`, poll
 interval `5s`, min `2s`) re-reads until the state leaves `converging` or the
 deadline expires, and records `wait.requestedSeconds`, `wait.elapsedMillis`,
-`wait.polls`, and `wait.settled`. The `answer` block is bounded under 700 bytes in CI.
+`wait.polls`, and `wait.settled`. Optional independent Pod image witness
+(`--verify-pod-images`, with optional `--image <ref-or-digest>` or reusing
+`--digest`) inspects running Pods matching the workload's selector (`core/v1`
+`pods`) and compares `status.containerStatuses[].imageID` and `image`; a
+mismatch returns `not-landed` / `workload-failed` (`brokenLink.stage: "workload"`)
+even when the controller reports Ready, and Pod list RBAC denial returns
+`not-observable` / `read-denied`. The `answer` block is bounded under 700 bytes in CI.
 
 ## GitOps Controller Coverage Contract
 

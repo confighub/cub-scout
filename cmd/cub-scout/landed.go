@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -17,6 +18,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"sigs.k8s.io/cli-utils/pkg/kstatus/status"
@@ -26,16 +28,18 @@ import (
 )
 
 var (
-	landedNamespace    string
-	landedKubeContext  string
-	landedRecording    string
-	landedRevision     string
-	landedDigest       string
-	landedUnitRevision string
-	landedWait         time.Duration
-	landedPollInterval time.Duration
-	landedFormat       string
-	landedIfUnchanged  string
+	landedNamespace       string
+	landedKubeContext     string
+	landedRecording       string
+	landedRevision        string
+	landedDigest          string
+	landedUnitRevision    string
+	landedVerifyPodImages bool
+	landedImage           string
+	landedWait            time.Duration
+	landedPollInterval    time.Duration
+	landedFormat          string
+	landedIfUnchanged     string
 )
 
 var landedCmd = &cobra.Command{
@@ -71,6 +75,8 @@ func init() {
 	landedCmd.Flags().StringVar(&landedRevision, "revision", "", "Expected Git SHA or controller revision")
 	landedCmd.Flags().StringVar(&landedDigest, "digest", "", "Expected OCI digest (e.g. sha256:...)")
 	landedCmd.Flags().StringVar(&landedUnitRevision, "unit-revision", "", "Expected ConfigHub unit revision")
+	landedCmd.Flags().BoolVar(&landedVerifyPodImages, "verify-pod-images", false, "Independently verify running Pod container imageIDs match the expected image or digest")
+	landedCmd.Flags().StringVar(&landedImage, "image", "", "Expected running Pod image reference or sha256 digest (requires --verify-pod-images)")
 	landedCmd.Flags().DurationVar(&landedWait, "wait", 0, "Bounded read-only wait duration until settled (default: 0s, max: 5m)")
 	landedCmd.Flags().DurationVar(&landedPollInterval, "poll-interval", agent.DefaultLandingPollInterval, "Interval between bounded-wait polls (default: 5s, min: 2s)")
 	landedCmd.Flags().StringVar(&landedFormat, "format", "ascii", "Output format: ascii, json, md")
@@ -215,6 +221,13 @@ func runLanded(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	if strings.TrimSpace(landedImage) != "" && !landedVerifyPodImages {
+		return fmt.Errorf("--image requires --verify-pod-images")
+	}
+	podVerifyOpts := landingPodVerifyOptions{
+		Verify:        landedVerifyPodImages,
+		ExpectedImage: resolveExpectedPodImage(landedImage, anchor),
+	}
 
 	selection, err := clusterContextSelectionFromFlag(cmd)
 	if err != nil {
@@ -245,7 +258,7 @@ func runLanded(cmd *cobra.Command, args []string) error {
 			return renderLandedOutputWithDelta(os.Stdout, out, format, landedIfUnchanged)
 		}
 		store := recordedLandingStore{objects: snapshot.Objects}
-		snap := fetchLandingSnapshotFromStore(ctx, store, "", target)
+		snap := fetchLandingSnapshotFromStoreWithOptions(ctx, store, "", target, podVerifyOpts)
 		eval := agent.EvaluateLanding(anchor, snap)
 		out := buildLandedOutput(eval, nil)
 		return renderLandedOutputWithDelta(os.Stdout, out, format, landedIfUnchanged)
@@ -283,7 +296,7 @@ func runLanded(cmd *cobra.Command, args []string) error {
 		PollInterval: landedPollInterval,
 		MaxWait:      agent.MaxLandingWaitCLI,
 	}, func(pollCtx context.Context) (agent.LandingSnapshot, error) {
-		return fetchLandingSnapshot(pollCtx, dynClient, session.contextLabel(), target), nil
+		return fetchLandingSnapshotWithOptions(pollCtx, dynClient, session.contextLabel(), target, podVerifyOpts), nil
 	})
 	if err != nil {
 		return err
@@ -299,9 +312,25 @@ func runLanded(cmd *cobra.Command, args []string) error {
 	return renderLandedOutputWithDelta(os.Stdout, out, format, landedIfUnchanged)
 }
 
+type landingPodVerifyOptions struct {
+	Verify        bool
+	ExpectedImage string
+}
+
+func resolveExpectedPodImage(explicitImage string, anchor agent.LandingAnchor) string {
+	if img := strings.TrimSpace(explicitImage); img != "" {
+		return img
+	}
+	if anchor.Kind == agent.AnchorKindOCIDigest {
+		return strings.TrimSpace(anchor.Value)
+	}
+	return ""
+}
+
 type landingObjectStore interface {
 	Get(ctx context.Context, gvr schema.GroupVersionResource, ns, name string) (*unstructured.Unstructured, error)
 	List(ctx context.Context, gvr schema.GroupVersionResource) ([]unstructured.Unstructured, error)
+	ListNamespace(ctx context.Context, gvr schema.GroupVersionResource, ns, labelSelector string) ([]unstructured.Unstructured, error)
 }
 
 type dynamicLandingStore struct {
@@ -314,6 +343,14 @@ func (s dynamicLandingStore) Get(ctx context.Context, gvr schema.GroupVersionRes
 
 func (s dynamicLandingStore) List(ctx context.Context, gvr schema.GroupVersionResource) ([]unstructured.Unstructured, error) {
 	list, err := s.dyn.Resource(gvr).Namespace("").List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return list.Items, nil
+}
+
+func (s dynamicLandingStore) ListNamespace(ctx context.Context, gvr schema.GroupVersionResource, ns, labelSelector string) ([]unstructured.Unstructured, error) {
+	list, err := s.dyn.Resource(gvr).Namespace(ns).List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
 	if err != nil {
 		return nil, err
 	}
@@ -355,6 +392,8 @@ func gvrMatchesRecordedObject(gvr schema.GroupVersionResource, obj *unstructured
 		return kind == "application"
 	case "secrets":
 		return kind == "secret"
+	case "pods":
+		return kind == "pod"
 	default:
 		return false
 	}
@@ -382,11 +421,44 @@ func (s recordedLandingStore) List(_ context.Context, gvr schema.GroupVersionRes
 	return out, nil
 }
 
+func (s recordedLandingStore) ListNamespace(_ context.Context, gvr schema.GroupVersionResource, ns, labelSelector string) ([]unstructured.Unstructured, error) {
+	var sel labels.Selector
+	if strings.TrimSpace(labelSelector) != "" {
+		parsed, err := labels.Parse(labelSelector)
+		if err != nil {
+			return nil, err
+		}
+		sel = parsed
+	}
+	var out []unstructured.Unstructured
+	for _, obj := range s.objects {
+		if !gvrMatchesRecordedObject(gvr, obj) {
+			continue
+		}
+		if ns != "" && obj.GetNamespace() != ns {
+			continue
+		}
+		if sel != nil && !sel.Matches(labels.Set(obj.GetLabels())) {
+			continue
+		}
+		out = append(out, *obj)
+	}
+	return out, nil
+}
+
 func fetchLandingSnapshot(ctx context.Context, dyn dynamic.Interface, kubeCtx string, target agent.LandingObjectRef) agent.LandingSnapshot {
-	return fetchLandingSnapshotFromStore(ctx, dynamicLandingStore{dyn: dyn}, kubeCtx, target)
+	return fetchLandingSnapshotWithOptions(ctx, dyn, kubeCtx, target, landingPodVerifyOptions{})
+}
+
+func fetchLandingSnapshotWithOptions(ctx context.Context, dyn dynamic.Interface, kubeCtx string, target agent.LandingObjectRef, opts landingPodVerifyOptions) agent.LandingSnapshot {
+	return fetchLandingSnapshotFromStoreWithOptions(ctx, dynamicLandingStore{dyn: dyn}, kubeCtx, target, opts)
 }
 
 func fetchLandingSnapshotFromStore(ctx context.Context, store landingObjectStore, kubeCtx string, target agent.LandingObjectRef) agent.LandingSnapshot {
+	return fetchLandingSnapshotFromStoreWithOptions(ctx, store, kubeCtx, target, landingPodVerifyOptions{})
+}
+
+func fetchLandingSnapshotFromStoreWithOptions(ctx context.Context, store landingObjectStore, kubeCtx string, target agent.LandingObjectRef, opts landingPodVerifyOptions) agent.LandingSnapshot {
 	snap := agent.LandingSnapshot{
 		Context:    kubeCtx,
 		Target:     target,
@@ -412,19 +484,269 @@ func fetchLandingSnapshotFromStore(ctx context.Context, store landingObjectStore
 
 	own := agent.DetectOwnership(obj)
 	snap.Owner = own.Type
-	labels := obj.GetLabels()
+	objLabels := obj.GetLabels()
 	annotations := obj.GetAnnotations()
 
 	switch strings.ToLower(own.Type) {
 	case "flux":
-		snap.Deployer, snap.Source, snap.ReadDenied, snap.ReadError = fetchFluxLandingLinks(ctx, store, labels)
+		snap.Deployer, snap.Source, snap.ReadDenied, snap.ReadError = fetchFluxLandingLinks(ctx, store, objLabels)
 	case "argocd", "argo":
-		snap.Deployer, snap.ReadDenied, snap.ReadError = fetchArgoLandingLink(ctx, store, labels, annotations)
+		snap.Deployer, snap.ReadDenied, snap.ReadError = fetchArgoLandingLink(ctx, store, objLabels, annotations)
 	case "helm":
 		snap.Deployer, snap.ReadDenied, snap.ReadError = fetchHelmLandingLink(ctx, store, target.Namespace, annotations)
 	}
 
+	if opts.Verify && !snap.ReadDenied {
+		podLink, denied, readErr := observePodImagesWitness(ctx, store, obj, target, opts.ExpectedImage)
+		if denied {
+			snap.ReadDenied = true
+			snap.ReadError = readErr
+		} else {
+			snap.PodImages = podLink
+		}
+	}
+
 	return snap
+}
+
+func workloadLabelSelector(obj *unstructured.Unstructured) (string, error) {
+	selMap, found, err := unstructured.NestedMap(obj.Object, "spec", "selector")
+	if err != nil || !found || len(selMap) == 0 {
+		return "", err
+	}
+	ls := &metav1.LabelSelector{}
+	if ml, ok, _ := unstructured.NestedStringMap(selMap, "matchLabels"); ok && len(ml) > 0 {
+		ls.MatchLabels = ml
+	}
+	if rawExprs, ok, _ := unstructured.NestedSlice(selMap, "matchExpressions"); ok && len(rawExprs) > 0 {
+		for _, raw := range rawExprs {
+			m, ok := raw.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			key, _ := m["key"].(string)
+			op, _ := m["operator"].(string)
+			var vals []string
+			if rawVals, ok := m["values"].([]interface{}); ok {
+				for _, rv := range rawVals {
+					if s, ok := rv.(string); ok {
+						vals = append(vals, s)
+					}
+				}
+			}
+			ls.MatchExpressions = append(ls.MatchExpressions, metav1.LabelSelectorRequirement{
+				Key:      key,
+				Operator: metav1.LabelSelectorOperator(op),
+				Values:   vals,
+			})
+		}
+	}
+	if len(ls.MatchLabels) == 0 && len(ls.MatchExpressions) == 0 {
+		return "", nil
+	}
+	sel, err := metav1.LabelSelectorAsSelector(ls)
+	if err != nil {
+		return "", err
+	}
+	return sel.String(), nil
+}
+
+func workloadTemplateContainerImages(obj *unstructured.Unstructured) map[string]string {
+	containers, found, err := unstructured.NestedSlice(obj.Object, "spec", "template", "spec", "containers")
+	if err != nil || !found {
+		return nil
+	}
+	out := make(map[string]string, len(containers))
+	for _, raw := range containers {
+		m, ok := raw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		name, _ := m["name"].(string)
+		img, _ := m["image"].(string)
+		if strings.TrimSpace(name) != "" && strings.TrimSpace(img) != "" {
+			out[name] = strings.TrimSpace(img)
+		}
+	}
+	return out
+}
+
+func observePodImagesWitness(
+	ctx context.Context,
+	store landingObjectStore,
+	workloadObj *unstructured.Unstructured,
+	target agent.LandingObjectRef,
+	expectedImage string,
+) (link *agent.LandingLinkObservation, denied bool, readErr string) {
+	selStr, err := workloadLabelSelector(workloadObj)
+	if err != nil || selStr == "" {
+		msg := "workload spec.selector is absent or invalid"
+		if err != nil {
+			msg = err.Error()
+		}
+		return &agent.LandingLinkObservation{
+			Present:  true,
+			Ref:      &target,
+			Status:   "unknown",
+			Message:  msg,
+			Reporter: mapsvc.RestsOnCubScoutComparison,
+		}, false, ""
+	}
+
+	podGVR := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
+	pods, err := store.ListNamespace(ctx, podGVR, target.Namespace, selStr)
+	if err != nil {
+		if apierrors.IsForbidden(err) || apierrors.IsUnauthorized(err) {
+			return nil, true, err.Error()
+		}
+		return &agent.LandingLinkObservation{
+			Present:  true,
+			Ref:      &target,
+			Status:   "unknown",
+			Message:  err.Error(),
+			Reporter: mapsvc.RestsOnCubScoutComparison,
+		}, false, err.Error()
+	}
+
+	var running []unstructured.Unstructured
+	for i := range pods {
+		p := pods[i]
+		if p.GetDeletionTimestamp() != nil {
+			continue
+		}
+		phase, _, _ := unstructured.NestedString(p.Object, "status", "phase")
+		if phase == "Running" {
+			running = append(running, p)
+		}
+	}
+	sort.Slice(running, func(i, j int) bool {
+		return running[i].GetName() < running[j].GetName()
+	})
+
+	if len(running) == 0 {
+		return &agent.LandingLinkObservation{
+			Present:  true,
+			Ref:      &target,
+			Status:   "failed",
+			Message:  fmt.Sprintf("no running Pods matched selector %q in namespace %s", selStr, target.Namespace),
+			Reporter: mapsvc.RestsOnCubScoutComparison,
+		}, false, ""
+	}
+
+	expected := strings.TrimSpace(expectedImage)
+	if expected != "" {
+		for i := range running {
+			pod := &running[i]
+			statuses, _, _ := unstructured.NestedSlice(pod.Object, "status", "containerStatuses")
+			matched := false
+			var observed []string
+			for _, raw := range statuses {
+				m, ok := raw.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				imgID, _ := m["imageID"].(string)
+				img, _ := m["image"].(string)
+				if agent.PodImageMatches(expected, imgID, img) {
+					matched = true
+					break
+				}
+				if imgID != "" {
+					observed = append(observed, imgID)
+				} else if img != "" {
+					observed = append(observed, img)
+				}
+			}
+			if !matched {
+				podRef := &agent.LandingObjectRef{
+					APIVersion: "v1",
+					Kind:       "Pod",
+					Namespace:  pod.GetNamespace(),
+					Name:       pod.GetName(),
+				}
+				obs := "none"
+				if len(observed) > 0 {
+					obs = strings.Join(observed, ",")
+				}
+				return &agent.LandingLinkObservation{
+					Present:  true,
+					Ref:      podRef,
+					Status:   "failed",
+					Message:  fmt.Sprintf("running pod %s imageID/image (%s) did not match expected %s", pod.GetName(), obs, expected),
+					Reporter: mapsvc.RestsOnCubScoutComparison,
+				}, false, ""
+			}
+		}
+		return &agent.LandingLinkObservation{
+			Present:  true,
+			Ref:      &target,
+			Status:   "ready",
+			Message:  fmt.Sprintf("%d/%d running pods matched expected image", len(running), len(running)),
+			Reporter: mapsvc.RestsOnCubScoutComparison,
+		}, false, ""
+	}
+
+	// No explicit --image or --digest: compare running Pods against workload spec template container images.
+	specImages := workloadTemplateContainerImages(workloadObj)
+	if len(specImages) == 0 {
+		return &agent.LandingLinkObservation{
+			Present:  true,
+			Ref:      &target,
+			Status:   "unknown",
+			Message:  "no expected image supplied and workload spec.template.spec.containers is empty",
+			Reporter: mapsvc.RestsOnCubScoutComparison,
+		}, false, ""
+	}
+	specNames := make([]string, 0, len(specImages))
+	for name := range specImages {
+		specNames = append(specNames, name)
+	}
+	sort.Strings(specNames)
+
+	for i := range running {
+		pod := &running[i]
+		statuses, _, _ := unstructured.NestedSlice(pod.Object, "status", "containerStatuses")
+		byName := make(map[string]map[string]interface{}, len(statuses))
+		for _, raw := range statuses {
+			if m, ok := raw.(map[string]interface{}); ok {
+				if cname, _ := m["name"].(string); cname != "" {
+					byName[cname] = m
+				}
+			}
+		}
+		for _, cname := range specNames {
+			wantImg := specImages[cname]
+			cs, ok := byName[cname]
+			var imgID, img string
+			if ok {
+				imgID, _ = cs["imageID"].(string)
+				img, _ = cs["image"].(string)
+			}
+			if !ok || !agent.PodImageMatches(wantImg, imgID, img) {
+				podRef := &agent.LandingObjectRef{
+					APIVersion: "v1",
+					Kind:       "Pod",
+					Namespace:  pod.GetNamespace(),
+					Name:       pod.GetName(),
+				}
+				return &agent.LandingLinkObservation{
+					Present:  true,
+					Ref:      podRef,
+					Status:   "failed",
+					Message:  fmt.Sprintf("running pod %s container %s (imageID=%s image=%s) did not match workload spec image %s", pod.GetName(), cname, imgID, img, wantImg),
+					Reporter: mapsvc.RestsOnCubScoutComparison,
+				}, false, ""
+			}
+		}
+	}
+
+	return &agent.LandingLinkObservation{
+		Present:  true,
+		Ref:      &target,
+		Status:   "ready",
+		Message:  fmt.Sprintf("%d/%d running pods matched workload spec images", len(running), len(running)),
+		Reporter: mapsvc.RestsOnCubScoutComparison,
+	}, false, ""
 }
 
 func observeWorkloadLink(obj *unstructured.Unstructured, ref agent.LandingObjectRef) *agent.LandingLinkObservation {
@@ -743,6 +1065,7 @@ func buildLandingAnswer(eval agent.LandingEvaluation, cost *agent.KubernetesRead
 	addLinkBasis("source", eval.Snapshot.Source)
 	addLinkBasis("deployer", eval.Snapshot.Deployer)
 	addLinkBasis("workload", eval.Snapshot.Workload)
+	addLinkBasis("pod-images", eval.Snapshot.PodImages)
 
 	switch eval.Reason {
 	case agent.LandingReasonNoAnchorSupplied:
