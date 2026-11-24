@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/confighub/cub-scout/v2/internal/hubread"
+	"github.com/confighub/cub-scout/v3/internal/hubread"
 )
 
 // #758: the reads of one thing, by cub and by the SDK reader, on a real

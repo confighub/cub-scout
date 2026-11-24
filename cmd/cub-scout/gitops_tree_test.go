@@ -19,7 +19,7 @@ import (
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 	ktesting "k8s.io/client-go/testing"
 
-	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"github.com/confighub/cub-scout/v3/pkg/agent"
 )
 
 // The tests in this file are about the command: its argument, flags, filters

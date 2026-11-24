@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/confighub/cub-scout/v2/pkg/agent"
-	"github.com/confighub/cub-scout/v2/pkg/hub"
+	"github.com/confighub/cub-scout/v3/pkg/agent"
+	"github.com/confighub/cub-scout/v3/pkg/hub"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 )

@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"github.com/confighub/cub-scout/v3/pkg/agent"
 	"github.com/stretchr/testify/require"
 )
 

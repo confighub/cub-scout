@@ -17,7 +17,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/confighub/cub-scout/v2/internal/summarystore"
+	"github.com/confighub/cub-scout/v3/internal/summarystore"
 	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"

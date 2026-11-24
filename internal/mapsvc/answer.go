@@ -3,7 +3,7 @@
 
 package mapsvc
 
-import "github.com/confighub/cub-scout/v2/pkg/agent"
+import "github.com/confighub/cub-scout/v3/pkg/agent"
 
 // Answer is the envelope every JSON answer is to carry, so an agent that has
 // learned to read one command's answer can read the next. Design and the

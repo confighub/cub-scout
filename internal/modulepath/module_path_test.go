@@ -13,10 +13,10 @@ import (
 	"testing"
 )
 
-const modulePath = "github.com/confighub/cub-scout/v2"
+const modulePath = "github.com/confighub/cub-scout/v3"
 const previousModulePath = "github.com/confighub/cub-scout"
 
-func TestModulePathAndSelfImportsUseV2(t *testing.T) {
+func TestModulePathAndSelfImportsUseV3(t *testing.T) {
 	root := filepath.Clean(filepath.Join("..", ".."))
 	goMod, err := os.ReadFile(filepath.Join(root, "go.mod"))
 	if err != nil {
@@ -43,13 +43,24 @@ import _ "github.com/confighub/cub-scout/pkg/agent"
 		}
 	})
 
-	t.Run("accepts v2 active import", func(t *testing.T) {
+	t.Run("rejects obsolete v2 active import", func(t *testing.T) {
 		root := t.TempDir()
 		writeGoFile(t, root, "pkg/active.go", `package active
 import _ "github.com/confighub/cub-scout/v2/pkg/agent"
 `)
+		err := scanSelfImports(root, modulePath, previousModulePath)
+		if err == nil || !strings.Contains(err.Error(), previousModulePath+"/v2/pkg/agent") {
+			t.Fatalf("scanSelfImports error = %v, want obsolete /v2 import error", err)
+		}
+	})
+
+	t.Run("accepts v3 active import", func(t *testing.T) {
+		root := t.TempDir()
+		writeGoFile(t, root, "pkg/active.go", `package active
+import _ "github.com/confighub/cub-scout/v3/pkg/agent"
+`)
 		if err := scanSelfImports(root, modulePath, previousModulePath); err != nil {
-			t.Fatalf("scanSelfImports rejected /v2 import: %v", err)
+			t.Fatalf("scanSelfImports rejected /v3 import: %v", err)
 		}
 	})
 
@@ -80,7 +91,7 @@ import _ "github.com/confighub/cub-scout/pkg/legacy"
 
 package inactivepkg
 import (
-  _ "github.com/confighub/cub-scout/v2/pkg/agent"
+  _ "github.com/confighub/cub-scout/v3/pkg/agent"
 `)
 		err := scanSelfImports(root, modulePath, previousModulePath)
 		if err == nil || !strings.Contains(err.Error(), "platform_android.go") {

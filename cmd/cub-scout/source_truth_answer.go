@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/confighub/cub-scout/v2/internal/mapsvc"
-	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"github.com/confighub/cub-scout/v3/internal/mapsvc"
+	"github.com/confighub/cub-scout/v3/pkg/agent"
 )
 
 // The states a source-truth answer can have, and the keys for why. A closed

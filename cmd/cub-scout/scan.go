@@ -14,9 +14,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/confighub/cub-scout/v2/internal/mapsvc"
-	"github.com/confighub/cub-scout/v2/internal/scan"
-	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"github.com/confighub/cub-scout/v3/internal/mapsvc"
+	"github.com/confighub/cub-scout/v3/internal/scan"
+	"github.com/confighub/cub-scout/v3/pkg/agent"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )

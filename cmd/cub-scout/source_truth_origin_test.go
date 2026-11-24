@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"github.com/confighub/cub-scout/v3/pkg/agent"
 )
 
 // The annotations are the ones recorded on Deployment argobot/argobot after

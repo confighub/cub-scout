@@ -1,4 +1,4 @@
-module github.com/confighub/cub-scout/v2
+module github.com/confighub/cub-scout/v3
 
 go 1.26.0
 

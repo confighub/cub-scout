@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/confighub/cub-scout/v2/internal/scan"
+	"github.com/confighub/cub-scout/v3/internal/scan"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
@@ -22,9 +22,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
-	"github.com/confighub/cub-scout/v2/internal/mapsvc"
-	"github.com/confighub/cub-scout/v2/pkg/agent"
-	"github.com/confighub/cub-scout/v2/pkg/hub"
+	"github.com/confighub/cub-scout/v3/internal/mapsvc"
+	"github.com/confighub/cub-scout/v3/pkg/agent"
+	"github.com/confighub/cub-scout/v3/pkg/hub"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"

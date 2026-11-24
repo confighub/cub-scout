@@ -18,9 +18,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/confighub/cub-scout/v2/internal/hubread"
-	"github.com/confighub/cub-scout/v2/pkg/agent"
-	pkghub "github.com/confighub/cub-scout/v2/pkg/hub"
+	"github.com/confighub/cub-scout/v3/internal/hubread"
+	"github.com/confighub/cub-scout/v3/pkg/agent"
+	pkghub "github.com/confighub/cub-scout/v3/pkg/hub"
 )
 
 const (

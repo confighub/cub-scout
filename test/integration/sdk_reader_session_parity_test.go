@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/confighub/cub-scout/v2/internal/hubread"
+	"github.com/confighub/cub-scout/v3/internal/hubread"
 )
 
 // #758: the session check, the local context, the organization list and the

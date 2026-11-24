@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/confighub/cub-scout/v2/internal/gitctx"
-	"github.com/confighub/cub-scout/v2/internal/graph"
+	"github.com/confighub/cub-scout/v3/internal/gitctx"
+	"github.com/confighub/cub-scout/v3/internal/graph"
 )
 
 // DetectAll runs all registered patterns against the graph.

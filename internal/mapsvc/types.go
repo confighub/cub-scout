@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"github.com/confighub/cub-scout/v3/pkg/agent"
 )
 
 // Entry represents a resource in the fleet map.

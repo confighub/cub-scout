@@ -4,8 +4,8 @@
 package main
 
 import (
-	"github.com/confighub/cub-scout/v2/pkg/agent"
-	"github.com/confighub/cub-scout/v2/pkg/hub"
+	"github.com/confighub/cub-scout/v3/pkg/agent"
+	"github.com/confighub/cub-scout/v3/pkg/hub"
 )
 
 // A ConfigHub OCI source is recognised by its registry, and only the server

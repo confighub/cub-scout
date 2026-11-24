@@ -493,10 +493,10 @@ brew install confighub/tap/cub-scout
 ```
 
 For direct downloads and tagged source builds, use the
-[install guide](docs/getting-started/install.md). The source module now uses
-`github.com/confighub/cub-scout/v2`; proxy installation via
+[install guide](docs/getting-started/install.md). The source module on `main`
+uses `github.com/confighub/cub-scout/v3` (for 3.x); proxy installation via
 `go install github.com/confighub/cub-scout/v2/cmd/cub-scout@latest` installs
-the latest tagged 2.x module. For a pinned install use
+the latest tagged 2.x release. For a pinned install use
 `go install github.com/confighub/cub-scout/v2/cmd/cub-scout@v2.19.0`. Container command
 `docker run ghcr.io/confighub/cub-scout:v2.19.0 version` still needs registry
 access verification (#520); the published image is Linux amd64 only.

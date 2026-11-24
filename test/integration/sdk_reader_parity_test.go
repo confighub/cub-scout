@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/confighub/cub-scout/v2/internal/hubread"
+	"github.com/confighub/cub-scout/v3/internal/hubread"
 )
 
 // disposableConfigHubEnv must be "1" for the test below to run. It creates a

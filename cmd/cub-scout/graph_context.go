@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/confighub/cub-scout/v2/internal/graph"
+	"github.com/confighub/cub-scout/v3/internal/graph"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
