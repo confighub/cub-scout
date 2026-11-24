@@ -569,6 +569,65 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				return args, nil
 			},
 		},
+		"landed": {
+			Descriptor: mcpToolDescriptor{
+				Name:        "landed",
+				Description: "Read-only landing check: did a specific Git revision, OCI digest, or unit revision reach a Flux or Argo CD workload (Deployment, StatefulSet, DaemonSet), is it still converging, or which link broke (landed --format json). Optional bounded wait (max 60s) exits early once settled.",
+				Annotations: readOnly,
+				InputSchema: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"target":        map[string]interface{}{"type": "string", "description": "Workload target as <kind>/<name>, e.g. deploy/api"},
+						"namespace":     map[string]interface{}{"type": "string", "description": "Namespace of the target workload (default: default)"},
+						"context":       map[string]interface{}{"type": "string", "description": "Explicit Kubernetes context name"},
+						"revision":      map[string]interface{}{"type": "string", "description": "Expected Git SHA or controller revision"},
+						"digest":        map[string]interface{}{"type": "string", "description": "Expected OCI digest (sha256:...)"},
+						"unit_revision": map[string]interface{}{"type": "string", "description": "Expected ConfigHub unit revision"},
+						"wait":          map[string]interface{}{"type": "string", "description": "Bounded read-only wait duration (default 0s, max 60s)"},
+					},
+					"required":             []string{"target"},
+					"additionalProperties": false,
+				},
+			},
+			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
+				target := argString(arguments, "target")
+				if target == "" {
+					return nil, fmt.Errorf("missing required argument: target")
+				}
+				args := []string{"landed", target}
+				if raw, present := arguments["context"]; present {
+					value, ok := raw.(string)
+					if !ok || strings.TrimSpace(value) == "" {
+						return nil, fmt.Errorf("context must be a non-empty kubeconfig context name")
+					}
+					args = append(args, "--kube-context", value)
+				}
+				if ns := argString(arguments, "namespace"); ns != "" {
+					args = append(args, "-n", ns)
+				}
+				if rev := argString(arguments, "revision"); rev != "" {
+					args = append(args, "--revision", rev)
+				}
+				if dig := argString(arguments, "digest"); dig != "" {
+					args = append(args, "--digest", dig)
+				}
+				if unitRev := argString(arguments, "unit_revision"); unitRev != "" {
+					args = append(args, "--unit-revision", unitRev)
+				}
+				if rawWait := argString(arguments, "wait"); rawWait != "" {
+					d, err := time.ParseDuration(rawWait)
+					if err != nil {
+						return nil, fmt.Errorf("invalid wait duration %q: %w", rawWait, err)
+					}
+					if d < 0 || d > agent.MaxLandingWaitMCP {
+						return nil, fmt.Errorf("MCP wait must be between 0s and %s (got %s)", agent.MaxLandingWaitMCP, d)
+					}
+					args = append(args, "--wait", d.String())
+				}
+				args = append(args, "--format", "json")
+				return args, nil
+			},
+		},
 		"explain": {
 			Descriptor: mcpToolDescriptor{
 				Name:        "explain",

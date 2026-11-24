@@ -1,7 +1,10 @@
 # Proposal: "Did my change land?" (A(1) + G1 + G2)
 
-**Status:** Proposal for maintainer review. **No code is built until the
-maintainer approves the command name, state words, and bounded-wait defaults.**
+**Status:** Approved by the maintainer on 2026-11-24; first slice implemented
+as `cub scout landed` (CLI) and `landed` (MCP) with state words `landed`,
+`converging`, `not-landed`, `not-observable` and G2 wait caps (`0s` default,
+`5m` CLI max, `60s` MCP max, `5s` poll interval / `2s` min) for Flux and
+Argo CD workloads (`Deployment`, `StatefulSet`, `DaemonSet`).
 
 This proposal specifies Package A(1) ("did my change land"), Addition G1
 (`converging` as a state), and Addition G2 (a bounded, read-only wait) from

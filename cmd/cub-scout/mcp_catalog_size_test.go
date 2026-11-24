@@ -34,6 +34,7 @@ var mcpCatalogToolCeilings = map[string]int{
 	"explain":                   2800,
 	"gitops_settings":           2400,
 	"gitops_status":             1900,
+	"landed":                    1300, // A(1) + G1/G2 landing check, 2026-11-24
 	"map":                       2300,
 	"release_check":             2200,
 	"scan":                      700,
@@ -44,7 +45,8 @@ var mcpCatalogToolCeilings = map[string]int{
 // after the first shortening (17,465 and 33,947 before it). Doctor's
 // before_attach parameter (#888) added 72 bytes on 2026-11-18: 15,218 and
 // 31,224.
-var mcpCatalogTotalCeilings = map[bool]int{false: 15300, true: 31300}
+// Updated 2026-11-24 when the standalone `landed` tool (A(1) + G1/G2) was added.
+var mcpCatalogTotalCeilings = map[bool]int{false: 16600, true: 32600}
 
 func mcpCatalogSizes(connected bool) (map[string]int, int) {
 	gateway := newMCPGatewayWithMode(nil, nil, connected)
@@ -103,7 +105,8 @@ func TestMCPCoreProfileStaysWithinItsDeclaredSize(t *testing.T) {
 	}
 	index, _ := callText(t, profileGateway(t, "core", true, nil), mcpMoreToolName, nil)
 	t.Logf("cub_scout_more: %d bytes in the catalog; connected index %d bytes", len(more), len(index))
-	if len(index) > 2800 {
-		t.Errorf("the connected index is %d bytes, over its ceiling of 2800", len(index))
+	// Raised from 2800 to 3000 on 2026-11-24 when `landed` (A(1) + G1/G2) was added (2981 bytes).
+	if len(index) > 3000 {
+		t.Errorf("the connected index is %d bytes, over its ceiling of 3000", len(index))
 	}
 }

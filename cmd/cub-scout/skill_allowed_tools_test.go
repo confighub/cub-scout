@@ -59,6 +59,7 @@ var readOnlyScoutPaths = map[string]bool{
 	"impact":                    true,
 	"import cluster-aggregator": true,
 	"import parse-repo":         true,
+	"landed":                    true,
 	"map activity":              true,
 	"map hooks":                 true,
 	"map list":                  true,
