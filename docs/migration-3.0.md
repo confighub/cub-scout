@@ -1,18 +1,16 @@
 # Migration notes for 3.0
 
-This guide records planned compatibility changes for the 3.0 major release.
-Changes marked deprecated remain available in 2.x until a later release says
-otherwise.
+This guide records compatibility changes for the 3.0 major release. For the
+full 3.0 migration guide with before/after commands verified against the built
+binary, see [docs/releases/v3.0.0-migration.md](releases/v3.0.0-migration.md).
 
 ## What 3.0 removes
 
-Each item below prints a deprecation notice on stderr when used (stdout,
-including JSON, is unchanged), naming 3.0 as the release that removes it. The
-notices are in the code from
-[#950](https://github.com/confighub/cub-scout/pull/950). The deprecation
-window starts with the first published release that contains them, and at
-least one minor release with the notices is published before 3.0
-([#595](https://github.com/confighub/cub-scout/issues/595)).
+Each item below printed a deprecation notice on stderr in `v2.18.0` and
+`v2.19.0` ([#950](https://github.com/confighub/cub-scout/pull/950)), meeting
+the one-minor deprecation window before 3.0
+([#595](https://github.com/confighub/cub-scout/issues/595)). On `main` (3.0),
+every removed flag and command fails and names its replacement.
 
 | Removed in 3.0 | Use instead |
 |---|---|
