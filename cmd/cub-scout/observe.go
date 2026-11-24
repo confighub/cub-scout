@@ -422,6 +422,8 @@ func fieldAttributionSummary(obj *unstructured.Unstructured, owner agent.Ownersh
 	}
 	pred := agent.PredictFieldRevert(owner, nil, targetKind, path)
 	result.RevertPrediction = &pred
+	contention := agent.DetectFieldContention(owner, result.Managers)
+	result.Contention = &contention
 	return result
 }
 

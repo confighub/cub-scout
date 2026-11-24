@@ -168,6 +168,7 @@ type FieldAttributionSummary struct {
 	Managers         []string                     `json:"managers,omitempty"`
 	Reason           string                       `json:"reason,omitempty"`
 	RevertPrediction *agent.FieldRevertPrediction `json:"revertPrediction,omitempty"`
+	Contention       *agent.FieldContention       `json:"contention,omitempty"`
 }
 
 // HealthMeasurement describes whether explain observed evidence for the
@@ -968,6 +969,9 @@ func renderExplainText(summary ExplainSummary, mode PresentationMode, explicitMo
 			fmt.Fprintf(&b, " — %s", summary.FieldAttribution.Reason)
 		}
 		b.WriteByte('\n')
+		if summary.FieldAttribution.Contention != nil && summary.FieldAttribution.Contention.Contested {
+			fmt.Fprintf(&b, "  %s contested (%s)\n", label("Field writer contention"), strings.Join(summary.FieldAttribution.Contention.Categories, ", "))
+		}
 	}
 	if len(summary.Notes) > 0 {
 		fmt.Fprintf(&b, "  %s\n", label("Notes"))
@@ -1212,6 +1216,9 @@ func renderExplainMarkdown(summary ExplainSummary, mode PresentationMode, explic
 			fmt.Fprintf(&b, " — %s", summary.FieldAttribution.Reason)
 		}
 		b.WriteByte('\n')
+		if summary.FieldAttribution.Contention != nil && summary.FieldAttribution.Contention.Contested {
+			fmt.Fprintf(&b, "- **Field writer contention:** contested (`%s`)\n", strings.Join(summary.FieldAttribution.Contention.Categories, "`, `"))
+		}
 	}
 	if len(summary.Notes) > 0 {
 		fmt.Fprintf(&b, "- **Notes:**\n")

@@ -90,3 +90,102 @@ func TestFieldAttributionRendersInTextAndMarkdown(t *testing.T) {
 		}
 	}
 }
+
+func TestFieldAttributionContentionCombinations(t *testing.T) {
+	const fieldJSON = `{"f:spec":{"f:replicas":{}}}`
+	tests := []struct {
+		name           string
+		owner          agent.Ownership
+		managers       []string
+		wantContested  bool
+		wantCategories []string
+	}{
+		{
+			name:           "controller plus agent",
+			owner:          agent.Ownership{Type: agent.OwnerFlux, SubType: "kustomization"},
+			managers:       []string{agent.ManagerFluxKustomize, "agent/remediator/run-1"},
+			wantContested:  true,
+			wantCategories: []string{"agent/remediator", agent.WriterCategoryController},
+		},
+		{
+			name:           "controller plus kubectl",
+			owner:          agent.Ownership{Type: agent.OwnerArgo},
+			managers:       []string{agent.ManagerArgoCD, agent.ManagerKubectlEdit},
+			wantContested:  true,
+			wantCategories: []string{agent.WriterCategoryController, agent.WriterCategoryInteractive},
+		},
+		{
+			name:           "two distinct agents",
+			owner:          agent.Ownership{Type: agent.OwnerKubernetes},
+			managers:       []string{"agent/claude-code", "agent/codex"},
+			wantContested:  true,
+			wantCategories: []string{"agent/claude-code", "agent/codex"},
+		},
+		{
+			name:           "single controller",
+			owner:          agent.Ownership{Type: agent.OwnerFlux},
+			managers:       []string{agent.ManagerFluxKustomize},
+			wantContested:  false,
+			wantCategories: []string{agent.WriterCategoryController},
+		},
+		{
+			name:           "single unknown",
+			owner:          agent.Ownership{Type: agent.OwnerFlux},
+			managers:       []string{"vendor-writer"},
+			wantContested:  false,
+			wantCategories: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var entries []metav1.ManagedFieldsEntry
+			for _, m := range tc.managers {
+				entries = append(entries, fieldEntry(m, fieldJSON))
+			}
+			obj := fieldObject(entries...)
+			result := fieldAttributionSummary(obj, tc.owner, `.spec.replicas`)
+			if result.Contention == nil {
+				t.Fatalf("expected Contention to be populated for --field-path")
+			}
+			if result.Contention.Contested != tc.wantContested {
+				t.Fatalf("Contention.Contested = %v, want %v (got %+v)", result.Contention.Contested, tc.wantContested, result.Contention)
+			}
+			if len(result.Contention.Categories) != len(tc.wantCategories) {
+				t.Fatalf("Contention.Categories = %v, want %v", result.Contention.Categories, tc.wantCategories)
+			}
+			for i := range tc.wantCategories {
+				if result.Contention.Categories[i] != tc.wantCategories[i] {
+					t.Fatalf("Contention.Categories[%d] = %q, want %q", i, result.Contention.Categories[i], tc.wantCategories[i])
+				}
+			}
+		})
+	}
+}
+
+func TestFieldAttributionContentionRendersInTextAndMarkdown(t *testing.T) {
+	summary := ExplainSummary{
+		Resource: "Deployment/checkout", Namespace: "shop", Owner: "Flux", Source: "recorded",
+		Health: "Unknown", Risks: "None", Drift: "Unknown",
+		FieldAttribution: &FieldAttributionSummary{
+			Path:     `.spec.replicas`,
+			Cause:    agent.CauseUnknown,
+			Managers: []string{"agent/remediator", agent.ManagerFluxKustomize},
+			Contention: &agent.FieldContention{
+				Contested:  true,
+				Writers:    []string{"agent/remediator", agent.ManagerFluxKustomize},
+				Categories: []string{"agent/remediator", agent.WriterCategoryController},
+				Reason:     "multiple writer classes claim this field: agent/remediator, controller",
+			},
+		},
+	}
+	for name, output := range map[string]string{
+		"text": renderExplainText(summary, PresentationHuman, false, HintContext{Mode: HintModeDefault}),
+		"md":   renderExplainMarkdown(summary, PresentationHuman, false, HintContext{Mode: HintModeDefault}),
+	} {
+		output = ansi.Strip(output)
+		if !strings.Contains(output, "contested") || !strings.Contains(output, "agent/remediator") {
+			t.Errorf("%s omitted contention details: %s", name, output)
+		}
+	}
+}

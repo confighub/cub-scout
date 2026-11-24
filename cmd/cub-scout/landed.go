@@ -35,6 +35,7 @@ var (
 	landedWait         time.Duration
 	landedPollInterval time.Duration
 	landedFormat       string
+	landedIfUnchanged  string
 )
 
 var landedCmd = &cobra.Command{
@@ -73,6 +74,7 @@ func init() {
 	landedCmd.Flags().DurationVar(&landedWait, "wait", 0, "Bounded read-only wait duration until settled (default: 0s, max: 5m)")
 	landedCmd.Flags().DurationVar(&landedPollInterval, "poll-interval", agent.DefaultLandingPollInterval, "Interval between bounded-wait polls (default: 5s, min: 2s)")
 	landedCmd.Flags().StringVar(&landedFormat, "format", "ascii", "Output format: ascii, json, md")
+	landedCmd.Flags().StringVar(&landedIfUnchanged, "if-unchanged", "", "JSON only: return a compact unchanged envelope when the answer fingerprint matches this hash")
 }
 
 // landedOutput is the JSON document emitted by `cub scout landed --format json`
@@ -85,6 +87,7 @@ type landedOutput struct {
 	BrokenLink  *agent.LandingBrokenLink  `json:"brokenLink,omitempty"`
 	Convergence *agent.LandingConvergence `json:"convergence,omitempty"`
 	Wait        *agent.LandingWait        `json:"wait,omitempty"`
+	Fingerprint string                    `json:"fingerprint,omitempty"`
 	Answer      *mapsvc.Answer            `json:"answer"`
 }
 
@@ -200,6 +203,9 @@ func runLanded(cmd *cobra.Command, args []string) error {
 	if format != "ascii" && format != "json" && format != "md" {
 		return fmt.Errorf("unsupported format %q (supported: ascii, json, md)", landedFormat)
 	}
+	if strings.TrimSpace(landedIfUnchanged) != "" && format != "json" {
+		return fmt.Errorf("--if-unchanged applies to JSON output; pass --format json")
+	}
 
 	target, err := parseLandedTarget(args, landedNamespace)
 	if err != nil {
@@ -236,13 +242,13 @@ func runLanded(cmd *cobra.Command, args []string) error {
 			snap := agent.LandingSnapshot{Target: target, ObservedAt: time.Now().UTC()}
 			eval := agent.EvaluateLanding(anchor, snap)
 			out := buildLandedOutput(eval, nil)
-			return renderLandedOutput(os.Stdout, out, format)
+			return renderLandedOutputWithDelta(os.Stdout, out, format, landedIfUnchanged)
 		}
 		store := recordedLandingStore{objects: snapshot.Objects}
 		snap := fetchLandingSnapshotFromStore(ctx, store, "", target)
 		eval := agent.EvaluateLanding(anchor, snap)
 		out := buildLandedOutput(eval, nil)
-		return renderLandedOutput(os.Stdout, out, format)
+		return renderLandedOutputWithDelta(os.Stdout, out, format, landedIfUnchanged)
 	}
 
 	// If no anchor was supplied, return not-observable without touching the cluster.
@@ -250,7 +256,7 @@ func runLanded(cmd *cobra.Command, args []string) error {
 		snap := agent.LandingSnapshot{Context: selection.name, Target: target, ObservedAt: time.Now().UTC()}
 		eval := agent.EvaluateLanding(anchor, snap)
 		out := buildLandedOutput(eval, nil)
-		return renderLandedOutput(os.Stdout, out, format)
+		return renderLandedOutputWithDelta(os.Stdout, out, format, landedIfUnchanged)
 	}
 
 	session, sessErr := newLandedSessionForSelection(selection)
@@ -264,7 +270,7 @@ func runLanded(cmd *cobra.Command, args []string) error {
 		}
 		eval := agent.EvaluateLanding(anchor, snap)
 		out := buildLandedOutput(eval, nil)
-		return renderLandedOutput(os.Stdout, out, format)
+		return renderLandedOutputWithDelta(os.Stdout, out, format, landedIfUnchanged)
 	}
 
 	dynClient, err := session.dynamicClient()
@@ -290,7 +296,7 @@ func runLanded(cmd *cobra.Command, args []string) error {
 		cost = &measured
 	}
 	out := buildLandedOutput(eval, cost)
-	return renderLandedOutput(os.Stdout, out, format)
+	return renderLandedOutputWithDelta(os.Stdout, out, format, landedIfUnchanged)
 }
 
 type landingObjectStore interface {
@@ -669,6 +675,7 @@ func fetchHelmLandingLink(ctx context.Context, store landingObjectStore, targetN
 }
 
 func buildLandedOutput(eval agent.LandingEvaluation, cost *agent.KubernetesReadCost) landedOutput {
+	ans := buildLandingAnswer(eval, cost)
 	return landedOutput{
 		Context:     eval.Snapshot.Context,
 		Target:      eval.Snapshot.Target,
@@ -677,7 +684,8 @@ func buildLandedOutput(eval agent.LandingEvaluation, cost *agent.KubernetesReadC
 		BrokenLink:  eval.BrokenLink,
 		Convergence: eval.Convergence,
 		Wait:        eval.Wait,
-		Answer:      buildLandingAnswer(eval, cost),
+		Fingerprint: computeAnswerFingerprint(ans),
+		Answer:      ans,
 	}
 }
 
@@ -790,8 +798,22 @@ func buildLandingAnswer(eval agent.LandingEvaluation, cost *agent.KubernetesRead
 }
 
 func renderLandedOutput(w io.Writer, out landedOutput, format string) error {
+	return renderLandedOutputWithDelta(w, out, format, "")
+}
+
+func renderLandedOutputWithDelta(w io.Writer, out landedOutput, format, ifUnchanged string) error {
 	switch format {
 	case "json":
+		if out.Fingerprint == "" && out.Answer != nil {
+			out.Fingerprint = computeAnswerFingerprint(out.Answer)
+		}
+		if matchesIfUnchanged(ifUnchanged, out.Fingerprint) {
+			observedAt := ""
+			if out.Answer != nil {
+				observedAt = out.Answer.ObservedAt
+			}
+			return writeUnchangedEnvelope(w, out.Fingerprint, observedAt)
+		}
 		enc := json.NewEncoder(w)
 		enc.SetIndent("", "  ")
 		enc.SetEscapeHTML(false)

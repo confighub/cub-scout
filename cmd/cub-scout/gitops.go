@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/confighub/cub-scout/v3/internal/mapsvc"
+	"io"
 	"os"
 	"sort"
 	"strings"
@@ -27,6 +28,7 @@ var (
 	gitopsKubeContext string
 	gitopsFormat      string
 	gitopsView        string
+	gitopsIfUnchanged string
 	gitopsTUI         bool
 
 	gitopsWithConfigHub       bool
@@ -110,6 +112,7 @@ func init() {
 	gitopsStatusCmd.Flags().StringVar(&gitopsKubeContext, "kube-context", "", "Kubernetes context to inspect (default: current context)")
 	gitopsStatusCmd.Flags().StringVar(&gitopsFormat, "format", "ascii", "Output format: ascii, json, md")
 	gitopsStatusCmd.Flags().StringVar(&gitopsView, "view", gitopsStatusViewAll, "JSON only: all (default) or summary (compact, omits per-deployer and per-source lists)")
+	gitopsStatusCmd.Flags().StringVar(&gitopsIfUnchanged, "if-unchanged", "", "JSON only: return a compact unchanged envelope when the answer fingerprint matches this hash")
 	gitopsStatusCmd.Flags().BoolVar(&gitopsTUI, "tui", false, "View this GitOps status snapshot in a scrollable terminal viewport")
 	rejectRemovedFlags(gitopsStatusCmd, map[string]string{
 		"json": "use --format json instead",
@@ -156,6 +159,10 @@ type GitOpsSummary struct {
 
 	// DeliveryEvidence is optional connected evidence from ConfigHub and event consumers.
 	DeliveryEvidence *GitOpsDeliveryEvidence `json:"deliveryEvidence,omitempty"`
+
+	// Fingerprint is a deterministic hash of Answer (excluding observedAt and cost)
+	// for --if-unchanged delta polling.
+	Fingerprint string `json:"fingerprint,omitempty"`
 
 	// Answer is the common envelope (docs/proposals/answer-envelope.md):
 	// state settled, converging, failing, no-deployers or not-observable.
@@ -330,6 +337,14 @@ func runGitOpsStatus(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	if strings.TrimSpace(gitopsIfUnchanged) != "" {
+		if gitopsTUI {
+			return fmt.Errorf("--tui cannot be combined with --if-unchanged")
+		}
+		if format != "json" {
+			return fmt.Errorf("--if-unchanged applies to JSON output; pass --format json")
+		}
+	}
 	evidenceOptions, err := gitOpsDeliveryEvidenceOptionsFromFlags(ctx)
 	if err != nil {
 		return err
@@ -400,7 +415,7 @@ func runGitOpsStatus(cmd *cobra.Command, args []string) error {
 	// Output
 	switch format {
 	case "json":
-		return outputGitOpsStatusJSON(projectGitOpsStatusView(summary, view))
+		return writeGitOpsStatusJSON(os.Stdout, projectGitOpsStatusView(summary, view), gitopsIfUnchanged)
 	case "md":
 		return outputGitOpsStatusMarkdown(summary)
 	default:
@@ -1066,7 +1081,21 @@ func runtimeIssueOrder(reason string) int {
 
 // outputGitOpsStatusJSON outputs the summary as JSON
 func outputGitOpsStatusJSON(summary GitOpsSummary) error {
-	enc := json.NewEncoder(os.Stdout)
+	return writeGitOpsStatusJSON(os.Stdout, summary, "")
+}
+
+func writeGitOpsStatusJSON(w io.Writer, summary GitOpsSummary, ifUnchanged string) error {
+	if summary.Fingerprint == "" && summary.Answer != nil {
+		summary.Fingerprint = computeAnswerFingerprint(summary.Answer)
+	}
+	if matchesIfUnchanged(ifUnchanged, summary.Fingerprint) {
+		observedAt := ""
+		if summary.Answer != nil {
+			observedAt = summary.Answer.ObservedAt
+		}
+		return writeUnchangedEnvelope(w, summary.Fingerprint, observedAt)
+	}
+	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	return enc.Encode(summary)
 }
@@ -1475,7 +1504,7 @@ func loadAndRenderGitOpsStatusFromJSON(path, format, view string) error {
 	summary.Answer = buildGitOpsStatusAnswer(summary, time.Now(), nil)
 	switch format {
 	case "json":
-		return outputGitOpsStatusJSON(projectGitOpsStatusView(summary, view))
+		return writeGitOpsStatusJSON(os.Stdout, projectGitOpsStatusView(summary, view), gitopsIfUnchanged)
 	case "md":
 		return outputGitOpsStatusMarkdown(summary)
 	default:
