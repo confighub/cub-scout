@@ -1279,31 +1279,34 @@ Passing `--view summary` with `--format json` (or `view: "summary"` on MCP
 
 ### Landed Answer (since v3.0)
 
-`cub scout landed <kind/name> -n <ns> --revision <rev>|--digest <sha>|--image <ref> --format json`
+`cub scout landed <kind/name> -n <ns> --revision <sha>|--digest <sha256:...>|--unit-revision <rev> --format json`
 (and the standalone MCP tool `landed`) carries a top-level `answer` block beside
-its structured landing evidence (`target`, `anchor`, `owner`, `broken_link`,
-`recheck_after_seconds`, `wait`, `links[]`, `observed_at`).
+its structured landing evidence (`target`, `owner`, `anchor`, `brokenLink`,
+`convergence`, `wait`).
 
 | `state` | `reason` | When |
 |---|---|---|
-| `landed` | `revision-verified-on-workload` | Every link in the delivery chain is ready and carries the exact expected anchor (revision, OCI digest, or container image) |
-| `converging` | `controller-reconciling` | The deployer is progressing or on another revision while reconciling; `recheck_after_seconds` says when to look again |
-| `converging` | `workload-rolling-out` | The deployer applied the expected anchor, and the workload rollout is still in progress |
-| `not-landed` | `source-failed` | The source object reports a failure |
-| `not-landed` | `deployer-failed` | The deployer reports a failure |
-| `not-landed` | `deployer-suspended` | The deployer is suspended (Flux `spec.suspend: true`) |
-| `not-landed` | `workload-on-different-revision` | Settled deployer or workload reports a different revision/digest/image than requested |
-| `not-landed` | `workload-unhealthy` | The workload is not ready and not progressing |
-| `not-observable` | `target-not-read` | Target object could not be read (or RBAC denied) |
-| `not-observable` | `no-owner-marker` | Target carries no recognized GitOps owner marker |
-| `not-observable` | `controller-not-read` | Deployer or source object could not be read |
+| `landed` | `revision-and-workload-converged` | Every link in the delivery chain is ready and carries the exact expected Git SHA or unit revision, and the workload is ready |
+| `landed` | `digest-and-workload-converged` | Every link in the delivery chain is ready and carries the exact expected OCI digest, and the workload is ready |
+| `converging` | `source-fetching` | Source object is still fetching or progressing |
+| `converging` | `controller-reconciling` | Deployer controller is actively reconciling |
+| `converging` | `controller-on-prior-revision` | Source holds the new revision while deployer is still on a prior revision |
+| `converging` | `workload-rolling-out` | Deployer applied the expected anchor, and the workload rollout is still in progress |
+| `not-landed` | `source-error` | Source object reports a failure (`brokenLink.stage: "source"`) |
+| `not-landed` | `controller-reconcile-failed` | Deployer reports a reconcile failure (`brokenLink.stage: "deployer"`) |
+| `not-landed` | `controller-settled-other-revision` | Settled deployer reports a different revision or digest than requested |
+| `not-landed` | `workload-failed` | Workload is unhealthy / failed (`brokenLink.stage: "workload"`) |
+| `not-observable` | `no-anchor-supplied` | Neither `--revision`, `--digest`, nor `--unit-revision` was supplied |
+| `not-observable` | `target-not-found` | Target workload was not found in the namespace |
+| `not-observable` | `no-owner-marker-recognised` | Target carries no recognized GitOps owner marker |
 | `not-observable` | `unsupported-controller` | First slice covers Flux and Argo CD; other controllers return `not-observable` |
-| `not-observable` | `anchor-not-comparable` | Observed evidence cannot be compared against the requested anchor |
+| `not-observable` | `read-denied` | Kubernetes RBAC denied reading the target or its delivery chain |
+| `not-observable` | `cluster-unreachable` | Cluster could not be reached |
 
 Bounded read-only wait (`--wait`, default `0s`, CLI max `5m`, MCP max `60s`, poll
 interval `5s`, min `2s`) re-reads until the state leaves `converging` or the
-deadline expires, and records `wait.requested`, `wait.elapsed_ms`, `wait.polls`,
-and `wait.settled`. The `answer` block is bounded under 700 bytes in CI.
+deadline expires, and records `wait.requestedSeconds`, `wait.elapsedMillis`,
+`wait.polls`, and `wait.settled`. The `answer` block is bounded under 700 bytes in CI.
 
 ## GitOps Controller Coverage Contract
 
