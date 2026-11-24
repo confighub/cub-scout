@@ -76,6 +76,12 @@ for name in v4-labelled v4-bare v3-labelled v3-bare copied relabelled; do
   "$scout" explain "Deployment/$name" -n "$ns" --format json > "$out/explain-$name.json" 2> "$out/explain-$name.stderr" || true
 done
 
+# Prove cub scout landed on real Helm 4 and Helm 3 releases (positive + negative controls).
+for name in v4-labelled v3-labelled; do
+  "$scout" landed "deployment/$name" -n "$ns" --revision 1 --format json > "$out/landed-$name-ok.json"
+  "$scout" landed "deployment/$name" -n "$ns" --revision 99 --format json > "$out/landed-$name-wrong.json"
+done
+
 python3 - "$out" <<'PY'
 import json, sys
 out = sys.argv[1]
@@ -113,6 +119,16 @@ for name in ["v4-labelled", "v4-bare", "v3-labelled", "v3-bare", "copied", "rela
         roles = {(l.get("id") or {}).get("kind"): l.get("role") for l in trace.get("chain") or []}
         if roles.get("HelmChart") != "intermediate" or roles.get("Release") != "deployer":
             bad.append("%s: chain roles %s, want HelmChart intermediate and Release deployer" % (name, roles))
+for name in ["v4-labelled", "v3-labelled"]:
+    ok_doc = json.load(open("%s/landed-%s-ok.json" % (out, name)))
+    wrong_doc = json.load(open("%s/landed-%s-wrong.json" % (out, name)))
+    ok_state = (ok_doc.get("answer") or {}).get("state")
+    wrong_state = (wrong_doc.get("answer") or {}).get("state")
+    lines.append("%s: landed(--revision 1)=%s, landed(--revision 99)=%s" % (name, ok_state, wrong_state))
+    if ok_state != "landed":
+        bad.append("%s: landed --revision 1 state %s, want landed" % (name, ok_state))
+    if wrong_state != "not-landed":
+        bad.append("%s: landed --revision 99 state %s, want not-landed" % (name, wrong_state))
 open(out + "/summary.txt", "w").write("\n".join(lines) + "\n")
 print("\n".join(lines))
 if bad:
