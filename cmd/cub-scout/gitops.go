@@ -25,7 +25,6 @@ import (
 var (
 	gitopsNamespace   string
 	gitopsKubeContext string
-	gitopsJSON        bool
 	gitopsFormat      string
 	gitopsTUI         bool
 
@@ -105,8 +104,9 @@ func init() {
 	gitopsStatusCmd.Flags().StringVar(&gitopsKubeContext, "kube-context", "", "Kubernetes context to inspect (default: current context)")
 	gitopsStatusCmd.Flags().StringVar(&gitopsFormat, "format", "ascii", "Output format: ascii, json, md")
 	gitopsStatusCmd.Flags().BoolVar(&gitopsTUI, "tui", false, "View this GitOps status snapshot in a scrollable terminal viewport")
-	gitopsStatusCmd.Flags().BoolVar(&gitopsJSON, "json", false, "Output as JSON (shorthand for --format json)")
-	_ = gitopsStatusCmd.Flags().MarkDeprecated("json", "use --format json instead; --json is removed in 3.0")
+	rejectRemovedFlags(gitopsStatusCmd, map[string]string{
+		"json": "use --format json instead",
+	})
 	gitopsStatusCmd.Flags().BoolVar(&gitopsWithConfigHub, "with-confighub", false, "Include bounded ConfigHub release and live-status evidence")
 	gitopsStatusCmd.Flags().StringVar(&gitopsConfigHubSpace, "confighub-space", "", "ConfigHub space for connected evidence (default: CUB_SPACE; use '*' explicitly for all spaces)")
 	gitopsStatusCmd.Flags().StringVar(&gitopsConfigHubSince, "confighub-since", "24h", "Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w)")
@@ -312,11 +312,11 @@ func runGitOpsStatus(cmd *cobra.Command, args []string) error {
 	if selection.explicit && os.Getenv("CUB_SCOUT_TEST_GITOPS_JSON") != "" {
 		return fmt.Errorf("--kube-context applies only to live GitOps status; it cannot be combined with CUB_SCOUT_TEST_GITOPS_JSON")
 	}
-	format, err := normalizeGitOpsStatusFormat(gitopsFormat, gitopsJSON)
+	format, err := normalizeGitOpsStatusFormat(gitopsFormat, false)
 	if err != nil {
 		return err
 	}
-	if err := validateGitOpsTUIFormat(gitopsTUI, cmd.Flags().Changed("format"), cmd.Flags().Changed("json")); err != nil {
+	if err := validateGitOpsTUIFormat(gitopsTUI, cmd.Flags().Changed("format"), false); err != nil {
 		return err
 	}
 	evidenceOptions, err := gitOpsDeliveryEvidenceOptionsFromFlags(ctx)

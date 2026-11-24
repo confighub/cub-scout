@@ -21,7 +21,6 @@ import (
 )
 
 var (
-	treeJSON      bool   // deprecated: use --format json
 	treeFormat    string // output format: ascii, json
 	treeNamespace string
 	treeAll       bool
@@ -84,16 +83,15 @@ func init() {
 
 	treeCmd.Flags().String("kube-context", "", "Explicit Kubernetes context for cluster views (no fallback)")
 	treeCmd.Flags().StringVar(&treeFormat, "format", "ascii", "Output format: ascii, json, md")
-	treeCmd.Flags().BoolVar(&treeJSON, "json", false, "Output as JSON (deprecated: use --format json)")
+	rejectRemovedFlags(treeCmd, map[string]string{
+		"json": "use --format json instead",
+	})
 	treeCmd.Flags().StringVarP(&treeNamespace, "namespace", "n", "", "Filter by namespace")
 	treeCmd.Flags().BoolVarP(&treeAll, "all", "A", false, "Show all resources including system namespaces")
 	treeCmd.Flags().StringVar(&treeSpace, "space", "", "ConfigHub space for the 'config' view; '*' for every space (default: CUB_SPACE)")
 	treeCmd.Flags().StringVar(&treeEdge, "edge", "clone", "Edge type for 'config' view: clone (inheritance) or link (dependencies)")
 	treeCmd.Flags().StringVar(&treeOwner, "owner", "", "Filter by owner: Flux, ArgoCD, Sveltos, Modelplane, Crossplane, kro, Helm, ConfigHub, Native")
 	treeCmd.Flags().IntVar(&treeDepth, "depth", 0, "Limit tree depth (0 = unlimited)")
-
-	// Mark --json as deprecated
-	_ = treeCmd.Flags().MarkDeprecated("json", "use --format json instead; --json is removed in 3.0")
 }
 
 func runTree(cmd *cobra.Command, args []string) error {
@@ -354,7 +352,7 @@ func runTreeRuntime(ctx context.Context) error {
 		return trees[i].Name < trees[j].Name
 	})
 
-	if treeJSON {
+	if strings.EqualFold(strings.TrimSpace(treeFormat), "json") {
 		return json.NewEncoder(os.Stdout).Encode(trees)
 	}
 
@@ -417,9 +415,6 @@ func loadAndRenderTreeFromJSON(path string) error {
 
 	// Resolve effective format
 	effectiveFormat := treeFormat
-	if treeJSON && effectiveFormat == "ascii" {
-		effectiveFormat = "json"
-	}
 
 	switch effectiveFormat {
 	case "json":
@@ -500,9 +495,6 @@ func loadAndRenderTreeFromJSON(path string) error {
 func runTreeOwnership(ctx context.Context) error {
 	// Resolve effective format (--format takes precedence over deprecated --json)
 	effectiveFormat := treeFormat
-	if treeJSON && effectiveFormat == "ascii" {
-		effectiveFormat = "json"
-	}
 
 	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
@@ -690,7 +682,7 @@ func runTreeWorkloads(ctx context.Context) error {
 }
 
 func runTreeGit(ctx context.Context) error {
-	jsonOutput := treeJSON || strings.EqualFold(treeFormat, "json")
+	jsonOutput := strings.EqualFold(treeFormat, "json")
 	cfg, err := treeClusterConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to build config: %w", err)
@@ -1182,7 +1174,7 @@ func runTreePatterns(ctx context.Context) error {
 func runTreeConfig() error {
 	// `cub unit tree` prints a text tree whatever output flag it is given, and
 	// this view prints a header around it, so there is no JSON to return.
-	if treeJSON || strings.EqualFold(strings.TrimSpace(treeFormat), "json") {
+	if strings.EqualFold(strings.TrimSpace(treeFormat), "json") {
 		return fmt.Errorf("tree config has no JSON output: it shows `cub unit tree`, which prints text only")
 	}
 
@@ -1332,7 +1324,7 @@ func runTreeSuggest(ctx context.Context) error {
 		})
 	}
 
-	if treeJSON {
+	if strings.EqualFold(strings.TrimSpace(treeFormat), "json") {
 		suggestion := SuggestAppStructure(workloads, treeSpace)
 		return json.NewEncoder(os.Stdout).Encode(suggestion)
 	}

@@ -222,10 +222,6 @@ func TestTheUngatedCommandsAskTheGate(t *testing.T) {
 	require.ErrorIs(t, err, errConfigHubUnavailable)
 	require.ErrorContains(t, err, "map fleet needs ConfigHub")
 
-	_, err = loadFleetOutlierUnits("space")
-	require.ErrorIs(t, err, errFleetOutliersNotConnected)
-	require.ErrorIs(t, err, refusal, "the gate's reason is kept")
-
 	// import --json: the proposal stands as it is, with no lookup.
 	looked := 0
 	prevLookup := listUnitSlugsForSpace

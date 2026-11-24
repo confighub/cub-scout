@@ -20,15 +20,15 @@ import (
 func prepareTraceSelectionTest(t *testing.T) {
 	t.Helper()
 	oldNS, oldFormat, oldApp, oldPresentation := traceNamespace, traceFormat, traceApp, tracePresentation
-	oldJSON, oldReverse, oldDiff, oldArtifacts, oldConnected := traceJSON, traceReverse, traceDiff, traceArtifacts, traceWithConfigHub
+	oldReverse, oldDiff, oldArtifacts, oldConnected := traceReverse, traceDiff, traceArtifacts, traceWithConfigHub
 	oldDesiredFile, oldAPIVersion := traceDesiredFile, traceAPIVersion
 	t.Cleanup(func() {
 		traceNamespace, traceFormat, traceApp, tracePresentation = oldNS, oldFormat, oldApp, oldPresentation
-		traceJSON, traceReverse, traceDiff, traceArtifacts, traceWithConfigHub = oldJSON, oldReverse, oldDiff, oldArtifacts, oldConnected
+		traceReverse, traceDiff, traceArtifacts, traceWithConfigHub = oldReverse, oldDiff, oldArtifacts, oldConnected
 		traceDesiredFile, traceAPIVersion = oldDesiredFile, oldAPIVersion
 	})
 	traceNamespace, traceFormat, traceApp, tracePresentation = "delivery", "json", "api", ""
-	traceJSON, traceReverse, traceDiff, traceArtifacts, traceWithConfigHub = false, false, false, false, false
+	traceReverse, traceDiff, traceArtifacts, traceWithConfigHub = false, false, false, false
 	traceDesiredFile, traceAPIVersion = "", ""
 	t.Setenv("CUB_SCOUT_TEST_TRACE_JSON", "")
 	t.Setenv("CUB_SCOUT_TEST_TRACE_ARTIFACTS_JSON", "")

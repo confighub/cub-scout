@@ -248,18 +248,13 @@ func parseGoFilesIncludingTests(t *testing.T, dirs ...string) (*token.FileSet, m
 }
 
 func TestTreeConfigRefusesJSON(t *testing.T) {
-	prevJSON, prevFormat := treeJSON, treeFormat
-	t.Cleanup(func() { treeJSON, treeFormat = prevJSON, prevFormat })
+	prevFormat := treeFormat
+	t.Cleanup(func() { treeFormat = prevFormat })
 	stubSpaceInputs(t, "platform")
 
-	for _, set := range []func(){
-		func() { treeJSON, treeFormat = true, "ascii" },
-		func() { treeJSON, treeFormat = false, "json" },
-	} {
-		set()
-		err := runTreeConfig()
-		if err == nil || !strings.Contains(err.Error(), "tree config has no JSON output") {
-			t.Fatalf("err = %v, want JSON refused", err)
-		}
+	treeFormat = "json"
+	err := runTreeConfig()
+	if err == nil || !strings.Contains(err.Error(), "tree config has no JSON output") {
+		t.Fatalf("err = %v, want JSON refused", err)
 	}
 }

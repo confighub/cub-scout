@@ -442,127 +442,6 @@ func TestGitOpsDeliverySpace_ReportsItsSource(t *testing.T) {
 	}
 }
 
-// fleet outliers reads exactly one space, named on the cub command line, and
-// refuses every-space.
-func TestFleetOutliers_ReadsExactlyOneNamedSpace(t *testing.T) {
-	oldLoader, oldSpace, oldFormat := loadFleetOutlierUnitsFn, fleetOutliersSpace, fleetOutliersFormat
-	t.Cleanup(func() {
-		loadFleetOutlierUnitsFn, fleetOutliersSpace, fleetOutliersFormat = oldLoader, oldSpace, oldFormat
-	})
-	fleetOutliersFormat = "json"
-
-	var asked []string
-	loadFleetOutlierUnitsFn = func(space string) ([]fleetUnitSnapshot, error) {
-		asked = append(asked, space)
-		// What one ConfigHub space can hold: unit slugs are unique, and each
-		// unit has one target.
-		return []fleetUnitSnapshot{
-			{UnitSlug: "api", Cluster: "cluster-a", Revision: 3, Space: space},
-			{UnitSlug: "worker", Cluster: "cluster-b", Revision: 7, Space: space},
-		}, nil
-	}
-
-	stubSpaceInputs(t, "from-env")
-	fleetOutliersSpace = ""
-	out := captureStdout(t, func() {
-		if err := runFleetOutliers(nil, nil); err != nil {
-			t.Fatal(err)
-		}
-	})
-	var report fleetOutlierReport
-	if err := json.Unmarshal([]byte(out), &report); err != nil {
-		t.Fatalf("parse %q: %v", out, err)
-	}
-	if report.Scope.Space != "from-env" || report.Scope.SpaceSource != spaceSourceEnv {
-		t.Fatalf("scope = %+v, want from-env from CUB_SPACE", report.Scope)
-	}
-	// Neither unit is on two clusters, so nothing was compared. Reporting each
-	// cluster as missing the other's unit, or as consistent, would both be false.
-	if report.Summary.ComparedUnitCount != 0 || report.Summary.OutlierClusterCount != 0 || len(report.Notes) != 1 {
-		t.Fatalf("report = %+v, want nothing compared and a note saying so", report)
-	}
-
-	fleetOutliersSpace = "prod"
-	captureStdout(t, func() {
-		if err := runFleetOutliers(nil, nil); err != nil {
-			t.Fatal(err)
-		}
-	})
-	if strings.Join(asked, ",") != "from-env,prod" {
-		t.Fatalf("spaces passed to cub = %v, want [from-env prod]", asked)
-	}
-
-	asked = nil
-	fleetOutliersSpace = "*"
-	if err := runFleetOutliers(nil, nil); err == nil || !strings.Contains(err.Error(), "reads one ConfigHub space") {
-		t.Fatalf("err = %v, want every-space refused", err)
-	}
-	stubSpaceInputs(t, "")
-	fleetOutliersSpace = ""
-	if err := runFleetOutliers(nil, nil); err == nil || !strings.Contains(err.Error(), "--space <slug>") {
-		t.Fatalf("err = %v, want a refusal when no space is given anywhere", err)
-	}
-	if asked != nil {
-		t.Fatalf("cub was asked for %v although the command refused", asked)
-	}
-}
-
-// A failure reading the space is reported as what it is. It used to be
-// reported as "Run: cub auth login" whatever cub said.
-func TestFleetOutliers_ReportsWhyTheReadFailed(t *testing.T) {
-	oldLoader, oldSpace := loadFleetOutlierUnitsFn, fleetOutliersSpace
-	t.Cleanup(func() { loadFleetOutlierUnitsFn, fleetOutliersSpace = oldLoader, oldSpace })
-	stubSpaceInputs(t, "")
-	fleetOutliersSpace = "no-such-space"
-	loadFleetOutlierUnitsFn = func(space string) ([]fleetUnitSnapshot, error) {
-		return nil, errors.New(`cub unit list -o json --quiet --space no-such-space failed: space "no-such-space" not found`)
-	}
-	err := runFleetOutliers(nil, nil)
-	if err == nil || !strings.Contains(err.Error(), `space "no-such-space" not found`) || strings.Contains(err.Error(), "cub auth login") {
-		t.Fatalf("err = %v, want cub's reason and no login advice", err)
-	}
-}
-
-func TestBuildFleetOutlierReport_UnitsOnOneClusterAreNotCompared(t *testing.T) {
-	report, err := buildFleetOutlierReport([]fleetUnitSnapshot{
-		{UnitSlug: "api", Cluster: "cluster-a", Revision: 4},
-		{UnitSlug: "api", Cluster: "cluster-b", Revision: 3},
-		{UnitSlug: "only-on-a", Cluster: "cluster-a", Revision: 1},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if report.Summary.ComparedUnitCount != 1 {
-		t.Fatalf("compared units = %d, want 1 (api)", report.Summary.ComparedUnitCount)
-	}
-	for _, finding := range report.ByCluster["cluster-b"].Outliers {
-		if finding.Unit == "only-on-a" {
-			t.Fatalf("cluster-b reported missing %q, a unit only one cluster has", finding.Unit)
-		}
-	}
-	if len(report.Notes) != 0 {
-		t.Fatalf("notes = %v, want none when a unit was compared", report.Notes)
-	}
-	if ascii := renderFleetOutliersASCII(report); strings.Contains(ascii, "Not compared") {
-		t.Fatalf("ascii output says nothing was compared:\n%s", ascii)
-	}
-
-	nothing, err := buildFleetOutlierReport([]fleetUnitSnapshot{
-		{UnitSlug: "api", Cluster: "cluster-a", Revision: 4},
-		{UnitSlug: "worker", Cluster: "cluster-b", Revision: 3},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	ascii := renderFleetOutliersASCII(nothing)
-	if !strings.Contains(ascii, "Not compared") || strings.Contains(ascii, "consistent") || strings.Contains(ascii, "Missing") {
-		t.Fatalf("ascii output must say nothing was compared, without calling a cluster consistent or missing a unit:\n%s", ascii)
-	}
-	if md := renderFleetOutliersMarkdown(nothing); !strings.Contains(md, "Compared units: `0`") || strings.Contains(md, "consistent") {
-		t.Fatalf("markdown output:\n%s", md)
-	}
-}
-
 func TestMapFleetSpace(t *testing.T) {
 	stubSpaceInputs(t, "")
 	if got := mapFleetSpace(""); got.Slug != allConfigHubSpaces || got.Source != spaceSourceCommandDefault {
@@ -590,20 +469,20 @@ func TestConnectedCommandsNameTheirSpaceAgainstARecordingCub(t *testing.T) {
 
 	prevHistoryRequire, prevAuditRequire := requireHistoryConnectedFn, requireAuditConnectedFn
 	prevHistoryNav := resolveHistoryNavigationFn
-	prevHistorySpace, prevAuditSpace, prevTreeSpace, prevFleetSpace, prevImpactSpace, prevMapFleetSpace :=
-		historySpace, auditListSpace, treeSpace, fleetOutliersSpace, impactSpace, fleetSpace
-	prevHistoryFormat, prevAuditFormat, prevFleetFormat, prevImpactFormat := historyFormat, auditListFormat, fleetOutliersFormat, impactFormat
+	prevHistorySpace, prevAuditSpace, prevTreeSpace, prevImpactSpace, prevMapFleetSpace :=
+		historySpace, auditListSpace, treeSpace, impactSpace, fleetSpace
+	prevHistoryFormat, prevAuditFormat, prevImpactFormat := historyFormat, auditListFormat, impactFormat
 	t.Cleanup(func() {
 		requireHistoryConnectedFn, requireAuditConnectedFn = prevHistoryRequire, prevAuditRequire
 		resolveHistoryNavigationFn = prevHistoryNav
-		historySpace, auditListSpace, treeSpace, fleetOutliersSpace, impactSpace, fleetSpace =
-			prevHistorySpace, prevAuditSpace, prevTreeSpace, prevFleetSpace, prevImpactSpace, prevMapFleetSpace
-		historyFormat, auditListFormat, fleetOutliersFormat, impactFormat = prevHistoryFormat, prevAuditFormat, prevFleetFormat, prevImpactFormat
+		historySpace, auditListSpace, treeSpace, impactSpace, fleetSpace =
+			prevHistorySpace, prevAuditSpace, prevTreeSpace, prevImpactSpace, prevMapFleetSpace
+		historyFormat, auditListFormat, impactFormat = prevHistoryFormat, prevAuditFormat, prevImpactFormat
 	})
 	requireHistoryConnectedFn = func() error { return nil }
 	requireAuditConnectedFn = func() error { return nil }
 	resolveHistoryNavigationFn = func(ctx context.Context, q historyQuery) historyNavigation { return historyNavigation{} }
-	historyFormat, auditListFormat, fleetOutliersFormat, impactFormat = "json", "json", "json", "json"
+	historyFormat, auditListFormat, impactFormat = "json", "json", "json"
 	historyCmd.SetContext(context.Background())
 	auditListCmd.SetContext(context.Background())
 
@@ -621,8 +500,6 @@ func TestConnectedCommandsNameTheirSpaceAgainstARecordingCub(t *testing.T) {
 			run: func() error { return runAuditList(auditListCmd, nil) }},
 		{name: "tree config", setFlag: func(v string) { treeSpace = v }, needsSpace: true,
 			run: runTreeConfig},
-		{name: "fleet outliers", setFlag: func(v string) { fleetOutliersSpace = v }, needsSpace: true,
-			run: func() error { return runFleetOutliers(nil, nil) }},
 		{name: "impact", setFlag: func(v string) { impactSpace = v }, needsSpace: true,
 			run: func() error { return runImpact(impactCmd, []string{"api"}) }},
 		{name: "map fleet", setFlag: func(v string) { fleetSpace = v }, allowsEvery: true,

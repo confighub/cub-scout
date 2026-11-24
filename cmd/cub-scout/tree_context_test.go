@@ -18,9 +18,9 @@ import (
 
 func preserveTreeContextFlags(t *testing.T) {
 	t.Helper()
-	format, ns, all, js := treeFormat, treeNamespace, treeAll, treeJSON
-	t.Cleanup(func() { treeFormat, treeNamespace, treeAll, treeJSON = format, ns, all, js })
-	treeFormat, treeNamespace, treeAll, treeJSON = "json", "team-a", true, false
+	format, ns, all := treeFormat, treeNamespace, treeAll
+	t.Cleanup(func() { treeFormat, treeNamespace, treeAll = format, ns, all })
+	treeFormat, treeNamespace, treeAll = "json", "team-a", true
 	t.Setenv("CUB_SCOUT_TEST_TREE_JSON", "")
 }
 

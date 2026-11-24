@@ -6079,40 +6079,6 @@ func (m Model) renderTree() string {
 	return b.String()
 }
 
-// Command
-var hierarchyCmd = &cobra.Command{
-	Use:        "hierarchy",
-	Short:      "Interactive ConfigHub hierarchy explorer (deprecated: use 'map --hub')",
-	Deprecated: "use 'cub-scout map --hub' or 'cub-scout map hub' instead; hierarchy is removed in 3.0",
-	Long: `Launch an interactive TUI to explore your ConfigHub hierarchy.
-
-DEPRECATED: This command is deprecated. Use 'cub-scout map --hub' or 'cub-scout map hub' instead.
-
-Navigate through Organizations, Spaces, Units and Targets in a tree view.
-
-Navigation:
-  ↑/k, ↓/j     Move up/down
-  ←/h          Collapse node or go to parent
-  →/l, Enter   Expand node (prompts to switch org if needed)
-  /            Filter - type to filter, hides non-matching nodes while preserving hierarchy
-  f            Toggle filter on/off (when search query is active)
-  n/N          Jump to next/previous match
-  i            Import workloads from Kubernetes (opens wizard)
-  Esc          Clear filter
-  r            Refresh data
-  q            Quit
-
-The current organization and space are highlighted.
-Expanding a different organization will prompt you to switch context.
-Units show their sync status: ✓ (ok), ⚠ (drifted), ✗ (error)
-`,
-	RunE: runHierarchy,
-}
-
-func init() {
-	rootCmd.AddCommand(hierarchyCmd)
-}
-
 // hubBinding is the cluster map hub reads and writes when one was named with
 // --kube-context (map hub --kube-context, or map --kube-context --hub). Its
 // writes (the Argo CD hand-off, labels and annotations on workloads) need it

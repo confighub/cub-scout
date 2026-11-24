@@ -30,7 +30,6 @@ var contextExempt = map[string]string{
 	"cub-scout catalog list":              "reads a local catalog",
 	"cub-scout catalog validate":          "reads a local catalog",
 	"cub-scout demo list":                 "lists built-in demos",
-	"cub-scout fleet outliers":            "reads ConfigHub; deprecated, removed in 3.0",
 	"cub-scout history":                   "reads ConfigHub ChangeSets",
 	"cub-scout history changeorder":       "reads a ConfigHub ChangeOrder",
 	"cub-scout impact":                    "reads ConfigHub",

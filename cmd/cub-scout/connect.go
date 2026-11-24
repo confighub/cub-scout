@@ -100,9 +100,9 @@ func addConnectFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&connectKubeconfigPath, "kubeconfig", "", "Destination kubeconfig path (default: first KUBECONFIG entry or ~/.kube/config)")
 	cmd.Flags().BoolVar(&connectSkipVerify, "skip-verify", false, "Skip Kubernetes API connectivity check")
 	cmd.Flags().BoolVar(&connectLaunchMap, "map", false, "Launch cub-scout map immediately after connect")
-	cmd.Flags().BoolVar(&connectLaunchMap, "go", false, "Deprecated alias for --map")
-	_ = cmd.Flags().MarkHidden("go")
-	_ = cmd.Flags().MarkDeprecated("go", "use --map; --go is removed in 3.0")
+	rejectRemovedFlags(cmd, map[string]string{
+		"go": "use --map instead",
+	})
 }
 
 func runConnect(cmd *cobra.Command, args []string) error {

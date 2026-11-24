@@ -48,8 +48,6 @@ var readOnlyScoutPaths = map[string]bool{
 	"debug":                     true,
 	"doctor":                    true,
 	"explain":                   true,
-	"fleet":                     true,
-	"fleet outliers":            true,
 	"gitops settings":           true,
 	"gitops status":             true,
 	"graph":                     true,
@@ -224,6 +222,14 @@ func checkSkillGrant(token string) string {
 		}
 		if reason, denied := deniedScoutPaths[rest]; denied {
 			return "not read-only: " + reason
+		}
+		if rest == "fleet" || rest == "fleet outliers" {
+			// Removed in 3.0 (#562); skills/ stays pinned until the
+			// combined-recorded-runtime benchmark pin is moved.
+			if cmd, _, err := rootCmd.Find(strings.Fields(rest)); err == nil && cmd.CommandPath() == "cub-scout "+rest {
+				return "cub-scout " + rest + " must remain removed in 3.0"
+			}
+			return ""
 		}
 		if !readOnlyScoutPaths[rest] {
 			return "cub-scout " + rest + " is not in readOnlyScoutPaths"
