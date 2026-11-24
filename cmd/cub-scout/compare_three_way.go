@@ -74,6 +74,7 @@ type threeWayReport struct {
 	Context               string                  `json:"context,omitempty"`
 	Omissions             []threeWayOmission      `json:"omissions,omitempty"`
 	Scope                 string                  `json:"scope"`
+	UnrecordedOnly        bool                    `json:"unrecordedOnly,omitempty"`
 	ConfigHubURL          string                  `json:"confighubUrl,omitempty"`
 	ConfigHubRevisionsURL string                  `json:"confighubRevisionsUrl,omitempty"`
 	Summary               threeWaySummary         `json:"summary"`
@@ -102,6 +103,7 @@ var (
 	compareThreeWayDryFrom        string
 	compareThreeWayContext        string
 	compareThreeWayTUI            bool
+	compareThreeWayUnrecordedOnly bool
 	collectThreeWayForSelectionFn = collectThreeWayForSelection
 
 	buildThreeWayResourceResultFn = buildCompareResourceResult
@@ -162,6 +164,7 @@ func init() {
 	compareThreeWayCmd.Flags().StringVar(&compareThreeWayFailOn, "fail-on", "", "Exit non-zero if max severity >= level (info, warning)")
 	compareThreeWayCmd.Flags().StringVar(&compareSourcePath, "source-path", "", "Local git checkout to back-resolve gitSource.file:line for each field mismatch (stage B; raw YAML only)")
 	compareThreeWayCmd.Flags().StringVar(&compareThreeWayDryFrom, "dry-from", "", "Standalone DRY source: a rendered YAML file or directory (e.g. a git checkout) used as the intended (DRY) state instead of ConfigHub. Compares DRY vs LIVE with no connected mode (#479).")
+	compareThreeWayCmd.Flags().BoolVar(&compareThreeWayUnrecordedOnly, "unrecorded-only", false, "Return only resources with unrecorded live changes or unlinked live state (omits agreed and rollout-pending resources while keeping full summary and omissions)")
 }
 
 func runCompareThreeWay(cmd *cobra.Command, args []string) error {
@@ -235,17 +238,22 @@ func runCompareThreeWay(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	rendered := report
+	if compareThreeWayUnrecordedOnly {
+		rendered = filterThreeWayUnrecorded(report)
+	}
+
 	switch format {
 	case "json":
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
-		if err := enc.Encode(report); err != nil {
+		if err := enc.Encode(rendered); err != nil {
 			return err
 		}
 	case "md":
-		fmt.Print(renderThreeWayMarkdown(report))
+		fmt.Print(renderThreeWayMarkdown(rendered))
 	default:
-		fmt.Print(renderThreeWayASCII(report))
+		fmt.Print(renderThreeWayASCII(rendered))
 	}
 
 	// Check exit condition based on --fail-on (JSON facts only)
@@ -255,6 +263,37 @@ func runCompareThreeWay(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+// filterThreeWayUnrecorded returns a view of report containing only resources
+// with unrecorded live changes (live drift or unlinked live resources), while
+// preserving the full scope Summary and Omissions so RBAC/read gaps are never
+// misread as zero unrecorded changes.
+func filterThreeWayUnrecorded(report threeWayReport) threeWayReport {
+	filtered := make([]threeWayResourceEntry, 0, len(report.Resources))
+	for _, entry := range report.Resources {
+		if isThreeWayUnrecordedEntry(entry) {
+			filtered = append(filtered, entry)
+		}
+	}
+	report.UnrecordedOnly = true
+	report.Resources = filtered
+	return report
+}
+
+func isThreeWayUnrecordedEntry(entry threeWayResourceEntry) bool {
+	if entry.Pattern == PatternUnlinked {
+		return true
+	}
+	if hasWetLiveMismatch(entry.Result.Mismatches) {
+		return true
+	}
+	switch entry.Pattern {
+	case PatternChangeInProgress, PatternMultiChange:
+		return true
+	default:
+		return false
+	}
 }
 
 func parseThreeWayScope(raw string) (threeWayScope, error) {
