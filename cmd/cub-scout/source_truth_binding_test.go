@@ -74,11 +74,12 @@ func TestSourceTruthCLIExplicitContextBindsRuntimeAndArgoAfterRetarget(t *testin
 	var runErr error
 	output := captureStdout(t, func() { runErr = runSourceTruth(command, []string{"Deployment/api"}) })
 	require.NoError(t, runErr)
-	var evidence agent.SourceTruthEvidence
-	require.NoError(t, json.Unmarshal([]byte(output), &evidence))
-	require.Equal(t, "alpha-context", evidence.Context)
-	require.Equal(t, agent.StatusPASS, evidence.Status)
-	require.Equal(t, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", evidence.Surfaces.Controller.RevisionOrDigest, "Argo's observed sync revision, not spec.source.targetRevision, is the comparison anchor")
+	var envelope sourceTruthEnvelope
+	require.NoError(t, json.Unmarshal([]byte(output), &envelope))
+	require.Equal(t, "alpha-context", envelope.Context)
+	require.NotNil(t, envelope.Answer)
+	require.Equal(t, sourceTruthStateAgreed, envelope.Answer.State)
+	require.Equal(t, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", envelope.Surfaces.Controller.RevisionOrDigest, "Argo's observed sync revision, not spec.source.targetRevision, is the comparison anchor")
 	require.Equal(t, 1, unitReads, "ConfigHub lookup is retained and separate from Kubernetes context selection")
 	require.Greater(t, alpha.count(http.MethodGet, "/apis/apps/v1/namespaces/team-a/deployments/api"), 0)
 	require.Greater(t, alpha.count(http.MethodGet, "/apis/argoproj.io/v1alpha1/applications"), 0)
@@ -201,9 +202,11 @@ func TestSourceTruthUnknownStrategyRespectsFormatAndValidatesExplicitContext(t *
 		})
 		switch format {
 		case "json":
-			var evidence agent.SourceTruthEvidence
-			require.NoError(t, json.Unmarshal([]byte(output), &evidence))
-			require.Equal(t, agent.StatusASK, evidence.Status)
+			var envelope sourceTruthEnvelope
+			require.NoError(t, json.Unmarshal([]byte(output), &envelope))
+			require.NotNil(t, envelope.Answer)
+			require.Equal(t, sourceTruthStateNotObservable, envelope.Answer.State)
+			require.Equal(t, sourceTruthReasonStrategyNotDeclared, envelope.Answer.Reason)
 		case "ascii":
 			require.Contains(t, output, "Source truth: UNKNOWN (ASK)")
 		case "md":
@@ -224,10 +227,11 @@ func TestSourceTruthFormatRenderersProjectSameEvidence(t *testing.T) {
 		require.NoError(t, outputSourceTruth(&output, evidence, format))
 		outputs[format] = output.String()
 	}
-	var decoded agent.SourceTruthEvidence
+	var decoded map[string]json.RawMessage
 	require.NoError(t, json.Unmarshal([]byte(outputs["json"]), &decoded))
-	require.Equal(t, evidence.Status, decoded.Status)
-	require.Equal(t, evidence.Context, decoded.Context)
+	require.NotContains(t, decoded, "status")
+	require.NotContains(t, decoded, "source_truth")
+	require.JSONEq(t, `"alpha-context"`, string(decoded["context"]))
 	require.Contains(t, outputs["ascii"], "Selected Kubernetes context: alpha-context")
 	require.Contains(t, outputs["ascii"], "Runtime: unavailable")
 	require.Contains(t, outputs["md"], "Selected Kubernetes context: `alpha-context`")

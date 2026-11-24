@@ -610,18 +610,23 @@ func TestMCPGatewayHandleRequest_ToolsCallCompareThreeWay(t *testing.T) {
 func TestMCPGatewayHandleRequest_ToolsCallCompareSourceTruth(t *testing.T) {
 	var gotStandaloneArgs []string
 
-	// Synthetic source-truth payload that mirrors the contract types in
-	// pkg/agent/source_truth.go. Field names must match exactly, since
-	// the structuredContent wrapper just hands the parsed JSON back.
+	// Synthetic source-truth payload matching the 3.0 JSON contract (verdict
+	// words status and source_truth left JSON/MCP in 3.0; answer carries state
+	// and reason).
 	const syntheticPayload = `{
 		"declared_strategy": "ConfigHub -> OCI -> Flux -> Kubernetes",
-		"status": "PASS",
-		"source_truth": "AGREED",
 		"outlier": "unknown",
 		"surfaces": {
 			"confighub":  {"space":"demo","unit":"rag-server","revision":"47"},
 			"controller": {"kind":"Flux","source":"oci://oci.confighub.com/demo/rag-server","revision_or_digest":"sha256:abc","health":"Ready"},
 			"runtime":    {"resource":"Deployment/rag-server in demo","field":"spec.template.spec.containers[0].image","value":"oci.confighub.com/demo/rag-server@sha256:abc","health":"Current"}
+		},
+		"answer": {
+			"state": "agreed",
+			"reason": "object-revision-is-head",
+			"observedAt": "2026-11-24T00:00:00Z",
+			"unknowns": [],
+			"next": []
 		}
 	}`
 
@@ -678,9 +683,8 @@ func TestMCPGatewayHandleRequest_ToolsCallCompareSourceTruth(t *testing.T) {
 	}
 
 	// Source-truth's contract fields must round-trip through the
-	// structuredContent envelope under `data`. Spot-check the three
-	// council-anchored fields plus the strategy-rendered string.
-	for _, want := range []string{"declared_strategy", "status", "source_truth", "outlier", "surfaces"} {
+	// structuredContent envelope under `data`, without the 2.x verdict words.
+	for _, want := range []string{"declared_strategy", "outlier", "surfaces", "answer"} {
 		if _, ok := result.StructuredContent.Data[want]; !ok {
 			gotKeys := make([]string, 0, len(result.StructuredContent.Data))
 			for k := range result.StructuredContent.Data {
@@ -690,8 +694,10 @@ func TestMCPGatewayHandleRequest_ToolsCallCompareSourceTruth(t *testing.T) {
 			t.Errorf("structuredContent.data missing field %q (got keys: %v)", want, gotKeys)
 		}
 	}
-	if got := result.StructuredContent.Data["status"]; got != "PASS" {
-		t.Errorf("status field = %v, want PASS", got)
+	for _, removed := range []string{"status", "source_truth"} {
+		if _, ok := result.StructuredContent.Data[removed]; ok {
+			t.Errorf("structuredContent.data must not contain removed 2.x verdict field %q", removed)
+		}
 	}
 }
 

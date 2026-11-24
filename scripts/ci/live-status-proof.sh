@@ -221,14 +221,16 @@ PY
 import json, sys
 report = json.load(open(sys.argv[1]))
 surface = (report.get("surfaces") or {}).get("confighub") or {}
-print("source-truth: status=%s confighub=%s errors=%s" % (report.get("status"), surface, report.get("collection_errors")))
+answer = report.get("answer") or {}
+print("source-truth: state=%s reason=%s confighub=%s errors=%s" % (answer.get("state") if isinstance(answer, dict) else None, answer.get("reason") if isinstance(answer, dict) else None, surface, report.get("collection_errors")))
+if "status" in report or "source_truth" in report:
+    sys.exit("source-truth JSON still contains removed 2.x verdict fields: %s" % sorted(report))
 if surface.get("unit") != "argobot" or not surface.get("space") or not surface.get("revision"):
     sys.exit("source-truth did not read the ConfigHub unit named by the workload's origin annotation")
-if report.get("proof_gaps") or report.get("status") != "PASS":
+if report.get("proof_gaps"):
     sys.exit("source-truth reported a gap on a freshly delivered workload: %s" % report.get("proof_gaps"))
 # The answer beside it, in its lean form: agreed, by what was compared, and
 # with what was not compared said.
-answer = report.get("answer") or {}
 print("source-truth answer: %s" % answer)
 if sorted(answer) != ["next", "observedAt", "reason", "state", "unknowns"]:
     sys.exit("source-truth answer is not the lean form: %s" % sorted(answer))

@@ -53,7 +53,10 @@ func TestMCPSourceTruthUsesScoutCommandAndSelectedAPI(t *testing.T) {
 	encoded, err := json.Marshal(response.Result)
 	require.NoError(t, err)
 	require.Contains(t, string(encoded), `alpha-context`)
-	require.Contains(t, string(encoded), `"status":"PASS"`)
+	require.Contains(t, string(encoded), `"state":"agreed"`)
+	require.Contains(t, string(encoded), `"reason":"git-revision-matches"`)
+	require.NotContains(t, string(encoded), `"status":`)
+	require.NotContains(t, string(encoded), `"source_truth":`)
 	require.NotEmpty(t, alpha.allRequests())
 	require.Empty(t, beta.allRequests())
 }

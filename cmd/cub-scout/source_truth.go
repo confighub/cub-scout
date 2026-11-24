@@ -182,22 +182,23 @@ func runSourceTruth(cmd *cobra.Command, args []string) error {
 }
 
 // outputSourceTruthAnswered writes the evidence and, in JSON, the answer
-// beside it. The ASCII and Markdown renderings are for people and keep the
-// verdict words; they do not carry the block.
+// beside it without the verdict words (status, source_truth), which leave
+// JSON and MCP output in 3.0. The ASCII and Markdown renderings are for people
+// and keep the verdict words; they do not carry the answer block.
 func outputSourceTruthAnswered(w io.Writer, ev agent.SourceTruthEvidence, format string, answer *mapsvc.LeanAnswer) error {
-	if strings.ToLower(strings.TrimSpace(format)) != "json" || answer == nil {
+	if strings.ToLower(strings.TrimSpace(format)) != "json" {
 		return outputSourceTruth(w, ev, format)
 	}
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	enc.SetEscapeHTML(false)
-	return enc.Encode(sourceTruthEnvelope{SourceTruthEvidence: ev, Answer: answer})
+	return enc.Encode(newSourceTruthEnvelope(ev, answer))
 }
 
 func outputSourceTruth(w io.Writer, ev agent.SourceTruthEvidence, format string) error {
 	switch strings.ToLower(strings.TrimSpace(format)) {
 	case "json":
-		return agent.EncodeEvidence(w, ev)
+		return outputSourceTruthAnswered(w, ev, "json", nil)
 	case "md":
 		_, err := io.WriteString(w, renderSourceTruthMarkdown(ev))
 		return err
