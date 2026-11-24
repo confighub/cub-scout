@@ -10,8 +10,13 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"strings"
 )
+
+// MinCubVersion is the minimum `cub` CLI version required by cub-scout 3.0's
+// connected gate (maintainer's decision, 2026-11-24; #595).
+const MinCubVersion = "0.11.4"
 
 // Reasons RequireCubConnected refuses. Callers wrap them with the command that
 // was refused; the returned error also carries the specific cause.
@@ -53,6 +58,42 @@ var cubAuthStatus = func() (detail string, err error) {
 	return firstLine(stderr.String()), err
 }
 
+// cubVersion runs `cub version` and returns its stdout so RequireCubConnected
+// can enforce MinCubVersion. It is a variable so tests need no real `cub`.
+var cubVersion = func() (string, error) {
+	var stdout bytes.Buffer
+	cmd := exec.Command("cub", "version")
+	cmd.Stdout = &stdout
+	err := cmd.Run()
+	return strings.TrimSpace(stdout.String()), err
+}
+
+var semverPattern = regexp.MustCompile(`\bv?(\d+)\.(\d+)\.(\d+)\b`)
+
+// CheckCubVersionFloor verifies that a `cub version` output string is at least
+// MinCubVersion. Non-semver strings (such as local "dev" builds) degrade
+// gracefully and are not refused.
+func CheckCubVersionFloor(versionOutput string) error {
+	m := semverPattern.FindStringSubmatch(versionOutput)
+	if len(m) != 4 {
+		return nil
+	}
+	maj, _ := strconv.Atoi(m[1])
+	min, _ := strconv.Atoi(m[2])
+	pat, _ := strconv.Atoi(m[3])
+
+	floorM := semverPattern.FindStringSubmatch(MinCubVersion)
+	fMaj, _ := strconv.Atoi(floorM[1])
+	fMin, _ := strconv.Atoi(floorM[2])
+	fPat, _ := strconv.Atoi(floorM[3])
+
+	if maj < fMaj || (maj == fMaj && min < fMin) || (maj == fMaj && min == fMin && pat < fPat) {
+		return fmt.Errorf("%w: installed cub v%d.%d.%d is below the cub-scout 3.0 minimum v%s; run `cub upgrade`",
+			ErrCubVersionSkew, maj, min, pat, MinCubVersion)
+	}
+	return nil
+}
+
 func firstLine(text string) string {
 	text = strings.TrimSpace(text)
 	if i := strings.IndexByte(text, '\n'); i >= 0 {
@@ -82,6 +123,11 @@ func RequireCubConnected() error {
 	}
 	detail, err := cubAuthStatus()
 	if err == nil {
+		if verOut, vErr := cubVersion(); vErr == nil {
+			if floorErr := CheckCubVersionFloor(verOut); floorErr != nil {
+				return floorErr
+			}
+		}
 		return nil
 	}
 	if errors.Is(err, exec.ErrNotFound) {

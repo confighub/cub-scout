@@ -29,6 +29,7 @@ Alphabetical command index: [cli-reference.md](cli-reference.md)
 | v1.0 | Contract freeze, connected mode auth, comprehensive test coverage |
 | v2.8 | Optional bounded ConfigHub delivery evidence on `gitops status`, `doctor`, `trace`, `explain`, and `map activity`; MCP connected release/event/live-status tools; source-truth strategy enum parity; first-class `bot` wrapper for in-cluster watch deployment |
 | v2.9 | Resource-backed connected MCP reads; identity-checked supporting live-status evidence on Argo Application activity rows |
+| v3.0 | Go module `/v3`; removed deprecated `--json` / `--go` / `--set-context` flags, `hierarchy`, and `fleet outliers`; `compare source-truth` verdict words removed from JSON/MCP; connected `cub` CLI floor `>= v0.11.4` |
 | v2.10.0 | Opt-in bounded `explain`, with exact context/API identity, per-session observation reuse in MCP/TUI, refresh, and explicit omissions |
 
 > If documentation and behavior ever diverge, **golden tests under

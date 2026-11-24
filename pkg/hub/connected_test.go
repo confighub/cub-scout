@@ -25,12 +25,61 @@ func stubCubAuthStatus(t *testing.T, detail string, err error) *int {
 
 	calls := 0
 	old := cubAuthStatus
-	t.Cleanup(func() { cubAuthStatus = old })
+	oldVer := cubVersion
+	t.Cleanup(func() {
+		cubAuthStatus = old
+		cubVersion = oldVer
+	})
 	cubAuthStatus = func() (string, error) {
 		calls++
 		return detail, err
 	}
+	cubVersion = func() (string, error) {
+		return "cub version v" + MinCubVersion, nil
+	}
 	return &calls
+}
+
+func TestCheckCubVersionFloor(t *testing.T) {
+	accepted := []string{
+		"cub version v0.11.4",
+		"0.11.4",
+		"cub v0.11.9 (linux/amd64)",
+		"v0.12.0",
+		"v1.0.0",
+		"dev",
+		"",
+	}
+	for _, in := range accepted {
+		if err := CheckCubVersionFloor(in); err != nil {
+			t.Errorf("CheckCubVersionFloor(%q) = %v, want nil", in, err)
+		}
+	}
+
+	rejected := []string{
+		"cub version v0.11.3",
+		"0.10.11",
+		"cub v0.6.8",
+	}
+	for _, in := range rejected {
+		err := CheckCubVersionFloor(in)
+		if !errors.Is(err, ErrCubVersionSkew) {
+			t.Errorf("CheckCubVersionFloor(%q) = %v, want ErrCubVersionSkew", in, err)
+			continue
+		}
+		if !strings.Contains(err.Error(), "v"+MinCubVersion) || !strings.Contains(err.Error(), "cub upgrade") {
+			t.Errorf("CheckCubVersionFloor(%q) = %q, want minimum v%s and upgrade hint", in, err.Error(), MinCubVersion)
+		}
+	}
+}
+
+func TestRequireCubConnected_EnforcesVersionFloor(t *testing.T) {
+	stubCubAuthStatus(t, "", nil)
+	cubVersion = func() (string, error) { return "cub version v0.11.3", nil }
+	err := RequireCubConnected()
+	if !errors.Is(err, ErrCubVersionSkew) || !strings.Contains(err.Error(), "v0.11.4") {
+		t.Fatalf("RequireCubConnected() = %v, want ErrCubVersionSkew naming v0.11.4", err)
+	}
 }
 
 func TestRequireCubConnected(t *testing.T) {
