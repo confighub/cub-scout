@@ -1,8 +1,9 @@
 # AI Read Me First
 
-**2026-11-16:** read
-[the state of the plan](docs/roadmap-3.0-execution.md#state-of-the-plan--2026-11-19)
-first: it says what is shipped, what was decided and what is open.
+**2026-11-24:** read
+[the state of the plan](docs/roadmap-3.0-execution.md#state-of-the-plan--2026-11-24)
+first: it says what is shipped, what is left to reach 3.0, what was decided
+and what is open.
 [v2.19.0](docs/releases/v2.19.0.md) is the latest release (2026-11-19): under
 Flux, `release check` says "not yet" (`WATCH`) for another revision, and runs
 on a real cluster in CI. It works with ConfigHub 0.11. Principle 10 in
