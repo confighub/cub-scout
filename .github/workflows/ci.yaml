@@ -576,6 +576,9 @@ jobs:
       - name: release check answers on a real Flux OCI delivery
         run: bash scripts/ci/release-check-lane.sh ./cub-scout "$RUNNER_TEMP/release-check-lane"
 
+      - name: landed answers on real Flux and Argo CD deliveries
+        run: bash scripts/ci/landed-lane.sh ./cub-scout "$RUNNER_TEMP/landed-lane"
+
       - name: Record scoped controller acceptance
         run: |
           kubectl get applications.argoproj.io guestbook -n argocd -o json > "$RUNNER_TEMP/argo-application.json"
@@ -602,6 +605,7 @@ jobs:
             ${{ runner.temp }}/crossplane-lane/
             ${{ runner.temp }}/terraform-lane/
             ${{ runner.temp }}/release-check-lane/
+            ${{ runner.temp }}/landed-lane/
 
       - name: Test trace command
         run: ./cub-scout trace deployment/cart -n boutique
