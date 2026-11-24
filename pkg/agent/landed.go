@@ -229,8 +229,8 @@ func EvaluateLanding(anchor LandingAnchor, snap LandingSnapshot) LandingEvaluati
 		eval.Reason = LandingReasonNoOwnerMarkerRecognised
 		eval.Summary = fmt.Sprintf("No GitOps owner marker was recognised on %s/%s.", snap.Target.Kind, snap.Target.Name)
 		return eval
-	case "flux", "argocd", "argo":
-		// Supported in 3.0 first slice.
+	case "flux", "argocd", "argo", "helm":
+		// Supported controllers (Flux, Argo CD, Helm).
 	default:
 		eval.State = LandingStateNotObservable
 		eval.Reason = LandingReasonUnsupportedController

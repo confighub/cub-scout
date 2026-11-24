@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -346,6 +347,8 @@ func gvrMatchesRecordedObject(gvr schema.GroupVersionResource, obj *unstructured
 		return kind == "ocirepository"
 	case "applications":
 		return kind == "application"
+	case "secrets":
+		return kind == "secret"
 	default:
 		return false
 	}
@@ -411,6 +414,8 @@ func fetchLandingSnapshotFromStore(ctx context.Context, store landingObjectStore
 		snap.Deployer, snap.Source, snap.ReadDenied, snap.ReadError = fetchFluxLandingLinks(ctx, store, labels)
 	case "argocd", "argo":
 		snap.Deployer, snap.ReadDenied, snap.ReadError = fetchArgoLandingLink(ctx, store, labels, annotations)
+	case "helm":
+		snap.Deployer, snap.ReadDenied, snap.ReadError = fetchHelmLandingLink(ctx, store, target.Namespace, annotations)
 	}
 
 	return snap
@@ -595,6 +600,72 @@ func fetchArgoLandingLink(ctx context.Context, store landingObjectStore, labels,
 		return link, false, ""
 	}
 	return nil, false, ""
+}
+
+// fetchHelmLandingLink inspects the latest Helm release Secret
+// (`sh.helm.release.v1.<release>.v<N>`) in the release namespace named by
+// `meta.helm.sh/release-name` and `meta.helm.sh/release-namespace`. It never
+// guesses from chart labels alone when `meta.helm.sh/release-name` is absent.
+func fetchHelmLandingLink(ctx context.Context, store landingObjectStore, targetNS string, annotations map[string]string) (deployer *agent.LandingLinkObservation, denied bool, readErr string) {
+	releaseName := strings.TrimSpace(annotations["meta.helm.sh/release-name"])
+	if releaseName == "" {
+		return nil, false, ""
+	}
+	releaseNS := strings.TrimSpace(annotations["meta.helm.sh/release-namespace"])
+	if releaseNS == "" {
+		releaseNS = targetNS
+	}
+	secretGVR := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "secrets"}
+	items, err := store.List(ctx, secretGVR)
+	if err != nil {
+		if apierrors.IsForbidden(err) || apierrors.IsUnauthorized(err) {
+			return nil, true, err.Error()
+		}
+		return nil, false, err.Error()
+	}
+
+	var latest *unstructured.Unstructured
+	latestVer := -1
+	for i := range items {
+		sec := &items[i]
+		if releaseNS != "" && sec.GetNamespace() != releaseNS {
+			continue
+		}
+		secLabels := sec.GetLabels()
+		if secLabels["owner"] != "helm" || secLabels["name"] != releaseName {
+			continue
+		}
+		ver, err := strconv.Atoi(strings.TrimSpace(secLabels["version"]))
+		if err != nil {
+			continue
+		}
+		if ver > latestVer {
+			latestVer = ver
+			latest = sec
+		}
+	}
+	if latest == nil {
+		return nil, false, ""
+	}
+
+	secLabels := latest.GetLabels()
+	ref := &agent.LandingObjectRef{APIVersion: "v1", Kind: "Secret", Namespace: latest.GetNamespace(), Name: latest.GetName()}
+	link := &agent.LandingLinkObservation{
+		Present:  true,
+		Ref:      ref,
+		Status:   "unknown",
+		Revision: strings.TrimSpace(secLabels["version"]),
+		Reporter: mapsvc.RestsOnControllerReport,
+	}
+	switch strings.ToLower(strings.TrimSpace(secLabels["status"])) {
+	case "deployed":
+		link.Status = "ready"
+	case "pending-install", "pending-upgrade", "pending-rollback", "uninstalling":
+		link.Status = "progressing"
+	case "failed":
+		link.Status = "failed"
+	}
+	return link, false, ""
 }
 
 func buildLandedOutput(eval agent.LandingEvaluation, cost *agent.KubernetesReadCost) landedOutput {
