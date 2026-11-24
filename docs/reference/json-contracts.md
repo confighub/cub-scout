@@ -1299,7 +1299,7 @@ its structured landing evidence (`target`, `owner`, `anchor`, `brokenLink`,
 | `not-observable` | `no-anchor-supplied` | Neither `--revision`, `--digest`, nor `--unit-revision` was supplied |
 | `not-observable` | `target-not-found` | Target workload was not found in the namespace |
 | `not-observable` | `no-owner-marker-recognised` | Target carries no recognized GitOps owner marker |
-| `not-observable` | `unsupported-controller` | First slice covers Flux and Argo CD; other controllers return `not-observable` |
+| `not-observable` | `unsupported-controller` | Controller does not write a verifiable Git/OCI/generation anchor (e.g. Sveltos) or reported no verifiable revision/`observedGeneration` |
 | `not-observable` | `read-denied` | Kubernetes RBAC denied reading the target or its delivery chain |
 | `not-observable` | `cluster-unreachable` | Cluster could not be reached |
 

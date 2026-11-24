@@ -45,15 +45,42 @@ if [[ -z "$deployment" ]]; then
   exit 1
 fi
 echo "$deployment" > "$out/deployment-name.txt"
+kubectl rollout status "deployment/$deployment" -n xp-lane --timeout=60s || true
+kubectl wait --for=condition=Synced xlaneapps.lane.example.org/lane -n xp-lane --timeout=60s || true
+kubectl get xlaneapps.lane.example.org lane -n xp-lane -o json > "$out/composite.json" 2>&1 || true
 kubectl get deployment "$deployment" -n xp-lane -o json > "$out/deployment.json"
 
 "$scout" map list --json --namespace xp-lane --ownership-evidence > "$out/map-list.json"
 "$scout" trace "deployment/$deployment" -n xp-lane --format json > "$out/trace.json" 2> "$out/trace.stderr" || true
 "$scout" tree composition > "$out/tree-composition.txt" 2>&1 || true
 
-python3 - "$out" "$deployment" <<'PY'
+xp_obs_gen=$(python3 -c '
 import json, sys
-out, name = sys.argv[1], sys.argv[2]
+d = json.load(open(sys.argv[1]))
+st = d.get("status") or {}
+gen = None
+for cond_type in ("Ready", "Synced"):
+    for c in st.get("conditions") or []:
+        if c.get("type") == cond_type and c.get("observedGeneration"):
+            gen = c["observedGeneration"]
+            break
+    if gen:
+        break
+if not gen and st.get("observedGeneration"):
+    gen = st["observedGeneration"]
+print(gen or "")
+' "$out/composite.json" 2>/dev/null || true)
+
+if [[ -n "$xp_obs_gen" ]]; then
+  "$scout" landed "deployment/$deployment" -n xp-lane --revision "$xp_obs_gen" --format json > "$out/landed-ok.json"
+  "$scout" landed "deployment/$deployment" -n xp-lane --revision 99 --format json > "$out/landed-wrong.json"
+else
+  "$scout" landed "deployment/$deployment" -n xp-lane --revision 1 --format json > "$out/landed-no-anchor.json"
+fi
+
+python3 - "$out" "$deployment" "$xp_obs_gen" <<'PY'
+import json, sys
+out, name, xp_obs_gen = sys.argv[1], sys.argv[2], sys.argv[3]
 meta = json.load(open(out + "/deployment.json"))["metadata"]
 labels, annotations = meta.get("labels") or {}, meta.get("annotations") or {}
 owner_refs = ["%s/%s %s" % (r.get("apiVersion"), r.get("kind"), r.get("name")) for r in meta.get("ownerReferences") or []]
@@ -87,6 +114,33 @@ if trace is None:
     bad.append("trace printed no JSON (stderr in trace.stderr)")
 elif state == "no-owner-marker":
     bad.append("trace says no owner marker, but Crossplane's metadata is on the object")
+if xp_obs_gen:
+    comp_conds = (json.load(open(out + "/composite.json")).get("status") or {}).get("conditions") or []
+    xr_ready = any(c.get("type") == "Ready" and c.get("status") == "True" for c in comp_conds)
+    ok_doc = json.load(open(out + "/landed-ok.json"))
+    wrong_doc = json.load(open(out + "/landed-wrong.json"))
+    ok_state = (ok_doc.get("answer") or {}).get("state")
+    wrong_state = (wrong_doc.get("answer") or {}).get("state")
+    lines.append("landed(xrReady=%s, --revision %s)=%s, landed(--revision 99)=%s" % (xr_ready, xp_obs_gen, ok_state, wrong_state))
+    if xr_ready:
+        if ok_state != "landed":
+            bad.append("landed --revision %s state %s, want landed" % (xp_obs_gen, ok_state))
+        if wrong_state != "not-landed":
+            bad.append("landed --revision 99 state %s, want not-landed" % wrong_state)
+    else:
+        # Without function-auto-ready, the XR stays Ready=False (Creating); landed
+        # must honestly report converging and never produce a false landed.
+        if ok_state != "converging":
+            bad.append("landed --revision %s state %s while XR is not Ready, want converging" % (xp_obs_gen, ok_state))
+        if wrong_state != "converging":
+            bad.append("landed --revision 99 state %s while XR is not Ready, want converging" % wrong_state)
+else:
+    na_doc = json.load(open(out + "/landed-no-anchor.json"))
+    na_state = (na_doc.get("answer") or {}).get("state")
+    lines.append("landed(no observedGeneration)=%s" % na_state)
+    if na_state != "not-observable":
+        bad.append("landed without observedGeneration state %s, want not-observable" % na_state)
+open(out + "/summary.txt", "w").write("\n".join(lines) + "\n")
 if bad:
     sys.exit("Crossplane lane:\n" + "\n".join(bad))
 PY

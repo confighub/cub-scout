@@ -20,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"sigs.k8s.io/cli-utils/pkg/kstatus/status"
 
@@ -46,8 +47,9 @@ var landedCmd = &cobra.Command{
 	Use:   "landed <kind>/<name> | <kind> <name>",
 	Short: "Check whether an anchored revision or digest landed on a workload",
 	Long: `Check whether a specific Git revision, OCI digest, or ConfigHub unit revision
-reached a workload (Deployment, StatefulSet, or DaemonSet) under Flux or Argo CD,
-whether delivery is still converging, or which link broke.
+reached a workload (Deployment, StatefulSet, DaemonSet, Job, or CronJob) under
+Flux, Argo CD, Helm, kro, or Crossplane, whether delivery is still converging,
+or which link broke.
 
 Read-only: never modifies cluster state. With --wait, performs a bounded
 read-only poll loop (capped at 5m on CLI, 60s via MCP) that exits early as
@@ -165,13 +167,13 @@ func parseLandedTarget(args []string, ns string) (agent.LandingObjectRef, error)
 	}
 	kind := canonicalWorkloadKind(rawKind)
 	if kind == "" {
-		return agent.LandingObjectRef{}, fmt.Errorf("unsupported workload kind %q (supported in 3.0: Deployment, StatefulSet, DaemonSet)", rawKind)
+		return agent.LandingObjectRef{}, fmt.Errorf("unsupported workload kind %q (supported: Deployment, StatefulSet, DaemonSet, Job, CronJob)", rawKind)
 	}
 	if strings.TrimSpace(ns) == "" {
 		ns = "default"
 	}
 	return agent.LandingObjectRef{
-		APIVersion: "apps/v1",
+		APIVersion: workloadGVR(kind).GroupVersion().String(),
 		Kind:       kind,
 		Namespace:  ns,
 		Name:       strings.TrimSpace(name),
@@ -186,6 +188,10 @@ func canonicalWorkloadKind(raw string) string {
 		return "StatefulSet"
 	case "ds", "daemonset", "daemonsets":
 		return "DaemonSet"
+	case "job", "jobs":
+		return "Job"
+	case "cj", "cronjob", "cronjobs":
+		return "CronJob"
 	default:
 		return ""
 	}
@@ -197,6 +203,10 @@ func workloadGVR(kind string) schema.GroupVersionResource {
 		return schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "statefulsets"}
 	case "DaemonSet":
 		return schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "daemonsets"}
+	case "Job":
+		return schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "jobs"}
+	case "CronJob":
+		return schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "cronjobs"}
 	default:
 		return schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
 	}
@@ -290,13 +300,14 @@ func runLanded(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("create dynamic client: %w", err)
 	}
+	discClient, _ := session.discoveryClient()
 
 	eval, err := agent.WaitForLanding(ctx, anchor, agent.LandingWaitOptions{
 		Wait:         landedWait,
 		PollInterval: landedPollInterval,
 		MaxWait:      agent.MaxLandingWaitCLI,
 	}, func(pollCtx context.Context) (agent.LandingSnapshot, error) {
-		return fetchLandingSnapshotWithOptions(pollCtx, dynClient, session.contextLabel(), target, podVerifyOpts), nil
+		return fetchLandingSnapshotWithOptions(pollCtx, dynClient, discClient, session.contextLabel(), target, podVerifyOpts), nil
 	})
 	if err != nil {
 		return err
@@ -329,16 +340,57 @@ func resolveExpectedPodImage(explicitImage string, anchor agent.LandingAnchor) s
 
 type landingObjectStore interface {
 	Get(ctx context.Context, gvr schema.GroupVersionResource, ns, name string) (*unstructured.Unstructured, error)
+	GetByGVK(ctx context.Context, gvk schema.GroupVersionKind, ns, name string) (*unstructured.Unstructured, error)
 	List(ctx context.Context, gvr schema.GroupVersionResource) ([]unstructured.Unstructured, error)
 	ListNamespace(ctx context.Context, gvr schema.GroupVersionResource, ns, labelSelector string) ([]unstructured.Unstructured, error)
 }
 
 type dynamicLandingStore struct {
-	dyn dynamic.Interface
+	dyn  dynamic.Interface
+	disc discovery.DiscoveryInterface
 }
 
 func (s dynamicLandingStore) Get(ctx context.Context, gvr schema.GroupVersionResource, ns, name string) (*unstructured.Unstructured, error) {
 	return s.dyn.Resource(gvr).Namespace(ns).Get(ctx, name, metav1.GetOptions{})
+}
+
+func (s dynamicLandingStore) GetByGVK(ctx context.Context, gvk schema.GroupVersionKind, ns, name string) (*unstructured.Unstructured, error) {
+	if s.disc != nil && gvk.Version != "" {
+		if resList, err := s.disc.ServerResourcesForGroupVersion(gvk.GroupVersion().String()); err == nil && resList != nil {
+			for _, r := range resList.APIResources {
+				if strings.Contains(r.Name, "/") || !strings.EqualFold(r.Kind, gvk.Kind) {
+					continue
+				}
+				gvr := schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: r.Name}
+				if r.Namespaced && ns != "" {
+					return s.dyn.Resource(gvr).Namespace(ns).Get(ctx, name, metav1.GetOptions{})
+				}
+				return s.dyn.Resource(gvr).Get(ctx, name, metav1.GetOptions{})
+			}
+		}
+	}
+	gvr := schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: pluralizeKind(gvk.Kind)}
+	if ns != "" {
+		obj, err := s.dyn.Resource(gvr).Namespace(ns).Get(ctx, name, metav1.GetOptions{})
+		if err == nil || !apierrors.IsNotFound(err) {
+			return obj, err
+		}
+	}
+	return s.dyn.Resource(gvr).Get(ctx, name, metav1.GetOptions{})
+}
+
+func pluralizeKind(kind string) string {
+	lower := strings.ToLower(strings.TrimSpace(kind))
+	switch {
+	case lower == "":
+		return ""
+	case strings.HasSuffix(lower, "y") && len(lower) > 1:
+		return lower[:len(lower)-1] + "ies"
+	case strings.HasSuffix(lower, "s"):
+		return lower + "es"
+	default:
+		return lower + "s"
+	}
 }
 
 func (s dynamicLandingStore) List(ctx context.Context, gvr schema.GroupVersionResource) ([]unstructured.Unstructured, error) {
@@ -380,6 +432,10 @@ func gvrMatchesRecordedObject(gvr schema.GroupVersionResource, obj *unstructured
 		return kind == "statefulset"
 	case "daemonsets":
 		return kind == "daemonset"
+	case "jobs":
+		return kind == "job"
+	case "cronjobs":
+		return kind == "cronjob"
 	case "kustomizations":
 		return kind == "kustomization"
 	case "helmreleases":
@@ -409,6 +465,28 @@ func (s recordedLandingStore) Get(_ context.Context, gvr schema.GroupVersionReso
 		}
 	}
 	return nil, apierrors.NewNotFound(schema.GroupResource{Group: gvr.Group, Resource: gvr.Resource}, name)
+}
+
+func (s recordedLandingStore) GetByGVK(_ context.Context, gvk schema.GroupVersionKind, ns, name string) (*unstructured.Unstructured, error) {
+	for _, obj := range s.objects {
+		if obj == nil {
+			continue
+		}
+		gv, err := schema.ParseGroupVersion(obj.GetAPIVersion())
+		if err != nil {
+			continue
+		}
+		if gv.Group != gvk.Group || (gvk.Version != "" && gv.Version != gvk.Version) {
+			continue
+		}
+		if !strings.EqualFold(strings.TrimSpace(obj.GetKind()), strings.TrimSpace(gvk.Kind)) {
+			continue
+		}
+		if obj.GetName() == name && (ns == "" || obj.GetNamespace() == ns || obj.GetNamespace() == "") {
+			return obj, nil
+		}
+	}
+	return nil, apierrors.NewNotFound(schema.GroupResource{Group: gvk.Group, Resource: pluralizeKind(gvk.Kind)}, name)
 }
 
 func (s recordedLandingStore) List(_ context.Context, gvr schema.GroupVersionResource) ([]unstructured.Unstructured, error) {
@@ -446,8 +524,8 @@ func (s recordedLandingStore) ListNamespace(_ context.Context, gvr schema.GroupV
 	return out, nil
 }
 
-func fetchLandingSnapshotWithOptions(ctx context.Context, dyn dynamic.Interface, kubeCtx string, target agent.LandingObjectRef, opts landingPodVerifyOptions) agent.LandingSnapshot {
-	return fetchLandingSnapshotFromStoreWithOptions(ctx, dynamicLandingStore{dyn: dyn}, kubeCtx, target, opts)
+func fetchLandingSnapshotWithOptions(ctx context.Context, dyn dynamic.Interface, disc discovery.DiscoveryInterface, kubeCtx string, target agent.LandingObjectRef, opts landingPodVerifyOptions) agent.LandingSnapshot {
+	return fetchLandingSnapshotFromStoreWithOptions(ctx, dynamicLandingStore{dyn: dyn, disc: disc}, kubeCtx, target, opts)
 }
 
 func fetchLandingSnapshotFromStore(ctx context.Context, store landingObjectStore, kubeCtx string, target agent.LandingObjectRef) agent.LandingSnapshot {
@@ -490,6 +568,12 @@ func fetchLandingSnapshotFromStoreWithOptions(ctx context.Context, store landing
 		snap.Deployer, snap.ReadDenied, snap.ReadError = fetchArgoLandingLink(ctx, store, objLabels, annotations)
 	case "helm":
 		snap.Deployer, snap.ReadDenied, snap.ReadError = fetchHelmLandingLink(ctx, store, target.Namespace, annotations)
+	case "kro":
+		snap.Deployer, snap.ReadDenied, snap.ReadError = fetchKroLandingLink(ctx, store, obj, target.Namespace, objLabels)
+	case "crossplane":
+		snap.Deployer, snap.ReadDenied, snap.ReadError = fetchCrossplaneLandingLink(ctx, store, obj, target.Namespace, objLabels)
+	case "sveltos":
+		snap.Deployer = observeSveltosMetadataLink(annotations)
 	}
 
 	if opts.Verify && !snap.ReadDenied {
@@ -746,6 +830,12 @@ func observePodImagesWitness(
 }
 
 func observeWorkloadLink(obj *unstructured.Unstructured, ref agent.LandingObjectRef) *agent.LandingLinkObservation {
+	switch ref.Kind {
+	case "Job":
+		return observeJobLink(obj, ref)
+	case "CronJob":
+		return observeCronJobLink(obj, ref)
+	}
 	res, err := status.Compute(obj)
 	if err != nil {
 		return &agent.LandingLinkObservation{Present: true, Ref: &ref, Status: "unknown", Message: err.Error(), Reporter: mapsvc.RestsOnObjectMetadata}
@@ -765,6 +855,109 @@ func observeWorkloadLink(obj *unstructured.Unstructured, ref agent.LandingObject
 		link.Status = "failed"
 	default:
 		link.Status = "unknown"
+	}
+	return link
+}
+
+func observeJobLink(obj *unstructured.Unstructured, ref agent.LandingObjectRef) *agent.LandingLinkObservation {
+	link := &agent.LandingLinkObservation{
+		Present:  true,
+		Ref:      &ref,
+		Status:   "unknown",
+		Reporter: mapsvc.RestsOnObjectMetadata,
+	}
+	succeeded, _, _ := unstructured.NestedInt64(obj.Object, "status", "succeeded")
+	failed, _, _ := unstructured.NestedInt64(obj.Object, "status", "failed")
+	active, _, _ := unstructured.NestedInt64(obj.Object, "status", "active")
+	suspended, _, _ := unstructured.NestedBool(obj.Object, "spec", "suspend")
+
+	var completeCondTrue, failedCondTrue bool
+	var completeMsg, failedMsg string
+	conds, _, _ := unstructured.NestedSlice(obj.Object, "status", "conditions")
+	for _, raw := range conds {
+		m, ok := raw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		condType, _ := m["type"].(string)
+		condStatus, _ := m["status"].(string)
+		msg, _ := m["message"].(string)
+		if msg == "" {
+			msg, _ = m["reason"].(string)
+		}
+		if condType == "Complete" && condStatus == "True" {
+			completeCondTrue = true
+			completeMsg = msg
+		}
+		if condType == "Failed" && condStatus == "True" {
+			failedCondTrue = true
+			failedMsg = msg
+		}
+	}
+
+	switch {
+	case succeeded > 0 || completeCondTrue:
+		link.Status = "ready"
+		if completeMsg != "" {
+			link.Message = completeMsg
+		} else {
+			if succeeded <= 0 {
+				succeeded = 1
+			}
+			link.Message = fmt.Sprintf("Job completed (%d succeeded)", succeeded)
+		}
+	case failedCondTrue:
+		link.Status = "failed"
+		if failedMsg != "" {
+			link.Message = failedMsg
+		} else {
+			link.Message = fmt.Sprintf("Job failed (%d failed)", failed)
+		}
+	case active > 0:
+		link.Status = "progressing"
+		link.Message = fmt.Sprintf("Job has %d active pod(s)", active)
+	case failed > 0:
+		link.Status = "progressing"
+		link.Message = fmt.Sprintf("Job has %d failed attempt(s) without terminal Failed condition", failed)
+	case suspended:
+		link.Status = "unknown"
+		link.Message = "Job is suspended"
+	default:
+		link.Status = "progressing"
+		link.Message = "Job has not started or completed yet"
+	}
+	return link
+}
+
+func observeCronJobLink(obj *unstructured.Unstructured, ref agent.LandingObjectRef) *agent.LandingLinkObservation {
+	link := &agent.LandingLinkObservation{
+		Present:  true,
+		Ref:      &ref,
+		Status:   "unknown",
+		Reporter: mapsvc.RestsOnObjectMetadata,
+	}
+	suspended, _, _ := unstructured.NestedBool(obj.Object, "spec", "suspend")
+	active, _, _ := unstructured.NestedSlice(obj.Object, "status", "active")
+	lastSchedule, _, _ := unstructured.NestedString(obj.Object, "status", "lastScheduleTime")
+	lastSuccessful, _, _ := unstructured.NestedString(obj.Object, "status", "lastSuccessfulTime")
+
+	switch {
+	case suspended:
+		link.Status = "unknown"
+		link.Message = "CronJob is suspended"
+	case len(active) > 0:
+		link.Status = "progressing"
+		link.Message = fmt.Sprintf("CronJob has %d active Job(s)", len(active))
+	case strings.TrimSpace(lastSchedule) != "":
+		link.Status = "ready"
+		if strings.TrimSpace(lastSuccessful) != "" {
+			link.Message = fmt.Sprintf("CronJob last scheduled at %s (last successful at %s)", lastSchedule, lastSuccessful)
+		} else {
+			link.Message = fmt.Sprintf("CronJob last scheduled at %s", lastSchedule)
+		}
+	default:
+		link.Status = "progressing"
+		link.Message = "CronJob has not been scheduled yet (no status.lastScheduleTime)"
 	}
 	return link
 }
@@ -992,6 +1185,291 @@ func fetchHelmLandingLink(ctx context.Context, store landingObjectStore, targetN
 	return link, false, ""
 }
 
+func nestedInt64FromMap(m map[string]interface{}, key string) int64 {
+	raw, ok := m[key]
+	if !ok || raw == nil {
+		return 0
+	}
+	switch v := raw.(type) {
+	case int64:
+		return v
+	case int:
+		return int64(v)
+	case float64:
+		return int64(v)
+	default:
+		return 0
+	}
+}
+
+// fetchKroLandingLink resolves the kro instance CR named by kro's own labels
+// (`kro.run/instance-{group,version,kind,name,namespace}`) or ownerReferences,
+// and reports its Ready condition and observedGeneration honestly.
+func fetchKroLandingLink(ctx context.Context, store landingObjectStore, obj *unstructured.Unstructured, targetNS string, labels map[string]string) (deployer *agent.LandingLinkObservation, denied bool, readErr string) {
+	instName := strings.TrimSpace(labels["kro.run/instance-name"])
+	instNS := strings.TrimSpace(labels["kro.run/instance-namespace"])
+	instKind := strings.TrimSpace(labels["kro.run/instance-kind"])
+	instGroup := strings.TrimSpace(labels["kro.run/instance-group"])
+	instVersion := strings.TrimSpace(labels["kro.run/instance-version"])
+
+	if instName == "" || instKind == "" || instGroup == "" || instVersion == "" {
+		for _, or := range obj.GetOwnerReferences() {
+			gv, err := schema.ParseGroupVersion(or.APIVersion)
+			if err != nil || !strings.Contains(gv.Group, "kro.run") || strings.EqualFold(or.Kind, "ResourceGraphDefinition") {
+				continue
+			}
+			if instName == "" {
+				instName = or.Name
+			}
+			if instKind == "" {
+				instKind = or.Kind
+			}
+			if instGroup == "" {
+				instGroup = gv.Group
+			}
+			if instVersion == "" {
+				instVersion = gv.Version
+			}
+			break
+		}
+	}
+	if instNS == "" {
+		instNS = targetNS
+	}
+	if instName == "" || instKind == "" || instGroup == "" || instVersion == "" {
+		return nil, false, ""
+	}
+
+	gvk := schema.GroupVersionKind{Group: instGroup, Version: instVersion, Kind: instKind}
+	inst, err := store.GetByGVK(ctx, gvk, instNS, instName)
+	if err != nil {
+		if apierrors.IsForbidden(err) || apierrors.IsUnauthorized(err) {
+			return nil, true, err.Error()
+		}
+		return nil, false, err.Error()
+	}
+	ref := &agent.LandingObjectRef{
+		APIVersion: inst.GetAPIVersion(),
+		Kind:       inst.GetKind(),
+		Namespace:  inst.GetNamespace(),
+		Name:       inst.GetName(),
+	}
+	return observeKroInstanceLink(inst, ref), false, ""
+}
+
+func observeKroInstanceLink(inst *unstructured.Unstructured, ref *agent.LandingObjectRef) *agent.LandingLinkObservation {
+	link := &agent.LandingLinkObservation{
+		Present:  true,
+		Ref:      ref,
+		Status:   "unknown",
+		Reporter: mapsvc.RestsOnControllerReport,
+	}
+	var obsGen int64
+	readyFound := false
+	conds, _, _ := unstructured.NestedSlice(inst.Object, "status", "conditions")
+	for _, raw := range conds {
+		m, ok := raw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		condType, _ := m["type"].(string)
+		if condType != "Ready" && condType != "InstanceReady" {
+			continue
+		}
+		readyFound = true
+		st, _ := m["status"].(string)
+		msg, _ := m["message"].(string)
+		if msg == "" {
+			msg, _ = m["reason"].(string)
+		}
+		link.Message = msg
+		if g := nestedInt64FromMap(m, "observedGeneration"); g > 0 {
+			obsGen = g
+		}
+		switch st {
+		case "True":
+			link.Status = "ready"
+		case "False":
+			link.Status = "failed"
+		case "Unknown":
+			link.Status = "progressing"
+		}
+		if condType == "Ready" {
+			break
+		}
+	}
+	if !readyFound {
+		state, _, _ := unstructured.NestedString(inst.Object, "status", "state")
+		switch strings.ToUpper(strings.TrimSpace(state)) {
+		case "ACTIVE":
+			link.Status = "ready"
+		case "FAILED":
+			link.Status = "failed"
+		case "IN_PROGRESS":
+			link.Status = "progressing"
+		}
+	}
+	if obsGen <= 0 {
+		if g, found, _ := unstructured.NestedInt64(inst.Object, "status", "observedGeneration"); found && g > 0 {
+			obsGen = g
+		}
+	}
+	if obsGen > 0 {
+		if inst.GetGeneration() > 0 && obsGen < inst.GetGeneration() {
+			link.Status = "progressing"
+		}
+		link.Revision = strconv.FormatInt(obsGen, 10)
+	}
+	return link
+}
+
+// fetchCrossplaneLandingLink resolves the Crossplane Composite Resource (XR)
+// referenced by ownerReferences (paired with `crossplane.io/composite` when
+// present) and reports its Synced/Ready conditions and observedGeneration.
+func fetchCrossplaneLandingLink(ctx context.Context, store landingObjectStore, obj *unstructured.Unstructured, targetNS string, labels map[string]string) (deployer *agent.LandingLinkObservation, denied bool, readErr string) {
+	compName := strings.TrimSpace(labels["crossplane.io/composite"])
+	var gvk schema.GroupVersionKind
+	var xrName string
+
+	// Prefer the ownerReference matching the crossplane.io/composite label,
+	// falling back to an ownerReference in a Crossplane/Upbound API group.
+	for _, or := range obj.GetOwnerReferences() {
+		gv, err := schema.ParseGroupVersion(or.APIVersion)
+		if err != nil || gv.Group == "" || gv.Version == "" || or.Kind == "" || or.Name == "" {
+			continue
+		}
+		if compName != "" && or.Name == compName {
+			gvk = schema.GroupVersionKind{Group: gv.Group, Version: gv.Version, Kind: or.Kind}
+			xrName = or.Name
+			break
+		}
+		if strings.Contains(gv.Group, "crossplane.io") || strings.Contains(gv.Group, "upbound.io") {
+			gvk = schema.GroupVersionKind{Group: gv.Group, Version: gv.Version, Kind: or.Kind}
+			xrName = or.Name
+		}
+	}
+	if xrName == "" || gvk.Kind == "" {
+		return nil, false, ""
+	}
+
+	xr, err := store.GetByGVK(ctx, gvk, targetNS, xrName)
+	if err != nil {
+		if apierrors.IsForbidden(err) || apierrors.IsUnauthorized(err) {
+			return nil, true, err.Error()
+		}
+		return nil, false, err.Error()
+	}
+	ref := &agent.LandingObjectRef{
+		APIVersion: xr.GetAPIVersion(),
+		Kind:       xr.GetKind(),
+		Namespace:  xr.GetNamespace(),
+		Name:       xr.GetName(),
+	}
+	return observeCrossplaneXRLink(xr, ref), false, ""
+}
+
+func observeCrossplaneXRLink(xr *unstructured.Unstructured, ref *agent.LandingObjectRef) *agent.LandingLinkObservation {
+	link := &agent.LandingLinkObservation{
+		Present:  true,
+		Ref:      ref,
+		Status:   "unknown",
+		Reporter: mapsvc.RestsOnControllerReport,
+	}
+	var syncedStatus, syncedReason, syncedMsg string
+	var readyStatus, readyReason, readyMsg string
+	var syncedObsGen, readyObsGen int64
+
+	conds, _, _ := unstructured.NestedSlice(xr.Object, "status", "conditions")
+	for _, raw := range conds {
+		m, ok := raw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		condType, _ := m["type"].(string)
+		st, _ := m["status"].(string)
+		reason, _ := m["reason"].(string)
+		msg, _ := m["message"].(string)
+		gen := nestedInt64FromMap(m, "observedGeneration")
+		switch condType {
+		case "Synced":
+			syncedStatus, syncedReason, syncedMsg, syncedObsGen = st, reason, msg, gen
+		case "Ready":
+			readyStatus, readyReason, readyMsg, readyObsGen = st, reason, msg, gen
+		}
+	}
+
+	switch {
+	case syncedStatus == "False":
+		link.Status = "failed"
+		link.Message = landedFirstNonEmpty(syncedMsg, syncedReason)
+	case readyStatus == "False":
+		if strings.EqualFold(readyReason, "Creating") {
+			link.Status = "progressing"
+		} else {
+			link.Status = "failed"
+		}
+		link.Message = landedFirstNonEmpty(readyMsg, readyReason)
+	case syncedStatus == "Unknown" || readyStatus == "Unknown":
+		link.Status = "progressing"
+		link.Message = landedFirstNonEmpty(readyMsg, syncedMsg, readyReason, syncedReason)
+	case readyStatus == "True" && (syncedStatus == "" || syncedStatus == "True"):
+		link.Status = "ready"
+		link.Message = landedFirstNonEmpty(readyMsg, readyReason)
+	case syncedStatus == "True" && readyStatus == "":
+		link.Status = "progressing"
+		link.Message = landedFirstNonEmpty(syncedMsg, syncedReason)
+	}
+
+	obsGen := readyObsGen
+	if obsGen <= 0 {
+		obsGen = syncedObsGen
+	}
+	if obsGen <= 0 {
+		if g, found, _ := unstructured.NestedInt64(xr.Object, "status", "observedGeneration"); found && g > 0 {
+			obsGen = g
+		}
+	}
+	if obsGen > 0 {
+		if xr.GetGeneration() > 0 && obsGen < xr.GetGeneration() {
+			link.Status = "progressing"
+		}
+		link.Revision = strconv.FormatInt(obsGen, 10)
+	}
+	return link
+}
+
+// observeSveltosMetadataLink records the Sveltos ClusterProfile/Profile named
+// in workload annotations without making extra API calls. Sveltos hashes its
+// own policy rather than writing a Git/OCI revision anchor, so EvaluateLanding
+// always returns not-observable for Sveltos.
+func observeSveltosMetadataLink(annotations map[string]string) *agent.LandingLinkObservation {
+	ownerKind := strings.TrimSpace(annotations["projectsveltos.io/owner-kind"])
+	ownerName := strings.TrimSpace(annotations["projectsveltos.io/owner-name"])
+	if ownerKind == "" || ownerName == "" {
+		return nil
+	}
+	return &agent.LandingLinkObservation{
+		Present: true,
+		Ref: &agent.LandingObjectRef{
+			APIVersion: "config.projectsveltos.io/v1beta1",
+			Kind:       ownerKind,
+			Name:       ownerName,
+		},
+		Status:   "unknown",
+		Message:  "Sveltos hashes its own policy and writes no Git or OCI revision anchor",
+		Reporter: mapsvc.RestsOnObjectMetadata,
+	}
+}
+
+func landedFirstNonEmpty(vals ...string) string {
+	for _, v := range vals {
+		if strings.TrimSpace(v) != "" {
+			return v
+		}
+	}
+	return ""
+}
+
 func buildLandedOutput(eval agent.LandingEvaluation, cost *agent.KubernetesReadCost) landedOutput {
 	ans := buildLandingAnswer(eval, cost)
 	return landedOutput{
@@ -1084,12 +1562,33 @@ func buildLandingAnswer(eval agent.LandingEvaluation, cost *agent.KubernetesRead
 			Reason: "cluster could not be reached",
 			Quoted: eval.Snapshot.ReadError,
 		})
-	case agent.LandingReasonTargetNotFound, agent.LandingReasonNoOwnerMarkerRecognised, agent.LandingReasonUnsupportedController:
+	case agent.LandingReasonTargetNotFound, agent.LandingReasonNoOwnerMarkerRecognised:
 		ans.Unknowns = append(ans.Unknowns, mapsvc.AnswerUnknown{
 			What:   "delivery chain verification",
 			Kind:   mapsvc.UnknownNotObservable,
 			Reason: eval.Reason,
 		})
+	case agent.LandingReasonUnsupportedController:
+		switch {
+		case strings.EqualFold(eval.Snapshot.Owner, agent.OwnerSveltos):
+			ans.Unknowns = append(ans.Unknowns, mapsvc.AnswerUnknown{
+				What:   "Sveltos revision anchor",
+				Kind:   mapsvc.UnknownNotObservable,
+				Reason: "Sveltos hashes its own policy and writes no Git or OCI revision anchor",
+			})
+		case eval.Snapshot.Deployer != nil && eval.Snapshot.Deployer.Present && strings.TrimSpace(eval.Snapshot.Deployer.Revision) == "":
+			ans.Unknowns = append(ans.Unknowns, mapsvc.AnswerUnknown{
+				What:   "deployer revision anchor",
+				Kind:   mapsvc.UnknownNotObservable,
+				Reason: fmt.Sprintf("%s deployer did not report a verifiable revision or observedGeneration", eval.Snapshot.Owner),
+			})
+		default:
+			ans.Unknowns = append(ans.Unknowns, mapsvc.AnswerUnknown{
+				What:   "delivery chain verification",
+				Kind:   mapsvc.UnknownNotObservable,
+				Reason: eval.Reason,
+			})
+		}
 	}
 
 	target := eval.Snapshot.Target

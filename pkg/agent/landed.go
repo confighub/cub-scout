@@ -113,7 +113,7 @@ type LandingLinkObservation struct {
 }
 
 // LandingSnapshot is the point-in-time read of a target workload and its
-// Flux or Argo CD delivery chain.
+// delivery chain (Flux, Argo CD, Helm, kro, Crossplane, or other owners).
 type LandingSnapshot struct {
 	Context     string
 	Target      LandingObjectRef
@@ -309,8 +309,13 @@ func EvaluateLanding(anchor LandingAnchor, snap LandingSnapshot) LandingEvaluati
 		eval.Reason = LandingReasonNoOwnerMarkerRecognised
 		eval.Summary = fmt.Sprintf("No GitOps owner marker was recognised on %s/%s.", snap.Target.Kind, snap.Target.Name)
 		return eval
-	case "flux", "argocd", "argo", "helm":
-		// Supported controllers (Flux, Argo CD, Helm).
+	case "flux", "argocd", "argo", "helm", "kro", "crossplane":
+		// Supported controllers with verifiable revision or observedGeneration anchors.
+	case "sveltos":
+		eval.State = LandingStateNotObservable
+		eval.Reason = LandingReasonUnsupportedController
+		eval.Summary = fmt.Sprintf("Sveltos does not write a Git or OCI revision anchor on %s/%s; landing cannot be verified against %s.", snap.Target.Kind, snap.Target.Name, anchor.Kind)
+		return eval
 	default:
 		eval.State = LandingStateNotObservable
 		eval.Reason = LandingReasonUnsupportedController
@@ -378,7 +383,16 @@ func EvaluateLanding(anchor LandingAnchor, snap LandingSnapshot) LandingEvaluati
 		return eval
 	}
 
-	// Deployer is "ready" (settled). Check whether its applied revision matches the anchor.
+	// Deployer is "ready" (settled). If it reported no verifiable revision or
+	// observedGeneration, never infer agreement or falsely claim mismatch.
+	if strings.TrimSpace(snap.Deployer.Revision) == "" {
+		eval.State = LandingStateNotObservable
+		eval.Reason = LandingReasonUnsupportedController
+		eval.Summary = fmt.Sprintf("The %s deployer reported ready without a verifiable revision or observedGeneration, so landing cannot be verified against %s.", snap.Owner, anchor.Kind)
+		return eval
+	}
+
+	// Check whether its applied revision matches the anchor.
 	deployerMatches := AnchorMatches(anchor, snap.Deployer.Revision)
 	if !deployerMatches {
 		// If the source already has the requested anchor, the deployer is still
@@ -404,7 +418,7 @@ func EvaluateLanding(anchor LandingAnchor, snap LandingSnapshot) LandingEvaluati
 		return eval
 	}
 
-	// 3. Workload link (kstatus on Deployment / StatefulSet / DaemonSet).
+	// 3. Workload link (Deployment / StatefulSet / DaemonSet / Job / CronJob).
 	if snap.Workload == nil || !snap.Workload.Present {
 		eval.State = LandingStateNotObservable
 		eval.Reason = LandingReasonTargetNotFound
