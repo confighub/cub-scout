@@ -45,15 +45,15 @@ var appListCmd = &cobra.Command{
 }
 
 var (
-	appSetContext bool
-	appLabels     []string
-	appJSON       bool
+	appLabels []string
+	appJSON   bool
 )
 
 func init() {
-	appCreateCmd.Flags().BoolVar(&appSetContext, "set-context", false, "Deprecated and ignored: cub has no default space to set")
-	_ = appCreateCmd.Flags().MarkDeprecated("set-context", "it is ignored, because cub (v0.5.2 and later) has no default space; pass --space <name> to the commands that need a space; --set-context is removed in 3.0")
 	appCreateCmd.Flags().StringArrayVar(&appLabels, "label", nil, "Labels in key=value format (can be repeated)")
+	rejectRemovedFlags(appCreateCmd, map[string]string{
+		"set-context": "pass --space <name> to the commands that need a space instead",
+	})
 
 	appListCmd.Flags().BoolVar(&appJSON, "json", false, "Output as JSON")
 

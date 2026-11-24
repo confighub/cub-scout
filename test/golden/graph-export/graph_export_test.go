@@ -13,7 +13,7 @@ func TestGraphExport_Empty(t *testing.T) {
 	binary := findBinary(t)
 
 	// Set test time for deterministic output
-	cmd := exec.Command(binary, "graph", "export", "--json")
+	cmd := exec.Command(binary, "graph", "export", "--format", "json")
 	cmd.Env = append(os.Environ(),
 		"CUB_SCOUT_TEST_TIME=2026-01-01T00:00:00Z",
 		"KUBECONFIG=/dev/null", // No cluster access needed for empty graph

@@ -43,7 +43,6 @@ Supported formats:
 }
 
 var (
-	graphExportJSON      bool
 	graphExportFormat    string
 	graphExportOutput    string
 	graphExportMaxNodes  int
@@ -56,9 +55,10 @@ func init() {
 	graphCmd.AddCommand(graphExportCmd)
 	graphExportCmd.Flags().String("kube-context", "", "Kubernetes context to inspect (strict explicit selection)")
 
-	graphExportCmd.Flags().BoolVar(&graphExportJSON, "json", false, "DEPRECATED: use --format json")
-	_ = graphExportCmd.Flags().MarkDeprecated("json", "use --format json; --json is removed in 3.0")
 	graphExportCmd.Flags().StringVar(&graphExportFormat, "format", "json", "Output format: json|dot|svg|html")
+	rejectRemovedFlags(graphExportCmd, map[string]string{
+		"json": "use --format json instead",
+	})
 	graphExportCmd.Flags().StringVarP(&graphExportOutput, "output", "o", "", "Write output to file (default: stdout)")
 	graphExportCmd.Flags().IntVar(&graphExportMaxNodes, "max-nodes", 300, "Maximum nodes in visual formats (0 = unlimited)")
 	graphExportCmd.Flags().StringVarP(&graphExportNamespace, "namespace", "n", "", "Namespace to collect (empty = all namespaces)")
@@ -126,9 +126,6 @@ func runGraphExport(cmd *cobra.Command, args []string) error {
 	}
 
 	format := strings.ToLower(strings.TrimSpace(graphExportFormat))
-	if graphExportJSON {
-		format = "json"
-	}
 
 	data, err := renderGraphOutput(g, format, graphExportMaxNodes)
 	if err != nil {

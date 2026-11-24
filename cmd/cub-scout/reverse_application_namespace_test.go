@@ -52,9 +52,9 @@ func TestReverseApplicationResolvesUniqueNamespace(t *testing.T) {
 			defer server.Close()
 			session, err := newTraceSession(&rest.Config{Host: server.URL}, "selected")
 			require.NoError(t, err)
-			oldFormat, oldJSON := traceFormat, traceJSON
-			traceFormat, traceJSON = "json", false
-			defer func() { traceFormat, traceJSON = oldFormat, oldJSON }()
+			oldFormat := traceFormat
+			traceFormat = "json"
+			defer func() { traceFormat = oldFormat }()
 			var runErr error
 			output := captureStdout(t, func() { runErr = runReverseTraceWithSession(context.Background(), session, "Application", "api", "") })
 			if tc.wantError != "" {

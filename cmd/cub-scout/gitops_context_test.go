@@ -92,7 +92,7 @@ func gitOpsContextKubeconfig(t *testing.T, path, current string, alpha, beta *gi
 func prepareGitOpsContextState(t *testing.T) {
 	t.Helper()
 	oldSelector := gitopsKubeContext
-	oldNamespace, oldFormat, oldJSON, oldTUI := gitopsNamespace, gitopsFormat, gitopsJSON, gitopsTUI
+	oldNamespace, oldFormat, oldTUI := gitopsNamespace, gitopsFormat, gitopsTUI
 	oldWithConfigHub, oldSpace, oldSince, oldStale := gitopsWithConfigHub, gitopsConfigHubSpace, gitopsConfigHubSince, gitopsConfigHubStaleAfter
 	flag := gitopsStatusCmd.Flags().Lookup("kube-context")
 	oldChanged := flag.Changed
@@ -101,7 +101,7 @@ func prepareGitOpsContextState(t *testing.T) {
 	oldContext := rootCmd.Context()
 	t.Cleanup(func() {
 		gitopsKubeContext = oldSelector
-		gitopsNamespace, gitopsFormat, gitopsJSON, gitopsTUI = oldNamespace, oldFormat, oldJSON, oldTUI
+		gitopsNamespace, gitopsFormat, gitopsTUI = oldNamespace, oldFormat, oldTUI
 		gitopsWithConfigHub, gitopsConfigHubSpace, gitopsConfigHubSince, gitopsConfigHubStaleAfter = oldWithConfigHub, oldSpace, oldSince, oldStale
 		flag.Changed = oldChanged
 		gitopsStatusCmd.Flags().Lookup("with-confighub").Changed = oldConfigHubChanged
@@ -112,7 +112,6 @@ func prepareGitOpsContextState(t *testing.T) {
 	gitopsKubeContext = ""
 	gitopsNamespace = ""
 	gitopsFormat = "json"
-	gitopsJSON = false
 	gitopsTUI = false
 	gitopsWithConfigHub = false
 	gitopsConfigHubSpace = ""

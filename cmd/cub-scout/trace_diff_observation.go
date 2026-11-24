@@ -245,9 +245,6 @@ func resolveTraceDiffNamespace(ctx context.Context, session *traceSession, desir
 
 func runTraceDiffObservation(ctx context.Context, selection clusterContextSelection, kind, name, namespace, apiVersion, desiredFile string) error {
 	format := traceFormat
-	if traceJSON && format == "ascii" {
-		format = "json"
-	}
 	if format != "ascii" && format != "json" && format != "md" {
 		return fmt.Errorf("unsupported trace format %q (supported: ascii, json, md)", format)
 	}

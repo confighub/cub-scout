@@ -30,7 +30,6 @@ import (
 var (
 	traceKubeContext         string
 	traceNamespace           string
-	traceJSON                bool   // deprecated: use --format json
 	traceFormat              string // output format: ascii, json
 	traceApp                 string // For direct Argo app tracing
 	traceReverse             bool   // Reverse trace - walk ownerReferences up
@@ -97,7 +96,7 @@ Examples:
   cub-scout trace deployment/nginx -n demo --diff --desired-file ./rendered --api-version apps/v1
 
   # Output as JSON
-  cub-scout trace deployment/nginx -n demo --json
+  cub-scout trace deployment/nginx -n demo --format json
 
   # Show deployment history (who deployed what, when)
   cub-scout trace deployment/nginx -n demo --history
@@ -136,7 +135,9 @@ func init() {
 	traceCmd.Flags().StringVar(&traceKubeContext, "kube-context", "", "Use this exact Kubernetes context for trace reads")
 	traceCmd.Flags().StringVarP(&traceNamespace, "namespace", "n", "", "Namespace of the resource (default: flux-system; Application names must be unique if omitted)")
 	traceCmd.Flags().StringVar(&traceFormat, "format", "ascii", "Output format: ascii, json, md")
-	traceCmd.Flags().BoolVar(&traceJSON, "json", false, "Output as JSON (deprecated: use --format json)")
+	rejectRemovedFlags(traceCmd, map[string]string{
+		"json": "use --format json instead",
+	})
 	traceCmd.Flags().StringVar(&traceApp, "app", "", "Trace Argo CD application by name")
 	traceCmd.Flags().BoolVarP(&traceReverse, "reverse", "r", false, "Reverse trace - walk ownerReferences up to find GitOps source")
 	traceCmd.Flags().BoolVarP(&traceDiff, "diff", "d", false, "Compare one already-rendered object with the selected live object")
@@ -151,9 +152,6 @@ func init() {
 	traceCmd.Flags().StringVar(&traceConfigHubSpace, "confighub-space", "", "ConfigHub space for delivery evidence (default: resource ConfigHub space; use '*' explicitly for all spaces)")
 	traceCmd.Flags().StringVar(&traceConfigHubSince, "confighub-since", "24h", "Lookback window for ConfigHub release/event evidence (examples: 24h, 7d, 2w)")
 	traceCmd.Flags().StringVar(&traceConfigHubStaleAfter, "confighub-stale-after", "15m", "Treat ConfigHub live-status observations older than this as stale")
-
-	// Mark --json as deprecated
-	_ = traceCmd.Flags().MarkDeprecated("json", "use --format json instead; --json is removed in 3.0")
 }
 
 func runTrace(cmd *cobra.Command, args []string) error {
@@ -175,9 +173,6 @@ func runTrace(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("--api-version requires --diff --desired-file")
 	}
 	effectiveFormat := traceFormat
-	if traceJSON && effectiveFormat == "ascii" {
-		effectiveFormat = "json"
-	}
 	if effectiveFormat != "ascii" && effectiveFormat != "json" && effectiveFormat != "md" {
 		return fmt.Errorf("unsupported trace format %q (supported: ascii, json, md)", effectiveFormat)
 	}
@@ -1411,9 +1406,6 @@ func outputTraceMarkdown(result *agent.TraceResult, artifacts map[string]mapsvc.
 // invocation binding and renders the requested reverse-trace representation.
 func runReverseTraceWithSession(ctx context.Context, session *traceSession, kind, name, namespace string) error {
 	format := traceFormat
-	if traceJSON && format == "ascii" {
-		format = "json"
-	}
 	switch format {
 	case "ascii", "json", "md":
 	default:
@@ -2788,9 +2780,6 @@ func loadAndRenderTraceFromJSON(path string, invCtx InvocationContext) error {
 
 	// Resolve effective format
 	effectiveFormat := traceFormat
-	if traceJSON && effectiveFormat == "ascii" {
-		effectiveFormat = "json"
-	}
 
 	artifacts := buildUnknownTraceArtifacts(&result)
 	if traceArtifacts {

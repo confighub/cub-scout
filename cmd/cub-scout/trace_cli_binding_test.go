@@ -26,13 +26,13 @@ func TestTraceCLIApplicationUsesKubernetesBindingWithoutArgoLogin(t *testing.T) 
 	t.Setenv("CUB_SCOUT_TEST_TRACE_JSON", "")
 	t.Setenv("PATH", t.TempDir()) // No Argo/Flux/kubectl binary is available.
 	oldNamespace, oldFormat, oldApp, oldPresentation := traceNamespace, traceFormat, traceApp, tracePresentation
-	oldJSON, oldReverse, oldDiff, oldArtifacts, oldConnected := traceJSON, traceReverse, traceDiff, traceArtifacts, traceWithConfigHub
+	oldReverse, oldDiff, oldArtifacts, oldConnected := traceReverse, traceDiff, traceArtifacts, traceWithConfigHub
 	t.Cleanup(func() {
 		traceNamespace, traceFormat, traceApp, tracePresentation = oldNamespace, oldFormat, oldApp, oldPresentation
-		traceJSON, traceReverse, traceDiff, traceArtifacts, traceWithConfigHub = oldJSON, oldReverse, oldDiff, oldArtifacts, oldConnected
+		traceReverse, traceDiff, traceArtifacts, traceWithConfigHub = oldReverse, oldDiff, oldArtifacts, oldConnected
 	})
 	traceNamespace, traceFormat, traceApp, tracePresentation = "delivery", "json", "api", ""
-	traceJSON, traceReverse, traceDiff, traceArtifacts, traceWithConfigHub = false, false, false, false, false
+	traceReverse, traceDiff, traceArtifacts, traceWithConfigHub = false, false, false, false
 	command := &cobra.Command{}
 	command.SetContext(context.Background())
 	var runErr error

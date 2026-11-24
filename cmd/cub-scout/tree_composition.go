@@ -90,7 +90,7 @@ func runTreeComposition(ctx context.Context) (resultErr error) {
 		fmt.Fprintf(os.Stderr, "[debug] total: %v\n", time.Since(startTotal))
 	}
 
-	if treeJSON {
+	if strings.EqualFold(strings.TrimSpace(treeFormat), "json") {
 		return json.NewEncoder(os.Stdout).Encode(byXR)
 	}
 

@@ -27,13 +27,13 @@ func exportContextCommand(t *testing.T, name, selection string) *cobra.Command {
 }
 func preserveExportFlags(t *testing.T) {
 	t.Helper()
-	gf, go_, gn, gempty, gj, gm := graphExportFormat, graphExportOutput, graphExportNamespace, graphExportEmpty, graphExportJSON, graphExportMaxNodes
+	gf, go_, gn, gempty, gm := graphExportFormat, graphExportOutput, graphExportNamespace, graphExportEmpty, graphExportMaxNodes
 	so, sn, sk, sr := snapshotOutput, snapshotNamespace, snapshotKind, snapshotRelations
 	t.Cleanup(func() {
-		graphExportFormat, graphExportOutput, graphExportNamespace, graphExportEmpty, graphExportJSON, graphExportMaxNodes = gf, go_, gn, gempty, gj, gm
+		graphExportFormat, graphExportOutput, graphExportNamespace, graphExportEmpty, graphExportMaxNodes = gf, go_, gn, gempty, gm
 		snapshotOutput, snapshotNamespace, snapshotKind, snapshotRelations = so, sn, sk, sr
 	})
-	graphExportFormat, graphExportOutput, graphExportNamespace, graphExportEmpty, graphExportJSON, graphExportMaxNodes = "json", "", "team-a", false, false, 300
+	graphExportFormat, graphExportOutput, graphExportNamespace, graphExportEmpty, graphExportMaxNodes = "json", "", "team-a", false, 300
 	snapshotOutput, snapshotNamespace, snapshotKind, snapshotRelations = "", "team-a", "Deployment", false
 	t.Setenv("CUB_SCOUT_TEST_TIME", "")
 	t.Setenv("CUB_SCOUT_TEST_CLUSTER", "")

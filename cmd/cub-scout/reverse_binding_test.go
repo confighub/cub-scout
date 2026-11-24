@@ -62,9 +62,9 @@ func TestRunReverseTraceWithSessionUsesCapturedServerAfterRetarget(t *testing.T)
 		t.Fatal("test did not retarget the source kubeconfig")
 	}
 
-	oldFormat, oldJSON := traceFormat, traceJSON
-	traceFormat, traceJSON = "json", false
-	t.Cleanup(func() { traceFormat, traceJSON = oldFormat, oldJSON })
+	oldFormat := traceFormat
+	traceFormat = "json"
+	t.Cleanup(func() { traceFormat = oldFormat })
 	var runErr error
 	output := captureStdout(t, func() {
 		runErr = runReverseTraceWithSession(context.Background(), session, "Deployment", "api", "team-a")
@@ -85,7 +85,7 @@ func TestRunReverseTraceWithSessionUsesCapturedServerAfterRetarget(t *testing.T)
 	if alphaRequests.Load() != 1 || betaRequests.Load() != 0 {
 		t.Fatalf("requests alpha=%d beta=%d; want only captured alpha endpoint", alphaRequests.Load(), betaRequests.Load())
 	}
-	traceFormat, traceJSON = "md", false
+	traceFormat = "md"
 	var markdownErr error
 	markdown := captureStdout(t, func() {
 		markdownErr = runReverseTraceWithSession(context.Background(), session, "Deployment", "api", "team-a")
@@ -233,9 +233,9 @@ func TestReverseTraceRejectsUnsupportedFormatBeforeClientReads(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	oldFormat, oldJSON := traceFormat, traceJSON
-	traceFormat, traceJSON = "invalid", false
-	t.Cleanup(func() { traceFormat, traceJSON = oldFormat, oldJSON })
+	oldFormat := traceFormat
+	traceFormat = "invalid"
+	t.Cleanup(func() { traceFormat = oldFormat })
 	err = runReverseTraceWithSession(context.Background(), session, "Deployment", "api", "team-a")
 	if err == nil || !strings.Contains(err.Error(), "unsupported trace format") {
 		t.Fatalf("unsupported format error = %v", err)

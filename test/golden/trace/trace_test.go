@@ -110,7 +110,7 @@ func TestTrace_UnmanagedResourceJSON(t *testing.T) {
 	requireGolden(t, "unmanaged-resource-json")
 
 	// Use kube-system/coredns which is typically native/unmanaged
-	result := golden.RunCubScout(t, "trace", "deployment/coredns", "-n", "kube-system", "--json")
+	result := golden.RunCubScout(t, "trace", "deployment/coredns", "-n", "kube-system", "--format", "json")
 
 	// Per cli-contract.md: exit code 1 for "not managed"
 	golden.AssertExitCode(t, 1, result)

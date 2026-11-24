@@ -89,7 +89,7 @@ func TestPluginParity_StandaloneMatchesPlugin(t *testing.T) {
 		// catches any plugin-mode template or command-path bug that
 		// specifically affects connected subtrees.
 		{name: "history_help", args: []string{"history", "--help"}},
-		{name: "fleet_help", args: []string{"fleet", "--help"}},
+		{name: "map_fleet_help", args: []string{"map", "fleet", "--help"}},
 		{name: "import_help", args: []string{"import", "--help"}},
 		{name: "gitops_help", args: []string{"gitops", "--help"}},
 		// Offline deterministic JSON output. scan --file does not touch a

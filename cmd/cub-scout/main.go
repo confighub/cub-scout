@@ -95,7 +95,7 @@ func main() {
 		applyPluginModeHelp(rootCmd)
 	}
 
-	if err := rootCmd.Execute(); err != nil {
+	if err := executeRootCmd(os.Args[1:]); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		// Honor exit codes signaled by RunE via exitCodeError (see
 		// exit_code.go). Commands like `receipt validate` need richer
