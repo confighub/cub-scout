@@ -23,7 +23,7 @@ func TestNewMCPGateway_ToolsIncludeStandaloneSet(t *testing.T) {
 		names = append(names, tool.Name)
 	}
 
-	want := []string{"doctor", "explain", "gitops_settings", "gitops_status", "map", "release_check", "scan", "trace"}
+	want := []string{"doctor", "explain", "gitops_settings", "gitops_status", "landed", "map", "release_check", "scan", "trace"}
 	if !reflect.DeepEqual(names, want) {
 		t.Fatalf("tool names = %v, want %v", names, want)
 	}

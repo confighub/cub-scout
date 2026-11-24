@@ -160,7 +160,7 @@ func TestCubScoutMoreIndexDescribeAndRun(t *testing.T) {
 			t.Errorf("index summary for %s is %d bytes", entry.Name, len(entry.Summary))
 		}
 	}
-	if want := []string{"gitops_settings", "release_check", "scan", "trace"}; !reflect.DeepEqual(names, want) || index.Profile != "core" {
+	if want := []string{"gitops_settings", "landed", "release_check", "scan", "trace"}; !reflect.DeepEqual(names, want) || index.Profile != "core" {
 		t.Errorf("index = %v (profile %q), want %v", names, index.Profile, want)
 	}
 
