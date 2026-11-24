@@ -51,31 +51,30 @@ Already done toward 3.0 (do not redo):
 
 ### What is left to 3.0
 
-#### The 3.0 transition ([#595], [#386], [#562]) — no new decisions needed
+#### The 3.0 transition ([#595], [#386], [#562]) — complete on `main`
 
-| Item | State | What is left |
+| Item | State | Reference |
 |---|---|---|
-| Go module path `/v2` → `/v3` ([#595]) | not started | Move module path to `github.com/confighub/cub-scout/v3`, rewrite every self-import, and add a test that no un-suffixed self-import remains. |
-| Remove deprecated flags and commands ([#595], [#562]) | deprecation window met in v2.18.0 | Remove `trace --json`, `tree --json`, `graph export --json`, `gitops status --json`, `connect --go`, `app create --set-context`, `hierarchy`, and `fleet outliers` (`docs/migration-3.0.md`). Add tests that each removed flag fails and names its replacement, never silently ignored. |
-| Verdict words leave JSON and MCP | deprecated in v2.16.0 / v2.18.0 | Remove `compare source-truth`'s `status` and `source_truth` verdict words from JSON and MCP output; keep them in ASCII and Markdown (decided 2026-11-16). |
-| `cub` version floor ([#595]) | needs version named at release time | Enforce the chosen floor (against the then-current `cub`, currently v0.11.x) in the connected gate and state it in `docs/reference/cli-contract.md`. |
-| Plugin-first naming ([#386]) | partly | Make `cub scout …` the documented primary form; keep the standalone `cub-scout` binary; show both forms in examples, plugin form first. |
-| Migration guide ([#595]) | draft in `docs/migration-3.0.md` | Write `docs/releases/v3.0.0-migration.md` (or promote `docs/migration-3.0.md`) and add a test that runs its before/after commands against the built binary. |
+| Go module path `/v2` → `/v3` ([#595]) | **done on `main`** | `#991` (`go.mod`, 313 files, `module_path_test.go` rejects unsuffixed and `/v2`) |
+| Remove deprecated flags and commands ([#595], [#562]) | **done on `main`** | `#992` (`removed_v3.go`, fail-and-name-replacement tests for all 8 surfaces) |
+| Verdict words leave JSON and MCP | **done on `main`** | `#993` (`status`, `source_truth` removed from JSON/MCP; kept in ASCII/Markdown) |
+| `cub` version floor ([#595]) | **done on `main`** | `#1000` (`pkg/hub.MinCubVersion = "0.11.4"` enforced in `RequireCubConnected`, stated in `cli-contract.md`) |
+| Plugin-first naming ([#386]) | **done on `main`** | `#994` (`cub scout ...` primary across README/CLI-GUIDE/start-here/install + guard test) |
+| Migration guide ([#595]) | **done on `main`** | `#995` (`docs/releases/v3.0.0-migration.md` + executed before/after binary test) |
 
 #### The agent plan's 3.0 items ([Agent plan — 2026-11-13](#agent-plan--2026-11-13))
 
 | Item | State | What is left |
 |---|---|---|
-| A(1) "did my change land" + G1 (`converging` state) | not started as its own tool | One tool and command (`landed` / `converging` / `not-landed` / `not-observable`, naming the broken link). Propose state words for maintainer approval before building. |
-| G2: bounded, read-only wait on the landing check | not started | One read-only call returning when state settles or time is up; must not be a watch service (`#539` stays not planned). |
+| A(1) "did my change land" + G1 (`converging` state) + G2 (bounded wait) | **done on `main` (Flux + Argo CD first slice)** | `#998` (proposal), `#1001` (`cub scout landed` CLI + `landed` MCP tool, 8 recorded fixtures, zero false-landed invariant). Real-cluster Flux + Argo CD CI lane (`scripts/ci/landed-lane.sh`) in progress. |
 | A(2) field value, last manager, will a controller revert it | partly (`explain`, field attribution) | A single answer shaped for the question. |
 | A(3) changes no one recorded | partly (`compare three-way`) | A single answer shaped for the question. |
-| A(4) `next[]` reads on every answer | done on the nine `answer` commands | Keep exact read-only commands enforced on every new answer. |
+| A(4) `next[]` reads on every answer | done on all 10 `answer` commands | Keep exact read-only commands enforced on every new answer. |
 | G5: agent identity in attribution | not started | Propose a field-manager convention; report what is read, never guess. |
-| B: envelope enforced on every command ([#596]) | nine commands done | Conformance test across all agent-facing commands; TUI, watch and bot surfaces. |
-| C: cost an agent can count on | MCP catalog size ceilings done (`mcp_catalog_size_test.go`); four-question sizes recorded by live lane | Per-answer size ceilings checked in CI; a summary view per tool; deterministic bytes-and-tokens benchmark over the 24 prepared cases (no model, no credits). |
-| E: measurement | rung 1 partly (four-question sizes) | Complete rung 1 (C's free numbers). Rungs 2–3 are paid and **not approved**. |
-| F: be found and be tried | topics and homepage set; README opens with a real-cluster `trace` answer | Confirm the "one command, one answer" first screen with the maintainer; MCP directory and krew listings; one 3.0 announcement carrying C's numbers. |
+| B: envelope enforced on every command ([#596]) | all 10 commands covered (MCP parity + ceilings) | TUI, watch and bot surface conformance. |
+| C: cost an agent can count on | **rung 1 done on `main`** | `#996` (per-answer byte ceilings in CI for all 10 commands), `#997` (deterministic 24-case bytes-and-tokens benchmark published in `docs/reference/answer-sizes.md`). Summary view per tool remains. |
+| E: measurement | **rung 1 complete** | Rungs 2–3 are paid and **not approved**. |
+| F: be found and be tried | topics, homepage, plugin-first README done | Confirm the "one command, one answer" first screen with the maintainer; MCP directory and krew listings; one 3.0 announcement carrying C's numbers. |
 | `#599` remainder | explicit `--kube-context` done | Cluster identity on every answer (waits on maintainer decision), merge-safe IDs, failure isolation. |
 
 #### Deferred to 3.1 (does not block 3.0; waits on ConfigHub agreement)
