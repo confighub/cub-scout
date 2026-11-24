@@ -182,19 +182,21 @@ func TestSourceTruthJSONCarriesTheAnswerBesideTheOldFields(t *testing.T) {
 	require.NoError(t, outputSourceTruthAnswered(&out, evidence, "json", answer))
 	var document map[string]json.RawMessage
 	require.NoError(t, json.Unmarshal(out.Bytes(), &document))
-	for _, key := range []string{"declared_strategy", "context", "collection_errors", "status", "source_truth", "outlier", "surfaces", "safe_next_action", "answer"} {
+	for _, key := range []string{"declared_strategy", "context", "collection_errors", "outlier", "surfaces", "safe_next_action", "answer"} {
 		require.Contains(t, document, key)
 	}
-	require.JSONEq(t, `"BLOCK"`, string(document["status"]), "the verdict word stays in JSON until 3.0")
+	require.NotContains(t, document, "status", "verdict words leave JSON in 3.0")
+	require.NotContains(t, document, "source_truth", "verdict words leave JSON in 3.0")
 
-	// Without the answer the document is byte for byte the old one.
-	var old, plain bytes.Buffer
-	require.NoError(t, agent.EncodeEvidence(&old, evidence))
+	// Without the answer the document still omits verdict words.
+	var plain bytes.Buffer
 	require.NoError(t, outputSourceTruthAnswered(&plain, evidence, "json", nil))
-	require.Equal(t, old.String(), plain.String())
-	// And with it, the growth is bounded: this is the form chosen because
-	// the full block more than doubled the answer.
-	require.Less(t, out.Len()-old.Len(), 700, "the lean answer added %d bytes", out.Len()-old.Len())
+	var plainDoc map[string]json.RawMessage
+	require.NoError(t, json.Unmarshal(plain.Bytes(), &plainDoc))
+	require.NotContains(t, plainDoc, "status")
+	require.NotContains(t, plainDoc, "source_truth")
+	// And with the lean answer, the growth is bounded.
+	require.Less(t, out.Len()-plain.Len(), 700, "the lean answer added %d bytes", out.Len()-plain.Len())
 
 	for _, format := range []string{"ascii", "md"} {
 		var rendered, before bytes.Buffer

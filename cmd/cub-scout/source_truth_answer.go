@@ -13,9 +13,9 @@ import (
 )
 
 // The states a source-truth answer can have, and the keys for why. A closed
-// list. They describe what was observed; PASS, WATCH, ASK and BLOCK beside
-// them are verdict words, kept in JSON until 3.0 and in the ASCII and
-// Markdown renderings after it (maintainer's decision, 2026-11-16).
+// list. They describe what was observed; PASS, WATCH, ASK and BLOCK are
+// verdict words kept in ASCII and Markdown for people and removed from JSON
+// and MCP output in 3.0 (maintainer's decision, 2026-11-16).
 const (
 	sourceTruthStateAgreed        = "agreed"
 	sourceTruthStateNotAgreed     = "not-agreed"
@@ -52,11 +52,32 @@ var sourceTruthGapMeaning = map[string]struct{ kind, reason string }{
 	"controller.oci_digest":                       {mapsvc.UnknownNotCompared, "the controller reports no digest to compare"},
 }
 
-// sourceTruthEnvelope is the JSON document: the evidence as it has been,
-// and the answer beside it.
+// sourceTruthEnvelope is the JSON and MCP wire shape for compare source-truth.
+// Verdict words (status, source_truth) stay in ASCII and Markdown for people
+// and leave JSON and MCP output in 3.0 (maintainer's decision, 2026-11-16);
+// machine readers use answer.state and answer.reason.
 type sourceTruthEnvelope struct {
-	agent.SourceTruthEvidence
-	Answer *mapsvc.LeanAnswer `json:"answer,omitempty"`
+	DeclaredStrategy string                    `json:"declared_strategy"`
+	Context          string                    `json:"context,omitempty"`
+	CollectionErrors []string                  `json:"collection_errors,omitempty"`
+	Outlier          agent.SourceTruthOutlier  `json:"outlier"`
+	Surfaces         agent.SourceTruthSurfaces `json:"surfaces"`
+	ProofGaps        []string                  `json:"proof_gaps,omitempty"`
+	SafeNextAction   string                    `json:"safe_next_action,omitempty"`
+	Answer           *mapsvc.LeanAnswer        `json:"answer,omitempty"`
+}
+
+func newSourceTruthEnvelope(ev agent.SourceTruthEvidence, answer *mapsvc.LeanAnswer) sourceTruthEnvelope {
+	return sourceTruthEnvelope{
+		DeclaredStrategy: ev.DeclaredStrategy,
+		Context:          ev.Context,
+		CollectionErrors: ev.CollectionErrors,
+		Outlier:          ev.Outlier,
+		Surfaces:         ev.Surfaces,
+		ProofGaps:        ev.ProofGaps,
+		SafeNextAction:   ev.SafeNextAction,
+		Answer:           answer,
+	}
 }
 
 // buildSourceTruthAnswer puts a source-truth result into the lean form of
