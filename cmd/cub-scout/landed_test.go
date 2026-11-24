@@ -35,6 +35,7 @@ func TestLandedAnswer_ConformanceAndQuotedClusterText(t *testing.T) {
 
 	out := buildLandedOutput(eval, nil)
 	require.NotNil(t, out.Answer)
+	requireConformingAnswer(t, out.Answer, landedStates, landedReasons)
 	require.Equal(t, agent.LandingStateNotLanded, out.Answer.State)
 	require.Equal(t, agent.LandingReasonControllerReconcileFailed, out.Answer.Reason)
 	require.NotContains(t, out.Answer.Summary, injected, "cluster text must never leak into summary")
