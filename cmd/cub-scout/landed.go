@@ -27,6 +27,7 @@ import (
 var (
 	landedNamespace    string
 	landedKubeContext  string
+	landedRecording    string
 	landedRevision     string
 	landedDigest       string
 	landedUnitRevision string
@@ -64,6 +65,7 @@ func init() {
 
 	landedCmd.Flags().StringVarP(&landedNamespace, "namespace", "n", "default", "Namespace of the target workload")
 	landedCmd.Flags().StringVar(&landedKubeContext, "kube-context", "", "Kubernetes context to inspect (default: current context)")
+	landedCmd.Flags().StringVar(&landedRecording, "recording", "", "Offline YAML/JSON cluster snapshot file to evaluate without cluster access")
 	landedCmd.Flags().StringVar(&landedRevision, "revision", "", "Expected Git SHA or controller revision")
 	landedCmd.Flags().StringVar(&landedDigest, "digest", "", "Expected OCI digest (e.g. sha256:...)")
 	landedCmd.Flags().StringVar(&landedUnitRevision, "unit-revision", "", "Expected ConfigHub unit revision")
@@ -217,6 +219,31 @@ func runLanded(cmd *cobra.Command, args []string) error {
 		ctx = context.Background()
 	}
 
+	// Offline recorded snapshot mode (Theme 4: zero cluster/network access).
+	if strings.TrimSpace(landedRecording) != "" {
+		if selection.explicit {
+			return fmt.Errorf("--recording cannot be combined with --kube-context")
+		}
+		if landedWait > 0 {
+			return fmt.Errorf("--recording cannot be combined with --wait (recorded snapshots are static)")
+		}
+		snapshot, err := readRecordedObjectSnapshot(landedRecording)
+		if err != nil {
+			return err
+		}
+		if anchor.Value == "" {
+			snap := agent.LandingSnapshot{Target: target, ObservedAt: time.Now().UTC()}
+			eval := agent.EvaluateLanding(anchor, snap)
+			out := buildLandedOutput(eval, nil)
+			return renderLandedOutput(os.Stdout, out, format)
+		}
+		store := recordedLandingStore{objects: snapshot.Objects}
+		snap := fetchLandingSnapshotFromStore(ctx, store, "", target)
+		eval := agent.EvaluateLanding(anchor, snap)
+		out := buildLandedOutput(eval, nil)
+		return renderLandedOutput(os.Stdout, out, format)
+	}
+
 	// If no anchor was supplied, return not-observable without touching the cluster.
 	if anchor.Value == "" {
 		snap := agent.LandingSnapshot{Context: selection.name, Target: target, ObservedAt: time.Now().UTC()}
@@ -265,13 +292,98 @@ func runLanded(cmd *cobra.Command, args []string) error {
 	return renderLandedOutput(os.Stdout, out, format)
 }
 
+type landingObjectStore interface {
+	Get(ctx context.Context, gvr schema.GroupVersionResource, ns, name string) (*unstructured.Unstructured, error)
+	List(ctx context.Context, gvr schema.GroupVersionResource) ([]unstructured.Unstructured, error)
+}
+
+type dynamicLandingStore struct {
+	dyn dynamic.Interface
+}
+
+func (s dynamicLandingStore) Get(ctx context.Context, gvr schema.GroupVersionResource, ns, name string) (*unstructured.Unstructured, error) {
+	return s.dyn.Resource(gvr).Namespace(ns).Get(ctx, name, metav1.GetOptions{})
+}
+
+func (s dynamicLandingStore) List(ctx context.Context, gvr schema.GroupVersionResource) ([]unstructured.Unstructured, error) {
+	list, err := s.dyn.Resource(gvr).Namespace("").List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return list.Items, nil
+}
+
+type recordedLandingStore struct {
+	objects []*unstructured.Unstructured
+}
+
+func gvrMatchesRecordedObject(gvr schema.GroupVersionResource, obj *unstructured.Unstructured) bool {
+	if obj == nil {
+		return false
+	}
+	gv, err := schema.ParseGroupVersion(obj.GetAPIVersion())
+	if err != nil {
+		return false
+	}
+	if gv.Group != gvr.Group {
+		return false
+	}
+	kind := strings.ToLower(strings.TrimSpace(obj.GetKind()))
+	switch gvr.Resource {
+	case "deployments":
+		return kind == "deployment"
+	case "statefulsets":
+		return kind == "statefulset"
+	case "daemonsets":
+		return kind == "daemonset"
+	case "kustomizations":
+		return kind == "kustomization"
+	case "helmreleases":
+		return kind == "helmrelease"
+	case "gitrepositories":
+		return kind == "gitrepository"
+	case "ocirepositories":
+		return kind == "ocirepository"
+	case "applications":
+		return kind == "application"
+	default:
+		return false
+	}
+}
+
+func (s recordedLandingStore) Get(_ context.Context, gvr schema.GroupVersionResource, ns, name string) (*unstructured.Unstructured, error) {
+	for _, obj := range s.objects {
+		if !gvrMatchesRecordedObject(gvr, obj) {
+			continue
+		}
+		if obj.GetName() == name && (ns == "" || obj.GetNamespace() == ns) {
+			return obj, nil
+		}
+	}
+	return nil, apierrors.NewNotFound(schema.GroupResource{Group: gvr.Group, Resource: gvr.Resource}, name)
+}
+
+func (s recordedLandingStore) List(_ context.Context, gvr schema.GroupVersionResource) ([]unstructured.Unstructured, error) {
+	var out []unstructured.Unstructured
+	for _, obj := range s.objects {
+		if gvrMatchesRecordedObject(gvr, obj) {
+			out = append(out, *obj)
+		}
+	}
+	return out, nil
+}
+
 func fetchLandingSnapshot(ctx context.Context, dyn dynamic.Interface, kubeCtx string, target agent.LandingObjectRef) agent.LandingSnapshot {
+	return fetchLandingSnapshotFromStore(ctx, dynamicLandingStore{dyn: dyn}, kubeCtx, target)
+}
+
+func fetchLandingSnapshotFromStore(ctx context.Context, store landingObjectStore, kubeCtx string, target agent.LandingObjectRef) agent.LandingSnapshot {
 	snap := agent.LandingSnapshot{
 		Context:    kubeCtx,
 		Target:     target,
 		ObservedAt: time.Now().UTC(),
 	}
-	obj, err := dyn.Resource(workloadGVR(target.Kind)).Namespace(target.Namespace).Get(ctx, target.Name, metav1.GetOptions{})
+	obj, err := store.Get(ctx, workloadGVR(target.Kind), target.Namespace, target.Name)
 	if err != nil {
 		switch {
 		case apierrors.IsForbidden(err) || apierrors.IsUnauthorized(err):
@@ -296,9 +408,9 @@ func fetchLandingSnapshot(ctx context.Context, dyn dynamic.Interface, kubeCtx st
 
 	switch strings.ToLower(own.Type) {
 	case "flux":
-		snap.Deployer, snap.Source, snap.ReadDenied, snap.ReadError = fetchFluxLandingLinks(ctx, dyn, labels)
+		snap.Deployer, snap.Source, snap.ReadDenied, snap.ReadError = fetchFluxLandingLinks(ctx, store, labels)
 	case "argocd", "argo":
-		snap.Deployer, snap.ReadDenied, snap.ReadError = fetchArgoLandingLink(ctx, dyn, labels, annotations)
+		snap.Deployer, snap.ReadDenied, snap.ReadError = fetchArgoLandingLink(ctx, store, labels, annotations)
 	}
 
 	return snap
@@ -328,14 +440,14 @@ func observeWorkloadLink(obj *unstructured.Unstructured, ref agent.LandingObject
 	return link
 }
 
-func fetchFluxLandingLinks(ctx context.Context, dyn dynamic.Interface, labels map[string]string) (deployer, source *agent.LandingLinkObservation, denied bool, readErr string) {
+func fetchFluxLandingLinks(ctx context.Context, store landingObjectStore, labels map[string]string) (deployer, source *agent.LandingLinkObservation, denied bool, readErr string) {
 	if ksName := labels["kustomize.toolkit.fluxcd.io/name"]; ksName != "" {
 		ksNS := labels["kustomize.toolkit.fluxcd.io/namespace"]
 		if ksNS == "" {
 			ksNS = "flux-system"
 		}
 		ksGVR := schema.GroupVersionResource{Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations"}
-		ks, err := dyn.Resource(ksGVR).Namespace(ksNS).Get(ctx, ksName, metav1.GetOptions{})
+		ks, err := store.Get(ctx, ksGVR, ksNS, ksName)
 		if err != nil {
 			if apierrors.IsForbidden(err) || apierrors.IsUnauthorized(err) {
 				return nil, nil, true, err.Error()
@@ -356,7 +468,7 @@ func fetchFluxLandingLinks(ctx context.Context, dyn dynamic.Interface, labels ma
 			srcNS = ksNS
 		}
 		if srcName != "" {
-			source = fetchFluxSourceObject(ctx, dyn, srcKind, srcNS, srcName)
+			source = fetchFluxSourceObject(ctx, store, srcKind, srcNS, srcName)
 		}
 		return deployer, source, false, ""
 	}
@@ -366,7 +478,7 @@ func fetchFluxLandingLinks(ctx context.Context, dyn dynamic.Interface, labels ma
 			hrNS = "flux-system"
 		}
 		hrGVR := schema.GroupVersionResource{Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases"}
-		hr, err := dyn.Resource(hrGVR).Namespace(hrNS).Get(ctx, hrName, metav1.GetOptions{})
+		hr, err := store.Get(ctx, hrGVR, hrNS, hrName)
 		if err != nil {
 			if apierrors.IsForbidden(err) || apierrors.IsUnauthorized(err) {
 				return nil, nil, true, err.Error()
@@ -383,7 +495,7 @@ func fetchFluxLandingLinks(ctx context.Context, dyn dynamic.Interface, labels ma
 	return nil, nil, false, ""
 }
 
-func fetchFluxSourceObject(ctx context.Context, dyn dynamic.Interface, kind, ns, name string) *agent.LandingLinkObservation {
+func fetchFluxSourceObject(ctx context.Context, store landingObjectStore, kind, ns, name string) *agent.LandingLinkObservation {
 	var resource string
 	switch kind {
 	case "GitRepository":
@@ -394,7 +506,7 @@ func fetchFluxSourceObject(ctx context.Context, dyn dynamic.Interface, kind, ns,
 		return nil
 	}
 	gvr := schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: resource}
-	obj, err := dyn.Resource(gvr).Namespace(ns).Get(ctx, name, metav1.GetOptions{})
+	obj, err := store.Get(ctx, gvr, ns, name)
 	if err != nil {
 		return nil
 	}
@@ -435,7 +547,7 @@ func observeFluxConditionLink(obj *unstructured.Unstructured, ref *agent.Landing
 	return link
 }
 
-func fetchArgoLandingLink(ctx context.Context, dyn dynamic.Interface, labels, annotations map[string]string) (deployer *agent.LandingLinkObservation, denied bool, readErr string) {
+func fetchArgoLandingLink(ctx context.Context, store landingObjectStore, labels, annotations map[string]string) (deployer *agent.LandingLinkObservation, denied bool, readErr string) {
 	appName := labels["argocd.argoproj.io/instance"]
 	if appName == "" {
 		if tid := annotations["argocd.argoproj.io/tracking-id"]; tid != "" {
@@ -448,15 +560,15 @@ func fetchArgoLandingLink(ctx context.Context, dyn dynamic.Interface, labels, an
 		return nil, false, ""
 	}
 	appGVR := schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}
-	list, err := dyn.Resource(appGVR).Namespace("").List(ctx, metav1.ListOptions{})
+	items, err := store.List(ctx, appGVR)
 	if err != nil {
 		if apierrors.IsForbidden(err) || apierrors.IsUnauthorized(err) {
 			return nil, true, err.Error()
 		}
 		return nil, false, err.Error()
 	}
-	for i := range list.Items {
-		app := &list.Items[i]
+	for i := range items {
+		app := &items[i]
 		if app.GetName() != appName {
 			continue
 		}
