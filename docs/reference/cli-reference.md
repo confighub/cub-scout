@@ -35,6 +35,7 @@ Source of truth:
 | `history` | Connected ChangeSet timeline and exact-space ChangeOrder reads | [Command Reference](commands.md#history) | [Connect and compare](../../examples/connect-and-compare/) |
 | `impact` | Connected blast-radius preview for one unit | [Command Reference](commands.md#impact) | [Connect and compare](../../examples/connect-and-compare/) |
 | `import` | Import workloads into ConfigHub | [Command Reference](commands.md#import) | [Argo import demo](../../examples/argo-import-confighub-demo/) |
+| `landed` | Check whether an anchored revision or digest landed on a workload (with optional bounded wait) | [Proposal](../proposals/did-my-change-land.md) | - |
 | `map` | Interactive TUI and list/status/ownership views | [Command Reference](commands.md#map) | [New user puzzle quest](../../examples/new-user-puzzle-quest/) |
 | `mcp` | Read-only MCP gateway | [Command Reference](commands.md#mcp) | [MCP gateway](../../examples/mcp-gateway/) |
 | `patterns` | Pattern detection engine | [Command Reference](commands.md#patterns-v07) | [Patterns fixtures](../../test/fixtures/patterns/) |

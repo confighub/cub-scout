@@ -29,6 +29,7 @@ var mcpAnswerBlockCeilings = map[string]int{
 	"explain":              900,  // 821 bytes
 	"gitops_settings":      1000, // 962 bytes
 	"gitops_status":        900,  // 842 bytes
+	"landed":               700,  // 655 bytes (A(1) + G1/G2 landing check)
 	"map":                  400,  // 387 bytes
 	"release_check":        1600, // 1548 bytes
 	"scan":                 700,  // 600 bytes
@@ -89,12 +90,26 @@ func TestAnswerBlocksStayWithinDeclaredSizeCeilings(t *testing.T) {
 	relReport.Finish(observedAtForTests.Add(1500 * time.Millisecond))
 	releaseAns := buildReleaseCheckAnswer(relReport)
 
+	landedAns := buildLandingAnswer(agent.EvaluateLanding(
+		agent.LandingAnchor{Kind: agent.AnchorKindOCIDigest, Value: "sha256:0828"},
+		agent.LandingSnapshot{
+			Context:     "prod-east",
+			Target:      agent.LandingObjectRef{APIVersion: "apps/v1", Kind: "Deployment", Namespace: "prod", Name: "api"},
+			TargetFound: true,
+			Owner:       "Flux",
+			ObservedAt:  observedAtForTests,
+			Deployer:    &agent.LandingLinkObservation{Present: true, Ref: &agent.LandingObjectRef{APIVersion: "kustomize.toolkit.fluxcd.io/v1", Kind: "Kustomization", Namespace: "flux-system", Name: "apps"}, Status: "ready", Revision: "latest@sha256:0828"},
+			Workload:    &agent.LandingLinkObservation{Present: true, Ref: &agent.LandingObjectRef{APIVersion: "apps/v1", Kind: "Deployment", Namespace: "prod", Name: "api"}, Status: "ready"},
+		},
+	), nil)
+
 	answers := map[string]interface{}{
 		"trace":                traceOut.Answer,
 		"compare_source_truth": sourceTruthAns,
 		"gitops_status":        gitopsAns,
 		"explain":              explainAns,
 		"doctor":               doctorAns,
+		"landed":               landedAns,
 		"map":                  mapAns,
 		"scan":                 scanAns,
 		"gitops_settings":      settingsAns,
