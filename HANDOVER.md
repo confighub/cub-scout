@@ -2226,12 +2226,12 @@ Merged on `main` (not yet tagged `v3.0.0`):
   - `docs/releases/v3.0.0-migration.md` with executed before/after binary test (`#995`).
   - `cub >= v0.11.4` version floor enforced in `pkg/hub.RequireCubConnected` (`#1000`).
 - **Package C without credits:** per-answer compact JSON byte ceilings in CI (`#996`, all 10 commands), deterministic zero-credit 24-case bytes-and-tokens benchmark (`#997`, published in `docs/reference/answer-sizes.md`), and `--view summary` on `gitops status` (`#1005`) and `doctor` (`#1007`) within declared MCP catalog and core profile ceilings.
-- **A(1) + G1/G2:** proposal (`#998`) approved and first slice shipped as `cub scout landed` CLI + `landed` MCP tool (`#1001`, `#1003`, `#1006`) with `landed`/`converging`/`not-landed`/`not-observable`, bounded read-only wait (`0s` default, `5m` CLI / `60s` MCP max), 8 recorded fixtures, 10-case zero false-landed invariant, and real Flux + Argo CD proof in `CI/GitOps E2E` (`#1002`).
+- **A(1) + G1/G2 + 3.2 Theme 3/4 first slices:** proposal (`#998`) approved and shipped as `cub scout landed` CLI + `landed` MCP tool (`#1001`, `#1003`, `#1006`, `#1014`) with `landed`/`converging`/`not-landed`/`not-observable`, bounded read-only wait (`0s` default, `5m` CLI / `60s` MCP max), offline `--recording` snapshots (`#1015`), Helm v3/v4 release parity (`#1016`), 10-case zero false-landed invariant, and real Flux + Argo CD + Helm v3/v4 proof in `CI/GitOps E2E` (`#1002`, `#1016`).
 - **A(2), A(3), and G5:** proposals (`#1004`, `#1009`) and zero-new-state-word implementations merged:
   - G5 Option A (`#1010`): `agent/<tool>[/<run>]` parser + `KnownManagerTool` self-reported agent label.
   - A(2) (`#1011`): `explain --field-path` live `value`/`valueFound` + Flux/Argo CD `revertPrediction`.
   - A(3) (`#1012`): `compare three-way --unrecorded-only` + MCP `unrecorded_only` preserving `summary` and `omissions[]`.
-- **Release notes & 3.x vision:** draft `docs/releases/v3.0.0.md` (`#1008`, not yet tagged) and `docs/proposals/vision-3.x.md` (`#999`, `#1000`): 3.2 focuses on Theme 3 (cross-controller delivery parity) + Theme 4 (offline/bundle verification), with Theme 1 (ephemeral local graph query layer) as an eval-gated experiment only.
+- **Release notes & 3.x vision:** draft `docs/releases/v3.0.0.md` (`#1008`, `#1013`, `#1014`, not yet tagged) and expanded 3.1–3.4 roadmap in `docs/proposals/vision-3.x.md` (`#999`, `#1000`, `#1017`).
 
 ## After v2.18.0: release check on a real cluster, Flux WATCH, #887 seen to disagree — 2026-11-19
 
