@@ -411,7 +411,18 @@ func fetchResourceAttribution(ctx context.Context, namespace, kind, name, fieldP
 
 func fieldAttributionSummary(obj *unstructured.Unstructured, owner agent.Ownership, path string) *FieldAttributionSummary {
 	attr, ok, incomplete := agent.AttributeFieldPath(obj, owner, path)
-	return fieldAttributionResult(path, attr, ok, incomplete)
+	result := fieldAttributionResult(path, attr, ok, incomplete)
+	if val, found := agent.LookupCanonicalFieldValue(obj, path); found {
+		result.Value = val
+		result.ValueFound = true
+	}
+	targetKind := ""
+	if obj != nil {
+		targetKind = obj.GetKind()
+	}
+	pred := agent.PredictFieldRevert(owner, nil, targetKind, path)
+	result.RevertPrediction = &pred
+	return result
 }
 
 func unavailableFieldAttribution(path, reason string) *FieldAttributionSummary {

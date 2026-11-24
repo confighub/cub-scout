@@ -10,6 +10,10 @@ import (
 	"time"
 
 	"github.com/confighub/cub-scout/v3/pkg/agent"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 )
 
 var newExplainSessionForSelection = newTraceSessionForSelection
@@ -164,6 +168,7 @@ func observeExplainWithSessionReads(ctx context.Context, session *traceSession, 
 	summary.MutationManagerTool = agent.KnownManagerTool(attr.ManagerHint)
 	if opts.FieldPath != "" {
 		summary.FieldAttribution = fieldAttributionSummary(obj, owner, opts.FieldPath)
+		enrichFieldRevertPrediction(ctx, dyn, obj, owner, summary.FieldAttribution)
 	}
 	events, eventErr := fetchResourceEventsWithTraceSession(ctx, session, namespace, kind, name)
 	if events != nil && len(events.Events) > 0 {
@@ -199,4 +204,43 @@ func observeExplainWithSessionReads(ctx context.Context, session *traceSession, 
 		return ExplainSummary{}, err
 	}
 	return summary, nil
+}
+
+// enrichFieldRevertPrediction fetches the owning Flux or Argo CD deployer
+// (read-only) so FieldAttribution.RevertPrediction rests on the observed
+// controller spec when readable, and stays unknown otherwise.
+func enrichFieldRevertPrediction(ctx context.Context, dyn dynamic.Interface, obj *unstructured.Unstructured, owner agent.Ownership, attr *FieldAttributionSummary) {
+	if dyn == nil || obj == nil || attr == nil {
+		return
+	}
+	name := strings.TrimSpace(owner.Name)
+	if name == "" {
+		return
+	}
+	ns := strings.TrimSpace(owner.Namespace)
+	var gvr schema.GroupVersionResource
+	switch owner.Type {
+	case agent.OwnerFlux:
+		if strings.EqualFold(owner.SubType, "helmrelease") {
+			gvr = schema.GroupVersionResource{Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases"}
+		} else {
+			gvr = schema.GroupVersionResource{Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations"}
+		}
+		if ns == "" {
+			ns = "flux-system"
+		}
+	case agent.OwnerArgo:
+		gvr = schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}
+		if ns == "" {
+			ns = "argocd"
+		}
+	default:
+		return
+	}
+	deployer, err := dyn.Resource(gvr).Namespace(ns).Get(ctx, name, metav1.GetOptions{})
+	if err != nil || deployer == nil {
+		return
+	}
+	pred := agent.PredictFieldRevert(owner, deployer, obj.GetKind(), attr.Path)
+	attr.RevertPrediction = &pred
 }

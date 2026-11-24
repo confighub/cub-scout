@@ -161,10 +161,13 @@ type RecordedInputEvidence struct {
 // FieldAttributionSummary reports only manager evidence for one requested
 // canonical path. It never infers write order or human identity.
 type FieldAttributionSummary struct {
-	Path     string                   `json:"path"`
-	Cause    agent.FieldMutationCause `json:"cause"`
-	Managers []string                 `json:"managers,omitempty"`
-	Reason   string                   `json:"reason,omitempty"`
+	Path             string                       `json:"path"`
+	Value            interface{}                  `json:"value,omitempty"`
+	ValueFound       bool                         `json:"valueFound,omitempty"`
+	Cause            agent.FieldMutationCause     `json:"cause"`
+	Managers         []string                     `json:"managers,omitempty"`
+	Reason           string                       `json:"reason,omitempty"`
+	RevertPrediction *agent.FieldRevertPrediction `json:"revertPrediction,omitempty"`
 }
 
 // HealthMeasurement describes whether explain observed evidence for the
