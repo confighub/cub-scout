@@ -8,7 +8,7 @@ execution; do not bypass macOS security checks.
 For v2.19.0, use Homebrew, the `cub` plugin, or the published archives below.
 You do not need a ConfigHub account for standalone cluster observation.
 
-## ConfigHub Plugin
+## ConfigHub Plugin (Primary)
 
 With the separately installed `cub` CLI:
 
@@ -23,7 +23,7 @@ The plugin has the same observation commands as the standalone client. ConfigHub
 authentication is needed only for connected operations. Use `--kube-context`
 for bounded Kubernetes reads; the host's `--context` selects a ConfigHub context.
 
-## Quick Install (Recommended)
+## Standalone Binary (Homebrew)
 
 ```bash
 # macOS/Linux via Homebrew

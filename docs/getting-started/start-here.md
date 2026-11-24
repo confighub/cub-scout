@@ -4,7 +4,7 @@ Start with a question: what is running, where did it come from, is delivery
 stuck, or does live state match the configuration you expected? Scout gathers
 read-only evidence without becoming another deployment controller.
 
-Choose **standalone CLI/TUI**, the **`cub` plugin**, an **MCP server** launched by
+Choose the **`cub` plugin** (`cub scout`, primary), the **standalone CLI/TUI** (`cub-scout`), an **MCP server** launched by
 your agent host, a **watch stream**, or an **in-cluster bot**. The
 [five-mode table](../../README.md#five-ways-to-run-cub-scout) explains which to use.
 Live checks need Kubernetes access; saved files and bundles can be inspected
@@ -27,10 +27,15 @@ prove.
 Run:
 
 ```bash
+# Plugin form (primary)
+cub plugin install confighub/cub-scout
+cub scout doctor
+cub scout gitops status
+cub scout map
+
+# Or standalone binary
 brew install confighub/tap/cub-scout
 cub-scout doctor
-cub-scout gitops status
-cub-scout map
 ```
 
 `doctor` gives the first triage summary, `gitops status` reports controller
@@ -63,19 +68,19 @@ Run:
 
 ```bash
 cub auth login
-cub-scout compare three-way --scope namespace/<namespace>
-cub-scout history deploy/<name> -n <namespace> --space <space>
-cub-scout impact <unit> --space <space>
-cub-scout audit list --since 7d --space <space>
+cub scout compare three-way --scope namespace/<namespace>
+cub scout history deploy/<name> -n <namespace> --space <space>
+cub scout impact <unit> --space <space>
+cub scout audit list --since 7d --space <space>
 ```
 
 Each of these reads one named ConfigHub space: pass `--space`, or export
-`CUB_SPACE`. `cub` has no default space, so with neither they refuse.
+`CUB_SPACE`. `cub` has no default space, so with neither they refuse. The
+standalone `cub-scout` binary accepts the exact same commands.
 
-`fleet outliers` remains available in 2.x but is deprecated for planned
-removal in 3.0. Its current single-space comparison cannot establish reliable
-cross-cluster lineage; no equivalent replacement is available yet. See the
-[3.0 migration note](../migration-3.0.md#fleet-outliers).
+`fleet outliers` was removed in 3.0 with no replacement because its
+single-space comparison could not establish reliable cross-cluster lineage.
+See the [3.0 migration note](../migration-3.0.md#fleet-outliers).
 
 Then:
 - [Canonical Import Path](../howto/import-to-confighub.md)
