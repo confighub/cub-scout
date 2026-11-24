@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/confighub/cub-scout/v2/internal/hubread"
+	"github.com/confighub/cub-scout/v3/internal/hubread"
 )
 
 // TestRecordReleaseLiveStatusOnARealServer writes a LiveStatus on a Release of

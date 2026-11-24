@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"github.com/confighub/cub-scout/v3/pkg/agent"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 

@@ -10,7 +10,7 @@ set -euo pipefail
 
 cap="${E2E_TEST_TIMEOUT_SECONDS:-600}"
 budget="${E2E_TEST_BUDGET_SECONDS:-300}"
-package="github.com/confighub/cub-scout/v2/cmd/cub-scout"
+package="github.com/confighub/cub-scout/v3/cmd/cub-scout"
 
 check_log() {
   local log="$1" line seconds

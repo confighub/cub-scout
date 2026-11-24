@@ -11,7 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/confighub/cub-scout/v2/pkg/queries"
+	"github.com/confighub/cub-scout/v3/pkg/queries"
 )
 
 var queriesJSON bool

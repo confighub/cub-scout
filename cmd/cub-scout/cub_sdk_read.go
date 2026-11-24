@@ -13,8 +13,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/confighub/cub-scout/v2/internal/hubread"
-	"github.com/confighub/cub-scout/v2/pkg/hub"
+	"github.com/confighub/cub-scout/v3/internal/hubread"
+	"github.com/confighub/cub-scout/v3/pkg/hub"
 )
 
 // This file is where a `cub` read is answered through the ConfigHub SDK

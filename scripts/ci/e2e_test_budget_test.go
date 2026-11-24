@@ -12,7 +12,7 @@ import (
 // added tests failed with a panic inside an unrelated test. The budget check
 // fails earlier and says why.
 func TestE2ETestBudget(t *testing.T) {
-	const pkg = "github.com/confighub/cub-scout/v2/cmd/cub-scout"
+	const pkg = "github.com/confighub/cub-scout/v3/cmd/cub-scout"
 	for _, tc := range []struct {
 		name    string
 		log     string

@@ -16,8 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/rest"
 
-	"github.com/confighub/cub-scout/v2/internal/mapsvc"
-	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"github.com/confighub/cub-scout/v3/internal/mapsvc"
+	"github.com/confighub/cub-scout/v3/pkg/agent"
 )
 
 // requireConformingAnswer is the envelope's contract, applied to any answer:

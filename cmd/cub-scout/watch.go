@@ -18,8 +18,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/confighub/cub-scout/v2/internal/mapsvc"
-	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"github.com/confighub/cub-scout/v3/internal/mapsvc"
+	"github.com/confighub/cub-scout/v3/pkg/agent"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"

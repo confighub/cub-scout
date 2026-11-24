@@ -24,7 +24,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/confighub/cub-scout/v2/test/golden"
+	"github.com/confighub/cub-scout/v3/test/golden"
 )
 
 const (

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"github.com/confighub/cub-scout/v3/pkg/agent"
 )
 
 // renderCrossplaneLineageHuman renders a compact XR-first Crossplane lineage section.

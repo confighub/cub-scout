@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	internalgraph "github.com/confighub/cub-scout/v2/internal/graph"
+	internalgraph "github.com/confighub/cub-scout/v3/internal/graph"
 )
 
 func TestRenderGraphOutput_JSONMatchesExport(t *testing.T) {

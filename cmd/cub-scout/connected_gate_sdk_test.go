@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/confighub/cub-scout/v2/internal/hubread"
-	"github.com/confighub/cub-scout/v2/pkg/hub"
+	"github.com/confighub/cub-scout/v3/internal/hubread"
+	"github.com/confighub/cub-scout/v3/pkg/hub"
 	"github.com/confighub/sdk/core/constants"
 	"github.com/stretchr/testify/require"
 )

@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/confighub/cub-scout/v2/internal/mapsvc"
-	"github.com/confighub/cub-scout/v2/internal/scan"
-	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"github.com/confighub/cub-scout/v3/internal/mapsvc"
+	"github.com/confighub/cub-scout/v3/internal/scan"
+	"github.com/confighub/cub-scout/v3/pkg/agent"
 )
 
 const (

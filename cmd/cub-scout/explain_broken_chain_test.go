@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"github.com/confighub/cub-scout/v3/pkg/agent"
 )
 
 // #827: explain took health from the resource's own link. A Deployment still

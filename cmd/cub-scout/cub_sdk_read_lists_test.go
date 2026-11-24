@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/confighub/cub-scout/v2/internal/hubread"
+	"github.com/confighub/cub-scout/v3/internal/hubread"
 	"github.com/stretchr/testify/require"
 )
 

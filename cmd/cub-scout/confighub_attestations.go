@@ -16,8 +16,8 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/confighub/cub-scout/v2/internal/hubread"
-	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"github.com/confighub/cub-scout/v3/internal/hubread"
+	"github.com/confighub/cub-scout/v3/pkg/agent"
 )
 
 var configHubAttestationsRead = boundedAttestationCubRead

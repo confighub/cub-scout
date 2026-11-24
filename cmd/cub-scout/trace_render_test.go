@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/confighub/cub-scout/v2/internal/mapsvc"
-	"github.com/confighub/cub-scout/v2/pkg/agent"
+	"github.com/confighub/cub-scout/v3/internal/mapsvc"
+	"github.com/confighub/cub-scout/v3/pkg/agent"
 )
 
 var traceRenderANSI = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)

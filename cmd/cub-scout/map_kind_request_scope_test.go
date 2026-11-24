@@ -16,7 +16,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/confighub/cub-scout/v2/internal/mapsvc"
+	"github.com/confighub/cub-scout/v3/internal/mapsvc"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"

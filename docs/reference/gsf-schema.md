@@ -337,7 +337,7 @@ cub-scout snapshot -o /var/lib/dashboard/cluster-state.json
 ### Programmatic Access (Go)
 
 ```go
-import "github.com/confighub/cub-scout/v2/pkg/agent"
+import "github.com/confighub/cub-scout/v3/pkg/agent"
 
 // Detect ownership of any unstructured resource
 ownership := agent.DetectOwnership(resource)

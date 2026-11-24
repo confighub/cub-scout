@@ -9,7 +9,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/confighub/cub-scout/v2/internal/hubread"
+	"github.com/confighub/cub-scout/v3/internal/hubread"
 )
 
 // errSDKRouteInATest is returned when a test reaches the SDK route without

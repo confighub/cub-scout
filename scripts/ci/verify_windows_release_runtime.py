@@ -57,7 +57,7 @@ def main():
         binary = matches[0].resolve()
         info = subprocess.check_output(['go', 'version', '-m', str(binary)], text=True)
         # The toolchain go.mod selects; setup-go installs it from there.
-        required = [': go1.26.9', 'github.com/confighub/cub-scout/v2',
+        required = [': go1.26.9', 'github.com/confighub/cub-scout/v3',
                     'vcs.revision=' + source, 'vcs.modified=false',
                     'CGO_ENABLED=0', 'GOOS=windows', 'GOARCH=' + args.arch]
         if any(value not in info for value in required):

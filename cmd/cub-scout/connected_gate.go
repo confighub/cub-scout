@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/confighub/cub-scout/v2/internal/hubread"
-	"github.com/confighub/cub-scout/v2/pkg/hub"
+	"github.com/confighub/cub-scout/v3/internal/hubread"
+	"github.com/confighub/cub-scout/v3/pkg/hub"
 )
 
 // requireCubConnectedFn is the gate's seam for tests.
