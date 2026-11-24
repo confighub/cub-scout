@@ -3,7 +3,10 @@
 
 package agent
 
-import "strings"
+import (
+	"regexp"
+	"strings"
+)
 
 // K8s metadata.managedFields[].manager string constants, verified against
 // upstream sources. Each constant's doc comment cites the source where the
@@ -31,6 +34,53 @@ const ManagerTerraformKubernetesProvider = "HashiCorp"
 // field_manager name. Recorded in the same run.
 const ManagerTerraformManifest = "Terraform"
 
+// ManagerAgentPrefix is the documented self-reported field-manager prefix for
+// coding and ops agents that write to Kubernetes (G5:
+// docs/proposals/agent-field-manager-identity.md):
+//
+//	agent/<tool>
+//	agent/<tool>/<run-or-session>
+//
+// Because metadata.managedFields[].manager is free text any client can set,
+// matching this prefix is self-reported metadata only, never cryptographic
+// identity or an ownership claim.
+const ManagerAgentPrefix = "agent/"
+
+const maxKubernetesFieldManagerLength = 128
+
+var (
+	agentManagerToolPattern = regexp.MustCompile(`^[a-z0-9][a-z0-9._-]{0,31}$`)
+	agentManagerRunPattern  = regexp.MustCompile(`^[a-zA-Z0-9._-]{1,64}$`)
+)
+
+// ParseAgentFieldManager parses a self-reported agent field-manager string
+// following the G5 convention (`agent/<tool>` or `agent/<tool>/<run>`).
+// Returns ok=false for any string that does not strictly match the convention
+// or exceeds Kubernetes' 128-character fieldManager limit.
+func ParseAgentFieldManager(manager string) (tool, run string, ok bool) {
+	if len(manager) > maxKubernetesFieldManagerLength || !strings.HasPrefix(manager, ManagerAgentPrefix) {
+		return "", "", false
+	}
+	rest := strings.TrimPrefix(manager, ManagerAgentPrefix)
+	if rest == "" {
+		return "", "", false
+	}
+	parts := strings.Split(rest, "/")
+	if len(parts) > 2 {
+		return "", "", false
+	}
+	if !agentManagerToolPattern.MatchString(parts[0]) {
+		return "", "", false
+	}
+	if len(parts) == 2 {
+		if !agentManagerRunPattern.MatchString(parts[1]) {
+			return "", "", false
+		}
+		return parts[0], parts[1], true
+	}
+	return parts[0], "", true
+}
+
 // KnownManagerTool names the tool that writes with a field-manager string,
 // for tools that leave no owner marker on what they apply. It is evidence of
 // who wrote fields, never an ownership claim: a manager name is free text any
@@ -41,6 +91,9 @@ func KnownManagerTool(manager string) string {
 		return "Terraform's Kubernetes provider (typed resources)"
 	case ManagerTerraformManifest:
 		return "Terraform's Kubernetes provider (kubernetes_manifest)"
+	}
+	if tool, _, ok := ParseAgentFieldManager(manager); ok {
+		return "self-reported agent manager (" + tool + ")"
 	}
 	return ""
 }

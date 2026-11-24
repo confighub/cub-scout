@@ -163,3 +163,55 @@ func TestManagerStringCoSignalDisambiguates(t *testing.T) {
 		t.Errorf("CSA must NOT be a controller manager for native resources — that would misclassify kubectl apply as controller-drift")
 	}
 }
+
+func TestParseAgentFieldManager(t *testing.T) {
+	tests := []struct {
+		name     string
+		manager  string
+		wantTool string
+		wantRun  string
+		wantOK   bool
+	}{
+		{"tool only", "agent/claude-code", "claude-code", "", true},
+		{"tool and run", "agent/pilot/run-9f2a1c", "pilot", "run-9f2a1c", true},
+		{"dots and underscores", "agent/codex_1.2/session_42.a", "codex_1.2", "session_42.a", true},
+		{"empty", "", "", "", false},
+		{"prefix only", "agent/", "", "", false},
+		{"trailing slash", "agent/codex/", "", "", false},
+		{"too many segments", "agent/codex/run-1/extra", "", "", false},
+		{"uppercase tool rejected", "agent/Codex", "", "", false},
+		{"leading dash tool rejected", "agent/-codex", "", "", false},
+		{"space rejected", "agent/codex run", "", "", false},
+		{"non-agent kubectl", ManagerKubectlPatch, "", "", false},
+		{"non-agent controller", ManagerFluxKustomize, "", "", false},
+		{"over 128 chars rejected", "agent/tool/" + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "", "", false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tool, run, ok := ParseAgentFieldManager(tc.manager)
+			if ok != tc.wantOK || tool != tc.wantTool || run != tc.wantRun {
+				t.Fatalf("ParseAgentFieldManager(%q) = (%q, %q, %v), want (%q, %q, %v)",
+					tc.manager, tool, run, ok, tc.wantTool, tc.wantRun, tc.wantOK)
+			}
+		})
+	}
+}
+
+func TestKnownManagerToolAgentConvention(t *testing.T) {
+	if got := KnownManagerTool("agent/claude-code"); got != "self-reported agent manager (claude-code)" {
+		t.Fatalf("KnownManagerTool(agent/claude-code) = %q", got)
+	}
+	if got := KnownManagerTool("agent/pilot/run-42"); got != "self-reported agent manager (pilot)" {
+		t.Fatalf("KnownManagerTool(agent/pilot/run-42) = %q", got)
+	}
+	if got := KnownManagerTool(ManagerKubectlPatch); got != "" {
+		t.Fatalf("KnownManagerTool(kubectl-patch) = %q, want empty (never guess)", got)
+	}
+	if IsInteractiveManager("agent/claude-code") {
+		t.Fatalf("agent/* must not be classified as interactive kubectl manager")
+	}
+	if IsControllerManagerFor("agent/claude-code", OwnerFlux, "") {
+		t.Fatalf("agent/* must not be classified as a GitOps controller")
+	}
+}
