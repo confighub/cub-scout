@@ -171,7 +171,22 @@ func TestAnswerIsTheSameThroughMCP(t *testing.T) {
 	mapJSONDoc, err := json.Marshal(mapSummaryDoc)
 	require.NoError(t, err)
 
-	for tool, cli := range map[string]string{"trace": string(traceJSON), "compare_source_truth": sourceTruth.String(), "gitops_status": string(gitopsJSON), "explain": explainJSON, "doctor": string(doctorJSON), "map": string(mapJSONDoc)} {
+	landedDoc := buildLandedOutput(agent.EvaluateLanding(
+		agent.LandingAnchor{Kind: agent.AnchorKindOCIDigest, Value: "sha256:0828"},
+		agent.LandingSnapshot{
+			Context:     "prod-east",
+			Target:      agent.LandingObjectRef{APIVersion: "apps/v1", Kind: "Deployment", Namespace: "demo", Name: "api"},
+			TargetFound: true,
+			Owner:       "Flux",
+			ObservedAt:  observedAtForTests,
+			Deployer:    &agent.LandingLinkObservation{Present: true, Ref: &agent.LandingObjectRef{APIVersion: "kustomize.toolkit.fluxcd.io/v1", Kind: "Kustomization", Namespace: "flux-system", Name: "apps"}, Status: "ready", Revision: "latest@sha256:0828"},
+			Workload:    &agent.LandingLinkObservation{Present: true, Ref: &agent.LandingObjectRef{APIVersion: "apps/v1", Kind: "Deployment", Namespace: "demo", Name: "api"}, Status: "ready"},
+		},
+	), nil)
+	landedJSONDoc, err := json.Marshal(landedDoc)
+	require.NoError(t, err)
+
+	for tool, cli := range map[string]string{"trace": string(traceJSON), "compare_source_truth": sourceTruth.String(), "gitops_status": string(gitopsJSON), "explain": explainJSON, "doctor": string(doctorJSON), "map": string(mapJSONDoc), "landed": string(landedJSONDoc)} {
 		t.Run(tool, func(t *testing.T) {
 			var cliDoc struct {
 				Answer json.RawMessage `json:"answer"`

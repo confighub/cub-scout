@@ -2214,6 +2214,21 @@ Open for the maintainer: the small eval run; telling the consumer of the
 source-truth fixtures that the "agreed" case needs `object_revision`; a
 smaller default MCP tool set.
 
+## 3.0 transition, Package C rung 1, `cub scout landed` (A(1) + G1/G2) — 2026-11-24
+
+Merged on `main` (not yet tagged `v3.0.0`):
+- **Consolidated plan & briefing:** `#989`, `#990`.
+- **Complete 3.0 transition (`#595`, `#386`, `#562`):**
+  - `/v3` Go module path (`#991`), with `module_path_test.go` rejecting unsuffixed and `/v2` imports.
+  - All 8 deprecated flags and commands removed with fail-and-name-replacement errors (`#992`).
+  - `compare source-truth` verdict words (`status`, `source_truth`) removed from JSON and MCP output, kept in ASCII and Markdown (`#993`).
+  - Plugin-first (`cub scout ...`) docs with standalone binary preserved (`#994`).
+  - `docs/releases/v3.0.0-migration.md` with executed before/after binary test (`#995`).
+  - `cub >= v0.11.4` version floor enforced in `pkg/hub.RequireCubConnected` (`#1000`).
+- **Package C without credits:** per-answer compact JSON byte ceilings in CI (`#996`, all 10 commands) and deterministic zero-credit 24-case bytes-and-tokens benchmark (`#997`, published in `docs/reference/answer-sizes.md`).
+- **A(1) + G1/G2:** proposal (`#998`) approved and first slice shipped as `cub scout landed` CLI + `landed` MCP tool (`#1001`) with `landed`/`converging`/`not-landed`/`not-observable`, bounded read-only wait (`0s` default, `5m` CLI / `60s` MCP max), 8 recorded fixtures, and 10-case zero false-landed invariant.
+- **3.x vision (3.2+):** `docs/proposals/vision-3.x.md` (`#999`, `#1000`): 3.2 focuses on Theme 3 (cross-controller delivery parity) + Theme 4 (offline/bundle verification), with Theme 1 (ephemeral local graph query layer) as an eval-gated experiment only.
+
 ## After v2.18.0: release check on a real cluster, Flux WATCH, #887 seen to disagree — 2026-11-19
 
 On "keep going" and the maintainer's "yes to 1". Merged, not released:
