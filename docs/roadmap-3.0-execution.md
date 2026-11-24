@@ -66,15 +66,15 @@ Already done toward 3.0 (do not redo):
 
 | Item | State | What is left |
 |---|---|---|
-| A(1) "did my change land" + G1 (`converging` state) + G2 (bounded wait) | **done on `main` (Flux + Argo CD first slice)** | `#998` (proposal), `#1001` (`cub scout landed` CLI + `landed` MCP tool, 8 recorded fixtures, zero false-landed invariant). Real-cluster Flux + Argo CD CI lane (`scripts/ci/landed-lane.sh`) in progress. |
-| A(2) field value, last manager, will a controller revert it | partly (`explain`, field attribution) | A single answer shaped for the question. |
-| A(3) changes no one recorded | partly (`compare three-way`) | A single answer shaped for the question. |
+| A(1) "did my change land" + G1 (`converging` state) + G2 (bounded wait) | **done on `main` (Flux + Argo CD first slice)** | `#998` (proposal), `#1001` (`cub scout landed` CLI + `landed` MCP tool, 8 recorded fixtures, zero false-landed invariant), `#1002` (real Flux + Argo CD proof in `CI/GitOps E2E`), `#1003` (MCP parity), `#1006` (`json-contracts.md`). |
+| A(2) field value, last manager, will a controller revert it | **done on `main` (Flux + Argo CD)** | `#1009` (proposal), `#1011` (`explain --field-path` live `value`/`valueFound` + `revertPrediction` grounded in observed Flux/Argo CD controller specs). |
+| A(3) changes no one recorded | **done on `main`** | `#1009` (proposal), `#1012` (`compare three-way --unrecorded-only` + MCP `unrecorded_only`, preserving `summary` and `omissions[]`). |
 | A(4) `next[]` reads on every answer | done on all 10 `answer` commands | Keep exact read-only commands enforced on every new answer. |
-| G5: agent identity in attribution | not started | Propose a field-manager convention; report what is read, never guess. |
+| G5: agent identity in attribution | **done on `main` (Option A)** | `#1004` (proposal), `#1010` (`agent/<tool>[/<run>]` parser + `KnownManagerTool` self-reported agent label; zero new cause enums). |
 | B: envelope enforced on every command ([#596]) | all 10 commands covered (MCP parity + ceilings) | TUI, watch and bot surface conformance. |
-| C: cost an agent can count on | **rung 1 done on `main`** | `#996` (per-answer byte ceilings in CI for all 10 commands), `#997` (deterministic 24-case bytes-and-tokens benchmark published in `docs/reference/answer-sizes.md`). Summary view per tool remains. |
+| C: cost an agent can count on | **done on `main` (rung 1 + summary views)** | `#996` (per-answer byte ceilings in CI for all 10 commands), `#997` (deterministic 24-case bytes-and-tokens benchmark published in `docs/reference/answer-sizes.md`), `#1005` (`gitops status --view summary`), `#1007` (`doctor --view summary`). |
 | E: measurement | **rung 1 complete** | Rungs 2–3 are paid and **not approved**. |
-| F: be found and be tried | topics, homepage, plugin-first README done | Confirm the "one command, one answer" first screen with the maintainer; MCP directory and krew listings; one 3.0 announcement carrying C's numbers. |
+| F: be found and be tried | topics, homepage, plugin-first README, draft `v3.0.0.md` (`#1008`) done | Confirm the "one command, one answer" first screen with the maintainer; MCP directory and krew listings; publish 3.0 announcement carrying C's numbers. |
 | `#599` remainder | explicit `--kube-context` done | Cluster identity on every answer (waits on maintainer decision), merge-safe IDs, failure isolation. |
 
 #### Deferred to 3.1 (does not block 3.0; waits on ConfigHub agreement)

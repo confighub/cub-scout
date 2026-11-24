@@ -2225,9 +2225,13 @@ Merged on `main` (not yet tagged `v3.0.0`):
   - Plugin-first (`cub scout ...`) docs with standalone binary preserved (`#994`).
   - `docs/releases/v3.0.0-migration.md` with executed before/after binary test (`#995`).
   - `cub >= v0.11.4` version floor enforced in `pkg/hub.RequireCubConnected` (`#1000`).
-- **Package C without credits:** per-answer compact JSON byte ceilings in CI (`#996`, all 10 commands) and deterministic zero-credit 24-case bytes-and-tokens benchmark (`#997`, published in `docs/reference/answer-sizes.md`).
-- **A(1) + G1/G2:** proposal (`#998`) approved and first slice shipped as `cub scout landed` CLI + `landed` MCP tool (`#1001`) with `landed`/`converging`/`not-landed`/`not-observable`, bounded read-only wait (`0s` default, `5m` CLI / `60s` MCP max), 8 recorded fixtures, and 10-case zero false-landed invariant.
-- **3.x vision (3.2+):** `docs/proposals/vision-3.x.md` (`#999`, `#1000`): 3.2 focuses on Theme 3 (cross-controller delivery parity) + Theme 4 (offline/bundle verification), with Theme 1 (ephemeral local graph query layer) as an eval-gated experiment only.
+- **Package C without credits:** per-answer compact JSON byte ceilings in CI (`#996`, all 10 commands), deterministic zero-credit 24-case bytes-and-tokens benchmark (`#997`, published in `docs/reference/answer-sizes.md`), and `--view summary` on `gitops status` (`#1005`) and `doctor` (`#1007`) within declared MCP catalog and core profile ceilings.
+- **A(1) + G1/G2:** proposal (`#998`) approved and first slice shipped as `cub scout landed` CLI + `landed` MCP tool (`#1001`, `#1003`, `#1006`) with `landed`/`converging`/`not-landed`/`not-observable`, bounded read-only wait (`0s` default, `5m` CLI / `60s` MCP max), 8 recorded fixtures, 10-case zero false-landed invariant, and real Flux + Argo CD proof in `CI/GitOps E2E` (`#1002`).
+- **A(2), A(3), and G5:** proposals (`#1004`, `#1009`) and zero-new-state-word implementations merged:
+  - G5 Option A (`#1010`): `agent/<tool>[/<run>]` parser + `KnownManagerTool` self-reported agent label.
+  - A(2) (`#1011`): `explain --field-path` live `value`/`valueFound` + Flux/Argo CD `revertPrediction`.
+  - A(3) (`#1012`): `compare three-way --unrecorded-only` + MCP `unrecorded_only` preserving `summary` and `omissions[]`.
+- **Release notes & 3.x vision:** draft `docs/releases/v3.0.0.md` (`#1008`, not yet tagged) and `docs/proposals/vision-3.x.md` (`#999`, `#1000`): 3.2 focuses on Theme 3 (cross-controller delivery parity) + Theme 4 (offline/bundle verification), with Theme 1 (ephemeral local graph query layer) as an eval-gated experiment only.
 
 ## After v2.18.0: release check on a real cluster, Flux WATCH, #887 seen to disagree — 2026-11-19
 
