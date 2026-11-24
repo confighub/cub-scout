@@ -105,6 +105,9 @@ Already done toward 3.0 (do not redo):
 | 2026-11-19 | Answer state words: `gitops status` settled, converging, failing, no-deployers, not-observable; `explain` explained, owner-only, no-owner-marker, not-observable; `doctor` issues-flagged, nothing-flagged, incomplete, not-observable (#965–#967). |
 | 2026-11-19 | Answer state words for `map list` (listed, partial, not-observable), `scan` (findings, no-findings, incomplete, not-observable), `gitops settings` (listed, no-deployers, partial, not-observable) and `release check` (matches, differs, not-compared, not-observable) (#972–#975); then cut v2.18.0. |
 | 2026-11-19 | `release check` under Flux: an OCIRepository and Kustomization both on another revision give `WATCH`, as an Argo CD Application on another revision does; before, `INCONCLUSIVE` (seen in #979). |
+| 2026-11-24 | 3.0 `cub` CLI version floor is `v0.11.4` (`pkg/hub.MinCubVersion`). |
+| 2026-11-24 | A(1) + G1/G2 approved: command `cub scout landed` / MCP tool `landed`; state words `landed`, `converging`, `not-landed`, `not-observable`; G2 wait defaults `0s`, CLI max `5m`, MCP max `60s`, poll interval `5s` (min `2s`); 3.0 first slice covers Flux + Argo CD + Deployment/StatefulSet/DaemonSet. |
+| 2026-11-24 | 3.2 direction: Theme 3 (cross-controller delivery parity) + Theme 4 (offline/bundle verification); Theme 1 (ephemeral local graph query layer) is an eval-gated experiment only; Themes 2 and 5 fold into existing tracks. |
 
 ### Open, and whose it is
 

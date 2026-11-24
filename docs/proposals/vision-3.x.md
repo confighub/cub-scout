@@ -1,8 +1,9 @@
 # Proposal: cub-scout 3.x Vision (3.2 and beyond)
 
-**Status:** Draft proposal for maintainer review — **not approved work, not a
-roadmap commitment.** Nothing in this document starts implementation without
-explicit approval and an eval plan.
+**Status:** 3.2 scope direction confirmed by the maintainer on 2026-11-24:
+- **3.2 focus:** **Theme 3** (Cross-controller delivery parity, gated by real-cluster CI lanes) and **Theme 4** (Offline / bundle-based agent verification).
+- **Eval-gated experiment only:** **Theme 1** (Ephemeral local graph query layer — build only if a small recorded-fixture prototype proves byte/turn reduction; never a persistent fact store).
+- **Folded into existing tracks (not separate 3.2 themes):** **Theme 2** (`G5` agent field-manager identity in attribution) and **Theme 5** (MCP registries, krew, multi-arch image release hygiene).
 
 This draft extends [agentic GitOps observability](../reference/agentic-gitops-observability.md)
 beyond 3.0 (the agent's single-change loop) and 3.1 (facts in ConfigHub `#600`,

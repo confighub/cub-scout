@@ -189,14 +189,14 @@ func TestTheGateByTheCubRouteAndByNoRoute(t *testing.T) {
 		t.Skipf("this machine has ConfigHub reads turned off: %v", err)
 	}
 	require.NoError(t, requireConfigHubSession())
-	require.Equal(t, []string{"auth status"}, fakeCubCalls(t, cubLog))
+	require.Equal(t, []string{"auth status", "version"}, fakeCubCalls(t, cubLog))
 	require.Empty(t, member.seen, "by the cub route the server is asked by cub, not by the reader")
 
 	t.Setenv(configHubReaderEnv, "sdkk")
 	err := requireConfigHubSession()
 	require.ErrorContains(t, err, "is not a reader")
 	require.False(t, errors.Is(err, hub.ErrCubNotAuthenticated))
-	require.Len(t, fakeCubCalls(t, cubLog), 1)
+	require.Len(t, fakeCubCalls(t, cubLog), 2)
 	require.Empty(t, member.seen)
 }
 
