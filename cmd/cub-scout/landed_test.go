@@ -7,6 +7,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -97,4 +99,16 @@ func TestMCPLandedTool_ArgValidationAndWaitCap(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, json.Unmarshal(raw, &structured))
 	require.Contains(t, structured, "data")
+}
+
+func TestLandedStatesAndReasonsDocumentedInJSONContracts(t *testing.T) {
+	docBytes, err := os.ReadFile(filepath.Join("..", "..", "docs", "reference", "json-contracts.md"))
+	require.NoError(t, err)
+	doc := string(docBytes)
+	for _, state := range landedStates {
+		require.Contains(t, doc, "`"+state+"`", "state %q must be documented in json-contracts.md", state)
+	}
+	for _, reason := range landedReasons {
+		require.Contains(t, doc, "`"+reason+"`", "reason %q must be documented in json-contracts.md", reason)
+	}
 }
