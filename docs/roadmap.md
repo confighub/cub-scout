@@ -4,7 +4,7 @@
 
 > **Current state:** what is shipped, what the next release carries, what was
 > decided and what is open are in one place:
-> [the state of the plan](roadmap-3.0-execution.md#state-of-the-plan--2026-11-19).
+> [the state of the plan](roadmap-3.0-execution.md#state-of-the-plan--2026-11-24).
 > Where this page and that section disagree, that section wins.
 
 > **Status:** Authoritative
@@ -171,13 +171,23 @@ issue is filed for these yet; file one when a package starts.
 - [ ] A: field value, last manager, and whether a controller will revert it.
 - [ ] A: changes no one recorded, from three-way compare.
 - [ ] A: `next[]` reads on every answer, exact commands, never writes.
-- [ ] B: one envelope for every answer. `trace` and `compare source-truth`
-  carry `answer`; `explain`, `gitops status` and `doctor` do not yet.
+  Shipped on the nine `answer`-carrying commands (`trace`, `compare source-truth`,
+  `gitops status`, `explain`, `doctor`, `map list`, `scan`, `gitops settings`,
+  `release check`); keep enforced on every new answer.
+- [ ] B: one envelope for every answer. Nine commands carry `answer`
+  (`trace`, `compare source-truth`, `gitops status`, `explain`, `doctor`,
+  `map list`, `scan`, `gitops settings`, `release check`), with MCP parity
+  tests and real-cluster CI checks; remaining: conformance test across all
+  agent-facing commands plus the TUI, watch and bot surfaces (#596).
 - [ ] 3.0: remove `status` and `source_truth` verdict words from
   `compare source-truth` JSON and MCP output, keeping them in ASCII and
-  Markdown (decided 2026-11-16). Needs a deprecation notice in v2.16. [Proposal](proposals/answer-envelope.md). It covers the
-  witness rule (G3), cluster identity and cost (#599) and conformance (#596).
-- [ ] B: mark text read from the cluster as quoted data in JSON and MCP.
+  Markdown (decided 2026-11-16). Deprecation notices shipped in v2.18.0 (#950),
+  meeting the one-minor window. [Proposal](proposals/answer-envelope.md). It
+  covers the witness rule (G3), cluster identity and cost (#599) and
+  conformance (#596).
+- [ ] B: mark text read from the cluster as quoted data in JSON and MCP
+  (done on the nine `answer`-carrying commands; remaining commands follow with
+  conformance).
 - [ ] B (decided 2026-11-16: the words leave JSON and MCP output in 3.0 and
   stay in ASCII and Markdown): remove verdict wording (PASS / WATCH / ASK / BLOCK) from cub-scout's
   skills and fields; it belongs to the judge.
@@ -201,7 +211,9 @@ issue is filed for these yet; file one when a package starts.
 - [ ] F: track installs and downloads instead of stars.
 - [ ] G1: `converging` with a recheck time on the landing check.
 - [ ] G2: a bounded, read-only wait on the landing check.
-- [ ] G3: every answer says whose word a fact rests on.
+- [ ] G3: every answer says whose word a fact rests on (`basis[].restsOn` is
+  shipped on the nine `answer`-carrying commands; remaining commands follow
+  with package B).
 - [ ] G4: a delivery attestation a ChangeWorkflow can require; needs
   ConfigHub's agreement.
 - [ ] G5: propose that agents set a field manager naming themselves.
@@ -561,7 +573,7 @@ before implementation.
 > the `answer` envelope on two commands, the MCP tool profile); the pre-attach
 > report, conformance and the remaining deprecation notices move to v2.17.
 > The stage and version lists below predate this; read
-> [the state of the plan](roadmap-3.0-execution.md#state-of-the-plan--2026-11-19).
+> [the state of the plan](roadmap-3.0-execution.md#state-of-the-plan--2026-11-24).
 >
 > **Added to on 2026-11-13.** The maintainer adopted, for now, an
 > [agent plan](roadmap-3.0-execution.md#agent-plan--2026-11-13): four

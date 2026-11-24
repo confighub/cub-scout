@@ -11,10 +11,11 @@
 > 2026-10-10).
 > Current gates: [the readiness ledger](releases/v2.15-readiness.md).
 
-## State of the plan — 2026-11-19
+## State of the plan — 2026-11-24
 
-The one place to read what is shipped, what is next and what is open. Where
-this section and anything below it disagree, this section wins.
+The one place to read what is shipped, what is left to reach 3.0, what was
+decided and what is open. Where this section and anything below it disagree,
+this section wins.
 
 ### Shipped
 
@@ -27,72 +28,63 @@ this section and anything below it disagree, this section wins.
 | [v2.18.0](releases/v2.18.0.md) | 2026-11-19 | The `answer` block on seven more commands; every cluster write names its cluster; `doctor --before-attach`; 3.0 deprecation notices. |
 | [v2.19.0](releases/v2.19.0.md) | 2026-11-19 | Under Flux, `release check` gives `WATCH` for another revision, and runs on a real cluster in CI; #887's comparisons seen to disagree under Flux and Argo CD. |
 
-### v2.16.0, published 2026-11-16
+Already done toward 3.0 (do not redo):
 
-[Notes and publication checks](releases/v2.16.0.md#publication-checks).
+- The `answer` envelope (`state`, `reason`, `summary`, `observedAt`, `cluster`,
+  `basis[]` with whose word, `unknowns[]`, `next[]`, `cost`) is on nine
+  commands: `trace`, `compare source-truth` (lean), `gitops status`, `explain`,
+  `doctor`, `map list`, `scan`, `gitops settings`, and `release check`.
+  `TestAnswerIsTheSameThroughMCP` and per-command `*_answer_mcp_test.go` hold
+  MCP output to the CLI's, and each command's answer is checked on a real
+  cluster in CI.
+- Every command takes `--kube-context` or a stated exemption
+  (`cmd/cub-scout/command_context_registry_test.go`), and every cluster write
+  refuses without it (`scripts/check-readonly.sh` catches `kubectl` writes too;
+  `#955`, `#962`, `#964`).
+- Deprecation notices for everything 3.0 removes shipped in v2.18.0 (`#950`),
+  so the one-minor deprecation window `#595` requires is met.
+- `doctor --before-attach` (`#888`, `#947`, `#952`), Crossplane `Ready` in
+  `trace` (`#948`, `#963`), Flux "not yet" as `WATCH` in `release check`
+  (`#982`), and `#887`'s live-status cluster check seen to agree and disagree
+  under Flux and Argo CD (including a StatefulSet and DaemonSet read live in
+  `#988`).
 
-Renumbered on 2026-11-16, as v2.14 was on 2026-10-10: the next minor ships
-what is ready, and the work the trimmed plan gave to v2.16 moves to v2.17.
+### What is left to 3.0
 
-| In v2.16.0 | From |
-|---|---|
-| Works with ConfigHub 0.11 (SDK core v0.11.4). Hosted ConfigHub moved to 0.11 on 2026-11-13 and v2.15.1 refuses it by default. | [#758] |
-| `trace`: a JSON answer, with the typed reason `no-owner-marker-recognised`, for a resource with no owner marker; before, an error line and no JSON. | #915 |
-| The `answer` envelope: full on `trace` (state, reason, whose word each claim rests on, what was not read, next read, measured cost), lean on `compare source-truth` (state, reason, time, unknowns, next). | #920, #922; packages A, B |
-| `mcp serve --tools all\|core\|<names>` and `cub_scout_more`; the default is unchanged. | #918; package C |
-| Answer sizes against raw `kubectl`, recorded by the live lane on every run. | #916; packages C, E rung 1 |
-| `trace --artifacts` says "not applicable" for a source with no object; docs say "no owner marker recognised". | #911, #923 |
-| Deprecation notice: the verdict words leave JSON and MCP output in 3.0. | decision, 2026-11-16 |
+#### The 3.0 transition ([#595], [#386], [#562]) — no new decisions needed
 
-| Moved to v2.17, then to v2.18; shipped in v2.18.0 | Where it stands |
-|---|---|
-| [#888] pre-attach report | `doctor --before-attach` landed (#947), with Argo CD, Flux and Sveltos recorded (#952); the apps-Space overlap and `cub variant upload` needs are left |
-| [#596] conformance across CLI, MCP and TUI | the envelope's checks and the MCP cross-surface test now cover `trace`, `compare source-truth`, `gitops status`, `explain` and `doctor` (#949, #965–#967); trace's human surfaces never say more than the answer; the other commands and their human surfaces are left |
-| Deprecation notices for the other 3.0 removals, including `fleet outliers` | in the code (#950); the window starts with the first release that contains them |
-| The envelope on `gitops status`, `explain`, `doctor`, `map list`, `scan`, `gitops settings`, `release check` | landed (#965–#967, #972–#975) with the words decided on 2026-11-19; all but `release check` checked on the GitOps lane's real cluster; each reports a measured cost (`explain` with `--kube-context`, #968, #969) |
+| Item | State | What is left |
+|---|---|---|
+| Go module path `/v2` → `/v3` ([#595]) | not started | Move module path to `github.com/confighub/cub-scout/v3`, rewrite every self-import, and add a test that no un-suffixed self-import remains. |
+| Remove deprecated flags and commands ([#595], [#562]) | deprecation window met in v2.18.0 | Remove `trace --json`, `tree --json`, `graph export --json`, `gitops status --json`, `connect --go`, `app create --set-context`, `hierarchy`, and `fleet outliers` (`docs/migration-3.0.md`). Add tests that each removed flag fails and names its replacement, never silently ignored. |
+| Verdict words leave JSON and MCP | deprecated in v2.16.0 / v2.18.0 | Remove `compare source-truth`'s `status` and `source_truth` verdict words from JSON and MCP output; keep them in ASCII and Markdown (decided 2026-11-16). |
+| `cub` version floor ([#595]) | needs version named at release time | Enforce the chosen floor (against the then-current `cub`, currently v0.11.x) in the connected gate and state it in `docs/reference/cli-contract.md`. |
+| Plugin-first naming ([#386]) | partly | Make `cub scout …` the documented primary form; keep the standalone `cub-scout` binary; show both forms in examples, plugin form first. |
+| Migration guide ([#595]) | draft in `docs/migration-3.0.md` | Write `docs/releases/v3.0.0-migration.md` (or promote `docs/migration-3.0.md`) and add a test that runs its before/after commands against the built binary. |
 
-Still owed from v2.15: [#882] item 5 and a live sighting of two Flux kinds;
-the remaining [#887] items; the eval cases; and of [#599], cluster identity,
-merge-safe IDs, cost and failure isolation on every answer. Its explicit
-context is done: since #953 a test holds every command to `--kube-context` or
-a stated reason, and #954, #956–#960 and #964 gave it to the demos,
-`quickstart`, `import argocd`, `views project --with-reality`, `import`, the
-import wizard and `map hub`. Every write now needs it ([#955], #962, #964).
+#### The agent plan's 3.0 items ([Agent plan — 2026-11-13](#agent-plan--2026-11-13))
 
-After v2.18.0, released in v2.19.0: the GitOps lane runs `release check`
-on a real Flux OCI delivery (#979), so each command's answer is checked on
-a real cluster, though not in every state; under Flux, a source and Kustomization on another revision give
-`WATCH` / `not-compared`, as under Argo CD (#982, the maintainer's decision;
-a behaviour change for `--fail-on`); the live-status lane records untrue
-statuses and sees each comparison of [#887] disagree, sync (#980) and health
-(#984); Argo CD v3.6.2 (#978) and kind v0.33.0 with node v1.35.8 (#983) in the
-lanes. Ready without a decision: a StatefulSet or DaemonSet read live ([#887]);
-a newer Kubernetes minor in the lanes, with the client libraries. Waiting on
-the maintainer: the open table below.
+| Item | State | What is left |
+|---|---|---|
+| A(1) "did my change land" + G1 (`converging` state) | not started as its own tool | One tool and command (`landed` / `converging` / `not-landed` / `not-observable`, naming the broken link). Propose state words for maintainer approval before building. |
+| G2: bounded, read-only wait on the landing check | not started | One read-only call returning when state settles or time is up; must not be a watch service (`#539` stays not planned). |
+| A(2) field value, last manager, will a controller revert it | partly (`explain`, field attribution) | A single answer shaped for the question. |
+| A(3) changes no one recorded | partly (`compare three-way`) | A single answer shaped for the question. |
+| A(4) `next[]` reads on every answer | done on the nine `answer` commands | Keep exact read-only commands enforced on every new answer. |
+| G5: agent identity in attribution | not started | Propose a field-manager convention; report what is read, never guess. |
+| B: envelope enforced on every command ([#596]) | nine commands done | Conformance test across all agent-facing commands; TUI, watch and bot surfaces. |
+| C: cost an agent can count on | MCP catalog size ceilings done (`mcp_catalog_size_test.go`); four-question sizes recorded by live lane | Per-answer size ceilings checked in CI; a summary view per tool; deterministic bytes-and-tokens benchmark over the 24 prepared cases (no model, no credits). |
+| E: measurement | rung 1 partly (four-question sizes) | Complete rung 1 (C's free numbers). Rungs 2–3 are paid and **not approved**. |
+| F: be found and be tried | topics and homepage set; README opens with a real-cluster `trace` answer | Confirm the "one command, one answer" first screen with the maintainer; MCP directory and krew listings; one 3.0 announcement carrying C's numbers. |
+| `#599` remainder | explicit `--kube-context` done | Cluster identity on every answer (waits on maintainer decision), merge-safe IDs, failure isolation. |
 
-### v2.18.0, published 2026-11-19
+#### Deferred to 3.1 (does not block 3.0; waits on ConfigHub agreement)
 
-The work the table above moved to v2.18 shipped, on the maintainer's word
-("cut v2.18.0 after"): the answer envelope on seven more commands, explicit
-context everywhere with writes refused without it, `doctor --before-attach`,
-Crossplane `Ready` in `trace`, and the 3.0 deprecation notices, whose window
-starts here. [Notes](releases/v2.18.0.md).
-
-### v2.17.0, published 2026-11-18
-
-Renumbered again, on the maintainer's word ("Cut v2.17.0"): v2.17.0 ships
-what the standing checks found. The items the table above moved to v2.17
-are now v2.18's. [Notes](releases/v2.17.0.md).
-
-| In v2.17.0 | From |
-|---|---|
-| kro owner names from kro's own `kro.run/instance-name` label; before, an arbitrary `kro.run/` label value. | #936 |
-| Helm: `trace` answers for objects named only by Helm's annotations; a named release is claimed only if its manifest lists the object; its recorded status is read as the deployer's report. | #929, #933, #935 |
-| `trace` says "no owner marker" only when detection recognised none. | #929 |
-| Crossplane: a composite labelled with its own name is its own root in `tree composition`. | #940 |
-| kubectl warnings on stderr are no longer parsed as data (`tree composition`, `import`). | #938 |
-| Terraform: the two invented keys removed; `explain` cites Terraform's field manager. | #942 |
-| Real installs in the GitOps lane: Flux 2.10, Argo CD 3.6, Helm 4 and 3, kro, Crossplane, Terraform; pinned runners, kind and goreleaser; the live lane on Ubuntu 26.04. | #927–#929, #934, #936, #937, #941 |
+- Facts in ConfigHub (`#600`, package D): cub-scout as the only author of an
+  observed fact, opt-in.
+- Delivery attestation (`G4`): receipt form a ConfigHub ChangeWorkflow can
+  require.
+- Signed receipts (`#889`) and a pullable bot image (`#520`).
 
 ### Decisions made
 
@@ -121,6 +113,10 @@ are now v2.18's. [Notes](releases/v2.17.0.md).
 | Any paid eval run. Three things wait on one: whether the shorter catalog helps, whether `core` becomes the default profile in 3.0, whether the `answer` block earns its bytes. | maintainer |
 | Cluster ID in `answer`: read on request, or always. | maintainer |
 | Where to raise the fact-storage and delivery-attestation questions with ConfigHub (packages D, G4). | maintainer |
+| Repository secret `CUB_SCAN_RELEASE_TOKEN` (blocks the `full` CI lane from provisioning its scanner). | maintainer |
+| State words for any new answer (including A(1) landing check). | maintainer |
+| The `cub` version floor for 3.0 (named against then-current `cub`). | maintainer |
+| Closing completed issues (`#948`, `#955`, `#888`, `#561`, and possibly `#887`) and stale milestones (`v2.13.0`, `v2.14.0`, `v2.15.0`). | maintainer |
 
 ### Standing checks
 
@@ -157,7 +153,7 @@ Adopted by the maintainer on 2026-11-13 "for now": it can be withdrawn. It
 adds to the [trimmed plan](#trimmed-plan--2026-11-10) below and changes two of
 its rows: v2.16 grows, and 3.0 is no longer the transition only. The
 not-planned list and the unscheduled paid benchmark stand. What is built so
-far is in [the state of the plan](#state-of-the-plan--2026-11-19) above; the
+far is in [the state of the plan](#state-of-the-plan--2026-11-24) above; the
 rest is not.
 
 The plan follows from a definition of
@@ -495,7 +491,7 @@ approve a release or proof of the release running.
 > **Superseded.** The P4 to P6 rows below list items the
 > [trimmed plan](#trimmed-plan--2026-11-10) marks not planned (#539, #584,
 > #601, #602, #604, #605, #641). Read
-> [the state of the plan](#state-of-the-plan--2026-11-19) for what is next.
+> [the state of the plan](#state-of-the-plan--2026-11-24) for what is next.
 
 Planning capacity: one lead/integrator, up to two cheap implementation workers,
 and one serial live-validation lane. The windows are **engineering-week ranges
