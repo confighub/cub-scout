@@ -895,15 +895,19 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
-						"view":    map[string]interface{}{"type": "string", "description": "View UUID or View Explorer URL; mutually exclusive with scope. Unit membership uses exact UnitID or space ID plus slug."},
-						"context": map[string]interface{}{"type": "string", "description": "Exact kubeconfig context for every read. An empty or unknown name fails; no fallback. Never inferred from ConfigHub targets."},
+						"view":    map[string]interface{}{"type": "string", "description": "View UUID or URL; mutually exclusive with scope."},
+						"context": map[string]interface{}{"type": "string", "description": "Exact kubeconfig context; fails if empty or unknown."},
 						"scope": map[string]interface{}{
 							"type":        "string",
-							"description": "Scope when view is omitted: <kind/name>, resource:<kind/name>, namespace/<ns>, or cluster.",
+							"description": "Scope when view omitted: <kind/name>, namespace/<ns>, or cluster.",
 						},
 						"namespace": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional namespace override for resource scope.",
+							"description": "Namespace override for resource scope.",
+						},
+						"unrecorded_only": map[string]interface{}{
+							"type":        "boolean",
+							"description": "Only unrecorded live drift/unlinked.",
 						},
 					},
 					"anyOf":                []interface{}{map[string]interface{}{"required": []string{"scope"}}, map[string]interface{}{"required": []string{"view"}}},
@@ -932,6 +936,9 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						return nil, fmt.Errorf("context must be a non-empty string")
 					}
 					args = append(args, "--kube-context", value)
+				}
+				if argBool(arguments, "unrecorded_only") {
+					args = append(args, "--unrecorded-only")
 				}
 				return args, nil
 			},
