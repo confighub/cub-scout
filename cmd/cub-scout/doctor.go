@@ -26,6 +26,7 @@ import (
 
 var (
 	doctorFormat       string
+	doctorView         string
 	doctorNamespace    string
 	doctorTopIssues    int
 	doctorPresentation string
@@ -41,6 +42,11 @@ var (
 	collectDoctorDeliveryEvidenceFn = func(ctx context.Context, namespace string, req ObserveScopeSummaryRequest, binding *localClusterBinding) (*GitOpsDeliveryEvidence, error) {
 		return collectDoctorDeliveryEvidenceWithBinding(ctx, namespace, req, binding)
 	}
+)
+
+const (
+	doctorViewAll     = "all"
+	doctorViewSummary = "summary"
 )
 
 var doctorCmd = &cobra.Command{
@@ -63,6 +69,7 @@ func init() {
 	rootCmd.AddCommand(doctorCmd)
 	doctorCmd.Flags().StringVarP(&doctorNamespace, "namespace", "n", "", "Namespace scope (default: all namespaces)")
 	doctorCmd.Flags().StringVar(&doctorFormat, "format", "ascii", "Output format: ascii, json")
+	doctorCmd.Flags().StringVar(&doctorView, "view", doctorViewAll, "JSON only: all (default) or summary (compact, omits topIssues, nextSteps, warnings, and detail blocks)")
 	doctorCmd.Flags().IntVar(&doctorTopIssues, "top", 3, "Number of top issues to include")
 	doctorCmd.Flags().StringVar(&doctorPresentation, "presentation", "", PresentationModeHelp())
 	doctorCmd.Flags().StringVar(&doctorHintMode, "hint-mode", "", HintModeHelp())
@@ -220,6 +227,10 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 	if format != "ascii" && format != "json" {
 		return fmt.Errorf("invalid --format %q (valid: ascii, json)", doctorFormat)
 	}
+	view, err := normalizeDoctorView(doctorView, cmd.Flags().Changed("view"), format)
+	if err != nil {
+		return err
+	}
 
 	// Build invocation context with presentation mode resolution
 	invCtx, err := NewInvocationContext(doctorPresentation, TransportCLI)
@@ -306,12 +317,46 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
-		return enc.Encode(summary)
+		return enc.Encode(projectDoctorView(summary, view))
 	default:
 		// Use invocation context for presentation mode, hint context for recommendations
 		fmt.Print(renderDoctorASCII(summary, invCtx.Mode(), invCtx.IsExplicit(), hintCtx))
 		return nil
 	}
+}
+
+func normalizeDoctorView(view string, viewChanged bool, format string) (string, error) {
+	v := strings.ToLower(strings.TrimSpace(view))
+	if v == "" {
+		v = doctorViewAll
+	}
+	switch v {
+	case doctorViewAll, doctorViewSummary:
+	default:
+		return "", fmt.Errorf("invalid --view %q (valid: all, summary)", view)
+	}
+	if viewChanged && format != "json" {
+		return "", fmt.Errorf("--view applies to JSON output; pass --format json")
+	}
+	return v, nil
+}
+
+// projectDoctorView returns a compact copy of summary when view is "summary",
+// preserving the answer block and top-level counts while omitting verbose
+// issue, hint, warning, and optional detail blocks.
+func projectDoctorView(summary DoctorSummary, view string) DoctorSummary {
+	if view != doctorViewSummary {
+		return summary
+	}
+	summary.TopIssues = nil
+	summary.NextSteps = nil
+	summary.Warnings = nil
+	summary.Rollouts = nil
+	summary.Delivery = nil
+	summary.ThreeWay = nil
+	summary.Attach = nil
+	summary.DeliveryEvidence = nil
+	return summary
 }
 
 func bindDoctorHintContext(hints []Hint, contextName string) []Hint {

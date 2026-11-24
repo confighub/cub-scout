@@ -278,11 +278,11 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						},
 						"with_confighub": map[string]interface{}{
 							"type":        "boolean",
-							"description": "Add bounded ConfigHub release, live-status and event-consumer evidence. Needs cub auth.",
+							"description": "Add bounded ConfigHub delivery evidence. Needs cub auth.",
 						},
 						"confighub_space": map[string]interface{}{
 							"type":        "string",
-							"description": "ConfigHub space. Omitted: ConfigHub reads are skipped and reported as a confighub.scope omission (there is no default space). '*' reads all spaces.",
+							"description": "ConfigHub space. Omitted: skipped (confighub.scope omission). '*' reads all spaces.",
 						},
 						"confighub_since": map[string]interface{}{
 							"type":        "string",
@@ -295,6 +295,11 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						"before_attach": map[string]interface{}{
 							"type":        "boolean",
 							"description": "Add what `cub cluster attach` would meet here.",
+						},
+						"view": map[string]interface{}{
+							"type":        "string",
+							"enum":        []string{"all", "summary"},
+							"description": "all or summary.",
 						},
 					},
 					"additionalProperties": false,
@@ -331,6 +336,9 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				}
 				if argBool(arguments, "before_attach") {
 					args = append(args, "--before-attach")
+				}
+				if view := argString(arguments, "view"); view != "" {
+					args = append(args, "--view", view)
 				}
 				return args, nil
 			},
