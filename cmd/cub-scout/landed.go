@@ -446,10 +446,6 @@ func (s recordedLandingStore) ListNamespace(_ context.Context, gvr schema.GroupV
 	return out, nil
 }
 
-func fetchLandingSnapshot(ctx context.Context, dyn dynamic.Interface, kubeCtx string, target agent.LandingObjectRef) agent.LandingSnapshot {
-	return fetchLandingSnapshotWithOptions(ctx, dyn, kubeCtx, target, landingPodVerifyOptions{})
-}
-
 func fetchLandingSnapshotWithOptions(ctx context.Context, dyn dynamic.Interface, kubeCtx string, target agent.LandingObjectRef, opts landingPodVerifyOptions) agent.LandingSnapshot {
 	return fetchLandingSnapshotFromStoreWithOptions(ctx, dynamicLandingStore{dyn: dyn}, kubeCtx, target, opts)
 }
