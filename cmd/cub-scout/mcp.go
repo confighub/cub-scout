@@ -747,7 +747,7 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						"view": map[string]interface{}{
 							"type":        "string",
 							"enum":        []string{"all", "summary"},
-							"description": "all or summary (omits deployer/source lists).",
+							"description": "all or summary.",
 						},
 					},
 					"additionalProperties": false,
