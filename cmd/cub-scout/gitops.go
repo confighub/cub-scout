@@ -1079,11 +1079,8 @@ func runtimeIssueOrder(reason string) int {
 	return 99
 }
 
-// outputGitOpsStatusJSON outputs the summary as JSON
-func outputGitOpsStatusJSON(summary GitOpsSummary) error {
-	return writeGitOpsStatusJSON(os.Stdout, summary, "")
-}
-
+// writeGitOpsStatusJSON outputs the summary as JSON, or a compact unchanged
+// envelope when ifUnchanged matches the answer fingerprint.
 func writeGitOpsStatusJSON(w io.Writer, summary GitOpsSummary, ifUnchanged string) error {
 	if summary.Fingerprint == "" && summary.Answer != nil {
 		summary.Fingerprint = computeAnswerFingerprint(summary.Answer)
