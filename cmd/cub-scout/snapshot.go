@@ -4,9 +4,13 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -14,16 +18,27 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	sigsyaml "sigs.k8s.io/yaml"
 
 	"github.com/confighub/cub-scout/v3/pkg/agent"
 )
 
+const (
+	snapshotFormatGSF  = "gsf"
+	snapshotFormatYAML = "yaml"
+	snapshotFormatJSON = "json"
+
+	defaultSnapshotMaxObjects = 200
+)
+
 var (
-	snapshotOutput    string
-	snapshotNamespace string
-	snapshotKind      string
-	snapshotRelations bool
-	snapshotNow       = time.Now
+	snapshotOutput     string
+	snapshotNamespace  string
+	snapshotKind       string
+	snapshotRelations  bool
+	snapshotFormat     = snapshotFormatGSF
+	snapshotMaxObjects = defaultSnapshotMaxObjects
+	snapshotNow        = time.Now
 )
 
 // GSFSnapshot represents the GitOps State Format output
@@ -83,21 +98,31 @@ type GSFSummary struct {
 
 var snapshotCmd = &cobra.Command{
 	Use:   "snapshot",
-	Short: "Dump cluster state as GSF JSON",
-	Long: `Take a snapshot of the current cluster state and output as GitOps State Format (GSF) JSON.
+	Short: "Dump cluster state as GSF JSON or sanitized offline recording YAML/JSON",
+	Long: `Take a read-only snapshot of the current cluster state.
 
-This is a read-only operation that queries the Kubernetes API and outputs
-ownership, relationships, and status for all detected resources.
+By default (--format gsf), outputs GitOps State Format (GSF) JSON with ownership
+and optional relationships.
+
+With --format yaml or --format json, captures a bounded, sanitized offline
+recording of workloads (Deployment, StatefulSet, DaemonSet, Job, CronJob) and
+GitOps controller objects (Flux Kustomization/HelmRelease/GitRepository/OCIRepository,
+Argo CD Application, and Helm release Secrets with Secret.data and Secret.stringData
+strictly stripped). Offline commands such as landed --recording, gitops status
+--recording, and doctor --recording evaluate these snapshots with zero cluster access.
 
 Examples:
-  # Output to stdout
+  # Output GSF JSON to stdout
   cub-scout snapshot
 
-  # Output to file
-  cub-scout snapshot -o state.json
+  # Capture a sanitized offline multi-document YAML snapshot
+  cub-scout snapshot --format yaml -n prod -o prod-snapshot.yaml
 
-  # Pipe to jq
-  cub-scout snapshot | jq '.entries[] | select(.owner.type == "flux")'
+  # Capture a sanitized offline JSON List snapshot bounded to 100 objects
+  cub-scout snapshot --format json --max-objects 100 -o prod-snapshot.json
+
+  # Output GSF JSON to file
+  cub-scout snapshot -o state.json
 
   # Filter by namespace
   cub-scout snapshot --namespace prod
@@ -115,10 +140,25 @@ func init() {
 	snapshotCmd.Flags().StringVarP(&snapshotOutput, "output", "o", "", "Output file (default: stdout, use '-' for explicit stdout)")
 	snapshotCmd.Flags().StringVarP(&snapshotNamespace, "namespace", "n", "", "Filter by namespace")
 	snapshotCmd.Flags().StringVarP(&snapshotKind, "kind", "k", "", "Filter by kind")
-	snapshotCmd.Flags().BoolVar(&snapshotRelations, "relations", false, "Include resource relations (owns, selects, mounts, references)")
+	snapshotCmd.Flags().BoolVar(&snapshotRelations, "relations", false, "Include resource relations (owns, selects, mounts, references; GSF format only)")
+	snapshotCmd.Flags().StringVar(&snapshotFormat, "format", snapshotFormatGSF, "Output format: gsf (default, GSF JSON), yaml (sanitized offline recording YAML), json (sanitized offline recording JSON List)")
+	snapshotCmd.Flags().IntVar(&snapshotMaxObjects, "max-objects", defaultSnapshotMaxObjects, "Maximum number of objects to capture in yaml/json recording mode (1-512)")
 }
 
 func runSnapshot(cmd *cobra.Command, args []string) error {
+	format, err := normalizeSnapshotFormat(snapshotFormat)
+	if err != nil {
+		return err
+	}
+	if format != snapshotFormatGSF {
+		if snapshotMaxObjects < 1 || snapshotMaxObjects > maxRecordedObjectCount {
+			return fmt.Errorf("invalid --max-objects %d (must be between 1 and %d)", snapshotMaxObjects, maxRecordedObjectCount)
+		}
+		if cmd.Flags().Changed("relations") && snapshotRelations {
+			return fmt.Errorf("--relations applies only to --format gsf")
+		}
+	}
+
 	ctx := cmd.Context()
 
 	// Build Kubernetes config
@@ -141,6 +181,27 @@ func runSnapshot(cmd *cobra.Command, args []string) error {
 		clusterName = "default"
 	}
 	observedAt := snapshotNow().UTC()
+
+	if format == snapshotFormatYAML || format == snapshotFormatJSON {
+		objects, truncated, err := collectRecordedSnapshotObjects(ctx, dynClient, snapshotNamespace, snapshotKind, snapshotMaxObjects)
+		if err != nil {
+			return err
+		}
+		out := io.Writer(os.Stdout)
+		if snapshotOutput != "" && snapshotOutput != "-" {
+			f, err := os.Create(snapshotOutput)
+			if err != nil {
+				return fmt.Errorf("create output file: %w", err)
+			}
+			defer f.Close()
+			out = f
+		}
+		sourceContext := selectedContext
+		if sourceContext == "" {
+			sourceContext = clusterName
+		}
+		return encodeRecordedSnapshot(out, format, objects, observedAt, sourceContext, truncated)
+	}
 
 	// Collect resources
 	entries := []GSFEntry{}
@@ -609,4 +670,271 @@ func buildReferencesRelations(items []unstructured.Unstructured, clusterName str
 	}
 
 	return relations
+}
+
+func normalizeSnapshotFormat(raw string) (string, error) {
+	f := strings.ToLower(strings.TrimSpace(raw))
+	if f == "" {
+		return snapshotFormatGSF, nil
+	}
+	switch f {
+	case snapshotFormatGSF, snapshotFormatYAML, snapshotFormatJSON:
+		return f, nil
+	default:
+		return "", fmt.Errorf("invalid --format %q (valid: gsf, yaml, json)", raw)
+	}
+}
+
+type snapshotResourceSpec struct {
+	GVR  schema.GroupVersionResource
+	Kind string
+}
+
+// recordedSnapshotResources lists the bounded workload and GitOps controller
+// resource types captured by `cub-scout snapshot --format yaml|json`.
+func recordedSnapshotResources() []snapshotResourceSpec {
+	return []snapshotResourceSpec{
+		// Workloads
+		{GVR: schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}, Kind: "Deployment"},
+		{GVR: schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "statefulsets"}, Kind: "StatefulSet"},
+		{GVR: schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "daemonsets"}, Kind: "DaemonSet"},
+		{GVR: schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "jobs"}, Kind: "Job"},
+		{GVR: schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "cronjobs"}, Kind: "CronJob"},
+		// Flux controllers & sources
+		{GVR: schema.GroupVersionResource{Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations"}, Kind: "Kustomization"},
+		{GVR: schema.GroupVersionResource{Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases"}, Kind: "HelmRelease"},
+		{GVR: schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "gitrepositories"}, Kind: "GitRepository"},
+		{GVR: schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "ocirepositories"}, Kind: "OCIRepository"},
+		// Argo CD
+		{GVR: schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}, Kind: "Application"},
+		// Helm release Secrets (filtered strictly to Helm release Secrets; data/stringData always stripped)
+		{GVR: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "secrets"}, Kind: "Secret"},
+	}
+}
+
+func isHelmReleaseSecret(obj *unstructured.Unstructured) bool {
+	if obj == nil {
+		return false
+	}
+	if secretType, _, _ := unstructured.NestedString(obj.Object, "type"); secretType == "helm.sh/release.v1" {
+		return true
+	}
+	if strings.HasPrefix(obj.GetName(), "sh.helm.release.v1.") {
+		return true
+	}
+	labels := obj.GetLabels()
+	return strings.EqualFold(strings.TrimSpace(labels["owner"]), "helm")
+}
+
+// sanitizeRecordedSnapshotObject returns a deep-copied, sanitized object safe
+// for offline recording. For Secrets, data and stringData (and last-applied
+// annotations) are strictly stripped so no secret material is ever captured.
+func sanitizeRecordedSnapshotObject(item *unstructured.Unstructured, fallbackSpec snapshotResourceSpec) *unstructured.Unstructured {
+	if item == nil {
+		return nil
+	}
+	cp := item.DeepCopy()
+	if cp.Object == nil {
+		cp.Object = map[string]interface{}{}
+	}
+	if cp.GetAPIVersion() == "" && fallbackSpec.GVR.Version != "" {
+		cp.SetAPIVersion(fallbackSpec.GVR.GroupVersion().String())
+	}
+	if cp.GetKind() == "" && fallbackSpec.Kind != "" {
+		cp.SetKind(fallbackSpec.Kind)
+	}
+
+	// Ensure metadata.namespace is explicitly recorded (even "" for cluster-scoped
+	// objects) so readRecordedObjectSnapshot accepts the emitted object cleanly.
+	meta, _ := cp.Object["metadata"].(map[string]interface{})
+	if meta == nil {
+		meta = map[string]interface{}{}
+		cp.Object["metadata"] = meta
+	}
+	if _, ok := meta["namespace"]; !ok {
+		meta["namespace"] = ""
+	}
+
+	if strings.EqualFold(cp.GetKind(), "Secret") {
+		sanitizedMeta := map[string]interface{}{
+			"name":      cp.GetName(),
+			"namespace": cp.GetNamespace(),
+		}
+		for _, key := range []string{"uid", "resourceVersion", "creationTimestamp", "generation", "ownerReferences", "labels"} {
+			if val, exists := meta[key]; exists {
+				sanitizedMeta[key] = val
+			}
+		}
+		if rawAnn, ok := meta["annotations"].(map[string]interface{}); ok && len(rawAnn) > 0 {
+			cleanAnn := make(map[string]interface{}, len(rawAnn))
+			for k, v := range rawAnn {
+				if k == "kubectl.kubernetes.io/last-applied-configuration" {
+					continue
+				}
+				cleanAnn[k] = v
+			}
+			if len(cleanAnn) > 0 {
+				sanitizedMeta["annotations"] = cleanAnn
+			}
+		}
+		sanitized := map[string]interface{}{
+			"apiVersion": cp.GetAPIVersion(),
+			"kind":       "Secret",
+			"metadata":   sanitizedMeta,
+		}
+		if secretType, found, _ := unstructured.NestedString(cp.Object, "type"); found && secretType != "" {
+			sanitized["type"] = secretType
+		}
+		return &unstructured.Unstructured{Object: sanitized}
+	}
+
+	return cp
+}
+
+func collectRecordedSnapshotObjects(ctx context.Context, dynClient dynamic.Interface, namespace, kindFilter string, maxObjects int) ([]*unstructured.Unstructured, bool, error) {
+	if maxObjects < 1 {
+		maxObjects = defaultSnapshotMaxObjects
+	}
+	if maxObjects > maxRecordedObjectCount {
+		maxObjects = maxRecordedObjectCount
+	}
+
+	captured := make([]*unstructured.Unstructured, 0)
+	truncated := false
+	kindFilter = strings.TrimSpace(kindFilter)
+
+	for _, spec := range recordedSnapshotResources() {
+		if kindFilter != "" && !strings.EqualFold(spec.Kind, kindFilter) {
+			continue
+		}
+		if err := ctx.Err(); err != nil {
+			return nil, false, err
+		}
+
+		var list *unstructured.UnstructuredList
+		var err error
+		if namespace != "" {
+			list, err = dynClient.Resource(spec.GVR).Namespace(namespace).List(ctx, v1.ListOptions{})
+		} else {
+			list, err = dynClient.Resource(spec.GVR).List(ctx, v1.ListOptions{})
+		}
+		if err != nil {
+			// Skip unavailable CRDs or optional APIs cleanly.
+			continue
+		}
+
+		// Sort items deterministically by namespace/name before applying cap.
+		items := make([]unstructured.Unstructured, len(list.Items))
+		copy(items, list.Items)
+		sort.Slice(items, func(i, j int) bool {
+			if items[i].GetNamespace() != items[j].GetNamespace() {
+				return items[i].GetNamespace() < items[j].GetNamespace()
+			}
+			return items[i].GetName() < items[j].GetName()
+		})
+
+		for i := range items {
+			item := &items[i]
+			if spec.Kind == "Secret" && !isHelmReleaseSecret(item) {
+				continue
+			}
+			if len(captured) >= maxObjects {
+				truncated = true
+				break
+			}
+			sanitized := sanitizeRecordedSnapshotObject(item, spec)
+			if sanitized != nil {
+				captured = append(captured, sanitized)
+			}
+		}
+		if truncated {
+			break
+		}
+	}
+
+	return captured, truncated, nil
+}
+
+func encodeRecordedSnapshot(w io.Writer, format string, objects []*unstructured.Unstructured, observedAt time.Time, sourceContext string, truncated bool) error {
+	obsStr := observedAt.UTC().Format(time.RFC3339)
+	annotations := map[string]string{
+		snapshotObservedAtAnnotation: obsStr,
+	}
+	if strings.TrimSpace(sourceContext) != "" {
+		annotations[snapshotSourceContextAnnotation] = strings.TrimSpace(sourceContext)
+	}
+	if truncated {
+		annotations["cub-scout.confighub.com/snapshot-truncated"] = "true"
+	}
+
+	rawItems := make([]map[string]interface{}, 0, len(objects))
+	for _, obj := range objects {
+		if obj != nil && obj.Object != nil {
+			rawItems = append(rawItems, obj.Object)
+		}
+	}
+
+	if format == snapshotFormatJSON {
+		envelope := map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "List",
+			"metadata": map[string]interface{}{
+				"annotations": annotations,
+			},
+			"items": rawItems,
+		}
+		enc := json.NewEncoder(w)
+		enc.SetIndent("", "  ")
+		return enc.Encode(envelope)
+	}
+
+	// YAML format: emit header comments recording observedAt and sourceContext.
+	var header strings.Builder
+	header.WriteString("# cub-scout snapshot\n")
+	header.WriteString("# observedAt: " + obsStr + "\n")
+	if strings.TrimSpace(sourceContext) != "" {
+		header.WriteString("# sourceContext: " + strings.TrimSpace(sourceContext) + "\n")
+	}
+	if truncated {
+		header.WriteString("# truncated: true\n")
+	}
+	if _, err := io.WriteString(w, header.String()); err != nil {
+		return err
+	}
+
+	// When empty or exceeding the multi-document limit (128), emit a single
+	// v1/List YAML document so readRecordedObjectSnapshot can parse up to 512 objects.
+	if len(rawItems) == 0 || len(rawItems) > maxRecordedObjectDocuments {
+		envelope := map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "List",
+			"metadata": map[string]interface{}{
+				"annotations": annotations,
+			},
+			"items": rawItems,
+		}
+		yamlBytes, err := sigsyaml.Marshal(envelope)
+		if err != nil {
+			return fmt.Errorf("marshal snapshot list yaml: %w", err)
+		}
+		_, err = w.Write(yamlBytes)
+		return err
+	}
+
+	// Multi-document YAML for 1..128 objects.
+	for i, item := range rawItems {
+		if i > 0 {
+			if _, err := io.WriteString(w, "---\n"); err != nil {
+				return err
+			}
+		}
+		yamlBytes, err := sigsyaml.Marshal(item)
+		if err != nil {
+			return fmt.Errorf("marshal snapshot object yaml: %w", err)
+		}
+		if _, err := w.Write(yamlBytes); err != nil {
+			return err
+		}
+	}
+	return nil
 }

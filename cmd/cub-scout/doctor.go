@@ -37,6 +37,7 @@ var (
 	doctorConfigHubSince      string
 	doctorConfigHubStaleAfter string
 	doctorKubeContext         string
+	doctorRecording           string
 	doctorBeforeAttach        bool
 
 	collectDoctorDeliveryEvidenceFn = func(ctx context.Context, namespace string, req ObserveScopeSummaryRequest, binding *localClusterBinding) (*GitOpsDeliveryEvidence, error) {
@@ -79,6 +80,7 @@ func init() {
 	doctorCmd.Flags().StringVar(&doctorConfigHubStaleAfter, "confighub-stale-after", "15m", "Treat ConfigHub live-status observations older than this as stale")
 	doctorCmd.Flags().BoolVar(&doctorBeforeAttach, "before-attach", false, "Add what `cub cluster attach` would meet in this cluster (always cluster-wide; read only)")
 	doctorCmd.Flags().StringVar(&doctorKubeContext, "kube-context", "", "Use this exact Kubernetes context for all doctor reads")
+	doctorCmd.Flags().StringVar(&doctorRecording, "recording", "", "Offline YAML/JSON cluster snapshot file to evaluate without cluster access")
 }
 
 // DoctorSummary is the canonical model behind both ASCII and JSON output.
@@ -257,6 +259,57 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
+	// Offline recorded snapshot mode (Theme 4: zero cluster/network access).
+	if strings.TrimSpace(doctorRecording) != "" {
+		if selection.explicit {
+			return fmt.Errorf("--recording cannot be combined with --kube-context")
+		}
+		if doctorWithConfigHub || cmd.Flags().Changed("confighub-space") || cmd.Flags().Changed("confighub-since") || cmd.Flags().Changed("confighub-stale-after") {
+			return fmt.Errorf("--recording cannot be combined with --with-confighub or ConfigHub options")
+		}
+		if doctorBeforeAttach {
+			return fmt.Errorf("--recording cannot be combined with --before-attach")
+		}
+		if os.Getenv("CUB_SCOUT_TEST_DOCTOR_INPUT_JSON") != "" {
+			return fmt.Errorf("--recording cannot be combined with doctor fixture input")
+		}
+		snapshot, err := readRecordedObjectSnapshot(doctorRecording)
+		if err != nil {
+			return err
+		}
+		summary := buildDoctorSummaryFromSnapshot(snapshot, doctorNamespace, doctorTopIssues)
+		switch format {
+		case "json":
+			hints := doctorHintsWithContext(summary, hintCtx)
+			sortHints(hints)
+			if len(hints) > 3 {
+				hints = hints[:3]
+			}
+			summary.NextSteps = HintsToStructured(hints)
+			summary.Answer = buildDoctorAnswer(summary, offlineRecordingObservedAt(snapshot))
+			summary.Answer.Unknowns = append(summary.Answer.Unknowns,
+				offlineRecordingUnknown(snapshot),
+				mapsvc.AnswerUnknown{
+					What:   "live cluster risk scan",
+					Kind:   mapsvc.UnknownNotCompared,
+					Reason: "offline recording evaluation checks recorded inventory and workload rollouts without live cluster scanning",
+				},
+			)
+			enc := json.NewEncoder(os.Stdout)
+			enc.SetIndent("", "  ")
+			return enc.Encode(projectDoctorView(summary, view))
+		default:
+			obsLabel := snapshot.ObservedAt
+			if obsLabel == "" {
+				obsLabel = "unknown"
+			}
+			fmt.Printf("OFFLINE RECORDING (observedAt: %s) — static snapshot; live cluster was not contacted\n", obsLabel)
+			fmt.Print(renderDoctorASCII(summary, invCtx.Mode(), invCtx.IsExplicit(), hintCtx))
+			return nil
+		}
+	}
+
 	if fixturePath := os.Getenv("CUB_SCOUT_TEST_DOCTOR_INPUT_JSON"); fixturePath != "" && selection.explicit {
 		return fmt.Errorf("--kube-context cannot be combined with doctor fixture input")
 	}
@@ -1234,4 +1287,52 @@ func doctorPercent(part, total int) int {
 		return 0
 	}
 	return int(float64(part) * 100.0 / float64(total))
+}
+
+// buildDoctorSummaryFromSnapshot evaluates a recorded multi-object YAML/JSON
+// snapshot offline with zero cluster or network access.
+func buildDoctorSummaryFromSnapshot(snapshot recordedObjectSnapshot, namespace string, topN int) DoctorSummary {
+	clusterName := strings.TrimSpace(snapshot.SourceContext)
+	if clusterName == "" {
+		clusterName = "recorded"
+	}
+	nsLabel := namespace
+	if nsLabel == "" {
+		nsLabel = "all"
+	}
+
+	entries := make([]MapEntry, 0, len(snapshot.Objects))
+	byOwner := map[string]int{}
+	observedAt := offlineRecordingObservedAt(snapshot)
+	decisions := make([]agent.RolloutDecision, 0)
+
+	for _, obj := range snapshot.Objects {
+		if obj == nil {
+			continue
+		}
+		if namespace != "" && obj.GetNamespace() != namespace {
+			continue
+		}
+		gv, _ := schema.ParseGroupVersion(obj.GetAPIVersion())
+		gvr := schema.GroupVersionResource{
+			Group:    gv.Group,
+			Version:  gv.Version,
+			Resource: strings.ToLower(obj.GetKind()) + "s",
+		}
+		entries = processResource(obj, gvr, clusterName, entries, byOwner)
+
+		switch obj.GetKind() {
+		case "Deployment", "StatefulSet", "DaemonSet", "Job":
+			if decision, ok := agent.BuildRolloutDecisionForWorkload(obj, nil, 0, observedAt); ok {
+				decisions = append(decisions, decision)
+			}
+		}
+	}
+
+	summary := buildDoctorSummary(entries, nil, clusterName, nsLabel, topN)
+	summary.KubernetesContext = snapshot.SourceContext
+	if len(decisions) > 0 {
+		summary.Rollouts = buildDoctorRolloutSummary(decisions, topN)
+	}
+	return summary
 }

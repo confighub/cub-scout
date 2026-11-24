@@ -4,12 +4,21 @@
 package main
 
 import (
+	"bytes"
+	"context"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	dynamicfake "k8s.io/client-go/dynamic/fake"
 )
 
 func TestBuildOwnsRelations(t *testing.T) {
@@ -553,5 +562,253 @@ func TestBuildReferencesRelations_NoDuplicates(t *testing.T) {
 	if len(relations) != 1 {
 		t.Errorf("expected 1 relation (deduplicated), got %d", len(relations))
 		t.Logf("relations: %+v", relations)
+	}
+}
+
+func newFakeSnapshotDynamicClient(objs ...runtime.Object) *dynamicfake.FakeDynamicClient {
+	scheme := runtime.NewScheme()
+	listKinds := map[schema.GroupVersionResource]string{
+		{Group: "apps", Version: "v1", Resource: "deployments"}:                      "DeploymentList",
+		{Group: "apps", Version: "v1", Resource: "statefulsets"}:                     "StatefulSetList",
+		{Group: "apps", Version: "v1", Resource: "daemonsets"}:                       "DaemonSetList",
+		{Group: "batch", Version: "v1", Resource: "jobs"}:                            "JobList",
+		{Group: "batch", Version: "v1", Resource: "cronjobs"}:                        "CronJobList",
+		{Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations"}: "KustomizationList",
+		{Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases"}:        "HelmReleaseList",
+		{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "gitrepositories"}:   "GitRepositoryList",
+		{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "ocirepositories"}:   "OCIRepositoryList",
+		{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}:             "ApplicationList",
+		{Group: "", Version: "v1", Resource: "secrets"}:                                   "SecretList",
+	}
+	return dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, objs...)
+}
+
+func TestSnapshotRecording_SecretSanitization(t *testing.T) {
+	helmSecret := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Secret",
+			"type":       "helm.sh/release.v1",
+			"metadata": map[string]interface{}{
+				"name":      "sh.helm.release.v1.web.v3",
+				"namespace": "prod",
+				"labels": map[string]interface{}{
+					"owner":   "helm",
+					"name":    "web",
+					"status":  "deployed",
+					"version": "3",
+				},
+				"annotations": map[string]interface{}{
+					"meta.helm.sh/release-name":                  "web",
+					"kubectl.kubernetes.io/last-applied-configuration": "MUST-NOT-LEAK-LAST-APPLIED",
+				},
+			},
+			"data": map[string]interface{}{
+				"release": "SUPER-SECRET-HELM-PAYLOAD-BASE64",
+			},
+			"stringData": map[string]interface{}{
+				"token": "SUPER-SECRET-TOKEN",
+			},
+		},
+	}
+	opaqueSecret := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Secret",
+			"type":       "Opaque",
+			"metadata": map[string]interface{}{
+				"name":      "app-db-creds",
+				"namespace": "prod",
+			},
+			"data": map[string]interface{}{
+				"password": "OPAQUE-SECRET-PASSWORD",
+			},
+		},
+	}
+
+	dynClient := newFakeSnapshotDynamicClient(helmSecret, opaqueSecret)
+	captured, truncated, err := collectRecordedSnapshotObjects(context.Background(), dynClient, "prod", "", 200)
+	if err != nil {
+		t.Fatalf("collectRecordedSnapshotObjects failed: %v", err)
+	}
+	if truncated {
+		t.Fatalf("expected truncated=false")
+	}
+	if len(captured) != 1 {
+		t.Fatalf("expected 1 captured object (Helm release Secret only), got %d", len(captured))
+	}
+
+	got := captured[0]
+	if got.GetName() != "sh.helm.release.v1.web.v3" {
+		t.Fatalf("captured secret name = %q, want sh.helm.release.v1.web.v3", got.GetName())
+	}
+	if _, hasData := got.Object["data"]; hasData {
+		t.Fatal("Secret.data must be strictly stripped")
+	}
+	if _, hasStringData := got.Object["stringData"]; hasStringData {
+		t.Fatal("Secret.stringData must be strictly stripped")
+	}
+	if gotType, _, _ := unstructured.NestedString(got.Object, "type"); gotType != "helm.sh/release.v1" {
+		t.Fatalf("Secret.type = %q, want helm.sh/release.v1", gotType)
+	}
+	if got.GetLabels()["owner"] != "helm" || got.GetLabels()["version"] != "3" {
+		t.Fatalf("Helm labels not preserved: %#v", got.GetLabels())
+	}
+	if got.GetAnnotations()["meta.helm.sh/release-name"] != "web" {
+		t.Fatalf("Helm annotation not preserved: %#v", got.GetAnnotations())
+	}
+	if _, hasLastApplied := got.GetAnnotations()["kubectl.kubernetes.io/last-applied-configuration"]; hasLastApplied {
+		t.Fatal("kubectl last-applied-configuration annotation on Secret must be stripped")
+	}
+
+	// Verify neither YAML nor JSON serialized output contains any secret payload.
+	observedAt := time.Date(2026, 11, 24, 22, 0, 0, 0, time.UTC)
+	for _, format := range []string{snapshotFormatYAML, snapshotFormatJSON} {
+		var buf bytes.Buffer
+		if err := encodeRecordedSnapshot(&buf, format, captured, observedAt, "kind-prod", false); err != nil {
+			t.Fatalf("encodeRecordedSnapshot(%s) failed: %v", format, err)
+		}
+		serialized := buf.String()
+		for _, forbidden := range []string{"SUPER-SECRET-HELM-PAYLOAD-BASE64", "SUPER-SECRET-TOKEN", "OPAQUE-SECRET-PASSWORD", "MUST-NOT-LEAK-LAST-APPLIED", "app-db-creds"} {
+			if strings.Contains(serialized, forbidden) {
+				t.Fatalf("format=%s leaked forbidden secret content %q", format, forbidden)
+			}
+		}
+	}
+}
+
+func TestSnapshotRecording_BoundedCapture(t *testing.T) {
+	objs := make([]runtime.Object, 0, 5)
+	for i := 1; i <= 5; i++ {
+		objs = append(objs, &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "apps/v1",
+				"kind":       "Deployment",
+				"metadata": map[string]interface{}{
+					"name":      fmt.Sprintf("app-%02d", i),
+					"namespace": "prod",
+				},
+			},
+		})
+	}
+
+	dynClient := newFakeSnapshotDynamicClient(objs...)
+	captured, truncated, err := collectRecordedSnapshotObjects(context.Background(), dynClient, "prod", "", 3)
+	if err != nil {
+		t.Fatalf("collectRecordedSnapshotObjects failed: %v", err)
+	}
+	if !truncated {
+		t.Fatal("expected truncated=true when cluster has more objects than maxObjects")
+	}
+	if len(captured) != 3 {
+		t.Fatalf("expected 3 captured objects, got %d", len(captured))
+	}
+	if captured[0].GetName() != "app-01" || captured[1].GetName() != "app-02" || captured[2].GetName() != "app-03" {
+		t.Fatalf("expected deterministic sorted order, got %q, %q, %q", captured[0].GetName(), captured[1].GetName(), captured[2].GetName())
+	}
+}
+
+func TestSnapshotRecording_YAMLAndJSONRoundTrip(t *testing.T) {
+	deploy := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "apps/v1",
+			"kind":       "Deployment",
+			"metadata": map[string]interface{}{
+				"name":      "api",
+				"namespace": "prod",
+				"labels": map[string]interface{}{
+					"kustomize.toolkit.fluxcd.io/name":      "apps",
+					"kustomize.toolkit.fluxcd.io/namespace": "flux-system",
+				},
+			},
+			"spec":   map[string]interface{}{"replicas": int64(2)},
+			"status": map[string]interface{}{"replicas": int64(2), "readyReplicas": int64(2)},
+		},
+	}
+	ks := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+			"kind":       "Kustomization",
+			"metadata": map[string]interface{}{
+				"name":      "apps",
+				"namespace": "flux-system",
+			},
+			"status": map[string]interface{}{
+				"conditions": []interface{}{
+					map[string]interface{}{
+						"type":   "Ready",
+						"status": "True",
+						"reason": "ReconciliationSucceeded",
+					},
+				},
+			},
+		},
+	}
+
+	dynClient := newFakeSnapshotDynamicClient(deploy, ks)
+	captured, truncated, err := collectRecordedSnapshotObjects(context.Background(), dynClient, "", "", 200)
+	if err != nil {
+		t.Fatalf("collectRecordedSnapshotObjects failed: %v", err)
+	}
+	if truncated || len(captured) != 2 {
+		t.Fatalf("captured=%d truncated=%v, want 2/false", len(captured), truncated)
+	}
+
+	observedAt := time.Date(2026, 11, 24, 21, 30, 0, 0, time.UTC)
+	for _, format := range []string{snapshotFormatYAML, snapshotFormatJSON} {
+		t.Run(format, func(t *testing.T) {
+			var buf bytes.Buffer
+			if err := encodeRecordedSnapshot(&buf, format, captured, observedAt, "prod-cluster", false); err != nil {
+				t.Fatalf("encodeRecordedSnapshot failed: %v", err)
+			}
+			filePath := filepath.Join(t.TempDir(), "snap."+format)
+			if err := os.WriteFile(filePath, buf.Bytes(), 0600); err != nil {
+				t.Fatal(err)
+			}
+			snap, err := readRecordedObjectSnapshot(filePath)
+			if err != nil {
+				t.Fatalf("readRecordedObjectSnapshot(%s) failed: %v", format, err)
+			}
+			if snap.ObservedAt != "2026-11-24T21:30:00Z" {
+				t.Fatalf("snap.ObservedAt = %q, want 2026-11-24T21:30:00Z", snap.ObservedAt)
+			}
+			if snap.SourceContext != "prod-cluster" {
+				t.Fatalf("snap.SourceContext = %q, want prod-cluster", snap.SourceContext)
+			}
+			if len(snap.Objects) != 2 {
+				t.Fatalf("len(snap.Objects) = %d, want 2", len(snap.Objects))
+			}
+		})
+	}
+}
+
+func TestSnapshotRecording_OverDocumentLimitUsesListYAML(t *testing.T) {
+	objs := make([]*unstructured.Unstructured, 0, maxRecordedObjectDocuments+5)
+	for i := 0; i < maxRecordedObjectDocuments+5; i++ {
+		objs = append(objs, &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "apps/v1",
+				"kind":       "Deployment",
+				"metadata": map[string]interface{}{
+					"name":      fmt.Sprintf("svc-%03d", i),
+					"namespace": "prod",
+				},
+			},
+		})
+	}
+	var buf bytes.Buffer
+	observedAt := time.Date(2026, 11, 24, 21, 45, 0, 0, time.UTC)
+	if err := encodeRecordedSnapshot(&buf, snapshotFormatYAML, objs, observedAt, "large-cluster", false); err != nil {
+		t.Fatalf("encodeRecordedSnapshot failed: %v", err)
+	}
+	snap, err := loadRecordedObjectSnapshot(bytes.NewReader(buf.Bytes()))
+	if err != nil {
+		t.Fatalf("loadRecordedObjectSnapshot failed: %v", err)
+	}
+	if len(snap.Objects) != maxRecordedObjectDocuments+5 {
+		t.Fatalf("len(snap.Objects) = %d, want %d", len(snap.Objects), maxRecordedObjectDocuments+5)
+	}
+	if snap.ObservedAt != "2026-11-24T21:45:00Z" || snap.SourceContext != "large-cluster" {
+		t.Fatalf("unexpected snapshot metadata: observedAt=%q sourceContext=%q", snap.ObservedAt, snap.SourceContext)
 	}
 }
