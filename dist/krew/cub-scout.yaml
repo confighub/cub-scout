@@ -3,7 +3,7 @@ kind: Plugin
 metadata:
   name: cub-scout
 spec:
-  version: v0.0.0
+  version: v3.0.0
   homepage: https://github.com/confighub/cub-scout
   shortDescription: "GitOps explorer for agents: read-only evidence from your clusters"
   description: |
@@ -15,27 +15,27 @@ spec:
         matchLabels:
           os: linux
           arch: amd64
-      uri: https://github.com/confighub/cub-scout/releases/download/v0.0.0/cub-scout_v0.0.0_linux_amd64.tar.gz
-      sha256: REPLACE_WITH_LINUX_AMD64_SHA256
+      uri: https://github.com/confighub/cub-scout/releases/download/v3.0.0/cub-scout_3.0.0_linux_amd64.tar.gz
+      sha256: a8940f8eeb1b518f5a4cfe20260ded0e92e090c6d924434ed89a83a004e5a598
       bin: kubectl-cub_scout
     - selector:
         matchLabels:
           os: linux
           arch: arm64
-      uri: https://github.com/confighub/cub-scout/releases/download/v0.0.0/cub-scout_v0.0.0_linux_arm64.tar.gz
-      sha256: REPLACE_WITH_LINUX_ARM64_SHA256
+      uri: https://github.com/confighub/cub-scout/releases/download/v3.0.0/cub-scout_3.0.0_linux_arm64.tar.gz
+      sha256: 2ce82805000d2863f75217701211068e6264f746fdd7c6cb78c1281f4c56679e
       bin: kubectl-cub_scout
     - selector:
         matchLabels:
           os: darwin
           arch: amd64
-      uri: https://github.com/confighub/cub-scout/releases/download/v0.0.0/cub-scout_v0.0.0_darwin_amd64.tar.gz
-      sha256: REPLACE_WITH_DARWIN_AMD64_SHA256
+      uri: https://github.com/confighub/cub-scout/releases/download/v3.0.0/cub-scout_3.0.0_darwin_amd64.tar.gz
+      sha256: 558b99e407984f043bfcd191ea70f5d0686649360267d5334b66fa390bee4985
       bin: kubectl-cub_scout
     - selector:
         matchLabels:
           os: darwin
           arch: arm64
-      uri: https://github.com/confighub/cub-scout/releases/download/v0.0.0/cub-scout_v0.0.0_darwin_arm64.tar.gz
-      sha256: REPLACE_WITH_DARWIN_ARM64_SHA256
+      uri: https://github.com/confighub/cub-scout/releases/download/v3.0.0/cub-scout_3.0.0_darwin_arm64.tar.gz
+      sha256: a662b1af6d311f13fbc859849a28302ef461fe586e210c73465e1d399478830f
       bin: kubectl-cub_scout
