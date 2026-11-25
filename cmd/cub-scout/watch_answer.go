@@ -31,22 +31,20 @@ const (
 	watchReasonClusterIdentityNotRead = "cluster-identity-not-read"
 )
 
-// watchStates reuses doctor's closed state vocabulary without adding new words.
-var (
-	watchStates  = doctorStates
-	watchReasons = []string{
-		watchReasonFindingFlagged,
-		watchReasonDriftDetected,
-		watchReasonOwnershipChanged,
-		watchReasonResourceDiscovered,
-		watchReasonResourceDeleted,
-		watchReasonInfoObserved,
-		watchReasonClusterObserved,
-		watchReasonCollectionPartial,
-		watchReasonInventoryNotRead,
-		watchReasonClusterIdentityNotRead,
-	}
-)
+// watchReasons is the closed list of documented reason keys for watch/bot
+// event answers. State words reuse doctorStates with zero additions.
+var watchReasons = []string{
+	watchReasonFindingFlagged,
+	watchReasonDriftDetected,
+	watchReasonOwnershipChanged,
+	watchReasonResourceDiscovered,
+	watchReasonResourceDeleted,
+	watchReasonInfoObserved,
+	watchReasonClusterObserved,
+	watchReasonCollectionPartial,
+	watchReasonInventoryNotRead,
+	watchReasonClusterIdentityNotRead,
+}
 
 // buildWatchEventAnswer builds a compact, conforming Answer envelope for a
 // single watch/bot event from data already collected in this cycle.
