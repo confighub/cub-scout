@@ -83,9 +83,11 @@ func TestWatchIdentityDefaultWireUnchanged(t *testing.T) {
 	require.Len(t, events, 1)
 	raw, err := json.Marshal(events[0])
 	require.NoError(t, err)
-	require.NotContains(t, string(raw), "clusterCostScope")
-	require.NotContains(t, string(raw), "resourceIdentity")
-	require.NotContains(t, string(raw), `"cluster":{`)
+	var top map[string]json.RawMessage
+	require.NoError(t, json.Unmarshal(raw, &top))
+	require.NotContains(t, top, "clusterCostScope")
+	require.NotContains(t, top, "resourceIdentity")
+	require.NotContains(t, top, "cluster")
 }
 
 func TestWatchAndBotIdentityUsesSelectedConfigOneRead(t *testing.T) {
