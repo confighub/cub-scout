@@ -92,6 +92,10 @@ type watchEvent struct {
 	// collection omissions do not. Receipt-build volume is controlled by
 	// --emit-receipt-batch-cap.
 	Receipt *agent.Statement `json:"receipt,omitempty"`
+
+	// Answer is the additive, read-only answer envelope (#596) derived
+	// deterministically from this event's existing observation.
+	Answer *mapsvc.Answer `json:"answer,omitempty"`
 }
 
 type watchEventResource struct {
@@ -117,6 +121,7 @@ type watchFinding struct {
 }
 
 type watchState struct {
+	context         string
 	clusterIdentity *agent.ClusterIdentityEvidence
 	omissions       []mapsvc.CollectionOmission
 	entryScopes     map[string]watchInventoryScope
@@ -369,6 +374,7 @@ func runWatchWithOptions(cmd *cobra.Command, opts watchOptions) error {
 			cycleCtx = context.WithValue(ctx, watchClusterIdentityKey{}, identity)
 		}
 		state, err := watchCollectState(cycleCtx, dynClient, namespace)
+		state.context = contextLabel
 		state.clusterIdentity = identity
 		return state, err
 	}
@@ -722,6 +728,9 @@ func buildWatchEvents(prev, curr watchState, severityFilter map[string]struct{},
 	}
 
 	events = attachWatchIdentity(events, prev, curr, ts)
+	for i := range events {
+		events[i].Answer = buildWatchEventAnswer(events[i], curr)
+	}
 	sort.Slice(events, func(i, j int) bool {
 		if events[i].Type != events[j].Type {
 			return events[i].Type < events[j].Type

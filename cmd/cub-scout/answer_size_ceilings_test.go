@@ -25,6 +25,7 @@ import (
 // hundred bytes.
 var mcpAnswerBlockCeilings = map[string]int{
 	"before_write":         700,  // 672 bytes (3.3 pre-write sensor, strictly < 1 KB)
+	"bot":                  700,  // watch/bot event envelope (#596)
 	"compare_source_truth": 400,  // 336 bytes
 	"doctor":               500,  // 418 bytes
 	"explain":              900,  // 821 bytes
@@ -35,6 +36,7 @@ var mcpAnswerBlockCeilings = map[string]int{
 	"release_check":        1600, // 1548 bytes
 	"scan":                 700,  // 600 bytes
 	"trace":                900,  // 828 bytes
+	"watch":                700,  // watch/bot event envelope (#596)
 }
 
 func TestAnswerBlocksStayWithinDeclaredSizeCeilings(t *testing.T) {
@@ -120,8 +122,25 @@ func TestAnswerBlocksStayWithinDeclaredSizeCeilings(t *testing.T) {
 		observedAt:        observedAtForTests,
 	})
 
+	watchAns := buildWatchEventAnswer(watchEvent{
+		Type:      "drift.detected",
+		Timestamp: observedAtForTests,
+		Resource:  watchEventResource{Kind: "Deployment", Name: "api", Namespace: "prod"},
+		Severity:  "warning",
+		Details:   map[string]interface{}{"category": "STATE", "message": "out of sync"},
+	}, watchState{context: "prod-east", namespace: "prod"})
+
+	botAns := buildWatchEventAnswer(watchEvent{
+		Type:      "scan.finding",
+		Timestamp: observedAtForTests,
+		Resource:  watchEventResource{Kind: "Deployment", Name: "api", Namespace: "prod"},
+		Severity:  "warning",
+		Details:   map[string]interface{}{"category": "STATE", "message": "out of sync"},
+	}, watchState{context: "prod-east", namespace: "prod"})
+
 	answers := map[string]interface{}{
 		"before_write":         beforeWriteAns,
+		"bot":                  botAns,
 		"trace":                traceOut.Answer,
 		"compare_source_truth": sourceTruthAns,
 		"gitops_status":        gitopsAns,
@@ -132,6 +151,7 @@ func TestAnswerBlocksStayWithinDeclaredSizeCeilings(t *testing.T) {
 		"scan":                 scanAns,
 		"gitops_settings":      settingsAns,
 		"release_check":        releaseAns,
+		"watch":                watchAns,
 	}
 
 	names := make([]string, 0, len(answers))
