@@ -12,6 +12,7 @@ import (
 	"io"
 	"math"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -23,6 +24,9 @@ const (
 	maxRecordedObjectDocuments = 128
 	maxRecordedObjectCount     = 512
 	maxRecordedObjectDepth     = 64
+
+	snapshotObservedAtAnnotation    = "cub-scout.confighub.com/snapshot-observed-at"
+	snapshotSourceContextAnnotation = "cub-scout.confighub.com/snapshot-source-context"
 )
 
 // recordedObjectIdentity is an exact Kubernetes identity. Namespace may be
@@ -52,8 +56,10 @@ type recordedObject struct {
 // recordedObjectSnapshot is parsed once at MCP startup and treated as
 // immutable. Selection returns a deep copy so callers cannot mutate the source.
 type recordedObjectSnapshot struct {
-	Objects    []*unstructured.Unstructured
-	Provenance recordedObjectProvenance
+	Objects       []*unstructured.Unstructured
+	Provenance    recordedObjectProvenance
+	ObservedAt    string
+	SourceContext string
 }
 
 // loadRecordedObject parses a bounded YAML/JSON object stream or generic
@@ -85,6 +91,7 @@ func loadRecordedObjectSnapshot(input io.Reader) (recordedObjectSnapshot, error)
 	decoder := yaml.NewDecoder(bytes.NewReader(raw))
 	objects := make([]*unstructured.Unstructured, 0)
 	var documents, objectCount, typedListDerivedObjects int
+	observedAt, sourceContext := extractRecordedSnapshotHeader(raw)
 	for {
 		var document yaml.Node
 		err := decoder.Decode(&document)
@@ -116,6 +123,13 @@ func loadRecordedObjectSnapshot(input io.Reader) (recordedObjectSnapshot, error)
 		if kind == "List" || kind == "DeploymentList" {
 			if (kind == "List" && apiVersion != "v1") || (kind == "DeploymentList" && apiVersion != "apps/v1") {
 				return recordedObjectSnapshot{}, fmt.Errorf("recorded input contains unsupported List type")
+			}
+			obs, srcCtx := extractRecordedAnnotationsFromMap(object)
+			if observedAt == "" && obs != "" {
+				observedAt = obs
+			}
+			if sourceContext == "" && srcCtx != "" {
+				sourceContext = srcCtx
 			}
 			itemsNode := mappingValue(root, "items")
 			if itemsNode == nil || itemsNode.Kind != yaml.SequenceNode {
@@ -156,6 +170,20 @@ func loadRecordedObjectSnapshot(input io.Reader) (recordedObjectSnapshot, error)
 	if len(objects) == 0 {
 		return recordedObjectSnapshot{}, fmt.Errorf("recorded input contains no objects")
 	}
+	if observedAt == "" || sourceContext == "" {
+		for _, obj := range objects {
+			obs, srcCtx := extractRecordedAnnotationsFromMap(obj.Object)
+			if observedAt == "" && obs != "" {
+				observedAt = obs
+			}
+			if sourceContext == "" && srcCtx != "" {
+				sourceContext = srcCtx
+			}
+			if observedAt != "" && sourceContext != "" {
+				break
+			}
+		}
+	}
 	digest := sha256.Sum256(raw)
 	return recordedObjectSnapshot{
 		Objects: objects,
@@ -163,7 +191,61 @@ func loadRecordedObjectSnapshot(input io.Reader) (recordedObjectSnapshot, error)
 			SHA256: hex.EncodeToString(digest[:]), Bytes: len(raw), Documents: documents, ObjectCount: objectCount,
 			TypedListDerivedObjects: typedListDerivedObjects,
 		},
+		ObservedAt:    observedAt,
+		SourceContext: sourceContext,
 	}, nil
+}
+
+func extractRecordedSnapshotHeader(raw []byte) (observedAt, sourceContext string) {
+	lines := strings.Split(string(raw), "\n")
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+		if !strings.HasPrefix(trimmed, "#") {
+			break
+		}
+		comment := strings.TrimSpace(strings.TrimPrefix(trimmed, "#"))
+		if strings.HasPrefix(comment, "observedAt:") {
+			val := strings.TrimSpace(strings.TrimPrefix(comment, "observedAt:"))
+			if normalized, ok := normalizeRecordedTimestamp(val); ok && observedAt == "" {
+				observedAt = normalized
+			}
+		} else if strings.HasPrefix(comment, "sourceContext:") {
+			val := strings.TrimSpace(strings.TrimPrefix(comment, "sourceContext:"))
+			if val != "" && sourceContext == "" {
+				sourceContext = val
+			}
+		}
+	}
+	return observedAt, sourceContext
+}
+
+func extractRecordedAnnotationsFromMap(obj map[string]interface{}) (observedAt, sourceContext string) {
+	annotations, found, err := unstructured.NestedStringMap(obj, "metadata", "annotations")
+	if err != nil || !found {
+		return "", ""
+	}
+	if rawObs := strings.TrimSpace(annotations[snapshotObservedAtAnnotation]); rawObs != "" {
+		if normalized, ok := normalizeRecordedTimestamp(rawObs); ok {
+			observedAt = normalized
+		}
+	}
+	sourceContext = strings.TrimSpace(annotations[snapshotSourceContextAnnotation])
+	return observedAt, sourceContext
+}
+
+func normalizeRecordedTimestamp(raw string) (string, bool) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return "", false
+	}
+	parsed, err := time.Parse(time.RFC3339, raw)
+	if err != nil {
+		return "", false
+	}
+	return parsed.UTC().Format(time.RFC3339), true
 }
 
 // apps/v1.DeploymentList declares Items []Deployment. This exact API envelope

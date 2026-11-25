@@ -18,6 +18,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/confighub/cub-scout/v3/pkg/agent"
@@ -26,6 +27,7 @@ import (
 var (
 	gitopsNamespace   string
 	gitopsKubeContext string
+	gitopsRecording   string
 	gitopsFormat      string
 	gitopsView        string
 	gitopsIfUnchanged string
@@ -110,6 +112,7 @@ func init() {
 
 	gitopsStatusCmd.Flags().StringVarP(&gitopsNamespace, "namespace", "n", "", "Namespace to scan (default: all namespaces)")
 	gitopsStatusCmd.Flags().StringVar(&gitopsKubeContext, "kube-context", "", "Kubernetes context to inspect (default: current context)")
+	gitopsStatusCmd.Flags().StringVar(&gitopsRecording, "recording", "", "Offline YAML/JSON cluster snapshot file to evaluate without cluster access")
 	gitopsStatusCmd.Flags().StringVar(&gitopsFormat, "format", "ascii", "Output format: ascii, json, md")
 	gitopsStatusCmd.Flags().StringVar(&gitopsView, "view", gitopsStatusViewAll, "JSON only: all (default) or summary (compact, omits per-deployer and per-source lists)")
 	gitopsStatusCmd.Flags().StringVar(&gitopsIfUnchanged, "if-unchanged", "", "JSON only: return a compact unchanged envelope when the answer fingerprint matches this hash")
@@ -343,6 +346,37 @@ func runGitOpsStatus(cmd *cobra.Command, args []string) error {
 		}
 		if format != "json" {
 			return fmt.Errorf("--if-unchanged applies to JSON output; pass --format json")
+		}
+	}
+
+	// Offline recorded snapshot mode (Theme 4: zero cluster/network access).
+	if strings.TrimSpace(gitopsRecording) != "" {
+		if selection.explicit {
+			return fmt.Errorf("--recording cannot be combined with --kube-context")
+		}
+		if gitopsWithConfigHub || cmd.Flags().Changed("confighub-space") || cmd.Flags().Changed("confighub-since") || cmd.Flags().Changed("confighub-stale-after") {
+			return fmt.Errorf("--recording cannot be combined with --with-confighub or ConfigHub options")
+		}
+		if os.Getenv("CUB_SCOUT_TEST_GITOPS_JSON") != "" {
+			return fmt.Errorf("--recording cannot be combined with CUB_SCOUT_TEST_GITOPS_JSON")
+		}
+		snapshot, err := readRecordedObjectSnapshot(gitopsRecording)
+		if err != nil {
+			return err
+		}
+		summary := buildGitOpsSummaryFromSnapshot(snapshot, gitopsNamespace)
+		summary.Answer = buildGitOpsStatusAnswer(summary, offlineRecordingObservedAt(snapshot), nil)
+		summary.Answer.Unknowns = append(summary.Answer.Unknowns, offlineRecordingUnknown(snapshot))
+		if gitopsTUI {
+			return runGitOpsStatusTUI(ctx, summary)
+		}
+		switch format {
+		case "json":
+			return writeGitOpsStatusJSON(os.Stdout, projectGitOpsStatusView(summary, view), gitopsIfUnchanged)
+		case "md":
+			return outputGitOpsStatusMarkdown(summary)
+		default:
+			return outputGitOpsStatusHuman(summary)
 		}
 	}
 	evidenceOptions, err := gitOpsDeliveryEvidenceOptionsFromFlags(ctx)
@@ -1520,4 +1554,256 @@ func readGitOpsStatusJSON(path string) (GitOpsSummary, error) {
 		return GitOpsSummary{}, fmt.Errorf("failed to parse gitops JSON: %w", err)
 	}
 	return summary, nil
+}
+
+func offlineRecordingObservedAt(snapshot recordedObjectSnapshot) time.Time {
+	if snapshot.ObservedAt != "" {
+		if parsed, err := time.Parse(time.RFC3339, snapshot.ObservedAt); err == nil {
+			return parsed.UTC()
+		}
+	}
+	return time.Now().UTC()
+}
+
+func offlineRecordingUnknown(snapshot recordedObjectSnapshot) mapsvc.AnswerUnknown {
+	if snapshot.ObservedAt != "" {
+		return mapsvc.AnswerUnknown{
+			What:   "live cluster state after snapshot",
+			Kind:   mapsvc.UnknownStale,
+			Reason: fmt.Sprintf("evaluated offline from recorded snapshot (observedAt: %s); live cluster was not contacted", snapshot.ObservedAt),
+		}
+	}
+	return mapsvc.AnswerUnknown{
+		What:   "live cluster state and snapshot capture time",
+		Kind:   mapsvc.UnknownStale,
+		Reason: "evaluated offline from recorded snapshot (observedAt: unknown); live cluster was not contacted",
+	}
+}
+
+// buildGitOpsSummaryFromSnapshot evaluates a recorded multi-object YAML/JSON
+// snapshot offline with zero cluster or network access.
+func buildGitOpsSummaryFromSnapshot(snapshot recordedObjectSnapshot, namespace string) GitOpsSummary {
+	summary := GitOpsSummary{
+		Context:   snapshot.SourceContext,
+		Backend:   string(agent.BackendNone),
+		Transport: string(agent.TransportUnknown),
+		Deployers: []DeployerStatus{},
+		Sources:   []SourceStatus{},
+	}
+
+	coverage := newGitOpsControllerCoverageTracker()
+	for _, kind := range []string{"Kustomization", "HelmRelease"} {
+		coverage.addResourceKind("Flux", kind)
+	}
+	coverage.addResourceKind("ArgoCD", "Application")
+	coverage.addResourceKind("ConfigHub", "ConfigHubTarget")
+	firstClassSpecs := firstClassControllerResources()
+	for _, spec := range firstClassSpecs {
+		coverage.addResourceKind(spec.Owner, spec.Kind)
+	}
+
+	hasFlux := false
+	hasArgo := false
+	hasControllers := false
+	hasOCI := false
+	hasGit := false
+	hasHelm := false
+
+	// Index pods in the snapshot for optional Argo runtime status enrichment.
+	podsByNS := map[string][]*unstructured.Unstructured{}
+	for _, obj := range snapshot.Objects {
+		if obj == nil {
+			continue
+		}
+		if obj.GetKind() == "Pod" {
+			podsByNS[obj.GetNamespace()] = append(podsByNS[obj.GetNamespace()], obj)
+		}
+	}
+
+	var sveltosReports *SveltosControllerEvidence
+
+	for _, obj := range snapshot.Objects {
+		if obj == nil {
+			continue
+		}
+		if namespace != "" && obj.GetNamespace() != namespace {
+			continue
+		}
+		gv, _ := schema.ParseGroupVersion(obj.GetAPIVersion())
+		kind := obj.GetKind()
+
+		switch {
+		case gv.Group == "source.toolkit.fluxcd.io" && (kind == "GitRepository" || kind == "OCIRepository" || kind == "HelmRepository" || kind == "Bucket"):
+			details := agent.ExtractFluxSourceFailure(obj)
+			summary.Sources = append(summary.Sources, SourceStatus{
+				Kind:           kind,
+				Name:           obj.GetName(),
+				Namespace:      obj.GetNamespace(),
+				Ready:          details.Ready,
+				Reason:         details.Reason,
+				Message:        details.Message,
+				URL:            details.SourceURL,
+				ArtifactDigest: details.ArtifactDigest,
+			})
+			switch kind {
+			case "OCIRepository":
+				hasOCI = true
+			case "GitRepository":
+				hasGit = true
+			case "HelmRepository":
+				hasHelm = true
+			}
+
+		case (gv.Group == "kustomize.toolkit.fluxcd.io" && kind == "Kustomization") ||
+			(gv.Group == "helm.toolkit.fluxcd.io" && kind == "HelmRelease"):
+			hasFlux = true
+			coverage.addFound("Flux", kind)
+			details := agent.ExtractFluxDeployerFailure(obj)
+			dep := DeployerStatus{
+				Kind:                  kind,
+				Name:                  obj.GetName(),
+				Namespace:             obj.GetNamespace(),
+				Ready:                 details.Ready,
+				Suspended:             details.Suspended,
+				Stage:                 string(details.Stage),
+				Reason:                details.Reason,
+				Message:               details.Message,
+				LastAppliedRevision:   details.LastAppliedRevision,
+				LastAttemptedRevision: details.LastAttemptedRevision,
+			}
+			if srcKind, found, _ := unstructured.NestedString(obj.Object, "spec", "sourceRef", "kind"); found && srcKind != "" {
+				srcName, _, _ := unstructured.NestedString(obj.Object, "spec", "sourceRef", "name")
+				srcNS, _, _ := unstructured.NestedString(obj.Object, "spec", "sourceRef", "namespace")
+				if srcNS == "" {
+					srcNS = obj.GetNamespace()
+				}
+				if srcName != "" {
+					dep.SourceRef = fmt.Sprintf("%s/%s/%s", srcKind, srcNS, srcName)
+				}
+			}
+			summary.Deployers = append(summary.Deployers, dep)
+
+		case gv.Group == "argoproj.io" && kind == "Application":
+			hasArgo = true
+			coverage.addFound("ArgoCD", kind)
+			details := agent.ExtractArgoFailure(obj)
+			dep := DeployerStatus{
+				Kind:                  kind,
+				Name:                  obj.GetName(),
+				Namespace:             obj.GetNamespace(),
+				Ready:                 details.Ready,
+				Stage:                 string(details.Stage),
+				Reason:                details.Reason,
+				Message:               details.Message,
+				SyncStatus:            details.SyncStatus,
+				HealthStatus:          details.HealthStatus,
+				LastAttemptedRevision: details.LastAttemptedRevision,
+			}
+			destNS, _, _ := unstructured.NestedString(obj.Object, "spec", "destination", "namespace")
+			destNS = strings.TrimSpace(destNS)
+			if destNS != "" && len(podsByNS[destNS]) > 0 {
+				issueCounts := map[string]int{}
+				for _, pod := range podsByNS[destNS] {
+					if strings.TrimSpace(pod.GetLabels()["argocd.argoproj.io/instance"]) != dep.Name {
+						continue
+					}
+					dep.PodTotal++
+					if isPodReadyForGitOpsStatus(pod) {
+						dep.PodReady++
+						continue
+					}
+					if reason := extractPodRuntimeIssueReason(pod); reason != "" {
+						issueCounts[reason]++
+					}
+				}
+				if len(issueCounts) > 0 {
+					for reason, count := range issueCounts {
+						dep.RuntimeIssues = append(dep.RuntimeIssues, RuntimeIssue{Reason: reason, Count: count})
+					}
+					sort.Slice(dep.RuntimeIssues, func(i, j int) bool {
+						if runtimeIssueOrder(dep.RuntimeIssues[i].Reason) == runtimeIssueOrder(dep.RuntimeIssues[j].Reason) {
+							return dep.RuntimeIssues[i].Reason < dep.RuntimeIssues[j].Reason
+						}
+						return runtimeIssueOrder(dep.RuntimeIssues[i].Reason) < runtimeIssueOrder(dep.RuntimeIssues[j].Reason)
+					})
+				}
+			} else {
+				dep.RuntimeOmission = &RuntimeOmission{Resource: "pods", Reason: "not_in_recording"}
+			}
+			summary.Deployers = append(summary.Deployers, dep)
+			if repoURL, _, _ := unstructured.NestedString(obj.Object, "spec", "source", "repoURL"); repoURL != "" {
+				if strings.HasPrefix(repoURL, "oci://") {
+					hasOCI = true
+				} else {
+					hasGit = true
+				}
+			}
+
+		default:
+			for _, spec := range firstClassSpecs {
+				if gv.Group == spec.GVR.Group && kind == spec.Kind {
+					coverage.addFound(spec.Owner, spec.Kind)
+					if spec.Owner == "Sveltos" {
+						appendSveltosObservation(&sveltosReports, obj)
+					}
+					if isControllerDeployerKind(spec.Kind) {
+						hasControllers = true
+						summary.Deployers = append(summary.Deployers, controllerDeployerStatus(obj, spec))
+					}
+					break
+				}
+			}
+		}
+	}
+
+	sort.Slice(summary.Sources, func(i, j int) bool {
+		if summary.Sources[i].Kind != summary.Sources[j].Kind {
+			return summary.Sources[i].Kind < summary.Sources[j].Kind
+		}
+		if summary.Sources[i].Namespace != summary.Sources[j].Namespace {
+			return summary.Sources[i].Namespace < summary.Sources[j].Namespace
+		}
+		return summary.Sources[i].Name < summary.Sources[j].Name
+	})
+	sort.Slice(summary.Deployers, func(i, j int) bool {
+		if summary.Deployers[i].Kind != summary.Deployers[j].Kind {
+			return summary.Deployers[i].Kind < summary.Deployers[j].Kind
+		}
+		if summary.Deployers[i].Namespace != summary.Deployers[j].Namespace {
+			return summary.Deployers[i].Namespace < summary.Deployers[j].Namespace
+		}
+		return summary.Deployers[i].Name < summary.Deployers[j].Name
+	})
+
+	for _, dep := range summary.Deployers {
+		if dep.IsHealthy() {
+			summary.HealthyCount++
+		} else {
+			summary.FailedCount++
+		}
+	}
+
+	switch {
+	case hasFlux:
+		summary.Backend = string(agent.BackendFlux)
+	case hasArgo:
+		summary.Backend = string(agent.BackendArgoCD)
+	case hasControllers:
+		summary.Backend = "controllers"
+	}
+	switch {
+	case hasOCI:
+		summary.Transport = string(agent.TransportOCI)
+	case hasGit:
+		summary.Transport = string(agent.TransportGit)
+	case hasHelm:
+		summary.Transport = string(agent.TransportHelm)
+	}
+
+	if sveltosReports != nil {
+		sortSveltosJSON(sveltosReports.Observations)
+		summary.SveltosControllerReports = sveltosReports
+	}
+	summary.ControllerCoverage = coverage.statuses()
+	return summary
 }

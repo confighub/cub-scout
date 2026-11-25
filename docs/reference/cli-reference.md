@@ -27,7 +27,7 @@ Source of truth:
 | `compare` | Compare Git, bundle, live, or connected intent/render/live state; in connected mode each field mismatch carries attribution evidence (`cause`, `managerHint`, `gitSource`, `bindingSource`) | [Command Reference](commands.md#compare) | [Connect and compare](../../examples/connect-and-compare/) |
 | `context-pack` | Export deterministic AI context JSON | [How-to](../howto/context-pack-v2.md) | [AI integration](../../examples/ai-integration/) |
 | `debug` | Guided GitOps debugging wizard | [Command Reference](commands.md#debug) | [Platform example](../../examples/platform-example/) |
-| `doctor` | One-command cluster health summary; `--before-attach` adds what `cub cluster attach` would meet | [Command Reference](commands.md#doctor) | [Connect and compare](../../examples/connect-and-compare/) |
+| `doctor` | One-command cluster health summary; `--before-attach` adds what `cub cluster attach` would meet; `--recording <file>` evaluates offline snapshots | [Command Reference](commands.md#doctor) | [Connect and compare](../../examples/connect-and-compare/) |
 | `explain` | Plain-English ownership and lineage for one resource | [Command Reference](commands.md#explain) | [New user puzzle quest](../../examples/new-user-puzzle-quest/) |
 | `gitops` | GitOps pipeline health and diagnostics | [Command Reference](commands.md#gitops-v014) | [Connected summary storage](../../examples/connected-summary-storage/) |
 | `graph` | Resource graph export and explanation | [Command Reference](commands.md#graph-v06) | [Graph export](../../examples/graph-export/) |
@@ -45,7 +45,7 @@ Source of truth:
 | `suggest-remedy` | Describe a suggested remediation for a risk finding (read-only). Legacy `remedy` is accepted as an alias. | [Command Reference](commands.md#suggest-remedy) | [Running demos](../howto/running-demos.md) |
 | `scan` | Risk and stuck-state scanning | [Command Reference](commands.md#scan) | [Lifecycle hazards](../../examples/lifecycle-hazards/) |
 | `setup` | Shell setup and quick cluster connect helpers | [Command Reference](commands.md#setup) | - |
-| `snapshot` | Dump cluster state as GSF JSON | [Command Reference](commands.md#snapshot) | [AI integration](../../examples/ai-integration/) |
+| `snapshot` | Dump cluster state as GSF JSON or bounded, sanitized offline recording YAML/JSON (`--format yaml\|json`) | [Command Reference](commands.md#snapshot) | [AI integration](../../examples/ai-integration/) |
 | `status` | Show connection mode and cluster info | [Command Reference](commands.md#status) | [Connect and compare](../../examples/connect-and-compare/) |
 | `summary` | Connected summary storage tools | [Command Reference](commands.md#summary-list) | [Connected summary storage](../../examples/connected-summary-storage/) |
 | `trace` | Trace ownership and source chain | [Command Reference](commands.md#trace) | [kro composition](../../examples/kro-composition/) |
@@ -66,7 +66,7 @@ Source of truth:
 | `compare three-way` | Connected DRY/WET/LIVE comparison; `--source-path <local-checkout>` opts into stage-B `gitSource.file:line` back-resolution for raw-YAML sources | [Command Reference](commands.md#compare-three-way) | [Connect and compare](../../examples/connect-and-compare/) |
 | `fleet outliers` | Deprecated 2.x comparison; planned removal in 3.0 absent validated cross-cluster identity; no equivalent replacement yet | [Command Reference](commands.md#fleet-outliers) | [Fleet import](../../examples/fleet-import/) |
 | `gitops settings` | Declared sync, correction and prune settings of Argo CD Applications and Flux Kustomizations and HelmReleases, grouped by project or namespace; preview since v2.13.3 | [Command Reference](commands.md#gitops-settings) | [Delivery settings](../../examples/delivery-settings/) |
-| `gitops status` | GitOps pipeline health plus optional bounded ConfigHub delivery evidence; `--tui` opens the same read-once snapshot in a viewport | [Command Reference](commands.md#gitops-v014) | [Live delivery observability](../../examples/live-delivery-observability/) |
+| `gitops status` | GitOps pipeline health plus optional bounded ConfigHub delivery evidence; `--recording <file>` evaluates offline snapshots; `--tui` opens the same read-once snapshot in a viewport | [Command Reference](commands.md#gitops-v014) | [Live delivery observability](../../examples/live-delivery-observability/) |
 | `gitops tree` | What is under each GitOps deployer, to any depth: child deployers, walked the same way, and the resources each reports, with each deployer's settings and state. Argo CD Applications; a preview since v2.14.0 | [Command Reference](commands.md#gitops-tree) | [Delivery tree example](../../examples/delivery-tree/) |
 | `history changeorder` | Exact-space reported ChangeOrder Stage/State and workflow declarations; evaluated outcomes unknown | [Command Reference](commands.md#history-changeorder) | [Authored read contract](../../examples/changeorder-read-contract/) |
 | `import apply` | Apply an import proposal JSON | [Command Reference](commands.md#import-apply) | [Import from live](../../examples/import-from-live/) |
