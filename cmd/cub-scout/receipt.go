@@ -51,6 +51,12 @@ var (
 // (#448, runReceiptVerifyScoped in receipt_aggregate.go) based on
 // whether --scope is set or the positional argument is comma-shaped.
 func runReceiptVerifyDispatch(cmd *cobra.Command, args []string) error {
+	// Offline signed-receipt verification mode (--input / --pubkey): runs
+	// strictly locally with zero kubeconfig, cluster, or network access (#889).
+	if strings.TrimSpace(receiptVerifySignedInput) != "" || strings.TrimSpace(receiptVerifySignedPubKey) != "" {
+		return runReceiptVerifySigned(cmd, args)
+	}
+
 	// Parse --ttl UPFRONT (before any routing or side effect) so a bad value
 	// rejects cleanly; every receipt path reads receiptTTLDur.
 	ttl, ttlErr := parseReceiptTTL()

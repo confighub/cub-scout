@@ -90,6 +90,7 @@ func TestReceiptPackageReadOnlyClient(t *testing.T) {
 		"cmd/cub-scout/receipt_render.go":        false,
 		"cmd/cub-scout/receipt_object_set.go":    false,
 		"cmd/cub-scout/receipt_show.go":          false,
+		"cmd/cub-scout/receipt_sign.go":          false,
 		"cmd/cub-scout/receipt_validate.go":      false,
 		"cmd/cub-scout/receipt_list.go":          false,
 		"cmd/cub-scout/watch_receipt.go":         false,
@@ -100,6 +101,7 @@ func TestReceiptPackageReadOnlyClient(t *testing.T) {
 		"pkg/agent/receipt_inputattestations.go": false,
 		"pkg/agent/receipt_object_set.go":        false,
 		"pkg/agent/receipt_predicates.go":        false,
+		"pkg/agent/receipt_sign.go":              false,
 		"pkg/agent/receipt_store.go":             false,
 		"pkg/agent/receipt_subject.go":           false,
 	}
