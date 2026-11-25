@@ -2231,7 +2231,12 @@ Merged on `main` (not yet tagged `v3.0.0`):
   - G5 Option A (`#1010`): `agent/<tool>[/<run>]` parser + `KnownManagerTool` self-reported agent label.
   - A(2) (`#1011`): `explain --field-path` live `value`/`valueFound` + Flux/Argo CD `revertPrediction`.
   - A(3) (`#1012`): `compare three-way --unrecorded-only` + MCP `unrecorded_only` preserving `summary` and `omissions[]`.
-- **Release notes & 3.x vision:** draft `docs/releases/v3.0.0.md` (`#1008`, `#1013`, `#1014`, not yet tagged) and expanded 3.1–3.4 roadmap in `docs/proposals/vision-3.x.md` (`#999`, `#1000`, `#1017`).
+- **Swarm 3.2 Universal & Offline Witness (`#1018`–`#1021`):**
+  - `#1018`: deterministic field writer-contention detection on `explain --field-path` + `--if-unchanged <hash>` delta answers on `landed` and `gitops status`.
+  - `#1019`: independent Pod/Image-Digest Witness (`landed --verify-pod-images` + `--image`, CLI + MCP, proven on real Flux & Argo CD in `landed-lane.sh`).
+  - `#1020`: bounded, secret-stripped `cub scout snapshot --format yaml|json` + offline `--recording` parity on `gitops status` and `doctor`.
+  - `#1021`: `Job`/`CronJob` workloads + `kro`/`Crossplane`/`Sveltos` parity in `landed` (proven in `kro-lane.sh` and `crossplane-lane.sh`).
+- **Release notes & 3.x vision:** finalized `docs/releases/v3.0.0.md`, MCP registry manifest `server.json`, `docs/reference/mcp-and-krew-listings.md`, and expanded 3.1–3.4 roadmap in `docs/proposals/vision-3.x.md` (`#999`, `#1000`, `#1017`, `#1022`).
 
 ## After v2.18.0: release check on a real cluster, Flux WATCH, #887 seen to disagree — 2026-11-19
 
